@@ -1,0 +1,35 @@
+
+This is a very simple, but working kernel driver for WhiteRabbit mini-NIC (hdl/modules/wrsw_mini_nic) with proper WR timestamping.
+
+TODO:
+- add calibration/DMTD ioctls()
+- add support for more than 1 endpoint + miNIC (configurable platform_devices)
+- add NAPI polling
+- add support for sending multiple descriptors (TX ring buffer)
+- cleanup, adapt to kernel coding rules
+- add TX_TS interrupt handler for proper reception of TX timestamps
+
+
+BUGS:
+- sometimes drops a warning like this one:
+
+# ping 192.168.100.1
+PING 192.168.100.1 (192.168.100.1): 56 data bytes
+------------[ cut here ]------------
+WARNING: at kernel/softirq.c:143 local_bh_enable+0x44/0xac()
+Modules linked in: wr_minic whiterabbit_vic
+[<c00291f8>] (unwind_backtrace+0x0/0xf0) from [<c00390fc>] (warn_slowpath_common+0x4c/0x64)
+[<c00390fc>] (warn_slowpath_common+0x4c/0x64) from [<c003912c>] (warn_slowpath_null+0x18/0x1c)
+[<c003912c>] (warn_slowpath_null+0x18/0x1c) from [<c003e23c>] (local_bh_enable+0x44/0xac)
+[<c003e23c>] (local_bh_enable+0x44/0xac) from [<c01982d0>] (neigh_lookup+0xb0/0xb8)
+[<c01982d0>] (neigh_lookup+0xb0/0xb8) from [<c01ccd10>] (arp_process+0x514/0x680)
+[<c01ccd10>] (arp_process+0x514/0x680) from [<c018ece8>] (__netif_receive_skb+0x244/0x26c)
+[<c018ece8>] (__netif_receive_skb+0x244/0x26c) from [<bf01484c>] (minic_rx_frame+0x1f4/0x238 [wr_minic])
+[<bf01484c>] (minic_rx_frame+0x1f4/0x238 [wr_minic]) from [<00000002>] (0x2)
+---[ end trace b836ae4c93691b2b ]---
+
+- fix compilation warning: 
+
+  MODPOST 1 modules
+  WARNING: "wrmch_vic_request_irq" [/home/slayer/wrdev-new/software/drivers/wr_minic/wr-minic.ko] undefined!
+  WARNING: "wrmch_vic_free_irq" [/home/slayer/wrdev-new/software/drivers/wr_minic/wr-minic.ko] undefined!

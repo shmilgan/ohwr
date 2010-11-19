@@ -1,0 +1,18 @@
+White Rabbit MCH Vectored Interrupt Controller driver
+------
+
+
+This driver adds support for the Interrupt Controller in the main FPGA of White Rabbit MCH. The VIC multiplexes 32 source interrupts
+into single interrupt CPU interrupt line (AT91SAM9263_ID_IRQ0).
+
+
+exported functions:
+---------------------
+
+
+void wrmch_vic_free_irq(int irq, void *dev_id);
+int wrmch_vic_request_irq(int irq, wrvic_irq_t handler, void *dev_id);
+void wrmch_vic_enable_irq(int irq);
+void wrmch_vic_disable_irq(int irq);
+
+dev_id = private data of requesting device/driver.
