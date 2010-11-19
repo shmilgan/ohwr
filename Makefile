@@ -1,7 +1,5 @@
 
-export WR_MODULES_DIR = $(shell /bin/pwd)
-
-DIRS = wr_vic wr_minic
+DIRS = wr_minic
 
 # We may "LINUX ?= /usr/src/linux-wrswitch", but it's better to leave it empty
 

@@ -1,10 +1,5 @@
 
-obj-m := wr_minic.o
-
-# This is needed to include wr_vic.h
-WR_MODULES_DIR ?= $(shell /bin/pwd)/..
-
-EXTRA_CFLAGS = -I$(WR_MODULES_DIR)/wr_vic
+obj-m := wr_vic.o wr_minic.o
 
 export ARCH ?= arm
 export CROSS_COMPILE ?= $(CROSS_COMPILE_ARM)
