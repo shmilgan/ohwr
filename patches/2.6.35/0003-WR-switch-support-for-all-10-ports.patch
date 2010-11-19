@@ -1,0 +1,104 @@
+From a2e39cf1c95a637ec71a43aefcc7e584349b091c Mon Sep 17 00:00:00 2001
+From: Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
+Date: Sat, 11 Sep 2010 20:24:01 +0200
+Subject: [PATCH] WR switch: support for all 10 ports
+
+---
+ arch/arm/mach-at91/board-whiterabbit-mch.c |   70 ++++++++++------------------
+ 1 files changed, 25 insertions(+), 45 deletions(-)
+
+diff --git a/arch/arm/mach-at91/board-whiterabbit-mch.c b/arch/arm/mach-at91/board-whiterabbit-mch.c
+index c1cbe11..2e5d458 100644
+--- a/arch/arm/mach-at91/board-whiterabbit-mch.c
++++ b/arch/arm/mach-at91/board-whiterabbit-mch.c
+@@ -121,55 +121,27 @@ static struct at91_eth_data wr_mch_macb_data __initdata = {
+ #define WR_MINIC_BASE_UP0 0x700a0000
+ #define WR_MINIC_BASE_UP1 0x70080000
+ 
++#define WR_MINIC_BASE_DP0 0x700c0000
++#define WR_MINIC_BASE_DP1 0x700e0000
++#define WR_MINIC_BASE_DP2 0x70100000
++#define WR_MINIC_BASE_DP3 0x70120000
++#define WR_MINIC_BASE_DP4 0x70140000
++#define WR_MINIC_BASE_DP5 0x70160000
++#define WR_MINIC_BASE_DP6 0x70180000
++#define WR_MINIC_BASE_DP7 0x701a0000
++
+ #define WR_MINIC_SIZE	  0x20000
+ 
+ #define WR_MINIC_IRQ_UP0 0
+ #define WR_MINIC_IRQ_UP1 1
+-
+-#if 0
+-
+-static struct resource wr_minic_up1_resources[] = {
+-  [0] = {
+-    .start	= WR_MINIC_BASE_UP1,
+-    .end	= WR_MINIC_BASE_UP1 + WR_MINIC_SIZE - 1,
+-    .flags	= IORESOURCE_MEM,
+-  },
+-  [1] = {
+-    .start	= WR_MINIC_IRQ_UP1,
+-    .end	= WR_MINIC_IRQ_UP1,
+-    .flags	= IORESOURCE_IRQ,
+-  },
+-};
+-
+-static struct resource wr_minic_up0_resources[] = {
+-  [0] = {
+-    .start	= WR_MINIC_BASE_UP0,
+-    .end	= WR_MINIC_BASE_UP0 + WR_MINIC_SIZE - 1,
+-    .flags	= IORESOURCE_MEM,
+-  },
+-  [1] = {
+-    .start	= WR_MINIC_IRQ_UP0,
+-    .end	= WR_MINIC_IRQ_UP0,
+-    .flags	= IORESOURCE_IRQ,
+-  },
+-};
+-
+-
+-
+-static struct platform_device wr_minic_up1_device = {
+-  .name		= "wr-minic",
+-  .id		= -1,
+-  .dev		= {
+-    .dma_mask		= &wr_minic_dmamask,
+-    .coherent_dma_mask	= DMA_BIT_MASK(32),
+-    .platform_data		= NULL,
+-  },
+-
+-  .resource	= wr_minic_up0_resources,
+-  .num_resources	= ARRAY_SIZE(wr_minic_up1_resources),
+-};
+-
+-#endif
++#define WR_MINIC_IRQ_DP0 2
++#define WR_MINIC_IRQ_DP1 3
++#define WR_MINIC_IRQ_DP2 4
++#define WR_MINIC_IRQ_DP3 5
++#define WR_MINIC_IRQ_DP4 6
++#define WR_MINIC_IRQ_DP5 7
++#define WR_MINIC_IRQ_DP6 8
++#define WR_MINIC_IRQ_DP7 9
+ 
+ static u64 wr_minic_dmamask = DMA_BIT_MASK(32);
+ 
+@@ -353,6 +325,14 @@ static void __init wr_mch_board_init(void)
+ 	/* initialise the NIC */
+ 	wr_mch_register_minic_port(0, PORT_UP, 0, WR_MINIC_BASE_UP0, WR_MINIC_IRQ_UP0);
+ 	wr_mch_register_minic_port(1, PORT_UP, 1, WR_MINIC_BASE_UP1, WR_MINIC_IRQ_UP1);
++	wr_mch_register_minic_port(2, PORT_DOWN, 0, WR_MINIC_BASE_DP0, WR_MINIC_IRQ_DP0);
++	wr_mch_register_minic_port(3, PORT_DOWN, 1, WR_MINIC_BASE_DP1, WR_MINIC_IRQ_DP1);
++	wr_mch_register_minic_port(4, PORT_DOWN, 2, WR_MINIC_BASE_DP2, WR_MINIC_IRQ_DP2);
++	wr_mch_register_minic_port(5, PORT_DOWN, 3, WR_MINIC_BASE_DP3, WR_MINIC_IRQ_DP3);
++	wr_mch_register_minic_port(6, PORT_DOWN, 4, WR_MINIC_BASE_DP4, WR_MINIC_IRQ_DP4);
++	wr_mch_register_minic_port(7, PORT_DOWN, 5, WR_MINIC_BASE_DP5, WR_MINIC_IRQ_DP5);
++	wr_mch_register_minic_port(8, PORT_DOWN, 6, WR_MINIC_BASE_DP6, WR_MINIC_IRQ_DP6);
++	wr_mch_register_minic_port(9, PORT_DOWN, 7, WR_MINIC_BASE_DP7, WR_MINIC_IRQ_DP7);
+ 
+ 	/* shutdown controller, wakeup button (5 msec low) */
+ 	at91_sys_write(AT91_SHDW_MR, AT91_SHDW_CPTWK0_(10) |
+-- 
+1.5.6.5
+
