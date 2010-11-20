@@ -62,9 +62,9 @@
 
 
 struct wrmch_vic {
-  void __iomem *regs;
-  wrvic_irq_t handlers[WRMCH_VIC_MAX_IRQS];
-  void *dev_ids[WRMCH_VIC_MAX_IRQS];
+	void __iomem *regs;
+	wrvic_irq_t handlers[WRMCH_VIC_MAX_IRQS];
+	void *dev_ids[WRMCH_VIC_MAX_IRQS];
 };
 
 static struct wrmch_vic *VIC;
@@ -72,122 +72,120 @@ static struct wrmch_vic *VIC;
 
 static irqreturn_t wrmch_vic_interrupt(int irq, void *dev_id)
 {
-  u32 reg_var;
-  wrvic_irq_t handler;
+	u32 reg_var;
+	wrvic_irq_t handler;
 
-  reg_var = vic_readl(VIC, VIC_REG_VAR); // determine the interrupt source
+	reg_var = vic_readl(VIC, VIC_REG_VAR); // determine the interrupt source
 
-  if (reg_var == VIC_SPURIOUS_IRQ)
-      printk(KERN_ERR PFX "spurious interrupt");
-  else
-    {
-//			printk("Got irq: var %d\n", reg_var);
-      handler = VIC->handlers[reg_var];
-      handler(VIC->dev_ids[reg_var]);
-    }
+	if (reg_var == VIC_SPURIOUS_IRQ) {
+		printk(KERN_ERR PFX "spurious interrupt");
+	} else {
+		//			printk("Got irq: var %d\n", reg_var);
+		handler = VIC->handlers[reg_var];
+		handler(VIC->dev_ids[reg_var]);
+	}
 
-  vic_writel(VIC, VIC_REG_EOIR, 0); // clear the interrupt pending flag
+	vic_writel(VIC, VIC_REG_EOIR, 0); // clear the interrupt pending flag
 
-  return IRQ_HANDLED;
+	return IRQ_HANDLED;
 }
 
 
 int wrmch_vic_request_irq(int irq, wrvic_irq_t handler, void *dev_id)
 {
-  if (irq < 0 || irq >= WRMCH_VIC_MAX_IRQS)
-    return -EINVAL;
+	if (irq < 0 || irq >= WRMCH_VIC_MAX_IRQS)
+		return -EINVAL;
 
-  if (VIC->handlers[irq])
-    return -EADDRINUSE;
+	if (VIC->handlers[irq])
+		return -EADDRINUSE;
 
-  VIC->handlers[irq] = handler;
-  VIC->dev_ids[irq] = dev_id;
-  
-  vic_writel(VIC, VIC_IVT_BASE + (irq << 2), irq); //(u32)handler);
-  wrmch_vic_enable_irq(irq);
+	VIC->handlers[irq] = handler;
+	VIC->dev_ids[irq] = dev_id;
 
-  return 0;
+	vic_writel(VIC, VIC_IVT_BASE + (irq << 2), irq); //(u32)handler);
+	wrmch_vic_enable_irq(irq);
+
+	return 0;
 }
 
 void wrmch_vic_free_irq(int irq, void *dev_id)
 {
-  if (irq < 0 || irq >= WRMCH_VIC_MAX_IRQS)
-    return;
+	if (irq < 0 || irq >= WRMCH_VIC_MAX_IRQS)
+		return;
 
-  if (VIC->dev_ids[irq] != dev_id)
-    return;
+	if (VIC->dev_ids[irq] != dev_id)
+		return;
 
-  wrmch_vic_disable_irq(irq);
-  vic_writel(VIC, VIC_IVT_BASE + (irq << 2), VIC_SPURIOUS_IRQ);
-  VIC->handlers[irq] = NULL;
-  VIC->dev_ids[irq] = NULL;
+	wrmch_vic_disable_irq(irq);
+	vic_writel(VIC, VIC_IVT_BASE + (irq << 2), VIC_SPURIOUS_IRQ);
+	VIC->handlers[irq] = NULL;
+	VIC->dev_ids[irq] = NULL;
 }
 
 void wrmch_vic_enable_irq(int irq)
 {
-  if (irq < 0 || irq >= WRMCH_VIC_MAX_IRQS)
-    return;
+	if (irq < 0 || irq >= WRMCH_VIC_MAX_IRQS)
+		return;
 
-  vic_writel(VIC, VIC_REG_IER, (1<<irq));
-//  printk("vic_enable_irq: irq %d imr %x\n", irq, vic_readl(VIC, VIC_REG_IMR));
+	vic_writel(VIC, VIC_REG_IER, (1<<irq));
+//printk("vic_enable_irq: irq %d imr %x\n", irq, vic_readl(VIC, VIC_REG_IMR));
 }
 
 void wrmch_vic_disable_irq(int irq)
 {
-  if (irq < 0 || irq >= WRMCH_VIC_MAX_IRQS)
-    return;
+	if (irq < 0 || irq >= WRMCH_VIC_MAX_IRQS)
+		return;
 
-  vic_writel(VIC, VIC_REG_IDR, (1<<irq));
-//  printk("vic_disable_irq: irq %d imr %x\n", irq, vic_readl(VIC, VIC_REG_IMR));
+	vic_writel(VIC, VIC_REG_IDR, (1<<irq));
+//printk("vic_disable_irq: irq %d imr %x\n", irq, vic_readl(VIC, VIC_REG_IMR));
 }
 
 static int __devinit wrmch_vic_init_module(void)
 {
-  int err, i;
+	int err, i;
 
-  VIC = kzalloc(sizeof(struct wrmch_vic), GFP_KERNEL);
+	VIC = kzalloc(sizeof(struct wrmch_vic), GFP_KERNEL);
 
-  VIC->regs = ioremap(FPGA_BASE_VIC, 0x1000);
+	VIC->regs = ioremap(FPGA_BASE_VIC, 0x1000);
 
-  vic_writel(VIC, VIC_REG_CTL, 0); // output is active LO
-  vic_writel(VIC, VIC_REG_IDR, 0xffffffff); // disable all interrupts
+	vic_writel(VIC, VIC_REG_CTL, 0); // output is active LO
+	vic_writel(VIC, VIC_REG_IDR, 0xffffffff); // disable all interrupts
 
-  err = request_irq(AT91SAM9263_ID_IRQ0, wrmch_vic_interrupt,
-		    IRQF_TRIGGER_LOW | IRQF_SHARED, "whiterabbit_vic", 
-		    VIC);
+	err = request_irq(AT91SAM9263_ID_IRQ0, wrmch_vic_interrupt,
+			  IRQF_TRIGGER_LOW | IRQF_SHARED, "whiterabbit_vic", 
+			  VIC);
 
-  if (unlikely(err)) {
-      printk(KERN_ERR PFX "request IRQ for WR VIC failed");
-      return err;
-  }
+	if (unlikely(err)) {
+		printk(KERN_ERR PFX "request IRQ for WR VIC failed");
+		return err;
+	}
 
-  /* clear the vector table */
-  for (i = 0; i < WRMCH_VIC_MAX_IRQS; i++)
-      vic_writel(VIC, VIC_IVT_BASE + (i<<2), VIC_SPURIOUS_IRQ);
+	/* clear the vector table */
+	for (i = 0; i < WRMCH_VIC_MAX_IRQS; i++)
+		vic_writel(VIC, VIC_IVT_BASE + (i<<2), VIC_SPURIOUS_IRQ);
 
-  vic_writel(VIC, VIC_REG_CTL, VIC_CTL_ENABLE); // enable the VIC
+	vic_writel(VIC, VIC_REG_CTL, VIC_CTL_ENABLE); // enable the VIC
 
-  printk(KERN_INFO PFX "module initialized");
+	printk(KERN_INFO PFX "module initialized");
 
-  return 0;
+	return 0;
 }
 
 
 static void __devexit wrmch_vic_cleanup_module(void)
 {
+	free_irq(AT91SAM9263_ID_IRQ0,  VIC);
 
-  free_irq(AT91SAM9263_ID_IRQ0,  VIC);
+	if (VIC) {
+		if (VIC->regs) {
+			iounmap(VIC->regs);
+			VIC->regs = NULL;
+		}
+		kfree(VIC);
+		VIC = NULL;
+	}
 
-  if (VIC) {
-    if (VIC->regs) {
-      iounmap(VIC->regs);
-      VIC->regs = NULL;
-    }
-    kfree(VIC);
-    VIC = NULL;
-  }
-
-  printk(KERN_INFO PFX "module cleanup");
+	printk(KERN_INFO PFX "module cleanup");
 }
 
 EXPORT_SYMBOL_GPL(wrmch_vic_request_irq);
