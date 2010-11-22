@@ -26,7 +26,11 @@
 #include "minic_regs.h"
 #include "endpoint_regs.h"
 #include "pps_gen_regs.h"
-#include "wr_vic.h"
+
+#ifndef WRVIC_BASE_IRQ
+#define WRVIC_BASE_IRQ (NR_AIC_IRQS + (5 * 32)) /* top of GPIO interrupts */
+#endif
+
 
 #define DMTD_AVG_SAMPLES 256
 #define DMTD_MAX_PHASE 16384
@@ -548,7 +552,8 @@ static inline void minic_rx_handle_irq(struct wr_minic *nic)
 	minic_clear_irq(nic, MINIC_EIC_ISR_RX);
 }
 
-static void minic_interrupt(void *dev_id) // called by MCH VIC driver
+/* called by WRVIC driver */
+static irqreturn_t minic_interrupt(int irq, void *dev_id)
 {
 	struct net_device *netdev = dev_id;
 	struct wr_minic *nic = netdev_priv(netdev);
@@ -561,6 +566,7 @@ static void minic_interrupt(void *dev_id) // called by MCH VIC driver
 
 	if (isr & MINIC_EIC_ISR_RX)
 		minic_rx_handle_irq(nic);
+	return IRQ_HANDLED;
 }
 
 static int minic_hw_tx(struct wr_minic *nic, char *data, unsigned size,
@@ -1145,7 +1151,8 @@ static int __devinit minic_probe(struct platform_device *pdev)
 		goto err_out_iounmap;
 	}
 
-	err = wrmch_vic_request_irq(netdev->irq, minic_interrupt, netdev);
+	err = request_irq(WRVIC_BASE_IRQ+netdev->irq, minic_interrupt,
+			  IRQF_SHARED, "wr-minic", netdev);
 
 	if (err) {
 		//		if (netif_msg_probe(nic)) {
@@ -1211,7 +1218,7 @@ static int __devexit minic_remove(struct platform_device *pdev)
 	if (!netdev)
 		return 0;
 
-	wrmch_vic_free_irq(netdev->irq, netdev);
+	free_irq(WRVIC_BASE_IRQ + netdev->irq, netdev);
 
 	nic = netdev_priv(netdev);
 	unregister_netdev(netdev);

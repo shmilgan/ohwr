@@ -1,7 +1,9 @@
 /*
- * whiterabbit_vic.c
+ * VIC controller, as implemented in FPGA in the White Rabbit switch
  *
- *  Copyright (c) 2009 Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
+ * Copyright (c) 2009, 2010 CERN
+ * Author: Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
+ * Author: Alessandro Rubini <rubini@gnudd.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -11,194 +13,129 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
-#include <linux/device.h>
-#include <linux/slab.h>
 
-#include <asm/mach-types.h>
-#include <asm/setup.h>
 #include <asm/irq.h>
-#include <asm/atomic.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-
-#include "wr_vic.h"
-
-#define DRV_MODULE_VERSION "0.1"
+#define DRV_MODULE_VERSION "0.2"
 #define DRV_NAME "wr_vic"
 #define PFX DRV_NAME ": "
 
+#define WRVIC_NR_IRQS 32 /* We have 32 possible interrupt sources */
 
-/* [0x0]: REG VIC Control Register */
-#define VIC_REG_CTL 0x00000000
-/* [0x4]: REG Raw Interrupt Status Register */
-#define VIC_REG_RISR 0x00000004
-/* [0x8]: REG Interrupt Enable Register */
-#define VIC_REG_IER 0x00000008
-/* [0xc]: REG Interrupt Disable Register */
-#define VIC_REG_IDR 0x0000000c
-/* [0x10]: REG Interrupt Mask Register */
-#define VIC_REG_IMR 0x00000010
-/* [0x14]: REG Vector Address Register */
-#define VIC_REG_VAR 0x00000014
-/* [0x1c]: REG End Of Interrupt Acknowledge Register */
-#define VIC_REG_EOIR 0x0000001c
+/* The following stanza comes from <mach/irq.h>: */
+     /*
+      * IRQ interrupt symbols are the AT91xxx_ID_* symbols
+      * for IRQs handled directly through the AIC, or else the AT91_PIN_*
+      * symbols in gpio.h for ones handled indirectly as GPIOs.
+      * We make provision for 5 banks of GPIO.
+     #define NR_IRQS         (NR_AIC_IRQS + (5 * 32))
+      */
+/* Therefore, we must have a bigger NR_IRQS and can't work otherwise */
+#if NR_IRQS < (NR_AIC_IRQS + (5 * 32) + WRVIC_NR_IRQS)
+#error "Please fix the kernel to allow for WR-VIC interrupts"
+#endif
 
-#define VIC_CTL_ENABLE                        (1<<0)
-#define VIC_CTL_POL                           (1<<1)
+#define WRVIC_BASE_IRQ (NR_AIC_IRQS + (5 * 32)) /* top of GPIO interrupts */
 
-#define VIC_IVT_BASE 0x00000080
+/*
+ * What follows is header-like material, but we need no header for
+ * external modules. Thus all defines are kept here to avoid confusion.
+ */
+#define FPGA_BASE_WRVIC	0x70030000
+#define FPGA_SIZE_WRVIC	0x00001000
 
-#define VIC_SPURIOUS_IRQ 0x12345678
-
-#define vic_readl(vic, offs)			\
-	__raw_readl((vic)->regs+ (offs))
-
-#define vic_writel(vic, offs, value)			\
-	__raw_writel((value), (vic)->regs + (offs))
-
-
-
-struct wrmch_vic {
-	void __iomem *regs;
-	wrvic_irq_t handlers[WRMCH_VIC_MAX_IRQS];
-	void *dev_ids[WRMCH_VIC_MAX_IRQS];
+struct wrvic_regs {
+	u32 reg_ctl;	/* [0x00]: WRVIC Control Register */
+	u32 reg_risr;	/* [0x04]: Raw Interrupt Status Register */
+	u32 reg_ier;	/* [0x08]: Interrupt Enable Register */
+	u32 reg_idr;	/* [0x0c]: Interrupt Disable Register */
+	u32 reg_imr;	/* [0x10]: Interrupt Mask Register */
+	u32 reg_var;	/* [0x14]: Vector Address Register */
+	u32 unused0;
+	u32 reg_eoir;	/* [0x1c]: End Of Irq Ack Register */
+	u32 unused1[((0x80-0x20)/4)];
+	u32 vector[WRVIC_NR_IRQS];
 };
 
-static struct wrmch_vic *VIC;
+static struct wrvic_regs __iomem *wrvic_regs;
 
+#define WRVIC_CTL_ENABLE                        (1<<0)
+#define WRVIC_CTL_POL                           (1<<1)
 
-static irqreturn_t wrmch_vic_interrupt(int irq, void *dev_id)
+#define WRVIC_SPURIOUS_IRQ 0x12345678 /* A diagnostic help */
+
+#define wrvic_readl(r)		__raw_readl(&wrvic_regs->r);
+#define wrvic_writel(val, r)	__raw_writel(val, &wrvic_regs->r);
+
+/* We only have two methods: unmask (enable) and mask (disable) */
+static void wrvic_unmask_irq(unsigned int irq)
 {
-	u32 reg_var;
-	wrvic_irq_t handler;
-
-	reg_var = vic_readl(VIC, VIC_REG_VAR); // determine the interrupt source
-
-	if (reg_var == VIC_SPURIOUS_IRQ) {
-		printk(KERN_ERR PFX "spurious interrupt");
-	} else {
-		//			printk("Got irq: var %d\n", reg_var);
-		handler = VIC->handlers[reg_var];
-		handler(VIC->dev_ids[reg_var]);
-	}
-
-	vic_writel(VIC, VIC_REG_EOIR, 0); // clear the interrupt pending flag
-
-	return IRQ_HANDLED;
+	irq -= WRVIC_BASE_IRQ;
+	wrvic_writel(irq, vector[irq]);
+	wrvic_writel(1 << irq, reg_ier);
 }
 
-
-int wrmch_vic_request_irq(int irq, wrvic_irq_t handler, void *dev_id)
+static void wrvic_mask_irq(unsigned int irq)
 {
-	if (irq < 0 || irq >= WRMCH_VIC_MAX_IRQS)
-		return -EINVAL;
+	irq -= WRVIC_BASE_IRQ;
+	wrvic_writel( 1 << irq, reg_idr);
+	wrvic_writel(WRVIC_SPURIOUS_IRQ, vector[irq]);
+}
 
-	if (VIC->handlers[irq])
-		return -EADDRINUSE;
+static struct irq_chip wrvic_irqchip = {
+	.name		= "WR-VIC",
+	.mask		= wrvic_mask_irq,
+	.unmask		= wrvic_unmask_irq,
+};
 
-	VIC->handlers[irq] = handler;
-	VIC->dev_ids[irq] = dev_id;
+static void wrvic_handler(unsigned int irq, struct irq_desc *desc)
+{
+	u32 pending = wrvic_readl(reg_var);
 
-	vic_writel(VIC, VIC_IVT_BASE + (irq << 2), irq); //(u32)handler);
-	wrmch_vic_enable_irq(irq);
+	if (pending == WRVIC_SPURIOUS_IRQ) {
+		printk(KERN_ERR PFX "spurious interrupt\n");
+		wrvic_writel(0, reg_eoir); /* clear pending flag */
+		return;
+	}
+
+	generic_handle_irq(WRVIC_BASE_IRQ + pending);
+	wrvic_writel(0, reg_eoir); /* clear pending flag */
+}
+
+int __init wrvic_init(void)
+{
+	int i;
+
+	wrvic_regs = ioremap(FPGA_BASE_WRVIC, FPGA_SIZE_WRVIC);
+	if (!wrvic_regs)
+		return -ENOMEM;
+
+	/* First, prime the WRVIC with "invalid" vectors and disable all irq */
+	for (i = 0; i < WRVIC_NR_IRQS; i++)
+		wrvic_writel(WRVIC_SPURIOUS_IRQ, vector[i]);
+	wrvic_writel(~0, reg_idr);
+
+	for(i = WRVIC_BASE_IRQ; i <= WRVIC_BASE_IRQ + WRVIC_NR_IRQS; i++) {
+		set_irq_chip(i, &wrvic_irqchip);
+		set_irq_handler(i, handle_level_irq);
+		set_irq_flags(i, IRQF_VALID | IRQF_PROBE);
+	}
+	set_irq_chained_handler(AT91SAM9263_ID_IRQ0, wrvic_handler);
+	set_irq_type(AT91SAM9263_ID_IRQ0, IRQF_TRIGGER_LOW);
+
+	/* Enable. "CTL_POL" is 0 which means active low (falling) */
+	wrvic_writel(WRVIC_CTL_ENABLE, reg_ctl);
 
 	return 0;
 }
 
-void wrmch_vic_free_irq(int irq, void *dev_id)
-{
-	if (irq < 0 || irq >= WRMCH_VIC_MAX_IRQS)
-		return;
+module_init(wrvic_init);
+/* no exit is expected */
 
-	if (VIC->dev_ids[irq] != dev_id)
-		return;
-
-	wrmch_vic_disable_irq(irq);
-	vic_writel(VIC, VIC_IVT_BASE + (irq << 2), VIC_SPURIOUS_IRQ);
-	VIC->handlers[irq] = NULL;
-	VIC->dev_ids[irq] = NULL;
-}
-
-void wrmch_vic_enable_irq(int irq)
-{
-	if (irq < 0 || irq >= WRMCH_VIC_MAX_IRQS)
-		return;
-
-	vic_writel(VIC, VIC_REG_IER, (1<<irq));
-//printk("vic_enable_irq: irq %d imr %x\n", irq, vic_readl(VIC, VIC_REG_IMR));
-}
-
-void wrmch_vic_disable_irq(int irq)
-{
-	if (irq < 0 || irq >= WRMCH_VIC_MAX_IRQS)
-		return;
-
-	vic_writel(VIC, VIC_REG_IDR, (1<<irq));
-//printk("vic_disable_irq: irq %d imr %x\n", irq, vic_readl(VIC, VIC_REG_IMR));
-}
-
-static int __devinit wrmch_vic_init_module(void)
-{
-	int err, i;
-
-	VIC = kzalloc(sizeof(struct wrmch_vic), GFP_KERNEL);
-
-	VIC->regs = ioremap(FPGA_BASE_VIC, 0x1000);
-
-	vic_writel(VIC, VIC_REG_CTL, 0); // output is active LO
-	vic_writel(VIC, VIC_REG_IDR, 0xffffffff); // disable all interrupts
-
-	err = request_irq(AT91SAM9263_ID_IRQ0, wrmch_vic_interrupt,
-			  IRQF_TRIGGER_LOW | IRQF_SHARED, "whiterabbit_vic", 
-			  VIC);
-
-	if (unlikely(err)) {
-		printk(KERN_ERR PFX "request IRQ for WR VIC failed");
-		return err;
-	}
-
-	/* clear the vector table */
-	for (i = 0; i < WRMCH_VIC_MAX_IRQS; i++)
-		vic_writel(VIC, VIC_IVT_BASE + (i<<2), VIC_SPURIOUS_IRQ);
-
-	vic_writel(VIC, VIC_REG_CTL, VIC_CTL_ENABLE); // enable the VIC
-
-	printk(KERN_INFO PFX "module initialized");
-
-	return 0;
-}
-
-
-static void __devexit wrmch_vic_cleanup_module(void)
-{
-	free_irq(AT91SAM9263_ID_IRQ0,  VIC);
-
-	if (VIC) {
-		if (VIC->regs) {
-			iounmap(VIC->regs);
-			VIC->regs = NULL;
-		}
-		kfree(VIC);
-		VIC = NULL;
-	}
-
-	printk(KERN_INFO PFX "module cleanup");
-}
-
-EXPORT_SYMBOL_GPL(wrmch_vic_request_irq);
-EXPORT_SYMBOL_GPL(wrmch_vic_free_irq);
-EXPORT_SYMBOL_GPL(wrmch_vic_enable_irq);
-EXPORT_SYMBOL_GPL(wrmch_vic_disable_irq);
-
-module_init(wrmch_vic_init_module);
-module_exit(wrmch_vic_cleanup_module);
-
-MODULE_AUTHOR("Tomasz Wlostowski");
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("White Rabbit MCH Vectored Interrupt Controller driver");
+MODULE_DESCRIPTION("White Rabbit Vectored Interrupt Controller");
 MODULE_VERSION(DRV_MODULE_VERSION);
-
-
