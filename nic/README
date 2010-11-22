@@ -1,0 +1,63 @@
+
+This is the NIC driver for white rabbit. It is definitely work in progress.
+
+The source has not been tested (only compile-tested), and has been
+laid out to be as understandable as possible, since I'm not the one
+who's going to debug it.
+
+These notes are for the one who will debug my crap. The published one
+will be different, hopefully.
+
+* The different files
+
+The module is called wr-nic.ko which comes from several object files.
+This is the layout. Files which need to be fixed have FIXME inside and
+in this list as well.
+
+     nic-hardware.h
+        this includes only #defines for magic project-wide constants.
+        They are most likely wrong, so they must be fixed.
+        FIXME: What are the physical addresses for wr_nic registers?
+
+     wr-nic.h
+        the header is used for sharing stuff between sources. Unlike
+        the previous one, it is at kernel-level abstractions. It includes
+        nic-hardware.h
+	FIXME: the memory resource list must be verifiedcompleted
+
+     ../wr-headers/
+        the directory includes unchanged headers copied from snv:
+        http://svn.ohwr.org/white-rabbit/trunk/software/include/hw/
+
+     module.c
+        registering and unregistering the module
+	FIXME: the memory resource list must be completed
+
+     device.c
+        the actual probe and remove functions, and the driver structure
+	FIXME: the memory resource list must be verified
+
+     endpoint.c
+        talking with the actual endpoints, including the probe part
+	FIXME: mii setup is missing
+
+     nic-core.c
+        standard networking stuff: interrupts and son on
+	FIXME: everything is missing
+
+     ethtool.c
+        ethtool operations
+
+     pps.c
+        the pulse-per-second mechanism. This might want to be registered
+        in Linux using drivers/pps, but it must be looked at. This
+        file is currently registering itself as a timesource.
+	FIXME: everything
+
+     timestamp.c
+        all the stuff related to timestamping
+	FIXME: everything
+
+     dmtd.c
+        calibration and readout
+	FIXME: everything
