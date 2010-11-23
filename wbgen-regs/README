@@ -1,0 +1,31 @@
+
+The headers have been derived from what is in svn:
+documentation/specifications/hdlspec/memory_map/
+
+In that directory you find the html generated from the wb files.
+Here I import the relevant headers.  The overall register
+map is in ../nic/nic-hardware.h .
+
+These are the commands I used after copying all the '*.wb' files here
+(wbgen2 has currently a problem with pathname-prefixed file names):
+
+
+# map wb names to header names
+src_endpoint="wrsw_pps_gen.wb"
+src_ppsg="wrsw_pps_gen.wb"
+src_calib="wrsw_calibrator_dmtd.wb"
+src_nic="wr_nic.wb"
+src_tstamp="wrsw_txtsu.wb"
+
+# all but nic-regs
+for n in endpoint ppsg calib tstamp; do
+    out=${n}-regs.h
+    eval in=\$src_$n
+    wbgen2 --cstyle=struct  --co=$out $in
+    # fix the <inttypes.h> stuff, which we miss in the kerenel
+    sed -i 's,inttypes.h,linux/types.h,' $out
+done
+
+# note: this must be hand-edited, and it has (see git log)
+wbgen2 --cstyle=struct  --co=nic-regs.h $src_nic
+sed -i 's,inttypes.h,linux/types.h,' nic-regs.h
