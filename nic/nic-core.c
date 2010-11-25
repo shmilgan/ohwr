@@ -16,86 +16,93 @@
 #include <linux/etherdevice.h>
 #include <linux/errno.h>
 #include <linux/spinlock.h>
+#include <asm/unaligned.h>
 
 #include "wr-nic.h"
 
-/* These are the standard netword device operations */
-static int wrn_open(struct net_device *netdev)
+/*
+ * The following functions are the standard network device operations.
+ * They act on the _endpoint_ (as each Linux interface is one endpoint)
+ * so sometimes a call to something withing ./endpoint.c is performed.
+ */
+static int wrn_open(struct net_device *dev)
 {
-	struct wrn_devpriv *priv = netdev_priv(netdev);
-	struct wrn_dev *wrn = priv->wrn;
+	struct wrn_ep *ep = netdev_priv(dev);
 
-	netdev_dbg(netdev, "%s\n", __func__);
+	/* This is "open" just for an endpoint. The nic hw is already on */
+	netdev_dbg(dev, "%s\n", __func__);
 
-	if (!is_valid_ether_addr(netdev->dev_addr))
+	if (!is_valid_ether_addr(dev->dev_addr))
 		return -EADDRNOTAVAIL;
 
-#if 0 /* FIXME: the whole open method is missing */
-	minic_writel(nic, MINIC_REG_MCR, 0);
-	minic_disable_irq(nic, 0xffffffff);
-	ep_enable(netdev);
+	/* Acknowledge all possibly pending interrupt sources */
 
-	netif_carrier_off(netdev);
+	/* FIXME */
 
-	init_timer(&nic->link_timer);
-	nic->link_timer.data = (unsigned long)netdev;
-	nic->link_timer.function = minic_check_link;
-	mod_timer(&nic->link_timer, jiffies + LINK_POLL_INTERVAL);
+	/* Enable tx and rx, without timestamping at this point */
 
-	nic->synced = false;
-	nic->syncing_counters = false;
 
-	nic->rx_base = MINIC_PBUF_SIZE >> 1;
-	nic->rx_size = MINIC_PBUF_SIZE >> 1;
+	/* Most drivers call platform_set_drvdata() but we don't need it */
 
-	nic->tx_base = 0;
-	nic->tx_size = MINIC_PBUF_SIZE >> 1;
-
-	nic->tx_hwtstamp_enable = 0;
-	nic->rx_hwtstamp_enable = 0;
-	nic->tx_hwtstamp_oob = 1;
-
-	minic_new_rx_buffer(nic);
-
-	minic_enable_irq(nic, MINIC_EIC_IER_RX); // enable RX irq
-	minic_writel(nic, MINIC_REG_MCR, MINIC_MCR_RX_EN); // enable RX
-
-	if (netif_queue_stopped(nic->netdev)) {
-		netif_wake_queue(netdev);
+	if (netif_queue_stopped(dev)) {
+		netif_wake_queue(dev);
 	} else {
-		netif_start_queue(netdev);
+		netif_start_queue(dev);
 	}
 
-	nic->iface_up = 0;
-#endif
+	/* Mark it as down, and start the ep-specific polling timer */
+	clear_bit(WRN_EP_UP, &ep->ep_flags);
+	wrn_ep_open(dev);
+
 	return 0;
 }
 
-static int wrn_close(struct net_device *netdev)
+static int wrn_close(struct net_device *dev)
 {
-	/* FIXME: the close method is missing */
+	struct wrn_ep *ep = netdev_priv(dev);
+
+	wrn_ep_close(dev);
+	clear_bit(WRN_EP_UP, &ep->ep_flags);
+
+	/* FIXME: other things to cleanup on close? */
 	return 0;
 }
 
-static int wrn_set_mac_address(struct net_device *netdev, void* addr)
+static int wrn_set_mac_address(struct net_device *dev, void* vaddr)
 {
-	/* FIXME: set_mac_address is missing */
+	struct wrn_ep *ep = netdev_priv(dev);
+	struct sockaddr *addr = vaddr;
+	u32 val;
+
+	netdev_dbg(dev, "%s\n", __func__);
+
+	if (!is_valid_ether_addr(addr->sa_data)) {
+		netdev_dbg(dev, "%s: invalid\n", __func__);
+		return -EADDRNOTAVAIL;
+	}
+
+	memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
+
+	val = __get_unaligned_le((u32 *)dev->dev_addr+0);
+	writel(val, ep->ep_regs->MACL);
+	val = __get_unaligned_le((u16 *)dev->dev_addr+4);
+	writel(val, ep->ep_regs->MACH);
 	return 0;
 }
 
-static int wrn_start_xmit(struct sk_buff *skb, struct net_device *netdev)
+static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	/* FIXME: start_xmit is missing */
 	return -ENODEV;
 }
 
-struct net_device_stats *wrn_get_stats(struct net_device *netdev)
+struct net_device_stats *wrn_get_stats(struct net_device *dev)
 {
 	/* FIXME: getstats is missing */
 	return NULL;
 }
 
-static int wrn_ioctl(struct net_device *netdev, struct ifreq *rq, int cmd)
+static int wrn_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 {
 	/* FIXME: ioctl is missing */
 	return -ENOIOCTLCMD;
@@ -110,7 +117,7 @@ static const struct net_device_ops wrn_netdev_ops = {
 	.ndo_set_mac_address	= wrn_set_mac_address,
 	.ndo_do_ioctl		= wrn_ioctl,
 #if 0
-	/* Missing ops, possibly to add later (FIXME?) */
+	/* Missing ops, possibly to add later */
 	.ndo_set_multicast_list	= wrn_set_multicast_list,
 	.ndo_change_mtu		= wrn_change_mtu,
 	/* There are several more, but not really useful for us */
@@ -118,14 +125,16 @@ static const struct net_device_ops wrn_netdev_ops = {
 };
 
 
-int wrn_netops_init(struct net_device *netdev)
+int wrn_netops_init(struct net_device *dev)
 {
-	netdev->netdev_ops = &wrn_netdev_ops;
+	dev->netdev_ops = &wrn_netdev_ops;
 	return 0;
 }
 
 irqreturn_t wrn_interrupt(int irq, void *dev_id)
 {
-	/* FIXME */
+	/* FIXME -- interrupt */
+
+	/* FIXME: check status register (BNA, REC) */
 	return IRQ_HANDLED;
 }

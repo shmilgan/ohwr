@@ -22,12 +22,12 @@
 
 static int wrn_get_settings(struct net_device *dev, struct ethtool_cmd *cmd)
 {
-	struct wrn_dev *wrn = netdev_priv(dev);
+	struct wrn_ep *ep = netdev_priv(dev);
 	int ret;
 
-	spin_lock_irq(&wrn->lock);
-	ret = mii_ethtool_gset(&wrn->mii, cmd);
-	spin_unlock_irq(&wrn->lock);
+	spin_lock_irq(&ep->lock);
+	ret = mii_ethtool_gset(&ep->mii, cmd);
+	spin_unlock_irq(&ep->lock);
 
 	cmd->supported=
 		SUPPORTED_FIBRE | /* FIXME: copper sfp? */
@@ -45,24 +45,24 @@ static int wrn_get_settings(struct net_device *dev, struct ethtool_cmd *cmd)
 
 static int wrn_set_settings(struct net_device *dev, struct ethtool_cmd *cmd)
 {
-	struct wrn_dev *wrn = netdev_priv(dev);
+	struct wrn_ep *ep = netdev_priv(dev);
 	int ret;
 
-	spin_lock_irq(&wrn->lock);
-	ret = mii_ethtool_sset(&wrn->mii, cmd);
-	spin_unlock_irq(&wrn->lock);
+	spin_lock_irq(&ep->lock);
+	ret = mii_ethtool_sset(&ep->mii, cmd);
+	spin_unlock_irq(&ep->lock);
 
 	return ret;
 }
 
 static int wrn_nwayreset(struct net_device *dev)
 {
-	struct wrn_dev *wrn = netdev_priv(dev);
+	struct wrn_ep *ep = netdev_priv(dev);
 	int ret;
 
-	spin_lock_irq(&wrn->lock);
-	ret = mii_nway_restart(&wrn->mii);
-	spin_unlock_irq(&wrn->lock);
+	spin_lock_irq(&ep->lock);
+	ret = mii_nway_restart(&ep->mii);
+	spin_unlock_irq(&ep->lock);
 
 	return ret;
 }

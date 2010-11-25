@@ -18,6 +18,7 @@
 #include <linux/errno.h>
 #include <linux/platform_device.h>
 #include <linux/spinlock.h>
+#include <linux/delay.h>
 #include <linux/io.h>
 
 #include "wr-nic.h"
@@ -29,6 +30,14 @@ static int __devexit wrn_remove(struct platform_device *pdev)
 	struct resource *res;
 	int i;
 
+	spin_lock(&wrn->lock);
+	--wrn->use_count; /* Hmmm... looks like overkill... */
+	spin_unlock(&wrn->lock);
+
+	/* First of all, stop any transmission */
+	writel(0, &wrn->regs->CR);
+
+	/* Then remove devices, memory maps, interrupts */
 	for (i = 0; i < WRN_NR_ENDPOINTS; i++) {
 		if (wrn->dev[i]) {
 			wrn_endpoint_remove(wrn->dev[i]);
@@ -37,10 +46,10 @@ static int __devexit wrn_remove(struct platform_device *pdev)
 		}
 	}
 
-	if (wrn->base_nic)	iounmap(wrn->base_nic);
-	if (wrn->base_ppsg)	iounmap(wrn->base_ppsg);
-	if (wrn->base_calib)	iounmap(wrn->base_calib);
-	if (wrn->base_stamp)	iounmap(wrn->base_stamp);
+	for (i = 0; i < ARRAY_SIZE(wrn->bases); i++) {
+		if (wrn->bases[i])
+			iounmap(wrn->bases[i]);
+	}
 
 	if (wrn->irq_registered) {
 		res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
@@ -49,19 +58,32 @@ static int __devexit wrn_remove(struct platform_device *pdev)
 	return 0;
 }
 
-/* This helper is used by probe below, to avoid code replication */
-static int __devinit __wrn_ioremap(struct platform_device *pdev, int n,
-				    void __iomem **ptr)
+/* This helper is used by probe below */
+static int __devinit __wrn_map_resources(struct platform_device *pdev)
 {
-	struct resource *res = platform_get_resource(pdev, IORESOURCE_MEM, n);
-	if (!res) {
-		dev_err(&pdev->dev, "No resource %i defined\n", n);
-		return -ENOMEM;
-	}
-	*ptr = ioremap(res->start, res->end + 1 - res->start);
-	if (!*ptr) {
-		dev_err(&pdev->dev, "Ioremap for resource %i failed\n", n);
-		return -ENOMEM;
+	int n, i = 0;
+	struct resource *res;
+	void __iomem *ptr;
+	struct wrn_dev *wrn = pdev->dev.platform_data;
+
+	/*
+	 * The memory regions are mapped once for all endpoints.
+	 * We don't populate the whole array, but use the resource list
+	 */
+	while ( (res =platform_get_resource(pdev, IORESOURCE_MEM, i)) ) {
+		ptr = ioremap(res->start, res->end + 1 - res->start);
+		if (!ptr) {
+			dev_err(&pdev->dev, "Remap for res %i (%08x) failed\n",
+				i, res->start);
+			return -ENOMEM;
+		}
+		/* Hack: find the block number and fill the array */
+		n = __FPGA_BASE_TO_NR(res->start);
+		pr_debug("Remapped %08x (block %i) to %p\n",
+			 res->start, n, ptr);
+		wrn->bases[n] = ptr;
+
+		i++; /* next please */
 	}
 	return 0;
 }
@@ -69,12 +91,12 @@ static int __devinit __wrn_ioremap(struct platform_device *pdev, int n,
 static int __devinit wrn_probe(struct platform_device *pdev)
 {
 	struct net_device *netdev;
-	struct wrn_devpriv *priv;
+	struct wrn_ep *ep;
 	struct wrn_dev *wrn = pdev->dev.platform_data;
 	struct resource *res;
 	int i, err = 0;
 
-	/* no need to lock_irq: we only protect count and continue unlocked */
+	/* No need to lock_irq: we only protect count and continue unlocked */
 	spin_lock(&wrn->lock);
 	if (++wrn->use_count != 1) {
 		--wrn->use_count;
@@ -83,17 +105,14 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 	}
 	spin_unlock(&wrn->lock);
 
-	/* These memory regions are mapped once for all endpoints */
-	if ( (err = __wrn_ioremap(pdev, WRN_RES_MEM_NIC, &wrn->base_nic)) )
+	/* Map our resource list and instantiate the shortcut pointers */
+	if ( (err = __wrn_map_resources(pdev)) )
 		goto out;
-	if ( (err = __wrn_ioremap(pdev, WRN_RES_MEM_PPSG, &wrn->base_ppsg)) )
-		goto out;
-	if ( (err = __wrn_ioremap(pdev, WRN_RES_MEM_CALIB, &wrn->base_calib)) )
-		goto out;
-	if ( (err = __wrn_ioremap(pdev, WRN_RES_MEM_STAMP, &wrn->base_stamp)) )
-		goto out;
+	wrn->regs = wrn->bases[WRN_BLOCK_NIC];
+	wrn->txd = (void *)&wrn->regs->TX1_D1;
+	wrn->rxd = (void *)&wrn->regs->RX1_D1;
 
-	/* get the interrupt number from the resource */
+	/* Get the interrupt number from the resource */
 	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 	err = request_irq(res->start, wrn_interrupt,
 			  IRQF_TRIGGER_LOW | IRQF_SHARED,
@@ -102,18 +121,26 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 	if (err) goto out;
 	wrn->irq_registered = 1;
 
+	/* Reset the device, just to be sure, before making anything */
+	writel(0, &wrn->regs->CR);
+	mdelay(10);
+
 	/* Finally, register one interface per endpoint */
 	memset(wrn->dev, 0, sizeof(wrn->dev));
 	for (i = 0; i < WRN_NR_ENDPOINTS; i++) {
-		netdev = alloc_etherdev(sizeof(struct wrn_devpriv));
+		netdev = alloc_etherdev(sizeof(struct wrn_ep));
 		if (!netdev) {
 			dev_err(&pdev->dev, "Etherdev alloc failed.\n");
 			err = -ENOMEM;
 			goto out;
 		}
-		priv = netdev_priv(netdev);
-		priv->wrn = wrn;
-		priv->ep_number = i;
+		/* The ep structure is filled before calling ep_probe */
+		ep = netdev_priv(netdev);
+		ep->wrn = wrn;
+		ep->ep_regs = wrn->bases[WRN_FIRST_EP + i];
+		ep->ep_number = i;
+		if (i < WRN_NR_UPLINK)
+			set_bit(WRN_EP_IS_UPLINK, &ep->ep_flags);
 
 		/* The netdevice thing is registered from the endpoint */
 		err = wrn_endpoint_probe(netdev);
@@ -124,11 +151,15 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 		/* This endpoint went in properly */
 		wrn->dev[i] = netdev;
 	}
-	err = 0;
+	err = 0; /* no more endpoints, we succeeded. Enable the device */
+	writel(NIC_CR_RX_EN | NIC_CR_TX_EN, &wrn->regs->CR);
+
 out:
 	if (err) {
 		/* Call the remove function to avoid duplicating code */
 		wrn_remove(pdev);
+	} else {
+		dev_info(&pdev->dev, "White Rabbit NIC driver\n");
 	}
 	return err;
 }

@@ -18,52 +18,214 @@
 
 #include "wr-nic.h"
 
-/* Called for each endpoint, with a valid priv structure in place */
-int wrn_endpoint_probe(struct net_device *netdev)
+/*
+ * Phy access: used by link status, enable, calibration ioctl etc.
+ * Called with endpoint lock (you'll lock the whole sequence of r/w)
+ */
+int wrn_phy_read(struct net_device *dev, int phy_id, int location)
 {
-	struct wrn_devpriv *priv = netdev_priv(netdev);
-	int err;
+	struct wrn_ep *ep = netdev_priv(dev);
+	u32 val;
 
-	/* FIXME: check if the endpoint does exist or not */
+	wrn_ep_write(ep, MDIO_CR, EP_MDIO_CR_ADDR_W(location));
+	while( (wrn_ep_read(ep, MDIO_SR) & EP_MDIO_SR_READY) == 0)
+		;
+	val = wrn_ep_read(ep, MDIO_SR);
+	/* mask from wbgen macros */
+	return EP_MDIO_SR_RDATA_R(val);
+}
 
-	if (0 /* not existent -- means no more exist after this one */)
-		return -ENODEV;
+void wrn_phy_write(struct net_device *dev, int phy_id, int location,
+		      int value)
+{
+	struct wrn_ep *ep = netdev_priv(dev);
+	wrn_ep_write(ep, MDIO_CR,
+		     EP_MDIO_CR_ADDR_W(location)
+		     | EP_MDIO_CR_DATA_W(value)
+		     | EP_MDIO_CR_RW);
+	while( (wrn_ep_read(ep, MDIO_SR) & EP_MDIO_SR_READY) == 0)
+		;
+}
 
-	/* Errors different from -ENODEV are fatal to insmod */
-	priv->base = ioremap(FPGA_BASE_EP(priv->ep_number), WRN_EP_MEM_SIZE);
-	if (!priv->base) {
-		printk(KERN_ERR DRV_NAME ": ioremap failed for EP %i\n",
-		       priv->ep_number);
-		return -ENOMEM;
+/* One link status poll per endpoint -- called with endpoint lock */
+static void wrn_update_link_status(struct net_device *dev)
+{
+	struct wrn_ep *ep = netdev_priv(dev);
+	u32 ecr, bmsr, bmcr, lpa;
+
+	bmsr = wrn_phy_read(dev, 0, MII_BMSR);
+	bmcr = wrn_phy_read(dev, 0, MII_BMCR);
+
+	netdev_dbg(dev, "%s: read %x %x", __func__, bmsr, bmcr);
+
+	/* FIXME: the link-up and link-down ops should be clarified */
+
+	if (!mii_link_ok(&ep->mii)) {		/* no link */
+		if(!netif_carrier_ok(dev))
+			return;
+		netif_carrier_off(dev);
+		clear_bit(WRN_EP_UP, &ep->ep_flags);
+		printk(KERN_INFO "%s: Link down.\n", dev->name);
 	}
 
-	/* build the device name (FIXME: up or downlink?) */
-	dev_alloc_name(netdev, "wru%d");
-	wrn_netops_init(netdev); /* function in ./nic-core.c */
-	wrn_ethtool_init(netdev); /* function in ./ethtool.c */
-	/* Napi is not supported on this device */
+	if(netif_carrier_ok(dev))
+		return;
 
-	/* FIXME: mii -- copy from minic */
+	if (bmcr & BMCR_ANENABLE) { /* AutoNegotiation is enabled */
+		if (!(bmsr & BMSR_ANEGCOMPLETE)) {
+			/*
+			 * Do nothing - another interrupt is generated
+			 * when negotiation complete
+			 */
+			return;
+		}
 
-	/* randomize a MAC address, so lazy users can avoid ifconfig */
-	random_ether_addr(netdev->dev_addr);
+		lpa  = wrn_phy_read(dev, 0, MII_LPA);
+		netif_carrier_on(dev);
+		set_bit(WRN_EP_UP, &ep->ep_flags);
 
-	err = register_netdev(netdev);
-	if (err) {
-		printk(KERN_ERR DRV_NAME "Can't register dev %s\n",
-		       netdev->name);
-		iounmap(priv->base);
-		/* ENODEV means "no more" for the caller */
-		return err == -ENODEV ? -EIO : err;
+		if (0) { /* was commented in minic */
+			wrn_ep_write(ep, FCR,
+				     EP_FCR_TXPAUSE |EP_FCR_RXPAUSE
+				     | EP_FCR_TX_THR_W(128)
+				     | EP_FCR_TX_QUANTA_W(200));
+		}
+
+		printk(KERN_INFO "%s: Link up, lpa 0x%04x.\n",
+		       dev->name, lpa);
+	} else {
+		netif_carrier_on(dev);
+		printk(KERN_INFO "%s: Link up.\n", dev->name);
+		set_bit(WRN_EP_UP, &ep->ep_flags);
 	}
+
+	/* reset RMON counters */
+	ecr = wrn_ep_read(ep, ECR);
+	wrn_ep_write(ep, ECR, ecr | EP_ECR_RST_CNT);
+	wrn_ep_write(ep, ECR, ecr );
+}
+
+/* Actual timer function. Takes the lock and calls above function */
+static void wrn_ep_check_link(unsigned long dev_id)
+{
+	struct net_device *dev = (struct net_device *) dev_id;
+	struct wrn_ep *ep = netdev_priv(dev);
+	unsigned long flags;
+
+	spin_lock_irqsave(&ep->lock, flags);
+	wrn_update_link_status(dev);
+	spin_unlock_irqrestore(&ep->lock, flags);
+
+	mod_timer(&ep->ep_link_timer, jiffies + WRN_LINK_POLL_INTERVAL);
+}
+
+/* Endpoint open and close turn on and off the timer */
+int wrn_ep_open(struct net_device *dev)
+{
+	struct wrn_ep *ep = netdev_priv(dev);
+	unsigned long timerarg = (unsigned long)dev;
+
+
+	setup_timer(&ep->ep_link_timer, wrn_ep_check_link, timerarg);
+	mod_timer(&ep->ep_link_timer, jiffies + WRN_LINK_POLL_INTERVAL);
 	return 0;
 }
 
-/* Called for each endpoint, with a valid priv structure. The caller frees */
-void wrn_endpoint_remove(struct net_device *netdev)
+int wrn_ep_close(struct net_device *dev)
 {
-	struct wrn_devpriv *priv = netdev_priv(netdev);
+	struct wrn_ep *ep = netdev_priv(dev);
 
-	unregister_netdev(netdev);
-	iounmap(priv->base);
+	del_timer_sync(&ep->ep_link_timer);
+	return 0;
+}
+
+/*
+ * The probe functions brings up the endpoint and the logical ethernet
+ * device within Linux. The actual network operations are in nic-core.c,
+ * as they are not endpoint-specific, while the mii stuff is in this file.
+ * The initial helper here shuts down everything, in case of failure or close
+ */
+static void __wrn_endpoint_shutdown(struct wrn_ep *ep)
+{
+	/* Not much to do it seems */
+	writel(0, ep->ep_regs->ECR); /* disable it all */
+}
+
+int wrn_endpoint_probe(struct net_device *dev)
+{
+	struct wrn_ep *ep = netdev_priv(dev);
+	int epnum, err;
+	u32 val;
+
+	epnum = ep->ep_number;
+
+	/* Build the device name */
+	if (epnum < 2)
+		dev_alloc_name(dev, "wru%d");
+	else
+		dev_alloc_name(dev, "wrd%d");
+
+	/* Check whether the ep has been sinthetized or not */
+	val = readl(ep->ep_regs->IDCODE);
+	if (val != WRN_EP_MAGIC) {
+		pr_info(DRV_NAME "EP%i (%s) has not been sintethized\n",
+			ep->ep_number, dev->name);
+		return -ENODEV;
+	}
+
+	/* Errors different from -ENODEV are fatal to insmod */
+
+	wrn_netops_init(dev); /* function in ./nic-core.c */
+	wrn_ethtool_init(dev); /* function in ./ethtool.c */
+	/* Napi is not supported on this device */
+
+	ep->mii.dev = dev;		/* Support for ethtool */
+	ep->mii.mdio_read = wrn_phy_read;
+	ep->mii.mdio_write = wrn_phy_write;
+	ep->mii.phy_id = 0;
+	ep->mii.phy_id_mask = 0x1f;
+	ep->mii.reg_num_mask = 0x1f;
+
+	ep->mii.force_media = 0;
+	ep->mii.advertising = ADVERTISE_1000XFULL;
+	ep->mii.full_duplex = 1;
+
+	writel(0, ep->ep_regs->TSCR); /* No stamps */
+
+	writel(0
+	       | EP_RFCR_QMODE_W(0x3)		/* unqualified port */
+	       | EP_RFCR_PRIO_VAL_W(4),		/* some mid priority */
+		ep->ep_regs->RFCR);
+
+	/* Enable transmission and reception; reset counters; set portid */
+	writel(0
+	       | EP_ECR_PORTID_W(ep->ep_number)
+	       | EP_ECR_RST_CNT
+	       | EP_ECR_TX_EN_FRA
+	       | EP_ECR_RX_EN_FRA,
+		ep->ep_regs->ECR);
+
+	/* Finally, register and succeed, or fail an undo */
+	err = register_netdev(dev);
+	if (err) {
+		printk(KERN_ERR DRV_NAME "Can't register dev %s\n",
+		       dev->name);
+		__wrn_endpoint_shutdown(ep);
+		/* ENODEV means "no more" for the caller, so avoid it */
+		return err == -ENODEV ? -EIO : err;
+	}
+
+	/* randomize a MAC address, so lazy users can avoid ifconfig */
+	random_ether_addr(dev->dev_addr);
+
+	return 0;
+}
+
+/* Called for each endpoint, with a valid ep structure. The caller frees */
+void wrn_endpoint_remove(struct net_device *dev)
+{
+	struct wrn_ep *ep = netdev_priv(dev);
+
+	unregister_netdev(dev);
+	__wrn_endpoint_shutdown(ep);
 }
