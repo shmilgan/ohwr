@@ -16,8 +16,13 @@ all modules:
 	$(MAKE) CONFIG_DEBUG_SECTION_MISMATCH=y \
 		-C $(LINUX) SUBDIRS=$(shell /bin/pwd) modules
 
+# looking at preprocessed output is helpful for bug hunting
+preprocess:
+	$(MAKE) CONFIG_DEBUG_SECTION_MISMATCH=y \
+		-C $(LINUX) SUBDIRS=$(shell /bin/pwd) $(wr-nic-objs:.o=.i)
+
 # We might "$(MAKE) -C $(LINUX)" but "make clean" with no LINUX defined
 # is sometimes useful to have
 clean:
-	rm -f *.mod.c *.o *.ko .*cmd Module.symvers modules.order *~
+	rm -f *.mod.c *.o *.ko *.i .*cmd Module.symvers modules.order *~
 	rm -rf .tmp_versions
