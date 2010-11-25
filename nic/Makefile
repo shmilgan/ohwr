@@ -3,10 +3,10 @@ obj-m := wr-nic.o
 wr-nic-objs := module.o device.o nic-core.o endpoint.o ethtool.o \
 		pps.o timestamp.o dmtd.o
 
-# Try to force a -I from ../wr-headers. Note that this is re-run from $LINUX
-WR_NIC_DIR ?= $(shell /bin/pwd)
-export WR_NIC_DIR
-EXTRA_CFLAGS := -I$(WR_NIC_DIR)/../wr-headers
+# accept WRN_DEBUG from the environment. It turns pr_debug() into printk.
+ifdef WRN_DEBUG
+	EXTRA_CFLAGS += -DDEBUG
+endif
 
 # What follows is standard stuff
 export ARCH ?= arm
