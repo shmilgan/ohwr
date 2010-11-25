@@ -1,0 +1,85 @@
+-- -*- Mode: LUA; tab-width: 2 -*-
+
+NUM_QUEUES = 10;
+
+peripheral {
+	 name = "RTU testing unit";
+	 description = "RTU testing unit";
+	 hdl_entity = "rtu_testunit_wb";
+	 prefix = "RTT";
+
+
+	 reg {
+			name = "FIFO Polling Register";
+			description = "Each bit indicates the presence of responses in the correspinding RFIFO";  
+			prefix = "FPR";
+
+			field {
+				 name = "Non-empty FIFOs";
+				 size = NUM_QUEUES;
+				 type = SLV;
+				 access_bus = READ_ONLY;
+				 access_dev = WRITE_ONLY;
+			};
+	 };
+
+	 irq {
+			name = "FIFO Not Empty";
+			prefix = "NEMPTY";
+			description = "Triggered when there are RTU responses in any of the RFIFOs";
+			trigger = LEVEL_1;
+	 };
+};
+
+
+queue_template = {
+
+	 fifo_reg {
+			name = "Response FIFO for RTU channel ";
+			prefix = "RFIFO_CH";
+
+			direction = CORE_TO_BUS;
+			size = 1024;
+
+			flags_dev = {FIFO_EMPTY};
+
+			field {
+				 name = "Destination port mask";
+				 prefix = "DPM";
+				 type = SLV;
+				 size = NUM_QUEUES+1;
+			};
+
+			field {
+				 name = "Final priority";
+				 prefix = "PRIO";
+				 type = SLV;
+				 size = 3;
+			};
+
+			field {
+				 name = "Drop packet flag";
+				 prefix = "DROP";
+				 type = BIT;
+			};
+	 };
+};
+
+function generate_resp_queues(n)
+   local i;
+
+   for i=1,n do
+      local T=deepcopy(queue_template);
+
+			foreach_reg({TYPE_FIFO}, function(r)
+
+																	r.name = r.name..(i-1);
+																	r.prefix = r.prefix..(i-1);
+															end, T);
+
+      table_join(periph, T);
+   end
+
+end
+
+generate_resp_queues(NUM_QUEUES);
