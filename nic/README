@@ -5,8 +5,26 @@ The source has not been tested (only compile-tested), and has been
 laid out to be as understandable as possible, since I'm not the one
 who's going to debug it.
 
-These notes are for the one who will debug my crap. The published one
+These notes are for the ones who will debug my crap. The published one
 will be different, hopefully.
+
+* The Makefile
+
+You can "export WRN_DEBUG=y" to force all pr_debug and netdev_dbg
+into real printks (with KERN_DEBUG priority: you get them in dmesg
+or you need to raise the console priority to see them on the console).
+
+* The naming conventionss
+
+      wrn_   as a prefix is used for all functions and macros, so you
+            	immediately know if sth is ours or comes from elsewhere
+      (as an exception, names of our own bits and registers are kept
+       as I got them, the context should say sth about what they arr)
+
+      wrn    is always a pointer to the wr-nic overall structure
+      ep     is the pointer to the endpoint structure
+      dev    is the pointer to the network device (device.c is an
+             exception, is uses "netdev" instead, sorry for the confution)
 
 * The different files
 
@@ -14,35 +32,34 @@ The module is called wr-nic.ko which comes from several object files.
 This is the layout. Files which need to be fixed have FIXME inside and
 in this list as well.
 
+     ../wbgen-regs/
+        The directory includes the register lists. See the REAME
+	in there about how to recreate them.
+
      nic-hardware.h
-        this includes only #defines for magic project-wide constants.
-        They are most likely wrong, so they must be fixed.
-        FIXME: What are the physical addresses for wr_nic registers?
+        This includes only #defines for magic project-wide constants.
+	It then includes the wbgen-generated headers for indivitual
+	register blocks.
+        FIXME: The NIC register map is still missing
 
      wr-nic.h
         the header is used for sharing stuff between sources. Unlike
-        the previous one, it is at kernel-level abstractions. It includes
-        nic-hardware.h
-	FIXME: the memory resource list must be verifiedcompleted
-
-     ../wr-headers/
-        the directory includes unchanged headers copied from snv:
-        http://svn.ohwr.org/white-rabbit/trunk/software/include/hw/
+        the previous one, which it includes, it define kernel-level
+	abstractions.
 
      module.c
         registering and unregistering the module
-	FIXME: the memory resource list must be completed
 
      device.c
         the actual probe and remove functions, and the driver structure
-	FIXME: the memory resource list must be verified
 
      endpoint.c
-        talking with the actual endpoints, including the probe part
-	FIXME: mii setup is missing
+        Talking with the actual endpoints, including the probe part.
+	Mii/phy stuff is here, as well as the polling timer for link status.
+	FIXME: the up and down procedures must be factorized and understood
 
      nic-core.c
-        standard networking stuff: interrupts and son on
+        standard networking stuff: interrupts and so on
 	FIXME: everything is missing
 
      ethtool.c
