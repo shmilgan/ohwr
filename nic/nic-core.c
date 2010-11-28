@@ -104,8 +104,22 @@ struct net_device_stats *wrn_get_stats(struct net_device *dev)
 
 static int wrn_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 {
-	/* FIXME: ioctl is missing */
-	return -ENOIOCTLCMD;
+	struct wrn_ep *ep = netdev_priv(dev);
+	int res;
+
+	switch (cmd) {
+	case SIOCSHWTSTAMP:
+		return wrn_tstamp_ioctl(dev, rq, cmd);
+	case PRIV_IOCGCALIBRATE:
+		return wrn_calib_ioctl(dev, rq, cmd);
+	case PRIV_IOCGGETPHASE:
+		return wrn_phase_ioctl(dev, rq, cmd);
+	default:
+		spin_lock_irq(&ep->lock);
+		res = generic_mii_ioctl(&ep->mii, if_mii(rq), cmd, NULL);
+		spin_unlock_irq(&ep->lock);
+		return res;
+	}
 }
 
 static const struct net_device_ops wrn_netdev_ops = {

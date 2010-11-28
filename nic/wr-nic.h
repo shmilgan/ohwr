@@ -113,9 +113,37 @@ enum wrn_resnames {
 #define wrn_ep_read(ep, reg) __raw_readl(&(ep)->ep_regs->reg)
 #define wrn_ep_write(ep, reg, val) __raw_writel((val), &(ep)->ep_regs->reg)
 
+/* Private ioctls, like in wr_minic.c */
+#define PRIV_IOCGCALIBRATE (SIOCDEVPRIVATE+1)
+#define PRIV_IOCGGETPHASE (SIOCDEVPRIVATE+2)
+
+/* Structures straight from wr_minic.c -- should user-space include this? */
+struct wrn_calibration_req {
+	int cmd;
+	int cal_present;
+};
+
+struct wrn_phase_req {
+	int ready;
+	u32 phase;
+};
+#define WRN_DMTD_AVG_SAMPLES 256
+#define WRN_DMTD_MAX_PHASE 16384
+
+#define WRN_CAL_TX_ON 1
+#define WRN_CAL_TX_OFF 2
+#define WRN_CAL_RX_ON 3
+#define WRN_CAL_RX_OFF 4
+#define WRN_CAL_RX_CHECK 5
+
+/* This a WR-specific register in the dmdio space */
+#define WRN_MDIO_WR_SPEC 0x00000010
+#define WRN_MDIO_WR_SPEC_TX_CAL		0x01 /* TX calib pattern */
+#define WRN_MDIO_WR_SPEC_RX_CAL_STAT	0x02 /* RX calib status */
+#define WRN_MDIO_WR_SPEC_CAL_CRST	0x04 /* Reset calibration counter */
 
 
-/* Following functions in in nic-core.c */
+/* Following functions are in nic-core.c */
 extern irqreturn_t wrn_interrupt(int irq, void *dev_id);
 extern int wrn_netops_init(struct net_device *netdev);
 
@@ -135,5 +163,13 @@ extern int wrn_ep_close(struct net_device *dev);
 
 extern int  wrn_endpoint_probe(struct net_device *netdev);
 extern void wrn_endpoint_remove(struct net_device *netdev);
+
+/* Following functions from timestamp.c */
+extern int wrn_tstamp_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
+
+/* Following functions from dmtd.c */
+extern int wrn_phase_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
+extern int wrn_calib_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
+
 
 #endif /* __WR_NIC_H__ */
