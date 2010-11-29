@@ -40,7 +40,6 @@ in this list as well.
         This includes only #defines for magic project-wide constants.
 	It then includes the wbgen-generated headers for indivitual
 	register blocks.
-        FIXME: The NIC register map is still missing
 
      wr-nic.h
         the header is used for sharing stuff between sources. Unlike
@@ -56,10 +55,10 @@ in this list as well.
      endpoint.c
         Talking with the actual endpoints, including the probe part.
 	Mii/phy stuff is here, as well as the polling timer for link status.
-	FIXME: the up and down procedures must be factorized and understood
 
      nic-core.c
         standard networking stuff: interrupts and so on
+	FIXME: open and close must be verified
 	FIXME: everything is missing
 
      ethtool.c
@@ -73,7 +72,7 @@ in this list as well.
 
      timestamp.c
         all the stuff related to timestamping
-	FIXME: everything
+	FIXME: a lot of stuff
 
      dmtd.c
         calibration and readout
