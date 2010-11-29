@@ -58,31 +58,32 @@ static void wrn_update_link_status(struct net_device *dev)
 
 	netdev_dbg(dev, "%s: read %x %x", __func__, bmsr, bmcr);
 
-	/* FIXME: the link-up and link-down ops should be clarified */
-
-	if (!mii_link_ok(&ep->mii)) {		/* no link */
-		if(!netif_carrier_ok(dev))
+	if (!mii_link_ok(&ep->mii)) {
+		/* No link, currently */
+		if(!netif_carrier_ok(dev)) {
+			/* No link in software structure: nothing to do */
 			return;
+		}
 		netif_carrier_off(dev);
 		clear_bit(WRN_EP_UP, &ep->ep_flags);
 		printk(KERN_INFO "%s: Link down.\n", dev->name);
 	}
 
-	if(netif_carrier_ok(dev))
+	/* Currently the link is active */
+	if(netif_carrier_ok(dev)) {
+		/* Software already knows it's up */
 		return;
+	}
+
+	/* What follows is the bring-up step */
 
 	if (bmcr & BMCR_ANENABLE) { /* AutoNegotiation is enabled */
 		if (!(bmsr & BMSR_ANEGCOMPLETE)) {
-			/*
-			 * Do nothing - another interrupt is generated
-			 * when negotiation complete
-			 */
+			/* Wait next timer, until it completes */
 			return;
 		}
 
 		lpa  = wrn_phy_read(dev, 0, MII_LPA);
-		netif_carrier_on(dev);
-		set_bit(WRN_EP_UP, &ep->ep_flags);
 
 		if (0) { /* was commented in minic */
 			wrn_ep_write(ep, FCR,
@@ -94,10 +95,11 @@ static void wrn_update_link_status(struct net_device *dev)
 		printk(KERN_INFO "%s: Link up, lpa 0x%04x.\n",
 		       dev->name, lpa);
 	} else {
-		netif_carrier_on(dev);
+		/* No autonegotiation. It's up immediately */
 		printk(KERN_INFO "%s: Link up.\n", dev->name);
-		set_bit(WRN_EP_UP, &ep->ep_flags);
 	}
+	netif_carrier_on(dev);
+	set_bit(WRN_EP_UP, &ep->ep_flags);
 
 	/* reset RMON counters */
 	ecr = wrn_ep_read(ep, ECR);
@@ -125,7 +127,21 @@ int wrn_ep_open(struct net_device *dev)
 	struct wrn_ep *ep = netdev_priv(dev);
 	unsigned long timerarg = (unsigned long)dev;
 
+	/* Prepare hardware registers: first config, then bring up */
+	writel(0
+	       | EP_RFCR_QMODE_W(0x3)		/* unqualified port */
+	       | EP_RFCR_PRIO_VAL_W(4),		/* some mid priority */
+		ep->ep_regs->RFCR);
+	writel(0, &ep->ep_regs->TSCR);		/* no stamps */
 
+	writel(0
+	       | EP_ECR_PORTID_W(ep->ep_number)
+	       | EP_ECR_RST_CNT
+	       | EP_ECR_TX_EN_FRA
+	       | EP_ECR_RX_EN_FRA,
+		ep->ep_regs->ECR);
+
+	/* Prepare the timer for link-up notifications */
 	setup_timer(&ep->ep_link_timer, wrn_ep_check_link, timerarg);
 	mod_timer(&ep->ep_link_timer, jiffies + WRN_LINK_POLL_INTERVAL);
 	return 0;
@@ -190,22 +206,7 @@ int wrn_endpoint_probe(struct net_device *dev)
 	ep->mii.advertising = ADVERTISE_1000XFULL;
 	ep->mii.full_duplex = 1;
 
-	writel(0, ep->ep_regs->TSCR); /* No stamps */
-
-	writel(0
-	       | EP_RFCR_QMODE_W(0x3)		/* unqualified port */
-	       | EP_RFCR_PRIO_VAL_W(4),		/* some mid priority */
-		ep->ep_regs->RFCR);
-
-	/* Enable transmission and reception; reset counters; set portid */
-	writel(0
-	       | EP_ECR_PORTID_W(ep->ep_number)
-	       | EP_ECR_RST_CNT
-	       | EP_ECR_TX_EN_FRA
-	       | EP_ECR_RX_EN_FRA,
-		ep->ep_regs->ECR);
-
-	/* Finally, register and succeed, or fail an undo */
+	/* Finally, register and succeed, or fail and undo */
 	err = register_netdev(dev);
 	if (err) {
 		printk(KERN_ERR DRV_NAME "Can't register dev %s\n",

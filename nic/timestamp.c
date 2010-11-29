@@ -17,6 +17,12 @@
 
 #include "wr-nic.h"
 
+irqreturn_t wrn_tstamp_interrupt(int irq, void *dev_id)
+{
+	/* FIXME: the tstamp interrupt */
+	return IRQ_NONE;
+}
+
 int wrn_tstamp_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
@@ -28,12 +34,14 @@ int wrn_tstamp_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		   config.tx_type, config.rx_filter);
 
 	switch (config.tx_type) {
+		/* Set up time stamping on transmission */
 	case HWTSTAMP_TX_ON:
 		set_bit(WRN_EP_STAMPING_TX, &ep->ep_flags);
-		/* FIXME memset(nic->tx_tstable, 0, sizeof(nic->tx_tstable));*/
+		/* FIXME: enable timestamp on tx in hardware */
 		break;
 
 	case HWTSTAMP_TX_OFF:
+		/* FIXME: disable timestamp on tx in hardware */
 		clear_bit(WRN_EP_STAMPING_TX, &ep->ep_flags);
 		break;
 
@@ -47,16 +55,15 @@ int wrn_tstamp_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	 */
 	switch (config.rx_filter) {
 	case HWTSTAMP_FILTER_NONE:
+		/* FIXME: disable rx in hardware */
 		clear_bit(WRN_EP_STAMPING_RX, &ep->ep_flags);
 		break;
 
-	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+	default: /* All other case: activate stamping */
+		/* FIXME: enable rx in hardware */
 		set_bit(WRN_EP_STAMPING_RX, &ep->ep_flags);
 
-		config.rx_filter = HWTSTAMP_FILTER_ALL;
 		break;
-	default:
-		return -ERANGE;
 	}
 
 	/* FIXME: minic_update_ts_config(nic); */

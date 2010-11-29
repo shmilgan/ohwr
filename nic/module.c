@@ -44,14 +44,7 @@ static struct resource wrn_resources[] = {
 	[WRN_RES_MEM_PPSG]	= __RES( PPSG ),
 	[WRN_RES_MEM_CALIBRATOR]= __RES( CALIBRATOR ),
 	[WRN_RES_MEM_NIC]	= __RES( NIC ),
-	[WRN_RES_MEM_TSTAMP]	= __RES( TSTAMP ),
-
-	/* Last is the interrupt */
-	[WRN_RES_IRQ] = {
-		.start =	WRN_INTERRUPT,
-		.end =		WRN_INTERRUPT,
-		.flags =	IORESOURCE_IRQ,
-	}
+	[WRN_RES_MEM_TSTAMP]	= __RES( TSTAMP )
 };
 #undef __RES
 

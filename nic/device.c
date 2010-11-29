@@ -27,7 +27,6 @@
 static int __devexit wrn_remove(struct platform_device *pdev)
 {
 	struct wrn_dev *wrn = pdev->dev.platform_data;
-	struct resource *res;
 	int i;
 
 	spin_lock(&wrn->lock);
@@ -51,9 +50,12 @@ static int __devexit wrn_remove(struct platform_device *pdev)
 			iounmap(wrn->bases[i]);
 	}
 
-	if (wrn->irq_registered) {
-		res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-		free_irq(res->start, wrn);
+	/* Unregister all interrupts that were registered */
+	for (i = 0; wrn->irq_registered; i++) {
+		static int irqs[] = WRN_IRQ_NUMBERS;
+		if (wrn->irq_registered & (1 << i))
+			free_irq(irqs[i], wrn);
+		wrn->irq_registered &= ~(1 << i);
 	}
 	return 0;
 }
@@ -93,8 +95,12 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 	struct net_device *netdev;
 	struct wrn_ep *ep;
 	struct wrn_dev *wrn = pdev->dev.platform_data;
-	struct resource *res;
 	int i, err = 0;
+
+	/* Lazily: irqs are not in the resource list */
+	static int irqs[] = WRN_IRQ_NUMBERS;
+	static char *irq_names[] = WRN_IRQ_NAMES;
+	static irq_handler_t irq_handlers[] = WRN_IRQ_HANDLERS;
 
 	/* No need to lock_irq: we only protect count and continue unlocked */
 	spin_lock(&wrn->lock);
@@ -112,15 +118,13 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 	wrn->txd = (void *)&wrn->regs->TX1_D1;
 	wrn->rxd = (void *)&wrn->regs->RX1_D1;
 
-	/* Get the interrupt number from the resource */
-	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	err = request_irq(res->start, wrn_interrupt,
-			  IRQF_TRIGGER_LOW | IRQF_SHARED,
-			  DRV_NAME,
-			  wrn);
-	if (err) goto out;
-	wrn->irq_registered = 1;
-
+	/* Register the interrupt handlers (not shared) */
+	for (i = 0; i < ARRAY_SIZE(irq_names); i++) {
+		err = request_irq(irqs[i], irq_handlers[i],
+			      IRQF_TRIGGER_LOW, irq_names[i], wrn);
+		if (err) goto out;
+		wrn->irq_registered |= 1 << i;
+	}
 	/* Reset the device, just to be sure, before making anything */
 	writel(0, &wrn->regs->CR);
 	mdelay(10);

@@ -12,34 +12,47 @@
  */
 #ifndef __WR_NIC_H__
 #define __WR_NIC_H__
-#include <linux/mii.h>
 #include <linux/irqreturn.h>
 #include <linux/spinlock.h>
-#include <linux/netdevice.h>
-#include <linux/timer.h>
+#include <linux/mii.h>		/* Needed for stuct mii_if_info in wrn_dev */
+#include <linux/netdevice.h>	/* Needed for net_device_stats in wrn_dev */
+#include <linux/timer.h>	/* Needed for struct time_list in wrn_dev*/
 
 #include "nic-hardware.h" /* Magic numbers: please fix them as needed */
 
 #define DRV_NAME "wr-nic" /* Used in messages and device/driver names */
 #define DRV_VERSION "0.1" /* For ethtool->get_drvinfo -- FIXME: auto-vers */
 
-/* Structures we are using but may remain opaque */
-struct net_device;
+/*
+ * Interrupt information should be hidden in resource lists,
+ * but the looping code would be hairy). So let's define three
+ * arrays of the same size, and code loops over these
+ */
+#define WRN_IRQ_NUMBERS {WRN_IRQ_MAIN, WRN_IRQ_TSTAMP}
+#define WRN_IRQ_NAMES {"wr-nic", "wr-tstamp"}
+#define WRN_IRQ_HANDLERS {wrn_interrupt, wrn_tstamp_interrupt}
 
 /*
- * This is the main data structure for our NIC device
+ * This is the main data structure for our NIC device. As for locking,
+ * the rule is that _either_ the wrn _or_ the endpoint is locked. Not both.
  */
 struct wrn_dev {
 	/* Base addresses. It's easier with an array, but not all are used */
 	void __iomem		*bases[WRN_NBLOCKS];
+
 	struct NIC_WB __iomem	*regs; /* shorthand for NIC-block registers */
+	spinlock_t		lock;
 	struct wrn_d_tx __iomem	*txd;
 	unsigned long		tx_mask; /* descriptors in use */
 	struct wrn_d_rx __iomem	*rxd;
 	unsigned long		rx_mask; /* descriptors in use */
-	spinlock_t		lock;
+	int			next_txdesc;
 
-	struct net_device	*dev[WRN_NR_ENDPOINTS];
+	/* For TX descriptors, we must keep track of the ownwes */
+	struct sk_buff		*skb_desc[WRN_NR_TXDESC];
+
+	struct net_device	*dev[WRN_NR_ENDPOINTS]; /* FIXME: unused */
+
 
 	/* FIXME: all dev fields must be verified */
 
@@ -136,7 +149,7 @@ struct wrn_phase_req {
 #define WRN_CAL_RX_OFF 4
 #define WRN_CAL_RX_CHECK 5
 
-/* This a WR-specific register in the dmdio space */
+/* This a WR-specific register in the mdio space */
 #define WRN_MDIO_WR_SPEC 0x00000010
 #define WRN_MDIO_WR_SPEC_TX_CAL		0x01 /* TX calib pattern */
 #define WRN_MDIO_WR_SPEC_RX_CAL_STAT	0x02 /* RX calib status */
@@ -166,6 +179,7 @@ extern void wrn_endpoint_remove(struct net_device *netdev);
 
 /* Following functions from timestamp.c */
 extern int wrn_tstamp_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
+extern irqreturn_t wrn_tstamp_interrupt(int irq, void *dev_id);
 
 /* Following functions from dmtd.c */
 extern int wrn_phase_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);

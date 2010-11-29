@@ -5,7 +5,8 @@
 #include <mach/at91sam9263.h>
 
 /* The interrupt is one of those managed by our WRVIC device */
-#define WRN_INTERRUPT		192 /* First vic-managed irq */
+#define WRN_IRQ_MAIN		192 /* First vic-managed irq */
+#define WRN_IRQ_TSTAMP		193 /* FIXME: interrupt numbers */
 
 /* This is the base address of all the FPGA regions (EBI1, CS0) */
 #define FPGA_BASE_ADDRESS 0x70000000
@@ -84,6 +85,13 @@ struct wrn_desc_rx {
 };
 
 /* Some macros to extract fields from descriptors -- FIXME*/
+
+/* Some more constants */
+#define WRN_MTU 1540
+
+/* The number of descriptors is used to look in wrn bitmasks (max is 32) */
+#define WRN_NR_TXDESC	8
+#define WRN_NR_RXDESC	8
 
 
 #endif /* __WR_NIC_HARDWARE_H__ */
