@@ -3,8 +3,8 @@
  *
  * Copyright (C) 2010 CERN (www.cern.ch)
  * Author: Alessandro Rubini <rubini@gnudd.com>
- * Parts are from previous work by Tomasz Wlostowski <tomasz.wlostowsk@cern.ch>
- * Parts are from previous work by  Emilio G. Cota <cota@braap.org>
+ * Partly from previous work by Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
+ * Partly from previous work by  Emilio G. Cota <cota@braap.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
