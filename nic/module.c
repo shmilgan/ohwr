@@ -70,7 +70,7 @@ int __init wrn_init(void)
 
 	platform_device_register(&wrn_device);
 	platform_driver_register(&wrn_driver);
-	return -EAGAIN;
+	return 0;
 }
 
 void __exit wrn_exit(void)

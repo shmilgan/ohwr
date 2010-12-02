@@ -20,32 +20,33 @@ int wrn_phase_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	struct wrn_phase_req phase_req;
 	struct wrn_ep *ep = netdev_priv(dev);
 	u32 dmsr;
-	s32 dmtd_phase;
+	s32 ph;
+
+	phase_req.phase = 0;
+	phase_req.ready = 0;
 
 	dmsr = readl(ep->ep_regs->DMSR);
 
 	if(dmsr & EP_DMSR_PS_RDY) {
-		dmtd_phase = EP_DMSR_PS_VAL_R(dmsr);
+		ph = EP_DMSR_PS_VAL_R(dmsr);
 
-		// sign-extend, fix the average if out of range due to jitter
-		if(dmtd_phase & 0x800000) dmtd_phase |= 0xff000000;
+		/* Sign-extend the 24-bit value */
+		if(ph & 0x800000)
+		    ph |= 0xff << 24;
 
-		// calculate the average
-		dmtd_phase /= WRN_DMTD_AVG_SAMPLES;
+		/* Divide by nsamples (average) */
+		ph /= WRN_DMTD_AVG_SAMPLES;
 
-		if(dmtd_phase > WRN_DMTD_MAX_PHASE)
-			dmtd_phase -= WRN_DMTD_MAX_PHASE;
-		if(dmtd_phase < 0) dmtd_phase += WRN_DMTD_MAX_PHASE;
+		/* Put it back in the proper range */
+		ph = (ph + WRN_DMTD_MAX_PHASE) % WRN_DMTD_MAX_PHASE;
 
-		phase_req.phase = dmtd_phase;
+		phase_req.phase = ph;
 		phase_req.ready = 1;
-	} else {
-		phase_req.phase = 0;
-		phase_req.ready = 0;
 	}
 
-	return copy_to_user(rq->ifr_data, &phase_req, sizeof(phase_req)) ?
-		-EFAULT : 0;
+	if (copy_to_user(rq->ifr_data, &phase_req, sizeof(phase_req)))
+		return -EFAULT;
+	return 0;
 }
 
 int wrn_calib_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)

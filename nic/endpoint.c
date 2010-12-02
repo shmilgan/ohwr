@@ -56,7 +56,8 @@ static void wrn_update_link_status(struct net_device *dev)
 	bmsr = wrn_phy_read(dev, 0, MII_BMSR);
 	bmcr = wrn_phy_read(dev, 0, MII_BMCR);
 
-	netdev_dbg(dev, "%s: read %x %x", __func__, bmsr, bmcr);
+	//netdev_dbg(dev, "%s: read %x %x", __func__, bmsr, bmcr);
+	//pr_debug("%s: read %x %x", __func__, bmsr, bmcr);
 
 	if (!mii_link_ok(&ep->mii)) {
 		/* No link, currently */
@@ -131,7 +132,7 @@ int wrn_ep_open(struct net_device *dev)
 	writel(0
 	       | EP_RFCR_QMODE_W(0x3)		/* unqualified port */
 	       | EP_RFCR_PRIO_VAL_W(4),		/* some mid priority */
-		ep->ep_regs->RFCR);
+		&ep->ep_regs->RFCR);
 	writel(0, &ep->ep_regs->TSCR);		/* no stamps */
 
 	writel(0
@@ -139,7 +140,7 @@ int wrn_ep_open(struct net_device *dev)
 	       | EP_ECR_RST_CNT
 	       | EP_ECR_TX_EN_FRA
 	       | EP_ECR_RX_EN_FRA,
-		ep->ep_regs->ECR);
+		&ep->ep_regs->ECR);
 
 	/* Prepare the timer for link-up notifications */
 	setup_timer(&ep->ep_link_timer, wrn_ep_check_link, timerarg);
@@ -151,6 +152,7 @@ int wrn_ep_close(struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
 
+	writel(0, &ep->ep_regs->ECR);
 	del_timer_sync(&ep->ep_link_timer);
 	return 0;
 }
@@ -164,7 +166,7 @@ int wrn_ep_close(struct net_device *dev)
 static void __wrn_endpoint_shutdown(struct wrn_ep *ep)
 {
 	/* Not much to do it seems */
-	writel(0, ep->ep_regs->ECR); /* disable it all */
+	writel(0, &ep->ep_regs->ECR); /* disable it all */
 }
 
 int wrn_endpoint_probe(struct net_device *dev)
@@ -182,7 +184,7 @@ int wrn_endpoint_probe(struct net_device *dev)
 		dev_alloc_name(dev, "wrd%d");
 
 	/* Check whether the ep has been sinthetized or not */
-	val = readl(ep->ep_regs->IDCODE);
+	val = readl(&ep->ep_regs->IDCODE);
 	if (val != WRN_EP_MAGIC) {
 		pr_info(DRV_NAME "EP%i (%s) has not been sintethized\n",
 			ep->ep_number, dev->name);

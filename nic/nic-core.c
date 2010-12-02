@@ -19,6 +19,7 @@
 #include <asm/unaligned.h>
 
 #include "wr-nic.h"
+#include "nic-mem.h"
 
 /*
  * The following functions are the standard network device operations.
@@ -30,7 +31,7 @@ static int wrn_open(struct net_device *dev)
 	struct wrn_ep *ep = netdev_priv(dev);
 
 	/* This is "open" just for an endpoint. The nic hw is already on */
-	netdev_dbg(dev, "%s\n", __func__);
+	//netdev_dbg(dev, "%s\n", __func__);
 
 	if (!is_valid_ether_addr(dev->dev_addr))
 		return -EADDRNOTAVAIL;
@@ -71,44 +72,71 @@ static int wrn_set_mac_address(struct net_device *dev, void* vaddr)
 	struct sockaddr *addr = vaddr;
 	u32 val;
 
-	netdev_dbg(dev, "%s\n", __func__);
+	//netdev_dbg(dev, "%s\n", __func__);
 
 	if (!is_valid_ether_addr(addr->sa_data)) {
-		netdev_dbg(dev, "%s: invalid\n", __func__);
+		//netdev_dbg(dev, "%s: invalid\n", __func__);
 		return -EADDRNOTAVAIL;
 	}
 
 	memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
 
-	val = __get_unaligned_le((u32 *)dev->dev_addr+0);
-	writel(val, ep->ep_regs->MACL);
-	val = __get_unaligned_le((u16 *)dev->dev_addr+4);
-	writel(val, ep->ep_regs->MACH);
+	/* MACH gets the first two bytes, MACL the rest  */
+	val = get_unaligned_be16(dev->dev_addr);
+	writel(val, &ep->ep_regs->MACH);
+	val = get_unaligned_be32(dev->dev_addr+2);
+	writel(val, &ep->ep_regs->MACL);
 	return 0;
+}
+
+/* Next descriptor */
+static int __wrn_next_desc(int i)
+{
+	return (i+1) % WRN_NR_DESC;
 }
 
 /* This is called with the lock taken */
 static int __wrn_alloc_tx_desc(struct wrn_dev *wrn)
 {
-	int ret, i = 0;
+	int ret = wrn->next_tx_head;
+	struct wrn_txd __iomem *tx;
 
-	do {
-		/* First increment the position */
-		wrn->next_txdesc++;
-		if (unlikely(wrn->next_txdesc >= WRN_NR_TXDESC))
-			wrn->next_txdesc = 0;
-		/* then check if it's available */
-		ret = test_and_set_bit(wrn->next_txdesc, &wrn->tx_mask);
-		if (!ret)
-			return wrn->next_txdesc;
-	} while (++i < WRN_NR_TXDESC);
-	return -ENOMEM;
+	tx = wrn->txd + ret;
+
+	/* Check if it's available */
+	if (readl(&tx->tx1) & NIC_TX1_D1_READY) {
+		pr_debug("%s: not free %i\n", __func__, ret);
+		return -ENOMEM;
+	}
+	wrn->next_tx_head = __wrn_next_desc(ret);
+	return ret;
 }
 
-static void __wrn_tx_desc(struct wrn_dev *wrn, int desc,
-			  void *data, int len)
+/* Actual transmission over a single endpoint */
+static void __wrn_tx_desc(struct wrn_ep *ep, int desc,
+			  void *data, int len, int id)
 {
-	/* FIXME: tx desc */
+	struct wrn_dev *wrn = ep->wrn;
+	int offset = __wrn_desc_offset(wrn, WRN_DDIR_TX, desc);
+	u32 *ptr = __wrn_desc_mem(wrn, WRN_DDIR_TX, desc);
+	struct wrn_txd __iomem *tx = wrn->txd + desc;
+
+	/* data */
+	printk("%s: %i -- data %p, len %i ", __func__, __LINE__,
+	       data, len);
+	printk("-- desc %i (tx %p)\n", desc, tx);
+
+	__wrn_copy_out(ptr, data, len);
+
+	/* TX register 3: mask of endpoints (FIXME: broadcast) */
+	writel(ep->ep_number, &tx->tx3);
+
+	/* TX register 2: ofset and length */
+	writel(offset | (len << 16), &tx->tx2);
+
+	/* TX register 1: id and masks */
+	writel(NIC_TX1_D1_PAD_E | NIC_TX1_D1_READY | (id << 16),
+	       &tx->tx1);
 }
 
 
@@ -116,10 +144,10 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
 	struct wrn_dev *wrn = ep->wrn;
-	union skb_shared_tx *shtx = skb_tx(skb);
+	//union skb_shared_tx *shtx = skb_tx(skb);
 	unsigned long flags;
 	int desc;
-	u16 tx_oob = 0;
+	int id;
 	void *data;
 	unsigned len;
 
@@ -129,22 +157,25 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		return -EMSGSIZE;
 	}
 
-	/* Allocate a descriptor (start from last allocated) */
+	/* Allocate a descriptor and id (start from last allocated) */
 	spin_lock_irqsave(&wrn->lock, flags);
 	desc = __wrn_alloc_tx_desc(wrn);
+	id = wrn->id++;
 	spin_unlock_irqrestore(&wrn->lock, flags);
+
+	if (desc < 0) /* error */
+		return desc;
 
 	data = skb->data;
 	len = skb->len;
 
-	spin_lock_irqsave(&ep->lock, flags);
+	//spin_lock_irqsave(&ep->lock, flags);
 
 	wrn->skb_desc[desc] = skb; /* Save for tx irq and stamping */
-	netif_stop_queue(dev); /* Queue is stopped until tx is over */
+	//netif_stop_queue(dev); /* Queue stopped until tx is over (FIXME?) */
 
 	if(test_bit(WRN_EP_STAMPING_TX, &ep->ep_flags)) {
-		/* FIXME: the hw tx stamping */
-#if 0
+#if 0		/* FIXME: the hw tx stamping */
 		struct skb_shared_hwtstamps *hwts = skb_hwtstamps(skb);
 		shtx->in_progress = 1;
 		*(u16 *) hwts = tx_oob = nic->tx_hwtstamp_oob;
@@ -152,20 +183,23 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		nic->tx_hwtstamp_oob ++;
 		if(nic->tx_hwtstamp_oob == 60000)
 			nic->tx_hwtstamp_oob = 1;
-	} else {
-		tx_oob = 0;
 #endif
 	}
 
+	/* Mark the owner of this descriptor */
+	wrn->skb_desc[desc] = skb;
+
 	/* This both copies the data to the descriptr and fires tx */
-	__wrn_tx_desc(wrn, desc, data, len);
+	printk("%s: %i\n", __func__, __LINE__);
+	__wrn_tx_desc(ep, desc, data, len, id);
+	printk("%s: %i\n", __func__, __LINE__);
 
 	/* We are done, this is trivial maiintainance*/
 	ep->stats.tx_packets++;
 	ep->stats.tx_bytes += len;
 	dev->trans_start = jiffies;
 
-	spin_unlock_irqrestore(&ep->lock, flags);
+	//spin_unlock_irqrestore(&ep->lock, flags);
 	return 0;
 }
 
@@ -221,10 +255,113 @@ int wrn_netops_init(struct net_device *dev)
 	return 0;
 }
 
+/*
+ * From this onwards, it's all about interrupt management
+ */
+static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
+{
+	struct net_device *dev;
+	struct wrn_endpoint *ep;
+	struct sk_buff *skb;
+	struct wrn_rxd __iomem *rx;
+	u32 r1, r2, r3;
+	int epnum, off, len;
+
+	rx = wrn->rxd + desc;
+	r1 = readl(&rx->rx1);
+	r2 = readl(&rx->rx2);
+	r3 = readl(&rx->rx3);
+	pr_debug("%s: %i: %08x %08x %08x\n", __func__, desc, r1, r2, r3);
+
+	/* So, this descriptor is not empty. Get the port (ep) */
+	epnum = NIC_RX1_D1_PORT_R(r1);
+	dev = wrn->dev[epnum];
+	ep = netdev_priv(dev);
+
+	/* FIXME: rx timestamp */
+
+	/* Data and length */
+	off = NIC_RX1_D3_OFFSET_R(r3);
+	len = NIC_RX1_D3_LEN_R(r3);
+	skb = netdev_alloc_skb(dev, len + 16 /* FIXME: real size for rx */);
+	/* FIXME: handle allocation failure */
+	skb_reserve(skb, 2);
+	__wrn_copy_in(skb_put(skb, len), wrn->databuf + off, len);
+	writel(NIC_RX1_D1_EMPTY, &rx->rx1);
+	skb->protocol = eth_type_trans(skb, dev);
+	skb->ip_summed = CHECKSUM_UNNECESSARY;
+	/* FIXME: these stats don't go to the right place */
+	dev->last_rx = jiffies;
+	dev->stats.rx_packets++;
+	dev->stats.rx_bytes += len;
+	printk("%i\n", __LINE__);
+	netif_receive_skb(skb);
+}
+
+static void wrn_rx_interrupt(struct wrn_dev *wrn)
+{
+	int desc;
+	struct wrn_rxd __iomem *rx;
+	u32 reg;
+
+	while (1) {
+		desc = wrn->next_rx;
+		rx = wrn->rxd + desc;
+		reg = readl(&rx->rx1);
+		if (reg & NIC_RX1_D1_EMPTY)
+			return;
+		__wrn_rx_descriptor(wrn, desc);
+		wrn->next_rx = __wrn_next_desc(desc);
+	}
+}
+
+static void wrn_tx_interrupt(struct wrn_dev *wrn)
+{
+	struct wrn_txd *tx;
+	struct sk_buff *skb;
+	u32 reg;
+	int i;
+
+	/* Loop using our talil until one is not sent */
+	while ( (i = wrn->next_tx_tail) != wrn->next_tx_head) {
+		/* Check if this is txdone */
+		tx = wrn->txd + i;
+		reg = readl(&tx->tx1);
+		if (reg & NIC_TX1_D1_READY)
+			return; /* no more */
+
+		skb = wrn->skb_desc[i];
+
+		/* FIXME: get the stamp from the fifo */
+
+		dev_kfree_skb_irq(skb);
+		wrn->skb_desc[i] = 0;
+		wrn->next_tx_tail = __wrn_next_desc(i);
+	}
+}
+
 irqreturn_t wrn_interrupt(int irq, void *dev_id)
 {
-	/* FIXME -- interrupt */
+	struct wrn_dev *wrn = dev_id;
+	struct NIC_WB *regs = wrn->regs;
+	u32 i, irqs;
 
-	/* FIXME: check status register (BNA, REC) */
+	irqs = readl((void *)regs + 0x2c /*EIC_ISR */);
+	i =  readl(&regs->SR);
+	pr_debug("%s: irqs 0x%x, sr 0x%x\n", __func__, irqs, i);
+	if (irqs & NIC_EIC_ISR_TXERR) {
+		pr_err("%s: TX error\n", __func__); /* FIXME */
+		writel(NIC_EIC_ISR_TXERR, (void *)regs + 0x2c);
+	}
+	if (irqs & NIC_EIC_ISR_TCOMP) {
+		pr_debug("%s: TX complete\n", __func__);
+		wrn_tx_interrupt(wrn);
+		writel(NIC_EIC_ISR_TCOMP, (void *)regs + 0x2c);
+	}
+	if (irqs & NIC_EIC_ISR_RCOMP) {
+		pr_debug("%s: RX complete\n", __func__);
+		wrn_rx_interrupt(wrn);
+		writel(NIC_EIC_ISR_RCOMP, (void *)regs + 0x2c);
+	}
 	return IRQ_HANDLED;
 }

@@ -25,13 +25,24 @@
 
 /*
  * Interrupt information should be hidden in resource lists,
- * but the looping code would be hairy). So let's define three
+ * but the looping code would be hairy. So let's define three
  * arrays of the same size, and code loops over these
  */
-#define WRN_IRQ_NUMBERS {WRN_IRQ_MAIN, WRN_IRQ_TSTAMP}
-#define WRN_IRQ_NAMES {"wr-nic", "wr-tstamp"}
-#define WRN_IRQ_HANDLERS {wrn_interrupt, wrn_tstamp_interrupt}
+#if 0
+#define WRN_IRQ_NUMBERS \
+	{WRN_IRQ_PPSG, WRN_IRQ_NIC, WRN_IRQ_RTU, WRN_IRQ_RTUT, WRN_IRQ_TSTAMP}
+#define WRN_IRQ_NAMES \
+	{"wr-ppsg", "wr-nic", "wr-rtu", "wr-rtut", "wr-tstamp"}
+#define WRN_IRQ_HANDLERS \
+	{NULL, wrn_interrupt, NULL, NULL, wrn_tstamp_interrupt}
+#endif
 
+/* Temporarily, one handler only */
+#define WRN_IRQ_NUMBERS {WRN_IRQ_NIC}
+#define WRN_IRQ_NAMES {"wr-nic"}
+#define WRN_IRQ_HANDLERS {wrn_interrupt}
+
+struct wrn_ep; /* Defined later */
 /*
  * This is the main data structure for our NIC device. As for locking,
  * the rule is that _either_ the wrn _or_ the endpoint is locked. Not both.
@@ -42,16 +53,17 @@ struct wrn_dev {
 
 	struct NIC_WB __iomem	*regs; /* shorthand for NIC-block registers */
 	spinlock_t		lock;
-	struct wrn_d_tx __iomem	*txd;
-	unsigned long		tx_mask; /* descriptors in use */
-	struct wrn_d_rx __iomem	*rxd;
-	unsigned long		rx_mask; /* descriptors in use */
-	int			next_txdesc;
+	struct wrn_txd __iomem	*txd;
+	struct wrn_rxd __iomem	*rxd;
+	void __iomem		*databuf; /* void to ease pointer arith */
+	int			next_tx_head, next_tx_tail;
+	int			next_rx;
 
-	/* For TX descriptors, we must keep track of the ownwes */
+	/* For TX descriptors, we must keep track of the ownwer */
 	struct sk_buff		*skb_desc[WRN_NR_TXDESC];
+	int			id;
 
-	struct net_device	*dev[WRN_NR_ENDPOINTS]; /* FIXME: unused */
+	struct net_device	*dev[WRN_NR_ENDPOINTS];
 
 
 	/* FIXME: all dev fields must be verified */

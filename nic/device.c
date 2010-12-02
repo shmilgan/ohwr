@@ -22,6 +22,7 @@
 #include <linux/io.h>
 
 #include "wr-nic.h"
+#include "nic-mem.h"
 
 /* The remove function is used by probe, so it's not __devexit */
 static int __devexit wrn_remove(struct platform_device *pdev)
@@ -113,10 +114,14 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 
 	/* Map our resource list and instantiate the shortcut pointers */
 	if ( (err = __wrn_map_resources(pdev)) )
+
 		goto out;
 	wrn->regs = wrn->bases[WRN_BLOCK_NIC];
-	wrn->txd = (void *)&wrn->regs->TX1_D1;
-	wrn->rxd = (void *)&wrn->regs->RX1_D1;
+	wrn->txd = ((void *)wrn->regs) + 0x80; /* was: TX1_D1 */
+	wrn->rxd = ((void *)wrn->regs) + 0x100; /* was: RX1_D1 */
+	wrn->databuf = (void *)wrn->regs + offsetof(struct NIC_WB, MEM);
+	printk("regs %p, txd %p, rxd %p, buffer %p\n",
+	       wrn->regs, wrn->txd, wrn->rxd, wrn->databuf);
 
 	/* Register the interrupt handlers (not shared) */
 	for (i = 0; i < ARRAY_SIZE(irq_names); i++) {
@@ -142,6 +147,7 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 		ep = netdev_priv(netdev);
 		ep->wrn = wrn;
 		ep->ep_regs = wrn->bases[WRN_FIRST_EP + i];
+		//printk("ep %p, regs %i = %p\n", ep, i, ep->ep_regs);
 		ep->ep_number = i;
 		if (i < WRN_NR_UPLINK)
 			set_bit(WRN_EP_IS_UPLINK, &ep->ep_flags);
@@ -155,9 +161,28 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 		/* This endpoint went in properly */
 		wrn->dev[i] = netdev;
 	}
-	err = 0; /* no more endpoints, we succeeded. Enable the device */
-	writel(NIC_CR_RX_EN | NIC_CR_TX_EN, &wrn->regs->CR);
 
+	/* Now, prepare RX descriptors */
+	for (i = 0; i < WRN_NR_RXDESC; i++) {
+		struct wrn_rxd *rx;
+		int offset;
+
+		rx = wrn->rxd + i;
+		offset = __wrn_desc_offset(wrn, WRN_DDIR_RX, i);
+		writel( (2000 << 16) | offset, &rx->rx3);
+		writel(NIC_RX1_D1_EMPTY, &rx->rx1);
+	}
+
+	/*
+	 * make sure all head/tail are 0 -- not needed here, but if we
+	 * disable and then re-enable, this _is_ needed
+	 */
+	wrn->next_tx_head = wrn->next_tx_tail = wrn->next_rx = 0;
+
+	writel(NIC_CR_RX_EN | NIC_CR_TX_EN, &wrn->regs->CR);
+	writel(~0, (void *)wrn->regs + 0x24 /* EIC_IER */);
+	printk("imr: %08x\n", readl((void *)wrn->regs + 0x28 /* EIC_IMR */));
+	err = 0;
 out:
 	if (err) {
 		/* Call the remove function to avoid duplicating code */
