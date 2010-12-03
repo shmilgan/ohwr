@@ -25,7 +25,7 @@ int wrn_phase_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	phase_req.phase = 0;
 	phase_req.ready = 0;
 
-	dmsr = readl(ep->ep_regs->DMSR);
+	dmsr = readl(&ep->ep_regs->DMSR);
 
 	if(dmsr & EP_DMSR_PS_RDY) {
 		ph = EP_DMSR_PS_VAL_R(dmsr);
