@@ -23,6 +23,15 @@
 #define DRV_NAME "wr-nic" /* Used in messages and device/driver names */
 #define DRV_VERSION "0.1" /* For ethtool->get_drvinfo -- FIXME: auto-vers */
 
+/* This trick is like __must_be_array(), as I mistake my writel */
+#define wrn_must_be_pointer(p) \
+   BUILD_BUG_ON(!__builtin_types_compatible_p(typeof(p), typeof(&*(p))))
+
+#ifndef __CHECKER__ /* If running under sparse <linux/compiler.h> does it */
+#undef __chk_io_ptr
+#define __chk_io_ptr(p) wrn_must_be_pointer(p)
+#endif
+
 /*
  * Interrupt information should be hidden in resource lists,
  * but the looping code would be hairy. So let's define three
