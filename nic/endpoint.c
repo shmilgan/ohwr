@@ -133,7 +133,13 @@ int wrn_ep_open(struct net_device *dev)
 	       | EP_RFCR_QMODE_W(0x3)		/* unqualified port */
 	       | EP_RFCR_PRIO_VAL_W(4),		/* some mid priority */
 		&ep->ep_regs->RFCR);
-	writel(0, &ep->ep_regs->TSCR);		/* no stamps */
+
+	/*
+	 * enable RX timestamping (it has no impact on performance)
+	 * and we need the RX OOB block to identify orginating endpoints
+	 * for RXed packets -- Tom
+	 */
+	writel(EP_TSCR_EN_TXTS| EP_TSCR_EN_RXTS, &ep->ep_regs->TSCR);
 
 	writel(0
 	       | EP_ECR_PORTID_W(ep->ep_number)
