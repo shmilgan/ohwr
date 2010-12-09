@@ -62,6 +62,7 @@ struct wrvic_regs {
 };
 
 static struct wrvic_regs __iomem *wrvic_regs;
+int enabled_irqs[WRVIC_NR_IRQS];
 
 #define WRVIC_CTL_ENABLE                        (1<<0)
 #define WRVIC_CTL_POL                           (1<<1)
@@ -71,19 +72,42 @@ static struct wrvic_regs __iomem *wrvic_regs;
 #define wrvic_readl(r)		__raw_readl(&wrvic_regs->r);
 #define wrvic_writel(val, r)	__raw_writel(val, &wrvic_regs->r);
 
+static void wrvic_handler(unsigned int irq, struct irq_desc *desc);
+
 /* We only have two methods: unmask (enable) and mask (disable) */
 static void wrvic_unmask_irq(unsigned int irq)
 {
 	irq -= WRVIC_BASE_IRQ;
 	wrvic_writel(irq, vector[irq]);
 	wrvic_writel(1 << irq, reg_ier);
+
+	enabled_irqs[irq] = 1;
+
+	set_irq_chained_handler(AT91SAM9263_ID_IRQ0, wrvic_handler);
+	set_irq_type(AT91SAM9263_ID_IRQ0, IRQF_TRIGGER_LOW);
+
+	/* Enable. "CTL_POL" is 0 which means active low (falling) */
+	wrvic_writel(WRVIC_CTL_ENABLE, reg_ctl);
 }
 
 static void wrvic_mask_irq(unsigned int irq)
 {
+	int i;
+	
 	irq -= WRVIC_BASE_IRQ;
 	wrvic_writel( 1 << irq, reg_idr);
 	wrvic_writel(WRVIC_SPURIOUS_IRQ, vector[irq]);
+
+	enabled_irqs[irq] = 0;
+	
+	for(i=0;i<WRVIC_NR_IRQS;i++)
+		if(enabled_irqs[i])
+			return;
+			
+	printk("wr-vic: No enabled interrupts left, disabling master IRQ.\n");
+	set_irq_chained_handler(AT91SAM9263_ID_IRQ0, handle_bad_irq);
+	
+
 }
 
 static struct irq_chip wrvic_irqchip = {
@@ -116,7 +140,11 @@ int __init wrvic_init(void)
 
 	/* First, prime the WRVIC with "invalid" vectors and disable all irq */
 	for (i = 0; i < WRVIC_NR_IRQS; i++)
+	{
 		wrvic_writel(WRVIC_SPURIOUS_IRQ, vector[i]);
+		enabled_irqs[i] = 0;
+	}
+
 	wrvic_writel(~0, reg_idr);
 
 	for(i = WRVIC_BASE_IRQ; i <= WRVIC_BASE_IRQ + WRVIC_NR_IRQS; i++) {
