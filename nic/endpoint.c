@@ -54,20 +54,20 @@ static void wrn_update_link_status(struct net_device *dev)
 	u32 ecr, bmsr, bmcr, lpa;
 
 	bmsr = wrn_phy_read(dev, 0, MII_BMSR);
-	bmcr = wrn_phy_read(dev, 0, MII_BMCR);
+	bmcr = wrn_phy_read(dev, 0, MII_BMSR);
 
 	//netdev_dbg(dev, "%s: read %x %x", __func__, bmsr, bmcr);
-	//pr_debug("%s: read %x %x", __func__, bmsr, bmcr);
+//	printk("%s: read %x %x %x\n", __func__, bmsr, bmcr);
 
-	if (!mii_link_ok(&ep->mii)) {
-		/* No link, currently */
-		if(!netif_carrier_ok(dev)) {
-			/* No link in software structure: nothing to do */
+		/* Link wnt down? */
+	if (!mii_link_ok(&ep->mii)) {	
+		if(netif_carrier_ok(dev)) {
+			netif_carrier_off(dev);
+			clear_bit(WRN_EP_UP, &ep->ep_flags);
+			printk(KERN_INFO "%s: Link down.\n", dev->name);
 			return;
 		}
-		netif_carrier_off(dev);
-		clear_bit(WRN_EP_UP, &ep->ep_flags);
-		printk(KERN_INFO "%s: Link down.\n", dev->name);
+		return;
 	}
 
 	/* Currently the link is active */
