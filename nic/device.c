@@ -117,6 +117,8 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 
 		goto out;
 	wrn->regs = wrn->bases[WRN_BLOCK_NIC];
+	wrn->txtsu_regs = wrn->bases[WRN_BLOCK_TSTAMP];
+	wrn->ppsg_regs = wrn->bases[WRN_BLOCK_PPSG];
 	wrn->txd = ((void *)wrn->regs) + 0x80; /* was: TX1_D1 */
 	wrn->rxd = ((void *)wrn->regs) + 0x100; /* was: RX1_D1 */
 	wrn->databuf = (void *)wrn->regs + offsetof(struct NIC_WB, MEM);

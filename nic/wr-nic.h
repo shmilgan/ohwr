@@ -51,7 +51,18 @@
 #define WRN_IRQ_NAMES {"wr-nic"}
 #define WRN_IRQ_HANDLERS {wrn_interrupt}
 
+#define WRN_TS_BUF_SIZE 1024 /* array of timestamp structures */
+
 struct wrn_ep; /* Defined later */
+
+/* A timestamping structure to keep information for user-space */
+struct wrn_tx_tstamp {
+	u8 valid;
+	u8 port_id;
+	u16 frame_id;
+	u32 ts;
+};
+
 /*
  * This is the main data structure for our NIC device. As for locking,
  * the rule is that _either_ the wrn _or_ the endpoint is locked. Not both.
@@ -61,6 +72,9 @@ struct wrn_dev {
 	void __iomem		*bases[WRN_NBLOCKS];
 
 	struct NIC_WB __iomem	*regs; /* shorthand for NIC-block registers */
+	struct TXTSU_WB __iomem *txtsu_regs; /* ... and the same for TXTSU */
+	struct PPSG_WB __iomem *ppsg_regs; /* ... */
+
 	spinlock_t		lock;
 	struct wrn_txd __iomem	*txd;
 	struct wrn_rxd __iomem	*rxd;
@@ -73,7 +87,7 @@ struct wrn_dev {
 	int			id;
 
 	struct net_device	*dev[WRN_NR_ENDPOINTS];
-
+	struct wrn_tx_tstamp	ts_buf[WRN_TS_BUF_SIZE];
 
 	/* FIXME: all dev fields must be verified */
 
@@ -205,6 +219,6 @@ extern irqreturn_t wrn_tstamp_interrupt(int irq, void *dev_id);
 /* Following functions from dmtd.c */
 extern int wrn_phase_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 extern int wrn_calib_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
-
+extern void wrn_ppsg_read_time(struct wrn_dev *wrn, u32 *fine_cnt, u32 *utc);
 
 #endif /* __WR_NIC_H__ */

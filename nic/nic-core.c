@@ -129,13 +129,15 @@ static void __wrn_tx_desc(struct wrn_ep *ep, int desc,
 	__wrn_copy_out(ptr, data, len);
 
 	/* TX register 3: mask of endpoints (FIXME: broadcast) */
-	writel(ep->ep_number, &tx->tx3);
+	//printk("EP Num: %d\n", ep->ep_number);
+
+	writel(1<<ep->ep_number, &tx->tx3);
 
 	/* TX register 2: ofset and length */
 	writel(offset | (len << 16), &tx->tx2);
 
 	/* TX register 1: id and masks */
-	writel(NIC_TX1_D1_PAD_E | NIC_TX1_D1_READY | (id << 16),
+	writel((len < 46 ? NIC_TX1_D1_PAD_E : 0) | NIC_TX1_D1_READY | (id << 16),
 	       &tx->tx1);
 }
 
@@ -264,8 +266,13 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 	struct wrn_endpoint *ep;
 	struct sk_buff *skb;
 	struct wrn_rxd __iomem *rx;
-	u32 r1, r2, r3;
+	u32 r1, r2, r3, offset;
 	int epnum, off, len;
+	u32 ts_r, ts_f;
+	struct skb_shared_hwtstamps *hwts;
+	u32 counter_ppsg; /* PPS generator nanosecond counter */
+	u32 utc;
+	s32 cntr_diff;
 
 	rx = wrn->rxd + desc;
 	r1 = readl(&rx->rx1);
@@ -274,7 +281,28 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 	pr_debug("%s: %i: %08x %08x %08x\n", __func__, desc, r1, r2, r3);
 
 	/* So, this descriptor is not empty. Get the port (ep) */
-	epnum = NIC_RX1_D1_PORT_R(r1);
+
+	offset = __wrn_desc_offset(wrn, WRN_DDIR_RX, desc);
+
+
+	if (r1 & NIC_RX1_D1_GOT_TS) {
+		/*
+		 * check if the packet has an RX OOB block
+		 * if not, we can't determine the orginating port
+		 * [sorry for confusion with the flag name - it should be
+		 * GOT_OOB. I'll fix it later -- Tom]
+		 */
+		epnum = NIC_RX1_D1_PORT_R(r1);
+		ts_r = NIC_RX1_D2_TS_R_R(r2);
+		ts_f = NIC_RX1_D2_TS_F_R(r2);
+	} else {
+		printk("No RX OOB? Something's seriously fkd....\n");
+
+		writel( (2000 << 16) | offset, &rx->rx3);
+		writel(NIC_RX1_D1_EMPTY, &rx->rx1); /* FIXME: count as error */
+		return ;
+	}
+
 	dev = wrn->dev[epnum];
 	ep = netdev_priv(dev);
 
@@ -287,7 +315,35 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 	/* FIXME: handle allocation failure */
 	skb_reserve(skb, 2);
 	__wrn_copy_in(skb_put(skb, len), wrn->databuf + off, len);
+
+	/*
+	 * reload the descriptor length (it was modified by the NIC
+	 * during reception of the packet)
+	 */
+	writel( (2000 << 16) | offset, &rx->rx3);
 	writel(NIC_RX1_D1_EMPTY, &rx->rx1);
+
+	/* RX timestamping part */
+
+	hwts = skb_hwtstamps(skb);
+
+	wrn_ppsg_read_time(wrn, &counter_ppsg, &utc);
+
+	if(counter_ppsg < ts_r)
+		utc--;
+
+	hwts->hwtstamp.tv.sec = (s32)utc & 0x7fffffff;
+	cntr_diff = (ts_r & 0xf) - ts_f;
+	/* the bit says the rising edge cnter is 1tick ahead */
+	if(cntr_diff == 1 || cntr_diff == (-0xf))
+		hwts->hwtstamp.tv.sec |= 0x80000000;
+	hwts->hwtstamp.tv.nsec = ts_r * 8; /* scale to nanoseconds */
+
+	pr_debug("Timestamp: %d:%d, ahead = %d\n",
+	       hwts->hwtstamp.tv.sec & 0x7fffffff,
+	       hwts->hwtstamp.tv.nsec & 0x7fffffff,
+	       hwts->hwtstamp.tv.sec & 0x80000000 ? 1 :0);
+
 	skb->protocol = eth_type_trans(skb, dev);
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 	/* FIXME: these stats don't go to the right place */
