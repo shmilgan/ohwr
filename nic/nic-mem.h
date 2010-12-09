@@ -39,6 +39,7 @@ static inline void __wrn_copy_out(u32 __iomem *to, void *from, int size)
 	u32 i;
 
 	from -= WRN_DDATA_OFFSET;
+	size += WRN_DDATA_OFFSET;
 	while (size > 0) {
 		i = get_unaligned_le32(from);
 		writel(i, to);
@@ -52,6 +53,7 @@ static inline void __wrn_copy_in(void *to, u32 __iomem *from, int size)
 	u32 i;
 
 	to -= WRN_DDATA_OFFSET;
+	size += WRN_DDATA_OFFSET;
 	printk("%s: %i  %p <= %p %i\n", __func__, __LINE__, to, from, size);
 	while (size > 0) {
 		i = readl(from);
