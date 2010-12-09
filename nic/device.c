@@ -162,6 +162,12 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 		wrn->dev[i] = netdev;
 	}
 
+	for (i = 0; i < WRN_NR_TXDESC; i++) { /* Clear all tx descriptors */
+		struct wrn_txd *tx;
+		tx = wrn->txd + i;
+		writel(0, &tx->tx1);
+	}
+
 	/* Now, prepare RX descriptors */
 	for (i = 0; i < WRN_NR_RXDESC; i++) {
 		struct wrn_rxd *rx;
