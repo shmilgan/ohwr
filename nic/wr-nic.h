@@ -46,10 +46,10 @@
 	{NULL, wrn_interrupt, NULL, NULL, wrn_tstamp_interrupt}
 #endif
 
-/* Temporarily, one handler only */
-#define WRN_IRQ_NUMBERS {WRN_IRQ_NIC}
-#define WRN_IRQ_NAMES {"wr-nic"}
-#define WRN_IRQ_HANDLERS {wrn_interrupt}
+/* Temporarily, two handlers only */
+#define WRN_IRQ_NUMBERS {WRN_IRQ_NIC, WRN_IRQ_TSTAMP}
+#define WRN_IRQ_NAMES {"wr-nic", "wr-tstamp"}
+#define WRN_IRQ_HANDLERS {wrn_interrupt, wrn_tstamp_interrupt}
 
 #define WRN_TS_BUF_SIZE 1024 /* array of timestamp structures */
 
@@ -61,6 +61,12 @@ struct wrn_tx_tstamp {
 	u8 port_id;
 	u16 frame_id;
 	u32 ts;
+};
+
+/* We must remember both skb and id for each pending descriptor */
+struct wrn_desc_pending {
+	struct sk_buff *skb;
+	u32 id; /* only 16 bits, actually */
 };
 
 /*
@@ -83,7 +89,7 @@ struct wrn_dev {
 	int			next_rx;
 
 	/* For TX descriptors, we must keep track of the ownwer */
-	struct sk_buff		*skb_desc[WRN_NR_TXDESC];
+	struct wrn_desc_pending	skb_desc[WRN_NR_TXDESC];
 	int			id;
 
 	struct net_device	*dev[WRN_NR_ENDPOINTS];
@@ -213,8 +219,10 @@ extern int  wrn_endpoint_probe(struct net_device *netdev);
 extern void wrn_endpoint_remove(struct net_device *netdev);
 
 /* Following functions from timestamp.c */
+extern void wrn_tstamp_find_skb(struct wrn_dev *wrn, int i);
 extern int wrn_tstamp_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 extern irqreturn_t wrn_tstamp_interrupt(int irq, void *dev_id);
+extern void wrn_tstamp_init(struct wrn_dev *wrn);
 
 /* Following functions from dmtd.c */
 extern int wrn_phase_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);

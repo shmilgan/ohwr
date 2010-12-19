@@ -114,7 +114,7 @@ static int __wrn_alloc_tx_desc(struct wrn_dev *wrn)
 
 /* Actual transmission over a single endpoint */
 static void __wrn_tx_desc(struct wrn_ep *ep, int desc,
-			  void *data, int len, int id)
+			  void *data, int len, int id, int do_stamp)
 {
 	struct wrn_dev *wrn = ep->wrn;
 	int offset = __wrn_desc_offset(wrn, WRN_DDIR_TX, desc);
@@ -133,11 +133,12 @@ static void __wrn_tx_desc(struct wrn_ep *ep, int desc,
 
 	writel(1<<ep->ep_number, &tx->tx3);
 
-	/* TX register 2: ofset and length */
+	/* TX register 2: offset and length */
 	writel(offset | (len << 16), &tx->tx2);
 
-	/* TX register 1: id and masks */
-	writel((len < 46 ? NIC_TX1_D1_PAD_E : 0) | NIC_TX1_D1_READY | (id << 16),
+	/* TX register 1: id and masks -- and tx_enable if needed */
+	writel((len < 60 ? NIC_TX1_D1_PAD_E : 0) | NIC_TX1_D1_READY
+	       | (do_stamp ? NIC_TX1_D1_TS_E : 0) | (id << 16),
 	       &tx->tx1);
 }
 
@@ -146,11 +147,12 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
 	struct wrn_dev *wrn = ep->wrn;
-	//union skb_shared_tx *shtx = skb_tx(skb);
+	union skb_shared_tx *shtx = skb_tx(skb);
 	unsigned long flags;
 	int desc;
 	int id;
-	void *data;
+	int do_stamp = 0;
+	void *data; /* FIXME: move data and len to __wrn_tx_desc */
 	unsigned len;
 
 	if (unlikely(skb->len > WRN_MTU)) {
@@ -162,7 +164,7 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	/* Allocate a descriptor and id (start from last allocated) */
 	spin_lock_irqsave(&wrn->lock, flags);
 	desc = __wrn_alloc_tx_desc(wrn);
-	id = wrn->id++;
+	id = (wrn->id++) & 0xffff;
 	spin_unlock_irqrestore(&wrn->lock, flags);
 
 	if (desc < 0) /* error */
@@ -173,27 +175,24 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	//spin_lock_irqsave(&ep->lock, flags);
 
-	wrn->skb_desc[desc] = skb; /* Save for tx irq and stamping */
+	if (wrn->skb_desc[desc].skb) {
+		pr_err("%s: descriptor overflow: tx timestamp pending\n",
+			__func__);
+	}
+	wrn->skb_desc[desc].skb = skb; /* Save for tx irq and stamping */
+	wrn->skb_desc[desc].id = id; /* Save for tx irq and stamping */
+
 	//netif_stop_queue(dev); /* Queue stopped until tx is over (FIXME?) */
 
-	if(test_bit(WRN_EP_STAMPING_TX, &ep->ep_flags)) {
-#if 0		/* FIXME: the hw tx stamping */
-		struct skb_shared_hwtstamps *hwts = skb_hwtstamps(skb);
-		shtx->in_progress = 1;
-		*(u16 *) hwts = tx_oob = nic->tx_hwtstamp_oob;
-
-		nic->tx_hwtstamp_oob ++;
-		if(nic->tx_hwtstamp_oob == 60000)
-			nic->tx_hwtstamp_oob = 1;
-#endif
+	/* FIXME: check the WRN_EP_STAMPING_TX flag and its meaning */
+	if (shtx->hardware) {
+		/* hardware timestamping is enabled */
+		do_stamp = 1;
 	}
-
-	/* Mark the owner of this descriptor */
-	wrn->skb_desc[desc] = skb;
 
 	/* This both copies the data to the descriptr and fires tx */
 	printk("%s: %i\n", __func__, __LINE__);
-	__wrn_tx_desc(ep, desc, data, len, id);
+	__wrn_tx_desc(ep, desc, data, len, id, do_stamp);
 	printk("%s: %i\n", __func__, __LINE__);
 
 	/* We are done, this is trivial maiintainance*/
@@ -306,8 +305,6 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 	dev = wrn->dev[epnum];
 	ep = netdev_priv(dev);
 
-	/* FIXME: rx timestamp */
-
 	/* Data and length */
 	off = NIC_RX1_D3_OFFSET_R(r3);
 	len = NIC_RX1_D3_LEN_R(r3);
@@ -375,6 +372,7 @@ static void wrn_tx_interrupt(struct wrn_dev *wrn)
 {
 	struct wrn_txd *tx;
 	struct sk_buff *skb;
+	union skb_shared_tx *shtx;
 	u32 reg;
 	int i;
 
@@ -386,12 +384,19 @@ static void wrn_tx_interrupt(struct wrn_dev *wrn)
 		if (reg & NIC_TX1_D1_READY)
 			return; /* no more */
 
-		skb = wrn->skb_desc[i];
+		skb = wrn->skb_desc[i].skb;
+		shtx = skb_tx(skb);
 
-		/* FIXME: get the stamp from the fifo */
-
-		dev_kfree_skb_irq(skb);
-		wrn->skb_desc[i] = 0;
+		if (shtx->hardware) {
+			/* hardware timestamping is enabled */
+			shtx->in_progress = 1;
+			printk("%s: %i -- in progress\n", __func__, __LINE__);
+			wrn_tstamp_find_skb(wrn, i);
+			/* It has been freed if found; otherwise keep it */
+		} else {
+			dev_kfree_skb_irq(skb);
+			wrn->skb_desc[i].skb = 0;
+		}
 		wrn->next_tx_tail = __wrn_next_desc(i);
 	}
 }
