@@ -1,0 +1,233 @@
+\input texinfo    @c -*-texinfo-*-
+%
+% wrs-test.in - main file for the documentation
+%
+%%%%
+
+%------------------------------------------------------------------------------
+%
+%                         NOTE FOR THE UNAWARE USER
+%                         =========================
+%
+%    This file is a texinfo source. It isn't the binary file of some strange
+%    editor of mine. If you want ASCII, you should "make cortex-m3.txt".
+%
+%------------------------------------------------------------------------------
+
+%
+% This is not a conventional info file...
+% I use three extra features:
+%   - The '%' as a comment marker, if at beginning of line ("\%" -> "%")
+%   - leading blanks are allowed (this is something I can't live without)
+%   - braces are automatically escaped when they appear in example blocks
+%
+
+@comment %**start of header
+@documentlanguage en
+@documentencoding ISO-8859-1
+@setfilename cortex-m3.info
+@settitle wrs-test
+@iftex
+@afourpaper
+@end iftex
+@paragraphindent none
+@comment %**end of header
+
+@setchapternewpage off
+
+@set update-month February 2011
+@set release v2011-02-21
+
+@finalout
+
+@titlepage
+@title White Rabbit Switch: test procedures
+@subtitle @value{update-month} (git tag @value{release})
+@subtitle A testing package for Ethernet switches
+
+@author Alessandro Rubini (@code{rubini@@gnudd.com})
+@end titlepage
+@headings single
+
+@c ##########################################################################
+@node Top, How is Testing Implemented, (dir), (dir)
+@top Introduction
+
+This small software package has been developed in the context of the
+@i{White Rabbit} project developed by CERN.  It defines and implements
+testing procedures according to RFC-1242 and RFC-2544, as well as
+(in later versions), RFC-2285 and RFC-2889.
+
+In this document, when I say @i{this package} I refer to, well, this
+package.  For me it is the tar file you downloaded (or the @i{git}
+tree you fetched), including both the code and the documentation.
+
+This work has been developed with reference to the @i{White Rabbit}
+project but has not been paid by CERN. I wrote it on my own and thus I
+retain full copyright on it, although future versions may see other
+copyright holders.
+
+Material (code and documentation) specifically written for this package
+is released according to the GNU GPL, version 2 or (at your option)
+any later version.  This excludes the RFC documents that are
+distributed in this package and any
+other works that may be added here in later versions. Any external
+contribution is clearly marked as such.
+
+This package is released as a @i{git} tree, with date-based tags for
+revision points (e.g.: @code{v2011-02-21}).  I release often, in order
+to keep my mates up to date on my status, even if, for example, the
+first release only includes partial documentation and no code at all.
+
+@menu
+* How is Testing Implemented::  
+* Description of the Tests::    
+* How to Run the Test Suite::   
+* Results Collected on Various Switches::  
+@end menu
+
+@c ##########################################################################
+@node How is Testing Implemented, Description of the Tests, Top, Top
+@chapter How is Testing Implemented
+
+Testing the performances of an Ethernet switch is a generic task,
+somehow detached from the underlying switch implementation.  However,
+existing test tools, as far as I know, are either non-free or in some
+way too simplified for the WR needs. Moreover, in WR we want to rely
+on hardware timestamping whenever possible.
+
+@menu
+* RFC Compliance::              
+* HW Timestamping Overview::    
+* Server and Client::           
+@end menu
+
+@c ==========================================================================
+@node RFC Compliance, HW Timestamping Overview, How is Testing Implemented, How is Testing Implemented
+@section RFC Compliance
+
+The relevant RFC Documents are included in the @code{rfc} subdirectory
+of this package. They have been downloaded from the following locations:
+
+@smallexample
+   http://www.ietf.org/rfc/rfc1242.txt
+   http://www.ietf.org/rfc/rfc2285.txt
+   http://www.ietf.org/rfc/rfc2544.txt
+   http://www.ietf.org/rfc/rfc2889.txt
+@end smallexample
+
+I am not aware of other specifications about testing, so I just refer
+to these three.  All three documents have @i{informational}
+status. This is the role of each of them and how it has been used in
+developing this package:
+
+@itemize @bullet
+@item RFC-1242
+
+    This document is only concerned with definitions used on other
+    documents.  What is most interesting for us is the definition of
+    @i{throughput} and @i{latency}. Throughput is the maximum data rate at
+    which no frame is lost, not as the amount of data transmitted per
+    second, as one may expect; latency is defined in two different ways
+    according to whether the device is a store-and-forward or a bit
+    forwarding one; we'll use the definition for bit forwarding devices.
+
+@item RFC-2544 (which obsoletes RFC-1944)
+
+    The document is the main definition of tests for one-to-one or
+    many-to-many performance evaluation. It defines which tests vendors
+    are expected to make and how to make them, relying on the definitions
+    set forth by RFC-1242.  It defines the concepts of ``conditionally
+    compliant'' and ``unconditionally compliant'' test suites.  The aim of
+    this package is being @i{conditionally} compliant, since the number of
+    recommended (but not required) tests is huge and probably not
+    meaningful for our aims.  Both in the source code and in this
+    description of the tests, I name the relevant sections of RFC-2544
+
+@item RFC-2285
+
+    Like the first document, this RFC defines the terminology for
+    benchmarking tests in LAN contexts.  It extends what is defined by
+    RFC-1242 with definition for a meshed networking context.
+
+@item RFC-2889
+
+    This is the equivalent of RFC-2544 for network topologies more complex
+    than one-to-one environments.  At this point in time, I am not able to
+    run any such tests, but they will be added in later versions of this
+    package.  Unlike RFC-2544, this document doesn't define a
+    @i{compliant} test environment.
+
+@end itemize
+
+The specifications for the testing are quite demanding. In particular,
+they make requirements for 
+
+
+@c ==========================================================================
+@node HW Timestamping Overview, Server and Client, RFC Compliance, How is Testing Implemented
+@section HW Timestamping Overview
+
+This section describes the hardware timestamp mechanism of the Linux
+kernel.  It is meant to be a reference for people who deal with
+hardware timestamping in general and more specifically in the White
+Rabbit project.
+
+@c FIXME: timestamp overview
+
+To be done.
+
+@c ==========================================================================
+@node Server and Client,  , HW Timestamping Overview, How is Testing Implemented
+@section Server and Client
+
+The test system has been designed as a client-server system, even
+though the client and server are expected to run on the same computer
+most of the time.
+
+Unless you are running client and server on different computers (which
+is not supported in the initial versions of this package), you'll just
+need to fire the client applications (see @ref{How to Run the Test
+Suite}).  The client program will automatically fork a server process,
+and exchange information through a @i{Unix Domain} socket.
+
+Running the sending and receiving sides of the testing machinery on
+different processes allows to exploit SMP, if the testing host is an
+SMP one.  When the host system is not SMP (for example, when
+a @i{White Rabbit} switch is used to test other switches) this choice
+may be sub-optimal; I may consider running multi-thread instead of
+multi-process in later revisions of this packages.
+
+@c FIXME: complete server and client
+
+@c ##########################################################################
+@node Description of the Tests, How to Run the Test Suite, How is Testing Implemented, Top
+@chapter Description of the Tests
+
+@c FIXME: 
+To be done.
+
+@c ##########################################################################
+@node How to Run the Test Suite, Results Collected on Various Switches, Description of the Tests, Top
+@chapter How to Run the Test Suite
+
+@c FIXME: 
+To be done.
+
+@c ##########################################################################
+@node Results Collected on Various Switches,  , How to Run the Test Suite, Top
+@chapter Results Collected on Various Switches
+
+@c FIXME: 
+To be done.
+
+@c ##########################################################################
+@iftex
+@contents
+@end iftex
+
+@bye
+
+
+@c  LocalWords:  gnudd titlepage iftex texinfo CERN timestamping smallexample
+@c  LocalWords:  LocalWords ietf timestamp
