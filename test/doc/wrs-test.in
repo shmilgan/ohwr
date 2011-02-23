@@ -35,8 +35,8 @@
 
 @setchapternewpage off
 
-@set update-month February 2011
-@set release v2011-02-21
+@set update-month March 2011
+@set release v2011-03-10
 
 @finalout
 
@@ -54,7 +54,8 @@
 @top Introduction
 
 This small software package has been developed in the context of the
-@i{White Rabbit} project developed by CERN.  It defines and implements
+@i{White Rabbit} project, a multi-company multi-lab collaboration
+hosted at @code{ohwr.org}.  This package defines and implements
 testing procedures according to RFC-1242 and RFC-2544, as well as
 (in later versions), RFC-2285 and RFC-2889.
 
@@ -63,9 +64,8 @@ package.  For me it is the tar file you downloaded (or the @i{git}
 tree you fetched), including both the code and the documentation.
 
 This work has been developed with reference to the @i{White Rabbit}
-project but has not been paid by CERN. I wrote it on my own and thus I
-retain full copyright on it, although future versions may see other
-copyright holders.
+project but is not actually part of it; I wrote it on my own in my own
+time.
 
 Material (code and documentation) specifically written for this package
 is released according to the GNU GPL, version 2 or (at your option)
@@ -98,12 +98,12 @@ on hardware timestamping whenever possible.
 
 @menu
 * RFC Compliance::              
-* HW Timestamping Overview::    
+* Network Timestamping Overview::  
 * Server and Client::           
 @end menu
 
 @c ==========================================================================
-@node RFC Compliance, HW Timestamping Overview, How is Testing Implemented, How is Testing Implemented
+@node RFC Compliance, Network Timestamping Overview, How is Testing Implemented, How is Testing Implemented
 @section RFC Compliance
 
 The relevant RFC Documents are included in the @code{rfc} subdirectory
@@ -165,20 +165,383 @@ they make requirements for
 
 
 @c ==========================================================================
-@node HW Timestamping Overview, Server and Client, RFC Compliance, How is Testing Implemented
-@section HW Timestamping Overview
+@node Network Timestamping Overview, Server and Client, RFC Compliance, How is Testing Implemented
+@section Network Timestamping Overview
 
 This section describes the hardware timestamp mechanism of the Linux
 kernel.  It is meant to be a reference for people who deal with
-hardware timestamping in general and more specifically in the White
-Rabbit project.
+hardware timestamping in general or in particular within White
+Rabbit.
 
-@c FIXME: timestamp overview
+The hardware timestamping mechanism has been pushed to the upstream
+kernel by Patrick Ohly and Richard Cochran; the first official kernel
+released with some related code was 2.6.30.
+The description in this section refers to Linux-2.6.35, although I
+plan to update to later versions over time.
+@c v2.6.35-rc1-1246-gc1f19b5
 
+The official documentation can be found in
+@code{Documentation/networking/timestamping.txt} and an example
+program is found in the directory
+@code{Documentation/networking/timestamping/}.  What is not explained
+there, however, is the internal mechanism and what are the relevant
+source files or data structures.
+
+@menu
+* Timestamping Implementation::  
+* Timestamping Use::            
+* Using HW Stamps on RTL8169::  
+* Using HW Stamps on the 82575 device::  
+* White Rabbit Extensions::     
+@end menu
+
+@c --------------------------------------------------------------------------
+@node Timestamping Implementation, Timestamping Use, Network Timestamping Overview, Network Timestamping Overview
+@subsection Timestamping Implementation
+
+This is a description of stamping seen from the point of view of
+the kernel; it describes what the driver is expected to do and the
+flow of associated information until it reaches user space.
+
+First, hardware timestamping must be enabled in the specific hardware
+interface. This is accomplished by the interface-specific @i{ioctl}
+function: the device driver must identify the @code{SIOCSHWTSTAMP}
+command and use it to set or unset flags in the private data structure
+of the device. Information is passed using an @code{hwstamp_config}
+structure, as described in the @code{timestamping.txt} file.
+
+Then, the socket itself must have timestamping enabled. The
+socket options (set by @i{setsockopt}) are the following.
+
+@table @code
+@item SO_TIMESTAMPING
+	This socket option receives a bitmask argument, specifying the
+        various timestamp options that are activated. See below.
+@item SO_TIMESTAMPNS
+	This option has argument 0 or 1. If enabled it requests
+        software stamps to be returned as nanoseconds (@code{struct timespec})
+        instead of microseconds (@code{struct timeval}).
+@end table
+
+The bits in the argument of @code{SO_TIMESTAMPING} are listed below. The
+numeric value is shown as well, because the @i{onestamp} tool
+(introduced later) received a numeric argument.
+
+@table @code
+@item 1 = SOF_TIMESTAMPING_TX_HARDWARE
+@itemx 2 = SOF_TIMESTAMPING_TX_SOFTWARE
+@itemx 4 = SOF_TIMESTAMPING_RX_HARDWARE
+@itemx 8 = SOF_TIMESTAMPING_RX_SOFTWARE
+       The 4 bits request one or more of the four possible timestamping
+       options. However I couldn't really make sense of them (in particular,
+       the two @code{SOFTWARE} bits have no effect on my systems). Without
+       bit 0 (@code{SOF_TIMESTAMPING_TX_HARDWARE}) no tx stamp is collected
+       at all.
+@item 16 = SOF_TIMESTAMPING_SOFTWARE
+@itemx 32 = SOF_TIMESTAMPING_SYS_HARDWARE
+@itemx 64 = SOF_TIMESTAMPING_RAW_HARDWARE
+      These three bits select which @i{timespec} structures in the
+      array of three (see later about the internals) are returned. Please
+      note that the @code{SYS_HARDWARE} and @code{RAW_HARDWARE} bits depend
+      on the device driver to be able to return such information: @code{SYS}
+      is a timestamp comparable with other GMT times while @code{RAW} is
+      an unrelated nanosecond counter.
+@end table
+
+@c 1 = SOF_TIMESTAMPING_TX_HARDWARE       (enables base tx stamp)
+@c 2 = SOF_TIMESTAMPING_TX_SOFTWARE       (no effect)
+@c 4 = SOF_TIMESTAMPING_RX_HARDWARE       (no effect)
+@c 8 = SOF_TIMESTAMPING_RX_SOFTWARE       (no effect)
+@c 16 = SOF_TIMESTAMPING_SOFTWARE
+@c 32 = SOF_TIMESTAMPING_SYS_HARDWARE
+@c 64 = SOF_TIMESTAMPING_RAW_HARDWARE
+
+Data collection is then slightly different for transmitted and
+received packets, although in both cases data reaches user space using
+a ``control message'' interface. Such control messages are assembled
+by the function @i{put_cmsg} (@code{net/core/scm.c}).
+
+@c ..........................................................................
+@subsubheading Receive Timestamps
+
+For receive timestamps, the device driver should fill one or two
+@i{ktime} structures in a shared space within the socket buffer.  The
+@i{ktime} is basically a 64-bits nanosecond count, which may or may
+not come from a @code{struct timespec} object. The @i{ktime} is opaque
+and the implementation is architecture-specific (see
+@code{<linux/ktime.h>}).
+
+The following excerpt shows the typical code to be executed in the
+RX interrupt handler; such code should only execute if stamping
+has been enabled for this interface using @i{ioctl}:
+
+@smallexample
+    struct skb_shared_hwtstamps *tstamps = skb_hwtstamps(skb);
+    struct timespec ts;
+    unsigned long nano;
+    ktime_t kt;
+
+    memset(tstamps, 0, sizeof(*tstamps));
+
+    /* fill "ts" as GMT time or a "nano" counter, in hw-specific ways */
+    kt = timespec_to_ktime(ts);
+    tstamps->syststamp = kt;   /* Use syststamp if your time is GMT */
+    tstamps->hwtstamp = nano;  /* Or use hwtstamp for hw nanoseconds */
+@end smallexample
+
+The difference between the two values is that the @i{sys} stamp is
+expected to be compared with the normal Unix time values (even if
+they are not kept in sharp sync), while the @i{hw} value can only
+be compared with other such values collected by the same interface.
+
+After filling the structure within the @i{skb}, the driver
+is done.  It's the network stack that will call @i{sock_recv_timestamp}
+at the proper time.
+
+@c ..........................................................................
+@subsubheading sock_recv_timestamp
+
+This function is called from one of @code{net/ipv4/ip_sockglue.c},
+@code{net/ipv6/datagram.c} and @code{net/packet/af_packet.c} .
+
+It is defined as an @i{inline} function in @code{include/net/sock.h};
+it checks socket flags to know whether stamping information must be
+returned or not.
+
+The function calls @i{__sock_recv_timestamp()} if one of
+these situations apply:
+
+@itemize @bullet
+@item The socket has @code{SOCK_RCVTSTAMP} set;
+@item The socket has @code{SOCK_TIMESTAMPING_RX_SOFTWARE} set;
+@item @code{skb->tstamp} is non-zero and the socket has
+       @code{SOCK_TIMESTAMPING_SOFTWARE} set;
+@item The @i{skb}'s @code{shhwtstamps->hwtstamp} is non-zero and
+      the socket has @code{SOCK_TIMESTAMPING_RAW_HARDWARE} set;
+@item The @i{skb}'s @code{shhwtstamps->syststamp} is non-zero and
+      the socket has @code{SOCK_TIMESTAMPING_SYS_HARDWARE} set;
+@end itemize
+
+If no such condition applies, the function sets @code{sk->sk_stamp} to
+the value of @code{skb->tstamp}, for the old interface by which user-space
+can ask the timestamp of the last packet received using @i{ioctl} on the
+socket.
+
+@c ..........................................................................
+@subsubheading __sock_recv_timestamp
+
+The function, in @code{net/socket.c}, is in charge of actually building
+the @i{cmsg}. It receives the @i{cmsg} header, the socket and the socket
+buffer. It fills the @i{cmsg} with:
+
+@itemize
+@item @code{SCM_TIMESTAMPNS} information (@code{timespec}) if the socket
+      has both @code{SOCK_RCVTSTAMP} and @code{SOCK_RCVTSTAMPNS}.
+@item @code{SCM_TIMESTAMP} information (@code{timeval}) if the socket
+      has @code{SOCK_RCVTSTAMP} alone.
+@item @code{SCM_TIMESTAMPING} information (an array of three @code{timespec})
+      if either of @code{SOCK_TIMESTAMPING_SOFTWARE},
+      @code{SOCK_TIMESTAMPING_SYS_HARDWARE} and
+      @code{SOCK_TIMESTAMPING_RAW_HARDWARE} is set. At least one and
+      at most three of the structures are filled, according to the active
+      flags.
+@end itemize
+
+@c ..........................................................................
+@subsubheading Transmit Timestamps
+
+Timestamps for transmitted packets cannot be retrieved during
+transmission, but only at a later time. The stamp is known only when
+the start-of-frame impulse passes the @i{phy} device, so you can only
+retrieve it during the @i{tx-done} interrupt, not earlier.
+
+The flow of actions that are involved in stamping is as follows:
+
+@itemize @bullet
+
+@item In the @i{start_xmit} device function, the driver marks timestamping
+as @i{in_progress} in the socket buffer -- only if this packet is going
+to be stamped.
+
+@item For those packets where @i{in_progress} is set, the @i{tx-done} interrupt function retrieves the timestamp and
+calls @i{skb_tstamp_tx} (@code{net/core/skbuff.c}). Note that the
+@i{in_progress} marker is only used by the driver itself.
+
+@item This @i{skb_stamp_tx} copies over the data to a clone of the
+original socket buffer, which is then enqueued to the error queue
+for the socket. The @i{tx-done} code can thus release this @i{skb}
+without any further special case.
+
+@item The protocol-specific @i{receive_error} function, will then
+call the same @i{sock_recv_timestamp} used for received packets.
+@end itemize
+
+This is the typical code that will run in the @i{tx-done} handler,
+for those packets where @i{in_progress} was set:
+
+@smallexample
+    struct skb_shared_hwtstamps tstamps; /* local in this function */
+    union skb_shared_tx *shtx;
+    struct timespec ts;
+    ktime_t kt;
+
+    memset(tstamps, 0, sizeof(*tstamps));
+
+    /* fill "ts" as GMT time or a "nano" counter, in hw-specific ways */
+    kt = timespec_to_ktime(ts);
+    tstamps.syststamp = kt;   /* Use syststamp if your time is GMT */
+    tstamps.hwtstamp = nano;  /* Or use hwtstamp for hw nanoseconds */
+
+    skb_tstamp_tx(skb, &shhwtstamps);
+@end smallexample
+
+Actually, the only difference in the code is that the structure
+with the two @i{ktime} stamps is local and not in the @i{skb} itself.
+
+@c --------------------------------------------------------------------------
+@node Timestamping Use, Using HW Stamps on RTL8169, Timestamping Implementation, Network Timestamping Overview
+@subsection Timestamping Use
+
+When you receive a packet you can get the timing data together with
+the packet, while when you transmit you must receive back a copy of
+your own data with the timing information added (this is the @i{clone}
+of the transmitted packet, as described earlier).
+
+In the directory @i{misc} of this package, you can find two simple
+programs that use the timestamping features. As opposed to what is
+found in the kernel sources
+(@code{Documentation/networking/timestamping/timestamping.c}), these
+don't do the PTP related operations but try to remain simpler.
+
+@itemize @bullet
+@item ttstamp
+The ``test time stamp'' program is the smallest testing tool I came up
+with, it may be used to get acquainted with the basic ideas of timestamping
+while taking some measures.
+
+@item onestamp
+This is a still smaller program: it takes timestamps on just one
+transmitted packet and one received packet. You can change the
+@i{ioctl} arguments on the command line to get acquainted to the
+meaning of the various bits.
+@end itemize
+
+The programs are based on common code, that I factorized in
+the source @code{stamp-funcs.c}.  The functions in there make
+the following tasks:
+
+@table @code
+@item make_stamping_socket()
+	The function opens a socket issuing the stamp-related ioctl commands
+	to both the socket and the network interface.
+
+@item send_and_stamp()
+@itemx recv_and_stamp()
+	The functions take the same arguments as @i{send} and @i{recv},
+	but collect timestamps in a static structures (that is overwritten
+	at every invocation).
+
+@item get_stamp()
+	Returns the timestamps collected by either of the previous
+	functions.
+
+@item print_stamp()
+	The function prints the static structures filled by either
+	@i{send_and_stamp} or @i{recv_and_stamp}.
+@end table
+
+@c --------------------------------------------------------------------------
+@node Using HW Stamps on RTL8169, Using HW Stamps on the 82575 device, Timestamping Use, Network Timestamping Overview
+@subsection Using HW Stamps on RTL8169
+
+The directory @i{patches} in this package includes a few patches to
+fake hardware timestamping with the RTL8169 Gigabit device. You can
+apply them with @i{git-am} or @i{patch}.
+
+The patches allow to test timestamping features while using a cheap
+Gigabit Ethernet card.  The faked hardware timestamps are both
+the @i{sys_hardware} and @i{raw_hardware} ones. The former is
+faked as a timespec with only 4 digits in the @i{tv_sec} field,
+while the latter has only 2 digits in the field. Both come
+from @i{getnstimeofday} since we have no other timestamp source.
+
+For example, this is what I get with my @i{onestamp} tool:
+
+@smallexample
+   tornado.root# ./onestamp eth1 0x7f
+   ./onestamp: Using interface eth1, with 127 as SO_TIMESTAMPING
+   tx  ns: 1299671882.829046976
+   tx ns0: 1299671882.829046976
+   tx ns1:       1882.829061507
+   tx ns2:         82.829061507
+
+   rx  ns: 1299671883.199960762
+   rx ns0: 1299671883.199960762
+   rx ns1:       1883.199960611
+   rx ns2:         83.199960611
+@end smallexample
+
+As shown above, by setting all the timestamp-related bits (see
+@ref{Timestamping Implementation}), we get back both software
+and hardware timestamps. The former has nanosecond resolution
+because we set the @code{SO_TIMESTAMPNS}, and the latter has
+all three @i{timespec} structures: the software one (index 0,
+which carries the same value as in plain software stamping),
+the @i{sys_hardware} one (index 1) and the @i{raw_hardware} one
+(index 2).
+
+In the example you can see that the transmit faked hardware stamp is
+taken after the software one, because the patch collect the time in
+the tx-done interrupt. The receive faked stamp is taken slightly
+before the software stamp because it is collected at interrupt time,
+before passing the packet to the kernel proper.
+
+When running @i{ttstamp}, you'll get back the 4 timestamp differences
+from TX to RX, expressed in nanoseconds, for the 4 stamps. The
+argument used for @code{SO_TIMESTAMPING} is 1 by default, or inherited
+from the environment variable @code{STAMP_HOWTO}.  The program must
+be run on a system with a loopback Ethernet cable, among the two
+self-connected interfaces.
+
+@c --------------------------------------------------------------------------
+@node Using HW Stamps on the 82575 device, White Rabbit Extensions, Using HW Stamps on RTL8169, Network Timestamping Overview
+@subsection Using HW Stamps on the 82575 device
+
+@b{NOTE: This is currently bugged, the numbers are repeated, I leave
+it here for reference}.
+
+@c FIXME
+
+If you have an Intel 82575 or 82576, supported by
+@code{drivers/net/igb/}, you have real hardware timestamping.  For
+some reasons, you should not activate bit 4 (0x10 =
+@code{SOF_TIMESTAMPING_SOFTWARE}) in @code{SO_TIMESTAMPING}, or you will
+get only the software stamp. This is a sample run with the simple
+@i{onestamp}:
+
+@smallexample
+   tornado.root# ./onestamp eth4 0x61
+   ./onestamp: Using interface eth4, with 97 as SO_TIMESTAMPING
+   tx  ns: 1299678952.801922373
+   tx ns0:          0.000000000
+   tx ns1: 1299673561.657943573
+   tx ns2: 1299668554.247323098
+
+   rx  ns: 1299678952.907927486
+   rx ns0:          0.000000000
+   rx ns1: 1299673561.657943573
+   rx ns2: 1299668554.247323098
+@end smallexample
+
+@c --------------------------------------------------------------------------
+@node White Rabbit Extensions,  , Using HW Stamps on the 82575 device, Network Timestamping Overview
+@subsection White Rabbit Extensions
+
+@c FIXME:
 To be done.
 
 @c ==========================================================================
-@node Server and Client,  , HW Timestamping Overview, How is Testing Implemented
+@node Server and Client,  , Network Timestamping Overview, How is Testing Implemented
 @section Server and Client
 
 The test system has been designed as a client-server system, even
@@ -230,4 +593,12 @@ To be done.
 
 
 @c  LocalWords:  gnudd titlepage iftex texinfo CERN timestamping smallexample
-@c  LocalWords:  LocalWords ietf timestamp
+@c  LocalWords:  LocalWords ietf timestamp misc timestamps ttstamp onestamp
+@c  LocalWords:  recvmsg cmsg recv SIOCSHWTSTAMP hwstamp config setsockopt xmit
+@c  LocalWords:  bitmask TIMESTAMPNS struct timespec timeval ktime memset linux
+@c  LocalWords:  sizeof syststamp tstamps hwtstamps hwtstamp shhwtstamps tstamp
+@c  LocalWords:  subsubheading skbuff getnstimeofday shtx inline Ohly sockglue
+@c  LocalWords:  RCVTSTAMP RCVTSTAMPNS nano ohwr Gigabit itemx documentlanguage
+@c  LocalWords:  documentencoding setfilename settitle afourpaper finalout http
+@c  LocalWords:  paragraphindent setchapternewpage Alessandro Rubini rubini
+@c  LocalWords:  itemize factorized funcs HOWTO loopback
