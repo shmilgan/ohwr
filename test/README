@@ -1,0 +1,13 @@
+
+This package is software and documentation about testing network switches,
+with specific attention to White Rabbit switches.
+
+doc/        includes the documentation, you need TeX and texinfo to compile
+
+misc/       has simple test programs related to hw timestamping. They
+            are documented in doc/ (there is no README in misc/)
+
+rfc/        hosts a copy of the relevant RFC documents
+
+Enjoy
+/alessandro
