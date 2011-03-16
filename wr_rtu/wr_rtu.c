@@ -1,0 +1,250 @@
+/*
+ * White Rabbit RTU (Routing Table Unit)
+ * Copyright (C) 2010, CERN.
+ *
+ * Version:     wr_rtu v1.0
+ *
+ * Authors:     Alessandro Rubini <rubini@gnudd.com>
+ *              Juan Luis Manas   <juan.manas@integrasys.es>
+ *              Miguel Baizan     <miguel.baizan@integrasys.es>
+ *
+ * Description:  RTU IRQ registration, capture and handling. 
+ *               Applies gnurabbit (http://www.ohwr.org) misc device concepts 
+ *               to make RTU UFIFO interrupts available to user space.
+ *
+ * Fixes:       
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version
+ * 2 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/ioctl.h>
+#include <linux/irqreturn.h>  
+#include <linux/fs.h>           
+#include <linux/module.h>
+#include <linux/miscdevice.h> 
+#include <linux/sched.h>
+#include <linux/wait.h>
+#include <linux/spinlock.h>
+
+#include <asm/mach/map.h>
+
+#include "wrsw_rtu_wb.h"
+#include "wr_rtu.h"
+
+#define DRV_MODULE_VERSION      "0.1"
+
+#define WR_RTU_IRQ              10
+#define WRVIC_BASE_IRQ          (NR_AIC_IRQS + (5 * 32)) // top of GPIO interr
+
+#define FPGA_BASE_RTU	        0x70100000               // fpga_regs.h
+                                
+#define wr_rtu_readl(r)		    __raw_readl(&regs->r);
+#define wr_rtu_writel(val, r)	__raw_writel(val, &regs->r);
+
+#define WR_FLAG_IRQDISABLE	    0x00000002
+
+struct wr_rtu_dev {
+	wait_queue_head_t	q;
+	spinlock_t		    lock;
+	unsigned long		flags;
+};
+
+struct wr_rtu_regs {
+	u32 reg_idr;	    // [0x40]: Interrupt Disable Register 
+	u32 reg_ier;	    // [0x44]: Interrupt Enable Register 
+	u32 reg_imr;	    // [0x48]: Interrupt Mask Register 
+	u32 reg_isr;	    // [0x4c]: Interrupt Status Register 
+    u32 unused[5];      // 
+    u32 reg_ufifo_csr;  // [0x64]: UFIFO control/status Register
+};
+
+static struct wr_rtu_regs __iomem *regs = NULL;
+
+static struct wr_rtu_dev dev;
+
+static void wr_rtu_enable_irq(void)
+{
+    wr_rtu_writel(RTU_EIC_IER_NEMPTY, reg_ier);
+}
+
+static void wr_rtu_disable_irq(void)
+{
+    wr_rtu_writel(RTU_EIC_IDR_NEMPTY, reg_idr);
+}
+
+static void wr_rtu_clear_irq(void)
+{
+    wr_rtu_writel(RTU_EIC_ISR_NEMPTY, reg_isr);
+}
+
+static int rtu_ufifo_is_empty(void)
+{
+    uint32_t csr =  wr_rtu_readl(reg_ufifo_csr);
+    return RTU_UFIFO_CSR_EMPTY & csr;
+}
+
+// RTU interrupt handler
+static irqreturn_t wr_rtu_interrupt(int irq, void *dev_id)
+{
+    // When IRQ is enabled an interruption is raised even if UFIFO is empty. 
+    // In such a case just ignore IRQ.
+    if (!rtu_ufifo_is_empty()) {
+	    spin_lock(&dev.lock);
+            dev.flags |= WR_FLAG_IRQDISABLE;
+            wr_rtu_disable_irq();
+	    spin_unlock(&dev.lock);
+        wake_up_interruptible(&dev.q);
+    }
+    return IRQ_HANDLED;
+}
+
+
+static int wr_rtu_open(struct inode *inode, struct file *f)
+{
+	f->private_data = &dev;
+	return 0;
+}
+
+static int wr_rtu_release(struct inode *inode, struct file *f)
+{
+	return 0;
+}
+
+static long wr_rtu_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
+{
+	int ret = 0;    
+
+    // Check cmd type
+	if (_IOC_TYPE(cmd) != __WR_IOC_MAGIC)
+		return -ENOIOCTLCMD;
+
+	switch(cmd) {
+	case WR_RTU_IRQWAIT: // Await UFIFO IRQ
+		spin_lock_irq(&dev.lock);
+		    if (dev.flags & WR_FLAG_IRQDISABLE)
+			    ret = -EAGAIN; 
+		spin_unlock_irq(&dev.lock);
+		if (ret < 0)
+			return ret;
+		wait_event_interruptible(dev.q, !rtu_ufifo_is_empty());
+        // Make sure 'wait' was interrupted by IRQ
+		if (signal_pending(current))
+			return -ERESTARTSYS;
+		return ret;
+    case WR_RTU_IRQENA:  // Re-enable UFIFO IRQ
+        spin_lock_irq(&dev.lock);
+		    if (!(dev.flags & WR_FLAG_IRQDISABLE)) {
+			    ret = -EAGAIN;
+		    } else {
+			    dev.flags &= ~WR_FLAG_IRQDISABLE;
+                wr_rtu_clear_irq();
+                wr_rtu_enable_irq();
+		    }
+        spin_unlock_irq(&dev.lock);
+        return ret;
+	default:
+		return -ENOIOCTLCMD;
+    }
+}
+
+static struct file_operations wr_rtu_fops = {
+    .owner          = THIS_MODULE,
+	.open           = wr_rtu_open,
+	.release        = wr_rtu_release,
+	.unlocked_ioctl = wr_rtu_ioctl
+};
+
+// TODO check available minor numbers
+static struct miscdevice wr_rtu_misc = {
+	.minor = 77,            
+	.name  = "wr_rtu",
+	.fops  = &wr_rtu_fops
+};
+
+static int wr_rtu_init(void)
+{
+    int err;
+
+	// register misc device
+	err = misc_register(&wr_rtu_misc);
+	if (err < 0) {
+		printk(KERN_ERR "%s: Can't register misc device\n", KBUILD_MODNAME);
+		return err;
+	}
+
+    // map RTU memory
+    regs = ioremap(
+                    FPGA_BASE_RTU    + RTU_REG_EIC_IDR, 
+                    RTU_REG_MFIFO_R0 - RTU_REG_EIC_IDR
+                  );
+
+  	if (!regs) {
+        misc_deregister(&wr_rtu_misc);
+	 	return -ENOMEM;
+    }
+    
+    // register interrupt handler
+
+    wr_rtu_disable_irq();
+
+    err = request_irq( 
+                    WRVIC_BASE_IRQ + WR_RTU_IRQ, 
+                    wr_rtu_interrupt, 
+                    IRQF_SHARED,
+                    "wr-rtu",
+                    regs
+                  ); 
+
+    // if succeeded, enable interrupts
+    if (err) {
+        printk(KERN_ALERT "request IRQ failed \n");
+        iounmap(regs);
+        misc_deregister(&wr_rtu_misc);
+        return err;
+    } else {
+        wr_rtu_enable_irq();
+    }
+    
+    // Init wait queue
+    init_waitqueue_head(&dev.q);
+
+    printk(KERN_ALERT "module initialized \n");
+    return err;
+}
+
+static void wr_rtu_exit(void)
+{
+    // disable RTU interrupts
+    wr_rtu_disable_irq();
+    // Unregister IRQ handler
+    free_irq(WRVIC_BASE_IRQ + WR_RTU_IRQ, regs);
+    // Unmap RTU memory
+    iounmap(regs);
+    // Unregister misc device driver
+	misc_deregister(&wr_rtu_misc);
+
+    printk(KERN_ALERT "module cleanup");
+}
+
+module_init(wr_rtu_init);
+module_exit(wr_rtu_exit);
+
+MODULE_DESCRIPTION("WR RTU IRQ handler");
+MODULE_VERSION(DRV_MODULE_VERSION);
+MODULE_LICENSE("GPL");
+
+
