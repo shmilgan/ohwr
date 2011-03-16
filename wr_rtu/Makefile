@@ -1,9 +1,11 @@
 obj-m           := wr_rtu.o
-KDIR            := ../../../kernel
-PWD             := $(shell pwd)
-# EXTRA_CFLAGS    := -I$(SUBDIRS)/../wr_vic
-EXTRA_CFLAGS    :=
-MAKE = make
+LINUX           ?= ../../../kernel
 
-default:
-        $(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules
+all modules:
+	$(MAKE) -C $(LINUX) SUBDIRS=$(shell /bin/pwd) modules
+
+# We might "$(MAKE) -C $(LINUX)" but "make clean" with no LINUX defined
+# is sometimes useful to have
+clean:
+	rm -f *.mod.c *.o *.ko *.i .*cmd Module.symvers modules.order *~
+	rm -rf .tmp_versions
