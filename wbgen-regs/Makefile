@@ -11,9 +11,11 @@ WB_ENDPOINT = $(MODULES)/wrsw_endpoint/ep_wishbone_controller.wb
 WB_PPSG     = $(MODULES)/wrsw_pps_gen/wrsw_pps_gen.wb
 WB_CALIB    = $(MODULES)/wrsw_calibrator_dmtd/wrsw_calibrator_dmtd.wb
 WB_TSTAMP   = $(MODULES)/wrsw_txtsu/wrsw_txtsu.wb
+WB_RTU      = $(MODULES)/wrsw_rtu/wrsw_rtu_wb.wb
 WB_NIC      = $(SPECS)/hdlspec/WRSW_wbc_internal_NIC/wr_nic.wb
 
-HEADERS = endpoint-regs.h ppsg-regs.h calib-regs.h tstamp-regs.h nic-regs.h
+HEADERS = endpoint-regs.h ppsg-regs.h calib-regs.h tstamp-regs.h rtu-regs.h \
+          nic-regs.h
 WBINPUT = $(HEADERS:.h=wb)
 
 # No default, for people who types "make" everywhere (like me)
@@ -38,5 +40,6 @@ wbinput:
 	@cp $(WB_PPSG) ppsg-regs.wb
 	@cp $(WB_CALIB) calib-regs.wb
 	@cp $(WB_TSTAMP) tstamp-regs.wb
+	@cp $(WB_RTU) rtu-regs.wb
 	@cp $(WB_NIC) nic-regs.wb
 	@echo "Copied input files from subversions to local directory"
