@@ -171,6 +171,14 @@
 #define EP_MDIO_SR_READY                      WBGEN2_GEN_MASK(31, 1)
 
 /* definitions for register: Identification register */
+
+/* definitions for register: Debug/Status register */
+
+/* definitions for field: Link status in reg: Debug/Status register */
+#define EP_DSR_LSTATUS                        WBGEN2_GEN_MASK(0, 1)
+
+/* definitions for field: Link activity in reg: Debug/Status register */
+#define EP_DSR_LACT                           WBGEN2_GEN_MASK(1, 1)
 /* definitions for RAM: Event counters memory */
 #define EP_RMON_RAM_BYTES 0x00000080 /* size in bytes */                               
 #define EP_RMON_RAM_WORDS 0x00000020 /* size in 32-bit words, 32-bit aligned */        
@@ -198,8 +206,10 @@ PACKED struct EP_WB {
   uint32_t MDIO_SR;
   /* [0x28]: REG Identification register */
   uint32_t IDCODE;
+  /* [0x2c]: REG Debug/Status register */
+  uint32_t DSR;
   /* padding to: 32 words */
-  uint32_t __padding_0[21];
+  uint32_t __padding_0[20];
   /* [0x80 - 0xff]: RAM Event counters memory, 32 32-bit words, 32-bit aligned, word-addressable */
   uint32_t RMON_RAM [32];
 };
