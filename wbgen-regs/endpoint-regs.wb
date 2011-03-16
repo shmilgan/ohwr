@@ -395,6 +395,29 @@ peripheral {
 				 value = 0xcafebabe;
 			};
 	 };
+
+	 reg { -- FIXME: move to HW ports (in V3) or at least add descriptions
+			name = "Debug/Status register";
+			description = "Some debug stuff";
+			prefix = "DSR";
+			
+			field {
+				 name = "Link status";
+				 prefix = "LSTATUS";
+				 type = BIT;
+				 access_bus = READ_ONLY;
+				 access_dev = WRITE_ONLY;
+			};
+			field {
+				 name = "Link activity";
+				 prefix = "LACT";
+				 type = BIT;
+				 access_bus = READ_WRITE;
+				 access_dev = READ_WRITE;
+				 load = LOAD_EXT;
+
+			};
+	 };
 	
 		ram {
 			 name = "Event counters memory";
