@@ -786,23 +786,15 @@ static int calibration_ioctl(struct net_device *netdev, struct ifreq *rq,
 
 	switch(cal_req.cmd) {
 	case CAL_CMD_TX_ON:
-		if(nic->iface_up) {
 			tmp = phy_read(netdev, 0, MDIO_REG_WR_SPEC);
 			phy_write(netdev, 0, MDIO_REG_WR_SPEC,
 				  tmp | MDIO_WR_SPEC_TX_CAL);
-		} else {
-			return -EFAULT;
-		}
 		break;
 
 	case CAL_CMD_TX_OFF:
-		if(nic->iface_up) {
 			tmp = phy_read(netdev, 0, MDIO_REG_WR_SPEC);
 			phy_write(netdev, 0, MDIO_REG_WR_SPEC,
 				  tmp & (~MDIO_WR_SPEC_TX_CAL));
-		} else {
-			return -EFAULT;
-		}
 		break;
 
 	case CAL_CMD_RX_ON:
