@@ -1,0 +1,468 @@
+\input texinfo    @c -*-texinfo-*-
+%
+% wrs-build.in - main file for the documentation
+%
+%%%%
+
+%------------------------------------------------------------------------------
+%
+%                         NOTE FOR THE UNAWARE USER
+%                         =========================
+%
+%    This file is a texinfo source. It isn't the binary file of some strange
+%    editor of mine. If you want ASCII, you should "make wrs-build.txt".
+%
+%------------------------------------------------------------------------------
+
+%
+% This is not a conventional info file...
+% I use three extra features:
+%   - The '%' as a comment marker, if at beginning of line ("\%" -> "%")
+%   - leading blanks are allowed (this is something I can't live without)
+%   - braces are automatically escaped when they appear in example blocks
+%
+
+@comment %**start of header
+@documentlanguage en
+@documentencoding ISO-8859-1
+@setfilename wrs-build.info
+@settitle wrs-build
+@iftex
+@afourpaper
+@end iftex
+@paragraphindent none
+@comment %**end of header
+
+@setchapternewpage off
+
+@set update-month April 2011
+@set release v2011-04-06
+
+@finalout
+
+@titlepage
+@title White Rabbit Switch: software build scripts
+@subtitle @value{update-month} (git tag @value{release})
+@subtitle How to rebuild the whole software package from sources
+@author Alessandro Rubini (@code{rubini@@gnudd.com})
+@end titlepage
+@headings single
+
+@c ##########################################################################
+@node Top, Overview, (dir), (dir)
+@top Introduction
+
+This package includes the software build procedures for the White
+Rabbit Switch.  Currently the software has been used on version 2 of
+the hardware project.
+
+If you don't need to make your hands dirty, just skip to @ref{Quick
+Build}.
+
+@menu
+* Overview::                    
+* Quick Build::                 
+* The Compiler::                
+* Buildroot::                   
+* The IPL::                     
+* The Boot Loader::             
+* The Linux Kernel::            
+* The Complete Filesystem::     
+@end menu
+
+@c ##########################################################################
+@node Overview, Quick Build, Top, Top
+@chapter Overview
+
+This package builds over previous work by Tomasz Wlostowski, who first
+made the whole thing work and stick together -- a serious result from
+serious efforts, I'm really amazed by his achievements.
+
+The rewriting described in this document (and embodied in ``this package''
+as I'll call it through the following pages) is meant to make the stuff
+more maintainable over time.  I'm an old-fashioned follower of the rule
+``first make it work then make it work well'', and this step is expected
+to make it work well for everybody.
+
+The purpose of this package is in achieving the following targets:
+
+@itemize @bullet
+@item One-command build.
+	The non-technical user should be able to rebuild the who software
+        package with a single command. This includes the IPL and boot-loader
+        even though, that are expected to be pre-installed in the switch with
+        no real need for upgrading.
+@item Sub-package separation.
+	Users and developers should be able to rebuild each
+        sub-package by itself. Sub-packages are the kernel,
+	@i{buildroot}, libraries and so on. If you have a problem (or a
+        customization you need on one sub-package), you should be able to work
+        on the part ignoring the whole as much as possible.
+@item Documentation.
+	The steps are documented as much as possible, because mishaps
+        do happen, and you should easily understand where the problem is.
+@item Avoid redundant downloads.
+	People with non-mainstream network connections would rather
+	avoid downloading the same package over and over. Thus, a centralized
+	download directory is defined where all external packages are
+        retrieved. Even if you ``make distclean'' in this package you
+        won't need re re-get everything from the network.  In a similar
+        mood, people who already have a local copy of the big packages
+        (kernel, u-boot, white-rabbit svn) won't need to re-download not
+        even the first time they build the WRS software.
+@end itemize
+
+The build system is set up as a mix of scripts and makefiles. Every
+sub-package is built by its own script and/or Makefile, and configuration is
+passed over through environment variables. The top-level build script
+sets all environment variables, while keeping defaults from your
+preexisting environment -- so you can override anything even when
+rebuilding it all from scratch.
+
+@menu
+* Portability::                 
+* Environment Variables::       
+* Downloading Files::           
+* The OHWR Repository::         
+* Rebuilding Parts::            
+@end menu
+
+@c ==========================================================================
+@node Portability, Environment Variables, Overview, Overview
+@section Portability
+
+The scripts in their current status are not expected to be very
+portable. I'm sure a number of @i{bashisms} exist, and I did no effort
+to even identify them.  To relieve the user from possible pain,
+internally the name @i{bash} is used instead of @i{sh}, so things
+should work even if your default shell is @i{ash} or @i{dash}.
+
+Similarly, most likely directory names with spaces won't work, as not all
+uses of shell variables are properly quoted. I urge you to use directory names
+with no spaces in them, or to submit a patch to fix the scripts.
+
+It should go without saying that the build environment is expected to
+be a native GNU/Linux system; success reports about other environments
+(e.g. cygwin) are welcome, possibly with associated patches.
+
+@c ==========================================================================
+@node Environment Variables, Downloading Files, Portability, Overview
+@section Environment Variables
+
+The scripts use a number of environment variables; you can pre-set
+them as you wish. If they are not pre-set, defaults apply as
+described below.
+
+When rebuilding everything, the defaults are applied for each unset
+variable; but when rebuilding a sub-package you'll need to set the
+variables beforehand.  Each sub-package complains if required
+variables are not pre-set when you compile it.
+
+The following variables are used in one or more parts of the scripts;
+let me restate, though, that sensible default values apply by default,
+so this list is mainly for your curiosity unless you are a developer.
+
+They are listed in an order that seems logical to me, but may sound
+random to a different person, please forgive this.  Most of the
+variables are prefixed with @code{WRS_} to make them easily identified
+in the overall mess of variables and command names (scripts used here
+have a similar prefix for the same reason).
+
+@table @code
+@item WRS_BASE_DIR
+	The pathname of the build directory (i.e., the one above
+        the documentation directory). It is internally set to the directory
+        name of the main script. You can call the script from its
+        own directory (as @code{./wrs_build-all}) or from elsewhere,
+        by using a pathname to invoke it.  This variable can't be
+        overridden in the main script, but must be pre-set if you run
+        a sub-script to rebuild only part of the software suite.
+
+@item WRS_OUTPUT_DIR
+	The pathname of the directory where output is placed. It defaults
+        to the current directory when invoking the script (i.e., you
+        can invoke @code{/path/to/wrs_build-all} to have all output
+        in the current directory, not within the source package.  Compilation
+        happens in a @i{build} subdirectory of @code{WRS_OUTPUT_DIR},
+        done-markers are placed in a @i{_done} subdirectory
+        and final images are placed in a @i{images} subdirectory.
+
+@item WRS_DOWNLOAD_DIR
+	The directory where downloaded files are placed. If unset
+        it defaults to @code{$WRS_OUTPUT_DIR/downloads}, which is
+        created if needed.  By pre-setting this variable you can
+        simply remove the output directory to force a full rebuild, without
+        the overhead of re-downloading everything.
+
+@item WRS_WR_REPOSITORY
+	The @i{url} of the @i{svn} repository for @i{White Rabbit}.
+        It defaults to the official place in @i{ohwr.org} but may be
+        pre-set to a local copy. See @ref{The OHWR Repository} below
+        about how to build a local copy of the repository.
+
+@item CROSS_COMPILE
+	The variable is the usual cross-compilation prefix. For example,
+        @code{arm-linux-} if you have @i{arm-linux-gcc} in your path,
+        or a full pathname without the trailing @code{gcc}. If unset,
+        it defaults to the compiler that @i{buildroot} self-builds.
+
+@end table
+
+Other variables are used internally in the script; since they are only
+useful to people working on the script itself, they are documented in
+place.
+
+@c ==========================================================================
+@node Downloading Files, The OHWR Repository, Environment Variables, Overview
+@section Downloading Files
+
+Every downloaded file is saved to the download directory, you might
+arrange not to remove that directory when you recompile over and over
+during development.
+
+If the file is missing in the download directory, it is retrieved from
+one of the following places:
+
+@itemize @bullet
+@item If the file exists in the download directory, the @i{md5sum} is
+      checked; on success, nothing else is done.
+@item If the repository (@code{$WRS_WR_REPOSITORY}) is a @code{file://}
+      identifier, then the copy from the local checkout is retrieved.
+@item If the previous step fails, the file is retrieved from upstream.
+@item If the previous step fails, the file is downloaded from the
+      @i{ohwr} web site.
+@end itemize
+
+The previous policy is implemented in @i{wrs_download}, in the file
+@code{scripts/wrs_functions}, based on @code{download-info} in the
+main directory.
+
+@c ==========================================================================
+@node The OHWR Repository, Rebuilding Parts, Downloading Files, Overview
+@section The OHWR Repository
+
+Most of the code here (with the huge exception of @i{buildroot}
+archives) comes from the @i{svn} repository at @code{ohwr.org}.
+
+To avoid massive network downloads you can use a local copy of the
+repository.  The environment variable @code{WRS_WR_REPOSITORY} can
+point to a local checkout (use a @code{file://} notation), but you
+can also have the complete history of the repository in your local
+computer.  If you are not interested, you can skip this section.
+
+@strong{Note:} instead of this procedure, you may prefer @i{git-svn},
+which is not described here at this point
+@c FIXME: git-svn
+
+Having a local repository is useful if you need to checkout older
+versions, or just diff among versions or run @code{svn log}, which
+will fail for White Rabbit over @u{http} due to the size of the
+repository itself.
+
+To make a local copy with @i{sbnsync} you can do as follows
+(thanks to Francisco Juan for teaching me about this):
+
+@example
+   export BASE="/opt/ohwr-svn"
+   export REPO="white-rabbit"
+
+   mkdir -p $BASE && cd $BASE
+   svnadmin create $REPO
+   echo '#!/bin/sh' > $REPO/hooks/pre-revprop-change
+   chmod +x $REPO/hooks/pre-revprop-change
+   svnsync init file://$BASE/$REPO http://svn.ohwr.org/$REPO
+   svnsync sync file://$BASE/$REPO
+@end example
+
+To further track commits in the remote repository, you only need to
+repeat the last command, ``@code{svnsync sync}''.
+
+Then, to make a local checkout that refers to your local archive, you
+can do like this:
+
+@example
+   mkdir -p $BASE/checkout && cd $BASE/checkout
+   svn checkout file://$BASE/$REPO
+@end example
+
+After this, your @code{/opt/ohwr-svn/checkout/white-rabbit} will
+refer to @code{/opt/ohwr-svn/white-rabbit} for every operation,
+like @i{diff}, @i{log}, @i{update}.
+
+To use the checkout in this project, and avoid extra downloads please
+run:
+
+@example
+   export WRS_WR_REPOSITORY=file:///opt/ohwr/checkout/white-rabbit
+@end example
+
+@c ==========================================================================
+@node Rebuilding Parts,  , The OHWR Repository, Overview
+@section Rebuilding Parts
+
+When the script builds each part (sub-package), it creates a file in
+the @code{build/_done} directory.
+
+When you rebuild everything, steps for which the marker file exists
+are not rebuilt. To force rebuilding of one specfici part, just remove
+the marker.  Markers are numbered, reflecting the order of compilation
+steps, but they also have a name: names like @code{02-u-boot} should be
+self-explicative.
+
+As an alternative, you can run the individual script within
+@i{scripts/}, after setting the proper environment variables.
+
+@c ##########################################################################
+@node Quick Build, The Compiler, Overview, Top
+@chapter Quick Build
+
+If you just want to build stuff, with no concern about network
+downloads and without even knowing what is happening, just create a
+directory where you want the output to be generated and start
+compilation. Note that it takes around 3GB.  Then:
+
+@example
+   /path/to/wrs_build/wrs_build-all
+@end example
+
+The script refuses to run from within the package itself, because
+@i{u-boot} would spit a puzzling @code{"fatal"} message and would
+generate a strange version number for itself.
+
+Note that progress messages are sent to @i{stderr}, so you may want to
+save @i{stdout} to a file, like this:
+
+@example
+   /path/to/wrs_build/wrs_build-all > logfile
+@end example
+
+The progress messages look like what is shown here below.  The log
+file will be rather big, as all the compilation steps are quite
+verbose.
+
+@example
+   2011-04-06 08:56:56: --- Buildroot compiler and filesystem
+   2011-04-06 08:56:56: Looking for file buildroot-2009.11.tar.bz2
+   2011-04-06 08:56:56: Skip download of buildroot-2009.11.tar.bz2
+   [...]
+   2011-04-06 09:18:05: --- AT91Boot
+   2011-04-06 09:18:05: Looking for file AT91Bootstrap1.11.zip
+   2011-04-06 09:18:05: Skip download of AT91Bootstrap1.11.zip
+   2011-04-06 09:18:05: Patching AT91Boot
+   2011-04-06 09:18:05: Building AT91Boot
+   2011-04-06 09:18:06: --- U-Boot
+   2011-04-06 09:18:06: Looking for file u-boot-1.3.4.tar.bz2
+   2011-04-06 09:18:06: Skip download of u-boot-1.3.4.tar.bz2
+   2011-04-06 09:18:12: Patching U-Boot
+   2011-04-06 09:18:13: Building U-Boot
+   2011-04-06 09:18:27: Complete build succeed
+@end example
+
+If you are lucky, everything completes by itself in a few dozen
+minutes and you'll find your final files in the @code{images}
+subdirectory.  If you are not too lucky, the build stops because
+you've found a bug in the build scripts; most likely because your
+setup differs from the ones we have been testing on.
+
+In order to re-run the build avoid any download, please remove (or
+rename) the @i{output/} directory, and re-run.
+
+
+@c ##########################################################################
+@node The Compiler, Buildroot, Quick Build, Top
+@chapter The Compiler
+
+The predefined compiler used here is the one built by @i{buildroot}.
+The default configuration selects this choice.  If you pre-set a
+different @code{CROSS_COMPILE} prefix in your environment, your own
+choice will be used by modifying the @i{buildroot} configuration file.
+Note, however, that not all cross-compilers will work (@i{buildroot}
+wants one that has been configured with @code{--sysroot} and it is
+quite unlikely yours has.
+
+In practice, you may want to set @code{CROSS_COMPILE} when you compile
+the boot loader and kernel by themselves, and avoid it when compiling
+it all.
+
+@c ##########################################################################
+@node Buildroot, The IPL, The Compiler, Top
+@chapter Buildroot
+
+The distribution being used here is @i{buildroot}. It is the first
+step being built, because it first creates a cross-compiler. Such a
+compiler is later used to compile all other software for the White
+Rabbit Switch.
+
+The configuration for @i{buildroot} comes from
+@code{patches/buildroot/buildroot-config-wrswitch}. The configuration
+is then changed only if you pre-set your own @code{CROSS_COMPILE}
+variable.
+
+Since @i{buildroot} itself is a moving target, all packages needed to
+build the chosen version with the default configuration of this
+package are part of the White Rabbit @i{svn} repository (that you need
+anyways to the WR-specific software packages.  Therefore, please set
+the environment variable @code{WRS_WR_REPOSITORY} to the place where
+you checked out the repository, without the @code{trunk} path
+component. For example:
+
+@example
+   export WRS_WR_REPOSITORY=file:///opt/ohwr/checkout/white-rabbit
+@end example
+
+If you want to change the configuration, you can do so after the first
+build iteration: change directory to @code{build/buildroot-2009.11}
+and run @code{make menuconfig}. After making your choices, copy back
+the file @code{.config} to
+@code{patches/buildroot/buildroot-config-wrswitch} in this package.
+
+
+@c ##########################################################################
+@node The IPL, The Boot Loader, Buildroot, Top
+@chapter The IPL
+
+The IPL being used is @i{AT91Bootstrap-1.11}, with a specific patch
+for the White Rabbit Switch. The patch is written by Tomasz and is
+part of this package (but is also in the @i{svn} repository at
+@code{ohwr.org}).
+
+After compilation, @code{images/dataflash_whiterabbit-mch.bin} is the
+binary to be loaded in the actual hardware.
+
+@c ##########################################################################
+@node The Boot Loader, The Linux Kernel, The IPL, Top
+@chapter The Boot Loader
+
+The boot loader in use is @i{u-boot-1.3.4}, with a specific patch for
+the White Rabbit Switch, the patch is work of Tomasz. The patch is
+part of this packages (but is also in the @i{svn} repository at
+@code{ohwr.org}).
+
+After compilation, the binary is found in @code{images/u-boot.bin}.
+The ELF version is copied to @i{images} as well, as
+@code{images/u-boot}; this file includes the symbol table and may be
+useful -- or may not.
+
+@c ##########################################################################
+@node The Linux Kernel, The Complete Filesystem, The Boot Loader, Top
+@chapter The Linux Kernel
+
+Not compiled by this package, yet.
+
+@c ##########################################################################
+@node The Complete Filesystem,  , The Linux Kernel, Top
+@chapter The Complete Filesystem
+
+Not compiled by this package, yet.
+
+@c ##########################################################################
+@iftex
+@contents
+@end iftex
+
+@bye
+
+
+@c  LocalWords:  gnudd titlepage iftex texinfo CERN timestamping smallexample
+@c  LocalWords:  LocalWords ietf timestamp misc timestamps ttstamp onestamp
+@c  LocalWords:  Tomasz Wlostowski buildroot distclean

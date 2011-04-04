@@ -1,0 +1,17 @@
+# -*-shell-script-*-
+# This file lists files we need to download. It is read by the shell,
+# so it is organized by lines. Each line has 4 fields:
+#   filename  md5sum   upstream-location   white-rabbit-svn-location
+# note that backslashes are allowed to make continuation lines
+#
+AT91Bootstrap1.11.zip                      547fe261cb0bfefdd57936e000ca7750 \
+  ftp://www.at91.com/pub/at91bootstrap/AT91Bootstrap1.11.zip \
+  pkg/AT91Bootstrap1.11.zip
+
+u-boot-1.3.4.tar.bz2                       ca12b805b4f2bdcf15733be3fe22e896 \
+  ftp://ftp.denx.de/pub/u-boot/u-boot-1.3.4.tar.bz2 \
+  pkg/u-boot-1.3.4.tar.bz2
+
+buildroot-2009.11.tar.bz2                  f742c4dc5e7f811464d9da789ff275d0 \
+  http://buildroot.uclibc.org/downloads/buildroot-2009.11.tar.bz2 \
+  pkg/buildroot-2009.11.tar.bz2

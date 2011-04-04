@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# check variables, like all scripts herein do
+WRS_SCRIPT_NAME=$(basename $0)
+if [ -z "$WRS_BASE_DIR" ]; then
+    echo "$0: Plesae set WRS_BASE_DIR" >& 2
+    exit 1
+fi
+. ${WRS_BASE_DIR}/scripts/wrs_functions
+
+wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR WRS_WR_REPOSITORY CROSS_COMPILE
+
+wrs_echo "--- AT91Boot"
+zipname="AT91Bootstrap1.11.zip"
+wrs_download $zipname
+
+mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
+mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
+
+# go to the build dir and compile it
+cd $WRS_OUTPUT_DIR/build
+dirname="Bootstrap-v1.11"; #stupid zip: content doesn't match the container
+rm -rf $dirname
+unzip -q ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "unzip $zipname"
+
+wrs_echo "Patching AT91Boot"
+patch -t -p2 -d $dirname < \
+    $WRS_BASE_DIR/patches/at91boot/AT91Bootstrap1.11-patch-wr \
+    || wrs_die "patching at91boot"
+
+wrs_echo "Building AT91Boot"; # stupid makefiles, I must force CROSS_COMPILE
+make -C $dirname/board/whiterabbit-mch/dataflash CROSS_COMPILE=$CROSS_COMPILE \
+    || wrs_die "compiling at91boot"
+cp $dirname/board/whiterabbit-mch/dataflash/dataflash_whiterabbit-mch.bin \
+    $WRS_OUTPUT_DIR/images \
+    || wrs_die "copying at91boot image"
+
+exit 0

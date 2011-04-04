@@ -1,0 +1,189 @@
+# -*-shell-script-*-
+
+# This file is loaded by the main build script and possibly
+# sub scripts. It defines common utilities used at build time.
+# All functions are prefixed with "wrs_" so they can be easily identified
+# as local code within the scripts.
+
+function wrs_echo {
+    # actually, this echo is to stderr, for diagnostics
+    echo -n "$(date "+%Y-%m-%d %H:%M:%S"): " >&2
+    echo $* >&2
+}
+
+function wrs_warn {
+    echo -n "$(date "+%Y-%m-%d %H:%M:%S"): " >& 2
+    echo "Warning: $*" >& 2
+}
+
+function wrs_err {
+    echo -n "$(date "+%Y-%m-%d %H:%M:%S"): " >& 2
+    echo "Error: $*" >& 2
+}
+
+function wrs_die {
+    if [ -n "$*" ]; then wrs_err $*; fi
+    exit 1
+}
+
+# Set a default variable without typing the name twice as in VAR=${VAR:-val}
+function wrs_setenv_default {
+    name=$1
+    value=$2
+    if [ -z "$(eval echo \$$name)" ]; then
+	eval ${name}="$value"
+    fi
+    export $name
+}
+
+# Show current variables to make the user confident things are fine
+function wrs_show_vars {
+    echo "";  echo "Building with the following parameters: "
+    for n in $*; do
+	val=$(env | grep "^$n=" | sed 's/^.*=//')
+	# we may show optional variables (e.g.: CROSS_COMPILE)
+	if [ "x$val" != "x" ]; then
+	    printf "%-20s = %s\n" $n "$val"
+	fi
+    done
+    # If the shell's stdout is a tty (not redirected), allow a delay
+    stty -F /proc/$$/fd/1 2> /dev/null > /dev/null
+    if [ $? -ne 0 ]; then return; fi
+
+    echo -n "You may now ctrl-C for 3 seconds"
+    for n in 1 2 3; do
+	echo -n .; sleep 1
+    done
+    echo ""
+}
+
+
+function wrs_check_tools {
+    local error=false
+    for f in $*; do
+	if [ -z "$(type -p $f)" ]; then
+	    wrs_err "Can't find \"$f\" in your current PATH" >& 2
+	    error=true
+	fi
+    done
+    if $error; then
+	wrs_die "Please install missing tools"
+    fi
+}
+
+# While the function above is called once for all, the one below is called
+# by each sub-script with a different list of required variables
+function wrs_check_vars {
+    local error=false
+    for n in $*; do
+        env | grep -q "^$n=" && continue
+        wrs_echo "${WRS_SCRIPT_NAME}: Environment variable $n is not set" >&2
+        error=true
+    done
+    if $error; then
+	wrs_die
+    fi
+}
+
+# Set and unset a variable in a config file. Used for buildroot/kernel stuff
+# Activate and deactivate a configuration option
+function wrs_set_config {
+    local config
+    if [ "x$2" = "x" ]; then config=".config"; else config="$2"; fi
+    sed -i "s/# $1 is not set/$1=y/" $config
+}
+
+function wrs_unset_config {
+    local config
+    if [ "x$2" = "x" ]; then config=".config"; else config="$2"; fi
+    sed -i "s/$1=y/# $1 is not set/" $config
+}
+
+# We'll need to set CROSS_COMPILE to the buildroot one, if unset
+function wrs_default_compiler {
+	dirname=$WRS_OUTPUT_DIR/build/buildroot-2009.11/output/staging/usr/bin
+	if [ -e $dirname/arm-linux-gcc ]; then
+	    wrs_setenv_default CROSS_COMPILE $dirname/arm-linux-
+	fi
+}
+
+# See documentation about use of the download-info file. Unfortunately,
+# a loop in a pipe is run in a sub-shell, so variables can't be just set.
+# Therefore, we use a temporary file here
+function wrs_download {
+    file=$1
+    DLLIST=${WRS_BASE_DIR}/download-info
+
+    wrs_echo "Looking for file $file"
+    T=$(mktemp /tmp/wrs-download-XXXXXX)
+    grep -v '^#' $DLLIST | grep -v '^[ 	]*$' | \
+	while read name md5 upstream svnname; do
+	    #echo "md5 $md5 name $name u $upstream s $svnname"
+	    if [ "$name" != "$file" ]; then continue; fi
+	    echo md5=\"$md5\" > $T
+	    echo upstream=\"$upstream\" >> $T
+	    echo svnname=\"$svnname\" >> $T
+	    break
+    done
+    . $T
+
+    mkdir -p ${WRS_DOWNLOAD_DIR} || wrs_die "mkdir ${WRS_DOWNLOAD_DIR}"
+
+    # If it exists, we are done
+    output=${WRS_DOWNLOAD_DIR}/$file
+    if [ -f $output ]; then
+	ourmd5=$(cat $output | md5sum | sed 's/ .*$//')
+	if [ "$ourmd5" = "$md5" ]; then
+	    wrs_echo "Skip download of $file"
+	    return
+	else
+	    wrs_warn "File $file is corrupted, re-downloading"
+	    rm $output
+	fi
+    fi
+
+    # Check if svn is local and the file exists
+    repodir=$(echo $WRS_WR_REPOSITORY | sed 's-^file:/*-/-')
+    repofile=$repodir/trunk/$svnname
+    if [ -f $repofile ]; then
+	cp $repofile $output
+	wrs_echo "Copied $file from local svn repo"
+	return
+    fi
+
+    # Download from upstream
+    wget $upstream -nv $upstream -O $output
+    if [ -f $output ]; then
+	wrs_echo "Copied $file from upstream"
+	return
+    fi
+
+    # Finally, get from ohwr.org
+    wget $upstream -nv $WRS_WR_REPOSITORY/trunk/$svnname \
+	-O $output
+    if [ -f $output ]; then
+	wrs_echo "Retrieved $file from ohwr.org"
+	return
+    fi
+    wrs_error "Cannot download $file"
+}
+
+# The following builds one step if needed: if file $1 exists, then the
+# step has already been acoomplished
+function wrs_build_step {
+    markerfile=$WRS_DONE_DIR/$1
+    script=$2
+    wrs_check_vars WRS_DONE_DIR
+
+    if [ -f $markerfile ]; then return; fi
+
+    # The step is build in a sub-process, so we can continue with the next
+    # Note that 
+    sh $WRS_SH_OPTIONS
+    
+}
+
+
+# Every time wrs_functions is loaded, re-set WRS_MAKE_J
+export WRS_MAKE_J_NUMBER=$(expr $(grep ^processor /proc/cpuinfo | wc -l) + 1)
+export WRS_MAKE_J=-j$WRS_MAKE_J_NUMBER

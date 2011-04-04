@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# check variables, like all scripts herein do
+WRS_SCRIPT_NAME=$(basename $0)
+if [ -z "$WRS_BASE_DIR" ]; then
+    echo "$0: Plesae set WRS_BASE_DIR" >& 2
+    exit 1
+fi
+. ${WRS_BASE_DIR}/scripts/wrs_functions
+
+wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR WRS_WR_REPOSITORY
+
+wrs_echo "--- Buildroot compiler and filesystem"
+zipname="buildroot-2009.11.tar.bz2"
+wrs_download $zipname
+
+mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
+mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
+
+# go to the build dir and compile it, using our configuration
+cd $WRS_OUTPUT_DIR/build
+dirname="buildroot-2009.11"
+rm -rf $dirname
+tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
+
+# copy the config and replace "-j" level. First remove it in case it's left in
+cd $dirname
+cp $WRS_BASE_DIR/patches/buildroot/buildroot-config-wrswitch .config
+sed -i /^BR2_JLEVEL/d .config
+echo "BR2_JLEVEL=$WRS_MAKE_J_NUMBER" >> .config
+
+# now, if CROSS_COMPILE is already set and is not ours, change the config
+if [ "x$CROSS_COMPILE" != "x" ]; then
+    wrs_echo "Changing config for external compiler"
+    wrs_unset_config BR2_TOOLCHAIN_BUILDROOT
+    wrs_unset_config BR2_TOOLCHAIN_SOURCE
+    wrs_set_config BR2_TOOLCHAIN_EXTERNAL
+    
+    echo BR2_TOOLCHAIN_EXTERNAL_PATH=\"$(dirname $(dirname $CROSS_COMPILE))\" \
+	>> .config
+    echo BR2_TOOLCHAIN_EXTERNAL_PREFIX="\"\$(ARCH)-linux\"" >> .config
+    echo '# BR2_TOOLCHAIN_EXTERNAL_UCLIBC is not set' >> .config
+    echo BR2_TOOLCHAIN_EXTERNAL_GLIBC=y >> .config
+    echo BR2_TOOLCHAIN_EXTERNAL_STRIP=y >> .config
+fi
+
+# re-digest the config we built
+make oldconfig || wrs_die "buildroot config"
+
+buildrootdir=$(/bin/pwd)
+
+### currently, we get the packages from a local checkout or ohwr remote repo
+mkdir -p $WRS_DOWNLOAD_DIR/buildroot-pkg || die "mkdir within downloads"
+cd $WRS_DOWNLOAD_DIR/buildroot-pkg
+
+repodir=$(echo $WRS_WR_REPOSITORY | sed 's-^file:/*-/-')
+repodir=$repodir/trunk/pkg/buildroot-pkg
+
+if [ -d $repodir ]; then
+    if ln $repodir/* . 2> /dev/null; then
+	wrs_echo "Hardlinked packages from $repodir"
+    else
+	cp -a $repodir/* . || wrs_die "copying"
+	wrs_echo "Copied packages from $repodir"
+    fi
+else
+    # The repository is remote, then try wget
+    wrs_echo "Dowloading packages from $WRS_WR_REPOSITORY"
+    wget -nd -np -nc -nv -r $WRS_WR_REPOSITORY/pkg/buildroot-pkg/
+fi
+
+# buildroot wants its own guest source packages to be within its own dir..
+# so "cd" to the place we saved, and copy stuff here as well
+cd $buildrootdir
+mkdir dl
+if ln $WRS_DOWNLOAD_DIR/buildroot-pkg/* dl 2> /dev/null; then
+    wrs_echo "Hardlinked packages from downloads to build place"
+else
+    cp -a $WRS_DOWNLOAD_DIR/buildroot-pkg/* dl || wrs_die "copying"
+    wrs_echo "Copied packages from downloads to build place"
+fi
+
+# We don't want CC to be pre-set at this point (some of us do :)
+unset CC
+make || wrs_die "buildroot compilation"
+

@@ -1,0 +1,89 @@
+#!/bin/bash
+# This is the main build script. It must build all the environment
+# variables for sub-scripts.
+
+# Base dir is forcibly the dirname of this script, as an absolute pathname
+dir=$(dirname $0)
+if echo $dir | grep -q '^/'; then
+    WRS_BASE_DIR="$dir";
+else
+    WRS_BASE_DIR="$(echo $(/bin/pwd)/$dir | sed 's-/.$--')";
+fi
+export WRS_BASE_DIR
+
+. ${WRS_BASE_DIR}/scripts/wrs_functions
+
+
+# See documentation for the meaning of these variables
+wrs_setenv_default WRS_OUTPUT_DIR      $(/bin/pwd)
+wrs_setenv_default WRS_DOWNLOAD_DIR    ${WRS_OUTPUT_DIR}/downloads
+wrs_setenv_default WRS_WR_REPOSITORY   http://svn.ohwr.org/white-rabbit
+
+# Refuse to build within the directory itself
+if [ "$WRS_OUTPUT_DIR" = "$WRS_BASE_DIR" ]; then
+    wrs_die "Please run $(basename $0) from a different directory"
+fi
+
+# Check the tools
+
+# FIXME: is the list of tools correct?
+WRS_TOOLS="curl svn git gcc g++ ar as m4 libtool gettext md5sum make"
+WRS_TOOLS="$WRS_TOOLS awk unzip patch bison flex ncursesw5-config"
+WRS_TOOLS="$WRS_TOOLS lua fakeroot"
+
+wrs_check_tools $WRS_TOOLS
+
+# Create the directory for the "done" markers, as wrs_build_step needs it
+export WRS_DONE_DIR=${WRS_OUTPUT_DIR}/build/_done
+if ! [ -d "${WRS_DONE_DIR}" ]; then
+    mkdir -p ${WRS_DONE_DIR} || wrs_die "mkdir failed"
+fi
+
+export WRS_SCRIPTS_DIR=${WRS_BASE_DIR}/scripts
+
+wrs_show_vars WRS_BASE_DIR WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR WRS_WR_REPOSITORY \
+    WRS_SCRIPTS_DIR WRS_DONE_DIR CROSS_COMPILE
+
+# The function builds one step if needed: if the marker file exists, then the
+# step has already been acoomplished and nothing is run this time
+function wrs_build_step {
+    markerfile="$WRS_DONE_DIR/$1"
+    script="$WRS_SCRIPTS_DIR/$2"
+
+    if [ -f $markerfile ]; then
+	wrs_echo "Marker $markerfile exists:"
+	wrs_echo "   not running $script"
+	return
+    fi
+
+    # Run another shell, so we can continue with the next step if it exits
+    # I sometimes set WRS_SH_OPTIONS to "-x" to help me in debugging
+    bash $WRS_SH_OPTIONS $script
+    if [ $? -ne 0 ];
+	then failed_step=true;
+	else touch $markerfile
+    fi
+}
+
+
+failed_step=false; # this is set to "true" but the wrs_build_step function
+
+# Now build the stuff one step at a time, only if not already done.
+
+#                 done-marker            script name
+wrs_build_step	  00-buildroot   	 wrs_build_buildroot
+wrs_default_compiler
+wrs_build_step	  01-at91boot    	 wrs_build_at91boot
+wrs_build_step	  02-u-boot      	 wrs_build_u-boot
+#wrs_build_step	  03-kernel      	 wrs_build_kernel
+#wrs_build_step	  04-filesystem   	 wrs_build_buildroot-fs
+#wrs_build_step	  05-wrs-tools   	 wrs_build_tools
+#wrs_build_step	  06-wrs-addon   	 wrs_build_addon
+#wrs_build_step	  07-wrap-rootfs 	 wrs_build_finalrootfs
+#wrs_build_step	  08-host-tftpd  	 wrs_build_tftpd
+
+if $failed_step; then
+    wrs_die "One or more build steps failed"
+fi
+wrs_echo "Complete build succeeded, apparently"
+
