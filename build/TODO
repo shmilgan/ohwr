@@ -1,0 +1,11 @@
+
+Things still to do
+
+- build kernel
+- build filesystem
+- build tools and addons
+- check list of tools
+- check why the md5sum is different for at91boot
+- fix the "fatal" message in u-boot (move ./build away of the git tree)
+- document how to reprogram everything in the switch
+- fix Environment variable CROSS_COMPILE is not set
