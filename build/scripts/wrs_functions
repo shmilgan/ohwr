@@ -127,7 +127,9 @@ function wrs_download {
     done
     . $T
 
-    mkdir -p ${WRS_DOWNLOAD_DIR} || wrs_die "mkdir ${WRS_DOWNLOAD_DIR}"
+    # create the directory and possibly a subdirectory
+    subdir=$(dirname $file)
+    mkdir -p ${WRS_DOWNLOAD_DIR}/$subdir || wrs_die "mkdir ${WRS_DOWNLOAD_DIR}"
 
     # If it exists, we are done
     output=${WRS_DOWNLOAD_DIR}/$file
@@ -152,14 +154,14 @@ function wrs_download {
     fi
 
     # Download from upstream
-    wget $upstream -nv $upstream -O $output
+    wget -nv $upstream -O $output
     if [ -f $output ]; then
-	wrs_echo "Copied $file from upstream"
+	wrs_echo "Retrieved $file from upstream"
 	return
     fi
 
     # Finally, get from ohwr.org
-    wget $upstream -nv $WRS_WR_REPOSITORY/trunk/$svnname \
+    wget -nv $WRS_WR_REPOSITORY/trunk/$svnname \
 	-O $output
     if [ -f $output ]; then
 	wrs_echo "Retrieved $file from ohwr.org"
