@@ -15,3 +15,92 @@ u-boot-1.3.4.tar.bz2                       ca12b805b4f2bdcf15733be3fe22e896 \
 buildroot-2009.11.tar.bz2                  f742c4dc5e7f811464d9da789ff275d0 \
   http://buildroot.uclibc.org/downloads/buildroot-2009.11.tar.bz2 \
   pkg/buildroot-2009.11.tar.bz2
+
+# What follows are the packages for buildroot itself
+buildroot-pkg/binutils-2.19.1.tar.bz2      09a8c5821a2dfdbb20665bc0bd680791 \
+  http://ftp.gnu.org/pub/gnu/binutils//binutils-2.19.1.tar.bz2 \
+  pkg/buildroot-pkg/binutils-2.19.1.tar.bz2
+
+buildroot-pkg/busybox-1.15.2.tar.bz2       d5653e5b74b17dbb1eeecda8b8f22c0a \
+  http://www.busybox.net/downloads/busybox-1.15.2.tar.bz2 \
+  pkg/buildroot-pkg/busybox-1.15.2.tar.bz2
+
+buildroot-pkg/dropbear-0.52.tar.gz         1c69ec674481d7745452f68f2ea5597e \
+  http://matt.ucc.asn.au/dropbear/releases/dropbear-0.52.tar.gz \
+  pkg/buildroot-pkg/dropbear-0.52.tar.gz
+
+buildroot-pkg/fakeroot_1.9.5.tar.gz        95c0c78c734b9782ec8d47e99c8e3fc8 \
+  http://sources.buildroot.net/fakeroot_1.9.5.tar.gz \
+  pkg/buildroot-pkg/fakeroot_1.9.5.tar.gz
+
+buildroot-pkg/gcc-4.4.2.tar.bz2            70f5ac588a79e3c9901d5b34f58d896d \
+  http://ftp.gnu.org/pub/gnu/gcc/gcc-4.4.2/gcc-4.4.2.tar.bz2 \
+  pkg/buildroot-pkg/gcc-4.4.2.tar.bz2
+
+buildroot-pkg/gdb-6.8.tar.bz2              c9da266b884fb8fa54df786dfaadbc7a \
+  http://ftp.gnu.org/pub/gnu/gdb/gdb-6.8.tar.bz2 \
+  pkg/buildroot-pkg/gdb-6.8.tar.bz2
+
+buildroot-pkg/genext2fs-1.4.tar.gz         8d403440e1fbcba163e8016468ae4cda \
+  http://sources.buildroot.net/genext2fs-1.4.tar.gz \
+  pkg/buildroot-pkg/genext2fs-1.4.tar.gz
+
+buildroot-pkg/gmp-4.2.4.tar.bz2            fc1e3b3a2a5038d4d74138d0b9cf8dbe \
+  http://ftp.gnu.org/pub/gnu/gmp/gmp-4.2.4.tar.bz2 \
+  pkg/buildroot-pkg/gmp-4.2.4.tar.bz2
+
+buildroot-pkg/libelf-0.8.12.tar.gz         e21f8273d9f5f6d43a59878dc274fec7 \
+  http://sources.buildroot.net/libelf-0.8.10.tar.gz \
+  pkg/buildroot-pkg/libelf-0.8.12.tar.gz
+
+buildroot-pkg/libpcap-1.0.0.tar.gz         9ad1358c5dec48456405eac197a46d3d \
+  http://www.tcpdump.org/release/libpcap-1.0.0.tar.gz \
+  pkg/buildroot-pkg/libpcap-1.0.0.tar.gz
+
+buildroot-pkg/linux-2.6.35.tar.bz2         091abeb4684ce03d1d936851618687b6 \
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.35.tar.bz2 \
+  pkg/buildroot-pkg/linux-2.6.35.tar.bz2
+
+buildroot-pkg/ltrace_0.5-3.1.diff.gz       8342b15d3342da685c411599d1227db9 \
+  http://ftp.debian.org/debian/pool/main/l/ltrace/ltrace_0.5-3.1.diff.gz \
+  pkg/buildroot-pkg/ltrace_0.5-3.1.diff.gz
+
+buildroot-pkg/ltrace_0.5.orig.tar.gz       9b96a0056e9ba88a54e938973bf83025 \
+  http://ftp.debian.org/debian/pool/main/l/ltrace/ltrace_0.5.orig.tar.gz \
+  pkg/buildroot-pkg/ltrace_0.5.orig.tar.gz
+
+buildroot-pkg/lzo-2.03.tar.gz              0c3d078c2e8ea5a88971089a2f02a726 \
+  http://www.oberhumer.com/opensource/lzo/download/lzo-2.03.tar.gz \
+  pkg/buildroot-pkg/lzo-2.03.tar.gz
+
+buildroot-pkg/mpfr-2.4.1.patch             5a2e60836b9bd811507a509f9150525d \
+  http://www.mpfr.org/mpfr-2.4.1/patches \
+  pkg/buildroot-pkg/mpfr-2.4.1.patch
+
+buildroot-pkg/mpfr-2.4.1.tar.bz2           c5ee0a8ce82ad55fe29ac57edd35d09e \
+  http://www.mpfr.org/mpfr-2.4.1/mpfr-2.4.1.tar.bz2 \
+  pkg/buildroot-pkg/mpfr-2.4.1.tar.bz2
+
+buildroot-pkg/mtd-utils-1.1.0.tar.bz2      05aa9b015625aa20afba728fb7ee47b3 \
+  ftp://ftp.infradead.org/pub/mtd-utils/mtd-utils-1.1.0.tar.bz2 \
+  pkg/buildroot-pkg/mtd-utils-1.1.0.tar.bz2
+
+buildroot-pkg/ncurses-5.6.tar.gz           b6593abe1089d6aab1551c105c9300e3 \
+  http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.6.tar.gz \
+  pkg/buildroot-pkg/ncurses-5.6.tar.gz
+
+buildroot-pkg/strace-4.5.18.tar.bz2        e9449fcee97e6a8ed73934c883c870e0 \
+  http://easynews.dl.sourceforge.net/sourceforge/strace/strace-4.5.18.tar.bz2 \
+  pkg/buildroot-pkg/strace-4.5.18.tar.bz2
+
+buildroot-pkg/tcpdump-4.0.0.tar.gz         b22ca72890df2301d922c9f2d17867f9 \
+  http://www.tcpdump.org/release/tcpdump-4.0.0.tar.gz \
+  pkg/buildroot-pkg/tcpdump-4.0.0.tar.gz
+
+buildroot-pkg/uClibc-0.9.30.1.tar.bz2      1a4b84e5536ad8170563ffa88c34679c \
+  http://www.uclibc.org/downloads/uClibc-0.9.30.1.tar.bz2 \
+  pkg/buildroot-pkg/uClibc-0.9.30.1.tar.bz2
+
+buildroot-pkg/zlib-1.2.3.tar.bz2           dee233bf288ee795ac96a98cc2e369b6 \
+  http://easynews.dl.sourceforge.net/sourceforge/libpng/zlib-1.2.3.tar.bz2 \
+  pkg/buildroot-pkg/zlib-1.2.3.tar.bz2
