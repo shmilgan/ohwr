@@ -39,7 +39,7 @@
 #include <linux/wait.h>
 #include <linux/spinlock.h>
 
-#include "wrsw_rtu_wb.h"
+#include "../wbgen-regs/rtu-regs.h"
 #include "wr_rtu.h"
 
 #define DRV_MODULE_VERSION      "0.1"
@@ -58,37 +58,29 @@ struct wr_rtu_dev {
 
 static struct wr_rtu_dev dev;
 
-struct wr_rtu_regs {
-	u32 reg_idr;		// [0x40]: Interrupt Disable Register 
-	u32 reg_ier;		// [0x44]: Interrupt Enable Register 
-	u32 reg_imr;		// [0x48]: Interrupt Mask Register 
-	u32 reg_isr;		// [0x4c]: Interrupt Status Register 
-	u32 unused[5];		// 
-	u32 reg_ufifo_csr;	// [0x64]: UFIFO control/status Register
-};
+static struct RTU_WB __iomem *regs;
 
-static struct wr_rtu_regs __iomem *regs;
 #define wr_rtu_readl(r)		__raw_readl(&regs->r);
 #define wr_rtu_writel(val, r)	__raw_writel(val, &regs->r);
 
 static void wr_rtu_enable_irq(void)
 {
-	wr_rtu_writel(RTU_EIC_IER_NEMPTY, reg_ier);
+	wr_rtu_writel(RTU_EIC_IER_NEMPTY, EIC_IER);
 }
 
 static void wr_rtu_disable_irq(void)
 {
-	wr_rtu_writel(RTU_EIC_IDR_NEMPTY, reg_idr);
+	wr_rtu_writel(RTU_EIC_IDR_NEMPTY, EIC_IDR);
 }
 
 static void wr_rtu_clear_irq(void)
 {
-	wr_rtu_writel(RTU_EIC_ISR_NEMPTY, reg_isr);
+	wr_rtu_writel(RTU_EIC_ISR_NEMPTY, EIC_ISR);
 }
 
 static int rtu_ufifo_is_empty(void)
 {
-	uint32_t csr =  wr_rtu_readl(reg_ufifo_csr);
+	uint32_t csr =  wr_rtu_readl(UFIFO_CSR);
 	return RTU_UFIFO_CSR_EMPTY & csr;
 }
 
@@ -171,8 +163,8 @@ static int __init wr_rtu_init(void)
 
 	// map RTU memory
 	regs = ioremap(
-		FPGA_BASE_RTU    + RTU_REG_EIC_IDR,
-		RTU_REG_MFIFO_R0 - RTU_REG_EIC_IDR
+		FPGA_BASE_RTU,
+		sizeof(struct RTU_WB)
 		);
 
 	if (!regs) {
@@ -188,7 +180,7 @@ static int __init wr_rtu_init(void)
 		wr_rtu_interrupt,
 		IRQF_SHARED,
 		"wr-rtu",
-		regs
+		(void*)regs
 		);
 
 	// if succeeded, enable interrupts
@@ -213,7 +205,7 @@ static void __exit wr_rtu_exit(void)
 	// disable RTU interrupts
 	wr_rtu_disable_irq();
 	// Unregister IRQ handler
-	free_irq(WRVIC_BASE_IRQ + WR_RTU_IRQ, regs);
+	free_irq(WRVIC_BASE_IRQ + WR_RTU_IRQ, (void*)regs);
 	// Unmap RTU memory
 	iounmap(regs);
 	// Unregister misc device driver
