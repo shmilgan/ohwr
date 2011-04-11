@@ -122,9 +122,9 @@ static void __wrn_tx_desc(struct wrn_ep *ep, int desc,
 	struct wrn_txd __iomem *tx = wrn->txd + desc;
 
 	/* data */
-	printk("%s: %i -- data %p, len %i ", __func__, __LINE__,
+	pr_debug("%s: %i -- data %p, len %i ", __func__, __LINE__,
 	       data, len);
-	printk("-- desc %i (tx %p)\n", desc, tx);
+	pr_debug("-- desc %i (tx %p)\n", desc, tx);
 
 	__wrn_copy_out(ptr, data, len);
 
@@ -191,9 +191,7 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 
 	/* This both copies the data to the descriptr and fires tx */
-	printk("%s: %i\n", __func__, __LINE__);
 	__wrn_tx_desc(ep, desc, data, len, id, do_stamp);
-	printk("%s: %i\n", __func__, __LINE__);
 
 	/* We are done, this is trivial maiintainance*/
 	ep->stats.tx_packets++;
@@ -295,7 +293,7 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 		ts_r = NIC_RX1_D2_TS_R_R(r2);
 		ts_f = NIC_RX1_D2_TS_F_R(r2);
 	} else {
-		printk("No RX OOB? Something's seriously fkd....\n");
+		pr_err("No RX OOB? Something's seriously fkd....\n");
 
 		writel( (2000 << 16) | offset, &rx->rx3);
 		writel(NIC_RX1_D1_EMPTY, &rx->rx1); /* FIXME: count as error */
@@ -347,7 +345,6 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 	dev->last_rx = jiffies;
 	dev->stats.rx_packets++;
 	dev->stats.rx_bytes += len;
-	printk("%i\n", __LINE__);
 	netif_receive_skb(skb);
 }
 
@@ -390,7 +387,7 @@ static void wrn_tx_interrupt(struct wrn_dev *wrn)
 		if (shtx->hardware) {
 			/* hardware timestamping is enabled */
 			shtx->in_progress = 1;
-			printk("%s: %i -- in progress\n", __func__, __LINE__);
+			pr_debug("%s: %i -- in progress\n", __func__, __LINE__);
 			wrn_tstamp_find_skb(wrn, i);
 			/* It has been freed if found; otherwise keep it */
 		} else {
