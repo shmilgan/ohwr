@@ -48,6 +48,12 @@ static struct resource wrn_resources[] = {
 };
 #undef __RES
 
+static void wrn_release(struct device *dev)
+{
+	/* nothing to do, but mandatory function */
+	pr_debug("%s\n", __func__);
+}
+
 static struct platform_device wrn_device = {
 	.name = DRV_NAME,
 	.id = 0,
@@ -55,6 +61,7 @@ static struct platform_device wrn_device = {
 	.num_resources = ARRAY_SIZE(wrn_resources),
 	.dev = {
 		.platform_data = &wrn_dev,
+		.release = &wrn_release,
 		/* dma_mask not used, as we make no DMA */
 	},
 };
