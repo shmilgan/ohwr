@@ -260,7 +260,7 @@ int wrn_netops_init(struct net_device *dev)
 static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 {
 	struct net_device *dev;
-	struct wrn_endpoint *ep;
+	struct wrn_ep *ep;
 	struct sk_buff *skb;
 	struct wrn_rxd __iomem *rx;
 	u32 r1, r2, r3, offset;
@@ -341,10 +341,9 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 
 	skb->protocol = eth_type_trans(skb, dev);
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
-	/* FIXME: these stats don't go to the right place */
 	dev->last_rx = jiffies;
-	dev->stats.rx_packets++;
-	dev->stats.rx_bytes += len;
+	ep->stats.rx_packets++;
+	ep->stats.rx_bytes += len;
 	netif_receive_skb(skb);
 }
 
