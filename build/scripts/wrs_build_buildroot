@@ -25,7 +25,17 @@ tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
 
 # copy the config and replace "-j" level. First remove it in case it's left in
 cd $dirname
-cp $WRS_BASE_DIR/patches/buildroot/buildroot-config-wrswitch .config
+CFG=$WRS_BASE_DIR/patches/buildroot/buildroot-config-wrswitch
+if [ "x$WRS_BUILDROOT_CONFIG" != "x" ]; then
+    if [ -f $WRS_BUILDROOT_CONFIG ]; then
+	CFG=$WRS_BUILDROOT_CONFIG
+    else
+	wrs_warn "WRS_BUILDROOT_CONFIG is not a regularname: ignoring it"
+	sleep 3
+    fi
+fi
+
+cp $CFG .config
 sed -i /^BR2_JLEVEL/d .config
 echo "BR2_JLEVEL=$WRS_MAKE_J_NUMBER" >> .config
 
