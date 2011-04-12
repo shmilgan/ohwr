@@ -1,0 +1,37 @@
+From f4ea42c0afc36348ad45e6cf1198773c2222da86 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Mon, 22 Nov 2010 15:56:36 +0100
+Subject: [PATCH] IRQ: export two symbols needed by external irq_chip
+
+---
+ arch/arm/kernel/irq.c |    1 +
+ kernel/irq/handle.c   |    1 +
+ 2 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/arch/arm/kernel/irq.c b/arch/arm/kernel/irq.c
+index 3b3d2c8..bd57e41 100644
+--- a/arch/arm/kernel/irq.c
++++ b/arch/arm/kernel/irq.c
+@@ -148,6 +148,7 @@ void set_irq_flags(unsigned int irq, unsigned int iflags)
+ 		desc->status &= ~IRQ_NOAUTOEN;
+ 	raw_spin_unlock_irqrestore(&desc->lock, flags);
+ }
++EXPORT_SYMBOL_GPL(set_irq_flags); /* Temporary: needed for WRVIC */
+ 
+ void __init init_IRQ(void)
+ {
+diff --git a/kernel/irq/handle.c b/kernel/irq/handle.c
+index 27e5c69..49e7565 100644
+--- a/kernel/irq/handle.c
++++ b/kernel/irq/handle.c
+@@ -276,6 +276,7 @@ struct irq_desc *irq_to_desc(unsigned int irq)
+ {
+ 	return (irq < NR_IRQS) ? irq_desc + irq : NULL;
+ }
++EXPORT_SYMBOL_GPL(irq_to_desc); /* Temporary: needed for WRVIC */
+ 
+ struct irq_desc *irq_to_desc_alloc_node(unsigned int irq, int node)
+ {
+-- 
+1.5.6.5
+

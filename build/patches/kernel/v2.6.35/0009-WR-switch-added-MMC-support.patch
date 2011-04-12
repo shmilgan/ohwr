@@ -1,0 +1,42 @@
+From 1a730512f5e6bb1dcdaf5d2e57176ab87c61d481 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 12 Apr 2011 14:03:48 +0200
+Subject: [PATCH] WR switch: added MMC support
+
+---
+ arch/arm/mach-at91/board-whiterabbit-mch.c |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
+
+diff --git a/arch/arm/mach-at91/board-whiterabbit-mch.c b/arch/arm/mach-at91/board-whiterabbit-mch.c
+index e19ab93..66a6aa7 100644
+--- a/arch/arm/mach-at91/board-whiterabbit-mch.c
++++ b/arch/arm/mach-at91/board-whiterabbit-mch.c
+@@ -123,6 +123,16 @@ static struct at91_eth_data wr_mch_macb_data __initdata = {
+ };
+ 
+ /*
++ * MCI (SD/MMC)
++ */
++static struct at91_mmc_data __initdata ek_mmc_data = {
++	.wire4          = 1,
++	.det_pin        = AT91_PIN_PE18,
++	.wp_pin         = AT91_PIN_PE19,
++//     .vcc_pin        = ... not connected
++};
++
++/*
+  * WhiteRabbit NIC (wr-nic) stub
+  */
+ 
+@@ -344,6 +354,8 @@ static void __init wr_mch_board_init(void)
+ 	 */
+ 	at91_add_device_i2c(NULL, 0);
+ 
++	at91_add_device_mmc(1, &ek_mmc_data);
++
+ 	/* initialise the NIC */
+ 	wr_mch_register_minic_port(0, PORT_UP,   0, FPGA_BASE_MINIC_UP0, WR_MINIC_IRQ_UP0);
+ 	wr_mch_register_minic_port(1, PORT_UP,   1, FPGA_BASE_MINIC_UP1, WR_MINIC_IRQ_UP1);
+-- 
+1.5.6.5
+

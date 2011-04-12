@@ -1,0 +1,24 @@
+From c99a8d1f7ee6f925223b3022c6583238023401dd Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 12 Apr 2011 14:02:24 +0200
+Subject: [PATCH] IRQ: export handle_bad_irq for WR switch modules
+
+---
+ kernel/irq/handle.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/kernel/irq/handle.c b/kernel/irq/handle.c
+index 49e7565..3b514a3 100644
+--- a/kernel/irq/handle.c
++++ b/kernel/irq/handle.c
+@@ -42,6 +42,7 @@ void handle_bad_irq(unsigned int irq, struct irq_desc *desc)
+ 	kstat_incr_irqs_this_cpu(irq, desc);
+ 	ack_bad_irq(irq);
+ }
++EXPORT_SYMBOL_GPL(handle_bad_irq); /* Temporary: needed for WRVIC */
+ 
+ #if defined(CONFIG_SMP) && defined(CONFIG_GENERIC_HARDIRQS)
+ static void __init init_irq_default_affinity(void)
+-- 
+1.5.6.5
+
