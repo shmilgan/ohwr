@@ -36,7 +36,7 @@
 @setchapternewpage off
 
 @set update-month April 2011
-@set release v2011-04-06
+@set release v2011-04-11
 
 @finalout
 
@@ -195,16 +195,18 @@ have a similar prefix for the same reason).
         the overhead of re-downloading everything.
 
 @item WRS_WR_REPOSITORY
-	The @i{url} of the @i{svn} repository for @i{White Rabbit}.
+s	The @i{url} of the @i{svn} repository for @i{White Rabbit}.
         It defaults to the official place in @i{ohwr.org} but may be
-        pre-set to a local copy. See @ref{The OHWR Repository} below
-        about how to build a local copy of the repository.
+        pre-set to a local copy (e.g.:
+	@code{file:///opt/ohwr-svn/white-rabbit}.  See @ref{The OHWR
+        Repository} below about how to build a local copy of the repository.
 
 @item CROSS_COMPILE
 	The variable is the usual cross-compilation prefix. For example,
         @code{arm-linux-} if you have @i{arm-linux-gcc} in your path,
         or a full pathname without the trailing @code{gcc}. If unset,
         it defaults to the compiler that @i{buildroot} self-builds.
+        See @ref{The Compiler} for some more details.
 
 @end table
 
@@ -250,7 +252,7 @@ point to a local checkout (use a @code{file://} notation), but you
 can also have the complete history of the repository in your local
 computer.  If you are not interested, you can skip this section.
 
-@strong{Note:} instead of this procedure, you may prefer @i{git-svn},
+@strong{Attention:} instead of this procedure, you may prefer @i{git-svn},
 which is not described here at this point
 @c FIXME: git-svn
 
@@ -319,7 +321,13 @@ As an alternative, you can run the individual script within
 If you just want to build stuff, with no concern about network
 downloads and without even knowing what is happening, just create a
 directory where you want the output to be generated and start
-compilation. Note that it takes around 3GB.  Then:
+compilation. Note that it takes around 3GB.
+
+If possible, I strongly suggest to at least set the environment variable
+@code{WRS_WR_REPOSITORY} to @code{file:///opt/ohwr-svn/white-rabbit}
+or equivalent.
+
+Then run:
 
 @example
    /path/to/wrs_build/wrs_build-all
@@ -382,7 +390,7 @@ quite unlikely yours has.
 
 In practice, you may want to set @code{CROSS_COMPILE} when you compile
 the boot loader and kernel by themselves, and avoid it when compiling
-it all.
+the complete package.
 
 @c ##########################################################################
 @node Buildroot, The IPL, The Compiler, Top
@@ -407,7 +415,7 @@ you checked out the repository, without the @code{trunk} path
 component. For example:
 
 @example
-   export WRS_WR_REPOSITORY=file:///opt/ohwr/checkout/white-rabbit
+   export WRS_WR_REPOSITORY=file:///opt/ohwr-svn/white-rabbit
 @end example
 
 If you want to change the configuration, you can do so after the first
@@ -416,6 +424,11 @@ and run @code{make menuconfig}. After making your choices, copy back
 the file @code{.config} to
 @code{patches/buildroot/buildroot-config-wrswitch} in this package.
 
+You can also set @code{WRS_BUILDROOT_CONFIG} to the full pathname of
+your configuration file of choice. The file must be a copy of the
+@code{.config} after the @code{make menuconfig} step described above.
+Note that if the variable is not pointing to a regular file it is
+ignored with a simple warning -- rather than stopping the build procedure.
 
 @c ##########################################################################
 @node The IPL, The Boot Loader, Buildroot, Top
@@ -447,7 +460,28 @@ useful -- or may not.
 @node The Linux Kernel, The Complete Filesystem, The Boot Loader, Top
 @chapter The Linux Kernel
 
-Not compiled by this package, yet.
+The kernel is currently version 2.6.35, compiled from an uncompressed
+tarball (so not within a @i{git} repository).  The the upstream
+vanilla kernel, local patches are applied (they come from a @i{git}
+repository, but they are currently applied with a simple @i{patch}
+command).
+
+The configuration being used is copied from this package: it is
+different from the default set forth by the patches
+(i.e. @code{wrswitchv2_defconfig}) because it adds support for the MMC
+card and NFS-Root. Such changes will be integrated in the kernel sources.
+
+If you want to change the configuration, you can do so after the first
+build iteration: change directory to @code{build/kernel}
+and run @code{make menuconfig}. After making your choices, copy back
+the file @code{.config} to
+@code{patches/kernel/v2.6.35/linux-config-wrswitch} in this package.
+
+You can also set @code{WRS_KERNEL_CONFIG} to the full pathname of
+your configuration file of choice. The file must be a copy of the
+@code{.config} after the @code{make menuconfig} step described above.
+Note that if the variable is not pointing to a regular file it is
+ignored with a simple warning -- rather than stopping the build procedure.
 
 @c ##########################################################################
 @node The Complete Filesystem,  , The Linux Kernel, Top
