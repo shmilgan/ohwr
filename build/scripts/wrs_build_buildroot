@@ -76,7 +76,7 @@ if [ -d $repodir ]; then
 else
     # The repository is remote, then try wget
     wrs_echo "Dowloading packages from $WRS_WR_REPOSITORY"
-    wget -nd -np -nc -nv -r $WRS_WR_REPOSITORY/pkg/buildroot-pkg/
+    wget -nd -np -nc -nv -r $WRS_WR_REPOSITORY/trunk/pkg/buildroot-pkg/
 fi
 
 # buildroot wants its own guest source packages to be within its own dir..
