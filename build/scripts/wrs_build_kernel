@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# check variables, like all scripts herein do
+WRS_SCRIPT_NAME=$(basename $0)
+if [ -z "$WRS_BASE_DIR" ]; then
+    echo "$0: Plesae set WRS_BASE_DIR" >& 2
+    exit 1
+fi
+. ${WRS_BASE_DIR}/scripts/wrs_functions
+
+wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR WRS_WR_REPOSITORY CROSS_COMPILE
+
+wrs_echo "--- Linux kernel for switch"
+zipname="buildroot-pkg/linux-2.6.35.tar.bz2"
+wrs_download $zipname
+
+mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
+mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
+
+# go to the build dir and compile it, using our configuration
+cd $WRS_OUTPUT_DIR/build
+dirname="linux-2.6.35"
+rm -rf $dirname
+tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
+
+# apply patches
+cd $dirname
+for n in ${WRS_BASE_DIR}/patches/kernel/v2.6.35/00*; do
+    patch -p1 < $n || wrs_die "patch kernel"
+done
+
+
+# copy the config and replace "-j" level. First remove it in case it's left in
+CFG=$WRS_BASE_DIR/patches/kernel/v2.6.35/linux-config-wrswitch
+if [ "x$WRS_KERNEL_CONFIG" != "x" ]; then
+    if [ -f $WRS_KERNEL_CONFIG ]; then
+	CFG=$WRS_KERNEL_CONFIG
+    else
+	wrs_warn "WRS_KERNEL_CONFIG is not a regularname: ignoring it"
+	sleep 3
+    fi
+fi
+
+cp $CFG .config
+export ARCH=arm
+make oldconfig  || wrs_die "kernel config"
+make $WRS_MAKE_J uImage modules  || wrs_die "kernel compilation"
+
+cp arch/$ARCH/boot/uImage $(find . -name '*.ko') $WRS_OUTPUT_DIR/images
