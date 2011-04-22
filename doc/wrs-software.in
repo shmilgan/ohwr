@@ -1,0 +1,393 @@
+\input texinfo    @c -*-texinfo-*-
+%
+% wrs-software.in - main file for the documentation
+%
+%%%%
+
+%------------------------------------------------------------------------------
+%
+%                         NOTE FOR THE UNAWARE USER
+%                         =========================
+%
+%    This file is a texinfo source. It isn't the binary file of some strange
+%    editor of mine. If you want ASCII, you should "make wrs-software.txt".
+%
+%------------------------------------------------------------------------------
+
+%
+% This is not a conventional info file...
+% I use three extra features:
+%   - The '%' as a comment marker, if at beginning of line ("\%" -> "%")
+%   - leading blanks are allowed (this is something I can't live without)
+%   - braces are automatically escaped when they appear in example blocks
+%
+
+@comment %**start of header
+@documentlanguage en
+@documentencoding ISO-8859-1
+@setfilename wrs-software.info
+@settitle wrs-software
+@iftex
+@afourpaper
+@end iftex
+@paragraphindent none
+@comment %**end of header
+
+@setchapternewpage off
+
+@set update-month April 2011
+
+@finalout
+
+@titlepage
+@title White Rabbit Switch: software repository
+@subtitle @value{update-month} (git tag ``v2011-04-22-pre-merge'')
+
+@author Alessandro Rubini (@code{rubini@@gnudd.com})
+@end titlepage
+@headings single
+
+@c ##########################################################################
+@node Top, How is Testing Implemented, (dir), (dir)
+@top Introduction
+
+This package is meant to include all white-rabbit software.
+At this point, it only includes a few device drivers.
+
+If you are reading this document, you downloaded a release that
+checkpoints the situation before I undergo a major reorganisation of
+the code, which will merge in other software packages that were
+independently developed up to now.
+
+The documentation in this release comes from the various README files
+in the package, but will soon be reorganised.  This release
+has a specific @i{git} tag: @code{v2011-04-22-pre-merge}'' for
+easy recovery of this code status, if I make a mess with the
+merge process.
+
+
+@menu
+* The Software Package::        
+* The Software Package::        
+@end menu
+
+@c ##########################################################################
+@node The Software Package
+@chapter The Software Package
+
+This directory hosts the minic and nic drivers for the WR switch.  The
+minic, together with the underlying vhdl implementation, is work by
+Tomasz Wlostowski.  The rest and any bug is by Alessandro Rubini,
+but Tom helped integrating with the new vhdl and testing stuff.
+
+@menu
+* Directory Layout::            
+* Compiling the Kernel::        
+* Compiling the Modules::       
+* Integration with wrdev2::     
+@end menu
+
+@c ==========================================================================
+@node Directory Layout
+@section Directory Layout
+
+
+@table @code
+@item doc/wrs-software.in
+	This file.
+
+@item COPYING
+	GNU GPL Version 2. This package is copyrighted by CERN and
+	released as free software.
+
+@item Makefile
+	Used to compile the various drivers. You should set LINUX
+	in your environment or in the command line of "make".
+
+@item wr_vic/
+@itemx wr_minic/
+	The directories host original work by Tomasz, copied here from svn.
+
+@item patches/
+	The directory hosts the kernel patches, split by kernel versions.
+	I have a git tree for that, and the patches here have been
+	spit out by "git format-patch". See a later section about git.
+
+@item nic/
+	This is the new driver, for the new logic design.
+@end table
+
+@c ==========================================================================
+@node Compiling the Kernel
+@section Compiling the Kernel
+
+To compile the kernel, you need to retrieve the pristine sources for
+2.6.35 and apply the patches for the switch. You can do that using git
+or with old-style tar+patch. See the subsection about how to get
+the sources.
+
+Once you have the wrswitch kernel, you should cd to its main directory
+and compile in this way. Note that the CROSS_COMPILE prefix may be the
+one you built using buildroot or more or less any other cross-gcc. The
+CROSS_COMPILE variable must end with the hyphen tha appears before "gcc"
+in the name of the actual compiler.
+
+@example
+   export ARCH=arm
+   export CROSS_COMPILE=/path/to/cross/arm-linux-
+   make wrswitchv2_defconfig
+   make uImage
+@end example
+
+Finally, copy the uImage to your tftp server directory, as the
+boot-loader in the switch is preconfigured to get a file called
+"uImage" from your tftp server.
+
+@example
+   cp arch/arm/boot/uImage /tftpboot
+@end example
+
+@c --------------------------------------------------------------------------
+@menu
+* Using Git::                   
+* Using Tar and Patch::         
+@end menu
+
+@node Using Git
+@subsection Using Git
+
+If you use git, you are expected to already have some copy of Linus'
+official tree. Let's say it's in /usr/src/linux-vanilla.git .  In that
+case, you should first check out 2.6.35 and then fetch the wrswitch
+branch. The git tree where I have the stuff is
+
+@example
+	git://gnudd.com/linux-wrswitchv2/
+@end example
+
+What follows is one possible way, adding branches to the vanilla
+tree. (I use different names for the various items to help the
+non-expert git user in differentiating them, a cleaner approach would
+be using "wrswtichv2" for all items in the different contexts).
+
+@example
+   cd /usr/src/linux-vanilla.git
+   git remote add gnudd git://gnudd.com/linux-wrswitchv2/
+   git fetch gnudd
+   git checkout -b wr-kernel gnudd/wrswitch2-dev
+@end example
+
+Af this point, you checkout is a new branch that corresponds to the
+"wrswitch2-dev" branch on my gnudd server.
+
+Another option is creating a different checkout that uses data from
+the Linus tree you already have on your system. (Strictly speaking,
+you can avoid creating the "linus" remote to fetch it, but I feel this
+is clearer).
+
+@example
+   export GIT_ALTERNATE_OBJECT_DIRECTORIES=/usr/src/linux-vanilla.git/objects
+   mkdir /usr/src/linux-wr
+   cd /usr/src/linux-wr
+   git init
+   git remote add linus /usr/src/linux-vanilla.git/objects
+   git remote add gnudd git://gnudd.com/linux-wrswitchv2/
+   git fetch linus
+   git fetch gnudd
+   git checkout -b wr-kernel gnudd/wrswitch2-dev
+@end example
+
+Please note that if you don't have a local "Linus" tree first, your
+fetch from gnudd will take several hours. You should first fetch from
+a mainstream server the official kernel to make this operation fast.
+
+To make the "GIT_ALTERNATE_OBJECT_DIRECTORIES" setting persistent, you
+can save it to local repository:
+
+  echo /usr/src/linux-vanilla/objects > .git/objects/info/alternates
+
+@c --------------------------------------------------------------------------
+@node Using Tar and Patch
+@subsection Using Tar and Patch
+
+If you are not a git user, you might apply the patches, with this
+procedure, using your national mirror instead of ch.kernel.org.
+Let's assume your starting current directory is the one where this
+README lives.
+
+@example
+   DOCDIR=$(/bin/pwd)
+   cd /usr/src/linux-wr
+   wget ftp://ftp.ch.kernel.org/pub/linux/kernel/v2.6/linux-2.6.35.tar.bz2
+   tar xjf linux-2.6.35.tar.bz2
+   mv linux-2.6.35/* linux-2.6.35/.??* .
+   rmdir linux-2.6.35
+   for n in in $DOCDIR/patches/2.6.35/*; do cat $n | patch -p1; done
+@end example
+
+
+@c ==========================================================================
+@node Compiling the Modules
+@section Compiling the Modules
+
+To compile the drivers please run "make", after setting up
+the proper environment variables:
+
+@table @code
+@item LINUX
+         should point to the kernel directory. For example,
+         export LINUX=/usr/src/linux-wr
+@item CROSS_COMPILE
+         should be the same prefix you used to cross-compile the
+         kernel. If CROSS_COMPILE_ARM is set, it is used as a
+         default (the name CROSS_COMPILE_ARM is used in wrdev2 scripts)
+@item ARCH
+         should be "arm", but the Makefile set it if not defined.
+@end table
+
+With the variables in place, after "make" you'll have a few kernel
+modules, with extension ".ko", that should be copied to the target
+system and loaded. Let's assume the target is T=192.168.1.23
+
+@example
+    scp $(find . -name '*.ko') root@@$T:/wr/lib/modules
+@end example
+
+The previous command assumes you either know the root password of your
+private key is authorised in the target system. The latter happens if
+you build the filesystem using wrdev2, which copies your public key to
+the target.
+
+@c ==========================================================================
+@node Integration with wrdev2
+@section Integration with wrdev2
+
+Tomasz released some scripts, as a stand-alone "wrdev2.tar.gz" package
+and available in the White Rabbit svn under "build_scripts". The svn
+version is better as the ramdisk is made using initramfs rather then
+ext2.gz.
+
+This code is replacing part of that material with different
+procedures, and integration is currently non-existent.
+
+You are expected to build the switch system using the other script-set
+and then replace the kernel and modules with what is available here.
+Over time I plan to integrate better, and possibly replace wrdev2 by
+bringing in here all the good material that is found there.
+
+
+@c ##########################################################################
+@node The NIC Driver
+@chapter The NIC Driver
+
+The @code{nic/} directory includes the NIC driver for white rabbit. It
+is work in progress.
+
+The has been laid out to be as understandable as possible, since I'm
+not the one who's going to debug it.
+
+These notes are for the ones who will debug my crap. The published one
+will be different, hopefully.
+
+@c ==========================================================================
+@node The Makefile
+@section The Makefile
+
+You can "export WRN_DEBUG=y" to force all pr_debug and netdev_dbg
+into real printks (with KERN_DEBUG priority: you get them in dmesg
+or you need to raise the console priority to see them on the console).
+
+@c ==========================================================================
+@node The Naming Conventions
+@section The Naming Conventions
+
+@table @code
+@item wrn_
+
+      as a prefix is used for all functions and macros, so you
+      immediately know if sth is ours or comes from elsewhere
+      (as an exception, names of our own bits and registers are kept
+      as I got them, the context should say sth about what they arr)
+
+@item wrn
+
+      is always a pointer to the wr-nic overall structure
+
+@item ep
+
+      is the pointer to the endpoint structure
+@item dev
+
+      is the pointer to the network device (device.c is an
+      exception, is uses "netdev" instead, sorry for the confusion)
+@end table
+
+@c ==========================================================================
+@node The NIC Files
+@section The NIC Files
+
+The module is called wr-nic.ko which comes from several object files.
+This is the layout. Files which need to be fixed have FIXME inside and
+in this list as well.
+
+@table @i
+@item ../wbgen-regs/
+
+        The directory includes the register lists. See the README
+	in there about how to recreate them.
+
+@item nic-hardware.h
+
+        This includes only #defines for magic project-wide constants.
+	It then includes the wbgen-generated headers for indivitual
+	register blocks.
+
+@item wr-nic.h
+
+        the header is used for sharing stuff between sources. Unlike
+        the previous one, which it includes, it define kernel-level
+	abstractions.
+
+@item module.c
+
+        registering and unregistering the module
+
+@item device.c
+
+        the actual probe and remove functions, and the driver structure
+
+@item endpoint.c
+
+        Talking with the actual endpoints, including the probe part.
+	Mii/phy stuff is here, as well as the polling timer for link status.
+
+@item nic-core.c
+
+        standard networking stuff: interrupts and so on
+
+@item ethtool.c
+
+        ethtool operations
+
+@item pps.c
+
+        the pulse-per-second mechanism. This might want to be registered
+        in Linux using drivers/pps, but it must be looked at. This
+        file is currently registering itself as a timesource.
+
+@item timestamp.c
+
+        all the stuff related to timestamping
+
+@item dmtd.c
+
+        calibration and readout
+
+@end table
+@c ##########################################################################
+@iftex
+@contents
+@end iftex
+
+@bye
+
