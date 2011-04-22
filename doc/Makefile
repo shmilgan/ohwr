@@ -1,7 +1,7 @@
 #
 # Makefile for the documentation directory
 #
-# Copyright 1994,2000,2010   Alessandro Rubini <rubini@linux.it>
+# Copyright 1994,2000,2010,2011   Alessandro Rubini <rubini@linux.it>
 #
 #################
 #
@@ -29,8 +29,9 @@ TEXI = $(INPUT:.in=.texi)
 .SUFFIXES: .in .texi .info .html .txt
 
 .in.texi:
-	@rm -f $@ 2> /dev/null
+	@rm -f $@
 	sed -f ./infofilter $< > $@
+	emacs -batch --no-site-file -l fixinfo $@
 	chmod -w $@
 
 # unfortuantely implicit rules are not concatenated, so force a make run
