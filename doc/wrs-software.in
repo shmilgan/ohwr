@@ -35,13 +35,13 @@
 
 @setchapternewpage off
 
-@set update-month April 2011
+@set update-month May 2011
 
 @finalout
 
 @titlepage
 @title White Rabbit Switch: software repository
-@subtitle @value{update-month} (git tag ``v2011-04-22-pre-merge'')
+@subtitle @value{update-month}
 
 @author Alessandro Rubini (@code{rubini@@gnudd.com})
 @end titlepage
@@ -52,39 +52,44 @@
 @top Introduction
 
 This package is meant to include all white-rabbit software.
-At this point, it only includes a few device drivers.
+At this point, it includes part of it but it is being worked on.
+@c FIXME
 
-If you are reading this document, you downloaded a release that
-checkpoints the situation before I undergo a major reorganisation of
-the code, which will merge in other software packages that were
-independently developed up to now.
-
-The documentation in this release comes from the various README files
-in the package, but will soon be reorganised.  This release
-has a specific @i{git} tag: @code{v2011-04-22-pre-merge}'' for
-easy recovery of this code status, if I make a mess with the
-merge process.
-
+Please note that the documentation itself is split in three different
+documents, this includes only part of the story.
 
 @menu
 * The Software Package::        
-* The Software Package::        
+* Compiling the Kernel::        
+* Compiling Kernel Modules::    
+* The NIC Driver::              
 @end menu
 
 @c ##########################################################################
 @node The Software Package
 @chapter The Software Package
 
-This directory hosts the minic and nic drivers for the WR switch.  The
-minic, together with the underlying vhdl implementation, is work by
-Tomasz Wlostowski.  The rest and any bug is by Alessandro Rubini,
-but Tom helped integrating with the new vhdl and testing stuff.
+The package hosts the minic and nic drivers for the WR switch, the
+user space code, build scripts and testing procedures.  The build
+scripts and test procedures are documented in separate files (pdf and
+all the other formats are available).
+
+To compile the documentation you are expected to have @i{emacs},
+@i{texinfo} and @i{pdftex} installed.  @i{emacs} is used to recreate
+the ``prev'', ``next'', ``up'' links used by @i{texinfo}.
+
+While the documentation is mainly my work, most of the code here is not
+mine. Tomasz Wlostowski and Maciej Lipinski wrote most of the vhdl and
+user-space code; Emilio Cota, with Tomasz, wrote the initial kernel
+space implementation; Miguel Baizan and Juan Luis Manas wrote the RTU code.
+
+There are many more people involved in White Rabbit and I'm clearly
+misrepresenting most of them here.  If you are involved and you are
+editing this file, please add your name in all the proper places.
 
 @menu
 * Directory Layout::            
-* Compiling the Kernel::        
-* Compiling the Modules::       
-* Integration with wrdev2::     
+* Role of this document::       
 @end menu
 
 @c ==========================================================================
@@ -93,43 +98,70 @@ but Tom helped integrating with the new vhdl and testing stuff.
 
 
 @table @code
-@item doc/wrs-software.in
-	This file.
-
 @item COPYING
-	GNU GPL Version 2. This package is copyrighted by CERN and
-	released as free software.
+	GNU GPL Version 2. This package is copyrighted by CERN and others,
+        and is released as free software.
 
-@item Makefile
-	Used to compile the various drivers. You should set LINUX
-	in your environment or in the command line of "make".
+@item doc/wrs-software.in
+	Source for this documentation.
 
-@item wr_vic/
-@itemx wr_minic/
-	The directories host original work by Tomasz, copied here from svn.
+@item doc/wrs-build.in
+	Documentation for the build scripts.
+
+@item doc/wrs-test.in
+	Documentation for the testing code.
+
+@item build/
+	Build scripts used to recompile all the software, documented
+        in doc/wrs-build* .
+
+@item kernel/
+	Device drivers and support files. Remember to set the @code{LINUX}
+        environment variable and your @code{CROSS_COMPILE} prefix in    
+        order to compile successfully. If you compile with the
+        build scripts this is done automatically for you.
+
+@item userspace/
+	Applications used in the switch itself. Again, you need
+        @code{CROSS_COMPILE} to be set unless you follow the build
+        scripts.
+
+@item test/
+	Test procedures, documented in doc/wrs-test* .
 
 @item patches/
-	The directory hosts the kernel patches, split by kernel versions.
-	I have a git tree for that, and the patches here have been
-	spit out by "git format-patch". See a later section about git.
+	The directory hosts patches for both the kernel and
+        other packages (as needed by the build scripts).
+        Some of the patches here have been spit out by "git format-patch".
 
-@item nic/
-	This is the new driver, for the new logic design.
 @end table
 
 @c ==========================================================================
+@node Role of this document
+@section Role of this document
+
+While the overall software compilation is described in a separate
+document, developers usually need to compile just the sub-parts they
+are working with, or get some insight about what the software is doing.
+
+This document, thus, collects notes about compilation of individual parts
+separately from the build scripts, as well as some information about
+the NIC driver and possibly (over time) other software components.
+
+
+@c ##########################################################################
 @node Compiling the Kernel
-@section Compiling the Kernel
+@chapter Compiling the Kernel
 
 To compile the kernel, you need to retrieve the pristine sources for
 2.6.35 and apply the patches for the switch. You can do that using git
-or with old-style tar+patch. See the subsection about how to get
-the sources.
+or with old-style tar+patch. See the section about how to get
+the sources with @i{git} or @i{tar} and @i{patch}.
 
 Once you have the wrswitch kernel, you should cd to its main directory
 and compile in this way. Note that the CROSS_COMPILE prefix may be the
-one you built using buildroot or more or less any other cross-gcc. The
-CROSS_COMPILE variable must end with the hyphen tha appears before "gcc"
+one you built using buildroot or any other @code{arm-linux-gcc}. The
+CROSS_COMPILE variable must end with the hyphen that appears before "gcc"
 in the name of the actual compiler.
 
 @example
@@ -147,16 +179,15 @@ boot-loader in the switch is preconfigured to get a file called
    cp arch/arm/boot/uImage /tftpboot
 @end example
 
-@c --------------------------------------------------------------------------
 @menu
 * Using Git::                   
-* Using Tar and Patch::         
 @end menu
 
+@c ==========================================================================
 @node Using Git
-@subsection Using Git
+@section Using Git
 
-If you use git, you are expected to already have some copy of Linus'
+If you use @i{git}, you are expected to already have some copy of Linus'
 official tree. Let's say it's in /usr/src/linux-vanilla.git .  In that
 case, you should first check out 2.6.35 and then fetch the wrswitch
 branch. The git tree where I have the stuff is
@@ -206,31 +237,35 @@ can save it to local repository:
 
   echo /usr/src/linux-vanilla/objects > .git/objects/info/alternates
 
-@c --------------------------------------------------------------------------
+@c ==========================================================================
 @node Using Tar and Patch
-@subsection Using Tar and Patch
+@section Using Tar and Patch
 
 If you are not a git user, you might apply the patches, with this
 procedure, using your national mirror instead of ch.kernel.org.
-Let's assume your starting current directory is the one where this
-README lives.
+Let's assume your starting current directory is the @code{wr-switch-sw}
+main directory
 
 @example
    DOCDIR=$(/bin/pwd)
+   mkdir /usr/src/linux-wr
    cd /usr/src/linux-wr
    wget ftp://ftp.ch.kernel.org/pub/linux/kernel/v2.6/linux-2.6.35.tar.bz2
    tar xjf linux-2.6.35.tar.bz2
    mv linux-2.6.35/* linux-2.6.35/.??* .
    rmdir linux-2.6.35
-   for n in in $DOCDIR/patches/2.6.35/*; do cat $n | patch -p1; done
+   for n in in $DOCDIR/patches/kernel/v2.6.35/*patch; do
+       cat $n | patch -p1
+   done
 @end example
 
 
-@c ==========================================================================
-@node Compiling the Modules
-@section Compiling the Modules
+@c ##########################################################################
+@node Compiling Kernel Modules
+@chapter Compiling Kernel Modules
 
-To compile the drivers please run "make", after setting up
+To compile the kernel drivers you need to run "make" in the @code{kernel/}
+subdirectory of the package, after setting up
 the proper environment variables:
 
 @table @code
@@ -242,7 +277,7 @@ the proper environment variables:
          kernel. If CROSS_COMPILE_ARM is set, it is used as a
          default (the name CROSS_COMPILE_ARM is used in wrdev2 scripts)
 @item ARCH
-         should be "arm", but the Makefile set it if not defined.
+         should be "arm", but the Makefile sets it if not predefined.
 @end table
 
 With the variables in place, after "make" you'll have a few kernel
@@ -255,39 +290,27 @@ system and loaded. Let's assume the target is T=192.168.1.23
 
 The previous command assumes you either know the root password of your
 private key is authorised in the target system. The latter happens if
-you build the filesystem using wrdev2, which copies your public key to
-the target.
-
-@c ==========================================================================
-@node Integration with wrdev2
-@section Integration with wrdev2
-
-Tomasz released some scripts, as a stand-alone "wrdev2.tar.gz" package
-and available in the White Rabbit svn under "build_scripts". The svn
-version is better as the ramdisk is made using initramfs rather then
-ext2.gz.
-
-This code is replacing part of that material with different
-procedures, and integration is currently non-existent.
-
-You are expected to build the switch system using the other script-set
-and then replace the kernel and modules with what is available here.
-Over time I plan to integrate better, and possibly replace wrdev2 by
-bringing in here all the good material that is found there.
+you build the filesystem using wrdev2 or the build scripts
+part of this package.
 
 
 @c ##########################################################################
 @node The NIC Driver
 @chapter The NIC Driver
 
-The @code{nic/} directory includes the NIC driver for white rabbit. It
-is work in progress.
+The @code{kernel/nic/} directory includes the NIC driver for white rabbit.
 
 The has been laid out to be as understandable as possible, since I'm
 not the one who's going to debug it.
 
 These notes are for the ones who will debug my crap. The published one
 will be different, hopefully.
+
+@menu
+* The Makefile::                
+* The Naming Conventions::      
+* The NIC Files::               
+@end menu
 
 @c ==========================================================================
 @node The Makefile
@@ -391,3 +414,5 @@ in this list as well.
 
 @bye
 
+
+@c  LocalWords:  texinfo pdftex wrswitch linux
