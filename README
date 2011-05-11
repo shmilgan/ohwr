@@ -7,8 +7,27 @@ All documentation lives in doc/ , where all *.in files are the sources
 (texinfo files, plain ascii, but please ask me before adding or
 removing chapter or sections -- or emacs and its texinfo-mode).
 
-When tarball are released, output files are part of the archive.
+Currently, the input files are the following ones:
 
-As I write this (Apr 2011) this repository is somewhat messy because
+doc/wrs-software.in
+
+	top-level documentation. It has some duplication with other files
+	because it was born as an alternative setup to the svn repository
+	and build scripts.
+
+doc/wrs-build.in
+
+	documentation about the complete build procedure (i.e., the
+	part that has been documented so far). Directly related code
+	lives in the build/ subdirectory of this package, the other
+	is elsewhere (kernel/ userspace/ and patches/so on).
+
+doc/wrs-test.in
+
+	documentation about the testing procedures. Associated code libce
+
+When a tar archive is released, precompiled output files are included.
+
+As I write this (May 2011) this repository is somewhat messy because
 it's merge-in-progress between several packages written independently.
 
