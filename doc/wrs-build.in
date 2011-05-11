@@ -42,7 +42,7 @@
 
 @titlepage
 @title White Rabbit Switch: software build scripts
-@subtitle @value{update-month} (git tag @value{release})
+@subtitle @value{update-month}
 @subtitle How to rebuild the whole software package from sources
 @author Alessandro Rubini (@code{rubini@@gnudd.com})
 @end titlepage
