@@ -1,0 +1,66 @@
+#-*-shell-script-*-
+flush
+verbose 9 /dev/stdout
+
+### I run this test with a 4-cable octopus
+iface tap1 tap2 tap3 tap4
+
+echo testing from 32 different senders plus another
+send 0 32 00:00 +1 ff:ff:ff:ff:ff:ff
+expect 0 32 32 32
+send 1 32 00:00 22:00:10:00:00:00 +1
+expect 32 0 0 0
+
+echo testing from 64 different senders plus another
+send 0 64 00:00 +1 ff:ff:ff:ff:ff:ff
+expect 0 64 64 64
+send 1 64 00:00 22:00:10:00:00:00 +1
+expect 64 0 0 0
+
+echo testing from 128 different senders plus another
+send 0 128 00:00 +1 ff:ff:ff:ff:ff:ff
+expect 0 128 128 128
+send 1 128 00:00 22:00:10:00:00:00 +1
+expect 128 0 0 0
+
+echo testing from 256 different senders plus another
+send 0 256 00:00 +1 ff:ff:ff:ff:ff:ff
+expect 0 256 256 256
+send 1 256 00:00 22:00:10:00:00:00 +1
+expect 256 0 0 0
+
+echo testing from 512 different senders plus another
+send 0 512 00:00 +1 ff:ff:ff:ff:ff:ff
+expect 0 512 512 512
+send 1 512 00:00 22:00:10:00:00:00 +1
+expect 512 0 0 0
+
+echo testing from 1024 different senders plus another
+send 0 1024 00:00 +1 ff:ff:ff:ff:ff:ff
+expect 0 1024 1024 1024
+send 1 1024 00:00 22:00:10:00:00:00 +1
+expect 1024 0 0 0
+
+echo testing from 2048 different senders plus another
+send 0 2048 00:00 +1 ff:ff:ff:ff:ff:ff
+expect 0 2048 2048 2048
+send 1 2048 00:00 22:00:10:00:00:00 +1
+expect 2048 0 0 0
+
+echo testing from 4096 different senders plus another
+send 0 4096 00:00 +1 ff:ff:ff:ff:ff:ff
+expect 0 4096 4096 4096
+send 1 4096 00:00 22:00:10:00:00:00 +1
+expect 4096 0 0 0
+
+echo testing from 8192 different senders plus another
+send 0 8192 00:00 +1 ff:ff:ff:ff:ff:ff
+expect 0 8192 8192 8192
+send 1 8192 00:00 22:00:10:00:00:00 +1
+expect 8192 0 0 0
+
+echo testing from 16384 different senders plus another
+send 0 16384 00:00 +1 ff:ff:ff:ff:ff:ff
+expect 0 16384 16384 16384
+send 1 16384 00:00 22:00:10:00:00:00 +1
+expect 16384 0 0 0

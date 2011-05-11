@@ -1,0 +1,9 @@
+
+echo sleep 2s
+sleep 2
+echo sleep 2s
+sleep 0 2000
+repeat x 10
+   echo sleep .5s
+   sleep 0 500
+endr x

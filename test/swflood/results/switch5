@@ -1,0 +1,63 @@
+
+spusa$ sudo ./swflood cfg-test/tablesize-test
+
+
+testing from 32 different senders plus another
+# testing from 32 different senders plus another
+cfg-test/tablesize-test:10: expect failed
+cfg-test/tablesize-test:10: expect failed
+expected:     0    32    32    32
+received:     0    31    31    31
+cfg-test/tablesize-test:12: expect failed
+cfg-test/tablesize-test:12: expect failed
+expected:    32     0     0     0
+received:    31     0     0     0
+testing from 64 different senders plus another
+# testing from 64 different senders plus another
+cfg-test/tablesize-test:16: success
+cfg-test/tablesize-test:18: success
+testing from 128 different senders plus another
+# testing from 128 different senders plus another
+cfg-test/tablesize-test:22: success
+cfg-test/tablesize-test:24: success
+testing from 256 different senders plus another
+# testing from 256 different senders plus another
+cfg-test/tablesize-test:28: success
+cfg-test/tablesize-test:30: success
+testing from 512 different senders plus another
+# testing from 512 different senders plus another
+cfg-test/tablesize-test:34: success
+cfg-test/tablesize-test:36: success
+testing from 1024 different senders plus another
+# testing from 1024 different senders plus another
+cfg-test/tablesize-test:40: success
+cfg-test/tablesize-test:42: success
+testing from 2048 different senders plus another
+# testing from 2048 different senders plus another
+cfg-test/tablesize-test:46: success
+cfg-test/tablesize-test:48: expect failed
+cfg-test/tablesize-test:48: expect failed
+expected:  2048     0     0     0
+received:  2048     0  1017  1017
+testing from 4096 different senders plus another
+# testing from 4096 different senders plus another
+cfg-test/tablesize-test:52: success
+cfg-test/tablesize-test:54: expect failed
+cfg-test/tablesize-test:54: expect failed
+expected:  4096     0     0     0
+received:  4096     0  3065  3065
+testing from 8192 different senders plus another
+# testing from 8192 different senders plus another
+cfg-test/tablesize-test:58: success
+cfg-test/tablesize-test:60: expect failed
+cfg-test/tablesize-test:60: expect failed
+expected:  8192     0     0     0
+received:  8192     0  7161  7161
+testing from 16384 different senders plus another
+# testing from 16384 different senders plus another
+cfg-test/tablesize-test:64: success
+cfg-test/tablesize-test:66: expect failed
+cfg-test/tablesize-test:66: expect failed
+expected: 16384     0     0     0
+received: 16384     0 15353 15353
+spusa$
