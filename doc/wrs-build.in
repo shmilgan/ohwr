@@ -35,8 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month April 2011
-@set release v2011-04-11
+@set update-month May 2011
 
 @finalout
 
@@ -52,8 +51,8 @@
 @node Top
 @top Introduction
 
-This package includes the software build procedures for the White
-Rabbit Switch.  Currently the software has been used on version 2 of
+This document describes the software build procedures for the White
+Rabbit Switch.  Currently the procedure described is in use for version 2 of
 the hardware project.
 
 If you don't need to make your hands dirty, just skip to @ref{Quick
@@ -74,30 +73,30 @@ Build}.
 @node Overview
 @chapter Overview
 
-This package builds over previous work by Tomasz Wlostowski, who first
+The scripts build over previous work by Tomasz Wlostowski, who first
 made the whole thing work and stick together -- a serious result from
 serious efforts, I'm really amazed by his achievements.
 
-The rewriting described in this document (and embodied in ``this package''
-as I'll call it through the following pages) is meant to make the stuff
+The rewriting described in this document (and embodied in the @code{build/}
+subdirectory of the @code{wr-switch-sw} package) is meant to make the stuff
 more maintainable over time.  I'm an old-fashioned follower of the rule
 ``first make it work then make it work well'', and this step is expected
 to make it work well for everybody.
 
-The purpose of this package is in achieving the following targets:
+The purpose of the build-script rewrite is achieving the following targets:
 
 @itemize @bullet
 @item One-command build.
-	The non-technical user should be able to rebuild the who software
+	The non-technical user should be able to rebuild the whole software
         package with a single command. This includes the IPL and boot-loader
-        even though, that are expected to be pre-installed in the switch with
+        even though they are expected to be pre-installed in the switch with
         no real need for upgrading.
 @item Sub-package separation.
 	Users and developers should be able to rebuild each
         sub-package by itself. Sub-packages are the kernel,
 	@i{buildroot}, libraries and so on. If you have a problem (or a
         customization you need on one sub-package), you should be able to work
-        on the part ignoring the whole as much as possible.
+        on the specific part ignoring the whole as much as possible.
 @item Documentation.
 	The steps are documented as much as possible, because mishaps
         do happen, and you should easily understand where the problem is.
@@ -105,7 +104,7 @@ The purpose of this package is in achieving the following targets:
 	People with non-mainstream network connections would rather
 	avoid downloading the same package over and over. Thus, a centralized
 	download directory is defined where all external packages are
-        retrieved. Even if you ``make distclean'' in this package you
+        retrieved. Even if you ``make distclean'' in the build scripts you
         won't need re re-get everything from the network.  In a similar
         mood, people who already have a local copy of the big packages
         (kernel, u-boot, white-rabbit svn) won't need to re-download not
@@ -137,7 +136,8 @@ to even identify them.  To relieve the user from possible pain,
 internally the name @i{bash} is used instead of @i{sh}, so things
 should work even if your default shell is @i{ash} or @i{dash}.
 
-Similarly, most likely directory names with spaces won't work, as not all
+Similarly, the scripts are likely to fail if you use spaces in directory
+names; that's because not all
 uses of shell variables are properly quoted. I urge you to use directory names
 with no spaces in them, or to submit a patch to fix the scripts.
 
@@ -155,8 +155,8 @@ described below.
 
 When rebuilding everything, the defaults are applied for each unset
 variable; but when rebuilding a sub-package you'll need to set the
-variables beforehand.  Each sub-package complains if required
-variables are not pre-set when you compile it.
+variables beforehand.  Each sub-package complains if it needs variables
+that are not set in your environment.
 
 The following variables are used in one or more parts of the scripts;
 let me restate, though, that sensible default values apply by default,
@@ -165,24 +165,26 @@ so this list is mainly for your curiosity unless you are a developer.
 They are listed in an order that seems logical to me, but may sound
 random to a different person, please forgive this.  Most of the
 variables are prefixed with @code{WRS_} to make them easily identified
-in the overall mess of variables and command names (scripts used here
+in the overall mess of variables and command names (all scripts used here
 have a similar prefix for the same reason).
 
 @table @code
 @item WRS_BASE_DIR
-	The pathname of the build directory (i.e., the one above
-        the documentation directory). It is internally set to the directory
-        name of the main script. You can call the script from its
-        own directory (as @code{./wrs_build-all}) or from elsewhere,
-        by using a pathname to invoke it.  This variable can't be
+	The pathname of the build directory (i.e., the @code{build/}
+        subdirectory of @code{wr-switch-sw}).
+        The variable is internally set to the directory
+        name of the main script. Note that the script can't
+        be run from the same directory (i.e.: @code{./wrs_build-all}
+        is not allowed), you must call it from your output directory
+        using a pathname to  invoke it.  This variable can't be
         overridden in the main script, but must be pre-set if you run
         a sub-script to rebuild only part of the software suite.
 
 @item WRS_OUTPUT_DIR
 	The pathname of the directory where output is placed. It defaults
-        to the current directory when invoking the script (i.e., you
+        to the current directory whence you invoke the script (i.e., you
         can invoke @code{/path/to/wrs_build-all} to have all output
-        in the current directory, not within the source package.  Compilation
+        in the current directory).  Compilation
         happens in a @i{build} subdirectory of @code{WRS_OUTPUT_DIR},
         done-markers are placed in a @i{_done} subdirectory
         and final images are placed in a @i{images} subdirectory.
@@ -191,11 +193,12 @@ have a similar prefix for the same reason).
 	The directory where downloaded files are placed. If unset
         it defaults to @code{$WRS_OUTPUT_DIR/downloads}, which is
         created if needed.  By pre-setting this variable you can
-        simply remove the output directory to force a full rebuild, without
+        simply recursively delete
+        the output directory to force a full rebuild, without
         the overhead of re-downloading everything.
 
 @item WRS_WR_REPOSITORY
-s	The @i{url} of the @i{svn} repository for @i{White Rabbit}.
+	The @i{url} of the @i{svn} repository for @i{White Rabbit}.
         It defaults to the official place in @i{ohwr.org} but may be
         pre-set to a local copy (e.g.:
 	@code{file:///opt/ohwr-svn/white-rabbit}.  See @ref{The OHWR
@@ -235,9 +238,9 @@ one of the following places:
       @i{ohwr} web site.
 @end itemize
 
-The previous policy is implemented in @i{wrs_download}, in the file
+The policy just described is implemented in @i{wrs_download}, in the file
 @code{scripts/wrs_functions}, based on @code{download-info} in the
-main directory.
+main build directory.
 
 @c ==========================================================================
 @node The OHWR Repository
@@ -261,7 +264,7 @@ versions, or just diff among versions or run @code{svn log}, which
 will fail for White Rabbit over @u{http} due to the size of the
 repository itself.
 
-To make a local copy with @i{sbnsync} you can do as follows
+To make a local copy with @i{svnsync} you can do as follows
 (thanks to Francisco Juan for teaching me about this):
 
 @example
@@ -306,7 +309,7 @@ When the script builds each part (sub-package), it creates a file in
 the @code{build/_done} directory.
 
 When you rebuild everything, steps for which the marker file exists
-are not rebuilt. To force rebuilding of one specfici part, just remove
+are not rebuilt. To force rebuilding of one specific part, just remove
 the marker.  Markers are numbered, reflecting the order of compilation
 steps, but they also have a name: names like @code{02-u-boot} should be
 self-explicative.
@@ -321,7 +324,7 @@ As an alternative, you can run the individual script within
 If you just want to build stuff, with no concern about network
 downloads and without even knowing what is happening, just create a
 directory where you want the output to be generated and start
-compilation. Note that it takes around 3GB.
+compilation. Note that it takes around 3GB of storage.
 
 If possible, I strongly suggest to at least set the environment variable
 @code{WRS_WR_REPOSITORY} to @code{file:///opt/ohwr-svn/white-rabbit}
@@ -330,7 +333,7 @@ or equivalent.
 Then run:
 
 @example
-   /path/to/wrs_build/wrs_build-all
+   /path/to/wr-switch-sw/build/wrs_build-all
 @end example
 
 The script refuses to run from within the package itself, because
@@ -341,40 +344,59 @@ Note that progress messages are sent to @i{stderr}, so you may want to
 save @i{stdout} to a file, like this:
 
 @example
-   /path/to/wrs_build/wrs_build-all > logfile
+   /path/to/wr-switch-sw/build/wrs_build-all > logfile
 @end example
 
 The progress messages look like what is shown here below.  The log
 file will be rather big, as all the compilation steps are quite
 verbose.
 
+Please note that there are also a number of warning messages being
+printed to @i{stderr}. It's a few hundred lines over the few dozen
+minutes it takes to build @i{buildroot}, but you can safely ignore them,
+trusting the build process will complete successfully.
+
+@smallexample
+2011-05-11 20:05:57: --- Buildroot compiler and filesystem
+2011-05-11 20:05:57: Looking for file buildroot-2009.11.tar.bz2
+2011-05-11 20:05:57: Skip download of buildroot-2009.11.tar.bz2
+2011-05-11 20:06:10: Copied packages from /opt/ohwr-svn/white-rabbit/trunk/pkg/buildroot-pkg
+2011-05-11 20:06:10: Hardlinked packages from downloads to build place
+2011-05-11 20:23:51: --- AT91Boot
+2011-05-11 20:23:51: Looking for file AT91Bootstrap1.11.zip
+2011-05-11 20:23:51: Skip download of AT91Bootstrap1.11.zip
+2011-05-11 20:23:51: Patching AT91Boot
+2011-05-11 20:23:51: Building AT91Boot
+2011-05-11 20:23:51: --- U-Boot
+2011-05-11 20:23:51: Looking for file u-boot-1.3.4.tar.bz2
+2011-05-11 20:23:52: Skip download of u-boot-1.3.4.tar.bz2
+2011-05-11 20:23:55: Patching U-Boot
+2011-05-11 20:23:58: Building U-Boot
+2011-05-11 20:24:17: --- Linux kernel for switch
+2011-05-11 20:24:17: Looking for file buildroot-pkg/linux-2.6.35.tar.bz2
+2011-05-11 20:24:19: Skip download of buildroot-pkg/linux-2.6.35.tar.bz2
+2011-05-11 20:26:42: Complete build succeeded, apparently
+@end smallexample
+
+You may prefer to save @i{stderr} with @i{stdout} to the log file
+but still see the time-stamped messages from the scripts. In this
+case you can issue the following command -- which is what I used
+to generate the terse output shown above:
+
 @example
-   2011-04-06 08:56:56: --- Buildroot compiler and filesystem
-   2011-04-06 08:56:56: Looking for file buildroot-2009.11.tar.bz2
-   2011-04-06 08:56:56: Skip download of buildroot-2009.11.tar.bz2
-   [...]
-   2011-04-06 09:18:05: --- AT91Boot
-   2011-04-06 09:18:05: Looking for file AT91Bootstrap1.11.zip
-   2011-04-06 09:18:05: Skip download of AT91Bootstrap1.11.zip
-   2011-04-06 09:18:05: Patching AT91Boot
-   2011-04-06 09:18:05: Building AT91Boot
-   2011-04-06 09:18:06: --- U-Boot
-   2011-04-06 09:18:06: Looking for file u-boot-1.3.4.tar.bz2
-   2011-04-06 09:18:06: Skip download of u-boot-1.3.4.tar.bz2
-   2011-04-06 09:18:12: Patching U-Boot
-   2011-04-06 09:18:13: Building U-Boot
-   2011-04-06 09:18:27: Complete build succeed
+   /path/to/wr-switch-sw/build/wrs_build-all 2>&1 | tee logfile \
+        | Greg '^20..-..-.. ..:'
 @end example
 
-If you are lucky, everything completes by itself in a few dozen
-minutes and you'll find your final files in the @code{images}
+If you are lucky, everything completes by itself in quite some minutes,
+depending on you CPU, disk and network speed.
+At the end you'll find your final files in the @code{images}
 subdirectory.  If you are not too lucky, the build stops because
 you've found a bug in the build scripts; most likely because your
 setup differs from the ones we have been testing on.
 
-In order to re-run the build avoid any download, please remove (or
-rename) the @i{output/} directory, and re-run.
-
+In order to re-run the build from the beginning, please remove (or
+rename) the output directory and re-run.
 
 @c ##########################################################################
 @node The Compiler
@@ -386,7 +408,7 @@ different @code{CROSS_COMPILE} prefix in your environment, your own
 choice will be used by modifying the @i{buildroot} configuration file.
 Note, however, that not all cross-compilers will work (@i{buildroot}
 wants one that has been configured with @code{--sysroot} and it is
-quite unlikely yours has.
+quite unlikely yours has).
 
 In practice, you may want to set @code{CROSS_COMPILE} when you compile
 the boot loader and kernel by themselves, and avoid it when compiling
@@ -461,15 +483,17 @@ useful -- or may not.
 @chapter The Linux Kernel
 
 The kernel is currently version 2.6.35, compiled from an uncompressed
-tarball (so not within a @i{git} repository).  The the upstream
-vanilla kernel, local patches are applied (they come from a @i{git}
+tar file (so not within a @i{git} repository).  The upstream
+vanilla kernel is downloaded, then
+local patches are applied (they come from a @i{git}
 repository, but they are currently applied with a simple @i{patch}
 command).
 
 The configuration being used is copied from this package: it is
 different from the default set forth by the patches
 (i.e. @code{wrswitchv2_defconfig}) because it adds support for the MMC
-card and NFS-Root. Such changes will be integrated in the kernel sources.
+card and NFS-Root. A later release of this package may integrate
+the configuration within the kernel patches.
 
 If you want to change the configuration, you can do so after the first
 build iteration: change directory to @code{build/kernel}
@@ -499,4 +523,6 @@ Not compiled by this package, yet.
 
 @c  LocalWords:  gnudd titlepage iftex texinfo CERN timestamping smallexample
 @c  LocalWords:  LocalWords ietf timestamp misc timestamps ttstamp onestamp
-@c  LocalWords:  Tomasz Wlostowski buildroot distclean
+@c  LocalWords:  Tomasz Wlostowski buildroot distclean defconfig wrswitch REPO
+@c  LocalWords:  menuconfig config dataflash whiterabbit stdout stderr svnsync
+@c  LocalWords:  filesystem diff ohwr http mkdir linux rubini itemize
