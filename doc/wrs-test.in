@@ -35,15 +35,14 @@
 
 @setchapternewpage off
 
-@set update-month March 2011
-@set release v2011-03-10
+@set update-month May 2011
 
 @finalout
 
 @titlepage
 @title White Rabbit Switch: test procedures
 @subtitle @value{update-month}
-@subtitle A testing package for Ethernet switches
+@subtitle Testing tools for Ethernet switches
 
 @author Alessandro Rubini (@code{rubini@@gnudd.com})
 @end titlepage
@@ -53,34 +52,38 @@
 @node Top
 @top Introduction
 
-This small software package has been developed in the context of the
+The @code{test/} subdirectory of @code{wr-switch-sw}
+is part of the efforts related to the
 @i{White Rabbit} project, a multi-company multi-lab collaboration
-hosted at @code{ohwr.org}.  This package defines and implements
+hosted at @code{ohwr.org}.  The testing sub-package introduces
+some special-purpose tools and examples, in addition to
+defining and implementing
 testing procedures according to RFC-1242 and RFC-2544, as well as
-(in later versions), RFC-2285 and RFC-2889.
+RFC-2285 and RFC-2889.
 
-In this document, when I say @i{this package} I refer to, well, this
-package.  For me it is the tar file you downloaded (or the @i{git}
-tree you fetched), including both the code and the documentation.
+As I write this page (May 2011), the RFC-related tests are not yet
+available, but I suspect this introduction to remain in place for a
+while after being out of date -- so please check later pages to
+verify the status of testing code.
 
-This work has been developed with reference to the @i{White Rabbit}
-project but is not actually part of it; I wrote it on my own in my own
-time.
+In this document, when I say @i{this package} I refer to the @i{White
+Rabbit Switch Software} (a.k.a. @code{wr-switch-sw}) --
+the tar file you downloaded (or the @i{git} tree you
+fetched), including both the code and the documentation.
 
-Material (code and documentation) specifically written for this package
-is released according to the GNU GPL, version 2 or (at your option)
-any later version.  This excludes the RFC documents that are
-distributed in this package and any
-other works that may be added here in later versions. Any external
-contribution is clearly marked as such.
+Material (code and documentation) specifically written for this
+package is released according to the GNU GPL, version 2 or (at your
+option) any later version.  This excludes the RFC documents that are
+distributed in this package and any other works that may be added here
+in later versions. Any external contribution is clearly marked as
+such, unless the committer forgot to update the documentation.
 
-This package is released as a @i{git} tree, with date-based tags for
-revision points (e.g.: @code{v2011-02-21}).  I release often, in order
-to keep my mates up to date on my status, even if, for example, the
-first release only includes partial documentation and no code at all.
 
 @menu
 * How is Testing Implemented::  
+* Network Timestamping Overview::  
+* The Octopus::                 
+* Server and Client::           
 * Description of the Tests::    
 * How to Run the Test Suite::   
 * Results Collected on Various Switches::  
@@ -98,15 +101,13 @@ on hardware timestamping whenever possible.
 
 @menu
 * RFC Compliance::              
-* Network Timestamping Overview::  
-* Server and Client::           
 @end menu
 
 @c ==========================================================================
 @node RFC Compliance
 @section RFC Compliance
 
-The relevant RFC Documents are included in the @code{rfc} subdirectory
+The relevant RFC Documents are included in the @code{test/rfc} subdirectory
 of this package. They have been downloaded from the following locations:
 
 @smallexample
@@ -117,9 +118,9 @@ of this package. They have been downloaded from the following locations:
 @end smallexample
 
 I am not aware of other specifications about testing, so I just refer
-to these three.  All three documents have @i{informational}
-status. This is the role of each of them and how it has been used in
-developing this package:
+to these four files.  All documents have @i{informational}
+status. This is the role of each of them and how it is being used in
+developing the test programs:
 
 @itemize @bullet
 @item RFC-1242
@@ -154,19 +155,22 @@ developing this package:
 
     This is the equivalent of RFC-2544 for network topologies more complex
     than one-to-one environments.  At this point in time, I am not able to
-    run any such tests, but they will be added in later versions of this
-    package.  Unlike RFC-2544, this document doesn't define a
+    run any such tests, on the White Rabbit Switch,
+    but they will be added in later versions of this
+    package.  Meanwhile, the ``octopus'' (see @ref{The Octopus}) is
+    something that somehow approaches what the RFC suggests.
+    Unlike RFC-2544, this document doesn't define a
     @i{compliant} test environment.
 
 @end itemize
 
-The specifications for the testing are quite demanding. In particular,
-they make requirements for 
+The specifications for the testing are quite demanding.  Work described
+here tried to reach compliance, but we are not there as this document
+is being drafted.
 
-
-@c ==========================================================================
+@c ##########################################################################
 @node Network Timestamping Overview
-@section Network Timestamping Overview
+@chapter Network Timestamping Overview
 
 This section describes the hardware timestamp mechanism of the Linux
 kernel.  It is meant to be a reference for people who deal with
@@ -195,9 +199,9 @@ source files or data structures.
 * White Rabbit Extensions::     
 @end menu
 
-@c --------------------------------------------------------------------------
+@c ==========================================================================
 @node Timestamping Implementation
-@subsection Timestamping Implementation
+@section Timestamping Implementation
 
 This is a description of stamping seen from the point of view of
 the kernel; it describes what the driver is expected to do and the
@@ -261,8 +265,8 @@ received packets, although in both cases data reaches user space using
 a ``control message'' interface. Such control messages are assembled
 by the function @i{put_cmsg} (@code{net/core/scm.c}).
 
-@c ..........................................................................
-@subsubheading Receive Timestamps
+@c --------------------------------------------------------------------------
+@subheading Receive Timestamps
 
 For receive timestamps, the device driver should fill one or two
 @i{ktime} structures in a shared space within the socket buffer.  The
@@ -298,8 +302,8 @@ After filling the structure within the @i{skb}, the driver
 is done.  It's the network stack that will call @i{sock_recv_timestamp}
 at the proper time.
 
-@c ..........................................................................
-@subsubheading sock_recv_timestamp
+@c --------------------------------------------------------------------------
+@subheading sock_recv_timestamp
 
 This function is called from one of @code{net/ipv4/ip_sockglue.c},
 @code{net/ipv6/datagram.c} and @code{net/packet/af_packet.c} .
@@ -327,8 +331,8 @@ the value of @code{skb->tstamp}, for the old interface by which user-space
 can ask the timestamp of the last packet received using @i{ioctl} on the
 socket.
 
-@c ..........................................................................
-@subsubheading __sock_recv_timestamp
+@c --------------------------------------------------------------------------
+@subheading __sock_recv_timestamp
 
 The function, in @code{net/socket.c}, is in charge of actually building
 the @i{cmsg}. It receives the @i{cmsg} header, the socket and the socket
@@ -347,8 +351,8 @@ buffer. It fills the @i{cmsg} with:
       flags.
 @end itemize
 
-@c ..........................................................................
-@subsubheading Transmit Timestamps
+@c --------------------------------------------------------------------------
+@subheading Transmit Timestamps
 
 Timestamps for transmitted packets cannot be retrieved during
 transmission, but only at a later time. The stamp is known only when
@@ -398,16 +402,16 @@ for those packets where @i{in_progress} was set:
 Actually, the only difference in the code is that the structure
 with the two @i{ktime} stamps is local and not in the @i{skb} itself.
 
-@c --------------------------------------------------------------------------
+@c ==========================================================================
 @node Timestamping Use
-@subsection Timestamping Use
+@section Timestamping Use
 
 When you receive a packet you can get the timing data together with
 the packet, while when you transmit you must receive back a copy of
 your own data with the timing information added (this is the @i{clone}
 of the transmitted packet, as described earlier).
 
-In the directory @i{misc} of this package, you can find two simple
+In the directory @i{test/misc} of this package, you can find two simple
 programs that use the timestamping features. As opposed to what is
 found in the kernel sources
 (@code{Documentation/networking/timestamping/timestamping.c}), these
@@ -450,11 +454,11 @@ the following tasks:
 	@i{send_and_stamp} or @i{recv_and_stamp}.
 @end table
 
-@c --------------------------------------------------------------------------
+@c ==========================================================================
 @node Using HW Stamps on RTL8169
-@subsection Using HW Stamps on RTL8169
+@section Using HW Stamps on RTL8169
 
-The directory @i{patches} in this package includes a few patches to
+The directory @i{test/patches} in this package includes a few patches to
 fake hardware timestamping with the RTL8169 Gigabit device. You can
 apply them with @i{git-am} or @i{patch}.
 
@@ -503,9 +507,9 @@ from the environment variable @code{STAMP_HOWTO}.  The program must
 be run on a system with a loopback Ethernet cable, among the two
 self-connected interfaces.
 
-@c --------------------------------------------------------------------------
+@c ==========================================================================
 @node Using HW Stamps on the 82575 device
-@subsection Using HW Stamps on the 82575 device
+@section Using HW Stamps on the 82575 device
 
 @b{NOTE: This is currently bugged, the numbers are repeated, I leave
 it here for reference}.
@@ -533,23 +537,182 @@ get only the software stamp. This is a sample run with the simple
    rx ns2: 1299668554.247323098
 @end smallexample
 
-@c --------------------------------------------------------------------------
+@c ==========================================================================
 @node White Rabbit Extensions
-@subsection White Rabbit Extensions
+@section White Rabbit Extensions
 
 @c FIXME:
-To be done.
+Still to be written.
+
+@c ##########################################################################
+@node The Octopus
+@chapter The Octopus
+
+The octopus is a simple tool I wrote almost for fun.  It was born as a
+separate package called @i{swflood} (``switch flood'') and is now
+hosted in the @code{test/swflood} directory of this package.
+
+The program is accompanied by a @code{multidump} sniffer tool, that
+sniffs on several network interfaces at the same time.
+
+@menu
+* swflood::                     
+* multidump::                   
+@end menu
 
 @c ==========================================================================
+@node swflood
+@section swflood
+
+This program is meant to flood a switch with packets, to test how such
+packets are routed to the various ports.
+
+The host system is expected to be connected to a single switch through
+several point-to-point cables.  Ideally you should run at least 3
+dedicated ethernets, in order to tell packets that are broadcasted to
+all the ports from ones routed to a single port.
+
+The host ports are configured to send packets from MAC addresses of
+the form @code{22:00:1x:00:yy:yy}, where "1x" represents the port
+number (starting from 0x10) and yy represents a sequential number
+starting from 0.  Some tests transmit from the same mac address, while
+other tests change the mac address to fake a network of different
+machines connected to the same cable. The program is expected to use
+at most 64k MAC addresses per interface, according to the pattern
+shown.
+
+The operation of @i{swflood} is driven by a configuration file.  Each
+line in the config file defines a directive.  The directive is either
+a declaration, a request to send packets or a request to report
+results. Each directive is parsed as a command line, so the command
+procedure receives @code{argc} and @code{argv}.  Lines starting with
+'#' and empty lines are discarded.
+
+The configuration file is passed on the command line of @i{swflood}.
+
+The following directives are supported:
+
+@table @code
+@item verbose <n> [<logfile>]
+
+	Activate verbosity level <n>; optionally redirect verbose
+	output to file <logfile>, while normal output goes to @i{stdout}.
+	The log file is opened in append mode.
+@c FIXME: check logging and error reports
+
+@item iface <name> <name> ...
+
+	Open one socket for each of these interfaces. For example:
+	"@code{inface eth1 eth4 eth3 eth2}". If some interfaces cannot be
+	opened only a warning is reported, but later directives may
+	fail (for example if you transmit from that interface). The
+	interfaces are assigned numbers starting from 0, used later
+        in the program.
+
+@item send <if> <nr> <yy:yy> [+<incr>] <aa:bb:cc:dd:ee:ff> [+<incr>]
+
+	Send <nr> packets from interface <if>, starting from mac
+	address yy:yy within the port's range, incrementing the mac
+	address by <incr> each time.  Before sending each packet the
+	program receives any pending frame and accounts it.
+
+	Example: "@code{send 0  100 00:01    22:00:11:00:00:10 +1}"
+
+	Example: "@code{send 1 1000 10:00 +1 22:00:10:00:00:01}"
+
+	The first example above sends 100 packets from 22:00:10:00:00:01
+	to 100 different target addresses (in the range of interface 2)
+	The second example send 1000 packets from different addresses
+	of interface 1 to address 00:01 in the range of interface 0.
+
+@item sendas <as> <if> <nr> <yy:yy> [+<incr>] <aa:bb:cc:dd:ee:ff> [+<incr>]
+
+	Like above, but the program sends from interface <if> using
+	a sender addresss belonging to interace <as>.
+
+@item expect <n> <n> ....
+
+	The commands waits for 10ms to get all packets still pending
+	on all the interfaces and then verifies if the number of
+	packets received on all interfaces is the specified number.
+	If it differs, an error is reported.
+
+@item flush
+	Resets the statistics for all interfaces.
+
+@item repeat <letter> <number>
+@itemx endr <letter>
+
+	Trivial looping tool. Repeats all the directives from the
+	"@code{repeat}" to the corresponding "@code{endr}" for <number> times.
+	The identifier <letter> allows nested loops.
+
+	Example:
+@example
+		send  0 100 00:00 +1 ff:ff:ff:ff:ff:ff
+		flush
+		repeat A 10
+		 	send 1 100 00:00 22:00:10:00:00:00 +1
+			expect 100 0 0 0
+		endr A
+@end example
+
+	The example fakes 100 senders at interface 0, and then
+	tries to transmit 10 times to all of them, each time
+	expecting to get all the packets on port 0,
+
+@item sleep <sec> [<msec>]
+
+	Insert a delay in the data flow.
+
+@item echo <arg> ...
+
+	Echo constant string to stdout. The string is also
+	saved to the log file, with a prefix of "# ", for ease "grep -v".
+@end table
+
+The @code{test/swflood/cfg-test} directory includes some example
+configuration files. In particular @code{tablesize-test} can be used
+to estimate the size of the routing table in the switch.
+
+@code{test/swflood/results} includes tree result logs for a run of
+@code{tablesize-test}. From the output, it's clear how both
+@code{switch5} and @code{piccolo} have a routing table of 1k
+addresses, while @code{switch6} has a table ot 8k addresses.
+
+@c ==========================================================================
+@node multidump
+@section multidump
+
+The @i{multidump} program is a simple sniffer that listens to several
+network interfaces at the same time. I used it as a diagnostic tool while
+writing the @i{swflood} program.
+
+The program receives a list of interface names on the command line,
+like this:
+
+@example
+    ./multidump eth1 eth2 eth3 eth4
+@end example
+
+The output is wide lines (119 characters), showing for each
+packet the interface name, a timestamp and the beginning of payload:
+
+@smallexample
+eth1     1305150196.250015   00:10:a7:13:b1:1e 94:0c:6d:80:ab:d9 08.00 45.08....
+@end smallexample
+
+
+@c ##########################################################################
 @node Server and Client
-@section Server and Client
+@chapter Server and Client
 
 The test system has been designed as a client-server system, even
 though the client and server are expected to run on the same computer
 most of the time.
 
 Unless you are running client and server on different computers (which
-is not supported in the initial versions of this package), you'll just
+is not supported in the initial versions of the testing tools), you'll just
 need to fire the client applications (see @ref{How to Run the Test
 Suite}).  The client program will automatically fork a server process,
 and exchange information through a @i{Unix Domain} socket.
@@ -559,7 +722,7 @@ different processes allows to exploit SMP, if the testing host is an
 SMP one.  When the host system is not SMP (for example, when
 a @i{White Rabbit} switch is used to test other switches) this choice
 may be sub-optimal; I may consider running multi-thread instead of
-multi-process in later revisions of this packages.
+multi-process in later revisions.
 
 @c FIXME: complete server and client
 
@@ -568,21 +731,21 @@ multi-process in later revisions of this packages.
 @chapter Description of the Tests
 
 @c FIXME: 
-To be done.
+Still to be written.
 
 @c ##########################################################################
 @node How to Run the Test Suite
 @chapter How to Run the Test Suite
 
 @c FIXME: 
-To be done.
+Still to be written.
 
 @c ##########################################################################
 @node Results Collected on Various Switches
 @chapter Results Collected on Various Switches
 
 @c FIXME: 
-To be done.
+Still to be written.
 
 @c ##########################################################################
 @iftex
@@ -601,4 +764,5 @@ To be done.
 @c  LocalWords:  RCVTSTAMP RCVTSTAMPNS nano ohwr Gigabit itemx documentlanguage
 @c  LocalWords:  documentencoding setfilename settitle afourpaper finalout http
 @c  LocalWords:  paragraphindent setchapternewpage Alessandro Rubini rubini
-@c  LocalWords:  itemize factorized funcs HOWTO loopback
+@c  LocalWords:  itemize factorized funcs HOWTO loopback multidump swflood
+@c  LocalWords:  logfile stdout
