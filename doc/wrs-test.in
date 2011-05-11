@@ -42,7 +42,7 @@
 
 @titlepage
 @title White Rabbit Switch: test procedures
-@subtitle @value{update-month} (git tag @value{release})
+@subtitle @value{update-month}
 @subtitle A testing package for Ethernet switches
 
 @author Alessandro Rubini (@code{rubini@@gnudd.com})
