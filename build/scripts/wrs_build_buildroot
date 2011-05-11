@@ -25,7 +25,7 @@ tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
 
 # copy the config and replace "-j" level. First remove it in case it's left in
 cd $dirname
-CFG=$WRS_BASE_DIR/patches/buildroot/buildroot-config-wrswitch
+CFG="$WRS_BASE_DIR/../patches/buildroot/buildroot-config-wrswitch"
 if [ "x$WRS_BUILDROOT_CONFIG" != "x" ]; then
     if [ -f $WRS_BUILDROOT_CONFIG ]; then
 	CFG=$WRS_BUILDROOT_CONFIG

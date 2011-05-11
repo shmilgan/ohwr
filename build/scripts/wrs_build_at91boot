@@ -25,7 +25,7 @@ unzip -q ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "unzip $zipname"
 
 wrs_echo "Patching AT91Boot"
 patch -t -p2 -d $dirname < \
-    $WRS_BASE_DIR/patches/at91boot/AT91Bootstrap1.11-patch-wr \
+    "$WRS_BASE_DIR/../patches/at91boot/AT91Bootstrap1.11-patch-wr" \
     || wrs_die "patching at91boot"
 
 wrs_echo "Building AT91Boot"; # stupid makefiles, I must force CROSS_COMPILE

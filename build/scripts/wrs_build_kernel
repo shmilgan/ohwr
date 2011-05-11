@@ -25,13 +25,13 @@ tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
 
 # apply patches
 cd $dirname
-for n in ${WRS_BASE_DIR}/patches/kernel/v2.6.35/00*; do
+for n in ${WRS_BASE_DIR}/../patches/kernel/v2.6.35/00*; do
     patch -p1 < $n || wrs_die "patch kernel"
 done
 
 
 # copy the config and replace "-j" level. First remove it in case it's left in
-CFG=$WRS_BASE_DIR/patches/kernel/v2.6.35/linux-config-wrswitch
+CFG="$WRS_BASE_DIR/../patches/kernel/v2.6.35/linux-config-wrswitch"
 if [ "x$WRS_KERNEL_CONFIG" != "x" ]; then
     if [ -f $WRS_KERNEL_CONFIG ]; then
 	CFG=$WRS_KERNEL_CONFIG
