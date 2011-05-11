@@ -1,6 +1,9 @@
 obj-m           := wr_rtu.o
 LINUX           ?= ../../../kernel
 
+export ARCH ?= arm
+export CROSS_COMPILE ?= $(CROSS_COMPILE_ARM)
+
 all modules:
 	$(MAKE) -C $(LINUX) SUBDIRS=$(shell /bin/pwd) modules
 
