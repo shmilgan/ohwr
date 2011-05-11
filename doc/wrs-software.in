@@ -48,7 +48,7 @@
 @headings single
 
 @c ##########################################################################
-@node Top, How is Testing Implemented, (dir), (dir)
+@node Top
 @top Introduction
 
 This package is meant to include all white-rabbit software.

@@ -49,7 +49,7 @@
 @headings single
 
 @c ##########################################################################
-@node Top, Overview, (dir), (dir)
+@node Top
 @top Introduction
 
 This package includes the software build procedures for the White
@@ -71,7 +71,7 @@ Build}.
 @end menu
 
 @c ##########################################################################
-@node Overview, Quick Build, Top, Top
+@node Overview
 @chapter Overview
 
 This package builds over previous work by Tomasz Wlostowski, who first
@@ -128,7 +128,7 @@ rebuilding it all from scratch.
 @end menu
 
 @c ==========================================================================
-@node Portability, Environment Variables, Overview, Overview
+@node Portability
 @section Portability
 
 The scripts in their current status are not expected to be very
@@ -146,7 +146,7 @@ be a native GNU/Linux system; success reports about other environments
 (e.g. cygwin) are welcome, possibly with associated patches.
 
 @c ==========================================================================
-@node Environment Variables, Downloading Files, Portability, Overview
+@node Environment Variables
 @section Environment Variables
 
 The scripts use a number of environment variables; you can pre-set
@@ -215,7 +215,7 @@ useful to people working on the script itself, they are documented in
 place.
 
 @c ==========================================================================
-@node Downloading Files, The OHWR Repository, Environment Variables, Overview
+@node Downloading Files
 @section Downloading Files
 
 Every downloaded file is saved to the download directory, you might
@@ -240,7 +240,7 @@ The previous policy is implemented in @i{wrs_download}, in the file
 main directory.
 
 @c ==========================================================================
-@node The OHWR Repository, Rebuilding Parts, Downloading Files, Overview
+@node The OHWR Repository
 @section The OHWR Repository
 
 Most of the code here (with the huge exception of @i{buildroot}
@@ -299,7 +299,7 @@ run:
 @end example
 
 @c ==========================================================================
-@node Rebuilding Parts,  , The OHWR Repository, Overview
+@node Rebuilding Parts
 @section Rebuilding Parts
 
 When the script builds each part (sub-package), it creates a file in
@@ -315,7 +315,7 @@ As an alternative, you can run the individual script within
 @i{scripts/}, after setting the proper environment variables.
 
 @c ##########################################################################
-@node Quick Build, The Compiler, Overview, Top
+@node Quick Build
 @chapter Quick Build
 
 If you just want to build stuff, with no concern about network
@@ -377,7 +377,7 @@ rename) the @i{output/} directory, and re-run.
 
 
 @c ##########################################################################
-@node The Compiler, Buildroot, Quick Build, Top
+@node The Compiler
 @chapter The Compiler
 
 The predefined compiler used here is the one built by @i{buildroot}.
@@ -393,7 +393,7 @@ the boot loader and kernel by themselves, and avoid it when compiling
 the complete package.
 
 @c ##########################################################################
-@node Buildroot, The IPL, The Compiler, Top
+@node Buildroot
 @chapter Buildroot
 
 The distribution being used here is @i{buildroot}. It is the first
@@ -431,7 +431,7 @@ Note that if the variable is not pointing to a regular file it is
 ignored with a simple warning -- rather than stopping the build procedure.
 
 @c ##########################################################################
-@node The IPL, The Boot Loader, Buildroot, Top
+@node The IPL
 @chapter The IPL
 
 The IPL being used is @i{AT91Bootstrap-1.11}, with a specific patch
@@ -443,7 +443,7 @@ After compilation, @code{images/dataflash_whiterabbit-mch.bin} is the
 binary to be loaded in the actual hardware.
 
 @c ##########################################################################
-@node The Boot Loader, The Linux Kernel, The IPL, Top
+@node The Boot Loader
 @chapter The Boot Loader
 
 The boot loader in use is @i{u-boot-1.3.4}, with a specific patch for
@@ -457,7 +457,7 @@ The ELF version is copied to @i{images} as well, as
 useful -- or may not.
 
 @c ##########################################################################
-@node The Linux Kernel, The Complete Filesystem, The Boot Loader, Top
+@node The Linux Kernel
 @chapter The Linux Kernel
 
 The kernel is currently version 2.6.35, compiled from an uncompressed
@@ -484,7 +484,7 @@ Note that if the variable is not pointing to a regular file it is
 ignored with a simple warning -- rather than stopping the build procedure.
 
 @c ##########################################################################
-@node The Complete Filesystem,  , The Linux Kernel, Top
+@node The Complete Filesystem
 @chapter The Complete Filesystem
 
 Not compiled by this package, yet.

@@ -50,7 +50,7 @@
 @headings single
 
 @c ##########################################################################
-@node Top, How is Testing Implemented, (dir), (dir)
+@node Top
 @top Introduction
 
 This small software package has been developed in the context of the
@@ -87,7 +87,7 @@ first release only includes partial documentation and no code at all.
 @end menu
 
 @c ##########################################################################
-@node How is Testing Implemented, Description of the Tests, Top, Top
+@node How is Testing Implemented
 @chapter How is Testing Implemented
 
 Testing the performances of an Ethernet switch is a generic task,
@@ -103,7 +103,7 @@ on hardware timestamping whenever possible.
 @end menu
 
 @c ==========================================================================
-@node RFC Compliance, Network Timestamping Overview, How is Testing Implemented, How is Testing Implemented
+@node RFC Compliance
 @section RFC Compliance
 
 The relevant RFC Documents are included in the @code{rfc} subdirectory
@@ -165,7 +165,7 @@ they make requirements for
 
 
 @c ==========================================================================
-@node Network Timestamping Overview, Server and Client, RFC Compliance, How is Testing Implemented
+@node Network Timestamping Overview
 @section Network Timestamping Overview
 
 This section describes the hardware timestamp mechanism of the Linux
@@ -196,7 +196,7 @@ source files or data structures.
 @end menu
 
 @c --------------------------------------------------------------------------
-@node Timestamping Implementation, Timestamping Use, Network Timestamping Overview, Network Timestamping Overview
+@node Timestamping Implementation
 @subsection Timestamping Implementation
 
 This is a description of stamping seen from the point of view of
@@ -399,7 +399,7 @@ Actually, the only difference in the code is that the structure
 with the two @i{ktime} stamps is local and not in the @i{skb} itself.
 
 @c --------------------------------------------------------------------------
-@node Timestamping Use, Using HW Stamps on RTL8169, Timestamping Implementation, Network Timestamping Overview
+@node Timestamping Use
 @subsection Timestamping Use
 
 When you receive a packet you can get the timing data together with
@@ -451,7 +451,7 @@ the following tasks:
 @end table
 
 @c --------------------------------------------------------------------------
-@node Using HW Stamps on RTL8169, Using HW Stamps on the 82575 device, Timestamping Use, Network Timestamping Overview
+@node Using HW Stamps on RTL8169
 @subsection Using HW Stamps on RTL8169
 
 The directory @i{patches} in this package includes a few patches to
@@ -504,7 +504,7 @@ be run on a system with a loopback Ethernet cable, among the two
 self-connected interfaces.
 
 @c --------------------------------------------------------------------------
-@node Using HW Stamps on the 82575 device, White Rabbit Extensions, Using HW Stamps on RTL8169, Network Timestamping Overview
+@node Using HW Stamps on the 82575 device
 @subsection Using HW Stamps on the 82575 device
 
 @b{NOTE: This is currently bugged, the numbers are repeated, I leave
@@ -534,14 +534,14 @@ get only the software stamp. This is a sample run with the simple
 @end smallexample
 
 @c --------------------------------------------------------------------------
-@node White Rabbit Extensions,  , Using HW Stamps on the 82575 device, Network Timestamping Overview
+@node White Rabbit Extensions
 @subsection White Rabbit Extensions
 
 @c FIXME:
 To be done.
 
 @c ==========================================================================
-@node Server and Client,  , Network Timestamping Overview, How is Testing Implemented
+@node Server and Client
 @section Server and Client
 
 The test system has been designed as a client-server system, even
@@ -564,21 +564,21 @@ multi-process in later revisions of this packages.
 @c FIXME: complete server and client
 
 @c ##########################################################################
-@node Description of the Tests, How to Run the Test Suite, How is Testing Implemented, Top
+@node Description of the Tests
 @chapter Description of the Tests
 
 @c FIXME: 
 To be done.
 
 @c ##########################################################################
-@node How to Run the Test Suite, Results Collected on Various Switches, Description of the Tests, Top
+@node How to Run the Test Suite
 @chapter How to Run the Test Suite
 
 @c FIXME: 
 To be done.
 
 @c ##########################################################################
-@node Results Collected on Various Switches,  , How to Run the Test Suite, Top
+@node Results Collected on Various Switches
 @chapter Results Collected on Various Switches
 
 @c FIXME: 
