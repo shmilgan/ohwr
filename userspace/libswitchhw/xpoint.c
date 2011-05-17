@@ -186,12 +186,10 @@ static void adn4600_write_reg(uint8_t reg, uint8_t value)
   if(mi2c_put_byte(value)) goto txerr;
 
   mi2c_stop();
-  return 0;
 
  txerr:
   TRACE(TRACE_FATAL, "No I2C ack from ADN4600!");
   mi2c_stop();
-  return 0;
 }
 
 

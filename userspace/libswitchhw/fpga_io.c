@@ -39,12 +39,6 @@ int shw_fpga_mmap_init()
 
 }
 
-int shw_main_fpga_init()
-{
-  shw_pio_configure(PIN_main_fpga_nrst);
-  shw_main_fpga_reset();
-}
-
 void shw_main_fpga_reset()
 {
     shw_pio_set0(PIN_main_fpga_nrst);
@@ -53,3 +47,8 @@ void shw_main_fpga_reset()
     usleep(10000);
 }
 
+int shw_main_fpga_init()
+{
+  shw_pio_configure(PIN_main_fpga_nrst);
+  shw_main_fpga_reset();
+}

@@ -243,7 +243,7 @@ static int uncompress_and_boot_fpga(int fpga_id, struct fpga_image_entry  *ent)
 int shw_boot_fpga(int fpga_id)
 {
   char *fw_name;
-  char *fpga_name;
+  const char *fpga_name;
   int rev_id;
   uint32_t fw_hash;
   struct fpga_image_entry ent;
