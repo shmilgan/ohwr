@@ -1,0 +1,35 @@
+
+Hamming Code implements the Hamming coding scheme for all the lengths
+from (7,4) up to (12000, 11986).
+
+ Cesar Prados, GSI
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This folder contain the Hamming code and Hamming Matrix
+
+HAMMING MATRIX
+
+generate a matrix for a hamming code, the size must be define in the source.
+
+hamming_matrix.c
+
+make matrix
+
+HAMMIN CODE
+encode and decode according to the rate define (m,n)
+
+bit_counter  
+bit_operation
+bit_operation
+define
+hamming
+
+make 
+
+
+
+

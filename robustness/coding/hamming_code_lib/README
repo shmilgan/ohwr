@@ -1,0 +1,47 @@
+
+Hamming Code implements the Hamming coding plus parity bit (64,72).
+
+ Cesar Prados, GSI
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Makefile creates a library.
+
+CALLING FUNCTIONS 
+
+Hamming_decode
+**************
+This function decode word of 64 bits with a 8 bits redundancy, 7 parity checks
+bits and 1 complete parity of the word.
+
+INPUT 
+std::payload 
+unsigned int chunk2encode .- Pointer to the beginning of the words
+unsigned int num_chunks.- Position in Chunk2encode of the redundancy 
+unsigned int *nBytep.- Position in Bytes of the error
+unsigned int *nBitP.- Position in Bits of the error
+
+OUTPUT
+
+unsigned int result .- return if the chunk has one error, two errors and more
+than two erros.
+
+Hamming_encode
+**************
+This function encode words of of 64 into 72 bits, 7 parity checks bits and 1 bit
+for the parity of the complete word. 
+
+INPUT
+const  char *frame .- payload to encode
+
+OUTPUT 
+std::string  with the 8 bits parity bits.
+
+
+
+
+
+
