@@ -1,23 +1,22 @@
-include ../../Makedefs
 
-CC=$(CROSS_COMPILE_ARM)gcc
-AR=$(CROSS_COMPILE_ARM)ar
-OBJS = pio.o pio_pins.o trace.o init.o fpga_io.o util.o ad9516.o fpgaboot.o minilzo/minilzo.o clkb_io.o xpoint.o hpll.o mblaster.o phy_calibration.o dmpll.o pps_gen.o watchdog.o
+CC = $(CROSS_COMPILE)gcc
+AR = $(CROSS_COMPILE)ar
+CFLAGS = -I. -O2 -I../include -DDEBUG -I./minilzo
 
-CFLAGS = -I. -O2 -I../include -I../include -DDEBUG -I./minilzo
-OUTPUT = libswitchhw.a
+OBJS = pio.o pio_pins.o trace.o init.o fpga_io.o util.o ad9516.o \
+	fpgaboot.o minilzo/minilzo.o clkb_io.o xpoint.o hpll.o \
+	mblaster.o phy_calibration.o dmpll.o pps_gen.o watchdog.o
 
-all:	$(OBJS)
-	${AR} rc $(OUTPUT) $(OBJS)
+LIB = libswitchhw.a
 
-%.o:	%.c
-	${CC} -c $^ $(CFLAGS) -o $@
+all:	$(LIB)
 
-install:all
-	scp $(OUTPUT) root@192.168.1.2:/root
+$(LIB): $(OBJS)
+	$(AR) rc $@ $^
+
+install: all
+	install -d $(WR_INSTALL_ROOT)/lib
+	install $(LIB) $(WR_INSTALL_ROOT)/lib
 
 clean:
-	rm -f $(OUTPUT) $(OBJS)
-	
-deploy:
-	
+	rm -f $(LIB) $(OBJS)
