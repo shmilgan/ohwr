@@ -1,32 +1,31 @@
-include ../../Makedefs
+
+CC = $(CROSS_COMPILE)gcc
 
 OBJS = hal_exports.o hal_main.o hal_ports.o hal_config.o
 
-OUTPUT = wrsw_hal
+BINARY = wrsw_hal
 
-CC=$(CROSS_COMPILE_ARM)gcc 
-CFLAGS=-I. -g -Wall -I../rubi-repos/ptp-noposix/libwripc -I../include -I../3rdparty/include -DDEBUG 
-LDFLAGS=-L../rubi-repos/ptp-noposix -L../libswitchhw -lswitchhw -lwripc -L../3rdparty/lib -llua -lm 
+# We must include stuff from wr_ipc, which is installed.
+# If this is build under build scripts, it's $WRS_OUTPUT_DIR/images/wr
+WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
+WR_INCLUDE = $(WR_INSTALL_ROOT)/include
+WR_LIB = $(WR_INSTALL_ROOT)/lib
 
-all: $(OBJS)
-			make -C ../libswitchhw
-			${CC} -o $(OUTPUT) $(OBJS) $(LDFLAGS)
-			
-%.o:  %.c
-			${CC} -c $^ $(CFLAGS)
-			
-deploy: all
-			mkdir -p $(WR_INSTALL_ROOT)/bin
-			cp $(OUTPUT) $(WR_INSTALL_ROOT)/bin
-			
-upload: all
-#			- scp ../rootfs_override/wr/etc/wrsw_hal.conf root@$(T):/wr/etc
-			- scp $(OUTPUT) root@$(T):/wr/bin
-			
-run:	upload
-			#- ssh -t root@$(T) "export LD_LIBRARY_PATH=/wr/lib && /wr/bin/$(OUTPUT)"
+CFLAGS = -g -Wall -DDEBUG \
+	-I. -I../include -I../3rdparty/include -I$(WR_INCLUDE)
 
-run:
+LDFLAGS = -L$(WR_INSTALL_ROOT)/lib -L../3rdparty/lib -L$(WR_LIB) \
+	-L../rubi-repos/ptp-noposix \
+	-lswitchhw -lwripc -llua -lm
+
+all: $(BINARY)
+
+$(BINARY): $(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+install: all
+	install -d         $(WR_INSTALL_ROOT)/bin
+	install $(BINARY) $(WR_INSTALL_ROOT)/bin
 
 clean:
-			rm -f $(OUTPUT) $(OBJS)
+	rm -f $(BINARY) *.o *~
