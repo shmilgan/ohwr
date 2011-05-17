@@ -58,14 +58,14 @@ static void dmpll_set_phase_shift(int channel, int ps_shift)
 	switch(channel)
 	{
 
-	 case DMPLL_CHANNEL_UP0: 
+	 case DMPLL_CHANNEL_UP0:
 		shw_clkb_write_reg(CLKB_BASE_DMPLL + DMPLL_REG_PSCR_IN0, ps_shift);
 		break;
 
-	 case DMPLL_CHANNEL_UP1: 
+	 case DMPLL_CHANNEL_UP1:
 		shw_clkb_write_reg(CLKB_BASE_DMPLL + DMPLL_REG_PSCR_IN1, ps_shift);
 		break;
-		
+
 	}
 }
 
@@ -79,7 +79,7 @@ int shw_dmpll_check_lock()
     return 0;
     shw_clkb_write_reg(CLKB_BASE_DMPLL + DMPLL_REG_PSR,  DMPLL_PSR_LOCK_LOST); // clear loss-of-lock bit
   }
-  
+
 //  printf("DPSR %x\n",psr & (DMPLL_PSR_FREQ_LK | DMPLL_PSR_PHASE_LK));
   return (psr & DMPLL_PSR_FREQ_LK);// && (psr & DMPLL_PSR_PHASE_LK);
 }
@@ -88,14 +88,14 @@ static int dmpll_shifter_busy(int channel)
 {
 	switch(channel)
 	{
-		
-	 case DMPLL_CHANNEL_UP0: 
+
+	 case DMPLL_CHANNEL_UP0:
 		return shw_clkb_read_reg(CLKB_BASE_DMPLL + DMPLL_REG_PSCR_IN0) & DMPLL_PSCR_IN0_BUSY;
 
-	 case DMPLL_CHANNEL_UP1: 
+	 case DMPLL_CHANNEL_UP1:
 		return shw_clkb_read_reg(CLKB_BASE_DMPLL + DMPLL_REG_PSCR_IN1) & DMPLL_PSCR_IN1_BUSY;
 	}
- return 0;	
+ return 0;
 }
 
 \
@@ -106,19 +106,19 @@ static int iface_to_channel(const char *source)
 		return DMPLL_CHANNEL_UP0;
 	else if(!strcmp(source,"wru1"))
 		return DMPLL_CHANNEL_UP1;
-	
+
 	return -1;
-}	
+}
 
 int shw_dmpll_lock(const char *source)
 {
 	int ref_clk = iface_to_channel(source);
-	
+
 	if(ref_clk < 0) {
 		TRACE(TRACE_ERROR, "Unknown clock source...");
 		return -1;
 	}
-	
+
   TRACE(TRACE_INFO,"DMPLL: Set refence input to: %s", source);
 
 	shw_clkb_write_reg(CLKB_BASE_DMPLL + DMPLL_REG_PCR, 0);
@@ -128,9 +128,9 @@ int shw_dmpll_lock(const char *source)
   dmpll_set_deglitch_threshold(DMPLL_REG_DGCR_FB,  cur_state.deglitch_threshold);
   shw_clkb_write_reg(CLKB_BASE_DMPLL + DMPLL_REG_PSCR_IN0, 0);
   shw_clkb_write_reg(CLKB_BASE_DMPLL + DMPLL_REG_PSCR_IN1, 0);
-  shw_clkb_write_reg(CLKB_BASE_DMPLL + DMPLL_REG_PSCR_IN2, 0); 
+  shw_clkb_write_reg(CLKB_BASE_DMPLL + DMPLL_REG_PSCR_IN2, 0);
   shw_clkb_write_reg(CLKB_BASE_DMPLL + DMPLL_REG_PSCR_IN3, 0);
- 
+
 
 // gains & thresholds
   shw_clkb_write_reg(CLKB_BASE_DMPLL + DMPLL_REG_FBGR, DMPLL_FBGR_F_KP_W(-100) | DMPLL_FBGR_F_KI_W(-600));
@@ -155,9 +155,9 @@ int shw_dmpll_phase_shift(const char *source, int phase_shift)
 
 	//	TRACE(TRACE_INFO,"shw_DMPLL_phase_shift source %s ref %d ps %d\n", source, ref_clk, phase_shift);
 	if(ref_clk < 0) return -1;
-	
+
 	ps = (double)phase_shift / 8000.0 * (double) shw_hpll_get_divider();
-	 
+
 	dmpll_set_phase_shift(ref_clk, (int) ps);
 	return 0;
 }

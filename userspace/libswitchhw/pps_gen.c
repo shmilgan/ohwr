@@ -13,10 +13,10 @@
 int shw_pps_gen_init()
 {
 	uint32_t cr;
-	
+
 	cr = PPSG_CR_CNT_EN | PPSG_CR_PWIDTH_W(PPS_WIDTH);
   TRACE(TRACE_INFO, "Initializing PPS generator...");
-  
+
   _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_CR, cr);
 
   _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ADJ_UTCLO, 1285700840);

@@ -219,7 +219,7 @@ int shw_ad9516_init()
     //    ad9516_power_down();
 
     shw_udelay(10000);
-    
+
 
 
     if(ad9516_read_reg(AD9516_SERIALPORT) != 0x18)
@@ -234,7 +234,7 @@ int shw_ad9516_init()
 	} else {
 	  assert_init(ad9516_load_state(&ad9516_regs_tcxo_25m));
 	}
-	
+
 // wait for the PLL to lock
     while(retries--)
     {
@@ -244,8 +244,8 @@ int shw_ad9516_init()
 
 		shw_ad9516_set_output_delay(9, 0.5, 0);
 
-//	 	TRACE(TRACE_INFO, "LockReg: %d\n", 
- 
+//	 	TRACE(TRACE_INFO, "LockReg: %d\n",
+
     return 0;
 }
 
@@ -253,8 +253,8 @@ static int find_optimal_params(float delay_ns, int *caps, int *frac, int *ramp, 
 {
  int r, i, ncaps, f;
  float best_error = 10000;
- 
- 
+
+
 	for(r = 0; r < 8; r++)
 	{
 		for(i=0;i<8;i++)
@@ -269,10 +269,10 @@ static int find_optimal_params(float delay_ns, int *caps, int *frac, int *ramp, 
 				float iramp = (float)(r+1)*200.0;
 				float del_range = 200.0 * ((float)(ncaps+3)/iramp) * 1.3286;
 				float offset = 0.34 + (1600.0 - iramp) * 10e-4 + (float)(ncaps-1)/iramp*6.0;
-				
+
 //				printf("range: %.3f offset %.3f\n", del_range, offset);
 				float del_fine = del_range * (float)f / 63.0  + offset;
-				if(fabs(del_fine - delay_ns) < best_error)	
+				if(fabs(del_fine - delay_ns) < best_error)
 				{
 	//				printf("New Best: %.3f\n", del_fine);
 					best_error = fabs(del_fine - delay_ns);
@@ -291,12 +291,12 @@ int shw_ad9516_set_output_delay(int output, float delay_ns, int bypass)
     uint16_t regbase = 0xa0 + 3*(output - 6);
 		int ramp,frac,caps;
 		float best_dly;
-		
+
 		find_optimal_params(delay_ns,&caps, &frac, &ramp, &best_dly );
-		
+
 //		printf("Opt: caps %d frac %d ramp %d best %.5f req %.5f regbase %x\n", caps, frac, ramp, best_dly, delay_ns, regbase);
 
-		
+
 
     ad9516_write_reg(regbase, bypass?1:0);
     ad9516_write_reg(regbase+1, (caps << 3) | (ramp));

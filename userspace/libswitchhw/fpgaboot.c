@@ -41,7 +41,7 @@ static int get_fpga_revid(int fpga_id, uint32_t *fw_hash, uint32_t *rev_id)
 	{
 // check the magic register value
 		if(_fpga_readl(FPGA_BASE_REVID + REVID_REG_MAGIC) != REVID_MAGIC_VALUE) return -1;
-		
+
 		*fw_hash = _fpga_readl(FPGA_BASE_REVID +  REVID_REG_FW_HASH);
 		*rev_id = _fpga_readl(FPGA_BASE_REVID +  REVID_REG_FW_REVISION);
 		return 0;
@@ -69,16 +69,16 @@ static char * read_string(FILE *f)
 {
 	char buf[1024];
 	uint32_t len;
-	
+
 	if(read_le32(f, &len) < 0)
 	 return NULL;
-	 
+
 	if(len > sizeof(buf)-1)
 	 return NULL;
-	 
+
 	fread(buf, 1, len, f);
 	buf[len]=0;
-	
+
 	return strdup(buf);
 }
 
@@ -86,13 +86,13 @@ static int read_image_header(FILE *f,  struct fpga_image_entry *ent)
 {
 	struct fpga_image_header hdr;
 	int rc = 0;
-	
+
 	if( fread(&hdr, sizeof(struct fpga_image_header), 1, f) != 1)
 	  return -1;
 
   if(memcmp(hdr.magic, FPGA_IMAGE_MAGIC, 4))
  		return -1;
-	
+
 	ent->fpga_name = read_string(f);
 	ent->fw_name = read_string(f);
 	rc = read_le32(f, &ent->hash_reg);
@@ -101,7 +101,7 @@ static int read_image_header(FILE *f,  struct fpga_image_entry *ent)
 	rc |= read_le32(f, &ent->compressed_size);
 
 	if(!ent->fpga_name || !ent->fw_name || rc) return -1;
-	
+
 	return 0;
 }
 
@@ -129,11 +129,11 @@ static int find_fpga_image(int fpga_id, const char *fw_name, int rev_id, uint32_
 	FILE *f;
 	struct dirent **namelist;
 	int n;
-	
+
 	char latest_image_name[1024];
 	int found = 0;
 	int max_rev = -1;
-	
+
 	n = scandir(fpga_image_dir, &namelist, 0, alphasort);
 
 	if(n<0)
@@ -141,22 +141,22 @@ static int find_fpga_image(int fpga_id, const char *fw_name, int rev_id, uint32_
 	    TRACE(TRACE_FATAL, "Scanning the FPGA image directory (%s) failed.", fpga_image_dir);
 	    return -1;
 	  }
-	
+
 	while(n--)
 	{
 		char namebuf[1024];
-		
+
 		strncpy(namebuf, fpga_image_dir, 1024);
 		strncat(namebuf, "/", 1024);
 		strncat(namebuf, namelist[n]->d_name, 1024);
-		
+
 		if(!stat_is_file(namebuf)) continue;
-		
+
 		f = fopen(namebuf, "rb");
 		if(f)
 		{
 			struct fpga_image_entry ent;
-			if(!read_image_header(f, &ent)) 
+			if(!read_image_header(f, &ent))
 			{
 			  TRACE(TRACE_INFO,"CheckFW: %s [%s] rev %d", ent.fpga_name, ent.fw_name, ent.revision);
 			  if(rev_id) // name-based lookup
@@ -165,7 +165,7 @@ static int find_fpga_image(int fpga_id, const char *fw_name, int rev_id, uint32_
 					   && !strcasecmp(ent.fw_name, fw_name))
 					   {
 					  	 found = 1;
-								
+
 					  	 if((int)ent.revision > max_rev)
 					  	 {
 					  		 max_rev = ent.revision;
@@ -173,7 +173,7 @@ static int find_fpga_image(int fpga_id, const char *fw_name, int rev_id, uint32_
 					  	 }
 					   }
 				} else { // revid-based lookup: we look for newer firmware with matching revid
-				
+
 					if(ent.hash_reg == fw_hash && (int)ent.revision > max_rev)
 					{
 					  found = 1;
@@ -192,10 +192,10 @@ static int find_fpga_image(int fpga_id, const char *fw_name, int rev_id, uint32_
 
 	if(!found)
 		return -1;
-		
+
   if(rev_id >= 0 && max_rev <= rev_id)
  	  return -1;
- 	  
+
 	f = fopen(latest_image_name, "rb");
 	read_image_header(f, ent_h);
 
@@ -203,7 +203,7 @@ static int find_fpga_image(int fpga_id, const char *fw_name, int rev_id, uint32_
 
 	ent_h -> image_buf = shw_malloc(ent_h->compressed_size);
 	fread(ent_h->image_buf, 1, ent_h->compressed_size, f);
-	fclose(f);	
+	fclose(f);
 
   return 0;
 }
@@ -229,10 +229,10 @@ static int uncompress_and_boot_fpga(int fpga_id, struct fpga_image_entry  *ent)
 
 	int rc = shw_load_fpga_bitstream(fpga_id, bitstream, ent->size);
 
-	
+
 	shw_free(bitstream);
   shw_free(ent->image_buf);
-  
+
   return rc;
 
 }
@@ -252,10 +252,10 @@ int shw_boot_fpga(int fpga_id)
   fpga_name = expand_fpga_id(fpga_id);
 
   TRACE(TRACE_INFO, "%s: reading REV_ID...", fpga_name);
-	
+
   if(get_fpga_revid (fpga_id, &fw_hash, (uint32_t *)&rev_id) < 0)
     rev_id = -1;
-  
+
   switch(fpga_id)
     {
     case FPGA_ID_MAIN:
@@ -263,7 +263,7 @@ int shw_boot_fpga(int fpga_id)
     case FPGA_ID_CLKB:
       fw_name = firmware_clkb; break;
     }
-  
+
   if(rev_id < 0 || force_new_firmware)
     {
       TRACE(TRACE_INFO, "%s: invalid REV_ID or forced firmware update. Trying to boot the FPGA with the firmware: %s", fpga_name, fw_name)
@@ -273,19 +273,19 @@ int shw_boot_fpga(int fpga_id)
 	shw_exit_fatal();
 	return -1;
       }
- 		
+
       return uncompress_and_boot_fpga(fpga_id, &ent);
     } else {
     TRACE(TRACE_INFO, "%s: got REV_ID (rev = %d, hash = %x).  Looking for newer firmware", fpga_name, rev_id, fw_hash);
     rc = find_fpga_image(fpga_id, fw_name, rev_id, fw_hash, &ent);
-  
+
     if(rc < 0) {
- 	
+
       TRACE(TRACE_INFO, "%s: no more recent image found", fpga_name);
       return 0;
     } else return uncompress_and_boot_fpga(fpga_id, &ent);
   }
- 
+
   return -1;
 }
 

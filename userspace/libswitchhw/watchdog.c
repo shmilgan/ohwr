@@ -33,7 +33,7 @@ static inline uint8_t spi_txrx(uint8_t x)
 		rval <<= 1;
 		if(shw_pio_get(PIN_sdin)) rval |= 1;
 		shw_udelay(50);
-		shw_pio_set1(PIN_sck);		
+		shw_pio_set1(PIN_sck);
 		shw_udelay(50);
 		x<<=1;
 	}
@@ -55,7 +55,7 @@ static void wd_spi_xfer(uint8_t *buf, int size)
 #define WD_CMD_SET_LED 1
 #define WD_CMD_FEEDBACK 2
 
-   
+
 
 void shw_mbl_set_leds(int port, int led, int mode)
 {
@@ -65,7 +65,7 @@ void shw_mbl_set_leds(int port, int led, int mode)
 	cmd_buf[1] = port;
 	cmd_buf[2] = led;
 	cmd_buf[3] = mode;
-	
+
 	wd_spi_xfer(cmd_buf, 4);
 }
 
@@ -78,7 +78,7 @@ void shw_mbl_cal_feedback(int port, int cmd)
 	cmd_buf[1] = port;
 	cmd_buf[2] = cmd;
 	cmd_buf[3] = 0;
-	
+
 	wd_spi_xfer(cmd_buf, 4);
 }
 

@@ -146,7 +146,7 @@ static void mi2c_get_byte(unsigned char *data)
 static void mi2c_init()
 {
   shw_clkb_write_reg(CLKB_BASE_GPIO + GPIO_REG_DDR, MASK_SCL_OUT | MASK_SDA_OUT);
-		
+
   M_SCL_OUT(1);
   M_SDA_OUT(1);
 }
@@ -229,7 +229,7 @@ int xpoint_configure()
 
   xpoint_route(XPT_SFP1_TX, XPT_UP1_RX);
   xpoint_route(XPT_SFP0_TX, XPT_UP0_RX);
-  
+
   return 0;
 }
 

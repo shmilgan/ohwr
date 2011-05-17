@@ -65,7 +65,7 @@ static int cal_current_port_type;
 static int uplink_calibrator_configure(int n_avg, int lane, int index)
 {
 	int input;
-	
+
 	if(lane == PHY_CALIBRATE_TX)
 		input = UPLINK_CAL_IN_REFCLK;
 	else if(lane == PHY_CALIBRATE_RX)
@@ -75,8 +75,8 @@ static int uplink_calibrator_configure(int n_avg, int lane, int index)
  		else
  			input = UPLINK_CAL_IN_UP1_RBCLK;
 	}
-	
-	
+
+
 	shw_clkb_write_reg(CLKB_BASE_CALIBRATOR + DPC_REG_CR, 0);
 	shw_clkb_write_reg(CLKB_BASE_CALIBRATOR + DPC_REG_CR, DPC_CR_EN | DPC_CR_N_AVG_W(n_avg) | DPC_CR_IN_SEL_W(input));
 }
@@ -86,15 +86,15 @@ int route_order[8] = {0,1,2,3,4,5,6,7};
 static int downlink_calibrator_configure(int n_avg, int lane, int index)
 {
 	int input;
-	
+
 	if(lane == PHY_CALIBRATE_TX)
 		input = DOWNLINK_CAL_IN_REFCLK;
 	else if(lane == PHY_CALIBRATE_RX)
 	{
 		input = DOWNLINK_CAL_IN_RBCLK(route_order[index]);
 	}
-	
-	
+
+
 	_fpga_writel(FPGA_BASE_CALIBRATOR + DPC_REG_CR, 0);
 	_fpga_writel(FPGA_BASE_CALIBRATOR + DPC_REG_CR, DPC_CR_EN | DPC_CR_N_AVG_W(n_avg) | DPC_CR_IN_SEL_W(input));
 }
@@ -142,13 +142,13 @@ static int decode_port_name(const char *if_name, int *type, int *index)
 		return -1;
 
 	*index = if_name[3] - '0';
-			
+
 	if(!strncmp(if_name, "wru", 3))
 		*type = PORT_UPLINK;
 	else if(!strncmp(if_name, "wrd", 3))
 		*type = PORT_DOWNLINK;
 	else return -1;
-	
+
 	return 0;
 }
 
@@ -159,9 +159,9 @@ static int do_net_ioctl(const char *if_name, int request, void *data)
 	ifr.ifr_addr.sa_family = AF_PACKET;
 	strcpy(ifr.ifr_name, if_name);
 	ifr.ifr_data = data;
- 
+
 	int rv = ioctl(cal_socket, request, &ifr);
-	
+
 	return rv;
 }
 
@@ -173,7 +173,7 @@ int shw_cal_init()
 	// create a raw socket for calibration/DMTD readout
 	cal_socket = socket(AF_PACKET, SOCK_DGRAM, 0);
 
-	if(cal_socket < 0) 
+	if(cal_socket < 0)
 		return -1;
 
 	return xpoint_configure();
@@ -187,9 +187,9 @@ int shw_cal_enable_pattern(const char *if_name, int enable)
 	// TRACE(TRACE_INFO,"port %s enable %d", if_name, enable);
 
 	if((rval=decode_port_name(if_name, &type, &index)) < 0) return rval;
-  
+
 	crq.cmd = enable ? CAL_CMD_TX_ON : CAL_CMD_TX_OFF;
-  
+
 	if(type == PORT_UPLINK)
 	{
 		if(do_net_ioctl(if_name, PRIV_IOCGCALIBRATE, &crq) < 0)
@@ -209,28 +209,28 @@ int shw_cal_enable_feedback(const char *if_name, int enable, int lane)
 	//  TRACE(TRACE_INFO,"port %s enable %d lane %d", if_name, enable, lane);
 
 	if((rval=decode_port_name(if_name, &type, &index)) < 0) return rval;
-	
+
 	//  TRACE(TRACE_INFO, "enable_feedback type:%d index:%d\n", type, index);
-	
+
 	cal_current_lane = lane;
 	cal_current_port_index = index;
 	cal_current_port_type = type;
 	strcpy(cal_current_if, if_name);
-	
+
 	if(type == PORT_UPLINK)
 	{
 		if(enable)
 		{
-		
-		
+
+
 			switch(lane)
 			{
 			case PHY_CALIBRATE_TX:
-				
+
 				cal_in_progress = 1;
 				xpoint_cal_feedback(1, index, 0); // enable PHY TX line feedback
 				//	      TRACE(TRACE_INFO, "TX index %d", index);
-	   
+
 
 
 				uplink_calibrator_configure(CAL_DMTD_AVERAGING_STEPS, lane, index);
@@ -240,8 +240,8 @@ int shw_cal_enable_feedback(const char *if_name, int enable, int lane)
 
 				cal_in_progress = 1;
 				xpoint_cal_feedback(1, index, 1); // enable PHY RX line feedback
-		
-			
+
+
 				crq.cmd = CAL_CMD_RX_ON;
 
 				if(do_net_ioctl(if_name, PRIV_IOCGCALIBRATE, &crq) < 0)
@@ -258,14 +258,14 @@ int shw_cal_enable_feedback(const char *if_name, int enable, int lane)
 
 
 				break;
-			
+
 
 			}
 		} else { // enable == 0
 			TRACE(TRACE_INFO, "Disabling calibration on port: %s", if_name);
 			cal_in_progress = 0;
 			xpoint_cal_feedback(0, 0, 0);
-			  
+
 			if(lane == PHY_CALIBRATE_TX)
 			{
 				crq.cmd = CAL_CMD_TX_OFF;
@@ -283,49 +283,49 @@ int shw_cal_enable_feedback(const char *if_name, int enable, int lane)
 	}
 }
 
-int shw_cal_measure(uint32_t *phase) 
+int shw_cal_measure(uint32_t *phase)
 {
 	int phase_raw;
 	struct wrmch_calibration_req crq;
 
 	if(!cal_in_progress)
 		return -1;
-		
+
 	if(cal_current_port_type == PORT_UPLINK)
 	{
 		switch(cal_current_lane)
 		{
 		case PHY_CALIBRATE_TX:
 			fprintf(stderr,"CalTxMeasUplink\n");
-			
-		
+
+
 			if(uplink_calibrator_measure(&phase_raw))
 			{
 				*phase = (uint32_t) ((double) phase_raw / (double) CAL_DMTD_AVERAGING_STEPS / (double)shw_hpll_get_divider() * 8000.0);
 				return 1;
 			} else return 0;
-				
+
 			break;
 		case PHY_CALIBRATE_RX:
 			crq.cmd = CAL_CMD_RX_CHECK;
 			if(do_net_ioctl(cal_current_if, PRIV_IOCGCALIBRATE, &crq) < 0) return -1;
-								
+
 			if(crq.cal_present && uplink_calibrator_measure(&phase_raw))
 			{
 				*phase = (uint32_t) ((double) phase_raw / (double) CAL_DMTD_AVERAGING_STEPS / (double)shw_hpll_get_divider() * 8000.0);
 				return 1;
 			} else return 0;
-			 
+
 			break;
-			
+
 		}
-	
+
 	} else {
 		//	TRACE(TRACE_ERROR, "Sorry, no downlinks support yet...\n");
 		return -1;
 	}
-	
-	
+
+
 }
 
 int shw_poll_dmtd(const char *if_name, uint32_t *phase_ps)
@@ -344,7 +344,7 @@ int shw_poll_dmtd(const char *if_name, uint32_t *phase_ps)
 
 	if(!phr.ready)  // No valid DMTD measurement?
 		return 0;
-  
+
 	//  TRACE(TRACE_INFO,"%s: phase %d", if_name, phr.phase);
 
 	*phase_ps = (uint32_t) ((double)phr.phase / (double)shw_hpll_get_divider() * 8000.0);

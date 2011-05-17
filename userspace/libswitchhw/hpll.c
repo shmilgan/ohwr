@@ -46,7 +46,7 @@ static inline void hpll_write(uint32_t reg, uint32_t value)
 
 /* static void hpll_poll_rfifo() */
 /* { */
-	
+
 /*   while(1) */
 /*     { */
 /*       if((hpll_read(HPLL_REG_RFIFO_CSR) & HPLL_RFIFO_CSR_EMPTY) || rfifo_nmeas >= MAX_MEAS) return; */
@@ -66,23 +66,23 @@ void shw_hpll_ramp_gain(double kp_new, double ki_new)
 {
 	uint64_t init_tics = shw_get_tics();
 	int step = 0;
-	
+
 	cur_params.kp_phase = kp_new;
 	cur_params.ki_phase = ki_new;
-		
-	
+
+
 	for(step = 0; step < cur_params.phase_gain_steps; step++)
 	{
-	
+
 //	  if(shw_get_tics() - init_tics > (uint64_step * cur_params.phase_gain_step_delay)
   	  {
 				double kp, ki;
-				
+
 				kp = interpolate(cur_params.kp_phase_cur,cur_params.kp_phase, step, cur_params.phase_gain_steps);
 				ki = interpolate(cur_params.ki_phase_cur,cur_params.ki_phase, step, cur_params.phase_gain_steps);
-				
+
 //	      TRACE(TRACE_INFO, "ramping down the HPLL gain (Kp = %.5f Ki = %.5f)", kp, ki);
-	      hpll_write(HPLL_REG_PBGR, 
+	      hpll_write(HPLL_REG_PBGR,
 					 HPLL_PBGR_P_KP_W(FLOAT_TO_FB_COEF(kp)) |
 					 HPLL_PBGR_P_KI_W(FLOAT_TO_FB_COEF(ki)));
 	//		} else {
@@ -106,10 +106,10 @@ void shw_hpll_load_regs(const hpll_params_t *params)
   hpll_write(HPLL_REG_DIVR,    // select the division ratio
 	     HPLL_DIVR_DIV_FB_W(params->N + params->delta) |
 	     HPLL_DIVR_DIV_REF_W(params->N));
-  
-  
+
+
   TRACE(TRACE_INFO,"DIV_REF = %d, DIV_FB = %d", params->N, params->N + params->delta);
-  
+
   hpll_write(HPLL_REG_FBGR, // set frequency detector gain
 	     HPLL_FBGR_F_KP_W(FLOAT_TO_FB_COEF(params->kp_freq)) |
 	     HPLL_FBGR_F_KI_W(FLOAT_TO_FB_COEF(params->ki_freq)));
@@ -143,10 +143,10 @@ void shw_hpll_load_regs(const hpll_params_t *params)
   TRACE(TRACE_INFO,"TargetFreqErr = %d, FreqGating = %d PhaseGating = %d", target_freq_err, params->freq_gating, params->phase_gating);
 
 
-  
+
   // enable the PLL, set DAC clock, reference clock, etc.
 
-  hpll_write(HPLL_REG_PCR, 
+  hpll_write(HPLL_REG_PCR,
 	     // 			 HPLL_PCR_FORCE_F |
 	     HPLL_PCR_ENABLE |                          // enable the PLL
 	     HPLL_PCR_SWRST |                           // force software reset
@@ -157,14 +157,14 @@ void shw_hpll_load_regs(const hpll_params_t *params)
 
 //  init_tics = shw_get_tics();
   memcpy(&cur_params, params, sizeof(hpll_params_t));
-  
+
   cur_params.kp_phase_cur = params->kp_phase;
   cur_params.ki_phase_cur = params->ki_phase;
-  
-  
+
+
 //  shw_hpll_ramp_gain(0.1,   0.00384);
   shw_hpll_ramp_gain(0.0384,   0.00384);
-  
+
 
 }
 
@@ -190,15 +190,15 @@ int shw_hpll_check_lock()
   uint32_t psr;
 
   psr= hpll_read(HPLL_REG_PSR);
-  
+
   if(psr & HPLL_PSR_LOCK_LOST) {
     return 0;
     hpll_write(HPLL_REG_PSR,  HPLL_PSR_LOCK_LOST); // clear loss-of-lock bit
   }
-  
+
   printf("PSR %x\n",psr & (HPLL_PSR_FREQ_LK | HPLL_PSR_PHASE_LK));
   printf("PCR %x\n", hpll_read(HPLL_REG_PCR));
-  
+
 //
 //	return 1;
 	  return (psr & HPLL_PSR_FREQ_LK) && (psr & HPLL_PSR_PHASE_LK);
@@ -225,9 +225,9 @@ int shw_hpll_switch_reference(const char *if_name)
 {
 	hpll_params_t my_params;
   TRACE(TRACE_INFO, "HPLL: Set reference input to: %s", if_name);
- 	
+
  	memcpy(&my_params, &default_hpll_params, sizeof(hpll_params_t));
- 	
+
  	if(!strcmp(if_name, "wru0"))
  		my_params.ref_sel = HPLL_REFSEL_UP0_RBCLK;
  	else if(!strcmp(if_name, "wru1"))
@@ -236,6 +236,6 @@ int shw_hpll_switch_reference(const char *if_name)
  		my_params.ref_sel = HPLL_REFSEL_LOCAL;
   else
  	  TRACE(TRACE_FATAL, "unrecognized HPLL reference clock: %s", if_name);
- 	
+
   shw_hpll_load_regs(&my_params);
 }

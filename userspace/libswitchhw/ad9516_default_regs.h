@@ -14,7 +14,7 @@ static const struct ad9516_regs ad9516_regs_tcxo_25m = {
  { 0x0011, 5}, // R div
  { 0x0012, 0x00},
  { 0x0013, 12},// A div
- { 0x0014, 18},// B div -- vco = 
+ { 0x0014, 18},// B div -- vco =
  { 0x0015, 0x00},
  { 0x0016, 5}, // 16/17 mode
  { 0x0017, 0x00},

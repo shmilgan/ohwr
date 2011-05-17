@@ -40,7 +40,7 @@ void trace_printf(const char *fname, int lineno, int level, const char *fmt, ...
         fprintf(trace_file, "%-24s ", linestr);
         vfprintf(trace_file, fmt, vargs);
         fflush(trace_file);
-		fprintf(trace_file,"\n");    
+		fprintf(trace_file,"\n");
 	}
 
     if(trace_to_stderr)

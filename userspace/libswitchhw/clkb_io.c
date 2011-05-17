@@ -72,7 +72,7 @@ int shw_clkb_init_cmi()
 
 int shw_clkb_init()
 {
-	
+
 
     shw_pio_configure(PIN_clkb_fpga_nrst);
     shw_pio_set0(PIN_clkb_fpga_nrst);
