@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# check variables, like all scripts herein do
+WRS_SCRIPT_NAME=$(basename $0)
+if [ -z "$WRS_BASE_DIR" ]; then
+    echo "$0: Plesae set WRS_BASE_DIR" >& 2
+    exit 1
+fi
+. ${WRS_BASE_DIR}/scripts/wrs_functions
+
+wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR WRS_WR_REPOSITORY CROSS_COMPILE
+
+wrs_echo "--- User space tools"
+
+sourcedir="$WRS_BASE_DIR/../userspace"
+installdir="$WRS_OUTPUT_DIR/images/wr"
+
+mkdir -p $installdir || wrs_die "mkdir images/wr"
+
+# This time build is done in-place, but the output is a tree in images/wr.
+# Some of the makefiles inside use 
+cd $sourcedir && make
+cd $sourcedir && make install WR_INSTALL_ROOT="$installdir"
+
