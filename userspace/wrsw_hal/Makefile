@@ -26,6 +26,7 @@ $(BINARY): $(OBJS)
 install: all
 	install -d         $(WR_INSTALL_ROOT)/bin
 	install $(BINARY) $(WR_INSTALL_ROOT)/bin
+	install hal_exports.h wrsw_hal.h $(WR_INSTALL_ROOT)/include
 
 clean:
 	rm -f $(BINARY) *.o *~
