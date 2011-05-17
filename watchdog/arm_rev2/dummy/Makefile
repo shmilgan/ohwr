@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-#         ATMEL Microcontroller Software Support 
+#         ATMEL Microcontroller Software Support
 # ----------------------------------------------------------------------------
 # Copyright (c) 2008, Atmel Corporation
 #
@@ -45,7 +45,7 @@ BOARD = whiterabbit_mch
 # TRACE_LEVEL_ERROR      2
 # TRACE_LEVEL_FATAL      1
 # TRACE_LEVEL_NO_TRACE   0
-TRACE_LEVEL = 3  
+TRACE_LEVEL = 3
 
 # Optimization level, put in comment for debugging
 OPTIMIZATION = -Os
@@ -78,7 +78,7 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 OBJDUMP = $(CROSS_COMPILE)objdump
 
 # Flags
-INCLUDES = -I$(AT91LIB)/boards/$(BOARD) -I$(AT91LIB)/peripherals 
+INCLUDES = -I$(AT91LIB)/boards/$(BOARD) -I$(AT91LIB)/peripherals
 INCLUDES += -I$(AT91LIB)/components -I$(AT91LIB)
 
 CFLAGS = -Wall -mlong-calls -ffunction-sections -DNOFPUT

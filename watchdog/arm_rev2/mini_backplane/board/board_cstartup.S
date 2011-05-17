@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support 
+ *         ATMEL Microcontroller Software Support
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -53,7 +53,7 @@
 
             .align      4
             .arm
-        
+
 /* Exception vectors
  *******************/
             .section    .vectors, "a"
@@ -80,7 +80,7 @@ fiqVector:
 //------------------------------------------------------------------------------
 fiqHandler:
         b       fiqHandler
-	
+
 //------------------------------------------------------------------------------
 /// Handles incoming interrupt requests by branching to the corresponding
 /// handler, as defined in the AIC. Supports interrupt nesting.

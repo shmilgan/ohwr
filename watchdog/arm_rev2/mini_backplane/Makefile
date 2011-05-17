@@ -8,10 +8,10 @@ OUTPUT = wd
 BOARD_OBJS = ./board/board_cstartup.o ./board/board_lowlevel.o ./board/board_memories.o
 LIB_OBJS = ./lib/adc.o ./lib/pio.o ./lib/aic.o ./lib/dbgu.o ./lib/stdio.o ./lib/memcpy.o  ./lib/twi.o ./lib/pmc.o
 
-TRACE_LEVEL = 3  
+TRACE_LEVEL = 3
 CHIP = at91sam7xc512
 BOARD = whiterabbit_mch
-ARCH = arm7tdmi 
+ARCH = arm7tdmi
 
 
 CFLAGS = -mcpu=$(ARCH) -Os -mlong-calls -ffunction-sections -D$(CHIP) -DTRACE_LEVEL=$(TRACE_LEVEL) -Iinclude
@@ -39,7 +39,7 @@ all:		$(ALL_OBJS)
 %.o:		%.c
 				${CC} $(CFLAGS) -c $^ -o $@
 
-clean:	
+clean:
 				rm -f $(ALL_OBJS) $(OUTPUT).bin $(OUTPUT).elf
 
 flash:		all

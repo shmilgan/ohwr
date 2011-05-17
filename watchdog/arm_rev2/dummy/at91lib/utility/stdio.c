@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support 
+ *         ATMEL Microcontroller Software Support
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -179,7 +179,7 @@ signed int PutSignedInt(
     if ((absolute / 10) > 0) {
 
         if (value < 0) {
-        
+
             num = PutSignedInt(pStr, fill, width, -(absolute / 10));
         }
         else {
@@ -335,7 +335,7 @@ signed int vsnprintf(char *pStr, size_t length, const char *pFormat, va_list ap)
 
             // Parse width
             while ((*pFormat >= '0') && (*pFormat <= '9')) {
-        
+
                 width = (width*10) + *pFormat-'0';
                 pFormat++;
             }
@@ -345,10 +345,10 @@ signed int vsnprintf(char *pStr, size_t length, const char *pFormat, va_list ap)
 
                 width = length - size;
             }
-        
+
             // Parse type
             switch (*pFormat) {
-            case 'd': 
+            case 'd':
             case 'i': num = PutSignedInt(pStr, fill, width, va_arg(ap, signed int)); break;
             case 'u': num = PutUnsignedInt(pStr, fill, width, va_arg(ap, unsigned int)); break;
             case 'x': num = PutHexa(pStr, fill, width, 0, va_arg(ap, unsigned int)); break;

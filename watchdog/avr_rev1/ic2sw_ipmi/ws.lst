@@ -755,22 +755,22 @@
  778               		.section	.progmem.data,"a",@progbits
  781               	__c.3006:
  782 0000 7773 5F70 		.string	"ws_process_work_list: unsupported protocol\n\r"
- 782      726F 6365 
- 782      7373 5F77 
- 782      6F72 6B5F 
- 782      6C69 7374 
+ 782      726F 6365
+ 782      7373 5F77
+ 782      6F72 6B5F
+ 782      6C69 7374
  785               	__c.2991:
  786 002d 7773 5F70 		.string	"ws_process_work_list: ws_process_incoming\n\r"
- 786      726F 6365 
- 786      7373 5F77 
- 786      6F72 6B5F 
- 786      6C69 7374 
+ 786      726F 6365
+ 786      7373 5F77
+ 786      6F72 6B5F
+ 786      6C69 7374
  789               	__c.2989:
  790 0059 7773 5F70 		.string	"ws_process_work_list: found a WS_ACTIVE_IN\n\r"
- 790      726F 6365 
- 790      7373 5F77 
- 790      6F72 6B5F 
- 790      6C69 7374 
+ 790      726F 6365
+ 790      7373 5F77
+ 790      6F72 6B5F
+ 790      6C69 7374
  791               		.comm ws_array,348,1
  872               	.Letext0:
 DEFINED SYMBOLS

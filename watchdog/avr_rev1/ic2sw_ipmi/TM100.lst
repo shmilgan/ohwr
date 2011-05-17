@@ -163,10 +163,10 @@
  178               		.data
  179               	.LC0:
  180 0000 696E 6974 		.string	"init temperature sensors\n\r"
- 180      2074 656D 
- 180      7065 7261 
- 180      7475 7265 
- 180      2073 656E 
+ 180      2074 656D
+ 180      7065 7261
+ 180      7475 7265
+ 180      2073 656E
  181               		.text
  182               	.global	tm100_init
  184               	tm100_init:
@@ -676,16 +676,16 @@
  695               		.section	.progmem.data,"a",@progbits
  698               	__c.3066:
  699 0000 746D 3130 		.string	"tm100_update_sensor_completion_function\n\r"
- 699      305F 7570 
- 699      6461 7465 
- 699      5F73 656E 
- 699      736F 725F 
+ 699      305F 7570
+ 699      6461 7465
+ 699      5F73 656E
+ 699      736F 725F
  702               	__c.3021:
  703 002a 746D 3130 		.string	"tm100_init no available ws\n\r"
- 703      305F 696E 
- 703      6974 206E 
- 703      6F20 6176 
- 703      6169 6C61 
+ 703      305F 696E
+ 703      6974 206E
+ 703      6F20 6176
+ 703      6169 6C61
  704               		.comm tm100_sensor,10,1
  705               		.comm tm100sr,64,1
  706               		.comm tm100sd,6,1

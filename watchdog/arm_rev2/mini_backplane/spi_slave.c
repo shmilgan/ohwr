@@ -38,9 +38,9 @@ void spi_irq()
 			if(rx_buf_count < RX_BUF_SIZE-1)
 			{
 				spi_rx_buf[rx_buf_wrpos++] = val;
-				rx_buf_wrpos &= RX_BUF_SIZE_MASK;			
+				rx_buf_wrpos &= RX_BUF_SIZE_MASK;
 			}
-			
+
 			if(tx_buf_count > 0 && tx_buf_rdpos < TX_BUF_SIZE)
 			{
 				unsigned char tdr= spi_tx_buf[tx_buf_rdpos++];
@@ -50,25 +50,25 @@ void spi_irq()
 				tx_buf_count--;
 			}
 	}
-	
+
 	if (status & AT91C_SPI_OVRES)
 	{
-		volatile unsigned char val = spi->SPI_RDR;	
+		volatile unsigned char val = spi->SPI_RDR;
 	}
-	
+
 	if (status & AT91C_SPI_NSSR)
 	{
 		if(rx_buf_count < RX_BUF_SIZE)
 		{
 			spi_rx_buf[rx_buf_wrpos++] = EOT;
-			rx_buf_wrpos &= RX_BUF_SIZE_MASK;			
-		}		
+			rx_buf_wrpos &= RX_BUF_SIZE_MASK;
+		}
 
 	//	printf("NSSR");
 
 		rx_packets++;
 	}
-	
+
 }
 
 int spi_slave_poll()
@@ -83,12 +83,12 @@ int spi_slave_read(unsigned char *buf, int max_len)
 	{
 		unsigned short val;
 		int i = 0;
-		
+
 		while((val = spi_rx_buf[rx_buf_rdpos++]) != EOT)
 		{
-			if(i<max_len) 
+			if(i<max_len)
 				buf[i] =  val & 0xff;
-			
+
 			i++;
 			rx_buf_rdpos &= RX_BUF_SIZE_MASK;
 		}
@@ -96,7 +96,7 @@ int spi_slave_read(unsigned char *buf, int max_len)
 
 		AIC_DisableIT(AT91C_ID_SPI0);
 		rx_buf_count -= i + 1;
-		rx_packets--;	
+		rx_packets--;
 		AIC_EnableIT(AT91C_ID_SPI0);
 		return i;
 	}
@@ -118,7 +118,7 @@ void spi_slave_init()
 {
 	PMC_EnablePeripheral(AT91C_ID_SPI0);
 	PMC_EnablePeripheral(AT91C_ID_PIOA);
-	
+
 	PIO_Configure(&PIN_spi_cs, 1);
 	PIO_Configure(&PIN_spi_miso, 1);
 	PIO_Configure(&PIN_spi_mosi, 1);

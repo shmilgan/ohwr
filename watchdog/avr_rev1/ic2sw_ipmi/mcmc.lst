@@ -1614,10 +1614,10 @@
  1653               		.data
  1654               	.LC0:
  1655 0000 6865 6164 		.string	"header_checkup %02X %02X %02X"
- 1655      6572 5F63 
- 1655      6865 636B 
- 1655      7570 2025 
- 1655      3032 5820 
+ 1655      6572 5F63
+ 1655      6865 636B
+ 1655      7570 2025
+ 1655      3032 5820
  1656               		.text
  1657               	.global	send_fan_ctrl
  1659               	send_fan_ctrl:
@@ -1869,77 +1869,77 @@
  1906               		.data
  1907               	.LC1:
  1908 001e 6D6F 6475 		.string	"module_event_handler: ingress\n\r"
- 1908      6C65 5F65 
- 1908      7665 6E74 
- 1908      5F68 616E 
- 1908      646C 6572 
+ 1908      6C65 5F65
+ 1908      7665 6E74
+ 1908      5F68 616E
+ 1908      646C 6572
  1909               	.LC2:
  1910 003e 4D4F 4455 		.string	"MODULE_HANDLE_CLOSED\n\r"
- 1910      4C45 5F48 
- 1910      414E 444C 
- 1910      455F 434C 
- 1910      4F53 4544 
+ 1910      4C45 5F48
+ 1910      414E 444C
+ 1910      455F 434C
+ 1910      4F53 4544
  1911               	.LC3:
  1912 0055 4D4F 4455 		.string	"MODULE_HANDLE_OPENED\n\r"
- 1912      4C45 5F48 
- 1912      414E 444C 
- 1912      455F 4F50 
- 1912      454E 4544 
+ 1912      4C45 5F48
+ 1912      414E 444C
+ 1912      455F 4F50
+ 1912      454E 4544
  1913               	.LC4:
  1914 006c 4D4F 4455 		.string	"MODULE_QUIESCED\n\r"
- 1914      4C45 5F51 
- 1914      5549 4553 
- 1914      4345 440A 
- 1914      0D00 
+ 1914      4C45 5F51
+ 1914      5549 4553
+ 1914      4345 440A
+ 1914      0D00
  1915               	.LC5:
  1916 007e 6D6F 6475 		.string	"module_event_handler not implemented\n\r"
- 1916      6C65 5F65 
- 1916      7665 6E74 
- 1916      5F68 616E 
- 1916      646C 6572 
+ 1916      6C65 5F65
+ 1916      7665 6E74
+ 1916      5F68 616E
+ 1916      646C 6572
  1917               	.LC6:
  1918 00a5 706F 7765 		.ascii	"power channel notification\n\rpwr_channel->event_dir %X\n\rp"
- 1918      7220 6368 
- 1918      616E 6E65 
- 1918      6C20 6E6F 
- 1918      7469 6669 
+ 1918      7220 6368
+ 1918      616E 6E65
+ 1918      6C20 6E6F
+ 1918      7469 6669
  1919 00dd 7772 5F63 		.ascii	"wr_channel->event_type %X\n\rpwr_channel->notification_event"
- 1919      6861 6E6E 
- 1919      656C 2D3E 
- 1919      6576 656E 
- 1919      745F 7479 
+ 1919      6861 6E6E
+ 1919      656C 2D3E
+ 1919      6576 656E
+ 1919      745F 7479
  1920 0117 5F6F 6666 		.ascii	"_offset %d\n\rpwr_channel->evt_data2 %d\n\rpwr_channel->evt_"
- 1920      7365 7420 
- 1920      2564 0A0D 
- 1920      7077 725F 
- 1920      6368 616E 
+ 1920      7365 7420
+ 1920      2564 0A0D
+ 1920      7077 725F
+ 1920      6368 616E
  1921 014f 6461 7461 		.ascii	"data3 %d\n\rpwr_channel->pwr_on %d\n\rpwr_channel->payload_o"
- 1921      3320 2564 
- 1921      0A0D 7077 
- 1921      725F 6368 
- 1921      616E 6E65 
+ 1921      3320 2564
+ 1921      0A0D 7077
+ 1921      725F 6368
+ 1921      616E 6E65
  1922 0187 7665 7263 		.ascii	"vercurrent %d\n\rpwr_channel->payload_pwr %d\n\rpwr_channel-"
- 1922      7572 7265 
- 1922      6E74 2025 
- 1922      640A 0D70 
- 1922      7772 5F63 
+ 1922      7572 7265
+ 1922      6E74 2025
+ 1922      640A 0D70
+ 1922      7772 5F63
  1923 01bf 3E65 6E61 		.ascii	">enable %d\n\rpwr_channel->MG_overcurrent %d\n\rpwr_channel-"
- 1923      626C 6520 
- 1923      2564 0A0D 
- 1923      7077 725F 
- 1923      6368 616E 
+ 1923      626C 6520
+ 1923      2564 0A0D
+ 1923      7077 725F
+ 1923      6368 616E
  1924 01f7 3E6D      		.ascii	">m"
  1925 01f9 675F 7077 		.string	"g_pwr %d\n\rpwr_channel->ps1 %d\n\rpwr_channel->pwr_channel_num %d\n\r"
- 1925      7220 2564 
- 1925      0A0D 7077 
- 1925      725F 6368 
- 1925      616E 6E65 
+ 1925      7220 2564
+ 1925      0A0D 7077
+ 1925      725F 6368
+ 1925      616E 6E65
  1926               	.LC7:
  1927 023a 6D6F 6475 		.string	"module_event_handler: engress\n\r"
- 1927      6C65 5F65 
- 1927      7665 6E74 
- 1927      5F68 616E 
- 1927      646C 6572 
+ 1927      6C65 5F65
+ 1927      7665 6E74
+ 1927      5F68 616E
+ 1927      646C 6572
  1928               		.text
  1929               	.global	module_event_handler
  1931               	module_event_handler:
@@ -2247,16 +2247,16 @@
  2234               		.data
  2235               	.LC8:
  2236 025a 7365 6E64 		.string	"send_read_fru_data - ingress \n\r"
- 2236      5F72 6561 
- 2236      645F 6672 
- 2236      755F 6461 
- 2236      7461 202D 
+ 2236      5F72 6561
+ 2236      645F 6672
+ 2236      755F 6461
+ 2236      7461 202D
  2237               	.LC9:
  2238 027a 7365 6E64 		.string	"send_read_fru_data - engress \n\r"
- 2238      5F72 6561 
- 2238      645F 6672 
- 2238      755F 6461 
- 2238      7461 202D 
+ 2238      5F72 6561
+ 2238      645F 6672
+ 2238      755F 6461
+ 2238      7461 202D
  2239               		.text
  2240               	.global	send_read_fru_data
  2242               	send_read_fru_data:
@@ -2492,28 +2492,28 @@
  2479               		.section	.progmem.data,"a",@progbits
  2482               	__c.3763:
  2483 0000 5265 7370 		.string	"Response package NOK\n\r"
- 2483      6F6E 7365 
- 2483      2070 6163 
- 2483      6B61 6765 
- 2483      204E 4F4B 
+ 2483      6F6E 7365
+ 2483      2070 6163
+ 2483      6B61 6765
+ 2483      204E 4F4B
  2486               	__c.3736:
  2487 0017 5265 7370 		.string	"Response package OK\n\r"
- 2487      6F6E 7365 
- 2487      2070 6163 
- 2487      6B61 6765 
- 2487      204F 4B0A 
+ 2487      6F6E 7365
+ 2487      2070 6163
+ 2487      6B61 6765
+ 2487      204F 4B0A
  2490               	__c.3687:
  2491 002d 6E6F 2061 		.string	"no available slot for the command. exit\n\r"
- 2491      7661 696C 
- 2491      6162 6C65 
- 2491      2073 6C6F 
- 2491      7420 666F 
+ 2491      7661 696C
+ 2491      6162 6C65
+ 2491      2073 6C6F
+ 2491      7420 666F
  2494               	__c.3316:
  2495 0057 0A0D 636F 		.string	"\n\rcommand successfully sent\n\r"
- 2495      6D6D 616E 
- 2495      6420 7375 
- 2495      6363 6573 
- 2495      7366 756C 
+ 2495      6D6D 616E
+ 2495      6420 7375
+ 2495      6363 6573
+ 2495      7366 756C
  2496               		.comm mcmc_ipmbl_address,1,1
  2497               		.comm amc,126,1
  2674               	.Letext0:

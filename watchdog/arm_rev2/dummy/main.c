@@ -19,7 +19,7 @@ static const Pin PIN_dtxd_bootsel = 			{1 << 28, AT91C_BASE_PIOA, AT91C_ID_PIOA,
 static void delay(int howmuch)
 {
 	volatile int i;
-	
+
 	while(howmuch--)
 	{
 		for(i=0;i<10000;i++) asm volatile("nop");
@@ -39,12 +39,12 @@ void io_init()
 int main(void)
 {
 	int force_samba = 0;
-	
+
 	io_init();
-	
+
 	force_samba = !PIO_Get(&PIN_dtxd_bootsel);
-	
-	
+
+
   TRACE_CONFIGURE(DBGU_STANDARD, 115200, BOARD_MCK);
 
     printf("force_samba: %d\n", force_samba);
@@ -59,12 +59,12 @@ int main(void)
 		delay(200);
 		PIO_Clear(&PIN_flash_serial_sel);
 	} else {
-	
+
 		PIO_Clear(&PIN_flash_serial_sel);
 		PIO_Set(&PIN_utca_pwron);
 		delay(20);
 		PIO_Set(&PIN_main_nrst);
-	
+
 	}
 
 
@@ -74,11 +74,11 @@ int main(void)
  		PIO_Set(&PIN_led_utca0);
 		delay(10);
 		PIO_Clear(&PIN_led_utca0);
-		delay(10);	
+		delay(10);
  		PIO_Set(&PIN_led_utca1);
 		delay(10);
 		PIO_Clear(&PIN_led_utca1);
-		delay(10);	
+		delay(10);
 
 	}
 }

@@ -71,7 +71,7 @@ typedef struct {
   uint32_t led_counter;
   int state;
 	uint8_t pio_out;
-	
+
 } port_state_t;
 
 #define NUM_PORTS 8
@@ -127,8 +127,8 @@ void port_init(port_state_t *port, uint8_t addr)
  port->led_act = LED_OFF;
  pca9534_set_dir ( addr, PIN_LED_LINK | PIN_LED_ACT | PIN_EN_FB_TX | PIN_EN_FB_RX | PIN_SFP_TX_DISABLE );
  pca9534_out ( addr, 0 );
- 
- port->pio_out = 0; 
+
+ port->pio_out = 0;
  port->prev_pio = PIN_SFP_DETECT | PIN_SFP_TX_FAULT;
  port->updated = 1;
  port->state = PORT_DETECT_SFP; // was SFP_DISABLED
@@ -139,7 +139,7 @@ void port_init(port_state_t *port, uint8_t addr)
 static void delay(int howmuch)
 {
   volatile int i;
-	
+
   while(howmuch--)
     {
       for(i=0;i<10000;i++) asm volatile("nop");
@@ -161,7 +161,7 @@ void io_init()
 
 int check_mini_backplane()
 {
-	
+
 }
 
 void power_on(int mode)
@@ -196,9 +196,9 @@ void power_on(int mode)
 void port_handle_leds(port_state_t *p)
 {
 	uint8_t led_state = 0;
-	
-	
-	
+
+
+
 	switch(p->led_link)
 	{
 		case LED_OFF:break;
@@ -236,7 +236,7 @@ void port_fsm()
       switch(p->state)
 	{
 	case PORT_DISABLED:
-	  
+
 	  break;
 
 	case PORT_DETECT_SFP:
@@ -248,7 +248,7 @@ void port_fsm()
 	    {
 	      printf("[port-fsm] detected SFP insertion on port %d\n\r", i);
 	      p->state = PORT_READY;
-	    } 
+	    }
 
 	  p->prev_pio = p->pio;
 
@@ -266,7 +266,7 @@ void port_fsm()
 int mi2c_scan()
 {
 	int i;
-	
+
 	for(i=0;i<256;i+=2)
 	{
 		mi2c_start();
@@ -289,7 +289,7 @@ void calib_setup(int port, int cmd)
 {
 	unsigned char lv2_mux = (port >> 1);
 
-	
+
 	switch(cmd)
 	{
 		case WD_CALIB_TX_ON:
@@ -319,7 +319,7 @@ void handle_spi()
 {
 	unsigned char cmd_buf[4];
 	unsigned char cmd, led, port, txrx, enable;
-	
+
 	if(spi_slave_read(cmd_buf, 4) == 4)
 	{
 		cmd = cmd_buf[0];
@@ -336,7 +336,7 @@ void handle_spi()
 						ports[port].led_act = cmd_buf[3];
 				}
 				break;
-				
+
 			case WD_CMD_CALIB_CTL:
 				port = cmd_buf[1];
 				txrx= cmd_buf[2];
@@ -346,7 +346,7 @@ void handle_spi()
 				break;
 		}
 	}
-	
+
 }
 
 int main(void)
@@ -354,7 +354,7 @@ int main(void)
   int force_samba = 0;
 
 	AT91S_RSTC * rstc = AT91C_BASE_RSTC;
-	
+
 	rstc->RSTC_RMR = 0xa5000000 | 1;
 
   io_init();
@@ -364,9 +364,9 @@ int main(void)
   TRACE_CONFIGURE(DBGU_STANDARD, 115200, BOARD_MCK);
 
   printf("force_samba: %d\n\r", force_samba);
-	
-	
-	
+
+
+
 
 
   mi2c_init();
@@ -388,7 +388,7 @@ port_init(&ports[7],0x4e);
 	unsigned char tmp[32];
 
   for(;;)
-  { 
+  {
   	port_fsm();
 
 		if(spi_slave_poll())
