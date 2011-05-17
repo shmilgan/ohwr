@@ -126,8 +126,24 @@ editing this file, please add your name in all the proper places.
         @code{CROSS_COMPILE} to be set unless you follow the build
         scripts.
 
+@item on-switch-tests/
+	Tests that are meant to be run on the switch itself.
+	The directory has been copied from @code{software/tests}
+        as it appeared in the @i{svn} repository; it has not been
+        recompiled or verified in any way.
+
+@item robustness/
+	The robustness demo program, copied from @i{svn} and
+        only cleaned up for end-of-line issues (dos newlines and
+        trailing spaces).
+
+@item watchdog/
+	The code for the ARM7 watchdog processor, copied from @i{svn}
+        and only cleaned of for end-of-line problems.
+
 @item test/
-	Test procedures, documented in doc/wrs-test* .
+	Test procedures, for the switch as a network equipment.
+        Documented in doc/wrs-test* .
 
 @item patches/
 	The directory hosts patches for both the kernel and
