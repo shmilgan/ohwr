@@ -66,6 +66,8 @@ Build}.
 * The IPL::                     
 * The Boot Loader::             
 * The Linux Kernel::            
+* Kernel Modules::              
+* User Space Tools::            
 * The Complete Filesystem::     
 @end menu
 
@@ -385,7 +387,7 @@ to generate the terse output shown above:
 
 @example
    /path/to/wr-switch-sw/build/wrs_build-all 2>&1 | tee logfile \
-        | Greg '^20..-..-.. ..:'
+        | grep '^20..-..-.. ..:'
 @end example
 
 If you are lucky, everything completes by itself in quite some minutes,
@@ -506,6 +508,21 @@ your configuration file of choice. The file must be a copy of the
 @code{.config} after the @code{make menuconfig} step described above.
 Note that if the variable is not pointing to a regular file it is
 ignored with a simple warning -- rather than stopping the build procedure.
+
+@c ##########################################################################
+@node Kernel Modules
+@chapter Kernel Modules
+
+In the next step the scripts compile modules that are part of this
+package.  The step depends on the kernel being available in the
+build directory. The modules are then copied into the @code{images}
+subdirectory of the main build directory.
+
+@c ##########################################################################
+@node User Space Tools
+@chapter User Space Tools
+
+Not compiled by this package, yet.
 
 @c ##########################################################################
 @node The Complete Filesystem
