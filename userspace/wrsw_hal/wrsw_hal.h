@@ -13,30 +13,30 @@ typedef void (*hal_cleanup_callback_t)();
 /* Port delay calibration parameters */
 typedef struct {
 
-	/* PHY delay measurement parameters for PHYs which require external calibration (i.e. with 
+	/* PHY delay measurement parameters for PHYs which require external calibration (i.e. with
 	the feedback network. */
 
 	/* minimum possible delay introduced by the PHY. Expressed as time
 	(in picoseconds) between the beginning of the symbol on the serial input
-	and the rising edge of the RX clock at which the deserialized word is 
+	and the rising edge of the RX clock at which the deserialized word is
 	available at the parallel output of the PHY. */
 	uint32_t phy_rx_min;
 
 	/* RX delay range of the PHY, expressed as a difference (in picoseconds)
 	between the maximum and minimum possible RX delays. For example, a 1.25 Gbps
-	PHY with minimum delay of 8 UI and maximum delay of 12 UI will have 
+	PHY with minimum delay of 8 UI and maximum delay of 12 UI will have
 	phy_rx_range equal to (12 - 8) * 800 ps = 3200 ps. Due to the nature of the
 	calibration method, the measurement range is limited to one parallel clock cycle,
-	i.e. 10 UIs, which is true for most 802.3z serdeses.  PHYs which have bigger 
+	i.e. 10 UIs, which is true for most 802.3z serdeses.  PHYs which have bigger
 	delay variance can't be calibrated using this method. */
 	uint32_t phy_rx_range;
 
 	/* value of the phase shift (in picoseconds) measured by the calibrator DMTD
 	when the PHY has locked on the minimum possible delay. Used to "unwind" the phase
-	measurement into the PHY RX delay. This parameter must be determined experimentally. */	
+	measurement into the PHY RX delay. This parameter must be determined experimentally. */
 	uint32_t phy_rx_bias;
 
-	
+
 	/* the same set of parameters, but for the TX path of the PHY */
 	uint32_t phy_tx_bias;
 	uint32_t phy_tx_min;
@@ -50,7 +50,7 @@ typedef struct {
 	uint32_t delta_tx_sfp;
 	uint32_t delta_rx_sfp;
 
-	/* Current board routing delays (between the DDMTD inputs to the PHY clock 
+	/* Current board routing delays (between the DDMTD inputs to the PHY clock
 	inputs/outputs), in picoseconds */
 	uint32_t delta_tx_board;
 	uint32_t delta_rx_board;
@@ -60,11 +60,11 @@ typedef struct {
 
   /* Fiber "alpha" asymmetry coefficient, as defined in the WRPTP Specification */
 	double fiber_alpha;
-	
+
   /* Fixed point fiber asymmetry coefficient. Expressed as (2 ^ 40 * (fiber_alpha - 1)). */      	int32_t fiber_fix_alpha;
 
   /* When non-zero: RX path is calibrated (delta_*_rx contain valid values) */
-  int rx_calibrated; 
+  int rx_calibrated;
   /* When non-zero: TX path is calibrated */
   int tx_calibrated;
 

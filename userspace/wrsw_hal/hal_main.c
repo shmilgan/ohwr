@@ -29,14 +29,14 @@ int hal_add_cleanup_callback(hal_cleanup_callback_t cb)
 		  cleanup_cb[i] = cb;
 		  return 0;
 		}
-		
+
 	return -1;
 }
 
 static void call_cleanup_cbs()
 {
   int i;
-  
+
 	TRACE(TRACE_INFO, "Cleaning up...");
 	for(i=0;i<MAX_CLEANUP_CALLBACKS;i++)
 		if(cleanup_cb[i]) cleanup_cb[i]();
@@ -47,19 +47,19 @@ int hal_setup_fpga_images()
 {
 	char fpga_dir[128];
 	char fw_name[128];
-	
+
   if( hal_config_get_string("global.hal_firmware_path", fpga_dir, sizeof(fpga_dir)) < 0)
  		return -1;
-  
+
 //  shw_fpga_force_firmware_reload();
   shw_set_fpga_firmware_path(fpga_dir);
-  
+
   if( !hal_config_get_string("global.main_firmware", fw_name, sizeof(fw_name)))
  		shw_request_fpga_firmware(FPGA_ID_MAIN, fw_name);
 
   if( !hal_config_get_string("global.clkb_firmware", fw_name, sizeof(fw_name)))
  		shw_request_fpga_firmware(FPGA_ID_CLKB, fw_name);
- 	
+
   return 0;
 }
 
@@ -79,13 +79,13 @@ static int load_unload_kmod(const char *name, int load)
 		}
 		modules_path_valid = 1;
 	}
-	
-		
+
+
 	TRACE(TRACE_INFO, "%s kernel module '%s'", load ? "Loading" : "Unloading", name);
 	snprintf(cmd, sizeof(cmd), "%s %s/%s", load ? "/sbin/insmod" : "/sbin/rmmod", modules_path, name);
-		
+
 	system(cmd);
-	
+
 	return 0;
 }
 #define assert_init(proc) { int ret; if((ret = proc) < 0) return ret; }
@@ -98,7 +98,7 @@ static void unload_kernel_modules()
 
 	for(;;)
 	{
-		if(!hal_config_iterate("global.modules", index++, module_name, sizeof(module_name))) 
+		if(!hal_config_iterate("global.modules", index++, module_name, sizeof(module_name)))
 			break;
 
 		load_unload_kmod(module_name, 0);
@@ -115,16 +115,16 @@ int hal_load_kernel_modules()
 
 	for(;;)
 	{
-		if(!hal_config_iterate("global.modules", index++, module_name, sizeof(module_name))) 
+		if(!hal_config_iterate("global.modules", index++, module_name, sizeof(module_name)))
 			break;
 
 		assert_init(load_unload_kmod(module_name, 1));
 	}
-	
+
 	hal_add_cleanup_callback(unload_kernel_modules);
-	
+
 	return 0;
-	
+
 }
 
 void sighandler(int sig)
@@ -147,25 +147,25 @@ int hal_init()
 	trace_log_stderr();
 
 	TRACE(TRACE_INFO,"HAL initializing...");
-	
+
 	memset(cleanup_cb, 0, sizeof(cleanup_cb));
 
 	signal(SIGSEGV, sighandler);
 	signal(SIGINT, sighandler);
 	signal(SIGTERM, sighandler);
 	signal(SIGILL, sighandler);
-	
+
 	assert_init(hal_parse_config());
 	assert_init(hal_setup_fpga_images());
 
 	if(!hal_config_get_int("timing.use_external_clock", &enable))
 		shw_use_external_reference(enable);
-	
+
 	assert_init(shw_init());
 	assert_init(hal_load_kernel_modules());
 	assert_init(hal_init_ports());
 	assert_init(hal_init_wripc());
-	
+
 	 return 0;
 }
 
@@ -173,7 +173,7 @@ void hal_update()
 {
 	hal_update_wripc();
 	hal_update_ports();
-	
+
 	usleep(1000);
 }
 
@@ -272,15 +272,15 @@ int main(int argc, char *argv[])
 	}
 
 	hal_parse_cmdline(argc, argv);
-	
+
   hal_init();
-	
+
 	if(daemon_mode)
 		hal_deamonize();
-	
-	
+
+
 	for(;;) hal_update();
 	hal_shutdown();
-	
+
 	return 0;
 }

@@ -30,9 +30,9 @@ int halexp_reset_port(const char *port_name)
 int halexp_lock_cmd(const char *port_name, int command, int priority)
 {
 	int rval;
-	
+
 	//	TRACE(TRACE_INFO,"Command %d", command);
-	
+
 	switch(command)
 	{
 		case HEXP_LOCK_CMD_START:
@@ -40,7 +40,7 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 
 		case HEXP_LOCK_CMD_CHECK:
 			rval = hal_port_check_lock(port_name);
-			
+
 			if(rval > 0)
 				return HEXP_LOCK_STATUS_LOCKED;
 			else if (!rval)
@@ -49,7 +49,7 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 				return HEXP_LOCK_STATUS_NONE;
 			break;
 	}
-	
+
 	return -100;
 }
 
@@ -95,7 +95,7 @@ int hal_init_wripc()
 	hal_ipc = wripc_create_server(WRSW_HAL_SERVER_ADDR);
 
 
-	if(hal_ipc < 0) 
+	if(hal_ipc < 0)
 		return -1;
 
 	wripc_export(hal_ipc, T_INT32, "halexp_pps_cmd", halexp_pps_cmd, 2, T_INT32, T_STRUCT(hexp_pps_params_t));
@@ -108,9 +108,9 @@ int hal_init_wripc()
 
 
 	hal_add_cleanup_callback(hal_cleanup_wripc);
-	
+
 	TRACE(TRACE_INFO, "Started WRIPC server '%s'", WRSW_HAL_SERVER_ADDR);
-	
+
 	return 0;
 }
 
@@ -125,12 +125,12 @@ int hal_check_running()
 	wripc_handle_t fd;
 
 	fd = wripc_connect(WRSW_HAL_SERVER_ADDR);
-	
+
 	if(fd >= 0)
 	{
 		wripc_close(fd);
 		return 1;
 	}
 	return 0;
-	
+
 }

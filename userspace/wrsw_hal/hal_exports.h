@@ -1,7 +1,7 @@
 #ifndef __HAL_EXPORTS_H
 #define __HAL_EXPORTS_H
 
-#include <stdint.h> 
+#include <stdint.h>
 
 #define HAL_MAX_PORTS 64
 
@@ -40,7 +40,7 @@
 
 #define HEXP_PPSG_CMD_GET 0
 #define HEXP_PPSG_CMD_ADJUST_PHASE 1
-#define HEXP_PPSG_CMD_ADJUST_UTC 2 
+#define HEXP_PPSG_CMD_ADJUST_UTC 2
 #define HEXP_PPSG_CMD_ADJUST_NSEC 3
 #define HEXP_PPSG_CMD_POLL 4
 
@@ -63,10 +63,10 @@ typedef struct {
 
   int64_t adjust_utc;
   int32_t adjust_nsec;
- 
+
   uint64_t current_utc;
   uint32_t current_nsec;
- 
+
 } hexp_pps_params_t;
 
 /* Port modes (hexp_port_state_t.mode) */
@@ -91,7 +91,7 @@ typedef struct {
   /* TX and RX delays (combined, big Deltas from the link model in the spec) */
   uint32_t delta_tx;
   uint32_t delta_rx;
-  
+
   /* DDMTD raw phase value in picoseconds */
   uint32_t phase_val;
 
