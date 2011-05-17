@@ -1,0 +1,162 @@
+White Rabbit Switch Routing Table Unit driver and daemon v1.0, based on IEEE 
+Standards 802.1D-2004 and 802.1Q-2003
+
+Authors:    Juan Luis Manas (juan.manas@integrasys.es)
+            Miguel Baizan   (miguel.baizan@integrasys-sa.com)
+
+Based on code by Maciej Lipinski and Tomasz Wlostowski. Fixed by Alessandro
+Rubini and Tomasz Wlostowski
+
+Short info: Implementation of the White Rabbit RTU daemon and driver.
+            The RTU daemon implements the 802.1Q basic learning process and the 
+            aging process. The RTU driver consists of two modules: a module in 
+            user space which implements FPGA R/W operations using mapped memory 
+            and a module in kernel space, which handles UFIFO IRQs. This last
+            module is placed in the WR development environment folder at 
+            software/drivers/wr_rtu.
+
+
+
+    Structure of the package wrsw_rtud
+    ==================================
+
+README
+	This file.
+
+COPYING:
+    GNU GPL Version 2. This package is copyrighted by CERN and
+    released as free software.
+
+TODO:
+    List of things to do.
+
+Documentation/doxygen/
+    Documentation of the source code created with Doxygen 1.7.2 and generated
+    in html and pdf formats. 
+
+patches/
+    The directory hosts the kernel patches, split by kernel versions. The patch
+    under this folder must be added to the ones in wr-switch-software package.
+
+mac.h, mac.c:
+    MAC address type related operations.
+
+rtu.h:
+    RTU data structures definition.
+
+rtud.c: 
+    RTU daemon. Handles the learning and aging processes; manages the 
+    filtering and VLAN databases.
+
+rtud_exports.h, rtud_exports.h:
+    Dump the filtering database. Based on libwripc.
+
+rtu_drv.h, rtu_drv.c:
+    RTU driver module in user space. Provides read/write access to RTU at 
+    hardware components including: 
+        - UFIFO 
+        - MFIFO
+        - HCAM 
+        - Aging RAM for Main Hashtable
+        - Aging Register for HCAM
+        - VLAN Table
+        - RTU Global Control Register
+        - RTU Port settings
+
+rtu_fd.h, rtu_fd.c:
+    RTU Filtering database. 
+    Filtering database management related operations and filtering 
+    database mirror. Note there is a single Filtering Database object 
+    per Bridge (See 802.1Q - 12.7.1)
+
+rtu_hash.h, rtu_hash.c:
+    RTU Hash generation functions.
+
+utils.h, utils.c:
+    Procedures to support wrsw_rtud running as a daemon in the 
+    background. Usage of the daemon.
+
+wr_rtu.h:
+    Header file to handle the wr_rtu kernel module operations.
+
+
+
+    Dependencies 
+    ============
+
+../include
+../libswitchhw
+../../kernel/include/
+
+The support for the RTU IRQ is implemented in the package "wr_rtu" at 
+software/drivers/wr_rtu. To make the daemon work, this package must be compiled
+and installed before running. Read below in the compilation notes for further
+explanation.
+
+The wr_rtu driver is based on the "wrvic" driver developed by Alessandro Rubini 
+at his wr-switch-software project (git://gnudd.com/wr-switch-software.git). 
+Read his documentation to integrate this package with the existing WR 
+development environment (wrdev2). While following the instructions in its README
+file, we found an error regarding the symbol handle_bad_irq in 
+kernel/irq/handle.c. If you encounter the same problem, apply the patch in 
+wrsw_rtud/patches and recompile the kernel.
+
+The wrsw_rtud daemon needs that the wr_rtu driver is loaded in the kernel before
+running.
+
+
+
+    Compilation of the module and the daemon
+    ========================================
+
+To compile the daemon, please run "make". An binary file called "wrsw_rtud"
+should have been generated. It should be copied to the target
+system in order to make it work. You can copy the binary manually:
+
+    scp wrsw_rtud root@$target_dir:/tmp
+
+where "target_dir" is the IP address of your target, and /tmp is the folder
+where you want it to be copied (we choose this folder to avoid storage issues
+regarding image size).
+
+Another option different from manual copy is to include the "wrsw_rtud" in the 
+tftpboot image. If you prefer this option, run "make" and then "make deploy".
+Once you have done this, run wrdev/scripts/build_rootfs.sh. The "wrsw_rtud" is 
+now included in the new image (and it will be placed at /wr/bin/ in the target 
+system, once it has been loaded).
+
+Before running the daemon in the target, you must compile and load the driver.
+To compile the driver, you should go to software/drivers/wr_rtu and execute
+build.sh. Then, you must copy the recently created wr_rtu.ko to the target:
+
+    scp wr_rtu.ko root@$target_dir:/tmp
+
+(again, we choose the /tmp folder instead of /wr/lib/modules, to avoid the 
+storage issues related to gentext2fs use)
+
+Before loading the module in the target, a node must be created. We have edited
+the file in buildroot-2009.11/target/device/Atmel/root/device_table.txt to
+create the node at startup. This node is called wr_rtu and it has major number
+10 and minor number 77. Be sure that you include a line like this at the
+end of the device_table.txt document:
+
+    /dev/wr_rtu c   640 0   0   10  77  -   -   -
+
+If you prefer to create this node manually, then use the "mknod" command.
+
+The last step is to load the driver:  
+
+    insmod wr_rtu.ko
+
+Now, you can run the daemon. Type "wrsw_rtud -h" for configuration options. 
+
+
+
+    Testing tools
+    =============
+
+In software/tests/rtu_stat there is a tool developed by Tomasz for dumping the
+filtering database while the daemon is running. It is based on libwripc. 
+It just dumps the entries stored in the ZBT memory.
+
+
