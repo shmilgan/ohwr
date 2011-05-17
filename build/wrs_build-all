@@ -79,7 +79,7 @@ wrs_build_step    03-kernel              wrs_build_kernel
 wrs_build_step    04-modules             wrs_build_modules
 wrs_build_step    05-ptp-noposix         wrs_build_ptp_noposix
 wrs_build_step    06-wrs-userspace       wrs_build_userspace
-#wrs_build_step   wrap-rootfs         wrs_build_finalrootfs
+wrs_build_step    07-wrap-rootfs         wrs_build_wraprootfs
 
 if $failed_step; then
     wrs_die "One or more build steps failed"

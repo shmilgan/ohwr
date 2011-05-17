@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# check variables, like all scripts herein do
+WRS_SCRIPT_NAME=$(basename $0)
+if [ -z "$WRS_BASE_DIR" ]; then
+    echo "$0: Plesae set WRS_BASE_DIR" >& 2
+    exit 1
+fi
+. ${WRS_BASE_DIR}/scripts/wrs_functions
+
+wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR WRS_WR_REPOSITORY CROSS_COMPILE
+
+wrs_echo "--- Wrapping filesystem"
+
+# This builds an initramfs thing. The cpio archive is made from
+# a real directory, and we have no device table support. So let's
+# extract a tar file with devices, instead.
+
+DEVTAR="$WRS_BASE_DIR/../userspace/devices.tar.gz"
+
+TMPFS=$(mktemp /tmp/rootfs.XXXXXX)
+
+rootfs_vanilla="$WRS_OUTPUT_DIR/build/buildroot-2009.11/output/target"
+rootfs_override="$WRS_BASE_DIR/../userspace/rootfs_override"
+
+TMPSCRIPT=$(mktemp /tmp/rootfs-script.XXXXXX)
+ROOTFS_IMAGE="$WRS_OUTPUT_DIR/images/ramdisk.ext2"
+
+cat > $TMPSCRIPT << EOF
+rm -r -f $TMPFS
+mkdir -p $TMPFS/wr
+
+cp -r $rootfs_vanilla/* $TMPFS
+cp -r $WRS_OUTPUT_DIR/images/wr/* $TMPFS/wr
+cp -r $rootfs_override/* $TMPFS
+
+mkdir -p $TMPFS/wr/lib/modules
+cp $WRS_OUTPUT_DIR/images/*ko $TMPFS/wr/lib/modules
+
+rm -rf $TMPFS/dev
+(cd $TMPFS && tar xzf $DEVTAR)
+(cd $TMPFS && ln -s sbin/init .)
+
+mkdir -p $TMPFS/root/.ssh
+cat $HOME/.ssh/id_?sa.pub >> $TMPFS/root/.ssh/authorized_keys
+if [ -f $WRS_BASE_DIR/authorized_keys ]; then
+    cat $WRS_BASE_DIR/authorized_keys >> $TMPFS/root/.ssh/authorized_keys
+fi
+chmod 600 $TMPFS/root/.ssh/authorized_keys
+chmod g-w $TMPFS/root $TMPFS/root/.ssh
+chown -R root:root $TMPFS/root
+chown -R root:root $TMPFS/etc/dropbear
+
+(cd "$TMPFS" && find . | cpio -o -H newc | gzip) > $ROOTFS_IMAGE
+
+EOF
+
+fakeroot bash $X $TMPSCRIPT
+
