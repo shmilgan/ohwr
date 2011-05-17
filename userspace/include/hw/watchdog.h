@@ -8,12 +8,12 @@
 
 #define MBL_LED_LINK 0
 #define MBL_LED_ACT 1
- 
+
 #define MBL_LED_OFF 0
 #define MBL_LED_ON 1
 #define MBL_LED_BLINK_SLOW 2
 #define MBL_LED_BLINK_FAST 3
-   
+
 #define MBL_FEEDBACK_TX 1
 #define MBL_FEEDBACK_RX 2
 #define MBL_FEEDBACK_OFF 3

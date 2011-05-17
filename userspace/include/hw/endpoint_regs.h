@@ -255,8 +255,8 @@
 #define EP_AFR2_ETYPE_W(value)                WBGEN2_GEN_WRITE(value, 16, 16)
 #define EP_AFR2_ETYPE_R(reg)                  WBGEN2_GEN_READ(reg, 16, 16)
 /* definitions for RAM: Event counters memory */
-#define EP_RMON_RAM_BYTES 0x00000080 /* size in bytes */                               
-#define EP_RMON_RAM_WORDS 0x00000020 /* size in 32-bit words, 32-bit aligned */        
+#define EP_RMON_RAM_BYTES 0x00000080 /* size in bytes */
+#define EP_RMON_RAM_WORDS 0x00000020 /* size in 32-bit words, 32-bit aligned */
 /* [0x0]: REG Endpoint Control Register */
 #define EP_REG_ECR 0x00000000
 /* [0x4]: REG Timestamping Control Register */

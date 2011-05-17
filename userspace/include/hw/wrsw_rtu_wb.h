@@ -396,14 +396,14 @@
 #define RTU_MFIFO_CSR_USEDW_W(value)          WBGEN2_GEN_WRITE(value, 0, 6)
 #define RTU_MFIFO_CSR_USEDW_R(reg)            WBGEN2_GEN_READ(reg, 0, 6)
 /* definitions for RAM: Hash collisions memory (HCAM) */
-#define RTU_HCAM_BYTES 0x00000800 /* size in bytes */                               
-#define RTU_HCAM_WORDS 0x00000200 /* size in 32-bit words, 32-bit aligned */        
+#define RTU_HCAM_BYTES 0x00000800 /* size in bytes */
+#define RTU_HCAM_WORDS 0x00000200 /* size in 32-bit words, 32-bit aligned */
 /* definitions for RAM: Aging bitmap for main hashtable */
-#define RTU_ARAM_MAIN_BYTES 0x00000400 /* size in bytes */                               
-#define RTU_ARAM_MAIN_WORDS 0x00000100 /* size in 32-bit words, 32-bit aligned */        
+#define RTU_ARAM_MAIN_BYTES 0x00000400 /* size in bytes */
+#define RTU_ARAM_MAIN_WORDS 0x00000100 /* size in 32-bit words, 32-bit aligned */
 /* definitions for RAM: VLAN table (VLAN_TAB) */
-#define RTU_VLAN_TAB_BYTES 0x00004000 /* size in bytes */                               
-#define RTU_VLAN_TAB_WORDS 0x00001000 /* size in 32-bit words, 32-bit aligned */        
+#define RTU_VLAN_TAB_BYTES 0x00004000 /* size in bytes */
+#define RTU_VLAN_TAB_WORDS 0x00001000 /* size in 32-bit words, 32-bit aligned */
 /* [0x0]: REG RTU Global Control Register */
 #define RTU_REG_GCR 0x00000000
 /* [0x4]: REG Aging register for HCAM */

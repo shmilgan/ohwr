@@ -16,7 +16,7 @@
 #define HPLL_PD_GATE_32K 6
 #define HPLL_PD_GATE_64K 7
 
-// Frequency detector gating:  
+// Frequency detector gating:
 #define HPLL_FD_GATE_16K 0
 #define HPLL_FD_GATE_32K 1
 #define HPLL_FD_GATE_64K 2
@@ -27,8 +27,8 @@
 #define HPLL_FD_GATE_2M 7
 
 #define HPLL_REFSEL_UP0_RBCLK 2
-#define HPLL_REFSEL_UP1_RBCLK 1 
-#define HPLL_REFSEL_LOCAL 0 
+#define HPLL_REFSEL_UP1_RBCLK 1
+#define HPLL_REFSEL_LOCAL 0
 
 
 typedef struct {
@@ -37,12 +37,12 @@ typedef struct {
 
   int phase_gain_steps;			 // number of phase gain (start to end) transition steps
   uint64_t phase_gain_step_delay;        // step delay for phase gain adjustment (in microseconds)
- 
+
   int N, delta;                          // divider settings: output_freq = input_freq * (N / (N+delta))
 
   int freq_gating;                       // frequency detector gating
   int phase_gating;                      // phase detector gating
-  
+
   int ref_sel;                           // reference clock select
   int force_freqmode;                    // force frequency lock mode
 

@@ -24,6 +24,6 @@ typedef struct {
   int channel;
   double phase_setpoint[4];
 } dmpll_params_t;
-              
+
 
 #endif

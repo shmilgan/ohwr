@@ -22,10 +22,10 @@ extern const pio_pin_t PIN_fled6[];
 extern const pio_pin_t PIN_fled7[];
 
 // uTCA front panel LEDs
-extern const pio_pin_t PIN_uled0[]; 
+extern const pio_pin_t PIN_uled0[];
 extern const pio_pin_t PIN_uled1[];
-extern const pio_pin_t PIN_uled2[]; 
-extern const pio_pin_t PIN_uled3[]; 
+extern const pio_pin_t PIN_uled2[];
+extern const pio_pin_t PIN_uled3[];
 
 // AD9516 PLL control signals
 extern const pio_pin_t PIN_ad9516_cs[];
