@@ -1,17 +1,24 @@
-include ../../Makedefs
 
-PROGRAM		:= wrsw_rtud
-SRCFILES    := mac.c rtu_drv.c rtu_hash.c rtu_fd.c rtud.c rtud_exports.c utils.c
-OBJFILES    := $(patsubst %.c,%.o,$(SRCFILES))
+PROGRAM		= wrsw_rtud
+SRCFILES	= mac.c rtu_drv.c rtu_hash.c rtu_fd.c rtud.c \
+			rtud_exports.c utils.c
+OBJFILES	= $(patsubst %.c,%.o,$(SRCFILES))
 
-CC		    := $(CROSS_COMPILE_ARM)gcc
-INCLUDES    := -I. -I../include -I../rubi-repos/ptp-noposix/libptpnetif -I../wrsw_hal -I../rubi-repos/ptp-noposix/libwripc \
--I../../kernel/include -I$(CROSS_COMPILE_ARM_PATH)/../include
-CFLAGS 		:= -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL
-LDFLAGS 	:= -L../libswitchhw -L../rubi-repos/ptp-noposix -lswitchhw \
--lptpnetif  -lwripc -lpthread
+CC		= $(CROSS_COMPILE)gcc
 
-RM 		    := rm -f
+# We must include stuff from various headers, which are installed.
+# If this is build under build scripts, it's $WRS_OUTPUT_DIR/images/wr
+WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
+WR_INCLUDE = $(WR_INSTALL_ROOT)/include
+WR_LIB = $(WR_INSTALL_ROOT)/lib
+
+CFLAGS		= -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL \
+			-I. -I../include -I$(WR_INCLUDE) -I$(LINUX)/include
+# -I$(CROSS_COMPILE_ARM_PATH)/../include
+
+LDFLAGS 	:= -L$(WR_LIB) -lswitchhw -lptpnetif  -lwripc -lpthread
+
+RM 	    := rm -f
 
 
 .PHONY: all
@@ -21,14 +28,8 @@ all: $(PROGRAM)
 $(PROGRAM): $(OBJFILES)
 	$(CC) -o $@ $(OBJFILES) $(LDFLAGS) 
 
-run:	all
-	scp $(PROGRAM) root@$(T):/tmp
-	
 clean:
 	$(RM) $(PROGRAM) $(OBJFILES)
 
-.c.o:
-	$(CC) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-
-deploy: all
+install: all
 	cp $(PROGRAM) $(WR_INSTALL_ROOT)/bin
