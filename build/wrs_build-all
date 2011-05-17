@@ -76,7 +76,7 @@ wrs_default_compiler
 wrs_build_step    01-at91boot            wrs_build_at91boot
 wrs_build_step    02-u-boot              wrs_build_u-boot
 wrs_build_step    03-kernel              wrs_build_kernel
-#wrs_build_step   04-modules             wrs_build_modules
+wrs_build_step    04-modules             wrs_build_modules
 #wrs_build_step   05-wrs-tools           wrs_build_tools
 #wrs_build_step   06-wrs-addon           wrs_build_addon
 #wrs_build_step   07-wrap-rootfs         wrs_build_finalrootfs

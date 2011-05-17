@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# check variables, like all scripts herein do
+WRS_SCRIPT_NAME=$(basename $0)
+if [ -z "$WRS_BASE_DIR" ]; then
+    echo "$0: Plesae set WRS_BASE_DIR" >& 2
+    exit 1
+fi
+. ${WRS_BASE_DIR}/scripts/wrs_functions
+
+wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR WRS_WR_REPOSITORY CROSS_COMPILE
+
+wrs_echo "--- Kernel modules from this package"
+
+mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
+mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
+
+# check that the kernel has been compiled (or at least configured)
+export LINUX="$WRS_OUTPUT_DIR/build/linux-2.6.35"
+test -f $LINUX/.config || wrs_die "no kernel in $LINUX"
+cd $WRS_BASE_DIR/../kernel
+make $WRS_MAKE_J  || wrs_die "white rabbit kernel modules"
+
+mkdir -p $WRS_OUTPUT_DIR/images
+cp $(find . -name \*.ko) $WRS_OUTPUT_DIR/images
