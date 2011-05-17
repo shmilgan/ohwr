@@ -1,0 +1,1261 @@
+Archive member included because of file (symbol)
+
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_exit.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o (exit)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_clear_bss.o)
+                              main_i2csw_ipmi.o (__do_clear_bss)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strtol.o)
+                              cmdline.o (strtol)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(isspace.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strtol.o) (isspace)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strcpy.o)
+                              cmdline.o (strcpy)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strncmp.o)
+                              cmdline.o (strncmp)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fdevopen.o)
+                              main_i2csw_ipmi.o (fdevopen)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(iob.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fdevopen.o) (__iob)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(printf.o)
+                              main_i2csw_ipmi.o (printf)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(puts.o)
+                              cmdline.o (puts)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(printf.o) (vfprintf)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(calloc.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fdevopen.o) (calloc)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(errno.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strtol.o) (errno)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(calloc.o) (malloc)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(cty_isfalse.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(isspace.o) (__ctype_isfalse)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strnlen_P.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o) (strnlen_P)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(memset.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(calloc.o) (memset)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strnlen.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o) (strnlen)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fputc.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o) (fputc)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(ultoa_invert.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o) (__ultoa_invert)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_mulsi3.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strtol.o) (__mulsi3)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_udivmodsi4.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strtol.o) (__udivmodsi4)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_prologue.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(printf.o) (__prologue_saves__)
+c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_epilogue.o)
+                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(printf.o) (__epilogue_restores__)
+
+Allocating common symbols
+Common symbol       size              file
+
+sdr_entry_table     0xa               sensor.o
+pef_postpone_timer_handle
+                    0x1               event.o
+errno               0x2               c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(errno.o)
+evt_log             0x161             event.o
+pef_alert_policy_table
+                    0x6               event.o
+CmdlineExecFunction
+                    0x2               cmdline.o
+ws                  0x74              main_i2csw_ipmi.o
+ws_array            0x15c             ws.o
+amc                 0x7e              mcmc.o
+Timer0Reg0          0x4               timer.o
+tm100sd             0x6               tm100.o
+CmdlineNumCommands  0x1               cmdline.o
+__brkval            0x2               c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+sda_pin             0x1               main_i2csw_ipmi.o
+print_buffer        0x64              main_i2csw_ipmi.o
+lbolt               0x4               timer.o
+leds                0xe               main_i2csw_ipmi.o
+tm100_sensor        0xa               tm100.o
+mcmc_ipmbl_address  0x1               mcmc.o
+CmdlineBuffer       0xf               cmdline.o
+wsp                 0x2               main_i2csw_ipmi.o
+sensor              0x4               sensor.o
+send_cmd            0x1               main_i2csw_ipmi.o
+pef_alert_string_table
+                    0x24              event.o
+tm100sr             0x40              tm100.o
+__flp               0x2               c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+scl_pin             0x1               main_i2csw_ipmi.o
+evt_processed       0xa               event.o
+pef_filter_table    0x2a              event.o
+__iob               0x6               c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(iob.o)
+IPMI0_A_ws          0x74              i2csw.o
+evt_config          0x3               event.o
+cmd                 0x20              main_i2csw_ipmi.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+text             0x00000000         0x00020000         xr
+data             0x00800060         0x0000ffa0         rw !x
+eeprom           0x00810000         0x00010000         rw !x
+fuse             0x00820000         0x00000400         rw !x
+lock             0x00830000         0x00000400         rw !x
+signature        0x00840000         0x00000400         rw !x
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+Address of section .data set to 0x800100
+LOAD c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+LOAD main_i2csw_ipmi.o
+LOAD uart.o
+LOAD i2csw.o
+LOAD ipmi.o
+LOAD event.o
+LOAD mcmc.o
+LOAD ws.o
+LOAD cmdline.o
+LOAD tm100.o
+LOAD sensor.o
+LOAD adc.o
+LOAD timer.o
+LOAD c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libm.a
+LOAD c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a
+LOAD c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a
+LOAD c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a
+
+.hash
+ *(.hash)
+
+.dynsym
+ *(.dynsym)
+
+.dynstr
+ *(.dynstr)
+
+.gnu.version
+ *(.gnu.version)
+
+.gnu.version_d
+ *(.gnu.version_d)
+
+.gnu.version_r
+ *(.gnu.version_r)
+
+.rel.init
+ *(.rel.init)
+
+.rela.init
+ *(.rela.init)
+
+.rel.text
+ *(.rel.text)
+ *(.rel.text.*)
+ *(.rel.gnu.linkonce.t*)
+
+.rela.text
+ *(.rela.text)
+ *(.rela.text.*)
+ *(.rela.gnu.linkonce.t*)
+
+.rel.fini
+ *(.rel.fini)
+
+.rela.fini
+ *(.rela.fini)
+
+.rel.rodata
+ *(.rel.rodata)
+ *(.rel.rodata.*)
+ *(.rel.gnu.linkonce.r*)
+
+.rela.rodata
+ *(.rela.rodata)
+ *(.rela.rodata.*)
+ *(.rela.gnu.linkonce.r*)
+
+.rel.data
+ *(.rel.data)
+ *(.rel.data.*)
+ *(.rel.gnu.linkonce.d*)
+
+.rela.data
+ *(.rela.data)
+ *(.rela.data.*)
+ *(.rela.gnu.linkonce.d*)
+
+.rel.ctors
+ *(.rel.ctors)
+
+.rela.ctors
+ *(.rela.ctors)
+
+.rel.dtors
+ *(.rel.dtors)
+
+.rela.dtors
+ *(.rela.dtors)
+
+.rel.got
+ *(.rel.got)
+
+.rela.got
+ *(.rela.got)
+
+.rel.bss
+ *(.rel.bss)
+
+.rela.bss
+ *(.rela.bss)
+
+.rel.plt
+ *(.rel.plt)
+
+.rela.plt
+ *(.rela.plt)
+
+.text           0x00000000     0x75b6
+ *(.vectors)
+ .vectors       0x00000000       0x8c c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+                0x00000000                __vectors
+                0x00000000                __vector_default
+ *(.vectors)
+ *(.progmem.gcc*)
+ *(.progmem*)
+ .progmem.data  0x0000008c       0x8c main_i2csw_ipmi.o
+ .progmem.data  0x00000118       0x32 i2csw.o
+ .progmem.data  0x0000014a      0x307 ipmi.o
+ .progmem.data  0x00000451      0x22f event.o
+ .progmem.data  0x00000680       0x75 mcmc.o
+ .progmem.data  0x000006f5       0x86 ws.o
+ .progmem.data  0x0000077b      0x10b cmdline.o
+                0x0000080c                str4
+                0x000007e2                str3
+                0x0000078a                CmdlineCmdNotFound
+                0x00000845                str5
+                0x0000079c                str1
+                0x0000085f                str6
+                0x00000780                CmdlineNotice
+                0x0000077b                CmdlinePrompt
+                0x000007b8                str2
+ .progmem.data  0x00000886       0x47 tm100.o
+                0x000008ce                . = ALIGN (0x2)
+ *fill*         0x000008cd        0x1 00
+                0x000008ce                __trampolines_start = .
+ *(.trampolines)
+ .trampolines   0x000008ce        0x0 linker stubs
+ *(.trampolines*)
+                0x000008ce                __trampolines_end = .
+ *(.jumptables)
+ *(.jumptables*)
+ *(.lowtext)
+ *(.lowtext*)
+                0x000008ce                __ctors_start = .
+ *(.ctors)
+                0x000008ce                __ctors_end = .
+                0x000008ce                __dtors_start = .
+ *(.dtors)
+                0x000008ce                __dtors_end = .
+ SORT(*)(.ctors)
+ SORT(*)(.dtors)
+ *(.init0)
+ .init0         0x000008ce        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+                0x000008ce                __init
+ *(.init0)
+ *(.init1)
+ *(.init1)
+ *(.init2)
+ .init2         0x000008ce        0xc c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+ *(.init2)
+ *(.init3)
+ *(.init3)
+ *(.init4)
+ .init4         0x000008da       0x1a c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+                0x000008da                __do_copy_data
+ .init4         0x000008f4       0x10 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_clear_bss.o)
+                0x000008f4                __do_clear_bss
+ *(.init4)
+ *(.init5)
+ *(.init5)
+ *(.init6)
+ *(.init6)
+ *(.init7)
+ *(.init7)
+ *(.init8)
+ *(.init8)
+ *(.init9)
+ .init9         0x00000904        0x8 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+ *(.init9)
+ *(.text)
+ .text          0x0000090c        0x4 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+                0x0000090c                __vector_22
+                0x0000090c                __vector_28
+                0x0000090c                __vector_1
+                0x0000090c                __vector_32
+                0x0000090c                __vector_34
+                0x0000090c                __vector_24
+                0x0000090c                __vector_12
+                0x0000090c                __bad_interrupt
+                0x0000090c                __vector_6
+                0x0000090c                __vector_31
+                0x0000090c                __vector_3
+                0x0000090c                __vector_23
+                0x0000090c                __vector_25
+                0x0000090c                __vector_11
+                0x0000090c                __vector_13
+                0x0000090c                __vector_17
+                0x0000090c                __vector_19
+                0x0000090c                __vector_7
+                0x0000090c                __vector_27
+                0x0000090c                __vector_5
+                0x0000090c                __vector_33
+                0x0000090c                __vector_4
+                0x0000090c                __vector_9
+                0x0000090c                __vector_2
+                0x0000090c                __vector_21
+                0x0000090c                __vector_15
+                0x0000090c                __vector_29
+                0x0000090c                __vector_8
+                0x0000090c                __vector_26
+                0x0000090c                __vector_14
+                0x0000090c                __vector_10
+                0x0000090c                __vector_18
+                0x0000090c                __vector_20
+ .text          0x00000910      0xa9e main_i2csw_ipmi.o
+                0x000013a4                put
+                0x00000910                initLeds
+                0x000009fe                tooglepwr
+                0x0000095a                boot_FPGA
+                0x00000ad2                main
+                0x0000139c                get
+                0x00000a3c                pwrFunction
+ .text          0x000013ae      0x100 uart.o
+                0x000013f6                uart_putstr
+                0x00001434                __vector_30
+                0x000013ba                printfr
+                0x000013ae                uartInit
+                0x00001414                uart_getc
+                0x000013dc                uartSetBaudRate
+                0x000013e6                uart_putc
+                0x00001422                uart_getc_noloop
+ .text          0x000014ae     0x2df0 i2csw.o
+                0x00001b40                i2cInitB
+                0x00002b18                i2c_master_write
+                0x00002036                i2c_bus_init
+                0x000014ae                clk_delay
+                0x000014ba                i2cPutbyte
+                0x000033c8                i2cMasterReceive
+                0x000032cc                i2c_master_read
+                0x00001d72                IPMB0_A_READ
+                0x00001a1c                i2cInitA
+                0x00001c58                i2cTemp
+                0x00002b70                i2c_Read
+                0x00001766                i2cGetbyte
+                0x00001a0c                getBus
+                0x0000229a                i2c_Send
+ .text          0x0000429e      0x616 ipmi.o
+                0x000043c4                ipmi_default_response
+                0x000042c0                ipmi_get_next_seq
+                0x000043ee                ipmi_process_fw_req
+                0x00004418                ipmi_process_response
+                0x00004658                ipmi_process_pkt
+                0x0000429e                ipmi_calculate_checksum
+                0x00004598                ipmi_process_request
+ .text          0x000048b4      0x5fc event.o
+                0x00004a96                ipmi_get_pef_config_params
+                0x000048bc                ipmi_get_event_receiver
+                0x00004954                ipmi_get_last_processed_event
+                0x000048b6                event_data_compare
+                0x00004a4a                ipmi_set_last_processed_event
+                0x00004bd8                ipmi_platform_event
+                0x00004b66                ipmi_event_handler
+                0x00004ad2                ipmi_arm_pef_postpone_timer
+                0x00004900                ipmi_set_event_receiver
+                0x00004b48                ipmi_event_init
+                0x00004b06                ipmi_get_pef_capabilities
+                0x00004aa0                ipmi_set_pef_config_params
+                0x000048b4                pef_postpone_timer_expired
+                0x00004bf2                ipmi_process_event_req
+ .text          0x00004eb0      0xd00 mcmc.o
+                0x00004f18                mcmc_mmc_event
+                0x000051f6                send_get_device_id
+                0x00005112                cmd_complete
+                0x000050e2                module_init2
+                0x0000529c                send_picmg_properties
+                0x000058ac                module_event_handler
+                0x00004ef2                lookup_dev_id
+                0x000050e0                enable_payload
+                0x000050ea                module_process_response
+                0x00005a9c                send_read_fru_data
+                0x00005728                send_fan_ctrl
+                0x0000544c                send_get_pm_status
+                0x00005132                send_pm_reset
+                0x00004ede                lookup_dev_addr
+                0x00005536                get_pwr_channel_stat
+                0x00004eb0                module_get_i2c_address
+                0x00005b94                module_init
+                0x0000511c                module_sensor_init
+                0x0000534e                send_set_fru_led_state
+                0x0000561e                send_pwr_ctrl_ch
+ .text          0x00005bb0      0x40c ws.o
+                0x00005cdc                ws_free
+                0x00005d78                ws_process_work_list
+                0x00005d72                ws_process_incoming
+                0x00005bb0                ws_init
+                0x00005c2e                ws_set_state
+                0x00005c42                ws_get_elem
+                0x00005bce                ws_alloc
+                0x00005cfe                ws_get_elem_seq
+ .text          0x00005fbc      0x4f8 cmdline.o
+                0x000060fe                helpFunction
+                0x00005fd2                set_available_cmd
+                0x00006200                cmdlineAddCommand
+                0x00005fbc                cmdlineInit
+                0x00006456                cmdlineInputFunc
+                0x000062e2                cmdlineMainLoop
+                0x00006324                cmdlineProcessInputString
+                0x00005fde                cmdlineSetOutputFunc
+                0x000061d4                cmdlinePrintPrompt
+                0x00005fe8                cmdlineGetArgStr
+                0x00005fd8                get_available_cmd
+                0x00006076                cmdlinePrintError
+                0x0000623e                cmdlineGetArgInt
+ .text          0x000064b4      0x34c tm100.o
+                0x000064c4                tm100_update_sensor_reading
+                0x0000672a                tm100_init_completion_function
+                0x00006634                tm100_update_sensor_completion_function
+                0x000064f4                tm100_update_sensor
+                0x000064b4                GetTM100SensorInfo
+                0x0000654a                tm100_init_sensor_record
+                0x00006558                tm100_init
+ .text          0x00006800       0x5c sensor.o
+                0x00006800                sensor_add
+ .text          0x0000685c       0xac adc.o
+                0x000068b4                adcIsComplete
+                0x000068de                adcConvert8bit
+                0x000068a2                adcSetChannel
+                0x00006880                adcOff
+                0x0000685c                adcInit
+                0x000068ae                adcStartConvert
+                0x00006886                adcSetPrescaler
+                0x00006890                adcSetReference
+                0x000068ba                adcConvert10bit
+ .text          0x00006908       0xa6 timer.o
+                0x00006908                timerInit
+                0x00006948                timer0SetPrescaler
+                0x00006928                timer0_initialize
+                0x00006952                timer0_ClearOverflowCount
+                0x00006964                __vector_16
+ .text          0x000069ae        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_exit.o)
+ .text          0x000069ae        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_clear_bss.o)
+ .text          0x000069ae      0x25e c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strtol.o)
+                0x000069ae                strtol
+ .text          0x00006c0c        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(isspace.o)
+ .text          0x00006c0c        0xe c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strcpy.o)
+                0x00006c0c                strcpy
+ .text          0x00006c1a       0x1c c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strncmp.o)
+                0x00006c1a                strncmp
+ .text          0x00006c36       0x98 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fdevopen.o)
+                0x00006c36                fdevopen
+ .text          0x00006cce        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(iob.o)
+ .text          0x00006cce       0x2a c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(printf.o)
+                0x00006cce                printf
+ .text          0x00006cf8       0x6a c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(puts.o)
+                0x00006cf8                puts
+ .text          0x00006d62      0x3ba c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
+                0x00006d62                vfprintf
+ .text          0x0000711c       0x38 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(calloc.o)
+                0x0000711c                calloc
+ .text          0x00007154        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(errno.o)
+ .text          0x00007154      0x20a c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+                0x00007154                malloc
+                0x000072ae                free
+ .text          0x0000735e        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(cty_isfalse.o)
+ .text          0x0000735e       0x16 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strnlen_P.o)
+                0x0000735e                strnlen_P
+ .text          0x00007374        0xe c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(memset.o)
+                0x00007374                memset
+ .text          0x00007382       0x16 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strnlen.o)
+                0x00007382                strnlen
+ .text          0x00007398       0x58 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fputc.o)
+                0x00007398                fputc
+ .text          0x000073f0       0xbc c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(ultoa_invert.o)
+                0x000073f0                __ultoa_invert
+ .text          0x000074ac        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_mulsi3.o)
+ .text          0x000074ac        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_udivmodsi4.o)
+ .text          0x000074ac        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_prologue.o)
+ .text          0x000074ac        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_epilogue.o)
+                0x000074ac                . = ALIGN (0x2)
+ *(.text.*)
+ .text.libgcc   0x000074ac        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_exit.o)
+ .text.libgcc   0x000074ac        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_clear_bss.o)
+ .text.ctype    0x000074ac       0x10 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(isspace.o)
+                0x000074ac                isspace
+ .text.ctype    0x000074bc        0x6 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(cty_isfalse.o)
+                0x000074c0                __ctype_istrue
+                0x000074bc                __ctype_isfalse
+ .text.libgcc   0x000074c2       0x3e c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_mulsi3.o)
+                0x000074c2                __mulsi3
+ .text.libgcc   0x00007500       0x44 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_udivmodsi4.o)
+                0x00007500                __udivmodsi4
+ .text.libgcc   0x00007544       0x38 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_prologue.o)
+                0x00007544                __prologue_saves__
+ .text.libgcc   0x0000757c       0x36 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_epilogue.o)
+                0x0000757c                __epilogue_restores__
+                0x000075b2                . = ALIGN (0x2)
+ *(.fini9)
+ .fini9         0x000075b2        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_exit.o)
+                0x000075b2                exit
+                0x000075b2                _exit
+ *(.fini9)
+ *(.fini8)
+ *(.fini8)
+ *(.fini7)
+ *(.fini7)
+ *(.fini6)
+ *(.fini6)
+ *(.fini5)
+ *(.fini5)
+ *(.fini4)
+ *(.fini4)
+ *(.fini3)
+ *(.fini3)
+ *(.fini2)
+ *(.fini2)
+ *(.fini1)
+ *(.fini1)
+ *(.fini0)
+ .fini0         0x000075b2        0x4 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_exit.o)
+ *(.fini0)
+                0x000075b6                _etext = .
+
+.data           0x00800100      0x520 load address 0x000075b6
+                0x00800100                PROVIDE (__data_start, .)
+ *(.data)
+ .data          0x00800100        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+ .data          0x00800100      0x179 main_i2csw_ipmi.o
+                0x00800274                IMPI_ADDR
+ .data          0x00800279        0x0 uart.o
+ .data          0x00800279       0xab i2csw.o
+ .data          0x00800324        0x0 ipmi.o
+ .data          0x00800324        0x6 event.o
+                0x00800324                pef_capabilities
+ .data          0x0080032a      0x2b6 mcmc.o
+                0x008005c5                IPMBL_TABLE
+                0x008005c4                g_dev_id
+ .data          0x008005e0        0x0 ws.o
+ .data          0x008005e0       0x1f cmdline.o
+ .data          0x008005ff       0x1b tm100.o
+ .data          0x0080061a        0x0 sensor.o
+ .data          0x0080061a        0x0 adc.o
+ .data          0x0080061a        0x0 timer.o
+ .data          0x0080061a        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_exit.o)
+ .data          0x0080061a        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_clear_bss.o)
+ .data          0x0080061a        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strtol.o)
+ .data          0x0080061a        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(isspace.o)
+ .data          0x0080061a        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strcpy.o)
+ .data          0x0080061a        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strncmp.o)
+ .data          0x0080061a        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fdevopen.o)
+ .data          0x0080061a        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(iob.o)
+ .data          0x0080061a        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(printf.o)
+ .data          0x0080061a        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(puts.o)
+ .data          0x0080061a        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
+ .data          0x0080061a        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(calloc.o)
+ .data          0x0080061a        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(errno.o)
+ .data          0x0080061a        0x6 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+                0x0080061c                __malloc_heap_start
+                0x0080061e                __malloc_heap_end
+                0x0080061a                __malloc_margin
+ .data          0x00800620        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(cty_isfalse.o)
+ .data          0x00800620        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strnlen_P.o)
+ .data          0x00800620        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(memset.o)
+ .data          0x00800620        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strnlen.o)
+ .data          0x00800620        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fputc.o)
+ .data          0x00800620        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(ultoa_invert.o)
+ .data          0x00800620        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_mulsi3.o)
+ .data          0x00800620        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_udivmodsi4.o)
+ .data          0x00800620        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_prologue.o)
+ .data          0x00800620        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_epilogue.o)
+ *(.data*)
+ *(.rodata)
+ *(.rodata*)
+ *(.gnu.linkonce.d*)
+                0x00800620                . = ALIGN (0x2)
+                0x00800620                _edata = .
+                0x00800620                PROVIDE (__data_end, .)
+
+.bss            0x00800620      0x6f0
+                0x00800620                PROVIDE (__bss_start, .)
+ *(.bss)
+ .bss           0x00800620        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+ .bss           0x00800620        0x0 main_i2csw_ipmi.o
+ .bss           0x00800620        0x0 uart.o
+ .bss           0x00800620       0xd0 i2csw.o
+ .bss           0x008006f0       0x10 ipmi.o
+                0x008006f0                seq_array
+ .bss           0x00800700        0x0 event.o
+ .bss           0x00800700        0x0 mcmc.o
+ .bss           0x00800700        0x0 ws.o
+ .bss           0x00800700       0x6b cmdline.o
+                0x00800700                CmdlineBufferLength
+                0x00800701                CmdlineBufferEditPos
+ .bss           0x0080076b        0x1 tm100.o
+                0x0080076b                tm100_sensor_count
+ .bss           0x0080076c        0x3 sensor.o
+                0x0080076c                current_sensor_count
+                0x0080076d                sdr_reservation_id
+ .bss           0x0080076f        0x0 adc.o
+ .bss           0x0080076f        0x0 timer.o
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_exit.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_clear_bss.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strtol.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(isspace.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strcpy.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strncmp.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fdevopen.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(iob.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(printf.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(puts.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(calloc.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(errno.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(cty_isfalse.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strnlen_P.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(memset.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strnlen.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fputc.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(ultoa_invert.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_mulsi3.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_udivmodsi4.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_prologue.o)
+ .bss           0x0080076f        0x0 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_epilogue.o)
+ *(.bss*)
+ *(COMMON)
+ COMMON         0x0080076f      0x10b main_i2csw_ipmi.o
+                0x0080076f                ws
+                0x008007e3                sda_pin
+                0x008007e4                print_buffer
+                0x00800848                leds
+                0x00800856                wsp
+                0x00800858                send_cmd
+                0x00800859                scl_pin
+                0x0080085a                cmd
+ COMMON         0x0080087a       0x74 i2csw.o
+                0x0080087a                IPMI0_A_ws
+ COMMON         0x008008ee      0x1c3 event.o
+                0x008008ee                pef_postpone_timer_handle
+                0x008008ef                evt_log
+                0x00800a50                pef_alert_policy_table
+                0x00800a56                pef_alert_string_table
+                0x00800a7a                evt_processed
+                0x00800a84                pef_filter_table
+                0x00800aae                evt_config
+ COMMON         0x00800ab1       0x7f mcmc.o
+                0x00800ab1                amc
+                0x00800b2f                mcmc_ipmbl_address
+ COMMON         0x00800b30      0x15c ws.o
+                0x00800b30                ws_array
+ COMMON         0x00800c8c       0x12 cmdline.o
+                0x00800c8c                CmdlineExecFunction
+                0x00800c8e                CmdlineNumCommands
+                0x00800c8f                CmdlineBuffer
+ COMMON         0x00800c9e       0x50 tm100.o
+                0x00800c9e                tm100sd
+                0x00800ca4                tm100_sensor
+                0x00800cae                tm100sr
+ COMMON         0x00800cee        0xe sensor.o
+                0x00800cee                sdr_entry_table
+                0x00800cf8                sensor
+ COMMON         0x00800cfc        0x8 timer.o
+                0x00800cfc                Timer0Reg0
+                0x00800d00                lbolt
+ COMMON         0x00800d04        0x6 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(iob.o)
+                0x00800d04                __iob
+ COMMON         0x00800d0a        0x2 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(errno.o)
+                0x00800d0a                errno
+ COMMON         0x00800d0c        0x4 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+                0x00800d0c                __brkval
+                0x00800d0e                __flp
+                0x00800d10                PROVIDE (__bss_end, .)
+                0x000075b6                __data_load_start = LOADADDR (.data)
+                0x00007ad6                __data_load_end = (__data_load_start + SIZEOF (.data))
+
+.noinit         0x00800d10        0x0
+                0x00800d10                PROVIDE (__noinit_start, .)
+ *(.noinit*)
+                0x00800d10                PROVIDE (__noinit_end, .)
+                0x00800d10                _end = .
+                0x00800d10                PROVIDE (__heap_start, .)
+
+.eeprom         0x00810000        0x0
+ *(.eeprom*)
+                0x00810000                __eeprom_end = .
+
+.fuse
+ *(.fuse)
+ *(.lfuse)
+ *(.hfuse)
+ *(.efuse)
+
+.lock
+ *(.lock*)
+
+.signature
+ *(.signature*)
+
+.stab
+ *(.stab)
+
+.stabstr
+ *(.stabstr)
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment
+ *(.comment)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges  0x00000000      0x180
+ *(.debug_aranges)
+ .debug_aranges
+                0x00000000       0x20 main_i2csw_ipmi.o
+ .debug_aranges
+                0x00000020       0x20 uart.o
+ .debug_aranges
+                0x00000040       0x20 i2csw.o
+ .debug_aranges
+                0x00000060       0x20 ipmi.o
+ .debug_aranges
+                0x00000080       0x20 event.o
+ .debug_aranges
+                0x000000a0       0x20 mcmc.o
+ .debug_aranges
+                0x000000c0       0x20 ws.o
+ .debug_aranges
+                0x000000e0       0x20 cmdline.o
+ .debug_aranges
+                0x00000100       0x20 tm100.o
+ .debug_aranges
+                0x00000120       0x20 sensor.o
+ .debug_aranges
+                0x00000140       0x20 adc.o
+ .debug_aranges
+                0x00000160       0x20 timer.o
+
+.debug_pubnames
+                0x00000000      0xd05
+ *(.debug_pubnames)
+ .debug_pubnames
+                0x00000000       0xc8 main_i2csw_ipmi.o
+ .debug_pubnames
+                0x000000c8       0x90 uart.o
+ .debug_pubnames
+                0x00000158      0x110 i2csw.o
+ .debug_pubnames
+                0x00000268       0xcc ipmi.o
+ .debug_pubnames
+                0x00000334      0x249 event.o
+ .debug_pubnames
+                0x0000057d      0x1ff mcmc.o
+ .debug_pubnames
+                0x0000077c       0xaa ws.o
+ .debug_pubnames
+                0x00000826      0x20f cmdline.o
+ .debug_pubnames
+                0x00000a35      0x11c tm100.o
+ .debug_pubnames
+                0x00000b51       0x70 sensor.o
+ .debug_pubnames
+                0x00000bc1       0xb0 adc.o
+ .debug_pubnames
+                0x00000c71       0x94 timer.o
+
+.debug_info     0x00000000     0x842c
+ *(.debug_info)
+ .debug_info    0x00000000      0xb12 main_i2csw_ipmi.o
+ .debug_info    0x00000b12      0x22f uart.o
+ .debug_info    0x00000d41     0x131b i2csw.o
+ .debug_info    0x0000205c      0xbff ipmi.o
+ .debug_info    0x00002c5b     0x140c event.o
+ .debug_info    0x00004067     0x1b13 mcmc.o
+ .debug_info    0x00005b7a      0x7da ws.o
+ .debug_info    0x00006354      0x92f cmdline.o
+ .debug_info    0x00006c83      0xcf7 tm100.o
+ .debug_info    0x0000797a      0x684 sensor.o
+ .debug_info    0x00007ffe      0x288 adc.o
+ .debug_info    0x00008286      0x1a6 timer.o
+ *(.gnu.linkonce.wi.*)
+
+.debug_abbrev   0x00000000     0x19a6
+ *(.debug_abbrev)
+ .debug_abbrev  0x00000000      0x344 main_i2csw_ipmi.o
+ .debug_abbrev  0x00000344      0x166 uart.o
+ .debug_abbrev  0x000004aa      0x2ff i2csw.o
+ .debug_abbrev  0x000007a9      0x288 ipmi.o
+ .debug_abbrev  0x00000a31      0x284 event.o
+ .debug_abbrev  0x00000cb5      0x304 mcmc.o
+ .debug_abbrev  0x00000fb9      0x21f ws.o
+ .debug_abbrev  0x000011d8      0x228 cmdline.o
+ .debug_abbrev  0x00001400      0x209 tm100.o
+ .debug_abbrev  0x00001609      0x13c sensor.o
+ .debug_abbrev  0x00001745      0x14e adc.o
+ .debug_abbrev  0x00001893      0x113 timer.o
+
+.debug_line     0x00000000     0x3f6c
+ *(.debug_line)
+ .debug_line    0x00000000      0x615 main_i2csw_ipmi.o
+ .debug_line    0x00000615      0x20d uart.o
+ .debug_line    0x00000822     0x110c i2csw.o
+ .debug_line    0x0000192e      0x5a4 ipmi.o
+ .debug_line    0x00001ed2      0x664 event.o
+ .debug_line    0x00002536      0xab2 mcmc.o
+ .debug_line    0x00002fe8      0x3bc ws.o
+ .debug_line    0x000033a4      0x3b7 cmdline.o
+ .debug_line    0x0000375b      0x40b tm100.o
+ .debug_line    0x00003b66       0xe4 sensor.o
+ .debug_line    0x00003c4a      0x1f1 adc.o
+ .debug_line    0x00003e3b      0x131 timer.o
+
+.debug_frame    0x00000000      0x7d0
+ *(.debug_frame)
+ .debug_frame   0x00000000       0x80 main_i2csw_ipmi.o
+ .debug_frame   0x00000080       0x90 uart.o
+ .debug_frame   0x00000110       0xf0 i2csw.o
+ .debug_frame   0x00000200       0x80 ipmi.o
+ .debug_frame   0x00000280       0xf0 event.o
+ .debug_frame   0x00000370      0x150 mcmc.o
+ .debug_frame   0x000004c0       0x90 ws.o
+ .debug_frame   0x00000550       0xe0 cmdline.o
+ .debug_frame   0x00000630       0x80 tm100.o
+ .debug_frame   0x000006b0       0x20 sensor.o
+ .debug_frame   0x000006d0       0xa0 adc.o
+ .debug_frame   0x00000770       0x60 timer.o
+
+.debug_str      0x00000000     0x278f
+ *(.debug_str)
+ .debug_str     0x00000000      0x3c1 main_i2csw_ipmi.o
+                                0x435 (size before relaxing)
+ .debug_str     0x000003c1       0x8a uart.o
+                                0x15a (size before relaxing)
+ .debug_str     0x0000044b      0x1d6 i2csw.o
+                                0x509 (size before relaxing)
+ .debug_str     0x00000621      0x192 ipmi.o
+                                0x4bb (size before relaxing)
+ .debug_str     0x000007b3      0xaec event.o
+                                0xcfb (size before relaxing)
+ .debug_str     0x0000129f      0xa6f mcmc.o
+                                0xfc8 (size before relaxing)
+ .debug_str     0x00001d0e       0x89 ws.o
+                                0x38e (size before relaxing)
+ .debug_str     0x00001d97      0x225 cmdline.o
+                                0x31b (size before relaxing)
+ .debug_str     0x00001fbc      0x665 tm100.o
+                                0x9d3 (size before relaxing)
+ .debug_str     0x00002621       0x73 sensor.o
+                                0x634 (size before relaxing)
+ .debug_str     0x00002694       0x93 adc.o
+                                0x168 (size before relaxing)
+ .debug_str     0x00002727       0x68 timer.o
+                                0x13e (size before relaxing)
+
+.debug_loc      0x00000000     0x303b
+ *(.debug_loc)
+ .debug_loc     0x00000000      0x2fc main_i2csw_ipmi.o
+ .debug_loc     0x000002fc       0x8c uart.o
+ .debug_loc     0x00000388      0x63f i2csw.o
+ .debug_loc     0x000009c7      0x6f3 ipmi.o
+ .debug_loc     0x000010ba      0x3cb event.o
+ .debug_loc     0x00001485      0xbf9 mcmc.o
+ .debug_loc     0x0000207e      0x2c7 ws.o
+ .debug_loc     0x00002345      0x7cc cmdline.o
+ .debug_loc     0x00002b11      0x41a tm100.o
+ .debug_loc     0x00002f2b       0x28 sensor.o
+ .debug_loc     0x00002f53       0xe8 adc.o
+
+.debug_macinfo
+ *(.debug_macinfo)
+OUTPUT(main_i2csw_ipmi.elf elf32-avr)
+LOAD linker stubs
+
+.debug_ranges   0x00000000      0x700
+ .debug_ranges  0x00000000       0x98 main_i2csw_ipmi.o
+ .debug_ranges  0x00000098       0x20 uart.o
+ .debug_ranges  0x000000b8      0x1e0 i2csw.o
+ .debug_ranges  0x00000298      0x108 ipmi.o
+ .debug_ranges  0x000003a0       0xe8 event.o
+ .debug_ranges  0x00000488       0x18 mcmc.o
+ .debug_ranges  0x000004a0       0xb0 ws.o
+ .debug_ranges  0x00000550      0x180 cmdline.o
+ .debug_ranges  0x000006d0       0x30 tm100.o
+
+Cross Reference Table
+
+Symbol                                            File
+CmdlineBuffer                                     cmdline.o
+CmdlineBufferEditPos                              cmdline.o
+CmdlineBufferLength                               cmdline.o
+CmdlineCmdNotFound                                cmdline.o
+CmdlineExecFunction                               cmdline.o
+CmdlineNotice                                     cmdline.o
+CmdlineNumCommands                                cmdline.o
+CmdlinePrompt                                     cmdline.o
+GetTM100SensorInfo                                tm100.o
+IMPI_ADDR                                         main_i2csw_ipmi.o
+IPMB0_A_READ                                      i2csw.o
+                                                  main_i2csw_ipmi.o
+IPMBL_TABLE                                       mcmc.o
+IPMI0_A_ws                                        i2csw.o
+Timer0Reg0                                        timer.o
+__bad_interrupt                                   c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__brkval                                          c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+__bss_end                                         c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_clear_bss.o)
+__bss_start                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_clear_bss.o)
+__ctype_isfalse                                   c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(cty_isfalse.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(isspace.o)
+__ctype_istrue                                    c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(cty_isfalse.o)
+__data_end                                        c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__data_load_start                                 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__data_start                                      c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__do_clear_bss                                    c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_clear_bss.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(errno.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(iob.o)
+                                                  timer.o
+                                                  sensor.o
+                                                  tm100.o
+                                                  cmdline.o
+                                                  ws.o
+                                                  mcmc.o
+                                                  event.o
+                                                  ipmi.o
+                                                  i2csw.o
+                                                  main_i2csw_ipmi.o
+__do_copy_data                                    c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+                                                  tm100.o
+                                                  cmdline.o
+                                                  mcmc.o
+                                                  event.o
+                                                  i2csw.o
+                                                  main_i2csw_ipmi.o
+__epilogue_restores__                             c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_epilogue.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(printf.o)
+__flp                                             c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+__heap_end                                        c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+__heap_start                                      c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+__init                                            c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__iob                                             c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(puts.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(printf.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(iob.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fdevopen.o)
+__malloc_heap_end                                 c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+__malloc_heap_start                               c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+__malloc_margin                                   c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+__mulsi3                                          c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_mulsi3.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strtol.o)
+__prologue_saves__                                c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_prologue.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(printf.o)
+__stack                                           c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__udivmodsi4                                      c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_udivmodsi4.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strtol.o)
+__ultoa_invert                                    c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(ultoa_invert.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
+__vector_1                                        c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_10                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_11                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_12                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_13                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_14                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_15                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_16                                       timer.o
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_17                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_18                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_19                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_2                                        c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_20                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_21                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_22                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_23                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_24                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_25                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_26                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_27                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_28                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_29                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_3                                        c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_30                                       uart.o
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_31                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_32                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_33                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_34                                       c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_4                                        c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_5                                        c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_6                                        c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_7                                        c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_8                                        c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_9                                        c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vector_default                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+__vectors                                         c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+_exit                                             c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_exit.o)
+adcConvert10bit                                   adc.o
+adcConvert8bit                                    adc.o
+adcInit                                           adc.o
+adcIsComplete                                     adc.o
+adcOff                                            adc.o
+adcSetChannel                                     adc.o
+adcSetPrescaler                                   adc.o
+adcSetReference                                   adc.o
+adcStartConvert                                   adc.o
+amc                                               mcmc.o
+boot_FPGA                                         main_i2csw_ipmi.o
+calloc                                            c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(calloc.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fdevopen.o)
+clk_delay                                         i2csw.o
+cmd                                               main_i2csw_ipmi.o
+cmd_complete                                      mcmc.o
+                                                  main_i2csw_ipmi.o
+cmdlineAddCommand                                 cmdline.o
+                                                  main_i2csw_ipmi.o
+cmdlineGetArgInt                                  cmdline.o
+                                                  main_i2csw_ipmi.o
+cmdlineGetArgStr                                  cmdline.o
+cmdlineInit                                       cmdline.o
+cmdlineInputFunc                                  cmdline.o
+                                                  uart.o
+cmdlineMainLoop                                   cmdline.o
+                                                  main_i2csw_ipmi.o
+cmdlinePrintError                                 cmdline.o
+cmdlinePrintPrompt                                cmdline.o
+cmdlineProcessInputString                         cmdline.o
+cmdlineSetOutputFunc                              cmdline.o
+current_sensor_count                              sensor.o
+enable_payload                                    mcmc.o
+errno                                             c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(errno.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strtol.o)
+event_data_compare                                event.o
+evt_config                                        event.o
+evt_log                                           event.o
+evt_processed                                     event.o
+exit                                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/avr51\libgcc.a(_exit.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+fdevopen                                          c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fdevopen.o)
+                                                  main_i2csw_ipmi.o
+fputc                                             c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(fputc.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
+free                                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+g_dev_id                                          mcmc.o
+get                                               main_i2csw_ipmi.o
+getBus                                            i2csw.o
+                                                  tm100.o
+                                                  main_i2csw_ipmi.o
+get_available_cmd                                 cmdline.o
+get_pwr_channel_stat                              mcmc.o
+helpFunction                                      cmdline.o
+                                                  main_i2csw_ipmi.o
+i2cGetbyte                                        i2csw.o
+i2cInitA                                          i2csw.o
+i2cInitB                                          i2csw.o
+i2cMasterReceive                                  i2csw.o
+i2cPutbyte                                        i2csw.o
+i2cTemp                                           i2csw.o
+i2c_Read                                          i2csw.o
+i2c_Send                                          i2csw.o
+                                                  main_i2csw_ipmi.o
+i2c_bus_init                                      i2csw.o
+                                                  main_i2csw_ipmi.o
+i2c_master_read                                   i2csw.o
+                                                  ws.o
+i2c_master_write                                  i2csw.o
+                                                  ws.o
+initLeds                                          main_i2csw_ipmi.o
+ipmi_arm_pef_postpone_timer                       event.o
+ipmi_calculate_checksum                           ipmi.o
+                                                  mcmc.o
+ipmi_default_response                             ipmi.o
+                                                  event.o
+ipmi_event_handler                                event.o
+ipmi_event_init                                   event.o
+ipmi_get_event_receiver                           event.o
+ipmi_get_last_processed_event                     event.o
+ipmi_get_next_seq                                 ipmi.o
+                                                  mcmc.o
+ipmi_get_pef_capabilities                         event.o
+ipmi_get_pef_config_params                        event.o
+ipmi_platform_event                               event.o
+ipmi_process_event_req                            event.o
+                                                  ipmi.o
+ipmi_process_fw_req                               ipmi.o
+ipmi_process_pkt                                  ipmi.o
+                                                  ws.o
+                                                  main_i2csw_ipmi.o
+ipmi_process_request                              ipmi.o
+ipmi_process_response                             ipmi.o
+ipmi_set_event_receiver                           event.o
+ipmi_set_last_processed_event                     event.o
+ipmi_set_pef_config_params                        event.o
+isspace                                           c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(isspace.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strtol.o)
+lbolt                                             timer.o
+                                                  ws.o
+leds                                              main_i2csw_ipmi.o
+lookup_dev_addr                                   mcmc.o
+lookup_dev_id                                     mcmc.o
+main                                              main_i2csw_ipmi.o
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51/crtm128.o
+malloc                                            c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(malloc.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(calloc.o)
+mcmc_ipmbl_address                                mcmc.o
+mcmc_mmc_event                                    mcmc.o
+memset                                            c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(memset.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(calloc.o)
+module_event_handler                              mcmc.o
+                                                  event.o
+module_get_i2c_address                            mcmc.o
+                                                  event.o
+                                                  ipmi.o
+module_init                                       mcmc.o
+                                                  main_i2csw_ipmi.o
+module_init2                                      mcmc.o
+module_process_response                           mcmc.o
+                                                  ipmi.o
+module_sensor_init                                mcmc.o
+pef_alert_policy_table                            event.o
+pef_alert_string_table                            event.o
+pef_capabilities                                  event.o
+pef_filter_table                                  event.o
+pef_postpone_timer_expired                        event.o
+pef_postpone_timer_handle                         event.o
+print_buffer                                      main_i2csw_ipmi.o
+printf                                            c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(printf.o)
+                                                  tm100.o
+                                                  cmdline.o
+                                                  mcmc.o
+                                                  i2csw.o
+                                                  main_i2csw_ipmi.o
+printfr                                           uart.o
+                                                  tm100.o
+                                                  ws.o
+                                                  mcmc.o
+                                                  event.o
+                                                  ipmi.o
+                                                  i2csw.o
+                                                  main_i2csw_ipmi.o
+put                                               main_i2csw_ipmi.o
+puts                                              c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(puts.o)
+                                                  cmdline.o
+pwrFunction                                       main_i2csw_ipmi.o
+scl_pin                                           i2csw.o
+                                                  main_i2csw_ipmi.o
+sda_pin                                           i2csw.o
+                                                  main_i2csw_ipmi.o
+sdr_entry_table                                   sensor.o
+sdr_reservation_id                                sensor.o
+send_cmd                                          main_i2csw_ipmi.o
+send_fan_ctrl                                     mcmc.o
+send_get_device_id                                mcmc.o
+send_get_pm_status                                mcmc.o
+send_picmg_properties                             mcmc.o
+send_pm_reset                                     mcmc.o
+send_pwr_ctrl_ch                                  mcmc.o
+                                                  main_i2csw_ipmi.o
+send_read_fru_data                                mcmc.o
+send_set_fru_led_state                            mcmc.o
+sensor                                            sensor.o
+sensor_add                                        sensor.o
+                                                  tm100.o
+seq_array                                         ipmi.o
+set_available_cmd                                 cmdline.o
+str1                                              cmdline.o
+str2                                              cmdline.o
+str3                                              cmdline.o
+str4                                              cmdline.o
+str5                                              cmdline.o
+str6                                              cmdline.o
+strcpy                                            c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strcpy.o)
+                                                  cmdline.o
+strncmp                                           c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strncmp.o)
+                                                  cmdline.o
+strnlen                                           c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strnlen.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
+strnlen_P                                         c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strnlen_P.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
+strtol                                            c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(strtol.o)
+                                                  cmdline.o
+timer0SetPrescaler                                timer.o
+timer0_ClearOverflowCount                         timer.o
+timer0_initialize                                 timer.o
+timerInit                                         timer.o
+                                                  main_i2csw_ipmi.o
+tm100_init                                        tm100.o
+                                                  mcmc.o
+tm100_init_completion_function                    tm100.o
+tm100_init_sensor_record                          tm100.o
+                                                  mcmc.o
+tm100_sensor                                      tm100.o
+tm100_sensor_count                                tm100.o
+tm100_update_sensor                               tm100.o
+tm100_update_sensor_completion_function           tm100.o
+tm100_update_sensor_reading                       tm100.o
+tm100sd                                           tm100.o
+tm100sr                                           tm100.o
+tooglepwr                                         main_i2csw_ipmi.o
+uartInit                                          uart.o
+                                                  main_i2csw_ipmi.o
+uartSetBaudRate                                   uart.o
+                                                  main_i2csw_ipmi.o
+uart_getc                                         uart.o
+                                                  main_i2csw_ipmi.o
+uart_getc_noloop                                  uart.o
+uart_putc                                         uart.o
+                                                  cmdline.o
+                                                  main_i2csw_ipmi.o
+uart_putstr                                       uart.o
+vfprintf                                          c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
+                                                  c:/winavr-20090313/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr51\libc.a(printf.o)
+ws                                                main_i2csw_ipmi.o
+ws_alloc                                          ws.o
+                                                  tm100.o
+                                                  mcmc.o
+ws_array                                          ws.o
+ws_free                                           ws.o
+                                                  tm100.o
+                                                  ipmi.o
+ws_get_elem                                       ws.o
+ws_get_elem_seq                                   ws.o
+                                                  ipmi.o
+ws_init                                           ws.o
+                                                  main_i2csw_ipmi.o
+ws_process_incoming                               ws.o
+ws_process_work_list                              ws.o
+                                                  main_i2csw_ipmi.o
+ws_set_state                                      ws.o
+                                                  tm100.o
+                                                  mcmc.o
+                                                  ipmi.o
+                                                  i2csw.o
+wsp                                               main_i2csw_ipmi.o

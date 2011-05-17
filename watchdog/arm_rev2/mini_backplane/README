@@ -1,0 +1,16 @@
+WR switch watchdog firmware (for use with mini-backplane)
+----------------------------------------------------------
+
+Compilation:
+- uses the same GCC as for the ARM9 big CPU. Just run make. No additional tools required
+
+Programming:
+- you need OpenOCD installed in your system. Tested on OOCD 0.4.0
+- connect the programmer, make sure the big row of jumpers next to CN1 is in "WD" position, as well as JP7 and JP11.
+- run "make flash"
+
+Features:
+- currently - not much. Just turns on the power supply and allows for modifying LED status and enabling/disabling calibration feedback. See libswitchhw/watchdog.c for API/protocol details
+
+Bugs:
+- MISO and MOSI lines are swapped. The ARM9 big CPU must use SPI in bitbanged mode

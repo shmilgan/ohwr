@@ -1,0 +1,1420 @@
+   1               		.file	"cmdline.c"
+   2               	__SREG__ = 0x3f
+   3               	__SP_H__ = 0x3e
+   4               	__SP_L__ = 0x3d
+   5               	__CCP__  = 0x34
+   6               	__tmp_reg__ = 0
+   7               	__zero_reg__ = 1
+  15               	.Ltext0:
+  16               	.global	cmdlineInit
+  18               	cmdlineInit:
+  19               	.LFB3:
+  20               	.LM1:
+  21               	/* prologue: function */
+  22               	/* frame size = 0 */
+  23               	.LM2:
+  24 0000 1092 0000 		sts CmdlineBufferLength,__zero_reg__
+  25               	.LM3:
+  26 0004 1092 0000 		sts CmdlineBufferEditPos,__zero_reg__
+  27               	.LM4:
+  28 0008 1092 0000 		sts (CmdlineExecFunction)+1,__zero_reg__
+  29 000c 1092 0000 		sts CmdlineExecFunction,__zero_reg__
+  30               	.LM5:
+  31 0010 1092 0000 		sts CmdlineNumCommands,__zero_reg__
+  32               	/* epilogue start */
+  33               	.LM6:
+  34 0014 0895      		ret
+  35               	.LFE3:
+  37               	.global	set_available_cmd
+  39               	set_available_cmd:
+  40               	.LFB4:
+  41               	.LM7:
+  42               	.LVL0:
+  43               	/* prologue: function */
+  44               	/* frame size = 0 */
+  45               	.LM8:
+  46 0016 8093 0000 		sts available_cmd,r24
+  47               	/* epilogue start */
+  48               	.LM9:
+  49 001a 0895      		ret
+  50               	.LFE4:
+  52               	.global	get_available_cmd
+  54               	get_available_cmd:
+  55               	.LFB5:
+  56               	.LM10:
+  57               	/* prologue: function */
+  58               	/* frame size = 0 */
+  59               	.LM11:
+  60 001c 8091 0000 		lds r24,available_cmd
+  61               	/* epilogue start */
+  62 0020 0895      		ret
+  63               	.LFE5:
+  65               	.global	cmdlineSetOutputFunc
+  67               	cmdlineSetOutputFunc:
+  68               	.LFB12:
+  69               	.LM12:
+  70               	.LVL1:
+  71               	/* prologue: function */
+  72               	/* frame size = 0 */
+  73               	.LM13:
+  74 0022 9093 0000 		sts (cmdlineOutputFunc)+1,r25
+  75 0026 8093 0000 		sts cmdlineOutputFunc,r24
+  76               	/* epilogue start */
+  77               	.LM14:
+  78 002a 0895      		ret
+  79               	.LFE12:
+  81               	.global	cmdlineGetArgStr
+  83               	cmdlineGetArgStr:
+  84               	.LFB14:
+  85               	.LM15:
+  86               	.LVL2:
+  87               	/* prologue: function */
+  88               	/* frame size = 0 */
+  89 002c 482F      		mov r20,r24
+  90               	.LM16:
+  91 002e 2091 0000 		lds r18,CmdlineBuffer
+  92 0032 2032      		cpi r18,lo8(32)
+  93 0034 01F0      		breq .+2
+  94 0036 00C0      		rjmp .L29
+  95               	.LVL3:
+  96 0038 90E0      		ldi r25,lo8(0)
+  97               	.LVL4:
+  98               	.L12:
+  99 003a 9F5F      		subi r25,lo8(-(1))
+ 100 003c A92F      		mov r26,r25
+ 101 003e B0E0      		ldi r27,lo8(0)
+ 102               	.LVL5:
+ 103 0040 A050      		subi r26,lo8(-(CmdlineBuffer))
+ 104 0042 B040      		sbci r27,hi8(-(CmdlineBuffer))
+ 105               	.LVL6:
+ 106 0044 2C91      		ld r18,X
+ 107 0046 2032      		cpi r18,lo8(32)
+ 108 0048 01F0      		breq .L12
+ 109               	.LVL7:
+ 110               	.L11:
+ 111               	.LM17:
+ 112 004a 4423      		tst r20
+ 113 004c 01F0      		breq .L30
+ 114 004e 30E0      		ldi r19,lo8(0)
+ 115               	.LVL8:
+ 116               	.LM18:
+ 117 0050 2223      		tst r18
+ 118 0052 01F0      		breq .L31
+ 119               	.L27:
+ 120 0054 2032      		cpi r18,lo8(32)
+ 121 0056 01F4      		brne .L22
+ 122 0058 00C0      		rjmp .L21
+ 123               	.L32:
+ 124 005a E032      		cpi r30,lo8(32)
+ 125 005c 01F0      		breq .L21
+ 126               	.L22:
+ 127 005e 9F5F      		subi r25,lo8(-(1))
+ 128               	.LVL9:
+ 129 0060 A92F      		mov r26,r25
+ 130 0062 B0E0      		ldi r27,lo8(0)
+ 131               	.LVL10:
+ 132 0064 FD01      		movw r30,r26
+ 133 0066 E050      		subi r30,lo8(-(CmdlineBuffer))
+ 134 0068 F040      		sbci r31,hi8(-(CmdlineBuffer))
+ 135 006a E081      		ld r30,Z
+ 136 006c EE23      		tst r30
+ 137 006e 01F4      		brne .L32
+ 138               	.LVL11:
+ 139               	.L15:
+ 140               	.LM19:
+ 141 0070 3F5F      		subi r19,lo8(-(1))
+ 142 0072 3417      		cp r19,r20
+ 143 0074 00F4      		brsh .L13
+ 144               	.L33:
+ 145 0076 A050      		subi r26,lo8(-(CmdlineBuffer))
+ 146 0078 B040      		sbci r27,hi8(-(CmdlineBuffer))
+ 147               	.LVL12:
+ 148 007a 2C91      		ld r18,X
+ 149               	.LM20:
+ 150 007c 2223      		tst r18
+ 151 007e 01F4      		brne .L27
+ 152               	.LVL13:
+ 153               	.L31:
+ 154 0080 A92F      		mov r26,r25
+ 155 0082 B0E0      		ldi r27,lo8(0)
+ 156               	.LVL14:
+ 157               	.LM21:
+ 158 0084 3F5F      		subi r19,lo8(-(1))
+ 159 0086 3417      		cp r19,r20
+ 160 0088 00F0      		brlo .L33
+ 161               	.L13:
+ 162               	.LM22:
+ 163 008a 9D01      		movw r18,r26
+ 164 008c 2050      		subi r18,lo8(-(CmdlineBuffer))
+ 165 008e 3040      		sbci r19,hi8(-(CmdlineBuffer))
+ 166               	.LM23:
+ 167 0090 C901      		movw r24,r18
+ 168               	/* epilogue start */
+ 169 0092 0895      		ret
+ 170               	.LVL15:
+ 171               	.L21:
+ 172               	.LM24:
+ 173 0094 9F5F      		subi r25,lo8(-(1))
+ 174               	.LVL16:
+ 175 0096 A92F      		mov r26,r25
+ 176 0098 B0E0      		ldi r27,lo8(0)
+ 177               	.LVL17:
+ 178 009a FD01      		movw r30,r26
+ 179 009c E050      		subi r30,lo8(-(CmdlineBuffer))
+ 180 009e F040      		sbci r31,hi8(-(CmdlineBuffer))
+ 181 00a0 8081      		ld r24,Z
+ 182 00a2 8032      		cpi r24,lo8(32)
+ 183 00a4 01F0      		breq .L21
+ 184               	.LVL18:
+ 185 00a6 00C0      		rjmp .L15
+ 186               	.LVL19:
+ 187               	.L30:
+ 188 00a8 A92F      		mov r26,r25
+ 189 00aa B0E0      		ldi r27,lo8(0)
+ 190               	.LVL20:
+ 191               	.LM25:
+ 192 00ac 9D01      		movw r18,r26
+ 193 00ae 2050      		subi r18,lo8(-(CmdlineBuffer))
+ 194 00b0 3040      		sbci r19,hi8(-(CmdlineBuffer))
+ 195               	.LM26:
+ 196 00b2 C901      		movw r24,r18
+ 197 00b4 0895      		ret
+ 198               	.LVL21:
+ 199               	.L29:
+ 200               	.LM27:
+ 201 00b6 90E0      		ldi r25,lo8(0)
+ 202               	.LVL22:
+ 203 00b8 00C0      		rjmp .L11
+ 204               	.LFE14:
+ 206               	.global	cmdlinePrintError
+ 208               	cmdlinePrintError:
+ 209               	.LFB13:
+ 210               	.LM28:
+ 211 00ba CF93      		push r28
+ 212 00bc DF93      		push r29
+ 213               	/* prologue: function */
+ 214               	/* frame size = 0 */
+ 215               	.LBB2:
+ 216               	.LM29:
+ 217 00be 20E0      		ldi r18,lo8(CmdlineNotice)
+ 218 00c0 30E0      		ldi r19,hi8(CmdlineNotice)
+ 219               	.LVL23:
+ 220 00c2 F901      		movw r30,r18
+ 221               	/* #APP */
+ 222               	 ;  213 "cmdline.c" 1
+ 223 00c4 8491      		lpm r24, Z
+ 224               		
+ 225               	 ;  0 "" 2
+ 226               	.LVL24:
+ 227               	/* #NOAPP */
+ 228               	.LBE2:
+ 229 00c6 8823      		tst r24
+ 230 00c8 01F0      		breq .L35
+ 231 00ca E901      		movw r28,r18
+ 232               	.LVL25:
+ 233               	.L36:
+ 234               	.LBB3:
+ 235 00cc 2196      		adiw r28,1
+ 236 00ce F901      		movw r30,r18
+ 237               	/* #APP */
+ 238               	 ;  213 "cmdline.c" 1
+ 239 00d0 8491      		lpm r24, Z
+ 240               		
+ 241               	 ;  0 "" 2
+ 242               	.LVL26:
+ 243               	/* #NOAPP */
+ 244               	.LBE3:
+ 245 00d2 0E94 0000 		call uart_putc
+ 246               	.LVL27:
+ 247 00d6 9E01      		movw r18,r28
+ 248               	.LVL28:
+ 249               	.LBB4:
+ 250 00d8 FE01      		movw r30,r28
+ 251               	/* #APP */
+ 252               	 ;  213 "cmdline.c" 1
+ 253 00da 8491      		lpm r24, Z
+ 254               		
+ 255               	 ;  0 "" 2
+ 256               	.LVL29:
+ 257               	/* #NOAPP */
+ 258               	.LBE4:
+ 259 00dc 8823      		tst r24
+ 260 00de 01F4      		brne .L36
+ 261               	.L35:
+ 262               	.LM30:
+ 263 00e0 8091 0000 		lds r24,CmdlineBuffer
+ 264               	.LVL30:
+ 265 00e4 8823      		tst r24
+ 266 00e6 01F0      		breq .L37
+ 267 00e8 8032      		cpi r24,lo8(32)
+ 268 00ea 01F0      		breq .L37
+ 269 00ec C0E0      		ldi r28,lo8(CmdlineBuffer)
+ 270 00ee D0E0      		ldi r29,hi8(CmdlineBuffer)
+ 271               	.LVL31:
+ 272 00f0 00C0      		rjmp .L38
+ 273               	.LVL32:
+ 274               	.L45:
+ 275 00f2 8032      		cpi r24,lo8(32)
+ 276 00f4 01F0      		breq .L37
+ 277               	.LVL33:
+ 278               	.L38:
+ 279 00f6 2196      		adiw r28,1
+ 280 00f8 0E94 0000 		call uart_putc
+ 281               	.LVL34:
+ 282 00fc 8881      		ld r24,Y
+ 283 00fe 8823      		tst r24
+ 284 0100 01F4      		brne .L45
+ 285               	.LVL35:
+ 286               	.L37:
+ 287               	.LM31:
+ 288 0102 8AE3      		ldi r24,lo8(58)
+ 289 0104 0E94 0000 		call uart_putc
+ 290               	.LVL36:
+ 291               	.LM32:
+ 292 0108 80E2      		ldi r24,lo8(32)
+ 293 010a 0E94 0000 		call uart_putc
+ 294               	.LBB5:
+ 295               	.LM33:
+ 296 010e 20E0      		ldi r18,lo8(CmdlineCmdNotFound)
+ 297 0110 30E0      		ldi r19,hi8(CmdlineCmdNotFound)
+ 298               	.LVL37:
+ 299 0112 F901      		movw r30,r18
+ 300               	/* #APP */
+ 301               	 ;  225 "cmdline.c" 1
+ 302 0114 8491      		lpm r24, Z
+ 303               		
+ 304               	 ;  0 "" 2
+ 305               	.LVL38:
+ 306               	/* #NOAPP */
+ 307               	.LBE5:
+ 308 0116 8823      		tst r24
+ 309 0118 01F0      		breq .L39
+ 310 011a E901      		movw r28,r18
+ 311               	.LVL39:
+ 312               	.L40:
+ 313               	.LBB6:
+ 314 011c 2196      		adiw r28,1
+ 315 011e F901      		movw r30,r18
+ 316               	/* #APP */
+ 317               	 ;  225 "cmdline.c" 1
+ 318 0120 8491      		lpm r24, Z
+ 319               		
+ 320               	 ;  0 "" 2
+ 321               	.LVL40:
+ 322               	/* #NOAPP */
+ 323               	.LBE6:
+ 324 0122 0E94 0000 		call uart_putc
+ 325               	.LVL41:
+ 326 0126 9E01      		movw r18,r28
+ 327               	.LVL42:
+ 328               	.LBB7:
+ 329 0128 FE01      		movw r30,r28
+ 330               	/* #APP */
+ 331               	 ;  225 "cmdline.c" 1
+ 332 012a 8491      		lpm r24, Z
+ 333               		
+ 334               	 ;  0 "" 2
+ 335               	.LVL43:
+ 336               	/* #NOAPP */
+ 337               	.LBE7:
+ 338 012c 8823      		tst r24
+ 339 012e 01F4      		brne .L40
+ 340               	.L39:
+ 341               	.LM34:
+ 342 0130 8DE0      		ldi r24,lo8(13)
+ 343               	.LVL44:
+ 344 0132 0E94 0000 		call uart_putc
+ 345               	.LVL45:
+ 346               	.LM35:
+ 347 0136 8AE0      		ldi r24,lo8(10)
+ 348 0138 0E94 0000 		call uart_putc
+ 349               	/* epilogue start */
+ 350               	.LM36:
+ 351 013c DF91      		pop r29
+ 352 013e CF91      		pop r28
+ 353               	.LVL46:
+ 354 0140 0895      		ret
+ 355               	.LFE13:
+ 357               	.global	helpFunction
+ 359               	helpFunction:
+ 360               	.LFB11:
+ 361               	.LM37:
+ 362 0142 CF93      		push r28
+ 363 0144 DF93      		push r29
+ 364               	/* prologue: function */
+ 365               	/* frame size = 0 */
+ 366               	.LBB8:
+ 367               	.LM38:
+ 368 0146 20E0      		ldi r18,lo8(str1)
+ 369 0148 30E0      		ldi r19,hi8(str1)
+ 370               	.LVL47:
+ 371 014a F901      		movw r30,r18
+ 372               	/* #APP */
+ 373               	 ;  176 "cmdline.c" 1
+ 374 014c 8491      		lpm r24, Z
+ 375               		
+ 376               	 ;  0 "" 2
+ 377               	.LVL48:
+ 378               	/* #NOAPP */
+ 379               	.LBE8:
+ 380 014e 8823      		tst r24
+ 381 0150 01F0      		breq .L47
+ 382 0152 E901      		movw r28,r18
+ 383               	.LVL49:
+ 384               	.L48:
+ 385               	.LBB9:
+ 386 0154 2196      		adiw r28,1
+ 387 0156 F901      		movw r30,r18
+ 388               	/* #APP */
+ 389               	 ;  176 "cmdline.c" 1
+ 390 0158 8491      		lpm r24, Z
+ 391               		
+ 392               	 ;  0 "" 2
+ 393               	.LVL50:
+ 394               	/* #NOAPP */
+ 395               	.LBE9:
+ 396 015a 0E94 0000 		call uart_putc
+ 397               	.LVL51:
+ 398 015e 9E01      		movw r18,r28
+ 399               	.LVL52:
+ 400               	.LBB10:
+ 401 0160 FE01      		movw r30,r28
+ 402               	/* #APP */
+ 403               	 ;  176 "cmdline.c" 1
+ 404 0162 8491      		lpm r24, Z
+ 405               		
+ 406               	 ;  0 "" 2
+ 407               	.LVL53:
+ 408               	/* #NOAPP */
+ 409               	.LBE10:
+ 410 0164 8823      		tst r24
+ 411 0166 01F4      		brne .L48
+ 412               	.L47:
+ 413               	.LBB11:
+ 414               	.LM39:
+ 415 0168 20E0      		ldi r18,lo8(str2)
+ 416 016a 30E0      		ldi r19,hi8(str2)
+ 417               	.LVL54:
+ 418 016c F901      		movw r30,r18
+ 419               	/* #APP */
+ 420               	 ;  178 "cmdline.c" 1
+ 421 016e 8491      		lpm r24, Z
+ 422               		
+ 423               	 ;  0 "" 2
+ 424               	.LVL55:
+ 425               	/* #NOAPP */
+ 426               	.LBE11:
+ 427 0170 8823      		tst r24
+ 428 0172 01F0      		breq .L49
+ 429 0174 E901      		movw r28,r18
+ 430               	.LVL56:
+ 431               	.L50:
+ 432               	.LBB12:
+ 433 0176 2196      		adiw r28,1
+ 434 0178 F901      		movw r30,r18
+ 435               	/* #APP */
+ 436               	 ;  178 "cmdline.c" 1
+ 437 017a 8491      		lpm r24, Z
+ 438               		
+ 439               	 ;  0 "" 2
+ 440               	.LVL57:
+ 441               	/* #NOAPP */
+ 442               	.LBE12:
+ 443 017c 0E94 0000 		call uart_putc
+ 444               	.LVL58:
+ 445 0180 9E01      		movw r18,r28
+ 446               	.LVL59:
+ 447               	.LBB13:
+ 448 0182 FE01      		movw r30,r28
+ 449               	/* #APP */
+ 450               	 ;  178 "cmdline.c" 1
+ 451 0184 8491      		lpm r24, Z
+ 452               		
+ 453               	 ;  0 "" 2
+ 454               	.LVL60:
+ 455               	/* #NOAPP */
+ 456               	.LBE13:
+ 457 0186 8823      		tst r24
+ 458 0188 01F4      		brne .L50
+ 459               	.L49:
+ 460               	.LBB14:
+ 461               	.LM40:
+ 462 018a 20E0      		ldi r18,lo8(str3)
+ 463 018c 30E0      		ldi r19,hi8(str3)
+ 464               	.LVL61:
+ 465 018e F901      		movw r30,r18
+ 466               	/* #APP */
+ 467               	 ;  180 "cmdline.c" 1
+ 468 0190 8491      		lpm r24, Z
+ 469               		
+ 470               	 ;  0 "" 2
+ 471               	.LVL62:
+ 472               	/* #NOAPP */
+ 473               	.LBE14:
+ 474 0192 8823      		tst r24
+ 475 0194 01F0      		breq .L51
+ 476 0196 E901      		movw r28,r18
+ 477               	.LVL63:
+ 478               	.L52:
+ 479               	.LBB15:
+ 480 0198 2196      		adiw r28,1
+ 481 019a F901      		movw r30,r18
+ 482               	/* #APP */
+ 483               	 ;  180 "cmdline.c" 1
+ 484 019c 8491      		lpm r24, Z
+ 485               		
+ 486               	 ;  0 "" 2
+ 487               	.LVL64:
+ 488               	/* #NOAPP */
+ 489               	.LBE15:
+ 490 019e 0E94 0000 		call uart_putc
+ 491               	.LVL65:
+ 492 01a2 9E01      		movw r18,r28
+ 493               	.LVL66:
+ 494               	.LBB16:
+ 495 01a4 FE01      		movw r30,r28
+ 496               	/* #APP */
+ 497               	 ;  180 "cmdline.c" 1
+ 498 01a6 8491      		lpm r24, Z
+ 499               		
+ 500               	 ;  0 "" 2
+ 501               	.LVL67:
+ 502               	/* #NOAPP */
+ 503               	.LBE16:
+ 504 01a8 8823      		tst r24
+ 505 01aa 01F4      		brne .L52
+ 506               	.L51:
+ 507               	.LBB17:
+ 508               	.LM41:
+ 509 01ac 20E0      		ldi r18,lo8(str4)
+ 510 01ae 30E0      		ldi r19,hi8(str4)
+ 511               	.LVL68:
+ 512 01b0 F901      		movw r30,r18
+ 513               	/* #APP */
+ 514               	 ;  182 "cmdline.c" 1
+ 515 01b2 8491      		lpm r24, Z
+ 516               		
+ 517               	 ;  0 "" 2
+ 518               	.LVL69:
+ 519               	/* #NOAPP */
+ 520               	.LBE17:
+ 521 01b4 8823      		tst r24
+ 522 01b6 01F0      		breq .L53
+ 523 01b8 E901      		movw r28,r18
+ 524               	.LVL70:
+ 525               	.L54:
+ 526               	.LBB18:
+ 527 01ba 2196      		adiw r28,1
+ 528 01bc F901      		movw r30,r18
+ 529               	/* #APP */
+ 530               	 ;  182 "cmdline.c" 1
+ 531 01be 8491      		lpm r24, Z
+ 532               		
+ 533               	 ;  0 "" 2
+ 534               	.LVL71:
+ 535               	/* #NOAPP */
+ 536               	.LBE18:
+ 537 01c0 0E94 0000 		call uart_putc
+ 538               	.LVL72:
+ 539 01c4 9E01      		movw r18,r28
+ 540               	.LVL73:
+ 541               	.LBB19:
+ 542 01c6 FE01      		movw r30,r28
+ 543               	/* #APP */
+ 544               	 ;  182 "cmdline.c" 1
+ 545 01c8 8491      		lpm r24, Z
+ 546               		
+ 547               	 ;  0 "" 2
+ 548               	.LVL74:
+ 549               	/* #NOAPP */
+ 550               	.LBE19:
+ 551 01ca 8823      		tst r24
+ 552 01cc 01F4      		brne .L54
+ 553               	.L53:
+ 554               	.LBB20:
+ 555               	.LM42:
+ 556 01ce 20E0      		ldi r18,lo8(str5)
+ 557 01d0 30E0      		ldi r19,hi8(str5)
+ 558               	.LVL75:
+ 559 01d2 F901      		movw r30,r18
+ 560               	/* #APP */
+ 561               	 ;  185 "cmdline.c" 1
+ 562 01d4 8491      		lpm r24, Z
+ 563               		
+ 564               	 ;  0 "" 2
+ 565               	.LVL76:
+ 566               	/* #NOAPP */
+ 567               	.LBE20:
+ 568 01d6 8823      		tst r24
+ 569 01d8 01F0      		breq .L55
+ 570 01da E901      		movw r28,r18
+ 571               	.LVL77:
+ 572               	.L56:
+ 573               	.LBB21:
+ 574 01dc 2196      		adiw r28,1
+ 575 01de F901      		movw r30,r18
+ 576               	/* #APP */
+ 577               	 ;  185 "cmdline.c" 1
+ 578 01e0 8491      		lpm r24, Z
+ 579               		
+ 580               	 ;  0 "" 2
+ 581               	.LVL78:
+ 582               	/* #NOAPP */
+ 583               	.LBE21:
+ 584 01e2 0E94 0000 		call uart_putc
+ 585               	.LVL79:
+ 586 01e6 9E01      		movw r18,r28
+ 587               	.LVL80:
+ 588               	.LBB22:
+ 589 01e8 FE01      		movw r30,r28
+ 590               	/* #APP */
+ 591               	 ;  185 "cmdline.c" 1
+ 592 01ea 8491      		lpm r24, Z
+ 593               		
+ 594               	 ;  0 "" 2
+ 595               	.LVL81:
+ 596               	/* #NOAPP */
+ 597               	.LBE22:
+ 598 01ec 8823      		tst r24
+ 599 01ee 01F4      		brne .L56
+ 600               	.L55:
+ 601               	.LBB23:
+ 602               	.LM43:
+ 603 01f0 20E0      		ldi r18,lo8(str6)
+ 604 01f2 30E0      		ldi r19,hi8(str6)
+ 605               	.LVL82:
+ 606 01f4 F901      		movw r30,r18
+ 607               	/* #APP */
+ 608               	 ;  188 "cmdline.c" 1
+ 609 01f6 8491      		lpm r24, Z
+ 610               		
+ 611               	 ;  0 "" 2
+ 612               	.LVL83:
+ 613               	/* #NOAPP */
+ 614               	.LBE23:
+ 615 01f8 8823      		tst r24
+ 616 01fa 01F0      		breq .L59
+ 617 01fc E901      		movw r28,r18
+ 618               	.LVL84:
+ 619               	.L58:
+ 620               	.LBB24:
+ 621 01fe 2196      		adiw r28,1
+ 622 0200 F901      		movw r30,r18
+ 623               	/* #APP */
+ 624               	 ;  188 "cmdline.c" 1
+ 625 0202 8491      		lpm r24, Z
+ 626               		
+ 627               	 ;  0 "" 2
+ 628               	.LVL85:
+ 629               	/* #NOAPP */
+ 630               	.LBE24:
+ 631 0204 0E94 0000 		call uart_putc
+ 632               	.LVL86:
+ 633 0208 9E01      		movw r18,r28
+ 634               	.LVL87:
+ 635               	.LBB25:
+ 636 020a FE01      		movw r30,r28
+ 637               	/* #APP */
+ 638               	 ;  188 "cmdline.c" 1
+ 639 020c 8491      		lpm r24, Z
+ 640               		
+ 641               	 ;  0 "" 2
+ 642               	.LVL88:
+ 643               	/* #NOAPP */
+ 644               	.LBE25:
+ 645 020e 8823      		tst r24
+ 646 0210 01F4      		brne .L58
+ 647               	.L59:
+ 648               	/* epilogue start */
+ 649               	.LM44:
+ 650 0212 DF91      		pop r29
+ 651 0214 CF91      		pop r28
+ 652               	.LVL89:
+ 653 0216 0895      		ret
+ 654               	.LFE11:
+ 656               	.global	cmdlinePrintPrompt
+ 658               	cmdlinePrintPrompt:
+ 659               	.LFB10:
+ 660               	.LM45:
+ 661 0218 CF93      		push r28
+ 662 021a DF93      		push r29
+ 663               	/* prologue: function */
+ 664               	/* frame size = 0 */
+ 665               	.LBB30:
+ 666               	.LM46:
+ 667 021c 20E0      		ldi r18,lo8(CmdlinePrompt)
+ 668 021e 30E0      		ldi r19,hi8(CmdlinePrompt)
+ 669               	.LVL90:
+ 670 0220 F901      		movw r30,r18
+ 671               	/* #APP */
+ 672               	 ;  161 "cmdline.c" 1
+ 673 0222 8491      		lpm r24, Z
+ 674               		
+ 675               	 ;  0 "" 2
+ 676               	.LVL91:
+ 677               	/* #NOAPP */
+ 678               	.LBE30:
+ 679 0224 8823      		tst r24
+ 680 0226 01F0      		breq .L69
+ 681 0228 E901      		movw r28,r18
+ 682               	.LVL92:
+ 683               	.L68:
+ 684               	.LBB31:
+ 685 022a 2196      		adiw r28,1
+ 686 022c F901      		movw r30,r18
+ 687               	/* #APP */
+ 688               	 ;  161 "cmdline.c" 1
+ 689 022e 8491      		lpm r24, Z
+ 690               		
+ 691               	 ;  0 "" 2
+ 692               	.LVL93:
+ 693               	/* #NOAPP */
+ 694               	.LBE31:
+ 695 0230 0E94 0000 		call uart_putc
+ 696               	.LVL94:
+ 697 0234 9E01      		movw r18,r28
+ 698               	.LVL95:
+ 699               	.LBB32:
+ 700 0236 FE01      		movw r30,r28
+ 701               	/* #APP */
+ 702               	 ;  161 "cmdline.c" 1
+ 703 0238 8491      		lpm r24, Z
+ 704               		
+ 705               	 ;  0 "" 2
+ 706               	.LVL96:
+ 707               	/* #NOAPP */
+ 708               	.LBE32:
+ 709 023a 8823      		tst r24
+ 710 023c 01F4      		brne .L68
+ 711               	.L69:
+ 712               	/* epilogue start */
+ 713               	.LM47:
+ 714 023e DF91      		pop r29
+ 715 0240 CF91      		pop r28
+ 716               	.LVL97:
+ 717 0242 0895      		ret
+ 718               	.LFE10:
+ 720               	.global	cmdlineAddCommand
+ 722               	cmdlineAddCommand:
+ 723               	.LFB7:
+ 724               	.LM48:
+ 725               	.LVL98:
+ 726 0244 0F93      		push r16
+ 727 0246 1F93      		push r17
+ 728               	/* prologue: function */
+ 729               	/* frame size = 0 */
+ 730 0248 AC01      		movw r20,r24
+ 731 024a 8B01      		movw r16,r22
+ 732               	.LM49:
+ 733 024c 8091 0000 		lds r24,CmdlineNumCommands
+ 734               	.LVL99:
+ 735 0250 2FE0      		ldi r18,lo8(15)
+ 736 0252 829F      		mul r24,r18
+ 737 0254 C001      		movw r24,r0
+ 738 0256 1124      		clr r1
+ 739 0258 8050      		subi r24,lo8(-(CmdlineCommandList))
+ 740 025a 9040      		sbci r25,hi8(-(CmdlineCommandList))
+ 741 025c BA01      		movw r22,r20
+ 742               	.LVL100:
+ 743 025e 0E94 0000 		call strcpy
+ 744               	.LVL101:
+ 745               	.LM50:
+ 746 0262 8091 0000 		lds r24,CmdlineNumCommands
+ 747 0266 E82F      		mov r30,r24
+ 748 0268 F0E0      		ldi r31,lo8(0)
+ 749 026a EE0F      		lsl r30
+ 750 026c FF1F      		rol r31
+ 751 026e E050      		subi r30,lo8(-(CmdlineFunctionList))
+ 752 0270 F040      		sbci r31,hi8(-(CmdlineFunctionList))
+ 753 0272 1183      		std Z+1,r17
+ 754 0274 0083      		st Z,r16
+ 755               	.LM51:
+ 756 0276 8F5F      		subi r24,lo8(-(1))
+ 757 0278 8093 0000 		sts CmdlineNumCommands,r24
+ 758               	/* epilogue start */
+ 759               	.LM52:
+ 760 027c 1F91      		pop r17
+ 761 027e 0F91      		pop r16
+ 762               	.LVL102:
+ 763 0280 0895      		ret
+ 764               	.LFE7:
+ 766               	.global	cmdlineGetArgInt
+ 768               	cmdlineGetArgInt:
+ 769               	.LFB15:
+ 770               	.LM53:
+ 771               	.LVL103:
+ 772 0282 DF93      		push r29
+ 773 0284 CF93      		push r28
+ 774 0286 00D0      		rcall .
+ 775 0288 CDB7      		in r28,__SP_L__
+ 776 028a DEB7      		in r29,__SP_H__
+ 777               	/* prologue: function */
+ 778               	/* frame size = 2 */
+ 779 028c 382F      		mov r19,r24
+ 780               	.LBB35:
+ 781               	.LBB36:
+ 782               	.LM54:
+ 783 028e 8091 0000 		lds r24,CmdlineBuffer
+ 784               	.LVL104:
+ 785 0292 8032      		cpi r24,lo8(32)
+ 786 0294 01F0      		breq .+2
+ 787 0296 00C0      		rjmp .L92
+ 788 0298 20E0      		ldi r18,lo8(0)
+ 789               	.LVL105:
+ 790               	.L76:
+ 791 029a 2F5F      		subi r18,lo8(-(1))
+ 792 029c A22F      		mov r26,r18
+ 793 029e B0E0      		ldi r27,lo8(0)
+ 794               	.LVL106:
+ 795 02a0 A050      		subi r26,lo8(-(CmdlineBuffer))
+ 796 02a2 B040      		sbci r27,hi8(-(CmdlineBuffer))
+ 797               	.LVL107:
+ 798 02a4 8C91      		ld r24,X
+ 799 02a6 8032      		cpi r24,lo8(32)
+ 800 02a8 01F0      		breq .L76
+ 801               	.LVL108:
+ 802               	.L75:
+ 803               	.LM55:
+ 804 02aa 3323      		tst r19
+ 805 02ac 01F0      		breq .L93
+ 806 02ae 90E0      		ldi r25,lo8(0)
+ 807               	.LVL109:
+ 808               	.LM56:
+ 809 02b0 8823      		tst r24
+ 810 02b2 01F0      		breq .L94
+ 811               	.L91:
+ 812 02b4 8032      		cpi r24,lo8(32)
+ 813 02b6 01F4      		brne .L86
+ 814 02b8 00C0      		rjmp .L85
+ 815               	.L95:
+ 816 02ba E032      		cpi r30,lo8(32)
+ 817 02bc 01F0      		breq .L85
+ 818               	.L86:
+ 819 02be 2F5F      		subi r18,lo8(-(1))
+ 820               	.LVL110:
+ 821 02c0 A22F      		mov r26,r18
+ 822 02c2 B0E0      		ldi r27,lo8(0)
+ 823               	.LVL111:
+ 824 02c4 FD01      		movw r30,r26
+ 825 02c6 E050      		subi r30,lo8(-(CmdlineBuffer))
+ 826 02c8 F040      		sbci r31,hi8(-(CmdlineBuffer))
+ 827 02ca E081      		ld r30,Z
+ 828 02cc EE23      		tst r30
+ 829 02ce 01F4      		brne .L95
+ 830               	.LVL112:
+ 831               	.L79:
+ 832               	.LM57:
+ 833 02d0 9F5F      		subi r25,lo8(-(1))
+ 834 02d2 9317      		cp r25,r19
+ 835 02d4 00F4      		brsh .L77
+ 836               	.L96:
+ 837 02d6 A050      		subi r26,lo8(-(CmdlineBuffer))
+ 838 02d8 B040      		sbci r27,hi8(-(CmdlineBuffer))
+ 839               	.LVL113:
+ 840 02da 8C91      		ld r24,X
+ 841               	.LM58:
+ 842 02dc 8823      		tst r24
+ 843 02de 01F4      		brne .L91
+ 844               	.LVL114:
+ 845               	.L94:
+ 846 02e0 A22F      		mov r26,r18
+ 847 02e2 B0E0      		ldi r27,lo8(0)
+ 848               	.LVL115:
+ 849               	.LM59:
+ 850 02e4 9F5F      		subi r25,lo8(-(1))
+ 851 02e6 9317      		cp r25,r19
+ 852 02e8 00F0      		brlo .L96
+ 853               	.L77:
+ 854               	.LBE36:
+ 855               	.LBE35:
+ 856               	.LM60:
+ 857 02ea CD01      		movw r24,r26
+ 858 02ec 8050      		subi r24,lo8(-(CmdlineBuffer))
+ 859 02ee 9040      		sbci r25,hi8(-(CmdlineBuffer))
+ 860 02f0 BE01      		movw r22,r28
+ 861 02f2 6F5F      		subi r22,lo8(-(1))
+ 862 02f4 7F4F      		sbci r23,hi8(-(1))
+ 863 02f6 4AE0      		ldi r20,lo8(10)
+ 864 02f8 50E0      		ldi r21,hi8(10)
+ 865 02fa 0E94 0000 		call strtol
+ 866               	.LVL116:
+ 867               	/* epilogue start */
+ 868               	.LM61:
+ 869 02fe 0F90      		pop __tmp_reg__
+ 870 0300 0F90      		pop __tmp_reg__
+ 871 0302 CF91      		pop r28
+ 872 0304 DF91      		pop r29
+ 873 0306 0895      		ret
+ 874               	.LVL117:
+ 875               	.L85:
+ 876               	.LBB38:
+ 877               	.LBB37:
+ 878               	.LM62:
+ 879 0308 2F5F      		subi r18,lo8(-(1))
+ 880               	.LVL118:
+ 881 030a A22F      		mov r26,r18
+ 882 030c B0E0      		ldi r27,lo8(0)
+ 883               	.LVL119:
+ 884 030e FD01      		movw r30,r26
+ 885 0310 E050      		subi r30,lo8(-(CmdlineBuffer))
+ 886 0312 F040      		sbci r31,hi8(-(CmdlineBuffer))
+ 887 0314 8081      		ld r24,Z
+ 888 0316 8032      		cpi r24,lo8(32)
+ 889 0318 01F0      		breq .L85
+ 890               	.LVL120:
+ 891 031a 00C0      		rjmp .L79
+ 892               	.LVL121:
+ 893               	.L93:
+ 894 031c A22F      		mov r26,r18
+ 895 031e B0E0      		ldi r27,lo8(0)
+ 896               	.LVL122:
+ 897 0320 00C0      		rjmp .L77
+ 898               	.LVL123:
+ 899               	.L92:
+ 900               	.LM63:
+ 901 0322 20E0      		ldi r18,lo8(0)
+ 902               	.LVL124:
+ 903 0324 00C0      		rjmp .L75
+ 904               	.LBE37:
+ 905               	.LBE38:
+ 906               	.LFE15:
+ 908               	.global	cmdlineMainLoop
+ 910               	cmdlineMainLoop:
+ 911               	.LFB8:
+ 912               	.LM64:
+ 913 0326 CF93      		push r28
+ 914 0328 DF93      		push r29
+ 915               	/* prologue: function */
+ 916               	/* frame size = 0 */
+ 917               	.LM65:
+ 918 032a E091 0000 		lds r30,CmdlineExecFunction
+ 919 032e F091 0000 		lds r31,(CmdlineExecFunction)+1
+ 920 0332 3097      		sbiw r30,0
+ 921 0334 01F0      		breq .L100
+ 922               	.LM66:
+ 923 0336 0995      		icall
+ 924               	.LM67:
+ 925 0338 1092 0000 		sts (CmdlineExecFunction)+1,__zero_reg__
+ 926 033c 1092 0000 		sts CmdlineExecFunction,__zero_reg__
+ 927               	.LBB43:
+ 928               	.LBB44:
+ 929               	.LBB45:
+ 930               	.LM68:
+ 931 0340 20E0      		ldi r18,lo8(CmdlinePrompt)
+ 932 0342 30E0      		ldi r19,hi8(CmdlinePrompt)
+ 933               	.LVL125:
+ 934 0344 F901      		movw r30,r18
+ 935               	/* #APP */
+ 936               	 ;  161 "cmdline.c" 1
+ 937 0346 8491      		lpm r24, Z
+ 938               		
+ 939               	 ;  0 "" 2
+ 940               	.LVL126:
+ 941               	/* #NOAPP */
+ 942               	.LBE45:
+ 943 0348 8823      		tst r24
+ 944 034a 01F0      		breq .L100
+ 945 034c E901      		movw r28,r18
+ 946               	.LVL127:
+ 947               	.L99:
+ 948               	.LBB46:
+ 949 034e 2196      		adiw r28,1
+ 950 0350 F901      		movw r30,r18
+ 951               	/* #APP */
+ 952               	 ;  161 "cmdline.c" 1
+ 953 0352 8491      		lpm r24, Z
+ 954               		
+ 955               	 ;  0 "" 2
+ 956               	.LVL128:
+ 957               	/* #NOAPP */
+ 958               	.LBE46:
+ 959 0354 0E94 0000 		call uart_putc
+ 960               	.LVL129:
+ 961 0358 9E01      		movw r18,r28
+ 962               	.LVL130:
+ 963               	.LBB47:
+ 964 035a FE01      		movw r30,r28
+ 965               	/* #APP */
+ 966               	 ;  161 "cmdline.c" 1
+ 967 035c 8491      		lpm r24, Z
+ 968               		
+ 969               	 ;  0 "" 2
+ 970               	.LVL131:
+ 971               	/* #NOAPP */
+ 972               	.LBE47:
+ 973 035e 8823      		tst r24
+ 974 0360 01F4      		brne .L99
+ 975               	.L100:
+ 976               	/* epilogue start */
+ 977               	.LBE44:
+ 978               	.LBE43:
+ 979               	.LM69:
+ 980 0362 DF91      		pop r29
+ 981 0364 CF91      		pop r28
+ 982               	.LVL132:
+ 983 0366 0895      		ret
+ 984               	.LFE8:
+ 986               		.data
+ 987               	.LC0:
+ 988 0000 2063 6D64 		.string	" cmd %s found\r\n"
+ 988      2025 7320 
+ 988      666F 756E 
+ 988      640D 0A00 
+ 989               	.LC1:
+ 990 0010 636D 6420 		.string	"cmd not found\r"
+ 990      6E6F 7420 
+ 990      666F 756E 
+ 990      640D 00
+ 991               		.text
+ 992               	.global	cmdlineProcessInputString
+ 994               	cmdlineProcessInputString:
+ 995               	.LFB9:
+ 996               	.LM70:
+ 997 0368 DF92      		push r13
+ 998 036a EF92      		push r14
+ 999 036c FF92      		push r15
+ 1000 036e 0F93      		push r16
+ 1001 0370 1F93      		push r17
+ 1002 0372 CF93      		push r28
+ 1003 0374 DF93      		push r29
+ 1004               	/* prologue: function */
+ 1005               	/* frame size = 0 */
+ 1006               	.LM71:
+ 1007 0376 1092 0000 		sts (CmdlineExecFunction)+1,__zero_reg__
+ 1008 037a 1092 0000 		sts CmdlineExecFunction,__zero_reg__
+ 1009               	.LM72:
+ 1010 037e 8091 0000 		lds r24,CmdlineBuffer
+ 1011 0382 8032      		cpi r24,lo8(32)
+ 1012 0384 01F4      		brne .+2
+ 1013 0386 00C0      		rjmp .L103
+ 1014 0388 8823      		tst r24
+ 1015 038a 01F4      		brne .+2
+ 1016 038c 00C0      		rjmp .L103
+ 1017 038e 10E0      		ldi r17,lo8(0)
+ 1018               	.LVL133:
+ 1019 0390 00C0      		rjmp .L105
+ 1020               	.LVL134:
+ 1021               	.L118:
+ 1022 0392 EE23      		tst r30
+ 1023 0394 01F0      		breq .L104
+ 1024               	.LVL135:
+ 1025               	.L105:
+ 1026 0396 1F5F      		subi r17,lo8(-(1))
+ 1027 0398 E12F      		mov r30,r17
+ 1028 039a F0E0      		ldi r31,lo8(0)
+ 1029 039c E050      		subi r30,lo8(-(CmdlineBuffer))
+ 1030 039e F040      		sbci r31,hi8(-(CmdlineBuffer))
+ 1031               	.LVL136:
+ 1032 03a0 E081      		ld r30,Z
+ 1033               	.LVL137:
+ 1034 03a2 E032      		cpi r30,lo8(32)
+ 1035 03a4 01F4      		brne .L118
+ 1036               	.L104:
+ 1037               	.LM73:
+ 1038 03a6 1123      		tst r17
+ 1039               	.LVL138:
+ 1040 03a8 01F4      		brne .+2
+ 1041 03aa 00C0      		rjmp .L103
+ 1042               	.LM74:
+ 1043 03ac D090 0000 		lds r13,CmdlineNumCommands
+ 1044 03b0 DD20      		tst r13
+ 1045 03b2 01F0      		breq .L107
+ 1046               	.LBB56:
+ 1047               	.LBB57:
+ 1048               	.LM75:
+ 1049 03b4 00E0      		ldi r16,lo8(0)
+ 1050               	.LVL139:
+ 1051 03b6 C0E0      		ldi r28,lo8(0)
+ 1052 03b8 D0E0      		ldi r29,hi8(0)
+ 1053 03ba 00C0      		rjmp .L111
+ 1054               	.LVL140:
+ 1055               	.L110:
+ 1056               	.LBE57:
+ 1057               	.LBE56:
+ 1058               	.LM76:
+ 1059 03bc 0F5F      		subi r16,lo8(-(1))
+ 1060 03be 2F96      		adiw r28,15
+ 1061 03c0 0D15      		cp r16,r13
+ 1062 03c2 00F4      		brsh .L107
+ 1063               	.LVL141:
+ 1064               	.L111:
+ 1065               	.LM77:
+ 1066 03c4 30E0      		ldi r19,lo8(CmdlineCommandList)
+ 1067 03c6 E32E      		mov r14,r19
+ 1068 03c8 30E0      		ldi r19,hi8(CmdlineCommandList)
+ 1069 03ca F32E      		mov r15,r19
+ 1070 03cc EC0E      		add r14,r28
+ 1071 03ce FD1E      		adc r15,r29
+ 1072 03d0 C701      		movw r24,r14
+ 1073 03d2 60E0      		ldi r22,lo8(CmdlineBuffer)
+ 1074 03d4 70E0      		ldi r23,hi8(CmdlineBuffer)
+ 1075 03d6 412F      		mov r20,r17
+ 1076 03d8 50E0      		ldi r21,lo8(0)
+ 1077 03da 0E94 0000 		call strncmp
+ 1078               	.LVL142:
+ 1079 03de 0097      		sbiw r24,0
+ 1080 03e0 01F4      		brne .L110
+ 1081               	.LM78:
+ 1082 03e2 00D0      		rcall .
+ 1083 03e4 00D0      		rcall .
+ 1084 03e6 80E0      		ldi r24,lo8(.LC0)
+ 1085 03e8 90E0      		ldi r25,hi8(.LC0)
+ 1086 03ea EDB7      		in r30,__SP_L__
+ 1087 03ec FEB7      		in r31,__SP_H__
+ 1088 03ee 9283      		std Z+2,r25
+ 1089 03f0 8183      		std Z+1,r24
+ 1090 03f2 F482      		std Z+4,r15
+ 1091 03f4 E382      		std Z+3,r14
+ 1092 03f6 0E94 0000 		call printf
+ 1093               	.LM79:
+ 1094 03fa E02F      		mov r30,r16
+ 1095 03fc F0E0      		ldi r31,lo8(0)
+ 1096               	.LVL143:
+ 1097 03fe EE0F      		lsl r30
+ 1098 0400 FF1F      		rol r31
+ 1099               	.LVL144:
+ 1100 0402 E050      		subi r30,lo8(-(CmdlineFunctionList))
+ 1101 0404 F040      		sbci r31,hi8(-(CmdlineFunctionList))
+ 1102               	.LVL145:
+ 1103 0406 8081      		ld r24,Z
+ 1104 0408 9181      		ldd r25,Z+1
+ 1105 040a 9093 0000 		sts (CmdlineExecFunction)+1,r25
+ 1106 040e 8093 0000 		sts CmdlineExecFunction,r24
+ 1107 0412 0F90      		pop __tmp_reg__
+ 1108 0414 0F90      		pop __tmp_reg__
+ 1109 0416 0F90      		pop __tmp_reg__
+ 1110 0418 0F90      		pop __tmp_reg__
+ 1111               	.LVL146:
+ 1112               	.L113:
+ 1113               	/* epilogue start */
+ 1114               	.LM80:
+ 1115 041a DF91      		pop r29
+ 1116 041c CF91      		pop r28
+ 1117 041e 1F91      		pop r17
+ 1118               	.LVL147:
+ 1119 0420 0F91      		pop r16
+ 1120 0422 FF90      		pop r15
+ 1121 0424 EF90      		pop r14
+ 1122 0426 DF90      		pop r13
+ 1123 0428 0895      		ret
+ 1124               	.LVL148:
+ 1125               	.L107:
+ 1126               	.LM81:
+ 1127 042a 80E0      		ldi r24,lo8(.LC1)
+ 1128 042c 90E0      		ldi r25,hi8(.LC1)
+ 1129 042e 0E94 0000 		call puts
+ 1130               	.LVL149:
+ 1131               	.LM82:
+ 1132 0432 0E94 0000 		call cmdlinePrintError
+ 1133               	.LBB62:
+ 1134               	.LBB63:
+ 1135               	.LBB64:
+ 1136               	.LM83:
+ 1137 0436 20E0      		ldi r18,lo8(CmdlinePrompt)
+ 1138 0438 30E0      		ldi r19,hi8(CmdlinePrompt)
+ 1139               	.LVL150:
+ 1140 043a F901      		movw r30,r18
+ 1141               	/* #APP */
+ 1142               	 ;  161 "cmdline.c" 1
+ 1143 043c 8491      		lpm r24, Z
+ 1144               		
+ 1145               	 ;  0 "" 2
+ 1146               	.LVL151:
+ 1147               	/* #NOAPP */
+ 1148               	.LBE64:
+ 1149 043e 8823      		tst r24
+ 1150 0440 01F0      		breq .L113
+ 1151 0442 E901      		movw r28,r18
+ 1152               	.LVL152:
+ 1153               	.L112:
+ 1154               	.LBB65:
+ 1155 0444 2196      		adiw r28,1
+ 1156 0446 F901      		movw r30,r18
+ 1157               	/* #APP */
+ 1158               	 ;  161 "cmdline.c" 1
+ 1159 0448 8491      		lpm r24, Z
+ 1160               		
+ 1161               	 ;  0 "" 2
+ 1162               	.LVL153:
+ 1163               	/* #NOAPP */
+ 1164               	.LBE65:
+ 1165 044a 0E94 0000 		call uart_putc
+ 1166               	.LVL154:
+ 1167 044e 9E01      		movw r18,r28
+ 1168               	.LVL155:
+ 1169               	.LBB66:
+ 1170 0450 FE01      		movw r30,r28
+ 1171               	/* #APP */
+ 1172               	 ;  161 "cmdline.c" 1
+ 1173 0452 8491      		lpm r24, Z
+ 1174               		
+ 1175               	 ;  0 "" 2
+ 1176               	.LVL156:
+ 1177               	/* #NOAPP */
+ 1178               	.LBE66:
+ 1179 0454 8823      		tst r24
+ 1180 0456 01F4      		brne .L112
+ 1181               	.LBE63:
+ 1182               	.LBE62:
+ 1183               	.LM84:
+ 1184 0458 DF91      		pop r29
+ 1185 045a CF91      		pop r28
+ 1186               	.LVL157:
+ 1187 045c 1F91      		pop r17
+ 1188               	.LVL158:
+ 1189 045e 0F91      		pop r16
+ 1190               	.LVL159:
+ 1191 0460 FF90      		pop r15
+ 1192 0462 EF90      		pop r14
+ 1193 0464 DF90      		pop r13
+ 1194 0466 0895      		ret
+ 1195               	.LVL160:
+ 1196               	.L103:
+ 1197               	.LBB67:
+ 1198               	.LBB61:
+ 1199               	.LBB58:
+ 1200               	.LM85:
+ 1201 0468 20E0      		ldi r18,lo8(CmdlinePrompt)
+ 1202 046a 30E0      		ldi r19,hi8(CmdlinePrompt)
+ 1203               	.LVL161:
+ 1204 046c F901      		movw r30,r18
+ 1205               	/* #APP */
+ 1206               	 ;  161 "cmdline.c" 1
+ 1207 046e 8491      		lpm r24, Z
+ 1208               		
+ 1209               	 ;  0 "" 2
+ 1210               	.LVL162:
+ 1211               	/* #NOAPP */
+ 1212               	.LBE58:
+ 1213 0470 8823      		tst r24
+ 1214 0472 01F0      		breq .L113
+ 1215 0474 E901      		movw r28,r18
+ 1216               	.LVL163:
+ 1217               	.L109:
+ 1218               	.LBB59:
+ 1219 0476 2196      		adiw r28,1
+ 1220 0478 F901      		movw r30,r18
+ 1221               	/* #APP */
+ 1222               	 ;  161 "cmdline.c" 1
+ 1223 047a 8491      		lpm r24, Z
+ 1224               		
+ 1225               	 ;  0 "" 2
+ 1226               	.LVL164:
+ 1227               	/* #NOAPP */
+ 1228               	.LBE59:
+ 1229 047c 0E94 0000 		call uart_putc
+ 1230               	.LVL165:
+ 1231 0480 9E01      		movw r18,r28
+ 1232               	.LVL166:
+ 1233               	.LBB60:
+ 1234 0482 FE01      		movw r30,r28
+ 1235               	/* #APP */
+ 1236               	 ;  161 "cmdline.c" 1
+ 1237 0484 8491      		lpm r24, Z
+ 1238               		
+ 1239               	 ;  0 "" 2
+ 1240               	.LVL167:
+ 1241               	/* #NOAPP */
+ 1242               	.LBE60:
+ 1243 0486 8823      		tst r24
+ 1244 0488 01F4      		brne .L109
+ 1245               	.LBE61:
+ 1246               	.LBE67:
+ 1247               	.LM86:
+ 1248 048a DF91      		pop r29
+ 1249 048c CF91      		pop r28
+ 1250               	.LVL168:
+ 1251 048e 1F91      		pop r17
+ 1252               	.LVL169:
+ 1253 0490 0F91      		pop r16
+ 1254 0492 FF90      		pop r15
+ 1255 0494 EF90      		pop r14
+ 1256 0496 DF90      		pop r13
+ 1257 0498 0895      		ret
+ 1258               	.LFE9:
+ 1260               	.global	cmdlineInputFunc
+ 1262               	cmdlineInputFunc:
+ 1263               	.LFB6:
+ 1264               	.LM87:
+ 1265               	.LVL170:
+ 1266               	/* prologue: function */
+ 1267               	/* frame size = 0 */
+ 1268 049a 982F      		mov r25,r24
+ 1269               	.LM88:
+ 1270 049c 8052      		subi r24,lo8(-(-32))
+ 1271               	.LVL171:
+ 1272 049e 8F35      		cpi r24,lo8(95)
+ 1273 04a0 00F4      		brsh .L120
+ 1274               	.LM89:
+ 1275 04a2 2091 0000 		lds r18,CmdlineBufferEditPos
+ 1276 04a6 8091 0000 		lds r24,CmdlineBufferLength
+ 1277 04aa 2817      		cp r18,r24
+ 1278 04ac 01F0      		breq .L123
+ 1279               	.L122:
+ 1280 04ae 0895      		ret
+ 1281               	.L120:
+ 1282               	.LM90:
+ 1283 04b0 9D30      		cpi r25,lo8(13)
+ 1284 04b2 01F4      		brne .L122
+ 1285               	.LM91:
+ 1286 04b4 8091 0000 		lds r24,CmdlineBufferLength
+ 1287 04b8 E82F      		mov r30,r24
+ 1288 04ba F0E0      		ldi r31,lo8(0)
+ 1289 04bc E050      		subi r30,lo8(-(CmdlineBuffer))
+ 1290 04be F040      		sbci r31,hi8(-(CmdlineBuffer))
+ 1291 04c0 1082      		st Z,__zero_reg__
+ 1292 04c2 8F5F      		subi r24,lo8(-(1))
+ 1293 04c4 8093 0000 		sts CmdlineBufferLength,r24
+ 1294               	.LM92:
+ 1295 04c8 8091 0000 		lds r24,CmdlineBufferEditPos
+ 1296 04cc 8F5F      		subi r24,lo8(-(1))
+ 1297 04ce 8093 0000 		sts CmdlineBufferEditPos,r24
+ 1298               	.LM93:
+ 1299 04d2 0E94 0000 		call cmdlineProcessInputString
+ 1300               	.LVL172:
+ 1301               	.LM94:
+ 1302 04d6 1092 0000 		sts CmdlineBufferLength,__zero_reg__
+ 1303               	.LM95:
+ 1304 04da 1092 0000 		sts CmdlineBufferEditPos,__zero_reg__
+ 1305 04de 0895      		ret
+ 1306               	.LVL173:
+ 1307               	.L123:
+ 1308               	.LM96:
+ 1309 04e0 E22F      		mov r30,r18
+ 1310 04e2 F0E0      		ldi r31,lo8(0)
+ 1311 04e4 E050      		subi r30,lo8(-(CmdlineBuffer))
+ 1312 04e6 F040      		sbci r31,hi8(-(CmdlineBuffer))
+ 1313 04e8 9083      		st Z,r25
+ 1314 04ea 822F      		mov r24,r18
+ 1315 04ec 8F5F      		subi r24,lo8(-(1))
+ 1316 04ee 8093 0000 		sts CmdlineBufferEditPos,r24
+ 1317               	.LM97:
+ 1318 04f2 8093 0000 		sts CmdlineBufferLength,r24
+ 1319 04f6 0895      		ret
+ 1320               	.LFE6:
+ 1322               	.global	CmdlinePrompt
+ 1323               		.section	.progmem.data,"a",@progbits
+ 1326               	CmdlinePrompt:
+ 1327 0000 636D 643E 		.string	"cmd>"
+ 1327      00
+ 1328               	.global	CmdlineNotice
+ 1331               	CmdlineNotice:
+ 1332 0005 636D 646C 		.string	"cmdline: "
+ 1332      696E 653A 
+ 1332      2000 
+ 1333               	.global	CmdlineCmdNotFound
+ 1336               	CmdlineCmdNotFound:
+ 1337 000f 636F 6D6D 		.string	"command not found"
+ 1337      616E 6420 
+ 1337      6E6F 7420 
+ 1337      666F 756E 
+ 1337      6400 
+ 1338               	.global	CmdlineBufferLength
+ 1339               	.global	CmdlineBufferLength
+ 1340               		.section .bss
+ 1343               	CmdlineBufferLength:
+ 1344 0000 00        		.skip 1,0
+ 1345               	.global	CmdlineBufferEditPos
+ 1346               	.global	CmdlineBufferEditPos
+ 1349               	CmdlineBufferEditPos:
+ 1350 0001 00        		.skip 1,0
+ 1351               	.global	str1
+ 1352               		.section	.progmem.data
+ 1355               	str1:
+ 1356 0021 0D0A 4176 		.string	"\r\nAvailable commands are:\r\n"
+ 1356      6169 6C61 
+ 1356      626C 6520 
+ 1356      636F 6D6D 
+ 1356      616E 6473 
+ 1357               	.global	str2
+ 1360               	str2:
+ 1361 003d 6865 6C70 		.string	"help      - displays available commands\r\n"
+ 1361      2020 2020 
+ 1361      2020 2D20 
+ 1361      6469 7370 
+ 1361      6C61 7973 
+ 1362               	.global	str3
+ 1365               	str3:
+ 1366 0067 7077 7220 		.string	"pwr %d %d %d - dev_addr channel ch_coun\r\n"
+ 1366      2564 2025 
+ 1366      6420 2564 
+ 1366      202D 2064 
+ 1366      6576 5F61 
+ 1367               	.global	str4
+ 1370               	str4:
+ 1371 0091 7365 6E64 		.string	"send_fru - dumps command arguments as decimal integers\r\n"
+ 1371      5F66 7275 
+ 1371      202D 2064 
+ 1371      756D 7073 
+ 1371      2063 6F6D 
+ 1372               	.global	str5
+ 1375               	str5:
+ 1376 00ca 746F 6F67 		.string	"toogle_pwr - toogle_pwr\r\n"
+ 1376      6C65 5F70 
+ 1376      7772 202D 
+ 1376      2074 6F6F 
+ 1376      676C 655F 
+ 1377               	.global	str6
+ 1380               	str6:
+ 1381 00e4 4641 4E20 		.string	"FAN %d - control fans colling module\r\n"
+ 1381      2564 202D 
+ 1381      2063 6F6E 
+ 1381      7472 6F6C 
+ 1381      2066 616E 
+ 1382               		.lcomm CmdlineCommandList,90
+ 1383               		.lcomm CmdlineFunctionList,12
+ 1384               		.lcomm available_cmd,1
+ 1385               		.lcomm cmdlineOutputFunc,2
+ 1386               		.comm CmdlineExecFunction,2,1
+ 1387               		.comm CmdlineBuffer,15,1
+ 1388               		.comm CmdlineNumCommands,1,1
+ 1509               	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 cmdline.c
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:2      *ABS*:0000003f __SREG__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:3      *ABS*:0000003e __SP_H__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:4      *ABS*:0000003d __SP_L__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:5      *ABS*:00000034 __CCP__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:6      *ABS*:00000000 __tmp_reg__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:7      *ABS*:00000001 __zero_reg__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:18     .text:00000000 cmdlineInit
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1343   .bss:00000000 CmdlineBufferLength
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1349   .bss:00000001 CmdlineBufferEditPos
+                            *COM*:00000002 CmdlineExecFunction
+                            *COM*:00000001 CmdlineNumCommands
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:39     .text:00000016 set_available_cmd
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1383   .bss:00000068 available_cmd
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:54     .text:0000001c get_available_cmd
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:67     .text:00000022 cmdlineSetOutputFunc
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1384   .bss:00000069 cmdlineOutputFunc
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:83     .text:0000002c cmdlineGetArgStr
+                            *COM*:0000000f CmdlineBuffer
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:208    .text:000000ba cmdlinePrintError
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1331   .progmem.data:00000005 CmdlineNotice
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1336   .progmem.data:0000000f CmdlineCmdNotFound
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:359    .text:00000142 helpFunction
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1355   .progmem.data:00000021 str1
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1360   .progmem.data:0000003d str2
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1365   .progmem.data:00000067 str3
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1370   .progmem.data:00000091 str4
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1375   .progmem.data:000000ca str5
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1380   .progmem.data:000000e4 str6
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:658    .text:00000218 cmdlinePrintPrompt
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1326   .progmem.data:00000000 CmdlinePrompt
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:722    .text:00000244 cmdlineAddCommand
+                             .bss:00000002 CmdlineCommandList
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1382   .bss:0000005c CmdlineFunctionList
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:768    .text:00000282 cmdlineGetArgInt
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:910    .text:00000326 cmdlineMainLoop
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:994    .text:00000368 cmdlineProcessInputString
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccnSFiyA.s:1262   .text:0000049a cmdlineInputFunc
+
+UNDEFINED SYMBOLS
+uart_putc
+strcpy
+strtol
+strncmp
+printf
+puts
+__do_copy_data
+__do_clear_bss

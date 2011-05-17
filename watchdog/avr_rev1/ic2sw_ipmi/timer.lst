@@ -1,0 +1,169 @@
+   1               		.file	"timer.c"
+   2               	__SREG__ = 0x3f
+   3               	__SP_H__ = 0x3e
+   4               	__SP_L__ = 0x3d
+   5               	__CCP__  = 0x34
+   6               	__tmp_reg__ = 0
+   7               	__zero_reg__ = 1
+  15               	.Ltext0:
+  16               	.global	timerInit
+  18               	timerInit:
+  19               	.LFB3:
+  20               	.LM1:
+  21               	/* prologue: function */
+  22               	/* frame size = 0 */
+  23               	.LBB12:
+  24               	.LBB13:
+  25               	.LBB14:
+  26               	.LBB15:
+  27               	.LM2:
+  28 0000 83B7      		in r24,83-32
+  29 0002 8760      		ori r24,lo8(7)
+  30 0004 83BF      		out 83-32,r24
+  31               	.LBE15:
+  32               	.LBE14:
+  33               	.LM3:
+  34 0006 12BE      		out 82-32,__zero_reg__
+  35               	.LM4:
+  36 0008 87B7      		in r24,87-32
+  37 000a 8160      		ori r24,lo8(1)
+  38 000c 87BF      		out 87-32,r24
+  39               	.LBB16:
+  40               	.LBB17:
+  41               	.LM5:
+  42 000e 1092 0000 		sts Timer0Reg0,__zero_reg__
+  43 0012 1092 0000 		sts (Timer0Reg0)+1,__zero_reg__
+  44 0016 1092 0000 		sts (Timer0Reg0)+2,__zero_reg__
+  45 001a 1092 0000 		sts (Timer0Reg0)+3,__zero_reg__
+  46               	/* epilogue start */
+  47               	.LBE17:
+  48               	.LBE16:
+  49               	.LBE13:
+  50               	.LBE12:
+  51               	.LM6:
+  52 001e 0895      		ret
+  53               	.LFE3:
+  55               	.global	timer0_initialize
+  57               	timer0_initialize:
+  58               	.LFB4:
+  59               	.LM7:
+  60               	/* prologue: function */
+  61               	/* frame size = 0 */
+  62               	.LBB18:
+  63               	.LBB19:
+  64               	.LM8:
+  65 0020 83B7      		in r24,83-32
+  66 0022 8760      		ori r24,lo8(7)
+  67 0024 83BF      		out 83-32,r24
+  68               	.LBE19:
+  69               	.LBE18:
+  70               	.LM9:
+  71 0026 12BE      		out 82-32,__zero_reg__
+  72               	.LM10:
+  73 0028 87B7      		in r24,87-32
+  74 002a 8160      		ori r24,lo8(1)
+  75 002c 87BF      		out 87-32,r24
+  76               	.LBB20:
+  77               	.LBB21:
+  78               	.LM11:
+  79 002e 1092 0000 		sts Timer0Reg0,__zero_reg__
+  80 0032 1092 0000 		sts (Timer0Reg0)+1,__zero_reg__
+  81 0036 1092 0000 		sts (Timer0Reg0)+2,__zero_reg__
+  82 003a 1092 0000 		sts (Timer0Reg0)+3,__zero_reg__
+  83               	/* epilogue start */
+  84               	.LBE21:
+  85               	.LBE20:
+  86               	.LM12:
+  87 003e 0895      		ret
+  88               	.LFE4:
+  90               	.global	timer0SetPrescaler
+  92               	timer0SetPrescaler:
+  93               	.LFB5:
+  94               	.LM13:
+  95               	.LVL0:
+  96               	/* prologue: function */
+  97               	/* frame size = 0 */
+  98               	.LM14:
+  99 0040 93B7      		in r25,83-32
+ 100 0042 987F      		andi r25,lo8(-8)
+ 101 0044 982B      		or r25,r24
+ 102 0046 93BF      		out 83-32,r25
+ 103               	/* epilogue start */
+ 104               	.LM15:
+ 105 0048 0895      		ret
+ 106               	.LFE5:
+ 108               	.global	timer0_ClearOverflowCount
+ 110               	timer0_ClearOverflowCount:
+ 111               	.LFB6:
+ 112               	.LM16:
+ 113               	/* prologue: function */
+ 114               	/* frame size = 0 */
+ 115               	.LM17:
+ 116 004a 1092 0000 		sts Timer0Reg0,__zero_reg__
+ 117 004e 1092 0000 		sts (Timer0Reg0)+1,__zero_reg__
+ 118 0052 1092 0000 		sts (Timer0Reg0)+2,__zero_reg__
+ 119 0056 1092 0000 		sts (Timer0Reg0)+3,__zero_reg__
+ 120               	/* epilogue start */
+ 121               	.LM18:
+ 122 005a 0895      		ret
+ 123               	.LFE6:
+ 125               	.global	__vector_16
+ 127               	__vector_16:
+ 128               	.LFB7:
+ 129               	.LM19:
+ 130 005c 1F92      		push __zero_reg__
+ 131 005e 0F92      		push r0
+ 132 0060 0FB6      		in r0,__SREG__
+ 133 0062 0F92      		push r0
+ 134 0064 1124      		clr __zero_reg__
+ 135 0066 8F93      		push r24
+ 136 0068 9F93      		push r25
+ 137 006a AF93      		push r26
+ 138 006c BF93      		push r27
+ 139               	/* prologue: Signal */
+ 140               	/* frame size = 0 */
+ 141               	.LM20:
+ 142 006e 8091 0000 		lds r24,lbolt
+ 143 0072 9091 0000 		lds r25,(lbolt)+1
+ 144 0076 A091 0000 		lds r26,(lbolt)+2
+ 145 007a B091 0000 		lds r27,(lbolt)+3
+ 146 007e 0196      		adiw r24,1
+ 147 0080 A11D      		adc r26,__zero_reg__
+ 148 0082 B11D      		adc r27,__zero_reg__
+ 149 0084 8093 0000 		sts lbolt,r24
+ 150 0088 9093 0000 		sts (lbolt)+1,r25
+ 151 008c A093 0000 		sts (lbolt)+2,r26
+ 152 0090 B093 0000 		sts (lbolt)+3,r27
+ 153               	/* epilogue start */
+ 154               	.LM21:
+ 155 0094 BF91      		pop r27
+ 156 0096 AF91      		pop r26
+ 157 0098 9F91      		pop r25
+ 158 009a 8F91      		pop r24
+ 159 009c 0F90      		pop r0
+ 160 009e 0FBE      		out __SREG__,r0
+ 161 00a0 0F90      		pop r0
+ 162 00a2 1F90      		pop __zero_reg__
+ 163 00a4 1895      		reti
+ 164               	.LFE7:
+ 166               		.comm Timer0Reg0,4,1
+ 167               		.comm lbolt,4,1
+ 224               	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 timer.c
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccWBwyNR.s:2      *ABS*:0000003f __SREG__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccWBwyNR.s:3      *ABS*:0000003e __SP_H__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccWBwyNR.s:4      *ABS*:0000003d __SP_L__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccWBwyNR.s:5      *ABS*:00000034 __CCP__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccWBwyNR.s:6      *ABS*:00000000 __tmp_reg__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccWBwyNR.s:7      *ABS*:00000001 __zero_reg__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccWBwyNR.s:18     .text:00000000 timerInit
+                            *COM*:00000004 Timer0Reg0
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccWBwyNR.s:57     .text:00000020 timer0_initialize
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccWBwyNR.s:92     .text:00000040 timer0SetPrescaler
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccWBwyNR.s:110    .text:0000004a timer0_ClearOverflowCount
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/ccWBwyNR.s:127    .text:0000005c __vector_16
+                            *COM*:00000004 lbolt
+
+UNDEFINED SYMBOLS
+__do_clear_bss

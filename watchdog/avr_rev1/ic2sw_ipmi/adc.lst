@@ -1,0 +1,267 @@
+   1               		.file	"adc.c"
+   2               	__SREG__ = 0x3f
+   3               	__SP_H__ = 0x3e
+   4               	__SP_L__ = 0x3d
+   5               	__CCP__  = 0x34
+   6               	__tmp_reg__ = 0
+   7               	__zero_reg__ = 1
+  15               	.Ltext0:
+  16               	.global	adcInit
+  18               	adcInit:
+  19               	.LFB2:
+  20               	.LM1:
+  21               	/* prologue: function */
+  22               	/* frame size = 0 */
+  23               	.LM2:
+  24 0000 8AB3      		in r24,58-32
+  25 0002 8770      		andi r24,lo8(7)
+  26 0004 8ABB      		out 58-32,r24
+  27               	.LM3:
+  28 0006 8BB3      		in r24,59-32
+  29 0008 8770      		andi r24,lo8(7)
+  30 000a 8BBB      		out 59-32,r24
+  31               	.LM4:
+  32 000c 379A      		sbi 38-32,7
+  33               	.LM5:
+  34 000e 3598      		cbi 38-32,5
+  35               	.LBB12:
+  36               	.LBB13:
+  37               	.LM6:
+  38 0010 86B1      		in r24,38-32
+  39 0012 887F      		andi r24,lo8(-8)
+  40 0014 8660      		ori r24,lo8(6)
+  41 0016 86B9      		out 38-32,r24
+  42               	.LBE13:
+  43               	.LBE12:
+  44               	.LBB14:
+  45               	.LBB15:
+  46               	.LM7:
+  47 0018 87B1      		in r24,39-32
+  48 001a 8F73      		andi r24,lo8(63)
+  49 001c 8064      		ori r24,lo8(64)
+  50 001e 87B9      		out 39-32,r24
+  51               	.LBE15:
+  52               	.LBE14:
+  53               	.LM8:
+  54 0020 3D98      		cbi 39-32,5
+  55               	/* epilogue start */
+  56               	.LM9:
+  57 0022 0895      		ret
+  58               	.LFE2:
+  60               	.global	adcOff
+  62               	adcOff:
+  63               	.LFB3:
+  64               	.LM10:
+  65               	/* prologue: function */
+  66               	/* frame size = 0 */
+  67               	.LM11:
+  68 0024 3398      		cbi 38-32,3
+  69               	.LM12:
+  70 0026 3798      		cbi 38-32,7
+  71               	/* epilogue start */
+  72               	.LM13:
+  73 0028 0895      		ret
+  74               	.LFE3:
+  76               	.global	adcSetPrescaler
+  78               	adcSetPrescaler:
+  79               	.LFB4:
+  80               	.LM14:
+  81               	.LVL0:
+  82               	/* prologue: function */
+  83               	/* frame size = 0 */
+  84               	.LM15:
+  85 002a 96B1      		in r25,38-32
+  86 002c 987F      		andi r25,lo8(-8)
+  87 002e 982B      		or r25,r24
+  88 0030 96B9      		out 38-32,r25
+  89               	/* epilogue start */
+  90               	.LM16:
+  91 0032 0895      		ret
+  92               	.LFE4:
+  94               	.global	adcSetReference
+  96               	adcSetReference:
+  97               	.LFB5:
+  98               	.LM17:
+  99               	.LVL1:
+ 100               	/* prologue: function */
+ 101               	/* frame size = 0 */
+ 102               	.LM18:
+ 103 0034 97B1      		in r25,39-32
+ 104 0036 8295      		swap r24
+ 105               	.LVL2:
+ 106 0038 880F      		lsl r24
+ 107 003a 880F      		lsl r24
+ 108 003c 807C      		andi r24,lo8(-64)
+ 109 003e 9F73      		andi r25,lo8(63)
+ 110 0040 982B      		or r25,r24
+ 111 0042 97B9      		out 39-32,r25
+ 112               	/* epilogue start */
+ 113               	.LM19:
+ 114 0044 0895      		ret
+ 115               	.LFE5:
+ 117               	.global	adcSetChannel
+ 119               	adcSetChannel:
+ 120               	.LFB6:
+ 121               	.LM20:
+ 122               	.LVL3:
+ 123               	/* prologue: function */
+ 124               	/* frame size = 0 */
+ 125               	.LM21:
+ 126 0046 97B1      		in r25,39-32
+ 127 0048 8F70      		andi r24,lo8(15)
+ 128               	.LVL4:
+ 129 004a 907F      		andi r25,lo8(-16)
+ 130 004c 892B      		or r24,r25
+ 131 004e 87B9      		out 39-32,r24
+ 132               	/* epilogue start */
+ 133               	.LM22:
+ 134 0050 0895      		ret
+ 135               	.LFE6:
+ 137               	.global	adcStartConvert
+ 139               	adcStartConvert:
+ 140               	.LFB7:
+ 141               	.LM23:
+ 142               	/* prologue: function */
+ 143               	/* frame size = 0 */
+ 144               	.LM24:
+ 145 0052 349A      		sbi 38-32,4
+ 146               	.LM25:
+ 147 0054 369A      		sbi 38-32,6
+ 148               	/* epilogue start */
+ 149               	.LM26:
+ 150 0056 0895      		ret
+ 151               	.LFE7:
+ 153               	.global	adcIsComplete
+ 155               	adcIsComplete:
+ 156               	.LFB8:
+ 157               	.LM27:
+ 158               	/* prologue: function */
+ 159               	/* frame size = 0 */
+ 160               	.LM28:
+ 161 0058 86B1      		in r24,38-32
+ 162               	.LM29:
+ 163 005a 8074      		andi r24,lo8(64)
+ 164               	/* epilogue start */
+ 165 005c 0895      		ret
+ 166               	.LFE8:
+ 168               	.global	adcConvert10bit
+ 170               	adcConvert10bit:
+ 171               	.LFB9:
+ 172               	.LM30:
+ 173               	.LVL5:
+ 174               	/* prologue: function */
+ 175               	/* frame size = 0 */
+ 176               	.LBB16:
+ 177               	.LBB17:
+ 178               	.LM31:
+ 179 005e 97B1      		in r25,39-32
+ 180 0060 8F70      		andi r24,lo8(15)
+ 181               	.LVL6:
+ 182 0062 907F      		andi r25,lo8(-16)
+ 183 0064 892B      		or r24,r25
+ 184 0066 87B9      		out 39-32,r24
+ 185               	.LBE17:
+ 186               	.LBE16:
+ 187               	.LM32:
+ 188 0068 349A      		sbi 38-32,4
+ 189               	.LM33:
+ 190 006a 369A      		sbi 38-32,6
+ 191               	.L16:
+ 192               	.LM34:
+ 193 006c 3699      		sbic 38-32,6
+ 194 006e 00C0      		rjmp .L16
+ 195               	.LM35:
+ 196 0070 24B1      		in r18,36-32
+ 197               	.LVL7:
+ 198               	.LM36:
+ 199 0072 45B1      		in r20,37-32
+ 200               	.LVL8:
+ 201 0074 942F      		mov r25,r20
+ 202               	.LVL9:
+ 203 0076 80E0      		ldi r24,lo8(0)
+ 204               	.LVL10:
+ 205 0078 30E0      		ldi r19,lo8(0)
+ 206 007a 282B      		or r18,r24
+ 207 007c 392B      		or r19,r25
+ 208               	.LVL11:
+ 209               	.LM37:
+ 210 007e C901      		movw r24,r18
+ 211               	.LVL12:
+ 212               	/* epilogue start */
+ 213 0080 0895      		ret
+ 214               	.LFE9:
+ 216               	.global	adcConvert8bit
+ 218               	adcConvert8bit:
+ 219               	.LFB10:
+ 220               	.LM38:
+ 221               	.LVL13:
+ 222               	/* prologue: function */
+ 223               	/* frame size = 0 */
+ 224               	.LBB18:
+ 225               	.LBB19:
+ 226               	.LBB20:
+ 227               	.LBB21:
+ 228               	.LM39:
+ 229 0082 97B1      		in r25,39-32
+ 230 0084 8F70      		andi r24,lo8(15)
+ 231               	.LVL14:
+ 232 0086 907F      		andi r25,lo8(-16)
+ 233 0088 892B      		or r24,r25
+ 234 008a 87B9      		out 39-32,r24
+ 235               	.LBE21:
+ 236               	.LBE20:
+ 237               	.LM40:
+ 238 008c 349A      		sbi 38-32,4
+ 239               	.LM41:
+ 240 008e 369A      		sbi 38-32,6
+ 241               	.L21:
+ 242               	.LM42:
+ 243 0090 3699      		sbic 38-32,6
+ 244 0092 00C0      		rjmp .L21
+ 245               	.LM43:
+ 246 0094 24B1      		in r18,36-32
+ 247               	.LVL15:
+ 248               	.LM44:
+ 249 0096 45B1      		in r20,37-32
+ 250               	.LVL16:
+ 251 0098 942F      		mov r25,r20
+ 252               	.LVL17:
+ 253 009a 80E0      		ldi r24,lo8(0)
+ 254               	.LVL18:
+ 255 009c 30E0      		ldi r19,lo8(0)
+ 256               	.LVL19:
+ 257 009e 822B      		or r24,r18
+ 258 00a0 932B      		or r25,r19
+ 259               	.LVL20:
+ 260 00a2 9695      		lsr r25
+ 261 00a4 8795      		ror r24
+ 262 00a6 9695      		lsr r25
+ 263 00a8 8795      		ror r24
+ 264               	.LVL21:
+ 265               	.LVL22:
+ 266               	/* epilogue start */
+ 267               	.LBE19:
+ 268               	.LBE18:
+ 269               	.LM45:
+ 270 00aa 0895      		ret
+ 271               	.LFE10:
+ 361               	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 adc.c
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:2      *ABS*:0000003f __SREG__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:3      *ABS*:0000003e __SP_H__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:4      *ABS*:0000003d __SP_L__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:5      *ABS*:00000034 __CCP__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:6      *ABS*:00000000 __tmp_reg__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:7      *ABS*:00000001 __zero_reg__
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:18     .text:00000000 adcInit
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:62     .text:00000024 adcOff
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:78     .text:0000002a adcSetPrescaler
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:96     .text:00000034 adcSetReference
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:119    .text:00000046 adcSetChannel
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:139    .text:00000052 adcStartConvert
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:155    .text:00000058 adcIsComplete
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:170    .text:0000005e adcConvert10bit
+C:\DOCUME~1\poliveir\LOCALS~1\Temp/cc8nbG9C.s:218    .text:00000082 adcConvert8bit
+
+NO UNDEFINED SYMBOLS
