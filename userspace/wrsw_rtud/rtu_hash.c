@@ -6,8 +6,8 @@
  *
  * Authors:     Maciej Lipinski (maciej.lipinski@cern.ch)
  *
- * Description: Hash function presented below, produces hash which corresponds 
- *              to hash produced by VHDL generated on this page: 
+ * Description: Hash function presented below, produces hash which corresponds
+ *              to hash produced by VHDL generated on this page:
  *              http://outputlogic.com/
  *
  * Fixes:
@@ -47,7 +47,7 @@ void rtu_hash_set_poly(uint16_t poly)
 uint16_t rtu_hash(uint8_t mac[ETH_ALEN], uint8_t fid)
 {
   uint16_t hash = 0xFFFF;
-  
+
   hash = crc16(hash, (0xFFFF & fid));
   hash = crc16(hash, ((uint16_t)mac[0] << 8) | mac[1]);
   hash = crc16(hash, ((uint16_t)mac[2] << 8) | mac[3]);
@@ -60,40 +60,40 @@ uint16_t rtu_hash(uint8_t mac[ETH_ALEN], uint8_t fid)
 -------------------------------------------------------------------------------
 -- SOME EXPLANATION REGARDING VHDL vs C  CRC IMPLEMENTATION BY ML
 -------------------------------------------------------------------------------
--- C code to produce exactly the same CRC as VHDL generated 
+-- C code to produce exactly the same CRC as VHDL generated
 -- with http://outputlogic.com/ .
 -- it uses naive method, it's not optimal at all
 -- but it's good enough to chech whether VHDL works OK
 -- It was made (by maciej.lipinski@cern.ch) modifying source from here:
 -- http://www.netrino.com/Embedded-Systems/How-To/CRC-Calculation-C-Code
 -- the website provides explanation of CRC
--- 
--- To get the hex representation of POLY to be used with the C function, which 
--- is different than hex representation of polly used to generate VHDL code 
+--
+-- To get the hex representation of POLY to be used with the C function, which
+-- is different than hex representation of polly used to generate VHDL code
 -- (i.e.:0x1021 <->0x88108), here is the trick:
 --
 -- 1) we are using the following poly equation: 1+x^5+x^12+x^16;
--- 2) it translates to binary: (1) 0001 0000 0010 0001 = 0x1021 
+-- 2) it translates to binary: (1) 0001 0000 0010 0001 = 0x1021
 --                              |                        |
---                              |   this is default      |   this you can find in 
+--                              |   this is default      |   this you can find in
 --                              |-> it's the 16th bit    |-> the wiki as description
 --                                                           of the polly equation
--- 
+--
 -- 3) we include the "default" bit into the polly and add zeroes at the end
 --    creating 20 bit polly, like this
---     (1) 0001 0000 0010 0001 => 1000 1000 0001 0000 1000 = 0x88108 
+--     (1) 0001 0000 0010 0001 => 1000 1000 0001 0000 1000 = 0x88108
 --
 --------------------------------------------------------------------------------
 --|        name   |      polly equation     | polly (hex) | our polly | tested |
 --------------------------------------------------------------------------------
 --|  CRC-16-CCITT | 1+x^5+x^12+x^16         |    0x1021   |  0x88108  |  yes   |
 --|  CRC-16-IBM   | 1+x^2+x^15+x^16         |    0x8005   |  0xC0028  |  yes   |
---|  CRC-16-DECT  | 1+x^3+x^7+x^8+x^10+x^16 |    0x0589   |  0x82C48  |  yes   |  
+--|  CRC-16-DECT  | 1+x^3+x^7+x^8+x^10+x^16 |    0x0589   |  0x82C48  |  yes   |
 --------------------------------------------------------------------------------
 */
 static uint16_t crc16(uint16_t const init_crc, uint16_t const message)
 {
-    uint32_t remainder;	
+    uint32_t remainder;
     int bit;
 
     // Initially, the dividend is the remainder.

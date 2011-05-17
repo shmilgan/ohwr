@@ -36,7 +36,7 @@
 // HW RTU (should be given by wrsw_rtu_wb.h)
 #define RTU_HCAM                0x4000
 #define RTU_ARAM_MAIN           0x8000
-#define RTU_VLAN_TAB            0xc000 
+#define RTU_VLAN_TAB            0xc000
 
 #define RTU_MFIFO_R0_DATA_SEL   0x00000000
 #define RTU_MFIFO_R1_ADDR_MASK  0x0007FFFF

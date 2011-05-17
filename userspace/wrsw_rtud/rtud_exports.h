@@ -6,10 +6,10 @@
  *
  * Authors:     Tomasz Wlostowski (tomasz.wlostowski@cern.ch)
  *
- * Description: Dump the filtering database. 
+ * Description: Dump the filtering database.
  *
  * Fixes:
- *              
+ *
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -31,7 +31,7 @@
 
 #include <stdint.h>
 
-typedef struct 
+typedef struct
 {
 		uint8_t mac[8];
 		uint32_t dpm;
@@ -42,7 +42,7 @@ typedef struct
 
 typedef struct  {
 	rtudexp_fd_entry_t list[8];
-	
+
 	int num_rules;
 	int next;
 } rtudexp_fd_list_t;

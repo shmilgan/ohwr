@@ -10,7 +10,7 @@
  *              background
  *
  * Fixes:
- *              
+ *
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -79,10 +79,10 @@ void daemonize(void)
 
 void usage(char *name)
 {
-    fprintf(stderr, 
+    fprintf(stderr,
         "Usage: %s [-dh] [-p <polly>] [-r <time>] [-t <time>]\n"
-        "\t-d   daemonize\n" 
-        "\t-h   help\n" 
+        "\t-d   daemonize\n"
+        "\t-h   help\n"
         "\t-p   polynomial for hash calculation. Possible values are CCITT, IBM, DECT\n"
         "\t-r   aging resolution (in sec). 20 sec by default\n"
         "\t-t   aging time (10 to 10000 sec). 300 sec by default.\n",

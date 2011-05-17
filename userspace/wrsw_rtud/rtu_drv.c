@@ -8,18 +8,18 @@
  *              Miguel Baizan   (miguel.baizan@integrasys.es)
  *              Maciej Lipinski (maciej.lipinski@cern.ch)
  *
- * Description: RTU driver module in user space. Provides read/write access 
- *              to RTU_at_HW  components including: 
- *              - UFIFO 
+ * Description: RTU driver module in user space. Provides read/write access
+ *              to RTU_at_HW  components including:
+ *              - UFIFO
  *              - MFIFO
- *              - HCAM 
+ *              - HCAM
  *              - Aging RAM for Main Hashtable
  *              - Aging Register for HCAM
  *              - VLAN Table
  *              - RTU Global Control Register
  *              - RTU Port settings
  *
- * Fixes:       
+ * Fixes:
  *              Alessandro Rubini
  *              Tomasz Wlostowski
  *
@@ -82,7 +82,7 @@ int rtu_init(void)
 {
     int err;
 
-    if(halexp_client_init() < 0) 
+    if(halexp_client_init() < 0)
         TRACE(
             TRACE_FATAL,
             "WRSW_HAL is not responding... Are you sure it's running on your switch?\n"
@@ -107,7 +107,7 @@ void rtu_exit(void)
 {
     if(fd >= 0)
         close(fd);
-            
+
     TRACE(TRACE_INFO, "module cleanup\n");
 }
 
@@ -153,7 +153,7 @@ int rtu_read_learning_queue(struct rtu_request *req)
             return err;
     }
 
-    // read data from mapped IO memory 
+    // read data from mapped IO memory
     uint32_t r0 = _fpga_readl(FPGA_BASE_RTU + RTU_REG_UFIFO_R0);
     uint32_t r1 = _fpga_readl(FPGA_BASE_RTU + RTU_REG_UFIFO_R1);
     uint32_t r2 = _fpga_readl(FPGA_BASE_RTU + RTU_REG_UFIFO_R2);
@@ -168,12 +168,12 @@ int rtu_read_learning_queue(struct rtu_request *req)
     uint32_t dmac_lo = RTU_UFIFO_R0_DMAC_LO_R(r0);
     uint32_t dmac_hi = RTU_UFIFO_R1_DMAC_HI_R(r1);
     uint32_t smac_lo = RTU_UFIFO_R2_SMAC_LO_R(r2);
-    uint32_t smac_hi = RTU_UFIFO_R3_SMAC_HI_R(r3);  
- 	
-    req->port_id  = RTU_UFIFO_R4_PID_R(r4);      
-    req->has_prio = RTU_UFIFO_R4_HAS_PRIO & r4;  
-    req->prio     = RTU_UFIFO_R4_PRIO_R(r4);     
-    req->has_vid  = RTU_UFIFO_R4_HAS_VID & r4; 
+    uint32_t smac_hi = RTU_UFIFO_R3_SMAC_HI_R(r3);
+
+    req->port_id  = RTU_UFIFO_R4_PID_R(r4);
+    req->has_prio = RTU_UFIFO_R4_HAS_PRIO & r4;
+    req->prio     = RTU_UFIFO_R4_PRIO_R(r4);
+    req->has_vid  = RTU_UFIFO_R4_HAS_VID & r4;
     req->vid      = RTU_UFIFO_R4_VID_R(r4);
     // destination mac
     req->dst[5]   = 0xFF &  dmac_lo;
@@ -255,7 +255,7 @@ void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent)
     TRACE_DBG(
         TRACE_INFO,
         "write htab entry: addr %x ent %08x %08x %08x %08x %08x",
-        zbt_addr, 
+        zbt_addr,
         mac_entry_word0_w(ent),
         mac_entry_word1_w(ent),
         mac_entry_word2_w(ent),
@@ -287,7 +287,7 @@ void rtu_clean_htab(void)
         write_mfifo_data(0x00000000);
         write_mfifo_data(0x00000000);
         write_mfifo_data(0x00000000);
-        write_mfifo_data(0x00000000);            
+        write_mfifo_data(0x00000000);
     }
 }
 
@@ -301,7 +301,7 @@ void rtu_clean_htab(void)
  */
 void rtu_read_hcam_entry( uint16_t cam_addr, struct filtering_entry *ent )
 {
-    // read data from mapped IO memory 
+    // read data from mapped IO memory
     uint32_t w0 = _fpga_readl(FPGA_BASE_RTU + RTU_HCAM + 4*cam_addr        );
     uint32_t w1 = _fpga_readl(FPGA_BASE_RTU + RTU_HCAM + 4*(cam_addr + 0x1));
     uint32_t w2 = _fpga_readl(FPGA_BASE_RTU + RTU_HCAM + 4*(cam_addr + 0x2));
@@ -310,7 +310,7 @@ void rtu_read_hcam_entry( uint16_t cam_addr, struct filtering_entry *ent )
     TRACE_DBG(
         TRACE_INFO,
         "read hcam entry: addr %x ent %08x %08x %08x %08x %08x",
-        cam_addr, 
+        cam_addr,
         w0,
         w1,
         w2,
@@ -340,7 +340,7 @@ void rtu_write_hcam_entry( uint16_t cam_addr, struct filtering_entry *ent)
     TRACE_DBG(
         TRACE_INFO,
         "write hcam entry: addr %x ent %08x %08x %08x %08x %08x",
-        cam_addr, 
+        cam_addr,
         mac_entry_word0_w(ent),
         mac_entry_word1_w(ent),
         mac_entry_word2_w(ent),
@@ -356,9 +356,9 @@ void rtu_write_hcam_entry( uint16_t cam_addr, struct filtering_entry *ent)
 void rtu_clean_hcam_entry( uint8_t cam_addr )
 {
  	_fpga_writel(FPGA_BASE_RTU + RTU_HCAM + 4*cam_addr        , 0x00000000);
-	_fpga_writel(FPGA_BASE_RTU + RTU_HCAM + 4*(cam_addr + 0x1), 0x00000000);			
-	_fpga_writel(FPGA_BASE_RTU + RTU_HCAM + 4*(cam_addr + 0x2), 0x00000000);			
-	_fpga_writel(FPGA_BASE_RTU + RTU_HCAM + 4*(cam_addr + 0x3), 0x00000000);			
+	_fpga_writel(FPGA_BASE_RTU + RTU_HCAM + 4*(cam_addr + 0x1), 0x00000000);
+	_fpga_writel(FPGA_BASE_RTU + RTU_HCAM + 4*(cam_addr + 0x2), 0x00000000);
+	_fpga_writel(FPGA_BASE_RTU + RTU_HCAM + 4*(cam_addr + 0x3), 0x00000000);
 	_fpga_writel(FPGA_BASE_RTU + RTU_HCAM + 4*(cam_addr + 0x4), 0x00000000);
     TRACE_DBG(
         TRACE_INFO,
@@ -383,7 +383,7 @@ void rtu_clean_hcam(void)
  * \brief Read word from aging HTAB.
  * Aging RAM Size: 256 32-bit words
  */
-uint32_t rtu_read_agr_htab( uint32_t addr ) 
+uint32_t rtu_read_agr_htab( uint32_t addr )
 {
     return _fpga_readl(FPGA_BASE_RTU + RTU_ARAM_MAIN + 4*addr) ;
 }
@@ -407,7 +407,7 @@ void rtu_clean_agr_htab(void)
  * Each bit corresponds to one MAC entry in HCAM memory.
  */
 uint32_t rtu_read_agr_hcam(void)
-{    
+{
 	return _fpga_readl(FPGA_BASE_RTU + RTU_REG_AGR_HCAM);
 }
 
@@ -435,7 +435,7 @@ void rtu_write_vlan_entry(uint32_t addr, struct vlan_table_entry *ent)
     TRACE_DBG(
         TRACE_INFO,
         "write vlan entry: addr %x ent %08x %08x %08x %08x %08x",
-        addr, 
+        addr,
         vlan_entry_word0_w(ent)
     );
 }
@@ -473,7 +473,7 @@ void rtu_enable(void)
 	uint32_t gcr = _fpga_readl(FPGA_BASE_RTU + RTU_REG_GCR);
     // Set G_ENA bit value = 1
     gcr = gcr | RTU_GCR_G_ENA;
-    // Update GCR    
+    // Update GCR
 	_fpga_writel(FPGA_BASE_RTU + RTU_REG_GCR, gcr );
     TRACE_DBG(TRACE_INFO,"updated gcr (enable): %x\n", gcr);
 }
@@ -486,8 +486,8 @@ void rtu_disable(void)
     // Get current GCR
 	uint32_t gcr = _fpga_readl(FPGA_BASE_RTU + RTU_REG_GCR);
     // Set G_ENA bit value = 0
-    gcr = gcr & (~RTU_GCR_G_ENA);    
-    // Update GCR    
+    gcr = gcr & (~RTU_GCR_G_ENA);
+    // Update GCR
 	_fpga_writel(FPGA_BASE_RTU + RTU_REG_GCR, gcr );
     TRACE_DBG(TRACE_INFO,"updated gcr (disable): %x\n", gcr);
 }
@@ -500,7 +500,7 @@ uint16_t rtu_read_hash_poly(void)
 {
     // Get current GCR
 	uint32_t gcr = _fpga_readl(FPGA_BASE_RTU + RTU_REG_GCR);
-    return RTU_GCR_POLY_VAL_R(gcr);    
+    return RTU_GCR_POLY_VAL_R(gcr);
 }
 
 /**
@@ -520,7 +520,7 @@ void rtu_write_hash_poly(uint16_t hash_poly)
 
 /**
  * \brief Set active ZBT bank.
- * @param bank active ZBT bank (0 or 1). Other values will be evaluated as 1. 
+ * @param bank active ZBT bank (0 or 1). Other values will be evaluated as 1.
  */
 void rtu_set_active_htab_bank(uint8_t bank)
 {
@@ -533,7 +533,7 @@ void rtu_set_active_htab_bank(uint8_t bank)
 }
 
 /**
- * \brief Set active CAM bank. 
+ * \brief Set active CAM bank.
  * @param bank active CAM bank (0 or 1). Other values will be evaluated as 1.
  */
 void rtu_set_active_hcam_bank(uint8_t bank)
@@ -547,7 +547,7 @@ void rtu_set_active_hcam_bank(uint8_t bank)
 }
 
 /**
- * \brief Set active ZBT and CAM banks at once. 
+ * \brief Set active ZBT and CAM banks at once.
  * @param bank active ZBT and CAM bank (0 or 1). Other values will be evaluated as 1.
  */
 void rtu_set_active_bank(uint8_t bank)
@@ -577,7 +577,7 @@ int rtu_set_fixed_prio_on_port(int port, uint8_t prio)
     uint32_t pcr_addr = fpga_rtu_pcr_addr(port);
 	uint32_t pcr = _fpga_readl(FPGA_BASE_RTU + pcr_addr);
     // Be careful! the following assumes every port control reg has same layout
-    pcr = pcr | RTU_PCR0_FIX_PRIO | RTU_PCR0_PRIO_VAL_W(prio); 
+    pcr = pcr | RTU_PCR0_FIX_PRIO | RTU_PCR0_PRIO_VAL_W(prio);
 	_fpga_writel(FPGA_BASE_RTU + pcr_addr, pcr);
 	return 0;
 }
@@ -595,7 +595,7 @@ int rtu_unset_fixed_prio_on_port(int port)
     uint32_t pcr_addr = fpga_rtu_pcr_addr(port);
 	uint32_t pcr = _fpga_readl(FPGA_BASE_RTU + pcr_addr);
     // Be careful! the following assumes every port control reg has same layout
-    pcr = pcr & (RTU_PCR0_LEARN_EN | RTU_PCR0_PASS_ALL | RTU_PCR0_PASS_BPDU | RTU_PCR0_B_UNREC); 
+    pcr = pcr & (RTU_PCR0_LEARN_EN | RTU_PCR0_PASS_ALL | RTU_PCR0_PASS_BPDU | RTU_PCR0_B_UNREC);
 	_fpga_writel(FPGA_BASE_RTU + pcr_addr, pcr);
 	return 0;
 }
@@ -603,7 +603,7 @@ int rtu_unset_fixed_prio_on_port(int port)
 /**
  * \brief Sets the LEARN_EN flag on indicated port.
  * @param port port number (0 to 9)
- * @param flag 0 disables learning. Otherwise: enables learning porcess on this port. 
+ * @param flag 0 disables learning. Otherwise: enables learning porcess on this port.
  * @return error code.
  */
 int rtu_learn_enable_on_port(int port, int flag)
@@ -624,10 +624,10 @@ int rtu_learn_enable_on_port(int port, int flag)
  * \brief Sets the PASS_BPDU flag on indicated port.
  * @param port port number (0 to 9)
  * @param flag 0: BPDU packets are passed RTU rules only if PASS_ALL is set.
- * Otherwise: BPDU packets are passed according to RTU rules. 
+ * Otherwise: BPDU packets are passed according to RTU rules.
  * @return error code.
  */
-int rtu_pass_bpdu_on_port(int port, int flag) 
+int rtu_pass_bpdu_on_port(int port, int flag)
 {
     if( (port < MIN_PORT) || (port > MAX_PORT) )
         return -EINVAL;
@@ -647,7 +647,7 @@ int rtu_pass_bpdu_on_port(int port, int flag)
  * @param flag 0: all packets are dropped. Otherwise: all packets are passed.
  * @return error code.
  */
-int rtu_pass_all_on_port(int port, int flag) 
+int rtu_pass_all_on_port(int port, int flag)
 {
     if( (port < MIN_PORT) || (port > MAX_PORT) )
         return -EINVAL;
@@ -664,10 +664,10 @@ int rtu_pass_all_on_port(int port, int flag)
 /**
  * \brief Sets the B_UNREC flag on indicated port.
  * @param port port number (0 to 9)
- * @param flag 0: packet is dropped. Otherwise: packet is broadcast. 
+ * @param flag 0: packet is dropped. Otherwise: packet is broadcast.
  * @return error code.
  */
-int rtu_set_unrecognised_behaviour_on_port(int port, int flag) 
+int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
 {
     if( (port < MIN_PORT) || (port > MAX_PORT) )
         return -EINVAL;
@@ -725,14 +725,14 @@ static void write_mfifo_data(uint32_t word)
 
 static uint32_t mac_entry_word0_w(struct filtering_entry *ent)
 {
-    return 
+    return
         ((0xFF & ent->mac[0])                        << 24)  |
         ((0xFF & ent->mac[1])                        << 16)  |
-        ((0xFF & ent->fid)                           <<  4)  | 
-        ((0x1  & ent->go_to_cam)                     <<  3)  | 
-        ((0x1  & ent->is_bpdu)                       <<  2)  | 
-        ((0x1  & ent->end_of_bucket)                 <<  1)  | 
-        ((0x1  & ent->valid )                             )  ;	      
+        ((0xFF & ent->fid)                           <<  4)  |
+        ((0x1  & ent->go_to_cam)                     <<  3)  |
+        ((0x1  & ent->is_bpdu)                       <<  2)  |
+        ((0x1  & ent->end_of_bucket)                 <<  1)  |
+        ((0x1  & ent->valid )                             )  ;
 }
 
 static uint32_t mac_entry_word1_w(struct filtering_entry *ent)
@@ -747,28 +747,28 @@ static uint32_t mac_entry_word1_w(struct filtering_entry *ent)
 static uint32_t mac_entry_word2_w(struct filtering_entry *ent)
 {
     return
-        ((0x1 & ent->drop_when_dest)                 << 28)  | 
-        ((0x1 & ent->prio_override_dst)              << 27)  | 
-        ((0x7 & ent->prio_dst)                       << 24)  | 
-        ((0x1 & ent->has_prio_dst)                   << 23)  | 
-        ((0x1 & ent->drop_unmatched_src_ports)       << 22)  | 
-        ((0x1 & ent->drop_when_source)               << 21)  | 
+        ((0x1 & ent->drop_when_dest)                 << 28)  |
+        ((0x1 & ent->prio_override_dst)              << 27)  |
+        ((0x7 & ent->prio_dst)                       << 24)  |
+        ((0x1 & ent->has_prio_dst)                   << 23)  |
+        ((0x1 & ent->drop_unmatched_src_ports)       << 22)  |
+        ((0x1 & ent->drop_when_source)               << 21)  |
         ((0x1 & ent->prio_override_src)              << 20)  |
-	    ((0x7 & ent->prio_src)                       << 17)  | 
-        ((0x1 & ent->has_prio_src)                   << 16)  | 
-        ((0x01FF & ent->cam_addr)                          )  ;		      
+	    ((0x7 & ent->prio_src)                       << 17)  |
+        ((0x1 & ent->has_prio_src)                   << 16)  |
+        ((0x01FF & ent->cam_addr)                          )  ;
 }
 
 static uint32_t mac_entry_word3_w(struct filtering_entry *ent)
 {
     return
-        ((0xFFFF & ent->port_mask_dst)               << 16)  | 
+        ((0xFFFF & ent->port_mask_dst)               << 16)  |
         ((0xFFFF & ent->port_mask_src)                    )  ;
 }
 
 static uint32_t mac_entry_word4_w(struct filtering_entry *ent)
 {
-    return 
+    return
         (ent->last_access_t);
 }
 
@@ -824,8 +824,8 @@ static void mac_entry_word4_r(uint32_t word, struct filtering_entry *ent)
 
 static uint32_t vlan_entry_word0_w(struct vlan_table_entry *ent)
 {
-    return 
-        ((0x1    & ent->drop)                             << 31)  | 
+    return
+        ((0x1    & ent->drop)                             << 31)  |
         ((0x1    & ent->prio_override)                    << 30)  |
         ((0x7    & ent->prio)                             << 27)  |
         ((0x1    & ent->has_prio)                         << 26)  |

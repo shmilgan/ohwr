@@ -9,7 +9,7 @@
  * Description: Dump the filtering database. Based on libwripc
  *
  * Fixes:
- *              
+ *
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -52,7 +52,7 @@ int rtud_init_exports()
 		return rtud_ipc;
 
 	TRACE(TRACE_INFO,"wripc server created [fd %d]", rtud_ipc);
-	
+
 
 	wripc_export(rtud_ipc, T_STRUCT(rtudexp_fd_list_t), "rtudexp_get_fd_list", rtudexp_get_fd_list, 1, T_INT32);
 
@@ -62,14 +62,14 @@ int rtud_init_exports()
 void rtudexp_get_fd_list(rtudexp_fd_list_t *list, int start_from)
 {
 	int i;
-	
+
 	//TRACE(TRACE_INFO,"GetFDList start=%d",start_from);
-	
+
 	for(i=0;i<8;i++)
 	{
 		struct filtering_entry *ent = rtu_fd_lookup_htab_entry(start_from + i);
 		if(!ent) break;
-		
+
 
 		memcpy(list->list[i].mac, ent->mac, sizeof(ent->mac));
 //		printf("Ent: %s %x\n", mac_to_string(ent->mac), ent->port_mask_dst);

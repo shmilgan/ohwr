@@ -8,12 +8,12 @@
  *              Miguel Baizan   (miguel.baizan@integrasys.es)
  *              Maciej Lipinski (maciej.lipinski@cern.ch)
  *
- * Description: RTU Filtering database. 
- *              Filtering database management related operations and filtering 
- *              database mirror. Note there is a single Filtering Database 
+ * Description: RTU Filtering database.
+ *              Filtering database management related operations and filtering
+ *              database mirror. Note there is a single Filtering Database
  *              object per Bridge (See 802.1Q - 12.7.1)
  *
- * Fixes:       
+ * Fixes:
  *              Alessandro Rubini
  *              Tomasz Wlostowski
  *
@@ -60,7 +60,7 @@
 
 
 /**
- * \brief Filtering Database entry handle. 
+ * \brief Filtering Database entry handle.
  */
 struct fd_handle {
     int mem_type;                       // HTAB or HCAM
@@ -96,14 +96,14 @@ static struct filtering_entry rtu_htab[HTAB_ENTRIES][RTU_BUCKETS];
  */
 static struct filtering_entry rtu_hcam[CAM_ENTRIES];
 
-/** 
- * \brief Table bank to write entries to. 
- * HTAB and HCAM banks will be handled according to this single bank value. 
+/**
+ * \brief Table bank to write entries to.
+ * HTAB and HCAM banks will be handled according to this single bank value.
  */
 static uint8_t bank;
 
 /**
- * \brief Mirror of Aging RAM. 
+ * \brief Mirror of Aging RAM.
  */
 static uint32_t rtu_agr_htab[RTU_ARAM_MAIN_WORDS];
 static uint32_t rtu_agr_hcam;
@@ -141,9 +141,9 @@ static inline int cam_bucket(uint16_t cam_addr);
 
 static inline int matched(uint32_t word, int offset);
 
-static int htab_contains(uint8_t mac[ETH_ALEN], uint8_t fid, int *bucket, 
+static int htab_contains(uint8_t mac[ETH_ALEN], uint8_t fid, int *bucket,
                          struct filtering_entry **ent);
-static int hcam_contains(uint8_t mac[ETH_ALEN], uint8_t fid, int *bucket, 
+static int hcam_contains(uint8_t mac[ETH_ALEN], uint8_t fid, int *bucket,
                          struct filtering_entry **ent);
 
 static int find_empty_bucket_in_hcam(void);
@@ -204,12 +204,12 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
  * @param port_map a port map specification with a control element for each
  * outbound port to specify filtering for that MAC address specification and VID
  * @param dynamic it indicates whether it's a dynamic entry
- * @return 0 if entry was created or updated. -ENOMEM if no space is available. 
+ * @return 0 if entry was created or updated. -ENOMEM if no space is available.
  */
 int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_map, int dynamic)
 {
     struct filtering_entry *ent;            // pointer to scan hashtable
-    uint16_t hash;                          // hashtable key            
+    uint16_t hash;                          // hashtable key
     uint8_t fid;                            // Filtering database identifier
     int bucket = 0;                         // bucket loop index
     int ret = 0;                            // return value
@@ -224,8 +224,8 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_map, 
         // Check HTAB
         ent  = &rtu_htab[hash][bucket];
         switch(htab_contains(mac, fid, &bucket, &ent)){
-        case FOUND: 
-            // update            
+        case FOUND:
+            // update
             mask_dst = ent->port_mask_dst | port_map;
             mask_src = ent->port_mask_src | vlan_tab[vid].port_mask;
             if ((ent->port_mask_dst != mask_dst) ||
@@ -261,7 +261,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_map, 
                 write_htab_entry(zbt_addr(hash, LAST_RTU_BUCKET), ent);
             }
 
-            // Check HCAM 
+            // Check HCAM
             ent = &rtu_hcam[bucket];
             switch(hcam_contains(mac, fid, &bucket, &ent)){
             case FOUND:
@@ -275,14 +275,14 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_map, 
                     write_hcam_entry(cam_addr(bucket), ent);
                 }
                 break;
-            case NOT_FOUND: 
+            case NOT_FOUND:
                 // existing list does not contain the entry and is necessary to
                 // append new entry at the end of current list
                 ent->end_of_bucket = 0;
                 write_hcam_entry(cam_addr(bucket), ent);
                 ent++;
                 bucket++;
-            case NOT_FOUND_AND_FIRST: 
+            case NOT_FOUND_AND_FIRST:
                 // First entry in HCAM for this hash.
                 ent->valid         = 1;
                 ent->end_of_bucket = 1;
@@ -309,24 +309,24 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_map, 
  * Changing the hash polynomial requires removing any existing
  * entry from RTU table.
  * Note in case RTU table becomes full, this function may
- * be used to change hash polynomial (thus leading to a different hash 
+ * be used to change hash polynomial (thus leading to a different hash
  * distribution).
- * @param poly binary polynomial representation. 
- * CRC-16-CCITT -> 1+x^5+x^12+x^16          -> 0x1021   
+ * @param poly binary polynomial representation.
+ * CRC-16-CCITT -> 1+x^5+x^12+x^16          -> 0x1021
  * CRC-16-IBM   -> 1+x^2+x^15+x^16          -> 0x8005
  * CRC-16-DECT  -> 1+x^3+x^7+x^8+x^10+x^16  -> 0x0589
  */
 void rtu_fd_set_hash_poly(uint16_t poly)
-{   
+{
     pthread_mutex_lock(&fd_mutex);
     rtu_write_hash_poly(poly);
-    rtu_hash_set_poly(poly);  
-    pthread_mutex_unlock(&fd_mutex);  
+    rtu_hash_set_poly(poly);
+    pthread_mutex_unlock(&fd_mutex);
 }
 
 /**
  * \brief Sets the aging time for dynamic filtering entries.
- * @param t new aging time value [seconds]. 
+ * @param t new aging time value [seconds].
  * @return -EINVAL if t < 10 or t > 1000000 (802.1Q, Table 8.3); 0 otherwise.
  */
 int rtu_fd_set_aging_time(unsigned long t)
@@ -343,12 +343,12 @@ int rtu_fd_set_aging_time(unsigned long t)
  * changes in active topology.
  */
 void rtu_fd_flush(void)
-{    
+{
     update_aging_map();     // Work with latest access info
-    rtu_fd_age_update();    // Update filtering entries age    
+    rtu_fd_age_update();    // Update filtering entries age
 
     pthread_mutex_lock(&fd_mutex);
-    rtu_fd_age_out();       // Remove old entries    
+    rtu_fd_age_out();       // Remove old entries
     pthread_mutex_unlock(&fd_mutex);
 
     clean_aging_map();      // Keep track of entries access in next period
@@ -365,9 +365,9 @@ struct filtering_entry *rtu_fd_lookup_htab_entry(int index)
 			{
 				if(n == index) return &rtu_htab[i][j];
 				n++;
-			}	
-		}	
-    }		
+			}
+		}
+    }
 	return  NULL;
 }
 
@@ -408,7 +408,7 @@ static int add_hw_req(int type, int mem, uint16_t addr, struct filtering_entry *
     req = (struct hw_req*) malloc(sizeof(struct hw_req));
     if(!req)
         return -ENOMEM;
-    
+
     req->type             = type;
     req->handle.mem_type  = mem;
     req->handle.addr      = addr;
@@ -423,49 +423,49 @@ static int add_hw_req(int type, int mem, uint16_t addr, struct filtering_entry *
     return 0;
 }
 
-static inline 
+static inline
 int write_htab_entry(uint16_t addr, struct filtering_entry *e)
 {
     return add_hw_req(HW_WRITE_REQ, HTAB, addr, e);
 }
 
-static inline 
+static inline
 int write_hcam_entry(uint16_t addr, struct filtering_entry *e)
 {
     return add_hw_req(HW_WRITE_REQ, HCAM, addr, e);
 }
 
-static inline 
+static inline
 int clean_htab_entry(uint16_t addr)
 {
     return add_hw_req(HW_CLEAN_REQ, HTAB, addr, NULL);
 }
 
-static inline 
+static inline
 int clean_hcam_entry(uint16_t addr)
 {
     return add_hw_req(HW_CLEAN_REQ, HCAM, addr, NULL);
 }
 
-static inline 
+static inline
 uint16_t zbt_addr(uint16_t hash, int bucket)
 {
     return (( 0x07FF & hash ) << 5 ) | ((0x0003 & bucket) << 3);
 }
 
-static inline 
+static inline
 uint16_t cam_addr(int bucket)
 {
     return ((0x001F & bucket) << 3);
 }
 
-static inline 
+static inline
 int cam_bucket(uint16_t cam_addr)
 {
     return ((cam_addr >> 3) & 0x001F);
 }
 
-static inline 
+static inline
 int matched(uint32_t word, int offset)
 {
     return (word >> offset) & 0x00000001;
@@ -481,9 +481,9 @@ int matched(uint32_t word, int offset)
  * HTAB was full for the corresponding hash. -EINVAL if bucket >= RTU_BUCKETS
  */
 static int htab_contains(
-        uint8_t mac[ETH_ALEN], 
-        uint8_t fid, 
-        int *bucket, 
+        uint8_t mac[ETH_ALEN],
+        uint8_t fid,
+        int *bucket,
         struct filtering_entry **ent)
 {
     for(; *bucket < RTU_BUCKETS; (*bucket)++, (*ent)++) {
@@ -492,9 +492,9 @@ static int htab_contains(
         if(mac_equal((*ent)->mac, mac) && ((*ent)->fid == fid))
             return FOUND;
         if(*bucket == LAST_RTU_BUCKET)
-            return NOT_FOUND_AND_FULL;        
-    } 
-    return -EINVAL;   
+            return NOT_FOUND_AND_FULL;
+    }
+    return -EINVAL;
 }
 
 /**
@@ -508,9 +508,9 @@ static int htab_contains(
  * end of bucket. -EINVAL if bucket >= CAM_ENTRIES or HCAM inconsistent.
  */
 static int hcam_contains(
-        uint8_t mac[ETH_ALEN], 
-        uint8_t fid, 
-        int *bucket, 
+        uint8_t mac[ETH_ALEN],
+        uint8_t fid,
+        int *bucket,
         struct filtering_entry **ent)
 {
     for(; *bucket < CAM_ENTRIES; (*bucket)++, (*ent)++) {
@@ -519,25 +519,25 @@ static int hcam_contains(
         if(mac_equal((*ent)->mac, mac) && ((*ent)->fid == fid))
             return FOUND;
         if((*ent)->end_of_bucket)
-            return 
-                (*bucket+1 < CAM_ENTRIES) && !rtu_hcam[*bucket+1].valid ? 
+            return
+                (*bucket+1 < CAM_ENTRIES) && !rtu_hcam[*bucket+1].valid ?
                 NOT_FOUND:-ENOMEM;
     }
     return -EINVAL;
 }
 
 /**
- * \brief Find the most appropriate empty bucket to insert new hash collision 
+ * \brief Find the most appropriate empty bucket to insert new hash collision
  * list. The algorithm first finds the fragment which contains the max number of
  * consecutive empty positions. Then divides this fragment into two parts: first
- * block is still available for possible increment of any existing list; The 
+ * block is still available for possible increment of any existing list; The
  * second block will be available for the new list.
  * The algorithm keeps a fair and uniform distribution of fragments space.
  * @return bucket index or -1 if the HCAM table is full.
  */
 static int find_empty_bucket_in_hcam(void)
 {
-    int bucket = 0; // bucket loop index               
+    int bucket = 0; // bucket loop index
     int res    = 0; // result bucket
     int empty  = 0; // consecutive empty buckets
     int max    = 0; // max consecutive empty buckets
@@ -561,17 +561,17 @@ static int find_empty_bucket_in_hcam(void)
     }
 
     if(max == 0)                   // bank is full
-        return -1; 
+        return -1;
     else if(max == CAM_ENTRIES)    // bank is empty
-        return 0;       
+        return 0;
     else    // Divide max space in two blocks and take address of second block
-        return res + max/2;   
+        return res + max/2;
 }
 
 /**
  * \brief Set the filtering database active bank both in software and hardware.
- * Note  both HTAB and HCAM active banks are switched at once. 
- * Bank switching is delayed until MFIFO is empty (method remains blocked 
+ * Note  both HTAB and HCAM active banks are switched at once.
+ * Bank switching is delayed until MFIFO is empty (method remains blocked
  * meanwhile).
  */
 static void set_active_bank(int b)
@@ -601,7 +601,7 @@ static void clean_fd(void)
 }
 
 /**
- * VLAN database initialisation. VLANs are initially marked as disabled. 
+ * VLAN database initialisation. VLANs are initially marked as disabled.
  */
 static void clean_vd(void)
 {
@@ -629,7 +629,7 @@ static void clean_vd(void)
 static void clean_aging_map(void)
 {
     int i;
-    
+
     rtu_agr_hcam = 0x00000000;
     rtu_clean_agr_hcam();
     for(i = 0; i < RTU_ARAM_MAIN_WORDS; i++) {
@@ -652,13 +652,13 @@ static void update_aging_map(void)
 }
 
 /**
- * \brief Updates the age of filtering entries accessed in the last period. 
+ * \brief Updates the age of filtering entries accessed in the last period.
  */
 static void rtu_fd_age_update(void)
 {
     int i;                              // Aging Bitmap word loop index
     int j;                              // Word bits loop index
-    uint32_t agr_word;                  // Aux var for manipulating aging RAM 
+    uint32_t agr_word;                  // Aux var for manipulating aging RAM
     uint16_t hash;                      // HTAB entry hash (index)
     int bucket;                         // HTAB entry bucket
     int bit_cnt;                        // Absolute bit counter
@@ -671,16 +671,16 @@ static void rtu_fd_age_update(void)
         agr_word = rtu_agr_htab[i];
         if(agr_word != 0x00000000) {
             for(j = 0; j < 32; j++){
-                if(matched(agr_word, j)) {  
-                    // ((word_pos x 32) + bit_pos)                  
-                    bit_cnt = ((i & 0x00FF) << 5) | (j & 0x001F);   
+                if(matched(agr_word, j)) {
+                    // ((word_pos x 32) + bit_pos)
+                    bit_cnt = ((i & 0x00FF) << 5) | (j & 0x001F);
                     hash    = bit_cnt >> 2;             // 4 buckets per hash
-                    bucket  = bit_cnt & 0x03;           // last 2 bits    
- 
+                    bucket  = bit_cnt & 0x03;           // last 2 bits
+
                     rtu_htab[hash][bucket].last_access_t = t;
                     TRACE(
-                        TRACE_INFO, 
-                        "updated htab entry age: mac = %s, hash = %d, bucket = %d\n, t = %d", 
+                        TRACE_INFO,
+                        "updated htab entry age: mac = %s, hash = %d, bucket = %d\n, t = %d",
                         mac_to_string(rtu_htab[hash][bucket].mac),
                         hash,
                         bucket,
@@ -691,13 +691,13 @@ static void rtu_fd_age_update(void)
         }
     }
     // HCAM
-    agr_word = rtu_agr_hcam;   
+    agr_word = rtu_agr_hcam;
     for(j = 0; j < 32; j++){
         if(matched(agr_word, j)) {
             rtu_hcam[j].last_access_t = t;
             TRACE(
-                TRACE_INFO, 
-                "updated hcam entry age: mac = %s, bucket = %d\n", 
+                TRACE_INFO,
+                "updated hcam entry age: mac = %s, bucket = %d\n",
                 mac_to_string(rtu_hcam[j].mac),
                 j
             );
@@ -706,8 +706,8 @@ static void rtu_fd_age_update(void)
 }
 
 /**
- * For each filtering entry in the filtering database, this method checks its 
- * last access time and removes it in case entry is older than the aging time. 
+ * For each filtering entry in the filtering database, this method checks its
+ * last access time and removes it in case entry is older than the aging time.
  */
 static void rtu_fd_age_out(void)
 {
@@ -722,7 +722,7 @@ static void rtu_fd_age_out(void)
         ent = &rtu_hcam[j];
         if(ent->valid && ent->dynamic && time_after(t, ent->last_access_t)) {
             TRACE(
-                TRACE_INFO, 
+                TRACE_INFO,
                 "deleting hcam entry: mac = %s, bucket = %d\n",
                 mac_to_string(ent->mac),
                 j
@@ -730,13 +730,13 @@ static void rtu_fd_age_out(void)
             delete_hcam_entry(j);
         }
     }
-    // HTAB    
+    // HTAB
     for (i = HTAB_ENTRIES; i-- > 0;) {
         for (j = RTU_BUCKETS; j-- > 0;) {
             ent = &rtu_htab[i][j];
             if(ent->valid && ent->dynamic && time_after(t, ent->last_access_t)){
                 TRACE(
-                    TRACE_INFO, 
+                    TRACE_INFO,
                     "deleting htab entry: mac = %s, hash = %d, bucket = %d\n",
                     mac_to_string(ent->mac),
                     i,
@@ -751,7 +751,7 @@ static void rtu_fd_age_out(void)
 }
 
 /**
- * \brief Read changes from hw_req_list and invoke RTU driver to efectively 
+ * \brief Read changes from hw_req_list and invoke RTU driver to efectively
  * write or clean the entry.
  */
 static void rtu_hw_commit(void)
@@ -771,9 +771,9 @@ static void rtu_hw_commit(void)
                 rtu_clean_htab_entry(req->handle.addr);
             else
                 rtu_clean_hcam_entry(req->handle.addr);
-            break;            
+            break;
         }
-    }        
+    }
 }
 
 /**
@@ -787,7 +787,7 @@ static void rtu_fd_commit(void)
     // write entries to inactive bank
     rtu_hw_commit();
     // switch bank to make entries available to RTU at HW
-    set_active_bank(bank); 
+    set_active_bank(bank);
     // both banks need same content
     rtu_hw_commit();
 
@@ -797,7 +797,7 @@ static void rtu_fd_commit(void)
 }
 
 /**
- * \brief Shifts HTAB list one position, starting at bucket. 
+ * \brief Shifts HTAB list one position, starting at bucket.
  */
 static void shift_htab_entries(uint16_t hash, int bucket)
 {
@@ -820,10 +820,10 @@ static void shift_htab_entries(uint16_t hash, int bucket)
 }
 
 /**
- * \brief Shifts HCAM list one position, starting at bucket. 
- * If entry to remove is end of bucket, marks previous one (if exists) as the 
+ * \brief Shifts HCAM list one position, starting at bucket.
+ * If entry to remove is end of bucket, marks previous one (if exists) as the
  * new end of bucket.
- * @return -1 if more entries remain in HCAM. Otherwise, returns the hash for 
+ * @return -1 if more entries remain in HCAM. Otherwise, returns the hash for
  * entry, in order to help modifying the last HTAB entry
  */
 static int shift_hcam_entries(int bucket)
@@ -839,17 +839,17 @@ static int shift_hcam_entries(int bucket)
     for(i = bucket; i < LAST_CAM_ENTRY; i++){
         if(ent->end_of_bucket){
             if(i > bucket) // entry to remove was not the last
-                break;    
+                break;
             if(i == 0){    // entry to remove was last but there are no previous
                 ret = rtu_hash(ent->mac, ent->fid);
-                break; 
-            }                
+                break;
+            }
             prev_ent = ent-1;
             if(!prev_ent->valid || prev_ent->end_of_bucket){
                 // prev entry not valid or part of another list
                 ret = rtu_hash(ent->mac, ent->fid);
                 break;
-            } 
+            }
             // mark previous as end_of_bucket
             prev_ent->end_of_bucket = 1;
             write_hcam_entry(cam_addr(i-1), prev_ent);
@@ -886,7 +886,7 @@ static void delete_hcam_entry(int bucket)
 }
 
 /**
- * \brief Deletes HTAB entry by shifting HTAB list. 
+ * \brief Deletes HTAB entry by shifting HTAB list.
  * If HCAM is used, it also copies first HCAM entry to last HTAB bucket.
  * @param hash hashcode for entry to remove.
  * @param bucket HTAB bucket for entry to remove
@@ -897,7 +897,7 @@ static void delete_htab_entry(uint16_t hash, int bucket)
     struct filtering_entry *prev_ent;
     struct filtering_entry *cam_ent;
     int hcam_bucket;
-    
+
 
     shift_htab_entries(hash, bucket);
 
@@ -909,7 +909,7 @@ static void delete_htab_entry(uint16_t hash, int bucket)
         prev_ent->cam_addr  = 0;
         // changes will be written to hw when shift operations are commited
 
-        // copy first cam entry into last HTAB entry    
+        // copy first cam entry into last HTAB entry
         hcam_bucket = cam_bucket(ent->cam_addr);
         cam_ent     = &rtu_hcam[hcam_bucket];
         rtu_fe_copy(ent, cam_ent);
