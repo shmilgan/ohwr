@@ -17,19 +17,17 @@ export
 
 all:
 	$(MAKE) -C 3rdparty all
-#	$(MAKE) -C rubi-repos/wr-switch-software
 #	$(MAKE) -C rubi-repos/ptp-noposix all
 	$(MAKE) -C libswitchhw all
-#	$(MAKE) -C wrsw_hal all
+	$(MAKE) -C wrsw_hal all
 #	$(MAKE) -C wrsw_rtud all
 #	$(MAKE) -C tests/rtu_stat TARGET=ARM all
 
 clean:
 	$(MAKE) -C 3rdparty clean
-#	$(MAKE) -C rubi-repos/wr-switch-software clean
 #	$(MAKE) -C rubi-repos/ptp-noposix clean
 	$(MAKE) -C libswitchhw clean
-#	$(MAKE) -C wrsw_hal clean
+	$(MAKE) -C wrsw_hal clean
 #	$(MAKE) -C wrsw_rtud clean
 #	$(MAKE) -C tests/wr_mon clean
 #	$(MAKE) -C tests/rtu_stat clean
@@ -37,7 +35,7 @@ clean:
 install: all
 	$(MAKE) -C 3rdparty install
 	$(MAKE) -C libswitchhw install
-#	$(MAKE) -C wrsw_hal deploy
+	$(MAKE) -C wrsw_hal install
 #	$(MAKE) -C wrsw_rtud deploy
 #	$(MAKE) -C tests/rtu_stat TARGET=ARM deploy
 #	./rubi-repos/deploy.sh $(WR_INSTALL_ROOT)
