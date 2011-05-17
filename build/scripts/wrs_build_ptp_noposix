@@ -43,7 +43,8 @@ install -d "$WRS_OUTPUT_DIR/images/wr/include"
 install ptpd "$WRS_OUTPUT_DIR/images/wr/bin"
 install libwripc.a libptpnetif.a "$WRS_OUTPUT_DIR/images/wr/lib"
 install libwripc/wr_ipc.h "$WRS_OUTPUT_DIR/images/wr/include"
-
+install libptpnetif/ptpd_netif.h "$WRS_OUTPUT_DIR/images/wr/include"
+install libptpnetif/hal_client.h "$WRS_OUTPUT_DIR/images/wr/include"
 
 #make $WRS_MAKE_J uImage modules  || wrs_die "kernel compilation"
 #cp arch/$ARCH/boot/uImage $(find . -name '*.ko') $WRS_OUTPUT_DIR/images
