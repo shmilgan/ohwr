@@ -1,0 +1,49 @@
+#!/bin/bash
+# check variables, like all scripts herein do
+WRS_SCRIPT_NAME=$(basename $0)
+if [ -z "$WRS_BASE_DIR" ]; then
+    echo "$0: Plesae set WRS_BASE_DIR" >& 2
+    exit 1
+fi
+. ${WRS_BASE_DIR}/scripts/wrs_functions
+
+wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR WRS_WR_REPOSITORY CROSS_COMPILE
+
+wrs_echo "--- PTP daemon (noposix repository)"
+
+mkdir -p $WRS_DOWNLOAD_DIR/ptp || wrs_die "mkdir downloads/ptp"
+cd $WRS_DOWNLOAD_DIR/ptp
+
+# checkout repository
+if [ ! -d .git ]; then
+    wrs_echo "Checking out git repository"
+    git init
+    git remote add gnudd git://gnudd.com/ptp-noposix.git
+    git fetch gnudd
+    git checkout -b master gnudd/master
+else
+    wrs_echo "Using local git repository"
+fi
+
+# to avoid building in the "download" place, copy it to the build place
+cd "$WRS_OUTPUT_DIR/build"
+dirname="ptp-noposix"
+rm -rf "$dirname"
+cp -a "$WRS_DOWNLOAD_DIR/ptp" "$dirname"
+cd "$dirname"
+# we need LINUX and CROSS_COMPILE. The latter is there for sure
+if [ "x$LINUX" == "x" ]; then
+    export LINUX="$WRS_OUTPUT_DIR/build/linux-2.6.35"
+fi
+
+make ptpd || wrs_die "cannot build ptp-noposix"
+install -d "$WRS_OUTPUT_DIR/images/wr/bin"
+install -d "$WRS_OUTPUT_DIR/images/wr/lib"
+install -d "$WRS_OUTPUT_DIR/images/wr/include"
+install ptpd "$WRS_OUTPUT_DIR/images/wr/bin"
+install libwripc.a libptpnetif.a "$WRS_OUTPUT_DIR/images/wr/lib"
+install libwripc/wr_ipc.h "$WRS_OUTPUT_DIR/images/wr/include"
+
+
+#make $WRS_MAKE_J uImage modules  || wrs_die "kernel compilation"
+#cp arch/$ARCH/boot/uImage $(find . -name '*.ko') $WRS_OUTPUT_DIR/images
