@@ -53,7 +53,7 @@
 #if defined(at91sam9g45) || defined(at91sam9m10)
 #define EXTRAM_ADDR AT91C_DDR2
 #define EXTRAM_SIZE BOARD_DDRAM_SIZE
-#elif at91sam3u4 
+#elif at91sam3u4
 #define EXTRAM_ADDR BOARD_EBI_PSRAM
 #define EXTRAM_SIZE BOARD_PSRAM_SIZE
 #else
@@ -188,7 +188,7 @@ int main(int argc, char **argv)
 
         // Enable User Reset
         AT91C_BASE_RSTC->RSTC_RMR |= AT91C_RSTC_URSTEN | (0xA5<<24);
-        
+
 
         ramType = pMailbox->argument.inputInit.ramType;
         dataBusWidth = pMailbox->argument.inputInit.dataBusWidth;
@@ -218,7 +218,7 @@ int main(int argc, char **argv)
         }
 
 #if defined(at91cap9) || defined(at91sam9m10) || defined(at91sam9g45)
-        TRACE_INFO("\tInit EBI Vdd : %s\n\r", (pMailbox->argument.inputInit.VddMemSel)?"3.3V":"1.8V");   
+        TRACE_INFO("\tInit EBI Vdd : %s\n\r", (pMailbox->argument.inputInit.VddMemSel)?"3.3V":"1.8V");
         BOARD_ConfigureVddMemSel(pMailbox->argument.inputInit.VddMemSel);
 #endif //defined(at91cap9)
 
@@ -230,12 +230,12 @@ int main(int argc, char **argv)
 #endif
         }
         else if (pMailbox->argument.inputInit.ramType == TYPE_PSRAM) {
-            TRACE_INFO("\tInit PSRAM...\n\r");   
-#if defined(at91sam3u4)            
+            TRACE_INFO("\tInit PSRAM...\n\r");
+#if defined(at91sam3u4)
             BOARD_ConfigurePsram();
-#endif            
+#endif
         }
-        else { 
+        else {
             // Configure DDRAM controller
 #if defined(at91cap9dk) || defined(at91sam9m10) || defined(at91sam9g45)
             TRACE_INFO("\tInit DDRAM ... (model : %d)\n\r", ddrModel);

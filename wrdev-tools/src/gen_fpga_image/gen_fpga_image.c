@@ -16,7 +16,7 @@ struct fpga_image_header {
 
 struct fpga_image_entry {
   char *fpga_name; // name of the FPGA (for example: MAIN, CLKB)
-  char *fw_name;   // name of the firmware (for example: board_test, rtu_test) 
+  char *fw_name;   // name of the firmware (for example: board_test, rtu_test)
   uint32_t hash_reg; // MD5 hash of the firmware ID.
   uint32_t revision;
   uint32_t size;
@@ -42,7 +42,7 @@ uint32_t calc_hash_reg(char *fpga_name, char *firmware_name)
 	char hash_buf[1024];
 	uint8_t hash_val[16];
 	int i;
-	
+
 	strncpy(hash_buf, fpga_name, 256);
 	strcat(hash_buf,"::");
 	strncat(hash_buf, firmware_name, 256);
@@ -50,7 +50,7 @@ uint32_t calc_hash_reg(char *fpga_name, char *firmware_name)
 
 	md5_checksum(hash_buf, strlen(hash_buf), hash_val);
 	for(i=0;i<4;i++) hash_val[i] ^= (hash_val[4+i] ^ hash_val[8+i] ^ hash_val[12+i]);
-	
+
 	return (uint32_t) hash_val[0] |
 				 ((uint32_t) hash_val[1] << 8) |
 				 ((uint32_t) hash_val[2] << 16) |
@@ -67,13 +67,13 @@ char *prepare_image(char *filename, char *fpga_name, char *firmware_name, int re
   fseek(f, 0, SEEK_END);
   size = ftell(f);
   rewind(f);
-	
+
   rbf_buf = malloc(size);
   fread(rbf_buf, 1, size, f);
   fclose(f);
 
   char *p = malloc(size);
-	
+
   lzo1x_1_compress(rbf_buf, size, p, (lzo_uint *)&size_cmp, lzo_workmem);
 
   free(rbf_buf);
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
   struct fpga_image_header hdr;
   struct fpga_image_entry ent;
 
-  if(argc < 2) 
+  if(argc < 2)
     {
 			printf("MCH FPGA image generator (c) TW, CERN BE-Co-HT 2010\n");
       printf("usage: %s OUTPUT.img INPUT.rbf REVISION FPGA_NAME FIRMWARE_NAME\n",argv[0]);
@@ -139,20 +139,20 @@ main(int argc, char *argv[])
 	{
 		printf("0x%08x", calc_hash_reg(argv[2], argv[3]));
 		return 0;
-	} else if (argc < 5) 
+	} else if (argc < 5)
 		die("Not enough arguments");
-	
+
 
   FILE *fout = fopen(argv[1], "wb");
 
-	if(!fout) 
+	if(!fout)
 		die("Can't open output file: %s\n", argv[1]);
 
 
   memcpy(hdr.magic, IMAGE_MAGIC, 4);
   hdr.num_images = 1;
 
-	
+
   fwrite(&hdr, sizeof(struct fpga_image_header), 1, fout);
 
 
@@ -161,7 +161,7 @@ main(int argc, char *argv[])
 	write_entry_header(fout, &ent);
 	fwrite(bitstream, 1, ent.compressed_size, fout);
 
-	
+
 
   printf("Total image size: %d bytes.\n", ftell(fout));
   fclose(fout);

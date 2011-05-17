@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support 
+ *         ATMEL Microcontroller Software Support
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -30,20 +30,20 @@
 /// \unit
 ///
 /// !!!Purpose
-/// 
-/// The AT45 Dataflash driver is based on the corresponding AT45 driver. 
+///
+/// The AT45 Dataflash driver is based on the corresponding AT45 driver.
 /// A AT45 instance has to be initialized using the Dataflash levle function
-/// AT45_Configure(). AT45 Dataflash can be automatically detected using 
-/// the AT45_FindDevice() function. Then AT45 dataflash operations such as 
+/// AT45_Configure(). AT45 Dataflash can be automatically detected using
+/// the AT45_FindDevice() function. Then AT45 dataflash operations such as
 /// read, write and erase DF can be launched using AT45_SendCommand function
 /// with corresponding AT45 command set.
-/// 
+///
 /// !!!Usage
-/// 
+///
 /// -# Reads data from the At45 at the specified address using AT45D_Read().
 /// -# Writes data on the At45 at the specified address using AT45D_Write().
 /// -# Erases a page of data at the given address using AT45D_Erase().
-/// -# Poll until the At45 has completed of corresponding operations using 
+/// -# Poll until the At45 has completed of corresponding operations using
 ///    AT45D_WaitReady().
 /// -# Retrieves and returns the At45 current using AT45D_GetStatus().
 //------------------------------------------------------------------------------
@@ -62,7 +62,7 @@
 //         Global functions
 //------------------------------------------------------------------------------
 
-extern void AT45D_WaitReady(At45 *pAt45); 
+extern void AT45D_WaitReady(At45 *pAt45);
 
 extern unsigned char AT45D_GetStatus(At45 *pAt45);
 
@@ -70,13 +70,13 @@ extern void AT45D_Read(
     At45 *pAt45,
     unsigned char *pBuffer,
     unsigned int size,
-    unsigned int address); 
+    unsigned int address);
 
 extern void AT45D_Write(
     At45 *pAt45,
     unsigned char *pBuffer,
     unsigned int size,
-    unsigned int address); 
+    unsigned int address);
 
 extern void AT45D_Erase(At45 *pAt45, unsigned int address);
 

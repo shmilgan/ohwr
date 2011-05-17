@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support 
+ *         ATMEL Microcontroller Software Support
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -91,7 +91,7 @@ static const At26Desc at26Devices[] = {
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
-/// Initializes an AT26 driver instance with the given SPI driver and chip 
+/// Initializes an AT26 driver instance with the given SPI driver and chip
 /// select value.
 /// \param pAt26  Pointer to an AT26 driver instance.
 /// \param pSpid  Pointer to an SPI driver instance.
@@ -117,7 +117,7 @@ void AT26_Configure(At26 *pAt26, Spid *pSpid, unsigned char cs)
     pCommand->pCmd = (unsigned char *) pAt26->pCmdBuffer;
     pCommand->callback = 0;
     pCommand->pArgument = 0;
-    pCommand->spiCs = cs;    
+    pCommand->spiCs = cs;
 }
 
 //------------------------------------------------------------------------------
@@ -129,7 +129,7 @@ unsigned char AT26_IsBusy(At26 *pAt26)
 {
     return SPID_IsBusy(pAt26->pSpid);
 }
-    
+
 //------------------------------------------------------------------------------
 /// Sends a command to the serial flash through the SPI. The command is made up
 /// of two parts: the first is used to transmit the command byte and optionally,
@@ -160,15 +160,15 @@ unsigned char AT26_SendCommand(
 
 {
     SpidCmd *pCommand;
-    
+
     SANITY_CHECK(pAt26);
 
     // Check if the SPI driver is available
     if (AT26_IsBusy(pAt26)) {
-    
+
         return AT26_ERROR_BUSY;
     }
-    
+
     // Store command and address in command buffer
     pAt26->pCmdBuffer[0] = (cmd & 0x000000FF)
                            | ((address & 0x0000FF) << 24)
@@ -182,13 +182,13 @@ unsigned char AT26_SendCommand(
      pCommand->dataSize = dataSize;
      pCommand->callback = callback;
      pCommand->pArgument = pArgument;
-    
+
      // Start the SPI transfer
      if (SPID_SendCommand(pAt26->pSpid, pCommand)) {
 
          return AT26_ERROR_SPI;
      }
- 
+
      return 0;
 }
 
@@ -208,7 +208,7 @@ const At26Desc * AT26_FindDevice(At26 *pAt26, unsigned int jedecId)
     // Search if device is recognized
     pAt26->pDesc = 0;
     while ((i < NUMDATAFLASH) && !(pAt26->pDesc)) {
-    
+
         if (jedecId == at26Devices[i].jedecId) {
 
             pAt26->pDesc = &(at26Devices[i]);

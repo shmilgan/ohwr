@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support 
+ *         ATMEL Microcontroller Software Support
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -31,10 +31,10 @@
 /// \unit
 ///
 /// !Purpose
-/// 
+///
 /// Methods and definitions for configuring interrupts using the Nested
 /// Vectored Interrupt Controller (NVIC).
-/// 
+///
 /// !Usage
 ///
 /// -# Configure interrupt source by implementing specific functions and define

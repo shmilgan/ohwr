@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support 
+ *         ATMEL Microcontroller Software Support
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -30,9 +30,9 @@
 //------------------------------------------------------------------------------
 /// \unit
 /// !Purpose
-/// 
+///
 /// The AT26 Serialflash driver.
-/// 
+///
 /// !Usage
 //------------------------------------------------------------------------------
 
@@ -68,12 +68,12 @@ extern unsigned char AT26D_Write(
     unsigned char *pData,
     unsigned int size,
     unsigned int address);
-    
+
 extern unsigned char AT26D_Read(
     At26 *pAt26,
     unsigned char *pData,
     unsigned int size,
-    unsigned int address);    
+    unsigned int address);
 
 #endif // #ifndef AT26D_H
 

@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support 
+ *         ATMEL Microcontroller Software Support
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -30,7 +30,7 @@
 /// \unit
 ///
 /// !!!Purpose
-/// 
+///
 /// The Dataflash driver is based on top of the corresponding Spi driver.
 /// A Dataflash structure instance has to be initialized using the DF_Init
 /// function. Then basic dataflash operations can be launched using macros such
@@ -40,33 +40,33 @@
 /// description must be known (DataflashDesc). Dataflash can be automatically
 /// detected using the DF_Scan() function.
 /// !!!Usage
-/// 
+///
 /// -# Initializes an AT45 instance and configures SPI chip select pin
 ///    using AT45_Configure().
 /// -# Detect DF and returns DF description corresponding to the device
-///    connected using AT45_FindDevice().This function shall be called by 
+///    connected using AT45_FindDevice().This function shall be called by
 ///    the application before AT45_SendCommand.
 /// -# Sends a command to the DF through the SPI using AT45_SendCommand().
-///    The command is identified by its command code and the number of 
+///    The command is identified by its command code and the number of
 ///    bytes to transfer.
 ///    -# Example code for sending command to write a page to DF.
 /// \code
 ///    // Issue a page write through buffer 1 command
-///	   error = AT45_SendCommand(pAt45, AT45_PAGE_WRITE_BUF1, 4, 
+///	   error = AT45_SendCommand(pAt45, AT45_PAGE_WRITE_BUF1, 4,
 ///	           pBuffer, size, address, 0, 0);
 /// \endcode
 ///    -# Example code for sending command to read a page from DF.
-///       If data needs to be received, then a data buffer must be 
+///       If data needs to be received, then a data buffer must be
 ///       provided.
 /// \code
 ///    // Issue a continuous read array command
 ///    error = AT45_SendCommand(pAt45, AT45_CONTINUOUS_READ_LEG, 8,
 ///            pBuffer, size, address, 0, 0);
 /// \endcode
-///    -# This function does not block; its optional callback will 
+///    -# This function does not block; its optional callback will
 ///       be invoked when the transfer completes.
 /// -# Check the AT45 driver is ready or not by polling AT45_IsBusy().
-/// 
+///
 //------------------------------------------------------------------------------
 
 #ifndef AT45_H
@@ -214,7 +214,7 @@ typedef struct {
 /// This structure is initialized by the DF_Init() command.
 /// pDfDesc field can be initialized by the DF_Scan() function.
 /// cmdBuffer is a private driver area used to compute the dataflash address to
-/// be sent to the dataflash. 
+/// be sent to the dataflash.
 /// Beware the PDC master must have access to this area.
 //------------------------------------------------------------------------------
 typedef struct _Dataflash {

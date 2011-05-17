@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support 
+ *         ATMEL Microcontroller Software Support
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -175,9 +175,9 @@ unsigned char AT45_SendCommand(
             pAt45->pCmdBuffer[2] = ((dfAddress & 0x00FF0000) >> 16);
             pAt45->pCmdBuffer[3] = ((dfAddress & 0x0000FF00) >> 8);
             pAt45->pCmdBuffer[4] = ((dfAddress & 0x000000FF) >> 0);
-    
+
             if ((cmd != AT45_CONTINUOUS_READ) && (cmd != AT45_PAGE_READ)) {
-    
+
                 cmdSize++;
             }
         }

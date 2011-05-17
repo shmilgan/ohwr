@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support 
+ *         ATMEL Microcontroller Software Support
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -30,26 +30,26 @@
 /// \unit
 ///
 /// !Purpose
-/// 
-/// The AT26 serial firmware Dataflash driver is based on top of the 
-/// corresponding Spi driver. A Dataflash structure instance has to be 
-/// initialized using the DF_Init function. Then basic dataflash 
-/// operations can be launched using macros such as DF_continuous_read. 
-/// These macros invoke the DF_Command() function which invokes the 
+///
+/// The AT26 serial firmware Dataflash driver is based on top of the
+/// corresponding Spi driver. A Dataflash structure instance has to be
+/// initialized using the DF_Init function. Then basic dataflash
+/// operations can be launched using macros such as DF_continuous_read.
+/// These macros invoke the DF_Command() function which invokes the
 /// DPI low driver using the SPI_SendCommand() function.
 /// Beware to compute the dataflash internal address, the dataflash sector
 /// description must be known (DataflashDesc). Dataflash can be automatically
 /// detected using the DF_Scan() function.
 ///
 /// !Usage
-/// 
+///
 /// -# Initializes an AT26 instance and configures SPI chip select pin
 ///    using AT26_Configure().
 /// -# Detect DF and returns DF description corresponding to the device
-///    connected using AT26_FindDevice().This function shall be called by 
+///    connected using AT26_FindDevice().This function shall be called by
 ///    the application before AT26_SendCommand().
 /// -# Sends a command to the DF through the SPI using AT26_SendCommand().
-///    The command is identified by its command code and the number of 
+///    The command is identified by its command code and the number of
 ///    bytes to transfer.
 ///    -# Example code for sending command to write a page to DF.
 /// \code
@@ -58,14 +58,14 @@
 ///            pData, writeSize, address, 0, 0);
 /// \endcode
 ///    -# Example code for sending command to read a page from DF.
-///       If data needs to be received, then a data buffer must be 
+///       If data needs to be received, then a data buffer must be
 ///       provided.
 /// \code
 ///    // Start a read operation
-///    error = AT26_SendCommand(pAt26, AT26_READ_ARRAY_LF, 
+///    error = AT26_SendCommand(pAt26, AT26_READ_ARRAY_LF,
 ///            4, pData, size, address, 0, 0);
 /// \endcode
-///    -# This function does not block; its optional callback will 
+///    -# This function does not block; its optional callback will
 ///       be invoked when the transfer completes.
 /// -# Check the AT26 driver is ready or not by polling AT26_IsBusy().
 ///
@@ -210,7 +210,7 @@ typedef struct _At26Desc {
 } At26Desc;
 
 //------------------------------------------------------------------------------
-/// Serial flash driver structure. Holds the current state of the driver, 
+/// Serial flash driver structure. Holds the current state of the driver,
 /// including the current command and the descriptor for the underlying device.
 //------------------------------------------------------------------------------
 typedef struct _At26 {

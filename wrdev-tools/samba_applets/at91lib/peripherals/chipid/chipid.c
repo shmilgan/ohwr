@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support 
+ *         ATMEL Microcontroller Software Support
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -198,7 +198,7 @@ const struct ChipIDType CHIPID_nvpTyp[AT91C_CHIPID_NVPTYPE_SIZE] = {
 //------------------------------------------------------------------------------
 unsigned char CHIPID_Find(const struct ChipIDType* pChipIDTypeList,
                                unsigned int size,
-                               unsigned int id, 
+                               unsigned int id,
                                struct ChipIDType* pChipIDType)
 {
     unsigned int i;

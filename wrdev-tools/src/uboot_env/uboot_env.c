@@ -43,7 +43,7 @@ main(int argc, char *argv[])
         fgets(line, 1024, f_env);
 
         int len = strlen(line);
-        if(line[len-1] == '\n') 
+        if(line[len-1] == '\n')
         {
 	    	line[len-1] = 0;
   	    	len--;
@@ -55,16 +55,16 @@ main(int argc, char *argv[])
     }
 
 	unsigned int crc = crc32(0, buf+4, ENV_SIZE-4);
-	
+
     fseek(f_image, ENV_OFFSET, SEEK_SET);
 	fwrite(&crc, 4, 1, f_image);
     fwrite(buf+4, 1, ENV_SIZE-4, f_image);
-  
+
 
     fclose(f_image);
     fclose(f_env);
 
-	
+
 
     return 0;
 

@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support 
+ *         ATMEL Microcontroller Software Support
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -36,7 +36,7 @@
 // 1   Control                  Control
 // 2   Translation table base   Translation table base
 // 3   Domain access control    Domain access control
-// 4                                                       (Reserved)    
+// 4                                                       (Reserved)
 // 5   Data fault status        Data fault status
 // 5   Instruction fault status Instruction fault status
 // 6   Fault address            Fault address
@@ -45,11 +45,11 @@
 // 9   cache lockdown           cache lockdown
 // 9   TCM region               TCM region
 // 10  TLB lockdown             TLB lockdown
-// 11                                                      (Reserved) 
-// 12                                                      (Reserved) 
+// 11                                                      (Reserved)
+// 12                                                      (Reserved)
 // 13  FCSE PID                 FCSE PID
 // 13  Context ID               Context ID
-// 14                                                      (Reserved)             
+// 14                                                      (Reserved)
 // 15  Test configuration       Test configuration
 //-----------------------------------------------------------------------------
 
@@ -99,7 +99,7 @@ unsigned int CP15_IsIcacheEnabled(void)
 
     control = CP15_ReadControl();
     return ((control & (1 << CP15_I_BIT)) != 0);
-} 
+}
 
 //------------------------------------------------------------------------------
 /// Enable Instruction cache
@@ -114,7 +114,7 @@ void CP15_EnableIcache(void)
     if ((control & (1 << CP15_I_BIT)) == 0) {
 
         control |= (1 << CP15_I_BIT);
-        CP15_WriteControl(control);        
+        CP15_WriteControl(control);
         TRACE_INFO("I cache enabled.\n\r");
     }
 #if !defined(OP_BOOTSTRAP_on)
@@ -138,14 +138,14 @@ void CP15_DisableIcache(void)
     if ((control & (1 << CP15_I_BIT)) != 0) {
 
         control &= ~(1 << CP15_I_BIT);
-        CP15_WriteControl(control);        
+        CP15_WriteControl(control);
         TRACE_INFO("I cache disabled.\n\r");
     }
     else {
 
         TRACE_INFO("I cache is already disabled.\n\r");
     }
-} 
+}
 
 //------------------------------------------------------------------------------
 /// Check MMU
@@ -157,7 +157,7 @@ unsigned int CP15_IsMMUEnabled(void)
 
     control = CP15_ReadControl();
     return ((control & (1 << CP15_M_BIT)) != 0);
-} 
+}
 
 //------------------------------------------------------------------------------
 /// Enable MMU
@@ -172,7 +172,7 @@ void CP15_EnableMMU(void)
     if ((control & (1 << CP15_M_BIT)) == 0) {
 
         control |= (1 << CP15_M_BIT);
-        CP15_WriteControl(control);        
+        CP15_WriteControl(control);
         TRACE_INFO("MMU enabled.\n\r");
     }
     else {
@@ -195,7 +195,7 @@ void CP15_DisableMMU(void)
 
         control &= ~(1 << CP15_M_BIT);
         control &= ~(1 << CP15_C_BIT);
-        CP15_WriteControl(control);        
+        CP15_WriteControl(control);
         TRACE_INFO("MMU disabled.\n\r");
     }
     else {
@@ -214,7 +214,7 @@ unsigned int CP15_IsDcacheEnabled(void)
 
     control = CP15_ReadControl();
     return ((control & ((1 << CP15_C_BIT)||(1 << CP15_M_BIT))) != 0);
-} 
+}
 
 //------------------------------------------------------------------------------
 /// Enable Data cache
@@ -233,7 +233,7 @@ void CP15_EnableDcache(void)
         if ((control & (1 << CP15_C_BIT)) == 0) {
 
             control |= (1 << CP15_C_BIT);
-            CP15_WriteControl(control);        
+            CP15_WriteControl(control);
             TRACE_INFO("D cache enabled.\n\r");
         }
         else {
@@ -256,7 +256,7 @@ void CP15_DisableDcache(void)
     if ((control & (1 << CP15_C_BIT)) != 0) {
 
         control &= ~(1 << CP15_C_BIT);
-        CP15_WriteControl(control);        
+        CP15_WriteControl(control);
         TRACE_INFO("D cache disabled.\n\r");
     }
     else {
@@ -273,9 +273,9 @@ void CP15_LockIcache(unsigned int index)
 {
     unsigned int victim = 0;
 
-    // invalidate all the cache (4 ways) 
+    // invalidate all the cache (4 ways)
     CP15_InvalidateIcache();
-    
+
     // lockdown all the ways except this in parameter
     victim =  CP15_ReadIcacheLockdown();
     victim = 0;
@@ -292,10 +292,10 @@ void CP15_LockDcache(unsigned int index)
 {
     unsigned int victim = 0;
 
-    // invalidate all the cache (4 ways)    
+    // invalidate all the cache (4 ways)
     CP15_InvalidateDcache();
-    
-    // lockdown all the ways except this in parameter    
+
+    // lockdown all the ways except this in parameter
     victim =  CP15_ReadDcacheLockdown();
     victim = 0;
     victim |= ~index;
@@ -308,11 +308,11 @@ void CP15_LockDcache(unsigned int index)
 /// \param D cache way
 //----------------------------------------------------------------------------
 void CP15_ShutdownDcache(void)
-{ 
-    CP15_TestCleanInvalidateDcache();  
+{
+    CP15_TestCleanInvalidateDcache();
     CP15_DrainWriteBuffer();
     CP15_DisableDcache();
-    CP15_InvalidateTLB();      
+    CP15_InvalidateTLB();
 }
 
 #endif // CP15_PRESENT

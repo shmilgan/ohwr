@@ -47,7 +47,7 @@ int serial_open(char *dev_name, int speed)
 	case 9600: spd=B9600; break;
 	default: return -2;
     }
-    
+
     fd = open (dev_name, O_RDWR | O_NONBLOCK);
 
     if(fd<0) return -1;
@@ -103,13 +103,13 @@ int serial_data_avail()
 {
     fd_set set;
     struct timeval tv;
-    
+
     FD_ZERO(&set);
     FD_SET(serial_fd,&set);
-    
+
     tv.tv_sec = 0;
     tv.tv_usec = 0;
-    
+
     return select(serial_fd+1, &set, NULL, NULL, &tv)>0;
 }
 
@@ -119,8 +119,8 @@ unsigned int sys_get_clock_usec()
     struct timeval tv;
 
     gettimeofday(&tv,&tz);
-    
-    return tv.tv_usec + tv.tv_sec * 1000000;    
+
+    return tv.tv_usec + tv.tv_sec * 1000000;
 }
 
 void sys_delay(int msecs)

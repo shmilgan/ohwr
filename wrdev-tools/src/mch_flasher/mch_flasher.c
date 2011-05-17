@@ -86,7 +86,7 @@ static int write_xmodem(int index, char *p)
 void die(const char *fmt, ...)
 {
 	va_list ap;
-	
+
 	va_start(ap, fmt);
 	fprintf(stderr, "Error: ");
 	vfprintf(stderr, fmt, ap);
@@ -111,14 +111,14 @@ void samba_write (uint32_t addr, uint32_t data, int size, int timeout)
 	while(1)
 	{
 	  if(serial_data_avail())
-	  {		
+	  {
 		if(serial_read_byte() =='>') break;
 	  }
 	  if(sys_get_clock_usec() - tstart > timeout) die("tx timeout");
 	}
-  
 
-  
+
+
 
 }
 
@@ -129,34 +129,34 @@ uint32_t samba_read (uint32_t addr, int size, int timeout)
 	int i,xpos=-1;
 	uint32_t rval;
 	uint32_t tstart;
-	
+
 	serial_purge();
 	snprintf(tmpbuf, 1024, "%c%08x,#", size==1?'o':(size==2?'h':'w'), addr);
-	
+
 //	printf("--> cmd: '%s'\n", tmpbuf);
 
 	serial_write(tmpbuf, strlen(tmpbuf));
 
     tstart = sys_get_clock_usec();
 
-	for(i=0;i<1024 && c!='>';) 
-	{ 
+	for(i=0;i<1024 && c!='>';)
+	{
 	  if(serial_data_avail())
-	  {		
+	  {
 		tmpbuf[i]=c=serial_read_byte();
 //		fprintf(stderr,"%c", c);
-		if(c=='x') xpos=i; 
+		if(c=='x') xpos=i;
 		i++;
 	  }
 
     if(sys_get_clock_usec()-tstart>timeout) die("rx timeout");
-	  
+
 	}
-	
+
 	if(xpos<0) die("invalid response from samba");
-	
+
 	sscanf(tmpbuf, "%x", &rval);
-	return rval;	
+	return rval;
 }
 
 
@@ -169,23 +169,23 @@ static int samba_send_file(const char *filename, uint32_t address, uint32_t offs
   char tmp[128];
 
   uint32_t tstart;
-    
+
   f = fopen(filename, "rb");
   if(!f) die("file open error: '%s'",filename);
-  
-  
+
+
   if(!size)
   {
 	fseek(f, 0, SEEK_END);
     size = ftell(f);
     offset = 0;
 	rewind(f);
-  } else 
+  } else
 	fseek(f, offset, SEEK_SET);
 
   buf = malloc(size);
   if(!buf) die("malloc failed");
-  
+
   fread(buf, 1, size, f);
   fclose(f);
 
@@ -197,14 +197,14 @@ static int samba_send_file(const char *filename, uint32_t address, uint32_t offs
   while(1)
   {
 	  if(serial_data_avail())
-	  {		
-	  
+	  {
+
 		if(serial_read_byte() == 'C') break;
 	  }
 
 	  if(sys_get_clock_usec()-tstart>SERIAL_TIMEOUT) die("xmodem handshake timeout");
 	}
-  
+
 
   file_size = size;
   sent = 0;
@@ -213,16 +213,16 @@ static int samba_send_file(const char *filename, uint32_t address, uint32_t offs
   {
 	uint32_t tosend = size > 128 ? 128 : size;
 	char tmp[128];
-	
+
 	memset(tmp, 0, 128);
 	memcpy(tmp, buf + sent, tosend);
-	
+
 	sent+=tosend;
 	size-=tosend;
-	
+
   write_xmodem(idx & 0xff, tmp);
 //	printf("dix %d \n", idx);
-	
+
 	if(!quiet) printf("%s: %d/%d bytes [%.0f%%] sent.                  \r", filename, sent, file_size, (float)sent/ (float)file_size * 100.0);
 	idx++;
   }
@@ -239,7 +239,7 @@ static int samba_send_file(const char *filename, uint32_t address, uint32_t offs
 static void samba_load_applet(char *applet_name, uint32_t address)
 {
 	char namebuf[1024];
-	
+
 	snprintf(namebuf, 1024, "%s/samba_applets/%s.bin", program_path, applet_name);
 	samba_send_file(namebuf, address, 0, 0, 1);
 }
@@ -248,7 +248,7 @@ static void samba_load_applet(char *applet_name, uint32_t address)
 static void mbox_write(uint32_t base, uint32_t offset, uint32_t value)
 {
   samba_write(base+offset, value, 4, SERIAL_TIMEOUT);
-}	
+}
 
 void samba_run(uint32_t addr, int timeout)
 {
@@ -259,9 +259,9 @@ void samba_run(uint32_t addr, int timeout)
 	snprintf(tmpbuf, 1024, "G%08x#",  addr);
 
 	serial_write(tmpbuf, strlen(tmpbuf));
-	
+
 	t1 = tstart = sys_get_clock_usec();
-	
+
 	while((timeout && (sys_get_clock_usec()- tstart < timeout)) || !timeout)
 	{
 	  if(serial_data_avail()) {
@@ -280,9 +280,9 @@ void samba_run(uint32_t addr, int timeout)
 		serial_write_byte(0x0a);
 		serial_write_byte(0x0d);
 		usleep(10000);
-		while(serial_data_avail()) 
-		  if( (c=serial_read_byte()) == '>') 
-			return; 
+		while(serial_data_avail())
+		  if( (c=serial_read_byte()) == '>')
+			return;
   		  else if(!applet_silent_mode)
 			fprintf(stderr,"%c", c);
 	  }
@@ -318,8 +318,8 @@ int samba_connect()
 	if((samba_read(INTERNAL_SRAM_BUF + MBOX_COMMAND, 4, 100000)) != ~APPLET_CMD_INIT) die("invalid response from applet");
 	if((samba_read(INTERNAL_SRAM_BUF + MBOX_STATUS, 4, 100000)) != APPLET_SUCCESS) die("invalid response from applet");
 
-	
-	
+
+
 
 }
 
@@ -328,7 +328,7 @@ int dataflash_init()
 
 //	samba_write(0xfffff410, 0x04000000, 4, 100000);
 //	samba_write(0xfffff430, 0x04000000, 4, 100000);
-	
+
 	samba_load_applet("isp-dataflash-at91sam9263", SDRAM_START);
 
 	mbox_write(SDRAM_START, MBOX_COMMAND, APPLET_CMD_INIT);
@@ -342,7 +342,7 @@ int dataflash_init()
 	if(samba_read(SDRAM_START + MBOX_STATUS, 4, 100000) != APPLET_SUCCESS) die("invalid response from applet");
 
 	buffer_addr = samba_read(SDRAM_START + MBOX_DATAFLASH_BUFFER_ADDR, 4, 100000);
-	
+
 }
 
 
@@ -358,7 +358,7 @@ int dataflash_write(uint32_t offset, uint32_t buf_addr, uint32_t size)
     mbox_write(SDRAM_START, MBOX_DATAFLASH_MEM_OFFSET, offset);
 
 	mbox_write(SDRAM_START, MBOX_COMMAND, APPLET_CMD_WRITE);
-	
+
     samba_run(SDRAM_START, 0);
 
 	if(samba_read(SDRAM_START + MBOX_COMMAND, 4, 100000) != ~APPLET_CMD_WRITE) die("invalid response from applet");
@@ -367,7 +367,7 @@ int dataflash_write(uint32_t offset, uint32_t buf_addr, uint32_t size)
 
 	printf("done. \n\n");
 
-  
+
 }
 
 int dataflash_erase_all()
@@ -378,7 +378,7 @@ int dataflash_erase_all()
 
 int dataflash_program(const char *filename)
 {
-	
+
 	uint32_t len = samba_send_file(filename, SDRAM_START + 0x3000000, 0, 0, 0);
 	dataflash_write(0, SDRAM_START + 0x3000000, len);
 }
@@ -387,14 +387,14 @@ main(int argc, char *argv[])
 {
 	char *serial_port = "/dev/ttyS0";
 
-	
+
 	if(argc < 2)
 	{
 	  printf("WhiteRabbit MCH DataFlash programmer (c) T.W. 2010\n");
 	  printf("Usage: %s <dataflash image> [serial port (default = /dev/ttyS0)]\n", argv[0]);
 	  return 0;
 	}
-	
+
 	if(argc > 2)
 	  serial_port = argv[2];
 
@@ -407,14 +407,14 @@ main(int argc, char *argv[])
 
 	samba_connect();
 	dataflash_init();
-  
+
 	printf("done.\n");
 	printf("Programming DataFlash...\n");
 	dataflash_program(argv[1]);
 	printf("Programming done!\n");
 
     serial_close();
-    
+
     return 0;
 
 }
