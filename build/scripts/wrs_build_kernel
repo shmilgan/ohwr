@@ -44,6 +44,12 @@ fi
 cp $CFG .config
 export ARCH=arm
 make oldconfig  || wrs_die "kernel config"
+# add mkimage in the path, in case it is not there
+if ! type -p mkimage > /dev/null; then
+    wrs_echo "No mkimage: adding u-boot tools directory to PATH"
+    export PATH=${WRS_OUTPUT_DIR}/build/u-boot-1.3.4/tools:$PATH
+fi
+# now proceed as usual
 make $WRS_MAKE_J uImage modules  || wrs_die "kernel compilation"
 
 cp arch/$ARCH/boot/uImage $(find . -name '*.ko') $WRS_OUTPUT_DIR/images
