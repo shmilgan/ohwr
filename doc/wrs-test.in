@@ -180,8 +180,8 @@ Rabbit.
 The hardware timestamping mechanism has been pushed to the upstream
 kernel by Patrick Ohly and Richard Cochran; the first official kernel
 released with some related code was 2.6.30.
-The description in this section refers to Linux-2.6.35, although I
-plan to update to later versions over time.
+The description in this section refers to Linux-2.6.39, with references
+to the slightly-different implementation of 2.6.35.
 @c v2.6.35-rc1-1246-gc1f19b5
 
 The official documentation can be found in
@@ -365,13 +365,14 @@ The flow of actions that are involved in stamping is as follows:
 
 @item In the @i{start_xmit} device function, the driver marks timestamping
 as @i{in_progress} in the socket buffer -- only if this packet is going
-to be stamped.
+to be stamped. This is accomplished by setting the @code{SKBTX_IN_PROGRESS}
+bit in @code{skb_shinfo(skb)->tx_flags}.
 
 @item For those packets where @i{in_progress} is set, the @i{tx-done} interrupt function retrieves the timestamp and
 calls @i{skb_tstamp_tx} (@code{net/core/skbuff.c}). Note that the
-@i{in_progress} marker is only used by the driver itself.
+@code{SKBTX_IN_PROGRESS} flag is only used by the driver itself.
 
-@item This @i{skb_stamp_tx} copies over the data to a clone of the
+@item This @i{skb_tstamp_tx} copies over the data to a clone of the
 original socket buffer, which is then enqueued to the error queue
 for the socket. The @i{tx-done} code can thus release this @i{skb}
 without any further special case.
@@ -399,8 +400,14 @@ for those packets where @i{in_progress} was set:
     skb_tstamp_tx(skb, &shhwtstamps);
 @end smallexample
 
-Actually, the only difference in the code is that the structure
+Actually, the only difference in the transmit code path from the
+receive code path we have seen earlier is that the structure
 with the two @i{ktime} stamps is local and not in the @i{skb} itself.
+
+Before version @code{v2.6.36-rc1-71-g2244d07} (thus, in 2.6.35 and earlier)
+the @i{in_progress} marker was a field in a union hosted in the
+socket buffer, but this extra level of indirection was confusing and has
+been removed.
 
 @c ==========================================================================
 @node Timestamping Use
