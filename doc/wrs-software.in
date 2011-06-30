@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month May 2011
+@set update-month June 2011
 
 @finalout
 
@@ -130,7 +130,10 @@ editing this file, please add your name in all the proper places.
 	Tests that are meant to be run on the switch itself.
 	The directory has been copied from @code{software/tests}
         as it appeared in the @i{svn} repository; it has not been
-        recompiled or verified in any way.
+        recompiled or verified in any way.  In this version, only
+        wr_mon had been made to compile, the other tests still include
+        @code{build.sh} that sources @code{../../settings}, in the old
+        way that is now deprecated.
 
 @item robustness/
 	The robustness demo program, copied from @i{svn} and
