@@ -1,24 +1,25 @@
-include ../../../Makedefs
+# # Standard stanza for cross-compilation (courtesy of the linux makefile)
+AS              = $(CROSS_COMPILE)as
+LD              = $(CROSS_COMPILE)ld
+CC              = $(CROSS_COMPILE)gcc
+CPP             = $(CC) -E
+AR              = $(CROSS_COMPILE)ar
+NM              = $(CROSS_COMPILE)nm
+STRIP           = $(CROSS_COMPILE)strip
+OBJCOPY         = $(CROSS_COMPILE)objcopy
+OBJDUMP         = $(CROSS_COMPILE)objdump
 
-CC=$(CROSS_COMPILE_ARM)gcc
-OBJS = wr_mon.o term.o 
-LDFLAGS = -lswitchhw -L../../libswitchhw -L../../libwripc -L../../libptpnetif -lwripc -lptpnetif
-CFLAGS = -I. -O2 -I../../include -DDEBUG -I../../../kernel/include -I../../libptpnetif -I../../PTPWRd -I../../wrsw_hal -I../../libwripc -g
-OUTPUT = wr_mon
 
-all:	$(OBJS)
-	make -C ../../libswitchhw
-	${CC} -o $(OUTPUT) $(OBJS) $(LDFLAGS)
+MON_OBJS = wr_mon.o term.o 
 
-%.o:	%.c
-	${CC} -c $^ $(CFLAGS)
+CFLAGS += -O2 -DDEBUG -I$(LINUX)/include
 
-run:  all
-	- scp $(OUTPUT)  root@192.168.1.16:/tmp
+ALL = wr_mon
 
-deploy:
-		cp $(OUTPUT) ../../rootfs_override/wr/bin
+all: $(ALL)
 
+wr_mon: $(MON_OBJS)
+	${CC} $^  $(LDFLAGS) -o $@ 
 
 clean:
-	rm -f $(OUTPUT) $(OBJS)
+	rm -f $(ALL) *.o *~
