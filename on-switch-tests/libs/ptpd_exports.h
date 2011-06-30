@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ptpd.h"
+//#include "ptpd.h"
 
 typedef struct{
 	int valid;
