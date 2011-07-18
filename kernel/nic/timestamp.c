@@ -38,7 +38,7 @@ void wrn_tstamp_find_skb(struct wrn_dev *wrn, int desc)
 	/* so we found the skb, do the timestamping magic */
 	hwts = skb_hwtstamps(skb);
 	wrn_ppsg_read_time(wrn, &counter_ppsg, &utc);
-	if(counter_ppsg < wrn->ts_buf[i].ts)
+	if(counter_ppsg > 3*REFCLK_FREQ/4 && wrn->ts_buf[i].ts < REFCLK_FREQ/4)
 		utc--;
 
 	hwts->hwtstamp.tv.sec = (s32)utc & 0x7fffffff;
@@ -61,8 +61,8 @@ static int record_tstamp(struct wrn_dev *wrn, u32 ts, u32 idreg)
 	u32 utc, counter_ppsg; /* PPS generator nanosecond counter */
 	int i; /* FIXME: use list for faster access */
 
-	printk("%s: Got TS: %x pid %d fid %d\n", __func__,
-		 ts, port_id, frame_id);
+	/*printk("%s: Got TS: %x pid %d fid %d\n", __func__,
+		 ts, port_id, frame_id);*/
 
 	/* First of all look if the skb is already pending */
 	for (i = 0; i < WRN_NR_DESC; i++)
@@ -70,7 +70,7 @@ static int record_tstamp(struct wrn_dev *wrn, u32 ts, u32 idreg)
 			break;
 
 	if (i < WRN_NR_DESC) {
-		printk("%s: found\n", __func__);
+		/*printk("%s: found\n", __func__);*/
 		skb = wrn->skb_desc[i].skb;
 		hwts = skb_hwtstamps(skb);
 

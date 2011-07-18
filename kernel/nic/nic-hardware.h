@@ -14,6 +14,8 @@
 /* Our host CPU is this one, no way out of it */
 #include <mach/at91sam9263.h>
 
+#define REFCLK_FREQ 125000000
+
 /* The interrupt is one of those managed by our WRVIC device */
 #define WRN_IRQ_BASE		192
 #define WRN_IRQ_PPSG		(WRN_IRQ_BASE + 0)

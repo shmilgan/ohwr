@@ -324,7 +324,7 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 
 	wrn_ppsg_read_time(wrn, &counter_ppsg, &utc);
 
-	if(counter_ppsg < ts_r)
+	if(counter_ppsg < REFCLK_FREQ/4 && ts_r > 3*REFCLK_FREQ/4)
 		utc--;
 
 	hwts->hwtstamp.tv.sec = (s32)utc & 0x7fffffff;
