@@ -61,25 +61,29 @@ static int record_tstamp(struct wrn_dev *wrn, u32 ts, u32 idreg)
 	u32 utc, counter_ppsg; /* PPS generator nanosecond counter */
 	int i; /* FIXME: use list for faster access */
 
-	pr_debug("%s: Got TS: %x pid %d fid %d\n", __func__,
+	printk("%s: Got TS: %x pid %d fid %d\n", __func__,
 		 ts, port_id, frame_id);
 
 	/* First of all look if the skb is already pending */
 	for (i = 0; i < WRN_NR_DESC; i++)
 		if (wrn->skb_desc[i].skb && wrn->skb_desc[i].id == frame_id)
 			break;
+
 	if (i < WRN_NR_DESC) {
-		pr_debug("%s: found\n", __func__);
+		printk("%s: found\n", __func__);
 		skb = wrn->skb_desc[i].skb;
 		hwts = skb_hwtstamps(skb);
+
 		wrn_ppsg_read_time(wrn, &counter_ppsg, &utc);
-		if(counter_ppsg < wrn->ts_buf[i].ts)
+		if(counter_ppsg < (ts & 0xfffffff))
 			utc--;
+			
 		hwts->hwtstamp.tv.sec = (s32)utc & 0x7fffffff;
-		hwts->hwtstamp.tv.nsec = ts * 8; /* scale to nanoseconds */
+		hwts->hwtstamp.tv.nsec = (ts & 0xfffffff) * 8; /* scale to nanoseconds */
 		skb_tstamp_tx(skb, hwts);
 		dev_kfree_skb_irq(skb);
 		wrn->skb_desc[i].skb = 0;
+		return 0;
 	}
 	/* Otherwise, save it to the list  */
 	for(i = 0; i < WRN_TS_BUF_SIZE; i++)
@@ -104,7 +108,7 @@ irqreturn_t wrn_tstamp_interrupt(int irq, void *dev_id)
 	struct TXTSU_WB *regs = wrn->txtsu_regs;
 	u32 r0, r1;
 
-	printk("%s: %i\n", __func__, __LINE__);
+	/* printk("%s: %i\n", __func__, __LINE__); */
 	/* FIXME: locking */
 	r0 = readl(&regs->TSF_R0);
 	r1 = readl(&regs->TSF_R1);
