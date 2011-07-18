@@ -54,7 +54,7 @@ static void wrn_update_link_status(struct net_device *dev)
 	u32 ecr, bmsr, bmcr, lpa;
 
 	bmsr = wrn_phy_read(dev, 0, MII_BMSR);
-	bmcr = wrn_phy_read(dev, 0, MII_BMSR);
+	bmcr = wrn_phy_read(dev, 0, MII_BMCR);
 
 	//netdev_dbg(dev, "%s: read %x %x", __func__, bmsr, bmcr);
 //	printk("%s: read %x %x %x\n", __func__, bmsr, bmcr);
@@ -153,6 +153,9 @@ int wrn_ep_open(struct net_device *dev)
 	       | EP_DMCR_EN
 	       | EP_DMCR_N_AVG_W(256 /* DMTD_AVG_SAMPLES */),
 	       &ep->ep_regs->DMCR);
+
+	wrn_phy_write(dev, 0, MII_LPA, 0);
+	wrn_phy_write(dev, 0, MII_BMCR, BMCR_ANENABLE | BMCR_ANRESTART);
 
 	/* Prepare the timer for link-up notifications */
 	setup_timer(&ep->ep_link_timer, wrn_ep_check_link, timerarg);
