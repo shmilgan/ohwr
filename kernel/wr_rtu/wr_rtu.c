@@ -44,7 +44,7 @@
 
 #define DRV_MODULE_VERSION      "0.1"
 
-#define WR_RTU_IRQ		10
+#define WR_RTU_IRQ		2
 #define WRVIC_BASE_IRQ		(NR_AIC_IRQS + (5 * 32)) // top of GPIO interr
 
 #define FPGA_BASE_RTU		0x70100000               // fpga_regs.h
