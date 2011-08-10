@@ -26,14 +26,14 @@ int wrn_get_ecr_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
         return -EFAULT;
 
     ecr = readl(&ep->ep_regs->ECR);
-    
+
     switch(ecr_req.cmd) {
     case WRN_ECR_GET_PORTID:
         ecr_req.val = EP_ECR_PORTID_R(ecr);
         break;
     default:
         // do nothing.....
-        return -EINVAL;
+        return -ENOIOCTLCMD;
     }
 
     if (copy_to_user(rq->ifr_data, &ecr_req, sizeof(ecr_req)))

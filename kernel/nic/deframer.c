@@ -31,9 +31,12 @@ int wrn_get_deframer_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
     case WRN_RFCR_GET_PRIO_VAL:
         deframer_req.val = EP_RFCR_PRIO_VAL_R(rfcr);
         break;
+    case WRN_RFCR_GET_QMODE:
+        deframer_req.val = EP_RFCR_QMODE_R(rfcr);
+        break;
     default:
         // do nothing.....
-        return -EINVAL;
+        return -ENOIOCTLCMD;
     }
 
     if (copy_to_user(rq->ifr_data, &deframer_req, sizeof(deframer_req)))
@@ -64,8 +67,8 @@ int wrn_set_deframer_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
             &ep->ep_regs->RFCR);
         break;
     default:
-	    // do nothing.....
-	    return -EINVAL;
+        // do nothing.....
+        return -ENOIOCTLCMD;
     }
 
     return 0;

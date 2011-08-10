@@ -200,8 +200,9 @@ struct wrn_register_req {
 #define WRN_CAL_RX_OFF 4
 #define WRN_CAL_RX_CHECK 5
 
-/* RFCR. For now only operations on PRIO_VAL implemented */
+/* RFCR */
 #define WRN_RFCR_GET_PRIO_VAL 2
+#define WRN_RFCR_GET_QMODE 4
 #define WRN_RFCR_SET_PRIO_VAL 10
 
 /* ECR. For now only get operation on PORTID implemented */
