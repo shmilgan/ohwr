@@ -18,7 +18,7 @@
 
 int wrn_get_deframer_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 {
-    struct wrn_deframer_req deframer_req;
+    struct wrn_register_req deframer_req;
     struct wrn_ep *ep = netdev_priv(dev);
     u32 rfcr;
 
@@ -45,7 +45,7 @@ int wrn_get_deframer_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 
 int wrn_set_deframer_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 {
-    struct wrn_deframer_req deframer_req;
+    struct wrn_register_req deframer_req;
     struct wrn_ep *ep = netdev_priv(dev);
     u32 rfcr;
 
