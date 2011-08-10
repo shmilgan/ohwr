@@ -187,6 +187,7 @@ int halexp_reset_port(const char *port_name);
 int halexp_calibration_cmd(const char *port_name, int command, int on_off);
 int halexp_lock_cmd(const char *port_name, int command, int priority);
 int halexp_query_ports(hexp_port_list_t *list);
+int halexp_query_all_ports(hexp_port_list_t *list);
 int halexp_get_port_state(hexp_port_state_t *state, const char *port_name);
 int halexp_pps_cmd(int cmd, hexp_pps_params_t *params);
 int halexp_pll_set_gain(int pll, int branch, int kp, int ki);

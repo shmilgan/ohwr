@@ -296,6 +296,7 @@ int hal_init_port(const char *name, int index)
 	{
 		reset_port_state(p);
 		p->in_use = 0;
+        strncpy(p->name, name, 16);
 		return 0;
 	}
 
@@ -906,4 +907,22 @@ int hal_extsrc_check_lock()
 	return 1; //>0 - we are locked to an external source
 	return 0; //=0 - HW problem, wait
 */	
+}
+// this function includes dummy ports in the list.
+int halexp_query_all_ports(hexp_port_list_t *list)
+{
+	int i;
+	int n = 0;
+
+	TRACE(TRACE_INFO," client queried port list (dummy ports included).");
+
+	for(i=0; i<MAX_PORTS; i++)
+	{
+        strcpy(list->port_names[i], ports[i].name);
+        if(ports[i].name[0] != '\0')
+            n++;
+	}
+
+	list->num_ports = n;
+	return 0;
 }
