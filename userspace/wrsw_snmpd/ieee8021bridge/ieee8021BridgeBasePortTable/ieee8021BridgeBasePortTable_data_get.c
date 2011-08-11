@@ -346,7 +346,6 @@ ieee8021BridgeBasePortCapabilities_get( ieee8021BridgeBasePortTable_rowreq_ctx *
  * TODO:231:o: |-> Extract the current value of the ieee8021BridgeBasePortCapabilities data.
  * copy (* ieee8021BridgeBasePortCapabilities_val_ptr ) from rowreq_ctx->data
  */
-    return MFD_SKIP;
     /*
      * TODO:242:o: update or replace BITS tests (get).
      * If ieee8021BridgeBasePortCapabilities data is stored in SNMP BIT order, individual
@@ -359,7 +358,8 @@ ieee8021BridgeBasePortCapabilities_get( ieee8021BridgeBasePortTable_rowreq_ctx *
      *
      * assuming generated code keeps ieee8021BridgeBasePortCapabilities BITS in SNMP order.
      */
-    (* ieee8021BridgeBasePortCapabilities_val_ptr ) = @m2c_ctx_rh;
+    (* ieee8021BridgeBasePortCapabilities_val_ptr ) =
+        rowreq_ctx->data.ieee8021BridgeBasePortCapabilities;
 
     return MFD_SUCCESS;
 } /* ieee8021BridgeBasePortCapabilities_get */
@@ -445,7 +445,6 @@ ieee8021BridgeBasePortTypeCapabilities_get( ieee8021BridgeBasePortTable_rowreq_c
  * TODO:231:o: |-> Extract the current value of the ieee8021BridgeBasePortTypeCapabilities data.
  * copy (* ieee8021BridgeBasePortTypeCapabilities_val_ptr ) from rowreq_ctx->data
  */
-    return MFD_SKIP;
     /*
      * TODO:242:o: update or replace BITS tests (get).
      * If ieee8021BridgeBasePortTypeCapabilities data is stored in SNMP BIT order, individual
@@ -458,7 +457,8 @@ ieee8021BridgeBasePortTypeCapabilities_get( ieee8021BridgeBasePortTable_rowreq_c
      *
      * assuming generated code keeps ieee8021BridgeBasePortTypeCapabilities BITS in SNMP order.
      */
-    (* ieee8021BridgeBasePortTypeCapabilities_val_ptr ) = @m2c_ctx_rh;
+    (* ieee8021BridgeBasePortTypeCapabilities_val_ptr ) =
+        rowreq_ctx->data.ieee8021BridgeBasePortTypeCapabilities;
 
     return MFD_SUCCESS;
 } /* ieee8021BridgeBasePortTypeCapabilities_get */

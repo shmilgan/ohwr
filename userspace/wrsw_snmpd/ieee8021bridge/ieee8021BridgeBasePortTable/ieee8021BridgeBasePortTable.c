@@ -133,8 +133,6 @@ ieee8021BridgeBasePortTable_rowreq_ctx_init(ieee8021BridgeBasePortTable_rowreq_c
     /*
      * TODO:210:o: |-> Perform extra ieee8021BridgeBasePortTable rowreq initialization. (eg DEFVALS)
      */
-    rowreq_ctx->data.ieee8021BridgeBasePortAdminPointToPoint = IEEE8021BRIDGEBASEPORTADMINPOINTTOPOINT_FORCEFALSE;
-    
 
     return MFD_SUCCESS;
 } /* ieee8021BridgeBasePortTable_rowreq_ctx_init */

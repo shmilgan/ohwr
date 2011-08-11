@@ -9,6 +9,13 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
+#include <sys/ioctl.h>
+#include <linux/if.h>
+
+#include <wr_ipc.h>
+#include <wrsw_hal.h>
+#include <hal_exports.h>
+
 /* include our parent header */
 #include "ieee8021BridgeBasePortTable.h"
 
@@ -188,160 +195,219 @@ ieee8021BridgeBasePortTable_container_shutdown(netsnmp_container *container_ptr)
 int
 ieee8021BridgeBasePortTable_container_load(netsnmp_container *container)
 {
-    ieee8021BridgeBasePortTable_rowreq_ctx *rowreq_ctx;
-    size_t                 count = 0;
+    ieee8021BridgeBasePortTable_rowreq_ctx  *rowreq_ctx;
 
-    /*
-     * temporary storage for index values
-     */
-        /*
-         * ieee8021BridgeBasePortComponentId(1)/IEEE8021PbbComponentIdentifier/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
-         */
-   u_long   ieee8021BridgeBasePortComponentId;
-        /*
-         * ieee8021BridgeBasePort(2)/IEEE8021BridgePortNumber/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
-         */
-   u_long   ieee8021BridgeBasePort;
+    wripc_handle_t              hal_ipc;
+    hexp_port_list_t            port_list;
+    hexp_port_state_t           port_state;
+
+    struct ifreq                ifr;
+    struct wrn_register_req     req;
+    char                        *name;
+    int                         sockfd, i;
+
+    /* Indexes */
+    u_long   ieee8021BridgeBasePortComponentId;
+    u_long   ieee8021BridgeBasePort;
 
 
-    DEBUGMSGTL(("verbose:ieee8021BridgeBasePortTable:ieee8021BridgeBasePortTable_container_load","called\n"));
+    DEBUGMSGTL(("ieee8021BridgeBasePortTable:"
+                "ieee8021BridgeBasePortTable_container_load","called\n"));
 
-    /*
-     * TODO:351:M: |-> Load/update data in the ieee8021BridgeBasePortTable container.
-     * loop over your ieee8021BridgeBasePortTable data, allocate a rowreq context,
-     * set the index(es) [and data, optionally] and insert into
-     * the container.
-     */
-    while( 1 ) {
-        /*
-         * check for end of data; bail out if there is no more data
-         */
-        if( 1 )
-            break;
+    /* Set index value for the Component Id */
+    ieee8021BridgeBasePortComponentId = DEFAULT_COMPONENTID;
 
-        /*
-         * TODO:352:M: |   |-> set indexes in new ieee8021BridgeBasePortTable rowreq context.
-         * data context will be set from the param (unless NULL,
-         *      in which case a new data context will be allocated)
-         */
-        rowreq_ctx = ieee8021BridgeBasePortTable_allocate_rowreq_ctx(NULL);
-        if (NULL == rowreq_ctx) {
-            snmp_log(LOG_ERR, "memory allocation failed\n");
-            return MFD_RESOURCE_UNAVAILABLE;
-        }
-        if(MFD_SUCCESS != ieee8021BridgeBasePortTable_indexes_set(rowreq_ctx
-                               , ieee8021BridgeBasePortComponentId
-                               , ieee8021BridgeBasePort
-               )) {
-            snmp_log(LOG_ERR,"error setting index while loading "
-                     "ieee8021BridgeBasePortTable data.\n");
-            ieee8021BridgeBasePortTable_release_rowreq_ctx(rowreq_ctx);
-            continue;
-        }
+        
+    /* Create socket interface */
+    sockfd = socket(AF_PACKET, SOCK_RAW, 0);
+    if (sockfd < 0) {
+        snmp_log(LOG_ERR,"socket failed\n");
+        return MFD_RESOURCE_UNAVAILABLE;
+    }
 
-        /*
-         * TODO:352:r: |   |-> populate ieee8021BridgeBasePortTable data context.
-         * Populate data context here. (optionally, delay until row prep)
-         */
-    /*
-     * TRANSIENT or semi-TRANSIENT data:
-     * copy data or save any info needed to do it in row_prep.
-     */
-    /*
-     * setup/save data for ieee8021BridgeBasePortIfIndex
-     * ieee8021BridgeBasePortIfIndex(3)/InterfaceIndexOrZero/ASN_INTEGER/long(long)//l/A/W/e/R/d/H
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBasePortIfIndex = ieee8021BridgeBasePortIfIndex;
-    
-    /*
-     * setup/save data for ieee8021BridgeBasePortDelayExceededDiscards
-     * ieee8021BridgeBasePortDelayExceededDiscards(4)/COUNTER64/ASN_COUNTER64/U64(U64)//l/A/w/e/r/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBasePortDelayExceededDiscards.high = ieee8021BridgeBasePortDelayExceededDiscards.high;
-    rowreq_ctx->data.ieee8021BridgeBasePortDelayExceededDiscards.low = ieee8021BridgeBasePortDelayExceededDiscards.low;
-    
-    /*
-     * setup/save data for ieee8021BridgeBasePortMtuExceededDiscards
-     * ieee8021BridgeBasePortMtuExceededDiscards(5)/COUNTER64/ASN_COUNTER64/U64(U64)//l/A/w/e/r/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBasePortMtuExceededDiscards.high = ieee8021BridgeBasePortMtuExceededDiscards.high;
-    rowreq_ctx->data.ieee8021BridgeBasePortMtuExceededDiscards.low = ieee8021BridgeBasePortMtuExceededDiscards.low;
-    
-    /*
-     * setup/save data for ieee8021BridgeBasePortCapabilities
-     * ieee8021BridgeBasePortCapabilities(6)/BITS/ASN_OCTET_STR/char(u_long)//L/A/w/E/r/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBasePortCapabilities = ieee8021BridgeBasePortCapabilities;
-    
-    /*
-     * setup/save data for ieee8021BridgeBasePortTypeCapabilities
-     * ieee8021BridgeBasePortTypeCapabilities(7)/BITS/ASN_OCTET_STR/char(u_long)//L/A/w/E/r/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBasePortTypeCapabilities = ieee8021BridgeBasePortTypeCapabilities;
-    
-    /*
-     * setup/save data for ieee8021BridgeBasePortType
-     * ieee8021BridgeBasePortType(8)/IEEE8021BridgePortType/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBasePortType = ieee8021BridgeBasePortType;
-    
-    /*
-     * setup/save data for ieee8021BridgeBasePortExternal
-     * ieee8021BridgeBasePortExternal(9)/TruthValue/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBasePortExternal = ieee8021BridgeBasePortExternal;
-    
-    /*
-     * setup/save data for ieee8021BridgeBasePortAdminPointToPoint
-     * ieee8021BridgeBasePortAdminPointToPoint(10)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBasePortAdminPointToPoint = ieee8021BridgeBasePortAdminPointToPoint;
-    
-    /*
-     * setup/save data for ieee8021BridgeBasePortOperPointToPoint
-     * ieee8021BridgeBasePortOperPointToPoint(11)/TruthValue/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBasePortOperPointToPoint = ieee8021BridgeBasePortOperPointToPoint;
-    
-    /*
-     * setup/save data for ieee8021BridgeBasePortName
-     * ieee8021BridgeBasePortName(12)/SnmpAdminString/ASN_OCTET_STR/char(char)//L/A/w/e/R/d/H
-     */
-    /** no mapping */
-    /*
-     * make sure there is enough space for ieee8021BridgeBasePortName data
-     */
-    if ((NULL == rowreq_ctx->data.ieee8021BridgeBasePortName) ||
-        (rowreq_ctx->data.ieee8021BridgeBasePortName_len <
-         (ieee8021BridgeBasePortName_len* sizeof(ieee8021BridgeBasePortName[0])))) {
-        snmp_log(LOG_ERR,"not enough space for value\n");
+    /* Connect to HAL to get information of the ports */
+    hal_ipc = wripc_connect("wrsw_hal");
+	if (hal_ipc < 0) {
+        snmp_log(LOG_ERR,"Unable to connect to HAL\n");
+        close(sockfd);
+		return MFD_ERROR;
+	}
+
+	DEBUGMSGTL(("ieee8021BridgeBasePortTable:"
+                "ieee8021BridgeBasePortTable_container_load",
+                "connected to HAL\n"));
+
+    /* Get port list */
+    if (wripc_call(hal_ipc, "halexp_query_all_ports", &port_list, 0) < 0) {
+        snmp_log(LOG_ERR,"halexp_query_all_ports has not worked\n");
+        wripc_close(hal_ipc);
+        close(sockfd);
         return MFD_ERROR;
     }
-    rowreq_ctx->data.ieee8021BridgeBasePortName_len = ieee8021BridgeBasePortName_len* sizeof(ieee8021BridgeBasePortName[0]);
-    memcpy( rowreq_ctx->data.ieee8021BridgeBasePortName, ieee8021BridgeBasePortName, ieee8021BridgeBasePortName_len* sizeof(ieee8021BridgeBasePortName[0]) );
-    
-        
-        /*
-         * insert into table container
-         */
-        CONTAINER_INSERT(container, rowreq_ctx);
-        ++count;
-    }
 
-    DEBUGMSGT(("verbose:ieee8021BridgeBasePortTable:ieee8021BridgeBasePortTable_container_load",
-               "inserted %d records\n", count));
+    ifr.ifr_addr.sa_family = AF_PACKET;
+    ifr.ifr_data = &req;
 
+    /* Iterate through port list */
+    for (i = 0; i < HAL_MAX_PORTS; i++) {
+        DEBUGMSGTL(("ieee8021BridgeBasePortTable:"
+                    "ieee8021BridgeBasePortTable_container_load",
+                    "port %d in port_list is: %s \n",
+                    i, port_list.port_names[i]));
+        /* Only interested in non null port names*/
+        if (port_list.port_names[i][0] != '\0') {
+		
+            /* Make custom ioctl to get PORTID from the corresponding endpoint*/			
+            strncpy(ifr.ifr_name, port_list.port_names[i], 
+                    sizeof(ifr.ifr_name));
+
+            req.cmd = WRN_ECR_GET_PORTID;            
+
+            if (ioctl(sockfd, PRIV_IOCGGETECR, &ifr) < 0) {
+                snmp_log(LOG_ERR, "ioctl PRIV_IOCGGETECR failed\n");
+            } else {
+                ieee8021BridgeBasePort = req.val;
+                DEBUGMSGTL(("ieee8021BridgeBasePortTable:"
+                            "ieee8021BridgeBasePortTable_container_load",
+                            "for port %d the PORTID value is: %i \n",
+                            i, req.val));
+
+                /* Allocate rowreq context */
+                rowreq_ctx = 
+                    ieee8021BridgeBasePortTable_allocate_rowreq_ctx(NULL);
+                if (NULL == rowreq_ctx) {
+                    snmp_log(LOG_ERR, "memory allocation failed\n");
+                    wripc_close(hal_ipc);
+                    close(sockfd);
+                    return MFD_RESOURCE_UNAVAILABLE;
+                }
+
+                /* Set indexes in the row requets context */
+                if (MFD_SUCCESS != ieee8021BridgeBasePortTable_indexes_set(
+                                    rowreq_ctx
+                                    , ieee8021BridgeBasePortComponentId
+                                    , ieee8021BridgeBasePort)) {
+                    snmp_log(LOG_ERR,"error setting index while loading "
+                             "ieee8021BridgeBasePortTable data.\n");
+                    ieee8021BridgeBasePortTable_release_rowreq_ctx(rowreq_ctx);
+                    wripc_close(hal_ipc);
+                    close(sockfd);
+                    continue;
+                }
+
+                /* Setup/save data for ieee8021BridgeBasePortIfIndex */
+                if (wripc_call(hal_ipc, "halexp_get_port_state", &port_state, 1, 
+                    A_STRING(port_list.port_names[i])) < 0) { /* Dummy port */
+                    rowreq_ctx->column_exists_flags = 
+                    IEEE8021BRIDGEBASEPORTTABLE_DUMMY_PORTS_COLS;
+                    rowreq_ctx->data.ieee8021BridgeBasePortIfIndex = 0;
+                    DEBUGMSGTL(("ieee8021BridgeBasePortTable:"
+                                "ieee8021BridgeBasePortTable_container_load",
+                                "dummy port (index 0)\n"));               
+                } else {
+                    rowreq_ctx->column_exists_flags = 
+                    IEEE8021BRIDGEBASEPORTTABLE_IMPLEMENTED_COLS;
+                    rowreq_ctx->data.ieee8021BridgeBasePortIfIndex = 
+                    port_state.hw_index;
+                    DEBUGMSGTL(("ieee8021BridgeBasePortTable:"
+                                "ieee8021BridgeBasePortTable_container_load",
+                                "hw_index is: %d \n",
+                                port_state.hw_index));
+
+                    /* Setup/save data for 
+                       ieee8021BridgeBasePortDelayExceededDiscards */
+                    /* TODO: WR: Need implementation (read the registers at HW) */
+                    rowreq_ctx->data.ieee8021BridgeBasePortDelayExceededDiscards.high = 0;
+                    rowreq_ctx->data.ieee8021BridgeBasePortDelayExceededDiscards.low = 0;
+
+                    /* Setup/save data for 
+                       ieee8021BridgeBasePortMtuExceededDiscards */
+                    /* TODO: WR: Need implementation (read the registers at HW) */
+                    rowreq_ctx->data.ieee8021BridgeBasePortMtuExceededDiscards.high = 0;
+                    rowreq_ctx->data.ieee8021BridgeBasePortMtuExceededDiscards.low = 0;
+                }            
+
+                /* Setup/save data for ieee8021BridgeBasePortCapabilities */
+                /* TODO: WR: Value hardcoded. We should probably think of a
+                   source where it can be read from (HAL?, config file?) */
+                rowreq_ctx->data.ieee8021BridgeBasePortCapabilities = 
+                IEEE8021BRIDGEBASEPORTCAPABILITIES_FLAG;
+
+                /* Setup/save data for ieee8021BridgeBasePortTypeCapabilities */
+                /* TODO: WR: Value hardcoded. We should probably think of a
+                   source where it can be read from (config file?) */
+                rowreq_ctx->data.ieee8021BridgeBasePortTypeCapabilities =
+                IEEE8021BRIDGEBASEPORTTYPECAPABILITIES_FLAG;
+                
+                /* Setup/save data for ieee8021BridgeBasePortType */
+                /* Read the QMODE flag in RFCR. If unqualified, 
+                   the type is dBridgePort. Else it is customerVlanPort */
+                req.cmd = WRN_RFCR_GET_QMODE;
+
+                if (ioctl(sockfd, PRIV_IOCGGETRFCR, &ifr) < 0) {
+                    snmp_log(LOG_ERR, "ioctl PRIV_IOCGGETRFCR failed\n");
+                    rowreq_ctx->column_exists_flags = 0;
+                } else {
+                    DEBUGMSGTL(("ieee8021BridgeBasePortTable:"
+                                "ieee8021BridgeBasePortTable_container_load",
+                                "QMODE: %d \n",
+                                req.val));
+                    if (req.val == RFCR_QMODE_UNQUALIFIED) {
+                        rowreq_ctx->data.ieee8021BridgeBasePortType =
+                        IEEE8021BRIDGEPORTTYPE_DBRIDGEPORT;
+                    } else {
+                        rowreq_ctx->data.ieee8021BridgeBasePortType =
+                        IEEE8021BRIDGEPORTTYPE_CUSTOMERVLANPORT;
+                    }
+                }
+                            
+                /* Setup/save data for ieee8021BridgeBasePortExternal */
+                /* Value hardcoded: In WR all the ports are external */
+                rowreq_ctx->data.ieee8021BridgeBasePortExternal =
+                    TRUTHVALUE_TRUE;
+
+                /* Setup/save data for ieee8021BridgeBasePortAdminPointToPoint */
+                /* TODO: WR: To be implemented when RSTP. Probably this info 
+                   is not applicable to dummy ports */
+                /* rowreq_ctx->data.ieee8021BridgeBasePortAdminPointToPoint =
+                   ieee8021BridgeBasePortAdminPointToPoint; */
+                
+                /* Setup/save data for ieee8021BridgeBasePortOperPointToPoint */
+                /* TODO: WR: To be implemented when RSTP. Probably this info 
+                   is not applicable to dummy ports*/
+                /* rowreq_ctx->data.ieee8021BridgeBasePortOperPointToPoint =
+                   ieee8021BridgeBasePortOperPointToPoint; */
+                            
+                /* Setup/save data for ieee8021BridgeBasePortName */            
+                name = &(port_list.port_names[i][0]);
+
+                rowreq_ctx->data.ieee8021BridgeBasePortName_len = sizeof(name);
+
+                if ((NULL == rowreq_ctx->data.ieee8021BridgeBasePortName) ||
+                    (rowreq_ctx->data.ieee8021BridgeBasePortName_len <
+                    sizeof(name))) {
+                        snmp_log(LOG_ERR,"no more than 32 characters"
+                                 " allowed\n");
+                        wripc_close(hal_ipc);
+                        close(sockfd);
+                        return MFD_ERROR;
+                }
+
+                memcpy(rowreq_ctx->data.ieee8021BridgeBasePortName,
+                       name, 
+                       sizeof(name));
+                
+                /* Insert into table container */
+                CONTAINER_INSERT(container, rowreq_ctx);
+            }
+        } /* Only interested in non null port names*/
+    } /* Iterate through port list */
+
+    wripc_close(hal_ipc);
+    close(sockfd);
     return MFD_SUCCESS;
 } /* ieee8021BridgeBasePortTable_container_load */
+
 
 /**
  * container clean up
