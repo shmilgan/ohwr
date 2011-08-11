@@ -1,7 +1,7 @@
 
 PROGRAM		= wrsw_rtud
-SRCFILES	= mac.c rtu_drv.c rtu_hash.c rtu_fd.c rtud.c \
-			rtud_exports.c utils.c
+SRCFILES	= mac.c rtu_drv.c rtu_hash.c rtu_hw.c rtu_fd.c rtu_fd_proxy.c \
+              rtu_fd_srv.c rtud.c utils.c
 OBJFILES	= $(patsubst %.c,%.o,$(SRCFILES))
 
 CC		= $(CROSS_COMPILE)gcc
@@ -16,7 +16,7 @@ CFLAGS		= -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL \
 			-I. -I../include -I$(WR_INCLUDE) -I$(LINUX)/include
 # -I$(CROSS_COMPILE_ARM_PATH)/../include
 
-LDFLAGS 	:= -L$(WR_LIB) -lswitchhw -lptpnetif  -lwripc -lpthread
+LDFLAGS 	:= -L$(WR_LIB) -lminipc -lswitchhw -lptpnetif  -lwripc -lpthread
 
 RM 	    := rm -f
 
