@@ -9,6 +9,13 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
+#include <sys/ioctl.h>
+#include <linux/if.h>
+
+#include <wr_ipc.h>
+#include <wrsw_hal.h>
+#include <hal_exports.h>
+
 /* include our parent header */
 #include "ieee8021BridgeTrafficClassTable.h"
 
@@ -189,89 +196,125 @@ int
 ieee8021BridgeTrafficClassTable_container_load(netsnmp_container *container)
 {
     ieee8021BridgeTrafficClassTable_rowreq_ctx *rowreq_ctx;
-    size_t                 count = 0;
 
-    /*
-     * temporary storage for index values
-     */
-        /*
-         * ieee8021BridgeBasePortComponentId(1)/IEEE8021PbbComponentIdentifier/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
-         */
-   u_long   ieee8021BridgeBasePortComponentId;
-        /*
-         * ieee8021BridgeBasePort(2)/IEEE8021BridgePortNumber/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
-         */
-   u_long   ieee8021BridgeBasePort;
-        /*
-         * ieee8021BridgeTrafficClassPriority(1)/IEEE8021PriorityValue/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
-         */
-   u_long   ieee8021BridgeTrafficClassPriority;
+    wripc_handle_t              hal_ipc;
+    hexp_port_list_t            port_list;
+    hexp_port_state_t           port_state;
+
+    struct ifreq                ifr;
+    struct wrn_register_req     req;
+    char                        *name;
+    int                         sockfd, i, prio;
+
+    /* Indexes */
+    u_long   ieee8021BridgeBasePortComponentId;
+    u_long   ieee8021BridgeBasePort;
+    u_long   ieee8021BridgeTrafficClassPriority;
 
 
-    DEBUGMSGTL(("verbose:ieee8021BridgeTrafficClassTable:ieee8021BridgeTrafficClassTable_container_load","called\n"));
+    DEBUGMSGTL(("ieee8021BridgeTrafficClassTable:"
+                "ieee8021BridgeTrafficClassTable_container_load", "called\n"));
 
-    /*
-     * TODO:351:M: |-> Load/update data in the ieee8021BridgeTrafficClassTable container.
-     * loop over your ieee8021BridgeTrafficClassTable data, allocate a rowreq context,
-     * set the index(es) [and data, optionally] and insert into
-     * the container.
-     */
-    while( 1 ) {
-        /*
-         * check for end of data; bail out if there is no more data
-         */
-        if( 1 )
-            break;
+    /* Set index value for the Component Id */
+    ieee8021BridgeBasePortComponentId = DEFAULT_COMPONENTID;
 
-        /*
-         * TODO:352:M: |   |-> set indexes in new ieee8021BridgeTrafficClassTable rowreq context.
-         * data context will be set from the param (unless NULL,
-         *      in which case a new data context will be allocated)
-         */
-        rowreq_ctx = ieee8021BridgeTrafficClassTable_allocate_rowreq_ctx(NULL);
-        if (NULL == rowreq_ctx) {
-            snmp_log(LOG_ERR, "memory allocation failed\n");
-            return MFD_RESOURCE_UNAVAILABLE;
-        }
-        if(MFD_SUCCESS != ieee8021BridgeTrafficClassTable_indexes_set(rowreq_ctx
-                               , ieee8021BridgeBasePortComponentId
-                               , ieee8021BridgeBasePort
-                               , ieee8021BridgeTrafficClassPriority
-               )) {
-            snmp_log(LOG_ERR,"error setting index while loading "
-                     "ieee8021BridgeTrafficClassTable data.\n");
-            ieee8021BridgeTrafficClassTable_release_rowreq_ctx(rowreq_ctx);
-            continue;
-        }
-
-        /*
-         * TODO:352:r: |   |-> populate ieee8021BridgeTrafficClassTable data context.
-         * Populate data context here. (optionally, delay until row prep)
-         */
-    /*
-     * TRANSIENT or semi-TRANSIENT data:
-     * copy data or save any info needed to do it in row_prep.
-     */
-    /*
-     * setup/save data for ieee8021BridgeTrafficClass
-     * ieee8021BridgeTrafficClass(2)/INTEGER32/ASN_INTEGER/long(long)//l/A/W/e/R/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeTrafficClass = ieee8021BridgeTrafficClass;
-    
-        
-        /*
-         * insert into table container
-         */
-        CONTAINER_INSERT(container, rowreq_ctx);
-        ++count;
+    /* Create socket interface */
+    sockfd = socket(AF_PACKET, SOCK_RAW, 0);
+    if (sockfd < 0) {
+        snmp_log(LOG_ERR,"socket failed\n");
+        return MFD_RESOURCE_UNAVAILABLE;
     }
 
-    DEBUGMSGT(("verbose:ieee8021BridgeTrafficClassTable:ieee8021BridgeTrafficClassTable_container_load",
-               "inserted %d records\n", count));
+    /* Connect to HAL to get information of the ports */
+    hal_ipc = wripc_connect("wrsw_hal");
+	if(hal_ipc < 0)	{
+        snmp_log(LOG_ERR,"Unable to connect to HAL\n");
+        close(sockfd);
+		return MFD_ERROR;
+	}
 
+	DEBUGMSGTL(("ieee8021BridgeTrafficClassTable:"
+                "ieee8021BridgeTrafficClassTable_container_load",
+                "connected to HAL\n"));
+
+    /* Get port list */
+    if (wripc_call(hal_ipc, "halexp_query_all_ports", &port_list, 0) < 0) {
+        snmp_log(LOG_ERR,"halexp_query_all_ports has not worked\n");
+        wripc_close(hal_ipc);
+        close(sockfd);
+        return MFD_ERROR;
+    }
+
+    /* Iterate through port list */
+    for (i = 0; i < HAL_MAX_PORTS; i++) {
+        DEBUGMSGTL(("ieee8021BridgePortPriorityTable:"
+                    "ieee8021BridgePortPriorityTable_container_load",
+                    "port %d in port_list is: %s \n",
+                    i, port_list.port_names[i]));
+
+        /* Only interested in non null port names*/
+        if (port_list.port_names[i][0] != '\0') {
+            /* Make custom ioctl to get data */
+			ifr.ifr_addr.sa_family = AF_PACKET;
+            strncpy(ifr.ifr_name, port_list.port_names[i], sizeof(ifr.ifr_name));
+
+            req.cmd = WRN_ECR_GET_PORTID;
+            ifr.ifr_data = &req;
+
+            if (ioctl(sockfd, PRIV_IOCGGETECR, &ifr) < 0) {
+                snmp_log(LOG_ERR, "ioctl PRIV_IOCGGETECR failed\n");
+            } else {
+                ieee8021BridgeBasePort = req.val;
+                DEBUGMSGTL(("ieee8021BridgePortPriorityTable:"
+                            "ieee8021BridgePortPriorityTable_container_load",
+                            "for port %d the PORTID value is: %i \n",
+                            i, req.val));
+
+                /* Iterate through traffic class priorities */
+                for (prio = 0; prio < 8; prio++) {
+                    ieee8021BridgeTrafficClassPriority = prio;
+
+                    /* Allocate rowreq context */
+                    rowreq_ctx =
+                      ieee8021BridgeTrafficClassTable_allocate_rowreq_ctx(NULL);
+                    if (NULL == rowreq_ctx) {
+                        snmp_log(LOG_ERR, "memory allocation failed\n");
+                        return MFD_RESOURCE_UNAVAILABLE;
+                    }
+
+                    rowreq_ctx->column_exists_flags =
+                        COLUMN_IEEE8021BRIDGETRAFFICCLASS_FLAG;
+
+                    /* Set indexes in the row requets context */
+                    if(MFD_SUCCESS !=
+                        ieee8021BridgeTrafficClassTable_indexes_set(rowreq_ctx
+                                           , ieee8021BridgeBasePortComponentId
+                                           , ieee8021BridgeBasePort
+                                           , ieee8021BridgeTrafficClassPriority
+                           )) {
+                        snmp_log(LOG_ERR,"error setting index while loading "
+                                 "ieee8021BridgeTrafficClassTable data.\n");
+                        ieee8021BridgeTrafficClassTable_release_rowreq_ctx(
+                            rowreq_ctx);
+                        continue;
+                    }
+
+                    /* Setup/save data for ieee8021BridgeTrafficClass */
+                    /* TODO:WR: Complete when HW support for TCs be provided */
+                    rowreq_ctx->data.ieee8021BridgeTrafficClass = 4;
+
+                    /* insert into table container */
+                    CONTAINER_INSERT(container, rowreq_ctx);
+                }
+            }
+        } /* Only interested in non null port names*/
+    } /* Iterate through port list */
+
+    wripc_close(hal_ipc);
+    close(sockfd);
     return MFD_SUCCESS;
 } /* ieee8021BridgeTrafficClassTable_container_load */
+
 
 /**
  * container clean up

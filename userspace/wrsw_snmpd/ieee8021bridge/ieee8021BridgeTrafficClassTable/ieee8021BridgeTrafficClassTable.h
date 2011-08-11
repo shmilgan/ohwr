@@ -33,6 +33,19 @@ config_require(IEEE8021-BRIDGE-MIB/ieee8021BridgeTrafficClassTable/ieee8021Bridg
 /* enum definions */
 #include "ieee8021BridgeTrafficClassTable_enums.h"
 
+
+#define DEFAULT_COMPONENTID 1
+
+/* Custom IOCTLs */
+#define PRIV_IOCGGETECR (SIOCDEVPRIVATE+5)
+#define WRN_ECR_GET_PORTID 4
+
+/* For custom ioctl operations on endpoint registers */
+struct wrn_register_req {
+    int         cmd;
+    uint32_t    val;
+};
+
 /* *********************************************************************
  * function declarations
  */
