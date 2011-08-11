@@ -50,12 +50,23 @@
 #define CAM_ENTRIES             (((RTU_HCAM_WORDS)/(ENTRY_WORDS))/(RTU_BANKS))
 #define LAST_CAM_ENTRY          ((CAM_ENTRIES)-1)
 
+#define NUM_PORTS               32
 #define MIN_PORT                0
 #define MAX_PORT                9
 #define NIC_PORT                10
 
-// Maximum number of supported VLANs
+// Number of supported VLANs
 #define NUM_VLANS               4096
+// Reserved VLANS: 0x000 and 0xFFF
+#define NUM_RESERVED_VLANS      2
+// Maximum VLAN identifier (0xFFF reserved)
+#define MAX_VID                 0xFFE
+// Default VID for untagged frames
+#define DEFAULT_VID             0x001
+// Wildcard VID used by management to refer to any VID
+#define WILDCARD_VID            0xFFF
+// Number of Filtering database identifiers
+#define NUM_FIDS                256
 
 #define NUM_RESERVED_ADDR       16
 
@@ -75,6 +86,26 @@
 #define TRACE_DBG(...)
 #endif
 
+enum filtering_control {
+	Filter 	= 0,
+	Forward	= 1,
+	Dynamic	= 2
+};
+
+enum registrar_control {
+    Registration_forbidden	= 0,
+    Registration_fixed      = 1, 
+    Normal_registration     = 2
+}; 
+
+enum storage_type {
+	Other           = 1,
+	Volatile        = 2,
+	Non_volatile    = 3,
+	Permanent       = 4,
+	Read_only       = 5
+};
+
 /**
  * \brief RTU request: input for the RTU
  */
@@ -87,6 +118,23 @@ struct rtu_request {
     uint8_t prio;          // packet priority (either assigned by the port
                            // or extracted from packet header)
     int has_prio;          // non-zero: priority present, 0:no priority defined
+};
+
+/**
+ * \brief Static Filtering Database Entry Object
+ */
+struct static_filtering_entry {
+    uint8_t mac[ETH_ALEN];                      // MAC address 
+    uint16_t vid;                               // VLAN ID 
+    enum filtering_control port_map[NUM_PORTS];	// port map for dest address	
+    enum storage_type type;		                // Entry storage type. Reserved 
+                                                // entries marked as permanent
+    struct static_filtering_entry *next;	    // Double linked list (in 
+    struct static_filtering_entry *prev;        // lexicographic order)
+    struct static_filtering_entry *next_sib;    // Next static entry with the 
+                                                // same MAC and a VID that maps 
+                                                // to the same FID
+    int active;
 };
 
 /**
@@ -140,7 +188,26 @@ struct filtering_entry {
     uint16_t cam_addr;            // address of the first entry in CAM memory
                                   // (2 words)
 
-    int dynamic;
+    int dynamic;                  // 1 = contains dynamic information. An entry 
+                                  // may contain both, static and dynamic info.
+
+    uint32_t use_dynamic; 	      // Identifies the static and dynamic part of 
+                                  // the filtering entry
+                                  // For static entries, bits set to 1 indicate 
+                                  // to use dynamic information (in case it 
+                                  // exists) to determine whether to forward or 
+                                  // filter (802.1Q 8.8.1).				
+                                  // Combines information for all the static 
+                    		      // entries associated to this MAC address and 
+                                  // FID.
+
+    struct static_filtering_entry *static_fdb;  
+                                  // static entries with same MAC and VIDs that 
+                                  // map to same FID. When static_fdb is not 
+                                  // NULL, the entry contains static information
+
+    struct filtering_entry *next; // Double linked list (in lexicographic order)
+    struct filtering_entry *prev; // 
 };
 
 /**
@@ -153,7 +220,17 @@ struct vlan_table_entry {
     int has_prio;           // priority defined;
     int prio_override;      // priority override (force per-VLAN priority)
     int drop;               // 1: drop the packet (VLAN not registered)
+
+    uint32_t use_dynamic; 	// For static entries, bits set to 1 indicate to use 
+                            // dynamic information to determine the member set
+    uint32_t untagged_set;  // Bits set to 1 indicate that frames shall be sent 
+                            // untagged in the corresponding port
+    int dynamic;            // pure static:         0
+                            // pure dynamic:	    1
+                            // dynamic and static:	2
+    uint32_t creation_t;    // value of sysUpTime when this VLAN was created.
 };
+
 
 /**
  * \brief Copies src filtering entry body into dst filtering entry body.

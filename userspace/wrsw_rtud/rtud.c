@@ -45,55 +45,7 @@
 #include "rtu_hash.h"
 #include "utils.h"
 
-
 static pthread_t aging_process;
-
-/**
- * \brief Creates the static entries in the filtering database
- * @return error code
- */
-static int rtu_create_static_entries()
-{
-    uint8_t bcast_mac[]         = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-    uint8_t slow_proto_mac[]    = {0x01, 0x80, 0xc2, 0x00, 0x00, 0x01};
-    hexp_port_list_t plist;
-    hexp_port_state_t pstate;
-    int i, err;
-
-    // Broadcast MAC
-    TRACE(TRACE_INFO,"adding static route for broadcast MAC...");
-    err = rtu_fdb_create_entry(bcast_mac, 1, 0xffffffff, STATIC);
-    if(err)
-        return err;
-
-    // VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
-    TRACE(TRACE_INFO,"adding static routes for slow protocols...");
-    for(i = 0; i < NUM_RESERVED_ADDR; i++) {
-        slow_proto_mac[5] = i;
-        err = rtu_fdb_create_entry(slow_proto_mac, 1, (1 << NIC_PORT), STATIC);
-        if(err)
-            return err;
-    }
-
-    // packets addressed to WR card interfaces are forwarded to NIC virtual port
-    halexp_query_ports(&plist);
-    for(i = 0; i < plist.num_ports; i++) {
-        halexp_get_port_state(&pstate, plist.port_names[i]);
-        TRACE(
-            TRACE_INFO,
-            "adding static route for port %s index %d [mac %s]",
-            plist.port_names[i],
-            pstate.hw_index,
-            mac_to_string(pstate.hw_addr)
-        );
-		err = rtu_fdb_create_entry(pstate.hw_addr, 1, (1 << NIC_PORT), STATIC);
-        if(err)
-            return err;
-    }
-
-    return 0;
-}
-
 
 /**
  * \brief Periodically removes the filtering database old entries.
@@ -104,7 +56,7 @@ static void *rtu_daemon_aging_process(void *arg)
     unsigned long aging_res = (unsigned long)arg;
 
     while(1){
-        rtu_fdb_age();
+        rtu_fdb_age_dynamic_entries();
         sleep(aging_res);
     }
     return NULL;
@@ -132,21 +84,21 @@ static int rtu_daemon_learning_process()
                 "ureq: port %d src %s VID %d priority %d",
                 req.port_id,
                 mac_to_string(req.src),
-                req.has_vid  ? req.vid:1,
+                req.has_vid  ? req.vid:DEFAULT_VID,
                 req.has_prio ? req.prio:0
             );
-            // If req has no VID, use 1 (untagged packet)
-            vid      = req.has_vid ? req.vid:1;
+            // If req has no VID, use default for untagged packets
+            vid      = req.has_vid ? req.vid:DEFAULT_VID;
             port_map = (1 << req.port_id);
             // 802.1Q checking list:
             // 1. Check port is in learning state. Done at HW
-            // 2. Check MAC address is unicast. 
-            if (req.src[0] & 1) // would prefer doing it at HW...
+            // 2. Check MAC address is unicast.
+            if (mac_multicast(req.src)) // would prefer doing it at HW...
                 continue;
             // 3. Check FDB is not full. Done at FDB
             // 4. Check VLAN member set is not empty. Done at FDB.
             // create or update entry at filtering database
-            err = rtu_fdb_create_entry(req.src, vid, port_map, DYNAMIC);
+            err = rtu_fdb_create_dynamic_entry(req.src, vid, port_map);
             if (err == -ENOMEM) {
                 // TODO remove oldest entries (802.1D says you MAY do it)
                 TRACE(TRACE_INFO, "filtering database full\n");
@@ -196,11 +148,6 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
     TRACE(TRACE_INFO, "init fd.");
     err = rtu_fdb_init(poly, aging_time);
     if (err)
-        return err;
-
-    // create static filtering entries
-    err = rtu_create_static_entries();
-    if(err)
         return err;
 
     // turn on RTU

@@ -43,6 +43,11 @@ static inline int mac_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN])
     return !memcmp(a, b, ETH_ALEN);
 }
 
+static inline int mac_cmp(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN])
+{
+    return memcmp(a, b, ETH_ALEN);
+}
+
 /**
  * \brief copies src mac address into dst mac address.
  * @return pointer to dst mac address
@@ -59,6 +64,15 @@ static inline uint8_t* mac_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
 static inline uint8_t* mac_clean(uint8_t mac[ETH_ALEN])
 {
     return memset(mac, 0x00, ETH_ALEN);
+}
+
+/**
+ * \brief Checks whether mac address is multicast.
+ * @return 1 if mac is a multicast address
+ */
+static inline int mac_multicast(uint8_t mac[ETH_ALEN])
+{
+    return mac[0] & 1;
 }
 
 char *mac_to_string(uint8_t mac[ETH_ALEN]);

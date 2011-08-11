@@ -35,6 +35,7 @@ int rtu_hw_clean_htab_entry(uint16_t addr);
 int rtu_hw_clean_hcam_entry(uint16_t addr);
 void rtu_hw_clean_fdb(void);
 void rtu_hw_commit(void);
+void rtu_hw_rollback(void);
 
 #endif /*__WHITERABBIT_RTU_HW_H*/
 

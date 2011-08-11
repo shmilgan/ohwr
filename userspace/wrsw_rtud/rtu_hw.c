@@ -23,6 +23,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <stdlib.h>
+
 #include "rtu_drv.h"
 #include "rtu_hw.h"
 
@@ -70,12 +72,12 @@ static uint8_t bank;
  */
 static int add_hw_req(int type, int mem, uint16_t addr, struct filtering_entry *ent)
 {
-    struct hw_req *req, *ptr;
-    
+    struct hw_req *req, *ptr = NULL;
+
     // get tail of current list
     if (hw_req_list) {
         for (ptr = hw_req_list; ptr->next; ptr = ptr->next) {
-            if (ptr->handle.entry_ptr == ent)   
+            if (ptr->handle.entry_ptr == ent)
                 return 0; // avoid duplicated writes
         }
     }
@@ -186,7 +188,7 @@ void rtu_hw_clean_fdb(void){
 /**
  * \brief Commits entry changes at software to hardware HTAB and HCAM.
  */
-void rtu_hw_commit(void) 
+void rtu_hw_commit(void)
 {
     if(!hw_req_list)
         return;
@@ -199,6 +201,15 @@ void rtu_hw_commit(void)
     commit();
 
     // the list is no longer needed
+    clean_list(hw_req_list);
+    hw_req_list = NULL;
+}
+
+/**
+ * \brief Orders to delete pending entry changes at software.
+ */
+void rtu_hw_rollback(void)
+{
     clean_list(hw_req_list);
     hw_req_list = NULL;
 }

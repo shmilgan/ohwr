@@ -2,7 +2,7 @@
  * White Rabbit RTU (Routing Table Unit)
  * Copyright (C) 2010, CERN.
  *
- * Version:     wrsw_rtud v1.0
+ * Version:     wrsw_rtud v2.0
  *
  * Authors:     Juan Luis Manas (juan.manas@integrasys.es)
  *              Miguel Baizan   (miguel.baizan@integrasys.es)
@@ -40,19 +40,94 @@
 #define STATIC          0
 #define DYNAMIC         1
 
+// Static filtering entries may be active or inactive. Only active entries
+// are used to compute the forward vector for a FDB entry.
+#define NOT_IN_SERVICE  0
+#define ACTIVE          1
+
 int rtu_fdb_init(uint16_t poly, unsigned long aging)
         __attribute__((warn_unused_result));
 
-int rtu_fdb_create_entry(
+int rtu_fdb_create_dynamic_entry(
             uint8_t mac[ETH_ALEN],
             uint16_t vid,
-            uint32_t port_map,
-            int dynamic
+            uint32_t port_map
      ) __attribute__((warn_unused_result));
 
-int  rtu_fdb_set_aging_time(unsigned long t) __attribute__((warn_unused_result));
+int  rtu_fdb_create_static_entry(
+            uint8_t mac[ETH_ALEN],
+            uint16_t vid,
+            enum filtering_control port_map[NUM_PORTS],
+            enum storage_type type,
+            int active
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_create_static_vlan_entry(
+            uint16_t vid,
+            uint8_t fid,
+        	enum registrar_control member_set[NUM_PORTS],
+        	uint32_t untagged_set
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_delete_static_entry(
+            uint8_t mac[ETH_ALEN],
+            uint16_t vid
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_read_entry(
+           uint8_t mac[ETH_ALEN],
+           uint8_t fid,
+           uint32_t *port_map,
+           int *entry_type
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_read_next_entry(
+           uint8_t (*mac)[ETH_ALEN],                            // inout
+           uint8_t *fid,                                        // inout
+           uint32_t *port_map,                                  // out
+           int *entry_type                                      // out
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_read_static_entry(
+            uint8_t mac[ETH_ALEN],
+            uint16_t vid,
+            enum filtering_control (*port_map)[NUM_PORTS],      // out
+            enum storage_type *type,                            // out
+            int *active                                         // out
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_read_next_static_entry(
+            uint8_t (*mac)[ETH_ALEN],                           // inout
+            uint16_t *vid,                                      // inout
+            enum filtering_control (*port_map)[NUM_PORTS],      // out
+            enum storage_type *type,                            // out
+            int *active                                         // out
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_read_static_vlan_entry(
+            uint16_t vid,
+	        enum registrar_control (*member_set)[NUM_PORTS],    // out
+	        uint32_t *untagged_set					            // out
+     ) __attribute__((warn_unused_result));
+
 void rtu_fdb_set_hash_poly(uint16_t poly);
-void rtu_fdb_age(void);
+
+void rtu_fdb_age_dynamic_entries(void);
+
+int  rtu_fdb_set_aging_time(
+            uint8_t fid,
+            unsigned long t
+    ) __attribute__((warn_unused_result));
+
+unsigned long rtu_fdb_get_aging_time(uint8_t fid);
+
+uint16_t rtu_fdb_get_num_dynamic_entries(uint8_t fid);
+uint32_t rtu_fdb_get_num_learned_entry_discards(uint8_t fid);
+uint16_t rtu_fdb_get_num_vlans(void);
+uint16_t rtu_fdb_get_max_supported_vlans(void);
+uint16_t rtu_fdb_get_max_vid(void);
+uint64_t rtu_fdb_get_num_vlan_deletes(void);
+uint8_t  rtu_fdb_get_next_fid(uint8_t fid);
 
 #endif /*__WHITERABBIT_RTU_FD_H*/
 
