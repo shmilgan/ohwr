@@ -4,6 +4,7 @@ ROOTFS_OVERRIDE = $(WRS_BASE_DIR)/../userspace/rootfs_override
 
 IEEE8021BRIDGEBASETABLE=ieee8021BridgeBaseTable/ieee8021BridgeBaseTable
 IEEE8021BRIDGEBASEPORTTABLE = ieee8021BridgeBasePortTable/ieee8021BridgeBasePortTable
+IEEE8021BRIDGETPPORTTABLE=ieee8021BridgeTpPortTable/ieee8021BridgeTpPortTable
 
 CC 	= $(CROSS_COMPILE)gcc
 
@@ -26,6 +27,12 @@ OBJS += $(IEEE8021BRIDGEBASEPORTTABLE)_data_get.o \
 	    $(IEEE8021BRIDGEBASEPORTTABLE).o \
 	    $(IEEE8021BRIDGEBASEPORTTABLE)_interface.o
 
+OBJS += $(IEEE8021BRIDGETPPORTTABLE)_data_get.o \
+	    $(IEEE8021BRIDGETPPORTTABLE)_data_set.o \
+	    $(IEEE8021BRIDGETPPORTTABLE)_data_access.o \
+	    $(IEEE8021BRIDGETPPORTTABLE).o \
+	    $(IEEE8021BRIDGETPPORTTABLE)_interface.o
+
 
 LIB 	= libieee8021bridge.so
 
@@ -33,6 +40,7 @@ LIB 	= libieee8021bridge.so
 all:	
 	cd ieee8021BridgeBaseTable; make -f Makefile;
 	cd ieee8021BridgeBasePortTable; make -f Makefile;
+	cd ieee8021BridgeTpPortTable; make -f Makefile;
 	$(CC) -o $(LIB) $(LDFLAGS) $(OBJS)
 
 
