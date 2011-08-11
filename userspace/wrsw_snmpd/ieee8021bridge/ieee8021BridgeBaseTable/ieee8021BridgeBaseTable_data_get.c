@@ -415,7 +415,6 @@ ieee8021BridgeBaseDeviceCapabilities_get( ieee8021BridgeBaseTable_rowreq_ctx *ro
  * TODO:231:o: |-> Extract the current value of the ieee8021BridgeBaseDeviceCapabilities data.
  * copy (* ieee8021BridgeBaseDeviceCapabilities_val_ptr ) from rowreq_ctx->data
  */
-    return MFD_SKIP;
     /*
      * TODO:242:o: update or replace BITS tests (get).
      * If ieee8021BridgeBaseDeviceCapabilities data is stored in SNMP BIT order, individual
@@ -428,7 +427,8 @@ ieee8021BridgeBaseDeviceCapabilities_get( ieee8021BridgeBaseTable_rowreq_ctx *ro
      *
      * assuming generated code keeps ieee8021BridgeBaseDeviceCapabilities BITS in SNMP order.
      */
-    (* ieee8021BridgeBaseDeviceCapabilities_val_ptr ) = @m2c_ctx_rh;
+    (* ieee8021BridgeBaseDeviceCapabilities_val_ptr ) =
+        rowreq_ctx->data.ieee8021BridgeBaseDeviceCapabilities;
 
     return MFD_SUCCESS;
 } /* ieee8021BridgeBaseDeviceCapabilities_get */

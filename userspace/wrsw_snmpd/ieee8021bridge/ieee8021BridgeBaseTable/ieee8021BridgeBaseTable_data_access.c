@@ -9,6 +9,14 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
+#include <sys/ioctl.h>
+#include <linux/if.h>
+#include <linux/if_ether.h>
+
+#include <wr_ipc.h>
+#include <wrsw_hal.h>
+#include <hal_exports.h>
+
 /* include our parent header */
 #include "ieee8021BridgeBaseTable.h"
 
@@ -188,132 +196,190 @@ ieee8021BridgeBaseTable_container_shutdown(netsnmp_container *container_ptr)
 int
 ieee8021BridgeBaseTable_container_load(netsnmp_container *container)
 {
-    ieee8021BridgeBaseTable_rowreq_ctx *rowreq_ctx;
-    size_t                 count = 0;
+    ieee8021BridgeBaseTable_rowreq_ctx  *rowreq_ctx;
 
-    /*
-     * temporary storage for index values
-     */
-        /*
-         * ieee8021BridgeBaseComponentId(1)/IEEE8021PbbComponentIdentifier/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
-         */
-   u_long   ieee8021BridgeBaseComponentId;
+    wripc_handle_t          hal_ipc;
+    hexp_port_list_t        port_list;
+
+    struct ifreq            ifr;
+    char                    if_name[MAX_IFNAME_SIZE];
+    uint32_t                mac_high, mac_low;
+    uint32_t                mac_high_prev = 0;
+    uint32_t                mac_low_prev = 0;
+    int                     sockfd, i;
+
+    /* Index */
+    u_long   ieee8021BridgeBaseComponentId;
 
 
-    DEBUGMSGTL(("verbose:ieee8021BridgeBaseTable:ieee8021BridgeBaseTable_container_load","called\n"));
+    DEBUGMSGTL(("ieee8021BridgeBaseTable:ieee8021BridgeBaseTable_container_load"
+                ,"called\n"));
 
-    /*
-     * TODO:351:M: |-> Load/update data in the ieee8021BridgeBaseTable container.
-     * loop over your ieee8021BridgeBaseTable data, allocate a rowreq context,
-     * set the index(es) [and data, optionally] and insert into
-     * the container.
-     */
-    while( 1 ) {
-        /*
-         * check for end of data; bail out if there is no more data
-         */
-        if( 1 )
-            break;
+    /* Set index value for the Component Id */
+    ieee8021BridgeBaseComponentId = DEFAULT_COMPONENTID;
 
-        /*
-         * TODO:352:M: |   |-> set indexes in new ieee8021BridgeBaseTable rowreq context.
-         * data context will be set from the param (unless NULL,
-         *      in which case a new data context will be allocated)
-         */
-        rowreq_ctx = ieee8021BridgeBaseTable_allocate_rowreq_ctx(NULL);
-        if (NULL == rowreq_ctx) {
-            snmp_log(LOG_ERR, "memory allocation failed\n");
-            return MFD_RESOURCE_UNAVAILABLE;
-        }
-        if(MFD_SUCCESS != ieee8021BridgeBaseTable_indexes_set(rowreq_ctx
-                               , ieee8021BridgeBaseComponentId
-               )) {
-            snmp_log(LOG_ERR,"error setting index while loading "
-                     "ieee8021BridgeBaseTable data.\n");
-            ieee8021BridgeBaseTable_release_rowreq_ctx(rowreq_ctx);
-            continue;
-        }
+    /* Allocate rowreq context */
+    rowreq_ctx = ieee8021BridgeBaseTable_allocate_rowreq_ctx(NULL);
+    if (NULL == rowreq_ctx) {
+        snmp_log(LOG_ERR, "memory allocation failed\n");
+        return MFD_RESOURCE_UNAVAILABLE;
+    }
 
-        /*
-         * TODO:352:r: |   |-> populate ieee8021BridgeBaseTable data context.
-         * Populate data context here. (optionally, delay until row prep)
-         */
-    /*
-     * TRANSIENT or semi-TRANSIENT data:
-     * copy data or save any info needed to do it in row_prep.
-     */
-    /*
-     * setup/save data for ieee8021BridgeBaseBridgeAddress
-     * ieee8021BridgeBaseBridgeAddress(2)/MacAddress/ASN_OCTET_STR/char(char)//L/A/W/e/R/d/H
-     */
-    /** no mapping */
-    /*
-     * make sure there is enough space for ieee8021BridgeBaseBridgeAddress data
-     */
+    rowreq_ctx->column_exists_flags = COLUMNS_IMPLEMENTED;
+
+    /* Set indexes in the row requets context */
+    if (MFD_SUCCESS != ieee8021BridgeBaseTable_indexes_set(rowreq_ctx,
+        ieee8021BridgeBaseComponentId)) {
+        snmp_log(LOG_ERR,"error setting index while loading "
+                 "ieee8021BridgeBaseTable data.\n");
+        ieee8021BridgeBaseTable_release_rowreq_ctx(rowreq_ctx);
+        return MFD_CANNOT_CREATE_NOW;
+    }
+
+    DEBUGMSGTL(("ieee8021BridgeBaseTable:ieee8021BridgeBaseTable_container_load"
+                ,"indexes set\n"));
+
+    /* Populate ieee8021BridgeBaseTable data context */
+
+    /* Setup/save data for ieee8021BridgeBaseBridgeAddress */
+    /* TODO: This object is permanent, so it should be read from a configuration
+       file. For now, it will be the numerically smallest MAC address of the
+       switch, as suggested by the standard */
     if ((NULL == rowreq_ctx->data.ieee8021BridgeBaseBridgeAddress) ||
-        (rowreq_ctx->data.ieee8021BridgeBaseBridgeAddress_len <
-         (ieee8021BridgeBaseBridgeAddress_len* sizeof(ieee8021BridgeBaseBridgeAddress[0])))) {
+        (sizeof(rowreq_ctx->data.ieee8021BridgeBaseBridgeAddress) < ETH_ALEN)) {
         snmp_log(LOG_ERR,"not enough space for value\n");
         return MFD_ERROR;
     }
-    rowreq_ctx->data.ieee8021BridgeBaseBridgeAddress_len = ieee8021BridgeBaseBridgeAddress_len* sizeof(ieee8021BridgeBaseBridgeAddress[0]);
-    memcpy( rowreq_ctx->data.ieee8021BridgeBaseBridgeAddress, ieee8021BridgeBaseBridgeAddress, ieee8021BridgeBaseBridgeAddress_len* sizeof(ieee8021BridgeBaseBridgeAddress[0]) );
-    
-    /*
-     * setup/save data for ieee8021BridgeBaseNumPorts
-     * ieee8021BridgeBaseNumPorts(3)/INTEGER32/ASN_INTEGER/long(long)//l/A/w/e/r/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBaseNumPorts = ieee8021BridgeBaseNumPorts;
-    
-    /*
-     * setup/save data for ieee8021BridgeBaseComponentType
-     * ieee8021BridgeBaseComponentType(4)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBaseComponentType = ieee8021BridgeBaseComponentType;
-    
-    /*
-     * setup/save data for ieee8021BridgeBaseDeviceCapabilities
-     * ieee8021BridgeBaseDeviceCapabilities(5)/BITS/ASN_OCTET_STR/char(u_long)//L/A/W/E/r/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBaseDeviceCapabilities = ieee8021BridgeBaseDeviceCapabilities;
-    
-    /*
-     * setup/save data for ieee8021BridgeBaseTrafficClassesEnabled
-     * ieee8021BridgeBaseTrafficClassesEnabled(6)/TruthValue/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBaseTrafficClassesEnabled = ieee8021BridgeBaseTrafficClassesEnabled;
-    
-    /*
-     * setup/save data for ieee8021BridgeBaseMmrpEnabledStatus
-     * ieee8021BridgeBaseMmrpEnabledStatus(7)/TruthValue/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBaseMmrpEnabledStatus = ieee8021BridgeBaseMmrpEnabledStatus;
-    
-    /*
-     * setup/save data for ieee8021BridgeBaseRowStatus
-     * ieee8021BridgeBaseRowStatus(8)/RowStatus/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h
-     */
-    /** no mapping */
-    rowreq_ctx->data.ieee8021BridgeBaseRowStatus = ieee8021BridgeBaseRowStatus;
-    
-        
-        /*
-         * insert into table container
-         */
-        CONTAINER_INSERT(container, rowreq_ctx);
-        ++count;
+
+    rowreq_ctx->data.ieee8021BridgeBaseBridgeAddress_len = ETH_ALEN;
+
+    /* Create socket interface */
+    sockfd = socket(AF_PACKET, SOCK_RAW, 0);
+    if (sockfd < 0) {
+        snmp_log(LOG_ERR,"socket failed\n");
+        return MFD_RESOURCE_UNAVAILABLE;
     }
 
-    DEBUGMSGT(("verbose:ieee8021BridgeBaseTable:ieee8021BridgeBaseTable_container_load",
-               "inserted %d records\n", count));
+    /* Connect to HAL to get information of the ports */
+    hal_ipc = wripc_connect("wrsw_hal");
+	if (hal_ipc < 0) {
+        snmp_log(LOG_ERR,"Unable to connect to HAL\n");
+        close(sockfd);
+		return MFD_ERROR;
+	}
 
+	DEBUGMSGTL(("ieee8021BridgeBaseTable:ieee8021BridgeBaseTable_container_load"
+                ,"connected to HAL\n"));
+
+    /* Get port list */
+    if (wripc_call(hal_ipc, "halexp_query_all_ports", &port_list, 0) < 0) {
+        snmp_log(LOG_ERR,"halexp_query_all_ports has not worked\n");
+        wripc_close(hal_ipc);
+        close(sockfd);
+        return MFD_ERROR;
+    }
+
+    /* Iterate through port list */
+    for (i = 0; i < HAL_MAX_PORTS; i++) {
+        DEBUGMSGTL(("ieee8021BridgeBaseTable:"
+                    "ieee8021BridgeBaseTable_container_load",
+                    "port %d in port_list is: %s \n",
+                    i, port_list.port_names[i]));
+        /* Only interested in non null port names*/
+        if (port_list.port_names[i][0] != '\0') {
+
+            /* Find the numerically smallest MAC address */
+            strncpy(ifr.ifr_name, port_list.port_names[i],
+                    sizeof(ifr.ifr_name));
+            if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) < 0) {
+                continue;
+            } else {
+                mac_high =  ifr.ifr_hwaddr.sa_data[0] << 24 |
+                            ifr.ifr_hwaddr.sa_data[1] << 16 |
+                            ifr.ifr_hwaddr.sa_data[2] << 8  |
+                            ifr.ifr_hwaddr.sa_data[3];
+                mac_low =   ifr.ifr_hwaddr.sa_data[4] << 8  |
+                            ifr.ifr_hwaddr.sa_data[5];
+
+                if ((mac_high_prev == 0) && (mac_low_prev == 0)) {
+                    mac_high_prev = mac_high;
+                    mac_low_prev = mac_low;
+                    strcpy(&if_name[0], port_list.port_names[i]);
+                } else {
+                    if (mac_high == mac_high_prev) {
+                        if (mac_low <= mac_low_prev) {
+                            mac_low_prev = mac_low;
+                            strcpy(&if_name[0], port_list.port_names[i]);
+                        }
+                    } else {
+                        if (mac_high <= mac_high_prev) {
+                            mac_high_prev = mac_high;
+                            strcpy(&if_name[0], port_list.port_names[i]);
+                        }
+                    }
+                }
+            } /* Find the numerically smallest MAC address */
+        } /* Only interested in non null port names*/
+    } /* Iterate through port list */
+
+    DEBUGMSGTL(("ieee8021BridgeBaseTable:ieee8021BridgeBaseTable_container_load"
+                ,"numerically smallest MAC address found in '%s'\n", if_name));
+
+    strncpy(ifr.ifr_name, &if_name[0], sizeof(ifr.ifr_name));
+
+    if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) < 0) {
+        memset(rowreq_ctx->data.ieee8021BridgeBaseBridgeAddress, (0), ETH_ALEN);
+    } else {
+        memcpy(rowreq_ctx->data.ieee8021BridgeBaseBridgeAddress,
+               ifr.ifr_hwaddr.sa_data, ETH_ALEN);
+    }
+
+    /* Setup/save data for ieee8021BridgeBaseNumPorts */
+    /* FIXME: Dummy ports shall not be included. However, the wrsw_hal does not
+       make this differentiation with the new wr-nic driver (as it did with
+       the minic driver) */
+    if (wripc_call(hal_ipc, "halexp_query_ports", &port_list, 0) < 0) {
+        snmp_log(LOG_ERR,"halexp_query_ports has not worked\n");
+        wripc_close(hal_ipc);
+        close(sockfd);
+        return MFD_ERROR;
+    }
+    rowreq_ctx->data.ieee8021BridgeBaseNumPorts = port_list.num_ports;
+
+    /* Setup/save data for ieee8021BridgeBaseComponentType */
+    /* TODO: WR: The value now is hardcoded. However we should think of a
+       source where it can be easily read from (config file?) */
+    rowreq_ctx->data.ieee8021BridgeBaseComponentType =
+    IEEE8021BRIDGEBASECOMPONENTTYPE_CVLANCOMPONENT;
+
+    /* Setup/save data for ieee8021BridgeBaseDeviceCapabilities */
+    /* TODO: WR: The values now are hardcoded. However we should think of a
+       source where it can be easily read from (config file?) without needing
+       to recompile */
+    rowreq_ctx->data.ieee8021BridgeBaseDeviceCapabilities =
+    IEEE8021BRIDGEBASEDEVICECAPABILITIES_FLAG;
+
+    /* Setup/save data for ieee8021BridgeBaseTrafficClassesEnabled */
+    /* TODO: WR: To be implemented when HW support for TCs be available */
+    /* rowreq_ctx->data.ieee8021BridgeBaseTrafficClassesEnabled =
+       ieee8021BridgeBaseTrafficClassesEnabled;*/
+
+    /* Setup/save data for ieee8021BridgeBaseMmrpEnabledStatus */
+    /* TODO: WR: To be implemented when MMRP be developed */
+    /* rowreq_ctx->data.ieee8021BridgeBaseMmrpEnabledStatus =
+       ieee8021BridgeBaseMmrpEnabledStatus;*/
+
+    /* Setup/save data for ieee8021BridgeBaseRowStatus */
+    rowreq_ctx->data.ieee8021BridgeBaseRowStatus = ROWSTATUS_ACTIVE;
+
+    /* Insert into table container */
+    CONTAINER_INSERT(container, rowreq_ctx);
+
+    wripc_close(hal_ipc);
+    close(sockfd);
     return MFD_SUCCESS;
 } /* ieee8021BridgeBaseTable_container_load */
+
 
 /**
  * container clean up

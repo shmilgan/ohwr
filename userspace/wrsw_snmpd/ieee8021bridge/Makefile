@@ -1,0 +1,46 @@
+
+NET-SNMP-CONFIG = $(WRS_OUTPUT_DIR)/build/buildroot-2009.11/output/build/net-snmp-5.5/net-snmp-config
+ROOTFS_OVERRIDE = $(WRS_BASE_DIR)/../userspace/rootfs_override
+
+IEEE8021BRIDGEBASETABLE=ieee8021BridgeBaseTable/ieee8021BridgeBaseTable
+IEEE8021BRIDGEBASEPORTTABLE = ieee8021BridgeBasePortTable/ieee8021BridgeBasePortTable
+
+CC 	= $(CROSS_COMPILE)gcc
+
+WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
+WR_INCLUDE = $(WR_INSTALL_ROOT)/include
+WR_LIB = $(WR_INSTALL_ROOT)/lib
+
+LDFLAGS = -fPIC -shared -L. -lwripc `$(NET-SNMP-CONFIG) --ldflags`
+
+
+OBJS =  $(IEEE8021BRIDGEBASETABLE)_data_get.o \
+	    $(IEEE8021BRIDGEBASETABLE)_data_set.o \
+	    $(IEEE8021BRIDGEBASETABLE)_data_access.o \
+	    $(IEEE8021BRIDGEBASETABLE).o \
+	    $(IEEE8021BRIDGEBASETABLE)_interface.o 
+
+OBJS += $(IEEE8021BRIDGEBASEPORTTABLE)_data_get.o \
+	    $(IEEE8021BRIDGEBASEPORTTABLE)_data_set.o \
+	    $(IEEE8021BRIDGEBASEPORTTABLE)_data_access.o \
+	    $(IEEE8021BRIDGEBASEPORTTABLE).o \
+	    $(IEEE8021BRIDGEBASEPORTTABLE)_interface.o
+
+
+LIB 	= libieee8021bridge.so
+
+
+all:	
+	cd ieee8021BridgeBaseTable; make -f Makefile;
+	cd ieee8021BridgeBasePortTable; make -f Makefile;
+	$(CC) -o $(LIB) $(LDFLAGS) $(OBJS)
+
+
+install: all
+	install -d $(ROOTFS_OVERRIDE)/usr/lib
+	install $(LIB) $(ROOTFS_OVERRIDE)/usr/lib
+	install libwripc.so $(ROOTFS_OVERRIDE)/usr/lib
+
+clean:
+	rm -f $(LIB) $(OBJS)
+

@@ -33,6 +33,10 @@ config_require(IEEE8021-BRIDGE-MIB/ieee8021BridgeBaseTable/ieee8021BridgeBaseTab
 /* enum definions */
 #include "ieee8021BridgeBaseTable_enums.h"
 
+
+#define DEFAULT_COMPONENTID 1
+#define MAX_IFNAME_SIZE 16
+
 /* *********************************************************************
  * function declarations
  */
