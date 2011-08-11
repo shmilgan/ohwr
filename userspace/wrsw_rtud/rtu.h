@@ -186,7 +186,4 @@ unsigned long now()
     return (unsigned long) time(NULL);
 }
 
-int rtud_init_exports();
-void rtud_handle_wripc();
-
 #endif /*__WHITERABBIT_RTU_H*/

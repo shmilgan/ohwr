@@ -47,7 +47,6 @@
 
 
 static pthread_t aging_process;
-static pthread_t wripc_process;
 
 /**
  * \brief Creates the static entries in the filtering database
@@ -63,7 +62,7 @@ static int rtu_create_static_entries()
 
     // Broadcast MAC
     TRACE(TRACE_INFO,"adding static route for broadcast MAC...");
-    err = rtu_fd_create_entry(bcast_mac, 0, 0xffffffff, STATIC);
+    err = rtu_fdb_create_entry(bcast_mac, 1, 0xffffffff, STATIC);
     if(err)
         return err;
 
@@ -71,7 +70,7 @@ static int rtu_create_static_entries()
     TRACE(TRACE_INFO,"adding static routes for slow protocols...");
     for(i = 0; i < NUM_RESERVED_ADDR; i++) {
         slow_proto_mac[5] = i;
-        err = rtu_fd_create_entry(slow_proto_mac, 0, (1 << NIC_PORT), STATIC);
+        err = rtu_fdb_create_entry(slow_proto_mac, 1, (1 << NIC_PORT), STATIC);
         if(err)
             return err;
     }
@@ -87,7 +86,7 @@ static int rtu_create_static_entries()
             pstate.hw_index,
             mac_to_string(pstate.hw_addr)
         );
-		err = rtu_fd_create_entry(pstate.hw_addr, 0, (1 << NIC_PORT), STATIC);
+		err = rtu_fdb_create_entry(pstate.hw_addr, 1, (1 << NIC_PORT), STATIC);
         if(err)
             return err;
     }
@@ -105,24 +104,8 @@ static void *rtu_daemon_aging_process(void *arg)
     unsigned long aging_res = (unsigned long)arg;
 
     while(1){
-        rtu_fd_flush();
+        rtu_fdb_age();
         sleep(aging_res);
-    }
-    return NULL;
-}
-
-
-/**
- * \brief Handles WRIPC requests.
- * Currently used to dump the filtering database contents when requested by
- * external processes.
- *
- */
-static void *rtu_daemon_wripc_process(void *arg)
-{
-    while(1){
-        rtud_handle_wripc();
-        sleep(1);
     }
     return NULL;
 }
@@ -141,20 +124,29 @@ static int rtu_daemon_learning_process()
     while(1){
         // Serve pending unrecognised request
         err = rtu_read_learning_queue(&req);
-        if (!err) {
+        if (err) {
+            TRACE(TRACE_INFO,"read learning queue: err %d\n", err);
+        } else {
             TRACE_DBG(
                 TRACE_INFO,
                 "ureq: port %d src %s VID %d priority %d",
                 req.port_id,
                 mac_to_string(req.src),
-                req.has_vid  ? req.vid:0,
+                req.has_vid  ? req.vid:1,
                 req.has_prio ? req.prio:0
             );
-            // If req has no VID, use 0 (untagged packet)
-            vid      = req.has_vid ? req.vid:0;
+            // If req has no VID, use 1 (untagged packet)
+            vid      = req.has_vid ? req.vid:1;
             port_map = (1 << req.port_id);
+            // 802.1Q checking list:
+            // 1. Check port is in learning state. Done at HW
+            // 2. Check MAC address is unicast. 
+            if (req.src[0] & 1) // would prefer doing it at HW...
+                continue;
+            // 3. Check FDB is not full. Done at FDB
+            // 4. Check VLAN member set is not empty. Done at FDB.
             // create or update entry at filtering database
-            err = rtu_fd_create_entry(req.src, vid, port_map, DYNAMIC);
+            err = rtu_fdb_create_entry(req.src, vid, port_map, DYNAMIC);
             if (err == -ENOMEM) {
                 // TODO remove oldest entries (802.1D says you MAY do it)
                 TRACE(TRACE_INFO, "filtering database full\n");
@@ -162,8 +154,6 @@ static int rtu_daemon_learning_process()
                 TRACE(TRACE_INFO, "create entry: err %d\n", err);
                 break;
             }
-        } else {
-            TRACE(TRACE_INFO,"read learning queue: err %d\n", err);
         }
     }
     return err;
@@ -195,8 +185,6 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
     TRACE(TRACE_INFO, "init port config.");
     for(i = MIN_PORT; i <= MAX_PORT; i++) {
         // MIN_PORT <= port <= MAX_PORT, thus no err returned
-   	fprintf(stderr,"**4**");
-
         err = rtu_learn_enable_on_port(i,1);
         err = rtu_pass_all_on_port(i,1);
         err = rtu_pass_bpdu_on_port(i,0);
@@ -206,7 +194,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 
     // init filtering database
     TRACE(TRACE_INFO, "init fd.");
-    err = rtu_fd_init(poly, aging_time);
+    err = rtu_fdb_init(poly, aging_time);
     if (err)
         return err;
 
@@ -219,8 +207,6 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
     TRACE(TRACE_INFO, "enable rtu.");
     rtu_enable();
 
-    rtud_init_exports();
-
     return err;
 }
 
@@ -230,7 +216,6 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 static void rtu_daemon_destroy()
 {
     // Threads stuff
-    pthread_cancel(wripc_process);
     pthread_cancel(aging_process);
 
     // Turn off RTU
@@ -318,9 +303,8 @@ int main(int argc, char **argv)
     if(run_as_daemon)
         daemonize();
 
-    // Start up aging process and auxiliary WRIPC thread
-    if ((err = pthread_create(&aging_process, NULL, rtu_daemon_aging_process, (void *) aging_res)) ||
-        (err = pthread_create(&wripc_process, NULL, rtu_daemon_wripc_process, NULL))) {
+    // Start up aging process
+    if ((err = pthread_create(&aging_process, NULL, rtu_daemon_aging_process, (void *) aging_res))) {
         rtu_daemon_destroy();
         return err;
     }

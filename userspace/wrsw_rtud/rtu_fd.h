@@ -40,22 +40,19 @@
 #define STATIC          0
 #define DYNAMIC         1
 
-int rtu_fd_init(uint16_t poly, unsigned long aging)
+int rtu_fdb_init(uint16_t poly, unsigned long aging)
         __attribute__((warn_unused_result));
 
-int  rtu_fd_create_entry(
+int rtu_fdb_create_entry(
             uint8_t mac[ETH_ALEN],
             uint16_t vid,
             uint32_t port_map,
             int dynamic
      ) __attribute__((warn_unused_result));
 
-int  rtu_fd_set_aging_time(unsigned long t) __attribute__((warn_unused_result));
-void rtu_fd_set_hash_poly(uint16_t poly);
-void rtu_fd_flush(void);
-struct filtering_entry * rtu_fd_lookup_htab_entry(int index);
-
-struct filtering_entry *rtu_fd_lookup_htab_entry(int index);
+int  rtu_fdb_set_aging_time(unsigned long t) __attribute__((warn_unused_result));
+void rtu_fdb_set_hash_poly(uint16_t poly);
+void rtu_fdb_age(void);
 
 #endif /*__WHITERABBIT_RTU_FD_H*/
 
