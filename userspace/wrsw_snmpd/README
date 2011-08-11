@@ -58,9 +58,6 @@ mibs/
 ../wrsw_rtud
 ../wrsw_hal
 
-IPC communications between the MIB objects and the RTU modules are based on the
-mini-ipc framework developed by Alessandro Rubini and Tomasz Wlostowski.
-
 IPC communications between the MIB objects and the HAL modules are based on the
 libwripc framework developed by Tomasz Wlostowski, Alessandro Rubini and Javier
 Serrano. The source code of the libwripc found at the ptp-noposix package
@@ -99,3 +96,13 @@ to a log file and then read the file (be careful however, since the log file can
 grow fast):
 
    # ./snmpd -Lf /var/log/snmpd.log
+
+    Compilation of the modules
+    ==========================
+
+To compile the MIB modules, please run "make". A library file per MIB (namely 
+iee8021bridge.so and ieee8021qbridge.so) will be produced. You can run 
+"make install" to copy library files to the $(WR_INSTALL_ROOT)/bin directory,
+and configuration file to the $(ROOTFS_OVERRIDE)/etc/snmp. 
+
+Before running the SNMP daemon, please make sure the RTU daemon is running.
