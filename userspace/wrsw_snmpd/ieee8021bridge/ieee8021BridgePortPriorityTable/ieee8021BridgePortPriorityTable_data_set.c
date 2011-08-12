@@ -10,6 +10,13 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
+#include <sys/ioctl.h>
+#include <linux/if.h>
+
+#include <wr_ipc.h>
+#include <wrsw_hal.h>
+#include <hal_exports.h>
+
 /* include our parent header */
 #include "ieee8021BridgePortPriorityTable.h"
 
@@ -100,6 +107,14 @@
      *                        +--------------+
      *
      */
+
+
+/* Static functions */
+static int 
+ieee8021BridgePortDefaultUserPriority_commit(
+    ieee8021BridgePortPriorityTable_rowreq_ctx *rowreq_ctx,
+    int undo_flag);
+
 
 /**
  * Setup up context with information needed to undo a set request.
@@ -240,133 +255,40 @@ int
 ieee8021BridgePortPriorityTable_commit( ieee8021BridgePortPriorityTable_rowreq_ctx *rowreq_ctx)
 {
     int rc = MFD_SUCCESS;
-    int             save_flags;
+    int save_flags;
 
-    DEBUGMSGTL(("verbose:ieee8021BridgePortPriorityTable:ieee8021BridgePortPriorityTable_commit","called\n"));
+    DEBUGMSGTL(("verbose:ieee8021BridgePortPriorityTable:"
+                "ieee8021BridgePortPriorityTable_commit","called\n"));
 
-    /** we should have a non-NULL pointer */
+    /* We should have a non-NULL pointer */
     netsnmp_assert( NULL != rowreq_ctx );
 
-    /*
-     * save flags, then clear until we actually do something
-     */
+    /* Save flags, then clear until we actually do something. We use now the
+       flags to control the commits */
     save_flags = rowreq_ctx->column_set_flags;
     rowreq_ctx->column_set_flags = 0;
 
     /*
-     * commit ieee8021BridgePortPriorityTable data
+     * Commit ieee8021BridgePortPriorityTable data
      * 1) check the column's flag in save_flags to see if it was set.
      * 2) clear the flag when you handle that column
      * 3) set the column's flag in column_set_flags if it needs undo
      *    processing in case of a failure.
      */
+
     if (save_flags & COLUMN_IEEE8021BRIDGEPORTDEFAULTUSERPRIORITY_FLAG) {
-       save_flags &= ~COLUMN_IEEE8021BRIDGEPORTDEFAULTUSERPRIORITY_FLAG; /* clear ieee8021BridgePortDefaultUserPriority */
-       /*
-        * TODO:482:o: |-> commit column ieee8021BridgePortDefaultUserPriority.
-        */
-       rc = -1;
-       if(-1 == rc) {
-           snmp_log(LOG_ERR,"ieee8021BridgePortPriorityTable column ieee8021BridgePortDefaultUserPriority commit failed\n");
-       }
-       else {
-            /*
-             * set flag, in case we need to undo ieee8021BridgePortDefaultUserPriority
-             */
-            rowreq_ctx->column_set_flags |= COLUMN_IEEE8021BRIDGEPORTDEFAULTUSERPRIORITY_FLAG;
-       }
-    }
-
-    if (save_flags & COLUMN_IEEE8021BRIDGEPORTNUMTRAFFICCLASSES_FLAG) {
-       save_flags &= ~COLUMN_IEEE8021BRIDGEPORTNUMTRAFFICCLASSES_FLAG; /* clear ieee8021BridgePortNumTrafficClasses */
-       /*
-        * TODO:482:o: |-> commit column ieee8021BridgePortNumTrafficClasses.
-        */
-       rc = -1;
-       if(-1 == rc) {
-           snmp_log(LOG_ERR,"ieee8021BridgePortPriorityTable column ieee8021BridgePortNumTrafficClasses commit failed\n");
-       }
-       else {
-            /*
-             * set flag, in case we need to undo ieee8021BridgePortNumTrafficClasses
-             */
-            rowreq_ctx->column_set_flags |= COLUMN_IEEE8021BRIDGEPORTNUMTRAFFICCLASSES_FLAG;
-       }
-    }
-
-    if (save_flags & COLUMN_IEEE8021BRIDGEPORTPRIORITYCODEPOINTSELECTION_FLAG) {
-       save_flags &= ~COLUMN_IEEE8021BRIDGEPORTPRIORITYCODEPOINTSELECTION_FLAG; /* clear ieee8021BridgePortPriorityCodePointSelection */
-       /*
-        * TODO:482:o: |-> commit column ieee8021BridgePortPriorityCodePointSelection.
-        */
-       rc = -1;
-       if(-1 == rc) {
-           snmp_log(LOG_ERR,"ieee8021BridgePortPriorityTable column ieee8021BridgePortPriorityCodePointSelection commit failed\n");
-       }
-       else {
-            /*
-             * set flag, in case we need to undo ieee8021BridgePortPriorityCodePointSelection
-             */
-            rowreq_ctx->column_set_flags |= COLUMN_IEEE8021BRIDGEPORTPRIORITYCODEPOINTSELECTION_FLAG;
-       }
-    }
-
-    if (save_flags & COLUMN_IEEE8021BRIDGEPORTUSEDEI_FLAG) {
-       save_flags &= ~COLUMN_IEEE8021BRIDGEPORTUSEDEI_FLAG; /* clear ieee8021BridgePortUseDEI */
-       /*
-        * TODO:482:o: |-> commit column ieee8021BridgePortUseDEI.
-        */
-       rc = -1;
-       if(-1 == rc) {
-           snmp_log(LOG_ERR,"ieee8021BridgePortPriorityTable column ieee8021BridgePortUseDEI commit failed\n");
-       }
-       else {
-            /*
-             * set flag, in case we need to undo ieee8021BridgePortUseDEI
-             */
-            rowreq_ctx->column_set_flags |= COLUMN_IEEE8021BRIDGEPORTUSEDEI_FLAG;
-       }
-    }
-
-    if (save_flags & COLUMN_IEEE8021BRIDGEPORTREQUIREDROPENCODING_FLAG) {
-       save_flags &= ~COLUMN_IEEE8021BRIDGEPORTREQUIREDROPENCODING_FLAG; /* clear ieee8021BridgePortRequireDropEncoding */
-       /*
-        * TODO:482:o: |-> commit column ieee8021BridgePortRequireDropEncoding.
-        */
-       rc = -1;
-       if(-1 == rc) {
-           snmp_log(LOG_ERR,"ieee8021BridgePortPriorityTable column ieee8021BridgePortRequireDropEncoding commit failed\n");
-       }
-       else {
-            /*
-             * set flag, in case we need to undo ieee8021BridgePortRequireDropEncoding
-             */
-            rowreq_ctx->column_set_flags |= COLUMN_IEEE8021BRIDGEPORTREQUIREDROPENCODING_FLAG;
-       }
-    }
-
-    if (save_flags & COLUMN_IEEE8021BRIDGEPORTSERVICEACCESSPRIORITYSELECTION_FLAG) {
-       save_flags &= ~COLUMN_IEEE8021BRIDGEPORTSERVICEACCESSPRIORITYSELECTION_FLAG; /* clear ieee8021BridgePortServiceAccessPrioritySelection */
-       /*
-        * TODO:482:o: |-> commit column ieee8021BridgePortServiceAccessPrioritySelection.
-        */
-       rc = -1;
-       if(-1 == rc) {
-           snmp_log(LOG_ERR,"ieee8021BridgePortPriorityTable column ieee8021BridgePortServiceAccessPrioritySelection commit failed\n");
-       }
-       else {
-            /*
-             * set flag, in case we need to undo ieee8021BridgePortServiceAccessPrioritySelection
-             */
-            rowreq_ctx->column_set_flags |= COLUMN_IEEE8021BRIDGEPORTSERVICEACCESSPRIORITYSELECTION_FLAG;
-       }
-    }
-
-    /*
-     * if we successfully commited this row, set the dirty flag.
-     */
-    if (MFD_SUCCESS == rc) {
-        rowreq_ctx->rowreq_flags |= MFD_ROW_DIRTY;
+        /* Commit column ieee8021BridgePortDefaultUserPriority */
+        rc = ieee8021BridgePortDefaultUserPriority_commit(rowreq_ctx, 0);
+        if (rc) {
+            snmp_log(LOG_ERR,"ieee8021BridgePortPriorityTable column"
+                     " ieee8021BridgePortDefaultUserPriority commit failed\n");
+        } else {
+            save_flags &= ~COLUMN_IEEE8021BRIDGEPORTDEFAULTUSERPRIORITY_FLAG;
+            /* Set flag, in case we need to undo
+               ieee8021BridgePortDefaultUserPriority */
+            rowreq_ctx->column_set_flags |=
+                COLUMN_IEEE8021BRIDGEPORTDEFAULTUSERPRIORITY_FLAG;
+        }
     }
 
     if (save_flags) {
@@ -374,7 +296,11 @@ ieee8021BridgePortPriorityTable_commit( ieee8021BridgePortPriorityTable_rowreq_c
        return MFD_ERROR;
     }
 
-    return rc;
+    /* If we successfully commited this row, set the dirty flag
+       and return success */
+    rowreq_ctx->rowreq_flags |= MFD_ROW_DIRTY;
+
+    return MFD_SUCCESS;
 } /* ieee8021BridgePortPriorityTable_commit */
 
 /**
@@ -397,24 +323,26 @@ ieee8021BridgePortPriorityTable_undo_commit( ieee8021BridgePortPriorityTable_row
 {
     int rc = MFD_SUCCESS;
 
-    DEBUGMSGTL(("verbose:ieee8021BridgePortPriorityTable:ieee8021BridgePortPriorityTable_undo_commit","called\n"));
+    DEBUGMSGTL(("verbose:ieee8021BridgePortPriorityTable:"
+                "ieee8021BridgePortPriorityTable_undo_commit","called\n"));
 
-    /** we should have a non-NULL pointer */
+    /* We should have a non-NULL pointer */
     netsnmp_assert( NULL != rowreq_ctx );
 
-    /*
-     * TODO:485:M: |-> Undo ieee8021BridgePortPriorityTable commit.
-     * check the column's flag in rowreq_ctx->column_set_flags to see
-     * if it was set during commit, then undo it.
-     *
-     * eg: if (rowreq_ctx->column_set_flags & COLUMN__FLAG) {}
-     */
+    if (rowreq_ctx->column_set_flags &
+        COLUMN_IEEE8021BRIDGEPORTDEFAULTUSERPRIORITY_FLAG) {
+        /* This column has been commited, so need undo */
+        rc = ieee8021BridgePortDefaultUserPriority_commit(rowreq_ctx, 1);
+        if (rc) {
+            /* Nothing we can do about it but log it */
+            snmp_log(LOG_ERR,"ieee8021BridgePortPriorityTable column"
+                     " ieee8021BridgePortDefaultUserPriority undo"
+                     " commit failed\n");
+        }
+    }
 
-    
-    /*
-     * if we successfully un-commited this row, clear the dirty flag.
-     */
-    if (MFD_SUCCESS == rc) {
+    /* If we successfully un-commited this row, clear the dirty flag */
+    if (rc == MFD_SUCCESS) {
         rowreq_ctx->rowreq_flags &= ~MFD_ROW_DIRTY;
     }
 
@@ -598,6 +526,123 @@ ieee8021BridgePortDefaultUserPriority_undo( ieee8021BridgePortPriorityTable_rowr
     return MFD_SUCCESS;
 } /* ieee8021BridgePortDefaultUserPriority_undo */
 
+
+/**
+ * Internal function used to commit or undo-commit values of
+ * the ieee8021BridgePortDefaultUserPriority object
+ *
+ * @param rowreq_ctx
+ *        Pointer to the row request context.
+ * @param undo_flag
+ *        A flag to control if we are making a commit(0) or an undo-commit(1)
+ *
+ * @retval MFD_SUCCESS              : success
+ * @retval MFD_ERROR                : error
+ * @retval MFD_RESOURCE_UNAVAILABLE : socket to interface not available
+ *
+ */
+static int 
+ieee8021BridgePortDefaultUserPriority_commit(
+ ieee8021BridgePortPriorityTable_rowreq_ctx *rowreq_ctx, int undo_flag)
+{
+    wripc_handle_t              hal_ipc;
+    hexp_port_list_t            port_list;
+
+    struct wrn_register_req     req;
+    struct ifreq                ifr;
+    int                         sockfd, port_id, i;
+
+
+    DEBUGMSGTL(("verbose:ieee8021BridgePortPriorityTable:"
+                "ieee8021BridgePortDefaultUserPriority_commit","called\n"));
+
+    /* Should never get a NULL pointer */
+    netsnmp_assert(NULL != rowreq_ctx);
+
+    /* Check if the value is the same as the one in the undo context.
+       If it's the same value we don't need to commit anything */
+    if (rowreq_ctx->undo->ieee8021BridgePortDefaultUserPriority ==
+        rowreq_ctx->data.ieee8021BridgePortDefaultUserPriority) {
+        return MFD_SUCCESS;
+    }
+
+    /* Create socket interface */
+    sockfd = socket(AF_PACKET, SOCK_RAW, 0);
+    if (sockfd < 0) {
+        snmp_log(LOG_ERR,"socket failed\n");
+        return MFD_RESOURCE_UNAVAILABLE;
+    }
+
+    /* Search the port name associated with the ieee8021BridgeBasePort */
+
+    /* Connect to HAL to get the information */
+    hal_ipc = wripc_connect("wrsw_hal");
+    if(hal_ipc < 0) {
+        snmp_log(LOG_ERR,"Unable to connect to HAL\n");
+        close(sockfd);
+        return MFD_ERROR;
+    }
+
+    /* Get the port list */
+    if (wripc_call(hal_ipc, "halexp_query_all_ports", &port_list, 0) < 0) {
+        snmp_log(LOG_ERR,"halexp_query_all_ports has not worked\n");
+        wripc_close(hal_ipc);
+        close(sockfd);
+        return MFD_ERROR;
+    }
+
+    ifr.ifr_addr.sa_family = AF_PACKET;
+    ifr.ifr_data = &req;
+
+    /* Iterate through the port list */
+    for(i = 0; i < HAL_MAX_PORTS; i++) {
+        /* Only interested in non null port names */
+        if (port_list.port_names[i][0] != '\0') {
+            /* Make custom ioctl to get data */
+            strncpy(ifr.ifr_name, port_list.port_names[i],
+                    sizeof(ifr.ifr_name));
+            req.cmd = WRN_ECR_GET_PORTID;
+
+            if (ioctl(sockfd, PRIV_IOCGGETECR, &ifr) < 0) {
+                snmp_log(LOG_ERR, "ioctl PRIV_IOCGGETECR failed\n");
+                wripc_close(hal_ipc);
+                close(sockfd);
+                return MFD_ERROR;
+            } else {
+                /* Check if this is the port ID that we need */
+                if (req.val == rowreq_ctx->tbl_idx.ieee8021BridgeBasePort) {
+                    req.cmd = WRN_RFCR_SET_PRIO_VAL;
+                    /* Check if we are commiting or undoing a previous commit */
+                    req.val = (undo_flag ?
+                      rowreq_ctx->undo->ieee8021BridgePortDefaultUserPriority :
+                      rowreq_ctx->data.ieee8021BridgePortDefaultUserPriority);
+
+                    ifr.ifr_data = &req;
+
+                    /* Set ieee8021BridgePortDefaultUserPriority value */
+                    /* TODO:WR: Support for the persistence of this data */
+                    if(ioctl(sockfd, PRIV_IOCSSETRFCR, &ifr) < 0) {
+                        snmp_log(LOG_ERR, "ioctl PRIV_IOCSSETECR failed\n");
+                        wripc_close(hal_ipc);
+                        close(sockfd);
+                        return MFD_ERROR;
+                    } else {
+                        DEBUGMSGTL(("verbose:ieee8021BridgePortPriorityTable:"
+                                "ieee8021BridgePortDefaultUserPriority_commit",
+                                "%s default user priority set to: %i\n",
+                                ifr.ifr_name, req.val));
+                    }
+                    break;
+                }
+            }
+        } /* Only interested in non null port names*/
+    } /* Iterate through port list */
+
+    wripc_close(hal_ipc);
+    close(sockfd);
+    return MFD_SUCCESS;
+} /* ieee8021BridgePortDefaultUserPriority_commit */
+
 /*---------------------------------------------------------------------
  * IEEE8021-BRIDGE-MIB::ieee8021BridgePortPriorityEntry.ieee8021BridgePortNumTrafficClasses
  * ieee8021BridgePortNumTrafficClasses is subid 2 of ieee8021BridgePortPriorityEntry.
@@ -670,7 +715,7 @@ ieee8021BridgePortNumTrafficClasses_check_value( ieee8021BridgePortPriorityTable
      * TODO:441:o: |-> Check for valid ieee8021BridgePortNumTrafficClasses value.
      */
 
-    return MFD_SUCCESS; /* ieee8021BridgePortNumTrafficClasses value not illegal */
+    return SNMP_ERR_NOTWRITABLE; /* It can be optionally RO */
 } /* ieee8021BridgePortNumTrafficClasses_check_value */
 
 /**
@@ -837,7 +882,7 @@ ieee8021BridgePortPriorityCodePointSelection_check_value( ieee8021BridgePortPrio
      * TODO:441:o: |-> Check for valid ieee8021BridgePortPriorityCodePointSelection value.
      */
 
-    return MFD_SUCCESS; /* ieee8021BridgePortPriorityCodePointSelection value not illegal */
+    return SNMP_ERR_NOTWRITABLE; /* Object not implemented */
 } /* ieee8021BridgePortPriorityCodePointSelection_check_value */
 
 /**
@@ -1009,7 +1054,7 @@ ieee8021BridgePortUseDEI_check_value( ieee8021BridgePortPriorityTable_rowreq_ctx
      * TODO:441:o: |-> Check for valid ieee8021BridgePortUseDEI value.
      */
 
-    return MFD_SUCCESS; /* ieee8021BridgePortUseDEI value not illegal */
+    return SNMP_ERR_NOTWRITABLE; /* Object not implemented */
 } /* ieee8021BridgePortUseDEI_check_value */
 
 /**
@@ -1182,7 +1227,7 @@ ieee8021BridgePortRequireDropEncoding_check_value( ieee8021BridgePortPriorityTab
      * TODO:441:o: |-> Check for valid ieee8021BridgePortRequireDropEncoding value.
      */
 
-    return MFD_SUCCESS; /* ieee8021BridgePortRequireDropEncoding value not illegal */
+    return SNMP_ERR_NOTWRITABLE; /* Object not implemented */
 } /* ieee8021BridgePortRequireDropEncoding_check_value */
 
 /**
@@ -1350,7 +1395,7 @@ ieee8021BridgePortServiceAccessPrioritySelection_check_value( ieee8021BridgePort
      * TODO:441:o: |-> Check for valid ieee8021BridgePortServiceAccessPrioritySelection value.
      */
 
-    return MFD_SUCCESS; /* ieee8021BridgePortServiceAccessPrioritySelection value not illegal */
+    return SNMP_ERR_NOTWRITABLE; /* Object not implemented */
 } /* ieee8021BridgePortServiceAccessPrioritySelection_check_value */
 
 /**

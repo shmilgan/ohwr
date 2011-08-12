@@ -38,9 +38,11 @@ config_require(IEEE8021-BRIDGE-MIB/ieee8021BridgePortPriorityTable/ieee8021Bridg
 
 /* Custom IOCTLs */
 #define PRIV_IOCGGETRFCR (SIOCDEVPRIVATE+3)
+#define PRIV_IOCSSETRFCR (SIOCDEVPRIVATE+4)
 #define PRIV_IOCGGETECR (SIOCDEVPRIVATE+5)
 #define WRN_ECR_GET_PORTID 4
 #define WRN_RFCR_GET_PRIO_VAL 2
+#define WRN_RFCR_SET_PRIO_VAL 10
 
 
 /* For custom ioctl operations on endpoint registers */
