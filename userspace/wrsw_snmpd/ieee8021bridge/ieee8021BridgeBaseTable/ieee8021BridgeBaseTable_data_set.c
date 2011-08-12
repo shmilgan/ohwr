@@ -18,7 +18,7 @@
  *
  * These routines are used to set the value for individual objects. The
  * row context is passed, along with the new value.
- * 
+ *
  * @{
  */
 /**********************************************************************
@@ -414,7 +414,7 @@ ieee8021BridgeBaseTable_undo_commit( ieee8021BridgeBaseTable_rowreq_ctx *rowreq_
      * eg: if (rowreq_ctx->column_set_flags & COLUMN__FLAG) {}
      */
 
-    
+
     /*
      * if we successfully un-commited this row, clear the dirty flag.
      */
@@ -484,12 +484,12 @@ The MAC address used by this bridge when it must be
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -619,7 +619,7 @@ ieee8021BridgeBaseBridgeAddress_undo( ieee8021BridgeBaseTable_rowreq_ctx *rowreq
             (rowreq_ctx->undo->ieee8021BridgeBaseBridgeAddress_len * sizeof(rowreq_ctx->data.ieee8021BridgeBaseBridgeAddress[0])));
     rowreq_ctx->data.ieee8021BridgeBaseBridgeAddress_len = rowreq_ctx->undo->ieee8021BridgeBaseBridgeAddress_len;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgeBaseBridgeAddress_undo */
 
@@ -685,12 +685,12 @@ Indicates the component type(s) of this bridge.  The
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -809,7 +809,7 @@ ieee8021BridgeBaseComponentType_undo( ieee8021BridgeBaseTable_rowreq_ctx *rowreq
      */
     rowreq_ctx->data.ieee8021BridgeBaseComponentType = rowreq_ctx->undo->ieee8021BridgeBaseComponentType;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgeBaseComponentType_undo */
 
@@ -888,12 +888,12 @@ Indicates the optional parts of IEEE 802.1D and 802.1Q
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -1012,7 +1012,7 @@ ieee8021BridgeBaseDeviceCapabilities_undo( ieee8021BridgeBaseTable_rowreq_ctx *r
      */
     rowreq_ctx->data.ieee8021BridgeBaseDeviceCapabilities = rowreq_ctx->undo->ieee8021BridgeBaseDeviceCapabilities;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgeBaseDeviceCapabilities_undo */
 
@@ -1062,12 +1062,12 @@ The value true(1) indicates that Traffic Classes are
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -1186,7 +1186,7 @@ ieee8021BridgeBaseTrafficClassesEnabled_undo( ieee8021BridgeBaseTable_rowreq_ctx
      */
     rowreq_ctx->data.ieee8021BridgeBaseTrafficClassesEnabled = rowreq_ctx->undo->ieee8021BridgeBaseTrafficClassesEnabled;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgeBaseTrafficClassesEnabled_undo */
 
@@ -1243,12 +1243,12 @@ The administrative status requested by management for
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -1367,7 +1367,7 @@ ieee8021BridgeBaseMmrpEnabledStatus_undo( ieee8021BridgeBaseTable_rowreq_ctx *ro
      */
     rowreq_ctx->data.ieee8021BridgeBaseMmrpEnabledStatus = rowreq_ctx->undo->ieee8021BridgeBaseMmrpEnabledStatus;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgeBaseMmrpEnabledStatus_undo */
 
@@ -1429,12 +1429,12 @@ The object indicates the status of an entry, and is used
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -1553,7 +1553,7 @@ ieee8021BridgeBaseRowStatus_undo( ieee8021BridgeBaseTable_rowreq_ctx *rowreq_ctx
      */
     rowreq_ctx->data.ieee8021BridgeBaseRowStatus = rowreq_ctx->undo->ieee8021BridgeBaseRowStatus;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgeBaseRowStatus_undo */
 
@@ -1579,7 +1579,7 @@ int
 ieee8021BridgeBaseTable_check_dependencies(ieee8021BridgeBaseTable_rowreq_ctx *rowreq_ctx)
 {
     int rc = MFD_SUCCESS;
-    
+
     DEBUGMSGTL(("internal:ieee8021BridgeBaseTable:ieee8021BridgeBaseTable_check_dependencies","called\n"));
 
     netsnmp_assert(NULL != rowreq_ctx);
@@ -1594,14 +1594,14 @@ ieee8021BridgeBaseTable_check_dependencies(ieee8021BridgeBaseTable_rowreq_ctx *r
     if (rowreq_ctx->column_set_flags & COLUMN_IEEE8021BRIDGEBASEROWSTATUS_FLAG) {
         /*
          * check for valid RowStatus transition (old, new)
-         * (Note: move transition check to 
+         * (Note: move transition check to
          *  to catch errors earlier)
          */
         rc = check_rowstatus_transition( rowreq_ctx->undo->ieee8021BridgeBaseRowStatus,
                                          rowreq_ctx->data.ieee8021BridgeBaseRowStatus );
         if (MFD_SUCCESS != rc)
             return rc;
-        
+
         /*
          * row creation requirements
          */

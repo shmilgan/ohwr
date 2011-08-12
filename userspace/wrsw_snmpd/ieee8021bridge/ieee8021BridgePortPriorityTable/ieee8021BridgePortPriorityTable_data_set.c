@@ -25,7 +25,7 @@
  *
  * These routines are used to set the value for individual objects. The
  * row context is passed, along with the new value.
- * 
+ *
  * @{
  */
 /**********************************************************************
@@ -110,7 +110,7 @@
 
 
 /* Static functions */
-static int 
+static int
 ieee8021BridgePortDefaultUserPriority_commit(
     ieee8021BridgePortPriorityTable_rowreq_ctx *rowreq_ctx,
     int undo_flag);
@@ -398,12 +398,12 @@ The default ingress User Priority for this port.  This
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -522,7 +522,7 @@ ieee8021BridgePortDefaultUserPriority_undo( ieee8021BridgePortPriorityTable_rowr
      */
     rowreq_ctx->data.ieee8021BridgePortDefaultUserPriority = rowreq_ctx->undo->ieee8021BridgePortDefaultUserPriority;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgePortDefaultUserPriority_undo */
 
@@ -541,7 +541,7 @@ ieee8021BridgePortDefaultUserPriority_undo( ieee8021BridgePortPriorityTable_rowr
  * @retval MFD_RESOURCE_UNAVAILABLE : socket to interface not available
  *
  */
-static int 
+static int
 ieee8021BridgePortDefaultUserPriority_commit(
  ieee8021BridgePortPriorityTable_rowreq_ctx *rowreq_ctx, int undo_flag)
 {
@@ -684,12 +684,12 @@ The number of egress traffic classes supported on this
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -808,7 +808,7 @@ ieee8021BridgePortNumTrafficClasses_undo( ieee8021BridgePortPriorityTable_rowreq
      */
     rowreq_ctx->data.ieee8021BridgePortNumTrafficClasses = rowreq_ctx->undo->ieee8021BridgePortNumTrafficClasses;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgePortNumTrafficClasses_undo */
 
@@ -819,7 +819,7 @@ ieee8021BridgePortNumTrafficClasses_undo( ieee8021BridgePortPriorityTable_rowreq
  * OID: .1.3.111.2.802.1.1.2.1.3.1.1.3
  * Description:
  This object identifies the rows in the PCP encoding and
-          decoding tables that are used to remark frames on this 
+          decoding tables that are used to remark frames on this
           port if this remarking is enabled.
  *
  * Attributes:
@@ -851,12 +851,12 @@ ieee8021BridgePortNumTrafficClasses_undo( ieee8021BridgePortPriorityTable_rowreq
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -975,7 +975,7 @@ ieee8021BridgePortPriorityCodePointSelection_undo( ieee8021BridgePortPriorityTab
      */
     rowreq_ctx->data.ieee8021BridgePortPriorityCodePointSelection = rowreq_ctx->undo->ieee8021BridgePortPriorityCodePointSelection;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgePortPriorityCodePointSelection_undo */
 
@@ -985,7 +985,7 @@ ieee8021BridgePortPriorityCodePointSelection_undo( ieee8021BridgePortPriorityTab
  * Its status is Current, and its access level is ReadWrite.
  * OID: .1.3.111.2.802.1.1.2.1.3.1.1.4
  * Description:
-If the Use_DEI is set to true(1) for the Port then the 
+If the Use_DEI is set to true(1) for the Port then the
         drop_eligible parameter is encoded in the DEI of transmitted
         frames, and the drop_eligible parameter shall be true(1) for a
         received frame if the DEI is set in the S-TAG or the Priority
@@ -1023,12 +1023,12 @@ If the Use_DEI is set to true(1) for the Port then the
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -1147,7 +1147,7 @@ ieee8021BridgePortUseDEI_undo( ieee8021BridgePortPriorityTable_rowreq_ctx *rowre
      */
     rowreq_ctx->data.ieee8021BridgePortUseDEI = rowreq_ctx->undo->ieee8021BridgePortUseDEI;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgePortUseDEI_undo */
 
@@ -1196,12 +1196,12 @@ If a Bridge supports encoding or decoding of drop_eligible
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -1320,7 +1320,7 @@ ieee8021BridgePortRequireDropEncoding_undo( ieee8021BridgePortPriorityTable_rowr
      */
     rowreq_ctx->data.ieee8021BridgePortRequireDropEncoding = rowreq_ctx->undo->ieee8021BridgePortRequireDropEncoding;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgePortRequireDropEncoding_undo */
 
@@ -1364,12 +1364,12 @@ Indication of if the Service Access Priority Selection
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -1488,7 +1488,7 @@ ieee8021BridgePortServiceAccessPrioritySelection_undo( ieee8021BridgePortPriorit
      */
     rowreq_ctx->data.ieee8021BridgePortServiceAccessPrioritySelection = rowreq_ctx->undo->ieee8021BridgePortServiceAccessPrioritySelection;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgePortServiceAccessPrioritySelection_undo */
 
@@ -1514,7 +1514,7 @@ int
 ieee8021BridgePortPriorityTable_check_dependencies(ieee8021BridgePortPriorityTable_rowreq_ctx *rowreq_ctx)
 {
     int rc = MFD_SUCCESS;
-    
+
     DEBUGMSGTL(("internal:ieee8021BridgePortPriorityTable:ieee8021BridgePortPriorityTable_check_dependencies","called\n"));
 
     netsnmp_assert(NULL != rowreq_ctx);

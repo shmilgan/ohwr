@@ -18,7 +18,7 @@
  *
  * These routines are used to set the value for individual objects. The
  * row context is passed, along with the new value.
- * 
+ *
  * @{
  */
 /**********************************************************************
@@ -325,7 +325,7 @@ ieee8021BridgeTrafficClassTable_undo_commit( ieee8021BridgeTrafficClassTable_row
      * eg: if (rowreq_ctx->column_set_flags & COLUMN__FLAG) {}
      */
 
-    
+
     /*
      * if we successfully un-commited this row, clear the dirty flag.
      */
@@ -382,12 +382,12 @@ The Traffic Class the received frame is mapped to.
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -506,7 +506,7 @@ ieee8021BridgeTrafficClass_undo( ieee8021BridgeTrafficClassTable_rowreq_ctx *row
      */
     rowreq_ctx->data.ieee8021BridgeTrafficClass = rowreq_ctx->undo->ieee8021BridgeTrafficClass;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgeTrafficClass_undo */
 
@@ -532,7 +532,7 @@ int
 ieee8021BridgeTrafficClassTable_check_dependencies(ieee8021BridgeTrafficClassTable_rowreq_ctx *rowreq_ctx)
 {
     int rc = MFD_SUCCESS;
-    
+
     DEBUGMSGTL(("internal:ieee8021BridgeTrafficClassTable:ieee8021BridgeTrafficClassTable_check_dependencies","called\n"));
 
     netsnmp_assert(NULL != rowreq_ctx);

@@ -93,58 +93,58 @@ typedef netsnmp_data_list ieee8021BridgeBasePortTable_registration;
  * ieee8021BridgeBasePortTable.
  */
 typedef struct ieee8021BridgeBasePortTable_data_s {
-    
+
         /*
          * ieee8021BridgeBasePortIfIndex(3)/InterfaceIndexOrZero/ASN_INTEGER/long(long)//l/A/W/e/R/d/H
          */
    long   ieee8021BridgeBasePortIfIndex;
-    
+
         /*
          * ieee8021BridgeBasePortDelayExceededDiscards(4)/COUNTER64/ASN_COUNTER64/U64(U64)//l/A/w/e/r/d/h
          */
    U64   ieee8021BridgeBasePortDelayExceededDiscards;
-    
+
         /*
          * ieee8021BridgeBasePortMtuExceededDiscards(5)/COUNTER64/ASN_COUNTER64/U64(U64)//l/A/w/e/r/d/h
          */
    U64   ieee8021BridgeBasePortMtuExceededDiscards;
-    
+
         /*
          * ieee8021BridgeBasePortCapabilities(6)/BITS/ASN_OCTET_STR/char(u_long)//L/A/w/E/r/d/h
          */
    u_long   ieee8021BridgeBasePortCapabilities;
-    
+
         /*
          * ieee8021BridgeBasePortTypeCapabilities(7)/BITS/ASN_OCTET_STR/char(u_long)//L/A/w/E/r/d/h
          */
    u_long   ieee8021BridgeBasePortTypeCapabilities;
-    
+
         /*
          * ieee8021BridgeBasePortType(8)/IEEE8021BridgePortType/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h
          */
    u_long   ieee8021BridgeBasePortType;
-    
+
         /*
          * ieee8021BridgeBasePortExternal(9)/TruthValue/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h
          */
    u_long   ieee8021BridgeBasePortExternal;
-    
+
         /*
          * ieee8021BridgeBasePortAdminPointToPoint(10)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
          */
    u_long   ieee8021BridgeBasePortAdminPointToPoint;
-    
+
         /*
          * ieee8021BridgeBasePortOperPointToPoint(11)/TruthValue/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h
          */
    u_long   ieee8021BridgeBasePortOperPointToPoint;
-    
+
         /*
          * ieee8021BridgeBasePortName(12)/SnmpAdminString/ASN_OCTET_STR/char(char)//L/A/w/e/R/d/H
          */
    char   ieee8021BridgeBasePortName[255];
 size_t      ieee8021BridgeBasePortName_len; /* # of char elements, not bytes */
-    
+
 } ieee8021BridgeBasePortTable_data;
 
 
@@ -193,9 +193,9 @@ typedef struct ieee8021BridgeBasePortTable_rowreq_ctx_s {
     /** this must be first for container compare to work */
     netsnmp_index        oid_idx;
     oid                  oid_tmp[MAX_ieee8021BridgeBasePortTable_IDX_LEN];
-    
+
     ieee8021BridgeBasePortTable_mib_index        tbl_idx;
-    
+
     ieee8021BridgeBasePortTable_data              data;
     unsigned int                column_exists_flags; /* flags for existence */
     ieee8021BridgeBasePortTable_undo_data       * undo;
@@ -211,7 +211,7 @@ typedef struct ieee8021BridgeBasePortTable_rowreq_ctx_s {
     /*
      * TODO:131:o: |   |-> Add useful data to ieee8021BridgeBasePortTable rowreq context.
      */
-    
+
     /*
      * storage for future expansion
      */
@@ -234,7 +234,7 @@ typedef struct ieee8021BridgeBasePortTable_ref_rowreq_ctx_s {
                                    void *user_init_ctx);
     void ieee8021BridgeBasePortTable_rowreq_ctx_cleanup(ieee8021BridgeBasePortTable_rowreq_ctx *rowreq_ctx);
 
-    int ieee8021BridgeBasePortTable_check_dependencies(ieee8021BridgeBasePortTable_rowreq_ctx * rowreq_ctx); 
+    int ieee8021BridgeBasePortTable_check_dependencies(ieee8021BridgeBasePortTable_rowreq_ctx * rowreq_ctx);
     int ieee8021BridgeBasePortTable_commit(ieee8021BridgeBasePortTable_rowreq_ctx * rowreq_ctx);
 
     ieee8021BridgeBasePortTable_rowreq_ctx *

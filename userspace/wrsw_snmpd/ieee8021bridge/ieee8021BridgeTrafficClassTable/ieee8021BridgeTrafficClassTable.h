@@ -89,12 +89,12 @@ typedef netsnmp_data_list ieee8021BridgeTrafficClassTable_registration;
  * ieee8021BridgeTrafficClassTable.
  */
 typedef struct ieee8021BridgeTrafficClassTable_data_s {
-    
+
         /*
          * ieee8021BridgeTrafficClass(2)/INTEGER32/ASN_INTEGER/long(long)//l/A/W/e/R/d/h
          */
    long   ieee8021BridgeTrafficClass;
-    
+
 } ieee8021BridgeTrafficClassTable_data;
 
 
@@ -148,9 +148,9 @@ typedef struct ieee8021BridgeTrafficClassTable_rowreq_ctx_s {
     /** this must be first for container compare to work */
     netsnmp_index        oid_idx;
     oid                  oid_tmp[MAX_ieee8021BridgeTrafficClassTable_IDX_LEN];
-    
+
     ieee8021BridgeTrafficClassTable_mib_index        tbl_idx;
-    
+
     ieee8021BridgeTrafficClassTable_data              data;
     unsigned int                column_exists_flags; /* flags for existence */
     ieee8021BridgeTrafficClassTable_undo_data       * undo;
@@ -166,7 +166,7 @@ typedef struct ieee8021BridgeTrafficClassTable_rowreq_ctx_s {
     /*
      * TODO:131:o: |   |-> Add useful data to ieee8021BridgeTrafficClassTable rowreq context.
      */
-    
+
     /*
      * storage for future expansion
      */
@@ -189,7 +189,7 @@ typedef struct ieee8021BridgeTrafficClassTable_ref_rowreq_ctx_s {
                                    void *user_init_ctx);
     void ieee8021BridgeTrafficClassTable_rowreq_ctx_cleanup(ieee8021BridgeTrafficClassTable_rowreq_ctx *rowreq_ctx);
 
-    int ieee8021BridgeTrafficClassTable_check_dependencies(ieee8021BridgeTrafficClassTable_rowreq_ctx * rowreq_ctx); 
+    int ieee8021BridgeTrafficClassTable_check_dependencies(ieee8021BridgeTrafficClassTable_rowreq_ctx * rowreq_ctx);
     int ieee8021BridgeTrafficClassTable_commit(ieee8021BridgeTrafficClassTable_rowreq_ctx * rowreq_ctx);
 
     ieee8021BridgeTrafficClassTable_rowreq_ctx *

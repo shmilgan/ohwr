@@ -89,27 +89,27 @@ typedef netsnmp_data_list ieee8021BridgeTpPortTable_registration;
  * ieee8021BridgeTpPortTable.
  */
 typedef struct ieee8021BridgeTpPortTable_data_s {
-    
+
         /*
          * ieee8021BridgeTpPortMaxInfo(3)/INTEGER32/ASN_INTEGER/long(long)//l/A/w/e/r/d/h
          */
    long   ieee8021BridgeTpPortMaxInfo;
-    
+
         /*
          * ieee8021BridgeTpPortInFrames(4)/COUNTER64/ASN_COUNTER64/U64(U64)//l/A/w/e/r/d/h
          */
    U64   ieee8021BridgeTpPortInFrames;
-    
+
         /*
          * ieee8021BridgeTpPortOutFrames(5)/COUNTER64/ASN_COUNTER64/U64(U64)//l/A/w/e/r/d/h
          */
    U64   ieee8021BridgeTpPortOutFrames;
-    
+
         /*
          * ieee8021BridgeTpPortInDiscards(6)/COUNTER64/ASN_COUNTER64/U64(U64)//l/A/w/e/r/d/h
          */
    U64   ieee8021BridgeTpPortInDiscards;
-    
+
 } ieee8021BridgeTpPortTable_data;
 
 
@@ -150,9 +150,9 @@ typedef struct ieee8021BridgeTpPortTable_rowreq_ctx_s {
     /** this must be first for container compare to work */
     netsnmp_index        oid_idx;
     oid                  oid_tmp[MAX_ieee8021BridgeTpPortTable_IDX_LEN];
-    
+
     ieee8021BridgeTpPortTable_mib_index        tbl_idx;
-    
+
     ieee8021BridgeTpPortTable_data              data;
     unsigned int                column_exists_flags; /* flags for existence */
 
@@ -165,7 +165,7 @@ typedef struct ieee8021BridgeTpPortTable_rowreq_ctx_s {
     /*
      * TODO:131:o: |   |-> Add useful data to ieee8021BridgeTpPortTable rowreq context.
      */
-    
+
     /*
      * storage for future expansion
      */

@@ -80,43 +80,43 @@ typedef netsnmp_data_list ieee8021BridgeBaseTable_registration;
  * ieee8021BridgeBaseTable.
  */
 typedef struct ieee8021BridgeBaseTable_data_s {
-    
+
         /*
          * ieee8021BridgeBaseBridgeAddress(2)/MacAddress/ASN_OCTET_STR/char(char)//L/A/W/e/R/d/H
          */
    char   ieee8021BridgeBaseBridgeAddress[6];
 size_t      ieee8021BridgeBaseBridgeAddress_len; /* # of char elements, not bytes */
-    
+
         /*
          * ieee8021BridgeBaseNumPorts(3)/INTEGER32/ASN_INTEGER/long(long)//l/A/w/e/r/d/h
          */
    long   ieee8021BridgeBaseNumPorts;
-    
+
         /*
          * ieee8021BridgeBaseComponentType(4)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h
          */
    u_long   ieee8021BridgeBaseComponentType;
-    
+
         /*
          * ieee8021BridgeBaseDeviceCapabilities(5)/BITS/ASN_OCTET_STR/char(u_long)//L/A/W/E/r/d/h
          */
    u_long   ieee8021BridgeBaseDeviceCapabilities;
-    
+
         /*
          * ieee8021BridgeBaseTrafficClassesEnabled(6)/TruthValue/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
          */
    u_long   ieee8021BridgeBaseTrafficClassesEnabled;
-    
+
         /*
          * ieee8021BridgeBaseMmrpEnabledStatus(7)/TruthValue/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
          */
    u_long   ieee8021BridgeBaseMmrpEnabledStatus;
-    
+
         /*
          * ieee8021BridgeBaseRowStatus(8)/RowStatus/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h
          */
    u_long   ieee8021BridgeBaseRowStatus;
-    
+
 } ieee8021BridgeBaseTable_data;
 
 
@@ -160,9 +160,9 @@ typedef struct ieee8021BridgeBaseTable_rowreq_ctx_s {
     /** this must be first for container compare to work */
     netsnmp_index        oid_idx;
     oid                  oid_tmp[MAX_ieee8021BridgeBaseTable_IDX_LEN];
-    
+
     ieee8021BridgeBaseTable_mib_index        tbl_idx;
-    
+
     ieee8021BridgeBaseTable_data              data;
     unsigned int                column_exists_flags; /* flags for existence */
     ieee8021BridgeBaseTable_undo_data       * undo;
@@ -178,7 +178,7 @@ typedef struct ieee8021BridgeBaseTable_rowreq_ctx_s {
     /*
      * TODO:131:o: |   |-> Add useful data to ieee8021BridgeBaseTable rowreq context.
      */
-    
+
     /*
      * storage for future expansion
      */
@@ -201,7 +201,7 @@ typedef struct ieee8021BridgeBaseTable_ref_rowreq_ctx_s {
                                    void *user_init_ctx);
     void ieee8021BridgeBaseTable_rowreq_ctx_cleanup(ieee8021BridgeBaseTable_rowreq_ctx *rowreq_ctx);
 
-    int ieee8021BridgeBaseTable_check_dependencies(ieee8021BridgeBaseTable_rowreq_ctx * rowreq_ctx); 
+    int ieee8021BridgeBaseTable_check_dependencies(ieee8021BridgeBaseTable_rowreq_ctx * rowreq_ctx);
     int ieee8021BridgeBaseTable_commit(ieee8021BridgeBaseTable_rowreq_ctx * rowreq_ctx);
 
     ieee8021BridgeBaseTable_rowreq_ctx *

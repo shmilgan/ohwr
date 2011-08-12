@@ -94,37 +94,37 @@ typedef netsnmp_data_list ieee8021BridgePortPriorityTable_registration;
  * ieee8021BridgePortPriorityTable.
  */
 typedef struct ieee8021BridgePortPriorityTable_data_s {
-    
+
         /*
          * ieee8021BridgePortDefaultUserPriority(1)/IEEE8021PriorityValue/ASN_UNSIGNED/u_long(u_long)//l/A/W/e/R/d/H
          */
    u_long   ieee8021BridgePortDefaultUserPriority;
-    
+
         /*
          * ieee8021BridgePortNumTrafficClasses(2)/INTEGER32/ASN_INTEGER/long(long)//l/A/W/e/R/d/h
          */
    long   ieee8021BridgePortNumTrafficClasses;
-    
+
         /*
          * ieee8021BridgePortPriorityCodePointSelection(3)/IEEE8021PriorityCodePoint/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h
          */
    u_long   ieee8021BridgePortPriorityCodePointSelection;
-    
+
         /*
          * ieee8021BridgePortUseDEI(4)/TruthValue/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h
          */
    u_long   ieee8021BridgePortUseDEI;
-    
+
         /*
          * ieee8021BridgePortRequireDropEncoding(5)/TruthValue/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h
          */
    u_long   ieee8021BridgePortRequireDropEncoding;
-    
+
         /*
          * ieee8021BridgePortServiceAccessPrioritySelection(6)/TruthValue/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h
          */
    u_long   ieee8021BridgePortServiceAccessPrioritySelection;
-    
+
 } ieee8021BridgePortPriorityTable_data;
 
 
@@ -173,9 +173,9 @@ typedef struct ieee8021BridgePortPriorityTable_rowreq_ctx_s {
     /** this must be first for container compare to work */
     netsnmp_index        oid_idx;
     oid                  oid_tmp[MAX_ieee8021BridgePortPriorityTable_IDX_LEN];
-    
+
     ieee8021BridgePortPriorityTable_mib_index        tbl_idx;
-    
+
     ieee8021BridgePortPriorityTable_data              data;
     unsigned int                column_exists_flags; /* flags for existence */
     ieee8021BridgePortPriorityTable_undo_data       * undo;
@@ -191,7 +191,7 @@ typedef struct ieee8021BridgePortPriorityTable_rowreq_ctx_s {
     /*
      * TODO:131:o: |   |-> Add useful data to ieee8021BridgePortPriorityTable rowreq context.
      */
-    
+
     /*
      * storage for future expansion
      */
@@ -214,7 +214,7 @@ typedef struct ieee8021BridgePortPriorityTable_ref_rowreq_ctx_s {
                                    void *user_init_ctx);
     void ieee8021BridgePortPriorityTable_rowreq_ctx_cleanup(ieee8021BridgePortPriorityTable_rowreq_ctx *rowreq_ctx);
 
-    int ieee8021BridgePortPriorityTable_check_dependencies(ieee8021BridgePortPriorityTable_rowreq_ctx * rowreq_ctx); 
+    int ieee8021BridgePortPriorityTable_check_dependencies(ieee8021BridgePortPriorityTable_rowreq_ctx * rowreq_ctx);
     int ieee8021BridgePortPriorityTable_commit(ieee8021BridgePortPriorityTable_rowreq_ctx * rowreq_ctx);
 
     ieee8021BridgePortPriorityTable_rowreq_ctx *

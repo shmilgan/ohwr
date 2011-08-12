@@ -18,7 +18,7 @@
  *
  * These routines are used to set the value for individual objects. The
  * row context is passed, along with the new value.
- * 
+ *
  * @{
  */
 /**********************************************************************
@@ -342,7 +342,7 @@ ieee8021BridgeBasePortTable_undo_commit( ieee8021BridgeBasePortTable_rowreq_ctx 
      * eg: if (rowreq_ctx->column_set_flags & COLUMN__FLAG) {}
      */
 
-    
+
     /*
      * if we successfully un-commited this row, clear the dirty flag.
      */
@@ -406,12 +406,12 @@ The value of the instance of the IfIndex object,
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -530,7 +530,7 @@ ieee8021BridgeBasePortIfIndex_undo( ieee8021BridgeBasePortTable_rowreq_ctx *rowr
      */
     rowreq_ctx->data.ieee8021BridgeBasePortIfIndex = rowreq_ctx->undo->ieee8021BridgeBasePortIfIndex;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgeBasePortIfIndex_undo */
 
@@ -540,7 +540,7 @@ ieee8021BridgeBasePortIfIndex_undo( ieee8021BridgeBasePortTable_rowreq_ctx *rowr
  * Its status is Current, and its access level is ReadWrite.
  * OID: .1.3.111.2.802.1.1.2.1.1.4.1.10
  * Description:
-For a port running spanning tree, this object represents the 
+For a port running spanning tree, this object represents the
          administrative point-to-point status of the LAN segment
          attached to this port, using the enumeration values of
          6.4.3.  A value of forceTrue(1) indicates
@@ -570,7 +570,7 @@ For a port running spanning tree, this object represents the
          6.10.1 (and described in 26.4.1).  Whenever the parameter
          is set to ForceFalse(2) or auto(3), the value for the
          Default Backbone Destination parameter is set to the
-         Backbone Service Instance Group Address for the VIP-ISID. 
+         Backbone Service Instance Group Address for the VIP-ISID.
 
          The value of this object MUST be retained across
          reinitializations of the management system.
@@ -605,12 +605,12 @@ For a port running spanning tree, this object represents the
  * You should check that the requested change between the undo value and the
  * new value is legal (ie, the transistion from one value to another
  * is legal).
- *      
+ *
  *@note
  * This check is only to determine if the new value
  * is \b potentially valid. This is the first check of many, and
  * is one of the simplest ones.
- * 
+ *
  *@note
  * this is not the place to do any checks for values
  * which depend on some other value in the mib. Those
@@ -729,7 +729,7 @@ ieee8021BridgeBasePortAdminPointToPoint_undo( ieee8021BridgeBasePortTable_rowreq
      */
     rowreq_ctx->data.ieee8021BridgeBasePortAdminPointToPoint = rowreq_ctx->undo->ieee8021BridgeBasePortAdminPointToPoint;
 
-    
+
     return MFD_SUCCESS;
 } /* ieee8021BridgeBasePortAdminPointToPoint_undo */
 
@@ -755,7 +755,7 @@ int
 ieee8021BridgeBasePortTable_check_dependencies(ieee8021BridgeBasePortTable_rowreq_ctx *rowreq_ctx)
 {
     int rc = MFD_SUCCESS;
-    
+
     DEBUGMSGTL(("internal:ieee8021BridgeBasePortTable:ieee8021BridgeBasePortTable_check_dependencies","called\n"));
 
     netsnmp_assert(NULL != rowreq_ctx);
