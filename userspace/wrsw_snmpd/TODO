@@ -1,0 +1,19 @@
+    ieee8021bridge
+    ==============
+
+- When HW support for Traffic Classes and counters be released, the associated
+objects shall be implemented. The same for RSTP and MMRP related objects.
+
+- Add support for persistence when appropriate. For this we may use a
+configuration file. This file should be stored in a non-volatile memory and
+applied at startup.
+
+- In order to reduce the footprint of the library and the over-complexity of the
+auto-generated code, we may re-generate the skeleton code created from the
+mib2c.mfd.conf template using this time a more suitable one (probably that used
+in the ieee8021qbridge).
+
+
+
+    ieee8021qbridge
+    ===============
