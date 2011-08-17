@@ -173,6 +173,7 @@ enum wrn_resnames {
 #define PRIV_IOCGGETRFCR (SIOCDEVPRIVATE+3)
 #define PRIV_IOCSSETRFCR (SIOCDEVPRIVATE+4)
 #define PRIV_IOCGGETECR (SIOCDEVPRIVATE+5)
+#define PRIV_IOCGCOUNTERS (SIOCDEVPRIVATE+6)
 
 /* Structures straight from wr_minic.c -- should user-space include this? */
 struct wrn_calibration_req {
@@ -248,13 +249,17 @@ extern int wrn_calib_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 extern void wrn_ppsg_read_time(struct wrn_dev *wrn, u32 *fine_cnt, u32 *utc);
 
 /* Following functions from deframer.c */
-extern int wrn_get_deframer_ioctl(struct net_device *dev, struct ifreq *rq, 
+extern int wrn_get_deframer_ioctl(struct net_device *dev, struct ifreq *rq,
 int cmd);
-extern int wrn_set_deframer_ioctl(struct net_device *dev, struct ifreq *rq, 
+extern int wrn_set_deframer_ioctl(struct net_device *dev, struct ifreq *rq,
 int cmd);
 
 /* Following functions from ecr.c */
-extern int wrn_get_ecr_ioctl(struct net_device *dev, struct ifreq *rq, 
+extern int wrn_get_ecr_ioctl(struct net_device *dev, struct ifreq *rq,
+int cmd);
+
+/* Following functions from counters.c */
+extern int wrn_event_counters_ioctl(struct net_device *dev, struct ifreq *rq,
 int cmd);
 
 #endif /* __WR_NIC_H__ */
