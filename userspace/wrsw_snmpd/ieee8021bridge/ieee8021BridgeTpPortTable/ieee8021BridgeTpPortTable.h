@@ -61,7 +61,13 @@ config_require(IEEE8021-BRIDGE-MIB/ieee8021BridgeTpPortTable/ieee8021BridgeTpPor
 
 /* Custom IOCTLs */
 #define PRIV_IOCGGETECR (SIOCDEVPRIVATE+5)
+#define PRIV_IOCGCOUNTERS (SIOCDEVPRIVATE+6)
 #define WRN_ECR_GET_PORTID 4
+
+/* Event counters offsets of the endpoints (only defined those in which we're
+   interested) */
+#define EP_COUNTER_RX_VALID_FRAMES 5
+#define EP_COUNTER_RX_DROPPED_FRAMES 9
 
 /* For custom ioctl operations on endpoint registers */
 struct wrn_register_req {

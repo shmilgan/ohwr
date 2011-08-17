@@ -36,11 +36,9 @@ extern "C" {
     int ieee8021BridgeTpPortTable_init_data(ieee8021BridgeTpPortTable_registration * ieee8021BridgeTpPortTable_reg);
 
 
-    /*
-     * TODO:180:o: Review ieee8021BridgeTpPortTable cache timeout.
-     * The number of seconds before the cache times out
-     */
-#define IEEE8021BRIDGETPPORTTABLE_CACHE_TIMEOUT   60
+/* We reduce the default value of the cache timeout in order to get the values
+   of the counters more frequently refreshed in the container */
+#define IEEE8021BRIDGETPPORTTABLE_CACHE_TIMEOUT   1
 
 void ieee8021BridgeTpPortTable_container_init(netsnmp_container **container_ptr_ptr,
                              netsnmp_cache *cache);

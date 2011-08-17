@@ -330,9 +330,19 @@ ieee8021BridgeTpPortTable_container_load(netsnmp_container *container)
                     rowreq_ctx->column_exists_flags = 0xf;
 
                     /* Setup/save data for ieee8021BridgeTpPortInFrames */
-                    /* TODO: WR: Need HW implementation */
-                    rowreq_ctx->data.ieee8021BridgeTpPortInFrames.high = 0;
-                    rowreq_ctx->data.ieee8021BridgeTpPortInFrames.low = 0;
+                    req.val = EP_COUNTER_RX_VALID_FRAMES;
+                    ifr.ifr_data = &req;
+
+                    if (ioctl(sockfd, PRIV_IOCGCOUNTERS, &ifr) < 0) {
+                        snmp_log(LOG_ERR,
+                                 "ioctl PRIV_IOCGCOUNTERS failed for port %s\n",
+                                 port_list.port_names[i]);
+                    } else {
+                        /* Counters at HW are only 32-bit long for now */
+                        rowreq_ctx->data.ieee8021BridgeTpPortInFrames.high = 0;
+                        rowreq_ctx->data.ieee8021BridgeTpPortInFrames.low =
+                            req.val;
+                    }
 
                     /* Setup/save data for ieee8021BridgeTpPortOutFrames */
                     /* TODO: WR: Need HW implementation */
@@ -340,9 +350,20 @@ ieee8021BridgeTpPortTable_container_load(netsnmp_container *container)
                     rowreq_ctx->data.ieee8021BridgeTpPortOutFrames.low = 0;
 
                     /* Setup/save data for ieee8021BridgeTpPortInDiscards */
-                    /* TODO: WR: Need HW implementation */
-                    rowreq_ctx->data.ieee8021BridgeTpPortInDiscards.high = 0;
-                    rowreq_ctx->data.ieee8021BridgeTpPortInDiscards.low = 0;
+                    req.val = EP_COUNTER_RX_DROPPED_FRAMES;
+                    ifr.ifr_data = &req;
+
+                    if (ioctl(sockfd, PRIV_IOCGCOUNTERS, &ifr) < 0) {
+                        snmp_log(LOG_ERR,
+                                 "ioctl PRIV_IOCGCOUNTERS failed for port %s\n",
+                                 port_list.port_names[i]);
+                    } else {
+                        /* Counters at HW are only 32-bit long for now */
+                        rowreq_ctx->data.ieee8021BridgeTpPortInDiscards.high =
+                            0;
+                        rowreq_ctx->data.ieee8021BridgeTpPortInDiscards.low =
+                            req.val;
+                    }
                 }
 
                 /* Setup/save data for ieee8021BridgeTpPortMaxInfo */
