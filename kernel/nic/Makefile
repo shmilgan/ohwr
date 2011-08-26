@@ -1,7 +1,7 @@
 
 obj-m := wr-nic.o
 wr-nic-objs := module.o device.o nic-core.o endpoint.o ethtool.o \
-		pps.o timestamp.o dmtd.o
+		pps.o timestamp.o dmtd.o ecr.o
 
 # accept WRN_DEBUG from the environment. It turns pr_debug() into printk.
 ifdef WRN_DEBUG

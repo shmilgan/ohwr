@@ -223,6 +223,8 @@ static int wrn_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		return wrn_calib_ioctl(dev, rq, cmd);
 	case PRIV_IOCGGETPHASE:
 		return wrn_phase_ioctl(dev, rq, cmd);
+    case PRIV_IOCGGETECR:
+        return wrn_get_ecr_ioctl(dev, rq, cmd);
 	default:
 		spin_lock_irq(&ep->lock);
 		res = generic_mii_ioctl(&ep->mii, if_mii(rq), cmd, NULL);
