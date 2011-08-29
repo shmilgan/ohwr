@@ -106,7 +106,7 @@ struct rtu_fdb_get_num_vlan_deletes_retdata {
 
 struct rtu_fdb_read_entry_argdata {
     uint8_t mac[ETH_ALEN];
-    uint8_t fid; 
+    uint8_t fid;
 };
 
 struct rtu_fdb_read_entry_retdata {
@@ -184,8 +184,79 @@ struct rtu_fdb_get_next_fid_argdata {
 };
 
 struct rtu_fdb_get_next_fid_retdata {
-    uint8_t retval;
+    uint16_t retval;
+};
+
+struct rtu_fdb_create_static_vlan_entry_argdata {
+    uint16_t vid;
+    uint8_t fid;
+    enum registrar_control member_set[NUM_PORTS];
+    uint32_t untagged_set;
+};
+
+struct rtu_fdb_create_static_vlan_entry_retdata {
+    int retval;
+};
+
+
+struct rtu_fdb_delete_static_vlan_entry_argdata {
+    uint16_t vid;
+};
+
+struct rtu_fdb_delete_static_vlan_entry_retdata {
+    int retval;
+};
+
+
+struct rtu_fdb_read_static_vlan_entry_argdata {
+    uint16_t vid;
+};
+
+struct rtu_fdb_read_static_vlan_entry_retdata {
+    int retval;
+    enum registrar_control member_set[NUM_PORTS];
+    uint32_t untagged_set;
+};
+
+
+struct rtu_fdb_read_next_static_vlan_entry_argdata {
+    uint16_t vid;
+};
+
+struct rtu_fdb_read_next_static_vlan_entry_retdata {
+    int retval;
+    uint16_t vid;
+    enum registrar_control member_set[NUM_PORTS];
+    uint32_t untagged_set;
+};
+
+
+struct rtu_fdb_read_vlan_entry_argdata {
+    uint16_t vid;
+};
+
+struct rtu_fdb_read_vlan_entry_retdata {
+    int retval;
+    uint8_t fid;
+    int entry_type;
+    enum registrar_control member_set[NUM_PORTS];
+    uint32_t untagged_set;
+    unsigned long creation_t;
+};
+
+
+struct rtu_fdb_read_next_vlan_entry_argdata {
+    uint16_t vid;
+};
+
+struct rtu_fdb_read_next_vlan_entry_retdata {
+    int retval;
+    uint16_t vid;
+    uint8_t fid;
+    int entry_type;
+    enum registrar_control member_set[NUM_PORTS];
+    uint32_t untagged_set;
+    unsigned long creation_t;
 };
 
 #endif /*__WHITERABBIT_RTU_FD_EXPORT_H*/
-

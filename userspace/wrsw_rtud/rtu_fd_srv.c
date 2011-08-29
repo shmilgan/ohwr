@@ -261,6 +261,120 @@ static int rtu_fdb_srv_get_next_fid(
     return 0;
 }
 
+static int rtu_fdb_srv_create_static_vlan_entry(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_create_static_vlan_entry_argdata *in;
+    struct rtu_fdb_create_static_vlan_entry_retdata *out;
+    in  = (struct rtu_fdb_create_static_vlan_entry_argdata*)args;
+    out = (struct rtu_fdb_create_static_vlan_entry_retdata*)ret;
+
+    out->retval =
+        rtu_fdb_create_static_vlan_entry(
+            in->vid,
+            in->fid,
+            in->member_set,
+            in->untagged_set
+        );
+
+    return 0;
+}
+
+static int rtu_fdb_srv_delete_static_vlan_entry(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_delete_static_vlan_entry_argdata *in;
+    struct rtu_fdb_delete_static_vlan_entry_retdata *out;
+    in  = (struct rtu_fdb_delete_static_vlan_entry_argdata*)args;
+    out = (struct rtu_fdb_delete_static_vlan_entry_retdata*)ret;
+
+    out->retval = rtu_fdb_delete_static_vlan_entry(in->vid);
+
+    return 0;
+}
+
+static int rtu_fdb_srv_read_static_vlan_entry(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_read_static_vlan_entry_argdata *in;
+    struct rtu_fdb_read_static_vlan_entry_retdata *out;
+    in  = (struct rtu_fdb_read_static_vlan_entry_argdata*)args;
+    out = (struct rtu_fdb_read_static_vlan_entry_retdata*)ret;
+
+    out->retval =
+        rtu_fdb_read_static_vlan_entry(
+            in->vid,
+            &out->member_set,
+            &out->untagged_set
+        );
+
+    return 0;
+}
+
+static int rtu_fdb_srv_read_next_static_vlan_entry(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_read_next_static_vlan_entry_argdata *in;
+    struct rtu_fdb_read_next_static_vlan_entry_retdata *out;
+    in  = (struct rtu_fdb_read_next_static_vlan_entry_argdata*)args;
+    out = (struct rtu_fdb_read_next_static_vlan_entry_retdata*)ret;
+
+    out->retval =
+        rtu_fdb_read_next_static_vlan_entry(
+            &in->vid,
+            &out->member_set,
+            &out->untagged_set
+        );
+
+    out->vid = in->vid;
+
+    return 0;
+}
+
+static int rtu_fdb_srv_read_vlan_entry(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_read_vlan_entry_argdata *in;
+    struct rtu_fdb_read_vlan_entry_retdata *out;
+    in  = (struct rtu_fdb_read_vlan_entry_argdata*)args;
+    out = (struct rtu_fdb_read_vlan_entry_retdata*)ret;
+
+    out->retval =
+        rtu_fdb_read_vlan_entry(
+            in->vid,
+            &out->fid,
+            &out->entry_type,
+            &out->member_set,
+            &out->untagged_set,
+            &out->creation_t
+        );
+
+    return 0;
+}
+
+static int rtu_fdb_srv_read_next_vlan_entry(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_read_next_vlan_entry_argdata *in;
+    struct rtu_fdb_read_next_vlan_entry_retdata *out;
+    in  = (struct rtu_fdb_read_next_vlan_entry_argdata*)args;
+    out = (struct rtu_fdb_read_next_vlan_entry_retdata*)ret;
+
+    out->retval =
+        rtu_fdb_read_next_vlan_entry(
+            &in->vid,
+            &out->fid,
+            &out->entry_type,
+            &out->member_set,
+            &out->untagged_set,
+            &out->creation_t
+        );
+
+    out->vid = in->vid;
+
+    return 0;
+}
+
 const struct minipc_pd rtu_fdb_srv_get_max_vid_struct = {
     .f      = rtu_fdb_srv_get_max_vid,
     .name   = "0",
@@ -441,6 +555,78 @@ const struct minipc_pd rtu_fdb_srv_get_next_fid_struct = {
     }
 };
 
+const struct minipc_pd rtu_fdb_srv_create_static_vlan_entry_struct = {
+    .f      = rtu_fdb_srv_create_static_vlan_entry,
+    .name   = "15",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_create_static_vlan_entry_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_create_static_vlan_entry_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_delete_static_vlan_entry_struct = {
+    .f      = rtu_fdb_srv_delete_static_vlan_entry,
+    .name   = "16",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_static_vlan_entry_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_static_vlan_entry_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_read_static_vlan_entry_struct = {
+    .f      = rtu_fdb_srv_read_static_vlan_entry,
+    .name   = "17",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_static_vlan_entry_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_static_vlan_entry_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_read_next_static_vlan_entry_struct = {
+    .f      = rtu_fdb_srv_read_next_static_vlan_entry,
+    .name   = "18",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_static_vlan_entry_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_static_vlan_entry_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_read_vlan_entry_struct = {
+    .f      = rtu_fdb_srv_read_vlan_entry,
+    .name   = "19",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_vlan_entry_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_vlan_entry_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_read_next_vlan_entry_struct = {
+    .f      = rtu_fdb_srv_read_next_vlan_entry,
+    .name   = "20",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_vlan_entry_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_vlan_entry_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
 struct minipc_ch *rtu_fdb_srv_create(char *name)
 {
 	struct minipc_ch *server;
@@ -461,10 +647,16 @@ struct minipc_ch *rtu_fdb_srv_create(char *name)
 	    minipc_export(server, &rtu_fdb_srv_read_next_entry_struct);
 	    minipc_export(server, &rtu_fdb_srv_create_static_entry_struct);
 	    minipc_export(server, &rtu_fdb_srv_read_static_entry_struct);
+	    minipc_export(server, &rtu_fdb_srv_read_next_static_entry_struct);
 	    minipc_export(server, &rtu_fdb_srv_delete_static_entry_struct);
 	    minipc_export(server, &rtu_fdb_srv_get_next_fid_struct);
+        minipc_export(server, &rtu_fdb_srv_create_static_vlan_entry_struct);
+        minipc_export(server, &rtu_fdb_srv_delete_static_vlan_entry_struct);
+        minipc_export(server, &rtu_fdb_srv_read_static_vlan_entry_struct);
+        minipc_export(server, &rtu_fdb_srv_read_next_static_vlan_entry_struct);
+        minipc_export(server, &rtu_fdb_srv_read_vlan_entry_struct);
+        minipc_export(server, &rtu_fdb_srv_read_next_vlan_entry_struct);
+
     }
     return server;
 }
-
-

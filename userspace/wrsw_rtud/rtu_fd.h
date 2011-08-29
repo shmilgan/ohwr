@@ -36,10 +36,6 @@
 
 #include "rtu.h"
 
-// Filtering entries may be static (permanent) or dynamic (learned)
-#define STATIC          0
-#define DYNAMIC         1
-
 // Static filtering entries may be active or inactive. Only active entries
 // are used to compute the forward vector for a FDB entry.
 #define NOT_IN_SERVICE  0
@@ -48,30 +44,12 @@
 int rtu_fdb_init(uint16_t poly, unsigned long aging)
         __attribute__((warn_unused_result));
 
+// FDB
+
 int rtu_fdb_create_dynamic_entry(
             uint8_t mac[ETH_ALEN],
             uint16_t vid,
             uint32_t port_map
-     ) __attribute__((warn_unused_result));
-
-int  rtu_fdb_create_static_entry(
-            uint8_t mac[ETH_ALEN],
-            uint16_t vid,
-            enum filtering_control port_map[NUM_PORTS],
-            enum storage_type type,
-            int active
-     ) __attribute__((warn_unused_result));
-
-int rtu_fdb_create_static_vlan_entry(
-            uint16_t vid,
-            uint8_t fid,
-        	enum registrar_control member_set[NUM_PORTS],
-        	uint32_t untagged_set
-     ) __attribute__((warn_unused_result));
-
-int rtu_fdb_delete_static_entry(
-            uint8_t mac[ETH_ALEN],
-            uint16_t vid
      ) __attribute__((warn_unused_result));
 
 int rtu_fdb_read_entry(
@@ -86,6 +64,21 @@ int rtu_fdb_read_next_entry(
            uint8_t *fid,                                        // inout
            uint32_t *port_map,                                  // out
            int *entry_type                                      // out
+     ) __attribute__((warn_unused_result));
+
+// Static FDB
+
+int  rtu_fdb_create_static_entry(
+            uint8_t mac[ETH_ALEN],
+            uint16_t vid,
+            enum filtering_control port_map[NUM_PORTS],
+            enum storage_type type,
+            int active
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_delete_static_entry(
+            uint8_t mac[ETH_ALEN],
+            uint16_t vid
      ) __attribute__((warn_unused_result));
 
 int rtu_fdb_read_static_entry(
@@ -104,11 +97,51 @@ int rtu_fdb_read_next_static_entry(
             int *active                                         // out
      ) __attribute__((warn_unused_result));
 
+// VLAN
+
+int rtu_fdb_create_static_vlan_entry(
+            uint16_t vid,
+            uint8_t fid,
+            enum registrar_control member_set[NUM_PORTS],
+            uint32_t untagged_set
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_delete_static_vlan_entry(
+            uint16_t vid
+     ) __attribute__((warn_unused_result));
+
 int rtu_fdb_read_static_vlan_entry(
             uint16_t vid,
-	        enum registrar_control (*member_set)[NUM_PORTS],    // out
-	        uint32_t *untagged_set					            // out
+            enum registrar_control (*member_set)[NUM_PORTS],    // out
+            uint32_t *untagged_set                              // out
      ) __attribute__((warn_unused_result));
+
+int rtu_fdb_read_next_static_vlan_entry(
+            uint16_t *vid,                                      // inout
+            enum registrar_control (*member_set)[NUM_PORTS],    // out
+            uint32_t *untagged_set                              // out
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_read_vlan_entry(
+            uint16_t vid,
+            uint8_t *fid,                                       // out
+            int *entry_type,                                    // out
+            enum registrar_control (*member_set)[NUM_PORTS],    // out
+            uint32_t *untagged_set,                             // out
+            unsigned long *creation_t                           // out
+     ) __attribute__((warn_unused_result));
+
+
+int rtu_fdb_read_next_vlan_entry(
+            uint16_t *vid,                                      // inout
+            uint8_t *fid,                                       // out
+            int *entry_type,                                    // out
+            enum registrar_control (*member_set)[NUM_PORTS],    // out
+            uint32_t *untagged_set,                             // out
+            unsigned long *creation_t                           // out
+     ) __attribute__((warn_unused_result));
+
+// Config
 
 void rtu_fdb_set_hash_poly(uint16_t poly);
 
@@ -121,13 +154,15 @@ int  rtu_fdb_set_aging_time(
 
 unsigned long rtu_fdb_get_aging_time(uint8_t fid);
 
-uint16_t rtu_fdb_get_num_dynamic_entries(uint8_t fid);
-uint32_t rtu_fdb_get_num_learned_entry_discards(uint8_t fid);
 uint16_t rtu_fdb_get_num_vlans(void);
 uint16_t rtu_fdb_get_max_supported_vlans(void);
 uint16_t rtu_fdb_get_max_vid(void);
+uint16_t rtu_fdb_get_next_fid(uint8_t fid);
+
+// Statistics
+
+uint16_t rtu_fdb_get_num_dynamic_entries(uint8_t fid);
+uint32_t rtu_fdb_get_num_learned_entry_discards(uint8_t fid);
 uint64_t rtu_fdb_get_num_vlan_deletes(void);
-uint8_t  rtu_fdb_get_next_fid(uint8_t fid);
 
 #endif /*__WHITERABBIT_RTU_FD_H*/
-

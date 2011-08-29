@@ -48,6 +48,63 @@
 static pthread_t aging_process;
 
 /**
+ * Creates static entries for reserved MAC addresses in the filtering
+ * database. Should be called on FDB (re)initialisation. These entries are
+ * permanent and can not be modified.
+ * @return error code
+ */
+static int create_permanent_entries()
+{
+    uint8_t bcast_mac[]         = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    uint8_t slow_proto_mac[]    = {0x01, 0x80, 0xc2, 0x00, 0x00, 0x01};
+    hexp_port_list_t plist;
+    hexp_port_state_t pstate;
+    int i, err;
+    enum filtering_control port_map[NUM_PORTS];
+
+    memset(port_map, 0x00, NUM_PORTS);
+    port_map[NIC_PORT] = Forward;
+
+    // VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
+    TRACE(TRACE_INFO,"adding static routes for slow protocols...");
+    for(i = 0; i < NUM_RESERVED_ADDR; i++) {
+        slow_proto_mac[5] = i;
+        err = rtu_fdb_create_static_entry(slow_proto_mac, WILDCARD_VID,
+            port_map, Permanent, ACTIVE);
+        if(err)
+            return err;
+    }
+
+    // packets addressed to WR card interfaces are forwarded to NIC virtual port
+    halexp_query_ports(&plist);
+    for(i = 0; i < plist.num_ports; i++) {
+        halexp_get_port_state(&pstate, plist.port_names[i]);
+        TRACE(
+            TRACE_INFO,
+            "adding static route for port %s index %d [mac %s]",
+            plist.port_names[i],
+            pstate.hw_index,
+            mac_to_string(pstate.hw_addr)
+        );
+		err = rtu_fdb_create_static_entry(pstate.hw_addr, WILDCARD_VID,
+		    port_map, Permanent, ACTIVE);
+        if(err)
+            return err;
+    }
+
+    // Broadcast MAC
+    TRACE(TRACE_INFO,"adding static route for broadcast MAC...");
+    for(i = 0; i < NUM_PORTS; i++)
+        port_map[i] = Forward;
+    err = rtu_fdb_create_static_entry(bcast_mac, WILDCARD_VID,
+        port_map, Permanent, ACTIVE);
+    if(err)
+        return err;
+
+    return 0;
+}
+
+/**
  * \brief Periodically removes the filtering database old entries.
  *
  */
@@ -75,7 +132,7 @@ static int rtu_daemon_learning_process()
 
     while(1){
         // Serve pending unrecognised request
-        err = rtu_read_learning_queue(&req);
+        err = rtu_hw_read_learning_queue(&req);
         if (err) {
             TRACE(TRACE_INFO,"read learning queue: err %d\n", err);
         } else {
@@ -125,23 +182,23 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 
     // init RTU HW
     TRACE(TRACE_INFO, "init rtu hardware.");
-    err = rtu_init();
+    err = rtu_hw_init();
     if(err)
         return err;
 
     // disable RTU
     TRACE(TRACE_INFO, "disable rtu.");
-    rtu_disable();
+    rtu_hw_disable();
 
     // init configuration for ports
     TRACE(TRACE_INFO, "init port config.");
     for(i = MIN_PORT; i <= MAX_PORT; i++) {
         // MIN_PORT <= port <= MAX_PORT, thus no err returned
-        err = rtu_learn_enable_on_port(i,1);
-        err = rtu_pass_all_on_port(i,1);
-        err = rtu_pass_bpdu_on_port(i,0);
-        err = rtu_set_fixed_prio_on_port(i,0);
-        err = rtu_set_unrecognised_behaviour_on_port(i,1);
+        err = rtu_hw_learn_enable_on_port(i,1);
+        err = rtu_hw_pass_all_on_port(i,1);
+        err = rtu_hw_pass_bpdu_on_port(i,0);
+        err = rtu_hw_set_fixed_prio_on_port(i,0);
+        err = rtu_hw_set_unrecognised_behaviour_on_port(i,1);
     }
 
     // init filtering database
@@ -150,9 +207,14 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
     if (err)
         return err;
 
+    // create permanent entries for reserved MAC addresses
+    err = create_permanent_entries();
+    if(err)
+        return err;
+
     // turn on RTU
     TRACE(TRACE_INFO, "enable rtu.");
-    rtu_enable();
+    rtu_hw_enable();
 
     return err;
 }
@@ -166,8 +228,8 @@ static void rtu_daemon_destroy()
     pthread_cancel(aging_process);
 
     // Turn off RTU
-    rtu_disable();
-    rtu_exit();
+    rtu_hw_disable();
+    rtu_hw_exit();
 }
 
 void sigint(int signum) {
@@ -262,5 +324,3 @@ int main(int argc, char **argv)
     rtu_daemon_destroy();
 	return err;
 }
-
-

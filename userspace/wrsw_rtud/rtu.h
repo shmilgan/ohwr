@@ -86,6 +86,11 @@
 #define TRACE_DBG(...)
 #endif
 
+// Filtering entries may be static (permanent) or dynamic (learned)
+#define STATIC          0
+#define DYNAMIC         1
+#define STATIC_DYNAMIC  2
+
 enum filtering_control {
 	Filter 	= 0,
 	Forward	= 1,
@@ -94,9 +99,9 @@ enum filtering_control {
 
 enum registrar_control {
     Registration_forbidden	= 0,
-    Registration_fixed      = 1, 
+    Registration_fixed      = 1,
     Normal_registration     = 2
-}; 
+};
 
 enum storage_type {
 	Other           = 1,
@@ -107,7 +112,7 @@ enum storage_type {
 };
 
 /**
- * \brief RTU request: input for the RTU
+ * RTU request: input for the RTU
  */
 struct rtu_request {
     int port_id;           // physical port identifier
@@ -121,24 +126,26 @@ struct rtu_request {
 };
 
 /**
- * \brief Static Filtering Database Entry Object
+ * Static Filtering Database Entry Object
  */
 struct static_filtering_entry {
-    uint8_t mac[ETH_ALEN];                      // MAC address 
-    uint16_t vid;                               // VLAN ID 
-    enum filtering_control port_map[NUM_PORTS];	// port map for dest address	
-    enum storage_type type;		                // Entry storage type. Reserved 
+    uint8_t mac[ETH_ALEN];                      // MAC address
+    uint16_t vid;                               // VLAN ID
+    enum filtering_control port_map[NUM_PORTS];	// port map for dest address
+    enum storage_type type;		                // Entry storage type. Reserved
                                                 // entries marked as permanent
-    struct static_filtering_entry *next;	    // Double linked list (in 
+    struct static_filtering_entry *next;	    // Double linked list (in
     struct static_filtering_entry *prev;        // lexicographic order)
-    struct static_filtering_entry *next_sib;    // Next static entry with the 
-                                                // same MAC and a VID that maps 
+    struct static_filtering_entry *next_sib;    // Next static entry with the
+                                                // same MAC and a VID that maps
                                                 // to the same FID
-    int active;
+    int active;                                 // 0: non-active; 1: active.
+                                                // Only active entries are used
+                                                // to compute the forward vector
 };
 
 /**
- * \brief RTU Filtering Database Entry Object
+ * RTU Filtering Database Entry Object
  */
 struct filtering_entry {
     int valid;                    // bit: 1 = entry is valid, 0: entry is
@@ -188,26 +195,34 @@ struct filtering_entry {
     uint16_t cam_addr;            // address of the first entry in CAM memory
                                   // (2 words)
 
-    int dynamic;                  // 1 = contains dynamic information. An entry 
+    int dynamic;                  // 1 = contains dynamic information. An entry
                                   // may contain both, static and dynamic info.
 
-    uint32_t use_dynamic; 	      // Identifies the static and dynamic part of 
+    uint32_t use_dynamic; 	      // Identifies the static and dynamic part of
                                   // the filtering entry
-                                  // For static entries, bits set to 1 indicate 
-                                  // to use dynamic information (in case it 
-                                  // exists) to determine whether to forward or 
-                                  // filter (802.1Q 8.8.1).				
-                                  // Combines information for all the static 
-                    		      // entries associated to this MAC address and 
+                                  // For static entries, bits set to 1 indicate
+                                  // to use dynamic information (in case it
+                                  // exists) to determine whether to forward or
+                                  // filter (802.1Q 8.8.1).
+                                  // Combines information for all the static
+                    		      // entries associated to this MAC address and
                                   // FID.
+    struct static_filtering_entry *static_fdb;
+                                  // static entries with same MAC and VIDs that
+                                  // map to same FID. When static_fdb is not
+                                  // NULL, the entry contains static info.
+    struct filtering_entry_node *fdb;
+                                  // associated node in lex ordered list.
+};
 
-    struct static_filtering_entry *static_fdb;  
-                                  // static entries with same MAC and VIDs that 
-                                  // map to same FID. When static_fdb is not 
-                                  // NULL, the entry contains static information
-
-    struct filtering_entry *next; // Double linked list (in lexicographic order)
-    struct filtering_entry *prev; // 
+/**
+ * RTU Filtering Database Entry Node in lexicographic ordered list.
+ */
+struct filtering_entry_node {
+    uint8_t mac[ETH_ALEN];
+    uint8_t fid;
+    struct filtering_entry_node *next; // Double linked list
+    struct filtering_entry_node *prev; // (in lexicographic order)
 };
 
 /**
@@ -221,13 +236,13 @@ struct vlan_table_entry {
     int prio_override;      // priority override (force per-VLAN priority)
     int drop;               // 1: drop the packet (VLAN not registered)
 
-    uint32_t use_dynamic; 	// For static entries, bits set to 1 indicate to use 
+    uint32_t use_dynamic; 	// For static entries, bits set to 1 indicate to use
                             // dynamic information to determine the member set
-    uint32_t untagged_set;  // Bits set to 1 indicate that frames shall be sent 
+    uint32_t untagged_set;  // Bits set to 1 indicate that frames shall be sent
                             // untagged in the corresponding port
     int dynamic;            // pure static:         0
-                            // pure dynamic:	    1
-                            // dynamic and static:	2
+                            // pure dynamic:        1
+                            // dynamic and static:  2
     uint32_t creation_t;    // value of sysUpTime when this VLAN was created.
 };
 
@@ -240,7 +255,7 @@ static inline
 struct filtering_entry *rtu_fe_copy( struct filtering_entry *dst,
                                      struct filtering_entry *src )
 {
-    return memcpy( dst, src, sizeof(*src) );
+    return memcpy(dst, src, sizeof(*src));
 }
 
 /**
@@ -251,7 +266,14 @@ struct filtering_entry *rtu_fe_copy( struct filtering_entry *dst,
 static inline
 struct filtering_entry *rtu_fe_clean(struct filtering_entry *ent)
 {
-    return memset( ent, 0, sizeof(*ent) );
+    return memset(ent, 0, sizeof(*ent));
+}
+
+static inline
+struct static_filtering_entry *rtu_sfe_copy( struct static_filtering_entry *dst,
+                                             struct static_filtering_entry *src )
+{
+    return memcpy(dst, src, sizeof(*src));
 }
 
 /**

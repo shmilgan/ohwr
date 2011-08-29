@@ -79,6 +79,47 @@ int rtu_fdb_proxy_read_next_static_entry(
             int *active                                         // out
      ) __attribute__((warn_unused_result));
 
+int rtu_fdb_proxy_create_static_vlan_entry(
+            uint16_t vid,
+            uint8_t fid,
+            enum registrar_control member_set[NUM_PORTS],
+            uint32_t untagged_set
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_proxy_delete_static_vlan_entry(
+            uint16_t vid
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_proxy_read_static_vlan_entry(
+            uint16_t vid,
+            enum registrar_control (*member_set)[NUM_PORTS],    // out
+            uint32_t *untagged_set                              // out
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_proxy_read_next_static_vlan_entry(
+            uint16_t *vid,                                      // inout
+            enum registrar_control (*member_set)[NUM_PORTS],    // out
+            uint32_t *untagged_set                              // out
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_proxy_read_vlan_entry(
+            uint16_t vid,
+            uint8_t *fid,                                       // out
+            int *entry_type,                                    // out
+            enum registrar_control *member_set[NUM_PORTS],      // out
+            uint32_t *untagged_set,                             // out
+            unsigned long *creation_t                           // out
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_proxy_read_next_vlan_entry(
+            uint16_t *vid,                                      // inout
+            uint8_t *fid,                                       // out
+            int *entry_type,                                    // out
+            enum registrar_control *member_set[NUM_PORTS],      // out
+            uint32_t *untagged_set,                             // out
+            unsigned long *creation_t                           // out
+     ) __attribute__((warn_unused_result));
+
 int  rtu_fdb_proxy_set_aging_time(
             uint8_t fid,
             unsigned long t
@@ -92,7 +133,7 @@ uint16_t rtu_fdb_proxy_get_num_vlans(void);
 uint16_t rtu_fdb_proxy_get_max_supported_vlans(void);
 uint16_t rtu_fdb_proxy_get_max_vid(void);
 uint64_t rtu_fdb_proxy_get_num_vlan_deletes(void);
-uint8_t  rtu_fdb_proxy_get_next_fid(uint8_t fid);
+uint16_t rtu_fdb_proxy_get_next_fid(uint8_t fid);
 
 struct minipc_ch *rtu_fdb_proxy_create(char *name);
 

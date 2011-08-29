@@ -195,6 +195,72 @@ const struct minipc_pd rtu_fdb_proxy_get_next_fid_struct = {
     }
 };
 
+const struct minipc_pd rtu_fdb_proxy_create_static_vlan_entry_struct = {
+    .name   = "15",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_create_static_vlan_entry_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_create_static_vlan_entry_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_delete_static_vlan_entry_struct = {
+    .name   = "16",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_static_vlan_entry_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_static_vlan_entry_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_read_static_vlan_entry_struct = {
+    .name   = "17",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_static_vlan_entry_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_static_vlan_entry_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_read_next_static_vlan_entry_struct = {
+    .name   = "18",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_static_vlan_entry_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_static_vlan_entry_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_read_vlan_entry_struct = {
+    .name   = "19",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_vlan_entry_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_vlan_entry_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_read_next_vlan_entry_struct = {
+    .name   = "20",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_vlan_entry_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_vlan_entry_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
 // IMPORTANT NOTE: errno used to inform of mini-ipc related errors
 // (errno value as set by minipc_call)
 
@@ -466,14 +532,153 @@ uint64_t rtu_fdb_proxy_get_num_vlan_deletes(void)
     return out.retval;
 }
 
-uint8_t rtu_fdb_proxy_get_next_fid(uint8_t fid)
+uint16_t rtu_fdb_proxy_get_next_fid(uint8_t fid)
 {
     int ret;
-    struct rtu_fdb_get_max_vid_argdata in;
-    struct rtu_fdb_get_max_vid_retdata out;
+    struct rtu_fdb_get_next_fid_argdata in;
+    struct rtu_fdb_get_next_fid_retdata out;
+
+    in.fid = fid;
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
             &rtu_fdb_proxy_get_next_fid_struct, &in, &out);
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_create_static_vlan_entry(
+            uint16_t vid,
+            uint8_t fid,
+            enum registrar_control member_set[NUM_PORTS],
+            uint32_t untagged_set)
+{
+    int ret;
+    struct rtu_fdb_create_static_vlan_entry_argdata in;
+    struct rtu_fdb_create_static_vlan_entry_retdata out;
+
+    in.vid = vid;
+    in.fid = fid;
+    memcpy(in.member_set, member_set, NUM_PORTS);
+    in.untagged_set = untagged_set;
+
+    ret = minipc_call(client,  MILLISEC_TIMEOUT,
+        &rtu_fdb_proxy_create_static_vlan_entry_struct, &in, &out);
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_delete_static_vlan_entry(uint16_t vid)
+{
+    int ret;
+    struct rtu_fdb_delete_static_vlan_entry_argdata in;
+    struct rtu_fdb_delete_static_vlan_entry_retdata out;
+
+    in.vid = vid;
+
+    ret = minipc_call(client,  MILLISEC_TIMEOUT,
+        &rtu_fdb_proxy_delete_static_vlan_entry_struct, &in, &out);
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_read_static_vlan_entry(
+            uint16_t vid,
+            enum registrar_control (*member_set)[NUM_PORTS],    // out
+            uint32_t *untagged_set)                             // out
+{
+    int ret;
+    struct rtu_fdb_read_static_vlan_entry_argdata in;
+    struct rtu_fdb_read_static_vlan_entry_retdata out;
+
+    in.vid = vid;
+
+    ret = minipc_call(client,  MILLISEC_TIMEOUT,
+        &rtu_fdb_proxy_read_static_vlan_entry_struct, &in, &out);
+
+    if (ret == 0) {
+        memcpy(*member_set, out.member_set, NUM_PORTS);
+        *untagged_set = out.untagged_set;
+    }
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_read_next_static_vlan_entry(
+            uint16_t *vid,                                      // inout
+            enum registrar_control (*member_set)[NUM_PORTS],    // out
+            uint32_t *untagged_set)                             // out
+{
+    int ret;
+    struct rtu_fdb_read_next_static_vlan_entry_argdata in;
+    struct rtu_fdb_read_next_static_vlan_entry_retdata out;
+
+    in.vid = *vid;
+
+    ret = minipc_call(client,  MILLISEC_TIMEOUT,
+        &rtu_fdb_proxy_read_next_static_vlan_entry_struct, &in, &out);
+
+    if (ret == 0) {
+        *vid = out.vid;
+        memcpy(*member_set, out.member_set, NUM_PORTS);
+        *untagged_set = out.untagged_set;
+    }
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_read_vlan_entry(
+            uint16_t vid,
+            uint8_t *fid,                                       // out
+            int *entry_type,                                    // out
+            enum registrar_control *member_set[NUM_PORTS],      // out
+            uint32_t *untagged_set,                             // out
+            unsigned long *creation_t)                          // out
+{
+    int ret;
+    struct rtu_fdb_read_vlan_entry_argdata in;
+    struct rtu_fdb_read_vlan_entry_retdata out;
+
+    in.vid = vid;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT,
+        &rtu_fdb_proxy_read_vlan_entry_struct, &in, &out);
+
+    if (ret == 0) {
+        *fid = out.fid;
+        *entry_type = out.entry_type;
+        memcpy(*member_set, out.member_set, NUM_PORTS);
+        *untagged_set = out.untagged_set;
+        *creation_t = out.creation_t;
+    }
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_read_next_vlan_entry(
+            uint16_t *vid,                                      // inout
+            uint8_t *fid,                                       // out
+            int *entry_type,                                    // out
+            enum registrar_control *member_set[NUM_PORTS],      // out
+            uint32_t *untagged_set,                             // out
+            unsigned long *creation_t)                          // out
+{
+    int ret;
+    struct rtu_fdb_read_next_vlan_entry_argdata in;
+    struct rtu_fdb_read_next_vlan_entry_retdata out;
+
+    in.vid = *vid;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT,
+        &rtu_fdb_proxy_read_next_vlan_entry_struct, &in, &out);
+
+    if (ret == 0) {
+        *vid = out.vid;
+        *fid = out.fid;
+        *entry_type = out.entry_type;
+        memcpy(*member_set, out.member_set, NUM_PORTS);
+        *untagged_set = out.untagged_set;
+        *creation_t = out.creation_t;
+    }
 
     return out.retval;
 }
@@ -487,4 +692,3 @@ struct minipc_ch *rtu_fdb_proxy_create(char* name)
     }
     return client;
 }
-
