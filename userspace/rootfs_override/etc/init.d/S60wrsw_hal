@@ -8,7 +8,7 @@
 
 start() {
  	echo -n "Starting WR Hardware Abstraction Layer daemon: "
-	LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/wr/lib" /wr/bin/wrsw_hal -d -f -c /wr/etc/wrsw_hal.conf
+	LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/wr/lib" /wr/bin/wrsw_hal -d -f -c /wr/etc/hal_with_nic.conf
 #	/wr/bin/wrsw_rtud -d
 }
 stop() {
@@ -37,4 +37,3 @@ case "$1" in
 esac
 
 exit $?
-

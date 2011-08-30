@@ -31,6 +31,7 @@
 #include "rstp_frame.h"
 #include "rstp_epoll_loop.h"
 #include "utils.h"
+#include "rstp_data.h"
 
 
 extern int epoll_fd;
@@ -79,15 +80,17 @@ int main(int argc, char *argv[])
         return err;
     }
 
-    /* TODO Initialization functions for static bridge_data and port_data
-       structures */
-    /* TODO Initialization functions for timers */
+    /* Initialise data (rstp parameters, port states, timers, etc) */
+    if ((err = init_data()) < 0) {
+        clear_epoll();
+        return err;
+    }
 
     /* Main loop */
-    err = epoll_main_loop();
+    if ((err = epoll_main_loop()) < 0) {
+        clear_epoll();
+        return err;
+    }
 
-    /* TODO Clean up functions */
-    clear_epoll();
-
-    return err;
+    return 0;
 }
