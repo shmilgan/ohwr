@@ -1,0 +1,83 @@
+White Rabbit Switch Rapid Spaning Tree Protocol (RSTP) implementation, based
+on the Standard IEEE 802.1D-2004
+
+Authors:    Miguel Baizan   (miguel.baizan@integrasys-sa.com)
+
+            This package is partially based on pieces of code found in the
+            bridge implementation developed in kernel 2.4 and in the project at
+            git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/rstp.git
+            Both developments are based in an older version of the RSTP protocol
+            (i.e. 802.1w-2001)
+
+Short info: Implementation at userspace of the Rapid Spaning Tree Protocol
+            as described in the Standard IEEE 802.1D-2004.
+
+
+
+    Structure of the package wrsw_rstpd
+    ===================================
+
+README
+    This file.
+
+COPYING:
+    GNU GPL Version 2. This package is copyrighted by CERN and
+    released as free software.
+
+TODO:
+    List of things to do.
+
+Makefile:
+    Makefile, based on the WR development environment wr-switch-sw-2011-05-18.
+
+rstp_main.c:
+    Main function.
+
+rstp_epoll_loop.[ch]:
+    Epoll event notification facility. It is on charge of gathering
+    the events triggered for the different sockets maintained by the
+    daemon (i.e. sockets for IPCs and sockets to rcv/snd BPDUs).
+
+rstp_frame.[ch]:
+    Set raw sockets to send/receive only BPDUs from kernel. The event management
+    of the socket is handled by the epoll facility.
+
+rstp_data.[ch]:
+    Defines the basic data structures and manages the bridge and port RSTP
+    information. Here we define the bridge structure, whose data will be
+    accessed and modified also by the rstp_if[ch] and rstp_stmch.[ch].
+
+rstp_if[ch]:
+    Functions that use exported functions of other daemons and HW
+    to get/set some values related with the RSTP operation. This file is for now
+    the only White Rabbit implementation dependent. This way we can isolate the
+    RSTP implementation from the HW and WR related implemenmtations.
+
+rstp_stmch.[ch]:
+    RSTP state machines. The implementation of each state machine has its own
+    .c file, named rstp_stmch_$(name_of_the_state_machine).c.
+
+
+
+    Dependencies
+    ============
+
+../include
+../wrsw_hal
+libwripc
+kernel/nic
+
+
+
+    Compilation of the module and the daemon
+    ========================================
+
+For compilation just run make, following the instructions of the documentation
+wrs-build.pdf in the wr-switch-sw/doc section, written by Alessandro Rubini.
+
+wrsw_rtud and wrsw_hal must be running in order to wrsw_rstpd work properly.
+Also the nic driver must be previously loaded (be sure that the configuration
+file for the HAL is hal_with_nic.conf).
+
+To run the wrsw_rstpd in the switch, just run ./wrsw_rstpd from /wr/bin. Use the
+'-h' option for help.

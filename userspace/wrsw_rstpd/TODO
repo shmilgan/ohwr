@@ -1,0 +1,29 @@
+FIRST OF ALL, NOTE THAT FOR NOW THIS IS A NON FUCTIONAL VERSION OF THE RSTP
+PROTOCOL; THERE'S STILL MUCH WORK TO DO.
+
+
+- Check backwards compatibility with STP
+
+- Code for BPDU processing.
+
+- Code for sending BPDUs.
+
+- Code for the State Machines.
+
+- Create a "rstp_mng.[ch]" module based on IPC for the management of the daemon.
+
+- Create a function to poll the link status periodically. A better aproach would
+  be to receive some kind of notification.
+
+- Create the functions that associate the RSTP port roles to the port states at
+  HW.
+
+- Before running, test that we don't have another instance of the daemon.
+
+- For now we reserve static memory for the rstp parameters of the whole set of
+  ports implemented at HW, whether they are dummy or not. To save memory we
+  could only have the non-dummy ports and create a dynamic procedure to include
+  and delete ports, as they change from dummy to non-dummy and viceversa. This
+  would be useful if we envisage hot-plugs. (Here note the difference between
+  dummy ports and the 'down' link status of a port; dummy ports are implemented
+  in the FPGA but have no board attached).
