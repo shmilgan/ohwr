@@ -1,6 +1,6 @@
 
 PROGRAM		= wrsw_rtud
-SRCFILES	= mac.c rtu_drv.c rtu_hash.c rtu_hw.c rtu_fd.c rtu_fd_proxy.c \
+SRCFILES	= mac.c rtu_drv.c rtu_hash.c rtu_sw.c rtu_fd.c rtu_fd_proxy.c \
               rtu_fd_srv.c rtud.c utils.c
 OBJFILES	= $(patsubst %.c,%.o,$(SRCFILES))
 
@@ -26,7 +26,7 @@ RM 	    := rm -f
 all: $(PROGRAM)
 
 $(PROGRAM): $(OBJFILES)
-	$(CC) -o $@ $(OBJFILES) $(LDFLAGS) 
+	$(CC) -o $@ $(OBJFILES) $(LDFLAGS)
 
 clean:
 	$(RM) $(PROGRAM) $(OBJFILES)

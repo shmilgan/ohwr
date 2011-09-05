@@ -4,21 +4,26 @@ ROOTFS_OVERRIDE = $(WRS_BASE_DIR)/../userspace/rootfs_override
 
 CC 	= $(CROSS_COMPILE)gcc
 
-CFLAGS 	= -fPIC -I. `$(NET-SNMP-CONFIG) --cflags` -I../../wrsw_rtud
-LDFLAGS = -fPIC -shared `$(NET-SNMP-CONFIG) --ldflags`
+CFLAGS 	= -fPIC -I. `$(NET-SNMP-CONFIG) --cflags` \
+          -I../../wrsw_rtud -I../../wrsw_hal \
+          -I$(WRS_OUTPUT_DIR)/build/ptp-noposix/libwripc
+
+LDFLAGS = -fPIC -shared `$(NET-SNMP-CONFIG) --ldflags` \
+          -L. -lwripc
 
 OBJS 	= \
+endpoint_hw.o \
 ieee8021QBridgeTable.o \
 ieee8021QBridgeFdbTable.o \
 ieee8021QBridgeStaticUnicastTable.o \
 ieee8021QBridgeStaticMulticastTable.o \
 ieee8021QBridgeTpFdbTable.o \
-ieee8021QBridgeTpGroupTable.o 
-#ieee8021QBridgeNextFreeLocalVlanTable.o \
-#ieee8021QBridgePortVlanTable.o \
-#ieee8021QBridgeVlanCurrentTable.o \
-#ieee8021QBridgeVlanNumDeletes.o \
-#ieee8021QBridgeVlanStaticTable.o 
+ieee8021QBridgeTpGroupTable.o \
+ieee8021QBridgeVlanStaticTable.o \
+ieee8021QBridgeVlanCurrentTable.o \
+ieee8021QBridgeVlanNumDeletes.o \
+ieee8021QBridgeNextFreeLocalVlanTable.o \
+ieee8021QBridgePortVlanTable.o
 
 LIB 	= libieee8021qbridge.so
 
@@ -31,7 +36,7 @@ $(LIB): $(OBJS)
 install: all
 	install -d $(ROOTFS_OVERRIDE)/usr/lib
 	install $(LIB) $(ROOTFS_OVERRIDE)/usr/lib
+	install libwripc.so $(ROOTFS_OVERRIDE)/usr/lib
 
 clean:
 	rm -f $(LIB) $(OBJS)
-
