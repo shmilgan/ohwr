@@ -1,5 +1,5 @@
 /*
- * White Rabbit RTU (Routing Table Unit)
+ * White Rabbit Switch Management
  * Copyright (C) 2010, CERN.
  *
  * Version:     wrsw_snmpd v1.0
@@ -42,12 +42,15 @@
 
 #define DEFAULT_COMPONENT_ID                    1
 
+#define CURR_ENT                                0
+#define NEXT_ENT                                1
+
 enum fdb_entry_status {
-	other           = 1,
-	Invalid         = 2,
-	Learned         = 3,
-	Self            = 4,
-	Mgmt            = 5
+    other           = 1,
+    Invalid         = 2,
+    Learned         = 3,
+    Self            = 4,
+    Mgmt            = 5
 };
 
 // Row entry
@@ -91,19 +94,22 @@ static void update_oid(
  * set by callee. The method fills the rest of parameters with data from
  * actual FDB.
  */
-static int cache_entry(struct ieee8021QBridgeTpFdbTable_entry *ent)
+static int cache_entry(struct ieee8021QBridgeTpFdbTable_entry *ent, int next)
 {
-    int found;
-    int type;
+    int found, type;
 
     errno = 0;
-    found = rtu_fdb_proxy_read_entry(ent->mac, ent->fid,
-        &(ent->port_map), &type);
-    ent->status = (type == STATIC) ? Mgmt:Learned;
+    found = next ?
+            (rtu_fdb_proxy_read_entry(ent->mac, ent->fid,
+                &(ent->port_map), &type) == 0) :
+            (rtu_fdb_proxy_read_next_entry(&(ent->mac), &(ent->fid),
+                &(ent->port_map), &type) == 0);
     if (errno)
         return SNMP_ERR_GENERR;
     if (!found)
         return SNMP_NOSUCHINSTANCE;
+
+    ent->status = (type == STATIC) ? Mgmt:Learned;
     return SNMP_ERR_NOERROR;
 }
 
@@ -137,22 +143,12 @@ static int get_column(
     int colnum,
     struct ieee8021QBridgeTpFdbTable_entry *ent)
 {
-    int ret;
-
     switch (colnum) {
     case COLUMN_IEEE8021QBRIDGETPFDBPORT:
-        ret = cache_entry(ent);
-        if (ret != SNMP_ERR_NOERROR)
-            return ret;
-        snmp_set_var_typed_integer(req->requestvb, ASN_UNSIGNED,
-            ent->port_map);
+        snmp_set_var_typed_integer(req->requestvb, ASN_UNSIGNED, ent->port_map);
         break;
     case COLUMN_IEEE8021QBRIDGETPFDBSTATUS:
-        ret = cache_entry(ent);
-        if (ret != SNMP_ERR_NOERROR)
-            return ret;
-        snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER,
-            ent->status);
+        snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, ent->status);
         break;
     default:
         return SNMP_NOSUCHOBJECT;
@@ -171,6 +167,10 @@ static int get(netsnmp_request_info *req)
     err = get_indexes(tinfo, &ent);
     if (err != SNMP_ERR_NOERROR)
         return err;
+    // Cache entry in agent memory.
+    err = cache_entry(&ent, CURR_ENT);
+    if (err != SNMP_ERR_NOERROR)
+        return err;
     // Get column value
     return get_column(req, tinfo->colnum, &ent);
 }
@@ -178,25 +178,23 @@ static int get(netsnmp_request_info *req)
 static int get_next(netsnmp_request_info *req,
     netsnmp_handler_registration *reginfo)
 {
-    int ret, found, type;
+    int err;
     netsnmp_variable_list *idx;
     netsnmp_table_request_info *tinfo;
     struct ieee8021QBridgeTpFdbTable_entry ent;
 
     tinfo = netsnmp_extract_table_info(req);
     // Get indexes for entry
-    ret = get_indexes(tinfo, &ent);
-    if (ret != SNMP_ERR_NOERROR)
-        return ret;
+    err = get_indexes(tinfo, &ent);
+    if (err != SNMP_ERR_NOERROR)
+        return err;
     // Get indexes for next entry
     do {
-        errno = 0;
-        found = rtu_fdb_proxy_read_next_entry(&(ent.mac), &(ent.fid),
-            &(ent.port_map), &type);
-        if (errno)
-            return SNMP_ERR_GENERR;
-        if (!found)
+        err = cache_entry(&ent, NEXT_ENT);
+        if (err == SNMP_NOSUCHINSTANCE)
             return SNMP_ENDOFMIBVIEW;
+        if (err != SNMP_ERR_NOERROR)
+            return err;
     } while (mac_multicast(ent.mac));       // Make sure entry is unicast
     // Update indexes (no need to update cid, as it does not change)
     idx = tinfo->indexes->next_variable;
@@ -208,7 +206,6 @@ static int get_next(netsnmp_request_info *req,
     // Get next entry column value
     return get_column(req, tinfo->colnum, &ent);
 }
-
 
 
 /**
@@ -253,8 +250,10 @@ static void initialize_table_ieee8021QBridgeTpFdbTable(void)
     netsnmp_table_registration_info *tinfo;
 
     reg = netsnmp_create_handler_registration(
-              "ieee8021QBridgeTpFdbTable",     ieee8021QBridgeTpFdbTable_handler,
-              ieee8021QBridgeTpFdbTable_oid, OID_LENGTH(ieee8021QBridgeTpFdbTable_oid),
+              "ieee8021QBridgeTpFdbTable",
+              ieee8021QBridgeTpFdbTable_handler,
+              (oid *)ieee8021QBridgeTpFdbTable_oid,
+              OID_LENGTH(ieee8021QBridgeTpFdbTable_oid),
               HANDLER_CAN_RONLY
               );
 

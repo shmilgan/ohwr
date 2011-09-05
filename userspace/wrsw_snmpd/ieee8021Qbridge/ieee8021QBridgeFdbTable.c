@@ -1,5 +1,5 @@
 /*
- * White Rabbit RTU (Routing Table Unit)
+ * White Rabbit Switch Management
  * Copyright (C) 2010, CERN.
  *
  * Version:     wrsw_snmpd v1.0
@@ -195,6 +195,7 @@ static int set_commit(netsnmp_request_info *req)
     netsnmp_table_request_info *tinfo;
     u_long age;
     u_long fid;         // ieee8021QBridgeFdbId
+    int err;
 
     tinfo = netsnmp_extract_table_info(req);
     fid = *(tinfo->indexes->next_variable->val.integer);
@@ -208,8 +209,8 @@ static int set_commit(netsnmp_request_info *req)
         // implement the two phase commit, as undoing also requires
         // mini-ipc calls.
         errno = 0;
-        rtu_fdb_proxy_set_aging_time(fid, age);
-        if (errno)
+        err = rtu_fdb_proxy_set_aging_time(fid, age);
+        if (err || errno)
             return SNMP_ERR_GENERR;
         break;
     }
@@ -218,10 +219,10 @@ static int set_commit(netsnmp_request_info *req)
 
 /** handles requests for the ieee8021QBridgeFdbTable table */
 static int ieee8021QBridgeFdbTable_handler(
-    netsnmp_mib_handler               *handler,
-    netsnmp_handler_registration      *reginfo,
-    netsnmp_agent_request_info        *reqinfo,
-    netsnmp_request_info              *requests)
+    netsnmp_mib_handler             *handler,
+    netsnmp_handler_registration    *reginfo,
+    netsnmp_agent_request_info      *reqinfo,
+    netsnmp_request_info            *requests)
 {
     netsnmp_request_info *req;
     int err;
@@ -278,7 +279,7 @@ static void initialize_table_ieee8021QBridgeFdbTable(void)
 
     reg = netsnmp_create_handler_registration(
               "ieee8021QBridgeFdbTable",     ieee8021QBridgeFdbTable_handler,
-              ieee8021QBridgeFdbTable_oid, OID_LENGTH(ieee8021QBridgeFdbTable_oid),
+              (oid *)ieee8021QBridgeFdbTable_oid, OID_LENGTH(ieee8021QBridgeFdbTable_oid),
               HANDLER_CAN_RWRITE
               );
 

@@ -1,5 +1,5 @@
 /*
- * White Rabbit RTU (Routing Table Unit)
+ * White Rabbit SNMP
  * Copyright (C) 2010, CERN.
  *
  * Version:     wrsw_snmpd v1.0
@@ -41,6 +41,9 @@
 #define COLUMN_IEEE8021QBRIDGETPGROUPLEARNT         3
 
 #define DEFAULT_COMPONENT_ID                        1
+
+#define CURR_ENT                                0
+#define NEXT_ENT                                1
 
 // Row entry
 struct ieee8021QBridgeTpGroupTable_entry {
@@ -86,20 +89,21 @@ static void update_oid(
  * set by callee. The method fills the rest of parameters with data from
  * actual FDB.
  */
-static int cache_entry(struct ieee8021QBridgeTpGroupTable_entry *ent)
+static int cache_entry(struct ieee8021QBridgeTpGroupTable_entry *ent, int next)
 {
     int i, found, fid;
     int type;
 
     // TODO Obtain FID assigned to VID
-    // 802.1Q (12.7.7) When operating on a Dynamic Filtering Entry [...] the 
-    // value used in the VID parameter can be any VID that has been allocated 
+    // 802.1Q (12.7.7) When operating on a Dynamic Filtering Entry [...] the
+    // value used in the VID parameter can be any VID that has been allocated
     // to the FID concerned)
-    
+
     fid = ent->vid;  // TODO modify when VLAN table methods are available at RTU
-    
-    found = rtu_fdb_proxy_read_entry(ent->mac, fid,
-        &(ent->port_map), &type);
+
+    errno = 0;
+    found = (rtu_fdb_proxy_read_entry(ent->mac, fid,
+        &(ent->port_map), &type) == 0);
     if (errno)
         return SNMP_ERR_GENERR;
     if (!found)
@@ -149,20 +153,12 @@ static int get_column(
     int colnum,
     struct ieee8021QBridgeTpGroupTable_entry *ent)
 {
-    int ret;
-
     switch (colnum) {
     case COLUMN_IEEE8021QBRIDGETPGROUPEGRESSPORTS:
-        ret = cache_entry(ent);
-        if (ret != SNMP_ERR_NOERROR)
-            return ret;
         snmp_set_var_typed_value( req->requestvb, ASN_OCTET_STR,
             ent->egress_ports, NUM_PORTS);
         break;
     case COLUMN_IEEE8021QBRIDGETPGROUPLEARNT:
-        ret = cache_entry(ent);
-        if (ret != SNMP_ERR_NOERROR)
-            return ret;
         snmp_set_var_typed_value( req->requestvb, ASN_OCTET_STR,
             ent->learnt_ports, NUM_PORTS);
         break;
@@ -183,13 +179,17 @@ static int get(netsnmp_request_info *req)
     err = get_indexes(tinfo, &ent);
     if (err != SNMP_ERR_NOERROR)
         return err;
+    // Cache entry in agent memory.
+    err = cache_entry(&ent, CURR_ENT);
+    if (err != SNMP_ERR_NOERROR)
+        return err;
     // Get column value
     return get_column(req, tinfo->colnum, &ent);
 }
 
 static int get_next(netsnmp_request_info *req,
     netsnmp_handler_registration *reginfo)
-{       
+{
     // TODO requires VLAN management support (lexicographic order for this
     // table is based on VID, while RTU orders dynamic entries by FID)
     return SNMP_ERR_GENERR;
@@ -237,8 +237,10 @@ static void initialize_table_ieee8021QBridgeTpGroupTable(void)
     netsnmp_table_registration_info *tinfo;
 
     reg = netsnmp_create_handler_registration(
-        "ieee8021QBridgeTpGroupTable", ieee8021QBridgeTpGroupTable_handler,
-        ieee8021QBridgeTpGroupTable_oid, OID_LENGTH(ieee8021QBridgeTpGroupTable_oid),
+        "ieee8021QBridgeTpGroupTable",
+        ieee8021QBridgeTpGroupTable_handler,
+        (oid *)ieee8021QBridgeTpGroupTable_oid,
+        OID_LENGTH(ieee8021QBridgeTpGroupTable_oid),
         HANDLER_CAN_RONLY);
 
     tinfo = SNMP_MALLOC_TYPEDEF( netsnmp_table_registration_info );

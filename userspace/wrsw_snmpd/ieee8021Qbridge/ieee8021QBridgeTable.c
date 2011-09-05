@@ -1,5 +1,5 @@
 /*
- * White Rabbit RTU (Routing Table Unit)
+ * White Rabbit Switch Management
  * Copyright (C) 2010, CERN.
  *
  * Version:     wrsw_snmpd v1.0
@@ -163,7 +163,7 @@ static void initialize_table_ieee8021QBridgeTable(void)
 
     reg = netsnmp_create_handler_registration(
               "ieee8021QBridgeTable", ieee8021QBridgeTable_handler,
-              ieee8021QBridgeTable_oid, OID_LENGTH(ieee8021QBridgeTable_oid),
+              (oid *)ieee8021QBridgeTable_oid, OID_LENGTH(ieee8021QBridgeTable_oid),
               HANDLER_CAN_RWRITE);
 
     tinfo = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
@@ -184,4 +184,3 @@ void init_ieee8021QBridgeTable(void)
     initialize_table_ieee8021QBridgeTable();
     rtu_fdb_proxy_create("wrsw_snmpd");
 }
-
