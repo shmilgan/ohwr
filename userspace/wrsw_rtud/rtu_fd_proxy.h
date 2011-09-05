@@ -106,7 +106,7 @@ int rtu_fdb_proxy_read_vlan_entry(
             uint16_t vid,
             uint8_t *fid,                                       // out
             int *entry_type,                                    // out
-            enum registrar_control *member_set[NUM_PORTS],      // out
+            enum registrar_control (*member_set)[NUM_PORTS],    // out
             uint32_t *untagged_set,                             // out
             unsigned long *creation_t                           // out
      ) __attribute__((warn_unused_result));
@@ -115,7 +115,7 @@ int rtu_fdb_proxy_read_next_vlan_entry(
             uint16_t *vid,                                      // inout
             uint8_t *fid,                                       // out
             int *entry_type,                                    // out
-            enum registrar_control *member_set[NUM_PORTS],      // out
+            enum registrar_control (*member_set)[NUM_PORTS],    // out
             uint32_t *untagged_set,                             // out
             unsigned long *creation_t                           // out
      ) __attribute__((warn_unused_result));
