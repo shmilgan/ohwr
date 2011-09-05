@@ -8,344 +8,250 @@
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 #include "ieee8021QBridgePortVlanTable.h"
 
+#include "rtu.h"
+#include "endpoint_hw.h"
 
 /* column number definitions for table ieee8021QBridgePortVlanTable */
-#define COLUMN_IEEE8021QBRIDGEPVID		1
-#define COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES		2
-#define COLUMN_IEEE8021QBRIDGEPORTINGRESSFILTERING		3
-#define COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS		4
-#define COLUMN_IEEE8021QBRIDGEPORTMVRPFAILEDREGISTRATIONS		5
-#define COLUMN_IEEE8021QBRIDGEPORTMVRPLASTPDUORIGIN		6
-#define COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION		7
+#define COLUMN_IEEE8021QBRIDGEPVID                                  1
+#define COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES              2
+#define COLUMN_IEEE8021QBRIDGEPORTINGRESSFILTERING                  3
+#define COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS                 4
+#define COLUMN_IEEE8021QBRIDGEPORTMVRPFAILEDREGISTRATIONS           5
+#define COLUMN_IEEE8021QBRIDGEPORTMVRPLASTPDUORIGIN                 6
+#define COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION        7
 
-    /* Typical data structure for a row entry */
-struct ieee8021QBridgePortVlanTable_entry {
-    /* Index values */
-    u_long ieee8021BridgeBasePortComponentId;
-    u_long ieee8021BridgeBasePort;
+#define DEFAULT_COMPONENT_ID    1
+#define MAX_PORTID              0x0F
+#define MIN_PVID                0x001
+#define MAX_PVID                0xFFE
 
-    /* Column values */
-    u_long ieee8021QBridgePvid;
-    u_long old_ieee8021QBridgePvid;
-    long ieee8021QBridgePortAcceptableFrameTypes;
-    long old_ieee8021QBridgePortAcceptableFrameTypes;
-    long ieee8021QBridgePortIngressFiltering;
-    long old_ieee8021QBridgePortIngressFiltering;
-    long ieee8021QBridgePortMvrpEnabledStatus;
-    long old_ieee8021QBridgePortMvrpEnabledStatus;
-    U64 ieee8021QBridgePortMvrpFailedRegistrations;
-    char ieee8021QBridgePortMvrpLastPduOrigin[NNN];
-    size_t ieee8021QBridgePortMvrpLastPduOrigin_len;
-    long ieee8021QBridgePortRestrictedVlanRegistration;
-    long old_ieee8021QBridgePortRestrictedVlanRegistration;
-
-    int   valid;
+enum acceptable_frame_types {
+    admitAll                   = 1,
+    admitUntaggedAndPriority   = 2,
+    admitTagged                = 3
 };
 
-/* create a new row in the table */
-static struct ieee8021QBridgePortVlanTable_entry *
-ieee8021QBridgePortVlanTable_createEntry( int dummy
-                 , u_long  ieee8021BridgeBasePortComponentId
-                 , u_long  ieee8021BridgeBasePort
-                ) {
-    struct ieee8021QBridgePortVlanTable_entry *entry;
+enum qmode {
+    access_port      = 0x00,
+    trunk_port       = 0x01,
+    unqualified_port = 0x11
+};
 
-    entry = SNMP_MALLOC_TYPEDEF(struct ieee8021QBridgePortVlanTable_entry);
-    if (!entry)
-        return NULL;
+/**
+ * Update the requested OID to match this instance
+ */
+static void update_oid(
+    netsnmp_request_info           *req,
+    netsnmp_handler_registration   *reginfo,
+    int                            column,
+    netsnmp_variable_list          *indexes)
+{
+    oid    build_space[MAX_OID_LEN];
+    size_t build_space_len = 0;
+    size_t index_oid_len = 0;
 
-    /* XXX - insert entry into local data structure */
-    return entry;
-}
-
-/* remove a row from the table */
-static void
-ieee8021QBridgePortVlanTable_removeEntry(struct ieee8021QBridgePortVlanTable_entry *entry) {
-    if (!entry)
-        return;    /* Nothing to remove */
-
-    /* XXX - remove entry from local data structure */
-
-    if (entry)
-        SNMP_FREE( entry );   /* XXX - release any other internal resources */
-}
-
-
-/** determine the appropriate row for an exact request */
-static struct ieee8021QBridgePortVlanTable_entry *
-ieee8021QBridgePortVlanTable_get_entry( netsnmp_variable_list *indexes ) {
-    struct ieee8021QBridgePortVlanTable_entry *row = NULL;
-
-    /* XXX - Use the 'indexes' parameter to retrieve the data
-       structure for the requested row, and return this. */
-    return row;
-}
-
-/** determine the appropriate row for an fuzzy request */
-static struct ieee8021QBridgePortVlanTable_entry *
-ieee8021QBridgePortVlanTable_get_next_entry( netsnmp_handler_registration *reginfo,
-                     netsnmp_request_info         *request,
-                     int                           column,
-                     netsnmp_variable_list        *indexes ) {
-    struct ieee8021QBridgePortVlanTable_entry *row = NULL;
-    oid             build_space[MAX_OID_LEN];
-    size_t          build_space_len = 0;
-    size_t          index_oid_len = 0;
-
-    /* XXX - Use the 'indexes' parameter to identify the
-             next row in the table.... */
-
-    /* XXX   .... update the 'indexes' parameter with the
-             appropriate index values ... */
-
-    /* ... and update the requested OID to match this instance */
-    memcpy(build_space, reginfo->rootoid,   /* registered oid */
+    memcpy(build_space, reginfo->rootoid,       /* registered oid */
                         reginfo->rootoid_len * sizeof(oid));
     build_space_len = reginfo->rootoid_len;
-    build_space[build_space_len++] = 1;  /* entry */
-    build_space[build_space_len++] = column; /* column */
+    build_space[build_space_len++] = 1;         /* entry */
+    build_space[build_space_len++] = column;    /* column */
     build_oid_noalloc(build_space + build_space_len,
                       MAX_OID_LEN - build_space_len, &index_oid_len,
                       NULL, 0, indexes);
-    snmp_set_var_objid(request->requestvb, build_space,
+    snmp_set_var_objid(req->requestvb, build_space,
                        build_space_len + index_oid_len);
+}
 
-    /*  Finally, return the data structure for this row */
-    return row;
+static int get_column(netsnmp_request_info *req, int colnum, u_long cid, u_long port)
+{
+    u_long pvid;                    // ieee8021QBridgePvid
+
+    if (cid != DEFAULT_COMPONENT_ID)
+        return SNMP_NOSUCHINSTANCE;
+
+    if (port > MAX_PORTID)
+        return SNMP_NOSUCHINSTANCE;
+
+    switch (colnum) {
+    case COLUMN_IEEE8021QBRIDGEPVID:
+        pvid = ep_hw_get_pvid(port);
+        if (pvid < 0)
+            return SNMP_ERR_GENERR;
+        snmp_set_var_typed_integer(req->requestvb, ASN_UNSIGNED, pvid);
+        break;
+    case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
+        switch(ep_hw_get_qmode(port)) {
+        case access_port:
+            snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, admitUntaggedAndPriority);
+            break;
+        case trunk_port:
+            snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, admitTagged);
+            break;
+        case unqualified_port:
+            snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, admitAll);
+            break;
+        default:
+            return SNMP_ERR_GENERR;
+        }
+        break;
+    case COLUMN_IEEE8021QBRIDGEPORTINGRESSFILTERING:
+        // 1 = true. Discard incoming frames for VLANs that do not include this
+        // port in its member set (currently unsupported by WR switch)
+        // 2 = false. Accept all incoming frames
+        snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, 2);
+        break;
+    default:
+        return SNMP_NOSUCHOBJECT;
+    }
+    return 0;
+}
+
+static int get(netsnmp_request_info *req)
+{
+    netsnmp_table_request_info  *tinfo;
+
+    tinfo = netsnmp_extract_table_info(req);
+    return
+        get_column(
+            req,
+            tinfo->colnum,
+            *(tinfo->indexes->val.integer),                 // cid
+            *(tinfo->indexes->next_variable->val.integer)   // port
+        );
+}
+
+static int get_next(netsnmp_request_info *req,
+    netsnmp_handler_registration *reginfo)
+{
+    netsnmp_table_request_info  *tinfo;
+
+    u_long cid;         // ieee8021BridgeBasePortComponentId;
+    u_long port;        // ieee8021BridgeBasePort;
+
+    tinfo = netsnmp_extract_table_info(req);
+    // Get indexes for entry
+    cid = *(tinfo->indexes->val.integer);
+    if (cid != DEFAULT_COMPONENT_ID)
+        return SNMP_NOSUCHINSTANCE;
+
+    port = *(tinfo->indexes->next_variable->val.integer);
+    if (port > MAX_PORTID)
+        return SNMP_NOSUCHINSTANCE;
+
+    // Get index for next entry and update OID
+    port = port + 1;
+    *(tinfo->indexes->next_variable->val.integer) = port;
+    update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
+    // return next entry column value
+    return get_column(req, tinfo->colnum, cid, port);
+}
+
+static int set_reserve1(netsnmp_request_info *req)
+{
+    int ret = SNMP_ERR_NOERROR;
+    netsnmp_table_request_info *tinfo;
+    u_long cid;                 // ieee8021BridgeBasePortComponentId;
+    u_long port;                // ieee8021BridgeBasePort;
+
+    tinfo = netsnmp_extract_table_info(req);
+    // Check indexes
+    cid = *(tinfo->indexes->val.integer);
+    if (cid != DEFAULT_COMPONENT_ID)
+        return SNMP_NOSUCHINSTANCE;
+
+    port = *(tinfo->indexes->next_variable->val.integer);
+    if (port > MAX_PORTID)
+        return SNMP_NOSUCHINSTANCE;
+
+    // Check column value
+    switch (tinfo->colnum) {
+    case COLUMN_IEEE8021QBRIDGEPVID:
+        ret = netsnmp_check_vb_int_range(req->requestvb, MIN_PVID, MAX_PVID);
+        break;
+    case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
+        ret = netsnmp_check_vb_int_range(req->requestvb, admitAll, admitTagged);
+        break;
+    default:
+        return SNMP_ERR_NOTWRITABLE;
+    }
+    return ret;
+}
+
+static int set_commit(netsnmp_request_info *req)
+{
+    int qmode;
+    netsnmp_table_request_info *tinfo;
+    u_long port;                    // ieee8021BridgeBasePort;
+    u_long pvid;                    // ieee8021QBridgePvid
+    long acceptable_frame_types;    // ieee8021QBridgePortAcceptableFrameTypes
+    long port_ingress_filtering;    // ieee8021QBridgePortIngressFiltering
+    int err = SNMP_ERR_NOERROR;
+
+    tinfo = netsnmp_extract_table_info(req);
+    port = *(tinfo->indexes->next_variable->val.integer);
+    switch (tinfo->colnum) {
+    case COLUMN_IEEE8021QBRIDGEPVID:
+        pvid = *req->requestvb->val.integer;
+        err = ep_hw_set_pvid(port, pvid);
+        if (err == -EIO)
+            return SNMP_ERR_GENERR;
+        break;
+    case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
+        acceptable_frame_types = *req->requestvb->val.integer;
+        switch(acceptable_frame_types) {
+        case admitAll:
+            ep_hw_set_qmode(port, unqualified_port);
+            break;
+        case admitUntaggedAndPriority:
+            ep_hw_set_qmode(port, access_port);
+            break;
+        case admitTagged:
+            ep_hw_set_qmode(port, trunk_port);
+            break;
+        }
+        break;
+    }
+    return err;
 }
 
 
-/** handles requests for the ieee8021QBridgePortVlanTable table */
-static int
-ieee8021QBridgePortVlanTable_handler(
-    netsnmp_mib_handler               *handler,
-    netsnmp_handler_registration      *reginfo,
-    netsnmp_agent_request_info        *reqinfo,
-    netsnmp_request_info              *requests) {
+/**
+ * Handles requests for the ieee8021QBridgePortVlanTable table
+ */
+static int ieee8021QBridgePortVlanTable_handler(
+    netsnmp_mib_handler           *handler,
+    netsnmp_handler_registration  *reginfo,
+    netsnmp_agent_request_info    *reqinfo,
+    netsnmp_request_info          *requests)
+{
 
-    netsnmp_request_info       *request;
-    netsnmp_table_request_info *table_info;
-    struct ieee8021QBridgePortVlanTable_entry          *table_entry;
-    int                         ret;
+    netsnmp_request_info *req;
+    int err;
 
     switch (reqinfo->mode) {
-        /*
-         * Read-support
-         */
     case MODE_GET:
-        for (request=requests; request; request=request->next) {
-            table_info  =     netsnmp_extract_table_info( request);
-            table_entry =     ieee8021QBridgePortVlanTable_get_entry( table_info->indexes );
-    
-            switch (table_info->colnum) {
-            case COLUMN_IEEE8021QBRIDGEPVID:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_integer( request->requestvb, ASN_UNSIGNED,
-                                            table_entry->ieee8021QBridgePvid);
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_integer( request->requestvb, ASN_INTEGER,
-                                            table_entry->ieee8021QBridgePortAcceptableFrameTypes);
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTINGRESSFILTERING:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_integer( request->requestvb, ASN_INTEGER,
-                                            table_entry->ieee8021QBridgePortIngressFiltering);
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_integer( request->requestvb, ASN_INTEGER,
-                                            table_entry->ieee8021QBridgePortMvrpEnabledStatus);
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTMVRPFAILEDREGISTRATIONS:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_integer( request->requestvb, ASN_COUNTER64,
-                                            table_entry->ieee8021QBridgePortMvrpFailedRegistrations);
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTMVRPLASTPDUORIGIN:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_value( request->requestvb, ASN_OCTET_STR,
-                                          table_entry->ieee8021QBridgePortMvrpLastPduOrigin,
-                                          table_entry->ieee8021QBridgePortMvrpLastPduOrigin_len);
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_integer( request->requestvb, ASN_INTEGER,
-                                            table_entry->ieee8021QBridgePortRestrictedVlanRegistration);
-                break;
-            default:
-                netsnmp_set_request_error(reqinfo, request,
-                                          SNMP_NOSUCHOBJECT);
-                break;
-            }
+        for (req = requests; req; req = req->next) {
+            err = get(req);
+            if (err)
+                netsnmp_set_request_error(reqinfo, req, err);
         }
         break;
-
     case MODE_GETNEXT:
-        for (request=requests; request; request=request->next) {
-            table_info  =     netsnmp_extract_table_info( request);
-            table_entry =     ieee8021QBridgePortVlanTable_get_next_entry( reginfo, request,
-                                   table_info->colnum, table_info->indexes );
-    
-            switch (table_info->colnum) {
-            case COLUMN_IEEE8021QBRIDGEPVID:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_integer( request->requestvb, ASN_UNSIGNED,
-                                            table_entry->ieee8021QBridgePvid);
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_integer( request->requestvb, ASN_INTEGER,
-                                            table_entry->ieee8021QBridgePortAcceptableFrameTypes);
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTINGRESSFILTERING:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_integer( request->requestvb, ASN_INTEGER,
-                                            table_entry->ieee8021QBridgePortIngressFiltering);
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_integer( request->requestvb, ASN_INTEGER,
-                                            table_entry->ieee8021QBridgePortMvrpEnabledStatus);
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTMVRPFAILEDREGISTRATIONS:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_integer( request->requestvb, ASN_COUNTER64,
-                                            table_entry->ieee8021QBridgePortMvrpFailedRegistrations);
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTMVRPLASTPDUORIGIN:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_value( request->requestvb, ASN_OCTET_STR,
-                                          table_entry->ieee8021QBridgePortMvrpLastPduOrigin,
-                                          table_entry->ieee8021QBridgePortMvrpLastPduOrigin_len);
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION:
-                if ( !table_entry ) {
-                    netsnmp_set_request_error(reqinfo, request,
-                                              SNMP_NOSUCHINSTANCE);
-                    continue;
-                }
-                snmp_set_var_typed_integer( request->requestvb, ASN_INTEGER,
-                                            table_entry->ieee8021QBridgePortRestrictedVlanRegistration);
-                break;
-            default:
-                netsnmp_set_request_error(reqinfo, request,
-                                          SNMP_NOSUCHOBJECT);
-                break;
-            }
+        for (req = requests; req; req = req->next) {
+            err = get_next(req, reginfo);
+            if (err)
+                netsnmp_set_request_error(reqinfo, req, err);
         }
         break;
-
-        /*
-         * Write-support
-         */
     case MODE_SET_RESERVE1:
-        for (request=requests; request; request=request->next) {
-            table_info  =     netsnmp_extract_table_info( request);
-            table_entry =     ieee8021QBridgePortVlanTable_get_entry( table_info->indexes );
-    
-            switch (table_info->colnum) {
-            case COLUMN_IEEE8021QBRIDGEPVID:
-                /* or possibly 'netsnmp_check_vb_int_range' */
-                ret = netsnmp_check_vb_int( request->requestvb );
-                if ( ret != SNMP_ERR_NOERROR ) {
-                    netsnmp_set_request_error( reqinfo, request, ret );
-                    return SNMP_ERR_NOERROR;
-                }
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
-                /* or possibly 'netsnmp_check_vb_int_range' */
-                ret = netsnmp_check_vb_int( request->requestvb );
-                if ( ret != SNMP_ERR_NOERROR ) {
-                    netsnmp_set_request_error( reqinfo, request, ret );
-                    return SNMP_ERR_NOERROR;
-                }
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTINGRESSFILTERING:
-                /* or possibly 'netsnmp_check_vb_int_range' */
-                ret = netsnmp_check_vb_int( request->requestvb );
-                if ( ret != SNMP_ERR_NOERROR ) {
-                    netsnmp_set_request_error( reqinfo, request, ret );
-                    return SNMP_ERR_NOERROR;
-                }
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS:
-                /* or possibly 'netsnmp_check_vb_int_range' */
-                ret = netsnmp_check_vb_int( request->requestvb );
-                if ( ret != SNMP_ERR_NOERROR ) {
-                    netsnmp_set_request_error( reqinfo, request, ret );
-                    return SNMP_ERR_NOERROR;
-                }
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION:
-                /* or possibly 'netsnmp_check_vb_int_range' */
-                ret = netsnmp_check_vb_int( request->requestvb );
-                if ( ret != SNMP_ERR_NOERROR ) {
-                    netsnmp_set_request_error( reqinfo, request, ret );
-                    return SNMP_ERR_NOERROR;
-                }
-                break;
-            default:
-                netsnmp_set_request_error( reqinfo, request,
-                                           SNMP_ERR_NOTWRITABLE );
+        for (req=requests; req; req=req->next) {
+            err = set_reserve1(req);
+            if (err) {
+                netsnmp_set_request_error(reqinfo, req, err);
                 return SNMP_ERR_NOERROR;
             }
         }
         break;
-
     case MODE_SET_RESERVE2:
         break;
 
@@ -353,103 +259,54 @@ ieee8021QBridgePortVlanTable_handler(
         break;
 
     case MODE_SET_ACTION:
-        for (request=requests; request; request=request->next) {
-            table_info  =     netsnmp_extract_table_info( request);
-            table_entry =     ieee8021QBridgePortVlanTable_get_entry( table_info->indexes );
-    
-            switch (table_info->colnum) {
-            case COLUMN_IEEE8021QBRIDGEPVID:
-                table_entry->old_ieee8021QBridgePvid = table_entry->ieee8021QBridgePvid;
-                table_entry->ieee8021QBridgePvid     = *request->requestvb->val.integer;
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
-                table_entry->old_ieee8021QBridgePortAcceptableFrameTypes = table_entry->ieee8021QBridgePortAcceptableFrameTypes;
-                table_entry->ieee8021QBridgePortAcceptableFrameTypes     = *request->requestvb->val.integer;
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTINGRESSFILTERING:
-                table_entry->old_ieee8021QBridgePortIngressFiltering = table_entry->ieee8021QBridgePortIngressFiltering;
-                table_entry->ieee8021QBridgePortIngressFiltering     = *request->requestvb->val.integer;
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS:
-                table_entry->old_ieee8021QBridgePortMvrpEnabledStatus = table_entry->ieee8021QBridgePortMvrpEnabledStatus;
-                table_entry->ieee8021QBridgePortMvrpEnabledStatus     = *request->requestvb->val.integer;
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION:
-                table_entry->old_ieee8021QBridgePortRestrictedVlanRegistration = table_entry->ieee8021QBridgePortRestrictedVlanRegistration;
-                table_entry->ieee8021QBridgePortRestrictedVlanRegistration     = *request->requestvb->val.integer;
-                break;
-            }
-        }
         break;
-
     case MODE_SET_UNDO:
-        for (request=requests; request; request=request->next) {
-            table_info  =     netsnmp_extract_table_info( request);
-            table_entry =     ieee8021QBridgePortVlanTable_get_entry( table_info->indexes );
-    
-            switch (table_info->colnum) {
-            case COLUMN_IEEE8021QBRIDGEPVID:
-                table_entry->ieee8021QBridgePvid     = table_entry->old_ieee8021QBridgePvid;
-                table_entry->old_ieee8021QBridgePvid = 0;
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
-                table_entry->ieee8021QBridgePortAcceptableFrameTypes     = table_entry->old_ieee8021QBridgePortAcceptableFrameTypes;
-                table_entry->old_ieee8021QBridgePortAcceptableFrameTypes = 0;
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTINGRESSFILTERING:
-                table_entry->ieee8021QBridgePortIngressFiltering     = table_entry->old_ieee8021QBridgePortIngressFiltering;
-                table_entry->old_ieee8021QBridgePortIngressFiltering = 0;
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS:
-                table_entry->ieee8021QBridgePortMvrpEnabledStatus     = table_entry->old_ieee8021QBridgePortMvrpEnabledStatus;
-                table_entry->old_ieee8021QBridgePortMvrpEnabledStatus = 0;
-                break;
-            case COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION:
-                table_entry->ieee8021QBridgePortRestrictedVlanRegistration     = table_entry->old_ieee8021QBridgePortRestrictedVlanRegistration;
-                table_entry->old_ieee8021QBridgePortRestrictedVlanRegistration = 0;
-                break;
-            }
-        }
         break;
-
     case MODE_SET_COMMIT:
+        for (req = requests; req; req = req->next) {
+            err = set_commit(req);
+            if (err)
+                netsnmp_set_request_error(reqinfo, req, err);
+        }
         break;
     }
     return SNMP_ERR_NOERROR;
 }
 
-/** Initialize the ieee8021QBridgePortVlanTable table by defining its contents and how it's structured */
-static void
-initialize_table_ieee8021QBridgePortVlanTable(void)
+/**
+ * Initialize the ieee8021QBridgePortVlanTable table by defining its
+ * contents and how it's structured
+ */
+static void initialize_table_ieee8021QBridgePortVlanTable(void)
 {
     const oid ieee8021QBridgePortVlanTable_oid[] = {1,3,111,2,802,1,1,4,1,4,5};
     netsnmp_handler_registration    *reg;
-    netsnmp_table_registration_info *table_info;
+    netsnmp_table_registration_info *tinfo;
 
     reg = netsnmp_create_handler_registration(
-              "ieee8021QBridgePortVlanTable",     ieee8021QBridgePortVlanTable_handler,
-              ieee8021QBridgePortVlanTable_oid, OID_LENGTH(ieee8021QBridgePortVlanTable_oid),
-              HANDLER_CAN_RWRITE
-              );
+              "ieee8021QBridgePortVlanTable",
+              ieee8021QBridgePortVlanTable_handler,
+              (oid *)ieee8021QBridgePortVlanTable_oid,
+              OID_LENGTH(ieee8021QBridgePortVlanTable_oid),
+              HANDLER_CAN_RWRITE);
 
-    table_info = SNMP_MALLOC_TYPEDEF( netsnmp_table_registration_info );
-    netsnmp_table_helper_add_indexes(table_info,
-                           ASN_UNSIGNED,  /* index: ieee8021BridgeBasePortComponentId */
-                           ASN_UNSIGNED,  /* index: ieee8021BridgeBasePort */
-                           0);
+    tinfo = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
+    netsnmp_table_helper_add_indexes(
+        tinfo,
+        ASN_UNSIGNED,  /* index: ieee8021BridgeBasePortComponentId */
+        ASN_UNSIGNED,  /* index: ieee8021BridgeBasePort */
+        0);
 
-    table_info->min_column = COLUMN_IEEE8021QBRIDGEPVID;
-    table_info->max_column = COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION;
+    tinfo->min_column = COLUMN_IEEE8021QBRIDGEPVID;
+    tinfo->max_column = COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION;
 
-    netsnmp_register_table( reg, table_info );
-
-    /* Initialise the contents of the table here */
+    netsnmp_register_table(reg, tinfo);
 }
 
-/** Initializes the ieee8021QBridgePortVlanTable module */
-void
-init_ieee8021QBridgePortVlanTable(void)
+/**
+ * Initializes the ieee8021QBridgePortVlanTable module
+ */
+void init_ieee8021QBridgePortVlanTable(void)
 {
-  /* here we initialize all the tables we're planning on supporting */
     initialize_table_ieee8021QBridgePortVlanTable();
 }
