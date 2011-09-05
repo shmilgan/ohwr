@@ -37,6 +37,7 @@ int wrn_get_deframer_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
         break;
     case WRN_RFCR_GET_VID_VAL:
         deframer_req.val = EP_RFCR_VID_VAL_R(rfcr);
+        break;
     default:
         // do nothing.....
         return -ENOIOCTLCMD;
