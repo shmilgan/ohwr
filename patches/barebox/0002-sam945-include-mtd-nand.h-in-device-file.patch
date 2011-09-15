@@ -1,0 +1,24 @@
+From 9c2eb8aef57353d9a3f23803b630dfbab4d9ab8a Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Fri, 16 Sep 2011 01:12:15 +0200
+Subject: [PATCH] sam945: include mtd/nand.h in device file
+
+---
+ arch/arm/mach-at91/at91sam9g45_devices.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/arch/arm/mach-at91/at91sam9g45_devices.c b/arch/arm/mach-at91/at91sam9g45_devices.c
+index f6e1eb4..992445a 100644
+--- a/arch/arm/mach-at91/at91sam9g45_devices.c
++++ b/arch/arm/mach-at91/at91sam9g45_devices.c
+@@ -18,6 +18,7 @@
+ #include <mach/board.h>
+ #include <mach/gpio.h>
+ #include <mach/io.h>
++#include <linux/mtd/nand.h>
+ 
+ #include "generic.h"
+ 
+-- 
+1.5.4.3
+
