@@ -48,6 +48,11 @@
 @headings single
 
 @c ##########################################################################
+@iftex
+@contents
+@end iftex
+
+@c ##########################################################################
 @node Top
 @top Introduction
 
@@ -618,10 +623,6 @@ running the script and all keys listed in the file @code{authorized_keys}
 in the main directory of this package, if present.
 
 @c ##########################################################################
-@iftex
-@contents
-@end iftex
-
 @bye
 
 
