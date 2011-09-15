@@ -63,6 +63,17 @@ the hardware project.
 If you don't need to make your hands dirty, just skip to @ref{Quick
 Build}.
 
+V3 of the WR-Switch has been successfully booted on Sep 13th 2011.
+Thus the last chapter documents the current status of software support
+for such device.
+
+The version you are reading now is compiled from branch ``v3'' of he
+@i{git} repository @code{git://ohwr.org/white-rabbit/wr-switch-sw.git}
+(or @code{git@@ohwr.org:white-rabbit/wr-switch-sw.git} if you are
+granted read-write access).  Such a branch will be rebased over time
+on the new master, as the master branch grows with more code and
+documentation that is relevant to V3 as well, until it wil be merged.
+
 @menu
 * Overview::                    
 * Quick Build::                 
@@ -72,8 +83,11 @@ Build}.
 * The Boot Loader::             
 * The Linux Kernel::            
 * Kernel Modules::              
-* User Space Tools::            
+* PTPd::                        
+* User Space Applications::     
+* VHDL Binaries::               
 * The Complete Filesystem::     
+* Building for Version 3 Hardware::  
 @end menu
 
 @c ##########################################################################
@@ -636,6 +650,408 @@ running the script and all keys listed in the file @code{authorized_keys}
 in the main directory of this package, if present.
 
 @c ##########################################################################
+@node Building for Version 3 Hardware
+@chapter Building for Version 3 Hardware
+
+Version 3 of the switch, which is expected to be the final version,
+the one going to production, is slightly different from V2.
+
+It is equipped with a AT91SAM9G45 processor (ARM9 running at 400MHz)
+with 64MB of DDR2 memory, 2GB of NAND flash and 8Mb of DataFlash.
+
+@menu
+* Building Code for WRS-3::     
+* Installation of WRS-3::       
+* Code layout in a production switch::  
+@end menu
+
+@c ==========================================================================
+@node Building Code for WRS-3
+@section Building Code for WRS-3
+
+When delivered from manufacturing, the switch has no software at all,
+while a working specimen needs 4 binary blobs on it:
+
+@itemize @bullet
+@item The initial program loader (here @i{at91boot}), that configures
+RAM memory and executes the second level boot loader, loaded from
+internal memories.
+
+@item The boot loader (we use @i{barebox}), which can retrieve the operating
+system from internal memories or from a network connection. It also offers
+an interactive prompt with a number of commands for the developer.
+
+@item The OS kernel (we use @i{linux-2.6.39}).
+
+@item The filesystem with actual application and bitstreams.
+@end itemize
+
+Installation of the first two programs is usually only needed once in
+the life of a switch. The steps are documented here anyways, as
+problems may happen, and users accidentally erasing code will need to
+bring the device back to life. This document describes everything
+in the order things happen since power-on, so according to your needs
+you may want to skip some sections.
+
+@menu
+* Building AT91Bootstrap::      
+* Building Barebox::            
+* Building the Kernel::         
+* Building the Filesystem::     
+* Initial tools for the FPGA::  
+@end menu
+
+@c --------------------------------------------------------------------------
+@node Building AT91Bootstrap
+@subsection Building AT91Bootstrap
+
+The version of @i{at91bootstrap} being used in the switch is found at
+@code{http://repository.timesys.com/@-buildsources/a/@-at91bootstrap-3/@-at91bootstrap-3-3.0/}.
+The patches we applied are in the directory @i{patches/at91boot/v3.3},
+and currently is one patch only (we are piggy-backing on the Atmel
+evaluation board without even changing the board name):
+
+@example
+   0001-board-9g45ek-fix-ddr-config-for-WRS-V3.patch
+@end example
+
+After uncompressing the archive and applying the patches, the following
+commands will compile the package (please customize according to your
+environment):
+
+@example
+   export CROSS_COMPILE=/opt/arm-2010q1/bin/arm-none-eabi-
+   make at91sam9g45ek_defconfig
+   make
+   cp ./binaries/at91sam9g45ek-dataflashcardboot-3.0.bin \
+          /tftpboot/at91bootstrap
+@end example
+
+For simplicity, a known-working binary is part of the @i{binaries}
+directory of this package as @code{at91boot}, the sane name used
+later in the installation instructions.
+
+@c --------------------------------------------------------------------------
+@node Building Barebox
+@subsection Building Barebox
+
+The barebox version we built is v2011-09, with one simple local patch
+and the chosen configuration file. More patches will be needed to customize
+board names (we are piggy-backing on the Ronetix PM9G45 board).
+
+The patches are part of this package in @i{patches/barebox} and
+are currently the following ones:
+
+@example
+   0001-91samg45-removed-two-clock-that-failed-compilation.patch
+   0002-sam945-include-mtd-nand.h-in-device-file.patch
+   0003-arm-config-added-wrs3_defconfig.patch
+@end example
+
+After uncompressing @i{v2011-09} and patching, the following commands
+can be used to compile:
+
+@example
+   export CROSS_COMPILE=/opt/arm-2010q1/bin/arm-none-eabi-
+   export ARCH=arm
+   make wrs3_defconfig
+   make
+   cp barebox.bin /tftpboot/bb.bin
+@end example
+
+A pre-built binary is available as @code{binaries/barebox.bin}.
+
+
+@c --------------------------------------------------------------------------
+@node Building the Kernel
+@subsection Building the Kernel
+
+The kernel we are currently using is version 2.6.29. We are piggy-backing
+on the @i{sam9g45ek} board, whose specific file we modified to account
+for WRS differences. This is a temporary solution, like we are doing
+for the other tools.
+
+The relevant patches are available in @i{patches/kernel/v2.6.39},
+and are currently the following ones:
+
+@example
+   0001-.config-for-the-switch.patch
+   0002-wrs3-changes-to-g45ek.patch
+@end example
+
+To compile the kernel, we used the following commands, keeping in mind
+that patch 0001 above creates a file called @code{.config}, not
+@i{wrs3_defconfig}
+
+@example
+   export CROSS_COMPILE=/opt/arm-2010q1/bin/arm-none-eabi-
+   export ARCH arm
+   make oldconfig
+   make && cp arch/arm/boot/zImage 128.141.44.150:/home/tftpboot/
+@end example
+
+@c --------------------------------------------------------------------------
+@node Building the Filesystem
+@subsection Building the Filesystem
+
+Currently, there is no official filesystem for this boards. We are
+developing the related code booting a generic ramdisk or NFS-Root.
+
+@c --------------------------------------------------------------------------
+@node Initial tools for the FPGA
+@subsection Initial tools for the FPGA
+
+In order to make some tests with your board and be able to develop
+further, the directory @i{tools} includes the following programs:
+
+@table @i
+@item devmem2
+	This is the classic tool to access physical addresses.
+
+@item mapper
+@itemx wmapper
+	The programs read from @i{/dev/mem} writing to @i{stdout} and
+        read from @i{stdin} writing to @i{/dev/mem}, respectively.
+        They are classic tools distributed in the @i{Linux Device Drivers}
+        examples since 1998.
+
+@item load-fpga
+	Loads a bitstream to the Virtex6 device of the switch. The biststream
+        file name must be passsed in the command line (@i{/dev/stdin} allowed).
+        The is a limit of 10MB (me lazy!), but the program complains if it
+        detects the limit is reached.
+
+@item spi-pll
+	Uses the @i{opencores_spi} device part of the FPGA bitstream to
+        talk with the AD9516 device that is mounted on the board.
+@end table
+
+@c ==========================================================================
+@node Installation of WRS-3
+@section Installation of WRS-3
+
+A switch with no code has three communication channels available: a
+serial port, on 2.54mm pins, a JTAG connector with standard ARM-20
+pinout and a USB port driven by the internal CPU ROM if no boot code
+is found.  Please note that if you write a faulty @i{at91boot} binary
+the internal ROM will jump into it without activating the USB port,
+and the JTAG will be your only way out.
+
+You can work without a serial port, but it's strongly suggested to
+connect it.  With a UART you are able to see diagnostics and interact
+with the boot loader or the operating system even if it fails to
+configure the network.  The port uses 3.3V signalling, so you'll most
+likely need a level converter; the figure below shows the connection
+(black is GND, orange is RX and white is TX).
+@sp 1
+@center @image{wrs-v3-uart, 5cm}
+@sp 1
+
+@menu
+* Installation from Jtag::      
+* Installation through the Boot-ROM::  
+@end menu
+
+@c --------------------------------------------------------------------------
+@node Installation from Jtag
+@subsection Installation from Jtag
+
+You can boot and install the system using a JTAG debugger. Each debugger
+has its own command language, so you'll need to adapt to yours. What is
+shown here refers to the @i{peedi} tool.
+
+As a first step, you'll need to ensure the JTAG clock is slow enough.
+The clock can be no faster than 1/6th of the CPU clock, so you need
+3kHz at most (the G45 starts up with an internal oscillator, which has
+an unpredictable value between 20kHz and 40kHz).  Then, I'd verify
+that the internal SRAM is working; I do that with cool food and bad
+coffee instead of the usual smelly dead beef.
+
+@example
+   clock init
+   mem write 0x300000 0xc001f00d
+   mem write 0x300004 0xbadc0ffe
+   mem read  0x300000 2
+   ==> 0x300000: 0xC001F00D 0xBADC0FFE
+@end example
+
+Now, you can load your @i{at91bootstrap} to the internal SRAM,
+retrieving it from the network or your host filesystem.  Since no boot
+loader is there, you should place a breakpoint after @i{at91bootstrap}
+initialized SDRAM and the PLL. Finally you can load @i{barebox} and jump
+to it. Such step is better performed with the full JTAG clock, or
+it would take several dozen minutes.
+
+@example
+  mem load at91bootstrap.bin 0x300000
+  break add hard 0x300088
+  go
+  ## wait for the breakpoint to happen
+  break del all
+  clock normal
+  mem load barebox.bin 0x73f00000
+  go
+@end example
+
+On the serial port you'll see the following messages at 115200,8N1.
+The first 4 lines are printed by @i{at91bootstrap}, the rest by @i{barebox}.
+
+@smallexample
+   Start AT91Bootstrap...
+   Begin to load image...
+   ++++++++
+   Loading image done.
+
+
+   barebox 2011.09.0-dirty (Sep 12 2011 - 17:09:12)
+
+   Board: Ronetix PM9G45
+   Clocks: CPU 400 MHz, master 133 MHz, main 12.000 MHz
+   registered netconsole as cs1
+   Malloc space: 0x73b00000 -> 0x73f00000 (size  4 MB)
+   Stack space : 0x73af8000 -> 0x73b00000 (size 32 kB)
+   Open /dev/env0 No such file or directory
+   no valid environment found on /dev/env0. Using default environment
+   running /env/bin/init...
+
+   Hit any key to stop autoboot:  2
+   barebox@@Ronetix PM9G45:/
+@end smallexample
+
+When the boot loader is running, you can boot a kernel and use its
+own @i{/dev/mtd} devices to write to the DataFlash and NAND memories.
+
+According to the partition table you have in your kernel sources, you'll
+see a different set of @i{mtd} files, but you can identify them by looking
+at @code{/proc/mtd}:
+
+@example
+   # cat /proc/mtd
+   dev:    size   erasesize  name
+   mtd0: 04000000 00020000 "Partition 1"
+   mtd1: 1c000000 00020000 "Partition 2"
+   mtd2: 00840000 00000420 "spi0.0-AT45DB642x"
+@end example
+
+Here above, the DataFlash is @i{/dev/mtd2}, whereas the former partitions
+refer to NAND memory.  You should then write @i{at91boot} to offset 0
+of the DataFlash and @i{barebox} to offset 0x8400 (33792):
+
+@example
+   cat at91bootstrap.bin > /dev/mtd2
+   dd bs=33792 seek=1 if=barebox.bin of=/dev/mtd2
+@end example
+
+Now you can detach the debugger, press reset and see @i{barebox} starting.
+
+@c --------------------------------------------------------------------------
+@node Installation through the Boot-ROM
+@subsection Installation through the Boot-ROM
+
+@c To boot the switch using the internal ROM, you can run the SAM-BA protocol.
+@c This package includes a working version of the USB flasher for GNU/Linux,
+@c that you can use in the following way, from your host:
+
+To be documented
+@c FIXME FIXME
+
+@c --------------------------------------------------------------------------
+@node Booting the Kernel
+@subsection Booting the Kernel
+
+After initial installation, the DataFlash only includes up to @i{barebox},
+while the rest must still be loaded.
+
+Assuming you have a known-working NFS-Root installation and a TFTP
+server, but you don't want to use DHCP because you already have one
+in your network, the following commands will load a kernel and
+boot it as NFS-Root. You'll need to change IP addresses and names
+to match your personal situation.
+
+@example
+   eth0.ipaddr=192.168.16.9
+   eth0.serverip=192.168.16.1
+   addpart /dev/mem  0x400000@@0x71000000(kernel)
+   tftp zImage /dev/mem.kernel
+   bootargs="$bootargs mem=64m root=nfs nfsroot=/opt/root/wrs,tcp "
+   bootargs="$bootargs ip=192.168.16.9:192.168.16.1:255.255.255.0"
+   bootz /dev/mem.kernel
+@end example
+
+@c ==========================================================================
+@node Code layout in a production switch
+@section Code layout in a production switch
+
+This is the suggested arrangement of the various binary blobs in the
+final switch. Any comment and suggestion is welcome, as nothing
+is cast in stone at this point:
+
+@table @i
+@item At91Boot
+      The initial program loader is located in the first few
+      kilobytes of NAND flash. The internal ROM loads it to static RAM
+      and executes it.  This version of @i{at91boot} wil read @i{barebox}
+      from NAND.
+
+@item Barebox
+      The active copy of the boot loader is in NAND memory as well.
+      The user can interact on the serial port, but if the program receives
+      nothing in the first three seconds it will proceed with the default
+      boot procedure. The shipped default loads everything else
+      from flash (as described here), but you can change and save the
+      configuration, which is stored in a different NAND partition.
+      For example during development you'll want to load the kenrel
+      and filesystem from the network, or use NFS-Root.
+
+@item Kernel
+      The default Linux kernel, loaded from NAND, is configured for
+      read-only access to @i{at91boot} and @i{barebox}, to prevent
+      erasing them by error.  Similarly, it isn't able to access DataFlash.
+      If you really want to hack the boot sequence, you can recompile
+      the kernel with no such protections, like I do.
+
+@item Ramdisk
+      The initial filesystem is loaded as an @i{initrd} archive, loaded
+      from a NAND partition. The running system won't be actively
+      accessing flash memory, so you can erase and reprogram your filesystem
+      without taking any special tests. 
+
+@item Additional Filesystem
+      The remaining area of NAND flash is mounted as @i{ubifs}. The
+      initial ram disk executes @i{etc/rc} from such partition, so
+      users can add own programs and customizations without the need
+      to reprogram the shipped @i{initrd}.
+
+@item Failsafe At91Boot
+      The DataFlash memory is equipped with recovery system software.
+      When the internal ROM looks for an IPL, it looks in NAND first,
+      and in DataFlash later.  Therefore, if you accidentally erase
+      your NAND, the system will boot from DataFlash.  The
+      @i{at91boot} there is configured to load @i{barebox} from
+      DataFlash.
+
+@item Failsafe Barebox
+      The @i{barebox} installed to DataFlash is configured to load
+      kernel and filesystem from the same device. If you connect
+      a serial port, though, you can interact and use the network.
+
+@item Failsame Operating System
+      The System Shipped in DataFlash has a @i{telnet} daemon,
+      listening on address 10.98.76.54, where user @i{root} has
+      an empty passowrd. The kernel is configured with read-write
+      access to the whole NAND memory, so you can easily reprogram your
+      production system.
+@end table
+
+Please note that the @i{failsafe} procedure is not really fail-safe,
+because if you write a fault @i{at91boot} or @i{barebox} to NAND,
+the internal ROM will still boot from NAND leading to a bricked device.
+In this case you must follow 
+
+
+
+
+@c ##########################################################################
 @bye
 
 
@@ -644,4 +1060,5 @@ in the main directory of this package, if present.
 @c  LocalWords:  Tomasz Wlostowski buildroot distclean defconfig wrswitch REPO
 @c  LocalWords:  menuconfig config dataflash whiterabbit stdout stderr svnsync
 @c  LocalWords:  filesystem diff ohwr http mkdir linux rubini itemize PTPd VHDL
-@c  LocalWords:  noposix ptpd userspace libswitchhw
+@c  LocalWords:  noposix ptpd userspace libswitchhw DataFlash NAND barebox FPGA
+@c  LocalWords:  Atmel
