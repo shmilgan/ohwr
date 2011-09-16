@@ -125,7 +125,7 @@ int  rtu_fdb_proxy_set_aging_time(
             unsigned long t
     ) __attribute__((warn_unused_result));
 
-unsigned long rtu_fd_proxy_get_aging_time(uint8_t fid);
+unsigned long rtu_fdb_proxy_get_aging_time(uint8_t fid);
 
 uint16_t rtu_fdb_proxy_get_num_dynamic_entries(uint8_t fid);
 uint32_t rtu_fdb_proxy_get_num_learned_entry_discards(uint8_t fid);
@@ -134,6 +134,8 @@ uint16_t rtu_fdb_proxy_get_max_supported_vlans(void);
 uint16_t rtu_fdb_proxy_get_max_vid(void);
 uint64_t rtu_fdb_proxy_get_num_vlan_deletes(void);
 uint16_t rtu_fdb_proxy_get_next_fid(uint8_t fid);
+
+void rtu_fdb_proxy_dump(void);
 
 struct minipc_ch *rtu_fdb_proxy_create(char *name);
 

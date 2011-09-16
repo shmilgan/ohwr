@@ -25,6 +25,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <stdlib.h>
+
 #include "rtu_fd_proxy.h"
 #include "rtu_fd_export.h"
 
@@ -261,6 +264,17 @@ const struct minipc_pd rtu_fdb_proxy_read_next_vlan_entry_struct = {
     }
 };
 
+const struct minipc_pd rtu_fdb_proxy_dump_struct = {
+    .name   = "21",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_dump_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_dump_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
 // IMPORTANT NOTE: errno used to inform of mini-ipc related errors
 // (errno value as set by minipc_call)
 
@@ -280,10 +294,10 @@ int  rtu_fdb_proxy_create_static_entry(
     in.vid    = vid;
     in.type   = type;
     in.active = active;
-    memcpy(in.port_map, port_map, NUM_PORTS);
+    memcpy(in.port_map, port_map, sizeof(enum filtering_control) * NUM_PORTS);
 
 	ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_create_static_entry_struct, &in, &out);
+            &rtu_fdb_proxy_create_static_entry_struct, &out, &in);
 
     return out.retval;
 }
@@ -301,7 +315,7 @@ int rtu_fdb_proxy_delete_static_entry(
     in.vid  = vid;
 
 	ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_delete_static_entry_struct, &in, &out);
+            &rtu_fdb_proxy_delete_static_entry_struct, &out, &in);
 
     return out.retval;
 }
@@ -321,7 +335,7 @@ int rtu_fdb_proxy_read_entry(
     in.fid  = fid;
 
 	ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_read_entry_struct, &in, &out);
+            &rtu_fdb_proxy_read_entry_struct, &out, &in);
 
     if (ret == 0) {
         *port_map   = out.port_map;
@@ -346,7 +360,7 @@ int rtu_fdb_proxy_read_next_entry(
     in.fid  = *fid;
 
 	ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_read_next_entry_struct, &in, &out);
+            &rtu_fdb_proxy_read_next_entry_struct, &out, &in);
 
     if (ret == 0) {
         mac_copy(*mac, out.mac);
@@ -374,10 +388,10 @@ int rtu_fdb_proxy_read_static_entry(
     in.vid  = vid;
 
 	ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_read_static_entry_struct, &in, &out);
+            &rtu_fdb_proxy_read_static_entry_struct, &out, &in);
 
     if (ret == 0) {
-        memcpy(*port_map, out.port_map, NUM_PORTS);
+        memcpy(*port_map, out.port_map, sizeof(enum filtering_control) * NUM_PORTS);
         *type   = out.type;
         *active = out.active;
     }
@@ -402,12 +416,12 @@ int rtu_fdb_proxy_read_next_static_entry(
     in.vid  = *vid;
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_read_next_static_entry_struct, &in, &out);
+            &rtu_fdb_proxy_read_next_static_entry_struct, &out, &in);
 
     if (ret == 0) {
         mac_copy(*mac, out.mac);
         *vid = out.vid;
-        memcpy(*port_map, out.port_map, NUM_PORTS);
+        memcpy(*port_map, out.port_map, sizeof(enum filtering_control) * NUM_PORTS);
         *type   = out.type;
         *active = out.active;
     }
@@ -429,13 +443,13 @@ int  rtu_fdb_proxy_set_aging_time(
     in.t = t;
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_set_aging_time_struct, &in, &out);
+            &rtu_fdb_proxy_set_aging_time_struct, &out, &in);
 
     return out.retval;
 }
 
 // errno should be checked by callee
-unsigned long rtu_fd_proxy_get_aging_time(uint8_t fid)
+unsigned long rtu_fdb_proxy_get_aging_time(uint8_t fid)
 {
     int ret;
     struct rtu_fdb_get_aging_time_argdata in;
@@ -444,7 +458,7 @@ unsigned long rtu_fd_proxy_get_aging_time(uint8_t fid)
     in.fid  = fid;
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_get_aging_time_struct, &in, &out);
+            &rtu_fdb_proxy_get_aging_time_struct, &out, &in);
 
     return out.retval;
 }
@@ -460,7 +474,7 @@ uint16_t rtu_fdb_proxy_get_num_dynamic_entries(uint8_t fid)
     in.fid  = fid;
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_get_num_dynamic_entries_struct, &in, &out);
+            &rtu_fdb_proxy_get_num_dynamic_entries_struct, &out, &in);
 
     return out.retval;
 }
@@ -475,7 +489,7 @@ uint32_t rtu_fdb_proxy_get_num_learned_entry_discards(uint8_t fid)
     in.fid  = fid;
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_get_num_learned_entry_discards_struct, &in, &out);
+            &rtu_fdb_proxy_get_num_learned_entry_discards_struct, &out, &in);
 
     return out.retval;
 }
@@ -488,7 +502,7 @@ uint16_t rtu_fdb_proxy_get_num_vlans(void)
     struct rtu_fdb_get_num_vlans_retdata out;
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_get_num_vlans_struct, &in, &out);
+            &rtu_fdb_proxy_get_num_vlans_struct, &out, &in);
 
     return out.retval;
 }
@@ -501,7 +515,7 @@ uint16_t rtu_fdb_proxy_get_max_supported_vlans(void)
     struct rtu_fdb_get_max_supported_vlans_retdata out;
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_get_max_supported_vlans_struct, &in, &out);
+            &rtu_fdb_proxy_get_max_supported_vlans_struct, &out, &in);
 
     return out.retval;
 }
@@ -514,7 +528,7 @@ uint16_t rtu_fdb_proxy_get_max_vid(void)
     struct rtu_fdb_get_max_vid_retdata out;
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_get_max_vid_struct, &in, &out);
+            &rtu_fdb_proxy_get_max_vid_struct, &out, &in);
 
     return out.retval;
 }
@@ -527,7 +541,7 @@ uint64_t rtu_fdb_proxy_get_num_vlan_deletes(void)
     struct rtu_fdb_get_num_vlan_deletes_retdata out;
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_get_num_vlan_deletes_struct, &in, &out);
+            &rtu_fdb_proxy_get_num_vlan_deletes_struct, &out, &in);
 
     return out.retval;
 }
@@ -541,7 +555,7 @@ uint16_t rtu_fdb_proxy_get_next_fid(uint8_t fid)
     in.fid = fid;
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_proxy_get_next_fid_struct, &in, &out);
+            &rtu_fdb_proxy_get_next_fid_struct, &out, &in);
 
     return out.retval;
 }
@@ -558,11 +572,11 @@ int rtu_fdb_proxy_create_static_vlan_entry(
 
     in.vid = vid;
     in.fid = fid;
-    memcpy(in.member_set, member_set, NUM_PORTS);
+    memcpy(in.member_set, member_set, sizeof(enum registrar_control) * NUM_PORTS);
     in.untagged_set = untagged_set;
 
     ret = minipc_call(client,  MILLISEC_TIMEOUT,
-        &rtu_fdb_proxy_create_static_vlan_entry_struct, &in, &out);
+        &rtu_fdb_proxy_create_static_vlan_entry_struct, &out, &in);
 
     return out.retval;
 }
@@ -576,7 +590,7 @@ int rtu_fdb_proxy_delete_static_vlan_entry(uint16_t vid)
     in.vid = vid;
 
     ret = minipc_call(client,  MILLISEC_TIMEOUT,
-        &rtu_fdb_proxy_delete_static_vlan_entry_struct, &in, &out);
+        &rtu_fdb_proxy_delete_static_vlan_entry_struct, &out, &in);
 
     return out.retval;
 }
@@ -593,10 +607,10 @@ int rtu_fdb_proxy_read_static_vlan_entry(
     in.vid = vid;
 
     ret = minipc_call(client,  MILLISEC_TIMEOUT,
-        &rtu_fdb_proxy_read_static_vlan_entry_struct, &in, &out);
+        &rtu_fdb_proxy_read_static_vlan_entry_struct, &out, &in);
 
     if (ret == 0) {
-        memcpy(*member_set, out.member_set, NUM_PORTS);
+        memcpy(*member_set, out.member_set, sizeof(enum registrar_control) * NUM_PORTS);
         *untagged_set = out.untagged_set;
     }
 
@@ -615,11 +629,11 @@ int rtu_fdb_proxy_read_next_static_vlan_entry(
     in.vid = *vid;
 
     ret = minipc_call(client,  MILLISEC_TIMEOUT,
-        &rtu_fdb_proxy_read_next_static_vlan_entry_struct, &in, &out);
+        &rtu_fdb_proxy_read_next_static_vlan_entry_struct, &out, &in);
 
     if (ret == 0) {
         *vid = out.vid;
-        memcpy(*member_set, out.member_set, NUM_PORTS);
+        memcpy(*member_set, out.member_set, sizeof(enum registrar_control) * NUM_PORTS);
         *untagged_set = out.untagged_set;
     }
 
@@ -641,12 +655,12 @@ int rtu_fdb_proxy_read_vlan_entry(
     in.vid = vid;
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
-        &rtu_fdb_proxy_read_vlan_entry_struct, &in, &out);
+        &rtu_fdb_proxy_read_vlan_entry_struct, &out, &in);
 
     if (ret == 0) {
         *fid = out.fid;
         *entry_type = out.entry_type;
-        memcpy(*member_set, out.member_set, NUM_PORTS);
+        memcpy(*member_set, out.member_set, sizeof(enum registrar_control) * NUM_PORTS);
         *untagged_set = out.untagged_set;
         *creation_t = out.creation_t;
     }
@@ -669,18 +683,29 @@ int rtu_fdb_proxy_read_next_vlan_entry(
     in.vid = *vid;
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
-        &rtu_fdb_proxy_read_next_vlan_entry_struct, &in, &out);
+        &rtu_fdb_proxy_read_next_vlan_entry_struct, &out, &in);
 
     if (ret == 0) {
         *vid = out.vid;
         *fid = out.fid;
         *entry_type = out.entry_type;
-        memcpy(*member_set, out.member_set, NUM_PORTS);
+        memcpy(*member_set, out.member_set, sizeof(enum registrar_control) * NUM_PORTS);
         *untagged_set = out.untagged_set;
         *creation_t = out.creation_t;
     }
 
     return out.retval;
+}
+
+void rtu_fdb_proxy_dump(void)
+{
+    int ret;
+    struct rtu_fdb_dump_argdata in;
+    struct rtu_fdb_dump_retdata out;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT,
+            &rtu_fdb_proxy_dump_struct, &out, &in);
+
 }
 
 struct minipc_ch *rtu_fdb_proxy_create(char* name)
