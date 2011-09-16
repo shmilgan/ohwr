@@ -143,12 +143,13 @@ static void calculate_member_set(
     int i;
 
     for (i = 0; i < NUM_PORTS; i++) {
-        if ((use_dynamic >> i) & 0x01)
-            *member_set[i] = Normal_registration;
-        else if ((port_map >> i) & 0x01)
-            *member_set[i] = Registration_fixed;
-        else
-            *member_set[i] = Registration_forbidden;
+        if ((use_dynamic >> i) & 0x01) {
+            (*member_set)[i] = Normal_registration;
+        } else if ((port_map >> i) & 0x01) {
+            (*member_set)[i] = Registration_fixed;
+        } else {
+            (*member_set)[i] = Registration_forbidden;
+        }
     }
 }
 
@@ -213,7 +214,7 @@ static struct static_filtering_entry *sfe_create(
         return NULL;
 
     mac_copy(sfe->mac, mac);
-    memcpy(sfe->port_map, port_map, NUM_PORTS);
+    memcpy(sfe->port_map, port_map, sizeof(enum filtering_control) * NUM_PORTS);
     sfe->vid      = vid;
     sfe->type     = type;
     sfe->active   = active;
@@ -238,7 +239,8 @@ static struct static_filtering_entry *sfe_create(
               node = node->next);
         sfe->next        = node->next;
         sfe->prev        = node;
-        node->next->prev = sfe;
+       if (node->next)
+            node->next->prev = sfe;
         node->next       = sfe;
     }
     return sfe;
@@ -265,7 +267,7 @@ static void sfe_delete(struct static_filtering_entry *sfe)
  */
 static struct static_filtering_entry *sfe_find(
         uint8_t mac[ETH_ALEN],
-        uint8_t vid)
+        uint16_t vid)
 {
     struct static_filtering_entry *sfe;
 
@@ -310,8 +312,8 @@ static int sfe_update(
         sfe->active = active;
         ret = 0;
     }
-    if (memcmp(sfe->port_map, port_map, NUM_PORTS)) {
-        memcpy(sfe->port_map, port_map, NUM_PORTS);
+    if (memcmp(sfe->port_map, port_map, sizeof(enum filtering_control) * NUM_PORTS)) {
+        memcpy(sfe->port_map, port_map, sizeof(enum filtering_control) * NUM_PORTS);
         ret = 0;
     }
     return ret;
@@ -329,6 +331,7 @@ static struct filtering_entry_node *fd_create(
         uint8_t  mac[ETH_ALEN],
         uint8_t fid)
 {
+    int i = 0;
     struct filtering_entry_node *node, *fe;
 
     fe = (struct filtering_entry_node*)
@@ -355,10 +358,11 @@ static struct filtering_entry_node *fd_create(
     } else {
         // find place to insert node
         for (;node->next && (mac_cmp(fe->mac, node->next->mac) > 0);
-              node = node->next);
+              node = node->next, i++);
         fe->next         = node->next;
         fe->prev         = node;
-        node->next->prev = fe;
+        if (node->next)
+            node->next->prev = fe;
         node->next       = fe;
     }
     return fe;
@@ -374,11 +378,12 @@ static void fd_delete(struct filtering_entry_node *fe)
 
     if(fe->prev)
         fe->prev->next = fe->next;
-    else                            // first node in fdb double linked list
+    else                           // first node in fdb double linked list
         fd[fe->fid] = fe->next;
 
     if(fe->next)
         fe->next->prev = fe->prev;
+
     free(fe);
 }
 
@@ -1001,7 +1006,7 @@ int rtu_fdb_read_static_entry(
     sfe = sfe_find(mac, vid);
     if (!sfe)
         return unlock(-EINVAL);
-    memcpy(*port_map, sfe->port_map, NUM_PORTS);
+    memcpy(*port_map, sfe->port_map, sizeof(enum filtering_control) * NUM_PORTS);
     *type   = sfe->type;
     *active = sfe->active;
     return unlock(0);
@@ -1032,7 +1037,7 @@ int rtu_fdb_read_next_static_entry(
         return unlock(-EINVAL);
 
     mac_copy(*mac, sfe->mac);
-    memcpy(*port_map, sfe->port_map, NUM_PORTS);
+    memcpy(*port_map, sfe->port_map, sizeof(enum filtering_control) * NUM_PORTS);
     *vid    = sfe->vid;
     *type   = sfe->type;
     *active = sfe->active;
@@ -1093,7 +1098,7 @@ int rtu_fdb_delete_static_vlan_entry(uint16_t vid)
     int fid, xcast;
     struct filtering_entry_node *node, *next;
     struct filtering_entry *fe;
-    struct static_filtering_entry *sfe;
+    struct static_filtering_entry *sfe, *next_sfe;
     struct vlan_table_entry *ve;
 
     if (reserved(vid))
@@ -1106,7 +1111,8 @@ int rtu_fdb_delete_static_vlan_entry(uint16_t vid)
 
     // Delete static entries for VID (from both static FDB and FDB)
    for (xcast = 0; xcast < 2; xcast++) {
-        for (sfe = sfd[xcast][vid]; sfe; sfe = sfe->next) {
+        for (sfe = sfd[xcast][vid]; sfe; sfe = next_sfe) {
+            next_sfe = sfe->next;
             fe_delete_static_entry(vid, sfe);
             sfe_delete(sfe);
         }
@@ -1143,6 +1149,7 @@ int rtu_fdb_read_static_vlan_entry(
 	        uint32_t *untagged_set)                                 // out
 {
     struct vlan_table_entry *ve;
+
 
     if (vid >= NUM_VLANS)
         return -EINVAL;
@@ -1252,7 +1259,7 @@ int rtu_fdb_read_next_vlan_entry(
 void rtu_fdb_age_dynamic_entries(void)
 {
     int fid;
-    struct filtering_entry_node *node;
+    struct filtering_entry_node *node, *next;
     struct filtering_entry *fe;
     unsigned long t;            // (secs)
 
@@ -1262,7 +1269,8 @@ void rtu_fdb_age_dynamic_entries(void)
     lock();
     t = now() - aging_time;
     for (fid = 0; fid < NUM_FIDS; fid++) {
-        for (node = fd[fid]; node; node = node->next) {
+        for (node = fd[fid]; node; node = next) {
+            next = node->next;
             if (rtu_sw_find_entry(node->mac, fid, &fe)) {
                 if(fe->dynamic && time_after(t, fe->last_access_t)) {
                     rtu_fdb_delete_dynamic_entry(fe);

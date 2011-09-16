@@ -90,13 +90,18 @@ int rtu_hw_init(void)
 
     // Used to 'get' RTU IRQs from kernel
 	fd = open(RTU_DEVNAME, O_RDWR);
-	if (fd < 0)
-        return errno;
+	if (fd < 0) {
+	    err = errno;
+	    TRACE(TRACE_FATAL, "unable to open rtu driver");
+        return err;
+    }
 
     // init IO memory map
     err = shw_fpga_mmap_init();
-    if(err)
+    if(err) {
+  	    TRACE(TRACE_FATAL, "error initialising IO memory map");
         return err;
+    }
 
     TRACE(TRACE_INFO,"module initialized\n");
 
@@ -434,7 +439,7 @@ void rtu_hw_write_vlan_entry(uint32_t addr, struct vlan_table_entry *ent)
 	_fpga_writel(FPGA_BASE_RTU + RTU_VLAN_TAB + 4*addr, vlan_entry_word0_w(ent));
     TRACE_DBG(
         TRACE_INFO,
-        "write vlan entry: addr %x ent %08x %08x %08x %08x %08x",
+        "write vlan entry: addr %x ent %08x",
         addr,
         vlan_entry_word0_w(ent)
     );

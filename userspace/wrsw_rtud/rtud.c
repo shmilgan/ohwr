@@ -43,9 +43,11 @@
 #include "rtu_fd.h"
 #include "rtu_drv.h"
 #include "rtu_hash.h"
+#include "rtu_fd_srv.h"
 #include "utils.h"
 
 static pthread_t aging_process;
+static pthread_t fdb_srv_process;
 
 /**
  * Creates static entries for reserved MAC addresses in the filtering
@@ -168,6 +170,18 @@ static int rtu_daemon_learning_process()
     return err;
 }
 
+static void *rtu_daemon_fdb_srv_process(void *arg)
+{
+    struct minipc_ch *server;
+
+    server = rtu_fdb_srv_create("rtu_fdb");
+	while (1) {
+	    if (minipc_server_action(server, 1000) < 0)
+		    fprintf(stderr, "rtu_fdb server_action(): %s\n", strerror(errno));
+    }
+    return NULL;
+}
+
 
 /**
  * \brief RTU set up.
@@ -189,6 +203,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
     // disable RTU
     TRACE(TRACE_INFO, "disable rtu.");
     rtu_hw_disable();
+
 
     // init configuration for ports
     TRACE(TRACE_INFO, "init port config.");
@@ -300,7 +315,7 @@ int main(int argc, char **argv)
     }
 
     // Initialise RTU.
-    if((err = rtu_daemon_init(poly, aging_time)) < 0) {
+    if((err = rtu_daemon_init(poly, aging_time))) {
         rtu_daemon_destroy();
         return err;
     }
@@ -314,6 +329,11 @@ int main(int argc, char **argv)
 
     // Start up aging process
     if ((err = pthread_create(&aging_process, NULL, rtu_daemon_aging_process, (void *) aging_res))) {
+        rtu_daemon_destroy();
+        return err;
+    }
+
+    if ((err = pthread_create(&fdb_srv_process, NULL, rtu_daemon_fdb_srv_process, (void *)NULL))) {
         rtu_daemon_destroy();
         return err;
     }

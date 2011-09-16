@@ -299,7 +299,7 @@ static struct filtering_entry *hcam_add(struct filtering_entry *fe)
 static void hcam_delete(int bucket)
 {
     struct filtering_entry *fe, *prev;
-    uint16_t hash = -1;     // informs unlinking required
+    int hash = -1;     // informs unlinking required.
 
     fe = &hcam[bucket];
 
@@ -394,6 +394,9 @@ static void htab_delete(uint16_t hash, int bucket)
             rtu_fe_clean(fe);
             htab_write(fe);
         }
+    } else {
+        rtu_fe_clean(fe);
+        htab_write(fe);
     }
 }
 
@@ -504,7 +507,7 @@ void rtu_sw_delete_entry(struct filtering_entry *fe)
 {
     // Delete from HTAB or HCAM as appropriate
     if (hcam_contains(fe))
-        hcam_delete(cam_addr(hcam_bucket(fe)));
+        hcam_delete(hcam_bucket(fe));
     else
         htab_delete(htab_hash(fe), htab_bucket(fe));
 }
@@ -552,10 +555,15 @@ struct vlan_table_entry *rtu_sw_find_vlan_entry(uint16_t vid)
 
 struct vlan_table_entry *rtu_sw_find_next_ve(uint16_t *vid)
 {
-    for (; *vid < NUM_VLANS; (*vid)++)
-        if (!vlan_tab[*vid].drop)
+    uint16_t _vid;
+    struct vlan_table_entry *ve;
+
+    for (_vid = *vid + 1; _vid < NUM_VLANS; _vid++)
+        if (!vlan_tab[_vid].drop)
             break;
-    return rtu_sw_find_vlan_entry(*vid);
+    *vid = _vid;
+    ve = rtu_sw_find_vlan_entry(_vid);
+    return ve;
 }
 
 int rtu_sw_create_vlan_entry(
@@ -776,4 +784,40 @@ void rtu_sw_rollback(void)
     hcam_wr_head     = 0;
     htab_wr_head     = 0;
     vlan_tab_wr_head = 0;
+}
+
+void rtu_sw_dump(void)
+{
+    int i, j;
+    struct filtering_entry *fe;
+
+    for (i = 0; i < HTAB_ENTRIES; i++) {
+        for (j = 0; j < RTU_BUCKETS; j++) {
+            fe = &htab[i][j];
+            if (fe->valid) {
+                TRACE(
+                    TRACE_INFO,
+                    "htab[%d][%d] (mac: %s, fid: %d, dynamic: %d)",
+                    i,
+                    j,
+                    mac_to_string(fe->mac),
+                    fe->fid,
+                    fe->dynamic
+                );
+            }
+        }
+    }
+    for (i = 0; i < CAM_ENTRIES; i++) {
+        fe = &hcam[i];
+        if (fe->valid) {
+            TRACE(
+                TRACE_INFO,
+                "hcam[%d] (mac: %s, fid: %d, dynamic: %d)",
+                i,
+                mac_to_string(fe->mac),
+                fe->fid,
+                fe->dynamic
+            );
+        }
+    }
 }

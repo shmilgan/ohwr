@@ -62,7 +62,8 @@
 // Maximum VLAN identifier (0xFFF reserved)
 #define MAX_VID                 0xFFE
 // Default VID for untagged frames
-#define DEFAULT_VID             0x001
+//#define DEFAULT_VID             0x001
+#define DEFAULT_VID             0x000
 // Wildcard VID used by management to refer to any VID
 #define WILDCARD_VID            0xFFF
 // Number of Filtering database identifiers
@@ -71,7 +72,8 @@
 #define NUM_RESERVED_ADDR       16
 
 // Default aging time for dynamic entries at filtering database [secs]
-#define DEFAULT_AGING_TIME      300
+//#define DEFAULT_AGING_TIME      300
+#define DEFAULT_AGING_TIME      10
 #define MIN_AGING_TIME          10
 #define MAX_AGING_TIME          10000
 // Default aging time resolution [secs]
