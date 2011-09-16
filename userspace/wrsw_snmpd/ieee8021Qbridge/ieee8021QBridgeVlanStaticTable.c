@@ -231,10 +231,11 @@ static int cache_entry(
 
     errno = 0;
     found = next ?
-            (rtu_fdb_proxy_read_static_vlan_entry(ent->vid,
-                &(ent->member_set), &(ent->untagged_set)) == 0) :
             (rtu_fdb_proxy_read_next_static_vlan_entry(&(ent->vid),
+                &(ent->member_set), &(ent->untagged_set)) == 0):
+            (rtu_fdb_proxy_read_static_vlan_entry(ent->vid,
                 &(ent->member_set), &(ent->untagged_set)) == 0);
+
     if (errno)
         return SNMP_ERR_GENERR;
     if (!found)
@@ -295,6 +296,11 @@ static int get(netsnmp_request_info *req)
     tinfo = netsnmp_extract_table_info(req);
     // Get indexes for entry
     err = get_indexes(tinfo, &ent);
+
+    snmp_log(LOG_DEBUG,
+        "ieee8021QBridgeVlanStaticTable: get cid=%lu vid=%d column=%d.\n",
+        ent.cid, ent.vid, tinfo->colnum);
+
     if (err != SNMP_ERR_NOERROR)
         return err;
     // Cache entry in agent memory.
@@ -638,6 +644,14 @@ static void initialize_table_ieee8021QBridgeVlanStaticTable(void)
  */
 void init_ieee8021QBridgeVlanStaticTable(void)
 {
+    struct minipc_ch *client;
+
     initialize_table_ieee8021QBridgeVlanStaticTable();
-    rtu_fdb_proxy_create("wrsw_snmpd");
+    client = rtu_fdb_proxy_create("rtu_fdb");
+    if (!client)
+        snmp_log(LOG_ERR,
+            "ieee8021QBridgeVlanStaticTable: error creating mini-ipc proxy - %s\n",
+            strerror(errno));
+    snmp_log(LOG_INFO,"ieee8021QBridgeVlanStaticTable: initialised\n");
+
 }

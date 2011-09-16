@@ -29,8 +29,8 @@
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
-#include "ieee8021QBridgeNextFreeLocalVlanTable.h"
 
+#include "ieee8021QBridgeNextFreeLocalVlanTable.h"
 
 /* column number definitions for table ieee8021QBridgeNextFreeLocalVlanTable */
 #define COLUMN_IEEE8021QBRIDGENEXTFREELOCALVLANCOMPONENTID		1
@@ -48,6 +48,11 @@ static int get(netsnmp_request_info *req)
     tinfo = netsnmp_extract_table_info(req);
     idx = tinfo->indexes;
     cid = *(idx->val.integer);
+
+    snmp_log(LOG_DEBUG,
+        "ieee8021QBridgeNextFreeLocalVlanTable: get cid=%d column=%d.\n",
+        cid, tinfo->colnum);
+
     if (cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
     // Get column value
@@ -126,4 +131,5 @@ static void initialize_table_ieee8021QBridgeNextFreeLocalVlanTable(void)
 void init_ieee8021QBridgeNextFreeLocalVlanTable(void)
 {
     initialize_table_ieee8021QBridgeNextFreeLocalVlanTable();
+    snmp_log(LOG_INFO,"ieee8021QBridgeNextFreeLocalVlanTable: initialised\n");
 }

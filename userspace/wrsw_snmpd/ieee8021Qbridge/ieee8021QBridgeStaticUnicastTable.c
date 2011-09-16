@@ -33,6 +33,7 @@
 #include "ieee8021QBridgeStaticUnicastTable.h"
 
 #include "rtu_fd_proxy.h"
+#include "mac.h"
 
 /* column number definitions for table ieee8021QBridgeStaticUnicastTable */
 #define COLUMN_IEEE8021QBRIDGESTATICUNICASTCOMPONENTID              1
@@ -222,10 +223,11 @@ static int cache_entry(
 
     errno = 0;
     found = next ?
-            (rtu_fdb_proxy_read_static_entry(ent->mac, ent->vid,
-                &(ent->port_map), &(ent->type), &(ent->row_status)) == 0) :
             (rtu_fdb_proxy_read_next_static_entry(&(ent->mac), &(ent->vid),
+                &(ent->port_map), &(ent->type), &(ent->row_status)) == 0):
+            (rtu_fdb_proxy_read_static_entry(ent->mac, ent->vid,
                 &(ent->port_map), &(ent->type), &(ent->row_status)) == 0);
+
     if (errno)
         return SNMP_ERR_GENERR;
     if (!found)
@@ -281,6 +283,11 @@ static int get(netsnmp_request_info *req)
     tinfo = netsnmp_extract_table_info(req);
     // Get indexes for entry
     err = get_indexes(tinfo, &ent);
+
+    snmp_log(LOG_DEBUG,
+        "ieee8021QBridgeStaticUnicastTable: get cid=%lu vid=%d mac=%s rx_port=%d column=%d.\n",
+        ent.cid, ent.vid, mac_to_string(ent.mac), ent.rx_port, tinfo->colnum);
+
     if (err != SNMP_ERR_NOERROR)
         return err;
     // Cache entry in agent memory.
@@ -599,6 +606,7 @@ static void initialize_table_ieee8021QBridgeStaticUnicastTable(void)
     const oid ieee8021QBridgeStaticUnicastTable_oid[] = {1,3,111,2,802,1,1,4,1,3,1};
     netsnmp_handler_registration    *reg;
     netsnmp_table_registration_info *tinfo;
+    netsnmp_variable_list *idx;
 
     reg = netsnmp_create_handler_registration(
               "ieee8021QBridgeStaticUnicastTable",
@@ -611,9 +619,17 @@ static void initialize_table_ieee8021QBridgeStaticUnicastTable(void)
     netsnmp_table_helper_add_indexes(tinfo,
             ASN_UNSIGNED,  /* index: ComponentId */
             ASN_UNSIGNED,  /* index: VlanIndex */
-            ASN_OCTET_STR, /* index: Address */
+            ASN_PRIV_IMPLIED_OCTET_STR, /* index: Address */
             ASN_UNSIGNED,  /* index: ReceivePort */
             0);
+
+    // Fix the MacAddress Index variable binding lenght
+    idx = tinfo->indexes;
+
+    idx = idx->next_variable; // skip componentId
+    idx = idx->next_variable; // skip vlanIndex
+
+    idx->val_len = ETH_ALEN;
 
     tinfo->min_column = COLUMN_IEEE8021QBRIDGESTATICUNICASTSTATICEGRESSPORTS;
     tinfo->max_column = COLUMN_IEEE8021QBRIDGESTATICUNICASTROWSTATUS;
@@ -626,6 +642,14 @@ static void initialize_table_ieee8021QBridgeStaticUnicastTable(void)
  */
 void init_ieee8021QBridgeStaticUnicastTable(void)
 {
+    struct minipc_ch *client;
+
     initialize_table_ieee8021QBridgeStaticUnicastTable();
-    rtu_fdb_proxy_create("wrsw_snmpd");
+    client = rtu_fdb_proxy_create("rtu_fdb");
+    if (!client)
+        snmp_log(LOG_ERR,
+            "ieee8021QBridgeStaticUnicastTable: error creating mini-ipc proxy - %s\n",
+            strerror(errno));
+    snmp_log(LOG_INFO,"ieee8021QBridgeStaticUnicastTable: initialised\n");
+
 }

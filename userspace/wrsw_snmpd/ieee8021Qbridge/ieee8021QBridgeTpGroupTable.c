@@ -34,6 +34,8 @@
 
 #include "rtu_fd_proxy.h"
 #include "rtu_fd.h"
+#include "mac.h"
+
 
 /* column number definitions for table ieee8021QBridgeTpGroupTable */
 #define COLUMN_IEEE8021QBRIDGETPGROUPADDRESS        1
@@ -177,6 +179,11 @@ static int get(netsnmp_request_info *req)
     tinfo = netsnmp_extract_table_info(req);
     // Get indexes for entry
     err = get_indexes(tinfo, &ent);
+
+    snmp_log(LOG_DEBUG,
+        "ieee8021QBridgeTpGroupTable: get cid=%lu vid=%d mac=%s column=%d.\n",
+        ent.cid, ent.vid, mac_to_string(ent.mac), tinfo->colnum);
+
     if (err != SNMP_ERR_NOERROR)
         return err;
     // Cache entry in agent memory.
@@ -235,6 +242,7 @@ static void initialize_table_ieee8021QBridgeTpGroupTable(void)
     const oid ieee8021QBridgeTpGroupTable_oid[] = {1,3,111,2,802,1,1,4,1,2,3};
     netsnmp_handler_registration    *reg;
     netsnmp_table_registration_info *tinfo;
+    netsnmp_variable_list *idx;
 
     reg = netsnmp_create_handler_registration(
         "ieee8021QBridgeTpGroupTable",
@@ -247,8 +255,16 @@ static void initialize_table_ieee8021QBridgeTpGroupTable(void)
     netsnmp_table_helper_add_indexes(tinfo,
                            ASN_UNSIGNED,   /* index: ComponentId */
                            ASN_UNSIGNED,   /* index: VlanIndex */
-                           ASN_OCTET_STR,  /* index: Address */
+                           ASN_PRIV_IMPLIED_OCTET_STR,  /* index: Address */
                            0);
+
+    // Fix the MacAddress Index variable binding lenght
+    idx = tinfo->indexes;
+
+    idx = idx->next_variable; // skip componentId
+    idx = idx->next_variable; // skip VlanIndex
+
+    idx->val_len = ETH_ALEN;
 
     tinfo->min_column = COLUMN_IEEE8021QBRIDGETPGROUPEGRESSPORTS;
     tinfo->max_column = COLUMN_IEEE8021QBRIDGETPGROUPLEARNT;
@@ -261,6 +277,14 @@ static void initialize_table_ieee8021QBridgeTpGroupTable(void)
  */
 void init_ieee8021QBridgeTpGroupTable(void)
 {
+    struct minipc_ch *client;
+
     initialize_table_ieee8021QBridgeTpGroupTable();
-    rtu_fdb_proxy_create("wrsw_snmpd");
+    client = rtu_fdb_proxy_create("rtu_fdb");
+    if (!client)
+        snmp_log(LOG_ERR,
+            "ieee8021QBridgeTpGroupTable: error creating mini-ipc proxy - %s\n",
+            strerror(errno));
+    snmp_log(LOG_INFO,"ieee8021QBridgeTpGroupTable: initialised\n");
+
 }

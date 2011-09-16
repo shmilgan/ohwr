@@ -65,6 +65,11 @@ static void update_oid(
 static int get_column(netsnmp_request_info *req, int colnum, u_long cid, u_long port)
 {
     u_long pvid;                    // ieee8021QBridgePvid
+    int qmode;
+
+   snmp_log(LOG_DEBUG,
+        "ieee8021QBridgePortVlanTable: get cid=%lu port=%lu column=%d.\n",
+        cid, port, colnum);
 
     if (cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
@@ -80,7 +85,9 @@ static int get_column(netsnmp_request_info *req, int colnum, u_long cid, u_long 
         snmp_set_var_typed_integer(req->requestvb, ASN_UNSIGNED, pvid);
         break;
     case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
-        switch(ep_hw_get_qmode(port)) {
+        qmode = ep_hw_get_qmode(port);
+        snmp_log(LOG_DEBUG,"ieee8021QBridgePortVlanTable: qmode=%d.\n", qmode);
+        switch(qmode) {
         case access_port:
             snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, admitUntaggedAndPriority);
             break;
@@ -309,4 +316,5 @@ static void initialize_table_ieee8021QBridgePortVlanTable(void)
 void init_ieee8021QBridgePortVlanTable(void)
 {
     initialize_table_ieee8021QBridgePortVlanTable();
+    snmp_log(LOG_INFO,"ieee8021QBridgePortVlanTable: initialised\n");
 }

@@ -33,6 +33,7 @@
 #include "ieee8021QBridgeFdbTable.h"
 
 #include "rtu_fd_proxy.h"
+#include "mac.h"
 
 /* column number definitions for table ieee8021QBridgeFdbTable */
 #define COLUMN_IEEE8021QBRIDGEFDBCOMPONENTID		    1
@@ -77,6 +78,10 @@ static int get_column(netsnmp_request_info *req, int colnum, u_long cid, u_long 
     uint32_t discards;    // ieee8021QBridgeFdbLearnedEntryDiscards
     long     age;         // ieee8021QBridgeFdbAgingTime
 
+    snmp_log(LOG_DEBUG,
+        "ieee8021QBridgeFdbTable: get cid=%d fid =%d column=%d.\n",
+        cid, fid, colnum);
+
     if (cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
 
@@ -98,7 +103,7 @@ static int get_column(netsnmp_request_info *req, int colnum, u_long cid, u_long 
         snmp_set_var_typed_integer(req->requestvb, ASN_COUNTER64, (uint64_t)discards);
         break;
     case COLUMN_IEEE8021QBRIDGEFDBAGINGTIME:
-        age = rtu_fd_proxy_get_aging_time(fid);
+        age = rtu_fdb_proxy_get_aging_time(fid);
         if (errno)
             return SNMP_ERR_GENERR;
         snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, age);
@@ -114,6 +119,7 @@ static int get(netsnmp_request_info *req)
     netsnmp_table_request_info  *tinfo;
 
     tinfo = netsnmp_extract_table_info(req);
+
     return get_column(
         req,
         tinfo->colnum,
@@ -298,6 +304,13 @@ static void initialize_table_ieee8021QBridgeFdbTable(void)
 /** Initializes the ieee8021QBridgeFdbTable module */
 void init_ieee8021QBridgeFdbTable(void)
 {
+    struct minipc_ch *client;
+
     initialize_table_ieee8021QBridgeFdbTable();
-    rtu_fdb_proxy_create("wrsw_snmpd");
+    client = rtu_fdb_proxy_create("rtu_fdb");
+    if (!client)
+        snmp_log(LOG_ERR,
+            "ieee8021QBridgeFdbTable: error creating mini-ipc proxy - %s\n",
+            strerror(errno));
+    snmp_log(LOG_INFO,"ieee8021QBridgeFdbTable: initialised\n");
 }

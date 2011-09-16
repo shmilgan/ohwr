@@ -63,6 +63,10 @@ static int get(netsnmp_request_info *req)
     tinfo = netsnmp_extract_table_info(req);
 
     cid = *(tinfo->indexes->val.integer);
+
+    snmp_log(LOG_DEBUG,
+        "ieee8021QBridgeTable: get cid=%d column=%d.\n", cid, tinfo->colnum);
+
     if (cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
 
@@ -93,6 +97,7 @@ static int get(netsnmp_request_info *req)
     case COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS:
         // not supported yet
     default:
+        snmp_log(LOG_WARNING, "ieee8021QBridgeTable: unknown colnum.\n");
         return SNMP_NOSUCHOBJECT;
     }
     return 0;
@@ -120,6 +125,7 @@ static int ieee8021QBridgeTable_handler(
         break;
     case MODE_GETNEXT:
         // Single bridge means single row...
+        snmp_log(LOG_DEBUG,"ieee8021QBridgeTable: GET-NEXT req received.\n");
         for (req = requests; req; req = req->next)
             netsnmp_set_request_error(reqinfo, req, SNMP_ENDOFMIBVIEW);
         break;
@@ -181,6 +187,13 @@ static void initialize_table_ieee8021QBridgeTable(void)
 /** Initializes the ieee8021QBridgeTable module */
 void init_ieee8021QBridgeTable(void)
 {
+    struct minipc_ch *client;
+
     initialize_table_ieee8021QBridgeTable();
-    rtu_fdb_proxy_create("wrsw_snmpd");
+    client = rtu_fdb_proxy_create("rtu_fdb");
+    if (!client)
+        snmp_log(LOG_ERR,
+            "ieee8021QBridgeTable: error creating mini-ipc proxy - %s\n",
+            strerror(errno));
+    snmp_log(LOG_INFO,"ieee8021QBridgeTable: initialised\n");
 }
