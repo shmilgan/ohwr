@@ -145,19 +145,13 @@ static int rtu_fdb_srv_read_entry(
     in  = (struct rtu_fdb_read_entry_argdata*)args;
     out = (struct rtu_fdb_read_entry_retdata*)ret;
 
-    uint32_t port_map;
-    int entry_type;
-
     out->retval =
         rtu_fdb_read_entry(
             in->mac,
             in->fid,
-            &port_map,
-            &entry_type
+            &out->port_map,
+            &out->entry_type
         );
-
-    out->port_map = port_map;
-    out->entry_type = entry_type;
 
     return 0;
 }
@@ -170,21 +164,16 @@ static int rtu_fdb_srv_read_next_entry(
     in  = (struct rtu_fdb_read_next_entry_argdata*)args;
     out = (struct rtu_fdb_read_next_entry_retdata*)ret;
 
-    uint32_t port_map;
-    int entry_type;
-
     out->retval =
         rtu_fdb_read_next_entry(
             &in->mac,
             &in->fid,
-            &port_map,
-            &entry_type
+            &out->port_map,
+            &out->entry_type
         );
 
     mac_copy(out->mac, in->mac);
     out->fid = in->fid;
-    out->port_map = port_map;
-    out->entry_type = entry_type;
 
     return 0;
 }
@@ -201,7 +190,8 @@ static int rtu_fdb_srv_create_static_entry(
         rtu_fdb_create_static_entry(
             in->mac,
             in->vid,
-            in->port_map,
+            in->egress_ports,
+            in->forbidden_ports,
             in->type,
             in->active
         );
@@ -217,23 +207,15 @@ static int rtu_fdb_srv_read_static_entry(
     in  = (struct rtu_fdb_read_static_entry_argdata*)args;
     out = (struct rtu_fdb_read_static_entry_retdata*)ret;
 
-    enum filtering_control port_map[NUM_PORTS];
-    enum storage_type type;
-    int active;
-
     out->retval =
         rtu_fdb_read_static_entry(
             in->mac,
             in->vid,
-            &port_map,
-            &type,
-            &active
+            &out->egress_ports,
+            &out->forbidden_ports,
+            &out->type,
+            &out->active
         );
-
-    memcpy(out->port_map, port_map,
-        sizeof(enum filtering_control) * NUM_PORTS);
-    out->type   = type;
-    out->active = active;
 
     return 0;
 }
@@ -246,24 +228,18 @@ static int rtu_fdb_srv_read_next_static_entry(
     in  = (struct rtu_fdb_read_next_static_entry_argdata*)args;
     out = (struct rtu_fdb_read_next_static_entry_retdata*)ret;
 
-    enum filtering_control port_map[NUM_PORTS];
-    enum storage_type type;
-    int active;
-
     out->retval =
         rtu_fdb_read_next_static_entry(
             &in->mac,
             &in->vid,
-            &port_map,
-            &type,
-            &active
+            &out->egress_ports,
+            &out->forbidden_ports,
+            &out->type,
+            &out->active
         );
+
     mac_copy(out->mac, in->mac);
-    memcpy(out->port_map, port_map,
-        sizeof(enum filtering_control) * NUM_PORTS);
     out->vid    = in->vid;
-    out->type   = type;
-    out->active = active;
 
     return 0;
 }
@@ -306,7 +282,8 @@ static int rtu_fdb_srv_create_static_vlan_entry(
         rtu_fdb_create_static_vlan_entry(
             in->vid,
             in->fid,
-            in->member_set,
+            in->egress_ports,
+            in->forbidden_ports,
             in->untagged_set
         );
 
@@ -334,19 +311,13 @@ static int rtu_fdb_srv_read_static_vlan_entry(
     in  = (struct rtu_fdb_read_static_vlan_entry_argdata*)args;
     out = (struct rtu_fdb_read_static_vlan_entry_retdata*)ret;
 
-    enum registrar_control member_set[NUM_PORTS];
-    uint32_t untagged_set;
-
     out->retval =
         rtu_fdb_read_static_vlan_entry(
             in->vid,
-            &member_set,
-            &untagged_set
+            &out->egress_ports,
+            &out->forbidden_ports,
+            &out->untagged_set
         );
-
-    memcpy(out->member_set, member_set,
-        sizeof(enum registrar_control) * NUM_PORTS);
-    out->untagged_set = untagged_set;
 
     return 0;
 }
@@ -359,20 +330,15 @@ static int rtu_fdb_srv_read_next_static_vlan_entry(
     in  = (struct rtu_fdb_read_next_static_vlan_entry_argdata*)args;
     out = (struct rtu_fdb_read_next_static_vlan_entry_retdata*)ret;
 
-    enum registrar_control member_set[NUM_PORTS];
-    uint32_t untagged_set;
-
     out->retval =
         rtu_fdb_read_next_static_vlan_entry(
             &in->vid,
-            &member_set,
-            &untagged_set
+            &out->egress_ports,
+            &out->forbidden_ports,
+            &out->untagged_set
         );
 
     out->vid = in->vid;
-    memcpy(out->member_set, member_set,
-        sizeof(enum registrar_control) * NUM_PORTS);
-    out->untagged_set = untagged_set;
 
     return 0;
 }
@@ -385,28 +351,15 @@ static int rtu_fdb_srv_read_vlan_entry(
     in  = (struct rtu_fdb_read_vlan_entry_argdata*)args;
     out = (struct rtu_fdb_read_vlan_entry_retdata*)ret;
 
-    uint8_t fid;
-    int entry_type;
-    enum registrar_control member_set[NUM_PORTS];
-    uint32_t untagged_set;
-    unsigned long creation_t;
-
     out->retval =
         rtu_fdb_read_vlan_entry(
             in->vid,
-            &fid,
-            &entry_type,
-            &member_set,
-            &untagged_set,
-            &creation_t
+            &out->fid,
+            &out->entry_type,
+            &out->port_mask,
+            &out->untagged_set,
+            &out->creation_t
         );
-
-    memcpy(out->member_set, member_set,
-        sizeof(enum registrar_control) * NUM_PORTS);
-    out->fid          = fid;
-    out->entry_type   = entry_type;
-    out->untagged_set = untagged_set;
-    out->creation_t   = creation_t;
 
     return 0;
 }
@@ -419,42 +372,17 @@ static int rtu_fdb_srv_read_next_vlan_entry(
     in  = (struct rtu_fdb_read_next_vlan_entry_argdata*)args;
     out = (struct rtu_fdb_read_next_vlan_entry_retdata*)ret;
 
-    uint8_t fid;
-    int entry_type;
-    enum registrar_control member_set[NUM_PORTS];
-    uint32_t untagged_set;
-    unsigned long creation_t;
-
     out->retval =
         rtu_fdb_read_next_vlan_entry(
             &in->vid,
-            &fid,
-            &entry_type,
-            &member_set,
-            &untagged_set,
-            &creation_t
+            &out->fid,
+            &out->entry_type,
+            &out->port_mask,
+            &out->untagged_set,
+            &out->creation_t
         );
 
     out->vid = in->vid;
-    memcpy(out->member_set, member_set,
-        sizeof(enum registrar_control) * NUM_PORTS);
-    out->fid          = fid;
-    out->entry_type   = entry_type;
-    out->untagged_set = untagged_set;
-    out->creation_t   = creation_t;
-
-    return 0;
-}
-
-static int rtu_fdb_srv_dump(
-            const struct minipc_pd *pd, uint32_t *args, void *ret)
-{
-    struct rtu_fdb_dump_argdata *in;
-    struct rtu_fdb_dump_retdata *out;
-    in  = (struct rtu_fdb_dump_argdata*)args;
-    out = (struct rtu_fdb_dump_retdata*)ret;
-
-    rtu_sw_dump();
 
     return 0;
 }
@@ -711,18 +639,6 @@ const struct minipc_pd rtu_fdb_srv_read_next_vlan_entry_struct = {
     }
 };
 
-const struct minipc_pd rtu_fdb_srv_dump_struct = {
-    .f      = rtu_fdb_srv_dump,
-    .name   = "21",
-    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
-                struct rtu_fdb_dump_retdata),
-    .args   = {
-        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
-                struct rtu_fdb_dump_argdata),
-        MINIPC_ARG_END,
-    }
-};
-
 struct minipc_ch *rtu_fdb_srv_create(char *name)
 {
 	struct minipc_ch *server;
@@ -752,7 +668,6 @@ struct minipc_ch *rtu_fdb_srv_create(char *name)
         minipc_export(server, &rtu_fdb_srv_read_next_static_vlan_entry_struct);
         minipc_export(server, &rtu_fdb_srv_read_vlan_entry_struct);
         minipc_export(server, &rtu_fdb_srv_read_next_vlan_entry_struct);
-        minipc_export(server, &rtu_fdb_srv_dump_struct);
    }
    return server;
 }

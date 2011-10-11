@@ -40,7 +40,7 @@ struct rtu_fdb_get_max_vid_argdata {
 struct rtu_fdb_get_max_vid_retdata {
     uint16_t retval;
     uint16_t padding;   // TODO remove. Required to pass mini-ipc size check
-} __attribute__((packed));
+};
 
 
 struct rtu_fdb_get_max_supported_vlans_argdata {
@@ -50,7 +50,7 @@ struct rtu_fdb_get_max_supported_vlans_argdata {
 struct rtu_fdb_get_max_supported_vlans_retdata {
     uint16_t retval;
     uint16_t padding;   // TODO remove. Required to pass mini-ipc size check
-} __attribute__((packed));
+};
 
 
 struct rtu_fdb_get_num_vlans_argdata {
@@ -60,7 +60,7 @@ struct rtu_fdb_get_num_vlans_argdata {
 struct rtu_fdb_get_num_vlans_retdata {
     uint16_t retval;
     uint16_t padding;   // TODO remove. Required to pass mini-ipc size check
-} __attribute__((packed));
+};
 
 
 struct rtu_fdb_get_num_dynamic_entries_argdata {
@@ -70,7 +70,7 @@ struct rtu_fdb_get_num_dynamic_entries_argdata {
 struct rtu_fdb_get_num_dynamic_entries_retdata {
     uint16_t retval;
     uint16_t padding;   // TODO remove. Required to pass mini-ipc size check
-} __attribute__((packed));
+};
 
 
 struct rtu_fdb_get_num_learned_entry_discards_argdata {
@@ -133,14 +133,15 @@ struct rtu_fdb_read_next_entry_retdata {
     uint8_t fid;
     uint32_t port_map;
     int entry_type;
-} __attribute__((packed));
+};
 
 
 struct rtu_fdb_create_static_entry_argdata {
     uint8_t mac[ETH_ALEN];
     uint16_t vid;
-    enum filtering_control port_map[NUM_PORTS];
-    enum storage_type type;
+    uint32_t egress_ports;
+    uint32_t forbidden_ports;
+    int type;
     int active;
 };
 
@@ -155,10 +156,11 @@ struct rtu_fdb_read_static_entry_argdata {
 
 struct rtu_fdb_read_static_entry_retdata {
     int retval;
-    enum filtering_control port_map[NUM_PORTS];
-    enum storage_type type;
+    uint32_t egress_ports;
+    uint32_t forbidden_ports;
+    int type;
     int active;
-} __attribute__((packed));
+};
 
 
 struct rtu_fdb_read_next_static_entry_argdata {
@@ -170,10 +172,11 @@ struct rtu_fdb_read_next_static_entry_retdata {
     int retval;
     uint8_t mac[ETH_ALEN];
     uint16_t vid;
-    enum filtering_control port_map[NUM_PORTS];
-    enum storage_type type;
+    uint32_t egress_ports;
+    uint32_t forbidden_ports;
+    int type;
     int active;
-} __attribute__((packed));
+};
 
 
 struct rtu_fdb_delete_static_entry_argdata {
@@ -192,12 +195,13 @@ struct rtu_fdb_get_next_fid_argdata {
 struct rtu_fdb_get_next_fid_retdata {
     uint16_t retval;
     uint16_t padding;   // TODO remove. Required to pass mini-ipc size check
-} __attribute__((packed));
+};
 
 struct rtu_fdb_create_static_vlan_entry_argdata {
     uint16_t vid;
     uint8_t fid;
-    enum registrar_control member_set[NUM_PORTS];
+    uint32_t egress_ports;
+    uint32_t forbidden_ports;
     uint32_t untagged_set;
 };
 
@@ -221,9 +225,10 @@ struct rtu_fdb_read_static_vlan_entry_argdata {
 
 struct rtu_fdb_read_static_vlan_entry_retdata {
     int retval;
-    enum registrar_control member_set[NUM_PORTS];
+    uint32_t egress_ports;
+    uint32_t forbidden_ports;
     uint32_t untagged_set;
-} __attribute__((packed));
+};
 
 
 struct rtu_fdb_read_next_static_vlan_entry_argdata {
@@ -233,9 +238,10 @@ struct rtu_fdb_read_next_static_vlan_entry_argdata {
 struct rtu_fdb_read_next_static_vlan_entry_retdata {
     int retval;
     uint16_t vid;
-    enum registrar_control member_set[NUM_PORTS];
+    uint32_t egress_ports;
+    uint32_t forbidden_ports;
     uint32_t untagged_set;
-} __attribute__((packed));
+};
 
 
 struct rtu_fdb_read_vlan_entry_argdata {
@@ -246,10 +252,10 @@ struct rtu_fdb_read_vlan_entry_retdata {
     int retval;
     uint8_t fid;
     int entry_type;
-    enum registrar_control member_set[NUM_PORTS];
+    uint32_t port_mask;
     uint32_t untagged_set;
     unsigned long creation_t;
-} __attribute__((packed));
+};
 
 
 struct rtu_fdb_read_next_vlan_entry_argdata {
@@ -261,18 +267,9 @@ struct rtu_fdb_read_next_vlan_entry_retdata {
     uint16_t vid;
     uint8_t fid;
     int entry_type;
-    enum registrar_control member_set[NUM_PORTS];
+    uint32_t port_mask;
     uint32_t untagged_set;
     unsigned long creation_t;
-} __attribute__((packed));
-
-struct rtu_fdb_dump_argdata {
-    // void
-};
-
-struct rtu_fdb_dump_retdata {
-    // void
-    int padding;  // TODO remove. Required to pass mini-ipc size check
 };
 
 
