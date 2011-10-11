@@ -71,8 +71,9 @@ int wrn_set_deframer_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
             &ep->ep_regs->RFCR);
         break;
     case WRN_RFCR_SET_VID_VAL:
-        if ((deframer_req.val == 0x000) ||
-            (deframer_req.val == 0xFFF))
+        if (deframer_req.val == 0xFFF)
+// Checking reserved VID value 0x000 disabled sin hardware v2 still uses it.
+//          ||  (deframer_req.val == 0x000)
             return -EINVAL;
         rfcr &= (~EP_RFCR_VID_VAL_MASK);
         writel((rfcr | EP_RFCR_VID_VAL_W(deframer_req.val)),
