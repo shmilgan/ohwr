@@ -38,6 +38,8 @@
 
 #include <hal_client.h>
 
+#include <net-snmp/library/snmp-tc.h>
+
 #include "rtu_fd.h"
 #include "rtu_sw.h"
 #include "rtu_drv.h"
@@ -45,6 +47,15 @@
 
 #include "utils.h"
 
+/**
+ * RTU Filtering Database Entry Node in lexicographic ordered list.
+ */
+struct filtering_entry_node {
+    uint8_t mac[ETH_ALEN];
+    uint8_t fid;
+    struct filtering_entry_node *next; // Double linked list
+    struct filtering_entry_node *prev; // (in lexicographic order)
+};
 
 /**
  * Max time that a dynamic MAC entry can remain
@@ -87,7 +98,11 @@ static struct static_filtering_entry *sfd[2][NUM_VLANS];
 static inline
 int reserved(int vid)
 {
-    return (vid == 0) || (vid == WILDCARD_VID);
+    return
+#ifdef V3
+        (vid == 0) ||
+#endif // V3
+        (vid == WILDCARD_VID);
 }
 
 static inline
@@ -108,84 +123,30 @@ int unlock(int code)
 //------------------------------------------------------------------------------
 
 /**
- * Obtains de port_mask and use_dynamic masks from the VLAN member_set.
- */
-static void calculate_vlan_vector(
-        	enum registrar_control member_set[NUM_PORTS],
-            uint32_t *port_mask,
-            uint32_t *use_dynamic)
-{
-    int i;
-
-    // If entry specifies Registration_fixed for this port, then Forward
-    // else if entry specifies Registration_forbidden for this port, then Filter
-    // else use Normal_registration (dynamic info from MVRP)
-    *use_dynamic = 0xFFFFFFFF;
-    *port_mask   = 0x00000000;
-    for (i = 0; i < NUM_PORTS; i++) {
-        if (member_set[i] == Registration_fixed) {
-            *port_mask   |=  (0x01 << i);
-            *use_dynamic &= !(0x01 << i);
-        } else if (member_set[i] == Registration_forbidden) {
-            *use_dynamic &= !(0x01 << i);
-        }
-    }
-}
-
-/**
- * Fills up the member_set combining info from port_map and use_dynamic masks.
- */
-static void calculate_member_set(
-            enum registrar_control (*member_set)[NUM_PORTS],
-            uint32_t port_map,
-            uint32_t use_dynamic)
-{
-    int i;
-
-    for (i = 0; i < NUM_PORTS; i++) {
-        if ((use_dynamic >> i) & 0x01) {
-            (*member_set)[i] = Normal_registration;
-        } else if ((port_map >> i) & 0x01) {
-            (*member_set)[i] = Registration_fixed;
-        } else {
-            (*member_set)[i] = Registration_forbidden;
-        }
-    }
-}
-
-/**
  * Combines port_map information from a list of static entries.
- * @param sfd pointer to the list of static entries that must be combined.
+ * @param sfe pointer to the list of static entries that must be combined.
  */
-static void calculate_forward_vector(
-            struct static_filtering_entry *sfd,
-            uint32_t *port_map,
-            uint32_t *use_dynamic)
+static void calculate_forward_vector(struct static_filtering_entry *sfe,
+                                     uint32_t *port_map,
+                                     uint32_t *use_dynamic)
 {
-    int i, n;
+    int i = 0;
 
     // If any entry specifies Forward for this port, then result is Forward
     // else if any entry specifies Filter for this port, then result is Filter
     // else use Dynamic info
     *use_dynamic = 0xFFFFFFFF;
     *port_map    = 0x00000000;
-    for (n = 0; sfd; sfd = sfd->next_sib, n++) {
+    for (; sfe; sfe = sfe->next_sib, i++) {
         // Only active entries are used to compute the forward vector
-        if (!sfd->active)
+        if (!sfe->active)
             continue;
         // The static filtering information specified for the wildcard VID only
         // applies to VLANs for which no specific static filtering entry exists.
-        if (sfd->vid == WILDCARD_VID)
-            if (n > 0)
-                break;
-        for (i = 0; i < NUM_PORTS; i++) {
-            if (sfd->port_map[i] == Forward) {
-                *port_map    |=  (0x01 << i);
-                *use_dynamic &= !(0x01 << i);
-            } else if (sfd->port_map[i] == Filter) {
-                *use_dynamic &= !(0x01 << i);
-            }
-        }
+        if ((i > 0) && (sfe->vid == WILDCARD_VID))
+            break;
+        *port_map    |= sfe->egress_ports;
+        *use_dynamic &= ~(sfe->egress_ports | sfe->forbidden_ports);
     }
 }
 
@@ -197,12 +158,12 @@ static void calculate_forward_vector(
  * Creates a filtering entry in the static FDB linked list.
  * @return pointer to entry created. NULL if no memory available
  */
-static struct static_filtering_entry *sfe_create(
-        uint8_t  mac[ETH_ALEN],
-        uint16_t vid,
-        enum filtering_control port_map[NUM_PORTS],
-        enum storage_type type,
-        int active)
+static struct static_filtering_entry *sfe_create(uint8_t  mac[ETH_ALEN],
+                                                 uint16_t vid,
+                                                 uint32_t egress_ports,
+                                                 uint32_t forbidden_ports,
+                                                 int type,
+                                                 int active)
 {
     int xcast;
     struct static_filtering_entry *node, *sfe;
@@ -213,21 +174,23 @@ static struct static_filtering_entry *sfe_create(
     if (!sfe)
         return NULL;
 
+    sfe->vid             = vid;
+    sfe->egress_ports    = egress_ports;
+    sfe->forbidden_ports = forbidden_ports;
+    sfe->type            = type;
+    sfe->active          = active;
+    sfe->next_sib        = NULL;
     mac_copy(sfe->mac, mac);
-    memcpy(sfe->port_map, port_map, sizeof(enum filtering_control) * NUM_PORTS);
-    sfe->vid      = vid;
-    sfe->type     = type;
-    sfe->active   = active;
-    sfe->next_sib = NULL;
+
     // Link into lexicographically ordered list
-    xcast = mac_multicast(sfe->mac);
+    xcast = mac_multicast(mac);
     node  = sfd[xcast][vid];
     if (!node) {
         // first node for this VID
         sfd[xcast][vid] = sfe;
         sfe->prev       = NULL;
         sfe->next       = NULL;
-    } else if (mac_cmp(sfe->mac, node->mac) < 0) {
+    } else if (mac_cmp(mac, node->mac) < 0) {
         // entry should be first
         node->prev      = sfe;
         sfe->prev       = NULL;
@@ -235,11 +198,11 @@ static struct static_filtering_entry *sfe_create(
         sfd[xcast][vid] = sfe;
     } else {
         // find place to insert node
-        for (;node->next && (mac_cmp(sfe->mac, node->next->mac) > 0);
+        for (;node->next && (mac_cmp(mac, node->next->mac) > 0);
               node = node->next);
         sfe->next        = node->next;
         sfe->prev        = node;
-       if (node->next)
+        if (node->next)
             node->next->prev = sfe;
         node->next       = sfe;
     }
@@ -265,9 +228,8 @@ static void sfe_delete(struct static_filtering_entry *sfe)
  * Searches for an entry with given mac and vid in static fdb.
  * @return pointer to entry. NULL if none found.
  */
-static struct static_filtering_entry *sfe_find(
-        uint8_t mac[ETH_ALEN],
-        uint16_t vid)
+static struct static_filtering_entry *sfe_find(uint8_t mac[ETH_ALEN],
+                                               uint16_t vid)
 {
     struct static_filtering_entry *sfe;
 
@@ -281,19 +243,23 @@ static struct static_filtering_entry *sfe_find(
  * Finds the filtering entry following the given one in lexicographic order.
  * @return pointer to next entry in lexicographic order. NULL if none found.
  */
-struct static_filtering_entry *sfe_find_next(
-        struct static_filtering_entry *sfe)
+struct static_filtering_entry *sfe_find_next(uint8_t mac[ETH_ALEN], uint32_t vid)
 {
-    int vid, xcast;
+    int xcast;
+    struct static_filtering_entry *node;
 
-    if (sfe->next)
-        return sfe->next;
+    xcast = mac_multicast(mac);
+    // First try to find next entry for same VID.
+    for (node = sfd[xcast][vid]; node; node = node->next)
+        if (mac_cmp(node->mac, mac) > 0)
+            return node;
 
-    // check entries for following VIDs
-    xcast = mac_multicast(sfe->mac);
-    for (vid = sfe->vid + 1; vid < NUM_VLANS; vid++)
+    // If none found, check entries for following FIDs
+    for (vid = vid + 1; vid < NUM_VLANS; vid++)
         if (sfd[xcast][vid])
             return sfd[xcast][vid];
+
+    // No more entries in static FDB
     return NULL;
 }
 
@@ -301,19 +267,26 @@ struct static_filtering_entry *sfe_find_next(
  * Updates static FDB entry.
  * @return 0 if entry was updated. 1 otherwise.
  */
-static int sfe_update(
-        struct static_filtering_entry *sfe,
-        enum filtering_control port_map[NUM_PORTS],
-        int active)
+static int sfe_update(struct static_filtering_entry *sfe,
+                      uint32_t egress_ports,
+                      uint32_t forbidden_ports,
+                      int active)
 {
+    // TODO persistence support
+    // TODO handle storage type update
+
     int ret = 1;
 
     if (sfe->active != active) {
         sfe->active = active;
         ret = 0;
     }
-    if (memcmp(sfe->port_map, port_map, sizeof(enum filtering_control) * NUM_PORTS)) {
-        memcpy(sfe->port_map, port_map, sizeof(enum filtering_control) * NUM_PORTS);
+    if (sfe->egress_ports != egress_ports) {
+        sfe->egress_ports = egress_ports;
+        ret = 0;
+    }
+    if (sfe->forbidden_ports != forbidden_ports) {
+        sfe->forbidden_ports = forbidden_ports;
         ret = 0;
     }
     return ret;
@@ -327,9 +300,7 @@ static int sfe_update(
  * Creates a filtering entry in the fdb linked list.
  * @return pointer to entry created. NULL if no memory available
  */
-static struct filtering_entry_node *fd_create(
-        uint8_t  mac[ETH_ALEN],
-        uint8_t fid)
+static struct filtering_entry_node *fd_create(uint8_t mac[ETH_ALEN], uint8_t fid)
 {
     int i = 0;
     struct filtering_entry_node *node, *fe;
@@ -403,17 +374,21 @@ struct filtering_entry_node *fd_find(uint8_t mac[ETH_ALEN], uint8_t fid)
  * Finds the filtering entry following the given one in lexicographic order.
  * @return pointer to next entry in lexicographic order. NULL if none found.
  */
-struct filtering_entry_node *fd_find_next(struct filtering_entry_node *node)
+struct filtering_entry_node *fd_find_next(uint8_t mac[ETH_ALEN], uint16_t fid)
 {
-    int fid;
+    struct filtering_entry_node *node;
 
-    if (node->next)
-        return node->next;
+    // First try to find next entry for same FID.
+    for (node = fd[fid]; node; node = node->next)
+        if (mac_cmp(node->mac, mac) > 0)
+            return node;
 
-    // check entries for following FIDs
-    for (fid = node->fid + 1; fid < NUM_FIDS; fid++)
+    // In none found, check entries for following FIDs
+    for (fid = fid + 1; fid < NUM_FIDS; fid++)
         if (fd[fid])
             return fd[fid];
+
+    // No more entries in FDB
     return NULL;
 }
 
@@ -421,14 +396,13 @@ struct filtering_entry_node *fd_find_next(struct filtering_entry_node *node)
  * Creates a filtering entry in fdb (both mirror and lex list).
  * @return 0 if entry was created. -ENOMEM if fdb is full.
  */
-static int rtu_fdb_create_entry(
-            struct filtering_entry **fe,
-            uint8_t  mac[ETH_ALEN],
-            uint16_t vid,
-            uint8_t fid,
-            uint32_t port_map,
-            uint32_t use_dynamic,
-            int dynamic)
+static int rtu_fdb_create_entry(struct filtering_entry **fe,
+                                uint8_t  mac[ETH_ALEN],
+                                uint16_t vid,
+                                uint8_t fid,
+                                uint32_t port_map,
+                                uint32_t use_dynamic,
+                                int dynamic)
 {
     struct filtering_entry_node *node;
 
@@ -462,24 +436,23 @@ static void rtu_fdb_delete_entry(struct filtering_entry *fe)
 /**
  * Update FDB entry with dynamic or static info, as indicated by 'dynamic' param
  * @param port_mask VLAN port mask.
- * @return 1 if entry masks were updated. 0 otherwise.
+ * @return 0 if entry masks were updated. 1 otherwise.
  */
-static int fe_update(
-            struct filtering_entry *fe,
-            uint32_t port_map,
-            uint32_t port_mask,
-            uint32_t use_dynamic,
-            int dynamic)
+static int fe_update(struct filtering_entry *fe,
+                     uint32_t port_map,
+                     uint32_t port_mask,
+                     uint32_t use_dynamic,
+                     int dynamic)
 {
-    int update = 0;
+    int ret = 1;
     uint32_t mask_src, mask_dst;
 
     if (dynamic) {
         if (fe->static_fdb && !fe->use_dynamic)
-            return 0;                       // dynamic info is not permitted
+            return 1;                       // dynamic info is not permitted
         // Override dynamic part of port map
         if (fe->use_dynamic)
-            mask_dst = ((fe->port_mask_dst & !fe->use_dynamic) |
+            mask_dst = ((fe->port_mask_dst & ~fe->use_dynamic) |
                         (port_map & fe->use_dynamic));
         else
             mask_dst = port_map;
@@ -504,14 +477,17 @@ static int fe_update(
 
     if (fe->port_mask_dst != mask_dst) {
         fe->port_mask_dst = mask_dst;
-        update = 1;
+        ret = 0;
     }
     if (fe->port_mask_src != mask_src) {
         fe->port_mask_src = mask_src;
-        update = 1;
+        ret = 0;
     }
 
-    return update;
+    if (ret == 0)
+        rtu_sw_update_entry(fe);
+
+    return ret;
 }
 
 
@@ -541,9 +517,8 @@ static void rtu_fdb_delete_dynamic_entry(struct filtering_entry *fe)
 /**
  * Registers a static entry in static list associated to an fdb entry.
  */
-static void fe_register_static_entry(
-        struct static_filtering_entry *sfe,
-        struct filtering_entry *fe)
+static void fe_register_static_entry(struct static_filtering_entry *sfe,
+                                     struct filtering_entry *fe)
 {
     struct static_filtering_entry *t;
 
@@ -570,9 +545,8 @@ static void fe_register_static_entry(
 /**
  * Unregisters a static entry from static list associated to an fdb entry.
  */
-static void fe_unregister_static_entry(
-        struct static_filtering_entry *sfe,
-        struct filtering_entry *fe)
+static void fe_unregister_static_entry(struct static_filtering_entry *sfe,
+                                       struct filtering_entry *fe)
 {
     struct static_filtering_entry *prev;
 
@@ -594,9 +568,8 @@ static void fe_unregister_static_entry(
  * @param sfe pointer to static entry contains static info to use.
  * @return 0 = entry inserted. 1 = entry unchanged. -ENOMEM = FDB full.
  */
-static int fe_insert_static_entry(
-            uint16_t vid,
-            struct static_filtering_entry *sfe)
+static int fe_insert_static_entry(uint16_t vid,
+                                  struct static_filtering_entry *sfe)
 {
     int ret;
     struct vlan_table_entry *ve;
@@ -611,7 +584,7 @@ static int fe_insert_static_entry(
         // and recalculate the forward vector combining static and dynamic info
         fe_register_static_entry(sfe, fe);
         calculate_forward_vector(fe->static_fdb, &_port_map, &_use_dynamic);
-        ret = fe_update(fe, vid, _port_map, _use_dynamic, STATIC);
+        ret = fe_update(fe, _port_map, ve->port_mask, _use_dynamic, STATIC);
     } else {
         // Create pure static entry
         calculate_forward_vector(sfe, &_port_map, &_use_dynamic);
@@ -629,9 +602,8 @@ static int fe_insert_static_entry(
  * not contain a reference to the given static entry or did not change when
  * removing the given static entry.
  */
-static int fe_delete_static_entry(
-            uint16_t vid,
-            struct static_filtering_entry *sfe)
+static int fe_delete_static_entry(uint16_t vid,
+                                  struct static_filtering_entry *sfe)
 {
     struct filtering_entry *fe;
     struct vlan_table_entry *ve;
@@ -648,7 +620,7 @@ static int fe_delete_static_entry(
     }
     // Combine all remaining static info and dynamic info (if any).
     calculate_forward_vector(fe->static_fdb, &_port_map, &_use_dynamic);
-    return fe_update(fe, vid, _port_map, _use_dynamic, STATIC);
+    return fe_update(fe, _port_map, ve->port_mask, _use_dynamic, STATIC);
 }
 
 //------------------------------------------------------------------------------
@@ -742,7 +714,7 @@ uint16_t rtu_fdb_get_next_fid(uint8_t fid)
     int i;
 
     lock();
-    for (i = fid; (i < NUM_FIDS) && !fd[i]; i++);
+    for (i = fid + 1; (i < NUM_FIDS) && !fd[i]; i++);
     unlock(0);
     return i;
 }
@@ -787,10 +759,9 @@ int rtu_fdb_init(uint16_t poly, unsigned long aging)
  * Creates or updates a dynamic filtering entry in filtering database.
  * @return 0 if entry was created or updated. -ENOMEM if FDB is full.
  */
-int rtu_fdb_create_dynamic_entry(
-            uint8_t  mac[ETH_ALEN],
-            uint16_t vid,
-            uint32_t port_map)
+int rtu_fdb_create_dynamic_entry(uint8_t  mac[ETH_ALEN],
+                                 uint16_t vid,
+                                 uint32_t port_map)
 {
     int ret, fid;
     struct filtering_entry  *fe;
@@ -830,11 +801,10 @@ int rtu_fdb_create_dynamic_entry(
  * contains dynamic information. STATIC if no dynamic info is being used.
  * @return 0 if entry found and read. -EINVAL if entry does not exist.
  */
-int rtu_fdb_read_entry(
-           uint8_t mac[ETH_ALEN],               // in
-           uint8_t fid,                         // in
-           uint32_t *port_map,                  // out
-           int *entry_type)                     // out
+int rtu_fdb_read_entry(uint8_t mac[ETH_ALEN],  // in
+                       uint8_t fid,            // in
+                       uint32_t *port_map,     // out
+                       int *entry_type)        // out
 {
     struct filtering_entry *fe;
 
@@ -852,28 +822,23 @@ int rtu_fdb_read_entry(
  * given MAC and FID,  in lexicographic order.
  * @return 0 if next entry exists and could be read. -EINVAL if no next entry.
  */
-int rtu_fdb_read_next_entry(
-           uint8_t (*mac)[ETH_ALEN],                            // inout
-           uint8_t *fid,                                        // inout
-           uint32_t *port_map,                                  // out
-           int *entry_type)                                     // out
+int rtu_fdb_read_next_entry(uint8_t (*mac)[ETH_ALEN],   // inout
+                            uint8_t *fid,               // inout
+                            uint32_t *port_map,         // out
+                            int *entry_type)            // out
 {
     struct filtering_entry *fe;
     struct filtering_entry_node *node;
 
     lock();
 
-    node = fd_find(*mac, *fid);
-    if (!node)
-        return unlock(-EINVAL);
-
-    node = fd_find_next(node);
+    node = fd_find_next(*mac, *fid);
     if (!node)
         return unlock(-EINVAL);
 
     if (!rtu_sw_find_entry(node->mac, node->fid, &fe))
-        return unlock(-EINVAL);     // this should never happen
-
+        return unlock(-EINVAL);     // this should never happen, since fd and
+                                    // htab/hcam should be always consistent
     mac_copy(*mac, fe->mac);
     *fid         = fe->fid;
     *port_map    = fe->port_mask_dst;
@@ -892,33 +857,42 @@ int rtu_fdb_read_next_entry(
  * @return 0 if entry created or updated. -ENOMEM if no memory available.-EINVAL
  * if entry is not registered. -EPERM if trying to modify a permanent entry.
  */
-int  rtu_fdb_create_static_entry(
-            uint8_t mac[ETH_ALEN],
-            uint16_t vid,
-            enum filtering_control port_map[NUM_PORTS],
-            enum storage_type type,
-            int active)
+int  rtu_fdb_create_static_entry(uint8_t mac[ETH_ALEN],
+                                 uint16_t vid,
+                                 uint32_t egress_ports,
+                                 uint32_t forbidden_ports,
+                                 int type,
+                                 int active)
 {
     int i, created = 0, ret = 0;
     struct static_filtering_entry *sfe;
     struct static_filtering_entry cache;
+
+    TRACE_DBG(
+        TRACE_INFO,
+        "create static entry: vid=%d mac=%s egress_ports=%x forbidden_ports=%x)",
+        vid, mac_to_string(mac), egress_ports, forbidden_ports);
 
     // if VLAN is not registered ignore request
     // (but the wildcard VID can still be used for management)
     if ((vid != WILDCARD_VID) && !rtu_sw_find_vlan_entry(vid))
         return -EINVAL;
 
+    // The same port cannot be a member of both egress ports and forbidden ports
+    if (egress_ports & forbidden_ports)
+        return -EINVAL;
+
     lock();
     // Create/Update entry in static FDB
     sfe = sfe_find(mac, vid);
     if (sfe) {
-        if (sfe->type == Permanent)
+        if (sfe->type == ST_PERMANENT)
             return unlock(-EPERM);
         rtu_sfe_copy(&cache, sfe);
-        if (sfe_update(sfe, port_map, active) != 0)
+        if (sfe_update(sfe, egress_ports, forbidden_ports, active) != 0)
             return unlock(0);
     } else {
-        sfe = sfe_create(mac, vid, port_map, type, active);
+        sfe = sfe_create(mac, vid, egress_ports, forbidden_ports, type, active);
         if (!sfe)
             return unlock(-ENOMEM);
         created = 1;
@@ -962,6 +936,10 @@ int rtu_fdb_delete_static_entry(uint8_t mac[ETH_ALEN], uint16_t vid)
     int i;
     struct static_filtering_entry *sfe;
 
+    TRACE_DBG(
+        TRACE_INFO,
+        "delete static entry: vid=%d mac=%s", vid, mac_to_string(mac));
+
     lock();
     // Check that VLAN is registered (except for wildcard vid)
     if ((vid != WILDCARD_VID) && !rtu_sw_find_vlan_entry(vid))
@@ -971,7 +949,7 @@ int rtu_fdb_delete_static_entry(uint8_t mac[ETH_ALEN], uint16_t vid)
     if (!sfe)
         return unlock(-EINVAL);
     // Permanent entries can not be removed
-    if (sfe->type == Permanent)
+    if (sfe->type == ST_PERMANENT)
         return unlock(-EPERM);
     // Unregister static entry from fdb
     if (vid == WILDCARD_VID) {
@@ -993,12 +971,12 @@ int rtu_fdb_delete_static_entry(uint8_t mac[ETH_ALEN], uint16_t vid)
  * Reads an static entry from the static filtering database
  * @return 0 if entry found and read. -EINVAL if entry does not exist.
  */
-int rtu_fdb_read_static_entry(
-            uint8_t mac[ETH_ALEN],                          // in
-            uint16_t vid,                                   // in
-            enum filtering_control (*port_map)[NUM_PORTS],  // out
-            enum storage_type *type,                        // out
-            int *active)                                    // out
+int rtu_fdb_read_static_entry(uint8_t mac[ETH_ALEN],        // in
+                              uint16_t vid,                 // in
+                              uint32_t *egress_ports,       // out
+                              uint32_t *forbidden_ports,    // out
+                              int *type,                    // out
+                              int *active)                  // out
 {
     struct static_filtering_entry *sfe;
 
@@ -1006,9 +984,10 @@ int rtu_fdb_read_static_entry(
     sfe = sfe_find(mac, vid);
     if (!sfe)
         return unlock(-EINVAL);
-    memcpy(*port_map, sfe->port_map, sizeof(enum filtering_control) * NUM_PORTS);
-    *type   = sfe->type;
-    *active = sfe->active;
+    *egress_ports    = sfe->egress_ports;
+    *forbidden_ports = sfe->forbidden_ports;
+    *type            = sfe->type;
+    *active          = sfe->active;
     return unlock(0);
 }
 
@@ -1018,29 +997,25 @@ int rtu_fdb_read_static_entry(
  * Returns the entry MAC address, FID, port map and entry type.
  * @return 0 if next entry exists and could be read. -EINVAL if no next entry.
  */
-int rtu_fdb_read_next_static_entry(
-        uint8_t (*mac)[ETH_ALEN],                           // inout
-        uint16_t *vid,                                      // inout
-        enum filtering_control (*port_map)[NUM_PORTS],      // out
-        enum storage_type *type,                            // out
-        int *active)                                        // out
+int rtu_fdb_read_next_static_entry(uint8_t (*mac)[ETH_ALEN],    // inout
+                                   uint16_t *vid,               // inout
+                                   uint32_t *egress_ports,      // out
+                                   uint32_t *forbidden_ports,   // out
+                                   int *type,                   // out
+                                   int *active)                 // out
 {
     struct static_filtering_entry *sfe;
 
     lock();
-    sfe = sfe_find(*mac, *vid);
+    sfe = sfe_find_next(*mac, *vid);
     if (!sfe)
         return unlock(-EINVAL);
-
-    sfe = sfe_find_next(sfe);
-    if (!sfe)
-        return unlock(-EINVAL);
-
+    *vid             = sfe->vid;
+    *egress_ports    = sfe->egress_ports;
+    *forbidden_ports = sfe->forbidden_ports;
+    *type            = sfe->type;
+    *active          = sfe->active;
     mac_copy(*mac, sfe->mac);
-    memcpy(*port_map, sfe->port_map, sizeof(enum filtering_control) * NUM_PORTS);
-    *vid    = sfe->vid;
-    *type   = sfe->type;
-    *active = sfe->active;
     return unlock(0);
 }
 
@@ -1056,20 +1031,33 @@ int rtu_fdb_read_next_static_entry(
  * @return 0 if entry was created. -EINVAL if vid is reserved or VLAN exists.
  * -ENOMEM in case no memory is available to create the entry.
  */
-int rtu_fdb_create_static_vlan_entry(
-        uint16_t vid,
-        uint8_t fid,
-        enum registrar_control member_set[NUM_PORTS],
-        uint32_t untagged_set)
+int rtu_fdb_create_static_vlan_entry(uint16_t vid,
+                                     uint8_t fid,
+                                     uint32_t egress_ports,
+                                     uint32_t forbidden_ports,
+                                     uint32_t untagged_set)
 {
     int ret = 0, xcast;
     uint32_t port_mask, use_dynamic;
     struct static_filtering_entry *sfe;
 
+    TRACE_DBG(
+        TRACE_INFO,
+        "create static vlan entry: vid=%d fid=%d egress_ports=%x forbidden_ports=%x untagged_set=%x",
+        vid, fid, egress_ports, forbidden_ports, untagged_set);
+
+    if (reserved(vid))
+        return -EINVAL;
+
+    // The same port cannot be a member of both egress ports and forbidden ports
+    if (egress_ports & forbidden_ports)
+        return -EINVAL;
+
     lock();
     rtu_sw_cache();
     // Insert VLAN registration entry into VLAN table
-    calculate_vlan_vector(member_set, &port_mask, &use_dynamic);
+    port_mask   = egress_ports;
+    use_dynamic = ~(egress_ports | forbidden_ports);
     rtu_sw_create_vlan_entry(vid, fid, port_mask, use_dynamic, untagged_set, STATIC);
     // Static entries for the Wildcard VID now must also apply to this VLAN
     for (xcast = 0; xcast < 2; xcast++) {
@@ -1100,6 +1088,8 @@ int rtu_fdb_delete_static_vlan_entry(uint16_t vid)
     struct filtering_entry *fe;
     struct static_filtering_entry *sfe, *next_sfe;
     struct vlan_table_entry *ve;
+
+    TRACE_DBG(TRACE_INFO, "delete static vlan entry: vid=%d", vid);
 
     if (reserved(vid))
         return -EINVAL;
@@ -1143,23 +1133,23 @@ int rtu_fdb_delete_static_vlan_entry(uint16_t vid)
  * Reads a static vlan entry from the VLAN database.
  * @return 0 if entry found and read.  -EINVAL if vid is not valid.
  */
-int rtu_fdb_read_static_vlan_entry(
-            uint16_t vid,                                           // in
-	        enum registrar_control (*member_set)[NUM_PORTS],        // out
-	        uint32_t *untagged_set)                                 // out
+int rtu_fdb_read_static_vlan_entry(uint16_t vid,                // in
+                                   uint32_t *egress_ports,      // out
+                                   uint32_t *forbidden_ports,   // out
+                                   uint32_t *untagged_set)      // out
 {
     struct vlan_table_entry *ve;
 
-
-    if (vid >= NUM_VLANS)
+    if ((vid >= NUM_VLANS) || reserved(vid))
         return -EINVAL;
 
     lock();
     ve = rtu_sw_find_vlan_entry(vid);
     if (!ve || ve->dynamic)
         return unlock(-EINVAL);
-    calculate_member_set(member_set, ve->port_mask, ve->use_dynamic);
-    *untagged_set = ve->untagged_set;
+    *egress_ports    = ve->port_mask;
+    *forbidden_ports = ~ve->use_dynamic & ~ve->port_mask;
+    *untagged_set    = ve->untagged_set;
     return unlock(0);
 }
 
@@ -1168,14 +1158,14 @@ int rtu_fdb_read_static_vlan_entry(
  * @param vid (IN) starting VLAN identifier. (OUT) vid of next vlan entry.
  * @return 0 if entry found and read. -EINVAL if vid not valid or no next VLAN.
  */
-int rtu_fdb_read_next_static_vlan_entry(
-        uint16_t *vid,                                      // inout
-        enum registrar_control (*member_set)[NUM_PORTS],    // out
-        uint32_t *untagged_set)                             // out
+int rtu_fdb_read_next_static_vlan_entry(uint16_t *vid,              // inout
+                                        uint32_t *egress_ports,     // out
+                                        uint32_t *forbidden_ports,  // out
+                                        uint32_t *untagged_set)     // out
 {
     struct vlan_table_entry *ve;
 
-    if (*vid >= NUM_VLANS)
+    if ((*vid >= NUM_VLANS) || reserved(*vid))
         return -EINVAL;
 
     lock();
@@ -1185,8 +1175,9 @@ int rtu_fdb_read_next_static_vlan_entry(
     } while(ve && ve->dynamic);
     if (!ve)
         return unlock(-EINVAL);
-    calculate_member_set(member_set, ve->port_mask, ve->use_dynamic);
-    *untagged_set = ve->untagged_set;
+    *egress_ports    = ve->port_mask;
+    *forbidden_ports = ~ve->use_dynamic & ~ve->port_mask;
+    *untagged_set    = ve->untagged_set;
     return unlock(0);
 }
 
@@ -1194,17 +1185,16 @@ int rtu_fdb_read_next_static_vlan_entry(
  * Reads a vlan entry from the VLAN database.
  * @return 0 if entry found and read. -EINVAL if vid not valid.
  */
-int rtu_fdb_read_vlan_entry(
-        uint16_t vid,
-        uint8_t *fid,                                       // out
-        int *entry_type,                                    // out
-        enum registrar_control (*member_set)[NUM_PORTS],    // out
-        uint32_t *untagged_set,                             // out
-        unsigned long *creation_t)                          // out
+int rtu_fdb_read_vlan_entry(uint16_t vid,
+                            uint8_t *fid,               // out
+                            int *entry_type,            // out
+                            uint32_t *port_mask,        // out
+                            uint32_t *untagged_set,     // out
+                            unsigned long *creation_t)  // out
 {
     struct vlan_table_entry *ve;
 
-    if (vid >= NUM_VLANS)
+    if ((vid >= NUM_VLANS) || reserved(vid))
         return -EINVAL;
 
     lock();
@@ -1215,7 +1205,7 @@ int rtu_fdb_read_vlan_entry(
     *entry_type   = ve->dynamic;
     *creation_t   = ve->creation_t;
     *untagged_set = ve->untagged_set;
-    calculate_member_set(member_set, ve->port_mask, ve->use_dynamic);
+    *port_mask    = ve->port_mask;
     return unlock(0);
 }
 
@@ -1224,13 +1214,12 @@ int rtu_fdb_read_vlan_entry(
  * @param vid (IN) starting VLAN identifier. (OUT) vid of next vlan entry.
  * @return 0 if entry found and read. -EINVAL if vid not valid.
  */
-int rtu_fdb_read_next_vlan_entry(
-            uint16_t *vid,                                      // inout
-            uint8_t *fid,                                       // out
-            int *entry_type,                                    // out
-            enum registrar_control (*member_set)[NUM_PORTS],    // out
-            uint32_t *untagged_set,                             // out
-            unsigned long *creation_t)                          // out
+int rtu_fdb_read_next_vlan_entry(uint16_t *vid,             // inout
+                                 uint8_t *fid,              // out
+                                 int *entry_type,           // out
+                                 uint32_t *port_mask,       // out
+                                 uint32_t *untagged_set,    // out
+                                 unsigned long *creation_t) // out
 {
     struct vlan_table_entry *ve;
 
@@ -1245,7 +1234,7 @@ int rtu_fdb_read_next_vlan_entry(
     *entry_type   = ve->dynamic;
     *creation_t   = ve->creation_t;
     *untagged_set = ve->untagged_set;
-    calculate_member_set(member_set, ve->port_mask, ve->use_dynamic);
+    *port_mask    = ve->port_mask;
     return unlock(0);
 }
 
