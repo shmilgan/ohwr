@@ -30,193 +30,188 @@
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
-#include "ieee8021QBridgeTpFdbTable.h"
 
+#include "ieee8021QBridgeTpFdbTable.h"
 #include "rtu_fd_proxy.h"
-#include "rtu_fd.h"
+#include "utils.h"
 
 /* column number definitions for table ieee8021QBridgeTpFdbTable */
 #define COLUMN_IEEE8021QBRIDGETPFDBADDRESS      1
 #define COLUMN_IEEE8021QBRIDGETPFDBPORT         2
 #define COLUMN_IEEE8021QBRIDGETPFDBSTATUS       3
 
-#define DEFAULT_COMPONENT_ID                    1
-
-#define CURR_ENT                                0
-#define NEXT_ENT                                1
-
-enum fdb_entry_status {
-    other           = 1,
-    Invalid         = 2,
-    Learned         = 3,
-    Self            = 4,
-    Mgmt            = 5
-};
-
 // Row entry
-struct ieee8021QBridgeTpFdbTable_entry {
+struct mib_fdb_table_entry {
     // indexes
     u_long  cid;
     uint8_t fid;
     uint8_t mac[ETH_ALEN];
+
     // Columns
     uint32_t port_map;
-    enum fdb_entry_status status;
+    int type;
 };
-
-/**
- * Update the requested OID to match this instance
- */
-static void update_oid(
-    netsnmp_request_info           *req,
-    netsnmp_handler_registration   *reginfo,
-    int                            column,
-    netsnmp_variable_list          *indexes)
-{
-    oid    build_space[MAX_OID_LEN];
-    size_t build_space_len = 0;
-    size_t index_oid_len = 0;
-
-    memcpy(build_space, reginfo->rootoid,   /* registered oid */
-                        reginfo->rootoid_len * sizeof(oid));
-    build_space_len = reginfo->rootoid_len;
-    build_space[build_space_len++] = 1;         /* entry */
-    build_space[build_space_len++] = column;    /* column */
-    build_oid_noalloc(build_space + build_space_len,
-                      MAX_OID_LEN - build_space_len, &index_oid_len,
-                      NULL, 0, indexes);
-    snmp_set_var_objid(req->requestvb, build_space,
-                       build_space_len + index_oid_len);
-}
-
-/**
- * Cache entry in agent memory. The ent parameter must have its indexes already
- * set by callee. The method fills the rest of parameters with data from
- * actual FDB.
- */
-static int cache_entry(struct ieee8021QBridgeTpFdbTable_entry *ent, int next)
-{
-    int found, type;
-
-    errno = 0;
-    found = next ?
-            (rtu_fdb_proxy_read_next_entry(&(ent->mac), &(ent->fid),
-                &(ent->port_map), &type) == 0):
-            (rtu_fdb_proxy_read_entry(ent->mac, ent->fid,
-                &(ent->port_map), &type) == 0);
-    if (errno)
-        return SNMP_ERR_GENERR;
-    if (!found)
-        return SNMP_NOSUCHINSTANCE;
-
-    ent->status = (type == STATIC) ? Mgmt:Learned;
-    return SNMP_ERR_NOERROR;
-}
 
 /**
  * Get indexes for an entry.
  * @param tinfo table information that contains the indexes (in raw format)
  * @param ent (OUT) used to return the retrieved indexes
- * @return SNMP_ERR_NOERROR if indexes are valid. SNMP_NOSUCHINSTANCE in case
- * any of the indexes is not valid.
  */
-static int get_indexes(netsnmp_table_request_info *tinfo,
-    struct ieee8021QBridgeTpFdbTable_entry *ent)
+static void get_indexes(
+    netsnmp_request_info           *req,
+    netsnmp_handler_registration   *reginfo,
+    netsnmp_table_request_info     *tinfo,
+    struct mib_fdb_table_entry     *ent)
 {
-    netsnmp_variable_list *idx = tinfo->indexes;
+    int oid_len, rootoid_len;
+    netsnmp_variable_list *idx;
 
-    ent->cid = *(idx->val.integer);
-    idx = idx->next_variable;
-    ent->fid = *(idx->val.integer);
-    idx = idx->next_variable;
-    memcpy(ent->mac, idx->val.string, idx->val_len);
-    if ((ent->cid != DEFAULT_COMPONENT_ID) || (ent->fid >= NUM_FIDS))
-        return SNMP_NOSUCHINSTANCE;
-    return SNMP_ERR_NOERROR;
+    // Get indexes from request - in case OID contains them!.
+    // Otherwise use default values for first row
+    oid_len     = req->requestvb->name_length;
+    rootoid_len = reginfo->rootoid_len;
+
+    if (oid_len > rootoid_len) {
+        idx = tinfo->indexes;
+        ent->cid = *(idx->val.integer);
+    } else {
+        ent->cid = 0;
+    }
+
+    if (oid_len > rootoid_len + 1) {
+        idx = idx->next_variable;
+        ent->fid = *(idx->val.integer);
+    } else {
+        ent->fid = 0;
+    }
+
+    if (oid_len > rootoid_len + 2) {
+        idx = idx->next_variable;
+        memcpy(ent->mac, idx->val.string, idx->val_len);
+    } else {
+        mac_copy(ent->mac, (uint8_t*)DEFAULT_MAC);
+    }
 }
 
-/**
- * @param ent should contain appropriate entry indexes
- */
 static int get_column(
     netsnmp_request_info *req,
     int colnum,
-    struct ieee8021QBridgeTpFdbTable_entry *ent)
+    struct mib_fdb_table_entry *ent)
 {
     switch (colnum) {
     case COLUMN_IEEE8021QBRIDGETPFDBPORT:
         snmp_set_var_typed_integer(req->requestvb, ASN_UNSIGNED, ent->port_map);
         break;
     case COLUMN_IEEE8021QBRIDGETPFDBSTATUS:
-        snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, ent->status);
+        snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER,
+            (ent->type == STATIC) ? Mgmt:Learned);
         break;
     default:
         return SNMP_NOSUCHOBJECT;
     }
-    return 0;
+    return SNMP_ERR_NOERROR;
 }
 
-static int get(netsnmp_request_info *req)
+static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
 {
     int err;
-    struct ieee8021QBridgeTpFdbTable_entry ent;
+    struct mib_fdb_table_entry ent;
     netsnmp_table_request_info *tinfo;
 
+    // Get indexes from request
     tinfo = netsnmp_extract_table_info(req);
-    // Get indexes for entry
-    err = get_indexes(tinfo, &ent);
+    get_indexes(req, reginfo, tinfo, &ent);
 
-    snmp_log(LOG_DEBUG,
-        "ieee8021QBridgeTpFdbTable: get cid=%lu fid=%d mac=%s column=%d.\n",
-        ent.cid, ent.fid, mac_to_string(ent.mac), tinfo->colnum);
+    _LOG_DBG("GET cid=%lu fid=%d mac=%s column=%d\n",
+        ent.cid, ent.fid, mac_to_str(ent.mac), tinfo->colnum);
 
-    if (err != SNMP_ERR_NOERROR)
-        return err;
-    // Cache entry in agent memory.
-    err = cache_entry(&ent, CURR_ENT);
-    if (err != SNMP_ERR_NOERROR)
-        return err;
+    if (ent.cid != DEFAULT_COMPONENT_ID)
+        return SNMP_NOSUCHINSTANCE;
+
+    if (ent.fid >= NUM_FIDS)
+        return SNMP_NOSUCHINSTANCE;
+
+    // Read entry from RTU FDB.
+    errno = 0;
+    err = rtu_fdb_proxy_read_entry(ent.mac, ent.fid, &(ent.port_map), &(ent.type));
+    if (errno)
+        goto error_;
+    if (err) {
+        _LOG_DBG("entry fid=%d mac=%s not found in fdb\n",
+            ent.fid, mac_to_str(ent.mac));
+        return SNMP_NOSUCHINSTANCE;
+    }
     // Get column value
     return get_column(req, tinfo->colnum, &ent);
+
+error_:
+    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    return SNMP_ERR_GENERR;
 }
 
 static int get_next(netsnmp_request_info *req,
     netsnmp_handler_registration *reginfo)
 {
     int err;
+    struct mib_fdb_table_entry ent;
     netsnmp_variable_list *idx;
     netsnmp_table_request_info *tinfo;
-    struct ieee8021QBridgeTpFdbTable_entry ent;
 
+    // Get indexes from request
     tinfo = netsnmp_extract_table_info(req);
-    // Get indexes for entry
-    err = get_indexes(tinfo, &ent);
-    if (err != SNMP_ERR_NOERROR)
-        return err;
-    // Get indexes for next entry
+    get_indexes(req, reginfo, tinfo, &ent);
+
+    _LOG_DBG("GET-NEXT cid=%d fid =%d mac=%s column=%d\n",
+        ent.cid, ent.fid, mac_to_str(ent.mac), tinfo->colnum);
+
+    // Get indexes for next entry - SNMP_ENDOFMIBVIEW informs the handler
+    // to proceed with next column.
+    if (ent.cid > DEFAULT_COMPONENT_ID) {
+        return SNMP_ENDOFMIBVIEW;
+    } else if (ent.cid == 0) {
+        ent.cid = DEFAULT_COMPONENT_ID;
+        ent.fid = 0;
+        mac_copy(ent.mac, (uint8_t*)DEFAULT_MAC);
+    }
+
+    if (ent.fid >= NUM_FIDS)
+        return SNMP_ENDOFMIBVIEW;
+
     do {
-        err = cache_entry(&ent, NEXT_ENT);
-        if (err == SNMP_NOSUCHINSTANCE)
-            return SNMP_ENDOFMIBVIEW;
-        if (err != SNMP_ERR_NOERROR)
-            return err;
-    } while (mac_multicast(ent.mac));       // Make sure entry is unicast
-    // Update indexes (no need to update cid, as it does not change)
-    idx = tinfo->indexes->next_variable;
+        errno = 0;
+        err = rtu_fdb_proxy_read_next_entry(
+            &(ent.mac), &(ent.fid), &(ent.port_map), &(ent.type));
+        if (errno)
+            goto error;
+        if (err)
+            return SNMP_ENDOFMIBVIEW;   // No other entry found
+    } while (mac_multicast(ent.mac));   // Make sure entry is unicast
+
+    // Update indexes and OID returned in SNMP response
+    idx = tinfo->indexes;
+    *(idx->val.integer) = ent.cid;
+
+    idx = idx->next_variable;
     *(idx->val.integer) = ent.fid;
+
     idx = idx->next_variable;
     memcpy(idx->val.string, ent.mac, ETH_ALEN);
+
     // Update OID
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
-    // Get next entry column value
+    // Return next entry column value
     return get_column(req, tinfo->colnum, &ent);
-}
 
+error:
+    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    return SNMP_ERR_GENERR;
+
+}
 
 /**
  * Handles requests for the ieee8021QBridgeTpFdbTable table
  */
-static int ieee8021QBridgeTpFdbTable_handler(
+static int _handler(
     netsnmp_mib_handler               *handler,
     netsnmp_handler_registration      *reginfo,
     netsnmp_agent_request_info        *reqinfo,
@@ -228,7 +223,7 @@ static int ieee8021QBridgeTpFdbTable_handler(
     switch (reqinfo->mode) {
     case MODE_GET:
         for (req = requests; req; req = req->next) {
-            err = get(req);
+            err = get(req, reginfo);
             if (err)
                 netsnmp_set_request_error(reqinfo, req, err);
         }
@@ -248,23 +243,23 @@ static int ieee8021QBridgeTpFdbTable_handler(
  * Initialize the ieee8021QBridgeTpFdbTable table by defining its
  * contents and how it's structured
  */
-static void initialize_table_ieee8021QBridgeTpFdbTable(void)
+static void initialize_table(void)
 {
-    const oid ieee8021QBridgeTpFdbTable_oid[] = {1,3,111,2,802,1,1,4,1,2,2};
+    const oid _oid[] = {1,3,111,2,802,1,1,4,1,2,2};
     netsnmp_handler_registration    *reg;
     netsnmp_table_registration_info *tinfo;
-    netsnmp_variable_list *idx;
+    netsnmp_variable_list           *idx;
 
     reg = netsnmp_create_handler_registration(
-              "ieee8021QBridgeTpFdbTable",
-              ieee8021QBridgeTpFdbTable_handler,
-              (oid *)ieee8021QBridgeTpFdbTable_oid,
-              OID_LENGTH(ieee8021QBridgeTpFdbTable_oid),
-              HANDLER_CAN_RONLY
-              );
+            "ieee8021QBridgeTpFdbTable",
+            _handler,
+            (oid *)_oid,
+            OID_LENGTH(_oid),
+            HANDLER_CAN_RONLY);
 
     tinfo = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
-    netsnmp_table_helper_add_indexes(tinfo,
+    netsnmp_table_helper_add_indexes(
+            tinfo,
             ASN_UNSIGNED,  /* index: ComponentId */
             ASN_UNSIGNED,  /* index: FdbId */
             ASN_PRIV_IMPLIED_OCTET_STR, /* index: Address */
@@ -272,10 +267,8 @@ static void initialize_table_ieee8021QBridgeTpFdbTable(void)
 
     // Fix the MacAddress Index variable binding lenght
     idx = tinfo->indexes;
-
     idx = idx->next_variable; // skip componentId
     idx = idx->next_variable; // skip FdbId
-
     idx->val_len = ETH_ALEN;
 
     tinfo->min_column = COLUMN_IEEE8021QBRIDGETPFDBPORT;
@@ -291,12 +284,11 @@ void init_ieee8021QBridgeTpFdbTable(void)
 {
     struct minipc_ch *client;
 
-    initialize_table_ieee8021QBridgeTpFdbTable();
     client = rtu_fdb_proxy_create("rtu_fdb");
-    if (!client)
-        snmp_log(LOG_ERR,
-            "ieee8021QBridgeTpFdbTable: error creating mini-ipc proxy - %s\n",
-            strerror(errno));
-    snmp_log(LOG_INFO,"ieee8021QBridgeTpFdbTable: initialised\n");
-
+    if(client) {
+        initialize_table();
+        _LOG_INF("initialised\n");
+    } else {
+        _LOG_ERR("error creating mini-ipc proxy - %s\n", strerror(errno));
+    }
 }

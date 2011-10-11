@@ -5,6 +5,16 @@
 #ifndef IEEE8021QBRIDGETPFDBTABLE_H
 #define IEEE8021QBRIDGETPFDBTABLE_H
 
+#define MIB_MOD "ieee8021QBridgeTpFdbTable"
+
+enum fdb_entry_status {
+    other           = 1,
+    Invalid         = 2,
+    Learned         = 3,
+    Self            = 4,
+    Mgmt            = 5
+};
+
 void init_ieee8021QBridgeTpFdbTable(void);
 
 #endif /* IEEE8021QBRIDGETPFDBTABLE_H */

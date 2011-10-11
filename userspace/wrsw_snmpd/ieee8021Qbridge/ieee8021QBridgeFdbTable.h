@@ -5,6 +5,8 @@
 #ifndef IEEE8021QBRIDGEFDBTABLE_H
 #define IEEE8021QBRIDGEFDBTABLE_H
 
+#define MIB_MOD "ieee8021QBridgeFdbTable"
+
 void init_ieee8021QBridgeFdbTable(void);
 
 #endif /* IEEE8021QBRIDGEFDBTABLE_H */

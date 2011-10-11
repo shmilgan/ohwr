@@ -33,6 +33,7 @@
 #include "ieee8021QBridgeVlanNumDeletes.h"
 
 #include "rtu_fd_proxy.h"
+#include "utils.h"
 
 /**
  * Initializes the ieee8021QBridgeVlanNumDeletes module
@@ -40,24 +41,23 @@
 void init_ieee8021QBridgeVlanNumDeletes(void)
 {
     struct minipc_ch *client;
-    const oid ieee8021QBridgeVlanNumDeletes_oid[] = {1,3,111,2,802,1,1,4,1,4,1};
+    const oid _oid[] = {1,3,111,2,802,1,1,4,1,4,1};
 
-    netsnmp_register_scalar(
-        netsnmp_create_handler_registration(
-            "ieee8021QBridgeVlanNumDeletes",
-            handle_ieee8021QBridgeVlanNumDeletes,
-            (oid *)ieee8021QBridgeVlanNumDeletes_oid,
-            OID_LENGTH(ieee8021QBridgeVlanNumDeletes_oid),
-            HANDLER_CAN_RONLY
-        )
-    );
     client = rtu_fdb_proxy_create("rtu_fdb");
-    if (!client)
-        snmp_log(LOG_ERR,
-            "ieee8021QBridgeVlanNumDeletes: error creating mini-ipc proxy - %s\n",
-            strerror(errno));
-    snmp_log(LOG_INFO,"ieee8021QBridgeVlanNumDeletes: initialised\n");
-
+    if(client) {
+        netsnmp_register_scalar(
+            netsnmp_create_handler_registration(
+                "ieee8021QBridgeVlanNumDeletes",
+                handle_ieee8021QBridgeVlanNumDeletes,
+                (oid *)_oid,
+                OID_LENGTH(_oid),
+                HANDLER_CAN_RONLY
+            )
+        );
+        _LOG_INF("initialised\n");
+    } else {
+        _LOG_ERR("error creating mini-ipc proxy - %s\n", strerror(errno));
+    }
 }
 
 int handle_ieee8021QBridgeVlanNumDeletes(
@@ -78,21 +78,17 @@ int handle_ieee8021QBridgeVlanNumDeletes(
         errno = 0;
         num_deletes = rtu_fdb_proxy_get_num_vlan_deletes();
         if (errno)
-            return SNMP_ERR_GENERR;
-        snmp_set_var_typed_value(
-            requests->requestvb,
-            ASN_COUNTER64,
-            (u_char *)&num_deletes,
-            sizeof(num_deletes)
-        );
+            goto error;
+        snmp_set_var_typed_value(requests->requestvb, ASN_COUNTER64,
+            (u_char *)&num_deletes, sizeof(num_deletes));
         break;
     default:
-        snmp_log(
-            LOG_ERR,
-            "unknown mode (%d) in handle_ieee8021QBridgeVlanNumDeletes\n",
-            reqinfo->mode
-        );
+        _LOG_ERR("unknown mode (%d) in handle\n", reqinfo->mode);
         return SNMP_ERR_GENERR;
     }
     return SNMP_ERR_NOERROR;
+
+error:
+    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    return SNMP_ERR_GENERR;
 }

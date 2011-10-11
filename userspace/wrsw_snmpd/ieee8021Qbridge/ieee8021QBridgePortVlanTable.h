@@ -5,6 +5,23 @@
 #ifndef IEEE8021QBRIDGEPORTVLANTABLE_H
 #define IEEE8021QBRIDGEPORTVLANTABLE_H
 
+#define MIB_MOD "ieee8021QBridgePortVlanTable"
+
+#define MIN_PVID                0x001
+#define MAX_PVID                0xFFE
+
+enum acceptable_frame_types {
+    admitAll                   = 1,
+    admitUntaggedAndPriority   = 2,
+    admitTagged                = 3
+};
+
+enum qmode {
+    access_port                = 0,
+    trunk_port                 = 1,
+    unqualified_port           = 3
+};
+
 void init_ieee8021QBridgePortVlanTable(void);
 
 #endif /* IEEE8021QBRIDGEPORTVLANTABLE_H */

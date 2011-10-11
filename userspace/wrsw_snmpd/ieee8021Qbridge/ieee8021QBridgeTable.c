@@ -25,15 +25,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <errno.h>
-
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
-#include "ieee8021QBridgeTable.h"
 
+#include "ieee8021QBridgeTable.h"
 #include "rtu_fd_proxy.h"
+#include "utils.h"
 
 /* column number definitions for table ieee8021QBridgeTable */
 #define COLUMN_IEEE8021QBRIDGECOMPONENTID		    1
@@ -43,69 +41,108 @@
 #define COLUMN_IEEE8021QBRIDGENUMVLANS		        5
 #define COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS		6
 
-#define DEFAULT_COMPONENT_ID                        1
-
-/**
- * @return 0 if suceeds, or SNMP error code if a problem appears
- */
-static int get(netsnmp_request_info *req)
+static int get_column(netsnmp_request_info *req, int colnum)
 {
-    netsnmp_table_request_info  *tinfo;
-
-    /* Index values */
-    u_long cid;     // ieee8021QBridgeComponentId
-    /* Column values */
     long ver;       // ieee8021QBridgeVlanVersionNumber;
     long mvid;      // ieee8021QBridgeMaxVlanId;
     u_long mvlans;  // ieee8021QBridgeMaxSupportedVlans;
     u_long vlans;   // ieee8021QBridgeNumVlans;
 
-    tinfo = netsnmp_extract_table_info(req);
-
-    cid = *(tinfo->indexes->val.integer);
-
-    snmp_log(LOG_DEBUG,
-        "ieee8021QBridgeTable: get cid=%d column=%d.\n", cid, tinfo->colnum);
-
-    if (cid != DEFAULT_COMPONENT_ID)
-        return SNMP_NOSUCHINSTANCE;
-
     errno = 0;
-    switch (tinfo->colnum) {
+    switch (colnum) {
     case COLUMN_IEEE8021QBRIDGEVLANVERSIONNUMBER:
-        ver = 1; // TODO get value from STP daemon
+        // TODO get value from STP daemon. Meanwhile, value 1 means Single STP
+        ver = 1;
         snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, ver);
         break;
     case COLUMN_IEEE8021QBRIDGEMAXVLANID:
         mvid = rtu_fdb_proxy_get_max_vid();
         if (errno)
-            return SNMP_ERR_GENERR;
+            goto error;
         snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, mvid);
         break;
     case COLUMN_IEEE8021QBRIDGEMAXSUPPORTEDVLANS:
         mvlans = rtu_fdb_proxy_get_max_supported_vlans();
         if (errno)
-            return SNMP_ERR_GENERR;
+            goto error;
         snmp_set_var_typed_integer(req->requestvb, ASN_UNSIGNED, mvlans);
         break;
     case COLUMN_IEEE8021QBRIDGENUMVLANS:
         vlans = rtu_fdb_proxy_get_num_vlans();
         if (errno)
-            return SNMP_ERR_GENERR;
+            goto error;
         snmp_set_var_typed_integer(req->requestvb, ASN_GAUGE, vlans);
         break;
     case COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS:
         // not supported yet
     default:
-        snmp_log(LOG_WARNING, "ieee8021QBridgeTable: unknown colnum.\n");
         return SNMP_NOSUCHOBJECT;
     }
-    return 0;
+    return SNMP_ERR_NOERROR;
+
+error:
+    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    return SNMP_ERR_GENERR;
 }
 
 
-/** handles requests for the ieee8021QBridgeTable table */
-static int ieee8021QBridgeTable_handler(
+static int get(netsnmp_request_info *req)
+{
+    netsnmp_table_request_info  *tinfo;
+    u_long cid;     // ieee8021QBridgeComponentId
+
+    // Get indexes from request
+    tinfo = netsnmp_extract_table_info(req);
+    cid = *(tinfo->indexes->val.integer);
+
+    _LOG_DBG("GET cid=%d column=%d.\n", cid, tinfo->colnum);
+
+    if (cid != DEFAULT_COMPONENT_ID)
+        return SNMP_NOSUCHINSTANCE;
+
+    // return entry column value
+    return get_column(req, tinfo->colnum);
+}
+
+static int get_next(netsnmp_request_info *req,
+    netsnmp_handler_registration *reginfo)
+{
+    int err;
+    u_long cid;
+    int oid_len, rootoid_len;
+    netsnmp_table_request_info  *tinfo;
+
+    tinfo = netsnmp_extract_table_info(req);
+
+    // Get indexes from request - in case OID contains them!.
+    // Otherwise use default values for first row.
+    oid_len     = req->requestvb->name_length;
+    rootoid_len = reginfo->rootoid_len;
+
+    cid = (oid_len > rootoid_len) ?
+          *(tinfo->indexes->val.integer):0;
+
+    _LOG_DBG("GET-NEXT cid=%d column=%d.\n", cid, tinfo->colnum);
+
+    // Get index for next entry - SNMP_ENDOFMIBVIEW informs the handler
+    // to proceed with next column.
+    if (cid >= DEFAULT_COMPONENT_ID)
+        return SNMP_ENDOFMIBVIEW;
+    else if (cid == 0)
+        cid = DEFAULT_COMPONENT_ID;
+
+    // Update indexes and OID returned in SNMP response
+    *(tinfo->indexes->val.integer) = cid;
+    update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
+
+    // return next entry column value
+    return get_column(req, tinfo->colnum);
+}
+
+/**
+ * handles requests for the ieee8021QBridgeTable table
+ */
+static int _handler(
     netsnmp_mib_handler               *handler,
     netsnmp_handler_registration      *reginfo,
     netsnmp_agent_request_info        *reqinfo,
@@ -124,10 +161,11 @@ static int ieee8021QBridgeTable_handler(
         }
         break;
     case MODE_GETNEXT:
-        // Single bridge means single row...
-        snmp_log(LOG_DEBUG,"ieee8021QBridgeTable: GET-NEXT req received.\n");
-        for (req = requests; req; req = req->next)
-            netsnmp_set_request_error(reqinfo, req, SNMP_ENDOFMIBVIEW);
+        for (req = requests; req; req = req->next) {
+            err = get_next(req, reginfo);
+            if (err)
+                netsnmp_set_request_error(reqinfo, req, err);
+        }
         break;
     case MODE_SET_RESERVE1:
         for (req = requests; req; req = req->next) {
@@ -140,18 +178,7 @@ static int ieee8021QBridgeTable_handler(
             default:
                 netsnmp_set_request_error(reqinfo, req, SNMP_ERR_NOTWRITABLE);
             }
-            return SNMP_ERR_NOERROR;
         }
-        break;
-    case MODE_SET_RESERVE2:
-        break;
-    case MODE_SET_FREE:
-        break;
-    case MODE_SET_ACTION:
-        // IEEE8021QBRIDGEMVRPENABLEDSTATUS not supported yet
-        break;
-    case MODE_SET_UNDO:
-        // IEEE8021QBRIDGEMVRPENABLEDSTATUS not supported yet
         break;
     case MODE_SET_COMMIT:
         // IEEE8021QBRIDGEMVRPENABLEDSTATUS not supported yet
@@ -160,23 +187,29 @@ static int ieee8021QBridgeTable_handler(
     return SNMP_ERR_NOERROR;
 }
 
-/** Initialize the ieee8021QBridgeTable table by defining its contents and how it's structured */
-static void initialize_table_ieee8021QBridgeTable(void)
+/**
+ * Initialize the ieee8021QBridgeTable table by defining its contents and
+ * how it's structured
+ */
+static void initialize_table(void)
 {
-    const oid ieee8021QBridgeTable_oid[] = {1,3,111,2,802,1,1,4,1,1,1};
+    const oid _oid[] = {1,3,111,2,802,1,1,4,1,1,1};
     netsnmp_handler_registration    *reg;
     netsnmp_table_registration_info *tinfo;
 
     reg = netsnmp_create_handler_registration(
-              "ieee8021QBridgeTable", ieee8021QBridgeTable_handler,
-              (oid *)ieee8021QBridgeTable_oid, OID_LENGTH(ieee8021QBridgeTable_oid),
-              HANDLER_CAN_RWRITE);
+            "ieee8021QBridgeTable",
+            _handler,
+            (oid *)_oid,
+            OID_LENGTH(_oid),
+            HANDLER_CAN_RWRITE);
 
     tinfo = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
 
-    netsnmp_table_helper_add_indexes(tinfo,
-        ASN_UNSIGNED, /* index: ieee8021QBridgeComponentId */
-        0);
+    netsnmp_table_helper_add_indexes(
+            tinfo,
+            ASN_UNSIGNED, /* index: ieee8021QBridgeComponentId */
+            0);
 
     tinfo->min_column = COLUMN_IEEE8021QBRIDGEVLANVERSIONNUMBER;
     tinfo->max_column = COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS;
@@ -184,16 +217,18 @@ static void initialize_table_ieee8021QBridgeTable(void)
     netsnmp_register_table(reg, tinfo);
 }
 
-/** Initializes the ieee8021QBridgeTable module */
+/**
+ * Initializes the ieee8021QBridgeTable module
+ */
 void init_ieee8021QBridgeTable(void)
 {
     struct minipc_ch *client;
 
-    initialize_table_ieee8021QBridgeTable();
     client = rtu_fdb_proxy_create("rtu_fdb");
-    if (!client)
-        snmp_log(LOG_ERR,
-            "ieee8021QBridgeTable: error creating mini-ipc proxy - %s\n",
-            strerror(errno));
-    snmp_log(LOG_INFO,"ieee8021QBridgeTable: initialised\n");
+    if(client) {
+        initialize_table();
+        _LOG_INF("initialised\n");
+    } else {
+        _LOG_ERR("error creating mini-ipc proxy - %s\n", strerror(errno));
+    }
 }

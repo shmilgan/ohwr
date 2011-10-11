@@ -26,14 +26,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
-#include "ieee8021QBridgeFdbTable.h"
 
+#include "ieee8021QBridgeFdbTable.h"
 #include "rtu_fd_proxy.h"
-#include "mac.h"
+#include "utils.h"
+
 
 /* column number definitions for table ieee8021QBridgeFdbTable */
 #define COLUMN_IEEE8021QBRIDGEFDBCOMPONENTID		    1
@@ -42,51 +42,11 @@
 #define COLUMN_IEEE8021QBRIDGEFDBLEARNEDENTRYDISCARDS	4
 #define COLUMN_IEEE8021QBRIDGEFDBAGINGTIME		        5
 
-#define DEFAULT_COMPONENT_ID                            1
-#define MIN_FDB_AGING_TIME                              10
-#define MAX_FDB_AGING_TIME                              1000000
-
-
-/**
- * Update the requested OID to match this instance
- */
-static void update_oid(
-    netsnmp_request_info           *req,
-    netsnmp_handler_registration   *reginfo,
-    int                            column,
-    netsnmp_variable_list          *indexes)
-{
-    oid    build_space[MAX_OID_LEN];
-    size_t build_space_len = 0;
-    size_t index_oid_len = 0;
-
-    memcpy(build_space, reginfo->rootoid,   /* registered oid */
-                        reginfo->rootoid_len * sizeof(oid));
-    build_space_len = reginfo->rootoid_len;
-    build_space[build_space_len++] = 1;         /* entry */
-    build_space[build_space_len++] = column;    /* column */
-    build_oid_noalloc(build_space + build_space_len,
-                      MAX_OID_LEN - build_space_len, &index_oid_len,
-                      NULL, 0, indexes);
-    snmp_set_var_objid(req->requestvb, build_space,
-                       build_space_len + index_oid_len);
-}
-
-static int get_column(netsnmp_request_info *req, int colnum, u_long cid, u_long fid)
+static int get_column(netsnmp_request_info *req, int colnum, u_long fid)
 {
     u_long   count;       // ieee8021QBridgeFdbDynamicCount
-    uint32_t discards;    // ieee8021QBridgeFdbLearnedEntryDiscards
+    uint64_t discards;    // ieee8021QBridgeFdbLearnedEntryDiscards
     long     age;         // ieee8021QBridgeFdbAgingTime
-
-    snmp_log(LOG_DEBUG,
-        "ieee8021QBridgeFdbTable: get cid=%d fid =%d column=%d.\n",
-        cid, fid, colnum);
-
-    if (cid != DEFAULT_COMPONENT_ID)
-        return SNMP_NOSUCHINSTANCE;
-
-    if (fid >= NUM_FIDS)
-        return SNMP_NOSUCHINSTANCE;
 
     errno = 0;
     switch (colnum) {
@@ -100,7 +60,7 @@ static int get_column(netsnmp_request_info *req, int colnum, u_long cid, u_long 
         discards = rtu_fdb_proxy_get_num_learned_entry_discards(fid);
         if (errno)
             return SNMP_ERR_GENERR;
-        snmp_set_var_typed_integer(req->requestvb, ASN_COUNTER64, (uint64_t)discards);
+        snmp_set_var_typed_integer(req->requestvb, ASN_COUNTER64, discards);
         break;
     case COLUMN_IEEE8021QBRIDGEFDBAGINGTIME:
         age = rtu_fdb_proxy_get_aging_time(fid);
@@ -111,120 +71,149 @@ static int get_column(netsnmp_request_info *req, int colnum, u_long cid, u_long 
     default:
         return SNMP_NOSUCHOBJECT;
     }
-    return 0;
+    return SNMP_ERR_NOERROR;
 }
 
 static int get(netsnmp_request_info *req)
 {
     netsnmp_table_request_info  *tinfo;
+    u_long cid;         // ieee8021QBridgeFdbComponentId
+    u_long fid;         // ieee8021QBridgeFdbId
 
+    // Get indexes from request
     tinfo = netsnmp_extract_table_info(req);
+    cid = *(tinfo->indexes->val.integer);
+    fid = *(tinfo->indexes->next_variable->val.integer);
 
-    return get_column(
-        req,
-        tinfo->colnum,
-        *(tinfo->indexes->val.integer),                  // cid
-        *(tinfo->indexes->next_variable->val.integer)    // fid
-    );
+    _LOG_DBG("GET cid=%d fid=%d column=%d.\n", cid, fid, tinfo->colnum);
+
+    if (cid != DEFAULT_COMPONENT_ID)
+        return SNMP_NOSUCHINSTANCE;
+
+    if (fid >= NUM_FIDS)
+        return SNMP_NOSUCHINSTANCE;
+
+    // return entry column value
+    return get_column(req, tinfo->colnum, fid);
 }
 
 static int get_next(netsnmp_request_info *req,
     netsnmp_handler_registration *reginfo)
 {
+    u_long cid;
+    u_long fid;
+    int oid_len, rootoid_len;
     netsnmp_table_request_info  *tinfo;
 
-    u_long cid;         // ieee8021QBridgeFdbComponentId
-    u_long fid;         // ieee8021QBridgeFdbId
-
     tinfo = netsnmp_extract_table_info(req);
-    // Get indexes for entry
-    cid = *(tinfo->indexes->val.integer);
-    if (cid != DEFAULT_COMPONENT_ID)
-        return SNMP_NOSUCHINSTANCE;
 
-    fid = *(tinfo->indexes->next_variable->val.integer);
-    if (fid >= NUM_FIDS)
-        return SNMP_NOSUCHINSTANCE;
+    // Get indexes from request - in case OID contains them!.
+    // Otherwise use default values for first row.
+    oid_len     = req->requestvb->name_length;
+    rootoid_len = reginfo->rootoid_len;
 
-    // Get index for next entry
-    errno = 0;
-    fid = rtu_fdb_proxy_get_next_fid(fid);
-    if (errno)
-        return SNMP_ERR_GENERR;
-    if (fid >= NUM_FIDS)
-        return SNMP_ENDOFMIBVIEW;   // inform the handler that it should
-                                    // start with next column object
-    // Update indexes
+    cid = (oid_len > rootoid_len) ?
+          *(tinfo->indexes->val.integer):0;
+    fid = (oid_len > rootoid_len + 1) ?
+          *(tinfo->indexes->next_variable->val.integer):0;
+
+    _LOG_DBG("GET-NEXT cid=%d fid =%d column=%d.\n", cid, fid, tinfo->colnum);
+
+    // Get index for next entry - SNMP_ENDOFMIBVIEW informs the handler
+    // to proceed with next column.
+    if (cid > DEFAULT_COMPONENT_ID) {
+        return SNMP_ENDOFMIBVIEW;
+    } else if (cid == 0) {
+        cid = DEFAULT_COMPONENT_ID;
+        fid = 0;
+    } else {
+        if (fid >= NUM_FIDS)
+            return SNMP_ENDOFMIBVIEW;
+        errno = 0;
+        fid = rtu_fdb_proxy_get_next_fid(fid);
+        if (errno)
+            return SNMP_ERR_GENERR;
+        if (fid >= NUM_FIDS)
+            return SNMP_ENDOFMIBVIEW;
+    }
+
+    // Update indexes and OID returned in SNMP response
+    *(tinfo->indexes->val.integer) = cid;
     *(tinfo->indexes->next_variable->val.integer) = fid;
-
-    // Update OID
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
 
     // return next entry column value
-    return get_column(req, tinfo->colnum, cid, fid);
+    return get_column(req, tinfo->colnum, fid);
 }
 
 static int set_reserve1(netsnmp_request_info *req)
 {
-    int ret;
+    int ret = SNMP_ERR_NOERROR;
+    u_long cid;
+    u_long fid;
     netsnmp_table_request_info *tinfo;
 
-    u_long cid;         // ieee8021QBridgeFdbComponentId
-    u_long fid;         // ieee8021QBridgeFdbId
-
+    // Get indexes from request
     tinfo = netsnmp_extract_table_info(req);
-    // Check indexes
     cid = *(tinfo->indexes->val.integer);
+    fid = *(tinfo->indexes->next_variable->val.integer);
+
+    _LOG_DBG("SET cid=%d fid =%d column=%d.\n", cid, fid, tinfo->colnum);
+
+    // Check indexes
     if (cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
 
-    fid = *(tinfo->indexes->next_variable->val.integer);
     if (fid >= NUM_FIDS)
         return SNMP_NOSUCHINSTANCE;
 
     // Check column value
     switch (tinfo->colnum) {
     case COLUMN_IEEE8021QBRIDGEFDBAGINGTIME:
-        ret = netsnmp_check_vb_int_range(req->requestvb,
-            MIN_FDB_AGING_TIME, MAX_FDB_AGING_TIME);
-        if (ret != SNMP_ERR_NOERROR)
-            return ret;
+        ret = netsnmp_check_vb_int_range(
+                req->requestvb, MIN_AGING_TIME, MAX_AGING_TIME);
         break;
     default:
         return SNMP_ERR_NOTWRITABLE;
     }
-    return 0;
+    return ret;
 }
 
 static int set_commit(netsnmp_request_info *req)
 {
     netsnmp_table_request_info *tinfo;
     u_long age;
-    u_long fid;         // ieee8021QBridgeFdbId
+    u_long fid;
     int err;
 
+    // At this point values are already checked by set_reserve1 so fdb method
+    // should not fail. Mini-ipc should also not fail... otherwise we have a
+    // problem, ...but  exactly the same problem that would exist in case we
+    // implement the two phase commit, as undoing also requires mini-ipc calls.
     tinfo = netsnmp_extract_table_info(req);
     fid = *(tinfo->indexes->next_variable->val.integer);
     switch (tinfo->colnum) {
     case COLUMN_IEEE8021QBRIDGEFDBAGINGTIME:
         age = *req->requestvb->val.integer;
-        // At this point values are already checked so fdb method will
-        // not fail.
-        // mini-ipc should also not fail... otherwise we have a problem,
-        // ...but exactly the same problem that would exist in case we
-        // implement the two phase commit, as undoing also requires
-        // mini-ipc calls.
         errno = 0;
         err = rtu_fdb_proxy_set_aging_time(fid, age);
-        if (err || errno)
+        if (errno) {
+            _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
             return SNMP_ERR_GENERR;
+        }
+        if (err) {
+            _LOG_ERR("set aging time error [%d]\n", err);
+            return SNMP_ERR_GENERR;
+        }
         break;
     }
-    return 0;
+    return SNMP_ERR_NOERROR;
 }
 
-/** handles requests for the ieee8021QBridgeFdbTable table */
-static int ieee8021QBridgeFdbTable_handler(
+/**
+ * handles requests for the ieee8021QBridgeFdbTable table
+ */
+static int _handler(
     netsnmp_mib_handler             *handler,
     netsnmp_handler_registration    *reginfo,
     netsnmp_agent_request_info      *reqinfo,
@@ -251,19 +240,9 @@ static int ieee8021QBridgeFdbTable_handler(
     case MODE_SET_RESERVE1:
         for (req=requests; req; req=req->next) {
             err = set_reserve1(req);
-            if (err) {
+            if (err)
                 netsnmp_set_request_error(reqinfo, req, err);
-                return SNMP_ERR_NOERROR;
-            }
         }
-        break;
-    case MODE_SET_RESERVE2:
-        break;
-    case MODE_SET_FREE:
-        break;
-    case MODE_SET_ACTION:
-        break;
-    case MODE_SET_UNDO:
         break;
     case MODE_SET_COMMIT:
         for (req = requests; req; req = req->next) {
@@ -276,24 +255,29 @@ static int ieee8021QBridgeFdbTable_handler(
     return SNMP_ERR_NOERROR;
 }
 
-/** Initialize the ieee8021QBridgeFdbTable table by defining its contents and how it's structured */
-static void initialize_table_ieee8021QBridgeFdbTable(void)
+/**
+ * Initialize the ieee8021QBridgeFdbTable table by defining its contents and
+ * how it's structured
+ */
+static void initialize_table(void)
 {
-    const oid ieee8021QBridgeFdbTable_oid[] = {1,3,111,2,802,1,1,4,1,2,1};
+    const oid _oid[] = {1,3,111,2,802,1,1,4,1,2,1};
     netsnmp_handler_registration    *reg;
     netsnmp_table_registration_info *tinfo;
 
     reg = netsnmp_create_handler_registration(
-              "ieee8021QBridgeFdbTable",     ieee8021QBridgeFdbTable_handler,
-              (oid *)ieee8021QBridgeFdbTable_oid, OID_LENGTH(ieee8021QBridgeFdbTable_oid),
-              HANDLER_CAN_RWRITE
-              );
+            "ieee8021QBridgeFdbTable",
+            _handler,
+            (oid *)_oid,
+            OID_LENGTH(_oid),
+            HANDLER_CAN_RWRITE);
 
     tinfo = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
-    netsnmp_table_helper_add_indexes(tinfo,
-        ASN_UNSIGNED,  /* index: ieee8021QBridgeFdbComponentId */
-        ASN_UNSIGNED,  /* index: ieee8021QBridgeFdbId */
-        0);
+    netsnmp_table_helper_add_indexes(
+            tinfo,
+            ASN_UNSIGNED,  /* index: ieee8021QBridgeFdbComponentId */
+            ASN_UNSIGNED,  /* index: ieee8021QBridgeFdbId */
+            0);
 
     tinfo->min_column = COLUMN_IEEE8021QBRIDGEFDBDYNAMICCOUNT;
     tinfo->max_column = COLUMN_IEEE8021QBRIDGEFDBAGINGTIME;
@@ -301,16 +285,18 @@ static void initialize_table_ieee8021QBridgeFdbTable(void)
     netsnmp_register_table(reg, tinfo);
 }
 
-/** Initializes the ieee8021QBridgeFdbTable module */
+/**
+ * Initializes the ieee8021QBridgeFdbTable module
+ */
 void init_ieee8021QBridgeFdbTable(void)
 {
     struct minipc_ch *client;
 
-    initialize_table_ieee8021QBridgeFdbTable();
     client = rtu_fdb_proxy_create("rtu_fdb");
-    if (!client)
-        snmp_log(LOG_ERR,
-            "ieee8021QBridgeFdbTable: error creating mini-ipc proxy - %s\n",
-            strerror(errno));
-    snmp_log(LOG_INFO,"ieee8021QBridgeFdbTable: initialised\n");
+    if(client) {
+        initialize_table();
+        _LOG_INF("initialised\n");
+    } else {
+        _LOG_ERR("error creating mini-ipc proxy - %s\n", strerror(errno));
+    }
 }

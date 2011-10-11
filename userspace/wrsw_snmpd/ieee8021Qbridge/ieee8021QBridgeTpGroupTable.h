@@ -5,6 +5,8 @@
 #ifndef IEEE8021QBRIDGETPGROUPTABLE_H
 #define IEEE8021QBRIDGETPGROUPTABLE_H
 
+#define MIB_MOD "ieee8021QBridgeTpGroupTable"
+
 void init_ieee8021QBridgeTpGroupTable(void);
 
 #endif /* IEEE8021QBRIDGETPGROUPTABLE_H */

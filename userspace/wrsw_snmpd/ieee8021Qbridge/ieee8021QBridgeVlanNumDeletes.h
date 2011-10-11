@@ -5,6 +5,8 @@
 #ifndef IEEE8021QBRIDGEVLANNUMDELETES_H
 #define IEEE8021QBRIDGEVLANNUMDELETES_H
 
+#define MIB_MOD "ieee8021QBridgeVlanNumDeletes"
+
 /* function declarations */
 void init_ieee8021QBridgeVlanNumDeletes(void);
 Netsnmp_Node_Handler handle_ieee8021QBridgeVlanNumDeletes;

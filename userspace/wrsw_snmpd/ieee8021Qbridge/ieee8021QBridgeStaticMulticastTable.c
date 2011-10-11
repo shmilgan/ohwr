@@ -31,10 +31,11 @@
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
-#include "ieee8021QBridgeStaticMulticastTable.h"
 
+#include "ieee8021QBridgeStaticMulticastTable.h"
 #include "rtu_fd_proxy.h"
 #include "mac.h"
+#include "utils.h"
 
 /* column number definitions for table ieee8021QBridgeStaticMulticastTable */
 #define COLUMN_IEEE8021QBRIDGESTATICMULTICASTADDRESS                1
@@ -44,98 +45,97 @@
 #define COLUMN_IEEE8021QBRIDGESTATICMULTICASTSTORAGETYPE            5
 #define COLUMN_IEEE8021QBRIDGESTATICMULTICASTROWSTATUS              6
 
-#define DEFAULT_COMPONENT_ID                                        1
 #define ALL_PORTS                                                   0
 
-#define CURR_ENT                                                    0
-#define NEXT_ENT                                                    1
-
 // Row entry
-struct ieee8021QBridgeStaticMulticastTable_entry {
+struct static_multicast_table_entry {
     // indexes
-    u_long cid;
+    u_long   cid;
     uint16_t vid;
     uint8_t  mac[ETH_ALEN];
-    u_long rx_port;
+    u_long   rx_port;
+
     // Columns
-    enum filtering_control port_map[NUM_PORTS];
     char egress_ports[NUM_PORTS];
-    char forbidden_egress_ports[NUM_PORTS];
-    enum storage_type type;
+    char forbidden_ports[NUM_PORTS];
+    int  type;
     int  row_status;
 
-    struct ieee8021QBridgeStaticMulticastTable_entry *next;
-    netsnmp_request_info *req; // associated SNMP request
+    // Aux fields
+    netsnmp_request_info    *req;                   // associated SNMP request
+    struct static_multicast_table_entry *next;
 };
 
 /**
  * Stores information related to SET actions that must be handled atomically
  */
-static struct ieee8021QBridgeStaticMulticastTable_entry *cache = NULL;
+static struct static_multicast_table_entry *cache = NULL;
 
-static inline int active(int row_status)
-{
-    return ((row_status == RS_ACTIVE) || (row_status == RS_CREATEANDGO));
-}
-
-/**
- * Compute port map from egress ports and forbidden egress ports
- */
 static void calculate_port_map(
-    struct ieee8021QBridgeStaticMulticastTable_entry *ent)
+    struct static_multicast_table_entry *ent,
+    uint32_t egress_ports,
+    uint32_t forbidden_ports)
 {
     int i;
 
-    for(i = 0; i < NUM_PORTS; i++) {
-        if (ent->egress_ports[i] == 1)
-            ent->port_map[i] = Forward;
-        else if (ent->forbidden_egress_ports[i] == 1)
-            ent->port_map[i] = Filter;
-        else
-            ent->port_map[i] = Dynamic;
+    for (i = 0; i < NUM_PORTS; i++) {
+        ent->egress_ports[i]    = (egress_ports  >> i)   & 0x01;
+        ent->forbidden_ports[i] = (forbidden_ports >> i) & 0x01;
     }
 }
 
 /**
  * Create a new row in the cache table
  */
-static struct ieee8021QBridgeStaticMulticastTable_entry *create_entry(
+static struct static_multicast_table_entry *cache_create(
     u_long  cid,
     u_long  vid,
-    char *mac,
+    char    *mac,
     u_long  rx_port)
 {
-    struct ieee8021QBridgeStaticMulticastTable_entry *ent;
+    struct static_multicast_table_entry *ent;
 
-    ent = SNMP_MALLOC_TYPEDEF(struct ieee8021QBridgeStaticMulticastTable_entry);
+    ent = SNMP_MALLOC_TYPEDEF(struct static_multicast_table_entry);
     if (!ent)
         return NULL;
 
-    ent->cid = cid;
-    ent->vid = vid;
-    mac_copy(ent->mac, mac);
-    ent->rx_port = rx_port;
-
-    memset(ent->port_map, 0, NUM_PORTS);
-    memset(ent->egress_ports, 0, NUM_PORTS);
-    memset(ent->forbidden_egress_ports, 0, NUM_PORTS);
-
-    ent->type       = Other;
+    ent->cid        = cid;
+    ent->vid        = vid;
+    ent->rx_port    = rx_port;
+    ent->type       = ST_OTHER;
     ent->row_status = RS_NOTINSERVICE;
 
-    // insert entry in table
+    mac_copy(ent->mac, mac);
+
+    memset(ent->egress_ports,    0, NUM_PORTS);
+    memset(ent->forbidden_ports, 0, NUM_PORTS);
+
+    // Insert into cache
     ent->next = cache;
     cache     = ent;
-
     return ent;
+}
+
+/**
+ * Determine the appropriate row for an exact request
+ */
+static struct static_multicast_table_entry *cache_get(
+    struct static_multicast_table_entry *idx)
+{
+    struct static_multicast_table_entry *ent;
+
+    for (ent = cache; ent; ent = ent->next)
+        if ((ent->vid == idx->vid) && mac_equal(ent->mac, idx->mac))
+            return ent;
+    return NULL;
 }
 
 /**
  * Remove all entries from cache.
  */
-static void clean_cache()
+static void cache_clean()
 {
-    struct ieee8021QBridgeStaticMulticastTable_entry *ptr;
+    struct static_multicast_table_entry *ptr;
 
     while(cache) {
         ptr = cache;
@@ -144,104 +144,53 @@ static void clean_cache()
     }
 }
 
-
-/**
- * Determine the appropriate row for an exact request
- */
-static struct ieee8021QBridgeStaticMulticastTable_entry *get_entry(
-    struct ieee8021QBridgeStaticMulticastTable_entry *indexes)
-{
-    struct ieee8021QBridgeStaticMulticastTable_entry *ent;
-
-    for (ent = cache; ent; ent = ent->next)
-        if ((ent->vid == indexes->vid) && mac_equal(ent->mac, indexes->mac))
-            return ent;
-    return NULL;
-}
-
-
-/**
- * Update the requested OID to match this instance
- */
-static void update_oid(
-    netsnmp_request_info           *req,
-    netsnmp_handler_registration   *reginfo,
-    int                            column,
-    netsnmp_variable_list          *indexes)
-{
-    oid    build_space[MAX_OID_LEN];
-    size_t build_space_len = 0;
-    size_t index_oid_len = 0;
-
-    memcpy(build_space, reginfo->rootoid,       /* registered oid */
-                        reginfo->rootoid_len * sizeof(oid));
-    build_space_len = reginfo->rootoid_len;
-    build_space[build_space_len++] = 1;         /* entry */
-    build_space[build_space_len++] = column;    /* column */
-    build_oid_noalloc(build_space + build_space_len,
-                      MAX_OID_LEN - build_space_len, &index_oid_len,
-                      NULL, 0, indexes);
-    snmp_set_var_objid(req->requestvb, build_space,
-                       build_space_len + index_oid_len);
-}
-
-
 /**
  * Get indexes for an entry.
  * @param tinfo table information that contains the indexes (in raw format)
  * @param ent (OUT) used to return the retrieved indexes
- * @return SNMP_ERR_NOERROR if indexes are valid. SNMP_NOSUCHINSTANCE in case
- * any of the indexes is not valid.
  */
-static int get_indexes(netsnmp_table_request_info *tinfo,
-    struct ieee8021QBridgeStaticMulticastTable_entry *ent)
+static void get_indexes(
+    netsnmp_request_info           *req,
+    netsnmp_handler_registration   *reginfo,
+    netsnmp_table_request_info     *tinfo,
+    struct static_multicast_table_entry *ent)
 {
-    netsnmp_variable_list *idx = tinfo->indexes;
+    int oid_len, rootoid_len;
+    netsnmp_variable_list *idx;
 
-    ent->cid = *(idx->val.integer);
-    idx = idx->next_variable;
-    ent->vid = *(idx->val.integer);
-    idx = idx->next_variable;
-    memcpy(ent->mac, idx->val.string, idx->val_len);
-    idx = idx->next_variable;
-    ent->rx_port = *(idx->val.integer);
-    if ((ent->cid != DEFAULT_COMPONENT_ID) || (ent->vid >= NUM_VLANS) ||
-        (ent->rx_port != ALL_PORTS))
-        return SNMP_NOSUCHINSTANCE;
-    return SNMP_ERR_NOERROR;
-}
+    // Get indexes from request - in case OID contains them!.
+    // Otherwise use default values for first row
+    oid_len     = req->requestvb->name_length;
+    rootoid_len = reginfo->rootoid_len;
 
-/**
- * Cache entry in agent memory. The ent parameter must have its indexes already
- * set by callee. The method fills the rest of parameters with data from
- * actual FDB.
- */
-static int cache_entry(
-        struct ieee8021QBridgeStaticMulticastTable_entry *ent,
-        int next)
-{
-    int found, i;
+    if (oid_len > rootoid_len) {
+        idx = tinfo->indexes;
+        ent->cid = *(idx->val.integer);
+    } else {
+        ent->cid = 0;
+    }
 
-    errno = 0;
-    found = next ?
-            (rtu_fdb_proxy_read_next_static_entry(&(ent->mac), &(ent->vid),
-                &(ent->port_map), &(ent->type), &(ent->row_status)) == 0):
-            (rtu_fdb_proxy_read_static_entry(ent->mac, ent->vid,
-                &(ent->port_map), &(ent->type), &(ent->row_status)) == 0);
-    if (errno)
-        return SNMP_ERR_GENERR;
-    if (!found)
-        return SNMP_NOSUCHINSTANCE;
+    if (oid_len > rootoid_len + 1) {
+        idx = idx->next_variable;
+        ent->vid = *(idx->val.integer);
+    } else {
+        ent->vid = 0;
+    }
 
-    // Get info on egress ports and forbidden egress ports from port map
-    for (i = 0; i < NUM_PORTS; i++)
-        ent->egress_ports[i] = (ent->port_map[i] == Forward) ? 1:0;
+    if (oid_len > rootoid_len + 2) {
+        idx = idx->next_variable;
+        memcpy(ent->mac, idx->val.string, idx->val_len);
+    } else {
+        mac_copy(ent->mac, (uint8_t*)DEFAULT_MAC);
+        ent->mac[0] = 0x01; // to refer to multicast addresses when searching
+    }
 
-    for (i = 0; i < NUM_PORTS; i++)
-        ent->forbidden_egress_ports[i] = (ent->port_map[i] == Filter) ? 1:0;
-
-    ent->row_status = ent->row_status ? RS_ACTIVE:RS_NOTINSERVICE; // std row status
-    return SNMP_ERR_NOERROR;
+    if (oid_len > rootoid_len + 3) {
+        idx = idx->next_variable;
+        ent->rx_port = *(idx->val.integer);
+    } else {
+        ent->rx_port = ALL_PORTS;
+    }
 }
 
 /**
@@ -250,7 +199,7 @@ static int cache_entry(
 static int get_column(
     netsnmp_request_info *req,
     int colnum,
-    struct ieee8021QBridgeStaticMulticastTable_entry *ent)
+    struct static_multicast_table_entry *ent)
 {
     switch (colnum) {
     case COLUMN_IEEE8021QBRIDGESTATICMULTICASTSTATICEGRESSPORTS:
@@ -259,114 +208,194 @@ static int get_column(
         break;
     case COLUMN_IEEE8021QBRIDGESTATICMULTICASTFORBIDDENEGRESSPORTS:
         snmp_set_var_typed_value(req->requestvb, ASN_OCTET_STR,
-            ent->forbidden_egress_ports, NUM_PORTS);
+            ent->forbidden_ports, NUM_PORTS);
         break;
     case COLUMN_IEEE8021QBRIDGESTATICMULTICASTSTORAGETYPE:
         snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, ent->type);
         break;
     case COLUMN_IEEE8021QBRIDGESTATICMULTICASTROWSTATUS:
-        snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, ent->row_status);
+        snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER,
+            ent->row_status ? RS_ACTIVE:RS_NOTINSERVICE);
         break;
     default:
         return SNMP_NOSUCHOBJECT;
     }
-    return 0;
+    return SNMP_ERR_NOERROR;
 }
 
-static int get(netsnmp_request_info *req)
+static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
 {
     int err;
-    struct ieee8021QBridgeStaticMulticastTable_entry ent;
+    uint32_t egress_ports, forbidden_ports;
+    struct static_multicast_table_entry ent;
     netsnmp_table_request_info *tinfo;
 
-    tinfo = netsnmp_extract_table_info(req);
     // Get indexes for entry
-    err = get_indexes(tinfo, &ent);
+    tinfo = netsnmp_extract_table_info(req);
+    get_indexes(req, reginfo, tinfo, &ent);
 
-    snmp_log(LOG_DEBUG,
-        "ieee8021QBridgeStaticMulticastTable: get cid=%lu vid=%d mac=%s rx_port=%d column=%d.\n",
-        ent.cid, ent.vid, mac_to_string(ent.mac), ent.rx_port, tinfo->colnum);
+    _LOG_DBG("get cid=%lu vid=%d mac=%s rx_port=%d column=%d\n",
+        ent.cid, ent.vid, mac_to_str(ent.mac), ent.rx_port, tinfo->colnum);
 
-    if (err != SNMP_ERR_NOERROR)
-        return err;
-    // Cache entry in agent memory.
-    err = cache_entry(&ent, CURR_ENT);
-    if (err != SNMP_ERR_NOERROR)
-        return err;
+    if (ent.cid != DEFAULT_COMPONENT_ID)
+        return SNMP_NOSUCHINSTANCE;
+
+    if (ent.vid >= NUM_VLANS)
+        return SNMP_NOSUCHINSTANCE;
+
+    if (ent.rx_port != ALL_PORTS)
+        return SNMP_NOSUCHINSTANCE;
+
+    // Read entry from RTU FDB.
+    errno = 0;
+    err = rtu_fdb_proxy_read_static_entry(ent.mac,
+                                          ent.vid,
+                                          &egress_ports,
+                                          &forbidden_ports,
+                                          &(ent.type),
+                                          &(ent.row_status));
+    if (errno)
+        goto error_;
+    if (err) {
+        _LOG_DBG("entry vid=%d mac=%s not found in fdb\n",
+            ent.vid, mac_to_str(ent.mac));
+        return SNMP_NOSUCHINSTANCE;
+    }
+
+    calculate_port_map(&ent, egress_ports, forbidden_ports);
+
     // Get column value
     return get_column(req, tinfo->colnum, &ent);
+
+error_:
+    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    return SNMP_ERR_GENERR;
 }
 
-static int get_next(netsnmp_request_info *req,
+static int get_next(
+    netsnmp_request_info *req,
     netsnmp_handler_registration *reginfo)
 {
     int err;
+    uint32_t egress_ports, forbidden_ports;
     netsnmp_variable_list *idx;
     netsnmp_table_request_info *tinfo;
-    struct ieee8021QBridgeStaticMulticastTable_entry ent;
+    struct static_multicast_table_entry ent;
 
-    tinfo = netsnmp_extract_table_info(req);
     // Get indexes for entry
-    err = get_indexes(tinfo, &ent);
-    if (err != SNMP_ERR_NOERROR)
-        return err;
-    // Cache next entry in agent memory.
-    err = cache_entry(&ent, NEXT_ENT);
-    if (err == SNMP_NOSUCHINSTANCE)
+    tinfo = netsnmp_extract_table_info(req);
+    get_indexes(req, reginfo, tinfo, &ent);
+
+    _LOG_DBG("GET-NEXT cid=%d vid =%d mac=%s rx_port=%d column=%d\n",
+        ent.cid, ent.vid, mac_to_str(ent.mac), ent.rx_port, tinfo->colnum);
+
+    // Get indexes for next entry - SNMP_ENDOFMIBVIEW informs the handler
+    // to proceed with next column.
+    if (ent.cid > DEFAULT_COMPONENT_ID) {
         return SNMP_ENDOFMIBVIEW;
-    if (err != SNMP_ERR_NOERROR)
-        return err;
-    // Update indexes (no need to update cid and rx_port, as they do not change)
-    idx = tinfo->indexes->next_variable;
+    } else if (ent.cid == 0) {
+        ent.cid     = DEFAULT_COMPONENT_ID;
+        ent.vid     = 0;
+        ent.rx_port = ALL_PORTS;
+        mac_copy(ent.mac, (uint8_t*)DEFAULT_MAC);
+        ent.mac[0] = 0x01;
+    }
+
+    if (ent.vid >= NUM_VLANS)
+        return SNMP_ENDOFMIBVIEW;
+
+    errno = 0;
+    err = rtu_fdb_proxy_read_next_static_entry(&(ent.mac),
+                                               &(ent.vid),
+                                               &egress_ports,
+                                               &forbidden_ports,
+                                               &(ent.type),
+                                               &(ent.row_status));
+    if (errno)
+        goto error_;
+    if (err)
+        return SNMP_ENDOFMIBVIEW; // No more entries in static FDB
+
+    calculate_port_map(&ent, egress_ports, forbidden_ports);
+
+    // Update indexes and OID returned in SNMP response
+    idx = tinfo->indexes;
+    *(idx->val.integer) = ent.cid;
+
+    idx = idx->next_variable;
     *(idx->val.integer) = ent.vid;
+
     idx = idx->next_variable;
     memcpy(idx->val.string, ent.mac, ETH_ALEN);
-    // Update OID
+
+    idx = idx->next_variable;
+    *(idx->val.integer) = ent.rx_port;
+
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
-    // Get next entry column value
+    // Return next entry column value
     return get_column(req, tinfo->colnum, &ent);
+
+error_:
+    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    return SNMP_ERR_GENERR;
 }
 
 /**
  * Checks that the type and size of the value matches the corresponding
  * column type and size.
  */
-static int set_reserve1(netsnmp_request_info *req)
+static int set_reserve1(
+    netsnmp_request_info *req,
+    netsnmp_handler_registration *reginfo)
 {
-    int ret = SNMP_ERR_NOERROR, found;
+    uint32_t ep, fp;                  // aux fields just to read entry from fdb
+    int err = SNMP_ERR_NOERROR, s, t;
     netsnmp_table_request_info *tinfo;
-    struct ieee8021QBridgeStaticMulticastTable_entry ent;
+    struct static_multicast_table_entry ent;
 
+    // Check indexes
     tinfo = netsnmp_extract_table_info(req);
+    get_indexes(req, reginfo, tinfo, &ent);
+
+    if (ent.cid != DEFAULT_COMPONENT_ID)
+        return SNMP_NOSUCHINSTANCE;
+
+    if (ent.vid >= NUM_VLANS)
+        return SNMP_NOSUCHINSTANCE;
+
+    if (ent.rx_port != ALL_PORTS)
+        return SNMP_NOSUCHINSTANCE;
+
+    _LOG_DBG("SET cid=%d vid=%d mac=%s rx_port=%d column=%d\n",
+        ent.cid, ent.vid, mac_to_str(ent.mac), ent.rx_port, tinfo->colnum);
+
     switch (tinfo->colnum) {
     case COLUMN_IEEE8021QBRIDGESTATICMULTICASTSTATICEGRESSPORTS:
-        ret = netsnmp_check_vb_type_and_size(req->requestvb, ASN_OCTET_STR, NUM_PORTS);
+        err = netsnmp_check_vb_type_and_size(req->requestvb, ASN_OCTET_STR, NUM_PORTS);
         break;
     case COLUMN_IEEE8021QBRIDGESTATICMULTICASTFORBIDDENEGRESSPORTS:
-        ret = netsnmp_check_vb_type_and_size(req->requestvb, ASN_OCTET_STR, NUM_PORTS);
+        err = netsnmp_check_vb_type_and_size(req->requestvb, ASN_OCTET_STR, NUM_PORTS);
         break;
     case COLUMN_IEEE8021QBRIDGESTATICMULTICASTSTORAGETYPE:
-        ret = netsnmp_check_vb_int_range(req->requestvb, Other, Read_only);
+        err = netsnmp_check_vb_int_range(req->requestvb, ST_OTHER, ST_READONLY);
         break;
     case COLUMN_IEEE8021QBRIDGESTATICMULTICASTROWSTATUS:
         // Get current row status and check transition from current to requested
-        ret = get_indexes(tinfo, &ent);
-        if (ret != SNMP_ERR_NOERROR)
-            return ret;
-
         errno = 0;
-        found = (rtu_fdb_proxy_read_static_entry(ent.mac, ent.vid,
-            &(ent.port_map), &(ent.type), &(ent.row_status)) == 0);
+        err = rtu_fdb_proxy_read_static_entry(ent.mac, ent.vid, &ep, &fp, &t, &s);
         if (errno)
-            return SNMP_ERR_GENERR;
-
-        ret = netsnmp_check_vb_rowstatus(req->requestvb,
-            (found ? RS_ACTIVE:RS_NONEXISTENT));
+            goto error__;
+        err = netsnmp_check_vb_rowstatus(req->requestvb,
+            err ? RS_NONEXISTENT:RS_ACTIVE);
         break;
     default:
         return SNMP_ERR_NOTWRITABLE;
     }
-    return ret;
+    return err;
+
+error__:
+    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    return SNMP_ERR_GENERR;
 }
 
 
@@ -375,78 +404,83 @@ static int set_reserve1(netsnmp_request_info *req)
  */
 static int set_reserve2(netsnmp_request_info *req)
 {
-    int status;
     netsnmp_table_request_info *tinfo;
-    struct ieee8021QBridgeStaticMulticastTable_entry *ent;
 
     tinfo = netsnmp_extract_table_info(req);
     switch (tinfo->colnum) {
     case COLUMN_IEEE8021QBRIDGESTATICMULTICASTROWSTATUS:
-        status = *req->requestvb->val.integer;
-        switch (status) {
+        switch (*req->requestvb->val.integer) { // status
         case RS_CREATEANDGO:
         case RS_CREATEANDWAIT:
-            ent = create_entry(
-                *tinfo->indexes->val.integer,
-                *tinfo->indexes->val.integer,
-                 tinfo->indexes->val.string,
-                *tinfo->indexes->val.integer
-                );
-            if (!ent)
+            if (!cache_create(
+                    *tinfo->indexes->val.integer,
+                    *tinfo->indexes->next_variable->val.integer,
+                     tinfo->indexes->next_variable->next_variable->val.string,
+                    *tinfo->indexes->next_variable->next_variable->next_variable->val.integer))
                 return SNMP_ERR_RESOURCEUNAVAILABLE;
-            break;
         }
     }
-    return 0;
+    return SNMP_ERR_NOERROR;
 }
 
 /**
  * Cache active/notInService FDB entries.
  */
-static int set_reserve3(netsnmp_request_info *req)
+static int set_reserve3(
+    netsnmp_request_info *req,
+    netsnmp_handler_registration *reginfo)
 {
-    int ret;
+    int i, err;
+    uint32_t egress_ports, forbidden_ports;
     netsnmp_table_request_info *tinfo;
-    struct ieee8021QBridgeStaticMulticastTable_entry *ent, indexes;
+    struct static_multicast_table_entry *ent, idx;
 
     // Get indexes for entry
     tinfo = netsnmp_extract_table_info(req);
-    ret = get_indexes(tinfo, &indexes);
-    if (ret != SNMP_ERR_NOERROR)
-        return ret;
+    get_indexes(req, reginfo, tinfo, &idx);
     // Get entry from cache
-    ent = get_entry(&indexes);
+    ent = cache_get(&idx);
     if (!ent) {
         // This means we are setting fields for ACTIVE or NOTINSERVICE rows.
         // (set_reserve2 creates rows for CREATE_AND_GO and CREATE_AND_WAIT)
-        ent = create_entry(
-                indexes.cid,
-                indexes.vid,
-                indexes.mac,
-                indexes.rx_port);
+        ent = cache_create(idx.cid, idx.vid, idx.mac, idx.rx_port);
         if (!ent)
             return SNMP_ERR_RESOURCEUNAVAILABLE;
-        ret = cache_entry(ent, CURR_ENT);
+
+        errno = 0;
+        err = rtu_fdb_proxy_read_static_entry(ent->mac, ent->vid, &egress_ports,
+            &forbidden_ports, &(ent->type), &(ent->row_status));
+        if (errno) {
+            _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+            return SNMP_ERR_GENERR;
+        }
+        if (err) {
+            _LOG_DBG("entry vid=%d mac=%s not found\n",
+                ent->vid, mac_to_str(ent->mac));
+            return SNMP_NOSUCHINSTANCE;
+        }
+        calculate_port_map(ent, egress_ports, forbidden_ports);
+        ent->row_status = ent->row_status ? RS_ACTIVE:RS_NOTINSERVICE;
     }
-    return ret;
+    return SNMP_ERR_NOERROR;
 }
 
 /**
  * Sets value using cached entries in the agent memory.
  */
-static int set_action(netsnmp_request_info *req)
+static int set_action(
+    netsnmp_request_info *req,
+    netsnmp_handler_registration *reginfo)
 {
     int err;
     netsnmp_table_request_info *tinfo;
-    struct ieee8021QBridgeStaticMulticastTable_entry *ent, indexes;
+    struct static_multicast_table_entry *ent, idx;
 
     // Get indexes
     tinfo = netsnmp_extract_table_info(req);
-    err = get_indexes(tinfo, &indexes);
-    if (err != SNMP_ERR_NOERROR)
-        return err;
+    get_indexes(req, reginfo, tinfo, &idx);
     // Get entry from cache
-    ent = get_entry(&indexes);
+    ent = cache_get(&idx);
     switch (tinfo->colnum) {
     case COLUMN_IEEE8021QBRIDGESTATICMULTICASTSTATICEGRESSPORTS:
         memcpy(ent->egress_ports,
@@ -454,7 +488,7 @@ static int set_action(netsnmp_request_info *req)
                req->requestvb->val_len);
         break;
     case COLUMN_IEEE8021QBRIDGESTATICMULTICASTFORBIDDENEGRESSPORTS:
-        memcpy(ent->forbidden_egress_ports,
+        memcpy(ent->forbidden_ports,
                req->requestvb->val.string,
                req->requestvb->val_len);
         break;
@@ -467,63 +501,85 @@ static int set_action(netsnmp_request_info *req)
     }
     // Keep reference to last request for this entry (to return err later on)
     ent->req = req;
-    return 0;
+    return SNMP_ERR_NOERROR;
 }
 
 /**
  * \brief Check consistency of active rows.
  */
-static int check_consistency(struct ieee8021QBridgeStaticMulticastTable_entry *ent)
+static int check_consistency(struct static_multicast_table_entry *ent)
 {
     int i;
 
     switch(ent->row_status) {
-        case RS_ACTIVE:
-        case RS_CREATEANDGO:
-            // MAC should be multicast (this is static _multcast_ table)
-            if (!mac_multicast(ent->mac))
+    case RS_ACTIVE:
+    case RS_CREATEANDGO:
+        // MAC should be multicast (this is static _multcast_ table)
+        if (!mac_multicast(ent->mac)) {
+            _LOG_ERR("error - mac address is unicast\n");
+            return SNMP_ERR_INCONSISTENTVALUE;
+        }
+        // Ports can not be egress and forbidden egress at the same time.
+        for (i = 0; i < NUM_PORTS; i++) {
+            if((ent->egress_ports[i] == 1) && (ent->forbidden_ports[i] == 1)) {
+                _LOG_ERR("inconsistent egress port definition - port %d\n", i);
                 return SNMP_ERR_INCONSISTENTVALUE;
-            // Ports can not be egress and forbidden egress at the same time.
-            for (i = 0; i < NUM_PORTS; i++)
-                if((ent->egress_ports[i] == 1) &&
-                   (ent->forbidden_egress_ports[i] == 1))
-                   return SNMP_ERR_INCONSISTENTVALUE;
+            }
+        }
     }
-    return 0;
+    return SNMP_ERR_NOERROR;
 }
 
-static int set_commit(struct ieee8021QBridgeStaticMulticastTable_entry *ent)
+static int set_commit(struct static_multicast_table_entry *ent)
 {
     int i, err;
-    enum filtering_control port_map[NUM_PORTS];
+    uint32_t egress_ports = 0, forbidden_ports = 0;
 
     switch (ent->row_status) {
     case RS_DESTROY:
         // Remove entry from FDB
         errno = 0;
         err = rtu_fdb_proxy_delete_static_entry(ent->mac, ent->vid);
+        if (errno)
+            goto error___;
         // Permanent entries can not be removed so an error might be raised...
-        if (errno || err)
+        if (err) {
+            _LOG_ERR("delete static entry error [%d]\n", err);
             return SNMP_ERR_GENERR;
+        }
         break;
     default:
-        calculate_port_map(ent);
+        for (i = 0; i < NUM_PORTS; i++) {
+            if (ent->egress_ports[i] == 1)
+                egress_ports |= (1 << i);
+            if (ent->forbidden_ports[i] == 1)
+                forbidden_ports |= (1 << i);
+        }
         // create/update entry in FDB
         errno = 0;
-        err = rtu_fdb_proxy_create_static_entry(ent->mac, ent->vid,
-            ent->port_map, ent->type, active(ent->row_status));
-        if (errno || err)
+        err = rtu_fdb_proxy_create_static_entry(
+            ent->mac, ent->vid, egress_ports, forbidden_ports, ent->type,
+            RS_IS_GOING_ACTIVE(ent->row_status));
+        if (errno)
+            goto error___;
+        if (err) {
+            _LOG_ERR("create static entry error [%d]\n", err);
             return SNMP_ERR_GENERR;
+        }
         break;
     }
-    return 0;
+    return SNMP_ERR_NOERROR;
+
+error___:
+    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    return SNMP_ERR_GENERR;
 }
 
 
 /**
  * Handles requests for the ieee8021QBridgeStaticMulticastTable table
  */
-static int ieee8021QBridgeStaticMulticastTable_handler(
+static int _handler(
     netsnmp_mib_handler               *handler,
     netsnmp_handler_registration      *reginfo,
     netsnmp_agent_request_info        *reqinfo,
@@ -531,12 +587,12 @@ static int ieee8021QBridgeStaticMulticastTable_handler(
 {
     int err;
     netsnmp_request_info *req;
-    struct ieee8021QBridgeStaticMulticastTable_entry *ent;
+    struct static_multicast_table_entry *ent;
 
     switch (reqinfo->mode) {
     case MODE_GET:
         for (req = requests; req; req = req->next) {
-            err = get(req);
+            err = get(req, reginfo);
             if (err)
                 netsnmp_set_request_error(reqinfo, req, err);
         }
@@ -550,7 +606,7 @@ static int ieee8021QBridgeStaticMulticastTable_handler(
         break;
     case MODE_SET_RESERVE1:
         for (req =requests; req; req =req->next) {
-            err = set_reserve1(req);
+            err = set_reserve1(req, reginfo);
             if (err)
                 netsnmp_set_request_error(reqinfo, req, err);
         }
@@ -562,17 +618,17 @@ static int ieee8021QBridgeStaticMulticastTable_handler(
                 netsnmp_set_request_error(reqinfo, req, err);
         }
         for (req = requests; req; req = req->next) {
-            err = set_reserve3(req);
+            err = set_reserve3(req, reginfo);
             if (err)
                 netsnmp_set_request_error(reqinfo, req, err);
         }
         break;
     case MODE_SET_FREE:
-        clean_cache();
+        cache_clean();
         break;
     case MODE_SET_ACTION:
         for (req = requests; req; req = req->next) {
-            err = set_action(req);
+            err = set_action(req, reginfo);
             if (err)
                 netsnmp_set_request_error(reqinfo, req, err);
         }
@@ -583,7 +639,7 @@ static int ieee8021QBridgeStaticMulticastTable_handler(
         }
         break;
     case MODE_SET_UNDO:
-        clean_cache();
+        cache_clean();
         break;
     case MODE_SET_COMMIT:
         for (ent = cache; ent; ent = ent->next) {
@@ -591,7 +647,7 @@ static int ieee8021QBridgeStaticMulticastTable_handler(
             if (err)
                 netsnmp_set_request_error(reqinfo, ent->req, err);
         }
-        clean_cache(); // prepare for next atomic set operation
+        cache_clean(); // prepare for next atomic set operation
         break;
     }
     return SNMP_ERR_NOERROR;
@@ -601,35 +657,33 @@ static int ieee8021QBridgeStaticMulticastTable_handler(
  * Initialize the ieee8021QBridgeStaticMulticastTable table by defining its
  * contents and how it's structured
  */
-static void initialize_table_ieee8021QBridgeStaticMulticastTable(void)
+static void initialize_table(void)
 {
-    const oid ieee8021QBridgeStaticMulticastTable_oid[] = {1,3,111,2,802,1,1,4,1,3,2};
+    const oid                       _oid[] = {1,3,111,2,802,1,1,4,1,3,2};
     netsnmp_handler_registration    *reg;
     netsnmp_table_registration_info *tinfo;
-    netsnmp_variable_list *idx;
+    netsnmp_variable_list           *idx;
 
     reg = netsnmp_create_handler_registration(
-              "ieee8021QBridgeStaticMulticastTable",
-              ieee8021QBridgeStaticMulticastTable_handler,
-              (oid *)ieee8021QBridgeStaticMulticastTable_oid,
-              OID_LENGTH(ieee8021QBridgeStaticMulticastTable_oid),
-              HANDLER_CAN_RWRITE
-              );
+            "ieee8021QBridgeStaticMulticastTable",
+            _handler,
+            (oid *)_oid,
+            OID_LENGTH(_oid),
+            HANDLER_CAN_RWRITE);
 
     tinfo = SNMP_MALLOC_TYPEDEF( netsnmp_table_registration_info );
-    netsnmp_table_helper_add_indexes(tinfo,
-            ASN_UNSIGNED,  /* index: ComponentId */
-            ASN_UNSIGNED,  /* index: VlanIndex */
+    netsnmp_table_helper_add_indexes(
+            tinfo,
+            ASN_UNSIGNED,               /* index: ComponentId */
+            ASN_UNSIGNED,               /* index: VlanIndex */
             ASN_PRIV_IMPLIED_OCTET_STR, /* index: MulticastAddress */
-            ASN_UNSIGNED,  /* index: ReceivePort */
+            ASN_UNSIGNED,               /* index: ReceivePort */
             0);
 
     // Fix the MacAddress Index variable binding lenght
     idx = tinfo->indexes;
-
     idx = idx->next_variable; // skip componentId
     idx = idx->next_variable; // skip vlanIndex
-
     idx->val_len = ETH_ALEN;
 
     tinfo->min_column = COLUMN_IEEE8021QBRIDGESTATICMULTICASTSTATICEGRESSPORTS;
@@ -645,12 +699,11 @@ void init_ieee8021QBridgeStaticMulticastTable(void)
 {
     struct minipc_ch *client;
 
-    initialize_table_ieee8021QBridgeStaticMulticastTable();
     client = rtu_fdb_proxy_create("rtu_fdb");
-    if (!client)
-        snmp_log(LOG_ERR,
-            "ieee8021QBridgeStaticMulticastTable: error creating mini-ipc proxy - %s\n",
-            strerror(errno));
-    snmp_log(LOG_INFO,"ieee8021QBridgeStaticMulticastTable: initialised\n");
-
+    if(client) {
+        initialize_table();
+        _LOG_INF("initialised\n");
+    } else {
+        _LOG_ERR("error creating mini-ipc proxy - %s\n", strerror(errno));
+    }
 }

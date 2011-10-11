@@ -30,9 +30,10 @@
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
-#include "ieee8021QBridgeVlanStaticTable.h"
 
+#include "ieee8021QBridgeVlanStaticTable.h"
 #include "rtu_fd_proxy.h"
+#include "utils.h"
 
 /* column number definitions for table ieee8021QBridgeVlanStaticTable */
 #define COLUMN_IEEE8021QBRIDGEVLANSTATICCOMPONENTID	        1
@@ -43,113 +44,93 @@
 #define COLUMN_IEEE8021QBRIDGEVLANSTATICUNTAGGEDPORTS       6
 #define COLUMN_IEEE8021QBRIDGEVLANSTATICROWSTATUS           7
 
-#define DEFAULT_COMPONENT_ID                                1
-
 #define VNAME_LENGTH                                        32
 
-#define CURR_ENT                                            0
-#define NEXT_ENT                                            1
-
 // Row entry
-struct ieee8021QBridgeVlanStaticTable_entry {
+struct mib_static_vlan_table_entry {
     // indexes
-    u_long cid;
-    uint16_t vid;
+    u_long      cid;
+    uint16_t    vid;
 
     // Columns
-    char vname[VNAME_LENGTH];
-    char egress_ports[NUM_PORTS];
-    char forbidden_egress_ports[NUM_PORTS];
-    char untagged_ports[NUM_PORTS];
-    int  row_status;
+    char        vname[VNAME_LENGTH];
+    char        egress_ports[NUM_PORTS];
+    char        forbidden_ports[NUM_PORTS];
+    char        untagged_ports[NUM_PORTS];
+    int         row_status;
 
-    /* Aux fields */
-    enum registrar_control member_set[NUM_PORTS];
-    uint32_t untagged_set;
-
-    struct ieee8021QBridgeVlanStaticTable_entry  *next;
-    netsnmp_request_info *req; // associated SNMP request
+    netsnmp_request_info *req;                      // associated SNMP request
+    struct mib_static_vlan_table_entry  *next;
 };
 
 /**
  * Stores information related to SET actions that must be handled atomically
  */
-static struct ieee8021QBridgeVlanStaticTable_entry *cache = NULL;
-
-static inline int active(int row_status)
-{
-    return ((row_status == RS_ACTIVE) || (row_status == RS_CREATEANDGO));
-}
+static struct mib_static_vlan_table_entry *cache = NULL;
 
 /**
  * Compute member_set from egress ports and forbidden egress ports
  */
 static void calculate_member_set(
-        struct ieee8021QBridgeVlanStaticTable_entry *ent)
+    struct mib_static_vlan_table_entry *ent,
+    uint32_t egress_ports,
+    uint32_t forbidden_ports,
+    uint32_t untagged_ports)
 {
     int i;
 
     for (i = 0; i < NUM_PORTS; i++) {
-        if (ent->egress_ports[i] == 1)
-            ent->member_set[i] = Registration_fixed;
-        else if (ent->forbidden_egress_ports[i] == 1)
-            ent->member_set[i] = Registration_forbidden;
-        else
-            ent->member_set[i] = Normal_registration;
+        ent->egress_ports[i]    = (egress_ports    >> i) & 0x01;
+        ent->forbidden_ports[i] = (forbidden_ports >> i) & 0x01;
+        ent->untagged_ports[i]  = (untagged_ports  >> i) & 0x01;
     }
 }
 
 /**
- * Compute untagged_set from untagged_ports
- */
-static void calculate_untagged_set(
-        struct ieee8021QBridgeVlanStaticTable_entry *ent)
-{
-    int i;
-
-    for (i = 0; i < NUM_PORTS; i++)
-        if (ent->untagged_ports[i] == 1)
-            ent->untagged_set |= (0x00000001 << i);
-}
-
-
-/**
  * Create a new row in the cache table
  */
-static struct ieee8021QBridgeVlanStaticTable_entry *create_entry(
-    u_long  cid,
-    u_long  vid)
+static struct mib_static_vlan_table_entry *cache_create(u_long  cid, u_long  vid)
 {
-    struct ieee8021QBridgeVlanStaticTable_entry *ent;
+    struct mib_static_vlan_table_entry *ent;
 
-    ent = SNMP_MALLOC_TYPEDEF(struct ieee8021QBridgeVlanStaticTable_entry);
+    ent = SNMP_MALLOC_TYPEDEF(struct mib_static_vlan_table_entry);
     if (!ent)
         return NULL;
 
-    ent->cid = cid;
-    ent->vid = vid;
+    ent->cid          = cid;
+    ent->vid          = vid;
+    ent->row_status   = RS_NOTINSERVICE;
 
     memset(ent->vname, 0, VNAME_LENGTH);
     memset(ent->egress_ports, 0, NUM_PORTS);
-    memset(ent->forbidden_egress_ports, 0, NUM_PORTS);
+    memset(ent->forbidden_ports, 0, NUM_PORTS);
     memset(ent->untagged_ports, 0, NUM_PORTS);
-
-    ent->untagged_set = 0;
-    ent->row_status   = RS_NOTINSERVICE;
 
     // insert entry in table
     ent->next = cache;
     cache     = ent;
-
     return ent;
+}
+
+/**
+ * Determine the appropriate row for an exact request
+ */
+static struct mib_static_vlan_table_entry *cache_get(int vid)
+{
+    struct mib_static_vlan_table_entry *ptr;
+
+    for (ptr = cache; ptr; ptr = ptr->next)
+        if (ptr->vid == vid)
+            return ptr;
+    return NULL;
 }
 
 /**
  * Remove all entries from cache.
  */
-static void clean_cache()
+static void cache_clean()
 {
-    struct ieee8021QBridgeVlanStaticTable_entry *ptr;
+    struct mib_static_vlan_table_entry *ptr;
 
     while(cache) {
         ptr = cache;
@@ -159,101 +140,37 @@ static void clean_cache()
 }
 
 /**
- * Determine the appropriate row for an exact request
- */
-static struct ieee8021QBridgeVlanStaticTable_entry *get_entry(
-    struct ieee8021QBridgeVlanStaticTable_entry *indexes)
-{
-    struct ieee8021QBridgeVlanStaticTable_entry *ent;
-
-    for (ent = cache; ent; ent = ent->next)
-        if (ent->vid == indexes->vid)
-            return ent;
-    return NULL;
-}
-
-/**
- * Update the requested OID to match this instance
- */
-static void update_oid(
-    netsnmp_request_info           *req,
-    netsnmp_handler_registration   *reginfo,
-    int                            column,
-    netsnmp_variable_list          *indexes)
-{
-    oid    build_space[MAX_OID_LEN];
-    size_t build_space_len = 0;
-    size_t index_oid_len = 0;
-
-    memcpy(build_space, reginfo->rootoid,       /* registered oid */
-                        reginfo->rootoid_len * sizeof(oid));
-    build_space_len = reginfo->rootoid_len;
-    build_space[build_space_len++] = 1;         /* entry */
-    build_space[build_space_len++] = column;    /* column */
-    build_oid_noalloc(build_space + build_space_len,
-                      MAX_OID_LEN - build_space_len, &index_oid_len,
-                      NULL, 0, indexes);
-    snmp_set_var_objid(req->requestvb, build_space,
-                       build_space_len + index_oid_len);
-}
-
-/**
  * Get indexes for an entry.
  * @param tinfo table information that contains the indexes (in raw format)
  * @param ent (OUT) used to return the retrieved indexes
- * @return SNMP_ERR_NOERROR if indexes are valid. SNMP_NOSUCHINSTANCE in case
- * any of the indexes is not valid.
  */
-static int get_indexes(netsnmp_table_request_info *tinfo,
-    struct ieee8021QBridgeVlanStaticTable_entry *ent)
+static void get_indexes(
+    netsnmp_request_info           *req,
+    netsnmp_handler_registration   *reginfo,
+    netsnmp_table_request_info     *tinfo,
+    struct mib_static_vlan_table_entry *ent)
 {
-    netsnmp_variable_list *idx = tinfo->indexes;
+    int oid_len, rootoid_len;
+    netsnmp_variable_list *idx;
 
-    ent->cid = *(idx->val.integer);
-    idx = idx->next_variable;
-    ent->vid = *(idx->val.integer);
-    idx = idx->next_variable;
-    if ((ent->cid != DEFAULT_COMPONENT_ID) || (ent->vid >= NUM_VLANS))
-        return SNMP_NOSUCHINSTANCE;
-    return SNMP_ERR_NOERROR;
-}
+    // Get indexes from request - in case OID contains them!.
+    // Otherwise use default values for first row
+    oid_len     = req->requestvb->name_length;
+    rootoid_len = reginfo->rootoid_len;
 
-/**
- * Cache entry in agent memory. The ent parameter must have its indexes already
- * set by callee. The method fills the rest of parameters with data from
- * actual FDB.
- */
-static int cache_entry(
-        struct ieee8021QBridgeVlanStaticTable_entry *ent,
-        int next)
-{
-    int i, found;
+    if (oid_len > rootoid_len) {
+        idx = tinfo->indexes;
+        ent->cid = *(idx->val.integer);
+    } else {
+        ent->cid = 0;
+    }
 
-    errno = 0;
-    found = next ?
-            (rtu_fdb_proxy_read_next_static_vlan_entry(&(ent->vid),
-                &(ent->member_set), &(ent->untagged_set)) == 0):
-            (rtu_fdb_proxy_read_static_vlan_entry(ent->vid,
-                &(ent->member_set), &(ent->untagged_set)) == 0);
-
-    if (errno)
-        return SNMP_ERR_GENERR;
-    if (!found)
-        return SNMP_NOSUCHINSTANCE;
-
-    // Get info on egress ports and forbidden egress ports from member_set
-    for (i = 0; i < NUM_PORTS; i++)
-        ent->egress_ports[i] = (ent->member_set[i] == Registration_fixed) ? 1:0;
-
-    for (i = 0; i < NUM_PORTS; i++)
-        ent->forbidden_egress_ports[i] =
-            (ent->member_set[i] == Registration_forbidden) ? 1:0;
-
-    for (i = 0; i < NUM_PORTS; i++)
-        ent->untagged_ports[i] = ((ent->untagged_set >> i) & 0x00000001);
-
-    ent->row_status = RS_ACTIVE;        // std row status
-    return SNMP_ERR_NOERROR;
+    if (oid_len > rootoid_len + 1) {
+        idx = idx->next_variable;
+        ent->vid = *(idx->val.integer);
+    } else {
+        ent->vid = 0;
+    }
 }
 
 /**
@@ -262,7 +179,7 @@ static int cache_entry(
 static int get_column(
     netsnmp_request_info *req,
     int colnum,
-    struct ieee8021QBridgeVlanStaticTable_entry *ent)
+    struct mib_static_vlan_table_entry *ent)
 {
     switch (colnum) {
     case COLUMN_IEEE8021QBRIDGEVLANSTATICNAME:
@@ -275,7 +192,7 @@ static int get_column(
         break;
     case COLUMN_IEEE8021QBRIDGEVLANFORBIDDENEGRESSPORTS:
         snmp_set_var_typed_value(req->requestvb, ASN_OCTET_STR,
-            ent->forbidden_egress_ports, NUM_PORTS);
+            ent->forbidden_ports, NUM_PORTS);
         break;
     case COLUMN_IEEE8021QBRIDGEVLANSTATICUNTAGGEDPORTS:
         snmp_set_var_typed_value(req->requestvb, ASN_OCTET_STR,
@@ -284,31 +201,46 @@ static int get_column(
     default:
         return SNMP_NOSUCHOBJECT;
     }
-    return 0;
+    return SNMP_ERR_NOERROR;
 }
 
-static int get(netsnmp_request_info *req)
+static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
 {
     int err;
-    struct ieee8021QBridgeVlanStaticTable_entry ent;
+    struct mib_static_vlan_table_entry ent;
+    uint32_t egress_ports, forbidden_ports, untagged_ports;
     netsnmp_table_request_info *tinfo;
 
-    tinfo = netsnmp_extract_table_info(req);
     // Get indexes for entry
-    err = get_indexes(tinfo, &ent);
+    tinfo = netsnmp_extract_table_info(req);
+    get_indexes(req, reginfo, tinfo, &ent);
 
-    snmp_log(LOG_DEBUG,
-        "ieee8021QBridgeVlanStaticTable: get cid=%lu vid=%d column=%d.\n",
-        ent.cid, ent.vid, tinfo->colnum);
+    _LOG_DBG("get cid=%lu vid=%d column=%d\n", ent.cid, ent.vid, tinfo->colnum);
 
-    if (err != SNMP_ERR_NOERROR)
-        return err;
-    // Cache entry in agent memory.
-    err = cache_entry(&ent, CURR_ENT);
-    if (err != SNMP_ERR_NOERROR)
-        return err;
+    if (ent.cid != DEFAULT_COMPONENT_ID)
+        return SNMP_NOSUCHINSTANCE;
+
+    if (ent.vid >= NUM_VLANS)
+        return SNMP_NOSUCHINSTANCE;
+
+    errno = 0;
+    err = rtu_fdb_proxy_read_static_vlan_entry(
+        ent.vid, &egress_ports, &forbidden_ports, &untagged_ports);
+    if (errno)
+        goto error;
+    if (err) {
+        _LOG_DBG("vlan vid=%d not found in static fdb\n", ent.vid);
+        return SNMP_NOSUCHINSTANCE;
+    }
+
+    calculate_member_set(&ent, egress_ports, forbidden_ports, untagged_ports);
+
     // Get column value
     return get_column(req, tinfo->colnum, &ent);
+
+error:
+    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    return SNMP_ERR_GENERR;
 }
 
 static int get_next(netsnmp_request_info *req,
@@ -317,27 +249,51 @@ static int get_next(netsnmp_request_info *req,
     int err;
     netsnmp_variable_list *idx;
     netsnmp_table_request_info *tinfo;
-    struct ieee8021QBridgeVlanStaticTable_entry ent;
+    struct mib_static_vlan_table_entry ent;
+    uint32_t egress_ports, forbidden_ports, untagged_ports;
 
+    // Get indexes from request
     tinfo = netsnmp_extract_table_info(req);
-    // Get indexes for entry
-    err = get_indexes(tinfo, &ent);
-    if (err != SNMP_ERR_NOERROR)
-        return err;
-    // Get indexes for next entry
-    // Cache next entry in agent memory.
-    err = cache_entry(&ent, NEXT_ENT);
-    if (err == SNMP_NOSUCHINSTANCE)
+    get_indexes(req, reginfo, tinfo, &ent);
+
+    _LOG_DBG("GET-NEXT cid=%d vid=%d column=%d\n",
+        ent.cid, ent.vid, tinfo->colnum);
+
+    // Get indexes for next entry - SNMP_ENDOFMIBVIEW informs the handler
+    // to proceed with next column.
+    if (ent.cid > DEFAULT_COMPONENT_ID) {
         return SNMP_ENDOFMIBVIEW;
-    if (err != SNMP_ERR_NOERROR)
-        return err;
-    // Update indexes (no need to update cid, as it does not change)
-    idx = tinfo->indexes->next_variable;
+    } else if (ent.cid == 0) {
+        ent.cid = DEFAULT_COMPONENT_ID;
+        ent.vid = 0;
+    }
+    if (ent.vid >= NUM_VLANS)
+        return SNMP_ENDOFMIBVIEW;
+
+    errno = 0;
+    err = rtu_fdb_proxy_read_next_static_vlan_entry(
+        &(ent.vid), &egress_ports, &forbidden_ports, &untagged_ports);
+    if (errno)
+        goto error_;
+    if (err)
+        return SNMP_ENDOFMIBVIEW;   // No other entry found
+
+    calculate_member_set(&ent, egress_ports, forbidden_ports, untagged_ports);
+
+    // Update indexes and OID returned in SNMP response
+    idx = tinfo->indexes;
+    *(idx->val.integer) = ent.cid;
+
+    idx = idx->next_variable;
     *(idx->val.integer) = ent.vid;
-    // Update OID
+
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
     // Get next entry column value
     return get_column(req, tinfo->colnum, &ent);
+
+error_:
+    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    return SNMP_ERR_GENERR;
 }
 
 
@@ -345,45 +301,62 @@ static int get_next(netsnmp_request_info *req,
  * Checks that the type and size of the value matches the corresponding
  * column type and size.
  */
-static int set_reserve1(netsnmp_request_info *req)
+static int set_reserve1(
+    netsnmp_request_info *req,
+    netsnmp_handler_registration *reginfo)
 {
-    int ret = SNMP_ERR_NOERROR, found;
+    int ret = SNMP_ERR_NOERROR, err;
+    uint32_t ep, fp, up;              // aux fields just to read entry from fdb
     netsnmp_table_request_info *tinfo;
-    struct ieee8021QBridgeVlanStaticTable_entry ent;
+    struct mib_static_vlan_table_entry ent;
 
+    // Check indexes
     tinfo = netsnmp_extract_table_info(req);
+    get_indexes(req, reginfo, tinfo, &ent);
+
+    if (ent.cid != DEFAULT_COMPONENT_ID)
+        return SNMP_NOSUCHINSTANCE;
+
+    if (ent.vid >= NUM_VLANS)
+        return SNMP_NOSUCHINSTANCE;
+
+    _LOG_DBG("SET cid=%d vid=%d column=%d\n", ent.cid, ent.vid, tinfo->colnum);
+
+    // Check column values
     switch (tinfo->colnum) {
     case COLUMN_IEEE8021QBRIDGEVLANSTATICNAME:
-        ret = netsnmp_check_vb_type_and_size(req->requestvb, ASN_OCTET_STR, VNAME_LENGTH);
+        ret = netsnmp_check_vb_type_and_size(req->requestvb, ASN_OCTET_STR,
+            VNAME_LENGTH);
         break;
     case COLUMN_IEEE8021QBRIDGEVLANSTATICEGRESSPORTS:
-        ret = netsnmp_check_vb_type_and_size(req->requestvb, ASN_OCTET_STR, NUM_PORTS);
+        ret = netsnmp_check_vb_type_and_size(req->requestvb, ASN_OCTET_STR,
+            NUM_PORTS);
         break;
     case COLUMN_IEEE8021QBRIDGEVLANFORBIDDENEGRESSPORTS:
-        ret = netsnmp_check_vb_type_and_size(req->requestvb, ASN_OCTET_STR, NUM_PORTS);
+        ret = netsnmp_check_vb_type_and_size(req->requestvb, ASN_OCTET_STR,
+            NUM_PORTS);
         break;
     case COLUMN_IEEE8021QBRIDGEVLANSTATICUNTAGGEDPORTS:
-        ret = netsnmp_check_vb_type_and_size(req->requestvb, ASN_OCTET_STR, NUM_PORTS);
+        ret = netsnmp_check_vb_type_and_size(req->requestvb, ASN_OCTET_STR,
+            NUM_PORTS);
         break;
     case COLUMN_IEEE8021QBRIDGEVLANSTATICROWSTATUS:
         // Get current row status and check transition from current to requested
-        ret = get_indexes(tinfo, &ent);
-        if (ret != SNMP_ERR_NOERROR)
-            return ret;
-
         errno = 0;
-        found = (rtu_fdb_proxy_read_static_vlan_entry(ent.vid,
-                &(ent.member_set), &(ent.untagged_set)) == 0);
+        err = rtu_fdb_proxy_read_static_vlan_entry(ent.vid, &ep, &fp, &up);
         if (errno)
-            return SNMP_ERR_GENERR;
-
+            goto error__;
         ret = netsnmp_check_vb_rowstatus(req->requestvb,
-                (found ? RS_ACTIVE:RS_NONEXISTENT));
+            err ? RS_NONEXISTENT:RS_ACTIVE);
         break;
     default:
         return SNMP_ERR_NOTWRITABLE;
     }
     return ret;
+
+error__:
+    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    return SNMP_ERR_GENERR;
 }
 
 /**
@@ -391,26 +364,20 @@ static int set_reserve1(netsnmp_request_info *req)
  */
 static int set_reserve2(netsnmp_request_info *req)
 {
-    int status;
     netsnmp_table_request_info *tinfo;
-    struct ieee8021QBridgeVlanStaticTable_entry *ent;
 
     tinfo = netsnmp_extract_table_info(req);
     switch (tinfo->colnum) {
     case COLUMN_IEEE8021QBRIDGEVLANSTATICROWSTATUS:
-        status = *req->requestvb->val.integer;
-        switch (status) {
+        switch (*req->requestvb->val.integer) { //status
         case RS_CREATEANDGO:
         case RS_CREATEANDWAIT:
-            ent = create_entry(
-                *tinfo->indexes->val.integer,
-                *tinfo->indexes->val.integer);
-            if (!ent)
+            if (!cache_create(*tinfo->indexes->val.integer,
+                              *tinfo->indexes->next_variable->val.integer))
                 return SNMP_ERR_RESOURCEUNAVAILABLE;
-            break;
         }
     }
-    return 0;
+    return SNMP_ERR_NOERROR;
 }
 
 /**
@@ -418,28 +385,41 @@ static int set_reserve2(netsnmp_request_info *req)
  */
 static int set_reserve3(netsnmp_request_info *req)
 {
-    int ret;
+    int i, cid, vid, err;
+    uint32_t egress_ports, forbidden_ports, untagged_ports;
     netsnmp_table_request_info *tinfo;
-    struct ieee8021QBridgeVlanStaticTable_entry *ent, indexes;
+    struct mib_static_vlan_table_entry *ent;
 
     // Get indexes for entry
     tinfo = netsnmp_extract_table_info(req);
-    ret = get_indexes(tinfo, &indexes);
-    if (ret != SNMP_ERR_NOERROR)
-        return ret;
+    cid = *tinfo->indexes->val.integer;
+    vid = *tinfo->indexes->next_variable->val.integer;
     // Get entry from cache
-    ent = get_entry(&indexes);
+    ent = cache_get(vid);
     if (!ent) {
         // This means we are setting fields for ACTIVE or NOTINSERVICE rows.
         // (set_reserve2 creates rows for CREATE_AND_GO and CREATE_AND_WAIT)
-        ent = create_entry(
-                indexes.cid,
-                indexes.vid);
+        ent = cache_create(cid, vid);
         if (!ent)
             return SNMP_ERR_RESOURCEUNAVAILABLE;
-        ret = cache_entry(ent, CURR_ENT);
+
+        errno = 0;
+        err = rtu_fdb_proxy_read_static_vlan_entry(
+            ent->vid, &egress_ports, &forbidden_ports, &untagged_ports);
+        if (errno) {
+            _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+            return SNMP_ERR_GENERR;
+        }
+        if (err) {
+            _LOG_DBG("vlan vid=%d not found in fdb\n", ent->vid);
+            return SNMP_NOSUCHINSTANCE;
+        }
+
+        calculate_member_set(ent, egress_ports, forbidden_ports, untagged_ports);
+
+        ent->row_status = RS_ACTIVE; // std row status
     }
-    return ret;
+    return SNMP_ERR_NOERROR;
 }
 
 /**
@@ -447,17 +427,16 @@ static int set_reserve3(netsnmp_request_info *req)
  */
 static int set_action(netsnmp_request_info *req)
 {
-    int err;
+    int err, vid;
     netsnmp_table_request_info *tinfo;
-    struct ieee8021QBridgeVlanStaticTable_entry *ent, indexes;
+    struct mib_static_vlan_table_entry *ent;
 
     // Get indexes
     tinfo = netsnmp_extract_table_info(req);
-    err = get_indexes(tinfo, &indexes);
-    if (err != SNMP_ERR_NOERROR)
-        return err;
+    vid = *tinfo->indexes->next_variable->val.integer;
     // Get entry from cache
-    ent = get_entry(&indexes);
+    ent = cache_get(vid);
+    // Set column value
     switch (tinfo->colnum) {
     case COLUMN_IEEE8021QBRIDGEVLANSTATICNAME:
         memcpy(ent->vname,
@@ -470,7 +449,7 @@ static int set_action(netsnmp_request_info *req)
                req->requestvb->val_len);
         break;
     case COLUMN_IEEE8021QBRIDGEVLANFORBIDDENEGRESSPORTS:
-        memcpy(ent->forbidden_egress_ports,
+        memcpy(ent->forbidden_ports,
                req->requestvb->val.string,
                req->requestvb->val_len);
         break;
@@ -479,63 +458,98 @@ static int set_action(netsnmp_request_info *req)
                req->requestvb->val.string,
                req->requestvb->val_len);
         break;
+    case COLUMN_IEEE8021QBRIDGEVLANSTATICROWSTATUS:
+        ent->row_status = *req->requestvb->val.integer;
+        break;
     }
     // Keep reference to last request for this entry (to return err later on)
     ent->req = req;
-    return 0;
+    return SNMP_ERR_NOERROR;
 }
 
 /**
  * Check consistency of active rows.
  */
-static int check_consistency(struct ieee8021QBridgeVlanStaticTable_entry *ent)
+static int check_consistency(struct mib_static_vlan_table_entry *ent)
 {
     int i;
 
     switch(ent->row_status) {
-        case RS_ACTIVE:
-        case RS_CREATEANDGO:
-            // Ports can not be egress and forbidden egress at the same time.
-            for (i = 0; i < NUM_PORTS; i++)
-                if((ent->egress_ports[i] == 1) &&
-                   (ent->forbidden_egress_ports[i] == 1))
-                   return SNMP_ERR_INCONSISTENTVALUE;
+    case RS_ACTIVE:
+    case RS_CREATEANDGO:
+        // Ports can not be egress and forbidden egress at the same time.
+        for (i = 0; i < NUM_PORTS; i++) {
+            if((ent->egress_ports[i] == 1) && (ent->forbidden_ports[i] == 1)) {
+               _LOG_ERR("inconsistent egress port definition - port %d\n", i);
+               return SNMP_ERR_INCONSISTENTVALUE;
+            }
+        }
     }
-    return 0;
+    return SNMP_ERR_NOERROR;
 }
 
-static int set_commit(struct ieee8021QBridgeVlanStaticTable_entry *ent)
+static int set_commit(struct mib_static_vlan_table_entry *ent)
 {
     int i, err;
+    uint32_t egress_ports = 0, forbidden_ports = 0, untagged_ports = 0;
+
 
     switch (ent->row_status) {
     case RS_DESTROY:
+        _LOG_DBG("delete vlan vid=%d\n", ent->vid);
         // Remove entry from VLAN table
         errno = 0;
         err = rtu_fdb_proxy_delete_static_vlan_entry(ent->vid);
-        if (errno || err)
+        if (errno)
+            goto error___;
+        if (err) {
+            _LOG_ERR("delete vlan vid=%d error [%d]\n", ent->vid, err);
             return SNMP_ERR_GENERR;
+        }
         break;
-    default:
-        calculate_member_set(ent);
-        calculate_untagged_set(ent);
+    case RS_CREATEANDWAIT:
+    case RS_NOTINSERVICE:
+        // TODO (requires RTU row status support)
+        break;
+    case RS_CREATEANDGO:
+    case RS_ACTIVE:
+        for (i = 0; i < NUM_PORTS; i++) {
+            if (ent->egress_ports[i] == 1)
+                egress_ports |= (1 << i);
+            if (ent->forbidden_ports[i] == 1)
+                forbidden_ports |= (1 << i);
+            if (ent->untagged_ports[i] == 1)
+                untagged_ports |= (1 << i);
+        }
         // Create/update entry in VLAN table
-        // The MIB object does not provide means to set the FID associated to
-        // a VID. We will use FID = 0 temporarily. (TODO)
+        // TODO handle the VLAN name
+        // TODO The MIB object does not provide means to set the FID associated
+        // to a VID. We will use FID = 0 temporarily.
+
+        _LOG_DBG("create/update vlan vid=%d\n", ent->vid);
+
         errno = 0;
-        err = rtu_fdb_proxy_create_static_vlan_entry(ent->vid, 0,
-            ent->member_set, ent->untagged_set);
-        if (errno || err)
+        err = rtu_fdb_proxy_create_static_vlan_entry(
+            ent->vid, 0, egress_ports, forbidden_ports, untagged_ports);
+        if (errno)
+            goto error___;
+        if (err) {
+            _LOG_ERR("create static vlan entry error [%d]\n", err);
             return SNMP_ERR_GENERR;
+        }
         break;
     }
-    return 0;
+    return SNMP_ERR_NOERROR;
+
+error___:
+    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    return SNMP_ERR_GENERR;
 }
 
 /**
  * Handles requests for the ieee8021QBridgeVlanStaticTable table
  */
-static int ieee8021QBridgeVlanStaticTable_handler(
+static int _handler(
     netsnmp_mib_handler               *handler,
     netsnmp_handler_registration      *reginfo,
     netsnmp_agent_request_info        *reqinfo,
@@ -544,12 +558,12 @@ static int ieee8021QBridgeVlanStaticTable_handler(
 
     int err;
     netsnmp_request_info *req;
-    struct ieee8021QBridgeVlanStaticTable_entry *ent;
+    struct mib_static_vlan_table_entry *ent;
 
     switch (reqinfo->mode) {
     case MODE_GET:
         for (req = requests; req; req = req->next) {
-            err = get(req);
+            err = get(req, reginfo);
             if (err)
                 netsnmp_set_request_error(reqinfo, req, err);
         }
@@ -563,7 +577,7 @@ static int ieee8021QBridgeVlanStaticTable_handler(
         break;
     case MODE_SET_RESERVE1:
         for (req =requests; req; req =req->next) {
-            err = set_reserve1(req);
+            err = set_reserve1(req, reginfo);
             if (err)
                 netsnmp_set_request_error(reqinfo, req, err);
         }
@@ -581,7 +595,7 @@ static int ieee8021QBridgeVlanStaticTable_handler(
         }
         break;
     case MODE_SET_FREE:
-        clean_cache();
+        cache_clean();
         break;
     case MODE_SET_ACTION:
         for (req = requests; req; req = req->next) {
@@ -596,7 +610,7 @@ static int ieee8021QBridgeVlanStaticTable_handler(
         }
         break;
     case MODE_SET_UNDO:
-        clean_cache();
+        cache_clean();
         break;
     case MODE_SET_COMMIT:
         for (ent = cache; ent; ent = ent->next) {
@@ -604,7 +618,7 @@ static int ieee8021QBridgeVlanStaticTable_handler(
             if (err)
                 netsnmp_set_request_error(reqinfo, ent->req, err);
         }
-        clean_cache(); // prepare for next atomic set operation
+        cache_clean(); // prepare for next atomic set operation
         break;
     }
     return SNMP_ERR_NOERROR;
@@ -614,21 +628,22 @@ static int ieee8021QBridgeVlanStaticTable_handler(
  * Initialize the ieee8021QBridgeVlanStaticTable table by defining its
  * contents and how it's structured
  */
-static void initialize_table_ieee8021QBridgeVlanStaticTable(void)
+static void initialize_table(void)
 {
-    const oid ieee8021QBridgeVlanStaticTable_oid[] = {1,3,111,2,802,1,1,4,1,4,3};
+    const oid                       _oid[] = {1,3,111,2,802,1,1,4,1,4,3};
     netsnmp_handler_registration    *reg;
     netsnmp_table_registration_info *tinfo;
 
     reg = netsnmp_create_handler_registration(
-              "ieee8021QBridgeVlanStaticTable",
-              ieee8021QBridgeVlanStaticTable_handler,
-              (oid *)ieee8021QBridgeVlanStaticTable_oid,
-              OID_LENGTH(ieee8021QBridgeVlanStaticTable_oid),
-              HANDLER_CAN_RWRITE);
+            "ieee8021QBridgeVlanStaticTable",
+            _handler,
+            (oid *)_oid,
+            OID_LENGTH(_oid),
+            HANDLER_CAN_RWRITE);
 
     tinfo = SNMP_MALLOC_TYPEDEF( netsnmp_table_registration_info );
-    netsnmp_table_helper_add_indexes(tinfo,
+    netsnmp_table_helper_add_indexes(
+            tinfo,
             ASN_UNSIGNED,  /* index: ComponentId */
             ASN_UNSIGNED,  /* index: VlanIndex */
             0);
@@ -646,12 +661,11 @@ void init_ieee8021QBridgeVlanStaticTable(void)
 {
     struct minipc_ch *client;
 
-    initialize_table_ieee8021QBridgeVlanStaticTable();
     client = rtu_fdb_proxy_create("rtu_fdb");
-    if (!client)
-        snmp_log(LOG_ERR,
-            "ieee8021QBridgeVlanStaticTable: error creating mini-ipc proxy - %s\n",
-            strerror(errno));
-    snmp_log(LOG_INFO,"ieee8021QBridgeVlanStaticTable: initialised\n");
-
+    if(client) {
+        initialize_table();
+        _LOG_INF("initialised\n");
+    } else {
+        _LOG_ERR("error creating mini-ipc proxy - %s\n", strerror(errno));
+    }
 }
