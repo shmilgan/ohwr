@@ -61,9 +61,14 @@
 #define NUM_RESERVED_VLANS      2
 // Maximum VLAN identifier (0xFFF reserved)
 #define MAX_VID                 0xFFE
+
 // Default VID for untagged frames
-//#define DEFAULT_VID             0x001
+#ifdef V3
+#define DEFAULT_VID             0x001
+#else
 #define DEFAULT_VID             0x000
+#endif // V3
+
 // Wildcard VID used by management to refer to any VID
 #define WILDCARD_VID            0xFFF
 // Number of Filtering database identifiers
@@ -72,10 +77,9 @@
 #define NUM_RESERVED_ADDR       16
 
 // Default aging time for dynamic entries at filtering database [secs]
-//#define DEFAULT_AGING_TIME      300
-#define DEFAULT_AGING_TIME      10
+#define DEFAULT_AGING_TIME      300
 #define MIN_AGING_TIME          10
-#define MAX_AGING_TIME          10000
+#define MAX_AGING_TIME          1000000
 // Default aging time resolution [secs]
 #define DEFAULT_AGING_RES       20
 
@@ -92,26 +96,6 @@
 #define STATIC          0
 #define DYNAMIC         1
 #define STATIC_DYNAMIC  2
-
-enum filtering_control {
-	Filter 	= 0,
-	Forward	= 1,
-	Dynamic	= 2
-};
-
-enum registrar_control {
-    Registration_forbidden	= 0,
-    Registration_fixed      = 1,
-    Normal_registration     = 2
-};
-
-enum storage_type {
-	Other           = 1,
-	Volatile        = 2,
-	Non_volatile    = 3,
-	Permanent       = 4,
-	Read_only       = 5
-};
 
 /**
  * RTU request: input for the RTU
@@ -133,17 +117,15 @@ struct rtu_request {
 struct static_filtering_entry {
     uint8_t mac[ETH_ALEN];                      // MAC address
     uint16_t vid;                               // VLAN ID
-    enum filtering_control port_map[NUM_PORTS];	// port map for dest address
-    enum storage_type type;		                // Entry storage type. Reserved
-                                                // entries marked as permanent
+    uint32_t egress_ports;                      // port map for dest address
+    uint32_t forbidden_ports;                   // 1 = prevents use of dyn info
+    int type;		                            // Entry storage type.
+    int active;                                 // 0: non-active; 1: active.
     struct static_filtering_entry *next;	    // Double linked list (in
     struct static_filtering_entry *prev;        // lexicographic order)
     struct static_filtering_entry *next_sib;    // Next static entry with the
                                                 // same MAC and a VID that maps
                                                 // to the same FID
-    int active;                                 // 0: non-active; 1: active.
-                                                // Only active entries are used
-                                                // to compute the forward vector
 };
 
 /**
@@ -210,21 +192,11 @@ struct filtering_entry {
                     		      // entries associated to this MAC address and
                                   // FID.
     struct static_filtering_entry *static_fdb;
-                                  // static entries with same MAC and VIDs that
+                                  // static entries with same MAC, and VIDs that
                                   // map to same FID. When static_fdb is not
                                   // NULL, the entry contains static info.
     struct filtering_entry_node *fdb;
                                   // associated node in lex ordered list.
-};
-
-/**
- * RTU Filtering Database Entry Node in lexicographic ordered list.
- */
-struct filtering_entry_node {
-    uint8_t mac[ETH_ALEN];
-    uint8_t fid;
-    struct filtering_entry_node *next; // Double linked list
-    struct filtering_entry_node *prev; // (in lexicographic order)
 };
 
 /**
