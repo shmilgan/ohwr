@@ -34,6 +34,8 @@
 #include <string.h>
 #include <linux/if_ether.h>
 
+static const uint8_t DEFAULT_MAC[ETH_ALEN] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
 /**
  * \brief Check whether two mac addresses are equal.
  * @return 1 if both addresses are equal. 0 otherwise.
@@ -78,4 +80,3 @@ static inline int mac_multicast(uint8_t mac[ETH_ALEN])
 char *mac_to_string(uint8_t mac[ETH_ALEN]);
 
 #endif /* __WHITERABBIT_RTU_MAC_H */
-
