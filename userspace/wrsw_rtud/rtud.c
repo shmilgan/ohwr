@@ -38,12 +38,15 @@
 #include <hw/switch_hw.h>
 #include <hal_client.h>
 
+#include <net-snmp/library/snmp-tc.h>
+
 #include "rtu.h"
 #include "mac.h"
 #include "rtu_fd.h"
 #include "rtu_drv.h"
 #include "rtu_hash.h"
 #include "rtu_fd_srv.h"
+#include "endpoint_hw.h"
 #include "utils.h"
 
 static pthread_t aging_process;
@@ -59,20 +62,18 @@ static int create_permanent_entries()
 {
     uint8_t bcast_mac[]         = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
     uint8_t slow_proto_mac[]    = {0x01, 0x80, 0xc2, 0x00, 0x00, 0x01};
+
     hexp_port_list_t plist;
     hexp_port_state_t pstate;
     int i, err;
-    enum filtering_control port_map[NUM_PORTS];
-
-    memset(port_map, 0x00, NUM_PORTS);
-    port_map[NIC_PORT] = Forward;
 
     // VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
+    // NIC egress port = 11 -> 0x400 (any other port is forbidden)
     TRACE(TRACE_INFO,"adding static routes for slow protocols...");
     for(i = 0; i < NUM_RESERVED_ADDR; i++) {
         slow_proto_mac[5] = i;
         err = rtu_fdb_create_static_entry(slow_proto_mac, WILDCARD_VID,
-            port_map, Permanent, ACTIVE);
+            0x400, 0xfffffbff, ST_PERMANENT, ACTIVE);
         if(err)
             return err;
     }
@@ -89,17 +90,15 @@ static int create_permanent_entries()
             mac_to_string(pstate.hw_addr)
         );
 		err = rtu_fdb_create_static_entry(pstate.hw_addr, WILDCARD_VID,
-		    port_map, Permanent, ACTIVE);
+		    0x400, 0xfffffbff, ST_PERMANENT, ACTIVE);
         if(err)
             return err;
     }
 
     // Broadcast MAC
     TRACE(TRACE_INFO,"adding static route for broadcast MAC...");
-    for(i = 0; i < NUM_PORTS; i++)
-        port_map[i] = Forward;
     err = rtu_fdb_create_static_entry(bcast_mac, WILDCARD_VID,
-        port_map, Permanent, ACTIVE);
+        0xffffffff, 0x00000000, ST_PERMANENT, ACTIVE);
     if(err)
         return err;
 
@@ -138,6 +137,9 @@ static int rtu_daemon_learning_process()
         if (err) {
             TRACE(TRACE_INFO,"read learning queue: err %d\n", err);
         } else {
+//            TRACE_DBG(TRACE_INFO, "mac=%u.%u.%u.%u.%u.%u",
+//                (int)req.src[0], (int)req.src[1], (int)req.src[2],
+//                (int)req.src[3], (int)req.src[4], (int)req.src[5]);
             TRACE_DBG(
                 TRACE_INFO,
                 "ureq: port %d src %s VID %d priority %d",
@@ -224,8 +226,20 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 
     // create permanent entries for reserved MAC addresses
     err = create_permanent_entries();
-    if(err)
+    if (err)
         return err;
+
+    // Fix default PVID
+    TRACE(TRACE_INFO, "set default port VID.");
+    err = ep_hw_init();
+    if (err)
+        return err;
+
+    for(i = MIN_PORT; i <= MAX_PORT; i++) {
+        err = ep_hw_set_pvid(i, DEFAULT_VID);
+        if (err)
+           TRACE_DBG(TRACE_INFO, "could not set default PVID on port %d.", i);
+    }
 
     // turn on RTU
     TRACE(TRACE_INFO, "enable rtu.");
