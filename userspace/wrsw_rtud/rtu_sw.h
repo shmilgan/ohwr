@@ -85,5 +85,4 @@ void rtu_sw_commit(void);
 void rtu_sw_rollback(void);
 
 uint16_t rtu_sw_get_next_vid(uint16_t vid);
-void rtu_sw_dump(void);
 #endif /*__WHITERABBIT_RTU_SW_H*/

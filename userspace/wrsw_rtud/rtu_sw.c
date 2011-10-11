@@ -743,7 +743,7 @@ void rtu_sw_uncache(void)
  */
 void rtu_sw_commit(void)
 {
-    int i, j;
+    int i, j, k;
     struct filtering_entry *fe;
     struct vlan_table_entry *ve;
 
@@ -762,13 +762,14 @@ void rtu_sw_commit(void)
             fe = hcam_wr[j];
             rtu_hw_write_hcam_entry(cam_addr(hcam_bucket(fe)), fe);
         }
-        for (j = 0; j < htab_wr_head; j++) {
-            fe = htab_wr[j];
+        for (k = 0; k < htab_wr_head; k++) {
+            fe = htab_wr[k];
             rtu_hw_write_htab_entry(zbt_addr(htab_hash(fe), htab_bucket(fe)), fe);
         }
         // switch bank to make entries available to RTU at HW
-        if (i < (RTU_BANKS - 1))
-            set_active_bank(bank);
+        if ((j > 0) || (k > 0))
+            if (i < (RTU_BANKS - 1))
+                set_active_bank(bank);
     }
     // Reset lists
     hcam_wr_head     = 0;
@@ -784,40 +785,4 @@ void rtu_sw_rollback(void)
     hcam_wr_head     = 0;
     htab_wr_head     = 0;
     vlan_tab_wr_head = 0;
-}
-
-void rtu_sw_dump(void)
-{
-    int i, j;
-    struct filtering_entry *fe;
-
-    for (i = 0; i < HTAB_ENTRIES; i++) {
-        for (j = 0; j < RTU_BUCKETS; j++) {
-            fe = &htab[i][j];
-            if (fe->valid) {
-                TRACE(
-                    TRACE_INFO,
-                    "htab[%d][%d] (mac: %s, fid: %d, dynamic: %d)",
-                    i,
-                    j,
-                    mac_to_string(fe->mac),
-                    fe->fid,
-                    fe->dynamic
-                );
-            }
-        }
-    }
-    for (i = 0; i < CAM_ENTRIES; i++) {
-        fe = &hcam[i];
-        if (fe->valid) {
-            TRACE(
-                TRACE_INFO,
-                "hcam[%d] (mac: %s, fid: %d, dynamic: %d)",
-                i,
-                mac_to_string(fe->mac),
-                fe->fid,
-                fe->dynamic
-            );
-        }
-    }
 }
