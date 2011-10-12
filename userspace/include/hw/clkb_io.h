@@ -6,6 +6,7 @@
 
 #define _CLKB_WB_BUS(x) ((x)<<8)
 
+/* Base addresses of the Timing FPGA wishbone peripherals */
 #define CLKB_BASE_REVID _CLKB_WB_BUS(0)
 #define CLKB_BASE_HPLL  _CLKB_WB_BUS(1)
 #define CLKB_BASE_GPIO  _CLKB_WB_BUS(2)

@@ -11,11 +11,13 @@
 
 static const char FPGA_IMAGE_MAGIC[4] = { 'w','r','f','i' };
 
+/* Global header of the firmware file */
 struct fpga_image_header {
 	char magic[4];
 	uint32_t num_fpgas;
 };
 
+/* FPGA bitstream entry definition in the firmware file */
 struct fpga_image_entry {
   char *fpga_name; // name of the FPGA (for example: MAIN, CLKB)
   char *fw_name;   // name of the firmware (for example: board_test, rtu_test).
