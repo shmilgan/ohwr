@@ -1,3 +1,5 @@
+/* Altera's MicroBlaster code for programming Cyclone3 FPGAs in Passive Seral mode */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>

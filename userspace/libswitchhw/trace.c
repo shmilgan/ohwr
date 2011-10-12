@@ -1,3 +1,4 @@
+/* Some debug/tracing stuff */
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>

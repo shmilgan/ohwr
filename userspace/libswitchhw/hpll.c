@@ -1,3 +1,5 @@
+/* Helper PLL driver */
+/* To be removed and replaced by the SoftPLL in V3 */
 #include <stdio.h>
 #include  <string.h>
 #include <inttypes.h>
@@ -8,18 +10,21 @@
 
 #define FREQ_ERROR_FRACBITS 7
 
-#define DEFAULT_PD_GATE_SEL HPLL_PD_GATE_16K // Phase detector gating = 16384 fbck cycles
-#define DEFAULT_FD_GATE_SEL 3 // Frequency gating: 131072 fbck cycles
+/* Default values for some HPLL parameters:
+   Phase detector gating = 16384 fbck cycles */
+#define DEFAULT_PD_GATE_SEL HPLL_PD_GATE_16K 
+/*  Frequency measure ment gating: 131072 fbck cycles */
+#define DEFAULT_FD_GATE_SEL 3 
 
+/* Lock detection thresholds */
 #define DEFAULT_LD_SAMPLES 250
 #define DEFAULT_LD_THRESHOLD 100
 
+/* Macros for converting floating point PI gains to the fixed point format
+   used internally by the HPLL */
 #define FLOAT_TO_FB_COEF(x) ((int)((x) * (32.0 * 16.0 )))
 #define FLOAT_TO_PB_COEF(x) ((int)((x) * (32.0 * 16.0 )))
 
-//  0.00384, 0.0384, // target phase Ki/Kp
-
-//  20.0 , 8.0, // freq Ki/Kp
 static const hpll_params_t default_hpll_params = {
   20.0 , 8.0, // freq Ki/Kp
   0.256, 6.40, // target phase Ki/Kp
@@ -34,6 +39,10 @@ static const hpll_params_t default_hpll_params = {
   0, 0
 };
 
+/* current state of the HPLL */
+static hpll_params_t cur_params;
+
+/* Wrappers for accessing HPLL regs */
 static inline uint32_t hpll_read(uint32_t reg)
 {
   return shw_clkb_read_reg(CLKB_BASE_HPLL + reg);
@@ -44,24 +53,17 @@ static inline void hpll_write(uint32_t reg, uint32_t value)
   shw_clkb_write_reg(CLKB_BASE_HPLL + reg, value);
 }
 
-/* static void hpll_poll_rfifo() */
-/* { */
 
-/*   while(1) */
-/*     { */
-/*       if((hpll_read(HPLL_REG_RFIFO_CSR) & HPLL_RFIFO_CSR_EMPTY) || rfifo_nmeas >= MAX_MEAS) return; */
-/*       rfifo_record[rfifo_nmeas++] = hpll_read(HPLL_REG_RFIFO_R0); */
-/*     } */
-/* } */
-
+/* Linear interpolation at (step) step out of (nsteps) between (start) and (end) */
 static double interpolate(double start, double end, int step, int nsteps)
 {
 	double k = (double)step / (double)(nsteps - 1);
 	return start * (1.0-k) + k * end;
 }
 
-static hpll_params_t cur_params;
 
+/* Ramps the HPLL gain to a new value. It doesn't like step changes int the coefficients,
+   so they have to be slowly adjusted until they reach the required values. */
 void shw_hpll_ramp_gain(double kp_new, double ki_new)
 {
 	uint64_t init_tics = shw_get_tics();
@@ -73,21 +75,15 @@ void shw_hpll_ramp_gain(double kp_new, double ki_new)
 
 	for(step = 0; step < cur_params.phase_gain_steps; step++)
 	{
-
-//	  if(shw_get_tics() - init_tics > (uint64_step * cur_params.phase_gain_step_delay)
-  	  {
 				double kp, ki;
 
 				kp = interpolate(cur_params.kp_phase_cur,cur_params.kp_phase, step, cur_params.phase_gain_steps);
 				ki = interpolate(cur_params.ki_phase_cur,cur_params.ki_phase, step, cur_params.phase_gain_steps);
 
-//	      TRACE(TRACE_INFO, "ramping down the HPLL gain (Kp = %.5f Ki = %.5f)", kp, ki);
 	      hpll_write(HPLL_REG_PBGR,
 					 HPLL_PBGR_P_KP_W(FLOAT_TO_FB_COEF(kp)) |
 					 HPLL_PBGR_P_KI_W(FLOAT_TO_FB_COEF(ki)));
-	//		} else {
 				usleep(1000);
-			}
 	}
 
 	cur_params.kp_phase_cur = cur_params.kp_phase;
@@ -95,7 +91,7 @@ void shw_hpll_ramp_gain(double kp_new, double ki_new)
 }
 
 
-
+/* Loads the state of the HPLL from (params) structure */
 void shw_hpll_load_regs(const hpll_params_t *params)
 {
   int target_freq_err;
@@ -155,17 +151,13 @@ void shw_hpll_load_regs(const hpll_params_t *params)
 	     HPLL_PCR_REFSEL_W(params->ref_sel));        // reference select
 
 
-//  init_tics = shw_get_tics();
   memcpy(&cur_params, params, sizeof(hpll_params_t));
 
   cur_params.kp_phase_cur = params->kp_phase;
   cur_params.ki_phase_cur = params->ki_phase;
 
 
-//  shw_hpll_ramp_gain(0.1,   0.00384);
-  shw_hpll_ramp_gain(0.0384,   0.00384);
-
-
+  shw_hpll_ramp_gain(0.0384,   0.00384); /* fixme */
 }
 
 void shw_hpll_reset()
@@ -174,16 +166,6 @@ void shw_hpll_reset()
   pcr_val |= HPLL_PCR_SWRST;
   hpll_write(HPLL_REG_PCR, pcr_val);
 }
-
-/*void shw_hpll_set_reference(int ref_clk)
-{
-  uint32_t pcr_val = hpll_read(HPLL_REG_PCR);
-
-  pcr_val &= ~HPLL_PCR_REFSEL_MASK;
-  pcr_val |= HPLL_PCR_REFSEL_W(ref_clk);
-
-  hpll_write(HPLL_REG_PCR, pcr_val);
-}*/
 
 int shw_hpll_check_lock()
 {
@@ -196,16 +178,8 @@ int shw_hpll_check_lock()
     hpll_write(HPLL_REG_PSR,  HPLL_PSR_LOCK_LOST); // clear loss-of-lock bit
   }
 
-  printf("PSR %x\n",psr & (HPLL_PSR_FREQ_LK | HPLL_PSR_PHASE_LK));
-  printf("PCR %x\n", hpll_read(HPLL_REG_PCR));
-
-//
-//	return 1;
-	  return (psr & HPLL_PSR_FREQ_LK) && (psr & HPLL_PSR_PHASE_LK);
+  return (psr & HPLL_PSR_FREQ_LK) && (psr & HPLL_PSR_PHASE_LK);
 }
-
-
-
 
 int shw_hpll_get_divider()
 {
@@ -221,6 +195,7 @@ int shw_hpll_init()
   while(!shw_hpll_check_lock()) usleep(100000);
 }
 
+/* Sets the HPLL reference input to network I/F (if_name) and re-initializes the HPLL. */
 int shw_hpll_switch_reference(const char *if_name)
 {
 	hpll_params_t my_params;

@@ -1,3 +1,4 @@
+/* GPIO pin definitions */
 #include <hw/pio.h>
 
 #define LED_OFF 0

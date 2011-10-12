@@ -1,5 +1,4 @@
-
-
+/* Pre-defined AD9516 PLL configs, both for 25 MHz TCXO and external 10 MHz reference. */
 
 static const struct ad9516_regs ad9516_regs_tcxo_25m = {
 {

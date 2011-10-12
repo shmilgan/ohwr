@@ -1,3 +1,5 @@
+/* Userspace /dev/mem I/O functions for accessing the Main FPGA */
+
 #include <stdio.h>
 #include <unistd.h>
 
@@ -14,8 +16,10 @@
 
 #define SPI_CLKDIV_VAL 20 // clock divider for CMI SPI bus clock
 
+/* Virtual base address of the Main FPGA address space. */
 volatile uint8_t *_fpga_base_virt;
 
+/* Initializes the mapping of the Main FPGA to the CPU address space. */
 int shw_fpga_mmap_init()
 {
   int fd;
@@ -39,6 +43,7 @@ int shw_fpga_mmap_init()
 
 }
 
+/* Resets the Main FPGA. */
 void shw_main_fpga_reset()
 {
     shw_pio_set0(PIN_main_fpga_nrst);
@@ -47,8 +52,10 @@ void shw_main_fpga_reset()
     usleep(10000);
 }
 
+/* Initializes the Main FPGA - that means (currently) just resetting it. */
 int shw_main_fpga_init()
 {
   shw_pio_configure(PIN_main_fpga_nrst);
   shw_main_fpga_reset();
+  return 0;
 }
