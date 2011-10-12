@@ -6,6 +6,7 @@
 
 #include <lua.h>
 #include <lauxlib.h>
+#include <lualib.h>
 #include <hw/trace.h>
 
 #define HAL_CONFIG_FILE "/wr/etc/wrsw_hal.conf"
@@ -26,11 +27,14 @@ void hal_config_set_config_file(const char *str)
 int hal_config_extra_cmdline(const char *str)
 {
 	extra_cmdline = strdup(str);
+	return 0;
 }
 
 /* Parses the HAL configuration file */
 int hal_parse_config()
 {
+	int ret;
+	
 	TRACE(TRACE_INFO, "Parsing wrsw_hal configuration file: %s", HAL_CONFIG_FILE);
 
 	cfg_file = lua_open();
@@ -39,12 +43,11 @@ int hal_parse_config()
 
 /* Just execute the config file as a regular Lua script. The contents of the file will be ordinary
    Lua variables accessible via lua_State. */
-	if (luaL_dofile(cfg_file, hal_config_file))
- 		TRACE(TRACE_ERROR, "Error parsing the configuration file: %s", lua_tostring(cfg_file,-1));
+	ret = luaL_dofile(cfg_file, hal_config_file);
 
 /* Declare a Lua "helper" function for regexp searching global variables - it's much easier to implement
    in Lua than in plain C. */
-	luaL_dostring(cfg_file, "\
+	ret |= luaL_dostring(cfg_file, "\
 	function get_var(name)	 \
 	local t = _G					\
 	for w in name:gmatch(\"([%w_]+)\\.?\") do	\
@@ -55,7 +58,13 @@ int hal_parse_config()
 
 /* Execute extra code from the command line */
 	if(extra_cmdline)
-		luaL_dostring(cfg_file, extra_cmdline);
+		ret |= luaL_dostring(cfg_file, extra_cmdline);
+
+ 	if(ret)
+ 	{
+ 		TRACE(TRACE_ERROR, "Error parsing the configuration file: %s", lua_tostring(cfg_file,-1));
+ 		return -1;
+ 	}
 
 	return 0;
 }
@@ -138,7 +147,7 @@ int hal_config_iterate(const char *section, int index, char *subsection, int max
 	while (lua_next(cfg_file, -2) != 0) {
 		/* uses 'key' (at index -2) and 'value' (at index -1) */
 
-		char *key_type = lua_typename(cfg_file, lua_type(cfg_file, -1));
+		char *key_type = (char *) lua_typename(cfg_file, lua_type(cfg_file, -1));
 		if(!strcmp(key_type, "table") && i == index)
 		{
 			strncpy(subsection, lua_tostring(cfg_file, -2), max_len);

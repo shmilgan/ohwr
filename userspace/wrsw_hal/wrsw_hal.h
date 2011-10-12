@@ -72,9 +72,11 @@ typedef struct {
 } hal_port_calibration_t;
 
 
-int hal_parse_config();
 int hal_check_running();
 
+int hal_parse_config();
+void hal_config_set_config_file(const char *str);
+int hal_config_extra_cmdline(const char *str);
 int hal_config_get_int(const char *name, int *value);
 int hal_config_get_double(const char *name, double *value);
 int hal_config_get_string(const char *name, char *value, int max_len);
@@ -90,6 +92,7 @@ int hal_add_cleanup_callback(hal_cleanup_callback_t cb);
 
 int hal_port_start_lock(const char  *port_name, int priority);
 int hal_port_check_lock(const char  *port_name);
+int hal_extsrc_check_lock(void); // added by ML
 
 
 #endif

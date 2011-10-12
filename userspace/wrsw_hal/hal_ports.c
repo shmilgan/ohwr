@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <math.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -361,7 +362,9 @@ int hal_init_port(const char *name, int index)
 
 	if(!hal_config_get_string(key_name, val, sizeof(val)))
 	{
-		if(!strcasecmp(val, "wr_master"))
+		if(!strcasecmp(val, "wr_m_and_s"))
+			p->mode = HEXP_PORT_MODE_WR_M_AND_S; 
+		else if(!strcasecmp(val, "wr_master"))
 			p->mode = HEXP_PORT_MODE_WR_MASTER;
 		else if(!strcasecmp(val, "wr_slave"))
 			p->mode = HEXP_PORT_MODE_WR_SLAVE;
@@ -556,6 +559,7 @@ static void calibration_fsm(hal_port_state_t *p)
 	}
 }
 
+#if 0
 /* Port LED update function. To be removed in V3. */
 static int update_port_leds(hal_port_state_t *p)
 {
@@ -580,6 +584,8 @@ static int update_port_leds(hal_port_state_t *p)
 	return 0;
 }
 
+#endif
+
 /* Main port state machine */
 static void port_fsm(hal_port_state_t *p)
 {
@@ -588,6 +594,9 @@ static void port_fsm(hal_port_state_t *p)
 /* If, at any moment, the link goes down, reset the FSM and the port state structure. */
 	if(!link_up && p->state != HAL_PORT_STATE_LINK_DOWN)
 	{
+		if(p->locked) 
+			shw_hpll_switch_reference("local"); /* FIXME: ugly workaround. The proper way is to do the TX calibration AFTER LOCKING !  */
+
 		TRACE(TRACE_INFO, "%s: link down", p->name);
 		p->state = HAL_PORT_STATE_LINK_DOWN;
 		reset_port_state(p);
@@ -751,11 +760,11 @@ int halexp_calibration_cmd(const char *port_name, int command, int on_off)
 
 	switch(command)
 	{
-/* Checks if the calibrator is idle (i.e. if there are no ports being currently calibrated).
+/* Checks if the calibrator is idle (i.e. if there are no ports being currently calibrated). */
 	case HEXP_CAL_CMD_CHECK_IDLE:
 		return !any_port_calibrating() && p->state == HAL_PORT_STATE_UP ? HEXP_CAL_RESP_OK : HEXP_CAL_RESP_BUSY;
 
-/* Returns taw deltaTx/Rx (debug only) */
+/* Returns raw deltaTx/Rx (debug only) */
 	case HEXP_CAL_CMD_GET_RAW_DELTA_RX:
 		return p->calib.raw_delta_rx_phy;
 		break;
@@ -850,3 +859,51 @@ int halexp_query_ports(hexp_port_list_t *list)
 	return 0;
 }
 
+/* Maciek's ptpx export for checking the presence of the external 10 MHz ref clock */
+int hal_extsrc_check_lock()
+{
+	
+	
+	char val[128];
+	FILE *fp;
+
+	if(!hal_config_get_string("extsrc.status", val, sizeof(val)))
+	{
+	  printf("mlDGB_HAL: read value: %s\n",val);
+	  if(!strcasecmp(val, "faked"))
+	  {
+	      return 1;
+	  }
+	  else if(!strcasecmp(val, "disabled"))
+	  {
+	      return -1;
+	  }
+	  else if(!strcasecmp(val, "enabled"))
+	  {
+		//TODO:  implement in HW, for the time being temprary solution
+//#ifdef TMP		
+	  	fp=fopen("/wr/etc/tmp_extsrc", "r");
+	  	if(!fp)
+	  		return 0;
+				if(fscanf(fp,"%s",val)>0)
+				{
+				  if(!strcasecmp(val, "locked"))
+		    		return 1;
+				  else if(!strcasecmp(val, "none"))
+				    return -1;
+				  else
+				    return 0;
+				}
+		
+		fclose(fp);
+		}	else
+//#endif		  
+		  return 0;	  
+	}
+	return -1;
+/*
+	return -1; //<0 - there is no external source lock
+	return 1; //>0 - we are locked to an external source
+	return 0; //=0 - HW problem, wait
+*/	
+}

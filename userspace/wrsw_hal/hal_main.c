@@ -181,6 +181,11 @@ int hal_init()
 /* Perform a low-level hardware init, load bitstreams, initialize non-kernel drivers */
 	assert_init(shw_init());
 
+/* If running in grandmaster mode, synchronize the internal PPS counter with the external source after
+   initializing the PPS generator. */
+	if(!hal_config_get_int("timing.use_external_clock", &enable))
+		shw_pps_gen_sync_external_pps();
+
 /* Load kernel drivers */
 	assert_init(hal_load_kernel_modules());
 

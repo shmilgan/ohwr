@@ -4,7 +4,8 @@
 #include <stdlib.h>
 
 #include <hw/trace.h>
-#include <hw/dmpll.h> /* for direct access to DMPLL */
+#include <hw/pps_gen.h> /* for direct access to DMPLL and PPS generator */
+#include <hw/dmpll.h> 
 
 #include "wrsw_hal.h"
 #include "hal_exports.h" /* for exported structs/function protos */
@@ -134,12 +135,14 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
     case HEXP_PPSG_CMD_POLL:
       return shw_dmpll_shifter_busy(params->port_name) || shw_pps_gen_busy();
     }
+  return -1; /* fixme: real error code */
 }
 
 /* PLL debug call, foreseen for live adjustment of some internal PLL parameters (gains, timeouts, etc.)
    To be implemented. */
 int halexp_pll_cmd(int cmd, hexp_pll_cmd_t *params)
 {
+	return 0;
 }
 
 static void hal_cleanup_wripc()
