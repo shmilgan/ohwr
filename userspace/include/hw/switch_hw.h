@@ -9,6 +9,7 @@
 #include "fpgaboot.h"
 #include "hpll.h"
 #include "watchdog.h"
+#include "pps_gen.h"
 
 int shw_init();
 
