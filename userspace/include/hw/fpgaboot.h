@@ -37,5 +37,6 @@ int shw_load_fpga_bitstream(int fpga_id, uint8_t *bitstream, uint32_t bitstream_
 int shw_request_fpga_firmware(int fpga_id, const char *firmware_name);
 int shw_boot_fpga(int fpga_id);
 int shw_set_fpga_firmware_path(const char *path);
+void shw_fpga_force_firmware_reload();
 
 #endif
