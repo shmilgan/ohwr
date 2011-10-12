@@ -61,7 +61,8 @@ typedef struct {
   /* Fiber "alpha" asymmetry coefficient, as defined in the WRPTP Specification */
 	double fiber_alpha;
 
-  /* Fixed point fiber asymmetry coefficient. Expressed as (2 ^ 40 * (fiber_alpha - 1)). */      	int32_t fiber_fix_alpha;
+  /* Fixed point fiber asymmetry coefficient. Expressed as (2 ^ 40 * (fiber_alpha - 1)). */      	
+  int32_t fiber_fix_alpha;
 
   /* When non-zero: RX path is calibrated (delta_*_rx contain valid values) */
   int rx_calibrated;
@@ -73,7 +74,6 @@ typedef struct {
 
 int hal_parse_config();
 int hal_check_running();
-
 
 int hal_config_get_int(const char *name, int *value);
 int hal_config_get_double(const char *name, double *value);

@@ -1,3 +1,5 @@
+/* Main HAL file */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,9 +19,13 @@
 
 #define MAX_CLEANUP_CALLBACKS 16
 
+#define assert_init(proc) { int ret; if((ret = proc) < 0) return ret; }
+
+
 static int daemon_mode= 0;
 static hal_cleanup_callback_t cleanup_cb[MAX_CLEANUP_CALLBACKS];
 
+/* Adds a function to be called during the HAL shutdown. */
 int hal_add_cleanup_callback(hal_cleanup_callback_t cb)
 {
 	int i;
@@ -33,6 +39,7 @@ int hal_add_cleanup_callback(hal_cleanup_callback_t cb)
 	return -1;
 }
 
+/* Calls all cleanup callbacks */
 static void call_cleanup_cbs()
 {
   int i;
@@ -43,17 +50,19 @@ static void call_cleanup_cbs()
 }
 
 
+/* Determines which FPGA bitstreams shall be loaded */
 int hal_setup_fpga_images()
 {
 	char fpga_dir[128];
 	char fw_name[128];
 
+/* query the path to the firmware directory in the config file */
   if( hal_config_get_string("global.hal_firmware_path", fpga_dir, sizeof(fpga_dir)) < 0)
  		return -1;
 
-//  shw_fpga_force_firmware_reload();
   shw_set_fpga_firmware_path(fpga_dir);
 
+/* check if the config demands a particular bitstream (otherwise libswitchhw will load the default ones) */
   if( !hal_config_get_string("global.main_firmware", fw_name, sizeof(fw_name)))
  		shw_request_fpga_firmware(FPGA_ID_MAIN, fw_name);
 
@@ -64,6 +73,7 @@ int hal_setup_fpga_images()
 }
 
 
+/* loads (load = 1) or unloads (load = 0) a WR kernel module (name). */
 static int load_unload_kmod(const char *name, int load)
 {
 	static char modules_path[128];
@@ -88,9 +98,9 @@ static int load_unload_kmod(const char *name, int load)
 
 	return 0;
 }
-#define assert_init(proc) { int ret; if((ret = proc) < 0) return ret; }
 
 
+/* Unloads all WR kernel modules during the shutdown */
 static void unload_kernel_modules()
 {
 	char module_name[80];
@@ -106,6 +116,7 @@ static void unload_kernel_modules()
 }
 
 
+/* Loads all WR kernel modules specified in the HAL config file */
 int hal_load_kernel_modules()
 {
 	char module_name[80];
@@ -141,6 +152,7 @@ int hal_shutdown()
 	return 0;
 }
 
+/* Main initialization function */
 int hal_init()
 {
 	int enable;
@@ -150,25 +162,38 @@ int hal_init()
 
 	memset(cleanup_cb, 0, sizeof(cleanup_cb));
 
+/* Set up trap for some signals - the main purpose is to prevent the hardware from working
+   when the HAL is shut down - launching the HAL on already initialized HW will freeze the system. */
 	signal(SIGSEGV, sighandler);
 	signal(SIGINT, sighandler);
 	signal(SIGTERM, sighandler);
 	signal(SIGILL, sighandler);
 
+/* parse the configuration file and choose the bitstreams to load to the FPGAs */
 	assert_init(hal_parse_config());
 	assert_init(hal_setup_fpga_images());
 
+/* Check if the switch will operate as a grandmaster and eventually enable the ext clock input
+   prior to initializing libswitchhw. */
 	if(!hal_config_get_int("timing.use_external_clock", &enable))
 		shw_use_external_reference(enable);
 
+/* Perform a low-level hardware init, load bitstreams, initialize non-kernel drivers */
 	assert_init(shw_init());
+
+/* Load kernel drivers */
 	assert_init(hal_load_kernel_modules());
+
+/* Initialize port FSMs - see hal_ports.c */
 	assert_init(hal_init_ports());
+
+/* Create a WRIPC server for HAL public API */
 	assert_init(hal_init_wripc());
 
-	 return 0;
+	return 0;
 }
 
+/* Main loop update - polls for WRIPC requests and rolls the port state machines */
 void hal_update()
 {
 	hal_update_wripc();
@@ -177,6 +202,7 @@ void hal_update()
 	usleep(1000);
 }
 
+/* Turns a nice and well-behaving HAL into an evil servant of satan. */
 void hal_deamonize()
 {
  pid_t pid, sid;
@@ -264,7 +290,7 @@ void hal_parse_cmdline(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 
-
+/* Prevent from running HAL twice - this will likely freeze the system */
 	if(hal_check_running())
 	{
 		fprintf(stderr, "Fatal: There is another WR HAL instance running. We can't work together.\n\n");
@@ -273,11 +299,10 @@ int main(int argc, char *argv[])
 
 	hal_parse_cmdline(argc, argv);
 
-  hal_init();
+	hal_init();
 
 	if(daemon_mode)
 		hal_deamonize();
-
 
 	for(;;) hal_update();
 	hal_shutdown();
