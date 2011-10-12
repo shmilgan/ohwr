@@ -61,3 +61,22 @@ int shw_pps_gen_busy()
 {
   return _fpga_readl(FPGA_BASE_PPS_GEN + PPSG_REG_CR) & PPSG_CR_CNT_ADJ ? 0 : 1;
 }
+
+/* Syncs the PPS generator PPS with the externally provided signal. */
+int shw_pps_gen_sync_external_pps()
+{
+  TRACE(TRACE_INFO, "Syncing to external PPS..");
+    
+  _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ADJ_NSEC, 6);
+  _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ESCR, PPSG_ESCR_SYNC);
+        
+  /* fixme: waiting here is unstable. Probably a HW bug. */
+  /* fixme: re-phasing the AD9516 clock is also required */
+        
+/*  while(!(_fpga_readl(FPGA_BASE_PPS_GEN + PPSG_REG_ESCR) & PPSG_ESCR_SYNC))
+    {
+       sleep(1);
+    }*/
+	return 0;
+}
+                
