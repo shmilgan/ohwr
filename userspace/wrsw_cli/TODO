@@ -1,0 +1,20 @@
+Informal TODO list
+------------------
+
+
+- Try to reduce the readline footprint by editing
+the /$(HOME)/wrdev/build/buildroot-2009.11/output/build/readline-5.2/rlconf.h
+
+- Introduce filtering options to ease the reading of outputs
+
+- Add support for a persistent configuration file.
+
+- Support command autocompletion (TAB key), using the readline library.
+
+- Capture signals (i.e. SIGTERM, to execute cli_cmd_exit before leaving the
+application, so memory be freed)
+
+- Extend the help for commands and options. (It is probably better to use a
+callback function for this, instead of a string).
+
+- Extend the commands.
