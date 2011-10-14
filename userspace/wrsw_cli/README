@@ -1,0 +1,100 @@
+White Rabbit Switch Command Line Interface (CLI).
+Version 1.0
+Copyright (C) 2011, CERN.
+
+Authors:    Juan Luis Manas (juan.manas@integrasys.es)
+            Miguel Baizan   (miguel.baizan@integrasys-sa.com)
+
+            This package is based on some ideas taken from the LGPL libcli
+            package by David Parrish, which you can find at
+            https://github.com/dparrish/libcli.git
+
+Short info: Basic CLI implementation for the management of the WR Switch.
+            This package has been built taking as a reference the CISCO's CLI
+            command syntax (given that it has become an industry standard for
+            the management of network devices). However, in WR we don't
+            envisage to use the CLI as the front-end for managing or
+            configuring the switch operating system, so some simplifications
+            have been made.
+
+
+
+    General info
+    ============
+
+Along with the SNMP agent, the WR CLI is ment to be one of the tools to
+configure and monitor the WR Switch. The WR CLI has been designed as another
+tool for the WR Switch, not as a front-end to manage the operating system of the
+switch (such as the CISCO's CLI does), so the WR CLI doesn't deal with access
+priviledges, network tools or anything that can be handled through the Linux
+kernel. In fact, the management operations for the CLI are just being defined
+in order to meet the conformance with the IEEE standards 802.1D and 802.1Q. No
+configuration modes have been defined.
+
+If you need help while using the WR CLI, type 'help' or '?'. These commands
+can be also used to get more information on a given command or even to get a
+list of available commands.
+
+Some line editing features are available, as well as some command history
+capabilities.
+
+Internally, the CLI has been designed trying to reuse the code written for the
+SNMP agents, which means that the CLI is going to translate the CLI commands
+into SNMP operations that an SNMP client will understand and run, in order to
+get the information from the SNMP agent. This way we aim at avoiding duplicate
+code and some concurrency issues. The SNMP agent will be who communicates with
+hardware.
+
+
+
+    Structure of the package
+    ========================
+
+README
+	This file.
+
+COPYING:
+    GNU GPL Version 2. This package is copyrighted by CERN and
+    released as free software.
+
+TODO:
+    List of things to do.
+
+Makefile:
+    Makefile, based on the WR development environment wr-switch-sw-2011-05-18.
+
+cli.[ch]:
+    Main function and main loop. Initialization of data structures. Command line
+    parsing and line editing features.
+
+cli_commands.[ch]:
+    Commands related stuff. Generation of the commands tree. Implementation of
+    the functions that handle each command.
+
+cli_snmp.[ch]:
+    SNMP utility functions to simplify handling SNMP stuff from CLI modules.
+
+
+    Dependencies
+    ============
+
+GPL readline library:
+    This package depends on the readline library, wich in turn depends on the
+    ncurses library. The readline library manages the line editing features of
+    the CLI and the command history.
+
+net-snmp:
+
+
+
+    Compilation and usage
+    =====================
+
+For compilation just run make, following the instructions of the documentation
+wrs-build.pdf in the wr-switch-sw/doc section, written by Alessandro Rubini.
+
+Everytime you run the wrsw_cli application you must specify a user and password
+(with the -u and -p arguments) in order to let the CLI access to the SNMPv3
+facilities. This is mandatory for now. Try with:
+
+ ./wrsw_cli -u authPrivUser -p password
