@@ -1,0 +1,4 @@
+*.o
+./gen_fpga_image
+./mch_flasher
+./uboot_env

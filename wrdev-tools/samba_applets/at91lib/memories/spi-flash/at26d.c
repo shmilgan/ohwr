@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support
+ *         ATMEL Microcontroller Software Support 
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -126,7 +126,7 @@ unsigned int AT26D_ReadJedecId(At26 *pAt26)
     unsigned int id = 0;
 
     SANITY_CHECK(pAt26);
-
+ 
     // Issue a read ID command
     error = AT26_SendCommand(pAt26, AT26_READ_JEDEC_ID, 1,
                              (unsigned char *) &id, 3, 0, 0, 0);
@@ -176,7 +176,7 @@ unsigned char AT26D_Unprotect(At26 *pAt26)
         // Protection already disabled
         return 0;
     }
-
+    
     // Check if sector protection registers are locked
     if ((status & AT26_STATUS_SPRL) == AT26_STATUS_SPRL_LOCKED) {
 
@@ -184,11 +184,11 @@ unsigned char AT26D_Unprotect(At26 *pAt26)
         AT26D_EnableWrite(pAt26);
         AT26D_WriteStatus(pAt26, 0);
     }
-
+    
     // Perform a global unprotect command
       AT26D_EnableWrite(pAt26);
     AT26D_WriteStatus(pAt26, 0);
-
+    
     // Check the new status
     status = AT26D_ReadStatus(pAt26);
     if ((status & (AT26_STATUS_SPRL | AT26_STATUS_SWP)) != 0) {
@@ -217,10 +217,10 @@ unsigned char AT26D_EraseChip(At26 *pAt26)
     if ((status & AT26_STATUS_SWP) != AT26_STATUS_SWP_PROTNONE) {
         return AT26_ERROR_PROTECTED;
     }
-
+    
     // Enable critical write operation
       AT26D_EnableWrite(pAt26);
-
+    
     // Erase the chip
     error = AT26_SendCommand(pAt26, AT26_CHIP_ERASE_2, 1, 0, 0, 0, 0, 0);
     ASSERT(!error, "-F- AT26_ChipErase: Could not issue command.\n\r");
@@ -245,7 +245,7 @@ unsigned char AT26D_EraseBlock(At26 *pAt26, unsigned int address)
     unsigned char error;
 
     SANITY_CHECK(pAt26);
-
+ 
     // Check that the flash is ready and unprotected
     status = AT26D_ReadStatus(pAt26);
     if ((status & AT26_STATUS_RDYBSY) != AT26_STATUS_RDYBSY_READY) {
@@ -306,7 +306,7 @@ unsigned char AT26D_Write(
 
         // Enable critical write operation
         AT26D_EnableWrite(pAt26);
-
+     
          // Program page
           error = AT26_SendCommand(pAt26, AT26_BYTE_PAGE_PROGRAM, 4,
                            pData, writeSize, address, 0, 0);
@@ -344,12 +344,12 @@ unsigned char AT26D_Read(
     unsigned int address)
 {
     unsigned char error;
-
+    
      // Start a read operation
       error = AT26_SendCommand(pAt26, AT26_READ_ARRAY_LF, 4, pData, size, address, 0, 0);
     ASSERT(!error, "-F- AT26_Read: Could not issue command.\n\r");
     // Wait for transfer to finish
     AT26D_Wait(pAt26);
-
+    
     return error;
 }

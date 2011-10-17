@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support
+ *         ATMEL Microcontroller Software Support 
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -31,9 +31,9 @@
 /// \unit
 ///
 /// !Purpose
-///
+/// 
 /// Methods and definitions for configuring interrupts.
-///
+/// 
 /// !Usage
 ///
 /// -# Configure an interrupt source using IRQ_ConfigureIT
@@ -63,7 +63,7 @@
 #if defined(cortexm3)
 #ifdef __NVIC_PRIO_BITS
 #undef __NVIC_PRIO_BITS
-#define __NVIC_PRIO_BITS           ((SCB->AIRCR & 0x700) >> 8)
+#define __NVIC_PRIO_BITS           ((SCB->AIRCR & 0x700) >> 8) 
 #endif
 #endif
 #endif

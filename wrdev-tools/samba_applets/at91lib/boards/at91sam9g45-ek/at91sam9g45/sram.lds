@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support 
+ *         ATMEL Microcontroller Software Support
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -27,26 +27,71 @@
  * ----------------------------------------------------------------------------
  */
 
-//------------------------------------------------------------------------------
-/// \dir
-/// !!!Purpose
-/// 
-/// This directory contains one module for each supported Atmel evaluation kit.
-///
-/// Each module provides the necessary definitions and methods for using the
-/// board in a portable way. This means that there should be NO overhead when
-/// porting a project from a SAM7S to a SAM7SE (for example), given that they
-/// both fullfil the technical requirements of the project.
-///
-/// !!!Contents
-/// Each board subdirectory contains board- and chip-dependant files to provide
-/// a number of services:
-///    - PIO definitions
-///    - Memory initializations
-///    - Startup and low level initialization
-///    - etc.
-///
-/// Please refer to the documentation of each directory for more in-depth
-/// description of what is available.
-//------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------
+ *      Linker script for running in internal SRAM on the AT91SAM9G45
+ *----------------------------------------------------------------------------*/
+
+OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
+OUTPUT_ARCH(arm)
+ENTRY(entry)
+
+MEMORY
+{
+    sram (W!RX) : ORIGIN = 0x300000, LENGTH = 64K
+    ddr_ebi0 (W!RX) : ORIGIN = 0x70000000, LENGTH = 128M
+}
+
+SECTIONS
+{  
+    .fixed0 :
+    {
+        . = ALIGN(4);
+        _sfixed0 = .;
+        *(.vectors)
+        *(.ramfunc)
+        *(.text*)
+        *(.rodata*)
+        *(.data)
+        *(.glue_7)
+        *(.glue_7t)
+        *(.CP15_*)
+        . = ALIGN(4);
+        _efixed0 = .;
+        _efixed = .;
+    } >sram
+
+    .fixed1 :
+    {
+        . = ALIGN(4);
+        _sfixed1 = .;
+        . = ALIGN(4);
+        _efixed1 = .;
+    } >sram
+
+    .prerelocate : AT (_efixed)
+    {
+        . = ALIGN(4);
+        _sprerelocate = .;
+        . = ALIGN(4);
+        _eprerelocate = .;
+    }
+
+    .postrelocate : AT (_efixed + SIZEOF(.prerelocate))
+    {
+        . = ALIGN(4);
+        _spostrelocate = .;
+        . = ALIGN(4);
+        _epostrelocate = .;
+    }
+
+    .bss (NOLOAD) : {
+        _szero = .;
+        *(.bss)
+        . = ALIGN(4);
+        _ezero = .;
+    } >sram
+    
+    _sstack = 0x300000 + 64 * 1024;
+}
+end = .;
 

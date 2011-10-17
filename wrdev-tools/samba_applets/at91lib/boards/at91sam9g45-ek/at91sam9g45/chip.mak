@@ -26,7 +26,9 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ----------------------------------------------------------------------------
 
-# Defines which are the available memory targets for the AT91SAM9263-EK board.
-
-MEMORIES = sdram sram
+# Defines which are the specific available IP for the chip AT91SAM9G45
+CHIP_CORE    = arm926ej_s
+CHIP_IP_MCI  = MCI_DMA
+CHIP_IP_UDP  = USB_UDPHS
+CHIP_IP_UHP  = USB_EHCI
 

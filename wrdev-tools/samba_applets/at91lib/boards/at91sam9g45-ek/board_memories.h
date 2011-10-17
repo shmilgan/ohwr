@@ -27,26 +27,43 @@
  * ----------------------------------------------------------------------------
  */
 
+#ifndef BOARD_MEMORIES_H
+#define BOARD_MEMORIES_H
+
+
 //------------------------------------------------------------------------------
-/// \dir
-/// !!!Purpose
-/// 
-/// This directory contains one module for each supported Atmel evaluation kit.
-///
-/// Each module provides the necessary definitions and methods for using the
-/// board in a portable way. This means that there should be NO overhead when
-/// porting a project from a SAM7S to a SAM7SE (for example), given that they
-/// both fullfil the technical requirements of the project.
-///
-/// !!!Contents
-/// Each board subdirectory contains board- and chip-dependant files to provide
-/// a number of services:
-///    - PIO definitions
-///    - Memory initializations
-///    - Startup and low level initialization
-///    - etc.
-///
-/// Please refer to the documentation of each directory for more in-depth
-/// description of what is available.
+//         Definitions
 //------------------------------------------------------------------------------
+// DDRAM models used as parameter of configureDdram().
+#define DDR_MICRON_MT47H64M8           0
+#define DDR_SAMSUNG_M470T6554EZ3_CE6   1
+
+#define VDDMEMSEL_1V8 0
+#define VDDMEMSEL_3V3 1
+
+
+//------------------------------------------------------------------------------
+//         Exported functions
+//------------------------------------------------------------------------------
+extern void BOARD_RemapRom(void);
+
+extern void BOARD_RemapRam(void);
+
+extern void BOARD_ConfigureVddMemSel(unsigned char VddMemSel);
+
+extern void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth);
+
+extern void BOARD_ConfigureDdramCp1(unsigned char busWidth);
+
+extern void BOARD_ConfigureSdram(unsigned char busWidth);
+
+extern void BOARD_ConfigureNandFlash(unsigned char busWidth);
+
+extern void BOARD_ConfigureNandFlash48MHz(unsigned char busWidth);
+
+extern void BOARD_ConfigureNorFlash(unsigned char busWidth);
+
+extern void BOARD_ConfigureNorFlash48MHz(unsigned char busWidth);
+
+#endif //#ifndef BOARD_MEMORIES_H
 

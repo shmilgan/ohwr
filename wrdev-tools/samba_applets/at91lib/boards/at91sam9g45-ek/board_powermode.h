@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support
+ *         ATMEL Microcontroller Software Support 
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -29,24 +29,22 @@
 
 //------------------------------------------------------------------------------
 /// \unit
-///
 /// !Purpose
-///
-/// Provides the low-level initialization function that gets called on chip
-/// startup.
+/// 
 ///
 /// !Usage
-///
-/// LowLevelInit() is called in #board_cstartup.S#.
+/// 
 //------------------------------------------------------------------------------
 
-#ifndef BOARD_LOWLEVEL_H
-#define BOARD_LOWLEVEL_H
+#ifndef BOARD_POWERMODE_H
+#define BOARD_POWERMODE_H
 
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
-extern void LowLevelInit(void);
+extern void LowPowerMode(void);
 
-#endif // BOARD_LOWLEVEL_H
+extern void NormalPowerMode(void);
+
+#endif //#ifndef BOARD_MEMORIES_H
 

@@ -28,25 +28,37 @@
  */
 
 //------------------------------------------------------------------------------
-/// \dir
-/// !!!Purpose
-/// 
-/// This directory contains one module for each supported Atmel evaluation kit.
-///
-/// Each module provides the necessary definitions and methods for using the
-/// board in a portable way. This means that there should be NO overhead when
-/// porting a project from a SAM7S to a SAM7SE (for example), given that they
-/// both fullfil the technical requirements of the project.
-///
-/// !!!Contents
-/// Each board subdirectory contains board- and chip-dependant files to provide
-/// a number of services:
-///    - PIO definitions
-///    - Memory initializations
-///    - Startup and low level initialization
-///    - etc.
-///
-/// Please refer to the documentation of each directory for more in-depth
-/// description of what is available.
+//         Headers
 //------------------------------------------------------------------------------
 
+#include "board.h"
+#include <pmc/pmc.h>
+
+//------------------------------------------------------------------------------
+//         Internal definitions
+//------------------------------------------------------------------------------
+
+
+//------------------------------------------------------------------------------
+//         Internal functions
+//------------------------------------------------------------------------------
+
+
+//------------------------------------------------------------------------------
+//         Exported functions
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+/// Put the CPU in IDLE mode with CP15
+//------------------------------------------------------------------------------
+void LowPowerMode(void)
+{
+    PMC_CPUInIdleMode();
+}
+
+//------------------------------------------------------------------------------
+/// Returns to normal mode automatically
+//------------------------------------------------------------------------------
+void NormalPowerMode(void)
+{
+}

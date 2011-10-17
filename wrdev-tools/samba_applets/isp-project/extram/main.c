@@ -32,6 +32,7 @@
 //------------------------------------------------------------------------------
 
 #include "../common/applet.h"
+#include "ddramc.h"
 #include <board.h>
 #include <board_lowlevel.h>
 #include <board_memories.h>
@@ -53,7 +54,7 @@
 #if defined(at91sam9g45) || defined(at91sam9m10)
 #define EXTRAM_ADDR AT91C_DDR2
 #define EXTRAM_SIZE BOARD_DDRAM_SIZE
-#elif at91sam3u4
+#elif at91sam3u4 
 #define EXTRAM_ADDR BOARD_EBI_PSRAM
 #define EXTRAM_SIZE BOARD_PSRAM_SIZE
 #else
@@ -135,37 +136,55 @@ extern unsigned int end;
 /// Go/No-Go test of the first 10K-Bytes of external RAM access.
 /// \return 0 if test is failed else 1.
 //------------------------------------------------------------------------------
+
+int r_seed;
+
+void my_srand(int seed)
+{
+    r_seed = seed;
+}
+
+int my_rand()
+{
+    r_seed *= 101028131;
+    r_seed += 12345;
+    return r_seed;
+}
 static unsigned char ExtRAM_TestOk(void)
 {
     unsigned int i;
     unsigned int *ptr = (unsigned int *) EXTRAM_ADDR;
 
-    for (i = 0; i < 10 * 1024; ++i) {
-
-        if (i & 1) {
-            ptr[i] = 0x55AA55AA | (1 << i);
-        }
-        else {
-            ptr[i] = 0xAA55AA55 | (1 << i);
-        }
+/*    for(;;)
+    {
+	ptr[0] = 0xdeadbeef;
+	ptr[0x1000] = ~0xdeadbeef;
+    } */
+    
+    my_srand(0);
+    TRACE_INFO("testing External RAM (first 2 MB)... ");
+    for (i = 0; i < 512 * 1024; ++i) {
+        ptr[i] = my_rand();
     }
 
-    for (i = 0; i < 10 * 1024; ++i) {
-        if (i & 1) {
-            if (ptr[i] != (0x55AA55AA | (1 << i))) {
+    my_srand(0);
+    for (i = 0; i < 512 * 1024; ++i) {
+        if (ptr[i] != my_rand()) {
+        	TRACE_INFO( " fail: %x %x\n\r", i, ptr[i]);
                 return 0;
             }
-        }
-        else {
-            if (ptr[i] != (0xAA55AA55 | (1 << i))) {
-                return 0;
-            }
-        }
     }
+
+    TRACE_INFO("OK.\n");
 
     return 1;
 }
 
+
+void delay(int x)
+{
+    while(x--) asm volatile("nop");
+}
 //------------------------------------------------------------------------------
 /// Applet code for initializing the external RAM.
 //------------------------------------------------------------------------------
@@ -176,27 +195,43 @@ int main(int argc, char **argv)
     unsigned int dataBusWidth = 0;
     unsigned int ddrModel = 0;
 
-    TRACE_CONFIGURE_ISP(DBGU_STANDARD, 115200, BOARD_MCK);
+    LowLevelInit();
 
+    TRACE_CONFIGURE_ISP(DBGU_STANDARD, 115200, BOARD_MCK);
+    
+    
+
+/*    *AT91C_PMC_PCER = AT91C_ID_PIOA;
+    *AT91C_PIOA_PDR = (1<<31);
+    *AT91C_PIOA_OER = (1<<31);
+    *AT91C_PIOA_BSR = (1<<31);
+    *AT91C_PIOA_PER = (1<<0);
+    *AT91C_PIOA_OER = (1<<0);
+    
+    *AT91C_PMC_PCKR = (1<<8); // select master clock
+    *AT91C_PMC_SCER = (1<<8); // ENABLE PCK0*/
+    
+    TRACE_INFO("Statup: PMC_MCKR %x MCK = %d command = %d\n\r", *AT91C_PMC_MCKR, BOARD_MCK, pMailbox->command);
     // ----------------------------------------------------------
     // INIT:
     // ----------------------------------------------------------
     if (pMailbox->command == APPLET_CMD_INIT) {
 
         // Initialize PMC
-        LowLevelInit();
+//	BOARD_RemapRam();
+
 
         // Enable User Reset
         AT91C_BASE_RSTC->RSTC_RMR |= AT91C_RSTC_URSTEN | (0xA5<<24);
-
+        
 
         ramType = pMailbox->argument.inputInit.ramType;
         dataBusWidth = pMailbox->argument.inputInit.dataBusWidth;
         ddrModel = pMailbox->argument.inputInit.ddrModel;
 
-#if (DYN_TRACES == 1)
-        traceLevel = pMailbox->argument.inputInit.traceLevel;
-#endif
+//#if (DYN_TRACES == 1)
+//        traceLevel = pMailbox->argument.inputInit.traceLevel;
+//#endif
 
         TRACE_INFO("-- EXTRAM ISP Applet %s --\n\r", SAM_BA_APPLETS_VERSION);
         TRACE_INFO("-- %s\n\r", BOARD_NAME);
@@ -218,7 +253,7 @@ int main(int argc, char **argv)
         }
 
 #if defined(at91cap9) || defined(at91sam9m10) || defined(at91sam9g45)
-        TRACE_INFO("\tInit EBI Vdd : %s\n\r", (pMailbox->argument.inputInit.VddMemSel)?"3.3V":"1.8V");
+        TRACE_INFO("\tInit EBI Vdd : %s\n\r", (pMailbox->argument.inputInit.VddMemSel)?"3.3V":"1.8V");   
         BOARD_ConfigureVddMemSel(pMailbox->argument.inputInit.VddMemSel);
 #endif //defined(at91cap9)
 
@@ -230,16 +265,18 @@ int main(int argc, char **argv)
 #endif
         }
         else if (pMailbox->argument.inputInit.ramType == TYPE_PSRAM) {
-            TRACE_INFO("\tInit PSRAM...\n\r");
-#if defined(at91sam3u4)
+            TRACE_INFO("\tInit PSRAM...\n\r");   
+#if defined(at91sam3u4)            
             BOARD_ConfigurePsram();
-#endif
+#endif            
         }
-        else {
+        else { 
             // Configure DDRAM controller
 #if defined(at91cap9dk) || defined(at91sam9m10) || defined(at91sam9g45)
             TRACE_INFO("\tInit DDRAM ... (model : %d)\n\r", ddrModel);
-            BOARD_ConfigureDdram(ddrModel, dataBusWidth);
+	    BOARD_ConfigureVddMemSel(VDDMEMSEL_1V8);
+            BOARD_ConfigureDdram(0, dataBusWidth);
+//	    ddramc_hw_init();
 #endif
         }
 

@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support
+ *         ATMEL Microcontroller Software Support 
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -31,12 +31,12 @@
 /// \unit
 ///
 /// !Purpose
-///
+/// 
 /// Methods and definitions for access Chip ID peripheral in AT91 microcontrollers.
-///
+/// 
 /// !Usage
 ///
-/// -#
+/// -# 
 ///
 //------------------------------------------------------------------------------
 

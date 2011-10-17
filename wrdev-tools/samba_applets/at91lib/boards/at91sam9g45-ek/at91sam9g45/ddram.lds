@@ -27,28 +27,62 @@
  * ----------------------------------------------------------------------------
  */
 
-#ifndef BOARD_MEMORIES_H
-#define BOARD_MEMORIES_H
+/*------------------------------------------------------------------------------
+ *      Linker script for running in external DDRAM on the AT91SAM9G45
+ *----------------------------------------------------------------------------*/
 
-//------------------------------------------------------------------------------
-//         Exported functions
-//------------------------------------------------------------------------------
+OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
+OUTPUT_ARCH(arm)
+ENTRY(entry)
 
-extern void BOARD_RemapRom(void);
+MEMORY
+{
+    sram (W!RX) : ORIGIN = 0x300000, LENGTH = 64K
+    ddr_ebi0 (W!RX) : ORIGIN = 0x70000000, LENGTH = 64M
+}
 
-extern void BOARD_RemapRam(void);
+SECTIONS
+{  
+    .fixed :
+    {
+        . = ALIGN(4);
+        _sfixed = .;
+        *(.text*)
+        *(.rodata*)
+        *(.glue_7)
+        *(.glue_7t)
+        *(.data)
+        *(.CP15_*)
+        . = ALIGN(4);
+        _efixed = .;
+    } >ddr_ebi0
 
-extern void BOARD_ConfigureSdram(unsigned char busWidth);
+    .prerelocate : AT (_efixed)
+    {
+        . = ALIGN(4);
+        _sprerelocate = .;
+        . = ALIGN(4);
+        _eprerelocate = .;
+    }
 
-extern void BOARD_ConfigureSdram48MHz(unsigned char busWidth);
+    .postrelocate : AT (_efixed + SIZEOF(.prerelocate))
+    {
+        . = ALIGN(4);
+        _spostrelocate = .;
+        *(.vectors);
+        *(.ramfunc)
+        . = ALIGN(4);
+        _epostrelocate = .;
+    } >sram
 
-extern void BOARD_ConfigureNandFlash(unsigned char busWidth);
-
-extern void BOARD_ConfigureNandFlash48MHz(unsigned char busWidth);
-
-extern void BOARD_ConfigureNorFlash(unsigned char busWidth);
-
-extern void BOARD_ConfigureNorFlash48MHz(unsigned char busWidth);
-
-#endif //#ifndef BOARD_MEMORIES_H
+    .bss (NOLOAD) : {
+        _szero = .;
+        *(.bss)
+        . = ALIGN(4);
+        _ezero = .;
+    } >ddr_ebi0
+    
+    _sstack = 0x70000000 + 64 * 1024 * 1024;
+}
+end = .;
 

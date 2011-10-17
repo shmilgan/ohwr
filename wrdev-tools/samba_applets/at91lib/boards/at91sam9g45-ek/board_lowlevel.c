@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support
+ *         ATMEL Microcontroller Software Support 
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -28,6 +28,19 @@
  */
 
 //------------------------------------------------------------------------------
+/// \unit
+///
+/// !Purpose
+///
+/// Provides the low-level initialization function that gets called on chip
+/// startup.
+///
+/// !Usage
+///
+/// LowLevelInit() is called in #board_cstartup.S#.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 //         Headers
 //------------------------------------------------------------------------------
 
@@ -38,25 +51,16 @@
 //------------------------------------------------------------------------------
 //         Internal definitions
 //------------------------------------------------------------------------------
-/*
-    Constants: Clock and PLL settings
 
-        BOARD_OSCOUNT - Startup time of main oscillator (in number of slow clock
-                        ticks).
-        BOARD_USBDIV - USB PLL divisor value to obtain a 48MHz clock.
-        BOARD_CKGR_PLL - PLL frequency range.
-        BOARD_PLLCOUNT - PLL startup time (in number of slow clock ticks).
-        BOARD_MUL - PLL MUL value.
-        BOARD_DIV - PLL DIV value.
-        BOARD_PRESCALER - Master clock prescaler value.
-*/
+/* Settings at 400/133MHz */
 #define BOARD_OSCOUNT           (AT91C_CKGR_OSCOUNT & (64 << 8))
+#define BOARD_CKGR_PLLA         (AT91C_CKGR_SRCA | AT91C_CKGR_OUTA_0)
+#define BOARD_PLLACOUNT         (0x3F << 8)
+#define BOARD_MULA              (AT91C_CKGR_MULA & (199 << 16))
+#define BOARD_DIVA              (AT91C_CKGR_DIVA & 3)
 
-
-#define PLLA_SETTINGS	0x2060BF09
-#define PLLB_SETTINGS	0x10483F0E
-
-#define BOARD_PRESCALER         AT91C_PMC_MDIV_2
+//#define BOARD_PRESCALER         (0x00001300) //400/133MHz
+#define BOARD_PRESCALER         (0x00001200) //400/100MHz
 
 //------------------------------------------------------------------------------
 //         Internal functions
@@ -85,47 +89,56 @@ void defaultIrqHandler( void )
     while (1);
 }
 
-
 //------------------------------------------------------------------------------
 //         Exported functions
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-///    Performs the low-level initialization of the chip.
+/// Performs the low-level initialization of the chip. Initialisation depends
+/// on where the application is executed: 
+/// - in sdram: it means that sdram has previously been initialized. No further
+///             initialization is required.
+/// - in sram:  PLL shall be initialized in LowLevelInit. Other initializations 
+///             can be done later by the application.
+/// - in norflash: LowLevelInit can't be executed in norflash because SMC 
+///             settings can't be changed while executing in external flash.
+///             LowLevelInit shall be executed in internal sram. It initializes
+///             PLL and SMC. 
+/// This function also reset the AIC and disable RTT and PIT interrupts
 //------------------------------------------------------------------------------
-void LowLevelInit( void )
+void LowLevelInit(void)
 {
     unsigned char i;
 
-#if !defined(sdram)
-    /* Initialize main oscillator
+#if !defined(ddram)
+
+for(i=0;i<3;i++) /* it seems that the PLL doesn't start up propely the 1st time it's programmed */
+{
+    /* Initialize main oscillator    
      ****************************/
     AT91C_BASE_PMC->PMC_MOR = BOARD_OSCOUNT | AT91C_CKGR_MOSCEN;
     while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_MOSCS));
 
-    /* Initialize PLLA at 200MHz (198.656) */
-    AT91C_BASE_PMC->PMC_PLLAR = PLLA_SETTINGS;
-
+    /* Initialize PLLA */
+    AT91C_BASE_PMC->PMC_PLLAR = BOARD_CKGR_PLLA
+                                | BOARD_PLLACOUNT
+                                | BOARD_MULA
+                                | BOARD_DIVA;
     while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_LOCKA));
-
-    // Initialize PLLB for USB usage (if not already locked)
-    if (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_LOCKB)) {
-        AT91C_BASE_PMC->PMC_PLLBR = PLLB_SETTINGS;
-        while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_LOCKB));
-    }
-
+    
     /* Wait for the master clock if it was already initialized */
     while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_MCKRDY));
 
     /* Switch to fast clock
      **********************/
     /* Switch to main oscillator + prescaler */
-    AT91C_BASE_PMC->PMC_MCKR = BOARD_PRESCALER;
+    AT91C_BASE_PMC->PMC_MCKR = (AT91C_BASE_PMC->PMC_MCKR & 0x3) | BOARD_PRESCALER;
     while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_MCKRDY));
 
     /* Switch to PLL + prescaler */
-    AT91C_BASE_PMC->PMC_MCKR |= AT91C_PMC_CSS_PLLA_CLK;
+    AT91C_BASE_PMC->PMC_MCKR = (AT91C_BASE_PMC->PMC_MCKR & 0xfffffffc) | AT91C_PMC_CSS_PLLA_CLK;
     while (!(AT91C_BASE_PMC->PMC_SR & AT91C_PMC_MCKRDY));
-#endif //#if !defined(sdram)
+}
+#endif
 
     /* Initialize AIC
      ****************/
@@ -143,9 +156,12 @@ void LowLevelInit( void )
         AT91C_BASE_AIC->AIC_EOICR = 0;
     }
 
+
     /* Watchdog initialization
      *************************/
+  #ifndef WDT_APP // Watchdog init in application ?
     AT91C_BASE_WDTC->WDTC_WDMR = AT91C_WDTC_WDDIS;
+  #endif
 
     /* Remap
      *******/
@@ -154,11 +170,11 @@ void LowLevelInit( void )
     // Disable RTT and PIT interrupts (potential problem when program A
     // configures RTT, then program B wants to use PIT only, interrupts
     // from the RTT will still occur since they both use AT91C_ID_SYS)
-    AT91C_BASE_RTTC0->RTTC_RTMR &= ~(AT91C_RTTC_ALMIEN | AT91C_RTTC_RTTINCIEN);
-    AT91C_BASE_RTTC1->RTTC_RTMR &= ~(AT91C_RTTC_ALMIEN | AT91C_RTTC_RTTINCIEN);
+    AT91C_BASE_RTTC->RTTC_RTMR &= ~(AT91C_RTTC_ALMIEN | AT91C_RTTC_RTTINCIEN);
     AT91C_BASE_PITC->PITC_PIMR &= ~AT91C_PITC_PITIEN;
+    
 #if defined(norflash)
     BOARD_ConfigureNorFlash(BOARD_NORFLASH_DFT_BUS_SIZE);
-#endif
+#endif    
 }
 

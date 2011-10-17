@@ -28,25 +28,26 @@
  */
 
 //------------------------------------------------------------------------------
-/// \dir
-/// !!!Purpose
-/// 
-/// This directory contains one module for each supported Atmel evaluation kit.
+/// \unit
 ///
-/// Each module provides the necessary definitions and methods for using the
-/// board in a portable way. This means that there should be NO overhead when
-/// porting a project from a SAM7S to a SAM7SE (for example), given that they
-/// both fullfil the technical requirements of the project.
+/// !Purpose
 ///
-/// !!!Contents
-/// Each board subdirectory contains board- and chip-dependant files to provide
-/// a number of services:
-///    - PIO definitions
-///    - Memory initializations
-///    - Startup and low level initialization
-///    - etc.
+/// Provides the low-level initialization function that gets called on chip
+/// startup.
 ///
-/// Please refer to the documentation of each directory for more in-depth
-/// description of what is available.
+/// !Usage
+///
+/// LowLevelInit() is called in #board_cstartup.S#.
 //------------------------------------------------------------------------------
+
+#ifndef BOARD_LOWLEVEL_H
+#define BOARD_LOWLEVEL_H
+
+//------------------------------------------------------------------------------
+//         Exported functions
+//------------------------------------------------------------------------------
+
+extern void LowLevelInit(void);
+
+#endif // BOARD_LOWLEVEL_H
 

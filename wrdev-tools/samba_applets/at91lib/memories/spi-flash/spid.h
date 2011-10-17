@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support
+ *         ATMEL Microcontroller Software Support 
  * ----------------------------------------------------------------------------
  * Copyright (c) 2008, Atmel Corporation
  *
@@ -30,20 +30,20 @@
 /// \unit
 ///
 /// !!!Purpose
-///
-/// The Spi driver is a low level spi driver which performs SPI device Initializes,
-/// spi transfer and receive. It can be used by upper SPI driver such as AT45
-/// driver and AT26 driver.
-///
+/// 
+/// The Spi driver is a low level spi driver which performs SPI device Initializes, 
+/// spi transfer and receive. It can be used by upper SPI driver such as AT45 
+/// driver and AT26 driver. 
+///  
 /// !!!Usage
-///
+/// 
 /// -# Initializes a SPI instance and the corresponding SPI hardware,
 ///    Configure SPI in Master Mode using SPID_Configure().
-/// -# Configures the SPI characteristics (such as Clock Polarity, Phase,
+/// -# Configures the SPI characteristics (such as Clock Polarity, Phase, 
 ///    transfers delay and Baud Rate) for the device corresponding to the
 ///    chip select using SPID_ConfigureCS().
 /// -# Starts a SPI master transfer using SPID_SendCommand().
-///    The transfer is performed using the PDC channels.
+///    The transfer is performed using the PDC channels. 
 ///    -# It enable the SPI clock.
 ///    -# Set the corresponding peripheral chip select.
 ///    -# Initialize the two SPI PDC buffers.
@@ -51,13 +51,13 @@
 ///         to send command data first.
 ///       - Initialize SPI_RPR and SPI_RCR with SPI command data and size
 ///         as dummy value.
-///       - Initialize SPI_TNPR and SPI_TNCR with rest of the data to be
+///       - Initialize SPI_TNPR and SPI_TNCR with rest of the data to be 
 ///        transfered.(if the data specified in cmd structure)
-///       - Initialize SPI_RNPR and SPI_RNCR with rest of the data to be
+///       - Initialize SPI_RNPR and SPI_RNCR with rest of the data to be 
 ///         received.(if the data specified in cmd structure)
 ///    -# Initialize the callback function if specified.
 ///    -# Enable transmitter and receiver.
-///    -# Example for sending a command to the dataflash through the SPI.
+///    -# Example for sending a command to the dataflash through the SPI. 
 /// \code
 ///      /// Build command to be sent.
 ///      ...
@@ -66,9 +66,9 @@
 ///          return AT45_ERROR_SPI;
 ///      }
 /// \endcode
-/// -# The SPI_Handler() must be called by the SPI Interrupt Service Routine
+/// -# The SPI_Handler() must be called by the SPI Interrupt Service Routine 
 ///    with the corresponding Spi instance. It is invokes to check for pending
-///    interrupts.
+///    interrupts. 
 ///    - Example for initializing SPI interrupt handler in upper application.
 /// \code
 ///	      AIC_ConfigureIT(AT91C_ID_SPI, 0, SPI_Handler);
@@ -121,7 +121,7 @@ typedef void (*SpidCallback )(unsigned char, void *);
 
 //------------------------------------------------------------------------------
 /// Spi Transfer Request prepared by the application upper layer. This structure
-/// is sent to the SPI_SendCommand function to start the transfer. At the end of
+/// is sent to the SPI_SendCommand function to start the transfer. At the end of 
 /// the transfer, the callback is invoked by the interrupt handler.
 //------------------------------------------------------------------------------
 typedef struct _SpidCmd {
@@ -170,7 +170,7 @@ extern unsigned char SPID_Configure(
     unsigned char spiId);
 
 extern void SPID_ConfigureCS(Spid *pSpid, unsigned char cs, unsigned int csr);
-
+	
 extern unsigned char SPID_SendCommand(
 	Spid *pSpid,
 	SpidCmd *pCommand);

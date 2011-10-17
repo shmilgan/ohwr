@@ -54,15 +54,15 @@
 #define TINY_APPPLET
 
 /// Stack size in SRAM
-#if defined (at91sam7se)
-/// For at91sam7se, the applet run in sdram, stack also in sdram.
+#if defined (at91sam7se) 
+/// For at91sam7se, the applet run in sdram, stack also in sdram. 
 #define STACK_SIZE 0
 #else
 #define STACK_SIZE 0x100
 #endif
 
 #else
-/// Read write buffer size in DF page number
+/// Read write buffer size in DF page number 
 #define BUFFER_NB_PAGE 500
 #endif
 
@@ -127,7 +127,7 @@ struct _Mailbox {
         struct {
 
             /// Bytes written.
-            unsigned int bytesWritten;
+            unsigned int bytesWritten; 
 
         } outputWrite;
 
@@ -156,7 +156,7 @@ struct _Mailbox {
 
         /// Output arguments for the Full Erase command.
         // NONE
-
+        
         /// Input arguments for the Buffer Erase command.
          struct {
 
@@ -167,7 +167,7 @@ struct _Mailbox {
 
         /// Output arguments for the Buffer Erase command.
         // NONE
-    } argument;
+    } argument;    
 };
 
 //------------------------------------------------------------------------------
@@ -264,9 +264,16 @@ static const struct _At45Select at45Select[2] = {
 #endif
 };
 
-/// Current Dataflash index
+/// Current Dataflash index 
 volatile unsigned char at45Index = 0;
 
+
+int checksum(unsigned char *buf, int size)
+{
+    int c = 0;
+    while(size--) c+=*buf++;
+    return c;
+}
 //------------------------------------------------------------------------------
 //         Global functions
 //------------------------------------------------------------------------------
@@ -283,11 +290,12 @@ int main(int argc, char **argv)
     unsigned int bytesToWrite, bytesToRead, bufferAddr, memoryOffset, packetSize;
     // index on read/write buffer
     unsigned char *pBuffer;
-    // Temporary buffer used for non page aligned read/write
+    // Temporary buffer used for non page aligned read/write 
     unsigned int tempBufferAddr;
     // Offset in destination buffer during buffer copy
     unsigned int bufferOffset;
-
+    unsigned char tmp[128];
+    
     // Configure the DBGU
 //    TRACE_CONFIGURE_ISP(DBGU_STANDARD, 115200, BOARD_MCK);
 
@@ -298,17 +306,17 @@ int main(int argc, char **argv)
     }
 
     // ----------------------------------------------------------
-    // INIT:
+    // INIT: 
     // ----------------------------------------------------------
     if (pMailbox->command == APPLET_CMD_INIT) {
 
         at45Index = pMailbox->argument.inputInit.at45Idx;
 
 #if (DYN_TRACES == 1)
-        traceLevel = pMailbox->argument.inputInit.traceLevel;
+//        traceLevel = pMailbox->argument.inputInit.traceLevel;
 #endif
 //        traceLevel = 4; //pMailbox->argument.inputInit.traceLevel;
-
+        
         TRACE_INFO("-- DataFlash AT45 ISP Applet %s --\n\r", SAM_BA_APPLETS_VERSION);
         TRACE_INFO("-- %s\n\r", BOARD_NAME);
         TRACE_INFO("-- Compiled: %s %s --\n\r", __DATE__, __TIME__);
@@ -322,7 +330,7 @@ int main(int argc, char **argv)
 
             TRACE_INFO("INIT command: No Dataflash %d defined for this board\n\r", \
                    pMailbox->argument.inputInit.at45Idx);
-
+          
             pMailbox->status = APPLET_NO_DEV;
             goto exit;
         }
@@ -334,7 +342,7 @@ int main(int argc, char **argv)
                (unsigned int) &(pMailbox->argument.inputInit.at45Idx));
 
         // Initialize the SPI and serial flash
-        SPID_Configure(&spid, at45Select[at45Index].pSpiHw, at45Select[at45Index].spiId);
+        SPID_Configure(&spid, at45Select[at45Index].pSpiHw, at45Select[at45Index].spiId);        
         PIO_Configure(at45Select[at45Index].pPinsSpi, at45Select[at45Index].numPinsSpi);
         PIO_Configure(at45Select[at45Index].pPinCs, 1);
 
@@ -342,7 +350,7 @@ int main(int argc, char **argv)
         SPID_ConfigureCS(&spid, at45Select[at45Index].cs, AT45_CSR(BOARD_MCK, SPCK));
         AT45_Configure(&at45, &spid, at45Select[at45Index].cs);
         TRACE_INFO("\tSPI and AT45 drivers initialized\n\r");
-
+        
 #if defined (at91sam9m10) || defined (at91sam9g45)
         pMailbox->argument.outputInit.bufferAddress = (unsigned int) AT91C_DDR2;
 #else
@@ -364,16 +372,16 @@ int main(int argc, char **argv)
         pMailbox->status = APPLET_SUCCESS;
         numPages = AT45_PageNumber(&at45);
         pageSize = AT45_PageSize(&at45);
-
-#ifdef TINY_APPPLET
+        
+#ifdef TINY_APPPLET        
        bufferSize = AT91C_ISRAM_SIZE                 // sram size
            - ( ((unsigned int) &end) - AT91C_ISRAM ) // program size (romcode, code+data)
            - STACK_SIZE                                 // stack size (if same area of applet code)
            - pageSize;                                 // tempbuffer size to to make not aligned write operations
 
-#else
+#else        
         bufferSize = BUFFER_NB_PAGE * pageSize;
-#endif
+#endif        
         bufferSize -= bufferSize % pageSize;  // integer number of pages can be contained in each buffer
         pMailbox->argument.outputInit.bufferSize = bufferSize;
         pMailbox->argument.outputInit.memorySize = numPages * pageSize;
@@ -382,7 +390,7 @@ int main(int argc, char **argv)
     }
 
     // ----------------------------------------------------------
-    // WRITE:
+    // WRITE: 
     // ----------------------------------------------------------
     else if (pMailbox->command == APPLET_CMD_WRITE) {
 
@@ -395,12 +403,13 @@ int main(int argc, char **argv)
                memoryOffset, bufferAddr, bytesToWrite);
 
         pBuffer = (unsigned char *) bufferAddr;
-        tempBufferAddr = bufferAddr + bufferSize;
-
+        tempBufferAddr = bufferAddr + bytesToWrite;
+	memcpy(bufferAddr + 0x10000+bytesToWrite, bufferAddr, bytesToWrite);
+        
 # if 1
 
         if ((memoryOffset % pageSize) != 0) {
-
+            
             // We are not page aligned, retrieve first page content to update it
             // Flush temp buffer
   //          DBGU_PutChar('a');
@@ -408,14 +417,14 @@ int main(int argc, char **argv)
             memset((unsigned int *)tempBufferAddr, 0xFF, pageSize);
 
             bufferOffset = (memoryOffset % pageSize);
-
+            
             if( (bytesToWrite + bufferOffset) < pageSize) {
                 packetSize = bytesToWrite;
             }
             else {
                 packetSize = pageSize - bufferOffset;
             }
-
+            
             memoryOffset -= bufferOffset;
 
             // Read page to be updated
@@ -425,6 +434,7 @@ int main(int argc, char **argv)
             memcpy((unsigned char *)(tempBufferAddr + bufferOffset), pBuffer, packetSize);
 
             // Write the page contents
+            AT45D_Erase(&at45, memoryOffset);
             AT45D_Write(&at45, (unsigned char *) tempBufferAddr, pageSize, memoryOffset);
 
             bytesToWrite -= packetSize;
@@ -437,8 +447,9 @@ int main(int argc, char **argv)
 
         // If it remains more than one page to write
         while (bytesToWrite >= pageSize) {
-            // Write the page contents
-//            DBGU_PutChar('b');
+            // Write the page contents 
+            DBGU_PutChar('.');
+            AT45D_Erase(&at45, memoryOffset);
             AT45D_Write(&at45, pBuffer, pageSize, memoryOffset);
   //          DBGU_PutChar('d');
 
@@ -448,19 +459,21 @@ int main(int argc, char **argv)
         }
 
 
+
 #if 1
         // Write remaining data
         if (bytesToWrite > 0) {
 
-
     //        DBGU_PutChar('c');
             // Read previous content of page
+
             AT45D_Read(&at45, (unsigned char *) tempBufferAddr, pageSize, memoryOffset);
 
             // Fill retrieved block with data to be programmed
             memcpy((unsigned char *)tempBufferAddr, pBuffer, bytesToWrite);
 
             // Write the page contents
+            AT45D_Erase(&at45, memoryOffset);
             AT45D_Write(&at45, (unsigned char *) tempBufferAddr, pageSize, memoryOffset);
 
             // No more bytes to write
@@ -469,17 +482,57 @@ int main(int argc, char **argv)
 
 #endif
 
+
         TRACE_INFO("WRITE return byte written : 0x%x Bytes\n\r",
                pMailbox->argument.inputWrite.bufferSize - bytesToWrite);
 
 
+        memoryOffset = pMailbox->argument.inputWrite.memoryOffset;
+        bufferAddr   = pMailbox->argument.inputWrite.bufferAddr;
+        bytesToWrite = pMailbox->argument.inputWrite.bufferSize;
+        
+	bufferAddr += 0x10000 + bytesToWrite;
+        TRACE_INFO("VERIFY at offset: 0x%x buffer at : 0x%x of: 0x%x Bytes\n\r",
+               memoryOffset, bufferAddr, bytesToWrite);
+
+	int fail = 0;
+	
+
+	while(bytesToWrite > 128)
+	{
+	    int n = (bytesToWrite > 128 ? 128 : bytesToWrite);
+	    int i;
+
+            AT45D_Read(&at45, tmp, n, memoryOffset);
+	    
+	    if(memcmp(tmp, bufferAddr, n))
+	    {
+//		TRACE_INFO("Buf at %x\n", bufferAddr);
+		for(i=0;i<n;i++)
+		{
+		    
+		    if(tmp[i]!=  *(unsigned char *)(bufferAddr + i))
+		      TRACE_INFO("%x: %x vs %x\n\r",memoryOffset + i, tmp[i], *(unsigned char *)(bufferAddr + i));
+		}
+		 fail = 1;
+	//	 break;
+	    }
+
+	    bufferAddr += n;
+	    bytesToWrite -= n;
+	    memoryOffset+=n;
+	}
+
+
+	if(fail)
+	    TRACE_INFO("Verification failure\n\r");
 
         pMailbox->argument.outputWrite.bytesWritten = pMailbox->argument.inputWrite.bufferSize - bytesToWrite;
         pMailbox->status = APPLET_SUCCESS;
     }
 
     // ----------------------------------------------------------
-    // READ:
+    // READ: 
     // ----------------------------------------------------------
     else if (pMailbox->command == APPLET_CMD_READ) {
 
@@ -494,7 +547,8 @@ int main(int argc, char **argv)
 
         // Read packet after packets
         while (((unsigned int)pBuffer < (bufferAddr + bufferSize)) && (bytesToRead > 0)) {
-
+	    int i;
+	    
             packetSize = min(PDC_MAX_COUNT, bytesToRead);
             AT45D_Read(&at45, pBuffer, packetSize, memoryOffset);
 
@@ -502,7 +556,7 @@ int main(int argc, char **argv)
             bytesToRead -= packetSize;
             memoryOffset += packetSize;
         }
-
+        
         TRACE_INFO("READ return byte read : 0x%x Bytes\n\r",
                pMailbox->argument.inputRead.bufferSize - bytesToRead);
 
@@ -511,7 +565,7 @@ int main(int argc, char **argv)
     }
 
     // ----------------------------------------------------------
-    // FULL ERASE:
+    // FULL ERASE: 
     // ----------------------------------------------------------
     else if (pMailbox->command == APPLET_CMD_FULL_ERASE) {
 
@@ -527,14 +581,14 @@ int main(int argc, char **argv)
         TRACE_INFO("Full Erase achieved\n\r");
         pMailbox->status = APPLET_SUCCESS;
     }
-
+    
     // ----------------------------------------------------------
-    // BUFFER ERASE:
+    // BUFFER ERASE: 
     // ----------------------------------------------------------
     else if (pMailbox->command == APPLET_CMD_BUFFER_ERASE) {
 
         TRACE_INFO("BUFFER ERASE command: \n\r");
-
+         
         memoryOffset = pMailbox->argument.inputBufferErase.memoryOffset;
         while (memoryOffset < (pMailbox->argument.inputBufferErase.memoryOffset + bufferSize)) {
 
@@ -545,9 +599,9 @@ int main(int argc, char **argv)
         TRACE_INFO("Buffer Erase achieved\n\r");
         pMailbox->status = APPLET_SUCCESS;
     }
-
+    
     // ----------------------------------------------------------
-    // CONFIGURE IN BINARY MODE (power of two page size):
+    // CONFIGURE IN BINARY MODE (power of two page size): 
     // ----------------------------------------------------------
     else if (pMailbox->command == APPLET_CMD_BINARY_PAGE) {
 
