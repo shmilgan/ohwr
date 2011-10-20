@@ -41,6 +41,7 @@
 #define CLI_ERROR           -1  /* Generic error */
 #define CLI_ALLOC_ERROR     -2  /* Memory allocation failed */
 #define CLI_SNMP_INIT_ERROR -3  /* SNMP initialization error */
+#define CLI_REG_ERROR       -4  /* Error while registering the commands */
 #define CLI_OK              0   /* Success */
 
 /* Prompt */
@@ -50,11 +51,11 @@
 #define DEFAULT_HOSTNAME    "WR-Switch"
 
 /* Define a maximum number of commands allowed per line */
-#define MAX_CMDS_IN_LINE    5
+#define MAX_CMDS_IN_LINE    10
 
 /* Define a maximum length for the commands inserted by the user (meassured in
    characters) */
-#define MAX_CMD_LENGTH      256
+#define MAX_CMD_LENGTH      1024
 
 
 /* Main data structures */
@@ -68,7 +69,7 @@ struct cli_cmd {
     int     opt;            /* Flag to know if this command accepts arguments */
     char    *opt_desc;      /* Description for the arguments */
 
-    int (*handler) (struct cli_shell *, int, char **); /* Handler for the
+    void (*handler) (struct cli_shell *, int, char **); /* Handler for the
                                                           command */
 
     struct cli_cmd *child;      /* Next possible commands in the line */
@@ -81,7 +82,6 @@ struct cli_cmd {
 struct cli_shell {
     char    *hostname;          /* Name of the host */
     char    *prompt;            /* Prompt for the cli shell */
-    int     error;              /* Code for errors */
 
     struct cli_cmd *root_cmd;    /* Reference to the root of the command tree */
 };
@@ -94,7 +94,7 @@ struct cli_cmd *cli_find_command(struct cli_shell *cli,
                                  struct cli_cmd *top_cmd,
                                  char *cmd);
 void cli_run_command(struct cli_shell *cli, char *string);
-void cli_print_error(struct cli_shell *cli);
+void cli_error(struct cli_shell *cli, int error_code);
 void cli_main_loop(struct cli_shell *cli);
 
 

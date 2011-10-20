@@ -42,8 +42,8 @@ Internally, the CLI has been designed trying to reuse the code written for the
 SNMP agents, which means that the CLI is going to translate the CLI commands
 into SNMP operations that an SNMP client will understand and run, in order to
 get the information from the SNMP agent. This way we aim at avoiding duplicate
-code and some concurrency issues. The SNMP agent will be who communicates with
-hardware.
+code and some concurrency issues. The SNMP agent will be responsible for
+communicating with hardware.
 
 
 
@@ -84,6 +84,9 @@ GPL readline library:
     the CLI and the command history.
 
 net-snmp:
+    The CLI commands use the net-snmp API to get/set the configuration
+    parameters of the switch, through a SNMP client interface, which
+    interacts with the SNMP agent.
 
 
 
@@ -98,3 +101,5 @@ Everytime you run the wrsw_cli application you must specify a user and password
 facilities. This is mandatory for now. Try with:
 
  ./wrsw_cli -u authPrivUser -p password
+
+In order to run the wrsw_cli, the wrsw_rtud and the snmpd agent must be running.

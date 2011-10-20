@@ -176,7 +176,7 @@ struct cli_shell *cli_init(void)
 
     cli = (struct cli_shell *)malloc(sizeof(struct cli_shell));
     if (!cli)
-        return NULL;
+        cli_error(NULL, CLI_ALLOC_ERROR);
 
     /* Clear structure */
     memset(cli, 0, sizeof(struct cli_shell));
@@ -257,6 +257,8 @@ void cli_run_command(struct cli_shell *cli, char *string)
     int i = 0;
     int argc = 0;
     char *argv[] = {0};
+    int arg = 0;  /* Flag to know whether we are looking for a command or
+                     an argument */
 
 
     if (!string)
@@ -267,7 +269,7 @@ void cli_run_command(struct cli_shell *cli, char *string)
 
     /* Check for allocation erors */
     if (num_cmds < 0) {
-        cli->error = CLI_ALLOC_ERROR;
+        printf("Out of memory while proccessing the command.\n");
         return;
     }
 
@@ -290,18 +292,26 @@ void cli_run_command(struct cli_shell *cli, char *string)
                 return;
             } else {
                 if (!cmd) {
-                    printf("Error. Command %s not found.\n", commands[i]);
+                    printf("Error. Command %s does not exist.\n", commands[i]);
                     return;
                 } else {
                     if (!cmd->opt) {
-                        printf("Error. Command %s not found.\n", commands[i]);
+                        printf("Error. Command %s does not exist.\n",
+                                commands[i]);
                         return;
                     } else {
-                        /* It can be an argument. The handler will check
-                           wether this is a valid argument or not */
-                        argc++;
-                        argv[(argc-1)] = commands[i];
-                        continue;
+                        if (arg) {
+                            /* It can be an argument. The handler will check
+                               wether this is a valid argument or not */
+                            argc++;
+                            argv[(argc-1)] = commands[i];
+                            arg = 0; /* Next word can't be an arg, but a cmd */
+                            continue;
+                        } else {
+                            printf("Error.Command %s does not exist.\n",
+                                    commands[i]);
+                            return;
+                        }
                     }
                 }
             }
@@ -325,6 +335,7 @@ void cli_run_command(struct cli_shell *cli, char *string)
         }
 
         cmd = c_found;
+        arg = 1; /* Next word can be an argument */
     }
 
     /* Run the handler associated to the last command detected */
@@ -348,22 +359,28 @@ void cli_run_command(struct cli_shell *cli, char *string)
  * It handles the fatal errors, i.e. those errors that force the program to
  * exit. It uses the cli_cmd_exit function to de-allocate data structures.
  * @param cli CLI interpreter.
+ * @param error_code Error code.
  */
-void cli_print_error(struct cli_shell *cli)
+void cli_error(struct cli_shell *cli, int error_code)
 {
-    switch (cli->error) {
+    switch (error_code) {
     case CLI_ALLOC_ERROR:
-        fprintf(stderr, "Memory allocation error");
+        fprintf(stderr, "Memory allocation error\n");
         break;
     case CLI_SNMP_INIT_ERROR:
-        fprintf(stderr, "SNMP initialization error");
+        fprintf(stderr, "SNMP initialization error\n");
+        break;
+    case CLI_REG_ERROR:
+        fprintf(stderr, "An error has occurred while registering the"
+                " commands tree\n");
         break;
     case CLI_ERROR:
     default:
-        fprintf(stderr, "Fatal generic error");
+        fprintf(stderr, "Fatal error: %i\n", error_code);
         break;
     }
 
+    /* Free memory */
     cli_cmd_exit(cli, 0, NULL);
 }
 
@@ -394,16 +411,13 @@ void cli_main_loop(struct cli_shell *cli)
             string++;
         }
 
-        /* Evaluate the commands line inserted by the user and try to run
-           the command */
-        cli_run_command(cli, string);
-
         /* If it is not an empty string, save the string to the history */
         if (string && *string)
             add_history(string);
 
-        if (cli->error < 0)
-            break;
+        /* Evaluate the commands line inserted by the user and try to run
+           the command */
+        cli_run_command(cli, string);
     }
 
     free(string);
@@ -455,26 +469,12 @@ int main(int argc, char **argv)
     if (!username && !password)
         usage(name);
 
-    /* Initialize the CLI */
+    /* Initialize the CLI data */
     cli = cli_init();
-
-    /* Check for initialization errors */
-    if (!cli) {
-        printf("Failed to allocate memory for the CLI\n");
-        return CLI_ALLOC_ERROR;
-    }
-
-    /* Check for other possible errors */
-    if (cli->error < 0)
-        cli_print_error(cli);
 
     /* Init SNMP */
     if (cli_snmp_init(username, password) < 0)
-        cli->error = CLI_SNMP_INIT_ERROR;
-
-    /* Check for other possible errors */
-    if (cli->error < 0)
-        cli_print_error(cli);
+        cli_error(cli,CLI_SNMP_INIT_ERROR);
 
     /* Set the prompt */
     cli_build_prompt(cli);
@@ -490,7 +490,7 @@ int main(int argc, char **argv)
 
     /* Free memory when exiting the main loop */
     if (cli)
-        cli_print_error(cli);
+        cli_error(cli, CLI_ERROR);
 
-	return CLI_ERROR;
+	return 0;
 }
