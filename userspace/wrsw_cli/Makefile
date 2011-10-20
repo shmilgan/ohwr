@@ -18,14 +18,14 @@ LIBFILES	= 	$(WRS_READLINE_DIR)/libreadline.a \
 CC		= $(CROSS_COMPILE)gcc
 
 CFLAGS		= -O2 -Os -pipe -Wall -I. -I$(WRS_READLINE_DIR) \
-	-I$(WRS_BUILDROOT_DIR)/output/build/net-snmp-5.5/include \
+	-I$(NET_SNMP_HOME)/include \
 	-I$(WRS_BUILDROOT_DIR)/output/staging/usr/include \
 	-I$(WRS_BUILDROOT_DIR)/output/staging/include \
 	--sysroot=$(WRS_BUILDROOT_DIR)/output/staging/ \
 	-isysroot $(WRS_BUILDROOT_DIR)/output/staging \
 	-mtune=arm920t -march=armv4t -mabi=aapcs-linux -msoft-float \
 	-D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Ulinux \
-	-Dlinux=linux -I.
+	-Dlinux=linux
 
 LDFLAGS = -L. -L$(WR_LIB) -L$(WRS_BUILDROOT_DIR)/output/target/usr/lib \
           `$(NET_SNMP_CONFIG) --libs`

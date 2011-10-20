@@ -3,6 +3,7 @@
  * Copyright (C) 2011, CERN.
  *
  * Authors:     Miguel Baizan   (miguel.baizan@integrasys.es)
+ *              Juan Luis Manas (juan.manas@integrasys.es)
  *
  * Description: Commands related stuff.
  *              Building of the commands tree.
@@ -31,6 +32,11 @@
 #include "cli.h"
 
 
+/* TODO Take these values from the RTU code */
+#define MIN_AGING_TIME          10
+#define MAX_AGING_TIME          1000000
+#define MAX_VID                 4094
+#define NUM_PORTS               32
 
 /* Function to build the commands tree */
 void cli_build_commands_tree(struct cli_shell *cli);
@@ -39,7 +45,7 @@ void cli_build_commands_tree(struct cli_shell *cli);
 struct cli_cmd *cli_register_command(struct cli_shell *cli,
                                             struct cli_cmd *parent,
                                             char *command,
-                                            int (*handler) (struct cli_shell *,
+                                            void (*handler) (struct cli_shell *,
                                                             int, char **),
                                             char *desc,
                                             int opt,
@@ -48,15 +54,23 @@ void cli_unregister_commands(struct cli_cmd *top_cmd);
 
 /* Commands */
 void cli_cmd_help(struct cli_shell *cli, struct cli_cmd *cmd);
-int cli_cmd_exit(struct cli_shell *cli, int argc, char **argv);
-int cli_cmd_hostname(struct cli_shell *cli, int argc, char **argv);
-int cli_cmd_show_cam(struct cli_shell *cli, int argc, char **argv);
-int cli_cmd_show_cam_aging(struct cli_shell *cli, int argc, char **argv);
-int cli_cmd_show_cam_multi(struct cli_shell *cli, int argc, char **argv);
-int cli_cmd_show_cam_static(struct cli_shell *cli, int argc, char **argv);
-int cli_cmd_show_cam_dynamic(struct cli_shell *cli, int argc, char **argv);
-int cli_cmd_show_vlan(struct cli_shell *cli, int argc, char **argv);
-int cli_cmd_set_cam_aging(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_exit(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_hostname(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_show_port_info(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_show_cam_aging(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_show_cam(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_show_cam_multi(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_show_cam_static(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_show_cam_static_multi(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_show_vlan(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_set_port_pvid(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_set_cam_aging(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_set_cam_static_entry(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_set_cam_multi_entry(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_del_cam_static_entry(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_del_cam_multi_entry(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_set_vlan(struct cli_shell *cli, int argc, char **argv);
+void cli_cmd_del_vlan(struct cli_shell *cli, int argc, char **argv);
 
 
 #endif /*__WHITERABBIT_CLI_COMMANDS_H*/

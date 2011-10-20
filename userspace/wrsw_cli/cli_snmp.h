@@ -37,13 +37,23 @@ char *cli_snmp_string(netsnmp_variable_list *vars);
 int cli_snmp_get_int(oid _oid[MAX_OID_LEN], size_t oid_len);
 char *cli_snmp_get_string(oid _oid[MAX_OID_LEN], size_t oid_len);
 
-netsnmp_pdu *cli_snmp_getnext(oid _oid[MAX_OID_LEN]);
+netsnmp_pdu *cli_snmp_getnext(oid _oid[MAX_OID_LEN], size_t *oid_len);
 
 int cli_snmp_getnext_int(oid _oid[MAX_OID_LEN], size_t *oid_len);
 char *cli_snmp_getnext_string(oid _oid[MAX_OID_LEN], size_t *oid_len);
 
-void cli_snmp_set_int(oid _oid[MAX_OID_LEN], char *val, char type);
-void cli_snmp_set_str(oid _oid[MAX_OID_LEN], char *val);
+void cli_snmp_set_int(oid _oid[MAX_OID_LEN],
+                      size_t oid_len,
+                      char *val,
+                      char type);
+
+void cli_snmp_set_str(oid _oid[MAX_OID_LEN], size_t oid_len, char *val);
+
+void cli_snmp_set(oid _oid[][MAX_OID_LEN],
+                  size_t oid_len[],
+                  char *val[],
+                  char type[],
+                  int nvars);
 
 void cli_snmp_close();
 

@@ -18,3 +18,5 @@ application, so memory be freed)
 callback function for this, instead of a string).
 
 - Extend the commands.
+
+- Add verbosity to the error messages.
