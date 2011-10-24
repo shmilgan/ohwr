@@ -9,8 +9,6 @@ the /$(HOME)/wrdev/build/buildroot-2009.11/output/build/readline-5.2/rlconf.h
 
 - Add support for a persistent configuration file.
 
-- Support command autocompletion (TAB key), using the readline library.
-
 - Capture signals (i.e. SIGTERM, to execute cli_cmd_exit before leaving the
 application, so memory be freed)
 

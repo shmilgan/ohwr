@@ -97,7 +97,7 @@ void cli_build_commands_tree(struct cli_shell *cli)
 
     /* exit */
     c = cli_register_command(cli, NULL, "exit", cli_cmd_exit,
-            "Exit from Command Line Interface", 0, NULL);
+            "Exit from Command Line Interface", CMD_NO_ARG, NULL);
 
     /* Set the root parent command from which the tree will be build */
     cli->root_cmd = c;
@@ -105,120 +105,123 @@ void cli_build_commands_tree(struct cli_shell *cli)
     /* hostname */
     cli_register_command(cli, NULL, "hostname", cli_cmd_hostname,
         "Displays or sets (if argument is present) the host name",
-        1, "<hostname> Optional. New hostname");
+        CMD_ARG_OPTIONAL, "<hostname> New hostname");
 
 
     /* SHOW commands */
     s = cli_register_command(cli, NULL, "show", NULL,
-        "Shows the device configurations", 0, NULL);
+        "Shows the device configurations", CMD_NO_ARG, NULL);
 
     /* show interface */
     c = cli_register_command(cli, s, "interface", NULL,
-            "Displays interface information", 0, NULL);
+            "Displays interface information", CMD_NO_ARG, NULL);
     /* show interface information */
     cli_register_command(cli, c, "information", cli_cmd_show_port_info,
-            "Displays general interface information", 0, NULL);
+            "Displays general interface information", CMD_NO_ARG, NULL);
 
     /* show mac-address-table */
     c = cli_register_command(cli, s, "mac-address-table", cli_cmd_show_cam,
             "Displays static and dynamic information of unicast entries"
-            " in the FDB", 0, NULL);
+            " in the FDB", CMD_NO_ARG, NULL);
     /* show mac-address-table aging-time */
     cli_register_command(cli, c, "aging-time", cli_cmd_show_cam_aging,
-        "Displays the Filtering Database aging time", 0, NULL);
+        "Displays the Filtering Database aging time", CMD_NO_ARG, NULL);
     /* show mac-address-table multicast */
     cli_register_command(cli, c, "multicast", cli_cmd_show_cam_multi,
         "Displays static and dynamic information of multicast entries"
-        " in the FDB", 0, NULL);
+        " in the FDB", CMD_NO_ARG, NULL);
     /* show mac-address-table static */
     m = cli_register_command(cli, c, "static", cli_cmd_show_cam_static,
         "Displays all the static unicast MAC address entries"
-        " in the FDB", 0, NULL);
+        " in the FDB", CMD_NO_ARG, NULL);
     /* show mac-address-table static multicast */
     cli_register_command(cli, m, "multicast", cli_cmd_show_cam_static_multi,
         "Displays all the static multicast MAC address entries"
-        " in the FDB", 0, NULL);
+        " in the FDB", CMD_NO_ARG, NULL);
 
     /* show vlan */
     c = cli_register_command(cli, s, "vlan", cli_cmd_show_vlan,
-            "Displays VLAN information", 0, NULL);
+            "Displays VLAN information", CMD_NO_ARG, NULL);
 
     /* INTERFACE commands */
     c = cli_register_command(cli, NULL, "interface", NULL,
-            "Interface configuration", 0, NULL);
+            "Interface configuration", CMD_NO_ARG, NULL);
     /* interface port <port number> */
     s = cli_register_command(cli, c, "port", NULL,
-        "Port configuration", 1, "<port number> Port Number");
+        "Port configuration", CMD_ARG_MANDATORY, "<port number> Port Number");
     /* interface port <port number> pvid <VLAN number> */
     cli_register_command(cli, s, "pvid", cli_cmd_set_port_pvid,
-        "Sets the PVID value for the port", 1, "<VLAN number> VLAN Number");
+        "Sets the PVID value for the port",
+        CMD_ARG_MANDATORY, "<VLAN number> VLAN Number");
 
     /* mac-address-table */
     c = cli_register_command(cli, NULL, "mac-address-table", NULL,
-            "Configure MAC address table", 0, NULL);
+            "Configure MAC address table", CMD_NO_ARG, NULL);
     /* mac-address-table aging-time <aging> */
     cli_register_command(cli, c, "aging-time", cli_cmd_set_cam_aging,
         "Sets the MAC address table aging time",
-        1, "<aging value> New aging time");
+        CMD_ARG_MANDATORY, "<aging value> New aging time");
     /* mac-address-table static <MAC Addrress> */
     s = cli_register_command(cli, c, "static", NULL,
             "Adds a static unicast entry in the filtering database",
-            1, "<MAC Addrress> MAC Address");
+            CMD_ARG_MANDATORY, "<MAC Addrress> MAC Address");
     /* mac-address-table static <MAC Addrress> vlan <VID> */
     m = cli_register_command(cli, s, "vlan", NULL,
             "Adds a static unicast entry in the filtering database",
-            1, "<VID> VLAN number");
+            CMD_ARG_MANDATORY, "<VID> VLAN number");
     /* mac-address-table static <MAC Addrress> vlan <VID> port <port number> */
     cli_register_command(cli, m, "port", cli_cmd_set_cam_static_entry,
         "Adds a static unicast entry in the filtering database",
-        1, "<port number> Port numbers separatted by commas");
+        CMD_ARG_MANDATORY, "<port number> Port numbers separatted by commas");
     /* mac-address-table multicast <MAC Addrress> */
     s = cli_register_command(cli, c, "multicast", NULL,
             "Adds a static multicast entry in the filtering database",
-            1, "<MAC Addrress> MAC Address");
+            CMD_ARG_MANDATORY, "<MAC Addrress> MAC Address");
     /* mac-address-table multicast <MAC Addrress> vlan <VID> */
     m = cli_register_command(cli, s, "vlan", NULL,
             "Adds a static multicast entry in the filtering database",
-            1, "<VID> VLAN number");
+            CMD_ARG_MANDATORY, "<VID> VLAN number");
     /* mac-address-table multicast <MAC Addrress> vlan <VID> port <port number> */
     cli_register_command(cli, m, "port", cli_cmd_set_cam_multi_entry,
         "Adds a static multicast entry in the filtering database",
-        1, "<port number> port numbers separatted by commas");
+        CMD_ARG_MANDATORY, "<port number> port numbers separatted by commas");
 
     /* VLAN commands */
     c = cli_register_command(cli, NULL, "vlan", NULL, "VLAN configuration",
-            1, "<VID> VLAN number");
+            CMD_ARG_MANDATORY, "<VID> VLAN number");
     /* vlan <VID> member <port number> */
     cli_register_command(cli, c, "member", cli_cmd_set_vlan,
-        "Creates a new VLAN", 1,
+        "Creates a new VLAN", CMD_ARG_MANDATORY,
         "<port number> port numbers separatted by commas");
 
     /* NO commands */
     no = cli_register_command(cli, NULL, "no", NULL,
-        "Use 'no' to delete/disable some configured parameters", 0, NULL);
+            "Use 'no' to delete/disable some configured parameters",
+            CMD_NO_ARG, NULL);
     /* no mac-address-table */
     c = cli_register_command(cli, no, "mac-address-table", NULL,
-            "Removes static entries from the filtering database", 0, NULL);
+            "Removes static entries from the filtering database",
+            CMD_NO_ARG, NULL);
     /* no mac-address-table static <MAC Addrress> */
     s = cli_register_command(cli, c, "static", NULL,
             "Removes a static unicast entry from the filtering database",
-            1, "<MAC Addrress> MAC Address");
+            CMD_ARG_MANDATORY, "<MAC Addrress> MAC Address");
     /* no mac-address-table static <MAC Addrress> vlan <VID> */
     cli_register_command(cli, s, "vlan", cli_cmd_del_cam_static_entry,
             "Removes a static unicast entry from the filtering database",
-            1, "<VID> VLAN number");
+            CMD_ARG_MANDATORY, "<VID> VLAN number");
     /* no mac-address-table multicast <MAC Addrress> */
     s = cli_register_command(cli, c, "multicast", NULL,
             "Removes a static multicast entry from the filtering database",
-            1, "<MAC Addrress> MAC Address");
+            CMD_ARG_MANDATORY, "<MAC Addrress> MAC Address");
     /* no mac-address-table multicast <MAC Addrress> vlan <VID> */
     cli_register_command(cli, s, "vlan", cli_cmd_del_cam_multi_entry,
             "Removes a static multicast entry from the filtering database",
-            1, "<VID> VLAN number");
+            CMD_ARG_MANDATORY, "<VID> VLAN number");
 
     /* no vlan <VID> */
     cli_register_command(cli, no, "vlan", cli_cmd_del_vlan, "Removes VLAN",
-            1, "<VID> VLAN number");
+            CMD_ARG_MANDATORY, "<VID> VLAN number");
 }
 
 /**
@@ -265,11 +268,11 @@ struct cli_cmd *cli_register_command(
         cmd->desc = strdup(desc);
 
     /* Set the options if they exists */
-    if (opt) {
+    if (opt != CMD_NO_ARG) {
         cmd->opt = opt;
         cmd->opt_desc = strdup(opt_desc);
     } else {
-        cmd->opt = 0;
+        cmd->opt = CMD_NO_ARG;
         cmd->opt_desc = NULL;
     }
 
@@ -385,9 +388,17 @@ void cli_cmd_help(struct cli_shell *cli, struct cli_cmd *cmd)
         printf("\tCommand DESCRIPTION\n");
         printf("\t-------------------\n");
         printf("\t%s\n", cmd->desc);
-        if (cmd->opt) {
-            printf("\n\tThis command accepts arguments:\n");
+        switch (cmd->opt) {
+        case CMD_ARG_MANDATORY:
+            printf("\n\tArguments that must be provided:\n");
             printf("\t%s\n", cmd->opt_desc);
+            break;
+        case CMD_ARG_OPTIONAL:
+            printf("\n\tOptional arguments:\n");
+            printf("\t%s\n", cmd->opt_desc);
+            break;
+        default:
+            break;
         }
         if (cmd->child) {
             printf("\n\tSUBCOMMANDS\n");
