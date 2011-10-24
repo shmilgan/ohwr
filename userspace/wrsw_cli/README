@@ -33,7 +33,8 @@ configuration modes have been defined.
 
 If you need help while using the WR CLI, type 'help' or '?'. These commands
 can be also used to get more information on a given command or even to get a
-list of available commands.
+list of available commands. For a simple command autocompletion, the TAB key
+may be also used.
 
 Some line editing features are available, as well as some command history
 capabilities.

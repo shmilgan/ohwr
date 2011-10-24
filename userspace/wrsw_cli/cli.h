@@ -57,6 +57,11 @@
    characters) */
 #define MAX_CMD_LENGTH      1024
 
+/* Define the types of argument expected by the command */
+#define CMD_NO_ARG          0
+#define CMD_ARG_MANDATORY   1
+#define CMD_ARG_OPTIONAL    2
+
 
 /* Main data structures */
 struct cli_cmd;

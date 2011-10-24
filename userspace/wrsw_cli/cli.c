@@ -41,6 +41,11 @@
 #include "cli_snmp.h"
 
 
+
+/* Reference needed by the readline library function for command
+   autocompletion */
+static struct cli_shell *_cli;
+
 /* Internal functions */
 static void usage(char *name);
 static int parse_string(char *string, char *commands[]);
@@ -121,7 +126,6 @@ static int parse_string(char *string, char *commands[])
 static void free_cmds_string(int num_cmds, char *commands[])
 {
     int i = 0;
-
     for (i = 0; i < num_cmds; i++)
         free(commands[i]);
 }
@@ -131,20 +135,105 @@ static void free_cmds_string(int num_cmds, char *commands[])
  * \brief Generator function for command completion.
  * @param cli CLI interpreter.
  * @param text the word to compete.
- * @param state lets us know whether to start from scratch; without any state
- * (i.e. STATE == 0), then we start at the top of the list.
+ * @param state lets us know whether to start from scratch; it's zero the first
+ * time this function is called, so without any state (i.e. STATE == 0),
+ * then we start at the top of the list.
 */
 static char *command_generator(const char *text, int state)
 {
-    /* TODO */
+    static int len, num_cmds, is_arg;
+    static struct cli_cmd *ref_cmd = NULL;
 
+    struct cli_shell *cli = _cli;
+    char *commands[MAX_CMDS_IN_LINE] = {0};
+    struct cli_cmd *cmd = NULL;
+    struct cli_cmd *c_found = NULL;
+    int i;
+
+
+    if (!state) {
+        len = strlen(text);
+        is_arg = 0;
+
+        /* Parse the line gathered so far */
+        num_cmds = parse_string(rl_line_buffer, commands);
+
+        /* Check for allocation errors */
+        if (num_cmds < 0)
+            return ((char*)NULL);
+
+        /* If present, check first that the previous commands are correct
+           parents */
+        if (num_cmds >= 0) {
+            ref_cmd = cli->root_cmd; /* When num_cmds == 0,
+                                        or when num_cmds == 1 and len != 0 */
+            for (i = 0; i < ((len == 0) ? num_cmds : (num_cmds - 1)); i++) {
+                if (!cmd) {
+                    /* Start the search from root_cmd */
+                    c_found = cli_find_command(cli, cli->root_cmd, commands[i]);
+                } else {
+                    /* Search among the children */
+                    c_found = cli_find_command(cli, cmd->child, commands[i]);
+                }
+
+                if (!c_found) {
+                    if (!cmd) { /* The first command in the line is wrong */
+                        free_cmds_string(num_cmds, commands);
+                        return ((char*)NULL);
+                    }
+
+                    /* Check if it may be an argument */
+                    if (cmd->opt != CMD_NO_ARG) {
+                        is_arg = ~is_arg;
+                        ref_cmd = cmd->child;
+                        continue;
+                    } else {
+                        free_cmds_string(num_cmds, commands);
+                        return ((char*)NULL);
+                    }
+                } else {
+                    ref_cmd = c_found->child;
+                }
+                is_arg = 0;
+                cmd = c_found;
+            }
+        }
+    }
+
+    cmd = ref_cmd;
+
+    /* If we reach the end of the commands list, we exit */
+    if (!cmd) {
+        free_cmds_string(num_cmds, commands);
+        return ((char*)NULL);
+    }
+
+    /* If it has to be an argument, no autocompletion is provided */
+    if (cmd->parent) {
+        if ((is_arg == 0) && (cmd->parent->opt == CMD_ARG_MANDATORY)) {
+            free_cmds_string(num_cmds, commands);
+            return ((char*)NULL);
+        }
+    }
+
+    /* Look for matches in the list of commands that share the parent */
+    while (cmd) {
+        if (strncmp(text, cmd->name, len) == 0) { /* Match found */
+            ref_cmd = cmd->next; /* Save the reference cmd for the next loop */
+            return (strdup(cmd->name));
+        }
+        cmd = cmd->next;
+    }
+
+    free_cmds_string(num_cmds, commands);
     return ((char*)NULL);
 }
 
 
 /**
- * \brief Attempt to complete on the contents of TEXT.
- * @param text the word to compete.
+ * \brief Attempt to complete on the contents of TEXT. It calls the
+ * command_generator function until it returns a NULL pointer.
+ * @param text the word to complete.
  * @param start
  * @param end START and END bound the region of rl_line_buffer that contains
  * the word to complete. We can use the entire contents of rl_line_buffer
@@ -261,7 +350,7 @@ void cli_run_command(struct cli_shell *cli, char *string)
                      an argument */
 
 
-    if (!string)
+    if (!*string)
         return;
 
     /* Parse command. The commands will be stored in the 'commands' array */
@@ -293,11 +382,13 @@ void cli_run_command(struct cli_shell *cli, char *string)
             } else {
                 if (!cmd) {
                     printf("Error. Command %s does not exist.\n", commands[i]);
+                    free_cmds_string(num_cmds, commands);
                     return;
                 } else {
-                    if (!cmd->opt) {
+                    if (cmd->opt == CMD_NO_ARG) {
                         printf("Error. Command %s does not exist.\n",
                                 commands[i]);
+                        free_cmds_string(num_cmds, commands);
                         return;
                     } else {
                         if (arg) {
@@ -308,8 +399,9 @@ void cli_run_command(struct cli_shell *cli, char *string)
                             arg = 0; /* Next word can't be an arg, but a cmd */
                             continue;
                         } else {
-                            printf("Error.Command %s does not exist.\n",
+                            printf("Error. Command %s does not exist.\n",
                                     commands[i]);
+                            free_cmds_string(num_cmds, commands);
                             return;
                         }
                     }
@@ -392,7 +484,7 @@ void cli_error(struct cli_shell *cli, int error_code)
 void cli_main_loop(struct cli_shell *cli)
 {
     char *line = NULL;
-    char *string;
+    char *string = NULL;
 
     /* Init loop */
     while (1) {
@@ -405,15 +497,17 @@ void cli_main_loop(struct cli_shell *cli)
 
         /* Use readline function to let Command Line Editing */
         line = readline(cli->prompt);
+        if (!line)
+            break;
 
         string = line;
-        while (*string && isspace(*string)) { /* Remove initial white spaces */
+        while (*string && isspace(*string)) /* Remove initial white spaces */
             string++;
-        }
+        if (!*string)
+            continue;
 
-        /* If it is not an empty string, save the string to the history */
-        if (string && *string)
-            add_history(string);
+        /* Save the string to the history */
+        add_history(string);
 
         /* Evaluate the commands line inserted by the user and try to run
            the command */
@@ -475,6 +569,9 @@ int main(int argc, char **argv)
     /* Init SNMP */
     if (cli_snmp_init(username, password) < 0)
         cli_error(cli,CLI_SNMP_INIT_ERROR);
+
+    /* Reference for the readline library */
+    _cli = cli;
 
     /* Set the prompt */
     cli_build_prompt(cli);
