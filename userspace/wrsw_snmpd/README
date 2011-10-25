@@ -69,11 +69,13 @@ to generate the static version (libwripc.a) at the ptp-noposix package. This is
 a sloppy temporary solution, while HAL package is adapted to mini-ipc.
 
 
+Depends on Net-SNMP 5.5 (SNMPv3 support) and OpenSSL 0.9.8 (encryption support).
+
     Compilation of the modules
     ==========================
 
 To compile the MIB modules, please run "make". A library file per MIB (namely
-libiee8021bridge.so and libieee8021qbridge.so) will be produced. You can run
+libieee8021bridge.so and libieee8021qbridge.so) will be produced. You can run
 "make install" to copy library files to the $(WR_INSTALL_ROOT)/bin directory,
 and configuration file to the $(ROOTFS_OVERRIDE)/etc/snmp.
 
@@ -106,3 +108,11 @@ iee8021bridge.so and ieee8021qbridge.so) will be produced. You can run
 and configuration file to the $(ROOTFS_OVERRIDE)/etc/snmp. 
 
 Before running the SNMP daemon, please make sure the RTU daemon is running.
+=======
+To redirect snmpd output to a file use the -Lf option. To filter snmpd messages
+by token use the -D option. Please refer to Net-SNMP documentation for detailed
+information on available configuration options.
+
+Example:
+
+#/usr/sbin/snmpd -Lf /var/log/snmpd.log -Dtrace,8021Q
