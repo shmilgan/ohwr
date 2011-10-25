@@ -5,8 +5,6 @@
 #ifndef IEEE8021QBRIDGESTATICMULTICASTTABLE_H
 #define IEEE8021QBRIDGESTATICMULTICASTTABLE_H
 
-#define MIB_MOD "ieee8021QBridgeStaticMulticastTable"
-
 void init_ieee8021QBridgeStaticMulticastTable(void);
 
 #endif /* IEEE8021QBRIDGESTATICMULTICASTTABLE_H */

@@ -5,8 +5,6 @@
 #ifndef IEEE8021QBRIDGEVLANCURRENTTABLE_H
 #define IEEE8021QBRIDGEVLANCURRENTTABLE_H
 
-#define MIB_MOD "ieee8021QBridgeVlanCurrentTable"
-
 void init_ieee8021QBridgeVlanCurrentTable(void);
 
 #endif /* IEEE8021QBRIDGEVLANCURRENTTABLE_H */

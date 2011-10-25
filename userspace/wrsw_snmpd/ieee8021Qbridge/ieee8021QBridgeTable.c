@@ -33,6 +33,8 @@
 #include "rtu_fd_proxy.h"
 #include "utils.h"
 
+#define MIBMOD  "8021Q"
+
 /* column number definitions for table ieee8021QBridgeTable */
 #define COLUMN_IEEE8021QBRIDGECOMPONENTID		    1
 #define COLUMN_IEEE8021QBRIDGEVLANVERSIONNUMBER		2
@@ -81,7 +83,8 @@ static int get_column(netsnmp_request_info *req, int colnum)
     return SNMP_ERR_NOERROR;
 
 error:
-    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+        __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -93,9 +96,9 @@ static int get(netsnmp_request_info *req)
 
     // Get indexes from request
     tinfo = netsnmp_extract_table_info(req);
-    cid = *(tinfo->indexes->val.integer);
+    cid = *tinfo->indexes->val.integer;
 
-    _LOG_DBG("GET cid=%d column=%d.\n", cid, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%d column=%d\n", cid, tinfo->colnum));
 
     if (cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
@@ -120,9 +123,9 @@ static int get_next(netsnmp_request_info *req,
     rootoid_len = reginfo->rootoid_len;
 
     cid = (oid_len > rootoid_len) ?
-          *(tinfo->indexes->val.integer):0;
+          *tinfo->indexes->val.integer:0;
 
-    _LOG_DBG("GET-NEXT cid=%d column=%d.\n", cid, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%d column=%d\n", cid, tinfo->colnum));
 
     // Get index for next entry - SNMP_ENDOFMIBVIEW informs the handler
     // to proceed with next column.
@@ -132,7 +135,7 @@ static int get_next(netsnmp_request_info *req,
         cid = DEFAULT_COMPONENT_ID;
 
     // Update indexes and OID returned in SNMP response
-    *(tinfo->indexes->val.integer) = cid;
+    *tinfo->indexes->val.integer = cid;
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
 
     // return next entry column value
@@ -227,8 +230,9 @@ void init_ieee8021QBridgeTable(void)
     client = rtu_fdb_proxy_create("rtu_fdb");
     if(client) {
         initialize_table();
-        _LOG_INF("initialised\n");
+        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
     } else {
-        _LOG_ERR("error creating mini-ipc proxy - %s\n", strerror(errno));
+        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
+            strerror(errno));
     }
 }

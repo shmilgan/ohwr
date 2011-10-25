@@ -35,6 +35,8 @@
 #include "rtu_fd_proxy.h"
 #include "utils.h"
 
+#define MIBMOD  "8021Q"
+
 /* column number definitions for table ieee8021QBridgeVlanCurrentTable */
 #define COLUMN_IEEE8021QBRIDGEVLANTIMEMARK                  1
 #define COLUMN_IEEE8021QBRIDGEVLANCURRENTCOMPONENTID        2
@@ -86,21 +88,21 @@ static void get_indexes(
 
     if (oid_len > rootoid_len) {
         idx = tinfo->indexes;
-        ent->time_mark = *(idx->val.integer);
+        ent->time_mark = *idx->val.integer;
     } else {
         ent->time_mark = 0;
     }
 
     if (oid_len > rootoid_len + 1) {
         idx = idx->next_variable;
-        ent->cid = *(idx->val.integer);
+        ent->cid = *idx->val.integer;
     } else {
         ent->cid = 0;
     }
 
     if (oid_len > rootoid_len + 2) {
         idx = idx->next_variable;
-        ent->vid = *(idx->val.integer);
+        ent->vid = *idx->val.integer;
     } else {
         ent->vid = 0;
     }
@@ -154,8 +156,8 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     tinfo = netsnmp_extract_table_info(req);
     get_indexes(req, reginfo, tinfo, &ent);
 
-    _LOG_DBG("GET cid=%lu vid=%d time=%lu column=%d.\n",
-        ent.cid, ent.vid, ent.time_mark, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%lu vid=%d time=%lu column=%d\n",
+        ent.cid, ent.vid, ent.time_mark, tinfo->colnum));
 
     if (ent.cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
@@ -166,22 +168,23 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     // Read entry from RTU FDB.
     errno = 0;
     err = rtu_fdb_proxy_read_vlan_entry( ent.vid,
-                                        &(ent.fid),
+                                        &ent.fid,
                                         &type,
-                                        &(ent.port_mask),
-                                        &(ent.untagged_set),
-                                        &(ent.creation_t));
+                                        &ent.port_mask,
+                                        &ent.untagged_set,
+                                        &ent.creation_t);
     if (errno)
         goto error;
     if (err) {
-        _LOG_DBG("vlan vid=%d not found in fdb\n", ent.vid);
+        DEBUGMSGTL((MIBMOD, "vlan vid=%d not found in fdb\n", ent.vid));
         return SNMP_NOSUCHINSTANCE;
     }
     // Get column value
     return get_column(req, tinfo->colnum, &ent);
 
 error:
-    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+        __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -197,8 +200,8 @@ static int get_next(netsnmp_request_info *req,
     tinfo = netsnmp_extract_table_info(req);
     get_indexes(req, reginfo, tinfo, &ent);
 
-    _LOG_DBG("GET-NEXT time=%d cid=%d vid=%d column=%d\n",
-        ent.time_mark, ent.cid, ent.vid, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "time=%d cid=%d vid=%d column=%d\n",
+        ent.time_mark, ent.cid, ent.vid, tinfo->colnum));
 
     // TODO time filtering
     // Get indexes for next entry - SNMP_ENDOFMIBVIEW informs the handler
@@ -211,39 +214,56 @@ static int get_next(netsnmp_request_info *req,
         ent.time_mark = 0;
         // NOTE: since vid=0 is a reserved value, it can be safely used to
         // start walking throught the VLAN table
+#ifdef V2
+        // Although use of VID=0 is reserved, it is actually used by HW V2,
+        // so we need to check it also.
+        errno = 0;
+        err = rtu_fdb_proxy_read_vlan_entry(ent.vid,
+                                            &ent.fid,
+                                            &type,
+                                            &ent.port_mask,
+                                            &ent.untagged_set,
+                                            &ent.creation_t);
+        if (errno)
+            goto error_;
+        if (!err)
+            goto update_idx;
+#endif // V2
     }
 
     if (ent.vid >= NUM_VLANS)
         return SNMP_ENDOFMIBVIEW;
 
     errno = 0;
-    err = rtu_fdb_proxy_read_next_vlan_entry(&(ent.vid),
-                                             &(ent.fid),
+    err = rtu_fdb_proxy_read_next_vlan_entry(&ent.vid,
+                                             &ent.fid,
                                              &type,
-                                             &(ent.port_mask),
-                                             &(ent.untagged_set),
-                                             &(ent.creation_t));
+                                             &ent.port_mask,
+                                             &ent.untagged_set,
+                                             &ent.creation_t);
     if (errno)
         goto error_;
     if (err)
         return SNMP_ENDOFMIBVIEW;   // No other entry found
 
+update_idx:
     // Update indexes and OID returned in SNMP response
     idx = tinfo->indexes;
-    *(idx->val.integer) = ent.time_mark;
+    *idx->val.integer = ent.time_mark;
 
     idx = idx->next_variable;
-    *(idx->val.integer) = ent.cid;
+    *idx->val.integer = ent.cid;
 
     idx = idx->next_variable;
-    *(idx->val.integer) = ent.vid;
+    *idx->val.integer = ent.vid;
 
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
     // Get next entry column value
     return get_column(req, tinfo->colnum, &ent);
 
 error_:
-    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+        __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -319,8 +339,9 @@ void init_ieee8021QBridgeVlanCurrentTable(void)
     client = rtu_fdb_proxy_create("rtu_fdb");
     if(client) {
         initialize_table();
-        _LOG_INF("initialised\n");
+        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
     } else {
-        _LOG_ERR("error creating mini-ipc proxy - %s\n", strerror(errno));
+        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
+            strerror(errno));
     }
 }

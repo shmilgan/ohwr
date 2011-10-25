@@ -35,6 +35,8 @@
 #include "rtu_fd_proxy.h"
 #include "utils.h"
 
+#define MIBMOD  "8021Q"
+
 /* column number definitions for table ieee8021QBridgeTpFdbTable */
 #define COLUMN_IEEE8021QBRIDGETPFDBADDRESS      1
 #define COLUMN_IEEE8021QBRIDGETPFDBPORT         2
@@ -73,14 +75,14 @@ static void get_indexes(
 
     if (oid_len > rootoid_len) {
         idx = tinfo->indexes;
-        ent->cid = *(idx->val.integer);
+        ent->cid = *idx->val.integer;
     } else {
         ent->cid = 0;
     }
 
     if (oid_len > rootoid_len + 1) {
         idx = idx->next_variable;
-        ent->fid = *(idx->val.integer);
+        ent->fid = *idx->val.integer;
     } else {
         ent->fid = 0;
     }
@@ -122,8 +124,8 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     tinfo = netsnmp_extract_table_info(req);
     get_indexes(req, reginfo, tinfo, &ent);
 
-    _LOG_DBG("GET cid=%lu fid=%d mac=%s column=%d\n",
-        ent.cid, ent.fid, mac_to_str(ent.mac), tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%lu fid=%d mac=%s column=%d\n",
+        ent.cid, ent.fid, mac_to_str(ent.mac), tinfo->colnum));
 
     if (ent.cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
@@ -133,19 +135,20 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
 
     // Read entry from RTU FDB.
     errno = 0;
-    err = rtu_fdb_proxy_read_entry(ent.mac, ent.fid, &(ent.port_map), &(ent.type));
+    err = rtu_fdb_proxy_read_entry(ent.mac, ent.fid, &ent.port_map, &ent.type);
     if (errno)
         goto error_;
     if (err) {
-        _LOG_DBG("entry fid=%d mac=%s not found in fdb\n",
-            ent.fid, mac_to_str(ent.mac));
+        DEBUGMSGTL((MIBMOD, "entry fid=%d mac=%s not found in fdb\n",
+            ent.fid, mac_to_str(ent.mac)));
         return SNMP_NOSUCHINSTANCE;
     }
     // Get column value
     return get_column(req, tinfo->colnum, &ent);
 
 error_:
-    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+        __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -161,8 +164,8 @@ static int get_next(netsnmp_request_info *req,
     tinfo = netsnmp_extract_table_info(req);
     get_indexes(req, reginfo, tinfo, &ent);
 
-    _LOG_DBG("GET-NEXT cid=%d fid =%d mac=%s column=%d\n",
-        ent.cid, ent.fid, mac_to_str(ent.mac), tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%d fid =%d mac=%s column=%d\n",
+        ent.cid, ent.fid, mac_to_str(ent.mac), tinfo->colnum));
 
     // Get indexes for next entry - SNMP_ENDOFMIBVIEW informs the handler
     // to proceed with next column.
@@ -180,7 +183,7 @@ static int get_next(netsnmp_request_info *req,
     do {
         errno = 0;
         err = rtu_fdb_proxy_read_next_entry(
-            &(ent.mac), &(ent.fid), &(ent.port_map), &(ent.type));
+            &ent.mac, &ent.fid, &ent.port_map, &ent.type);
         if (errno)
             goto error;
         if (err)
@@ -189,10 +192,10 @@ static int get_next(netsnmp_request_info *req,
 
     // Update indexes and OID returned in SNMP response
     idx = tinfo->indexes;
-    *(idx->val.integer) = ent.cid;
+    *idx->val.integer = ent.cid;
 
     idx = idx->next_variable;
-    *(idx->val.integer) = ent.fid;
+    *idx->val.integer = ent.fid;
 
     idx = idx->next_variable;
     memcpy(idx->val.string, ent.mac, ETH_ALEN);
@@ -203,7 +206,8 @@ static int get_next(netsnmp_request_info *req,
     return get_column(req, tinfo->colnum, &ent);
 
 error:
-    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+        __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
 
 }
@@ -287,8 +291,9 @@ void init_ieee8021QBridgeTpFdbTable(void)
     client = rtu_fdb_proxy_create("rtu_fdb");
     if(client) {
         initialize_table();
-        _LOG_INF("initialised\n");
+        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
     } else {
-        _LOG_ERR("error creating mini-ipc proxy - %s\n", strerror(errno));
+        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
+            strerror(errno));
     }
 }

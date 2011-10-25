@@ -12,6 +12,8 @@
 #include "endpoint_hw.h"
 #include "utils.h"
 
+#define MIBMOD  "8021Q"
+
 /* column number definitions for table ieee8021QBridgePortVlanTable */
 #define COLUMN_IEEE8021QBRIDGEPVID                                  1
 #define COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES              2
@@ -69,10 +71,11 @@ static int get(netsnmp_request_info *req)
 
     // Get indexes from request
     tinfo = netsnmp_extract_table_info(req);
-    cid  = *(tinfo->indexes->val.integer);
-    port = *(tinfo->indexes->next_variable->val.integer);
+    cid  = *tinfo->indexes->val.integer;
+    port = *tinfo->indexes->next_variable->val.integer;
 
-    _LOG_DBG("GET cid=%d port=%d column=%d.\n", cid, port, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%d port=%d column=%d\n",
+        cid, port, tinfo->colnum));
 
     if (cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
@@ -100,11 +103,12 @@ static int get_next(netsnmp_request_info *req,
 
     // Get indexes for entry
     cid  = (oid_len > rootoid_len) ?
-          *(tinfo->indexes->val.integer):0;
+          *tinfo->indexes->val.integer:0;
     port = (oid_len > rootoid_len + 1) ?
-          *(tinfo->indexes->next_variable->val.integer):MIN_PORT;
+          *tinfo->indexes->next_variable->val.integer:MIN_PORT;
 
-    _LOG_DBG("GET-NEXT cid=%d port=%d column=%d.\n", cid, port, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%d port=%d column=%d\n",
+        cid, port, tinfo->colnum));
 
     // Get index for next entry - SNMP_ENDOFMIBVIEW informs the handler
     // to proceed with next column.
@@ -119,8 +123,8 @@ static int get_next(netsnmp_request_info *req,
     }
 
     // Update indexes and OID returned in SNMP response
-    *(tinfo->indexes->val.integer) = cid;
-    *(tinfo->indexes->next_variable->val.integer) = port;
+    *tinfo->indexes->val.integer = cid;
+    *tinfo->indexes->next_variable->val.integer = port;
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
 
     // return next entry column value
@@ -136,11 +140,11 @@ static int set_reserve1(netsnmp_request_info *req)
 
     tinfo = netsnmp_extract_table_info(req);
     // Check indexes
-    cid = *(tinfo->indexes->val.integer);
+    cid = *tinfo->indexes->val.integer;
     if (cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
 
-    port = *(tinfo->indexes->next_variable->val.integer);
+    port = *tinfo->indexes->next_variable->val.integer;
     if (port > MAX_PORT)
         return SNMP_NOSUCHINSTANCE;
 
@@ -169,7 +173,7 @@ static int set_commit(netsnmp_request_info *req)
     int err = SNMP_ERR_NOERROR;
 
     tinfo = netsnmp_extract_table_info(req);
-    port = *(tinfo->indexes->next_variable->val.integer);
+    port = *tinfo->indexes->next_variable->val.integer;
     switch (tinfo->colnum) {
     case COLUMN_IEEE8021QBRIDGEPVID:
         pvid = *req->requestvb->val.integer;
@@ -283,9 +287,10 @@ void init_ieee8021QBridgePortVlanTable(void)
 
     err = ep_hw_init();
     if (err) {
-        _LOG_ERR("error on NIC driver init - %s\n", strerror(err));
+        snmp_log(LOG_ERR, "%s: error on NIC driver init - %s\n", __FILE__,
+            strerror(err));
     } else {
         initialize_table();
-        _LOG_INF("initialised\n");
+        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
     }
 }

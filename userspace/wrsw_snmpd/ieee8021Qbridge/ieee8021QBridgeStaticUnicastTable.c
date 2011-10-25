@@ -36,6 +36,9 @@
 #include "mac.h"
 #include "utils.h"
 
+#define MIBMOD  "8021Q"
+#define ALL_PORTS 0
+
 /* column number definitions for table ieee8021QBridgeStaticUnicastTable */
 #define COLUMN_IEEE8021QBRIDGESTATICUNICASTCOMPONENTID              1
 #define COLUMN_IEEE8021QBRIDGESTATICUNICASTVLANINDEX                2
@@ -150,7 +153,7 @@ static void cache_clean()
  * @param tinfo table information that contains the indexes (in raw format)
  * @param ent (OUT) used to return the retrieved indexes
  */
-static void get_indexes(
+static int get_indexes(
     netsnmp_request_info           *req,
     netsnmp_handler_registration   *reginfo,
     netsnmp_table_request_info     *tinfo,
@@ -163,34 +166,33 @@ static void get_indexes(
     // Otherwise use default values for first row
     oid_len     = req->requestvb->name_length;
     rootoid_len = reginfo->rootoid_len;
-
     if (oid_len > rootoid_len) {
+        if (!tinfo || !tinfo->indexes)
+            return SNMP_ERR_GENERR; // protects from effects of malformed PDUs
         idx = tinfo->indexes;
-        ent->cid = *(idx->val.integer);
-    } else {
+        ent->cid = *idx->val.integer;
+    } else
         ent->cid = 0;
-    }
 
     if (oid_len > rootoid_len + 1) {
         idx = idx->next_variable;
-        ent->vid = *(idx->val.integer);
-    } else {
+        ent->vid = *idx->val.integer;
+    } else
         ent->vid = 0;
-    }
 
     if (oid_len > rootoid_len + 2) {
         idx = idx->next_variable;
         memcpy(ent->mac, idx->val.string, idx->val_len);
-    } else {
+    } else
         mac_copy(ent->mac, (uint8_t*)DEFAULT_MAC);
-    }
 
     if (oid_len > rootoid_len + 3) {
         idx = idx->next_variable;
-        ent->rx_port = *(idx->val.integer);
-    } else {
+        ent->rx_port = *idx->val.integer;
+    } else
         ent->rx_port = ALL_PORTS;
-    }
+
+    return SNMP_ERR_NOERROR;
 }
 
 /**
@@ -232,10 +234,12 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
 
     // Get indexes for entry
     tinfo = netsnmp_extract_table_info(req);
-    get_indexes(req, reginfo, tinfo, &ent);
+    err = get_indexes(req, reginfo, tinfo, &ent);
+    if (err)
+        return err;
 
-    _LOG_DBG("get cid=%lu vid=%d mac=%s rx_port=%d column=%d\n",
-        ent.cid, ent.vid, mac_to_str(ent.mac), ent.rx_port, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%lu vid=%d mac=%s rx_port=%d column=%d\n",
+        ent.cid, ent.vid, mac_to_str(ent.mac), ent.rx_port, tinfo->colnum));
 
     if (ent.cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
@@ -252,13 +256,13 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
                                           ent.vid,
                                           &egress_ports,
                                           &forbidden_ports,
-                                          &(ent.type),
-                                          &(ent.row_status));
+                                          &ent.type,
+                                          &ent.row_status);
     if (errno)
         goto error_;
     if (err) {
-        _LOG_DBG("entry vid=%d mac=%s not found in fdb\n",
-            ent.vid, mac_to_str(ent.mac));
+        DEBUGMSGTL((MIBMOD, "entry vid=%d mac=%s not found in fdb\n",
+            ent.vid, mac_to_str(ent.mac)));
         return SNMP_NOSUCHINSTANCE;
     }
 
@@ -268,7 +272,8 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     return get_column(req, tinfo->colnum, &ent);
 
 error_:
-    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+        __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -285,8 +290,8 @@ static int get_next(netsnmp_request_info *req,
     tinfo = netsnmp_extract_table_info(req);
     get_indexes(req, reginfo, tinfo, &ent);
 
-    _LOG_DBG("GET-NEXT cid=%d vid =%d mac=%s rx_port=%d column=%d\n",
-        ent.cid, ent.vid, mac_to_str(ent.mac), ent.rx_port, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%d vid=%d mac=%s rx_port=%d column=%d\n",
+        ent.cid, ent.vid, mac_to_str(ent.mac), ent.rx_port, tinfo->colnum));
 
     // Get indexes for next entry - SNMP_ENDOFMIBVIEW informs the handler
     // to proceed with next column.
@@ -304,12 +309,12 @@ static int get_next(netsnmp_request_info *req,
 
 
     errno = 0;
-    err = rtu_fdb_proxy_read_next_static_entry(&(ent.mac),
-                                               &(ent.vid),
+    err = rtu_fdb_proxy_read_next_static_entry(&ent.mac,
+                                               &ent.vid,
                                                &egress_ports,
                                                &forbidden_ports,
-                                               &(ent.type),
-                                               &(ent.row_status));
+                                               &ent.type,
+                                               &ent.row_status);
     if (errno)
         goto error_;
     if (err)
@@ -319,23 +324,24 @@ static int get_next(netsnmp_request_info *req,
 
     // Update indexes and OID returned in SNMP response
     idx = tinfo->indexes;
-    *(idx->val.integer) = ent.cid;
+    *idx->val.integer = ent.cid;
 
     idx = idx->next_variable;
-    *(idx->val.integer) = ent.vid;
+    *idx->val.integer = ent.vid;
 
     idx = idx->next_variable;
     memcpy(idx->val.string, ent.mac, ETH_ALEN);
 
     idx = idx->next_variable;
-    *(idx->val.integer) = ent.rx_port;
+    *idx->val.integer = ent.rx_port;
 
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
     // Return next entry column value
     return get_column(req, tinfo->colnum, &ent);
 
 error_:
-    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+        __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -348,13 +354,16 @@ static int set_reserve1(
     netsnmp_handler_registration *reginfo)
 {
     uint32_t ep, fp;                  // aux fields just to read entry from fdb
-    int err = SNMP_ERR_NOERROR, s, t;
+    int err, s, t;
     netsnmp_table_request_info *tinfo;
     struct static_unicast_table_entry ent;
 
     // Check indexes
     tinfo = netsnmp_extract_table_info(req);
-    get_indexes(req, reginfo, tinfo, &ent);
+
+    err = get_indexes(req, reginfo, tinfo, &ent);
+    if (err)
+        return err;
 
     if (ent.cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
@@ -365,8 +374,8 @@ static int set_reserve1(
     if (ent.rx_port != ALL_PORTS)
         return SNMP_NOSUCHINSTANCE;
 
-    _LOG_DBG("SET cid=%d vid=%d mac=%s mac=%d.%d.%d.%d.%d.%d rx_port=%d column=%d\n",
-        ent.cid, ent.vid, mac_to_str(ent.mac), ent.rx_port, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%d vid=%d mac=%s rx_port=%d column=%d\n",
+        ent.cid, ent.vid, mac_to_str(ent.mac), ent.rx_port, tinfo->colnum));
 
     // Check column values
     switch (tinfo->colnum) {
@@ -394,7 +403,8 @@ static int set_reserve1(
     return err;
 
 error__:
-    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+        __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -437,7 +447,7 @@ static int set_reserve3(
 
     // Get indexes for entry
     tinfo = netsnmp_extract_table_info(req);
-    get_indexes(req, reginfo, tinfo, &idx);
+    get_indexes(req, reginfo, tinfo, &idx); //err checked at set_reserve1
     // Get entry from cache
     ent = cache_get(&idx);
     if (!ent) {
@@ -449,14 +459,15 @@ static int set_reserve3(
 
         errno = 0;
         err = rtu_fdb_proxy_read_static_entry(ent->mac, ent->vid, &egress_ports,
-            &forbidden_ports, &(ent->type), &(ent->row_status));
+            &forbidden_ports, &ent->type, &ent->row_status);
         if (errno) {
-            _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+            snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+                __FILE__, __LINE__, strerror(errno));
             return SNMP_ERR_GENERR;
         }
         if (err) {
-            _LOG_DBG("entry vid=%d mac=%s not found\n",
-                ent->vid, mac_to_str(ent->mac));
+            DEBUGMSGTL((MIBMOD, "entry vid=%d mac=%s not found\n",
+                ent->vid, mac_to_str(ent->mac)));
             return SNMP_NOSUCHINSTANCE;
         }
         calculate_port_map(ent, egress_ports, forbidden_ports);
@@ -517,13 +528,16 @@ static int check_consistency(struct static_unicast_table_entry *ent)
     case RS_CREATEANDGO:
         // MAC should not be multicast (this is static _unicast_ table)
         if (mac_multicast(ent->mac)) {
-            _LOG_ERR("error - mac address is multicast\n");
+            snmp_log(LOG_ERR, "%s(%d): error - mac address is multicast\n",
+                __FILE__, __LINE__);
             return SNMP_ERR_INCONSISTENTVALUE;
         }
         // Ports can not be egress and forbidden egress at the same time.
         for (i = 0; i < NUM_PORTS; i++) {
             if((ent->egress_ports[i] == 1) && (ent->forbidden_ports[i] == 1)) {
-                _LOG_ERR("inconsistent egress port definition - port %d\n", i);
+                snmp_log(LOG_ERR,
+                    "%s(%d): inconsistent egress port definition - port %d\n",
+                    __FILE__, __LINE__, i);
                 return SNMP_ERR_INCONSISTENTVALUE;
             }
         }
@@ -545,7 +559,8 @@ static int set_commit(struct static_unicast_table_entry *ent)
             goto error___;
         // Permanent entries can not be removed so an error might be raised...
         if (err) {
-            _LOG_ERR("delete static entry error [%d]\n", err);
+            snmp_log(LOG_ERR, "%s(%d): delete static entry error [%d]\n",
+                __FILE__, __LINE__, err);
             return SNMP_ERR_GENERR;
         }
         break;
@@ -565,7 +580,8 @@ static int set_commit(struct static_unicast_table_entry *ent)
         if (errno)
             goto error___;
         if (err) {
-            _LOG_ERR("create static entry error [%d]\n", err);
+            snmp_log(LOG_ERR, "%s(%d): create static entry error [%d]\n",
+                __FILE__, __LINE__, err);
             return SNMP_ERR_GENERR;
         }
         break;
@@ -573,7 +589,8 @@ static int set_commit(struct static_unicast_table_entry *ent)
     return SNMP_ERR_NOERROR;
 
 error___:
-    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+        __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -703,8 +720,9 @@ void init_ieee8021QBridgeStaticUnicastTable(void)
     client = rtu_fdb_proxy_create("rtu_fdb");
     if(client) {
         initialize_table();
-        _LOG_INF("initialised\n");
+        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
     } else {
-        _LOG_ERR("error creating mini-ipc proxy - %s\n", strerror(errno));
+        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
+            strerror(errno));
     }
 }

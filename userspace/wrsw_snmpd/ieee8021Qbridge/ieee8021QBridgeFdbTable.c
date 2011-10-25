@@ -34,6 +34,7 @@
 #include "rtu_fd_proxy.h"
 #include "utils.h"
 
+#define MIBMOD  "8021Q"
 
 /* column number definitions for table ieee8021QBridgeFdbTable */
 #define COLUMN_IEEE8021QBRIDGEFDBCOMPONENTID		    1
@@ -82,10 +83,13 @@ static int get(netsnmp_request_info *req)
 
     // Get indexes from request
     tinfo = netsnmp_extract_table_info(req);
-    cid = *(tinfo->indexes->val.integer);
-    fid = *(tinfo->indexes->next_variable->val.integer);
+    if (!tinfo || !tinfo->indexes)
+        return SNMP_ERR_GENERR;
 
-    _LOG_DBG("GET cid=%d fid=%d column=%d.\n", cid, fid, tinfo->colnum);
+    cid = *tinfo->indexes->val.integer;
+    fid = *tinfo->indexes->next_variable->val.integer;
+
+    DEBUGMSGTL((MIBMOD, "cid=%d fid=%d column=%d\n", cid, fid, tinfo->colnum));
 
     if (cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
@@ -112,12 +116,13 @@ static int get_next(netsnmp_request_info *req,
     oid_len     = req->requestvb->name_length;
     rootoid_len = reginfo->rootoid_len;
 
-    cid = (oid_len > rootoid_len) ?
-          *(tinfo->indexes->val.integer):0;
-    fid = (oid_len > rootoid_len + 1) ?
-          *(tinfo->indexes->next_variable->val.integer):0;
 
-    _LOG_DBG("GET-NEXT cid=%d fid =%d column=%d.\n", cid, fid, tinfo->colnum);
+    cid = (oid_len > rootoid_len) ?
+          *tinfo->indexes->val.integer:0;
+    fid = (oid_len > rootoid_len + 1) ?
+          *tinfo->indexes->next_variable->val.integer:0;
+
+    DEBUGMSGTL((MIBMOD, "cid=%d fid =%d column=%d\n", cid, fid, tinfo->colnum));
 
     // Get index for next entry - SNMP_ENDOFMIBVIEW informs the handler
     // to proceed with next column.
@@ -138,8 +143,8 @@ static int get_next(netsnmp_request_info *req,
     }
 
     // Update indexes and OID returned in SNMP response
-    *(tinfo->indexes->val.integer) = cid;
-    *(tinfo->indexes->next_variable->val.integer) = fid;
+    *tinfo->indexes->val.integer = cid;
+    *tinfo->indexes->next_variable->val.integer = fid;
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
 
     // return next entry column value
@@ -155,10 +160,10 @@ static int set_reserve1(netsnmp_request_info *req)
 
     // Get indexes from request
     tinfo = netsnmp_extract_table_info(req);
-    cid = *(tinfo->indexes->val.integer);
-    fid = *(tinfo->indexes->next_variable->val.integer);
+    cid = *tinfo->indexes->val.integer;
+    fid = *tinfo->indexes->next_variable->val.integer;
 
-    _LOG_DBG("SET cid=%d fid =%d column=%d.\n", cid, fid, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%d fid =%d column=%d\n", cid, fid, tinfo->colnum));
 
     // Check indexes
     if (cid != DEFAULT_COMPONENT_ID)
@@ -191,18 +196,20 @@ static int set_commit(netsnmp_request_info *req)
     // problem, ...but  exactly the same problem that would exist in case we
     // implement the two phase commit, as undoing also requires mini-ipc calls.
     tinfo = netsnmp_extract_table_info(req);
-    fid = *(tinfo->indexes->next_variable->val.integer);
+    fid = *tinfo->indexes->next_variable->val.integer;
     switch (tinfo->colnum) {
     case COLUMN_IEEE8021QBRIDGEFDBAGINGTIME:
         age = *req->requestvb->val.integer;
         errno = 0;
         err = rtu_fdb_proxy_set_aging_time(fid, age);
         if (errno) {
-            _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+            snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+                __FILE__, __LINE__, strerror(errno));
             return SNMP_ERR_GENERR;
         }
         if (err) {
-            _LOG_ERR("set aging time error [%d]\n", err);
+            snmp_log(LOG_ERR, "%s(%d): set aging time error [%d]\n",
+                __FILE__, __LINE__, err);
             return SNMP_ERR_GENERR;
         }
         break;
@@ -295,8 +302,9 @@ void init_ieee8021QBridgeFdbTable(void)
     client = rtu_fdb_proxy_create("rtu_fdb");
     if(client) {
         initialize_table();
-        _LOG_INF("initialised\n");
+        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
     } else {
-        _LOG_ERR("error creating mini-ipc proxy - %s\n", strerror(errno));
+        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
+            strerror(errno));
     }
 }

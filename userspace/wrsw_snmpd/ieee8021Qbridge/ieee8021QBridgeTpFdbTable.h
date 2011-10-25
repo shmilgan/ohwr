@@ -5,8 +5,6 @@
 #ifndef IEEE8021QBRIDGETPFDBTABLE_H
 #define IEEE8021QBRIDGETPFDBTABLE_H
 
-#define MIB_MOD "ieee8021QBridgeTpFdbTable"
-
 enum fdb_entry_status {
     other           = 1,
     Invalid         = 2,

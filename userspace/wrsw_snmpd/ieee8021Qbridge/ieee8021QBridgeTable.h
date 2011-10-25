@@ -5,8 +5,6 @@
 #ifndef IEEE8021QBRIDGETABLE_H
 #define IEEE8021QBRIDGETABLE_H
 
-#define MIB_MOD "ieee8021QBridgeTable"
-
 void init_ieee8021QBridgeTable(void);
 
 #endif /* IEEE8021QBRIDGETABLE_H */

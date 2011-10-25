@@ -35,6 +35,9 @@
 #include "rtu_fd_proxy.h"
 #include "utils.h"
 
+#define MIBMOD "8021Q"
+#define VNAME_LENGTH 32
+
 /* column number definitions for table ieee8021QBridgeVlanStaticTable */
 #define COLUMN_IEEE8021QBRIDGEVLANSTATICCOMPONENTID	        1
 #define COLUMN_IEEE8021QBRIDGEVLANSTATICVLANINDEX           2
@@ -44,7 +47,6 @@
 #define COLUMN_IEEE8021QBRIDGEVLANSTATICUNTAGGEDPORTS       6
 #define COLUMN_IEEE8021QBRIDGEVLANSTATICROWSTATUS           7
 
-#define VNAME_LENGTH                                        32
 
 // Row entry
 struct mib_static_vlan_table_entry {
@@ -160,14 +162,14 @@ static void get_indexes(
 
     if (oid_len > rootoid_len) {
         idx = tinfo->indexes;
-        ent->cid = *(idx->val.integer);
+        ent->cid = *idx->val.integer;
     } else {
         ent->cid = 0;
     }
 
     if (oid_len > rootoid_len + 1) {
         idx = idx->next_variable;
-        ent->vid = *(idx->val.integer);
+        ent->vid = *idx->val.integer;
     } else {
         ent->vid = 0;
     }
@@ -215,7 +217,8 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     tinfo = netsnmp_extract_table_info(req);
     get_indexes(req, reginfo, tinfo, &ent);
 
-    _LOG_DBG("get cid=%lu vid=%d column=%d\n", ent.cid, ent.vid, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "get cid=%lu vid=%d column=%d\n",
+        ent.cid, ent.vid, tinfo->colnum));
 
     if (ent.cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
@@ -229,7 +232,7 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     if (errno)
         goto error;
     if (err) {
-        _LOG_DBG("vlan vid=%d not found in static fdb\n", ent.vid);
+        DEBUGMSGTL((MIBMOD, "vlan vid=%d not found in static fdb\n", ent.vid));
         return SNMP_NOSUCHINSTANCE;
     }
 
@@ -239,7 +242,8 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     return get_column(req, tinfo->colnum, &ent);
 
 error:
-    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+        __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -256,8 +260,8 @@ static int get_next(netsnmp_request_info *req,
     tinfo = netsnmp_extract_table_info(req);
     get_indexes(req, reginfo, tinfo, &ent);
 
-    _LOG_DBG("GET-NEXT cid=%d vid=%d column=%d\n",
-        ent.cid, ent.vid, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%d vid=%d column=%d\n",
+        ent.cid, ent.vid, tinfo->colnum));
 
     // Get indexes for next entry - SNMP_ENDOFMIBVIEW informs the handler
     // to proceed with next column.
@@ -266,33 +270,46 @@ static int get_next(netsnmp_request_info *req,
     } else if (ent.cid == 0) {
         ent.cid = DEFAULT_COMPONENT_ID;
         ent.vid = 0;
+#ifdef V2
+        // Although use of VID=0 is reserved, it is actually used by HW V2,
+        // so we need to check it also.
+        errno = 0;
+        err = rtu_fdb_proxy_read_static_vlan_entry(
+            ent.vid, &egress_ports, &forbidden_ports, &untagged_ports);
+        if (errno)
+            goto error_;
+        if (!err)
+            goto update_idx;
+#endif // V2
     }
     if (ent.vid >= NUM_VLANS)
         return SNMP_ENDOFMIBVIEW;
 
     errno = 0;
     err = rtu_fdb_proxy_read_next_static_vlan_entry(
-        &(ent.vid), &egress_ports, &forbidden_ports, &untagged_ports);
+        &ent.vid, &egress_ports, &forbidden_ports, &untagged_ports);
     if (errno)
         goto error_;
     if (err)
         return SNMP_ENDOFMIBVIEW;   // No other entry found
 
+update_idx:
     calculate_member_set(&ent, egress_ports, forbidden_ports, untagged_ports);
 
     // Update indexes and OID returned in SNMP response
     idx = tinfo->indexes;
-    *(idx->val.integer) = ent.cid;
+    *idx->val.integer = ent.cid;
 
     idx = idx->next_variable;
-    *(idx->val.integer) = ent.vid;
+    *idx->val.integer = ent.vid;
 
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
     // Get next entry column value
     return get_column(req, tinfo->colnum, &ent);
 
 error_:
-    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+        __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -320,7 +337,8 @@ static int set_reserve1(
     if (ent.vid >= NUM_VLANS)
         return SNMP_NOSUCHINSTANCE;
 
-    _LOG_DBG("SET cid=%d vid=%d column=%d\n", ent.cid, ent.vid, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%d vid=%d column=%d\n",
+        ent.cid, ent.vid, tinfo->colnum));
 
     // Check column values
     switch (tinfo->colnum) {
@@ -355,7 +373,8 @@ static int set_reserve1(
     return ret;
 
 error__:
-    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+        __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -407,11 +426,12 @@ static int set_reserve3(netsnmp_request_info *req)
         err = rtu_fdb_proxy_read_static_vlan_entry(
             ent->vid, &egress_ports, &forbidden_ports, &untagged_ports);
         if (errno) {
-            _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+            snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
+                __FILE__, __LINE__, strerror(errno));
             return SNMP_ERR_GENERR;
         }
         if (err) {
-            _LOG_DBG("vlan vid=%d not found in fdb\n", ent->vid);
+            DEBUGMSGTL((MIBMOD, "vlan vid=%d not found in fdb\n", ent->vid));
             return SNMP_NOSUCHINSTANCE;
         }
 
@@ -480,7 +500,9 @@ static int check_consistency(struct mib_static_vlan_table_entry *ent)
         // Ports can not be egress and forbidden egress at the same time.
         for (i = 0; i < NUM_PORTS; i++) {
             if((ent->egress_ports[i] == 1) && (ent->forbidden_ports[i] == 1)) {
-               _LOG_ERR("inconsistent egress port definition - port %d\n", i);
+                snmp_log(LOG_ERR,
+                    "%s(%d): inconsistent egress port definition - port %d\n",
+                    __FILE__, __LINE__, i);
                return SNMP_ERR_INCONSISTENTVALUE;
             }
         }
@@ -496,14 +518,15 @@ static int set_commit(struct mib_static_vlan_table_entry *ent)
 
     switch (ent->row_status) {
     case RS_DESTROY:
-        _LOG_DBG("delete vlan vid=%d\n", ent->vid);
+        DEBUGMSGTL((MIBMOD, "delete vlan vid=%d\n", ent->vid));
         // Remove entry from VLAN table
         errno = 0;
         err = rtu_fdb_proxy_delete_static_vlan_entry(ent->vid);
         if (errno)
             goto error___;
         if (err) {
-            _LOG_ERR("delete vlan vid=%d error [%d]\n", ent->vid, err);
+            snmp_log(LOG_ERR, "%s(%d): delete vlan vid=%d error [%d]\n",
+                __FILE__, __LINE__, ent->vid, err);
             return SNMP_ERR_GENERR;
         }
         break;
@@ -526,7 +549,7 @@ static int set_commit(struct mib_static_vlan_table_entry *ent)
         // TODO The MIB object does not provide means to set the FID associated
         // to a VID. We will use FID = 0 temporarily.
 
-        _LOG_DBG("create/update vlan vid=%d\n", ent->vid);
+        DEBUGMSGTL((MIBMOD, "create/update vlan vid=%d\n", ent->vid));
 
         errno = 0;
         err = rtu_fdb_proxy_create_static_vlan_entry(
@@ -534,7 +557,8 @@ static int set_commit(struct mib_static_vlan_table_entry *ent)
         if (errno)
             goto error___;
         if (err) {
-            _LOG_ERR("create static vlan entry error [%d]\n", err);
+            snmp_log(LOG_ERR, "%s(%d): create static vlan entry error [%d]\n",
+                __FILE__, __LINE__, err);
             return SNMP_ERR_GENERR;
         }
         break;
@@ -542,7 +566,8 @@ static int set_commit(struct mib_static_vlan_table_entry *ent)
     return SNMP_ERR_NOERROR;
 
 error___:
-    _LOG_ERR("mini-ipc error [%s]\n", strerror(errno));
+    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n", __FILE__, __LINE__,
+        strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -664,8 +689,9 @@ void init_ieee8021QBridgeVlanStaticTable(void)
     client = rtu_fdb_proxy_create("rtu_fdb");
     if(client) {
         initialize_table();
-        _LOG_INF("initialised\n");
+        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
     } else {
-        _LOG_ERR("error creating mini-ipc proxy - %s\n", strerror(errno));
+        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
+            strerror(errno));
     }
 }

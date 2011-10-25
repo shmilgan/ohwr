@@ -5,8 +5,6 @@
 #ifndef IEEE8021QBRIDGEPORTVLANTABLE_H
 #define IEEE8021QBRIDGEPORTVLANTABLE_H
 
-#define MIB_MOD "ieee8021QBridgePortVlanTable"
-
 #define MIN_PVID                0x001
 #define MAX_PVID                0xFFE
 

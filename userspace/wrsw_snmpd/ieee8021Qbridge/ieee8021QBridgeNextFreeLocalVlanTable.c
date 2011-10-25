@@ -33,6 +33,8 @@
 #include "ieee8021QBridgeNextFreeLocalVlanTable.h"
 #include "utils.h"
 
+#define MIBMOD  "8021Q"
+
 /* column number definitions for table ieee8021QBridgeNextFreeLocalVlanTable */
 #define COLUMN_IEEE8021QBRIDGENEXTFREELOCALVLANCOMPONENTID		1
 #define COLUMN_IEEE8021QBRIDGENEXTFREELOCALVLANINDEX		    2
@@ -57,9 +59,9 @@ static int get(netsnmp_request_info *req)
 
     // Get indexes
     tinfo = netsnmp_extract_table_info(req);
-    cid = *(tinfo->indexes->val.integer);
+    cid = *tinfo->indexes->val.integer;
 
-    _LOG_DBG("GET cid=%d column=%d.\n", cid, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%d column=%d\n", cid, tinfo->colnum));
 
     if (cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
@@ -84,9 +86,9 @@ static int get_next(netsnmp_request_info *req,
     rootoid_len = reginfo->rootoid_len;
 
     cid = (oid_len > rootoid_len) ?
-          *(tinfo->indexes->val.integer):0;
+          *tinfo->indexes->val.integer:0;
 
-    _LOG_DBG("GET-NEXT cid=%d column=%d.\n", cid, tinfo->colnum);
+    DEBUGMSGTL((MIBMOD, "cid=%d column=%d\n", cid, tinfo->colnum));
 
     // Get index for next entry - SNMP_ENDOFMIBVIEW informs the handler
     // to proceed with next column.
@@ -96,7 +98,7 @@ static int get_next(netsnmp_request_info *req,
         cid = DEFAULT_COMPONENT_ID;
 
     // Update indexes and OID returned in SNMP response
-    *(tinfo->indexes->val.integer) = cid;
+    *tinfo->indexes->val.integer = cid;
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
 
     // return next entry column value
@@ -170,5 +172,5 @@ static void initialize_table(void)
 void init_ieee8021QBridgeNextFreeLocalVlanTable(void)
 {
     initialize_table();
-    _LOG_INF("initialised\n");
+    snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
 }
