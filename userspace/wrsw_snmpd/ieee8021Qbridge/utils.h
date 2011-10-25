@@ -36,10 +36,6 @@
 
 #define DEFAULT_COMPONENT_ID 1
 
-#define _LOG_ERR(...)  snmp_log(LOG_ERR,   MIB_MOD ": " __VA_ARGS__)
-#define _LOG_DBG(...)  snmp_log(LOG_DEBUG, MIB_MOD ": " __VA_ARGS__)
-#define _LOG_INF(...)  snmp_log(LOG_INFO,  MIB_MOD ": " __VA_ARGS__)
-
 void update_oid(
     netsnmp_request_info           *req,
     netsnmp_handler_registration   *reginfo,

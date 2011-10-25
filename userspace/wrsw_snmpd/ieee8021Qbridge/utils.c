@@ -24,14 +24,14 @@
  */
 #include "utils.h"
 
+
 /**
  * Update the requested OID to match a given instance
  */
-void update_oid(
-    netsnmp_request_info           *req,
-    netsnmp_handler_registration   *reginfo,
-    int                            column,
-    netsnmp_variable_list          *indexes)
+void update_oid(netsnmp_request_info           *req,
+                netsnmp_handler_registration   *reginfo,
+                int                            column,
+                netsnmp_variable_list          *indexes)
 {
     oid    build_space[MAX_OID_LEN];
     size_t build_space_len = 0;
