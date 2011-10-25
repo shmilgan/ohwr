@@ -26,8 +26,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <hw/trace.h>
-
 #include "rtu_fd_srv.h"
 #include "rtu_fd_export.h"
 

@@ -941,9 +941,6 @@ int rtu_fdb_delete_static_entry(uint8_t mac[ETH_ALEN], uint16_t vid)
         "delete static entry: vid=%d mac=%s", vid, mac_to_string(mac));
 
     lock();
-    // Check that VLAN is registered (except for wildcard vid)
-    if ((vid != WILDCARD_VID) && !rtu_sw_find_vlan_entry(vid))
-        return unlock(-EINVAL);
     // Check that entry is registered
     sfe = sfe_find(mac, vid);
     if (!sfe)
