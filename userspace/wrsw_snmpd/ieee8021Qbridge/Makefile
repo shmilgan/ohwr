@@ -8,7 +8,7 @@ WR_LIB = $(WR_INSTALL_ROOT)/lib
 
 CC = $(CROSS_COMPILE)gcc
 
-CFLAGS = -fPIC -shared -I. `$(NET-SNMP-CONFIG) --cflags` \
+CFLAGS = -fPIC -shared -I. -DV2 `$(NET-SNMP-CONFIG) --cflags` \
           -I../../wrsw_rtud -I../../wrsw_hal
 
 
