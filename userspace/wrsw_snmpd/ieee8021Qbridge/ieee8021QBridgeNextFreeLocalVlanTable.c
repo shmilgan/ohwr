@@ -39,12 +39,12 @@
 #define COLUMN_IEEE8021QBRIDGENEXTFREELOCALVLANCOMPONENTID		1
 #define COLUMN_IEEE8021QBRIDGENEXTFREELOCALVLANINDEX		    2
 
-static int get_column(netsnmp_request_info *req, int colnum)
+static int get_column(netsnmp_variable_list *vb, int colnum)
 {
     switch (colnum) {
     case COLUMN_IEEE8021QBRIDGENEXTFREELOCALVLANINDEX:
         // Creating a new local VLAN is not supported (i.e next free index = 0)
-        snmp_set_var_typed_integer(req->requestvb, ASN_UNSIGNED, 0);
+        snmp_set_var_typed_integer(vb, ASN_UNSIGNED, 0);
         break;
     default:
         return SNMP_NOSUCHOBJECT;
@@ -55,30 +55,26 @@ static int get_column(netsnmp_request_info *req, int colnum)
 static int get(netsnmp_request_info *req)
 {
     int cid;
-    netsnmp_table_request_info *tinfo;
+    netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
     // Get indexes
-    tinfo = netsnmp_extract_table_info(req);
     cid = *tinfo->indexes->val.integer;
 
     DEBUGMSGTL((MIBMOD, "cid=%d column=%d\n", cid, tinfo->colnum));
 
     if (cid != DEFAULT_COMPONENT_ID)
         return SNMP_NOSUCHINSTANCE;
-
     // return entry column value
-    return get_column(req, tinfo->colnum);
+    return get_column(req->requestvb, tinfo->colnum);
 }
 
-static int get_next(netsnmp_request_info *req,
-    netsnmp_handler_registration *reginfo)
+static int get_next(netsnmp_request_info         *req,
+                    netsnmp_handler_registration *reginfo)
 {
     int err;
     u_long cid;
     int oid_len, rootoid_len;
-    netsnmp_table_request_info  *tinfo;
-
-    tinfo = netsnmp_extract_table_info(req);
+    netsnmp_table_request_info  *tinfo = netsnmp_extract_table_info(req);
 
     // Get indexes from request - in case OID contains them!.
     // Otherwise use default values for first row.
@@ -94,7 +90,7 @@ static int get_next(netsnmp_request_info *req,
     // to proceed with next column.
     if (cid >= DEFAULT_COMPONENT_ID)
         return SNMP_ENDOFMIBVIEW;
-    else if (cid == 0)
+    if (cid == 0)
         cid = DEFAULT_COMPONENT_ID;
 
     // Update indexes and OID returned in SNMP response
@@ -102,21 +98,20 @@ static int get_next(netsnmp_request_info *req,
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
 
     // return next entry column value
-    return get_column(req, tinfo->colnum);
+    return get_column(req->requestvb, tinfo->colnum);
 }
 
 
 /**
  * Handles requests for the ieee8021QBridgeNextFreeLocalVlanTable table
  */
-static int _handler(
-    netsnmp_mib_handler               *handler,
-    netsnmp_handler_registration      *reginfo,
-    netsnmp_agent_request_info        *reqinfo,
-    netsnmp_request_info              *requests)
+static int _handler(netsnmp_mib_handler          *handler,
+                    netsnmp_handler_registration *reginfo,
+                    netsnmp_agent_request_info   *reqinfo,
+                    netsnmp_request_info         *requests)
 {
     int err;
-    netsnmp_request_info       *req;
+    netsnmp_request_info *req;
 
     switch (reqinfo->mode) {
     case MODE_GET:

@@ -23,7 +23,7 @@
 #define COLUMN_IEEE8021QBRIDGEPORTMVRPLASTPDUORIGIN                 6
 #define COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION        7
 
-static int get_column(netsnmp_request_info *req, int colnum, u_long port)
+static int get_column(netsnmp_variable_list *vb, int colnum, u_long port)
 {
     u_long pvid; // Port VLAN identifier
     int qmode;   // acceptable frame types
@@ -33,19 +33,19 @@ static int get_column(netsnmp_request_info *req, int colnum, u_long port)
         pvid = ep_hw_get_pvid(port);
         if (pvid < 0)
             return SNMP_ERR_GENERR;
-        snmp_set_var_typed_integer(req->requestvb, ASN_UNSIGNED, pvid);
+        snmp_set_var_typed_integer(vb, ASN_UNSIGNED, pvid);
         break;
     case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
         qmode = ep_hw_get_qmode(port);
         switch(qmode) {
         case access_port:
-            snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, admitUntaggedAndPriority);
+            snmp_set_var_typed_integer(vb, ASN_INTEGER, admitUntaggedAndPriority);
             break;
         case trunk_port:
-            snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, admitTagged);
+            snmp_set_var_typed_integer(vb, ASN_INTEGER, admitTagged);
             break;
         case unqualified_port:
-            snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, admitAll);
+            snmp_set_var_typed_integer(vb, ASN_INTEGER, admitAll);
             break;
         default:
             return SNMP_ERR_GENERR;
@@ -55,7 +55,7 @@ static int get_column(netsnmp_request_info *req, int colnum, u_long port)
         // true. Discard incoming frames for VLANs that do not include this
         // port in its member set (currently _unsupported_ by WR switch)
         // false. Accept all incoming frames
-        snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, TV_FALSE);
+        snmp_set_var_typed_integer(vb, ASN_INTEGER, TV_FALSE);
         break;
     default:
         return SNMP_NOSUCHOBJECT;
@@ -65,36 +65,31 @@ static int get_column(netsnmp_request_info *req, int colnum, u_long port)
 
 static int get(netsnmp_request_info *req)
 {
-    netsnmp_table_request_info  *tinfo;
     u_long cid;
     u_long port;
+    netsnmp_table_request_info  *tinfo = netsnmp_extract_table_info(req);
 
     // Get indexes from request
-    tinfo = netsnmp_extract_table_info(req);
     cid  = *tinfo->indexes->val.integer;
     port = *tinfo->indexes->next_variable->val.integer;
 
     DEBUGMSGTL((MIBMOD, "cid=%d port=%d column=%d\n",
         cid, port, tinfo->colnum));
 
-    if (cid != DEFAULT_COMPONENT_ID)
+    if ((cid != DEFAULT_COMPONENT_ID) ||
+        (port > MAX_PORT))
         return SNMP_NOSUCHINSTANCE;
 
-    if (port > MAX_PORT)
-        return SNMP_NOSUCHINSTANCE;
-
-    return get_column(req, tinfo->colnum, port);
+    return get_column(req->requestvb, tinfo->colnum, port);
 }
 
-static int get_next(netsnmp_request_info *req,
-    netsnmp_handler_registration *reginfo)
+static int get_next(netsnmp_request_info         *req,
+                    netsnmp_handler_registration *reginfo)
 {
     u_long cid;         // ieee8021BridgeBasePortComponentId;
     u_long port;        // ieee8021BridgeBasePort;
-    netsnmp_table_request_info  *tinfo;
     int oid_len, rootoid_len;
-
-    tinfo = netsnmp_extract_table_info(req);
+    netsnmp_table_request_info  *tinfo = netsnmp_extract_table_info(req);
 
     // Get indexes from request - in case OID contains them!.
     // Otherwise use default values for first row.
@@ -112,33 +107,30 @@ static int get_next(netsnmp_request_info *req,
 
     // Get index for next entry - SNMP_ENDOFMIBVIEW informs the handler
     // to proceed with next column.
-    if (cid > DEFAULT_COMPONENT_ID) {
+    if (cid > DEFAULT_COMPONENT_ID)
         return SNMP_ENDOFMIBVIEW;
-    } else if (cid == 0) {
+    if (cid == 0) {
         cid = DEFAULT_COMPONENT_ID;
         port = MIN_PORT;
     } else {
         if (++port > MAX_PORT)
             return SNMP_ENDOFMIBVIEW;
     }
-
     // Update indexes and OID returned in SNMP response
     *tinfo->indexes->val.integer = cid;
     *tinfo->indexes->next_variable->val.integer = port;
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
-
     // return next entry column value
-    return get_column(req, tinfo->colnum, port);
+    return get_column(req->requestvb, tinfo->colnum, port);
 }
 
 static int set_reserve1(netsnmp_request_info *req)
 {
     int ret = SNMP_ERR_NOERROR;
-    netsnmp_table_request_info *tinfo;
     u_long cid;                 // ieee8021BridgeBasePortComponentId;
     u_long port;                // ieee8021BridgeBasePort;
+    netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
-    tinfo = netsnmp_extract_table_info(req);
     // Check indexes
     cid = *tinfo->indexes->val.integer;
     if (cid != DEFAULT_COMPONENT_ID)
@@ -203,11 +195,10 @@ static int set_commit(netsnmp_request_info *req)
 /**
  * Handles requests for the ieee8021QBridgePortVlanTable table
  */
-static int _handler(
-    netsnmp_mib_handler           *handler,
-    netsnmp_handler_registration  *reginfo,
-    netsnmp_agent_request_info    *reqinfo,
-    netsnmp_request_info          *requests)
+static int _handler(netsnmp_mib_handler          *handler,
+                    netsnmp_handler_registration *reginfo,
+                    netsnmp_agent_request_info   *reqinfo,
+                    netsnmp_request_info         *requests)
 {
 
     netsnmp_request_info *req;

@@ -59,18 +59,17 @@ struct mib_fdb_table_entry {
  * @param tinfo table information that contains the indexes (in raw format)
  * @param ent (OUT) used to return the retrieved indexes
  */
-static void get_indexes(
-    netsnmp_request_info           *req,
-    netsnmp_handler_registration   *reginfo,
-    netsnmp_table_request_info     *tinfo,
-    struct mib_fdb_table_entry     *ent)
+static void get_indexes(netsnmp_variable_list          *vb,
+                        netsnmp_handler_registration   *reginfo,
+                        netsnmp_table_request_info     *tinfo,
+                        struct mib_fdb_table_entry     *ent)
 {
     int oid_len, rootoid_len;
     netsnmp_variable_list *idx;
 
     // Get indexes from request - in case OID contains them!.
     // Otherwise use default values for first row
-    oid_len     = req->requestvb->name_length;
+    oid_len     = vb->name_length;
     rootoid_len = reginfo->rootoid_len;
 
     if (oid_len > rootoid_len) {
@@ -95,17 +94,16 @@ static void get_indexes(
     }
 }
 
-static int get_column(
-    netsnmp_request_info *req,
-    int colnum,
-    struct mib_fdb_table_entry *ent)
+static int get_column(netsnmp_variable_list      *vb,
+                      int                        colnum,
+                      struct mib_fdb_table_entry *ent)
 {
     switch (colnum) {
     case COLUMN_IEEE8021QBRIDGETPFDBPORT:
-        snmp_set_var_typed_integer(req->requestvb, ASN_UNSIGNED, ent->port_map);
+        snmp_set_var_typed_integer(vb, ASN_UNSIGNED, ent->port_map);
         break;
     case COLUMN_IEEE8021QBRIDGETPFDBSTATUS:
-        snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER,
+        snmp_set_var_typed_integer(vb, ASN_INTEGER,
             (ent->type == STATIC) ? Mgmt:Learned);
         break;
     default:
@@ -118,35 +116,32 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
 {
     int err;
     struct mib_fdb_table_entry ent;
-    netsnmp_table_request_info *tinfo;
+    netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
-    // Get indexes from request
-    tinfo = netsnmp_extract_table_info(req);
-    get_indexes(req, reginfo, tinfo, &ent);
-
+    // Read indexes from request and insert them into ent
+    get_indexes(req->requestvb, reginfo, tinfo, &ent);
     DEBUGMSGTL((MIBMOD, "cid=%lu fid=%d mac=%s column=%d\n",
         ent.cid, ent.fid, mac_to_str(ent.mac), tinfo->colnum));
 
-    if (ent.cid != DEFAULT_COMPONENT_ID)
+    if ((ent.cid != DEFAULT_COMPONENT_ID) ||
+        (ent.fid >= NUM_FIDS))
         return SNMP_NOSUCHINSTANCE;
 
-    if (ent.fid >= NUM_FIDS)
-        return SNMP_NOSUCHINSTANCE;
-
-    // Read entry from RTU FDB.
+    // Read entry from FDB.
     errno = 0;
     err = rtu_fdb_proxy_read_entry(ent.mac, ent.fid, &ent.port_map, &ent.type);
     if (errno)
-        goto error_;
-    if (err) {
-        DEBUGMSGTL((MIBMOD, "entry fid=%d mac=%s not found in fdb\n",
-            ent.fid, mac_to_str(ent.mac)));
-        return SNMP_NOSUCHINSTANCE;
-    }
-    // Get column value
-    return get_column(req, tinfo->colnum, &ent);
+        goto minipc_err;
+    if (err)
+        goto entry_not_found;
+    return get_column(req->requestvb, tinfo->colnum, &ent);
 
-error_:
+entry_not_found:
+    DEBUGMSGTL((MIBMOD, "entry fid=%d mac=%s not found in fdb\n",
+        ent.fid, mac_to_str(ent.mac)));
+    return SNMP_NOSUCHINSTANCE;
+
+minipc_err:
     snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
         __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
@@ -158,25 +153,22 @@ static int get_next(netsnmp_request_info *req,
     int err;
     struct mib_fdb_table_entry ent;
     netsnmp_variable_list *idx;
-    netsnmp_table_request_info *tinfo;
+    netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
     // Get indexes from request
-    tinfo = netsnmp_extract_table_info(req);
-    get_indexes(req, reginfo, tinfo, &ent);
-
+    get_indexes(req->requestvb, reginfo, tinfo, &ent);
     DEBUGMSGTL((MIBMOD, "cid=%d fid =%d mac=%s column=%d\n",
         ent.cid, ent.fid, mac_to_str(ent.mac), tinfo->colnum));
 
     // Get indexes for next entry - SNMP_ENDOFMIBVIEW informs the handler
     // to proceed with next column.
-    if (ent.cid > DEFAULT_COMPONENT_ID) {
+    if (ent.cid > DEFAULT_COMPONENT_ID)
         return SNMP_ENDOFMIBVIEW;
-    } else if (ent.cid == 0) {
+    if (ent.cid == 0) {
         ent.cid = DEFAULT_COMPONENT_ID;
         ent.fid = 0;
         mac_copy(ent.mac, (uint8_t*)DEFAULT_MAC);
     }
-
     if (ent.fid >= NUM_FIDS)
         return SNMP_ENDOFMIBVIEW;
 
@@ -185,7 +177,7 @@ static int get_next(netsnmp_request_info *req,
         err = rtu_fdb_proxy_read_next_entry(
             &ent.mac, &ent.fid, &ent.port_map, &ent.type);
         if (errno)
-            goto error;
+            goto minipc_err;
         if (err)
             return SNMP_ENDOFMIBVIEW;   // No other entry found
     } while (mac_multicast(ent.mac));   // Make sure entry is unicast
@@ -199,27 +191,24 @@ static int get_next(netsnmp_request_info *req,
 
     idx = idx->next_variable;
     memcpy(idx->val.string, ent.mac, ETH_ALEN);
-
     // Update OID
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
     // Return next entry column value
-    return get_column(req, tinfo->colnum, &ent);
+    return get_column(req->requestvb, tinfo->colnum, &ent);
 
-error:
-    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
-        __FILE__, __LINE__, strerror(errno));
+minipc_err:
+    snmp_log(LOG_ERR, "%s(%s): mini-ipc error [%s]\n", __FILE__, __func__,
+        strerror(errno));
     return SNMP_ERR_GENERR;
-
 }
 
 /**
  * Handles requests for the ieee8021QBridgeTpFdbTable table
  */
-static int _handler(
-    netsnmp_mib_handler               *handler,
-    netsnmp_handler_registration      *reginfo,
-    netsnmp_agent_request_info        *reqinfo,
-    netsnmp_request_info              *requests)
+static int _handler(netsnmp_mib_handler          *handler,
+                    netsnmp_handler_registration *reginfo,
+                    netsnmp_agent_request_info   *reqinfo,
+                    netsnmp_request_info         *requests)
 {
     int err;
     netsnmp_request_info *req;

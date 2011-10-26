@@ -68,19 +68,19 @@ static int read_next_vid(uint16_t *vid)
     errno = 0;
     err = rtu_fdb_proxy_read_vlan_entry(*vid, &fid, &t, &pm, &us, &ct);
     if (errno)
-        goto error__;
+        goto minipc_err;
     if (err) {
         err = rtu_fdb_proxy_read_next_vlan_entry(vid, &fid, &t, &pm, &us, &ct);
         if (errno)
-            goto error__;
+            goto minipc_err;
         if (err)
             return SNMP_NOSUCHOBJECT;
     }
     return SNMP_ERR_NOERROR;
 
-error__:
-    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
-        __FILE__, __LINE__, strerror(errno));
+minipc_err:
+    snmp_log(LOG_ERR, "%s(%s): mini-ipc error [%s]\n", __FILE__, __func__,
+        strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -113,7 +113,7 @@ static int read_next_entry(struct mib_group_table_entry *ent)
     errno = 0;
     err = rtu_fdb_proxy_read_next_static_entry(&mac_a, &vid_a, &ep, &fp, &t, &s);
     if (errno)
-        goto error_;
+        goto minipc_err;
     if (err)
         return SNMP_ENDOFMIBVIEW; // No more entries in static FDB
                                   // TODO review once MMRP is supported
@@ -134,7 +134,7 @@ static int read_next_entry(struct mib_group_table_entry *ent)
     errno = 0;
     err = rtu_fdb_proxy_read_next_static_entry(&mac_b, &vid_b, &ep, &fp, &t, &s);
     if (errno)
-        goto error_;
+        goto minipc_err;
 
     if (err) {
         // No wildcard VID entries apply
@@ -172,9 +172,9 @@ static int read_next_entry(struct mib_group_table_entry *ent)
     }
     return SNMP_ERR_NOERROR;
 
-error_:
-    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
-        __FILE__, __LINE__, strerror(errno));
+minipc_err:
+    snmp_log(LOG_ERR, "%s(%s): mini-ipc error [%s]\n", __FILE__, __func__,
+        strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -183,18 +183,17 @@ error_:
  * @param tinfo table information that contains the indexes (in raw format)
  * @param ent (OUT) used to return the retrieved indexes
  */
-static void get_indexes(
-    netsnmp_request_info            *req,
-    netsnmp_handler_registration    *reginfo,
-    netsnmp_table_request_info      *tinfo,
-    struct mib_group_table_entry        *ent)
+static void get_indexes(netsnmp_variable_list        *vb,
+                        netsnmp_handler_registration *reginfo,
+                        netsnmp_table_request_info   *tinfo,
+                        struct mib_group_table_entry *ent)
 {
     int oid_len, rootoid_len;
     netsnmp_variable_list *idx;
 
     // Get indexes from request - in case OID contains them!.
     // Otherwise use default values for first row
-    oid_len     = req->requestvb->name_length;
+    oid_len     = vb->name_length;
     rootoid_len = reginfo->rootoid_len;
 
     if (oid_len > rootoid_len) {
@@ -219,31 +218,25 @@ static void get_indexes(
     }
 }
 
-static int get_column(
-    netsnmp_request_info *req,
-    int colnum,
-    struct mib_group_table_entry *ent)
+static int get_column(netsnmp_variable_list         *vb,
+                      int                           colnum,
+                      struct mib_group_table_entry  *ent)
 {
-    int i;
-    char egress_ports[NUM_PORTS];
-    char learnt_ports[NUM_PORTS] = {0,0,0,0,0,0,0,0,
-                                    0,0,0,0,0,0,0,0,
-                                    0,0,0,0,0,0,0,0,
-                                    0,0,0,0,0,0,0,0};
+    char ep[NUM_PORTS];                     // egress ports
+    char lp[NUM_PORTS] = {0,0,0,0,0,0,0,0,  // learn ports
+                          0,0,0,0,0,0,0,0,
+                          0,0,0,0,0,0,0,0,
+                          0,0,0,0,0,0,0,0};
 
     switch (colnum) {
     case COLUMN_IEEE8021QBRIDGETPGROUPEGRESSPORTS:
         // Get info on egress ports from port map
-        for (i = 0; i < NUM_PORTS; i++)
-            egress_ports[i] = (ent->port_map >> i) & 0x01;
-
-        snmp_set_var_typed_value( req->requestvb, ASN_OCTET_STR,
-            egress_ports, NUM_PORTS);
+        to_octetstr(ent->port_map, ep);
+        snmp_set_var_typed_value(vb, ASN_OCTET_STR, ep, NUM_PORTS);
         break;
     case COLUMN_IEEE8021QBRIDGETPGROUPLEARNT:
         // TODO MMRP not supported yet
-        snmp_set_var_typed_value( req->requestvb, ASN_OCTET_STR,
-            learnt_ports, NUM_PORTS);
+        snmp_set_var_typed_value(vb, ASN_OCTET_STR, lp, NUM_PORTS);
         break;
     default:
         return SNMP_NOSUCHOBJECT;
@@ -260,19 +253,15 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     int t;                                          // VLAN entry type    - aux
     unsigned long ct;                               // VLAN creation time - aux
     struct mib_group_table_entry ent;
-    netsnmp_table_request_info *tinfo;
+    netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
     // Get indexes from request
-    tinfo = netsnmp_extract_table_info(req);
-    get_indexes(req, reginfo, tinfo, &ent);
-
+    get_indexes(req->requestvb, reginfo, tinfo, &ent);
     DEBUGMSGTL((MIBMOD, "cid=%lu vid=%d mac=%s column=%d\n",
         ent.cid, ent.vid, mac_to_str(ent.mac), tinfo->colnum));
 
-    if (ent.cid != DEFAULT_COMPONENT_ID)
-        return SNMP_NOSUCHINSTANCE;
-
-    if (ent.vid >= NUM_VLANS)
+    if ((ent.cid != DEFAULT_COMPONENT_ID) ||
+        (ent.vid >= NUM_VLANS))
         return SNMP_NOSUCHINSTANCE;
 
     // Obtain FID assigned to VID
@@ -282,37 +271,40 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     errno = 0;
     err = rtu_fdb_proxy_read_vlan_entry(ent.vid, &fid, &t, &port_mask, &us, &ct);
     if (errno)
-        goto error;
-    if (err) {
-        DEBUGMSGTL((MIBMOD, "VLAN vid=%d not found\n", ent.vid));
-        return SNMP_NOSUCHINSTANCE;
-    }
+        goto minipc_err;
+    if (err)
+        goto vlan_not_found;
 
     errno = 0;
     err = rtu_fdb_proxy_read_entry(ent.mac, fid, &ent.port_map, &t);
     if (errno)
-        goto error;
-    if (err) {
-        DEBUGMSGTL((MIBMOD, "entry vid=%d mac=%s not found\n",
-            ent.vid, mac_to_str(ent.mac)));
-        return SNMP_NOSUCHINSTANCE;
-    }
+        goto minipc_err;
+    if (err)
+        goto entry_not_found;
 
     // Apply port_mask obtained from VLAN table on the port_map
     ent.port_map &= port_mask;
 
     // Get column value
-    return get_column(req, tinfo->colnum, &ent);
+    return get_column(req->requestvb, tinfo->colnum, &ent);
 
-error:
-    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
-        __FILE__, __LINE__, strerror(errno));
+vlan_not_found:
+    DEBUGMSGTL((MIBMOD, "VLAN vid=%d not found\n", ent.vid));
+    return SNMP_NOSUCHINSTANCE;
+
+entry_not_found:
+    DEBUGMSGTL((MIBMOD, "entry vid=%d mac=%s not found\n",
+        ent.vid, mac_to_str(ent.mac)));
+    return SNMP_NOSUCHINSTANCE;
+
+minipc_err:
+    snmp_log(LOG_ERR, "%s(%s): mini-ipc error [%s]\n", __FILE__, __func__,
+        strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
-static int get_next(
-    netsnmp_request_info *req,
-    netsnmp_handler_registration *reginfo)
+static int get_next(netsnmp_request_info         *req,
+                    netsnmp_handler_registration *reginfo)
 {
     int err;
     uint8_t fid;                                    // FID assigned to VID
@@ -321,45 +313,33 @@ static int get_next(
     int t;                                          // VLAN entry type    - aux
     unsigned long ct;                               // VLAN creation time - aux
     struct mib_group_table_entry ent;
-    netsnmp_table_request_info *tinfo;
     netsnmp_variable_list *idx;
+    netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
     // Get indexes from request
-    tinfo = netsnmp_extract_table_info(req);
-    get_indexes(req, reginfo, tinfo, &ent);
-
+    get_indexes(req->requestvb, reginfo, tinfo, &ent);
     DEBUGMSGTL((MIBMOD, "cid=%lu vid=%d mac=%s column=%d\n",
         ent.cid, ent.vid, mac_to_str(ent.mac), tinfo->colnum));
-
     // Obtain VID and MAC address for next entry stored at FDB
     err = read_next_entry(&ent);
     if (err)
         return err;
-
     // Obtain FID assigned to VID
     errno = 0;
     err = rtu_fdb_proxy_read_vlan_entry(ent.vid, &fid, &t, &port_mask, &us, &ct);
     if (errno)
-        goto error_;
-    if (err) {  // This should really never happen at this point
-        DEBUGMSGTL((MIBMOD, "VLAN vid=%d not found\n", ent.vid));
-        return SNMP_ERR_GENERR;
-    }
-
+        goto minipc_err;
+    if (err)
+        goto vlan_not_found;
     // Read entry from FDB
     errno = 0;
     err = rtu_fdb_proxy_read_entry(ent.mac, fid, &ent.port_map, &t);
     if (errno)
-        goto error_;
-    if (err) {  // This should really never happen at this point
-        DEBUGMSGTL((MIBMOD, "entry vid=%d mac=%s not found\n",
-            ent.vid, mac_to_str(ent.mac)));
-        return SNMP_ERR_GENERR;
-    }
-
+        goto minipc_err;
+    if (err)
+        goto entry_not_found;
     // Apply port_mask obtained from VLAN table on the port_map
     ent.port_map &= port_mask;
-
     // Update indexes and OID returned in SNMP response
     idx = tinfo->indexes;
     *idx->val.integer = ent.cid;
@@ -369,14 +349,21 @@ static int get_next(
 
     idx = idx->next_variable;
     memcpy(idx->val.string, ent.mac, ETH_ALEN);
-
     // Update OID
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
-
     // Return next entry column value
-    return get_column(req, tinfo->colnum, &ent);
+    return get_column(req->requestvb, tinfo->colnum, &ent);
 
-error_:
+vlan_not_found:
+    DEBUGMSGTL((MIBMOD, "VLAN vid=%d not found\n", ent.vid));
+    return SNMP_ERR_GENERR;
+
+entry_not_found:
+    DEBUGMSGTL((MIBMOD, "entry vid=%d mac=%s not found\n",
+        ent.vid, mac_to_str(ent.mac)));
+    return SNMP_ERR_GENERR;
+
+minipc_err:
     snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
         __FILE__, __LINE__, strerror(errno));
     return SNMP_ERR_GENERR;
@@ -385,11 +372,10 @@ error_:
 /**
  * Handles requests for the ieee8021QBridgeTpGroupTable table
  */
-static int _handler(
-    netsnmp_mib_handler               *handler,
-    netsnmp_handler_registration      *reginfo,
-    netsnmp_agent_request_info        *reqinfo,
-    netsnmp_request_info              *requests)
+static int _handler(netsnmp_mib_handler          *handler,
+                    netsnmp_handler_registration *reginfo,
+                    netsnmp_agent_request_info   *reqinfo,
+                    netsnmp_request_info         *requests)
 {
     int err;
     netsnmp_request_info *req;

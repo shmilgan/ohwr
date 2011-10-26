@@ -43,7 +43,7 @@
 #define COLUMN_IEEE8021QBRIDGENUMVLANS		        5
 #define COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS		6
 
-static int get_column(netsnmp_request_info *req, int colnum)
+static int get_column(netsnmp_variable_list *vb, int colnum)
 {
     long ver;       // ieee8021QBridgeVlanVersionNumber;
     long mvid;      // ieee8021QBridgeMaxVlanId;
@@ -55,25 +55,25 @@ static int get_column(netsnmp_request_info *req, int colnum)
     case COLUMN_IEEE8021QBRIDGEVLANVERSIONNUMBER:
         // TODO get value from STP daemon. Meanwhile, value 1 means Single STP
         ver = 1;
-        snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, ver);
+        snmp_set_var_typed_integer(vb, ASN_INTEGER, ver);
         break;
     case COLUMN_IEEE8021QBRIDGEMAXVLANID:
         mvid = rtu_fdb_proxy_get_max_vid();
         if (errno)
-            goto error;
-        snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, mvid);
+            goto minipc_err;
+        snmp_set_var_typed_integer(vb, ASN_INTEGER, mvid);
         break;
     case COLUMN_IEEE8021QBRIDGEMAXSUPPORTEDVLANS:
         mvlans = rtu_fdb_proxy_get_max_supported_vlans();
         if (errno)
-            goto error;
-        snmp_set_var_typed_integer(req->requestvb, ASN_UNSIGNED, mvlans);
+            goto minipc_err;
+        snmp_set_var_typed_integer(vb, ASN_UNSIGNED, mvlans);
         break;
     case COLUMN_IEEE8021QBRIDGENUMVLANS:
         vlans = rtu_fdb_proxy_get_num_vlans();
         if (errno)
-            goto error;
-        snmp_set_var_typed_integer(req->requestvb, ASN_GAUGE, vlans);
+            goto minipc_err;
+        snmp_set_var_typed_integer(vb, ASN_GAUGE, vlans);
         break;
     case COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS:
         // not supported yet
@@ -82,9 +82,9 @@ static int get_column(netsnmp_request_info *req, int colnum)
     }
     return SNMP_ERR_NOERROR;
 
-error:
-    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
-        __FILE__, __LINE__, strerror(errno));
+minipc_err:
+    snmp_log(LOG_ERR, "%s(%s): mini-ipc error [%s]\n", __FILE__, __func__,
+        strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
@@ -104,18 +104,16 @@ static int get(netsnmp_request_info *req)
         return SNMP_NOSUCHINSTANCE;
 
     // return entry column value
-    return get_column(req, tinfo->colnum);
+    return get_column(req->requestvb, tinfo->colnum);
 }
 
-static int get_next(netsnmp_request_info *req,
-    netsnmp_handler_registration *reginfo)
+static int get_next(netsnmp_request_info         *req,
+                    netsnmp_handler_registration *reginfo)
 {
     int err;
     u_long cid;
     int oid_len, rootoid_len;
-    netsnmp_table_request_info  *tinfo;
-
-    tinfo = netsnmp_extract_table_info(req);
+    netsnmp_table_request_info  *tinfo = netsnmp_extract_table_info(req);
 
     // Get indexes from request - in case OID contains them!.
     // Otherwise use default values for first row.
@@ -131,7 +129,7 @@ static int get_next(netsnmp_request_info *req,
     // to proceed with next column.
     if (cid >= DEFAULT_COMPONENT_ID)
         return SNMP_ENDOFMIBVIEW;
-    else if (cid == 0)
+    if (cid == 0)
         cid = DEFAULT_COMPONENT_ID;
 
     // Update indexes and OID returned in SNMP response
@@ -139,17 +137,16 @@ static int get_next(netsnmp_request_info *req,
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
 
     // return next entry column value
-    return get_column(req, tinfo->colnum);
+    return get_column(req->requestvb, tinfo->colnum);
 }
 
 /**
  * handles requests for the ieee8021QBridgeTable table
  */
-static int _handler(
-    netsnmp_mib_handler               *handler,
-    netsnmp_handler_registration      *reginfo,
-    netsnmp_agent_request_info        *reqinfo,
-    netsnmp_request_info              *requests)
+static int _handler(netsnmp_mib_handler          *handler,
+                    netsnmp_handler_registration *reginfo,
+                    netsnmp_agent_request_info   *reqinfo,
+                    netsnmp_request_info         *requests)
 {
     int err;
     netsnmp_request_info        *req;

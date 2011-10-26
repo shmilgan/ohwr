@@ -43,7 +43,7 @@
 #define COLUMN_IEEE8021QBRIDGEFDBLEARNEDENTRYDISCARDS	4
 #define COLUMN_IEEE8021QBRIDGEFDBAGINGTIME		        5
 
-static int get_column(netsnmp_request_info *req, int colnum, u_long fid)
+static int get_column(netsnmp_variable_list *vb, int colnum, u_long fid)
 {
     u_long   count;       // ieee8021QBridgeFdbDynamicCount
     uint64_t discards;    // ieee8021QBridgeFdbLearnedEntryDiscards
@@ -55,19 +55,19 @@ static int get_column(netsnmp_request_info *req, int colnum, u_long fid)
         count = rtu_fdb_proxy_get_num_dynamic_entries(fid);
         if (errno)
             return SNMP_ERR_GENERR;
-        snmp_set_var_typed_integer(req->requestvb, ASN_GAUGE, count);
+        snmp_set_var_typed_integer(vb, ASN_GAUGE, count);
         break;
     case COLUMN_IEEE8021QBRIDGEFDBLEARNEDENTRYDISCARDS:
         discards = rtu_fdb_proxy_get_num_learned_entry_discards(fid);
         if (errno)
             return SNMP_ERR_GENERR;
-        snmp_set_var_typed_integer(req->requestvb, ASN_COUNTER64, discards);
+        snmp_set_var_typed_integer(vb, ASN_COUNTER64, discards);
         break;
     case COLUMN_IEEE8021QBRIDGEFDBAGINGTIME:
         age = rtu_fdb_proxy_get_aging_time(fid);
         if (errno)
             return SNMP_ERR_GENERR;
-        snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, age);
+        snmp_set_var_typed_integer(vb, ASN_INTEGER, age);
         break;
     default:
         return SNMP_NOSUCHOBJECT;
@@ -91,31 +91,26 @@ static int get(netsnmp_request_info *req)
 
     DEBUGMSGTL((MIBMOD, "cid=%d fid=%d column=%d\n", cid, fid, tinfo->colnum));
 
-    if (cid != DEFAULT_COMPONENT_ID)
-        return SNMP_NOSUCHINSTANCE;
-
-    if (fid >= NUM_FIDS)
+    if ((cid != DEFAULT_COMPONENT_ID) ||
+        (fid >= NUM_FIDS))
         return SNMP_NOSUCHINSTANCE;
 
     // return entry column value
-    return get_column(req, tinfo->colnum, fid);
+    return get_column(req->requestvb, tinfo->colnum, fid);
 }
 
-static int get_next(netsnmp_request_info *req,
-    netsnmp_handler_registration *reginfo)
+static int get_next(netsnmp_request_info         *req,
+                    netsnmp_handler_registration *reginfo)
 {
     u_long cid;
     u_long fid;
     int oid_len, rootoid_len;
-    netsnmp_table_request_info  *tinfo;
-
-    tinfo = netsnmp_extract_table_info(req);
+    netsnmp_table_request_info  *tinfo = netsnmp_extract_table_info(req);
 
     // Get indexes from request - in case OID contains them!.
     // Otherwise use default values for first row.
     oid_len     = req->requestvb->name_length;
     rootoid_len = reginfo->rootoid_len;
-
 
     cid = (oid_len > rootoid_len) ?
           *tinfo->indexes->val.integer:0;
@@ -126,9 +121,9 @@ static int get_next(netsnmp_request_info *req,
 
     // Get index for next entry - SNMP_ENDOFMIBVIEW informs the handler
     // to proceed with next column.
-    if (cid > DEFAULT_COMPONENT_ID) {
+    if (cid > DEFAULT_COMPONENT_ID)
         return SNMP_ENDOFMIBVIEW;
-    } else if (cid == 0) {
+    if (cid == 0) {
         cid = DEFAULT_COMPONENT_ID;
         fid = 0;
     } else {
@@ -148,12 +143,12 @@ static int get_next(netsnmp_request_info *req,
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
 
     // return next entry column value
-    return get_column(req, tinfo->colnum, fid);
+    return get_column(req->requestvb, tinfo->colnum, fid);
 }
 
 static int set_reserve1(netsnmp_request_info *req)
 {
-    int ret = SNMP_ERR_NOERROR;
+    int ret;
     u_long cid;
     u_long fid;
     netsnmp_table_request_info *tinfo;
@@ -166,17 +161,15 @@ static int set_reserve1(netsnmp_request_info *req)
     DEBUGMSGTL((MIBMOD, "cid=%d fid =%d column=%d\n", cid, fid, tinfo->colnum));
 
     // Check indexes
-    if (cid != DEFAULT_COMPONENT_ID)
-        return SNMP_NOSUCHINSTANCE;
-
-    if (fid >= NUM_FIDS)
+    if ((cid != DEFAULT_COMPONENT_ID) ||
+        (fid >= NUM_FIDS))
         return SNMP_NOSUCHINSTANCE;
 
     // Check column value
     switch (tinfo->colnum) {
     case COLUMN_IEEE8021QBRIDGEFDBAGINGTIME:
         ret = netsnmp_check_vb_int_range(
-                req->requestvb, MIN_AGING_TIME, MAX_AGING_TIME);
+            req->requestvb, MIN_AGING_TIME, MAX_AGING_TIME);
         break;
     default:
         return SNMP_ERR_NOTWRITABLE;
@@ -203,13 +196,13 @@ static int set_commit(netsnmp_request_info *req)
         errno = 0;
         err = rtu_fdb_proxy_set_aging_time(fid, age);
         if (errno) {
-            snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
-                __FILE__, __LINE__, strerror(errno));
+            snmp_log(LOG_ERR, "%s(%s): mini-ipc error [%s]\n",
+                __FILE__, __func__, strerror(errno));
             return SNMP_ERR_GENERR;
         }
         if (err) {
-            snmp_log(LOG_ERR, "%s(%d): set aging time error [%d]\n",
-                __FILE__, __LINE__, err);
+            snmp_log(LOG_ERR, "%s(%s): set aging time error [%d]\n",
+                __FILE__, __func__, err);
             return SNMP_ERR_GENERR;
         }
         break;
@@ -220,11 +213,10 @@ static int set_commit(netsnmp_request_info *req)
 /**
  * handles requests for the ieee8021QBridgeFdbTable table
  */
-static int _handler(
-    netsnmp_mib_handler             *handler,
-    netsnmp_handler_registration    *reginfo,
-    netsnmp_agent_request_info      *reqinfo,
-    netsnmp_request_info            *requests)
+static int _handler(netsnmp_mib_handler          *handler,
+                    netsnmp_handler_registration *reginfo,
+                    netsnmp_agent_request_info   *reqinfo,
+                    netsnmp_request_info         *requests)
 {
     netsnmp_request_info *req;
     int err;

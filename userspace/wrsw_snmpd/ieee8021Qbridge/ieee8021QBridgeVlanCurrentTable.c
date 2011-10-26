@@ -72,18 +72,17 @@ struct mib_vlan_table_entry {
  * @param tinfo table information that contains the indexes (in raw format)
  * @param ent (OUT) used to return the retrieved indexes
  */
-static void get_indexes(
-    netsnmp_request_info           *req,
-    netsnmp_handler_registration   *reginfo,
-    netsnmp_table_request_info     *tinfo,
-    struct mib_vlan_table_entry    *ent)
+static void get_indexes(netsnmp_variable_list           *vb,
+                        netsnmp_handler_registration    *reginfo,
+                        netsnmp_table_request_info      *tinfo,
+                        struct mib_vlan_table_entry     *ent)
 {
     int oid_len, rootoid_len;
     netsnmp_variable_list *idx;
 
     // Get indexes from request - in case OID contains them!.
     // Otherwise use default values for first row
-    oid_len     = req->requestvb->name_length;
+    oid_len     = vb->name_length;
     rootoid_len = reginfo->rootoid_len;
 
     if (oid_len > rootoid_len) {
@@ -108,37 +107,31 @@ static void get_indexes(
     }
 }
 
-static int get_column(
-    netsnmp_request_info *req,
-    int colnum,
-    struct mib_vlan_table_entry *ent)
+static int get_column(netsnmp_variable_list         *vb,
+                      int                           colnum,
+                      struct mib_vlan_table_entry   *ent)
 {
-    int i;
-    char egress_ports[NUM_PORTS];
-    char untagged_ports[NUM_PORTS];
+    char ep[NUM_PORTS]; // egress ports
+    char up[NUM_PORTS]; // untagged ports
 
     switch (colnum) {
     case COLUMN_IEEE8021QBRIDGEVLANFDBID:
-        snmp_set_var_typed_integer(req->requestvb, ASN_UNSIGNED, ent->fid);
+        snmp_set_var_typed_integer(vb, ASN_UNSIGNED, ent->fid);
         break;
     case COLUMN_IEEE8021QBRIDGEVLANCURRENTEGRESSPORTS:
-        for (i = 0; i < NUM_PORTS; i++)
-            egress_ports[i] = (ent->port_mask >> i) & 0x01;
-        snmp_set_var_typed_value(req->requestvb, ASN_OCTET_STR,
-            egress_ports, NUM_PORTS);
+        to_octetstr(ent->port_mask, ep);
+        snmp_set_var_typed_value(vb, ASN_OCTET_STR, ep, NUM_PORTS);
         break;
     case COLUMN_IEEE8021QBRIDGEVLANCURRENTUNTAGGEDPORTS:
-        for (i = 0; i < NUM_PORTS; i++)
-            untagged_ports[i] = (ent->untagged_set >> i) & 0x01;
-        snmp_set_var_typed_value(req->requestvb, ASN_OCTET_STR,
-            untagged_ports, NUM_PORTS);
+        to_octetstr(ent->untagged_set, up);
+        snmp_set_var_typed_value(vb, ASN_OCTET_STR, up, NUM_PORTS);
         break;
     case COLUMN_IEEE8021QBRIDGEVLANSTATUS:
         // TODO review once MVRP is supported
-        snmp_set_var_typed_integer(req->requestvb, ASN_INTEGER, Other_vlan);
+        snmp_set_var_typed_integer(vb, ASN_INTEGER, Other_vlan);
         break;
     case COLUMN_IEEE8021QBRIDGEVLANCREATIONTIME:
-        snmp_set_var_typed_integer(req->requestvb, ASN_TIMETICKS, ent->creation_t);
+        snmp_set_var_typed_integer(vb, ASN_TIMETICKS, ent->creation_t);
         break;
     default:
         return SNMP_NOSUCHOBJECT;
@@ -150,19 +143,15 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
 {
     int err, type;
     struct mib_vlan_table_entry ent;
-    netsnmp_table_request_info *tinfo;
+    netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
     // Get indexes for entry
-    tinfo = netsnmp_extract_table_info(req);
-    get_indexes(req, reginfo, tinfo, &ent);
-
+    get_indexes(req->requestvb, reginfo, tinfo, &ent);
     DEBUGMSGTL((MIBMOD, "cid=%lu vid=%d time=%lu column=%d\n",
         ent.cid, ent.vid, ent.time_mark, tinfo->colnum));
-
-    if (ent.cid != DEFAULT_COMPONENT_ID)
-        return SNMP_NOSUCHINSTANCE;
-
-    if (ent.vid >= NUM_VLANS)
+    // Check index range
+    if ((ent.cid != DEFAULT_COMPONENT_ID) ||
+        (ent.vid >= NUM_VLANS))
         return SNMP_NOSUCHINSTANCE;
 
     // Read entry from RTU FDB.
@@ -174,41 +163,42 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
                                         &ent.untagged_set,
                                         &ent.creation_t);
     if (errno)
-        goto error;
-    if (err) {
-        DEBUGMSGTL((MIBMOD, "vlan vid=%d not found in fdb\n", ent.vid));
-        return SNMP_NOSUCHINSTANCE;
-    }
+        goto minipc_err;
+    if (err)
+        goto not_found;
     // Get column value
-    return get_column(req, tinfo->colnum, &ent);
+    return get_column(req->requestvb, tinfo->colnum, &ent);
 
-error:
-    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
-        __FILE__, __LINE__, strerror(errno));
+not_found:
+    DEBUGMSGTL((MIBMOD, "vlan vid=%d not found in fdb\n", ent.vid));
+    return SNMP_NOSUCHINSTANCE;
+
+minipc_err:
+    snmp_log(LOG_ERR, "%s(%s): mini-ipc error [%s]\n", __FILE__, __func__,
+        strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
-static int get_next(netsnmp_request_info *req,
+static int get_next(netsnmp_request_info         *req,
                     netsnmp_handler_registration *reginfo)
 {
     int err, type;
     struct mib_vlan_table_entry ent;
     netsnmp_variable_list *idx;
-    netsnmp_table_request_info *tinfo;
+    netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
     // Get indexes from request
-    tinfo = netsnmp_extract_table_info(req);
-    get_indexes(req, reginfo, tinfo, &ent);
-
+    get_indexes(req->requestvb, reginfo, tinfo, &ent);
     DEBUGMSGTL((MIBMOD, "time=%d cid=%d vid=%d column=%d\n",
         ent.time_mark, ent.cid, ent.vid, tinfo->colnum));
 
     // TODO time filtering
-    // Get indexes for next entry - SNMP_ENDOFMIBVIEW informs the handler
-    // to proceed with next column.
-    if (ent.cid > DEFAULT_COMPONENT_ID) {
+    // Get indexes for next entry
+    // SNMP_ENDOFMIBVIEW informs the handler to proceed with next column.
+    if (ent.cid > DEFAULT_COMPONENT_ID)
         return SNMP_ENDOFMIBVIEW;
-    } else if (ent.cid == 0) {
+
+    if (ent.cid == 0) {
         ent.cid       = DEFAULT_COMPONENT_ID;
         ent.vid       = 0;
         ent.time_mark = 0;
@@ -225,12 +215,11 @@ static int get_next(netsnmp_request_info *req,
                                             &ent.untagged_set,
                                             &ent.creation_t);
         if (errno)
-            goto error_;
+            goto minipc_err;
         if (!err)
             goto update_idx;
 #endif // V2
     }
-
     if (ent.vid >= NUM_VLANS)
         return SNMP_ENDOFMIBVIEW;
 
@@ -242,7 +231,7 @@ static int get_next(netsnmp_request_info *req,
                                              &ent.untagged_set,
                                              &ent.creation_t);
     if (errno)
-        goto error_;
+        goto minipc_err;
     if (err)
         return SNMP_ENDOFMIBVIEW;   // No other entry found
 
@@ -259,22 +248,21 @@ update_idx:
 
     update_oid(req, reginfo, tinfo->colnum, tinfo->indexes);
     // Get next entry column value
-    return get_column(req, tinfo->colnum, &ent);
+    return get_column(req->requestvb, tinfo->colnum, &ent);
 
-error_:
-    snmp_log(LOG_ERR, "%s(%d): mini-ipc error [%s]\n",
-        __FILE__, __LINE__, strerror(errno));
+minipc_err:
+    snmp_log(LOG_ERR, "%s(%s): mini-ipc error [%s]\n", __FILE__, __func__,
+        strerror(errno));
     return SNMP_ERR_GENERR;
 }
 
 /**
  * Handles requests for the ieee8021QBridgeVlanCurrentTable table
  */
-static int _handler(
-    netsnmp_mib_handler               *handler,
-    netsnmp_handler_registration      *reginfo,
-    netsnmp_agent_request_info        *reqinfo,
-    netsnmp_request_info              *requests)
+static int _handler(netsnmp_mib_handler          *handler,
+                    netsnmp_handler_registration *reginfo,
+                    netsnmp_agent_request_info   *reqinfo,
+                    netsnmp_request_info         *requests)
 {
     int err;
     netsnmp_request_info *req;

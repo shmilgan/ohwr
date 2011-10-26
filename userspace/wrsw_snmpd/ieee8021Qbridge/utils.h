@@ -54,4 +54,28 @@ static inline char *mac_to_str(uint8_t mac[ETH_ALEN])
     return str;
 }
 
+/**
+ * Converts uint32_t into octet string.
+ */
+static inline void to_octetstr(uint32_t val, char arr[32])
+{
+    int i = 0;
+
+    for (; i < 32; i++)
+        arr[i] = (val >> i) & 0x01;
+}
+
+/**
+ * Converts octet string into uint32_t.
+ */
+static inline void from_octetstr(uint32_t *val, char arr[32])
+{
+    int i = 0;
+
+    *val = 0;
+    for(; i < 32; i++)
+        if (arr[i])
+            (*val) |= (1 << i);
+}
+
 #endif /*__WHITERABBIT_SNMP_UTILS_H*/
