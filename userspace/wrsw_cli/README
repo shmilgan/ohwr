@@ -43,7 +43,7 @@ Internally, the CLI has been designed trying to reuse the code written for the
 SNMP agents, which means that the CLI is going to translate the CLI commands
 into SNMP operations that an SNMP client will understand and run, in order to
 get the information from the SNMP agent. This way we aim at avoiding duplicate
-code and some concurrency issues. The SNMP agent will be responsible for
+code and some concurrency issues. The SNMP agent will be then responsible for
 communicating with hardware.
 
 
@@ -94,8 +94,12 @@ net-snmp:
     Compilation and usage
     =====================
 
-For compilation just run make, following the instructions of the documentation
-wrs-build.pdf in the wr-switch-sw/doc section, written by Alessandro Rubini.
+For compilation just run "make", following the instructions of the document
+wrs-build.pdf in the wr-switch-sw/doc section; previously you need to set some
+environment variables (i.e. WRS_OUTPUT_DIR, CROSS_COMPILE and WR_INSTALL_ROOT).
+You can run "make install" to copy the binary file to the $(WR_INSTALL_ROOT)/bin
+directory. Also, you can compile this package using the build scripts in
+$(WRS_OUTPUT_DIR)/wr-switch-sw/build.
 
 Everytime you run the wrsw_cli application you must specify a user and password
 (with the -u and -p arguments) in order to let the CLI access to the SNMPv3
@@ -103,4 +107,9 @@ facilities. This is mandatory for now. Try with:
 
  ./wrsw_cli -u authPrivUser -p password
 
+These are the default values in the $(WR_INSTALL_ROOT)/etc/snmp/snmpd.conf
+configuration file.
+
 In order to run the wrsw_cli, the wrsw_rtud and the snmpd agent must be running.
+(The order of execution here is important; first you must run the wrsw_rtud,
+then the snmpd agent and finally the wrsw_cli).
