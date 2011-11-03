@@ -2,10 +2,8 @@
 WRS_BUILDROOT_DIR	= $(WRS_OUTPUT_DIR)/build/buildroot-2009.11
 WRS_READLINE_DIR	= $(WRS_BUILDROOT_DIR)/output/build/readline-5.2
 WRS_NCURSES_DIR		= $(WRS_BUILDROOT_DIR)/output/build/ncurses-5.6
-NET_SNMP_HOME		= $(WRS_BUILDROOT_DIR)/output/build/net-snmp-5.5
-NET_SNMP_CONFIG		= $(NET_SNMP_HOME)/net-snmp-config
-WR_INSTALL_ROOT 	?= /usr/lib/white-rabbit
-WR_LIB				= $(WR_INSTALL_ROOT)/lib
+WRS_NETSNMP_DIR		= $(WRS_BUILDROOT_DIR)/output/build/net-snmp-5.5
+NET_SNMP_CONFIG		= $(WRS_NETSNMP_DIR)/net-snmp-config
 
 
 PROGRAM		= wrsw_cli
@@ -18,22 +16,13 @@ LIBFILES	= 	$(WRS_READLINE_DIR)/libreadline.a \
 CC		= $(CROSS_COMPILE)gcc
 
 CFLAGS		= -O2 -Os -pipe -Wall -I. -I$(WRS_READLINE_DIR) \
-	-I$(NET_SNMP_HOME)/include \
-	-I$(WRS_BUILDROOT_DIR)/output/staging/usr/include \
-	-I$(WRS_BUILDROOT_DIR)/output/staging/include \
-	--sysroot=$(WRS_BUILDROOT_DIR)/output/staging/ \
-	-isysroot $(WRS_BUILDROOT_DIR)/output/staging \
-	-mtune=arm920t -march=armv4t -mabi=aapcs-linux -msoft-float \
-	-D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -Ulinux \
-	-Dlinux=linux
+			-I$(WRS_NETSNMP_DIR)/include
 
-LDFLAGS = -L. -L$(WR_LIB) -L$(WRS_BUILDROOT_DIR)/output/target/usr/lib \
+LDFLAGS = -L$(WRS_BUILDROOT_DIR)/output/target/usr/lib \
           `$(NET_SNMP_CONFIG) --libs`
 
 
-
 RM 	    := rm -f
-
 
 .PHONY: all
 
