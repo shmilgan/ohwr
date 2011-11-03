@@ -65,7 +65,7 @@ int cli_snmp_init(char *username, char *password)
 
     ss = snmp_open(&session);
     if (!ss) {
-        snmp_sess_perror("cli", &session);
+        snmp_sess_perror("cli: SNMP", &session);
         return -1;
     }
 
@@ -87,11 +87,18 @@ static netsnmp_pdu *cli_snmp_get(oid _oid[MAX_OID_LEN], size_t oid_len)
 
     status = snmp_synch_response(ss, pdu, &response);
 
-    if (status != STAT_SUCCESS)
-        errno = status;
-    else
-        if (response)
-           errno = response->errstat;
+    errno = EPROTO;
+    if (status == STAT_SUCCESS) {
+        if (response->errstat != SNMP_ERR_NOERROR)
+            fprintf(stderr, "Error in SNMP response: %s\n",
+                    snmp_errstring(response->errstat));
+        else
+            errno = 0;
+    } else if (status == STAT_TIMEOUT) {
+        fprintf(stderr, "SNMP Timeout: No Response from %s\n", ss->peername);
+    } else { /* status == STAT_ERROR */
+        snmp_sess_perror("cli: SNMP", ss);
+    }
 
     return response;
 }
@@ -106,7 +113,8 @@ int cli_snmp_int(netsnmp_variable_list *vars)
         case ASN_INTEGER:
             return *(vars->val).integer;
         default:
-            errno = -EINVAL;
+            errno = EINVAL;
+            fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         }
     }
     return 0;
@@ -124,7 +132,8 @@ char *cli_snmp_string(netsnmp_variable_list *vars)
             sp[vars->val_len] = '\0';
             return sp;
         default:
-            errno = -EINVAL;
+            errno = EINVAL;
+            fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
 	    }
     }
     return NULL;
@@ -137,11 +146,13 @@ int cli_snmp_get_int(oid _oid[MAX_OID_LEN], size_t oid_len)
 
     response = cli_snmp_get(_oid, oid_len);
     if (response) {
-        value = cli_snmp_int(response->variables);
+        if(response->errstat == SNMP_ERR_NOERROR)
+            value = cli_snmp_int(response->variables);
         err = errno;
         snmp_free_pdu(response);
+        errno = err;
     }
-    errno = err;
+
     return value;
 }
 
@@ -156,11 +167,13 @@ char *cli_snmp_get_string(oid _oid[MAX_OID_LEN], size_t oid_len)
 
     response = cli_snmp_get(_oid, oid_len);
     if (response) {
-        value = cli_snmp_string(response->variables);
+        if(response->errstat == SNMP_ERR_NOERROR)
+            value = cli_snmp_string(response->variables);
         err = errno;
         snmp_free_pdu(response);
+        errno = err;
 	}
-	errno = err;
+
 	return value;
 }
 
@@ -181,11 +194,18 @@ netsnmp_pdu *cli_snmp_getnext(oid _oid[MAX_OID_LEN], size_t *oid_len)
 
     status = snmp_synch_response(ss, pdu, &response);
 
-    if (status != STAT_SUCCESS)
-        errno = status;
-    else
-        if (response)
-           errno = response->errstat;
+    errno = EPROTO;
+    if (status == STAT_SUCCESS) {
+        if (response->errstat != SNMP_ERR_NOERROR)
+            fprintf(stderr, "Error in SNMP response: %s\n",
+                    snmp_errstring(response->errstat));
+        else
+            errno = 0;
+    } else if (status == STAT_TIMEOUT) {
+        fprintf(stderr, "SNMP Timeout: No Response from %s\n", ss->peername);
+    } else { /* status == STAT_ERROR */
+        snmp_sess_perror("cli: SNMP", ss);
+    }
 
     return response;
 }
@@ -199,14 +219,17 @@ int cli_snmp_getnext_int(oid _oid[MAX_OID_LEN], size_t *oid_len)
 
     response = cli_snmp_getnext(_oid, oid_len);
     if (response) {
-        vars = response->variables;
-        memcpy(_oid, vars->name, vars->name_length * sizeof(oid));
-        *oid_len = vars->name_length;
-        value = cli_snmp_int(vars);
+        if(response->errstat == SNMP_ERR_NOERROR) {
+            vars = response->variables;
+            memcpy(_oid, vars->name, vars->name_length * sizeof(oid));
+            *oid_len = vars->name_length;
+            value = cli_snmp_int(vars);
+        }
         err = errno;
         snmp_free_pdu(response);
+        errno = err;
     }
-    errno = err;
+
     return value;
 }
 
@@ -219,14 +242,17 @@ char *cli_snmp_getnext_string(oid _oid[MAX_OID_LEN], size_t *oid_len)
 
     response = cli_snmp_getnext(_oid, oid_len);
     if (response) {
-        vars = response->variables;
-        memcpy(_oid, vars->name, vars->name_length * sizeof(oid));
-        *oid_len = vars->name_length;
-        value = cli_snmp_string(response->variables);
+        if(response->errstat == SNMP_ERR_NOERROR) {
+            vars = response->variables;
+            memcpy(_oid, vars->name, vars->name_length * sizeof(oid));
+            *oid_len = vars->name_length;
+            value = cli_snmp_string(response->variables);
+        }
         err = errno;
         snmp_free_pdu(response);
+        errno = err;
     }
-    errno = err;
+
     return value;
 }
 
@@ -234,55 +260,59 @@ void cli_snmp_set_int(oid _oid[MAX_OID_LEN], size_t oid_len, char *val, char typ
 {
     netsnmp_pdu *pdu;
     netsnmp_pdu *response;
-    int err = 0, status;
+    int status, ret;
 
     pdu = snmp_pdu_create(SNMP_MSG_SET);
 
-    if (snmp_add_var(pdu, _oid, oid_len, type, val)) {
-        errno = -EINVAL;
+    if ((ret = snmp_add_var(pdu, _oid, oid_len, type, val))) {
+        fprintf(stderr, "Error %d: %s\n", ret, snmp_errstring(ret));
         return;
     }
 
     status = snmp_synch_response(ss, pdu, &response);
 
-    if (status != STAT_SUCCESS)
-        err = status;
-    else
-        if (response)
-           err = response->errstat;
+    if (status == STAT_SUCCESS) {
+        if (response->errstat != SNMP_ERR_NOERROR)
+            fprintf(stderr, "Error in SNMP response: %s\n",
+                    snmp_errstring(response->errstat));
+    } else if (status == STAT_TIMEOUT) {
+        fprintf(stderr, "SNMP Timeout: No Response from %s\n", ss->peername);
+    } else { /* status == STAT_ERROR */
+        snmp_sess_perror("cli: SNMP", ss);
+    }
 
     if (response)
         snmp_free_pdu(response);
-
-    errno = err;
 }
 
 void cli_snmp_set_str(oid _oid[MAX_OID_LEN], size_t oid_len, char *val)
 {
     netsnmp_pdu *pdu;
     netsnmp_pdu *response;
-    int err = 0, status;
+    int status, ret;
     char type;
 
     type = 's';
     pdu = snmp_pdu_create(SNMP_MSG_GET);
-    if (snmp_add_var(pdu, _oid, oid_len, type, val)) {
-        errno = -EINVAL;
+    if ((ret = snmp_add_var(pdu, _oid, oid_len, type, val))) {
+        fprintf(stderr, "Error %d: %s\n", ret, snmp_errstring(ret));
         return;
     }
 
     status = snmp_synch_response(ss, pdu, &response);
 
-    if (status != STAT_SUCCESS)
-        err = status;
-    else
-        if (response)
-           err = response->errstat;
+    if (status == STAT_SUCCESS) {
+        if (response->errstat != SNMP_ERR_NOERROR)
+            fprintf(stderr, "Error in SNMP response: %s\n",
+                    snmp_errstring(response->errstat));
+    } else if (status == STAT_TIMEOUT) {
+        fprintf(stderr, "SNMP Timeout: No Response from %s\n", ss->peername);
+    } else { /* status == STAT_ERROR */
+        snmp_sess_perror("cli: SNMP", ss);
+    }
 
     if (response)
         snmp_free_pdu(response);
-
-    errno = err;
 }
 
 void cli_snmp_set(oid _oid[][MAX_OID_LEN],
@@ -293,30 +323,31 @@ void cli_snmp_set(oid _oid[][MAX_OID_LEN],
 {
     netsnmp_pdu *pdu;
     netsnmp_pdu *response = NULL;
-    int err = 0, status, i;
+    int status, i, ret;
 
     pdu = snmp_pdu_create(SNMP_MSG_SET);
 
-    int ret = 0;
     for (i = 0; i < nvars; i++) {
         if ((ret = snmp_add_var(pdu, _oid[i], oid_len[i], type[i], val[i]))) {
-            errno = ret;
+            fprintf(stderr, "Error %d: %s\n", ret, snmp_errstring(ret));
             return;
         }
     }
 
     status = snmp_synch_response(ss, pdu, &response);
 
-    if (status != STAT_SUCCESS)
-        err = status;
-    else
-        if (response)
-           err = response->errstat;
+    if (status == STAT_SUCCESS) {
+        if (response->errstat != SNMP_ERR_NOERROR)
+            fprintf(stderr, "Error in SNMP response: %s\n",
+                    snmp_errstring(response->errstat));
+    } else if (status == STAT_TIMEOUT) {
+        fprintf(stderr, "SNMP Timeout: No Response from %s\n", ss->peername);
+    } else { /* status == STAT_ERROR */
+        snmp_sess_perror("cli: SNMP", ss);
+    }
 
     if (response)
         snmp_free_pdu(response);
-
-    errno = err;
 }
 
 

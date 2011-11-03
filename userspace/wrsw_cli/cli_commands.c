@@ -69,8 +69,8 @@
 
 
 /* Help functions */
-static void print_oid(oid _oid[MAX_OID_LEN], int n);
-static char *mac_to_string(uint8_t mac[ETH_ALEN]);
+static void print_oid(oid _oid[MAX_OID_LEN], int n) __attribute__((unused));
+static char *mac_to_string(uint8_t mac[ETH_ALEN], char str[3 * ETH_ALEN]);
 static int cmp_oid(oid old_oid[MAX_OID_LEN], oid new_oid[MAX_OID_LEN],
     int base_oid_length);
 static void ports_to_mask(char *ports_range, char *mask);
@@ -245,39 +245,25 @@ struct cli_cmd *cli_register_command(
 {
     struct cli_cmd *cmd, *c;
 
+    /* Check that the command name is not empty */
+    if (!*command)
+        cli_error(EINVAL);
+
     /* Allocate the structure for the command */
     cmd = (struct cli_cmd *)malloc(sizeof(struct cli_cmd));
     if (!cmd)
-        cli_error(cli, CLI_REG_ERROR);
+        cli_error(ENOMEM);
 
     /* Clear structure */
     memset(cmd, 0, sizeof(struct cli_cmd));
 
-    /* Set the parent command */
+    /* Set the command information */
+    cmd->name = command;
     cmd->parent = parent;
-
-    /* Set the command name */
-    if (!(cmd->name = strdup(command)))
-        cli_error(cli, CLI_REG_ERROR);
-
-    /* Set the handler function */
     cmd->handler = handler;
-
-    /* Set the description of the command */
-    if (desc)
-        cmd->desc = strdup(desc);
-
-    /* Set the options if they exists */
-    if (opt != CMD_NO_ARG) {
-        cmd->opt = opt;
-        cmd->opt_desc = strdup(opt_desc);
-    } else {
-        cmd->opt = CMD_NO_ARG;
-        cmd->opt_desc = NULL;
-    }
-
-    /* Init the pointer to the next command. This'll be the last in the list */
-    cmd->next = NULL;
+    cmd->desc = desc;
+    cmd->opt = opt;
+    cmd->opt_desc = opt_desc;
 
     /* Insert the command in the tree */
     if (parent) {
@@ -338,19 +324,12 @@ void cli_unregister_commands(struct cli_cmd *top_cmd)
             cli_unregister_commands(free_cmd);
         }
 
-        if (c->name)
-            free(c->name);
-        if (c->desc)
-            free(c->desc);
-        if (c->opt_desc)
-            free(c->opt_desc);
-        if (c) {
-            if (!c->child && !c->next)
-                /* Set the parent's reference to 0 */
-                if (c->parent)
-                    c->parent->child = NULL;
-            free(c);
-        }
+        if (!c->next)
+            /* Set the parent's reference to 0 */
+            if (c->parent)
+                c->parent->child = NULL;
+
+        free(c);
 
         /* Take the next pointer */
         c = p;
@@ -448,8 +427,16 @@ void cli_cmd_exit(struct cli_shell *cli, int argc, char **argv)
  */
 void cli_cmd_hostname(struct cli_shell *cli, int argc, char **argv)
 {
+    int i = 0;
+
     /* Check if this command has been called with arguments */
     if (argc) {
+        /* Maximum length for the hostname must be 32 characters */
+        for (i = 0; i < 32; i++)
+            if (argv[0][i] == '\0')
+                break;
+        if (i == 32)
+            argv[0][i] = '\0';
         free(cli->hostname);
         cli->hostname = strdup(argv[0]);
         cli_build_prompt(cli);
@@ -488,8 +475,6 @@ void cli_cmd_show_cam_aging(struct cli_shell *cli, int argc, char **argv)
 
     if (errno == 0) {
         printf("\tAging time: %d\n", aging);
-    } else {
-        printf("Error: %d\n", errno);
     }
 
     return;
@@ -528,17 +513,16 @@ void cli_cmd_show_port_info(struct cli_shell *cli, int argc, char **argv)
     do {
         errno = 0;
         pvid = cli_snmp_getnext_int(new_oid, &length_oid);
-        if (errno == 0) {
-            if (cmp_oid(_oid, new_oid, 11) < 0)
-                break;
-            if (cmp_oid(_oid, new_oid, 11) > 0)
-                break;
-            port = (int)new_oid[14];
-            printf("\t%-4d   %d\n", port, pvid);
-        } else {
-            printf("Error: %d\n", errno);
+        if (errno != 0)
             break;
-        }
+        if (cmp_oid(_oid, new_oid, 11) < 0)
+            break;
+        if (cmp_oid(_oid, new_oid, 11) > 0)
+            break;
+
+        port = (int)new_oid[14];
+        printf("\t%-4d   %d\n", port, pvid);
+
         memcpy(_oid, new_oid, sizeof(oid) * MAX_OID_LEN);
     } while(1);
 
@@ -562,6 +546,7 @@ void cli_cmd_show_cam(struct cli_shell *cli, int argc, char **argv)
     int i, j;
     int fid;
     uint8_t mac[ETH_ALEN];
+    char mac_str[3 * ETH_ALEN];
 
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
@@ -581,35 +566,34 @@ void cli_cmd_show_cam(struct cli_shell *cli, int argc, char **argv)
     do {
         errno = 0;
         port = cli_snmp_getnext_int(new_oid, &length_oid);
-        if (errno == 0) {
-            if (cmp_oid(_oid, new_oid, 11) < 0)
-                break;
-            if (cmp_oid(_oid, new_oid, 11) > 0)
-                break;
-            fid = (int)new_oid[14];
-            for (i = 0; i < ETH_ALEN; i++){
-                mac[i] = (int) new_oid[15+i];
-            }
-            printf("\t%-3d   %-17s      ", fid, mac_to_string(mac));
-
-            /* Parse the port value */
-            j = 0;
-            for (i = 0; i < NUM_PORTS; i++) {
-                if (port & (1 << i)) {
-                    if (j > 0) {
-                        printf(", ");
-                        if ((j % 8) == 0)
-                            printf("\n\t                             ");
-                    }
-                    printf("%d", i);
-                    j++;
-                }
-            }
-            printf("\n");
-        } else {
-            printf("Error: %d\n", errno);
+        if (errno != 0)
             break;
+        if (cmp_oid(_oid, new_oid, 11) < 0)
+            break;
+        if (cmp_oid(_oid, new_oid, 11) > 0)
+            break;
+
+        fid = (int)new_oid[14];
+        for (i = 0; i < ETH_ALEN; i++){
+            mac[i] = (int) new_oid[15+i];
         }
+        printf("\t%-3d   %-17s      ", fid, mac_to_string(mac, mac_str));
+
+        /* Parse the port value */
+        j = 0;
+        for (i = 0; i < NUM_PORTS; i++) {
+            if (port & (1 << i)) {
+                if (j > 0) {
+                    printf(", ");
+                    if ((j % 8) == 0)
+                        printf("\n\t                             ");
+                }
+                printf("%d", i);
+                j++;
+            }
+        }
+        printf("\n");
+
         memcpy(_oid, new_oid, sizeof(oid)*MAX_OID_LEN);
     } while(1);
 
@@ -635,6 +619,7 @@ void cli_cmd_show_cam_multi(struct cli_shell *cli, int argc, char **argv)
     int i;
     int fid;
     uint8_t mac[ETH_ALEN];
+    char mac_str[3 * ETH_ALEN];
 
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
@@ -654,32 +639,31 @@ void cli_cmd_show_cam_multi(struct cli_shell *cli, int argc, char **argv)
     do {
         errno = 0;
         egress_ports = cli_snmp_getnext_string(new_oid, &length_oid);
-        if (errno == 0) {
-            if (cmp_oid(_oid, new_oid, 11) < 0)
-                break;
-            if (cmp_oid(_oid, new_oid, 11) > 0)
-                break;
-            fid = (int)new_oid[14];
-            for (i = 0; i < ETH_ALEN; i++){
-                mac[i] = (int) new_oid[15+i];
-            }
-            printf("\t%-3d   %-17s      ", fid, mac_to_string(mac));
-
-            /* Parse the port mask */
-            memset(ports_range, 0, sizeof(ports_range));
-            mask_to_ports(egress_ports, ports_range);
-            for (i = 0; ports_range[i] >= 0 && i < NUM_PORTS; i++) {
-                printf("%d", ports_range[i]);
-                if (ports_range[i + 1] >= 0)
-                    printf(", ");
-                if ((i != 0) && ((i % 8) == 0))
-                    printf("\n\t                             ");
-            }
-            printf("\n");
-        } else {
-            printf("Error: %d\n", errno);
+        if (errno != 0)
             break;
+        if (cmp_oid(_oid, new_oid, 11) < 0)
+            break;
+        if (cmp_oid(_oid, new_oid, 11) > 0)
+            break;
+
+        fid = (int)new_oid[14];
+        for (i = 0; i < ETH_ALEN; i++){
+            mac[i] = (int) new_oid[15+i];
         }
+        printf("\t%-3d   %-17s      ", fid, mac_to_string(mac, mac_str));
+
+        /* Parse the port mask */
+        memset(ports_range, 0, NUM_PORTS * sizeof(int));
+        mask_to_ports(egress_ports, ports_range);
+        for (i = 0; ports_range[i] >= 0 && i < NUM_PORTS; i++) {
+            printf("%d", ports_range[i]);
+            if (ports_range[i + 1] >= 0)
+                printf(", ");
+            if ((i != 0) && ((i % 8) == 0))
+                printf("\n\t                             ");
+        }
+        printf("\n");
+
         memcpy(_oid, new_oid, sizeof(oid)*MAX_OID_LEN);
     } while(1);
 
@@ -752,39 +736,36 @@ void cli_cmd_show_vlan(struct cli_shell *cli, int argc, char **argv)
     do {
         errno = 0;
         ports = cli_snmp_getnext_string(new_oid, &length_oid);
-        if (errno == 0) {
-            if (cmp_oid(_oid, new_oid, 11) < 0)
-                break;
-            if (cmp_oid(_oid, new_oid, 11) > 0)
-                break;
-
-            vid = (int)new_oid[15];
-
-            memcpy(aux_oid, new_oid, length_oid * sizeof(oid));
-            aux_oid[12] = 4; /* FID column */
-            errno = 0;
-            fid = cli_snmp_get_int(aux_oid, length_oid);
-            if (errno != 0) {
-                printf("Error: %d\n", errno);
-                break;
-            }
-            printf("\t%-4d   %-3d    ", vid, fid);
-
-            /* Parse the port mask */
-            memset(ports_range, 0, sizeof(ports_range));
-            mask_to_ports(ports, ports_range);
-            for (i = 0; ports_range[i] >= 0 && i < NUM_PORTS; i++) {
-                printf("%d", ports_range[i]);
-                if (ports_range[i + 1] >= 0)
-                    printf(", ");
-                if ((i != 0) && ((i % 8) == 0))
-                    printf("\n\t              ");
-            }
-            printf("\n");
-        } else {
-            printf("Error: %d\n", errno);
+        if (errno != 0)
             break;
+        if (cmp_oid(_oid, new_oid, 11) < 0)
+            break;
+        if (cmp_oid(_oid, new_oid, 11) > 0)
+            break;
+
+        vid = (int)new_oid[15];
+        memcpy(aux_oid, new_oid, length_oid * sizeof(oid));
+        aux_oid[12] = 4; /* FID column */
+
+        errno = 0;
+        fid = cli_snmp_get_int(aux_oid, length_oid);
+        if (errno != 0)
+            break;
+
+        printf("\t%-4d   %-3d    ", vid, fid);
+
+        /* Parse the port mask */
+        memset(ports_range, 0, NUM_PORTS * sizeof(int));
+        mask_to_ports(ports, ports_range);
+        for (i = 0; ports_range[i] >= 0 && i < NUM_PORTS; i++) {
+            printf("%d", ports_range[i]);
+            if (ports_range[i + 1] >= 0)
+                printf(", ");
+            if ((i != 0) && ((i % 8) == 0))
+                printf("\n\t              ");
         }
+        printf("\n");
+
         memcpy(_oid, new_oid, sizeof(oid)*MAX_OID_LEN);
     } while(1);
 
@@ -854,11 +835,7 @@ void cli_cmd_set_port_pvid(struct cli_shell *cli, int argc, char **argv)
     _oid[14] = port;              /* PVID column */
     length_oid++;
 
-    errno = 0;
     cli_snmp_set_int(_oid, length_oid, argv[1], 'i');
-
-    if (errno != 0)
-        printf("Error: %d\n", errno);
 
     return;
 }
@@ -905,11 +882,7 @@ void cli_cmd_set_cam_aging(struct cli_shell *cli, int argc, char **argv)
     if (!snmp_parse_oid(base_oid, _oid, &length_oid))
         return;
 
-    errno = 0;
     cli_snmp_set_int(_oid, length_oid, argv[0], 'i');
-
-    if (errno != 0)
-        printf("Error: %d\n", errno);
 
     return;
 }
@@ -1057,10 +1030,7 @@ void cli_cmd_set_vlan(struct cli_shell *cli, int argc, char **argv)
     types[0] = 'i';                     /* Type integer */
     types[1] = 'x';                     /* Type string */
 
-    errno = 0;
     cli_snmp_set(_oid, length_oid, value, types, 2);
-    if (errno != 0)
-        printf("Error: %d\n", errno);
 
     return;
 }
@@ -1115,12 +1085,8 @@ void cli_cmd_del_vlan(struct cli_shell *cli, int argc, char **argv)
 
     length_oid += 2;
 
-    errno = 0;
     /* Row status (delete = 6) */
     cli_snmp_set_int(_oid, length_oid, "6", 'i');
-
-    if (errno != 0)
-        printf("Error: %d\n", errno);
 
     return;
 }
@@ -1136,13 +1102,12 @@ static void print_oid(oid _oid[MAX_OID_LEN], int n)
         printf(".%d", (int)_oid[i]);
 }
 
-/* Helper function to convert mac address into a string*/
-static char *mac_to_string(uint8_t mac[ETH_ALEN])
+/* Helper function to convert mac address into a string */
+static char *mac_to_string(uint8_t mac[ETH_ALEN], char str[3 * ETH_ALEN])
 {
- 	char str[40];
-    snprintf(str, 40, "%02x:%02x:%02x:%02x:%02x:%02x",
+    snprintf(str, 3 * ETH_ALEN, "%02x:%02x:%02x:%02x:%02x:%02x",
              mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
-    return strdup(str); //FIXME: can't be static but this takes memory
+    return str;
 }
 
 /* Helper function to compare OIDs */
@@ -1164,7 +1129,8 @@ static int cmp_oid(oid old_oid[MAX_OID_LEN], oid new_oid[MAX_OID_LEN],
 }
 
 /* Helper function to convert port numbers (which can be formatted as a
-   group of numbers separatted by commas) in port masks */
+   group of numbers separatted by commas) in port masks. The character 'e' is
+   used when an error occurs */
 static void ports_to_mask(char *ports_range, char *mask)
 {
     int i = 0;
@@ -1264,6 +1230,7 @@ static void show_cam_static(char *base_oid)
     int i;
     int vid;
     uint8_t mac[ETH_ALEN];
+    char mac_str[3 * ETH_ALEN];
 
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
@@ -1283,32 +1250,31 @@ static void show_cam_static(char *base_oid)
     do {
         errno = 0;
         egress_ports = cli_snmp_getnext_string(new_oid, &length_oid);
-        if (errno == 0) {
-            if (cmp_oid(_oid, new_oid, 11) < 0)
-                break;
-            if (cmp_oid(_oid, new_oid, 11) > 0)
-                break;
-            vid = (int)new_oid[14];
-            for (i = 0; i < ETH_ALEN; i++){
-                mac[i] = (int) new_oid[15+i];
-            }
-            printf("\t%-4d   %-17s      ", vid, mac_to_string(mac));
-
-            /* Parse the port mask */
-            memset(ports_range, 0, sizeof(ports_range));
-            mask_to_ports(egress_ports, ports_range);
-            for (i = 0; ports_range[i] >= 0 && i < NUM_PORTS; i++) {
-                printf("%d", ports_range[i]);
-                if (ports_range[i + 1] >= 0)
-                    printf(", ");
-                if ((i != 0) && ((i % 8) == 0))
-                    printf("\n\t                              ");
-            }
-            printf("\n");
-        } else {
-            printf("Error: %d\n", errno);
+        if (errno != 0)
             break;
+        if (cmp_oid(_oid, new_oid, 11) < 0)
+            break;
+        if (cmp_oid(_oid, new_oid, 11) > 0)
+            break;
+
+        vid = (int)new_oid[14];
+        for (i = 0; i < ETH_ALEN; i++){
+            mac[i] = (int) new_oid[15+i];
         }
+        printf("\t%-4d   %-17s      ", vid, mac_to_string(mac, mac_str));
+
+        /* Parse the port mask */
+        memset(ports_range, 0, sizeof(ports_range));
+        mask_to_ports(egress_ports, ports_range);
+        for (i = 0; ports_range[i] >= 0 && i < NUM_PORTS; i++) {
+            printf("%d", ports_range[i]);
+            if (ports_range[i + 1] >= 0)
+                printf(", ");
+            if ((i != 0) && ((i % 8) == 0))
+                printf("\n\t                              ");
+        }
+        printf("\n");
+
         memcpy(_oid, new_oid, sizeof(oid)*MAX_OID_LEN);
     } while(1);
 }
@@ -1398,10 +1364,9 @@ static void set_cam_static(int argc, char **argv, char *base_oid,
     types[0] = 'i';                     /* Type integer */
     types[1] = 'x';                     /* Type string */
 
-    errno = 0;
     cli_snmp_set(_oid, length_oid, value, types, 2);
-    if (errno != 0)
-        printf("Error: %d\n", errno);
+
+    return;
 }
 
 /* Helper function to remove the static entries in the FDB (both
@@ -1460,10 +1425,8 @@ static void del_cam_static_entry(int argc, char **argv, char *base_oid)
 
     length_oid += 9;
 
-    errno = 0;
     /* Row status (delete = 6) */
     cli_snmp_set_int(_oid, length_oid, "6", 'i');
 
-    if (errno != 0)
-        printf("Error: %d\n", errno);
+    return;
 }
