@@ -35,6 +35,7 @@
 #include <ctype.h>
 #include <readline.h>
 #include <history.h>
+#include <errno.h>
 
 #include "cli.h"
 #include "cli_commands.h"
@@ -91,16 +92,15 @@ static int parse_string(char *string, char *commands[])
 
         cmd_start = word;
 
-        while (*word && !isspace(*word)) { /* Detect words */
+        while (*word && !isspace(*word)) { /* Detect characters */
             word++;
             cmd_length++;
         }
 
         /* Allocate memory for the command */
         commands[i] = (char*)malloc(cmd_length + 1);
-        if (!commands[i]) {
-            return -1;
-        }
+        if (!commands[i])
+            return -ENOMEM;
 
         /* Copy the detected command to the array */
         memcpy(commands[i], cmd_start, cmd_length);
@@ -125,7 +125,7 @@ static int parse_string(char *string, char *commands[])
  */
 static void free_cmds_string(int num_cmds, char *commands[])
 {
-    int i = 0;
+    int i;
     for (i = 0; i < num_cmds; i++)
         free(commands[i]);
 }
@@ -177,23 +177,19 @@ static char *command_generator(const char *text, int state)
                 }
 
                 if (!c_found) {
-                    if (!cmd) { /* The first command in the line is wrong */
-                        free_cmds_string(num_cmds, commands);
-                        return ((char*)NULL);
-                    }
+                    if (!cmd) /* The first command in the line is wrong */
+                        goto free;
 
                     /* Check if it may be an argument */
                     if (cmd->opt != CMD_NO_ARG) {
                         is_arg = ~is_arg;
                         ref_cmd = cmd->child;
                         continue;
-                    } else {
-                        free_cmds_string(num_cmds, commands);
-                        return ((char*)NULL);
                     }
-                } else {
-                    ref_cmd = c_found->child;
+                    goto free;
                 }
+
+                ref_cmd = c_found->child;
                 is_arg = 0;
                 cmd = c_found;
             }
@@ -203,18 +199,13 @@ static char *command_generator(const char *text, int state)
     cmd = ref_cmd;
 
     /* If we reach the end of the commands list, we exit */
-    if (!cmd) {
-        free_cmds_string(num_cmds, commands);
-        return ((char*)NULL);
-    }
+    if (!cmd)
+        goto free;
 
     /* If it has to be an argument, no autocompletion is provided */
-    if (cmd->parent) {
-        if ((is_arg == 0) && (cmd->parent->opt == CMD_ARG_MANDATORY)) {
-            free_cmds_string(num_cmds, commands);
-            return ((char*)NULL);
-        }
-    }
+    if (cmd->parent)
+        if ((is_arg == 0) && (cmd->parent->opt == CMD_ARG_MANDATORY))
+            goto free;
 
     /* Look for matches in the list of commands that share the parent */
     while (cmd) {
@@ -225,6 +216,9 @@ static char *command_generator(const char *text, int state)
         cmd = cmd->next;
     }
 
+    goto free;
+
+    free:
     free_cmds_string(num_cmds, commands);
     return ((char*)NULL);
 }
@@ -244,11 +238,19 @@ static char **completion(char *text, int start, int end)
 {
     char **matches;
 
-    matches = (char **)NULL;
-
     matches = rl_completion_matches(text, command_generator);
-
     return matches;
+}
+
+
+/**
+ * \brief Error handling.
+ * @param error Error code.
+ */
+void cli_error(int error)
+{
+    fprintf(stderr, "Error %d: %s\n", error, strerror(error));
+    exit(1);
 }
 
 
@@ -263,9 +265,10 @@ struct cli_shell *cli_init(void)
 {
     struct cli_shell *cli;
 
-    cli = (struct cli_shell *)malloc(sizeof(struct cli_shell));
+
+    cli = malloc(sizeof(struct cli_shell));
     if (!cli)
-        cli_error(NULL, CLI_ALLOC_ERROR);
+        cli_error(ENOMEM);
 
     /* Clear structure */
     memset(cli, 0, sizeof(struct cli_shell));
@@ -280,6 +283,9 @@ struct cli_shell *cli_init(void)
        filename generator function be called when no matches are found. */
     rl_completion_entry_function = (rl_compentry_func_t *) completion;
 
+    /* Set the prompt */
+    cli_build_prompt(cli);
+
     return cli;
 }
 
@@ -292,7 +298,8 @@ struct cli_shell *cli_init(void)
  */
 void cli_build_prompt(struct cli_shell *cli)
 {
-    char buf[64];
+    char buf[35]; /* Maximum length of hostname is 32 and length of EXEC_PROMPT
+                     is 2 */
 
     if (!cli->hostname)
         cli->hostname = strdup(DEFAULT_HOSTNAME);
@@ -300,9 +307,9 @@ void cli_build_prompt(struct cli_shell *cli)
     if (cli->prompt)
         free(cli->prompt);
 
-    strcpy(&buf[0], cli->hostname);
-    strcat(&buf[0], EXEC_PROMPT);
-    cli->prompt = strdup(&buf[0]);
+    strcpy(buf, cli->hostname);
+    strcat(buf, EXEC_PROMPT);
+    cli->prompt = strdup(buf);
 }
 
 
@@ -345,7 +352,7 @@ void cli_run_command(struct cli_shell *cli, char *string)
     char *q = "?";
     int i = 0;
     int argc = 0;
-    char *argv[] = {0};
+    char *argv[MAX_CMDS_IN_LINE] = {0};
     int arg = 0;  /* Flag to know whether we are looking for a command or
                      an argument */
 
@@ -353,16 +360,15 @@ void cli_run_command(struct cli_shell *cli, char *string)
     if (!*string)
         return;
 
-    /* Parse command. The commands will be stored in the 'commands' array */
+    /* Parse command. The subcommands will be stored in the 'commands' array */
     num_cmds = parse_string(string, commands);
 
     /* Check for allocation erors */
-    if (num_cmds < 0) {
-        printf("Out of memory while proccessing the command.\n");
-        return;
-    }
+    if (num_cmds < 0)
+        cli_error(ENOMEM);
 
-    /* Find the commands in the commands array, and evaluate them if possible */
+    /* Find the subcommands in the commands array, and evaluate them if
+       possible */
     for (i = 0; i < num_cmds; i++) {
         if (!cmd) {
             /* Start the search from root_cmd */
@@ -372,57 +378,45 @@ void cli_run_command(struct cli_shell *cli, char *string)
             c_found = cli_find_command(cli, cmd->child, commands[i]);
         }
 
-        /* If a matching command has not been found, maybe the user has asked
-           for help or we have an argument for this command */
+        /* If a matching subcommand has not been found, maybe the user has asked
+           for help or maybe we have an argument for this command */
         if (!c_found) {
             if (!strcmp(commands[i], h) || !strcmp(commands[i], q)) {
                 cli_cmd_help(cli, cmd);
-                free_cmds_string(num_cmds, commands);
-                return;
-            } else {
-                if (!cmd) {
-                    printf("Error. Command %s does not exist.\n", commands[i]);
-                    free_cmds_string(num_cmds, commands);
-                    return;
-                } else {
-                    if (cmd->opt == CMD_NO_ARG) {
-                        printf("Error. Command %s does not exist.\n",
-                                commands[i]);
-                        free_cmds_string(num_cmds, commands);
-                        return;
-                    } else {
-                        if (arg) {
-                            /* It can be an argument. The handler will check
-                               wether this is a valid argument or not */
-                            argc++;
-                            argv[(argc-1)] = commands[i];
-                            arg = 0; /* Next word can't be an arg, but a cmd */
-                            continue;
-                        } else {
-                            printf("Error. Command %s does not exist.\n",
-                                    commands[i]);
-                            free_cmds_string(num_cmds, commands);
-                            return;
-                        }
-                    }
-                }
+                goto free;
             }
+            if (!cmd) {
+                printf("Error. Command %s does not exist.\n", commands[i]);
+                goto free;
+            }
+            if (cmd->opt == CMD_NO_ARG) {
+                printf("Error. Command %s does not exist.\n", commands[i]);
+                goto free;
+            }
+            if (arg) {
+                /* It can be an argument. The handler will check
+                   wether this is a valid argument or not */
+                argc++;
+                argv[(argc-1)] = commands[i];
+                arg = 0; /* Next word can't be an arg, but a cmd */
+                continue;
+            }
+            printf("Error. Command %s does not exist.\n", commands[i]);
+            goto free;
         }
 
-        /* If a previous command has been detected, check that it is the parent
-           command */
+        /* If a previous subcommand has been detected, check that it is a valid
+           parent */
         if (cmd) {
-            /* But first be sure that the command found does have a parent */
+            /* But first be sure that the found subcommand does have a parent */
             if (c_found->parent) {
                 if (memcmp(cmd, c_found->parent, sizeof(struct cli_cmd))) {
                     printf("Error. Wrong command syntax.\n");
-                    free_cmds_string(num_cmds, commands);
-                    return;
+                    goto free;
                 }
             } else {
                 printf("Error. Wrong command syntax.\n");
-                free_cmds_string(num_cmds, commands);
-                return;
+                goto free;
             }
         }
 
@@ -430,50 +424,19 @@ void cli_run_command(struct cli_shell *cli, char *string)
         arg = 1; /* Next word can be an argument */
     }
 
-    /* Run the handler associated to the last command detected */
-    if (cmd) {
-        if (cmd->handler) {
-            cmd->handler(cli, argc, argv);
-        } else {
-            printf("Nothing to do for this command. Type '");
-            for (i = 0; i < num_cmds; i++)
-                printf("%s ", commands[i]);
-            printf("help' for usage.\n");
-        }
+    /* Run the handler associated to the last subcommand detected */
+    if (cmd->handler) {
+        cmd->handler(cli, argc, argv);
+    } else {
+        printf("Nothing to do for this command. Type '");
+        for (i = 0; i < num_cmds; i++)
+            printf("%s ", commands[i]);
+        printf("help' for usage.\n");
     }
 
+    free:
     free_cmds_string(num_cmds, commands);
-}
-
-
-/**
- * \brief Error handling.
- * It handles the fatal errors, i.e. those errors that force the program to
- * exit. It uses the cli_cmd_exit function to de-allocate data structures.
- * @param cli CLI interpreter.
- * @param error_code Error code.
- */
-void cli_error(struct cli_shell *cli, int error_code)
-{
-    switch (error_code) {
-    case CLI_ALLOC_ERROR:
-        fprintf(stderr, "Memory allocation error\n");
-        break;
-    case CLI_SNMP_INIT_ERROR:
-        fprintf(stderr, "SNMP initialization error\n");
-        break;
-    case CLI_REG_ERROR:
-        fprintf(stderr, "An error has occurred while registering the"
-                " commands tree\n");
-        break;
-    case CLI_ERROR:
-    default:
-        fprintf(stderr, "Fatal error: %i\n", error_code);
-        break;
-    }
-
-    /* Free memory */
-    cli_cmd_exit(cli, 0, NULL);
+    return;
 }
 
 
@@ -488,13 +451,6 @@ void cli_main_loop(struct cli_shell *cli)
 
     /* Init loop */
     while (1) {
-        /* Clear the buffer. Remember that the readline function makes the
-           allocation of the string internally */
-        if (line) {
-            free(line);
-            line = NULL;
-        }
-
         /* Use readline function to let Command Line Editing */
         line = readline(cli->prompt);
         if (!line)
@@ -512,9 +468,10 @@ void cli_main_loop(struct cli_shell *cli)
         /* Evaluate the commands line inserted by the user and try to run
            the command */
         cli_run_command(cli, string);
-    }
 
-    free(string);
+        /* Clear the buffer for the next iteration */
+        free(line);
+    }
 }
 
 
@@ -524,28 +481,21 @@ void cli_main_loop(struct cli_shell *cli)
 int main(int argc, char **argv)
 {
     int op;
-    char *s, *name, *optstring;
+    char *optstring;
     char *version = VERSION;
     char *username = NULL;
     char *password = NULL;
     struct cli_shell *cli;
 
 
-    /* Strip out path from argv[0] if exists, and extract command name */
-    for (name = s = argv[0]; s[0]; s++) {
-        if (s[0] == '/' && s[1]) {
-            name = &s[1];
-        }
-    }
-
     /* Capture options */
-    if (argc > 0) {
+    if (argc > 1) {
         /* Parse options */
         optstring = "hp:u:";
         while ((op = getopt(argc, argv, optstring)) != -1) {
             switch(op) {
             case 'h':
-                usage(name);
+                usage(argv[0]);
                 break;
             case 'p':
                 password = optarg;
@@ -554,40 +504,27 @@ int main(int argc, char **argv)
                 username = optarg;
                 break;
             default:
-                usage(name);
+                usage(argv[0]);
                 break;
             }
         }
     }
 
-    if (!username && !password)
-        usage(name);
+    if (!username || !password)
+        usage(argv[0]);
 
     /* Initialize the CLI data */
-    cli = cli_init();
+    _cli = cli = cli_init();
 
     /* Init SNMP */
     if (cli_snmp_init(username, password) < 0)
-        cli_error(cli,CLI_SNMP_INIT_ERROR);
-
-    /* Reference for the readline library */
-    _cli = cli;
-
-    /* Set the prompt */
-    cli_build_prompt(cli);
+        cli_error(ENOMEM);
 
     /* Print welcome message */
-    printf("\n\t****************************\n");
-    printf("\t  wrsw_cli version %s      \n", version);
-    printf("\t  Copyright (C) 2011, CERN  \n");
-    printf("\t****************************\n\n");
+    printf("\twrsw_cli version %s. Copyright (C) 2011, CERN\n", version);
 
     /* Init main loop */
     cli_main_loop(cli);
-
-    /* Free memory when exiting the main loop */
-    if (cli)
-        cli_error(cli, CLI_ERROR);
 
 	return 0;
 }

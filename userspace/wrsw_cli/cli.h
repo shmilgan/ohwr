@@ -36,26 +36,18 @@
 
 #define VERSION "1.0"
 
-/* Define return codes. Codes minor than 0 means a fatal error so the CLI must
-   shutdown */
-#define CLI_ERROR           -1  /* Generic error */
-#define CLI_ALLOC_ERROR     -2  /* Memory allocation failed */
-#define CLI_SNMP_INIT_ERROR -3  /* SNMP initialization error */
-#define CLI_REG_ERROR       -4  /* Error while registering the commands */
-#define CLI_OK              0   /* Success */
-
 /* Prompt */
-#define EXEC_PROMPT  "# "
+#define EXEC_PROMPT  "> "
 
 /* Default hostname */
 #define DEFAULT_HOSTNAME    "WR-Switch"
 
-/* Define a maximum number of commands allowed per line */
-#define MAX_CMDS_IN_LINE    10
+/* Define a maximum number of commands and options allowed per line */
+#define MAX_CMDS_IN_LINE    12
 
 /* Define a maximum length for the commands inserted by the user (meassured in
    characters) */
-#define MAX_CMD_LENGTH      1024
+#define MAX_CMD_LENGTH      2048
 
 /* Define the types of argument expected by the command */
 #define CMD_NO_ARG          0
@@ -93,13 +85,13 @@ struct cli_shell {
 
 
 /* Functions */
+void cli_error(int error_code);
 struct cli_shell *cli_init(void);
 void cli_build_prompt(struct cli_shell *cli);
 struct cli_cmd *cli_find_command(struct cli_shell *cli,
                                  struct cli_cmd *top_cmd,
                                  char *cmd);
 void cli_run_command(struct cli_shell *cli, char *string);
-void cli_error(struct cli_shell *cli, int error_code);
 void cli_main_loop(struct cli_shell *cli);
 
 
