@@ -2,6 +2,12 @@ Informal TODO list
 ------------------
 
 
+- Extend the commands and options help.
+
+- Extend the commands.
+
+- Document the command syntax (e.g. user manual)
+
 - Try to reduce the readline footprint by editing
 the /$(HOME)/wrdev/build/buildroot-2009.11/output/build/readline-5.2/rlconf.h
 
@@ -12,9 +18,4 @@ the /$(HOME)/wrdev/build/buildroot-2009.11/output/build/readline-5.2/rlconf.h
 - Capture signals (i.e. SIGTERM, to execute cli_cmd_exit before leaving the
 application, so memory be freed)
 
-- Extend the help for commands and options. (It is probably better to use a
-callback function for this, instead of a string).
-
-- Extend the commands.
-
-- Add verbosity to the error messages.
+- Modify Makefile to support native compilation.

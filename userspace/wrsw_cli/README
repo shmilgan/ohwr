@@ -69,11 +69,17 @@ cli.[ch]:
     parsing and line editing features.
 
 cli_commands.[ch]:
-    Commands related stuff. Generation of the commands tree. Implementation of
-    the functions that handle each command.
+    Generation of the commands tree.
 
 cli_snmp.[ch]:
     SNMP utility functions to simplify handling SNMP stuff from CLI modules.
+
+cmd_*.c
+    Each file implements the commands family handlers and the init function to
+    register the commands in the command tree.
+
+cli_commands_utils.[ch]
+    Miscellaneous helper functions for the command handlers.
 
 
     Dependencies

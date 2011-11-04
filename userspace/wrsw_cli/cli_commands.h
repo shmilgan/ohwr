@@ -5,9 +5,7 @@
  * Authors:     Miguel Baizan   (miguel.baizan@integrasys.es)
  *              Juan Luis Manas (juan.manas@integrasys.es)
  *
- * Description: Commands related stuff.
- *              Building of the commands tree.
- *              Implementation of the functions that handle each command.
+ * Description: Building of the commands tree.
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -32,16 +30,10 @@
 #include "cli.h"
 
 
-/* TODO Take these values from the RTU code */
-#define MIN_AGING_TIME          10
-#define MAX_AGING_TIME          1000000
-#define MAX_VID                 4094
-#define NUM_PORTS               32
-
 /* Function to build the commands tree */
 void cli_build_commands_tree(struct cli_shell *cli);
 
-/* Command Registration and de-registration functions */
+/* Command registration function */
 struct cli_cmd *cli_register_command(struct cli_shell *cli,
                                             struct cli_cmd *parent,
                                             char *command,
@@ -50,27 +42,16 @@ struct cli_cmd *cli_register_command(struct cli_shell *cli,
                                             char *desc,
                                             int opt,
                                             char *opt_desc);
-void cli_unregister_commands(struct cli_cmd *top_cmd);
 
-/* Commands */
-void cli_cmd_help(struct cli_shell *cli, struct cli_cmd *cmd);
-void cli_cmd_exit(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_hostname(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_show_port_info(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_show_cam_aging(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_show_cam(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_show_cam_multi(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_show_cam_static(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_show_cam_static_multi(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_show_vlan(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_set_port_pvid(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_set_cam_aging(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_set_cam_static_entry(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_set_cam_multi_entry(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_del_cam_static_entry(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_del_cam_multi_entry(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_set_vlan(struct cli_shell *cli, int argc, char **argv);
-void cli_cmd_del_vlan(struct cli_shell *cli, int argc, char **argv);
+/* Functions to build each command family. Look in cmd_*.c for definition */
+void cmd_exit_init(struct cli_shell *cli);
+void cmd_hostname_init(struct cli_shell *cli);
+void cmd_show_init(struct cli_shell *cli);
+void cmd_mac_address_table_init(struct cli_shell *cli);
+void cmd_no_init(struct cli_shell *cli);
+void cmd_interface_init(struct cli_shell *cli);
+void cmd_vlan_init(struct cli_shell *cli);
+
 
 
 #endif /*__WHITERABBIT_CLI_COMMANDS_H*/
