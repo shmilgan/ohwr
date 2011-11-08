@@ -185,8 +185,8 @@ struct wrn_phase_req {
 
 /* Support for generic operations on endpoint registers */
 struct wrn_register_req {
-    int cmd;
-    u32 val;
+	int cmd;
+	u32 val;
 };
 
 #define WRN_DMTD_AVG_SAMPLES 256
