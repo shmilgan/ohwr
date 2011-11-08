@@ -1,5 +1,6 @@
 White Rabbit Switch Rapid Spaning Tree Protocol (RSTP) implementation, based
-on the Standard IEEE 802.1D-2004
+on the Standard IEEE 802.1D-2004. This package is copyrighted by CERN and
+released as free software (GNU GPL Version 2).
 
 Authors:    Miguel Baizan   (miguel.baizan@integrasys-sa.com)
 
@@ -19,10 +20,6 @@ Short info: Implementation at userspace of the Rapid Spaning Tree Protocol
 
 README
     This file.
-
-COPYING:
-    GNU GPL Version 2. This package is copyrighted by CERN and
-    released as free software.
 
 TODO:
     List of things to do.
