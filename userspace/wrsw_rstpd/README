@@ -42,17 +42,17 @@ rstp_frame.[ch]:
 rstp_data.[ch]:
     Defines the basic data structures and manages the bridge and port RSTP
     information. Here we define the bridge structure, whose data will be
-    accessed and modified also by the rstp_if[ch] and rstp_stmch.[ch].
+    accessed and modified also by the rstp_if.[ch] and rstp_stmch.[ch].
 
 rstp_if[ch]:
     Functions that use exported functions of other daemons and HW
     to get/set some values related with the RSTP operation. This file is for now
     the only White Rabbit implementation dependent. This way we can isolate the
-    RSTP implementation from the HW and WR related implemenmtations.
+    RSTP implementation from the HW and WR related implementations.
 
 rstp_stmch.[ch]:
     RSTP state machines. The implementation of each state machine has its own
-    .c file, named rstp_stmch_$(name_of_the_state_machine).c.
+    source file, named rstp_stmch_$(name_of_the_state_machine).c.
 
 
 
@@ -66,15 +66,24 @@ kernel/nic
 
 
 
-    Compilation of the module and the daemon
+    Compilation of the daemon
     ========================================
 
 For compilation just run make, following the instructions of the documentation
-wrs-build.pdf in the wr-switch-sw/doc section, written by Alessandro Rubini.
+wrs-build.pdf in the wr-switch-sw/doc section; previously you need to set some
+environment variables (i.e. WRS_OUTPUT_DIR, CROSS_COMPILE and WR_INSTALL_ROOT).
+You can run "make install" to copy the binary file to the $(WR_INSTALL_ROOT)/bin
+directory. Also you can compile this package using the build scripts in
+$(WR_OUTPUT_DIR)/wr-switch-sw/build.
 
-wrsw_rtud and wrsw_hal must be running in order to wrsw_rstpd work properly.
+When executed as daemon (-d option), it generates a log file placed by default
+in /var/log/rstpd.log. You can control verbosity of log messages with the
+-DVERBOSE option in the Makefile.
+
+The wrsw_hal service must be running in order to wrsw_rstpd work properly.
 Also the nic driver must be previously loaded (be sure that the configuration
 file for the HAL is hal_with_nic.conf).
 
 To run the wrsw_rstpd in the switch, just run ./wrsw_rstpd from /wr/bin. Use the
-'-h' option for help.
+'-h' option for help and options. The log file is placed by default in
+/var/log/rstpd.log.

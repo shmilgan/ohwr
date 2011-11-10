@@ -27,8 +27,6 @@
 #include <errno.h>
 #include <string.h>
 
-#include <hw/trace.h>
-
 #include "rstp_data.h"
 #include "rstp_stmch.h"
 #include "rstp_if.h"
@@ -55,7 +53,7 @@ int init_data(void)
     */
     ret = rstp_if_init_port_data();
     if (ret) {
-        TRACE(TRACE_INFO, "Error while filling port structures with data");
+        TRACE(TRACE_FATAL, "Error while filling port structures with data");
         return -1;
     }
 
@@ -178,15 +176,15 @@ void one_second(void)
 
 static void print_init_data(void)
 {
-    char *up = "up";
-    char *down = "down";
+    char __attribute__((unused)) *up = "up";
+    char __attribute__((unused)) *down = "down";
     int i = 0;
 
-    TRACE(TRACE_INFO, "Printing initialisation data for ports...");
+    TRACEV(TRACE_INFO, "Printing initialisation data for ports...");
 
     for (i = 0; i < MAX_NUM_PORTS ; i++) {
-        TRACE(TRACE_INFO, "port id %d, named %s, is %s",
-              br.ports[i].portId, br.ports[i].port_name,
-              (br.ports[i].link_status ? up : down));
+        TRACEV(TRACE_INFO, "port id %d, named %s, is %s",
+               br.ports[i].portId, br.ports[i].port_name,
+               (br.ports[i].link_status ? up : down));
     }
 }

@@ -30,7 +30,17 @@
 #include <linux/if_ether.h>
 #include <time.h>
 
+#include <hw/trace.h>
 #include "rstp_stmch.h"
+
+
+#define DEFAULT_LOG_FILE "/var/log/rstpd.log" /* Running as daemon, if
+                                                 -f option is not specified */
+#ifdef VERBOSE
+#define TRACEV(...) TRACE(__VA_ARGS__)
+#else
+#define TRACEV(...)
+#endif
 
 
 #define MAX_NUM_PORTS 10
