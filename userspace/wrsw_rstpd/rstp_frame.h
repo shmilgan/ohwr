@@ -33,8 +33,6 @@
 #ifndef __WHITERABBIT_RSTP_FRAME_H
 #define __WHITERABBIT_RSTP_FRAME_H
 
-#include "rstp_epoll_loop.h"
-
 
 void frame_send(int ifindex, const unsigned char *data, int len);
 int frame_socket_init(void);

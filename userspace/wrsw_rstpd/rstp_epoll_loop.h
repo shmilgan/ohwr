@@ -53,10 +53,10 @@ struct epoll_event_handler {
 
 /* Functions */
 int epoll_init(void);
-void clear_epoll(void);
+void epoll_clear(void);
+int epoll_add(struct epoll_event_handler *h);
+int epoll_remove(struct epoll_event_handler *h);
 int epoll_main_loop(void);
-int add_epoll(struct epoll_event_handler *h);
-int remove_epoll(struct epoll_event_handler *h);
 
 static inline int time_diff(struct timeval *second, struct timeval *first)
 {

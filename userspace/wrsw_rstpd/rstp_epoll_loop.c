@@ -37,20 +37,19 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <hw/trace.h>
-
 #include "rstp_epoll_loop.h"
+#include "rstp_data.h"
 
 
 /* Globals */
-int epoll_fd = -1;
+static int epoll_fd = -1;
 
 int epoll_init(void)
 {
     /* Level-triggered by default */
     int ret = epoll_create(EPOLL_MAX_NUM_DESCRIPTORS);
     if (ret < 0) {
-        TRACE(TRACE_INFO, "epoll_create failed: %d", ret);
+        TRACE(TRACE_FATAL, "epoll_create failed: %d", ret);
         return ret;
     }
 
@@ -58,7 +57,7 @@ int epoll_init(void)
     return 0;
 }
 
-int add_epoll(struct epoll_event_handler *h)
+int epoll_add(struct epoll_event_handler *h)
 {
     struct epoll_event ev = {
         .events = EPOLLIN, /* Input file descriptor ready event */
@@ -67,21 +66,21 @@ int add_epoll(struct epoll_event_handler *h)
 
     int ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, h->fd, &ev);
     if (ret < 0)
-        TRACE(TRACE_INFO, "add_epoll failed: %d", ret);
+        TRACE(TRACE_FATAL, "add_epoll failed: %d", ret);
 
     return ret;
 }
 
-int remove_epoll(struct epoll_event_handler *h)
+int epoll_remove(struct epoll_event_handler *h)
 {
     int ret = epoll_ctl(epoll_fd, EPOLL_CTL_DEL, h->fd, NULL);
     if (ret < 0)
-        TRACE(TRACE_INFO, "remove_epoll failed: %d", ret);
+        TRACE(TRACE_FATAL, "remove_epoll failed: %d", ret);
 
     return ret;
 }
 
-void clear_epoll(void)
+void epoll_clear(void)
 {
     if (epoll_fd >= 0)
         close(epoll_fd);
@@ -103,15 +102,15 @@ int epoll_main_loop(void)
         timeout = time_diff(&nexttimeout, &tv);
         if (timeout < 0) { /* tick */
             nexttimeout.tv_sec++;
-            //one_second(); /* TODO Tick has been generated. Recompute STMs */
-            TRACE(TRACE_INFO, "A tick has been raised");
+            //recompute_stmchs(); /* TODO Tick has been generated. Recompute STMs */
+            TRACEV(TRACE_INFO, "A tick has been raised");
             timeout = time_diff(&nexttimeout, &tv);
         } /* TODO what if more than 1 sec. has expired (timeout < -1000)? */
 
         /* Wait for events or for timeout to expire */
         num_fd = epoll_wait(epoll_fd, ev, EPOLL_MAX_NUM_EVENTS, timeout);
         if (num_fd < 0 && errno != EINTR) {
-            TRACE(TRACE_INFO, "epoll_wait failed: %d", num_fd);
+            TRACE(TRACE_FATAL, "epoll_wait failed: %d", num_fd);
             return -1;
         }
 

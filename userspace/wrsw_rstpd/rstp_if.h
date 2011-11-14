@@ -27,6 +27,8 @@
 #ifndef __WHITERABBIT_RSTP_IF_H
 #define __WHITERABBIT_RSTP_IF_H
 
+#include "rstp_data.h"
+
 
 /* Custom IOCTLs */
 #define PRIV_IOCGGETECR (SIOCDEVPRIVATE+5)
@@ -39,8 +41,8 @@ struct wrn_register_req {
 };
 
 
-int rstp_if_init_port_data(void);
-uint8_t* rstp_if_get_bridge_addr(void);
+int rstp_if_init_port_data(struct bridge_data *br);
+int rstp_if_get_bridge_addr(struct bridge_data *br);
 
 
 #endif /* __WHITERABBIT_RSTP_IF_H */

@@ -34,13 +34,13 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 #include <netinet/in.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
 #include <linux/filter.h>
 
-#include <hw/trace.h>
-
+#include "rstp_data.h"
 #include "rstp_frame.h"
 #include "rstp_epoll_loop.h"
 
@@ -69,18 +69,19 @@ static void dump_frame(const unsigned char *buf, int octets)
 void frame_send(int ifindex, const unsigned char *data, int len)
 {
     int octets;
-    struct sockaddr_ll sl = {   /* Link level information */
+    static struct sockaddr_ll sl = {   /* Link level information */
         .sll_family = AF_PACKET,
-        .sll_protocol = htons(ETH_P_802_2),
-        .sll_ifindex = ifindex,
         .sll_halen = ETH_ALEN,
-    };
+    }; /* TODO Pass this structure as argument */
+
+    sl.sll_protocol = htons(ETH_P_802_2),
+    sl.sll_ifindex = ifindex;
 
     /* The first bytes of data pointer should be the physical layer address */
     memcpy(&sl.sll_addr, data, ETH_ALEN);
 
     /* For debug */
-    TRACE(TRACE_INFO,
+    TRACEV(TRACE_INFO,
           "Transmit Dst index %d %02x:%02x:%02x:%02x:%02x:%02x\n",
           sl.sll_ifindex,
           sl.sll_addr[0], sl.sll_addr[1], sl.sll_addr[2],
@@ -91,15 +92,15 @@ void frame_send(int ifindex, const unsigned char *data, int len)
                (struct sockaddr *) &sl, sizeof(sl));
 
     if (octets < 0) {
-        TRACE(TRACE_INFO, "frame send failed: %d", octets);
+        TRACE(TRACE_ERROR, "frame send failed: %d", octets);
     } else if (octets != len) {
-        TRACE(TRACE_INFO, "short write in sendto: %d instead of %d",
+        TRACE(TRACE_ERROR, "short write in sendto: %d instead of %d",
               octets, len);
     }
 }
 
 /* Internal function to receive the BPDUs */
-static void frame_rcv(uint32_t events, struct epoll_event_handler *h)
+static void frame_recv(uint32_t events, struct epoll_event_handler *h)
 {
     int octets;
     unsigned char buf[2048];
@@ -110,12 +111,12 @@ static void frame_rcv(uint32_t events, struct epoll_event_handler *h)
     octets =
         recvfrom(h->fd, &buf, sizeof(buf), 0, (struct sockaddr *) &sl, &salen);
     if (octets <= 0) {
-        TRACE(TRACE_INFO, "frame received failed: %d", octets);
+        TRACE(TRACE_ERROR, "frame received failed: %d", octets);
         return;
     }
 
     /* For debug */
-    TRACE(TRACE_INFO,
+    TRACEV(TRACE_INFO,
           "Receive Src ifindex %d %02x:%02x:%02x:%02x:%02x:%02x",
           sl.sll_ifindex,
           sl.sll_addr[0], sl.sll_addr[1], sl.sll_addr[2],
@@ -142,7 +143,7 @@ int frame_socket_init(void)
 {
     int sockfd;
 
-    struct sock_filter stp_filter[] = { /* BPF code */
+    static struct sock_filter stp_filter[] = { /* BPF code */
         { 0x28, 0, 0, 0x0000000c },
         { 0x25, 3, 0, 0x000005dc },
         { 0x30, 0, 0, 0x0000000e },
@@ -160,26 +161,35 @@ int frame_socket_init(void)
     /* We need raw sockets to get link level information */
     sockfd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_802_2));
     if (sockfd < 0) {
-        TRACE(TRACE_INFO, "frame socket failed: %d", sockfd);
+        TRACE(TRACE_FATAL, "frame socket failed: error %d: %s\n",
+              errno, strerror(errno));
         return -1;
     }
 
     /* Attach the filter to relay only STP BPDUs */
     if (setsockopt(sockfd, SOL_SOCKET, SO_ATTACH_FILTER,
         &fprog, sizeof(fprog)) < 0) {
-        TRACE(TRACE_INFO, "setsockopt frame filter failed");
-    } else if (fcntl(sockfd, F_SETFL, O_NONBLOCK) < 0) {
-        /* We want non-block sockets */
-        TRACE(TRACE_INFO, "fcntl set nonblock failed");
-    } else {
-        /* Register this socket and its handler in the epoll facility */
-        frame_event.fd = sockfd;
-        frame_event.handler = frame_rcv;
-
-        if (add_epoll(&frame_event) == 0)
-            return 0;
+        TRACE(TRACE_FATAL, "setsockopt frame filter failed: error %d: %s\n",
+              errno, strerror(errno));
+        return -1;
     }
 
-    close(sockfd);
-    return -1;
+    if (fcntl(sockfd, F_SETFL, O_NONBLOCK) < 0) {
+        /* We want non-block sockets */
+        TRACE(TRACE_FATAL, "fcntl set nonblock failed: error %d: %s\n",
+              errno, strerror(errno));
+        return -1;
+    }
+
+    /* Register this socket and its handler in the epoll facility */
+    frame_event.fd = sockfd;
+    frame_event.handler = frame_recv;
+
+    if (epoll_add(&frame_event) != 0) {
+        TRACE(TRACE_FATAL, "adding to epoll failed: error %d: %s\n",
+              errno, strerror(errno));
+        return -1;
+    }
+
+    return 0;
 }

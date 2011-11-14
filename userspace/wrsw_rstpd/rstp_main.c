@@ -38,9 +38,6 @@
 #include "rstp_data.h"
 
 
-extern int epoll_fd;
-
-
 /* Helper function to show the correct usage of the daemon */
 static void usage(char *name)
 {
@@ -147,13 +144,13 @@ int main(int argc, char *argv[])
 
     /* Create socket to get RSTP BPDUs from the kernel */
     if ((err = frame_socket_init()) < 0) {
-        clear_epoll();
+        epoll_clear();
         return err;
     }
 
     /* Initialise data (rstp parameters, port states, timers, etc) */
     if ((err = init_data()) < 0) {
-        clear_epoll();
+        epoll_clear();
         return err;
     }
 
@@ -164,6 +161,6 @@ int main(int argc, char *argv[])
     /* Main loop */
     err = epoll_main_loop();
 
-    clear_epoll();
+    epoll_clear();
     return err;
 }

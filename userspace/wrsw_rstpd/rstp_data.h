@@ -145,12 +145,6 @@
 #define TICK            29  /* 17.19.43 */
 #define UPDTINFO        30  /* 17.19.45 */
 
-/* Operations on RSTP port flags */
-#define GET_PORT_FLAG(bitfield, flag)       ((bitfield >> flag) & 0x01)
-#define REMOVE_PORT_FLAG(bitfield, flag)    (bitfield &= (~(0x01 << flag)))
-#define SET_PORT_FLAG(bitfield, flag)       (bitfield |= (0x01 << flag))
-
-
 
 /* Bridge ID is 8 octets long. See 802.1D, clause 9.2.5, for encoding */
 struct bridge_id {
@@ -339,14 +333,29 @@ struct bridge_data {
 };
 
 
+/* Operations on RSTP port flags */
+/* Test if the flag is set or not */
+static inline uint32_t get_port_flag(uint32_t bitfield, int flag)
+{
+    return ((bitfield >> flag) & 0x01);
+}
 
-/* Declare bridge data structure */
-extern struct bridge_data br;
+/* Sets the flag to zero */
+static inline void remove_port_flag(uint32_t bitfield, int flag)
+{
+    (bitfield &= (~(0x01 << flag)));
+}
+
+/* Sets the flag to one */
+static inline void set_port_flag(uint32_t bitfield, int flag)
+{
+    (bitfield |= (0x01 << flag));
+}
 
 
 /*** FUNCTIONS ***/
 int init_data(void);
-void one_second(void);
+void recompute_stmchs(void);
 
 
 #endif /* __WHITERABBIT_RSTP_DATA_H */
