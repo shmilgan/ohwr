@@ -23,18 +23,54 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "rstp_data.h"
 
-#include "rstp_stmch.h"
 
-
-/* This is for debug */
-char *stmch_get_name(struct state_machine *stmch)
+/* Init State Machines data */
+void init_stmchs_data(struct bridge_data *br)
 {
-    char *stmch_names[] = {"Port Information", "Port Role Selection",
-                           "Port Role Transitions", "Port Receive",
-                           "Port State Transitions", "Topology Change",
-                           "Port Protocol Migration", "Port Transmit",
-                           "Port Timers", "Bridge Detection"};
+    int i, j;
 
-    return stmch_names[stmch->id];
+    br->stmch.bridge = br;
+    br->stmch.port = NULL;
+
+    /* Initialize the bridge's state machine */
+    initialize_prs(&br->stmch);
+
+    for (i = 0; i < MAX_NUM_PORTS ; i++) {
+        for (j = 0; j < NUM_STMCH_PER_PORT; j++) {
+            br->ports[i].stmch[j].bridge = br;
+            br->ports[i].stmch[j].port = &br->ports[i];
+        }
+        /* Initialize the port's state machines */
+        /* TODO
+        initialize_pim(&br->ports[i].stmch[PIM]);
+        initialize_prt(&br->ports[i].stmch[PRT]);
+        initialize_prx(&br->ports[i].stmch[PRX]);
+        initialize_pst(&br->ports[i].stmch[PST]);
+        initialize_tcm(&br->ports[i].stmch[TCM]);
+        initialize_ppm(&br->ports[i].stmch[PPM]);
+        initialize_ptx(&br->ports[i].stmch[PTX]);
+        initialize_pti(&br->ports[i].stmch[PTI]);
+        initialize_bdm(&br->ports[i].stmch[BDM]);
+        */
+    }
+}
+
+/* Compute the transitions of all the STMCHs (called when a BPDU is received,
+   or when the one second step has expired, or when a port link status has
+   changed, etc) */
+void stmch_compute_transitions(struct bridge_data *br)
+{
+    br->stmch.compute_transitions(&br->stmch);
+
+    /* TODO compute stmchs transitions for ports that have PortEnabled = 1 */
+#if 0
+    int i, j;
+    for (i = 0; i < MAX_NUM_PORTS ; i++) {
+        for (j = 0; j < NUM_STMCH_PER_PORT; j++) {
+            br->ports[i].stmch[j].compute_transitions(&br->ports[i].stmch[j]]);
+        }
+    }
+#endif
 }

@@ -50,7 +50,7 @@ rstp_if[ch]:
     the only White Rabbit implementation dependent. This way we can isolate the
     RSTP implementation from the HW and WR related implementations.
 
-rstp_stmch.[ch]:
+rstp_stmch.[c]:
     RSTP state machines. The implementation of each state machine has its own
     source file, named rstp_stmch_$(name_of_the_state_machine).c.
 

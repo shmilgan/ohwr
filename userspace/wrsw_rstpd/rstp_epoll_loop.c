@@ -102,7 +102,7 @@ int epoll_main_loop(void)
         timeout = time_diff(&nexttimeout, &tv);
         if (timeout < 0) { /* tick */
             nexttimeout.tv_sec++;
-            //recompute_stmchs(); /* TODO Tick has been generated. Recompute STMs */
+            recompute_stmchs();
             TRACEV(TRACE_INFO, "A tick has been raised");
             timeout = time_diff(&nexttimeout, &tv);
         } /* TODO what if more than 1 sec. has expired (timeout < -1000)? */

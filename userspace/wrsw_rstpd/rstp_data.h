@@ -31,7 +31,6 @@
 #include <time.h>
 
 #include <hw/trace.h>
-#include "rstp_stmch.h"
 
 
 #define DEFAULT_LOG_FILE "/var/log/rstpd.log" /* Running as daemon, if
@@ -76,23 +75,24 @@
 /* Default values for the RSTP performance parameters. See 802.1D-2004, clause
    17.14 and 9.2.8. Time values in BPDUs are encoded in units of time of
    1/256 of a second */
-#define DEFAULT_MIGRATE_TIME            0x0300      /* 3 seconds */
-#define DEFAULT_BRIDGE_HELLO_TIME       0x0200      /* 2 seconds */
-#define DEFAULT_BRIDGE_MAX_AGE          0x1400      /* 20 seconds */
-#define DEFAULT_BRIDGE_FORWARD_DELAY    0x0F00      /* 15 seconds */
+#define ONE_SECOND  256
+#define DEFAULT_MIGRATE_TIME            (3 * ONE_SECOND)
+#define DEFAULT_BRIDGE_HELLO_TIME       (2 * ONE_SECOND)
+#define DEFAULT_BRIDGE_MAX_AGE          (20 * ONE_SECOND)
+#define DEFAULT_BRIDGE_FORWARD_DELAY    (15 * ONE_SECOND)
 #define DEFAULT_TRANSMIT_HOLD_COUNT     0x06        /* 6 */
 #define DEFAULT_BRIDGE_PRIORITY         0x8000      /* 32768 */
 #define DEFAULT_PORT_PRIORITY           0x80        /* 128 */
 
 /* Ranges for the RSTP performance parameters */
-#define MIN_BRIDGE_HELLO_TIME           0x0100      /* 1 second */
-#define MAX_BRIDGE_HELLO_TIME           0x0200      /* 2 seconds */
-#define MIN_BRIDGE_MAX_AGE              0x0600      /* 6 seconds */
-#define MAX_BRIDGE_MAX_AGE              0x2800      /* 40 seconds */
-#define MIN_BRIDGE_FORWARD_DELAY        0x0400      /* 4 seconds */
-#define MAX_BRIDGE_FORWARD_DELAY        0x1E00      /* 30 seconds */
-#define MIN_TRANSMIT_HOLD_COUNT         0x0100      /* 1 second */
-#define MAX_TRANSMIT_HOLD_COUNT         0x0A00      /* 10 seconds */
+#define MIN_BRIDGE_HELLO_TIME           ONE_SECOND
+#define MAX_BRIDGE_HELLO_TIME           (2 * ONE_SECOND)
+#define MIN_BRIDGE_MAX_AGE              (6 * ONE_SECOND)
+#define MAX_BRIDGE_MAX_AGE              (40 * ONE_SECOND)
+#define MIN_BRIDGE_FORWARD_DELAY        (4 * ONE_SECOND)
+#define MAX_BRIDGE_FORWARD_DELAY        (30 * ONE_SECOND)
+#define MIN_TRANSMIT_HOLD_COUNT         0x01
+#define MAX_TRANSMIT_HOLD_COUNT         0x0A
 #define MIN_BRIDGE_PRIORITY             0
 #define MAX_BRIDGE_PRIORITY             0xF000      /* 61440 */
 #define MIN_PORT_PRIORITY               0
@@ -131,7 +131,7 @@
 #define RCVDMSG         15  /* 17.19.27 */
 #define RCVDRSTP        16  /* 17.19.28 */
 #define RCVDSTP         17  /* 17.19.29 */
-#define RCVDTc          18  /* 17.19.30 */
+#define RCVDTC          18  /* 17.19.30 */
 #define RCVDTCACK       19  /* 17.19.31 */
 #define RCVDTCN         20  /* 17.19.32 */
 #define REROOT          21  /* 17.19.33 */
@@ -236,6 +236,32 @@ enum protocol_version {
     RSTP_NORMAL_OPERATION = 2
 };
 
+/* State machines IDs. Be sure that the port's state machines start at 0, and
+   the bridge's state machine is the last */
+enum stmch_id {
+    PIM = 0,    /* Port Information Machine */
+    PRT,        /* Port Role Transitions Machine */
+    PRX,        /* Port Receive Machine */
+    PST,        /* Port State Transitions Machine*/
+    TCM,        /* Topology Change Machine */
+    PPM,        /* Port protocol Migration Machine */
+    PTX,        /* Port Transmit Machine */
+    PTI,        /* Port Timers Machine */
+    BDM,        /* Bridge Detection Machine */
+    PRS         /* Port Role Selection Machine */
+};
+
+/* Keep track of state machines and their current states */
+struct state_machine {
+    struct bridge_data      *bridge;    /* Owner bridge */
+    struct port_data        *port;      /* Owner port, if applicable */
+
+    enum stmch_id           id;     /* For stmch identification */
+    unsigned int            state;  /* States for each STMCH */
+
+    void (* compute_transitions) (struct state_machine *);
+};
+
 
 /* RSTP performance parameters per port. These parameters are not modified by
 the operation of RSTP, but are treated as constants. They may be modified by
@@ -334,7 +360,7 @@ struct bridge_data {
 
 
 /* Operations on RSTP port flags */
-/* Test if the flag is set or not */
+/* Test whether the flag is set or not */
 static inline uint32_t get_port_flag(uint32_t bitfield, int flag)
 {
     return ((bitfield >> flag) & 0x01);
@@ -354,8 +380,31 @@ static inline void set_port_flag(uint32_t bitfield, int flag)
 
 
 /*** FUNCTIONS ***/
+/* rstp_data.c */
 int init_data(void);
 void recompute_stmchs(void);
+int cmp_priority_vectors(struct st_priority_vector *pv1,
+                         struct st_priority_vector *pv2,
+                         int cmp_RxPortId);
+int cmp_times(struct rstp_times *t1, struct rstp_times *t2);
+
+/* rstp_stmch.c */
+void init_stmchs_data(struct bridge_data *br);
+void stmch_compute_transitions(struct bridge_data *br);
+
+/* rstp_stmch_*.c */
+void initialize_prs(struct state_machine *stmch);
+/* TODO
+void initialize_pim(struct state_machine *stmch);
+void initialize_prt(struct state_machine *stmch);
+void initialize_prx(struct state_machine *stmch);
+void initialize_pst(struct state_machine *stmch);
+void initialize_tcm(struct state_machine *stmch);
+void initialize_ppm(struct state_machine *stmch);
+void initialize_ptx(struct state_machine *stmch);
+void initialize_pti(struct state_machine *stmch);
+void initialize_bdm(struct state_machine *stmch);
+*/
 
 
 #endif /* __WHITERABBIT_RSTP_DATA_H */

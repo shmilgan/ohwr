@@ -1,7 +1,7 @@
 
 PROGRAM		= wrsw_rstpd
 SRCFILES	= rstp_main.c rstp_epoll_loop.c rstp_frame.c rstp_if.c \
-			  rstp_data.c rstp_stmch.c
+			  rstp_data.c rstp_stmch.c rstp_stmch_port_role_selection.c
 OBJFILES	= $(patsubst %.c,%.o,$(SRCFILES))
 
 CC		= $(CROSS_COMPILE)gcc

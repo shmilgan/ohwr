@@ -29,7 +29,6 @@
 #include <string.h>
 
 #include "rstp_data.h"
-#include "rstp_stmch.h"
 #include "rstp_if.h"
 
 
@@ -156,8 +155,12 @@ int init_data(void)
     /*
      * 5) INIT STMCHs STATES
     */
-    /* TODO init port and bridge states; BEGIN = TRUE to initialize the states
-       of the STMCHs */
+    /* Init port and bridge stmch structures. BEGIN = TRUE to initialize the
+       states of the STMCHs */
+    init_stmchs_data(&bridge);
+    bridge.begin = 1;
+    stmch_compute_transitions(&bridge); /* To initialize the states */
+    bridge.begin = 0;
 
 
     print_init_data(); /* For debug */
@@ -170,19 +173,50 @@ int init_data(void)
    iterate through the list of STMCHs on each port */
 void recompute_stmchs(void)
 {
-    /* TODO Function to be implemented */
-
     /* Each time this function is instatiated we should test the port's link
        status in order to update the rstp info accordingly. This polling is
        a temporary solution, while we implement a method for notifications */
 
     /* Update the TICK flag */
-    int i = 0;
+    int i;
     for (i = 0; i < MAX_NUM_PORTS ; i++) {
         set_port_flag(bridge.ports[i].rstp_flags, TICK);
     }
+
+    stmch_compute_transitions(&bridge);
 }
 
+
+/* Function to compare priority vectors. cmp_RxPortId is a flag to include
+   the RxPortId component in the comparison */
+int cmp_priority_vectors(struct st_priority_vector *pv1,
+                         struct st_priority_vector *pv2,
+                         int cmp_RxPortId)
+{
+    int ret;
+    size_t pv_size = (2 * (BRIDGE_PRIO_LEN + ETH_ALEN) * sizeof(uint8_t)) +
+                      sizeof(uint32_t) + sizeof(uint16_t);
+
+    /* struct st_priority_vector is properly aligned (no padding), so we
+       shouldn't need to compare each member independently */
+    if ((ret = memcmp(pv1, pv2, pv_size)))
+        return ret;
+
+    /* If cmp_RxPortId = 1, compare the RxPortId */
+    if (cmp_RxPortId && (pv1->RxPortId != pv2->RxPortId))
+        return ((pv1->RxPortId < pv2->RxPortId) ? -1 : 1);
+
+    /* If the vectors are equal, return 0 */
+    return 0;
+}
+
+/* Compare timer parameters */
+int cmp_times(struct rstp_times *t1, struct rstp_times *t2)
+{
+    /* struct rstp_times is properly aligned (no padding), so we
+       shouldn't need to compare each member independently */
+    return memcmp(t1, t2, (4 * sizeof(uint16_t)));
+}
 
 
 static void print_init_data(void)
@@ -206,3 +240,23 @@ static char *mac_to_string(uint8_t mac[ETH_ALEN], char str[3 * ETH_ALEN])
              mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     return str;
 }
+
+#if 0
+static char *get_stmch_name(enum stmch_id id)
+{
+    static char *stmch_names[] = {
+        [PRS] = "Port Role Selection",
+        [PIM] = "Port Information",
+        [PRT] = "Port Role Transitions",
+        [PRX] = "Port Receive",
+        [PST] = "Port State Transitions",
+        [TCM] = "Topology Change",
+        [PPM] = "Port Protocol Migration",
+        [PTX] = "Port Transmit",
+        [PTI] = "Port Timers",
+        [BDM] = "Bridge Detection"
+    };
+
+    return stmch_names[id];
+}
+#endif
