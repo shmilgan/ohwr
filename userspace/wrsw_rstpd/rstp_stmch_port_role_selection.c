@@ -41,7 +41,7 @@ static void updtRoleDisabledTree(struct bridge_data *br)
 
     /* At startup all the ports are marked as DISABLED */
     for (i = 0; i < MAX_NUM_PORTS ; i++) {
-        br->ports[i].selectedRole = DISABLED_PORT;
+        br->ports[i].selectedRole = DisabledPort;
     }
 
     TRACEV(TRACE_INFO, "PRS: ports role set to DISABLED");
@@ -53,7 +53,7 @@ static void clearReselectTree(struct bridge_data *br)
     int i;
 
     for (i = 0; i < MAX_NUM_PORTS ; i++)
-        remove_port_flag(br->ports[i].rstp_flags, RESELECT);
+        remove_port_flag(br->ports[i].rstp_flags, reselect);
 
     TRACEV(TRACE_INFO, "PRS: RESELECT flag set to 0 on every port");
 }
@@ -71,19 +71,20 @@ static void updtRolesTree(struct bridge_data *br)
 
 
     for (i = 0; i < MAX_NUM_PORTS ; i++) {
-        /* Do not need to check the PORTENABLED flag; infoIs = Disabled when
+        /* Do not need to check the portEnabled flag; infoIs = Disabled when
            BEGIN = 1 */
-        if (br->ports[i].infoIs == RECEIVED) {
+        if (br->ports[i].infoIs == Received) {
             /* 17.21.25 a) */
             rppv = br->ports[i].portPriority;
             rppv.RootPathCost += br->ports[i].mng.PortPathCost;
 
             /* 17.21.25 b) */
-            if (memcmp(&rppv.TxBridgeId, &br->BridgePriority.TxBridgeId,
+            if (memcmp(&rppv.DesignatedBridgeId,
+                       &br->BridgePriority.DesignatedBridgeId,
                       (ETH_ALEN + BRIDGE_PRIO_LEN) * sizeof(uint8_t)) &&
                 (cmp_priority_vectors(&rppv, &best_rppv, 1) < 0)) {
                 best_rppv = rppv;
-                br->rootPortId = best_rppv.RxPortId;
+                br->rootPortId = best_rppv.BridgePortId;
                 root_port_num = i;
                 TRACEV(TRACE_INFO, "PRS: the Bridge's root priority vector has "
                        "been updated");
@@ -111,17 +112,18 @@ static void updtRolesTree(struct bridge_data *br)
     for (i = 0; i < MAX_NUM_PORTS ; i++) {
         /* 17.21.25 d) and e) */
         br->ports[i].designatedPriority = br->rootPriority;
-        br->ports[i].designatedPriority.TxBridgeId = br->mng.BridgeIdentifier;
-        br->ports[i].designatedPriority.TxPortId = br->ports[i].portId;
-        br->ports[i].designatedPriority.RxPortId = br->ports[i].portId;
+        br->ports[i].designatedPriority.DesignatedBridgeId =
+            br->mng.BridgeIdentifier;
+        br->ports[i].designatedPriority.DesignatedPortId = br->ports[i].portId;
+        br->ports[i].designatedPriority.BridgePortId = br->ports[i].portId;
         br->ports[i].designatedTimes = br->rootTimes;
         br->ports[i].designatedTimes.hello_time = br->BridgeTimes.hello_time;
 
         switch (br->ports[i].infoIs) {
-        case RECEIVED:  /* 17.21.25 i), j), k), l) */
+        case Received:  /* 17.21.25 i), j), k), l) */
             if (root_port_num == i) {
-                br->ports[i].selectedRole = ROOT_PORT;
-                remove_port_flag(br->ports[i].rstp_flags, UPDTINFO);
+                br->ports[i].selectedRole = RootPort;
+                remove_port_flag(br->ports[i].rstp_flags, updtInfo);
                 TRACEV(TRACE_INFO, "PRS: port %s is ROOT port",
                        br->ports[i].port_name);
                 break;
@@ -131,43 +133,43 @@ static void updtRolesTree(struct bridge_data *br)
                 /* Comparing the designated bridge id with the bridge id should
                    be enough to distinguish between backup and alternate ports
                    (17.3.1) */
-                if (memcmp(&br->ports[i].portPriority.TxBridgeId,
+                if (memcmp(&br->ports[i].portPriority.DesignatedBridgeId,
                            &br->mng.BridgeIdentifier,
                            (BRIDGE_PRIO_LEN + ETH_ALEN) * sizeof(uint8_t))) {
-                    br->ports[i].selectedRole = ALTERNATE_PORT;
+                    br->ports[i].selectedRole = AlternatePort;
                     TRACEV(TRACE_INFO, "PRS: port %s is ALTERNATE port",
                            br->ports[i].port_name);
                 } else {
-                    br->ports[i].selectedRole = BACKUP_PORT;
+                    br->ports[i].selectedRole = BackupPort;
                     TRACEV(TRACE_INFO, "PRS: port %s is BACKUP port",
                            br->ports[i].port_name);
                 }
-                remove_port_flag(br->ports[i].rstp_flags, UPDTINFO);
+                remove_port_flag(br->ports[i].rstp_flags, updtInfo);
                 break;
             }
-            br->ports[i].selectedRole = DESIGNATED_PORT;
-            set_port_flag(br->ports[i].rstp_flags, UPDTINFO);
+            br->ports[i].selectedRole = DesignatedPort;
+            set_port_flag(br->ports[i].rstp_flags, updtInfo);
             TRACEV(TRACE_INFO, "PRS: port %s is DESIGNATED port",
                    br->ports[i].port_name);
             break;
-        case AGED:      /* 17.21.25 g) */
-            set_port_flag(br->ports[i].rstp_flags, UPDTINFO);
-            br->ports[i].selectedRole = DESIGNATED_PORT;
+        case Aged:      /* 17.21.25 g) */
+            set_port_flag(br->ports[i].rstp_flags, updtInfo);
+            br->ports[i].selectedRole = DesignatedPort;
             TRACEV(TRACE_INFO, "PRS: port %s is DESIGNATED port",
                    br->ports[i].port_name);
             break;
-        case MINE:      /* 17.21.25 h) */
+        case Mine:      /* 17.21.25 h) */
             if (cmp_priority_vectors(&br->ports[i].designatedPriority,
                                      &br->ports[i].portPriority, 1) ||
                 cmp_times(&br->ports[i].portTimes, &root_port->portTimes)) {
-                set_port_flag(br->ports[i].rstp_flags, UPDTINFO);
+                set_port_flag(br->ports[i].rstp_flags, updtInfo);
             }
-            br->ports[i].selectedRole = DESIGNATED_PORT;
+            br->ports[i].selectedRole = DesignatedPort;
             TRACEV(TRACE_INFO, "PRS: port %s is DESIGNATED port",
                    br->ports[i].port_name);
             break;
-        case DISABLED:  /* 17.21.25 f) */
-            br->ports[i].selectedRole = DISABLED_PORT;
+        case Disabled:  /* 17.21.25 f) */
+            br->ports[i].selectedRole = DisabledPort;
             TRACEV(TRACE_INFO, "PRS: port %s is DISABLED port",
                    br->ports[i].port_name);
             break;
@@ -183,12 +185,12 @@ static void setSelectedTree(struct bridge_data *br)
     int i;
 
     for (i = 0; i < MAX_NUM_PORTS ; i++) {
-        if (get_port_flag(br->ports[i].rstp_flags, RESELECT))
+        if (get_port_flag(br->ports[i].rstp_flags, reselect))
             return;
     }
 
     for (i = 0; i < MAX_NUM_PORTS ; i++)
-        set_port_flag(br->ports[i].rstp_flags, SELECTED);
+        set_port_flag(br->ports[i].rstp_flags, selected);
 
     TRACEV(TRACE_INFO, "PRS: SELECTED variable set to TRUE for all Ports");
 }
@@ -233,7 +235,7 @@ static void compute_transitions(struct state_machine *stmch)
     switch (stmch->state) {
     case ROLE_SELECTION:
         for (i = 0; i < MAX_NUM_PORTS ; i++) {
-            if (get_port_flag(br->ports[i].rstp_flags, RESELECT)) {
+            if (get_port_flag(br->ports[i].rstp_flags, reselect)) {
                 enter_state(stmch, ROLE_SELECTION);
                 break;
             }

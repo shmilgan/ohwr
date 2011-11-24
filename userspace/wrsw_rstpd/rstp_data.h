@@ -113,37 +113,86 @@
 #define MAX_PORT_PATH_COST                  0xBEBC200   /* 200000000 */
 
 /* RSTP port flags (rstp_flags). See  802.1D-2004, clause 17.19  */
-#define AGREE           0   /* 17.19.2 */
-#define AGREED          1   /* 17.19.3 */
-#define DISPUTED        2   /* 17.19.6 */
-#define FDBFLUSH        3   /* 17.19.7 */
-#define FORWARD         4   /* 17.19.8 */
-#define FORWARDING      5   /* 17.19.9 */
-#define LEARN           6   /* 17.19.11 */
-#define LEARNING        7   /* 17.19.12 */
-#define MCHECK          8   /* 17.19.13 */
-#define NEWINFO         9   /* 17.19.16 */
-#define OPEREDGE        10  /* 17.19.17 */
-#define PORTENABLED     11  /* 17.19.18 */
-#define PROPOSED        12  /* 17.19.23 */
-#define PROPOSING       13  /* 17.19.24 */
-#define RCVDBPDU        14  /* 17.19.25 */
-#define RCVDMSG         15  /* 17.19.27 */
-#define RCVDRSTP        16  /* 17.19.28 */
-#define RCVDSTP         17  /* 17.19.29 */
-#define RCVDTC          18  /* 17.19.30 */
-#define RCVDTCACK       19  /* 17.19.31 */
-#define RCVDTCN         20  /* 17.19.32 */
-#define REROOT          21  /* 17.19.33 */
-#define RESELECT        22  /* 17.19.34 */
-#define SELECTED        23  /* 17.19.36 */
-#define SENDRSTP        24  /* 17.19.38 */
-#define SYNC            25  /* 17.19.39 */
-#define SYNCED          26  /* 17.19.40 */
-#define TCACK           27  /* 17.19.41 */
-#define TCPROP          28  /* 17.19.42 */
-#define TICK            29  /* 17.19.43 */
-#define UPDTINFO        30  /* 17.19.45 */
+enum port_flag {
+    agree = 0,      /* 17.19.2 */
+    agreed,         /* 17.19.3 */
+    disputed,       /* 17.19.6 */
+    fdbFlush,       /* 17.19.7 */
+    forward,        /* 17.19.8 */
+    forwarding,     /* 17.19.9 */
+    learn,          /* 17.19.11 */
+    learning,       /* 17.19.12 */
+    mcheck,         /* 17.19.13 */
+    newInfo,        /* 17.19.16 */
+    operEdge,       /* 17.19.17 */
+    portEnabled,    /* 17.19.18 */
+    proposed,       /* 17.19.23 */
+    proposing,      /* 17.19.24 */
+    rcvdBPDU,       /* 17.19.25 */
+    rcvdMsg,        /* 17.19.27 */
+    rcvdRSTP,       /* 17.19.28 */
+    rcvdSTP,        /* 17.19.29 */
+    rcvdTc,         /* 17.19.30 */
+    rcvdTcAck,      /* 17.19.31 */
+    rcvdTcn,        /* 17.19.32 */
+    reRoot,         /* 17.19.33 */
+    reselect,       /* 17.19.34 */
+    selected,       /* 17.19.36 */
+    sendRSTP,       /* 17.19.38 */
+    _sync,          /* 17.19.39 */ /* renamed because of a previous declaration
+                                      in unistd.h */
+    synced,         /* 17.19.40 */
+    tcAck,          /* 17.19.41 */
+    tcProp,         /* 17.19.42 */
+    tick,           /* 17.19.43 */
+    updtInfo        /* 17.19.45 */
+};
+
+/* Indicate the origin/state of the Port's ST information. See 802.1D,
+   clause 17.19.10 */
+enum port_info {
+    Received,
+    Mine,
+    Aged,
+    Disabled
+};
+
+enum received_info {
+    SuperiorDesignatedInfo,
+    RepeatedDesignatedInfo,
+    InferiorDesignatedInfo,
+    InferiorRootAlternateInfo,
+    OtherInfo
+};
+
+enum port_role {
+    RootPort,
+    DesignatedPort,
+    AlternatePort,
+    BackupPort,
+    DisabledPort
+};
+
+/* Values that the Force Protocol Version management parameter can take */
+enum protocol_version {
+    STP_COMPATIBLE = 0,
+    RSTP_NORMAL_OPERATION = 2
+};
+
+/* State machines IDs. Be sure that the port's state machines start at 0, and
+   the bridge's state machine is the last */
+enum stmch_id {
+    PIM = 0,    /* Port Information Machine */
+    PRT,        /* Port Role Transitions Machine */
+    PRX,        /* Port Receive Machine */
+    PST,        /* Port State Transitions Machine*/
+    TCM,        /* Topology Change Machine */
+    PPM,        /* Port protocol Migration Machine */
+    PTX,        /* Port Transmit Machine */
+    PTI,        /* Port Timers Machine */
+    BDM,        /* Bridge Detection Machine */
+    PRS         /* Port Role Selection Machine */
+};
 
 
 /* Bridge ID is 8 octets long. See 802.1D, clause 9.2.5, for encoding */
@@ -200,55 +249,9 @@ struct rstp_bpdu {
 struct st_priority_vector {
     struct bridge_id    RootBridgeId;
     uint32_t            RootPathCost;
-    struct bridge_id    TxBridgeId;
-    uint16_t            TxPortId;
-    uint16_t            RxPortId;
-};
-
-/* Indicate the origin/state of the Port's ST information. See 802.1D,
-   clause 17.19.10*/
-enum port_info {
-    RECEIVED,
-    MINE,
-    AGED,
-    DISABLED
-};
-
-enum received_info {
-    SUPERIOR_DESIGNATED_INFO,
-    REPEATED_DESIGNATED_INFO,
-    INFERIOR_DESIGNATED_INFO,
-    INFERIOR_ROOT_ALTERNATE_INFO,
-    OTHER_INFO
-};
-
-enum port_role {
-    ROOT_PORT,
-    DESIGNATED_PORT,
-    ALTERNATE_PORT,
-    BACKUP_PORT,
-    DISABLED_PORT
-};
-
-/* Values that the Force Protocol Version management parameter can take */
-enum protocol_version {
-    STP_COMPATIBLE = 0,
-    RSTP_NORMAL_OPERATION = 2
-};
-
-/* State machines IDs. Be sure that the port's state machines start at 0, and
-   the bridge's state machine is the last */
-enum stmch_id {
-    PIM = 0,    /* Port Information Machine */
-    PRT,        /* Port Role Transitions Machine */
-    PRX,        /* Port Receive Machine */
-    PST,        /* Port State Transitions Machine*/
-    TCM,        /* Topology Change Machine */
-    PPM,        /* Port protocol Migration Machine */
-    PTX,        /* Port Transmit Machine */
-    PTI,        /* Port Timers Machine */
-    BDM,        /* Bridge Detection Machine */
-    PRS         /* Port Role Selection Machine */
+    struct bridge_id    DesignatedBridgeId;
+    uint16_t            DesignatedPortId;
+    uint16_t            BridgePortId;
 };
 
 /* Keep track of state machines and their current states */
@@ -267,7 +270,7 @@ struct state_machine {
 the operation of RSTP, but are treated as constants. They may be modified by
 management. See 802.1D, clause 17.13 */
 struct rstp_port_mng_data {
-    int PortEnabled;        /* The Administrative status of the Port. If True(1)
+    int AdminPortEnabled;   /* The Administrative status of the Port. If True(1)
                                the ST is enabled for this port */
     int AdminEdgePort;      /* 17.13.1 */ /* There's another related parameter
                                              called AutoEdgePort. It's optional
@@ -361,19 +364,19 @@ struct bridge_data {
 
 /* Operations on RSTP port flags */
 /* Test whether the flag is set or not */
-static inline uint32_t get_port_flag(uint32_t bitfield, int flag)
+static inline uint32_t get_port_flag(uint32_t bitfield, enum port_flag flag)
 {
     return ((bitfield >> flag) & 0x01);
 }
 
 /* Sets the flag to zero */
-static inline void remove_port_flag(uint32_t bitfield, int flag)
+static inline void remove_port_flag(uint32_t bitfield, enum port_flag flag)
 {
     (bitfield &= (~(0x01 << flag)));
 }
 
 /* Sets the flag to one */
-static inline void set_port_flag(uint32_t bitfield, int flag)
+static inline void set_port_flag(uint32_t bitfield, enum port_flag flag)
 {
     (bitfield |= (0x01 << flag));
 }

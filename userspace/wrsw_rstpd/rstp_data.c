@@ -82,8 +82,8 @@ int init_data(void)
     bridge.mng.TxHoldCount = DEFAULT_TRANSMIT_HOLD_COUNT;
 
     for (i = 0; i < MAX_NUM_PORTS ; i++) {
-        bridge.ports[i].mng.PortEnabled = 1; /* All ports participate in the ST
-                                                at startup */
+        bridge.ports[i].mng.AdminPortEnabled = 1; /* All ports participate in
+                                                     the ST at startup */
         bridge.ports[i].mng.AdminEdgePort = 0;
         bridge.ports[i].mng.PortPriority = DEFAULT_PORT_PRIORITY;
         bridge.ports[i].mng.PortPathCost = DEFAULT_PORT_PATH_COST_1_GBPS;
@@ -98,14 +98,14 @@ int init_data(void)
     /* At startup, during 'Root War', all the bridges consider itself as Root */
     /* Set priority vectors. See 17.18.3, 17.18.6 and 17.6 */
     bridge.BridgePriority.RootBridgeId = bridge.mng.BridgeIdentifier;
-    bridge.BridgePriority.TxBridgeId = bridge.mng.BridgeIdentifier;
+    bridge.BridgePriority.DesignatedBridgeId = bridge.mng.BridgeIdentifier;
     bridge.BridgePriority.RootPathCost =
-    bridge.BridgePriority.TxPortId =
-    bridge.BridgePriority.RxPortId = 0;
+    bridge.BridgePriority.DesignatedPortId =
+    bridge.BridgePriority.BridgePortId = 0;
     bridge.rootPriority = bridge.BridgePriority;
 
     /* Set the Port Identifier of the Root Port. See 17.18.5 */
-    bridge.rootPortId = bridge.rootPriority.RxPortId;
+    bridge.rootPortId = bridge.rootPriority.BridgePortId;
 
     /* Set the Bridge and Root times. See 17.18.4 and 17.18.7 */
     bridge.BridgeTimes.message_age = 0;
@@ -127,21 +127,23 @@ int init_data(void)
         /* Set some flags */
         bridge.ports[i].rstp_flags = 0x0;
         /* 17.19.18 */
-        if (bridge.ports[i].link_status && bridge.ports[i].mng.PortEnabled) {
-            set_port_flag(bridge.ports[i].rstp_flags, PORTENABLED);
+        if (bridge.ports[i].link_status &&
+            bridge.ports[i].mng.AdminPortEnabled) {
+            set_port_flag(bridge.ports[i].rstp_flags, portEnabled);
         } else { /* Link status down or administrative port state disabled */
-            remove_port_flag(bridge.ports[i].rstp_flags, PORTENABLED);
+            remove_port_flag(bridge.ports[i].rstp_flags, portEnabled);
         }
 
         /* Set priority vectors */
         bridge.ports[i].designatedPriority = bridge.rootPriority;
-        bridge.ports[i].designatedPriority.TxPortId =
-        bridge.ports[i].designatedPriority.RxPortId = bridge.ports[i].portId;
+        bridge.ports[i].designatedPriority.DesignatedPortId =
+        bridge.ports[i].designatedPriority.BridgePortId =
+            bridge.ports[i].portId;
 
         memset(&bridge.ports[i].msgPriority, 0x00,
                sizeof(struct st_priority_vector));
         bridge.ports[i].portPriority = bridge.rootPriority;
-        bridge.ports[i].portPriority.RxPortId = bridge.ports[i].portId;
+        bridge.ports[i].portPriority.BridgePortId = bridge.ports[i].portId;
 
         /* Set timers */
         bridge.ports[i].designatedTimes = bridge.rootTimes;  /* 17.19.5 and
@@ -177,21 +179,21 @@ void recompute_stmchs(void)
        status in order to update the rstp info accordingly. This polling is
        a temporary solution, while we implement a method for notifications */
 
-    /* Update the TICK flag */
+    /* Update the tick flag */
     int i;
     for (i = 0; i < MAX_NUM_PORTS ; i++) {
-        set_port_flag(bridge.ports[i].rstp_flags, TICK);
+        set_port_flag(bridge.ports[i].rstp_flags, tick);
     }
 
     stmch_compute_transitions(&bridge);
 }
 
 
-/* Function to compare priority vectors. cmp_RxPortId is a flag to include
-   the RxPortId component in the comparison */
+/* Function to compare priority vectors. cmp_BridgePortId is a flag to include
+   the BridgePortId component in the comparison */
 int cmp_priority_vectors(struct st_priority_vector *pv1,
                          struct st_priority_vector *pv2,
-                         int cmp_RxPortId)
+                         int cmp_BridgePortId)
 {
     int ret;
     size_t pv_size = (2 * (BRIDGE_PRIO_LEN + ETH_ALEN) * sizeof(uint8_t)) +
@@ -202,9 +204,9 @@ int cmp_priority_vectors(struct st_priority_vector *pv1,
     if ((ret = memcmp(pv1, pv2, pv_size)))
         return ret;
 
-    /* If cmp_RxPortId = 1, compare the RxPortId */
-    if (cmp_RxPortId && (pv1->RxPortId != pv2->RxPortId))
-        return ((pv1->RxPortId < pv2->RxPortId) ? -1 : 1);
+    /* If cmp_BridgePortId = 1, compare the BridgePortId */
+    if (cmp_BridgePortId && (pv1->BridgePortId != pv2->BridgePortId))
+        return ((pv1->BridgePortId < pv2->BridgePortId) ? -1 : 1);
 
     /* If the vectors are equal, return 0 */
     return 0;
