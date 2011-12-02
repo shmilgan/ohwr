@@ -126,6 +126,7 @@ int init_data(void)
 
         /* Set some flags */
         bridge.ports[i].rstp_flags = 0x0;
+        bridge.ports[i].operPointToPointMAC = FALSE;
         /* 17.19.18 */
         if (bridge.ports[i].link_status &&
             bridge.ports[i].mng.AdminPortEnabled) {

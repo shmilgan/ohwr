@@ -63,7 +63,6 @@ static void updtRolesTree(struct bridge_data *br)
 {
     int i;
     int root_port_num = -1;
-    uint16_t temp_time;
     struct st_priority_vector   rppv; /* root path priority vector */
     struct st_priority_vector   best_rppv = br->BridgePriority;
     struct rstp_times           best_times = br->BridgeTimes;
@@ -100,12 +99,9 @@ static void updtRolesTree(struct bridge_data *br)
     /* 17.21.25 c) */
     if (root_port_num >= 0) {
         best_times = br->ports[root_port_num].portTimes;
-        temp_time = best_times.message_age + ONE_SECOND;
+        best_times.message_age += ONE_SECOND;
         /* Round to nearest whole second */
-        best_times.message_age =
-                    ((temp_time % ONE_SECOND) >= (ONE_SECOND / 2)) ?
-                    (((temp_time >> 8) + 1) * ONE_SECOND) :
-                    (((temp_time >> 8) - 1) * ONE_SECOND);
+        round_timer(best_times.message_age);
     }
     br->rootTimes = best_times;
 

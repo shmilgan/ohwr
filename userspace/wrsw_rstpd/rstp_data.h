@@ -41,6 +41,12 @@
 #define TRACEV(...)
 #endif
 
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 1
+#endif
 
 #define MAX_NUM_PORTS 10
 #define NUM_STMCH_PER_PORT 9
@@ -57,14 +63,20 @@
 /* STP is version 0 and RSTP is version 2 */
 #define RST_PROTOCOL_VERSION_IDENTIFIER 0x02
 
-/* Masks for the flags parameter in the BPDUs */
+/* Masks and offsets for the flags parameter in the BPDUs */
+#define PROPOSAL_FLAG_OFFS               1
+#define PORT_ROLE_FLAG_OFFS              2
+#define LEARNING_FLAG_OFFS               4
+#define FORWARDING_FLAG_OFFS             5
+#define AGREEMENT_FLAG_OFFS              6
+#define TOPOLOGY_CHANGE_ACK_FLAG_OFFS    7
 #define TOPOLOGY_CHANGE_FLAG        0x01
-#define PROPOSAL_FLAG               (0x01 << 1)
-#define PORT_ROLE_FLAG              (0x03 << 2)
-#define LEARNING_FLAG               (0x01 << 4)
-#define FORWARDING_FLAG             (0x01 << 5)
-#define AGREEMENT_FLAG              (0x01 << 6)
-#define TOPOLOGY_CHANGE_ACK_FLAG    (0x01 << 7)
+#define PROPOSAL_FLAG               (0x01 << PROPOSAL_FLAG_OFFS)
+#define PORT_ROLE_FLAG              (0x03 << PORT_ROLE_FLAG_OFFS)
+#define LEARNING_FLAG               (0x01 << LEARNING_FLAG_OFFS)
+#define FORWARDING_FLAG             (0x01 << FORWARDING_FLAG_OFFS)
+#define AGREEMENT_FLAG              (0x01 << AGREEMENT_FLAG_OFFS)
+#define TOPOLOGY_CHANGE_ACK_FLAG    (0x01 << TOPOLOGY_CHANGE_ACK_FLAG_OFFS)
 
 /* Port roles as defined in the BPDU */
 #define PORT_ROLE_UNKNOWN           0
@@ -238,7 +250,7 @@ struct tcn_bpdu {
 };
 
 /* Rapid Spanning Tree BPDU. See 802.1D, clause 9.3.3. This BPDU can act as
-   a Configuration BPDU and as a TCN BPDU */
+   a Configuration BPDU, as a TCN BPDU or as a RSTP BPDU */
 struct rstp_bpdu {
     struct cfg_bpdu configuration_bpdu;
     uint8_t         version1_length;
@@ -277,6 +289,8 @@ struct rstp_port_mng_data {
                                              and provided only for bridges that
                                              support the identification of edge
                                              ports. Not implemented for now. */
+    int adminPointToPointMAC; /* 6.4.3 and 17.12 */
+
     uint8_t     PortPriority;   /* 17.13.10 */
     uint32_t    PortPathCost;   /* 17.13.11 and 17.19.20 */
 
@@ -291,6 +305,8 @@ struct port_data {
     struct state_machine        stmch[NUM_STMCH_PER_PORT];
 
     struct rstp_port_mng_data   mng;
+    struct rstp_bpdu            bpdu; /* This is to store the information of the
+                                         last BPDU received in this port */
 
     /* RSTP data.
      * Per-Port RSTP variables. The state machines will use the information
@@ -309,12 +325,15 @@ struct port_data {
     struct st_priority_vector   portPriority;       /* 17.19.21 */
     struct rstp_times           portTimes;          /* 17.19.22 */
 
-    uint8_t                     txCount;        /* 17.19.44 */
-    uint16_t                    portId;         /* 17.19.19 */
     enum port_info              infoIs;         /* 17.19.10 */
     enum received_info          rcvdInfo;       /* 17.19.26 */
     enum port_role              role;           /* 17.19.35 */
     enum port_role              selectedRole;   /* 17.19.37 */
+
+    uint16_t                    portId;         /* 17.19.19 */
+    uint8_t                     txCount;        /* 17.19.44 */
+
+    uint8_t                     operPointToPointMAC;  /* 6.4.3 and 17.12 */
 
     /* RSTP port flags */
     uint32_t                    rstp_flags;     /* Flags defined above. Use the
@@ -381,6 +400,13 @@ static inline void set_port_flag(uint32_t bitfield, enum port_flag flag)
     (bitfield |= (0x01 << flag));
 }
 
+/* Rounds the timer to the nearest whole second */
+static inline void round_timer(uint16_t timer)
+{
+    timer = ((timer % ONE_SECOND) >= (ONE_SECOND / 2)) ?
+            (((timer >> 8) + 1) * ONE_SECOND) :
+            (((timer >> 8) - 1) * ONE_SECOND);
+}
 
 /*** FUNCTIONS ***/
 /* rstp_data.c */
@@ -397,8 +423,8 @@ void stmch_compute_transitions(struct bridge_data *br);
 
 /* rstp_stmch_*.c */
 void initialize_prs(struct state_machine *stmch);
-/* TODO
 void initialize_pim(struct state_machine *stmch);
+/* TODO
 void initialize_prt(struct state_machine *stmch);
 void initialize_prx(struct state_machine *stmch);
 void initialize_pst(struct state_machine *stmch);
