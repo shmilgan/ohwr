@@ -124,15 +124,12 @@ int init_data(void)
             ((bridge.ports[i].mng.PortPriority << 8) |
              (bridge.ports[i].port_number));
 
-        /* Set some flags */
-        bridge.ports[i].rstp_flags = 0x0;
-        bridge.ports[i].operPointToPointMAC = FALSE;
         /* 17.19.18 */
         if (bridge.ports[i].link_status &&
             bridge.ports[i].mng.AdminPortEnabled) {
-            set_port_flag(bridge.ports[i].rstp_flags, portEnabled);
+            bridge.ports[i].portEnabled = TRUE;
         } else { /* Link status down or administrative port state disabled */
-            remove_port_flag(bridge.ports[i].rstp_flags, portEnabled);
+            bridge.ports[i].portEnabled = FALSE;
         }
 
         /* Set priority vectors */
@@ -182,9 +179,8 @@ void recompute_stmchs(void)
 
     /* Update the tick flag */
     int i;
-    for (i = 0; i < MAX_NUM_PORTS ; i++) {
-        set_port_flag(bridge.ports[i].rstp_flags, tick);
-    }
+    for (i = 0; i < MAX_NUM_PORTS ; i++)
+        bridge.ports[i].tick = TRUE;
 
     stmch_compute_transitions(&bridge);
 }

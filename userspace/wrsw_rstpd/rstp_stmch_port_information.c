@@ -59,34 +59,33 @@ static int betterorsameInfo(struct port_data *port)
 /* 17.21.8 */
 static enum received_info rcvInfo(struct port_data *port)
 {
-    int cmp_pv, bpdu_port_role;
+    int cmp_pv, role;
 
-    /* TODO: Decode BPDU. See also 9.3.4. */
+    /* TODO: Decode BPDU (see 17.21.8). This will be probably done before
+       calling this function, so the data will be already available in
+       port->bpdu. See also 9.3.4. */
 
     /* Check the port role encoded in the BPDU */
-    bpdu_port_role = (port->bpdu.configuration_bpdu.flags & PORT_ROLE_FLAG) >>
-                     PORT_ROLE_FLAG_OFFS;
+    role = (port->bpdu.flags & PORT_ROLE_FLAG) >> PORT_ROLE_FLAG_OFFS;
 
     cmp_pv = cmp_priority_vectors(&port->msgPriority, &port->portPriority, 1);
 
-    if (port->bpdu.configuration_bpdu.bpdu_type == BPDU_TYPE_CONFIG ||
-        (port->bpdu.configuration_bpdu.bpdu_type == BPDU_TYPE_RSTP &&
-         bpdu_port_role == PORT_ROLE_DESIGNATED)) {
-        if (cmp_pv < 0) {   /* 17.21.8 a.1)*/
+    if (port->bpdu.type == BPDU_TYPE_CONFIG ||
+        (port->bpdu.type == BPDU_TYPE_RSTP && role == PORT_ROLE_DESIGNATED)) {
+        if (cmp_pv < 0)     /* 17.21.8 a.1)*/
             return SuperiorDesignatedInfo;
-        }
+
         if (cmp_pv == 0) {
             if (!cmp_times(&port->msgTimes, &port->portTimes))
                 return RepeatedDesignatedInfo;  /* 17.21.8 b) */
             return SuperiorDesignatedInfo;  /* 17.21.8 a.2) */
         }
-        if (cmp_pv > 0) {   /* 17.21.8 c) */
+
+        if (cmp_pv > 0)     /* 17.21.8 c) */
             return InferiorDesignatedInfo;
-        }
     }
 
-    if (port->bpdu.configuration_bpdu.bpdu_type == BPDU_TYPE_RSTP &&
-        bpdu_port_role != PORT_ROLE_UNKNOWN) {
+    if (port->bpdu.type == BPDU_TYPE_RSTP && role != PORT_ROLE_UNKNOWN) {
         if (cmp_pv >= 0)    /* 17.21.8 d) */
             return InferiorRootAlternateInfo;
     }
@@ -97,31 +96,28 @@ static enum received_info rcvInfo(struct port_data *port)
 /* 17.21.11 */
 static void recordProposal(struct port_data *port)
 {
-    int bpdu_port_role =
-        (port->bpdu.configuration_bpdu.flags & PORT_ROLE_FLAG) >>
-        PORT_ROLE_FLAG_OFFS;
+    int role = (port->bpdu.flags & PORT_ROLE_FLAG) >> PORT_ROLE_FLAG_OFFS;
 
-    if (port->bpdu.configuration_bpdu.bpdu_type == BPDU_TYPE_CONFIG ||
-        (port->bpdu.configuration_bpdu.bpdu_type == BPDU_TYPE_RSTP &&
-         bpdu_port_role == PORT_ROLE_DESIGNATED)) {
-        if ((port->bpdu.configuration_bpdu.flags & PROPOSAL_FLAG))
-            set_port_flag(port->rstp_flags, proposed);
+    if (port->bpdu.type == BPDU_TYPE_CONFIG ||
+        (port->bpdu.type == BPDU_TYPE_RSTP && role == PORT_ROLE_DESIGNATED)) {
+        if ((port->bpdu.flags & PROPOSAL_FLAG))
+            port->proposed = TRUE;
     }
 }
 
 /* 17.21.17 */
 static void setTcFlags(struct port_data *port)
 {
-    switch (port->bpdu.configuration_bpdu.bpdu_type) {
+    switch (port->bpdu.type) {
     case BPDU_TYPE_CONFIG:
     case BPDU_TYPE_RSTP:
-        if ((port->bpdu.configuration_bpdu.flags & TOPOLOGY_CHANGE_FLAG))
-            set_port_flag(port->rstp_flags, rcvdTc);
-        if ((port->bpdu.configuration_bpdu.flags & TOPOLOGY_CHANGE_ACK_FLAG))
-            set_port_flag(port->rstp_flags, rcvdTcAck);
+        if ((port->bpdu.flags & TOPOLOGY_CHANGE_FLAG))
+            port->rcvdTc = TRUE;
+        if ((port->bpdu.flags & TOPOLOGY_CHANGE_ACK_FLAG))
+            port->rcvdTcAck =  TRUE;
         break;
     case BPDU_TYPE_TCN:
-        set_port_flag(port->rstp_flags, rcvdTcn);
+        port->rcvdTcn = TRUE;
         break;
     }
 }
@@ -157,25 +153,25 @@ static void updtRcvdInfoWhile(struct port_data *port)
 /* 17.21.10 */
 static void recordDispute(struct port_data *port)
 {
-    if (port->bpdu.configuration_bpdu.bpdu_type == BPDU_TYPE_RSTP &&
-        (port->bpdu.configuration_bpdu.flags & LEARNING_FLAG)) {
-        set_port_flag(port->rstp_flags, agreed);
-        remove_port_flag(port->rstp_flags, proposing);
+    if (port->bpdu.type == BPDU_TYPE_RSTP &&
+        (port->bpdu.flags & LEARNING_FLAG)) {
+        port->agreed = TRUE;
+        port->proposing = FALSE;
     }
 }
 
 /* 17.21.9 */
 static void recordAgreement(struct port_data *port)
 {
-    if ((port->bpdu.configuration_bpdu.protocol_version_identifier ==
+    if ((port->bpdu.protocol_version_identifier ==
          RST_PROTOCOL_VERSION_IDENTIFIER) &&
-        (port->operPointToPointMAC == TRUE) &&
-        (port->bpdu.configuration_bpdu.flags & AGREEMENT_FLAG)) {
-        set_port_flag(port->rstp_flags, agreed);
-        remove_port_flag(port->rstp_flags, proposing);
+        port->operPointToPointMAC &&
+        (port->bpdu.flags & AGREEMENT_FLAG)) {
+        port->agreed = TRUE;
+        port->proposing = FALSE;
         return;
     }
-    remove_port_flag(port->rstp_flags, agreed);
+    port->agreed = FALSE;
 }
 
 
@@ -188,72 +184,63 @@ static void enter_state(struct state_machine *stmch, enum states state)
     case CURRENT:
         break;
     case DISABLED:
-        remove_port_flag(port->rstp_flags, rcvdMsg);
-        remove_port_flag(port->rstp_flags, proposing);
-        remove_port_flag(port->rstp_flags, proposed);
-        remove_port_flag(port->rstp_flags, agree);
-        remove_port_flag(port->rstp_flags, agreed);
+        port->rcvdMsg =
+        port->proposing =
+        port->proposed =
+        port->agree =
+        port->agreed = FALSE;
         port->rcvdInfoWhile = 0;
         port->infoIs = Disabled;
-        set_port_flag(port->rstp_flags, reselect);
-        remove_port_flag(port->rstp_flags, selected);
+        port->reselect = TRUE;
+        port->selected = FALSE;
         break;
     case AGED:
         port->infoIs = Aged;
-        set_port_flag(port->rstp_flags, reselect);
-        remove_port_flag(port->rstp_flags, selected);
+        port->reselect = TRUE;
+        port->selected = FALSE;
         break;
     case UPDATE:
-        remove_port_flag(port->rstp_flags, proposing);
-        remove_port_flag(port->rstp_flags, proposed);
-        (get_port_flag(port->rstp_flags, agreed) &&
-            betterorsameInfo(port)) ?
-            set_port_flag(port->rstp_flags, agreed) :
-            remove_port_flag(port->rstp_flags, agreed);
-        (get_port_flag(port->rstp_flags, synced) &&
-            get_port_flag(port->rstp_flags, agreed)) ?
-            set_port_flag(port->rstp_flags, synced) :
-            remove_port_flag(port->rstp_flags, synced);
+        port->proposing =
+        port->proposed = FALSE;
+        port->agreed = (port->agreed && betterorsameInfo(port));
+        port->synced = (port->synced && port->agreed);
         port->portPriority = port->designatedPriority;
         port->portTimes = port->designatedTimes;
-        remove_port_flag(port->rstp_flags, updtInfo);
+        port->updtInfo = FALSE;
         port->infoIs = Mine;
-        set_port_flag(port->rstp_flags, newInfo);
+        port->newInfo = TRUE;
         break;
     case SUPERIOR_DESIGNATED:
-        remove_port_flag(port->rstp_flags, agreed);
-        remove_port_flag(port->rstp_flags, proposing);
+        port->agreed =
+        port->proposing = FALSE;
         recordProposal(port);
         setTcFlags(port);
-        (get_port_flag(port->rstp_flags, agree) &&
-            betterorsameInfo(port)) ?
-            set_port_flag(port->rstp_flags, agree) :
-            remove_port_flag(port->rstp_flags, agree);
+        port->agree = (port->agree &&  betterorsameInfo(port));
         recordPriority(port);
         recordTimes(port);
         updtRcvdInfoWhile(port);
         port->infoIs = Received;
-        set_port_flag(port->rstp_flags, reselect);
-        remove_port_flag(port->rstp_flags, selected);
-        remove_port_flag(port->rstp_flags, rcvdMsg);
+        port->reselect = TRUE;
+        port->selected =
+        port->rcvdMsg = FALSE;
         break;
     case REPEATED_DESIGNATED:
         recordProposal(port);
         setTcFlags(port);
         updtRcvdInfoWhile(port);
-        remove_port_flag(port->rstp_flags, rcvdMsg);
+        port->rcvdMsg = FALSE;
         break;
     case INFERIOR_DESIGNATED:
         recordDispute(port);
-        remove_port_flag(port->rstp_flags, rcvdMsg);
+        port->rcvdMsg = FALSE;
         break;
     case NOT_DESIGNATED:
         recordAgreement(port);
         setTcFlags(port);
-        remove_port_flag(port->rstp_flags, rcvdMsg);
+        port->rcvdMsg = FALSE;
         break;
     case OTHER:
-        remove_port_flag(port->rstp_flags, rcvdMsg);
+        port->rcvdMsg = FALSE;
         break;
     case RECEIVE:
         port->rcvdInfo = rcvInfo(port);
@@ -285,8 +272,7 @@ static void compute_transitions(struct state_machine *stmch)
            " state machine");
 
     /* Test if the BEGIN flag is true */
-    if (br->begin || (!get_port_flag(port->rstp_flags, portEnabled) &&
-                      (port->infoIs != Disabled))) {
+    if (br->begin || (!port->portEnabled && (port->infoIs != Disabled))) {
         enter_state(stmch, DISABLED);
         TRACEV(TRACE_INFO, "PIM: BEGIN is TRUE: current state: DISABLED");
         return;
@@ -296,16 +282,14 @@ static void compute_transitions(struct state_machine *stmch)
 
     switch (stmch->state) {
     case DISABLED:
-        if (get_port_flag(port->rstp_flags, portEnabled))
+        if (port->portEnabled)
             enter_state(stmch, AGED);
-        else if (get_port_flag(port->rstp_flags, rcvdMsg))
+        else if (port->rcvdMsg)
             enter_state(stmch, DISABLED);
         break;
     case AGED:
-        if (get_port_flag(port->rstp_flags, selected) &&
-            get_port_flag(port->rstp_flags, updtInfo)) {
+        if (port->selected && port->updtInfo)
             enter_state(stmch, UPDATE);
-        }
         break;
     case UPDATE:
     case SUPERIOR_DESIGNATED:
@@ -316,16 +300,14 @@ static void compute_transitions(struct state_machine *stmch)
         enter_state(stmch, CURRENT);
         break;
     case CURRENT:
-        if (get_port_flag(port->rstp_flags, selected) &&
-            get_port_flag(port->rstp_flags, updtInfo)) {
+        if (port->selected && port->updtInfo) {
             enter_state(stmch, UPDATE);
         } else if ((port->infoIs == Received) &&
                    (port->rcvdInfoWhile == 0) &&
-                   !get_port_flag(port->rstp_flags, updtInfo) &&
-                   !get_port_flag(port->rstp_flags, rcvdMsg)) {
+                   !port->updtInfo &&
+                   !port->rcvdMsg) {
             enter_state(stmch, AGED);
-        } else if (get_port_flag(port->rstp_flags, rcvdMsg) &&
-                   !get_port_flag(port->rstp_flags, updtInfo)) {
+        } else if (port->rcvdMsg && !port->updtInfo) {
             enter_state(stmch, RECEIVE);
         }
         break;

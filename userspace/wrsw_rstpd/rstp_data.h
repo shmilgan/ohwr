@@ -124,41 +124,6 @@
 #define DEFAULT_PORT_PATH_COST_10_TBPS      0x0000002   /* 2 */
 #define MAX_PORT_PATH_COST                  0xBEBC200   /* 200000000 */
 
-/* RSTP port flags (rstp_flags). See  802.1D-2004, clause 17.19  */
-enum port_flag {
-    agree = 0,      /* 17.19.2 */
-    agreed,         /* 17.19.3 */
-    disputed,       /* 17.19.6 */
-    fdbFlush,       /* 17.19.7 */
-    forward,        /* 17.19.8 */
-    forwarding,     /* 17.19.9 */
-    learn,          /* 17.19.11 */
-    learning,       /* 17.19.12 */
-    mcheck,         /* 17.19.13 */
-    newInfo,        /* 17.19.16 */
-    operEdge,       /* 17.19.17 */
-    portEnabled,    /* 17.19.18 */
-    proposed,       /* 17.19.23 */
-    proposing,      /* 17.19.24 */
-    rcvdBPDU,       /* 17.19.25 */
-    rcvdMsg,        /* 17.19.27 */
-    rcvdRSTP,       /* 17.19.28 */
-    rcvdSTP,        /* 17.19.29 */
-    rcvdTc,         /* 17.19.30 */
-    rcvdTcAck,      /* 17.19.31 */
-    rcvdTcn,        /* 17.19.32 */
-    reRoot,         /* 17.19.33 */
-    reselect,       /* 17.19.34 */
-    selected,       /* 17.19.36 */
-    sendRSTP,       /* 17.19.38 */
-    _sync,          /* 17.19.39 */ /* renamed because of a previous declaration
-                                      in unistd.h */
-    synced,         /* 17.19.40 */
-    tcAck,          /* 17.19.41 */
-    tcProp,         /* 17.19.42 */
-    tick,           /* 17.19.43 */
-    updtInfo        /* 17.19.45 */
-};
 
 /* Indicate the origin/state of the Port's ST information. See 802.1D,
    clause 17.19.10 */
@@ -222,15 +187,12 @@ struct rstp_times {
     uint16_t   forward_delay;
 };
 
-
-/* Configuration BPDU. See 802.1D, clause 9.3.1. Note that the Port
-   ID is 2 octets long. See 802.1D-2004, clause 9.2.7, for encoding
-   (the less significant 12 bits are used to encode the Port Number, while
-   the 4 more significant bits are used to encode the Port Priority) */
-struct cfg_bpdu {
+/* This structure can act as a Configuration BPDU (9.3.1), a Topology
+   Change Notification BPDU (9.3.2) or a Rapid Spanning Tree BPDU (9.3.3). */
+struct generic_bpdu {
     uint16_t                protocol_identifier;
     uint8_t                 protocol_version_identifier;
-    uint8_t                 bpdu_type;
+    uint8_t                 type;
     uint8_t                 flags;
 
     struct bridge_id        root_identifier;
@@ -239,23 +201,9 @@ struct cfg_bpdu {
     uint16_t                port_identifier;
 
     struct rstp_times       times;
-}; /* TODO: should we use: __attribute__((packed))?. Decide when BPDUs
-      processing functions be written */;
 
-/* Topology Change Notification BPDU. See 802.1D, clause 9.3.2 */
-struct tcn_bpdu {
-    uint16_t    protocol_identifier;
-    uint8_t     protocol_version_identifier;
-    uint8_t     bpdu_type;
+    uint8_t                 version1_length;  /* Only for RSTP BPDUs */
 };
-
-/* Rapid Spanning Tree BPDU. See 802.1D, clause 9.3.3. This BPDU can act as
-   a Configuration BPDU, as a TCN BPDU or as a RSTP BPDU */
-struct rstp_bpdu {
-    struct cfg_bpdu configuration_bpdu;
-    uint8_t         version1_length;
-};
-
 
 /* Spanning Tree priority vector. See 802.1D, clause 17.5 */
 struct st_priority_vector {
@@ -305,7 +253,7 @@ struct port_data {
     struct state_machine        stmch[NUM_STMCH_PER_PORT];
 
     struct rstp_port_mng_data   mng;
-    struct rstp_bpdu            bpdu; /* This is to store the information of the
+    struct generic_bpdu         bpdu; /* This is to store the information of the
                                          last BPDU received in this port */
 
     /* RSTP data.
@@ -330,15 +278,44 @@ struct port_data {
     enum port_role              role;           /* 17.19.35 */
     enum port_role              selectedRole;   /* 17.19.37 */
 
-    uint16_t                    portId;         /* 17.19.19 */
+    uint16_t                    portId;         /* 17.19.19, 9.2.7 */
     uint8_t                     txCount;        /* 17.19.44 */
 
-    uint8_t                     operPointToPointMAC;  /* 6.4.3 and 17.12 */
+    int                         operPointToPointMAC;  /* 6.4.3 and 17.12 */
 
-    /* RSTP port flags */
-    uint32_t                    rstp_flags;     /* Flags defined above. Use the
-                                                   macros to get/set/remove
-                                                   each flag */
+    /* RSTP port flags. TODO: Consider using bitfields instead of int */
+    int agree;          /* 17.19.2 */
+    int agreed;         /* 17.19.3 */
+    int disputed;       /* 17.19.6 */
+    int fdbFlush;       /* 17.19.7 */
+    int forward;        /* 17.19.8 */
+    int forwarding;     /* 17.19.9 */
+    int learn;          /* 17.19.11 */
+    int learning;       /* 17.19.12 */
+    int mcheck;         /* 17.19.13 */
+    int newInfo;        /* 17.19.16 */
+    int operEdge;       /* 17.19.17 */
+    int portEnabled;    /* 17.19.18 */
+    int proposed;       /* 17.19.23 */
+    int proposing;      /* 17.19.24 */
+    int rcvdBPDU;       /* 17.19.25 */
+    int rcvdMsg;        /* 17.19.27 */
+    int rcvdRSTP;       /* 17.19.28 */
+    int rcvdSTP;        /* 17.19.29 */
+    int rcvdTc;         /* 17.19.30 */
+    int rcvdTcAck;      /* 17.19.31 */
+    int rcvdTcn;        /* 17.19.32 */
+    int reRoot;         /* 17.19.33 */
+    int reselect;       /* 17.19.34 */
+    int selected;       /* 17.19.36 */
+    int sendRSTP;       /* 17.19.38 */
+    int sync;           /* 17.19.39 */
+    int synced;         /* 17.19.40 */
+    int tcAck;          /* 17.19.41 */
+    int tcProp;         /* 17.19.42 */
+    int tick;           /* 17.19.43 */
+    int updtInfo;       /* 17.19.45 */
+
     /* Timers */
     uint16_t edgeDelayWhile;    /* 17.17.1 */
     uint16_t fdWhile;           /* 17.17.2 */
@@ -380,25 +357,6 @@ struct bridge_data {
     struct rstp_times           rootTimes;          /* 17.18.7 */
 };
 
-
-/* Operations on RSTP port flags */
-/* Test whether the flag is set or not */
-static inline uint32_t get_port_flag(uint32_t bitfield, enum port_flag flag)
-{
-    return ((bitfield >> flag) & 0x01);
-}
-
-/* Sets the flag to zero */
-static inline void remove_port_flag(uint32_t bitfield, enum port_flag flag)
-{
-    (bitfield &= (~(0x01 << flag)));
-}
-
-/* Sets the flag to one */
-static inline void set_port_flag(uint32_t bitfield, enum port_flag flag)
-{
-    (bitfield |= (0x01 << flag));
-}
 
 /* Rounds the timer to the nearest whole second */
 static inline void round_timer(uint16_t timer)

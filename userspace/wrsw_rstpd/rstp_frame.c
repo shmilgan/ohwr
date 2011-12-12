@@ -123,7 +123,8 @@ static void frame_recv(uint32_t events, struct epoll_event_handler *h)
           sl.sll_addr[3], sl.sll_addr[4], sl.sll_addr[5]);
     dump_frame(buf, octets);
 
-    /* TODO Parse and process the received frame */
+    /* TODO Parse the received frame. Fill in port->bpdu with data. Then
+       recompute state machines */
     //bpdu_rcv(sl.sll_ifindex, buf, octets);
 }
 
