@@ -57,9 +57,9 @@ buildroot-pkg/libpcap-1.0.0.tar.gz         9ad1358c5dec48456405eac197a46d3d \
   http://www.tcpdump.org/release/libpcap-1.0.0.tar.gz \
   pkg/buildroot-pkg/libpcap-1.0.0.tar.gz
 
-buildroot-pkg/linux-2.6.35.tar.bz2         091abeb4684ce03d1d936851618687b6 \
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.35.tar.bz2 \
-  pkg/buildroot-pkg/linux-2.6.35.tar.bz2
+buildroot-pkg/linux-2.6.39.tar.bz2        1aab7a741abe08d42e8eccf20de61e05  \
+  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.39.tar.bz2 \
+  pkg/buildroot-pkg/linux-2.6.39.tar.bz2
 
 buildroot-pkg/ltrace_0.5-3.1.diff.gz       8342b15d3342da685c411599d1227db9 \
   http://ftp.debian.org/debian/pool/main/l/ltrace/ltrace_0.5-3.1.diff.gz \
