@@ -766,7 +766,7 @@ A pre-built binary is available as @code{binaries/barebox.bin}.
 @node Building the Kernel
 @subsection Building the Kernel
 
-The kernel we are currently using is version 2.6.29. We are piggy-backing
+The kernel we are currently using is version 2.6.39. We are piggy-backing
 on the @i{sam9g45ek} board, whose specific file we modified to account
 for WRS differences. This is a temporary solution, like we are doing
 for the other tools.
@@ -785,8 +785,7 @@ that patch 0001 above creates a file called @code{.config}, not
 
 @example
    export CROSS_COMPILE=/opt/arm-2010q1/bin/arm-none-eabi-
-   export ARCH arm
-   make oldconfig
+   export ARCH=arm
    make && cp arch/arm/boot/zImage 128.141.44.150:/home/tftpboot/
 @end example
 
