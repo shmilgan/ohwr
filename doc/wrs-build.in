@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month May 2011
+@set update-month January 2012
 
 @finalout
 
@@ -263,7 +263,7 @@ can also have the complete history of the repository in your local
 computer.  If you are not interested, you can skip this section.
 
 @strong{Attention:} instead of this procedure, you may prefer @i{git-svn},
-which is not described here at this point
+which is not described here at this point.
 @c FIXME: git-svn
 
 Having a local repository is useful if you need to checkout older
@@ -367,34 +367,40 @@ Arranging for the message to be removed would have unpleasant side
 effects, and you are not expected to lack a local copy in any case.
 
 The progress messages look like what is shown here below.  The log
-file will be rather big, as all the compilation steps are quite
-verbose.
+file will be rather big (7MB or so), as all the compilation steps are
+quite verbose.
 
+The following examples show an example run on a dual core system (12k
+bogoMips in total) where downloading already happened.
+
+@c FIXME: example
 @smallexample
-2011-05-18 00:26:45: --- Buildroot compiler and filesystem
-2011-05-18 00:26:45: Looking for file buildroot-2009.11.tar.bz2
-2011-05-18 00:26:45: Skip download of buildroot-2009.11.tar.bz2
-2011-05-18 00:26:58: Copied packages from /opt/ohwr-svn/white-rabbit/trunk/pkg/buildroot-pkg
-2011-05-18 00:26:58: Hardlinked packages from downloads to build place
-2011-05-18 00:43:41: --- AT91Boot
-2011-05-18 00:43:41: Looking for file AT91Bootstrap1.11.zip
-2011-05-18 00:43:42: Skip download of AT91Bootstrap1.11.zip
-2011-05-18 00:43:42: Patching AT91Boot
-2011-05-18 00:43:42: Building AT91Boot
-2011-05-18 00:43:42: --- U-Boot
-2011-05-18 00:43:42: Looking for file u-boot-1.3.4.tar.bz2
-2011-05-18 00:43:43: Skip download of u-boot-1.3.4.tar.bz2
-2011-05-18 00:43:45: Patching U-Boot
-2011-05-18 00:43:49: Building U-Boot
-2011-05-18 00:44:05: --- Linux kernel for switch
-2011-05-18 00:44:05: Looking for file buildroot-pkg/linux-2.6.35.tar.bz2
-2011-05-18 00:44:07: Skip download of buildroot-pkg/linux-2.6.35.tar.bz2
-2011-05-18 00:46:38: --- Kernel modules from this package
-2011-05-18 00:46:43: --- PTP daemon (noposix repository)
-2011-05-18 00:46:43: Using local git repository
-2011-05-18 00:46:45: --- User space tools
-2011-05-18 00:46:46: --- Wrapping filesystem
-2011-05-18 00:46:47: Complete build succeeded, apparently
+2012-01-09 13:08:01: --- Buildroot compiler and filesystem
+2012-01-09 13:08:01: Looking for file buildroot-2009.11.tar.bz2
+2012-01-09 13:08:02: Skip download of buildroot-2009.11.tar.bz2
+2012-01-09 13:08:02: Uncompressing buildroot
+2012-01-09 13:08:03: Patching buildroot
+2012-01-09 13:08:05: Can't mass-download from http://svn.ohwr.org/white-rabbit, delaying download
+2012-01-09 13:08:05: Hardlinked packages from downloads to build place
+2012-01-09 13:23:53: --- AT91Boot
+2012-01-09 13:23:53: Looking for file AT91Bootstrap1.11.zip
+2012-01-09 13:23:53: Skip download of AT91Bootstrap1.11.zip
+2012-01-09 13:23:53: Patching AT91Boot
+2012-01-09 13:23:53: Building AT91Boot
+2012-01-09 13:23:53: --- U-Boot
+2012-01-09 13:23:53: Looking for file u-boot-1.3.4.tar.bz2
+2012-01-09 13:23:54: Skip download of u-boot-1.3.4.tar.bz2
+2012-01-09 13:23:56: Patching U-Boot
+2012-01-09 13:23:57: Building U-Boot
+2012-01-09 13:24:13: --- Linux kernel for switch
+2012-01-09 13:24:13: Looking for file buildroot-pkg/linux-2.6.35.tar.bz2
+2012-01-09 13:24:14: Skip download of buildroot-pkg/linux-2.6.35.tar.bz2
+2012-01-09 13:26:27: --- Kernel modules from this package
+2012-01-09 13:26:30: --- PTP daemon (noposix repository)
+2012-01-09 13:26:30: Using local git repository
+2012-01-09 13:26:32: --- User space tools
+2012-01-09 13:26:33: --- Wrapping filesystem
+2012-01-09 13:26:34: Complete build succeeded, apparently
 @end smallexample
 
 You may prefer to save @i{stderr} with @i{stdout} to the log file
@@ -419,6 +425,13 @@ rename) the output directory and reissue the command.  To only
 redo one step, you can remove the marker in @code{build/_done}
 (the markers are empty files with name like @code{00-buildroot}
 and @code{03-kernel}).
+
+@b{WARNING:}
+Unfortunately, @code{make-3.82} (and supposedly later ones) is not
+able to compile this version of @i{buildroot}.  I couldn't investigate
+the reason, but @i{mtd} compilation fails because @i{lzo} is missing.
+Earlier @i{make} version will compile and install @i{lzo} first,
+and everything works well.
 
 @c ##########################################################################
 @node The Compiler
