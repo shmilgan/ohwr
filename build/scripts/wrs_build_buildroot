@@ -38,7 +38,14 @@ fi
 
 cp $CFG .config
 sed -i /^BR2_JLEVEL/d .config
-echo "BR2_JLEVEL=$WRS_MAKE_J_NUMBER" >> .config
+# make 3.82 splits the work differently, and compilation fails. So no -j
+makefails=$(make -v | awk 'NR==1 {if ($NF > 3.81) print "fail"}')
+if [ "x$makefails" = "xfail" ]; then
+    echo "BR2_JLEVEL=1" >> .config
+    # Actually, it seems it fails anyways. I give up and document the issue
+else
+    echo "BR2_JLEVEL=$WRS_MAKE_J_NUMBER" >> .config
+fi
 
 # apply any pending patches
 wrs_echo "Patching buildroot"
