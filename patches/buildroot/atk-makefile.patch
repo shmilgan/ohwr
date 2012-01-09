@@ -1,0 +1,11 @@
+--- ./package/atk/atk.mk.orig	2012-01-09 11:28:58.000000000 +0100
++++ ./package/atk/atk.mk	2012-01-09 11:31:09.000000000 +0100
+@@ -41,7 +41,7 @@
+ 		gl_cv_c_restrict=no ac_cv_prog_F77=no
+ 
+ ATK_CONF_OPT =  --enable-shared \
+-		--enable-static
++		--enable-static \
+ 		--disable-glibtest --enable-explicit-deps=no \
+ 		--disable-debug
+ 
