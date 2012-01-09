@@ -20,6 +20,7 @@ mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 # go to the build dir and compile it, using our configuration
 cd $WRS_OUTPUT_DIR/build
 dirname="buildroot-2009.11"
+wrs_echo "Uncompressing buildroot"
 rm -rf $dirname
 tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
 
@@ -38,6 +39,16 @@ fi
 cp $CFG .config
 sed -i /^BR2_JLEVEL/d .config
 echo "BR2_JLEVEL=$WRS_MAKE_J_NUMBER" >> .config
+
+# apply any pending patches
+wrs_echo "Patching buildroot"
+cd $dirname
+for n in $WRS_BASE_DIR/../patches/buildroot/*patch; do
+    # the shell passes the "*" over if no matches are there, so check
+    if test -f "$n"; then
+	patch -p1 < $n || wrs_die "Apply $n"
+    fi
+done
 
 # now, if CROSS_COMPILE is already set and is not ours, change the config
 if [ "x$CROSS_COMPILE" != "x" ]; then
@@ -74,9 +85,10 @@ if [ -d $repodir ]; then
 	wrs_echo "Copied packages from $repodir"
     fi
 else
-    # The repository is remote, then try wget
-    wrs_echo "Dowloading packages from $WRS_WR_REPOSITORY"
-    wget -nd -np -nc -nv -r $WRS_WR_REPOSITORY/trunk/pkg/buildroot-pkg/
+    # The repository is remote, but wget fails (bug, won't be fixed: see
+    # http://lists.gnu.org/archive/html/bug-wget/2010-04/msg00038.html
+    wrs_echo "Can't mass-download from $WRS_WR_REPOSITORY, delaying download"
+    #wget -nd -np -nc -nv -r $WRS_WR_REPOSITORY/trunk/pkg/buildroot-pkg/
 fi
 
 # buildroot wants its own guest source packages to be within its own dir..
@@ -86,11 +98,20 @@ mkdir dl
 if ln $WRS_DOWNLOAD_DIR/buildroot-pkg/* dl 2> /dev/null; then
     wrs_echo "Hardlinked packages from downloads to build place"
 else
-    cp -a $WRS_DOWNLOAD_DIR/buildroot-pkg/* dl || wrs_die "copying"
-    wrs_echo "Copied packages from downloads to build place"
+    if cp -a $WRS_DOWNLOAD_DIR/buildroot-pkg/* dl; then
+	wrs_echo "Copied packages from downloads to build place"
+    else
+	wrs_echo "No buildroot packages, it will download them"
+    fi
 fi
 
 # We don't want CC to be pre-set at this point (some of us do :)
 unset CC
 make || wrs_die "buildroot compilation"
+
+# finally, copy what it downloaded to the local place, for next time
+mkdir -p  $WRS_DOWNLOAD_DIR/buildroot-pkg
+cp -a $buildrootdir/dl/*tar*  $WRS_DOWNLOAD_DIR/buildroot-pkg
+# the previous command may fail, if the files are already linked. so "true"
+true
 
