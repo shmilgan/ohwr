@@ -114,29 +114,26 @@ function wrs_download {
     file=$1
     DLLIST=${WRS_BASE_DIR}/download-info
 
-    wrs_echo "Looking for file $file"
+    #wrs_echo "Looking for file $file"
     T=$(mktemp /tmp/wrs-download-XXXXXX)
     grep -v '^#' $DLLIST | grep -v '^[ 	]*$' | \
-	while read name md5 upstream svnname; do
-	    #echo "md5 $md5 name $name u $upstream s $svnname"
+	while read name md5 upstream; do
+	    #echo "md5 $md5 name $name u $upstream"
 	    if [ "$name" != "$file" ]; then continue; fi
 	    echo md5=\"$md5\" > $T
 	    echo upstream=\"$upstream\" >> $T
-	    echo svnname=\"$svnname\" >> $T
 	    break
     done
     . $T
 
-    # create the directory and possibly a subdirectory
-    subdir=$(dirname $file)
-    mkdir -p ${WRS_DOWNLOAD_DIR}/$subdir || wrs_die "mkdir ${WRS_DOWNLOAD_DIR}"
+    mkdir -p ${WRS_DOWNLOAD_DIR} || wrs_die "mkdir ${WRS_DOWNLOAD_DIR}"
 
     # If it exists, we are done
     output=${WRS_DOWNLOAD_DIR}/$file
     if [ -f $output ]; then
 	ourmd5=$(cat $output | md5sum | sed 's/ .*$//')
 	if [ "$ourmd5" = "$md5" ]; then
-	    wrs_echo "Skip download of $file"
+	    #wrs_echo "Skip download of $file"
 	    return
 	else
 	    wrs_warn "File $file is corrupted, re-downloading"
@@ -145,12 +142,18 @@ function wrs_download {
     fi
 
     # Download from upstream
-    wget -nv $upstream -O $output
+    wget -q $upstream -O $output
     if [ -f $output ]; then
 	wrs_echo "Retrieved $file from upstream"
 	return
     fi
 
+    # Download from buildroot
+    wget -q http://sources.buildroot.net/$file
+    if [ -f $output ]; then
+	wrs_echo "Retrieved $file from sources.buildroot.net"
+	return
+    fi
     wrs_error "Cannot download $file"
 }
 

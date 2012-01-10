@@ -1,106 +1,109 @@
 # -*-shell-script-*-
 # This file lists files we need to download. It is read by the shell,
-# so it is organized by lines. Each line has 4 fields:
-#   filename  md5sum   upstream-location   white-rabbit-svn-location
+# so it is organized by lines. Each line has 3 fields:
+#   filename  md5sum   upstream-location
 # note that backslashes are allowed to make continuation lines
-#
-AT91Bootstrap1.11.zip                      547fe261cb0bfefdd57936e000ca7750 \
-  http://svn.ohwr.org/white-rabbit/trunk/pkg/AT91Bootstrap1.11.zip
-  pkg/AT91Bootstrap1.11.zip
+# if the upstream is not valid any more, the script will get it from
+#   http://sources.buildroot.net/
 
-u-boot-1.3.4.tar.bz2                       ca12b805b4f2bdcf15733be3fe22e896 \
-  ftp://ftp.denx.de/pub/u-boot/u-boot-1.3.4.tar.bz2 \
-  pkg/u-boot-1.3.4.tar.bz2
+# FIXME: barebox, at91boot and kernel are missing
 
-buildroot-2009.11.tar.bz2                  f742c4dc5e7f811464d9da789ff275d0 \
-  http://buildroot.uclibc.org/downloads/buildroot-2009.11.tar.bz2 \
-  pkg/buildroot-2009.11.tar.bz2
+buildroot-2011.11.tar.bz2        7b852f4ef17c63857ca7b9388b782070 \
+   http://www.buildroot.org/downloads/buildroot-2011.11.tar.bz2
 
-# What follows are the packages for buildroot itself
-buildroot-pkg/binutils-2.19.1.tar.bz2      09a8c5821a2dfdbb20665bc0bd680791 \
-  http://ftp.gnu.org/pub/gnu/binutils//binutils-2.19.1.tar.bz2 \
-  pkg/buildroot-pkg/binutils-2.19.1.tar.bz2
+autoconf-2.65.tar.bz2            a6de1cc6434cd64038b0a0ae4e252b33 \
+   http://ftp.gnu.org/pub/gnu/autoconf/autoconf-2.65.tar.bz2
 
-buildroot-pkg/busybox-1.15.2.tar.bz2       d5653e5b74b17dbb1eeecda8b8f22c0a \
-  http://www.busybox.net/downloads/busybox-1.15.2.tar.bz2 \
-  pkg/buildroot-pkg/busybox-1.15.2.tar.bz2
+automake-1.11.1.tar.bz2          c2972c4d9b3e29c03d5f2af86249876f \
+   http://ftp.gnu.org/pub/gnu/automake/automake-1.11.1.tar.bz2
 
-buildroot-pkg/dropbear-0.52.tar.gz         1c69ec674481d7745452f68f2ea5597e \
-  http://matt.ucc.asn.au/dropbear/releases/dropbear-0.52.tar.gz \
-  pkg/buildroot-pkg/dropbear-0.52.tar.gz
+binutils-2.21.1.tar.bz2          bde820eac53fa3a8d8696667418557ad \
+   http://ftp.gnu.org/pub/gnu/binutils/binutils-2.21.1.tar.bz2
 
-buildroot-pkg/fakeroot_1.9.5.tar.gz        95c0c78c734b9782ec8d47e99c8e3fc8 \
-  http://sources.buildroot.net/fakeroot_1.9.5.tar.gz \
-  pkg/buildroot-pkg/fakeroot_1.9.5.tar.gz
+bridge-utils-1.5.tar.gz          ec7b381160b340648dede58c31bb2238 \
+   http://kent.dl.sourceforge.net/sourceforge/bridge/bridge-utils-1.5.tar.gz
 
-buildroot-pkg/gcc-4.4.2.tar.bz2            70f5ac588a79e3c9901d5b34f58d896d \
-  http://ftp.gnu.org/pub/gnu/gcc/gcc-4.4.2/gcc-4.4.2.tar.bz2 \
-  pkg/buildroot-pkg/gcc-4.4.2.tar.bz2
+busybox-1.19.3.tar.bz2           c3938e1ac59602387009bbf1dd1af7f6 \
+   http://www.busybox.net/downloads/busybox-1.19.3.tar.bz2
 
-buildroot-pkg/gdb-6.8.tar.bz2              c9da266b884fb8fa54df786dfaadbc7a \
-  http://ftp.gnu.org/pub/gnu/gdb/gdb-6.8.tar.bz2 \
-  pkg/buildroot-pkg/gdb-6.8.tar.bz2
+dropbear-0.53.1.tar.gz           6b8d901859d9b8a18e2f6bfe0a892a03 \
+   http://matt.ucc.asn.au/dropbear/releases/dropbear-0.53.1.tar.gz
 
-buildroot-pkg/genext2fs-1.4.tar.gz         8d403440e1fbcba163e8016468ae4cda \
-  http://sources.buildroot.net/genext2fs-1.4.tar.gz \
-  pkg/buildroot-pkg/genext2fs-1.4.tar.gz
+ethtool-3.0.tar.gz               a339cbdcbe1c1fbe377c36d84231bda6 \
+   http://www.kernel.org/pub/software/network/ethtool/ethtool-3.0.tar.gz
 
-buildroot-pkg/gmp-4.2.4.tar.bz2            fc1e3b3a2a5038d4d74138d0b9cf8dbe \
-  http://ftp.gnu.org/pub/gnu/gmp/gmp-4.2.4.tar.bz2 \
-  pkg/buildroot-pkg/gmp-4.2.4.tar.bz2
+fakeroot_1.9.5.tar.gz            95c0c78c734b9782ec8d47e99c8e3fc8 \
+  http://snapshot.debian.org/archive/debian/20080427T000000Z/pool/main/f/fakeroot/fakeroot_1.9.5.tar.gz
 
-buildroot-pkg/libelf-0.8.12.tar.gz         e21f8273d9f5f6d43a59878dc274fec7 \
-  http://sources.buildroot.net/libelf-0.8.10.tar.gz \
-  pkg/buildroot-pkg/libelf-0.8.12.tar.gz
+gcc-4.3.6.tar.bz2                55ddf934bc9f8d1eaff7a77e7d598a85 \
+   http://ftp.gnu.org/pub/gnu/gcc/gcc-4.3.6/gcc-4.3.6.tar.bz2
 
-buildroot-pkg/libpcap-1.0.0.tar.gz         9ad1358c5dec48456405eac197a46d3d \
-  http://www.tcpdump.org/release/libpcap-1.0.0.tar.gz \
-  pkg/buildroot-pkg/libpcap-1.0.0.tar.gz
+gmp-5.0.2.tar.bz2                0bbaedc82fb30315b06b1588b9077cd3 \
+   http://ftp.gnu.org/pub/gnu/gmp/gmp-5.0.2.tar.bz2
 
-buildroot-pkg/linux-2.6.39.tar.bz2        1aab7a741abe08d42e8eccf20de61e05  \
-  http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.39.tar.bz2 \
-  pkg/buildroot-pkg/linux-2.6.39.tar.bz2
+gperf-3.0.4.tar.gz               c1f1db32fb6598d6a93e6e88796a8632 \
+   http://ftp.gnu.org/pub/gnu/gperf/
 
-buildroot-pkg/ltrace_0.5-3.1.diff.gz       8342b15d3342da685c411599d1227db9 \
-  http://ftp.debian.org/debian/pool/main/l/ltrace/ltrace_0.5-3.1.diff.gz \
-  pkg/buildroot-pkg/ltrace_0.5-3.1.diff.gz
+iproute2-2.6.39.tar.gz           8a3b6bc77c2ecf752284aa4a6fc630a6 \
+   http://devresources.linuxfoundation.org/dev/iproute2/download/iproute2-2.6.39.tar.gz
 
-buildroot-pkg/ltrace_0.5.orig.tar.gz       9b96a0056e9ba88a54e938973bf83025 \
-  http://ftp.debian.org/debian/pool/main/l/ltrace/ltrace_0.5.orig.tar.gz \
-  pkg/buildroot-pkg/ltrace_0.5.orig.tar.gz
+libelf-0.8.12.tar.gz             e21f8273d9f5f6d43a59878dc274fec7 \
+   http://www.mr511.de/software/libelf-0.8.12.tar.gz
 
-buildroot-pkg/lzo-2.03.tar.gz              0c3d078c2e8ea5a88971089a2f02a726 \
-  http://www.oberhumer.com/opensource/lzo/download/lzo-2.03.tar.gz \
-  pkg/buildroot-pkg/lzo-2.03.tar.gz
+libpcap-1.1.1.tar.gz             1bca27d206970badae248cfa471bbb47 \
+   http://www.tcpdump.org/release/libpcap-1.1.1.tar.gz
 
-buildroot-pkg/mpfr-2.4.1.patch             5a2e60836b9bd811507a509f9150525d \
-  http://www.mpfr.org/mpfr-2.4.1/patches \
-  pkg/buildroot-pkg/mpfr-2.4.1.patch
+libtool-2.2.10.tar.gz            b745d220e88163fcd9eea0a90ccf21b0 \
+   http://ftp.gnu.org/pub/gnu/libtool/libtool-2.2.10.tar.gz
 
-buildroot-pkg/mpfr-2.4.1.tar.bz2           c5ee0a8ce82ad55fe29ac57edd35d09e \
-  http://www.mpfr.org/mpfr-2.4.1/mpfr-2.4.1.tar.bz2 \
-  pkg/buildroot-pkg/mpfr-2.4.1.tar.bz2
+linux-3.1.4.tar.bz2              52643e5a013d450ad69627c3cac490cb \
+   http://www.kernel.org/pub//linux/kernel/v3.x//linux-3.1.4.tar.bz2
 
-buildroot-pkg/mtd-utils-1.1.0.tar.bz2      05aa9b015625aa20afba728fb7ee47b3 \
-  ftp://ftp.infradead.org/pub/mtd-utils/mtd-utils-1.1.0.tar.bz2 \
-  pkg/buildroot-pkg/mtd-utils-1.1.0.tar.bz2
+ltrace_0.5.3.orig.tar.gz         3fa7fe715ab879db08bd06d1d59fd90f \
+   http://ftp.debian.org/debian/pool/main/l/ltrace/ltrace_0.5.3.orig.tar.gz
 
-buildroot-pkg/ncurses-5.6.tar.gz           b6593abe1089d6aab1551c105c9300e3 \
-  http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.6.tar.gz \
-  pkg/buildroot-pkg/ncurses-5.6.tar.gz
+lua-5.1.4.tar.gz                 d0870f2de55d59c1c8419f36e8fac150 \
+   http://www.lua.org/ftp/lua-5.1.4.tar.gz
 
-buildroot-pkg/strace-4.5.18.tar.bz2        e9449fcee97e6a8ed73934c883c870e0 \
-  http://easynews.dl.sourceforge.net/sourceforge/strace/strace-4.5.18.tar.bz2 \
-  pkg/buildroot-pkg/strace-4.5.18.tar.bz2
+lzo-2.06.tar.gz                  95380bd4081f85ef08c5209f4107e9f8 \
+   http://www.lzop.org/download/
 
-buildroot-pkg/tcpdump-4.0.0.tar.gz         b22ca72890df2301d922c9f2d17867f9 \
-  http://www.tcpdump.org/release/tcpdump-4.0.0.tar.gz \
-  pkg/buildroot-pkg/tcpdump-4.0.0.tar.gz
+m4-1.4.15.tar.bz2                c7c32540bc3842d5550f88d47ef551d8 \
+   http://ftp.gnu.org/pub/gnu/m4/m4-1.4.15.tar.bz2
 
-buildroot-pkg/uClibc-0.9.30.1.tar.bz2      1a4b84e5536ad8170563ffa88c34679c \
-  http://www.uclibc.org/downloads/uClibc-0.9.30.1.tar.bz2 \
-  pkg/buildroot-pkg/uClibc-0.9.30.1.tar.bz2
+mpfr-3.0.1.tar.bz2               bfbecb2eacb6d48432ead5cfc3f7390a \
+   http://www.mpfr.org/mpfr-3.0.1/mpfr-3.0.1.tar.bz2
 
-buildroot-pkg/zlib-1.2.3.tar.bz2           dee233bf288ee795ac96a98cc2e369b6 \
-  http://easynews.dl.sourceforge.net/sourceforge/libpng/zlib-1.2.3.tar.bz2 \
-  pkg/buildroot-pkg/zlib-1.2.3.tar.bz2
+mtd-utils-1.4.6.tar.bz2          a0418afcf6026824a5fa5e9051793f3c \
+   ftp://ftp.infradead.org/pub/mtd-utils/mtd-utils-1.4.6.tar.bz2
+
+ncurses-5.7.tar.gz               cce05daf61a64501ef6cd8da1f727ec6 \
+   http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.7.tar.gz
+
+pkg-config-0.25.tar.gz           a3270bab3f4b69b7dc6dbdacbcae9745 \
+   http://pkgconfig.freedesktop.org/releases/pkg-config-0.25.tar.gz
+
+rsync-3.0.9.tar.gz               5ee72266fe2c1822333c407e1761b92b \
+   http://rsync.samba.org/ftp/rsync/src/rsync-3.0.9.tar.gz
+
+screen-4.0.3.tar.gz              8506fd205028a96c741e4037de6e3c42 \
+   http://ftp.gnu.org/pub/gnu/screen/screen-4.0.3.tar.gz
+
+strace-4.5.20.tar.bz2            64dfe10d9db0c1e34030891695ffca4b \
+   http://kent.dl.sourceforge.net/sourceforge/strace/strace-4.5.20.tar.bz2
+
+tcpdump-4.1.1.tar.gz             d0dd58bbd6cd36795e05c6f1f74420b0 \
+   http://www.tcpdump.org/release/tcpdump-4.1.1.tar.gz
+
+uClibc-0.9.32.tar.bz2            cfcb6c25d8ebe12817499d8749ee8ae1 \
+   http://www.uclibc.org/downloads/uClibc-0.9.32.tar.bz2
+
+udev-173.tar.bz2                 91a88a359b60bbd074b024883cc0dbde \
+   http://www.kernel.org/pub//linux/utils/kernel/hotplug//udev-173.tar.bz2
+   http://sources.buildroot.net//udev-173.tar.bz2
+
+zlib-1.2.5.tar.bz2               be1e89810e66150f5b0327984d8625a0 \
+   http://kent.dl.sourceforge.net/sourceforge/libpng/zlib-1.2.5.tar.bz2
+
+
+

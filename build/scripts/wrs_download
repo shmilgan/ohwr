@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# check variables, like all scripts herein do
+WRS_SCRIPT_NAME=$(basename $0)
+if [ -z "$WRS_BASE_DIR" ]; then
+    echo "$0: Plesae set WRS_BASE_DIR" >& 2
+    exit 1
+fi
+. ${WRS_BASE_DIR}/scripts/wrs_functions
+
+wrs_check_vars WRS_DOWNLOAD_DIR
+
+cd $WRS_DOWNLOAD_DIR
+wrs_echo "--- Downloading all files"
+
+# download all files
+DLLIST=${WRS_BASE_DIR}/download-info
+T=$(mktemp /tmp/wrs-download-XXXXXX)
+
+# ok, this duplicates the loop in wrs_download itself....
+grep -v '^#' $DLLIST | grep -v '^[ 	]*$' | \
+    while read name md5 upstream; do
+   wrs_download $name
+done

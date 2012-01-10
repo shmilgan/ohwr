@@ -24,8 +24,6 @@ if [ "$WRS_OUTPUT_DIR" = "$WRS_BASE_DIR" ]; then
 fi
 
 # Check the tools
-
-# FIXME: is the list of tools correct?
 WRS_TOOLS="curl svn git gcc g++ ar as m4 libtool gettext md5sum make"
 WRS_TOOLS="$WRS_TOOLS awk unzip patch bison flex ncursesw5-config"
 WRS_TOOLS="$WRS_TOOLS lua fakeroot gettext"
@@ -70,15 +68,16 @@ failed_step=false; # this is set to "true" but the wrs_build_step function
 # Now build the stuff one step at a time, only if not already done.
 
 #                 done-marker            script name
-wrs_build_step    00-buildroot           wrs_build_buildroot
+wrs_build_step    00-download            wrs_download
+wrs_build_step    01-buildroot           wrs_build_buildroot
 wrs_default_compiler
-wrs_build_step    01-at91boot            wrs_build_at91boot
-wrs_build_step    02-u-boot              wrs_build_u-boot
-wrs_build_step    03-kernel              wrs_build_kernel
-wrs_build_step    04-modules             wrs_build_modules
-wrs_build_step    05-ptp-noposix         wrs_build_ptp_noposix
-wrs_build_step    06-wrs-userspace       wrs_build_userspace
-wrs_build_step    07-wrap-rootfs         wrs_build_wraprootfs
+wrs_build_step    02-at91boot            wrs_build_at91boot
+wrs_build_step    03-barebox             wrs_build_barebox
+wrs_build_step    04-kernel              wrs_build_kernel
+wrs_build_step    05-modules             wrs_build_modules
+wrs_build_step    06-ptp-noposix         wrs_build_ptp_noposix
+wrs_build_step    07-wrs-userspace       wrs_build_userspace
+wrs_build_step    08-wrap-rootfs         wrs_build_wraprootfs
 
 if $failed_step; then
     wrs_die "One or more build steps failed"
