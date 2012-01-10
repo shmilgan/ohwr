@@ -8,7 +8,7 @@ if [ -z "$WRS_BASE_DIR" ]; then
 fi
 . ${WRS_BASE_DIR}/scripts/wrs_functions
 
-wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR WRS_WR_REPOSITORY CROSS_COMPILE
+wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR CROSS_COMPILE
 
 wrs_echo "--- AT91Boot"
 zipname="AT91Bootstrap1.11.zip"

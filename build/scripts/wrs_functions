@@ -144,15 +144,6 @@ function wrs_download {
 	fi
     fi
 
-    # Check if svn is local and the file exists
-    repodir=$(echo $WRS_WR_REPOSITORY | sed 's-^file:/*-/-')
-    repofile=$repodir/trunk/$svnname
-    if [ -f $repofile ]; then
-	cp $repofile $output
-	wrs_echo "Copied $file from local svn repo"
-	return
-    fi
-
     # Download from upstream
     wget -nv $upstream -O $output
     if [ -f $output ]; then
@@ -160,13 +151,6 @@ function wrs_download {
 	return
     fi
 
-    # Finally, get from ohwr.org
-    wget -nv $WRS_WR_REPOSITORY/trunk/$svnname \
-	-O $output
-    if [ -f $output ]; then
-	wrs_echo "Retrieved $file from ohwr.org"
-	return
-    fi
     wrs_error "Cannot download $file"
 }
 

@@ -17,7 +17,6 @@ export WRS_BASE_DIR
 # See documentation for the meaning of these variables
 wrs_setenv_default WRS_OUTPUT_DIR      $(/bin/pwd)
 wrs_setenv_default WRS_DOWNLOAD_DIR    ${WRS_OUTPUT_DIR}/downloads
-wrs_setenv_default WRS_WR_REPOSITORY   http://svn.ohwr.org/white-rabbit
 
 # Refuse to build within the directory itself
 if [ "$WRS_OUTPUT_DIR" = "$WRS_BASE_DIR" ]; then
@@ -41,7 +40,7 @@ fi
 
 export WRS_SCRIPTS_DIR=${WRS_BASE_DIR}/scripts
 
-wrs_show_vars WRS_BASE_DIR WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR WRS_WR_REPOSITORY \
+wrs_show_vars WRS_BASE_DIR WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR \
     WRS_SCRIPTS_DIR WRS_DONE_DIR CROSS_COMPILE
 
 # The function builds one step if needed: if the marker file exists, then the
