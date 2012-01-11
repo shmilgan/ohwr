@@ -11,7 +11,7 @@ fi
 wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR
 
 wrs_echo "--- Buildroot compiler and filesystem"
-zipname="buildroot-2009.11.tar.bz2"
+zipname="buildroot-2011.11.tar.bz2"
 wrs_download $zipname
 
 mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
@@ -19,7 +19,7 @@ mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 
 # go to the build dir and compile it, using our configuration
 cd $WRS_OUTPUT_DIR/build
-dirname="buildroot-2009.11"
+dirname="buildroot-2011.11"
 wrs_echo "Uncompressing buildroot"
 rm -rf $dirname
 tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
@@ -31,7 +31,7 @@ if [ "x$WRS_BUILDROOT_CONFIG" != "x" ]; then
     if [ -f $WRS_BUILDROOT_CONFIG ]; then
 	CFG=$WRS_BUILDROOT_CONFIG
     else
-	wrs_warn "WRS_BUILDROOT_CONFIG is not a regularname: ignoring it"
+	wrs_warn "WRS_BUILDROOT_CONFIG is not a regular file: ignoring it"
 	sleep 3
     fi
 fi
@@ -73,35 +73,18 @@ if [ "x$CROSS_COMPILE" != "x" ]; then
 fi
 
 # re-digest the config we built
+wrs_echo "Reconfiguring buildroot"
 make oldconfig || wrs_die "buildroot config"
 
 buildrootdir=$(/bin/pwd)
 
-### currently, we get the packages from a local checkout or ohwr remote repo
-mkdir -p $WRS_DOWNLOAD_DIR/buildroot-pkg || die "mkdir within downloads"
-cd $WRS_DOWNLOAD_DIR/buildroot-pkg
-
-# buildroot wants its own guest source packages to be within its own dir..
-# so "cd" to the place we saved, and copy stuff here as well
+# the download dir in the config file is already set to ../../downloads
+# However, to be safe, make a symlink for its default place, in case
+# a custom config file is used
 cd $buildrootdir
-mkdir dl
-if ln $WRS_DOWNLOAD_DIR/buildroot-pkg/* dl 2> /dev/null; then
-    wrs_echo "Hardlinked packages from downloads to build place"
-else
-    if cp -a $WRS_DOWNLOAD_DIR/buildroot-pkg/* dl; then
-	wrs_echo "Copied packages from downloads to build place"
-    else
-	wrs_echo "No buildroot packages, it will download them"
-    fi
-fi
+test -d dl || ln -sf $WRS_DOWNLOAD_DIR dl
 
 # We don't want CC to be pre-set at this point (some of us do :)
 unset CC
+wrs_echo "Compiling buildroot"
 make || wrs_die "buildroot compilation"
-
-# finally, copy what it downloaded to the local place, for next time
-mkdir -p  $WRS_DOWNLOAD_DIR/buildroot-pkg
-cp -a $buildrootdir/dl/*tar*  $WRS_DOWNLOAD_DIR/buildroot-pkg
-# the previous command may fail, if the files are already linked. so "true"
-true
-
