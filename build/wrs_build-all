@@ -48,8 +48,8 @@ function wrs_build_step {
     script="$WRS_SCRIPTS_DIR/$2"
 
     if [ -f $markerfile ]; then
-	wrs_echo "Marker $markerfile exists:"
-	wrs_echo "   not running $script"
+	wrs_echo "Marker $1 exists:"
+	wrs_echo "   not running $2"
 	return
     fi
 
@@ -60,6 +60,8 @@ function wrs_build_step {
 	then failed_step=true;
 	else touch $markerfile
     fi
+    # remove marker 00, re-checking the download has no issues
+    rm -f $WRS_DONE_DIR/00*
 }
 
 
