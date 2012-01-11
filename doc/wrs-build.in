@@ -57,22 +57,18 @@
 @top Introduction
 
 This document describes the software build procedures for the White
-Rabbit Switch.  Currently the procedure described is in use for version 2 of
-the hardware project.
+Rabbit Switch.  The procedure described is for version 3 of the
+hardware project, which  has been successfully booted for the first
+time on Sep 13th 2011.
+
+If you have an older Version-2 switch, please refer to the v2 branch
+of the repository at
+@code{git://ohwr.org/white-rabbit/wr-switch-sw.git}
+(or @code{git@@ohwr.org:white-rabbit/wr-switch-sw.git} if you are
+granted write access).
 
 If you don't need to make your hands dirty, just skip to @ref{Quick
 Build}.
-
-V3 of the WR-Switch has been successfully booted on Sep 13th 2011.
-Thus the last chapter documents the current status of software support
-for such device.
-
-The version you are reading now is compiled from branch ``v3'' of he
-@i{git} repository @code{git://ohwr.org/white-rabbit/wr-switch-sw.git}
-(or @code{git@@ohwr.org:white-rabbit/wr-switch-sw.git} if you are
-granted read-write access).  Such a branch will be rebased over time
-on the new master, as the master branch grows with more code and
-documentation that is relevant to V3 as well, until it wil be merged.
 
 @menu
 * Overview::                    
@@ -143,7 +139,6 @@ rebuilding it all from scratch.
 * Portability::                 
 * Environment Variables::       
 * Downloading Files::           
-* The OHWR Repository::         
 * Rebuilding Parts::            
 @end menu
 
@@ -155,7 +150,9 @@ The scripts in their current status are not expected to be very
 portable. I'm sure a number of @i{bashisms} exist, and I did no effort
 to even identify them.  To relieve the user from possible pain,
 internally the name @i{bash} is used instead of @i{sh}, so things
-should work even if your default shell is @i{ash} or @i{dash}.
+should work even if your default shell is @i{ash} or @i{dash}
+(but please remember me about this any now and then, and I'll fix
+stuff to work with @i{dash} at least).
 
 Similarly, the scripts are likely to fail if you use spaces in directory
 names; that's because not all
@@ -218,13 +215,6 @@ have a similar prefix for the same reason).
         the output directory to force a full rebuild, without
         the overhead of re-downloading everything.
 
-@item WRS_WR_REPOSITORY
-	The @i{url} of the @i{svn} repository for @i{White Rabbit}.
-        It defaults to the official place in @i{ohwr.org} but may be
-        pre-set to a local copy (e.g.:
-	@code{file:///opt/ohwr-svn/white-rabbit}.  See @ref{The OHWR
-        Repository} below about how to build a local copy of the repository.
-
 @item CROSS_COMPILE
 	The variable is the usual cross-compilation prefix. For example,
         @code{arm-linux-} if you have @i{arm-linux-gcc} in your path,
@@ -238,25 +228,30 @@ Other variables are used internally in the script; since they are only
 useful to people working on the script itself, they are documented in
 place.
 
+If you compiled for version 2 you'll notice we don't have
+@code{WRS_WR_REPOSITORY} any more. We used to rely on upstream
+archives to be part of the @i{White Rabbit} subversion tree, but I
+didn't add the new archives in there because of their size.
+
 @c ==========================================================================
 @node Downloading Files
 @section Downloading Files
 
-Every downloaded file is saved to the download directory, you might
+Every downloaded file is saved to the download directory, you should
 arrange not to remove that directory when you recompile over and over
-during development.
+during development.  I chose to make the first
+script download everything, because I think this eases development in a
+way: you first wait a while but can tell download errors from other
+issues, and then you can build it all even without a network connection.
 
-If the file is missing in the download directory, it is retrieved from
-one of the following places:
+For each upstream archive needed, the following steps are performed:
 
 @itemize @bullet
 @item If the file exists in the download directory, the @i{md5sum} is
       checked; on success, nothing else is done.
-@item If the repository (@code{$WRS_WR_REPOSITORY}) is a @code{file://}
-      identifier, then the copy from the local checkout is retrieved.
 @item If the previous step fails, the file is retrieved from upstream.
 @item If the previous step fails, the file is downloaded from the
-      @i{ohwr} web site.
+      buildroot web site.
 @end itemize
 
 The policy just described is implemented in @i{wrs_download}, in the file
@@ -264,78 +259,19 @@ The policy just described is implemented in @i{wrs_download}, in the file
 main build directory.
 
 @c ==========================================================================
-@node The OHWR Repository
-@section The OHWR Repository
-
-Most of the code here (with the huge exception of @i{buildroot}
-archives) comes from the @i{svn} repository at @code{ohwr.org}.
-
-To avoid massive network downloads you can use a local copy of the
-repository.  The environment variable @code{WRS_WR_REPOSITORY} can
-point to a local checkout (use a @code{file://} notation), but you
-can also have the complete history of the repository in your local
-computer.  If you are not interested, you can skip this section.
-
-@strong{Attention:} instead of this procedure, you may prefer @i{git-svn},
-which is not described here at this point.
-@c FIXME: git-svn
-
-Having a local repository is useful if you need to checkout older
-versions, or just diff among versions or run @code{svn log}, which
-will fail for White Rabbit over @u{http} due to the size of the
-repository itself.
-
-To make a local copy with @i{svnsync} you can do as follows
-(thanks to Francisco Juan for teaching me about this):
-
-@example
-   export BASE="/opt/ohwr-svn"
-   export REPO="white-rabbit"
-
-   mkdir -p $BASE && cd $BASE
-   svnadmin create $REPO
-   echo '#!/bin/sh' > $REPO/hooks/pre-revprop-change
-   chmod +x $REPO/hooks/pre-revprop-change
-   svnsync init file://$BASE/$REPO http://svn.ohwr.org/$REPO
-   svnsync sync file://$BASE/$REPO
-@end example
-
-To further track commits in the remote repository, you only need to
-repeat the last command, ``@code{svnsync sync}''.
-
-Then, to make a local checkout that refers to your local archive, you
-can do like this:
-
-@example
-   mkdir -p $BASE/checkout && cd $BASE/checkout
-   svn checkout file://$BASE/$REPO
-@end example
-
-After this, your @code{/opt/ohwr-svn/checkout/white-rabbit} will
-refer to @code{/opt/ohwr-svn/white-rabbit} for every operation,
-like @i{diff}, @i{log}, @i{update}.
-
-To use the checkout in this project, and avoid extra downloads please
-run:
-
-@example
-   export WRS_WR_REPOSITORY=file:///opt/ohwr/checkout/white-rabbit
-@end example
-
-@c ==========================================================================
 @node Rebuilding Parts
 @section Rebuilding Parts
 
-When the script builds each part (sub-package), it creates a file in
-the @code{build/_done} directory.
+When the main script succeeds in building one part (sub-package),
+it creates a file in the @code{build/_done} directory.
 
 When you rebuild everything, steps for which the marker file exists
 are not rebuilt. To force rebuilding of one specific part, just remove
 the marker.  Markers are numbered, reflecting the order of compilation
-steps, but they also have a name: names like @code{02-u-boot} should be
+steps, but they also have a name: names like @code{04-kernel} should be
 self-explicative.
 
-As an alternative, you can run the individual script within
+As an alternative, you can run the individual script from within
 @i{scripts/}, after setting the proper environment variables.
 
 @c ##########################################################################
@@ -347,74 +283,41 @@ downloads and without even knowing what is happening, just create a
 directory where you want the output to be generated and start
 compilation. Note that it takes around 3GB of storage.
 
-If possible, I strongly suggest to at least set the environment variable
-@code{WRS_WR_REPOSITORY} to @code{file:///opt/ohwr-svn/white-rabbit}
-or equivalent.
-
-Then run:
+Then run this (but please read more for a better command):
 
 @example
    /path/to/wr-switch-sw/build/wrs_build-all
 @end example
 
-The script refuses to run from within the package itself, because
-@i{u-boot} would spit a puzzling @code{"fatal"} message and would
-generate a strange version number for itself.
-
 Note that progress messages are sent to @i{stderr}, so you may want to
-save @i{stdout} to a file, like this:
+save @i{stdout} to a file, like this (but please read more for a better
+command):
 
 @example
    /path/to/wr-switch-sw/build/wrs_build-all > logfile
 @end example
 
 Please note that there are also a number of warning messages being
-printed to @i{stderr}. It's a few hundred lines over the few dozen
+printed to @i{stderr}. It's a few hundred lines over the many
 minutes it takes to build @i{buildroot}, but you can safely ignore them,
 trusting the build process will complete successfully.
 
-@b{Warning:} there is especially one hairy message being returned
-by @i{wget} if you are using the @i{ohwr} repository: @code{ERROR 500:
-Internal Server Error}. Please ignore this message, as it is about
-a file that is not being used (nor explicitly looked for, actually).
-Arranging for the message to be removed would have unpleasant side
-effects, and you are not expected to lack a local copy in any case.
-
 The progress messages look like what is shown here below.  The log
-file will be rather big (7MB or so), as all the compilation steps are
+file will be rather big (6 or 7MB or so), as all the compilation steps are
 quite verbose.
 
-The following examples show an example run on a dual core system (12k
-bogoMips in total) where downloading already happened.
+The following example shows a run on a quad core system (18k
+bogoMips in total), where downloading already happened.
 
 @c FIXME: example
 @smallexample
-2012-01-09 13:08:01: --- Buildroot compiler and filesystem
-2012-01-09 13:08:01: Looking for file buildroot-2009.11.tar.bz2
-2012-01-09 13:08:02: Skip download of buildroot-2009.11.tar.bz2
-2012-01-09 13:08:02: Uncompressing buildroot
-2012-01-09 13:08:03: Patching buildroot
-2012-01-09 13:08:05: Can't mass-download from http://svn.ohwr.org/white-rabbit, delaying download
-2012-01-09 13:08:05: Hardlinked packages from downloads to build place
-2012-01-09 13:23:53: --- AT91Boot
-2012-01-09 13:23:53: Looking for file AT91Bootstrap1.11.zip
-2012-01-09 13:23:53: Skip download of AT91Bootstrap1.11.zip
-2012-01-09 13:23:53: Patching AT91Boot
-2012-01-09 13:23:53: Building AT91Boot
-2012-01-09 13:23:53: --- U-Boot
-2012-01-09 13:23:53: Looking for file u-boot-1.3.4.tar.bz2
-2012-01-09 13:23:54: Skip download of u-boot-1.3.4.tar.bz2
-2012-01-09 13:23:56: Patching U-Boot
-2012-01-09 13:23:57: Building U-Boot
-2012-01-09 13:24:13: --- Linux kernel for switch
-2012-01-09 13:24:13: Looking for file buildroot-pkg/linux-2.6.35.tar.bz2
-2012-01-09 13:24:14: Skip download of buildroot-pkg/linux-2.6.35.tar.bz2
-2012-01-09 13:26:27: --- Kernel modules from this package
-2012-01-09 13:26:30: --- PTP daemon (noposix repository)
-2012-01-09 13:26:30: Using local git repository
-2012-01-09 13:26:32: --- User space tools
-2012-01-09 13:26:33: --- Wrapping filesystem
-2012-01-09 13:26:34: Complete build succeeded, apparently
+2012-01-10 17:39:59: --- Downloading all files
+2012-01-10 17:40:00: --- Buildroot compiler and filesystem
+2012-01-10 17:40:00: Uncompressing buildroot
+2012-01-10 17:40:00: Patching buildroot
+2012-01-10 17:40:00: Reconfiguring buildroot
+2012-01-10 17:40:01: Compiling buildroot
+2012-01-10 17:55:13: + echo --- AT91Boot
 @end smallexample
 
 You may prefer to save @i{stderr} with @i{stdout} to the log file
@@ -437,15 +340,8 @@ setup differs from the ones we have been testing on.
 In order to re-run the build from the beginning, please remove (or
 rename) the output directory and reissue the command.  To only
 redo one step, you can remove the marker in @code{build/_done}
-(the markers are empty files with name like @code{00-buildroot}
-and @code{03-kernel}).
-
-@b{WARNING:}
-Unfortunately, @code{make-3.82} (and supposedly later ones) is not
-able to compile this version of @i{buildroot}.  I couldn't investigate
-the reason, but @i{mtd} compilation fails because @i{lzo} is missing.
-Earlier @i{make} version will compile and install @i{lzo} first,
-and everything works well.
+(the markers are empty files with name like @code{01-buildroot}
+and @code{04-kernel}).
 
 @c ##########################################################################
 @node The Compiler
@@ -468,7 +364,7 @@ the complete package.
 @chapter Buildroot
 
 The distribution being used here is @i{buildroot}. It is the first
-step being built, because it first creates a cross-compiler. Such a
+step being built, because it creates the cross-compiler it will use. Such a
 compiler is later used to compile all other software for the White
 Rabbit Switch.
 
@@ -477,20 +373,8 @@ The configuration for @i{buildroot} comes from
 is then changed only if you pre-set your own @code{CROSS_COMPILE}
 variable.
 
-Since @i{buildroot} itself is a moving target, all packages needed to
-build the chosen version with the default configuration of this
-package are part of the White Rabbit @i{svn} repository (that you need
-anyways to the WR-specific software packages.  Therefore, please set
-the environment variable @code{WRS_WR_REPOSITORY} to the place where
-you checked out the repository, without the @code{trunk} path
-component. For example:
-
-@example
-   export WRS_WR_REPOSITORY=file:///opt/ohwr-svn/white-rabbit
-@end example
-
 If you want to change the configuration, you can do so after the first
-build iteration: change directory to @code{build/buildroot-2009.11}
+build iteration: change directory to @code{build/buildroot-2011.11}
 and run @code{make menuconfig}. After making your choices, copy back
 the file @code{.config} to
 @code{patches/buildroot/buildroot-config-wrswitch} in this package.
@@ -505,14 +389,25 @@ ignored with a simple warning -- rather than stopping the build procedure.
 @node The IPL
 @chapter The IPL
 
-The IPL being used is @i{AT91Bootstrap-1.11}, with a specific patch
-for the White Rabbit Switch. The patch is written by Tomasz and is
-part of this package (but is also in the @i{svn} repository at
-@code{ohwr.org}).
+The version of @i{at91bootstrap} being used in the switch as
+@i{Initial Program Loader} is found at @code{http://repository.timesys.com/}
+The patches we applied are in the directory @i{patches/at91boot/v3.3},
+and currently it is one patch only (we are piggy-backing on the Atmel
+evaluation board without even changing the board name):
 
-After compilation, @code{images/dataflash_whiterabbit-mch.bin} is the
-binary to be loaded in the actual hardware.
+@example
+   0001-board-9g45ek-fix-ddr-config-for-WRS-V3.patch
+@end example
 
+The script uncompresses, patches and builds, leaving
+@code{images/at91bootstrap.bin} after it is over. This file is
+the one to be loaded in the hardware.
+
+For simplicity, a known-working binary is part of the @i{binaries}
+directory of this package as @code{at91bootstrap.bin}, the sane name used
+later in the installation instructions.
+
+@c FIXME: verified up to here
 @c ##########################################################################
 @node The Boot Loader
 @chapter The Boot Loader
@@ -694,42 +589,11 @@ in the order things happen since power-on, so according to your needs
 you may want to skip some sections.
 
 @menu
-* Building AT91Bootstrap::      
 * Building Barebox::            
 * Building the Kernel::         
 * Building the Filesystem::     
 * Initial tools for the FPGA::  
 @end menu
-
-@c --------------------------------------------------------------------------
-@node Building AT91Bootstrap
-@subsection Building AT91Bootstrap
-
-The version of @i{at91bootstrap} being used in the switch is found at
-@code{http://repository.timesys.com/@-buildsources/a/@-at91bootstrap-3/@-at91bootstrap-3-3.0/}.
-The patches we applied are in the directory @i{patches/at91boot/v3.3},
-and currently is one patch only (we are piggy-backing on the Atmel
-evaluation board without even changing the board name):
-
-@example
-   0001-board-9g45ek-fix-ddr-config-for-WRS-V3.patch
-@end example
-
-After uncompressing the archive and applying the patches, the following
-commands will compile the package (please customize according to your
-environment):
-
-@example
-   export CROSS_COMPILE=/opt/arm-2010q1/bin/arm-none-eabi-
-   make at91sam9g45ek_defconfig
-   make
-   cp ./binaries/at91sam9g45ek-dataflashcardboot-3.0.bin \
-          /tftpboot/at91bootstrap
-@end example
-
-For simplicity, a known-working binary is part of the @i{binaries}
-directory of this package as @code{at91boot}, the sane name used
-later in the installation instructions.
 
 @c --------------------------------------------------------------------------
 @node Building Barebox
@@ -849,6 +713,7 @@ likely need a level converter; the figure below shows the connection
 @menu
 * Installation from Jtag::      
 * Installation through the Boot-ROM::  
+* Booting the Kernel::          
 @end menu
 
 @c --------------------------------------------------------------------------
