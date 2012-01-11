@@ -6,8 +6,13 @@
 # if the upstream is not valid any more, the script will get it from
 #   http://sources.buildroot.net/
 
-# FIXME: barebox, at91boot and kernel are missing
+# IPL
+at91bootstrap-3-3.0.tar.gz       059a3e99cd93727c642ab7843c714887 \
+http://repository.timesys.com/buildsources/a/at91bootstrap-3/at91bootstrap-3-3.0/at91bootstrap-3-3.0.tar.gz
 
+# FIXME: barebox and kernel are missing
+
+# buildroot core and packages
 buildroot-2011.11.tar.bz2        7b852f4ef17c63857ca7b9388b782070 \
    http://www.buildroot.org/downloads/buildroot-2011.11.tar.bz2
 
