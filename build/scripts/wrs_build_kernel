@@ -11,8 +11,8 @@ fi
 wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR CROSS_COMPILE
 
 wrs_echo "--- Linux kernel for switch"
-zipname="buildroot-pkg/linux-2.6.39.tar.bz2"
-wrs_download $zipname
+tarname="linux-2.6.39.tar.bz2"
+wrs_download $tarname
 
 mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
 mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
@@ -21,7 +21,7 @@ mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 cd $WRS_OUTPUT_DIR/build
 dirname="linux-2.6.39"
 rm -rf $dirname
-tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
+tar xjf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
 
 # apply patches
 cd $dirname
@@ -44,12 +44,7 @@ fi
 cp $CFG .config
 export ARCH=arm
 make oldconfig  || wrs_die "kernel config"
-# add mkimage in the path, in case it is not there
-if ! type -p mkimage > /dev/null; then
-    wrs_echo "No mkimage: adding u-boot tools directory to PATH"
-    export PATH=${WRS_OUTPUT_DIR}/build/u-boot-1.3.4/tools:$PATH
-fi
-# now proceed as usual
+
 make $WRS_MAKE_J zImage modules  || wrs_die "kernel compilation"
 
 cp arch/$ARCH/boot/zImage $(find . -name '*.ko') $WRS_OUTPUT_DIR/images
