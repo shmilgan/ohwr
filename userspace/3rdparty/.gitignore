@@ -1,8 +1,0 @@
-bin
-include
-lib
-man
-liblua.a
-liblua.so
-lua-5.1.4/src/lua
-lua-5.1.4/src/luac

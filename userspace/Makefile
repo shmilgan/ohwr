@@ -17,14 +17,12 @@ export
 
 # All targets must install as well, as later builds use headers/libs
 all:
-	$(MAKE) -C 3rdparty all install
 	$(MAKE) -C libswitchhw all install
 	$(MAKE) -C wrsw_hal all install
 	$(MAKE) -C wrsw_rtud all
 #	$(MAKE) -C tests/rtu_stat TARGET=ARM all
 
 clean:
-	$(MAKE) -C 3rdparty clean
 	$(MAKE) -C libswitchhw clean
 	$(MAKE) -C wrsw_hal clean
 	$(MAKE) -C wrsw_rtud clean
@@ -32,7 +30,6 @@ clean:
 #	$(MAKE) -C tests/rtu_stat clean
 
 install: all
-	$(MAKE) -C 3rdparty install
 	$(MAKE) -C libswitchhw install
 	$(MAKE) -C wrsw_hal install
 	$(MAKE) -C wrsw_rtud install
