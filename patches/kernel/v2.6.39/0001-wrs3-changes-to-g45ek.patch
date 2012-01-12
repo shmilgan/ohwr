@@ -1,7 +1,7 @@
-From 577238fad811f148ddfd3b8e3d83802c6ada3d32 Mon Sep 17 00:00:00 2001
+From 95648bc0194a8a284b87b5555314f53e166a46f9 Mon Sep 17 00:00:00 2001
 From: Alessandro Rubini <rubini@gnudd.com>
 Date: Wed, 14 Sep 2011 11:23:29 +0200
-Subject: [PATCH 2/2] wrs3 changes to g45ek
+Subject: [PATCH] wrs3 changes to g45ek
 
 ---
  arch/arm/mach-at91/board-sam9m10g45ek.c |   36 +++++++++++++++++++++++++++++++
@@ -55,5 +55,5 @@ index 6c999db..d0e1e67 100644
  
  MACHINE_START(AT91SAM9M10G45EK, "Atmel AT91SAM9M10G45-EK")
 -- 
-1.7.1
+1.7.0.4
 
