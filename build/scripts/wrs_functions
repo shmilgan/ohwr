@@ -5,29 +5,29 @@
 # All functions are prefixed with "wrs_" so they can be easily identified
 # as local code within the scripts.
 
-function wrs_echo {
+wrs_echo () {
     # actually, this echo is to stderr, for diagnostics
     echo -n "$(date "+%Y-%m-%d %H:%M:%S"): " >&2
     echo $* >&2
 }
 
-function wrs_warn {
+wrs_warn () {
     echo -n "$(date "+%Y-%m-%d %H:%M:%S"): " >& 2
     echo "Warning: $*" >& 2
 }
 
-function wrs_err {
+wrs_err () {
     echo -n "$(date "+%Y-%m-%d %H:%M:%S"): " >& 2
     echo "Error: $*" >& 2
 }
 
-function wrs_die {
+wrs_die () {
     if [ -n "$*" ]; then wrs_err $*; fi
     exit 1
 }
 
 # Set a default variable without typing the name twice as in VAR=${VAR:-val}
-function wrs_setenv_default {
+wrs_setenv_default () {
     name=$1
     value=$2
     if [ -z "$(eval echo \$$name)" ]; then
@@ -37,7 +37,7 @@ function wrs_setenv_default {
 }
 
 # Show current variables to make the user confident things are fine
-function wrs_show_vars {
+wrs_show_vars () {
     echo "";  echo "Building with the following parameters: "
     for n in $*; do
 	val=$(env | grep "^$n=" | sed 's/^.*=//')
@@ -58,7 +58,7 @@ function wrs_show_vars {
 }
 
 
-function wrs_check_tools {
+wrs_check_tools () {
     local error=false
     for f in $*; do
 	if [ -z "$(type -p $f)" ]; then
@@ -73,7 +73,7 @@ function wrs_check_tools {
 
 # While the function above is called once for all, the one below is called
 # by each sub-script with a different list of required variables
-function wrs_check_vars {
+wrs_check_vars () {
     local error=false
     for n in $*; do
         env | grep -q "^$n=" && continue
@@ -87,20 +87,20 @@ function wrs_check_vars {
 
 # Set and unset a variable in a config file. Used for buildroot/kernel stuff
 # Activate and deactivate a configuration option
-function wrs_set_config {
+wrs_set_config () {
     local config
     if [ "x$2" = "x" ]; then config=".config"; else config="$2"; fi
     sed -i "s/# $1 is not set/$1=y/" $config
 }
 
-function wrs_unset_config {
+wrs_unset_config () {
     local config
     if [ "x$2" = "x" ]; then config=".config"; else config="$2"; fi
     sed -i "s/$1=y/# $1 is not set/" $config
 }
 
 # We'll need to set CROSS_COMPILE to the buildroot one, if unset
-function wrs_default_compiler {
+wrs_default_compiler () {
     hostdir=$WRS_OUTPUT_DIR/build/buildroot-2011.11/output/host
 	if [ -e $hostdir/usr/bin/arm-linux-gcc ]; then
 	    wrs_setenv_default CROSS_COMPILE $hostdir/usr/bin/arm-linux-
@@ -110,7 +110,7 @@ function wrs_default_compiler {
 # See documentation about use of the download-info file. Unfortunately,
 # a loop in a pipe is run in a sub-shell, so variables can't be just set.
 # Therefore, we use a temporary file here
-function wrs_download {
+wrs_download () {
     file=$1
     DLLIST=${WRS_BASE_DIR}/download-info
 
@@ -159,7 +159,7 @@ function wrs_download {
 
 # The following builds one step if needed: if file $1 exists, then the
 # step has already been acoomplished
-function wrs_build_step {
+wrs_build_step () {
     markerfile=$WRS_DONE_DIR/$1
     script=$2
     wrs_check_vars WRS_DONE_DIR
