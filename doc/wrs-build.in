@@ -542,7 +542,7 @@ further, the directory @i{tools} includes the following programs:
 
 @item load-fpga
 	Loads a bitstream to the Virtex6 device of the switch. The biststream
-        file name must be passsed in the command line (@i{/dev/stdin} allowed).
+        file name must be passed in the command line (@i{/dev/stdin} allowed).
         The is a limit of 10MB (me lazy!), but the program complains if it
         detects the limit is reached.
 
@@ -553,7 +553,7 @@ further, the directory @i{tools} includes the following programs:
 
 Please note that currently the @code{Makefile} is very limited. It
 requires you to specify both the kernel directory (@code{LINUX=}) and
-the cross-compiler to use (@code{CROSS_COMPILE=}). Similary, you must
+the cross-compiler to use (@code{CROSS_COMPILE=}). Similarly, you must
 spell the name of the binaries on the command line.  It will be fixed
 and integrated in the build procedure as soon as possible.
 
@@ -666,7 +666,7 @@ signals are needed.
 You can work without a serial port, but it's strongly suggested to
 connect it.  With a UART you are able to see diagnostics and interact
 with the boot loader or the operating system even if it fails to
-configure the network.  The port uses 3.3V signalling, so you'll most
+configure the network.  The port uses 3.3V signals, so you'll most
 likely need a level converter; the figure below shows the connection
 (black is GND, orange is RX and white is TX).
 @sp 1
@@ -776,13 +776,62 @@ Now you can detach the debugger, press reset and see @i{barebox} starting.
 @node Installation through the Boot-ROM
 @section Installation through the Boot-ROM
 
-To boot the switch using the internal ROM, you can run the
-run the SAM-BA protocol.
-This package includes a working version of the USB flasher for GNU/Linux,
-that you can use in the following way, from your host:
+You can install the IPL and boot loader using the @i{USB-loader} program,
+put together by Tomasz based on Atmel sources available to the public
+with a permissive Free Software license.
 
-To be documented
-@c FIXME FIXME
+In order to force the ROM to run the boot protocol, you must prevent
+it from finding code in the @i{data-flash}. To do so you can short
+pins 1 and 4 of the chip -- this shorts CS* and 5V to the ROM
+can access to the memory's contents. I used two wires
+to be shorted together as needed.  Then, you need to connect a USB
+cable to the device socket near the JTAG connector. The next image
+shows both the shorted pins (the @i{dataflash} is on the left) and the
+USB cable (on the right).
+
+With the pins shorted , you can press reset (the button near the USB
+connector). If things go well, the device is enumerated as shown;
+you must un-short the wires at this point or you won't be able
+to write the new information to @i{dataflash}
+
+@smallexample
+   brezza% lsusb | grep Atmel
+   Bus 001 Device 025: ID 03eb:6124 Atmel Corp. at91sam SAMBA bootloader
+@end smallexample
+
+The device should also appear as @code{/dev/ttyACM0} or equivalent.
+At this point you must un-short the @i{dataflash} pins (
+
+Now you can program the IPL and boot loader using the script FIXME
+provided in this package.  The script performs the following steps:
+
+@itemize @bullet
+@item It compiles the loader (@i{usb-loader/} subdir).
+@item It picks @i{at91boot} and @i{barebox} from the @i{binaries} subdirectory.
+@item It packs them together in a single binary image.
+@item Optionally, it changes the default MAC address in @i{barebox}
+      default environment, so you can make all switches different.
+@item It uses the @i{sam-ba} protocol to write to @i{dataflash}.
+@item 
+
+If all goes well, at the next reset you'll find @i{barebox} accessing
+the network with your preferred MAC address.
+
+The script is invoked as follows, from the toplevel directory of
+@code{wr-switch-build}:
+
+@example
+   ./build/flash-wrs [xx:yy:zz:aa:bb:cc]
+@eend example
+
+The MAC address is optional; if unspecified the default
+@code{02:0b:ad:c0:ff:ee} applies.  If you want to burn your wont
+@i{at91boot.bin} or @i{barebox.bin} you can just place them in
+the @i{binaries} subdirectory beforehand.
+
+The output you must expect from the flasher is like the following:
+
+FIXME
 
 @c ==========================================================================
 @node Booting the Kernel
@@ -829,7 +878,7 @@ is cast in stone at this point:
       boot procedure. The shipped default loads everything else
       from flash (as described here), but you can change and save the
       configuration, which is stored in a different NAND partition.
-      For example during development you'll want to load the kenrel
+      For example during development you'll want to load the kernel
       and filesystem from the network, or use NFS-Root.
 
 @item Kernel
@@ -864,10 +913,10 @@ is cast in stone at this point:
       kernel and filesystem from the same device. If you connect
       a serial port, though, you can interact and use the network.
 
-@item Failsame Operating System
+@item Failsafe Operating System
       The System Shipped in DataFlash has a @i{telnet} daemon,
       listening on address 10.98.76.54, where user @i{root} has
-      an empty passowrd. The kernel is configured with read-write
+      an empty password. The kernel is configured with read-write
       access to the whole NAND memory, so you can easily reprogram your
       production system.
 @end table
