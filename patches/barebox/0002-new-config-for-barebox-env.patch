@@ -1,0 +1,64 @@
+From 8b83039b5eeb580cbda14cbc7a84525d02e5a717 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Thu, 12 Jan 2012 20:07:48 +0100
+Subject: [PATCH] new config for barebox env
+
+---
+ arch/arm/boards/pm9g45/env/config |   43 ++++--------------------------------
+ 1 files changed, 5 insertions(+), 38 deletions(-)
+
+diff --git a/arch/arm/boards/pm9g45/env/config b/arch/arm/boards/pm9g45/env/config
+index b8ca18d..ed683fe 100644
+--- a/arch/arm/boards/pm9g45/env/config
++++ b/arch/arm/boards/pm9g45/env/config
+@@ -1,42 +1,9 @@
+ #!/bin/sh
+-
+-# use 'dhcp' to do dhcp in barebox and in kernel
+-# use 'none' if you want to skip kernel ip autoconfiguration
+-ip=dhcp
+-
+-# or set your networking parameters here
+-#eth0.ipaddr=a.b.c.d
+-#eth0.netmask=a.b.c.d
+-#eth0.gateway=a.b.c.d
+-#eth0.serverip=a.b.c.d
+-
+-# can be either 'nfs', 'tftp' or 'nand'
+-kernel_loc=tftp
+-# can be either 'net', 'nand' or 'initrd'
+-rootfs_loc=net
+-
+-# can be either 'jffs2' or 'ubifs'
+-rootfs_type=ubifs
+-rootfsimage=root.$rootfs_type
+-
+-# The image type of the kernel. Can be uimage, zimage, raw, or raw_lzo
+-#kernelimage_type=zimage
+-#kernelimage=zImage
+-kernelimage_type=uimage
+-kernelimage=uImage
+-#kernelimage_type=raw
+-#kernelimage=Image
+-#kernelimage_type=raw_lzo
+-#kernelimage=Image.lzo
+-
+-nand_device=atmel_nand
+-nand_parts="256k(barebox)ro,64k(bareboxenv),1536k(kernel),-(root)"
+-rootfs_mtdblock_nand=3
+-
++eth0.ethaddr=02:0B:AD:C0:FF:EE
+ autoboot_timeout=3
+-
++PS1="barebox-wrs> "
+ bootargs="console=ttyS0,115200"
+-
+-# set a fancy prompt (if support is compiled in)
+-PS1="\e[1;32mbarebox@\e[1;31m\h:\w\e[0m "
++dhcp
++tftp wrboot
++./wrboot
+ 
+-- 
+1.7.0.4
+
