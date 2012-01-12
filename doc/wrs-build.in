@@ -79,11 +79,13 @@ Build}.
 * The Boot Loader::             
 * The Linux Kernel::            
 * Kernel Modules::              
+* Initial tools for the FPGA::  
 * PTPd::                        
 * User Space Applications::     
 * VHDL Binaries::               
 * The Complete Filesystem::     
-* Building for Version 3 Hardware::  
+* Installation of WRS-3::       
+* Code layout in a production switch::  
 @end menu
 
 @c ##########################################################################
@@ -237,7 +239,7 @@ didn't add the new archives in there because of their size.
 @node Downloading Files
 @section Downloading Files
 
-Every downloaded file is saved to the download directory, you should
+Every downloaded file is saved to the @code{download} directory, you should
 arrange not to remove that directory when you recompile over and over
 during development.  I chose to make the first
 script download everything, because I think this eases development in a
@@ -257,6 +259,17 @@ For each upstream archive needed, the following steps are performed:
 The policy just described is implemented in @i{wrs_download}, in the file
 @code{scripts/wrs_functions}, based on @code{download-info} in the
 main build directory.
+
+The message of a download run are like the following ones:
+
+@smallexample
+   2012-01-12 18:30:46: --- Downloading all files
+   2012-01-12 18:30:53: Retrieved at91bootstrap-3-3.0.tar.gz from upstream
+   2012-01-12 18:31:00: Retrieved buildroot-2011.11.tar.bz2 from upstream
+   [...]
+   2012-01-12 18:37:53: Retrieved uClibc-0.9.32.tar.bz2 from upstream
+   2012-01-12 18:37:56: Retrieved zlib-1.2.5.tar.bz2 from upstream
+@end smallexample
 
 @c ==========================================================================
 @node Rebuilding Parts
@@ -307,17 +320,26 @@ file will be rather big (6 or 7MB or so), as all the compilation steps are
 quite verbose.
 
 The following example shows a run on a quad core system (18k
-bogoMips in total), where downloading already happened.
+bogoMips in total). If files had already been downloaded, the first
+step takes only a pair of seconds to verify the checksums:
 
 @c FIXME: example
 @smallexample
-2012-01-10 17:39:59: --- Downloading all files
-2012-01-10 17:40:00: --- Buildroot compiler and filesystem
-2012-01-10 17:40:00: Uncompressing buildroot
-2012-01-10 17:40:00: Patching buildroot
-2012-01-10 17:40:00: Reconfiguring buildroot
-2012-01-10 17:40:01: Compiling buildroot
-2012-01-10 17:55:13: + echo --- AT91Boot
+2012-01-12 18:59:04: --- Downloading all files
+2012-01-12 18:59:06: --- Buildroot compiler and filesystem
+2012-01-12 18:59:06: Uncompressing buildroot
+2012-01-12 18:59:06: Patching buildroot
+2012-01-12 18:59:06: Reconfiguring buildroot
+2012-01-12 18:59:07: Compiling buildroot
+2012-01-12 19:14:16: --- AT91Boot
+2012-01-12 19:14:16: Patching AT91Boot
+2012-01-12 19:14:16: Building AT91Boot
+2012-01-12 19:14:17: --- Barebox
+2012-01-12 19:14:17: Patching Barebox
+2012-01-12 19:14:17: Building Barebox
+2012-01-12 19:14:25: --- Linux kernel for switch
+2012-01-12 19:15:43: --- Kernel modules from this package
+[...]
 @end smallexample
 
 You may prefer to save @i{stderr} with @i{stdout} to the log file
@@ -407,43 +429,74 @@ For simplicity, a known-working binary is part of the @i{binaries}
 directory of this package as @code{at91bootstrap.bin}, the sane name used
 later in the installation instructions.
 
-@c FIXME: verified up to here
+@b{Warning}: with some distribution, this compilation step will print
+a scaring message about memory corruption. This is reporting a bug in
+the configuration program, that has no bad effects and can be ignored.
+Maybe we'll switch to another version in the future.
+
 @c ##########################################################################
 @node The Boot Loader
 @chapter The Boot Loader
 
-The boot loader in use is @i{u-boot-1.3.4}, with a specific patch for
-the White Rabbit Switch, the patch is work of Tomasz. The patch is
-part of this packages (but is also in the @i{svn} repository at
-@code{ohwr.org}).
+The switch user @i{barebox} as a boot loader. We are running version
+2011-09, with one simple local patch and the chosen configuration
+file. More patches will be needed to customize board names (we are
+piggy-backing on the Ronetix PM9G45 board).
 
-After compilation, the binary is found in @code{images/u-boot.bin}.
+The patches are part of this package in @i{patches/barebox} and
+are currently the following ones:
+
+@example
+   0001-91samg45-removed-two-clock-that-failed-compilation.patch
+   0002-sam945-include-mtd-nand.h-in-device-file.patch
+   0003-arm-config-added-wrs3_defconfig.patch
+   0004-new-config-for-barebox-env.patch
+@end example
+
+The build scripts compile with the following commands, where the
+cross-compiler is the one build by @i{buildroot}. If you run these
+by hand you can use a different compiler (as shown):
+
+@example
+   export CROSS_COMPILE=/opt/arm-2010q1/bin/arm-none-eabi-
+   export ARCH=arm
+   make wrs3_defconfig
+   make
+   cp barebox.bin /tftpboot/bb.bin
+@end example
+
+A pre-built binary is available as @code{binaries/barebox.bin}.
+
 The ELF version is copied to @i{images} as well, as
-@code{images/u-boot}; this file includes the symbol table and may be
+@code{images/barebox}; this file includes the symbol table and may be
 useful -- or may not.
 
 @c ##########################################################################
 @node The Linux Kernel
 @chapter The Linux Kernel
 
-The kernel is currently version 2.6.35, compiled from an uncompressed
+The kernel is currently version 2.6.39, compiled from an uncompressed
 tar file (so not within a @i{git} repository).  The upstream
 vanilla kernel is downloaded, then
 local patches are applied (they come from a @i{git}
 repository, but they are currently applied with a simple @i{patch}
 command).
 
-The configuration being used is copied from this package: it is
-different from the default set forth by the patches
-(i.e. @code{wrswitchv2_defconfig}) because it adds support for the MMC
-card and NFS-Root. A later release of this package may integrate
-the configuration within the kernel patches.
+The relevant patches are available in @i{patches/kernel/v2.6.39},
+and are currently the following ones:
+
+@example
+   0001-wrs3-changes-to-g45ek.patch
+@end example
+
+The configuration being used is copied from this package, so it
+is easier to change it if needed.
 
 If you want to change the configuration, you can do so after the first
 build iteration: change directory to @code{build/kernel}
 and run @code{make menuconfig}. After making your choices, copy back
 the file @code{.config} to
-@code{patches/kernel/v2.6.35/linux-config-wrswitch} in this package.
+@code{patches/kernel/v2.6.39/linux-config-wrswitch} in this package.
 
 You can also set @code{WRS_KERNEL_CONFIG} to the full pathname of
 your configuration file of choice. The file must be a copy of the
@@ -466,203 +519,12 @@ becomes dirty with output and intermediate files; the advantage is that
 any modification you make to the code is already in the repository
 for your to commit.
 
-@c ##########################################################################
-@node PTPd
-@chapter PTPd
-
-The Precision Time Protocol Daemon being used is host in a different
-repository. It's the code base that has been ported to compile in a
-freestanding environment, downloaded from
-@code{git://gnudd.com/ptp-noposix.git} .
-
-A plain @i{make} in the directory will fail, because after building
-@i{ptpd} other steps are tried, but they are only needed for
-the freestanding environment (i.e., LM32 with supporting code) and will
-fail for this @i{arm-linux} hosted build.
-
-Additionally, the script installs the header and library for
-@i{wr_ipc}, which are needed for later steps and are now part of the
-@i{ptp} repository. Similarly, the script installs headers for the hal
-and @i{libptpnetif}.
-
-The script is known to work with version @code{fea09f7} of the @i{git}
-repository, but the script checks out the @i{master} branch, being
-confident newer versions will be at least as good as the current one
-(for example, the current version as I write this has some concerning
-warning messages).
+@c FIXME: modules
+@b{Warning}: the modules are not yet ported to V3.
 
 @c ##########################################################################
-@node User Space Applications
-@chapter User Space Applications
-
-The build of user space is concerned about the following steps:
-
-@table @i
-@item 3rdparty
-	The directory includes the @i{lua} tool, used in the switch
-        to parse the configuration file.
-
-@item libswitchhw 
-	This is a library of functions needed by the next
-        step. @code{libswitchhw.a} is thus installed in @code{images/wr/lib}.
-
-@item wrsw_hal
-	This is the main application program for the White Rabbit Switch
-        operation. The script installs the executable in @code{images/wr/bin}.
-
-@item wrsw_rtud
-	This is the daemon for the routing table unit, installed in
-        @code{images/wr/bin}.
-
-@end table
-
-@c ##########################################################################
-@node VHDL Binaries
-@chapter VHDL Binaries
-
-The binaries are currently missing from the filesystem-making procedures.
-
-@c ##########################################################################
-@node The Complete Filesystem
-@chapter The Complete Filesystem
-
-The final step in compiling the filesystem is making the CPIO archive
-to be used as @i{ramdisk} in the switch.  The name of the file
-@code{images/ramdisk.ext2} within the @code{WRS_BUILD_DIR}, even if
-it has nothing to do with an @i{ext2} filesystem.  The name, however,
-is the predefined one in @i{u-boot} configuration; so until we
-change @i{u-boot}, it's easier for the image to keep this older name.
-
-The filesystem is built by copying the @i{buildroot} file tree and
-overlaying it with @code{userspace/rootfs_override/}; device files
-are extracted from @code{userspace/devices.tar.gz}.
-
-The @i{root} user has an empty password (set forth in
-@code{userspace/rootfs_override/}) and authorizes a few @i{ssh} keys,
-to allow @i{ssh} login (and @i{scp}) without the need to provide a
-password -- though empty.  The script authorizes the key of the user
-running the script and all keys listed in the file @code{authorized_keys}
-in the main directory of this package, if present.
-
-@c ##########################################################################
-@node Building for Version 3 Hardware
-@chapter Building for Version 3 Hardware
-
-Version 3 of the switch, which is expected to be the final version,
-the one going to production, is slightly different from V2.
-
-It is equipped with a AT91SAM9G45 processor (ARM9 running at 400MHz)
-with 64MB of DDR2 memory, 2GB of NAND flash and 8Mb of DataFlash.
-
-@menu
-* Building Code for WRS-3::     
-* Installation of WRS-3::       
-* Code layout in a production switch::  
-@end menu
-
-@c ==========================================================================
-@node Building Code for WRS-3
-@section Building Code for WRS-3
-
-When delivered from manufacturing, the switch has no software at all,
-while a working specimen needs 4 binary blobs on it:
-
-@itemize @bullet
-@item The initial program loader (here @i{at91boot}), that configures
-RAM memory and executes the second level boot loader, loaded from
-internal memories.
-
-@item The boot loader (we use @i{barebox}), which can retrieve the operating
-system from internal memories or from a network connection. It also offers
-an interactive prompt with a number of commands for the developer.
-
-@item The OS kernel (we use @i{linux-2.6.39}).
-
-@item The filesystem with actual application and bitstreams.
-@end itemize
-
-Installation of the first two programs is usually only needed once in
-the life of a switch. The steps are documented here anyways, as
-problems may happen, and users accidentally erasing code will need to
-bring the device back to life. This document describes everything
-in the order things happen since power-on, so according to your needs
-you may want to skip some sections.
-
-@menu
-* Building Barebox::            
-* Building the Kernel::         
-* Building the Filesystem::     
-* Initial tools for the FPGA::  
-@end menu
-
-@c --------------------------------------------------------------------------
-@node Building Barebox
-@subsection Building Barebox
-
-The barebox version we built is v2011-09, with one simple local patch
-and the chosen configuration file. More patches will be needed to customize
-board names (we are piggy-backing on the Ronetix PM9G45 board).
-
-The patches are part of this package in @i{patches/barebox} and
-are currently the following ones:
-
-@example
-   0001-91samg45-removed-two-clock-that-failed-compilation.patch
-   0002-sam945-include-mtd-nand.h-in-device-file.patch
-   0003-arm-config-added-wrs3_defconfig.patch
-@end example
-
-After uncompressing @i{v2011-09} and patching, the following commands
-can be used to compile:
-
-@example
-   export CROSS_COMPILE=/opt/arm-2010q1/bin/arm-none-eabi-
-   export ARCH=arm
-   make wrs3_defconfig
-   make
-   cp barebox.bin /tftpboot/bb.bin
-@end example
-
-A pre-built binary is available as @code{binaries/barebox.bin}.
-
-
-@c --------------------------------------------------------------------------
-@node Building the Kernel
-@subsection Building the Kernel
-
-The kernel we are currently using is version 2.6.39. We are piggy-backing
-on the @i{sam9g45ek} board, whose specific file we modified to account
-for WRS differences. This is a temporary solution, like we are doing
-for the other tools.
-
-The relevant patches are available in @i{patches/kernel/v2.6.39},
-and are currently the following ones:
-
-@example
-   0001-.config-for-the-switch.patch
-   0002-wrs3-changes-to-g45ek.patch
-@end example
-
-To compile the kernel, we used the following commands, keeping in mind
-that patch 0001 above creates a file called @code{.config}, not
-@i{wrs3_defconfig}
-
-@example
-   export CROSS_COMPILE=/opt/arm-2010q1/bin/arm-none-eabi-
-   export ARCH=arm
-   make && cp arch/arm/boot/zImage 128.141.44.150:/home/tftpboot/
-@end example
-
-@c --------------------------------------------------------------------------
-@node Building the Filesystem
-@subsection Building the Filesystem
-
-Currently, there is no official filesystem for this boards. We are
-developing the related code booting a generic ramdisk or NFS-Root.
-
-@c --------------------------------------------------------------------------
 @node Initial tools for the FPGA
-@subsection Initial tools for the FPGA
+@chapter Initial tools for the FPGA
 
 In order to make some tests with your board and be able to develop
 further, the directory @i{tools} includes the following programs:
@@ -689,16 +551,117 @@ further, the directory @i{tools} includes the following programs:
         talk with the AD9516 device that is mounted on the board.
 @end table
 
-@c ==========================================================================
+Please note that currently the @code{Makefile} is very limited. It
+requires you to specify both the kernel directory (@code{LINUX=}) and
+the cross-compiler to use (@code{CROSS_COMPILE=}). Similary, you must
+spell the name of the binaries on the command line.  It will be fixed
+and integrated in the build procedure as soon as possible.
+
+@b{Warning}: the rest of this file has not been updated yet. It
+is kept here for reference anyways.
+
+@c FIXME: check if devmem is already part of busybox
+
+@c ##########################################################################
+@node PTPd
+@chapter PTPd
+
+The Precision Time Protocol Daemon being used is host in a different
+repository. It's the code base that has been ported to compile in a
+freestanding environment, downloaded from
+@code{git://gnudd.com/ptp-noposix.git} .
+
+@c FIXME: the new PTP
+We are working on a better code base for a portable PTP, but it is
+not yet ready as of this writing.
+
+A plain @i{make} in the @i{ptp-noposix} directory will fail,
+because after building
+@i{ptpd} other steps are tried, but they are only needed for
+the freestanding environment (i.e., LM32 with supporting code) and will
+fail for this @i{arm-linux} hosted build.
+
+Additionally, the script installs the header and library for
+@i{wr_ipc}, which are needed for later steps and are now part of the
+@i{ptp} repository. Similarly, the script installs headers for the hal
+and @i{libptpnetif}.
+
+The script is known to work with version @code{fea09f7} of the @i{git}
+repository, but the script checks out the @i{master} branch, being
+confident newer versions will be at least as good as the current one
+(for example, the current version as I write this has some concerning
+warning messages).
+
+@c ##########################################################################
+@node User Space Applications
+@chapter User Space Applications
+
+The build of user space is concerned about the following steps:
+@c FIXME: user space apps
+
+@table @i
+
+@item libswitchhw 
+	This is a library of functions needed by the next
+        step. @code{libswitchhw.a} is thus installed in @code{images/wr/lib}.
+
+@item wrsw_hal
+	This is the main application program for the White Rabbit Switch
+        operation. The script installs the executable in @code{images/wr/bin}.
+
+@item wrsw_rtud
+	This is the daemon for the routing table unit, installed in
+        @code{images/wr/bin}.
+
+@end table
+
+@c ##########################################################################
+@node VHDL Binaries
+@chapter VHDL Binaries
+
+The binaries are currently missing from the filesystem-making procedures.
+
+@c ##########################################################################
+@node The Complete Filesystem
+@chapter The Complete Filesystem
+
+
+The final step in compiling the filesystem is making the CPIO archive
+to be used as @i{ramdisk} in the switch.  The name of the file
+@code{images/ramdisk.ext2} within the @code{WRS_BUILD_DIR}, even if
+it has nothing to do with an @i{ext2} filesystem.  The name, however,
+is the predefined one in @i{u-boot} configuration; so until we
+change @i{u-boot}, it's easier for the image to keep this older name.
+
+The filesystem is built by copying the @i{buildroot} file tree and
+overlaying it with @code{userspace/rootfs_override/}; device files
+are extracted from @code{userspace/devices.tar.gz}.
+
+The @i{root} user has an empty password (set forth in
+@code{userspace/rootfs_override/}) and authorizes a few @i{ssh} keys,
+to allow @i{ssh} login (and @i{scp}) without the need to provide a
+password -- though empty.  The script authorizes the key of the user
+running the script and all keys listed in the file @code{authorized_keys}
+in the main directory of this package, if present.
+
+@c ##########################################################################
 @node Installation of WRS-3
-@section Installation of WRS-3
+@chapter Installation of WRS-3
 
 A switch with no code has three communication channels available: a
 serial port, on 2.54mm pins, a JTAG connector with standard ARM-20
 pinout and a USB port driven by the internal CPU ROM if no boot code
 is found.  Please note that if you write a faulty @i{at91boot} binary
-the internal ROM will jump into it without activating the USB port,
-and the JTAG will be your only way out.
+the internal ROM will jump into it without activating the USB port.
+The solution here is either the @i{USB loader} or the JTAG, as described
+later
+and the JTAG will be your only way out
+
+If you have a @i{mini-backplane}, you can connect the 6 pins of P2 to
+the similar connector on the backplane labeled as @code{Connect to
+MCH/P2}. The backplane hosts a CP2102 USB adapter and a mini-USB
+socket.  Note that you may connect all 6 pins, but only TX and RX
+signals are needed.
 
 You can work without a serial port, but it's strongly suggested to
 connect it.  With a UART you are able to see diagnostics and interact
@@ -716,11 +679,12 @@ likely need a level converter; the figure below shows the connection
 * Booting the Kernel::          
 @end menu
 
-@c --------------------------------------------------------------------------
+@c ==========================================================================
 @node Installation from Jtag
-@subsection Installation from Jtag
+@section Installation from Jtag
 
-You can boot and install the system using a JTAG debugger. Each debugger
+You can boot and install the system using a JTAG debugger, although
+the @i{USB loader} is currently the preferred technique. Each debugger
 has its own command language, so you'll need to adapt to yours. What is
 shown here refers to the @i{peedi} tool.
 
@@ -808,20 +772,21 @@ of the DataFlash and @i{barebox} to offset 0x8400 (33792):
 
 Now you can detach the debugger, press reset and see @i{barebox} starting.
 
-@c --------------------------------------------------------------------------
+@c ==========================================================================
 @node Installation through the Boot-ROM
-@subsection Installation through the Boot-ROM
+@section Installation through the Boot-ROM
 
-@c To boot the switch using the internal ROM, you can run the SAM-BA protocol.
-@c This package includes a working version of the USB flasher for GNU/Linux,
-@c that you can use in the following way, from your host:
+To boot the switch using the internal ROM, you can run the
+run the SAM-BA protocol.
+This package includes a working version of the USB flasher for GNU/Linux,
+that you can use in the following way, from your host:
 
 To be documented
 @c FIXME FIXME
 
-@c --------------------------------------------------------------------------
+@c ==========================================================================
 @node Booting the Kernel
-@subsection Booting the Kernel
+@section Booting the Kernel
 
 After initial installation, the DataFlash only includes up to @i{barebox},
 while the rest must still be loaded.
@@ -842,9 +807,9 @@ to match your personal situation.
    bootz /dev/mem.kernel
 @end example
 
-@c ==========================================================================
+@c ##########################################################################
 @node Code layout in a production switch
-@section Code layout in a production switch
+@chapter Code layout in a production switch
 
 This is the suggested arrangement of the various binary blobs in the
 final switch. Any comment and suggestion is welcome, as nothing
