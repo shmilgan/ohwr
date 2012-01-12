@@ -143,18 +143,22 @@ wrs_download () {
 
     # Download from upstream
     wget -q $upstream -O $output
-    if [ -f $output ]; then
+    if [ -s $output ]; then
 	wrs_echo "Retrieved $file from upstream"
 	return
+    else
+	rm -f $output
     fi
 
     # Download from buildroot
     wget -q http://sources.buildroot.net/$file
-    if [ -f $output ]; then
+    if [ -s $output ]; then
 	wrs_echo "Retrieved $file from sources.buildroot.net"
 	return
+    else
+	rm -f $output
     fi
-    wrs_error "Cannot download $file"
+    wrs_err "Cannot download $file"
 }
 
 # The following builds one step if needed: if file $1 exists, then the
