@@ -10,29 +10,33 @@ fi
 
 wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR CROSS_COMPILE
 
-wrs_echo "--- U-Boot"
-zipname="u-boot-1.3.4.tar.bz2"
-wrs_download $zipname
+wrs_echo "--- Barebox"
+tarname="barebox-2011.09.0.tar.bz2"
+wrs_download $tarname
 
 mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
 mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 
 # go to the build dir and compile it
 cd $WRS_OUTPUT_DIR/build
-dirname="u-boot-1.3.4"
+dirname="barebox-2011.09.0"
 rm -rf $dirname
-tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
-
-wrs_echo "Patching U-Boot"
-patch -t -p2 -d $dirname < \
-    "$WRS_BASE_DIR/../patches/u-boot/u-boot-1.3.4-wr-patch" \
-    || wrs_die "patching u-boot"
-
-wrs_echo "Building U-Boot"
+tar xjf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
 cd $dirname
-make whiterabbit_mch || wrs_die "configure u-boot"
-make -s $WRS_MAKE_J || wrs_die "compile u-boot"
-cp u-boot u-boot.bin $WRS_OUTPUT_DIR/images \
-    || wrs_die "copying u-boot image"
+
+wrs_echo "Patching Barebox"
+for n in $WRS_BASE_DIR/../patches/barebox/*patch; do
+    # the shell passes the "*" over if no matches are there, so check
+    if test -f "$n"; then
+	patch -p1 < $n || wrs_die "Apply $n"
+    fi
+done
+
+wrs_echo "Building Barebox"
+export ARCH=arm
+make wrs3_defconfig || wrs_die "configure barebox"
+make -s $WRS_MAKE_J || wrs_die "compile barebox"
+cp barebox barebox.bin $WRS_OUTPUT_DIR/images \
+    || wrs_die "copying barebox image"
 
 exit 0
