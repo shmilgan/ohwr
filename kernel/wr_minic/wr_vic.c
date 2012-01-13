@@ -13,14 +13,12 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
-
-#include <asm/irq.h>
+//#include <linux/irq.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#define DRV_MODULE_VERSION "0.2"
 #define DRV_NAME "wr_vic"
 #define PFX DRV_NAME ": "
 
@@ -45,7 +43,7 @@
  * What follows is header-like material, but we need no header for
  * external modules. Thus all defines are kept here to avoid confusion.
  */
-#define FPGA_BASE_WRVIC	0x70030000
+#define FPGA_BASE_WRVIC	0x10050000
 #define FPGA_SIZE_WRVIC	0x00001000
 
 struct wrvic_regs {
@@ -55,7 +53,7 @@ struct wrvic_regs {
 	u32 reg_idr;	/* [0x0c]: Interrupt Disable Register */
 	u32 reg_imr;	/* [0x10]: Interrupt Mask Register */
 	u32 reg_var;	/* [0x14]: Vector Address Register */
-	u32 unused0;
+	u32 reg_swtrig; /* [0x18]: Software-trigger of IRQ */
 	u32 reg_eoir;	/* [0x1c]: End Of Irq Ack Register */
 	u32 unused1[((0x80-0x20)/4)];
 	u32 vector[WRVIC_NR_IRQS];
@@ -75,45 +73,44 @@ int enabled_irqs[WRVIC_NR_IRQS];
 static void wrvic_handler(unsigned int irq, struct irq_desc *desc);
 
 /* We only have two methods: unmask (enable) and mask (disable) */
-static void wrvic_unmask_irq(unsigned int irq)
+static void wrvic_irq_unmask(struct irq_data *d)
 {
-	irq -= WRVIC_BASE_IRQ;
+	int irq = d->irq - WRVIC_BASE_IRQ;
 	wrvic_writel(irq, vector[irq]);
 	wrvic_writel(1 << irq, reg_ier);
 
 	enabled_irqs[irq] = 1;
 
-	set_irq_chained_handler(AT91SAM9263_ID_IRQ0, wrvic_handler);
-	set_irq_type(AT91SAM9263_ID_IRQ0, IRQF_TRIGGER_LOW);
+	irq_set_irq_type(AT91SAM9G45_ID_IRQ0, IRQF_TRIGGER_LOW); /* FIXME: needed? */
 
 	/* Enable. "CTL_POL" is 0 which means active low (falling) */
 	wrvic_writel(WRVIC_CTL_ENABLE, reg_ctl);
 }
 
-static void wrvic_mask_irq(unsigned int irq)
+static void wrvic_irq_mask(struct irq_data *d)
 {
+	int irq = d->irq;
 	int i;
-	
+
 	irq -= WRVIC_BASE_IRQ;
 	wrvic_writel( 1 << irq, reg_idr);
 	wrvic_writel(WRVIC_SPURIOUS_IRQ, vector[irq]);
 
 	enabled_irqs[irq] = 0;
-	
+
+	/* FIXME: find a better way to detect we have no more */
 	for(i=0;i<WRVIC_NR_IRQS;i++)
 		if(enabled_irqs[i])
 			return;
-			
-	printk("wr-vic: No enabled interrupts left, disabling master IRQ.\n");
-	set_irq_chained_handler(AT91SAM9263_ID_IRQ0, handle_bad_irq);
-	
 
+	printk("wr-vic: No enabled interrupts left, disabling master IRQ.\n");
+	irq_set_chained_handler(AT91SAM9G45_ID_IRQ0, handle_bad_irq);
 }
 
 static struct irq_chip wrvic_irqchip = {
 	.name		= "WR-VIC",
-	.mask		= wrvic_mask_irq,
-	.unmask		= wrvic_unmask_irq,
+	.irq_mask	= wrvic_irq_mask,
+	.irq_unmask	= wrvic_irq_unmask,
 };
 
 static void wrvic_handler(unsigned int irq, struct irq_desc *desc)
@@ -148,12 +145,11 @@ int __init wrvic_init(void)
 	wrvic_writel(~0, reg_idr);
 
 	for(i = WRVIC_BASE_IRQ; i <= WRVIC_BASE_IRQ + WRVIC_NR_IRQS; i++) {
-		set_irq_chip(i, &wrvic_irqchip);
-		set_irq_handler(i, handle_level_irq);
+		irq_set_chip_and_handler(i, &wrvic_irqchip, handle_level_irq);
 		set_irq_flags(i, IRQF_VALID | IRQF_PROBE);
 	}
-	set_irq_chained_handler(AT91SAM9263_ID_IRQ0, wrvic_handler);
-	set_irq_type(AT91SAM9263_ID_IRQ0, IRQF_TRIGGER_LOW);
+	irq_set_chained_handler(AT91SAM9G45_ID_IRQ0, wrvic_handler);
+	irq_set_irq_type(AT91SAM9G45_ID_IRQ0, IRQF_TRIGGER_LOW);
 
 	/* Enable. "CTL_POL" is 0 which means active low (falling) */
 	wrvic_writel(WRVIC_CTL_ENABLE, reg_ctl);
@@ -166,4 +162,3 @@ module_init(wrvic_init);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("White Rabbit Vectored Interrupt Controller");
-MODULE_VERSION(DRV_MODULE_VERSION);
