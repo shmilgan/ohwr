@@ -1,5 +1,5 @@
 
-DIRS = wr_minic nic wr_rtu
+DIRS = wr_vic wr_nic wr_rtu
 
 # We may "LINUX ?= /usr/src/linux-wrswitch", but it's better to leave it empty
 

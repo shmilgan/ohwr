@@ -1,5 +1,5 @@
 
-obj-m := wr_vic.o wr_minic.o
+obj-m := wr_vic.o
 
 export ARCH ?= arm
 export CROSS_COMPILE ?= $(CROSS_COMPILE_ARM)
