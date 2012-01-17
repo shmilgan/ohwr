@@ -28,11 +28,11 @@ int wrn_phy_read(struct net_device *dev, int phy_id, int location)
 	u32 val;
 
 	wrn_ep_write(ep, MDIO_CR, EP_MDIO_CR_ADDR_W(location));
-	while( (wrn_ep_read(ep, MDIO_SR) & EP_MDIO_SR_READY) == 0)
+	while( (wrn_ep_read(ep, MDIO_ASR) & EP_MDIO_ASR_READY) == 0)
 		;
-	val = wrn_ep_read(ep, MDIO_SR);
+	val = wrn_ep_read(ep, MDIO_ASR);
 	/* mask from wbgen macros */
-	return EP_MDIO_SR_RDATA_R(val);
+	return EP_MDIO_ASR_RDATA_R(val);
 }
 
 void wrn_phy_write(struct net_device *dev, int phy_id, int location,
@@ -43,7 +43,7 @@ void wrn_phy_write(struct net_device *dev, int phy_id, int location,
 		     EP_MDIO_CR_ADDR_W(location)
 		     | EP_MDIO_CR_DATA_W(value)
 		     | EP_MDIO_CR_RW);
-	while( (wrn_ep_read(ep, MDIO_SR) & EP_MDIO_SR_READY) == 0)
+	while( (wrn_ep_read(ep, MDIO_ASR) & EP_MDIO_ASR_READY) == 0)
 		;
 }
 
@@ -130,9 +130,9 @@ int wrn_ep_open(struct net_device *dev)
 
 	/* Prepare hardware registers: first config, then bring up */
 	writel(0
-	       | EP_RFCR_QMODE_W(0x3)		/* unqualified port */
-	       | EP_RFCR_PRIO_VAL_W(4),		/* some mid priority */
-		&ep->ep_regs->RFCR);
+	       | EP_VCR0_QMODE_W(0x3)		/* unqualified port */
+	       | EP_VCR0_PRIO_VAL_W(4),		/* some mid priority */
+		&ep->ep_regs->VCR0);
 
 	/*
 	 * enable RX timestamping (it has no impact on performance)
@@ -144,8 +144,8 @@ int wrn_ep_open(struct net_device *dev)
 	writel(0
 	       | EP_ECR_PORTID_W(ep->ep_number)
 	       | EP_ECR_RST_CNT
-	       | EP_ECR_TX_EN_FRA
-	       | EP_ECR_RX_EN_FRA,
+	       | EP_ECR_TX_EN
+	       | EP_ECR_RX_EN,
 		&ep->ep_regs->ECR);
 
 	/* Setup DMCR */
