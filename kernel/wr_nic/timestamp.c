@@ -20,6 +20,7 @@ void wrn_tstamp_find_skb(struct wrn_dev *wrn, int desc)
 {
 	struct skb_shared_hwtstamps *hwts;
 	struct sk_buff *skb = wrn->skb_desc[desc].skb;
+	struct timespec ts;
 	int id = wrn->skb_desc[desc].id;
 	u32 counter_ppsg; /* PPS generator nanosecond counter */
 	u32 utc;
@@ -41,8 +42,9 @@ void wrn_tstamp_find_skb(struct wrn_dev *wrn, int desc)
 	if(counter_ppsg > 3*REFCLK_FREQ/4 && wrn->ts_buf[i].ts < REFCLK_FREQ/4)
 		utc--;
 
-	hwts->hwtstamp.tv.sec = (s32)utc & 0x7fffffff;
-	hwts->hwtstamp.tv.nsec = wrn->ts_buf[i].ts * 8; /* scale to nsecs */
+	ts.tv_sec = (s32)utc & 0x7fffffff;
+	ts.tv_nsec = wrn->ts_buf[i].ts * 8; /* scale to nsecs */
+	hwts->hwtstamp = timespec_to_ktime(ts);
 	skb_tstamp_tx(skb, hwts);
 	dev_kfree_skb_irq(skb);
 
@@ -52,17 +54,18 @@ void wrn_tstamp_find_skb(struct wrn_dev *wrn, int desc)
 }
 
 /* This function records the timestamp in a list -- called from interrupt */
-static int record_tstamp(struct wrn_dev *wrn, u32 ts, u32 idreg)
+static int record_tstamp(struct wrn_dev *wrn, u32 tsval, u32 idreg)
 {
 	int port_id = TXTSU_TSF_R1_PID_R(idreg);
 	int frame_id = TXTSU_TSF_R1_FID_R(idreg);
 	struct skb_shared_hwtstamps *hwts;
+	struct timespec ts;
 	struct sk_buff *skb;
 	u32 utc, counter_ppsg; /* PPS generator nanosecond counter */
 	int i; /* FIXME: use list for faster access */
 
 	/*printk("%s: Got TS: %x pid %d fid %d\n", __func__,
-		 ts, port_id, frame_id);*/
+		 tsval, port_id, frame_id);*/
 
 	/* First of all look if the skb is already pending */
 	for (i = 0; i < WRN_NR_DESC; i++)
@@ -75,11 +78,12 @@ static int record_tstamp(struct wrn_dev *wrn, u32 ts, u32 idreg)
 		hwts = skb_hwtstamps(skb);
 
 		wrn_ppsg_read_time(wrn, &counter_ppsg, &utc);
-		if(counter_ppsg < (ts & 0xfffffff))
+		if(counter_ppsg < (tsval & 0xfffffff))
 			utc--;
-			
-		hwts->hwtstamp.tv.sec = (s32)utc & 0x7fffffff;
-		hwts->hwtstamp.tv.nsec = (ts & 0xfffffff) * 8; /* scale to nanoseconds */
+
+		ts.tv_sec = (s32)utc & 0x7fffffff;
+		ts.tv_nsec = (tsval & 0xfffffff) * 8; /* scale to nanoseconds */
+		hwts->hwtstamp = timespec_to_ktime(ts);
 		skb_tstamp_tx(skb, hwts);
 		dev_kfree_skb_irq(skb);
 		wrn->skb_desc[i].skb = 0;
@@ -95,7 +99,7 @@ static int record_tstamp(struct wrn_dev *wrn, u32 ts, u32 idreg)
 		return -ENOMEM;
 	}
 	pr_debug("%s: save to slot %i\n", __func__, i);
-	wrn->ts_buf[i].ts = ts;
+	wrn->ts_buf[i].ts = tsval;
 	wrn->ts_buf[i].port_id = port_id;
 	wrn->ts_buf[i].frame_id = frame_id;
 	wrn->ts_buf[i].valid = 1;

@@ -16,6 +16,7 @@
 #include <linux/etherdevice.h>
 #include <linux/errno.h>
 #include <linux/spinlock.h>
+#include <linux/net_tstamp.h>
 #include <asm/unaligned.h>
 
 #include "wr-nic.h"
@@ -147,7 +148,7 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
 	struct wrn_dev *wrn = ep->wrn;
-	union skb_shared_tx *shtx = skb_tx(skb);
+	struct skb_shared_info *info = skb_shinfo(skb);
 	unsigned long flags;
 	int desc;
 	int id;
@@ -185,7 +186,7 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	//netif_stop_queue(dev); /* Queue stopped until tx is over (FIXME?) */
 
 	/* FIXME: check the WRN_EP_STAMPING_TX flag and its meaning */
-	if (shtx->hardware) {
+	if (info->tx_flags & SKBTX_HW_TSTAMP) {
 		/* hardware timestamping is enabled */
 		do_stamp = 1;
 	}
@@ -267,6 +268,7 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 	int epnum, off, len;
 	u32 ts_r, ts_f;
 	struct skb_shared_hwtstamps *hwts;
+	struct timespec ts;
 	u32 counter_ppsg; /* PPS generator nanosecond counter */
 	u32 utc;
 	s32 cntr_diff;
@@ -327,18 +329,19 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 	if(counter_ppsg < REFCLK_FREQ/4 && ts_r > 3*REFCLK_FREQ/4)
 		utc--;
 
-	hwts->hwtstamp.tv.sec = (s32)utc & 0x7fffffff;
+	ts.tv_sec = (s32)utc & 0x7fffffff;
 	cntr_diff = (ts_r & 0xf) - ts_f;
 	/* the bit says the rising edge cnter is 1tick ahead */
 	if(cntr_diff == 1 || cntr_diff == (-0xf))
-		hwts->hwtstamp.tv.sec |= 0x80000000;
-	hwts->hwtstamp.tv.nsec = ts_r * 8; /* scale to nanoseconds */
+		ts.tv_sec |= 0x80000000;
+	ts.tv_nsec = ts_r * 8; /* scale to nanoseconds */
 
-	pr_debug("Timestamp: %d:%d, ahead = %d\n",
-	       hwts->hwtstamp.tv.sec & 0x7fffffff,
-	       hwts->hwtstamp.tv.nsec & 0x7fffffff,
-	       hwts->hwtstamp.tv.sec & 0x80000000 ? 1 :0);
+	pr_debug("Timestamp: %li:%li, ahead = %d\n",
+	       ts.tv_sec & 0x7fffffff,
+	       ts.tv_nsec & 0x7fffffff,
+	       ts.tv_sec & 0x80000000 ? 1 :0);
 
+	hwts->hwtstamp = timespec_to_ktime(ts);
 	skb->protocol = eth_type_trans(skb, dev);
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 	dev->last_rx = jiffies;
@@ -368,7 +371,8 @@ static void wrn_tx_interrupt(struct wrn_dev *wrn)
 {
 	struct wrn_txd *tx;
 	struct sk_buff *skb;
-	union skb_shared_tx *shtx;
+	struct skb_shared_info *info;
+
 	u32 reg;
 	int i;
 
@@ -381,11 +385,11 @@ static void wrn_tx_interrupt(struct wrn_dev *wrn)
 			return; /* no more */
 
 		skb = wrn->skb_desc[i].skb;
-		shtx = skb_tx(skb);
+		info = skb_shinfo(skb);
 
-		if (shtx->hardware) {
+		if (info->tx_flags & SKBTX_HW_TSTAMP) {
 			/* hardware timestamping is enabled */
-			shtx->in_progress = 1;
+			info->tx_flags |= SKBTX_IN_PROGRESS;
 			pr_debug("%s: %i -- in progress\n", __func__, __LINE__);
 			wrn_tstamp_find_skb(wrn, i);
 			/* It has been freed if found; otherwise keep it */
