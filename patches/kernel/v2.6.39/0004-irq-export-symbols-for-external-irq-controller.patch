@@ -1,0 +1,79 @@
+From 5a7166ccf11ae171cfd305d1b771035c4ccf2c20 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 17 Jan 2012 17:48:50 +0100
+Subject: [PATCH 4/4] irq: export symbols for external irq controller
+
+---
+ arch/arm/kernel/irq.c |    1 +
+ kernel/irq/chip.c     |    1 +
+ kernel/irq/handle.c   |    2 ++
+ kernel/irq/irqdesc.c  |    2 ++
+ 4 files changed, 6 insertions(+), 0 deletions(-)
+
+diff --git a/arch/arm/kernel/irq.c b/arch/arm/kernel/irq.c
+index 83bbad0..4a7f8aa 100644
+--- a/arch/arm/kernel/irq.c
++++ b/arch/arm/kernel/irq.c
+@@ -115,6 +115,7 @@ void set_irq_flags(unsigned int irq, unsigned int iflags)
+ 	/* Order is clear bits in "clr" then set bits in "set" */
+ 	irq_modify_status(irq, clr, set & ~clr);
+ }
++EXPORT_SYMBOL_GPL(set_irq_flags); /* for external irq controllers */
+ 
+ void __init init_IRQ(void)
+ {
+diff --git a/kernel/irq/chip.c b/kernel/irq/chip.c
+index 4af1e2b..ced43d9 100644
+--- a/kernel/irq/chip.c
++++ b/kernel/irq/chip.c
+@@ -587,6 +587,7 @@ irq_set_chip_and_handler_name(unsigned int irq, struct irq_chip *chip,
+ 	irq_set_chip(irq, chip);
+ 	__irq_set_handler(irq, handle, 0, name);
+ }
++EXPORT_SYMBOL_GPL(irq_set_chip_and_handler_name);
+ 
+ void irq_modify_status(unsigned int irq, unsigned long clr, unsigned long set)
+ {
+diff --git a/kernel/irq/handle.c b/kernel/irq/handle.c
+index 90cb55f..4d0421e 100644
+--- a/kernel/irq/handle.c
++++ b/kernel/irq/handle.c
+@@ -13,6 +13,7 @@
+ #include <linux/irq.h>
+ #include <linux/random.h>
+ #include <linux/sched.h>
++#include <linux/module.h>
+ #include <linux/interrupt.h>
+ #include <linux/kernel_stat.h>
+ 
+@@ -33,6 +34,7 @@ void handle_bad_irq(unsigned int irq, struct irq_desc *desc)
+ 	kstat_incr_irqs_this_cpu(irq, desc);
+ 	ack_bad_irq(irq);
+ }
++EXPORT_SYMBOL_GPL(handle_bad_irq);
+ 
+ /*
+  * Special, empty irq handler:
+diff --git a/kernel/irq/irqdesc.c b/kernel/irq/irqdesc.c
+index 2c039c9..d902ebf 100644
+--- a/kernel/irq/irqdesc.c
++++ b/kernel/irq/irqdesc.c
+@@ -110,6 +110,7 @@ struct irq_desc *irq_to_desc(unsigned int irq)
+ {
+ 	return radix_tree_lookup(&irq_desc_tree, irq);
+ }
++EXPORT_SYMBOL_GPL(irq_to_desc);
+ 
+ static void delete_irq_desc(unsigned int irq)
+ {
+@@ -272,6 +273,7 @@ struct irq_desc *irq_to_desc(unsigned int irq)
+ {
+ 	return (irq < NR_IRQS) ? irq_desc + irq : NULL;
+ }
++EXPORT_SYMBOL_GPL(irq_to_desc);
+ 
+ static void free_desc(unsigned int irq)
+ {
+-- 
+1.7.7.2
+
