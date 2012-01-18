@@ -36,8 +36,8 @@
  *  0x20000 - 0x3ffff:     NIC
  *  0x20000 - 0x20fff  NIC control regs and descriptor area
  *  0x28000 - 0x2bfff  NIC packet buffer (16k)
- *  0x40000 - 0x4ffff:           Endpoints
- *  0x40000 + N * 0x200  Endpoint N control registers
+ *  0x30000 - 0x4ffff:           Endpoints
+ *  0x30000 + N * 0x200  Endpoint N control registers
  *  0x50000 - 0x50fff:  VIC
  *  0x51000 - 0x51fff:  Tstamp unit
  *  0x52000 - 0x52fff:  PPS gen
@@ -45,7 +45,7 @@
 /* This is the base address of all the FPGA regions (EBI1, CS0) */
 #define FPGA_BASE_NIC	0x10020000
 #define FPGA_SIZE_NIC	0x00010000
-#define FPGA_BASE_EP	0x10040000
+#define FPGA_BASE_EP	0x10030000
 #define FPGA_SIZE_EP	0x00010000
 #define FPGA_BASE_VIC	0x10050000
 #define FPGA_SIZE_VIC	0x00001000
