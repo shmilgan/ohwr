@@ -12,62 +12,62 @@
 #define __WR_NIC_HARDWARE_H__
 
 /* Our host CPU is this one, no way out of it */
-#include <mach/at91sam9263.h>
+//#include <mach/at91sam9263.h>
 
 #define REFCLK_FREQ 125000000
 
 /* The interrupt is one of those managed by our WRVIC device */
 #define WRN_IRQ_BASE		192
-#define WRN_IRQ_PPSG		(WRN_IRQ_BASE + 0)
-#define WRN_IRQ_NIC		(WRN_IRQ_BASE + 1)
-#define WRN_IRQ_RTU		(WRN_IRQ_BASE + 2)
-#define WRN_IRQ_RTUT		(WRN_IRQ_BASE + 3)
-#define WRN_IRQ_TSTAMP		(WRN_IRQ_BASE + 4)
+#define WRN_IRQ_NIC		(WRN_IRQ_BASE + 0)
+#define WRN_IRQ_TSTAMP		(WRN_IRQ_BASE + 1) /* FIXME: not there */
+//#define WRN_IRQ_PPSG		(WRN_IRQ_BASE + )
+//#define WRN_IRQ_RTU		(WRN_IRQ_BASE + )
+//#define WRN_IRQ_RTUT		(WRN_IRQ_BASE + )
 
+/*
+ *	V3 Memory map, temporarily (Jan 2012)
+ *
+ *  0x00000 - 0x1ffff:    RT Subsystem
+ *  0x00000 - 0x0ffff: RT Subsystem Program Memory (16 - 64 kB)
+ *  0x10000 - 0x100ff: RT Subsystem UART
+ *  0x10100 - 0x101ff: RT Subsystem SoftPLL-adv
+ *  0x10200 - 0x102ff: RT Subsystem SPI Master
+ *  0x10300 - 0x103ff: RT Subsystem GPIO
+ *  0x20000 - 0x3ffff:     NIC
+ *  0x20000 - 0x20fff  NIC control regs and descriptor area
+ *  0x28000 - 0x2bfff  NIC packet buffer (16k)
+ *  0x40000 - 0x4ffff:           Endpoints
+ *  0x40000 + N * 0x200  Endpoint N control registers
+ *  0x50000 - 0x50fff:  VIC
+ *  0x51000 - 0x51fff:  Tstamp unit
+ *  0x52000 - 0x52fff:  PPS gen
+ */
 /* This is the base address of all the FPGA regions (EBI1, CS0) */
-#define FPGA_BASE_ADDRESS 0x70000000
+#define FPGA_BASE_NIC	0x10020000
+#define FPGA_SIZE_NIC	0x00010000
+#define FPGA_BASE_EP	0x10040000
+#define FPGA_SIZE_EP	0x00010000
+#define FPGA_BASE_VIC	0x10050000
+#define FPGA_SIZE_VIC	0x00001000
+#define FPGA_BASE_TS	0x10051000
+#define FPGA_SIZE_TS	0x00001000
+#define FPGA_BASE_PPSG	0x10052000
+#define FPGA_SIZE_PPSG	0x00001000
 
-/* The memory map is split in several blocks, each of them 64kB */
-#define FPGA_BLOCK_SIZE		0x10000 /* for ioremap */
-#define __FPGA_BLOCK_TO_ADDR(block)			\
-	(FPGA_BASE_ADDRESS + (block) * FPGA_BLOCK_SIZE)
-
-/* I number fpga blocks, to handle all the base addresses as an array */
 enum fpga_blocks {
-	WRN_BLOCK_REVID		= 0x00,	/* Not used here */
-	WRN_BLOCK_GPIO		= 0x01,	/* Not used here */
-	WRN_BLOCK_SPIM		= 0x02,	/* Not used here */
-	WRN_BLOCK_VIC		= 0x03,	/* Separate module */
-	WRN_BLOCK_EP_UP0	= 0x04,
-	WRN_BLOCK_EP_UP1	= 0x05,
-	WRN_BLOCK_EP_DP0	= 0x06,
-	WRN_BLOCK_EP_DP1	= 0x07,
-	WRN_BLOCK_EP_DP2	= 0x08,
-	WRN_BLOCK_EP_DP3	= 0x09,
-	WRN_BLOCK_EP_DP4	= 0x0a,
-	WRN_BLOCK_EP_DP5	= 0x0b,
-	WRN_BLOCK_EP_DP6	= 0x0c,
-	WRN_BLOCK_EP_DP7	= 0x0d,
-	WRN_BLOCK_PPSG		= 0x0e,	/* pps.c */
-	WRN_BLOCK_CALIBRATOR	= 0x0f,	/* dmtd.c */
-	WRN_BLOCK_RTU		= 0x10,	/* Separate driver */
-	WRN_BLOCK_RTU_TESTUNIT	= 0x11,	/* Separate driver */
-	WRN_BLOCK_NIC		= 0x12,
-	WRN_BLOCK_TSTAMP	= 0x13,	/* timestamp.c */
-
-	WRN_NBLOCKS	/* number of blocks, for array size */
+	WRN_FB_NIC,
+	WRN_FB_EP,
+	WRN_FB_VIC, /* not mapped here (but in vic.ko) */
+	WRN_FB_TS,
+	WRN_FB_PPSG,
+	WRN_NR_OF_BLOCKS,
 };
-/* In addition to the above enumeration, mark out endpoints */
-#define WRN_NR_ENDPOINTS		10
+
+/* In addition to the above enumeration, mark out endpoints (FIXME: 1 only) */
+#define WRN_NR_ENDPOINTS		1
 #define WRN_FIRST_EP			WRN_BLOCK_EP_UP0
-#define WRN_LAST_EP			WRN_BLOCK_EP_DP7
-#define WRN_NR_UPLINK (WRN_BLOCK_EP_DP0 - WRN_BLOCK_EP_UP0)
-
-/* Hardware addresses are derived from the block numbers */
-#define FPGA_BASE(name)		__FPGA_BLOCK_TO_ADDR(WRN_BLOCK_ ## name)
-
-/* And this bad thing exists to get the block from the address */
-#define __FPGA_BASE_TO_NR(add) (((add) - FPGA_BASE_ADDRESS) / FPGA_BLOCK_SIZE)
+#define WRN_LAST_EP			WRN_FIRST_EP
+//#define WRN_NR_UPLINK (WRN_BLOCK_EP_DP0 - WRN_BLOCK_EP_UP0)
 
 /* 8 tx and 8 rx descriptors */
 #define WRN_NR_DESC	8

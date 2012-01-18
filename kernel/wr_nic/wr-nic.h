@@ -66,7 +66,7 @@ struct wrn_desc_pending {
  */
 struct wrn_dev {
 	/* Base addresses. It's easier with an array, but not all are used */
-	void __iomem		*bases[WRN_NBLOCKS];
+	void __iomem		*bases[WRN_NR_OF_BLOCKS];
 
 	struct NIC_WB __iomem	*regs; /* shorthand for NIC-block registers */
 	struct TXTSU_WB __iomem *txtsu_regs; /* ... and the same for TXTSU */

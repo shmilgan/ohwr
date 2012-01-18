@@ -23,28 +23,18 @@
 static struct wrn_dev wrn_dev;
 
 /* The WRN_RES_ names are defined in the header file. Each block 64kB */
-#define __RES(name) {					\
-	.start = FPGA_BASE(name),			\
-	.end =   FPGA_BASE(name) + FPGA_BLOCK_SIZE-1,	\
+#define __RES(name_) {						\
+	.start = FPGA_BASE_ ## name_,				\
+	.end =   FPGA_BASE_ ## name_ + FPGA_SIZE_ ## name_ - 1,	\
 	.flags = IORESOURCE_MEM				\
 	}
 
 /* Not all the blocks are relevant to this driver, only list the used ones */
 static struct resource wrn_resources[] = {
-	[WRN_RES_MEM_EP_UP0]	= __RES( EP_UP0 ),
-	[WRN_RES_MEM_EP_UP1]	= __RES( EP_UP1 ),
-	[WRN_RES_MEM_EP_DP0]	= __RES( EP_DP0 ),
-	[WRN_RES_MEM_EP_DP1]	= __RES( EP_DP1 ),
-	[WRN_RES_MEM_EP_DP2]	= __RES( EP_DP2 ),
-	[WRN_RES_MEM_EP_DP3]	= __RES( EP_DP3 ),
-	[WRN_RES_MEM_EP_DP4]	= __RES( EP_DP4 ),
-	[WRN_RES_MEM_EP_DP5]	= __RES( EP_DP5 ),
-	[WRN_RES_MEM_EP_DP6]	= __RES( EP_DP6 ),
-	[WRN_RES_MEM_EP_DP7]	= __RES( EP_DP7 ),
-	[WRN_RES_MEM_PPSG]	= __RES( PPSG ),
-	[WRN_RES_MEM_CALIBRATOR]= __RES( CALIBRATOR ),
-	[WRN_RES_MEM_NIC]	= __RES( NIC ),
-	[WRN_RES_MEM_TSTAMP]	= __RES( TSTAMP )
+	__RES( NIC ),
+	__RES( EP ),
+	__RES( TS ),
+	__RES( PPSG ),
 };
 #undef __RES
 

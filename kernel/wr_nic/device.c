@@ -64,7 +64,7 @@ static int __devexit wrn_remove(struct platform_device *pdev)
 /* This helper is used by probe below */
 static int __devinit __wrn_map_resources(struct platform_device *pdev)
 {
-	int n, i = 0;
+	int i = 0;
 	struct resource *res;
 	void __iomem *ptr;
 	struct wrn_dev *wrn = pdev->dev.platform_data;
@@ -81,10 +81,9 @@ static int __devinit __wrn_map_resources(struct platform_device *pdev)
 			return -ENOMEM;
 		}
 		/* Hack: find the block number and fill the array */
-		n = __FPGA_BASE_TO_NR(res->start);
 		pr_debug("Remapped %08x (block %i) to %p\n",
-			 res->start, n, ptr);
-		wrn->bases[n] = ptr;
+			 res->start, i, ptr);
+		wrn->bases[i] = ptr;
 
 		i++; /* next please */
 	}
@@ -116,9 +115,9 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 	if ( (err = __wrn_map_resources(pdev)) )
 
 		goto out;
-	wrn->regs = wrn->bases[WRN_BLOCK_NIC];
-	wrn->txtsu_regs = wrn->bases[WRN_BLOCK_TSTAMP];
-	wrn->ppsg_regs = wrn->bases[WRN_BLOCK_PPSG];
+	wrn->regs = wrn->bases[WRN_FB_NIC];
+	wrn->txtsu_regs = wrn->bases[WRN_FB_TS];
+	wrn->ppsg_regs = wrn->bases[WRN_FB_PPSG];
 	wrn->txd = ((void *)wrn->regs) + 0x80; /* was: TX1_D1 */
 	wrn->rxd = ((void *)wrn->regs) + 0x100; /* was: RX1_D1 */
 	wrn->databuf = (void *)wrn->regs + offsetof(struct NIC_WB, MEM);
@@ -148,11 +147,13 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 		/* The ep structure is filled before calling ep_probe */
 		ep = netdev_priv(netdev);
 		ep->wrn = wrn;
-		ep->ep_regs = wrn->bases[WRN_FIRST_EP + i];
+		ep->ep_regs = wrn->bases[WRN_FB_EP]; /* FIXME: works for 1EP */
 		//printk("ep %p, regs %i = %p\n", ep, i, ep->ep_regs);
 		ep->ep_number = i;
+#if 0 /* FIXME: UPlink or not? */
 		if (i < WRN_NR_UPLINK)
 			set_bit(WRN_EP_IS_UPLINK, &ep->ep_flags);
+#endif
 
 		/* The netdevice thing is registered from the endpoint */
 		err = wrn_endpoint_probe(netdev);
