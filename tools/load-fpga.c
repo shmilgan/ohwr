@@ -1,10 +1,14 @@
 /*
  * Trivial gpio bit banger.
  * Alessandro Rubini, 2011, for CERN.
+ * Turned into and spi user-space driver
+ * Tomasz Wlostowski, 2012, for CERN.
+ *
  * Released to the public domain.
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
@@ -15,24 +19,21 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 
-#include <linux/types.h>
-
-#include <mach/at91_pio.h> /* -I$LINUX/arch/arm/mach-at91/include/ */
+/* -I$LINUX/arch/arm/mach-at91/include/ */
+#include <mach/at91_pio.h>
+#include <mach/at91_ssc.h>
+#include <mach/at91_pmc.h>
+#include <mach/at91sam9g45.h>
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
 
-unsigned char bstream[10*1000*1000]; /* me lazy bastard */
+unsigned char *bstream;
 
-void *pio[5]; /* from mmap(/dev/mem) */
-
-/* describe the g45 memory layout */
-unsigned char *piobase = (void *)0xfffff000;
-
-int offsets[] = {0x200, 0x400, 0x600, 0x800, 0xa00};
-
-void *pio[5]; /* from mmap(/dev/mem) plus offsets above */
+/* The address and size of the entire AT91 I/O reg space */
+#define BASE_IOREGS 0xfff78000
+#define SIZE_IOREGS 0x88000
 
 enum {
 	PIOA = 0,
@@ -42,8 +43,23 @@ enum {
 	PIOE = 4
 };
 
-/* macro to access 32-bit registers */
-#define __PIO(port, regname) (*(volatile __u32 *)(pio[port] + regname))
+void *ioregs;
+
+
+#define AT91_PIOx(port) (AT91_PIOA + AT91_BASE_SYS + 0x200 * port)
+
+/* macros to access 32-bit registers of various peripherals */
+#define __PIO(port, regname) (*(volatile uint32_t *) \
+  (ioregs + AT91_PIOx(port) - BASE_IOREGS + regname))
+
+#define __SSC(regname) (*(volatile uint32_t *) \
+  (ioregs + (AT91SAM9G45_BASE_SSC0 - BASE_IOREGS) + regname))
+
+#define __PMC(regname) \
+  (*(volatile uint32_t *)(ioregs + (AT91_BASE_SYS - BASE_IOREGS) + regname))
+
+/* Missing SSC reg fields */
+#define     AT91_SSC_CKO_DURING_XFER   (2 << 2)
 
 /* This sets a bit. To clear output se set ODR (output disable register) */
 static inline void pio_set(int regname, int port, int bit)
@@ -82,7 +98,7 @@ void ud(int usecs) /* horrible udelay thing without scheduling */
 
 int main(int argc, char **argv)
 {
-	int pagesize, bs_size, i;
+	int bs_size, i;
 	int fdmem;
 
 	if (argc != 2) {
@@ -100,20 +116,30 @@ int main(int argc, char **argv)
 				strerror(errno));
 			exit(1);
 		}
-		bs_size = fread(bstream, 1, sizeof(bstream), f);
-		if (bs_size < 0) {
+
+		fseek(f, 0, SEEK_END);
+		bs_size = ftell(f);
+		fseek(f, 0, SEEK_SET);
+
+		bstream = malloc(bs_size);
+
+		if (bstream == NULL)
+		{
+			fprintf(stderr, "malloc failed\n");
+			fclose(f);
+			exit(1);
+		}
+
+
+		if (fread(bstream, 1, bs_size, f) != bs_size) {
 			fprintf(stderr, "%s: read(%s): %s\n", argv[0],
 				argv[1], strerror(errno));
 			exit(1);
 		}
-		if (bs_size == sizeof(bstream)) {
-			fprintf(stderr, "%s: %s: too big\n", argv[0], argv[1]);
-			exit(1);
-		}
+
 		fclose(f);
 	}
 
-	pagesize = getpagesize(); /* can't fail */
 
 	/* /dev/mem for mmap of both gpio and spi1 */
 	if ((fdmem = open("/dev/mem", O_RDWR | O_SYNC)) < 0) {
@@ -122,32 +148,49 @@ int main(int argc, char **argv)
 	}
 
 	/* map a whole page (4kB, but we called getpagesize to know it) */
-	piobase = mmap(0, pagesize, PROT_READ | PROT_WRITE,
-		       MAP_SHARED, fdmem,
-		       (int)piobase & (~(pagesize-1)));
-	if (piobase == MAP_FAILED) {
+	ioregs = mmap(0, SIZE_IOREGS, PROT_READ | PROT_WRITE,
+		      MAP_SHARED, fdmem,
+		      BASE_IOREGS);
+
+	if (ioregs == MAP_FAILED) {
 		fprintf(stderr, "%s: mmap(/dev/mem): %s\n",
 			argv[0], strerror(errno));
 		exit(1);
 	}
 
-	/* ok, now move the pointers within the page, we won't munmap anyways */
-	for (i = 0; i < ARRAY_SIZE(pio); i++) {
-		pio[i] = piobase + offsets[i];
-	}
 
 	/*
 	 * all of this stuff is working on gpio so enable pio, out or in
 	 */
 
-	/* clock and data are output, low by now */
-	pio_set(PIO_PER, TK0);
-	pio_set(PIO_CODR, TK0);
+	/* clock and data are output, connected to SSC, low by now */
+
+	pio_set(PIO_PDR, TK0);
+	pio_set(PIO_ASR, TK0);
 	pio_set(PIO_OER, TK0);
 
-	pio_set(PIO_PER, TD0);
-	pio_set(PIO_CODR, TD0);
+	pio_set(PIO_PDR, TD0);
+	pio_set(PIO_ASR, TD0);
 	pio_set(PIO_OER, TD0);
+
+	/* enable SSC controller clock */
+	__PMC(AT91_PMC_PCER) = 1<<AT91SAM9G45_ID_SSC0;
+	
+	__SSC(AT91_SSC_CR) = AT91_SSC_SWRST;
+	__SSC(AT91_SSC_CR) = 0;
+
+	/* Config clock rate = MCK / 3 */
+	__SSC(AT91_SSC_CMR) = 2 & AT91_SSC_CMR_DIV;
+
+	/* Clock source = divided master clock,
+	   active only during data transfer, extra 2 cycles of delay
+	   between subsequent bytes */
+	__SSC(AT91_SSC_TCMR) =
+		AT91_SSC_CKS_DIV | AT91_SSC_CKO_DURING_XFER | (2<<16);
+
+	/* 8 bits/xfer, MSB first */
+	__SSC(AT91_SSC_TFMR) = (7 & AT91_SSC_DATALEN) | AT91_SSC_MSBF;
+	__SSC(AT91_SSC_CR) = AT91_SSC_TXEN;
 
 	/* fpga_reset is high */
 	pio_set(PIO_PER, FPGA_RESET);
@@ -213,34 +256,29 @@ int main(int argc, char **argv)
 		if (pio_get(INITB))
 			break;
 	}
+
 	if (pio_get(INITB)) {
 		fprintf(stderr, "%s: INIT_B is not going back high\n",
 			argv[0]);
 		//exit(1);
 	}
 
-
+	ud(1000); /* wait for a short while before commencing the configuration - otherwise
+		     the FPGA might not assert the DONE flag correctly */
 	/* Then write one byte at a time */
+
+	printf("Booting FPGA: ");
 	for (i = 0; i < bs_size; i++) {
-		int byte = bstream[i];
-		int bit;
-
-		if (!(i & 1023)) {
-				putchar('.'); fflush(stdout);
+		if (!(i & 32767)) {
+			putchar('.');
+			fflush(stdout);
 		}
-		/* msb first */
-		for (bit = 0x80; bit > 0; bit >>= 1) {
-			/* data on rising edge of clock, which starts low */
-			if (byte & bit)
-				pio_set(PIO_SODR, TD0);
-			else
-				pio_set(PIO_CODR, TD0);
 
-			/* so, rising edge, after it's stable */
-			asm volatile("nop\n nop\n nop\n nop");
-			pio_set(PIO_SODR, TK0);
-			pio_set(PIO_CODR, TK0);
-		}
+		while(! (__SSC(AT91_SSC_SR) & AT91_SSC_TXEMPTY))
+			;
+
+		__SSC(AT91_SSC_THR) = bstream[i];
+
 		if (0 && /* don't do this check */ !pio_get(DONE)) {
 			fprintf(stderr, "%s: DONE is already high after "
 				"%i bytes (missing %i)\n", argv[0],
