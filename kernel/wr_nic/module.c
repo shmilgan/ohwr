@@ -31,10 +31,10 @@ static struct wrn_dev wrn_dev;
 
 /* Not all the blocks are relevant to this driver, only list the used ones */
 static struct resource wrn_resources[] = {
-	__RES( NIC ),
-	__RES( EP ),
-	__RES( TS ),
-	__RES( PPSG ),
+	[WRN_FB_NIC] = __RES( NIC ),
+	[WRN_FB_EP] = __RES( EP ),
+	[WRN_FB_TS] = __RES( TS ),
+	[WRN_FB_PPSG] = __RES( PPSG ),
 };
 #undef __RES
 

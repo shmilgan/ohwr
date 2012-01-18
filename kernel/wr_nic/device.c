@@ -74,6 +74,8 @@ static int __devinit __wrn_map_resources(struct platform_device *pdev)
 	 * We don't populate the whole array, but use the resource list
 	 */
 	while ( (res =platform_get_resource(pdev, IORESOURCE_MEM, i)) ) {
+		if (!res->start)
+			continue;
 		ptr = ioremap(res->start, res->end + 1 - res->start);
 		if (!ptr) {
 			dev_err(&pdev->dev, "Remap for res %i (%08x) failed\n",
