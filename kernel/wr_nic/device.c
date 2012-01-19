@@ -149,8 +149,8 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 		/* The ep structure is filled before calling ep_probe */
 		ep = netdev_priv(netdev);
 		ep->wrn = wrn;
-		ep->ep_regs = wrn->bases[WRN_FB_EP]; /* FIXME: works for 1EP */
-		//printk("ep %p, regs %i = %p\n", ep, i, ep->ep_regs);
+		ep->ep_regs = wrn->bases[WRN_FB_EP] + i * FPGA_SIZE_EACH_EP;
+		printk("ep %p, regs %i = %p\n", ep, i, ep->ep_regs);
 		ep->ep_number = i;
 #if 0 /* FIXME: UPlink or not? */
 		if (i < WRN_NR_UPLINK)

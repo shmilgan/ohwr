@@ -47,6 +47,7 @@
 #define FPGA_SIZE_NIC	0x00010000
 #define FPGA_BASE_EP	0x10030000
 #define FPGA_SIZE_EP	0x00010000
+#define FPGA_SIZE_EACH_EP	0x200
 #define FPGA_BASE_VIC	0x10050000
 #define FPGA_SIZE_VIC	0x00001000
 #define FPGA_BASE_TS	0x10051000
@@ -57,17 +58,14 @@
 enum fpga_blocks {
 	WRN_FB_NIC,
 	WRN_FB_EP,
-	WRN_FB_VIC, /* not mapped here (but in vic.ko) */
+	WRN_FB_VIC, /* not mapped here (but in wr-vic.ko) */
 	WRN_FB_TS,
 	WRN_FB_PPSG,
 	WRN_NR_OF_BLOCKS,
 };
 
-/* In addition to the above enumeration, mark out endpoints (FIXME: 1 only) */
-#define WRN_NR_ENDPOINTS		1
-#define WRN_FIRST_EP			WRN_BLOCK_EP_UP0
-#define WRN_LAST_EP			WRN_FIRST_EP
-//#define WRN_NR_UPLINK (WRN_BLOCK_EP_DP0 - WRN_BLOCK_EP_UP0)
+/* In addition to the above enumeration, we scan for those many endpoints */
+#define WRN_NR_ENDPOINTS		18
 
 /* 8 tx and 8 rx descriptors */
 #define WRN_NR_DESC	8

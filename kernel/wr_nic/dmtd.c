@@ -58,10 +58,10 @@ int wrn_calib_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	if (copy_from_user(&cal_req, rq->ifr_data, sizeof(cal_req)))
 		return -EFAULT;
 
-#if 0
-	if (!(ep->ep_flags & BIT(WRN_EP_UP)))
-		return -EIO; /* was -EFAULT in minic */
-#endif
+	if (0) { /* FIXME: what' coming out of this thing? */
+		if (!(ep->ep_flags & BIT(WRN_EP_UP)))
+			return -EIO; /* was -EFAULT in minic */
+	}
 
 	switch(cal_req.cmd) {
 	case WRN_CAL_TX_ON:
