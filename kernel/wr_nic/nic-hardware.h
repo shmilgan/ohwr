@@ -37,7 +37,7 @@
  *  0x20000 - 0x20fff  NIC control regs and descriptor area
  *  0x28000 - 0x2bfff  NIC packet buffer (16k)
  *  0x30000 - 0x4ffff:           Endpoints
- *  0x30000 + N * 0x200  Endpoint N control registers
+ *  0x30000 + N * 0x400  Endpoint N control registers
  *  0x50000 - 0x50fff:  VIC
  *  0x51000 - 0x51fff:  Tstamp unit
  *  0x52000 - 0x52fff:  PPS gen
@@ -47,8 +47,8 @@
 #define FPGA_SIZE_NIC	0x00010000
 #define FPGA_BASE_EP	0x10030000
 #define FPGA_SIZE_EP	0x00010000
-#define FPGA_SIZE_EACH_EP	0x200
-#define FPGA_BASE_VIC	0x10050000
+#define FPGA_SIZE_EACH_EP	0x400
+#define FPGA_BASE_VIC	0x10050000 /* not used here */
 #define FPGA_SIZE_VIC	0x00001000
 #define FPGA_BASE_TS	0x10051000
 #define FPGA_SIZE_TS	0x00001000
@@ -58,7 +58,6 @@
 enum fpga_blocks {
 	WRN_FB_NIC,
 	WRN_FB_EP,
-	WRN_FB_VIC, /* not mapped here (but in wr-vic.ko) */
 	WRN_FB_TS,
 	WRN_FB_PPSG,
 	WRN_NR_OF_BLOCKS,

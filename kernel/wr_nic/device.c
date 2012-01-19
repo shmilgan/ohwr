@@ -10,7 +10,6 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/netdevice.h>
@@ -64,7 +63,7 @@ static int __devexit wrn_remove(struct platform_device *pdev)
 /* This helper is used by probe below */
 static int __devinit __wrn_map_resources(struct platform_device *pdev)
 {
-	int i = 0;
+	int i;
 	struct resource *res;
 	void __iomem *ptr;
 	struct wrn_dev *wrn = pdev->dev.platform_data;
@@ -73,8 +72,9 @@ static int __devinit __wrn_map_resources(struct platform_device *pdev)
 	 * The memory regions are mapped once for all endpoints.
 	 * We don't populate the whole array, but use the resource list
 	 */
-	while ( (res =platform_get_resource(pdev, IORESOURCE_MEM, i)) ) {
-		if (!res->start)
+	for (i = 0; i < pdev->num_resources; i++) {
+		res = platform_get_resource(pdev, IORESOURCE_MEM, i);
+		if (!res || !res->start)
 			continue;
 		ptr = ioremap(res->start, res->end + 1 - res->start);
 		if (!ptr) {
@@ -86,8 +86,6 @@ static int __devinit __wrn_map_resources(struct platform_device *pdev)
 		pr_debug("Remapped %08x (block %i) to %p\n",
 			 res->start, i, ptr);
 		wrn->bases[i] = ptr;
-
-		i++; /* next please */
 	}
 	return 0;
 }
@@ -115,7 +113,6 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 
 	/* Map our resource list and instantiate the shortcut pointers */
 	if ( (err = __wrn_map_resources(pdev)) )
-
 		goto out;
 	wrn->regs = wrn->bases[WRN_FB_NIC];
 	wrn->txtsu_regs = wrn->bases[WRN_FB_TS];
