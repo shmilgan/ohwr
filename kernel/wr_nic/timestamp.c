@@ -43,7 +43,7 @@ void wrn_tstamp_find_skb(struct wrn_dev *wrn, int desc)
 		utc--;
 
 	ts.tv_sec = (s32)utc & 0x7fffffff;
-	ts.tv_nsec = wrn->ts_buf[i].ts * 8; /* scale to nsecs */
+	ts.tv_nsec = wrn->ts_buf[i].ts * NSEC_PER_TICK;
 	hwts->hwtstamp = timespec_to_ktime(ts);
 	skb_tstamp_tx(skb, hwts);
 	dev_kfree_skb_irq(skb);
@@ -82,7 +82,7 @@ static int record_tstamp(struct wrn_dev *wrn, u32 tsval, u32 idreg)
 			utc--;
 
 		ts.tv_sec = (s32)utc & 0x7fffffff;
-		ts.tv_nsec = (tsval & 0xfffffff) * 8; /* scale to nanoseconds */
+		ts.tv_nsec = (tsval & 0xfffffff) * NSEC_PER_TICK;
 		hwts->hwtstamp = timespec_to_ktime(ts);
 		skb_tstamp_tx(skb, hwts);
 		dev_kfree_skb_irq(skb);

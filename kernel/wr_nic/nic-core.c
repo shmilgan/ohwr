@@ -339,7 +339,7 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 	/* the bit says the rising edge cnter is 1tick ahead */
 	if(cntr_diff == 1 || cntr_diff == (-0xf))
 		ts.tv_sec |= 0x80000000;
-	ts.tv_nsec = ts_r * 8; /* scale to nanoseconds */
+	ts.tv_nsec = ts_r * NSEC_PER_TICK;
 
 	pr_debug("Timestamp: %li:%li, ahead = %d\n",
 	       ts.tv_sec & 0x7fffffff,

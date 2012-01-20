@@ -11,10 +11,9 @@
 #ifndef __WR_NIC_HARDWARE_H__
 #define __WR_NIC_HARDWARE_H__
 
-/* Our host CPU is this one, no way out of it */
-//#include <mach/at91sam9263.h>
-
-#define REFCLK_FREQ 125000000
+/* This is the clock used in internal counters. */
+#define REFCLK_FREQ (125000000 / 2)
+#define NSEC_PER_TICK (NSEC_PER_SEC / REFCLK_FREQ)
 
 /* The interrupt is one of those managed by our WRVIC device */
 #define WRN_IRQ_BASE		192

@@ -62,6 +62,9 @@ static struct platform_device wrn_device = {
  */
 int __init wrn_init(void)
 {
+	/* The clock period must be a multiple of 1ns, so bug out otherwise */
+	BUILD_BUG_ON(REFCLK_FREQ * NSEC_PER_TICK != NSEC_PER_SEC);
+
 	/* A few fields must be initialized at run time */
 	spin_lock_init(&wrn_dev.lock);
 
