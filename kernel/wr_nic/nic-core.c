@@ -30,6 +30,7 @@
 static int wrn_open(struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
+	u32 val;
 
 	/* This is "open" just for an endpoint. The nic hw is already on */
 	//netdev_dbg(dev, "%s\n", __func__);
@@ -47,6 +48,10 @@ static int wrn_open(struct net_device *dev)
 	} else {
 		netif_start_queue(dev);
 	}
+
+	/* Set the MRU equal to the MTU */
+	val = readl(&ep->ep_regs->RFCR) & ~EP_RFCR_MRU_MASK;
+	writel (val | EP_RFCR_MRU_W(dev->mtu), &ep->ep_regs->RFCR);
 
 	/* Most drivers call platform_set_drvdata() but we don't need it */
 	return 0;

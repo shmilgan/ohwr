@@ -19,7 +19,7 @@
 /* The interrupt is one of those managed by our WRVIC device */
 #define WRN_IRQ_BASE		192
 #define WRN_IRQ_NIC		(WRN_IRQ_BASE + 0)
-#define WRN_IRQ_TSTAMP		(WRN_IRQ_BASE + 1) /* FIXME: not there */
+#define WRN_IRQ_TSTAMP		(WRN_IRQ_BASE + 1)
 //#define WRN_IRQ_PPSG		(WRN_IRQ_BASE + )
 //#define WRN_IRQ_RTU		(WRN_IRQ_BASE + )
 //#define WRN_IRQ_RTUT		(WRN_IRQ_BASE + )
