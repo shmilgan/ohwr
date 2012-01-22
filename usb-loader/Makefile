@@ -1,9 +1,11 @@
-CC=gcc
-OBJS=mch_flasher.o serial_linux.o
-OUTPUT=mch_flasher
 
-all:	$(OBJS)
-		${CC} -o $(OUTPUT) $(OBJS)
+OBJS = mch_flasher.o serial_linux.o
+FLASHER = mch_flasher
+
+all: $(FLASHER)
+
+$(FLASHER): $(OBJS)
+	${CC} -o $@ $(OBJS)
 
 clean:
-		rm -f $(OBJS) $(OUTPUT)
+	rm -f $(OBJS) $(FLASHER) *~
