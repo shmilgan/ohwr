@@ -1,0 +1,60 @@
+#!/bin/sh
+# A script to compile the usb loader, possibly changing the mac address
+
+
+# Sanity checks
+if [ -d ./usb-loader ]; then true; else
+    echo "$0: Please run me from the top-level wr-switch-sw directory" >& 2
+    exit 1
+fi
+
+err=0;
+if [ -f ./binaries/at91bootstrap.bin ]; then true; else err=1; fi
+if [ -f ./binaries/barebox.bin ]; then true; else err=1; fi
+
+if [ $err -eq 1 ]; then
+    echo "$0: Can't find at91bootstrap or barebox binary" >& 2
+    exit 1
+fi
+
+# parse command line
+DEV="/dev/ttyACM0"
+MAC=""
+while [ $# -ge 1 ]; do
+    case $1 in
+	/* ) DEV="$1"; shift ;;
+	*:* ) MAC="$1"; shift ;;
+	* ) echo "$0: Invalid argument \"$1\"" >&2; exit 1;;
+    esac
+done
+
+# check mac address
+if [ "x$MAC" != "x" ]; then
+    X="[0-9a-fA-F][0-9a-fA-F]"
+    if echo $MAC | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
+	true
+    else
+	echo "$0: Invalid MAC address \"$MAC\"" >&2; exit 1;
+    fi
+fi
+
+# build flasher itself
+if CC=cc make -s -C usb-loader; then true; else
+	echo "$0: Error compiling usb-loader" >&2; exit 1;
+fi
+
+# cat binaries to temp file. Increase size of at91boot (0x8400)
+T=$(mktemp /tmp/wrs-flash.XXXXXX)
+cat binaries/at91bootstrap.bin /dev/zero | dd bs=1 count=33792 > $T \
+    2> /dev/null
+cat binaries/barebox.bin >> $T
+
+# change the mac address if so requested
+if [ "$MAC" != "x$MAC" ]; then
+    sed -i "s/02:0B:AD:C0:FF:EE/$MAC/" $T
+fi
+
+# flash it (msc...)
+(cd usb-loader && ./mch_flasher $T $DEV)
+
+#rm -f $T
