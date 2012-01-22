@@ -192,12 +192,6 @@ int wrn_endpoint_probe(struct net_device *dev)
 
 	epnum = ep->ep_number;
 
-	/* Build the device name */
-	if (epnum < 2)
-		dev_alloc_name(dev, "wru%d");
-	else
-		dev_alloc_name(dev, "wrd%d");
-
 	/* Check whether the ep has been sinthetized or not */
 	val = readl(&ep->ep_regs->IDCODE);
 	if (val != WRN_EP_MAGIC) {
@@ -205,9 +199,9 @@ int wrn_endpoint_probe(struct net_device *dev)
 			ep->ep_number, dev->name);
 		return -ENODEV;
 	}
-
 	/* Errors different from -ENODEV are fatal to insmod */
 
+	dev_alloc_name(dev, "wr%d");
 	wrn_netops_init(dev); /* function in ./nic-core.c */
 	wrn_ethtool_init(dev); /* function in ./ethtool.c */
 	/* Napi is not supported on this device */
