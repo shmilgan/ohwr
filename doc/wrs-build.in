@@ -152,9 +152,9 @@ The scripts in their current status are not expected to be very
 portable. I'm sure a number of @i{bashisms} exist, and I did no effort
 to even identify them.  To relieve the user from possible pain,
 internally the name @i{bash} is used instead of @i{sh}, so things
-should work even if your default shell is @i{ash} or @i{dash}
-(but please remember me about this any now and then, and I'll fix
-stuff to work with @i{dash} at least).
+should work even if your default shell is @i{ash} or @i{dash};
+actually the scripts have been tested in one system where the
+default @i{sh} is @i{dash}.
 
 Similarly, the scripts are likely to fail if you use spaces in directory
 names; that's because not all
@@ -260,7 +260,7 @@ The policy just described is implemented in @i{wrs_download}, in the file
 @code{scripts/wrs_functions}, based on @code{download-info} in the
 main build directory.
 
-The message of a download run are like the following ones:
+The messages of a download run are like the following ones:
 
 @smallexample
    2012-01-12 18:30:46: --- Downloading all files
@@ -430,8 +430,8 @@ directory of this package as @code{at91bootstrap.bin}, the sane name used
 later in the installation instructions.
 
 @b{Warning}: with some distribution, this compilation step will print
-a scaring message about memory corruption. This is reporting a bug in
-the configuration program, that has no bad effects and can be ignored.
+a scaring message about memory corruption. The message is reporting a bug in
+the configuration program which has no actual effects and can be ignored.
 Maybe we'll switch to another version in the future.
 
 @c ##########################################################################
@@ -487,6 +487,9 @@ and are currently the following ones:
 
 @example
    0001-wrs3-changes-to-g45ek.patch
+   0002-initramfs-stop-after-one-cpio-archive.patch
+   0003-at91-NR_IRQS-increase-by-64-to-fit-custom-muxes.patch
+   0004-irq-export-symbols-for-external-irq-controller.patch
 @end example
 
 The configuration being used is copied from this package, so it
@@ -500,9 +503,11 @@ the file @code{.config} to
 
 You can also set @code{WRS_KERNEL_CONFIG} to the full pathname of
 your configuration file of choice. The file must be a copy of the
-@code{.config} after the @code{make menuconfig} step described above.
-Note that if the variable is not pointing to a regular file it is
-ignored with a simple warning -- rather than stopping the build procedure.
+@code{.config} found in the main @i{barebox} directory,
+(for example the one left after the @code{make menuconfig} step).
+Note that if the @code{WRS_KERNEL_CONFIG}
+variable is not pointing to a regular file it is
+ignored with a simple warning, without stopping the build procedure.
 
 @c ##########################################################################
 @node Kernel Modules
@@ -519,8 +524,13 @@ becomes dirty with output and intermediate files; the advantage is that
 any modification you make to the code is already in the repository
 for your to commit.
 
-@c FIXME: modules
-@b{Warning}: the modules are not yet ported to V3.
+Currently, the modules build built are @i{wr_vic.ko} (the interrupt
+controller) and @i{wr-nic.ko} (the network ``card'' driver).  The
+@i{wr_rtu.ko} driver is compiled too, but it is not currently used nor
+tested.
+
+@b{Warning}: I plan to soon rename all modules to have an hyphen
+instead of an underscore in the name.
 
 @c ##########################################################################
 @node Initial tools for the FPGA
@@ -530,9 +540,6 @@ In order to make some tests with your board and be able to develop
 further, the directory @i{tools} includes the following programs:
 
 @table @i
-@item devmem2
-	This is the classic tool to access physical addresses.
-
 @item mapper
 @itemx wmapper
 	The programs read from @i{/dev/mem} writing to @i{stdout} and
@@ -546,10 +553,18 @@ further, the directory @i{tools} includes the following programs:
         The is a limit of 10MB (me lazy!), but the program complains if it
         detects the limit is reached.
 
+@item lm32-loader
+	Loads a program to the internal LM32 soft-cre.
+
 @item spi-pll
 	Uses the @i{opencores_spi} device part of the FPGA bitstream to
-        talk with the AD9516 device that is mounted on the board.
+        talk with the AD9516 device that is mounted on the board. It is
+        only of historical relevance, as the internal LM32 is not dealing
+        with the PLL device.
 @end table
+
+The list above used to include @i{devmem2}, but now @i{devmem} is part
+of the installed @i{busybox} and has the same command-line interface.
 
 Please note that currently the @code{Makefile} is very limited. It
 requires you to specify both the kernel directory (@code{LINUX=}) and
@@ -557,21 +572,19 @@ the cross-compiler to use (@code{CROSS_COMPILE=}). Similarly, you must
 spell the name of the binaries on the command line.  It will be fixed
 and integrated in the build procedure as soon as possible.
 
-@b{Warning}: the rest of this file has not been updated yet. It
-is kept here for reference anyways.
-
-@c FIXME: check if devmem is already part of busybox
-
 @c ##########################################################################
 @node PTPd
 @chapter PTPd
+
+@c FIXME: the new PTP
+@b{Warning}: This part of the document, about PTP,  needs to be updated, what
+follows is the old text, kept here for reference.
 
 The Precision Time Protocol Daemon being used is host in a different
 repository. It's the code base that has been ported to compile in a
 freestanding environment, downloaded from
 @code{git://gnudd.com/ptp-noposix.git} .
 
-@c FIXME: the new PTP
 We are working on a better code base for a portable PTP, but it is
 not yet ready as of this writing.
 
@@ -596,8 +609,11 @@ warning messages).
 @node User Space Applications
 @chapter User Space Applications
 
-The build of user space is concerned about the following steps:
 @c FIXME: user space apps
+@b{Warning}: This part of the document, about user space, needs to be
+updated, what follows is the old text, kept here for reference.
+
+The build of user space is concerned about the following steps:
 
 @table @i
 
@@ -617,15 +633,24 @@ The build of user space is concerned about the following steps:
 
 @c ##########################################################################
 @node VHDL Binaries
-@chapter VHDL Binaries
+@chapter VHDL and LM32 Binaries
 
 The binaries are currently missing from the filesystem-making procedures.
+You'll need to get the most recent binaries and copy them in the filesystem
+by yourself. This part will be filled last in this document, when the
+switches are distributed for production.
+
+@c FIXME: the binaries.
+
 
 @c ##########################################################################
 @node The Complete Filesystem
 @chapter The Complete Filesystem
 
+@b{Warning}: This part of the document, about the filesystem, needs to
+be updated, what follows is the old text, kept here for reference.
 
+@c FIXME: the complete filesystem
 The final step in compiling the filesystem is making the CPIO archive
 to be used as @i{ramdisk} in the switch.  The name of the file
 @code{images/ramdisk.ext2} within the @code{WRS_BUILD_DIR}, even if
@@ -674,17 +699,17 @@ likely need a level converter; the figure below shows the connection
 @sp 1
 
 @menu
-* Installation from Jtag::      
-* Installation through the Boot-ROM::  
+* Installing from Jtag::        
+* Installing with the USB Flasher::  
 * Booting the Kernel::          
 @end menu
 
 @c ==========================================================================
-@node Installation from Jtag
-@section Installation from Jtag
+@node Installing from Jtag
+@section Installing from Jtag
 
 You can boot and install the system using a JTAG debugger, although
-the @i{USB loader} is currently the preferred technique. Each debugger
+the @i{USB Flasher} is currently the preferred technique. Each debugger
 has its own command language, so you'll need to adapt to yours. What is
 shown here refers to the @i{peedi} tool.
 
@@ -724,6 +749,7 @@ it would take several dozen minutes.
 On the serial port you'll see the following messages at 115200,8N1.
 The first 4 lines are printed by @i{at91bootstrap}, the rest by @i{barebox}.
 
+@c FIXME: the messages and prompts
 @smallexample
    Start AT91Bootstrap...
    Begin to load image...
@@ -773,8 +799,8 @@ of the DataFlash and @i{barebox} to offset 0x8400 (33792):
 Now you can detach the debugger, press reset and see @i{barebox} starting.
 
 @c ==========================================================================
-@node Installation through the Boot-ROM
-@section Installation through the Boot-ROM
+@node Installing with the USB Flasher
+@section Installing with the USB Flasher
 
 You can install the IPL and boot loader using the @i{USB-loader} program,
 put together by Tomasz based on Atmel sources available to the public
@@ -785,11 +811,15 @@ it from finding code in the @i{data-flash}. To do so you can short
 pins 1 and 4 of the chip -- this shorts CS* and 5V to the ROM
 can access to the memory's contents. I used two wires
 to be shorted together as needed.  Then, you need to connect a USB
-cable to the device socket near the JTAG connector. The next image
-shows both the shorted pins (the @i{dataflash} is on the left) and the
+cable to the device socket near the JTAG connector. The next figure
+shows both the shorted pins (the @i{dataflash} is on the left and there
+are two arrowheads pointing to them) and the
 USB cable (on the right).
+@sp 1
+@center @image{flasher, 14cm}
+@sp 1
 
-With the pins shorted , you can press reset (the button near the USB
+After shorting the pins you can press reset (the button near the USB
 connector). If things go well, the device is enumerated as shown;
 you must un-short the wires at this point or you won't be able
 to write the new information to @i{dataflash}
@@ -800,38 +830,71 @@ to write the new information to @i{dataflash}
 @end smallexample
 
 The device should also appear as @code{/dev/ttyACM0} or equivalent.
-At this point you must un-short the @i{dataflash} pins (
 
-Now you can program the IPL and boot loader using the script FIXME
-provided in this package.  The script performs the following steps:
+Now you can un-short the @i{data flash} ping and program the IPL and
+boot loader using the script @i{build/flash-wrs} provided in this
+package.
+
+The script is invoked as superuser in the following way, from the
+toplevel directory of @code{wr-switch-sw}:
+
+@example
+   ./build/flash-wrs [uart-device] [xx:yy:zz:aa:bb:cc]
+@end example
+
+The @i{uart device} is optional. It defaults to @code{/dev/ttyACM0}.
+If your system maps the Atmel ROM to a different device name, please
+pass the name on the command line. The script wants a full pathname:
+the leading @code{/} is used to tell the device argument from the
+mac-address one).
+
+The MAC address is optional; if not specified, the default
+@code{02:0b:ad:c0:ff:ee} applies.  The script checks that the
+address is properly formed before applying it to the @i{barebox}.
+
+If you want to flash your own @i{at91boot.bin} or @i{barebox.bin} you
+can just place them in the @i{binaries} subdirectory before calling
+the script.
+
+The script performs the following steps:
 
 @itemize @bullet
 @item It compiles the loader (@i{usb-loader/} subdir).
 @item It picks @i{at91boot} and @i{barebox} from the @i{binaries} subdirectory.
-@item It packs them together in a single binary image.
+@item It packs them together in a single binary image, with proper offsets,
 @item Optionally, it changes the default MAC address in @i{barebox}
       default environment, so you can make all switches different.
 @item It uses the @i{sam-ba} protocol to write to @i{dataflash}.
-@item 
+@end itemize
 
 If all goes well, at the next reset you'll find @i{barebox} accessing
 the network with your preferred MAC address.
 
-The script is invoked as follows, from the toplevel directory of
-@code{wr-switch-build}:
+The output you must expect from the flasher is like the following, and
+the process takes half a minute more or less:
 
 @example
-   ./build/flash-wrs [xx:yy:zz:aa:bb:cc]
-@eend example
+   Initializing SAM-BA: CPU ID: 0x819b05a2
+   loading applet isp-extram-at91sam9g45 at 0x00300000
+   Initializing DataFlash...
+   loading applet isp-dataflash-at91sam9g45 at 0x00300000
+   Programming DataFlash...
+   Dataflash: Writing 279896 bytes at offset 0x0 buffer 70000000....ABCDE
+   Fdone.
+   Programming done!
+@end example
 
-The MAC address is optional; if unspecified the default
-@code{02:0b:ad:c0:ff:ee} applies.  If you want to burn your wont
-@i{at91boot.bin} or @i{barebox.bin} you can just place them in
-the @i{binaries} subdirectory beforehand.
+If you look at the serial port, during programming, you'll see
+messages like these:
 
-The output you must expect from the flasher is like the following:
-
-FIXME
+@example
+   -I- Statup: PMC_MCKR 1202 MCK = 100000000 command = 0
+   -I- -- EXTRAM ISP Applet 2.9 --
+   -I- -- AT91SAM9G45-EK
+   [...]
+   -I- VERIFY at offset: 0x0 buffer at : 0x70055d28 of: 0x45d28 Bytes
+   -I-     End of applet (command : 2 --- status : 0)
+@end example
 
 @c ==========================================================================
 @node Booting the Kernel
@@ -846,6 +909,7 @@ in your network, the following commands will load a kernel and
 boot it as NFS-Root. You'll need to change IP addresses and names
 to match your personal situation.
 
+@c FIXME: kernel boot procedure
 @example
    eth0.ipaddr=192.168.16.9
    eth0.serverip=192.168.16.1
@@ -860,72 +924,79 @@ to match your personal situation.
 @node Code layout in a production switch
 @chapter Code layout in a production switch
 
-This is the suggested arrangement of the various binary blobs in the
-final switch. Any comment and suggestion is welcome, as nothing
-is cast in stone at this point:
+This section should document how the various memories are being used
+in production.  This topic is still to be decided, so I removed the
+previous proposal waiting for a final decision.  The plan is
+installing a newer @i{barebox} able to reprogram everything else from
+the network or usb if a button is kept pressed at boot.
 
-@table @i
-@item At91Boot
-      The initial program loader is located in the first few
-      kilobytes of NAND flash. The internal ROM loads it to static RAM
-      and executes it.  This version of @i{at91boot} wil read @i{barebox}
-      from NAND.
-
-@item Barebox
-      The active copy of the boot loader is in NAND memory as well.
-      The user can interact on the serial port, but if the program receives
-      nothing in the first three seconds it will proceed with the default
-      boot procedure. The shipped default loads everything else
-      from flash (as described here), but you can change and save the
-      configuration, which is stored in a different NAND partition.
-      For example during development you'll want to load the kernel
-      and filesystem from the network, or use NFS-Root.
-
-@item Kernel
-      The default Linux kernel, loaded from NAND, is configured for
-      read-only access to @i{at91boot} and @i{barebox}, to prevent
-      erasing them by error.  Similarly, it isn't able to access DataFlash.
-      If you really want to hack the boot sequence, you can recompile
-      the kernel with no such protections, like I do.
-
-@item Ramdisk
-      The initial filesystem is loaded as an @i{initrd} archive, loaded
-      from a NAND partition. The running system won't be actively
-      accessing flash memory, so you can erase and reprogram your filesystem
-      without taking any special tests. 
-
-@item Additional Filesystem
-      The remaining area of NAND flash is mounted as @i{ubifs}. The
-      initial ram disk executes @i{etc/rc} from such partition, so
-      users can add own programs and customizations without the need
-      to reprogram the shipped @i{initrd}.
-
-@item Failsafe At91Boot
-      The DataFlash memory is equipped with recovery system software.
-      When the internal ROM looks for an IPL, it looks in NAND first,
-      and in DataFlash later.  Therefore, if you accidentally erase
-      your NAND, the system will boot from DataFlash.  The
-      @i{at91boot} there is configured to load @i{barebox} from
-      DataFlash.
-
-@item Failsafe Barebox
-      The @i{barebox} installed to DataFlash is configured to load
-      kernel and filesystem from the same device. If you connect
-      a serial port, though, you can interact and use the network.
-
-@item Failsafe Operating System
-      The System Shipped in DataFlash has a @i{telnet} daemon,
-      listening on address 10.98.76.54, where user @i{root} has
-      an empty password. The kernel is configured with read-write
-      access to the whole NAND memory, so you can easily reprogram your
-      production system.
-@end table
-
-Please note that the @i{failsafe} procedure is not really fail-safe,
-because if you write a fault @i{at91boot} or @i{barebox} to NAND,
-the internal ROM will still boot from NAND leading to a bricked device.
-In this case you must follow 
-
+@c FIXME: code layout
+@c This is the suggested arrangement of the various binary blobs in the
+@c final switch. Any comment and suggestion is welcome, as nothing
+@c is cast in stone at this point:
+@c 
+@c @table @i
+@c @item At91Boot
+@c       The initial program loader is located in the first few
+@c       kilobytes of NAND flash. The internal ROM loads it to static RAM
+@c       and executes it.  This version of @i{at91boot} wil read @i{barebox}
+@c       from NAND.
+@c 
+@c @item Barebox
+@c       The active copy of the boot loader is in NAND memory as well.
+@c       The user can interact on the serial port, but if the program receives
+@c       nothing in the first three seconds it will proceed with the default
+@c       boot procedure. The shipped default loads everything else
+@c       from flash (as described here), but you can change and save the
+@c       configuration, which is stored in a different NAND partition.
+@c       For example during development you'll want to load the kernel
+@c       and filesystem from the network, or use NFS-Root.
+@c 
+@c @item Kernel
+@c       The default Linux kernel, loaded from NAND, is configured for
+@c       read-only access to @i{at91boot} and @i{barebox}, to prevent
+@c       erasing them by error.  Similarly, it isn't able to access DataFlash.
+@c       If you really want to hack the boot sequence, you can recompile
+@c       the kernel with no such protections, like I do.
+@c 
+@c @item Ramdisk
+@c       The initial filesystem is loaded as an @i{initrd} archive, loaded
+@c       from a NAND partition. The running system won't be actively
+@c       accessing flash memory, so you can erase and reprogram your filesystem
+@c       without taking any special tests. 
+@c 
+@c @item Additional Filesystem
+@c       The remaining area of NAND flash is mounted as @i{ubifs}. The
+@c       initial ram disk executes @i{etc/rc} from such partition, so
+@c       users can add own programs and customizations without the need
+@c       to reprogram the shipped @i{initrd}.
+@c 
+@c @item Failsafe At91Boot
+@c       The DataFlash memory is equipped with recovery system software.
+@c       When the internal ROM looks for an IPL, it looks in NAND first,
+@c       and in DataFlash later.  Therefore, if you accidentally erase
+@c       your NAND, the system will boot from DataFlash.  The
+@c       @i{at91boot} there is configured to load @i{barebox} from
+@c       DataFlash.
+@c 
+@c @item Failsafe Barebox
+@c       The @i{barebox} installed to DataFlash is configured to load
+@c       kernel and filesystem from the same device. If you connect
+@c       a serial port, though, you can interact and use the network.
+@c 
+@c @item Failsafe Operating System
+@c       The System Shipped in DataFlash has a @i{telnet} daemon,
+@c       listening on address 10.98.76.54, where user @i{root} has
+@c       an empty password. The kernel is configured with read-write
+@c       access to the whole NAND memory, so you can easily reprogram your
+@c       production system.
+@c @end table
+@c 
+@c Please note that the @i{failsafe} procedure is not really fail-safe,
+@c because if you write a fault @i{at91boot} or @i{barebox} to NAND,
+@c the internal ROM will still boot from NAND leading to a bricked device.
+@c In this case you must follow 
+@c 
 
 
 
