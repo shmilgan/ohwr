@@ -47,7 +47,7 @@
 #define WR_RTU_IRQ		2
 #define WRVIC_BASE_IRQ		(NR_AIC_IRQS + (5 * 32)) // top of GPIO interr
 
-#define FPGA_BASE_RTU		0x70100000               // fpga_regs.h
+#define FPGA_BASE_RTU		0x10060000               // fpga_regs.h
 
 struct wr_rtu_dev {
 	wait_queue_head_t	q;
