@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
 /* -I$LINUX/arch/arm/mach-at91/include/ */
 #include <mach/at91_pio.h>
@@ -29,7 +30,7 @@
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
 
-unsigned char *bstream;
+static unsigned char *bstream;
 
 /* The address and size of the entire AT91 I/O reg space */
 #define BASE_IOREGS 0xfff78000
@@ -43,7 +44,7 @@ enum {
 	PIOE = 4
 };
 
-void *ioregs;
+static void *ioregs;
 
 
 #define AT91_PIOx(port) (AT91_PIOA + AT91_BASE_SYS + 0x200 * port)
@@ -85,7 +86,7 @@ static int pio_get(int port, int bit)
 #define FPGA_RESET	PIOA, 5 //out
 
 
-void ud(int usecs) /* horrible udelay thing without scheduling */
+static void ud(int usecs) /* horrible udelay thing without scheduling */
 {
 	struct timeval tv1, tv2;
 	gettimeofday(&tv1, NULL);
@@ -96,23 +97,18 @@ void ud(int usecs) /* horrible udelay thing without scheduling */
 }
 
 
-int main(int argc, char **argv)
+/* being a lazy bastard, I fork a process to avoid free, munmap etc */
+static int load_fpga_child(char *fname)
 {
 	int bs_size, i;
 	int fdmem;
 
-	if (argc != 2) {
-		fprintf(stderr, "%s: Use: \"%s <bitstream>\"\n", argv[0],
-			argv[0]);
-		exit(1);
-	}
-
 	{
 		/* read the bisstream file */
-		FILE *f = fopen(argv[1], "r");
+		FILE *f = fopen(fname, "r");
 
 		if (!f) {
-			fprintf(stderr, "%s: %s: %s\n", argv[0], argv[1],
+			fprintf(stderr, "%s: %s: %s\n", __func__, fname,
 				strerror(errno));
 			exit(1);
 		}
@@ -126,14 +122,13 @@ int main(int argc, char **argv)
 		if (bstream == NULL)
 		{
 			fprintf(stderr, "malloc failed\n");
-			fclose(f);
 			exit(1);
 		}
 
 
 		if (fread(bstream, 1, bs_size, f) != bs_size) {
-			fprintf(stderr, "%s: read(%s): %s\n", argv[0],
-				argv[1], strerror(errno));
+			fprintf(stderr, "%s: read(%s): %s\n", __func__,
+				fname, strerror(errno));
 			exit(1);
 		}
 
@@ -143,7 +138,8 @@ int main(int argc, char **argv)
 
 	/* /dev/mem for mmap of both gpio and spi1 */
 	if ((fdmem = open("/dev/mem", O_RDWR | O_SYNC)) < 0) {
-		fprintf(stderr, "%s: /dev/mem: %s\n", argv[0], strerror(errno));
+		fprintf(stderr, "%s: /dev/mem: %s\n", __func__,
+			strerror(errno));
 		exit(1);
 	}
 
@@ -153,8 +149,8 @@ int main(int argc, char **argv)
 		      BASE_IOREGS);
 
 	if (ioregs == MAP_FAILED) {
-		fprintf(stderr, "%s: mmap(/dev/mem): %s\n",
-			argv[0], strerror(errno));
+		fprintf(stderr, "%s: mmap(/dev/mem): %s\n", __func__,
+			strerror(errno));
 		exit(1);
 	}
 
@@ -239,13 +235,13 @@ int main(int argc, char **argv)
 	/* check status: initb must be low and done must be low */
 	if (pio_get(INITB)) {
 		fprintf(stderr, "%s: INIT_B is still high after PROGRAM_B\n",
-			argv[0]);
+			__func__);
 		//exit(1);
 	}
 
 	if (!pio_get(DONE)) {
 		fprintf(stderr, "%s: DONE is already high after PROGRAM_B\n",
-			argv[0]);
+			__func__);
 		//exit(1);
 	}
 
@@ -259,7 +255,7 @@ int main(int argc, char **argv)
 
 	if (pio_get(INITB)) {
 		fprintf(stderr, "%s: INIT_B is not going back high\n",
-			argv[0]);
+			__func__);
 		//exit(1);
 	}
 
@@ -281,7 +277,7 @@ int main(int argc, char **argv)
 
 		if (0 && /* don't do this check */ !pio_get(DONE)) {
 			fprintf(stderr, "%s: DONE is already high after "
-				"%i bytes (missing %i)\n", argv[0],
+				"%i bytes (missing %i)\n", __func__,
 				i, bs_size - i);
 			exit(1);
 		}
@@ -296,7 +292,7 @@ int main(int argc, char **argv)
 	}
 	if (pio_get(DONE)) {
 		fprintf(stderr, "%s: DONE is not going high after %i bytes\n",
-			argv[0], bs_size);
+			__func__, bs_size);
 		exit(1);
 	}
 
@@ -304,6 +300,25 @@ int main(int argc, char **argv)
 	pio_set(PIO_CODR, FPGA_RESET);
 	ud(10);
 	pio_set(PIO_SODR, FPGA_RESET);
-
 	exit(0);
+}
+
+int load_fpga_main(char *fname)
+{
+	int pid = fork();
+	int status;
+
+	switch(pid) {
+	case -1:
+		fprintf(stderr, "fork(): %s\n", strerror(errno));
+		return -1;
+	case 0: /* child */
+		load_fpga_child(fname);
+		exit(0);
+	default: /* parent */
+		waitpid(pid, &status, 0);
+		if (!WEXITSTATUS(status))
+			return 0;
+		return -1;
+	}
 }

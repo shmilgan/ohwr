@@ -15,3 +15,18 @@ NM              = $(CROSS_COMPILE)nm
 STRIP           = $(CROSS_COMPILE)strip
 OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
+
+LIB = libtools.a
+
+LIBOBJ = lm32-loader.o load-fpga.o
+
+LDFLAGS = -L. -ltools
+
+PROGS = load-lm32 load-virtex spi-pll mapper wmapper
+
+all: $(LIB) $(PROGS)
+
+$(PROGS): $(LIB)
+
+$(LIB): $(LIBOBJ)
+	$(AR) r $@ $^

@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/mman.h>
@@ -17,6 +18,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #define BASE_FPGA 0x10000000
 #define SIZE_FPGA 0x20000
@@ -82,22 +84,16 @@ void copy_lm32(uint32_t *buf, int buf_nwords, uint32_t base_addr)
 	printf("OK.\n");
 }
 
-int main(int argc, char **argv)
+int load_lm32_child(char *fname)
 {
 	uint32_t *buf;
 	FILE *f;
 	int fdmem;
 
-  if(argc<2)
-  {
-    fprintf(stderr, "No parameters specified !\n");
-    fprintf(stderr, "Usage:\n\t%s <binary file> \n", argv[0]);
-    return 0;
-  }
-
 	/* /dev/mem for mmap of both gpio and spi1 */
 	if ((fdmem = open("/dev/mem", O_RDWR | O_SYNC)) < 0) {
-		fprintf(stderr, "%s: /dev/mem: %s\n", argv[0], strerror(errno));
+		fprintf(stderr, "%s: /dev/mem: %s\n", __func__,
+			strerror(errno));
 		exit(1);
 	}
 
@@ -108,12 +104,12 @@ int main(int argc, char **argv)
 
 	if (base_fpga == MAP_FAILED) {
 		fprintf(stderr, "%s: mmap(/dev/mem): %s\n",
-			argv[0], strerror(errno));
+			__func__, strerror(errno));
 		exit(1);
 	}
 
 
-   	f=fopen(argv[1],"rb");
+   	f=fopen(fname,"rb");
    	if(!f)
    	{
    	 	fprintf(stderr, "Input file not found.\n");
@@ -137,4 +133,22 @@ int main(int argc, char **argv)
   return 0;
 }
 
+int load_lm32_main(char *fname)
+{
+	int pid = fork();
+	int status;
 
+	switch(pid) {
+	case -1:
+		fprintf(stderr, "fork(): %s\n", strerror(errno));
+		return -1;
+	case 0: /* child */
+		load_lm32_child(fname);
+		exit(0);
+	default: /* parent */
+		waitpid(pid, &status, 0);
+		if (!WEXITSTATUS(status))
+			return 0;
+		return -1;
+	}
+}
