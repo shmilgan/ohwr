@@ -221,6 +221,7 @@ static int wrn_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
 	int res;
+	u32 reg;
 
 	switch (cmd) {
 	case SIOCSHWTSTAMP:
@@ -229,6 +230,16 @@ static int wrn_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		return wrn_calib_ioctl(dev, rq, cmd);
 	case PRIV_IOCGGETPHASE:
 		return wrn_phase_ioctl(dev, rq, cmd);
+	case PRIV_IOCREADREG:
+		if (get_user(reg, (u32 *)rq->ifr_data) < 0)
+			return -EFAULT;
+		if (reg > sizeof(struct EP_WB) || reg & 3)
+			return -EINVAL;
+		reg = readl((void *)ep->ep_regs + reg);
+		if (put_user(reg, (u32 *)rq->ifr_data) < 0)
+			return -EFAULT;
+		return 0;
+
 	default:
 		spin_lock_irq(&ep->lock);
 		res = generic_mii_ioctl(&ep->mii, if_mii(rq), cmd, NULL);

@@ -158,9 +158,10 @@ enum wrn_resnames {
 #define wrn_ep_read(ep, reg) __raw_readl(&(ep)->ep_regs->reg)
 #define wrn_ep_write(ep, reg, val) __raw_writel((val), &(ep)->ep_regs->reg)
 
-/* Private ioctls, like in wr_minic.c */
-#define PRIV_IOCGCALIBRATE (SIOCDEVPRIVATE+1)
-#define PRIV_IOCGGETPHASE (SIOCDEVPRIVATE+2)
+/* Private ioctls, (the first 2 are the same as they were in wr_minic.c */
+#define PRIV_IOCGCALIBRATE	(SIOCDEVPRIVATE + 1)
+#define PRIV_IOCGGETPHASE	(SIOCDEVPRIVATE + 2)
+#define PRIV_IOCREADREG		(SIOCDEVPRIVATE + 3)
 
 /* Structures straight from wr_minic.c -- should user-space include this? */
 struct wrn_calibration_req {
