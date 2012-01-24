@@ -3,9 +3,7 @@ CC = $(CROSS_COMPILE)gcc
 AR = $(CROSS_COMPILE)ar
 CFLAGS = -I. -O2 -I../include -DDEBUG -I./minilzo
 
-OBJS = pio.o pio_pins.o trace.o init.o fpga_io.o util.o ad9516.o \
-	fpgaboot.o minilzo/minilzo.o clkb_io.o xpoint.o \
-	mblaster.o pps_gen.o
+OBJS = trace.o init.o fpga_io.o util.o pps_gen.o
 
 LIB = libswitchhw.a
 
