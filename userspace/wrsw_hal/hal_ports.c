@@ -438,35 +438,16 @@ static void port_locking_fsm(hal_port_state_t *p)
 /* Step 1: start locking by switching the helper PLL to use the newly designated uplink port as a reference */
 	case LOCK_STATE_START:
 		shw_hpll_switch_reference(p->name);
-		p->lock_state = LOCK_STATE_WAIT_HPLL;
+		p->lock_state = LOCK_STATE_LOCKED; // was LOCK_STATE_WAIT_HPLL
 		break;
 
 /* Step 2: wait until the HPLL has locked. fixme: timeout? */
-	case LOCK_STATE_WAIT_HPLL:
-		if(shw_hpll_check_lock())
-		{
-			TRACE(TRACE_INFO, "HPLL locked to port: %s", p->name);
-/* The HPLL is locked - now the DMPLL has a stable DMTD offset clock, so we can re-lock it to the 
-   new uplink */
-			shw_dmpll_lock(p->name);
-			p->lock_state = LOCK_STATE_WAIT_DMPLL;
-		}
-		break;
+
+		/* ARub: removed for V3 as Tom commands */
 
 /* Step 3: Wait until the DMPLL has locked */
-	case LOCK_STATE_WAIT_DMPLL:
 
-
-		if(!shw_hpll_check_lock())
-		{
-			p->lock_state = LOCK_STATE_NONE;
-		} else if(shw_dmpll_check_lock())
-		{
-			TRACE(TRACE_INFO, "DMPLL locked to port: %s", p->name);
-			p->lock_state = LOCK_STATE_LOCKED;
-		}
-
-		break;
+		/* ARub: removed for V3 as Tom commands */
 
 /* Step 4: locking done. Just poll the PLL status regularly. */
 	case LOCK_STATE_LOCKED:
@@ -477,13 +458,9 @@ static void port_locking_fsm(hal_port_state_t *p)
 			TRACE(TRACE_ERROR, "HPLL de-locked");
 			p->lock_state = LOCK_STATE_NONE;
 			p->locked = 0;
-		} else if (!shw_dmpll_check_lock())
-		{
-			shw_hpll_switch_reference("local"); /* FIXME: ugly workaround. The proper way is to do the TX calibration AFTER LOCKING !  */
-			TRACE(TRACE_ERROR, "DMPLL de-locked");
-			p->lock_state = LOCK_STATE_NONE;
-			p->locked = 0;
-		} else 
+		}
+		/* We had "else if" and dmpll check. Removed on Tom's word */
+		else
 /* Indicate that the port is locked */
 			p->locked = 1;
 

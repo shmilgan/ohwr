@@ -105,7 +105,7 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
    setpoints for different uplinks is the task of the PTPd.*/
 
     case HEXP_PPSG_CMD_ADJUST_PHASE:
-      shw_dmpll_phase_shift(params->port_name, params->adjust_phase_shift);
+	    /* no more dmpll */
       return 0;
 
 /* PPS adjustment call, independent for the nanosecond (a.k.a. 8ns cycle) counter and the seconds (UTC)
@@ -133,7 +133,7 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
    delay calculation. */
  
     case HEXP_PPSG_CMD_POLL:
-      return shw_dmpll_shifter_busy(params->port_name) || shw_pps_gen_busy();
+	    return shw_pps_gen_busy(); /* no more dmpll shifter to check */
     }
   return -1; /* fixme: real error code */
 }

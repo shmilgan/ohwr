@@ -32,7 +32,7 @@ int shw_init()
 	  assert_init(shw_clkb_init());
   /* Start-up the PLLs. */
     assert_init(shw_hpll_init());
-    assert_init(shw_dmpll_init());
+    /* no more assert_init(shw_dmpll_init()); */
   /* Initialize the calibrator (requires the DMTD clock to be operational) */
     assert_init(shw_cal_init());
   /* Start-up the PPS generator */
