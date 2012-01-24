@@ -94,16 +94,9 @@ typedef struct {
 /* current DMTD loopback phase (picoseconds) and whether is it valid or not */
 	uint32_t phase_val;
 	int phase_val_valid;
-
+	int tx_cal_pending, rx_cal_pending;
 /* locking FSM state */
 	int lock_state;
-
-/* calibration FSM substates (RX/TX calibration in progress) */
-	int tx_cal_pending;
-	int rx_cal_pending;
-
-/* Index of the activity/link LED  */
-	int led_index;
 
 /* Endpoint's base address */
 	uint32_t ep_base;
@@ -115,35 +108,6 @@ static hal_port_state_t ports[MAX_PORTS];
 
 /* An fd of always opened raw sockets for ioctl()-ing Ethernet devices */
 static int fd_raw;
-
-/* computes an "unwrapped" PHY delay from the parameters from the configuration file (see wrsw_hal.h for
-   a detailed explanation) and the phase from the calibrator DMTD */
-static uint32_t fix_phy_delay(int32_t delay, int32_t bias, int32_t min_val, int32_t range)
-{
-	int32_t brange = (bias + range) % 8000;
-	TRACE(TRACE_INFO,"dly %d bias %d range %d brange %d", delay, bias, range,brange);
-
-/* harder case: the range of calibrator measurements goes across the 0 - 8 ns "jump" - i.e. 
-   the measured phase can be either in [bias, 8000ps] or in [0ps, bias + range - 8000ps] */
-	if(bias + range > 8000)
-	{
-		if(brange < 0) brange += 8000;
-
-/* determine the subrange */
-		if(delay > bias || (delay < bias && delay > brange))
-		{
-			return delay - bias + min_val;
-		}  {
-			return delay + (8000-bias) + min_val;
-		}
-
-/* easy case - min and max delays fit as a single block inside the [0, 8000 ps] interval */
-	} else {
-		return delay - bias + min_val;
-	}
-	return delay;  /* fixme: this is never reached */
-}
-
 
 /* generates a unique MAC address for port if_name (currently produced from the MAC of the
    management port). */
@@ -177,7 +141,6 @@ static int get_mac_address(const char *if_name, uint8_t *mac_addr)
 /* Resets the state variables of a particular port and re-starts its state machines */
 static void reset_port_state(hal_port_state_t *p)
 {
-
 	p->calib.rx_calibrated = 0;
 	p->calib.tx_calibrated = 0;
 	p->locked = 0;
@@ -185,7 +148,6 @@ static void reset_port_state(hal_port_state_t *p)
 	p->lock_state = LOCK_STATE_NONE;
 	p->tx_cal_pending = 0;
 	p->rx_cal_pending = 0;
-
 }
 
 #define AT_INT32 0
@@ -280,12 +242,8 @@ int hal_init_port(const char *name, int index)
 	system(cmd);
 
 /* read calibraton parameters (unwrapping and constant deltas) */
-	cfg_get_port_param(name, "phy_rx_bias",  &p->calib.phy_rx_bias,  AT_INT32, 7800);
 	cfg_get_port_param(name, "phy_rx_min",   &p->calib.phy_rx_min,   AT_INT32, 18*800);
-	cfg_get_port_param(name, "phy_rx_range", &p->calib.phy_rx_range, AT_INT32, 7*800);
-
-	cfg_get_port_param(name, "phy_tx_bias",  &p->calib.phy_tx_bias,   AT_INT32, 7800);
-	cfg_get_port_param(name, "phy_tx_min",   &p->calib.phy_tx_min,    AT_INT32, 18*800);  	        cfg_get_port_param(name, "phy_tx_range", &p->calib.phy_tx_range,  AT_INT32, 7*800);
+	cfg_get_port_param(name, "phy_tx_min",   &p->calib.phy_tx_min,    AT_INT32, 18*800);
 
 	cfg_get_port_param(name, "delta_tx_sfp",  &p->calib.delta_tx_sfp,  AT_INT32, 0);
 	cfg_get_port_param(name, "delta_rx_sfp",  &p->calib.delta_rx_sfp,  AT_INT32, 0);
@@ -300,22 +258,13 @@ int hal_init_port(const char *name, int index)
 	p->calib.fiber_fix_alpha = (double)pow(2.0, 40.0) * ((p->calib.fiber_alpha + 1.0) / (p->calib.fiber_alpha + 2.0) - 0.5);
 
 
-/* choose the LED (mini-backplane/front-panel). Not really implemented yet. In the V3 leds will be handled
-   from inside the FPGA */
-	p->led_index = (int) (p->name[3] - '0');
-	if(p->name[2] == 'u')
-		p->led_index |= LED_UP_MASK;
+	sscanf(p->name+2, "%d", &p->hw_index);
 
-
-	if(p->name[2] == 'd')
-	{
-		p->hw_index = 2+(p->name[3]-'0');
-	} else {
-		p->hw_index = 0+(p->name[3]-'0');
-	}
 
 /* Set up the endpoint's base address (fixme: do this with the driver) */
-	p->ep_base = FPGA_BASE_EP_UP0 + 0x10000  *  p->hw_index;
+
+/* FIXME: this address should come from the driver header */
+	p->ep_base = 0x30000 + 0x400  *  p->hw_index;
 
 /* Configure the port's timing role depending on the contents of the config file */
 	snprintf(key_name, sizeof(key_name),  "ports.%s.mode", p->name);
@@ -388,41 +337,18 @@ static int check_link_up(const char *if_name)
    and the softpll. */
 static void port_locking_fsm(hal_port_state_t *p)
 {
-	switch(p->lock_state)
-	{
-/* locking disabled - do nothing */
-	case LOCK_STATE_NONE:
-		return;
-
-/* Step 1: start locking by switching the helper PLL to use the newly designated uplink port as a reference */
-
-		/* ARub: removed for V3 as Tom commands */
-	case LOCK_STATE_START:
-		p->lock_state = LOCK_STATE_LOCKED;
-		break;
-
-/* Step 2: wait until the HPLL has locked. fixme: timeout? */
-
-		/* ARub: removed for V3 as Tom commands */
-
-/* Step 3: Wait until the DMPLL has locked */
-
-		/* ARub: removed for V3 as Tom commands */
-
-/* Step 4: locking done. Just poll the PLL status regularly. */
-	case LOCK_STATE_LOCKED:
-
-		/* There were checks if hpll and dmpll. Removed now */
-		p->locked = 1;
-
-		break;
-	}
 }
 
 /* Updates the current value of the phase shift on a given port. Called by the main update function regularly. */
 static void poll_dmtd(hal_port_state_t *p)
 {
 	/* FIXME: what should we do here? */
+}
+
+
+static uint16_t pcs_readl(int endpoint, uint8_t reg)
+{
+
 }
 
 
@@ -436,8 +362,9 @@ static void calibration_fsm(hal_port_state_t *p)
 		TRACE(TRACE_INFO,"Bypassing calibration for downlink port %s", p->name);
 		p->calib.tx_calibrated = 1;
 		p->calib.rx_calibrated = 1;
-		p->calib.delta_rx_phy = 0;
-		p->calib.delta_tx_phy = 0;
+		/* FIXME: use proper register names */
+		p->calib.delta_rx_phy = p->calib.phy_rx_min + ((pcs_readl(p->hw_index, 16) >> 4) & 0x1f) * 800;
+		p->calib.delta_tx_phy = p->calib.phy_tx_min;
 		p->tx_cal_pending = 0;
 		p->rx_cal_pending = 0;
 
@@ -446,35 +373,9 @@ static void calibration_fsm(hal_port_state_t *p)
 
 /* Is there a calibration measurement in progress for this port? */
 
-	/* no, not in V3 */
+/* no, not in V3 */
 }
 
-#if 0
-/* Port LED update function. To be removed in V3. */
-static int update_port_leds(hal_port_state_t *p)
-{
-	uint32_t dsr = _fpga_readl(p->ep_base + EP_REG_DSR);
-
-
-
-	if(p->led_index & LED_UP_MASK)
-	{
-		int i = p->led_index & 0xf;
-
-		if(i==1)
-			shw_pio_set(&PIN_fled4[0],  dsr & EP_DSR_LSTATUS ? 0 : 1);
-		else
-			shw_pio_set(&PIN_fled0[0],  dsr & EP_DSR_LSTATUS ? 0 : 1);
-
-		// uplinks....
-	} else {
-//			printf("li %d\n", p->led_index);
-		shw_mbl_set_leds(p->led_index, 0, dsr & EP_DSR_LSTATUS ? MBL_LED_ON : MBL_LED_OFF);
-	}
-	return 0;
-}
-
-#endif
 
 /* Main port state machine */
 static void port_fsm(hal_port_state_t *p)
@@ -617,9 +518,9 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 	state->delta_tx = p->calib.delta_tx_phy + p->calib.delta_tx_sfp + p->calib.delta_tx_board;
 	state->delta_rx = p->calib.delta_rx_phy + p->calib.delta_rx_sfp + p->calib.delta_rx_board;
 
-	state->t2_phase_transition = 1400;
-	state->t4_phase_transition = 1400;
-	state->clock_period = 8000;
+	state->t2_phase_transition = 6000;
+	state->t4_phase_transition = 6000;
+	state->clock_period = 16000;
 	state->fiber_fix_alpha = p->calib.fiber_fix_alpha;
 
 	memcpy(state->hw_addr, p->hw_addr, 6);
@@ -664,44 +565,6 @@ int halexp_query_ports(hexp_port_list_t *list)
 /* Maciek's ptpx export for checking the presence of the external 10 MHz ref clock */
 int hal_extsrc_check_lock()
 {
-	
-	
-	char val[128];
-	FILE *fp;
-
-	if(!hal_config_get_string("extsrc.status", val, sizeof(val)))
-	{
-	  printf("mlDGB_HAL: read value: %s\n",val);
-	  if(!strcasecmp(val, "faked"))
-	  {
-	      return 1;
-	  }
-	  else if(!strcasecmp(val, "disabled"))
-	  {
-	      return -1;
-	  }
-	  else if(!strcasecmp(val, "enabled"))
-	  {
-		//TODO:  implement in HW, for the time being temprary solution
-//#ifdef TMP		
-	  	fp=fopen("/wr/etc/tmp_extsrc", "r");
-	  	if(!fp)
-	  		return 0;
-				if(fscanf(fp,"%s",val)>0)
-				{
-				  if(!strcasecmp(val, "locked"))
-		    		return 1;
-				  else if(!strcasecmp(val, "none"))
-				    return -1;
-				  else
-				    return 0;
-				}
-		
-		fclose(fp);
-		}	else
-//#endif		  
-		  return 0;	  
-	}
 	return -1;
 /*
 	return -1; //<0 - there is no external source lock

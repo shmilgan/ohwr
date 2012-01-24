@@ -22,25 +22,8 @@ typedef struct {
 	available at the parallel output of the PHY. */
 	uint32_t phy_rx_min;
 
-	/* RX delay range of the PHY, expressed as a difference (in picoseconds)
-	between the maximum and minimum possible RX delays. For example, a 1.25 Gbps
-	PHY with minimum delay of 8 UI and maximum delay of 12 UI will have
-	phy_rx_range equal to (12 - 8) * 800 ps = 3200 ps. Due to the nature of the
-	calibration method, the measurement range is limited to one parallel clock cycle,
-	i.e. 10 UIs, which is true for most 802.3z serdeses.  PHYs which have bigger
-	delay variance can't be calibrated using this method. */
-	uint32_t phy_rx_range;
-
-	/* value of the phase shift (in picoseconds) measured by the calibrator DMTD
-	when the PHY has locked on the minimum possible delay. Used to "unwind" the phase
-	measurement into the PHY RX delay. This parameter must be determined experimentally. */
-	uint32_t phy_rx_bias;
-
-
 	/* the same set of parameters, but for the TX path of the PHY */
-	uint32_t phy_tx_bias;
 	uint32_t phy_tx_min;
-	uint32_t phy_tx_range;
 
 	/* Current PHY (clock-to-serial-symbol) TX and RX delays, in picoseconds */
 	uint32_t delta_tx_phy;
@@ -54,9 +37,6 @@ typedef struct {
 	inputs/outputs), in picoseconds */
 	uint32_t delta_tx_board;
 	uint32_t delta_rx_board;
-
-	uint32_t raw_delta_rx_phy;
-	uint32_t raw_delta_tx_phy;
 
   /* Fiber "alpha" asymmetry coefficient, as defined in the WRPTP Specification */
 	double fiber_alpha;

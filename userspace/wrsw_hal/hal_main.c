@@ -60,14 +60,14 @@ int hal_setup_fpga_images()
   if( hal_config_get_string("global.hal_firmware_path", fpga_dir, sizeof(fpga_dir)) < 0)
  		return -1;
 
-  shw_set_fpga_firmware_path(fpga_dir);
+//  shw_set_fpga_firmware_path(fpga_dir);
 
 /* check if the config demands a particular bitstream (otherwise libswitchhw will load the default ones) */
-  if( !hal_config_get_string("global.main_firmware", fw_name, sizeof(fw_name)))
+/*  if( !hal_config_get_string("global.main_firmware", fw_name, sizeof(fw_name)))
  		shw_request_fpga_firmware(FPGA_ID_MAIN, fw_name);
 
   if( !hal_config_get_string("global.clkb_firmware", fw_name, sizeof(fw_name)))
- 		shw_request_fpga_firmware(FPGA_ID_CLKB, fw_name);
+ 		shw_request_fpga_firmware(FPGA_ID_CLKB, fw_name);*/
 
   return 0;
 }
@@ -171,23 +171,23 @@ int hal_init()
 
 /* parse the configuration file and choose the bitstreams to load to the FPGAs */
 	assert_init(hal_parse_config());
-	assert_init(hal_setup_fpga_images());
+//	assert_init(hal_setup_fpga_images());
 
 /* Check if the switch will operate as a grandmaster and eventually enable the ext clock input
    prior to initializing libswitchhw. */
-	if(!hal_config_get_int("timing.use_external_clock", &enable))
-		shw_use_external_reference(enable);
+//	if(!hal_config_get_int("timing.use_external_clock", &enable))
+//		shw_use_external_reference(enable);
 
 /* Perform a low-level hardware init, load bitstreams, initialize non-kernel drivers */
 	assert_init(shw_init());
 
 /* If running in grandmaster mode, synchronize the internal PPS counter with the external source after
    initializing the PPS generator. */
-	if(!hal_config_get_int("timing.use_external_clock", &enable))
-		shw_pps_gen_sync_external_pps();
+//	if(!hal_config_get_int("timing.use_external_clock", &enable))
+//		shw_pps_gen_sync_external_pps();
 
 /* Load kernel drivers */
-	assert_init(hal_load_kernel_modules());
+//	assert_init(hal_load_kernel_modules());
 
 /* Initialize port FSMs - see hal_ports.c */
 	assert_init(hal_init_ports());
@@ -278,9 +278,9 @@ void hal_parse_cmdline(int argc, char *argv[])
 				hal_config_set_config_file(optarg);
 				break;
 
-			case 'f':
-				shw_fpga_force_firmware_reload();
-				break;
+	//		case 'f':
+//				shw_fpga_force_firmware_reload();
+//				break;
 			case 'h':
 				show_help();
 				exit(0);
