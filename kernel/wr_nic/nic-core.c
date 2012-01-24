@@ -239,6 +239,19 @@ static int wrn_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		if (put_user(reg, (u32 *)rq->ifr_data) < 0)
 			return -EFAULT;
 		return 0;
+	case PRIV_IOCPHYREG:
+		/* this command allows to read and write a phy register */
+		if (get_user(reg, (u32 *)rq->ifr_data) < 0)
+			return -EFAULT;
+		if (reg & (1<<31)) {
+			wrn_phy_write(dev, 0, (reg >> 16) & 0xff,
+				      reg & 0xffff);
+			return 0;
+		}
+		reg = wrn_phy_read(dev, 0, (reg >> 16) & 0xff);
+		if (put_user(reg, (u32 *)rq->ifr_data) < 0)
+			return -EFAULT;
+		return 0;
 
 	default:
 		spin_lock_irq(&ep->lock);
