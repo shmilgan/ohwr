@@ -414,6 +414,10 @@ static void wrn_tx_interrupt(struct wrn_dev *wrn)
 			return; /* no more */
 
 		skb = wrn->skb_desc[i].skb;
+		if (!skb) {
+			pr_err("no socket in descriptor %i\n");
+			return;
+		}
 		info = skb_shinfo(skb);
 
 		if (info->tx_flags & SKBTX_HW_TSTAMP) {
