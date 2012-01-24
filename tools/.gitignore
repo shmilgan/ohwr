@@ -1,0 +1,5 @@
+load-lm32
+load-virtex
+mapper
+wmapper
+spi-pll
