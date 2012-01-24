@@ -15,14 +15,21 @@ mkdir -p $WRS_DOWNLOAD_DIR/ptp || wrs_die "mkdir downloads/ptp"
 cd $WRS_DOWNLOAD_DIR/ptp
 
 # checkout repository
-if [ ! -d .git ]; then
+if [ -d .git ]; then
+    git checkout v3 || (cd $WRS_DOWNLOAD_DIR && rm -rf ptp)
+fi
+
+# check again, as the above step may have removed stuff
+mkdir -p $WRS_DOWNLOAD_DIR/ptp || wrs_die "mkdir downloads/ptp"
+cd $WRS_DOWNLOAD_DIR/ptp
+if [ -d .git ]; then
+    wrs_echo "Using local git repository (previous clone)"
+else
     wrs_echo "Checking out git repository"
     git init
     git remote add gnudd git://gnudd.com/ptp-noposix.git
     git fetch gnudd
-    git checkout -b master gnudd/master
-else
-    wrs_echo "Using local git repository"
+    git checkout -b v3 gnudd/v3
 fi
 
 # to avoid building in the "download" place, copy it to the build place
@@ -33,7 +40,7 @@ cp -a "$WRS_DOWNLOAD_DIR/ptp" "$dirname"
 cd "$dirname"
 # we need LINUX and CROSS_COMPILE. The latter is there for sure
 if [ "x$LINUX" == "x" ]; then
-    export LINUX="$WRS_OUTPUT_DIR/build/linux-2.6.35"
+    export LINUX="$WRS_OUTPUT_DIR/build/linux-2.6.39"
 fi
 
 make ptpd || wrs_die "cannot build ptp-noposix"
