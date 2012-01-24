@@ -436,9 +436,10 @@ static void port_locking_fsm(hal_port_state_t *p)
 		return;
 
 /* Step 1: start locking by switching the helper PLL to use the newly designated uplink port as a reference */
+
+		/* ARub: removed for V3 as Tom commands */
 	case LOCK_STATE_START:
-		shw_hpll_switch_reference(p->name);
-		p->lock_state = LOCK_STATE_LOCKED; // was LOCK_STATE_WAIT_HPLL
+		p->lock_state = LOCK_STATE_LOCKED;
 		break;
 
 /* Step 2: wait until the HPLL has locked. fixme: timeout? */
@@ -452,17 +453,8 @@ static void port_locking_fsm(hal_port_state_t *p)
 /* Step 4: locking done. Just poll the PLL status regularly. */
 	case LOCK_STATE_LOCKED:
 
-		if(!shw_hpll_check_lock())
-		{
-			shw_hpll_switch_reference("local"); /* FIXME: ugly workaround. The proper way is to do the TX calibration AFTER LOCKING !  */
-			TRACE(TRACE_ERROR, "HPLL de-locked");
-			p->lock_state = LOCK_STATE_NONE;
-			p->locked = 0;
-		}
-		/* We had "else if" and dmpll check. Removed on Tom's word */
-		else
-/* Indicate that the port is locked */
-			p->locked = 1;
+		/* There were checks if hpll and dmpll. Removed now */
+		p->locked = 1;
 
 		break;
 	}
@@ -572,8 +564,7 @@ static void port_fsm(hal_port_state_t *p)
 	if(!link_up && p->state != HAL_PORT_STATE_LINK_DOWN)
 	{
 		if(p->locked) 
-			shw_hpll_switch_reference("local"); /* FIXME: ugly workaround. The proper way is to do the TX calibration AFTER LOCKING !  */
-
+			; /* nothing: was hpll_switch_reference(local) */
 		TRACE(TRACE_INFO, "%s: link down", p->name);
 		p->state = HAL_PORT_STATE_LINK_DOWN;
 		reset_port_state(p);

@@ -31,8 +31,8 @@ int shw_init()
     assert_init(shw_boot_fpga(FPGA_ID_CLKB));
 	  assert_init(shw_clkb_init());
   /* Start-up the PLLs. */
-    assert_init(shw_hpll_init());
-    /* no more assert_init(shw_dmpll_init()); */
+	  /* no more shw_hpll_init(); */
+	  /* no more shw_dmpll_init(); */
   /* Initialize the calibrator (requires the DMTD clock to be operational) */
     assert_init(shw_cal_init());
   /* Start-up the PPS generator */

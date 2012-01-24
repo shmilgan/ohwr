@@ -301,7 +301,7 @@ int shw_cal_measure(uint32_t *phase)
 
 			if(uplink_calibrator_measure(&phase_raw))
 			{
-				*phase = (uint32_t) ((double) phase_raw / (double) CAL_DMTD_AVERAGING_STEPS / (double)shw_hpll_get_divider() * 8000.0);
+				*phase = (uint32_t) ((double) phase_raw / (double) CAL_DMTD_AVERAGING_STEPS / 1.0 /* shw_hpll_get_divider() */ * 8000.0);
 				return 1;
 			} else return 0;
 
@@ -312,7 +312,7 @@ int shw_cal_measure(uint32_t *phase)
 
 			if(crq.cal_present && uplink_calibrator_measure(&phase_raw))
 			{
-				*phase = (uint32_t) ((double) phase_raw / (double) CAL_DMTD_AVERAGING_STEPS / (double)shw_hpll_get_divider() * 8000.0);
+				*phase = (uint32_t) ((double) phase_raw / (double) CAL_DMTD_AVERAGING_STEPS / 1.0 /* shw_hpll_get_divider */ * 8000.0);
 				return 1;
 			} else return 0;
 
@@ -347,7 +347,7 @@ int shw_poll_dmtd(const char *if_name, uint32_t *phase_ps)
 
 	//  TRACE(TRACE_INFO,"%s: phase %d", if_name, phr.phase);
 
-	*phase_ps = (uint32_t) ((double)phr.phase / (double)shw_hpll_get_divider() * 8000.0);
+	*phase_ps = 0; /* So it compiles, but this file must die as well */
 	return 1;
 }
 
