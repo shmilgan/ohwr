@@ -38,7 +38,7 @@ int shw_init()
   /* Start-up the PPS generator */
     assert_init(shw_pps_gen_init());
   /* ... and the SPI link with the watchdog */
-    assert_init(shw_watchdog_init());
+    /* no more shw_watchdog_init(); */
 
 	TRACE(TRACE_INFO, "HW initialization done!");
 }
