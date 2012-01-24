@@ -34,7 +34,7 @@ int shw_init()
 	  /* no more shw_hpll_init(); */
 	  /* no more shw_dmpll_init(); */
   /* Initialize the calibrator (requires the DMTD clock to be operational) */
-    assert_init(shw_cal_init());
+	  /* no more shw_cal_init(); */
   /* Start-up the PPS generator */
     assert_init(shw_pps_gen_init());
   /* ... and the SPI link with the watchdog */

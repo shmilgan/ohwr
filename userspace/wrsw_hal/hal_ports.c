@@ -239,47 +239,7 @@ static int check_port_presence(const char *if_name)
    (TX latency never changes as long as the TLK1221 PHY reference clock is enabled, 
    even if the link goes down) */
 
-static int port_startup_tx_calibration(hal_port_state_t *p)
-{
-	uint32_t raw_phase;
-
-	TRACE(TRACE_INFO,"Pre-calibratinmg TX for port %s", p->name);
-
-/* Step 1. Enable transmission of the calibration pattern, so the calibrator DMTD has a meaningful
-   signal for phase measurement */
-	if(shw_cal_enable_pattern(p->name, 1) < 0)
-		return -1;
-
-
-/* Step 2. Tell the crosspoint/mini-backlane to feed back the TX output of the PHY we want to calibrate
-   to the calibrator DMTD. */
-	if(shw_cal_enable_feedback(p->name, 1, PHY_CALIBRATE_TX) < 0)
-	{
-		shw_cal_enable_pattern(p->name, 0);
-		return -1;
-	}
-
-
-/* Step 3. Measure the delay. fixme: remove this stupid usleep. */
-	while(!shw_cal_measure(&raw_phase))
-		usleep(1000);
-
-
-/* Step 4. Convert the phase into the actual delay. The calibrator measures the phase difference (A-B) between
-   inputs A and B. A is the reference signal (REF clock for calibrating the TX path, port's RX clock for
-   calibrating the RX path), B is the feedback signal from the crosspoint (i.e. the calibration pattern
-   outputted/coming to the PHY being calibrated). In case of the TX ports (to respect casuality), the 
-	phase has to be reversed. */
-	p->calib.delta_tx_phy = fix_phy_delay(8000-raw_phase, p->calib.phy_tx_bias, p->calib.phy_tx_min, p->calib.phy_tx_range);
-	p->calib.tx_calibrated = 1;
-
-	TRACE(TRACE_INFO, "port %s, delta_tx_phy = %d ps", p->name, p->calib.delta_tx_phy);
-
-/* Step 5. Disable transmission of the calibration pattern, so the port can function normally. */
-	shw_cal_enable_pattern(p->name, 0);
-
-	return 0;
-}
+/* No more calibration in V3 */
 
 /* Port initialization. Assigns the MAC address, WR timing mode, reads parameters from the config file. */
 int hal_init_port(const char *name, int index)
@@ -381,8 +341,7 @@ int hal_init_port(const char *name, int index)
 		p->mode = HEXP_PORT_MODE_NON_WR;
 	}
 
-/* pre-calibrate the TX path for each port */
-	port_startup_tx_calibration(p);
+/* Used to pre-calibrate the TX path for each port. No more in V3 */
 
 	return 0;
 }
@@ -463,15 +422,7 @@ static void port_locking_fsm(hal_port_state_t *p)
 /* Updates the current value of the phase shift on a given port. Called by the main update function regularly. */
 static void poll_dmtd(hal_port_state_t *p)
 {
-	uint32_t phase_val;
-
-	if(shw_poll_dmtd(p->name, &phase_val) > 0)
-	{
-		p->phase_val = phase_val;
-		p->phase_val_valid = 1;
-	} else {
-		p->phase_val_valid = 0;
-	};
+	/* FIXME: what should we do here? */
 }
 
 
@@ -494,38 +445,8 @@ static void calibration_fsm(hal_port_state_t *p)
 	}
 
 /* Is there a calibration measurement in progress for this port? */
-	if(p->tx_cal_pending || p->rx_cal_pending)
-	{
-		uint32_t phase;
 
-/* Got the phase? */
-		if(shw_cal_measure(&phase) > 0)
-		{
-
-			TRACE(TRACE_INFO,"MeasuredPhase: %d", phase);
-
-			if(p->tx_cal_pending)
-			{
-			/* the TX path was being calibrated - unwrap the _reversed_ phase and store the resulting deltaTX. */
-				p->calib.tx_calibrated =1;
-				p->calib.raw_delta_tx_phy = 8000-phase;
-				p->calib.delta_tx_phy = fix_phy_delay(8000-phase, p->calib.phy_tx_bias, p->calib.phy_tx_min, p->calib.phy_tx_range);
-				TRACE(TRACE_INFO, "TXCal: raw %d fixed %d\n", phase,    p->calib.delta_tx_phy);
-				p->tx_cal_pending = 0;
-			}
-
-			if(p->rx_cal_pending)
-			{
-			/* the RX path was being calibrated - unwrap the phase and store the resulting deltaRX. */
-				p->calib.rx_calibrated =1;
-				p->calib.raw_delta_rx_phy = phase;
-				p->calib.delta_rx_phy = fix_phy_delay(phase, p->calib.phy_rx_bias, p->calib.phy_rx_min, p->calib.phy_rx_range);
-
-				TRACE(TRACE_INFO, "RXCal: raw %d fixed %d\n", phase,    p->calib.delta_rx_phy);
-				p->rx_cal_pending = 0;
-			}
-		}
-	}
+	/* no, not in V3 */
 }
 
 #if 0
@@ -719,95 +640,8 @@ static int any_port_calibrating()
 }
 
 /* Public function for controlling the calibration process. Called by the PTPd during WR Link setup. */
-int halexp_calibration_cmd(const char *port_name, int command, int on_off)
-{
-	hal_port_state_t *p = lookup_port(port_name);
 
-	if(!p)
-		return -1;
-
-	switch(command)
-	{
-/* Checks if the calibrator is idle (i.e. if there are no ports being currently calibrated). */
-	case HEXP_CAL_CMD_CHECK_IDLE:
-		return !any_port_calibrating() && p->state == HAL_PORT_STATE_UP ? HEXP_CAL_RESP_OK : HEXP_CAL_RESP_BUSY;
-
-/* Returns raw deltaTx/Rx (debug only) */
-	case HEXP_CAL_CMD_GET_RAW_DELTA_RX:
-		return p->calib.raw_delta_rx_phy;
-		break;
-
-	case HEXP_CAL_CMD_GET_RAW_DELTA_TX:
-		return p->calib.raw_delta_tx_phy;
-		break;
-
-/* Enables/disables transmission of the calibration pattern */
-	case HEXP_CAL_CMD_TX_PATTERN:
-		TRACE(TRACE_INFO, "TXPattern %s, port %s", on_off ? "ON" : "OFF", port_name);
-
-		// FIXME: add some error handling
-
-		if(on_off)
-			p->state = HAL_PORT_STATE_CALIBRATION;
-		else
-			p->state = HAL_PORT_STATE_UP;
-
-		shw_cal_enable_pattern(p->name, on_off);
-		return HEXP_CAL_RESP_OK;
-		break;
-
-/* Enables/disables measurement of deltaTX on a particular port. The results are available
-   via halexp_get_port_state(). */
-	case HEXP_CAL_CMD_TX_MEASURE:
-		TRACE(TRACE_INFO, "TXMeasure %s, port %s", on_off ? "ON" : "OFF", port_name);
-
-/* invalidate the result of the previous calibration */
-		p->calib.tx_calibrated = 0;
-
-		if(on_off)
-		{
-			p->tx_cal_pending = 1;
-			p->calib.tx_calibrated = 0;
-			shw_cal_enable_feedback(p->name, 1, PHY_CALIBRATE_TX);
-/* Trigger the calibration FSM */
-			p->state = HAL_PORT_STATE_CALIBRATION;
-
-			return HEXP_CAL_RESP_OK;
-		} else {
-/* Go back to the default port FSM state */
-			p->state = HAL_PORT_STATE_UP;
-			p->tx_cal_pending =0;
-			shw_cal_enable_feedback(p->name, 0, PHY_CALIBRATE_TX);
-			return HEXP_CAL_RESP_OK;
-
-		}
-
-		break;
-
-/* The same thing, but for the RX path */
-	case HEXP_CAL_CMD_RX_MEASURE:
-		TRACE(TRACE_INFO, "RXMeasure %s, port %s", on_off ? "ON" : "OFF", port_name);
-
-		if(on_off)
-		{
-			p->rx_cal_pending = 1;
-			p->calib.rx_calibrated = 0;
-			shw_cal_enable_feedback(p->name, 1, PHY_CALIBRATE_RX);
-			p->state = HAL_PORT_STATE_CALIBRATION;
-			return HEXP_CAL_RESP_OK;
-		} else {
-			shw_cal_enable_feedback(p->name, 0, PHY_CALIBRATE_RX);
-			p->state = HAL_PORT_STATE_UP;
-			p->rx_cal_pending = 0;
-			return HEXP_CAL_RESP_OK;
-
-		}
-
-		break;
-	};
-
-	return 0;
-}
+/* No more calibration in V3 */
 
 /* Public API function - returns the array of names of all WR network interfaces */
 int halexp_query_ports(hexp_port_list_t *list)
