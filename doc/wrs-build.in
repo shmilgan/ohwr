@@ -547,13 +547,13 @@ further, the directory @i{tools} includes the following programs:
         They are classic tools distributed in the @i{Linux Device Drivers}
         examples since 1998.
 
-@item load-fpga
+@item load-virtex
 	Loads a bitstream to the Virtex6 device of the switch. The biststream
         file name must be passed in the command line (@i{/dev/stdin} allowed).
         The is a limit of 10MB (me lazy!), but the program complains if it
         detects the limit is reached.
 
-@item lm32-loader
+@item load-lm32
 	Loads a program to the internal LM32 soft-cre.
 
 @item spi-pll
@@ -566,11 +566,14 @@ further, the directory @i{tools} includes the following programs:
 The list above used to include @i{devmem2}, but now @i{devmem} is part
 of the installed @i{busybox} and has the same command-line interface.
 
-Please note that currently the @code{Makefile} is very limited. It
-requires you to specify both the kernel directory (@code{LINUX=}) and
-the cross-compiler to use (@code{CROSS_COMPILE=}). Similarly, you must
-spell the name of the binaries on the command line.  It will be fixed
-and integrated in the build procedure as soon as possible.
+The functions to load the fpga and the lm32 have been turned into a
+library, so external programs can link @code{libtools.a}.
+
+Please note that to compiler you need to specify both the kernel
+directory (@code{LINUX=}) and the cross-compiler to use
+(@code{CROSS_COMPILE=}). Moreover, the @i{tools} subdir is not
+integrated in the build scripts.
+@c FIXME: tools
 
 @c ##########################################################################
 @node PTPd
