@@ -264,6 +264,74 @@ const struct minipc_pd rtu_fdb_proxy_read_next_vlan_entry_struct = {
     }
 };
 
+const struct minipc_pd rtu_vfdb_proxy_forward_dynamic_struct = {
+    .name   = "21",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_forward_dynamic_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_forward_dynamic_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_vfdb_proxy_filter_dynamic_struct = {
+    .name   = "22",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_filter_dynamic_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_filter_dynamic_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_delete_dynamic_entries_struct = {
+    .name   = "23",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_dynamic_entries_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_dynamic_entries_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_is_restricted_vlan_reg_struct = {
+    .name   = "24",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_is_restricted_vlan_reg_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_is_restricted_vlan_reg_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_set_restricted_vlan_reg_struct = {
+    .name   = "25",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_restricted_vlan_reg_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_restricted_vlan_reg_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_unset_restricted_vlan_reg_struct = {
+    .name   = "26",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_unset_restricted_vlan_reg_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_unset_restricted_vlan_reg_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+
+
 // IMPORTANT NOTE: errno used to inform of mini-ipc related errors
 // (errno value as set by minipc_call)
 // errno should be checked by callee
@@ -274,7 +342,8 @@ int  rtu_fdb_proxy_create_static_entry(
             uint32_t egress_ports,
             uint32_t forbidden_ports,
             int type,
-            int active)
+            int active,
+            int is_bpdu)
 {
     int ret;
     struct rtu_fdb_create_static_entry_argdata in;
@@ -285,6 +354,7 @@ int  rtu_fdb_proxy_create_static_entry(
     in.forbidden_ports  = forbidden_ports;
     in.type             = type;
     in.active           = active;
+    in.is_bpdu          = is_bpdu;
     mac_copy(in.mac, mac);
 
 	ret = minipc_call(client, MILLISEC_TIMEOUT,
@@ -691,6 +761,92 @@ int rtu_fdb_proxy_read_next_vlan_entry(
 
     return out.retval;
 }
+
+int rtu_vfdb_proxy_forward_dynamic(int port, uint16_t vid)
+{
+    int ret;
+    struct rtu_vfdb_forward_dynamic_argdata in;
+    struct rtu_vfdb_forward_dynamic_retdata out;
+
+    in.vid = vid;
+    in.port = port;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT,
+        &rtu_vfdb_proxy_forward_dynamic_struct, &out, &in);
+
+    return out.retval;
+}
+
+int rtu_vfdb_proxy_filter_dynamic(int port, uint16_t vid)
+{
+    int ret;
+    struct rtu_vfdb_filter_dynamic_argdata in;
+    struct rtu_vfdb_filter_dynamic_retdata out;
+
+    in.vid = vid;
+    in.port = port;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT,
+        &rtu_vfdb_proxy_filter_dynamic_struct, &out, &in);
+
+    return out.retval;
+}
+
+void rtu_fdb_proxy_delete_dynamic_entries(int port, uint16_t vid)
+{
+    int ret;
+    struct rtu_fdb_delete_dynamic_entries_argdata in;
+    struct rtu_fdb_delete_dynamic_entries_retdata out;
+
+    in.vid = vid;
+    in.port = port;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT,
+        &rtu_fdb_proxy_delete_dynamic_entries_struct, &out, &in);
+}
+
+int rtu_fdb_proxy_is_restricted_vlan_reg(int port)
+{
+    int ret;
+    struct rtu_fdb_is_restricted_vlan_reg_argdata in;
+    struct rtu_fdb_is_restricted_vlan_reg_retdata out;
+
+    in.port = port;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT,
+        &rtu_fdb_proxy_is_restricted_vlan_reg_struct, &out, &in);
+
+    return out.retval;
+}
+
+void rtu_fdb_proxy_set_restricted_vlan_reg(int port)
+{
+    int ret;
+    struct rtu_fdb_set_restricted_vlan_reg_argdata in;
+    struct rtu_fdb_set_restricted_vlan_reg_retdata out;
+
+    in.port = port;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT,
+        &rtu_fdb_proxy_set_restricted_vlan_reg_struct, &out, &in);
+
+    return;
+}
+
+void rtu_fdb_proxy_unset_restricted_vlan_reg(int port)
+{
+    int ret;
+    struct rtu_fdb_unset_restricted_vlan_reg_argdata in;
+    struct rtu_fdb_unset_restricted_vlan_reg_retdata out;
+
+    in.port = port;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT,
+        &rtu_fdb_proxy_unset_restricted_vlan_reg_struct, &out, &in);
+
+    return;
+}
+
 
 struct minipc_ch *rtu_fdb_proxy_create(char* name)
 {
