@@ -143,6 +143,7 @@ struct rtu_fdb_create_static_entry_argdata {
     uint32_t forbidden_ports;
     int type;
     int active;
+    int is_bpdu;
 };
 
 struct rtu_fdb_create_static_entry_retdata {
@@ -272,5 +273,58 @@ struct rtu_fdb_read_next_vlan_entry_retdata {
     unsigned long creation_t;
 };
 
+struct rtu_vfdb_forward_dynamic_argdata {
+    int port;
+    uint16_t vid;
+};
+
+struct rtu_vfdb_forward_dynamic_retdata {
+    int retval;
+};
+
+struct rtu_vfdb_filter_dynamic_argdata {
+    int port;
+    uint16_t vid;
+};
+
+struct rtu_vfdb_filter_dynamic_retdata {
+    int retval;
+};
+
+
+struct rtu_fdb_delete_dynamic_entries_argdata {
+    int port;
+    uint16_t vid;
+};
+
+struct rtu_fdb_delete_dynamic_entries_retdata {
+    uint32_t padding;   // TODO remove. Required to pass mini-ipc size check
+};
+
+struct rtu_fdb_is_restricted_vlan_reg_argdata {
+    int port;
+};
+
+struct rtu_fdb_is_restricted_vlan_reg_retdata {
+    int retval;
+};
+
+
+struct rtu_fdb_set_restricted_vlan_reg_argdata {
+    int port;
+};
+
+struct rtu_fdb_set_restricted_vlan_reg_retdata {
+    uint32_t padding;   // TODO remove. Required to pass mini-ipc size check
+};
+
+
+struct rtu_fdb_unset_restricted_vlan_reg_argdata {
+    int port;
+};
+
+struct rtu_fdb_unset_restricted_vlan_reg_retdata {
+    uint32_t padding;   // TODO remove. Required to pass mini-ipc size check
+};
 
 #endif /*__WHITERABBIT_RTU_FD_EXPORT_H*/

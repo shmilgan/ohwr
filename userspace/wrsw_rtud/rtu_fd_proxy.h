@@ -43,7 +43,8 @@ int  rtu_fdb_proxy_create_static_entry(
             uint32_t egress_ports,
             uint32_t forbidden_ports,
             int type,
-            int active
+            int active,
+            int is_bpdu
      ) __attribute__((warn_unused_result));
 
 int rtu_fdb_proxy_delete_static_entry(
@@ -141,6 +142,15 @@ uint16_t rtu_fdb_proxy_get_max_supported_vlans(void);
 uint16_t rtu_fdb_proxy_get_max_vid(void);
 uint64_t rtu_fdb_proxy_get_num_vlan_deletes(void);
 uint16_t rtu_fdb_proxy_get_next_fid(uint8_t fid);
+
+int rtu_vfdb_proxy_forward_dynamic(int port, uint16_t vid);
+int rtu_vfdb_proxy_filter_dynamic(int port, uint16_t vid);
+
+void rtu_fdb_proxy_delete_dynamic_entries(int port, uint16_t vid);
+
+int rtu_fdb_proxy_is_restricted_vlan_reg(int port);
+void rtu_fdb_proxy_set_restricted_vlan_reg(int port);
+void rtu_fdb_proxy_unset_restricted_vlan_reg(int port);
 
 struct minipc_ch *rtu_fdb_proxy_create(char *name);
 

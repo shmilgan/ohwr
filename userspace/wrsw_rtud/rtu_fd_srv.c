@@ -191,7 +191,8 @@ static int rtu_fdb_srv_create_static_entry(
             in->egress_ports,
             in->forbidden_ports,
             in->type,
-            in->active
+            in->active,
+            in->is_bpdu
         );
 
     return 0;
@@ -381,6 +382,98 @@ static int rtu_fdb_srv_read_next_vlan_entry(
         );
 
     out->vid = in->vid;
+
+    return 0;
+}
+
+static int rtu_vfdb_srv_forward_dynamic(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_vfdb_forward_dynamic_argdata *in;
+    struct rtu_vfdb_forward_dynamic_retdata *out;
+    in  = (struct rtu_vfdb_forward_dynamic_argdata*)args;
+    out = (struct rtu_vfdb_forward_dynamic_retdata*)ret;
+
+    out->retval =
+        rtu_vfdb_forward_dynamic(
+            in->port,
+            in->vid
+        );
+
+    return 0;
+}
+
+static int rtu_vfdb_srv_filter_dynamic(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_vfdb_filter_dynamic_argdata *in;
+    struct rtu_vfdb_filter_dynamic_retdata *out;
+    in  = (struct rtu_vfdb_filter_dynamic_argdata*)args;
+    out = (struct rtu_vfdb_filter_dynamic_retdata*)ret;
+
+    out->retval =
+        rtu_vfdb_filter_dynamic(
+            in->port,
+            in->vid
+        );
+
+    return 0;
+}
+
+static int rtu_fdb_srv_delete_dynamic_entries(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_delete_dynamic_entries_argdata *in;
+    struct rtu_fdb_delete_dynamic_entries_retdata *out;
+    in  = (struct rtu_fdb_delete_dynamic_entries_argdata*)args;
+    out = (struct rtu_fdb_delete_dynamic_entries_retdata*)ret;
+
+    rtu_fdb_delete_dynamic_entries(
+            in->port,
+            in->vid
+        );
+
+    return 0;
+}
+
+static int rtu_fdb_srv_is_restricted_vlan_reg(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_is_restricted_vlan_reg_argdata *in;
+    struct rtu_fdb_is_restricted_vlan_reg_retdata *out;
+    in  = (struct rtu_fdb_is_restricted_vlan_reg_argdata*)args;
+    out = (struct rtu_fdb_is_restricted_vlan_reg_retdata*)ret;
+
+    out->retval =
+        rtu_fdb_is_restricted_vlan_reg(
+            in->port
+        );
+
+    return 0;
+}
+
+static int rtu_fdb_srv_set_restricted_vlan_reg(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_set_restricted_vlan_reg_argdata *in;
+    struct rtu_fdb_set_restricted_vlan_reg_retdata *out;
+    in  = (struct rtu_fdb_set_restricted_vlan_reg_argdata*)args;
+    out = (struct rtu_fdb_set_restricted_vlan_reg_retdata*)ret;
+
+    rtu_fdb_set_restricted_vlan_reg(in->port);
+
+    return 0;
+}
+
+static int rtu_fdb_srv_unset_restricted_vlan_reg(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_unset_restricted_vlan_reg_argdata *in;
+    struct rtu_fdb_unset_restricted_vlan_reg_retdata *out;
+    in  = (struct rtu_fdb_unset_restricted_vlan_reg_argdata*)args;
+    out = (struct rtu_fdb_unset_restricted_vlan_reg_retdata*)ret;
+
+    rtu_fdb_unset_restricted_vlan_reg(in->port);
 
     return 0;
 }
@@ -637,6 +730,78 @@ const struct minipc_pd rtu_fdb_srv_read_next_vlan_entry_struct = {
     }
 };
 
+const struct minipc_pd rtu_vfdb_srv_forward_dynamic_struct = {
+    .f      = rtu_vfdb_srv_forward_dynamic,
+    .name   = "21",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_forward_dynamic_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_forward_dynamic_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_vfdb_srv_filter_dynamic_struct = {
+    .f      = rtu_vfdb_srv_filter_dynamic,
+    .name   = "22",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_filter_dynamic_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_filter_dynamic_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_delete_dynamic_entries_struct = {
+    .f      = rtu_fdb_srv_delete_dynamic_entries,
+    .name   = "23",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_dynamic_entries_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_dynamic_entries_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_is_restricted_vlan_reg_struct = {
+    .f      = rtu_fdb_srv_is_restricted_vlan_reg,
+    .name   = "24",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_is_restricted_vlan_reg_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_is_restricted_vlan_reg_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_set_restricted_vlan_reg_struct = {
+    .f      = rtu_fdb_srv_set_restricted_vlan_reg,
+    .name   = "25",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_restricted_vlan_reg_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_restricted_vlan_reg_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_unset_restricted_vlan_reg_struct = {
+    .f      = rtu_fdb_srv_unset_restricted_vlan_reg,
+    .name   = "26",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_unset_restricted_vlan_reg_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_unset_restricted_vlan_reg_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
 struct minipc_ch *rtu_fdb_srv_create(char *name)
 {
 	struct minipc_ch *server;
@@ -666,6 +831,12 @@ struct minipc_ch *rtu_fdb_srv_create(char *name)
         minipc_export(server, &rtu_fdb_srv_read_next_static_vlan_entry_struct);
         minipc_export(server, &rtu_fdb_srv_read_vlan_entry_struct);
         minipc_export(server, &rtu_fdb_srv_read_next_vlan_entry_struct);
+        minipc_export(server, &rtu_vfdb_srv_forward_dynamic_struct);
+        minipc_export(server, &rtu_vfdb_srv_filter_dynamic_struct);
+        minipc_export(server, &rtu_fdb_srv_delete_dynamic_entries_struct);
+        minipc_export(server, &rtu_fdb_srv_is_restricted_vlan_reg_struct);
+        minipc_export(server, &rtu_fdb_srv_set_restricted_vlan_reg_struct);
+        minipc_export(server, &rtu_fdb_srv_unset_restricted_vlan_reg_struct);
    }
    return server;
 }
