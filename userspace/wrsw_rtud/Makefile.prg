@@ -1,11 +1,10 @@
 
 PROGRAM		= wrsw_rtud
 SRCFILES	= mac.c rtu_drv.c rtu_hash.c rtu_sw.c rtu_fd.c \
-              rtu_fd_srv.c rtud.c utils.c
+              rtu_fd_srv.c endpoint_hw.c rtud.c utils.c
 OBJFILES	= $(patsubst %.c,%.o,$(SRCFILES))
-OBJS        = rtu_fd_proxy.o
 
-CC		= $(CROSS_COMPILE)gcc
+CC		    = $(CROSS_COMPILE)gcc
 
 # We must include stuff from various headers, which are installed.
 # If this is build under build scripts, it's $WRS_OUTPUT_DIR/images/wr
@@ -19,11 +18,11 @@ CFLAGS		= -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL \
 # -I$(CROSS_COMPILE_ARM_PATH)/../include
 
 LDFLAGS 	:= -L. -L$(WR_LIB) \
-               -lwrrtu -lswitchhw -lptpnetif -lminipc -lwripc -lpthread
+               -lswitchhw -lptpnetif -lminipc -lwripc -lpthread
 
 RM 	    := rm -f
 
-all: $(PROGRAM)
+all: $(PROGRAM) $(LIB)
 
 $(PROGRAM): $(OBJFILES)
 	$(CC) -o $@ $(OBJFILES) $(LDFLAGS)

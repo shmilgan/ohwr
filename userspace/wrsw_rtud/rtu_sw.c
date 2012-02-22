@@ -499,6 +499,11 @@ void rtu_sw_update_entry(struct filtering_entry *fe)
         htab_write(fe);
 }
 
+void rtu_sw_update_vlan_entry(struct vlan_table_entry *ve)
+{
+    vlan_write(ve);
+}
+
 /**
  * Deletes a filtering entry from the FDB mirror (either at HTAB or HCAM).
  * @param fe pointer to FDB entry as returned from other rtu_sw methods.
@@ -510,6 +515,50 @@ void rtu_sw_delete_entry(struct filtering_entry *fe)
         hcam_delete(hcam_bucket(fe));
     else
         htab_delete(htab_hash(fe), htab_bucket(fe));
+}
+
+/* Delete all FDB entries for the given fid and port (e.g. after deleting a
+   VLAN entry */
+void rtu_sw_delete_dynamic_entries(int port, uint16_t vid)
+{
+    int i, j;
+    uint8_t fid;
+    struct filtering_entry *fe;
+
+    /* Check that vlan is registered */
+    if (vlan_tab[vid].drop)
+        return;
+
+    /* Check that port is in vlan */
+    if (!is_set(vlan_tab[vid].port_mask, port))
+        return;
+
+    fid = vlan_tab[vid].fid;
+
+    /* Note removing a dynamic entry results in a forward decision */
+    for (i = 0; i < HTAB_ENTRIES; i++) {
+        for (j = 0; j < RTU_BUCKETS; j++) {
+            fe = &htab[i][j];
+            if (fe->valid && (fe->fid == fid)) {
+                if (is_set(fe->use_dynamic, port) &&
+                    !is_set(fe->port_mask_dst, port)) {
+                    set(&fe->port_mask_dst, port);
+                    htab_write(fe);
+                }
+            }
+        }
+    }
+
+    for (i = 0; i < CAM_ENTRIES; i++) {
+        fe = &hcam[i];
+        if (fe->valid && (fe->fid == fid)) {
+            if (is_set(fe->use_dynamic, port) &&
+                !is_set(fe->port_mask_dst, port)) {
+                set(&fe->port_mask_dst, port);
+                hcam_write(fe);
+            }
+        }
+    }
 }
 
 /**
@@ -566,7 +615,7 @@ struct vlan_table_entry *rtu_sw_find_next_ve(uint16_t *vid)
     return ve;
 }
 
-int rtu_sw_create_vlan_entry(
+struct vlan_table_entry *rtu_sw_create_vlan_entry(
         uint16_t vid,
         uint8_t fid,
         uint32_t port_mask,
@@ -579,6 +628,8 @@ int rtu_sw_create_vlan_entry(
     vlan_tab[vid].fid           = fid;
     vlan_tab[vid].use_dynamic   = use_dynamic;
     vlan_tab[vid].dynamic       = dynamic;
+    // TODO dynamic flag is obsolete. Use is_static instead.
+    vlan_tab[vid].is_static     = (dynamic == STATIC);
     vlan_tab[vid].drop          = 0;
     vlan_tab[vid].has_prio      = 0;
     vlan_tab[vid].prio_override = 0;

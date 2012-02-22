@@ -56,17 +56,15 @@ void rtu_sw_delete_entry(struct filtering_entry *fe);
 void rtu_sw_clean_fd(void);
 
 struct vlan_table_entry *rtu_sw_find_vlan_entry(uint16_t vid);
-
 struct vlan_table_entry *rtu_sw_find_next_ve(uint16_t *vid);
+struct vlan_table_entry *rtu_sw_create_vlan_entry(uint16_t vid,
+                                                  uint8_t fid,
+                                                  uint32_t port_mask,
+                                                  uint32_t use_dynamic,
+                                                  uint32_t untagged_set,
+                                                  int dynamic);
 
-int rtu_sw_create_vlan_entry(
-        uint16_t vid,
-        uint8_t fid,
-        uint32_t port_mask,
-        uint32_t use_dynamic,
-        uint32_t untagged_set,
-        int dynamic);
-
+void rtu_sw_update_vlan_entry(struct vlan_table_entry *ve);
 int rtu_sw_delete_vlan_entry(uint16_t vid);
 
 void rtu_sw_clean_vd(void);
@@ -85,4 +83,5 @@ void rtu_sw_commit(void);
 void rtu_sw_rollback(void);
 
 uint16_t rtu_sw_get_next_vid(uint16_t vid);
+void rtu_sw_delete_dynamic_entries(int port, uint16_t vid);
 #endif /*__WHITERABBIT_RTU_SW_H*/
