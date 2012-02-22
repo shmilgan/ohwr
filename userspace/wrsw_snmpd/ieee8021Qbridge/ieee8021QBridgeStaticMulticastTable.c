@@ -535,7 +535,7 @@ static int set_commit(struct static_multicast_table_entry *ent)
         // create/update entry in FDB
         errno = 0;
         err = rtu_fdb_proxy_create_static_entry(ent->mac, ent->vid, ep, fp,
-            ent->type, RS_IS_GOING_ACTIVE(ent->row_status));
+            ent->type, RS_IS_GOING_ACTIVE(ent->row_status), !IS_BPDU);
         if (errno)
             goto minipc_err;
         if (err)
