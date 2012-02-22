@@ -1,0 +1,87 @@
+White Rabbit Switch Multiple Vlan Registration Protocol (MVRP)
+
+GNU GPL Version 2. This package is copyrighted by CERN and released as
+free software. Copyright (C) 2012, CERN.
+
+Authors:    Juan Luis Manas (juan.manas@integrasys.es)
+            Miguel Baizan   (miguel.baizan@integrasys-sa.com)
+
+Short info: Implementation of the Multiple Vlan Registration Protocol (MVRP) as
+            defined in the Std. IEEE 802.1ak-2007 and 802.1ak-Corrigendum.
+
+
+
+    General info
+    ============
+
+'MVRP provides a mechanism for dynamic maintenance of the contents of Dynamic
+VLAN Registration Entries for each VLAN, and for propagating the information
+they contain to other Bridges. This information allows MVRP-aware devices to
+dynamically establish and update their knowledge of the set of VLANs that
+currently have active members, and through which Ports those members can be
+reached.'
+
+The MVRP protocol defines an Application component of the Multiple Registration
+Protocol (MRP) in order to provide the VLAN Registration Service with means to
+maintain and propagate the dynamic configuration of the VLANs of the switch.
+
+The MVRP protocol has been implemented as a daemon to be run at user space.
+
+
+
+    Structure of the package
+    ========================
+
+README
+	This file.
+
+Makefile:
+    Makefile, based on the WR development environment wr-switch-sw-2011-05-18.
+
+mvrp.c
+    MVRP implementation.
+
+
+    Dependencies
+    ============
+
+wr-switch-sw/wrsw_rtud:
+    The MVRP implementation needs to interact with the Filtering Database and
+    the VLAN Registration Table. These are accessed through the RTU proxies.
+
+libminipc.so libwripc.so:
+    Libraries to handle IPCs.
+
+wr-switch-sw/wrsw_hal:
+    The MVRP implementation extracts the ports information (list of ports,
+    port state, etc.) from the HAL. As the information held by HAL can only be
+    accessed through the libwripc library, there's also a dependency with this
+    one. Note however that the libwripc package in wr-switch-sw-2011-05-18
+    has been superseded by the mini-ipc package, so the library may be found
+    only in the installation directories (see Makefile).
+
+wr-switch-sw/wrsw_mrp:
+    MRP implementation.
+
+
+
+
+    Compilation and usage
+    =====================
+
+For compilation just run "make", following the instructions of the document
+wrs-build.pdf in the wr-switch-sw/doc section; previously you need to set some
+environment variables (i.e. LINUX, CROSS_COMPILE and WR_INSTALL_ROOT).
+You can run "make install" to copy the binary file to the $(WR_INSTALL_ROOT)/bin
+directory. Also, you can compile this package using the build scripts in
+$(WRS_OUTPUT_DIR)/wr-switch-sw/build.
+
+Before running the wrsw_mvrpd daemon you must be sure that there's an instance
+of the wrsw_hal and wrsw_rtud daemon already running.
+
+To launch the daemon just run:
+
+ ./wrsw_mvrpd
+
+from the installation directory in the WR switch. Use the option '-d' to run in
+background.
