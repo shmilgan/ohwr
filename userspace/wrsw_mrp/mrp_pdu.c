@@ -1,3 +1,25 @@
+/*
+ * White Rabbit MRP (Multiple Registration Protocol)
+ *
+ * Authors:     Juan Luis Manas (juan.manas@integrasys.es)
+ *              Miguel Baizan   (miguel.baizan@integrasys.es)
+ *
+ * Description: Encoding/decoding of MRP PDUs.
+ *
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version
+ * 2 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <stdint.h>
 #include <math.h>
 #include <errno.h>
@@ -5,11 +27,8 @@
 #include <linux/if_packet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "malloc.h"
 
 #include "mrp.h"
-#include "mrp_pdu.h"
-#include "mrp_attr.h"
 
 inline static int pdu_may_pull(struct mrpdu *pdu, int len)
 {
@@ -23,7 +42,7 @@ inline static void pdu_pull(struct mrpdu *pdu, int len)
 
 inline static int pdu_tailroom(struct mrpdu *pdu)
 {
-    return ETH_DATA_LEN - pdu->pos;
+    return pdu->maxlen - pdu->pos;
 }
 
 inline static int leaveall_event(uint8_t octet)
@@ -34,6 +53,11 @@ inline static int leaveall_event(uint8_t octet)
 inline static int number_of_values(uint8_t high, uint8_t low)
 {
     return ((high & 0x1f) << 8) | low; //13 bits
+}
+
+inline static int pdu_nval(struct mrpdu *pdu, int vhdr)
+{
+    return number_of_values(pdu->buf[vhdr], pdu->buf[vhdr + 1]);
 }
 
 /* Returns number of ThreePackedEvents in a VectorAttribute
@@ -83,7 +107,7 @@ static int unpack_tpe(uint8_t tpe, int idx)
 /* Packs an event into a ThreePackedEvent, according to its index
    @param tpe current value of the ThreePackedEvent
    @param idx index of the event (0, 1 or 2) */
-static uint8_t pack_tpe(enum mrp_event event, uint8_t tpe, int idx)
+static uint8_t pack_tpe(enum mrp_attr_event event, uint8_t tpe, int idx)
 {
     switch(idx) {
     case 2:
@@ -119,57 +143,54 @@ static void mrp_pdu_parse_attr(struct mrp_participant *part,
                                int attrtype,
                                int attrlen)
 {
-    int i, j;
+    int i, j, event;
     int leaveall;           // leaveall event value
     int nval;               // number of values (a.k.a. events)
+    int offset;             // event offset within vector
     int e;                  // number of ThreePackedEvents
-    int event;
+    int mid;                // MAD attribute identifier
     uint8_t tpe;            // ThreePackedEvent
-    void *attrval;          // attr value
-    void *nextval;          // next attr value
-    struct mrp_attr *attr;
+    void *firstval;         // first attr value
+    struct mrp_application *app = part->port->app;
 
     /* Vector Header */
     leaveall = leaveall_event(pdu->buf[pdu->pos]);
-    nval     = number_of_values(pdu->buf[pdu->pos], pdu->buf[pdu->pos + 1]);
+    nval = pdu_nval(pdu, pdu->pos);
     pdu_pull(pdu, MRP_ATTR_HDR_LEN);
 
     /* First Value */
-    attrval = &pdu->buf[pdu->pos];
+    firstval = &pdu->buf[pdu->pos];
     pdu_pull(pdu, attrlen);
 
     /* If attribute type is not recognised, message events are not processed */
-    if (attrtype > part->app->maxattr)
+    e = ntpe(nval);
+    if (attrtype > app->maxattr)
         goto discard;
 
-    if (leaveall)
-        mrp_attrtype_event(part, attrtype, MRP_EVENT_R_LA);
+    if (leaveall) {
+        mad_attrtype_event(part, attrtype, MRP_EVENT_R_LA);
+        mad_participant_event(part, MRP_EVENT_R_LA);
+    }
 
     /* Vector */
-    e = ntpe(nval);
-    nextval = malloc(attrlen);
-    memcpy(nextval, attrval, attrlen);
-    for (i = 0; i < e; i++) {
+    for (i = 0, offset = 0; i < e; i++) {
         tpe = pdu->buf[pdu->pos + i];
-        for (j = 0; j < 3; j++, nval--) {
-            if (nval > 0) {
-                event = attr_event(unpack_tpe(tpe, j));
+        for (j = 0; j < 3; j++, offset++) {
+            if (offset < nval) {
+                /* Process event */
+                event = mrp_event(unpack_tpe(tpe, j));
                 if (event == MRP_EVENT_UNKOWN)
                     continue; /* Unknown events are silently discarded */
-                /* Process event */
-                attr = mrp_attr_lookup(part->mad, attrtype, attrlen, nextval);
-                if (!attr) {
-                    attr = mrp_attr_create(attrtype, attrlen, nextval);
-                    if (!attr) // TODO handle NOMEM err
-                        break;
-                    mrp_attr_insert(&part->mad, attr);
+                mid = app->db_find_entry(attrtype, attrlen, firstval, offset);
+                if (mid < 0) {
+                    mid = app->db_add_entry(attrtype, attrlen, firstval, offset);
+                    if ((mid < 0) || (mid >= app->numattr))
+                        continue; // TODO handle nomem error
                 }
-                mrp_attr_event(attr, event);
-                part->app->nextval(attrtype, attrlen, nextval);
+                mad_attr_event(part, mid, event);
             }
         }
     }
-    free(nextval);
 
 discard:
     pdu_pull(pdu, e);
@@ -194,7 +215,7 @@ static void mrp_pdu_parse_msg(struct mrp_participant *part, struct mrpdu *pdu)
    @param pdu data to be unmarshalled. */
 static void mrp_pdu_parse(struct mrp_participant *part, struct mrpdu *pdu)
 {
-    pdu->pos = 0;
+    pdu->pos = 1;
     while(pdu->len > pdu->pos) {
         mrp_pdu_parse_msg(part, pdu);
         if (mrp_pdu_parse_end_mark(pdu) < 0)
@@ -221,7 +242,7 @@ static int mrp_pdu_check_attr(struct mrpdu *pdu, int attrlen)
         return -1;
     }
     /* The number of AttributeEvent values should be non-zero */
-    nval = number_of_values(pdu->buf[pdu->pos], pdu->buf[pdu->pos + 1]);
+    nval = pdu_nval(pdu, pdu->pos);
     if (nval == 0) {
         fprintf(stderr, "mrp: error parsing attr header: num of values is 0\n");
         return -1;
@@ -303,7 +324,7 @@ static int mrp_pdu_check(struct mrpdu *pdu)
 
 
 /* Append MRP_ENDMARK at current encoding position.
-   @return 0 if endmark was actually encoded. -1 if there was no room*/
+   @return 0 if endmark was actually encoded. -1 if there was no room */
 int mrp_pdu_append_endmark(struct mrpdu *pdu)
 {
     if (pdu_tailroom(pdu) < MRP_END_MARK_LEN)
@@ -317,6 +338,7 @@ static int mrp_pdu_append_msg(struct mrpdu *pdu, int attrtype, int attrlen)
 {
     if (pdu_tailroom(pdu) < MRP_MSG_HDR_LEN)
         return -1;
+    pdu->mhdr = pdu->pos;
     /* AttributeType */
     pdu->buf[pdu->pos++] = attrtype;
     /* AttributeLength */
@@ -343,14 +365,13 @@ static int mrp_pdu_append_vector_attr(struct mrpdu *pdu, int attrlen,
 }
 
 /* Initialise PDU encoding and decoding info */
-void mrp_pdu_init(struct mrpdu *pdu)
+void mrp_pdu_init(struct mrpdu *pdu, int tagged)
 {
-    memset(pdu->buf, 0, ETH_DATA_LEN);
     pdu->len = 0;
     pdu->pos = 0;
-
-    pdu->cur_attr = NULL;
+    pdu->mhdr = 0;
     pdu->vhdr = 0;
+    pdu->maxlen = tagged ? VLAN_ETH_DATA_LEN:ETH_DATA_LEN;
 }
 
 /* Read incoming MRP PDU.
@@ -358,14 +379,14 @@ void mrp_pdu_init(struct mrpdu *pdu)
    discarded (v.g. due to incorrect format) */
 int mrp_pdu_rcv(struct mrp_application *app)
 {
-    struct mrpdu pdu;          /* ethernet frame payload */
-    struct sockaddr_ll sl;      /* stores sending address */
-    socklen_t len = sizeof(sl); /* lenght of sockaddr structure */
+    struct mrpdu pdu;               /* ethernet frame payload */
+    struct mrp_participant *part;
 
-    /* Receive PDU */
-    pdu.len = recvfrom(app->proto.fd, &pdu.buf, sizeof(pdu.buf), 0,
-        (struct sockaddr*)&sl, &len);
-    if (pdu.len <= 0)
+    /* PDU should be processed by the participant associated the port
+      (and vlan, if application requires tagged PDUs) */
+    /* Locate participant. If found, its pdu.buf gets filled with data */
+    part = mrp_socket_rcv(app, &pdu);
+    if (!part)
         return -1;
 
     /* Check PDU format */
@@ -374,100 +395,106 @@ int mrp_pdu_rcv(struct mrp_application *app)
         return -1;
     }
 
-    // app->rcv(port, pdu);
-
     /* Parse PDU */
-    mrp_pdu_parse(&app->participants[sl.sll_ifindex], &pdu);
+    mrp_pdu_parse(part, &pdu);
 
     return 0;
 }
 
 /* Send the MRPDU for the given participant.
-   @param part pointer to MRP participant */
-void mrp_pdu_send(struct mrp_participant *part)
+   @param p pointer to MRP participant */
+void mrp_pdu_send(struct mrp_participant *p)
 {
-    int len;
-    struct mrpdu *pdu = &part->pdu;
-    struct mrp_application *app = part->app;
-
-    static struct sockaddr_ll sl = {    // link level info
-        .sll_family = PF_PACKET,
-        .sll_halen  = ETH_ALEN
-    };
-
-    sl.sll_ifindex  = mrp_port(part);
-    sl.sll_protocol = htons(app->proto.ethertype);
-    memcpy(&sl.sll_addr, app->proto.address, ETH_ALEN);
+    struct mrpdu *pdu = &p->pdu;
 
     /* end message and pdu (not strictly necessary)*/
+    pdu->pos++;
     mrp_pdu_append_endmark(pdu);
     mrp_pdu_append_endmark(pdu);
 
     /* Ensure minimum ethernet payload */
-    pdu->len = (pdu->len < MIN_ETH_DATA_LEN) ? MIN_ETH_DATA_LEN:pdu->len;
+    pdu->len = (pdu->len < MIN_ETH_DATA_LEN) ? MIN_ETH_DATA_LEN : pdu->pos;
 
-    len = sendto(app->proto.fd, pdu->buf, pdu->len, 0,
-        (struct sockaddr*)&sl, sizeof(sl));
-    if (len < pdu->len)
-        perror("mrp_pdu_send");
+    /* Send PDU through the open socket */
+    mrp_socket_send(p);
 }
 
 /*
    Append and MRP attribute event into a participant PDU.
    @param part participant which contains PDU into which attribute should be
    appended.
-   @param attr attribute to which the event refers.
+   @param mid attribute index to which the event refers.
    @param event attribute event. In the case of a LEAVEALL event, the event is
    added to the VectorAttribute being currently encoded.
    @return 0 if attribute event was correctly appended. -1 if there is no space
-   left to insert the attribute event */
-int mrp_pdu_append_attr(struct mrp_participant *part,  struct mrp_attr *attr,
-    enum mrp_event event)
+   left to insert the attribute event. -EINVAL if invalid attribute */
+int mrp_pdu_append_attr(struct mrp_participant *part,
+                        int mid,
+                        enum mrp_attr_event event)
 {
-    struct mrp_attr *cur_attr;
-    struct mrpdu *pdu;
-    int rb_pos, rb_vhdr;        // initial encoding positions (rollback)
-    int nval;                   // number of values vector attr header
-    int idx;                    // Index of event within ThreePackedEvent
-    uint16_t vhdr;              // Vector header
-
-    pdu = &part->pdu;
-    cur_attr = pdu->cur_attr;
-
-    /* If first attribute... */
-    if (!cur_attr) {
-        /* Init PDU */
-        mrp_pdu_init(pdu);
-        pdu->buf[pdu->pos++] = part->app->proto.version;
-        cur_attr = attr;
-    }
+    int new_pdu, new_msg, new_vec;
+    int rb_pos, rb_vhdr, rb_mhdr;   // initial encoding positions (rollback)
+    int nval;                       // number of values (vector header)
+    int idx;                        // Index of event within ThreePackedEvent
+    uint16_t vhdr;                  // Vector header
+    uint8_t __attrtype;             // current message attr type
+    void *firstval;
+    uint8_t attrtype;
+    uint8_t attrlen;
+    void *attrval;
+    struct mrp_application *app = part->port->app;
+    struct mrpdu *pdu = &part->pdu;
 
     rb_pos  = pdu->pos;
     rb_vhdr = pdu->vhdr;
+    rb_mhdr = pdu->mhdr;
+
+    /* Obtain attr info from application */
+    if (app->db_read_entry(&attrtype, &attrlen, &attrval, mid) < 0)
+        /* should never happend, but... just in case, avoid processing further
+           events for this attr. To recover from error, close and send PDU */
+        goto nomem;
+
+    /* If first attribute... */
+    new_pdu = (pdu->pos == 0);
+    if (new_pdu)
+        pdu->buf[pdu->pos++] = app->proto.version;
+    else
+        __attrtype = pdu->buf[pdu->mhdr];
 
     /* If new attribute type... */
-    if (attr->type != cur_attr->type) {
-        /* Close previous message and append a new one*/
-        if (mrp_pdu_append_endmark(pdu) < 0)
+    new_msg = new_pdu || (attrtype != __attrtype);
+    if (new_msg) {
+        /* Close previous message (if exists) and append a new one */
+        if (!new_pdu) {
+            pdu->pos++;
+            if (mrp_pdu_append_endmark(pdu) < 0)
+                goto nomem;
+        }
+        if (mrp_pdu_append_msg(pdu, attrtype, attrlen) < 0)
             goto nomem;
-        if (mrp_pdu_append_msg(pdu, attr->type, attr->len) < 0)
-            goto nomem;
-        cur_attr = attr;
-    }
-    /* If attribute value is not the following one... */
-    if (!mrp_attr_subsequent(part->app, cur_attr->value,
-        attr->value, attr->type, attr->len)) {
-        /* Append new vector attribute. */
-        if(mrp_pdu_append_vector_attr(pdu, attr->len, attr->value) < 0)
-            goto nomem;
+    } else {
+        nval = pdu_nval(pdu, pdu->vhdr);
+        firstval = &pdu->buf[pdu->vhdr + MRP_ATTR_HDR_LEN];
     }
 
-    nval = number_of_values(pdu->buf[pdu->vhdr], pdu->buf[pdu->vhdr + 1]);
+    /* If attribute value is not the following one in vector... */
+    new_vec = new_msg ||
+           (app->attr_cmp(attrtype, attrlen, attrval, firstval) != (nval + 1));
+    if (new_vec) {
+        if(!new_msg)
+            pdu->pos++;
+        /* Append new vector attribute. */
+        if(mrp_pdu_append_vector_attr(pdu, attrlen, attrval) < 0)
+            goto nomem;
+        nval = 0;
+    }
+
     /* Append event in the corresponding ThreePackedEvent */
     idx  = nval % 3;
     if (idx == 0) {
         /* Append new octet to the Vector */
-        if (!pdu_may_pull(pdu, 1))
+        if (pdu_tailroom(pdu) < 1)
             goto nomem;
         pdu->pos++;
         pdu->buf[pdu->pos] = 0; /* initial value for the tpe */
@@ -480,18 +507,14 @@ int mrp_pdu_append_attr(struct mrp_participant *part,  struct mrp_attr *attr,
     memcpy(pdu->buf + pdu->vhdr, &vhdr, MRP_ATTR_HDR_LEN);
     /* no need to update encoding position, since we are just updating */
 
-    pdu->cur_attr = cur_attr;
     return 0;
 
 nomem:
     /* rollback pdu changes */
     pdu->pos  = rb_pos;
     pdu->vhdr = rb_vhdr;
+    pdu->mhdr = rb_mhdr;
 
-    /* prepare pdu for delivery */
-    mrp_pdu_append_endmark(pdu); /* message end */
-    mrp_pdu_append_endmark(pdu); /* pdu end */
-    pdu->len = pdu->pos;
     return -1;
 }
 
@@ -499,4 +522,9 @@ nomem:
 int mrp_pdu_full(struct mrpdu *pdu)
 {
     return pdu_tailroom(pdu) == 0;
+}
+
+int mrp_pdu_empty(struct mrpdu *pdu)
+{
+    return pdu_tailroom(pdu) == pdu->maxlen;
 }

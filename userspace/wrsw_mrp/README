@@ -1,0 +1,97 @@
+White Rabbit Switch Multiple Registration Protocol (MRP)
+
+GNU GPL Version 2. This package is copyrighted by CERN and released as
+free software. Copyright (C) 2012, CERN.
+
+Authors:    Juan Luis Manas (juan.manas@integrasys.es)
+            Miguel Baizan   (miguel.baizan@integrasys-sa.com)
+
+Short info: Implementation of the Multiple Registration Protocol (MRP) as
+            defined in the Std. IEEE 802.1ak-2007 and 802.1ak-Corrigendum.
+
+
+
+    General info
+    ============
+
+'The Multiple Registration Protocol allows participants in an MRP application
+to register attributes with other participants in a Bridged Local Area Network.
+The definition of attribute types, their values, and the semantics associated
+with values when registered, are specific to each MRP application.'
+
+The MRP protocol has been implemented as a library to be used for any MRP
+Application (at the time of the development of this software package, only two
+MRP applications were known: MMRP -Multiple MAC Registration Protocol- and
+MVRP -Multiple VLAN Registration Protocol-).
+
+
+
+    Structure of the package
+    ========================
+
+README
+	This file.
+
+Makefile:
+    Makefile, based on the WR development environment wr-switch-sw-2011-05-18.
+
+if_index.[ch]:
+    Functions for inquiring about network interfaces (not available at net/if.h)
+
+wrsw_hal_ipc.[ch]:
+    Wrapper functions for HAL IPC methods. These functions are expected to be
+    shared among several other WR software packages.
+
+llist.h:
+    Generic functions to handle linked lists (create, delete, add, etc).
+
+timer.h:
+    Operations to be used over MRP timers.
+
+mrp_socket.c:
+    Functions to handle Raw and Datagram packet sockets.
+
+mrp_pdu.c:
+    Functions to encode/decode MRP PDUs.
+
+mrp.[ch]:
+    Main MRP functions and data structures. State machines are also defined
+    here.
+
+
+
+
+    Dependencies
+    ============
+
+wr-switch-sw/wrsw_rtud:
+    The MRP implementation interacts with the RTU proxy to be sure that hardware
+    delivers application packets (PDUs) to the kernel instead of switching them.
+
+libminipc.so libwripc.so:
+    Libraries to handle IPCs.
+
+wr-switch-sw/wrsw_hal:
+    The MRP implementation needs some ports information that will be provided
+    by the HAL. As the information held by HAL can only be accessed through
+    the libwripc library, there's also a dependency with this one. Note however
+    that the libwripc package in wr-switch-sw-2011-05-18 has been superseded
+    by the mini-ipc package, so the library may be found only in the
+    installation directories (see Makefile).
+
+lrt:
+    The timer functions use clock and time functions that need to link
+    with real time features (see manual pages, e.g. clock_gettime).
+
+
+
+
+    Compilation and usage
+    =====================
+
+For compilation just run "make", following the instructions of the document
+wrs-build.pdf in the wr-switch-sw/doc section; previously you need to set some
+environment variables (i.e. LINUX, CROSS_COMPILE and WR_INSTALL_ROOT).
+You can run "make install" to copy the library to the $(WR_INSTALL_ROOT)/lib
+directory. Also, you can compile this package using the build scripts in
+$(WRS_OUTPUT_DIR)/wr-switch-sw/build.
