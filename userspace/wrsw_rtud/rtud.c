@@ -73,7 +73,7 @@ static int create_permanent_entries()
     for(i = 0; i < NUM_RESERVED_ADDR; i++) {
         slow_proto_mac[5] = i;
         err = rtu_fdb_create_static_entry(slow_proto_mac, WILDCARD_VID,
-            0x400, 0xfffffbff, ST_PERMANENT, ACTIVE);
+            0x400, 0xfffffbff, ST_PERMANENT, ACTIVE, !IS_BPDU);
         if(err)
             return err;
     }
@@ -90,7 +90,7 @@ static int create_permanent_entries()
             mac_to_string(pstate.hw_addr)
         );
 		err = rtu_fdb_create_static_entry(pstate.hw_addr, WILDCARD_VID,
-		    0x400, 0xfffffbff, ST_PERMANENT, ACTIVE);
+		    0x400, 0xfffffbff, ST_PERMANENT, ACTIVE, !IS_BPDU);
         if(err)
             return err;
     }
@@ -98,7 +98,7 @@ static int create_permanent_entries()
     // Broadcast MAC
     TRACE(TRACE_INFO,"adding static route for broadcast MAC...");
     err = rtu_fdb_create_static_entry(bcast_mac, WILDCARD_VID,
-        0xffffffff, 0x00000000, ST_PERMANENT, ACTIVE);
+        0xffffffff, 0x00000000, ST_PERMANENT, ACTIVE, !IS_BPDU);
     if(err)
         return err;
 

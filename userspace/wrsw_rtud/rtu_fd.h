@@ -74,7 +74,8 @@ int  rtu_fdb_create_static_entry(
             uint32_t egress_ports,
             uint32_t forbidden_ports,
             int type,
-            int active
+            int active,
+            int is_bpdu
      ) __attribute__((warn_unused_result));
 
 int rtu_fdb_delete_static_entry(
@@ -170,5 +171,16 @@ uint16_t rtu_fdb_get_next_fid(uint8_t fid);
 uint16_t rtu_fdb_get_num_dynamic_entries(uint8_t fid);
 uint32_t rtu_fdb_get_num_learned_entry_discards(uint8_t fid);
 uint64_t rtu_fdb_get_num_vlan_deletes(void);
+
+int rtu_fdb_is_restricted_vlan_reg(int port);
+void rtu_fdb_set_restricted_vlan_reg(int port);
+void rtu_fdb_unset_restricted_vlan_reg(int port);
+
+// Dynamic VLAN
+int rtu_vfdb_forward_dynamic(int port, uint16_t vid);
+int rtu_vfdb_filter_dynamic(int port, uint16_t vid);
+
+void rtu_fdb_delete_dynamic_entries(int port, uint16_t vid);
+
 
 #endif /*__WHITERABBIT_RTU_FD_H*/

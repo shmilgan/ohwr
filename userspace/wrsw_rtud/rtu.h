@@ -37,6 +37,7 @@
 #include <linux/if_ether.h>
 #include <stdio.h>
 
+
 #include "mac.h"
 
 #define RTU_BANKS               2
@@ -97,6 +98,8 @@
 #define DYNAMIC         1
 #define STATIC_DYNAMIC  2
 
+#define IS_BPDU         1
+
 /**
  * RTU request: input for the RTU
  */
@@ -121,6 +124,7 @@ struct static_filtering_entry {
     uint32_t forbidden_ports;                   // 1 = prevents use of dyn info
     int type;		                            // Entry storage type.
     int active;                                 // 0: non-active; 1: active.
+    int is_bpdu;                                // 1 = bpdu
     struct static_filtering_entry *next;	    // Double linked list (in
     struct static_filtering_entry *prev;        // lexicographic order)
     struct static_filtering_entry *next_sib;    // Next static entry with the
@@ -217,6 +221,9 @@ struct vlan_table_entry {
     int dynamic;            // pure static:         0
                             // pure dynamic:        1
                             // dynamic and static:  2
+
+    int is_static;
+
     uint32_t creation_t;    // value of sysUpTime when this VLAN was created.
 };
 
@@ -258,5 +265,21 @@ unsigned long now()
 {
     return (unsigned long) time(NULL);
 }
+
+inline static int is_set(uint32_t val, int pos)
+{
+    return val & (1 << pos);
+}
+
+inline static void set(uint32_t *val, int pos)
+{
+    *val |= (1 << pos);
+}
+
+inline static void unset(uint32_t *val, int pos)
+{
+    *val &= ~(1 << pos);
+}
+
 
 #endif /*__WHITERABBIT_RTU_H*/

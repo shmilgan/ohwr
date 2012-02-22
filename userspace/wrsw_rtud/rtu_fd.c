@@ -95,6 +95,9 @@ static struct filtering_entry_node *fd[NUM_FIDS];
  */
 static struct static_filtering_entry *sfd[2][NUM_VLANS];
 
+/* Restricted VLAN registration port map */
+static uint32_t restricted_vlan_reg;
+
 static inline
 int reserved(int vid)
 {
@@ -103,6 +106,12 @@ int reserved(int vid)
         (vid == 0) ||
 #endif // V3
         (vid == WILDCARD_VID);
+}
+
+static inline
+int illegal(int port)
+{
+    return (port < 0) || (port > NUM_PORTS);
 }
 
 static inline
@@ -118,6 +127,18 @@ int unlock(int code)
     return code;
 }
 
+static inline
+int is_restricted_vlan_reg(int port)
+{
+    return (restricted_vlan_reg >> port) & 0x01;
+}
+
+static inline
+int is_normal_vlan_reg(struct vlan_table_entry *vlan, int port)
+{
+    return vlan->use_dynamic & (1 << port);
+}
+
 //------------------------------------------------------------------------------
 // Auxiliary functions to convert 802.1Q data types into low level data types.
 //------------------------------------------------------------------------------
@@ -130,14 +151,14 @@ static void calculate_forward_vector(struct static_filtering_entry *sfe,
                                      uint32_t *port_map,
                                      uint32_t *use_dynamic)
 {
-    int i = 0;
+    int i;
 
     // If any entry specifies Forward for this port, then result is Forward
     // else if any entry specifies Filter for this port, then result is Filter
     // else use Dynamic info
     *use_dynamic = 0xFFFFFFFF;
     *port_map    = 0x00000000;
-    for (; sfe; sfe = sfe->next_sib, i++) {
+    for (i = 0; sfe; sfe = sfe->next_sib, i++) {
         // Only active entries are used to compute the forward vector
         if (!sfe->active)
             continue;
@@ -148,6 +169,21 @@ static void calculate_forward_vector(struct static_filtering_entry *sfe,
         *port_map    |= sfe->egress_ports;
         *use_dynamic &= ~(sfe->egress_ports | sfe->forbidden_ports);
     }
+}
+
+static int is_bpdu(struct static_filtering_entry *sfe)
+{
+    int i;
+
+    for (i = 0; sfe; sfe = sfe->next_sib, i++) {
+        if (!sfe->active)
+            continue;
+        if ((i > 0) && (sfe->vid == WILDCARD_VID))
+            break;
+        if (sfe->is_bpdu)
+            return 1;
+    }
+    return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -163,7 +199,8 @@ static struct static_filtering_entry *sfe_create(uint8_t  mac[ETH_ALEN],
                                                  uint32_t egress_ports,
                                                  uint32_t forbidden_ports,
                                                  int type,
-                                                 int active)
+                                                 int active,
+                                                 int is_bpdu)
 {
     int xcast;
     struct static_filtering_entry *node, *sfe;
@@ -179,6 +216,7 @@ static struct static_filtering_entry *sfe_create(uint8_t  mac[ETH_ALEN],
     sfe->forbidden_ports = forbidden_ports;
     sfe->type            = type;
     sfe->active          = active;
+    sfe->is_bpdu         = is_bpdu;
     sfe->next_sib        = NULL;
     mac_copy(sfe->mac, mac);
 
@@ -270,7 +308,8 @@ struct static_filtering_entry *sfe_find_next(uint8_t mac[ETH_ALEN], uint32_t vid
 static int sfe_update(struct static_filtering_entry *sfe,
                       uint32_t egress_ports,
                       uint32_t forbidden_ports,
-                      int active)
+                      int active,
+                      int is_bpdu)
 {
     // TODO persistence support
     // TODO handle storage type update
@@ -289,6 +328,11 @@ static int sfe_update(struct static_filtering_entry *sfe,
         sfe->forbidden_ports = forbidden_ports;
         ret = 0;
     }
+    if (sfe->is_bpdu != is_bpdu) {
+        sfe->is_bpdu = is_bpdu;
+        ret = 0;
+    }
+
     return ret;
 }
 
@@ -593,6 +637,7 @@ static int fe_insert_static_entry(uint16_t vid,
         if (ret == 0)
             fe_register_static_entry(sfe, fe);
     }
+    fe->is_bpdu |= sfe->is_bpdu;
     return ret;
 }
 
@@ -620,7 +665,22 @@ static int fe_delete_static_entry(uint16_t vid,
     }
     // Combine all remaining static info and dynamic info (if any).
     calculate_forward_vector(fe->static_fdb, &_port_map, &_use_dynamic);
+    fe->is_bpdu = is_bpdu(fe->static_fdb);
     return fe_update(fe, _port_map, ve->port_mask, _use_dynamic, STATIC);
+}
+
+static int fe_insert_wildcard_static_entries(uint16_t vid)
+{
+    int xcast;
+    struct static_filtering_entry *sfe;
+
+    for (xcast = 0; xcast < 2; xcast++) {
+        for (sfe = sfd[xcast][WILDCARD_VID]; sfe; sfe = sfe->next) {
+            if (fe_insert_static_entry(vid, sfe) < 0)
+                return -ENOMEM;
+        }
+    }
+    return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -846,9 +906,98 @@ int rtu_fdb_read_next_entry(uint8_t (*mac)[ETH_ALEN],   // inout
     return unlock(0);
 }
 
+void rtu_fdb_delete_dynamic_entries(int port, uint16_t vid)
+{
+    if (illegal(port) || reserved(vid))
+        return;
+    lock();
+    rtu_sw_delete_dynamic_entries(port, vid);
+    rtu_sw_commit();
+    unlock(0);
+}
+
+/**
+ * Creates or updates a dynamic vlan registration entry.
+ * @return 0 if entry was created or updated. -1 if vlan registration is
+ * restricted and there is no static vlan entry. -EINVAL if port number is not
+ * valid or vid is reserved.
+ */
+int rtu_vfdb_forward_dynamic(int port, uint16_t vid)
+{
+    int err;
+    struct vlan_table_entry *vlan;
+
+    if (reserved(vid) || illegal(port))
+        return -EINVAL;
+
+    /* If the value of the Restricted_VLAN_Registration is TRUE, a dynamic entry
+    for a given VLAN may only be created if a Static VLAN Registration Entry
+    already exists for that VLAN, in which the Registrar Administrative Control
+    value is Normal Registration */
+    lock();
+    vlan = rtu_sw_find_vlan_entry(vid);
+    if (is_restricted_vlan_reg(port) && !(vlan && vlan->is_static))
+        return unlock(-1);
+    if (vlan) {
+        if (vlan->is_static && !is_normal_vlan_reg(vlan, port))
+            return unlock(-1);
+        vlan->port_mask |= (1 << port);
+        rtu_sw_update_vlan_entry(vlan);
+    } else {
+        /* Note: If no static entry exists for a VLAN, then it is assumed
+        that frames for that VLAN are transmitted VLAN-tagged on all Ports */
+        // TODO FID
+        rtu_sw_cache();
+        rtu_sw_create_vlan_entry(vid, 0, (1 << port), 0, 0, DYNAMIC);
+        err = fe_insert_wildcard_static_entries(vid);
+        if (err) {
+            // Rollback insertions
+            rtu_sw_uncache();
+            rtu_sw_rollback();
+            return unlock(err);
+        }
+    }
+    rtu_sw_commit();
+    return unlock(0);
+}
+
+/**
+ * Delete a dynamic vlan registration entry for the given VLAN and port.
+ */
+int rtu_vfdb_filter_dynamic(int port, uint16_t vid)
+{
+    struct vlan_table_entry *vlan;
+
+    if (reserved(vid))
+        return -EINVAL;
+
+    if ((port < 0) || (port > NUM_PORTS))
+        return -EINVAL;
+
+    lock();
+    vlan = rtu_sw_find_vlan_entry(vid);
+    if (vlan) {
+        /* If vlan entry is dynamic, entry can be filtered out straight forward.
+        If vlan entry is static, normal registration is required */
+        if (vlan->is_static && !is_normal_vlan_reg(vlan, port))
+            return unlock(-1);
+        /* Filter out port from vlan */
+        unset(&vlan->port_mask, port);
+        /* Either update or remove vlan (in case it contains no other ports) */
+        if (vlan->port_mask)
+            rtu_sw_update_vlan_entry(vlan);
+        else
+            rtu_sw_delete_vlan_entry(vid);
+        // TODO remove FDB entries for VLAN and port
+        rtu_sw_commit();
+    }
+    return unlock(0);
+}
+
 //------------------------------------------------------------------------------
 // Static FDB
 //------------------------------------------------------------------------------
+
 
 /**
  * Creates or updates a static filtering entry in filtering database.
@@ -862,7 +1011,8 @@ int  rtu_fdb_create_static_entry(uint8_t mac[ETH_ALEN],
                                  uint32_t egress_ports,
                                  uint32_t forbidden_ports,
                                  int type,
-                                 int active)
+                                 int active,
+                                 int is_bpdu)
 {
     int i, created = 0, ret = 0;
     struct static_filtering_entry *sfe;
@@ -886,13 +1036,14 @@ int  rtu_fdb_create_static_entry(uint8_t mac[ETH_ALEN],
     // Create/Update entry in static FDB
     sfe = sfe_find(mac, vid);
     if (sfe) {
-        if (sfe->type == ST_PERMANENT)
+        if (sfe->type == ST_READONLY)
             return unlock(-EPERM);
         rtu_sfe_copy(&cache, sfe);
-        if (sfe_update(sfe, egress_ports, forbidden_ports, active) != 0)
+        if (sfe_update(sfe, egress_ports, forbidden_ports, active, is_bpdu) != 0)
             return unlock(0);
     } else {
-        sfe = sfe_create(mac, vid, egress_ports, forbidden_ports, type, active);
+        sfe = sfe_create(
+                mac, vid, egress_ports, forbidden_ports, type, active, is_bpdu);
         if (!sfe)
             return unlock(-ENOMEM);
         created = 1;
@@ -1020,6 +1171,7 @@ int rtu_fdb_read_next_static_entry(uint8_t (*mac)[ETH_ALEN],    // inout
 // VLAN Table
 //------------------------------------------------------------------------------
 
+
 /**
  * Creates a static VLAN entry in the VLAN table
  * @param member_set registrar administrative control for the GVRP protocol.
@@ -1034,9 +1186,9 @@ int rtu_fdb_create_static_vlan_entry(uint16_t vid,
                                      uint32_t forbidden_ports,
                                      uint32_t untagged_set)
 {
-    int ret = 0, xcast;
+    int err;
     uint32_t port_mask, use_dynamic;
-    struct static_filtering_entry *sfe;
+    struct vlan_table_entry *ve;
 
     TRACE_DBG(
         TRACE_INFO,
@@ -1052,21 +1204,20 @@ int rtu_fdb_create_static_vlan_entry(uint16_t vid,
 
     lock();
     rtu_sw_cache();
-    // Insert VLAN registration entry into VLAN table
-    port_mask   = egress_ports;
+    ve = rtu_sw_find_vlan_entry(vid);
+    // Insert VLAN registration entry into VLAN table (keeping dyn info, if any)
     use_dynamic = ~(egress_ports | forbidden_ports);
+    port_mask = ve ?
+        (egress_ports | ((ve->port_mask & ve->use_dynamic) & use_dynamic)):
+         egress_ports;
     rtu_sw_create_vlan_entry(vid, fid, port_mask, use_dynamic, untagged_set, STATIC);
     // Static entries for the Wildcard VID now must also apply to this VLAN
-    for (xcast = 0; xcast < 2; xcast++) {
-        for (sfe = sfd[xcast][WILDCARD_VID]; sfe; sfe = sfe->next) {
-            ret = fe_insert_static_entry(vid, sfe);
-            if (ret == -ENOMEM) {
-                // Rollback insertions
-                rtu_sw_uncache();
-                rtu_sw_rollback();
-                return unlock(-ENOMEM);
-            }
-        }
+    err = fe_insert_wildcard_static_entries(vid);
+    if (err) {
+        // Rollback insertions
+        rtu_sw_uncache();
+        rtu_sw_rollback();
+        return unlock(err);
     }
     rtu_sw_commit();
     return unlock(0);
@@ -1074,8 +1225,6 @@ int rtu_fdb_create_static_vlan_entry(uint16_t vid,
 
 /**
  * Deletes a static VLAN entry from the VLAN table.
- * When a static VLAN entry is removed, any static or dynamic info contained in
- * the FDB which refers exclusively to such VLAN is also removed.
  * @return -EINVAL if vid is reserved or VLAN not registered. 0 if was removed.
  */
 int rtu_fdb_delete_static_vlan_entry(uint16_t vid)
@@ -1093,36 +1242,47 @@ int rtu_fdb_delete_static_vlan_entry(uint16_t vid)
 
     lock();
     ve = rtu_sw_find_vlan_entry(vid);
-    if (!ve || ve->dynamic)
+    if (!ve)
         return unlock(-EINVAL);
 
-    // Delete static entries for VID (from both static FDB and FDB)
-   for (xcast = 0; xcast < 2; xcast++) {
-        for (sfe = sfd[xcast][vid]; sfe; sfe = next_sfe) {
-            next_sfe = sfe->next;
-            fe_delete_static_entry(vid, sfe);
-            sfe_delete(sfe);
-        }
-    }
-    // Indirect static info and dynamic info can only be removed from FDB
-    // if not shared with other VLANS (i.e. no other VID maps to the same FID).
-    fid = ve->fid;
-    if (!rtu_sw_fid_shared(fid)) {
-        // Delete FDB info originated from static entries for wildcard VID
-        for (xcast = 0; xcast < 2; xcast++)
-            for (sfe = sfd[xcast][WILDCARD_VID]; sfe; sfe = sfe->next)
+    // Delete all static information
+    ve->port_mask &= ve->use_dynamic;
+    // Dynamic info for restricted vlan registration ports must also be removed
+    ve->port_mask &= ~restricted_vlan_reg;
+
+    if (ve->port_mask == 0) {
+        // Delete static entries for VID (from both static FDB and FDB)
+        for (xcast = 0; xcast < 2; xcast++) {
+            for (sfe = sfd[xcast][vid]; sfe; sfe = next_sfe) {
+                next_sfe = sfe->next;
                 fe_delete_static_entry(vid, sfe);
-        // Delete dynamic entries for FID assigned exclusively to VID
-        for (node = fd[fid]; node; node = next) {
-            next = node->next;
-            if (rtu_sw_find_entry(node->mac, fid, &fe))
-                rtu_fdb_delete_dynamic_entry(fe);
+                sfe_delete(sfe);
+            }
         }
+
+        // Indirect static info and dynamic info can only be removed from FDB
+        // if not shared with other VLANS (i.e. no other VID maps to the same FID).
+        fid = ve->fid;
+        if (!rtu_sw_fid_shared(fid)) {
+            // Delete FDB info originated from static entries for wildcard VID
+            for (xcast = 0; xcast < 2; xcast++)
+                for (sfe = sfd[xcast][WILDCARD_VID]; sfe; sfe = sfe->next)
+                    fe_delete_static_entry(vid, sfe);
+            // Delete dynamic entries for FID assigned exclusively to VID
+            for (node = fd[fid]; node; node = next) {
+                next = node->next;
+                if (rtu_sw_find_entry(node->mac, fid, &fe))
+                    rtu_fdb_delete_dynamic_entry(fe);
+            }
+        }
+        // Delete VLAN registration entry from VLAN table
+        rtu_sw_delete_vlan_entry(vid);
+        num_vlan_deletes++;
+    } else {
+        // Dynamic info still remains
+        rtu_sw_update_vlan_entry(ve);
     }
-    // Delete VLAN registration entry from VLAN table
-    rtu_sw_delete_vlan_entry(vid);
     rtu_sw_commit();
-    num_vlan_deletes++;
     return unlock(0);
 }
 
@@ -1142,7 +1302,7 @@ int rtu_fdb_read_static_vlan_entry(uint16_t vid,                // in
 
     lock();
     ve = rtu_sw_find_vlan_entry(vid);
-    if (!ve || ve->dynamic)
+    if (!ve || !ve->is_static)
         return unlock(-EINVAL);
     *egress_ports    = ve->port_mask;
     *forbidden_ports = ~ve->use_dynamic & ~ve->port_mask;
@@ -1169,7 +1329,7 @@ int rtu_fdb_read_next_static_vlan_entry(uint16_t *vid,              // inout
     // find next VLAN entry that is static
     do {
         ve = rtu_sw_find_next_ve(vid);
-    } while(ve && ve->dynamic);
+    } while(ve && !ve->is_static);
     if (!ve)
         return unlock(-EINVAL);
     *egress_ports    = ve->port_mask;
@@ -1233,6 +1393,21 @@ int rtu_fdb_read_next_vlan_entry(uint16_t *vid,             // inout
     *untagged_set = ve->untagged_set;
     *port_mask    = ve->port_mask;
     return unlock(0);
+}
+
+int rtu_fdb_is_restricted_vlan_reg(int port_no)
+{
+    return is_set(restricted_vlan_reg, port_no);
+}
+
+void rtu_fdb_set_restricted_vlan_reg(int port_no)
+{
+    set(&restricted_vlan_reg, port_no);
+}
+
+void rtu_fdb_unset_restricted_vlan_reg(int port_no)
+{
+    unset(&restricted_vlan_reg, port_no);
 }
 
 //------------------------------------------------------------------------------
