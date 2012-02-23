@@ -45,7 +45,7 @@ int cmp_oid(oid old_oid[MAX_OID_LEN], oid new_oid[MAX_OID_LEN],
             int base_oid_length);
 void print_oid(oid _oid[MAX_OID_LEN], int n) __attribute__((unused));
 void mask_to_ports(char *mask, int *ports_range);
-void ports_to_mask(char *ports_range, char *mask);
+int ports_to_mask(char *ports_range, char *mask);
 
 
 #endif /*__WHITERABBIT_CLI_COMMANDS_H*/
