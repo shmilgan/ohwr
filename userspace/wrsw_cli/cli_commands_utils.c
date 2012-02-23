@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "cli_commands_utils.h"
 
@@ -95,13 +96,11 @@ int cmp_oid(oid old_oid[MAX_OID_LEN], oid new_oid[MAX_OID_LEN],
 {
     /* The OID for the table must be the same */
     if (memcmp(new_oid, old_oid, base_oid_length*sizeof(oid)) == 0) {
-        if (memcmp(old_oid, new_oid, ((base_oid_length + 2)*sizeof(oid))) == 0) {
+        if (memcmp(old_oid, new_oid, ((base_oid_length + 2)*sizeof(oid))) == 0)
             return 0; /* We are still in the same column */
-        } else {
+        else
             return 1; /* We have changed the column */
-        }
-    }
-    else {
+    } else {
         return -1; /* We have changed the table */
     }
 
@@ -139,10 +138,10 @@ void mask_to_ports(char *mask, int *ports_range)
 
 /**
  * \brief Helper function to convert port numbers (which can be formatted as a
- * group of numbers separatted by commas) in port masks. The character 'e' is
- * used when an error occurs
+ * group of numbers separatted by commas) in port masks.
+ * @return 0 on success; a negative value otherwise.
 */
-void ports_to_mask(char *ports_range, char *mask)
+int ports_to_mask(char *ports_range, char *mask)
 {
     int i = 0;
     int len = 0;
@@ -154,10 +153,8 @@ void ports_to_mask(char *ports_range, char *mask)
     memset(mask, '0', (NUM_PORTS+1));
 
     for (i = 0; i < NUM_PORTS; i++) {
-        if (!isdigit(*port) && (*port != ',')) {
-            mask[0] = 'e';
-            return; /* Only decimal numbers or commas accepted */
-        }
+        if (!isdigit(*port) && (*port != ','))
+            goto fail;
 
         while (*port == ',') /* Detect commas */
             port++;
@@ -168,26 +165,21 @@ void ports_to_mask(char *ports_range, char *mask)
             port++;
             len++;
         }
-        if (len > 2) {
-            mask[0] = 'e';
-            return; /* A port should not have more than two digits */
-        }
+
+        if (len > 2)
+            goto fail; /* A port should not have more than two digits */
 
         /* Allocate memory for the ports array */
         ports[i] = (char*)malloc(len + 1);
-        if (!ports[i]) {
-            mask[0] = 'e';
-            return;
-        }
+        if (!ports[i])
+            cli_error(ENOMEM);
 
         /* Copy the detected command to the array */
         memcpy(ports[i], port_start, len);
         ports[i][len] = 0;
 
-        if (atoi(ports[i]) < 0 || atoi(ports[i]) >= NUM_PORTS) {
-            mask[0] = 'e';
-            return; /* Valid range: from 0 to NUM_PORTS-1 */
-        }
+        if (atoi(ports[i]) < 0 || atoi(ports[i]) >= NUM_PORTS)
+            goto fail;
 
         num_ports++;
 
@@ -208,5 +200,11 @@ void ports_to_mask(char *ports_range, char *mask)
     for (i = 0; i < num_ports ; i++)
         free(ports[i]);
 
-    return;
+    return 0;
+
+fail:
+    printf("\tError. Ports must be decimal numbers separated by commas,\n"
+           "\twith no blank spaces in between. Valid range: from 0 to %d\n",
+           (NUM_PORTS-1));
+    return -1;
 }

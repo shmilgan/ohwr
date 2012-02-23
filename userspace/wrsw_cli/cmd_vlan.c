@@ -72,13 +72,9 @@ void cli_cmd_set_vlan(struct cli_shell *cli, int argc, char **argv)
     vid = atoi(argv[0]);
 
     /* Parse port numbers to port mask and check the syntax */
-    ports_to_mask(argv[1], mask);
-    if (mask[0] == 'e') {
-        printf("\tError. Ports must be decimal numbers separated by commas,\n");
-        printf("\twith no blank spaces in between. Valid range: from 0 to %d\n",
-                (NUM_PORTS-1));
+    if (ports_to_mask(argv[1], mask) != 0)
         return;
-    }
+
     memset(ports, '0', 2*NUM_PORTS);
     for (i = 0; i < NUM_PORTS; i++)
         ports[(2*i)+1] = mask[i];

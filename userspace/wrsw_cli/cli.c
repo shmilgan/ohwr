@@ -64,7 +64,6 @@ static void usage(char *name)
     exit(1);
 }
 
-
 /**
  * \brief Turns the string introduced by the user into an array of commands.
  * It alternatively detects white spaces and words. Each word is stored in one
@@ -82,9 +81,8 @@ static int parse_string(char *string, char *commands[])
     char *cmd_start;
 
     for (i = 0; i < MAX_CMDS_IN_LINE; i++) {
-        while (*word && isspace(*word)) { /* Detect white spaces */
+        while (*word && isspace(*word)) /* Detect white spaces */
             word++;
-        }
 
         if (!*word)
             break;
@@ -215,9 +213,7 @@ static char *command_generator(const char *text, int state)
         cmd = cmd->next;
     }
 
-    goto free;
-
-    free:
+free:
     free_cmds_string(num_cmds, commands);
     return ((char*)NULL);
 }
@@ -324,10 +320,9 @@ struct cli_cmd *cli_find_command(
 {
     struct cli_cmd *c;
 
-    for (c = top_cmd; c; c = c->next) {
+    for (c = top_cmd; c; c = c->next)
         if (!strcmp(c->name, cmd))
             return c; /* Command found */
-    }
 
     return NULL;
 }
@@ -433,7 +428,7 @@ void cli_run_command(struct cli_shell *cli, char *string)
         printf("help' for usage.\n");
     }
 
-    free:
+free:
     free_cmds_string(num_cmds, commands);
     return;
 }

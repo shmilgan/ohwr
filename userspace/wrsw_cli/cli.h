@@ -49,11 +49,13 @@
    characters) */
 #define MAX_CMD_LENGTH      2048
 
-/* Define the types of argument expected by the command */
-#define CMD_NO_ARG          0
-#define CMD_ARG_MANDATORY   1
-#define CMD_ARG_OPTIONAL    2
 
+/* Define the types of argument expected by the command */
+enum type_of_arg {
+    CMD_NO_ARG = 0,
+    CMD_ARG_MANDATORY,
+    CMD_ARG_OPTIONAL
+};
 
 /* Main data structures */
 struct cli_cmd;
