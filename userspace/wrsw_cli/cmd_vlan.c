@@ -29,6 +29,11 @@
 #include "cli_commands.h"
 #include "cli_commands_utils.h"
 
+enum vlan_cmds {
+    CMD_VLAN = 0,
+    CMD_VLAN_MEMBER,
+    NUM_VLAN_CMDS
+};
 
 /**
  * \brief Command 'vlan <VID> member <Port number>'.
@@ -108,19 +113,36 @@ void cli_cmd_set_vlan(struct cli_shell *cli, int argc, char **argv)
     return;
 }
 
+/* Define the 'vlan' commands family */
+struct cli_cmd cli_vlan[NUM_VLAN_CMDS] = {
+    /* vlan <VID> */
+    [CMD_VLAN] = {
+        .parent     = NULL,
+        .name       = "vlan",
+        .handler    = NULL,
+        .desc       = "VLAN configuration",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<VID> VLAN number"
+    },
+    /* vlan <VID> member <port number> */
+    [CMD_VLAN_MEMBER] = {
+        .parent     = cli_vlan + CMD_VLAN,
+        .name       = "member",
+        .handler    = cli_cmd_set_vlan,
+        .desc       = "Creates a new VLAN",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<port number> port numbers separatted by commas"
+    }
+};
+
 /**
- * \brief Registration function for the command family 'vlan'.
+ * \brief Init function for the command family 'vlan'.
  * @param cli CLI interpreter.
  */
 void cmd_vlan_init(struct cli_shell *cli)
 {
-    struct cli_cmd *c;
+    int i;
 
-    c = cli_register_command(cli, NULL, "vlan", NULL, "VLAN configuration",
-            CMD_ARG_MANDATORY, "<VID> VLAN number");
-
-    /* vlan <VID> member <port number> */
-    cli_register_command(cli, c, "member", cli_cmd_set_vlan,
-        "Creates a new VLAN", CMD_ARG_MANDATORY,
-        "<port number> port numbers separatted by commas");
+    for (i = 0; i < NUM_VLAN_CMDS; i++)
+        cli_insert_command(cli, &cli_vlan[i]);
 }

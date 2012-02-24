@@ -22,28 +22,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef __WHITERABBIT_CLI_COMMANDS_H
 #define __WHITERABBIT_CLI_COMMANDS_H
 
-
 #include "cli.h"
-
 
 /* Function to build the commands tree */
 void cli_build_commands_tree(struct cli_shell *cli);
 
-/* Command registration function */
-struct cli_cmd *cli_register_command(struct cli_shell *cli,
-                                            struct cli_cmd *parent,
-                                            char *command,
-                                            void (*handler) (struct cli_shell *,
-                                                            int, char **),
-                                            char *desc,
-                                            int opt,
-                                            char *opt_desc);
+void cli_insert_command(struct cli_shell *cli, struct cli_cmd *cmd);
 
-/* Functions to build each command family. Look in cmd_*.c for definition */
+/* Functions to init each commands family. Look in cmd_*.c for implementation */
 void cmd_exit_init(struct cli_shell *cli);
 void cmd_hostname_init(struct cli_shell *cli);
 void cmd_show_init(struct cli_shell *cli);
@@ -51,7 +40,5 @@ void cmd_mac_address_table_init(struct cli_shell *cli);
 void cmd_no_init(struct cli_shell *cli);
 void cmd_interface_init(struct cli_shell *cli);
 void cmd_vlan_init(struct cli_shell *cli);
-
-
 
 #endif /*__WHITERABBIT_CLI_COMMANDS_H*/

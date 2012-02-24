@@ -29,7 +29,18 @@
 #include "cli_commands.h"
 #include "cli_commands_utils.h"
 
-
+enum show_cmds {
+    CMD_SHOW = 0,
+    CMD_SHOW_INTERFACE,
+    CMD_SHOW_INTERFACE_INFORMATION,
+    CMD_SHOW_CAM,
+    CMD_SHOW_CAM_AGING_TIME,
+    CMD_SHOW_CAM_MULTICAST,
+    CMD_SHOW_CAM_STATIC,
+    CMD_SHOW_CAM_STATIC_MULTICAST,
+    CMD_SHOW_VLAN,
+    NUM_SHOW_CMDS
+};
 
 /* Helper function to get the static entries of the FDB (both unicast
    or multicast, depending on the OID passed as argument) */
@@ -414,45 +425,103 @@ void cli_cmd_show_vlan(struct cli_shell *cli, int argc, char **argv)
     return;
 }
 
+/* Define the 'show' commands family */
+struct cli_cmd cli_show[NUM_SHOW_CMDS] = {
+    /* show */
+    [CMD_SHOW] = {
+        .parent     = NULL,
+        .name       = "show",
+        .handler    = NULL,
+        .desc       = "Shows the device configurations",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show interface */
+    [CMD_SHOW_INTERFACE] = {
+        .parent     = cli_show + CMD_SHOW,
+        .name       = "interface",
+        .handler    = NULL,
+        .desc       = "Displays interface information",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show interface information */
+    [CMD_SHOW_INTERFACE_INFORMATION] = {
+        .parent     = cli_show + CMD_SHOW_INTERFACE,
+        .name       = "information",
+        .handler    = cli_cmd_show_port_info,
+        .desc       = "Displays general interface information",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show mac-address-table */
+    [CMD_SHOW_CAM] = {
+        .parent     = cli_show + CMD_SHOW,
+        .name       = "mac-address-table",
+        .handler    = cli_cmd_show_cam,
+        .desc       = "Displays static and dynamic information of unicast "
+                      "entries in the FDB",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show mac-address-table aging-time */
+    [CMD_SHOW_CAM_AGING_TIME] = {
+        .parent     = cli_show + CMD_SHOW_CAM,
+        .name       = "aging-time",
+        .handler    = cli_cmd_show_cam_aging,
+        .desc       = "Displays the Filtering Database aging time",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show mac-address-table multicast */
+    [CMD_SHOW_CAM_MULTICAST] = {
+        .parent     = cli_show + CMD_SHOW_CAM,
+        .name       = "multicast",
+        .handler    = cli_cmd_show_cam_multi,
+        .desc       = "Displays static and dynamic information of multicast "
+                      "entries in the FDB",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show mac-address-table static */
+    [CMD_SHOW_CAM_STATIC] = {
+        .parent     = cli_show + CMD_SHOW_CAM,
+        .name       = "static",
+        .handler    = cli_cmd_show_cam_static,
+        .desc       = "Displays all the static unicast MAC address entries in"
+                      " the FDB",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show mac-address-table static multicast */
+    [CMD_SHOW_CAM_STATIC_MULTICAST] = {
+        .parent     = cli_show + CMD_SHOW_CAM_STATIC,
+        .name       = "multicast",
+        .handler    = cli_cmd_show_cam_static_multi,
+        .desc       = "Displays all the static multicast MAC address entries"
+                      " in the FDB",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show vlan */
+    [CMD_SHOW_VLAN] = {
+        .parent     = cli_show + CMD_SHOW,
+        .name       = "vlan",
+        .handler    = cli_cmd_show_vlan,
+        .desc       = "Displays VLAN information",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    }
+};
+
 /**
- * \brief Registration function for the command family 'show'.
+ * \brief Init function for the command family 'show'.
  * @param cli CLI interpreter.
  */
 void cmd_show_init(struct cli_shell *cli)
 {
-    struct cli_cmd *c, *s, *m;
+    int i;
 
-    s = cli_register_command(cli, NULL, "show", NULL,
-        "Shows the device configurations", CMD_NO_ARG, NULL);
-
-    /* show interface */
-    c = cli_register_command(cli, s, "interface", NULL,
-            "Displays interface information", CMD_NO_ARG, NULL);
-    /* show interface information */
-    cli_register_command(cli, c, "information", cli_cmd_show_port_info,
-            "Displays general interface information", CMD_NO_ARG, NULL);
-
-    /* show mac-address-table */
-    c = cli_register_command(cli, s, "mac-address-table", cli_cmd_show_cam,
-            "Displays static and dynamic information of unicast entries"
-            " in the FDB", CMD_NO_ARG, NULL);
-    /* show mac-address-table aging-time */
-    cli_register_command(cli, c, "aging-time", cli_cmd_show_cam_aging,
-        "Displays the Filtering Database aging time", CMD_NO_ARG, NULL);
-    /* show mac-address-table multicast */
-    cli_register_command(cli, c, "multicast", cli_cmd_show_cam_multi,
-        "Displays static and dynamic information of multicast entries"
-        " in the FDB", CMD_NO_ARG, NULL);
-    /* show mac-address-table static */
-    m = cli_register_command(cli, c, "static", cli_cmd_show_cam_static,
-        "Displays all the static unicast MAC address entries"
-        " in the FDB", CMD_NO_ARG, NULL);
-    /* show mac-address-table static multicast */
-    cli_register_command(cli, m, "multicast", cli_cmd_show_cam_static_multi,
-        "Displays all the static multicast MAC address entries"
-        " in the FDB", CMD_NO_ARG, NULL);
-
-    /* show vlan */
-    c = cli_register_command(cli, s, "vlan", cli_cmd_show_vlan,
-            "Displays VLAN information", CMD_NO_ARG, NULL);
+    for (i = 0; i < NUM_SHOW_CMDS; i++)
+        cli_insert_command(cli, &cli_show[i]);
 }

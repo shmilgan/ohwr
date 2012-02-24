@@ -29,6 +29,16 @@
 #include "cli_commands.h"
 #include "cli_commands_utils.h"
 
+enum no_cmds {
+    CMD_NO = 0,
+    CMD_NO_CAM,
+    CMD_NO_CAM_STATIC,
+    CMD_NO_CAM_STATIC_VLAN,
+    CMD_NO_CAM_MULTICAST,
+    CMD_NO_CAM_MULTICAST_VLAN,
+    CMD_NO_VLAN,
+    NUM_NO_CMDS
+};
 
 /* Helper function to remove the static entries in the FDB (both
     unicast or multicast, depending on the OID passed as argument) */
@@ -178,40 +188,85 @@ void cli_cmd_del_vlan(struct cli_shell *cli, int argc, char **argv)
     return;
 }
 
+/* Define the 'no' commands family */
+struct cli_cmd cli_no[NUM_NO_CMDS] = {
+    /* no */
+    [CMD_NO] = {
+        .parent     = NULL,
+        .name       = "no",
+        .handler    = NULL,
+        .desc       = "Use 'no' to delete/disable some configured parameters",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* no mac-address-table */
+    [CMD_NO_CAM] = {
+        .parent     = cli_no + CMD_NO,
+        .name       = "mac-address-table",
+        .handler    = NULL,
+        .desc       = "Removes static entries from the filtering database",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* no mac-address-table static <MAC Addrress> */
+    [CMD_NO_CAM_STATIC] = {
+        .parent     = cli_no + CMD_NO_CAM,
+        .name       = "static",
+        .handler    = NULL,
+        .desc       = "Removes a static unicast entry from the filtering"
+                      " database",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<MAC Addrress> MAC Address"
+    },
+    /* no mac-address-table static <MAC Addrress> vlan <VID> */
+    [CMD_NO_CAM_STATIC_VLAN] = {
+        .parent     = cli_no + CMD_NO_CAM_STATIC,
+        .name       = "vlan",
+        .handler    = cli_cmd_del_cam_static_entry,
+        .desc       = "Removes a static unicast entry from the filtering"
+                      " database",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<VID> VLAN number"
+    },
+    /* no mac-address-table multicast <MAC Addrress> */
+    [CMD_NO_CAM_MULTICAST] = {
+        .parent     = cli_no + CMD_NO_CAM,
+        .name       = "multicast",
+        .handler    = NULL,
+        .desc       = "Removes a static multicast entry from the filtering"
+                      " database",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<MAC Addrress> MAC Address"
+    },
+    /* no mac-address-table multicast <MAC Addrress> vlan <VID> */
+    [CMD_NO_CAM_MULTICAST_VLAN] = {
+        .parent     = cli_no + CMD_NO_CAM_MULTICAST,
+        .name       = "vlan",
+        .handler    = cli_cmd_del_cam_multi_entry,
+        .desc       = "Removes a static multicast entry from the filtering"
+                      " database",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<VID> VLAN number"
+    },
+    /* no vlan <VID> */
+    [CMD_NO_VLAN] = {
+        .parent     = cli_no + CMD_NO,
+        .name       = "vlan",
+        .handler    = cli_cmd_del_vlan,
+        .desc       = "Removes a VLAN",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<VID> VLAN number"
+    }
+};
+
 /**
- * \brief Registration function for the command family 'no'.
+ * \brief Init function for the command family 'no'.
  * @param cli CLI interpreter.
  */
 void cmd_no_init(struct cli_shell *cli)
 {
-    struct cli_cmd *c, *s, *m;
+    int i;
 
-    m = cli_register_command(cli, NULL, "no", NULL,
-            "Use 'no' to delete/disable some configured parameters",
-            CMD_NO_ARG, NULL);
-
-    /* no mac-address-table */
-    c = cli_register_command(cli, m, "mac-address-table", NULL,
-            "Removes static entries from the filtering database",
-            CMD_NO_ARG, NULL);
-    /* no mac-address-table static <MAC Addrress> */
-    s = cli_register_command(cli, c, "static", NULL,
-            "Removes a static unicast entry from the filtering database",
-            CMD_ARG_MANDATORY, "<MAC Addrress> MAC Address");
-    /* no mac-address-table static <MAC Addrress> vlan <VID> */
-    cli_register_command(cli, s, "vlan", cli_cmd_del_cam_static_entry,
-            "Removes a static unicast entry from the filtering database",
-            CMD_ARG_MANDATORY, "<VID> VLAN number");
-    /* no mac-address-table multicast <MAC Addrress> */
-    s = cli_register_command(cli, c, "multicast", NULL,
-            "Removes a static multicast entry from the filtering database",
-            CMD_ARG_MANDATORY, "<MAC Addrress> MAC Address");
-    /* no mac-address-table multicast <MAC Addrress> vlan <VID> */
-    cli_register_command(cli, s, "vlan", cli_cmd_del_cam_multi_entry,
-            "Removes a static multicast entry from the filtering database",
-            CMD_ARG_MANDATORY, "<VID> VLAN number");
-
-    /* no vlan <VID> */
-    cli_register_command(cli, m, "vlan", cli_cmd_del_vlan, "Removes VLAN",
-            CMD_ARG_MANDATORY, "<VID> VLAN number");
+    for (i = 0; i < NUM_NO_CMDS; i++)
+        cli_insert_command(cli, &cli_no[i]);
 }
