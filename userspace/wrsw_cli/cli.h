@@ -73,7 +73,8 @@ struct cli_cmd {
 
     struct cli_cmd *child;      /* Next possible commands in the line */
     struct cli_cmd *parent;     /* Previous command in the line */
-    struct cli_cmd *next;       /* Commands with the same parent */
+    struct cli_cmd *next;       /* Commands with the same parent. Useful for
+                                   autocompletion functions */
 };
 
 

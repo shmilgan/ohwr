@@ -28,6 +28,10 @@
 
 #include "cli_commands.h"
 
+enum hostname_cmds {
+    CMD_HOSTNAME = 0,
+    NUM_HOSTNAME_CMDS
+};
 
 /**
  * \brief Command 'hostname'.
@@ -60,13 +64,24 @@ void cli_cmd_hostname(struct cli_shell *cli, int argc, char **argv)
     return;
 }
 
+/* Define the 'hostname' commands family */
+struct cli_cmd cli_hostname[NUM_HOSTNAME_CMDS] = {
+    /* hostname <hostname> */
+    [CMD_HOSTNAME] = {
+        .parent     = NULL,
+        .name       = "hostname",
+        .handler    = cli_cmd_hostname,
+        .desc       = "Displays or sets (if argument is present) the host name",
+        .opt        = CMD_ARG_OPTIONAL,
+        .opt_desc   = "<hostname> New hostname"
+    }
+};
+
 /**
- * \brief Registration function for the 'hostname' command.
+ * \brief Init function for the 'hostname' command.
  * @param cli CLI interpreter.
  */
 void cmd_hostname_init(struct cli_shell *cli)
 {
-    cli_register_command(cli, NULL, "hostname", cli_cmd_hostname,
-        "Displays or sets (if argument is present) the host name",
-        CMD_ARG_OPTIONAL, "<hostname> New hostname");
+    cli_insert_command(cli, cli_hostname);
 }

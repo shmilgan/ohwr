@@ -28,6 +28,10 @@
 #include "cli_commands.h"
 #include "cli_snmp.h"
 
+enum exit_cmds {
+    CMD_EXIT = 0,
+    NUM_EXIT_CMDS
+};
 
 /**
  * \brief Command 'exit'.
@@ -52,13 +56,24 @@ void cli_cmd_exit(struct cli_shell *cli, int argc, char **argv)
     exit(0);
 }
 
+/* Define the 'exit' commands family */
+struct cli_cmd cli_exit[NUM_EXIT_CMDS] = {
+    /* exit */
+    [CMD_EXIT] = {
+        .parent     = NULL,
+        .name       = "exit",
+        .handler    = cli_cmd_exit,
+        .desc       = "Exit from Command Line Interface",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    }
+};
+
 /**
- * \brief Registration function for the 'exit' command.
+ * \brief Init function for the 'exit' command.
  * @param cli CLI interpreter.
  */
 void cmd_exit_init(struct cli_shell *cli)
 {
-    /* 'exit' command */
-    cli_register_command(cli, NULL, "exit", cli_cmd_exit,
-        "Exit from Command Line Interface", CMD_NO_ARG, NULL);
+    cli_insert_command(cli, cli_exit);
 }

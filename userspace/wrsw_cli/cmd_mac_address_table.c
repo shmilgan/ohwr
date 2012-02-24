@@ -29,6 +29,17 @@
 #include "cli_commands.h"
 #include "cli_commands_utils.h"
 
+enum cam_cmds {
+    CMD_CAM = 0,
+    CMD_CAM_AGING,
+    CMD_CAM_STATIC,
+    CMD_CAM_STATIC_VLAN,
+    CMD_CAM_STATIC_VLAN_PORT,
+    CMD_CAM_MULTICAST,
+    CMD_CAM_MULTICAST_VLAN,
+    CMD_CAM_MULTICAST_VLAN_PORT,
+    NUM_CAM_CMDS
+};
 
 /* Helper function to create static entries in the FDB (both
    unicast or multicast, depending on the OID passed as argument). The column
@@ -197,45 +208,90 @@ void cli_cmd_set_cam_multi_entry(struct cli_shell *cli, int argc, char **argv)
     return;
 }
 
+/* Define the 'mac-address-table' commands family */
+struct cli_cmd cli_cam[NUM_CAM_CMDS] = {
+    /* mac-address-table */
+    [CMD_CAM] = {
+        .parent     = NULL,
+        .name       = "mac-address-table",
+        .handler    = NULL,
+        .desc       = "Configure MAC address table",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* mac-address-table aging-time <aging> */
+    [CMD_CAM_AGING] = {
+        .parent     = cli_cam + CMD_CAM,
+        .name       = "aging-time",
+        .handler    = cli_cmd_set_cam_aging,
+        .desc       = "Sets the MAC address table aging time",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<aging value> New aging time"
+    },
+    /* mac-address-table static <MAC Addrress> */
+    [CMD_CAM_STATIC] = {
+        .parent     = cli_cam + CMD_CAM,
+        .name       = "static",
+        .handler    = NULL,
+        .desc       = "Adds a static unicast entry in the filtering database",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<MAC Addrress> MAC Address"
+    },
+    /* mac-address-table static <MAC Addrress> vlan <VID> */
+    [CMD_CAM_STATIC_VLAN] = {
+        .parent     = cli_cam + CMD_CAM_STATIC,
+        .name       = "vlan",
+        .handler    = NULL,
+        .desc       = "Adds a static unicast entry in the filtering database",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<VID> VLAN number"
+    },
+    /* mac-address-table static <MAC Addrress> vlan <VID> port <port number> */
+    [CMD_CAM_STATIC_VLAN_PORT] = {
+        .parent     = cli_cam + CMD_CAM_STATIC_VLAN,
+        .name       = "port",
+        .handler    = cli_cmd_set_cam_static_entry,
+        .desc       = "Adds a static unicast entry in the filtering database",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<port number> Port numbers separatted by commas"
+    },
+    /* mac-address-table multicast <MAC Addrress> */
+    [CMD_CAM_MULTICAST] = {
+        .parent     = cli_cam + CMD_CAM,
+        .name       = "multicast",
+        .handler    = NULL,
+        .desc       = "Adds a static multicast entry in the filtering database",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<MAC Addrress> MAC Address"
+    },
+    /* mac-address-table multicast <MAC Addrress> vlan <VID> */
+    [CMD_CAM_MULTICAST_VLAN] = {
+        .parent     = cli_cam + CMD_CAM_MULTICAST,
+        .name       = "vlan",
+        .handler    = NULL,
+        .desc       = "Adds a static multicast entry in the filtering database",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<VID> VLAN number"
+    },
+    /* mac-address-table multicast <MAC Addrress> vlan <VID> port <port number> */
+    [CMD_CAM_MULTICAST_VLAN_PORT] = {
+        .parent     = cli_cam + CMD_CAM_MULTICAST_VLAN,
+        .name       = "port",
+        .handler    = cli_cmd_set_cam_multi_entry,
+        .desc       = "Adds a static multicast entry in the filtering database",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<port number> port numbers separatted by commas"
+    }
+};
+
 /**
- * \brief Registration function for the command family 'mac-address-table'.
+ * \brief Init function for the command family 'mac-address-table'.
  * @param cli CLI interpreter.
  */
 void cmd_mac_address_table_init(struct cli_shell *cli)
 {
-    struct cli_cmd *c, *s, *m;
+    int i;
 
-    c = cli_register_command(cli, NULL, "mac-address-table", NULL,
-            "Configure MAC address table", CMD_NO_ARG, NULL);
-
-    /* mac-address-table aging-time <aging> */
-    cli_register_command(cli, c, "aging-time", cli_cmd_set_cam_aging,
-        "Sets the MAC address table aging time",
-        CMD_ARG_MANDATORY, "<aging value> New aging time");
-
-    /* mac-address-table static <MAC Addrress> */
-    s = cli_register_command(cli, c, "static", NULL,
-            "Adds a static unicast entry in the filtering database",
-            CMD_ARG_MANDATORY, "<MAC Addrress> MAC Address");
-    /* mac-address-table static <MAC Addrress> vlan <VID> */
-    m = cli_register_command(cli, s, "vlan", NULL,
-            "Adds a static unicast entry in the filtering database",
-            CMD_ARG_MANDATORY, "<VID> VLAN number");
-    /* mac-address-table static <MAC Addrress> vlan <VID> port <port number> */
-    cli_register_command(cli, m, "port", cli_cmd_set_cam_static_entry,
-        "Adds a static unicast entry in the filtering database",
-        CMD_ARG_MANDATORY, "<port number> Port numbers separatted by commas");
-
-    /* mac-address-table multicast <MAC Addrress> */
-    s = cli_register_command(cli, c, "multicast", NULL,
-            "Adds a static multicast entry in the filtering database",
-            CMD_ARG_MANDATORY, "<MAC Addrress> MAC Address");
-    /* mac-address-table multicast <MAC Addrress> vlan <VID> */
-    m = cli_register_command(cli, s, "vlan", NULL,
-            "Adds a static multicast entry in the filtering database",
-            CMD_ARG_MANDATORY, "<VID> VLAN number");
-    /* mac-address-table multicast <MAC Addrress> vlan <VID> port <port number> */
-    cli_register_command(cli, m, "port", cli_cmd_set_cam_multi_entry,
-        "Adds a static multicast entry in the filtering database",
-        CMD_ARG_MANDATORY, "<port number> port numbers separatted by commas");
+    for (i = 0; i < NUM_CAM_CMDS; i++)
+        cli_insert_command(cli, &cli_cam[i]);
 }

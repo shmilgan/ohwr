@@ -29,90 +29,59 @@
 
 #include "cli_commands.h"
 
-
 /*
  * NOTE:
  * The commands tree is built as a linked list of subcommands, starting with a
  * root command, whose reference is stored in the cli_shell structure
  * in order to keep a track of the whole list. Each subcommand may have a
  * parent, a children and a reference to the next command with shared parent.
+ * Each parent will only have a child (to access other childs we use 'next').
  * Depending on the previous parent commands, each subcommand has a different
  * handler. This is a graphical example of a commands tree:
  *
  * +--------------+
- * | root command |
+ * | root Command |
  * +--------------+
  *        |
- *        |
+ *        V
  * +--------------+
- * | next command |
+ * |  Command A   |
+*  |   next B     |
  * +--------------+
  *        |
- *        |
- * +--------------+         +---------------+        +--------------+
- * | next command |-------->| child command |------->| child command|
- * +--------------+         +---------------+        +--------------+
- *        |                         |
- *        |                         |
- * +--------------+         +--------------+
- * | next command |         | next command |
- * +--------------+         +--------------+
+ *        V
+ * +--------------+         +---------------+
+ * | Command B    |<------->|  Command D    |        +--------------+
+*  |  next C      |         |   parent B    |        |  Command F   |
+*  |  child D     |         |   child F     |<------>|   parent D   |
+*  |              |<----    |   next E      |        |              |
+ * +--------------+    |    +---------------+        +--------------+
+ *        |            |            |
+ *        V            |            V
+ * +--------------+    |    +---------------+
+ * | Command C    |    |____|  Command E    |
+ * +--------------+         |   parent B    |
+ *                          +---------------+
  *
  *
  */
-
-#define NUM_PORTS 32
-
-
 
 /**
- * \brief Register a command in the tree.
- * It inserts a command in the command tree.
+ * \brief Inserts a command in the commands tree.
+ * It inserts a command in the command tree, by updating the child and next
+ * pointers of the commands.
  * @param cli CLI interpreter.
- * @param parent pointer to the parent command. If it has no parent, then this
- *        parameter is NULL.
- * @param handler pointer to the function that handles the command. It can be
- *        NULL if the command has no meaning itself, but it has meaning as a
- *        parent of other command(s).
- * @param desc description of the command. This is printed when help is
- *        requested.
- * @return pointer to the new created command. It can be NULL if any error
- *         occurs.
+ * @param parent pointer to the command to register.
  */
-struct cli_cmd *cli_register_command(
-    struct cli_shell *cli, struct cli_cmd *parent, char *command,
-    void (*handler)(struct cli_shell *, int, char **),char *desc,
-    int opt, char *opt_desc)
+void cli_insert_command(struct cli_shell *cli, struct cli_cmd *cmd)
 {
-    struct cli_cmd *cmd, *c;
+    struct cli_cmd *c;
 
-    /* Check that the command name is not empty */
-    if (!*command)
-        cli_error(EINVAL);
-
-    /* Allocate the structure for the command */
-    cmd = (struct cli_cmd *)malloc(sizeof(struct cli_cmd));
-    if (!cmd)
-        cli_error(ENOMEM);
-
-    /* Clear structure */
-    memset(cmd, 0, sizeof(struct cli_cmd));
-
-    /* Set the command information */
-    cmd->name = command;
-    cmd->parent = parent;
-    cmd->handler = handler;
-    cmd->desc = desc;
-    cmd->opt = opt;
-    cmd->opt_desc = opt_desc;
-
-    /* Insert the command in the tree */
-    if (parent) {
-        /* Move to the parent and add the new command to the list of children */
-        if (!parent->child) {
-            parent->child = cmd;
-        } else { /* Traverse the list */
-            c = parent->child;
+    if (cmd->parent) {
+        if (!cmd->parent->child) { /* parent has no child yet */
+            cmd->parent->child = cmd;
+        } else { /* traverse the list to add the command at the end */
+            c = cmd->parent->child;
             while (c) {
                 if (c->next) {
                     c = c->next;
@@ -122,12 +91,12 @@ struct cli_cmd *cli_register_command(
                 }
             }
         }
-    } else { /* The new command has no parent */
+    } else { /* the command has no parent */
         c = cli->root_cmd;
-        if(!c) {
+        if(!c) { /* this is the first command in the tree */
             cli->root_cmd = cmd;
         } else {
-            while (c) {
+            while (c) { /* traverse the list to add the command at the end */
                 if (c->next) {
                     c = c->next;
                 } else {
@@ -137,18 +106,16 @@ struct cli_cmd *cli_register_command(
             }
         }
     }
-
-    return cmd;
+    return;
 }
 
 /**
- * \brief Build the commands tree.
+ * \brief Builds the commands tree.
  * The commands tree is built as a linked list of commands, starting with a
  * root command, whose reference is stored in the cli_shell structure
  * in order to keep a track of the whole list. Each command may have a
  * parent, a children and a reference to the next command with shared parent.
- * Here you can add new commands for registration in the commands tree. Remember
- * also that you have to implement the handler for the commands you create.
+ * Each parent will only have a child (to access other childs we use 'next').
  * @param cli CLI interpreter.
  */
 void cli_build_commands_tree(struct cli_shell *cli)

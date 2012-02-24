@@ -29,6 +29,12 @@
 #include "cli_commands.h"
 #include "cli_commands_utils.h"
 
+enum interface_cmds {
+    CMD_INTERFACE = 0,
+    CMD_INTERFACE_PORT,
+    CMD_INTERFACE_PORT_PVID,
+    NUM_INTERFACE_CMDS
+};
 
 /**
  * \brief Command 'interface port <port number> pvid <VLAN number>'.
@@ -97,22 +103,45 @@ void cli_cmd_set_port_pvid(struct cli_shell *cli, int argc, char **argv)
     return;
 }
 
+/* Define the 'interface' commands family */
+struct cli_cmd cli_interface[NUM_INTERFACE_CMDS] = {
+    /* interface */
+    [CMD_INTERFACE] = {
+        .parent     = NULL,
+        .name       = "interface",
+        .handler    = NULL,
+        .desc       = "Interface configuration",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* interface port <port number> */
+    [CMD_INTERFACE_PORT] = {
+        .parent     = cli_interface + CMD_INTERFACE,
+        .name       = "port",
+        .handler    = NULL,
+        .desc       = "Port configuration",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<port number> Port Number"
+    },
+    /* interface port <port number> pvid <VLAN number> */
+    [CMD_INTERFACE_PORT_PVID] = {
+        .parent     = cli_interface + CMD_INTERFACE_PORT,
+        .name       = "pvid",
+        .handler    = cli_cmd_set_port_pvid,
+        .desc       = "Sets the PVID value for the port",
+        .opt        = CMD_ARG_MANDATORY,
+        .opt_desc   = "<VLAN number> VLAN Number"
+    }
+};
+
 /**
- * \brief Registration function for the command family 'interface'.
+ * \brief Init function for the command family 'interface'.
  * @param cli CLI interpreter.
  */
 void cmd_interface_init(struct cli_shell *cli)
 {
-    struct cli_cmd *c, *s;
+    int i;
 
-    c = cli_register_command(cli, NULL, "interface", NULL,
-            "Interface configuration", CMD_NO_ARG, NULL);
-
-    /* interface port <port number> */
-    s = cli_register_command(cli, c, "port", NULL,
-        "Port configuration", CMD_ARG_MANDATORY, "<port number> Port Number");
-    /* interface port <port number> pvid <VLAN number> */
-    cli_register_command(cli, s, "pvid", cli_cmd_set_port_pvid,
-        "Sets the PVID value for the port",
-        CMD_ARG_MANDATORY, "<VLAN number> VLAN Number");
+    for (i = 0; i < NUM_INTERFACE_CMDS; i++)
+        cli_insert_command(cli, &cli_interface[i]);
 }
