@@ -460,7 +460,10 @@ static int rtu_fdb_srv_set_restricted_vlan_reg(
     in  = (struct rtu_fdb_set_restricted_vlan_reg_argdata*)args;
     out = (struct rtu_fdb_set_restricted_vlan_reg_retdata*)ret;
 
-    rtu_fdb_set_restricted_vlan_reg(in->port);
+    out->retval =
+        rtu_fdb_set_restricted_vlan_reg(
+            in->port
+        );
 
     return 0;
 }
@@ -473,7 +476,10 @@ static int rtu_fdb_srv_unset_restricted_vlan_reg(
     in  = (struct rtu_fdb_unset_restricted_vlan_reg_argdata*)args;
     out = (struct rtu_fdb_unset_restricted_vlan_reg_retdata*)ret;
 
-    rtu_fdb_unset_restricted_vlan_reg(in->port);
+    out->retval =
+        rtu_fdb_unset_restricted_vlan_reg(
+            in->port
+        );
 
     return 0;
 }

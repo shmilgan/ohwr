@@ -173,8 +173,8 @@ uint32_t rtu_fdb_get_num_learned_entry_discards(uint8_t fid);
 uint64_t rtu_fdb_get_num_vlan_deletes(void);
 
 int rtu_fdb_is_restricted_vlan_reg(int port);
-void rtu_fdb_set_restricted_vlan_reg(int port);
-void rtu_fdb_unset_restricted_vlan_reg(int port);
+int rtu_fdb_set_restricted_vlan_reg(int port);
+int rtu_fdb_unset_restricted_vlan_reg(int port);
 
 // Dynamic VLAN
 int rtu_vfdb_forward_dynamic(int port, uint16_t vid);
