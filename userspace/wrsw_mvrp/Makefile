@@ -1,31 +1,14 @@
-PROGRAM	= wrsw_mvrpd
-OBJS    = mvrp.o
 
-CC      = $(CROSS_COMPILE)gcc
+# Invokes sub-makefiles for mvrp program and mvrp (ipc) shared library.
 
-# We must include stuff from wr_ipc, which is installed.
-# If this is build under build scripts, it's $WRS_OUTPUT_DIR/images/wr
-WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
-WR_INCLUDE = $(WR_INSTALL_ROOT)/include
-WR_LIB = $(WR_INSTALL_ROOT)/lib
-
-# Use -DV3 with v3 HW (to avoid using VID = 0)
-CFLAGS  := -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL \
-           -I. -I../include -I../wrsw_rtud -I../wrsw_mrp -I$(WR_INCLUDE) \
-           -I$(LINUX)/include
-
-LDFLAGS := -L. -L$(WR_LIB) \
-           -lswitchhw -lwripc -lminipc -lwrrtu -lwrmrp
-
-RM := rm -f
-
-all: $(PROGRAM)
-
-$(PROGRAM): $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+all:
+	$(MAKE) -f Makefile.lib all
+	$(MAKE) -f Makefile.prg all
 
 clean:
-	$(RM) $(OBJS)
+	$(MAKE) -f Makefile.lib clean
+	$(MAKE) -f Makefile.prg clean
 
-install: all
-	cp $(PROGRAM) $(WR_INSTALL_ROOT)/bin
+install:
+	$(MAKE) -f Makefile.lib install
+	$(MAKE) -f Makefile.prg install
