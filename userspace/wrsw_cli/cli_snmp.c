@@ -122,6 +122,25 @@ int cli_snmp_int(netsnmp_variable_list *vars)
     return 0;
 }
 
+uint64_t cli_snmp_counter(netsnmp_variable_list *vars)
+{
+    uint32_t high;
+    uint32_t low;
+
+    if (vars) {
+        switch(vars->type) {
+        case ASN_COUNTER64:
+            high = vars->val.counter64->high;
+            low  = vars->val.counter64->low;
+            return ((uint64_t)high << 32) | low;
+        default:
+            errno = EINVAL;
+            fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        }
+    }
+    return 0;
+}
+
 char *cli_snmp_string(netsnmp_variable_list *vars)
 {
     char *sp;
@@ -150,6 +169,24 @@ int cli_snmp_get_int(oid _oid[MAX_OID_LEN], size_t oid_len)
     if (response) {
         if(response->errstat == SNMP_ERR_NOERROR)
             value = cli_snmp_int(response->variables);
+        err = errno;
+        snmp_free_pdu(response);
+        errno = err;
+    }
+
+    return value;
+}
+
+uint64_t cli_snmp_get_counter(oid _oid[MAX_OID_LEN], size_t oid_len)
+{
+    netsnmp_pdu *response;
+    int err = 0;
+    uint64_t value = 0;
+
+    response = cli_snmp_get(_oid, oid_len);
+    if (response) {
+        if(response->errstat == SNMP_ERR_NOERROR)
+            value = cli_snmp_counter(response->variables);
         err = errno;
         snmp_free_pdu(response);
         errno = err;

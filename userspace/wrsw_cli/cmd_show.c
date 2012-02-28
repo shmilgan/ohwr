@@ -39,6 +39,8 @@ enum show_cmds {
     CMD_SHOW_CAM_STATIC,
     CMD_SHOW_CAM_STATIC_MULTICAST,
     CMD_SHOW_VLAN,
+    CMD_SHOW_MVRP,
+    CMD_SHOW_MVRP_STATUS,
     NUM_SHOW_CMDS
 };
 
@@ -113,7 +115,7 @@ static void show_cam_static(char *base_oid)
 void cli_cmd_show_cam_aging(struct cli_shell *cli, int argc, char **argv)
 {
     oid _oid[MAX_OID_LEN];
-    char *base_oid = "1.3.111.2.802.1.1.4.1.2.1.1.5.1.0";
+    char *base_oid = ".1.3.111.2.802.1.1.4.1.2.1.1.5.1.0";
     size_t length_oid;  /* Base OID length */
     int aging;
 
@@ -137,7 +139,8 @@ void cli_cmd_show_cam_aging(struct cli_shell *cli, int argc, char **argv)
 
 /**
  * \brief Command 'show interface information'.
- * This command shows general information on ports.
+ * This command shows general information on ports (including MVRP related
+ * parameters).
  * @param cli CLI interpreter.
  * @param argc unused
  * @param agv unused
@@ -145,10 +148,16 @@ void cli_cmd_show_cam_aging(struct cli_shell *cli, int argc, char **argv)
 void cli_cmd_show_port_info(struct cli_shell *cli, int argc, char **argv)
 {
     oid _oid[MAX_OID_LEN];
+    oid aux_oid[MAX_OID_LEN];
     oid new_oid[MAX_OID_LEN];
     char *base_oid = ".1.3.111.2.802.1.1.4.1.4.5.1.1";
     size_t length_oid;  /* Base OID length */
     int pvid, port;
+    int mvrp_enabled;           /* MVRP port status */
+    int mvrp_restricted;        /* MVRP port restricted registrations */
+    uint64_t mvrp_failed;       /* MVRP port failed registrations */
+    char *mvrp_lpo;             /* MVRP port last PDU origin */
+    char mac_str[3 * ETH_ALEN];
 
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
@@ -162,8 +171,10 @@ void cli_cmd_show_port_info(struct cli_shell *cli, int argc, char **argv)
     memcpy(new_oid, _oid, MAX_OID_LEN * sizeof(oid));
 
     /* Header */
-    printf("\tPort   PVID\n");
-    printf("\t----   ----\n");
+    printf("\t            MVRP\n");
+    printf("\t            --------------------------------------------------\n");
+    printf("\tPort  PVID  Status    Registration Failed   Last PDU from      \n");
+    printf("\t----  ----  --------- ------------ -------  -------------------\n");
 
     do {
         errno = 0;
@@ -176,9 +187,43 @@ void cli_cmd_show_port_info(struct cli_shell *cli, int argc, char **argv)
             break;
 
         port = (int)new_oid[14];
-        printf("\t%-4d   %d\n", port, pvid);
+
+        memcpy(aux_oid, new_oid, length_oid * sizeof(oid));
+
+        aux_oid[12] = 4; /* MVRP port status column */
+        errno = 0;
+        mvrp_enabled = cli_snmp_get_int(aux_oid, length_oid);
+        if (errno != 0)
+            break;
+
+        aux_oid[12] = 7; /* MVRP port restricted registration column */
+        errno = 0;
+        mvrp_restricted = cli_snmp_get_int(aux_oid, length_oid);
+        if (errno != 0)
+            break;
+
+        aux_oid[12] = 5; /* MVRP port failed registrations */
+        errno = 0;
+        mvrp_failed = cli_snmp_get_counter(aux_oid, length_oid);
+        if (errno != 0)
+            break;
+
+        aux_oid[12] = 6; /* MVRP port last PDU origin */
+        errno = 0;
+        mvrp_lpo = cli_snmp_get_string(aux_oid, length_oid);
+        if (errno != 0)
+            break;
+
+        printf("\t%-4d  %-4d   %-8s %-12s %-7lld  %-19s\n",
+               port,
+               pvid,
+               (mvrp_enabled == TV_TRUE) ? "Enabled" : "Disabled",
+               (mvrp_restricted == TV_TRUE) ? "Restricted" : "    *",
+               mvrp_failed,
+               mac_to_string((uint8_t *)mvrp_lpo, mac_str));
 
         memcpy(_oid, new_oid, sizeof(oid) * MAX_OID_LEN);
+        free(mvrp_lpo);
     } while(1);
 
     return;
@@ -425,6 +470,38 @@ void cli_cmd_show_vlan(struct cli_shell *cli, int argc, char **argv)
     return;
 }
 
+/**
+ * \brief Command 'show mvrp status'.
+ * This command displays the MVRP status on the device.
+ * @param cli CLI interpreter.
+ * @param argc unused.
+ * @param agv unused.
+ */
+void cli_cmd_show_mvrp_status(struct cli_shell *cli, int argc, char **argv)
+{
+    oid _oid[MAX_OID_LEN];
+    char *base_oid = ".1.3.111.2.802.1.1.4.1.1.1.1.6.1";
+    size_t length_oid;  /* Base OID length */
+    int status;
+
+
+    memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
+
+    /* Parse the base_oid string to an oid array type */
+    length_oid = MAX_OID_LEN;
+    if (!snmp_parse_oid(base_oid, _oid, &length_oid))
+        return;
+
+    errno = 0;
+    status = cli_snmp_get_int(_oid, length_oid);
+
+    if (errno == 0)
+        printf("\tMVRP status: %s\n",
+               (status == TV_TRUE) ? "Enabled" : "Disabled" );
+
+    return;
+}
+
 /* Define the 'show' commands family */
 struct cli_cmd cli_show[NUM_SHOW_CMDS] = {
     /* show */
@@ -450,7 +527,8 @@ struct cli_cmd cli_show[NUM_SHOW_CMDS] = {
         .parent     = cli_show + CMD_SHOW_INTERFACE,
         .name       = "information",
         .handler    = cli_cmd_show_port_info,
-        .desc       = "Displays general interface information",
+        .desc       = "Displays general interface information (including some "
+                      "MVRP parameters)",
         .opt        = CMD_NO_ARG,
         .opt_desc   = NULL
     },
@@ -509,6 +587,24 @@ struct cli_cmd cli_show[NUM_SHOW_CMDS] = {
         .name       = "vlan",
         .handler    = cli_cmd_show_vlan,
         .desc       = "Displays VLAN information",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show mvrp */
+    [CMD_SHOW_MVRP] = {
+        .parent     = cli_show + CMD_SHOW,
+        .name       = "mvrp",
+        .handler    = NULL,
+        .desc       = "Displays MVRP information",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show mvrp status */
+    [CMD_SHOW_MVRP_STATUS] = {
+        .parent     = cli_show + CMD_SHOW_MVRP,
+        .name       = "status",
+        .handler    = cli_cmd_show_mvrp_status,
+        .desc       = "Displays the MVRP Enabled Status",
         .opt        = CMD_NO_ARG,
         .opt_desc   = NULL
     }

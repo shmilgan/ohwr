@@ -9,7 +9,7 @@ NET_SNMP_CONFIG		= $(WRS_NETSNMP_DIR)/net-snmp-config
 PROGRAM		= wrsw_cli
 SRCFILES	= cli.c cli_commands.c cli_snmp.c cli_commands_utils.c \
 				cmd_exit.c cmd_hostname.c cmd_show.c cmd_mac_address_table.c \
-				cmd_no.c cmd_interface.c cmd_vlan.c
+				cmd_no.c cmd_interface.c cmd_vlan.c cmd_mvrp.c
 OBJFILES	= $(patsubst %.c,%.o,$(SRCFILES))
 LIBFILES	= 	$(WRS_READLINE_DIR)/libreadline.a \
 				$(WRS_READLINE_DIR)/libhistory.a \

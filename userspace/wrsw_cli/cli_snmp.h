@@ -29,12 +29,18 @@
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 
+#define S_TRUE "1"
+#define S_FALSE "2"
+
+
 int cli_snmp_init(char *username, char *password);
 
 int cli_snmp_int(netsnmp_variable_list *vars);
+uint64_t cli_snmp_counter(netsnmp_variable_list *vars);
 char *cli_snmp_string(netsnmp_variable_list *vars);
 
 int cli_snmp_get_int(oid _oid[MAX_OID_LEN], size_t oid_len);
+uint64_t cli_snmp_get_counter(oid _oid[MAX_OID_LEN], size_t oid_len);
 char *cli_snmp_get_string(oid _oid[MAX_OID_LEN], size_t oid_len);
 
 netsnmp_pdu *cli_snmp_getnext(oid _oid[MAX_OID_LEN], size_t *oid_len);
