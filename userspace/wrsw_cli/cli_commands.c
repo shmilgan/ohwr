@@ -138,6 +138,9 @@ void cli_build_commands_tree(struct cli_shell *cli)
     /* 'mac-address-table' commands family */
     cmd_mac_address_table_init(cli);
 
+    /* 'mvrp' commands family */
+    cmd_mvrp_init(cli);
+
     /* 'no' commands family */
     cmd_no_init(cli);
 }

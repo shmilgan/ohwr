@@ -40,5 +40,6 @@ void cmd_mac_address_table_init(struct cli_shell *cli);
 void cmd_no_init(struct cli_shell *cli);
 void cmd_interface_init(struct cli_shell *cli);
 void cmd_vlan_init(struct cli_shell *cli);
+void cmd_mvrp_init(struct cli_shell *cli);
 
 #endif /*__WHITERABBIT_CLI_COMMANDS_H*/
