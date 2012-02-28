@@ -195,7 +195,6 @@ struct mad_machine {
 /* MRP Protocol Data Unit */
 struct mrpdu {
     uint8_t buf[ETH_DATA_LEN];
-    uint8_t src_mac[ETH_ALEN];  // source mac address
 
     int maxlen;         // max buffer length
     int len;            // buffer length
@@ -211,16 +210,20 @@ struct mrp_application;
 struct mrp_port {
     int hw_index;                       // Interface index of the port
     int port_no;                        // Port number
+    int point_to_point;                 // 1 = point to point
+                                        // 0 = shared medium
+    struct timespec periodic_timeout;   // Periodic timer expiration time
+    enum mrp_periodic_state periodic_state;
+
+    struct mrp_application *app;        // mrp application component
+    NODE *participants;                 // list of participants attached
+                                        // to this port
 
     int is_enabled;
-    struct mrp_application *app;        // mrp application component
-
-    int point_to_point;                 // 1 = port operates point to point
-
-    enum mrp_periodic_state periodic_state;
-    struct timespec periodic_timeout;   // Periodic timer expiration time
-
-    NODE *participants;
+    int reg_failures;                   // number of registration failures
+    uint8_t last_pdu_origin[ETH_ALEN];  // MAC addr of originator of the last
+                                        // MRPDU that caused a change in the
+                                        // Registrar state machine
 };
 
 /* MRP propagation context */
@@ -250,15 +253,10 @@ struct mrp_participant {
     struct timespec tx_window[3];       // Tx rate control
 
     struct mrpdu pdu;                   // used to encode MRP PDU
+
     int next_to_process;                // next attribute to start processing
                                         // with, in the following tx opportunity
     NODE *contexts;                     // List of propagation contexts
-
-    /* Management related */
-    int reg_failures;                   // number of registration failures
-    uint8_t last_pdu_origin[ETH_ALEN];  // MAC addr of originator of the last
-                                        // MRPDU that caused a change in the
-                                        // Registrar state machine
 };
 
 /* MRP protocol configuration */

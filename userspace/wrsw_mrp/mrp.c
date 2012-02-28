@@ -689,7 +689,8 @@ int mad_attr_event(struct mrp_participant *p,
     uint8_t state, action;
     int is_new = 0;     //  is_new = 1 for new attribute declarations
     int in;             //  in = 1 when the registrar is in IN state
-    struct mrp_application *app = p->port->app;
+    struct mrp_port *port = p->port;
+    struct mrp_application *app = port->app;
     struct mad_machine *machine = &p->machines[mid];
 
 //registrar:
@@ -711,7 +712,7 @@ int mad_attr_event(struct mrp_participant *p,
         is_new = 1;
     case MRP_ACTION_JOIN:
         if (app->mad_join_ind(p, mid, is_new) < 0) {
-            p->reg_failures++;
+            port->reg_failures++;
             break;
         }
         map_propagate_join(p, mid);
@@ -753,13 +754,13 @@ applicant:
     case MRP_APPLICANT_VP:
         /* Ignore transitions to states AO and AP when operPointToPointMAC
            is TRUE (802.1ak 2007 Table 10.3 Note 3) */
-        if ((event == MRP_EVENT_R_JOIN_IN) && (p->port->point_to_point))
+        if ((event == MRP_EVENT_R_JOIN_IN) && (port->point_to_point))
             return 0;
         break;
     case MRP_APPLICANT_AA:
         /* Transition from AA to QA due to rIn! is Ignored (no transition) if
            operPointToPointMAC is FALSE (802.1ak 2007 Table 10.3 Note 5)*/
-        if ((event == MRP_EVENT_R_IN) && (!p->port->point_to_point))
+        if ((event == MRP_EVENT_R_IN) && (!port->point_to_point))
             return 0;
         break;
     case MRP_APPLICANT_AN:
@@ -1053,7 +1054,6 @@ struct mrp_participant *mrp_create_participant(struct mrp_port *port)
     p->port             = port;
     p->contexts         = NULL;
     p->leaveall         = 0;
-    p->reg_failures     = 0;
     p->next_to_process  = 0;
 
     p->join_timer_running   = 0;
@@ -1197,10 +1197,13 @@ static struct mrp_port *mrp_create_port(struct mrp_application *app,
 
     port->hw_index = hw_index;
     port->port_no = port_no;
+    port->reg_failures = 0;
 
     /* Add port to application port list */
     if (list_add(&app->ports, list_create(port)) < 0)
         goto nomem;
+
+    port->is_enabled = 1;
 
     return port;
 
@@ -1433,6 +1436,9 @@ void mrp_protocol(struct mrp_application *app)
     mrp_pdu_rcv(app);
     for (node = app->ports; node; node = node->next) {
         port = (struct mrp_port *)node->content;
+
+        if (!port->is_enabled)
+            continue;
 
         if (!port->participants)
             continue;

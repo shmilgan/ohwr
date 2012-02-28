@@ -235,13 +235,15 @@ static struct mrp_participant *mrp_rcv_raw(struct mrp_application *app,
     /* Extract the PDU from the frame */
     memcpy(pdu->buf, &buffer[VLAN_ETH_HLEN], sizeof(pdu->buf));
     pdu->len = len - VLAN_ETH_HLEN;
-    memcpy(pdu->src_mac, sl.sll_addr, ETH_ALEN);
 
     port = mrp_find_port(app, sl.sll_ifindex);
     if (!port)
         return NULL;
 
     p = mrp_find_participant(port, mrp_find_context(app, vid));
+
+    memcpy(port->last_pdu_origin, sl.sll_addr, ETH_ALEN);
+
     return p;
 }
 
@@ -259,15 +261,13 @@ static struct mrp_participant *mrp_rcv_dgram(struct mrp_application *app,
     if (pdu->len <= 0)
         return NULL;
 
-    fprintf(stderr, "A %d bytes length frame has been received\n", pdu->len);
-
-    memcpy(pdu->src_mac, sl.sll_addr, ETH_ALEN);
-
     /* Return the participant: only one participant can be attached to any given
     port for a vlan-unaware protocol (i.e. the first and only one in the list) */
     port = mrp_find_port(app, sl.sll_ifindex);
     if (!port)
         return NULL;
+
+    memcpy(port->last_pdu_origin, sl.sll_addr, ETH_ALEN);
 
     return (struct mrp_participant*)port->participants->content;
 }

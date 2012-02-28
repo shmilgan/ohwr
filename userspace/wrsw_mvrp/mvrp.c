@@ -38,7 +38,9 @@
 #include "mrp.h"
 #include "if_index.h"
 #include "rtu_fd_proxy.h"
+#include "mvrp_srv.h"
 #include "wrsw_hal_ipc.h"
+#include "mvrp.h"
 
 /* Protocol Version as defined (802.1ak-2007) */
 #define MVRP_PROTOCOL_VER   0x00
@@ -50,7 +52,6 @@
 #define ETH_P_MVRP          0x88F5
 
 #define BASE_SPANNING_TREE_CONTEXT_ID 0
-
 
 enum mvrp_attributes {
 	MVRP_ATTR_INVALID,
@@ -69,7 +70,10 @@ struct vlan_reg_entry {
 static struct vlan_reg_entry vlan_db[NUM_VLANS];
 
 /* A Single Spanning Tree instance is considered (i.e. a single context) */
-struct map_context *ctx;
+static struct map_context *ctx;
+
+/* Global state of MVRP operation */
+static int mvrp_enabled;
 
 /* 'When any MVRP declaration marked as “new” is received on a given Port,
    either as a result of receiving an MVRPDU from the attached LAN
@@ -77,17 +81,16 @@ struct map_context *ctx;
    or the MVRP Application (MAD_Join.request), any entries in the filtering
    database for that Port and for the VLAN corresponding to the attribute value
    in the MAD_Join primitive are removed.' (802.1ak 11.2.5)*/
-void mvrp_new_declaration(struct mrp_participant *p, int mid)
+static void mvrp_new_declaration(struct mrp_participant *p, int mid)
 {
     rtu_fdb_proxy_delete_dynamic_entries(p->port->port_no, mid);
 }
 
-int mvrp_join_ind(struct mrp_participant *p, int mid, int is_new)
+static int mvrp_join_ind(struct mrp_participant *p, int mid, int is_new)
 {
-    /* Copy MAC address of PDU originator */
-    mac_copy(p->last_pdu_origin, p->pdu.src_mac);
+    struct mrp_port *port = p->port;
 
-    if (rtu_vfdb_proxy_forward_dynamic(p->port->port_no, mid) < 0)
+    if (rtu_vfdb_proxy_forward_dynamic(port->port_no, mid) < 0)
         return -1;
 
     if (is_new)
@@ -96,13 +99,13 @@ int mvrp_join_ind(struct mrp_participant *p, int mid, int is_new)
     return 0;
 }
 
-void mvrp_leave_ind(struct mrp_participant *p, int mid)
+static void mvrp_leave_ind(struct mrp_participant *p, int mid)
 {
     rtu_vfdb_proxy_filter_dynamic(p->port->port_no, mid);
 }
 
 /* Return 0 if both values are the same. Otherwise, return the difference */
-int attr_cmp(uint8_t type, uint8_t len, void *v1, void *v2)
+static int attr_cmp(uint8_t type, uint8_t len, void *v1, void *v2)
 {
     uint16_t val1;
     uint16_t val2;
@@ -114,7 +117,7 @@ int attr_cmp(uint8_t type, uint8_t len, void *v1, void *v2)
            0xffffffff;
 }
 
-uint8_t attrtype(int mid)
+static uint8_t attrtype(int mid)
 {
     if ((mid < 0) ||
 #ifdef V3
@@ -125,7 +128,7 @@ uint8_t attrtype(int mid)
     return MVRP_ATTR_VID;
 }
 
-int db_add_entry(uint8_t type, uint8_t len, void *firstval, int offset)
+static int db_add_entry(uint8_t type, uint8_t len, void *firstval, int offset)
 {
     uint16_t val;
 
@@ -133,7 +136,7 @@ int db_add_entry(uint8_t type, uint8_t len, void *firstval, int offset)
     return ntohs(val) + offset;
 }
 
-int db_read_entry(uint8_t *type, uint8_t *len, void **value, int mid)
+static int db_read_entry(uint8_t *type, uint8_t *len, void **value, int mid)
 {
     if ((mid < 0) ||
 #ifdef V3
@@ -148,7 +151,7 @@ int db_read_entry(uint8_t *type, uint8_t *len, void **value, int mid)
     return 0;
 }
 
-int db_find_entry(uint8_t type, uint8_t len, void *firstval, int offset)
+static int db_find_entry(uint8_t type, uint8_t len, void *firstval, int offset)
 {
     uint16_t val;
     int mid;
@@ -165,14 +168,14 @@ int db_find_entry(uint8_t type, uint8_t len, void *firstval, int offset)
 }
 
 /* Not required for this MRP application */
-void db_delete_entry(uint8_t type, uint8_t len, void *value)
+static void db_delete_entry(uint8_t type, uint8_t len, void *value)
 {
     return;
 }
 
 /* Check whether the tcDetected timer is running or not.
    @return 1 if timer is running. 0 otherwise */
-int tc_detected(struct mrp_port *port, struct map_context *ctx)
+static int tc_detected(struct mrp_port *port, struct map_context *ctx)
 {
     // TODO IPC with RSTPd to read the tcDetected value for the port and ST
     // instance (i.e., mrp_port(port) and ctx->id)
@@ -228,6 +231,20 @@ struct mrp_application mvrp_app = {
     .proto.address   = MVRP_ADDRESS,
     .proto.tagged    = 0
 };
+
+/* Find port with the given port number in the application port list */
+static struct mrp_port *find_port(int port_no)
+{
+    NODE *node;
+    struct mrp_port *port;
+
+    for (node = mvrp_app.ports; node; node = node->next) {
+        port = (struct mrp_port *)node->content;
+        if (port->port_no == port_no)
+            return port;
+    }
+    return NULL;
+}
 
 /* Determine the forwarding state of a port within a given context.
    @return 1 if forwarding is TRUE, 0 if FALSE. */
@@ -316,28 +333,46 @@ static int mvrp_check_forwarding_state()
 /* Initialise vlan database with vfdb static entries */
 static int init_vlan_table()
 {
-    int vid, err;
+    int err;
+    uint16_t vid;
     uint32_t egress_ports;
     uint32_t forbidden_ports;
     uint32_t untagged_set;
 
     memset(vlan_db, 0, sizeof(vlan_db));
 
-    for (vid = 0; vid < NUM_VLANS; vid++) {
+    for (vid = 0; vid < NUM_VLANS; vid++)
         vlan_db[vid].nvid = htons(vid);
+
+    vid = 0;
+#ifndef V3
+    /* Note VID = 0 is not permitted by 802.1Q (but was still used by V2 hw) */
+    errno = 0;
+    err = rtu_fdb_proxy_read_static_vlan_entry(vid,
+                                               &egress_ports,
+                                               &forbidden_ports,
+                                               &untagged_set);
+    if (errno)
+        return -1;
+    if (!err) {
+        vlan_db[vid].egress_ports = egress_ports;
+        vlan_db[vid].forbidden_ports = forbidden_ports;
+    }
+#endif
+    do {
         errno = 0;
-        err = rtu_fdb_proxy_read_static_vlan_entry(vid,
-                                                   &egress_ports,
-                                                   &forbidden_ports,
-                                                   &untagged_set);
+        err = rtu_fdb_proxy_read_next_static_vlan_entry(&vid,
+                                                        &egress_ports,
+                                                        &forbidden_ports,
+                                                        &untagged_set);
         if (errno)
             return -1;
-
         if (!err) {
             vlan_db[vid].egress_ports = egress_ports;
             vlan_db[vid].forbidden_ports = forbidden_ports;
         }
-    }
+    } while (!err);
+
     return 0;
 }
 
@@ -362,6 +397,8 @@ static int mvrp_init()
     fprintf(stderr, "mvrp: register application\n");
     if (mrp_register_application(&mvrp_app) != 0)
         return -1;
+
+    mvrp_enabled = 1;
 
     return 0;
 }
@@ -408,12 +445,12 @@ void sigint(int signum) {
     exit(0);
 }
 
-
 int main(int argc, char **argv)
 {
     int op;
     char *optstring;
     int run_as_daemon = 0;
+    struct minipc_ch *server;
 
     if (argc > 1) {
         /* Parse daemon options */
@@ -440,11 +477,20 @@ int main(int argc, char **argv)
     if (mvrp_init() < 0)
         return -1;
 
+    server = mvrp_srv_create("mvrp");
+
 	// Register signal handler
 	signal(SIGINT, sigint);
 
     fprintf(stderr, "mvrp: mrp protocol\n");
     while (1) {
+        /* Handle user triggered actions (i.e. management) */
+	    if (minipc_server_action(server, 10) < 0)
+		    fprintf(stderr, "mvrp server_action(): %s\n", strerror(errno));
+
+        if (!mvrp_enabled)
+            continue;
+
         /* Handle any possible change in ports operational or forwarding state */
         if (mvrp_check_operational_state() < 0)
             goto failed;
@@ -456,12 +502,69 @@ int main(int argc, char **argv)
 
         // TODO handle port role change (i.e trigger flush and redeclare events)
 
-        // TODO handle user triggered actions (i.e. management)
-
-        usleep(100);
     }
 
 failed:
     mrp_unregister_application(&mvrp_app);
     return -1;
+}
+
+/* Management */
+
+void mvrp_enable(void)
+{
+    mvrp_enabled = 1;
+}
+
+void mvrp_disable(void)
+{
+    mvrp_enabled = 0;
+}
+
+int mvrp_is_enabled(void)
+{
+    return mvrp_enabled;
+}
+
+int mvrp_enable_port(int port_no)
+{
+    struct mrp_port *port = find_port(port_no);
+    if (!port)
+        return -EINVAL;
+    port->is_enabled = 1;
+    return 0;
+}
+
+int mvrp_disable_port(int port_no)
+{
+    struct mrp_port *port = find_port(port_no);
+    if (!port)
+        return -EINVAL;
+    port->is_enabled = 0;
+    return 0;
+}
+
+int mvrp_is_enabled_port(int port_no)
+{
+    struct mrp_port *port = find_port(port_no);
+    if (!port)
+        return -EINVAL;
+    return port->is_enabled;
+}
+
+int mvrp_get_failed_registrations(int port_no)
+{
+    struct mrp_port *port = find_port(port_no);
+    if (!port)
+        return -EINVAL;
+    return port->reg_failures;
+}
+
+int mvrp_get_last_pdu_origin(int port_no, uint8_t (*mac)[ETH_ALEN])
+{
+    struct mrp_port *port = find_port(port_no);
+    if (!port)
+        return -EINVAL;
+    mac_copy(*mac, port->last_pdu_origin);
+    return 0;
 }
