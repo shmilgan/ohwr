@@ -11,6 +11,8 @@
 #include "rtu.h"
 #include "endpoint_hw.h"
 #include "utils.h"
+#include "rtu_fd_proxy.h"
+#include "mvrp_proxy.h"
 
 #define MIBMOD  "8021Q"
 
@@ -25,9 +27,13 @@
 
 static int get_column(netsnmp_variable_list *vb, int colnum, u_long port)
 {
-    u_long pvid; // Port VLAN identifier
-    int qmode;   // acceptable frame types
+    u_long pvid;            // ieee8021QBridgePvid
+    int qmode;              // ieee8021QBridgePortAcceptableFrameTypes
+    uint8_t mac[ETH_ALEN];  // ieee8021QBridgePortMvrpLastPduOrigin
+    int reg_failures;  // ieee8021QBridgePortMvrpFailedRegistrations
+    int ret;
 
+    errno = 0;
     switch (colnum) {
     case COLUMN_IEEE8021QBRIDGEPVID:
         pvid = ep_hw_get_pvid(port);
@@ -57,10 +63,47 @@ static int get_column(netsnmp_variable_list *vb, int colnum, u_long port)
         // false. Accept all incoming frames
         snmp_set_var_typed_integer(vb, ASN_INTEGER, TV_FALSE);
         break;
+    case COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS:
+        ret = mvrp_proxy_is_enabled_port(port);
+        if (errno)
+            goto minipc_err;
+        if (ret < 0)
+            return SNMP_NOSUCHINSTANCE;
+        snmp_set_var_typed_integer(vb, ASN_INTEGER, ret ? TV_TRUE:TV_FALSE);
+        break;
+    case COLUMN_IEEE8021QBRIDGEPORTMVRPFAILEDREGISTRATIONS:
+        reg_failures = mvrp_proxy_get_failed_registrations(port);
+        if (errno)
+            goto minipc_err;
+        if (reg_failures < 0)
+            return SNMP_NOSUCHINSTANCE;
+        snmp_set_var_typed_integer(vb, ASN_COUNTER64, (uint64_t)reg_failures);
+        break;
+    case COLUMN_IEEE8021QBRIDGEPORTMVRPLASTPDUORIGIN:
+        ret = mvrp_proxy_get_last_pdu_origin(port, &mac);
+        if (errno)
+            goto minipc_err;
+        if (ret < 0)
+            return SNMP_NOSUCHINSTANCE;
+        snmp_set_var_typed_value(vb, ASN_OCTET_STR, mac, ETH_ALEN);
+        break;
+    case COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION:
+        ret = rtu_fdb_proxy_is_restricted_vlan_reg(port);
+        if (errno)
+            goto minipc_err;
+        if (ret < 0)
+            return SNMP_NOSUCHINSTANCE;
+        snmp_set_var_typed_integer(vb, ASN_INTEGER, ret ? TV_TRUE:TV_FALSE);
+        break;
     default:
         return SNMP_NOSUCHOBJECT;
     }
     return SNMP_ERR_NOERROR;
+
+minipc_err:
+    snmp_log(LOG_ERR, "%s(%s): mini-ipc error [%s]\n", __FILE__, __func__,
+        strerror(errno));
+    return SNMP_ERR_GENERR;
 }
 
 static int get(netsnmp_request_info *req)
@@ -148,6 +191,12 @@ static int set_reserve1(netsnmp_request_info *req)
     case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
         ret = netsnmp_check_vb_int_range(req->requestvb, admitAll, admitTagged);
         break;
+    case COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS:
+        ret = netsnmp_check_vb_truthvalue(req->requestvb);
+        break;
+    case COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION:
+        ret = netsnmp_check_vb_truthvalue(req->requestvb);
+        break;
     default:
         return SNMP_ERR_NOTWRITABLE;
     }
@@ -162,10 +211,12 @@ static int set_commit(netsnmp_request_info *req)
     u_long pvid;                    // ieee8021QBridgePvid
     long acceptable_frame_types;    // ieee8021QBridgePortAcceptableFrameTypes
     long port_ingress_filtering;    // ieee8021QBridgePortIngressFiltering
+    int enabled;                    // ieee8021QBridgePortMvrpEnabledStatus
     int err = SNMP_ERR_NOERROR;
 
     tinfo = netsnmp_extract_table_info(req);
     port = *tinfo->indexes->next_variable->val.integer;
+    errno = 0;
     switch (tinfo->colnum) {
     case COLUMN_IEEE8021QBRIDGEPVID:
         pvid = *req->requestvb->val.integer;
@@ -187,8 +238,34 @@ static int set_commit(netsnmp_request_info *req)
             break;
         }
         break;
+    case COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS:
+        if (*req->requestvb->val.integer == TV_TRUE)
+            err = mvrp_proxy_enable_port(port);
+        else
+            err = mvrp_proxy_disable_port(port);
+        if (errno)
+            goto minipc_err;
+        if (err)
+            return SNMP_NOSUCHINSTANCE;
+        break;
+    case COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION:
+        if (*req->requestvb->val.integer == TV_TRUE)
+            err = rtu_fdb_proxy_set_restricted_vlan_reg(port);
+        else
+            err = rtu_fdb_proxy_unset_restricted_vlan_reg(port);
+        if (errno)
+            goto minipc_err;
+        if (err)
+            return SNMP_NOSUCHINSTANCE;
+        break;
     }
+
     return err;
+
+minipc_err:
+    snmp_log(LOG_ERR, "%s(%s): mini-ipc error [%s]\n", __FILE__, __func__,
+        strerror(errno));
+    return SNMP_ERR_GENERR;
 }
 
 
@@ -275,13 +352,30 @@ static void initialize_table(void)
 void init_ieee8021QBridgePortVlanTable(void)
 {
     int err;
+    struct minipc_ch *client;
+    struct minipc_ch *mvrp_client;
+
+    client = rtu_fdb_proxy_create("rtu_fdb");
+    if (!client) {
+        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
+            strerror(errno));
+        return;
+    }
+
+    mvrp_client = mvrp_proxy_create("mvrp");
+    if (!mvrp_client) {
+        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
+            strerror(errno));
+        return;
+    }
 
     err = ep_hw_init();
     if (err) {
         snmp_log(LOG_ERR, "%s: error on NIC driver init - %s\n", __FILE__,
             strerror(err));
-    } else {
-        initialize_table();
-        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
+        return;
     }
+
+    initialize_table();
+    snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
 }

@@ -31,6 +31,7 @@
 
 #include "ieee8021QBridgeTable.h"
 #include "rtu_fd_proxy.h"
+#include "mvrp_proxy.h"
 #include "utils.h"
 
 #define MIBMOD  "8021Q"
@@ -49,6 +50,7 @@ static int get_column(netsnmp_variable_list *vb, int colnum)
     long mvid;      // ieee8021QBridgeMaxVlanId;
     u_long mvlans;  // ieee8021QBridgeMaxSupportedVlans;
     u_long vlans;   // ieee8021QBridgeNumVlans;
+    int enabled;    // ieee8021QBridgeMvrpEnabledStatus;
 
     errno = 0;
     switch (colnum) {
@@ -76,7 +78,11 @@ static int get_column(netsnmp_variable_list *vb, int colnum)
         snmp_set_var_typed_integer(vb, ASN_GAUGE, vlans);
         break;
     case COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS:
-        // not supported yet
+        enabled = mvrp_proxy_is_enabled();
+        if (errno)
+            goto minipc_err;
+        snmp_set_var_typed_integer(vb, ASN_INTEGER, enabled ? TV_TRUE:TV_FALSE);
+        break;
     default:
         return SNMP_NOSUCHOBJECT;
     }
@@ -172,8 +178,9 @@ static int _handler(netsnmp_mib_handler          *handler,
             tinfo = netsnmp_extract_table_info(req);
             switch (tinfo->colnum) {
             case COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS:
-                // not supported yet
-                netsnmp_set_request_error(reqinfo, req, SNMP_NOSUCHOBJECT);
+                err = netsnmp_check_vb_truthvalue(req->requestvb);
+                if (err)
+                    netsnmp_set_request_error(reqinfo, req, err);
                 break;
             default:
                 netsnmp_set_request_error(reqinfo, req, SNMP_ERR_NOTWRITABLE);
@@ -181,7 +188,21 @@ static int _handler(netsnmp_mib_handler          *handler,
         }
         break;
     case MODE_SET_COMMIT:
-        // IEEE8021QBRIDGEMVRPENABLEDSTATUS not supported yet
+        for (req = requests; req; req = req->next) {
+            tinfo = netsnmp_extract_table_info(req);
+            switch (tinfo->colnum) {
+            case COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS:
+                if (*req->requestvb->val.integer == TV_TRUE)
+                    mvrp_proxy_enable();
+                else
+                    mvrp_proxy_disable();
+                if (errno)
+                    netsnmp_set_request_error(reqinfo, req, SNMP_ERR_GENERR);
+                break;
+            default:
+                netsnmp_set_request_error(reqinfo, req, SNMP_ERR_NOTWRITABLE);
+            }
+        }
         break;
     }
     return SNMP_ERR_NOERROR;
@@ -223,13 +244,22 @@ static void initialize_table(void)
 void init_ieee8021QBridgeTable(void)
 {
     struct minipc_ch *client;
+    struct minipc_ch *mvrp_client;
 
     client = rtu_fdb_proxy_create("rtu_fdb");
-    if(client) {
-        initialize_table();
-        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
-    } else {
+    if (!client) {
         snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
             strerror(errno));
+        return;
     }
+
+    mvrp_client = mvrp_proxy_create("mvrp");
+    if (!mvrp_client) {
+        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
+            strerror(errno));
+        return;
+    }
+
+    initialize_table();
+    snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
 }

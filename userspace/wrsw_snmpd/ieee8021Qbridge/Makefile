@@ -9,11 +9,11 @@ WR_LIB = $(WR_INSTALL_ROOT)/lib
 CC = $(CROSS_COMPILE)gcc
 
 CFLAGS = -fPIC -shared -I. -DV2 `$(NET-SNMP-CONFIG) --cflags` \
-          -I../../wrsw_rtud -I../../wrsw_hal
+          -I../../wrsw_rtud -I../../wrsw_hal -I../../wrsw_mvrp
 
 
 LDFLAGS = -fPIC -shared `$(NET-SNMP-CONFIG) --ldflags` \
-          -L. -L$(WR_LIB) -lwrrtu
+          -L. -L$(WR_LIB) -lwrrtu -lwrmvrp
 
 OBJS 	= \
 utils.o \
