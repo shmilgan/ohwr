@@ -819,7 +819,7 @@ int rtu_fdb_proxy_is_restricted_vlan_reg(int port)
     return out.retval;
 }
 
-void rtu_fdb_proxy_set_restricted_vlan_reg(int port)
+int rtu_fdb_proxy_set_restricted_vlan_reg(int port)
 {
     int ret;
     struct rtu_fdb_set_restricted_vlan_reg_argdata in;
@@ -830,10 +830,10 @@ void rtu_fdb_proxy_set_restricted_vlan_reg(int port)
     ret = minipc_call(client, MILLISEC_TIMEOUT,
         &rtu_fdb_proxy_set_restricted_vlan_reg_struct, &out, &in);
 
-    return;
+    return out.retval;
 }
 
-void rtu_fdb_proxy_unset_restricted_vlan_reg(int port)
+int rtu_fdb_proxy_unset_restricted_vlan_reg(int port)
 {
     int ret;
     struct rtu_fdb_unset_restricted_vlan_reg_argdata in;
@@ -844,7 +844,7 @@ void rtu_fdb_proxy_unset_restricted_vlan_reg(int port)
     ret = minipc_call(client, MILLISEC_TIMEOUT,
         &rtu_fdb_proxy_unset_restricted_vlan_reg_struct, &out, &in);
 
-    return;
+    return out.retval;
 }
 
 

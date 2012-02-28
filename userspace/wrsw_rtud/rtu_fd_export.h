@@ -315,7 +315,7 @@ struct rtu_fdb_set_restricted_vlan_reg_argdata {
 };
 
 struct rtu_fdb_set_restricted_vlan_reg_retdata {
-    uint32_t padding;   // TODO remove. Required to pass mini-ipc size check
+    int retval;
 };
 
 
@@ -324,7 +324,7 @@ struct rtu_fdb_unset_restricted_vlan_reg_argdata {
 };
 
 struct rtu_fdb_unset_restricted_vlan_reg_retdata {
-    uint32_t padding;   // TODO remove. Required to pass mini-ipc size check
+    int retval;
 };
 
 #endif /*__WHITERABBIT_RTU_FD_EXPORT_H*/

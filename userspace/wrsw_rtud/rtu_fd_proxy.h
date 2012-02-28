@@ -149,8 +149,8 @@ int rtu_vfdb_proxy_filter_dynamic(int port, uint16_t vid);
 void rtu_fdb_proxy_delete_dynamic_entries(int port, uint16_t vid);
 
 int rtu_fdb_proxy_is_restricted_vlan_reg(int port);
-void rtu_fdb_proxy_set_restricted_vlan_reg(int port);
-void rtu_fdb_proxy_unset_restricted_vlan_reg(int port);
+int rtu_fdb_proxy_set_restricted_vlan_reg(int port);
+int rtu_fdb_proxy_unset_restricted_vlan_reg(int port);
 
 struct minipc_ch *rtu_fdb_proxy_create(char *name);
 

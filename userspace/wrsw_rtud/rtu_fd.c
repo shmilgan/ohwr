@@ -1322,7 +1322,7 @@ int rtu_fdb_read_next_static_vlan_entry(uint16_t *vid,              // inout
 {
     struct vlan_table_entry *ve;
 
-    if ((*vid >= NUM_VLANS) || reserved(*vid))
+    if (*vid >= NUM_VLANS)
         return -EINVAL;
 
     lock();
@@ -1397,17 +1397,25 @@ int rtu_fdb_read_next_vlan_entry(uint16_t *vid,             // inout
 
 int rtu_fdb_is_restricted_vlan_reg(int port_no)
 {
+    if (illegal(port_no))
+        return -EINVAL;
     return is_set(restricted_vlan_reg, port_no);
 }
 
-void rtu_fdb_set_restricted_vlan_reg(int port_no)
+int rtu_fdb_set_restricted_vlan_reg(int port_no)
 {
+    if (illegal(port_no))
+        return -EINVAL;
     set(&restricted_vlan_reg, port_no);
+    return 0;
 }
 
-void rtu_fdb_unset_restricted_vlan_reg(int port_no)
+int rtu_fdb_unset_restricted_vlan_reg(int port_no)
 {
+    if (illegal(port_no))
+        return -EINVAL;
     unset(&restricted_vlan_reg, port_no);
+    return 0;
 }
 
 //------------------------------------------------------------------------------
