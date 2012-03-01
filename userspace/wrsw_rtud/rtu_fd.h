@@ -171,6 +171,11 @@ uint16_t rtu_fdb_get_next_fid(uint8_t fid);
 uint16_t rtu_fdb_get_num_dynamic_entries(uint8_t fid);
 uint32_t rtu_fdb_get_num_learned_entry_discards(uint8_t fid);
 uint64_t rtu_fdb_get_num_vlan_deletes(void);
+int rtu_fdb_get_size(void);
+int rtu_fdb_get_num_all_static_entries(void);
+int rtu_fdb_get_num_all_dynamic_entries(void);
+int rtu_vfdb_get_num_all_static_entries(void);
+int rtu_vfdb_get_num_all_dynamic_entries(void);
 
 int rtu_fdb_is_restricted_vlan_reg(int port);
 int rtu_fdb_set_restricted_vlan_reg(int port);

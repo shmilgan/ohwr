@@ -591,6 +591,28 @@ int rtu_sw_get_num_vlans(void)
     return n;
 }
 
+int rtu_sw_get_num_static_vlan_entries(void)
+{
+    int i, n;
+
+    for (i = 0, n = 0; i < NUM_VLANS; i++)
+        if (!vlan_tab[i].drop && (vlan_tab[i].dynamic == STATIC ||
+                                  vlan_tab[i].dynamic == STATIC_DYNAMIC))
+            n++;
+    return n;
+}
+
+int rtu_sw_get_num_dynamic_vlan_entries(void)
+{
+    int i, n;
+
+    for (i = 0, n = 0; i < NUM_VLANS; i++)
+        if (!vlan_tab[i].drop && (vlan_tab[i].dynamic == DYNAMIC ||
+                                  vlan_tab[i].dynamic == STATIC_DYNAMIC))
+            n++;
+    return n;
+}
+
 /**
  * Searches for a VLAN entry with given vid in RTU mirror.
  * @return  pointer to VLAN entry if found. NULL otherwise.
