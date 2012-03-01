@@ -152,6 +152,12 @@ int rtu_fdb_proxy_is_restricted_vlan_reg(int port);
 int rtu_fdb_proxy_set_restricted_vlan_reg(int port);
 int rtu_fdb_proxy_unset_restricted_vlan_reg(int port);
 
+int rtu_fdb_proxy_get_size(void);
+int rtu_fdb_proxy_get_num_all_static_entries(void);
+int rtu_fdb_proxy_get_num_all_dynamic_entries(void);
+int rtu_vfdb_proxy_get_num_all_static_entries(void);
+int rtu_vfdb_proxy_get_num_all_dynamic_entries(void);
+
 struct minipc_ch *rtu_fdb_proxy_create(char *name);
 
 #endif /*__WHITERABBIT_RTU_FD_PROXY_H*/

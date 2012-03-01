@@ -719,14 +719,19 @@ int rtu_fdb_get_size(void)
  */
 int rtu_fdb_get_num_all_static_entries(void)
 {
-    int i, j, num = 0;
+    int xcast, vid, n = 0;
+    struct static_filtering_entry *entry;
 
-    lock();
-    for (j = 0; j < 2; j++)
-        for (i = 0 ; (i < NUM_VLANS) && sfd[j][i]; i++)
-            num++;
-    unlock(0);
-    return num;
+    for (xcast = 0; xcast < 2; xcast++) {
+        for (vid = 0 ; vid < NUM_VLANS; vid++) {
+            entry = sfd[xcast][vid];
+            while (entry) {
+                n++;
+                entry = entry->next;
+            }
+        }
+    }
+    return n;
 }
 
 /**
@@ -736,13 +741,11 @@ int rtu_fdb_get_num_all_static_entries(void)
  */
 int rtu_fdb_get_num_all_dynamic_entries(void)
 {
-    int i, num = 0;
+    int fid, n;
 
-    lock();
-    for (i = 0 ; (i < NUM_FIDS) && fd[i]; i++)
-        num += num_dynamic_entries[i];
-    unlock(0);
-    return num;
+    for (fid = 0, n = 0; fid < NUM_FIDS; fid++)
+        n += num_dynamic_entries[fid];
+    return n;
 }
 
 /**
