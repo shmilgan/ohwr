@@ -32,8 +32,8 @@
 enum no_cmds {
     CMD_NO = 0,
     CMD_NO_CAM,
-    CMD_NO_CAM_STATIC,
-    CMD_NO_CAM_STATIC_VLAN,
+    CMD_NO_CAM_UNICAST,
+    CMD_NO_CAM_UNICAST_VLAN,
     CMD_NO_CAM_MULTICAST,
     CMD_NO_CAM_MULTICAST_VLAN,
     CMD_NO_VLAN,
@@ -103,7 +103,7 @@ static void del_cam_static_entry(int argc, char **argv, char *base_oid)
 }
 
 /**
- * \brief Command 'no mac-address-table static <MAC Addrress> vlan <VID>'.
+ * \brief Command 'no mac-address-table unicast <MAC Addrress> vlan <VID>'.
  * This command deletes a unicast static entry in the FDB.
  * @param cli CLI interpreter.
  * @param argc number of arguments. Only two arguments allowed.
@@ -111,7 +111,7 @@ static void del_cam_static_entry(int argc, char **argv, char *base_oid)
  * XX:XX:XX:XX:XX:XX) and the VLAN number (a decimal number between 0 and
  * MAX_VID+1).
  */
-void cli_cmd_del_cam_static_entry(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_del_cam_uni_entry(struct cli_shell *cli, int argc, char **argv)
 {
     del_cam_static_entry(argc, argv, ".1.3.111.2.802.1.1.4.1.3.1.1.8");
     return;
@@ -208,21 +208,21 @@ struct cli_cmd cli_no[NUM_NO_CMDS] = {
         .opt        = CMD_NO_ARG,
         .opt_desc   = NULL
     },
-    /* no mac-address-table static <MAC Addrress> */
-    [CMD_NO_CAM_STATIC] = {
+    /* no mac-address-table unicast <MAC Addrress> */
+    [CMD_NO_CAM_UNICAST] = {
         .parent     = cli_no + CMD_NO_CAM,
-        .name       = "static",
+        .name       = "unicast",
         .handler    = NULL,
         .desc       = "Removes a static unicast entry from the filtering"
                       " database",
         .opt        = CMD_ARG_MANDATORY,
         .opt_desc   = "<MAC Addrress> MAC Address"
     },
-    /* no mac-address-table static <MAC Addrress> vlan <VID> */
-    [CMD_NO_CAM_STATIC_VLAN] = {
-        .parent     = cli_no + CMD_NO_CAM_STATIC,
+    /* no mac-address-table unicast <MAC Addrress> vlan <VID> */
+    [CMD_NO_CAM_UNICAST_VLAN] = {
+        .parent     = cli_no + CMD_NO_CAM_UNICAST,
         .name       = "vlan",
-        .handler    = cli_cmd_del_cam_static_entry,
+        .handler    = cli_cmd_del_cam_uni_entry,
         .desc       = "Removes a static unicast entry from the filtering"
                       " database",
         .opt        = CMD_ARG_MANDATORY,
