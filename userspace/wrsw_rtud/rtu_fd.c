@@ -702,6 +702,69 @@ uint16_t rtu_fdb_get_num_vlans(void)
     return rtu_sw_get_num_vlans();
 }
 
+/**
+ * Gets the maximum number of entries that can be held in the Filtering
+ * Database.
+ * @return Filtering Database size.
+ */
+int rtu_fdb_get_size(void)
+{
+    return RTU_ENTRIES;
+}
+
+/**
+ * Gets the number of Static Filtering Entries in the Switch's Filtering
+ * Database.
+ * @return number of Static Filtering Entries.
+ */
+int rtu_fdb_get_num_all_static_entries(void)
+{
+    int i, j, num = 0;
+
+    lock();
+    for (j = 0; j < 2; j++)
+        for (i = 0 ; (i < NUM_VLANS) && sfd[j][i]; i++)
+            num++;
+    unlock(0);
+    return num;
+}
+
+/**
+ * Gets the number of Dynamic Filtering Entries in the Switch's Filtering
+ * Database.
+ * @return number of Dynamic Filtering Entries.
+ */
+int rtu_fdb_get_num_all_dynamic_entries(void)
+{
+    int i, num = 0;
+
+    lock();
+    for (i = 0 ; (i < NUM_FIDS) && fd[i]; i++)
+        num += num_dynamic_entries[i];
+    unlock(0);
+    return num;
+}
+
+/**
+ * Gets the number of Static VLAN Registration Entries in the Switch's
+ * Filtering Database.
+ * @return number of Static VLAN Registration Entries.
+ */
+int rtu_vfdb_get_num_all_static_entries(void)
+{
+    return rtu_sw_get_num_static_vlan_entries();
+}
+
+/**
+ * Gets the number of Dynamic VLAN Registration Entries in the Switch's
+ * Filtering Database.
+ * @return number of Dynamic VLAN Registration Entries.
+ */
+int rtu_vfdb_get_num_all_dynamic_entries(void)
+{
+    return rtu_sw_get_num_dynamic_vlan_entries();
+}
+
 uint16_t rtu_fdb_get_max_supported_vlans(void)
 {
     // Operating in pure IVL mode, implementation would only support 255 VLANS!

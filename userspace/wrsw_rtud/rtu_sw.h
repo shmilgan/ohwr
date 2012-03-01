@@ -70,6 +70,8 @@ int rtu_sw_delete_vlan_entry(uint16_t vid);
 void rtu_sw_clean_vd(void);
 
 int rtu_sw_get_num_vlans(void);
+int rtu_sw_get_num_static_vlan_entries(void);
+int rtu_sw_get_num_dynamic_vlan_entries(void);
 
 int rtu_sw_fid_shared(uint8_t fid);
 
