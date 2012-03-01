@@ -27,20 +27,17 @@
 
 
 #include <linux/if_ether.h>
+
+#include <rtu.h>
+
 #include "cli.h"
 #include "cli_snmp.h"
-
-
-#define MIN_AGING_TIME          10
-#define MAX_AGING_TIME          1000000
-#define MAX_VID                 4094
-#define NUM_PORTS               32
 
 
 /* The help command is treated specially */
 void cli_cmd_help(struct cli_shell *cli, struct cli_cmd *cmd);
 
-char *mac_to_string(uint8_t mac[ETH_ALEN], char str[3 * ETH_ALEN]);
+char *mac_to_str(uint8_t mac[ETH_ALEN], char str[3 * ETH_ALEN]);
 int cmp_oid(oid old_oid[MAX_OID_LEN], oid new_oid[MAX_OID_LEN],
             int base_oid_length);
 void print_oid(oid _oid[MAX_OID_LEN], int n) __attribute__((unused));

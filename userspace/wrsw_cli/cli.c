@@ -35,6 +35,8 @@
 #include <history.h>
 #include <errno.h>
 
+#include <rtu_fd_proxy.h>
+
 #include "cli.h"
 #include "cli_commands.h"
 #include "cli_snmp.h"
@@ -252,7 +254,7 @@ void cli_error(int error)
 /**
  * \brief Initialization function.
  * It allocates memory for the CLI interpreter structure and builds the commands
- * tree.
+ * tree. It also cretaes a client for IPCs with the RTU daemon.
  * @return pointer to the new created CLI interpreter structure. If NULL,
  * something is wrong and the program must be exited.
  */
@@ -260,6 +262,9 @@ struct cli_shell *cli_init(void)
 {
     struct cli_shell *cli;
 
+    errno = 0;
+    if(!rtu_fdb_proxy_create("rtu_fdb"))
+        cli_error(errno);
 
     cli = malloc(sizeof(struct cli_shell));
     if (!cli)

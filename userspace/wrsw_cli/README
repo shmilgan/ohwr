@@ -44,7 +44,9 @@ SNMP agents, which means that the CLI is going to translate the CLI commands
 into SNMP operations that an SNMP client will understand and run, in order to
 get the information from the SNMP agent. This way we aim at avoiding duplicate
 code and some concurrency issues. The SNMP agent will be then responsible for
-communicating with hardware.
+communicating with hardware. Note however that some mandatory management
+operations (as determined by the Std. IEEE 802.1Q-2005) will not be supported
+by the SNMP MIBs; in these cases, IPCs methods will be used instead.
 
 
 
@@ -94,6 +96,13 @@ net-snmp:
     The CLI commands use the net-snmp API to get/set the configuration
     parameters of the switch, through a SNMP client interface, which
     interacts with the SNMP agent.
+
+wr-switch-sw/wrsw_rtud:
+    The CLI implementation needs to access the RTU for some operations
+    not supported by the SNMP MIBs.
+
+libminipc.so libwripc.so:
+    Libraries to handle IPCs.
 
 
 

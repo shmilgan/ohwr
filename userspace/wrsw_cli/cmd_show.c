@@ -26,6 +26,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include <rtu_fd_proxy.h>
+
 #include "cli_commands.h"
 #include "cli_commands_utils.h"
 
@@ -89,7 +91,7 @@ static void show_cam_static(char *base_oid)
         for (i = 0; i < ETH_ALEN; i++){
             mac[i] = (int) new_oid[15+i];
         }
-        printf("\t%-4d   %-17s      ", vid, mac_to_string(mac, mac_str));
+        printf("\t%-4d   %-17s      ", vid, mac_to_str(mac, mac_str));
 
         /* Parse the port mask */
         memset(ports_range, 0, sizeof(ports_range));
@@ -222,13 +224,61 @@ void cli_cmd_show_port_info(struct cli_shell *cli, int argc, char **argv)
                (mvrp_enabled == TV_TRUE) ? "Enabled" : "Disabled",
                (mvrp_restricted == TV_TRUE) ? "Restricted" : "    *",
                mvrp_failed,
-               mac_to_string((uint8_t *)mvrp_lpo, mac_str));
+               mac_to_str((uint8_t *)mvrp_lpo, mac_str));
 
         memcpy(_oid, new_oid, sizeof(oid) * MAX_OID_LEN);
         free(mvrp_lpo);
     } while(1);
 
     return;
+}
+
+/**
+ * \brief Command 'show mac-address-table'.
+ * This command shows general information on the Filtering Database
+ * @param cli CLI interpreter.
+ * @param argc unused
+ * @param agv unused
+ */
+void cli_cmd_show_cam(struct cli_shell *cli, int argc, char **argv)
+{
+    int fdb_size;
+    int fdb_num_static, fdb_num_dynamic;
+    int vfdb_num_static, vfdb_num_dynamic;
+
+    errno = 0;
+    fdb_size = rtu_fdb_proxy_get_size();
+    if (errno != 0)
+        return;
+
+    errno = 0;
+    fdb_num_static = rtu_fdb_proxy_get_num_all_static_entries();
+    if (errno != 0)
+        return;
+
+    errno = 0;
+    fdb_num_dynamic = rtu_fdb_proxy_get_num_all_dynamic_entries();
+    if (errno != 0)
+        return;
+
+    errno = 0;
+    vfdb_num_static = rtu_vfdb_proxy_get_num_all_static_entries();
+    if (errno != 0)
+        return;
+
+    errno = 0;
+    vfdb_num_dynamic = rtu_vfdb_proxy_get_num_all_dynamic_entries();
+    if (errno != 0)
+        return;
+
+    printf("\tFiltering Database Size:                      %d entries\n"
+           "\tNumber of Static Filtering Entries:           %d\n"
+           "\tNumber of Dynamic Filtering Entries:          %d\n"
+           "\tNumber of Static VLAN Registration Entries:   %d\n"
+           "\tNumber of Dynamic VLAN Registration Entries:  %d\n",
+           fdb_size,
+           fdb_num_static, fdb_num_dynamic,
+           vfdb_num_static, vfdb_num_dynamic);
 }
 
 /**
@@ -279,7 +329,7 @@ void cli_cmd_show_cam_uni(struct cli_shell *cli, int argc, char **argv)
         for (i = 0; i < ETH_ALEN; i++){
             mac[i] = (int) new_oid[15+i];
         }
-        printf("\t%-3d   %-17s      ", fid, mac_to_string(mac, mac_str));
+        printf("\t%-3d   %-17s      ", fid, mac_to_str(mac, mac_str));
 
         /* Parse the port value */
         j = 0;
@@ -351,7 +401,7 @@ void cli_cmd_show_cam_multi(struct cli_shell *cli, int argc, char **argv)
         for (i = 0; i < ETH_ALEN; i++){
             mac[i] = (int) new_oid[15+i];
         }
-        printf("\t%-3d   %-17s      ", fid, mac_to_string(mac, mac_str));
+        printf("\t%-3d   %-17s      ", fid, mac_to_str(mac, mac_str));
 
         /* Parse the port mask */
         memset(ports_range, 0, NUM_PORTS * sizeof(int));
@@ -538,8 +588,8 @@ struct cli_cmd cli_show[NUM_SHOW_CMDS] = {
     [CMD_SHOW_CAM] = {
         .parent     = cli_show + CMD_SHOW,
         .name       = "mac-address-table",
-        .handler    = NULL,
-        .desc       = "Displays information of the FDB",
+        .handler    = cli_cmd_show_cam,
+        .desc       = "Displays general information on the FDB",
         .opt        = CMD_NO_ARG,
         .opt_desc   = NULL
     },
@@ -548,7 +598,7 @@ struct cli_cmd cli_show[NUM_SHOW_CMDS] = {
         .parent     = cli_show + CMD_SHOW_CAM,
         .name       = "unicast",
         .handler    = cli_cmd_show_cam_uni,
-        .desc       = "Displays static and dynamic information of unicast "
+        .desc       = "Displays static and dynamic information on unicast "
                       "entries in the FDB",
         .opt        = CMD_NO_ARG,
         .opt_desc   = NULL
@@ -567,7 +617,7 @@ struct cli_cmd cli_show[NUM_SHOW_CMDS] = {
         .parent     = cli_show + CMD_SHOW_CAM,
         .name       = "multicast",
         .handler    = cli_cmd_show_cam_multi,
-        .desc       = "Displays static and dynamic information of multicast "
+        .desc       = "Displays static and dynamic information on multicast "
                       "entries in the FDB",
         .opt        = CMD_NO_ARG,
         .opt_desc   = NULL
