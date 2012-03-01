@@ -484,6 +484,76 @@ static int rtu_fdb_srv_unset_restricted_vlan_reg(
     return 0;
 }
 
+static int rtu_fdb_srv_get_size(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_get_size_argdata *in;
+    struct rtu_fdb_get_size_retdata *out;
+    in  = (struct rtu_fdb_get_size_argdata*)args;
+    out = (struct rtu_fdb_get_size_retdata*)ret;
+
+    // TODO
+    // out->retval = rtu_fdb_get_size();
+
+    return 0;
+}
+
+static int rtu_fdb_srv_get_num_all_static_entries(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_get_num_all_static_entries_argdata *in;
+    struct rtu_fdb_get_num_all_static_entries_retdata *out;
+    in  = (struct rtu_fdb_get_num_all_static_entries_argdata*)args;
+    out = (struct rtu_fdb_get_num_all_static_entries_retdata*)ret;
+
+    // TODO
+    // out->retval = rtu_fdb_get_num_all_static_entries();
+
+    return 0;
+}
+
+static int rtu_fdb_srv_get_num_all_dynamic_entries(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_get_num_all_dynamic_entries_argdata *in;
+    struct rtu_fdb_get_num_all_dynamic_entries_retdata *out;
+    in  = (struct rtu_fdb_get_num_all_dynamic_entries_argdata*)args;
+    out = (struct rtu_fdb_get_num_all_dynamic_entries_retdata*)ret;
+
+    // TODO
+    // out->retval = rtu_fdb_get_num_all_dynamic_entries();
+
+    return 0;
+}
+
+static int rtu_vfdb_srv_get_num_all_static_entries(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_vfdb_get_num_all_static_entries_argdata *in;
+    struct rtu_vfdb_get_num_all_static_entries_retdata *out;
+    in  = (struct rtu_vfdb_get_num_all_static_entries_argdata*)args;
+    out = (struct rtu_vfdb_get_num_all_static_entries_retdata*)ret;
+
+    // TODO
+    // out->retval = rtu_vfdb_get_num_all_static_entries();
+
+    return 0;
+}
+
+static int rtu_vfdb_srv_get_num_all_dynamic_entries(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_vfdb_get_num_all_dynamic_entries_argdata *in;
+    struct rtu_vfdb_get_num_all_dynamic_entries_retdata *out;
+    in  = (struct rtu_vfdb_get_num_all_dynamic_entries_argdata*)args;
+    out = (struct rtu_vfdb_get_num_all_dynamic_entries_retdata*)ret;
+
+    // TODO
+    // out->retval = rtu_vfdb_get_num_all_dynamic_entries();
+
+    return 0;
+}
+
 const struct minipc_pd rtu_fdb_srv_get_max_vid_struct = {
     .f      = rtu_fdb_srv_get_max_vid,
     .name   = "0",
@@ -808,6 +878,67 @@ const struct minipc_pd rtu_fdb_srv_unset_restricted_vlan_reg_struct = {
     }
 };
 
+
+const struct minipc_pd rtu_fdb_srv_get_size_struct = {
+    .f      = rtu_fdb_srv_get_size,
+    .name   = "27",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_size_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_size_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_get_num_all_static_entries_struct = {
+    .f      = rtu_fdb_srv_get_num_all_static_entries,
+    .name   = "28",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_num_all_static_entries_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_num_all_static_entries_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_get_num_all_dynamic_entries_struct = {
+    .f      = rtu_fdb_srv_get_num_all_dynamic_entries,
+    .name   = "29",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_num_all_dynamic_entries_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_num_all_dynamic_entries_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_vfdb_srv_get_num_all_static_entries_struct = {
+    .f      = rtu_vfdb_srv_get_num_all_static_entries,
+    .name   = "30",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_get_num_all_static_entries_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_get_num_all_static_entries_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_vfdb_srv_get_num_all_dynamic_entries_struct = {
+    .f      = rtu_vfdb_srv_get_num_all_dynamic_entries,
+    .name   = "31",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_get_num_all_dynamic_entries_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_get_num_all_dynamic_entries_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
 struct minipc_ch *rtu_fdb_srv_create(char *name)
 {
 	struct minipc_ch *server;
@@ -843,6 +974,11 @@ struct minipc_ch *rtu_fdb_srv_create(char *name)
         minipc_export(server, &rtu_fdb_srv_is_restricted_vlan_reg_struct);
         minipc_export(server, &rtu_fdb_srv_set_restricted_vlan_reg_struct);
         minipc_export(server, &rtu_fdb_srv_unset_restricted_vlan_reg_struct);
+        minipc_export(server, &rtu_fdb_srv_get_size_struct);
+        minipc_export(server, &rtu_fdb_srv_get_num_all_static_entries_struct);
+        minipc_export(server, &rtu_fdb_srv_get_num_all_dynamic_entries_struct);
+        minipc_export(server, &rtu_vfdb_srv_get_num_all_static_entries_struct);
+        minipc_export(server, &rtu_vfdb_srv_get_num_all_dynamic_entries_struct);
    }
    return server;
 }

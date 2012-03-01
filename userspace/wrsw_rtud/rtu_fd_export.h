@@ -327,4 +327,48 @@ struct rtu_fdb_unset_restricted_vlan_reg_retdata {
     int retval;
 };
 
+struct rtu_fdb_get_size_argdata {
+    // void
+};
+
+struct rtu_fdb_get_size_retdata {
+    int retval;
+};
+
+
+struct rtu_fdb_get_num_all_static_entries_argdata {
+    // void
+};
+
+struct rtu_fdb_get_num_all_static_entries_retdata {
+    int retval;
+};
+
+
+struct rtu_fdb_get_num_all_dynamic_entries_argdata {
+    // void
+};
+
+struct rtu_fdb_get_num_all_dynamic_entries_retdata {
+    int retval;
+};
+
+
+struct rtu_vfdb_get_num_all_static_entries_argdata {
+    // void
+};
+
+struct rtu_vfdb_get_num_all_static_entries_retdata {
+    int retval;
+};
+
+
+struct rtu_vfdb_get_num_all_dynamic_entries_argdata {
+    // void
+};
+
+struct rtu_vfdb_get_num_all_dynamic_entries_retdata {
+    int retval;
+};
+
 #endif /*__WHITERABBIT_RTU_FD_EXPORT_H*/

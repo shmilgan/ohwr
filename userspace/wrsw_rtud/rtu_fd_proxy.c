@@ -330,6 +330,61 @@ const struct minipc_pd rtu_fdb_proxy_unset_restricted_vlan_reg_struct = {
     }
 };
 
+const struct minipc_pd rtu_fdb_proxy_get_size_struct = {
+    .name   = "27",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_size_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_size_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_get_num_all_static_entries_struct = {
+    .name   = "28",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_num_all_static_entries_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_num_all_static_entries_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_get_num_all_dynamic_entries_struct = {
+    .name   = "29",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_num_all_dynamic_entries_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_num_all_dynamic_entries_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_vfdb_proxy_get_num_all_static_entries_struct = {
+    .name   = "30",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_get_num_all_static_entries_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_get_num_all_static_entries_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_vfdb_proxy_get_num_all_dynamic_entries_struct = {
+    .name   = "31",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_get_num_all_dynamic_entries_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_vfdb_get_num_all_dynamic_entries_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
 
 
 // IMPORTANT NOTE: errno used to inform of mini-ipc related errors
@@ -843,6 +898,61 @@ int rtu_fdb_proxy_unset_restricted_vlan_reg(int port)
 
     ret = minipc_call(client, MILLISEC_TIMEOUT,
         &rtu_fdb_proxy_unset_restricted_vlan_reg_struct, &out, &in);
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_get_size(void)
+{
+    int ret;
+    struct rtu_fdb_get_size_argdata in;
+    struct rtu_fdb_get_size_retdata out;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_get_size_struct, &out, &in);
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_get_num_all_static_entries(void)
+{
+    int ret;
+    struct rtu_fdb_get_num_all_static_entries_argdata in;
+    struct rtu_fdb_get_num_all_static_entries_retdata out;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_get_num_all_static_entries_struct, &out, &in);
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_get_num_all_dynamic_entries(void)
+{
+    int ret;
+    struct rtu_fdb_get_num_all_dynamic_entries_argdata in;
+    struct rtu_fdb_get_num_all_dynamic_entries_retdata out;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_get_num_all_dynamic_entries_struct, &out, &in);
+
+    return out.retval;
+}
+
+int rtu_vfdb_proxy_get_num_all_static_entries(void)
+{
+    int ret;
+    struct rtu_vfdb_get_num_all_static_entries_argdata in;
+    struct rtu_vfdb_get_num_all_static_entries_retdata out;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_vfdb_proxy_get_num_all_static_entries_struct, &out, &in);
+
+    return out.retval;
+}
+
+int rtu_vfdb_proxy_get_num_all_dynamic_entries(void)
+{
+    int ret;
+    struct rtu_vfdb_get_num_all_dynamic_entries_argdata in;
+    struct rtu_vfdb_get_num_all_dynamic_entries_retdata out;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_vfdb_proxy_get_num_all_dynamic_entries_struct, &out, &in);
 
     return out.retval;
 }

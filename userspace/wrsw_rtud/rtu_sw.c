@@ -596,8 +596,7 @@ int rtu_sw_get_num_static_vlan_entries(void)
     int i, n;
 
     for (i = 0, n = 0; i < NUM_VLANS; i++)
-        if (!vlan_tab[i].drop && (vlan_tab[i].dynamic == STATIC ||
-                                  vlan_tab[i].dynamic == STATIC_DYNAMIC))
+        if (!vlan_tab[i].drop && (vlan_tab[i].dynamic != DYNAMIC))
             n++;
     return n;
 }
@@ -607,8 +606,7 @@ int rtu_sw_get_num_dynamic_vlan_entries(void)
     int i, n;
 
     for (i = 0, n = 0; i < NUM_VLANS; i++)
-        if (!vlan_tab[i].drop && (vlan_tab[i].dynamic == DYNAMIC ||
-                                  vlan_tab[i].dynamic == STATIC_DYNAMIC))
+        if (!vlan_tab[i].drop && (vlan_tab[i].dynamic != STATIC))
             n++;
     return n;
 }
