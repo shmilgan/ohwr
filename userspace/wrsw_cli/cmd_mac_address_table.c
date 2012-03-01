@@ -32,9 +32,9 @@
 enum cam_cmds {
     CMD_CAM = 0,
     CMD_CAM_AGING,
-    CMD_CAM_STATIC,
-    CMD_CAM_STATIC_VLAN,
-    CMD_CAM_STATIC_VLAN_PORT,
+    CMD_CAM_UNICAST,
+    CMD_CAM_UNICAST_VLAN,
+    CMD_CAM_UNICAST_VLAN_PORT,
     CMD_CAM_MULTICAST,
     CMD_CAM_MULTICAST_VLAN,
     CMD_CAM_MULTICAST_VLAN_PORT,
@@ -175,7 +175,7 @@ void cli_cmd_set_cam_aging(struct cli_shell *cli, int argc, char **argv)
 }
 
 /**
- * \brief Command 'mac-address-table static <MAC Addrress> vlan <VID>
+ * \brief Command 'mac-address-table unicast <MAC Addrress> vlan <VID>
  * port <port number>'.
  * This command creates a unicast static entry in the FDB.
  * @param cli CLI interpreter.
@@ -185,7 +185,7 @@ void cli_cmd_set_cam_aging(struct cli_shell *cli, int argc, char **argv)
  * MAX_VID+1) and the port number (decimal port numbers, separatted by commas
  * and with no blank spaces in between).
  */
-void cli_cmd_set_cam_static_entry(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_set_cam_uni_entry(struct cli_shell *cli, int argc, char **argv)
 {
     set_cam_static(argc, argv, ".1.3.111.2.802.1.1.4.1.3.1.1.8", 5);
     return;
@@ -228,29 +228,29 @@ struct cli_cmd cli_cam[NUM_CAM_CMDS] = {
         .opt        = CMD_ARG_MANDATORY,
         .opt_desc   = "<aging value> New aging time"
     },
-    /* mac-address-table static <MAC Addrress> */
-    [CMD_CAM_STATIC] = {
+    /* mac-address-table unicast <MAC Addrress> */
+    [CMD_CAM_UNICAST] = {
         .parent     = cli_cam + CMD_CAM,
-        .name       = "static",
+        .name       = "unicast",
         .handler    = NULL,
         .desc       = "Adds a static unicast entry in the filtering database",
         .opt        = CMD_ARG_MANDATORY,
         .opt_desc   = "<MAC Addrress> MAC Address"
     },
-    /* mac-address-table static <MAC Addrress> vlan <VID> */
-    [CMD_CAM_STATIC_VLAN] = {
-        .parent     = cli_cam + CMD_CAM_STATIC,
+    /* mac-address-table unicast <MAC Addrress> vlan <VID> */
+    [CMD_CAM_UNICAST_VLAN] = {
+        .parent     = cli_cam + CMD_CAM_UNICAST,
         .name       = "vlan",
         .handler    = NULL,
         .desc       = "Adds a static unicast entry in the filtering database",
         .opt        = CMD_ARG_MANDATORY,
         .opt_desc   = "<VID> VLAN number"
     },
-    /* mac-address-table static <MAC Addrress> vlan <VID> port <port number> */
-    [CMD_CAM_STATIC_VLAN_PORT] = {
-        .parent     = cli_cam + CMD_CAM_STATIC_VLAN,
+    /* mac-address-table unicast <MAC Addrress> vlan <VID> port <port number> */
+    [CMD_CAM_UNICAST_VLAN_PORT] = {
+        .parent     = cli_cam + CMD_CAM_UNICAST_VLAN,
         .name       = "port",
-        .handler    = cli_cmd_set_cam_static_entry,
+        .handler    = cli_cmd_set_cam_uni_entry,
         .desc       = "Adds a static unicast entry in the filtering database",
         .opt        = CMD_ARG_MANDATORY,
         .opt_desc   = "<port number> Port numbers separatted by commas"
@@ -280,7 +280,7 @@ struct cli_cmd cli_cam[NUM_CAM_CMDS] = {
         .handler    = cli_cmd_set_cam_multi_entry,
         .desc       = "Adds a static multicast entry in the filtering database",
         .opt        = CMD_ARG_MANDATORY,
-        .opt_desc   = "<port number> port numbers separatted by commas"
+        .opt_desc   = "<port number> Port numbers separatted by commas"
     }
 };
 

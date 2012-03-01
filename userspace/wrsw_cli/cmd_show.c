@@ -34,9 +34,11 @@ enum show_cmds {
     CMD_SHOW_INTERFACE,
     CMD_SHOW_INTERFACE_INFORMATION,
     CMD_SHOW_CAM,
+    CMD_SHOW_CAM_UNICAST,
     CMD_SHOW_CAM_AGING_TIME,
     CMD_SHOW_CAM_MULTICAST,
     CMD_SHOW_CAM_STATIC,
+    CMD_SHOW_CAM_STATIC_UNICAST,
     CMD_SHOW_CAM_STATIC_MULTICAST,
     CMD_SHOW_VLAN,
     CMD_SHOW_MVRP,
@@ -230,13 +232,13 @@ void cli_cmd_show_port_info(struct cli_shell *cli, int argc, char **argv)
 }
 
 /**
- * \brief Command 'show mac-address-table'.
+ * \brief Command 'show mac-address-table unicast'.
  * This command shows the unicast entries in the FDB.
  * @param cli CLI interpreter.
  * @param argc unused
  * @param agv unused
  */
-void cli_cmd_show_cam(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_cam_uni(struct cli_shell *cli, int argc, char **argv)
 {
     oid _oid[MAX_OID_LEN];
     oid new_oid[MAX_OID_LEN];
@@ -370,13 +372,13 @@ void cli_cmd_show_cam_multi(struct cli_shell *cli, int argc, char **argv)
 }
 
 /**
- * \brief Command 'show mac-address-table static'.
+ * \brief Command 'show mac-address-table static unicast'.
  * This command shows the unicast static entries in the FDB.
  * @param cli CLI interpreter.
  * @param argc unused
  * @param agv unused
  */
-void cli_cmd_show_cam_static(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_cam_static_uni(struct cli_shell *cli, int argc, char **argv)
 {
     show_cam_static(".1.3.111.2.802.1.1.4.1.3.1.1.5");
     return;
@@ -536,7 +538,16 @@ struct cli_cmd cli_show[NUM_SHOW_CMDS] = {
     [CMD_SHOW_CAM] = {
         .parent     = cli_show + CMD_SHOW,
         .name       = "mac-address-table",
-        .handler    = cli_cmd_show_cam,
+        .handler    = NULL,
+        .desc       = "Displays information of the FDB",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show mac-address-table unicast */
+    [CMD_SHOW_CAM_UNICAST] = {
+        .parent     = cli_show + CMD_SHOW_CAM,
+        .name       = "unicast",
+        .handler    = cli_cmd_show_cam_uni,
         .desc       = "Displays static and dynamic information of unicast "
                       "entries in the FDB",
         .opt        = CMD_NO_ARG,
@@ -565,7 +576,17 @@ struct cli_cmd cli_show[NUM_SHOW_CMDS] = {
     [CMD_SHOW_CAM_STATIC] = {
         .parent     = cli_show + CMD_SHOW_CAM,
         .name       = "static",
-        .handler    = cli_cmd_show_cam_static,
+        .handler    = NULL,
+        .desc       = "Displays static MAC address entries information present"
+                      " in the FDB",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show mac-address-table static unicast */
+    [CMD_SHOW_CAM_STATIC_UNICAST] = {
+        .parent     = cli_show + CMD_SHOW_CAM_STATIC,
+        .name       = "unicast",
+        .handler    = cli_cmd_show_cam_static_uni,
         .desc       = "Displays all the static unicast MAC address entries in"
                       " the FDB",
         .opt        = CMD_NO_ARG,
