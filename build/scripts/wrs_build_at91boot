@@ -25,7 +25,7 @@ tar xzf $WRS_DOWNLOAD_DIR/$tarname || wrs_die "untar $tarname"
 
 wrs_echo "Patching AT91Boot"
 cd $dirname
-for n in $WRS_BASE_DIR/../patches/at91boot/*patch; do
+for n in $WRS_BASE_DIR/../patches/at91boot/v3.3/*patch; do
     # the shell passes the "*" over if no matches are there, so check
     if test -f "$n"; then
 	patch -p1 < $n || wrs_die "Apply $n"
