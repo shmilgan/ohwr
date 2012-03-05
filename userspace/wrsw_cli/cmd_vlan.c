@@ -42,7 +42,7 @@ enum vlan_cmds {
  * @param argc number of arguments. Only two arguments allowed.
  * @param agv Two arguments must be specified: the VLAN number (a decimal
  * number between 0 and MAX_VID+1) and the port number (decimal port numbers,
- * separatted by commas and with no blank spaces in between).
+ * separated by commas and with no blank spaces in between).
  */
 void cli_cmd_set_vlan(struct cli_shell *cli, int argc, char **argv)
 {
@@ -131,7 +131,7 @@ struct cli_cmd cli_vlan[NUM_VLAN_CMDS] = {
         .handler    = cli_cmd_set_vlan,
         .desc       = "Creates a new VLAN",
         .opt        = CMD_ARG_MANDATORY,
-        .opt_desc   = "<port number> port numbers separatted by commas"
+        .opt_desc   = "<port number> port numbers separated by commas"
     }
 };
 

@@ -243,7 +243,7 @@ void cli_cmd_mvrp_restricted_registration_disable(struct cli_shell *cli,
         return;
 
     for (i = 0; i < NUM_PORTS; i++)
-        if (atoi(&mask[i]) == 1)
+        if (mask[i] == '1')
             mvrp_restricted_registration_status(i, S_FALSE);
 
     return;
@@ -285,7 +285,7 @@ struct cli_cmd cli_mvrp[NUM_MVRP_CMDS] = {
         .handler    = NULL,
         .desc       = "Configure MVRP on a given port",
         .opt        = CMD_ARG_MANDATORY,
-        .opt_desc   = "<port number> port numbers separatted by commas"
+        .opt_desc   = "<port number> port numbers separated by commas"
     },
     /* mvrp port <port number> enable */
     [CMD_MVRP_PORT_ENABLE] = {
