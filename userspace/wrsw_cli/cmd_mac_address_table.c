@@ -182,7 +182,7 @@ void cli_cmd_set_cam_aging(struct cli_shell *cli, int argc, char **argv)
  * @param argc number of arguments. Only three arguments allowed.
  * @param agv Three arguments must be specified: the MAC Address (formatted as
  * XX:XX:XX:XX:XX:XX), the VLAN number (a decimal number between 0 and
- * MAX_VID+1) and the port number (decimal port numbers, separatted by commas
+ * MAX_VID+1) and the port number (decimal port numbers, separated by commas
  * and with no blank spaces in between).
  */
 void cli_cmd_set_cam_uni_entry(struct cli_shell *cli, int argc, char **argv)
@@ -199,7 +199,7 @@ void cli_cmd_set_cam_uni_entry(struct cli_shell *cli, int argc, char **argv)
  * @param argc number of arguments. Only three arguments allowed.
  * @param agv Three arguments must be specified: the MAC Address (formatted as
  * XX:XX:XX:XX:XX:XX), the VLAN number (a decimal number between 0 and
- * MAX_VID+1) and the port number (decimal port numbers, separatted by commas
+ * MAX_VID+1) and the port number (decimal port numbers, separated by commas
  * and with no blank spaces in between).
  */
 void cli_cmd_set_cam_multi_entry(struct cli_shell *cli, int argc, char **argv)
@@ -253,7 +253,7 @@ struct cli_cmd cli_cam[NUM_CAM_CMDS] = {
         .handler    = cli_cmd_set_cam_uni_entry,
         .desc       = "Adds a static unicast entry in the filtering database",
         .opt        = CMD_ARG_MANDATORY,
-        .opt_desc   = "<port number> Port numbers separatted by commas"
+        .opt_desc   = "<port number> Port numbers separated by commas"
     },
     /* mac-address-table multicast <MAC Addrress> */
     [CMD_CAM_MULTICAST] = {
@@ -280,7 +280,7 @@ struct cli_cmd cli_cam[NUM_CAM_CMDS] = {
         .handler    = cli_cmd_set_cam_multi_entry,
         .desc       = "Adds a static multicast entry in the filtering database",
         .opt        = CMD_ARG_MANDATORY,
-        .opt_desc   = "<port number> Port numbers separatted by commas"
+        .opt_desc   = "<port number> Port numbers separated by commas"
     }
 };
 

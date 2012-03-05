@@ -176,9 +176,9 @@ void cli_cmd_show_port_info(struct cli_shell *cli, int argc, char **argv)
 
     /* Header */
     printf("\t            MVRP\n");
-    printf("\t            --------------------------------------------------\n");
-    printf("\tPort  PVID  Status    Registration Failed   Last PDU from      \n");
-    printf("\t----  ----  --------- ------------ -------  -------------------\n");
+    printf("\t            ---------------------------------------------------\n");
+    printf("\tPort  PVID  Status   Registration Failed      Last PDU from   \n");
+    printf("\t----  ----  -------- ------------ ----------  -----------------\n");
 
     do {
         errno = 0;
@@ -218,7 +218,7 @@ void cli_cmd_show_port_info(struct cli_shell *cli, int argc, char **argv)
         if (errno != 0)
             break;
 
-        printf("\t%-4d  %-4d   %-8s %-12s %-7lld  %-19s\n",
+        printf("\t%-4d  %-4d  %-8s %-12s %-10lld  %-17s\n",
                port,
                pvid,
                (mvrp_enabled == TV_TRUE) ? "Enabled" : "Disabled",
