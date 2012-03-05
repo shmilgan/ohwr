@@ -13,6 +13,7 @@
 #include <sys/ioctl.h>
 #include <linux/if_ether.h>
 #include <linux/if_arp.h>
+#include <linux/if.h>
 
 #include <wr_ipc.h>
 
@@ -29,6 +30,7 @@
 
 #include "wrsw_hal.h"
 #include "hal_exports.h"
+#include "driver_stuff.h"
 
 #define MAX_PORTS 64
 
@@ -340,15 +342,46 @@ static void port_locking_fsm(hal_port_state_t *p)
 }
 
 /* Updates the current value of the phase shift on a given port. Called by the main update function regularly. */
+struct wr_phase_req{
+	int valid;
+	uint32_t phase;
+};
+
 static void poll_dmtd(hal_port_state_t *p)
 {
+	struct ifreq ifr;
+	struct wr_phase_req preq;
+	
+	strncpy(ifr.ifr_name, p->name, sizeof(ifr.ifr_name));
+
+	ifr.ifr_data=  (void *)&preq;
+
+	if(ioctl(fd_raw, PRIV_IOCGGETPHASE, &ifr) < 0) return;
+	
+//	fprintf(stderr, "Poll: %d %d\n", preq.valid, preq.phase);
+	
 	/* FIXME: what should we do here? */
+	p->phase_val = (int)((double)preq.phase / 16384.0 * 16000.0);
+	p->phase_val_valid = preq.valid;
 }
 
-
-static uint16_t pcs_readl(int endpoint, uint8_t reg)
+uint32_t pcs_readl(hal_port_state_t *p, int reg)
 {
+	struct ifreq ifr;
+	uint32_t rv;
+	
+	strncpy(ifr.ifr_name, p->name, sizeof(ifr.ifr_name));
 
+	rv = NIC_READ_PHY_CMD(reg);
+	ifr.ifr_data = (void *)&rv;
+//	printf("raw fd %d name %s\n", fd_raw, ifr.ifr_name);
+	if(	ioctl(fd_raw, PRIV_IOCPHYREG, &ifr) < 0)
+	{
+		fprintf(stderr,"ioctl failed\n");
+	};
+	
+	printf("PCS_readl: reg %d data %x\n", reg, NIC_RESULT_DATA(rv));
+	return NIC_RESULT_DATA(rv);
 }
 
 
@@ -356,24 +389,7 @@ static uint16_t pcs_readl(int endpoint, uint8_t reg)
 static void calibration_fsm(hal_port_state_t *p)
 {
 
-/* Downlink ports are not supported yet.... Sorry... */
-	if(p->name[2] == 'd')
-	{
-		TRACE(TRACE_INFO,"Bypassing calibration for downlink port %s", p->name);
-		p->calib.tx_calibrated = 1;
-		p->calib.rx_calibrated = 1;
-		/* FIXME: use proper register names */
-		p->calib.delta_rx_phy = p->calib.phy_rx_min + ((pcs_readl(p->hw_index, 16) >> 4) & 0x1f) * 800;
-		p->calib.delta_tx_phy = p->calib.phy_tx_min;
-		p->tx_cal_pending = 0;
-		p->rx_cal_pending = 0;
 
-		return;
-	}
-
-/* Is there a calibration measurement in progress for this port? */
-
-/* no, not in V3 */
 }
 
 
@@ -406,6 +422,17 @@ static void port_fsm(hal_port_state_t *p)
 	{
 		if(link_up)
 		{
+		p->calib.tx_calibrated = 1;
+		p->calib.rx_calibrated = 1;
+		/* FIXME: use proper register names */
+		p->calib.delta_rx_phy = p->calib.phy_rx_min + ((pcs_readl(p, 16) >> 4) & 0x1f) * 800;
+		p->calib.delta_tx_phy = p->calib.phy_tx_min;
+
+		TRACE(TRACE_INFO,"Bypassing calibration for downlink port %s [dTx %d, dRx %d]", p->name, p->calib.delta_tx_phy, 	p->calib.delta_rx_phy);
+
+		p->tx_cal_pending = 0;
+		p->rx_cal_pending = 0;
+
 			TRACE(TRACE_INFO, "%s: link up", p->name);
 			p->state = HAL_PORT_STATE_UP;
 		}
