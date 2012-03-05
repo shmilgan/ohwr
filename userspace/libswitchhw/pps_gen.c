@@ -28,6 +28,7 @@ int shw_pps_gen_init()
 
   _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_CR, cr | PPSG_CR_CNT_SET);
   _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_CR, cr);
+  _fpga_writel(FPGA_BASE_PPS_GEN + 0x1c, 0x6); /* enable PPS output */
 }
 
 /* Adjusts the nanosecond (125 MHz refclk cycle) counter by atomically adding (how_much). */
