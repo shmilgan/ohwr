@@ -27,6 +27,9 @@
 
 #include "cli.h"
 
+struct cli_cmd cli_no;
+struct cli_cmd cli_show;
+
 /* Function to build the commands tree */
 void cli_build_commands_tree(struct cli_shell *cli);
 
@@ -35,9 +38,7 @@ void cli_insert_command(struct cli_shell *cli, struct cli_cmd *cmd);
 /* Functions to init each commands family. Look in cmd_*.c for implementation */
 void cmd_exit_init(struct cli_shell *cli);
 void cmd_hostname_init(struct cli_shell *cli);
-void cmd_show_init(struct cli_shell *cli);
 void cmd_mac_address_table_init(struct cli_shell *cli);
-void cmd_no_init(struct cli_shell *cli);
 void cmd_interface_init(struct cli_shell *cli);
 void cmd_vlan_init(struct cli_shell *cli);
 void cmd_mvrp_init(struct cli_shell *cli);

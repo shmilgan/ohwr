@@ -66,6 +66,26 @@
  *
  */
 
+/* Define the 'no' and 'show' commands globally, so other subcommands in
+   different command families can share these commands as parents */
+struct cli_cmd cli_no = {
+    .parent     = NULL,
+    .name       = "no",
+    .handler    = NULL,
+    .desc       = "Use 'no' to delete/disable some configured parameters",
+    .opt        = CMD_NO_ARG,
+    .opt_desc   = NULL
+};
+
+struct cli_cmd cli_show = {
+    .parent     = NULL,
+    .name       = "show",
+    .handler    = NULL,
+    .desc       = "Shows the device configurations",
+    .opt        = CMD_NO_ARG,
+    .opt_desc   = NULL
+};
+
 /**
  * \brief Inserts a command in the commands tree.
  * It inserts a command in the command tree, by updating the child and next
@@ -120,14 +140,15 @@ void cli_insert_command(struct cli_shell *cli, struct cli_cmd *cmd)
  */
 void cli_build_commands_tree(struct cli_shell *cli)
 {
+    /* Insert the 'no' and 'show' commands in the commands tree */
+    cli_insert_command(cli, &cli_no);
+    cli_insert_command(cli, &cli_show);
+
     /* 'exit' command */
     cmd_exit_init(cli);
 
     /* 'hostname' command */
     cmd_hostname_init(cli);
-
-    /* 'show' commands family */
-    cmd_show_init(cli);
 
     /* 'interface' commands family */
     cmd_interface_init(cli);
@@ -140,7 +161,4 @@ void cli_build_commands_tree(struct cli_shell *cli)
 
     /* 'mvrp' commands family */
     cmd_mvrp_init(cli);
-
-    /* 'no' commands family */
-    cmd_no_init(cli);
 }
