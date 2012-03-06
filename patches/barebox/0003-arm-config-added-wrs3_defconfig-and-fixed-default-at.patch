@@ -1,23 +1,25 @@
-From 8dda05690997b602b2f8b5b8327e846710fd5806 Mon Sep 17 00:00:00 2001
+From 67b9fe6e93ec3a0a94301380e9f56a1026b7f774 Mon Sep 17 00:00:00 2001
 From: Alessandro Rubini <rubini@gnudd.com>
 Date: Thu, 15 Sep 2011 23:53:57 +0200
-Subject: [PATCH] arm config: added wrs3_defconfig
+Subject: [PATCH 3/5] arm config: added wrs3_defconfig and fixed default
+ at91/Kconfig
 
 ---
- arch/arm/configs/wrs3_defconfig |  306 +++++++++++++++++++++++++++++++++++++++
- 1 files changed, 306 insertions(+), 0 deletions(-)
+ arch/arm/configs/wrs3_defconfig |  305 +++++++++++++++++++++++++++++++++++++++
+ arch/arm/mach-at91/Kconfig      |    2 +-
+ 2 files changed, 306 insertions(+), 1 deletions(-)
  create mode 100644 arch/arm/configs/wrs3_defconfig
 
 diff --git a/arch/arm/configs/wrs3_defconfig b/arch/arm/configs/wrs3_defconfig
 new file mode 100644
-index 0000000..632b61d
+index 0000000..c289768
 --- /dev/null
 +++ b/arch/arm/configs/wrs3_defconfig
-@@ -0,0 +1,306 @@
+@@ -0,0 +1,305 @@
 +#
 +# Automatically generated make config: don't edit
 +# Linux/arm 2011.09.0 Barebox Configuration
-+# Fri Sep 16 01:08:38 2011
++# Tue Jan 24 21:02:43 2012
 +#
 +# CONFIG_BOARD_LINKER_SCRIPT is not set
 +CONFIG_GENERIC_LINKER_SCRIPT=y
@@ -49,7 +51,7 @@ index 0000000..632b61d
 +#
 +# CONFIG_BOOT_ENDIANNESS_SWITCH is not set
 +CONFIG_ARCH_TEXT_BASE=0x73f00000
-+CONFIG_BOARDINFO="Ronetix PM9G45"
++CONFIG_BOARDINFO="CERN White Rabbit Switch V3"
 +
 +#
 +# Atmel AT91 System-on-Chip
@@ -104,7 +106,7 @@ index 0000000..632b61d
 +# CONFIG_EXPERIMENTAL is not set
 +CONFIG_MALLOC_DLMALLOC=y
 +# CONFIG_KALLSYMS is not set
-+CONFIG_PROMPT="pm9g45:"
++CONFIG_PROMPT="WRS-3> "
 +CONFIG_BAUDRATE=115200
 +CONFIG_LONGHELP=y
 +CONFIG_CBSIZE=1024
@@ -207,7 +209,7 @@ index 0000000..632b61d
 +# flash                         
 +#
 +CONFIG_CMD_FLASH=y
-+CONFIG_CMD_UBI=y
++# CONFIG_CMD_UBI is not set
 +
 +#
 +# booting                       
@@ -281,7 +283,7 @@ index 0000000..632b61d
 +CONFIG_MTD_NAND_VERIFY_WRITE=y
 +# CONFIG_MTD_NAND_ECC_SMC is not set
 +CONFIG_MTD_NAND_IDS=y
-+CONFIG_UBI=y
++# CONFIG_UBI is not set
 +# CONFIG_ATA is not set
 +# CONFIG_USB is not set
 +# CONFIG_USB_GADGET is not set
@@ -308,7 +310,6 @@ index 0000000..632b61d
 +CONFIG_FS_RAMFS=y
 +CONFIG_FS_DEVFS=y
 +# CONFIG_FS_FAT is not set
-+CONFIG_PARTITION_NEED_MTD=y
 +CONFIG_ZLIB=y
 +CONFIG_BZLIB=y
 +CONFIG_CRC32=y
@@ -320,6 +321,19 @@ index 0000000..632b61d
 +# CONFIG_GENERIC_FIND_NEXT_BIT is not set
 +CONFIG_PROCESS_ESCAPE_SEQUENCE=y
 +CONFIG_LZO_DECOMPRESS=y
+diff --git a/arch/arm/mach-at91/Kconfig b/arch/arm/mach-at91/Kconfig
+index ee46002..7d245d5 100644
+--- a/arch/arm/mach-at91/Kconfig
++++ b/arch/arm/mach-at91/Kconfig
+@@ -16,7 +16,7 @@ config BOARDINFO
+ 	default "Bucyrus MMC-CPU" if MACH_MMCCPU
+ 	default "Ronetix PM9261" if MACH_PM9261
+ 	default "Ronetix PM9263" if MACH_PM9263
+-	default "Ronetix PM9G45" if MACH_PM9G45
++	default "CERN White Rabbit Switch V3" if MACH_PM9G45
+ 
+ config HAVE_NAND_ATMEL_BUSWIDTH_16
+ 	bool
 -- 
-1.5.4.3
+1.7.7.2
 

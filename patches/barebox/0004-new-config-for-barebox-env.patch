@@ -1,17 +1,17 @@
-From 8b83039b5eeb580cbda14cbc7a84525d02e5a717 Mon Sep 17 00:00:00 2001
+From 8dd9093a82d3901bd6194aa2e36aee822f7a18f2 Mon Sep 17 00:00:00 2001
 From: Alessandro Rubini <rubini@gnudd.com>
 Date: Thu, 12 Jan 2012 20:07:48 +0100
-Subject: [PATCH] new config for barebox env
+Subject: [PATCH 4/5] new config for barebox env
 
 ---
- arch/arm/boards/pm9g45/env/config |   43 ++++--------------------------------
- 1 files changed, 5 insertions(+), 38 deletions(-)
+ arch/arm/boards/pm9g45/env/config |   45 +++++-------------------------------
+ 1 files changed, 7 insertions(+), 38 deletions(-)
 
 diff --git a/arch/arm/boards/pm9g45/env/config b/arch/arm/boards/pm9g45/env/config
-index b8ca18d..ed683fe 100644
+index b8ca18d..45ae02b 100644
 --- a/arch/arm/boards/pm9g45/env/config
 +++ b/arch/arm/boards/pm9g45/env/config
-@@ -1,42 +1,9 @@
+@@ -1,42 +1,11 @@
  #!/bin/sh
 -
 -# use 'dhcp' to do dhcp in barebox and in kernel
@@ -55,10 +55,12 @@ index b8ca18d..ed683fe 100644
 -
 -# set a fancy prompt (if support is compiled in)
 -PS1="\e[1;32mbarebox@\e[1;31m\h:\w\e[0m "
++timeout -a $autoboot_timeout
++if [ $? != 0 ]; then exit; fi
 +dhcp
 +tftp wrboot
 +./wrboot
  
 -- 
-1.7.0.4
+1.7.7.2
 
