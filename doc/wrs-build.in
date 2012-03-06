@@ -86,6 +86,7 @@ Build}.
 * The Complete Filesystem::     
 * Installation of WRS-3::       
 * Code layout in a production switch::  
+* Troubleshooting::             
 @end menu
 
 @c ##########################################################################
@@ -1001,6 +1002,41 @@ the network or usb if a button is kept pressed at boot.
 @c In this case you must follow 
 @c 
 
+@c ##########################################################################
+@node Troubleshooting
+@chapter Troubleshooting
+
+This chapter includes notes about issues we found and how to address them,
+or extra tools 
+
+@c ==========================================================================
+@node Testing SDRAM
+@section Testing SDRAM
+
+In case you suspect to have RAM issues and are not even able to boot
+@i{barebox}, this package offers the program @i{g45memtest}. It is a
+merge of @i{at91boot} and @code{commands/memtest.c} from barebox, with
+the small @i{printf} I use in other projects (e.g. @i{pptp}).
+
+The binary is included in the package as @code{binaries/g45memtest}.
+It should be loaded like @code{at91boot}: it configures the RAM and
+the PLL, and then runs the test.
+
+The source is distributed as a patch-set over @i{at91boot} (the same
+version we use to boot the switch), in @code{patches/g45memtest}.  To
+compile, untar the source, apply the patches and compile.  The
+following commands are what I used to compile it (you'll need to set
+@code{CROSS_COMPILE} first, though).
+
+@example
+   tar xzf /opt/wrs-build/downloads/at91bootstrap-3-3.0.tar.gz
+   git am $WRS_BASE_DIR/../patches/g45memtest/00*
+   make at91sam9g45ek_defconfig
+   make
+@end example
+
+The output binary is the only file called ``@code{binaries/*.bin}'',
+that should be renamed to @code{g45memtest}.
 
 
 @c ##########################################################################

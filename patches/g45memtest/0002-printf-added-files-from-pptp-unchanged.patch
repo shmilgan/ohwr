@@ -1,0 +1,130 @@
+From c27eea873f4a7dd9bea3da51b8e4aba27b9e52fc Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 6 Mar 2012 10:18:59 +0100
+Subject: [PATCH 2/6] printf: added files from pptp, unchanged
+
+---
+ lib/diag-printf.c |   34 ++++++++++++++++++++++++++
+ lib/printf-mini.c |   69 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 103 insertions(+), 0 deletions(-)
+ create mode 100644 lib/diag-printf.c
+ create mode 100644 lib/printf-mini.c
+
+diff --git a/lib/diag-printf.c b/lib/diag-printf.c
+new file mode 100644
+index 0000000..4f26782
+--- /dev/null
++++ b/lib/diag-printf.c
+@@ -0,0 +1,34 @@
++/*
++ * Basic printf based on vprintf based on vsprintf
++ *
++ * Alessandro Rubini for CERN, 2011 -- public domain
++ * (please note that the vsprintf is not public domain but GPL)
++ */
++#include <stdarg.h>
++#include <pptp/pptp.h>
++#include <pptp/diag.h>
++
++#define PP_BUF 128		/* We prefer small targets */
++
++static char print_buf[PP_BUF];
++
++int pp_vprintf(const char *fmt, va_list args)
++{
++	int ret;
++
++	ret = pp_vsprintf(print_buf, fmt, args);
++	pp_puts(print_buf);
++	return ret;
++}
++
++int pp_printf(const char *fmt, ...)
++{
++	va_list args;
++	int r;
++
++	va_start(args, fmt);
++	r = pp_vprintf(fmt, args);
++	va_end(args);
++
++	return r;
++}
+diff --git a/lib/printf-mini.c b/lib/printf-mini.c
+new file mode 100644
+index 0000000..d68c848
+--- /dev/null
++++ b/lib/printf-mini.c
+@@ -0,0 +1,69 @@
++#include <stdarg.h>
++/*
++ * minimal vsprintf: only %s and hex values
++ * Alessandro Rubini 2010, based on code in u-boot (from older Linux)
++ * GNU GPL version 2.
++ */
++int pp_vsprintf(char *buf, const char *fmt, va_list args)
++{
++	int i, j;
++	static char hex[] = "0123456789abcdef";
++	char *s;
++	char *str = buf;
++
++	for (; *fmt ; ++fmt) {
++		if (*fmt != '%') {
++			*str++ = *fmt;
++			continue;
++		}
++
++	repeat:
++		fmt++;		/* Skip '%' initially, other stuff later */
++
++		/* Skip the complete format string */
++		switch(*fmt) {
++		case '\0':
++			goto ret;
++		case '*':
++			/* should be precision, just eat it */
++			i = va_arg(args, int);
++			/* fall through: discard unknown stuff */
++		default:
++			goto repeat;
++
++			/* Special cases for conversions */
++
++		case 'c': /* char: supported */
++			*str++ = (unsigned char) va_arg(args, int);
++			break;
++		case 's': /* string: supported */
++			s = va_arg(args, char *);
++			while (*s)
++				*str++ = *s++;
++			break;
++		case 'n': /* number-thus-far: not supported */
++			break;
++		case '%': /* supported */
++			*str++ = '%';
++			break;
++
++			/* all integer (and pointer) are printed as <%08x> */
++		case 'o':
++		case 'x':
++		case 'X':
++		case 'd':
++		case 'i':
++		case 'u':
++		case 'p':
++			i = va_arg(args, int);
++			*str++ = '<';
++			for (j = 28; j >= 0; j -= 4)
++				*str++ = hex[(i>>j)&0xf];
++			*str++ = '>';
++			break;
++		}
++	}
++ ret:
++	*str = '\0';
++	return str - buf;
++}
+-- 
+1.7.7.2
+

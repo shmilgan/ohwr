@@ -1,0 +1,85 @@
+From f87ac48aaf4ec7726391b87577fceede1b561228 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Thu, 15 Sep 2011 23:41:14 +0200
+Subject: [PATCH 1/6] board 9g45ek: fix ddr config for WRS-V3
+
+---
+ board/at91sam9g45ek/at91sam9g45ek.c |    2 +-
+ crt0_gnu.S                          |    2 +-
+ driver/ddramc.c                     |    6 +++---
+ include/AT91SAM9G45_inc.h           |    2 +-
+ 4 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/board/at91sam9g45ek/at91sam9g45ek.c b/board/at91sam9g45ek/at91sam9g45ek.c
+index d6b10db..8569231 100644
+--- a/board/at91sam9g45ek/at91sam9g45ek.c
++++ b/board/at91sam9g45ek/at91sam9g45ek.c
+@@ -158,7 +158,7 @@ void ddramc_hw_init(void)
+         (AT91C_DDRC2_DBW_16_BITS | AT91C_DDRC2_MD_DDR2_SDRAM);
+ 
+     ddram_config.ddramc_cr = (AT91C_DDRC2_NC_DDR10_SDR9 |       // 10 column bits (1K)
+-                              AT91C_DDRC2_NR_14 |       // 14 row bits    (8K)
++                              AT91C_DDRC2_NR_13 |       // 13 row bits    (8K)
+                               AT91C_DDRC2_CAS_3 |       // CAS Latency 3
+                               AT91C_DDRC2_DLL_RESET_DISABLED);  // DLL not reset
+ 
+diff --git a/crt0_gnu.S b/crt0_gnu.S
+index df956d8..c00b717 100644
+--- a/crt0_gnu.S
++++ b/crt0_gnu.S
+@@ -56,7 +56,7 @@ _exception_vectors:
+ 	b 	swi_vector   	/* Software Interrupt */
+ 	b 	pabt_vector  	/* Prefetch Abort */
+ 	b 	dabt_vector  	/* Data Abort */
+-.word		_edata		/* Size of the image for SAM-BA */
++.word		_edata - _exception_vectors		/* Size of the image for SAM-BA */
+ 	b 	irq_vector	/* IRQ : read the AIC */
+ 	b 	fiq_vector      /* FIQ */
+ 
+diff --git a/driver/ddramc.c b/driver/ddramc.c
+index 08eac28..e2824ff 100644
+--- a/driver/ddramc.c
++++ b/driver/ddramc.c
+@@ -126,7 +126,7 @@ int ddram_init(unsigned int ddram_controller_address,
+     write_ddramc(ddram_controller_address, HDDRSDRC2_MR,
+                  AT91C_DDRC2_MODE_EXT_LMR_CMD);
+     /* Perform a write access to DDR address so that BA[1] is set to 1 and BA[0] is set to 0. */
+-    *((unsigned int *)(ddram_address + (0x2 << ba_offset))) = 0;
++    *((unsigned int *)(ddram_address + 0x4000000 /* (0x2 << ba_offset) */)) = 0;
+ 
+     // wait 2 cycles min (of tCK) = 15 ns min
+     Wait(2);
+@@ -135,7 +135,7 @@ int ddram_init(unsigned int ddram_controller_address,
+     /* Perform a write access to DDR address so that BA[1] is set to 1 and BA[0] is set to 1. */
+     write_ddramc(ddram_controller_address, HDDRSDRC2_MR,
+                  AT91C_DDRC2_MODE_EXT_LMR_CMD);
+-    *((unsigned int *)(ddram_address + (0x3 << ba_offset))) = 0;
++    *((unsigned int *)(ddram_address + 0x6000000 /* (0x3 << ba_offset) */)) = 0;
+ 
+     // wait 2 cycles min (of tCK) = 15 ns min
+     Wait(2);
+@@ -144,7 +144,7 @@ int ddram_init(unsigned int ddram_controller_address,
+     /* Perform a write access to DDR address so that BA[1] is set to 0 and BA[0] is set to 1. */
+     write_ddramc(ddram_controller_address, HDDRSDRC2_MR,
+                  AT91C_DDRC2_MODE_EXT_LMR_CMD);
+-    *((unsigned int *)(ddram_address + (0x1 << ba_offset))) = 0;
++    *((unsigned int *)(ddram_address + 0x2000000 /* (0x1 << ba_offset) */)) = 0;
+ 
+     // wait 200 cycles min (of tCK) = 1500 ns min
+     Wait(100);
+diff --git a/include/AT91SAM9G45_inc.h b/include/AT91SAM9G45_inc.h
+index 550aea4..a4a168f 100644
+--- a/include/AT91SAM9G45_inc.h
++++ b/include/AT91SAM9G45_inc.h
+@@ -267,7 +267,7 @@
+ #define 	AT91C_DDRC2_NC_DDR10_SDR9           (0x1)       // (HDDRSDRC2) DDR 10 Bits | SDR 9 Bits
+ #define 	AT91C_DDRC2_NC_DDR11_SDR10          (0x2)       // (HDDRSDRC2) DDR 11 Bits | SDR 10 Bits
+ #define 	AT91C_DDRC2_NC_DDR12_SDR11          (0x3)       // (HDDRSDRC2) DDR 12 Bits | SDR 11 Bits
+-#define AT91C_DDRC2_NR            (0x3 <<  2)   // (HDDRSDRC2) Number of Row Bits
++#define AT91C_DDRC2_NR            AT91C_DDRC2_NR_13   // (HDDRSDRC2) Number of Row Bits
+ #define 	AT91C_DDRC2_NR_11                   (0x0 <<  2) // (HDDRSDRC2) 11 Bits
+ #define 	AT91C_DDRC2_NR_12                   (0x1 <<  2) // (HDDRSDRC2) 12 Bits
+ #define 	AT91C_DDRC2_NR_13                   (0x2 <<  2) // (HDDRSDRC2) 13 Bits
+-- 
+1.7.7.2
+

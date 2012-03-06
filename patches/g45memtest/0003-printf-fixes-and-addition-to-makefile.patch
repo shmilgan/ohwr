@@ -1,0 +1,82 @@
+From 3ebc7c415750ffcd7cf4241010027773609e6919 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 6 Mar 2012 10:37:27 +0100
+Subject: [PATCH 3/6] printf: fixes and addition to makefile
+
+---
+ include/pp_printf.h |    9 +++++++++
+ lib/diag-printf.c   |    3 +--
+ lib/libc.mk         |    3 +++
+ lib/printf-mini.c   |    1 +
+ main.c              |    1 +
+ 5 files changed, 15 insertions(+), 2 deletions(-)
+ create mode 100644 include/pp_printf.h
+
+diff --git a/include/pp_printf.h b/include/pp_printf.h
+new file mode 100644
+index 0000000..6ceca25
+--- /dev/null
++++ b/include/pp_printf.h
+@@ -0,0 +1,9 @@
++/* prototypes for the mini printf, copied from pptp */
++
++#include <stdarg.h>
++
++int pp_vprintf(const char *fmt, va_list args);
++int pp_printf(const char *fmt, ...);
++int pp_vsprintf(char *buf, const char *fmt, va_list args);
++
++#define pp_puts dbgu_print
+diff --git a/lib/diag-printf.c b/lib/diag-printf.c
+index 4f26782..07a1d78 100644
+--- a/lib/diag-printf.c
++++ b/lib/diag-printf.c
+@@ -5,8 +5,7 @@
+  * (please note that the vsprintf is not public domain but GPL)
+  */
+ #include <stdarg.h>
+-#include <pptp/pptp.h>
+-#include <pptp/diag.h>
++#include <pp_printf.h>
+ 
+ #define PP_BUF 128		/* We prefer small targets */
+ 
+diff --git a/lib/libc.mk b/lib/libc.mk
+index 219e55b..a79c4bd 100644
+--- a/lib/libc.mk
++++ b/lib/libc.mk
+@@ -7,6 +7,9 @@ COBJS-y				+=	$(LIBC)string.o
+ COBJS-y				+=	$(LIBC)div0.o
+ COBJS-y				+=	$(LIBC)udiv.o
+ COBJS-y				+=	$(LIBC)eabi_utils.o
++COBJS-y				+=	$(LIBC)printf-mini.o
++COBJS-y				+=	$(LIBC)diag-printf.o
++
+ 
+ SOBJS-y				+=	$(LIBC)_udivsi3.o
+ SOBJS-y				+=	$(LIBC)_umodsi3.o
+diff --git a/lib/printf-mini.c b/lib/printf-mini.c
+index d68c848..0c0ea73 100644
+--- a/lib/printf-mini.c
++++ b/lib/printf-mini.c
+@@ -1,4 +1,5 @@
+ #include <stdarg.h>
++#include <pp_printf.h>
+ /*
+  * minimal vsprintf: only %s and hex values
+  * Alessandro Rubini 2010, based on code in u-boot (from older Linux)
+diff --git a/main.c b/main.c
+index 2a46204..8810324 100644
+--- a/main.c
++++ b/main.c
+@@ -30,6 +30,7 @@
+  * Creation            : ODi Apr 19th 2006
+  *-----------------------------------------------------------------------------
+  */
++#include <pp_printf.h>
+ #include "part.h"
+ #include "main.h"
+ #include "dbgu.h"
+-- 
+1.7.7.2
+
