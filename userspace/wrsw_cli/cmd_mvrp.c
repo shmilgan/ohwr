@@ -6,6 +6,8 @@
  *              Juan Luis Manas (juan.manas@integrasys.es)
  *
  * Description: Implementation of the commands family 'mvrp'.
+ *              Some MVRP management functions are implemented in the
+ *              'interface' commands family.
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +41,8 @@ enum mvrp_cmds {
     CMD_MVRP_PORT_RESTRICTED_REGISTRATION,
     CMD_MVRP_PORT_RESTRICTED_REGISTRATION_ENABLE,
     CMD_MVRP_PORT_RESTRICTED_REGISTRATION_DISABLE,
+    CMD_SHOW_MVRP,
+    CMD_SHOW_MVRP_STATUS,
     NUM_MVRP_CMDS
 };
 
@@ -54,6 +58,46 @@ static void mvrp_enabled_status(char *val)
     length_oid = MAX_OID_LEN;
     if (!snmp_parse_oid(base_oid, _oid, &length_oid))
         return;
+
+    cli_snmp_set_int(_oid, length_oid, val, 'i');
+}
+
+static void mvrp_port_enabled_status(int port, char *val)
+{
+    oid _oid[MAX_OID_LEN];
+    char *base_oid = ".1.3.111.2.802.1.1.4.1.4.5.1.4.1";
+    size_t length_oid;  /* Base OID length */
+
+    memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
+
+    /* Parse the base_oid string to an oid array type */
+    length_oid = MAX_OID_LEN;
+    if (!snmp_parse_oid(base_oid, _oid, &length_oid))
+        return;
+
+    /* Build the indexes */
+    _oid[14] = port;              /* port number */
+    length_oid++;
+
+    cli_snmp_set_int(_oid, length_oid, val, 'i');
+}
+
+static void mvrp_restricted_registration_status(int port, char *val)
+{
+    oid _oid[MAX_OID_LEN];
+    char *base_oid = ".1.3.111.2.802.1.1.4.1.4.5.1.7.1";
+    size_t length_oid;  /* Base OID length */
+
+    memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
+
+    /* Parse the base_oid string to an oid array type */
+    length_oid = MAX_OID_LEN;
+    if (!snmp_parse_oid(base_oid, _oid, &length_oid))
+        return;
+
+    /* Build the indexes */
+    _oid[14] = port;              /* port number */
+    length_oid++;
 
     cli_snmp_set_int(_oid, length_oid, val, 'i');
 }
@@ -82,26 +126,6 @@ void cli_cmd_mvrp_disable(struct cli_shell *cli, int argc, char **argv)
 {
     mvrp_enabled_status(S_FALSE);
     return;
-}
-
-static void mvrp_port_enabled_status(int port, char *val)
-{
-    oid _oid[MAX_OID_LEN];
-    char *base_oid = ".1.3.111.2.802.1.1.4.1.4.5.1.4.1";
-    size_t length_oid;  /* Base OID length */
-
-    memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
-
-    /* Parse the base_oid string to an oid array type */
-    length_oid = MAX_OID_LEN;
-    if (!snmp_parse_oid(base_oid, _oid, &length_oid))
-        return;
-
-    /* Build the indexes */
-    _oid[14] = port;              /* port number */
-    length_oid++;
-
-    cli_snmp_set_int(_oid, length_oid, val, 'i');
 }
 
 /**
@@ -165,26 +189,6 @@ void cli_cmd_mvrp_port_disable(struct cli_shell *cli, int argc, char **argv)
     return;
 }
 
-static void mvrp_restricted_registration_status(int port, char *val)
-{
-    oid _oid[MAX_OID_LEN];
-    char *base_oid = ".1.3.111.2.802.1.1.4.1.4.5.1.7.1";
-    size_t length_oid;  /* Base OID length */
-
-    memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
-
-    /* Parse the base_oid string to an oid array type */
-    length_oid = MAX_OID_LEN;
-    if (!snmp_parse_oid(base_oid, _oid, &length_oid))
-        return;
-
-    /* Build the indexes */
-    _oid[14] = port;              /* port number */
-    length_oid++;
-
-    cli_snmp_set_int(_oid, length_oid, val, 'i');
-}
-
 /**
  * \brief Command 'mvrp port <port number> restricted-registration enable'.
  * This command enables the Restricted VLAN Registration state on a given
@@ -245,6 +249,38 @@ void cli_cmd_mvrp_restricted_registration_disable(struct cli_shell *cli,
     for (i = 0; i < NUM_PORTS; i++)
         if (mask[i] == '1')
             mvrp_restricted_registration_status(i, S_FALSE);
+
+    return;
+}
+
+/**
+ * \brief Command 'show mvrp status'.
+ * This command displays the MVRP status on the device.
+ * @param cli CLI interpreter.
+ * @param argc unused.
+ * @param agv unused.
+ */
+void cli_cmd_show_mvrp_status(struct cli_shell *cli, int argc, char **argv)
+{
+    oid _oid[MAX_OID_LEN];
+    char *base_oid = ".1.3.111.2.802.1.1.4.1.1.1.1.6.1";
+    size_t length_oid;  /* Base OID length */
+    int status;
+
+
+    memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
+
+    /* Parse the base_oid string to an oid array type */
+    length_oid = MAX_OID_LEN;
+    if (!snmp_parse_oid(base_oid, _oid, &length_oid))
+        return;
+
+    errno = 0;
+    status = cli_snmp_get_int(_oid, length_oid);
+
+    if (errno == 0)
+        printf("\tMVRP status: %s\n",
+               (status == TV_TRUE) ? "Enabled" : "Disabled" );
 
     return;
 }
@@ -332,6 +368,24 @@ struct cli_cmd cli_mvrp[NUM_MVRP_CMDS] = {
         .handler    = cli_cmd_mvrp_restricted_registration_disable,
         .desc       = "Disable the state of the Restricted VLAN Registration on"
                       " this port",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show mvrp */
+    [CMD_SHOW_MVRP] = {
+        .parent     = &cli_show,
+        .name       = "mvrp",
+        .handler    = NULL,
+        .desc       = "Displays MVRP information",
+        .opt        = CMD_NO_ARG,
+        .opt_desc   = NULL
+    },
+    /* show mvrp status */
+    [CMD_SHOW_MVRP_STATUS] = {
+        .parent     = cli_mvrp + CMD_SHOW_MVRP,
+        .name       = "status",
+        .handler    = cli_cmd_show_mvrp_status,
+        .desc       = "Displays the MVRP Enabled Status",
         .opt        = CMD_NO_ARG,
         .opt_desc   = NULL
     }
