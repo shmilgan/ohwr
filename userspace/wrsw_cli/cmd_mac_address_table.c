@@ -73,9 +73,8 @@ static void set_cam_static(int argc, char **argv, char *base_oid,
     char *value[2];
     int i;
 
-    /* Check that we have the three arguments */
     if (argc != 3) {
-        printf("\tError. You have missed some argument\n");
+        printf("\tError. You have missed some command option\n");
         return;
     }
 
@@ -83,22 +82,14 @@ static void set_cam_static(int argc, char **argv, char *base_oid,
     addr = argv[0];
     if (sscanf(addr, "%02x:%02x:%02x:%02x:%02x:%02x",
         &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]) != 6) {
-        printf("\tError. Wrong MAC address format. Try: XX:XX:XX:XX:XX:XX\n");
+        printf("\tError: wrong MAC address format. Try: XX:XX:XX:XX:XX:XX\n");
         return;
     }
 
     /* Check the syntax of the vlan argument */
-    for (i = 0; argv[1][i]; i++) {
-        if (!isdigit(argv[1][i])) {
-            printf("\tError. Only decimal values are allowed\n");
-            return;
-        }
-    }
-    if ((atoi(argv[1]) < 0) || (atoi(argv[1]) > (MAX_VID + 1))) {
-        printf("\tError. Allowed values are in the range 0 to %d\n",
-                (MAX_VID + 1));
+    if (is_vid(argv[1]) < 0)
         return;
-    }
+
     vid = atoi(argv[1]);
 
     /* Parse port numbers to port mask and check the syntax */
@@ -213,10 +204,8 @@ static void del_cam_static_entry(int argc, char **argv, char *base_oid)
     int vid;
     int i;
 
-
-    /* Check that we have the two arguments */
     if (argc != 2) {
-        printf("\tError. You have missed some argument\n");
+        printf("\tError. You have missed some command option\n");
         return;
     }
 
@@ -224,22 +213,14 @@ static void del_cam_static_entry(int argc, char **argv, char *base_oid)
     addr = argv[0];
     if (sscanf(addr, "%02x:%02x:%02x:%02x:%02x:%02x",
         &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]) != 6) {
-        printf("\tError. Wrong MAC address format. Try: XX:XX:XX:XX:XX:XX\n");
+        printf("\tError: wrong MAC address format. Try: XX:XX:XX:XX:XX:XX\n");
         return;
     }
 
     /* Check the syntax of the vlan argument */
-    for (i = 0; argv[1][i]; i++) {
-        if (!isdigit(argv[1][i])) {
-            printf("\tError. Only decimal values are allowed\n");
-            return;
-        }
-    }
-    if ((atoi(argv[1]) < 0) || (atoi(argv[1]) > (MAX_VID + 1))) {
-        printf("\tError. Allowed values are in the range 0 to %d\n",
-                (MAX_VID + 1));
+    if (is_vid(argv[1]) < 0)
         return;
-    }
+
     vid = atoi(argv[1]);
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
@@ -269,35 +250,22 @@ static void del_cam_static_entry(int argc, char **argv, char *base_oid)
  * This command sets a new aging time.
  * @param cli CLI interpreter.
  * @param argc number of arguments. Only one argument allowed.
- * @param agv new value for the aging time. Allowed values are between 10 and
- * 1000000.
+ * @param agv new value for the aging time.
  */
 void cli_cmd_set_cam_aging(struct cli_shell *cli, int argc, char **argv)
 {
     oid _oid[MAX_OID_LEN];
     char *base_oid = "1.3.111.2.802.1.1.4.1.2.1.1.5.1.0";
     size_t length_oid;  /* Base OID length */
-    int i;
 
-    /* Check that we have an argument */
     if (!argc) {
         printf("\tError. You must specify the new aging value\n");
         return;
     }
 
     /* Check the syntax of the argument */
-    for (i = 0; argv[0][i]; i++) {
-        if (!isdigit(argv[0][i])) {
-            printf("\tError. Only decimal values are allowed\n");
-            return;
-        }
-    }
-    if ((atoi(argv[0]) < MIN_AGING_TIME) || (atoi(argv[0]) > MAX_AGING_TIME)) {
-        printf("\tError. Allowed values are in the range %d to %d\n",
-                MIN_AGING_TIME, MAX_AGING_TIME);
+    if (is_aging(argv[0]) < 0)
         return;
-    }
-
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
 
@@ -317,10 +285,8 @@ void cli_cmd_set_cam_aging(struct cli_shell *cli, int argc, char **argv)
  * This command creates a unicast static entry in the FDB.
  * @param cli CLI interpreter.
  * @param argc number of arguments. Only three arguments allowed.
- * @param agv Three arguments must be specified: the MAC Address (formatted as
- * XX:XX:XX:XX:XX:XX), the VLAN number (a decimal number between 0 and
- * MAX_VID+1) and the port number (decimal port numbers, separated by commas
- * and with no blank spaces in between).
+ * @param agv Three arguments must be specified: the MAC Address, the VLAN
+ * number and the port number.
  */
 void cli_cmd_set_cam_uni_entry(struct cli_shell *cli, int argc, char **argv)
 {
@@ -334,10 +300,8 @@ void cli_cmd_set_cam_uni_entry(struct cli_shell *cli, int argc, char **argv)
  * This command creates a multicast static entry in the FDB.
  * @param cli CLI interpreter.
  * @param argc number of arguments. Only three arguments allowed.
- * @param agv Three arguments must be specified: the MAC Address (formatted as
- * XX:XX:XX:XX:XX:XX), the VLAN number (a decimal number between 0 and
- * MAX_VID+1) and the port number (decimal port numbers, separated by commas
- * and with no blank spaces in between).
+ * @param agv Three arguments must be specified: the MAC Address, the VLAN
+ * number and the port number.
  */
 void cli_cmd_set_cam_multi_entry(struct cli_shell *cli, int argc, char **argv)
 {
@@ -596,9 +560,8 @@ void cli_cmd_show_cam_static_multi(struct cli_shell *cli, int argc, char **argv)
  * This command deletes a unicast static entry in the FDB.
  * @param cli CLI interpreter.
  * @param argc number of arguments. Only two arguments allowed.
- * @param agv Two arguments must be specified: the MAC Address (formatted as
- * XX:XX:XX:XX:XX:XX) and the VLAN number (a decimal number between 0 and
- * MAX_VID+1).
+ * @param agv Two arguments must be specified: the MAC Address and the VLAN
+ * number.
  */
 void cli_cmd_del_cam_uni_entry(struct cli_shell *cli, int argc, char **argv)
 {
@@ -611,9 +574,8 @@ void cli_cmd_del_cam_uni_entry(struct cli_shell *cli, int argc, char **argv)
  * This command deletes a multicast static entry in the FDB.
  * @param cli CLI interpreter.
  * @param argc number of arguments. Only two arguments allowed.
- * @param agv Two arguments must be specified: the MAC Address (formatted as
- * XX:XX:XX:XX:XX:XX) and the VLAN number (a decimal number between 0 and
- * MAX_VID+1).
+ * @param agv Two arguments must be specified: the MAC Address and the VLAN
+ * number.
  */
 void cli_cmd_del_cam_multi_entry(struct cli_shell *cli, int argc, char **argv)
 {

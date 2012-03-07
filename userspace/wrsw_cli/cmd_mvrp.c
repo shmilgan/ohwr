@@ -133,17 +133,15 @@ void cli_cmd_mvrp_disable(struct cli_shell *cli, int argc, char **argv)
  * This command enables MVRP on a given port/ports.
  * @param cli CLI interpreter.
  * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the port number (a decimal
- * number between 0 and NUM_PORTS-1).
+ * @param agv One argument must be specified: the port number.
  */
 void cli_cmd_mvrp_port_enable(struct cli_shell *cli, int argc, char **argv)
 {
     char mask[NUM_PORTS + 1];
     int i;
 
-    /* Check that we have the argument */
     if (argc != 1) {
-        printf("\tError. You have missed some argument\n");
+        printf("\tError. You have missed some command option\n");
         return;
     }
 
@@ -163,17 +161,15 @@ void cli_cmd_mvrp_port_enable(struct cli_shell *cli, int argc, char **argv)
  * This command disables MVRP on a given port/ports.
  * @param cli CLI interpreter.
  * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the port number (a decimal
- * number between 0 and NUM_PORTS-1).
+ * @param agv One argument must be specified: the port number.
  */
 void cli_cmd_mvrp_port_disable(struct cli_shell *cli, int argc, char **argv)
 {
     char mask[NUM_PORTS + 1];
     int i;
 
-    /* Check that we have the argument */
     if (argc != 1) {
-        printf("\tError. You have missed some argument\n");
+        printf("\tError. You have missed some command option\n");
         return;
     }
 
@@ -195,8 +191,7 @@ void cli_cmd_mvrp_port_disable(struct cli_shell *cli, int argc, char **argv)
  * port/ports.
  * @param cli CLI interpreter.
  * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the port number (a decimal
- * number between 0 and NUM_PORTS-1).
+ * @param agv One argument must be specified: the port number.
  */
 void cli_cmd_mvrp_restricted_registration_enable(struct cli_shell *cli, int argc,
                                                  char **argv)
@@ -204,9 +199,8 @@ void cli_cmd_mvrp_restricted_registration_enable(struct cli_shell *cli, int argc
     char mask[NUM_PORTS + 1];
     int i;
 
-    /* Check that we have the argument */
     if (argc != 1) {
-        printf("\tError. You have missed some argument\n");
+        printf("\tError. You have missed some command option\n");
         return;
     }
 
@@ -227,8 +221,7 @@ void cli_cmd_mvrp_restricted_registration_enable(struct cli_shell *cli, int argc
  * port/ports.
  * @param cli CLI interpreter.
  * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the port number (a decimal
- * number between 0 and NUM_PORTS-1).
+ * @param agv One argument must be specified: the port number.
  */
 void cli_cmd_mvrp_restricted_registration_disable(struct cli_shell *cli,
                                                   int argc, char **argv)
@@ -236,9 +229,8 @@ void cli_cmd_mvrp_restricted_registration_disable(struct cli_shell *cli,
     char mask[NUM_PORTS + 1];
     int i;
 
-    /* Check that we have the argument */
     if (argc != 1) {
-        printf("\tError. You have missed some argument\n");
+        printf("\tError. You have missed some command option\n");
         return;
     }
 

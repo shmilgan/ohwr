@@ -45,7 +45,6 @@ void cli_cmd_hostname(struct cli_shell *cli, int argc, char **argv)
 {
     int i = 0;
 
-    /* Check if this command has been called with arguments */
     if (argc) {
         /* Maximum length for the hostname must be 32 characters */
         for (i = 0; i < 32; i++)
