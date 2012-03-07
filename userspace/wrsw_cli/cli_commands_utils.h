@@ -44,5 +44,10 @@ void print_oid(oid _oid[MAX_OID_LEN], int n) __attribute__((unused));
 void mask_to_ports(char *mask, int *ports_range);
 int ports_to_mask(char *ports_range, char *mask);
 
+/* Check command options syntax */
+int is_port(char *port);
+int is_vid(char *vid);
+int is_aging(char *aging);
+
 
 #endif /*__WHITERABBIT_CLI_COMMANDS_H*/

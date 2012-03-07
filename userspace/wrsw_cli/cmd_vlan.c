@@ -42,9 +42,8 @@ enum vlan_cmds {
  * This command creates a new VLAN.
  * @param cli CLI interpreter.
  * @param argc number of arguments. Only two arguments allowed.
- * @param agv Two arguments must be specified: the VLAN number (a decimal
- * number between 0 and MAX_VID+1) and the port number (decimal port numbers,
- * separated by commas and with no blank spaces in between).
+ * @param agv Two arguments must be specified: the VLAN number and the port
+ * number.
  */
 void cli_cmd_set_vlan(struct cli_shell *cli, int argc, char **argv)
 {
@@ -58,24 +57,15 @@ void cli_cmd_set_vlan(struct cli_shell *cli, int argc, char **argv)
     char *value[2];
     int i;
 
-    /* Check that we have the three arguments */
     if (argc != 2) {
-        printf("\tError. You have missed some argument\n");
+        printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Check the syntax of the vlan argument */
-    for (i = 0; argv[0][i]; i++) {
-        if (!isdigit(argv[0][i])) {
-            printf("\tError. Only decimal values are allowed\n");
-            return;
-        }
-    }
-    if ((atoi(argv[0]) < 0) || (atoi(argv[0]) > (MAX_VID + 1))) {
-        printf("\tError. Allowed values are in the range 0 to %d\n",
-                (MAX_VID + 1));
+    if (is_vid(argv[0]) < 0)
         return;
-    }
+
     vid = atoi(argv[0]);
 
     /* Parse port numbers to port mask and check the syntax */
@@ -195,8 +185,7 @@ void cli_cmd_show_vlan(struct cli_shell *cli, int argc, char **argv)
  * This command removes a VLAN.
  * @param cli CLI interpreter.
  * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the VLAN number (a decimal
- * number between 0 and MAX_VID+1).
+ * @param agv One argument must be specified: the VLAN number.
  */
 void cli_cmd_del_vlan(struct cli_shell *cli, int argc, char **argv)
 {
@@ -204,27 +193,16 @@ void cli_cmd_del_vlan(struct cli_shell *cli, int argc, char **argv)
     char *base_oid = "1.3.111.2.802.1.1.4.1.4.3.1.7";
     size_t length_oid; /* Base OID length */
     int vid;
-    int i;
 
-
-    /* Check that we have the three arguments */
     if (argc != 1) {
-        printf("\tError. You have missed some argument\n");
+        printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Check the syntax of the vlan argument */
-    for (i = 0; argv[0][i]; i++) {
-        if (!isdigit(argv[0][i])) {
-            printf("\tError. Only decimal values are allowed\n");
-            return;
-        }
-    }
-    if ((atoi(argv[0]) < 0) || (atoi(argv[0]) > (MAX_VID + 1))) {
-        printf("\tError. Allowed values are in the range 0 to %d\n",
-                (MAX_VID + 1));
+    if (is_vid(argv[0]) < 0)
         return;
-    }
+
     vid = atoi(argv[0]);
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));

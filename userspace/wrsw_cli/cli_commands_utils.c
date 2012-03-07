@@ -208,3 +208,61 @@ fail:
            (NUM_PORTS-1));
     return -1;
 }
+
+/* Check the syntax of the port argument */
+int is_port(char *port)
+{
+    int i;
+
+    for (i = 0; port[i]; i++) {
+        if (!isdigit(port[i])) {
+            printf("\tPort syntax error: only decimal values allowed\n");
+            return -1;
+        }
+    }
+    if ((atoi(port) < 0) || (atoi(port) >= NUM_PORTS)) {
+        printf("\tPort syntax error: allowed values are in the range 0 to %d\n",
+                (NUM_PORTS-1));
+        return -1;
+    }
+    return 0;
+}
+
+/* Check the syntax of the vlan argument */
+int is_vid(char *vid)
+{
+    int i;
+
+    for (i = 0; vid[i]; i++) {
+        if (!isdigit(vid[i])) {
+            printf("\tVID syntax error: only decimal values are allowed\n");
+            return -1;
+        }
+    }
+    /* FIXME: VID = 0 not allowed in the Std. 802.1Q, but supported by HW */
+    if ((atoi(vid) < 0) || (atoi(vid) > MAX_VID)) {
+        printf("\tVID syntax error: allowed values are in the range 0 to %d\n",
+                MAX_VID);
+        return -1;
+    }
+    return 0;
+}
+
+/* Check the syntax of the aging argument */
+int is_aging(char *aging)
+{
+    int i;
+
+    for (i = 0; aging[i]; i++) {
+        if (!isdigit(aging[i])) {
+            printf("\tAging syntax error: only decimal values are allowed\n");
+            return -1;
+        }
+    }
+    if ((atoi(aging) < MIN_AGING_TIME) || (atoi(aging) > MAX_AGING_TIME)) {
+        printf("\tAging syntax error: allowed values are in the range %d to "
+               "%d\n", MIN_AGING_TIME, MAX_AGING_TIME);
+        return -1;
+    }
+    return 0;
+}

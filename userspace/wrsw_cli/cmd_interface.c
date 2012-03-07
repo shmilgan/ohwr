@@ -39,55 +39,33 @@ enum interface_cmds {
 };
 
 /**
- * \brief Command 'interface port <port number> pvid <VLAN number>'.
+ * \brief Command 'interface port <port number> pvid <VID>'.
  * This command sets the Port VLAN number (PVID) value.
  * @param cli CLI interpreter.
  * @param argc number of arguments. Only two arguments allowed.
- * @param agv Two arguments must be specified: the port number (a decimal
- * number between 0 and NUM_PORTS-1) and the PVID value (a decimal number
- * between 0 and MAX_VID)
+ * @param agv Two arguments must be specified: the port number and the PVID.
  */
 void cli_cmd_set_port_pvid(struct cli_shell *cli, int argc, char **argv)
 {
     oid _oid[MAX_OID_LEN];
     char *base_oid = "1.3.111.2.802.1.1.4.1.4.5.1.1.1";
     size_t length_oid;  /* Base OID length */
-    int i;
     int port;
 
-    /* Check that we have the three arguments */
     if (argc != 2) {
-        printf("\tError. You have missed some argument\n");
+        printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Check the syntax of the port argument */
-    for (i = 0; argv[0][i]; i++) {
-        if (!isdigit(argv[0][i])) {
-            printf("\tError. Only decimal values are allowed\n");
-            return;
-        }
-    }
-    if ((atoi(argv[0]) < 0) || (atoi(argv[0]) >= NUM_PORTS)) {
-        printf("\tError. Allowed values are in the range 0 to %d\n",
-                (NUM_PORTS-1));
+    if (is_port(argv[0]) < 0)
         return;
-    }
+
+    /* Check the syntax of the pvid argument */
+    if (is_vid(argv[1]) < 0)
+        return;
+
     port = atoi(argv[0]);
-
-    /* Check the syntax of the vlan argument */
-    for (i = 0; argv[1][i]; i++) {
-        if (!isdigit(argv[1][i])) {
-            printf("\tError. Only decimal values are allowed\n");
-            return;
-        }
-    }
-    if ((atoi(argv[1]) <= 0) || (atoi(argv[1]) > (MAX_VID))) {
-        printf("\tError. Allowed values are in the range 1 to %d\n",
-                MAX_VID);
-        return;
-    }
-
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
 
@@ -217,14 +195,14 @@ struct cli_cmd cli_interface[NUM_INTERFACE_CMDS] = {
         .opt        = CMD_ARG_MANDATORY,
         .opt_desc   = "<port number> Port Number"
     },
-    /* interface port <port number> pvid <VLAN number> */
+    /* interface port <port number> pvid <VID> */
     [CMD_INTERFACE_PORT_PVID] = {
         .parent     = cli_interface + CMD_INTERFACE_PORT,
         .name       = "pvid",
         .handler    = cli_cmd_set_port_pvid,
         .desc       = "Sets the PVID value for the port",
         .opt        = CMD_ARG_MANDATORY,
-        .opt_desc   = "<VLAN number> VLAN Number"
+        .opt_desc   = "<VID> VLAN Number"
     },
     /* show interface */
     [CMD_SHOW_INTERFACE] = {
