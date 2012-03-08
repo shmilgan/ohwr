@@ -70,6 +70,8 @@ void rbuf_push(struct ring_buffer *rbuf, void *what)
 	rbuf->count++;
 	memcpy(rbuf->base + rbuf->wr_ptr*rbuf->entry_size, what, rbuf->entry_size);
 	rbuf->wr_ptr++;
+	if(rbuf->wr_ptr == rbuf->num_entries)
+		rbuf->wr_ptr = 0;
 }
 
 int rbuf_pop(struct ring_buffer *rbuf, void *dst)
@@ -80,6 +82,9 @@ int rbuf_pop(struct ring_buffer *rbuf, void *dst)
 	rbuf->count--;
 	memcpy(dst, rbuf->base + rbuf->rd_ptr*rbuf->entry_size, rbuf->entry_size);
 	rbuf->rd_ptr++;
+
+	if(rbuf->rd_ptr == rbuf->num_entries)
+		rbuf->rd_ptr = 0;
 	return 1;
 }
 
@@ -145,10 +150,10 @@ void proxy_stuff(int fd)
 	if(	rbuf_init(&spll_trace, RING_BUFFER_ENTRIES, sizeof(struct fifo_entry)) < 0)
 	{
 		perror("rbuf_init()");
-		return -1;
+		return ;
 	}
 
-	fprintf(stderr,"Connection accepted.\n");
+	fprintf(stderr,"Connection accepted [record size %d].\n", sizeof(struct fifo_entry));
 	proxy_done = 0;
 	signal(SIGPIPE, sighandler);
 
