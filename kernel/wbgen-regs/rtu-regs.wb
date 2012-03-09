@@ -1,125 +1,16 @@
 -- -*- Mode: LUA; tab-width: 2 -*-
 
-PCR_template = reg {
-	 name = "Port Control Register";
-	 description = "Register controlling the mode of certain RTU port.";
-	 prefix = "PCR";
-
-	 field {
-			name = "Learning enable";
-			description = "1: enables learning process on this port. Unrecognized requests will be put into UFIFO\
-			               0: disables learning. Unrecognized requests will be either broadcast or dropped.";
-			prefix = "LEARN_EN";
-			
-			type = BIT;
-			access_dev = READ_ONLY;
-			access_bus = READ_WRITE;
-	 };
-	 
-	 field {
-			name = "Pass all packets";
-			description = "1: all packets are passed (depending on the rules in RT table). \
-			               0: all packets are dropped on this port.";
-
-			prefix = "PASS_ALL";
-			
-			type = BIT;
-			access_dev = READ_ONLY;
-			access_bus = READ_WRITE;
-	 };
-
-	 field {
-			name = "Pass BPDUs";
-			description = "1: BPDU packets (with dst MAC 01:80:c2:00:00:00) are passed according to RT rules. This setting overrides PASS_ALL.\
-                     0: BPDU packets are passed according to RTU rules only if PASS_ALL is set.[ML by modified]";
-
-			prefix = "PASS_BPDU";
-			
-			type = BIT;
-			access_dev = READ_ONLY;
-			access_bus = READ_WRITE;
-	 };
-
-	 field {
-			name = "Fix priority";
-			description = "1: Port has fixed priority of value PRIO_VAL. It overrides the priority coming from the endpoint\
-                     0: Use priority from the endpoint";
-
-			prefix = "FIX_PRIO";
-			
-			type = BIT;
-			access_dev = READ_ONLY;
-			access_bus = READ_WRITE;
-	 };
-
-
-	 field {
-			name = "Priority value";
-			description = "Fixed priority value for the port. Used instead the endpoint-assigned priority when FIX_PRIO = 1";
-
-			prefix = "PRIO_VAL";
-			
-			type = SLV;
-			align = 4;
-			size =3 ;
-			access_dev = READ_ONLY;
-			access_bus = READ_WRITE;
-	 };
-
-
-	 field {
-			name = "Unrecognized request behaviour";
-			description = "Sets the port behaviour for all unrecognized requests:\
-                     0: packet is dropped\
-                     1: packet is broadcast";
-			prefix = "B_UNREC";
-			
-			type = BIT;
-			access_dev = READ_ONLY;
-			access_bus = READ_WRITE;
-
-	 };
-
-	 -- Mirroring Control fields go here.
-
-};
-
-
 peripheral {
 	 name = "Routing Table Unit (RTU)";
-   prefix="rtu";
+   prefix = "rtu";
 
-	 hdl_entity="wrsw_rtu_wb";
+	 hdl_entity="rtu_wishbone_slave";
 	 
 -- Port Configuration Register
-
-
 	 reg {
 			name = "RTU Global Control Register";
 			description = "Control register containing global (port-independent) settings of the RTU.";
 			prefix = "GCR";
-
-			field {
-				 name = "Main table bank select";
-				 description = "Selects active bank of RTU hashtable (ZBT).\
-				                0: bank 0 is used by lookup engine and bank 1 can be accessed using MFIFO\
-				                1: bank 1 is used by lookup engine and bank 0 can be accessed using MFIFO";
-				 type = BIT;			 
-				 prefix = "HT_BSEL";
-				 access_dev = READ_ONLY;
-				 access_bus = READ_WRITE;
-			};
-
-			field {
-				 name = "Hash collision table (HCAM) bank select";
-				 description = "Selects active bank of RTU extra memory for colliding hashes.\
-				                0: bank 0 is used by lookup engine\
-				                1: bank 1 is used by lookup engine";
-				 type = BIT;		 
-				 prefix = "HCAM_BSEL";
-				 access_dev = READ_ONLY;
-				 access_bus = READ_WRITE;
-			};
 
 			field {
 				 name = "RTU Global Enable";
@@ -131,7 +22,26 @@ peripheral {
 				 prefix = "G_ENA";
 				 access_dev = READ_ONLY;
 				 access_bus = READ_WRITE;
+         clock = "clk_match_i";
+
 			};
+
+      field {
+         name = "MFIFO Trigger";
+         description = "write 1: triggers a flush of MFIFO into the hash table (blocks the RTU for a few cycles)\
+         write 0: no effect\
+         read 1: MFIFO is busy\
+         read 0: MFIFO is idle";
+
+         prefix = "MFIFOTRIG";
+         
+         type = BIT;
+         load = LOAD_EXT;
+         access_bus = READ_WRITE;
+         access_dev = READ_WRITE;
+         clock = "clk_match_i";
+
+      };
 
 			field {
 				 name = "Hash Poly";
@@ -143,13 +53,127 @@ peripheral {
 				 size = 16 ;
 				 access_dev = READ_ONLY;
 				 access_bus = READ_WRITE;
+         clock = "clk_match_i";
+
 			};
 
 
-			 clock = "zbt_clk_i";
 	 };
 
--- TXTSU interrupts
+   reg {
+      name = "Port Select Register";
+      description = "Selects the port to control through the PCR register";
+      prefix = "PSR";
+
+      field {
+         name = "Port Select";
+         prefix = "PORT_SEL";
+         description = "Selected Port";
+         size = 8;
+         type = SLV;
+         access_bus = READ_WRITE;
+         access_dev = READ_ONLY;
+      };
+
+      field {
+         name = "Number of ports";
+         prefix = "N_PORTS";
+         description = "Number of RTU ports compiled in.";
+         size = 8;
+         type = SLV;
+         access_bus = READ_ONLY;
+         access_dev = WRITE_ONLY;
+      };
+   };
+
+   reg {
+      name = "Port Control Register";
+      description = "Register controlling the mode of the RTU port selected by PSELR register.";
+      prefix = "PCR";
+
+      field {
+         name = "Learning enable";
+         description = "1: enables learning process on this port. Unrecognized requests will be put into UFIFO\
+         0: disables learning. Unrecognized requests will be either broadcast or dropped.";
+         prefix = "LEARN_EN";
+         
+         type = BIT;
+         access_dev = READ_WRITE;
+         access_bus = READ_WRITE;
+         load = LOAD_EXT;
+      };
+      
+      field {
+         name = "Pass all packets";
+         description = "1: all packets are passed (depending on the rules in RT table). \
+         0: all packets are dropped on this port.";
+
+         prefix = "PASS_ALL";
+         
+         type = BIT;
+         access_dev = READ_WRITE;
+         access_bus = READ_WRITE;
+         load = LOAD_EXT;
+      };
+
+      field {
+         name = "Pass BPDUs";
+         description = "1: BPDU packets (with dst MAC 01:80:c2:00:00:00) are passed according to RT rules. This setting overrides PASS_ALL.\
+         0: BPDU packets are passed according to RTU rules only if PASS_ALL is set.[ML by modified]";
+
+         prefix = "PASS_BPDU";
+         
+         type = BIT;
+         access_dev = READ_WRITE;
+         access_bus = READ_WRITE;
+         load = LOAD_EXT;
+
+      };
+
+      field {
+         name = "Fix priority";
+         description = "1: Port has fixed priority of value PRIO_VAL. It overrides the priority coming from the endpoint\
+         0: Use priority from the endpoint";
+
+         prefix = "FIX_PRIO";
+
+         type = BIT;
+         access_dev = READ_WRITE;
+         access_bus = READ_WRITE;
+         load = LOAD_EXT;
+      };
+
+
+      field {
+         name = "Priority value";
+         description = "Fixed priority value for the port. Used instead the endpoint-assigned priority when FIX_PRIO = 1";
+
+         prefix = "PRIO_VAL";
+         
+         type = SLV;
+         align = 4;
+         size =3 ;
+         access_dev = READ_WRITE;
+         access_bus = READ_WRITE;
+         load = LOAD_EXT;
+      };
+
+
+      field {
+         name = "Unrecognized request behaviour";
+         description = "Sets the port behaviour for all unrecognized requests:\
+         0: packet is dropped\
+         1: packet is broadcast";
+         prefix = "B_UNREC";
+         
+         type = BIT;
+
+         access_dev = READ_WRITE;
+         access_bus = READ_WRITE;
+         load = LOAD_EXT;
+      };
+   };
+
 	irq {
 		 name = "UFIFO Not Empty IRQ";
 		 description = "Interrupt active when there are some requests in UFIFO.";
@@ -169,7 +193,7 @@ peripheral {
 		 flags_dev = {FIFO_FULL, FIFO_EMPTY};
 		 flags_bus = {FIFO_EMPTY, FIFO_COUNT};
 
-		 --clock = "zbt_clk_i";
+		 --clock = "clk_match_i";
 		  -- clock = ""; - make it asynchronous if you want
 
 		 field {
@@ -257,36 +281,20 @@ peripheral {
 	};
 
 	ram {
-		 name = "Hash collisions memory (HCAM)";
-		 description = "Memory block containing the 'tails' for hashes which have more than 4 entries and don't fit into a single bucket of main ZBT hashtable. \
-		                <b>Note:</b> MSB of the address is the bank select bit. ";
-		 prefix = "HCAM";
-
-		 width = 32;
-		 size = 32 * 8 * 2; -- 32 entries * 8 words per entry * 2 banks
-		 access_dev = READ_ONLY;
-		 access_bus = READ_WRITE;
-		 
-		 clock = "zbt_clk_i"; --async?
-
-	};
-
-
-	ram {
 		 name = "Aging bitmap for main hashtable";
 		 description = "Each bit in this memory reflects the state of corresponding entry in main hashtable:\
                     0: entry wasn't matched\
                     1: entry was matched at least once.\
                     CPU reads this bitmap and subsequently clears it every few seconds to update the aging counters.";
-		 prefix = "ARAM_MAIN";
+		 prefix = "ARAM";
 
 		 width = 32;
 		 size = 8192 / 32; -- 8192 bits
 		 access_dev = READ_WRITE;
 		 access_bus = READ_WRITE;
 		 
-		 --[changed 6/10/2010] clock = "zbt_clk_i";
-		 --clock = "zbt_clk_i"; --async?
+		 --[changed 6/10/2010] clock = "clk_match_i";
+		 --clock = "clk_match_i"; --async?
 
 	};
 
@@ -300,30 +308,8 @@ peripheral {
 		 access_dev = READ_ONLY;
 		 access_bus = READ_WRITE;
 		 
-		 -- --[changed 6/10/2010]  clock = "zbt_clk_i";
-		 --clock = "zbt_clk_i"; --async?
-
-	};
-
-	reg {
-		 name = "Aging register for HCAM";
-		 description = "Each bit in this register reflects the state of corresponding entry in HCAM:\
-                    0: entry wasn't matched\
-                    1: entry was matched at least once.\
-                    CPU reads this bitmap and subsequently clears it every few seconds to update the aging counters.";
-		 prefix = "AGR_HCAM";
-
-		 field {
-				name = "Aging register value";
-				type = SLV;
-				size = 32;
-				access_dev = READ_WRITE;
-				access_bus = READ_WRITE;
-				load = LOAD_EXT;
-		 };
-		 
-		 clock = "zbt_clk_i";
---		 clock = "zbt_clk_i"; --async?
+		 -- --[changed 6/10/2010]  clock = "clk_match_i";
+		 --clock = "clk_match_i"; --async?
 
 	};
 
@@ -356,22 +342,10 @@ peripheral {
 				size = 32;
 		 };
 
-		 clock = "zbt_clk_i";
+		 clock = "clk_match_i";
 
 	};
 
 };
 
 
-function gen_PCRs(num_pcrs)
-	 local i;
-	 
-	 for i=0,num_pcrs-1 do
-			local rp = deepcopy(PCR_template);
-			rp.name = rp.name.." "..i;
-			rp.prefix = rp.prefix..i;
-			table.insert(periph, rp);
-	 end
-end
-
-gen_PCRs(10);
