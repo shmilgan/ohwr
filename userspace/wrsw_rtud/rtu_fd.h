@@ -8,9 +8,9 @@
  *              Miguel Baizan   (miguel.baizan@integrasys.es)
  *              Maciej Lipinski (maciej.lipinski@cern.ch)
  *
- * Description: RTU Filtering database header.
- *              Filtering database management related operations and filtering
- *              database mirror. Note there is a single Filtering Database
+ * Description: RTU Filtering database header. 
+ *              Filtering database management related operations and filtering 
+ *              database mirror. Note there is a single Filtering Database 
  *              object per Bridge (See 802.1Q - 12.7.1)
  *
  * Fixes:
@@ -40,13 +40,13 @@
 #define STATIC          0
 #define DYNAMIC         1
 
-int rtu_fd_init(uint16_t poly, unsigned long aging)
+int rtu_fd_init(uint16_t poly, unsigned long aging) 
         __attribute__((warn_unused_result));
 
 int  rtu_fd_create_entry(
-            uint8_t mac[ETH_ALEN],
-            uint16_t vid,
-            uint32_t port_map,
+            uint8_t mac[ETH_ALEN], 
+            uint16_t vid, 
+            uint32_t port_map, 
             int dynamic
      ) __attribute__((warn_unused_result));
 

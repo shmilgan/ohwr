@@ -6,8 +6,8 @@
  *
  * Authors:     Maciej Lipinski (maciej.lipinski@cern.ch)
  *
- * Description: Hash function presented below, produces hash which corresponds
- *              to hash produced by VHDL generated on this page:
+ * Description: Hash function presented below, produces hash which corresponds 
+ *              to hash produced by VHDL generated on this page: 
  *              http://outputlogic.com/
  *
  * Fixes:
@@ -34,16 +34,16 @@
 /*
   Hash polynomials implemented by RTU
   ---------------------------------------------------------
-  |        name   |      poly equation      | poly (hex)  |
+  |        name   |      poly equation      | poly (hex)  | 
   ---------------------------------------------------------
   |  CRC-16-CCITT | 1+x^5+x^12+x^16         |    0x1021   |
   |  CRC-16-IBM   | 1+x^2+x^15+x^16         |    0x8005   |
   |  CRC-16-DECT  | 1+x^3+x^7+x^8+x^10+x^16 |    0x0589   |
   ---------------------------------------------------------
 */
-#define HW_POLYNOMIAL_CCITT         0x1021
-#define HW_POLYNOMIAL_IBM           0x8005
-#define HW_POLYNOMIAL_DECT          0x0589
+#define HW_POLYNOMIAL_CCITT         0x1021 
+#define HW_POLYNOMIAL_IBM           0x8005 
+#define HW_POLYNOMIAL_DECT          0x0589 
 
 void rtu_hash_set_poly(uint16_t poly);
 uint16_t rtu_hash(uint8_t mac[ETH_ALEN], uint8_t fid);

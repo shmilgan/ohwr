@@ -7,14 +7,14 @@
  * Authors:     Juan Luis Manas (juan.manas@integrasys.es)
  *              Miguel Baizan   (miguel.baizan@integrasys.es)
  *
- * Description: RTU daemon.
- *              Handles the learning and aging processes.
+ * Description: RTU daemon. 
+ *              Handles the learning and aging processes. 
  *              Manages the filtering and VLAN databases.
  *
- * Fixes:
+ * Fixes:       
  *              Alessandro Rubini
- *              Tomasz Wlostowski
- *
+ *              Tomasz Wlostowski 
+ *              
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,7 +50,7 @@ static pthread_t aging_process;
 static pthread_t wripc_process;
 
 /**
- * \brief Creates the static entries in the filtering database
+ * \brief Creates the static entries in the filtering database 
  * @return error code
  */
 static int rtu_create_static_entries()
@@ -66,7 +66,7 @@ static int rtu_create_static_entries()
     err = rtu_fd_create_entry(bcast_mac, 0, 0xffffffff, STATIC);
     if(err)
         return err;
-
+	
     // VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
     TRACE(TRACE_INFO,"adding static routes for slow protocols...");
     for(i = 0; i < NUM_RESERVED_ADDR; i++) {
@@ -75,16 +75,16 @@ static int rtu_create_static_entries()
         if(err)
             return err;
     }
-
+    
     // packets addressed to WR card interfaces are forwarded to NIC virtual port
-    halexp_query_ports(&plist);
+    halexp_query_ports(&plist);	
     for(i = 0; i < plist.num_ports; i++) {
-        halexp_get_port_state(&pstate, plist.port_names[i]);
+        halexp_get_port_state(&pstate, plist.port_names[i]); 
         TRACE(
             TRACE_INFO,
-            "adding static route for port %s index %d [mac %s]",
-            plist.port_names[i],
-            pstate.hw_index,
+            "adding static route for port %s index %d [mac %s]", 
+            plist.port_names[i], 
+            pstate.hw_index, 
             mac_to_string(pstate.hw_addr)
         );
 		err = rtu_fd_create_entry(pstate.hw_addr, 0, (1 << NIC_PORT), STATIC);
@@ -122,18 +122,18 @@ static void *rtu_daemon_wripc_process(void *arg)
 {
     while(1){
         rtud_handle_wripc();
-        sleep(1);
+        usleep(10000);
     }
     return NULL;
 }
 
 /**
- * \brief Handles the learning process.
+ * \brief Handles the learning process. 
  * @return error code
  */
 static int rtu_daemon_learning_process()
 {
-    int err;
+    int err;                            
     struct rtu_request req;             // Request read from learning queue
     uint32_t port_map;                  // Destination port map
     uint16_t vid;                       // VLAN identifier
@@ -144,8 +144,8 @@ static int rtu_daemon_learning_process()
         if (!err) {
             TRACE_DBG(
                 TRACE_INFO,
-                "ureq: port %d src %s VID %d priority %d",
-                req.port_id,
+                "ureq: port %d src %s VID %d priority %d", 
+                req.port_id, 
                 mac_to_string(req.src),
                 req.has_vid  ? req.vid:0,
                 req.has_prio ? req.prio:0
@@ -171,7 +171,7 @@ static int rtu_daemon_learning_process()
 
 
 /**
- * \brief RTU set up.
+ * \brief RTU set up. 
  * Initialises routing table cache and RTU at hardware.
  * @param poly hash polinomial.
  * @param aging_time Aging time in seconds.
@@ -195,7 +195,6 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
     TRACE(TRACE_INFO, "init port config.");
     for(i = MIN_PORT; i <= MAX_PORT; i++) {
         // MIN_PORT <= port <= MAX_PORT, thus no err returned
-   	fprintf(stderr,"**4**");
 
         err = rtu_learn_enable_on_port(i,1);
         err = rtu_pass_all_on_port(i,1);
@@ -207,7 +206,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
     // init filtering database
     TRACE(TRACE_INFO, "init fd.");
     err = rtu_fd_init(poly, aging_time);
-    if (err)
+    if (err) 
         return err;
 
     // create static filtering entries
@@ -228,7 +227,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
  * \brief RTU shutdown.
  */
 static void rtu_daemon_destroy()
-{
+{ 
     // Threads stuff
     pthread_cancel(wripc_process);
     pthread_cancel(aging_process);
@@ -245,11 +244,11 @@ void sigint(int signum) {
 
 /**
  * \brief Starts up the learning and aging processes.
- */
+ */ 
 int main(int argc, char **argv)
 {
 	int op, err;
-    char *s, *name, *optstring;
+    char *s, *name, *optstring;			
     int run_as_daemon        = 0;
     uint16_t poly            = HW_POLYNOMIAL_CCITT;  // Hash polinomial
     unsigned long aging_res  = DEFAULT_AGING_RES;    // Aging resolution [sec.]
@@ -272,7 +271,7 @@ int main(int argc, char **argv)
                 run_as_daemon = 1;
                 break;
             case 'h':
-                usage(name);
+                usage(name);                
             case 'p':
                 if (strcmp(optarg, "CCITT") == 0) {
                     poly = HW_POLYNOMIAL_CCITT;
@@ -293,7 +292,7 @@ int main(int argc, char **argv)
                 break;
             case 't':
                 aging_time = atol(optarg);
-                if ((aging_time < MIN_AGING_TIME) ||
+                if ((aging_time < MIN_AGING_TIME) || 
                     (aging_time > MAX_AGING_TIME)) {
                     fprintf(stderr, "Invalid aging time\n");
                     usage(name);
@@ -305,7 +304,7 @@ int main(int argc, char **argv)
         }
     }
 
-    // Initialise RTU.
+    // Initialise RTU. 
     if((err = rtu_daemon_init(poly, aging_time)) < 0) {
         rtu_daemon_destroy();
         return err;
@@ -315,7 +314,7 @@ int main(int argc, char **argv)
 	signal(SIGINT, sigint);
 
     // daemonize _before_ creating threads
-    if(run_as_daemon)
+    if(run_as_daemon) 
         daemonize();
 
     // Start up aging process and auxiliary WRIPC thread
@@ -324,7 +323,7 @@ int main(int argc, char **argv)
         rtu_daemon_destroy();
         return err;
     }
-
+    
     // Start up learning process.
     err = rtu_daemon_learning_process();
     // On error, release RTU resources
