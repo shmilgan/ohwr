@@ -13,7 +13,8 @@ if [ -f ./binaries/at91bootstrap.bin ]; then true; else err=1; fi
 if [ -f ./binaries/barebox.bin ]; then true; else err=1; fi
 
 if [ $err -eq 1 ]; then
-    echo "$0: Can't find at91bootstrap or barebox binary" >& 2
+    echo "$0: Can't find either ./binaries/at91bootstrap.bin" >& 2
+    echo "$0:                or ./binaries/barebox.bin" >& 2
     exit 1
 fi
 
