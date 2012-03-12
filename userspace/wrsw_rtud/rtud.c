@@ -60,12 +60,8 @@ static int rtu_create_static_entries()
     hexp_port_list_t plist;
     hexp_port_state_t pstate;
     int i, err;
+    uint32_t enabled_port_mask = 0;
 
-    // Broadcast MAC
-    TRACE(TRACE_INFO,"adding static route for broadcast MAC...");
-    err = rtu_fd_create_entry(bcast_mac, 0, 0xffffffff, STATIC);
-    if(err)
-        return err;
 	
     // VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
     TRACE(TRACE_INFO,"adding static routes for slow protocols...");
@@ -80,6 +76,7 @@ static int rtu_create_static_entries()
     halexp_query_ports(&plist);	
     for(i = 0; i < plist.num_ports; i++) {
         halexp_get_port_state(&pstate, plist.port_names[i]); 
+        enabled_port_mask |= (1 << pstate.hw_index);
         TRACE(
             TRACE_INFO,
             "adding static route for port %s index %d [mac %s]", 
@@ -91,6 +88,12 @@ static int rtu_create_static_entries()
         if(err)
             return err;
     }
+
+    // Broadcast MAC
+    TRACE(TRACE_INFO,"adding static route for broadcast MAC...");
+    err = rtu_fd_create_entry(bcast_mac, 0, enabled_port_mask | (1 << NIC_PORT), STATIC);
+    if(err)
+        return err;
 
     return 0;
 }
