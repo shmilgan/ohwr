@@ -3,5 +3,6 @@
 # Start the network....
 #
 
-udhcpc 
+# don't run dhcp-client if root is nfs.
+grep -q '/ nfs' /proc/mounts || udhcpc 
 
