@@ -120,6 +120,7 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 	wrn->txd = ((void *)wrn->regs) + 0x80; /* was: TX1_D1 */
 	wrn->rxd = ((void *)wrn->regs) + 0x100; /* was: RX1_D1 */
 	wrn->databuf = (void *)wrn->regs + offsetof(struct NIC_WB, MEM);
+	tasklet_init(&wrn->rx_tlet, wrn_rx_interrupt, (unsigned long)wrn);
 	printk("regs %p, txd %p, rxd %p, buffer %p\n",
 	       wrn->regs, wrn->txd, wrn->rxd, wrn->databuf);
 
@@ -188,7 +189,7 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 	wrn->next_tx_head = wrn->next_tx_tail = wrn->next_rx = 0;
 
 	writel(NIC_CR_RX_EN | NIC_CR_TX_EN, &wrn->regs->CR);
-	writel(~0, (void *)wrn->regs + 0x24 /* EIC_IER */);
+	writel(WRN_IRQ_ALL, (void *)wrn->regs + 0x24 /* EIC_IER */);
 	printk("imr: %08x\n", readl((void *)wrn->regs + 0x28 /* EIC_IMR */));
 
 	wrn_tstamp_init(wrn);

@@ -379,9 +379,11 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 	netif_receive_skb(skb);
 }
 
-static void wrn_rx_interrupt(struct wrn_dev *wrn)
+/* This function is called in soft-irq context */
+void wrn_rx_interrupt(unsigned long arg)
 {
 	int desc;
+	struct wrn_dev *wrn = (void *)arg;
 	struct wrn_rxd __iomem *rx;
 	u32 reg;
 
@@ -390,12 +392,14 @@ static void wrn_rx_interrupt(struct wrn_dev *wrn)
 		rx = wrn->rxd + desc;
 		reg = readl(&rx->rx1);
 		if (reg & NIC_RX1_D1_EMPTY)
-			return;
+			break;
 		__wrn_rx_descriptor(wrn, desc);
 		wrn->next_rx = __wrn_next_desc(desc);
 	}
+	writel(WRN_IRQ_ALL, (void *)wrn->regs + 0x24 /* IER */);
 }
 
+/* This, lazily, remains in hard-irq context */
 static void wrn_tx_interrupt(struct wrn_dev *wrn)
 {
 	struct wrn_txd *tx;
@@ -454,8 +458,14 @@ irqreturn_t wrn_interrupt(int irq, void *dev_id)
 	}
 	if (irqs & NIC_EIC_ISR_RCOMP) {
 		pr_debug("%s: RX complete\n", __func__);
-		wrn_rx_interrupt(wrn);
+		/*
+		 * This must be processed in soft-irq context, as this is
+		 * what is needed for socket processing. So disable
+		 * the interrupt first, then run the tasklet
+		 */
+		writel(WRN_IRQ_ALL_BUT_RX, (void *)wrn->regs + 0x24 /* IER */);
 		writel(NIC_EIC_ISR_RCOMP, (void *)regs + 0x2c);
+		tasklet_schedule(&wrn->rx_tlet);
 	}
 	return IRQ_HANDLED;
 }

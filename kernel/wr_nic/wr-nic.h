@@ -73,6 +73,7 @@ struct wrn_dev {
 	struct PPSG_WB __iomem *ppsg_regs; /* ... */
 
 	spinlock_t		lock;
+	struct tasklet_struct	rx_tlet;
 	struct wrn_txd __iomem	*txd;
 	struct wrn_rxd __iomem	*rxd;
 	void __iomem		*databuf; /* void to ease pointer arith */
@@ -97,6 +98,11 @@ struct wrn_dev {
 	int use_count; /* only used at probe time */
 	int irq_registered;
 };
+
+/* We need to disable the rx-complete interrupt, so get the masks */
+#define WRN_IRQ_ALL		(~0)
+#define WRN_IRQ_ALL_BUT_RX	(~NIC_EIC_IER_RCOMP)
+#define WRN_IRQ_NONE		0
 
 /* Each network device (endpoint) has one such priv structure */
 struct wrn_ep {
@@ -201,6 +207,7 @@ struct wrn_phase_req {
 /* Following functions are in nic-core.c */
 extern irqreturn_t wrn_interrupt(int irq, void *dev_id);
 extern int wrn_netops_init(struct net_device *netdev);
+extern void wrn_rx_interrupt(unsigned long arg); /* tasklet */
 
 /* Following data in device.c */
 struct platform_driver;
