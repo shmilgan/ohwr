@@ -405,7 +405,7 @@ static void wrn_tx_interrupt(struct wrn_dev *wrn)
 	u32 reg;
 	int i;
 
-	/* Loop using our talil until one is not sent */
+	/* Loop using our tail until one is not sent */
 	while ( (i = wrn->next_tx_tail) != wrn->next_tx_head) {
 		/* Check if this is txdone */
 		tx = wrn->txd + i;
@@ -415,7 +415,7 @@ static void wrn_tx_interrupt(struct wrn_dev *wrn)
 
 		skb = wrn->skb_desc[i].skb;
 		if (!skb) {
-			pr_err("no socket in descriptor %i\n");
+			pr_err("no socket in descriptor %i\n", i);
 			return;
 		}
 		info = skb_shinfo(skb);
