@@ -120,8 +120,7 @@ static int get_mac_address(const char *if_name, uint8_t *mac_addr)
 	int idx;
 	int uniq_num;
 
-	idx = (if_name[2] == 'u' ? 32 : 0) + (if_name[3] - '0');
-
+	sscanf(if_name, "wr%d", &idx); 
 
 	strncpy(ifr.ifr_name, "eth0", sizeof(ifr.ifr_name));
 
