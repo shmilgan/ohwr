@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month January 2012
+@set update-month March 2012
 
 @finalout
 
@@ -450,8 +450,9 @@ are currently the following ones:
 @example
    0001-91samg45-removed-two-clock-that-failed-compilation.patch
    0002-sam945-include-mtd-nand.h-in-device-file.patch
-   0003-arm-config-added-wrs3_defconfig.patch
+   0003-arm-config-added-wrs3_defconfig-and-fixed-default-at.patch
    0004-new-config-for-barebox-env.patch
+   0005-nand-wrs-it-s-16-bits-not-8.patch
 @end example
 
 The build scripts compile with the following commands, where the
@@ -504,11 +505,15 @@ the file @code{.config} to
 
 You can also set @code{WRS_KERNEL_CONFIG} to the full pathname of
 your configuration file of choice. The file must be a copy of the
-@code{.config} found in the main @i{barebox} directory,
+@code{.config} found in the main kernel directory,
 (for example the one left after the @code{make menuconfig} step).
 Note that if the @code{WRS_KERNEL_CONFIG}
 variable is not pointing to a regular file it is
 ignored with a simple warning, without stopping the build procedure.
+
+The build scripts copy both @i{zImage} and all compiled kernel
+modules to the @i{images/} directory of the build place. This currently
+includes modules 
 
 @c ##########################################################################
 @node Kernel Modules
@@ -651,20 +656,32 @@ switches are distributed for production.
 @node The Complete Filesystem
 @chapter The Complete Filesystem
 
-@b{Warning}: This part of the document, about the filesystem, needs to
-be updated, what follows is the old text, kept here for reference.
-
-@c FIXME: the complete filesystem
 The final step in compiling the filesystem is making the CPIO archive
-to be used as @i{ramdisk} in the switch.  The name of the file
-@code{images/ramdisk.ext2} within the @code{WRS_BUILD_DIR}, even if
-it has nothing to do with an @i{ext2} filesystem.  The name, however,
-is the predefined one in @i{u-boot} configuration; so until we
-change @i{u-boot}, it's easier for the image to keep this older name.
+with the overall filesystem contents.  This archive can be used as an
+@i{initramfs} or uncompressed to some directory.  The build procedure
+doesn't leave a directory tree on disk because that would require
+administrator privileges. I think it's best not to call @i{sudo} from
+within build scripts, to respect our users' security concerns.
 
-The filesystem is built by copying the @i{buildroot} file tree and
-overlaying it with @code{userspace/rootfs_override/}; device files
-are extracted from @code{userspace/devices.tar.gz}.
+The output file is called @i{images/wrs-image.cpio.gz} in the build
+directory.  You can uncompress it, for example to run NFS-root,
+with the following command in a newly-created empty directory:
+
+@example
+   zcat $WRS_OUTPUT_DIR/images/wrs-image.cpio.gz | sudo cpio --extract
+@end example
+
+The @i{cpio} archive includes a number of device special files in
+@i{dev}, even though the configured @i{buildroot} uses @code{mdev -s}
+to build all needed devices. The pre-created devices come from
+@i{userspace/devices.tar.gz}. Note that the buildroot output
+directory, @i{build/buildroot-2011.11/output/target} does not
+include any target (and no white-rabbit specific files), so it
+cannot be used as a root filesystem by itself.
+
+The @i{cpio} filesystem is built by copying the @i{buildroot} file
+tree and overlaying it with @code{userspace/rootfs_override/}; device
+files, as said,  are extracted from @code{userspace/devices.tar.gz}.
 
 The @i{root} user has an empty password (set forth in
 @code{userspace/rootfs_override/}) and authorizes a few @i{ssh} keys,
@@ -924,83 +941,87 @@ to match your personal situation.
    bootz /dev/mem.kernel
 @end example
 
+Please note that the default boot command in the barebox binary with the
+provided patches runs the following three commands:
+
+@example
+   dhcp
+   tftp wrboot
+   ./wrboot
+@end example
+
+This means that if you have both DHCP and TFTP, you can just write
+your @i{barebox} commands in a file called @i{wrboot} in your TFTP
+public location, and the commands will automatically executed at boot.
+Actually, I'm currently using the stanza shown above to boot my
+switch over the network with no interaction at all, while being able
+to change the boot procedure on the server while the switch is off.
+
 @c ##########################################################################
 @node Code layout in a production switch
 @chapter Code layout in a production switch
 
-This section should document how the various memories are being used
-in production.  This topic is still to be decided, so I removed the
-previous proposal waiting for a final decision.  The plan is
-installing a newer @i{barebox} able to reprogram everything else from
-the network or usb if a button is kept pressed at boot.
+This is the suggested arrangement of the various binary blobs in the
+final switch. Any comment and suggestion is welcome, as nothing
+is cast in stone at this point.
 
-@c FIXME: code layout
-@c This is the suggested arrangement of the various binary blobs in the
-@c final switch. Any comment and suggestion is welcome, as nothing
-@c is cast in stone at this point:
-@c 
-@c @table @i
-@c @item At91Boot
-@c       The initial program loader is located in the first few
-@c       kilobytes of NAND flash. The internal ROM loads it to static RAM
-@c       and executes it.  This version of @i{at91boot} wil read @i{barebox}
-@c       from NAND.
-@c 
-@c @item Barebox
-@c       The active copy of the boot loader is in NAND memory as well.
-@c       The user can interact on the serial port, but if the program receives
-@c       nothing in the first three seconds it will proceed with the default
-@c       boot procedure. The shipped default loads everything else
-@c       from flash (as described here), but you can change and save the
-@c       configuration, which is stored in a different NAND partition.
-@c       For example during development you'll want to load the kernel
-@c       and filesystem from the network, or use NFS-Root.
-@c 
-@c @item Kernel
-@c       The default Linux kernel, loaded from NAND, is configured for
-@c       read-only access to @i{at91boot} and @i{barebox}, to prevent
-@c       erasing them by error.  Similarly, it isn't able to access DataFlash.
-@c       If you really want to hack the boot sequence, you can recompile
-@c       the kernel with no such protections, like I do.
-@c 
-@c @item Ramdisk
-@c       The initial filesystem is loaded as an @i{initrd} archive, loaded
-@c       from a NAND partition. The running system won't be actively
-@c       accessing flash memory, so you can erase and reprogram your filesystem
-@c       without taking any special tests. 
-@c 
-@c @item Additional Filesystem
-@c       The remaining area of NAND flash is mounted as @i{ubifs}. The
-@c       initial ram disk executes @i{etc/rc} from such partition, so
-@c       users can add own programs and customizations without the need
-@c       to reprogram the shipped @i{initrd}.
-@c 
-@c @item Failsafe At91Boot
-@c       The DataFlash memory is equipped with recovery system software.
-@c       When the internal ROM looks for an IPL, it looks in NAND first,
-@c       and in DataFlash later.  Therefore, if you accidentally erase
-@c       your NAND, the system will boot from DataFlash.  The
-@c       @i{at91boot} there is configured to load @i{barebox} from
-@c       DataFlash.
-@c 
-@c @item Failsafe Barebox
-@c       The @i{barebox} installed to DataFlash is configured to load
-@c       kernel and filesystem from the same device. If you connect
-@c       a serial port, though, you can interact and use the network.
-@c 
-@c @item Failsafe Operating System
-@c       The System Shipped in DataFlash has a @i{telnet} daemon,
-@c       listening on address 10.98.76.54, where user @i{root} has
-@c       an empty password. The kernel is configured with read-write
-@c       access to the whole NAND memory, so you can easily reprogram your
-@c       production system.
-@c @end table
-@c 
-@c Please note that the @i{failsafe} procedure is not really fail-safe,
-@c because if you write a fault @i{at91boot} or @i{barebox} to NAND,
-@c the internal ROM will still boot from NAND leading to a bricked device.
-@c In this case you must follow 
-@c 
+The basic idea is to have two systems installed: one is the production
+system, that boots by default, and the other is the fail-safe system that
+users will be able to boot if they messed up badly with the production
+code base.  There will be a button to select the fail-safe system when
+needed.
+
+The two boot procedures will be like this:
+
+@table @i
+
+@item Fail-safe boot
+
+	This is using the binaries that are already built by the
+        package in its current status.  The IPL lives in @i{dataflash};
+        if loads @i{barebox} from @i{dataflash} and the configuration
+        fetches the boot procedure from the network.  This gives
+        technicians complete freedom to boot whatever they want, either
+        fore development or recovery purposes
+
+@item Production boot
+
+	During normal work the switch would boot from NAND flash. The
+        IPL lives in NAND memory (the manufactures certifies that the
+        first block can never be bad) and it loads a @i{barebox} binary
+        from @i{dataflash}. This is a different @i{barebox} than the
+        one used in fail-safe boot.  This @i{barebox} loads a kernel
+        from NAND memory and runs it, mounting the root filesystem
+        from another NAND partition.
+
+@end table
+
+With this setup, the @i{dataflash} can be made read-only when accessed
+by Linux, for better safety.  Normal use cases will be able to change
+either the kernel or the filesystem (or both) without touching
+@i{dataflash}. On the other hand, @i{at91boot} is unable to deal with
+bad blocks in NAND, or with correction of single-bit errors; that's
+why it will load its @i{barebox} from @i{dataflash}.
+
+The internal CPU ROM will boot from NAND if it finds the magic
+signature in there. If no signature is there, it will bot from
+@i{dataflash}.  Thus, the production boot will be entered by default;
+it will boot the fail-safe sequence only if the NAND flash is erased
+(or has never been programmed) or somebody pressed the spacial
+@i{fail-safe} at power-up.  The button simply disables the
+@i{chip-select} pin of NAND memory; the ROM will fail reading NAND and
+will go on booting from @i{dataflash}.
+
+We foresee no issues in making the @i{dataflash} read-only, because
+user customization is expected to be limited to the kernel and the
+filesystem; we therefor think that preventing accidental erasure of
+@i{dataflash} is good policy.  Those users who want to replace their
+@i{at91boot} or @i{barebox} will be able to do that anyways, either
+from @i{barebox} itself or from a custom build of the kernel.
+
+Later releases of this document will include the complete recovery
+procedures, as well as building rules for the production versions of
+@i{at91boot} and @i{barebox}.
 
 @c ##########################################################################
 @node Troubleshooting
@@ -1008,6 +1029,10 @@ the network or usb if a button is kept pressed at boot.
 
 This chapter includes notes about issues we found and how to address them,
 or extra tools 
+
+@menu
+* Testing SDRAM::               
+@end menu
 
 @c ==========================================================================
 @node Testing SDRAM

@@ -20,11 +20,11 @@ DEVTAR="$WRS_BASE_DIR/../userspace/devices.tar.gz"
 
 TMPFS=$(mktemp /tmp/rootfs.XXXXXX)
 
-rootfs_vanilla="$WRS_OUTPUT_DIR/build/buildroot-2009.11/output/target"
+rootfs_vanilla="$WRS_OUTPUT_DIR/build/buildroot-2011.11/output/target"
 rootfs_override="$WRS_BASE_DIR/../userspace/rootfs_override"
 
 TMPSCRIPT=$(mktemp /tmp/rootfs-script.XXXXXX)
-ROOTFS_IMAGE="$WRS_OUTPUT_DIR/images/ramdisk.ext2"
+ROOTFS_IMAGE="$WRS_OUTPUT_DIR/images/wrs-image.cpio.gz"
 
 cat > $TMPSCRIPT << EOF
 rm -r -f $TMPFS
