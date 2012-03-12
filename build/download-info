@@ -49,6 +49,9 @@ fakeroot_1.9.5.tar.gz            95c0c78c734b9782ec8d47e99c8e3fc8 \
 gcc-4.3.6.tar.bz2                55ddf934bc9f8d1eaff7a77e7d598a85 \
    http://ftp.gnu.org/pub/gnu/gcc/gcc-4.3.6/gcc-4.3.6.tar.bz2
 
+gdb-7.3.1.tar.bz2                b89a5fac359c618dda97b88645ceab47 \
+   http://ftp.gnu.org/pub/gnu/gdb/gdb-7.3.1.tar.bz2
+
 gmp-5.0.2.tar.bz2                0bbaedc82fb30315b06b1588b9077cd3 \
    http://ftp.gnu.org/pub/gnu/gmp/gmp-5.0.2.tar.bz2
 
@@ -60,6 +63,9 @@ iproute2-2.6.39.tar.gz           8a3b6bc77c2ecf752284aa4a6fc630a6 \
 
 libelf-0.8.12.tar.gz             e21f8273d9f5f6d43a59878dc274fec7 \
    http://www.mr511.de/software/libelf-0.8.12.tar.gz
+
+libffi-3.0.9.tar.gz              1f300a7a7f975d4046f51c3022fa5ff1 \
+   ftp://sources.redhat.com/pub/libffi/libffi-3.0.9.tar.gz
 
 libpcap-1.1.1.tar.gz             1bca27d206970badae248cfa471bbb47 \
    http://www.tcpdump.org/release/libpcap-1.1.1.tar.gz
@@ -91,8 +97,17 @@ mtd-utils-1.4.6.tar.bz2          a0418afcf6026824a5fa5e9051793f3c \
 ncurses-5.7.tar.gz               cce05daf61a64501ef6cd8da1f727ec6 \
    http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.7.tar.gz
 
+openssl-1.0.0e.tar.gz            7040b89c4c58c7a1016c0dfa6e821c86 \
+   http://www.openssl.org/source/openssl-1.0.0e.tar.gz
+
 pkg-config-0.25.tar.gz           a3270bab3f4b69b7dc6dbdacbcae9745 \
    http://pkgconfig.freedesktop.org/releases/pkg-config-0.25.tar.gz
+
+Python-2.7.2.tar.bz2            ba7b2f11ffdbf195ee0d111b9455a5bd \
+   http://www.python.org/ftp/python/2.7.2/Python-2.7.2.tar.bz2
+
+readline-6.2.tar.gz              67948acb2ca081f23359d0256e9a271c \
+   http://ftp.gnu.org/pub/gnu/readline/readline-6.2.tar.gz
 
 rsync-3.0.9.tar.gz               5ee72266fe2c1822333c407e1761b92b \
    http://rsync.samba.org/ftp/rsync/src/rsync-3.0.9.tar.gz
@@ -108,9 +123,6 @@ tcpdump-4.1.1.tar.gz             d0dd58bbd6cd36795e05c6f1f74420b0 \
 
 uClibc-0.9.32.tar.bz2            cfcb6c25d8ebe12817499d8749ee8ae1 \
    http://www.uclibc.org/downloads/uClibc-0.9.32.tar.bz2
-
-udev-173.tar.bz2                 91a88a359b60bbd074b024883cc0dbde \
-   http://www.kernel.org/pub//linux/utils/kernel/hotplug//udev-173.tar.bz2
 
 zlib-1.2.5.tar.bz2               be1e89810e66150f5b0327984d8625a0 \
    http://kent.dl.sourceforge.net/sourceforge/libpng/zlib-1.2.5.tar.bz2
