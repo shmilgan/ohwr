@@ -49,9 +49,14 @@ static int wrn_open(struct net_device *dev)
 		netif_start_queue(dev);
 	}
 
-	/* Set the MRU equal to the MTU */
+	/*
+	 * Set the MRU bit enough, to avoid issues. We used dev-mtu,
+	 * but this MRU includes OOB and stuff. So let's put it to 2kB,
+	 * which is the maximum allowed, and le software deal with
+	 * malformed packets
+	 */
 	val = readl(&ep->ep_regs->RFCR) & ~EP_RFCR_MRU_MASK;
-	writel (val | EP_RFCR_MRU_W(dev->mtu), &ep->ep_regs->RFCR);
+	writel (val | EP_RFCR_MRU_W(2048), &ep->ep_regs->RFCR);
 
 	/* Most drivers call platform_set_drvdata() but we don't need it */
 	return 0;
