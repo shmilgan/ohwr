@@ -18,7 +18,7 @@
 % This is not a conventional info file...
 % I use three extra features:
 %   - The '%' as a comment marker, if at beginning of line ("\%" -> "%")
-%   - leading blanks are allowed (this is something I can't live without)
+%   - leading blanks are allowed (this is something I cannot live without)
 %   - braces are automatically escaped when they appear in example blocks
 %
 
@@ -67,7 +67,7 @@ of the repository at
 (or @code{git@@ohwr.org:white-rabbit/wr-switch-sw.git} if you are
 granted write access).
 
-If you don't need to make your hands dirty, just skip to @ref{Quick
+If you do not want to get your hands dirty, just skip to @ref{Quick
 Build}.
 
 @menu
@@ -95,11 +95,11 @@ Build}.
 
 The scripts build over previous work by Tomasz Wlostowski, who first
 made the whole thing work and stick together -- a serious result from
-serious efforts, I'm really amazed by his achievements.
+serious efforts, I am really amazed by his achievements.
 
 The rewriting described in this document (and embodied in the @code{build/}
 subdirectory of the @code{wr-switch-sw} package) is meant to make the stuff
-more maintainable over time.  I'm an old-fashioned follower of the rule
+more maintainable over time.  I am an old-fashioned follower of the rule
 ``first make it work then make it work well'', and this step is expected
 to make it work well for everybody.
 
@@ -125,9 +125,9 @@ The purpose of the build-script rewrite is achieving the following targets:
 	avoid downloading the same package over and over. Thus, a centralized
 	download directory is defined where all external packages are
         retrieved. Even if you ``make distclean'' in the build scripts you
-        won't need re re-get everything from the network.  In a similar
+        will not need re-get everything from the network.  In a similar
         mood, people who already have a local copy of the big packages
-        (kernel, u-boot, white-rabbit svn) won't need to re-download not
+        (kernel, u-boot, white-rabbit svn) will not need to re-download not
         even the first time they build the WRS software.
 @end itemize
 
@@ -150,7 +150,7 @@ rebuilding it all from scratch.
 @section Portability
 
 The scripts in their current status are not expected to be very
-portable. I'm sure a number of @i{bashisms} exist, and I did no effort
+portable. I am sure a number of @i{bashisms} exist, and I did no effort
 to even identify them.  To relieve the user from possible pain,
 internally the name @i{bash} is used instead of @i{sh}, so things
 should work even if your default shell is @i{ash} or @i{dash};
@@ -158,7 +158,7 @@ actually the scripts have been tested in one system where the
 default @i{sh} is @i{dash}.
 
 Similarly, the scripts are likely to fail if you use spaces in directory
-names; that's because not all
+names; that is because not all
 uses of shell variables are properly quoted. I urge you to use directory names
 with no spaces in them, or to submit a patch to fix the scripts.
 
@@ -175,7 +175,7 @@ them as you wish. If they are not pre-set, defaults apply as
 described below.
 
 When rebuilding everything, the defaults are applied for each unset
-variable; but when rebuilding a sub-package you'll need to set the
+variable; but when rebuilding a sub-package you will need to set the
 variables beforehand.  Each sub-package complains if it needs variables
 that are not set in your environment.
 
@@ -194,10 +194,10 @@ have a similar prefix for the same reason).
 	The pathname of the build directory (i.e., the @code{build/}
         subdirectory of @code{wr-switch-sw}).
         The variable is internally set to the directory
-        name of the main script. Note that the script can't
+        name of the main script. Note that the script cannot
         be run from the same directory (i.e.: @code{./wrs_build-all}
         is not allowed), you must call it from your output directory
-        using a pathname to  invoke it.  This variable can't be
+        using a pathname to  invoke it.  This variable cannot be
         overridden in the main script, but must be pre-set if you run
         a sub-script to rebuild only part of the software suite.
 
@@ -231,10 +231,10 @@ Other variables are used internally in the script; since they are only
 useful to people working on the script itself, they are documented in
 place.
 
-If you compiled for version 2 you'll notice we don't have
+If you compiled for version 2 you will notice we do not have
 @code{WRS_WR_REPOSITORY} any more. We used to rely on upstream
 archives to be part of the @i{White Rabbit} subversion tree, but I
-didn't add the new archives in there because of their size.
+did not add the new archives in there because of their size.
 
 @c ==========================================================================
 @node Downloading Files
@@ -304,15 +304,15 @@ Then run this (but please read more for a better command):
 @end example
 
 Note that progress messages are sent to @i{stderr}, so you may want to
-save @i{stdout} to a file, like this (but please read more for a better
-command):
+save @i{stdout} to a file, like this (again, it is recommended you read
+further for a better command):
 
 @example
    /path/to/wr-switch-sw/build/wrs_build-all > logfile
 @end example
 
 Please note that there are also a number of warning messages being
-printed to @i{stderr}. It's a few hundred lines over the many
+printed to @i{stderr}. It is a few hundred lines over the many
 minutes it takes to build @i{buildroot}, but you can safely ignore them,
 trusting the build process will complete successfully.
 
@@ -353,11 +353,11 @@ to generate the terse output shown above:
         | grep '^20..-..-.. ..:'
 @end example
 
-If you are lucky, everything completes by itself in quite some minutes,
-depending on you CPU, disk and network speed.
-At the end you'll find your final files in the @code{images}
+If you are lucky, everything completes by itself. The time taken
+depends on you CPU, disk and network speed.
+At the end you will find your final files in the @code{images}
 subdirectory.  If you are not too lucky, the build stops because
-you've found a bug in the build scripts; most likely because your
+you have found a bug in the build scripts; most likely because your
 setup differs from the ones we have been testing on.
 
 In order to re-run the build from the beginning, please remove (or
@@ -376,7 +376,7 @@ different @code{CROSS_COMPILE} prefix in your environment, your own
 choice will be used by modifying the @i{buildroot} configuration file.
 Note, however, that not all cross-compilers will work (@i{buildroot}
 wants one that has been configured with @code{--sysroot} and it is
-quite unlikely yours has).
+quite unlikely yours has been).
 
 In practice, you may want to set @code{CROSS_COMPILE} when you compile
 the boot loader and kernel by themselves, and avoid it when compiling
@@ -387,7 +387,7 @@ the complete package.
 @chapter Buildroot
 
 The distribution being used here is @i{buildroot}. It is the first
-step being built, because it creates the cross-compiler it will use. Such a
+step being built, because it creates the cross-compiler it will use. This
 compiler is later used to compile all other software for the White
 Rabbit Switch.
 
@@ -395,6 +395,9 @@ The configuration for @i{buildroot} comes from
 @code{patches/buildroot/buildroot-config-wrswitch}. The configuration
 is then changed only if you pre-set your own @code{CROSS_COMPILE}
 variable.
+
+@c The following can be shown in a set of commands instead of this hard
+@c to read explanation.
 
 If you want to change the configuration, you can do so after the first
 build iteration: change directory to @code{build/buildroot-2011.11}
@@ -415,7 +418,7 @@ ignored with a simple warning -- rather than stopping the build procedure.
 The version of @i{at91bootstrap} being used in the switch as
 @i{Initial Program Loader} is found at @code{http://repository.timesys.com/}
 The patches we applied are in the directory @i{patches/at91boot/v3.3},
-and currently it is one patch only (we are piggy-backing on the Atmel
+and currently it is only a single patch (we are piggy-backing on the Atmel
 evaluation board without even changing the board name):
 
 @example
@@ -427,19 +430,20 @@ The script uncompresses, patches and builds, leaving
 the one to be loaded in the hardware.
 
 For simplicity, a known-working binary is part of the @i{binaries}
+@c The 'sane' name?? do you mean 'same'?
 directory of this package as @code{at91bootstrap.bin}, the sane name used
 later in the installation instructions.
 
-@b{Warning}: with some distribution, this compilation step will print
-a scaring message about memory corruption. The message is reporting a bug in
+@b{Warning}: with some distributions, this compilation step will print
+a scary message about memory corruption. The message is reporting a bug in
 the configuration program which has no actual effects and can be ignored.
-Maybe we'll switch to another version in the future.
+Maybe we will switch to another version in the future.
 
 @c ##########################################################################
 @node The Boot Loader
 @chapter The Boot Loader
 
-The switch user @i{barebox} as a boot loader. We are running version
+The switch uses @i{barebox} as a boot loader. We are running version
 2011-09, with one simple local patch and the chosen configuration
 file. More patches will be needed to customize board names (we are
 piggy-backing on the Ronetix PM9G45 board).
@@ -456,7 +460,7 @@ are currently the following ones:
 @end example
 
 The build scripts compile with the following commands, where the
-cross-compiler is the one build by @i{buildroot}. If you run these
+cross-compiler is the one built by @i{buildroot}. If you run these
 by hand you can use a different compiler (as shown):
 
 @example
@@ -470,8 +474,8 @@ by hand you can use a different compiler (as shown):
 A pre-built binary is available as @code{binaries/barebox.bin}.
 
 The ELF version is copied to @i{images} as well, as
-@code{images/barebox}; this file includes the symbol table and may be
-useful -- or may not.
+@code{images/barebox}; this file includes the symbol table and may (or may not) be
+useful.
 
 @c ##########################################################################
 @node The Linux Kernel
@@ -497,6 +501,7 @@ and are currently the following ones:
 The configuration being used is copied from this package, so it
 is easier to change it if needed.
 
+@c again, maybe simplify this to a set of commands?
 If you want to change the configuration, you can do so after the first
 build iteration: change directory to @code{build/kernel}
 and run @code{make menuconfig}. After making your choices, copy back
@@ -524,18 +529,18 @@ package.  The step depends on the kernel being available in the
 build directory. The modules are then copied into the @code{images}
 subdirectory of the main build directory.
 
-Please note that modules (and later user-space) are compiled in-place,
-not in the output directory.  The disadvantage is that your repository
-becomes dirty with output and intermediate files; the advantage is that
+Please note that modules (and later user-space) are compiled in-place;
+ie. not in the output directory.  The disadvantage is that your repository
+becomes dirty with output and intermediate files. The advantage is that
 any modification you make to the code is already in the repository
 for your to commit.
 
 Currently, the modules build built are @i{wr_vic.ko} (the interrupt
 controller) and @i{wr-nic.ko} (the network ``card'' driver).  The
 @i{wr_rtu.ko} driver is compiled too, but it is not currently used nor
-tested.
+has it been tested.
 
-@b{Warning}: I plan to soon rename all modules to have an hyphen
+@b{Warning}: I plan to soon rename all modules to have a hyphen
 instead of an underscore in the name.
 
 @c ##########################################################################
@@ -560,7 +565,7 @@ further, the directory @i{tools} includes the following programs:
         detects the limit is reached.
 
 @item load-lm32
-	Loads a program to the internal LM32 soft-cre.
+	Loads a program to the internal LM32 soft-core.
 
 @item spi-pll
 	Uses the @i{opencores_spi} device part of the FPGA bitstream to
@@ -572,7 +577,7 @@ further, the directory @i{tools} includes the following programs:
 The list above used to include @i{devmem2}, but now @i{devmem} is part
 of the installed @i{busybox} and has the same command-line interface.
 
-The functions to load the fpga and the lm32 have been turned into a
+The functions to load the FPGA and the LM32 have been turned into a
 library, so external programs can link @code{libtools.a}.
 
 Please note that to compiler you need to specify both the kernel
@@ -590,7 +595,7 @@ integrated in the build scripts.
 follows is the old text, kept here for reference.
 
 The Precision Time Protocol Daemon being used is host in a different
-repository. It's the code base that has been ported to compile in a
+repository. It is the code base that has been ported to compile in a
 freestanding environment, downloaded from
 @code{git://gnudd.com/ptp-noposix.git} .
 
@@ -605,6 +610,7 @@ fail for this @i{arm-linux} hosted build.
 
 Additionally, the script installs the header and library for
 @i{wr_ipc}, which are needed for later steps and are now part of the
+@c hal or HAL?
 @i{ptp} repository. Similarly, the script installs headers for the hal
 and @i{libptpnetif}.
 
@@ -645,7 +651,7 @@ The build of user space is concerned about the following steps:
 @chapter VHDL and LM32 Binaries
 
 The binaries are currently missing from the filesystem-making procedures.
-You'll need to get the most recent binaries and copy them in the filesystem
+You will need to get the most recent binaries and copy them in the filesystem
 by yourself. This part will be filled last in this document, when the
 switches are distributed for production.
 
@@ -659,8 +665,8 @@ switches are distributed for production.
 The final step in compiling the filesystem is making the CPIO archive
 with the overall filesystem contents.  This archive can be used as an
 @i{initramfs} or uncompressed to some directory.  The build procedure
-doesn't leave a directory tree on disk because that would require
-administrator privileges. I think it's best not to call @i{sudo} from
+does not leave a directory tree on disk because that would require
+administrator privileges. I think it is best not to call @i{sudo} from
 within build scripts, to respect our users' security concerns.
 
 The output file is called @i{images/wrs-image.cpio.gz} in the build
@@ -709,10 +715,10 @@ MCH/P2}. The backplane hosts a CP2102 USB adapter and a mini-USB
 socket.  Note that you may connect all 6 pins, but only TX and RX
 signals are needed.
 
-You can work without a serial port, but it's strongly suggested to
+You can work without a serial port, but it is strongly suggested to
 connect it.  With a UART you are able to see diagnostics and interact
 with the boot loader or the operating system even if it fails to
-configure the network.  The port uses 3.3V signals, so you'll most
+configure the network.  The port uses 3.3V signals, so you will most
 likely need a level converter; the figure below shows the connection
 (black is GND, orange is RX and white is TX).
 @sp 1
@@ -731,13 +737,13 @@ likely need a level converter; the figure below shows the connection
 
 You can boot and install the system using a JTAG debugger, although
 the @i{USB Flasher} is currently the preferred technique. Each debugger
-has its own command language, so you'll need to adapt to yours. What is
+has its own command language, so you will need to adapt to yours. What is
 shown here refers to the @i{peedi} tool.
 
-As a first step, you'll need to ensure the JTAG clock is slow enough.
+As a first step, you will need to ensure the JTAG clock is slow enough.
 The clock can be no faster than 1/6th of the CPU clock, so you need
 3kHz at most (the G45 starts up with an internal oscillator, which has
-an unpredictable value between 20kHz and 40kHz).  Then, I'd verify
+an unpredictable value between 20kHz and 40kHz).  Then, I would verify
 that the internal SRAM is working; I do that with cool food and bad
 coffee instead of the usual smelly dead beef.
 
@@ -767,7 +773,7 @@ it would take several dozen minutes.
   go
 @end example
 
-On the serial port you'll see the following messages at 115200,8N1.
+On the serial port you will see the following messages at 115200,8N1.
 The first 4 lines are printed by @i{at91bootstrap}, the rest by @i{barebox}.
 
 @c FIXME: the messages and prompts
@@ -796,7 +802,7 @@ The first 4 lines are printed by @i{at91bootstrap}, the rest by @i{barebox}.
 When the boot loader is running, you can boot a kernel and use its
 own @i{/dev/mtd} devices to write to the DataFlash and NAND memories.
 
-According to the partition table you have in your kernel sources, you'll
+According to the partition table you have in your kernel sources, you will
 see a different set of @i{mtd} files, but you can identify them by looking
 at @code{/proc/mtd}:
 
@@ -842,7 +848,7 @@ USB cable (on the right).
 
 After shorting the pins you can press reset (the button near the USB
 connector). If things go well, the device is enumerated as shown;
-you must un-short the wires at this point or you won't be able
+you must un-short the wires at this point or you will not be able
 to write the new information to @i{dataflash}
 
 @smallexample
@@ -888,7 +894,7 @@ The script performs the following steps:
 @item It uses the @i{sam-ba} protocol to write to @i{dataflash}.
 @end itemize
 
-If all goes well, at the next reset you'll find @i{barebox} accessing
+If all goes well, at the next reset you will find @i{barebox} accessing
 the network with your preferred MAC address.
 
 The output you must expect from the flasher is like the following, and
@@ -905,7 +911,7 @@ the process takes half a minute more or less:
    Programming done!
 @end example
 
-If you look at the serial port, during programming, you'll see
+If you look at the serial port, during programming, you will see
 messages like these:
 
 @example
@@ -925,9 +931,9 @@ After initial installation, the DataFlash only includes up to @i{barebox},
 while the rest must still be loaded.
 
 Assuming you have a known-working NFS-Root installation and a TFTP
-server, but you don't want to use DHCP because you already have one
+server, but you do not want to use DHCP because you already have one
 in your network, the following commands will load a kernel and
-boot it as NFS-Root. You'll need to change IP addresses and names
+boot it as NFS-Root. You will need to change IP addresses and names
 to match your personal situation.
 
 @c FIXME: kernel boot procedure
@@ -953,7 +959,7 @@ provided patches runs the following three commands:
 This means that if you have both DHCP and TFTP, you can just write
 your @i{barebox} commands in a file called @i{wrboot} in your TFTP
 public location, and the commands will automatically executed at boot.
-Actually, I'm currently using the stanza shown above to boot my
+Actually, I am currently using the stanza shown above to boot my
 switch over the network with no interaction at all, while being able
 to change the boot procedure on the server while the switch is off.
 
@@ -1005,7 +1011,7 @@ With this setup, the @i{dataflash} can be made read-only when accessed
 by Linux, for better safety.  Normal use cases will be able to change
 either the kernel or the filesystem (or both) without touching
 @i{dataflash}. On the other hand, @i{at91boot} is unable to deal with
-bad blocks in NAND, or with correction of single-bit errors; that's
+bad blocks in NAND, or with correction of single-bit errors; that is
 why it will load its @i{barebox} from @i{dataflash}.
 
 The internal CPU ROM will boot from NAND if it finds the magic
@@ -1176,7 +1182,7 @@ the PLL, and then runs the test.
 The source is distributed as a patch-set over @i{at91boot} (the same
 version we use to boot the switch), in @code{patches/g45memtest}.  To
 compile, untar the source, apply the patches and compile.  The
-following commands are what I used to compile it (you'll need to set
+following commands are what I used to compile it (you will need to set
 @code{CROSS_COMPILE} first, though).
 
 @example
