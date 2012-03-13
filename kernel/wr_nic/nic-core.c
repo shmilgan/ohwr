@@ -311,30 +311,29 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 	r1 = readl(&rx->rx1);
 	r2 = readl(&rx->rx2);
 	r3 = readl(&rx->rx3);
-	pr_debug("%s: %i: %08x %08x %08x\n", __func__, desc, r1, r2, r3);
 
 	/* So, this descriptor is not empty. Get the port (ep) */
 
 	offset = __wrn_desc_offset(wrn, WRN_DDIR_RX, desc);
 
+	if (unlikely(r1 & NIC_RX1_D1_ERROR)) {
+		pr_debug("%s: %i: %08x %08x %08x\n", __func__, desc,
+			 r1, r2, r3);
+		goto err_out;
+	}
 
-	if (r1 & NIC_RX1_D1_GOT_TS) {
+	if (unlikely(!(r1 & NIC_RX1_D1_GOT_TS))) {
 		/*
-		 * check if the packet has an RX OOB block
-		 * if not, we can't determine the orginating port
 		 * [sorry for confusion with the flag name - it should be
 		 * GOT_OOB. I'll fix it later -- Tom]
 		 */
-		epnum = NIC_RX1_D1_PORT_R(r1);
-		ts_r = NIC_RX1_D2_TS_R_R(r2);
-		ts_f = NIC_RX1_D2_TS_F_R(r2);
-	} else {
 		pr_err("No RX OOB? Something's seriously fkd....\n");
-
-		writel( (2000 << 16) | offset, &rx->rx3);
-		writel(NIC_RX1_D1_EMPTY, &rx->rx1); /* FIXME: count as error */
-		return ;
+		goto err_out;
 	}
+
+	epnum = NIC_RX1_D1_PORT_R(r1);
+	ts_r = NIC_RX1_D2_TS_R_R(r2);
+	ts_f = NIC_RX1_D2_TS_F_R(r2);
 
 	dev = wrn->dev[epnum];
 	ep = netdev_priv(dev);
@@ -347,10 +346,7 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 	skb_reserve(skb, 2);
 	__wrn_copy_in(skb_put(skb, len), wrn->databuf + off, len);
 
-	/*
-	 * reload the descriptor length (it was modified by the NIC
-	 * during reception of the packet)
-	 */
+	/* Rewrite lenght (modified during rx) and mark it free ASAP */
 	writel( (2000 << 16) | offset, &rx->rx3);
 	writel(NIC_RX1_D1_EMPTY, &rx->rx1);
 
@@ -382,6 +378,17 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 	ep->stats.rx_packets++;
 	ep->stats.rx_bytes += len;
 	netif_receive_skb(skb);
+	return;
+
+err_out: /* Mark it free anyways -- with its full length */
+	writel( (2000 << 16) | offset, &rx->rx3);
+	writel(NIC_RX1_D1_EMPTY, &rx->rx1);
+
+	/* account the error to endpoint 0 -- we don't know who it is */
+	dev = wrn->dev[0];
+	ep = netdev_priv(dev);
+	ep->stats.rx_errors++;
+
 }
 
 /* This function is called in soft-irq context */
