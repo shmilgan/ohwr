@@ -385,7 +385,137 @@ const struct minipc_pd rtu_vfdb_proxy_get_num_all_dynamic_entries_struct = {
     }
 };
 
+const struct minipc_pd rtu_fdb_proxy_create_lc_struct = {
+    .name   = "32",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_create_lc_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_create_lc_argdata),
+        MINIPC_ARG_END,
+    }
+};
 
+const struct minipc_pd rtu_fdb_proxy_delete_lc_struct = {
+    .name   = "33",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_lc_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_lc_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_read_lc_struct = {
+    .name   = "34",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_lc_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_lc_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_read_next_lc_struct = {
+    .name   = "35",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_lc_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_lc_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_read_lc_set_type_struct = {
+    .name   = "36",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_lc_set_type_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_lc_set_type_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_set_default_lc_struct = {
+    .name   = "37",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_default_lc_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_default_lc_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_get_default_lc_struct = {
+    .name   = "38",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_default_lc_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_default_lc_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_read_fid_struct = {
+    .name   = "39",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_fid_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_fid_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_read_next_fid_struct = {
+    .name   = "40",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_fid_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_fid_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_set_fid_struct = {
+    .name   = "41",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_fid_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_fid_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_delete_fid_struct = {
+    .name   = "42",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_fid_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_fid_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_proxy_set_default_lc_type_struct = {
+    .name   = "43",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_default_lc_type_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_default_lc_type_argdata),
+        MINIPC_ARG_END,
+    }
+};
 
 // IMPORTANT NOTE: errno used to inform of mini-ipc related errors
 // (errno value as set by minipc_call)
@@ -676,7 +806,6 @@ uint16_t rtu_fdb_proxy_get_next_fid(uint8_t fid)
 
 int rtu_fdb_proxy_create_static_vlan_entry(
             uint16_t vid,
-            uint8_t fid,
             uint32_t egress_ports,
             uint32_t forbidden_ports,
             uint32_t untagged_set)
@@ -686,7 +815,6 @@ int rtu_fdb_proxy_create_static_vlan_entry(
     struct rtu_fdb_create_static_vlan_entry_retdata out;
 
     in.vid              = vid;
-    in.fid              = fid;
     in.egress_ports     = egress_ports;
     in.forbidden_ports  = forbidden_ports;
     in.untagged_set     = untagged_set;
@@ -957,7 +1085,176 @@ int rtu_vfdb_proxy_get_num_all_dynamic_entries(void)
     return out.retval;
 }
 
+int rtu_fdb_proxy_create_lc(int sid, uint16_t vid, int lc_type)
+{
+    int ret;
+    struct rtu_fdb_create_lc_argdata in;
+    struct rtu_fdb_create_lc_retdata out;
 
+    in.sid = sid;
+    in.vid = vid;
+    in.lc_type = lc_type;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_create_lc_struct, &out, &in);
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_delete_lc(int sid, uint16_t vid)
+{
+    int ret;
+    struct rtu_fdb_delete_lc_argdata in;
+    struct rtu_fdb_delete_lc_retdata out;
+
+    in.sid = sid;
+    in.vid = vid;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_delete_lc_struct, &out, &in);
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_read_lc(uint16_t vid, int *lc_set)
+{
+    int ret;
+    struct rtu_fdb_read_lc_argdata in;
+    struct rtu_fdb_read_lc_retdata out;
+
+    in.vid = vid;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_read_lc_struct, &out, &in);
+
+    *lc_set = out.lc_set;
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_read_next_lc(uint16_t *vid, int *lc_set)
+{
+    int ret;
+    struct rtu_fdb_read_next_lc_argdata in;
+    struct rtu_fdb_read_next_lc_retdata out;
+
+    in.vid = *vid;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_read_next_lc_struct, &out, &in);
+
+    *vid = out.vid;
+    *lc_set = out.lc_set;
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_read_lc_set_type(int sid, int *lc_type)
+{
+    int ret;
+    struct rtu_fdb_read_lc_set_type_argdata in;
+    struct rtu_fdb_read_lc_set_type_retdata out;
+
+    in.sid = sid;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_read_lc_set_type_struct, &out, &in);
+
+    *lc_type = out.lc_type;
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_set_default_lc(int sid)
+{
+    int ret;
+    struct rtu_fdb_set_default_lc_argdata in;
+    struct rtu_fdb_set_default_lc_retdata out;
+
+    in.sid = sid;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_set_default_lc_struct, &out, &in);
+
+    return out.retval;
+}
+
+void rtu_fdb_proxy_get_default_lc(int *sid, int *lc_type)
+{
+    int ret;
+    struct rtu_fdb_get_default_lc_argdata in;
+    struct rtu_fdb_get_default_lc_retdata out;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_get_default_lc_struct, &out, &in);
+
+    *sid = out.sid;
+    *lc_type = out.lc_type;
+}
+
+void rtu_fdb_proxy_read_fid(uint16_t vid, uint8_t *fid, int *fid_fixed)
+{
+    int ret;
+    struct rtu_fdb_read_fid_argdata in;
+    struct rtu_fdb_read_fid_retdata out;
+
+    in.vid = vid;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_read_fid_struct, &out, &in);
+
+    *fid = out.fid;
+    *fid_fixed = out.fid_fixed;
+}
+
+int rtu_fdb_proxy_read_next_fid(uint16_t *vid, uint8_t *fid, int *fid_fixed)
+{
+    int ret;
+    struct rtu_fdb_read_next_fid_argdata in;
+    struct rtu_fdb_read_next_fid_retdata out;
+
+    in.vid = *vid;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_read_next_fid_struct, &out, &in);
+
+    *vid = out.vid;
+    *fid = out.fid;
+    *fid_fixed = out.fid_fixed;
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_set_fid(uint16_t vid, uint8_t fid)
+{
+    int ret;
+    struct rtu_fdb_set_fid_argdata in;
+    struct rtu_fdb_set_fid_retdata out;
+
+    in.vid = vid;
+    in.fid = fid;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_set_fid_struct, &out, &in);
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_delete_fid(uint16_t vid)
+{
+    int ret;
+    struct rtu_fdb_delete_fid_argdata in;
+    struct rtu_fdb_delete_fid_retdata out;
+
+    in.vid = vid;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_delete_fid_struct, &out, &in);
+
+    return out.retval;
+}
+
+int rtu_fdb_proxy_set_default_lc_type(int lc_type)
+{
+    int ret;
+    struct rtu_fdb_set_default_lc_type_argdata in;
+    struct rtu_fdb_set_default_lc_type_retdata out;
+
+    in.lc_type = lc_type;
+
+    ret = minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_proxy_set_default_lc_type_struct, &out, &in);
+
+    return out.retval;
+}
 struct minipc_ch *rtu_fdb_proxy_create(char* name)
 {
     if (!client) {

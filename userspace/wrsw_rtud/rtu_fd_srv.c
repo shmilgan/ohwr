@@ -280,7 +280,6 @@ static int rtu_fdb_srv_create_static_vlan_entry(
     out->retval =
         rtu_fdb_create_static_vlan_entry(
             in->vid,
-            in->fid,
             in->egress_ports,
             in->forbidden_ports,
             in->untagged_set
@@ -492,8 +491,7 @@ static int rtu_fdb_srv_get_size(
     in  = (struct rtu_fdb_get_size_argdata*)args;
     out = (struct rtu_fdb_get_size_retdata*)ret;
 
-    // TODO
-    // out->retval = rtu_fdb_get_size();
+    out->retval = rtu_fdb_get_size();
 
     return 0;
 }
@@ -506,8 +504,7 @@ static int rtu_fdb_srv_get_num_all_static_entries(
     in  = (struct rtu_fdb_get_num_all_static_entries_argdata*)args;
     out = (struct rtu_fdb_get_num_all_static_entries_retdata*)ret;
 
-    // TODO
-    // out->retval = rtu_fdb_get_num_all_static_entries();
+    out->retval = rtu_fdb_get_num_all_static_entries();
 
     return 0;
 }
@@ -520,8 +517,7 @@ static int rtu_fdb_srv_get_num_all_dynamic_entries(
     in  = (struct rtu_fdb_get_num_all_dynamic_entries_argdata*)args;
     out = (struct rtu_fdb_get_num_all_dynamic_entries_retdata*)ret;
 
-    // TODO
-    // out->retval = rtu_fdb_get_num_all_dynamic_entries();
+    out->retval = rtu_fdb_get_num_all_dynamic_entries();
 
     return 0;
 }
@@ -534,8 +530,7 @@ static int rtu_vfdb_srv_get_num_all_static_entries(
     in  = (struct rtu_vfdb_get_num_all_static_entries_argdata*)args;
     out = (struct rtu_vfdb_get_num_all_static_entries_retdata*)ret;
 
-    // TODO
-    // out->retval = rtu_vfdb_get_num_all_static_entries();
+    out->retval = rtu_vfdb_get_num_all_static_entries();
 
     return 0;
 }
@@ -548,8 +543,203 @@ static int rtu_vfdb_srv_get_num_all_dynamic_entries(
     in  = (struct rtu_vfdb_get_num_all_dynamic_entries_argdata*)args;
     out = (struct rtu_vfdb_get_num_all_dynamic_entries_retdata*)ret;
 
-    // TODO
-    // out->retval = rtu_vfdb_get_num_all_dynamic_entries();
+    out->retval = rtu_vfdb_get_num_all_dynamic_entries();
+
+    return 0;
+}
+
+static int rtu_fdb_srv_create_lc(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_create_lc_argdata *in;
+    struct rtu_fdb_create_lc_retdata *out;
+    in  = (struct rtu_fdb_create_lc_argdata*)args;
+    out = (struct rtu_fdb_create_lc_retdata*)ret;
+
+    out->retval =
+        rtu_fdb_create_lc(
+            in->sid,
+            in->vid,
+            in->lc_type
+        );
+
+    return 0;
+}
+
+static int rtu_fdb_srv_delete_lc(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_delete_lc_argdata *in;
+    struct rtu_fdb_delete_lc_retdata *out;
+    in  = (struct rtu_fdb_delete_lc_argdata*)args;
+    out = (struct rtu_fdb_delete_lc_retdata*)ret;
+
+    out->retval =
+        rtu_fdb_delete_lc(
+            in->sid,
+            in->vid
+        );
+
+    return 0;
+}
+
+static int rtu_fdb_srv_read_lc(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_read_lc_argdata *in;
+    struct rtu_fdb_read_lc_retdata *out;
+    in  = (struct rtu_fdb_read_lc_argdata*)args;
+    out = (struct rtu_fdb_read_lc_retdata*)ret;
+
+    out->retval =
+        rtu_fdb_read_lc(
+            in->vid,
+            &out->lc_set
+        );
+
+    return 0;
+}
+
+static int rtu_fdb_srv_read_next_lc(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_read_next_lc_argdata *in;
+    struct rtu_fdb_read_next_lc_retdata *out;
+    in  = (struct rtu_fdb_read_next_lc_argdata*)args;
+    out = (struct rtu_fdb_read_next_lc_retdata*)ret;
+
+    out->retval =
+        rtu_fdb_read_next_lc(
+            &in->vid,
+            &out->lc_set
+        );
+
+    out->vid = in->vid;
+
+    return 0;
+}
+
+static int rtu_fdb_srv_read_lc_set_type(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_read_lc_set_type_argdata *in;
+    struct rtu_fdb_read_lc_set_type_retdata *out;
+    in  = (struct rtu_fdb_read_lc_set_type_argdata*)args;
+    out = (struct rtu_fdb_read_lc_set_type_retdata*)ret;
+
+    out->retval =
+        rtu_fdb_read_lc_set_type(
+            in->sid,
+            &out->lc_type
+        );
+
+    return 0;
+}
+
+static int rtu_fdb_srv_set_default_lc(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_set_default_lc_argdata *in;
+    struct rtu_fdb_set_default_lc_retdata *out;
+    in  = (struct rtu_fdb_set_default_lc_argdata*)args;
+    out = (struct rtu_fdb_set_default_lc_retdata*)ret;
+
+    out->retval =
+        rtu_fdb_set_default_lc(
+            in->sid
+        );
+
+    return 0;
+}
+
+static int rtu_fdb_srv_get_default_lc(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_get_default_lc_argdata *in;
+    struct rtu_fdb_get_default_lc_retdata *out;
+    in  = (struct rtu_fdb_get_default_lc_argdata*)args;
+    out = (struct rtu_fdb_get_default_lc_retdata*)ret;
+
+    rtu_fdb_get_default_lc(
+        &out->sid,
+        &out->lc_type
+    );
+
+    return 0;
+}
+
+static int rtu_fdb_srv_read_fid(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_read_fid_argdata *in;
+    struct rtu_fdb_read_fid_retdata *out;
+    in  = (struct rtu_fdb_read_fid_argdata*)args;
+    out = (struct rtu_fdb_read_fid_retdata*)ret;
+
+    rtu_fdb_read_fid(
+        in->vid,
+        &out->fid,
+        &out->fid_fixed
+    );
+
+    return 0;
+}
+
+static int rtu_fdb_srv_read_next_fid(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_read_next_fid_argdata *in;
+    struct rtu_fdb_read_next_fid_retdata *out;
+    in  = (struct rtu_fdb_read_next_fid_argdata*)args;
+    out = (struct rtu_fdb_read_next_fid_retdata*)ret;
+
+    out->retval =
+        rtu_fdb_read_next_fid(
+            &in->vid,
+            &out->fid,
+            &out->fid_fixed
+        );
+
+    out->vid = in->vid;
+
+    return 0;
+}
+
+static int rtu_fdb_srv_set_fid(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_set_fid_argdata *in;
+    struct rtu_fdb_set_fid_retdata *out;
+    in  = (struct rtu_fdb_set_fid_argdata*)args;
+    out = (struct rtu_fdb_set_fid_retdata*)ret;
+
+    out->retval = rtu_fdb_set_fid(in->vid, in->fid);
+
+    return 0;
+}
+
+static int rtu_fdb_srv_delete_fid(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_delete_fid_argdata *in;
+    struct rtu_fdb_delete_fid_retdata *out;
+    in  = (struct rtu_fdb_delete_fid_argdata*)args;
+    out = (struct rtu_fdb_delete_fid_retdata*)ret;
+
+    out->retval = rtu_fdb_delete_fid(in->vid);
+
+    return 0;
+}
+
+static int rtu_fdb_srv_set_default_lc_type(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct rtu_fdb_set_default_lc_type_argdata *in;
+    struct rtu_fdb_set_default_lc_type_retdata *out;
+    in  = (struct rtu_fdb_set_default_lc_type_argdata*)args;
+    out = (struct rtu_fdb_set_default_lc_type_retdata*)ret;
+
+    out->retval = rtu_fdb_set_default_lc_type(in->lc_type);
 
     return 0;
 }
@@ -939,6 +1129,150 @@ const struct minipc_pd rtu_vfdb_srv_get_num_all_dynamic_entries_struct = {
     }
 };
 
+const struct minipc_pd rtu_fdb_srv_create_lc_struct = {
+    .f      = rtu_fdb_srv_create_lc,
+    .name   = "32",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_create_lc_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_create_lc_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_delete_lc_struct = {
+    .f      = rtu_fdb_srv_delete_lc,
+    .name   = "33",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_lc_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_lc_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_read_lc_struct = {
+    .f      = rtu_fdb_srv_read_lc,
+    .name   = "34",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_lc_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_lc_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_read_next_lc_struct = {
+    .f      = rtu_fdb_srv_read_next_lc,
+    .name   = "35",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_lc_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_lc_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_read_lc_set_type_struct = {
+    .f      = rtu_fdb_srv_read_lc_set_type,
+    .name   = "36",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_lc_set_type_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_lc_set_type_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_set_default_lc_struct = {
+    .f      = rtu_fdb_srv_set_default_lc,
+    .name   = "37",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_default_lc_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_default_lc_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_get_default_lc_struct = {
+    .f      = rtu_fdb_srv_get_default_lc,
+    .name   = "38",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_default_lc_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_get_default_lc_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_read_fid_struct = {
+    .f      = rtu_fdb_srv_read_fid,
+    .name   = "39",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_fid_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_fid_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_read_next_fid_struct = {
+    .f      = rtu_fdb_srv_read_next_fid,
+    .name   = "40",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_fid_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_read_next_fid_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_set_fid_struct = {
+    .f      = rtu_fdb_srv_set_fid,
+    .name   = "41",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_fid_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_fid_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_delete_fid_struct = {
+    .f      = rtu_fdb_srv_delete_fid,
+    .name   = "42",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_fid_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_delete_fid_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+const struct minipc_pd rtu_fdb_srv_set_default_lc_type_struct = {
+    .f      = rtu_fdb_srv_set_default_lc_type,
+    .name   = "43",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_default_lc_type_retdata),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct rtu_fdb_set_default_lc_type_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
 struct minipc_ch *rtu_fdb_srv_create(char *name)
 {
 	struct minipc_ch *server;
@@ -979,6 +1313,18 @@ struct minipc_ch *rtu_fdb_srv_create(char *name)
         minipc_export(server, &rtu_fdb_srv_get_num_all_dynamic_entries_struct);
         minipc_export(server, &rtu_vfdb_srv_get_num_all_static_entries_struct);
         minipc_export(server, &rtu_vfdb_srv_get_num_all_dynamic_entries_struct);
+        minipc_export(server, &rtu_fdb_srv_create_lc_struct);
+        minipc_export(server, &rtu_fdb_srv_delete_lc_struct);
+        minipc_export(server, &rtu_fdb_srv_read_lc_struct);
+        minipc_export(server, &rtu_fdb_srv_read_next_lc_struct);
+        minipc_export(server, &rtu_fdb_srv_read_lc_set_type_struct);
+        minipc_export(server, &rtu_fdb_srv_set_default_lc_struct);
+        minipc_export(server, &rtu_fdb_srv_get_default_lc_struct);
+        minipc_export(server, &rtu_fdb_srv_read_fid_struct);
+        minipc_export(server, &rtu_fdb_srv_read_next_fid_struct);
+        minipc_export(server, &rtu_fdb_srv_set_fid_struct);
+        minipc_export(server, &rtu_fdb_srv_delete_fid_struct);
+        minipc_export(server, &rtu_fdb_srv_set_default_lc_type_struct);
    }
    return server;
 }

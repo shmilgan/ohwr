@@ -200,7 +200,6 @@ struct rtu_fdb_get_next_fid_retdata {
 
 struct rtu_fdb_create_static_vlan_entry_argdata {
     uint16_t vid;
-    uint8_t fid;
     uint32_t egress_ports;
     uint32_t forbidden_ports;
     uint32_t untagged_set;
@@ -370,5 +369,123 @@ struct rtu_vfdb_get_num_all_dynamic_entries_argdata {
 struct rtu_vfdb_get_num_all_dynamic_entries_retdata {
     int retval;
 };
+
+struct rtu_fdb_create_lc_argdata {
+    int sid;
+    uint16_t vid;
+    int lc_type;
+};
+
+struct rtu_fdb_create_lc_retdata {
+    int retval;
+};
+
+struct rtu_fdb_delete_lc_argdata {
+    int sid;
+    uint16_t vid;
+};
+
+struct rtu_fdb_delete_lc_retdata {
+    int retval;
+};
+
+
+struct rtu_fdb_read_lc_argdata {
+    uint16_t vid;
+};
+
+struct rtu_fdb_read_lc_retdata {
+    int retval;
+    uint32_t lc_set;
+};
+
+
+struct rtu_fdb_read_next_lc_argdata {
+    uint16_t vid;
+    uint32_t lc_set;
+};
+
+struct rtu_fdb_read_next_lc_retdata {
+    int retval;
+    uint16_t vid;
+    uint32_t lc_set;
+};
+
+struct rtu_fdb_read_lc_set_type_argdata {
+    int sid;
+};
+
+struct rtu_fdb_read_lc_set_type_retdata {
+    int retval;
+    int lc_type;
+};
+
+
+struct rtu_fdb_set_default_lc_argdata {
+    int sid;
+};
+
+struct rtu_fdb_set_default_lc_retdata {
+    int retval;
+};
+
+
+struct rtu_fdb_get_default_lc_argdata {
+    // void
+};
+
+struct rtu_fdb_get_default_lc_retdata {
+    int sid;
+    int lc_type;
+};
+
+
+struct rtu_fdb_read_fid_argdata {
+    uint16_t vid;
+};
+
+struct rtu_fdb_read_fid_retdata {
+    uint8_t fid;
+    int fid_fixed;
+};
+
+
+struct rtu_fdb_read_next_fid_argdata {
+    uint16_t vid;
+};
+
+struct rtu_fdb_read_next_fid_retdata {
+    int retval;
+    uint16_t vid;
+    uint8_t fid;
+    int fid_fixed;
+};
+
+struct rtu_fdb_set_fid_argdata {
+    uint16_t vid;
+    uint8_t fid;
+};
+
+struct rtu_fdb_set_fid_retdata {
+    int retval;
+};
+
+
+struct rtu_fdb_delete_fid_argdata {
+    uint16_t vid;
+};
+
+struct rtu_fdb_delete_fid_retdata {
+    int retval;
+};
+
+struct rtu_fdb_set_default_lc_type_argdata {
+    int lc_type;
+};
+
+struct rtu_fdb_set_default_lc_type_retdata {
+    int retval;
+};
+
 
 #endif /*__WHITERABBIT_RTU_FD_EXPORT_H*/
