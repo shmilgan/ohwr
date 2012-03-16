@@ -112,8 +112,14 @@ static int get_next(netsnmp_request_info         *req,
     oid_len     = req->requestvb->name_length;
     rootoid_len = reginfo->rootoid_len;
 
-    cid = (oid_len > rootoid_len) ?
-          *tinfo->indexes->val.integer:0;
+    if (oid_len > rootoid_len) {
+        if (!tinfo || !tinfo->indexes)
+            return SNMP_ERR_GENERR;
+        cid = *tinfo->indexes->val.integer;
+    } else {
+        cid = 0;
+    }
+
     fid = (oid_len > rootoid_len + 1) ?
           *tinfo->indexes->next_variable->val.integer:0;
 
@@ -155,6 +161,9 @@ static int set_reserve1(netsnmp_request_info *req)
 
     // Get indexes from request
     tinfo = netsnmp_extract_table_info(req);
+    if (!tinfo || !tinfo->indexes)
+        return SNMP_ERR_GENERR;
+
     cid = *tinfo->indexes->val.integer;
     fid = *tinfo->indexes->next_variable->val.integer;
 

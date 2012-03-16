@@ -72,7 +72,7 @@ struct mib_vlan_table_entry {
  * @param tinfo table information that contains the indexes (in raw format)
  * @param ent (OUT) used to return the retrieved indexes
  */
-static void get_indexes(netsnmp_variable_list           *vb,
+static int get_indexes(netsnmp_variable_list           *vb,
                         netsnmp_handler_registration    *reginfo,
                         netsnmp_table_request_info      *tinfo,
                         struct mib_vlan_table_entry     *ent)
@@ -86,6 +86,8 @@ static void get_indexes(netsnmp_variable_list           *vb,
     rootoid_len = reginfo->rootoid_len;
 
     if (oid_len > rootoid_len) {
+        if (!tinfo || !tinfo->indexes)
+            return SNMP_ERR_GENERR;
         idx = tinfo->indexes;
         ent->time_mark = *idx->val.integer;
     } else {
@@ -105,6 +107,7 @@ static void get_indexes(netsnmp_variable_list           *vb,
     } else {
         ent->vid = 0;
     }
+    return SNMP_ERR_NOERROR;
 }
 
 static int get_column(netsnmp_variable_list         *vb,
@@ -146,7 +149,10 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
     // Get indexes for entry
-    get_indexes(req->requestvb, reginfo, tinfo, &ent);
+    err = get_indexes(req->requestvb, reginfo, tinfo, &ent);
+    if (err)
+        return err;
+
     DEBUGMSGTL((MIBMOD, "cid=%lu vid=%d time=%lu column=%d\n",
         ent.cid, ent.vid, ent.time_mark, tinfo->colnum));
     // Check index range
@@ -188,7 +194,10 @@ static int get_next(netsnmp_request_info         *req,
     netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
     // Get indexes from request
-    get_indexes(req->requestvb, reginfo, tinfo, &ent);
+    err = get_indexes(req->requestvb, reginfo, tinfo, &ent);
+    if (err)
+        return err;
+
     DEBUGMSGTL((MIBMOD, "time=%d cid=%d vid=%d column=%d\n",
         ent.time_mark, ent.cid, ent.vid, tinfo->colnum));
 

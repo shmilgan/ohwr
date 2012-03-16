@@ -112,6 +112,9 @@ static int get(netsnmp_request_info *req)
     u_long port;
     netsnmp_table_request_info  *tinfo = netsnmp_extract_table_info(req);
 
+    if (!tinfo || !tinfo->indexes)
+        return SNMP_ERR_GENERR;
+
     // Get indexes from request
     cid  = *tinfo->indexes->val.integer;
     port = *tinfo->indexes->next_variable->val.integer;
@@ -134,14 +137,21 @@ static int get_next(netsnmp_request_info         *req,
     int oid_len, rootoid_len;
     netsnmp_table_request_info  *tinfo = netsnmp_extract_table_info(req);
 
+
     // Get indexes from request - in case OID contains them!.
     // Otherwise use default values for first row.
     oid_len     = req->requestvb->name_length;
     rootoid_len = reginfo->rootoid_len;
 
     // Get indexes for entry
-    cid  = (oid_len > rootoid_len) ?
-          *tinfo->indexes->val.integer:0;
+    if (oid_len > rootoid_len) {
+        if (!tinfo || !tinfo->indexes)
+            return SNMP_ERR_GENERR;
+        cid = *tinfo->indexes->val.integer;
+    } else {
+        cid = 0;
+    }
+
     port = (oid_len > rootoid_len + 1) ?
           *tinfo->indexes->next_variable->val.integer:MIN_PORT;
 
@@ -173,6 +183,9 @@ static int set_reserve1(netsnmp_request_info *req)
     u_long cid;                 // ieee8021BridgeBasePortComponentId;
     u_long port;                // ieee8021BridgeBasePort;
     netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
+
+    if (!tinfo || !tinfo->indexes)
+        return SNMP_ERR_GENERR;
 
     // Check indexes
     cid = *tinfo->indexes->val.integer;
