@@ -22,9 +22,9 @@ all:
 	$(MAKE) -C wrsw_hal all install
 	$(MAKE) -C mini-ipc -f Makefile.static all
 	$(MAKE) -C wrsw_rtud all install
-	$(MAKE) -C wrsw_snmpd all install
 	$(MAKE) -C wrsw_mrp all install
 	$(MAKE) -C wrsw_mvrp all install
+	$(MAKE) -C wrsw_snmpd all install
 #	$(MAKE) -C tests/rtu_stat TARGET=ARM all
 
 clean:
@@ -32,9 +32,9 @@ clean:
 	$(MAKE) -C libswitchhw clean
 	$(MAKE) -C wrsw_hal clean
 	$(MAKE) -C wrsw_rtud clean
-	$(MAKE) -C wrsw_snmpd clean
 	$(MAKE) -C wrsw_mrp clean
 	$(MAKE) -C wrsw_mvrp clean
+	$(MAKE) -C wrsw_snmpd clean
 #	$(MAKE) -C tests/wr_mon clean
 #	$(MAKE) -C tests/rtu_stat clean
 
