@@ -161,4 +161,7 @@ void cli_build_commands_tree(struct cli_shell *cli)
 
     /* 'mvrp' commands family */
     cmd_mvrp_init(cli);
+
+    /* 'learning-constraints' commands family */
+    cmd_lc_init(cli);
 }
