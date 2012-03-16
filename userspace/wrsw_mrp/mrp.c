@@ -1259,7 +1259,7 @@ int mrp_register_application(struct mrp_application *app)
             WILDCARD_VID,
             0x400,              /*egress*/
             0xfffffbff,         /*forbidden*/
-            ST_PERMANENT,
+            ST_VOLATILE,
             ACTIVE,
             !app->proto.tagged  /* is bpdu */);
     if (errno) {
