@@ -30,7 +30,8 @@ static int get_column(netsnmp_variable_list *vb, int colnum, u_long port)
     u_long pvid;            // ieee8021QBridgePvid
     int qmode;              // ieee8021QBridgePortAcceptableFrameTypes
     uint8_t mac[ETH_ALEN];  // ieee8021QBridgePortMvrpLastPduOrigin
-    int reg_failures;  // ieee8021QBridgePortMvrpFailedRegistrations
+    int failures;
+    struct counter64 reg_failures = {0};  // ieee8021QBridgePortMvrpFailedRegistrations
     int ret;
 
     errno = 0;
@@ -72,12 +73,14 @@ static int get_column(netsnmp_variable_list *vb, int colnum, u_long port)
         snmp_set_var_typed_integer(vb, ASN_INTEGER, ret ? TV_TRUE:TV_FALSE);
         break;
     case COLUMN_IEEE8021QBRIDGEPORTMVRPFAILEDREGISTRATIONS:
-        reg_failures = mvrp_proxy_get_failed_registrations(port);
+        failures = mvrp_proxy_get_failed_registrations(port);
         if (errno)
             goto minipc_err;
-        if (reg_failures < 0)
+        if (failures < 0)
             return SNMP_NOSUCHINSTANCE;
-        snmp_set_var_typed_integer(vb, ASN_COUNTER64, (uint64_t)reg_failures);
+        reg_failures.low = (u_long)failures;
+        snmp_set_var_typed_value(vb, ASN_COUNTER64, (u_char *)&reg_failures,
+                                 sizeof(struct counter64));
         break;
     case COLUMN_IEEE8021QBRIDGEPORTMVRPLASTPDUORIGIN:
         ret = mvrp_proxy_get_last_pdu_origin(port, &mac);
