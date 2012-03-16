@@ -240,9 +240,9 @@ int is_vid(char *vid)
         }
     }
     /* FIXME: VID = 0 not allowed in the Std. 802.1Q, but supported by HW */
-    if ((atoi(vid) < 0) || (atoi(vid) > MAX_VID)) {
+    if ((atoi(vid) < 0) || (atoi(vid) > WILDCARD_VID)) {
         printf("\tVID syntax error: allowed values are in the range 0 to %d\n",
-                MAX_VID);
+                WILDCARD_VID);
         return -1;
     }
     return 0;
@@ -262,6 +262,25 @@ int is_aging(char *aging)
     if ((atoi(aging) < MIN_AGING_TIME) || (atoi(aging) > MAX_AGING_TIME)) {
         printf("\tAging syntax error: allowed values are in the range %d to "
                "%d\n", MIN_AGING_TIME, MAX_AGING_TIME);
+        return -1;
+    }
+    return 0;
+}
+
+/* Check the syntax of the VLAN Learning Constraints Set ID argument */
+int is_sid(char *sid)
+{
+    int i;
+
+    for (i = 0; sid[i]; i++) {
+        if (!isdigit(sid[i])) {
+            printf("\tSID syntax error: only decimal values are allowed\n");
+            return -1;
+        }
+    }
+    if ((atoi(sid) < 0) || (atoi(sid) > LC_MAX_SET_ID)) {
+        printf("\tSID syntax error: allowed values are in the range 0 to "
+               "%d\n", LC_MAX_SET_ID);
         return -1;
     }
     return 0;

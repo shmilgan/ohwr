@@ -33,6 +33,7 @@
 #include "cli.h"
 #include "cli_snmp.h"
 
+#define LC_MAX_SET_ID   31  /* TODO: read this constant from RTU */
 
 /* The help command is treated specially */
 void cli_cmd_help(struct cli_shell *cli, struct cli_cmd *cmd);
@@ -48,6 +49,7 @@ int ports_to_mask(char *ports_range, char *mask);
 int is_port(char *port);
 int is_vid(char *vid);
 int is_aging(char *aging);
+int is_sid(char *sid);
 
 
 #endif /*__WHITERABBIT_CLI_COMMANDS_H*/
