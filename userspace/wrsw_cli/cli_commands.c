@@ -164,4 +164,7 @@ void cli_build_commands_tree(struct cli_shell *cli)
 
     /* 'learning-constraints' commands family */
     cmd_lc_init(cli);
+
+    /* 'allocations' commands family */
+    cmd_allocations_init(cli);
 }
