@@ -285,3 +285,22 @@ int is_sid(char *sid)
     }
     return 0;
 }
+
+/* Check the syntax of the VLAN Learning Constraints Set ID argument */
+int is_fid(char *fid)
+{
+    int i;
+
+    for (i = 0; fid[i]; i++) {
+        if (!isdigit(fid[i])) {
+            printf("\tFID syntax error: only decimal values are allowed\n");
+            return -1;
+        }
+    }
+    if ((atoi(fid) < 1) || (atoi(fid) >= NUM_FIDS)) { /* TODO: check this */
+        printf("\tFID syntax error: allowed values are in the range 1 to "
+               "%d\n", (NUM_FIDS - 1));
+        return -1;
+    }
+    return 0;
+}

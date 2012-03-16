@@ -50,6 +50,7 @@ int is_port(char *port);
 int is_vid(char *vid);
 int is_aging(char *aging);
 int is_sid(char *sid);
+int is_fid(char *fid);
 
 
 #endif /*__WHITERABBIT_CLI_COMMANDS_H*/

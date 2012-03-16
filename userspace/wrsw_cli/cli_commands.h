@@ -43,5 +43,6 @@ void cmd_interface_init(struct cli_shell *cli);
 void cmd_vlan_init(struct cli_shell *cli);
 void cmd_mvrp_init(struct cli_shell *cli);
 void cmd_lc_init(struct cli_shell *cli);
+void cmd_allocations_init(struct cli_shell *cli);
 
 #endif /*__WHITERABBIT_CLI_COMMANDS_H*/
