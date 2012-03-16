@@ -61,7 +61,8 @@ static int get_column(netsnmp_variable_list *vb, int colnum, u_long fid)
         discards = rtu_fdb_proxy_get_num_learned_entry_discards(fid);
         if (errno)
             return SNMP_ERR_GENERR;
-        snmp_set_var_typed_integer(vb, ASN_COUNTER64, discards);
+        snmp_set_var_typed_value(vb, ASN_COUNTER64, (u_char *)&discards,
+                                 sizeof(discards));
         break;
     case COLUMN_IEEE8021QBRIDGEFDBAGINGTIME:
         age = rtu_fdb_proxy_get_aging_time(fid);
