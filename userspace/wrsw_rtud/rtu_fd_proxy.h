@@ -86,7 +86,6 @@ int rtu_fdb_proxy_read_next_static_entry(
 
 int rtu_fdb_proxy_create_static_vlan_entry(
             uint16_t vid,
-            uint8_t fid,
             uint32_t egress_ports,
             uint32_t forbidden_ports,
             uint32_t untagged_set
@@ -157,6 +156,22 @@ int rtu_fdb_proxy_get_num_all_static_entries(void);
 int rtu_fdb_proxy_get_num_all_dynamic_entries(void);
 int rtu_vfdb_proxy_get_num_all_static_entries(void);
 int rtu_vfdb_proxy_get_num_all_dynamic_entries(void);
+
+int rtu_fdb_proxy_create_lc(int sid, uint16_t vid, int lc_type);
+int rtu_fdb_proxy_delete_lc(int sid, uint16_t vid);
+int rtu_fdb_proxy_read_lc(uint16_t vid, int *lc_set);
+int rtu_fdb_proxy_read_next_lc(uint16_t *vid, int *lc_set);
+int rtu_fdb_proxy_read_lc_set_type(int sid, int *lc_type);
+
+int rtu_fdb_proxy_set_default_lc(int sid);
+void rtu_fdb_proxy_get_default_lc(int *sid, int *lc_type);
+
+void rtu_fdb_proxy_read_fid(uint16_t vid, uint8_t *fid, int *fid_fixed);
+int rtu_fdb_proxy_read_next_fid(uint16_t *vid, uint8_t *fid, int *fid_fixed);
+int rtu_fdb_proxy_set_fid(uint16_t vid, uint8_t fid);
+int rtu_fdb_proxy_delete_fid(uint16_t vid);
+
+int rtu_fdb_proxy_set_default_lc_type(int lc_type);
 
 struct minipc_ch *rtu_fdb_proxy_create(char *name);
 
