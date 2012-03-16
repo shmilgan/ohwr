@@ -65,6 +65,18 @@ static struct vlan_table_entry  vlan_tab[NUM_VLANS];
 static struct vlan_table_entry _vlan_tab[NUM_VLANS];
 
 /**
+ * Learning Constraint Sets. Set 0 (IVL) used as default.
+ */
+int lc_tab[NUM_LC_SETS] = {LC_INDEPENDENT};
+
+/**
+ * Default Learning Constraint Set. VLANs which are not explicitly assigned
+ * to a Set, are implicitly associated to the default set. Default value (0)
+ * makes the bridge to apply Independent VLAN Learning.
+ */
+int default_lc_set;
+
+/**
  * Table bank to write entries to.
  * HTAB and HCAM banks will be handled according to this single bank value.
  */
@@ -611,6 +623,11 @@ int rtu_sw_get_num_dynamic_vlan_entries(void)
     return n;
 }
 
+struct vlan_table_entry *rtu_sw_get_vlan_entry(uint16_t vid)
+{
+    return &vlan_tab[vid];
+}
+
 /**
  * Searches for a VLAN entry with given vid in RTU mirror.
  * @return  pointer to VLAN entry if found. NULL otherwise.
@@ -637,7 +654,6 @@ struct vlan_table_entry *rtu_sw_find_next_ve(uint16_t *vid)
 
 struct vlan_table_entry *rtu_sw_create_vlan_entry(
         uint16_t vid,
-        uint8_t fid,
         uint32_t port_mask,
         uint32_t use_dynamic,
         uint32_t untagged_set,
@@ -645,7 +661,6 @@ struct vlan_table_entry *rtu_sw_create_vlan_entry(
 {
     vlan_tab[vid].port_mask     = port_mask;
     vlan_tab[vid].untagged_set  = untagged_set;
-    vlan_tab[vid].fid           = fid;
     vlan_tab[vid].use_dynamic   = use_dynamic;
     vlan_tab[vid].dynamic       = dynamic;
     // TODO dynamic flag is obsolete. Use is_static instead.
@@ -659,11 +674,14 @@ struct vlan_table_entry *rtu_sw_create_vlan_entry(
     return 0;
 }
 
-int rtu_sw_delete_vlan_entry(uint16_t vid)
+void rtu_sw_delete_vlan_entry(uint16_t vid)
 {
-    vlan_tab[vid].drop = 1;
-    vlan_write(&vlan_tab[vid]);
-    return 0;
+    struct vlan_table_entry *vlan = &vlan_tab[vid];
+
+    vlan->drop = 1;
+    if (!vlan->fid_fixed)
+        vlan->fid = 0;
+    vlan_write(vlan);
 }
 
 /**
@@ -682,12 +700,12 @@ void rtu_sw_clean_vd(void)
     // Entry with VID 1 reserved for untagged packets.
     rtu_sw_create_vlan_entry(
         DEFAULT_VID,
-        0,              // FID
         0xffffffff,     // port_mask:
         0x00000000,     // use_dynamic: Registration fixed for all ports
         0xffffffff,     // untagged_set: All untagged (See 802.1Q section 8.8.2)
         STATIC
     );
+    rtu_sw_allocate_fid(DEFAULT_VID);
     rtu_hw_write_vlan_entry(DEFAULT_VID, &vlan_tab[DEFAULT_VID]);
 }
 
@@ -856,4 +874,315 @@ void rtu_sw_rollback(void)
     hcam_wr_head     = 0;
     htab_wr_head     = 0;
     vlan_tab_wr_head = 0;
+}
+
+//-----------------------------------------------------------------------------
+// Learning Constraints
+//-----------------------------------------------------------------------------
+
+/**
+ * Return learning constraint set for the given vlan. If no lc set is defined,
+ * the default lc set is returned.
+ */
+inline static uint32_t get_lc_set(uint16_t vid)
+{
+    uint32_t set = vlan_tab[vid].lc_set;
+    return set ? set : (1 << default_lc_set);
+}
+
+/**
+ * Fetch shared and independent sets from a learning constraint set.
+ */
+static void fetch_lc_sets(uint32_t lc_set, uint32_t *s_set, uint32_t *i_set)
+{
+    int i;
+
+    for (i = 0; i < NUM_LC_SETS; i++) {
+        if (is_set(lc_set, i)) {
+            switch (lc_tab[i]) {
+            case LC_SHARED:      set(s_set, i); break;
+            case LC_INDEPENDENT: set(i_set, i); break;
+            default: break;
+            }
+        }
+    }
+}
+
+/**
+ * Check that learning constraints related to the given vlan are consistent.
+ * @return 1 if lc set is consistent. 0 otherwise.
+ */
+static int is_lc_set_consistent(uint16_t vid)
+{
+    int i;
+    uint8_t fid2, fid1 = vlan_tab[vid].fid;
+    uint32_t lc_set, s_set = 0, i_set = 0;   /* learning constraint set masks */
+
+    lc_set = get_lc_set(vid);
+    fetch_lc_sets(lc_set, &s_set, &i_set);
+    for (i = 0; i < NUM_VLANS; i++) {
+        /* skip given vlan */
+        if (i == vid)
+            continue;
+
+        /* Other VLANs in the same shared set can not be in another independent
+           set where the given VLAN appears. Other VLANs in the same independent
+           set can not be in another shared set where the given VLAN appears */
+        lc_set = get_lc_set(i);
+        if ((lc_set & s_set) && (lc_set & i_set))
+            return 0;
+
+        /* skip vlans with no fid */
+        fid2 = vlan_tab[i].fid;
+        if (!fid1 || !fid2)
+            continue;
+
+        /* Check that VLANs in the same shared set have been allocated the same
+           FID and other VLANs in the same independent learning constraint set
+           have not been allocated the same FID */
+        if (((lc_set & s_set) && (fid2 != fid1)) ||
+            ((lc_set & i_set) && (fid2 == fid1)))
+            return 0;
+    }
+    return 1;
+}
+
+/**
+ * Allocates VID to exactly one FID.
+ * TODO FID reconfiguration if fid was dynamic.
+ * @return 0 if FID allocated. -1 on error.
+ */
+int rtu_sw_allocate_fid(uint16_t vid)
+{
+    int i;
+    int fid;
+    char fbd_fids[NUM_FIDS] = {}; /* Forbidden FIDs as per I constraints */
+    uint8_t req_fid = 0;          /* Required FIDs as per S constraints */
+    uint32_t lc_set, s_set = 0, i_set = 0;
+
+    if (vlan_tab[vid].fid)   /* fid already allocated */
+        return 0;
+
+    /* If a given VID appears in an S Constraint then it shall be allocated to
+       the same FID as the other VID identified in the same S Constraint. If a
+       given VID appears in an I Constraint, then it shall not be allocated to
+       the same FID as any other VID that appears in an I Constraint with the
+       same Independent Set Identifier. */
+    lc_set = get_lc_set(vid);
+    fetch_lc_sets(lc_set, &s_set, &i_set);
+    for (i = 0; i < NUM_VLANS; i++) {
+        /* skip given vlan */
+        if (i == vid)
+            continue;
+        /* skip vlans with no fid */
+        fid = vlan_tab[i].fid;
+        if (!fid)
+            continue;
+
+        lc_set =  get_lc_set(i);
+        if (lc_set & s_set) {
+            if (req_fid) {
+              if (req_fid != fid)
+                return -1;
+            } else {
+                req_fid = fid;
+            }
+        }
+
+        if (lc_set & i_set)
+            fbd_fids[fid] = 1;
+    }
+
+    /* Allocate VID to any FID that appears in an S Constraint */
+    if (req_fid) {
+        /* Make sure the same FID is not required and forbidden at the same time */
+        if (fbd_fids[req_fid])
+            return -1;
+        vlan_tab[vid].fid = req_fid;
+        return 0;
+    }
+
+    /* Allocate VID to an FID that does not appear in any I Constraint */
+    for (i = 1; i < NUM_FIDS; i++) { /* fid = 0 reserved */
+        if (fbd_fids[i])
+            continue;
+        vlan_tab[vid].fid = (uint8_t)i;
+        return 0;
+    }
+
+    /* At this point the number of FIDs is not enough to meet the constraints */
+    return -1;
+}
+
+/**
+ * Creates a learning constraint. If the new constraint is inconsistent with
+ * those already configured in the Bridge and VID to FID allocations, then the
+ * management operation shall not be performed and an error response shall be
+ * returned.
+ * @return 0 if lc created. -1 if inconsistency detected.
+ */
+int rtu_sw_create_lc(int sid, uint16_t vid, int lc_type)
+{
+    int cur_lc_type = lc_tab[sid];
+    uint32_t cur_lc_set = vlan_tab[vid].lc_set;
+
+    if ((cur_lc_type != LC_UNDEFINED) && (cur_lc_type != lc_type))
+        return -EINVAL;
+
+    lc_tab[sid] = lc_type;
+    set(&vlan_tab[vid].lc_set, sid);
+
+    if (!is_lc_set_consistent(vid))
+        goto rollback;
+
+    return 0;
+
+rollback:
+    lc_tab[sid] = cur_lc_type;
+    vlan_tab[vid].lc_set = cur_lc_set;
+    return -1;
+
+}
+
+/**
+ * Deletes a learning constraint.
+ */
+void rtu_sw_delete_lc(int sid, uint16_t vid)
+{
+    int i;
+
+    unset(&vlan_tab[vid].lc_set, sid);
+    for (i = 0; i < NUM_VLANS; i++)
+        if (is_set(vlan_tab[i].lc_set, sid))
+            return;
+    lc_tab[sid] = LC_UNDEFINED;
+}
+
+/**
+ * Read the learning constraints set for the given vlan.
+ */
+void rtu_sw_read_lc(int vid, uint32_t *lc_set)
+{
+    *lc_set = vlan_tab[vid].lc_set;
+}
+
+/**
+ * Read the learning constraint set for the VLAN following the given one.
+ */
+int rtu_sw_read_next_lc(uint16_t *vid, uint32_t *lc_set)
+{
+    for (*vid = *vid + 1; *vid < NUM_VLANS; (*vid)++) {
+        if (vlan_tab[*vid].lc_set) {
+            *lc_set = vlan_tab[*vid].lc_set;
+            return 0;
+        }
+    }
+    return -1;
+}
+
+/**
+ * Read the learning constraint set type following the given one.
+ */
+void rtu_sw_get_lc_set_type(int sid, int *lc_type)
+{
+    *lc_type = lc_tab[sid];
+}
+
+//-----------------------------------------------------------------------------
+// Default learning constraints
+//-----------------------------------------------------------------------------
+
+/**
+ * Gets the default learning constraint set.
+ */
+void rtu_sw_get_default_lc(int *sid, int *lc_type)
+{
+    *sid = default_lc_set;
+    *lc_type = lc_tab[default_lc_set];
+}
+
+/**
+ * Sets the default learning constraint set.
+ */
+int rtu_sw_set_default_lc(int sid)
+{
+    int i;
+    int cur_lc_set = default_lc_set;
+
+    default_lc_set = sid;
+
+    /* Check overall consistency for each pair of vlans */
+    for (i = 0; i < NUM_VLANS; i++)
+        if (vlan_tab[i].fid || vlan_tab[i].lc_set)
+            if (!is_lc_set_consistent(i))
+                goto rollback;
+
+    return 0;
+
+rollback:
+    default_lc_set = cur_lc_set;
+    return -1;
+}
+
+/**
+ * Sets the default learning constraint set type.
+ */
+int rtu_sw_set_default_lc_type(int lc_type)
+{
+    int i;
+    int cur_lc_type = lc_tab[default_lc_set];
+
+    lc_tab[default_lc_set] = lc_type;
+
+    /* Check overall consistency for each pair of vlans */
+    for (i = 0; i < NUM_VLANS; i++)
+        if (vlan_tab[i].fid || vlan_tab[i].lc_set)
+            if (!is_lc_set_consistent(i))
+                goto rollback;
+
+    return 0;
+
+rollback:
+    lc_tab[default_lc_set] = cur_lc_type;
+    return -1;
+}
+
+//-----------------------------------------------------------------------------
+// VID to FID allocation
+//-----------------------------------------------------------------------------
+
+/* Allocates the VID to the given FID. If the new allocation is inconsistent
+   with those already configured in the Bridge, then the management operation
+   shall not be performed and an error response shall be returned. */
+int rtu_sw_set_fid(uint16_t vid, uint8_t fid)
+{
+    vlan_tab[vid].fid = fid;
+    vlan_tab[vid].fid_fixed = 1;
+    if (!is_lc_set_consistent(vid))
+        return -1;
+    return 0;
+}
+
+void rtu_sw_get_fid(uint16_t vid, uint8_t *fid, int *fid_fixed)
+{
+    *fid = vlan_tab[vid].fid;
+    *fid_fixed = vlan_tab[vid].fid_fixed;
+}
+
+int rtu_sw_get_next_fid(uint16_t *vid, uint8_t *fid, int *fid_fixed)
+{
+    for ((*vid)++; *vid < NUM_VLANS; (*vid)++) {
+        if (vlan_tab[*vid].fid) {
+            *fid = vlan_tab[*vid].fid;
+            *fid_fixed = vlan_tab[*vid].fid_fixed;
+            return 0;
+        }
+    }
+    return -1;
+}
+
+void rtu_sw_delete_fid(uint16_t vid)
+{
+    vlan_tab[vid].fid = 0;
+    vlan_tab[vid].fid_fixed = 0;
 }

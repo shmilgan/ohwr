@@ -105,7 +105,6 @@ int rtu_fdb_read_next_static_entry(
 
 int rtu_fdb_create_static_vlan_entry(
             uint16_t vid,
-            uint8_t fid,
             uint32_t egress_ports,
             uint32_t forbidden_ports,
             uint32_t untagged_set
@@ -187,5 +186,22 @@ int rtu_vfdb_filter_dynamic(int port, uint16_t vid);
 
 void rtu_fdb_delete_dynamic_entries(int port, uint16_t vid);
 
+// Learning Constraints
+int rtu_fdb_create_lc(int sid, uint16_t vid, int lc_type);
+int rtu_fdb_delete_lc(int sid, uint16_t vid);
+int rtu_fdb_read_lc(uint16_t vid, uint32_t *lc_set);
+int rtu_fdb_read_next_lc(uint16_t *vid, uint32_t *lc_set);
+int rtu_fdb_read_lc_set_type(int sid, int *lc_type);
+
+// Default Learning Constraints
+int rtu_fdb_set_default_lc(int sid);
+int rtu_fdb_set_default_lc_type(int lc_type);
+void rtu_fdb_get_default_lc(int *sid, int *lc_type);
+
+// VID to FID allocations
+void rtu_fdb_read_fid(uint16_t vid, uint8_t *fid, int *fid_fixed);
+int rtu_fdb_read_next_fid(uint16_t *vid, uint8_t *fid, int *fid_fixed);
+int rtu_fdb_set_fid(uint16_t vid, uint8_t fid);
+int rtu_fdb_delete_fid(uint16_t vid);
 
 #endif /*__WHITERABBIT_RTU_FD_H*/

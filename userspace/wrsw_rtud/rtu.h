@@ -100,6 +100,12 @@
 
 #define IS_BPDU         1
 
+#define NUM_LC_SETS     32
+
+#define LC_UNDEFINED    0
+#define LC_INDEPENDENT  1
+#define LC_SHARED       2
+
 /**
  * RTU request: input for the RTU
  */
@@ -208,10 +214,13 @@ struct filtering_entry {
  */
 struct vlan_table_entry {
     uint32_t port_mask;     // VLAN port mask: 1 = ports assigned to this VLAN
-    uint8_t fid;            // Filtering Database Identifier
+    uint8_t fid;            // Filtering Database Identifier. (0 is reserved)
+    int fid_fixed;          // VID to FID allocation type
+                            // 1 = fixed allocation; 0 = dynamic allocation
     uint8_t prio;           // VLAN priority
     int has_prio;           // priority defined;
     int prio_override;      // priority override (force per-VLAN priority)
+
     int drop;               // 1: drop the packet (VLAN not registered)
 
     uint32_t use_dynamic; 	// For static entries, bits set to 1 indicate to use
@@ -225,6 +234,9 @@ struct vlan_table_entry {
     int is_static;
 
     uint32_t creation_t;    // value of sysUpTime when this VLAN was created.
+
+    uint32_t lc_set;        // identifies the learning constraint sets to which
+                            // this VLAN belongs
 };
 
 
