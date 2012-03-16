@@ -683,6 +683,7 @@ static int fe_insert_wildcard_static_entries(uint16_t vid)
     return 0;
 }
 
+
 //------------------------------------------------------------------------------
 // API
 //------------------------------------------------------------------------------
@@ -771,7 +772,6 @@ int rtu_vfdb_get_num_all_dynamic_entries(void)
 uint16_t rtu_fdb_get_max_supported_vlans(void)
 {
     // Operating in pure IVL mode, implementation would only support 255 VLANS!
-    // (but no means to express learning constraints yet)
     return NUM_VLANS - NUM_RESERVED_VLANS;
 }
 
@@ -990,7 +990,7 @@ void rtu_fdb_delete_dynamic_entries(int port, uint16_t vid)
  */
 int rtu_vfdb_forward_dynamic(int port, uint16_t vid)
 {
-    int err;
+    int err = 0;
     struct vlan_table_entry *vlan;
 
     if (reserved(vid) || illegal(port))
@@ -1010,21 +1010,26 @@ int rtu_vfdb_forward_dynamic(int port, uint16_t vid)
         vlan->port_mask |= (1 << port);
         rtu_sw_update_vlan_entry(vlan);
     } else {
+        rtu_sw_cache();
         /* Note: If no static entry exists for a VLAN, then it is assumed
         that frames for that VLAN are transmitted VLAN-tagged on all Ports */
-        // TODO FID
-        rtu_sw_cache();
-        rtu_sw_create_vlan_entry(vid, 0, (1 << port), 0, 0, DYNAMIC);
+        rtu_sw_create_vlan_entry(vid, (1 << port), 0, 0, DYNAMIC);
+        /* Allocate VID to FID based on fixed allocations and learning constraints*/
+        err = rtu_sw_allocate_fid(vid);
+        if (err)
+            goto rollback;
+        /* Static entries for the Wildcard VID must also apply to this VLAN */
         err = fe_insert_wildcard_static_entries(vid);
-        if (err) {
-            // Rollback insertions
-            rtu_sw_uncache();
-            rtu_sw_rollback();
-            return unlock(err);
-        }
+        if (err)
+            goto rollback;
     }
     rtu_sw_commit();
-    return unlock(0);
+    return unlock(err);
+
+rollback:
+    rtu_sw_uncache();
+    rtu_sw_rollback();
+    return unlock(err);
 }
 
 /**
@@ -1163,7 +1168,7 @@ int rtu_fdb_delete_static_entry(uint8_t mac[ETH_ALEN], uint16_t vid)
     if (!sfe)
         return unlock(-EINVAL);
     // Permanent entries can not be removed
-    if (sfe->type == ST_PERMANENT)
+    if (sfe->type == ST_READONLY)
         return unlock(-EPERM);
     // Unregister static entry from fdb
     if (vid == WILDCARD_VID) {
@@ -1247,7 +1252,6 @@ int rtu_fdb_read_next_static_entry(uint8_t (*mac)[ETH_ALEN],    // inout
  * -ENOMEM in case no memory is available to create the entry.
  */
 int rtu_fdb_create_static_vlan_entry(uint16_t vid,
-                                     uint8_t fid,
                                      uint32_t egress_ports,
                                      uint32_t forbidden_ports,
                                      uint32_t untagged_set)
@@ -1258,8 +1262,8 @@ int rtu_fdb_create_static_vlan_entry(uint16_t vid,
 
     TRACE_DBG(
         TRACE_INFO,
-        "create static vlan entry: vid=%d fid=%d egress_ports=%x forbidden_ports=%x untagged_set=%x",
-        vid, fid, egress_ports, forbidden_ports, untagged_set);
+        "create static vlan entry: vid=%d egress_ports=%x forbidden_ports=%x untagged_set=%x",
+        vid, egress_ports, forbidden_ports, untagged_set);
 
     if (reserved(vid))
         return -EINVAL;
@@ -1276,17 +1280,25 @@ int rtu_fdb_create_static_vlan_entry(uint16_t vid,
     port_mask = ve ?
         (egress_ports | ((ve->port_mask & ve->use_dynamic) & use_dynamic)):
          egress_ports;
-    rtu_sw_create_vlan_entry(vid, fid, port_mask, use_dynamic, untagged_set, STATIC);
+    rtu_sw_create_vlan_entry(vid, port_mask, use_dynamic, untagged_set, STATIC);
+
+    /* Allocate VID to FID based on fixed allocations and learning constraints*/
+    err = rtu_sw_allocate_fid(vid);
+    if (err)
+        goto rollback;
+
     // Static entries for the Wildcard VID now must also apply to this VLAN
     err = fe_insert_wildcard_static_entries(vid);
-    if (err) {
-        // Rollback insertions
-        rtu_sw_uncache();
-        rtu_sw_rollback();
-        return unlock(err);
-    }
+    if (err)
+        goto rollback;
+
     rtu_sw_commit();
-    return unlock(0);
+    return unlock(err);
+
+rollback:
+    rtu_sw_uncache();
+    rtu_sw_rollback();
+    return unlock(err);
 }
 
 /**
@@ -1485,6 +1497,281 @@ int rtu_fdb_unset_restricted_vlan_reg(int port_no)
 }
 
 //------------------------------------------------------------------------------
+// Learning Constraints
+//------------------------------------------------------------------------------
+
+int rtu_fdb_create_lc(int sid, uint16_t vid, int lc_type)
+{
+    int ret;
+
+    if ((sid < 0) || (sid > NUM_LC_SETS))
+        return -EINVAL;
+
+    if ((lc_type < LC_INDEPENDENT) || (lc_type > LC_SHARED))
+        return -EINVAL;
+
+    if (reserved(vid))
+        return -EINVAL;
+
+    lock();
+    ret = rtu_sw_create_lc(sid, vid, lc_type);
+    unlock(0);
+    return ret;
+}
+
+int rtu_fdb_delete_lc(int sid, uint16_t vid)
+{
+    if ((sid < 0) || (sid > NUM_LC_SETS))
+        return -EINVAL;
+
+    if (reserved(vid))
+        return -EINVAL;
+
+    lock();
+    rtu_sw_delete_lc(sid, vid);
+    unlock(0);
+    return 0;
+}
+
+int rtu_fdb_read_lc(uint16_t vid, uint32_t *lc_set)
+{
+    if (reserved(vid))
+        return -EINVAL;
+
+    lock();
+    rtu_sw_read_lc(vid, lc_set);
+    unlock(0);
+    return 0;
+}
+
+int rtu_fdb_read_next_lc(uint16_t *vid, uint32_t *lc_set)
+{
+    int ret;
+
+    if (reserved(*vid))
+        return -EINVAL;
+
+    lock();
+    ret = rtu_sw_read_next_lc(vid, lc_set);
+    unlock(0);
+    return ret;
+}
+
+int rtu_fdb_read_lc_set_type(int sid, int *lc_type)
+{
+    if ((sid < 0) || (sid > NUM_LC_SETS))
+        return -EINVAL;
+
+    lock();
+    rtu_sw_get_lc_set_type(sid, lc_type);
+    unlock(0);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// Default Learning Constraints
+//------------------------------------------------------------------------------
+
+void rtu_fdb_get_default_lc(int *sid, int *lc_type)
+{
+    lock();
+    rtu_sw_get_default_lc(sid, lc_type);
+    unlock(0);
+}
+
+int rtu_fdb_set_default_lc(int sid)
+{
+    int ret;
+
+    if ((sid < 0) || (sid > NUM_LC_SETS))
+        return -EINVAL;
+
+    lock();
+    ret = rtu_sw_set_default_lc(sid);
+    unlock(0);
+    return ret;
+}
+
+int rtu_fdb_set_default_lc_type(int lc_type)
+{
+    int ret;
+
+    if ((lc_type < LC_INDEPENDENT) || (lc_type > LC_SHARED))
+        return -EINVAL;
+
+    lock();
+    ret = rtu_sw_set_default_lc_type(lc_type);
+    unlock(0);
+    return ret;
+}
+
+//-----------------------------------------------------------------------------
+// VID to FID allocation
+//-----------------------------------------------------------------------------
+
+
+/**
+ * Deletes all static and dynamic mac entries from FDB, for the given VLAN.
+ */
+static void delete_mac_entries(uint16_t vid)
+{
+    int fid, xcast;
+    struct filtering_entry_node *node, *next;
+    struct filtering_entry *fe;
+    struct static_filtering_entry *sfe, *next_sfe;
+    struct vlan_table_entry *ve;
+
+    ve = rtu_sw_find_vlan_entry(vid);
+    if (ve) {
+        fid = ve->fid;
+        // Delete dynamic entries for FID assigned to VID
+        for (node = fd[fid]; node; node = next) {
+            next = node->next;
+            if (rtu_sw_find_entry(node->mac, fid, &fe))
+                rtu_fdb_delete_dynamic_entry(fe);
+        }
+
+        // Delete FDB info from static entries for VID
+        for (xcast = 0; xcast < 2; xcast++) {
+            for (sfe = sfd[xcast][vid]; sfe; sfe = next_sfe) {
+                next_sfe = sfe->next;
+                fe_delete_static_entry(vid, sfe);
+            }
+        }
+
+        // Delete FDB info from static entries for wildcard VID
+        // (if no other VID maps to the same FID).
+        if (!rtu_sw_fid_shared(fid)) {
+            for (xcast = 0; xcast < 2; xcast++)
+                for (sfe = sfd[xcast][WILDCARD_VID]; sfe; sfe = sfe->next)
+                    fe_delete_static_entry(vid, sfe);
+        }
+
+    }
+}
+
+/**
+ * Inserts all static mac entries in FDB, for the given VLAN.
+ */
+static int insert_mac_entries(uint16_t vid)
+{
+    int err;
+    int xcast;
+    struct static_filtering_entry *sfe, *next_sfe;
+
+    if (rtu_sw_find_vlan_entry(vid)) {
+        // Insert static entries for VID in FDB with new VID to FID mapping
+        for (xcast = 0; xcast < 2; xcast++) {
+            for (sfe = sfd[xcast][vid]; sfe; sfe = next_sfe) {
+                next_sfe = sfe->next;
+                err = fe_insert_static_entry(vid, sfe);
+                if (err)
+                    return err;
+            }
+        }
+
+        // Apply static entries for the Wildcard VID with new VID to FID mapping
+        err = fe_insert_wildcard_static_entries(vid);
+        if (err)
+            return err;
+    }
+    return 0;
+}
+
+
+int rtu_fdb_set_fid(uint16_t vid, uint8_t fid)
+{
+    int err;
+
+    if (reserved(vid))
+        return -EINVAL;
+
+    if (!fid)
+        return -EINVAL; /* 0 is reserved */
+
+    lock();
+    rtu_sw_cache();
+
+    // Delete FDB information associated to previous VID to FID mapping
+    delete_mac_entries(vid);
+
+    // Modify VID to FID allocation
+    err = rtu_sw_set_fid(vid, fid);
+    if (err)
+        goto rollback;
+
+    // Insert FDB information with the new VID to FID mapping
+    err = insert_mac_entries(vid);
+    if (err)
+        goto rollback;
+
+    rtu_sw_commit();
+    unlock(0);
+    return 0;
+
+rollback:
+    rtu_sw_uncache();
+    rtu_sw_rollback();
+    unlock(0);
+    return err;
+}
+
+int rtu_fdb_delete_fid(uint16_t vid)
+{
+    int err;
+
+    if (reserved(vid))
+        return -EINVAL;
+
+    lock();
+    rtu_sw_cache();
+
+    // Delete FDB information associated to previous VID to FID mapping (if any)
+    delete_mac_entries(vid);
+
+    // Delete VID to FID allocation
+    rtu_sw_delete_fid(vid);
+
+    // If VLAN is active, allocate VID to a new FID
+    if (rtu_sw_find_vlan_entry(vid)) {
+        err = rtu_sw_allocate_fid(vid);
+        if (err)
+            goto rollback;
+    }
+
+    // Insert FDB information with the new VID to FID mapping
+    insert_mac_entries(vid);
+
+    rtu_sw_commit();
+    unlock(0);
+    return err;
+
+rollback:
+    rtu_sw_uncache();
+    rtu_sw_rollback();
+    unlock(0);
+    return err;
+}
+
+void rtu_fdb_read_fid(uint16_t vid, uint8_t *fid, int *fid_fixed)
+{
+    lock();
+    rtu_sw_get_fid(vid, fid, fid_fixed);
+    unlock(0);
+}
+
+int rtu_fdb_read_next_fid(uint16_t *vid, uint8_t *fid, int *fid_fixed)
+{
+    int ret;
+
+    lock();
+    ret = rtu_sw_get_next_fid(vid, fid, fid_fixed);
+    unlock(0);
+    return ret;
+}
+
+
+//------------------------------------------------------------------------------
 // Aging
 //------------------------------------------------------------------------------
 
@@ -1503,7 +1790,7 @@ void rtu_fdb_age_dynamic_entries(void)
 
     lock();
     t = now() - aging_time;
-    for (fid = 0; fid < NUM_FIDS; fid++) {
+    for (fid = 1; fid < NUM_FIDS; fid++) {  /* fid 0 is reserved */
         for (node = fd[fid]; node; node = next) {
             next = node->next;
             if (rtu_sw_find_entry(node->mac, fid, &fe)) {
