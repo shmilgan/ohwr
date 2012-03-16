@@ -128,7 +128,7 @@ static void cache_clean()
  * @param tinfo table information that contains the indexes (in raw format)
  * @param ent (OUT) used to return the retrieved indexes
  */
-static void get_indexes(netsnmp_variable_list               *vb,
+static int get_indexes(netsnmp_variable_list               *vb,
                         netsnmp_handler_registration        *reginfo,
                         netsnmp_table_request_info          *tinfo,
                         struct mib_static_vlan_table_entry  *ent)
@@ -142,6 +142,8 @@ static void get_indexes(netsnmp_variable_list               *vb,
     rootoid_len = reginfo->rootoid_len;
 
     if (oid_len > rootoid_len) {
+        if (!tinfo || !tinfo->indexes)
+            return SNMP_ERR_GENERR;
         idx = tinfo->indexes;
         ent->cid = *idx->val.integer;
     } else {
@@ -154,6 +156,7 @@ static void get_indexes(netsnmp_variable_list               *vb,
     } else {
         ent->vid = 0;
     }
+    return SNMP_ERR_NOERROR;
 }
 
 /**
@@ -195,7 +198,10 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
     // Read indexes from request and insert them into ent
-    get_indexes(req->requestvb, reginfo, tinfo, &ent);
+    err = get_indexes(req->requestvb, reginfo, tinfo, &ent);
+    if (err)
+        return err;
+
     DEBUGMSGTL((MIBMOD, "get cid=%lu vid=%d column=%d\n",
         ent.cid, ent.vid, tinfo->colnum));
     // Check index range
@@ -238,7 +244,10 @@ static int get_next(netsnmp_request_info         *req,
     netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
     // Read indexes from request and insert them into ent
-    get_indexes(req->requestvb, reginfo, tinfo, &ent);
+    err = get_indexes(req->requestvb, reginfo, tinfo, &ent);
+    if (err)
+        return err;
+
     DEBUGMSGTL((MIBMOD, "cid=%d vid=%d column=%d\n",
         ent.cid, ent.vid, tinfo->colnum));
     // Get indexes for next entry
@@ -307,7 +316,10 @@ static int set_reserve1(netsnmp_request_info            *req,
     netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
     // Check indexes
-    get_indexes(vb, reginfo, tinfo, &ent);
+    err = get_indexes(vb, reginfo, tinfo, &ent);
+    if (err)
+        return err;
+
     DEBUGMSGTL((MIBMOD, "cid=%d vid=%d column=%d\n",
         ent.cid, ent.vid, tinfo->colnum));
 
@@ -508,12 +520,10 @@ static int set_commit(struct mib_static_vlan_table_entry *ent)
         from_octetstr(&fp, ent->forbidden_ports);
         from_octetstr(&up, ent->untagged_ports);
         // TODO handle the VLAN name
-        // TODO The MIB object does not provide means to set the FID associated
-        // to a VID. We will use FID = 0 temporarily.
         DEBUGMSGTL((MIBMOD, "create/update vlan vid=%d\n", ent->vid));
         // Create/update entry in VLAN table
         errno = 0;
-        err = rtu_fdb_proxy_create_static_vlan_entry(ent->vid, 0, ep, fp, up);
+        err = rtu_fdb_proxy_create_static_vlan_entry(ent->vid, ep, fp, up);
         if (errno)
             goto minipc_err;
         if (err)
