@@ -27,7 +27,9 @@ ieee8021QBridgeVlanStaticTable.o \
 ieee8021QBridgeVlanCurrentTable.o \
 ieee8021QBridgeVlanNumDeletes.o \
 ieee8021QBridgeNextFreeLocalVlanTable.o \
-ieee8021QBridgePortVlanTable.o
+ieee8021QBridgePortVlanTable.o \
+ieee8021QBridgeLearningConstraintsTable.o \
+ieee8021QBridgeLearningConstraintDefaultsTable.o
 
 LIB  = libieee8021qbridge.so
 
