@@ -261,10 +261,14 @@ void cli_error(int error)
 struct cli_shell *cli_init(void)
 {
     struct cli_shell *cli;
+    struct minipc_ch *client;
 
+    /* Set up the client for the RTU proxy */
     errno = 0;
-    if(!rtu_fdb_proxy_create("rtu_fdb"))
+    client = rtu_fdb_proxy_create("rtu_fdb");
+    if(!client)
         cli_error(errno);
+    minipc_set_logfile(client, NULL); /* no log file */
 
     cli = malloc(sizeof(struct cli_shell));
     if (!cli)
