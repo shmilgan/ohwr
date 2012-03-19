@@ -57,6 +57,7 @@ static int rtu_create_static_entries()
 {
     uint8_t bcast_mac[]         = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
     uint8_t slow_proto_mac[]    = {0x01, 0x80, 0xc2, 0x00, 0x00, 0x01};
+    uint8_t ptp_mcast_mac[]    = {0x01, 0x1b, 0x19, 0x00, 0x00, 0x00};
     hexp_port_list_t plist;
     hexp_port_state_t pstate;
     int i, err;
@@ -92,6 +93,7 @@ static int rtu_create_static_entries()
     // Broadcast MAC
     TRACE(TRACE_INFO,"adding static route for broadcast MAC...");
     err = rtu_fd_create_entry(bcast_mac, 0, enabled_port_mask | (1 << NIC_PORT), STATIC);
+    err = rtu_fd_create_entry(ptp_mcast_mac, 0, (1 << NIC_PORT), STATIC);
     if(err)
         return err;
 
