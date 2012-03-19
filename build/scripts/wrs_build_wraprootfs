@@ -57,3 +57,4 @@ EOF
 
 fakeroot bash $X $TMPSCRIPT
 
+rm -rf $TMPFS
