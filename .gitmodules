@@ -1,0 +1,3 @@
+[submodule "userspace/ptp-noposix"]
+	path = userspace/ptp-noposix
+	url = git://gnudd.com/ptp-noposix.git
