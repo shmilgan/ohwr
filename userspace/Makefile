@@ -15,7 +15,7 @@ WRDEV_DIR ?= $(WRS_BASE_DIR)/..
 # subdirectories we want to compile
 SUBDIRS = libswitchhw libwripc libptpnetif 
 SUBDIRS += wrsw_hal wrsw_rtud spll_dbg_proxy
-SUBDIRS += wr_mon #rtu_stat
+SUBDIRS += wr_mon rtu_stat #test_rtu
 
 # all variables are exported
 export

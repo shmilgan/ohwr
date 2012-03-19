@@ -1,3 +1,5 @@
 wrsw_hal/wrsw_hal
 wrsw_rtud/wrsw_rtud
 spll_dbg_proxy/spll_dbg_proxy
+wr_mon/wr_mon
+rtu_stat/rtu_stat
