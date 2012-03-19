@@ -1,15 +1,16 @@
 /* SoftPLL debug proxy
 
-	 Reads out the debug FIFO datastream from the SoftPLL and proxies it
-	 via TCP connection to the application running on an outside host, where
-	 the can be plotted, analyzed, etc.
-	 
-	 The debug stream contains run-time signals coming in/out the SoftPLL - for example,
-	 the phase/frequency errors on each channel, DAC drive values, phase tags. 
+ Reads out the debug FIFO datastream from the SoftPLL and proxies it
+ via TCP connection to the application running on an outside host, where
+ the can be plotted, analyzed, etc.
 
-	 Todo: poll the hardware FIFO through a driver with interrupt support
+ The debug stream contains run-time signals coming in/out the SoftPLL
+ - for example, the phase/frequency errors on each channel, DAC drive
+ values, phase tags.
+
+ Todo: poll the hardware FIFO through a driver with interrupt support
 */
-	 
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -36,9 +37,9 @@ __attribute__((packed)) struct fifo_entry {
 	uint16_t seq_id;
 };
 
-/* 
+/*
 
-Simple ring buffer implementation. WARNING: NOT thread-safe 
+Simple ring buffer implementation. WARNING: NOT thread-safe
 
 */
 struct ring_buffer {
@@ -53,22 +54,23 @@ int rbuf_init(struct ring_buffer *rbuf, int num_entries, int entry_size)
 	rbuf->base = malloc(num_entries * entry_size);
 	if(!rbuf->base)
 		return -1;
-	
+
 	rbuf->entry_size = entry_size;
 	rbuf->num_entries = num_entries;
 	rbuf->wr_ptr = 0;
 	rbuf->rd_ptr = 0;
 	rbuf->count = 0;
-	return 0;	
+	return 0;
 }
 
 void rbuf_push(struct ring_buffer *rbuf, void *what)
 {
 	if(rbuf->count >= rbuf->num_entries-1) /* buffer full */
 		return;
-	
+
 	rbuf->count++;
-	memcpy(rbuf->base + rbuf->wr_ptr*rbuf->entry_size, what, rbuf->entry_size);
+	memcpy(rbuf->base + rbuf->wr_ptr*rbuf->entry_size, what,
+	       rbuf->entry_size);
 	rbuf->wr_ptr++;
 	if(rbuf->wr_ptr == rbuf->num_entries)
 		rbuf->wr_ptr = 0;
@@ -78,9 +80,10 @@ int rbuf_pop(struct ring_buffer *rbuf, void *dst)
 {
 	if(!rbuf->count) /* buffer empty */
 		return 0;
-	
+
 	rbuf->count--;
-	memcpy(dst, rbuf->base + rbuf->rd_ptr*rbuf->entry_size, rbuf->entry_size);
+	memcpy(dst, rbuf->base + rbuf->rd_ptr*rbuf->entry_size,
+	       rbuf->entry_size);
 	rbuf->rd_ptr++;
 
 	if(rbuf->rd_ptr == rbuf->num_entries)
@@ -102,25 +105,25 @@ static struct SPLL_WB *_spll_regs = (struct SPLL_WB*) SPLL_BASE;
 
 void poll_spll_fifo()
 {
-	
+
 	while(1) {
 
-/* Move the following lines (and the ring buffering code) to the driver. 
+/* Move the following lines (and the ring buffering code) to the driver.
 
 	for the SPLL: IRQ = 3  (asserted when FIFO != empty)
-					base : check DFR_HOST register in softpll_regs.h
-	
+			base : check DFR_HOST register in softpll_regs.h
+
 	device: /dev/spfifoX
 	parameters: base_addr, num_regs (r0, r1), irq
-	ioctls: 
-	
+	ioctls:
+
 */
 
 		uint32_t csr =	_fpga_readl(REG(DFR_HOST_CSR));
 		struct fifo_entry ent;
 
 //		fprintf(stderr,"CSR %x\n", csr);
-		
+
 		if(csr & SPLL_DFR_HOST_CSR_EMPTY) break;
 
 		ent.value = _fpga_readl(REG(DFR_HOST_R0));
@@ -140,34 +143,37 @@ void sighandler(int sig)
 	if(sig == SIGPIPE)
 	{
 		fprintf(stderr,"Connection broken. Killing proxy\n");
-		proxy_done = 1;	
+		proxy_done = 1;
 	}
 }
 
 
 void proxy_stuff(int fd)
 {
-	if(	rbuf_init(&spll_trace, RING_BUFFER_ENTRIES, sizeof(struct fifo_entry)) < 0)
+	if(rbuf_init(&spll_trace, RING_BUFFER_ENTRIES,
+		     sizeof(struct fifo_entry)) < 0)
 	{
 		perror("rbuf_init()");
 		return ;
 	}
 
-	fprintf(stderr,"Connection accepted [record size %d].\n", sizeof(struct fifo_entry));
+	fprintf(stderr,"Connection accepted [record size %d].\n",
+		sizeof(struct fifo_entry));
 	proxy_done = 0;
 	signal(SIGPIPE, sighandler);
 
 	for(;;)
 	{
-		poll_spll_fifo();	
-		
+		poll_spll_fifo();
+
 		while(spll_trace.count > ENTRIES_PER_PACKET)
 		{
 			struct fifo_entry tx_buf[ENTRIES_PER_PACKET];
 			int i;
-			
+
+			/* fixme: make endian-independent */
 			for(i=0;i<ENTRIES_PER_PACKET;i++)
-				rbuf_pop(&spll_trace, &tx_buf[i]); /* fixme: make endian-independent */
+				rbuf_pop(&spll_trace, &tx_buf[i]);
 
 			if(proxy_done)
 			{
@@ -180,12 +186,12 @@ void proxy_stuff(int fd)
 				fprintf(stderr,"Connection closed.\n");
 				rbuf_release(&spll_trace);
 				return;
-			}			
+			}
 		}
 //		fprintf(stderr,"Count :%d\n", spll_trace.count);
 		usleep(10000);
 	}
-	
+
 }
 
 extern void shw_fpga_mmap_init();
@@ -204,14 +210,15 @@ int main(int argc, char *argv[])
 		}
 
 		int yes = 1;
-		if (setsockopt(sock_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes)) < 0) {
+		if (setsockopt(sock_fd,SOL_SOCKET,SO_REUSEADDR,
+			       &yes,sizeof(yes)) < 0) {
 			perror("setsockopt()");
 			return -1;
 		}
-		
+
     sin.sin_family = AF_INET;                /* Internet address family */
     sin.sin_addr.s_addr = htonl(INADDR_ANY); /* Any incoming interface */
-    sin.sin_port = htons(MY_PORT); 	
+    sin.sin_port = htons(MY_PORT);
 
     if (bind(sock_fd, (struct sockaddr *) &sin, sizeof(sin)) < 0)
     {
@@ -225,17 +232,19 @@ int main(int argc, char *argv[])
 			return -1;
 		}
 
-		
+
 		for(;;)
 		{
 			struct sockaddr_in client_addr;
 			socklen_t client_len = sizeof(client_addr);
 			int client_fd;
-		
-			if((client_fd = accept(sock_fd, (struct sockaddr *) &client_addr, &client_len)) > 0)
+
+			if((client_fd = accept(sock_fd,
+					       (struct sockaddr *)&client_addr,
+					       &client_len)) > 0)
 				proxy_stuff(client_fd);
-				
-		}    	
+
+		}
 
 		return 0;
 }
