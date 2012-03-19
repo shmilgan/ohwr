@@ -1,7 +1,0 @@
-
-This directory used to include tests that are meant to be run on the
-switch itself. Now only rtu_test remains, even though it's not
-included in the Makefile rules.
-
-If you "make" here, only libwripc and wr_mon are compiled, but
-wr_mon must be ported to V3.
