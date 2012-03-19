@@ -1,11 +1,7 @@
 
-This directory includes tests that are meant to be run on the switch
-itself.
+This directory used to include tests that are meant to be run on the
+switch itself. Now only rtu_test remains, even though it's not
+included in the Makefile rules.
 
-The directory has been copied from @code{software/tests} as it
-appeared in the @i{svn} repository; it has not been recompiled or
-verified in any way.  In this version, only wr_mon had been made to
-compile, the other tests still include @code{build.sh} that sources
-@code{../../settings}, in the old way that is now deprecated.
-
-If you "make" here, only libwripc and wr_mon is compiled.
+If you "make" here, only libwripc and wr_mon are compiled, but
+wr_mon must be ported to V3.
