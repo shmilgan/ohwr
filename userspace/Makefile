@@ -13,8 +13,9 @@ WR_INSTALL_ROOT ?= $(WRS_OUTPUT_DIR)/images/wr
 WRDEV_DIR ?= $(WRS_BASE_DIR)/..
 
 # subdirectories we want to compile
-SUBDIRS = libswitchhw wrsw_hal wrsw_rtud spll_dbg_proxy
-# SUBDIRS += wrsw_rtud wr_mon rtu_stat
+SUBDIRS = libswitchhw libwripc libptpnetif 
+SUBDIRS += wrsw_hal wrsw_rtud spll_dbg_proxy
+SUBDIRS += wr_mon #rtu_stat
 
 # all variables are exported
 export
