@@ -12,31 +12,19 @@ CROSS_COMPILE_ARM ?= $(CROSS_COMPILE)
 WR_INSTALL_ROOT ?= $(WRS_OUTPUT_DIR)/images/wr
 WRDEV_DIR ?= $(WRS_BASE_DIR)/..
 
+# subdirectories we want to compile
+SUBDIRS = libswitchhw wrsw_hal wrsw_rtud
+# SUBDIRS += spll_dbg_proxy wrsw_rtud wr_mon rtu_stat
+
 # all variables are exported
 export
 
 # All targets must install as well, as later builds use headers/libs
 all:
-	$(MAKE) -C libswitchhw all install
-	$(MAKE) -C wrsw_hal all install
-	$(MAKE) -C wrsw_rtud all
-#	$(MAKE) -C tests/rtu_stat TARGET=ARM all
+	for d in $(SUBDIRS); do $(MAKE) -C $$d $@ || exit 1; done
 
 clean:
-	$(MAKE) -C libswitchhw clean
-	$(MAKE) -C wrsw_hal clean
-	$(MAKE) -C wrsw_rtud clean
-#	$(MAKE) -C tests/wr_mon clean
-#	$(MAKE) -C tests/rtu_stat clean
+	for d in $(SUBDIRS); do $(MAKE) -C $$d $@ || exit 1; done
 
 install: all
-	$(MAKE) -C libswitchhw install
-	$(MAKE) -C wrsw_hal install
-	$(MAKE) -C wrsw_rtud install
-#	$(MAKE) -C tests/rtu_stat TARGET=ARM deploy
-#	./rubi-repos/deploy.sh $(WR_INSTALL_ROOT)
-
-#rootfs: install
-#	mkdir -p $(WR_INSTALL_ROOT)/firmware
-#	cp $(WRDEV_DIR)/hdl/bin/*.bin $(WR_INSTALL_ROOT)/firmware
-#	../scripts/build_rootfs.sh
+	for d in $(SUBDIRS); do $(MAKE) -C $$d $@ || exit 1; done
