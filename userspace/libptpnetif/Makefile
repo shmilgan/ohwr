@@ -1,7 +1,7 @@
 
 CC = $(CROSS_COMPILE)gcc
 AR = $(CROSS_COMPILE)ar
-CFLAGS = -I. -O2 -I../include -I../wrsw_hal -I../libwripc -DDEBUG
+CFLAGS = -I. -O2 -I../include -I../wrsw_hal -I../mini-rpc -DDEBUG
 
 OBJS = hal_client.o netif_test.o ptpd_netif.o
 

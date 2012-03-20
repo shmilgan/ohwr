@@ -12,9 +12,9 @@ OBJDUMP         = $(CROSS_COMPILE)objdump
 OBJS = rtu_stat.o
 
 CFLAGS =  -O2 -I../include -DDEBUG -I$(LINUX)/include -I../libptpnetif \
-	-I../wrsw_hal -I../libwripc -I../wrsw_rtud -g 
+	-I../wrsw_hal -I../wrsw_rtud -I../mini-rpc -g 
 
-LDFLAGS =  -L$(WR_INSTALL_ROOT)/lib -lwripc
+LDFLAGS =  -L$(WR_INSTALL_ROOT)/lib -L../mini-rpc -lminipc
 
 BINARY = rtu_stat
 

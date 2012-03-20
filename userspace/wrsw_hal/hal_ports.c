@@ -15,7 +15,7 @@
 #include <linux/if_arp.h>
 #include <linux/if.h>
 
-#include <wr_ipc.h>
+//#include <wr_ipc.h>
 
 /* LOTs of hardware includes */
 #include <hw/trace.h>

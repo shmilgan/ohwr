@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <wr_ipc.h>
+//#include <minipc.h>
 
 #include <hw/trace.h>
 #include <hw/switch_hw.h>

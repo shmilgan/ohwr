@@ -13,10 +13,12 @@ WR_INCLUDE = $(WR_INSTALL_ROOT)/include
 WR_LIB = $(WR_INSTALL_ROOT)/lib
 
 CFLAGS		= -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL \
-			-I. -I../include -I$(WR_INCLUDE) -I$(LINUX)/include
+		-I../libptpnetif -I../wrsw_hal \
+		-I../mini-rpc -I../include -I$(WR_INCLUDE) -I$(LINUX)/include
 # -I$(CROSS_COMPILE_ARM_PATH)/../include
 
-LDFLAGS 	:= -L$(WR_LIB) -lswitchhw -lptpnetif  -lwripc -lpthread
+LDFLAGS 	:= -L$(WR_LIB) -L../libptpnetif -L../libswitchhw -L../mini-rpc\
+		-lswitchhw -lptpnetif -lpthread -lminipc
 
 RM 	    := rm -f
 
