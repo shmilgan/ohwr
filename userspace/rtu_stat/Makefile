@@ -14,7 +14,7 @@ OBJS = rtu_stat.o
 CFLAGS =  -O2 -I../include -DDEBUG -I$(LINUX)/include -I../libptpnetif \
 	-I../wrsw_hal -I../libwripc -I../wrsw_rtud -g 
 
-LDFLAGS =  -L$(WR_INSTALL_ROOT)/lib -lptpnetif -lwripc -lswitchhw 
+LDFLAGS =  -L$(WR_INSTALL_ROOT)/lib -lwripc
 
 BINARY = rtu_stat
 
