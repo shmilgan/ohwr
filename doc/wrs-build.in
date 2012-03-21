@@ -957,6 +957,11 @@ Actually, I'm currently using the stanza shown above to boot my
 switch over the network with no interaction at all, while being able
 to change the boot procedure on the server while the switch is off.
 
+To have a self-hosting switch, you should copy your
+filesystem to NAND flash. See @ref{Installing the filesystem to NAND},
+for a quick primer (the production procedure is not finalized at this
+point).
+
 @c ##########################################################################
 @node Code layout in a production switch
 @chapter Code layout in a production switch
@@ -1022,6 +1027,127 @@ from @i{barebox} itself or from a custom build of the kernel.
 Later releases of this document will include the complete recovery
 procedures, as well as building rules for the production versions of
 @i{at91boot} and @i{barebox}.
+
+@menu
+* Installing the filesystem to NAND::  
+@end menu
+
+@c ==========================================================================
+@node Installing the filesystem to NAND
+@section Installing the filesystem to NAND
+
+This is an initial procedure to install the filesystem to NAND memory
+and set up a self-hosted switch to keep in your pocket for
+demonstration purposes.  Pleae note this is not the production release,
+as some shortcuts have been taken.
+
+After a successful NFS-Root boot, you'll notice the system identified
+two flash devices, for a total of 3 partitions. Note however that NAND
+memory may have bad blocks:
+
+@example
+   # dmesg | grep -i mtd
+   Creating 2 MTD partitions on "atmel_nand":
+   mtd_dataflash spi0.0: AT45DB642x (8448 KBytes) pagesize 1056 bytes (OTP)
+
+   # cat /proc/mtd
+   dev:    size   erasesize  name
+   mtd0: 04000000 00020000 "Partition 1"
+   mtd1: 1c000000 00020000 "Partition 2"
+   mtd2: 00840000 00000420 "spi0.0-AT45DB642x"
+
+   # dmesg | grep -i bad
+   Scanning device for bad blocks
+   Bad eraseblock 2 at 0x000000040000
+   Bad eraseblock 914 at 0x000007240000
+   Bad eraseblock 2649 at 0x000014b20000
+   Bad eraseblock 2944 at 0x000017000000
+
+@end example
+
+To set up a boot procedure that doesn't depend on the network,
+we need to choose where the place the kernel and filesystem. To
+avoid repartitioning the NAND memory let's use the two
+partitions we have: mtd0 to fit the kernel and mtd1 for the filesystem.
+
+Please note that the environment of @i{barebox} is stored in NAND
+memory from 256k to 512k. The size is so big because @i{barebox}
+will skip badblocks within that are.
+
+The suggested setup, thus, is the following:
+
+@example
+   0x0000.0000 - 0x0004.0000    Empty (space for a barebox)
+   0x0004.0000 - 0x0008.0000    Barebox environment
+   0x0008.0000 - 0x0010.0000    Empty (up to 1MB)
+   0x0010.0000 - 0x0090.0000    Kernel (plenty of space)
+   0x0090.0000 - 0x0400.0000    Empty (up to the end of /dev/mtd0)
+   0x0400.0000 - 0x2000.0000    Filesystem space, jffs2
+@end example
+
+With this in mind, the installation procedure is as follow:
+
+@table @i
+
+@item  Erase the filesystem partion if needed
+
+	@code{flash_eraseall -j /dev/mtd1}
+
+@item Mount as @i{jffs2}
+
+        @code{mount -t jffs2 /dev/mtdblock1 /mnt}
+
+@item Copy your filesystem data, possibly from the cpio archive
+
+	@code{cd /mnt; zcat /tmp2/wrs-image.cpio.gz | cpio --extract}
+
+	Here, you may want to copy the current NFS-Root filesystem,
+        but the @i{cp} command we have on the target lacks the
+	@code{-x} (@code{--one-file-system}) option.
+
+@item Umount the filesystem
+
+	@code{cd /; umount /mnt}
+
+@item Erase space for the kernel
+
+	@code{flash_erase /dev/mtd0 0x100000 0x40}
+
+	Note that the offset is in bytes (1MB) and the lenght is in
+        number of blocks (each block is 128kB
+
+@item Copy the kernel to nand
+
+	@code{cat /path/to/zImage /dev/zero | cat | dd bs=1k count=2048 > /tmp/k}
+        @code{dd if=/tmp/k bs=128k of=/dev/mtd0 seek=8}
+
+	The former command is needed to pad the kernel to a multiple
+        of 128kB, as the flash has 128k-sized blocks. The size here
+        is 2MB, which is more than enough for our current kernel.
+
+	The latter command copies to @code{/dev/mtd0} as offset 1MB.
+
+@end table
+
+The following repeats the commands in a format that is simpler to cut
+and paste to your serial port:
+
+@smallexample
+    flash_eraseall -j /dev/mtd1
+    mount -t jffs2 /dev/mtdblock1 /mnt
+    cd /mnt; zcat /tmp2/wrs-image.cpio.gz | cpio --extract
+    cd /; umount /mnt
+    flash_erase /dev/mtd0 0x100000 0x40
+    cat /path/to/zImage /dev/zero | cat | dd bs=1k count=2048 > /tmp/k
+    dd if=/tmp/k bs=128k of=/dev/mtd0 seek=8
+@end smallexample
+
+Now, we need to go to @i{barebox} and change the default boot command.
+To do it, you need to call @code{edit /env/config} and later
+@code{saveenv}.  The internal editor of @i{barebox} is pretty basic, but
+it use the arrow keys (it is not like @i{vi}, for your pleasure but
+not for mine). To save and exit use @i{ctrl-D}.
+
 
 @c ##########################################################################
 @node Troubleshooting
