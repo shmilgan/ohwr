@@ -39,7 +39,11 @@ void wrn_tstamp_find_skb(struct wrn_dev *wrn, int desc)
 	/* so we found the skb, do the timestamping magic */
 	hwts = skb_hwtstamps(skb);
 	wrn_ppsg_read_time(wrn, &counter_ppsg, &utc);
-	if(counter_ppsg < wrn->ts_buf[i].ts)
+	
+	/* The timestamp nanoseconds value is closer to the end of previous second, but the UTC time
+	   read from PPSG is at the beginning of the next second: adjust UTC seconds to avoid 1 sec
+	   "jump" */
+	if(counter_ppsg < REFCLK_FREQ/4 && wrn->ts_buf[i].ts > 3*REFCLK_FREQ/4)
 		utc--;
 
 	ts.tv_sec = (s32)utc & 0x7fffffff;
