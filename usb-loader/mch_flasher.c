@@ -42,6 +42,11 @@
 
 #define PORT_SPEED 			115200
 
+//External variable from version.c
+extern const char build_time[];
+extern const char git_user[];
+extern const char git_revision[];
+
 char *program_path;
 
 int applet_silent_mode = 1;
@@ -418,6 +423,8 @@ main(int argc, char *argv[])
 	if(argc > 2)
 	  serial_port = argv[2];
 
+	//Print line to know the version of software for testing purpose
+	fprintf(stderr,"\nCompiled by %s (%s)\ngit rev:%s\n\n",git_user,build_time,git_revision);
 
 	program_path = dirname(argv[0]);
 
