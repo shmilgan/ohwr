@@ -435,7 +435,8 @@ main(int argc, char *argv[])
 	fprintf(stderr,"Initializing DataFlash...\n\n");
 	dataflash_init(board_rev);
 
-//	dataflash_erase_all();
+	fprintf(stderr,"Erasing DataFlash...\n\n");
+	dataflash_erase_all();
 	
 	fprintf(stderr,"Programming DataFlash...\n");
 	dataflash_program(argv[1]);
