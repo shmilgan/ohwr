@@ -1,4 +1,14 @@
 
+IMPORTANT NOTE (Mar 2012):
+
+     This is the software repository for version 2
+     of the switch. Version 2 is not being produced and only one dozen
+     of them exist. If you have version 3, please checkout branch "v3"
+     of this same repository (or simply "master" if you do it after
+     2012-04-07)
+
+ORIGINAL README follows:
+
 This package is meant to include all white-rabbit software. Part of
 this comes from the white-rabbit svn repository on ohwr.org, part comes
 from separate repositories that I merged here.

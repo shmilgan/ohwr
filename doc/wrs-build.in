@@ -80,6 +80,14 @@ Build}.
 @node Overview
 @chapter Overview
 
+@b{Important Note (Mar 2012):}
+This is the software repository for version 2
+of the switch. Version 2 is not being produced and only one dozen
+of them exist. If you have version 3, please checkout branch "v3"
+of this same repository (or simply "master" if you do it after
+2012-04-07)
+
+
 The scripts build over previous work by Tomasz Wlostowski, who first
 made the whole thing work and stick together -- a serious result from
 serious efforts, I'm really amazed by his achievements.
