@@ -1,0 +1,53 @@
+--- /dev/null
++++ b/package/netsnmp/netsnmp.mk
+@@ -3,12 +3,14 @@
+ # netsnmp
+ #
+ #############################################################
++# 05/24/2011: 	Modified to reduce footprint 
++
+ NETSNMP_VERSION:=5.5
+ NETSNMP_SITE:=http://$(BR2_SOURCEFORGE_MIRROR).dl.sourceforge.net/sourceforge/net-snmp/
+ NETSNMP_DIR:=$(BUILD_DIR)/net-snmp-$(NETSNMP_VERSION)
+ NETSNMP_SOURCE:=net-snmp-$(NETSNMP_VERSION).tar.gz
+ 
+-NETSNMP_WO_TRANSPORT:=
++NETSNMP_WO_TRANSPORT:= TCP Unix Callback
+ ifneq ($(BR2_INET_IPX),y)
+ NETSNMP_WO_TRANSPORT+= IPX
+ endif
+@@ -74,7 +76,7 @@
+ 		--with-ldflags="$(TARGET_LDFLAGS)" \
+ 		--with-endianness=$(NETSNMP_ENDIAN) \
+ 		--with-persistent-directory=/var/lib/snmp \
+-		--enable-ucd-snmp-compatibility \
++		--disable-ucd-snmp-compatibility \
+ 		--enable-shared \
+ 		--disable-static \
+ 		--with-logfile=none \
+@@ -87,15 +89,23 @@
+ 		--without-rsaref \
+ 		--with-sys-contact="root" \
+ 		--with-sys-location="Unknown" \
+-		--with-mib-modules="host smux ucd-snmp/dlmod" \
++		--with-mib-modules="ucd-snmp/dlmod" \
+ 		--with-out-transports="$(NETSNMP_WO_TRANSPORT)" \
+-		--with-defaults \
+ 		--disable-debugging \
+ 		--prefix=/usr \
+ 		--sysconfdir=/etc \
+ 		--enable-mini-agent \
+ 		--without-kmem-usage \
+ 		$(DISABLE_IPV6) \
++		--disable-applications \
++		--disable-scripts \
++		--disable-mibs \
++		--disable-mib-loading \
++		--disable-deprecated \
++		--disable-snmptrapd-subagent \
++		--without-opaque-special-types \
++		--with-out-mib-modules="mibII ucd_snmp agent_mibs agentx target utilities disman/event disman/schedule host" \
++		--with-default-snmp-version="3" \
+ 	)
+ 	touch $@
+ 
