@@ -153,31 +153,16 @@ int my_rand()
     r_seed += 12345;
     return r_seed;
 }
+
+extern int mem_test(unsigned long _start, unsigned long _end, unsigned long pattern_unused);
+
 static unsigned char ExtRAM_TestOk(void)
 {
     unsigned int i;
     unsigned int *ptr = (unsigned int *) EXTRAM_ADDR;
+	TRACE_INFO( "External mem addr: %x\n\r", EXTRAM_ADDR);
 
-/*    for(;;)
-    {
-	ptr[0] = 0xdeadbeef;
-	ptr[0x1000] = ~0xdeadbeef;
-    } */
-    
-    my_srand(0);
-    TRACE_INFO("testing External RAM");
-    for (i = 0; i < 512 * 1024; ++i) {
-        ptr[i] = my_rand();
-    }
-
-    my_srand(0);
-    for (i = 0; i < 512 * 1024; ++i) {
-        if (ptr[i] != my_rand()) {
-        	TRACE_INFO( "fail: %x %x\n\r", i, ptr[i]);
-                return 0;
-            }
-    }
-    return 1;
+	return	mem_test((EXTRAM_ADDR), (EXTRAM_ADDR) + 0x4000000 - 0x4, 0) ? 0: 1;
 }
 
 
@@ -279,22 +264,25 @@ int main(int argc, char **argv)
 //	    ddramc_hw_init();
 #endif
         }
-
-        // Test external RAM access
-        if (ExtRAM_TestOk()) {
-
-            pMailbox->status = APPLET_SUCCESS;
-        }
-        else {
-            pMailbox->status = APPLET_FAIL;
-        }
-
-        pMailbox->argument.outputInit.bufferAddress = ((unsigned int) &end);
-        pMailbox->argument.outputInit.bufferSize = 0;
-        pMailbox->argument.outputInit.memorySize = EXTRAM_SIZE;
-
-        TRACE_INFO("\tInit successful.\n\r");
+       TRACE_INFO("\tInit successful.\n\r");
     }
+    
+    if (pMailbox->command == APPLET_CMD_WRITE || pMailbox->command == APPLET_CMD_READ) 
+    {
+	    
+	    // Test external RAM access
+	    if (ExtRAM_TestOk()) {
+		    pMailbox->status = APPLET_SUCCESS;
+	    }
+	    else {
+		    pMailbox->status = APPLET_FAIL;
+	    }
+	    
+	    pMailbox->argument.outputInit.bufferAddress = ((unsigned int) &end);
+	    pMailbox->argument.outputInit.bufferSize = 0;
+	    pMailbox->argument.outputInit.memorySize = EXTRAM_SIZE;
+    }
+    
 
     // Acknowledge the end of command
     TRACE_INFO("\tEnd of applet (command : %x --- status : %x)\n\r", pMailbox->command, pMailbox->status);
