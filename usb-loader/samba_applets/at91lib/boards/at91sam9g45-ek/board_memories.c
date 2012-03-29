@@ -38,6 +38,7 @@
 #include <board.h>
 #include <pio/pio.h>
 #include "board_memories.h"
+#include <utility/trace.h>
 
 /*
     Macros:
@@ -49,6 +50,12 @@
 #define READ(peripheral, register)          (peripheral->register)
 #define WRITE(peripheral, register, value)  (peripheral->register = value)
 
+//------------------------------------------------------------------------------
+//         External definitions
+//------------------------------------------------------------------------------
+#ifndef AT91C_DDRC2_NR_VAL
+	#define AT91C_DDRC2_NR_VAL 13 //This value should be 13 for WRS3-18
+#endif
 
 //------------------------------------------------------------------------------
 //         Internal functions
@@ -135,18 +142,25 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
             // 4. Program the features of DDR2-SDRAM device into the Timing Register HDDRSDRC2_T2PR.            
 
             WRITE(pDdrc, HDDRSDRC2_CR, AT91C_DDRC2_NC_DDR10_SDR9  |     // 10 column bits (1K)
-                                       AT91C_DDRC2_NR_13          |     // 14 row bits    (8K)
+                                       AT91C_DDRC2_NR_VAL          |     // 13 row bits    (8K) 
                                        AT91C_DDRC2_CAS_3          |     // CAS Latency 3
                                        AT91C_DDRC2_DLL_RESET_DISABLED
                                        ); // DLL not reset
 
+	    TRACE_INFO("\tDDR2 Config: 0x%x (NC=%d, NR=%d, CAS=%d) \n\r", 
+		       READ(pDdrc, HDDRSDRC2_CR),
+		       (READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_NC) + 9,
+		       ((READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_NR) >> 2) + 11,
+		       (READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_CAS) >> 4);
+    	    
+	    
             // assume timings for 7.5ns min clock period
             WRITE(pDdrc, HDDRSDRC2_T0PR, AT91C_DDRC2_TRAS_6       |     //  6 * 7.5 = 45 ns
                                          AT91C_DDRC2_TRCD_2       |     //  2 * 7.5 = 15 ns
                                          AT91C_DDRC2_TWR_2        |     //  2 * 7.5 = 15 ns
                                          AT91C_DDRC2_TRC_8        |     //  8 * 7.5 = 60 ns
                                          AT91C_DDRC2_TRP_2        |     //  2 * 7.5 = 15 ns
-                                         AT91C_DDRC2_TRRD_2       |     //  2 * 7.5 = 15 ns
+                                         AT91C_DDRC2_TRRD_1       |     //  1 * 7.5 = 7.5 ns
                                          AT91C_DDRC2_TWTR_1       |     //  1 clock cycle
                                          AT91C_DDRC2_TMRD_2);           //  2 clock cycles
 
@@ -156,8 +170,8 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
                                          AT91C_DDRC2_TRFC_14 << 0);     // 14 * 7.5 = 105 ns (must be 105 ns for 512M DDR)
 
             WRITE(pDdrc, HDDRSDRC2_T2PR, AT91C_DDRC2_TRTP_1   |         //  1 * 7.5 = 7.5 ns
-                                         AT91C_DDRC2_TRPA_2   |         
-                                         AT91C_DDRC2_TXARDS_8 |         //  7 clock cycles
+                                         AT91C_DDRC2_TRPA_0   |         
+                                         AT91C_DDRC2_TXARDS_7 |         //  7 clock cycles
                                          AT91C_DDRC2_TXARD_2);          //  2 clock cycles
 
             // Step 3: An NOP command is issued to the DDR2-SDRAM to enable clock.
