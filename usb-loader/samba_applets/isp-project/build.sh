@@ -24,7 +24,7 @@ compile_module()
 		make $2
 	else
 		#Compile the module
-		make CROSS_COMPILE=${CROSS_COMPILE} CHIP=at91sam9g45 BOARD=at91sam9g45-ek MEMORIES=sram TRACE_LEVEL=5 DYN_TRACES=1 DEFINES="-D__GIT__=\\\"${GITR}${GITS}\\\"" INSTALLDIR=../../
+		make CROSS_COMPILE=${CROSS_COMPILE} CHIP=at91sam9g45 BOARD=at91sam9g45-ek MEMORIES=sram TRACE_LEVEL=5 DYN_TRACES=1 DEFINES="-D__GIT__=\\\"${GITR}${GITS}\\\" $DEFINES" INSTALLDIR=../../
 	fi
 }
 
@@ -36,6 +36,15 @@ root="$(dirname $(pwd)/$0)"
 compile_module dataflash $1
 
 #### Compilation of extern ram module
+DEFINES="-DAT91C_DDRC2_NR_XX=AT91C_DDRC2_NR_13"
+compile_module extram $1 
+cp ${root}/../isp-extram-at91sam9g45.bin ${root}/../isp-extram-at91sam9g45-NR13.bin
+
+DEFINES="-DAT91C_DDRC2_NR_XX=AT91C_DDRC2_NR_14"
 compile_module extram $1
+cp ${root}/../isp-extram-at91sam9g45.bin ${root}/../isp-extram-at91sam9g45-NR14.bin 
 
+DEFINES="-DAT91C_DDRC2_NR_XX=$1"
 
+#### Compilation of extern ram module
+compile_module extram
