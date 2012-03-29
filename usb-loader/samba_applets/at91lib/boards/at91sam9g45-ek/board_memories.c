@@ -53,8 +53,8 @@
 //------------------------------------------------------------------------------
 //         External definitions
 //------------------------------------------------------------------------------
-#ifndef AT91C_DDRC2_NR_VAL
-	#define AT91C_DDRC2_NR_VAL 13 //This value should be 13 for WRS3-18
+#ifndef AT91C_DDRC2_NR_XX
+	#define AT91C_DDRC2_NR_XX AT91C_DDRC2_NR_13 /*This value should be 13 for WRS3-18*/
 #endif
 
 //------------------------------------------------------------------------------
@@ -142,7 +142,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
             // 4. Program the features of DDR2-SDRAM device into the Timing Register HDDRSDRC2_T2PR.            
 
             WRITE(pDdrc, HDDRSDRC2_CR, AT91C_DDRC2_NC_DDR10_SDR9  |     // 10 column bits (1K)
-                                       AT91C_DDRC2_NR_VAL          |     // 13 row bits    (8K) 
+                                       AT91C_DDRC2_NR_XX         |     // 13 row bits    (8K) 
                                        AT91C_DDRC2_CAS_3          |     // CAS Latency 3
                                        AT91C_DDRC2_DLL_RESET_DISABLED
                                        ); // DLL not reset
