@@ -8,6 +8,13 @@ if [ -d ./usb-loader ]; then true; else
     exit 1
 fi
 
+# Check if atmel sam-ba is find by lusb
+lsusb | grep "at91sam SAMBA" &> /dev/null
+if [ $? -gt "0" ]; then
+        echo "Did not find the sam-ba bootloader in lsub....\nPlease check that the Dataflash is short-circuited!"
+        exit 1;
+fi
+
 err=0;
 if [ -f ./binaries/at91bootstrap.bin ]; then true; else err=1; fi
 if [ -f ./binaries/barebox.bin ]; then true; else err=1; fi
