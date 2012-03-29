@@ -330,10 +330,18 @@ int samba_connect(int board_rev)
 
 	samba_run(INTERNAL_SRAM_BUF, 100000000);
 
-	if((samba_read(INTERNAL_SRAM_BUF + MBOX_COMMAND, 4, 10000000)) != ~APPLET_CMD_INIT) die("invalid response from applet");
-	if((samba_read(INTERNAL_SRAM_BUF + MBOX_STATUS, 4, 10000000)) != APPLET_SUCCESS) die("invalid response from applet");
-
+	if((samba_read(INTERNAL_SRAM_BUF + MBOX_COMMAND, 4, 10000000)) != ~APPLET_CMD_INIT) die("invalid response from applet init");
+	if((samba_read(INTERNAL_SRAM_BUF + MBOX_STATUS, 4, 10000000)) != APPLET_SUCCESS) die("invalid response from applet status");
 	return 0;
+}
+
+int ddr_check(int board_rev)
+{
+	
+	mbox_write(INTERNAL_SRAM_BUF, MBOX_COMMAND, APPLET_CMD_WRITE);
+	samba_run(INTERNAL_SRAM_BUF, 0);
+	if((samba_read(INTERNAL_SRAM_BUF + MBOX_COMMAND, 4, 10000000)) != ~APPLET_CMD_WRITE) die("invalid response from applet write");
+	if((samba_read(INTERNAL_SRAM_BUF + MBOX_STATUS, 4, 10000000)) != APPLET_SUCCESS) die("invalid response from applet status");	
 }
 
 int dataflash_init(int board_rev)
@@ -431,12 +439,15 @@ main(int argc, char *argv[])
 	serial_open(serial_port, PORT_SPEED);
 	fprintf(stderr,"Initializing SAM-BA: ");
 	samba_connect(board_rev);
-
+	
+	fprintf(stderr,"Checking DDR...\n\n");
+	ddr_check(board_rev);
+	
 	fprintf(stderr,"Initializing DataFlash...\n\n");
 	dataflash_init(board_rev);
 
-	fprintf(stderr,"Erasing DataFlash...\n\n");
-	dataflash_erase_all();
+	//fprintf(stderr,"Erasing DataFlash...\n\n");
+	//dataflash_erase_all();
 	
 	fprintf(stderr,"Programming DataFlash...\n");
 	dataflash_program(argv[1]);
