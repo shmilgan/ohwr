@@ -95,7 +95,7 @@ endif
 
 CFLAGS += $(TARGET_OPTS)
 CFLAGS += -Wall -mlong-calls -ffunction-sections
-CFLAGS += -g $(OPTIMIZATION) -mthumb $(INCLUDES) -D$(CHIP) -DDYN_TRACES -DTRACE_DBGU
+CFLAGS += -g $(OPTIMIZATION) -mthumb $(INCLUDES) -D$(CHIP) -DDYN_TRACES -DTRACE_DBGU $(DEFINES)
 
 ASFLAGS = $(TARGET_OPTS) -Wall -g $(OPTIMIZATION) $(INCLUDES) -D$(CHIP) -D__ASSEMBLY__
 LDFLAGS = -g $(OPTIMIZATION) $(TARGET_OPTS) -Wl,-Map=$(OUTPUT).map,--gc-sections #-nostartfiles 
@@ -148,7 +148,7 @@ VPATH += $(BOARDS)/$(BOARD)
 VPATH += $(BOARDS)/$(BOARD)/$(CHIP)
 
 # Objects built from C source files
-C_OBJECTS += main.o
+C_OBJECTS += main.o memtest.o
 C_OBJECTS += board_memories.o
 C_OBJECTS += board_lowlevel.o
 C_OBJECTS += dbgu.o

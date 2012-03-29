@@ -118,7 +118,7 @@ CFLAGS += -UDYN_TRACES
 TR_LEV = 0
 endif
 
-CFLAGS += -DTRACE_LEVEL=$(TR_LEV)
+CFLAGS += -DTRACE_LEVEL=$(TR_LEV) $(DEFINES)
 
 
 #-------------------------------------------------------------------------------
