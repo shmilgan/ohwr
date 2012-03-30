@@ -170,6 +170,10 @@ enum wrn_resnames {
 /* Private ioctls, like in wr_minic.c */
 #define PRIV_IOCGCALIBRATE (SIOCDEVPRIVATE+1)
 #define PRIV_IOCGGETPHASE (SIOCDEVPRIVATE+2)
+#define PRIV_IOCGGETRFCR (SIOCDEVPRIVATE+3)
+#define PRIV_IOCSSETRFCR (SIOCDEVPRIVATE+4)
+#define PRIV_IOCGGETECR (SIOCDEVPRIVATE+5)
+#define PRIV_IOCGCOUNTERS (SIOCDEVPRIVATE+6)
 
 /* Structures straight from wr_minic.c -- should user-space include this? */
 struct wrn_calibration_req {
@@ -181,6 +185,13 @@ struct wrn_phase_req {
 	int ready;
 	u32 phase;
 };
+
+/* Support for generic operations on endpoint registers */
+struct wrn_register_req {
+    int cmd;
+    u32 val;
+};
+
 #define WRN_DMTD_AVG_SAMPLES 256
 #define WRN_DMTD_MAX_PHASE 16384
 
@@ -189,6 +200,14 @@ struct wrn_phase_req {
 #define WRN_CAL_RX_ON 3
 #define WRN_CAL_RX_OFF 4
 #define WRN_CAL_RX_CHECK 5
+
+/* RFCR */
+#define WRN_RFCR_GET_PRIO_VAL 2
+#define WRN_RFCR_GET_QMODE 4
+#define WRN_RFCR_SET_PRIO_VAL 10
+
+/* ECR. For now only get operation on PORTID implemented */
+#define WRN_ECR_GET_PORTID 4
 
 /* This a WR-specific register in the mdio space */
 #define WRN_MDIO_WR_SPEC 0x00000010
@@ -228,5 +247,19 @@ extern void wrn_tstamp_init(struct wrn_dev *wrn);
 extern int wrn_phase_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 extern int wrn_calib_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 extern void wrn_ppsg_read_time(struct wrn_dev *wrn, u32 *fine_cnt, u32 *utc);
+
+/* Following functions from deframer.c */
+extern int wrn_get_deframer_ioctl(struct net_device *dev, struct ifreq *rq,
+int cmd);
+extern int wrn_set_deframer_ioctl(struct net_device *dev, struct ifreq *rq,
+int cmd);
+
+/* Following functions from ecr.c */
+extern int wrn_get_ecr_ioctl(struct net_device *dev, struct ifreq *rq,
+int cmd);
+
+/* Following functions from counters.c */
+extern int wrn_event_counters_ioctl(struct net_device *dev, struct ifreq *rq,
+int cmd);
 
 #endif /* __WR_NIC_H__ */

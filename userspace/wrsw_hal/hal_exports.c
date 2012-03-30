@@ -167,6 +167,7 @@ int hal_init_wripc()
 	wripc_export(hal_ipc, T_INT32, "halexp_calibration_cmd", halexp_calibration_cmd, 3, T_STRING, T_INT32, T_INT32);
 	wripc_export(hal_ipc, T_INT32, "halexp_lock_cmd", halexp_lock_cmd, 3, T_STRING, T_INT32, T_INT32);
 	wripc_export(hal_ipc, T_STRUCT(hexp_port_list_t), "halexp_query_ports", halexp_query_ports, 0);
+    wripc_export(hal_ipc, T_STRUCT(hexp_port_list_t), "halexp_query_all_ports", halexp_query_all_ports, 0);
 
 
 	hal_add_cleanup_callback(hal_cleanup_wripc);

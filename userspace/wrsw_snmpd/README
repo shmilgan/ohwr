@@ -1,0 +1,101 @@
+White Rabbit Switch SNMP Remote Management v1.0, based on IEEE
+Standards 802.1Q-2005 and 802.1ap-2008
+
+Authors:    Juan Luis Manas (juan.manas@integrasys.es)        - ieee8021qbridge
+            Miguel Baizan   (miguel.baizan@integrasys-sa.com) - ieee8021bridge
+
+Short info: Implementation of the White Rabbit Switch SNMP Remote Management.
+            The SNMP daemon, based on the NETSNMP package, implements the SNMPv3
+            protocol. The MIB objects defined in IEEE8021-BRIDGE-MIB
+            and IEEE8021-Q-BRIDGE-MIB are placed in subfolders ieee8021bridge
+            and ieee8021Qbridge, providing the 802.1Q mandatory management
+            capabilities.
+
+
+    Structure of the package wrsw_rtud
+    ==================================
+
+README
+	This file.
+
+COPYING:
+    GNU GPL Version 2. This package is copyrighted by CERN and
+    released as free software.
+
+TODO:
+    List of things to do.
+
+config/
+    Configuration files required to patch netsnmp configuration (to reduce
+    footprint and enable dynamic loading). Run "make install" to copy the patch
+    to the patches/buildroot directory. The file snmpd.conf provides
+    the runtime snmp daemon configuration and extensions to load
+    (i.e. 802.1Q MIB objects).
+
+ieee8021bridge/
+    The directory hosts the implementation of the MIB objects defined in
+    IEEE8021-BRIDGE-MIB (See Std-802.1ap-2008). Files are based on skeleton
+    code produced by the netsnmp mib2c compiler using the mib2c.mfd.conf
+    template.
+
+ieee8021Qbridge/
+    The directory hosts the implementation of the MIB objects defined in
+    IEEE8021-Q-BRIDGE-MIB (See Std-802.1ap-2008). Files are roughly based on
+    skeleton code produced by the netsnmp mib2c compiler using the
+    mib2c.raw-table.conf template.
+
+mibs/
+    This directory contains additional MIB files required by mib2c (the NETSNMP
+    MIB compiler) to compile the IEEE8021-Q-BRIDGE-MIB. These MIB files can also
+    be downloaded from:
+    http://www.ieee802.org/1/files/public/MIBs
+    http://www.simpleweb.org/ietf/mibs/
+
+
+    Dependencies
+    ============
+
+../wrsw_rtud
+../wrsw_hal
+
+IPC communications between the MIB objects and the RTU modules are based on the
+mini-ipc framework developed by Alessandro Rubini and Tomasz Wlostowski.
+
+IPC communications between the MIB objects and the HAL modules are based on the
+libwripc framework developed by Tomasz Wlostowski, Alessandro Rubini and Javier
+Serrano. The source code of the libwripc found at the ptp-noposix package
+is used to compile the libieee8021bridge.so library. However dynamic libraries
+are needed in order to link with the libieee8021bridge.so library, so during the
+linking proccess the old version of the libwripc library (libwripc.so) found
+at the svn is used instead, which seems to have the same code as that used
+to generate the static version (libwripc.a) at the ptp-noposix package. This is
+a sloppy temporary solution, while HAL package is adapted to mini-ipc.
+
+
+    Compilation of the modules
+    ==========================
+
+To compile the MIB modules, please run "make". A library file per MIB (namely
+libiee8021bridge.so and libieee8021qbridge.so) will be produced. You can run
+"make install" to copy library files to the $(WR_INSTALL_ROOT)/bin directory,
+and configuration file to the $(ROOTFS_OVERRIDE)/etc/snmp.
+
+Before running the SNMP daemon, please make sure the RTU daemon and the HAL
+daemon are running. Also the wr-nic.ko must be loaded, so be sure that the
+HAL is reading the correct configuration file.
+
+
+    Testing the SNMP in the switch
+    ==============================
+
+In order to avoid the overwhelming amount of debugging messages generated with
+the mib2c.mfd.conf template, it's highly recommended to run the snmpd agent with
+the '-Ln' option:
+
+   # ./snmpd -Ln
+
+If you prefer to watch what's happening, please redirect the debugging messages
+to a log file and then read the file (be careful however, since the log file can
+grow fast):
+
+   # ./snmpd -Lf /var/log/snmpd.log
