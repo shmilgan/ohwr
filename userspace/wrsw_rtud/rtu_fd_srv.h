@@ -2,14 +2,15 @@
  * White Rabbit RTU (Routing Table Unit)
  * Copyright (C) 2010, CERN.
  *
- * Version:     wrsw_rtud v1.0
+ * Version:     wrsw_rtud v2.0
  *
- * Authors:     Tomasz Wlostowski (tomasz.wlostowski@cern.ch)
+ * Authors:     Juan Luis Manas (juan.manas@integrasys.es)
  *
- * Description: Dump the filtering database.
+ * Description: RTU Filtering Database Server.
+ *              Provides IPC access to the Filtering Database.
+ *              Based on Alessandro Rubini & Tomasz Wlostowski mini_ipc framework.
  *
  * Fixes:
- *
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,30 +24,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
+#ifndef __WHITERABBIT_RTU_FD_SRV_H
+#define __WHITERABBIT_RTU_FD_SRV_H
 
+#include "minipc.h"
 
-#ifndef __RTUD_EXPORTS_H
-#define __RTUD_EXPORTS_H
+#include "rtu.h"
 
-#include <stdint.h>
+struct minipc_ch *rtu_fdb_srv_create(char *name);
 
-typedef struct
-{
-		uint8_t mac[8];
-		uint32_t dpm;
-		uint32_t spm;
-		uint8_t priority;
-		int dynamic;
-} rtudexp_fd_entry_t;
+#endif /*__WHITERABBIT_RTU_FD_SRV_H*/
 
-typedef struct  {
-	rtudexp_fd_entry_t list[8];
-
-	int num_rules;
-	int next;
-} rtudexp_fd_list_t;
-
-void rtudexp_get_fd_list(rtudexp_fd_list_t *list, int start_from);
-
-#endif

@@ -43,79 +43,79 @@
 
 #define RTU_DEVNAME             "/dev/wr_rtu"
 
-int rtu_init(void)
+int rtu_hw_init(void)
         __attribute__((warn_unused_result));
-void rtu_exit(void);
+void rtu_hw_exit(void);
 
 // UFIFO
 
-int rtu_ufifo_is_empty(void);
-int rtu_read_learning_queue_cnt(void);
-int rtu_read_learning_queue(struct rtu_request *req);
+int rtu_hw_ufifo_is_empty(void);
+int rtu_hw_read_learning_queue_cnt(void);
+int rtu_hw_read_learning_queue(struct rtu_request *req);
 
 // MFIFO
 
-int rtu_read_mfifo_cnt(void);
-int rtu_mfifo_is_full(void);
-int rtu_mfifo_is_empty(void);
-void rtu_clean_mfifo(void);
-void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent);
-void rtu_clean_htab_entry(uint16_t zbt_addr);
-void rtu_clean_htab(void);
+int rtu_hw_read_mfifo_cnt(void);
+int rtu_hw_mfifo_is_full(void);
+int rtu_hw_mfifo_is_empty(void);
+void rtu_hw_clean_mfifo(void);
+void rtu_hw_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent);
+void rtu_hw_clean_htab_entry(uint16_t zbt_addr);
+void rtu_hw_clean_htab(void);
 
 // HCAM
 
-void rtu_read_hcam_entry(uint16_t cam_addr, struct filtering_entry *ent);
-void rtu_write_hcam_entry(uint16_t cam_addr, struct filtering_entry *ent);
-void rtu_clean_hcam_entry(uint8_t cam_addr);
-void rtu_clean_hcam(void);
+void rtu_hw_read_hcam_entry(uint16_t cam_addr, struct filtering_entry *ent);
+void rtu_hw_write_hcam_entry(uint16_t cam_addr, struct filtering_entry *ent);
+void rtu_hw_clean_hcam_entry(uint8_t cam_addr);
+void rtu_hw_clean_hcam(void);
 
 // AGING - HTAB
 
-uint32_t rtu_read_agr_htab(uint32_t addr);
-void rtu_clean_agr_htab(void);
+uint32_t rtu_hw_read_agr_htab(uint32_t addr);
+void rtu_hw_clean_agr_htab(void);
 
 // AGING - HCAM
 
-uint32_t rtu_read_agr_hcam(void);
-void rtu_clean_agr_hcam(void);
+uint32_t rtu_hw_read_agr_hcam(void);
+void rtu_hw_clean_agr_hcam(void);
 
 // VLAN TABLE
 
-void rtu_write_vlan_entry(uint32_t addr, struct vlan_table_entry *ent);
-void rtu_clean_vlan_entry(uint32_t addr);
-void rtu_clean_vlan(void);
+void rtu_hw_write_vlan_entry(uint32_t addr, struct vlan_table_entry *ent);
+void rtu_hw_clean_vlan_entry(uint32_t addr);
+void rtu_hw_clean_vlan(void);
 
 // GLOBAL CONTROL REGISTER
 
-void rtu_enable(void);
-void rtu_disable(void);
-void rtu_write_hash_poly(uint16_t hash_poly);
-uint16_t rtu_read_hash_poly(void);
-void rtu_set_active_htab_bank(uint8_t bank);
-void rtu_set_active_hcam_bank(uint8_t bank);
-void rtu_set_active_bank(uint8_t bank);
+void rtu_hw_enable(void);
+void rtu_hw_disable(void);
+void rtu_hw_write_hash_poly(uint16_t hash_poly);
+uint16_t rtu_hw_read_hash_poly(void);
+void rtu_hw_set_active_htab_bank(uint8_t bank);
+void rtu_hw_set_active_hcam_bank(uint8_t bank);
+void rtu_hw_set_active_bank(uint8_t bank);
 
 // PORT SETTINGS
 
-int rtu_set_fixed_prio_on_port(int port, uint8_t prio)
+int rtu_hw_set_fixed_prio_on_port(int port, uint8_t prio)
         __attribute__((warn_unused_result));
-int rtu_unset_fixed_prio_on_port(int port)
+int rtu_hw_unset_fixed_prio_on_port(int port)
         __attribute__((warn_unused_result));
-int rtu_learn_enable_on_port(int port, int flag)
+int rtu_hw_learn_enable_on_port(int port, int flag)
         __attribute__((warn_unused_result));
-int rtu_pass_bpdu_on_port(int port, int flag)
+int rtu_hw_pass_bpdu_on_port(int port, int flag)
         __attribute__((warn_unused_result));
-int rtu_pass_all_on_port(int port, int pass_all)
+int rtu_hw_pass_all_on_port(int port, int pass_all)
         __attribute__((warn_unused_result));
-int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
+int rtu_hw_set_unrecognised_behaviour_on_port(int port, int flag)
         __attribute__((warn_unused_result));
 
 // IRQs
 
-void rtu_enable_irq(void);
-void rtu_disable_irq(void);
-void rtu_clear_irq(void);
+void rtu_hw_enable_irq(void);
+void rtu_hw_disable_irq(void);
+void rtu_hw_clear_irq(void);
 
 
 #endif /*__WHITERABBIT_RTU_DRV_H*/

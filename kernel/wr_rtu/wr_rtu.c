@@ -8,11 +8,11 @@
  *              Juan Luis Manas   <juan.manas@integrasys.es>
  *              Miguel Baizan     <miguel.baizan@integrasys.es>
  *
- * Description:  RTU IRQ registration, capture and handling. 
- *               Applies gnurabbit (http://www.ohwr.org) misc device concepts 
+ * Description:  RTU IRQ registration, capture and handling.
+ *               Applies gnurabbit (http://www.ohwr.org) misc device concepts
  *               to make RTU UFIFO interrupts available to user space.
  *
- * Fixes:       
+ * Fixes:
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@ static int rtu_ufifo_is_empty(void)
 // RTU interrupt handler
 static irqreturn_t wr_rtu_interrupt(int irq, void *unused)
 {
-	// When IRQ is enabled an irq is raised even if UFIFO is empty. 
+	// When IRQ is enabled an irq is raised even if UFIFO is empty.
 	// In such a case just ignore IRQ.
 	if (rtu_ufifo_is_empty())
 		return IRQ_NONE;
@@ -220,5 +220,3 @@ module_exit(wr_rtu_exit);
 MODULE_DESCRIPTION("WR RTU IRQ handler");
 MODULE_VERSION(DRV_MODULE_VERSION);
 MODULE_LICENSE("GPL");
-
-

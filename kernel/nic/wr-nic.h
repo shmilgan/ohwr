@@ -202,9 +202,12 @@ struct wrn_register_req {
 #define WRN_CAL_RX_CHECK 5
 
 /* RFCR */
+#define WRN_RFCR_GET_VID_VAL 1
 #define WRN_RFCR_GET_PRIO_VAL 2
 #define WRN_RFCR_GET_QMODE 4
+#define WRN_RFCR_SET_VID_VAL 9
 #define WRN_RFCR_SET_PRIO_VAL 10
+#define WRN_RFCR_SET_QMODE 12
 
 /* ECR. For now only get operation on PORTID implemented */
 #define WRN_ECR_GET_PORTID 4

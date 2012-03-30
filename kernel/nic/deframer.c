@@ -2,8 +2,9 @@
  * RX Deframer Control Register procedures
  *
  * Copyright (C) 2010 CERN (www.cern.ch)
- * Author: Alessandro Rubini <rubini@gnudd.com>, 
+ * Author: Alessandro Rubini <rubini@gnudd.com>,
  *         Miguel Baizan <miguel.baizan@integrasys-sa.com>
+ *         Juan Luis Manas <juan.manas@integrasys-sa.com>
  * Partly from previous work by Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
  * Partly from previous work by  Emilio G. Cota <cota@braap.org>
  *
@@ -34,6 +35,9 @@ int wrn_get_deframer_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
     case WRN_RFCR_GET_QMODE:
         deframer_req.val = EP_RFCR_QMODE_R(rfcr);
         break;
+    case WRN_RFCR_GET_VID_VAL:
+        deframer_req.val = EP_RFCR_VID_VAL_R(rfcr);
+        break;
     default:
         // do nothing.....
         return -ENOIOCTLCMD;
@@ -63,7 +67,21 @@ int wrn_set_deframer_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
         if (deframer_req.val >= 8)
             return -EINVAL;
         rfcr &= (~EP_RFCR_PRIO_VAL_MASK);
-        writel((rfcr | EP_RFCR_PRIO_VAL_W(deframer_req.val)), 
+        writel((rfcr | EP_RFCR_PRIO_VAL_W(deframer_req.val)),
+            &ep->ep_regs->RFCR);
+        break;
+    case WRN_RFCR_SET_VID_VAL:
+        if (deframer_req.val == 0xFFF)
+// Checking reserved VID value 0x000 disabled sin hardware v2 still uses it.
+//          ||  (deframer_req.val == 0x000)
+            return -EINVAL;
+        rfcr &= (~EP_RFCR_VID_VAL_MASK);
+        writel((rfcr | EP_RFCR_VID_VAL_W(deframer_req.val)),
+            &ep->ep_regs->RFCR);
+        break;
+    case WRN_RFCR_SET_QMODE:
+        rfcr &= (~EP_RFCR_QMODE_MASK);
+        writel((rfcr | EP_RFCR_QMODE_W(deframer_req.val & 0x11)),
             &ep->ep_regs->RFCR);
         break;
     default:

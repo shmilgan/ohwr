@@ -20,8 +20,8 @@ all:
 	$(MAKE) -C 3rdparty all install
 	$(MAKE) -C libswitchhw all install
 	$(MAKE) -C wrsw_hal all install
-	$(MAKE) -C wrsw_rtud all
-	$(MAKE) -C wrsw_snmpd all
+	$(MAKE) -C wrsw_rtud all install
+	$(MAKE) -C wrsw_snmpd all install
 #	$(MAKE) -C tests/rtu_stat TARGET=ARM all
 
 clean:

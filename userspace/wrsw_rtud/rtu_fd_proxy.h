@@ -5,16 +5,12 @@
  * Version:     wrsw_rtud v2.0
  *
  * Authors:     Juan Luis Manas (juan.manas@integrasys.es)
- *              Miguel Baizan   (miguel.baizan@integrasys.es)
- *              Maciej Lipinski (maciej.lipinski@cern.ch)
  *
- * Description: RTU Filtering database header.
- *              Filtering database management related operations and filtering
- *              database mirror. Note there is a single Filtering Database
- *              object per Bridge (See 802.1Q - 12.7.1)
+ * Description: RTU Filtering Database Proxy.
+ *              Provides IPC access to the Filtering Database.
+ *              Based on Alessandro Rubini & Tomasz Wlostowski mini_ipc framework.
  *
  * Fixes:
- *              Tomasz Wlostowski
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -31,44 +27,17 @@
  */
 
 
-#ifndef __WHITERABBIT_RTU_FD_H
-#define __WHITERABBIT_RTU_FD_H
+#ifndef __WHITERABBIT_RTU_FD_PROXY_H
+#define __WHITERABBIT_RTU_FD_PROXY_H
 
+#include <errno.h>
+
+#include "minipc.h"
 #include "rtu.h"
 
-// Static filtering entries may be active or inactive. Only active entries
-// are used to compute the forward vector for a FDB entry.
-#define NOT_IN_SERVICE  0
-#define ACTIVE          1
+#define MILLISEC_TIMEOUT 1000
 
-int rtu_fdb_init(uint16_t poly, unsigned long aging)
-        __attribute__((warn_unused_result));
-
-// FDB
-
-int rtu_fdb_create_dynamic_entry(
-            uint8_t mac[ETH_ALEN],
-            uint16_t vid,
-            uint32_t port_map
-     ) __attribute__((warn_unused_result));
-
-int rtu_fdb_read_entry(
-           uint8_t mac[ETH_ALEN],
-           uint8_t fid,
-           uint32_t *port_map,
-           int *entry_type
-     ) __attribute__((warn_unused_result));
-
-int rtu_fdb_read_next_entry(
-           uint8_t (*mac)[ETH_ALEN],                            // inout
-           uint8_t *fid,                                        // inout
-           uint32_t *port_map,                                  // out
-           int *entry_type                                      // out
-     ) __attribute__((warn_unused_result));
-
-// Static FDB
-
-int  rtu_fdb_create_static_entry(
+int  rtu_fdb_proxy_create_static_entry(
             uint8_t mac[ETH_ALEN],
             uint16_t vid,
             uint32_t egress_ports,
@@ -77,12 +46,26 @@ int  rtu_fdb_create_static_entry(
             int active
      ) __attribute__((warn_unused_result));
 
-int rtu_fdb_delete_static_entry(
+int rtu_fdb_proxy_delete_static_entry(
             uint8_t mac[ETH_ALEN],
             uint16_t vid
      ) __attribute__((warn_unused_result));
 
-int rtu_fdb_read_static_entry(
+int rtu_fdb_proxy_read_entry(
+           uint8_t mac[ETH_ALEN],
+           uint8_t fid,
+           uint32_t *port_map,
+           int *entry_type
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_proxy_read_next_entry(
+           uint8_t (*mac)[ETH_ALEN],                            // inout
+           uint8_t *fid,                                        // inout
+           uint32_t *port_map,                                  // out
+           int *entry_type                                      // out
+     ) __attribute__((warn_unused_result));
+
+int rtu_fdb_proxy_read_static_entry(
             uint8_t mac[ETH_ALEN],
             uint16_t vid,
             uint32_t *egress_ports,                             // out
@@ -91,7 +74,7 @@ int rtu_fdb_read_static_entry(
             int *active                                         // out
      ) __attribute__((warn_unused_result));
 
-int rtu_fdb_read_next_static_entry(
+int rtu_fdb_proxy_read_next_static_entry(
             uint8_t (*mac)[ETH_ALEN],                           // inout
             uint16_t *vid,                                      // inout
             uint32_t *egress_ports,                             // out
@@ -100,9 +83,7 @@ int rtu_fdb_read_next_static_entry(
             int *active                                         // out
      ) __attribute__((warn_unused_result));
 
-// VLAN
-
-int rtu_fdb_create_static_vlan_entry(
+int rtu_fdb_proxy_create_static_vlan_entry(
             uint16_t vid,
             uint8_t fid,
             uint32_t egress_ports,
@@ -110,25 +91,25 @@ int rtu_fdb_create_static_vlan_entry(
             uint32_t untagged_set
      ) __attribute__((warn_unused_result));
 
-int rtu_fdb_delete_static_vlan_entry(
+int rtu_fdb_proxy_delete_static_vlan_entry(
             uint16_t vid
      ) __attribute__((warn_unused_result));
 
-int rtu_fdb_read_static_vlan_entry(
+int rtu_fdb_proxy_read_static_vlan_entry(
             uint16_t vid,
             uint32_t *egress_ports,                             // out
             uint32_t *forbidden_ports,                          // out
             uint32_t *untagged_set                              // out
      ) __attribute__((warn_unused_result));
 
-int rtu_fdb_read_next_static_vlan_entry(
+int rtu_fdb_proxy_read_next_static_vlan_entry(
             uint16_t *vid,                                      // inout
             uint32_t *egress_ports,                             // out
             uint32_t *forbidden_ports,                          // out
             uint32_t *untagged_set                              // out
      ) __attribute__((warn_unused_result));
 
-int rtu_fdb_read_vlan_entry(
+int rtu_fdb_proxy_read_vlan_entry(
             uint16_t vid,
             uint8_t *fid,                                       // out
             int *entry_type,                                    // out
@@ -137,8 +118,7 @@ int rtu_fdb_read_vlan_entry(
             unsigned long *creation_t                           // out
      ) __attribute__((warn_unused_result));
 
-
-int rtu_fdb_read_next_vlan_entry(
+int rtu_fdb_proxy_read_next_vlan_entry(
             uint16_t *vid,                                      // inout
             uint8_t *fid,                                       // out
             int *entry_type,                                    // out
@@ -147,28 +127,21 @@ int rtu_fdb_read_next_vlan_entry(
             unsigned long *creation_t                           // out
      ) __attribute__((warn_unused_result));
 
-// Config
-
-void rtu_fdb_set_hash_poly(uint16_t poly);
-
-void rtu_fdb_age_dynamic_entries(void);
-
-int  rtu_fdb_set_aging_time(
+int  rtu_fdb_proxy_set_aging_time(
             uint8_t fid,
             unsigned long t
     ) __attribute__((warn_unused_result));
 
-unsigned long rtu_fdb_get_aging_time(uint8_t fid);
+unsigned long rtu_fdb_proxy_get_aging_time(uint8_t fid);
 
-uint16_t rtu_fdb_get_num_vlans(void);
-uint16_t rtu_fdb_get_max_supported_vlans(void);
-uint16_t rtu_fdb_get_max_vid(void);
-uint16_t rtu_fdb_get_next_fid(uint8_t fid);
+uint16_t rtu_fdb_proxy_get_num_dynamic_entries(uint8_t fid);
+uint32_t rtu_fdb_proxy_get_num_learned_entry_discards(uint8_t fid);
+uint16_t rtu_fdb_proxy_get_num_vlans(void);
+uint16_t rtu_fdb_proxy_get_max_supported_vlans(void);
+uint16_t rtu_fdb_proxy_get_max_vid(void);
+uint64_t rtu_fdb_proxy_get_num_vlan_deletes(void);
+uint16_t rtu_fdb_proxy_get_next_fid(uint8_t fid);
 
-// Statistics
+struct minipc_ch *rtu_fdb_proxy_create(char *name);
 
-uint16_t rtu_fdb_get_num_dynamic_entries(uint8_t fid);
-uint32_t rtu_fdb_get_num_learned_entry_discards(uint8_t fid);
-uint64_t rtu_fdb_get_num_vlan_deletes(void);
-
-#endif /*__WHITERABBIT_RTU_FD_H*/
+#endif /*__WHITERABBIT_RTU_FD_PROXY_H*/

@@ -78,7 +78,7 @@ static int fd;
 /**
  * \brief Initialize HW RTU memory map
  */
-int rtu_init(void)
+int rtu_hw_init(void)
 {
     int err;
 
@@ -90,20 +90,25 @@ int rtu_init(void)
 
     // Used to 'get' RTU IRQs from kernel
 	fd = open(RTU_DEVNAME, O_RDWR);
-	if (fd < 0)
-        return errno;
+	if (fd < 0) {
+	    err = errno;
+	    TRACE(TRACE_FATAL, "unable to open rtu driver");
+        return err;
+    }
 
     // init IO memory map
     err = shw_fpga_mmap_init();
-    if(err)
+    if(err) {
+  	    TRACE(TRACE_FATAL, "error initialising IO memory map");
         return err;
+    }
 
     TRACE(TRACE_INFO,"module initialized\n");
 
     return 0;
 }
 
-void rtu_exit(void)
+void rtu_hw_exit(void)
 {
     if(fd >= 0)
         close(fd);
@@ -118,7 +123,7 @@ void rtu_exit(void)
  * \brief Returns the UFIFO empty flag.
  * @return Value of UFIFO empty flag.
  */
-int rtu_ufifo_is_empty(void)
+int rtu_hw_ufifo_is_empty(void)
 {
     uint32_t csr =  _fpga_readl(FPGA_BASE_RTU + RTU_REG_UFIFO_CSR);
     return RTU_UFIFO_CSR_EMPTY & csr;
@@ -128,7 +133,7 @@ int rtu_ufifo_is_empty(void)
  * \brief Returns the current learning queue length.
  * @return Number of unrecognised requests currently in the learning queue.
  */
-int rtu_read_learning_queue_cnt(void)
+int rtu_hw_read_learning_queue_cnt(void)
 {
     // Get counter from UFIFO Control-Status Register
     // Fixme: USEDW returns 0 (FIFO overflow?)
@@ -142,12 +147,12 @@ int rtu_read_learning_queue_cnt(void)
  * @param req pointer to unrecognised request data. Memory handled by callee.
  * @return error code
  */
-int rtu_read_learning_queue(struct rtu_request *req)
+int rtu_hw_read_learning_queue(struct rtu_request *req)
 {
     int err;
 
     // If learning queue is empty, wait for UFIFO IRQ
-    if (rtu_ufifo_is_empty()) {
+    if (rtu_hw_ufifo_is_empty()) {
         err = ioctl(fd, WR_RTU_IRQWAIT);
         if (err && (err != -EAGAIN))
             return err;
@@ -161,7 +166,7 @@ int rtu_read_learning_queue(struct rtu_request *req)
     uint32_t r4 = _fpga_readl(FPGA_BASE_RTU + RTU_REG_UFIFO_R4);
 
     // Once read: if learning queue becomes empty again, enable UFIFO IRQ
-    if (rtu_ufifo_is_empty())
+    if (rtu_hw_ufifo_is_empty())
         ioctl(fd, WR_RTU_IRQENA);
 
     // unmarshall data and populate request
@@ -199,7 +204,7 @@ int rtu_read_learning_queue(struct rtu_request *req)
  * \brief Returns the current main hashtable CPU access FIFO (MFIFO) length.
  * @return Number of MAC entries currently in the MFIFO.
  */
-int rtu_read_mfifo_cnt(void)
+int rtu_hw_read_mfifo_cnt(void)
 {
     // Get counter from MFIFO Control-Status Register
     uint32_t csr = _fpga_readl(FPGA_BASE_RTU + RTU_REG_MFIFO_CSR);
@@ -210,7 +215,7 @@ int rtu_read_mfifo_cnt(void)
  * \brief Checks whether the main hashtable CPU access FIFO (MFIFO) is full.
  * @return 1 if MFIFO is full. 0 otherwise.
  */
-int rtu_mfifo_is_full(void)
+int rtu_hw_mfifo_is_full(void)
 {
     uint32_t csr = _fpga_readl(FPGA_BASE_RTU + RTU_REG_MFIFO_CSR);
     return RTU_MFIFO_CSR_FULL & csr;
@@ -220,7 +225,7 @@ int rtu_mfifo_is_full(void)
  * \brief Checks whether the main hashtable CPU access FIFO (MFIFO) is empty.
  * @return 1 if MFIFO is empty. 0 otherwise.
  */
-int rtu_mfifo_is_empty(void)
+int rtu_hw_mfifo_is_empty(void)
 {
     uint32_t csr = _fpga_readl(FPGA_BASE_RTU + RTU_REG_MFIFO_CSR);
     return RTU_MFIFO_CSR_EMPTY & csr;
@@ -229,9 +234,9 @@ int rtu_mfifo_is_empty(void)
 /**
  * \brief Cleans MFIFO
  */
-void rtu_clean_mfifo(void)
+void rtu_hw_clean_mfifo(void)
 {
-    while(!rtu_mfifo_is_empty()) {
+    while(!rtu_hw_mfifo_is_empty()) {
         _fpga_writel(FPGA_BASE_RTU + RTU_REG_MFIFO_R0, RTU_MFIFO_R0_AD_SEL);
         _fpga_writel(FPGA_BASE_RTU + RTU_REG_MFIFO_R1, 0);
         usleep(10);
@@ -243,7 +248,7 @@ void rtu_clean_mfifo(void)
  * @param ent MAC table entry to be written to MFIFO.
  * @param zbt_addr ZBT SRAM memory address in which MAC entry shoud be added.
  */
-void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent)
+void rtu_hw_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent)
 {
     write_mfifo_addr(zbt_addr);
     write_mfifo_data(mac_entry_word0_w(ent));
@@ -268,17 +273,17 @@ void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent)
  * \brief Cleans MAC entry in main hash table at the given address
  * @param zbt_addr memory address which shoud be cleaned.
  */
-void rtu_clean_htab_entry(uint16_t zbt_addr)
+void rtu_hw_clean_htab_entry(uint16_t zbt_addr)
 {
 	struct filtering_entry ent;
-	rtu_write_htab_entry(zbt_addr, rtu_fe_clean(&ent));
+	rtu_hw_write_htab_entry(zbt_addr, rtu_fe_clean(&ent));
 }
 
 /**
  * \brief Cleans main hash table.
  * Cleans all entries in HTAB inactive bank.
  */
-void rtu_clean_htab(void)
+void rtu_hw_clean_htab(void)
 {
     int addr;
     for (addr = 0; addr < RTU_ENTRIES; addr++) {
@@ -299,7 +304,7 @@ void rtu_clean_htab(void)
  * @param ent used to store the entry read. Memory should be handled by callee.
  * @param cam_addr memory address which shoud be read.
  */
-void rtu_read_hcam_entry( uint16_t cam_addr, struct filtering_entry *ent )
+void rtu_hw_read_hcam_entry( uint16_t cam_addr, struct filtering_entry *ent )
 {
     // read data from mapped IO memory
     uint32_t w0 = _fpga_readl(FPGA_BASE_RTU + RTU_HCAM + 4*cam_addr        );
@@ -330,7 +335,7 @@ void rtu_read_hcam_entry( uint16_t cam_addr, struct filtering_entry *ent )
  * @param ent MAC table entry to be written to HCAM.
  * @param cam_addr memory address in which MAC entry shoud be added.
  */
-void rtu_write_hcam_entry( uint16_t cam_addr, struct filtering_entry *ent)
+void rtu_hw_write_hcam_entry( uint16_t cam_addr, struct filtering_entry *ent)
 {
 	_fpga_writel(FPGA_BASE_RTU + RTU_HCAM + 4*cam_addr        , mac_entry_word0_w(ent));
 	_fpga_writel(FPGA_BASE_RTU + RTU_HCAM + 4*(cam_addr + 0x1), mac_entry_word1_w(ent));
@@ -353,7 +358,7 @@ void rtu_write_hcam_entry( uint16_t cam_addr, struct filtering_entry *ent)
  * \brief Cleans MAC entry in HCAM Hash collisions memory
  * @param addr memory address which shoud be cleaned.
  */
-void rtu_clean_hcam_entry( uint8_t cam_addr )
+void rtu_hw_clean_hcam_entry( uint8_t cam_addr )
 {
  	_fpga_writel(FPGA_BASE_RTU + RTU_HCAM + 4*cam_addr        , 0x00000000);
 	_fpga_writel(FPGA_BASE_RTU + RTU_HCAM + 4*(cam_addr + 0x1), 0x00000000);
@@ -369,7 +374,7 @@ void rtu_clean_hcam_entry( uint8_t cam_addr )
  * \brief Cleans HCAM.
  * Cleans all entries in HCAM inactive bank.
  */
-void rtu_clean_hcam(void)
+void rtu_hw_clean_hcam(void)
 {
     int addr;
    	for (addr = 0; addr < (RTU_HCAM_WORDS/RTU_BANKS); addr++) {
@@ -383,7 +388,7 @@ void rtu_clean_hcam(void)
  * \brief Read word from aging HTAB.
  * Aging RAM Size: 256 32-bit words
  */
-uint32_t rtu_read_agr_htab( uint32_t addr )
+uint32_t rtu_hw_read_agr_htab( uint32_t addr )
 {
     return _fpga_readl(FPGA_BASE_RTU + RTU_ARAM_MAIN + 4*addr) ;
 }
@@ -391,7 +396,7 @@ uint32_t rtu_read_agr_htab( uint32_t addr )
 /**
  * \brief Clears aging bitmap for HTAB
  */
-void rtu_clean_agr_htab(void)
+void rtu_hw_clean_agr_htab(void)
 {
     int addr;
 	for(addr=0;addr < RTU_ARAM_MAIN_WORDS;addr++) {
@@ -406,7 +411,7 @@ void rtu_clean_agr_htab(void)
  * \brief Read aging register for HCAM.
  * Each bit corresponds to one MAC entry in HCAM memory.
  */
-uint32_t rtu_read_agr_hcam(void)
+uint32_t rtu_hw_read_agr_hcam(void)
 {
 	return _fpga_readl(FPGA_BASE_RTU + RTU_REG_AGR_HCAM);
 }
@@ -414,7 +419,7 @@ uint32_t rtu_read_agr_hcam(void)
 /**
  * \brief Clears aging register for HCAM
  */
-void rtu_clean_agr_hcam(void)
+void rtu_hw_clean_agr_hcam(void)
 {
 	_fpga_writel(FPGA_BASE_RTU + RTU_REG_AGR_HCAM, 0x00000000);
 }
@@ -427,14 +432,14 @@ void rtu_clean_agr_hcam(void)
  * VLAN table size: 4096 32-bit words.
  * @param addr entry memory address
  */
-void rtu_write_vlan_entry(uint32_t addr, struct vlan_table_entry *ent)
+void rtu_hw_write_vlan_entry(uint32_t addr, struct vlan_table_entry *ent)
 {
 
 //	printf("write_VLAN_ent: addr %x val %x\n", + RTU_VLAN_TAB + 4*addr, vlan_entry_word0_w(ent));
 	_fpga_writel(FPGA_BASE_RTU + RTU_VLAN_TAB + 4*addr, vlan_entry_word0_w(ent));
     TRACE_DBG(
         TRACE_INFO,
-        "write vlan entry: addr %x ent %08x %08x %08x %08x %08x",
+        "write vlan entry: addr %x ent %08x",
         addr,
         vlan_entry_word0_w(ent)
     );
@@ -444,7 +449,7 @@ void rtu_write_vlan_entry(uint32_t addr, struct vlan_table_entry *ent)
  * \brief Cleans VLAN entry in VLAN table
  * @param addr memory address which shoud be cleaned.
  */
-void rtu_clean_vlan_entry( uint32_t addr )
+void rtu_hw_clean_vlan_entry( uint32_t addr )
 {
     // Value 0x80000000 sets drop field to 1 (VLAN entry not registered)
  	_fpga_writel(FPGA_BASE_RTU + RTU_VLAN_TAB + 4*addr, 0x80000000);
@@ -453,7 +458,7 @@ void rtu_clean_vlan_entry( uint32_t addr )
 /**
  * \brief Cleans VLAN table (drop bit is set to 1)
  */
-void rtu_clean_vlan(void)
+void rtu_hw_clean_vlan(void)
 {
     int addr;
    	for (addr = 0; addr < NUM_VLANS; addr++) {
@@ -467,7 +472,7 @@ void rtu_clean_vlan(void)
 /**
  * \brief Enables RTU operation.
  */
-void rtu_enable(void)
+void rtu_hw_enable(void)
 {
     // Get current GCR
 	uint32_t gcr = _fpga_readl(FPGA_BASE_RTU + RTU_REG_GCR);
@@ -481,7 +486,7 @@ void rtu_enable(void)
 /**
  * \brief Disables RTU operation.
  */
-void rtu_disable(void)
+void rtu_hw_disable(void)
 {
     // Get current GCR
 	uint32_t gcr = _fpga_readl(FPGA_BASE_RTU + RTU_REG_GCR);
@@ -496,7 +501,7 @@ void rtu_disable(void)
  * \brief Gets the polynomial used for hash computation in RTU at HW.
  * @return hash_poly hex representation of polynomial
  */
-uint16_t rtu_read_hash_poly(void)
+uint16_t rtu_hw_read_hash_poly(void)
 {
     // Get current GCR
 	uint32_t gcr = _fpga_readl(FPGA_BASE_RTU + RTU_REG_GCR);
@@ -507,7 +512,7 @@ uint16_t rtu_read_hash_poly(void)
  * \brief Sets the polynomial used for hash computation in RTU at HW.
  * @param hash_poly hex representation of polynomial
  */
-void rtu_write_hash_poly(uint16_t hash_poly)
+void rtu_hw_write_hash_poly(uint16_t hash_poly)
 {
     // Get current GCR
 	uint32_t gcr = _fpga_readl(FPGA_BASE_RTU + RTU_REG_GCR);
@@ -522,7 +527,7 @@ void rtu_write_hash_poly(uint16_t hash_poly)
  * \brief Set active ZBT bank.
  * @param bank active ZBT bank (0 or 1). Other values will be evaluated as 1.
  */
-void rtu_set_active_htab_bank(uint8_t bank)
+void rtu_hw_set_active_htab_bank(uint8_t bank)
 {
 	uint32_t gcr = _fpga_readl(FPGA_BASE_RTU + RTU_REG_GCR);
     gcr = bank ?
@@ -536,7 +541,7 @@ void rtu_set_active_htab_bank(uint8_t bank)
  * \brief Set active CAM bank.
  * @param bank active CAM bank (0 or 1). Other values will be evaluated as 1.
  */
-void rtu_set_active_hcam_bank(uint8_t bank)
+void rtu_hw_set_active_hcam_bank(uint8_t bank)
 {
 	uint32_t gcr = _fpga_readl(FPGA_BASE_RTU + RTU_REG_GCR);
     gcr = bank ?
@@ -550,7 +555,7 @@ void rtu_set_active_hcam_bank(uint8_t bank)
  * \brief Set active ZBT and CAM banks at once.
  * @param bank active ZBT and CAM bank (0 or 1). Other values will be evaluated as 1.
  */
-void rtu_set_active_bank(uint8_t bank)
+void rtu_hw_set_active_bank(uint8_t bank)
 {
 	uint32_t gcr = _fpga_readl(FPGA_BASE_RTU + RTU_REG_GCR);
     gcr = bank ?
@@ -570,7 +575,7 @@ void rtu_set_active_bank(uint8_t bank)
  * @param prio priority value
  * @return error code.
  */
-int rtu_set_fixed_prio_on_port(int port, uint8_t prio)
+int rtu_hw_set_fixed_prio_on_port(int port, uint8_t prio)
 {
     if( (port < MIN_PORT) || (port > MAX_PORT) )
         return -EINVAL;
@@ -588,7 +593,7 @@ int rtu_set_fixed_prio_on_port(int port, uint8_t prio)
  * @param port port number (0 to 9)
  * @return error code.
  */
-int rtu_unset_fixed_prio_on_port(int port)
+int rtu_hw_unset_fixed_prio_on_port(int port)
 {
     if( (port < MIN_PORT) || (port > MAX_PORT) )
         return -EINVAL;
@@ -606,7 +611,7 @@ int rtu_unset_fixed_prio_on_port(int port)
  * @param flag 0 disables learning. Otherwise: enables learning porcess on this port.
  * @return error code.
  */
-int rtu_learn_enable_on_port(int port, int flag)
+int rtu_hw_learn_enable_on_port(int port, int flag)
 {
     if( (port < MIN_PORT) || (port > MAX_PORT) )
         return -EINVAL;
@@ -627,7 +632,7 @@ int rtu_learn_enable_on_port(int port, int flag)
  * Otherwise: BPDU packets are passed according to RTU rules.
  * @return error code.
  */
-int rtu_pass_bpdu_on_port(int port, int flag)
+int rtu_hw_pass_bpdu_on_port(int port, int flag)
 {
     if( (port < MIN_PORT) || (port > MAX_PORT) )
         return -EINVAL;
@@ -647,7 +652,7 @@ int rtu_pass_bpdu_on_port(int port, int flag)
  * @param flag 0: all packets are dropped. Otherwise: all packets are passed.
  * @return error code.
  */
-int rtu_pass_all_on_port(int port, int flag)
+int rtu_hw_pass_all_on_port(int port, int flag)
 {
     if( (port < MIN_PORT) || (port > MAX_PORT) )
         return -EINVAL;
@@ -667,7 +672,7 @@ int rtu_pass_all_on_port(int port, int flag)
  * @param flag 0: packet is dropped. Otherwise: packet is broadcast.
  * @return error code.
  */
-int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
+int rtu_hw_set_unrecognised_behaviour_on_port(int port, int flag)
 {
     if( (port < MIN_PORT) || (port > MAX_PORT) )
         return -EINVAL;
@@ -683,17 +688,17 @@ int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
 
 // IRQs
 
-void rtu_enable_irq(void)
+void rtu_hw_enable_irq(void)
 {
     _fpga_writel(FPGA_BASE_RTU + RTU_REG_EIC_IER, RTU_EIC_IER_NEMPTY);
 }
 
-void rtu_disable_irq(void)
+void rtu_hw_disable_irq(void)
 {
     _fpga_writel(FPGA_BASE_RTU + RTU_REG_EIC_IDR, RTU_EIC_IDR_NEMPTY);
 }
 
-void rtu_clear_irq(void)
+void rtu_hw_clear_irq(void)
 {
     _fpga_writel(FPGA_BASE_RTU + RTU_REG_EIC_ISR, RTU_EIC_ISR_NEMPTY);
 }
@@ -707,7 +712,7 @@ void rtu_clear_irq(void)
 static void write_mfifo_addr(uint32_t zbt_addr)
 {
     // workaround required to solve MFIFO overflow
-    rtu_clean_mfifo();
+    rtu_hw_clean_mfifo();
 
     _fpga_writel(FPGA_BASE_RTU + RTU_REG_MFIFO_R0, RTU_MFIFO_R0_AD_SEL);
     _fpga_writel(FPGA_BASE_RTU + RTU_REG_MFIFO_R1, zbt_addr);
@@ -718,7 +723,7 @@ static void write_mfifo_data(uint32_t word)
     _fpga_writel(FPGA_BASE_RTU + RTU_REG_MFIFO_R0, RTU_MFIFO_R0_DATA_SEL);
     _fpga_writel(FPGA_BASE_RTU + RTU_REG_MFIFO_R1, word);
     // workaround required to solve MFIFO overflow
-    while(rtu_mfifo_is_full());
+    while(rtu_hw_mfifo_is_full());
 }
 
 // to marshall MAC entries
@@ -849,5 +854,3 @@ static uint32_t fpga_rtu_pcr_addr(int port)
     default:return -EINVAL;
     }
 }
-
-
