@@ -32,6 +32,13 @@ compile_module()
 CROSS_COMPILE=/opt/wrs/misc/cd-g++lite/bin/arm-none-eabi-
 root="$(dirname $(pwd)/$0)"
 
+#### Check compiler
+if [[ -z $(${CROSS_COMPILE}gcc --version | grep "Sourcery G++ Lite 2008q3-39") ]]; then
+	echo "You should use Sourcery G++ Lite 2008q3-39 to compile samba-applets"
+	echo "see reference: http://www.at91.com/forum/viewtopic.php/f,8/t,5352/"
+	exit 1;
+fi
+
 #### Compilation of dataflash module
 compile_module dataflash $1
 
@@ -44,7 +51,6 @@ DEFINES="-DAT91C_DDRC2_NR_XX=AT91C_DDRC2_NR_14"
 compile_module extram $1
 cp ${root}/../isp-extram-at91sam9g45.bin ${root}/../isp-extram-at91sam9g45-NR14.bin 
 
-DEFINES="-DAT91C_DDRC2_NR_XX=$1"
 
 #### Compilation of extern ram module
 compile_module extram
