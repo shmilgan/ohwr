@@ -48,7 +48,7 @@ extern const char git_user[];
 extern const char git_revision[];
 
 char *program_path;
-
+char *program_name;
 int applet_silent_mode = 1;
 
 unsigned int buffer_size = 0x3000;
@@ -314,15 +314,12 @@ int samba_connect(int board_rev)
 	if(board_rev == BOARD_REV_V3 && id != ID_SAM9G45) die ("Not a 9G45 CPU");
 }
 
-int ddr_init(int board_rev, int NR)
+int ddr_init(int board_rev)
 {
 	if(board_rev == BOARD_REV_V2)
 		samba_load_applet("isp-extram-at91sam9263", INTERNAL_SRAM_BUF);
 	else if(board_rev == BOARD_REV_V3) 
-	{
-		if(NR==14) samba_load_applet("isp-extram-at91sam9g45-NR14", INTERNAL_SRAM_BUF); 
-		else samba_load_applet("isp-extram-at91sam9g45-NR13", INTERNAL_SRAM_BUF); 
-	}
+		samba_load_applet("isp-extram-at91sam9g45", INTERNAL_SRAM_BUF); 
 	
 	mbox_write(INTERNAL_SRAM_BUF, MBOX_COMMAND, APPLET_CMD_INIT);
 	
@@ -419,50 +416,101 @@ int dataflash_program(const char *filename)
 	dataflash_write(0, SDRAM_START, len);
 }
 
+
+void show_help(const char* serial_port)
+{
+	printf("WhiteRabbit MCH DataFlash programmer (c) T.W. 2010\n");
+	printf("Compiled by %s (%s)\ngit rev:%s\n\n",git_user,build_time,git_revision);
+	printf("Usage: %s [options] <dataflash image>\n", program_name);
+	printf("Options:\n");
+	printf("\t-a \t\t perform all actions (same as -wec). Default option.\n");
+	printf("\t-w \t\t write the dataflash\n");
+	printf("\t-e \t\t erase the dataflash\n");
+	printf("\t-c \t\t check the DDR\n");
+	printf("\t-s SERIAL_PORT\t By default it is: -s %s\n",serial_port);
+	printf("\t-h \t\t Show this little help\n");
+	printf("\n");
+}
+
 main(int argc, char *argv[])
 {
 	int board_rev  = BOARD_REV_V3;
 	char *serial_port = "/dev/ttyACM0";
-
+	char c;
+	int erase=0;
+	int check=0;
+	int write=0;
+	int noopts=1;
 	
-	if(argc < 2)
+	program_name = basename(argv[0]);
+	program_path = dirname(argv[0]);		
+
+	//Parse options
+	
+	while (--argc > 0 && (*++argv)[0] == '-') {
+		noopts=0;
+		while (c = *++argv[0]) {
+			switch (c) {
+				case 'a': erase = 1; check=1; write=1; break;
+				case 'e': erase=1; break;
+				case 'c': check=1; break;
+				case 'w': write=1; break;
+				case 's': serial_port = argv[1]; break;
+				case 'h': show_help(serial_port);
+					return 0;
+					break;
+				default:
+					printf("find: illegal option %c\n", c);
+					argc = 0;
+					break;
+			}
+		}
+	}
+	--argv;
+	++argc;
+		
+	//Default value are all
+	if(noopts) { erase = 1; check=1; write=1; }
+	
+	printf("prog=%s, n=%d, serial=%s, (e=%d,c=%d,w=%d)\n", argv[1],argc,serial_port, erase,check,write);
+	
+	if(write && argc < 2)
 	{
-	  printf("WhiteRabbit MCH DataFlash programmer (c) T.W. 2010\n");
-	  printf("Usage: %s <dataflash image> [serial port (default = %s)\n", argv[0], serial_port);
-	  return 0;
+		show_help(serial_port);
+		return 0;
 	}
 	
-	if(argc > 2)
-	  serial_port = argv[2];
-
 	//Print line to know the version of software for testing purpose
 	fprintf(stderr,"\nCompiled by %s (%s)\ngit rev:%s\n\n",git_user,build_time,git_revision);
-
-	program_path = dirname(argv[0]);
-
+	
 	serial_open(serial_port, PORT_SPEED);
 	fprintf(stderr,"Initializing SAM-BA: ");
 	samba_connect(board_rev);
 
 	fprintf(stderr,"Initializing DDR...\n\n");
-	ddr_init(board_rev,14);
+	ddr_init(board_rev);
 	
-	sys_delay(100);
-	
-	fprintf(stderr,"Initializing DDR...\n\n");
-	ddr_init(board_rev,13);
-	
-	fprintf(stderr,"Checking DDR...\n\n");
-	ddr_check(board_rev);
+	if(check) 
+	{
+		fprintf(stderr,"Checking DDR...\n\n");
+		ddr_check(board_rev);
+	}
 	
 	fprintf(stderr,"Initializing DataFlash...\n\n");
 	dataflash_init(board_rev);
 
-	fprintf(stderr,"Erasing DataFlash...\n\n");
-	dataflash_erase_all();
+	if(erase) 
+	{
+		fprintf(stderr,"Erasing DataFlash...\n\n");
+		dataflash_erase_all();
+	}
 	
-	fprintf(stderr,"Programming DataFlash...\n");
-	dataflash_program(argv[1]);
+	if(write)
+	{
+		fprintf(stderr,"Programming DataFlash...\n");
+		dataflash_program(argv[1]);
+	}
+	
 	printf("Programming done!\n");
 
 	serial_close();
