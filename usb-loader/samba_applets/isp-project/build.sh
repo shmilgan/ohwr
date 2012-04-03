@@ -43,14 +43,4 @@ fi
 compile_module dataflash $1
 
 #### Compilation of extern ram module
-DEFINES="-DAT91C_DDRC2_NR_XX=AT91C_DDRC2_NR_13"
-compile_module extram $1 
-cp ${root}/../isp-extram-at91sam9g45.bin ${root}/../isp-extram-at91sam9g45-NR13.bin
-
-DEFINES="-DAT91C_DDRC2_NR_XX=AT91C_DDRC2_NR_14"
 compile_module extram $1
-cp ${root}/../isp-extram-at91sam9g45.bin ${root}/../isp-extram-at91sam9g45-NR14.bin 
-
-
-#### Compilation of extern ram module
-compile_module extram

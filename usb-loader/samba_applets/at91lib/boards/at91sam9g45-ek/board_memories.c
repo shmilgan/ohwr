@@ -109,6 +109,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
     int i;
     volatile unsigned int cr = 0;
     unsigned short ddrc_dbw = 0;
+    unsigned int ba_offset;
 
     switch (busWidth) {
         case 16:
@@ -121,6 +122,9 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
             break;
 
     }
+    
+    
+
 
     // Enable DDR2 clock x2 in PMC
     WRITE(AT91C_BASE_PMC, PMC_SCER, AT91C_PMC_DDR);
@@ -146,13 +150,23 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
                                        AT91C_DDRC2_CAS_3          |     // CAS Latency 3
                                        AT91C_DDRC2_DLL_RESET_DISABLED
                                        ); // DLL not reset
+	    
+	    /* compute BA[] offset according to CR configuration */
+	    ba_offset = (READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_NC) + 9;          // number of column bits for DDR
+	    ba_offset += ((READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_NR) >> 2) + 11; // number of row bits
+	    ba_offset += (ddrc_dbw & AT91C_DDRC2_DBW) ? 1 : 2;   // bus width 
+	    
 
-	    TRACE_INFO("\tDDR2 Config: 0x%x (NC=%d, NR=%d, CAS=%d) \n\r", 
-		       READ(pDdrc, HDDRSDRC2_CR),
+	    TRACE_INFO("\tDDR2 Config: 0x%x (NC=%d, NR=%d, CAS=%d, ba_offset=%d) \n\r", 
+		       (READ(pDdrc, HDDRSDRC2_CR)),
 		       (READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_NC) + 9,
 		       ((READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_NR) >> 2) + 11,
-		       (READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_CAS) >> 4);
+		       (READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_CAS) >> 4,
+		       ba_offset);
     	    
+	    
+
+	    
 	    
             // assume timings for 7.5ns min clock period
             WRITE(pDdrc, HDDRSDRC2_T0PR, AT91C_DDRC2_TRAS_6       |     //  6 * 7.5 = 45 ns
@@ -203,7 +217,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
 
             // Step 6: An Extended Mode Register set (EMRS2) cycle is  issued to chose between commercialor high  temperature operations.
             WRITE(pDdrc, HDDRSDRC2_MR, AT91C_DDRC2_MODE_EXT_LMR_CMD);
-            *((unsigned int *)((unsigned char *)pDdr + 0x4000000)) = 0;
+	    *((unsigned int *)((unsigned char *)pDdr + (0x2 << ba_offset))) = 0;
          
             // wait 2 cycles min
             for (i = 0; i < 100; i++) {
@@ -212,7 +226,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
             
             // Step 7: An Extended Mode Register set (EMRS3) cycle is issued to set all registers to 0.
             WRITE(pDdrc, HDDRSDRC2_MR, AT91C_DDRC2_MODE_EXT_LMR_CMD);
-            *((unsigned int *)((unsigned char *)pDdr + 0x6000000)) = 0;
+	    *((unsigned int *)((unsigned char *)pDdr + (0x3 << ba_offset))) = 0;
 
             // wait 2 cycles min
             for (i = 0; i < 100; i++) {
@@ -221,7 +235,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
              
             // Step 8:  An Extended Mode Register set (EMRS1) cycle is issued to enable DLL.
             WRITE(pDdrc, HDDRSDRC2_MR, AT91C_DDRC2_MODE_EXT_LMR_CMD);
-            *((unsigned int *)((unsigned char *)pDdr + 0x2000000)) = 0;
+	    *((unsigned int *)((unsigned char *)pDdr + (0x1 << ba_offset))) = 0;
 
             // wait 200 cycles min
             for (i = 0; i < 10000; i++) {
@@ -281,7 +295,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
             
             // Step 16: An Extended Mode Register set (EMRS1) cycle is issued to OCD default value.
             WRITE(pDdrc, HDDRSDRC2_MR, AT91C_DDRC2_MODE_EXT_LMR_CMD);
-            *((unsigned int *)((unsigned char *)pDdr + 0x2000000)) = 0;
+	    *((unsigned int *)((unsigned char *)pDdr + (0x1 << ba_offset))) = 0;
 
             // wait 2 cycles min
             for (i = 0; i < 100; i++) {
@@ -294,7 +308,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
          
            // Step 18: An Extended Mode Register set (EMRS1) cycle is issued to enable OCD exit.
            WRITE(pDdrc, HDDRSDRC2_MR, AT91C_DDRC2_MODE_EXT_LMR_CMD);
-            *((unsigned int *)((unsigned char *)pDdr + 0x6000000)) = 0;
+	   *((unsigned int *)((unsigned char *)pDdr + (0x1 << ba_offset))) = 0;
 
             // wait 2 cycles min
             for (i = 0; i < 100; i++) {
