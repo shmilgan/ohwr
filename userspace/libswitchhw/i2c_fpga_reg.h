@@ -36,12 +36,13 @@
 typedef struct
 {
     uint32_t base_address;
+    uint32_t prescaler;
 } i2c_fpga_reg_t;
 
 
-i2c_bus_t*	i2c_fpga_reg_new_bus(uint32_t address, uint32_t prescaler);
-int32_t		i2c_fpga_reg_transfer(struct i2c_bus_t* bus, uint32_t address,  uint32_t to_write, uint32_t to_read, uint8_t* data);
-int32_t		i2c_fpga_reg_scan(struct i2c_bus_t* bus, uint32_t i2c_address);
+int		i2c_fpga_reg_init_bus(struct i2c_bus *bus);
+int32_t		i2c_fpga_reg_transfer(struct i2c_bus* bus, uint32_t address,  uint32_t to_write, uint32_t to_read, uint8_t* data);
+int32_t		i2c_fpga_reg_scan(struct i2c_bus* bus, uint32_t i2c_address);
 
 
 #endif //I2C_FPGA_REG_H

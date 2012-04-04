@@ -1,6 +1,6 @@
 #include "libshw_i2c.h"
 
-int wrswhw_pca9554_configure(struct i2c_bus_t* bus, uint32_t address)
+int wrswhw_pca9554_configure(struct i2c_bus* bus, uint32_t address)
 {
     //config initial port dir
     uint8_t config_outputs[2] = {PCA9554_CMD_DIR_REG, WRSWHW_OUTPUT_BITMAP};
@@ -12,14 +12,14 @@ int wrswhw_pca9554_configure(struct i2c_bus_t* bus, uint32_t address)
 }
 
 
-int wrswhw_pca9554_set_output_reg(struct i2c_bus_t* bus, uint32_t address, uint8_t value)
+int wrswhw_pca9554_set_output_reg(struct i2c_bus* bus, uint32_t address, uint8_t value)
 {
     //set initial output state
     uint8_t set_outputs[2] = {PCA9554_CMD_OUTPUT_REG, value};
     return i2c_transfer(bus, address, sizeof(set_outputs), 0, set_outputs);
 }
 
-int32_t wrswhw_pca9554_get_input(struct i2c_bus_t* bus, uint32_t address)
+int32_t wrswhw_pca9554_get_input(struct i2c_bus* bus, uint32_t address)
 {
     //set read address
     uint8_t r = PCA9554_CMD_INPUT_REG;
@@ -35,7 +35,7 @@ int32_t wrswhw_pca9554_get_input(struct i2c_bus_t* bus, uint32_t address)
     return r;
 }
 
-int wrswhw_pca9554_set_output_bits(struct i2c_bus_t* bus, uint32_t address, uint8_t value)
+int wrswhw_pca9554_set_output_bits(struct i2c_bus* bus, uint32_t address, uint8_t value)
 {
     int result = wrswhw_pca9554_get_input(bus, address);
     if (result < 0)
@@ -47,7 +47,7 @@ int wrswhw_pca9554_set_output_bits(struct i2c_bus_t* bus, uint32_t address, uint
     return wrswhw_pca9554_set_output_reg(bus, address, result);
 }
 
-int wrswhw_pca9554_clear_output_bits(struct i2c_bus_t* bus, uint32_t address, uint8_t value)
+int wrswhw_pca9554_clear_output_bits(struct i2c_bus* bus, uint32_t address, uint8_t value)
 {
     int result = wrswhw_pca9554_get_input(bus, address);
     if (result < 0)

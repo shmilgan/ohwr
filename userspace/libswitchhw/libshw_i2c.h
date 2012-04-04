@@ -25,11 +25,11 @@
 //initial state for outputs
 #define WRSWHW_INITIAL_OUTPUT_STATE	(LINK1_SFP_TX_DISABLE | LINK0_SFP_TX_DISABLE)
 
-int wrswhw_pca9554_configure(struct i2c_bus_t* bus, uint32_t address);
-int wrswhw_pca9554_set_output_reg(struct i2c_bus_t* bus, uint32_t address, uint8_t value);
+int wrswhw_pca9554_configure(struct i2c_bus* bus, uint32_t address);
+int wrswhw_pca9554_set_output_reg(struct i2c_bus* bus, uint32_t address, uint8_t value);
 
-int wrswhw_pca9554_get_input(struct i2c_bus_t* bus, uint32_t address);
-int wrswhw_pca9554_set_output_bits  (struct i2c_bus_t* bus, uint32_t address, uint8_t value);
-int wrswhw_pca9554_clear_output_bits(struct i2c_bus_t* bus, uint32_t address, uint8_t value);
+int wrswhw_pca9554_get_input(struct i2c_bus* bus, uint32_t address);
+int wrswhw_pca9554_set_output_bits  (struct i2c_bus* bus, uint32_t address, uint8_t value);
+int wrswhw_pca9554_clear_output_bits(struct i2c_bus* bus, uint32_t address, uint8_t value);
 
 #endif //LIBSHW_I2C_H

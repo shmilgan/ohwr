@@ -5,104 +5,101 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "i2c.h"
 #include "pio.h"
 
-#include "i2c_cpu_bb.h"
+#include "i2c_bitbang.h"
 #include "i2c_fpga_reg.h"
+
+#include "i2c_sfp.h"
 
 #include "libshw_i2c.h"
 
-
-//I2C for reading downlink SFPs via mux
-static const pio_pin_t bus0_sda = {PIOB, 20, PIO_MODE_GPIO, PIO_OUT_1};
-static const pio_pin_t bus0_scl = {PIOB, 21, PIO_MODE_GPIO, PIO_OUT_1};
-
-static const pio_pin_t bus1_sda = {PIOB, 22, PIO_MODE_GPIO, PIO_OUT_1};
-static const pio_pin_t bus1_scl = {PIOB, 23, PIO_MODE_GPIO, PIO_OUT_1};
-
-static const pio_pin_t bus2_sda = {PIOB, 24, PIO_MODE_GPIO, PIO_OUT_1};
-//static const pio_pin_t bus2_scl = {PIOB, 25, PIO_MODE_GPIO, PIO_OUT_1};
-
-
-//PB20
-//PB21
-//PB22
-//PB22
-//PB23
-//PB24
-//PB25
-//PB26
-//PB27
-
-
-static const pio_pin_t fan_box =  {PIOB, 20, PIO_MODE_GPIO, PIO_OUT_1};
-static const pio_pin_t fan_fpga = {PIOB, 24, PIO_MODE_GPIO, PIO_OUT_1};
-
-
-static const pio_pin_t led1 = {PIOA, 0, PIO_MODE_GPIO, PIO_OUT_1};
-static const pio_pin_t led2 = {PIOA, 1, PIO_MODE_GPIO, PIO_OUT_1};
-
-static const pio_pin_t mux_scl = {PIOB, 25, PIO_MODE_GPIO, PIO_OUT_1};
-static const pio_pin_t mux_sda = {PIOB, 27, PIO_MODE_GPIO, PIO_OUT_1};
+#define ARRAY_SIZE(a)                               \
+  (sizeof(a) / sizeof(*(a)))
 
 int main()
 {
+    int ret;
+    uint32_t i;
+    unsigned char dev_map[16];
+    int detect;
+    struct shw_sfp_header head;
+
     printf("Initing HW...\n");
+    memset(&head, 0, sizeof(head));
 
     shw_init();
-
-    
-
-    shw_pio_configure(&led1);
-    shw_pio_configure(&led2);
-
-    printf("Connecting to a bus...\n");
-
-    //struct i2c_bus_t* bus1 = i2c_cpu_bb_new_bus(&mux_scl, &mux_sda);
-    struct i2c_bus_t* bus1 = i2c_fpga_reg_new_bus(FPGA_I2C1_ADDRESS, 50000);
-    
-    /*
-    if (!bus1)
-    {
-	printf("Failed to create bus!\n");
-	exit(1);
+    if (shw_sfp_buses_init() < 0) {
+        printf("Failed to initialize buses\n");
+        return 1;
     }
-    
-    
-    unsigned char detected_devices_bitmap[16];
-    
-    int detected_devices  = i2c_scan(bus1, detected_devices_bitmap);
-    
-    printf("Detected %d devices\n", detected_devices);
-    if (detected_devices > 0)
-    {
-	int i;
-	for (i = 0; i < 16; i++)
-	{
-	    printf("%02X ", detected_devices_bitmap[i] % 0xFF);
-	}
-	printf("\n");
+
+    shw_sfp_read_db("sfpdb.lua");
+
+    shw_sfp_bus_scan(WR_FPGA_BUS0, dev_map);
+    shw_sfp_bus_scan(WR_FPGA_BUS1, dev_map);
+    shw_sfp_bus_scan(WR_MUX_BUS, dev_map);
+    shw_sfp_bus_scan(WR_SFP0_BUS, dev_map);
+    shw_sfp_bus_scan(WR_SFP1_BUS, dev_map);
+
+#if 0
+    shw_sfp_gpio_init();
+    pio_pin_t *sda = ((struct i2c_bitbang *)i2c_buses[WR_MUX_BUS].type_specific)->sda;
+    while (1) {
+        mi2c_pin_out(sda, 1);
+        mi2c_pin_out(sda, 0);
+	    for (i = 0; i < 18; i++) {
+		    shw_sfp_set_led_link(i, 1);
+	    }
+	    usleep(100);
+	    for (i = 0; i < 18; i++) {
+		    shw_sfp_set_led_link(i, 0);
+	    }
+		    usleep(100);
     }
-    */
-    /*
-    unsigned char data[16] = {1};
-    
-    printf("Send+Rcvd: %d\n", i2c_transfer(bus1, 0x70, 1, 0, data));
-    printf("Send+Rcvd: %d\n", i2c_transfer(bus1, 0x71, 1, 0, data));
-    printf("Send+Rcvd: %d\n", i2c_transfer(bus1, 0x72, 1, 0, data));
-    printf("Send+Rcvd: %d\n", i2c_transfer(bus1, 0x73, 1, 0, data));
-    */
-    
-    int i = 0;
-    for (i = 0; i < 7; i++)
-    {
-	wrswhw_pca9554_configure(bus1, 0x20 | i);
-	wrswhw_pca9554_set_output_reg(bus1, 0x20 | i, ~(WRSWHW_INITIAL_OUTPUT_STATE));
+#endif
+
+    struct shw_sfp_caldata *d;
+    printf("\nScanning SFPs:\n");
+    for (i = 0; i < 18; i++) {
+        memset(&head, 0, sizeof(struct shw_sfp_header));
+        ret = shw_sfp_read(i, 0x50, 0x0, sizeof(head), (uint8_t *)&head);
+        if (ret == I2C_DEV_NOT_FOUND || ret < 0) {
+            printf("SFP %d: NOT PRESENT\n", i);
+            continue;
+        }
+        printf("SFP %d: PRESENT\n", i);
+        shw_sfp_header_dump(&head);
+        shw_sfp_print_header(&head);
+	d = NULL;
+	d = shw_sfp_get_cal_data(i);
+	if (d)
+		printf("Callibration (%s): alpha = %d, dtx = %d, drx = %d\n",
+			(d->flags & SFP_FLAG_CLASS_DATA) ? "CLASS" : "DEVICE",
+			d->alpha, d->delta_tx, d->delta_rx);
+        printf("\n");
     }
-    
-    
-    i2c_free(bus1);
+
+
+#if 0
+    for (i = 0; i < 18; i++) {
+        memset(&head, 0, sizeof(struct shw_sfp_header));
+	printf("SFP_SCAN: %08x\n", shw_sfp_scan());
+        ret = shw_sfp_read(i, 0x50, 0x0, sizeof(head), (uint8_t *)&head);
+        if (ret == I2C_DEV_NOT_FOUND) {
+            printf("SFP %d: NOT PRESENT\n", i);
+            continue;
+        }
+        printf("SFP %d: PRESENT\n", i);
+        printf("\n");
+        shw_sfp_header_dump(&head);
+        shw_sfp_print_header(&head);
+    }
+#endif
+
     return 0;
 }

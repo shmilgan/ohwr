@@ -40,7 +40,7 @@ int shw_pio_mmap_init()
     	exit(-1);
     }
 
-    _sys_base = mmap(NULL, 0x4000, PROT_READ | PROT_WRITE, MAP_SHARED, fd, AT91C_BASE_SYS);
+    _sys_base = mmap(NULL, 0x4000, PROT_READ | PROT_WRITE, MAP_SHARED, fd, (off_t)AT91C_BASE_SYS);
 
     if (_sys_base == NULL)
     {
