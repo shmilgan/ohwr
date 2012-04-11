@@ -25,6 +25,7 @@ all:
 	$(MAKE) -C wrsw_mrp all install
 	$(MAKE) -C wrsw_mvrp all install
 	$(MAKE) -C wrsw_snmpd all install
+	$(MAKE) -C wrsw_cli all install
 #	$(MAKE) -C tests/rtu_stat TARGET=ARM all
 
 clean:
@@ -35,6 +36,7 @@ clean:
 	$(MAKE) -C wrsw_mrp clean
 	$(MAKE) -C wrsw_mvrp clean
 	$(MAKE) -C wrsw_snmpd clean
+	$(MAKE) -C wrsw_cli clean
 #	$(MAKE) -C tests/wr_mon clean
 #	$(MAKE) -C tests/rtu_stat clean
 
@@ -43,9 +45,10 @@ install: all
 	$(MAKE) -C libswitchhw install
 	$(MAKE) -C wrsw_hal install
 	$(MAKE) -C wrsw_rtud install
-	$(MAKE) -C wrsw_snmpd install
 	$(MAKE) -C wrsw_mrp install
 	$(MAKE) -C wrsw_mvrp install
+	$(MAKE) -C wrsw_snmpd install
+	$(MAKE) -C wrsw_cli install
 #	$(MAKE) -C tests/rtu_stat TARGET=ARM deploy
 #	./rubi-repos/deploy.sh $(WR_INSTALL_ROOT)
 
