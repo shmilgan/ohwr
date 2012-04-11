@@ -155,6 +155,7 @@ static void mrp_send_raw(struct sockaddr_ll *sl, struct mrp_participant *p)
     struct mrpdu *pdu = &p->pdu;
     struct mrp_application *app = p->port->app;
     struct map_context *ctx;
+    struct map_context_list *cnode;
 
     /* Get source address. First we need to get the name of the interface we
        want to send the frame to and then we can get its HW address.
@@ -172,13 +173,15 @@ static void mrp_send_raw(struct sockaddr_ll *sl, struct mrp_participant *p)
 	}
 
     /* Get the VID */
-    if (!p->contexts || p->contexts->next) {
+    if (list_empty(&p->contexts) || (p->contexts.next != p->contexts.prev)) {
         fprintf(stderr, "mrp: tagged protocol with no context" \
                         "or multiple contexts per participant");
         return;
     }
 
-    ctx = (struct map_context*)p->contexts->content;
+    cnode = list_first_entry(&p->contexts, struct map_context_list, node);
+
+    ctx = cnode->context;
     vid = ctx->cid;
 
     /* Build the frame header */
@@ -269,7 +272,8 @@ static struct mrp_participant *mrp_rcv_dgram(struct mrp_application *app,
 
     memcpy(port->last_pdu_origin, sl.sll_addr, ETH_ALEN);
 
-    return (struct mrp_participant*)port->participants->content;
+    return list_entry(
+        &port->participants, struct mrp_participant, port_participant);
 }
 
 /* Send MRPDU through the open socket. If we have SOCK_DGRAM, we let the kernel

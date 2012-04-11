@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <signal.h>
@@ -235,14 +236,12 @@ struct mrp_application mvrp_app = {
 /* Find port with the given port number in the application port list */
 static struct mrp_port *find_port(int port_no)
 {
-    NODE *node;
     struct mrp_port *port;
 
-    for (node = mvrp_app.ports; node; node = node->next) {
-        port = (struct mrp_port *)node->content;
+    list_for_each_entry(port, &mvrp_app.ports, app_port)
         if (port->port_no == port_no)
             return port;
-    }
+
     return NULL;
 }
 
@@ -259,7 +258,7 @@ static int is_forwarding(struct mrp_port *port)
        (i.e. if the port has a participant attached). This is a temporary
        solution until STP be implemented (the STP instance should have
        its own methods to determine if the port is forwarding) */
-    if (port->participants)
+    if (!list_empty(&port->participants))
         return 1;
     return 0;
 }
@@ -268,15 +267,13 @@ static int is_forwarding(struct mrp_port *port)
    @return 0 on success. -1 in case of error */
 static int mvrp_check_operational_state()
 {
-    NODE *node;
     struct mrp_port *port;
     struct mrp_participant *p;
     hexp_port_state_t port_info;
     char ifname[IF_NAMESIZE];
 
-    for (node = mvrp_app.ports; node; node = node->next) {
-        port = (struct mrp_port *)node->content;
 
+    list_for_each_entry(port, &mvrp_app.ports, app_port) {
         /* Get interface name */
         if (!if_indextoname(port->hw_index, ifname))
             return -1;
@@ -287,7 +284,7 @@ static int mvrp_check_operational_state()
 
         /* Create or delete participants according to the port state */
         if (port_info.up) {
-            if (!port->participants) {
+            if (list_empty(&port->participants)) {
                 /* There is a single MVRP participant per enabled port,
                 irrespective of the port state in the ST context. */
                 p = mrp_create_participant(port);
@@ -299,8 +296,10 @@ static int mvrp_check_operational_state()
                     return -1;
             }
         } else {
-            if (port->participants) {
-                p = (struct mrp_participant*)port->participants->content;
+            if (!list_empty(&port->participants)) {
+                p = list_first_entry(&port->participants,
+                                     struct mrp_participant,
+                                     port_participant);
                 mrp_destroy_participant(p);
             }
         }
@@ -312,18 +311,15 @@ static int mvrp_check_operational_state()
    @return -1 if an error occurred. 0 otherwise */
 static int mvrp_check_forwarding_state()
 {
-    NODE *node;
     struct mrp_port *port;
 
-    for (node = mvrp_app.ports; node; node = node->next) {
-        port = (struct mrp_port *)node->content;
-
+    list_for_each_entry(port, &mvrp_app.ports, app_port) {
         if (is_forwarding(port)) {
-            if (!list_find(ctx->forwarding_ports, port))
+            if (!list_find_port(&ctx->forwarding_ports, port))
                 if (map_context_add_port(ctx, port) < 0)
                     return -1;
         } else {
-            if (list_find(ctx->forwarding_ports, port))
+            if (list_find_port(&ctx->forwarding_ports, port))
                 map_context_remove_port(ctx, port);
         }
     }

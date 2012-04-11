@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <linux/if_ether.h>
 
-#include "llist.h"
+#include "linux_list.h"
 #include "rtu_fd.h"
 
 #define MRP_END_MARK                0x0000
@@ -216,8 +216,8 @@ struct mrp_port {
     enum mrp_periodic_state periodic_state;
 
     struct mrp_application *app;        // mrp application component
-    NODE *participants;                 // list of participants attached
-                                        // to this port
+    struct list_head participants;      // list of attached participants
+    struct list_head app_port;          // item in list of application ports
 
     int is_enabled;
     int reg_failures;                   // number of registration failures
@@ -226,13 +226,25 @@ struct mrp_port {
                                         // Registrar state machine
 };
 
+struct mrp_port_list {
+    struct mrp_port *port;
+    struct list_head node;
+};
+
 /* MRP propagation context */
 struct map_context {
     int cid;                            // context identifier
     int *members;                       // per-attribute membership
                                         // (participants registering an attr)
-    NODE *participants;                 // List of participants
-    NODE *forwarding_ports;             // List of ports in forwarding state
+
+    struct list_head participants;      // List of participants
+    struct list_head forwarding_ports;  // List of ports in forwarding state
+    struct list_head app_context;       // item in list of application contexts
+};
+
+struct map_context_list {
+    struct map_context *context;
+    struct list_head node;
 };
 
 /* MRP participant */
@@ -256,7 +268,14 @@ struct mrp_participant {
 
     int next_to_process;                // next attribute to start processing
                                         // with, in the following tx opportunity
-    NODE *contexts;                     // List of propagation contexts
+
+    struct list_head contexts;          // List of propagation contexts
+    struct list_head port_participant;  // item in list of port participants
+};
+
+struct mrp_participant_list {
+    struct mrp_participant *participant;
+    struct list_head node;
 };
 
 /* MRP protocol configuration */
@@ -275,8 +294,8 @@ struct mrp_application {
     uint32_t numattr;                   // supported number of attributes
 
     struct mrp_proto proto;             // protocol configuration
-    NODE *ports;                        // List of (all) ports
-    NODE *contexts;                     // List of (all) contexts
+    struct list_head ports;             // List of (all) ports
+    struct list_head contexts;          // List of (all) contexts
 
     /* Service Primitives */
 	int (*mad_join_ind)(struct mrp_participant *p, int mid, int is_new);
@@ -392,6 +411,39 @@ inline static int mad_registered_here(struct mrp_participant *p, int mid)
 inline static int mad_machine_active(struct mrp_participant *p, int mid)
 {
     return mad_declared_here(p, mid) || mad_registered_here(p, mid);
+}
+
+inline static struct mrp_port_list *list_find_port(
+                                        struct list_head *head,
+                                        struct mrp_port *port) {
+    struct mrp_port_list *node;
+
+    list_for_each_entry(node, head, node)
+          if (node->port == port)
+            return node;
+    return NULL;
+}
+
+inline static struct mrp_participant_list *list_find_participant(
+                                        struct list_head *head,
+                                        struct mrp_participant *participant) {
+    struct mrp_participant_list *node;
+
+    list_for_each_entry(node, head, node)
+          if (node->participant == participant)
+            return node;
+    return NULL;
+}
+
+inline static struct map_context_list *list_find_context(
+                                        struct list_head *head,
+                                        struct map_context *context) {
+    struct map_context_list *node;
+
+    list_for_each_entry(node, head, node)
+          if (node->context == context)
+            return node;
+    return NULL;
 }
 
 #endif /*__WHITERABBIT_MRP_H*/
