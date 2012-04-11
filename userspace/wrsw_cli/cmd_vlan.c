@@ -41,35 +41,33 @@ enum vlan_cmds {
  * \brief Command 'vlan <VID> member <Port number>'.
  * This command creates a new VLAN.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only two arguments allowed.
- * @param agv Two arguments must be specified: the VLAN number and the port
+ * @param valc number of arguments. Only two arguments allowed.
+ * @param valv Two arguments must be specified: the VLAN number and the port
  * number.
  */
-void cli_cmd_set_vlan(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_set_vlan(struct cli_shell *cli, int valc, char **valv)
 {
     oid _oid[2][MAX_OID_LEN];
     char *base_oid = "1.3.111.2.802.1.1.4.1.4.3.1.7";
     size_t length_oid[2]; /* Base OID length */
     int vid;
     char ports[(2*NUM_PORTS)+1];
-    char mask[NUM_PORTS+1];
+    char mask[NUM_PORTS];
     char types[2];
     char *value[2];
     int i;
 
-    if (argc != 2) {
+    if (valc != 2) {
         printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Check the syntax of the vlan argument */
-    if (is_vid(argv[0]) < 0)
+    if ((vid = cli_check_param(valv[0], VID_PARAM)) < 0)
         return;
 
-    vid = atoi(argv[0]);
-
     /* Parse port numbers to port mask and check the syntax */
-    if (ports_to_mask(argv[1], mask) != 0)
+    if (ports_to_mask(valv[1], mask) != 0)
         return;
 
     memset(ports, '0', 2*NUM_PORTS);
@@ -109,10 +107,10 @@ void cli_cmd_set_vlan(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'show vlan'.
  * This command displays the VLANs information.
  * @param cli CLI interpreter.
- * @param argc unused
- * @param agv unused
+ * @param valc unused
+ * @param valv unused
  */
-void cli_cmd_show_vlan(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_vlan(struct cli_shell *cli, int valc, char **valv)
 {
     oid _oid[MAX_OID_LEN];
     oid new_oid[MAX_OID_LEN];
@@ -120,7 +118,7 @@ void cli_cmd_show_vlan(struct cli_shell *cli, int argc, char **argv)
     char *base_oid = ".1.3.111.2.802.1.1.4.1.4.2.1.5";
     size_t length_oid;  /* Base OID length */
     char *ports = NULL;
-    int ports_range[NUM_PORTS];
+    int ports_range[NUM_PORTS + 1];
     int vid;
     int fid;
     int i = 0;
@@ -164,7 +162,7 @@ void cli_cmd_show_vlan(struct cli_shell *cli, int argc, char **argv)
         /* Parse the port mask */
         memset(ports_range, 0, NUM_PORTS * sizeof(int));
         mask_to_ports(ports, ports_range);
-        for (i = 0; ports_range[i] >= 0 && i < NUM_PORTS; i++) {
+        for (i = 0; ports_range[i] >= 0; i++) {
             printf("%d", ports_range[i]);
             if (ports_range[i + 1] >= 0)
                 printf(", ");
@@ -184,26 +182,24 @@ void cli_cmd_show_vlan(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'no vlan <VID>'.
  * This command removes a VLAN.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the VLAN number.
+ * @param valc number of arguments. Only one argument allowed.
+ * @param valv One argument must be specified: the VLAN number.
  */
-void cli_cmd_del_vlan(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_del_vlan(struct cli_shell *cli, int valc, char **valv)
 {
     oid _oid[MAX_OID_LEN];
     char *base_oid = "1.3.111.2.802.1.1.4.1.4.3.1.7";
     size_t length_oid; /* Base OID length */
     int vid;
 
-    if (argc != 1) {
+    if (valc != 1) {
         printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Check the syntax of the vlan argument */
-    if (is_vid(argv[0]) < 0)
+    if ((vid = cli_check_param(valv[0], VID_PARAM)) < 0)
         return;
-
-    vid = atoi(argv[0]);
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
 

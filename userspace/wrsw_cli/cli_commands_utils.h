@@ -33,24 +33,30 @@
 #include "cli.h"
 #include "cli_snmp.h"
 
-#define LC_MAX_SET_ID   31  /* TODO: read this constant from RTU */
+#define LC_MAX_SET_ID   (NUM_LC_SETS - 1)
+
+enum param_type {
+    PORT_PARAM = 0,
+    VID_PARAM,
+    AGING_PARAM,
+    SID_PARAM,
+    FID_PARAM,
+    NUM_OF_PARAM_TYPES
+};
 
 /* The help command is treated specially */
 void cli_cmd_help(struct cli_shell *cli, struct cli_cmd *cmd);
 
 char *mac_to_str(uint8_t mac[ETH_ALEN], char str[3 * ETH_ALEN]);
+int str_to_mac(char *str, unsigned int mac[ETH_ALEN]);
 int cmp_oid(oid old_oid[MAX_OID_LEN], oid new_oid[MAX_OID_LEN],
             int base_oid_length);
 void print_oid(oid _oid[MAX_OID_LEN], int n) __attribute__((unused));
 void mask_to_ports(char *mask, int *ports_range);
-int ports_to_mask(char *ports_range, char *mask);
+int ports_to_mask(char *port_list, char *mask);
 
 /* Check command options syntax */
-int is_port(char *port);
-int is_vid(char *vid);
-int is_aging(char *aging);
-int is_sid(char *sid);
-int is_fid(char *fid);
+int cli_check_param(char *string, enum param_type type);
 
 
 #endif /*__WHITERABBIT_CLI_COMMANDS_H*/

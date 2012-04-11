@@ -53,28 +53,25 @@ enum allocation_type {
  * \brief Command 'allocations vlan <VID> fid <FID>'.
  * This command establishes a Fixed allocation of a VID to an FID.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only two arguments allowed.
- * @param agv Two arguments must be specified: the VID and the FID.
+ * @param valc number of arguments. Only two arguments allowed.
+ * @param valv Two arguments must be specified: the VID and the FID.
  */
-void cli_cmd_allocation(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_allocation(struct cli_shell *cli, int valc, char **valv)
 {
     int vid, fid;
 
-    if (argc != 2) {
+    if (valc != 2) {
         printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Check the syntax of the vlan argument */
-    if (is_vid(argv[0]) < 0)
+    if ((vid = cli_check_param(valv[0], VID_PARAM)) < 0)
         return;
 
     /* Check the syntax of the fid argument */
-    if (is_fid(argv[1]) < 0)
+    if ((fid = cli_check_param(valv[1], FID_PARAM)) < 0)
         return;
-
-    vid = atoi(argv[0]);
-    fid = atoi(argv[1]);
 
     if (rtu_fdb_proxy_set_fid((uint16_t)vid, (uint8_t)fid) < 0)
         printf("\tOperation rejected.\n");
@@ -84,10 +81,10 @@ void cli_cmd_allocation(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'show allocations'.
  * This command displays the contents of the VID to FID allocation table.
  * @param cli CLI interpreter.
- * @param argc unused.
- * @param agv unused.
+ * @param valc unused.
+ * @param valv unused.
  */
-void cli_cmd_show_allocation(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_allocation(struct cli_shell *cli, int valc, char **valv)
 {
     uint16_t    vid = 0;
     uint8_t     fid;
@@ -117,25 +114,23 @@ void cli_cmd_show_allocation(struct cli_shell *cli, int argc, char **argv)
  * This command displays the FID to which a specified VID is currently
  * allocated.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the VID.
+ * @param valc number of arguments. Only one argument allowed.
+ * @param valv One argument must be specified: the VID.
  */
-void cli_cmd_show_allocation_vlan(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_allocation_vlan(struct cli_shell *cli, int valc, char **valv)
 {
     uint16_t    vid;
     uint8_t     fid;
     int         fid_fixed;
 
-    if (argc != 1) {
+    if (valc != 1) {
         printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Check the syntax of the vlan argument */
-    if (is_vid(argv[0]) < 0)
+    if ((vid = cli_check_param(valv[0], VID_PARAM)) < 0)
         return;
-
-    vid = (uint16_t)atoi(argv[0]);
 
     rtu_fdb_proxy_read_fid(vid, &fid, &fid_fixed);
 
@@ -153,10 +148,10 @@ void cli_cmd_show_allocation_vlan(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'show allocations fid <FID>'.
  * This command displays all VIDs currently allocated to a given FID.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the FID.
+ * @param valc number of arguments. Only one argument allowed.
+ * @param valv One argument must be specified: the FID.
  */
-void cli_cmd_show_allocation_fid(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_allocation_fid(struct cli_shell *cli, int valc, char **valv)
 {
     uint16_t    vid = 0;
     uint8_t     fid;
@@ -164,16 +159,14 @@ void cli_cmd_show_allocation_fid(struct cli_shell *cli, int argc, char **argv)
     int         fid_fixed;
     int         ret = 0;
 
-    if (argc != 1) {
+    if (valc != 1) {
         printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Check the syntax of the fid argument */
-    if (is_fid(argv[0]) < 0)
+    if ((fid = cli_check_param(valv[0], FID_PARAM)) < 0)
         return;
-
-    fid = (uint8_t)atoi(argv[0]);
 
     printf("\tFID   Type        VID\n"
            "\t---   ---------   ----\n");
@@ -196,23 +189,21 @@ void cli_cmd_show_allocation_fid(struct cli_shell *cli, int argc, char **argv)
  * This command removes a fixed VID to FID allocation from the VID to FID
  * allocation table.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the VID.
+ * @param valc number of arguments. Only one argument allowed.
+ * @param valv One argument must be specified: the VID.
  */
-void cli_cmd_no_allocation(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_no_allocation(struct cli_shell *cli, int valc, char **valv)
 {
     uint16_t vid;
 
-    if (argc != 1) {
+    if (valc != 1) {
         printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Check the syntax of the vlan argument */
-    if (is_vid(argv[0]) < 0)
+    if ((vid = cli_check_param(valv[0], VID_PARAM)) < 0)
         return;
-
-    vid = (uint16_t)atoi(argv[0]);
 
     if (rtu_fdb_proxy_delete_fid(vid) < 0)
         printf("\tOperation rejected.\n");

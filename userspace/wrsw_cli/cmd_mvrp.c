@@ -46,143 +46,140 @@ enum mvrp_cmds {
     NUM_MVRP_CMDS
 };
 
-static void mvrp_enabled_status(char *val)
+enum mvrp_status_entities {
+    MVRP_STATUS_PROTOCOL = 0,
+    MVRP_STATUS_PORT,
+    MVRP_STATUS_RESTRICTED_REGISTRATION
+};
+
+/* Used to enable/disable MVRP entities */
+struct mvrp_status {
+    int     entity;     /* One of the mvrp_status_entities */
+    int     port;       /* Port number (when applicable) */
+    char    *enabled;   /* TRUE or FALSE as defined by SNMP (strings) */
+    char    *base_oid;
+};
+
+/* Enable/Disable MVRP, MVRP in specific ports or Restricted Registration
+parameter in specific ports */
+static void mvrp_set_status(struct mvrp_status *status)
 {
     oid _oid[MAX_OID_LEN];
-    char *base_oid = ".1.3.111.2.802.1.1.4.1.1.1.1.6.1";
     size_t length_oid;  /* Base OID length */
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
 
     /* Parse the base_oid string to an oid array type */
     length_oid = MAX_OID_LEN;
-    if (!snmp_parse_oid(base_oid, _oid, &length_oid))
+    if (!snmp_parse_oid(status->base_oid, _oid, &length_oid))
         return;
 
-    cli_snmp_set_int(_oid, length_oid, val, 'i');
+    /* Build the indexes if info applies to ports */
+    if (status->entity != MVRP_STATUS_PROTOCOL) {
+        _oid[14] = status->port;
+        length_oid++;
+    }
+
+    cli_snmp_set_int(_oid, length_oid, status->enabled, 'i');
 }
 
-static void mvrp_port_enabled_status(int port, char *val)
+/* Set the port number and base OID when operation applies to Port or
+Restricted Registration entities */
+static void mvrp_port_status(int valc, char **valv, struct mvrp_status *status)
 {
-    oid _oid[MAX_OID_LEN];
-    char *base_oid = ".1.3.111.2.802.1.1.4.1.4.5.1.4.1";
-    size_t length_oid;  /* Base OID length */
+    char mask[NUM_PORTS + 1];
+    int i;
 
-    memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
+    if (valc != 1) {
+        printf("\tError. You have missed some command option\n");
+        return;
+    }
 
-    /* Parse the base_oid string to an oid array type */
-    length_oid = MAX_OID_LEN;
-    if (!snmp_parse_oid(base_oid, _oid, &length_oid))
+    /* Parse port numbers to port mask and check the syntax */
+    if (ports_to_mask(valv[0], mask) != 0)
         return;
 
-    /* Build the indexes */
-    _oid[14] = port;              /* port number */
-    length_oid++;
+    status->base_oid = (status->entity == MVRP_STATUS_PORT) ?
+        ".1.3.111.2.802.1.1.4.1.4.5.1.4.1" :    /* Port */
+        ".1.3.111.2.802.1.1.4.1.4.5.1.7.1";     /* Restricted Registration */
 
-    cli_snmp_set_int(_oid, length_oid, val, 'i');
-}
+    for (i = 0; i < NUM_PORTS; i++)
+        if (mask[i] == '1') {
+            status->port = i;
+            mvrp_set_status(status);
+        }
 
-static void mvrp_restricted_registration_status(int port, char *val)
-{
-    oid _oid[MAX_OID_LEN];
-    char *base_oid = ".1.3.111.2.802.1.1.4.1.4.5.1.7.1";
-    size_t length_oid;  /* Base OID length */
-
-    memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
-
-    /* Parse the base_oid string to an oid array type */
-    length_oid = MAX_OID_LEN;
-    if (!snmp_parse_oid(base_oid, _oid, &length_oid))
-        return;
-
-    /* Build the indexes */
-    _oid[14] = port;              /* port number */
-    length_oid++;
-
-    cli_snmp_set_int(_oid, length_oid, val, 'i');
+    return;
 }
 
 /**
  * \brief Command 'mvrp enable'.
  * This command enables MVRP on the device.
  * @param cli CLI interpreter.
- * @param argc unused.
- * @param agv unused.
+ * @param valc unused.
+ * @param valv unused.
  */
-void cli_cmd_mvrp_enable(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_mvrp_enable(struct cli_shell *cli, int valc, char **valv)
 {
-    mvrp_enabled_status(S_TRUE);
-    return;
+    static struct mvrp_status status = {
+        .entity = MVRP_STATUS_PROTOCOL,
+        .enabled = S_TRUE,
+        .base_oid = ".1.3.111.2.802.1.1.4.1.1.1.1.6.1"
+    };
+
+    mvrp_set_status(&status);
 }
 
 /**
  * \brief Command 'mvrp disable'.
  * This command disables MVRP on the device.
  * @param cli CLI interpreter.
- * @param argc unused.
- * @param agv unused.
+ * @param valc unused.
+ * @param valv unused.
  */
-void cli_cmd_mvrp_disable(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_mvrp_disable(struct cli_shell *cli, int valc, char **valv)
 {
-    mvrp_enabled_status(S_FALSE);
-    return;
+    static struct mvrp_status status = {
+        .entity = MVRP_STATUS_PROTOCOL,
+        .enabled = S_FALSE,
+        .base_oid = ".1.3.111.2.802.1.1.4.1.1.1.1.6.1"
+    };
+
+    mvrp_set_status(&status);
 }
 
 /**
  * \brief Command 'mvrp port <port number> enable'.
  * This command enables MVRP on a given port/ports.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the port number.
+ * @param valc number of arguments. Only one argument allowed.
+ * @param valv One argument must be specified: the port number.
  */
-void cli_cmd_mvrp_port_enable(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_mvrp_port_enable(struct cli_shell *cli, int valc, char **valv)
 {
-    char mask[NUM_PORTS + 1];
-    int i;
+    static struct mvrp_status status = {
+        .entity = MVRP_STATUS_PORT,
+        .enabled = S_TRUE,
+    };
 
-    if (argc != 1) {
-        printf("\tError. You have missed some command option\n");
-        return;
-    }
-
-    /* Parse port numbers to port mask and check the syntax */
-    if (ports_to_mask(argv[0], mask) != 0)
-        return;
-
-    for (i = 0; i < NUM_PORTS; i++)
-        if (mask[i] == '1')
-            mvrp_port_enabled_status(i, "1");
-
-    return;
+    mvrp_port_status(valc, valv, &status);
 }
 
 /**
  * \brief Command 'mvrp port <port number> disable'.
  * This command disables MVRP on a given port/ports.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the port number.
+ * @param valc number of arguments. Only one argument allowed.
+ * @param valv One argument must be specified: the port number.
  */
-void cli_cmd_mvrp_port_disable(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_mvrp_port_disable(struct cli_shell *cli, int valc, char **valv)
 {
-    char mask[NUM_PORTS + 1];
-    int i;
+    static struct mvrp_status status = {
+        .entity = MVRP_STATUS_PORT,
+        .enabled = S_FALSE,
+    };
 
-    if (argc != 1) {
-        printf("\tError. You have missed some command option\n");
-        return;
-    }
-
-    /* Parse port numbers to port mask and check the syntax */
-    if (ports_to_mask(argv[0], mask) != 0)
-        return;
-
-
-    for (i = 0; i < NUM_PORTS; i++)
-        if (mask[i] == '1')
-            mvrp_port_enabled_status(i, "2");
-
-    return;
+    mvrp_port_status(valc, valv, &status);
 }
 
 /**
@@ -190,29 +187,19 @@ void cli_cmd_mvrp_port_disable(struct cli_shell *cli, int argc, char **argv)
  * This command enables the Restricted VLAN Registration state on a given
  * port/ports.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the port number.
+ * @param valc number of arguments. Only one argument allowed.
+ * @param valv One argument must be specified: the port number.
  */
-void cli_cmd_mvrp_restricted_registration_enable(struct cli_shell *cli, int argc,
-                                                 char **argv)
+void cli_cmd_mvrp_restricted_registration_enable(struct cli_shell *cli, int valc,
+                                                 char **valv)
 {
-    char mask[NUM_PORTS + 1];
-    int i;
+    static struct mvrp_status status = {
+        .entity = MVRP_STATUS_RESTRICTED_REGISTRATION,
+        .enabled = S_TRUE,
+    };
 
-    if (argc != 1) {
-        printf("\tError. You have missed some command option\n");
-        return;
-    }
+    mvrp_port_status(valc, valv, &status);
 
-    /* Parse port numbers to port mask and check the syntax */
-    if (ports_to_mask(argv[0], mask) != 0)
-        return;
-
-    for (i = 0; i < NUM_PORTS; i++)
-        if (mask[i] == '1')
-            mvrp_restricted_registration_status(i, S_TRUE);
-
-    return;
 }
 
 /**
@@ -220,44 +207,33 @@ void cli_cmd_mvrp_restricted_registration_enable(struct cli_shell *cli, int argc
  * This command disables the Restricted VLAN Registration state on a given
  * port/ports.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the port number.
+ * @param valc number of arguments. Only one argument allowed.
+ * @param valv One argument must be specified: the port number.
  */
 void cli_cmd_mvrp_restricted_registration_disable(struct cli_shell *cli,
-                                                  int argc, char **argv)
+                                                  int valc, char **valv)
 {
-    char mask[NUM_PORTS + 1];
-    int i;
+    static struct mvrp_status status = {
+        .entity = MVRP_STATUS_RESTRICTED_REGISTRATION,
+        .enabled = S_FALSE,
+    };
 
-    if (argc != 1) {
-        printf("\tError. You have missed some command option\n");
-        return;
-    }
-
-    /* Parse port numbers to port mask and check the syntax */
-    if (ports_to_mask(argv[0], mask) != 0)
-        return;
-
-    for (i = 0; i < NUM_PORTS; i++)
-        if (mask[i] == '1')
-            mvrp_restricted_registration_status(i, S_FALSE);
-
-    return;
+    mvrp_port_status(valc, valv, &status);
 }
 
 /**
  * \brief Command 'show mvrp status'.
  * This command displays the MVRP status on the device.
  * @param cli CLI interpreter.
- * @param argc unused.
- * @param agv unused.
+ * @param valc unused.
+ * @param valv unused.
  */
-void cli_cmd_show_mvrp_status(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_mvrp_status(struct cli_shell *cli, int valc, char **valv)
 {
     oid _oid[MAX_OID_LEN];
     char *base_oid = ".1.3.111.2.802.1.1.4.1.1.1.1.6.1";
     size_t length_oid;  /* Base OID length */
-    int status;
+    int enabled;
 
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
@@ -268,11 +244,11 @@ void cli_cmd_show_mvrp_status(struct cli_shell *cli, int argc, char **argv)
         return;
 
     errno = 0;
-    status = cli_snmp_get_int(_oid, length_oid);
+    enabled = cli_snmp_get_int(_oid, length_oid);
 
     if (errno == 0)
         printf("\tMVRP status: %s\n",
-               (status == TV_TRUE) ? "Enabled" : "Disabled" );
+               (enabled == TV_TRUE) ? "Enabled" : "Disabled" );
 
     return;
 }

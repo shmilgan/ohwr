@@ -3,6 +3,7 @@
  * Copyright (C) 2011, CERN.
  *
  * Authors:     Juan Luis Manas (juan.manas@integrasys.es)
+ *              Miguel Baizan   (miguel.baizan@integrasys.es)
  *
  * Description: SNMP utility functions to simplify handling SNMP stuff from CLI
  *              modules.
@@ -52,8 +53,6 @@ void cli_snmp_set_int(oid _oid[MAX_OID_LEN],
                       size_t oid_len,
                       char *val,
                       char type);
-
-void cli_snmp_set_str(oid _oid[MAX_OID_LEN], size_t oid_len, char *val);
 
 void cli_snmp_set(oid _oid[][MAX_OID_LEN],
                   size_t oid_len[],

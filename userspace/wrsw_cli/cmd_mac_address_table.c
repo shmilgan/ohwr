@@ -59,12 +59,11 @@ enum cam_cmds {
    unicast or multicast, depending on the OID passed as argument). The column
    identifier for the port mask is also needed, since it's different for the
    unicast and multicast tables  */
-static void set_cam_static(int argc, char **argv, char *base_oid,
+static void set_cam_static(int valc, char **valv, char *base_oid,
     int egress_ports_column)
 {
     oid _oid[2][MAX_OID_LEN];
     size_t length_oid[2]; /* Base OID length */
-    char *addr;
     unsigned int mac[ETH_ALEN];
     int vid;
     char mask[NUM_PORTS+1];
@@ -73,27 +72,21 @@ static void set_cam_static(int argc, char **argv, char *base_oid,
     char *value[2];
     int i;
 
-    if (argc != 3) {
+    if (valc != 3) {
         printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Parse the MAC address */
-    addr = argv[0];
-    if (sscanf(addr, "%02x:%02x:%02x:%02x:%02x:%02x",
-        &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]) != 6) {
-        printf("\tError: wrong MAC address format. Try: XX:XX:XX:XX:XX:XX\n");
+    if (str_to_mac(valv[0], mac) < 0)
         return;
-    }
 
     /* Check the syntax of the vlan argument */
-    if (is_vid(argv[1]) < 0)
+    if ((vid = cli_check_param(valv[1], VID_PARAM)) < 0)
         return;
 
-    vid = atoi(argv[1]);
-
     /* Parse port numbers to port mask and check the syntax */
-    if (ports_to_mask(argv[2], mask) != 0)
+    if (ports_to_mask(valv[2], mask) != 0)
         return;
 
     memset(ports, '0', 2*NUM_PORTS);
@@ -140,7 +133,7 @@ static void show_cam_static(char *base_oid)
     oid new_oid[MAX_OID_LEN];
     size_t length_oid;  /* Base OID length */
     char *egress_ports = NULL;
-    int ports_range[NUM_PORTS];
+    int ports_range[NUM_PORTS + 1];
     int i;
     int vid;
     uint8_t mac[ETH_ALEN];
@@ -180,7 +173,7 @@ static void show_cam_static(char *base_oid)
         /* Parse the port mask */
         memset(ports_range, 0, sizeof(ports_range));
         mask_to_ports(egress_ports, ports_range);
-        for (i = 0; ports_range[i] >= 0 && i < NUM_PORTS; i++) {
+        for (i = 0; ports_range[i] >= 0; i++) {
             printf("%d", ports_range[i]);
             if (ports_range[i + 1] >= 0)
                 printf(", ");
@@ -195,33 +188,26 @@ static void show_cam_static(char *base_oid)
 
 /* Helper function to remove the static entries in the FDB (both
     unicast or multicast, depending on the OID passed as argument) */
-static void del_cam_static_entry(int argc, char **argv, char *base_oid)
+static void del_cam_static_entry(int valc, char **valv, char *base_oid)
 {
     oid _oid[MAX_OID_LEN];
     size_t length_oid; /* Base OID length */
-    char *addr;
     unsigned int mac[ETH_ALEN];
     int vid;
     int i;
 
-    if (argc != 2) {
+    if (valc != 2) {
         printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Parse the MAC address */
-    addr = argv[0];
-    if (sscanf(addr, "%02x:%02x:%02x:%02x:%02x:%02x",
-        &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]) != 6) {
-        printf("\tError: wrong MAC address format. Try: XX:XX:XX:XX:XX:XX\n");
+    if (str_to_mac(valv[0], mac) < 0)
         return;
-    }
 
     /* Check the syntax of the vlan argument */
-    if (is_vid(argv[1]) < 0)
+    if ((vid = cli_check_param(valv[1], VID_PARAM)) < 0)
         return;
-
-    vid = atoi(argv[1]);
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
 
@@ -249,22 +235,22 @@ static void del_cam_static_entry(int argc, char **argv, char *base_oid)
  * \brief Command 'mac-address-table aging-time <aging time>'.
  * This command sets a new aging time.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only one argument allowed.
- * @param agv new value for the aging time.
+ * @param valc number of arguments. Only one argument allowed.
+ * @param valv new value for the aging time.
  */
-void cli_cmd_set_cam_aging(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_set_cam_aging(struct cli_shell *cli, int valc, char **valv)
 {
     oid _oid[MAX_OID_LEN];
     char *base_oid = "1.3.111.2.802.1.1.4.1.2.1.1.5.1.0";
     size_t length_oid;  /* Base OID length */
 
-    if (!argc) {
+    if (!valc) {
         printf("\tError. You must specify the new aging value\n");
         return;
     }
 
     /* Check the syntax of the argument */
-    if (is_aging(argv[0]) < 0)
+    if (cli_check_param(valv[0], AGING_PARAM) < 0)
         return;
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
@@ -274,7 +260,7 @@ void cli_cmd_set_cam_aging(struct cli_shell *cli, int argc, char **argv)
     if (!snmp_parse_oid(base_oid, _oid, &length_oid))
         return;
 
-    cli_snmp_set_int(_oid, length_oid, argv[0], 'i');
+    cli_snmp_set_int(_oid, length_oid, valv[0], 'i');
 
     return;
 }
@@ -284,13 +270,13 @@ void cli_cmd_set_cam_aging(struct cli_shell *cli, int argc, char **argv)
  * port <port number>'.
  * This command creates a unicast static entry in the FDB.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only three arguments allowed.
- * @param agv Three arguments must be specified: the MAC Address, the VLAN
+ * @param valc number of arguments. Only three arguments allowed.
+ * @param valv Three arguments must be specified: the MAC Address, the VLAN
  * number and the port number.
  */
-void cli_cmd_set_cam_uni_entry(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_set_cam_uni_entry(struct cli_shell *cli, int valc, char **valv)
 {
-    set_cam_static(argc, argv, ".1.3.111.2.802.1.1.4.1.3.1.1.8", 5);
+    set_cam_static(valc, valv, ".1.3.111.2.802.1.1.4.1.3.1.1.8", 5);
     return;
 }
 
@@ -299,13 +285,13 @@ void cli_cmd_set_cam_uni_entry(struct cli_shell *cli, int argc, char **argv)
  * port <port number>'.
  * This command creates a multicast static entry in the FDB.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only three arguments allowed.
- * @param agv Three arguments must be specified: the MAC Address, the VLAN
+ * @param valc number of arguments. Only three arguments allowed.
+ * @param valv Three arguments must be specified: the MAC Address, the VLAN
  * number and the port number.
  */
-void cli_cmd_set_cam_multi_entry(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_set_cam_multi_entry(struct cli_shell *cli, int valc, char **valv)
 {
-    set_cam_static(argc, argv, ".1.3.111.2.802.1.1.4.1.3.2.1.6", 3);
+    set_cam_static(valc, valv, ".1.3.111.2.802.1.1.4.1.3.2.1.6", 3);
     return;
 }
 
@@ -313,10 +299,10 @@ void cli_cmd_set_cam_multi_entry(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'show mac-address-table aging-time'.
  * This command shows the aging time.
  * @param cli CLI interpreter.
- * @param argc unused
- * @param agv unused
+ * @param valc unused
+ * @param valv unused
  */
-void cli_cmd_show_cam_aging(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_cam_aging(struct cli_shell *cli, int valc, char **valv)
 {
     oid _oid[MAX_OID_LEN];
     char *base_oid = ".1.3.111.2.802.1.1.4.1.2.1.1.5.1.0";
@@ -345,10 +331,10 @@ void cli_cmd_show_cam_aging(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'show mac-address-table'.
  * This command shows general information on the Filtering Database
  * @param cli CLI interpreter.
- * @param argc unused
- * @param agv unused
+ * @param valc unused
+ * @param valv unused
  */
-void cli_cmd_show_cam(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_cam(struct cli_shell *cli, int valc, char **valv)
 {
     int fdb_size;
     int fdb_num_static, fdb_num_dynamic;
@@ -393,10 +379,10 @@ void cli_cmd_show_cam(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'show mac-address-table unicast'.
  * This command shows the unicast entries in the FDB.
  * @param cli CLI interpreter.
- * @param argc unused
- * @param agv unused
+ * @param valc unused
+ * @param valv unused
  */
-void cli_cmd_show_cam_uni(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_cam_uni(struct cli_shell *cli, int valc, char **valv)
 {
     oid _oid[MAX_OID_LEN];
     oid new_oid[MAX_OID_LEN];
@@ -464,17 +450,17 @@ void cli_cmd_show_cam_uni(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'show mac-address-table multicast'.
  * This command shows the multicast static entries in the FDB.
  * @param cli CLI interpreter.
- * @param argc unused
- * @param agv unused
+ * @param valc unused
+ * @param valv unused
  */
-void cli_cmd_show_cam_multi(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_cam_multi(struct cli_shell *cli, int valc, char **valv)
 {
     oid _oid[MAX_OID_LEN];
     oid new_oid[MAX_OID_LEN];
     char *base_oid = ".1.3.111.2.802.1.1.4.1.2.3.1.2";
     size_t length_oid;  /* Base OID length */
     char *egress_ports = NULL;
-    int ports_range[NUM_PORTS];
+    int ports_range[NUM_PORTS + 1];
     int i;
     int fid;
     uint8_t mac[ETH_ALEN];
@@ -514,7 +500,7 @@ void cli_cmd_show_cam_multi(struct cli_shell *cli, int argc, char **argv)
         /* Parse the port mask */
         memset(ports_range, 0, NUM_PORTS * sizeof(int));
         mask_to_ports(egress_ports, ports_range);
-        for (i = 0; ports_range[i] >= 0 && i < NUM_PORTS; i++) {
+        for (i = 0; ports_range[i] >= 0; i++) {
             printf("%d", ports_range[i]);
             if (ports_range[i + 1] >= 0)
                 printf(", ");
@@ -533,10 +519,10 @@ void cli_cmd_show_cam_multi(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'show mac-address-table static unicast'.
  * This command shows the unicast static entries in the FDB.
  * @param cli CLI interpreter.
- * @param argc unused
- * @param agv unused
+ * @param valc unused
+ * @param valv unused
  */
-void cli_cmd_show_cam_static_uni(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_cam_static_uni(struct cli_shell *cli, int valc, char **valv)
 {
     show_cam_static(".1.3.111.2.802.1.1.4.1.3.1.1.5");
     return;
@@ -546,10 +532,10 @@ void cli_cmd_show_cam_static_uni(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'show mac-address-table static multicast'.
  * This command shows the multicast static entries in the FDB.
  * @param cli CLI interpreter.
- * @param argc unused
- * @param agv unused
+ * @param valc unused
+ * @param valv unused
  */
-void cli_cmd_show_cam_static_multi(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_cam_static_multi(struct cli_shell *cli, int valc, char **valv)
 {
     show_cam_static(".1.3.111.2.802.1.1.4.1.3.2.1.3");
     return;
@@ -559,13 +545,13 @@ void cli_cmd_show_cam_static_multi(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'no mac-address-table unicast <MAC Addrress> vlan <VID>'.
  * This command deletes a unicast static entry in the FDB.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only two arguments allowed.
- * @param agv Two arguments must be specified: the MAC Address and the VLAN
+ * @param valc number of arguments. Only two arguments allowed.
+ * @param valv Two arguments must be specified: the MAC Address and the VLAN
  * number.
  */
-void cli_cmd_del_cam_uni_entry(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_del_cam_uni_entry(struct cli_shell *cli, int valc, char **valv)
 {
-    del_cam_static_entry(argc, argv, ".1.3.111.2.802.1.1.4.1.3.1.1.8");
+    del_cam_static_entry(valc, valv, ".1.3.111.2.802.1.1.4.1.3.1.1.8");
     return;
 }
 
@@ -573,13 +559,13 @@ void cli_cmd_del_cam_uni_entry(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'no mac-address-table multicast <MAC Addrress> vlan <VID>'.
  * This command deletes a multicast static entry in the FDB.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only two arguments allowed.
- * @param agv Two arguments must be specified: the MAC Address and the VLAN
+ * @param valc number of arguments. Only two arguments allowed.
+ * @param valv Two arguments must be specified: the MAC Address and the VLAN
  * number.
  */
-void cli_cmd_del_cam_multi_entry(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_del_cam_multi_entry(struct cli_shell *cli, int valc, char **valv)
 {
-    del_cam_static_entry(argc, argv, ".1.3.111.2.802.1.1.4.1.3.2.1.6");
+    del_cam_static_entry(valc, valv, ".1.3.111.2.802.1.1.4.1.3.2.1.6");
     return;
 }
 
@@ -590,7 +576,7 @@ struct cli_cmd cli_cam[NUM_CAM_CMDS] = {
         .parent     = NULL,
         .name       = "mac-address-table",
         .handler    = NULL,
-        .desc       = "Configure MAC address table",
+        .desc       = "MAC address table configuration",
         .opt        = CMD_NO_ARG,
         .opt_desc   = NULL
     },

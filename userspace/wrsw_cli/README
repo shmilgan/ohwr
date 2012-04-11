@@ -53,12 +53,8 @@ by the SNMP MIBs; in these cases, IPCs methods will be used instead.
     Structure of the package
     ========================
 
-README
+README:
 	This file.
-
-COPYING:
-    GNU GPL Version 2. This package is copyrighted by CERN and
-    released as free software.
 
 TODO:
     List of things to do.
@@ -128,3 +124,6 @@ configuration file.
 In order to run the wrsw_cli, the wrsw_rtud and the snmpd agent must be running.
 (The order of execution here is important; first you must run the wrsw_rtud,
 then the snmpd agent and finally the wrsw_cli).
+Similarly, if you want to configure the MVRP protocol, you need to run first the
+wrsw_mvrpd daemon (in this case the order of execution would be wrsw_rtud,
+wrsw_mvrpd, snmp agent and then wrsw_cli).

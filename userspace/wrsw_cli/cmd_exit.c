@@ -36,21 +36,13 @@ enum exit_cmds {
 /**
  * \brief Command 'exit'.
  * @param cli CLI interpreter.
- * @param argc unused.
- * @param agv unused.
+ * @param valc unused.
+ * @param valv unused.
  */
-void cli_cmd_exit(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_exit(struct cli_shell *cli, int valc, char **valv)
 {
     /* Close SNMP */
     cli_snmp_close();
-
-    /* Free cli shell structure */
-    if (cli->hostname)
-        free(cli->hostname);
-    if (cli->prompt)
-        free(cli->prompt);
-    if (cli)
-        free(cli);
 
     printf("GOODBYE!\n\n");
     exit(0);

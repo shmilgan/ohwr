@@ -1,21 +1,19 @@
 Informal TODO list
 ------------------
 
+- Extend the commands.
 
 - Extend the commands and options help.
 
-- Extend the commands.
-
-- Document the command syntax (e.g. user manual)
-
 - Try to reduce the readline footprint by editing
 the /$(HOME)/wrdev/build/buildroot-2009.11/output/build/readline-5.2/rlconf.h
+Or just remove the dependency with this library and make a small one that
+handles the command autocompletion and history features.
 
 - Introduce filtering options to ease the reading of outputs
 
-- Add support for a persistent configuration file.
+- Support ranges for command arguments (ports, VIDs).
 
-- Capture signals (i.e. SIGTERM, to execute cli_cmd_exit before leaving the
-application, so memory be freed)
-
-- Modify Makefile to support native compilation.
+- Add support for a persistent configuration file (although this is a more
+general task which affects the configuration capabilities of the switch as
+a whole).

@@ -38,22 +38,21 @@ enum hostname_cmds {
  * This command shows the name of the host. If an argument is provided, this
  * command changes the name of the host to the new name passed as argument.
  * @param cli CLI interpreter.
- * @param argc number of arguments (only 0 or 1 are allowed).
- * @param agv if used, this is meant to be the new name for the host.
+ * @param valc number of arguments (only 0 or 1 are allowed).
+ * @param valv if used, this is meant to be the new name for the host.
  */
-void cli_cmd_hostname(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_hostname(struct cli_shell *cli, int valc, char **valv)
 {
     int i = 0;
 
-    if (argc) {
-        /* Maximum length for the hostname must be 32 characters */
-        for (i = 0; i < 32; i++)
-            if (argv[0][i] == '\0')
+    if (valc) {
+        for (i = 0; i < MAX_HOSTNAME_LEN; i++)
+            if (valv[0][i] == '\0')
                 break;
         if (i == 32)
-            argv[0][i] = '\0';
+            valv[0][i] = '\0';
         free(cli->hostname);
-        cli->hostname = strdup(argv[0]);
+        cli->hostname = strdup(valv[0]);
         cli_build_prompt(cli);
         printf("\tThe new name for the host is '%s'\n", cli->hostname);
     } else {

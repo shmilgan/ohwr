@@ -49,21 +49,20 @@ enum lc_cmds {
 };
 
 struct cli_lc_entry {
-    int type;           /* Type of LC */
-    int num_vlans;      /* Number of VLANs for this Set ID */
-    int *vid;           /* List of VLANs in this Set ID */
+    int type;                   /* Type of LC */
+    int num_vlans;              /* Number of VLANs for this Set ID */
+    uint16_t vid[NUM_VLANS];    /* List of VLANs in this Set ID */
 };
 
 /* Internal LC table. It will be used to re-order the values got through SNMP,
    so we can get LC table data indexed by Set ID */
-struct cli_lc_entry lc_table[NUM_LC_SETS];  /* LC table */
+struct cli_lc_entry lc_table[NUM_LC_SETS] = {{0}};  /* LC table */
 
 static void reset_lc_table(void)
 {
     int i;
 
     for (i = 0; i < NUM_LC_SETS; i++) {
-        lc_table[i].vid = (int *)realloc(lc_table[i].vid, sizeof(int));
         lc_table[i].num_vlans = 0;
         lc_table[i].type = LC_UNDEFINED;
     }
@@ -102,15 +101,9 @@ static int cli_read_lc_table(void)
         vid = (int)new_oid[14];
         set_id = (int)new_oid[15];
 
-        errno = 0;
-        lc_table[set_id].vid = (int *)realloc(lc_table[set_id].vid,
-            (lc_table[set_id].num_vlans + 1) * sizeof(int));
-        if (errno != 0)
-            return -1;
-
-        lc_table[set_id].num_vlans++;
         lc_table[set_id].type = lc_type;
-        lc_table[set_id].vid[(lc_table[set_id].num_vlans - 1)] = vid;
+        lc_table[set_id].vid[lc_table[set_id].num_vlans] = vid;
+        lc_table[set_id].num_vlans++;
 
         memcpy(_oid, new_oid, MAX_OID_LEN * sizeof(oid));
     } while(1);
@@ -118,25 +111,26 @@ static int cli_read_lc_table(void)
 }
 
 /* Creates a new entry in the VLAN Learning Constraints table */
-static void set_lc(int argc, char **argv, int type)
+static void set_lc(int valc, char **valv, int type)
 {
     oid _oid[2][MAX_OID_LEN];
     char *base_oid = "1.3.111.2.802.1.1.4.1.4.8.1";
     size_t length_oid[2];  /* Base OID length */
     char types[2];
     char *value[2];
+    int sid, vid;
 
-    if (argc != 2) {
+    if (valc != 2) {
         printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Check the syntax of the set-id argument */
-    if (is_sid(argv[0]) < 0)
+    if ((sid = cli_check_param(valv[0], SID_PARAM)) < 0)
         return;
 
     /* Check the syntax of the vid argument */
-    if (is_vid(argv[1]) < 0)
+    if ((vid = cli_check_param(valv[1], VID_PARAM)) < 0)
         return;
 
     memset(_oid[0], 0 , MAX_OID_LEN * sizeof(oid));
@@ -150,8 +144,8 @@ static void set_lc(int argc, char **argv, int type)
     /* Build the indexes */
     _oid[0][12] = 5;                /* RowStatus column */
     _oid[0][13] = 1;                /* Component ID column */
-    _oid[0][14] = atoi(argv[1]);    /* VID column */
-    _oid[0][15] = atoi(argv[0]);    /* Set ID column */
+    _oid[0][14] = vid;              /* VID column */
+    _oid[0][15] = sid;              /* Set ID column */
 
     length_oid[0] += 4;
     memcpy(_oid[1], _oid[0], length_oid[0] * sizeof(oid));
@@ -173,12 +167,12 @@ static void set_lc(int argc, char **argv, int type)
  * \brief Command 'learning-constraints shared set-id <SID> vlan <vid>'.
  * This command sets a Shared VLAN Learning Constraint rule for a given VID.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only two arguments allowed.
- * @param agv Two arguments must be specified: the Set ID and the VID.
+ * @param valc number of arguments. Only two arguments allowed.
+ * @param valv Two arguments must be specified: the Set ID and the VID.
  */
-void cli_cmd_lc_shared(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_lc_shared(struct cli_shell *cli, int valc, char **valv)
 {
-    set_lc(argc, argv, LC_SHARED);
+    set_lc(valc, valv, LC_SHARED);
     return;
 }
 
@@ -187,12 +181,12 @@ void cli_cmd_lc_shared(struct cli_shell *cli, int argc, char **argv)
  * This command sets an Independent VLAN Learning Constraint rule for a given
  * VID.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only two arguments allowed.
- * @param agv Two arguments must be specified: the set ID and the VID.
+ * @param valc number of arguments. Only two arguments allowed.
+ * @param valv Two arguments must be specified: the set ID and the VID.
  */
-void cli_cmd_lc_independent(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_lc_independent(struct cli_shell *cli, int valc, char **valv)
 {
-    set_lc(argc, argv, LC_INDEPENDENT);
+    set_lc(valc, valv, LC_INDEPENDENT);
     return;
 }
 
@@ -200,10 +194,10 @@ void cli_cmd_lc_independent(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'show learning-constraints'.
  * This command displays the contents in the VLAN Learning Constraints table.
  * @param cli CLI interpreter.
- * @param argc unused.
- * @param agv unused.
+ * @param valc unused.
+ * @param valv unused.
  */
-void cli_cmd_show_lc(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_lc(struct cli_shell *cli, int valc, char **valv)
 {
     int i, j;
 
@@ -245,10 +239,10 @@ void cli_cmd_show_lc(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'show learning-constraints vlan <VID>'.
  * This command displays the VLAN Learning Constraints for a given VID.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only one argument allowed.
- * @param agv One argument must be specified: the VLAN number.
+ * @param valc number of arguments. Only one argument allowed.
+ * @param valv One argument must be specified: the VLAN number.
  */
-void cli_cmd_show_lc_vlan(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_lc_vlan(struct cli_shell *cli, int valc, char **valv)
 {
     oid _oid[MAX_OID_LEN];
     oid new_oid[MAX_OID_LEN];
@@ -256,16 +250,14 @@ void cli_cmd_show_lc_vlan(struct cli_shell *cli, int argc, char **argv)
     size_t length_oid; /* Base OID length */
     int vid, set_id, lc_type;
 
-    if (argc != 1) {
+    if (valc != 1) {
         printf("\tError. You have missed some argument\n");
         return;
     }
 
     /* Check the syntax of the vlan argument */
-    if(is_vid(argv[0]) < 0)
+    if ((vid = cli_check_param(valv[0], VID_PARAM)) < 0)
         return;
-
-    vid = atoi(argv[0]);
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
 
@@ -308,26 +300,27 @@ void cli_cmd_show_lc_vlan(struct cli_shell *cli, int argc, char **argv)
  * \brief Command 'no learning-constraints set-id <SID> vlan <VID>'.
  * This command removes an entry in the VLAN Learning Constraints table.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only two arguments allowed.
- * @param agv Two arguments must be specified: the Set ID and the VID.
+ * @param valc number of arguments. Only two arguments allowed.
+ * @param valv Two arguments must be specified: the Set ID and the VID.
  */
-void cli_cmd_no_lc(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_no_lc(struct cli_shell *cli, int valc, char **valv)
 {
     oid _oid[MAX_OID_LEN];
     char *base_oid = "1.3.111.2.802.1.1.4.1.4.8.1.5";
     size_t length_oid;  /* Base OID length */
+    int sid, vid;
 
-    if (argc != 2) {
+    if (valc != 2) {
         printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Check the syntax of the set-id argument */
-    if (is_sid(argv[0]) < 0)
+    if ((sid = cli_check_param(valv[0], SID_PARAM)) < 0)
         return;
 
     /* Check the syntax of the vid argument */
-    if (is_vid(argv[1]) < 0)
+    if ((vid = cli_check_param(valv[1], VID_PARAM)) < 0)
         return;
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
@@ -339,8 +332,8 @@ void cli_cmd_no_lc(struct cli_shell *cli, int argc, char **argv)
 
     /* Build the indexes */
     _oid[13] = 1;               /* Component ID column */
-    _oid[14] = atoi(argv[1]);   /* VID column */
-    _oid[15] = atoi(argv[0]);   /* Set ID column */
+    _oid[14] = vid;             /* VID column */
+    _oid[15] = sid;             /* Set ID column */
 
     length_oid += 3;
 
@@ -475,9 +468,6 @@ struct cli_cmd cli_lc[NUM_LC_CMDS] = {
 void cmd_lc_init(struct cli_shell *cli)
 {
     int i;
-
-    /* Init LC table */
-    reset_lc_table();
 
     for (i = 0; i < NUM_LC_CMDS; i++)
         cli_insert_command(cli, &cli_lc[i]);

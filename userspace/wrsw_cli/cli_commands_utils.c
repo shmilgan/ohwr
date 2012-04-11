@@ -32,6 +32,23 @@
 #include "cli_commands_utils.h"
 
 
+struct cli_range {
+    int min;
+    int max;
+    char *type;
+};
+
+/* Define allowed values for each parameter type */
+static struct cli_range cli_ranges[NUM_OF_PARAM_TYPES] = {
+    [PORT_PARAM]    = {0, NUM_PORTS - 1, "port"},
+    [VID_PARAM]     = {0, WILDCARD_VID, "VID"}, /* FIXME: VID = 0 not allowed
+                                                   in the Std. 802.1Q, but
+                                                   supported by HW */
+    [AGING_PARAM]   = {MIN_AGING_TIME, MAX_AGING_TIME, "aging"},
+    [SID_PARAM]     = {0, LC_MAX_SET_ID, "SID"},
+    [FID_PARAM]     = {1, NUM_FIDS - 1, "FID"}
+};
+
 /**
  * \brief Command 'help'.
  * The 'help' command is the only one not registered in the tree. It has a
@@ -81,7 +98,44 @@ void cli_cmd_help(struct cli_shell *cli, struct cli_cmd *cmd)
 }
 
 /**
- * \brief Helper function to convert mac address into a string
+ * \brief Check the syntax for a given command argument.
+ * This function checks that a given command argument (expressed as
+ * a string) is in an allowed range, and if so it returns the argument as
+ * an integer.
+ * @param string command argument to be checked
+ * @param type type of argument
+ * @return The command argument expressed as an integer. -1 if it's an invalid
+ * parameter or it's not in the allowed range.
+*/
+int cli_check_param(char *string, enum param_type type)
+{
+    int val;
+    char *rest;
+    struct cli_range *range = &cli_ranges[type];
+
+    val = strtol(string, &rest, 10);
+    /* check for errors */
+    if (*rest) {
+        printf("Invalid %s \"%s\": must be a decimal value\n",
+               range->type, string);
+        return -1;
+    }
+
+    if (val < range->min || val > range->max) {
+        printf("Invalid %s \"%s\": valid range is %i to %i\n",
+               range->type, string, range->min, range->max);
+        return -1;
+    }
+
+    return val;
+}
+
+/**
+ * \brief Helper function to convert mac address into a string.
+ * @param mac MAC address expressed as an array of integers.
+ * @param str The string buffer where the MAC address is to be stored.
+ * @return A pointer to the string buffer representing the MAC address in the
+ * format XX:XX:XX:XX:XX:XX.
 */
 char *mac_to_str(uint8_t mac[ETH_ALEN], char str[3 * ETH_ALEN])
 {
@@ -90,7 +144,31 @@ char *mac_to_str(uint8_t mac[ETH_ALEN], char str[3 * ETH_ALEN])
     return str;
 }
 
-/* Helper function to compare OIDs */
+/**
+ * \brief Helper function to convert mac address string into a mac address
+ * format (array of integers).
+ * @param str MAC address string.
+ * @param mac MAC address expressed as an array of integers.
+ * @return 0 on success. -1 on error.
+*/
+int str_to_mac(char *str, unsigned int mac[ETH_ALEN])
+{
+    if (sscanf(str, "%02x:%02x:%02x:%02x:%02x:%02x",
+        &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]) != 6) {
+        printf("\tError: wrong MAC address format. Try: XX:XX:XX:XX:XX:XX,"
+               " being 'X' an hexadecimal number\n");
+        return -1;
+    }
+    return 0;
+}
+
+/**
+ * \brief Helper function to compare OIDs.
+ * @param old_oid Old OID.
+ * @param new_oid New OID.
+ * @param base_oid_length OIDs length to be compared.
+ * @return 0 if they match. 1 or -1 if not.
+*/
 int cmp_oid(oid old_oid[MAX_OID_LEN], oid new_oid[MAX_OID_LEN],
     int base_oid_length)
 {
@@ -118,6 +196,9 @@ void print_oid(oid _oid[MAX_OID_LEN], int n)
 
 /**
  * \brief Helper function to convert port masks into port numbers
+ * @param mask Port mask.
+ * @param ports_range Array containing the port numbers corresponding to the
+ * positions where the bits in the port mask are set to '1'.
 */
 void mask_to_ports(char *mask, int *ports_range)
 {
@@ -130,75 +211,65 @@ void mask_to_ports(char *mask, int *ports_range)
         }
     }
 
-    if (j < NUM_PORTS)
-        ports_range[j] = -1; /* This marks the end of the ports array */
+    ports_range[j] = -1; /* This marks the end of the ports array */
 
     return;
 }
 
 /**
  * \brief Helper function to convert port numbers (which can be formatted as a
- * group of numbers separatted by commas) in port masks.
+ * group of numbers separatted by commas) into port masks.
+ * @param port_list A string containing the port list.
+ * @param mask Port mask to be build from the port list.
  * @return 0 on success; a negative value otherwise.
 */
-int ports_to_mask(char *ports_range, char *mask)
+int ports_to_mask(char *port_list, char *mask)
 {
     int i = 0;
-    int len = 0;
-    int num_ports = 0;
+    int len, port_num;
+    char *rest;
+    char *p = port_list;
     char *port_start;
-    char *port = ports_range;
-    char *ports[NUM_PORTS];
+    char port[3];
 
-    memset(mask, '0', (NUM_PORTS+1));
+    memset(mask, '0', NUM_PORTS);
 
     for (i = 0; i < NUM_PORTS; i++) {
-        if (!isdigit(*port) && (*port != ','))
+        len = 0;
+        memset(port, 0, 3);
+
+        if (!isdigit(*p) && (*p != ','))
             goto fail;
 
-        while (*port == ',') /* Detect commas */
-            port++;
+        while (*p == ',') /* Detect commas */
+            p++;
 
-        port_start = port;
+        if (!*p)
+            break;
 
-        while (*port && isdigit(*port)) { /* Detect numbers */
-            port++;
+        port_start = p;
+
+        while (*p && isdigit(*p)) { /* Detect numbers */
+            p++;
             len++;
         }
 
         if (len > 2)
-            goto fail; /* A port should not have more than two digits */
-
-        /* Allocate memory for the ports array */
-        ports[i] = (char*)malloc(len + 1);
-        if (!ports[i])
-            cli_error(ENOMEM);
-
-        /* Copy the detected command to the array */
-        memcpy(ports[i], port_start, len);
-        ports[i][len] = 0;
-
-        if (atoi(ports[i]) < 0 || atoi(ports[i]) >= NUM_PORTS)
             goto fail;
 
-        num_ports++;
+        memcpy(port, port_start, len);
 
-        /* Clean for the next loop */
-        len = 0;
+        port_num = strtol(port, &rest, 10);
+
+        if (*rest || port_num < 0 || port_num >= NUM_PORTS)
+            goto fail;
+
+        mask[port_num] = '1';
 
         /* Be sure that we are not yet at the end of the string */
-        if (!*port)
+        if (!*p)
             break;
     }
-
-    /* Create the mask */
-    for (i = 0; i < num_ports ; i++)
-        mask[atoi(ports[i])] = '1';
-
-    mask[NUM_PORTS] = '\0';
-
-    for (i = 0; i < num_ports ; i++)
-        free(ports[i]);
 
     return 0;
 
@@ -207,100 +278,4 @@ fail:
            "\twith no blank spaces in between. Valid range: from 0 to %d\n",
            (NUM_PORTS-1));
     return -1;
-}
-
-/* Check the syntax of the port argument */
-int is_port(char *port)
-{
-    int i;
-
-    for (i = 0; port[i]; i++) {
-        if (!isdigit(port[i])) {
-            printf("\tPort syntax error: only decimal values allowed\n");
-            return -1;
-        }
-    }
-    if ((atoi(port) < 0) || (atoi(port) >= NUM_PORTS)) {
-        printf("\tPort syntax error: allowed values are in the range 0 to %d\n",
-                (NUM_PORTS-1));
-        return -1;
-    }
-    return 0;
-}
-
-/* Check the syntax of the vlan argument */
-int is_vid(char *vid)
-{
-    int i;
-
-    for (i = 0; vid[i]; i++) {
-        if (!isdigit(vid[i])) {
-            printf("\tVID syntax error: only decimal values are allowed\n");
-            return -1;
-        }
-    }
-    /* FIXME: VID = 0 not allowed in the Std. 802.1Q, but supported by HW */
-    if ((atoi(vid) < 0) || (atoi(vid) > WILDCARD_VID)) {
-        printf("\tVID syntax error: allowed values are in the range 0 to %d\n",
-                WILDCARD_VID);
-        return -1;
-    }
-    return 0;
-}
-
-/* Check the syntax of the aging argument */
-int is_aging(char *aging)
-{
-    int i;
-
-    for (i = 0; aging[i]; i++) {
-        if (!isdigit(aging[i])) {
-            printf("\tAging syntax error: only decimal values are allowed\n");
-            return -1;
-        }
-    }
-    if ((atoi(aging) < MIN_AGING_TIME) || (atoi(aging) > MAX_AGING_TIME)) {
-        printf("\tAging syntax error: allowed values are in the range %d to "
-               "%d\n", MIN_AGING_TIME, MAX_AGING_TIME);
-        return -1;
-    }
-    return 0;
-}
-
-/* Check the syntax of the VLAN Learning Constraints Set ID argument */
-int is_sid(char *sid)
-{
-    int i;
-
-    for (i = 0; sid[i]; i++) {
-        if (!isdigit(sid[i])) {
-            printf("\tSID syntax error: only decimal values are allowed\n");
-            return -1;
-        }
-    }
-    if ((atoi(sid) < 0) || (atoi(sid) > LC_MAX_SET_ID)) {
-        printf("\tSID syntax error: allowed values are in the range 0 to "
-               "%d\n", LC_MAX_SET_ID);
-        return -1;
-    }
-    return 0;
-}
-
-/* Check the syntax of the VLAN Learning Constraints Set ID argument */
-int is_fid(char *fid)
-{
-    int i;
-
-    for (i = 0; fid[i]; i++) {
-        if (!isdigit(fid[i])) {
-            printf("\tFID syntax error: only decimal values are allowed\n");
-            return -1;
-        }
-    }
-    if ((atoi(fid) < 1) || (atoi(fid) >= NUM_FIDS)) { /* TODO: check this */
-        printf("\tFID syntax error: allowed values are in the range 1 to "
-               "%d\n", (NUM_FIDS - 1));
-        return -1;
-    }
-    return 0;
 }

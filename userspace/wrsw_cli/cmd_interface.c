@@ -42,30 +42,28 @@ enum interface_cmds {
  * \brief Command 'interface port <port number> pvid <VID>'.
  * This command sets the Port VLAN number (PVID) value.
  * @param cli CLI interpreter.
- * @param argc number of arguments. Only two arguments allowed.
- * @param agv Two arguments must be specified: the port number and the PVID.
+ * @param valc number of arguments. Only two arguments allowed.
+ * @param valv Two arguments must be specified: the port number and the PVID.
  */
-void cli_cmd_set_port_pvid(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_set_port_pvid(struct cli_shell *cli, int valc, char **valv)
 {
     oid _oid[MAX_OID_LEN];
     char *base_oid = "1.3.111.2.802.1.1.4.1.4.5.1.1.1";
     size_t length_oid;  /* Base OID length */
     int port;
 
-    if (argc != 2) {
+    if (valc != 2) {
         printf("\tError. You have missed some command option\n");
         return;
     }
 
     /* Check the syntax of the port argument */
-    if (is_port(argv[0]) < 0)
+    if ((port = cli_check_param(valv[0], PORT_PARAM)) < 0)
         return;
 
     /* Check the syntax of the pvid argument */
-    if (is_vid(argv[1]) < 0)
+    if (cli_check_param(valv[1], VID_PARAM) < 0)
         return;
-
-    port = atoi(argv[0]);
 
     memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
 
@@ -78,7 +76,7 @@ void cli_cmd_set_port_pvid(struct cli_shell *cli, int argc, char **argv)
     _oid[14] = port;              /* PVID column */
     length_oid++;
 
-    cli_snmp_set_int(_oid, length_oid, argv[1], 'i');
+    cli_snmp_set_int(_oid, length_oid, valv[1], 'i');
 
     return;
 }
@@ -88,10 +86,10 @@ void cli_cmd_set_port_pvid(struct cli_shell *cli, int argc, char **argv)
  * This command shows general information on ports (including MVRP related
  * parameters).
  * @param cli CLI interpreter.
- * @param argc unused
- * @param agv unused
+ * @param valc unused
+ * @param valv unused
  */
-void cli_cmd_show_port_info(struct cli_shell *cli, int argc, char **argv)
+void cli_cmd_show_port_info(struct cli_shell *cli, int valc, char **valv)
 {
     oid _oid[MAX_OID_LEN];
     oid aux_oid[MAX_OID_LEN];

@@ -41,6 +41,7 @@
  *
  * +--------------+
  * | root Command |
+ * |   next A     |
  * +--------------+
  *        |
  *        V
@@ -72,7 +73,7 @@ struct cli_cmd cli_no = {
     .parent     = NULL,
     .name       = "no",
     .handler    = NULL,
-    .desc       = "Use 'no' to delete/disable some configured parameters",
+    .desc       = "Delete/disable configured parameters",
     .opt        = CMD_NO_ARG,
     .opt_desc   = NULL
 };
@@ -81,7 +82,7 @@ struct cli_cmd cli_show = {
     .parent     = NULL,
     .name       = "show",
     .handler    = NULL,
-    .desc       = "Shows the device configurations",
+    .desc       = "Display the device configurations",
     .opt        = CMD_NO_ARG,
     .opt_desc   = NULL
 };

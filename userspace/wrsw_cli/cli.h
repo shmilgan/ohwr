@@ -38,12 +38,17 @@
 
 /* Prompt */
 #define EXEC_PROMPT  "> "
+#define PROMPT_LEN   2
 
 /* Default hostname */
 #define DEFAULT_HOSTNAME    "WR-Switch"
+#define MAX_HOSTNAME_LEN    32  /* Maximum length as mandated by standard
+                                   management functions */
 
 /* Define a maximum number of commands and options allowed per line */
-#define MAX_CMDS_IN_LINE    12
+#define MAX_WORDS_IN_LINE    16
+/* Maximum length allowed for any word (subcommand or argument) */
+#define MAX_WORD_LEN     64
 
 /* Define a maximum length for the commands inserted by the user (meassured in
    characters) */
@@ -88,13 +93,13 @@ struct cli_shell {
 
 
 /* Functions */
-void cli_error(int error_code);
+void cli_fatal(int error_code);
 struct cli_shell *cli_init(void);
 void cli_build_prompt(struct cli_shell *cli);
 struct cli_cmd *cli_find_command(struct cli_shell *cli,
                                  struct cli_cmd *top_cmd,
                                  char *cmd);
-void cli_run_command(struct cli_shell *cli, char *string);
+void cli_run_command(struct cli_shell *cli, char *input);
 void cli_main_loop(struct cli_shell *cli);
 
 
