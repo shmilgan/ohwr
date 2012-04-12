@@ -203,7 +203,7 @@ static struct static_filtering_entry *sfe_create(uint8_t  mac[ETH_ALEN],
                                                  int is_bpdu)
 {
     int xcast;
-    struct static_filtering_entry *node, *sfe;
+    struct static_filtering_entry *node, *sfe, **ptr;
 
     sfe = (struct static_filtering_entry*)
           malloc(sizeof(struct static_filtering_entry));
@@ -220,30 +220,18 @@ static struct static_filtering_entry *sfe_create(uint8_t  mac[ETH_ALEN],
     sfe->next_sib        = NULL;
     mac_copy(sfe->mac, mac);
 
-    // Link into lexicographically ordered list
     xcast = mac_multicast(mac);
-    node  = sfd[xcast][vid];
-    if (!node) {
-        // first node for this VID
-        sfd[xcast][vid] = sfe;
-        sfe->prev       = NULL;
-        sfe->next       = NULL;
-    } else if (mac_cmp(mac, node->mac) < 0) {
-        // entry should be first
-        node->prev      = sfe;
-        sfe->prev       = NULL;
-        sfe->next       = node;
-        sfd[xcast][vid] = sfe;
-    } else {
-        // find place to insert node
-        for (;node->next && (mac_cmp(mac, node->next->mac) > 0);
-              node = node->next);
-        sfe->next        = node->next;
-        sfe->prev        = node;
-        if (node->next)
-            node->next->prev = sfe;
-        node->next       = sfe;
-    }
+
+    // Link into lexicographically ordered list
+    for (ptr = &sfd[xcast][vid], node = sfd[xcast][vid];
+         node && mac_cmp(sfe->mac, node->mac) < 0;
+         ptr = &node->next, node = node->next)
+         ;
+    sfe->prev = *ptr;
+    *ptr = sfe;
+    sfe->next = node;
+    if (node) node->prev = sfe;
+
     return sfe;
 }
 
@@ -269,11 +257,14 @@ static void sfe_delete(struct static_filtering_entry *sfe)
 static struct static_filtering_entry *sfe_find(uint8_t mac[ETH_ALEN],
                                                uint16_t vid)
 {
-    struct static_filtering_entry *sfe;
+    int cmp;
+    struct static_filtering_entry *node;
 
-    for (sfe = sfd[mac_multicast(mac)][vid]; sfe && !mac_equal(mac, sfe->mac);
-         sfe = sfe->next);
-    return sfe;
+    for (node = sfd[mac_multicast(mac)][vid];
+         node && ((cmp = mac_cmp(mac, node->mac)) < 0);
+         node = node->next)
+        ;
+    return node && cmp == 0 ? node:NULL;
 }
 
 
@@ -346,11 +337,9 @@ static int sfe_update(struct static_filtering_entry *sfe,
  */
 static struct filtering_entry_node *fd_create(uint8_t mac[ETH_ALEN], uint8_t fid)
 {
-    int i = 0;
-    struct filtering_entry_node *node, *fe;
+    struct filtering_entry_node *node, *fe, **ptr;
 
-    fe = (struct filtering_entry_node*)
-            malloc(sizeof(struct filtering_entry_node));
+    fe = (struct filtering_entry_node*) malloc(sizeof(*fe));
 
     if (!fe)
         return NULL;
@@ -358,28 +347,15 @@ static struct filtering_entry_node *fd_create(uint8_t mac[ETH_ALEN], uint8_t fid
     mac_copy(fe->mac, mac);
     fe->fid = fid;
     // Link into lexicographically ordered list
-    node = fd[fid];
-    if (!node) {
-        // first node for this FID
-        fd[fid]  = fe;
-        fe->prev = NULL;
-        fe->next = NULL;
-    } else if (mac_cmp(fe->mac, node->mac) < 0) {
-        // entry should be first
-        node->prev = fe;
-        fe->prev   = NULL;
-        fe->next   = node;
-        fd[fid]    = fe;
-    } else {
-        // find place to insert node
-        for (;node->next && (mac_cmp(fe->mac, node->next->mac) > 0);
-              node = node->next, i++);
-        fe->next         = node->next;
-        fe->prev         = node;
-        if (node->next)
-            node->next->prev = fe;
-        node->next       = fe;
-    }
+    for (ptr = &fd[fid], node = fd[fid];
+         node && mac_cmp(fe->mac, node->mac) < 0;
+         ptr = &node->next, node = node->next)
+         ;
+    fe->prev = *ptr;
+    *ptr = fe;
+    fe->next = node;
+    if (node) node->prev = fe;
+
     return fe;
 }
 
@@ -408,10 +384,14 @@ static void fd_delete(struct filtering_entry_node *fe)
  */
 struct filtering_entry_node *fd_find(uint8_t mac[ETH_ALEN], uint8_t fid)
 {
+    int cmp;
     struct filtering_entry_node *node;
 
-    for (node = fd[fid]; node && !mac_equal(mac, node->mac); node = node->next);
-    return node;
+    for (node = fd[fid];
+         node && ((cmp = mac_cmp(mac, node->mac)) < 0);
+         node = node->next)
+        ;
+    return node && cmp == 0 ? node:NULL;
 }
 
 /**
@@ -480,6 +460,8 @@ static void rtu_fdb_delete_entry(struct filtering_entry *fe)
 /**
  * Update FDB entry with dynamic or static info, as indicated by 'dynamic' param
  * @param port_mask VLAN port mask.
+ * @param use_dynamic the new use_dynamic mask (only makes sense if static infi
+ * is being provided.
  * @return 0 if entry masks were updated. 1 otherwise.
  */
 static int fe_update(struct filtering_entry *fe,
@@ -490,31 +472,31 @@ static int fe_update(struct filtering_entry *fe,
 {
     int ret = 1;
     uint32_t mask_src, mask_dst;
+    uint32_t port_map_static, port_map_dynamic;
 
-    if (dynamic) {
+    port_map_static  = fe->port_mask_dst & ~fe->use_dynamic;
+    port_map_dynamic = fe->port_mask_dst & fe->use_dynamic;
+
+    if (dynamic) { /* dynamic info is being provided */
         if (fe->static_fdb && !fe->use_dynamic)
-            return 1;                       // dynamic info is not permitted
-        // Override dynamic part of port map
-        if (fe->use_dynamic)
-            mask_dst = ((fe->port_mask_dst & ~fe->use_dynamic) |
-                        (port_map & fe->use_dynamic));
-        else
-            mask_dst = port_map;
+            return 1;   /* ...but dynamic info is not permitted */
+        /* Override dynamic part of port map
+           If entry is static, pick up just those ports permitted by dyn mask */
+        mask_dst = fe->static_fdb
+            ? port_map_static | (port_map & fe->use_dynamic)
+            : port_map;
+
+        /* if entry was not dynamic then this is a new one */
         if (!fe->dynamic) {
-            fe->dynamic = DYNAMIC;          // now entry contains dyn info
+            fe->dynamic = DYNAMIC;
             num_dynamic_entries[fe->fid]++;
         }
-    } else {
-        mask_dst = port_map;                // Static part of forward vector
-        if (use_dynamic) {                  // If dynamic info can be used...
-            if (fe->dynamic)                // ...and entry contains dyn info
-                // Add dynamic part of forward vector.
-                mask_dst |= ((fe->port_mask_dst & fe->use_dynamic) &
-                              use_dynamic);
-            else
-                // Apply default unicast/group behavior
-                mask_dst |= use_dynamic;
-        }
+    } else {  /* static info is being provided */
+        /* If dynamic info can now be used and entry contains dyn info, keep it.
+           Otherwise apply default unicast/group behaviour */
+        mask_dst = use_dynamic && fe->dynamic
+            ? port_map | (port_map_dynamic & use_dynamic)
+            : port_map | use_dynamic;
         fe->use_dynamic = use_dynamic;
     }
     mask_src = fe->port_mask_src | port_mask;
@@ -856,14 +838,12 @@ uint16_t rtu_fdb_get_next_fid(uint8_t fid)
  */
 int rtu_fdb_init(uint16_t poly, unsigned long aging)
 {
-    int err, i;
+    int err;
 
     TRACE_DBG(TRACE_INFO, "clean filtering database.");
     rtu_sw_clean_fd();
-    for (i = 0; i < NUM_VLANS; i++)
-        sfd[0][i] = sfd[1][i] = NULL;
-    for (i = 0; i < NUM_FIDS; i++)
-        fd[i] = NULL;
+    memset(&fd, 0, sizeof(fd));
+    memset(&sfd, 0, sizeof(sfd));
     TRACE_DBG(TRACE_INFO, "clean vlan database.");
     rtu_sw_clean_vd();
     TRACE_DBG(TRACE_INFO, "clean aging map.");

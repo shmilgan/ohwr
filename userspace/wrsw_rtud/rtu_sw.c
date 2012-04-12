@@ -80,7 +80,7 @@ int default_lc_set;
  * Table bank to write entries to.
  * HTAB and HCAM banks will be handled according to this single bank value.
  */
-static uint8_t bank;
+static int bank;
 
 /**
  * Holds pointers to entries that were changed at HCAM SW since last commit.
@@ -187,7 +187,7 @@ static void set_active_bank(int b)
     // inactive bank becomes active (both banks are switched at once)
 	rtu_hw_set_active_bank(b);
     // active bank becomes inactive one
-    bank = (b == 0) ? 1:0;
+    bank = !b;
 }
 
 /**
