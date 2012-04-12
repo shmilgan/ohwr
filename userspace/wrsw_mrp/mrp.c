@@ -7,6 +7,8 @@
  * Description: Main MRP functions.
  *              State machines definition.
  *
+ * Fixes:
+ *              Alessandro Rubini
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -487,9 +489,10 @@ static const struct mrp_state_trans
 
 /* Default timer parameter values (centiseconds) */
 static int join_time     = 20;
-static int leave_time    = 60;
 static int leaveall_time = 1000;
 static int periodic_time = 100;
+/* leave time takes random value between 60 and 100 centisec at mrp_init */
+static int leave_time;
 
 inline static void mad_init_machine(struct mad_machine *m)
 {
@@ -526,14 +529,11 @@ static int map_propagates_to(struct mrp_participant *p,
    @return pointer to context, or NULL if none found */
 struct map_context *mrp_find_context(struct mrp_application *app, int cid)
 {
-    struct list_head *node;
     struct map_context *c;
 
-	list_for_each(node, &app->contexts) {
-		c = list_entry(node, struct map_context, app_context);
+	list_for_each_entry(c, &app->contexts, app_context)
         if (c->cid == cid)
             return c;
-    }
     return NULL;
 }
 
@@ -558,14 +558,11 @@ struct mrp_participant *mrp_find_participant(struct mrp_port *port,
    @return pointer to port, or NULL if none found */
 struct mrp_port *mrp_find_port(struct mrp_application *app, int hw_index)
 {
-    struct list_head *node;
     struct mrp_port *port;
 
-    list_for_each(node, &app->ports) {
-	    port = list_entry(node, struct mrp_port, app_port);
+    list_for_each_entry(port, &app->ports, app_port)
         if (port->hw_index == hw_index)
             return port;
-    }
     return NULL;
 }
 
@@ -711,6 +708,7 @@ int mad_attr_event(struct mrp_participant *p,
     switch (action & MRP_ACTION_MASK) {
     case MRP_ACTION_NEW:
         is_new = 1;
+        /* fall through */
     case MRP_ACTION_JOIN:
         if (app->mad_join_ind(p, mid, is_new) < 0) {
             port->reg_failures++;
@@ -733,6 +731,7 @@ int mad_attr_event(struct mrp_participant *p,
         break;
     case MRP_ACTION_STOP_LEAVE_TIMER:;
         // leave timer handled at participant level
+        break;
     }
 
     machine->reg_state = state;
@@ -771,6 +770,7 @@ applicant:
             state = MRP_APPLICANT_AA;
             action |= MRP_ACTION_REQ_TX;
         }
+        break;
     default:;
     }
 
@@ -906,7 +906,6 @@ void mad_participant_event(struct mrp_participant *p, enum mrp_event event)
 void mad_port_event(struct mrp_port *port, enum mrp_event event)
 {
     uint8_t state, action;
-    struct list_head *node;
     struct mrp_participant *p;
 
     state = mrp_periodic_state_table[port->periodic_state][event].state;
@@ -918,10 +917,8 @@ void mad_port_event(struct mrp_port *port, enum mrp_event event)
     case MRP_ACTION_PERIODIC:
         /* 'Causes a periodic! event against all Applicant state machines
             associated with the participant(s)' attached to the port */
-	    list_for_each(node, &port->participants) {
-		    p = list_entry(node, struct mrp_participant, port_participant);
+	    list_for_each_entry(p, &port->participants, port_participant)
             mad_event(p, MRP_EVENT_PERIODIC);
-		}
     }
     switch (action & MRP_TIMER_ACTION_MASK) {
     case MRP_ACTION_START_PERIODIC_TIMER:
@@ -944,7 +941,7 @@ int map_context_add_port(struct map_context *ctx, struct mrp_port *port)
     port_node = malloc(sizeof(*port_node));
     if (!port_node)
         return -1;
-    list_add2(&port_node->node, &ctx->forwarding_ports);
+    list_add(&port_node->node, &ctx->forwarding_ports);
 
     p = mrp_find_participant(port, ctx);
     if (!p)
@@ -1023,9 +1020,9 @@ int map_context_add_participant(struct map_context *c,
     pnode->participant = p;
 
     /* Add context to participant */
-    list_add2(&cnode->node, &p->contexts);
+    list_add(&cnode->node, &p->contexts);
     /* Add participant to context */
-    list_add2(&pnode->node, &c->participants);
+    list_add(&pnode->node, &c->participants);
 
     return 0;
 
@@ -1091,7 +1088,7 @@ struct mrp_participant *mrp_create_participant(struct mrp_port *port)
         random_val(leaveall_time,  (3 * leaveall_time) / 2));
 
     /* Add participant to the port */
-    list_add2(&p->port_participant, &port->participants);
+    list_add(&p->port_participant, &port->participants);
 
     if (app->init_participant(p) < 0)
         goto err;
@@ -1131,16 +1128,14 @@ void mrp_destroy_participant(struct mrp_participant *p)
 /* Delete port and remove it from the application */
 void mrp_destroy_port(struct mrp_port *port)
 {
-    struct list_head *node;
+    struct mrp_participant *p;
 
     if (!port)
         return;
 
     /* Delete all port participants */
-	list_for_each(node, &port->participants) {
-        mrp_destroy_participant(
-		    list_entry(node, struct mrp_participant, port_participant));
-    }
+	list_for_each_entry(p, &port->participants, port_participant)
+        mrp_destroy_participant(p);
 
     /* Remove port from application */
     list_del(&port->app_port);
@@ -1169,7 +1164,7 @@ struct map_context *map_context_create(int cid, struct mrp_application *app)
 
     memset(ctx->members, 0, sizeof(int) * app->numattr);
 
-    list_add2(&ctx->app_context, &app->contexts);
+    list_add(&ctx->app_context, &app->contexts);
 
     return ctx;
 
@@ -1181,15 +1176,15 @@ nomem:
 /* Delete context and remove it from the application */
 void map_context_destroy(struct map_context *ctx, struct mrp_application *app)
 {
-    struct mrp_participant_list *node;
+    struct mrp_participant_list *part_node;
     struct mrp_port_list *port_node;
 
     if (!ctx)
         return;
 
     /* Remove all participants from context */
-    list_for_each_entry(node, &ctx->participants, node)
-        map_context_remove_participant(ctx, node->participant);
+    list_for_each_entry(part_node, &ctx->participants, node)
+        map_context_remove_participant(ctx, part_node->participant);
 
     /* Remove all ports from forwarding port set */
     list_for_each_entry(port_node, &ctx->forwarding_ports, node)
@@ -1228,7 +1223,7 @@ static struct mrp_port *mrp_create_port(struct mrp_application *app,
     port->reg_failures = 0;
 
     /* Add port to application port list */
-    list_add2(&port->app_port, &app->ports);
+    list_add(&port->app_port, &app->ports);
 
     port->is_enabled = 1;
 
@@ -1265,7 +1260,7 @@ int mrp_register_application(struct mrp_application *app)
         if (hw_index == 0)
             continue;
 
-        port_no = if_nametoport(port_list.port_names[i]);
+        port_no = wr_nametoport(port_list.port_names[i]);
         if (port_no < 0) {
             fprintf(stderr, "mrp: read interface port number failed\n");
             goto fail;
@@ -1301,28 +1296,25 @@ int mrp_register_application(struct mrp_application *app)
 fail:
     while (!list_empty(&app->ports))
         list_del(app->ports.next);
-    close(app->proto.fd);
+    mrp_close_socket(app);
     return -1;
 }
 
 int mrp_unregister_application(struct mrp_application *app)
 {
     int err;
-    struct list_head *node;
+    struct mrp_port *port;
+    struct map_context *context;
 
     close(app->proto.fd);
 
     /* Delete all ports (will remove participants) */
-    list_for_each(node, &app->ports) {
-        mrp_destroy_port(list_entry(node, struct mrp_port, app_port));
-	}
+    list_for_each_entry(port, &app->ports, app_port)
+        mrp_destroy_port(port);
 
-   /* Delete all contexts */
-    while (!list_empty(&app->contexts)) {
-        map_context_destroy(
-            list_entry(app->contexts.next, struct map_context, app_context),
-            app);
-    }
+    /* Delete all contexts */
+    list_for_each_entry(context, &app->contexts, app_context)
+        map_context_destroy(context, app);
 
     /* Make sure MRP app packets are forwarded again on all ports */
     errno = 0;
@@ -1372,7 +1364,7 @@ static int mrp_tx_rate_exceeded(struct mrp_participant *p)
 {
     struct timespec now, window;
 
-    timespec_copy(&window, p->tx_window);
+    window = p->tx_window[0];
     timespec_add_cs(&window, 3 * join_time / 2);
     return timespec_compare(timer_now(&now), &window) < 0;
 }
@@ -1381,12 +1373,10 @@ static int mrp_tx_rate_exceeded(struct mrp_participant *p)
    @param p pointer to MRP participant */
 static void mrp_tx_reg(struct mrp_participant *p)
 {
-    struct timespec now, *window = &p->tx_window[0];
-
     /* Shift tx window */
-    timespec_copy(window, window + 1);
-    timespec_copy(window + 1, window + 2);
-    timespec_copy(window + 2, timer_now(&now));
+    p->tx_window[0] = p->tx_window[1];
+    p->tx_window[1] = p->tx_window[2];
+    timer_now(p->tx_window + 2);
     /* Reset LeaveAll event */
     p->leaveall = 0;
 
@@ -1401,10 +1391,10 @@ static void mrp_tx_reg(struct mrp_participant *p)
    If operPointToPointMAC is FALSE, and there is no pending request, a transmit
    opportunity is scheduled at a time value randomized between 0 and JoinTime
    @return !0 if a tx opportunity is offered. 0 otherwise */
-static int mrp_tx_opportunity(struct mrp_participant *p)
+static int mrp_tx_opportunity(struct mrp_participant *p, struct timespec *now)
 {
     if (p->join_timer_running) {
-        if (timer_expired(&p->join_timeout)) {
+        if (timer_expired_now(&p->join_timeout, now)) {
             p->join_timer_running = 0;
             return p->port->point_to_point ? !mrp_tx_rate_exceeded(p):1;
         }
@@ -1459,14 +1449,13 @@ void mrp_protocol(struct mrp_application *app)
 {
     struct mrp_port *port;
     struct mrp_participant *p;
-    struct list_head *node;     /* Port node */
-    struct list_head *pnode;    /* Participant node */
+    struct timespec now;
+
+    timer_now(&now);
 
     /* Process received PDUs */
     mrp_pdu_rcv(app);
-    list_for_each(node, &app->ports) {
-        port = list_entry(node, struct mrp_port, app_port);
-
+    list_for_each_entry(port, &app->ports, app_port) {
         if (!port->is_enabled)
             continue;
 
@@ -1474,24 +1463,24 @@ void mrp_protocol(struct mrp_application *app)
             continue;
 
         /* Handle timers */
-        if (timer_expired(&port->periodic_timeout))
+        if (timer_expired_now(&port->periodic_timeout, &now))
             mad_port_event(port, MRP_EVENT_PERIODIC_TIMER);
 
-	    list_for_each(pnode, &port->participants) {
-		    p = list_entry(pnode, struct mrp_participant, port_participant);
-            if (timer_expired(&p->leaveall_timeout))
+	    list_for_each_entry(p, &port->participants, port_participant) {
+            if (timer_expired_now(&p->leaveall_timeout, &now))
                 mad_participant_event(p, MRP_EVENT_LEAVEALL_TIMER);
 
             /* 'The accuracy required for the leavetimer is sufficiently
                coarse to permit the use of a single operating system timer
                per Participant with 2 bits of state for each Registrar' */
-            if (p->leave_timer_running && timer_expired(&p->leave_timeout_4)) {
+            if (p->leave_timer_running &&
+                timer_expired_now(&p->leave_timeout_4, &now)) {
                 p->leave_timer_running = 0;
                 mad_event(p, MRP_EVENT_LEAVE_TIMER);
             }
 
             /* Handle transimission */
-            if (mrp_tx_opportunity(p))
+            if (mrp_tx_opportunity(p, &now))
                 mrp_tx(p);
         }
     }
@@ -1535,7 +1524,7 @@ int mrp_init(void)
     srand(time(NULL));
 
     /* Take a random value for the leave_time, between 60 and 100 centisec */
-    leave_time = random_val(leave_time, 100);
+    leave_time = random_val(60, 100);
 
     return 0;
 }

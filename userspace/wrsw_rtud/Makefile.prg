@@ -14,7 +14,7 @@ WR_LIB = $(WR_INSTALL_ROOT)/lib
 
 # Use -DV3 with v3 HW (sets default PVID = 1 and checks for reserved VIDs)
 CFLAGS		= -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL \
-			-I. -I../include -I$(WR_INCLUDE) -I$(LINUX)/include # -DV3
+			-I. -I../include -I$(WR_INCLUDE) # -DV3
 # -I$(CROSS_COMPILE_ARM_PATH)/../include
 
 LDFLAGS 	:= -L. -L$(WR_LIB) \

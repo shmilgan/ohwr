@@ -6,6 +6,8 @@
  *
  * Description: Encoding/decoding of MRP PDUs.
  *
+ * Fixes:
+ *              Alessandro Rubini
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -64,7 +66,7 @@ inline static int pdu_nval(struct mrpdu *pdu, int vhdr)
    @param nval number of events in encoded in VectorAttribute */
 inline static int ntpe(int nval)
 {
-    return ceil((double)nval / 3);
+    return (nval + 2) / 3;
 }
 
 
@@ -90,7 +92,7 @@ static enum mrp_event mrp_event(enum mrp_attr_event e) {
 
 /* Unpacks an event packed in a ThreePackeEvent.
    @param idx event index (0-2) */
-static int unpack_tpe(uint8_t tpe, int idx)
+static int unpack_tpe(int tpe, int idx)
 {
     switch(idx) {
     case 0:
@@ -107,7 +109,7 @@ static int unpack_tpe(uint8_t tpe, int idx)
 /* Packs an event into a ThreePackedEvent, according to its index
    @param tpe current value of the ThreePackedEvent
    @param idx index of the event (0, 1 or 2) */
-static uint8_t pack_tpe(enum mrp_attr_event event, uint8_t tpe, int idx)
+static uint8_t pack_tpe(enum mrp_attr_event event, int tpe, int idx)
 {
     switch(idx) {
     case 2:

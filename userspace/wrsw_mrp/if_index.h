@@ -20,7 +20,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
- #ifndef __WHITERABBIT_IF_INDEX_H
+#ifndef __WHITERABBIT_IF_INDEX_H
 #define __WHITERABBIT_IF_INDEX_H
 
 #include <stdint.h>
@@ -35,6 +35,6 @@ struct wrn_register_req {
     uint32_t    val;
 };
 
-int if_nametoport(const char *ifname);
+int wr_nametoport(const char *ifname);
 
 #endif /*__WHITERABBIT_IF_INDEX_H*/

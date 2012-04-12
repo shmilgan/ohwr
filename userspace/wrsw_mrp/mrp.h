@@ -7,6 +7,8 @@
  * Description: Main MRP data and function prototypes (it includes the
  *              functions prototypes from mrp.c, mrp_pdu.c and mrp_socket.c)
  *
+ * Fixes:
+ *              Alessandro Rubini
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,7 +42,7 @@
 #define MAX_VECTOR_ATTR_LEN         ((ETH_DATA_LEN) - \
                                     ((MRP_PROTOCOL_VERSION_LEN) + (MRP_MSG_HDR_LEN)))
 
-#define MAX_THREE_PACKED_EVENT_VAL  215 /* ((5 * 6) + 5) * 6) + 5 */
+#define MAX_THREE_PACKED_EVENT_VAL  ((((5 * 6) + 5) * 6) + 5)
 
 /* Minimum length for the Ethernet payload */
 #define MIN_ETH_DATA_LEN            ((ETH_ZLEN) - (ETH_HLEN))
@@ -185,23 +187,22 @@ struct mrp_state_trans {
 
 /* Holds per-attribute applicant and registrar state machines.*/
 struct mad_machine {
-    enum mrp_applicant_state app_state : 4;
-    enum mrp_registrar_state reg_state : 3;
+    enum mrp_applicant_state app_state;
+    enum mrp_registrar_state reg_state;
 
-    enum mrp_applicant_mgt app_mgt     : 1;
-    enum mrp_registrar_mgt reg_mgt     : 2;
+    enum mrp_applicant_mgt app_mgt;
+    enum mrp_registrar_mgt reg_mgt;
 };
 
 /* MRP Protocol Data Unit */
 struct mrpdu {
-    uint8_t buf[ETH_DATA_LEN];
-
     int maxlen;         // max buffer length
     int len;            // buffer length
     int pos;            // decoding position
 
     int mhdr;           // offset of message being encoded
     int vhdr;           // offset of vector header for attribute being encoded
+    uint8_t buf[ETH_DATA_LEN];
 };
 
 struct mrp_application;
@@ -392,6 +393,7 @@ int mrp_pdu_append_endmark(struct mrpdu *pdu);
 
 /* MRP socket */
 int mrp_open_socket(struct mrp_application *app);
+void mrp_close_socket(struct mrp_application *app);
 void mrp_socket_send(struct mrp_participant *p);
 struct mrp_participant *mrp_socket_rcv(struct mrp_application *app,
                                        struct mrpdu *pdu);

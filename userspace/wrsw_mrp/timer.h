@@ -6,6 +6,8 @@
  *
  * Description: Operations to be used over MRP timers.
  *
+ * Fixes:
+ *              Alessandro Rubini
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,8 +25,6 @@
 #ifndef __WHITERABBIT_TIMER_H
 #define __WHITERABBIT_TIMER_H
 
-#include <stdint.h>
-#include <string.h>
 #include <time.h>
 
 #ifndef CLOCK_MONOTONIC_RAW
@@ -49,11 +49,12 @@
  */
 static inline int timespec_compare(const struct timespec *a, const struct timespec *b)
 {
-	if (a->tv_sec < b->tv_sec)
-		return -1;
-	if (a->tv_sec > b->tv_sec)
-		return 1;
-	return a->tv_nsec - b->tv_nsec;
+    int ret;
+
+    ret = a->tv_sec - b->tv_sec;
+    if (!ret)
+        ret = a->tv_nsec - b->tv_nsec;
+	return ret;
 }
 
 /* Add centiseconds to a timespec
@@ -69,13 +70,6 @@ static void timespec_add_cs(struct timespec *timestamp, unsigned long cs)
         timestamp->tv_nsec += (ns - NSEC_PER_SEC);
     } else
         timestamp->tv_nsec += ns;
-}
-
-/* Copies src timer into dst timer.
-   @return pointer to dst timer. */
-static inline uint8_t* timespec_copy(struct timespec *dst, struct timespec *src)
-{
-    return memcpy(dst, src, sizeof(struct timespec));
 }
 
 /* Get a current time as timespec.
@@ -97,13 +91,19 @@ static inline void timer_start(struct timespec *timeout, long period)
     timespec_add_cs(timer_now(timeout), period);
 }
 
+static inline int timer_expired_now(struct timespec *timeout,
+                                    struct timespec *now)
+{
+    return timespec_compare(now, timeout) > 0;
+}
+
 /* Check whether the timer has expired or not.
    @param timeout Timer timeout
    @return 1 if the timer has expired; 0 otherwise */
 int timer_expired(struct timespec *timeout)
 {
     struct timespec now;
-    return timespec_compare(timer_now(&now), timeout) > 0;
+    return timer_expired_now(timeout, timer_now(&now));
 }
 
 /* Pseudo-random period */

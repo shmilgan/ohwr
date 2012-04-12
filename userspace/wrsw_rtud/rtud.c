@@ -262,7 +262,7 @@ static void rtu_daemon_destroy()
 
 void sigint(int signum) {
     rtu_daemon_destroy();
-    exit(0);
+    signal(SIGINT, SIG_DFL);
 }
 
 /**

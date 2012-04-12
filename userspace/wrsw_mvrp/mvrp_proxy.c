@@ -96,61 +96,52 @@ const struct minipc_pd mvrp_proxy_is_enabled_port_struct = {
 
 void mvrp_proxy_enable(void)
 {
-    int ret;
     struct mvrp_enable_argdata in;
     struct mvrp_enable_retdata out;
 
-    ret = minipc_call(client, MILLISEC_TIMEOUT, &mvrp_proxy_enable_struct, &out, &in);
-
-    return;
+    minipc_call(client, MILLISEC_TIMEOUT, &mvrp_proxy_enable_struct, &out, &in);
 }
 
 void mvrp_proxy_disable(void)
 {
-    int ret;
     struct mvrp_disable_argdata in;
     struct mvrp_disable_retdata out;
 
-    ret = minipc_call(client, MILLISEC_TIMEOUT, &mvrp_proxy_disable_struct, &out, &in);
-
-    return;
+    minipc_call(client, MILLISEC_TIMEOUT, &mvrp_proxy_disable_struct, &out, &in);
 }
 
 int mvrp_proxy_enable_port(int port_no)
 {
-    int ret;
     struct mvrp_enable_port_argdata in;
     struct mvrp_enable_port_retdata out;
 
     in.port_no = port_no;
 
-    ret = minipc_call(client, MILLISEC_TIMEOUT, &mvrp_proxy_enable_port_struct, &out, &in);
+    minipc_call(client, MILLISEC_TIMEOUT, &mvrp_proxy_enable_port_struct, &out, &in);
 
     return out.retval;
 }
 
 int mvrp_proxy_disable_port(int port_no)
 {
-    int ret;
     struct mvrp_disable_port_argdata in;
     struct mvrp_disable_port_retdata out;
 
     in.port_no = port_no;
 
-    ret = minipc_call(client, MILLISEC_TIMEOUT, &mvrp_proxy_disable_port_struct, &out, &in);
+    minipc_call(client, MILLISEC_TIMEOUT, &mvrp_proxy_disable_port_struct, &out, &in);
 
     return out.retval;
 }
 
 int mvrp_proxy_get_failed_registrations(int port_no)
 {
-    int ret;
     struct mvrp_get_failed_registrations_argdata in;
     struct mvrp_get_failed_registrations_retdata out;
 
     in.port_no = port_no;
 
-    ret = minipc_call(client, MILLISEC_TIMEOUT, &mvrp_proxy_get_failed_registrations_struct, &out, &in);
+    minipc_call(client, MILLISEC_TIMEOUT, &mvrp_proxy_get_failed_registrations_struct, &out, &in);
 
     return out.retval;
 }
@@ -174,26 +165,22 @@ int mvrp_proxy_get_last_pdu_origin(int port_no, uint8_t (*mac)[ETH_ALEN])
 
 int mvrp_proxy_is_enabled(void)
 {
-    int ret;
     struct mvrp_is_enabled_argdata in;
     struct mvrp_is_enabled_retdata out;
 
-
-    ret = minipc_call(client, MILLISEC_TIMEOUT,
-            &mvrp_proxy_is_enabled_struct, &out, &in);
+    minipc_call(client, MILLISEC_TIMEOUT, &mvrp_proxy_is_enabled_struct, &out, &in);
 
     return out.retval;
 }
 
 int mvrp_proxy_is_enabled_port(int port_no)
 {
-    int ret;
     struct mvrp_is_enabled_port_argdata in;
     struct mvrp_is_enabled_port_retdata out;
 
     in.port_no = port_no;
 
-    ret = minipc_call(client, MILLISEC_TIMEOUT, &mvrp_proxy_is_enabled_port_struct, &out, &in);
+    minipc_call(client, MILLISEC_TIMEOUT, &mvrp_proxy_is_enabled_port_struct, &out, &in);
 
     return out.retval;
 }

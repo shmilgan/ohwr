@@ -3,26 +3,14 @@
 static int mvrp_srv_enable(
             const struct minipc_pd *pd, uint32_t *args, void *ret)
 {
-    struct mvrp_enable_argdata *in;
-    struct mvrp_enable_retdata *out;
-    in  = (struct mvrp_enable_argdata*)args;
-    out = (struct mvrp_enable_retdata*)ret;
-
     mvrp_enable();
-
     return 0;
 }
 
 static int mvrp_srv_disable(
             const struct minipc_pd *pd, uint32_t *args, void *ret)
 {
-    struct mvrp_disable_argdata *in;
-    struct mvrp_disable_retdata *out;
-    in  = (struct mvrp_disable_argdata*)args;
-    out = (struct mvrp_disable_retdata*)ret;
-
     mvrp_disable();
-
     return 0;
 }
 
@@ -81,9 +69,7 @@ static int mvrp_srv_get_last_pdu_origin(
 static int mvrp_srv_is_enabled(
             const struct minipc_pd *pd, uint32_t *args, void *ret)
 {
-    struct mvrp_is_enabled_argdata *in;
     struct mvrp_is_enabled_retdata *out;
-    in  = (struct mvrp_is_enabled_argdata*)args;
     out = (struct mvrp_is_enabled_retdata*)ret;
 
     out->retval = mvrp_is_enabled();

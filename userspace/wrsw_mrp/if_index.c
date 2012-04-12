@@ -20,7 +20,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include <string.h>
 #include <unistd.h>
 
@@ -32,7 +31,7 @@
 #include "if_index.h"
 
 /* Get port number for the given interface name */
-int if_nametoport(const char *ifname)
+int wr_nametoport(const char *ifname)
 {
     int fd, ret;
     struct ifreq ifr;

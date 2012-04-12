@@ -9,7 +9,6 @@ WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
 WR_INCLUDE = $(WR_INSTALL_ROOT)/include
 WR_LIB = $(WR_INSTALL_ROOT)/lib
 
-# Use -DV3 with v3 HW (to avoid using VID = 0)
 CFLAGS  := -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL \
            -I. -I../include -I../wrsw_rtud -I../wrsw_mrp -I$(WR_INCLUDE) \
            -I$(LINUX)/include

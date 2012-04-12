@@ -334,3 +334,8 @@ int mrp_open_socket(struct mrp_application *app)
     app->proto.fd = fd;
     return 0;
 }
+
+void mrp_close_socket(struct mrp_application *app)
+{
+    close(app->proto.fd);
+}

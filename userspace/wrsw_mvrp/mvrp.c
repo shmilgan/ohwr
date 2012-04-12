@@ -6,6 +6,8 @@
  *
  * Description: MVRP daemon.
  *
+ * Fixes:
+ *              Alessandro Rubini
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -76,6 +78,8 @@ static struct map_context *ctx;
 /* Global state of MVRP operation */
 static int mvrp_enabled;
 
+static int switch_is_v2;
+
 /* 'When any MVRP declaration marked as “new” is received on a given Port,
    either as a result of receiving an MVRPDU from the attached LAN
    (MAD_Join.indication), or as a result of receiving a request from MAP
@@ -120,11 +124,9 @@ static int attr_cmp(uint8_t type, uint8_t len, void *v1, void *v2)
 
 static uint8_t attrtype(int mid)
 {
-    if ((mid < 0) ||
-#ifdef V3
-        (mid == 0) ||
-#endif  // V3
-        (mid >= NUM_VLANS))
+    if ((mid < 0) || (mid >= NUM_VLANS))
+        return MVRP_ATTR_INVALID;
+    if (!switch_is_v2 && (mid == 0))
         return MVRP_ATTR_INVALID;
     return MVRP_ATTR_VID;
 }
@@ -139,11 +141,9 @@ static int db_add_entry(uint8_t type, uint8_t len, void *firstval, int offset)
 
 static int db_read_entry(uint8_t *type, uint8_t *len, void **value, int mid)
 {
-    if ((mid < 0) ||
-#ifdef V3
-        (mid == 0) ||
-#endif  // V3
-        (mid >= NUM_VLANS))
+    if ((mid < 0) || (mid >= NUM_VLANS))
+        return -EINVAL;
+    if (!switch_is_v2 && (mid == 0))
         return -EINVAL;
 
     *len = 2;
@@ -159,13 +159,13 @@ static int db_find_entry(uint8_t type, uint8_t len, void *firstval, int offset)
 
     memcpy(&val, firstval, len);
     mid = ntohs(val) + offset;
-    return (
-#ifdef V3
-            (mid > 0)
-#else
-            (mid >= 0)
-#endif  // V3
-            && (mid < NUM_VLANS)) ? mid : -1;
+
+    if ((mid < 0) || (mid >= NUM_VLANS))
+        return -EINVAL;
+    if ((mid == 0) && !switch_is_v2)
+        return -EINVAL;
+
+    return mid;
 }
 
 /* Not required for this MRP application */
@@ -241,7 +241,6 @@ static struct mrp_port *find_port(int port_no)
     list_for_each_entry(port, &mvrp_app.ports, app_port)
         if (port->port_no == port_no)
             return port;
-
     return NULL;
 }
 
@@ -341,20 +340,21 @@ static int init_vlan_table()
         vlan_db[vid].nvid = htons(vid);
 
     vid = 0;
-#ifndef V3
     /* Note VID = 0 is not permitted by 802.1Q (but was still used by V2 hw) */
-    errno = 0;
-    err = rtu_fdb_proxy_read_static_vlan_entry(vid,
-                                               &egress_ports,
-                                               &forbidden_ports,
-                                               &untagged_set);
-    if (errno)
-        return -1;
-    if (!err) {
-        vlan_db[vid].egress_ports = egress_ports;
-        vlan_db[vid].forbidden_ports = forbidden_ports;
+    if (switch_is_v2) {
+        errno = 0;
+        err = rtu_fdb_proxy_read_static_vlan_entry(vid,
+                                                   &egress_ports,
+                                                   &forbidden_ports,
+                                                   &untagged_set);
+        if (errno)
+            return -1;
+        if (!err) {
+            vlan_db[vid].egress_ports = egress_ports;
+            vlan_db[vid].forbidden_ports = forbidden_ports;
+        }
     }
-#endif
+
     do {
         errno = 0;
         err = rtu_fdb_proxy_read_next_static_vlan_entry(&vid,
@@ -438,7 +438,7 @@ static void daemonize(void)
 
 void sigint(int signum) {
     mrp_unregister_application(&mvrp_app);
-    exit(0);
+    signal(SIGINT, SIG_DFL);
 }
 
 int main(int argc, char **argv)
@@ -456,10 +456,14 @@ int main(int argc, char **argv)
             case 'd':
                 run_as_daemon = 1;
                 break;
+            case 'v':
+                switch_is_v2 = (atoi(optarg) == 2);
+                break;
             default:
                 fprintf(stderr,
                     "Usage: %s [-d] \n"
-                    "\t-d   daemonize\n",
+                    "\t-d   daemonize\n"
+                    "\t-v<version>\n",
                     argv[0]);
                 exit(1);
             }

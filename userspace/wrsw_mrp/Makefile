@@ -10,7 +10,7 @@ WR_INCLUDE = $(WR_INSTALL_ROOT)/include
 WR_LIB = $(WR_INSTALL_ROOT)/lib
 
 CFLAGS := -fPIC -shared -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL \
-         -I. -I../include -I../wrsw_rtud -I$(WR_INCLUDE) -I$(LINUX)/include \
+         -I. -I../include -I../wrsw_rtud -I$(WR_INCLUDE) \
          -I../wrsw_hal
 
 LDFLAGS := -fPIC -shared -L. -L$(WR_LIB) -lrt -lwripc -lminipc -lwrrtu
