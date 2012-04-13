@@ -1,5 +1,4 @@
 
-WRS_BUILDROOT_DIR	= $(WRS_OUTPUT_DIR)/build/buildroot-2009.11
 WRS_READLINE_DIR	= $(WRS_BUILDROOT_DIR)/output/build/readline-5.2
 WRS_NCURSES_DIR		= $(WRS_BUILDROOT_DIR)/output/build/ncurses-5.6
 WRS_NETSNMP_DIR		= $(WRS_BUILDROOT_DIR)/output/build/net-snmp-5.5

@@ -105,9 +105,11 @@ libminipc.so libwripc.so:
     Compilation and usage
     =====================
 
-For compilation just run "make", following the instructions of the document
-wrs-build.pdf in the wr-switch-sw/doc section; previously you need to set some
-environment variables (i.e. WRS_OUTPUT_DIR, CROSS_COMPILE and WR_INSTALL_ROOT).
+For compilation just run "make", following the instructions in wrs-build.in
+in the wr-switch-sw/doc section; previously you need to set some environment
+variables (i.e. WRS_OUTPUT_DIR, CROSS_COMPILE, WR_INSTALL_ROOT and 
+WRS_BUILDROOT_DIR).
+
 You can run "make install" to copy the binary file to the $(WR_INSTALL_ROOT)/bin
 directory. Also, you can compile this package using the build scripts in
 $(WRS_OUTPUT_DIR)/wr-switch-sw/build.
