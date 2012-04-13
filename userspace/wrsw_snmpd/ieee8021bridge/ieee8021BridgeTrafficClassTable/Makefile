@@ -1,5 +1,5 @@
 
-NET-SNMP-CONFIG = $(WRS_OUTPUT_DIR)/build/buildroot-2009.11/output/build/net-snmp-5.5/net-snmp-config
+NET-SNMP-CONFIG = $(WRS_BUILDROOT_DIR)/output/build/net-snmp-5.5/net-snmp-config
 ROOTFS_OVERRIDE = $(WRS_BASE_DIR)/../userspace/rootfs_override
 
 CC 	= $(CROSS_COMPILE)gcc

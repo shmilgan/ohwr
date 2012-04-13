@@ -1,5 +1,5 @@
 
-NET-SNMP-CONFIG = $(WRS_OUTPUT_DIR)/build/buildroot-2009.11/output/build/net-snmp-5.5/net-snmp-config
+NET-SNMP-CONFIG = $(WRS_BUILDROOT_DIR)/output/build/net-snmp-5.5/net-snmp-config
 ROOTFS_OVERRIDE = $(WRS_BASE_DIR)/../userspace/rootfs_override
 
 IEEE8021BRIDGEBASETABLE = ieee8021BridgeBaseTable/ieee8021BridgeBaseTable
@@ -51,11 +51,11 @@ LIB 	= libieee8021bridge.so
 
 
 all:	
-	cd ieee8021BridgeBaseTable; make -f Makefile;
-	cd ieee8021BridgeBasePortTable; make -f Makefile;
-	cd ieee8021BridgeTpPortTable; make -f Makefile;
-	cd ieee8021BridgePortPriorityTable; make -f Makefile;
-	cd ieee8021BridgeTrafficClassTable; make -f Makefile;
+	$(MAKE) -C ieee8021BridgeBaseTable all
+	$(MAKE) -C ieee8021BridgeBasePortTable all
+	$(MAKE) -C ieee8021BridgeTpPortTable all
+	$(MAKE) -C ieee8021BridgePortPriorityTable all
+	$(MAKE) -C ieee8021BridgeTrafficClassTable all
 	$(CC) -o $(LIB) $(LDFLAGS) $(OBJS)
 
 
@@ -65,5 +65,9 @@ install: all
 	install libwripc.so $(ROOTFS_OVERRIDE)/usr/lib
 
 clean:
-	rm -f $(LIB) $(OBJS)
+	$(MAKE) -C ieee8021BridgeBaseTable clean
+	$(MAKE) -C ieee8021BridgeBasePortTable clean
+	$(MAKE) -C ieee8021BridgeTpPortTable clean
+	$(MAKE) -C ieee8021BridgePortPriorityTable clean
+	$(MAKE) -C ieee8021BridgeTrafficClassTable clean
 
