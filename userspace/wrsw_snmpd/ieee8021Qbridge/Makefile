@@ -1,4 +1,4 @@
-NET_SNMP_HOME   = $(WRS_OUTPUT_DIR)/build/buildroot-2009.11/output/build/net-snmp-5.5
+NET_SNMP_HOME   = $(WRS_BUILDROOT_DIR)/output/build/net-snmp-5.5
 NET-SNMP-CONFIG = $(NET_SNMP_HOME)/net-snmp-config
 ROOTFS_OVERRIDE = $(WRS_BASE_DIR)/../userspace/rootfs_override
 
