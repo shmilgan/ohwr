@@ -32,6 +32,7 @@
  *  0x10100 - 0x101ff: RT Subsystem SoftPLL-adv
  *  0x10200 - 0x102ff: RT Subsystem SPI Master
  *  0x10300 - 0x103ff: RT Subsystem GPIO
+ *  0x10500 - 0x105ff: PPS gen
  *  0x20000 - 0x3ffff:     NIC
  *  0x20000 - 0x20fff  NIC control regs and descriptor area
  *  0x28000 - 0x2bfff  NIC packet buffer (16k)
@@ -39,9 +40,10 @@
  *  0x30000 + N * 0x400  Endpoint N control registers
  *  0x50000 - 0x50fff:  VIC
  *  0x51000 - 0x51fff:  Tstamp unit
- *  0x52000 - 0x52fff:  PPS gen
  */
 /* This is the base address of all the FPGA regions (EBI1, CS0) */
+#define FPGA_BASE_PPSG	0x10010500
+#define FPGA_SIZE_PPSG	0x00000100
 #define FPGA_BASE_NIC	0x10020000
 #define FPGA_SIZE_NIC	0x00010000
 #define FPGA_BASE_EP	0x10030000
@@ -51,8 +53,6 @@
 #define FPGA_SIZE_VIC	0x00001000
 #define FPGA_BASE_TS	0x10051000
 #define FPGA_SIZE_TS	0x00001000
-#define FPGA_BASE_PPSG	0x10052000
-#define FPGA_SIZE_PPSG	0x00001000
 
 enum fpga_blocks {
 	WRN_FB_NIC,
