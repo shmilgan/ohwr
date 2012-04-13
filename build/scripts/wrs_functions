@@ -107,6 +107,16 @@ function wrs_default_compiler {
 	fi
 }
 
+# Make the buildroot path independent of its version, so user space packages 
+# linked against buildroot packages may work even if the buildroot dir is
+# renamed/updated.
+function wrs_buildroot_dir {
+	dirname=$WRS_OUTPUT_DIR/build/buildroot*
+	if [ -e $dirname ]; then
+	    wrs_setenv_default WRS_BUILDROOT_DIR $dirname
+	fi
+}
+
 # See documentation about use of the download-info file. Unfortunately,
 # a loop in a pipe is run in a sub-shell, so variables can't be just set.
 # Therefore, we use a temporary file here

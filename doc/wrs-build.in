@@ -212,6 +212,11 @@ have a similar prefix for the same reason).
         the output directory to force a full rebuild, without
         the overhead of re-downloading everything.
 
+@item WRS_BUILDROOT_DIR
+	The pathname of the @i{buildroot} directory. It is used by some
+        WR-specific user space applications that need to link against
+        different libraries generated during the buildroot compilation.
+
 @item WRS_WR_REPOSITORY
 	The @i{url} of the @i{svn} repository for @i{White Rabbit}.
         It defaults to the official place in @i{ohwr.org} but may be

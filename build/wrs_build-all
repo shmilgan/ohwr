@@ -73,6 +73,7 @@ failed_step=false; # this is set to "true" but the wrs_build_step function
 #                 done-marker            script name
 wrs_build_step    00-buildroot           wrs_build_buildroot
 wrs_default_compiler
+wrs_buildroot_dir
 wrs_build_step    01-at91boot            wrs_build_at91boot
 wrs_build_step    02-u-boot              wrs_build_u-boot
 wrs_build_step    03-kernel              wrs_build_kernel
