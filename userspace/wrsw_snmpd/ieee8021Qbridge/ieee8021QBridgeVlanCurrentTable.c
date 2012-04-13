@@ -38,14 +38,14 @@
 #define MIBMOD  "8021Q"
 
 /* column number definitions for table ieee8021QBridgeVlanCurrentTable */
-#define COLUMN_IEEE8021QBRIDGEVLANTIMEMARK                  1
-#define COLUMN_IEEE8021QBRIDGEVLANCURRENTCOMPONENTID        2
-#define COLUMN_IEEE8021QBRIDGEVLANINDEX                     3
-#define COLUMN_IEEE8021QBRIDGEVLANFDBID                     4
-#define COLUMN_IEEE8021QBRIDGEVLANCURRENTEGRESSPORTS        5
-#define COLUMN_IEEE8021QBRIDGEVLANCURRENTUNTAGGEDPORTS      6
-#define COLUMN_IEEE8021QBRIDGEVLANSTATUS                    7
-#define COLUMN_IEEE8021QBRIDGEVLANCREATIONTIME              8
+#define COLUMN_TIMEMARK                  1
+#define COLUMN_CURRENTCOMPONENTID        2
+#define COLUMN_INDEX                     3
+#define COLUMN_FDBID                     4
+#define COLUMN_CURRENTEGRESSPORTS        5
+#define COLUMN_CURRENTUNTAGGEDPORTS      6
+#define COLUMN_STATUS                    7
+#define COLUMN_CREATIONTIME              8
 
 enum vlan_entry_status {
     Other_vlan      = 1,
@@ -118,22 +118,22 @@ static int get_column(netsnmp_variable_list         *vb,
     char up[NUM_PORTS]; // untagged ports
 
     switch (colnum) {
-    case COLUMN_IEEE8021QBRIDGEVLANFDBID:
+    case COLUMN_FDBID:
         snmp_set_var_typed_integer(vb, ASN_UNSIGNED, ent->fid);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANCURRENTEGRESSPORTS:
+    case COLUMN_CURRENTEGRESSPORTS:
         to_octetstr(ent->port_mask, ep);
         snmp_set_var_typed_value(vb, ASN_OCTET_STR, ep, NUM_PORTS);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANCURRENTUNTAGGEDPORTS:
+    case COLUMN_CURRENTUNTAGGEDPORTS:
         to_octetstr(ent->untagged_set, up);
         snmp_set_var_typed_value(vb, ASN_OCTET_STR, up, NUM_PORTS);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANSTATUS:
+    case COLUMN_STATUS:
         // TODO review once MVRP is supported
         snmp_set_var_typed_integer(vb, ASN_INTEGER, Other_vlan);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANCREATIONTIME:
+    case COLUMN_CREATIONTIME:
         snmp_set_var_typed_integer(vb, ASN_TIMETICKS, ent->creation_t);
         break;
     default:
@@ -320,8 +320,8 @@ static void initialize_table(void)
             ASN_UNSIGNED,   /* index: VlanIndex */
             0);
 
-    tinfo->min_column = COLUMN_IEEE8021QBRIDGEVLANFDBID;
-    tinfo->max_column = COLUMN_IEEE8021QBRIDGEVLANCREATIONTIME;
+    tinfo->min_column = COLUMN_FDBID;
+    tinfo->max_column = COLUMN_CREATIONTIME;
 
     netsnmp_register_table(reg, tinfo);
 }

@@ -36,13 +36,13 @@
 #define MIBMOD  "8021Q"
 
 /* column number definitions for table ieee8021QBridgeNextFreeLocalVlanTable */
-#define COLUMN_IEEE8021QBRIDGENEXTFREELOCALVLANCOMPONENTID		1
-#define COLUMN_IEEE8021QBRIDGENEXTFREELOCALVLANINDEX		    2
+#define COLUMN_COMPONENTID		1
+#define COLUMN_INDEX		    2
 
 static int get_column(netsnmp_variable_list *vb, int colnum)
 {
     switch (colnum) {
-    case COLUMN_IEEE8021QBRIDGENEXTFREELOCALVLANINDEX:
+    case COLUMN_INDEX:
         // Creating a new local VLAN is not supported (i.e next free index = 0)
         snmp_set_var_typed_integer(vb, ASN_UNSIGNED, 0);
         break;
@@ -163,8 +163,8 @@ static void initialize_table(void)
             ASN_UNSIGNED,  /* index: ComponentId */
             0);
 
-    tinfo->min_column = COLUMN_IEEE8021QBRIDGENEXTFREELOCALVLANINDEX;
-    tinfo->max_column = COLUMN_IEEE8021QBRIDGENEXTFREELOCALVLANINDEX;
+    tinfo->min_column = COLUMN_INDEX;
+    tinfo->max_column = COLUMN_INDEX;
 
     netsnmp_register_table(reg, tinfo);
 }

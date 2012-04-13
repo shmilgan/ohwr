@@ -2,7 +2,6 @@
 #define __WHITERABBIT_MVRP_PROXY_H
 
 #include "minipc.h"
-#include "mvrp_export.h"
 
 #define MILLISEC_TIMEOUT 1000
 

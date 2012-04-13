@@ -1,6 +1,6 @@
 ROOTFS_OVERRIDE = $(WRS_BASE_DIR)/../userspace/rootfs_override
 
-OBJS = rtu_fd_proxy.o endpoint_hw.o
+OBJS = rtu_fd_proxy.o rtu_fd_structs.o endpoint_hw.o
 
 CC   = $(CROSS_COMPILE)gcc
 

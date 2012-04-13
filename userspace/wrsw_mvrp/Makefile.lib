@@ -1,6 +1,6 @@
 ROOTFS_OVERRIDE = $(WRS_BASE_DIR)/../userspace/rootfs_override
 
-OBJS = mvrp_proxy.o
+OBJS = mvrp_structs.o mvrp_proxy.o
 
 CC   = $(CROSS_COMPILE)gcc
 

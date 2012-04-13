@@ -1,5 +1,5 @@
 PROGRAM	= wrsw_mvrpd
-OBJS    = mvrp_proxy.o mvrp_srv.o mvrp.o
+OBJS    = mvrp_structs.o mvrp_proxy.o mvrp_srv.o mvrp.o
 
 CC      = $(CROSS_COMPILE)gcc
 

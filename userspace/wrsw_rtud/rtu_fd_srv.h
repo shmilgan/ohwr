@@ -35,4 +35,3 @@
 struct minipc_ch *rtu_fdb_srv_create(char *name);
 
 #endif /*__WHITERABBIT_RTU_FD_SRV_H*/
-

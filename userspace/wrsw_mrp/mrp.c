@@ -31,6 +31,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <net/if.h>
+#include <sys/ioctl.h>
 
 #include <hal_exports.h>
 
@@ -1202,10 +1203,11 @@ static struct mrp_port *mrp_create_port(struct mrp_application *app,
                                         int port_no)
 {
     struct mrp_port *port;
+    struct ifreq ifr;
 
-    port = (struct mrp_port *)malloc(sizeof(struct mrp_port));
+    port = (struct mrp_port *)malloc(sizeof(*port));
     if (!port)
-        return port;
+        return NULL;
 
     port->app = app;
     /* Set port as point to point (default).
@@ -1221,6 +1223,19 @@ static struct mrp_port *mrp_create_port(struct mrp_application *app,
     port->hw_index = hw_index;
     port->port_no = port_no;
     port->reg_failures = 0;
+
+    /* Get port address. First we need to get the name of the interface and then
+       we can get its HW address ('Normally, the user specifies which device to
+       affect by setting ifr_name... and given the ifr_ifindex, the SIOCGIFNAME
+       is the only ioctl which returns its results in ifr_name') */
+    ifr.ifr_ifindex = hw_index;
+    if ((ioctl(app->proto.fd, SIOCGIFNAME,   &ifr) == -1) ||
+	    (ioctl(app->proto.fd, SIOCGIFHWADDR, &ifr) == -1)) {
+        fprintf(stderr, "mrp: unable to get HW address; IOCTL error.");
+        free(port);
+        return NULL;
+    }
+    memcpy(port->hwaddr, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
 
     /* Add port to application port list */
     list_add(&port->app_port, &app->ports);

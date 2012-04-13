@@ -49,6 +49,18 @@
 
 #define VLAN_TAG_LEN                4  /* octets */
 
+/* VLAN tagged frames */
+#define VLAN_TAG_LEN        4
+
+#ifndef VLAN_ETH_HLEN
+#define VLAN_ETH_HLEN       (VLAN_TAG_LEN + ETH_HLEN)
+#endif
+
+/* Max. octets in frame (no FCS) */
+#ifndef VLAN_ETH_FRAME_LEN
+#define VLAN_ETH_FRAME_LEN  (VLAN_TAG_LEN + ETH_FRAME_LEN)
+#endif
+
 /* PDU payload lenght to guarantee compatibility with interfaces that do not
    handle 802.1Q tags */
 #define VLAN_ETH_DATA_LEN           ((ETH_DATA_LEN) - (VLAN_TAG_LEN))
@@ -210,6 +222,7 @@ struct mrp_application;
 /* MRP port */
 struct mrp_port {
     int hw_index;                       // Interface index of the port
+    uint8_t hwaddr[ETH_ALEN];           // HW MAC address of the port
     int port_no;                        // Port number
     int point_to_point;                 // 1 = point to point
                                         // 0 = shared medium

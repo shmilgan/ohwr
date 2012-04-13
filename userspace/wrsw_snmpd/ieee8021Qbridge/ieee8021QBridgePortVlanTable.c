@@ -17,13 +17,13 @@
 #define MIBMOD  "8021Q"
 
 /* column number definitions for table ieee8021QBridgePortVlanTable */
-#define COLUMN_IEEE8021QBRIDGEPVID                                  1
-#define COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES              2
-#define COLUMN_IEEE8021QBRIDGEPORTINGRESSFILTERING                  3
-#define COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS                 4
-#define COLUMN_IEEE8021QBRIDGEPORTMVRPFAILEDREGISTRATIONS           5
-#define COLUMN_IEEE8021QBRIDGEPORTMVRPLASTPDUORIGIN                 6
-#define COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION        7
+#define COLUMN_PVID                              1
+#define COLUMN_ACCEPTABLEFRAMETYPES              2
+#define COLUMN_INGRESSFILTERING                  3
+#define COLUMN_MVRPENABLEDSTATUS                 4
+#define COLUMN_MVRPFAILEDREGISTRATIONS           5
+#define COLUMN_MVRPLASTPDUORIGIN                 6
+#define COLUMN_RESTRICTEDVLANREGISTRATION        7
 
 static int get_column(netsnmp_variable_list *vb, int colnum, u_long port)
 {
@@ -36,13 +36,13 @@ static int get_column(netsnmp_variable_list *vb, int colnum, u_long port)
 
     errno = 0;
     switch (colnum) {
-    case COLUMN_IEEE8021QBRIDGEPVID:
+    case COLUMN_PVID:
         pvid = ep_hw_get_pvid(port);
         if (pvid < 0)
             return SNMP_ERR_GENERR;
         snmp_set_var_typed_integer(vb, ASN_UNSIGNED, pvid);
         break;
-    case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
+    case COLUMN_ACCEPTABLEFRAMETYPES:
         qmode = ep_hw_get_qmode(port);
         switch(qmode) {
         case access_port:
@@ -58,13 +58,13 @@ static int get_column(netsnmp_variable_list *vb, int colnum, u_long port)
             return SNMP_ERR_GENERR;
         }
         break;
-    case COLUMN_IEEE8021QBRIDGEPORTINGRESSFILTERING:
+    case COLUMN_INGRESSFILTERING:
         // true. Discard incoming frames for VLANs that do not include this
         // port in its member set (currently _unsupported_ by WR switch)
         // false. Accept all incoming frames
         snmp_set_var_typed_integer(vb, ASN_INTEGER, TV_FALSE);
         break;
-    case COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS:
+    case COLUMN_MVRPENABLEDSTATUS:
         ret = mvrp_proxy_is_enabled_port(port);
         if (errno)
             goto minipc_err;
@@ -72,7 +72,7 @@ static int get_column(netsnmp_variable_list *vb, int colnum, u_long port)
             return SNMP_NOSUCHINSTANCE;
         snmp_set_var_typed_integer(vb, ASN_INTEGER, ret ? TV_TRUE:TV_FALSE);
         break;
-    case COLUMN_IEEE8021QBRIDGEPORTMVRPFAILEDREGISTRATIONS:
+    case COLUMN_MVRPFAILEDREGISTRATIONS:
         failures = mvrp_proxy_get_failed_registrations(port);
         if (errno)
             goto minipc_err;
@@ -82,7 +82,7 @@ static int get_column(netsnmp_variable_list *vb, int colnum, u_long port)
         snmp_set_var_typed_value(vb, ASN_COUNTER64, (u_char *)&reg_failures,
                                  sizeof(struct counter64));
         break;
-    case COLUMN_IEEE8021QBRIDGEPORTMVRPLASTPDUORIGIN:
+    case COLUMN_MVRPLASTPDUORIGIN:
         ret = mvrp_proxy_get_last_pdu_origin(port, &mac);
         if (errno)
             goto minipc_err;
@@ -90,7 +90,7 @@ static int get_column(netsnmp_variable_list *vb, int colnum, u_long port)
             return SNMP_NOSUCHINSTANCE;
         snmp_set_var_typed_value(vb, ASN_OCTET_STR, mac, ETH_ALEN);
         break;
-    case COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION:
+    case COLUMN_RESTRICTEDVLANREGISTRATION:
         ret = rtu_fdb_proxy_is_restricted_vlan_reg(port);
         if (errno)
             goto minipc_err;
@@ -201,16 +201,16 @@ static int set_reserve1(netsnmp_request_info *req)
 
     // Check column value
     switch (tinfo->colnum) {
-    case COLUMN_IEEE8021QBRIDGEPVID:
+    case COLUMN_PVID:
         ret = netsnmp_check_vb_int_range(req->requestvb, MIN_PVID, MAX_PVID);
         break;
-    case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
+    case COLUMN_ACCEPTABLEFRAMETYPES:
         ret = netsnmp_check_vb_int_range(req->requestvb, admitAll, admitTagged);
         break;
-    case COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS:
+    case COLUMN_MVRPENABLEDSTATUS:
         ret = netsnmp_check_vb_truthvalue(req->requestvb);
         break;
-    case COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION:
+    case COLUMN_RESTRICTEDVLANREGISTRATION:
         ret = netsnmp_check_vb_truthvalue(req->requestvb);
         break;
     default:
@@ -234,13 +234,13 @@ static int set_commit(netsnmp_request_info *req)
     port = *tinfo->indexes->next_variable->val.integer;
     errno = 0;
     switch (tinfo->colnum) {
-    case COLUMN_IEEE8021QBRIDGEPVID:
+    case COLUMN_PVID:
         pvid = *req->requestvb->val.integer;
         err = ep_hw_set_pvid(port, pvid);
         if (err == -EIO)
             return SNMP_ERR_GENERR;
         break;
-    case COLUMN_IEEE8021QBRIDGEPORTACCEPTABLEFRAMETYPES:
+    case COLUMN_ACCEPTABLEFRAMETYPES:
         acceptable_frame_types = *req->requestvb->val.integer;
         switch(acceptable_frame_types) {
         case admitAll:
@@ -254,7 +254,7 @@ static int set_commit(netsnmp_request_info *req)
             break;
         }
         break;
-    case COLUMN_IEEE8021QBRIDGEPORTMVRPENABLEDSTATUS:
+    case COLUMN_MVRPENABLEDSTATUS:
         if (*req->requestvb->val.integer == TV_TRUE)
             err = mvrp_proxy_enable_port(port);
         else
@@ -264,7 +264,7 @@ static int set_commit(netsnmp_request_info *req)
         if (err)
             return SNMP_NOSUCHINSTANCE;
         break;
-    case COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION:
+    case COLUMN_RESTRICTEDVLANREGISTRATION:
         if (*req->requestvb->val.integer == TV_TRUE)
             err = rtu_fdb_proxy_set_restricted_vlan_reg(port);
         else
@@ -356,8 +356,8 @@ static void initialize_table(void)
             ASN_UNSIGNED,  /* index: ieee8021BridgeBasePort */
             0);
 
-    tinfo->min_column = COLUMN_IEEE8021QBRIDGEPVID;
-    tinfo->max_column = COLUMN_IEEE8021QBRIDGEPORTRESTRICTEDVLANREGISTRATION;
+    tinfo->min_column = COLUMN_PVID;
+    tinfo->max_column = COLUMN_RESTRICTEDVLANREGISTRATION;
 
     netsnmp_register_table(reg, tinfo);
 }

@@ -37,12 +37,12 @@
 #define MIBMOD  "8021Q"
 
 /* column number definitions for table ieee8021QBridgeTable */
-#define COLUMN_IEEE8021QBRIDGECOMPONENTID		    1
-#define COLUMN_IEEE8021QBRIDGEVLANVERSIONNUMBER		2
-#define COLUMN_IEEE8021QBRIDGEMAXVLANID		        3
-#define COLUMN_IEEE8021QBRIDGEMAXSUPPORTEDVLANS		4
-#define COLUMN_IEEE8021QBRIDGENUMVLANS		        5
-#define COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS		6
+#define COLUMN_COMPONENTID		    1
+#define COLUMN_VLANVERSIONNUMBER	2
+#define COLUMN_MAXVLANID		    3
+#define COLUMN_MAXSUPPORTEDVLANS	4
+#define COLUMN_NUMVLANS		        5
+#define COLUMN_MVRPENABLEDSTATUS	6
 
 static int get_column(netsnmp_variable_list *vb, int colnum)
 {
@@ -54,30 +54,30 @@ static int get_column(netsnmp_variable_list *vb, int colnum)
 
     errno = 0;
     switch (colnum) {
-    case COLUMN_IEEE8021QBRIDGEVLANVERSIONNUMBER:
+    case COLUMN_VLANVERSIONNUMBER:
         // TODO get value from STP daemon. Meanwhile, value 1 means Single STP
         ver = 1;
         snmp_set_var_typed_integer(vb, ASN_INTEGER, ver);
         break;
-    case COLUMN_IEEE8021QBRIDGEMAXVLANID:
+    case COLUMN_MAXVLANID:
         mvid = rtu_fdb_proxy_get_max_vid();
         if (errno)
             goto minipc_err;
         snmp_set_var_typed_integer(vb, ASN_INTEGER, mvid);
         break;
-    case COLUMN_IEEE8021QBRIDGEMAXSUPPORTEDVLANS:
+    case COLUMN_MAXSUPPORTEDVLANS:
         mvlans = rtu_fdb_proxy_get_max_supported_vlans();
         if (errno)
             goto minipc_err;
         snmp_set_var_typed_integer(vb, ASN_UNSIGNED, mvlans);
         break;
-    case COLUMN_IEEE8021QBRIDGENUMVLANS:
+    case COLUMN_NUMVLANS:
         vlans = rtu_fdb_proxy_get_num_vlans();
         if (errno)
             goto minipc_err;
         snmp_set_var_typed_integer(vb, ASN_GAUGE, vlans);
         break;
-    case COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS:
+    case COLUMN_MVRPENABLEDSTATUS:
         enabled = mvrp_proxy_is_enabled();
         if (errno)
             goto minipc_err;
@@ -185,7 +185,7 @@ static int _handler(netsnmp_mib_handler          *handler,
         for (req = requests; req; req = req->next) {
             tinfo = netsnmp_extract_table_info(req);
             switch (tinfo->colnum) {
-            case COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS:
+            case COLUMN_MVRPENABLEDSTATUS:
                 err = netsnmp_check_vb_truthvalue(req->requestvb);
                 if (err)
                     netsnmp_set_request_error(reqinfo, req, err);
@@ -199,7 +199,7 @@ static int _handler(netsnmp_mib_handler          *handler,
         for (req = requests; req; req = req->next) {
             tinfo = netsnmp_extract_table_info(req);
             switch (tinfo->colnum) {
-            case COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS:
+            case COLUMN_MVRPENABLEDSTATUS:
                 if (*req->requestvb->val.integer == TV_TRUE)
                     mvrp_proxy_enable();
                 else
@@ -240,8 +240,8 @@ static void initialize_table(void)
             ASN_UNSIGNED, /* index: ieee8021QBridgeComponentId */
             0);
 
-    tinfo->min_column = COLUMN_IEEE8021QBRIDGEVLANVERSIONNUMBER;
-    tinfo->max_column = COLUMN_IEEE8021QBRIDGEMVRPENABLEDSTATUS;
+    tinfo->min_column = COLUMN_VLANVERSIONNUMBER;
+    tinfo->max_column = COLUMN_MVRPENABLEDSTATUS;
 
     netsnmp_register_table(reg, tinfo);
 }

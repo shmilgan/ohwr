@@ -1,7 +1,7 @@
 
 PROGRAM		= wrsw_rtud
 SRCFILES	= mac.c rtu_drv.c rtu_hash.c rtu_sw.c rtu_fd.c \
-              rtu_fd_srv.c endpoint_hw.c rtud.c utils.c
+              rtu_fd_structs.c rtu_fd_srv.c endpoint_hw.c rtud.c utils.c
 OBJFILES	= $(patsubst %.c,%.o,$(SRCFILES))
 
 CC		    = $(CROSS_COMPILE)gcc

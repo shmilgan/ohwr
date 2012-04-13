@@ -37,11 +37,11 @@
 #define MIBMOD  "8021Q"
 
 /* column number definitions for table ieee8021QBridgeFdbTable */
-#define COLUMN_IEEE8021QBRIDGEFDBCOMPONENTID		    1
-#define COLUMN_IEEE8021QBRIDGEFDBID		                2
-#define COLUMN_IEEE8021QBRIDGEFDBDYNAMICCOUNT		    3
-#define COLUMN_IEEE8021QBRIDGEFDBLEARNEDENTRYDISCARDS	4
-#define COLUMN_IEEE8021QBRIDGEFDBAGINGTIME		        5
+#define COLUMN_COMPONENTID		    1
+#define COLUMN_ID		            2
+#define COLUMN_DYNAMICCOUNT		    3
+#define COLUMN_LEARNEDENTRYDISCARDS	4
+#define COLUMN_AGINGTIME		    5
 
 static int get_column(netsnmp_variable_list *vb, int colnum, u_long fid)
 {
@@ -51,20 +51,20 @@ static int get_column(netsnmp_variable_list *vb, int colnum, u_long fid)
 
     errno = 0;
     switch (colnum) {
-    case COLUMN_IEEE8021QBRIDGEFDBDYNAMICCOUNT:
+    case COLUMN_DYNAMICCOUNT:
         count = rtu_fdb_proxy_get_num_dynamic_entries(fid);
         if (errno)
             return SNMP_ERR_GENERR;
         snmp_set_var_typed_integer(vb, ASN_GAUGE, count);
         break;
-    case COLUMN_IEEE8021QBRIDGEFDBLEARNEDENTRYDISCARDS:
+    case COLUMN_LEARNEDENTRYDISCARDS:
         discards = rtu_fdb_proxy_get_num_learned_entry_discards(fid);
         if (errno)
             return SNMP_ERR_GENERR;
         snmp_set_var_typed_value(vb, ASN_COUNTER64, (u_char *)&discards,
                                  sizeof(discards));
         break;
-    case COLUMN_IEEE8021QBRIDGEFDBAGINGTIME:
+    case COLUMN_AGINGTIME:
         age = rtu_fdb_proxy_get_aging_time(fid);
         if (errno)
             return SNMP_ERR_GENERR;
@@ -177,7 +177,7 @@ static int set_reserve1(netsnmp_request_info *req)
 
     // Check column value
     switch (tinfo->colnum) {
-    case COLUMN_IEEE8021QBRIDGEFDBAGINGTIME:
+    case COLUMN_AGINGTIME:
         ret = netsnmp_check_vb_int_range(
             req->requestvb, MIN_AGING_TIME, MAX_AGING_TIME);
         break;
@@ -201,7 +201,7 @@ static int set_commit(netsnmp_request_info *req)
     tinfo = netsnmp_extract_table_info(req);
     fid = *tinfo->indexes->next_variable->val.integer;
     switch (tinfo->colnum) {
-    case COLUMN_IEEE8021QBRIDGEFDBAGINGTIME:
+    case COLUMN_AGINGTIME:
         age = *req->requestvb->val.integer;
         errno = 0;
         err = rtu_fdb_proxy_set_aging_time(fid, age);
@@ -288,8 +288,8 @@ static void initialize_table(void)
             ASN_UNSIGNED,  /* index: ieee8021QBridgeFdbId */
             0);
 
-    tinfo->min_column = COLUMN_IEEE8021QBRIDGEFDBDYNAMICCOUNT;
-    tinfo->max_column = COLUMN_IEEE8021QBRIDGEFDBAGINGTIME;
+    tinfo->min_column = COLUMN_DYNAMICCOUNT;
+    tinfo->max_column = COLUMN_AGINGTIME;
 
     netsnmp_register_table(reg, tinfo);
 }

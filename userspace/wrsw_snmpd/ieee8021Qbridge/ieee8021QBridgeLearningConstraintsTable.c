@@ -36,11 +36,11 @@
 #define MIBMOD "8021Q"
 
 /* column number definitions for table ieee8021QBridgeLearningConstraintsTable */
-#define COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSCOMPONENTID	1
-#define COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSVLAN		    2
-#define COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSSET		    3
-#define COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSTYPE		    4
-#define COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSSTATUS		    5
+#define COLUMN_COMPONENTID	1
+#define COLUMN_VLAN		    2
+#define COLUMN_SET		    3
+#define COLUMN_TYPE		    4
+#define COLUMN_STATUS		5
 
 /* Row entry */
 struct mib_lc_table_entry {
@@ -164,10 +164,10 @@ static int get_column(netsnmp_variable_list     *vb,
                       struct mib_lc_table_entry *ent)
 {
     switch (colnum) {
-    case COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSTYPE:
+    case COLUMN_TYPE:
         snmp_set_var_typed_integer(vb, ASN_INTEGER, ent->lc_type);
         break;
-    case COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSSTATUS:
+    case COLUMN_STATUS:
         snmp_set_var_typed_integer(vb, ASN_INTEGER,
             ent->row_status ? RS_ACTIVE:RS_NOTINSERVICE);
         break;
@@ -359,10 +359,10 @@ static int set_reserve1(netsnmp_request_info            *req,
 
     // Check column values
     switch (tinfo->colnum) {
-    case COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSTYPE:
+    case COLUMN_TYPE:
         err = netsnmp_check_vb_int_range(vb, LC_INDEPENDENT, LC_SHARED);
         break;
-    case COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSSTATUS:
+    case COLUMN_STATUS:
         // Get current row status and check transition from current to requested
         errno = 0;
         err = rtu_fdb_proxy_read_lc(ent.vid, &lc_set);
@@ -390,7 +390,7 @@ static int set_reserve2(netsnmp_request_info *req)
     netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
     switch (tinfo->colnum) {
-    case COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSSTATUS:
+    case COLUMN_STATUS:
         switch (*req->requestvb->val.integer) { //status
         case RS_CREATEANDGO:
         case RS_CREATEANDWAIT:
@@ -480,10 +480,10 @@ static int set_action(netsnmp_request_info *req)
     ent = cache_get(vid, sid);
     // Set column value
     switch (tinfo->colnum) {
-    case COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSTYPE:
+    case COLUMN_TYPE:
         ent->lc_type = *vb->val.integer;
         break;
-    case COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSSTATUS:
+    case COLUMN_STATUS:
         ent->row_status = *vb->val.integer;
         break;
     }
@@ -639,8 +639,8 @@ static void initialize_table(void)
             ASN_INTEGER,   /* index: LearningConstraintsSet */
             0);
 
-    tinfo->min_column = COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSTYPE;
-    tinfo->max_column = COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTSSTATUS;
+    tinfo->min_column = COLUMN_TYPE;
+    tinfo->max_column = COLUMN_STATUS;
 
     netsnmp_register_table(reg, tinfo);
 }

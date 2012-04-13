@@ -38,9 +38,9 @@
 #define MIBMOD  "8021Q"
 
 /* column number definitions for table ieee8021QBridgeTpFdbTable */
-#define COLUMN_IEEE8021QBRIDGETPFDBADDRESS      1
-#define COLUMN_IEEE8021QBRIDGETPFDBPORT         2
-#define COLUMN_IEEE8021QBRIDGETPFDBSTATUS       3
+#define COLUMN_ADDRESS      1
+#define COLUMN_PORT         2
+#define COLUMN_STATUS       3
 
 // Row entry
 struct mib_fdb_table_entry {
@@ -102,10 +102,10 @@ static int get_column(netsnmp_variable_list      *vb,
                       struct mib_fdb_table_entry *ent)
 {
     switch (colnum) {
-    case COLUMN_IEEE8021QBRIDGETPFDBPORT:
+    case COLUMN_PORT:
         snmp_set_var_typed_integer(vb, ASN_UNSIGNED, ent->port_map);
         break;
-    case COLUMN_IEEE8021QBRIDGETPFDBSTATUS:
+    case COLUMN_STATUS:
         snmp_set_var_typed_integer(vb, ASN_INTEGER,
             (ent->type == STATIC) ? Mgmt:Learned);
         break;
@@ -273,8 +273,8 @@ static void initialize_table(void)
     idx = idx->next_variable; // skip FdbId
     idx->val_len = ETH_ALEN;
 
-    tinfo->min_column = COLUMN_IEEE8021QBRIDGETPFDBPORT;
-    tinfo->max_column = COLUMN_IEEE8021QBRIDGETPFDBSTATUS;
+    tinfo->min_column = COLUMN_PORT;
+    tinfo->max_column = COLUMN_STATUS;
 
     netsnmp_register_table(reg, tinfo);
 }

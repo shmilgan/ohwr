@@ -36,9 +36,9 @@
 #define MIBMOD "8021Q"
 
 /* column number definitions for table ieee8021QBridgeLearningConstraintDefaultsTable */
-#define COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTDEFAULTSCOMPONENTID	1
-#define COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTDEFAULTSSET		    2
-#define COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTDEFAULTSTYPE		3
+#define COLUMN_COMPONENTID	1
+#define COLUMN_SET		    2
+#define COLUMN_TYPE		    3
 
 static int get_column(netsnmp_variable_list *vb, int colnum)
 {
@@ -49,10 +49,10 @@ static int get_column(netsnmp_variable_list *vb, int colnum)
     if (errno)
         goto minipc_err;
     switch (colnum) {
-    case COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTDEFAULTSSET:
+    case COLUMN_SET:
         snmp_set_var_typed_integer(vb, ASN_INTEGER, sid);
         break;
-    case COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTDEFAULTSTYPE:
+    case COLUMN_TYPE:
         snmp_set_var_typed_integer(vb, ASN_INTEGER, lc_type);
         break;
     default:
@@ -141,10 +141,10 @@ static int set_reserve1(netsnmp_request_info *req)
 
     // Check column value
     switch (tinfo->colnum) {
-    case COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTDEFAULTSSET:
+    case COLUMN_SET:
         ret = netsnmp_check_vb_int_range(req->requestvb, 0, NUM_LC_SETS - 1);
         break;
-    case COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTDEFAULTSTYPE:
+    case COLUMN_TYPE:
         ret = netsnmp_check_vb_int_range(req->requestvb, LC_INDEPENDENT, LC_SHARED);
         break;
     default:
@@ -162,7 +162,7 @@ static int set_commit(netsnmp_request_info *req)
     tinfo = netsnmp_extract_table_info(req);
     errno = 0;
     switch (tinfo->colnum) {
-    case COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTDEFAULTSSET:
+    case COLUMN_SET:
         sid = *req->requestvb->val.integer;
         err = rtu_fdb_proxy_set_default_lc(sid);
         if (errno)
@@ -170,7 +170,7 @@ static int set_commit(netsnmp_request_info *req)
         if (err)
             return SNMP_NOSUCHINSTANCE;
         break;
-    case COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTDEFAULTSTYPE:
+    case COLUMN_TYPE:
         lc_type = *req->requestvb->val.integer;
         err = rtu_fdb_proxy_set_default_lc_type(lc_type);
         if (errno)
@@ -259,8 +259,8 @@ static void initialize_table(void)
             ASN_UNSIGNED,  /* index: ieee8021BridgeBasePortComponentId */
             0);
 
-    tinfo->min_column = COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTDEFAULTSSET;
-    tinfo->max_column = COLUMN_IEEE8021QBRIDGELEARNINGCONSTRAINTDEFAULTSTYPE;
+    tinfo->min_column = COLUMN_SET;
+    tinfo->max_column = COLUMN_TYPE;
 
     netsnmp_register_table(reg, tinfo);
 }

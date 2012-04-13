@@ -38,9 +38,9 @@
 #define MIBMOD  "8021Q"
 
 /* column number definitions for table ieee8021QBridgeTpGroupTable */
-#define COLUMN_IEEE8021QBRIDGETPGROUPADDRESS        1
-#define COLUMN_IEEE8021QBRIDGETPGROUPEGRESSPORTS    2
-#define COLUMN_IEEE8021QBRIDGETPGROUPLEARNT         3
+#define COLUMN_ADDRESS        1
+#define COLUMN_EGRESSPORTS    2
+#define COLUMN_LEARNT         3
 
 // Row entry
 struct mib_group_table_entry {
@@ -232,12 +232,12 @@ static int get_column(netsnmp_variable_list         *vb,
                           0,0,0,0,0,0,0,0};
 
     switch (colnum) {
-    case COLUMN_IEEE8021QBRIDGETPGROUPEGRESSPORTS:
+    case COLUMN_EGRESSPORTS:
         // Get info on egress ports from port map
         to_octetstr(ent->port_map, ep);
         snmp_set_var_typed_value(vb, ASN_OCTET_STR, ep, NUM_PORTS);
         break;
-    case COLUMN_IEEE8021QBRIDGETPGROUPLEARNT:
+    case COLUMN_LEARNT:
         // TODO MMRP not supported yet
         snmp_set_var_typed_value(vb, ASN_OCTET_STR, lp, NUM_PORTS);
         break;
@@ -439,8 +439,8 @@ static void initialize_table(void)
     idx = idx->next_variable; // skip VlanIndex
     idx->val_len = ETH_ALEN;
 
-    tinfo->min_column = COLUMN_IEEE8021QBRIDGETPGROUPEGRESSPORTS;
-    tinfo->max_column = COLUMN_IEEE8021QBRIDGETPGROUPLEARNT;
+    tinfo->min_column = COLUMN_EGRESSPORTS;
+    tinfo->max_column = COLUMN_LEARNT;
 
     netsnmp_register_table(reg, tinfo);
 }

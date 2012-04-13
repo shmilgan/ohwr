@@ -39,13 +39,13 @@
 #define VNAME_LENGTH 32
 
 /* column number definitions for table ieee8021QBridgeVlanStaticTable */
-#define COLUMN_IEEE8021QBRIDGEVLANSTATICCOMPONENTID	        1
-#define COLUMN_IEEE8021QBRIDGEVLANSTATICVLANINDEX           2
-#define COLUMN_IEEE8021QBRIDGEVLANSTATICNAME                3
-#define COLUMN_IEEE8021QBRIDGEVLANSTATICEGRESSPORTS         4
-#define COLUMN_IEEE8021QBRIDGEVLANFORBIDDENEGRESSPORTS      5
-#define COLUMN_IEEE8021QBRIDGEVLANSTATICUNTAGGEDPORTS       6
-#define COLUMN_IEEE8021QBRIDGEVLANSTATICROWSTATUS           7
+#define COLUMN_STATICCOMPONENTID	     1
+#define COLUMN_STATICVLANINDEX           2
+#define COLUMN_STATICNAME                3
+#define COLUMN_STATICEGRESSPORTS         4
+#define COLUMN_FORBIDDENEGRESSPORTS      5
+#define COLUMN_STATICUNTAGGEDPORTS       6
+#define COLUMN_STATICROWSTATUS           7
 
 
 // Row entry
@@ -167,18 +167,18 @@ static int get_column(netsnmp_variable_list                 *vb,
                       struct mib_static_vlan_table_entry    *ent)
 {
     switch (colnum) {
-    case COLUMN_IEEE8021QBRIDGEVLANSTATICNAME:
+    case COLUMN_STATICNAME:
         snmp_set_var_typed_value(vb, ASN_OCTET_STR, ent->vname, VNAME_LENGTH);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANSTATICEGRESSPORTS:
+    case COLUMN_STATICEGRESSPORTS:
         snmp_set_var_typed_value(vb, ASN_OCTET_STR, ent->egress_ports,
             NUM_PORTS);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANFORBIDDENEGRESSPORTS:
+    case COLUMN_FORBIDDENEGRESSPORTS:
         snmp_set_var_typed_value(vb, ASN_OCTET_STR, ent->forbidden_ports,
             NUM_PORTS);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANSTATICUNTAGGEDPORTS:
+    case COLUMN_STATICUNTAGGEDPORTS:
         snmp_set_var_typed_value(vb, ASN_OCTET_STR, ent->untagged_ports,
             NUM_PORTS);
         break;
@@ -329,19 +329,19 @@ static int set_reserve1(netsnmp_request_info            *req,
 
     // Check column values
     switch (tinfo->colnum) {
-    case COLUMN_IEEE8021QBRIDGEVLANSTATICNAME:
+    case COLUMN_STATICNAME:
         err = netsnmp_check_vb_type_and_size(vb, ASN_OCTET_STR, VNAME_LENGTH);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANSTATICEGRESSPORTS:
+    case COLUMN_STATICEGRESSPORTS:
         err = netsnmp_check_vb_type_and_size(vb, ASN_OCTET_STR, NUM_PORTS);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANFORBIDDENEGRESSPORTS:
+    case COLUMN_FORBIDDENEGRESSPORTS:
         err = netsnmp_check_vb_type_and_size(vb, ASN_OCTET_STR, NUM_PORTS);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANSTATICUNTAGGEDPORTS:
+    case COLUMN_STATICUNTAGGEDPORTS:
         err = netsnmp_check_vb_type_and_size(vb, ASN_OCTET_STR, NUM_PORTS);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANSTATICROWSTATUS:
+    case COLUMN_STATICROWSTATUS:
         // Get current row status and check transition from current to requested
         errno = 0;
         err = rtu_fdb_proxy_read_static_vlan_entry(ent.vid, &ep, &fp, &up);
@@ -368,7 +368,7 @@ static int set_reserve2(netsnmp_request_info *req)
     netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
     switch (tinfo->colnum) {
-    case COLUMN_IEEE8021QBRIDGEVLANSTATICROWSTATUS:
+    case COLUMN_STATICROWSTATUS:
         switch (*req->requestvb->val.integer) { //status
         case RS_CREATEANDGO:
         case RS_CREATEANDWAIT:
@@ -448,19 +448,19 @@ static int set_action(netsnmp_request_info *req)
     ent = cache_get(vid);
     // Set column value
     switch (tinfo->colnum) {
-    case COLUMN_IEEE8021QBRIDGEVLANSTATICNAME:
+    case COLUMN_STATICNAME:
         memcpy(ent->vname, vb->val.string, vb->val_len);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANSTATICEGRESSPORTS:
+    case COLUMN_STATICEGRESSPORTS:
         memcpy(ent->egress_ports, vb->val.string, vb->val_len);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANFORBIDDENEGRESSPORTS:
+    case COLUMN_FORBIDDENEGRESSPORTS:
         memcpy(ent->forbidden_ports, vb->val.string, vb->val_len);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANSTATICUNTAGGEDPORTS:
+    case COLUMN_STATICUNTAGGEDPORTS:
         memcpy(ent->untagged_ports, vb->val.string, vb->val_len);
         break;
-    case COLUMN_IEEE8021QBRIDGEVLANSTATICROWSTATUS:
+    case COLUMN_STATICROWSTATUS:
         ent->row_status = *vb->val.integer;
         break;
     }
@@ -649,8 +649,8 @@ static void initialize_table(void)
             ASN_UNSIGNED,  /* index: VlanIndex */
             0);
 
-    tinfo->min_column = COLUMN_IEEE8021QBRIDGEVLANSTATICNAME;
-    tinfo->max_column = COLUMN_IEEE8021QBRIDGEVLANSTATICROWSTATUS;
+    tinfo->min_column = COLUMN_STATICNAME;
+    tinfo->max_column = COLUMN_STATICROWSTATUS;
 
     netsnmp_register_table(reg, tinfo);
 }
