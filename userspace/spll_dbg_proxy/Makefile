@@ -30,5 +30,5 @@ install:
 
 # deprecated: internal stuff.
 scp: all
-	scp $(BINARY) root@pts-test03:/tftpboot/192.168.1.2/root
+	scp $(BINARY) root@pts-test03:/tftpboot/rootfs/wr/bin
 

@@ -103,7 +103,7 @@ static struct SPLL_WB *_spll_regs = (struct SPLL_WB*) SPLL_BASE;
 
 #define REG(x) ((uint32_t)(&_spll_regs->x))
 
-void poll_spll_fifo()
+void poll_spll_fifo(int purge)
 {
 
 	while(1) {
@@ -126,13 +126,19 @@ void poll_spll_fifo()
 
 		if(csr & SPLL_DFR_HOST_CSR_EMPTY) break;
 
+		else if((csr & SPLL_DFR_HOST_CSR_FULL) && !purge)
+		{
+			fprintf(stderr, "FIFO OVERFLOW!\n");
+		}
+
 		ent.value = _fpga_readl(REG(DFR_HOST_R0));
 		ent.seq_id = _fpga_readl(REG(DFR_HOST_R1)) & 0xffff;
 
 
 	//	fprintf(stderr, "v: %x\n", ent.value);
 
-		rbuf_push(&spll_trace, (void *)&ent);
+		if(!purge)
+			rbuf_push(&spll_trace, (void *)&ent);
 	}
 }
 
@@ -150,6 +156,8 @@ void sighandler(int sig)
 
 void proxy_stuff(int fd)
 {
+	poll_spll_fifo(1); /* purge it! */
+	
 	if(rbuf_init(&spll_trace, RING_BUFFER_ENTRIES,
 		     sizeof(struct fifo_entry)) < 0)
 	{
@@ -164,7 +172,7 @@ void proxy_stuff(int fd)
 
 	for(;;)
 	{
-		poll_spll_fifo();
+		poll_spll_fifo(0);
 
 		while(spll_trace.count > ENTRIES_PER_PACKET)
 		{
