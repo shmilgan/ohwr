@@ -98,5 +98,50 @@ void shw_sfp_header_dump(struct shw_sfp_header *head);
 int32_t shw_sfp_read(int num, uint32_t addr, int off, int len, uint8_t *buf);
 int32_t shw_sfp_write(int num, uint32_t addr, int off, int len, uint8_t *buf);
 
+/* Set/get the 4 GPIO's connected to PCA9554's for a particular SFP */
+void shw_sfp_gpio_set(int num, uint8_t state);
+uint8_t shw_sfp_gpio_get(int num);
+
+static inline void shw_sfp_set_generic(int num, int status, int type)
+{
+	uint8_t state;
+	state = shw_sfp_gpio_get(num);
+	if (status)
+		state |= type;
+	else
+		state &= ~type;
+	shw_sfp_gpio_set(num, state);
+}
+
+#define shw_sfp_set_led_link(num, status)	\
+	shw_sfp_set_generic(num, status, SFP_LED_LINK)
+
+#define shw_sfp_set_led_wrmode(num, status)	\
+	shw_sfp_set_generic(num, status, SFP_LED_WRMODE)
+
+#define shw_sfp_set_led_synced(num, status)	\
+	shw_sfp_set_generic(num, status, SFP_LED_SYNCED)
+
+#define shw_sfp_set_tx_disable(num, status)	\
+	shw_sfp_set_generic(num, status, SFP_TX_DISABLE)
+
+#define SFP_FLAG_CLASS_DATA	(1 << 0)
+#define SFP_FLAG_DEVICE_DATA	(1 << 1)
+
+struct shw_sfp_caldata {
+	int flags;
+	char part_num[16];	/* part number of device as found in DB */
+	char vendor_serial[16];
+	/* Callibration data */
+	double alpha;
+	uint32_t delta_tx;
+	uint32_t delta_rx;
+	struct shw_sfp_caldata *next;
+};
+
+/* Load the db from a file */
+int shw_sfp_read_db(char *filename);
+/* return NULL if no data found */
+struct shw_sfp_caldata *shw_sfp_get_cal_data(int num);
 
 #endif			//I2C_SFP_H
