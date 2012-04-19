@@ -5,9 +5,10 @@
 
 #include <hw/trace.h>
 #include <hw/pps_gen.h> /* for direct access to DMPLL and PPS generator */
-#include <hw/dmpll.h> 
+#include <hw/dmpll.h>
 
 #include "wrsw_hal.h"
+#include "rt_ipc.h"
 
 #include <minipc.h>
 
@@ -26,7 +27,7 @@ int halexp_check_running()
 int halexp_extsrc_cmd(int command)
 {
 	int rval;
-	
+
 	switch(command)
 	{
 /* There's only one command so far: checking if a valid reference clock is present on the external input
@@ -42,7 +43,7 @@ int halexp_extsrc_cmd(int command)
 				return HEXP_EXTSRC_STATUS_NOSRC;
 			break;
 	}
-	
+
 	return -100; /* fixme: add real error code */
 }
 
@@ -62,17 +63,17 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 
 	switch(command)
 	{
-/* Start locking - i.e. tell the HAL locking state machine to use the port (port_name) as the source of the reference 
+/* Start locking - i.e. tell the HAL locking state machine to use the port (port_name) as the source of the reference
    frequency. (priority) parameter allows to distinguish between various reference sources and establish
-   a switchover order. For example when  wr0, wr1, wr2 have respectively priorities (1, 0, 2), 
-   the primary clock source is wr1. When it dies (e.g. rats ate the fiber), the PLL will automatically 
+   a switchover order. For example when  wr0, wr1, wr2 have respectively priorities (1, 0, 2),
+   the primary clock source is wr1. When it dies (e.g. rats ate the fiber), the PLL will automatically
    switch to wr1, and if wr1 dies, to wr2. When all the ports are down, the PLL will switch to holdover
    mode. In V3, calling this command with negative (priority) removes the port from the locking list.
 */
 		case HEXP_LOCK_CMD_START:
 			return hal_port_start_lock(port_name, priority);
 
-/* Check if locked - called by the PTPd repeatedly after calling "Start locking" to check if the 
+/* Check if locked - called by the PTPd repeatedly after calling "Start locking" to check if the
    PLL has already locked to and stabilized the reference frequency */
 		case HEXP_LOCK_CMD_CHECK:
 			rval = hal_port_check_lock(port_name);
@@ -98,25 +99,24 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
     {
 /* fixme: TODO: implement HEXP_PPSG_CMD_GET call */
 
-/* Phase adjustment call: adjusts the phase shift between the uplink port (port_name) and the 
+/* Phase adjustment call: adjusts the phase shift between the uplink port (port_name) and the
    local VCTCXO clock by adding a number of picoseconds given in (params->adjust_phase_shift) to the
-   current phase setpoint (i.e. when adjust is positive, the resulting ref clock/PPS goes a bit into 
+   current phase setpoint (i.e. when adjust is positive, the resulting ref clock/PPS goes a bit into
    future, it if's negative - it rolls back into past). Note that to have a seamless swictchover,
-   the phase shifts for different uplinks have to be coherent (i.e. the phase of the uplink clock + 
-   its adjustment shall result in the same VCTCXO phase. Keeping the coherency between the phase 
+   the phase shifts for different uplinks have to be coherent (i.e. the phase of the uplink clock +
+   its adjustment shall result in the same VCTCXO phase. Keeping the coherency between the phase
    setpoints for different uplinks is the task of the PTPd.*/
 
     case HEXP_PPSG_CMD_ADJUST_PHASE:
-	    /* no more dmpll */
-      return 0;
 
 /* PPS adjustment call, independent for the nanosecond (a.k.a. 8ns cycle) counter and the seconds (UTC)
-   counter. The counters are adjusted by atomically adding (params->adjust_nsec/utc). Since there's a 
+   counter. The counters are adjusted by atomically adding (params->adjust_nsec/utc). Since there's a
    single PPS counter, these adjustments are port-independent. Once the coarse (8ns) offset is fixed,
    fine adjustments are done with ADJUST_PHASE call, independently for each uplink to accommodate
    the different phase shifts on each port (and the fiber/cable connected to it).
  */
- 
+      return rts_adjust_phase(0, params->adjust_phase_shift) ? 0 : -1;
+
     case HEXP_PPSG_CMD_ADJUST_NSEC:
       shw_pps_gen_adjust_nsec(params->adjust_nsec);
       return 0;
@@ -133,7 +133,7 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
    fixme: the NIC driver should check the status of the PPS generator adjustment and if it detects
    a pending adjustment it shall not timestamp any packets, so the PTPd will simply ignore them during
    delay calculation. */
- 
+
     case HEXP_PPSG_CMD_POLL:
 	    return shw_pps_gen_busy(); /* no more dmpll shifter to check */
     }
@@ -215,7 +215,7 @@ int hal_init_wripc()
 
 	hal_add_cleanup_callback(hal_cleanup_wripc);
 
-	TRACE(TRACE_INFO, "Started WRIPC server '%s'", WRSW_HAL_SERVER_ADDR);
+	TRACE(TRACE_INFO, "Started mini-rpc server '%s'", WRSW_HAL_SERVER_ADDR);
 
 	return 0;
 }
