@@ -400,6 +400,23 @@ void shw_sfp_gpio_init(void)
 		i2c_transfer(bus, addr + i, 2, 0, conf_output); 
 		i2c_transfer(bus, addr + i, 2, 0, set_output); 
 	}
+	
+	for(i=0; i<18;i++)
+	{
+		shw_sfp_set_led_synced(i, 1);
+		shw_udelay(7000);
+		shw_sfp_set_led_link(i, 1);
+		shw_udelay(7000);
+	}
+	for(i=0; i<18;i++)
+	{
+		shw_sfp_set_led_synced(i, 0);
+		shw_udelay(7000);
+		shw_sfp_set_led_link(i, 0);
+		shw_udelay(7000);
+	}
+
+	
 }
 
 void shw_sfp_gpio_set(int num, uint8_t state)
@@ -566,7 +583,7 @@ int shw_sfp_read_db(char *filename)
 
 		sfp = malloc(sizeof(struct shw_sfp_caldata));
 		strcpy(sfp->part_num, sfp_pn);
-		if (strcmp(sfp_vs, "") == 0) {
+		if (!sfp_vs || strcmp(sfp_vs, "") == 0) {
 			sfp->vendor_serial[0] = 0;
 			sfp->flags |= SFP_FLAG_CLASS_DATA;
 		} else {
