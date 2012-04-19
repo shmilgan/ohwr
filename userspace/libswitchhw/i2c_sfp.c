@@ -512,10 +512,7 @@ int shw_sfp_read_db(char *filename)
 	lua_State *L = luaL_newstate();
 	struct shw_sfp_caldata *sfp;
 
-	luaopen_base(L);
-	luaopen_io(L);
-	luaopen_string(L);
-	luaopen_math(L);
+	luaL_openlibs(L);
 
 	if (luaL_loadfile(L, filename) || lua_pcall(L, 0, 0, 0)) {
 		printf("cannot run configuration file: %s",
@@ -535,21 +532,27 @@ int shw_sfp_read_db(char *filename)
 			continue;
 		}
 		int i = 0;
-		const char *sfp_pn;
-		const char *sfp_vs;
-		int vals[3];
+		const char *sfp_pn = 0;
+		const char *sfp_vs = 0;
+		int vals[2];
+		double alpha;
 		lua_pushnil(L);
 		while (lua_next(L, -2)) {
-			if (i == 0)
-				sfp_pn = (const char *)lua_tostring(L, -1);
-			else if (i == 1)
-				sfp_vs = (const char *)lua_tostring(L, -1);
-			else
-				vals[i-2] = (int)lua_tonumber(L, -1);
-			i++;
+			const char *key = lua_tostring(L, -2);
+			if (strcmp(key, "part_num") == 0)
+				sfp_pn = lua_tostring(L, -1);
+			else if (strcmp(key, "part_serial") == 0)
+				sfp_vs = lua_tostring(L, -1);
+			else if (strcmp(key, "alpha") == 0)
+				alpha = lua_tonumber(L, -1);
+			else if (strcmp(key, "delta_tx") == 0)
+				vals[0] = lua_tointeger(L, -1);
+			else if (strcmp(key, "delta_rx") == 0)
+				vals[1] = lua_tointeger(L, -1);
 			lua_pop(L, 1);
 		}
 		lua_pop(L, 1);
+
 		sfp = malloc(sizeof(struct shw_sfp_caldata));
 		strcpy(sfp->part_num, sfp_pn);
 		if (strcmp(sfp_vs, "") == 0) {
@@ -559,9 +562,9 @@ int shw_sfp_read_db(char *filename)
 			strcpy(sfp->vendor_serial, sfp_vs);
 			sfp->flags |= SFP_FLAG_DEVICE_DATA;
 		}
-		sfp->alpha = vals[0];
-		sfp->delta_tx = vals[1];
-		sfp->delta_rx = vals[2];
+		sfp->alpha = alpha;
+		sfp->delta_tx = vals[0];
+		sfp->delta_rx = vals[1];
 		sfp->next = shw_sfp_cal_list;
 		shw_sfp_cal_list = sfp;
 		printf("registered cal data\n");
@@ -601,7 +604,7 @@ struct shw_sfp_caldata *shw_sfp_get_cal_data(int num)
 	t = shw_sfp_cal_list;
 	/* In the first pass, look for serial number */
 	while (t) {
-		printf("search1 %s %s\n", t->part_num, t->vendor_serial);
+//		printf("search1 %s %s\n", t->part_num, t->vendor_serial);
 		if (strcmp(pn, t->part_num) == 0 && strcmp(t->vendor_serial, "") == 0)
 			other = t;
 		else if (strcmp(pn, t->part_num) == 0 && strcmp(vs, t->vendor_serial) == 0)
