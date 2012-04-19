@@ -6,7 +6,7 @@ OBJS = trace.o init.o fpga_io.o util.o pps_gen.o i2c.o pio_pins.o i2c_bitbang.o 
 SCAN_OBJS = i2cscan.o
 
 LIB = libswitchhw.a
-LDFLAGS += -lm liblua.a
+LDFLAGS += -lm -ldl liblua.a
 
 all: $(LIB) 
 
