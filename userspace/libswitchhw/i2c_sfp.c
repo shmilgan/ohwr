@@ -185,13 +185,13 @@ int shw_sfp_buses_init(void)
 {
 	int i;
 
-	printf("Initializing i2c buses...\n\n");
+	TRACE(TRACE_INFO, "Initializing SFP I2C busses...");
 	for (i = 0; i < ARRAY_SIZE(i2c_buses); i++) {
 		if (i2c_init_bus(&i2c_buses[i]) < 0) {
 			printf("init failed: %s\n", i2c_buses[i].name);
 			return -1;
 		}
-		printf("init: success: %s\n", i2c_buses[i].name);
+//		printf("init: success: %s\n", i2c_buses[i].name);
 	}
 	return 0;
 }

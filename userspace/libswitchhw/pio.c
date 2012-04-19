@@ -27,8 +27,9 @@ volatile uint8_t *_sys_base;
 void pmc_enable_clock(int clock)
 {
     _writel(_sys_base + AT91C_BASE_PMC_RAW - AT91C_BASE_SYS_RAW + 0x10, (1<<clock)); // fucking atmel headers
-    printf("ClkStat: %x\n", _readl(_sys_base + AT91C_BASE_PMC_RAW - AT91C_BASE_SYS_RAW + 0x18));
+//    printf("ClkStat: %x\n", _readl(_sys_base + AT91C_BASE_PMC_RAW - AT91C_BASE_SYS_RAW + 0x18));
 }
+
 int shw_pio_mmap_init()
 {
     int i;
@@ -58,8 +59,8 @@ int shw_pio_mmap_init()
 
 //  fprintf(stderr,"AT91_SYS mmapped to: 0x%08x\n", _sys_base);
 
-    printf("PIOA offset %08X\n", AT91C_BASE_PIOA_RAW - AT91C_BASE_SYS_RAW);
-    printf("Sys base: %08X\n", _sys_base);
+//    printf("PIOA offset %08X\n", AT91C_BASE_PIOA_RAW - AT91C_BASE_SYS_RAW);
+//    printf("Sys base: %08X\n", _sys_base);
 
     _pio_base[REG_BASE][PIOA] = _sys_base + AT91C_BASE_PIOA_RAW - AT91C_BASE_SYS_RAW;		//offset counting from AT91C_BASE_SYS
     _pio_base[REG_BASE][PIOB] = _sys_base + AT91C_BASE_PIOB_RAW - AT91C_BASE_SYS_RAW;		//offset counting from AT91C_BASE_SYS
@@ -115,7 +116,7 @@ void shw_pio_configure(const pio_pin_t *pin)
     case PIOD:
     case PIOE:
 
-	printf("-- configure CPU PIO PIN: P%c.%d base=0x%x\n\n", pin->port-PIOA+'A', pin->pin, base);
+//	printf("-- configure CPU PIO PIN: P%c.%d base=0x%x\n\n", pin->port-PIOA+'A', pin->pin, base);
 
         _writel(base + PIO_IDR, mask);	// disable irq
 
