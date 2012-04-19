@@ -17,6 +17,8 @@
 
 #include "wrsw_hal.h"
 
+#include "rt_ipc.h"
+
 #define MAX_CLEANUP_CALLBACKS 16
 
 #define assert_init(proc) { int ret; if((ret = proc) < 0) return ret; }
@@ -188,6 +190,8 @@ int hal_init()
 
 /* Load kernel drivers */
 //	assert_init(hal_load_kernel_modules());
+
+	assert_init(rts_connect());
 
 /* Initialize port FSMs - see hal_ports.c */
 	assert_init(hal_init_ports());

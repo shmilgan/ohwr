@@ -1,7 +1,7 @@
 
 CC = $(CROSS_COMPILE)gcc
 
-OBJS = hal_exports.o hal_main.o hal_ports.o hal_config.o
+OBJS = hal_exports.o hal_main.o hal_ports.o hal_config.o rt_client.o
 
 BINARY = wrsw_hal
 
@@ -11,7 +11,7 @@ WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
 WR_INCLUDE = $(WR_INSTALL_ROOT)/include
 WR_LIB = $(WR_INSTALL_ROOT)/lib
 
-CFLAGS = -g -Wall -DDEBUG \
+CFLAGS = -g -Wall -DDEBUG -DRT_CLIENT\
 	-I../include -I../mini-rpc -I$(WR_INCLUDE)
 
 LDFLAGS = -L$(WR_INSTALL_ROOT)/lib -L../3rdparty/lib -L$(WR_LIB) \

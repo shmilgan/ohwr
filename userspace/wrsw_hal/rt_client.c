@@ -1,0 +1,146 @@
+/*
+ * Example mini-ipc client
+ *
+ * Copyright (C) 2011 CERN (www.cern.ch)
+ * Author: Alessandro Rubini <rubini@gnudd.com>
+ *
+ * Released in the public domain
+ */
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/time.h>
+
+#include "minipc.h"
+#include "rt_ipc.h"
+
+#define RTS_MAILBOX_ADDR "mem:10007000"
+
+#define RTS_TIMEOUT 100 /* ms */
+
+static const struct minipc_pd rtipc_rts_get_state_struct = {
+	.name = "aaaa",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT, struct rts_pll_state),
+	.args = {
+		MINIPC_ARG_END
+	},
+};
+
+static const struct minipc_pd rtipc_rts_set_mode_struct = {
+	.name = "bbbb",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
+	    MINIPC_ARG_END
+	},
+};
+
+static const struct minipc_pd rtipc_rts_lock_channel_struct = {
+	.name = "cccc",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
+	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
+	    MINIPC_ARG_END
+	},
+};
+
+static const struct minipc_pd rtipc_rts_adjust_phase_struct = {
+	.name = "dddd",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
+	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
+	    MINIPC_ARG_END
+	},
+};
+
+static struct minipc_ch *client;
+
+//#define VERBOSE
+
+/* Queries the RT CPU PLL state */
+int rts_get_state(struct rts_pll_state *state)
+{
+	int i, ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_get_state_struct, state);
+
+    if(ret < 0)
+        return ret;
+
+
+    state->current_ref = (state->current_ref);
+    state->flags = (state->flags);
+    state->holdover_duration = (state->holdover_duration);
+    state->mode = (state->mode);
+
+    for(i=0; i<RTS_PLL_CHANNELS;i++)
+    {
+        state->channels[i].priority = (state->channels[i].priority);
+        state->channels[i].phase_setpoint = (state->channels[i].phase_setpoint);
+        state->channels[i].phase_current = (state->channels[i].phase_current);
+        state->channels[i].phase_loopback = (state->channels[i].phase_loopback);
+        state->channels[i].flags = (state->channels[i].flags);
+    }
+
+
+#ifdef VERBOSE
+    printf("RTS State Dump: \n");
+    printf("CurrentRef: %d Mode: %d Flags: %x\n", state->current_ref, state->mode, state->flags);
+    for(i=0;i<RTS_PLL_CHANNELS;i++)
+        printf("Ch%d: setpoint: %dps current: %dps loopback: %dps flags: %x\n", i,
+               state->channels[i].phase_setpoint,
+               state->channels[i].phase_current,
+               state->channels[i].phase_loopback,
+               state->channels[i].flags);
+
+#endif
+    return 0;
+}
+
+/* Sets the RT subsystem mode (Boundary Clock or Grandmaster) */
+int rts_set_mode(int mode)
+{
+	int rval;
+	int ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_set_mode_struct, &rval, mode);
+
+    if(ret < 0)
+        return ret;
+
+    return rval;
+}
+
+/* Sets the phase setpoint on a given channel */
+int rts_adjust_phase(int channel, int32_t phase_setpoint)
+{
+  int rval;
+	int  ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_adjust_phase_struct, &rval, channel, phase_setpoint);
+
+    if(ret < 0)
+        return ret;
+
+    return rval;
+}
+
+/* Reference channel configuration (BC mode only) */
+int rts_lock_channel(int channel, int priority)
+{
+    int rval;
+		int ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_lock_channel_struct, &rval, channel,priority);
+
+    if(ret < 0)
+        return ret;
+
+    return rval;
+}
+
+
+int rts_connect()
+{
+	client = minipc_client_create(RTS_MAILBOX_ADDR, /*MINIPC_FLAG_VERBOSE*/0);
+	if (!client)
+        return -1;
+	return 0;
+}
+

@@ -18,17 +18,16 @@
 //#include <wr_ipc.h>
 
 /* LOTs of hardware includes */
+#include <hw/switch_hw.h>
+
 #include <hw/trace.h>
-#include <hw/hpll.h>
-#include <hw/dmpll.h>
-#include <hw/phy_calibration.h>
 #include <hw/pio.h>
 #include <hw/pio_pins.h>
 #include <hw/fpga_regs.h>
 #include <hw/endpoint_regs.h>
-#include <hw/watchdog.h>
 
 #include "wrsw_hal.h"
+#include "rt_ipc.h"
 #include "hal_exports.h"
 #include "driver_stuff.h"
 
@@ -55,10 +54,8 @@
 /* Default fiber alpha coefficient (G.652 @ 1310 nm TX / 1550 nm RX) */
 #define DEFAULT_FIBER_ALPHA_COEF (1.4682e-04*1.76)
 
-/* LED location masks - uplink LEDs are on the front-panel, downlink LEDs are in the mini-backplane
-and so they are accessed in different way by the CPU. */
-#define LED_DOWN_MASK 0x00
-#define LED_UP_MASK 0x80
+
+#define RTS_POLL_INTERVAL 200000
 
 
 /* Internal port state structure */
@@ -87,9 +84,9 @@ typedef struct {
 /* unused */
 	int index;
 
-/* 1: PLL is locked to this port */	
+/* 1: PLL is locked to this port */
 	int locked;
-	
+
 /* calibration data */
 	hal_port_calibration_t calib;
 
@@ -118,23 +115,20 @@ static int get_mac_address(const char *if_name, uint8_t *mac_addr)
 {
 	struct ifreq ifr;
 	int idx;
-	int uniq_num;
 
-	sscanf(if_name, "wr%d", &idx); 
+	sscanf(if_name, "wr%d", &idx);
 
 	strncpy(ifr.ifr_name, "eth0", sizeof(ifr.ifr_name));
 
 	if(ioctl(fd_raw, SIOCGIFHWADDR, &ifr) < 0)
 		return -1;
 
-	uniq_num = (int)ifr.ifr_hwaddr.sa_data[4] * 256 + (int)ifr.ifr_hwaddr.sa_data[5] + idx;
-
-	mac_addr[0] = 0x2; // locally administered MAC
-	mac_addr[1] = 0x4a;
-	mac_addr[2] = 0xbc;
-	mac_addr[3] = (uniq_num >> 16) & 0xff;
-	mac_addr[4] = (uniq_num >> 8) & 0xff;
-	mac_addr[5] = uniq_num & 0xff;
+	mac_addr[0] = 0x8 | 0x2; // locally administered MAC
+	mac_addr[1] = 0x00;
+	mac_addr[2] = 0x30;
+	mac_addr[3] = ifr.ifr_hwaddr.sa_data[3];
+	mac_addr[4] = ifr.ifr_hwaddr.sa_data[4];
+	mac_addr[5] = (ifr.ifr_hwaddr.sa_data[5] & 0xc0) + (idx + 1);
 
 	return 0;
 }
@@ -198,11 +192,12 @@ static int check_port_presence(const char *if_name)
 	return 0;
 }
 
-/* Performs one-time TX path calibration for a certain port, right after the HAL startup
-   (TX latency never changes as long as the TLK1221 PHY reference clock is enabled, 
-   even if the link goes down) */
-
-/* No more calibration in V3 */
+static void enable_port(int port, int enable)
+{
+    char str[50];
+    snprintf(str, sizeof(str), "/sbin/ifconfig wr%d %s", port, enable ? "up" : "down");
+    system(str);
+}
 
 /* Port initialization. Assigns the MAC address, WR timing mode, reads parameters from the config file. */
 int hal_init_port(const char *name, int index)
@@ -239,8 +234,9 @@ int hal_init_port(const char *name, int index)
 	snprintf(cmd, sizeof(cmd), "/sbin/ifconfig %s hw ether %02x:%02x:%02x:%02x:%02x:%02x", name, mac_addr[0],  mac_addr[1],  mac_addr[2],  mac_addr[3],  mac_addr[4],  mac_addr[5] );
 	system(cmd);
 
-	snprintf(cmd, sizeof(cmd), "/sbin/ifconfig %s up", name);
-	system(cmd);
+	//snprintf(cmd, sizeof(cmd), "/sbin/ifconfig %s up", name);
+	//system(cmd);
+	enable_port(p->hw_index, 1);
 
 /* read calibraton parameters (unwrapping and constant deltas) */
 	cfg_get_port_param(name, "phy_rx_min",   &p->calib.phy_rx_min,   AT_INT32, 18*800);
@@ -273,7 +269,7 @@ int hal_init_port(const char *name, int index)
 	if(!hal_config_get_string(key_name, val, sizeof(val)))
 	{
 		if(!strcasecmp(val, "wr_m_and_s"))
-			p->mode = HEXP_PORT_MODE_WR_M_AND_S; 
+			p->mode = HEXP_PORT_MODE_WR_M_AND_S;
 		else if(!strcasecmp(val, "wr_master"))
 			p->mode = HEXP_PORT_MODE_WR_MASTER;
 		else if(!strcasecmp(val, "wr_slave"))
@@ -304,7 +300,6 @@ int hal_init_ports()
 	char port_name[128];
 
 	TRACE(TRACE_INFO, "Initializing switch ports");
-
 /* Open a single raw socket for accessing the MAC addresses, etc. */
 	fd_raw = socket(AF_PACKET, SOCK_DGRAM, 0);
 	if(fd_raw < 0) return -1;
@@ -333,42 +328,36 @@ static int check_link_up(const char *if_name)
 }
 
 
-/* Port locking state machine - controls the HPLL/DMPLL. 
+/* Port locking state machine - controls the HPLL/DMPLL.
    TODO (v3): get rid of this code - this will all be moved to the realtime CPU inside the FPGA
    and the softpll. */
 static void port_locking_fsm(hal_port_state_t *p)
 {
 }
 
+static struct rts_pll_state rts_state;
+static int rts_state_valid = 0;
+
 /* Updates the current value of the phase shift on a given port. Called by the main update function regularly. */
-struct wr_phase_req{
-	int valid;
-	uint32_t phase;
-};
-
-static void poll_dmtd(hal_port_state_t *p)
+static void poll_rts_state()
 {
-	struct ifreq ifr;
-	struct wr_phase_req preq;
-	
-	strncpy(ifr.ifr_name, p->name, sizeof(ifr.ifr_name));
+    static int poll_tics = 0;
 
-	ifr.ifr_data=  (void *)&preq;
 
-	if(ioctl(fd_raw, PRIV_IOCGGETPHASE, &ifr) < 0) return;
-	
-//	fprintf(stderr, "Poll: %d %d\n", preq.valid, preq.phase);
-	
-	/* FIXME: what should we do here? */
-	p->phase_val = (int)((double)preq.phase / 16384.0 * 16000.0);
-	p->phase_val_valid = preq.valid;
+    if(shw_get_tics() - poll_tics > RTS_POLL_INTERVAL)
+    {
+        rts_state_valid = rts_get_state(&rts_state) < 0 ? 0 : 1;
+        poll_tics = shw_get_tics();
+        if(!rts_state_valid)
+            printf("rts_get_state failure, weird...\n");
+    }
 }
 
 uint32_t pcs_readl(hal_port_state_t *p, int reg)
 {
 	struct ifreq ifr;
 	uint32_t rv;
-	
+
 	strncpy(ifr.ifr_name, p->name, sizeof(ifr.ifr_name));
 
 	rv = NIC_READ_PHY_CMD(reg);
@@ -378,18 +367,11 @@ uint32_t pcs_readl(hal_port_state_t *p, int reg)
 	{
 		fprintf(stderr,"ioctl failed\n");
 	};
-	
-	printf("PCS_readl: reg %d data %x\n", reg, NIC_RESULT_DATA(rv));
+
+//	printf("PCS_readl: reg %d data %x\n", reg, NIC_RESULT_DATA(rv));
 	return NIC_RESULT_DATA(rv);
 }
 
-
-/* Calibration state machine */
-static void calibration_fsm(hal_port_state_t *p)
-{
-
-
-}
 
 
 /* Main port state machine */
@@ -400,7 +382,7 @@ static void port_fsm(hal_port_state_t *p)
 /* If, at any moment, the link goes down, reset the FSM and the port state structure. */
 	if(!link_up && p->state != HAL_PORT_STATE_LINK_DOWN)
 	{
-		if(p->locked) 
+		if(p->locked)
 			; /* nothing: was hpll_switch_reference(local) */
 		TRACE(TRACE_INFO, "%s: link down", p->name);
 		p->state = HAL_PORT_STATE_LINK_DOWN;
@@ -440,7 +422,12 @@ static void port_fsm(hal_port_state_t *p)
 
 /* Default "on" state - just keep polling the phase value. */
 	case HAL_PORT_STATE_UP:
-		poll_dmtd(p);
+		if(rts_state_valid)
+		{
+		   	p->phase_val = rts_state.channels[p->hw_index].phase_loopback;
+            p->phase_val_valid = rts_state.channels[p->hw_index].flags & CHAN_PMEAS_READY ? 1 : 0;
+
+		}
 
 		break;
 
@@ -461,7 +448,7 @@ static void port_fsm(hal_port_state_t *p)
 
 /* Calibration still pending - if not anymore, go back to the "UP" state */
 		if(p->rx_cal_pending || p->tx_cal_pending)
-			calibration_fsm(p);
+			{}//calibration_fsm(p);
 		else
 			p->state = HAL_PORT_STATE_UP;
 
@@ -474,6 +461,8 @@ static void port_fsm(hal_port_state_t *p)
 void hal_update_ports()
 {
 	int i;
+
+	poll_rts_state();
 	for(i=0; i<MAX_PORTS;i++)
 		if(ports[i].in_use)
 			port_fsm(&ports[i]);
@@ -503,11 +492,10 @@ int hal_port_start_lock(const char  *port_name, int priority)
 
 /* fixme: check the main FSM state before */
 	p->state = HAL_PORT_STATE_LOCKING;
-	p->lock_state = LOCK_STATE_START;
 
 	TRACE(TRACE_INFO, "Locking to port: %s", port_name);
 
-	return PORT_OK;
+    return rts_lock_channel(p->hw_index, 0) < 0 ? PORT_ERROR : PORT_OK;
 }
 
 
@@ -517,19 +505,22 @@ int hal_port_check_lock(const char  *port_name)
 	hal_port_state_t *p = lookup_port(port_name);
 
 	if(!p) return PORT_ERROR;
-	if(p->lock_state == LOCK_STATE_LOCKED)
-		return 1;
 
-	return 0;
+    if(!rts_state_valid)
+        return 0;
+
+    return (rts_state.current_ref == p->hw_index &&
+            (rts_state.flags & RTS_DMTD_LOCKED) &&
+            (rts_state.flags & RTS_REF_LOCKED));
 }
 
 /* Public function for querying the state of a particular port (DMTD phase, calibration deltas, etc.) */
 int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 {
 	hal_port_state_t *p = lookup_port(port_name);
-	if(!p)
-		return -1;
 
+    if(!p)
+		return -1;
 
 	state->valid = 1;
 	state->mode = p->mode;
@@ -596,5 +587,6 @@ int hal_extsrc_check_lock()
 	return -1; //<0 - there is no external source lock
 	return 1; //>0 - we are locked to an external source
 	return 0; //=0 - HW problem, wait
-*/	
+*/
 }
+
