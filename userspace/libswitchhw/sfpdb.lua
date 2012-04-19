@@ -3,6 +3,11 @@
 
 sfpdb = {
 --{ PART_NUM,  VENDOR_SERIAL,  ALPHA, DELTA_TX, DELTA_RX }
-  {  "MGBT1",             "",      8,        9,       10 },
-  {  "MGBT1",  "FSZ15311600",      5,        6,        7 }
+  {
+    part_num = "MGBT1",
+    part_serial = "FSZ15311600",
+    alpha = 5.055223,
+    delta_tx = 6,
+    delta_rx = 7
+  }
 }

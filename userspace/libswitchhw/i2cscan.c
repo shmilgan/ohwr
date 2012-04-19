@@ -15,6 +15,7 @@
 #include "i2c_fpga_reg.h"
 
 #include "i2c_sfp.h"
+#include <hw/sfp_lib.h>
 
 #include "libshw_i2c.h"
 
@@ -78,7 +79,7 @@ int main()
 	d = NULL;
 	d = shw_sfp_get_cal_data(i);
 	if (d)
-		printf("Callibration (%s): alpha = %d, dtx = %d, drx = %d\n",
+		printf("Callibration (%s): alpha = %lf, dtx = %d, drx = %d\n",
 			(d->flags & SFP_FLAG_CLASS_DATA) ? "CLASS" : "DEVICE",
 			d->alpha, d->delta_tx, d->delta_rx);
         printf("\n");
