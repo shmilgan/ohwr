@@ -1,22 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <wr_ipc.h>
+#include <minipc.h>
 
 #include "term.h"
 
+#define PTP_EXPORT_STRUCTURES
 #include "ptpd_exports.h"
+
 #include "hal_client.h"
 
 hexp_port_list_t port_list;
 
-wripc_handle_t h_ptp;
+static struct minipc_ch *ptp_ch;
 
 void init()
 {
 	halexp_client_init();
 
-	if( (h_ptp = wripc_connect("ptpd")) < 0)
+	ptp_ch = minipc_client_create("ptpd", 0);
+	if (!ptp_ch)
 	{
 		fprintf(stderr,"Can't establish WRIPC connection "
 			"to the PTP daemon!\n");
@@ -70,7 +73,8 @@ void show_ports()
 void show_servo()
 {
 	ptpdexp_sync_state_t ss;
-	wripc_call(h_ptp, "ptpdexp_get_sync_state", &ss, 0);
+
+	minipc_call(ptp_ch, 200, &__rpcdef_get_sync_state, 0, &ss);
 
 	term_cprintf(C_BLUE, "\n\nSynchronization status:\n\n");
 
@@ -165,9 +169,9 @@ main()
 			if(c=='t') {
 				int rval;
 				track_onoff = 1-track_onoff;
-				wripc_call(h_ptp, "ptpdexp_cmd", &rval, 2,
-					   A_INT32(PTPDEXP_COMMAND_TRACKING),
-					   A_INT32(track_onoff));
+				minipc_call(ptp_ch, 200, &__rpcdef_cmd,
+					    &rval, PTPDEXP_COMMAND_TRACKING,
+					    track_onoff);
 			}
 		}
 

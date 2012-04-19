@@ -13,9 +13,10 @@ OBJDUMP         = $(CROSS_COMPILE)objdump
 MON_OBJS = wr_mon.o term.o 
 
 CFLAGS += -O2 -DDEBUG -I$(LINUX)/include -I../include \
-	-I../libptpnetif -I../wrsw_hal -I../libwripc
+	-I../libptpnetif -I../wrsw_hal -I../mini-rpc
 
-LDFLAGS =  -L$(WR_INSTALL_ROOT)/lib -lptpnetif -lwripc
+LDFLAGS =  -L$(WR_INSTALL_ROOT)/lib -L../mini-rpc -L../libptpnetif \
+	-lptpnetif -lminipc
 
 BINARY = wr_mon
 

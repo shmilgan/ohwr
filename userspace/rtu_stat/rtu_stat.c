@@ -4,15 +4,16 @@
 #include <string.h>
 
 #include <hal_client.h>
+#include <minipc.h>
 #include <rtud_exports.h>
 
-#include <wr_ipc.h>
 
-static int rtud_ipc;
+static struct minipc_ch *rtud_ch;
 
 void rtudexp_get_fd_list(rtudexp_fd_list_t *list, int start_from)
 {
-	wripc_call(rtud_ipc, "rtudexp_get_fd_list", list, 1, A_INT32(start_from));
+	minipc_call(rtud_ch, 200, &rtud_export_get_fd_list, list,
+		    start_from);
 }
 
 #define RTU_MAX_ENTRIES 8192
@@ -89,9 +90,9 @@ main()
 	int n_entries;
 	int i;
 	
-	rtud_ipc = wripc_connect("rtud");
+	rtud_ch = minipc_client_create("rtud", 0);
 	
-	if(rtud_ipc < 0)
+	if(!rtud_ch)
 	{
 		printf("Can't conenct to RTUd wripc server\n");
 		return 0;

@@ -31,37 +31,24 @@
 #include <stdint.h>
 #include <errno.h>
 
-#include <wr_ipc.h>
 #include <hw/trace.h>
 
+#include "minipc.h"
 #include "rtu.h"
 #include "rtu_fd.h"
 #include "rtud_exports.h"
 #include "mac.h"
 
-static int rtud_ipc;
+/* The channel */
+static struct minipc_ch *rtud_ch;
 
-
-
-
-int rtud_init_exports()
-{
-	rtud_ipc = wripc_create_server("rtud");
-
-	if(rtud_ipc < 0)
-		return rtud_ipc;
-
-	TRACE(TRACE_INFO,"wripc server created [fd %d]", rtud_ipc);
-
-
-	wripc_export(rtud_ipc, T_STRUCT(rtudexp_fd_list_t), "rtudexp_get_fd_list", rtudexp_get_fd_list, 1, T_INT32);
-
-	return 0;
-}
-
-void rtudexp_get_fd_list(rtudexp_fd_list_t *list, int start_from)
+/* The exported function */
+int rtudexp_get_fd_list(const struct minipc_pd *pd,
+			uint32_t *args, void *ret)
 {
 	int i;
+	rtudexp_fd_list_t *list = ret;
+	int start_from = args[0];
 
 	//TRACE(TRACE_INFO,"GetFDList start=%d",start_from);
 
@@ -82,9 +69,28 @@ void rtudexp_get_fd_list(rtudexp_fd_list_t *list, int start_from)
 
 	list->num_rules = i;
 	list->next = (i < 8 ? 0 : start_from+i);
+	return 0;
+}
+
+
+
+int rtud_init_exports()
+{
+	rtud_ch = minipc_server_create("rtud", 0);
+
+	if(!rtud_ch < 0)
+		return -1;
+
+	TRACE(TRACE_INFO,"wripc server created [fd %d]",
+	      minipc_fileno(rtud_ch));
+
+	rtud_export_get_fd_list.f = rtudexp_get_fd_list;
+	if (minipc_export(rtud_ch, &rtud_export_get_fd_list) < 0)
+		return -1;
+	return 0;
 }
 
 void rtud_handle_wripc()
 {
-	wripc_process(rtud_ipc);
+	minipc_server_action(rtud_ch, 100);
 }

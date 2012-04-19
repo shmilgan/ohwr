@@ -20,5 +20,10 @@ mkdir -p $installdir || wrs_die "mkdir images/wr"
 # This time build is done in-place, but the output is a tree in images/wr.
 # Some of the makefiles inside use 
 cd $sourcedir && make
+
+# mini-rpc is an external package, it has no wr-specific install
+install -d $installdir/lib
+install mini-rpc/*.a $installdir/lib
+
 cd $sourcedir && make install WR_INSTALL_ROOT="$installdir"
 

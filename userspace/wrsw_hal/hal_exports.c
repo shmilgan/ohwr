@@ -8,11 +8,13 @@
 #include <hw/dmpll.h> 
 
 #include "wrsw_hal.h"
+
+#include <minipc.h>
+
+#define HAL_EXPORT_STRUCTURES
 #include "hal_exports.h" /* for exported structs/function protos */
 
-#include <wr_ipc.h>
-
-static wripc_handle_t hal_ipc;
+static struct minipc_ch *hal_ch;
 
 /* Dummy WRIPC export, used by the clients to check if the HAL is responding */
 int halexp_check_running()
@@ -147,26 +149,69 @@ int halexp_pll_cmd(int cmd, hexp_pll_cmd_t *params)
 
 static void hal_cleanup_wripc()
 {
-	wripc_close(hal_ipc);
+	minipc_close(hal_ch);
+}
+
+/* The functions to manage packet/args conversions */
+static int export_pps_cmd(const struct minipc_pd *pd,
+			  uint32_t *args, void *ret)
+{
+	int rval;
+
+	/* First argument is command next is param structure */
+	rval = halexp_pps_cmd(args[0], (hexp_pps_params_t *)(args + 1));
+	*(int *)ret = rval;
+	return 0;
+}
+
+static int export_get_port_state(const struct minipc_pd *pd,
+				 uint32_t *args, void *ret)
+{
+	hexp_port_state_t *state = ret;
+
+	return halexp_get_port_state(state, (char *)args /* name */);
+}
+
+static int export_lock_cmd(const struct minipc_pd *pd,
+				 uint32_t *args, void *ret)
+{
+	int rval;
+	char *pname = (void *)args;
+
+	/* jump over the string */
+	args = minipc_get_next_arg(args, pd->args[0]);
+
+	rval = halexp_lock_cmd(pname, args[0] /* cmd */, args[1] /* prio */);
+	*(int *)ret = rval;
+	return 0;
+}
+
+static int export_query_ports(const struct minipc_pd *pd,
+			      uint32_t *args, void *ret)
+{
+	hexp_port_list_t *list = ret;
+	halexp_query_ports(list);
+	return 0;
 }
 
 
 /* Creates a wripc server and exports all public API functions */
 int hal_init_wripc()
 {
-	hal_ipc = wripc_create_server(WRSW_HAL_SERVER_ADDR);
+	hal_ch = minipc_server_create(WRSW_HAL_SERVER_ADDR, 0);
 
 
-	if(hal_ipc < 0)
+	if(hal_ch < 0)
 		return -1;
 
-	wripc_export(hal_ipc, T_INT32, "halexp_pps_cmd", halexp_pps_cmd, 2, T_INT32, T_STRUCT(hexp_pps_params_t));
-	wripc_export(hal_ipc, T_INT32, "halexp_pll_cmd", halexp_pll_cmd, 2, T_INT32, T_STRUCT(hexp_pll_cmd_t));
-	wripc_export(hal_ipc, T_INT32, "halexp_check_running", halexp_check_running, 0);
-	wripc_export(hal_ipc, T_STRUCT(hexp_port_state_t), "halexp_get_port_state", halexp_get_port_state, 1, T_STRING);
-	wripc_export(hal_ipc, T_INT32, "halexp_lock_cmd", halexp_lock_cmd, 3, T_STRING, T_INT32, T_INT32);
-	wripc_export(hal_ipc, T_STRUCT(hexp_port_list_t), "halexp_query_ports", halexp_query_ports, 0);
+	/* NOTE: check_running is not remotely called, so I don't export it */
 
+	/* fill the function pointers */
+	__rpcdef_pps_cmd.f = export_pps_cmd;
+	__rpcdef_get_port_state.f = export_get_port_state;
+	__rpcdef_lock_cmd.f = export_lock_cmd;
+	__rpcdef_query_ports.f = export_query_ports;
+	/* FIXME: pll_cmd is empty anyways???? */
 
 	hal_add_cleanup_callback(hal_cleanup_wripc);
 
@@ -178,7 +223,8 @@ int hal_init_wripc()
 /* wripc update function, must be called in the main program loop */
 int hal_update_wripc()
 {
-	return wripc_process(hal_ipc);
+	minipc_server_action(hal_ch, 200 /* ms */);
+	return 0;
 }
 
 
@@ -186,15 +232,11 @@ int hal_update_wripc()
    launching multiple HALs simultaneously. */
 int hal_check_running()
 {
-	wripc_handle_t fd;
+	struct minipc_ch *ch;
 
-	fd = wripc_connect(WRSW_HAL_SERVER_ADDR);
-
-	if(fd >= 0)
-	{
-		wripc_close(fd);
-		return 1;
-	}
-	return 0;
-
+	ch = minipc_client_create(WRSW_HAL_SERVER_ADDR, 0);
+	if (!ch)
+		return 0;
+	minipc_close(ch);
+	return 1;
 }
