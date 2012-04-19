@@ -578,7 +578,6 @@ int shw_sfp_read_db(char *filename)
 		sfp->delta_rx = vals[1];
 		sfp->next = shw_sfp_cal_list;
 		shw_sfp_cal_list = sfp;
-		printf("registered cal data\n");
 	}
 	lua_pop( L, 1 );
 	lua_close(L);
