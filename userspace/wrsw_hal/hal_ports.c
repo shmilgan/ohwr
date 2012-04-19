@@ -15,8 +15,6 @@
 #include <linux/if_arp.h>
 #include <linux/if.h>
 
-//#include <wr_ipc.h>
-
 /* LOTs of hardware includes */
 #include <hw/switch_hw.h>
 
@@ -25,8 +23,10 @@
 #include <hw/pio_pins.h>
 #include <hw/fpga_regs.h>
 #include <hw/endpoint_regs.h>
+#include <hw/sfp_lib.h>
 
 #include "wrsw_hal.h"
+#include "timeout.h"
 #include "rt_ipc.h"
 #include "hal_exports.h"
 #include "driver_stuff.h"
@@ -39,6 +39,7 @@
 #define HAL_PORT_MODE_NON_WR 3
 
 /* Port state machine states */
+#define HAL_PORT_STATE_DISABLED 0
 #define HAL_PORT_STATE_LINK_DOWN 1
 #define HAL_PORT_STATE_UP 2
 #define HAL_PORT_STATE_CALIBRATION 3
@@ -54,9 +55,8 @@
 /* Default fiber alpha coefficient (G.652 @ 1310 nm TX / 1550 nm RX) */
 #define DEFAULT_FIBER_ALPHA_COEF (1.4682e-04*1.76)
 
-
-#define RTS_POLL_INTERVAL 200000
-
+#define RTS_POLL_INTERVAL 200 /* ms */
+#define SFP_POLL_INTERVAL 1000 /* ms */
 
 /* Internal port state structure */
 typedef struct {
@@ -89,6 +89,8 @@ typedef struct {
 
 /* calibration data */
 	hal_port_calibration_t calib;
+	struct shw_sfp_caldata sfp_calibration;
+
 
 /* current DMTD loopback phase (picoseconds) and whether is it valid or not */
 	uint32_t phase_val;
@@ -96,6 +98,7 @@ typedef struct {
 	int tx_cal_pending, rx_cal_pending;
 /* locking FSM state */
 	int lock_state;
+
 
 /* Endpoint's base address */
 	uint32_t ep_base;
@@ -107,6 +110,15 @@ static hal_port_state_t ports[MAX_PORTS];
 
 /* An fd of always opened raw sockets for ioctl()-ing Ethernet devices */
 static int fd_raw;
+
+
+/* RT subsystem PLL state, polled regularly via mini-ipc */
+static struct rts_pll_state rts_state;
+static int rts_state_valid = 0;
+
+/* Polling timeouts (RT Subsystem & SFP detection) */
+static timeout_t tmo_rts, tmo_sfp;
+
 
 /* generates a unique MAC address for port if_name (currently produced from the MAC of the
    management port). */
@@ -242,17 +254,8 @@ int hal_init_port(const char *name, int index)
 	cfg_get_port_param(name, "phy_rx_min",   &p->calib.phy_rx_min,   AT_INT32, 18*800);
 	cfg_get_port_param(name, "phy_tx_min",   &p->calib.phy_tx_min,    AT_INT32, 18*800);
 
-	cfg_get_port_param(name, "delta_tx_sfp",  &p->calib.delta_tx_sfp,  AT_INT32, 0);
-	cfg_get_port_param(name, "delta_rx_sfp",  &p->calib.delta_rx_sfp,  AT_INT32, 0);
-
 	cfg_get_port_param(name, "delta_tx_board",  &p->calib.delta_tx_board,  AT_INT32, 0);
 	cfg_get_port_param(name, "delta_rx_board",  &p->calib.delta_rx_board,  AT_INT32, 0);
-
-/* read the alpha parameter and turn it into a format suitable for the PTPd */
-	cfg_get_port_param(name, "fiber_alpha", &p->calib.fiber_alpha, AT_DOUBLE, DEFAULT_FIBER_ALPHA_COEF);
-
-/* WARNING! when alpha = 1.0 (no asymmetry), fiber_fix_alpha = 0! */
-	p->calib.fiber_fix_alpha = (double)pow(2.0, 40.0) * ((p->calib.fiber_alpha + 1.0) / (p->calib.fiber_alpha + 2.0) - 0.5);
 
 
 	sscanf(p->name+2, "%d", &p->hw_index);
@@ -299,7 +302,13 @@ int hal_init_ports()
 	int index = 0;
 	char port_name[128];
 
+
 	TRACE(TRACE_INFO, "Initializing switch ports");
+
+/* default timeouts */
+	tmo_init(&tmo_sfp, SFP_POLL_INTERVAL, 1);
+	tmo_init(&tmo_rts, RTS_POLL_INTERVAL, 1);
+
 /* Open a single raw socket for accessing the MAC addresses, etc. */
 	fd_raw = socket(AF_PACKET, SOCK_DGRAM, 0);
 	if(fd_raw < 0) return -1;
@@ -335,19 +344,14 @@ static void port_locking_fsm(hal_port_state_t *p)
 {
 }
 
-static struct rts_pll_state rts_state;
-static int rts_state_valid = 0;
+
 
 /* Updates the current value of the phase shift on a given port. Called by the main update function regularly. */
 static void poll_rts_state()
 {
-    static int poll_tics = 0;
-
-
-    if(shw_get_tics() - poll_tics > RTS_POLL_INTERVAL)
+    if(tmo_expired(&tmo_rts))
     {
         rts_state_valid = rts_get_state(&rts_state) < 0 ? 0 : 1;
-        poll_tics = shw_get_tics();
         if(!rts_state_valid)
             printf("rts_get_state failure, weird...\n");
     }
@@ -457,12 +461,38 @@ static void port_fsm(hal_port_state_t *p)
 	}
 }
 
+/* detects insertion/removal of SFP transceivers */
+static void poll_sfps()
+{
+	if (tmo_expired(&tmo_sfp))
+	{
+		uint32_t mask = shw_sfp_module_scan();
+		static int old_mask = 0;
+		
+		if(mask != old_mask)
+		{
+			int i;
+			for (i=0; i<MAX_PORTS; i++)
+				if(ports[i].in_use && (mask ^ old_mask) & (1<<ports[i].hw_index))
+				{
+					int insert = mask & (1<<ports[i].hw_index);
+					TRACE(TRACE_INFO, "Detected SFP %s on port %s.", insert ? "insertion" : "removal", ports[i].name);
+				}
+		
+		}
+		
+		old_mask = mask;
+	}
+}
+
 /* Executes the port FSM for all ports. Called regularly by the main loop. */
 void hal_update_ports()
 {
 	int i;
 
 	poll_rts_state();
+	poll_sfps();
+	
 	for(i=0; i<MAX_PORTS;i++)
 		if(ports[i].in_use)
 			port_fsm(&ports[i]);
@@ -522,6 +552,10 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
     if(!p)
 		return -1;
 
+/* WARNING! when alpha = 1.0 (no asymmetry), fiber_fix_alpha = 0! */
+
+	state->fiber_fix_alpha = (double)pow(2.0, 40.0) * ((p->calib.sfp.alpha + 1.0) / (p->calib.sfp.alpha + 2.0) - 0.5);
+
 	state->valid = 1;
 	state->mode = p->mode;
 	state->up = p->state != HAL_PORT_STATE_LINK_DOWN;
@@ -532,14 +566,13 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 	state->tx_calibrated = p->calib.tx_calibrated;
 	state->rx_calibrated = p->calib.rx_calibrated;
 
-	state->delta_tx = p->calib.delta_tx_phy + p->calib.delta_tx_sfp + p->calib.delta_tx_board;
-	state->delta_rx = p->calib.delta_rx_phy + p->calib.delta_rx_sfp + p->calib.delta_rx_board;
+	state->delta_tx = p->calib.delta_tx_phy + p->calib.sfp.delta_tx + p->calib.delta_tx_board;
+	state->delta_rx = p->calib.delta_rx_phy + p->calib.sfp.delta_rx + p->calib.delta_rx_board;
 
 	state->t2_phase_transition = 6000;
 	state->t4_phase_transition = 6000;
 	state->clock_period = 16000;
-	state->fiber_fix_alpha = p->calib.fiber_fix_alpha;
-
+	
 	memcpy(state->hw_addr, p->hw_addr, 6);
 	state->hw_index = p->hw_index;
 

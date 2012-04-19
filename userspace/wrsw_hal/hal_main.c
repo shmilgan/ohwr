@@ -158,6 +158,8 @@ int hal_shutdown()
 int hal_init()
 {
 	int enable;
+	char sfp_db_path[1024];
+	
 	trace_log_stderr();
 
 	TRACE(TRACE_INFO,"HAL initializing...");
@@ -175,29 +177,24 @@ int hal_init()
 	assert_init(hal_parse_config());
 //	assert_init(hal_setup_fpga_images());
 
-/* Check if the switch will operate as a grandmaster and eventually enable the ext clock input
-   prior to initializing libswitchhw. */
-//	if(!hal_config_get_int("timing.use_external_clock", &enable))
-//		shw_use_external_reference(enable);
+  if(!hal_config_get_string("global.sfp_database_path", sfp_db_path, sizeof(sfp_db_path)))
+ 		if(shw_sfp_read_db(sfp_db_path) < 0)
+			TRACE(TRACE_ERROR, "Can't read SFP database (%s)", sfp_db_path)
+		else 
+			TRACE(TRACE_INFO, "Loaded SFP database (%s)", sfp_db_path);
 
 /* Perform a low-level hardware init, load bitstreams, initialize non-kernel drivers */
 	assert_init(shw_init());
 
-/* If running in grandmaster mode, synchronize the internal PPS counter with the external source after
-   initializing the PPS generator. */
-//	if(!hal_config_get_int("timing.use_external_clock", &enable))
-//		shw_pps_gen_sync_external_pps();
-
-/* Load kernel drivers */
-//	assert_init(hal_load_kernel_modules());
-
-	assert_init(rts_connect());
+	assert_init(hal_init_timing());
 
 /* Initialize port FSMs - see hal_ports.c */
 	assert_init(hal_init_ports());
 
 /* Create a WRIPC server for HAL public API */
 	assert_init(hal_init_wripc());
+
+
 
 	return 0;
 }
