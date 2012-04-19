@@ -8,7 +8,7 @@ SCAN_OBJS = i2cscan.o
 LIB = libswitchhw.a
 LDFLAGS += -lm liblua.a
 
-all: $(LIB) i2cscan
+all: $(LIB) 
 
 $(LIB): $(OBJS)
 	$(AR) rc $@ $^
