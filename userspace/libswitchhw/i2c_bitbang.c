@@ -37,7 +37,7 @@ int i2c_bitbang_init_bus(struct i2c_bus *bus)
 	return 0;
 }
 
-#define I2C_DELAY 100
+#define I2C_DELAY 4
 
 void mi2c_pin_out(pio_pin_t* pin, int state)
 {
