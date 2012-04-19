@@ -505,6 +505,17 @@ int shw_sfp_read_header(int num, struct shw_sfp_header *head)
 	return 0;
 }
 
+int shw_sfp_read_verify_header(int num, struct shw_sfp_header *head)
+{
+	int ret;
+
+	ret = shw_sfp_read_header(num, head);
+	if (ret < 0)
+		return ret;
+
+	return shw_sfp_header_verify(head);
+}
+
 static struct shw_sfp_caldata *shw_sfp_cal_list = NULL;
 
 int shw_sfp_read_db(char *filename)

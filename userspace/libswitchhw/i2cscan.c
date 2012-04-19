@@ -15,6 +15,7 @@
 #include "i2c_fpga_reg.h"
 
 #include "i2c_sfp.h"
+#include <hw/sfp_lib.h>
 
 #include "libshw_i2c.h"
 
