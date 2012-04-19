@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <inttypes.h>
 
-#include <at91/at91sam9263.h>
+#include <at91/at91sam9g45.h>
 #include <at91/at91_pio.h>
 #include <at91/at91_pmc.h>
 
@@ -44,6 +44,11 @@ typedef struct pio_pin
 #define REG_CODR 1
 #define REG_SODR 2
 #define REG_PDSR 3
+
+#define FPGA_PIO_REG_CODR	0x0
+#define FPGA_PIO_REG_SODR	0x4
+#define FPGA_PIO_REG_DDR	0x8
+#define FPGA_PIO_REG_PSR	0xC
 
 extern volatile uint8_t *_sys_base;
 extern volatile uint8_t *_pio_base[4][NUM_PIO_BANKS+1];

@@ -9,10 +9,13 @@
 
 int shw_init()
 {
-	/* Map the the FPGA memory space */
+    /* Map the the FPGA memory space */
     assert_init(shw_fpga_mmap_init());
+    /* Map CPU's ping into memory space */
+    assert_init(shw_pio_mmap_init());
+    shw_pio_configure_all();
   /* Initialize the AD9516 and the clock distribution. Now we can start accessing the FPGAs. */
-    assert_init(shw_pps_gen_init());
+  //    assert_init(shw_pps_gen_init());
   /* ... and the SPI link with the watchdog */
     /* no more shw_watchdog_init(); */
 
