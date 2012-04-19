@@ -89,8 +89,6 @@ typedef struct {
 
 /* calibration data */
 	hal_port_calibration_t calib;
-	struct shw_sfp_caldata sfp_calibration;
-
 
 /* current DMTD loopback phase (picoseconds) and whether is it valid or not */
 	uint32_t phase_val;
@@ -232,6 +230,7 @@ int hal_init_port(const char *name, int index)
 /* make sure the states and other port variables are in their initial state */
 	reset_port_state(p);
 
+	p->state = HAL_PORT_STATE_DISABLED;	
 	p->in_use = 1;
 
 /* generate a (hopefully) unique MAC */
@@ -246,10 +245,6 @@ int hal_init_port(const char *name, int index)
 	snprintf(cmd, sizeof(cmd), "/sbin/ifconfig %s hw ether %02x:%02x:%02x:%02x:%02x:%02x", name, mac_addr[0],  mac_addr[1],  mac_addr[2],  mac_addr[3],  mac_addr[4],  mac_addr[5] );
 	system(cmd);
 
-	//snprintf(cmd, sizeof(cmd), "/sbin/ifconfig %s up", name);
-	//system(cmd);
-	enable_port(p->hw_index, 1);
-
 /* read calibraton parameters (unwrapping and constant deltas) */
 	cfg_get_port_param(name, "phy_rx_min",   &p->calib.phy_rx_min,   AT_INT32, 18*800);
 	cfg_get_port_param(name, "phy_tx_min",   &p->calib.phy_tx_min,    AT_INT32, 18*800);
@@ -260,6 +255,7 @@ int hal_init_port(const char *name, int index)
 
 	sscanf(p->name+2, "%d", &p->hw_index);
 
+	enable_port(p->hw_index, 1);
 
 /* Set up the endpoint's base address (fixme: do this with the driver) */
 
@@ -303,7 +299,7 @@ int hal_init_ports()
 	char port_name[128];
 
 
-	TRACE(TRACE_INFO, "Initializing switch ports");
+	TRACE(TRACE_INFO, "Initializing switch ports...");
 
 /* default timeouts */
 	tmo_init(&tmo_sfp, SFP_POLL_INTERVAL, 1);
@@ -377,31 +373,47 @@ uint32_t pcs_readl(hal_port_state_t *p, int reg)
 }
 
 
+static int handle_link_down(hal_port_state_t *p, int link_up)
+{
+/* If, at any moment, the link goes down, reset the FSM and the port state structure. */
+	if(!link_up && p->state != HAL_PORT_STATE_LINK_DOWN && p->state != HAL_PORT_STATE_DISABLED)
+	{
+		if(p->locked)
+		{
+			TRACE(TRACE_INFO, "switching RTS to use local reference");
+			if(hal_get_timing_mode() != HAL_TIMING_MODE_GRAND_MASTER)
+				 rts_set_mode(RTS_MODE_GM_FREERUNNING);
+		}
+
+		shw_sfp_set_led_link(p->hw_index, 0);
+		p->state = HAL_PORT_STATE_LINK_DOWN;
+		reset_port_state(p);
+
+		TRACE(TRACE_INFO, "%s: link down", p->name);
+
+		return 1;
+	}
+	return 0;
+}
 
 /* Main port state machine */
 static void port_fsm(hal_port_state_t *p)
 {
 	int link_up = check_link_up(p->name);
 
-/* If, at any moment, the link goes down, reset the FSM and the port state structure. */
-	if(!link_up && p->state != HAL_PORT_STATE_LINK_DOWN)
-	{
-		if(p->locked)
-			; /* nothing: was hpll_switch_reference(local) */
-		TRACE(TRACE_INFO, "%s: link down", p->name);
-		p->state = HAL_PORT_STATE_LINK_DOWN;
-		reset_port_state(p);
-
-		p->calib.rx_calibrated = 0;
+	if(handle_link_down(p, link_up))
 		return;
-	}
-
 /* handle the locking part */
 	port_locking_fsm(p);
 
 	switch(p->state)
 	{
 
+	case HAL_PORT_STATE_DISABLED:
+		p->calib.tx_calibrated = 0;
+		p->calib.rx_calibrated = 0;
+		break;
+				
 /* Default state - wait until the link goes up */
 	case HAL_PORT_STATE_LINK_DOWN:
 	{
@@ -413,13 +425,14 @@ static void port_fsm(hal_port_state_t *p)
 		p->calib.delta_rx_phy = p->calib.phy_rx_min + ((pcs_readl(p, 16) >> 4) & 0x1f) * 800;
 		p->calib.delta_tx_phy = p->calib.phy_tx_min;
 
-		TRACE(TRACE_INFO,"Bypassing calibration for downlink port %s [dTx %d, dRx %d]", p->name, p->calib.delta_tx_phy, 	p->calib.delta_rx_phy);
+//		TRACE(TRACE_INFO,"Bypassing calibration for downlink port %s [dTx %d, dRx %d]", p->name, p->calib.delta_tx_phy, 	p->calib.delta_rx_phy);
 
 		p->tx_cal_pending = 0;
 		p->rx_cal_pending = 0;
 
-			TRACE(TRACE_INFO, "%s: link up", p->name);
-			p->state = HAL_PORT_STATE_UP;
+		shw_sfp_set_led_link(p->hw_index, 1);
+		TRACE(TRACE_INFO, "%s: link up", p->name);
+		p->state = HAL_PORT_STATE_UP;
 		}
 		break;
 	}
@@ -461,6 +474,40 @@ static void port_fsm(hal_port_state_t *p)
 	}
 }
 
+static void on_insert_sfp(hal_port_state_t *p)
+{
+		struct shw_sfp_header shdr;
+		if(shw_sfp_read_verify_header(p->hw_index, &shdr) < 0)
+			TRACE(TRACE_ERROR, "Failed to read SFP configuration header")
+		else {
+			struct shw_sfp_caldata *cdata;
+			TRACE(TRACE_INFO, "SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s", shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
+			cdata = shw_sfp_get_cal_data(p->hw_index);
+			if(cdata)
+			{
+				TRACE(TRACE_INFO, "SFP Info: (%s) deltaTx %d delta Rx %d alpha %.3f (* 1e6)", 
+					cdata->flags & SFP_FLAG_CLASS_DATA ? "class-specific" : "device-specific",
+					cdata->delta_tx, cdata->delta_rx, cdata->alpha * 1e6);
+					
+				memcpy(&p->calib.sfp, cdata, sizeof(struct shw_sfp_caldata));
+			} else {
+				TRACE(TRACE_ERROR, "WARNING! SFP on port %s is NOT registered in the DB (using default delta & alpha values). This may cause severe timing performance degradation!", p->name);
+				p->calib.sfp.delta_tx = 0;
+				p->calib.sfp.delta_rx = 0;
+				p->calib.sfp.alpha = DEFAULT_FIBER_ALPHA_COEF;				
+		}
+		
+		p->state = HAL_PORT_STATE_LINK_DOWN;
+		shw_sfp_set_tx_disable(p->hw_index, 0);
+	}
+}
+
+static void on_remove_sfp(hal_port_state_t *p)
+{
+	handle_link_down(p, 0);
+	p->state = HAL_PORT_STATE_DISABLED;
+}
+
 /* detects insertion/removal of SFP transceivers */
 static void poll_sfps()
 {
@@ -471,16 +518,22 @@ static void poll_sfps()
 		
 		if(mask != old_mask)
 		{
-			int i;
+			int i, hw_index;
 			for (i=0; i<MAX_PORTS; i++)
-				if(ports[i].in_use && (mask ^ old_mask) & (1<<ports[i].hw_index))
+			{
+				hw_index = ports[i].hw_index;
+				
+				if(ports[i].in_use && (mask ^ old_mask) & (1<<hw_index))
 				{
-					int insert = mask & (1<<ports[i].hw_index);
+					int insert = mask & (1<<hw_index);
 					TRACE(TRACE_INFO, "Detected SFP %s on port %s.", insert ? "insertion" : "removal", ports[i].name);
+					if(insert)
+						on_insert_sfp(&ports[i]);
+					else
+						on_remove_sfp(&ports[i]);
 				}
-		
+			}
 		}
-		
 		old_mask = mask;
 	}
 }
