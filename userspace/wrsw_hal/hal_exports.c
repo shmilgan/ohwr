@@ -111,14 +111,14 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
 
 /* PPS adjustment call, independent for the nanosecond (a.k.a. 8ns cycle) counter and the seconds (UTC)
    counter. The counters are adjusted by atomically adding (params->adjust_nsec/utc). Since there's a
-   single PPS counter, these adjustments are port-independent. Once the coarse (8ns) offset is fixed,
+   single PPS counter, these adjustments are port-independent. Once the coarse (16/8ns) offset is fixed,
    fine adjustments are done with ADJUST_PHASE call, independently for each uplink to accommodate
    the different phase shifts on each port (and the fiber/cable connected to it).
  */
       return rts_adjust_phase(0, params->adjust_phase_shift) ? 0 : -1;
 
     case HEXP_PPSG_CMD_ADJUST_NSEC:
-      shw_pps_gen_adjust_nsec(params->adjust_nsec);
+      shw_pps_gen_adjust_nsec((int64_t)params->adjust_nsec * 1000LL / (int64_t)REF_CLOCK_PERIOD_PS);
       return 0;
 
     case HEXP_PPSG_CMD_ADJUST_UTC:
@@ -211,6 +211,12 @@ int hal_init_wripc()
 	__rpcdef_get_port_state.f = export_get_port_state;
 	__rpcdef_lock_cmd.f = export_lock_cmd;
 	__rpcdef_query_ports.f = export_query_ports;
+	
+	minipc_export(hal_ch, &__rpcdef_pps_cmd);
+	minipc_export(hal_ch, &__rpcdef_get_port_state);
+	minipc_export(hal_ch, &__rpcdef_lock_cmd);
+	minipc_export(hal_ch, &__rpcdef_query_ports);
+	
 	/* FIXME: pll_cmd is empty anyways???? */
 
 	hal_add_cleanup_callback(hal_cleanup_wripc);
