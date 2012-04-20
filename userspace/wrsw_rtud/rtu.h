@@ -48,8 +48,7 @@
 #define ENTRY_WORDS             8
 
 #define MIN_PORT                0
-#define MAX_PORT                5
-#define NIC_PORT                6
+#define MAX_PORT                14
 
 // Maximum number of supported VLANs
 #define NUM_VLANS               4096

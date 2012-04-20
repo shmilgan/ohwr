@@ -63,18 +63,22 @@ static int rtu_create_static_entries()
     int i, err;
     uint32_t enabled_port_mask = 0;
 
+
+    // packets addressed to WR card interfaces are forwarded to NIC virtual port
+    halexp_query_ports(&plist);	
+	
+		TRACE(TRACE_INFO, "Number of physical ports: %d, active ports: %d\n", plist.num_physical_ports, plist.num_ports);
 	
     // VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
     TRACE(TRACE_INFO,"adding static routes for slow protocols...");
     for(i = 0; i < NUM_RESERVED_ADDR; i++) {
         slow_proto_mac[5] = i;
-        err = rtu_fd_create_entry(slow_proto_mac, 0, (1 << NIC_PORT), STATIC);
+        err = rtu_fd_create_entry(slow_proto_mac, 0, (1 << plist.num_physical_ports), STATIC);
         if(err)
             return err;
     }
     
-    // packets addressed to WR card interfaces are forwarded to NIC virtual port
-    halexp_query_ports(&plist);	
+  
     for(i = 0; i < plist.num_ports; i++) {
         halexp_get_port_state(&pstate, plist.port_names[i]); 
         enabled_port_mask |= (1 << pstate.hw_index);
@@ -85,15 +89,15 @@ static int rtu_create_static_entries()
             pstate.hw_index, 
             mac_to_string(pstate.hw_addr)
         );
-		err = rtu_fd_create_entry(pstate.hw_addr, 0, (1 << NIC_PORT), STATIC);
+		err = rtu_fd_create_entry(pstate.hw_addr, 0, (1 << plist.num_physical_ports), STATIC);
         if(err)
             return err;
     }
 
     // Broadcast MAC
     TRACE(TRACE_INFO,"adding static route for broadcast MAC...");
-    err = rtu_fd_create_entry(bcast_mac, 0, enabled_port_mask | (1 << NIC_PORT), STATIC);
-    err = rtu_fd_create_entry(ptp_mcast_mac, 0, (1 << NIC_PORT), STATIC);
+    err = rtu_fd_create_entry(bcast_mac, 0, enabled_port_mask | (1 << plist.num_physical_ports), STATIC);
+    err = rtu_fd_create_entry(ptp_mcast_mac, 0, (1 << plist.num_physical_ports), STATIC);
     if(err)
         return err;
 
