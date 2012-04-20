@@ -116,7 +116,7 @@ static int rts_state_valid = 0;
 
 /* Polling timeouts (RT Subsystem & SFP detection) */
 static timeout_t tmo_rts, tmo_sfp;
-
+static int num_physical_ports;
 
 /* generates a unique MAC address for port if_name (currently produced from the MAC of the
    management port). */
@@ -133,13 +133,16 @@ static int get_mac_address(const char *if_name, uint8_t *mac_addr)
 	if(ioctl(fd_raw, SIOCGIFHWADDR, &ifr) < 0)
 		return -1;
 
-	mac_addr[0] = 0x8 | 0x2; // locally administered MAC
-	mac_addr[1] = 0x00;
-	mac_addr[2] = 0x30;
-	mac_addr[3] = ifr.ifr_hwaddr.sa_data[3];
-	mac_addr[4] = ifr.ifr_hwaddr.sa_data[4];
-	mac_addr[5] = (ifr.ifr_hwaddr.sa_data[5] & 0xc0) + (idx + 1);
-
+	if(mac_addr)
+	{
+		mac_addr[0] = 0x8 | 0x2; // locally administered MAC
+		mac_addr[1] = 0x00;
+		mac_addr[2] = 0x30;
+		mac_addr[3] = ifr.ifr_hwaddr.sa_data[3];
+		mac_addr[4] = ifr.ifr_hwaddr.sa_data[4];
+		mac_addr[5] = (ifr.ifr_hwaddr.sa_data[5] & 0xc0) + (idx + 1);
+	}
+	
 	return 0;
 }
 
@@ -197,9 +200,9 @@ static int check_port_presence(const char *if_name)
 	strncpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
 
 	if(ioctl(fd_raw, SIOCGIFHWADDR, &ifr) < 0)
-		return -1;
+		return 0;
 
-	return 0;
+	return 1;
 }
 
 static void enable_port(int port, int enable)
@@ -208,6 +211,7 @@ static void enable_port(int port, int enable)
     snprintf(str, sizeof(str), "/sbin/ifconfig wr%d %s", port, enable ? "up" : "down");
     system(str);
 }
+
 
 /* Port initialization. Assigns the MAC address, WR timing mode, reads parameters from the config file. */
 int hal_init_port(const char *name, int index)
@@ -220,7 +224,7 @@ int hal_init_port(const char *name, int index)
 	uint8_t mac_addr[6];
 
 /* check if the port is compiled into the firmware, if not, just ignore it. */
-	if(check_port_presence(name) < 0)
+	if(!check_port_presence(name))
 	{
 		reset_port_state(p);
 		p->in_use = 0;
@@ -294,8 +298,7 @@ int hal_init_port(const char *name, int index)
 /* Interates via all the ports defined in the config file and intializes them one after another. */
 int hal_init_ports()
 {
-
-	int index = 0;
+	int index = 0, i;
 	char port_name[128];
 
 
@@ -308,6 +311,17 @@ int hal_init_ports()
 /* Open a single raw socket for accessing the MAC addresses, etc. */
 	fd_raw = socket(AF_PACKET, SOCK_DGRAM, 0);
 	if(fd_raw < 0) return -1;
+
+/* Count the number of physical WR network interfaces */
+	num_physical_ports = 0;
+	for(i=0;i<HAL_MAX_PORTS;i++)
+	{	
+		char if_name[16];
+		snprintf(if_name, sizeof(if_name), "wr%d", i);
+		if(check_port_presence(if_name)) num_physical_ports++;
+	}
+	
+	TRACE(TRACE_INFO, "Number of physical ports supported in HW: %d", num_physical_ports); 
 
 	memset(ports, 0, sizeof(ports));
 
@@ -578,7 +592,9 @@ int hal_port_start_lock(const char  *port_name, int priority)
 
 	TRACE(TRACE_INFO, "Locking to port: %s", port_name);
 
-    return rts_lock_channel(p->hw_index, 0) < 0 ? PORT_ERROR : PORT_OK;
+	rts_set_mode(RTS_MODE_BC);
+	
+  return rts_lock_channel(p->hw_index, 0) < 0 ? PORT_ERROR : PORT_OK;
 }
 
 
@@ -602,8 +618,10 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 {
 	hal_port_state_t *p = lookup_port(port_name);
 
-    if(!p)
-		return -1;
+  if(!p)
+			return -1;
+
+
 
 /* WARNING! when alpha = 1.0 (no asymmetry), fiber_fix_alpha = 0! */
 
@@ -622,9 +640,9 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 	state->delta_tx = p->calib.delta_tx_phy + p->calib.sfp.delta_tx + p->calib.delta_tx_board;
 	state->delta_rx = p->calib.delta_rx_phy + p->calib.sfp.delta_rx + p->calib.delta_rx_board;
 
-	state->t2_phase_transition = 6000;
-	state->t4_phase_transition = 6000;
-	state->clock_period = 16000;
+	state->t2_phase_transition = DEFAULT_T2_PHASE_TRANS;
+	state->t4_phase_transition = DEFAULT_T4_PHASE_TRANS;
+	state->clock_period = REF_CLOCK_PERIOD_PS;
 	
 	memcpy(state->hw_addr, p->hw_addr, 6);
 	state->hw_index = p->hw_index;
@@ -653,14 +671,13 @@ int halexp_query_ports(hexp_port_list_t *list)
 	int i;
 	int n = 0;
 
-	TRACE(TRACE_INFO," client queried port list.");
-
 	for(i=0; i<MAX_PORTS;i++)
 	{
 		if(ports[i].in_use)
 			strcpy(list->port_names[n++], ports[i].name);
 	}
 
+	list->num_physical_ports = num_physical_ports;
 	list->num_ports = n;
 	return 0;
 }
