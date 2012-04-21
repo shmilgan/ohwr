@@ -53,6 +53,9 @@ struct wrn_tx_tstamp {
 	u16 frame_id;
 	u32 ts;
 };
+/* bits for "valid" field */
+#define TS_PRESENT 1
+#define TS_INVALID 2 /* as reported by hw: we return 0 as timestamp */
 
 /* We must remember both skb and id for each pending descriptor */
 struct wrn_desc_pending {

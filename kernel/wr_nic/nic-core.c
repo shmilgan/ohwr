@@ -371,7 +371,11 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 	       ts.tv_nsec & 0x7fffffff,
 	       ts.tv_sec & 0x80000000 ? 1 :0);
 
-	hwts->hwtstamp = timespec_to_ktime(ts);
+	/* If the timestamp was reported as incorrect, pass 0 instead */
+	if (r1 & (1 << 15)) /* FIXME: bit name possibly? */
+		hwts->hwtstamp = ns_to_ktime(0);
+	else
+		hwts->hwtstamp = timespec_to_ktime(ts);
 	skb->protocol = eth_type_trans(skb, dev);
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 	dev->last_rx = jiffies;

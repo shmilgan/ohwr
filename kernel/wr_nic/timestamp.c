@@ -48,7 +48,10 @@ void wrn_tstamp_find_skb(struct wrn_dev *wrn, int desc)
 
 	ts.tv_sec = (s32)utc & 0x7fffffff;
 	ts.tv_nsec = wrn->ts_buf[i].ts * NSEC_PER_TICK;
-	hwts->hwtstamp = timespec_to_ktime(ts);
+	if (wrn->ts_buf[i].valid & TS_INVALID)
+		hwts->hwtstamp = ns_to_ktime(0);
+	else
+		hwts->hwtstamp = timespec_to_ktime(ts);
 	skb_tstamp_tx(skb, hwts);
 	dev_kfree_skb_irq(skb);
 
@@ -62,6 +65,7 @@ static int record_tstamp(struct wrn_dev *wrn, u32 tsval, u32 idreg)
 {
 	int port_id = TXTSU_TSF_R1_PID_R(idreg);
 	int frame_id = TXTSU_TSF_R1_FID_R(idreg);
+	int ts_invalid = 0 /* = ???(idreg) -- please fix this */ ;
 	struct skb_shared_hwtstamps *hwts;
 	struct timespec ts;
 	struct sk_buff *skb;
@@ -87,13 +91,16 @@ static int record_tstamp(struct wrn_dev *wrn, u32 tsval, u32 idreg)
 
 		ts.tv_sec = (s32)utc & 0x7fffffff;
 		ts.tv_nsec = (tsval & 0xfffffff) * NSEC_PER_TICK;
-		hwts->hwtstamp = timespec_to_ktime(ts);
+		if (ts_invalid)
+			hwts->hwtstamp = ns_to_ktime(0);
+		else
+			hwts->hwtstamp = timespec_to_ktime(ts);
 		skb_tstamp_tx(skb, hwts);
 		dev_kfree_skb_irq(skb);
 		wrn->skb_desc[i].skb = 0;
 		return 0;
 	}
-	/* Otherwise, save it to the list  */
+	/* Otherwise, save it to the list, in an empty slot  */
 	for(i = 0; i < WRN_TS_BUF_SIZE; i++)
 		if(!wrn->ts_buf[i].valid)
 			break;
@@ -106,7 +113,9 @@ static int record_tstamp(struct wrn_dev *wrn, u32 tsval, u32 idreg)
 	wrn->ts_buf[i].ts = tsval;
 	wrn->ts_buf[i].port_id = port_id;
 	wrn->ts_buf[i].frame_id = frame_id;
-	wrn->ts_buf[i].valid = 1;
+	wrn->ts_buf[i].valid = TS_PRESENT;
+	if (invalid)
+		wrn->ts_buf[i].valid |= TS_INVALID;
 	return 0;
 }
 
