@@ -44,9 +44,10 @@
 #define WR_SFP16_BUS	16
 #define WR_SFP17_BUS	17
 
-#define SFP_LED_LINK_MASK(t)	((t) ? (1 << 6) : (1 << 0))
-#define SFP_LED_WRMODE_MASK(t)	((t) ? (1 << 4) : (1 << 1))
-#define SFP_LED_SYNCED_MASK(t)	((t) ? (1 << 5) : (1 << 3))
+
+#define SFP_LED_SYNCED_MASK(t)	((t) ? (1 << 6) : (1 << 0))
+#define SFP_LED_LINK_MASK(t)	((t) ? (1 << 4) : (1 << 1))
+#define SFP_LED_WRMODE_MASK(t)	((t) ? (1 << 5) : (1 << 3))
 #define SFP_TX_DISABLE_MASK(t)	((t) ? (1 << 7) : (1 << 2))
 
 /*
