@@ -118,6 +118,8 @@ static int rts_state_valid = 0;
 static timeout_t tmo_rts, tmo_sfp;
 static int num_physical_ports;
 
+int hal_port_check_lock(const char  *port_name);
+
 int any_port_locked()
 {
     if(!rts_state_valid) return -1;
@@ -150,7 +152,7 @@ static int get_mac_address(const char *if_name, uint8_t *mac_addr)
 		mac_addr[4] = ifr.ifr_hwaddr.sa_data[4];
 		mac_addr[5] = (ifr.ifr_hwaddr.sa_data[5] & 0xc0) + (idx + 1);
 	}
-	
+
 	return 0;
 }
 
@@ -242,7 +244,7 @@ int hal_init_port(const char *name, int index)
 /* make sure the states and other port variables are in their initial state */
 	reset_port_state(p);
 
-	p->state = HAL_PORT_STATE_DISABLED;	
+	p->state = HAL_PORT_STATE_DISABLED;
 	p->in_use = 1;
 
 /* generate a (hopefully) unique MAC */
@@ -323,13 +325,13 @@ int hal_init_ports()
 /* Count the number of physical WR network interfaces */
 	num_physical_ports = 0;
 	for(i=0;i<HAL_MAX_PORTS;i++)
-	{	
+	{
 		char if_name[16];
 		snprintf(if_name, sizeof(if_name), "wr%d", i);
 		if(check_port_presence(if_name)) num_physical_ports++;
 	}
-	
-	TRACE(TRACE_INFO, "Number of physical ports supported in HW: %d", num_physical_ports); 
+
+	TRACE(TRACE_INFO, "Number of physical ports supported in HW: %d", num_physical_ports);
 
 	memset(ports, 0, sizeof(ports));
 
@@ -362,7 +364,22 @@ static void port_locking_fsm(hal_port_state_t *p)
 {
 }
 
+int hal_phase_shifter_busy()
+{
+    if(!rts_state_valid)
+        return 1;
 
+    if(rts_state.current_ref != REF_NONE)
+    {
+        int busy = rts_state.channels[rts_state.current_ref].flags & CHAN_SHIFTING ? 1 : 0;
+
+        TRACE(TRACE_INFO, "PSBusy %d, flags %x", busy, rts_state.channels[rts_state.current_ref].flags);
+        return busy;
+    }
+
+
+    return 1;
+}
 
 /* Updates the current value of the phase shift on a given port. Called by the main update function regularly. */
 static void poll_rts_state()
@@ -435,7 +452,7 @@ static void port_fsm(hal_port_state_t *p)
 		p->calib.tx_calibrated = 0;
 		p->calib.rx_calibrated = 0;
 		break;
-				
+
 /* Default state - wait until the link goes up */
 	case HAL_PORT_STATE_LINK_DOWN:
 	{
@@ -464,8 +481,8 @@ static void port_fsm(hal_port_state_t *p)
 		if(rts_state_valid)
 		{
 		   	p->phase_val = rts_state.channels[p->hw_index].phase_loopback;
-            p->phase_val_valid = rts_state.channels[p->hw_index].flags & CHAN_PMEAS_READY ? 1 : 0;
-
+        p->phase_val_valid = rts_state.channels[p->hw_index].flags & CHAN_PMEAS_READY ? 1 : 0;
+				p->locked = hal_port_check_lock(p->name);
 		}
 
 		break;
@@ -474,6 +491,9 @@ static void port_fsm(hal_port_state_t *p)
 	case HAL_PORT_STATE_LOCKING:
 
 /* Once the locking FSM is done, go back to the "UP" state. */
+
+		p->locked = hal_port_check_lock(p->name);
+
 		if(p->locked)
 		{
 			TRACE(TRACE_INFO,"[main-fsm] Port %s locked.", p->name);
@@ -507,7 +527,7 @@ static void on_insert_sfp(hal_port_state_t *p)
 			cdata = shw_sfp_get_cal_data(p->hw_index);
 			if(cdata)
 			{
-				TRACE(TRACE_INFO, "SFP Info: (%s) deltaTx %d delta Rx %d alpha %.3f (* 1e6)", 
+				TRACE(TRACE_INFO, "SFP Info: (%s) deltaTx %d delta Rx %d alpha %.3f (* 1e6)",
 					cdata->flags & SFP_FLAG_CLASS_DATA ? "class-specific" : "device-specific",
 					cdata->delta_tx, cdata->delta_rx, cdata->alpha * 1e6);
 
@@ -516,9 +536,9 @@ static void on_insert_sfp(hal_port_state_t *p)
 				TRACE(TRACE_ERROR, "WARNING! SFP on port %s is NOT registered in the DB (using default delta & alpha values). This may cause severe timing performance degradation!", p->name);
 				p->calib.sfp.delta_tx = 0;
 				p->calib.sfp.delta_rx = 0;
-				p->calib.sfp.alpha = DEFAULT_FIBER_ALPHA_COEF;				
+				p->calib.sfp.alpha = DEFAULT_FIBER_ALPHA_COEF;
 		}
-		
+
 		p->state = HAL_PORT_STATE_LINK_DOWN;
 		shw_sfp_set_tx_disable(p->hw_index, 0);
 	}
@@ -537,14 +557,14 @@ static void poll_sfps()
 	{
 		uint32_t mask = shw_sfp_module_scan();
 		static int old_mask = 0;
-		
+
 		if(mask != old_mask)
 		{
 			int i, hw_index;
 			for (i=0; i<MAX_PORTS; i++)
 			{
 				hw_index = ports[i].hw_index;
-				
+
 				if(ports[i].in_use && (mask ^ old_mask) & (1<<hw_index))
 				{
 					int insert = mask & (1<<hw_index);
@@ -567,7 +587,7 @@ void hal_update_ports()
 
 	poll_rts_state();
 	poll_sfps();
-	
+
 	for(i=0; i<MAX_PORTS;i++)
 		if(ports[i].in_use)
 			port_fsm(&ports[i]);
@@ -601,7 +621,7 @@ int hal_port_start_lock(const char  *port_name, int priority)
 	TRACE(TRACE_INFO, "Locking to port: %s", port_name);
 
 	rts_set_mode(RTS_MODE_BC);
-	
+
   return rts_lock_channel(p->hw_index, 0) < 0 ? PORT_ERROR : PORT_OK;
 }
 
@@ -652,7 +672,7 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 	state->t2_phase_transition = DEFAULT_T2_PHASE_TRANS;
 	state->t4_phase_transition = DEFAULT_T4_PHASE_TRANS;
 	state->clock_period = REF_CLOCK_PERIOD_PS;
-	
+
 	memcpy(state->hw_addr, p->hw_addr, 6);
 	state->hw_index = p->hw_index;
 

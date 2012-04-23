@@ -75,5 +75,6 @@ int hal_extsrc_check_lock(void); // added by ML
 
 int hal_init_timing();
 int hal_get_timing_mode();
+int hal_phase_shifter_busy();
 
 #endif
