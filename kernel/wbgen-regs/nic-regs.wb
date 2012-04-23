@@ -319,6 +319,19 @@ RX_desc_template = {
 				 access_bus = READ_ONLY;
 				 access_dev = WRITE_ONLY;
       };
+
+      field {
+				 name = "RX timestamp (possibly) incorrect";
+				 prefix = "TS_INCORRECT";
+				 description = "read 1: the RX timestamp in R2 register may be incorrect, because it has been generated during counter adjustment,\
+				 								read 0: the RX timestamp in R2 register is correct";
+
+				 type = BIT;
+				 access_bus = READ_ONLY;
+				 access_dev = WRITE_ONLY;
+      };
+      
+      
    };
 
 	 

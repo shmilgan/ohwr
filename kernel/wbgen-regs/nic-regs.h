@@ -401,6 +401,9 @@
 /* definitions for field: Got RX Timestamp in reg: RX Descriptor 1 register 1 */
 #define NIC_RX1_D1_GOT_TS                     WBGEN2_GEN_MASK(14, 1)
 
+/* definitions for field: RX timestamp (possibly) incorrect in reg: RX Descriptor 1 register 1 */
+#define NIC_RX1_D1_TS_INCORRECT               WBGEN2_GEN_MASK(15, 1)
+
 /* definitions for register: RX Descriptor 1 register 2 */
 
 /* definitions for field: RX_TS_R in reg: RX Descriptor 1 register 2 */
@@ -445,6 +448,9 @@
 
 /* definitions for field: Got RX Timestamp in reg: RX Descriptor 2 register 1 */
 #define NIC_RX2_D1_GOT_TS                     WBGEN2_GEN_MASK(14, 1)
+
+/* definitions for field: RX timestamp (possibly) incorrect in reg: RX Descriptor 2 register 1 */
+#define NIC_RX2_D1_TS_INCORRECT               WBGEN2_GEN_MASK(15, 1)
 
 /* definitions for register: RX Descriptor 2 register 2 */
 
@@ -491,6 +497,9 @@
 /* definitions for field: Got RX Timestamp in reg: RX Descriptor 3 register 1 */
 #define NIC_RX3_D1_GOT_TS                     WBGEN2_GEN_MASK(14, 1)
 
+/* definitions for field: RX timestamp (possibly) incorrect in reg: RX Descriptor 3 register 1 */
+#define NIC_RX3_D1_TS_INCORRECT               WBGEN2_GEN_MASK(15, 1)
+
 /* definitions for register: RX Descriptor 3 register 2 */
 
 /* definitions for field: RX_TS_R in reg: RX Descriptor 3 register 2 */
@@ -535,6 +544,9 @@
 
 /* definitions for field: Got RX Timestamp in reg: RX Descriptor 4 register 1 */
 #define NIC_RX4_D1_GOT_TS                     WBGEN2_GEN_MASK(14, 1)
+
+/* definitions for field: RX timestamp (possibly) incorrect in reg: RX Descriptor 4 register 1 */
+#define NIC_RX4_D1_TS_INCORRECT               WBGEN2_GEN_MASK(15, 1)
 
 /* definitions for register: RX Descriptor 4 register 2 */
 
@@ -581,6 +593,9 @@
 /* definitions for field: Got RX Timestamp in reg: RX Descriptor 5 register 1 */
 #define NIC_RX5_D1_GOT_TS                     WBGEN2_GEN_MASK(14, 1)
 
+/* definitions for field: RX timestamp (possibly) incorrect in reg: RX Descriptor 5 register 1 */
+#define NIC_RX5_D1_TS_INCORRECT               WBGEN2_GEN_MASK(15, 1)
+
 /* definitions for register: RX Descriptor 5 register 2 */
 
 /* definitions for field: RX_TS_R in reg: RX Descriptor 5 register 2 */
@@ -625,6 +640,9 @@
 
 /* definitions for field: Got RX Timestamp in reg: RX Descriptor 6 register 1 */
 #define NIC_RX6_D1_GOT_TS                     WBGEN2_GEN_MASK(14, 1)
+
+/* definitions for field: RX timestamp (possibly) incorrect in reg: RX Descriptor 6 register 1 */
+#define NIC_RX6_D1_TS_INCORRECT               WBGEN2_GEN_MASK(15, 1)
 
 /* definitions for register: RX Descriptor 6 register 2 */
 
@@ -671,6 +689,9 @@
 /* definitions for field: Got RX Timestamp in reg: RX Descriptor 7 register 1 */
 #define NIC_RX7_D1_GOT_TS                     WBGEN2_GEN_MASK(14, 1)
 
+/* definitions for field: RX timestamp (possibly) incorrect in reg: RX Descriptor 7 register 1 */
+#define NIC_RX7_D1_TS_INCORRECT               WBGEN2_GEN_MASK(15, 1)
+
 /* definitions for register: RX Descriptor 7 register 2 */
 
 /* definitions for field: RX_TS_R in reg: RX Descriptor 7 register 2 */
@@ -715,6 +736,9 @@
 
 /* definitions for field: Got RX Timestamp in reg: RX Descriptor 8 register 1 */
 #define NIC_RX8_D1_GOT_TS                     WBGEN2_GEN_MASK(14, 1)
+
+/* definitions for field: RX timestamp (possibly) incorrect in reg: RX Descriptor 8 register 1 */
+#define NIC_RX8_D1_TS_INCORRECT               WBGEN2_GEN_MASK(15, 1)
 
 /* definitions for register: RX Descriptor 8 register 2 */
 
@@ -800,6 +824,7 @@
 /* definitions for field: Transmit Error in reg: Interrupt status register */
 #define NIC_EIC_ISR_TXERR                     WBGEN2_GEN_MASK(3, 1)
 /* definitions for RAM: TX/RX Buffers */
+#define NIC_MEM_BASE 0x00008000 /* base address */                                
 #define NIC_MEM_BYTES 0x00008000 /* size in bytes */                               
 #define NIC_MEM_WORDS 0x00002000 /* size in 32-bit words, 32-bit aligned */        
 
