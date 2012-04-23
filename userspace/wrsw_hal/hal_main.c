@@ -188,13 +188,11 @@ int hal_init()
 
 	assert_init(hal_init_timing());
 
-/* Initialize port FSMs - see hal_ports.c */
-	assert_init(hal_init_ports());
-
 /* Create a WRIPC server for HAL public API */
 	assert_init(hal_init_wripc());
 
-
+/* Initialize port FSMs - see hal_ports.c */
+	assert_init(hal_init_ports());
 
 	return 0;
 }
@@ -205,7 +203,7 @@ void hal_update()
 	hal_update_wripc();
 	hal_update_ports();
 
-	usleep(1000);
+//	usleep(1000);
 }
 
 /* Turns a nice and well-behaving HAL into an evil servant of satan. */

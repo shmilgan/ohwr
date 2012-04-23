@@ -17,43 +17,6 @@
 
 static struct minipc_ch *hal_ch;
 
-/* Dummy WRIPC export, used by the clients to check if the HAL is responding */
-int halexp_check_running()
-{
-	return 1;
-}
-
-/* External synchronization source (i.e. GPS 10 MHz input) control. */
-int halexp_extsrc_cmd(int command)
-{
-	int rval;
-
-	switch(command)
-	{
-/* There's only one command so far: checking if a valid reference clock is present on the external input
-   and whether the PLL is locked to the network recovered clock or to the external reference. */
-
-		case HEXP_EXTSRC_CMD_CHECK:
-			rval = hal_extsrc_check_lock();
-			if(rval > 0)
-				return HEXP_EXTSRC_STATUS_LOCKED;
-			else if (!rval)
-				return HEXP_LOCK_STATUS_BUSY;
-			else
-				return HEXP_EXTSRC_STATUS_NOSRC;
-			break;
-	}
-
-	return -100; /* fixme: add real error code */
-}
-
-/* Dummy reset call (used to be a real reset for testing, but it's no longer necessary) */
-int halexp_reset_port(const char *port_name)
-{
-  TRACE(TRACE_INFO, "resetting port %s\n", port_name);
-  return 0;
-}
-
 /* Locking call - controls the HAL locking state machine. Called by the PTPd during the WR Link Setup phase, when
    it has detected a compatible WR master. */
 int halexp_lock_cmd(const char *port_name, int command, int priority)
@@ -94,6 +57,7 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 /* Phase/Clock adjutsment call. Called by the PTPd servo. Controls both the PLLs and the PPS Generator. */
 int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
 {
+	int busy;
 
   switch(cmd)
     {
@@ -135,17 +99,24 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
    delay calculation. */
 
     case HEXP_PPSG_CMD_POLL:
-	    return shw_pps_gen_busy(); /* no more dmpll shifter to check */
+			busy = shw_pps_gen_busy();
+//  		TRACE(TRACE_INFO, "ppsg_busy: %d\n",busy);
+	    return busy ? 0 : 1; /* no more dmpll shifter to check */
     }
   return -1; /* fixme: real error code */
 }
 
-/* PLL debug call, foreseen for live adjustment of some internal PLL parameters (gains, timeouts, etc.)
-   To be implemented. */
-int halexp_pll_cmd(int cmd, hexp_pll_cmd_t *params)
+extern int any_port_locked();
+
+int halexp_get_timing_state(hexp_timing_state_t *state)
 {
-	return 0;
+    state->timing_mode = hal_get_timing_mode();
+    state->locked_port = any_port_locked();
+
+    return 0;
 }
+
+
 
 static void hal_cleanup_wripc()
 {
@@ -194,6 +165,12 @@ static int export_query_ports(const struct minipc_pd *pd,
 	return 0;
 }
 
+static int export_get_timing_state(const struct minipc_pd *pd,
+			      uint32_t *args, void *ret)
+{
+	halexp_get_timing_state(ret);
+	return 0;
+}
 
 /* Creates a wripc server and exports all public API functions */
 int hal_init_wripc()
@@ -202,8 +179,10 @@ int hal_init_wripc()
 
 
 	if(hal_ch < 0)
+	{
+		TRACE(TRACE_ERROR, "Failed to create mini-rpc server '%s'", WRSW_HAL_SERVER_ADDR);
 		return -1;
-
+	}
 	/* NOTE: check_running is not remotely called, so I don't export it */
 
 	/* fill the function pointers */
@@ -211,12 +190,15 @@ int hal_init_wripc()
 	__rpcdef_get_port_state.f = export_get_port_state;
 	__rpcdef_lock_cmd.f = export_lock_cmd;
 	__rpcdef_query_ports.f = export_query_ports;
-	
+	__rpcdef_get_timing_state.f = export_get_timing_state;
+
 	minipc_export(hal_ch, &__rpcdef_pps_cmd);
 	minipc_export(hal_ch, &__rpcdef_get_port_state);
 	minipc_export(hal_ch, &__rpcdef_lock_cmd);
 	minipc_export(hal_ch, &__rpcdef_query_ports);
-	
+    minipc_export(hal_ch, &__rpcdef_get_timing_state);
+
+
 	/* FIXME: pll_cmd is empty anyways???? */
 
 	hal_add_cleanup_callback(hal_cleanup_wripc);

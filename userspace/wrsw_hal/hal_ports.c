@@ -118,6 +118,14 @@ static int rts_state_valid = 0;
 static timeout_t tmo_rts, tmo_sfp;
 static int num_physical_ports;
 
+int any_port_locked()
+{
+    if(!rts_state_valid) return -1;
+    if(rts_state.current_ref == REF_NONE) return -1;
+
+    return rts_state.current_ref;
+}
+
 /* generates a unique MAC address for port if_name (currently produced from the MAC of the
    management port). */
 /* FIXME: MAC addresses should be kept in some EEPROM */
@@ -502,7 +510,7 @@ static void on_insert_sfp(hal_port_state_t *p)
 				TRACE(TRACE_INFO, "SFP Info: (%s) deltaTx %d delta Rx %d alpha %.3f (* 1e6)", 
 					cdata->flags & SFP_FLAG_CLASS_DATA ? "class-specific" : "device-specific",
 					cdata->delta_tx, cdata->delta_rx, cdata->alpha * 1e6);
-					
+
 				memcpy(&p->calib.sfp, cdata, sizeof(struct shw_sfp_caldata));
 			} else {
 				TRACE(TRACE_ERROR, "WARNING! SFP on port %s is NOT registered in the DB (using default delta & alpha values). This may cause severe timing performance degradation!", p->name);
@@ -629,7 +637,8 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 
 	state->valid = 1;
 	state->mode = p->mode;
-	state->up = p->state != HAL_PORT_STATE_LINK_DOWN;
+	state->up = (p->state != HAL_PORT_STATE_LINK_DOWN && p->state != HAL_PORT_STATE_DISABLED);
+
 	state->is_locked = p->lock_state == LOCK_STATE_LOCKED;
 	state->phase_val = p->phase_val;
 	state->phase_val_valid = p->phase_val_valid;
@@ -685,11 +694,6 @@ int halexp_query_ports(hexp_port_list_t *list)
 /* Maciek's ptpx export for checking the presence of the external 10 MHz ref clock */
 int hal_extsrc_check_lock()
 {
-	return -1;
-/*
-	return -1; //<0 - there is no external source lock
-	return 1; //>0 - we are locked to an external source
-	return 0; //=0 - HW problem, wait
-*/
+    return (hal_get_timing_mode() != HAL_TIMING_MODE_BC) ? 1 : 0;
 }
 

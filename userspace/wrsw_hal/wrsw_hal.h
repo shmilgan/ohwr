@@ -7,16 +7,12 @@
 
 typedef void (*hal_cleanup_callback_t)();
 
-#define HAL_TIMING_MODE_GRAND_MASTER 0
-#define HAL_TIMING_MODE_FREE_MASTER 1
-#define HAL_TIMING_MODE_BC 2
-
 #define PORT_BUSY 1
 #define PORT_OK 0
 #define PORT_ERROR -1
 
-#define DEFAULT_T2_PHASE_TRANS 6000
-#define DEFAULT_T4_PHASE_TRANS 6000
+#define DEFAULT_T2_PHASE_TRANS 0
+#define DEFAULT_T4_PHASE_TRANS 0
 #define REF_CLOCK_PERIOD_PS 16000
 
 
