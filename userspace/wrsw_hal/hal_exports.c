@@ -99,9 +99,8 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
    delay calculation. */
 
     case HEXP_PPSG_CMD_POLL:
-			busy = shw_pps_gen_busy();
-//  		TRACE(TRACE_INFO, "ppsg_busy: %d\n",busy);
-	    return busy ? 0 : 1; /* no more dmpll shifter to check */
+			busy = shw_pps_gen_busy() || hal_phase_shifter_busy();
+	    return busy ? 0 : 1;
     }
   return -1; /* fixme: real error code */
 }
