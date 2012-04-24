@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Miguel Baizan <miguel.baizan@integrasys-sa.com>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Service
+# Description: The Filtering Database contains Static Filtering Entries
+# Goal: Verify that the Filtering Database of the DUT contains Static
+# Filtering Entries.
+
+echo ""
+echo "----------------------------------------------------------------"
+echo "BFS.8 - The Filtering Database contains Static Filtering Entries"
+echo "----------------------------------------------------------------"
+
+
+# Check that at least one object is returned from the static unicast or
+# multicast tables
+echo "# \033[22;33mCheck!\033[39m: at least one entry should be returned"
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeStaticUnicastTable
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeStaticMulticastTable

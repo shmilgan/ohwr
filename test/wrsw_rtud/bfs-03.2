@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Alvaro Sanchez <alvaro.sanchez@integrasys-sa.com>
+#         Miguel Baizan <miguel.baizan@integrasys-sa.com>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Service
+# Description: Creation and update of Dynamic Filtering Entries
+# Goal: Verify that the learning process updates a Dynamic Filtering
+# Entry in the Filtering Database upon reception of an unicast ethernet frame
+# from an station with a MAC address that is currently stored at the Filtering
+# Database.
+
+echo ""
+echo "------------------------------------------"
+echo "BFS.3.2 - Update Dynamic Filtering Entries"
+echo "------------------------------------------"
+
+MAC=22:0:10:0:0:32
+
+swflood ./cfg/bfs-3.2.1.cfg > /dev/null 2>&1
+
+# Find the learned address in the Filtering Database
+echo "# Find the learned address: mac=$MAC"
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeTpFdbTable | grep -i -w $MAC
+
+swflood ./cfg/bfs-3.2.2.cfg > /dev/null 2>&1
+
+# Find the learned address in the Filtering Database, which should
+# have been updated.
+echo "# Find the learned address: mac=$MAC"
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeTpFdbTable | grep -i -w $MAC

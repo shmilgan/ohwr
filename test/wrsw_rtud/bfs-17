@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Alvaro Sanchez <alvaro.sanchez@integrasys-sa.com>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Service
+# Description: Age Out Dynamic Filtering Entries
+# Goal: Verify that the DUT ages out the Dynamic Filtering Entries that
+# have not been updated in the Filtering Database when the aging timer for
+# those entries expires
+
+echo ""
+echo "------------------------------------------"
+echo "BFS.17 - Age Out Dynamic Filtering Entries"
+echo "------------------------------------------"
+
+echo "# Set aging time to 10 seconds"
+snmpset $SNMPSET_FLAGS iso.3.111.2.802.1.1.4.1.2.1.1.5.1.0 i 10
+
+swflood ./cfg/bfs-17.cfg > /dev/null 2>&1

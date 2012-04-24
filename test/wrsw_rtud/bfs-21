@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Juan Luis Manas <juan.manas@integrasys.es>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Service
+# Description: Verify initial content of Filtering Database
+# Goal: Verify that the filtering database is initialized with a static
+# filtering entry for each of the reserved multicast addresses which can not be
+# forwarded.
+
+echo
+echo "----------------------------------------------------"
+echo "BFS-21. Verify initial content of Filtering Database"
+echo "----------------------------------------------------"
+
+# 1. The list of static multicast entries is read by management from the DUT
+echo "# Check existing static multicast entries for reserved MAC addresses"
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeStaticMulticastTable \
+    | egrep -i '1:80:C2:0:0:[A-F0-9]{1,2}'
+
+# 2. Frames are sent cotaining as destination the reserved MAC addresses
+swflood ./cfg/bfs-21.cfg > /dev/null 2>&1
+
+# 3. The list of static unicast entries is read by management from the DUT
+echo "# Check existing static unicast entries for switch interfaces"
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeStaticUnicastTable \
+    | egrep -i '2:4A:BC:0:BE:[A-F0-9]{1,2}'

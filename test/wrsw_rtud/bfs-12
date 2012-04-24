@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Juan Luis Manas <juan.manas@integrasys.es>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Service
+# Description: Create static filtering entry for broadcast MAC address
+# Goal: Verify that a static filtering entry can be created for the broadcast
+# MAC address so that broadcast frames received by the switch on one port are
+# relayed on all the other switch ports.
+
+echo
+echo "----------------------------------------------------------------"
+echo "BFS-12.  Create static filtering entry for broadcast MAC address"
+echo "----------------------------------------------------------------"
+
+# 1. A static filtering entry is created for broadcast MAC address at RTU startup
+echo "# Find static broadcast entry mac=FF:FF:FF:FF:FF:FF in filtering database"
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeStaticMulticastTable | grep -i "FF:FF:FF:FF:FF:FF"
+
+if [ $? -ne 0 ];
+    then echo "Not found"
+fi
+
+# 2. A frame with destination MAC address FF:FF:FF:FF:FF:FF is sent from eth0
+swflood ./cfg/bfs-12.cfg > /dev/null 2>&1

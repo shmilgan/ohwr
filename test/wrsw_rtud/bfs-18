@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Alvaro Sanchez <alvaro.sanchez@integrasys-sa.com>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Service
+# Description: Dynamic Filtering Entries not duplicated
+# Goal: Verify that the DUT does not create more than one Dynamic
+# Filtering Entry in the Filtering Data Base for de same MAC and update it to
+# the last source address.
+
+echo ""
+echo "-------------------------------------------------"
+echo "BFS.18 - Dynamic Filtering Entries not duplicated"
+echo "-------------------------------------------------"
+
+swflood ./cfg/bfs-18.cfg > /dev/null 2>&1

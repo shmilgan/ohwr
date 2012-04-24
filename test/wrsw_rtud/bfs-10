@@ -1,0 +1,61 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Juan Luis Manas <juan.manas@integrasys.es>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Service
+# Description: Create, modify and delete a static filtering entry by management
+# Goal: Verify that it is possible to create, modify and delete static filtering
+# entries that state the forwarding and filtering rules for given MAC addresses
+
+echo
+echo "------------------------------------------------------------------------"
+echo "BFS-10. Create, modify and delete a static filtering entry by management"
+echo "------------------------------------------------------------------------"
+
+MAC=22:0:10:0:A:A
+MAC_DEC=34.0.16.0.10.10
+
+echo "# Create static filtering entry: mac=$MAC port=DP0"
+snmpset $SNMPSET_FLAGS \
+    ieee8021QBridgeStaticUnicastRowStatus.1.$VLAN.$MAC_DEC.0                \
+        i $RS_CREATEANDGO                                                   \
+    ieee8021QBridgeStaticUnicastStaticEgressPorts.1.$VLAN.$MAC_DEC.0        \
+         x 0000010000000000000000000000000000000000000000000000000000000000 \
+    ieee8021QBridgeStaticUnicastForbiddenEgressPorts.1.$VLAN.$MAC_DEC.0     \
+        x 0101000101010101010101010101010101010101010101010101010101010101  \
+    ieee8021QBridgeStaticUnicastStorageType.1.$VLAN.$MAC_DEC.0              \
+        i 2                                                                 \
+    > /dev/null 2>&1
+
+echo "# Find static filtering entry: mac=$MAC"
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeStaticUnicastTable | grep -i -w $MAC
+
+echo "# Update static filtering entry: mac=$MAC port=UP1"
+snmpset $SNMPSET_FLAGS \
+    ieee8021QBridgeStaticUnicastStaticEgressPorts.1.$VLAN.$MAC_DEC.0       \
+        x 0001000000000000000000000000000000000000000000000000000000000000 \
+    ieee8021QBridgeStaticUnicastForbiddenEgressPorts.1.$VLAN.$MAC_DEC.0    \
+        x 0100010101010101010101010101010101010101010101010101010101010101 \
+    > /dev/null 2>&1
+
+echo "# Find static filtering entry: mac=$MAC"
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeStaticUnicastTable | grep -i -w $MAC
+
+echo "# Delete static filtering entry: mac=$MAC"
+snmpset $SNMPSET_FLAGS \
+    ieee8021QBridgeStaticUnicastRowStatus.1.$VLAN.$MAC_DEC.0 i $RS_DESTROY  \
+    > /dev/null 2>&1
+
+echo "# Check that no entry with mac=$MAC exists"
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeStaticUnicastTable | grep -i -w $MAC
+
+if [ $? -ne 0 ];
+    then echo "\033[22;32msuccess\033[39m"
+else
+    echo "\033[22;31mfailed\033[39m"
+fi

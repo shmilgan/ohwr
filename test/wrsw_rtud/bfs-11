@@ -1,0 +1,122 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Juan Luis Manas <juan.manas@integrasys.es>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Service
+# Description: Create static filtering entry for unicast and group MAC addresses
+# Goal: Verify that frames are forwarded, filtered or dynamically learned
+# according to the egress ports and forbidden ports defined in the static
+# unicast and/or multicast entries.
+
+echo
+echo "-------------------------------------------------------------"
+echo "BFS-11. Create static filtering entry for unicast MAC address"
+echo "-------------------------------------------------------------"
+
+# A. Unicast MAC entry
+
+MAC=22:0:10:0:B:B
+MAC_DEC=34.0.16.0.11.11
+
+# 1. A static filtering entry is created by management for unicast MAC address
+# 22:00:10:00:0B:0B (34.0.16.0.11.11 dec) specifying forward on port DP0.
+echo "# Create static unicast entry: mac=$MAC port=DP0"
+snmpset $SNMPSET_FLAGS \
+    ieee8021QBridgeStaticUnicastRowStatus.1.$VLAN.$MAC_DEC.0                \
+        i $RS_CREATEANDGO                                                   \
+    ieee8021QBridgeStaticUnicastStaticEgressPorts.1.$VLAN.$MAC_DEC.0        \
+        x 0000010000000000000000000000000000000000000000000000000000000000  \
+    ieee8021QBridgeStaticUnicastForbiddenEgressPorts.1.$VLAN.$MAC_DEC.0     \
+        x 0101000101010101010101010101010101010101010101010101010101010101  \
+    ieee8021QBridgeStaticUnicastStorageType.1.$VLAN.$MAC_DEC.0              \
+        i 2                                                                 \
+    > /dev/null 2>&1
+
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeStaticUnicastTable | grep -i -w $MAC
+
+# 2. A frame with destination MAC address 22:00:10:00:0B:0B is sent from port
+# eth0 at the test station.
+swflood ./cfg/bfs-11.1.cfg > /dev/null 2>&1
+
+# 3. The static filtering entry defined at step 1 is modified by management to
+# filter traffic for MAC address 00:11:22:33:44:55 on port DP0 and forward it
+# instead through port UP1.
+echo "# Update static unicast entry: mac=$MAC port=UP1"
+snmpset $SNMPSET_FLAGS \
+    ieee8021QBridgeStaticUnicastStaticEgressPorts.1.$VLAN.$MAC_DEC.0        \
+        x 0001000000000000000000000000000000000000000000000000000000000000  \
+    ieee8021QBridgeStaticUnicastForbiddenEgressPorts.1.$VLAN.$MAC_DEC.0     \
+        x 0100010101010101010101010101010101010101010101010101010101010101  \
+    > /dev/null 2>&1
+
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeStaticUnicastTable | grep -i -w $MAC
+
+# 4. Step 2 is repeated
+swflood ./cfg/bfs-11.2.cfg > /dev/null 2>&1
+
+# 5. The static filtering entry defined at step 1 is deleted by management.
+echo "# Delete static unicast entry: mac=$MAC port=DP0"
+snmpset $SNMPSET_FLAGS \
+    ieee8021QBridgeStaticUnicastRowStatus.1.$VLAN.$MAC_DEC.0 i $RS_DESTROY \
+    > /dev/null 2>&1
+
+# 6. Step 2 is repeated
+swflood ./cfg/bfs-11.3.cfg > /dev/null 2>&1
+
+
+echo
+echo "----------------------------------------------------"
+echo " Create static filtering entry for group MAC address"
+echo "----------------------------------------------------"
+
+MAC=21:0:10:0:B:B
+MAC_DEC=33.0.16.0.11.11
+
+# B. Multicast MAC entry
+
+# 1. A static filtering entry is created by management for multicast MAC address
+# 21:00:10:00:0B:0B (33.0.16.0.11.11 dec) specifying forward on ports UP1 and DP0.
+echo "# Create static multicast entry: mac=$MAC ports=UP1, DP0"
+snmpset $SNMPSET_FLAGS \
+    ieee8021QBridgeStaticMulticastRowStatus.1.$VLAN.$MAC_DEC.0             \
+        i $RS_CREATEANDGO                                                  \
+    ieee8021QBridgeStaticMulticastStaticEgressPorts.1.$VLAN.$MAC_DEC.0     \
+        x 0001010000000000000000000000000000000000000000000000000000000000 \
+    ieee8021QBridgeStaticMulticastForbiddenEgressPorts.1.$VLAN.$MAC_DEC.0  \
+        x 0100000101010101010101010101010101010101010101010101010101010101 \
+    ieee8021QBridgeStaticMulticastStorageType.1.$VLAN.$MAC_DEC.0           \
+        i 2                                                                \
+    > /dev/null 2>&1
+
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeStaticMulticastTable | grep -i -w $MAC
+
+# 2. A frame with destination MAC address 21:00:10:00:0B:0B is sent from port
+# eth0 at the test station.
+swflood ./cfg/bfs-11.4.cfg > /dev/null 2>&1
+
+# 3. The static filtering entry defined at step 1 is modified by management to
+# filter traffic for 21:00:10:00:0B:0B on ports UP1 and DP0
+echo "# Update static multicast entry: mac=$MAC port=none"
+snmpset $SNMPSET_FLAGS \
+    ieee8021QBridgeStaticMulticastStaticEgressPorts.1.$VLAN.$MAC_DEC.0      \
+        x 0000000000000000000000000000000000000000000000000000000000000000  \
+    ieee8021QBridgeStaticMulticastForbiddenEgressPorts.1.$VLAN.$MAC_DEC.0   \
+        x 0101010101010101010101010101010101010101010101010101010101010101  \
+    > /dev/null 2>&1
+
+snmptable $SNMPTAB_FLAGS \
+    IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeStaticMulticastTable | grep -i -w $MAC
+
+# 2. A frame with destination MAC address 21:00:10:00:0B:0B is sent from port
+# eth0 at the test station.
+swflood ./cfg/bfs-11.5.cfg > /dev/null 2>&1
+
+# reset
+snmpset $SNMPSET_FLAGS \
+    ieee8021QBridgeStaticMulticastRowStatus.1.$VLAN.$MAC_DEC.0 i $RS_DESTROY \
+    > /dev/null 2>&1

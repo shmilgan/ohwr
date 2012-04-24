@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Alvaro Sanchez <alvaro.sanchez@integrasys-sa.com>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Service
+# Description: Set the Ageing Time within the permitted range
+# Goal: Verify that the DUT may be configured to use a value of Ageing
+# Time within the permitted range which is between 10 and 1000000 seconds
+
+echo ""
+echo "-------------------------------------------------------"
+echo "BFS.20 - Set the Ageing Time within the permitted range"
+echo "-------------------------------------------------------"
+
+echo "# Set aging time to 9 seconds (should not be allowed)"
+snmpset $SNMPSET_FLAGS iso.3.111.2.802.1.1.4.1.2.1.1.5.1.0 i 9
+
+echo "# Set aging time to 1000001 seconds (should not be allowed)"
+snmpset $SNMPSET_FLAGS iso.3.111.2.802.1.1.4.1.2.1.1.5.1.0 i 1000001
+
+echo "# Set aging time to 10 seconds"
+snmpset $SNMPSET_FLAGS iso.3.111.2.802.1.1.4.1.2.1.1.5.1.0 i 10
+
+echo "# Set aging time to 1000000 seconds"
+snmpset $SNMPSET_FLAGS iso.3.111.2.802.1.1.4.1.2.1.1.5.1.0 i 1000000

@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Alvaro Sanchez <alvaro.sanchez@integrasys-sa.com>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Service
+# Description: Set the default Ageing Time
+# Goal: Verify that the DUT may be configured to use the recommended
+# default Ageing Time, which is 300 seconds.
+
+echo ""
+echo "------------------------------------"
+echo "BFS.19 - Set the default Ageing Time"
+echo "------------------------------------"
+
+echo "# Set aging time to 300 seconds"
+snmpset $SNMPSET_FLAGS iso.3.111.2.802.1.1.4.1.2.1.1.5.1.0 i 300

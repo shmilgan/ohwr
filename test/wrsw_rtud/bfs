@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Juan Luis Manas <juan.manas@integrasys.es>
+#         Alvaro Sanchez <alvaro.sanchez@integrasys-sa.com>
+#         Miguel Baizan <miguel.baizan@integrasys-sa.com>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Services Tests.
+# Reference: IEEE 802.1Q-2005 standard, Annex A (PICS proforma).
+
+WRS_BASE_DIR=$HOME/wrdev
+SWFLOOD_DIR=$WRS_BASE_DIR/wr-switch-sw/test/swflood
+MIBDIRS=$WRS_BASE_DIR/build/buildroot-2009.11/output/build/net-snmp-5.5/mibs:$WRS_BASE_DIR/wr-switch-sw/userspace/wrsw_snmpd/mibs
+MIBS=all
+export MIBDIRS
+export MIBS
+export PATH=$PATH:$SWFLOOD_DIR
+
+WRS_IP=192.168.1.9
+SNMP_USER=authPrivUser
+SNMP_PASSWD=password
+SNMP_AUTH=authNoPriv
+SNMP_VER=3
+
+SNMPSET_FLAGS="-v $SNMP_VER -u $SNMP_USER -a MD5 -A $SNMP_PASSWD -l $SNMP_AUTH -Ir $WRS_IP"
+SNMPTAB_FLAGS="-v $SNMP_VER -u $SNMP_USER -a MD5 -A $SNMP_PASSWD -l $SNMP_AUTH -Ci -CH -OX $WRS_IP"
+export SNMPSET_FLAGS
+export SNMPTAB_FLAGS
+
+RS_ACTIVE=1
+RS_NOTINSERVICE=2
+RS_NOTREADY=3
+RS_CREATEANDGO=4
+RS_CREATEANDWAIT=5
+RS_DESTROY=6
+export RS_CREATEANDGO
+export RS_DESTROY
+
+# Default VLAN Identifier
+VLAN=0
+export VLAN
+
+# BFS scripts
+./bfs-3.1
+./bfs-3.2
+./bfs-6
+./bfs-8
+./bfs-9
+./bfs-10
+./bfs-11
+./bfs-12
+./bfs-15
+./bfs-17
+./bfs-18
+./bfs-19
+./bfs-20
+./bfs-21
+
+#for test in bfs-*
+#    do ./$test
+#done

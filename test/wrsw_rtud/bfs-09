@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Miguel Baizan <miguel.baizan@integrasys-sa.com>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Service
+# Description: Static Filtering Entries not aged out
+# Goal: Verify that the Static Filtering Entries contained in the
+# Filtering Database of the DUT are not affected by the aging process.
+
+echo ""
+echo "---------------------------------------------"
+echo "BFS.9 - Static Filtering Entries not aged out"
+echo "---------------------------------------------"
+
+MAC=22:0:11:0:0:9
+MAC_DEC=34.0.17.0.0.9
+
+echo "# Set aging time to 10 seconds"
+snmpset $SNMPSET_FLAGS iso.3.111.2.802.1.1.4.1.2.1.1.5.1.0 i 10
+
+echo "# Create static filtering entry mac=$MAC port=UP1"
+snmpset $SNMPSET_FLAGS \
+    iso.3.111.2.802.1.1.4.1.3.1.1.8.1.$VLAN.$MAC_DEC.0                     \
+        i $RS_CREATEANDGO                                                  \
+    iso.3.111.2.802.1.1.4.1.3.1.1.5.1.$VLAN.$MAC_DEC.0                     \
+        x 0001000000000000000000000000000000000000000000000000000000000000 \
+    iso.3.111.2.802.1.1.4.1.3.1.1.6.1.$VLAN.$MAC_DEC.0                     \
+        x 0100010101010101010101010101010101010101010101010101010101010101 \
+    iso.3.111.2.802.1.1.4.1.3.1.1.7.1.$VLAN.$MAC_DEC.0                     \
+        i 2                                                                \
+    > /dev/null 2>&1
+
+swflood ./cfg/bfs-9.cfg > /dev/null 2>&1

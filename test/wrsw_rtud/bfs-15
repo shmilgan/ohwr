@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Miguel Baizan <miguel.baizan@integrasys-sa.com>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Service
+# Description: Create Static Filtering Entry conflicting with Dynamic Filtering
+#              Entry
+# Goal: Verify that a Static Filtering Entry overwrites any previous
+# forwarding and filtering information dynamically learned by the switch.
+
+echo ""
+echo "---------------------------------------------------------------"
+echo "BFS.15 - Create Static Filtering Entry conflicting with Dynamic"
+echo "         Filtering Entry"
+echo "---------------------------------------------------------------"
+
+MAC=22:0:10:0:0:15
+MAC_DEC=34.0.16.0.0.21
+
+swflood ./cfg/bfs-15.1.cfg > /dev/null 2>&1
+
+echo "# Create Static Filtering Entry mac=$MAC port=DP0"
+snmpset $SNMPSET_FLAGS \
+    iso.3.111.2.802.1.1.4.1.3.1.1.8.1.$VLAN.$MAC_DEC.0                     \
+        i $RS_CREATEANDGO                                                  \
+    iso.3.111.2.802.1.1.4.1.3.1.1.5.1.$VLAN.$MAC_DEC.0                     \
+        x 0000010000000000000000000000000000000000000000000000000000000000 \
+    iso.3.111.2.802.1.1.4.1.3.1.1.6.1.$VLAN.$MAC_DEC.0                     \
+        x 0101000101010101010101010101010101010101010101010101010101010101 \
+    iso.3.111.2.802.1.1.4.1.3.1.1.7.1.$VLAN.$MAC_DEC.0                     \
+        i 2                                                                \
+    > /dev/null 2>&1
+
+swflood ./cfg/bfs-15.2.cfg > /dev/null 2>&1
