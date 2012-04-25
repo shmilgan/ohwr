@@ -23,6 +23,7 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 {
 	int rval;
 
+	TRACE(TRACE_INFO, "halexp_lock_cmd: cmd=%d port=%s tics =%lld\n", command, port_name, shw_get_tics());
 
 	switch(command)
 	{
@@ -101,6 +102,10 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
     case HEXP_PPSG_CMD_POLL:
 			busy = shw_pps_gen_busy() || hal_phase_shifter_busy();
 	    return busy ? 0 : 1;
+
+    case HEXP_PPSG_CMD_SET_VALID:
+        return shw_pps_gen_enable_output(params->pps_valid);
+
     }
   return -1; /* fixme: real error code */
 }

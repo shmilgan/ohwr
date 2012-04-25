@@ -37,6 +37,7 @@
 #define HEXP_PPSG_CMD_ADJUST_UTC 2
 #define HEXP_PPSG_CMD_ADJUST_NSEC 3
 #define HEXP_PPSG_CMD_POLL 4
+#define HEXP_PPSG_CMD_SET_VALID 5
 
 #define HEXP_ON 1
 #define HEXP_OFF 0
@@ -64,6 +65,8 @@
 typedef struct {
 
   char port_name[16];
+
+	int pps_valid;
 
   uint32_t current_phase_shift;
   int32_t adjust_phase_shift;
