@@ -154,6 +154,8 @@ int hal_shutdown()
 	return 0;
 }
 
+void hal_deamonize();
+
 /* Main initialization function */
 int hal_init()
 {
@@ -188,11 +190,14 @@ int hal_init()
 
 	assert_init(hal_init_timing());
 
+/* Initialize port FSMs - see hal_ports.c */
+	assert_init(hal_init_ports());
+
 /* Create a WRIPC server for HAL public API */
 	assert_init(hal_init_wripc());
 
-/* Initialize port FSMs - see hal_ports.c */
-	assert_init(hal_init_ports());
+	if(daemon_mode)
+		hal_deamonize();
 
 	return 0;
 }
@@ -294,6 +299,7 @@ void hal_parse_cmdline(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 
+	trace_log_file("/hal_log");
 /* Prevent from running HAL twice - this will likely freeze the system */
 	if(hal_check_running())
 	{
@@ -305,8 +311,6 @@ int main(int argc, char *argv[])
 
 	hal_init();
 
-	if(daemon_mode)
-		hal_deamonize();
 
 	for(;;) hal_update();
 	hal_shutdown();
