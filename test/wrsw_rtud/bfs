@@ -42,21 +42,6 @@ VLAN=0
 export VLAN
 
 # BFS scripts
-./bfs-3.1
-./bfs-3.2
-./bfs-6
-./bfs-8
-./bfs-9
-./bfs-10
-./bfs-11
-./bfs-12
-./bfs-15
-./bfs-17
-./bfs-18
-./bfs-19
-./bfs-20
-./bfs-21
-
-#for test in bfs-*
-#    do ./$test
-#done
+for test in bfs-*
+    do ./$test
+done
