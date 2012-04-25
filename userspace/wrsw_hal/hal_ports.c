@@ -31,7 +31,6 @@
 #include "hal_exports.h"
 #include "driver_stuff.h"
 
-#define MAX_PORTS 64
 
 /* Port modes - WR Uplink/Downlink/Non-WR-at-all */
 #define HAL_PORT_MODE_WR_UPLINK 1
@@ -104,7 +103,7 @@ typedef struct {
 
 
 /* Port table */
-static hal_port_state_t ports[MAX_PORTS];
+static hal_port_state_t ports[HAL_MAX_PORTS];
 
 /* An fd of always opened raw sockets for ioctl()-ing Ethernet devices */
 static int fd_raw;
@@ -461,6 +460,7 @@ static void port_fsm(hal_port_state_t *p)
 		p->calib.tx_calibrated = 1;
 		p->calib.rx_calibrated = 1;
 		/* FIXME: use proper register names */
+		TRACE(TRACE_INFO, "Bitslide: %d", ((pcs_readl(p, 16) >> 4) & 0x1f));
 		p->calib.delta_rx_phy = p->calib.phy_rx_min + ((pcs_readl(p, 16) >> 4) & 0x1f) * 800;
 		p->calib.delta_tx_phy = p->calib.phy_tx_min;
 
@@ -482,7 +482,8 @@ static void port_fsm(hal_port_state_t *p)
 		{
 		   	p->phase_val = rts_state.channels[p->hw_index].phase_loopback;
         p->phase_val_valid = rts_state.channels[p->hw_index].flags & CHAN_PMEAS_READY ? 1 : 0;
-				p->locked = hal_port_check_lock(p->name);
+				//hal_port_check_lock(p->name);
+				//p->locked = 
 		}
 
 		break;
@@ -561,7 +562,7 @@ static void poll_sfps()
 		if(mask != old_mask)
 		{
 			int i, hw_index;
-			for (i=0; i<MAX_PORTS; i++)
+			for (i=0; i<HAL_MAX_PORTS; i++)
 			{
 				hw_index = ports[i].hw_index;
 
@@ -588,7 +589,7 @@ void hal_update_ports()
 	poll_rts_state();
 	poll_sfps();
 
-	for(i=0; i<MAX_PORTS;i++)
+	for(i=0; i<HAL_MAX_PORTS;i++)
 		if(ports[i].in_use)
 			port_fsm(&ports[i]);
 }
@@ -597,7 +598,7 @@ void hal_update_ports()
 static hal_port_state_t *lookup_port(const char *name)
 {
 	int i;
-	for(i = 0; i< MAX_PORTS;i++)
+	for(i = 0; i< HAL_MAX_PORTS;i++)
 		if(ports[i].in_use && !strcmp(name, ports[i].name))
 			return &ports[i];
 
@@ -646,6 +647,8 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 {
 	hal_port_state_t *p = lookup_port(port_name);
 
+	TRACE(TRACE_INFO, "GetPorttState %s\n", port_name);
+
   if(!p)
 			return -1;
 
@@ -683,7 +686,7 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 static int any_port_calibrating()
 {
 	int i;
-	for(i=0; i<MAX_PORTS;i++)
+	for(i=0; i<HAL_MAX_PORTS;i++)
 		if(ports[i].state == HAL_PORT_STATE_CALIBRATION && ports[i].in_use)
 			return 1;
 
@@ -700,7 +703,7 @@ int halexp_query_ports(hexp_port_list_t *list)
 	int i;
 	int n = 0;
 
-	for(i=0; i<MAX_PORTS;i++)
+	for(i=0; i<HAL_MAX_PORTS;i++)
 	{
 		if(ports[i].in_use)
 			strcpy(list->port_names[n++], ports[i].name);
