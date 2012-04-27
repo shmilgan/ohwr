@@ -9,9 +9,9 @@ STRIP           = $(CROSS_COMPILE)strip
 OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
-OBJS = rtu_stat.o
+OBJS = rtu_stat.o ../ptp-noposix/libptpnetif/hal_client.o
 
-CFLAGS =  -O2 -I../include -DDEBUG -I$(LINUX)/include -I../libptpnetif \
+CFLAGS =  -O2 -I../include -DDEBUG -I$(LINUX)/include -I../ptp-noposix/libptpnetif \
 	-I../wrsw_hal -I../wrsw_rtud -I../mini-rpc -g 
 
 LDFLAGS =  -L$(WR_INSTALL_ROOT)/lib -L../mini-rpc -lminipc

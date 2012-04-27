@@ -9,7 +9,7 @@
 
 
 static struct minipc_ch *rtud_ch;
-
+static hexp_port_list_t plist;
 void rtudexp_get_fd_list(rtudexp_fd_list_t *list, int start_from)
 {
 	minipc_call(rtud_ch, 200, &rtud_export_get_fd_list, list,
@@ -61,7 +61,7 @@ char *decode_ports(int dpm)
 	static char str[80],str2[20];
 	int i;
 
-	if((dpm & 0x7ff) == 0x7ff)
+	if((dpm & ((1<<plist.num_physical_ports)-1)) == ((1<<plist.num_physical_ports)-1))
 	{
 		strcpy(str,"ALL");
 		return str;		
@@ -76,7 +76,7 @@ char *decode_ports(int dpm)
 		if(dpm&(1<<i)) strcat(str,str2);
 	}	
 
-	if(dpm & (1<<10))
+	if(dpm & (1<<plist.num_physical_ports))
 		strcat(str, "CPU");
 	
 	return str;
@@ -87,17 +87,26 @@ char *decode_ports(int dpm)
 main()
 {
 	rtudexp_fd_entry_t fd_list[RTU_MAX_ENTRIES];
+
 	int n_entries;
 	int i;
 	
+	if(	halexp_client_init() < 0)
+	{
+		printf("Can't conenct to HAL mini-rpc server\n");
+		return -1;
+	}
+
+
 	rtud_ch = minipc_client_create("rtud", 0);
 	
 	if(!rtud_ch)
 	{
-		printf("Can't conenct to RTUd wripc server\n");
-		return 0;
+		printf("Can't conenct to RTUd mini-rpc server\n");
+		return -1;
 	}
 	
+	halexp_query_ports(&plist);
 	fetch_rtu_fd(fd_list, &n_entries);
 
   qsort(fd_list, n_entries,  sizeof(rtudexp_fd_entry_t), cmp_entries);
@@ -109,7 +118,7 @@ main()
 
 	for(i=0;i<n_entries;i++)
 	{
-		printf("%-25s %-22s %s\n", mac_to_string(fd_list[i].mac), decode_ports(fd_list[i].dpm), fd_list[i].dynamic ? "DYNAMIC":"STATIC");
+		printf("%-25s %-22s %s (mask %x hash %x)\n", mac_to_string(fd_list[i].mac), decode_ports(fd_list[i].dpm), fd_list[i].dynamic ? "DYNAMIC":"STATIC", fd_list[i].dpm, fd_list[i].hash);
 	}
 	printf("\n");	
 }
