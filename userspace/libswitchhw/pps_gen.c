@@ -60,7 +60,18 @@ int shw_pps_gen_adjust_utc(int64_t how_much)
 /* Returns 1 when the adjustment operation is not yet finished */
 int shw_pps_gen_busy()
 {
-  return _fpga_readl(FPGA_BASE_PPS_GEN + PPSG_REG_CR) & PPSG_CR_CNT_ADJ ? 0 : 1;
+	uint32_t cr = _fpga_readl(FPGA_BASE_PPS_GEN + PPSG_REG_CR);
+  return cr& PPSG_CR_CNT_ADJ ? 0 : 1;
 }
 
-                
+/* Enables/disables PPS output */
+int shw_pps_gen_enable_output(int enable)
+{
+    uint32_t escr = _fpga_readl(FPGA_BASE_PPS_GEN + PPSG_REG_ESCR);
+    if(enable)
+        _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ESCR, escr | PPSG_ESCR_PPS_VALID)
+    else
+        _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ESCR, escr & ~PPSG_ESCR_PPS_VALID);
+
+    return 0;
+}
