@@ -14,48 +14,13 @@
 #include <sys/time.h>
 
 #include "minipc.h"
+
+#define RTIPC_EXPORT_STRUCTURES
 #include "rt_ipc.h"
 
 #define RTS_MAILBOX_ADDR "mem:10007000"
 
-#define RTS_TIMEOUT 100 /* ms */
-
-static const struct minipc_pd rtipc_rts_get_state_struct = {
-	.name = "aaaa",
-	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT, struct rts_pll_state),
-	.args = {
-		MINIPC_ARG_END
-	},
-};
-
-static const struct minipc_pd rtipc_rts_set_mode_struct = {
-	.name = "bbbb",
-	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
-	.args = {
-	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
-	    MINIPC_ARG_END
-	},
-};
-
-static const struct minipc_pd rtipc_rts_lock_channel_struct = {
-	.name = "cccc",
-	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
-	.args = {
-	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
-	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
-	    MINIPC_ARG_END
-	},
-};
-
-static const struct minipc_pd rtipc_rts_adjust_phase_struct = {
-	.name = "dddd",
-	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
-	.args = {
-	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
-	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
-	    MINIPC_ARG_END
-	},
-};
+#define RTS_TIMEOUT 200 /* ms */
 
 static struct minipc_ch *client;
 
@@ -128,6 +93,17 @@ int rts_lock_channel(int channel, int priority)
 {
     int rval;
 		int ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_lock_channel_struct, &rval, channel,priority);
+
+    if(ret < 0)
+        return ret;
+
+    return rval;
+}
+
+int rts_enable_ptracker(int channel, int enable)
+{
+    int rval;
+		int ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_enable_ptracker_struct, &rval, channel, enable);
 
     if(ret < 0)
         return ret;

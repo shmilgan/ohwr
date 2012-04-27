@@ -27,6 +27,10 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 
 	switch(command)
 	{
+		case HEXP_LOCK_CMD_ENABLE_TRACKING:
+			return hal_enable_tracking(port_name);
+			
+
 /* Start locking - i.e. tell the HAL locking state machine to use the port (port_name) as the source of the reference
    frequency. (priority) parameter allows to distinguish between various reference sources and establish
    a switchover order. For example when  wr0, wr1, wr2 have respectively priorities (1, 0, 2),

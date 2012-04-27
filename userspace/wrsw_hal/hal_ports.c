@@ -427,6 +427,7 @@ static int handle_link_down(hal_port_state_t *p, int link_up)
 		p->state = HAL_PORT_STATE_LINK_DOWN;
 		reset_port_state(p);
 
+		rts_enable_ptracker(p->hw_index, 0);
 		TRACE(TRACE_INFO, "%s: link down", p->name);
 
 		return 1;
@@ -605,6 +606,15 @@ static hal_port_state_t *lookup_port(const char *name)
 	return NULL;
 }
 
+int hal_enable_tracking(const char  *port_name)
+{
+	hal_port_state_t *p = lookup_port(port_name);
+
+	if(!p) return PORT_ERROR;
+
+  return rts_enable_ptracker(p->hw_index, 1) < 0 ? PORT_ERROR : PORT_OK;
+}
+
 /* Triggers the locking state machine, called by the PTPd during the WR link setup phase. */
 int hal_port_start_lock(const char  *port_name, int priority)
 {
@@ -647,7 +657,7 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 {
 	hal_port_state_t *p = lookup_port(port_name);
 
-	TRACE(TRACE_INFO, "GetPorttState %s\n", port_name);
+//	TRACE(TRACE_INFO, "GetPortState %s [lup %x]\n", port_name, p);
 
   if(!p)
 			return -1;
@@ -704,10 +714,8 @@ int halexp_query_ports(hexp_port_list_t *list)
 	int n = 0;
 
 	for(i=0; i<HAL_MAX_PORTS;i++)
-	{
 		if(ports[i].in_use)
 			strcpy(list->port_names[n++], ports[i].name);
-	}
 
 	list->num_physical_ports = num_physical_ports;
 	list->num_ports = n;
