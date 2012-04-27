@@ -137,6 +137,7 @@ struct filtering_entry {
                                   // (2 words)
 
     int dynamic;
+		uint16_t hash;
 };
 
 /**

@@ -198,6 +198,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_map, 
         hash = rtu_hash(mac, fid);
         // Check HTAB
         ent  = &rtu_htab[hash][bucket];
+        ent->hash = (hash << 2) | bucket;
         switch(htab_contains(mac, fid, &bucket, &ent)){
         case FOUND: 
             // update            

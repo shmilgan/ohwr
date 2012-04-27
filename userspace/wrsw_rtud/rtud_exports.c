@@ -65,6 +65,7 @@ int rtudexp_get_fd_list(const struct minipc_pd *pd,
 		list->list[i].spm = ent->port_mask_src;
 		list->list[i].priority = 0;
 		list->list[i].dynamic = ent->dynamic;
+		list->list[i].hash = ent->hash;
 	}
 
 	list->num_rules = i;

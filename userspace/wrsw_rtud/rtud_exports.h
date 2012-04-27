@@ -39,6 +39,7 @@ typedef struct
 		uint32_t spm;
 		uint8_t priority;
 		int dynamic;
+		uint16_t hash;
 } rtudexp_fd_entry_t;
 
 typedef struct  {
