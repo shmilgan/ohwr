@@ -72,19 +72,26 @@ static uint32_t vlan_entry_word0_w(struct vlan_table_entry *ent);
  */
 static int fd;
 
+#define HAL_CONNECT_RETRIES 10
+#define HAL_CONNECT_TIMEOUT 2000000 /* us */
+
 /**
  * \brief Initialize HW RTU memory map
  */
+
 int rtu_init(void)
 {
     int err;
 
-    if(halexp_client_init() < 0) 
+    if(halexp_client_try_connect(HAL_CONNECT_RETRIES, HAL_CONNECT_TIMEOUT) < 0) 
+    {
         TRACE(
             TRACE_FATAL,
             "The HAL is not responding... Are you sure it's running on your switch?\n"
             );
-
+				exit(-1);
+		}
+		
     // Used to 'get' RTU IRQs from kernel
 	fd = open(RTU_DEVNAME, O_RDWR);
 	if (fd < 0)
