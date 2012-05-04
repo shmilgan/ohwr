@@ -64,8 +64,8 @@ static int rtu_create_static_entries()
     uint32_t enabled_port_mask = 0;
 
 
-    // packets addressed to WR card interfaces are forwarded to NIC virtual port
-    halexp_query_ports(&plist);	
+	  // packets addressed to WR card interfaces are forwarded to NIC virtual port
+    TRACE(TRACE_INFO, "qp %d", halexp_query_ports(&plist));
 	
 		TRACE(TRACE_INFO, "Number of physical ports: %d, active ports: %d\n", plist.num_physical_ports, plist.num_ports);
 	
@@ -100,6 +100,8 @@ static int rtu_create_static_entries()
     err = rtu_fd_create_entry(ptp_mcast_mac, 0, (1 << plist.num_physical_ports), STATIC);
     if(err)
         return err;
+
+    TRACE(TRACE_INFO,"done creating static entries.");
 
     return 0;
 }
@@ -164,6 +166,7 @@ static int rtu_daemon_learning_process()
             port_map = (1 << req.port_id);
             // create or update entry at filtering database
             err = rtu_fd_create_entry(req.src, vid, port_map, DYNAMIC);
+						err= 0;
             if (err == -ENOMEM) {
                 // TODO remove oldest entries (802.1D says you MAY do it)
                 TRACE(TRACE_INFO, "filtering database full\n");
@@ -327,7 +330,7 @@ int main(int argc, char **argv)
         daemonize();
 
     // Start up aging process and auxiliary WRIPC thread
-    if ((err = pthread_create(&aging_process, NULL, rtu_daemon_aging_process, (void *) aging_res)) ||
+    if (/*(err = pthread_create(&aging_process, NULL, rtu_daemon_aging_process, (void *) aging_res)) ||*/
         (err = pthread_create(&wripc_process, NULL, rtu_daemon_wripc_process, NULL))) {
         rtu_daemon_destroy();
         return err;
