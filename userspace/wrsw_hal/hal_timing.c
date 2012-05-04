@@ -14,8 +14,8 @@
 
 static int timing_mode;
 
-#define LOCK_TIMEOUT_EXT 10000
-#define LOCK_TIMEOUT_INT 1000
+#define LOCK_TIMEOUT_EXT 60000
+#define LOCK_TIMEOUT_INT 10000
 
 int hal_init_timing()
 {
