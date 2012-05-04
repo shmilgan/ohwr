@@ -4,12 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//#include "ptpd.h"
-
 typedef struct{
 	int valid;
-	char slave_servo_state[128];
-	char sync_source[128];
+	char slave_servo_state[32];
+	char sync_source[32];
 	int tracking_enabled;
 	int64_t mu;
 	int64_t delay_ms;
@@ -22,6 +20,7 @@ typedef struct{
 	int64_t cur_offset;
 	int64_t cur_setpoint;
 	int64_t cur_skew;
+	int64_t update_count;
 }  ptpdexp_sync_state_t ;
 
 #define PTPDEXP_COMMAND_TRACKING 1
