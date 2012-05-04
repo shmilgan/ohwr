@@ -10,13 +10,13 @@ OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
 
-MON_OBJS = wr_mon.o term.o 
+MON_OBJS = wr_mon.o term.o  ../ptp-noposix/libptpnetif/hal_client.o
 
 CFLAGS += -O2 -DDEBUG -I$(LINUX)/include -I../include \
-	-I../libptpnetif -I../wrsw_hal -I../mini-rpc
+	-I../ptp-noposix/libptpnetif -I../ptp-noposix/wrsw_hal -I../mini-rpc
 
-LDFLAGS =  -L$(WR_INSTALL_ROOT)/lib -L../mini-rpc -L../libptpnetif \
-	-lptpnetif -lminipc
+LDFLAGS =  -L$(WR_INSTALL_ROOT)/lib -L../mini-rpc -L../ptp-noposix/libptpnetif \
+	 -lminipc
 
 BINARY = wr_mon
 

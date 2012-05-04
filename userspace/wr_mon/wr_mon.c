@@ -26,6 +26,7 @@ void init()
 		exit(-1);
 	}
 
+
 	term_init();
 	halexp_query_ports(&port_list);
 }
@@ -74,7 +75,7 @@ void show_servo()
 {
 	ptpdexp_sync_state_t ss;
 
-	minipc_call(ptp_ch, 200, &__rpcdef_get_sync_state, 0, &ss);
+	minipc_call(ptp_ch, 2000, &__rpcdef_get_sync_state, &ss);
 
 	term_cprintf(C_BLUE, "\n\nSynchronization status:\n\n");
 
@@ -132,11 +133,9 @@ void show_servo()
 
 	term_cprintf(C_GREY, "Skew:                      ");
 	term_cprintf(C_WHITE, "%.2f nsec\n", ss.cur_skew/1000.0);
-}
 
-void show_menu()
-{
-	term_pcprintf(30, 1, C_BLUE, "q = quit, t = toggle tracking");
+	term_cprintf(C_GREY, "Servo update counter:      ");
+	term_cprintf(C_WHITE, "%lld times\n", ss.update_count);
 }
 
 int track_onoff = 1;
@@ -144,13 +143,10 @@ int track_onoff = 1;
 void show_screen()
 {
 	term_clear();
-	term_pcprintf(1, 1, C_BLUE, "WR Switch Sync Monitor v 0.1");
+	term_pcprintf(1, 1, C_BLUE, "WR Switch Sync Monitor v 1.0 [q = quit]");
 
 	show_ports();
 	show_servo();
-	show_menu();
-
-//	handle_toggle();
 }
 
 main()
