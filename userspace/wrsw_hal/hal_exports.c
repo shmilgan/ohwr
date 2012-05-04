@@ -23,7 +23,7 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 {
 	int rval;
 
-	TRACE(TRACE_INFO, "halexp_lock_cmd: cmd=%d port=%s tics =%lld\n", command, port_name, shw_get_tics());
+//	TRACE(TRACE_INFO, "halexp_lock_cmd: cmd=%d port=%s tics =%lld\n", command, port_name, shw_get_tics());
 
 	switch(command)
 	{

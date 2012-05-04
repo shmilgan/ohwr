@@ -149,7 +149,7 @@ static int get_mac_address(const char *if_name, uint8_t *mac_addr)
 		mac_addr[2] = 0x30;
 		mac_addr[3] = ifr.ifr_hwaddr.sa_data[3];
 		mac_addr[4] = ifr.ifr_hwaddr.sa_data[4];
-		mac_addr[5] = (ifr.ifr_hwaddr.sa_data[5] & 0xc0) + (idx + 1);
+		mac_addr[5] = (ifr.ifr_hwaddr.sa_data[5] & 0xc0) + (idx + 2);
 	}
 
 	return 0;
@@ -372,7 +372,7 @@ int hal_phase_shifter_busy()
     {
         int busy = rts_state.channels[rts_state.current_ref].flags & CHAN_SHIFTING ? 1 : 0;
 
-        TRACE(TRACE_INFO, "PSBusy %d, flags %x", busy, rts_state.channels[rts_state.current_ref].flags);
+//        TRACE(TRACE_INFO, "PSBusy %d, flags %x", busy, rts_state.channels[rts_state.current_ref].flags);
         return busy;
     }
 
@@ -647,6 +647,9 @@ int hal_port_check_lock(const char  *port_name)
     if(!rts_state_valid)
         return 0;
 
+		if(rts_state.delock_count > 0)
+				return 0;
+
     return (rts_state.current_ref == p->hw_index &&
             (rts_state.flags & RTS_DMTD_LOCKED) &&
             (rts_state.flags & RTS_REF_LOCKED));
@@ -672,7 +675,7 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 	state->mode = p->mode;
 	state->up = (p->state != HAL_PORT_STATE_LINK_DOWN && p->state != HAL_PORT_STATE_DISABLED);
 
-	state->is_locked = p->lock_state == LOCK_STATE_LOCKED;
+	state->is_locked = p->locked; //lock_state == LOCK_STATE_LOCKED;
 	state->phase_val = p->phase_val;
 	state->phase_val_valid = p->phase_val_valid;
 
