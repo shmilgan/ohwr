@@ -85,6 +85,8 @@ struct rts_pll_state {
 
 	/* mode of operation (RTS_MODE_xxx) */
 	uint32_t mode;
+
+	uint32_t delock_count;
 };
 
 /* API */
