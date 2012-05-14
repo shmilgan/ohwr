@@ -1,0 +1,35 @@
+From 4a94ffdd4e78d50d24669f2646b3648bc93a51c4 Mon Sep 17 00:00:00 2001
+From: Benoit Rat <benoit@sevensols.com>
+Date: Wed, 28 Mar 2012 19:19:46 +0200
+Subject: [PATCH 06/19] leds: Correct FPGA LED problems, and add CPU LED
+ during booting
+
+---
+ board/at91sam9g45ek/at91sam9g45ek.c |   11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/board/at91sam9g45ek/at91sam9g45ek.c b/board/at91sam9g45ek/at91sam9g45ek.c
+index 8569231..83c2c29 100644
+--- a/board/at91sam9g45ek/at91sam9g45ek.c
++++ b/board/at91sam9g45ek/at91sam9g45ek.c
+@@ -80,6 +80,17 @@ void hw_init(void)
+     };
+ 
+     /*
++     * Configure LED GPIOs 
++     */
++    const struct pio_desc led_gpio[] = {
++	{"D11",   AT91C_PIN_PA(0), 0, PIO_OPENDRAIN, PIO_OUTPUT},	//Switch on D11 when booting start.
++	{"D12",   AT91C_PIN_PA(1), 1, PIO_OPENDRAIN, PIO_OUTPUT}, 	//Setup D12 such to use when the programs end loading.
++	{"DDone", AT91C_PIN_PA(2), 0, PIO_DEFAULT, PIO_INPUT}, 	//Setup FPGA LED Done in read mode
++	{"DInit", AT91C_PIN_PA(3), 0, PIO_DEFAULT, PIO_INPUT} 	//Setup FPGA LED Init in read mode
++    };
++    pio_setup(led_gpio);
++    
++    /*
+      * Disable watchdog 
+      */
+     writel(AT91C_WDTC_WDDIS, AT91C_BASE_WDTC + WDTC_WDMR);
+-- 
+1.7.9.5
+

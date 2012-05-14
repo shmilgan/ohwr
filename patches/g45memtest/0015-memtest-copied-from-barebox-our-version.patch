@@ -1,11 +1,11 @@
-From 425ef2fa1550b9e480167f8b125adb897f281798 Mon Sep 17 00:00:00 2001
+From 80b81d783772a87000356f126cb47dc429a95f3d Mon Sep 17 00:00:00 2001
 From: Alessandro Rubini <rubini@gnudd.com>
 Date: Tue, 6 Mar 2012 10:42:17 +0100
-Subject: [PATCH 4/6] memtest.c: copied from barebox (our version)
+Subject: [PATCH 15/19] memtest: copied from barebox (our version)
 
 ---
  lib/memtest.c |  355 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 355 insertions(+), 0 deletions(-)
+ 1 file changed, 355 insertions(+)
  create mode 100644 lib/memtest.c
 
 diff --git a/lib/memtest.c b/lib/memtest.c
@@ -370,5 +370,5 @@ index 0000000..d9c8b3d
 +BAREBOX_CMD_END
 +
 -- 
-1.7.7.2
+1.7.9.5
 

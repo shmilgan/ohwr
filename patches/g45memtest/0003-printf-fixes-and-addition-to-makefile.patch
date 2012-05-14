@@ -1,7 +1,7 @@
-From 3ebc7c415750ffcd7cf4241010027773609e6919 Mon Sep 17 00:00:00 2001
+From dc2e9ac1fcca99e6c4924714f26cf85a87e3259c Mon Sep 17 00:00:00 2001
 From: Alessandro Rubini <rubini@gnudd.com>
 Date: Tue, 6 Mar 2012 10:37:27 +0100
-Subject: [PATCH 3/6] printf: fixes and addition to makefile
+Subject: [PATCH 03/19] printf: fixes and addition to makefile
 
 ---
  include/pp_printf.h |    9 +++++++++
@@ -78,5 +78,5 @@ index 2a46204..8810324 100644
  #include "main.h"
  #include "dbgu.h"
 -- 
-1.7.7.2
+1.7.9.5
 
