@@ -26,43 +26,44 @@ if [ $err -eq 1 ]; then
 fi
 
 # parse command line
-DEV="/dev/ttyACM0"
 MAC=""
+DEV=""
+FLAGS=""
 while [ $# -ge 1 ]; do
     case $1 in
-	/* ) DEV="$1"; shift ;;
+    --help|-h) 	echo "Usage  :\t $0 [options] MAC \nOptions:\t same as mch_flasher\n\n";
+				echo ">\$ usb-loader/mch_flasher -h"; usb-loader/mch_flasher -h; 
+				exit 0;;
+	/* ) DEV="-s $1"; shift ;;
 	*:* ) MAC="$1"; shift ;;
+	-*) FLAGS="${FLAGS} $1"; shift;;
 	* ) echo "$0: Invalid argument \"$1\"" >&2; exit 1;;
     esac
 done
 
-# check mac address
-if [ "x$MAC" != "x" ]; then
-    X="[0-9a-fA-F][0-9a-fA-F]"
-    if echo $MAC | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
-	true
-    else
-	echo "$0: Invalid MAC address \"$MAC\"" >&2; exit 1;
-    fi
-fi
 
 # build flasher itself
 if CC=cc make -s -C usb-loader; then true; else
 	echo "$0: Error compiling usb-loader" >&2; exit 1;
 fi
 
-# cat binaries to temp file. Increase size of at91boot (0x8400)
-T=$(mktemp /tmp/wrs-flash.XXXXXX)
-cat binaries/at91bootstrap.bin /dev/zero | dd bs=1 count=33792 > $T \
-    2> /dev/null
-cat binaries/barebox.bin >> $T
-
-# change the mac address if so requested
-if [ "$MAC" != "x$MAC" ]; then
-    sed -i "s/02:0B:AD:C0:FF:EE/$MAC/" $T
+# check & change mac address
+if [ "x$MAC" != "x" ]; then
+    X="[0-9a-fA-F][0-9a-fA-F]"
+    if echo $MAC | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
+		sed -i "s/02:0B:AD:C0:FF:EE/$MAC/" $T
+		echo "MAC is now: $MAC"
+    else
+	echo "$0: Invalid MAC address \"$MAC\"" >&2; exit 1;
+    fi
 fi
 
+# cat binaries to temp file. Increase size of at91boot (0x8400)
+T=$(mktemp /tmp/wrs-flash.XXXXXX)
+cp ./binaries/at91bootstrap.bin $T
+dd if=./binaries/barebox.bin of=$T conv=notrunc bs=1 seek=33792 2> /dev/null
+
 # flash it (msc...)
-(cd usb-loader && ./mch_flasher $T $DEV)
+(cd usb-loader && ./mch_flasher $FLAGS $DEV $T  )
 
 #rm -f $T
