@@ -1158,15 +1158,14 @@ struct map_context *map_context_create(int cid, struct mrp_application *app)
 
     INIT_LIST_HEAD(&ctx->participants);
     INIT_LIST_HEAD(&ctx->forwarding_ports);
+    INIT_LIST_HEAD(&ctx->app_context);
 
     ctx->members = malloc(sizeof(int) * app->numattr);
     if (!ctx->members)
         goto nomem;
 
     memset(ctx->members, 0, sizeof(int) * app->numattr);
-
     list_add(&ctx->app_context, &app->contexts);
-
     return ctx;
 
 nomem:

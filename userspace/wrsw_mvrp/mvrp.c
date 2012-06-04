@@ -383,6 +383,7 @@ static int mvrp_init()
        Context'. Note that even if no instance of STP is running, a context will
        still exist */
     fprintf(stderr, "mvrp: create propagation context\n");
+    INIT_LIST_HEAD(&mvrp_app.contexts);
     ctx = map_context_create(BASE_SPANNING_TREE_CONTEXT_ID, &mvrp_app);
     if (!ctx)
         return -1;
