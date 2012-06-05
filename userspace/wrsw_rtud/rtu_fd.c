@@ -203,7 +203,7 @@ static struct static_filtering_entry *sfe_create(uint8_t  mac[ETH_ALEN],
                                                  int is_bpdu)
 {
     int xcast;
-    struct static_filtering_entry *node, *sfe, **ptr;
+    struct static_filtering_entry *node, *prev, *sfe, **ptr;
 
     sfe = (struct static_filtering_entry*)
           malloc(sizeof(struct static_filtering_entry));
@@ -223,11 +223,11 @@ static struct static_filtering_entry *sfe_create(uint8_t  mac[ETH_ALEN],
     xcast = mac_multicast(mac);
 
     // Link into lexicographically ordered list
-    for (ptr = &sfd[xcast][vid], node = sfd[xcast][vid];
-         node && mac_cmp(sfe->mac, node->mac) < 0;
-         ptr = &node->next, node = node->next)
+    for (ptr = &sfd[xcast][vid], node = sfd[xcast][vid], prev = NULL;
+         node && mac_cmp(sfe->mac, node->mac) > 0;
+         ptr = &node->next, prev = node, node = node->next)
          ;
-    sfe->prev = *ptr;
+    sfe->prev = prev;
     *ptr = sfe;
     sfe->next = node;
     if (node) node->prev = sfe;
@@ -261,7 +261,7 @@ static struct static_filtering_entry *sfe_find(uint8_t mac[ETH_ALEN],
     struct static_filtering_entry *node;
 
     for (node = sfd[mac_multicast(mac)][vid];
-         node && ((cmp = mac_cmp(mac, node->mac)) < 0);
+         node && ((cmp = mac_cmp(mac, node->mac)) > 0);
          node = node->next)
         ;
     return node && cmp == 0 ? node:NULL;
@@ -337,7 +337,7 @@ static int sfe_update(struct static_filtering_entry *sfe,
  */
 static struct filtering_entry_node *fd_create(uint8_t mac[ETH_ALEN], uint8_t fid)
 {
-    struct filtering_entry_node *node, *fe, **ptr;
+    struct filtering_entry_node *node, *prev, *fe, **ptr;
 
     fe = (struct filtering_entry_node*) malloc(sizeof(*fe));
 
@@ -347,11 +347,11 @@ static struct filtering_entry_node *fd_create(uint8_t mac[ETH_ALEN], uint8_t fid
     mac_copy(fe->mac, mac);
     fe->fid = fid;
     // Link into lexicographically ordered list
-    for (ptr = &fd[fid], node = fd[fid];
-         node && mac_cmp(fe->mac, node->mac) < 0;
-         ptr = &node->next, node = node->next)
+    for (ptr = &fd[fid], node = fd[fid], prev = NULL;
+         node && mac_cmp(fe->mac, node->mac) > 0;
+         ptr = &node->next, prev = node, node = node->next)
          ;
-    fe->prev = *ptr;
+    fe->prev = prev;
     *ptr = fe;
     fe->next = node;
     if (node) node->prev = fe;
@@ -388,7 +388,7 @@ struct filtering_entry_node *fd_find(uint8_t mac[ETH_ALEN], uint8_t fid)
     struct filtering_entry_node *node;
 
     for (node = fd[fid];
-         node && ((cmp = mac_cmp(mac, node->mac)) < 0);
+         node && ((cmp = mac_cmp(mac, node->mac)) > 0);
          node = node->next)
         ;
     return node && cmp == 0 ? node:NULL;
@@ -842,8 +842,8 @@ int rtu_fdb_init(uint16_t poly, unsigned long aging)
 
     TRACE_DBG(TRACE_INFO, "clean filtering database.");
     rtu_sw_clean_fd();
-    memset(&fd, 0, sizeof(fd));
-    memset(&sfd, 0, sizeof(sfd));
+    memset(&fd, 0, sizeof(fd));//sizeof(struct filtering_entry_node *) * NUM_FIDS);
+    memset(&sfd, 0, sizeof(sfd));//sizeof(struct static_filtering_entry *) * 2 * NUM_VLANS);
     TRACE_DBG(TRACE_INFO, "clean vlan database.");
     rtu_sw_clean_vd();
     TRACE_DBG(TRACE_INFO, "clean aging map.");
@@ -860,6 +860,7 @@ int rtu_fdb_init(uint16_t poly, unsigned long aging)
 
     return 0;
 }
+
 
 /**
  * Creates or updates a dynamic filtering entry in filtering database.
