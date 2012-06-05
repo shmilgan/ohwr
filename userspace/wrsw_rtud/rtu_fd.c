@@ -607,19 +607,21 @@ static int fe_insert_static_entry(uint16_t vid,
         // If an entry already exists in the fdb for the same mac and fid
         // just register static entry in static_fdb list associated to it
         // (if the static entry was only updated, it is already registered),
-        // and recalculate the forward vector combining static and dynamic info
+        // and recalculate the forward vector combining static and dynamic info        
         fe_register_static_entry(sfe, fe);
         calculate_forward_vector(fe->static_fdb, &_port_map, &_use_dynamic);
         ret = fe_update(fe, _port_map, ve->port_mask, _use_dynamic, STATIC);
+        fe->is_bpdu |= sfe->is_bpdu;        
     } else {
         // Create pure static entry
         calculate_forward_vector(sfe, &_port_map, &_use_dynamic);
         ret = rtu_fdb_create_entry(&fe, sfe->mac, vid, ve->fid, _port_map,
             _use_dynamic, STATIC);
-        if (ret == 0)
+        if (ret == 0) {
             fe_register_static_entry(sfe, fe);
+            fe->is_bpdu |= sfe->is_bpdu;        
+        }
     }
-    fe->is_bpdu |= sfe->is_bpdu;
     return ret;
 }
 
@@ -1262,17 +1264,14 @@ int rtu_fdb_create_static_vlan_entry(uint16_t vid,
         (egress_ports | ((ve->port_mask & ve->use_dynamic) & use_dynamic)):
          egress_ports;
     rtu_sw_create_vlan_entry(vid, port_mask, use_dynamic, untagged_set, STATIC);
-
     /* Allocate VID to FID based on fixed allocations and learning constraints*/
     err = rtu_sw_allocate_fid(vid);
     if (err)
         goto rollback;
-
     // Static entries for the Wildcard VID now must also apply to this VLAN
     err = fe_insert_wildcard_static_entries(vid);
     if (err)
         goto rollback;
-
     rtu_sw_commit();
     return unlock(err);
 
