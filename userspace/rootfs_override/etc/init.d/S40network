@@ -3,6 +3,10 @@
 # Start the network....
 #
 
-# don't run dhcp-client if root is nfs.
-grep -q '/ nfs' /proc/mounts || udhcpc 
+#MAC=`/wr/bin/get_board_mac`
+#echo "Management port MAC address: $MAC"
+#ifconfig eth0 hw ether $MAC
+#ifplugd -i eth0
+#udhcpc -n
 
+/usr/sbin/ifplugd -I -f -i eth0

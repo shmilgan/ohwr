@@ -14,14 +14,18 @@
 # process   == program to run
 
 # Startup the system
-null::sysinit:/bin/mount -o remount,rw /
-null::sysinit:/bin/mount -t proc proc /proc
-null::sysinit:/bin/mount -a
-null::sysinit:/bin/hostname -F /etc/hostname
-null::sysinit:/sbin/ifconfig lo 127.0.0.1 up
-null::sysinit:/sbin/route add -net 127.0.0.0 netmask 255.0.0.0 lo
+#null::sysinit:/bin/mount -o remount,rw /
+#null::sysinit:/etc/init.d/rc.sysinit
+
+#/bin/mount -t proc proc /proc
+#null::sysinit:/bin/mount -a
+#null::sysinit:/bin/mount -o remount,rw /
+#null::sysinit:/bin/hostname -F /etc/hostname
+#null::sysinit:/sbin/ifconfig lo 127.0.0.1 up
+#null::sysinit:/sbin/route add -net 127.0.0.0 netmask 255.0.0.0 lo
 
 # now run any rc scripts
+::sysinit:/etc/init.d/rc.sysinit
 ::sysinit:/etc/init.d/rcS
 
 # Set up a couple of getty's
@@ -29,7 +33,7 @@ null::sysinit:/sbin/route add -net 127.0.0.0 netmask 255.0.0.0 lo
 #tty2::respawn:/sbin/getty 38400 tty2
 
 # Put a getty on the serial port
-ttyS0::respawn:/bin/ash --login
+ttyGS0::respawn:/bin/ash --login
 #/sbin/getty -L ttyS0 115200 vt100
 
 # Logging junk

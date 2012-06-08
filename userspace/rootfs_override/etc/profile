@@ -14,6 +14,7 @@ export LD_LIBRARY_PATH=\
 /usr/lib:\
 /wr/lib
 
+
 # If running interactively, then:
 if [ "$PS1" ]; then
 
@@ -52,3 +53,5 @@ if [ "$PS1" ]; then
     alias calc='calc -Cd '
     alias bc='calc -Cd '
 fi;
+
+export PS1="wrs-`ifconfig eth0 | grep inet | awk -F: '{ print $2 }' | awk '{ print $1 }'`#"
