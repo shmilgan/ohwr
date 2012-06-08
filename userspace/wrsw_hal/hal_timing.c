@@ -12,6 +12,8 @@
 #include "rt_ipc.h"
 #include "hal_exports.h"
 
+#include "gps_resync/gps_resync.h"
+
 static int timing_mode;
 
 #define LOCK_TIMEOUT_EXT 60000
@@ -21,7 +23,8 @@ int hal_init_timing()
 {
 	char str[128];
 	timeout_t lock_tmo;
-
+	int use_utc = 0;
+	
 	if(rts_connect() < 0)
 	{
 		TRACE(TRACE_ERROR, "Failed to establish communication with the RT subsystem.");
@@ -62,22 +65,36 @@ int hal_init_timing()
 			break;
 	}
 
-	while(!tmo_expired(&lock_tmo))
+	while(1)
 	{
 		struct rts_pll_state pstate;
+
+		if(tmo_expired(&lock_tmo))
+		{
+			TRACE(TRACE_ERROR, "Can't lock the PLL. If running in the GrandMaster mode, are you sure the 1-PPS and 10 MHz reference clock signals are properly connected?");
+			return -1;
+		}
 
 		if(rts_get_state(&pstate) < 0)
 			return -1;
 
 		if(pstate.flags & RTS_DMTD_LOCKED)
-			return 0;
+			break;
 
 		usleep(100000);
 	}
 
+
+	if(hal_config_get_int("timing.use_nmea", &use_utc) < 0)
+		use_utc = 0;
+	
+	if(timing_mode == HAL_TIMING_MODE_GRAND_MASTER && use_utc)
+	{
+		TRACE(TRACE_INFO, "re-syncing to UTC from serial port");
+		nmea_resync_ppsgen("/dev/ttyS2");
+	}
 			
-	TRACE(TRACE_ERROR, "Can't lock the PLL. If running in the GrandMaster mode, are you sure the 1-PPS and 10 MHz reference clock signals are properly connected?");
-	return -1;
+	return 0;
 }
 
 int hal_get_timing_mode()

@@ -1,7 +1,7 @@
 
 CC = $(CROSS_COMPILE)gcc
 
-OBJS = hal_exports.o hal_main.o hal_ports.o hal_config.o rt_client.o hal_timing.o
+OBJS = hal_exports.o hal_main.o hal_ports.o hal_config.o rt_client.o hal_timing.o gps_resync/serial_linux.o gps_resync/nmea.o gps_resync/gps_resync.o
 
 BINARY = wrsw_hal
 
@@ -16,7 +16,7 @@ CFLAGS = -g -Wall -DDEBUG -DRT_CLIENT\
 
 LDFLAGS = -L$(WR_INSTALL_ROOT)/lib -L../3rdparty/lib -L$(WR_LIB) \
 	 -L../libswitchhw -L../mini-rpc \
-	 -lminipc -llua -lm -ldl -lswitchhw
+	 -lminipc -llua -lm -ldl -lswitchhw 
 
 all: $(BINARY)
 
