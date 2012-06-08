@@ -4,16 +4,11 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <hw/util.h> //for shw_udelay();
+#include <util.h>
 
 #include "i2c_bitbang.h"
 
-#include <sys/time.h>
-#include <unistd.h>
 
-
- 
- 
 int i2c_bitbang_init_bus(struct i2c_bus *bus)
 {
 	struct i2c_bitbang *priv;

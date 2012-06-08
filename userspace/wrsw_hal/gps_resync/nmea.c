@@ -299,7 +299,7 @@ int nmea_parse_gprmc(const char *buff, int buff_sz, nmea_gprmc_t *pack)
         &(time_buff[0]),
         &(pack->status), &(pack->lat), &(pack->ns), &(pack->lon), &(pack->ew),
         &(pack->speed), &(pack->direction),
-        &(pack->utc.day), &(pack->utc.mon), &(pack->utc.year),
+        &(pack->time.day), &(pack->time.mon), &(pack->time.year),
         &(pack->declination), &(pack->declin_ew), &(pack->mode));
 
     if(nsen != 13 && nsen != 14)
@@ -307,14 +307,14 @@ int nmea_parse_gprmc(const char *buff, int buff_sz, nmea_gprmc_t *pack)
         return 0;
     }
 
-    if(0 != _nmea_parse_time(&time_buff[0], (int)strlen(&time_buff[0]), &(pack->utc)))
+    if(0 != _nmea_parse_time(&time_buff[0], (int)strlen(&time_buff[0]), &(pack->time)))
     {
         return 0;
     }
 
-    if(pack->utc.year < 90)
-        pack->utc.year += 100;
-    pack->utc.mon -= 1;
+    if(pack->time.year < 90)
+        pack->time.year += 100;
+    pack->time.mon -= 1;
 
     return 1;
 }

@@ -91,6 +91,9 @@ struct rts_pll_state {
 
 /* API */
 
+/* Connects to the RT CPU */
+int rts_connect();
+
 /* Queries the RT CPU PLL state */
 int rts_get_state(struct rts_pll_state *state);
 

@@ -10,19 +10,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-//#include <minipc.h>
-
-#include <hw/trace.h>
-#include <hw/switch_hw.h>
+#include <trace.h>
+#include <switch_hw.h>
 
 #include "wrsw_hal.h"
-
 #include "rt_ipc.h"
 
 #define MAX_CLEANUP_CALLBACKS 16
 
 #define assert_init(proc) { int ret; if((ret = proc) < 0) return ret; }
-
 
 static int daemon_mode= 0;
 static hal_cleanup_callback_t cleanup_cb[MAX_CLEANUP_CALLBACKS];
@@ -56,7 +52,6 @@ static void call_cleanup_cbs()
 int hal_setup_fpga_images()
 {
 	char fpga_dir[128];
-	char fw_name[128];
 
 /* query the path to the firmware directory in the config file */
   if( hal_config_get_string("global.hal_firmware_path", fpga_dir, sizeof(fpga_dir)) < 0)
@@ -159,7 +154,6 @@ void hal_deamonize();
 /* Main initialization function */
 int hal_init()
 {
-	int enable;
 	char sfp_db_path[1024];
 	
 	trace_log_stderr();
@@ -180,11 +174,14 @@ int hal_init()
 //	assert_init(hal_setup_fpga_images());
 
   if(!hal_config_get_string("global.sfp_database_path", sfp_db_path, sizeof(sfp_db_path)))
- 		if(shw_sfp_read_db(sfp_db_path) < 0)
+  {
+ 		if(shw_sfp_read_db(sfp_db_path) < 0) {
 			TRACE(TRACE_ERROR, "Can't read SFP database (%s)", sfp_db_path)
-		else 
+		} else {
 			TRACE(TRACE_INFO, "Loaded SFP database (%s)", sfp_db_path);
-
+		}
+	}
+	
 /* Perform a low-level hardware init, load bitstreams, initialize non-kernel drivers */
 	assert_init(shw_init());
 

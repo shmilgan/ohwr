@@ -6,10 +6,12 @@
 #include <inttypes.h>
 #include <fcntl.h>
 
-#include <hw/pio.h>	//why does it not include right header?
 #include <at91/at91sam9g45.h>
 #include <at91/at91_pmc.h>
-#include "pio.h"
+#include <at91/at91_pio.h>
+
+#include <pio.h>
+#include <trace.h>
 
 volatile uint8_t *_pio_base[4][NUM_PIO_BANKS+1];
 volatile uint8_t *_sys_base;
@@ -62,17 +64,17 @@ int shw_pio_mmap_init()
 //    printf("PIOA offset %08X\n", AT91C_BASE_PIOA_RAW - AT91C_BASE_SYS_RAW);
 //    printf("Sys base: %08X\n", _sys_base);
 
-    _pio_base[REG_BASE][PIOA] = _sys_base + AT91C_BASE_PIOA_RAW - AT91C_BASE_SYS_RAW;		//offset counting from AT91C_BASE_SYS
-    _pio_base[REG_BASE][PIOB] = _sys_base + AT91C_BASE_PIOB_RAW - AT91C_BASE_SYS_RAW;		//offset counting from AT91C_BASE_SYS
-    _pio_base[REG_BASE][PIOC] = _sys_base + AT91C_BASE_PIOC_RAW - AT91C_BASE_SYS_RAW;		//offset counting from AT91C_BASE_SYS
-    _pio_base[REG_BASE][PIOD] = _sys_base + AT91C_BASE_PIOD_RAW - AT91C_BASE_SYS_RAW;		//offset counting from AT91C_BASE_SYS
-    _pio_base[REG_BASE][PIOE] = _sys_base + AT91C_BASE_PIOE_RAW - AT91C_BASE_SYS_RAW;		//offset counting from AT91C_BASE_SYS
+    _pio_base[IDX_REG_BASE][PIOA] = _sys_base + AT91C_BASE_PIOA_RAW - AT91C_BASE_SYS_RAW;		//offset counting from AT91C_BASE_SYS
+    _pio_base[IDX_REG_BASE][PIOB] = _sys_base + AT91C_BASE_PIOB_RAW - AT91C_BASE_SYS_RAW;		//offset counting from AT91C_BASE_SYS
+    _pio_base[IDX_REG_BASE][PIOC] = _sys_base + AT91C_BASE_PIOC_RAW - AT91C_BASE_SYS_RAW;		//offset counting from AT91C_BASE_SYS
+    _pio_base[IDX_REG_BASE][PIOD] = _sys_base + AT91C_BASE_PIOD_RAW - AT91C_BASE_SYS_RAW;		//offset counting from AT91C_BASE_SYS
+    _pio_base[IDX_REG_BASE][PIOE] = _sys_base + AT91C_BASE_PIOE_RAW - AT91C_BASE_SYS_RAW;		//offset counting from AT91C_BASE_SYS
 
     for (i=1; i<=5; i++)
     {
-        _pio_base [REG_CODR][i] = _pio_base[REG_BASE][i] + PIO_CODR;
-        _pio_base [REG_SODR][i] = _pio_base[REG_BASE][i] + PIO_SODR;
-        _pio_base [REG_PDSR][i] = _pio_base[REG_BASE][i] + PIO_PDSR;
+        _pio_base [IDX_REG_CODR][i] = _pio_base[IDX_REG_BASE][i] + PIO_CODR;
+        _pio_base [IDX_REG_SODR][i] = _pio_base[IDX_REG_BASE][i] + PIO_SODR;
+        _pio_base [IDX_REG_PDSR][i] = _pio_base[IDX_REG_BASE][i] + PIO_PDSR;
     }
 
     return 0;
@@ -106,7 +108,7 @@ void shw_pio_configure(const pio_pin_t *pin)
 {
     uint32_t mask = (1<<pin->pin);
     uint32_t ddr;
-    volatile uint8_t *base = (_pio_base[REG_BASE][pin->port]);
+    volatile uint8_t *base = (_pio_base[IDX_REG_BASE][pin->port]);
 
     switch (pin->port)
     {

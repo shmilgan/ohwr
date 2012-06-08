@@ -7,7 +7,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-#include <hw/trace.h>
+
+#include <trace.h>
 
 #define HAL_CONFIG_FILE "/wr/etc/wrsw_hal.conf"
 

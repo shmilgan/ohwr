@@ -14,7 +14,7 @@
 #ifndef __WBGEN2_REGDEFS_PPS_GEN_WB_WB
 #define __WBGEN2_REGDEFS_PPS_GEN_WB_WB
 
-#include <inttypes.h>
+#include <stdint.h>
 
 #if defined( __GNUC__)
 #define PACKED __attribute__ ((packed))
@@ -53,15 +53,15 @@
 
 /* definitions for register: Nanosecond counter register */
 
-/* definitions for register: UTC Counter register (least-significant part) */
+/* definitions for register: SEC Counter register (least-significant part) */
 
-/* definitions for register: UTC Counter register (most-significant part) */
+/* definitions for register: SEC Counter register (most-significant part) */
 
 /* definitions for register: Nanosecond adjustment register */
 
-/* definitions for register: UTC Adjustment register (least-significant part) */
+/* definitions for register: SEC Adjustment register (least-significant part) */
 
-/* definitions for register: UTC Adjustment register (most-significant part) */
+/* definitions for register: SEC Adjustment register (most-significant part) */
 
 /* definitions for register: External sync control register */
 
@@ -71,22 +71,22 @@
 /* definitions for field: PPS output valid in reg: External sync control register */
 #define PPSG_ESCR_PPS_VALID                   WBGEN2_GEN_MASK(1, 1)
 
-/* definitions for field: Timecode output(UTC+cycles) valid in reg: External sync control register */
+/* definitions for field: Timecode output(SEC+cycles) valid in reg: External sync control register */
 #define PPSG_ESCR_TM_VALID                    WBGEN2_GEN_MASK(2, 1)
 /* [0x0]: REG Control Register */
 #define PPSG_REG_CR 0x00000000
 /* [0x4]: REG Nanosecond counter register */
 #define PPSG_REG_CNTR_NSEC 0x00000004
-/* [0x8]: REG UTC Counter register (least-significant part) */
-#define PPSG_REG_CNTR_UTCLO 0x00000008
-/* [0xc]: REG UTC Counter register (most-significant part) */
-#define PPSG_REG_CNTR_UTCHI 0x0000000c
+/* [0x8]: REG SEC Counter register (least-significant part) */
+#define PPSG_REG_CNTR_SECLO 0x00000008
+/* [0xc]: REG SEC Counter register (most-significant part) */
+#define PPSG_REG_CNTR_SECHI 0x0000000c
 /* [0x10]: REG Nanosecond adjustment register */
 #define PPSG_REG_ADJ_NSEC 0x00000010
-/* [0x14]: REG UTC Adjustment register (least-significant part) */
-#define PPSG_REG_ADJ_UTCLO 0x00000014
-/* [0x18]: REG UTC Adjustment register (most-significant part) */
-#define PPSG_REG_ADJ_UTCHI 0x00000018
+/* [0x14]: REG SEC Adjustment register (least-significant part) */
+#define PPSG_REG_ADJ_SECLO 0x00000014
+/* [0x18]: REG SEC Adjustment register (most-significant part) */
+#define PPSG_REG_ADJ_SECHI 0x00000018
 /* [0x1c]: REG External sync control register */
 #define PPSG_REG_ESCR 0x0000001c
 #endif

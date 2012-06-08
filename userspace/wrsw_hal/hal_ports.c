@@ -16,14 +16,13 @@
 #include <linux/if.h>
 
 /* LOTs of hardware includes */
-#include <hw/switch_hw.h>
+#include <switch_hw.h>
+#include <trace.h>
+#include <pio.h>
+#include <sfp_lib.h>
 
-#include <hw/trace.h>
-#include <hw/pio.h>
-#include <hw/pio_pins.h>
 #include <hw/fpga_regs.h>
 #include <hw/endpoint_regs.h>
-#include <hw/sfp_lib.h>
 
 #include "wrsw_hal.h"
 #include "timeout.h"
@@ -694,22 +693,6 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 
 	return 0;
 }
-
-/* Returns 1 if any of the switch's ports is currently being calibrated */
-static int any_port_calibrating()
-{
-	int i;
-	for(i=0; i<HAL_MAX_PORTS;i++)
-		if(ports[i].state == HAL_PORT_STATE_CALIBRATION && ports[i].in_use)
-			return 1;
-
-	return 0;
-}
-
-/* Public function for controlling the calibration process. Called by the PTPd during WR Link setup. */
-
-/* No more calibration in V3 */
-
 /* Public API function - returns the array of names of all WR network interfaces */
 int halexp_query_ports(hexp_port_list_t *list)
 {

@@ -6,11 +6,7 @@
 #ifndef I2C_FPGA_REG_H
 #define I2C_FPGA_REG_H
 
-
-#include <hw/pio.h>
 #include <hw/fpga_regs.h>
-
-
 #include "i2c.h"
 
 #define FPGA_I2C_REG_PREL	0x00
@@ -39,13 +35,8 @@ typedef struct
     uint32_t prescaler;
 } i2c_fpga_reg_t;
 
-
 int		i2c_fpga_reg_init_bus(struct i2c_bus *bus);
 int32_t		i2c_fpga_reg_transfer(struct i2c_bus* bus, uint32_t address,  uint32_t to_write, uint32_t to_read, uint8_t* data);
 int32_t		i2c_fpga_reg_scan(struct i2c_bus* bus, uint32_t i2c_address);
 
-
 #endif //I2C_FPGA_REG_H
-
-
-

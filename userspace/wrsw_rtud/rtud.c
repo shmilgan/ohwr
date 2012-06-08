@@ -35,7 +35,8 @@
 #include <pthread.h>
 #include <signal.h>
 
-#include <hw/switch_hw.h>
+#include <trace.h>
+#include <switch_hw.h>
 #include <hal_client.h>
 
 #include "rtu.h"

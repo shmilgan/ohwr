@@ -3,7 +3,7 @@
 
 #include "i2c.h"
 
-#include <hw/sfp_lib.h>
+#include <sfp_lib.h>
 
 //address from AT24C01 datasheet (1k, all address lines shorted to the ground)
 #define I2C_SFP_ADDRESS 0x50

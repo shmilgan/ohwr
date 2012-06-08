@@ -27,11 +27,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <hw/trace.h>
-
 #include "rtu.h"
 #include "rtu_hash.h"
-
 
 /**
  * \brief Polynomial used to calculate the MAC entry hash code.
@@ -43,7 +40,6 @@ static uint16_t crc16(uint16_t const init_crc, uint16_t const message);
 void rtu_hash_set_poly(uint16_t poly)
 {
     hash_poly = ((0x10000 | poly) << 3 );
-    TRACE(TRACE_INFO, "poly hw = %x, poly sw = %x\n", poly, hash_poly);
 }
 
 uint16_t rtu_hash(uint8_t mac[ETH_ALEN], uint8_t fid)

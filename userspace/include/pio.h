@@ -1,14 +1,9 @@
 #ifndef __CPU_IO_H
 #define __CPU_IO_H
 
-#include <sys/types.h>
-#include <inttypes.h>
+#include <stdint.h>
 
-#include <at91/at91sam9g45.h>
 #include <at91/at91_pio.h>
-#include <at91/at91_pmc.h>
-
-#include <hw/trace.h>
 
 #define NUM_PIO_BANKS 6
 
@@ -40,10 +35,10 @@ typedef struct pio_pin
 	int dir;
 } pio_pin_t;
 
-#define REG_BASE 0
-#define REG_CODR 1
-#define REG_SODR 2
-#define REG_PDSR 3
+#define IDX_REG_BASE 0
+#define IDX_REG_CODR 1
+#define IDX_REG_SODR 2
+#define IDX_REG_PDSR 3
 
 #define FPGA_PIO_REG_CODR	0x0
 #define FPGA_PIO_REG_SODR	0x4
@@ -68,38 +63,41 @@ static inline void shw_pio_set(const pio_pin_t *pin, int state)
 {
 
   if(state)
-	_writel(_pio_base[REG_SODR][pin->port], (1<<pin->pin));
+	_writel(_pio_base[IDX_REG_SODR][pin->port], (1<<pin->pin));
   else
-  	_writel(_pio_base[REG_CODR][pin->port], (1<<pin->pin));
+  	_writel(_pio_base[IDX_REG_CODR][pin->port], (1<<pin->pin));
 }
 
 static inline void shw_pio_set1(const pio_pin_t *pin)
 {
-
-//TRACE(TRACE_INFO,"pio_set1 %x\n", _pio_base[REG_SODR][pin->port]);
-	_writel(_pio_base[REG_SODR][pin->port], (1<<pin->pin));
+	_writel(_pio_base[IDX_REG_SODR][pin->port], (1<<pin->pin));
 }
 
 static inline void shw_pio_set0(const pio_pin_t *pin)
 {
-	_writel(_pio_base[REG_CODR][pin->port], (1<<pin->pin));
+	_writel(_pio_base[IDX_REG_CODR][pin->port], (1<<pin->pin));
 }
 
 static inline int shw_pio_get(const pio_pin_t *pin)
 {
-    return (_readl(_pio_base[REG_PDSR][pin->port]) & (1<<pin->pin)) ? 1 : 0;
+    return (_readl(_pio_base[IDX_REG_PDSR][pin->port]) & (1<<pin->pin)) ? 1 : 0;
 }
 
 static inline int shw_pio_setdir(const pio_pin_t *pin, int dir)
 {
   if(dir == PIO_OUT)
-	_writel((_pio_base[REG_BASE][pin->port] + PIO_OER), (1<<pin->pin));
+		_writel((_pio_base[IDX_REG_BASE][pin->port] + PIO_OER), (1<<pin->pin));
   else
-  	_writel((_pio_base[REG_BASE][pin->port] + PIO_ODR), (1<<pin->pin));
+  	_writel((_pio_base[IDX_REG_BASE][pin->port] + PIO_ODR), (1<<pin->pin));
 
 	return 0;
 }
 
 #include "pio_pins.h"
 
-#endif
+int shw_pio_mmap_init();
+void shw_pio_toggle_pin(pio_pin_t* pin, uint32_t udelay);
+void shw_pio_configure_all();
+void shw_pio_configure(const pio_pin_t *pin);
+
+#endif //PIO_H

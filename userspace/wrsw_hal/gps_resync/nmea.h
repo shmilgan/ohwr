@@ -31,7 +31,8 @@ typedef struct
  */
 typedef struct
 {
-    nmea_time_t utc;    /**< UTC of position */
+    nmea_time_t time;    /**< Current time */
+
 	  char    status;     /**< Status (A = active or V = void) */
 		double  lat;        /**< Latitude in NDEG - [degree][min].[sec/60] */
     char    ns;         /**< [N]orth or [S]outh */

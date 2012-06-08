@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include <hw/trace.h>
+#include <trace.h>
 
 static FILE *trace_file = NULL;
 static int trace_to_stderr = 0;

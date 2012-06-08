@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <hw/switch_hw.h>
+#include <switch_hw.h>
 #include "i2c_sfp.h"
 
 #define assert_init(proc) { int ret; if((ret = proc) < 0) return ret; }

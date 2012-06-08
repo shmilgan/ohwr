@@ -38,11 +38,15 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 
-#include <hw/switch_hw.h>
-#include <hw/rtu_regs.h>
+
+#include <switch_hw.h>
 #include <hal_client.h>
+
+#include <hw/fpga_regs.h>
+#include <hw/rtu_regs.h>
 
 #include "rtu_drv.h"
 #include "wr_rtu.h"

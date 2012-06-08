@@ -3,9 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <hw/trace.h>
-#include <hw/pps_gen.h> /* for direct access to DMPLL and PPS generator */
-#include <hw/dmpll.h>
+#include <trace.h>
+#include <pps_gen.h> /* for direct access to DMPLL and PPS generator */
 
 #include "wrsw_hal.h"
 #include "rt_ipc.h"
@@ -87,11 +86,11 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
       return rts_adjust_phase(0, params->adjust_phase_shift) ? 0 : -1;
 
     case HEXP_PPSG_CMD_ADJUST_NSEC:
-      shw_pps_gen_adjust_nsec((int64_t)params->adjust_nsec * 1000LL / (int64_t)REF_CLOCK_PERIOD_PS);
+      shw_pps_gen_adjust(PPSG_ADJUST_NSEC, params->adjust_nsec);
       return 0;
 
-    case HEXP_PPSG_CMD_ADJUST_UTC:
-      shw_pps_gen_adjust_utc(params->adjust_utc);
+    case HEXP_PPSG_CMD_ADJUST_SEC:
+      shw_pps_gen_adjust(PPSG_ADJUST_SEC, params->adjust_sec);
       return 0;
 
 /* Returns non-zero if the PPS/PLL adjustment is in progress.

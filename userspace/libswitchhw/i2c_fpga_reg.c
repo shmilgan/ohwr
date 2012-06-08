@@ -4,10 +4,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <hw/util.h> //for shw_udelay();
+#include <util.h> //for shw_udelay();
 
 #include "i2c_fpga_reg.h"
-
 
 int i2c_fpga_reg_init_bus(struct i2c_bus *bus)
 {

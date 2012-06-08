@@ -13,11 +13,11 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include <pio.h>
+#include <trace.h>
+
 #include "i2c.h"
-#include "pio.h"
-
 #include "i2c_sfp.h"
-
 #include "i2c_bitbang.h"
 #include "i2c_fpga_reg.h"
 

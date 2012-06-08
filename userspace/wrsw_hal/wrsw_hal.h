@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 
-#include <hw/sfp_lib.h>
+#include <sfp_lib.h>
 
 typedef void (*hal_cleanup_callback_t)();
 
@@ -13,9 +13,6 @@ typedef void (*hal_cleanup_callback_t)();
 
 #define DEFAULT_T2_PHASE_TRANS 0
 #define DEFAULT_T4_PHASE_TRANS 0
-#define REF_CLOCK_PERIOD_PS 16000
-
-
 
 /* Port delay calibration parameters */
 typedef struct {
