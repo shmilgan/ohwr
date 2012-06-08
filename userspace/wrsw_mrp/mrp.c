@@ -660,7 +660,6 @@ static void map_propagate_leave_in_context(struct mrp_participant *this_part,
 void map_propagate_join(struct mrp_participant *this_part, int mid)
 {
     struct map_context_list *node;
-
     list_for_each_entry(node, &this_part->contexts, node)
         map_propagate_join_in_context(this_part, node->context, mid);
 }
@@ -942,6 +941,10 @@ int map_context_add_port(struct map_context *ctx, struct mrp_port *port)
     port_node = malloc(sizeof(*port_node));
     if (!port_node)
         return -1;
+    
+    port_node->port = port;
+    INIT_LIST_HEAD(&port_node->node);
+    
     list_add(&port_node->node, &ctx->forwarding_ports);
 
     p = mrp_find_participant(port, ctx);
@@ -1020,6 +1023,9 @@ int map_context_add_participant(struct map_context *c,
         goto nomem;
     pnode->participant = p;
 
+    INIT_LIST_HEAD(&cnode->node);
+    INIT_LIST_HEAD(&pnode->node);
+
     /* Add context to participant */
     list_add(&cnode->node, &p->contexts);
     /* Add participant to context */
@@ -1071,6 +1077,7 @@ struct mrp_participant *mrp_create_participant(struct mrp_port *port)
         mad_init_machine(&p->machines[i]);
 
     INIT_LIST_HEAD(&p->contexts);
+    INIT_LIST_HEAD(&p->port_participant);
 
     p->port             = port;
     p->leaveall         = 0;
@@ -1218,6 +1225,7 @@ static struct mrp_port *mrp_create_port(struct mrp_application *app,
     timer_start(&port->periodic_timeout, periodic_time);
 
     INIT_LIST_HEAD(&port->participants);
+    INIT_LIST_HEAD(&port->app_port);
 
     port->hw_index = hw_index;
     port->port_no = port_no;
@@ -1483,7 +1491,6 @@ void mrp_protocol(struct mrp_application *app)
 	    list_for_each_entry(p, &port->participants, port_participant) {
             if (timer_expired_now(&p->leaveall_timeout, &now))
                 mad_participant_event(p, MRP_EVENT_LEAVEALL_TIMER);
-
             /* 'The accuracy required for the leavetimer is sufficiently
                coarse to permit the use of a single operating system timer
                per Participant with 2 bits of state for each Registrar' */
@@ -1492,7 +1499,6 @@ void mrp_protocol(struct mrp_application *app)
                 p->leave_timer_running = 0;
                 mad_event(p, MRP_EVENT_LEAVE_TIMER);
             }
-
             /* Handle transimission */
             if (mrp_tx_opportunity(p, &now))
                 mrp_tx(p);

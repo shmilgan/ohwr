@@ -130,6 +130,7 @@ void mrp_socket_send(struct mrp_participant *p)
 
     /* Send the frame */
     frame_len = hdr_len + pdu->len;
+    
     len = sendto(app->proto.fd, &buffer, frame_len, 0,
                  (struct sockaddr*)&sl, sizeof(struct sockaddr_ll));
 
@@ -183,7 +184,7 @@ struct mrp_participant *mrp_socket_rcv(struct mrp_application *app,
     }
     /* Only one participant can be attached to any given port for a vlan-unaware
        protocol */
-    return list_entry(&port->participants,
+    return list_first_entry(&port->participants,
         struct mrp_participant, port_participant);
 }
 
