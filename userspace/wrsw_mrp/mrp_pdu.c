@@ -181,6 +181,8 @@ static void mrp_pdu_parse_attr(struct mrp_participant *part,
             if (offset < nval) {
                 /* Process event */
                 event = mrp_event(unpack_tpe(tpe, j));
+                fprintf(stderr, "mrp_pdu_parse_attr() - event=%d\n", event);
+                
                 if (event == MRP_EVENT_UNKOWN)
                     continue; /* Unknown events are silently discarded */
                 mid = app->db_find_entry(attrtype, attrlen, firstval, offset);
@@ -396,10 +398,9 @@ int mrp_pdu_rcv(struct mrp_application *app)
         fprintf(stderr, "mrp: error parsing pdu at octet %d\n", pdu.pos);
         return -1;
     }
-
+    
     /* Parse PDU */
     mrp_pdu_parse(part, &pdu);
-
     return 0;
 }
 
@@ -410,7 +411,6 @@ void mrp_pdu_send(struct mrp_participant *p)
     struct mrpdu *pdu = &p->pdu;
 
     /* end message and pdu (not strictly necessary)*/
-    pdu->pos++;
     mrp_pdu_append_endmark(pdu);
     mrp_pdu_append_endmark(pdu);
 
@@ -453,7 +453,7 @@ int mrp_pdu_append_attr(struct mrp_participant *part,
 
     /* Obtain attr info from application */
     if (app->db_read_entry(&attrtype, &attrlen, &attrval, mid) < 0)
-        /* should never happend, but... just in case, avoid processing further
+        /* should never happen, but... just in case, avoid processing further
            events for this attr. To recover from error, close and send PDU */
         goto nomem;
 
@@ -469,7 +469,6 @@ int mrp_pdu_append_attr(struct mrp_participant *part,
     if (new_msg) {
         /* Close previous message (if exists) and append a new one */
         if (!new_pdu) {
-            pdu->pos++;
             if (mrp_pdu_append_endmark(pdu) < 0)
                 goto nomem;
         }
@@ -484,8 +483,6 @@ int mrp_pdu_append_attr(struct mrp_participant *part,
     new_vec = new_msg ||
            (app->attr_cmp(attrtype, attrlen, attrval, firstval) != (nval + 1));
     if (new_vec) {
-        if(!new_msg)
-            pdu->pos++;
         /* Append new vector attribute. */
         if(mrp_pdu_append_vector_attr(pdu, attrlen, attrval) < 0)
             goto nomem;
@@ -498,10 +495,9 @@ int mrp_pdu_append_attr(struct mrp_participant *part,
         /* Append new octet to the Vector */
         if (pdu_tailroom(pdu) < 1)
             goto nomem;
-        pdu->pos++;
-        pdu->buf[pdu->pos] = 0; /* initial value for the tpe */
+        pdu->buf[pdu->pos++] = 0; /* initial value for the tpe */
     }
-    pdu->buf[pdu->pos] = pack_tpe(event, pdu->buf[pdu->pos], idx);
+    pdu->buf[pdu->pos - 1] = pack_tpe(event, pdu->buf[pdu->pos], idx);
     /* note: do _not_ update encoding pos after adding the packed event! */
     nval++;
     /* Update Vector Header */
