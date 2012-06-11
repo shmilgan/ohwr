@@ -20,11 +20,11 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 
-/* -I$LINUX/arch/arm/mach-at91/include/ */
+#include <mach/at91sam9g45.h>
+
 #include <mach/at91_pio.h>
 #include <mach/at91_ssc.h>
 #include <mach/at91_pmc.h>
-#include <mach/at91sam9g45.h>
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
