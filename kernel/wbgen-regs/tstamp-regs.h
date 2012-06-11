@@ -13,7 +13,12 @@
 #ifndef __WBGEN2_REGDEFS_TSTAMP
 #define __WBGEN2_REGDEFS_TSTAMP
 
+#ifdef __KERNEL__
 #include <linux/types.h>
+#else
+#include <stdint.h>
+#endif
+
 
 #if defined( __GNUC__)
 #define PACKED __attribute__ ((packed))

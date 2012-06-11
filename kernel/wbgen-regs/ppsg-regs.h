@@ -13,7 +13,12 @@
 #ifndef __WBGEN2_REGDEFS_PPSG
 #define __WBGEN2_REGDEFS_PPSG
 
+#ifdef __KERNEL__
 #include <linux/types.h>
+#else
+#include <stdint.h>
+#endif
+
 
 #if defined( __GNUC__)
 #define PACKED __attribute__ ((packed))
@@ -62,6 +67,17 @@
 
 /* definitions for register: UTC Adjustment register (most-significant part) */
 
+/* definitions for register: External sync control register */
+
+/* definitions for field: Sync to external PPS input in reg: External sync control register */
+#define PPSG_ESCR_SYNC                        WBGEN2_GEN_MASK(0, 1)
+
+/* definitions for field: PPS output valid in reg: External sync control register */
+#define PPSG_ESCR_PPS_VALID                   WBGEN2_GEN_MASK(1, 1)
+
+/* definitions for field: Timecode output(UTC+cycles) valid in reg: External sync control register */
+#define PPSG_ESCR_TM_VALID                    WBGEN2_GEN_MASK(2, 1)
+
 PACKED struct PPSG_WB {
   /* [0x0]: REG Control Register */
   uint32_t CR;
@@ -77,6 +93,8 @@ PACKED struct PPSG_WB {
   uint32_t ADJ_UTCLO;
   /* [0x18]: REG UTC Adjustment register (most-significant part) */
   uint32_t ADJ_UTCHI;
+  /* [0x1c]: REG External sync control register */
+  uint32_t ESCR;
 };
 
 #endif

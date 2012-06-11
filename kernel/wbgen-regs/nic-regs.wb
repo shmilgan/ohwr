@@ -75,10 +75,10 @@ top = peripheral {
       field {
 				 name = "Buffer Not Available";
 				 prefix = "bna";
-				 description = "No buffers were available when receiving a packet. Cleared by writing a one to this bit";
+				 description = "No buffers were available when receiving a packet.";
 				 type = BIT;
-				 access_bus = READ_WRITE;
-				 access_dev = READ_WRITE;
+				 access_bus = READ_ONLY;
+				 access_dev = WRITE_ONLY;
 				 load = LOAD_EXT;
       };
 
@@ -92,6 +92,57 @@ top = peripheral {
 				 access_dev = READ_WRITE;
 				 load = LOAD_EXT;
       };
+
+      field {
+				 name = "Transmission done";
+				 prefix = "tx_done";
+				 description = "read 1: All non-empty TX descriptors have been transmitted\
+				                read 0: Transmission in progress\
+				 write 1: Clears the flag\
+				 write 0: No effect";
+
+				 type = BIT;
+				 access_bus = READ_WRITE;
+				 access_dev = READ_WRITE;
+				 load = LOAD_EXT;
+      };
+
+      field {
+				 name = "Transmission error";
+				 prefix = "tx_error";
+				 description = "read 1: A TX error occured and the transmission was stopped. CUR_TX_DESC is pointing the TX descriptor for which the error occured\
+				                read 0: No TX error\
+				 write 1: Clears the flag\
+				 write 0: No effect";
+
+				 type = BIT;
+				 access_bus = READ_WRITE;
+				 access_dev = READ_WRITE;
+				 load = LOAD_EXT;
+      };
+
+
+			field {
+				 align = 8;
+				 name = "Current TX descriptor";
+				 size = 3;
+				 prefix = "cur_TX_Desc";
+				 description = "Index of the currently handled TX descriptor";
+				 type = SLV;
+				 access_bus = READ_ONLY;
+				 access_dev = WRITE_ONLY;
+			};
+
+			field {
+				 align = 8;
+				 name = "Current RX descriptor";
+				 size = 3;
+				 prefix = "cur_RX_DESC";
+				 description = "Index of the currently handled RX descriptor";
+				 type = SLV;
+				 access_bus = READ_ONLY;
+				 access_dev = WRITE_ONLY;
+			};
    };
 
 
@@ -109,6 +160,7 @@ top = peripheral {
 	 irq {
       name = "Receive Complete";
       prefix = "rcomp";
+      ack_line = true;
       description = "A frame has been stored in memory.";
       trigger = LEVEL_1;
    };
@@ -116,20 +168,17 @@ top = peripheral {
    irq {
       name = "Transmit Complete";
       prefix = "tcomp";
+      ack_line = true;
+			mask_line = true;
       description = "Frame successfully transmitted";
-      trigger = LEVEL_1;
-   };
-
-   irq {
-      name = "Receive Error";
-      prefix = "rxerr";
-      description = "Receive Error";
       trigger = LEVEL_1;
    };
 
    irq {
       name = "Transmit Error";
       prefix = "txerr";
+      ack_line = true;
+			mask_line = true;
       trigger = LEVEL_1;
    };
 
@@ -138,31 +187,30 @@ top = peripheral {
 --			prefix = "dtx";
 --			size = 32;
 --			width = 32;
- --     access_bus = READ_WRITE;
-  --    access_dev = READ_WRITE;
-	-- };
+--      access_bus = READ_WRITE;
+--      access_dev = READ_WRITE;
+--	 };
 
-	-- ram {
-	--		name = "RX descriptors mem";
+--	 ram {
+--			name = "RX descriptors mem";
 --			prefix = "drx";
 --			size = 32;
 --			width = 32;
- --     access_bus = READ_WRITE;
-  --    access_dev = READ_WRITE;
-	-- };
+--      access_bus = READ_WRITE;
+--      access_dev = READ_WRITE;
+--	 };
 
 
-   ram {
-      name = "TX/RX Buffers";
-      prefix = "mem";
-      -- 8192 * 32 = 32Kb
-      size = 8192;
-      width = 32;
-      access_bus = READ_WRITE;
-      access_dev = READ_WRITE;
+    ram {
+       name = "TX/RX Buffers";
+       prefix = "mem";
+       -- 8192 * 32 = 32Kb
+       size = 8192;
+       width = 32;
+       access_bus = READ_WRITE;
+       access_dev = READ_WRITE;
 
-   };
-
+    };
 };
 
 
@@ -235,21 +283,20 @@ TX_desc_template =
       name = "TX Descriptor %d register 2";
       prefix = "tx%d_d2";
 
--- extended the sizes to 16 bits (although the buffer is 32kB-long)
       field {
 				 name = "offset in RAM--in bytes, must be aligned to 32-bit boundary";
 				 prefix = "offset";
 				 type = SLV;
-				 size = 16;
+				 size = 13;
 				 access_bus = READ_WRITE;
 				 access_dev = READ_ONLY;
       };
 
       field {
-				 name = "Length of buffer in bytes";
+				 name = "Length of buffer--in bytes. Least significant bit must always be 0 (the packet size must be divisible by 2)";
 				 prefix = "len";
 				 type = SLV;
-				 size = 16;
+				 size = 13;
 				 align = 16;
 				 access_bus = READ_WRITE;
 				 access_dev = READ_ONLY;
@@ -320,18 +367,17 @@ RX_desc_template = {
 				 access_dev = WRITE_ONLY;
       };
 
-      field {
-				 name = "RX timestamp (possibly) incorrect";
-				 prefix = "TS_INCORRECT";
-				 description = "read 1: the RX timestamp in R2 register may be incorrect, because it has been generated during counter adjustment,\
-				 								read 0: the RX timestamp in R2 register is correct";
-
-				 type = BIT;
-				 access_bus = READ_ONLY;
-				 access_dev = WRITE_ONLY;
+     field {
+         name = "RX Timestamp (possibly) incorrect";
+         prefix = "TS_INCORRECT";
+         align = 15;
+         description = "1 - there is a risk that the timestamp in RX_D2 is invalid, because it was taken during counter adjustment,\
+         0 - RX timestamp OK.";
+         type = BIT;
+         access_bus = READ_ONLY;
+         access_dev = WRITE_ONLY;
       };
-      
-      
+
    };
 
 	 
@@ -342,8 +388,8 @@ RX_desc_template = {
       
       field {
 				 name = "RX_TS_R";
-				 description = "Value of the RX timestamp (rising edge bits)";
 				 prefix = "TS_R";
+				 description = "Value of the RX timestamp (rising edge bits)";
 				 size = 28;
 				 type = SLV;
 				 access_bus = READ_ONLY;
@@ -369,7 +415,7 @@ RX_desc_template = {
 				 name = "Offset in packet RAM (in bytes, 32-bit aligned)";
 				 prefix = "offset";
 				 type = SLV;
-				 size = 16;
+				 size = 13;
 				 access_bus = READ_WRITE;
 				 access_dev = READ_ONLY;
       },
@@ -378,7 +424,7 @@ RX_desc_template = {
 				 name = "Length of buffer in bytes. After reception of the packet, it's updated with the length of the received packet.";
 				 prefix = "len";
 				 type = SLV;
-				 size = 16;
+				 size = 13;
 				 align = 16;
 				 access_bus = READ_WRITE;
 				 access_dev = READ_WRITE;
