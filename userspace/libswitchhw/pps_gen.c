@@ -1,18 +1,28 @@
 /* PPS Generator driver */
 
+/* Warning: references to "UTC" in the registers DO NOT MEAN actual UTC time, it's just a plain second counter
+	 It doesn't care about leap seconds. */
+
 #include <stdio.h>
-#include  <string.h>
+#include <string.h>
+#include <stddef.h>
 #include <inttypes.h>
 #include <sys/time.h>
 
-#include <hw/fpga_regs.h>
-#include <hw/pps_gen_regs.h>
+#include <fpga_io.h>
+#include <regs/ppsg-regs.h>
 
 #include <switch_hw.h>
 #include <trace.h>
 
 /* Default width (in 8ns units) of the pulses on the PPS output */
 #define PPS_WIDTH 100000
+
+#define ppsg_write(reg, val) \
+	_fpga_writel(FPGA_BASE_PPS_GEN + offsetof(struct PPSG_WB, reg), val)
+
+#define ppsg_read(reg) \
+	_fpga_readl(FPGA_BASE_PPS_GEN + offsetof(struct PPSG_WB, reg))
 
 int shw_pps_gen_init()
 {
@@ -21,15 +31,15 @@ int shw_pps_gen_init()
 	cr = PPSG_CR_CNT_EN | PPSG_CR_PWIDTH_W(PPS_WIDTH);
   TRACE(TRACE_INFO, "Initializing PPS generator...");
 
-  _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_CR, cr);
+  ppsg_write(CR, cr);
 
-  _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ADJ_SECLO, 0);
-  _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ADJ_SECHI, 0);
-  _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ADJ_NSEC, 0);
+  ppsg_write(ADJ_UTCLO, 0);
+  ppsg_write(ADJ_UTCHI, 0);
+  ppsg_write(ADJ_NSEC, 0);
 
-  _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_CR, cr | PPSG_CR_CNT_SET);
-  _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_CR, cr);
-  _fpga_writel(FPGA_BASE_PPS_GEN + 0x1c, 0x6); /* enable PPS output */
+  ppsg_write(CR, cr | PPSG_CR_CNT_SET);
+  ppsg_write(CR, cr);
+  ppsg_write(ESCR, 0x6); /* enable PPS output */
 }
 
 /* Adjusts the nanosecond (refclk cycle) counter by atomically adding (how_much) cycles. */
@@ -42,34 +52,34 @@ int shw_pps_gen_adjust(int counter, int64_t how_much)
 
 	if(counter == PPSG_ADJUST_NSEC)
 	{
- 		_fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ADJ_SECLO, 0);
-  	_fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ADJ_SECHI, 0);
-		_fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ADJ_NSEC, how_much);
+ 		ppsg_write(ADJ_UTCLO, 0);
+  	ppsg_write(ADJ_UTCHI, 0);
+		ppsg_write(ADJ_NSEC, how_much);
 	} else {
- 		_fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ADJ_SECLO, (uint32_t ) (how_much & 0xffffffffLL));
-  	_fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ADJ_SECHI, (uint32_t ) (how_much >> 32) & 0xff);
-		_fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ADJ_NSEC, 0);
+ 		ppsg_write(ADJ_UTCLO, (uint32_t ) (how_much & 0xffffffffLL));
+  	ppsg_write(ADJ_UTCHI, (uint32_t ) (how_much >> 32) & 0xff);
+		ppsg_write(ADJ_NSEC, 0);
 	}
 
-  _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_CR, _fpga_readl(FPGA_BASE_PPS_GEN + PPSG_REG_CR) | PPSG_CR_CNT_ADJ);
+  ppsg_write(CR, ppsg_read(CR) | PPSG_CR_CNT_ADJ);
 	return 0;
 }
 
 /* Returns 1 when the adjustment operation is not yet finished */
 int shw_pps_gen_busy()
 {
-	uint32_t cr = _fpga_readl(FPGA_BASE_PPS_GEN + PPSG_REG_CR);
-  return cr& PPSG_CR_CNT_ADJ ? 0 : 1;
+	uint32_t cr = ppsg_read(CR);
+  return cr & PPSG_CR_CNT_ADJ ? 0 : 1;
 }
 
 /* Enables/disables PPS output */
 int shw_pps_gen_enable_output(int enable)
 {
-    uint32_t escr = _fpga_readl(FPGA_BASE_PPS_GEN + PPSG_REG_ESCR);
+    uint32_t escr = ppsg_read(ESCR);
     if(enable)
-        _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ESCR, escr | PPSG_ESCR_PPS_VALID)
+        ppsg_write(ESCR, escr | PPSG_ESCR_PPS_VALID)
     else
-        _fpga_writel(FPGA_BASE_PPS_GEN + PPSG_REG_ESCR, escr & ~PPSG_ESCR_PPS_VALID);
+        ppsg_write(ESCR, escr & ~PPSG_ESCR_PPS_VALID);
 
     return 0;
 }
@@ -80,9 +90,9 @@ void shw_pps_gen_read_time(uint64_t *seconds, uint32_t *nanoseconds)
 	uint64_t sec1, sec2;
 	
 	do {
-		sec1 = (uint64_t)_fpga_readl(FPGA_BASE_PPS_GEN + PPSG_REG_CNTR_SECLO) | (uint64_t)_fpga_readl(FPGA_BASE_PPS_GEN + PPSG_REG_CNTR_SECHI) << 32;
-		ns_cnt = _fpga_readl(FPGA_BASE_PPS_GEN + PPSG_REG_CNTR_NSEC);
-		sec2 = (uint64_t)_fpga_readl(FPGA_BASE_PPS_GEN + PPSG_REG_CNTR_SECLO) | (uint64_t)_fpga_readl(FPGA_BASE_PPS_GEN + PPSG_REG_CNTR_SECHI) << 32;
+		sec1 = (uint64_t)ppsg_read(CNTR_UTCLO) | (uint64_t)ppsg_read(CNTR_UTCHI) << 32;
+		ns_cnt = ppsg_read(CNTR_NSEC);
+		sec2 = (uint64_t)ppsg_read(CNTR_UTCLO) | (uint64_t)ppsg_read(CNTR_UTCHI) << 32;
 	}	while(sec2 != sec1);
 
 	if(seconds) *seconds = sec2;

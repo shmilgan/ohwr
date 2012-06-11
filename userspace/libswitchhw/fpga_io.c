@@ -11,7 +11,7 @@
 
 #include <switch_hw.h>
 
-#include <hw/fpga_regs.h>
+#include <fpga_io.h>
 
 #define SMC_CS0_BASE 0x10000000
 #define SMC_CS0_SIZE 0x200000

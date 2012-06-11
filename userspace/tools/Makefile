@@ -14,7 +14,6 @@ OBJDUMP         = $(CROSS_COMPILE)objdump
 
 # LOTs of includes
 CFLAGS =  -O2 -DDEBUG -g \
-					-I../../kernel/wbgen-regs \
 					-I$(LINUX)/include \
 					-I$(LINUX)/arch/arm/mach-at91/include \
 					-I../ptp-noposix/libptpnetif \

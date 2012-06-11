@@ -22,7 +22,9 @@
 
 #include <linux/mii.h>
 
-#include "endpoint-regs.h"
+#include <regs/endpoint-regs.h>
+
+#undef PACKED
 #include "ptpd_netif.h"
 
 #include "rt_ipc.h"

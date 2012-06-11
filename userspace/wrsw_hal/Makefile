@@ -14,7 +14,7 @@ WR_LIB = $(WR_INSTALL_ROOT)/lib
 CFLAGS = -g -Wall -DDEBUG -DRT_CLIENT\
 	-I../include -I../mini-rpc -I$(WR_INCLUDE)
 
-LDFLAGS = -L$(WR_INSTALL_ROOT)/lib -L../3rdparty/lib -L$(WR_LIB) \
+LDFLAGS = -L$(WR_INSTALL_ROOT)/lib -L$(WR_LIB) \
 	 -L../libswitchhw -L../mini-rpc \
 	 -lminipc -llua -lm -ldl -lswitchhw 
 

@@ -6,7 +6,7 @@
 #ifndef I2C_FPGA_REG_H
 #define I2C_FPGA_REG_H
 
-#include <hw/fpga_regs.h>
+#include <fpga_io.h>
 #include "i2c.h"
 
 #define FPGA_I2C_REG_PREL	0x00

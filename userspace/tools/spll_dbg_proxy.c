@@ -22,8 +22,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include "hw/fpga_regs.h"
-#include "softpll_regs.h"
+#include <fpga_io.h>
+#include <regs/softpll-regs.h>
 
 /* TCP Port to listen on */
 #define MY_PORT 12345

@@ -1,6 +1,6 @@
 CC = $(CROSS_COMPILE)gcc
 AR = $(CROSS_COMPILE)ar
-CFLAGS = -I. -O2 -I../include -DDEBUG -I./minilzo -g -I./lua-5.2.0/src/
+CFLAGS = -I. -O2 -I../include -DDEBUG -g
 
 OBJS = trace.o init.o fpga_io.o util.o pps_gen.o i2c.o pio_pins.o i2c_bitbang.o i2c_fpga_reg.o pio.o libshw_i2c.o i2c_sfp.o
 SCAN_OBJS = i2cscan.o

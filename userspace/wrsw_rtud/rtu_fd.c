@@ -36,8 +36,8 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include <hw/fpga_regs.h>
-#include <hw/rtu_regs.h>
+#include <fpga_io.h>
+#include <regs/rtu-regs.h>
 
 #include <trace.h>
 
