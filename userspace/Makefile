@@ -13,7 +13,7 @@ WR_INSTALL_ROOT ?= $(WRS_OUTPUT_DIR)/images/wr
 WRDEV_DIR ?= $(WRS_BASE_DIR)/..
 
 # subdirectories we want to compile
-SUBDIRS = mini-rpc ptp-noposix libswitchhw wrsw_hal wrsw_rtud tools
+SUBDIRS = mini-rpc libswitchhw wrsw_hal wrsw_rtud tools
 
 # all variables are exported
 export
