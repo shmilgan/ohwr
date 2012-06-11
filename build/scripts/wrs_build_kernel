@@ -23,7 +23,7 @@ dirname="linux-2.6.39"
 rm -rf $dirname
 tar xjf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
 
- apply patches
+# apply patches
 cd $dirname
 for n in ${WRS_BASE_DIR}/../patches/kernel/v2.6.39/00*; do
     patch -p1 < $n || wrs_die "patch kernel"
