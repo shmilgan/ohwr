@@ -22,4 +22,8 @@ cd $WRS_BASE_DIR/../kernel
 make $WRS_MAKE_J  || wrs_die "white rabbit kernel modules"
 
 mkdir -p $WRS_OUTPUT_DIR/images
-cp $(find . -name \*.ko) $WRS_OUTPUT_DIR/images
+mkdir -p $WRS_OUTPUT_DIR/images/wr/
+mkdir -p $WRS_OUTPUT_DIR/images/wr/lib
+mkdir -p $WRS_OUTPUT_DIR/images/wr/lib/modules/
+
+cp $(find . -name \*.ko) $WRS_OUTPUT_DIR/images/wr/lib/modules

@@ -23,7 +23,7 @@ dirname="linux-2.6.39"
 rm -rf $dirname
 tar xjf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
 
-# apply patches
+ apply patches
 cd $dirname
 for n in ${WRS_BASE_DIR}/../patches/kernel/v2.6.39/00*; do
     patch -p1 < $n || wrs_die "patch kernel"
@@ -47,4 +47,10 @@ make oldconfig  || wrs_die "kernel config"
 
 make $WRS_MAKE_J zImage modules  || wrs_die "kernel compilation"
 
-cp arch/$ARCH/boot/zImage $(find . -name '*.ko') $WRS_OUTPUT_DIR/images
+mkdir -p $WRS_OUTPUT_DIR/images/lib
+mkdir -p $WRS_OUTPUT_DIR/images/lib/modules
+mkdir -p $WRS_OUTPUT_DIR/images/lib/modules/2.6.39
+mkdir -p $WRS_OUTPUT_DIR/images/lib/modules/2.6.39/kernel
+
+cp $(find . -name '*.ko') $WRS_OUTPUT_DIR/images/lib/modules/2.6.39/kernel
+cp arch/$ARCH/boot/zImage $WRS_OUTPUT_DIR/images
