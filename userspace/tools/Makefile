@@ -1,4 +1,4 @@
-TOOLS = rtu_stat wr_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex
+TOOLS = rtu_stat wr_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex com
 
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 
@@ -44,6 +44,9 @@ load-virtex: load-virtex.o load-fpga.o
 			${CC} -o $@ $^ $(LDFLAGS)
 
 load-lm32: load-lm32.o lm32-loader.o
+			${CC} -o $@ $^ $(LDFLAGS)
+
+com: com.o
 			${CC} -o $@ $^ $(LDFLAGS)
 
 clean:
