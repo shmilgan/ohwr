@@ -16,17 +16,11 @@ STRIP           = $(CROSS_COMPILE)strip
 OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
-LIB = libtools.a
+LDFLAGS = -L. 
 
-LIBOBJ = lm32-loader.o load-fpga.o
+PROGS = mapper wmapper 
 
-LDFLAGS = -L. -ltools
+all: $(PROGS)
 
-PROGS = load-lm32 load-virtex spi-pll mapper wmapper
+$(PROGS): 
 
-all: $(LIB) $(PROGS)
-
-$(PROGS): $(LIB)
-
-$(LIB): $(LIBOBJ)
-	$(AR) r $@ $^
