@@ -92,57 +92,6 @@ top = peripheral {
 				 access_dev = READ_WRITE;
 				 load = LOAD_EXT;
       };
-
-      field {
-				 name = "Transmission done";
-				 prefix = "tx_done";
-				 description = "read 1: All non-empty TX descriptors have been transmitted\
-				                read 0: Transmission in progress\
-				 write 1: Clears the flag\
-				 write 0: No effect";
-
-				 type = BIT;
-				 access_bus = READ_WRITE;
-				 access_dev = READ_WRITE;
-				 load = LOAD_EXT;
-      };
-
-      field {
-				 name = "Transmission error";
-				 prefix = "tx_error";
-				 description = "read 1: A TX error occured and the transmission was stopped. CUR_TX_DESC is pointing the TX descriptor for which the error occured\
-				                read 0: No TX error\
-				 write 1: Clears the flag\
-				 write 0: No effect";
-
-				 type = BIT;
-				 access_bus = READ_WRITE;
-				 access_dev = READ_WRITE;
-				 load = LOAD_EXT;
-      };
-
-
-			field {
-				 align = 8;
-				 name = "Current TX descriptor";
-				 size = 3;
-				 prefix = "cur_TX_Desc";
-				 description = "Index of the currently handled TX descriptor";
-				 type = SLV;
-				 access_bus = READ_ONLY;
-				 access_dev = WRITE_ONLY;
-			};
-
-			field {
-				 align = 8;
-				 name = "Current RX descriptor";
-				 size = 3;
-				 prefix = "cur_RX_DESC";
-				 description = "Index of the currently handled RX descriptor";
-				 type = SLV;
-				 access_bus = READ_ONLY;
-				 access_dev = WRITE_ONLY;
-			};
    };
 
 
@@ -160,7 +109,6 @@ top = peripheral {
 	 irq {
       name = "Receive Complete";
       prefix = "rcomp";
-      ack_line = true;
       description = "A frame has been stored in memory.";
       trigger = LEVEL_1;
    };
@@ -168,17 +116,20 @@ top = peripheral {
    irq {
       name = "Transmit Complete";
       prefix = "tcomp";
-      ack_line = true;
-			mask_line = true;
       description = "Frame successfully transmitted";
+      trigger = LEVEL_1;
+   };
+
+   irq {
+      name = "Receive Error";
+      prefix = "rxerr";
+      description = "Receive Error";
       trigger = LEVEL_1;
    };
 
    irq {
       name = "Transmit Error";
       prefix = "txerr";
-      ack_line = true;
-			mask_line = true;
       trigger = LEVEL_1;
    };
 
@@ -287,7 +238,7 @@ TX_desc_template =
 				 name = "offset in RAM--in bytes, must be aligned to 32-bit boundary";
 				 prefix = "offset";
 				 type = SLV;
-				 size = 13;
+				 size = 16;
 				 access_bus = READ_WRITE;
 				 access_dev = READ_ONLY;
       };
@@ -296,7 +247,7 @@ TX_desc_template =
 				 name = "Length of buffer--in bytes. Least significant bit must always be 0 (the packet size must be divisible by 2)";
 				 prefix = "len";
 				 type = SLV;
-				 size = 13;
+				 size = 16;
 				 align = 16;
 				 access_bus = READ_WRITE;
 				 access_dev = READ_ONLY;
@@ -415,7 +366,7 @@ RX_desc_template = {
 				 name = "Offset in packet RAM (in bytes, 32-bit aligned)";
 				 prefix = "offset";
 				 type = SLV;
-				 size = 13;
+				 size = 16;
 				 access_bus = READ_WRITE;
 				 access_dev = READ_ONLY;
       },
@@ -424,7 +375,7 @@ RX_desc_template = {
 				 name = "Length of buffer in bytes. After reception of the packet, it's updated with the length of the received packet.";
 				 prefix = "len";
 				 type = SLV;
-				 size = 13;
+				 size = 16;
 				 align = 16;
 				 access_bus = READ_WRITE;
 				 access_dev = READ_WRITE;

@@ -51,24 +51,6 @@
 /* definitions for field: Frame Received in reg: NIC Status Register */
 #define NIC_SR_REC                            WBGEN2_GEN_MASK(1, 1)
 
-/* definitions for field: Transmission done in reg: NIC Status Register */
-#define NIC_SR_TX_DONE                        WBGEN2_GEN_MASK(2, 1)
-
-/* definitions for field: Transmission error in reg: NIC Status Register */
-#define NIC_SR_TX_ERROR                       WBGEN2_GEN_MASK(3, 1)
-
-/* definitions for field: Current TX descriptor in reg: NIC Status Register */
-#define NIC_SR_CUR_TX_DESC_MASK               WBGEN2_GEN_MASK(8, 3)
-#define NIC_SR_CUR_TX_DESC_SHIFT              8
-#define NIC_SR_CUR_TX_DESC_W(value)           WBGEN2_GEN_WRITE(value, 8, 3)
-#define NIC_SR_CUR_TX_DESC_R(reg)             WBGEN2_GEN_READ(reg, 8, 3)
-
-/* definitions for field: Current RX descriptor in reg: NIC Status Register */
-#define NIC_SR_CUR_RX_DESC_MASK               WBGEN2_GEN_MASK(16, 3)
-#define NIC_SR_CUR_RX_DESC_SHIFT              16
-#define NIC_SR_CUR_RX_DESC_W(value)           WBGEN2_GEN_WRITE(value, 16, 3)
-#define NIC_SR_CUR_RX_DESC_R(reg)             WBGEN2_GEN_READ(reg, 16, 3)
-
 /* definitions for register: SW_Reset */
 
 /* definitions for register: TX Descriptor 1 register 1 */
@@ -94,16 +76,16 @@
 /* definitions for register: TX Descriptor 1 register 2 */
 
 /* definitions for field: offset in RAM--in bytes, must be aligned to 32-bit boundary in reg: TX Descriptor 1 register 2 */
-#define NIC_TX1_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_TX1_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_TX1_D2_OFFSET_SHIFT               0
-#define NIC_TX1_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_TX1_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_TX1_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_TX1_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer--in bytes. Least significant bit must always be 0 (the packet size must be divisible by 2) in reg: TX Descriptor 1 register 2 */
-#define NIC_TX1_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_TX1_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_TX1_D2_LEN_SHIFT                  16
-#define NIC_TX1_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_TX1_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_TX1_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_TX1_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: TX Descriptor 1 register 3 */
 
@@ -136,16 +118,16 @@
 /* definitions for register: TX Descriptor 2 register 2 */
 
 /* definitions for field: offset in RAM--in bytes, must be aligned to 32-bit boundary in reg: TX Descriptor 2 register 2 */
-#define NIC_TX2_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_TX2_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_TX2_D2_OFFSET_SHIFT               0
-#define NIC_TX2_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_TX2_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_TX2_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_TX2_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer--in bytes. Least significant bit must always be 0 (the packet size must be divisible by 2) in reg: TX Descriptor 2 register 2 */
-#define NIC_TX2_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_TX2_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_TX2_D2_LEN_SHIFT                  16
-#define NIC_TX2_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_TX2_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_TX2_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_TX2_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: TX Descriptor 2 register 3 */
 
@@ -178,16 +160,16 @@
 /* definitions for register: TX Descriptor 3 register 2 */
 
 /* definitions for field: offset in RAM--in bytes, must be aligned to 32-bit boundary in reg: TX Descriptor 3 register 2 */
-#define NIC_TX3_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_TX3_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_TX3_D2_OFFSET_SHIFT               0
-#define NIC_TX3_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_TX3_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_TX3_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_TX3_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer--in bytes. Least significant bit must always be 0 (the packet size must be divisible by 2) in reg: TX Descriptor 3 register 2 */
-#define NIC_TX3_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_TX3_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_TX3_D2_LEN_SHIFT                  16
-#define NIC_TX3_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_TX3_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_TX3_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_TX3_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: TX Descriptor 3 register 3 */
 
@@ -220,16 +202,16 @@
 /* definitions for register: TX Descriptor 4 register 2 */
 
 /* definitions for field: offset in RAM--in bytes, must be aligned to 32-bit boundary in reg: TX Descriptor 4 register 2 */
-#define NIC_TX4_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_TX4_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_TX4_D2_OFFSET_SHIFT               0
-#define NIC_TX4_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_TX4_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_TX4_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_TX4_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer--in bytes. Least significant bit must always be 0 (the packet size must be divisible by 2) in reg: TX Descriptor 4 register 2 */
-#define NIC_TX4_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_TX4_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_TX4_D2_LEN_SHIFT                  16
-#define NIC_TX4_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_TX4_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_TX4_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_TX4_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: TX Descriptor 4 register 3 */
 
@@ -262,16 +244,16 @@
 /* definitions for register: TX Descriptor 5 register 2 */
 
 /* definitions for field: offset in RAM--in bytes, must be aligned to 32-bit boundary in reg: TX Descriptor 5 register 2 */
-#define NIC_TX5_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_TX5_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_TX5_D2_OFFSET_SHIFT               0
-#define NIC_TX5_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_TX5_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_TX5_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_TX5_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer--in bytes. Least significant bit must always be 0 (the packet size must be divisible by 2) in reg: TX Descriptor 5 register 2 */
-#define NIC_TX5_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_TX5_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_TX5_D2_LEN_SHIFT                  16
-#define NIC_TX5_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_TX5_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_TX5_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_TX5_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: TX Descriptor 5 register 3 */
 
@@ -304,16 +286,16 @@
 /* definitions for register: TX Descriptor 6 register 2 */
 
 /* definitions for field: offset in RAM--in bytes, must be aligned to 32-bit boundary in reg: TX Descriptor 6 register 2 */
-#define NIC_TX6_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_TX6_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_TX6_D2_OFFSET_SHIFT               0
-#define NIC_TX6_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_TX6_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_TX6_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_TX6_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer--in bytes. Least significant bit must always be 0 (the packet size must be divisible by 2) in reg: TX Descriptor 6 register 2 */
-#define NIC_TX6_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_TX6_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_TX6_D2_LEN_SHIFT                  16
-#define NIC_TX6_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_TX6_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_TX6_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_TX6_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: TX Descriptor 6 register 3 */
 
@@ -346,16 +328,16 @@
 /* definitions for register: TX Descriptor 7 register 2 */
 
 /* definitions for field: offset in RAM--in bytes, must be aligned to 32-bit boundary in reg: TX Descriptor 7 register 2 */
-#define NIC_TX7_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_TX7_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_TX7_D2_OFFSET_SHIFT               0
-#define NIC_TX7_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_TX7_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_TX7_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_TX7_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer--in bytes. Least significant bit must always be 0 (the packet size must be divisible by 2) in reg: TX Descriptor 7 register 2 */
-#define NIC_TX7_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_TX7_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_TX7_D2_LEN_SHIFT                  16
-#define NIC_TX7_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_TX7_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_TX7_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_TX7_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: TX Descriptor 7 register 3 */
 
@@ -388,16 +370,16 @@
 /* definitions for register: TX Descriptor 8 register 2 */
 
 /* definitions for field: offset in RAM--in bytes, must be aligned to 32-bit boundary in reg: TX Descriptor 8 register 2 */
-#define NIC_TX8_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_TX8_D2_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_TX8_D2_OFFSET_SHIFT               0
-#define NIC_TX8_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_TX8_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_TX8_D2_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_TX8_D2_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer--in bytes. Least significant bit must always be 0 (the packet size must be divisible by 2) in reg: TX Descriptor 8 register 2 */
-#define NIC_TX8_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_TX8_D2_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_TX8_D2_LEN_SHIFT                  16
-#define NIC_TX8_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_TX8_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_TX8_D2_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_TX8_D2_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: TX Descriptor 8 register 3 */
 
@@ -444,16 +426,16 @@
 /* definitions for register: RX Descriptor 1 register 3 */
 
 /* definitions for field: Offset in packet RAM (in bytes, 32-bit aligned) in reg: RX Descriptor 1 register 3 */
-#define NIC_RX1_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_RX1_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_RX1_D3_OFFSET_SHIFT               0
-#define NIC_RX1_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_RX1_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_RX1_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_RX1_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer in bytes. After reception of the packet, it's updated with the length of the received packet. in reg: RX Descriptor 1 register 3 */
-#define NIC_RX1_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_RX1_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_RX1_D3_LEN_SHIFT                  16
-#define NIC_RX1_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_RX1_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_RX1_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_RX1_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: RX Descriptor 2 register 1 */
 
@@ -492,16 +474,16 @@
 /* definitions for register: RX Descriptor 2 register 3 */
 
 /* definitions for field: Offset in packet RAM (in bytes, 32-bit aligned) in reg: RX Descriptor 2 register 3 */
-#define NIC_RX2_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_RX2_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_RX2_D3_OFFSET_SHIFT               0
-#define NIC_RX2_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_RX2_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_RX2_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_RX2_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer in bytes. After reception of the packet, it's updated with the length of the received packet. in reg: RX Descriptor 2 register 3 */
-#define NIC_RX2_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_RX2_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_RX2_D3_LEN_SHIFT                  16
-#define NIC_RX2_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_RX2_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_RX2_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_RX2_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: RX Descriptor 3 register 1 */
 
@@ -540,16 +522,16 @@
 /* definitions for register: RX Descriptor 3 register 3 */
 
 /* definitions for field: Offset in packet RAM (in bytes, 32-bit aligned) in reg: RX Descriptor 3 register 3 */
-#define NIC_RX3_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_RX3_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_RX3_D3_OFFSET_SHIFT               0
-#define NIC_RX3_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_RX3_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_RX3_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_RX3_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer in bytes. After reception of the packet, it's updated with the length of the received packet. in reg: RX Descriptor 3 register 3 */
-#define NIC_RX3_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_RX3_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_RX3_D3_LEN_SHIFT                  16
-#define NIC_RX3_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_RX3_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_RX3_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_RX3_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: RX Descriptor 4 register 1 */
 
@@ -588,16 +570,16 @@
 /* definitions for register: RX Descriptor 4 register 3 */
 
 /* definitions for field: Offset in packet RAM (in bytes, 32-bit aligned) in reg: RX Descriptor 4 register 3 */
-#define NIC_RX4_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_RX4_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_RX4_D3_OFFSET_SHIFT               0
-#define NIC_RX4_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_RX4_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_RX4_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_RX4_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer in bytes. After reception of the packet, it's updated with the length of the received packet. in reg: RX Descriptor 4 register 3 */
-#define NIC_RX4_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_RX4_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_RX4_D3_LEN_SHIFT                  16
-#define NIC_RX4_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_RX4_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_RX4_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_RX4_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: RX Descriptor 5 register 1 */
 
@@ -636,16 +618,16 @@
 /* definitions for register: RX Descriptor 5 register 3 */
 
 /* definitions for field: Offset in packet RAM (in bytes, 32-bit aligned) in reg: RX Descriptor 5 register 3 */
-#define NIC_RX5_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_RX5_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_RX5_D3_OFFSET_SHIFT               0
-#define NIC_RX5_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_RX5_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_RX5_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_RX5_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer in bytes. After reception of the packet, it's updated with the length of the received packet. in reg: RX Descriptor 5 register 3 */
-#define NIC_RX5_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_RX5_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_RX5_D3_LEN_SHIFT                  16
-#define NIC_RX5_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_RX5_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_RX5_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_RX5_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: RX Descriptor 6 register 1 */
 
@@ -684,16 +666,16 @@
 /* definitions for register: RX Descriptor 6 register 3 */
 
 /* definitions for field: Offset in packet RAM (in bytes, 32-bit aligned) in reg: RX Descriptor 6 register 3 */
-#define NIC_RX6_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_RX6_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_RX6_D3_OFFSET_SHIFT               0
-#define NIC_RX6_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_RX6_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_RX6_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_RX6_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer in bytes. After reception of the packet, it's updated with the length of the received packet. in reg: RX Descriptor 6 register 3 */
-#define NIC_RX6_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_RX6_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_RX6_D3_LEN_SHIFT                  16
-#define NIC_RX6_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_RX6_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_RX6_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_RX6_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: RX Descriptor 7 register 1 */
 
@@ -732,16 +714,16 @@
 /* definitions for register: RX Descriptor 7 register 3 */
 
 /* definitions for field: Offset in packet RAM (in bytes, 32-bit aligned) in reg: RX Descriptor 7 register 3 */
-#define NIC_RX7_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_RX7_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_RX7_D3_OFFSET_SHIFT               0
-#define NIC_RX7_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_RX7_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_RX7_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_RX7_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer in bytes. After reception of the packet, it's updated with the length of the received packet. in reg: RX Descriptor 7 register 3 */
-#define NIC_RX7_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_RX7_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_RX7_D3_LEN_SHIFT                  16
-#define NIC_RX7_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_RX7_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_RX7_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_RX7_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: RX Descriptor 8 register 1 */
 
@@ -780,16 +762,16 @@
 /* definitions for register: RX Descriptor 8 register 3 */
 
 /* definitions for field: Offset in packet RAM (in bytes, 32-bit aligned) in reg: RX Descriptor 8 register 3 */
-#define NIC_RX8_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 13)
+#define NIC_RX8_D3_OFFSET_MASK                WBGEN2_GEN_MASK(0, 16)
 #define NIC_RX8_D3_OFFSET_SHIFT               0
-#define NIC_RX8_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 13)
-#define NIC_RX8_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 13)
+#define NIC_RX8_D3_OFFSET_W(value)            WBGEN2_GEN_WRITE(value, 0, 16)
+#define NIC_RX8_D3_OFFSET_R(reg)              WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for field: Length of buffer in bytes. After reception of the packet, it's updated with the length of the received packet. in reg: RX Descriptor 8 register 3 */
-#define NIC_RX8_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 13)
+#define NIC_RX8_D3_LEN_MASK                   WBGEN2_GEN_MASK(16, 16)
 #define NIC_RX8_D3_LEN_SHIFT                  16
-#define NIC_RX8_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 13)
-#define NIC_RX8_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 13)
+#define NIC_RX8_D3_LEN_W(value)               WBGEN2_GEN_WRITE(value, 16, 16)
+#define NIC_RX8_D3_LEN_R(reg)                 WBGEN2_GEN_READ(reg, 16, 16)
 
 /* definitions for register: Interrupt disable register */
 
@@ -799,8 +781,11 @@
 /* definitions for field: Transmit Complete in reg: Interrupt disable register */
 #define NIC_EIC_IDR_TCOMP                     WBGEN2_GEN_MASK(1, 1)
 
+/* definitions for field: Receive Error in reg: Interrupt disable register */
+#define NIC_EIC_IDR_RXERR                     WBGEN2_GEN_MASK(2, 1)
+
 /* definitions for field: Transmit Error in reg: Interrupt disable register */
-#define NIC_EIC_IDR_TXERR                     WBGEN2_GEN_MASK(2, 1)
+#define NIC_EIC_IDR_TXERR                     WBGEN2_GEN_MASK(3, 1)
 
 /* definitions for register: Interrupt enable register */
 
@@ -810,8 +795,11 @@
 /* definitions for field: Transmit Complete in reg: Interrupt enable register */
 #define NIC_EIC_IER_TCOMP                     WBGEN2_GEN_MASK(1, 1)
 
+/* definitions for field: Receive Error in reg: Interrupt enable register */
+#define NIC_EIC_IER_RXERR                     WBGEN2_GEN_MASK(2, 1)
+
 /* definitions for field: Transmit Error in reg: Interrupt enable register */
-#define NIC_EIC_IER_TXERR                     WBGEN2_GEN_MASK(2, 1)
+#define NIC_EIC_IER_TXERR                     WBGEN2_GEN_MASK(3, 1)
 
 /* definitions for register: Interrupt mask register */
 
@@ -821,8 +809,11 @@
 /* definitions for field: Transmit Complete in reg: Interrupt mask register */
 #define NIC_EIC_IMR_TCOMP                     WBGEN2_GEN_MASK(1, 1)
 
+/* definitions for field: Receive Error in reg: Interrupt mask register */
+#define NIC_EIC_IMR_RXERR                     WBGEN2_GEN_MASK(2, 1)
+
 /* definitions for field: Transmit Error in reg: Interrupt mask register */
-#define NIC_EIC_IMR_TXERR                     WBGEN2_GEN_MASK(2, 1)
+#define NIC_EIC_IMR_TXERR                     WBGEN2_GEN_MASK(3, 1)
 
 /* definitions for register: Interrupt status register */
 
@@ -832,8 +823,11 @@
 /* definitions for field: Transmit Complete in reg: Interrupt status register */
 #define NIC_EIC_ISR_TCOMP                     WBGEN2_GEN_MASK(1, 1)
 
+/* definitions for field: Receive Error in reg: Interrupt status register */
+#define NIC_EIC_ISR_RXERR                     WBGEN2_GEN_MASK(2, 1)
+
 /* definitions for field: Transmit Error in reg: Interrupt status register */
-#define NIC_EIC_ISR_TXERR                     WBGEN2_GEN_MASK(2, 1)
+#define NIC_EIC_ISR_TXERR                     WBGEN2_GEN_MASK(3, 1)
 /* definitions for RAM: TX/RX Buffers */
 #define NIC_MEM_BASE 0x00008000 /* base address */                                
 #define NIC_MEM_BYTES 0x00008000 /* size in bytes */                               
