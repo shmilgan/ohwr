@@ -54,7 +54,7 @@ int shw_pps_gen_adjust(int counter, int64_t how_much)
 	{
  		ppsg_write(ADJ_UTCLO, 0);
   	ppsg_write(ADJ_UTCHI, 0);
-		ppsg_write(ADJ_NSEC, how_much);
+		ppsg_write(ADJ_NSEC, (int32_t) ((int64_t) how_much * 1000LL / (int64_t)REF_CLOCK_PERIOD_PS));
 	} else {
  		ppsg_write(ADJ_UTCLO, (uint32_t ) (how_much & 0xffffffffLL));
   	ppsg_write(ADJ_UTCHI, (uint32_t ) (how_much >> 32) & 0xff);
