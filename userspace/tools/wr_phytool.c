@@ -369,8 +369,8 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 		{	
 			ptpd_netif_sendto(sock, &to, buf, 64, &ts_tx);
 			int n = ptpd_netif_recvfrom(sock, &from, buf, 64, &ts_rx);
-			printf("TX timestamp: correct %d %12lld:%12d\n", ts_tx.correct, ts_tx.utc, ts_tx.nsec);
-			printf("RX timestamp: correct %d %12lld:%12d\n", ts_rx.correct, ts_rx.utc, ts_rx.nsec);
+			printf("TX timestamp: correct %d %12lld:%12d\n", ts_tx.correct, ts_tx.sec, ts_tx.nsec);
+			printf("RX timestamp: correct %d %12lld:%12d\n", ts_rx.correct, ts_rx.sec, ts_rx.nsec);
 			adjust_count --;
 		}// else printf("AdjustInProgress\n");
 			
