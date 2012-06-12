@@ -36,6 +36,7 @@ mkdir -p $TMPFS/wr
 cp -r $rootfs_vanilla/* $TMPFS
 cp -r $WRS_OUTPUT_DIR/images/wr/* $TMPFS/wr
 cp -r $WRS_OUTPUT_DIR/images/lib/* $TMPFS/lib
+rm -f $TMPFS/etc/init.d/*
 cp -r $rootfs_override/* $TMPFS
 
 rm -rf $TMPFS/dev
