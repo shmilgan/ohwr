@@ -56,6 +56,8 @@
 
 #define BASE_SPANNING_TREE_CONTEXT_ID 0
 
+#define MVRP_ATTR_LEN       2
+
 enum mvrp_attributes {
 	MVRP_ATTR_INVALID,
 	MVRP_ATTR_VID,
@@ -95,6 +97,9 @@ static int mvrp_join_ind(struct mrp_participant *p, int mid, int is_new)
 {
     struct mrp_port *port = p->port;
 
+    TRACE_DBG(TRACE_INFO, 
+        "mvrp: join_ind (new %d, port %d, vid %d)\n", is_new, port->port_no, mid);
+
     if (rtu_vfdb_proxy_forward_dynamic(port->port_no, mid) < 0)
         return -1;
 
@@ -106,6 +111,9 @@ static int mvrp_join_ind(struct mrp_participant *p, int mid, int is_new)
 
 static void mvrp_leave_ind(struct mrp_participant *p, int mid)
 {
+    TRACE_DBG(TRACE_INFO, 
+        "mvrp: leave_ind (port %d, vid=%d)\n", p->port->port_no, mid);
+
     rtu_vfdb_proxy_filter_dynamic(p->port->port_no, mid);
 }
 
@@ -115,11 +123,11 @@ static int attr_cmp(uint8_t type, uint8_t len, void *v1, void *v2)
     uint16_t val1;
     uint16_t val2;
 
+	if ((type != MVRP_ATTR_VID) || (len != MVRP_ATTR_LEN))
+        return 0xffffffff;
     memcpy(&val1, v1, len);
     memcpy(&val2, v2, len);
-    return ((type == MVRP_ATTR_VID) && (len == 2)) ?
-           ntohs(val2) - ntohs(val1):
-           0xffffffff;
+    return ntohs(val2) - ntohs(val1);
 }
 
 static uint8_t attrtype(int mid)
@@ -134,6 +142,9 @@ static uint8_t attrtype(int mid)
 static int db_add_entry(uint8_t type, uint8_t len, void *firstval, int offset)
 {
     uint16_t val;
+
+	if ((type != MVRP_ATTR_VID) || (len != MVRP_ATTR_LEN))
+        return -EINVAL;
 
     memcpy(&val, firstval, len);
     return ntohs(val) + offset;
@@ -156,6 +167,9 @@ static int db_find_entry(uint8_t type, uint8_t len, void *firstval, int offset)
 {
     uint16_t val;
     int mid;
+
+	if ((type != MVRP_ATTR_VID) || (len != MVRP_ATTR_LEN))
+        return -EINVAL;
 
     memcpy(&val, firstval, len);
     mid = ntohs(val) + offset;
@@ -205,10 +219,9 @@ static int mvrp_uninit_participant(struct mrp_participant *part)
 {
     int vid;
 
-    for (vid = 0; vid < NUM_VLANS; vid++) {
+    for (vid = 0; vid < NUM_VLANS; vid++) 
         if (mad_registered_here(part, vid))
             rtu_vfdb_proxy_filter_dynamic(part->port->port_no, vid);
-    }
     return 0;
 }
 
@@ -288,8 +301,7 @@ static int mvrp_check_operational_state()
                 irrespective of the port state in the ST context. */
                 p = mrp_create_participant(port);
                 if (!p)
-                    return -1;
-
+                    return -1;            
                 /* Associate participant to the propagation context */
                 if (map_context_add_participant(ctx, p) != 0)
                     return -1;
@@ -375,23 +387,23 @@ static int init_vlan_table()
 /* Initialise MVRP entity */
 static int mvrp_init()
 {
-    fprintf(stderr, "mvrp: mrp init\n");
+    TRACE(TRACE_INFO, "mvrp: mrp init\n");
     if (mrp_init() != 0)
         return -1;
 
     /* 'A MAP Context identifier of 0 always identifies the Base Spanning Tree
        Context'. Note that even if no instance of STP is running, a context will
        still exist */
-    fprintf(stderr, "mvrp: create propagation context\n");
+    TRACE(TRACE_INFO, "mvrp: create propagation context\n");
     INIT_LIST_HEAD(&mvrp_app.contexts);
     ctx = map_context_create(BASE_SPANNING_TREE_CONTEXT_ID, &mvrp_app);
     if (!ctx)
         return -1;
 
-    fprintf(stderr, "mvrp: init vlan table\n");
+    TRACE(TRACE_INFO, "mvrp: init vlan table\n");
     init_vlan_table();
 
-    fprintf(stderr, "mvrp: register application\n");
+    TRACE(TRACE_INFO, "mvrp: register application\n");
     if (mrp_register_application(&mvrp_app) != 0)
         return -1;
 
@@ -483,11 +495,11 @@ int main(int argc, char **argv)
 	// Register signal handler
 	signal(SIGINT, sigint);
 
-    fprintf(stderr, "mvrp: mrp protocol\n");
+    TRACE(TRACE_INFO, "mvrp: mrp protocol\n");
     while (1) {
         /* Handle user triggered actions (i.e. management) */
 	    if (minipc_server_action(server, 10) < 0)
-		    fprintf(stderr, "mvrp server_action(): %s\n", strerror(errno));
+		    TRACE(TRACE_INFO, "mvrp server_action(): %s\n", strerror(errno));
 
         if (!mvrp_enabled)
             continue;
@@ -495,6 +507,7 @@ int main(int argc, char **argv)
         /* Handle any possible change in ports operational or forwarding state */
         if (mvrp_check_operational_state() < 0)
             goto failed;
+
         if (mvrp_check_forwarding_state() < 0)
             goto failed;
 
@@ -502,7 +515,6 @@ int main(int argc, char **argv)
         mrp_protocol(&mvrp_app);
 
         // TODO handle port role change (i.e trigger flush and redeclare events)
-
     }
 
 failed:

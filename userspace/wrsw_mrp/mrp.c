@@ -495,6 +495,159 @@ static int periodic_time = 100;
 /* leave time takes random value between 60 and 100 centisec at mrp_init */
 static int leave_time;
 
+static char *str_event(enum mrp_event event)
+{
+    switch (event) {
+    case MRP_EVENT_NEW:
+        return "NEW";        
+    case MRP_EVENT_JOIN:
+        return "JOIN";
+    case MRP_EVENT_LV:
+        return "LV";
+    case MRP_EVENT_R_NEW:
+        return "R_NEW";
+    case MRP_EVENT_R_JOIN_IN:
+        return "R_JOIN_IN";
+    case MRP_EVENT_R_IN:
+        return "R_IN";
+    case MRP_EVENT_R_JOIN_MT:
+        return "R_JOIN_MT";
+    case MRP_EVENT_R_MT:
+        return "R_MT";
+    case MRP_EVENT_R_LV:
+        return "R_LV";
+    case MRP_EVENT_R_LA:
+        return "R_LA";
+    case MRP_EVENT_TX:
+        return "TX";
+    case MRP_EVENT_TX_LA:
+        return "TX_LA";
+    case MRP_EVENT_TX_LAF:
+        return "TX_LAF";
+    case MRP_EVENT_FLUSH:
+        return "FLUSH";
+    case MRP_EVENT_REDECLARE:
+        return "REDECLARE";
+    case MRP_EVENT_PERIODIC:
+        return "PERIODIC";
+    case MRP_EVENT_PERIODIC_TIMER:
+        return "PERIODIC_TIMER";
+    case MRP_EVENT_PERIODIC_ENABLED:
+        return "PERIODIC_ENABLED";
+    case MRP_EVENT_PERIODIC_DISABLED:
+        return "PERIODIC_DISABLED";
+    case MRP_EVENT_LEAVE_TIMER:
+        return "LEAVE_TIMER";
+    case MRP_EVENT_LEAVEALL_TIMER:
+        return "LEAVEALL_TIMER";
+    default:
+        return "UNKOWN";
+    };
+
+}
+
+static char *str_regstate(int state)
+{
+    switch (state) {
+    case MRP_REGISTRAR_IN:
+        return "IN";    
+    case MRP_REGISTRAR_L3:
+        return "L3";    
+    case MRP_REGISTRAR_L2:
+        return "L2";    
+    case MRP_REGISTRAR_L1:
+        return "L1";    
+    case MRP_REGISTRAR_LV:
+        return "LV";    
+    case MRP_REGISTRAR_MT:
+        return "MT";    
+    default:
+        return "--";    
+    }
+}
+
+static char *str_appstate(int state)
+{
+    switch (state) {
+    case MRP_APPLICANT_VO:
+        return "VO";
+    case MRP_APPLICANT_VP:
+        return "VP";
+    case MRP_APPLICANT_VN:
+        return "VN";
+    case MRP_APPLICANT_AN:
+        return "AN";
+    case MRP_APPLICANT_AA:
+        return "AA";
+    case MRP_APPLICANT_QA:
+        return "QA";
+    case MRP_APPLICANT_LA:
+        return "LA";
+    case MRP_APPLICANT_AO:
+        return "AO";
+    case MRP_APPLICANT_QO:
+        return "QO";
+    case MRP_APPLICANT_AP:
+        return "AP";
+    case MRP_APPLICANT_QP:
+        return "QP";
+    case MRP_APPLICANT_LO:
+        return "LO";
+    default: 
+        return "--";
+    }
+}
+
+/*static char *str_leaveallstate(int state)*/
+/*{*/
+/*    switch (state) {*/
+/*    case MRP_LEAVEALL_A:*/
+/*        return "A";*/
+/*    case MRP_LEAVEALL_P:*/
+/*        return "P";*/
+/*    default:*/
+/*        return "--";*/
+/*    }*/
+/*}*/
+
+static char *str_action(int action)
+{
+    switch (action) {
+    case MRP_ACTION_NONE:
+        return "";
+    case MRP_ACTION_NEW:
+        return "NEW";
+    case MRP_ACTION_JOIN:
+        return "JOIN";
+    case MRP_ACTION_LV:
+        return "LV";
+    case MRP_ACTION_S_NEW:
+        return "S_NEW";
+    case MRP_ACTION_S_JOIN:
+        return "S_JOIN";
+    case MRP_ACTION_S_LV:
+        return "S_LV";
+    case MRP_ACTION_S:
+        return "S";
+    case MRP_ACTION_S_LA:
+        return "S_LA";
+    case MRP_ACTION_PERIODIC:
+        return "PERIODIC";
+    case MRP_ACTION_START_LEAVE_TIMER:
+        return "START_LEAVE_TIMER";
+    case MRP_ACTION_STOP_LEAVE_TIMER:
+        return "STOP_LEAVE_TIMER";
+    case MRP_ACTION_START_LEAVEALL_TIMER:
+        return "START_LEAVEALL_TIMER";
+    case MRP_ACTION_START_PERIODIC_TIMER:
+        return "START_PERIODIC_TIMER";
+    case MRP_ACTION_REQ_TX:
+        return "REQ_TX";
+    default:
+        return "UNKNOWN";
+    }
+}
+
 inline static void mad_init_machine(struct mad_machine *m)
 {
     m->app_state = MRP_APPLICANT_VO;
@@ -570,6 +723,11 @@ struct mrp_port *mrp_find_port(struct mrp_application *app, int hw_index)
 /* MAD_Join.request(attribute_type, attribute_value, new) */
 static void mad_join_req(struct mrp_participant *p, int mid, int is_new)
 {
+    TRACE_DBG(TRACE_INFO,
+        "mrp: join_req (new %d, port %d, vid %d)\n", 
+        is_new, 
+        p->port->port_no, 
+        mid);              
     mad_attr_event(p, mid, is_new ? MRP_EVENT_NEW:MRP_EVENT_JOIN);
     if (is_new)
         p->port->app->mad_new_declaration(p, mid);
@@ -578,6 +736,10 @@ static void mad_join_req(struct mrp_participant *p, int mid, int is_new)
 /* MAD_Leave.request(attribute_type, attribute_value) */
 static void mad_leave_req(struct mrp_participant *p, int mid)
 {
+    TRACE_DBG(TRACE_INFO,
+        "mrp: leave_req (port %d, vid %d)\n", 
+        p->port->port_no, 
+        mid);
     mad_attr_event(p, mid, MRP_EVENT_LV);
 }
 
@@ -691,6 +853,20 @@ int mad_attr_event(struct mrp_participant *p,
     struct mrp_application *app = port->app;
     struct mad_machine *machine = &p->machines[mid];
 
+    TRACE_DBG(TRACE_INFO,
+        "mrp: (port %d, mid %d) %s \t=> [reg: %s][app: %s] --> [reg: %s][app: %s] => %s %s %s %s\n", 
+        p->port->port_no,
+        mid,
+        str_event(event),        
+        str_regstate(machine->reg_state),
+        str_appstate(machine->app_state),
+        str_regstate(mrp_registrar_state_table[machine->reg_state][event].state),
+        str_appstate(mrp_applicant_state_table[machine->app_state][event].state),
+        str_action(mrp_registrar_state_table[machine->reg_state][event].action & MRP_ACTION_MASK),
+        str_action(mrp_registrar_state_table[machine->reg_state][event].action & MRP_TIMER_ACTION_MASK),
+        str_action(mrp_applicant_state_table[machine->app_state][event].action  & MRP_ACTION_MASK),
+        str_action(mrp_applicant_state_table[machine->app_state][event].action  & MRP_REQ_TX_MASK));
+    
 //registrar:
 
     /* Fixed    : Registrar ignores all MRP messages, and remains IN
@@ -737,7 +913,6 @@ int mad_attr_event(struct mrp_participant *p,
     machine->reg_state = state;
 
 applicant:
-
     in = (machine->reg_state == MRP_REGISTRAR_IN);
 
     /* applicant state machine */
@@ -873,6 +1048,15 @@ void mad_participant_event(struct mrp_participant *p, enum mrp_event event)
     uint8_t state;
     uint8_t action;
 
+/*    TRACE_DBG(TRACE_INFO, */
+/*        "mrp: (port %d) leaveall [%s]-->[%s] => %s %s\n", */
+/*        p->port->port_no,*/
+/*        p->leaveall_state,*/
+/*        mrp_leaveall_state_table[p->leaveall_state][event].state,*/
+/*        str_action(mrp_leaveall_state_table[p->leaveall_state][event].action & MRP_ACTION_MASK),*/
+/*        str_action(mrp_leaveall_state_table[p->leaveall_state][event].action & MRP_TIMER_ACTION_MASK));*/
+/*    */
+    
     state = mrp_leaveall_state_table[p->leaveall_state][event].state;
     if (state == MRP_LEAVEALL_INVALID)
         return;
@@ -993,10 +1177,9 @@ void map_context_remove_port(struct map_context *c, struct mrp_port *port)
         /* If a Port is removed from the set, and that Port has declared one or more
         attributes, then this Port transmits a Leave message for every
         attribute that it has declared. (affects only to Active applicants) */
-        for (mid = 0; mid < max; mid++) {
+        for (mid = 0; mid < max; mid++)
             if (mad_declared_here(p, mid))
                 mad_attr_event(p, mid, MRP_EVENT_LV);
-        }
     }
 
     port_node = list_find_port(&c->forwarding_ports, port);
@@ -1238,7 +1421,7 @@ static struct mrp_port *mrp_create_port(struct mrp_application *app,
     ifr.ifr_ifindex = hw_index;
     if ((ioctl(app->proto.fd, SIOCGIFNAME,   &ifr) == -1) ||
 	    (ioctl(app->proto.fd, SIOCGIFHWADDR, &ifr) == -1)) {
-        fprintf(stderr, "mrp: unable to get HW address; IOCTL error.");
+        TRACE(TRACE_INFO, "mrp: unable to get HW address; IOCTL error.");
         free(port);
         return NULL;
     }
@@ -1284,12 +1467,12 @@ int mrp_register_application(struct mrp_application *app)
 
         port_no = wr_nametoport(port_list.port_names[i]);
         if (port_no < 0) {
-            fprintf(stderr, "mrp: read interface port number failed\n");
+            TRACE(TRACE_INFO, "mrp: read interface port number failed\n");
             goto fail;
         }
 
         if (!mrp_create_port(app, hw_index, port_no)) {
-            fprintf(stderr, "mrp: not enough memory to create new port\n");
+            TRACE(TRACE_INFO, "mrp: not enough memory to create new port\n");
             goto fail;
         }
     }
@@ -1309,7 +1492,7 @@ int mrp_register_application(struct mrp_application *app)
         goto fail;
     }
     if (err) {
-        fprintf(stderr, "create static entry failed err %d\n", err);
+        TRACE(TRACE_INFO, "create static entry failed err %d\n", err);
         goto fail;
     }
 
@@ -1480,25 +1663,26 @@ void mrp_protocol(struct mrp_application *app)
     list_for_each_entry(port, &app->ports, app_port) {
         if (!port->is_enabled)
             continue;
-
         if (list_empty(&port->participants))
-            continue;
+            continue;        
 
         /* Handle timers */
         if (timer_expired_now(&port->periodic_timeout, &now))
             mad_port_event(port, MRP_EVENT_PERIODIC_TIMER);
 
-	    list_for_each_entry(p, &port->participants, port_participant) {
+	    list_for_each_entry(p, &port->participants, port_participant) {	    
             if (timer_expired_now(&p->leaveall_timeout, &now))
                 mad_participant_event(p, MRP_EVENT_LEAVEALL_TIMER);
             /* 'The accuracy required for the leavetimer is sufficiently
                coarse to permit the use of a single operating system timer
                per Participant with 2 bits of state for each Registrar' */
+
             if (p->leave_timer_running &&
                 timer_expired_now(&p->leave_timeout_4, &now)) {
                 p->leave_timer_running = 0;
                 mad_event(p, MRP_EVENT_LEAVE_TIMER);
             }
+            
             /* Handle transimission */
             if (mrp_tx_opportunity(p, &now))
                 mrp_tx(p);
