@@ -3,7 +3,6 @@
 # in the auto-generated ../Makedefs (when software was in svn).
 # So let's add all of the needed variables here (environment can override)
 
-LINUX ?= $(WRDEV_DIR)/software/rubi-repos/linux-wr
 ARCH ?= arm
 CROSS_COMPILE ?= $(CROSS_COMPILE_ARM_PATH)$(CROSS_COMPILE_ARM_PREFIX)
 CROSS_COMPILE_ARM ?= $(CROSS_COMPILE)
