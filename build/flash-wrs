@@ -1,5 +1,79 @@
 #!/bin/sh
-# A script to compile the usb loader, possibly changing the mac address
+# A script to ease the use of the usb loader, possibly changing the mac address
+#
+# Authors: 
+#	- Benoit Rat (Seven Solutions, www.sevensols.com)
+# 	- Alessandro Rubini
+#
+# GNU Lesser General Public License Usage
+# This file may be used under the terms of the GNU Lesser
+# General Public License version 2.1 as published by the Free Software
+# Foundation and appearing in the file LICENSE.LGPL included in the
+# packaging of this file.  Please review the following information to
+# ensure the GNU Lesser General Public License version 2.1 requirements
+# will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+#########################################################################	
+
+
+showhelp()
+{
+	echo "Usage: $0 [options] MAC [<firmware>.tar.gz] [DEV]\n"
+	echo "MAC:\t MAC address in hexadecimal seperated by ':' (i.e, AB:CD:EF:01:23:45)"
+	echo "<firmware>.tar.gz: Use the file in the firmware to flash the device"
+	echo "DEV:\t The usb device (by default it is /dev/ttyACM0)"
+	echo "Options: "
+	echo "\t-h|--help\t\t Show this help message"
+	echo "\t-m|--memmode\t\t can be: default, df (dataflash), nf (nandflash), test."
+	echo "\t-e \t\t\t Completely erase the memory (Can erase your configuration)"
+	echo "\t--build\t\t\t Use file that you have build in the WRS_OUTPUT_DIR"
+	echo "\t--test\t\t\t Use file for testing the switch (not available)"
+	echo "\t--silent\t\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE"
+
+	echo ""
+	exit 0
+}
+
+
+checkExit()
+{
+	err=0;
+	if [ $1 ]; then
+		if [ -f $1 ]; then 
+			return 0; 
+		else 
+			echo "Can't find $1" >& 2; 
+		fi
+	else
+		echo "varname not set"
+	fi
+	exit 1
+}
+
+modifyMAC()
+{
+	origin=$1
+	new=$2
+	cp $origin $new
+	
+	# check & change mac address
+	X="[0-9a-fA-F][0-9a-fA-F]"
+	while true; do
+		if echo $MAC | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
+			sed -i "s/02:0B:AD:C0:FF:EE/$MAC/" $new
+			echo "MAC is now: $MAC"
+			return 0
+		else
+			if [ "x$MAC" != "x" ]; then
+					echo "$0: Invalid MAC address \"$MAC\"" >&2;
+			fi
+			if [ $silent ]; then 
+					return 1;
+			fi
+			read -p "Enter MAC (XX:XX:XX:XX:XX:XX): " MAC
+		fi
+	done
+
+}
 
 showhelp()
 {
@@ -97,6 +171,14 @@ while [ $# -ge 1 ]; do
 		kernel=${WRS_OUTPUT_DIR}/images/zImage
 		rootfs=${WRS_OUTPUT_DIR}/images/wrs-image.jffs2.img
 		shift;;
+	*.tar.gz) 
+		checkExit $1
+		tar --directory /tmp -xzf $1	
+		at91bs=/tmp/at91bootstrap.bin;
+		barebox=/tmp/barebox.bin
+		kernel=/tmp/zImage
+		rootfs=/tmp/wrs-image.jffs2.img
+		shift;;
 	-h|--help) 	showhelp; shift;;
 	-m|--memmode)	memmode="$2";  shift; shift;;
 	--silent)	silent=1; shift;;
@@ -107,6 +189,30 @@ while [ $# -ge 1 ]; do
 	* ) echo "$0: Invalid argument \"$1\"" >&2; exit 1;;
     esac
 done
+
+## Selecting the running memmode
+if [ "x$memmode" = "xdf" ]; then
+	df=1
+elif [ "x$memmode" = "xnf" ]; then
+	nf=1
+elif [ "x$memmode" = "xtest" ]; then
+	test=1
+else 
+	df=1
+	nf=1
+fi
+
+## Flashing DataFlash
+if [ $df ]; then
+
+	checkExit $at91bs
+	checkExit $barebox
+	
+	Tbarebox=$(mktemp /tmp/barebox.XXXXXX)
+	modifyMAC ${barebox} ${Tbarebox}
+
+	./usb-loader/mch_flasher -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792		
+fi
 
 ## Selecting the running memmode
 if [ "x$memmode" = "xdf" ]; then
