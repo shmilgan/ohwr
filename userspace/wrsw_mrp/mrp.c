@@ -35,8 +35,6 @@
 
 #include <hal_exports.h>
 
-#include <hw/trace.h>
-
 #include <net-snmp/library/snmp-tc.h>
 
 #include "rtu_fd_proxy.h"
@@ -723,7 +721,7 @@ struct mrp_port *mrp_find_port(struct mrp_application *app, int hw_index)
 /* MAD_Join.request(attribute_type, attribute_value, new) */
 static void mad_join_req(struct mrp_participant *p, int mid, int is_new)
 {
-    TRACE_DBG(TRACE_INFO,
+    fprintf(stderr, 
         "mrp: join_req (new %d, port %d, vid %d)\n", 
         is_new, 
         p->port->port_no, 
@@ -736,7 +734,7 @@ static void mad_join_req(struct mrp_participant *p, int mid, int is_new)
 /* MAD_Leave.request(attribute_type, attribute_value) */
 static void mad_leave_req(struct mrp_participant *p, int mid)
 {
-    TRACE_DBG(TRACE_INFO,
+    fprintf(stderr, 
         "mrp: leave_req (port %d, vid %d)\n", 
         p->port->port_no, 
         mid);
@@ -845,7 +843,7 @@ void map_propagate_leave(struct mrp_participant *this_part, int mid)
 int mad_attr_event(struct mrp_participant *p,
                     int mid,
                     enum mrp_event event)
-{
+{ 
     uint8_t state, action;
     int is_new = 0;     //  is_new = 1 for new attribute declarations
     int in;             //  in = 1 when the registrar is in IN state
@@ -853,7 +851,7 @@ int mad_attr_event(struct mrp_participant *p,
     struct mrp_application *app = port->app;
     struct mad_machine *machine = &p->machines[mid];
 
-    TRACE_DBG(TRACE_INFO,
+    fprintf(stderr, 
         "mrp: (port %d, mid %d) %s \t=> [reg: %s][app: %s] --> [reg: %s][app: %s] => %s %s %s %s\n", 
         p->port->port_no,
         mid,
@@ -1048,7 +1046,7 @@ void mad_participant_event(struct mrp_participant *p, enum mrp_event event)
     uint8_t state;
     uint8_t action;
 
-/*    TRACE_DBG(TRACE_INFO, */
+/*    fprintf(stderr,  */
 /*        "mrp: (port %d) leaveall [%s]-->[%s] => %s %s\n", */
 /*        p->port->port_no,*/
 /*        p->leaveall_state,*/
@@ -1302,13 +1300,11 @@ void mrp_destroy_participant(struct mrp_participant *p)
         return;
 
     p->port->app->uninit_participant(p);
-
     /* Remove participant from propagation contexts */
     while (!list_empty(&p->contexts)) {
         cnode = list_first_entry(&p->contexts, struct map_context_list, node);
         map_context_remove_participant(cnode->context, p);
     }
-
     /* Remove participant from port */
     list_del(&p->port_participant);
 
@@ -1319,19 +1315,16 @@ void mrp_destroy_participant(struct mrp_participant *p)
 /* Delete port and remove it from the application */
 void mrp_destroy_port(struct mrp_port *port)
 {
-    struct mrp_participant *p;
+    struct mrp_participant *p, *tmp;
 
     if (!port)
         return;
-
     /* Delete all port participants */
-	list_for_each_entry(p, &port->participants, port_participant)
+	list_for_each_entry_safe(p, tmp, &port->participants, port_participant)
         mrp_destroy_participant(p);
-
     /* Remove port from application */
     list_del(&port->app_port);
-
-    free(port);
+    free(port);    
 }
 
 /* Create a context with the given identifier. Add propagation context to app.
@@ -1366,20 +1359,18 @@ nomem:
 /* Delete context and remove it from the application */
 void map_context_destroy(struct map_context *ctx, struct mrp_application *app)
 {
-    struct mrp_participant_list *part_node;
-    struct mrp_port_list *port_node;
+    struct mrp_participant_list *part_node, *tmp_a;
+    struct mrp_port_list *port_node, *tmp_b;
 
     if (!ctx)
         return;
 
     /* Remove all participants from context */
-    list_for_each_entry(part_node, &ctx->participants, node)
+    list_for_each_entry_safe(part_node, tmp_a, &ctx->participants, node)
         map_context_remove_participant(ctx, part_node->participant);
-
     /* Remove all ports from forwarding port set */
-    list_for_each_entry(port_node, &ctx->forwarding_ports, node)
+    list_for_each_entry_safe(port_node, tmp_b, &ctx->forwarding_ports, node)
         list_del(&port_node->node);
-
     /* Remove context from application */
     list_del(&ctx->app_context);
 
@@ -1421,7 +1412,7 @@ static struct mrp_port *mrp_create_port(struct mrp_application *app,
     ifr.ifr_ifindex = hw_index;
     if ((ioctl(app->proto.fd, SIOCGIFNAME,   &ifr) == -1) ||
 	    (ioctl(app->proto.fd, SIOCGIFHWADDR, &ifr) == -1)) {
-        TRACE(TRACE_INFO, "mrp: unable to get HW address; IOCTL error.");
+        fprintf(stderr,  "mrp: unable to get HW address; IOCTL error.");
         free(port);
         return NULL;
     }
@@ -1431,7 +1422,6 @@ static struct mrp_port *mrp_create_port(struct mrp_application *app,
     list_add(&port->app_port, &app->ports);
 
     port->is_enabled = 1;
-
     return port;
 }
 
@@ -1467,18 +1457,17 @@ int mrp_register_application(struct mrp_application *app)
 
         port_no = wr_nametoport(port_list.port_names[i]);
         if (port_no < 0) {
-            TRACE(TRACE_INFO, "mrp: read interface port number failed\n");
+            fprintf(stderr,  "mrp: read interface port number failed\n");
             goto fail;
         }
 
         if (!mrp_create_port(app, hw_index, port_no)) {
-            TRACE(TRACE_INFO, "mrp: not enough memory to create new port\n");
+            fprintf(stderr,  "mrp: not enough memory to create new port\n");
             goto fail;
         }
     }
 
     /* Make sure RTU delivers MRP application packets to NIC */
-    errno = 0;
     err = rtu_fdb_proxy_create_static_entry(
             app->proto.address,
             WILDCARD_VID,
@@ -1492,7 +1481,7 @@ int mrp_register_application(struct mrp_application *app)
         goto fail;
     }
     if (err) {
-        TRACE(TRACE_INFO, "create static entry failed err %d\n", err);
+        fprintf(stderr, "create static entry failed err %d\n", err);
         goto fail;
     }
 
@@ -1508,25 +1497,23 @@ fail:
 int mrp_unregister_application(struct mrp_application *app)
 {
     int err;
-    struct mrp_port *port;
-    struct map_context *context;
-
-    close(app->proto.fd);
+    struct mrp_port *port, *tmp_port;
+    struct map_context *context, *tmp_context;
 
     /* Delete all ports (will remove participants) */
-    list_for_each_entry(port, &app->ports, app_port)
+    list_for_each_entry_safe(port, tmp_port, &app->ports, app_port)
         mrp_destroy_port(port);
 
     /* Delete all contexts */
-    list_for_each_entry(context, &app->contexts, app_context)
+    list_for_each_entry_safe(context, tmp_context, &app->contexts, app_context)
         map_context_destroy(context, app);
 
+    close(app->proto.fd);
+
     /* Make sure MRP app packets are forwarded again on all ports */
-    errno = 0;
     err = rtu_fdb_proxy_delete_static_entry(app->proto.address, WILDCARD_VID);
     if (errno || err)
         return -1;
-
     return 0;
 }
 
@@ -1719,10 +1706,7 @@ void mrp_set_applicant_control(struct mrp_participant *p,
    @return -1 if error. 0 otherwise. */
 int mrp_init(void)
 {
-    if (!rtu_fdb_proxy_create("rtu_fdb")) {
-        perror("rtu_fdb_proxy_create");
-        return -1;
-    }
+    rtu_fdb_proxy_init("rtu_fdb");
 
     /* Start a random seed to generate random periods for timers */
     srand(time(NULL));

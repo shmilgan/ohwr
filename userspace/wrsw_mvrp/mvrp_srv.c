@@ -70,6 +70,25 @@ static int mvrp_srv_is_enabled_port(
     return 0;
 }
 
+static int mvrp_srv_register_vlan(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    struct mvrp_register_vlan_argdata *in;
+    in  = (struct mvrp_register_vlan_argdata*)args;
+    
+    *(int *)ret = mvrp_register_vlan(in->vid, in->egress_ports, in->forbidden_ports);
+    return 0;
+}
+
+static int mvrp_srv_deregister_vlan(
+            const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+    int vid = args[0];
+
+    *(int *)ret = mvrp_deregister_vlan(vid);
+    return 0;
+}
+
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 struct minipc_ch *mvrp_srv_create(char *name)
@@ -89,6 +108,8 @@ struct minipc_ch *mvrp_srv_create(char *name)
         {&mvrp_get_last_pdu_origin_struct, mvrp_srv_get_last_pdu_origin},
         {&mvrp_is_enabled_struct, mvrp_srv_is_enabled},
         {&mvrp_is_enabled_port_struct, mvrp_srv_is_enabled_port},
+        {&mvrp_register_vlan_struct, mvrp_srv_register_vlan},
+        {&mvrp_deregister_vlan_struct, mvrp_srv_deregister_vlan},        
     };
 
     server = minipc_server_create(name, 0);

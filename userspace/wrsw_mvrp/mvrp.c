@@ -34,8 +34,6 @@
 
 #include <net/if.h>
 
-#include <hw/trace.h>
-
 #include "hal_exports.h"
 
 #include "mrp.h"
@@ -82,6 +80,14 @@ static int mvrp_enabled;
 
 static int switch_is_v2;
 
+static void mvrp_exit(int err);
+
+static inline void check_rtu_pipe()
+{
+    if (errno == EPIPE)
+        mvrp_exit(errno);
+}
+
 /* 'When any MVRP declaration marked as “new” is received on a given Port,
    either as a result of receiving an MVRPDU from the attached LAN
    (MAD_Join.indication), or as a result of receiving a request from MAP
@@ -91,17 +97,20 @@ static int switch_is_v2;
 static void mvrp_new_declaration(struct mrp_participant *p, int mid)
 {
     rtu_fdb_proxy_delete_dynamic_entries(p->port->port_no, mid);
+    check_rtu_pipe();
 }
 
 static int mvrp_join_ind(struct mrp_participant *p, int mid, int is_new)
 {
-    struct mrp_port *port = p->port;
+    int port_no = p->port->port_no;
 
-    TRACE_DBG(TRACE_INFO, 
-        "mvrp: join_ind (new %d, port %d, vid %d)\n", is_new, port->port_no, mid);
+    fprintf(stderr, 
+        "mvrp: join_ind(new %d, port %d, vid %d)\n", is_new, port_no, mid);
 
-    if (rtu_vfdb_proxy_forward_dynamic(port->port_no, mid) < 0)
+    if (rtu_vfdb_proxy_forward_dynamic(port_no, mid) < 0)
         return -1;
+
+    check_rtu_pipe();
 
     if (is_new)
         mvrp_new_declaration(p, mid);
@@ -111,10 +120,11 @@ static int mvrp_join_ind(struct mrp_participant *p, int mid, int is_new)
 
 static void mvrp_leave_ind(struct mrp_participant *p, int mid)
 {
-    TRACE_DBG(TRACE_INFO, 
-        "mvrp: leave_ind (port %d, vid=%d)\n", p->port->port_no, mid);
+    int port_no = p->port->port_no;
 
-    rtu_vfdb_proxy_filter_dynamic(p->port->port_no, mid);
+    fprintf(stderr, "mvrp: leave_ind (port %d, vid=%d)\n", port_no, mid);
+    rtu_vfdb_proxy_filter_dynamic(port_no, mid);
+    check_rtu_pipe();
 }
 
 /* Return 0 if both values are the same. Otherwise, return the difference */
@@ -198,30 +208,35 @@ static int tc_detected(struct mrp_port *port, struct map_context *ctx)
 }
 
 /* Set up participant registration controls based on existing VLAN entries */
-static int mvrp_init_participant(struct mrp_participant *part)
+static int mvrp_init_participant(struct mrp_participant *p)
 {
-    int vid, port_no = part->port->port_no;
+    int vid;
+    int port_no = p->port->port_no;
 
     for (vid = 0; vid < NUM_VLANS; vid++) {
         if (is_set(vlan_db[vid].egress_ports, port_no)) {
-            mrp_set_registrar_control(part, vid, MRP_FIXED_REGISTRATION);
-            mrp_join_req(part, vid, 1 /* is new */);
+            mrp_set_registrar_control(p, vid, MRP_FIXED_REGISTRATION);
+            mrp_join_req(p, vid, 1 /* is new */);
         }
         /* TODO not clear whether forbidden registration requires join_req */
         if (is_set(vlan_db[vid].forbidden_ports, port_no))
-            mrp_set_registrar_control(part, vid, MRP_FORBIDDEN_REGISTRATION);
+            mrp_set_registrar_control(p, vid, MRP_FORBIDDEN_REGISTRATION);
     }
     return 0;
 }
 
 /* Remove dynamic entries for the participant*/
-static int mvrp_uninit_participant(struct mrp_participant *part)
+static int mvrp_uninit_participant(struct mrp_participant *p)
 {
     int vid;
+    int port_no = p->port->port_no;
 
-    for (vid = 0; vid < NUM_VLANS; vid++) 
-        if (mad_registered_here(part, vid))
-            rtu_vfdb_proxy_filter_dynamic(part->port->port_no, vid);
+    for (vid = 0; vid < NUM_VLANS; vid++) {
+        if (mad_registered_here(p, vid)) {
+            rtu_vfdb_proxy_filter_dynamic(port_no, vid);
+            check_rtu_pipe();
+        }
+    }
     return 0;
 }
 
@@ -340,10 +355,10 @@ static int mvrp_check_forwarding_state()
 /* Initialise vlan database with vfdb static entries */
 static int init_vlan_table()
 {
-    int err;
+    int err = 0;
     uint16_t vid;
-    uint32_t egress_ports;
-    uint32_t forbidden_ports;
+    uint32_t egress_ports = 0;
+    uint32_t forbidden_ports = 0;
     uint32_t untagged_set;
 
     memset(vlan_db, 0, sizeof(vlan_db));
@@ -351,35 +366,23 @@ static int init_vlan_table()
     for (vid = 0; vid < NUM_VLANS; vid++)
         vlan_db[vid].nvid = htons(vid);
 
-    vid = 0;
     /* Note VID = 0 is not permitted by 802.1Q (but was still used by V2 hw) */
+    vid = 0;
     if (switch_is_v2) {
-        errno = 0;
-        err = rtu_fdb_proxy_read_static_vlan_entry(vid,
-                                                   &egress_ports,
-                                                   &forbidden_ports,
-                                                   &untagged_set);
+        err = rtu_fdb_proxy_read_static_vlan_entry(
+            vid, &egress_ports, &forbidden_ports, &untagged_set);
         if (errno)
             return -1;
-        if (!err) {
-            vlan_db[vid].egress_ports = egress_ports;
-            vlan_db[vid].forbidden_ports = forbidden_ports;
-        }
     }
 
-    do {
-        errno = 0;
-        err = rtu_fdb_proxy_read_next_static_vlan_entry(&vid,
-                                                        &egress_ports,
-                                                        &forbidden_ports,
-                                                        &untagged_set);
+    while (!err) {
+        vlan_db[vid].egress_ports = egress_ports;
+        vlan_db[vid].forbidden_ports = forbidden_ports;
+        err = rtu_fdb_proxy_read_next_static_vlan_entry(
+            &vid, &egress_ports, &forbidden_ports, &untagged_set);
         if (errno)
             return -1;
-        if (!err) {
-            vlan_db[vid].egress_ports = egress_ports;
-            vlan_db[vid].forbidden_ports = forbidden_ports;
-        }
-    } while (!err);
+    }
 
     return 0;
 }
@@ -387,29 +390,44 @@ static int init_vlan_table()
 /* Initialise MVRP entity */
 static int mvrp_init()
 {
-    TRACE(TRACE_INFO, "mvrp: mrp init\n");
+    fprintf(stderr,  "mvrp: mrp init\n");
     if (mrp_init() != 0)
         return -1;
 
     /* 'A MAP Context identifier of 0 always identifies the Base Spanning Tree
        Context'. Note that even if no instance of STP is running, a context will
        still exist */
-    TRACE(TRACE_INFO, "mvrp: create propagation context\n");
+    fprintf(stderr,  "mvrp: create propagation context\n");
     INIT_LIST_HEAD(&mvrp_app.contexts);
     ctx = map_context_create(BASE_SPANNING_TREE_CONTEXT_ID, &mvrp_app);
     if (!ctx)
         return -1;
 
-    TRACE(TRACE_INFO, "mvrp: init vlan table\n");
-    init_vlan_table();
+    fprintf(stderr,  "mvrp: init vlan table\n");
+    if (init_vlan_table() < 0)
+        return -1;
 
-    TRACE(TRACE_INFO, "mvrp: register application\n");
+    fprintf(stderr,  "mvrp: register application\n");
     if (mrp_register_application(&mvrp_app) != 0)
         return -1;
 
     mvrp_enabled = 1;
 
     return 0;
+}
+
+static void mvrp_uninit(void)
+{
+    fprintf(stderr,  "mvrp: unregister application\n");
+    mrp_unregister_application(&mvrp_app);
+    fprintf(stderr,  "mvrp: destroy propagation context\n");
+    map_context_destroy(ctx, &mvrp_app);
+}
+
+static void mvrp_exit(int err) 
+{
+    mvrp_uninit();
+    exit(err); 
 }
 
 /* Helper function to daemonize the process */
@@ -449,9 +467,9 @@ static void daemonize(void)
     close(STDERR_FILENO);
 }
 
-void sigint(int signum) {
-    mrp_unregister_application(&mvrp_app);
-    signal(SIGINT, SIG_DFL);
+void sigint(int signum) 
+{
+    mvrp_exit(signum);
 }
 
 int main(int argc, char **argv)
@@ -495,11 +513,11 @@ int main(int argc, char **argv)
 	// Register signal handler
 	signal(SIGINT, sigint);
 
-    TRACE(TRACE_INFO, "mvrp: mrp protocol\n");
+    fprintf(stderr,  "mvrp: mrp protocol\n");
     while (1) {
         /* Handle user triggered actions (i.e. management) */
 	    if (minipc_server_action(server, 10) < 0)
-		    TRACE(TRACE_INFO, "mvrp server_action(): %s\n", strerror(errno));
+		    fprintf(stderr,  "mvrp server_action(): %s\n", strerror(errno));
 
         if (!mvrp_enabled)
             continue;
@@ -518,7 +536,7 @@ int main(int argc, char **argv)
     }
 
 failed:
-    mrp_unregister_application(&mvrp_app);
+    mvrp_uninit();
     return -1;
 }
 
@@ -581,3 +599,68 @@ int mvrp_get_last_pdu_origin(int port_no, uint8_t (*mac)[ETH_ALEN])
     mac_copy(*mac, port->last_pdu_origin);
     return 0;
 }
+
+static void mvrp_register_vlan_member(struct mrp_participant *p, int vid, int fixed)
+{
+    int rc = fixed ? MRP_FIXED_REGISTRATION:MRP_FORBIDDEN_REGISTRATION;
+    
+    mrp_set_registrar_control(p, vid, rc);
+    if (fixed)
+        mrp_join_req(p, vid, !mad_registered_here(p, vid) /*is_new */);
+}
+
+static void mvrp_deregister_vlan_member(struct mrp_participant *p, int vid)
+{
+    mrp_set_registrar_control(p, vid, MRP_NORMAL_REGISTRATION);
+    mrp_leave_req(p, vid);                
+}
+
+int mvrp_register_vlan(int vid, uint32_t egress_ports, uint32_t forbidden_ports)
+{
+    int fixed, forbidden;
+    struct mrp_port *port;
+    struct mrp_participant *p;
+
+    if (vid < 0 || vid >= NUM_VLANS)
+        return -EINVAL;
+
+    vlan_db[vid].egress_ports = egress_ports; 
+    vlan_db[vid].forbidden_ports = forbidden_ports; 
+        
+    list_for_each_entry(port, &mvrp_app.ports, app_port) {
+        if (!list_empty(&port->participants)) {
+            p = list_first_entry(
+                &port->participants, struct mrp_participant, port_participant);
+            fixed = egress_ports & (1 << port->port_no);
+            forbidden = forbidden_ports & (1 << port->port_no);
+            if (fixed || forbidden)
+                mvrp_register_vlan_member(p, vid, fixed);
+            else if (mad_registered_here(p, vid))
+                mvrp_deregister_vlan_member(p, vid);    
+        }
+    }
+    return 0;
+}
+
+int mvrp_deregister_vlan(int vid)
+{
+    struct mrp_port *port;
+    struct mrp_participant *p;
+
+    if (vid < 0 || vid >= NUM_VLANS)
+        return -EINVAL;
+
+    vlan_db[vid].egress_ports = 0; 
+    vlan_db[vid].forbidden_ports = 0; 
+        
+    list_for_each_entry(port, &mvrp_app.ports, app_port) {
+        if (!list_empty(&port->participants)) {
+            p = list_first_entry(
+                &port->participants, struct mrp_participant, port_participant);
+            if (mad_registered_here(p, vid))
+                mvrp_deregister_vlan_member(p, vid);    
+        }
+    }
+    return 0;
+}
+

@@ -1,5 +1,5 @@
 LIB  = libwrmrp.so
-OBJS = wrsw_hal_ipc.o if_index.o mrp_socket.o mrp_pdu.o mrp.o
+OBJS = wrsw_hal_ipc.o if_index.o mrp_socket.o mrp_pdu.o mrp.o 
 
 CC   = $(CROSS_COMPILE)gcc
 

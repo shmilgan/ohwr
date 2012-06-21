@@ -71,3 +71,23 @@ struct minipc_pd mvrp_is_enabled_port_struct = {
         MINIPC_ARG_END,
     }
 };
+
+struct minipc_pd mvrp_register_vlan_struct = {
+    .name   = "register_vlan",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+                struct mvrp_register_vlan_argdata),
+        MINIPC_ARG_END,
+    }
+};
+
+struct minipc_pd mvrp_deregister_vlan_struct = {
+    .name   = "deregister_vlan",
+    .retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+    .args   = {
+        MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+        MINIPC_ARG_END,
+    }
+};
+

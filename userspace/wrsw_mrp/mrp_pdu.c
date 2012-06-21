@@ -237,25 +237,25 @@ static int mrp_pdu_check_attr(struct mrpdu *pdu, int attrlen)
 
     /* Vector Attribute Header */
     if (!pdu_may_pull(pdu, MRP_ATTR_HDR_LEN)) {
-        TRACE(TRACE_INFO, "mrp: error parsing attr header: too short\n");
+        fprintf(stderr,  "mrp: error parsing attr header: too short\n");
         return -1;
     }
     /* leaveall event (3 msbits): values other than 0 and 1 are reserved */
     if (leaveall_event(pdu->buf[pdu->pos]) > 1) {
-        TRACE(TRACE_INFO, "mrp: error parsing attr header: reserved leaveall\n");
+        fprintf(stderr,  "mrp: error parsing attr header: reserved leaveall\n");
         return -1;
     }
     /* The number of AttributeEvent values should be non-zero */
     nval = pdu_nval(pdu, pdu->pos);
     if (nval == 0) {
-        TRACE(TRACE_INFO, "mrp: error parsing attr header: num of values is 0\n");
+        fprintf(stderr,  "mrp: error parsing attr header: num of values is 0\n");
         return -1;
     }
     pdu_pull(pdu, MRP_ATTR_HDR_LEN);
 
     /* First Value */
     if (!pdu_may_pull(pdu, attrlen)) {
-        TRACE(TRACE_INFO, "mrp: error parsing first value: too short\n");
+        fprintf(stderr,  "mrp: error parsing first value: too short\n");
         return -1;
     }
     pdu_pull(pdu, attrlen);
@@ -263,14 +263,14 @@ static int mrp_pdu_check_attr(struct mrpdu *pdu, int attrlen)
     /* Number of ThreePackedEvents */
     e = ntpe(nval);
     if (!pdu_may_pull(pdu, e)) {
-        TRACE(TRACE_INFO, "mrp: error parsing event vector: %d too short\n", e);
+        fprintf(stderr,  "mrp: error parsing event vector: %d too short\n", e);
         return -1;
     }
 
     /* Vector */
     for (i = 0; i < e; i++) {
         if (pdu->buf[pdu->pos + i] > MAX_THREE_PACKED_EVENT_VAL) {
-            TRACE(TRACE_INFO, "mrp: error parsing event vector: reserved\n");
+            fprintf(stderr,  "mrp: error parsing event vector: reserved\n");
             return -1;
         }
     }
@@ -285,19 +285,19 @@ static int mrp_pdu_check_msg(struct mrpdu *pdu)
     int attrtype, attrlen;
 
     if (!pdu_may_pull(pdu, MRP_MSG_HDR_LEN)) {
-        TRACE(TRACE_INFO, "mrp: error parsing msg header: too short\n");
+        fprintf(stderr,  "mrp: error parsing msg header: too short\n");
         return -1;
     }
     /* attrtype: 0 is reserved and should not be used by MRP applications */
     attrtype = pdu->buf[pdu->pos];
     if (attrtype == 0) {
-        TRACE(TRACE_INFO, "mrp: error parsing msg header: reserved attr type\n");
+        fprintf(stderr,  "mrp: error parsing msg header: reserved attr type\n");
         return -1;
     }
     /* Attribute lenght should be a non-zero integer (See IEEE Corrigendum 1)*/
     attrlen = pdu->buf[pdu->pos + 1];
     if (attrlen == 0) {
-        TRACE(TRACE_INFO, "mrp: error parsing msg header: attr length is 0\n");
+        fprintf(stderr,  "mrp: error parsing msg header: attr length is 0\n");
         return -1;
     }
     pdu_pull(pdu, MRP_MSG_HDR_LEN);
@@ -395,7 +395,7 @@ int mrp_pdu_rcv(struct mrp_application *app)
 
     /* Check PDU format */
     if (mrp_pdu_check(&pdu) < 0) {
-        TRACE(TRACE_INFO, "mrp: error parsing pdu at octet %d\n", pdu.pos);
+        fprintf(stderr,  "mrp: error parsing pdu at octet %d\n", pdu.pos);
         return -1;
     }
     
@@ -518,7 +518,7 @@ int mrp_pdu_append_attr(struct mrp_participant *part,
         pdu->buf[pdu->pos++] = 0; /* initial value for the tpe */
     }
 
-    TRACE_DBG(TRACE_INFO,
+    fprintf(stderr, 
         "mrp: (port %d, mid %d) %s\n", 
         part->port->port_no, 
         mid, 
