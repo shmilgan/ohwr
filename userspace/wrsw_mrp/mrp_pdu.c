@@ -280,9 +280,9 @@ static int mrp_pdu_check_attr(struct mrpdu *pdu, int attrlen)
 
 /* Check MRP PDU message format.
    @return 0 if format is correct. -1 otherwise */
-static int mrp_pdu_check_msg(struct mrpdu *pdu)
+static int mrp_pdu_check_msg(struct mrp_application *app, struct mrpdu *pdu)
 {
-    int attrtype, attrlen;
+    int attrtype, attrlen;    
 
     if (!pdu_may_pull(pdu, MRP_MSG_HDR_LEN)) {
         fprintf(stderr,  "mrp: error parsing msg header: too short\n");
@@ -292,6 +292,11 @@ static int mrp_pdu_check_msg(struct mrpdu *pdu)
     attrtype = pdu->buf[pdu->pos];
     if (attrtype == 0) {
         fprintf(stderr,  "mrp: error parsing msg header: reserved attr type\n");
+        return -1;
+    }
+    if ((attrtype >= app->maxattr) && (app->proto.version >= pdu->buf[0])) {
+        fprintf(stderr,  "mrp: error parsing msg header: unkown attrtype %d\n", 
+            attrtype);
         return -1;
     }
     /* Attribute lenght should be a non-zero integer (See IEEE Corrigendum 1)*/
@@ -312,13 +317,13 @@ static int mrp_pdu_check_msg(struct mrpdu *pdu)
 
 /* Check MRP PDU format.
    @return 0 if format is correct. -1 otherwise */
-static int mrp_pdu_check(struct mrpdu *pdu)
+static int mrp_pdu_check(struct mrp_application *app, struct mrpdu *pdu)
 {
     pdu->pos = 0;
     /* Protocol Version */
     pdu_pull(pdu, 1);
     while(pdu->len > pdu->pos) {
-        if (mrp_pdu_check_msg(pdu) < 0)
+        if (mrp_pdu_check_msg(app, pdu) < 0)
             return -1;
         if (mrp_pdu_parse_end_mark(pdu) < 0)
             break;
@@ -394,7 +399,7 @@ int mrp_pdu_rcv(struct mrp_application *app)
         return -1;
 
     /* Check PDU format */
-    if (mrp_pdu_check(&pdu) < 0) {
+    if (mrp_pdu_check(app, &pdu) < 0) {
         fprintf(stderr,  "mrp: error parsing pdu at octet %d\n", pdu.pos);
         return -1;
     }
