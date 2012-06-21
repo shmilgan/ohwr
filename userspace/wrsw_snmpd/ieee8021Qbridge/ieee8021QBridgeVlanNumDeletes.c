@@ -40,25 +40,19 @@
  */
 void init_ieee8021QBridgeVlanNumDeletes(void)
 {
-    struct minipc_ch *client;
     const oid _oid[] = {1,3,111,2,802,1,1,4,1,4,1};
 
-    client = rtu_fdb_proxy_create("rtu_fdb");
-    if(client) {
-        netsnmp_register_scalar(
-            netsnmp_create_handler_registration(
-                "ieee8021QBridgeVlanNumDeletes",
-                handle_ieee8021QBridgeVlanNumDeletes,
-                (oid *)_oid,
-                OID_LENGTH(_oid),
-                HANDLER_CAN_RONLY
-            )
-        );
-        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
-    } else {
-        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n",
-            __FILE__, strerror(errno));
-    }
+    rtu_fdb_proxy_init("rtu_fdb");
+    netsnmp_register_scalar(
+        netsnmp_create_handler_registration(
+            "ieee8021QBridgeVlanNumDeletes",
+            handle_ieee8021QBridgeVlanNumDeletes,
+            (oid *)_oid,
+            OID_LENGTH(_oid),
+            HANDLER_CAN_RONLY
+        )
+    );
+    snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
 }
 
 int handle_ieee8021QBridgeVlanNumDeletes(
@@ -76,7 +70,7 @@ int handle_ieee8021QBridgeVlanNumDeletes(
 
     switch(reqinfo->mode) {
     case MODE_GET:
-        errno = 0;
+        
         num_deletes = rtu_fdb_proxy_get_num_vlan_deletes();
         if (errno)
             goto error;

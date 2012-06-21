@@ -173,6 +173,6 @@ int rtu_fdb_proxy_delete_fid(uint16_t vid);
 
 int rtu_fdb_proxy_set_default_lc_type(int lc_type);
 
-struct minipc_ch *rtu_fdb_proxy_create(char *name);
+void rtu_fdb_proxy_init(char *name);
 
 #endif /*__WHITERABBIT_RTU_FD_PROXY_H*/

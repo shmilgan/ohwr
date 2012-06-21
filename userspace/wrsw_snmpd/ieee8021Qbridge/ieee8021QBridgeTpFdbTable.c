@@ -134,7 +134,7 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
         return SNMP_NOSUCHINSTANCE;
 
     // Read entry from FDB.
-    errno = 0;
+    
     err = rtu_fdb_proxy_read_entry(ent.mac, ent.fid, &ent.port_map, &ent.type);
     if (errno)
         goto minipc_err;
@@ -182,7 +182,7 @@ static int get_next(netsnmp_request_info *req,
         return SNMP_ENDOFMIBVIEW;
 
     do {
-        errno = 0;
+        
         err = rtu_fdb_proxy_read_next_entry(
             &ent.mac, &ent.fid, &ent.port_map, &ent.type);
         if (errno)
@@ -284,14 +284,7 @@ static void initialize_table(void)
  */
 void init_ieee8021QBridgeTpFdbTable(void)
 {
-    struct minipc_ch *client;
-
-    client = rtu_fdb_proxy_create("rtu_fdb");
-    if(client) {
-        initialize_table();
-        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
-    } else {
-        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
-            strerror(errno));
-    }
+    rtu_fdb_proxy_init("rtu_fdb");
+    initialize_table();
+    snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
 }

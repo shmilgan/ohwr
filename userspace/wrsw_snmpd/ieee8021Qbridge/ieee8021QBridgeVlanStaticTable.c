@@ -33,6 +33,7 @@
 
 #include "ieee8021QBridgeVlanStaticTable.h"
 #include "rtu_fd_proxy.h"
+#include "mvrp_proxy.h"
 #include "utils.h"
 
 #define MIBMOD "8021Q"
@@ -209,7 +210,7 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
         (ent.vid >= NUM_VLANS))
         return SNMP_NOSUCHINSTANCE;
     // Read entry from FDB
-    errno = 0;
+    
     err = rtu_fdb_proxy_read_static_vlan_entry(ent.vid, &ep, &fp, &up);
     if (errno)
         goto minipc_err;
@@ -260,7 +261,7 @@ static int get_next(netsnmp_request_info         *req,
 #ifdef V2
         // Although use of VID=0 is reserved, it is actually used by HW V2,
         // so we need to check it also.
-        errno = 0;
+        
         err = rtu_fdb_proxy_read_static_vlan_entry(ent.vid, &ep, &fp, &up);
         if (errno)
             goto minipc_err;
@@ -271,7 +272,7 @@ static int get_next(netsnmp_request_info         *req,
     if (ent.vid >= NUM_VLANS)
         return SNMP_ENDOFMIBVIEW;
     // Read next vlan entry from FDB
-    errno = 0;
+    
     err = rtu_fdb_proxy_read_next_static_vlan_entry(&ent.vid, &ep, &fp, &up);
     if (errno)
         goto minipc_err;
@@ -343,7 +344,7 @@ static int set_reserve1(netsnmp_request_info            *req,
         break;
     case COLUMN_STATICROWSTATUS:
         // Get current row status and check transition from current to requested
-        errno = 0;
+        
         err = rtu_fdb_proxy_read_static_vlan_entry(ent.vid, &ep, &fp, &up);
         if (errno)
             goto minipc_err;
@@ -407,7 +408,7 @@ static int set_reserve3(netsnmp_request_info *req)
             return SNMP_ERR_RESOURCEUNAVAILABLE;
 
         // Read data from FDB and save it into entry
-        errno = 0;
+        
         err = rtu_fdb_proxy_read_static_vlan_entry(vid, &ep, &fp, &up);
         if (errno)
             goto minipc_err;
@@ -494,21 +495,28 @@ static int check_consistency(struct mib_static_vlan_table_entry *ent)
 
 static int set_commit(struct mib_static_vlan_table_entry *ent)
 {
-    int err;
-    uint32_t ep;
-    uint32_t fp;
-    uint32_t up;
+    int err, vid, port_no;
+    uint32_t ep, fp, up;
 
+    vid = ent->vid;
     switch (ent->row_status) {
     case RS_DESTROY:
-        DEBUGMSGTL((MIBMOD, "delete vlan vid=%d\n", ent->vid));
+        DEBUGMSGTL((MIBMOD, "delete vlan vid=%d\n", vid));
         // Remove entry from VLAN table
-        errno = 0;
-        err = rtu_fdb_proxy_delete_static_vlan_entry(ent->vid);
+        
+        err = rtu_fdb_proxy_delete_static_vlan_entry(vid);
         if (errno)
             goto minipc_err;
         if (err)
             goto not_deleted;
+
+        /* Inform MVRP about VLAN deregistration */            
+        err = mvrp_proxy_deregister_vlan(vid);    
+        if (errno)
+            snmp_log(LOG_ERR, 
+                "%s(%s): mini-ipc error at mvrp_deregister_vlan [%s]\n", 
+                __FILE__, __func__, strerror(errno));
+                
         break;
     case RS_CREATEANDWAIT:
     case RS_NOTINSERVICE:
@@ -520,14 +528,22 @@ static int set_commit(struct mib_static_vlan_table_entry *ent)
         from_octetstr(&fp, ent->forbidden_ports);
         from_octetstr(&up, ent->untagged_ports);
         // TODO handle the VLAN name
-        DEBUGMSGTL((MIBMOD, "create/update vlan vid=%d\n", ent->vid));
+        DEBUGMSGTL((MIBMOD, "create/update vlan vid=%d\n", vid));
         // Create/update entry in VLAN table
-        errno = 0;
-        err = rtu_fdb_proxy_create_static_vlan_entry(ent->vid, ep, fp, up);
+        
+        err = rtu_fdb_proxy_create_static_vlan_entry(vid, ep, fp, up);
         if (errno)
             goto minipc_err;
         if (err)
             goto not_created;
+
+        /* Inform MVRP (if available) about VLAN registration */            
+        err = mvrp_proxy_register_vlan(vid, ep, fp);
+        if (errno)
+            snmp_log(LOG_ERR, 
+                "%s(%s): mini-ipc error at mvrp_register_vlan [%s]\n", 
+                __FILE__, __func__, strerror(errno));
+            
         break;
     }
     return SNMP_ERR_NOERROR;
@@ -539,7 +555,7 @@ not_created:
 
 not_deleted:
     snmp_log(LOG_ERR, "%s(%s): delete vlan vid=%d error [%s]\n",
-        __FILE__, __func__, ent->vid, strerror(err));
+        __FILE__, __func__, vid, strerror(err));
     return SNMP_ERR_GENERR;
 
 minipc_err:
@@ -660,14 +676,8 @@ static void initialize_table(void)
  */
 void init_ieee8021QBridgeVlanStaticTable(void)
 {
-    struct minipc_ch *client;
-
-    client = rtu_fdb_proxy_create("rtu_fdb");
-    if(client) {
-        initialize_table();
-        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
-    } else {
-        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
-            strerror(errno));
-    }
+    rtu_fdb_proxy_init("rtu_fdb");
+    mvrp_proxy_init("mvrp");
+    initialize_table();
+    snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
 }

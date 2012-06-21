@@ -49,7 +49,6 @@ static int get_column(netsnmp_variable_list *vb, int colnum, u_long fid)
     uint64_t discards;    // ieee8021QBridgeFdbLearnedEntryDiscards
     long     age;         // ieee8021QBridgeFdbAgingTime
 
-    errno = 0;
     switch (colnum) {
     case COLUMN_DYNAMICCOUNT:
         count = rtu_fdb_proxy_get_num_dynamic_entries(fid);
@@ -136,7 +135,6 @@ static int get_next(netsnmp_request_info         *req,
     } else {
         if (fid >= NUM_FIDS)
             return SNMP_ENDOFMIBVIEW;
-        errno = 0;
         fid = rtu_fdb_proxy_get_next_fid(fid);
         if (errno)
             return SNMP_ERR_GENERR;
@@ -203,7 +201,6 @@ static int set_commit(netsnmp_request_info *req)
     switch (tinfo->colnum) {
     case COLUMN_AGINGTIME:
         age = *req->requestvb->val.integer;
-        errno = 0;
         err = rtu_fdb_proxy_set_aging_time(fid, age);
         if (errno) {
             snmp_log(LOG_ERR, "%s(%s): mini-ipc error [%s]\n",
@@ -299,14 +296,7 @@ static void initialize_table(void)
  */
 void init_ieee8021QBridgeFdbTable(void)
 {
-    struct minipc_ch *client;
-
-    client = rtu_fdb_proxy_create("rtu_fdb");
-    if(client) {
-        initialize_table();
-        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
-    } else {
-        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
-            strerror(errno));
-    }
+    rtu_fdb_proxy_init("rtu_fdb");
+    initialize_table();
+    snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
 }

@@ -232,7 +232,7 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
         return SNMP_NOSUCHINSTANCE;
 
     // Read entry from RTU FDB.
-    errno = 0;
+    
     err = rtu_fdb_proxy_read_static_entry(ent.mac, ent.vid, &ep, &fp, &ent.type,
                                           &ent.row_status);
     if (errno)
@@ -289,7 +289,7 @@ static int get_next(netsnmp_request_info *req,
     if (ent.vid >= NUM_VLANS)
         return SNMP_ENDOFMIBVIEW;
 
-    errno = 0;
+    
     err = rtu_fdb_proxy_read_next_static_entry(&ent.mac, &ent.vid, &ep, &fp,
                                                &ent.type, &ent.row_status);
     if (errno)
@@ -361,7 +361,7 @@ static int set_reserve1(netsnmp_request_info *req,
         break;
     case COLUMN_ROWSTATUS:
         // Get current row status and check transition from current to requested
-        errno = 0;
+        
         err = rtu_fdb_proxy_read_static_entry(ent.mac, ent.vid, &ep, &fp, &t, &s);
         if (errno)
             goto minipc_err;
@@ -426,7 +426,7 @@ static int set_reserve3(netsnmp_request_info         *req,
         if (!ent)
             return SNMP_ERR_RESOURCEUNAVAILABLE;
 
-        errno = 0;
+        
         err = rtu_fdb_proxy_read_static_entry(ent->mac, ent->vid, &ep,
             &fp, &ent->type, &ent->row_status);
         if (errno)
@@ -521,7 +521,7 @@ static int set_commit(struct static_multicast_table_entry *ent)
     switch (ent->row_status) {
     case RS_DESTROY:
         // Remove entry from FDB
-        errno = 0;
+        
         err = rtu_fdb_proxy_delete_static_entry(ent->mac, ent->vid);
         if (errno)
             goto minipc_err;
@@ -533,7 +533,7 @@ static int set_commit(struct static_multicast_table_entry *ent)
         from_octetstr(&ep, ent->egress_ports);
         from_octetstr(&fp, ent->forbidden_ports);
         // create/update entry in FDB
-        errno = 0;
+        
         err = rtu_fdb_proxy_create_static_entry(ent->mac, ent->vid, ep, fp,
             ent->type, RS_IS_GOING_ACTIVE(ent->row_status), !IS_BPDU);
         if (errno)
@@ -688,14 +688,7 @@ static void initialize_table(void)
  */
 void init_ieee8021QBridgeStaticMulticastTable(void)
 {
-    struct minipc_ch *client;
-
-    client = rtu_fdb_proxy_create("rtu_fdb");
-    if(client) {
-        initialize_table();
-        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
-    } else {
-        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
-            strerror(errno));
-    }
+    rtu_fdb_proxy_init("rtu_fdb");
+    initialize_table();
+    snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
 }

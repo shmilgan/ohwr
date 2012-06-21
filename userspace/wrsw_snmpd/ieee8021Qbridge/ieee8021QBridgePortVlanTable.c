@@ -34,7 +34,7 @@ static int get_column(netsnmp_variable_list *vb, int colnum, u_long port)
     struct counter64 reg_failures = {0};  // ieee8021QBridgePortMvrpFailedRegistrations
     int ret;
 
-    errno = 0;
+    
     switch (colnum) {
     case COLUMN_PVID:
         pvid = ep_hw_get_pvid(port);
@@ -368,22 +368,9 @@ static void initialize_table(void)
 void init_ieee8021QBridgePortVlanTable(void)
 {
     int err;
-    struct minipc_ch *client;
-    struct minipc_ch *mvrp_client;
 
-    client = rtu_fdb_proxy_create("rtu_fdb");
-    if (!client) {
-        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
-            strerror(errno));
-        return;
-    }
-
-    mvrp_client = mvrp_proxy_create("mvrp");
-    if (!mvrp_client) {
-        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
-            strerror(errno));
-        return;
-    }
+    rtu_fdb_proxy_init("rtu_fdb");
+    mvrp_proxy_init("mvrp");
 
     err = ep_hw_init();
     if (err) {

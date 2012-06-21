@@ -44,7 +44,6 @@ static int get_column(netsnmp_variable_list *vb, int colnum)
 {
     int sid, lc_type;
 
-    errno = 0;
     rtu_fdb_proxy_get_default_lc(&sid, &lc_type);
     if (errno)
         goto minipc_err;
@@ -160,7 +159,6 @@ static int set_commit(netsnmp_request_info *req)
     int err = SNMP_ERR_NOERROR;
 
     tinfo = netsnmp_extract_table_info(req);
-    errno = 0;
     switch (tinfo->colnum) {
     case COLUMN_SET:
         sid = *req->requestvb->val.integer;
@@ -270,14 +268,7 @@ static void initialize_table(void)
  */
 void init_ieee8021QBridgeLearningConstraintDefaultsTable(void)
 {
-    struct minipc_ch *client;
-
-    client = rtu_fdb_proxy_create("rtu_fdb");
-    if(client) {
-        initialize_table();
-        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
-    } else {
-        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
-            strerror(errno));
-    }
+    rtu_fdb_proxy_init("rtu_fdb");
+    initialize_table();
+    snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
 }

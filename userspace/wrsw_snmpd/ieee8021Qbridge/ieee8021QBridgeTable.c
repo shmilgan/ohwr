@@ -52,7 +52,7 @@ static int get_column(netsnmp_variable_list *vb, int colnum)
     u_long vlans;   // ieee8021QBridgeNumVlans;
     int enabled;    // ieee8021QBridgeMvrpEnabledStatus;
 
-    errno = 0;
+    
     switch (colnum) {
     case COLUMN_VLANVERSIONNUMBER:
         // TODO get value from STP daemon. Meanwhile, value 1 means Single STP
@@ -251,22 +251,8 @@ static void initialize_table(void)
  */
 void init_ieee8021QBridgeTable(void)
 {
-    struct minipc_ch *client;
-    struct minipc_ch *mvrp_client;
-
-    client = rtu_fdb_proxy_create("rtu_fdb");
-    if (!client) {
-        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
-            strerror(errno));
-        return;
-    }
-
-    mvrp_client = mvrp_proxy_create("mvrp");
-    if (!mvrp_client) {
-        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
-            strerror(errno));
-        return;
-    }
+    rtu_fdb_proxy_init("rtu_fdb");
+    mvrp_proxy_init("mvrp");
 
     initialize_table();
     snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);

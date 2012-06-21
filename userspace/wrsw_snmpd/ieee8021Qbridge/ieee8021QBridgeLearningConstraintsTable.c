@@ -198,7 +198,6 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
         (ent.sid >= NUM_LC_SETS))
         return SNMP_NOSUCHINSTANCE;
     // Read entry from FDB
-    errno = 0;
     err = rtu_fdb_proxy_read_lc(ent.vid, &lc_set);
     if (errno)
         goto minipc_err;
@@ -208,7 +207,6 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     if (!(lc_set & (1 << ent.sid)))
         goto not_found;
 
-    errno = 0;
     err = rtu_fdb_proxy_read_lc_set_type(ent.sid, &ent.lc_type);
     if (errno)
         goto minipc_err;
@@ -270,7 +268,6 @@ static int get_next(netsnmp_request_info         *req,
     if (ent.sid >= NUM_LC_SETS)
         goto get_next_vid;
 
-    errno = 0;
     err = rtu_fdb_proxy_read_lc(ent.vid, &lc_set);
     if (errno)
         goto minipc_err;
@@ -282,7 +279,6 @@ static int get_next(netsnmp_request_info         *req,
 
 get_next_vid:
     // Read next learning constraint entry from FDB
-    errno = 0;
     err = rtu_fdb_proxy_read_next_lc(&ent.vid, &lc_set);
     if (errno)
         goto minipc_err;
@@ -300,7 +296,6 @@ get_lc_type:
 
     DEBUGMSGTL((MIBMOD, "get lc type: vid=%d sid=%d\n", ent.vid, ent.sid));
 
-    errno = 0;
     err = rtu_fdb_proxy_read_lc_set_type(ent.sid, &ent.lc_type);
     if (errno)
         goto minipc_err;
@@ -364,7 +359,6 @@ static int set_reserve1(netsnmp_request_info            *req,
         break;
     case COLUMN_STATUS:
         // Get current row status and check transition from current to requested
-        errno = 0;
         err = rtu_fdb_proxy_read_lc(ent.vid, &lc_set);
         if (errno)
             goto minipc_err;
@@ -429,7 +423,6 @@ static int set_reserve3(netsnmp_request_info *req)
             return SNMP_ERR_RESOURCEUNAVAILABLE;
 
         // Read data from FDB and save it into entry
-        errno = 0;
         err = rtu_fdb_proxy_read_lc(vid, &lc_set);
         if (errno)
             goto minipc_err;
@@ -439,7 +432,6 @@ static int set_reserve3(netsnmp_request_info *req)
         if (!(lc_set & (1 << sid)))
             goto not_found;
 
-        errno = 0;
         err = rtu_fdb_proxy_read_lc_set_type(sid, &ent->lc_type);
         if (errno)
             goto minipc_err;
@@ -501,7 +493,6 @@ static int set_commit(struct mib_lc_table_entry *ent)
     case RS_DESTROY:
         DEBUGMSGTL((MIBMOD, "delete learning constraint vid=%d sid=%d\n", ent->vid, ent->sid));
         // Remove entry from VLAN table
-        errno = 0;
         err = rtu_fdb_proxy_delete_lc(ent->sid, ent->vid);
         if (errno)
             goto minipc_err;
@@ -516,7 +507,6 @@ static int set_commit(struct mib_lc_table_entry *ent)
     case RS_ACTIVE:
         DEBUGMSGTL((MIBMOD, "create/update learning constraint vid=%d sid=%d\n", ent->vid, ent->sid));
         // Create/update entry in VLAN table
-        errno = 0;
         err = rtu_fdb_proxy_create_lc(ent->sid, ent->vid, ent->lc_type);
         if (errno)
             goto minipc_err;
@@ -651,14 +641,7 @@ static void initialize_table(void)
  */
 void init_ieee8021QBridgeLearningConstraintsTable(void)
 {
-    struct minipc_ch *client;
-
-    client = rtu_fdb_proxy_create("rtu_fdb");
-    if(client) {
-        initialize_table();
-        snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
-    } else {
-        snmp_log(LOG_ERR, "%s: error creating mini-ipc proxy - %s\n", __FILE__,
-            strerror(errno));
-    }
+    rtu_fdb_proxy_init("rtu_fdb");
+    initialize_table();
+    snmp_log(LOG_INFO, "%s: initialised\n", __FILE__);
 }
