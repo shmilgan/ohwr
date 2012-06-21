@@ -1,6 +1,65 @@
 #!/bin/sh
 # A script to compile the usb loader, possibly changing the mac address
 
+showhelp()
+{
+	echo "Usage: $0 [options] MAC [DEV]\n"
+	echo "MAC:\t MAC address in hexadecimal seperated by ':' (i.e, AB:CD:EF:01:23:45)"
+	echo "DEV:\t The usb device (by default it is /dev/ttyACM0)"
+	echo "Options: "
+	echo "\t-h|--help\t\t Show this help message"
+	echo "\t-m|--memmode\t\t can be: default, df (dataflash), nf (nandflash), test."
+	echo "\t-e \t\t\t Completely erase the memory (Can erase your configuration)"
+	echo "\t--build\t\t\t Use file that you have build in the WRS_OUTPUT_DIR"
+	echo "\t--test\t\t\t Use file for testing the switch (not available)"
+	echo "\t--silent\t\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE"
+
+	echo ""
+	exit 0
+}
+
+
+checkExit()
+{
+	err=0;
+	if [ $1 ]; then
+		if [ -f $1 ]; then 
+			return 0; 
+		else 
+			echo "Can't find $1" >& 2; 
+		fi
+	else
+		echo "varname not set"
+	fi
+	exit 1
+}
+
+modifyMAC()
+{
+	origin=$1
+	new=$2
+	cp $origin $new
+	
+	# check & change mac address
+	X="[0-9a-fA-F][0-9a-fA-F]"
+	while true; do
+		if echo $MAC | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
+			sed -i "s/02:0B:AD:C0:FF:EE/$MAC/" $new
+			echo "MAC is now: $MAC"
+			return 0
+		else
+			if [ "x$MAC" != "x" ]; then
+					echo "$0: Invalid MAC address \"$MAC\"" >&2;
+			fi
+			if [ $silent ]; then 
+					return 1;
+			fi
+			read -p "Enter MAC (XX:XX:XX:XX:XX:XX): " MAC
+		fi
+	done
+
+}
+
 
 # Sanity checks
 if [ -d ./usb-loader ]; then true; else
@@ -8,62 +67,91 @@ if [ -d ./usb-loader ]; then true; else
     exit 1
 fi
 
-# Check if atmel sam-ba is find by lusb
-lsusb | grep "at91sam SAMBA" &> /dev/null
-if [ $? -gt "0" ]; then
-        echo "Did not find the sam-ba bootloader in lsub....\nPlease check that the Dataflash is short-circuited!"
-        exit 1;
+# build flasher itself
+if CC=cc make -s -C usb-loader; then true; else
+	echo "$0: Error compiling usb-loader" >&2; exit 1;
 fi
 
-err=0;
-if [ -f ./binaries/at91bootstrap.bin ]; then true; else err=1; fi
-if [ -f ./binaries/barebox.bin ]; then true; else err=1; fi
-
-if [ $err -eq 1 ]; then
-    echo "$0: Can't find either ./binaries/at91bootstrap.bin" >& 2
-    echo "$0:                or ./binaries/barebox.bin" >& 2
-    exit 1
+# Check if atmel sam-ba is find by lusb
+lsusb | grep "at91sam SAMBA" > /dev/null
+if [ $? -gt "0" ]; then
+        echo "Did not find the sam-ba monitor in lsusb....\nPlease check that the Dataflash is short-circuited!"
+        exit 1;
 fi
 
 # parse command line
 MAC=""
 DEV=""
 FLAGS=""
+
+at91bs="./binaries/at91bootstrap.bin"
+barebox="./binaries/barebox.bin"
+kernel="${WRS_OUTPUT_DIR}/images/zImage"
+rootfs="${WRS_OUTPUT_DIR}/images/wrs-image.jffs2.img"
+
 while [ $# -ge 1 ]; do
     case $1 in
-    --help|-h) 	echo "Usage  :\t $0 [options] MAC \nOptions:\t same as mch_flasher\n\n";
-				echo ">\$ usb-loader/mch_flasher -h"; usb-loader/mch_flasher -h; 
-				exit 0;;
+	-b|--build) 
+		at91bs=${WRS_OUTPUT_DIR}/images/at91bootstrap.bin;
+		barebox=${WRS_OUTPUT_DIR}/images/barebox.bin
+		kernel=${WRS_OUTPUT_DIR}/images/zImage
+		rootfs=${WRS_OUTPUT_DIR}/images/wrs-image.jffs2.img
+		shift;;
+	-h|--help) 	showhelp; shift;;
+	-m|--memmode)	memmode="$2";  shift; shift;;
+	--silent)	silent=1; shift;;
 	/* ) DEV="-s $1"; shift ;;
 	*:* ) MAC="$1"; shift ;;
+	
 	-*) FLAGS="${FLAGS} $1"; shift;;
 	* ) echo "$0: Invalid argument \"$1\"" >&2; exit 1;;
     esac
 done
 
-
-# build flasher itself
-if CC=cc make -s -C usb-loader; then true; else
-	echo "$0: Error compiling usb-loader" >&2; exit 1;
+## Selecting the running memmode
+if [ "x$memmode" = "xdf" ]; then
+	df=1
+elif [ "x$memmode" = "xnf" ]; then
+	nf=1
+elif [ "x$memmode" = "xtest" ]; then
+	test=1
+else 
+	df=1
+	nf=1
 fi
 
-# check & change mac address
-if [ "x$MAC" != "x" ]; then
-    X="[0-9a-fA-F][0-9a-fA-F]"
-    if echo $MAC | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
-		sed -i "s/02:0B:AD:C0:FF:EE/$MAC/" $T
-		echo "MAC is now: $MAC"
-    else
-	echo "$0: Invalid MAC address \"$MAC\"" >&2; exit 1;
-    fi
+## Flashing DataFlash
+if [ $df ]; then
+
+	checkExit $at91bs
+	checkExit $barebox
+	
+	Tbarebox=$(mktemp /tmp/barebox.XXXXXX)
+	modifyMAC ${barebox} ${Tbarebox}
+
+	./usb-loader/mch_flasher -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792		
 fi
 
-# cat binaries to temp file. Increase size of at91boot (0x8400)
-T=$(mktemp /tmp/wrs-flash.XXXXXX)
-cp ./binaries/at91bootstrap.bin $T
-dd if=./binaries/barebox.bin of=$T conv=notrunc bs=1 seek=33792 2> /dev/null
+## Flashing NANDFlash
+if [ $nf ]; then
 
-# flash it (msc...)
-(cd usb-loader && ./mch_flasher $FLAGS $DEV $T  )
+	checkExit $kernel
+	checkExit $rootfs
 
-#rm -f $T
+	./usb-loader/mch_flasher -m nand $FLAGS $DEV ${kernel} 0x00100000 ${rootfs} 0x04000000	
+fi
+
+## Loading in DDR
+if [ $test ]; then
+
+	checkExit $barebox
+	checkExit $kernel
+	checkExit $rootfs
+	
+	Tbarebox=$(mktemp /tmp/barebox.XXXXXX)
+	modifyMAC ${barebox} ${Tbarebox}
+
+	./usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${rootfs} 0x2000000
+fi
+
+
