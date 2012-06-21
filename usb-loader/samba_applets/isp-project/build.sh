@@ -19,18 +19,19 @@ compile_module()
 	# Append '+' symbol if some files need to be commited to git 	
 	if [[ -n `git status -s .` ]]; then GITS='+'; else GITS=''; fi;	
 
-	if [[ -n $2 ]]; then
+	if [[ $2 == "clean" || $2 == "install" ]]; then
 		#Execute specific make commands such as make clean, make install
 		make $2
 	else
 		#Compile the module
-		make CROSS_COMPILE=${CROSS_COMPILE} CHIP=at91sam9g45 BOARD=at91sam9g45-ek MEMORIES=sram TRACE_LEVEL=5 DYN_TRACES=1 DEFINES="-D__GIT__=\\\"${GITR}${GITS}\\\" $DEFINES" INSTALLDIR=../../
+		make CROSS_COMPILE=${CROSS_COMPILE} CHIP=at91sam9g45 BOARD=at91sam9g45-ek MEMORIES=sram TRACE_LEVEL=5 DYN_TRACES=0 DEFINES="-D__GIT__=\\\"${GITR}${GITS}\\\" $DEFINES" INSTALLDIR=../../
 	fi
 }
 
 #### Setup global variable
-CROSS_COMPILE=/opt/wrs/misc/cd-g++lite/bin/arm-none-eabi-
-root="$(dirname $(pwd)/$0)"
+root=$(cd $(dirname $0) && pwd)
+
+echo "root is=$root"
 
 #### Check compiler
 if [[ -z $(${CROSS_COMPILE}gcc --version | grep "Sourcery G++ Lite 2008q3-39") ]]; then
@@ -44,3 +45,8 @@ compile_module dataflash $1
 
 #### Compilation of extern ram module
 compile_module extram $1
+
+#### Compilation of NAND flash
+compile_module nandflash $1
+
+

@@ -320,7 +320,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
             *(pDdr) = 0;
 
             // Step 21: Write the refresh rate into the count field in the Refresh Timer register. The DDR2-SDRAM device requires a
-            // refresh every 15.625 ¦Ìs or 7.81 ¦Ìs. With a 100MHz frequency, the refresh timer count register must to be set with
+            // refresh every 15.625 ns or 7.81 ns. With a 100MHz frequency, the refresh timer count register must to be set with
             // (15.625 /100 MHz) = 1562 i.e. 0x061A or (7.81 /100MHz) = 781 i.e. 0x030d.
       
             // Set Refresh timer
@@ -548,6 +548,22 @@ void BOARD_ConfigureSdram(unsigned char busWidth)
 //------------------------------------------------------------------------------
 void BOARD_ConfigureNandFlash(unsigned char busWidth)
 {
+    AT91C_BASE_MATRIX->MATRIX_EBICSA |= AT91C_EBI_CS3A_SM;
+
+    // Configure SMC
+    AT91C_BASE_SMC->SMC_SETUP3 = 0x00020002;
+    AT91C_BASE_SMC->SMC_PULSE3 = 0x04040404;
+    AT91C_BASE_SMC->SMC_CYCLE3 = 0x00070007;
+    AT91C_BASE_SMC->SMC_CTRL3  = 0x00030003;
+
+    if (busWidth == 8) {
+
+        AT91C_BASE_SMC->SMC_CTRL3 |= AT91C_SMC_DBW_WIDTH_EIGTH_BITS;
+    }
+    else if (busWidth == 16) {
+
+        AT91C_BASE_SMC->SMC_CTRL3 |= AT91C_SMC_DBW_WIDTH_SIXTEEN_BITS;
+    }
 }
 
 //------------------------------------------------------------------------------
