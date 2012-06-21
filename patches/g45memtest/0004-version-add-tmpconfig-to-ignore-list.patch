@@ -1,0 +1,21 @@
+From 391890df3ca410003b51bf45a4b17a5a8e22a588 Mon Sep 17 00:00:00 2001
+From: Benoit Rat <benoit@sevensols.com>
+Date: Fri, 23 Mar 2012 13:42:57 +0100
+Subject: [PATCH 04/19] version: add tmpconfig to ignore list
+
+---
+ .gitignore |    1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/.gitignore b/.gitignore
+index d78652e..a973a59 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,4 @@ binaries
+ *.o
+ tags
+ *.swp
++.tmpconfig*
+-- 
+1.7.9.5
+

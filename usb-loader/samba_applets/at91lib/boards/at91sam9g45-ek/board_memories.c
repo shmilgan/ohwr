@@ -38,6 +38,7 @@
 #include <board.h>
 #include <pio/pio.h>
 #include "board_memories.h"
+#include <utility/trace.h>
 
 /*
     Macros:
@@ -49,6 +50,12 @@
 #define READ(peripheral, register)          (peripheral->register)
 #define WRITE(peripheral, register, value)  (peripheral->register = value)
 
+//------------------------------------------------------------------------------
+//         External definitions
+//------------------------------------------------------------------------------
+#ifndef AT91C_DDRC2_NR_XX
+	#define AT91C_DDRC2_NR_XX AT91C_DDRC2_NR_13 /*This value should be 13 for WRS3-18*/
+#endif
 
 //------------------------------------------------------------------------------
 //         Internal functions
@@ -102,6 +109,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
     int i;
     volatile unsigned int cr = 0;
     unsigned short ddrc_dbw = 0;
+    unsigned int ba_offset;
 
     switch (busWidth) {
         case 16:
@@ -114,6 +122,9 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
             break;
 
     }
+    
+    
+
 
     // Enable DDR2 clock x2 in PMC
     WRITE(AT91C_BASE_PMC, PMC_SCER, AT91C_PMC_DDR);
@@ -135,11 +146,28 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
             // 4. Program the features of DDR2-SDRAM device into the Timing Register HDDRSDRC2_T2PR.            
 
             WRITE(pDdrc, HDDRSDRC2_CR, AT91C_DDRC2_NC_DDR10_SDR9  |     // 10 column bits (1K)
-                                       AT91C_DDRC2_NR_14          |     // 14 row bits    (8K)
+                                       AT91C_DDRC2_NR_XX         |     // 13 row bits    (8K) 
                                        AT91C_DDRC2_CAS_3          |     // CAS Latency 3
                                        AT91C_DDRC2_DLL_RESET_DISABLED
                                        ); // DLL not reset
+	    
+	    /* compute BA[] offset according to CR configuration */
+	    ba_offset = (READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_NC) + 9;          // number of column bits for DDR
+	    ba_offset += ((READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_NR) >> 2) + 11; // number of row bits
+	    ba_offset += (ddrc_dbw & AT91C_DDRC2_DBW) ? 1 : 2;   // bus width 
+	    
 
+	    TRACE_INFO("\tDDR2 Config: 0x%x (NC=%d, NR=%d, CAS=%d, ba_offset=%d) \n\r", 
+		       (READ(pDdrc, HDDRSDRC2_CR)),
+		       (READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_NC) + 9,
+		       ((READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_NR) >> 2) + 11,
+		       (READ(pDdrc, HDDRSDRC2_CR) & AT91C_DDRC2_CAS) >> 4,
+		       ba_offset);
+    	    
+	    
+
+	    
+	    
             // assume timings for 7.5ns min clock period
             WRITE(pDdrc, HDDRSDRC2_T0PR, AT91C_DDRC2_TRAS_6       |     //  6 * 7.5 = 45 ns
                                          AT91C_DDRC2_TRCD_2       |     //  2 * 7.5 = 15 ns
@@ -189,7 +217,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
 
             // Step 6: An Extended Mode Register set (EMRS2) cycle is  issued to chose between commercialor high  temperature operations.
             WRITE(pDdrc, HDDRSDRC2_MR, AT91C_DDRC2_MODE_EXT_LMR_CMD);
-            *((unsigned int *)((unsigned char *)pDdr + 0x4000000)) = 0;
+	    *((unsigned int *)((unsigned char *)pDdr + (0x2 << ba_offset))) = 0;
          
             // wait 2 cycles min
             for (i = 0; i < 100; i++) {
@@ -198,7 +226,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
             
             // Step 7: An Extended Mode Register set (EMRS3) cycle is issued to set all registers to 0.
             WRITE(pDdrc, HDDRSDRC2_MR, AT91C_DDRC2_MODE_EXT_LMR_CMD);
-            *((unsigned int *)((unsigned char *)pDdr + 0x6000000)) = 0;
+	    *((unsigned int *)((unsigned char *)pDdr + (0x3 << ba_offset))) = 0;
 
             // wait 2 cycles min
             for (i = 0; i < 100; i++) {
@@ -207,7 +235,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
              
             // Step 8:  An Extended Mode Register set (EMRS1) cycle is issued to enable DLL.
             WRITE(pDdrc, HDDRSDRC2_MR, AT91C_DDRC2_MODE_EXT_LMR_CMD);
-            *((unsigned int *)((unsigned char *)pDdr + 0x2000000)) = 0;
+	    *((unsigned int *)((unsigned char *)pDdr + (0x1 << ba_offset))) = 0;
 
             // wait 200 cycles min
             for (i = 0; i < 10000; i++) {
@@ -267,7 +295,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
             
             // Step 16: An Extended Mode Register set (EMRS1) cycle is issued to OCD default value.
             WRITE(pDdrc, HDDRSDRC2_MR, AT91C_DDRC2_MODE_EXT_LMR_CMD);
-            *((unsigned int *)((unsigned char *)pDdr + 0x2000000)) = 0;
+	    *((unsigned int *)((unsigned char *)pDdr + (0x1 << ba_offset))) = 0;
 
             // wait 2 cycles min
             for (i = 0; i < 100; i++) {
@@ -280,7 +308,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
          
            // Step 18: An Extended Mode Register set (EMRS1) cycle is issued to enable OCD exit.
            WRITE(pDdrc, HDDRSDRC2_MR, AT91C_DDRC2_MODE_EXT_LMR_CMD);
-            *((unsigned int *)((unsigned char *)pDdr + 0x6000000)) = 0;
+	   *((unsigned int *)((unsigned char *)pDdr + (0x1 << ba_offset))) = 0;
 
             // wait 2 cycles min
             for (i = 0; i < 100; i++) {
@@ -292,7 +320,7 @@ void BOARD_ConfigureDdram(unsigned char ddrModel, unsigned char busWidth)
             *(pDdr) = 0;
 
             // Step 21: Write the refresh rate into the count field in the Refresh Timer register. The DDR2-SDRAM device requires a
-            // refresh every 15.625 ¦Ìs or 7.81 ¦Ìs. With a 100MHz frequency, the refresh timer count register must to be set with
+            // refresh every 15.625 ns or 7.81 ns. With a 100MHz frequency, the refresh timer count register must to be set with
             // (15.625 /100 MHz) = 1562 i.e. 0x061A or (7.81 /100MHz) = 781 i.e. 0x030d.
       
             // Set Refresh timer
@@ -520,6 +548,22 @@ void BOARD_ConfigureSdram(unsigned char busWidth)
 //------------------------------------------------------------------------------
 void BOARD_ConfigureNandFlash(unsigned char busWidth)
 {
+    AT91C_BASE_MATRIX->MATRIX_EBICSA |= AT91C_EBI_CS3A_SM;
+
+    // Configure SMC
+    AT91C_BASE_SMC->SMC_SETUP3 = 0x00020002;
+    AT91C_BASE_SMC->SMC_PULSE3 = 0x04040404;
+    AT91C_BASE_SMC->SMC_CYCLE3 = 0x00070007;
+    AT91C_BASE_SMC->SMC_CTRL3  = 0x00030003;
+
+    if (busWidth == 8) {
+
+        AT91C_BASE_SMC->SMC_CTRL3 |= AT91C_SMC_DBW_WIDTH_EIGTH_BITS;
+    }
+    else if (busWidth == 16) {
+
+        AT91C_BASE_SMC->SMC_CTRL3 |= AT91C_SMC_DBW_WIDTH_SIXTEEN_BITS;
+    }
 }
 
 //------------------------------------------------------------------------------

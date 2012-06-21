@@ -1,0 +1,211 @@
+From e5b1d890e842647f0a70af8381d5114a7ca8635d Mon Sep 17 00:00:00 2001
+From: Benoit Rat <benoit@sevensols.com>
+Date: Mon, 19 Mar 2012 17:49:43 +0100
+Subject: [PATCH 07/19] ddr: Fix ba offset bug and improve configuration
+
+---
+ board/at91sam9g45ek/at91sam9g45ek.c |   34 ++++++++++++++++++----------------
+ driver/ddramc.c                     |   20 +++++++++++++-------
+ include/AT91SAM9G45_inc.h           |    5 ++++-
+ include/DDR2_MT47H_inc.h            |   35 +++++++++++++++++++++++++++++++++++
+ include/ddramc.h                    |    2 +-
+ 5 files changed, 71 insertions(+), 25 deletions(-)
+ create mode 100644 include/DDR2_MT47H_inc.h
+
+diff --git a/board/at91sam9g45ek/at91sam9g45ek.c b/board/at91sam9g45ek/at91sam9g45ek.c
+index 83c2c29..e6b8f9c 100644
+--- a/board/at91sam9g45ek/at91sam9g45ek.c
++++ b/board/at91sam9g45ek/at91sam9g45ek.c
+@@ -151,7 +151,7 @@ void hw_init(void)
+     /*
+      * Configure DDRAM Controller 
+      */
+-    ddramc_hw_init();
++    ddramc_hw_init(); 
+ #endif                          /* CONFIG_DDR2 */
+ }
+ #endif                          /* CONFIG_HW_INIT */
+@@ -163,36 +163,38 @@ static SDdramConfig ddram_config;
+ /* \fn    ddramc_hw_init							*/
+ /* \brief This function performs DDRAMC HW initialization			*/
+ /*------------------------------------------------------------------------------*/
+-void ddramc_hw_init(void)
++
++
++void ddramc_hw_init()
+ {
+     ddram_config.ddramc_mdr =
+         (AT91C_DDRC2_DBW_16_BITS | AT91C_DDRC2_MD_DDR2_SDRAM);
+ 
+-    ddram_config.ddramc_cr = (AT91C_DDRC2_NC_DDR10_SDR9 |       // 10 column bits (1K)
+-                              AT91C_DDRC2_NR_13 |       // 13 row bits    (8K)
++    ddram_config.ddramc_cr = (AT91C_DDRC2_NC_XX |       // see include/DDR2_MT47H_inc.h
++			      AT91C_DDRC2_NR_XX	|       // see include/DDR2_MT47H_inc.h
+                               AT91C_DDRC2_CAS_3 |       // CAS Latency 3
+                               AT91C_DDRC2_DLL_RESET_DISABLED);  // DLL not reset
+ 
+     ddram_config.ddramc_rtr = 0x24B;
+ 
+-    ddram_config.ddramc_t0pr = (AT91C_DDRC2_TRAS_6 |    //  6 * 7.5 = 45   ns
+-                                AT91C_DDRC2_TRCD_2 |    //  2 * 7.5 = 22.5 ns
+-                                AT91C_DDRC2_TWR_2 |     //  2 * 7.5 = 15   ns
+-                                AT91C_DDRC2_TRC_8 |     //  8 * 7.5 = 75   ns
+-                                AT91C_DDRC2_TRP_2 |     //  2 * 7.5 = 22.5 ns
+-                                AT91C_DDRC2_TRRD_1 |    //  1 * 7.5 = 7.5   ns
+-                                AT91C_DDRC2_TWTR_1 |    //  1 clock cycle
+-                                AT91C_DDRC2_TMRD_2);    //  2 clock cycles
++    ddram_config.ddramc_t0pr = (AT91C_DDRC2_TRAS_6  |    //  6 * 7.5 = 45   ns
++                                AT91C_DDRC2_TRCD_2  |    //  2 * 7.5 = 15   ns
++                                AT91C_DDRC2_TWR_2   |    //  2 * 7.5 = 15   ns
++                                AT91C_DDRC2_TRC_8   |    //  8 * 7.5 = 75   ns
++                                AT91C_DDRC2_TRP_2   |    //  2 * 7.5 = 22.5 ns
++                                AT91C_DDRC2_TRRD_XX |    //  see include/DDR2_MT47H_inc.h
++                                AT91C_DDRC2_TWTR_1  |    //  1 clock cycle
++                                AT91C_DDRC2_TMRD_2);     //  2 clock cycles
+ 
+     ddram_config.ddramc_t1pr = (AT91C_DDRC2_TXP_2 |     //  2 * 7.5 = 15 ns
+                                 200 << 16 |     // 200 clock cycles, TXSRD: Exit self refresh delay to Read command
+                                 16 << 8 |       // 16 * 7.5 = 120 ns TXSNR: Exit self refresh delay to non read command
+                                 AT91C_DDRC2_TRFC_14 << 0);      // 14 * 7.5 = 142 ns (must be 140 ns for 1Gb DDR)
+ 
+-    ddram_config.ddramc_t2pr = (AT91C_DDRC2_TRTP_1 |    //  1 * 7.5 = 7.5 ns
+-                                AT91C_DDRC2_TRPA_0 |    //  0 * 7.5 = 0 ns
+-                                AT91C_DDRC2_TXARDS_7 |  //  7 clock cycles
+-                                AT91C_DDRC2_TXARD_2);   //  2 clock cycles
++    ddram_config.ddramc_t2pr = (AT91C_DDRC2_TRTP_1    |  //  1 * 7.5 = 7.5 ns
++                                AT91C_DDRC2_TRPA_XX   |  // see include/DDR2_MT47H_inc.h 
++                                AT91C_DDRC2_TXARDS_XX |  // see include/DDR2_MT47H_inc.h
++                                AT91C_DDRC2_TXARD_2);    //  2 clock cycles
+ 
+     // ENABLE DDR2 clock 
+     writel(AT91C_PMC_DDR, AT91C_BASE_PMC + PMC_SCER);
+diff --git a/driver/ddramc.c b/driver/ddramc.c
+index e2824ff..f6fdfe8 100644
+--- a/driver/ddramc.c
++++ b/driver/ddramc.c
+@@ -75,10 +75,16 @@ int ddram_init(unsigned int ddram_controller_address,
+     ba_offset = (ddram_config->ddramc_cr & AT91C_DDRC2_NC) + 9;          // number of column bits for DDR
+     if (ddram_decod_seq(ddram_config->ddramc_cr))
+         ba_offset += ((ddram_config->ddramc_cr & AT91C_DDRC2_NR) >> 2) + 11; // number of row bits
+-    ba_offset += (ddram_config->ddramc_mdr & AT91C_DDRC2_DBW) ? 1 : 2;   // bus width
+-
+-    dbg_log(3, " ba_offset = %x ... ", ba_offset);
+-
++    ba_offset += (ddram_config->ddramc_mdr & AT91C_DDRC2_DBW) ? 1 : 2;   // bus width 
++      
++    dbg_log(1,"DDR2 Config: %x (NC=%d, NR=%d, CAS=%d, ba_offset = %x)\n\r",
++	    ddram_config->ddramc_cr ,
++	    (ddram_config->ddramc_cr & AT91C_DDRC2_NC) + 9,
++	    ((ddram_config->ddramc_cr & AT91C_DDRC2_NR) >> 2) + 11,
++	    (ddram_config->ddramc_cr & AT91C_DDRC2_CAS) >> 4,
++	    ba_offset
++    );
++    
+     // Step 1: Program the memory device type
+     write_ddramc(ddram_controller_address, HDDRSDRC2_MDR,
+                  ddram_config->ddramc_mdr);
+@@ -126,7 +132,7 @@ int ddram_init(unsigned int ddram_controller_address,
+     write_ddramc(ddram_controller_address, HDDRSDRC2_MR,
+                  AT91C_DDRC2_MODE_EXT_LMR_CMD);
+     /* Perform a write access to DDR address so that BA[1] is set to 1 and BA[0] is set to 0. */
+-    *((unsigned int *)(ddram_address + 0x4000000 /* (0x2 << ba_offset) */)) = 0;
++    *((unsigned int *)(ddram_address + (0x2 << ba_offset))) = 0;
+ 
+     // wait 2 cycles min (of tCK) = 15 ns min
+     Wait(2);
+@@ -135,7 +141,7 @@ int ddram_init(unsigned int ddram_controller_address,
+     /* Perform a write access to DDR address so that BA[1] is set to 1 and BA[0] is set to 1. */
+     write_ddramc(ddram_controller_address, HDDRSDRC2_MR,
+                  AT91C_DDRC2_MODE_EXT_LMR_CMD);
+-    *((unsigned int *)(ddram_address + 0x6000000 /* (0x3 << ba_offset) */)) = 0;
++    *((unsigned int *)(ddram_address + (0x3 << ba_offset))) = 0;
+ 
+     // wait 2 cycles min (of tCK) = 15 ns min
+     Wait(2);
+@@ -144,7 +150,7 @@ int ddram_init(unsigned int ddram_controller_address,
+     /* Perform a write access to DDR address so that BA[1] is set to 0 and BA[0] is set to 1. */
+     write_ddramc(ddram_controller_address, HDDRSDRC2_MR,
+                  AT91C_DDRC2_MODE_EXT_LMR_CMD);
+-    *((unsigned int *)(ddram_address + 0x2000000 /* (0x1 << ba_offset) */)) = 0;
++    *((unsigned int *)(ddram_address + (0x1 << ba_offset))) = 0;
+ 
+     // wait 200 cycles min (of tCK) = 1500 ns min
+     Wait(100);
+diff --git a/include/AT91SAM9G45_inc.h b/include/AT91SAM9G45_inc.h
+index a4a168f..a73fcd3 100644
+--- a/include/AT91SAM9G45_inc.h
++++ b/include/AT91SAM9G45_inc.h
+@@ -267,7 +267,7 @@
+ #define 	AT91C_DDRC2_NC_DDR10_SDR9           (0x1)       // (HDDRSDRC2) DDR 10 Bits | SDR 9 Bits
+ #define 	AT91C_DDRC2_NC_DDR11_SDR10          (0x2)       // (HDDRSDRC2) DDR 11 Bits | SDR 10 Bits
+ #define 	AT91C_DDRC2_NC_DDR12_SDR11          (0x3)       // (HDDRSDRC2) DDR 12 Bits | SDR 11 Bits
+-#define AT91C_DDRC2_NR            AT91C_DDRC2_NR_13   // (HDDRSDRC2) Number of Row Bits
++#define AT91C_DDRC2_NR            		    (0x3 <<  2) // (HDDRSDRC2) Number of Row Bits (MASK)
+ #define 	AT91C_DDRC2_NR_11                   (0x0 <<  2) // (HDDRSDRC2) 11 Bits
+ #define 	AT91C_DDRC2_NR_12                   (0x1 <<  2) // (HDDRSDRC2) 12 Bits
+ #define 	AT91C_DDRC2_NR_13                   (0x2 <<  2) // (HDDRSDRC2) 13 Bits
+@@ -6350,3 +6350,6 @@
+ #define BOARD_SD_MCI_ID_USE			0
+ 
+ #define CHIP_SRAM0_BASEADDR 0x300000
++
++//Hacks to include our DDR without modifying the whole board
++#include "DDR2_MT47H_inc.h"
+\ No newline at end of file
+diff --git a/include/DDR2_MT47H_inc.h b/include/DDR2_MT47H_inc.h
+new file mode 100644
+index 0000000..75b3af3
+--- /dev/null
++++ b/include/DDR2_MT47H_inc.h
+@@ -0,0 +1,35 @@
++/**
++* Small hacks to make the at91bootstrap works with our DDR memories
++* 
++* Author: Benoit RAT
++*
++**/
++#ifndef WRS318V3
++#define WRS318V3 1 //Version 3.1
++
++#define MT47H32M16HR 0x025E
++#ifdef MT47H32M16HR
++	//Then define new value
++	#define AT91C_DDRC2_NC_XX 	AT91C_DDRC2_NC_DDR10_SDR9	// 10 column bits (1K)
++	#define AT91C_DDRC2_NR_XX 	AT91C_DDRC2_NR_13 		// 13 row bits    (8K)
++	#define AT91C_DDRC2_TRRD_XX 	AT91C_DDRC2_TRRD_2 		//  2 * 7.5 > 10   ns
++
++	#if MT47H32M16HR == 0x025E //for -25E
++		#define AT91C_DDRC2_TRPA_XX 	AT91C_DDRC2_TRPA_2 	//  2 * 7.5 = 15 ns
++		#define AT91C_DDRC2_TXARDS_XX 	AT91C_DDRC2_TXARDS_8 	//  
++	#endif
++
++	#if MT47H32M16HR == 0x0030 //for -3
++		#define AT91C_DDRC2_TRPA_XX 	AT91C_DDRC2_TRPA_3 	//  3 * 7.5 = 22.5 ns
++		#define AT91C_DDRC2_TXARDS_XX 	AT91C_DDRC2_TXARDS_7 	// 
++	#endif
++#else  //Original values for AT
++	#define AT91C_DDRC2_NC_XX 	AT91C_DDRC2_NC_DDR10_SDR9 	// 10 column bits (1K)
++	#define AT91C_DDRC2_NR_XX 	AT91C_DDRC2_NR_13
++	#define AT91C_DDRC2_TRPA_XX 	AT91C_DDRC2_TRPA_0
++	#define AT91C_DDRC2_TXARDS_XX 	AT91C_DDRC2_TXARDS_7
++	#define AT91C_DDRC2_TRRD_XX 	AT91C_DDRC2_TRRD_1
++#endif
++
++
++#endif
+\ No newline at end of file
+diff --git a/include/ddramc.h b/include/ddramc.h
+index 3e7a30a..527436f 100644
+--- a/include/ddramc.h
++++ b/include/ddramc.h
+@@ -45,6 +45,6 @@ typedef struct SDdramConfig {
+ extern int ddram_init(unsigned int ddram_controller_address,
+                       unsigned int ddram_address,
+                       struct SDdramConfig *ddram_config);
+-extern void ddramc_hw_init(void);
++extern void ddramc_hw_init();
+ 
+ #endif                          /*SDRAMC_H_ */
+-- 
+1.7.9.5
+

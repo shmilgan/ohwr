@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------------
 #         ATMEL Microcontroller Software Support 
 # ----------------------------------------------------------------------------
-# Copyright (c) 2008, Atmel Corporation
+# Copyright (c) 2010, Atmel Corporation
 #
 # All rights reserved.
 #
@@ -26,7 +26,7 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ----------------------------------------------------------------------------
 
-# 	Makefile for compiling isp-project extram applet
+# 	Makefile for compiling isp-project nandflash applet
 
 #-------------------------------------------------------------------------------
 #		User-modifiable options
@@ -45,15 +45,20 @@ BOARD_DIR = $(CHIP)-ek
 ifeq ($(CHIP),at91cap9)
 BOARD_DIR = $(BOARD)
 endif
+ifeq ($(CHIP),at91cap7)
+BOARD_DIR = $(BOARD)
+endif
 
 INSTALLDIR = "../tcl_lib/$(BOARD_DIR)/"
 
 # AT91 library directory
 AT91LIB = ../../at91lib
 
-# Output file basename
-OUTPUT = isp-extram-$(CHIP)
+# External library
+EXT_LIBS= ../../external_libs
 
+# Output file basename
+OUTPUT = isp-nandflash-$(CHIP)
 # Compile with chip specific features
 include $(AT91LIB)/boards/$(BOARD)/$(CHIP)/chip.mak
 
@@ -63,7 +68,6 @@ include $(AT91LIB)/boards/$(BOARD)/board.mak
 # Output directories
 BIN = bin
 OBJ = obj
-
 
 #-------------------------------------------------------------------------------
 #		Tools
@@ -79,26 +83,32 @@ STRIP = $(CROSS_COMPILE)strip
 OBJCOPY = $(CROSS_COMPILE)objcopy
 
 # Flags
-INCLUDES += -I$(AT91LIB)/boards/$(BOARD)
-INCLUDES += -I$(AT91LIB)/peripherals
-INCLUDES += -I$(AT91LIB)/components
+INCLUDES = -I$(AT91LIB)/boards/$(BOARD) -I$(AT91LIB)/peripherals -I$(AT91LIB)/memories
+INCLUDES += -I$(AT91LIB)/drivers
 INCLUDES += -I$(AT91LIB)
-
 ifeq (cortexm3,$(CHIP_CORE))
     # For Cortex-M3: thumb code only mthumb32
     TARGET_OPTS = -mcpu=cortex-m3 -mthumb 
+    # Force usage of HW ECC
+    CHIP_IP_ECC  = HW_ECC
+    CHIP_IP_NAND = NAND_CTRL
+    CFLAGS +=  -DHARDWARE_ECC
 else
     # ARM7 or 9
     TARGET_OPTS =
 endif
 
+ifeq (cortexm3,$(CHIP_CORE))
+INCLUDES += -I$(EXT_LIBS)/cmsis
+endif
 
 CFLAGS += $(TARGET_OPTS)
 CFLAGS += -Wall -mlong-calls -ffunction-sections
-CFLAGS += -g $(OPTIMIZATION) -mthumb $(INCLUDES) -D$(CHIP) -DDYN_TRACES -DTRACE_DBGU $(DEFINES)
-
+CFLAGS += -g $(OPTIMIZATION) -mthumb $(INCLUDES) -D$(CHIP) -DDYN_TRACES
 ASFLAGS = $(TARGET_OPTS) -Wall -g $(OPTIMIZATION) $(INCLUDES) -D$(CHIP) -D__ASSEMBLY__
-LDFLAGS = -g $(OPTIMIZATION) $(TARGET_OPTS) -Wl,-Map=$(OUTPUT).map,--gc-sections #-nostartfiles 
+LDFLAGS = -g $(OPTIMIZATION) $(TARGET_OPTS) -Wl,-Map=$(OUTPUT).map,--gc-sections 
+#-nostartfiles 
+
 
 #-------------------------------------------------------------------------------
 # Trace level used for compilation
@@ -114,14 +124,21 @@ LDFLAGS = -g $(OPTIMIZATION) $(TARGET_OPTS) -Wl,-Map=$(OUTPUT).map,--gc-sections
 # Define if traces are allowed depending on the chip
 #-------------------------------------------------------------------------------
 # Info traces allowed by default
-TR_LEV = 4
+TR_LEV = $(TRACE_LEVEL)
+
 
 # Disable trace capability for devices with few memory
 ifeq ($(CHIP),at91sam7se32)
 CFLAGS += -UDYN_TRACES
 TR_LEV = 0
 endif
-ifeq ($(CHIP),at91sam9260)
+
+ifeq ($(CHIP),at91sam3u2)
+CFLAGS += -UDYN_TRACES
+TR_LEV = 0
+endif
+
+ifeq ($(CHIP),at91sam3u1)
 CFLAGS += -UDYN_TRACES
 TR_LEV = 0
 endif
@@ -137,33 +154,61 @@ CFLAGS += -DTRACE_LEVEL=$(TR_LEV)
 ISP = ..
 PERIPH = $(AT91LIB)/peripherals
 BOARDS = $(AT91LIB)/boards
+MEM = $(AT91LIB)/memories
 UTILITY = $(AT91LIB)/utility
+DRIVERS = $(AT91LIB)/drivers
+
 
 VPATH += $(ISP)/common
+VPATH += $(MEM)/nandflash
 VPATH += $(UTILITY)
-VPATH += $(PERIPH)/dbgu
-VPATH += $(PERIPH)/pio
+VPATH += $(PERIPH)/dbgu $(PERIPH)/pio $(PERIPH)/irq
 VPATH += $(PERIPH)/cp15
-VPATH += $(BOARDS)/$(BOARD)
-VPATH += $(BOARDS)/$(BOARD)/$(CHIP)
+VPATH += $(PERIPH)/smc
+VPATH += $(BOARDS)/$(BOARD) $(BOARDS)/$(BOARD)/$(CHIP)
+VPATH += $(PERIPH)/hsmc4
+VPATH += $(EXT_LIBS)/cmsis
+VPATH += $(PERIPH)/dma
+VPATH += $(DRIVERS)/dmad
+VPATH += $(PERIPH)/irq
 
 # Objects built from C source files
-C_OBJECTS += main.o memtest.o
-C_OBJECTS += board_memories.o
-C_OBJECTS += board_lowlevel.o
-C_OBJECTS += dbgu.o
-C_OBJECTS += pio.o
-C_OBJECTS += cp15.o
-C_OBJECTS += stdio.o
-C_OBJECTS += trace.o
+C_OBJECTS = main.o
+
+# Objects for chips with nfc
+ifeq ($(CHIP_IP_NAND), NAND_CTRL)
+C_OBJECTS += NfcRawNandFlash.o
+C_OBJECTS += hsmc4.o
+C_OBJECTS += dma.o
+C_OBJECTS += dmad.o
+else
+C_OBJECTS += RawNandFlash.o
+endif
+
+C_OBJECTS += sam9_smc.o
+C_OBJECTS += EccNandFlash.o SkipBlockNandFlash.o
+C_OBJECTS += NandFlashModel.o NandFlashModelList.o NandSpareScheme.o
+
+ifeq ($(CHIP_IP_ECC), HW_ECC)
+C_OBJECTS +=  hsmc4_ecc.o
+endif
+
+C_OBJECTS += math.o string.o stdio.o trace.o hamming.o
+C_OBJECTS += dbgu.o pio.o cp15.o
+C_OBJECTS += board_memories.o board_lowlevel.o
+
+# Individual objects for different chips
+C_OBJECTS += $(IRQ_OBJS)
 
 ifeq (cortexm3,$(CHIP_CORE))
     # Cortex M3
     C_OBJECTS += isp_cstartup.o
     C_OBJECTS += exceptions.o
+    C_OBJECTS += nvic.o
 else
 	# Objects built from Assembly source files
 	ASM_OBJECTS = isp_cstartup.o
+    C_OBJECTS += aic.o
 endif
 
 # Append OBJ and BIN directories to output filename
@@ -184,9 +229,9 @@ ASM_OBJECTS_$(1) = $(addprefix $(OBJ)/$(1)_, $(ASM_OBJECTS))
 
 $(1): $$(ASM_OBJECTS_$(1)) $$(C_OBJECTS_$(1)) 
 	$(CC) $(LDFLAGS) -T"$(AT91LIB)/boards/$(BOARD)/$(CHIP)/$$@_samba.lds" -o $(OUTPUT).elf $$^
-#bb/init.o bb/ddramc.o 
 	$(OBJCOPY) -O binary $(OUTPUT).elf $(OUTPUT).bin
 	$(SIZE) $$^ $(OUTPUT).elf
+	@[ -e $(INSTALLDIR) ] || mkdir $(INSTALLDIR)
 	@cp -f $(OUTPUT).bin $(INSTALLDIR)
 
 $$(C_OBJECTS_$(1)): $(OBJ)/$(1)_%.o: %.c Makefile $(OBJ) $(BIN)
@@ -195,8 +240,8 @@ $$(C_OBJECTS_$(1)): $(OBJ)/$(1)_%.o: %.c Makefile $(OBJ) $(BIN)
 $$(ASM_OBJECTS_$(1)): $(OBJ)/$(1)_%.o: %.S Makefile $(OBJ) $(BIN)
 	$(CC) $(ASFLAGS) -D$(1) -c -o $$@ $$<
 
-#debug:
-#	perl ../../resources/gdb/debug.pl $(OUTPUT).elf
+debug:
+	perl ../../resources/gdb/debug.pl $(OUTPUT).elf
 
 endef
 
