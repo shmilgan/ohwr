@@ -1259,7 +1259,7 @@ struct mrp_participant *mrp_create_participant(struct mrp_port *port)
 
     INIT_LIST_HEAD(&p->contexts);
     INIT_LIST_HEAD(&p->port_participant);
-
+    
     p->port             = port;
     p->leaveall         = 0;
     p->next_to_process  = 0;
@@ -1270,18 +1270,14 @@ struct mrp_participant *mrp_create_participant(struct mrp_port *port)
     /* Init pdu and transmission window */
     mrp_pdu_init(&p->pdu, app->proto.tagged);
     memset(p->tx_window, 0, 3 * sizeof(struct timespec));
-
     /* leaveall state machine and timer */
     p->leaveall_state = MRP_LEAVEALL_P;
     timer_start(&p->leaveall_timeout,
         random_val(leaveall_time,  (3 * leaveall_time) / 2));
-
     /* Add participant to the port */
     list_add(&p->port_participant, &port->participants);
-
     if (app->init_participant(p) < 0)
         goto err;
-
     return p;
 
 err:
@@ -1307,7 +1303,6 @@ void mrp_destroy_participant(struct mrp_participant *p)
     }
     /* Remove participant from port */
     list_del(&p->port_participant);
-
     free(p->machines);
     free(p);
 }

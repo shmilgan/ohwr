@@ -80,14 +80,6 @@ static int mvrp_enabled;
 
 static int switch_is_v2;
 
-static void mvrp_exit(int err);
-
-static inline void check_rtu_pipe()
-{
-    if (errno == EPIPE)
-        mvrp_exit(errno);
-}
-
 /* 'When any MVRP declaration marked as “new” is received on a given Port,
    either as a result of receiving an MVRPDU from the attached LAN
    (MAD_Join.indication), or as a result of receiving a request from MAP
@@ -97,7 +89,6 @@ static inline void check_rtu_pipe()
 static void mvrp_new_declaration(struct mrp_participant *p, int mid)
 {
     rtu_fdb_proxy_delete_dynamic_entries(p->port->port_no, mid);
-    check_rtu_pipe();
 }
 
 static int mvrp_join_ind(struct mrp_participant *p, int mid, int is_new)
@@ -106,15 +97,10 @@ static int mvrp_join_ind(struct mrp_participant *p, int mid, int is_new)
 
     fprintf(stderr, 
         "mvrp: join_ind(new %d, port %d, vid %d)\n", is_new, port_no, mid);
-
     if (rtu_vfdb_proxy_forward_dynamic(port_no, mid) < 0)
         return -1;
-
-    check_rtu_pipe();
-
     if (is_new)
         mvrp_new_declaration(p, mid);
-
     return 0;
 }
 
@@ -124,7 +110,6 @@ static void mvrp_leave_ind(struct mrp_participant *p, int mid)
 
     fprintf(stderr, "mvrp: leave_ind (port %d, vid=%d)\n", port_no, mid);
     rtu_vfdb_proxy_filter_dynamic(port_no, mid);
-    check_rtu_pipe();
 }
 
 /* Return 0 if both values are the same. Otherwise, return the difference */
@@ -152,17 +137,23 @@ static uint8_t attrtype(int mid)
 static int db_add_entry(uint8_t type, uint8_t len, void *firstval, int offset)
 {
     uint16_t val;
+    int vid;
 
 	if ((type != MVRP_ATTR_VID) || (len != MVRP_ATTR_LEN))
         return -EINVAL;
 
     memcpy(&val, firstval, len);
-    return ntohs(val) + offset;
+    vid = ntohs(val) + offset;    
+    if ((vid < 0) || (vid > MAX_VID))
+        return -EINVAL;
+    if (!switch_is_v2 && (vid == 0))
+        return -EINVAL;
+    return vid;
 }
 
 static int db_read_entry(uint8_t *type, uint8_t *len, void **value, int mid)
 {
-    if ((mid < 0) || (mid >= NUM_VLANS))
+    if ((mid < 0) || (mid > MAX_VID))
         return -EINVAL;
     if (!switch_is_v2 && (mid == 0))
         return -EINVAL;
@@ -184,7 +175,7 @@ static int db_find_entry(uint8_t type, uint8_t len, void *firstval, int offset)
     memcpy(&val, firstval, len);
     mid = ntohs(val) + offset;
 
-    if ((mid < 0) || (mid >= NUM_VLANS))
+    if ((mid < 0) || (mid > MAX_VID))
         return -EINVAL;
     if ((mid == 0) && !switch_is_v2)
         return -EINVAL;
@@ -231,12 +222,9 @@ static int mvrp_uninit_participant(struct mrp_participant *p)
     int vid;
     int port_no = p->port->port_no;
 
-    for (vid = 0; vid < NUM_VLANS; vid++) {
-        if (mad_registered_here(p, vid)) {
+    for (vid = 0; vid < NUM_VLANS; vid++)
+        if (mad_registered_here(p, vid))
             rtu_vfdb_proxy_filter_dynamic(port_no, vid);
-            check_rtu_pipe();
-        }
-    }
     return 0;
 }
 
@@ -412,7 +400,6 @@ static int mvrp_init()
         return -1;
 
     mvrp_enabled = 1;
-
     return 0;
 }
 
@@ -420,14 +407,8 @@ static void mvrp_uninit(void)
 {
     fprintf(stderr,  "mvrp: unregister application\n");
     mrp_unregister_application(&mvrp_app);
-    fprintf(stderr,  "mvrp: destroy propagation context\n");
-    map_context_destroy(ctx, &mvrp_app);
-}
-
-static void mvrp_exit(int err) 
-{
-    mvrp_uninit();
-    exit(err); 
+//    map_context_destroy(ctx, &mvrp_app);
+    mvrp_enabled = 0;
 }
 
 /* Helper function to daemonize the process */
@@ -469,7 +450,8 @@ static void daemonize(void)
 
 void sigint(int signum) 
 {
-    mvrp_exit(signum);
+    mvrp_uninit();
+    exit(signum); 
 }
 
 int main(int argc, char **argv)
@@ -481,7 +463,7 @@ int main(int argc, char **argv)
 
     if (argc > 1) {
         /* Parse daemon options */
-        optstring = "d:";
+        optstring = "dv:";
         while ((op = getopt(argc, argv, optstring)) != -1) {
             switch(op) {
             case 'd':
@@ -510,18 +492,30 @@ int main(int argc, char **argv)
 
     server = mvrp_srv_create("mvrp");
 
-	// Register signal handler
+	/* Register signal handler */
 	signal(SIGINT, sigint);
+	/* Keep MVRP process running even if RTU is shutdown. 
+	   Handle read/write error instead of shutting down the application */
+	signal(SIGPIPE, SIG_IGN);
 
     fprintf(stderr,  "mvrp: mrp protocol\n");
     while (1) {
         /* Handle user triggered actions (i.e. management) */
-	    if (minipc_server_action(server, 10) < 0)
+	    if (minipc_server_action(server, 1) < 0)
 		    fprintf(stderr,  "mvrp server_action(): %s\n", strerror(errno));
 
-        if (!mvrp_enabled)
+        if (!mvrp_enabled) {
+            sleep(1);
             continue;
-
+        }
+        
+        /* Check whether MVRP should register again (v.g. if RTU restarts) */
+        if (!rtu_fdb_proxy_valid()) {
+            mvrp_disable();
+            if (rtu_fdb_proxy_connected())
+                mvrp_enable();
+        }
+        
         /* Handle any possible change in ports operational or forwarding state */
         if (mvrp_check_operational_state() < 0)
             goto failed;
@@ -544,12 +538,14 @@ failed:
 
 void mvrp_enable(void)
 {
-    mvrp_enabled = 1;
+    if (!mvrp_enabled)
+        mvrp_init();
 }
 
 void mvrp_disable(void)
 {
-    mvrp_enabled = 0;
+    if (mvrp_enabled)
+        mvrp_uninit();
 }
 
 int mvrp_is_enabled(void)

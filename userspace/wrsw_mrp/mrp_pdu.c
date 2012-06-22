@@ -188,9 +188,10 @@ static void mrp_pdu_parse_attr(struct mrp_participant *part,
                 mid = app->db_find_entry(attrtype, attrlen, firstval, offset);
                 if (mid < 0) {
                     mid = app->db_add_entry(attrtype, attrlen, firstval, offset);
-                    if ((mid < 0) || (mid >= app->numattr))
+                    if (mid < 0) 
                         continue; // TODO handle nomem error
                 }
+                // TODO IEEE8021ak-2007 10.8.3.5 Clause c.2... not needed so far
                 mad_attr_event(part, mid, event);
             }
         }
@@ -506,7 +507,7 @@ int mrp_pdu_append_attr(struct mrp_participant *part,
 
     /* If attribute value is not the following one in vector... */
     new_vec = new_msg ||
-           (app->attr_cmp(attrtype, attrlen, attrval, firstval) != (nval + 1));
+           (app->attr_cmp(attrtype, attrlen, firstval, attrval) != nval);
     if (new_vec) {
         /* Append new vector attribute. */
         if(mrp_pdu_append_vector_attr(pdu, attrlen, attrval) < 0)
@@ -529,7 +530,7 @@ int mrp_pdu_append_attr(struct mrp_participant *part,
         mid, 
         str_attr_event(event));
 
-    pdu->buf[pdu->pos - 1] = pack_tpe(event, pdu->buf[pdu->pos], idx);
+    pdu->buf[pdu->pos - 1] = pack_tpe(event, pdu->buf[pdu->pos - 1], idx);
     /* note: do _not_ update encoding pos after adding the packed event! */
     nval++;
     /* Update Vector Header */

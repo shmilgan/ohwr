@@ -34,18 +34,16 @@
 #include "rtu_fd_proxy.h"
 #include "rtu_fd_structs.h"
 
-struct minipc_ch *client = NULL;
+struct minipc_ch *client;
 
 char name[MINIPC_MAX_NAME];
 
-static struct minipc_ch *proxy_create()
+static struct minipc_ch *client_create()
 {
     if (!client) {
     	client = minipc_client_create(name, 0);
         if (client)
     	    minipc_set_logfile(client, stderr);
-    	else
-    	    fprintf(stderr, "%s minipc proxy: error %s\n", name, strerror(errno));
     }
     return client;
 }
@@ -53,7 +51,7 @@ static struct minipc_ch *proxy_create()
 static inline void check_conn(void)
 {
     int err = errno;
-    if (err == EPIPE || err == ENOTCONN) {
+    if (err == EPIPE || err == ENOTCONN || err == ECONNREFUSED) {
         minipc_close(client); 
         client = NULL;
         errno = err;
@@ -72,7 +70,7 @@ int  rtu_fdb_proxy_create_static_entry(
     struct rtu_fdb_create_static_entry_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid              = vid;
@@ -85,7 +83,7 @@ int  rtu_fdb_proxy_create_static_entry(
 
     errno = 0;
 	if (minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_create_static_entry_struct, &out, &in) != 0)
+            &rtu_fdb_create_static_entry_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -97,7 +95,7 @@ int rtu_fdb_proxy_delete_static_entry(
     struct rtu_fdb_delete_static_entry_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = vid;
@@ -105,7 +103,7 @@ int rtu_fdb_proxy_delete_static_entry(
 
     errno = 0;
 	if (minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_delete_static_entry_struct, &out, &in) != 0)
+            &rtu_fdb_delete_static_entry_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -119,7 +117,7 @@ int rtu_fdb_proxy_read_entry(
     struct rtu_fdb_read_entry_argdata in;
     struct rtu_fdb_read_entry_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     mac_copy(in.mac, mac);
@@ -145,7 +143,7 @@ int rtu_fdb_proxy_read_next_entry(
     struct rtu_fdb_read_next_entry_argdata in;
     struct rtu_fdb_read_next_entry_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.fid = *fid;
@@ -175,7 +173,7 @@ int rtu_fdb_proxy_read_static_entry(
     struct rtu_fdb_read_static_entry_argdata in;
     struct rtu_fdb_read_static_entry_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = vid;
@@ -205,7 +203,7 @@ int rtu_fdb_proxy_read_next_static_entry(
     struct rtu_fdb_read_next_static_entry_argdata in;
     struct rtu_fdb_read_next_static_entry_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = *vid;
@@ -234,7 +232,7 @@ int  rtu_fdb_proxy_set_aging_time(
     struct rtu_fdb_set_aging_time_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.fid = fid;
@@ -242,7 +240,7 @@ int  rtu_fdb_proxy_set_aging_time(
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_set_aging_time_struct, &out, &in) != 0)
+            &rtu_fdb_set_aging_time_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -252,13 +250,13 @@ unsigned long rtu_fdb_proxy_get_aging_time(uint8_t fid)
     struct rtu_fdb_get_aging_time_argdata in;
     struct rtu_fdb_get_aging_time_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.fid = fid;
 
     if (minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_get_aging_time_struct, &out, &in) != 0)
+            &rtu_fdb_get_aging_time_struct, &out, &in) < 0)
         check_conn();    
     return out.retval;
 }
@@ -269,14 +267,14 @@ uint16_t rtu_fdb_proxy_get_num_dynamic_entries(uint8_t fid)
     struct rtu_fdb_get_num_dynamic_entries_argdata in;
     struct rtu_fdb_get_num_dynamic_entries_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.fid = fid;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_get_num_dynamic_entries_struct, &out, &in) != 0)
+            &rtu_fdb_get_num_dynamic_entries_struct, &out, &in) < 0)
         check_conn();    
     return out.retval;
 }
@@ -286,14 +284,14 @@ uint32_t rtu_fdb_proxy_get_num_learned_entry_discards(uint8_t fid)
     struct rtu_fdb_get_num_learned_entry_discards_argdata in;
     struct rtu_fdb_get_num_learned_entry_discards_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.fid = fid;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_get_num_learned_entry_discards_struct, &out, &in) != 0)
+            &rtu_fdb_get_num_learned_entry_discards_struct, &out, &in) < 0)
         check_conn();    
     return out.retval;
 }
@@ -302,12 +300,12 @@ uint16_t rtu_fdb_proxy_get_num_vlans(void)
 {
     struct rtu_fdb_get_num_vlans_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_get_num_vlans_struct, &out) != 0)
+            &rtu_fdb_get_num_vlans_struct, &out) < 0)
         check_conn();    
     return out.retval;
 }
@@ -316,12 +314,12 @@ uint16_t rtu_fdb_proxy_get_max_supported_vlans(void)
 {
     struct rtu_fdb_get_max_supported_vlans_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_get_max_supported_vlans_struct, &out) != 0)
+            &rtu_fdb_get_max_supported_vlans_struct, &out) < 0)
         check_conn();    
     return out.retval;
 }
@@ -330,12 +328,12 @@ uint16_t rtu_fdb_proxy_get_max_vid(void)
 {
     struct rtu_fdb_get_max_vid_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT, 
-        &rtu_fdb_get_max_vid_struct, &out) != 0)
+        &rtu_fdb_get_max_vid_struct, &out) < 0)
         check_conn();    
     return out.retval;
 }
@@ -344,12 +342,12 @@ uint64_t rtu_fdb_proxy_get_num_vlan_deletes(void)
 {
     struct rtu_fdb_get_num_vlan_deletes_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_get_num_vlan_deletes_struct, &out) != 0)
+            &rtu_fdb_get_num_vlan_deletes_struct, &out) < 0)
         check_conn();    
     return out.retval;
 }
@@ -359,14 +357,14 @@ uint16_t rtu_fdb_proxy_get_next_fid(uint8_t fid)
     struct rtu_fdb_get_next_fid_argdata in;
     struct rtu_fdb_get_next_fid_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.fid = fid;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-            &rtu_fdb_get_next_fid_struct, &out, &in) != 0)
+            &rtu_fdb_get_next_fid_struct, &out, &in) < 0)
         check_conn();    
     return out.retval;
 }
@@ -380,7 +378,7 @@ int rtu_fdb_proxy_create_static_vlan_entry(
     struct rtu_fdb_create_static_vlan_entry_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid              = vid;
@@ -390,7 +388,7 @@ int rtu_fdb_proxy_create_static_vlan_entry(
 
     errno = 0;
     if (minipc_call(client,  MILLISEC_TIMEOUT,
-        &rtu_fdb_create_static_vlan_entry_struct, &out, &in) != 0)
+        &rtu_fdb_create_static_vlan_entry_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -400,14 +398,14 @@ int rtu_fdb_proxy_delete_static_vlan_entry(uint16_t vid)
     struct rtu_fdb_delete_static_vlan_entry_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = vid;
 
     errno = 0;
     if (minipc_call(client,  MILLISEC_TIMEOUT,
-        &rtu_fdb_delete_static_vlan_entry_struct, &out, &in) != 0)
+        &rtu_fdb_delete_static_vlan_entry_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -421,7 +419,7 @@ int rtu_fdb_proxy_read_static_vlan_entry(
     struct rtu_fdb_read_static_vlan_entry_argdata in;
     struct rtu_fdb_read_static_vlan_entry_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = vid;
@@ -447,7 +445,7 @@ int rtu_fdb_proxy_read_next_static_vlan_entry(
     struct rtu_fdb_read_next_static_vlan_entry_argdata in;
     struct rtu_fdb_read_next_static_vlan_entry_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = *vid;
@@ -476,7 +474,7 @@ int rtu_fdb_proxy_read_vlan_entry(
     struct rtu_fdb_read_vlan_entry_argdata in;
     struct rtu_fdb_read_vlan_entry_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = vid;
@@ -506,7 +504,7 @@ int rtu_fdb_proxy_read_next_vlan_entry(
     struct rtu_fdb_read_next_vlan_entry_argdata in;
     struct rtu_fdb_read_next_vlan_entry_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = *vid;
@@ -531,7 +529,7 @@ int rtu_vfdb_proxy_forward_dynamic(int port, uint16_t vid)
     struct rtu_vfdb_forward_dynamic_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = vid;
@@ -539,7 +537,7 @@ int rtu_vfdb_proxy_forward_dynamic(int port, uint16_t vid)
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-        &rtu_vfdb_forward_dynamic_struct, &out, &in) != 0)
+        &rtu_vfdb_forward_dynamic_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -549,7 +547,7 @@ int rtu_vfdb_proxy_filter_dynamic(int port, uint16_t vid)
     struct rtu_vfdb_filter_dynamic_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = vid;
@@ -557,7 +555,7 @@ int rtu_vfdb_proxy_filter_dynamic(int port, uint16_t vid)
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-        &rtu_vfdb_filter_dynamic_struct, &out, &in) != 0)
+        &rtu_vfdb_filter_dynamic_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -567,15 +565,15 @@ void rtu_fdb_proxy_delete_dynamic_entries(int port, uint16_t vid)
     struct rtu_fdb_delete_dynamic_entries_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return;
 
     in.vid = vid;
     in.port = port;
-
+    
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-        &rtu_fdb_delete_dynamic_entries_struct, &out, &in) != 0)
+        &rtu_fdb_delete_dynamic_entries_struct, &out, &in) < 0)
         check_conn();    
 }
 
@@ -584,14 +582,14 @@ int rtu_fdb_proxy_is_restricted_vlan_reg(int port)
     struct rtu_fdb_is_restricted_vlan_reg_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.port = port;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-        &rtu_fdb_is_restricted_vlan_reg_struct, &out, &in) != 0)
+        &rtu_fdb_is_restricted_vlan_reg_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -601,14 +599,14 @@ int rtu_fdb_proxy_set_restricted_vlan_reg(int port)
     struct rtu_fdb_set_restricted_vlan_reg_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.port = port;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-        &rtu_fdb_set_restricted_vlan_reg_struct, &out, &in) != 0)
+        &rtu_fdb_set_restricted_vlan_reg_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -618,14 +616,14 @@ int rtu_fdb_proxy_unset_restricted_vlan_reg(int port)
     struct rtu_fdb_unset_restricted_vlan_reg_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.port = port;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-        &rtu_fdb_unset_restricted_vlan_reg_struct, &out, &in) != 0)
+        &rtu_fdb_unset_restricted_vlan_reg_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -634,11 +632,11 @@ int rtu_fdb_proxy_get_size(void)
 {
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     errno = 0;
-    if (minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_get_size_struct, &out) != 0)
+    if (minipc_call(client, MILLISEC_TIMEOUT, &rtu_fdb_get_size_struct, &out) < 0)
         check_conn();    
     return out;
 }
@@ -647,12 +645,12 @@ int rtu_fdb_proxy_get_num_all_static_entries(void)
 {
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-        &rtu_fdb_get_num_all_static_entries_struct, &out) != 0)
+        &rtu_fdb_get_num_all_static_entries_struct, &out) < 0)
         check_conn();    
     return out;
 }
@@ -661,12 +659,12 @@ int rtu_fdb_proxy_get_num_all_dynamic_entries(void)
 {
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-        &rtu_fdb_get_num_all_dynamic_entries_struct, &out) != 0)
+        &rtu_fdb_get_num_all_dynamic_entries_struct, &out) < 0)
         check_conn();    
     return out;
 }
@@ -675,12 +673,12 @@ int rtu_vfdb_proxy_get_num_all_static_entries(void)
 {
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-        &rtu_vfdb_get_num_all_static_entries_struct, &out) != 0)
+        &rtu_vfdb_get_num_all_static_entries_struct, &out) < 0)
         check_conn();    
     return out;
 }
@@ -689,12 +687,12 @@ int rtu_vfdb_proxy_get_num_all_dynamic_entries(void)
 {
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-        &rtu_vfdb_get_num_all_dynamic_entries_struct, &out) != 0)
+        &rtu_vfdb_get_num_all_dynamic_entries_struct, &out) < 0)
         check_conn();    
     return out;
 }
@@ -704,7 +702,7 @@ int rtu_fdb_proxy_create_lc(int sid, uint16_t vid, int lc_type)
     struct rtu_fdb_create_lc_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.sid = sid;
@@ -713,7 +711,7 @@ int rtu_fdb_proxy_create_lc(int sid, uint16_t vid, int lc_type)
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT, 
-        &rtu_fdb_create_lc_struct, &out, &in) != 0)
+        &rtu_fdb_create_lc_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -723,7 +721,7 @@ int rtu_fdb_proxy_delete_lc(int sid, uint16_t vid)
     struct rtu_fdb_delete_lc_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.sid = sid;
@@ -731,7 +729,7 @@ int rtu_fdb_proxy_delete_lc(int sid, uint16_t vid)
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT, 
-        &rtu_fdb_delete_lc_struct, &out, &in) != 0)
+        &rtu_fdb_delete_lc_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -741,7 +739,7 @@ int rtu_fdb_proxy_read_lc(uint16_t vid, int *lc_set)
     struct rtu_fdb_read_lc_argdata in;
     struct rtu_fdb_read_lc_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = vid;
@@ -761,7 +759,7 @@ int rtu_fdb_proxy_read_next_lc(uint16_t *vid, int *lc_set)
     struct rtu_fdb_read_next_lc_argdata in;
     struct rtu_fdb_read_next_lc_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = *vid;
@@ -781,7 +779,7 @@ int rtu_fdb_proxy_read_lc_set_type(int sid, int *lc_type)
 {
     struct rtu_fdb_read_lc_set_type_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     errno = 0;
@@ -798,12 +796,12 @@ int rtu_fdb_proxy_set_default_lc(int sid)
 {
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT, 
-        &rtu_fdb_set_default_lc_struct, &out, sid) != 0)
+        &rtu_fdb_set_default_lc_struct, &out, sid) < 0)
         check_conn();    
     return out;
 }
@@ -812,7 +810,7 @@ void rtu_fdb_proxy_get_default_lc(int *sid, int *lc_type)
 {
     struct rtu_fdb_get_default_lc_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return;
 
     errno = 0;
@@ -830,7 +828,7 @@ void rtu_fdb_proxy_read_fid(uint16_t vid, uint8_t *fid, int *fid_fixed)
     struct rtu_fdb_read_fid_argdata in;
     struct rtu_fdb_read_fid_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return;
 
     in.vid = vid;
@@ -850,7 +848,7 @@ int rtu_fdb_proxy_read_next_fid(uint16_t *vid, uint8_t *fid, int *fid_fixed)
     struct rtu_fdb_read_next_fid_argdata in;
     struct rtu_fdb_read_next_fid_retdata out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = *vid;
@@ -872,7 +870,7 @@ int rtu_fdb_proxy_set_fid(uint16_t vid, uint8_t fid)
     struct rtu_fdb_set_fid_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = vid;
@@ -880,7 +878,7 @@ int rtu_fdb_proxy_set_fid(uint16_t vid, uint8_t fid)
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT, 
-        &rtu_fdb_set_fid_struct, &out, &in) != 0)
+        &rtu_fdb_set_fid_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -890,14 +888,14 @@ int rtu_fdb_proxy_delete_fid(uint16_t vid)
     struct rtu_fdb_delete_fid_argdata in;
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     in.vid = vid;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT, 
-        &rtu_fdb_delete_fid_struct, &out, &in) != 0)
+        &rtu_fdb_delete_fid_struct, &out, &in) < 0)
         check_conn();    
     return out;
 }
@@ -906,12 +904,12 @@ int rtu_fdb_proxy_set_default_lc_type(int lc_type)
 {
     int out;
 
-    if (!proxy_create())
+    if (!client_create())
         return -1;
 
     errno = 0;
     if (minipc_call(client, MILLISEC_TIMEOUT,
-        &rtu_fdb_set_default_lc_type_struct, &out, lc_type) != 0)
+        &rtu_fdb_set_default_lc_type_struct, &out, lc_type) < 0)
         check_conn();    
     return out;
 }
@@ -919,5 +917,16 @@ int rtu_fdb_proxy_set_default_lc_type(int lc_type)
 void rtu_fdb_proxy_init(char* _name)
 {
     strncpy(name, _name, sizeof(name) - 1);
+}
+
+int rtu_fdb_proxy_valid()
+{
+    return (int)client;
+}
+
+int rtu_fdb_proxy_connected()
+{
+    rtu_fdb_proxy_get_size();
+    return (int)client;
 }
 

@@ -174,5 +174,7 @@ int rtu_fdb_proxy_delete_fid(uint16_t vid);
 int rtu_fdb_proxy_set_default_lc_type(int lc_type);
 
 void rtu_fdb_proxy_init(char *name);
+int rtu_fdb_proxy_valid();
+int rtu_fdb_proxy_connected();
 
 #endif /*__WHITERABBIT_RTU_FD_PROXY_H*/

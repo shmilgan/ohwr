@@ -17,5 +17,7 @@ int mvrp_proxy_register_vlan(int vid, uint32_t egress_ports, uint32_t forbidden_
 int mvrp_proxy_deregister_vlan(int vid);
 
 void mvrp_proxy_init(char *name);
+int mvrp_proxy_valid();
+int mvrp_proxy_connected();
 
 #endif /*__WHITERABBIT_MVRP_PROXY_H*/
