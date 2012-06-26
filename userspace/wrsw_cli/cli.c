@@ -255,11 +255,8 @@ struct cli_shell *cli_init(void)
 
     /* Set up the client for the RTU proxy */
     errno = 0;
-    client = rtu_fdb_proxy_create("rtu_fdb");
-    if(!client) {
-        fprintf(stderr, "Unable to connect to the RTU daemon.\n");
-        cli_fatal(errno);
-    }
+    rtu_fdb_proxy_init("rtu_fdb");
+    client = (struct minipc_ch *)rtu_fdb_proxy_connected();
     minipc_set_logfile(client, NULL); /* no log file */
 
     /* allocate memory for the CLI structure */
