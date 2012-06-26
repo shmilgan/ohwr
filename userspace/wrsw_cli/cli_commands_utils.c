@@ -41,9 +41,7 @@ struct cli_range {
 /* Define allowed values for each parameter type */
 static struct cli_range cli_ranges[NUM_OF_PARAM_TYPES] = {
     [PORT_PARAM]    = {0, NUM_PORTS - 1, "port"},
-    [VID_PARAM]     = {0, WILDCARD_VID, "VID"}, /* FIXME: VID = 0 not allowed
-                                                   in the Std. 802.1Q, but
-                                                   supported by HW */
+    [VID_PARAM]     = {DEFAULT_VID, WILDCARD_VID, "VID"},
     [AGING_PARAM]   = {MIN_AGING_TIME, MAX_AGING_TIME, "aging"},
     [SID_PARAM]     = {0, LC_MAX_SET_ID, "SID"},
     [FID_PARAM]     = {1, NUM_FIDS - 1, "FID"}
