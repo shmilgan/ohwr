@@ -30,8 +30,6 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include <hw/trace.h>
-
 #include "mrp.h"
 
 /* VLAN header is not in standard Linux headers. We rename the structure to
@@ -113,7 +111,7 @@ void mrp_socket_send(struct mrp_participant *p)
         memcpy(&vhdr.h_ether, &hdr, ETH_HLEN);
         /* Get VID and TPID from associated context */
         if (list_empty(&p->contexts)) {
-            fprintf(stderr,  "mrp: no context found");
+            TRACE(TRACE_INFO,  "mrp: no context found\n");
             return;
         }
         cnode = list_first_entry(&p->contexts, struct map_context_list, node);
@@ -133,7 +131,7 @@ void mrp_socket_send(struct mrp_participant *p)
     /* Send the frame */
     frame_len = hdr_len + pdu->len;
     
-    fprintf(stderr,  
+    TRACE_DBG(TRACE_INFO,  
         "mrp: transmit pdu (port %d)\n", p->port->port_no);
     
     len = sendto(app->proto.fd, &buffer, frame_len, 0,
@@ -168,7 +166,7 @@ struct mrp_participant *mrp_socket_rcv(struct mrp_application *app,
     if (len <= 0)
         return NULL;
 
-    fprintf(stderr,  
+    TRACE_DBG(TRACE_INFO,  
         "mrp: pdu received (ifindex %d)\n", sl.sll_ifindex);
 
     /* Find the port that has received the PDU */
@@ -177,7 +175,7 @@ struct mrp_participant *mrp_socket_rcv(struct mrp_application *app,
         return NULL;
 
     /* Store the Last PDU Origin parameter */
-    memcpy(port->last_pdu_origin, sl.sll_addr, ETH_ALEN);
+    memcpy(port->last_pdu_origin, sl.sll_addr, ETH_ALEN);    
 
     /* Copy frame Data to the PDU buffer */
     hdr_len = (app->proto.tagged) ? VLAN_ETH_HLEN : ETH_HLEN;
@@ -192,8 +190,10 @@ struct mrp_participant *mrp_socket_rcv(struct mrp_application *app,
     }
     /* Only one participant can be attached to any given port for a vlan-unaware
        protocol */
-    return list_first_entry(&port->participants,
-        struct mrp_participant, port_participant);
+    if (!list_empty(&port->participants))
+        return list_first_entry(&port->participants,
+            struct mrp_participant, port_participant);
+    return NULL;
 }
 
 /**

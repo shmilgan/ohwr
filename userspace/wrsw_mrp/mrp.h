@@ -65,6 +65,21 @@
    handle 802.1Q tags */
 #define VLAN_ETH_DATA_LEN           ((ETH_DATA_LEN) - (VLAN_TAG_LEN))
 
+/* hack (*!?) */
+
+#undef TRACE_DBG
+#undef TRACE
+#undef TRACE_INFO
+
+#ifdef TRACE_ALL
+#define TRACE_DBG(...) fprintf(__VA_ARGS__)
+#else
+#define TRACE_DBG(...)
+#endif
+
+#define TRACE       fprintf
+#define TRACE_INFO  stderr
+
 const static uint16_t endmark = MRP_END_MARK;
 
 enum mrp_applicant_state {

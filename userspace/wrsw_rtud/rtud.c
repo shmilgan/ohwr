@@ -96,11 +96,13 @@ static int create_permanent_entries()
     }
 
     // Broadcast MAC
+#ifdef V3
     TRACE(TRACE_INFO,"adding static route for broadcast MAC...");
     err = rtu_fdb_create_static_entry(bcast_mac, WILDCARD_VID,
         0xffffffff, 0x00000000, ST_READONLY, ACTIVE, !IS_BPDU);
     if(err)
         return err;
+#endif
 
     return 0;
 }

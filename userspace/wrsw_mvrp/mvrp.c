@@ -95,7 +95,7 @@ static int mvrp_join_ind(struct mrp_participant *p, int mid, int is_new)
 {
     int port_no = p->port->port_no;
 
-    fprintf(stderr, 
+    TRACE_DBG(TRACE_INFO, 
         "mvrp: join_ind(new %d, port %d, vid %d)\n", is_new, port_no, mid);
     if (rtu_vfdb_proxy_forward_dynamic(port_no, mid) < 0)
         return -1;
@@ -108,7 +108,7 @@ static void mvrp_leave_ind(struct mrp_participant *p, int mid)
 {
     int port_no = p->port->port_no;
 
-    fprintf(stderr, "mvrp: leave_ind (port %d, vid=%d)\n", port_no, mid);
+    TRACE_DBG(TRACE_INFO, "mvrp: leave_ind (port %d, vid=%d)\n", port_no, mid);
     rtu_vfdb_proxy_filter_dynamic(port_no, mid);
 }
 
@@ -378,24 +378,24 @@ static int init_vlan_table()
 /* Initialise MVRP entity */
 static int mvrp_init()
 {
-    fprintf(stderr,  "mvrp: mrp init\n");
+    TRACE(TRACE_INFO,  "mvrp: mrp init\n");
     if (mrp_init() != 0)
         return -1;
 
     /* 'A MAP Context identifier of 0 always identifies the Base Spanning Tree
        Context'. Note that even if no instance of STP is running, a context will
        still exist */
-    fprintf(stderr,  "mvrp: create propagation context\n");
+    TRACE_DBG(TRACE_INFO,  "mvrp: create propagation context\n");
     INIT_LIST_HEAD(&mvrp_app.contexts);
     ctx = map_context_create(BASE_SPANNING_TREE_CONTEXT_ID, &mvrp_app);
     if (!ctx)
         return -1;
 
-    fprintf(stderr,  "mvrp: init vlan table\n");
+    TRACE_DBG(TRACE_INFO,  "mvrp: init vlan table\n");
     if (init_vlan_table() < 0)
         return -1;
 
-    fprintf(stderr,  "mvrp: register application\n");
+    TRACE(TRACE_INFO,  "mvrp: register application\n");
     if (mrp_register_application(&mvrp_app) != 0)
         return -1;
 
@@ -405,9 +405,8 @@ static int mvrp_init()
 
 static void mvrp_uninit(void)
 {
-    fprintf(stderr,  "mvrp: unregister application\n");
+    TRACE(TRACE_INFO,  "mvrp: unregister application\n");
     mrp_unregister_application(&mvrp_app);
-//    map_context_destroy(ctx, &mvrp_app);
     mvrp_enabled = 0;
 }
 
@@ -450,6 +449,7 @@ static void daemonize(void)
 
 void sigint(int signum) 
 {
+    fprintf(stderr, "mvrp sigint (%d)\n", signum);
     mvrp_uninit();
     exit(signum); 
 }
@@ -473,7 +473,7 @@ int main(int argc, char **argv)
                 switch_is_v2 = (atoi(optarg) == 2);
                 break;
             default:
-                fprintf(stderr,
+                fprintf(TRACE_INFO,
                     "Usage: %s [-d] \n"
                     "\t-d   daemonize\n"
                     "\t-v<version>\n",
@@ -498,11 +498,11 @@ int main(int argc, char **argv)
 	   Handle read/write error instead of shutting down the application */
 	signal(SIGPIPE, SIG_IGN);
 
-    fprintf(stderr,  "mvrp: mrp protocol\n");
+    TRACE(TRACE_INFO,  "mvrp: mrp protocol\n");
     while (1) {
         /* Handle user triggered actions (i.e. management) */
 	    if (minipc_server_action(server, 1) < 0)
-		    fprintf(stderr,  "mvrp server_action(): %s\n", strerror(errno));
+		    TRACE(TRACE_INFO,  "mvrp server_action(): %s\n", strerror(errno));
 
         if (!mvrp_enabled) {
             sleep(1);
