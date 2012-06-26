@@ -64,8 +64,22 @@ struct mib_vlan_table_entry {
     uint8_t fid;
     uint32_t port_mask;
     uint32_t untagged_set;
-    u_long creation_t;
+    u_long creation_t; 
+    int type;
 };
+
+static int vlan_status(struct mib_vlan_table_entry *ent)
+{
+    switch(ent->type) {
+    case 0: 
+        return Permanent_vlan;
+    case 1:
+    case 2: 
+        return Dynamic_mvrp;
+    default: 
+        return Other_vlan;
+    }
+}
 
 /**
  * Get indexes for an entry.
@@ -130,8 +144,7 @@ static int get_column(netsnmp_variable_list         *vb,
         snmp_set_var_typed_value(vb, ASN_OCTET_STR, up, NUM_PORTS);
         break;
     case COLUMN_STATUS:
-        // TODO review once MVRP is supported
-        snmp_set_var_typed_integer(vb, ASN_INTEGER, Other_vlan);
+        snmp_set_var_typed_integer(vb, ASN_INTEGER, vlan_status(ent));
         break;
     case COLUMN_CREATIONTIME:
         snmp_set_var_typed_integer(vb, ASN_TIMETICKS, ent->creation_t);
@@ -144,7 +157,7 @@ static int get_column(netsnmp_variable_list         *vb,
 
 static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
 {
-    int err, type;
+    int err;
     struct mib_vlan_table_entry ent;
     netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
 
@@ -164,7 +177,7 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     
     err = rtu_fdb_proxy_read_vlan_entry( ent.vid,
                                         &ent.fid,
-                                        &type,
+                                        &ent.type,
                                         &ent.port_mask,
                                         &ent.untagged_set,
                                         &ent.creation_t);
@@ -188,7 +201,7 @@ minipc_err:
 static int get_next(netsnmp_request_info         *req,
                     netsnmp_handler_registration *reginfo)
 {
-    int err, type;
+    int err;
     struct mib_vlan_table_entry ent;
     netsnmp_variable_list *idx;
     netsnmp_table_request_info *tinfo = netsnmp_extract_table_info(req);
@@ -219,7 +232,7 @@ static int get_next(netsnmp_request_info         *req,
         
         err = rtu_fdb_proxy_read_vlan_entry(ent.vid,
                                             &ent.fid,
-                                            &type,
+                                            &ent.type,
                                             &ent.port_mask,
                                             &ent.untagged_set,
                                             &ent.creation_t);
@@ -235,7 +248,7 @@ static int get_next(netsnmp_request_info         *req,
     
     err = rtu_fdb_proxy_read_next_vlan_entry(&ent.vid,
                                              &ent.fid,
-                                             &type,
+                                             &ent.type,
                                              &ent.port_mask,
                                              &ent.untagged_set,
                                              &ent.creation_t);
