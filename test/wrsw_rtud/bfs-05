@@ -1,0 +1,84 @@
+#!/bin/sh
+
+# Copyright CERN, 2012
+# Author: Juan Luis Manas <juan.manas@integrasys.es>
+# Licence: GPL v2 or later.
+
+# Basic Filtering Service
+# Description: Do not Create dynamic filtering entries for group MAC addresses
+# Goal: VVerify that group MAC addresses are ignored by the learning process.
+
+
+modprobe 8021q
+modprobe pktgen
+
+pgset() {
+    local result
+
+    echo $1 > $PGDEV
+
+    result=`cat $PGDEV | fgrep "Result: OK:"`
+    if [ "$result" = "" ]; then
+         cat $PGDEV | fgrep Result:
+    fi
+}
+
+echo ""
+echo "-----------------------------------------------------------------------"
+echo "BFS.5 - Do not Create dynamic filtering entries for group MAC addresses"
+echo "-----------------------------------------------------------------------"
+
+
+echo "# Send a frame with multicast source MAC through eth0 (should not be relayed)"
+
+SRC_MAC=21:05:12:00:00:05
+DST_MAC=22:00:11:05:05:05
+
+PGDEV=/proc/net/pktgen/kpktgend_0
+ pgset "rem_device_all"
+ pgset "add_device eth0"
+
+PGDEV=/proc/net/pktgen/eth0
+ pgset "count 1"
+ pgset "src_mac $SRC_MAC"
+ pgset "dst_mac $DST_MAC"
+
+tcpdump -n -t -e -l -i eth0 2> /dev/null | sed "s/^/eth0 - /" &
+tcpdump -n -t -e -l -i eth1 2> /dev/null | sed "s/^/eth1 - /" &
+tcpdump -n -t -e -l -i eth2 2> /dev/null | sed "s/^/eth2 - /" &
+PIDS_TCPDUMP=`pgrep -P $$ tcpdump`
+
+echo "# Frames received:"
+
+PGDEV=/proc/net/pktgen/pgctrl
+ pgset "start"
+
+sleep 1
+kill -9 $PIDS_TCPDUMP > /dev/null 2>&1
+
+echo "# Send a frame with multicast destination MAC through eth1 (should be captured on [eth0, eth2])"
+
+PGDEV=/proc/net/pktgen/kpktgend_0
+ pgset "rem_device_all"
+ pgset "add_device eth1"
+
+PGDEV=/proc/net/pktgen/eth1
+ pgset "count 1"
+ pgset "src_mac $DST_MAC"
+ pgset "dst_mac $SRC_MAC"
+
+tcpdump -n -t -e -l -i eth0 2> /dev/null | sed "s/^/eth0 - /" &
+tcpdump -n -t -e -l -i eth1 2> /dev/null | sed "s/^/eth1 - /" &
+tcpdump -n -t -e -l -i eth2 2> /dev/null | sed "s/^/eth2 - /" &
+PIDS_TCPDUMP=`pgrep -P $$ tcpdump`
+
+echo "# Frames received:"
+
+PGDEV=/proc/net/pktgen/pgctrl
+ pgset "start"
+
+sleep 1
+kill -9 $PIDS_TCPDUMP > /dev/null 2>&1
+
+echo "# Get the list of dynamic entries learned by the switch."
+snmptable $SNMPTAB_FLAGS  IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeTpFdbTable | grep learned

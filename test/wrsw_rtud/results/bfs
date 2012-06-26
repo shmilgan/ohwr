@@ -37,6 +37,22 @@ received:     1     0     0
 # Find the learned address: mac=22:0:10:0:0:32
  [1][1][22:0:10:0:0:32]                        1                    learned
 
+-----------------------------------------------------------------------
+BFS.5 - Do not Create dynamic filtering entries for group MAC addresses
+-----------------------------------------------------------------------
+# Send a frame with multicast source MAC through eth0 (should not be relayed)
+# Frames received:
+eth1 - 21:05:12:00:00:05 > 22:00:11:05:05:05, ethertype IPv4 (0x0800), length 60: 195.1.1.203.9 > 0.0.0.0.9: UDP, length 18
+eth0 - 21:05:12:00:00:05 > 22:00:11:05:05:05, ethertype IPv4 (0x0800), length 60: 195.1.1.203.9 > 0.0.0.0.9: UDP, length 18
+eth2 - 21:05:12:00:00:05 > 22:00:11:05:05:05, ethertype IPv4 (0x0800), length 60: 195.1.1.203.9 > 0.0.0.0.9: UDP, length 18
+# Send a frame with multicast destination MAC through eth1 (should be captured on [eth0, eth2])
+# Frames received:
+eth1 - 22:00:11:05:05:05 > 21:05:12:00:00:05, ethertype IPv4 (0x0800), length 60: 195.1.1.202.9 > 0.0.0.0.9: UDP, length 18
+eth0 - 22:00:11:05:05:05 > 21:05:12:00:00:05, ethertype IPv4 (0x0800), length 60: 195.1.1.202.9 > 0.0.0.0.9: UDP, length 18
+eth2 - 22:00:11:05:05:05 > 21:05:12:00:00:05, ethertype IPv4 (0x0800), length 60: 195.1.1.202.9 > 0.0.0.0.9: UDP, length 18
+# Get the list of dynamic entries learned by the switch.
+  [1][1][22:0:11:5:5:5]                        2                    learned
+
 ---------------------------------------------------------------------
 BFS-6. Create dynamic filtering entry that conflicts with static info
 ---------------------------------------------------------------------
