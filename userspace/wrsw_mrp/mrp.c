@@ -721,7 +721,7 @@ struct mrp_port *mrp_find_port(struct mrp_application *app, int hw_index)
 /* MAD_Join.request(attribute_type, attribute_value, new) */
 static void mad_join_req(struct mrp_participant *p, int mid, int is_new)
 {
-    fprintf(stderr, 
+    TRACE_DBG(TRACE_INFO, 
         "mrp: join_req (new %d, port %d, vid %d)\n", 
         is_new, 
         p->port->port_no, 
@@ -734,7 +734,7 @@ static void mad_join_req(struct mrp_participant *p, int mid, int is_new)
 /* MAD_Leave.request(attribute_type, attribute_value) */
 static void mad_leave_req(struct mrp_participant *p, int mid)
 {
-    fprintf(stderr, 
+    TRACE_DBG(TRACE_INFO, 
         "mrp: leave_req (port %d, vid %d)\n", 
         p->port->port_no, 
         mid);
@@ -766,7 +766,11 @@ static void map_propagate_join_in_context(struct mrp_participant *this_part,
     if (!list_find_port(&ctx->forwarding_ports, this_part->port))
         return;
 
-    /* Avoid increasing joining_members in case case of New re-declarations */
+    /* Avoid increasing joining_members in case of New re-declarations */
+    if (mad_registered_here(this_part, mid))
+        if (ctx->members[mid] == 0)
+            ctx->members[mid] = 1;
+
     joining_members = mad_registered_here(this_part, mid) ?
                       ctx->members[mid]:
                       ++ctx->members[mid];
@@ -794,10 +798,13 @@ static void map_propagate_leave_in_context(struct mrp_participant *this_part,
     struct mrp_participant *to_part;
     int remaining_members;
 
+    if (ctx->members[mid] == 0)
+        return;
+
     /* Propagation only occurs if originating port is in forwarding state */
     if (!list_find_port(&ctx->forwarding_ports, this_part->port))
         return;
-
+        
     remaining_members = --(ctx->members[mid]);
     if (remaining_members > 1)
         return;
@@ -851,7 +858,7 @@ int mad_attr_event(struct mrp_participant *p,
     struct mrp_application *app = port->app;
     struct mad_machine *machine = &p->machines[mid];
 
-    fprintf(stderr, 
+    TRACE_DBG(TRACE_INFO, 
         "mrp: (port %d, mid %d) %s \t=> [reg: %s][app: %s] --> [reg: %s][app: %s] => %s %s %s %s\n", 
         p->port->port_no,
         mid,
@@ -1046,7 +1053,7 @@ void mad_participant_event(struct mrp_participant *p, enum mrp_event event)
     uint8_t state;
     uint8_t action;
 
-/*    fprintf(stderr,  */
+/*    TRACE_DBG(TRACE_INFO,  */
 /*        "mrp: (port %d) leaveall [%s]-->[%s] => %s %s\n", */
 /*        p->port->port_no,*/
 /*        p->leaveall_state,*/
@@ -1407,7 +1414,7 @@ static struct mrp_port *mrp_create_port(struct mrp_application *app,
     ifr.ifr_ifindex = hw_index;
     if ((ioctl(app->proto.fd, SIOCGIFNAME,   &ifr) == -1) ||
 	    (ioctl(app->proto.fd, SIOCGIFHWADDR, &ifr) == -1)) {
-        fprintf(stderr,  "mrp: unable to get HW address; IOCTL error.");
+        TRACE(TRACE_INFO,  "mrp: unable to get HW address; IOCTL error.");
         free(port);
         return NULL;
     }
@@ -1452,12 +1459,12 @@ int mrp_register_application(struct mrp_application *app)
 
         port_no = wr_nametoport(port_list.port_names[i]);
         if (port_no < 0) {
-            fprintf(stderr,  "mrp: read interface port number failed\n");
+            TRACE(TRACE_INFO,  "mrp: read interface port number failed\n");
             goto fail;
         }
 
         if (!mrp_create_port(app, hw_index, port_no)) {
-            fprintf(stderr,  "mrp: not enough memory to create new port\n");
+            TRACE(TRACE_INFO,  "mrp: not enough memory to create new port\n");
             goto fail;
         }
     }
@@ -1476,7 +1483,7 @@ int mrp_register_application(struct mrp_application *app)
         goto fail;
     }
     if (err) {
-        fprintf(stderr, "create static entry failed err %d\n", err);
+        TRACE(TRACE_INFO, "create static entry failed err %d\n", err);
         goto fail;
     }
 

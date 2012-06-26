@@ -449,7 +449,7 @@ static void daemonize(void)
 
 void sigint(int signum) 
 {
-    fprintf(stderr, "mvrp sigint (%d)\n", signum);
+    fprintf(stderr, "mvrp: sigint(%d)\n", signum);
     mvrp_uninit();
     exit(signum); 
 }
