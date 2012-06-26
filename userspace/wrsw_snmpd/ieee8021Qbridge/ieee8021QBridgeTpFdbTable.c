@@ -54,6 +54,14 @@ struct mib_fdb_table_entry {
     int type;
 };
 
+
+static int _log2(uint32_t val) 
+{     
+    int ret = -1;     
+    while (val >>= 1) ret++;     
+    return ret; 
+} 
+
 /**
  * Get indexes for an entry.
  * @param tinfo table information that contains the indexes (in raw format)
@@ -103,7 +111,7 @@ static int get_column(netsnmp_variable_list      *vb,
 {
     switch (colnum) {
     case COLUMN_PORT:
-        snmp_set_var_typed_integer(vb, ASN_UNSIGNED, ent->port_map);
+        snmp_set_var_typed_integer(vb, ASN_UNSIGNED, _log2(ent->port_map));
         break;
     case COLUMN_STATUS:
         snmp_set_var_typed_integer(vb, ASN_INTEGER,
