@@ -607,11 +607,11 @@ static int fe_insert_static_entry(uint16_t vid,
         // If an entry already exists in the fdb for the same mac and fid
         // just register static entry in static_fdb list associated to it
         // (if the static entry was only updated, it is already registered),
-        // and recalculate the forward vector combining static and dynamic info        
+        // and recalculate the forward vector combining static and dynamic info
         fe_register_static_entry(sfe, fe);
         calculate_forward_vector(fe->static_fdb, &_port_map, &_use_dynamic);
         ret = fe_update(fe, _port_map, ve->port_mask, _use_dynamic, STATIC);
-        fe->is_bpdu |= sfe->is_bpdu;        
+        fe->is_bpdu |= sfe->is_bpdu;
     } else {
         // Create pure static entry
         calculate_forward_vector(sfe, &_port_map, &_use_dynamic);
@@ -619,7 +619,7 @@ static int fe_insert_static_entry(uint16_t vid,
             _use_dynamic, STATIC);
         if (ret == 0) {
             fe_register_static_entry(sfe, fe);
-            fe->is_bpdu |= sfe->is_bpdu;        
+            fe->is_bpdu |= sfe->is_bpdu;
         }
     }
     return ret;
@@ -913,13 +913,15 @@ int rtu_fdb_create_dynamic_entry(uint8_t  mac[ETH_ALEN],
 int rtu_fdb_read_entry(uint8_t mac[ETH_ALEN],  // in
                        uint8_t fid,            // in
                        uint32_t *port_map,     // out
+                       uint32_t *use_dynamic,  // out
                        int *entry_type)        // out
 {
     struct filtering_entry *fe;
 
     lock();
     if (rtu_sw_find_entry(mac, fid, &fe)) {
-        *port_map   = fe->port_mask_dst;
+        *port_map = fe->port_mask_dst;
+        *use_dynamic = fe->use_dynamic;
         *entry_type = fe->dynamic;
         return unlock(0);
     }
@@ -934,6 +936,7 @@ int rtu_fdb_read_entry(uint8_t mac[ETH_ALEN],  // in
 int rtu_fdb_read_next_entry(uint8_t (*mac)[ETH_ALEN],   // inout
                             uint8_t *fid,               // inout
                             uint32_t *port_map,         // out
+                            uint32_t *use_dynamic,  // out
                             int *entry_type)            // out
 {
     struct filtering_entry *fe;
@@ -950,10 +953,12 @@ int rtu_fdb_read_next_entry(uint8_t (*mac)[ETH_ALEN],   // inout
                                     // htab/hcam should be always consistent
     mac_copy(*mac, fe->mac);
     *fid         = fe->fid;
-    *port_map    = fe->port_mask_dst;
+    *port_map = fe->port_mask_dst;
+    *use_dynamic = fe->use_dynamic;
     *entry_type  = fe->dynamic;
     return unlock(0);
 }
+
 
 void rtu_fdb_delete_dynamic_entries(int port, uint16_t vid)
 {

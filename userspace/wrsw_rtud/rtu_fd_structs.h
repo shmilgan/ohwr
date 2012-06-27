@@ -93,6 +93,7 @@ struct rtu_fdb_read_entry_argdata {
 struct rtu_fdb_read_entry_retdata {
     int retval;
     uint32_t port_map;
+    uint32_t use_dynamic;
     int entry_type;
 };
 
@@ -107,6 +108,7 @@ struct rtu_fdb_read_next_entry_retdata {
     uint8_t mac[ETH_ALEN];
     uint8_t fid;
     uint32_t port_map;
+    uint32_t use_dynamic;
     int entry_type;
 };
 

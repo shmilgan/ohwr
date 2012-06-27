@@ -138,6 +138,7 @@ static int rtu_fdb_srv_read_entry(
             in->mac,
             in->fid,
             &out->port_map,
+            &out->use_dynamic,
             &out->entry_type
         );
 
@@ -157,6 +158,7 @@ static int rtu_fdb_srv_read_next_entry(
             &in->mac,
             &in->fid,
             &out->port_map,
+            &out->use_dynamic,
             &out->entry_type
         );
 

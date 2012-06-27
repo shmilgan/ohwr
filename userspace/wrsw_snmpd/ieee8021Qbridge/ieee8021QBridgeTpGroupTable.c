@@ -51,6 +51,7 @@ struct mib_group_table_entry {
 
     // Columns
     uint32_t port_map;
+    uint32_t use_dynamic;
 };
 
 /**
@@ -65,7 +66,7 @@ static int read_next_vid(uint16_t *vid)
     uint32_t pm, us;
     unsigned long ct;
 
-    
+
     err = rtu_fdb_proxy_read_vlan_entry(*vid, &fid, &t, &pm, &us, &ct);
     if (errno)
         goto minipc_err;
@@ -110,7 +111,7 @@ static int read_next_entry(struct mib_group_table_entry *ent)
     vid_a = ent->vid;
     mac_copy(mac_a, ent->mac);
 
-    
+
     err = rtu_fdb_proxy_read_next_static_entry(&mac_a, &vid_a, &ep, &fp, &t, &s);
     if (errno)
         goto minipc_err;
@@ -131,7 +132,7 @@ static int read_next_entry(struct mib_group_table_entry *ent)
     vid_b = WILDCARD_VID;
     mac_copy(mac_b, ent->mac);
 
-    
+
     err = rtu_fdb_proxy_read_next_static_entry(&mac_b, &vid_b, &ep, &fp, &t, &s);
     if (errno)
         goto minipc_err;
@@ -274,15 +275,16 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
     // 802.1Q (12.7.7) When operating on a Dynamic Filtering Entry [...] the
     // value used in the VID parameter can be any VID that has been allocated
     // to the FID concerned)
-    
+
     err = rtu_fdb_proxy_read_vlan_entry(ent.vid, &fid, &t, &port_mask, &us, &ct);
     if (errno)
         goto minipc_err;
     if (err)
         goto vlan_not_found;
 
-    
-    err = rtu_fdb_proxy_read_entry(ent.mac, fid, &ent.port_map, &t);
+
+    err = rtu_fdb_proxy_read_entry(
+        ent.mac, fid, &ent.port_map, &ent.use_dynamic, &t);
     if (errno)
         goto minipc_err;
     if (err)
@@ -334,15 +336,16 @@ static int get_next(netsnmp_request_info         *req,
     if (err)
         return err;
     // Obtain FID assigned to VID
-    
+
     err = rtu_fdb_proxy_read_vlan_entry(ent.vid, &fid, &t, &port_mask, &us, &ct);
     if (errno)
         goto minipc_err;
     if (err)
         goto vlan_not_found;
     // Read entry from FDB
-    
-    err = rtu_fdb_proxy_read_entry(ent.mac, fid, &ent.port_map, &t);
+
+    err = rtu_fdb_proxy_read_entry(
+        ent.mac, fid, &ent.port_map, &ent.use_dynamic, &t);
     if (errno)
         goto minipc_err;
     if (err)

@@ -56,6 +56,7 @@ int rtu_fdb_read_entry(
            uint8_t mac[ETH_ALEN],
            uint8_t fid,
            uint32_t *port_map,
+           uint32_t *use_dynamic,
            int *entry_type
      ) __attribute__((warn_unused_result));
 
@@ -63,6 +64,7 @@ int rtu_fdb_read_next_entry(
            uint8_t (*mac)[ETH_ALEN],                            // inout
            uint8_t *fid,                                        // inout
            uint32_t *port_map,                                  // out
+           uint32_t *use_dynamic,                               // out
            int *entry_type                                      // out
      ) __attribute__((warn_unused_result));
 

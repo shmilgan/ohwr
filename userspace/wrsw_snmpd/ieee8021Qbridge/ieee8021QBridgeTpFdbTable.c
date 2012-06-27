@@ -51,16 +51,50 @@ struct mib_fdb_table_entry {
 
     // Columns
     uint32_t port_map;
+    uint32_t use_dynamic;
     int type;
 };
 
 
-static int _log2(uint32_t val) 
-{     
-    int ret = -1;     
-    while (val >>= 1) ret++;     
-    return ret; 
-} 
+static unsigned int port_no(struct mib_fdb_table_entry *ent)
+{
+    int ret = -1;
+    uint32_t port_map_dyn, port_map_stc, port_map;
+
+    switch(ent->type) {
+    case STATIC:
+        return 0;
+    case DYNAMIC:
+        port_map = ent->port_map;
+        break;
+    case STATIC_DYNAMIC:
+        port_map_dyn = ent->port_map & ent->use_dynamic;
+        port_map_stc = ent->port_map & ~ent->use_dynamic;
+        port_map = port_map_dyn ? port_map_dyn:port_map_stc;
+        break;
+    }
+
+    while (port_map) {
+        ret++;
+        port_map >>= 1;
+    }
+
+    // TODO fix. port number 0 is reserved but RTU hardware uses it.
+    return (ret == -1) ? 0:ret;
+}
+
+static unsigned int entry_type(struct mib_fdb_table_entry *ent)
+{
+    switch(ent->type) {
+    case STATIC:
+        return Mgmt;
+    case DYNAMIC:
+        return ent->port_map ? Learned:other;
+    case STATIC_DYNAMIC:
+        return (ent->port_map & ent->use_dynamic) ? Learned:Mgmt;
+    }
+}
+
 
 /**
  * Get indexes for an entry.
@@ -111,11 +145,10 @@ static int get_column(netsnmp_variable_list      *vb,
 {
     switch (colnum) {
     case COLUMN_PORT:
-        snmp_set_var_typed_integer(vb, ASN_UNSIGNED, _log2(ent->port_map));
+        snmp_set_var_typed_integer(vb, ASN_UNSIGNED, port_no(ent));
         break;
     case COLUMN_STATUS:
-        snmp_set_var_typed_integer(vb, ASN_INTEGER,
-            (ent->type == STATIC) ? Mgmt:Learned);
+        snmp_set_var_typed_integer(vb, ASN_INTEGER, entry_type(ent));
         break;
     default:
         return SNMP_NOSUCHOBJECT;
@@ -142,13 +175,14 @@ static int get(netsnmp_request_info *req, netsnmp_handler_registration *reginfo)
         return SNMP_NOSUCHINSTANCE;
 
     // Read entry from FDB.
-    
-    err = rtu_fdb_proxy_read_entry(ent.mac, ent.fid, &ent.port_map, &ent.type);
+
+    err = rtu_fdb_proxy_read_entry(
+        ent.mac, ent.fid, &ent.port_map, &ent.use_dynamic, &ent.type);
     if (errno)
         goto minipc_err;
     if (err)
         goto entry_not_found;
-    return get_column(req->requestvb, tinfo->colnum, &ent);
+     return get_column(req->requestvb, tinfo->colnum, &ent);
 
 entry_not_found:
     DEBUGMSGTL((MIBMOD, "entry fid=%d mac=%s not found in fdb\n",
@@ -190,9 +224,8 @@ static int get_next(netsnmp_request_info *req,
         return SNMP_ENDOFMIBVIEW;
 
     do {
-        
-        err = rtu_fdb_proxy_read_next_entry(
-            &ent.mac, &ent.fid, &ent.port_map, &ent.type);
+       err = rtu_fdb_proxy_read_next_entry(
+            &ent.mac, &ent.fid, &ent.port_map, &ent.use_dynamic, &ent.type);
         if (errno)
             goto minipc_err;
         if (err)
