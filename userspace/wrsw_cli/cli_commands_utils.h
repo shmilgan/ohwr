@@ -52,7 +52,8 @@ int str_to_mac(char *str, unsigned int mac[ETH_ALEN]);
 int cmp_oid(oid old_oid[MAX_OID_LEN], oid new_oid[MAX_OID_LEN],
             int base_oid_length);
 void print_oid(oid _oid[MAX_OID_LEN], int n) __attribute__((unused));
-void mask_to_ports(char *mask, int *ports_range);
+void string_mask_to_ports(char *port_map, int *ports_range);
+void bit_mask_to_ports(uint32_t port_map, int *ports_range);
 int ports_to_mask(char *port_list, char *mask);
 
 /* Check command options syntax */

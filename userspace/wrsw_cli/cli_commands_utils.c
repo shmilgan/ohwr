@@ -194,16 +194,16 @@ void print_oid(oid _oid[MAX_OID_LEN], int n)
 
 /**
  * \brief Helper function to convert port masks into port numbers
- * @param mask Port mask.
+ * @param port_map Port mask expressed as a string.
  * @param ports_range Array containing the port numbers corresponding to the
  * positions where the bits in the port mask are set to '1'.
 */
-void mask_to_ports(char *mask, int *ports_range)
+void string_mask_to_ports(char *port_map, int *ports_range)
 {
     int i, j = 0;
 
     for (i = 0; i < NUM_PORTS; i++) {
-        if (mask[i] == 1) {
+        if (port_map[i] == 1) {
             ports_range[j] = i;
             j++;
         }
@@ -212,6 +212,23 @@ void mask_to_ports(char *mask, int *ports_range)
     ports_range[j] = -1; /* This marks the end of the ports array */
 
     return;
+}
+
+/**
+ * \brief Helper function to convert port masks into port numbers
+ * @param port_map Port mask expressed as a bit mask.
+ * @param ports_range Array containing the port numbers corresponding to the
+ * positions where the bits in the port mask are set to '1'.
+*/
+void bit_mask_to_ports(uint32_t port_map, int *ports_range)
+{
+    int i, j = 0;
+
+    for (i = 0; i < NUM_PORTS; i++)
+        if (port_map & (1 << i))
+            ports_range[j++] = i;
+
+    ports_range[j] = -1; /* End of array */
 }
 
 /**

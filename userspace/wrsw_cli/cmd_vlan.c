@@ -161,7 +161,7 @@ void cli_cmd_show_vlan(struct cli_shell *cli, int valc, char **valv)
 
         /* Parse the port mask */
         memset(ports_range, 0, NUM_PORTS * sizeof(int));
-        mask_to_ports(ports, ports_range);
+        string_mask_to_ports(ports, ports_range);
         for (i = 0; ports_range[i] >= 0; i++) {
             printf("%d", ports_range[i]);
             if (ports_range[i + 1] >= 0)

@@ -172,7 +172,7 @@ static void show_cam_static(char *base_oid)
 
         /* Parse the port mask */
         memset(ports_range, 0, sizeof(ports_range));
-        mask_to_ports(egress_ports, ports_range);
+        string_mask_to_ports(egress_ports, ports_range);
         for (i = 0; ports_range[i] >= 0; i++) {
             printf("%d", ports_range[i]);
             if (ports_range[i + 1] >= 0)
@@ -384,71 +384,47 @@ void cli_cmd_show_cam(struct cli_shell *cli, int valc, char **valv)
  */
 void cli_cmd_show_cam_uni(struct cli_shell *cli, int valc, char **valv)
 {
-    oid _oid[MAX_OID_LEN];
-    oid new_oid[MAX_OID_LEN];
-    char *base_oid = ".1.3.111.2.802.1.1.4.1.2.2.1.2";
-    size_t length_oid;  /* Base OID length */
-    int port;
-    int i, j;
-    int fid;
-    uint8_t mac[ETH_ALEN];
-    char mac_str[3 * ETH_ALEN];
+    uint8_t     fid = 0;
+    uint8_t     mac[ETH_ALEN];
+    char        mac_str[3 * ETH_ALEN];
+    uint32_t    port_map_dyn = 0, port_map = 0;
+    int         entry_type = 0;
+    int         ports_range[NUM_PORTS + 1];
+    int         i;
+    int         ret = 0;
 
-
-    memset(_oid, 0 , MAX_OID_LEN * sizeof(oid));
-
-    /* Parse the base_oid string to an oid array type */
-    length_oid = MAX_OID_LEN;
-    if (!snmp_parse_oid(base_oid, _oid, &length_oid))
-        return;
-
-    /* We initialize the OIDs with the OID of the table */
-    memcpy(new_oid, _oid, MAX_OID_LEN * sizeof(oid));
-
-    /* Header */
     printf("\tFID      MAC Address         Ports\n");
     printf("\t---   -----------------      --------------------------------\n");
 
-    do {
-        errno = 0;
-        port = cli_snmp_getnext_int(new_oid, &length_oid);
-        if (errno != 0)
-            break;
-        if (cmp_oid(_oid, new_oid, 11) < 0)
-            break;
-        if (cmp_oid(_oid, new_oid, 11) > 0)
-            break;
+    /* Search starts from DEFAULT_MAC and FID = 0 */
+    memcpy(mac, (uint8_t*)DEFAULT_MAC, ETH_ALEN);
 
-        fid = (int)new_oid[14];
-        for (i = 0; i < ETH_ALEN; i++){
-            mac[i] = (int) new_oid[15+i];
-        }
-        printf("\t%-3d   %-17s      ", fid, mac_to_str(mac, mac_str));
-
-        /* Parse the port value */
-        j = 0;
-        for (i = 0; i < NUM_PORTS; i++) {
-            if (port & (1 << i)) {
-                if (j > 0) {
+    /* Get all the entries */
+    while (ret >= 0) {
+        if (fid && port_map) {
+            printf("\t%-3d   %-17s      ", fid, mac_to_str(mac, mac_str));
+            /* Parse the port mask */
+            memset(ports_range, 0, NUM_PORTS * sizeof(int));
+            bit_mask_to_ports(port_map, ports_range);
+            for (i = 0; ports_range[i] >= 0; i++) {
+                printf("%d", ports_range[i]);
+                if (ports_range[i + 1] >= 0)
                     printf(", ");
-                    if ((j % 8) == 0)
-                        printf("\n\t                             ");
-                }
-                printf("%d", i);
-                j++;
+                if ((i != 0) && ((i % 8) == 0))
+                    printf("\n\t                             ");
             }
+            printf("\n");
         }
-        printf("\n");
-
-        memcpy(_oid, new_oid, sizeof(oid)*MAX_OID_LEN);
-    } while(1);
+        ret = rtu_fdb_proxy_read_next_entry(&mac, &fid, &port_map,
+                                            &port_map_dyn, &entry_type);
+    }
 
     return;
 }
 
 /**
  * \brief Command 'show mac-address-table multicast'.
- * This command shows the multicast static entries in the FDB.
+ * This command shows the multicast entries in the FDB.
  * @param cli CLI interpreter.
  * @param valc unused
  * @param valv unused
@@ -499,7 +475,7 @@ void cli_cmd_show_cam_multi(struct cli_shell *cli, int valc, char **valv)
 
         /* Parse the port mask */
         memset(ports_range, 0, NUM_PORTS * sizeof(int));
-        mask_to_ports(egress_ports, ports_range);
+        string_mask_to_ports(egress_ports, ports_range);
         for (i = 0; ports_range[i] >= 0; i++) {
             printf("%d", ports_range[i]);
             if (ports_range[i + 1] >= 0)
