@@ -68,6 +68,22 @@ static char *print_type(int entry_type)
     return NULL;
 }
 
+static int static_entry_exists(uint16_t vid, unsigned int mac[ETH_ALEN])
+{
+    uint32_t egress_ports;
+    uint32_t forbidden_ports;
+    int type;
+    int active;
+    uint8_t addr[ETH_ALEN];
+    int i;
+
+    for (i = 0; i < ETH_ALEN; i++)
+        addr[i] = mac[i];
+
+    return rtu_fdb_proxy_read_static_entry(addr, vid, &egress_ports,
+                                           &forbidden_ports, &type, &active);
+}
+
 /* Helper function to create static entries in the FDB (both
    unicast or multicast, depending on the OID passed as argument). The column
    identifier for the port mask is also needed, since it's different for the
@@ -147,8 +163,19 @@ static void set_cam_static(int valc, char **valv, char *base_oid,
     types[1] = 'x';                         /* Type string */
     types[2] = 'x';                         /* Type string */
 
-    cli_snmp_set(_oid, length_oid, value, types, 3);
+    /* If static entry already exists then avoid to set the RowStatus column */
+    if (static_entry_exists(vid, mac) >= 0) {
+        memcpy(_oid[0], _oid[1], length_oid[0] * sizeof(oid));
+        memcpy(_oid[1], _oid[2], length_oid[0] * sizeof(oid));
+        value[0] = value[1];
+        value[1] = value[2];
+        types[0] = types[1];
+        types[1] = types[2];
+        cli_snmp_set(_oid, length_oid, value, types, 2);
+        return;
+    }
 
+    cli_snmp_set(_oid, length_oid, value, types, 3);
     return;
 }
 
@@ -557,7 +584,7 @@ void cli_cmd_show_cam_static_multi(struct cli_shell *cli, int valc, char **valv)
 
 /**
  * \brief Command 'no mac-address-table unicast <MAC Addrress> vlan <VID>'.
- * This command deletes a unicast static entry in the FDB.
+ * This command deletes a unicast entry in the FDB.
  * @param cli CLI interpreter.
  * @param valc number of arguments. Only two arguments allowed.
  * @param valv Two arguments must be specified: the MAC Address and the VLAN
@@ -565,13 +592,94 @@ void cli_cmd_show_cam_static_multi(struct cli_shell *cli, int valc, char **valv)
  */
 void cli_cmd_del_cam_uni_entry(struct cli_shell *cli, int valc, char **valv)
 {
+    /* First we need to make the entry to be completely static, so that the
+       SNMP does not complaint if the entry has dynamic information */
+    oid _oid[3][MAX_OID_LEN];
+    char *base_oid = ".1.3.111.2.802.1.1.4.1.3.1.1.8";
+    size_t length_oid[3]; /* Base OID length */
+    unsigned int mac[ETH_ALEN];
+    int vid;
+    char egress_ports[(2*NUM_PORTS)+1];
+    char forbidden_ports[(2*NUM_PORTS)+1];
+    char types[3];
+    char *value[3];
+    int i;
+
+    if (valc != 2) {
+        printf("\tError. You have missed some command option\n");
+        return;
+    }
+
+    /* Parse the MAC address */
+    if (str_to_mac(valv[0], mac) < 0)
+        return;
+
+    /* Check the syntax of the vlan argument */
+    if ((vid = cli_check_param(valv[1], VID_PARAM)) < 0)
+        return;
+
+    /* Build the egress and forbidden port masks */
+    memset(egress_ports, '0', 2*NUM_PORTS);
+    memset(forbidden_ports, '0', 2*NUM_PORTS);
+    for (i = 0; i < NUM_PORTS; i++)
+        forbidden_ports[(2*i)+1] = '1';
+    egress_ports[64] = '\0';
+    forbidden_ports[64] = '\0';
+
+    memset(_oid[0], 0 , MAX_OID_LEN * sizeof(oid));
+    memset(_oid[1], 0 , MAX_OID_LEN * sizeof(oid));
+    memset(_oid[2], 0 , MAX_OID_LEN * sizeof(oid));
+
+    /* Parse the base_oid string to an oid array type */
+    length_oid[0] = MAX_OID_LEN;
+    if (!snmp_parse_oid(base_oid, _oid[0], &length_oid[0]))
+        return;
+
+    /* Build the indexes */
+    _oid[0][13] = 1;                /* Component ID column */
+    _oid[0][14] = vid;              /* VID column */
+    for (i = 15; i < 21 ; i++)      /* MAC address columns */
+        _oid[0][i] = mac[i-15];
+    _oid[0][21] = 0;                /* Receive Port column */
+
+    length_oid[0] += 9;
+    memcpy(_oid[1], _oid[0], length_oid[0] * sizeof(oid));
+    memcpy(_oid[2], _oid[0], length_oid[0] * sizeof(oid));
+    length_oid[2] = length_oid[1] = length_oid[0];
+
+    /* Fill with data. Remember that we have to handle the Row Status */
+    _oid[1][12] = 5;                        /* Egress ports column */
+    _oid[2][12] = 6;                        /* Forbidden ports column */
+    value[0] = "4";                         /* Row status (create = 4) */
+    value[1] = egress_ports;                /* Egress ports */
+    value[2] = forbidden_ports;             /* Forbidden ports */
+    types[0] = 'i';                         /* Type integer */
+    types[1] = 'x';                         /* Type string */
+    types[2] = 'x';                         /* Type string */
+
+    /* If static entry already exists then avoid to set the RowStatus column */
+    if (static_entry_exists(vid, mac) >= 0) {
+        memcpy(_oid[0], _oid[1], length_oid[0] * sizeof(oid));
+        memcpy(_oid[1], _oid[2], length_oid[0] * sizeof(oid));
+        value[0] = value[1];
+        value[1] = value[2];
+        types[0] = types[1];
+        types[1] = types[2];
+        cli_snmp_set(_oid, length_oid, value, types, 2);
+    } else {
+        cli_snmp_set(_oid, length_oid, value, types, 3);
+    }
+
+    /* Finally delete the entry */
     del_cam_static_entry(valc, valv, ".1.3.111.2.802.1.1.4.1.3.1.1.8");
     return;
 }
 
 /**
  * \brief Command 'no mac-address-table multicast <MAC Addrress> vlan <VID>'.
- * This command deletes a multicast static entry in the FDB.
+ * This command deletes a multicast static entry in the FDB. Note that the
+ * removal of multicast dynamic entries is not allowed by the standard, except
+ * as a result of the MMRP action.
  * @param cli CLI interpreter.
  * @param valc number of arguments. Only two arguments allowed.
  * @param valv Two arguments must be specified: the MAC Address and the VLAN
@@ -739,8 +847,7 @@ struct cli_cmd cli_cam[NUM_CAM_CMDS] = {
         .parent     = cli_cam + CMD_NO_CAM,
         .name       = "unicast",
         .handler    = NULL,
-        .desc       = "Removes a static unicast entry from the filtering"
-                      " database",
+        .desc       = "Removes a unicast entry from the filtering database",
         .opt        = CMD_ARG_MANDATORY,
         .opt_desc   = "<MAC Addrress> MAC Address"
     },
@@ -749,8 +856,7 @@ struct cli_cmd cli_cam[NUM_CAM_CMDS] = {
         .parent     = cli_cam + CMD_NO_CAM_UNICAST,
         .name       = "vlan",
         .handler    = cli_cmd_del_cam_uni_entry,
-        .desc       = "Removes a static unicast entry from the filtering"
-                      " database",
+        .desc       = "Removes a unicast entry from the filtering database",
         .opt        = CMD_ARG_MANDATORY,
         .opt_desc   = "<VID> VLAN number"
     },
