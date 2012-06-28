@@ -232,6 +232,20 @@ void bit_mask_to_ports(uint32_t port_map, int *ports_range)
 }
 
 /**
+ * \brief Helper function to invert a port mask which is formatted as a string.
+ * @param mask Port mask to be inverted.
+ * @param inverted_mask Inverted port mask.
+ * @param len Length of the masks.
+*/
+void invert_string_mask(char *mask, char *inverted_mask, int len)
+{
+    int i;
+
+    for (i = 0; i < len; i++)
+        inverted_mask[i] = (mask[i] == '0') ? '1' : '0';
+}
+
+/**
  * \brief Helper function to convert port numbers (which can be formatted as a
  * group of numbers separatted by commas) into port masks.
  * @param port_list A string containing the port list.

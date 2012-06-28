@@ -58,18 +58,21 @@ enum cam_cmds {
 /* Helper function to create static entries in the FDB (both
    unicast or multicast, depending on the OID passed as argument). The column
    identifier for the port mask is also needed, since it's different for the
-   unicast and multicast tables  */
+   unicast and multicast tables. Note that in this operation we set both
+   the egress and the forbidden ports  */
 static void set_cam_static(int valc, char **valv, char *base_oid,
     int egress_ports_column)
 {
-    oid _oid[2][MAX_OID_LEN];
-    size_t length_oid[2]; /* Base OID length */
+    oid _oid[3][MAX_OID_LEN];
+    size_t length_oid[3]; /* Base OID length */
     unsigned int mac[ETH_ALEN];
     int vid;
     char mask[NUM_PORTS+1];
-    char ports[(2*NUM_PORTS)+1];
-    char types[2];
-    char *value[2];
+    char inverted_mask[NUM_PORTS+1];
+    char egress_ports[(2*NUM_PORTS)+1];
+    char forbidden_ports[(2*NUM_PORTS)+1];
+    char types[3];
+    char *value[3];
     int i;
 
     if (valc != 3) {
@@ -89,13 +92,20 @@ static void set_cam_static(int valc, char **valv, char *base_oid,
     if (ports_to_mask(valv[2], mask) != 0)
         return;
 
-    memset(ports, '0', 2*NUM_PORTS);
-    for (i = 0; i < NUM_PORTS; i++)
-        ports[(2*i)+1] = mask[i];
-    ports[64] = '\0';
+    /* Build the egress and forbidden port masks */
+    memset(egress_ports, '0', 2*NUM_PORTS);
+    memset(forbidden_ports, '0', 2*NUM_PORTS);
+    invert_string_mask(mask, inverted_mask, NUM_PORTS + 1);
+    for (i = 0; i < NUM_PORTS; i++) {
+        egress_ports[(2*i)+1] = mask[i];
+        forbidden_ports[(2*i)+1] = inverted_mask[i];
+    }
+    egress_ports[64] = '\0';
+    forbidden_ports[64] = '\0';
 
     memset(_oid[0], 0 , MAX_OID_LEN * sizeof(oid));
     memset(_oid[1], 0 , MAX_OID_LEN * sizeof(oid));
+    memset(_oid[2], 0 , MAX_OID_LEN * sizeof(oid));
 
     /* Parse the base_oid string to an oid array type */
     length_oid[0] = MAX_OID_LEN;
@@ -111,16 +121,20 @@ static void set_cam_static(int valc, char **valv, char *base_oid,
 
     length_oid[0] += 9;
     memcpy(_oid[1], _oid[0], length_oid[0] * sizeof(oid));
-    length_oid[1] = length_oid[0];
+    memcpy(_oid[2], _oid[0], length_oid[0] * sizeof(oid));
+    length_oid[2] = length_oid[1] = length_oid[0];
 
     /* Fill with data. Remember that we have to handle the Row Status */
-    _oid[1][12] = egress_ports_column;  /* Egress ports column */
-    value[0] = "4";                     /* Row status (create = 4) */
-    value[1] = ports;                   /* Egress ports */
-    types[0] = 'i';                     /* Type integer */
-    types[1] = 'x';                     /* Type string */
+    _oid[1][12] = egress_ports_column;      /* Egress ports column */
+    _oid[2][12] = egress_ports_column + 1;  /* Forbidden ports column */
+    value[0] = "4";                         /* Row status (create = 4) */
+    value[1] = egress_ports;                /* Egress ports */
+    value[2] = forbidden_ports;             /* Forbidden ports */
+    types[0] = 'i';                         /* Type integer */
+    types[1] = 'x';                         /* Type string */
+    types[2] = 'x';                         /* Type string */
 
-    cli_snmp_set(_oid, length_oid, value, types, 2);
+    cli_snmp_set(_oid, length_oid, value, types, 3);
 
     return;
 }
@@ -393,7 +407,7 @@ void cli_cmd_show_cam_uni(struct cli_shell *cli, int valc, char **valv)
     int         i;
     int         ret = 0;
 
-    printf("\tFID      MAC Address         Ports\n");
+    printf("\tFID   MAC Address            Ports\n");
     printf("\t---   -----------------      --------------------------------\n");
 
     /* Search starts from DEFAULT_MAC and FID = 0 */
@@ -454,7 +468,7 @@ void cli_cmd_show_cam_multi(struct cli_shell *cli, int valc, char **valv)
     memcpy(new_oid, _oid, MAX_OID_LEN * sizeof(oid));
 
     /* Header */
-    printf("\tFID      MAC Address         Ports\n");
+    printf("\tFID   MAC Address            Ports\n");
     printf("\t---   -----------------      --------------------------------\n");
 
     do {
