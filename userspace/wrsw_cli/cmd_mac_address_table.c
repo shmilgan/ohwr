@@ -55,6 +55,19 @@ enum cam_cmds {
     NUM_CAM_CMDS
 };
 
+static char *print_type(int entry_type)
+{
+    switch(entry_type) {
+    case STATIC:
+        return "STATIC";
+    case DYNAMIC:
+        return "DYNAMIC";
+    case STATIC_DYNAMIC:
+        return "STATIC & DYNAMIC";
+    }
+    return NULL;
+}
+
 /* Helper function to create static entries in the FDB (both
    unicast or multicast, depending on the OID passed as argument). The column
    identifier for the port mask is also needed, since it's different for the
@@ -135,6 +148,49 @@ static void set_cam_static(int valc, char **valv, char *base_oid,
     types[2] = 'x';                         /* Type string */
 
     cli_snmp_set(_oid, length_oid, value, types, 3);
+
+    return;
+}
+
+/* Helper function to obtain the filtering database entries */
+static void show_cam(int only_unicast)
+{
+    uint8_t     fid = 0;
+    uint8_t     mac[ETH_ALEN];
+    char        mac_str[3 * ETH_ALEN];
+    uint32_t    port_map_dyn = 0, port_map = 0;
+    int         entry_type = 0;
+    int         ports_range[NUM_PORTS + 1];
+    int         i, allowed_addr;
+    int         ret = 0;
+
+    printf("\tFID   MAC Address            Type               Ports\n");
+    printf("\t---   -----------------      ----------------   --------------------------------\n");
+
+    /* Search starts from DEFAULT_MAC and FID = 0 */
+    memcpy(mac, (uint8_t*)DEFAULT_MAC, ETH_ALEN);
+
+    /* Get all the entries */
+    while (ret >= 0) {
+        allowed_addr = (only_unicast == 0) ? 1 : !mac_multicast(mac);
+        if (fid && port_map && allowed_addr) {
+            printf("\t%-3d   %-17s      %-16s   ",
+                   fid, mac_to_str(mac, mac_str), print_type(entry_type));
+            /* Parse the port mask */
+            memset(ports_range, 0, NUM_PORTS * sizeof(int));
+            bit_mask_to_ports(port_map, ports_range);
+            for (i = 0; ports_range[i] >= 0; i++) {
+                printf("%d", ports_range[i]);
+                if (ports_range[i + 1] >= 0)
+                    printf(", ");
+                if ((i != 0) && ((i % 8) == 0))
+                    printf("\n\t                             ");
+            }
+            printf("\n");
+        }
+        ret = rtu_fdb_proxy_read_next_entry(&mac, &fid, &port_map,
+                                            &port_map_dyn, &entry_type);
+    }
 
     return;
 }
@@ -387,6 +443,9 @@ void cli_cmd_show_cam(struct cli_shell *cli, int valc, char **valv)
            fdb_size,
            fdb_num_static, fdb_num_dynamic,
            vfdb_num_static, vfdb_num_dynamic);
+
+    printf("\n");
+    show_cam(0 /* unicast and multicast */);
 }
 
 /**
@@ -398,42 +457,7 @@ void cli_cmd_show_cam(struct cli_shell *cli, int valc, char **valv)
  */
 void cli_cmd_show_cam_uni(struct cli_shell *cli, int valc, char **valv)
 {
-    uint8_t     fid = 0;
-    uint8_t     mac[ETH_ALEN];
-    char        mac_str[3 * ETH_ALEN];
-    uint32_t    port_map_dyn = 0, port_map = 0;
-    int         entry_type = 0;
-    int         ports_range[NUM_PORTS + 1];
-    int         i;
-    int         ret = 0;
-
-    printf("\tFID   MAC Address            Ports\n");
-    printf("\t---   -----------------      --------------------------------\n");
-
-    /* Search starts from DEFAULT_MAC and FID = 0 */
-    memcpy(mac, (uint8_t*)DEFAULT_MAC, ETH_ALEN);
-
-    /* Get all the entries */
-    while (ret >= 0) {
-        if (fid && port_map) {
-            printf("\t%-3d   %-17s      ", fid, mac_to_str(mac, mac_str));
-            /* Parse the port mask */
-            memset(ports_range, 0, NUM_PORTS * sizeof(int));
-            bit_mask_to_ports(port_map, ports_range);
-            for (i = 0; ports_range[i] >= 0; i++) {
-                printf("%d", ports_range[i]);
-                if (ports_range[i + 1] >= 0)
-                    printf(", ");
-                if ((i != 0) && ((i % 8) == 0))
-                    printf("\n\t                             ");
-            }
-            printf("\n");
-        }
-        ret = rtu_fdb_proxy_read_next_entry(&mac, &fid, &port_map,
-                                            &port_map_dyn, &entry_type);
-    }
-
-    return;
+    show_cam(1 /* Only unicast */);
 }
 
 /**
