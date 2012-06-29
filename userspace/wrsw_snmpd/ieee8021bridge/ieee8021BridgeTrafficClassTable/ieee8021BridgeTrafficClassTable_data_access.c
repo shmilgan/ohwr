@@ -271,8 +271,8 @@ ieee8021BridgeTrafficClassTable_container_load(netsnmp_container *container)
 
     /* Iterate through port list */
     for (i = 0; i < HAL_MAX_PORTS; i++) {
-        DEBUGMSGTL(("ieee8021BridgePortPriorityTable:"
-                    "ieee8021BridgePortPriorityTable_container_load",
+        DEBUGMSGTL(("ieee8021BridgeTrafficClassTable:"
+                    "ieee8021BridgeTrafficClassTable_container_load",
                     "port %d in port_list is: %s \n",
                     i, port_list.port_names[i]));
 
@@ -289,8 +289,8 @@ ieee8021BridgeTrafficClassTable_container_load(netsnmp_container *container)
                 snmp_log(LOG_ERR, "ioctl PRIV_IOCGGETECR failed\n");
             } else {
                 ieee8021BridgeBasePort = req.val;
-                DEBUGMSGTL(("ieee8021BridgePortPriorityTable:"
-                            "ieee8021BridgePortPriorityTable_container_load",
+                DEBUGMSGTL(("ieee8021BridgeTrafficClassTable:"
+                            "ieee8021BridgeTrafficClassTable_container_load",
                             "for port %d the PORTID value is: %i \n",
                             i, req.val));
 
@@ -306,8 +306,9 @@ ieee8021BridgeTrafficClassTable_container_load(netsnmp_container *container)
                         return MFD_RESOURCE_UNAVAILABLE;
                     }
 
-                    rowreq_ctx->column_exists_flags =
-                        COLUMN_IEEE8021BRIDGETRAFFICCLASS_FLAG;
+                    /* rowreq_ctx->column_exists_flags =
+                        COLUMN_IEEE8021BRIDGETRAFFICCLASS_FLAG; */
+                    rowreq_ctx->column_exists_flags = 0; /* TCs not supported at HW yet */
 
                     /* Set indexes in the row requets context */
                     if(MFD_SUCCESS !=
