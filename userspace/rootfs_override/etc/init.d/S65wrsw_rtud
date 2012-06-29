@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# Starts rtud.
+#
+
+# Make sure the dropbearkey progam exists
+[ -f /wr/bin/wrsw_hal ] || exit 0
+
+start() {
+ 	echo "Starting WR Routing Table Unit daemon: "
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/wr/lib"
+    if [ ! -e /dev/wr_rtu ]; then
+	    mknod /dev/wr_rtu c 10 77
+    fi
+	/wr/bin/wrsw_rtud -d
+}
+stop() {
+	killall wrsw_rtud
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart|reload)
+  	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?

@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Starts mvrpd.
+#
+
+# Make sure the dropbearkey progam exists
+[ -f /wr/bin/wrsw_hal ] || exit 0
+
+start() {
+ 	echo "Starting WR MVRP daemon: "
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/wr/lib"
+    /wr/bin/wrsw_mvrpd -d
+}
+stop() {
+	killall wrsw_mvrpd
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart|reload)
+  	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
