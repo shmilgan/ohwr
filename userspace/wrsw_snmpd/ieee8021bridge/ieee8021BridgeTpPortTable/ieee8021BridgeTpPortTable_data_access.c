@@ -325,9 +325,10 @@ ieee8021BridgeTpPortTable_container_load(netsnmp_container *container)
                 if (wripc_call(hal_ipc, "halexp_get_port_state", &port_state, 1,
                     A_STRING(port_list.port_names[i])) < 0) { /* Dummy port */
                     rowreq_ctx->column_exists_flags =
-                    IEEE8021BRIDGETPPORTTABLE_DUMMY_PORTS_COLS;
+                        IEEE8021BRIDGETPPORTTABLE_DUMMY_PORTS_COLS;
                 } else {
-                    rowreq_ctx->column_exists_flags = 0xf;
+                    rowreq_ctx->column_exists_flags =
+                        IEEE8021BRIDGETPPORTTABLE_IMPLEMENTED_COLS;
 
                     /* Setup/save data for ieee8021BridgeTpPortInFrames */
                     req.val = EP_COUNTER_RX_VALID_FRAMES;

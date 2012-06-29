@@ -14,14 +14,13 @@ OBJS =  ieee8021BridgeTrafficClassTable_data_get.o \
 	    ieee8021BridgeTrafficClassTable_data_set.o \
 	    ieee8021BridgeTrafficClassTable_data_access.o \
 	    ieee8021BridgeTrafficClassTable.o \
-	    ieee8021BridgeTrafficClassTable_interface.o 
+	    ieee8021BridgeTrafficClassTable_interface.o
 
 
 all:	$(OBJS)
 
 $(OBJS): %.o: %.c
-	$(CC) -c $(CFLAGS) $< -o $@ 
+	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:
 	rm -f $(OBJS)
-
