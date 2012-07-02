@@ -15,8 +15,8 @@ echo "----------------------------------------------------------------"
 echo "BFS-12.  Create static filtering entry for broadcast MAC address"
 echo "----------------------------------------------------------------"
 
-# 1. A static filtering entry is created for broadcast MAC address at RTU startup
-echo "# Find static broadcast entry mac=FF:FF:FF:FF:FF:FF in filtering database"
+# 1. Find the static broadcast entry
+echo "# Find the static broadcast entry mac=FF:FF:FF:FF:FF:FF in the filtering database"
 snmptable $SNMPTAB_FLAGS \
     IEEE8021-Q-BRIDGE-MIB:ieee8021QBridgeStaticMulticastTable | grep -i "FF:FF:FF:FF:FF:FF"
 
@@ -24,5 +24,25 @@ if [ $? -ne 0 ];
     then echo "Not found"
 fi
 
-# 2. A frame with destination MAC address FF:FF:FF:FF:FF:FF is sent from eth0
+# 2. A static filtering entry is created for the broadcast MAC address
+VLAN=0
+MAC_DEC=255.255.255.255.255.255
+echo "# Create a static filtering entry for the broadcast MAC address"
+snmpset $SNMPSET_FLAGS \
+    ieee8021QBridgeStaticMulticastRowStatus.1.$VLAN.$MAC_DEC.0                \
+        i $RS_CREATEANDGO                                                   \
+    ieee8021QBridgeStaticMulticastStaticEgressPorts.1.$VLAN.$MAC_DEC.0        \
+        x 0101010101010101010101010101010101010101010101010101010101010101  \
+    ieee8021QBridgeStaticMulticastForbiddenEgressPorts.1.$VLAN.$MAC_DEC.0     \
+        x 0000000000000000000000000000000000000000000000000000000000000000  \
+    ieee8021QBridgeStaticMulticastStorageType.1.$VLAN.$MAC_DEC.0              \
+        i 2                                                                 \
+
+# 3. A frame with destination MAC address FF:FF:FF:FF:FF:FF is sent from eth0
 swflood ./cfg/bfs-12.cfg > /dev/null 2>&1
+
+
+# Clean-up
+snmpset $SNMPSET_FLAGS \
+    ieee8021QBridgeStaticMulticastRowStatus.1.$VLAN.$MAC_DEC.0                \
+        i $RS_DESTROY > /dev/null 2>&1

@@ -165,6 +165,13 @@ BFS-12.  Create static filtering entry for broadcast MAC address
 ----------------------------------------------------------------
 # Find static broadcast entry mac=FF:FF:FF:FF:FF:FF in filtering database
 Not found
+# Create a static filtering entry for the broadcast MAC address
+IEEE8021-Q-BRIDGE-MIB::ieee8021QBridgeStaticMulticastRowStatus.1.0.'......'.0 = INTEGER: createAndGo(4)
+IEEE8021-Q-BRIDGE-MIB::ieee8021QBridgeStaticMulticastStaticEgressPorts.1.0.'......'.0 = Hex-STRING: 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+IEEE8021-Q-BRIDGE-MIB::ieee8021QBridgeStaticMulticastForbiddenEgressPorts.1.0.'......'.0 = Hex-STRING: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+IEEE8021-Q-BRIDGE-MIB::ieee8021QBridgeStaticMulticastStorageType.1.0.'......'.0 = INTEGER: volatile(2)
 # Send frame (dst=FF:FF:FF:FF:FF:FF, src=22:00:10:00:0C:0C) on eth0
 # Expected broadcast
 ./cfg/bfs-12.cfg:7: failed
