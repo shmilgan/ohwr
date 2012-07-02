@@ -254,6 +254,7 @@ ieee8021BridgeBaseTable_container_load(netsnmp_container *container)
     }
 
     rowreq_ctx->column_exists_flags = COLUMNS_IMPLEMENTED;
+    rowreq_ctx->column_set_flags = 0; /* Read-Only */
 
     /* Set indexes in the row requets context */
     if (MFD_SUCCESS != ieee8021BridgeBaseTable_indexes_set(rowreq_ctx,
@@ -389,8 +390,8 @@ ieee8021BridgeBaseTable_container_load(netsnmp_container *container)
 
     /* Setup/save data for ieee8021BridgeBaseTrafficClassesEnabled */
     /* TODO: WR: To be implemented when HW support for TCs be available */
-    /* rowreq_ctx->data.ieee8021BridgeBaseTrafficClassesEnabled =
-       ieee8021BridgeBaseTrafficClassesEnabled;*/
+       rowreq_ctx->data.ieee8021BridgeBaseTrafficClassesEnabled =
+       TRUTHVALUE_FALSE;
 
     /* Setup/save data for ieee8021BridgeBaseMmrpEnabledStatus */
     /* TODO: WR: To be implemented when MMRP be developed */
