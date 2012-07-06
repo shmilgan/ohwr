@@ -240,7 +240,9 @@ did not add the new archives in there because of their size.
 @node Downloading Files
 @section Downloading Files
 
-Every downloaded file is saved to the @code{download} directory, you should
+Every downloaded file is saved to the @code{download} directory 
+(if set @code{WRS_DOWNLOAD_DIR} else the default
+@code{$WRS_OUPUT_DIR/downloads}). You should
 arrange not to remove that directory when you recompile over and over
 during development. I chose to make the first
 script download everything, because I think this eases development in a
