@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Buildroot 2011.11 Configuration
-# Tue Jun 12 10:50:47 2012
+# Fri Jul  6 17:17:43 2012
 #
 BR2_HAVE_DOT_CONFIG=y
 BR2_arm=y
@@ -76,7 +76,7 @@ BR2_SOURCEFORGE_MIRROR="kent"
 BR2_KERNEL_MIRROR="http://www.kernel.org/pub/"
 BR2_GNU_MIRROR="http://ftp.gnu.org/pub/gnu"
 BR2_DEBIAN_MIRROR="http://ftp.debian.org"
-BR2_JLEVEL=3
+BR2_JLEVEL=5
 # BR2_CCACHE is not set
 # BR2_DEPRECATED is not set
 # BR2_ENABLE_DEBUG is not set
@@ -198,8 +198,8 @@ BR2_TARGET_GENERIC_HOSTNAME="wrs3"
 BR2_TARGET_GENERIC_ISSUE="Welcome to WR Switch V3"
 # BR2_ROOTFS_DEVICE_CREATION_STATIC is not set
 # BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_DEVTMPFS is not set
-# BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV is not set
-BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_UDEV=y
+BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV=y
+# BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_UDEV is not set
 BR2_ROOTFS_DEVICE_TABLE="target/generic/device_table.txt"
 BR2_ROOTFS_SKELETON_DEFAULT=y
 # BR2_ROOTFS_SKELETON_CUSTOM is not set
@@ -288,6 +288,7 @@ BR2_PACKAGE_CUSTOMIZE=y
 # BR2_PACKAGE_MUSEPACK is not set
 # BR2_PACKAGE_PORTAUDIO is not set
 # BR2_PACKAGE_PULSEAUDIO is not set
+# BR2_PACKAGE_PYTHON_MAD is not set
 # BR2_PACKAGE_SPEEX is not set
 
 #
@@ -568,16 +569,11 @@ BR2_PACKAGE_MTD_MTDINFO=y
 # BR2_PACKAGE_SYSSTAT is not set
 # BR2_PACKAGE_TI_UTILS is not set
 # BR2_PACKAGE_UBOOT_TOOLS is not set
-BR2_PACKAGE_UDEV=y
 
 #
-# udev extras requires a toolchain with LARGEFILE + WCHAR support
+# udev requires /dev mgmnt set to udev under System configuration
 #
 # BR2_PACKAGE_USB_MODESWITCH is not set
-
-#
-# usbmount requires a toolchain with LARGEFILE + WCHAR support
-#
 # BR2_PACKAGE_USBUTILS is not set
 # BR2_PACKAGE_WIPE is not set
 
@@ -608,7 +604,28 @@ BR2_PACKAGE_LUA_SHARED_LIBRARY=y
 # BR2_PACKAGE_XAVANTE is not set
 # BR2_PACKAGE_MICROPERL is not set
 # BR2_PACKAGE_PHP is not set
-# BR2_PACKAGE_PYTHON is not set
+BR2_PACKAGE_PYTHON=y
+# BR2_PACKAGE_PYTHON_PY_ONLY is not set
+BR2_PACKAGE_PYTHON_PYC_ONLY=y
+# BR2_PACKAGE_PYTHON_PY_PYC is not set
+
+#
+# core python modules
+#
+
+#
+# The following modules are unusual or require extra libraries
+#
+# BR2_PACKAGE_PYTHON_BZIP2 is not set
+# BR2_PACKAGE_PYTHON_BSDDB is not set
+# BR2_PACKAGE_PYTHON_CODECSCJK is not set
+# BR2_PACKAGE_PYTHON_CURSES is not set
+# BR2_PACKAGE_PYTHON_PYEXPAT is not set
+BR2_PACKAGE_PYTHON_READLINE=y
+BR2_PACKAGE_PYTHON_SSL=y
+BR2_PACKAGE_PYTHON_UNICODEDATA=y
+# BR2_PACKAGE_PYTHON_SQLITE is not set
+# BR2_PACKAGE_PYTHON_ZLIB is not set
 # BR2_PACKAGE_RUBY is not set
 # BR2_PACKAGE_TCL is not set
 
@@ -634,7 +651,10 @@ BR2_PACKAGE_ZLIB=y
 #
 # libnss requires a toolchain with LARGEFILE support
 #
-# BR2_PACKAGE_OPENSSL is not set
+BR2_PACKAGE_OPENSSL=y
+# BR2_PACKAGE_OPENSSL_BIN is not set
+# BR2_PACKAGE_OPENSSL_ENGINES is not set
+# BR2_PACKAGE_OPENSSL_OCF is not set
 
 #
 # Database
@@ -707,6 +727,7 @@ BR2_PACKAGE_ZLIB=y
 # BR2_PACKAGE_LIBHID is not set
 # BR2_PACKAGE_LIBIQRF is not set
 # BR2_PACKAGE_LIBUSB is not set
+# BR2_PACKAGE_PYTHON_SERIAL is not set
 
 #
 # Networking
@@ -749,7 +770,7 @@ BR2_PACKAGE_LIBDAEMON=y
 BR2_PACKAGE_LIBELF=y
 # BR2_PACKAGE_LIBEVENT is not set
 # BR2_PACKAGE_LIBEV is not set
-# BR2_PACKAGE_LIBFFI is not set
+BR2_PACKAGE_LIBFFI=y
 # BR2_PACKAGE_LIBGLIB2 is not set
 
 #
@@ -784,7 +805,7 @@ BR2_PACKAGE_NCURSES=y
 # BR2_PACKAGE_NEWT is not set
 BR2_PACKAGE_PCRE=y
 # BR2_PACKAGE_POPT is not set
-# BR2_PACKAGE_READLINE is not set
+BR2_PACKAGE_READLINE=y
 # BR2_PACKAGE_SLANG is not set
 
 #
