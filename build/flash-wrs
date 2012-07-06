@@ -23,7 +23,7 @@ showhelp()
 	echo "DEV:\t The usb device (by default it is /dev/ttyACM0)"
 	echo "Options: "
 	echo "\t-h|--help\t\t Show this help message"
-	echo "\t-m|--memmode\t\t can be: default, df (dataflash), nf (nandflash), test."
+	echo "\t-m|--mode\t\t can be: default, df (dataflash), nf (nandflash), test, compress."
 	echo "\t-e \t\t\t Completely erase the memory (Can erase your configuration)"
 	echo "\t--build\t\t\t Use file that you have build in the WRS_OUTPUT_DIR"
 	echo "\t--test\t\t\t Use file for testing the switch (not available)"
@@ -146,13 +146,6 @@ if CC=cc make -s -C usb-loader; then true; else
 	echo "$0: Error compiling usb-loader" >&2; exit 1;
 fi
 
-# Check if atmel sam-ba is find by lusb
-lsusb | grep "at91sam SAMBA" > /dev/null
-if [ $? -gt "0" ]; then
-        echo "Did not find the sam-ba monitor in lsusb....\nPlease check that the Dataflash is short-circuited!"
-        exit 1;
-fi
-
 # parse command line
 MAC=""
 DEV=""
@@ -197,9 +190,35 @@ elif [ "x$memmode" = "xnf" ]; then
 	nf=1
 elif [ "x$memmode" = "xtest" ]; then
 	test=1
+elif [ "x$memmode" = "xcompress" ]; then
+	cp ${at91bs} /tmp/at91bootstrap.bin
+	cp ${barebox} /tmp/barebox.bin
+	cp ${kernel} /tmp/zImage
+	cp ${rootfs} /tmp/wrs-image.jffs2.img
+	tar -czvf "wrs-firmware-$(date +%y%m%d).tar.gz" -C /tmp/ at91bootstrap.bin barebox.bin zImage wrs-image.jffs2.img
+	exit 0
 else 
 	df=1
 	nf=1
+fi
+
+# Check if atmel sam-ba is find by lusb
+msg="Waiting for at91sam SAMBA bootloader on usb\nPlease check that the Dataflash is short-circuited!\n"
+while true; do
+	lsusb | grep "at91sam" > /dev/null
+	if [ "$?" -eq "0" ]; then
+		break    
+	else
+		if [ -n "$msg" ]; then
+			printf "$msg"
+			msg=""
+		fi
+		sleep 1
+		printf "."
+	fi
+done
+if [ -z "$msg" ]; then
+	printf "\tOK\n"
 fi
 
 ## Flashing DataFlash
