@@ -36,8 +36,10 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include <hw/rtu_regs.h>
-#include <hw/trace.h>
+#include <fpga_io.h>
+#include <regs/rtu-regs.h>
+
+#include <trace.h>
 
 #include "rtu_fd.h"
 #include "rtu_drv.h"
@@ -198,6 +200,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_map, 
         hash = rtu_hash(mac, fid);
         // Check HTAB
         ent  = &rtu_htab[hash][bucket];
+        ent->hash = (hash << 2) | bucket;
         switch(htab_contains(mac, fid, &bucket, &ent)){
         case FOUND: 
             // update            

@@ -3,12 +3,16 @@
 
 #include <inttypes.h>
 
+#include <sfp_lib.h>
+
 typedef void (*hal_cleanup_callback_t)();
 
 #define PORT_BUSY 1
 #define PORT_OK 0
 #define PORT_ERROR -1
 
+#define DEFAULT_T2_PHASE_TRANS 0
+#define DEFAULT_T4_PHASE_TRANS 0
 
 /* Port delay calibration parameters */
 typedef struct {
@@ -29,25 +33,17 @@ typedef struct {
 	uint32_t delta_tx_phy;
 	uint32_t delta_rx_phy;
 
-	/* Current SFP (electrical in to optical out) TX and RX delays, in picoseconds */
-	uint32_t delta_tx_sfp;
-	uint32_t delta_rx_sfp;
-
 	/* Current board routing delays (between the DDMTD inputs to the PHY clock
 	inputs/outputs), in picoseconds */
 	uint32_t delta_tx_board;
 	uint32_t delta_rx_board;
 
-  /* Fiber "alpha" asymmetry coefficient, as defined in the WRPTP Specification */
-	double fiber_alpha;
-
-  /* Fixed point fiber asymmetry coefficient. Expressed as (2 ^ 40 * (fiber_alpha - 1)). */      	
-  int32_t fiber_fix_alpha;
-
   /* When non-zero: RX path is calibrated (delta_*_rx contain valid values) */
   int rx_calibrated;
   /* When non-zero: TX path is calibrated */
   int tx_calibrated;
+
+	struct shw_sfp_caldata sfp;
 
 } hal_port_calibration_t;
 
@@ -72,7 +68,11 @@ int hal_add_cleanup_callback(hal_cleanup_callback_t cb);
 
 int hal_port_start_lock(const char  *port_name, int priority);
 int hal_port_check_lock(const char  *port_name);
+int hal_enable_tracking(const char  *port_name);
 int hal_extsrc_check_lock(void); // added by ML
 
+int hal_init_timing();
+int hal_get_timing_mode();
+int hal_phase_shifter_busy();
 
 #endif

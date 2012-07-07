@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# check variables, like all scripts herein do
+WRS_SCRIPT_NAME=$(basename $0)
+
+. ${WRS_BASE_DIR}/scripts/wrs_functions
+
+wrs_check_vars WRS_OUTPUT_DIR
+
+wrs_echo "--- Deploying FPGA firmware"
+
+mkdir -p ${WRS_OUTPUT_DIR}/images/wr
+mkdir -p ${WRS_OUTPUT_DIR}/images/wr/lib
+mkdir -p ${WRS_OUTPUT_DIR}/images/wr/lib/firmware
+
+echo "$WRS_HW_DIR"
+
+if [ "$WRS_HW_DIR" != "" ]; then
+	cp ${WRS_HW_DIR}/syn/scb_8ports/scb_top_synthesis.bin ${WRS_OUTPUT_DIR}/images/wr/lib/firmware/8ports_mb.bin
+	cp ${WRS_HW_DIR}/rt/rt_cpu.bin ${WRS_OUTPUT_DIR}/images/wr/lib/firmware/rt_cpu.bin
+else
+	tarname=wrs3-gw.tar.gz
+	wrs_download $tarname
+	tar xzf $WRS_DOWNLOAD_DIR/$tarname -C ${WRS_OUTPUT_DIR}/images/wr/lib/firmware
+fi

@@ -10,17 +10,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <wr_ipc.h>
-
-#include <hw/trace.h>
-#include <hw/switch_hw.h>
+#include <trace.h>
+#include <switch_hw.h>
 
 #include "wrsw_hal.h"
+#include "rt_ipc.h"
 
 #define MAX_CLEANUP_CALLBACKS 16
 
 #define assert_init(proc) { int ret; if((ret = proc) < 0) return ret; }
-
 
 static int daemon_mode= 0;
 static hal_cleanup_callback_t cleanup_cb[MAX_CLEANUP_CALLBACKS];
@@ -54,7 +52,6 @@ static void call_cleanup_cbs()
 int hal_setup_fpga_images()
 {
 	char fpga_dir[128];
-	char fw_name[128];
 
 /* query the path to the firmware directory in the config file */
   if( hal_config_get_string("global.hal_firmware_path", fpga_dir, sizeof(fpga_dir)) < 0)
@@ -152,10 +149,13 @@ int hal_shutdown()
 	return 0;
 }
 
+void hal_deamonize();
+
 /* Main initialization function */
 int hal_init()
 {
-	int enable;
+	char sfp_db_path[1024];
+	
 	trace_log_stderr();
 
 	TRACE(TRACE_INFO,"HAL initializing...");
@@ -173,27 +173,28 @@ int hal_init()
 	assert_init(hal_parse_config());
 //	assert_init(hal_setup_fpga_images());
 
-/* Check if the switch will operate as a grandmaster and eventually enable the ext clock input
-   prior to initializing libswitchhw. */
-//	if(!hal_config_get_int("timing.use_external_clock", &enable))
-//		shw_use_external_reference(enable);
-
+  if(!hal_config_get_string("global.sfp_database_path", sfp_db_path, sizeof(sfp_db_path)))
+  {
+ 		if(shw_sfp_read_db(sfp_db_path) < 0) {
+			TRACE(TRACE_ERROR, "Can't read SFP database (%s)", sfp_db_path)
+		} else {
+			TRACE(TRACE_INFO, "Loaded SFP database (%s)", sfp_db_path);
+		}
+	}
+	
 /* Perform a low-level hardware init, load bitstreams, initialize non-kernel drivers */
 	assert_init(shw_init());
 
-/* If running in grandmaster mode, synchronize the internal PPS counter with the external source after
-   initializing the PPS generator. */
-//	if(!hal_config_get_int("timing.use_external_clock", &enable))
-//		shw_pps_gen_sync_external_pps();
-
-/* Load kernel drivers */
-//	assert_init(hal_load_kernel_modules());
+	assert_init(hal_init_timing());
 
 /* Initialize port FSMs - see hal_ports.c */
 	assert_init(hal_init_ports());
 
 /* Create a WRIPC server for HAL public API */
 	assert_init(hal_init_wripc());
+
+	if(daemon_mode)
+		hal_deamonize();
 
 	return 0;
 }
@@ -204,7 +205,7 @@ void hal_update()
 	hal_update_wripc();
 	hal_update_ports();
 
-	usleep(1000);
+//	usleep(1000);
 }
 
 /* Turns a nice and well-behaving HAL into an evil servant of satan. */
@@ -295,6 +296,7 @@ void hal_parse_cmdline(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 
+	trace_log_file("/hal_log");
 /* Prevent from running HAL twice - this will likely freeze the system */
 	if(hal_check_running())
 	{
@@ -306,8 +308,6 @@ int main(int argc, char *argv[])
 
 	hal_init();
 
-	if(daemon_mode)
-		hal_deamonize();
 
 	for(;;) hal_update();
 	hal_shutdown();

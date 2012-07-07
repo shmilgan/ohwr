@@ -9,35 +9,15 @@ fi
 
 wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR CROSS_COMPILE
 
-wrs_echo "--- PTP daemon (noposix repository)"
+wrs_echo "--- PTP daemon (noposix repository as a submodule)"
 
-mkdir -p $WRS_DOWNLOAD_DIR/ptp || wrs_die "mkdir downloads/ptp"
-cd $WRS_DOWNLOAD_DIR/ptp
+# checkout, in case the user didn't do that
+cd ${WRS_BASE_DIR}/..
+git submodule init -q
+git submodule update -q
+cd userspace/ptp-noposix
+make clean
 
-# checkout repository
-if [ -d .git ]; then
-    git checkout v3 || (cd $WRS_DOWNLOAD_DIR && rm -rf ptp)
-fi
-
-# check again, as the above step may have removed stuff
-mkdir -p $WRS_DOWNLOAD_DIR/ptp || wrs_die "mkdir downloads/ptp"
-cd $WRS_DOWNLOAD_DIR/ptp
-if [ -d .git ]; then
-    wrs_echo "Using local git repository (previous clone)"
-else
-    wrs_echo "Checking out git repository"
-    git init
-    git remote add gnudd git://gnudd.com/ptp-noposix.git
-    git fetch gnudd
-    git checkout -b v3 gnudd/v3
-fi
-
-# to avoid building in the "download" place, copy it to the build place
-cd "$WRS_OUTPUT_DIR/build"
-dirname="ptp-noposix"
-rm -rf "$dirname"
-cp -a "$WRS_DOWNLOAD_DIR/ptp" "$dirname"
-cd "$dirname"
 # we need LINUX and CROSS_COMPILE. The latter is there for sure
 if [ "x$LINUX" == "x" ]; then
     export LINUX="$WRS_OUTPUT_DIR/build/linux-2.6.39"
@@ -48,8 +28,7 @@ install -d "$WRS_OUTPUT_DIR/images/wr/bin"
 install -d "$WRS_OUTPUT_DIR/images/wr/lib"
 install -d "$WRS_OUTPUT_DIR/images/wr/include"
 install ptpd "$WRS_OUTPUT_DIR/images/wr/bin"
-install libwripc.a libptpnetif.a "$WRS_OUTPUT_DIR/images/wr/lib"
-install libwripc/wr_ipc.h "$WRS_OUTPUT_DIR/images/wr/include"
+install libptpnetif.a "$WRS_OUTPUT_DIR/images/wr/lib"
 install libptpnetif/ptpd_netif.h "$WRS_OUTPUT_DIR/images/wr/include"
 install libptpnetif/hal_client.h "$WRS_OUTPUT_DIR/images/wr/include"
 

@@ -13,7 +13,12 @@
 #ifndef __WBGEN2_REGDEFS_ENDPOINT
 #define __WBGEN2_REGDEFS_ENDPOINT
 
+#ifdef __KERNEL__
 #include <linux/types.h>
+#else
+#include <stdint.h>
+#endif
+
 
 #if defined( __GNUC__)
 #define PACKED __attribute__ ((packed))
@@ -265,6 +270,7 @@
 /* definitions for field: DMTD Phase shift value ready in reg: DMTD Status register */
 #define EP_DMSR_PS_RDY                        WBGEN2_GEN_MASK(24, 1)
 /* definitions for RAM: Event counters memory */
+#define EP_RMON_RAM_BASE 0x00000080 /* base address */                                
 #define EP_RMON_RAM_BYTES 0x00000080 /* size in bytes */                               
 #define EP_RMON_RAM_WORDS 0x00000020 /* size in 32-bit words, 32-bit aligned */        
 

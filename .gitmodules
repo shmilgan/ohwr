@@ -1,0 +1,6 @@
+[submodule "userspace/ptp-noposix"]
+	path = userspace/ptp-noposix
+	url = git://gnudd.com/ptp-noposix.git
+[submodule "userspace/mini-rpc"]
+	path = userspace/mini-rpc
+	url = git://github.com/a-rubini/mini-rpc.git

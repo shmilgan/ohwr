@@ -1,0 +1,4 @@
+#!/bin/sh
+
+#for ttyGS0 console
+insmod /lib/modules/2.6.39/kernel/g_serial.ko

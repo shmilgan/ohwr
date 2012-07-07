@@ -127,5 +127,6 @@ uClibc-0.9.32.tar.bz2            cfcb6c25d8ebe12817499d8749ee8ae1 \
 zlib-1.2.5.tar.bz2               be1e89810e66150f5b0327984d8625a0 \
    http://kent.dl.sourceforge.net/sourceforge/libpng/zlib-1.2.5.tar.bz2
 
-
+wrs3-gw.tar.gz                   339414ba4d26ee4d50ddb36284377860 \
+   http://www.ohwr.org/attachments/download/1371/wrs3-gw.tar.gz
 

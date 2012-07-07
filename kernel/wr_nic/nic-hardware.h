@@ -79,7 +79,6 @@ enum fpga_blocks {
  */
 #include "../wbgen-regs/endpoint-regs.h"
 #include "../wbgen-regs/ppsg-regs.h"
-#include "../wbgen-regs/calib-regs.h"
 #include "../wbgen-regs/nic-regs.h"
 #include "../wbgen-regs/tstamp-regs.h"
 

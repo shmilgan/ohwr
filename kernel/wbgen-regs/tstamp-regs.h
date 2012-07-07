@@ -13,7 +13,12 @@
 #ifndef __WBGEN2_REGDEFS_TSTAMP
 #define __WBGEN2_REGDEFS_TSTAMP
 
+#ifdef __KERNEL__
 #include <linux/types.h>
+#else
+#include <stdint.h>
+#endif
+
 
 #if defined( __GNUC__)
 #define PACKED __attribute__ ((packed))
@@ -78,6 +83,11 @@
 #define TXTSU_TSF_R1_FID_W(value)             WBGEN2_GEN_WRITE(value, 16, 16)
 #define TXTSU_TSF_R1_FID_R(reg)               WBGEN2_GEN_READ(reg, 16, 16)
 
+/* definitions for register: FIFO 'Timestamp FIFO' data output register 2 */
+
+/* definitions for field: Timestamp (possibly) incorrect in reg: FIFO 'Timestamp FIFO' data output register 2 */
+#define TXTSU_TSF_R2_INCORRECT                WBGEN2_GEN_MASK(0, 1)
+
 /* definitions for register: FIFO 'Timestamp FIFO' control/status register */
 
 /* definitions for field: FIFO full flag in reg: FIFO 'Timestamp FIFO' control/status register */
@@ -105,7 +115,9 @@ PACKED struct TXTSU_WB {
   uint32_t TSF_R0;
   /* [0x14]: REG FIFO 'Timestamp FIFO' data output register 1 */
   uint32_t TSF_R1;
-  /* [0x18]: REG FIFO 'Timestamp FIFO' control/status register */
+  /* [0x18]: REG FIFO 'Timestamp FIFO' data output register 2 */
+  uint32_t TSF_R2;
+  /* [0x1c]: REG FIFO 'Timestamp FIFO' control/status register */
   uint32_t TSF_CSR;
 };
 

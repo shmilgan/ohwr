@@ -16,6 +16,8 @@
 #ifndef AT91_PMC_H
 #define AT91_PMC_H
 
+#define AT91_PMC 0
+
 #define	AT91_PMC_SCER		(AT91_PMC + 0x00)	/* System Clock Enable Register */
 #define	AT91_PMC_SCDR		(AT91_PMC + 0x04)	/* System Clock Disable Register */
 

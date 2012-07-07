@@ -1,0 +1,28 @@
+From 3c96273023f759800c3cb3309ac1ef8a83fe7f04 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 10 Apr 2012 13:00:22 +0200
+Subject: [PATCH 08/19] boot: disable watchdog asap
+
+---
+ crt0_gnu.S |    5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/crt0_gnu.S b/crt0_gnu.S
+index c00b717..0a9079b 100644
+--- a/crt0_gnu.S
++++ b/crt0_gnu.S
+@@ -105,6 +105,11 @@ _relocate_to_sram:
+ 	ldr	pc, =_setup_clocks
+ #endif /* CONFIG_FLASH */
+ 
++	/* disable watchdog */
++	ldr	r1, =0xFFFFFD44
++	mov	r2, #0x00008000
++	str	r2, [r1]
++
+ 	ldr     r4, = lowlevel_clock_init
+ 	mov     lr, pc
+ 	bx      r4
+-- 
+1.7.9.5
+

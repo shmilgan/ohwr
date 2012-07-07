@@ -78,13 +78,10 @@ make oldconfig || wrs_die "buildroot config"
 
 buildrootdir=$(/bin/pwd)
 
-# the download dir in the config file is already set to ../../downloads
-# However, to be safe, make a symlink for its default place, in case
-# a custom config file is used
 cd $buildrootdir
-test -d dl || ln -sf $WRS_DOWNLOAD_DIR dl
 
 # We don't want CC to be pre-set at this point (some of us do :)
 unset CC
 wrs_echo "Compiling buildroot"
-make || wrs_die "buildroot compilation"
+# tell to buildroot to use our download directory
+make BUILDROOT_DL_DIR=$WRS_DOWNLOAD_DIR || wrs_die "buildroot compilation"

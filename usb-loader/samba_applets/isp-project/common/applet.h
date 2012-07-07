@@ -63,6 +63,10 @@
 #define APPLET_CMD_TAG_BLOCK         0x11
 /// Read the Unique ID bits (on SAM3)
 #define APPLET_CMD_READ_UNIQUE_ID    0x12
+/// Applet blocks erase command code.
+#define APPLET_CMD_ERASE_BLOCKS      0x13
+/// Applet batch full erase command code.
+#define APPLET_CMD_BATCH_ERASE       0x14
 
 /// Operation was successful.
 #define APPLET_SUCCESS          0x00

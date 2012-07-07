@@ -9,12 +9,12 @@
 #include <fcntl.h>
 #include <poll.h>
 
-#include <hw/switch_hw.h>
+#include <switch_hw.h>
+
+#include <fpga_io.h>
 
 #define SMC_CS0_BASE 0x10000000
 #define SMC_CS0_SIZE 0x200000
-
-#define SPI_CLKDIV_VAL 20 // clock divider for CMI SPI bus clock
 
 /* Virtual base address of the Main FPGA address space. */
 volatile uint8_t *_fpga_base_virt;

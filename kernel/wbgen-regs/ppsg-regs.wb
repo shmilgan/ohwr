@@ -56,6 +56,7 @@ peripheral {
 				 clock = "refclk_i";
 			};
 
+
 			field {
 				 name = "PPS Pulse width";
 				 description = "Width of generated PPS pulses in 125 MHz refernce clock cycles";
@@ -151,6 +152,46 @@ peripheral {
 			};
 	 };
 
+	 reg {
+			name = "External sync control register";
+			prefix = "ESCR";
+			
+			field {
+				 name = "Sync to external PPS input";
+				 description = "write 1: Waits until a pulse on external PPS input arrives and re-synchronizes the PPS counter to it\
+				 write 0: no effect\
+				 read 1: external synchronization done\
+				 read 0: external synchronization in progress";
+				 type = BIT;
+				 prefix = "SYNC";
+				 access_bus = READ_WRITE;
+				 access_dev = READ_WRITE;
+				 load = LOAD_EXT;
+				 clock = "refclk_i";
+			};
 
+      field {
+         name = "PPS output valid";
+         description = "write 1: PPS output provides reliable 1-PPS signal\
+                        write 0: PPS output is invalid";
+         prefix = "PPS_VALID";
+         type = BIT;
+         access_bus = READ_WRITE;
+         access_dev = READ_ONLY;
+         clock = "refclk_i";
+      };
+
+      field {
+         name = "Timecode output(UTC+cycles) valid";
+         description = "write 1: Timecode output provides valid time\
+                        write 0: Timecode output does not provide valid time";
+         prefix = "TM_VALID";
+         type = BIT;
+         access_bus = READ_WRITE;
+         access_dev = READ_ONLY;
+         clock = "refclk_i";
+      };
+
+	 };
 
 };

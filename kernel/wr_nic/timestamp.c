@@ -1,4 +1,4 @@
-/*
+/*\
  * Timestamping routines for WR Switch
  *
  * Copyright (C) 2010 CERN (www.cern.ch)
@@ -37,15 +37,22 @@ void wrn_tstamp_find_skb(struct wrn_dev *wrn, int desc)
 	pr_debug("%s: found\n", __func__);
 
 	/* so we found the skb, do the timestamping magic */
-	hwts = skb_hwtstamps(skb);
 	wrn_ppsg_read_time(wrn, &counter_ppsg, &utc);
-	if(counter_ppsg < wrn->ts_buf[i].ts)
+	
+	/* The timestamp nanoseconds value is closer to the end of previous second, but the UTC time
+	   read from PPSG is at the beginning of the next second: adjust UTC seconds to avoid 1 sec
+	   "jump" */
+	if(counter_ppsg < REFCLK_FREQ/4 && wrn->ts_buf[i].ts > 3*REFCLK_FREQ/4)
 		utc--;
 
 	ts.tv_sec = (s32)utc & 0x7fffffff;
 	ts.tv_nsec = wrn->ts_buf[i].ts * NSEC_PER_TICK;
-	hwts->hwtstamp = timespec_to_ktime(ts);
-	skb_tstamp_tx(skb, hwts);
+	if (! (wrn->ts_buf[i].valid & TS_INVALID))
+	{	
+		hwts = skb_hwtstamps(skb);
+		hwts->hwtstamp = timespec_to_ktime(ts);
+		skb_tstamp_tx(skb, hwts);
+	}
 	dev_kfree_skb_irq(skb);
 
 	/* release both the descriptor and the tstamp entry */
@@ -54,10 +61,11 @@ void wrn_tstamp_find_skb(struct wrn_dev *wrn, int desc)
 }
 
 /* This function records the timestamp in a list -- called from interrupt */
-static int record_tstamp(struct wrn_dev *wrn, u32 tsval, u32 idreg)
+static int record_tstamp(struct wrn_dev *wrn, u32 tsval, u32 idreg, u32 r2)
 {
 	int port_id = TXTSU_TSF_R1_PID_R(idreg);
 	int frame_id = TXTSU_TSF_R1_FID_R(idreg);
+	int ts_incorrect = r2 & TXTSU_TSF_R2_INCORRECT;
 	struct skb_shared_hwtstamps *hwts;
 	struct timespec ts;
 	struct sk_buff *skb;
@@ -75,7 +83,6 @@ static int record_tstamp(struct wrn_dev *wrn, u32 tsval, u32 idreg)
 	if (i < WRN_NR_DESC) {
 		/*printk("%s: found\n", __func__);*/
 		skb = wrn->skb_desc[i].skb;
-		hwts = skb_hwtstamps(skb);
 
 		wrn_ppsg_read_time(wrn, &counter_ppsg, &utc);
 		if(counter_ppsg < (tsval & 0xfffffff))
@@ -83,13 +90,19 @@ static int record_tstamp(struct wrn_dev *wrn, u32 tsval, u32 idreg)
 
 		ts.tv_sec = (s32)utc & 0x7fffffff;
 		ts.tv_nsec = (tsval & 0xfffffff) * NSEC_PER_TICK;
-		hwts->hwtstamp = timespec_to_ktime(ts);
-		skb_tstamp_tx(skb, hwts);
+
+		/* Provide the timestamp for the userland only if we're 100% sure about its correctness */
+		if (!ts_incorrect) 
+		{
+			hwts = skb_hwtstamps(skb);
+			hwts->hwtstamp = timespec_to_ktime(ts);
+			skb_tstamp_tx(skb, hwts);
+		}
 		dev_kfree_skb_irq(skb);
 		wrn->skb_desc[i].skb = 0;
 		return 0;
 	}
-	/* Otherwise, save it to the list  */
+	/* Otherwise, save it to the list, in an empty slot  */
 	for(i = 0; i < WRN_TS_BUF_SIZE; i++)
 		if(!wrn->ts_buf[i].valid)
 			break;
@@ -102,7 +115,9 @@ static int record_tstamp(struct wrn_dev *wrn, u32 tsval, u32 idreg)
 	wrn->ts_buf[i].ts = tsval;
 	wrn->ts_buf[i].port_id = port_id;
 	wrn->ts_buf[i].frame_id = frame_id;
-	wrn->ts_buf[i].valid = 1;
+	wrn->ts_buf[i].valid = TS_PRESENT;
+	if (ts_incorrect)
+		wrn->ts_buf[i].valid |= TS_INVALID;
 	return 0;
 }
 
@@ -110,14 +125,15 @@ irqreturn_t wrn_tstamp_interrupt(int irq, void *dev_id)
 {
 	struct wrn_dev *wrn = dev_id;
 	struct TXTSU_WB *regs = wrn->txtsu_regs;
-	u32 r0, r1;
+	u32 r0, r1, r2;
 
 	/* printk("%s: %i\n", __func__, __LINE__); */
 	/* FIXME: locking */
 	r0 = readl(&regs->TSF_R0);
 	r1 = readl(&regs->TSF_R1);
+	r2 = readl(&regs->TSF_R2);
 
-	if(record_tstamp(wrn, r0, r1) < 0) {
+	if(record_tstamp(wrn, r0, r1, r2) < 0) {
 		printk("%s: ENOMEM in the TS buffer. Disabling TX stamping.\n",
 		       __func__);
 		writel(TXTSU_EIC_IER_NEMPTY, &wrn->txtsu_regs->EIC_IDR);

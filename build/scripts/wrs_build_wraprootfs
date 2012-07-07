@@ -2,6 +2,7 @@
 
 # check variables, like all scripts herein do
 WRS_SCRIPT_NAME=$(basename $0)
+
 if [ -z "$WRS_BASE_DIR" ]; then
     echo "$0: Plesae set WRS_BASE_DIR" >& 2
     exit 1
@@ -24,7 +25,9 @@ rootfs_vanilla="$WRS_OUTPUT_DIR/build/buildroot-2011.11/output/target"
 rootfs_override="$WRS_BASE_DIR/../userspace/rootfs_override"
 
 TMPSCRIPT=$(mktemp /tmp/rootfs-script.XXXXXX)
-ROOTFS_IMAGE="$WRS_OUTPUT_DIR/images/wrs-image.cpio.gz"
+ROOTFS_IMAGE_CPIO="$WRS_OUTPUT_DIR/images/wrs-image.cpio.gz"
+ROOTFS_IMAGE_TGZ="$WRS_OUTPUT_DIR/images/wrs-image.tar.gz"
+ROOTFS_IMAGE_JFFS2="$WRS_OUTPUT_DIR/images/wrs-image.jffs2"
 
 cat > $TMPSCRIPT << EOF
 rm -r -f $TMPFS
@@ -32,10 +35,9 @@ mkdir -p $TMPFS/wr
 
 cp -r $rootfs_vanilla/* $TMPFS
 cp -r $WRS_OUTPUT_DIR/images/wr/* $TMPFS/wr
+cp -r $WRS_OUTPUT_DIR/images/lib/* $TMPFS/lib
+rm -f $TMPFS/etc/init.d/*
 cp -r $rootfs_override/* $TMPFS
-
-mkdir -p $TMPFS/wr/lib/modules
-cp $WRS_OUTPUT_DIR/images/*ko $TMPFS/wr/lib/modules
 
 rm -rf $TMPFS/dev
 (cd $TMPFS && tar xzf $DEVTAR)
@@ -51,7 +53,9 @@ chmod g-w $TMPFS/root $TMPFS/root/.ssh
 chown -R root:root $TMPFS/root
 chown -R root:root $TMPFS/etc/dropbear
 
-(cd "$TMPFS" && find . | cpio -o -H newc | gzip) > $ROOTFS_IMAGE
+(cd "$TMPFS" && find . | cpio -o -H newc | gzip) > $ROOTFS_IMAGE_CPIO
+(cd "$TMPFS" && tar cz .> $ROOTFS_IMAGE_TGZ)
+/usr/sbin/mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $ROOTFS_IMAGE_JFFS2.img
 
 EOF
 

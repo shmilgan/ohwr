@@ -318,6 +318,10 @@
 #endif
 
 
+#define DUMP_REG(structname, periph, reg) \
+		TRACE_INFO("%s%s = 0x%08x\r\n", #periph,#reg, \
+				((AT91PS_##structname )(AT91C_BASE_##periph)) -> structname##_##reg);
+
 //------------------------------------------------------------------------------
 //         Exported variables
 //------------------------------------------------------------------------------

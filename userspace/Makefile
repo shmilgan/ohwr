@@ -3,7 +3,6 @@
 # in the auto-generated ../Makedefs (when software was in svn).
 # So let's add all of the needed variables here (environment can override)
 
-LINUX ?= $(WRDEV_DIR)/software/rubi-repos/linux-wr
 ARCH ?= arm
 CROSS_COMPILE ?= $(CROSS_COMPILE_ARM_PATH)$(CROSS_COMPILE_ARM_PREFIX)
 CROSS_COMPILE_ARM ?= $(CROSS_COMPILE)
@@ -13,15 +12,14 @@ WR_INSTALL_ROOT ?= $(WRS_OUTPUT_DIR)/images/wr
 WRDEV_DIR ?= $(WRS_BASE_DIR)/..
 
 # subdirectories we want to compile
-SUBDIRS = libswitchhw libwripc libptpnetif 
-SUBDIRS += wrsw_hal wrsw_rtud spll_dbg_proxy
-SUBDIRS += wr_mon rtu_stat #test_rtu
+SUBDIRS = mini-rpc libswitchhw wrsw_hal wrsw_rtud tools
 
 # all variables are exported
 export
 
 # All targets must install as well, as later builds use headers/libs
 all:
+	ln -sf ../../kernel/wbgen-regs include/regs
 	for d in $(SUBDIRS); do $(MAKE) -C $$d $@ || exit 1; done
 
 clean:

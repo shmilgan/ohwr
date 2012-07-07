@@ -30,6 +30,7 @@
 #define __RTUD_EXPORTS_H
 
 #include <stdint.h>
+#include <minipc.h>
 
 typedef struct
 {
@@ -38,6 +39,7 @@ typedef struct
 		uint32_t spm;
 		uint8_t priority;
 		int dynamic;
+		uint16_t hash;
 } rtudexp_fd_entry_t;
 
 typedef struct  {
@@ -47,6 +49,15 @@ typedef struct  {
 	int next;
 } rtudexp_fd_list_t;
 
-void rtudexp_get_fd_list(rtudexp_fd_list_t *list, int start_from);
+/* Export this function: it returns a structure */
+struct minipc_pd rtud_export_get_fd_list = {
+	.name = "get_fd_list",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+				    rtudexp_fd_list_t),
+	.args = {
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+		MINIPC_ARG_END,
+	},
+};
 
 #endif

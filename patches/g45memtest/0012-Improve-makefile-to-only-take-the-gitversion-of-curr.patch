@@ -1,0 +1,26 @@
+From 8083ba2049c07ce9f939819ce3016912d256019f Mon Sep 17 00:00:00 2001
+From: Benoit Rat <benoit@sevensols.com>
+Date: Wed, 11 Apr 2012 17:25:28 +0200
+Subject: [PATCH 12/19] Improve makefile to only take the gitversion of
+ current directory
+
+---
+ Makefile |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index c61ee3e..fd7f16e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -292,7 +292,7 @@ version.c: $(SOBJS-y) $(COBJS-y) .git/HEAD .git/index
+ 	@echo "**/" >> $@   
+ 	@echo 'const char build_time[] = __DATE__ " @ " __TIME__ ;' >> $@
+ 	@echo "const char git_user[] = \"$(shell git config --get user.name)\";" >> $@
+-	@echo "const char git_revision[] = \"$(shell git rev-parse HEAD)$(shell if git status -s > /dev/null; then echo '+'; fi;)\";" >> $@
++	@echo "const char git_revision[] = \"$(shell git log --abbrev-commit --pretty=oneline -1 . | cut -d" " -f1)$(shell if git status -s > /dev/null; then echo '+'; fi;)\";" >> $@
+ 	@echo "" >> $@
+ endif
+ 
+-- 
+1.7.9.5
+

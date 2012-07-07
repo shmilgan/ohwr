@@ -1,0 +1,52 @@
+From a6f38ea81c99fca8ad2c67b0b03d97c16fe97d94 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 10 Apr 2012 13:04:09 +0200
+Subject: [PATCH 09/19] boot: added flip_leds(count) in assembler
+
+---
+ crt0_gnu.S |   29 +++++++++++++++++++++++++++++
+ 1 file changed, 29 insertions(+)
+
+diff --git a/crt0_gnu.S b/crt0_gnu.S
+index 0a9079b..784c9ce 100644
+--- a/crt0_gnu.S
++++ b/crt0_gnu.S
+@@ -74,6 +74,35 @@ irq_vector:
+ 	b 	irq_vector
+ fiq_vector:
+ 	b 	fiq_vector
++
++/*
++ * First of all, write a procedure, that can be called from C or asm,
++ * to flip leds a number of times, after a small delay
++ */
++
++flip_leds: /* input: r0 is the count of flips */
++
++	/* a delay */
++	ldr r1, =200
++1:	subs r1, r1, #1
++	bne 1b
++
++	ldr r1, =0xfffff200  /* PIOA */
++	mov r2, #3           /* bit 0 and 1: both leds */
++
++	str r2, [r1] /* enable */
++	str r2, [r1, #0x10] /* output enable */
++	cmp r0, #0
++	beq 2f
++0:	str r2, [r1, #0x34] /* output clear (led on) */
++	str r2, [r1, #0x30] /* output set (led off) */
++	subs r0, r0, #1
++	bne 0b
++
++2:	bx lr
++
++.ltorg
++
+ reset_vector:
+ 
+ /* Init the stack */
+-- 
+1.7.9.5
+

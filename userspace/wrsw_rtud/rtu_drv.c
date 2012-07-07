@@ -36,13 +36,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stddef.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 
-#include <hw/switch_hw.h>
-#include <hw/rtu_regs.h>
+
+#include <switch_hw.h>
 #include <hal_client.h>
+
+#include <fpga_io.h>
+#include <regs/rtu-regs.h>
 
 #include "rtu_drv.h"
 #include "wr_rtu.h"
@@ -72,19 +77,26 @@ static uint32_t vlan_entry_word0_w(struct vlan_table_entry *ent);
  */
 static int fd;
 
+#define HAL_CONNECT_RETRIES 10
+#define HAL_CONNECT_TIMEOUT 2000000 /* us */
+
 /**
  * \brief Initialize HW RTU memory map
  */
+
 int rtu_init(void)
 {
     int err;
 
-    if(halexp_client_init() < 0) 
+    if(halexp_client_try_connect(HAL_CONNECT_RETRIES, HAL_CONNECT_TIMEOUT) < 0) 
+    {
         TRACE(
             TRACE_FATAL,
             "The HAL is not responding... Are you sure it's running on your switch?\n"
             );
-
+				exit(-1);
+		}
+		
     // Used to 'get' RTU IRQs from kernel
 	fd = open(RTU_DEVNAME, O_RDWR);
 	if (fd < 0)
@@ -111,26 +123,22 @@ void rtu_exit(void)
 }
 
 
-static inline uint32_t rtu_rd(uint32_t reg)
-{
-	return _fpga_readl(FPGA_BASE_RTU + reg);
-}
+#define rtu_rd(reg) \
+	 _fpga_readl(FPGA_BASE_RTU + offsetof(struct RTU_WB, reg))
 
-static inline void rtu_wr(uint32_t reg, uint32_t value)
-{
-	_fpga_writel(FPGA_BASE_RTU + reg, value);
-}
+#define rtu_wr(reg, val) \
+	 _fpga_writel(FPGA_BASE_RTU + offsetof(struct RTU_WB, reg), val)
 
 static inline void write_pcr(int port, uint32_t pcr)
 {
-	rtu_wr(RTU_REG_PSR, RTU_PSR_PORT_SEL_W(port));
-	rtu_wr(RTU_REG_PCR, pcr);
+	rtu_wr(PSR, RTU_PSR_PORT_SEL_W(port));
+	rtu_wr(PCR, pcr);
 }
 
 static inline uint32_t read_pcr(int port)
 {
-	rtu_wr(RTU_REG_PSR, RTU_PSR_PORT_SEL_W(port));
-	return rtu_rd(RTU_REG_PCR);
+	rtu_wr(PSR, RTU_PSR_PORT_SEL_W(port));
+	return rtu_rd(PCR);
 }
 
 // UFIFO
@@ -141,7 +149,7 @@ static inline uint32_t read_pcr(int port)
  */
 int rtu_ufifo_is_empty(void)
 {
-    uint32_t csr =  rtu_rd( RTU_REG_UFIFO_CSR);
+    uint32_t csr =  rtu_rd( UFIFO_CSR);
     return RTU_UFIFO_CSR_EMPTY & csr;
 }
 
@@ -153,7 +161,7 @@ int rtu_read_learning_queue_cnt(void)
 {
     // Get counter from UFIFO Control-Status Register
     // Fixme: USEDW returns 0 (FIFO overflow?)
-    uint32_t csr = rtu_rd( RTU_REG_UFIFO_CSR);
+    uint32_t csr = rtu_rd( UFIFO_CSR);
     return RTU_UFIFO_CSR_USEDW_R(csr);
 }
 
@@ -184,11 +192,11 @@ int rtu_read_learning_queue(struct rtu_request *req)
     }
 
     // read data from mapped IO memory 
-    uint32_t r0 = rtu_rd( RTU_REG_UFIFO_R0);
-    uint32_t r1 = rtu_rd( RTU_REG_UFIFO_R1);
-    uint32_t r2 = rtu_rd( RTU_REG_UFIFO_R2);
-    uint32_t r3 = rtu_rd( RTU_REG_UFIFO_R3);
-    uint32_t r4 = rtu_rd( RTU_REG_UFIFO_R4);
+    uint32_t r0 = rtu_rd( UFIFO_R0);
+    uint32_t r1 = rtu_rd( UFIFO_R1);
+    uint32_t r2 = rtu_rd( UFIFO_R2);
+    uint32_t r3 = rtu_rd( UFIFO_R3);
+    uint32_t r4 = rtu_rd( UFIFO_R4);
 
     // Once read: if learning queue becomes empty again, enable UFIFO IRQ
 
@@ -233,7 +241,7 @@ int rtu_read_learning_queue(struct rtu_request *req)
 int rtu_read_mfifo_cnt(void)
 {
     // Get counter from MFIFO Control-Status Register
-    uint32_t csr = rtu_rd( RTU_REG_MFIFO_CSR);
+    uint32_t csr = rtu_rd( MFIFO_CSR);
     return RTU_MFIFO_CSR_USEDW_R(csr);
 }
 
@@ -243,7 +251,7 @@ int rtu_read_mfifo_cnt(void)
  */
 int rtu_mfifo_is_full(void)
 {
-    uint32_t csr = rtu_rd( RTU_REG_MFIFO_CSR);
+    uint32_t csr = rtu_rd( MFIFO_CSR);
     return RTU_MFIFO_CSR_FULL & csr;
 }
 
@@ -253,16 +261,16 @@ int rtu_mfifo_is_full(void)
  */
 int rtu_mfifo_is_empty(void)
 {
-    uint32_t csr = rtu_rd( RTU_REG_MFIFO_CSR);
+    uint32_t csr = rtu_rd( MFIFO_CSR);
     return RTU_MFIFO_CSR_EMPTY & csr;
 }
 
 static inline void flush_mfifo()
 {
-	uint32_t gcr = rtu_rd (RTU_REG_GCR);
-	rtu_wr(RTU_REG_GCR, gcr | RTU_GCR_MFIFOTRIG);
+	uint32_t gcr = rtu_rd (GCR);
+	rtu_wr(GCR, gcr | RTU_GCR_MFIFOTRIG);
 
-	while(!rtu_rd(RTU_REG_GCR) & RTU_GCR_MFIFOTRIG); /* wait while the RTU is busy flushing the MFIFO */
+	while(!rtu_rd(GCR) & RTU_GCR_MFIFOTRIG); /* wait while the RTU is busy flushing the MFIFO */
 }
 
 /**
@@ -329,7 +337,7 @@ void rtu_clean_htab(void)
  */
 uint32_t rtu_read_agr_htab( uint32_t addr ) 
 {
-    return rtu_rd( RTU_ARAM_BASE + 4*addr) ;
+    return _fpga_readl(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*addr) ;
 }
 
 /**
@@ -339,7 +347,7 @@ void rtu_clean_agr_htab(void)
 {
     int addr;
 	for(addr=0;addr < RTU_ARAM_WORDS;addr++) {
-	    rtu_wr(RTU_ARAM_BASE + 4*addr, 0x00000000);
+	    _fpga_writel(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*addr, 0x00000000);
     }
 }
 
@@ -354,7 +362,7 @@ void rtu_write_vlan_entry(uint32_t addr, struct vlan_table_entry *ent)
 {
 
 //	printf("write_VLAN_ent: addr %x val %x\n", + RTU_VLAN_TAB + 4*addr, vlan_entry_word0_w(ent));
-	rtu_wr(RTU_VLAN_TAB_BASE + 4*addr, vlan_entry_word0_w(ent));
+	_fpga_writel(FPGA_BASE_RTU + RTU_VLAN_TAB_BASE + 4*addr, vlan_entry_word0_w(ent));
     TRACE_DBG(
         TRACE_INFO,
         "write vlan entry: addr %x ent %08x %08x %08x %08x %08x",
@@ -370,7 +378,7 @@ void rtu_write_vlan_entry(uint32_t addr, struct vlan_table_entry *ent)
 void rtu_clean_vlan_entry( uint32_t addr )
 {
     // Value 0x80000000 sets drop field to 1 (VLAN entry not registered)
- 	rtu_wr(RTU_VLAN_TAB_BASE + 4*addr, 0x80000000);
+ 	_fpga_writel(FPGA_BASE_RTU + RTU_VLAN_TAB_BASE + 4*addr, 0x80000000);
 }
 
 /**
@@ -380,7 +388,7 @@ void rtu_clean_vlan(void)
 {
     int addr;
    	for (addr = 0; addr < NUM_VLANS; addr++) {
- 	    rtu_wr(RTU_VLAN_TAB_BASE + 4*addr, 0x80000000);
+ 	    _fpga_writel(FPGA_BASE_RTU + RTU_VLAN_TAB_BASE + 4*addr, 0x80000000);
     }
 }
 
@@ -392,8 +400,8 @@ void rtu_clean_vlan(void)
  */
 void rtu_enable(void)
 {
-	uint32_t gcr = rtu_rd( RTU_REG_GCR);
-	rtu_wr(RTU_REG_GCR, gcr | RTU_GCR_G_ENA);
+	uint32_t gcr = rtu_rd( GCR);
+	rtu_wr(GCR, gcr | RTU_GCR_G_ENA);
   TRACE_DBG(TRACE_INFO,"updated gcr (enable): %x\n", gcr);
 }
 
@@ -402,8 +410,8 @@ void rtu_enable(void)
  */
 void rtu_disable(void)
 {
-	uint32_t gcr = rtu_rd( RTU_REG_GCR);
-	rtu_wr(RTU_REG_GCR, gcr & (~RTU_GCR_G_ENA));
+	uint32_t gcr = rtu_rd( GCR);
+	rtu_wr(GCR, gcr & (~RTU_GCR_G_ENA));
   TRACE_DBG(TRACE_INFO,"updated gcr (disable): %x\n", gcr);
 }
 
@@ -413,7 +421,7 @@ void rtu_disable(void)
  */
 uint16_t rtu_read_hash_poly(void)
 {
-	uint32_t gcr = rtu_rd( RTU_REG_GCR);
+	uint32_t gcr = rtu_rd( GCR);
   return RTU_GCR_POLY_VAL_R(gcr);    
 }
 
@@ -424,11 +432,11 @@ uint16_t rtu_read_hash_poly(void)
 void rtu_write_hash_poly(uint16_t hash_poly)
 {
     // Get current GCR
-	uint32_t gcr = rtu_rd( RTU_REG_GCR);
+	uint32_t gcr = rtu_rd( GCR);
     // Clear previous hash poly and insert the new one
     gcr = (gcr & (~RTU_GCR_POLY_VAL_MASK)) | RTU_GCR_POLY_VAL_W(hash_poly);
     // Update GCR
-	rtu_wr(RTU_REG_GCR, gcr );
+	rtu_wr(GCR, gcr );
     TRACE_DBG(TRACE_INFO,"updated gcr (poly): %x\n", gcr);
 }
 
@@ -559,14 +567,14 @@ int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
 
 static void write_mfifo_addr(uint32_t zbt_addr)
 {
-    rtu_wr(RTU_REG_MFIFO_R0, RTU_MFIFO_R0_AD_SEL);
-    rtu_wr(RTU_REG_MFIFO_R1, zbt_addr);
+    rtu_wr(MFIFO_R0, RTU_MFIFO_R0_AD_SEL);
+    rtu_wr(MFIFO_R1, zbt_addr);
 }
 
 static void write_mfifo_data(uint32_t word)
 {
-    rtu_wr(RTU_REG_MFIFO_R0, RTU_MFIFO_R0_DATA_SEL);
-    rtu_wr(RTU_REG_MFIFO_R1, word);
+    rtu_wr(MFIFO_R0, RTU_MFIFO_R0_DATA_SEL);
+    rtu_wr(MFIFO_R1, word);
 }
 
 // to marshall MAC entries

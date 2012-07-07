@@ -47,4 +47,10 @@ make oldconfig  || wrs_die "kernel config"
 
 make $WRS_MAKE_J zImage modules  || wrs_die "kernel compilation"
 
-cp arch/$ARCH/boot/zImage $(find . -name '*.ko') $WRS_OUTPUT_DIR/images
+mkdir -p $WRS_OUTPUT_DIR/images/lib
+mkdir -p $WRS_OUTPUT_DIR/images/lib/modules
+mkdir -p $WRS_OUTPUT_DIR/images/lib/modules/2.6.39
+mkdir -p $WRS_OUTPUT_DIR/images/lib/modules/2.6.39/kernel
+
+cp $(find . -name '*.ko') $WRS_OUTPUT_DIR/images/lib/modules/2.6.39/kernel
+cp arch/$ARCH/boot/zImage $WRS_OUTPUT_DIR/images

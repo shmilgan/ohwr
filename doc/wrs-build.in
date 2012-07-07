@@ -240,9 +240,11 @@ did not add the new archives in there because of their size.
 @node Downloading Files
 @section Downloading Files
 
-Every downloaded file is saved to the @code{download} directory, you should
+Every downloaded file is saved to the @code{download} directory 
+(if set @code{WRS_DOWNLOAD_DIR} else the default
+@code{$WRS_OUPUT_DIR/downloads}). You should
 arrange not to remove that directory when you recompile over and over
-during development.  I chose to make the first
+during development. I chose to make the first
 script download everything, because I think this eases development in a
 way: you first wait a while but can tell download errors from other
 issues, and then you can build it all even without a network connection.
@@ -326,22 +328,26 @@ step takes only a pair of seconds to verify the checksums:
 
 @c FIXME: example
 @smallexample
-2012-01-12 18:59:04: --- Downloading all files
-2012-01-12 18:59:06: --- Buildroot compiler and filesystem
-2012-01-12 18:59:06: Uncompressing buildroot
-2012-01-12 18:59:06: Patching buildroot
-2012-01-12 18:59:06: Reconfiguring buildroot
-2012-01-12 18:59:07: Compiling buildroot
-2012-01-12 19:14:16: --- AT91Boot
-2012-01-12 19:14:16: Patching AT91Boot
-2012-01-12 19:14:16: Building AT91Boot
-2012-01-12 19:14:17: --- Barebox
-2012-01-12 19:14:17: Patching Barebox
-2012-01-12 19:14:17: Building Barebox
-2012-01-12 19:14:25: --- Linux kernel for switch
-2012-01-12 19:15:43: --- Kernel modules from this package
-[...]
-@end smallexample
+2012-07-06 17:23:57: --- Downloading all files
+2012-07-06 17:24:02: --- Buildroot compiler and filesystem
+2012-07-06 17:24:02: Uncompressing buildroot
+2012-07-06 17:24:02: Patching buildroot
+2012-07-06 17:24:02: Reconfiguring buildroot
+2012-07-06 17:24:04: Compiling buildroot
+2012-07-06 17:48:46: --- AT91Boot
+2012-07-06 17:48:46: Patching AT91Boot
+2012-07-06 17:48:46: Building AT91Boot
+2012-07-06 17:48:50: --- Barebox
+2012-07-06 17:48:50: Patching Barebox
+2012-07-06 17:48:50: Building Barebox
+2012-07-06 17:48:59: --- Linux kernel for switch
+2012-07-06 17:50:32: --- Kernel modules from this package
+2012-07-06 17:50:35: --- PTP daemon (noposix repository as a submodule)
+2012-07-06 17:50:38: --- User space tools
+2012-07-06 17:50:39: --- Deploying FPGA firmware
+2012-07-06 17:50:39: --- Wrapping filesystem
+2012-07-06 17:50:53: Complete build succeeded, apparently
+@endsmallexample
 
 You may prefer to save @i{stderr} with @i{stdout} to the log file
 but still see the time-stamped messages from the scripts. In this
