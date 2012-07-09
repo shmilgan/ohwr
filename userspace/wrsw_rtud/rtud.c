@@ -90,7 +90,8 @@ static int rtu_create_static_entries()
             pstate.hw_index, 
             mac_to_string(pstate.hw_addr)
         );
-		err = rtu_fd_create_entry(pstate.hw_addr, 0, (1 << plist.num_physical_ports), STATIC);
+
+				err = rtu_fd_create_entry(pstate.hw_addr, 0, (1 << plist.num_physical_ports), STATIC);
         if(err)
             return err;
     }

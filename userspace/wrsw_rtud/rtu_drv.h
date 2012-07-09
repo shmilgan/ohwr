@@ -77,8 +77,8 @@ void rtu_clean_agr_hcam(void);
 
 // VLAN TABLE
 
-void rtu_write_vlan_entry(uint32_t addr, struct vlan_table_entry *ent);
-void rtu_clean_vlan_entry(uint32_t addr);
+void rtu_write_vlan_entry(int vid, struct vlan_table_entry *ent);
+void rtu_clean_vlan_entry(int vid);
 void rtu_clean_vlan(void);
 
 // GLOBAL CONTROL REGISTER
