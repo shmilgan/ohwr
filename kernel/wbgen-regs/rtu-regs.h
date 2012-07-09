@@ -86,6 +86,46 @@
 /* definitions for field: Unrecognized request behaviour in reg: Port Control Register */
 #define RTU_PCR_B_UNREC                       WBGEN2_GEN_MASK(7, 1)
 
+/* definitions for register: VLAN Table Register 1 */
+
+/* definitions for field: VLAN ID in reg: VLAN Table Register 1 */
+#define RTU_VTR1_VID_MASK                     WBGEN2_GEN_MASK(0, 12)
+#define RTU_VTR1_VID_SHIFT                    0
+#define RTU_VTR1_VID_W(value)                 WBGEN2_GEN_WRITE(value, 0, 12)
+#define RTU_VTR1_VID_R(reg)                   WBGEN2_GEN_READ(reg, 0, 12)
+
+/* definitions for field: Filtering Database ID in reg: VLAN Table Register 1 */
+#define RTU_VTR1_FID_MASK                     WBGEN2_GEN_MASK(12, 8)
+#define RTU_VTR1_FID_SHIFT                    12
+#define RTU_VTR1_FID_W(value)                 WBGEN2_GEN_WRITE(value, 12, 8)
+#define RTU_VTR1_FID_R(reg)                   WBGEN2_GEN_READ(reg, 12, 8)
+
+/* definitions for field: Drop in reg: VLAN Table Register 1 */
+#define RTU_VTR1_DROP                         WBGEN2_GEN_MASK(20, 1)
+
+/* definitions for field: Has user-defined priority in reg: VLAN Table Register 1 */
+#define RTU_VTR1_HAS_PRIO                     WBGEN2_GEN_MASK(21, 1)
+
+/* definitions for field: Override endpoint-assigned priority in reg: VLAN Table Register 1 */
+#define RTU_VTR1_PRIO_OVERRIDE                WBGEN2_GEN_MASK(22, 1)
+
+/* definitions for field: Priority value in reg: VLAN Table Register 1 */
+#define RTU_VTR1_PRIO_MASK                    WBGEN2_GEN_MASK(23, 3)
+#define RTU_VTR1_PRIO_SHIFT                   23
+#define RTU_VTR1_PRIO_W(value)                WBGEN2_GEN_WRITE(value, 23, 3)
+#define RTU_VTR1_PRIO_R(reg)                  WBGEN2_GEN_READ(reg, 23, 3)
+
+/* definitions for field: Force VLAN table entry update in reg: VLAN Table Register 1 */
+#define RTU_VTR1_UPDATE                       WBGEN2_GEN_MASK(26, 1)
+
+/* definitions for register: VLAN Table Register 2 */
+
+/* definitions for field: Port Mask in reg: VLAN Table Register 2 */
+#define RTU_VTR2_PORT_MASK_MASK               WBGEN2_GEN_MASK(0, 32)
+#define RTU_VTR2_PORT_MASK_SHIFT              0
+#define RTU_VTR2_PORT_MASK_W(value)           WBGEN2_GEN_WRITE(value, 0, 32)
+#define RTU_VTR2_PORT_MASK_R(reg)             WBGEN2_GEN_READ(reg, 0, 32)
+
 /* definitions for register: Interrupt disable register */
 
 /* definitions for field: UFIFO Not Empty IRQ in reg: Interrupt disable register */
@@ -153,16 +193,16 @@
 #define RTU_UFIFO_R4_PRIO_R(reg)              WBGEN2_GEN_READ(reg, 12, 3)
 
 /* definitions for field: Port ID in reg: FIFO 'Unrecognized request FIFO (UFIFO)' data output register 4 */
-#define RTU_UFIFO_R4_PID_MASK                 WBGEN2_GEN_MASK(16, 4)
+#define RTU_UFIFO_R4_PID_MASK                 WBGEN2_GEN_MASK(16, 8)
 #define RTU_UFIFO_R4_PID_SHIFT                16
-#define RTU_UFIFO_R4_PID_W(value)             WBGEN2_GEN_WRITE(value, 16, 4)
-#define RTU_UFIFO_R4_PID_R(reg)               WBGEN2_GEN_READ(reg, 16, 4)
+#define RTU_UFIFO_R4_PID_W(value)             WBGEN2_GEN_WRITE(value, 16, 8)
+#define RTU_UFIFO_R4_PID_R(reg)               WBGEN2_GEN_READ(reg, 16, 8)
 
 /* definitions for field: VID valid in reg: FIFO 'Unrecognized request FIFO (UFIFO)' data output register 4 */
-#define RTU_UFIFO_R4_HAS_VID                  WBGEN2_GEN_MASK(20, 1)
+#define RTU_UFIFO_R4_HAS_VID                  WBGEN2_GEN_MASK(24, 1)
 
 /* definitions for field: PRIO valid in reg: FIFO 'Unrecognized request FIFO (UFIFO)' data output register 4 */
-#define RTU_UFIFO_R4_HAS_PRIO                 WBGEN2_GEN_MASK(21, 1)
+#define RTU_UFIFO_R4_HAS_PRIO                 WBGEN2_GEN_MASK(25, 1)
 
 /* definitions for register: FIFO 'Unrecognized request FIFO (UFIFO)' control/status register */
 
@@ -202,13 +242,9 @@
 #define RTU_MFIFO_CSR_USEDW_W(value)          WBGEN2_GEN_WRITE(value, 0, 6)
 #define RTU_MFIFO_CSR_USEDW_R(reg)            WBGEN2_GEN_READ(reg, 0, 6)
 /* definitions for RAM: Aging bitmap for main hashtable */
-#define RTU_ARAM_BASE 0x00004000 /* base address */                                
+#define RTU_ARAM_BASE 0x00000400 /* base address */                                
 #define RTU_ARAM_BYTES 0x00000400 /* size in bytes */                               
 #define RTU_ARAM_WORDS 0x00000100 /* size in 32-bit words, 32-bit aligned */        
-/* definitions for RAM: VLAN table (VLAN_TAB) */
-#define RTU_VLAN_TAB_BASE 0x00008000 /* base address */                                
-#define RTU_VLAN_TAB_BYTES 0x00004000 /* size in bytes */                               
-#define RTU_VLAN_TAB_WORDS 0x00001000 /* size in 32-bit words, 32-bit aligned */        
 
 PACKED struct RTU_WB {
   /* [0x0]: REG RTU Global Control Register */
@@ -217,8 +253,12 @@ PACKED struct RTU_WB {
   uint32_t PSR;
   /* [0x8]: REG Port Control Register */
   uint32_t PCR;
+  /* [0xc]: REG VLAN Table Register 1 */
+  uint32_t VTR1;
+  /* [0x10]: REG VLAN Table Register 2 */
+  uint32_t VTR2;
   /* padding to: 8 words */
-  uint32_t __padding_0[5];
+  uint32_t __padding_0[3];
   /* [0x20]: REG Interrupt disable register */
   uint32_t EIC_IDR;
   /* [0x24]: REG Interrupt enable register */
@@ -245,14 +285,10 @@ PACKED struct RTU_WB {
   uint32_t MFIFO_R1;
   /* [0x50]: REG FIFO 'Main hashtable CPU access FIFO (MFIFO)' control/status register */
   uint32_t MFIFO_CSR;
-  /* padding to: 4096 words */
-  uint32_t __padding_1[4075];
-  /* [0x4000 - 0x43ff]: RAM Aging bitmap for main hashtable, 256 32-bit words, 32-bit aligned, word-addressable */
+  /* padding to: 256 words */
+  uint32_t __padding_1[235];
+  /* [0x400 - 0x7ff]: RAM Aging bitmap for main hashtable, 256 32-bit words, 32-bit aligned, word-addressable */
   uint32_t ARAM [256];
-  /* padding to: 8192 words */
-  uint32_t __padding_2[4096];
-  /* [0x8000 - 0xbfff]: RAM VLAN table (VLAN_TAB), 4096 32-bit words, 32-bit aligned, word-addressable */
-  uint32_t VLAN_TAB [4096];
 };
 
 #endif
