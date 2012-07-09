@@ -34,7 +34,6 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
-#include <linux/if_ether.h>
 #include <stdio.h>
 
 #include "mac.h"
@@ -47,8 +46,8 @@
 
 #define ENTRY_WORDS             8
 
-#define MIN_PORT                0
-#define MAX_PORT                14
+#define MIN_PORT 0
+#define MAX_PORT 17
 
 // Maximum number of supported VLANs
 #define NUM_VLANS               4096
@@ -151,6 +150,9 @@ struct vlan_table_entry {
     int prio_override;      // priority override (force per-VLAN priority)
     int drop;               // 1: drop the packet (VLAN not registered)
 };
+
+
+
 
 /**
  * \brief Copies src filtering entry body into dst filtering entry body.
