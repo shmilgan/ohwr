@@ -17,19 +17,17 @@
 
 showhelp()
 {
-	echo "Usage: $0 [options] MAC [<firmware>.tar.gz] [DEV]\n"
-	echo "MAC:\t MAC address in hexadecimal seperated by ':' (i.e, AB:CD:EF:01:23:45)"
-	echo "<firmware>.tar.gz: Use the file in the firmware to flash the device"
-	echo "DEV:\t The usb device (by default it is /dev/ttyACM0)"
-	echo "Options: "
-	echo "\t-h|--help\t\t Show this help message"
-	echo "\t-m|--mode\t\t can be: default, df (dataflash), nf (nandflash), test, compress."
-	echo "\t-e \t\t\t Completely erase the memory (Can erase your configuration)"
-	echo "\t--build\t\t\t Use file that you have build in the WRS_OUTPUT_DIR"
-	echo "\t--test\t\t\t Use file for testing the switch (not available)"
-	echo "\t--silent\t\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE"
-
-	echo ""
+	printf "Usage: $0 [options] MAC [<firmware>.tar.gz] [DEV]\n\n"
+	printf "MAC:\t MAC address in hexadecimal seperated by ':' (i.e, AB:CD:EF:01:23:45)\n"
+	printf "<firmware>.tar.gz: Use the file in the firmware to flash the device\n"
+	printf "DEV:\t The usb device (by default it is /dev/ttyACM0)\n"
+	printf "Options: \n"
+	printf "\t-h|--help\t\t Show this help message\n"
+	printf "\t-m|--mode\t\t can be: default, df (dataflash), nf (nandflash), test.\n"
+	printf "\t-e \t\t\t Completely erase the memory (Can erase your configuration)\n"
+	printf "\t--build\t\t\t Use file that you have build in the WRS_OUTPUT_DIR\n"
+	printf "\t--test\t\t\t Use file for testing the switch (not available)\n"
+	printf "\t--silent\t\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE\n\n"
 	exit 0
 }
 
@@ -190,13 +188,6 @@ elif [ "x$memmode" = "xnf" ]; then
 	nf=1
 elif [ "x$memmode" = "xtest" ]; then
 	test=1
-elif [ "x$memmode" = "xcompress" ]; then
-	cp ${at91bs} /tmp/at91bootstrap.bin
-	cp ${barebox} /tmp/barebox.bin
-	cp ${kernel} /tmp/zImage
-	cp ${rootfs} /tmp/wrs-image.jffs2.img
-	tar -czvf "wrs-firmware-$(date +%y%m%d).tar.gz" -C /tmp/ at91bootstrap.bin barebox.bin zImage wrs-image.jffs2.img
-	exit 0
 else 
 	df=1
 	nf=1
