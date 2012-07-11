@@ -1,14 +1,14 @@
-From 028fafe92791963b95094abdc4c975a8f166228e Mon Sep 17 00:00:00 2001
+From 62bcf3fbd32c123ffdf19895cc902b844c217414 Mon Sep 17 00:00:00 2001
 From: Alessandro Rubini <rubini@gnudd.com>
 Date: Tue, 6 Mar 2012 01:26:28 +0100
-Subject: [PATCH 5/5] nand wrs: it's 16-bits not 8
+Subject: [PATCH 3/9] nand wrs: it's 16-bits not 8
 
 ---
  arch/arm/boards/pm9g45/init.c |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/arch/arm/boards/pm9g45/init.c b/arch/arm/boards/pm9g45/init.c
-index 35c9ce9..7d0fb4c 100644
+index 9b22276..9ecd628 100644
 --- a/arch/arm/boards/pm9g45/init.c
 +++ b/arch/arm/boards/pm9g45/init.c
 @@ -44,9 +44,9 @@ static struct atmel_nand_data nand_pdata = {
@@ -33,5 +33,5 @@ index 35c9ce9..7d0fb4c 100644
  	/* configure chip-select 3 (NAND) */
  	sam9_smc_configure(3, &pm_nand_smc_config);
 -- 
-1.7.7.2
+1.7.9.5
 
