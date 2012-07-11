@@ -25,7 +25,7 @@ rm -rf $dirname
 tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
 
 # copy the config and replace "-j" level. First remove it in case it's left in
-cd $dirname
+cd $WRS_OUTPUT_DIR/build/${dirname}
 CFG="$WRS_BASE_DIR/../patches/buildroot/buildroot-config-wrswitch"
 if [ "x$WRS_BUILDROOT_CONFIG" != "x" ]; then
     if [ -f $WRS_BUILDROOT_CONFIG ]; then
@@ -49,7 +49,7 @@ fi
 
 # apply any pending patches
 wrs_echo "Patching buildroot"
-cd $dirname
+cd $WRS_OUTPUT_DIR/build/${dirname}
 for n in $WRS_BASE_DIR/../patches/buildroot/*patch; do
     # the shell passes the "*" over if no matches are there, so check
     if test -f "$n"; then
@@ -59,17 +59,21 @@ done
 
 # now, if CROSS_COMPILE is already set and is not ours, change the config
 if [ "x$CROSS_COMPILE" != "x" ]; then
-    wrs_echo "Changing config for external compiler"
-    wrs_unset_config BR2_TOOLCHAIN_BUILDROOT
-    wrs_unset_config BR2_TOOLCHAIN_SOURCE
-    wrs_set_config BR2_TOOLCHAIN_EXTERNAL
-    
-    echo BR2_TOOLCHAIN_EXTERNAL_PATH=\"$(dirname $(dirname $CROSS_COMPILE))\" \
-	>> .config
-    echo BR2_TOOLCHAIN_EXTERNAL_PREFIX="\"\$(ARCH)-linux\"" >> .config
-    echo '# BR2_TOOLCHAIN_EXTERNAL_UCLIBC is not set' >> .config
-    echo BR2_TOOLCHAIN_EXTERNAL_GLIBC=y >> .config
-    echo BR2_TOOLCHAIN_EXTERNAL_STRIP=y >> .config
+	wrs_echo "Checking CROSS_COMPILE"
+	${CROSS_COMPILE}gcc -v 2>&1 | grep arm &> /dev/null
+	if [ $? -eq "0" ]; then
+		wrs_echo "Changing config for external compiler ($CROSS_COMPILE)"
+		wrs_unset_config BR2_TOOLCHAIN_BUILDROOT
+		wrs_unset_config BR2_TOOLCHAIN_SOURCE
+		wrs_set_config BR2_TOOLCHAIN_EXTERNAL
+		
+		echo BR2_TOOLCHAIN_EXTERNAL_PATH=\"$(dirname $(dirname $CROSS_COMPILE))\" \
+		>> .config
+		echo BR2_TOOLCHAIN_EXTERNAL_PREFIX="\"\$(ARCH)-linux\"" >> .config
+		echo '# BR2_TOOLCHAIN_EXTERNAL_UCLIBC is not set' >> .config
+		echo BR2_TOOLCHAIN_EXTERNAL_GLIBC=y >> .config
+		echo BR2_TOOLCHAIN_EXTERNAL_STRIP=y >> .config
+	fi
 fi
 
 # re-digest the config we built
