@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month March 2012
+@set update-month July 2012
 
 @finalout
 
@@ -44,6 +44,7 @@
 @subtitle @value{update-month}
 @subtitle How to rebuild the whole software package from sources
 @author Alessandro Rubini (@code{rubini@@gnudd.com})
+@author Benoit Rat (@code{benoit@@sevensols.com})
 @end titlepage
 @headings single
 
@@ -60,6 +61,8 @@ This document describes the software build procedures for the White
 Rabbit Switch.  The procedure described is for version 3 of the
 hardware project, which  has been successfully booted for the first
 time on Sep 13th 2011.
+The different steps focus on the v3.2, however you can find specific
+documentation for v3.0 & v3.1 in @ref{v3.0 & v3.1}
 
 If you have an older Version-2 switch, please refer to the v2 branch
 of the repository at
@@ -274,22 +277,6 @@ The messages of a download run are like the following ones:
    2012-01-12 18:37:56: Retrieved zlib-1.2.5.tar.bz2 from upstream
 @end smallexample
 
-@c ==========================================================================
-@node Rebuilding Parts
-@section Rebuilding Parts
-
-When the main script succeeds in building one part (sub-package),
-it creates a file in the @code{build/_done} directory.
-
-When you rebuild everything, steps for which the marker file exists
-are not rebuilt. To force rebuilding of one specific part, just remove
-the marker.  Markers are numbered, reflecting the order of compilation
-steps, but they also have a name: names like @code{04-kernel} should be
-self-explicative.
-
-As an alternative, you can run the individual script from within
-@i{scripts/}, after setting the proper environment variables.
-
 @c ##########################################################################
 @node Quick Build
 @chapter Quick Build
@@ -347,7 +334,7 @@ step takes only a pair of seconds to verify the checksums:
 2012-07-06 17:50:39: --- Deploying FPGA firmware
 2012-07-06 17:50:39: --- Wrapping filesystem
 2012-07-06 17:50:53: Complete build succeeded, apparently
-@endsmallexample
+@end smallexample
 
 You may prefer to save @i{stderr} with @i{stdout} to the log file
 but still see the time-stamped messages from the scripts. In this
@@ -371,6 +358,239 @@ rename) the output directory and reissue the command.  To only
 redo one step, you can remove the marker in @code{build/_done}
 (the markers are empty files with name like @code{01-buildroot}
 and @code{04-kernel}).
+
+
+@c ##########################################################################
+@node Quick Flashing of WRS-3
+@chapter Quick Flashing of WRS-3
+
+This chapter quickly resumes the different steps to install the WRS-3 with the 
+correct firmware. This procedure described the installation of the switch
+with a @i{SCB v3.2} and a @i{Mini-Backplane v3.2}. 
+
+If you have an older 
+version you might look at the @ref{v3.0 & v3.1} and the various footnotes.
+
+@menu
+* USB connection::    
+* The Flasher Script::  
+* Quick Barebox::          
+@end menu
+
+
+@c ==========================================================================
+@node USB connection
+@section USB connection
+
+@sp 1
+@center @image{frontpanel, 7cm,,front panel of the switch}
+@sp 1
+
+
+@subsection Serial-USB
+
+The first step is to plug a USB cable from your computer to the frontal 
+@b{right} mini-USB @i{(Test)} port of the switch. This USB port is connected to the 
+debug UART of the ARM (and then of the FPGA). Once connected a 
+@code{/dev/ttyUSB0} should appears on your machine, and you can read the
+output using minicom @footnote{We recommend to use @uref{http://brokestream.com/tinyserial.html, tinyserial} instead of minicom} like this:
+
+@example
+	minicom -D /dev/ttyUSB0 -b 115200
+@end example
+
+@subsection SAMBA & Gadget-USB
+
+Then to flash the firmware a USB cable must be plugged into the frontal 
+@b{left} mini-USB port of the switch. 
+
+Once you have connected the USB cable you should see the SAMBA 
+bootloader on your machine:
+
+@smallexample
+   brezza% lsusb | grep Atmel
+   Bus 001 Device 025: ID 03eb:6124 Atmel Corp. at91sam SAMBA bootloader
+@end smallexample
+
+The device should also appear as @code{/dev/ttyACM0} or equivalent.
+
+If it is not the case, this mean that there are already some code in the
+@i{dataflash}, that the switch try to boot. In order to disable the 
+dataflash you need to open the switch box and put a 1mm jumper
+@footnote{On v3.0 & v3.1 this jumper does not exist. Refer to 
+@ref{SAMBA-Monitor (USB Flasher)}}
+on the @i{DFEN} pin as shown in picture below
+
+@sp 1
+@center @image{jumpers, 10cm,,Booting jumpers}
+@sp 2
+
+
+After placing the jumper you can press reset (the button near the USB connector). 
+If things go well, the device is enumerated as shown; 
+you must @b{remove} the jumper at this point or you will
+not be able to write the new information to dataflash
+
+
+
+@c ==========================================================================
+@node The Flasher Script
+@section The Flasher Script
+
+A script has been written to easily flash a firmware into the 
+switch. It is invoked in the following way:
+
+
+@example
+   ./build/flash-wrs [options] MAC [<firmware>.tar.gz] [DEV]
+   
+@end example
+
+
+By default the code will only flash  @i{at91boot.bin} or @i{barebox.bin} 
+situated in the @i{binaries} subdirectory into the dataflash. 
+To understand better all the options of the script you should look at 
+@ref{USB-Loader} or use the @code{--help} option.
+
+However we strongly recommend to first erase the whole memory and then
+flash using a @i{tar.gz} package. The execution should be similar as: 
+
+@example
+    wr-switch-sw/build/flash-wrs -e wrs-firmware-<revision>.tar.gz 
+@end example
+
+The output you must expect from the flasher is like the following, and
+the process takes 3 minutes more or less:
+
+@smallexample
+	Initializing SAM-BA: CPU ID: 0x819b05a2
+	[...]
+	Programming DataFlash Done!!!
+	Closing...
+	[...]
+	Programming done!
+	Programming NandFlash Done!!!
+Closing...
+@end smallexample
+
+If you look at the serial port, during programming, you will see
+messages like these:
+
+@smallexample
+   -I- Statup: PMC_MCKR 1202 MCK = 100000000 command = 0
+   -I- -- EXTRAM ISP Applet 2.9 --
+   -I- -- AT91SAM9G45-EK
+   [...]
+   -I-     End of applet (command : 2 --- status : 0)
+@end smallexample
+
+@c ==========================================================================
+@node Quick Barebox
+@section Quick Barebox
+
+After flashing, you should reach the following menu.
+
+@example
+ Welcome on WRSv3 Boot Sequence
+      1: boot from nand (default)      
+      2: boot from dataflash (failsafe)
+      3: boot from script              
+      4: boot from ram                 
+      5: boot from nfs                 
+      6: boot from nfs (test)          
+      7: edit & save config            
+      8: shell (prompt terminal)       
+      9: reset barebox    
+@end example
+
+If you have used the @i{tar.gz} package to flash your device you should boot from nand.
+However, if NAND flash was erased the menu will automatically select the entry 
+@code{boot from nfs (test)} until you chose @code{edit & save config}
+and press @i{Ctrl+D} to save the config file.
+
+The other options of the menu are described in  @ref{Booting with Barebox}
+
+
+@c ##########################################################################
+@node Build Script
+@chapter Build Script
+
+The @code{wrs_build-all} can be used to quickly build the White Rabbit 
+Software as seen in @ref{Quick Build}. However it admits other 
+functionalities detailed in this chapter. You might also want to check its 
+embedded documentation using:
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --help
+@end example
+
+
+@c ==========================================================================
+@node Rebuilding Parts
+@section Rebuilding Parts
+
+When the main script succeeds in building one part (sub-package),
+it creates a file in the @code{build/_done} directory.
+
+When you rebuild everything, steps for which the marker file exists
+are not rebuilt. To force rebuilding of one specific part, just remove
+the marker.  Markers are numbered, reflecting the order of compilation
+steps, but they also have a name: names like @code{04-kernel} should be
+self-explicative. 
+
+To ease the rebuilding of a specific module a shortcut has been created 
+in the @code{wrs_build-all} script. For example if you want to recompile
+kernel you should execute.
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --step=04
+@end example
+
+You can list all compiled module by calling
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --list
+@end example
+ 
+
+As an alternative, you can run the individual script from within
+@i{scripts/}, after setting the proper environment variables.
+
+
+@c ==========================================================================
+@node Rebuilding From Scratch
+@section Rebuilding From Scratch
+
+If you have updated the repository with new modifications, you might want 
+to check that the you can rebuild from scratch. To clean your output 
+directory by deleting all compiled modules (except downloaded files), just call:
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --clean
+@end example
+ 
+ 
+@c ==========================================================================
+@node Release Package
+@section Release Package
+
+Once all the building steps have succeed, you can easily create a 
+package in your working directory using the following command:
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --pack
+@end example 
+
+This will generate a @code{tar.gz} package with various  
+nomenclatures according to the state of the git repository:
+
+@itemize @bullet
+@item @code{wrs-firmware-120711-2c67861.tar.gz}: Package generated the 11th of July 2012 using git revision @i{2c67861}
+@item @code{wrs-firmware-120711-2c67861+.tar.gz}: Same as above, except that the there are some modification git revision @i{2c67861} has been modified. You might need to commit or stash the changes to remove the @code{+} tag.
+@item @code{wrs-firmware-wr-switch-sw-v3.0-rc1.tag.gz}: The package correspond to the git tag @i{wr-switch-sw-v3.0-rc1}. 
+@end itemize
+
+
 
 @c ##########################################################################
 @node The Compiler
@@ -450,20 +670,25 @@ Maybe we will switch to another version in the future.
 @chapter The Boot Loader
 
 The switch uses @i{barebox} as a boot loader. We are running version
-2011-09, with one simple local patch and the chosen configuration
+2012-05, with one simple local patch and the chosen configuration
 file. More patches will be needed to customize board names (we are
 piggy-backing on the Ronetix PM9G45 board).
 
 The patches are part of this package in @i{patches/barebox} and
 are currently the following ones:
 
-@example
-   0001-91samg45-removed-two-clock-that-failed-compilation.patch
-   0002-sam945-include-mtd-nand.h-in-device-file.patch
-   0003-arm-config-added-wrs3_defconfig-and-fixed-default-at.patch
-   0004-new-config-for-barebox-env.patch
-   0005-nand-wrs-it-s-16-bits-not-8.patch
-@end example
+@smallexample
+    0001-sam945-include-mtd-nand.h-in-device-file.patch
+	0002-arm-config-added-wrs3_defconfig-and-fixed-default-at.patch
+	0003-nand-wrs-it-s-16-bits-not-8.patch
+	0004-add-DHCP-retries-by-tom.patch
+	0005-build-Add-a-script-to-compile-with-WRS-env-variables.patch
+	0006-gpio-add-function-to-check-them.patch
+	0007-startup-load-default-environment-when-loading-env-fa.patch
+	0008-nand-Fix-wrongly-removed-line-for-16bits-NAND.patch
+	0009-wrs-init-config-script-with-menu-support-v3.2.patch
+	0001-91samg45-removed-two-clock-that-failed-compilation.patch
+@end smallexample
 
 The build scripts compile with the following commands, where the
 cross-compiler is the one built by @i{buildroot}. If you run these
@@ -703,280 +928,125 @@ running the script and all keys listed in the file @code{authorized_keys}
 in the main directory of this package, if present.
 
 @c ##########################################################################
-@node Installation of WRS-3
-@chapter Installation of WRS-3
+@node USB-Loader
+@chapter USB-Loader
 
-A switch with no code has three communication channels available: a
-serial port, on 2.54mm pins, a JTAG connector with standard ARM-20
-pinout and a USB port driven by the internal CPU ROM if no boot code
-is found.  Please note that if you write a faulty @i{at91boot} binary
-the internal ROM will jump into it without activating the USB port.
-The solution here is either the @i{USB loader} or the JTAG, as described
-later
-and the JTAG will be your only way out
+To flash the firmware into the switch you need to use the @i{USB-loader}
+program. You can also use the flash-wrs script that ease the procedure.
 
-If you have a @i{mini-backplane}, you can connect the 6 pins of P2 to
-the similar connector on the backplane labeled as @code{Connect to
-MCH/P2}. The backplane hosts a CP2102 USB adapter and a mini-USB
-socket.  Note that you may connect all 6 pins, but only TX and RX
-signals are needed.
-
-You can work without a serial port, but it is strongly suggested to
-connect it.  With a UART you are able to see diagnostics and interact
-with the boot loader or the operating system even if it fails to
-configure the network.  The port uses 3.3V signals, so you will most
-likely need a level converter; the figure below shows the connection
-(black is GND, orange is RX and white is TX).
-@sp 1
-@center @image{wrs-v3-uart, 5cm}
-@sp 1
-
-@menu
-* Installing from Jtag::        
-* Installing with the USB Flasher::  
-* Booting the Kernel::          
-@end menu
-
-@c ==========================================================================
-@node Installing from Jtag
-@section Installing from Jtag
-
-You can boot and install the system using a JTAG debugger, although
-the @i{USB Flasher} is currently the preferred technique. Each debugger
-has its own command language, so you will need to adapt to yours. What is
-shown here refers to the @i{peedi} tool.
-
-As a first step, you will need to ensure the JTAG clock is slow enough.
-The clock can be no faster than 1/6th of the CPU clock, so you need
-3kHz at most (the G45 starts up with an internal oscillator, which has
-an unpredictable value between 20kHz and 40kHz).  Then, I would verify
-that the internal SRAM is working; I do that with cool food and bad
-coffee instead of the usual smelly dead beef.
-
-@example
-   clock init
-   mem write 0x300000 0xc001f00d
-   mem write 0x300004 0xbadc0ffe
-   mem read  0x300000 2
-   ==> 0x300000: 0xC001F00D 0xBADC0FFE
-@end example
-
-Now, you can load your @i{at91bootstrap} to the internal SRAM,
-retrieving it from the network or your host filesystem.  Since no boot
-loader is there, you should place a breakpoint after @i{at91bootstrap}
-initialized SDRAM and the PLL. Finally you can load @i{barebox} and jump
-to it. Such step is better performed with the full JTAG clock, or
-it would take several dozen minutes.
-
-@example
-  mem load at91bootstrap.bin 0x300000
-  break add hard 0x300088
-  go
-  ## wait for the breakpoint to happen
-  break del all
-  clock normal
-  mem load barebox.bin 0x73f00000
-  go
-@end example
-
-On the serial port you will see the following messages at 115200,8N1.
-The first 4 lines are printed by @i{at91bootstrap}, the rest by @i{barebox}.
-
-@c FIXME: the messages and prompts
-@smallexample
-   Start AT91Bootstrap...
-   Begin to load image...
-   ++++++++
-   Loading image done.
-
-
-   barebox 2011.09.0-dirty (Sep 12 2011 - 17:09:12)
-
-   Board: Ronetix PM9G45
-   Clocks: CPU 400 MHz, master 133 MHz, main 12.000 MHz
-   registered netconsole as cs1
-   Malloc space: 0x73b00000 -> 0x73f00000 (size  4 MB)
-   Stack space : 0x73af8000 -> 0x73b00000 (size 32 kB)
-   Open /dev/env0 No such file or directory
-   no valid environment found on /dev/env0. Using default environment
-   running /env/bin/init...
-
-   Hit any key to stop autoboot:  2
-   barebox@@Ronetix PM9G45:/
-@end smallexample
-
-When the boot loader is running, you can boot a kernel and use its
-own @i{/dev/mtd} devices to write to the DataFlash and NAND memories.
-
-According to the partition table you have in your kernel sources, you will
-see a different set of @i{mtd} files, but you can identify them by looking
-at @code{/proc/mtd}:
-
-@example
-   # cat /proc/mtd
-   dev:    size   erasesize  name
-   mtd0: 04000000 00020000 "Partition 1"
-   mtd1: 1c000000 00020000 "Partition 2"
-   mtd2: 00840000 00000420 "spi0.0-AT45DB642x"
-@end example
-
-Here above, the DataFlash is @i{/dev/mtd2}, whereas the former partitions
-refer to NAND memory.  You should then write @i{at91boot} to offset 0
-of the DataFlash and @i{barebox} to offset 0x8400 (33792):
-
-@example
-   cat at91bootstrap.bin > /dev/mtd2
-   dd bs=33792 seek=1 if=barebox.bin of=/dev/mtd2
-@end example
-
-Now you can detach the debugger, press reset and see @i{barebox} starting.
-
-@c ==========================================================================
-@node Installing with the USB Flasher
-@section Installing with the USB Flasher
-
-You can install the IPL and boot loader using the @i{USB-loader} program,
-put together by Tomasz based on Atmel sources available to the public
-with a permissive Free Software license.
-
-In order to force the ROM to run the boot protocol, you must prevent
-it from finding code in the @i{data-flash}. To do so you can short
-pins 1 and 4 of the chip -- this shorts CS* and 5V to the ROM
-can access to the memory's contents. I used two wires
-to be shorted together as needed.  Then, you need to connect a USB
-cable to the device socket near the JTAG connector. The next figure
-shows both the shorted pins (the @i{dataflash} is on the left and there
-are two arrowheads pointing to them) and the
-USB cable (on the right).
-@sp 1
-@center @image{flasher, 14cm}
-@sp 1
-
-After shorting the pins you can press reset (the button near the USB
-connector). If things go well, the device is enumerated as shown;
-you must un-short the wires at this point or you will not be able
-to write the new information to @i{dataflash}
-
-@smallexample
-   brezza% lsusb | grep Atmel
-   Bus 001 Device 025: ID 03eb:6124 Atmel Corp. at91sam SAMBA bootloader
-@end smallexample
-
-The device should also appear as @code{/dev/ttyACM0} or equivalent.
-
-Now you can un-short the @i{data flash} ping and program the IPL and
-boot loader using the script @i{build/flash-wrs} provided in this
-package.
-
-The script is invoked as superuser in the following way, from the
+The script can be invoked in the following ways, from the
 toplevel directory of @code{wr-switch-sw}:
 
-@example
-   ./build/flash-wrs [uart-device] [xx:yy:zz:aa:bb:cc]
-@end example
+@smallexample
+	$ build/flash-wrs --help
+	Usage: build/flash-wrs [options] MAC [<firmware>.tar.gz] [DEV]
 
-The @i{uart device} is optional. It defaults to @code{/dev/ttyACM0}.
+	MAC:	 MAC address in hexadecimal seperated by ':' (i.e, AB:CD:EF:01:23:45)
+	<firmware>.tar.gz: Use the file in the firmware to flash the device
+	DEV:	 The usb device (by default it is /dev/ttyACM0)
+	Options: 
+		-h|--help		 Show this help message
+		-m|--mode		 can be: default, df (dataflash), nf (nandflash), test.
+		-e 			 Completely erase the memory (Can erase your configuration)
+		--build			 Use file that you have build in the WRS_OUTPUT_DIR
+		--test			 Use file for testing the switch (not available)
+		--skip		 Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE
+@end smallexample
+
+The @i{DEV} is optional. It defaults to @code{/dev/ttyACM0}.
 If your system maps the Atmel ROM to a different device name, please
-pass the name on the command line. The script wants a full pathname:
-the leading @code{/} is used to tell the device argument from the
-mac-address one).
+pass the name on the command line. The script wants a full pathname 
+starting with @code{/}.
 
-The MAC address is optional; if not specified, the default
-@code{02:0b:ad:c0:ff:ee} applies.  The script checks that the
-address is properly formed before applying it to the @i{barebox}.
+The MAC address is mandatory, if not specified it is asked in the next step.
+The script checks that the address is properly formed before applying 
+it to the @i{barebox}. If the @code{--skip} flag is used the MAC will 
+be by default 02:0B:AD:C0:FF:EE
 
 If you want to flash your own @i{at91boot.bin} or @i{barebox.bin} you
 can just place them in the @i{binaries} subdirectory before calling
 the script.
 
+You can also flash the image you have build using @ref{Quick Build} by
+adding the tag @code{--build}
+
+Finally you can select a mode using the @code{-m|--mode} flag to choose
+to write in dataflash, nandflash, both (default mode) or ddr memories.
+
+
 The script performs the following steps:
 
 @itemize @bullet
 @item It compiles the loader (@i{usb-loader/} subdir).
-@item It picks @i{at91boot} and @i{barebox} from the @i{binaries} subdirectory.
-@item It packs them together in a single binary image, with proper offsets,
+@item Check if SAMBA bootloader is present.
+@item It picks the correct binaries according to the options.
 @item Optionally, it changes the default MAC address in @i{barebox}
       default environment, so you can make all switches different.
-@item It uses the @i{sam-ba} protocol to write to @i{dataflash}.
+@item It erases the memory selected by mode.
+@item And finally, it writes the corresponding binaries to @i{dataflash}, 
+@i{nandflash} or @i{ddr}.
 @end itemize
 
-If all goes well, at the next reset you will find @i{barebox} accessing
-the network with your preferred MAC address.
 
-The output you must expect from the flasher is like the following, and
-the process takes half a minute more or less:
 
-@example
-   Initializing SAM-BA: CPU ID: 0x819b05a2
-   loading applet isp-extram-at91sam9g45 at 0x00300000
-   Initializing DataFlash...
-   loading applet isp-dataflash-at91sam9g45 at 0x00300000
-   Programming DataFlash...
-   Dataflash: Writing 279896 bytes at offset 0x0 buffer 70000000....ABCDE
-   Fdone.
-   Programming done!
-@end example
-
-If you look at the serial port, during programming, you will see
-messages like these:
-
-@example
-   -I- Statup: PMC_MCKR 1202 MCK = 100000000 command = 0
-   -I- -- EXTRAM ISP Applet 2.9 --
-   -I- -- AT91SAM9G45-EK
-   [...]
-   -I- VERIFY at offset: 0x0 buffer at : 0x70055d28 of: 0x45d28 Bytes
-   -I-     End of applet (command : 2 --- status : 0)
-@end example
 
 @c ==========================================================================
-@node Booting the Kernel
-@section Booting the Kernel
+@node Booting with Barebox
+@chapter Booting with Barebox
 
-After initial installation, the DataFlash only includes up to @i{barebox},
-while the rest must still be loaded.
+After initial installation, you should reach the following menu.
 
-Assuming you have a known-working NFS-Root installation and a TFTP
-server, but you do not want to use DHCP because you already have one
-in your network, the following commands will load a kernel and
-boot it as NFS-Root. You will need to change IP addresses and names
-to match your personal situation.
+@example
+ Welcome on WRSv3 Boot Sequence
+      1: boot from nand (default)      
+      2: boot from dataflash (failsafe)
+      3: boot from script              
+      4: boot from ram                 
+      5: boot from nfs                 
+      6: boot from nfs (test)          
+      7: edit & save config            
+      8: shell (prompt terminal)       
+      9: reset barebox    
+@end example
 
-@c FIXME: kernel boot procedure
+
+@itemize @bullet
+@item Booting from NAND is the standard boot procedure
+@item Booting from DataFlash can be used when NAND has been corrupted. 
+It is the failsafe mode.
+@end itemize
+
+
+The other options need a network connection. By default they use
+a DHCP server to obtain the IP address to connect to the TFTP server 
+to load the different files.
+
+However, if you do not want to use DHCP because you already have one in your 
+network you should edit the config and add the following
 @example
    eth0.ipaddr=192.168.16.9
    eth0.serverip=192.168.16.1
-   addpart /dev/mem  0x400000@@0x71000000(kernel)
-   tftp zImage /dev/mem.kernel
-   bootargs="$bootargs mem=64m root=nfs nfsroot=/opt/root/wrs,tcp "
-   bootargs="$bootargs ip=192.168.16.9:192.168.16.1:255.255.255.0"
-   bootz /dev/mem.kernel
 @end example
 
-Please note that the default boot command in the barebox binary with the
-provided patches runs the following three commands:
+These "network" booting options can be explained as:
 
-@example
-   dhcp
-   tftp wrboot
-   ./wrboot
-@end example
+@itemize @bullet
+@item script: search for a script in TFTP directory at @code{<MAC of switch>/wrboot} or @code{wrboot} to load and execute it.
+@item ram: load @code{zImage} & @code{wrs-image.cpio.gz} to the DDR to boot from it.
+@item nfs: load @code{zImage} to the DDR  & mount @code{rootfs} as root filesystem.
+@item nfs (test): load @code{zImage} to the DDR  & mount @code{rootfs-test} as root filesystem. 
+@end itemize
 
-This means that if you have both DHCP and TFTP, you can just write
-your @i{barebox} commands in a file called @i{wrboot} in your TFTP
-public location, and the commands will automatically executed at boot.
-Actually, I am currently using the stanza shown above to boot my
-switch over the network with no interaction at all, while being able
-to change the boot procedure on the server while the switch is off.
+Finally in save & edit config you have some parameters to easily fit
+the booting process to your need. i.e, Selecting alternative boot method,
+forcing alternative boot, etc.
 
-To have a self-hosting switch, you should copy your
-filesystem to NAND flash. See @ref{Installing the filesystem to NAND},
-for a quick primer (the production procedure is not finalized at this
-point).
 
 @c ##########################################################################
 @node Code layout in a production switch
 @chapter Code layout in a production switch
+
+@b{NOTE}: This chapter might be out-dated
 
 This is the suggested arrangement of the various binary blobs in the
 final switch. Any comment and suggestion is welcome, as nothing
@@ -1040,13 +1110,219 @@ Later releases of this document will include the complete recovery
 procedures, as well as building rules for the production versions of
 @i{at91boot} and @i{barebox}.
 
-@menu
-* Installing the filesystem to NAND::  
-@end menu
+
+
+
+@c ##########################################################################
+@node v3.0 & v3.1
+@appendix v3.0 & v3.1
+
+This appendix keep the documentation of deprecated devices like the 
+switch v3.0 and the v3.1. A list of changes between these version can be
+found in 
 
 @c ==========================================================================
-@node Installing the filesystem to NAND
-@section Installing the filesystem to NAND
+@node SAMBA-Monitor (USB Flasher)
+@section SAMBA-Monitor (USB Flasher)
+
+To flash the switch using USB flasher, you need to force the ROM to 
+run the boot protocol called SAMBA Monitor which mean that you must 
+prevent the ARM from finding valid code in the @i{data-flash}.
+
+In @ref{USB connection} we have used a jumper to
+disable dataflash, however for version v3.0 & v3.1 it does not exist. 
+Thus, you need to short pins 1 and 4 of the dataflash chip 
+-- this shorts CS* and 5V to the ROM can access to the memory's contents. 
+
+I used two wires to be shorted together as needed. The next figure
+shows both the shorted pins (the @i{dataflash} is on the left and there
+are two arrowheads pointing to them) and the
+USB cable (on the right).
+@sp 1
+@center @image{flasher, 14cm}
+@sp 1
+
+After shorting the pins you can press reset (the button near the USB
+connector). If things go well, the device is enumerated as shown;
+you must un-short the wires at this point or you will not be able
+to write the new information to @i{dataflash}
+
+@smallexample
+   brezza% lsusb | grep Atmel
+   Bus 001 Device 025: ID 03eb:6124 Atmel Corp. at91sam SAMBA bootloader
+@end smallexample
+
+The device should also appear as @code{/dev/ttyACM0} or equivalent.
+
+
+
+
+@c ==========================================================================
+@node Serial Port
+@section Serial Port
+
+If you have a @i{mini-backplane}, you can connect the 6 pins of P2 to
+the similar connector on the backplane labeled as @code{Connect to
+MCH/P2}. The backplane hosts a CP2102 USB adapter and a mini-USB
+socket.  Note that you may connect all 6 pins, but only TX and RX
+signals are needed.
+
+You can work without a serial port, but it is strongly suggested to
+connect it.  With a UART you are able to see diagnostics and interact
+with the boot loader or the operating system even if it fails to
+configure the network.  The port uses 3.3V signals, so you will most
+likely need a level converter; the figure below shows the connection
+(black is GND, orange is RX and white is TX).
+@sp 1
+@center @image{wrs-v3-uart, 5cm}
+@sp 1
+
+
+@c ##########################################################################
+@node Installing from Jtag
+@appendix Installing from Jtag
+
+
+You can boot and install the system using a JTAG debugger, although
+the @i{USB Flasher} is currently the preferred technique. However you 
+might have a problem with the USB-Flasher and JTAG is the only way to
+communicate with the switch.
+
+Each debugger has its own command language, so you will need to adapt 
+to yours. What is shown here refers to the @i{peedi} & @i{sam-ice} tools.
+
+@c ==========================================================================
+@node PEEDI Tool
+@section PEEDI Tool
+
+As a first step, you will need to ensure the JTAG clock is slow enough.
+The clock can be no faster than 1/6th of the CPU clock, so you need
+3kHz at most (the G45 starts up with an internal oscillator, which has
+an unpredictable value between 20kHz and 40kHz).  Then, I would verify
+that the internal SRAM is working; I do that with cool food and bad
+coffee instead of the usual smelly dead beef.
+
+@smallexample
+   clock init
+   mem write 0x300000 0xc001f00d
+   mem write 0x300004 0xbadc0ffe
+   mem read  0x300000 2
+   ==> 0x300000: 0xC001F00D 0xBADC0FFE
+@end smallexample
+
+Now, you can load your @i{at91bootstrap} to the internal SRAM,
+retrieving it from the network or your host filesystem.  Since no boot
+loader is there, you should place a breakpoint after @i{at91bootstrap}
+initialized SDRAM and the PLL. Finally you can load @i{barebox} and jump
+to it. Such step is better performed with the full JTAG clock, or
+it would take several dozen minutes.
+
+@smallexample
+  mem load at91bootstrap.bin 0x300000
+  break add hard 0x300088
+  go
+  ## wait for the breakpoint to happen
+  break del all
+  clock normal
+  mem load barebox.bin 0x73f00000
+  go
+@end smallexample
+
+@c ==========================================================================
+@node SAM-ICE Tool
+@section SAM-ICE Tool
+
+This section follows the same steps as in @ref{PEEDI Tool}, but using
+the syntax of the SAM-ICE tool recommended by Atmel
+
+@example
+./start
+@end example
+
+Checking SRAM
+
+@smallexample
+speed 2
+w4 0x300000 0xc001f00d
+w4 0x300004 0xcbadc0ffe
+mem32 0x300000 2
+@end smallexample
+
+Uploading at91bootstrap & barebox to DDR
+
+@smallexample
+speed 2
+r
+wreg "R15 (PC)" 300000
+loadbin /tftpboot/at91bootstrap.bin 0x300000
+SetBP 0x300088 H #Check 0x300088
+g
+speed a
+loadbin /tftpboot/barebox.bin 0x73f00000
+ClrBP 1
+g
+@end smallexample
+
+
+@c ==========================================================================
+@node Booting & Flashing
+@section Booting & Flashing
+
+On the serial port you will see the following messages at 115200,8N1.
+The first 4 lines are printed by @i{at91bootstrap}, the rest by @i{barebox}.
+
+@c FIXME: the messages and prompts
+@smallexample
+   Start AT91Bootstrap...
+   Begin to load image...
+   ++++++++
+   Loading image done.
+
+
+   barebox 2011.09.0-dirty (Sep 12 2011 - 17:09:12)
+
+   Board: Ronetix PM9G45
+   Clocks: CPU 400 MHz, master 133 MHz, main 12.000 MHz
+   registered netconsole as cs1
+   Malloc space: 0x73b00000 -> 0x73f00000 (size  4 MB)
+   Stack space : 0x73af8000 -> 0x73b00000 (size 32 kB)
+   Open /dev/env0 No such file or directory
+   no valid environment found on /dev/env0. Using default environment
+   running /env/bin/init...
+
+   Hit any key to stop autoboot:  2
+   barebox@@Ronetix PM9G45:/
+@end smallexample
+
+When the boot loader is running, you can boot a kernel and use its
+own @i{/dev/mtd} devices to write to the DataFlash and NAND memories.
+
+According to the partition table you have in your kernel sources, you will
+see a different set of @i{mtd} files, but you can identify them by looking
+at @code{/proc/mtd}:
+
+@example
+   # cat /proc/mtd
+   dev:    size   erasesize  name
+   mtd0: 04000000 00020000 "Partition 1"
+   mtd1: 1c000000 00020000 "Partition 2"
+   mtd2: 00840000 00000420 "spi0.0-AT45DB642x"
+@end example
+
+Here above, the DataFlash is @i{/dev/mtd2}, whereas the former partitions
+refer to NAND memory.  You should then write @i{at91boot} to offset 0
+of the DataFlash and @i{barebox} to offset 0x8400 (33792):
+
+@example
+   cat at91bootstrap.bin > /dev/mtd2
+   dd bs=33792 seek=1 if=barebox.bin of=/dev/mtd2
+@end example
+
+Now you can detach the debugger, press reset and see @i{barebox} starting.
+
+@c ==========================================================================
+@node Installing Kernel & FileSystem to NAND
+@section Installing Kernel & FileSystem to NAND
 
 This is an initial procedure to install the filesystem to NAND memory
 and set up a self-hosted switch to keep in your pocket for
@@ -1161,9 +1437,10 @@ it use the arrow keys (it is not like @i{vi}, for your pleasure but
 not for mine). To save and exit use @i{ctrl-D}.
 
 
+
 @c ##########################################################################
 @node Troubleshooting
-@chapter Troubleshooting
+@appendix Troubleshooting
 
 This chapter includes notes about issues we found and how to address them,
 or extra tools 
@@ -1193,6 +1470,8 @@ following commands are what I used to compile it (you will need to set
 
 @example
    tar xzf /opt/wrs-build/downloads/at91bootstrap-3-3.0.tar.gz
+   cd at91bootstrap-3-3.0
+   git init .
    git am $WRS_BASE_DIR/../patches/g45memtest/00*
    make at91sam9g45ek_defconfig
    make
@@ -1200,6 +1479,7 @@ following commands are what I used to compile it (you will need to set
 
 The output binary is the only file called ``@code{binaries/*.bin}'',
 that should be renamed to @code{g45memtest}.
+
 
 
 @c ##########################################################################
