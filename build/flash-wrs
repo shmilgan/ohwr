@@ -27,7 +27,7 @@ showhelp()
 	printf "\t-e \t\t\t Completely erase the memory (Can erase your configuration)\n"
 	printf "\t--build\t\t\t Use file that you have build in the WRS_OUTPUT_DIR\n"
 	printf "\t--test\t\t\t Use file for testing the switch (not available)\n"
-	printf "\t--silent\t\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE\n\n"
+	printf "\t--skip\t\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE\n\n"
 	exit 0
 }
 
@@ -67,7 +67,11 @@ modifyMAC()
 			if [ $silent ]; then 
 					return 1;
 			fi
-			read -p "Enter MAC (XX:XX:XX:XX:XX:XX): " MAC
+			read -p "Enter MAC (XX:XX:XX:XX:XX:XX) or press S (Skip): " MAC
+			if ( [ "x$MAC" = "xS" ] || [ "x$MAC" = "xs" ] ); then 
+				MAC=""
+				return 1;
+			fi
 		fi
 	done
 
@@ -132,15 +136,17 @@ modifyMAC()
 
 }
 
+# Go to the top directory
+topdir=$(dirname $0)/..
 
 # Sanity checks
-if [ -d ./usb-loader ]; then true; else
-    echo "$0: Please run me from the top-level wr-switch-sw directory" >& 2
+if [ -d ${topdir}/usb-loader ]; then true; else
+    echo "$0: usb-loader is not found" >& 2
     exit 1
 fi
 
 # build flasher itself
-if CC=cc make -s -C usb-loader; then true; else
+if CC=cc make -s -C ${topdir}/usb-loader; then true; else
 	echo "$0: Error compiling usb-loader" >&2; exit 1;
 fi
 
@@ -149,8 +155,8 @@ MAC=""
 DEV=""
 FLAGS=""
 
-at91bs="./binaries/at91bootstrap.bin"
-barebox="./binaries/barebox.bin"
+at91bs="${topdir}/binaries/at91bootstrap.bin"
+barebox="${topdir}/binaries/barebox.bin"
 kernel="${WRS_OUTPUT_DIR}/images/zImage"
 rootfs="${WRS_OUTPUT_DIR}/images/wrs-image.jffs2.img"
 
@@ -210,6 +216,7 @@ while true; do
 done
 if [ -z "$msg" ]; then
 	printf "\tOK\n"
+	read -t 5 -p "Remove the Dataflash jumper (5s timeout)" 
 fi
 
 ## Flashing DataFlash
@@ -221,7 +228,7 @@ if [ $df ]; then
 	Tbarebox=$(mktemp /tmp/barebox.XXXXXX)
 	modifyMAC ${barebox} ${Tbarebox}
 
-	./usb-loader/mch_flasher -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792		
+	${topdir}/usb-loader/mch_flasher -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792		
 fi
 
 ## Selecting the running memmode
@@ -254,7 +261,7 @@ if [ $nf ]; then
 	checkExit $kernel
 	checkExit $rootfs
 
-	./usb-loader/mch_flasher -m nand $FLAGS $DEV ${kernel} 0x00100000 ${rootfs} 0x04000000	
+	${topdir}/usb-loader/mch_flasher -m nand $FLAGS $DEV ${kernel} 0x00100000 ${rootfs} 0x04000000	
 fi
 
 ## Loading in DDR
@@ -267,7 +274,7 @@ if [ $test ]; then
 	Tbarebox=$(mktemp /tmp/barebox.XXXXXX)
 	modifyMAC ${barebox} ${Tbarebox}
 
-	./usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${rootfs} 0x2000000
+	${topdir}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${rootfs} 0x2000000
 fi
 
 
