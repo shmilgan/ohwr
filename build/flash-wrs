@@ -62,28 +62,14 @@ modifyMAC()
 	new=$2
 	cp $origin $new
 	
-	# check & change mac address
-	X="[0-9a-fA-F][0-9a-fA-F]"
-	while true; do
-		if echo $MAC | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
-			sed -i "s/02:0B:AD:C0:FF:EE/$MAC/" $new
-			echo "MAC is now: $MAC"
-			return 0
-		else
-			if [ "x$MAC" != "x" ]; then
-					echo "$0: Invalid MAC address \"$MAC\"" >&2;
-			fi
-			if [ $skip ]; then 
-					return 1;
-			fi
-			read -p "Enter MAC (XX:XX:XX:XX:XX:XX) or press S (Skip): " MAC
-			if ( [ "x$MAC" = "xS" ] || [ "x$MAC" = "xs" ] ); then 
-				MAC=""
-				return 1;
-			fi
-		fi
-	done
-
+	# MAC address doesn't need any modification
+	if [ $silent ]; then 
+	    return 1;
+	fi
+	# Modify MAC address
+	sed -i "s/02:0B:AD:C0:FF:EE/$MAC/" $new
+	echo "MAC is now: $MAC"
+	return 0
 }
 
 # Go to the top directory
