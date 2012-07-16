@@ -64,7 +64,7 @@ modifyMAC()
 			if [ "x$MAC" != "x" ]; then
 					echo "$0: Invalid MAC address \"$MAC\"" >&2;
 			fi
-			if [ $silent ]; then 
+			if [ $skip ]; then 
 					return 1;
 			fi
 			read -p "Enter MAC (XX:XX:XX:XX:XX:XX) or press S (Skip): " MAC
@@ -72,65 +72,6 @@ modifyMAC()
 				MAC=""
 				return 1;
 			fi
-		fi
-	done
-
-}
-
-showhelp()
-{
-	echo "Usage: $0 [options] MAC [DEV]\n"
-	echo "MAC:\t MAC address in hexadecimal seperated by ':' (i.e, AB:CD:EF:01:23:45)"
-	echo "DEV:\t The usb device (by default it is /dev/ttyACM0)"
-	echo "Options: "
-	echo "\t-h|--help\t\t Show this help message"
-	echo "\t-m|--memmode\t\t can be: default, df (dataflash), nf (nandflash), test."
-	echo "\t-e \t\t\t Completely erase the memory (Can erase your configuration)"
-	echo "\t--build\t\t\t Use file that you have build in the WRS_OUTPUT_DIR"
-	echo "\t--test\t\t\t Use file for testing the switch (not available)"
-	echo "\t--silent\t\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE"
-
-	echo ""
-	exit 0
-}
-
-
-checkExit()
-{
-	err=0;
-	if [ $1 ]; then
-		if [ -f $1 ]; then 
-			return 0; 
-		else 
-			echo "Can't find $1" >& 2; 
-		fi
-	else
-		echo "varname not set"
-	fi
-	exit 1
-}
-
-modifyMAC()
-{
-	origin=$1
-	new=$2
-	cp $origin $new
-	
-	# check & change mac address
-	X="[0-9a-fA-F][0-9a-fA-F]"
-	while true; do
-		if echo $MAC | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
-			sed -i "s/02:0B:AD:C0:FF:EE/$MAC/" $new
-			echo "MAC is now: $MAC"
-			return 0
-		else
-			if [ "x$MAC" != "x" ]; then
-					echo "$0: Invalid MAC address \"$MAC\"" >&2;
-			fi
-			if [ $silent ]; then 
-					return 1;
-			fi
-			read -p "Enter MAC (XX:XX:XX:XX:XX:XX): " MAC
 		fi
 	done
 
@@ -178,7 +119,7 @@ while [ $# -ge 1 ]; do
 		shift;;
 	-h|--help) 	showhelp; shift;;
 	-m|--memmode)	memmode="$2";  shift; shift;;
-	--silent)	silent=1; shift;;
+	--skip)	skip=1; shift;;
 	/* ) DEV="-s $1"; shift ;;
 	*:* ) MAC="$1"; shift ;;
 	
@@ -216,7 +157,7 @@ while true; do
 done
 if [ -z "$msg" ]; then
 	printf "\tOK\n"
-	read -t 5 -p "Remove the Dataflash jumper (5s timeout)" 
+	read -p "Remove the Dataflash jumper (Press any key)" 
 fi
 
 ## Flashing DataFlash
@@ -229,30 +170,6 @@ if [ $df ]; then
 	modifyMAC ${barebox} ${Tbarebox}
 
 	${topdir}/usb-loader/mch_flasher -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792		
-fi
-
-## Selecting the running memmode
-if [ "x$memmode" = "xdf" ]; then
-	df=1
-elif [ "x$memmode" = "xnf" ]; then
-	nf=1
-elif [ "x$memmode" = "xtest" ]; then
-	test=1
-else 
-	df=1
-	nf=1
-fi
-
-## Flashing DataFlash
-if [ $df ]; then
-
-	checkExit $at91bs
-	checkExit $barebox
-	
-	Tbarebox=$(mktemp /tmp/barebox.XXXXXX)
-	modifyMAC ${barebox} ${Tbarebox}
-
-	./usb-loader/mch_flasher -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792		
 fi
 
 ## Flashing NANDFlash
