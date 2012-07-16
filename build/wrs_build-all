@@ -47,10 +47,10 @@ showhelp() {
 	echo ""
 	echo "Options:"
 	echo "	--help 		Show this little message"
+	echo "	--pack		Create a tar.gz package with the files"
 	echo "	--clean		Remove all the previous configuration"
 	echo "	--fetch		Force fetching the new download files"
 	echo "	--list		List the different building steps"
-	echo "	--pack		Create a tar.gz package with the files in ${WRS_OUTPUT_DIR}/images/"
 	echo "	--step=[00-09]	Perform one specific step"
 	echo ""
 	exit 0;
