@@ -367,7 +367,7 @@ and @code{04-kernel}).
 @section Release Package
 
 Once all the building steps have succeed, you can easily create a 
-package in your working directory using the following command:
+package in @code{WRS_OUTPUT_DIR/images/} using the following command:
 
 @example
    /path/to/wr-switch-sw/build/wrs_build-all --pack
