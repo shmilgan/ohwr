@@ -1,24 +1,24 @@
-From ac5a6dcee581286e1bd5cc9b6da136dc601f93cd Mon Sep 17 00:00:00 2001
+From 01f37c9783d48906f3ea2a672be734c5ebd3f9d2 Mon Sep 17 00:00:00 2001
 From: Alessandro Rubini <rubini@gnudd.com>
 Date: Mon, 9 Jul 2012 13:40:30 +0200
 Subject: [PATCH 9/9] wrs: init & config script with menu (support v3.2)
 
 Author:    Benoit Rat <benoit@sevensols.com>
 ---
- arch/arm/boards/pm9g45/env/bin/init            |  230 ++++++++++++++++++++++++
- arch/arm/boards/pm9g45/env/config              |   39 ++--
+ arch/arm/boards/pm9g45/env/bin/init            |  228 ++++++++++++++++++++++++
+ arch/arm/boards/pm9g45/env/config              |   40 ++---
  arch/arm/boards/pm9g45/env/this_is_compiled_in |    3 +
  arch/arm/boards/pm9g45/init.c                  |    4 +-
- 4 files changed, 244 insertions(+), 32 deletions(-)
+ 4 files changed, 247 insertions(+), 28 deletions(-)
  create mode 100644 arch/arm/boards/pm9g45/env/bin/init
  create mode 100644 arch/arm/boards/pm9g45/env/this_is_compiled_in
 
 diff --git a/arch/arm/boards/pm9g45/env/bin/init b/arch/arm/boards/pm9g45/env/bin/init
 new file mode 100644
-index 0000000..8a95f5c
+index 0000000..c6e8b46
 --- /dev/null
 +++ b/arch/arm/boards/pm9g45/env/bin/init
-@@ -0,0 +1,230 @@
+@@ -0,0 +1,228 @@
 +#!/bin/sh
 +#
 +# Init script for WRS barebox
@@ -40,7 +40,7 @@ index 0000000..8a95f5c
 +autoboot_altforced="0";
 +autoboot_altmode="2";
 +error_timeout="60";
-+
++net="0"
 +bootargs="console=ttyS0,115200"
 +
 +### Override default value using /env/config
@@ -70,24 +70,23 @@ index 0000000..8a95f5c
 +menu -a -m boot -d "Welcome on WRSv3 Boot Sequence"
 +menu -e -a -m boot -c 'init -m nand'						-d "boot from nand (default)"
 +menu -e -a -m boot -c 'init -m df'							-d "boot from dataflash (failsafe)"
-+menu -e -a -m boot -c 'init -m script -i dhcp'				-d "boot from script"
-+menu -e -a -m boot -c 'init -m ram -r tftp -i dhcp'			-d "boot from ram"
-+menu -e -a -m boot -c 'init -m tftp -r nfs -i dhcp'			-d "boot from nfs"
-+menu -e -a -m boot -c 'init -m tftp -r nfs -i dhcp -x test'	-d "boot from nfs (test)"
++menu -e -a -m boot -c 'init -m script -n'					-d "boot from script"
++menu -e -a -m boot -c 'init -m ram -r tftp -n'				-d "boot from ram"
++menu -e -a -m boot -c 'init -m tftp -r nfs -n'				-d "boot from nfs"
++menu -e -a -m boot -c 'init -m tftp -r nfs -n -x test'		-d "boot from nfs (test)"
 +menu -e -a -m boot -c 'init -m config'						-d "edit & save config"
 +menu -e -a -m boot -c 'exit 0'								-d "shell (prompt terminal)"
 +menu -e -a -m boot -c reset									-d "reset barebox"
 +
 +### Check init arguments
-+while getopt "m:r:i:x:
-+" Option
++while getopt "m:r:x:n" Option
 +do
 +if [ ${Option} = m ]; then
 +	mode=${OPTARG}
 +elif [ ${Option} = r ]; then
 +	rootfs_loc=${OPTARG}
-+elif [ ${Option} = i ]; then
-+	ip=${OPTARG}
++elif [ ${Option} = n ]; then
++	net="1"
 +elif [ ${Option} = x ]; then
 +	xtra="-${OPTARG}"
 +else
@@ -109,9 +108,16 @@ index 0000000..8a95f5c
 +		menu -m boot -S -n $autoboot_altmode
 +		ok="1"
 +	else
-+		## Otherwise boot from NAND
-+		menu -m boot -S -n 1
-+		ok="1"
++		### If barebox is not already set in NAND (first boot or NAND formatted)
++		if [ -f /env/this_is_compiled_in ]; then
++			echo "You might save & edit the config to run from NAND"
++			menu -m boot -S -n 6	#Select automatic NFS (test) option for next boot
++			ok="1"
++		### Otherwise boot from NAND	
++	    else
++			menu -m boot -S -n 1
++			ok="1"
++		fi
 +	fi
 +fi
 +
@@ -125,19 +131,11 @@ index 0000000..8a95f5c
 +if [ x$run = x1 -a x$mode = xnand ]; then
 +	echo "booting from NAND"
 +	run="0"
-+	
-+	### If barebox is not already set in NAND (first boot or NAND formatted)
-+	if [ -f /env/this_is_compiled_in ]; then
-+		echo "You might save & edit the config to run from NAND"
-+		menu -m boot -S -n 6	#Select automatic NFS (test) option for next boot
-+		ok="1"
-+    else
-+		cp /dev/nand0.kernel /dev/mem.kernel
-+		bootargs="$bootargs root=1f01 rootfstype=jffs2 mem=32m init=/init"
-+		bootz /dev/mem.kernel
-+		menu -m boot -S -n $autoboot_altmode #Select the alternative boot
-+	fi
-+    
++		
++	cp /dev/nand0.kernel /dev/mem.kernel
++	bootargs="$bootargs root=1f01 rootfstype=jffs2 mem=32m init=/init"
++	bootz /dev/mem.kernel
++	menu -m boot -S -n $autoboot_altmode #Select the alternative boot
 +fi
 +
 +### Edit and save config mode
@@ -183,14 +181,14 @@ index 0000000..8a95f5c
 +
 +
 +### Obtain DHCP
-+if [ x$run = x1 -a x$ip = xdhcp ]; then
++if [ x$run = x1 -a x$net = x1 -a x$ip = xdhcp ]; then
 +	dhcp 5
 +	if [ "$?" -eq "1" ]; then
-+			echo "Enable to obtain IP from DHCP"
-+			echo -n "hit any key to go to menu..."; timeout -sa $error_timeout
-+			menu -m boot -s
-+			exit 0;
++			echo "Enable to obtain IP from DHCP (Required for $mode)"
++			run="0"
++			ok="0"
 +	fi
++	
 +fi
 +
 +### Try autoboot from loading script  
@@ -250,54 +248,59 @@ index 0000000..8a95f5c
 +
 +
 diff --git a/arch/arm/boards/pm9g45/env/config b/arch/arm/boards/pm9g45/env/config
-index 5f05e6f..b71cbdc 100644
+index 5f05e6f..c25398f 100644
 --- a/arch/arm/boards/pm9g45/env/config
 +++ b/arch/arm/boards/pm9g45/env/config
-@@ -1,37 +1,18 @@
+@@ -1,37 +1,27 @@
  #!/bin/sh
 +## You must use Ctrl+D to Save & Ctrl+C to Exit
  
 -# use 'dhcp' to do dhcp in barebox and in kernel
 -# use 'none' if you want to skip kernel ip autoconfiguration
--ip=dhcp
- 
--# or set your networking parameters here
--#eth0.ipaddr=a.b.c.d
--#eth0.netmask=a.b.c.d
--#eth0.gateway=a.b.c.d
--#eth0.serverip=a.b.c.d
++
 +##eth0.ethaddr corresponds to the MAC address of the switch, it can also be changes using flasher
 +eth0.ethaddr=02:0B:AD:C0:FF:EE
++
++## use 'dhcp' to do dhcp in barebox and in kernel
+ ip=dhcp
  
+-# or set your networking parameters here
++## or set your networking parameters here
++#eth0.serverip=a.b.c.d
+ #eth0.ipaddr=a.b.c.d
+ #eth0.netmask=a.b.c.d
+ #eth0.gateway=a.b.c.d
+-#eth0.serverip=a.b.c.d
+-
 -# can be either 'nfs', 'tftp' or 'nand'
 -kernel_loc=nand
 -# can be either 'net', 'nand' or 'initrd'
 -rootfs_loc=nand
-+## Timeout to autoboot in the pre-selected menu
-+autoboot_timeout="10";
- 
+-
 -# can be either 'jffs2' or 'ubifs'
 -rootfs_type=ubifs
 -rootfsimage=root.$rootfs_type
-+## In case the default boot doesn't work we can use a specified alternative boot
-+#autoboot_altforced="0";
-+#autoboot_altmode="2";
- 
+-
 -#kernelimage=zImage
 -kernelimage=uImage
 -#kernelimage=Image
 -#kernelimage=Image.lzo
-+## Timeout to show the error Message
-+#error_timeout="10";
  
 -nand_device=atmel_nand
 -nand_parts="128k(bootstrap)ro,256k(barebox)ro,1664k(bareboxenv),3M(kernel),-(root)"
 -rootfs_mtdblock_nand=4
--
++## Timeout to autoboot in the pre-selected menu
++autoboot_timeout="10";
+ 
 -autoboot_timeout=3
--
++## In case the default boot doesn't work we can use a specified alternative boot
++#autoboot_altforced="0";
++#autoboot_altmode="2";
+ 
 -bootargs="console=ttyS0,115200"
--
++## Timeout to show the error Message
++#error_timeout="10";
+ 
 -# set a fancy prompt (if support is compiled in)
 -PS1="\e[1;32mbarebox@\e[1;31m\h:\w\e[0m "
  
