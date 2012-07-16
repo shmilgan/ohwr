@@ -278,9 +278,11 @@ The messages of a download run are like the following ones:
 @end smallexample
 
 @c ##########################################################################
-@node Quick Build
-@chapter Quick Build
+@node Building
+@chapter Building
 
+@node Quick Build
+@section Quick Build
 If you just want to build stuff, with no concern about network
 downloads and without even knowing what is happening, just create a
 directory where you want the output to be generated and start
@@ -358,6 +360,85 @@ rename) the output directory and reissue the command.  To only
 redo one step, you can remove the marker in @code{build/_done}
 (the markers are empty files with name like @code{01-buildroot}
 and @code{04-kernel}).
+
+
+@c ==========================================================================
+@node Release Package
+@section Release Package
+
+Once all the building steps have succeed, you can easily create a 
+package in your working directory using the following command:
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --pack
+@end example 
+
+This will generate a @code{tar.gz} package with various  
+nomenclatures according to the state of the git repository:
+
+@itemize @bullet
+@item @code{wrs-firmware-120711-2c67861.tar.gz}: Package generated the 11th of July 2012 using git revision @i{2c67861}
+@item @code{wrs-firmware-120711-2c67861+.tar.gz}: Same as above, except that the there are some modification git revision @i{2c67861} has been modified. You might need to commit or stash the changes to remove the @code{+} tag.
+@item @code{wrs-firmware-wr-switch-sw-v3.0-rc1.tag.gz}: The package correspond to the git tag @i{wr-switch-sw-v3.0-rc1}. 
+@end itemize
+
+
+@c ==========================================================================
+@node Build Script
+@section Build Script
+
+The @code{wrs_build-all} can be used to quickly build the White Rabbit 
+Software as seen above. However it admits other functionalities detailed
+in this chapter. You might also want to check its embedded documentation using:
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --help
+@end example
+
+
+@c ==========================================================================
+@node Rebuilding Parts
+@subsection Rebuilding Parts
+
+When the main script succeeds in building one part (sub-package),
+it creates a file in the @code{build/_done} directory.
+
+When you rebuild everything, steps for which the marker file exists
+are not rebuilt. To force rebuilding of one specific part, just remove
+the marker.  Markers are numbered, reflecting the order of compilation
+steps, but they also have a name: names like @code{04-kernel} should be
+self-explicative. 
+
+To ease the rebuilding of a specific module a shortcut has been created 
+in the @code{wrs_build-all} script. For example if you want to recompile
+kernel you should execute.
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --step=04
+@end example
+
+You can list all compiled module by calling
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --list
+@end example
+ 
+
+As an alternative, you can run the individual script from within
+@i{scripts/}, after setting the proper environment variables.
+
+
+@c ==========================================================================
+@node Rebuilding From Scratch
+@subsection Rebuilding From Scratch
+
+If you have updated the repository with new modifications, you might want 
+to check that you can rebuild from scratch. To clean your output 
+directory by deleting all compiled modules (except downloaded files), just call:
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --clean
+@end example
 
 
 @c ##########################################################################
@@ -509,87 +590,6 @@ However, if NAND flash was erased the menu will automatically select the entry
 and press @i{Ctrl+D} to save the config file.
 
 The other options of the menu are described in  @ref{Booting with Barebox}
-
-
-@c ##########################################################################
-@node Build Script
-@chapter Build Script
-
-The @code{wrs_build-all} can be used to quickly build the White Rabbit 
-Software as seen in @ref{Quick Build}. However it admits other 
-functionalities detailed in this chapter. You might also want to check its 
-embedded documentation using:
-
-@example
-   /path/to/wr-switch-sw/build/wrs_build-all --help
-@end example
-
-
-@c ==========================================================================
-@node Rebuilding Parts
-@section Rebuilding Parts
-
-When the main script succeeds in building one part (sub-package),
-it creates a file in the @code{build/_done} directory.
-
-When you rebuild everything, steps for which the marker file exists
-are not rebuilt. To force rebuilding of one specific part, just remove
-the marker.  Markers are numbered, reflecting the order of compilation
-steps, but they also have a name: names like @code{04-kernel} should be
-self-explicative. 
-
-To ease the rebuilding of a specific module a shortcut has been created 
-in the @code{wrs_build-all} script. For example if you want to recompile
-kernel you should execute.
-
-@example
-   /path/to/wr-switch-sw/build/wrs_build-all --step=04
-@end example
-
-You can list all compiled module by calling
-
-@example
-   /path/to/wr-switch-sw/build/wrs_build-all --list
-@end example
- 
-
-As an alternative, you can run the individual script from within
-@i{scripts/}, after setting the proper environment variables.
-
-
-@c ==========================================================================
-@node Rebuilding From Scratch
-@section Rebuilding From Scratch
-
-If you have updated the repository with new modifications, you might want 
-to check that the you can rebuild from scratch. To clean your output 
-directory by deleting all compiled modules (except downloaded files), just call:
-
-@example
-   /path/to/wr-switch-sw/build/wrs_build-all --clean
-@end example
- 
- 
-@c ==========================================================================
-@node Release Package
-@section Release Package
-
-Once all the building steps have succeed, you can easily create a 
-package in your working directory using the following command:
-
-@example
-   /path/to/wr-switch-sw/build/wrs_build-all --pack
-@end example 
-
-This will generate a @code{tar.gz} package with various  
-nomenclatures according to the state of the git repository:
-
-@itemize @bullet
-@item @code{wrs-firmware-120711-2c67861.tar.gz}: Package generated the 11th of July 2012 using git revision @i{2c67861}
-@item @code{wrs-firmware-120711-2c67861+.tar.gz}: Same as above, except that the there are some modification git revision @i{2c67861} has been modified. You might need to commit or stash the changes to remove the @code{+} tag.
-@item @code{wrs-firmware-wr-switch-sw-v3.0-rc1.tag.gz}: The package correspond to the git tag @i{wr-switch-sw-v3.0-rc1}. 
-@end itemize
-
 
 
 @c ##########################################################################
