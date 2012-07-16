@@ -118,7 +118,15 @@ while [ $# -ge 1 ]; do
 		rootfs=/tmp/wrs-image.jffs2.img
 		shift;;
 	-h|--help) 	showhelp; shift;;
-	-m|--memmode)	memmode="$2";  shift; shift;;
+	-m|--memmode)
+	    # verify memory mode
+	    if [ "$2" != "nf" ] && [ "$2" != "df" ] && [ "$2" != "test" ] && [ "$2" != "default" ]; then
+		echo "Error: Invalid memory mode"
+		showhelp
+		exit 1
+	    fi
+	    memmode="$2"
+	    shift; shift;;
 	--skip)	skip=1; shift;;
 	/* ) DEV="-s $1"; shift ;;
 	*:* ) MAC="$1"; shift ;;
