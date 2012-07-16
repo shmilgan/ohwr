@@ -19,7 +19,7 @@ wrs_echo "--- Wrapping filesystem"
 
 DEVTAR="$WRS_BASE_DIR/../userspace/devices.tar.gz"
 
-TMPFS=$(mktemp /tmp/rootfs.XXXXXX)
+TMPFS=$(mktemp -d /tmp/rootfs.XXXXXX)
 
 rootfs_vanilla="$WRS_OUTPUT_DIR/build/buildroot-2011.11/output/target"
 rootfs_override="$WRS_BASE_DIR/../userspace/rootfs_override"
@@ -30,7 +30,6 @@ ROOTFS_IMAGE_TGZ="$WRS_OUTPUT_DIR/images/wrs-image.tar.gz"
 ROOTFS_IMAGE_JFFS2="$WRS_OUTPUT_DIR/images/wrs-image.jffs2"
 
 cat > $TMPSCRIPT << EOF
-rm -r -f $TMPFS
 mkdir -p $TMPFS/wr
 
 cp -r $rootfs_vanilla/* $TMPFS
@@ -41,7 +40,7 @@ cp -r $rootfs_override/* $TMPFS
 
 rm -rf $TMPFS/dev
 (cd $TMPFS && tar xzf $DEVTAR)
-(cd $TMPFS && ln -s sbin/init .)
+(cd $TMPFS && ln -fs sbin/init .)
 
 mkdir -p $TMPFS/root/.ssh
 cat $HOME/.ssh/id_?sa.pub >> $TMPFS/root/.ssh/authorized_keys
@@ -53,12 +52,14 @@ chmod g-w $TMPFS/root $TMPFS/root/.ssh
 chown -R root:root $TMPFS/root
 chown -R root:root $TMPFS/etc/dropbear
 
+##Test Anchor
+
 (cd "$TMPFS" && find . | cpio -o -H newc | gzip) > $ROOTFS_IMAGE_CPIO
 (cd "$TMPFS" && tar cz .> $ROOTFS_IMAGE_TGZ)
 /usr/sbin/mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $ROOTFS_IMAGE_JFFS2.img
-
 EOF
 
 fakeroot bash $X $TMPSCRIPT
 
 rm -rf $TMPFS
+rm -rf $TMPSCRIPT

@@ -1,8 +1,10 @@
+# System generated file
 *.o
 *.ko
 *.a
 *.mod.c
 *~
+*.swp
 .*.cmd
 modules.order
 .tmp_versions
@@ -10,3 +12,7 @@ Module.symvers
 .cproject
 .project
 .settings
+# Project generated file
+kernel/wbgen-regs/wbgen-regs
+userspace/include/regs
+

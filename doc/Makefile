@@ -57,4 +57,4 @@ clean: terse
 	rm -f $(ALL) $(TEXI)
 
 install:
-
+	if [ -n $(WRS_OUTPUT_DIR) ]; then cp *.pdf  $(WRS_OUTPUT_DIR)/images/; fi

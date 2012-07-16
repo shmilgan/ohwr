@@ -1,0 +1,64 @@
+From 5b2b91f674f727fc1b40878e3f4a9ee721008eb2 Mon Sep 17 00:00:00 2001
+From: Benoit Rat <benoit@sevensols.com>
+Date: Mon, 2 Jul 2012 13:00:43 +0200
+Subject: [PATCH 8/9] nand: Fix wrongly removed line for 16bits NAND
+
+---
+ drivers/mtd/nand/atmel_nand.c |   26 ++++++++++++++++++++++----
+ 1 file changed, 22 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/mtd/nand/atmel_nand.c b/drivers/mtd/nand/atmel_nand.c
+index 96624a1..bad75a9 100644
+--- a/drivers/mtd/nand/atmel_nand.c
++++ b/drivers/mtd/nand/atmel_nand.c
+@@ -141,6 +141,13 @@ static void atmel_read_buf(struct mtd_info *mtd, u8 *buf, int len)
+ 	memcpy_fromio(buf, chip->IO_ADDR_R, len);
+ }
+ 
++static void atmel_read_buf16(struct mtd_info *mtd, u8 *buf, int len)
++{
++	struct nand_chip	*nand_chip = mtd->priv;
++
++	readsw(nand_chip->IO_ADDR_R, buf, len / 2);
++}
++
+ static void atmel_write_buf(struct mtd_info *mtd, const u8 *buf, int len)
+ {
+ 	struct nand_chip *chip = mtd->priv;
+@@ -148,6 +155,14 @@ static void atmel_write_buf(struct mtd_info *mtd, const u8 *buf, int len)
+ 	memcpy_toio(chip->IO_ADDR_W, buf, len);
+ }
+ 
++static void atmel_write_buf16(struct mtd_info *mtd, const u8 *buf, int len)
++{
++	struct nand_chip	*nand_chip = mtd->priv;
++
++	writesw(nand_chip->IO_ADDR_W, buf, len / 2);
++}
++
++
+ /*
+  * Calculate HW ECC
+  *
+@@ -391,11 +406,14 @@ static int __init atmel_nand_probe(struct device_d *dev)
+ 
+ 	nand_chip->chip_delay = 20;		/* 20us command delay time */
+ 
+-	if (host->board->bus_width_16)		/* 16-bit bus width */
++	if (host->board->bus_width_16) {	/* 16-bit bus width */
+ 		nand_chip->options |= NAND_BUSWIDTH_16;
+-
+-	nand_chip->read_buf = atmel_read_buf;
+-	nand_chip->write_buf = atmel_write_buf;
++		nand_chip->read_buf = atmel_read_buf16;
++		nand_chip->write_buf = atmel_write_buf16;
++	} else {
++		nand_chip->read_buf = atmel_read_buf;
++		nand_chip->write_buf = atmel_write_buf;
++	}
+ 
+ 	atmel_nand_enable(host);
+ 
+-- 
+1.7.9.5
+
