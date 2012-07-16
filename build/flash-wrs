@@ -47,6 +47,15 @@ checkExit()
 	exit 1
 }
 
+checkMAC()
+{
+    X="[0-9a-fA-F][0-9a-fA-F]"
+    if echo $1 | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
+	return 0
+    fi
+    return 1
+}
+
 modifyMAC()
 {
 	origin=$1
@@ -141,6 +150,19 @@ while [ $# -ge 1 ]; do
 	* ) echo "$0: Invalid argument \"$1\"" >&2; exit 1;;
     esac
 done
+
+#MAC address is a mandatory field
+if [ "x$MAC" = "x" ]; then
+    echo "Error: MAC address is mandatory"
+    showhelp
+    exit 1
+else
+    checkMAC $MAC
+    if [ $? -eq 1 ];then
+	echo "Error: MAC address is invalid ($MAC)"
+	exit 1
+    fi
+fi
 
 ## Selecting the running memmode
 if [ "x$memmode" = "xdf" ]; then
