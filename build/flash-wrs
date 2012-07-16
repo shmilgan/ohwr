@@ -23,7 +23,7 @@ showhelp()
 	printf "DEV:\t The usb device (by default it is /dev/ttyACM0)\n"
 	printf "Options: \n"
 	printf "  -h|--help\t Show this help message\n"
-	printf "  -m|--mode\t can be: default, df (dataflash), nf (nandflash), test.\n"
+	printf "  -m|--mode\t can be: default (df and nf), df (dataflash),\n\t\t nf (nandflash), ddr (ddr memories).\n"
 	printf "  -e \t\t Completely erase the memory (Can erase your configuration)\n"
 	printf "  -b|--build\t Use file that you have build in the WRS_OUTPUT_DIR\n"
 	printf "  --test\t Use file for testing the switch (not available)\n"
@@ -129,7 +129,7 @@ while [ $# -ge 1 ]; do
 	-h|--help) 	showhelp; shift;;
 	-m|--memmode)
 	    # verify memory mode
-	    if [ "$2" != "nf" ] && [ "$2" != "df" ] && [ "$2" != "test" ] && [ "$2" != "default" ]; then
+	    if [ "$2" != "nf" ] && [ "$2" != "df" ] && [ "$2" != "ddr" ] && [ "$2" != "default" ]; then
 		echo "Error: Invalid memory mode"
 		showhelp
 		exit 1
