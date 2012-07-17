@@ -257,7 +257,7 @@ int rtu_mfifo_is_empty(void)
     return RTU_MFIFO_CSR_EMPTY & csr;
 }
 
-static inline void flush_mfifo()
+static void flush_mfifo()
 {
 	uint32_t gcr = rtu_rd (GCR);
 	rtu_wr(GCR, gcr | RTU_GCR_MFIFOTRIG);
@@ -270,7 +270,7 @@ static inline void flush_mfifo()
  * @param ent MAC table entry to be written to MFIFO.
  * @param zbt_addr ZBT SRAM memory address in which MAC entry shoud be added.
  */
-void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent)
+void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent, int flush)
 {
     write_mfifo_addr(zbt_addr);
     write_mfifo_data(mac_entry_word0_w(ent));
@@ -278,7 +278,9 @@ void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent)
     write_mfifo_data(mac_entry_word2_w(ent));
     write_mfifo_data(mac_entry_word3_w(ent));
     write_mfifo_data(mac_entry_word4_w(ent));
-		flush_mfifo();
+
+		if(flush)
+			flush_mfifo();
 
     TRACE_DBG(
         TRACE_INFO,
@@ -290,16 +292,6 @@ void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent)
         mac_entry_word3_w(ent),
         mac_entry_word4_w(ent)
     );
-}
-
-/**
- * \brief Cleans MAC entry in main hash table at the given address
- * @param zbt_addr memory address which shoud be cleaned.
- */
-void rtu_clean_htab_entry(uint16_t zbt_addr)
-{
-	struct filtering_entry ent;
-	rtu_write_htab_entry(zbt_addr, rtu_fe_clean(&ent));
 }
 
 /**
@@ -327,20 +319,15 @@ void rtu_clean_htab(void)
  * \brief Read word from aging HTAB.
  * Aging RAM Size: 256 32-bit words
  */
-uint32_t rtu_read_agr_htab( uint32_t addr ) 
-{
-    return _fpga_readl(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*addr) ;
-}
 
-/**
- * \brief Clears aging bitmap for HTAB
- */
-void rtu_clean_agr_htab(void)
+void rtu_read_aging_bitmap( uint32_t *bitmap ) 
 {
-    int addr;
-	for(addr=0;addr < RTU_ARAM_WORDS;addr++) {
-	    _fpga_writel(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*addr, 0x00000000);
-    }
+	int i;
+	for(i=0; i< RTU_ENTRIES / 32; i++)	
+	{
+   	bitmap[i] = _fpga_readl(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*i);
+    _fpga_writel(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*i, 0);
+	}
 }
 
 // VLAN TABLE
@@ -365,6 +352,9 @@ void rtu_write_vlan_entry(int vid, struct vlan_table_entry *ent)
    
 	rtu_wr(VTR2,  vtr2);
 	rtu_wr(VTR1,  vtr1);
+
+	TRACE(TRACE_INFO, "AddVlan: vid %d port_mask 0x%x", vid, ent->port_mask);
+	
 }
 
 /**
@@ -585,7 +575,6 @@ static uint32_t mac_entry_word0_w(struct filtering_entry *ent)
         ((0xFF & ent->mac[0])                        << 24)  |
         ((0xFF & ent->mac[1])                        << 16)  |
         ((0xFF & ent->fid)                           <<  4)  | 
-        ((0x1  & ent->go_to_cam)                     <<  3)  | 
         ((0x1  & ent->is_bpdu)                       <<  2)  | 
         ((0x1  & ent->end_of_bucket)                 <<  1)  | 
         ((0x1  & ent->valid )                             )  ;	      
@@ -610,9 +599,8 @@ static uint32_t mac_entry_word2_w(struct filtering_entry *ent)
         ((0x1 & ent->drop_unmatched_src_ports)       << 22)  | 
         ((0x1 & ent->drop_when_source)               << 21)  | 
         ((0x1 & ent->prio_override_src)              << 20)  |
-	    ((0x7 & ent->prio_src)                       << 17)  | 
-        ((0x1 & ent->has_prio_src)                   << 16)  | 
-        ((0x01FF & ent->cam_addr)                          )  ;		      
+		    ((0x7 & ent->prio_src)                       << 17)  | 
+        ((0x1 & ent->has_prio_src)                   << 16);
 }
 
 static uint32_t mac_entry_word3_w(struct filtering_entry *ent)

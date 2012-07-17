@@ -40,6 +40,7 @@ typedef struct
 		uint8_t priority;
 		int dynamic;
 		uint16_t hash;
+		int bucket;
 } rtudexp_fd_entry_t;
 
 typedef struct  {

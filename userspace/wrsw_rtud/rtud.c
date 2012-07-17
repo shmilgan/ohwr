@@ -1,4 +1,4 @@
-/*
+/*\\
  * White Rabbit RTU (Routing Table Unit)
  * Copyright (C) 2010, CERN.
  *
@@ -34,6 +34,10 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <signal.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <linux/if.h>
+
 
 #include <trace.h>
 #include <switch_hw.h>
@@ -50,56 +54,73 @@
 static pthread_t aging_process;
 static pthread_t wripc_process;
 
+static struct {
+	int in_use;
+	int is_up;
+	char if_name[16];
+	int hw_index;
+} port_state[MAX_PORT + 1];
+
+
 /**
  * \brief Creates the static entries in the filtering database 
  * @return error code
  */
+
 static int rtu_create_static_entries()
 {
     uint8_t bcast_mac[]         = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
     uint8_t slow_proto_mac[]    = {0x01, 0x80, 0xc2, 0x00, 0x00, 0x01};
     uint8_t ptp_mcast_mac[]    = {0x01, 0x1b, 0x19, 0x00, 0x00, 0x00};
-    hexp_port_list_t plist;
     hexp_port_state_t pstate;
+		hexp_port_list_t ports;
     int i, err;
     uint32_t enabled_port_mask = 0;
 
 
 	  // packets addressed to WR card interfaces are forwarded to NIC virtual port
-    TRACE(TRACE_INFO, "qp %d", halexp_query_ports(&plist));
+    TRACE(TRACE_INFO, "qp %d", halexp_query_ports(&ports));
 	
-		TRACE(TRACE_INFO, "Number of physical ports: %d, active ports: %d\n", plist.num_physical_ports, plist.num_ports);
+		TRACE(TRACE_INFO, "Number of physical ports: %d, active ports: %d\n", ports.num_physical_ports, ports.num_ports);
 	
     // VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
     TRACE(TRACE_INFO,"adding static routes for slow protocols...");
     for(i = 0; i < NUM_RESERVED_ADDR; i++) {
         slow_proto_mac[5] = i;
-        err = rtu_fd_create_entry(slow_proto_mac, 0, (1 << plist.num_physical_ports), STATIC);
+        err = rtu_fd_create_entry(slow_proto_mac, 0, (1 << ports.num_physical_ports), STATIC);
         if(err)
             return err;
     }
     
   
-    for(i = 0; i < plist.num_ports; i++) {
-        halexp_get_port_state(&pstate, plist.port_names[i]); 
+  	memset(port_state, 0, sizeof(port_state));
+  	
+    for(i = 0; i < ports.num_ports; i++) {
+        halexp_get_port_state(&pstate, ports.port_names[i]); 
         enabled_port_mask |= (1 << pstate.hw_index);
+        
+        strncpy(port_state[i].if_name, ports.port_names[i], 16);
+        port_state[i].is_up = 0;
+        port_state[i].hw_index = pstate.hw_index;
+    		port_state[i].in_use = 1;
+    		    
         TRACE(
             TRACE_INFO,
             "adding static route for port %s index %d [mac %s]", 
-            plist.port_names[i], 
+            ports.port_names[i], 
             pstate.hw_index, 
             mac_to_string(pstate.hw_addr)
         );
 
-				err = rtu_fd_create_entry(pstate.hw_addr, 0, (1 << plist.num_physical_ports), STATIC);
+				err = rtu_fd_create_entry(pstate.hw_addr, 0, (1 << ports.num_physical_ports), STATIC);
         if(err)
             return err;
     }
 
     // Broadcast MAC
     TRACE(TRACE_INFO,"adding static route for broadcast MAC...");
-    err = rtu_fd_create_entry(bcast_mac, 0, enabled_port_mask | (1 << plist.num_physical_ports), STATIC);
-    err = rtu_fd_create_entry(ptp_mcast_mac, 0, (1 << plist.num_physical_ports), STATIC);
+    err = rtu_fd_create_entry(bcast_mac, 0, enabled_port_mask | (1 << ports.num_physical_ports), STATIC);
+    err = rtu_fd_create_entry(ptp_mcast_mac, 0, (1 << ports.num_physical_ports), STATIC);
     if(err)
         return err;
 
@@ -109,18 +130,60 @@ static int rtu_create_static_entries()
 }
 
 
+/* Checks if the link is up on inteface (if_name). Returns non-zero if yes. */
+static int check_link(int fd_raw, const char *if_name)
+{
+  struct ifreq ifr;
+
+  strncpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
+  if(ioctl(fd_raw, SIOCGIFFLAGS, &ifr) > 0) return -1;
+  return (ifr.ifr_flags & IFF_UP && ifr.ifr_flags & IFF_RUNNING);
+}
+
+static void rtu_update_ports_state()
+{
+	int i;
+	static int fd_raw = -1;
+
+	/* create a dummy socket for ioctls() to check link status on each port */
+	if(fd_raw < 0)
+	{
+		fd_raw = socket(AF_PACKET, SOCK_DGRAM, 0);
+	  if(fd_raw < 0) 
+	  	return;
+	}
+	
+	for(i=0; i <= MAX_PORT; i++)
+	{
+		if(!port_state[i].in_use)
+			continue;
+			
+		int link_up = check_link(fd_raw, port_state[i].if_name);
+		if(port_state[i].is_up && !link_up)
+		{
+			TRACE(TRACE_INFO, "Port %s went down, removing corresponding entries...", port_state[i].if_name)
+			
+			rtu_fd_clear_entries_for_port(port_state[i].hw_index);
+		} 
+		
+		port_state[i].is_up = link_up;
+		
+	}
+}
+
 /**
  * \brief Periodically removes the filtering database old entries.
  *
  */
 static void *rtu_daemon_aging_process(void *arg)
 {
-    unsigned long aging_res = (unsigned long)arg;
 
-    while(1){
+    while(1) {
+				rtu_update_ports_state();    		
         rtu_fd_flush();
-        sleep(aging_res);
+        sleep(1);
     }
+
     return NULL;
 }
 
@@ -139,6 +202,8 @@ static void *rtu_daemon_wripc_process(void *arg)
     }
     return NULL;
 }
+
+
 
 /**
  * \brief Handles the learning process. 
@@ -332,7 +397,7 @@ int main(int argc, char **argv)
         daemonize();
 
     // Start up aging process and auxiliary WRIPC thread
-    if (/*(err = pthread_create(&aging_process, NULL, rtu_daemon_aging_process, (void *) aging_res)) ||*/
+    if ((err = pthread_create(&aging_process, NULL, rtu_daemon_aging_process, (void *) aging_res)) ||
         (err = pthread_create(&wripc_process, NULL, rtu_daemon_wripc_process, NULL))) {
         rtu_daemon_destroy();
         return err;

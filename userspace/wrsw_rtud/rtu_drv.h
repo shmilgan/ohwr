@@ -48,32 +48,14 @@ int rtu_ufifo_is_empty(void);
 int rtu_read_learning_queue_cnt(void);
 int rtu_read_learning_queue(struct rtu_request *req);
 
-// MFIFO
+// HTAB access
 
-int rtu_read_mfifo_cnt(void);
-int rtu_mfifo_is_full(void);
-int rtu_mfifo_is_empty(void);
-void rtu_clean_mfifo(void);
-void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent);
-void rtu_clean_htab_entry(uint16_t zbt_addr);
+void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent, int flush);
 void rtu_clean_htab(void);
-
-// HCAM
-
-void rtu_read_hcam_entry(uint16_t cam_addr, struct filtering_entry *ent);
-void rtu_write_hcam_entry(uint16_t cam_addr, struct filtering_entry *ent);
-void rtu_clean_hcam_entry(uint8_t cam_addr);
-void rtu_clean_hcam(void);
 
 // AGING - HTAB
 
-uint32_t rtu_read_agr_htab(uint32_t addr);
-void rtu_clean_agr_htab(void);
-
-// AGING - HCAM
-
-uint32_t rtu_read_agr_hcam(void);
-void rtu_clean_agr_hcam(void);
+void rtu_read_aging_bitmap(uint32_t *bitmap);
 
 // VLAN TABLE
 

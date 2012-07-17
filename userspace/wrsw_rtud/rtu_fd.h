@@ -53,6 +53,8 @@ int  rtu_fd_create_entry(
 int  rtu_fd_set_aging_time(unsigned long t) __attribute__((warn_unused_result));
 void rtu_fd_set_hash_poly(uint16_t poly);
 void rtu_fd_flush(void);
+void rtu_fd_clear_entries_for_port(int dest_port);
+
 struct filtering_entry * rtu_fd_lookup_htab_entry(int index);
 
 struct filtering_entry *rtu_fd_lookup_htab_entry(int index);
