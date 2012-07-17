@@ -70,7 +70,7 @@ char *decode_ports(int dpm)
 
 
 
-	for(i=0;i<10;i++)
+	for(i=0;i<plist.num_physical_ports;i++)
 	{
 		sprintf(str2,"%d ", i);
 		if(dpm&(1<<i)) strcat(str,str2);
@@ -117,8 +117,11 @@ main()
 	printf("----------------------------------------------------------\n");
 
 	for(i=0;i<n_entries;i++)
-	{
-		printf("%-25s %-22s %s (mask %x hash %x)\n", mac_to_string(fd_list[i].mac), decode_ports(fd_list[i].dpm), fd_list[i].dynamic ? "DYNAMIC":"STATIC", fd_list[i].dpm, fd_list[i].hash);
-	}
+		printf("%-25s %-22s %s (hash %03x:%x)\n", 
+			mac_to_string(fd_list[i].mac), 
+			decode_ports(fd_list[i].dpm), 
+			fd_list[i].dynamic ? "DYNAMIC":"STATIC ", 
+			fd_list[i].hash,
+			fd_list[i].bucket);
 	printf("\n");	
 }
