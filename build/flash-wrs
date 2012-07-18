@@ -36,10 +36,10 @@ checkExit()
 {
 	err=0;
 	if [ $1 ]; then
-		if [ -f $1 ]; then 
-			return 0; 
-		else 
-			echo "Can't find $1" >& 2; 
+		if [ -f $1 ]; then
+			return 0;
+		else
+			echo "Can't find $1" >& 2;
 		fi
 	else
 		echo "varname not set"
@@ -169,7 +169,7 @@ if [ "x$memmode" = "xdf" ]; then
 	df=1
 elif [ "x$memmode" = "xnf" ]; then
 	nf=1
-elif [ "x$memmode" = "xtest" ]; then
+elif [ "x$memmode" = "xddr" ]; then
 	test=1
 else 
 	df=1
