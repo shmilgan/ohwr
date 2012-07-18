@@ -78,9 +78,8 @@ static int rtu_create_static_entries()
     uint32_t enabled_port_mask = 0;
 
 
-	  // packets addressed to WR card interfaces are forwarded to NIC virtual port
-    TRACE(TRACE_INFO, "qp %d", halexp_query_ports(&ports));
-	
+		halexp_query_ports(&ports);
+		
 		TRACE(TRACE_INFO, "Number of physical ports: %d, active ports: %d\n", ports.num_physical_ports, ports.num_ports);
 	
     // VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
@@ -92,7 +91,6 @@ static int rtu_create_static_entries()
             return err;
     }
     
-  
   	memset(port_state, 0, sizeof(port_state));
   	
     for(i = 0; i < ports.num_ports; i++) {
@@ -211,7 +209,7 @@ static void *rtu_daemon_wripc_process(void *arg)
  */
 static int rtu_daemon_learning_process()
 {
-    int err;                            
+    int err, i, port_down;                            
     struct rtu_request req;             // Request read from learning queue
     uint32_t port_map;                  // Destination port map
     uint16_t vid;                       // VLAN identifier
@@ -220,7 +218,7 @@ static int rtu_daemon_learning_process()
         // Serve pending unrecognised request
         err = rtu_read_learning_queue(&req);
         if (!err) {
-            TRACE_DBG(
+            TRACE(
                 TRACE_INFO,
                 "ureq: port %d src %s VID %d priority %d", 
                 req.port_id, 
@@ -228,6 +226,17 @@ static int rtu_daemon_learning_process()
                 req.has_vid  ? req.vid:0,
                 req.has_prio ? req.prio:0
             );
+            
+						for(port_down=i=0; i<=MAX_PORT;i++)
+							if(port_state[i].in_use && port_state[i].hw_index == req.port_id && !port_state[i].is_up)
+							{
+								port_down = 1;
+								break;
+							}
+							
+						/* don't learn on ports that are down (FIFO tail?) */
+            if(port_down)
+            	continue;
             // If req has no VID, use 0 (untagged packet)
             vid      = req.has_vid ? req.vid:0;
             port_map = (1 << req.port_id);

@@ -183,6 +183,7 @@ int rtu_read_learning_queue(struct rtu_request *req)
             return err;
     }
 
+
     // read data from mapped IO memory 
     uint32_t r0 = rtu_rd( UFIFO_R0);
     uint32_t r1 = rtu_rd( UFIFO_R1);
