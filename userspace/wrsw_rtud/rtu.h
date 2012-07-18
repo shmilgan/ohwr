@@ -143,6 +143,7 @@ struct filtering_entry {
     int prio_override_dst;        // priority override (force per-MAC priority)
 
     int dynamic;
+    int age;
 };
 
 /**

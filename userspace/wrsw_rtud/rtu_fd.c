@@ -212,7 +212,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 				/* Case 1: entry already present in the hashtable */
 				if(htab_search(mac, fid, &ent))
 				{
-						TRACE(TRACE_INFO, "Entry for mac %s already found.", mac_to_string(mac));
+						TRACE_DBG(TRACE_INFO, "Entry for mac %s already found.", mac_to_string(mac));
 
             mask_dst = ent->port_mask_dst | port_mask;
             mask_src = ent->port_mask_src | vlan_tab[vid].port_mask;
@@ -226,14 +226,13 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 				} else {
 						int n_buckets; 
 
-						TRACE(TRACE_INFO, "Creating new entry for mac %s.", mac_to_string(mac));
-
 						eaddr.hash = rtu_hash(mac, fid);
 						n_buckets = htab_count_buckets(eaddr);
+
 						if(n_buckets == RTU_BUCKETS)
 						{
 							TRACE(TRACE_ERROR, "Hash %03x has no buckets left.", eaddr.hash);
-							return -1;
+							return -ENOMEM;
 						}
 				
 						eaddr.bucket = n_buckets;
@@ -241,7 +240,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 						ent = &rtu_htab[eaddr.hash][eaddr.bucket];
 						ent->addr          = eaddr;
 
-						TRACE(TRACE_INFO, "Mac %s : hash %03x:%d.", mac_to_string(mac), eaddr.hash, eaddr.bucket);
+						TRACE(TRACE_INFO, "Created new entry for MAC %s : hash %03x:%d.", mac_to_string(mac), eaddr.hash, eaddr.bucket);
 
             ent->valid         = 1;
             ent->fid           = fid;
@@ -451,15 +450,20 @@ static void rtu_fd_age_update(void)
           hash    = bit_cnt >> 2;             // 4 buckets per hash
           bucket  = bit_cnt & 0x03;           // last 2 bits    
  
-          rtu_htab[hash][bucket].last_access_t = t;
+ 					if(!rtu_htab[hash][bucket].dynamic)
+ 						continue;
+ 
           TRACE(
             TRACE_INFO, 
-            "Updated htab entry age: mac = %s, hash = %d, bucket = %d\n, t = %d", 
+            "Updated htab entry age: mac = %s, hash = %03x:%d, delta_t = %d", 
             mac_to_string(rtu_htab[hash][bucket].mac),
             hash,
             bucket,
-            t
+            t - rtu_htab[hash][bucket].last_access_t
           );
+
+					rtu_htab[hash][bucket].age = t - rtu_htab[hash][bucket].last_access_t;
+          rtu_htab[hash][bucket].last_access_t = t;
 				}
       }
 }
@@ -528,6 +532,8 @@ static void rtu_fd_age_out(void)
 static void delete_htab_entry(struct rtu_addr addr)
 {
 	int i, n_buckets = htab_count_buckets(addr);
+
+	TRACE(TRACE_INFO, "Deleted entry for MAC %s : hash %03x:%d.", mac_to_string(rtu_htab[addr.hash][addr.bucket].mac), addr.hash, addr.bucket);
 
 	memset(&rtu_htab[addr.hash][addr.bucket], 0, sizeof(struct filtering_entry));
 	

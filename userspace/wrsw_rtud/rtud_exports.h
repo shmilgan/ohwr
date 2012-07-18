@@ -41,6 +41,7 @@ typedef struct
 		int dynamic;
 		uint16_t hash;
 		int bucket;
+		int age;
 } rtudexp_fd_entry_t;
 
 typedef struct  {

@@ -67,6 +67,7 @@ int rtudexp_get_fd_list(const struct minipc_pd *pd,
 		list->list[i].dynamic = ent->dynamic;
 		list->list[i].hash = ent->addr.hash;
 		list->list[i].bucket = ent->addr.bucket;
+		list->list[i].age = ent->age;
 	}
 
 	list->num_rules = i;

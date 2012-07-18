@@ -113,15 +113,21 @@ main()
 	
 	printf("RTU Filtering Database Dump: %d rules\n", n_entries);
 	printf("\n");
-	printf("MAC                       Dst.ports              Type\n");
-	printf("----------------------------------------------------------\n");
+	printf("MAC                       Dst.ports              Type                   Age [s]\n");
+	printf("----------------------------------------------------------------------------------\n");
 
 	for(i=0;i<n_entries;i++)
-		printf("%-25s %-22s %s (hash %03x:%x)\n", 
+	{
+		printf("%-25s %-22s %s (hash %03x:%x)   ", 
 			mac_to_string(fd_list[i].mac), 
 			decode_ports(fd_list[i].dpm), 
 			fd_list[i].dynamic ? "DYNAMIC":"STATIC ", 
 			fd_list[i].hash,
 			fd_list[i].bucket);
+		if(fd_list[i].dynamic)
+			printf("%d\n", fd_list[i].age);
+		else
+			printf("-\n");
+	}
 	printf("\n");	
 }
