@@ -22,12 +22,12 @@ showhelp()
 	printf "<firmware>.tar.gz: Use the file in the firmware to flash the device\n"
 	printf "DEV:\t The usb device (by default it is /dev/ttyACM0)\n"
 	printf "Options: \n"
-	printf "\t-h|--help\t\t Show this help message\n"
-	printf "\t-m|--mode\t\t can be: default, df (dataflash), nf (nandflash), test.\n"
-	printf "\t-e \t\t\t Completely erase the memory (Can erase your configuration)\n"
-	printf "\t--build\t\t\t Use file that you have build in the WRS_OUTPUT_DIR\n"
-	printf "\t--test\t\t\t Use file for testing the switch (not available)\n"
-	printf "\t--skip\t\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE\n\n"
+	printf "  -h|--help\t Show this help message\n"
+	printf "  -m|--mode\t can be: default (df and nf), df (dataflash),\n\t\t nf (nandflash), ddr (ddr memories).\n"
+	printf "  -e \t\t Completely erase the memory (Can erase your configuration)\n"
+	printf "  -b|--build\t Use file that you have build in the WRS_OUTPUT_DIR\n"
+	printf "  --test\t Use file for testing the switch (not available)\n"
+	printf "  --skip\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE\n\n"
 	exit 0
 }
 
@@ -45,6 +45,15 @@ checkExit()
 		echo "varname not set"
 	fi
 	exit 1
+}
+
+checkMAC()
+{
+    X="[0-9a-fA-F][0-9a-fA-F]"
+    if echo $1 | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
+	return 0
+    fi
+    return 1
 }
 
 modifyMAC()
@@ -118,8 +127,22 @@ while [ $# -ge 1 ]; do
 		rootfs=/tmp/wrs-image.jffs2.img
 		shift;;
 	-h|--help) 	showhelp; shift;;
-	-m|--memmode)	memmode="$2";  shift; shift;;
-	--skip)	skip=1; shift;;
+	-m|--memmode)
+	    # verify memory mode
+	    if [ "$2" != "nf" ] && [ "$2" != "df" ] && [ "$2" != "ddr" ] && [ "$2" != "default" ]; then
+		echo "Error: Invalid memory mode"
+		showhelp
+		exit 1
+	    fi
+	    memmode="$2"
+	    shift; shift;;
+	--skip)
+	    # set default the MAC address if user didn't set a MAC address
+	    if [ "x$MAC" = "x" ]; then
+		MAC="02:0B:AD:C0:FF:EE"
+	    fi
+	    skip=1;
+	    shift;;
 	/* ) DEV="-s $1"; shift ;;
 	*:* ) MAC="$1"; shift ;;
 	
@@ -127,6 +150,19 @@ while [ $# -ge 1 ]; do
 	* ) echo "$0: Invalid argument \"$1\"" >&2; exit 1;;
     esac
 done
+
+#MAC address is a mandatory field
+if [ "x$MAC" = "x" ]; then
+    echo "Error: MAC address is mandatory"
+    showhelp
+    exit 1
+else
+    checkMAC $MAC
+    if [ $? -eq 1 ];then
+	echo "Error: MAC address is invalid ($MAC)"
+	exit 1
+    fi
+fi
 
 ## Selecting the running memmode
 if [ "x$memmode" = "xdf" ]; then

@@ -278,9 +278,11 @@ The messages of a download run are like the following ones:
 @end smallexample
 
 @c ##########################################################################
-@node Quick Build
-@chapter Quick Build
+@node Building
+@chapter Building
 
+@node Quick Build
+@section Quick Build
 If you just want to build stuff, with no concern about network
 downloads and without even knowing what is happening, just create a
 directory where you want the output to be generated and start
@@ -360,15 +362,92 @@ redo one step, you can remove the marker in @code{build/_done}
 and @code{04-kernel}).
 
 
+@c ==========================================================================
+@node Release Package
+@section Release Package
+
+Once all the building steps have succeed, you can easily create a 
+package in @code{WRS_OUTPUT_DIR/images/} using the following command:
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --pack
+@end example 
+
+This will generate a @code{tar.gz} package with various  
+nomenclatures according to the state of the git repository:
+
+@itemize @bullet
+@item @code{wrs-firmware-120711-2c67861.tar.gz}: Package generated the 11th of July 2012 using git revision @i{2c67861}
+@item @code{wrs-firmware-120711-2c67861+.tar.gz}: Same as above, except that the there are some modification git revision @i{2c67861} has been modified. You might need to commit or stash the changes to remove the @code{+} tag.
+@item @code{wrs-firmware-wr-switch-sw-v3.0-rc1.tag.gz}: The package correspond to the git tag @i{wr-switch-sw-v3.0-rc1}. 
+@end itemize
+
+
+@c ==========================================================================
+@node Build Script
+@section Build Script
+
+The @code{wrs_build-all} can be used to quickly build the White Rabbit 
+Software as seen above. However it admits other functionalities detailed
+in this chapter. You might also want to check its embedded documentation using:
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --help
+@end example
+
+
+@c ==========================================================================
+@node Rebuilding Parts
+@subsection Rebuilding Parts
+
+When the main script succeeds in building one part (sub-package),
+it creates a file in the @code{build/_done} directory.
+
+When you rebuild everything, steps for which the marker file exists
+are not rebuilt. To force rebuilding of one specific part, just remove
+the marker.  Markers are numbered, reflecting the order of compilation
+steps, but they also have a name: names like @code{04-kernel} should be
+self-explicative. 
+
+To ease the rebuilding of a specific module a shortcut has been created 
+in the @code{wrs_build-all} script. For example if you want to recompile
+kernel you should execute.
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --step=04
+@end example
+
+You can list all compiled module by calling
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --list
+@end example
+ 
+
+As an alternative, you can run the individual script from within
+@i{scripts/}, after setting the proper environment variables.
+
+
+@c ==========================================================================
+@node Rebuilding From Scratch
+@subsection Rebuilding From Scratch
+
+If you have updated the repository with new modifications, you might want 
+to check that you can rebuild from scratch. To clean your output 
+directory by deleting all compiled modules (except downloaded files), just call:
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --clean
+@end example
+
+
 @c ##########################################################################
-@node Quick Flashing of WRS-3
-@chapter Quick Flashing of WRS-3
+@node Flashing of WRS-3
+@chapter Flashing of WRS-3
 
 This chapter quickly resumes the different steps to install the WRS-3 with the 
 correct firmware. This procedure described the installation of the switch
-with a @i{SCB v3.2} and a @i{Mini-Backplane v3.2}. 
-
-If you have an older 
+with a @i{SCB v3.2} and a @i{Mini-Backplane v3.2}. If you have an older 
 version you might look at the @ref{v3.0 & v3.1} and the various footnotes.
 
 @menu
@@ -431,29 +510,16 @@ If things go well, the device is enumerated as shown;
 you must @b{remove} the jumper at this point or you will
 not be able to write the new information to dataflash
 
+@c =============================================================================
+@node USB-Loader
+@section USB-Loader
 
+To flash the firmware into the switch you need to use the @i{USB-loader}
+program. You can also use the flash-wrs script that ease the procedure.
 
-@c ==========================================================================
-@node The Flasher Script
-@section The Flasher Script
-
-A script has been written to easily flash a firmware into the 
-switch. It is invoked in the following way:
-
-
-@example
-   ./build/flash-wrs [options] MAC [<firmware>.tar.gz] [DEV]
-   
-@end example
-
-
-By default the code will only flash  @i{at91boot.bin} or @i{barebox.bin} 
-situated in the @i{binaries} subdirectory into the dataflash. 
-To understand better all the options of the script you should look at 
-@ref{USB-Loader} or use the @code{--help} option.
-
-However we strongly recommend to first erase the whole memory and then
-flash using a @i{tar.gz} package. The execution should be similar as: 
+The script can be invoked in the following ways to flash a packege@footnote{read
+@ref{Release Package} to undestand how to create a package} into
+the switch, from the toplevel directory of @code{wr-switch-sw}:
 
 @example
     wr-switch-sw/build/flash-wrs -e wrs-firmware-<revision>.tar.gz 
@@ -462,6 +528,7 @@ flash using a @i{tar.gz} package. The execution should be similar as:
 The output you must expect from the flasher is like the following, and
 the process takes 3 minutes more or less:
 
+@c FIXME better example with timestamp
 @smallexample
 	Initializing SAM-BA: CPU ID: 0x819b05a2
 	[...]
@@ -470,7 +537,7 @@ the process takes 3 minutes more or less:
 	[...]
 	Programming done!
 	Programming NandFlash Done!!!
-Closing...
+        Closing...
 @end smallexample
 
 If you look at the serial port, during programming, you will see
@@ -483,6 +550,67 @@ messages like these:
    [...]
    -I-     End of applet (command : 2 --- status : 0)
 @end smallexample
+
+@c -------------------------------------------------------------------
+@node flash-script
+@subsection Flash Script
+
+The @code{flash-wrs} script can be used to quickly flash the White Rabbit switch
+as seen above. However it admits other functionalities detailed in this chapter.
+You might also want to check its embedded documentations using:
+
+@smallexample
+$ ./build/flash-wrs --help
+Usage: ./build/flash-wrs [options] MAC [<firmware>.tar.gz] [DEV]
+
+MAC:     MAC address in hexadecimal seperated by ':' (i.e, AB:CD:EF:01:23:45)
+<firmware>.tar.gz: Use the file in the firmware to flash the device
+DEV:     The usb device (by default it is /dev/ttyACM0)
+Options: 
+  -h|--help      Show this help message
+  -m|--mode      can be: default, df (dataflash), nf (nandflash), test.
+  -e             Completely erase the memory (Can erase your configuration)
+  -b|--build     Use file that you have build in the WRS_OUTPUT_DIR
+  --test         Use file for testing the switch (not available)
+  --silent       Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE
+@end smallexample
+
+The @i{DEV} is optional. It defaults to @code{/dev/ttyACM0}.
+If your system maps the Atmel ROM to a different device name, please
+pass the name on the command line. The script wants a full pathname 
+starting with @code{/}.
+
+If the @code{--silent} flag is used the MAC will be by default
+02:0B:AD:C0:FF:EE; otherwise MAC is mandatory. If MAC is not specified
+the script exit.
+
+If you want to flash your own @i{at91boot.bin} or @i{barebox.bin} you
+can just place them in the @i{binaries} subdirectory before calling
+the script.
+
+You can also flash the image you have build using @ref{Building} by
+adding the tag @code{-b|--build}.
+
+Finally you can select a mode using the @code{-m|--mode} flag to choose
+to write in dataflash (df), nandflash (nf), both (default) or ddr memories (ddr).
+You can also erase the selected memory before write your binaries; to do this
+add the option @code{-e}.
+
+
+The script performs the following steps:
+
+@itemize @bullet
+@item It compiles the loader (@i{usb-loader/} subdir).
+@item Check if SAMBA bootloader is present.
+@item It picks the correct binaries according to the options.
+@item Optionally, it changes the default MAC address in @i{barebox}
+      default environment, so you can make all switches different.
+@item It erases the memory selected by mode.
+@item And finally, it writes the corresponding binaries to @i{dataflash}, 
+@i{nandflash} or @i{ddr}.
+@end itemize
+
+
 
 @c ==========================================================================
 @node Quick Barebox
@@ -509,87 +637,6 @@ However, if NAND flash was erased the menu will automatically select the entry
 and press @i{Ctrl+D} to save the config file.
 
 The other options of the menu are described in  @ref{Booting with Barebox}
-
-
-@c ##########################################################################
-@node Build Script
-@chapter Build Script
-
-The @code{wrs_build-all} can be used to quickly build the White Rabbit 
-Software as seen in @ref{Quick Build}. However it admits other 
-functionalities detailed in this chapter. You might also want to check its 
-embedded documentation using:
-
-@example
-   /path/to/wr-switch-sw/build/wrs_build-all --help
-@end example
-
-
-@c ==========================================================================
-@node Rebuilding Parts
-@section Rebuilding Parts
-
-When the main script succeeds in building one part (sub-package),
-it creates a file in the @code{build/_done} directory.
-
-When you rebuild everything, steps for which the marker file exists
-are not rebuilt. To force rebuilding of one specific part, just remove
-the marker.  Markers are numbered, reflecting the order of compilation
-steps, but they also have a name: names like @code{04-kernel} should be
-self-explicative. 
-
-To ease the rebuilding of a specific module a shortcut has been created 
-in the @code{wrs_build-all} script. For example if you want to recompile
-kernel you should execute.
-
-@example
-   /path/to/wr-switch-sw/build/wrs_build-all --step=04
-@end example
-
-You can list all compiled module by calling
-
-@example
-   /path/to/wr-switch-sw/build/wrs_build-all --list
-@end example
- 
-
-As an alternative, you can run the individual script from within
-@i{scripts/}, after setting the proper environment variables.
-
-
-@c ==========================================================================
-@node Rebuilding From Scratch
-@section Rebuilding From Scratch
-
-If you have updated the repository with new modifications, you might want 
-to check that the you can rebuild from scratch. To clean your output 
-directory by deleting all compiled modules (except downloaded files), just call:
-
-@example
-   /path/to/wr-switch-sw/build/wrs_build-all --clean
-@end example
- 
- 
-@c ==========================================================================
-@node Release Package
-@section Release Package
-
-Once all the building steps have succeed, you can easily create a 
-package in your working directory using the following command:
-
-@example
-   /path/to/wr-switch-sw/build/wrs_build-all --pack
-@end example 
-
-This will generate a @code{tar.gz} package with various  
-nomenclatures according to the state of the git repository:
-
-@itemize @bullet
-@item @code{wrs-firmware-120711-2c67861.tar.gz}: Package generated the 11th of July 2012 using git revision @i{2c67861}
-@item @code{wrs-firmware-120711-2c67861+.tar.gz}: Same as above, except that the there are some modification git revision @i{2c67861} has been modified. You might need to commit or stash the changes to remove the @code{+} tag.
-@item @code{wrs-firmware-wr-switch-sw-v3.0-rc1.tag.gz}: The package correspond to the git tag @i{wr-switch-sw-v3.0-rc1}. 
-@end itemize
-
 
 
 @c ##########################################################################
@@ -926,68 +973,6 @@ to allow @i{ssh} login (and @i{scp}) without the need to provide a
 password -- though empty.  The script authorizes the key of the user
 running the script and all keys listed in the file @code{authorized_keys}
 in the main directory of this package, if present.
-
-@c ##########################################################################
-@node USB-Loader
-@chapter USB-Loader
-
-To flash the firmware into the switch you need to use the @i{USB-loader}
-program. You can also use the flash-wrs script that ease the procedure.
-
-The script can be invoked in the following ways, from the
-toplevel directory of @code{wr-switch-sw}:
-
-@smallexample
-	$ build/flash-wrs --help
-	Usage: build/flash-wrs [options] MAC [<firmware>.tar.gz] [DEV]
-
-	MAC:	 MAC address in hexadecimal seperated by ':' (i.e, AB:CD:EF:01:23:45)
-	<firmware>.tar.gz: Use the file in the firmware to flash the device
-	DEV:	 The usb device (by default it is /dev/ttyACM0)
-	Options: 
-		-h|--help		 Show this help message
-		-m|--mode		 can be: default, df (dataflash), nf (nandflash), test.
-		-e 			 Completely erase the memory (Can erase your configuration)
-		--build			 Use file that you have build in the WRS_OUTPUT_DIR
-		--test			 Use file for testing the switch (not available)
-		--skip		 Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE
-@end smallexample
-
-The @i{DEV} is optional. It defaults to @code{/dev/ttyACM0}.
-If your system maps the Atmel ROM to a different device name, please
-pass the name on the command line. The script wants a full pathname 
-starting with @code{/}.
-
-The MAC address is mandatory, if not specified it is asked in the next step.
-The script checks that the address is properly formed before applying 
-it to the @i{barebox}. If the @code{--skip} flag is used the MAC will 
-be by default 02:0B:AD:C0:FF:EE
-
-If you want to flash your own @i{at91boot.bin} or @i{barebox.bin} you
-can just place them in the @i{binaries} subdirectory before calling
-the script.
-
-You can also flash the image you have build using @ref{Quick Build} by
-adding the tag @code{--build}
-
-Finally you can select a mode using the @code{-m|--mode} flag to choose
-to write in dataflash, nandflash, both (default mode) or ddr memories.
-
-
-The script performs the following steps:
-
-@itemize @bullet
-@item It compiles the loader (@i{usb-loader/} subdir).
-@item Check if SAMBA bootloader is present.
-@item It picks the correct binaries according to the options.
-@item Optionally, it changes the default MAC address in @i{barebox}
-      default environment, so you can make all switches different.
-@item It erases the memory selected by mode.
-@item And finally, it writes the corresponding binaries to @i{dataflash}, 
-@i{nandflash} or @i{ddr}.
-@end itemize
-
-
 
 
 @c ==========================================================================

@@ -23,6 +23,11 @@ if [ "$WRS_OUTPUT_DIR" = "$WRS_BASE_DIR" ]; then
     wrs_die "Please run $(basename $0) from a different directory"
 fi
 
+# Refuse to build within the wr-switch-sw directory
+if echo $WRS_BASE_DIR | grep "^$WRS_OUTPUT_DIR/./build\$" > /dev/null; then
+	wrs_die "Please run $(basename $0) from a different directory"
+fi
+
 # Check the tools
 WRS_TOOLS="curl svn git gcc g++ ar as m4 libtool gettext md5sum make"
 WRS_TOOLS="$WRS_TOOLS awk unzip patch bison flex ncursesw5-config"
@@ -47,10 +52,9 @@ showhelp() {
 	echo ""
 	echo "Options:"
 	echo "	--help 		Show this little message"
+	echo "	--pack		Create a tar.gz package with the files"
 	echo "	--clean		Remove all the previous configuration"
-	echo "	--fetch		Force fetching the new download files"
 	echo "	--list		List the different building steps"
-	echo "	--pack		Create a tar.gz package with the files in ${WRS_OUTPUT_DIR}/images/"
 	echo "	--step=[00-09]	Perform one specific step"
 	echo ""
 	exit 0;
@@ -93,7 +97,6 @@ if [ -n "$1" ]; then
 	case "$1" in
 		--help) showhelp;;
 		--clean) clean;;
-		--fetch) echo "To be done";;
 		--list) cd $WRS_DONE_DIR; ls 0*; exit 0;;
 		--pack) pack; exit 0;;
 		--step=0[0-9]) num=`echo $1 | sed -e 's/--step=//'`; rm -vf $WRS_DONE_DIR/${num}-*;;
@@ -152,4 +155,3 @@ if $failed_step; then
     wrs_die "One or more build steps failed"
 fi
 wrs_echo "Complete build succeeded, apparently"
-

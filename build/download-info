@@ -83,7 +83,7 @@ lua-5.1.4.tar.gz                 d0870f2de55d59c1c8419f36e8fac150 \
    http://www.lua.org/ftp/lua-5.1.4.tar.gz
 
 lzo-2.06.tar.gz                  95380bd4081f85ef08c5209f4107e9f8 \
-   http://www.lzop.org/download/lzo-2.06.tar.gz
+   http://www.oberhumer.com/opensource/lzo/download/lzo-2.06.tar.gz
 
 m4-1.4.15.tar.bz2                c7c32540bc3842d5550f88d47ef551d8 \
    http://ftp.gnu.org/pub/gnu/m4/m4-1.4.15.tar.bz2
