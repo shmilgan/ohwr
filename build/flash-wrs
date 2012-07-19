@@ -193,7 +193,7 @@ while true; do
 done
 if [ -z "$msg" ]; then
 	printf "\tOK\n"
-	read -p "Remove the Dataflash jumper (Press any key)" 
+	read -p "Remove the Dataflash jumper (Press any key)" notused
 fi
 
 ## Flashing DataFlash
