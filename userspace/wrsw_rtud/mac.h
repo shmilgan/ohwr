@@ -32,7 +32,8 @@
 
 #include <stdint.h>
 #include <string.h>
-#include <linux/if_ether.h>
+
+#define ETH_ALEN 6
 
 /** 
  * \brief Check whether two mac addresses are equal.  

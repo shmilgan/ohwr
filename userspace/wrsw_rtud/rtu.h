@@ -34,7 +34,6 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
-#include <linux/if_ether.h>
 #include <stdio.h>
 
 #include "mac.h"
@@ -47,8 +46,8 @@
 
 #define ENTRY_WORDS             8
 
-#define MIN_PORT                0
-#define MAX_PORT                14
+#define MIN_PORT 0
+#define MAX_PORT 17
 
 // Maximum number of supported VLANs
 #define NUM_VLANS               4096
@@ -71,9 +70,17 @@
 #define TRACE_DBG(...)
 #endif
 
+
+/* RTU entry address */
+struct rtu_addr {
+  int hash;
+  int bucket;
+};
+
 /**
  * \brief RTU request: input for the RTU
  */
+
 struct rtu_request {
     int port_id;           // physical port identifier
     uint8_t src[ETH_ALEN]; // source MAC address 
@@ -89,6 +96,8 @@ struct rtu_request {
  * \brief RTU Filtering Database Entry Object
  */
 struct filtering_entry {
+		struct rtu_addr addr;				  // address of self in the RTU hashtable
+
     int valid;                    // bit: 1 = entry is valid, 0: entry is 
                                   // invalid (empty)
     int end_of_bucket;            // bit: 1 = last entry in current bucket, stop
@@ -122,6 +131,9 @@ struct filtering_entry {
 
     uint32_t last_access_t;       // time of last access to the rule (for aging)
 
+		int force_remove;							// when true, the entry is to be removed immediately (
+																	// aged out or destination port went down)
+
     uint8_t prio_src;             // priority (src MAC)
     int has_prio_src;             // priority value valid
     int prio_override_src;        // priority override (force per-MAC priority)
@@ -130,14 +142,8 @@ struct filtering_entry {
     int has_prio_dst;             // priority value valid
     int prio_override_dst;        // priority override (force per-MAC priority)
 
-    int go_to_cam;                // 1 : there are more entries outside the 
-                                  // bucket
-
-    uint16_t cam_addr;            // address of the first entry in CAM memory 
-                                  // (2 words)
-
     int dynamic;
-		uint16_t hash;
+    int age;
 };
 
 /**
@@ -151,6 +157,9 @@ struct vlan_table_entry {
     int prio_override;      // priority override (force per-VLAN priority)
     int drop;               // 1: drop the packet (VLAN not registered)
 };
+
+
+
 
 /**
  * \brief Copies src filtering entry body into dst filtering entry body.

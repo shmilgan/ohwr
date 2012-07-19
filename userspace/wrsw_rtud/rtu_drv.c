@@ -64,14 +64,6 @@ static uint32_t mac_entry_word2_w(struct filtering_entry *ent);
 static uint32_t mac_entry_word3_w(struct filtering_entry *ent);
 static uint32_t mac_entry_word4_w(struct filtering_entry *ent);
 
-static void mac_entry_word0_r(uint32_t word, struct filtering_entry *ent);
-static void mac_entry_word1_r(uint32_t word, struct filtering_entry *ent);
-static void mac_entry_word2_r(uint32_t word, struct filtering_entry *ent);
-static void mac_entry_word3_r(uint32_t word, struct filtering_entry *ent);
-static void mac_entry_word4_r(uint32_t word, struct filtering_entry *ent);
-
-static uint32_t vlan_entry_word0_w(struct vlan_table_entry *ent);
-
 /*
  * Used to communicate to RTU UFIFO IRQ handler device at kernel space
  */
@@ -191,6 +183,7 @@ int rtu_read_learning_queue(struct rtu_request *req)
             return err;
     }
 
+
     // read data from mapped IO memory 
     uint32_t r0 = rtu_rd( UFIFO_R0);
     uint32_t r1 = rtu_rd( UFIFO_R1);
@@ -265,7 +258,7 @@ int rtu_mfifo_is_empty(void)
     return RTU_MFIFO_CSR_EMPTY & csr;
 }
 
-static inline void flush_mfifo()
+static void flush_mfifo()
 {
 	uint32_t gcr = rtu_rd (GCR);
 	rtu_wr(GCR, gcr | RTU_GCR_MFIFOTRIG);
@@ -278,7 +271,7 @@ static inline void flush_mfifo()
  * @param ent MAC table entry to be written to MFIFO.
  * @param zbt_addr ZBT SRAM memory address in which MAC entry shoud be added.
  */
-void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent)
+void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent, int flush)
 {
     write_mfifo_addr(zbt_addr);
     write_mfifo_data(mac_entry_word0_w(ent));
@@ -286,7 +279,9 @@ void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent)
     write_mfifo_data(mac_entry_word2_w(ent));
     write_mfifo_data(mac_entry_word3_w(ent));
     write_mfifo_data(mac_entry_word4_w(ent));
-	flush_mfifo();
+
+		if(flush)
+			flush_mfifo();
 
     TRACE_DBG(
         TRACE_INFO,
@@ -298,16 +293,6 @@ void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent)
         mac_entry_word3_w(ent),
         mac_entry_word4_w(ent)
     );
-}
-
-/**
- * \brief Cleans MAC entry in main hash table at the given address
- * @param zbt_addr memory address which shoud be cleaned.
- */
-void rtu_clean_htab_entry(uint16_t zbt_addr)
-{
-	struct filtering_entry ent;
-	rtu_write_htab_entry(zbt_addr, rtu_fe_clean(&ent));
 }
 
 /**
@@ -335,20 +320,15 @@ void rtu_clean_htab(void)
  * \brief Read word from aging HTAB.
  * Aging RAM Size: 256 32-bit words
  */
-uint32_t rtu_read_agr_htab( uint32_t addr ) 
-{
-    return _fpga_readl(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*addr) ;
-}
 
-/**
- * \brief Clears aging bitmap for HTAB
- */
-void rtu_clean_agr_htab(void)
+void rtu_read_aging_bitmap( uint32_t *bitmap ) 
 {
-    int addr;
-	for(addr=0;addr < RTU_ARAM_WORDS;addr++) {
-	    _fpga_writel(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*addr, 0x00000000);
-    }
+	int i;
+	for(i=0; i< RTU_ENTRIES / 32; i++)	
+	{
+   	bitmap[i] = _fpga_readl(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*i);
+    _fpga_writel(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*i, 0);
+	}
 }
 
 // VLAN TABLE
@@ -358,27 +338,39 @@ void rtu_clean_agr_htab(void)
  * VLAN table size: 4096 32-bit words.
  * @param addr entry memory address
  */
-void rtu_write_vlan_entry(uint32_t addr, struct vlan_table_entry *ent)
+void rtu_write_vlan_entry(int vid, struct vlan_table_entry *ent)
 {
+ 	uint32_t vtr1, vtr2;
 
-//	printf("write_VLAN_ent: addr %x val %x\n", + RTU_VLAN_TAB + 4*addr, vlan_entry_word0_w(ent));
-	_fpga_writel(FPGA_BASE_RTU + RTU_VLAN_TAB_BASE + 4*addr, vlan_entry_word0_w(ent));
-    TRACE_DBG(
-        TRACE_INFO,
-        "write vlan entry: addr %x ent %08x %08x %08x %08x %08x",
-        addr, 
-        vlan_entry_word0_w(ent)
-    );
+  vtr2 = ent->port_mask;
+  vtr1 = RTU_VTR1_UPDATE
+					| RTU_VTR1_VID_W(vid)
+          | (ent->drop ? RTU_VTR1_DROP : 0)
+          | (ent->prio_override ? RTU_VTR1_PRIO_OVERRIDE : 0)
+          | (ent->has_prio ? RTU_VTR1_HAS_PRIO : 0)
+          | RTU_VTR1_PRIO_W(ent->prio)
+          | RTU_VTR1_FID_W(ent->fid);
+   
+	rtu_wr(VTR2,  vtr2);
+	rtu_wr(VTR1,  vtr1);
+
+	TRACE(TRACE_INFO, "AddVlan: vid %d port_mask 0x%x", vid, ent->port_mask);
+	
 }
 
 /**
  * \brief Cleans VLAN entry in VLAN table
  * @param addr memory address which shoud be cleaned.
  */
-void rtu_clean_vlan_entry( uint32_t addr )
+void rtu_clean_vlan_entry( int vid )
 {
-    // Value 0x80000000 sets drop field to 1 (VLAN entry not registered)
- 	_fpga_writel(FPGA_BASE_RTU + RTU_VLAN_TAB_BASE + 4*addr, 0x80000000);
+ 	uint32_t vtr1, vtr2;
+
+  vtr2 = 0;
+  vtr1 = RTU_VTR1_UPDATE | RTU_VTR1_VID_W(vid);
+   
+	rtu_wr(VTR2,  vtr2);
+	rtu_wr(VTR1,  vtr1);
 }
 
 /**
@@ -387,9 +379,8 @@ void rtu_clean_vlan_entry( uint32_t addr )
 void rtu_clean_vlan(void)
 {
     int addr;
-   	for (addr = 0; addr < NUM_VLANS; addr++) {
- 	    _fpga_writel(FPGA_BASE_RTU + RTU_VLAN_TAB_BASE + 4*addr, 0x80000000);
-    }
+   	for (addr = 0; addr < NUM_VLANS; addr++) 
+			rtu_clean_vlan_entry(addr);
 }
 
 
@@ -585,7 +576,6 @@ static uint32_t mac_entry_word0_w(struct filtering_entry *ent)
         ((0xFF & ent->mac[0])                        << 24)  |
         ((0xFF & ent->mac[1])                        << 16)  |
         ((0xFF & ent->fid)                           <<  4)  | 
-        ((0x1  & ent->go_to_cam)                     <<  3)  | 
         ((0x1  & ent->is_bpdu)                       <<  2)  | 
         ((0x1  & ent->end_of_bucket)                 <<  1)  | 
         ((0x1  & ent->valid )                             )  ;	      
@@ -610,9 +600,8 @@ static uint32_t mac_entry_word2_w(struct filtering_entry *ent)
         ((0x1 & ent->drop_unmatched_src_ports)       << 22)  | 
         ((0x1 & ent->drop_when_source)               << 21)  | 
         ((0x1 & ent->prio_override_src)              << 20)  |
-	    ((0x7 & ent->prio_src)                       << 17)  | 
-        ((0x1 & ent->has_prio_src)                   << 16)  | 
-        ((0x01FF & ent->cam_addr)                          )  ;		      
+		    ((0x7 & ent->prio_src)                       << 17)  | 
+        ((0x1 & ent->has_prio_src)                   << 16);
 }
 
 static uint32_t mac_entry_word3_w(struct filtering_entry *ent)
@@ -624,68 +613,9 @@ static uint32_t mac_entry_word3_w(struct filtering_entry *ent)
 
 static uint32_t mac_entry_word4_w(struct filtering_entry *ent)
 {
-    return 
-        (ent->last_access_t);
+    return
+        ((0xFFFF & (ent->port_mask_dst >> 16))         << 16)  | 
+        ((0xFFFF & (ent->port_mask_src >> 16))              )  ;
 }
 
-
-// to unmarshall MAC entries
-
-static void mac_entry_word0_r(uint32_t word, struct filtering_entry *ent)
-{
-    ent->mac[0]                         = 0xFF & (word >> 24);
-    ent->mac[1]                         = 0xFF & (word >> 16);
-    ent->fid                            = 0xFF & (word >>  4);
-    ent->go_to_cam                      = 0x1  & (word >>  3);
-    ent->is_bpdu                        = 0x1  & (word >>  2);
-    ent->end_of_bucket                  = 0x1  & (word >>  1);
-    ent->valid                          = 0x1  & (word      );
-}
-
-static void mac_entry_word1_r(uint32_t word, struct filtering_entry *ent)
-{
-    ent->mac[2]                         = 0xFF & (word >> 24);
-    ent->mac[3]                         = 0xFF & (word >> 16);
-    ent->mac[4]                         = 0xFF & (word >>  8);
-    ent->mac[5]                         = 0xFF & (word      );
-}
-
-static void mac_entry_word2_r(uint32_t word, struct filtering_entry *ent)
-{
-    ent->drop_when_dest                 = 0x1   & (word >> 28);
-    ent->prio_override_dst              = 0x1   & (word >> 27);
-    ent->prio_dst                       = 0x7   & (word >> 24);
-    ent->has_prio_dst                   = 0x1   & (word >> 23);
-    ent->drop_unmatched_src_ports       = 0x1   & (word >> 22);
-    ent->drop_when_source               = 0x1   & (word >> 21);
-    ent->prio_override_src              = 0x1   & (word >> 20);
-    ent->prio_src                       = 0x7   & (word >> 17);
-    ent->has_prio_src                   = 0x1   & (word >> 16);
-    ent->cam_addr                       = 0x1FF & (word      );
-}
-
-static void mac_entry_word3_r(uint32_t word, struct filtering_entry *ent)
-{
-    ent->port_mask_dst                  = 0xFFFF & (word >> 16);
-    ent->port_mask_src                  = 0xFFFF & (word      );
-}
-
-static void mac_entry_word4_r(uint32_t word, struct filtering_entry *ent)
-{
-    ent->last_access_t                  = word;
-}
-
-
-// to marshall VLAN entries
-
-static uint32_t vlan_entry_word0_w(struct vlan_table_entry *ent)
-{
-    return 
-        ((0x1    & ent->drop)                             << 31)  | 
-        ((0x1    & ent->prio_override)                    << 30)  |
-        ((0x7    & ent->prio)                             << 27)  |
-        ((0x1    & ent->has_prio)                         << 26)  |
-        ((0xFF   & ent->fid)                              << 16)  |
-        ((0xFFFF & ent->port_mask)                             )  ;
-}
 
