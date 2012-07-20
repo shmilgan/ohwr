@@ -198,8 +198,9 @@ have a similar prefix for the same reason).
         subdirectory of @code{wr-switch-sw}).
         The variable is internally set to the directory
         name of the main script. Note that the script cannot
-        be run from the same directory (i.e.: @code{./wrs_build-all}
-        is not allowed), you must call it from your output directory
+        be run from the same directory or from the wr-switch-sw project
+        directory (i.e.: @code{./wrs_build-all} @code{./build/wrs_build-all}
+        are not allowed), you must call it from your output directory
         using a pathname to  invoke it.  This variable cannot be
         overridden in the main script, but must be pre-set if you run
         a sub-script to rebuild only part of the software suite.
