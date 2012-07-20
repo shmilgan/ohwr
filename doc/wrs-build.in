@@ -1469,6 +1469,14 @@ that should be renamed to @code{g45memtest}.
 
 
 @c ##########################################################################
+@node Schematics
+@appendix Schematics
+The switch schematics version: 3.0, 3.1 and 3.2 are available on the 
+OpenHardware repository of the white-rabbit project at the following link:
+@uref{http://www.ohwr.org/documents/180}
+
+
+@c ##########################################################################
 @bye
 
 
