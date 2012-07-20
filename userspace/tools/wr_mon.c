@@ -33,15 +33,24 @@ void init()
 
 void show_ports()
 {
-	int i;
+	int i, j;
 	term_pcprintf(3, 1, C_BLUE, "Switch ports:");
 
-	for(i=0; i<port_list.num_ports;i++)
+	for(i=0; i<18;i++)
 	{
+		char if_name[10], found = 0;
 		hexp_port_state_t state;
-		halexp_get_port_state(&state, port_list.port_names[i]);
 
-		term_pcprintf(5+i, 1, C_WHITE, "%s: ", port_list.port_names[i]);
+		snprintf(if_name, 10, "wr%d", i);
+		
+		for(j=0;j<port_list.num_ports;j++)
+			if(!strcmp(port_list.port_names[j], if_name)) { found = 1; break; }
+			
+		if(!found) continue;
+		
+		halexp_get_port_state(&state, if_name);
+
+		term_pcprintf(5+i, 1, C_WHITE, "%05s: ", if_name);
 		if(state.up)
 			term_cprintf(C_GREEN, "Link up    ");
 		else
