@@ -346,7 +346,7 @@ to generate the terse output shown above:
 
 @example
    /path/to/wr-switch-sw/build/wrs_build-all 2>&1 | tee logfile \
-        | grep '^20..-..-.. ..:'
+        | grep "^20..-..-.. ..:"
 @end example
 
 If you are lucky, everything completes by itself. The time taken
