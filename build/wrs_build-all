@@ -4,11 +4,7 @@
 
 # Base dir is forcibly the dirname of this script, as an absolute pathname
 dir=$(dirname $0)
-if echo $dir | grep -q '^/'; then
-    WRS_BASE_DIR="$dir";
-else
-    WRS_BASE_DIR="$(echo $(/bin/pwd)/$dir | sed 's-/.$--')";
-fi
+WRS_BASE_DIR=$(cd $dir && /bin/pwd)
 export WRS_BASE_DIR
 
 . ${WRS_BASE_DIR}/scripts/wrs_functions
@@ -18,14 +14,20 @@ export WRS_BASE_DIR
 wrs_setenv_default WRS_OUTPUT_DIR      $(/bin/pwd)
 wrs_setenv_default WRS_DOWNLOAD_DIR    ${WRS_OUTPUT_DIR}/downloads
 
-# Refuse to build within the directory itself
-if [ "$WRS_OUTPUT_DIR" = "$WRS_BASE_DIR" ]; then
-    wrs_die "Please run $(basename $0) from a different directory"
+# Allow only absolute path for WRS_OUTPUT_DIR and WRS_DOWNLOAD_DIR
+if [ "${WRS_OUTPUT_DIR:0:1}" != "/" ]; then
+	wrs_die "Invalid WRS_OUTPUT_DIR, only absolute paths are allowed"
+fi
+if [ "${WRS_DOWNLOAD_DIR:0:1}" != "/" ]; then
+	wrs_die "Invalid WRS_DOWNLOAD_DIR, only absolute paths are allowed"
+
 fi
 
+#project is WRS_BASE_DIR path without build directory at the end
+project=${WRS_BASE_DIR:0:(${#WRS_BASE_DIR}-6)}
 # Refuse to build within the wr-switch-sw directory
-if echo $WRS_BASE_DIR | grep "^$WRS_OUTPUT_DIR/./build\$" > /dev/null; then
-	wrs_die "Please run $(basename $0) from a different directory"
+if echo $WRS_OUTPUT_DIR | grep "^$project.*\$" > /dev/null; then
+	wrs_die "Please run $(basename $0) from a different directory outside the wr-switch-sw project"
 fi
 
 # Check the tools
