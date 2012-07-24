@@ -31,7 +31,7 @@ fi
 # Check the tools
 WRS_TOOLS="curl svn git gcc g++ ar as m4 libtool gettext md5sum make"
 WRS_TOOLS="$WRS_TOOLS awk unzip patch bison flex ncursesw5-config"
-WRS_TOOLS="$WRS_TOOLS lua fakeroot gettext mkfs.jffs2"
+WRS_TOOLS="$WRS_TOOLS lua fakeroot gettext mkfs.jffs2 makeinfo"
 
 wrs_check_tools $WRS_TOOLS
 
