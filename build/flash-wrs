@@ -27,7 +27,7 @@ showhelp()
 	printf "  -e \t\t Completely erase the memory (Can erase your configuration)\n"
 	printf "  -b|--build\t Use file that you have build in the WRS_OUTPUT_DIR\n"
 	printf "  --test\t Use file for testing the switch (not available)\n"
-	printf "  --skip\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE\n\n"
+	printf "  --silent\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE\n\n"
 	exit 0
 }
 
@@ -122,12 +122,12 @@ while [ $# -ge 1 ]; do
 	    fi
 	    memmode="$2"
 	    shift; shift;;
-	--skip)
+	--silent)
 	    # set default the MAC address if user didn't set a MAC address
 	    if [ "x$MAC" = "x" ]; then
 		MAC="02:0B:AD:C0:FF:EE"
 	    fi
-	    skip=1;
+	    silent=1;
 	    shift;;
 	/* ) DEV="-s $1"; shift ;;
 	*:* ) MAC="$1"; shift ;;
