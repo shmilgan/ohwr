@@ -194,7 +194,7 @@ have a similar prefix for the same reason).
 
 @table @code
 @item WRS_BASE_DIR
-	The pathname of the build directory (i.e., the @code{build/}
+	The absolute pathname of the build directory (i.e., the @code{build/}
         subdirectory of @code{wr-switch-sw}).
         The variable is internally set to the directory
         name of the main script. Note that the script cannot
@@ -206,7 +206,8 @@ have a similar prefix for the same reason).
         a sub-script to rebuild only part of the software suite.
 
 @item WRS_OUTPUT_DIR
-	The pathname of the directory where output is placed. It defaults
+	The absolute pathname of the directory where output is placed. It 
+	defaults
         to the current directory whence you invoke the script (i.e., you
         can invoke @code{/path/to/wrs_build-all} to have all output
         in the current directory).  Compilation
@@ -215,7 +216,8 @@ have a similar prefix for the same reason).
         and final images are placed in a @i{images} subdirectory.
 
 @item WRS_DOWNLOAD_DIR
-	The directory where downloaded files are placed. If unset
+	The absolute pathname of the directory where downloaded files 
+	are placed. If unset
         it defaults to @code{$WRS_OUTPUT_DIR/downloads}, which is
         created if needed.  By pre-setting this variable you can
         simply recursively delete
