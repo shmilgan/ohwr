@@ -96,7 +96,6 @@ int rts_lock_channel(int channel, int priority)
 
 int rts_init()
 {
-    TRACE("Initializing the RT Subsystem...\n");
     clear_state();
 }
 

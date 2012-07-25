@@ -15,12 +15,16 @@ CFLAGS= $(CFLAGS_PLATFORM) -ffunction-sections -fdata-sections -O3 -Iinclude -in
 LDFLAGS= $(LDFLAGS_PLATFORM) -Wl,--gc-sections -O3 -Iinclude -ffreestanding 
 SIZE = $(CROSS_COMPILE)size
 OBJS += $(OBJS_PLATFORM)
+REVISION=$(shell git rev-parse HEAD)
 
 OUTPUT=rt_cpu
 
 all: 		$(OBJS)
 				$(SIZE) -t $(OBJS)
-				${CC} -o $(OUTPUT).elf $(OBJS) $(LDFLAGS) 
+				echo "const char *build_revision = \"$(REVISION)\";" > revision.c
+				echo "const char *build_date = __DATE__ \" \" __TIME__;" >> revision.c
+				$(CC) $(CFLAGS) -c revision.c
+				${CC} -o $(OUTPUT).elf $(OBJS) revision.o $(LDFLAGS) 
 				${OBJCOPY} -O binary $(OUTPUT).elf $(OUTPUT).bin
 
 clean:	

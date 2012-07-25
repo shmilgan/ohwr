@@ -6,15 +6,20 @@
 
 #include "minipc.h"
 
-//void _irq_entry() {};
+const char *build_revision;
+const char *build_date;
 
 main()
 {
 	uint32_t start_tics = 0;
 
 	uart_init();
-	ad9516_init();
+	
+	TRACE("WR Switch Real Time Subsystem (c) CERN 2011-2012\n");
+	TRACE("Revision: %s, built at %s.\n", build_revision, build_date);
+	TRACE("--");
 
+	ad9516_init();
 	rts_init();
 	rtipc_init();
 
