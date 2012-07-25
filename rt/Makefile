@@ -1,6 +1,8 @@
-CROSS_COMPILE ?= /opt/gcc-lm32/bin/lm32-elf-
+CROSS_COMPILE ?= lm32-elf-
 
-OBJS = main.o dev/uart.o dev/timer.o lib/mprintf.o dev/ad9516.o dev/softpll_ng.o ipc/minipc-mem-server.o ipc/rt_ipc.o
+LIBSOFTPLL_DIR = ../userspace/ptp-noposix/softpll
+
+OBJS = main.o dev/uart.o dev/timer.o lib/mprintf.o dev/ad9516.o ipc/minipc-mem-server.o ipc/rt_ipc.o $(LIBSOFTPLL_DIR)/softpll_ng.o
 
 CFLAGS_PLATFORM = -mmultiply-enabled -mbarrel-shift-enabled -Idev
 LDFLAGS_PLATFORM = -mmultiply-enabled -mbarrel-shift-enabled   -nostdlib -T target/lm32/ram.ld 
@@ -9,8 +11,8 @@ OBJS_PLATFORM=target/lm32/crt0.o target/lm32/irq.o
 CC=$(CROSS_COMPILE)gcc
 OBJCOPY=$(CROSS_COMPILE)objcopy
 OBJDUMP=$(CROSS_COMPILE)objdump
-CFLAGS= $(CFLAGS_PLATFORM) -ffunction-sections -fdata-sections -O3 -Iinclude -include include/trace.h   -ffreestanding -Iipc
-LDFLAGS= $(LDFLAGS_PLATFORM) -ffunction-sections -fdata-sections -O3 -Iinclude -ffreestanding 
+CFLAGS= $(CFLAGS_PLATFORM) -ffunction-sections -fdata-sections -O3 -Iinclude -include include/trace.h  -ffreestanding -Iipc -I$(LIBSOFTPLL_DIR) -I.
+LDFLAGS= $(LDFLAGS_PLATFORM) -Wl,--gc-sections -O3 -Iinclude -ffreestanding 
 SIZE = $(CROSS_COMPILE)size
 OBJS += $(OBJS_PLATFORM)
 
@@ -25,7 +27,7 @@ clean:
 				rm -f $(OBJS) $(OUTPUT).elf $(OUTPUT).bin $(OUTPUT).ram
 
 scp:		all
-				scp rt_cpu.bin root@pts-test03.cern.ch:/tftpboot/rootfs/wr/lib/firmware
+				scp rt_cpu.bin root@pcbe12132:/tftpboot/rootfs/wr/lib/firmware
 
 %.o:		%.c
 				${CC} $(CFLAGS) $(LIB_DIR) -c $^ -o $@

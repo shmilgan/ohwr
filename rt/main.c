@@ -2,7 +2,7 @@
 #include "uart.h"
 #include "timer.h"
 
-#include "dev/softpll_ng.h"
+#include "softpll_ng.h"
 
 #include "minipc.h"
 
