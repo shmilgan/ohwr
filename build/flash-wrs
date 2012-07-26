@@ -27,7 +27,7 @@ showhelp()
 	printf "  -e \t\t Completely erase the memory (Can erase your configuration)\n"
 	printf "  -b|--build\t Use file that you have build in the WRS_OUTPUT_DIR\n"
 	printf "  --test\t Use file for testing the switch (not available)\n"
-	printf "  --skip\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE\n\n"
+	printf "  --silent\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE\n\n"
 	exit 0
 }
 
@@ -36,10 +36,10 @@ checkExit()
 {
 	err=0;
 	if [ $1 ]; then
-		if [ -f $1 ]; then 
-			return 0; 
-		else 
-			echo "Can't find $1" >& 2; 
+		if [ -f $1 ]; then
+			return 0;
+		else
+			echo "Can't find $1" >& 2;
 		fi
 	else
 		echo "varname not set"
@@ -62,28 +62,14 @@ modifyMAC()
 	new=$2
 	cp $origin $new
 	
-	# check & change mac address
-	X="[0-9a-fA-F][0-9a-fA-F]"
-	while true; do
-		if echo $MAC | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
-			sed -i "s/02:0B:AD:C0:FF:EE/$MAC/" $new
-			echo "MAC is now: $MAC"
-			return 0
-		else
-			if [ "x$MAC" != "x" ]; then
-					echo "$0: Invalid MAC address \"$MAC\"" >&2;
-			fi
-			if [ $skip ]; then 
-					return 1;
-			fi
-			read -p "Enter MAC (XX:XX:XX:XX:XX:XX) or press S (Skip): " MAC
-			if ( [ "x$MAC" = "xS" ] || [ "x$MAC" = "xs" ] ); then 
-				MAC=""
-				return 1;
-			fi
-		fi
-	done
-
+	# MAC address doesn't need any modification
+	if [ $silent ]; then 
+	    return 1;
+	fi
+	# Modify MAC address
+	sed -i "s/02:0B:AD:C0:FF:EE/$MAC/" $new
+	echo "MAC is now: $MAC"
+	return 0
 }
 
 # Go to the top directory
@@ -136,12 +122,12 @@ while [ $# -ge 1 ]; do
 	    fi
 	    memmode="$2"
 	    shift; shift;;
-	--skip)
+	--silent)
 	    # set default the MAC address if user didn't set a MAC address
 	    if [ "x$MAC" = "x" ]; then
 		MAC="02:0B:AD:C0:FF:EE"
 	    fi
-	    skip=1;
+	    silent=1;
 	    shift;;
 	/* ) DEV="-s $1"; shift ;;
 	*:* ) MAC="$1"; shift ;;
@@ -169,7 +155,7 @@ if [ "x$memmode" = "xdf" ]; then
 	df=1
 elif [ "x$memmode" = "xnf" ]; then
 	nf=1
-elif [ "x$memmode" = "xtest" ]; then
+elif [ "x$memmode" = "xddr" ]; then
 	test=1
 else 
 	df=1
