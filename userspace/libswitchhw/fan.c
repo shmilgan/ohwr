@@ -164,7 +164,7 @@ int shw_init_fans()
 	fan_pi.kp = 4.0;
 	fan_pi.y_min = 200;	
 	fan_pi.bias = 200;	
-	fan_pi.y_max = 1000;	
+	fan_pi.y_max = 800;	
 
 	pi_init(&fan_pi);
 	
