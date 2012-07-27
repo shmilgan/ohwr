@@ -4,5 +4,6 @@
 int mprintf(char const *format, ...);
 
 #define TRACE(...) mprintf(__VA_ARGS__)
+#define TRACE_DEV(...) mprintf(__VA_ARGS__)
 
 #endif
