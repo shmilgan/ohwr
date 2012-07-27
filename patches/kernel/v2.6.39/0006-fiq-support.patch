@@ -1,0 +1,124 @@
+From 7008c0d8fe3224ea533c2634f8bdc34fe8dc1e5b Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@unipv.it>
+Date: Wed, 27 May 2009 00:44:01 +0200
+Subject: [PATCH] arm fiq: allow modules to exploit the fiq mechanism
+
+This patch exports "fiq_userptr" so that a module can hook to the fiq
+handler. This mechanism is used by my "fiq-engine" external package
+found in gnudd.com.
+
+To prevent data aborts in vmalloc areas during fiq-mode, vmalloc.c is
+modified to update the virtual memory of all processes in map_vm_area().
+Without this patch such updates happen on demand, but page faults can't
+be managed in fiq mode. Unfortunately, it's #fidef CONFIG_ARM in vmalloc.c
+---
+ arch/arm/kernel/armksyms.c   |    6 ++++++
+ arch/arm/kernel/entry-armv.S |   24 +++++++++++++++++++++++-
+ mm/vmalloc.c                 |   37 +++++++++++++++++++++++++++++++++++++
+ 3 files changed, 66 insertions(+), 1 deletions(-)
+
+diff --git a/arch/arm/kernel/armksyms.c b/arch/arm/kernel/armksyms.c
+index e5e1e53..db1b872 100644
+--- a/arch/arm/kernel/armksyms.c
++++ b/arch/arm/kernel/armksyms.c
+@@ -49,6 +49,12 @@ extern void __aeabi_ulcmp(void);
+ 
+ extern void fpundefinstr(void);
+ 
++/*
++ * for fiq support (code in entry-armv.S -- ARub)
++ */
++extern void (*fiq_userptr)(void);
++EXPORT_SYMBOL(fiq_userptr);
++
+ 
+ EXPORT_SYMBOL(__backtrace);
+ 
+diff --git a/arch/arm/kernel/entry-armv.S b/arch/arm/kernel/entry-armv.S
+index bb96a7d..5692cbb 100644
+--- a/arch/arm/kernel/entry-armv.S
++++ b/arch/arm/kernel/entry-armv.S
+@@ -1193,9 +1193,31 @@ __stubs_start:
+  * other mode than FIQ...  Ok you can switch to another mode, but you can't
+  * get out of that mode without clobbering one register.
+  */
++/* ARub: try to use it instead (we won't leave FIQ mode anyway) */
+ vector_fiq:
+-	disable_fiq
++	ldr	r9,	1f
++	ldr	r9,	[r9]
++	movs	r9,	r9
++	beq	fiq_ret
++	mov	r8,	lr
++	mov	lr,	pc
++	mov	pc,	r9	/* jump to userptr */
++	mov	lr,	r8
++fiq_ret:
+ 	subs	pc, lr, #4
++fiq_savemm:
++	.long	0
++
++	
++	
++1:	.long	fiq_userptr
++	
++.section .text /* can't live here... */
++.globl	fiq_userptr
++fiq_userptr:
++	.long	0		/* This must save r0..r8 inclusive */
++.previous	
++
+ 
+ /*=============================================================================
+  * Address exception handler
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index eb5cc7d..aec65f2 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -1205,6 +1205,43 @@ int map_vm_area(struct vm_struct *area, pgprot_t prot, struct page ***pages)
+ 		err = 0;
+ 	}
+ 
++/*
++ * In order to support installation of a non-trivial FIQ handler, on ARM
++ * we need to replicate kernel virtual memory to all processes (so it
++ * can be accessed from fiq state irrespective of what current process is).
++ * The code comes from do_translation_fault, and is arm-specific.
++ */
++#ifdef CONFIG_ARM
++	if (!err) {
++		struct task_struct *p;
++		for_each_process(p) {
++			task_lock(p);
++			if (!p->mm)
++				goto next_process;
++			if (p->mm == &init_mm)
++				goto next_process;
++			for (addr = (unsigned long)area->addr;
++			     addr < end; addr += PAGE_SIZE) {
++				/* "+= PMD_SIZE" may be faster... */
++				unsigned int index;
++				pgd_t *pgd, *pgd_k;
++				pmd_t *pmd, *pmd_k;
++				/*  from do_translation_fault() */
++				index = pgd_index(addr);
++				pgd = p->mm->pgd + index;
++				pgd_k = init_mm.pgd + index;
++				if (!pgd_present(*pgd))
++					set_pgd(pgd, *pgd_k);
++				pmd_k = pmd_offset(pgd_k, addr);
++				pmd   = pmd_offset(pgd, addr);
++				copy_pmd(pmd, pmd_k);
++			}
++		next_process:
++			task_unlock(p);
++		}
++	}
++#endif
++
+ 	return err;
+ }
+ EXPORT_SYMBOL_GPL(map_vm_area);
+-- 
+1.7.7.2
+
