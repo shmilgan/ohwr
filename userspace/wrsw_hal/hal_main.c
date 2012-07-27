@@ -204,7 +204,7 @@ void hal_update()
 {
 	hal_update_wripc();
 	hal_update_ports();
-
+	shw_update_fans();
 //	usleep(1000);
 }
 

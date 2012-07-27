@@ -19,6 +19,8 @@ int shw_init()
 		assert_init(shw_sfp_buses_init());
 		shw_sfp_gpio_init();
 
+		assert_init(shw_init_fans());
+
 	TRACE(TRACE_INFO, "HW initialization done!");
 }
 

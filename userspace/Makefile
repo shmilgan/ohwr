@@ -20,6 +20,7 @@ export
 # All targets must install as well, as later builds use headers/libs
 all:
 	ln -sf ../../kernel/wbgen-regs include/regs
+	ln -sf ../../kernel/at91_softpwm/at91_softpwm.h include/at91_softpwm.h
 	for d in $(SUBDIRS); do $(MAKE) -C $$d $@ || exit 1; done
 
 clean:
