@@ -36,6 +36,7 @@ int hal_init_timing()
   {
   	TRACE(TRACE_INFO,"Not timing mode specified in the config file. Defaulting to Boundary Clock.");
   	timing_mode = HAL_TIMING_MODE_BC;
+  	strcpy (str, "BoundaryClock");
   } else {
   	if(!strcasecmp(str, "GrandMaster") || !strcasecmp(str, "GM"))
   		timing_mode = HAL_TIMING_MODE_GRAND_MASTER;
