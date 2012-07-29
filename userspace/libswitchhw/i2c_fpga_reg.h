@@ -28,6 +28,7 @@
 
 #define FPGA_I2C0_ADDRESS 0x54000
 #define FPGA_I2C1_ADDRESS 0x55000
+#define FPGA_I2C_SENSORS_ADDRESS 0x56000
 
 typedef struct
 {
