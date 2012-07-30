@@ -64,22 +64,12 @@ showhelp() {
 
 pack()
 {
-	olddir=$(/bin/pwd)
-	cd ${WRS_BASE_DIR}/../
 	#Check if the current git repo correspond to a tag
-	name=$(git describe --exact-match --tags HEAD &> /dev/null)
-	
-	if [ $? -ne "0" ]; then
-		# Otherwise obtain the date and git revision
-		name=$(date +%y%m%d)"-"$(git log --abbrev-commit --pretty=oneline -1 | cut -d" " -f1)
-		# Append '+' symbol if some files need to be commited to git 	
-		if [ "x$(git status -s .)" != "x" ]; then 
-			name="$name+"; 
-		fi;	
-	fi
-	cd ${olddir}
+        cd $WRS_BASE_DIR
+	name=$(git describe --always --dirty)
+
 	echo "Packing into wrs-firmware-$name.tar.gz";
-	tar -czvf "wrs-firmware-$name.tar.gz" -C ${WRS_OUTPUT_DIR}/images/ at91bootstrap.bin barebox.bin zImage wrs-image.jffs2.img
+	tar -czvf "$WRS_OUTPUT_DIR/wrs-firmware-$name.tar.gz" -C ${WRS_OUTPUT_DIR}/images/ at91bootstrap.bin barebox.bin zImage wrs-image.jffs2.img
 	exit 0
 }
 

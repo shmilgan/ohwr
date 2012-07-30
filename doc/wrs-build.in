@@ -370,21 +370,23 @@ and @code{04-kernel}).
 @section Release Package
 
 Once all the building steps have succeed, you can easily create a 
-package in @code{WRS_OUTPUT_DIR/images/} using the following command:
+package in @code{WRS_OUTPUT_DIR} using the following command:
 
 @example
    /path/to/wr-switch-sw/build/wrs_build-all --pack
 @end example 
 
-This will generate a @code{tar.gz} package with various  
-nomenclatures according to the state of the git repository:
+This will generate a @code{tar.gz} package. The name of the package is composed
+by the prefix and the description of the current status of the git repository.
+This is the same naming policy the kernel and other packages.
 
-@itemize @bullet
-@item @code{wrs-firmware-120711-2c67861.tar.gz}: Package generated the 11th of July 2012 using git revision @i{2c67861}
-@item @code{wrs-firmware-120711-2c67861+.tar.gz}: Same as above, except that the there are some modification git revision @i{2c67861} has been modified. You might need to commit or stash the changes to remove the @code{+} tag.
-@item @code{wrs-firmware-wr-switch-sw-v3.0-rc1.tag.gz}: The package correspond to the git tag @i{wr-switch-sw-v3.0-rc1}. 
-@end itemize
-
+The prefix is @code{wrs-firmware-}; the information about the current status are
+retrived by using the git commmand @code{git describe --always --dirty}.
+For example, if you are building the tag @code{wr-switch-sw-v3.0}, your package
+name will be @code{wrs-firmware-wr-switch-sw-v3.0.tag.gz}. If you are building
+on some personal commit the name includes some extra information to describe
+your commit: number of commits form the last tag (if any), SHA1 code of the
+commit. IF you have uncommited changed, the suffix @code{-dirty} is there too.
 
 @c ==========================================================================
 @node Build Script
