@@ -15,9 +15,17 @@ mkdir -p ${WRS_OUTPUT_DIR}/images/wr/lib/firmware
 
 echo "$WRS_HW_DIR"
 
+if [ -f "${WRS_BASE_DIR}/../rt/rt_cpu.bin" ]; then
+	echo "Using self-compiled RT firmware"
+	cp ${WRS_BASE_DIR}/../rt/rt_cpu.bin ${WRS_OUTPUT_DIR}/images/wr/lib/firmware/rt_cpu.bin
+else
+	echo "Using pre-compiled (binaries/) RT firmware"
+	cp ${WRS_BASE_DIR}/../binaries/rt_cpu.bin ${WRS_OUTPUT_DIR}/images/wr/lib/firmware/rt_cpu.bin
+fi
+
 if [ "$WRS_HW_DIR" != "" ]; then
 	cp ${WRS_HW_DIR}/syn/scb_8ports/scb_top_synthesis.bin ${WRS_OUTPUT_DIR}/images/wr/lib/firmware/8ports_mb.bin
-	cp ${WRS_HW_DIR}/rt/rt_cpu.bin ${WRS_OUTPUT_DIR}/images/wr/lib/firmware/rt_cpu.bin
+	cp ${WRS_HW_DIR}/syn/scb_18ports/scb_top_synthesis.bin ${WRS_OUTPUT_DIR}/images/wr/lib/firmware/18ports_mb.bin
 else
 	tarname=wrs3-gw.tar.gz
 	wrs_download $tarname

@@ -26,6 +26,7 @@ all: 		$(OBJS)
 				$(CC) $(CFLAGS) -c revision.c
 				${CC} -o $(OUTPUT).elf $(OBJS) revision.o $(LDFLAGS) 
 				${OBJCOPY} -O binary $(OUTPUT).elf $(OUTPUT).bin
+				cp	$(OUTPUT).bin ../binaries
 
 clean:	
 				rm -f $(OBJS) $(OUTPUT).elf $(OUTPUT).bin $(OUTPUT).ram
