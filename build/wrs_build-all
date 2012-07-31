@@ -30,7 +30,8 @@ if echo $WRS_OUTPUT_DIR | grep "^$project.*\$" > /dev/null; then
 	wrs_die "Please run $(basename $0) from a different directory outside the wr-switch-sw project"
 fi
 
-# Check the tools
+# Check the tools, also in /usr/sbin
+export PATH="$PATH:/usr/sbin"
 WRS_TOOLS="curl svn git gcc g++ ar as m4 libtool gettext md5sum make"
 WRS_TOOLS="$WRS_TOOLS awk unzip patch bison flex ncursesw5-config"
 WRS_TOOLS="$WRS_TOOLS lua fakeroot gettext mkfs.jffs2 makeinfo"
