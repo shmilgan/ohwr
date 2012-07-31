@@ -639,42 +639,42 @@ After initial installation, you should reach the following menu.
  Welcome on WRSv3 Boot Sequence
       1: boot from nand (default)      
       2: boot from dataflash (failsafe)
-      3: boot from script              
-      4: boot from ram                 
-      5: boot from nfs                 
-      6: boot from nfs (test)          
-      7: edit & save config            
-      8: shell (prompt terminal)       
-      9: reset barebox    
+      3: boot from script        
+      4: edit & save config            
+      5: shell (prompt terminal)       
+      6: reset barebox    
 @end example
 
+You have multiple choise to boot your switch. The default is the boot
+from NAND memory, but you need to install the Linux kernel and the
+file system on it before succesfully boot the switch. Please see
+@ref{Install Kernel to NAND} to install the kernel and the file system
+on the NAND memory.
+You can also boot from the DataFlash; this is the failsafe mode, you can
+use it when the NAND memory is corrupted.
+@c FIXME how can I install on DataFlash?
 
-@itemize @bullet
-@item Booting from NAND is the standard boot procedure
-@item Booting from DataFlash can be used when NAND has been corrupted. 
-It is the failsafe mode.
-@end itemize
+Script option requires an active network connection and a
+TFTP server, optionally a DHCP server. By defaul it uses a DHCP server to
+obtain the IP address to connect to the TFTP server.
+
+However, if you do not want to use DHCP you must edit the configuration and
+add the following lines@footnote{replace IP addresses with your local
+addressing}:
 
 
-The other options need a network connection. By default they use
-a DHCP server to obtain the IP address to connect to the TFTP server 
-to load the different files.
-
-However, if you do not want to use DHCP because you already have one in your 
-network you should edit the config and add the following
 @example
    eth0.ipaddr=192.168.16.9
    eth0.serverip=192.168.16.1
 @end example
 
-These "network" booting options can be explained as:
 
-@itemize @bullet
-@item script: search for a script in TFTP directory at @code{<MAC of switch>/wrboot} or @code{wrboot} to load and execute it.
-@item ram: load @code{zImage} & @code{wrs-image.cpio.gz} to the DDR to boot from it.
-@item nfs: load @code{zImage} to the DDR  & mount @code{rootfs} as root filesystem.
-@item nfs (test): load @code{zImage} to the DDR  & mount @code{rootfs-test} as root filesystem. 
-@end itemize
+The script booting procedure asks to the TFTP server a script named
+@file{wrboot}. This file can be placed in the root TFTP directory, or
+in its direct sub-directory named with the MAC address of the destination
+switch. Once the script is loaded, the switch execute it within barabox
+to boot the system. You can use this option to write costum kernel
+commandline.
 
 Finally in save & edit config you have some parameters to easily fit
 the booting process to your need. i.e, Selecting alternative boot method,
@@ -689,16 +689,11 @@ forcing alternative boot, etc.
 @node Booting from NFS
 @section Booting from NFS
 
-After initial installation, the DataFlash only includes up to @i{barebox},
-while the rest must still be loaded.
+Assuming you have a known-working NFS-Root installation, a TFTP
+server and you don't use the DHCP server; you can write a @file{wrboot}
+script to boot the Linux kernel loaded with TFTP and the file system on NFS.
+Following an example of a @file{wrboot} script used too boot from NFS.
 
-Assuming you have a known-working NFS-Root installation and a TFTP
-server, but you do not want to use DHCP because you already have one
-in your network, the following commands will load a kernel and
-boot it as NFS-Root. You will need to change IP addresses and names
-to match your personal situation.
-
-@c FIXME: kernel boot procedure
 @example
    eth0.ipaddr=192.168.16.9
    eth0.serverip=192.168.16.1
@@ -709,30 +704,13 @@ to match your personal situation.
    bootz /dev/mem.kernel
 @end example
 
-Please note that the default boot command in the barebox binary with the
-provided patches runs the following three commands:
-
-@example
-   dhcp
-   tftp wrboot
-   ./wrboot
-@end example
-
-This means that if you have both DHCP and TFTP, you can just write
-your @i{barebox} commands in a file called @i{wrboot} in your TFTP
-public location, and the commands will automatically executed at boot.
-Actually, I am currently using the stanza shown above to boot my
-switch over the network with no interaction at all, while being able
-to change the boot procedure on the server while the switch is off.
-
-To have a self-hosting switch, you should copy your
-filesystem to NAND flash. See @ref{Install and Booting from NAND},
-for a quick primer (the production procedure is not finalized at this
-point).
+As described above, by using the @i{boot from script} option, barebox 
+automatically load your @file{wrboot} script @footnote{See
+@ref{Booting with Barebox} to know where place your @file{wrboot}}.
 
 @c ==========================================================================
-@node Install and Booting from NAND
-@section Install and Booting from NAND
+@node Install Kernel to NAND
+@section Install Kernel to NAND
 
 In order to boot from NAND memory, you must install the kernel and
 the filesystem  to NAND memory, so you can have a self-hosted switch.
