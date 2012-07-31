@@ -477,7 +477,7 @@ The first step is to plug a USB cable from your computer to the frontal
 @b{right} mini-USB @i{(Test)} port of the switch. This USB port is connected to the 
 debug UART of the ARM (and then of the FPGA). Once connected a 
 @code{/dev/ttyUSB0} should appears on your machine, and you can read the
-output using minicom @footnote{We recommend to use @uref{http://brokestream.com/tinyserial.html, tinyserial} instead of minicom} like this:
+output using minicom @footnote{You can use other programs for accessing serial ports, for example @uref{http://brokestream.com/tinyserial.html, tinyserial}} like this:
 
 @example
 	minicom -D /dev/ttyUSB0 -b 115200
