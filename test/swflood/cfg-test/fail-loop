@@ -1,9 +1,0 @@
-
-repeat  df r
-repeat 1000 50
-repeat 100 f
-
-repeat 50 a
-
-endr  x
-
