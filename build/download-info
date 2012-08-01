@@ -18,6 +18,10 @@ barebox-2012.05.0.tar.bz2       208495f31b832eb6ae0c887787431def \
 linux-2.6.39.tar.bz2            1aab7a741abe08d42e8eccf20de61e05 \
    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.39.tar.bz2
 
+# our gateware binaries
+wrs3-gw-v3.0-20120801.tar.gz    28a7ac3ec004d3e441c232fa125d820a \
+http://www.ohwr.org/attachments/download/1485/wrs3-gw-v3.0-20120801.tar.gz
+
 # buildroot core and packages
 buildroot-2011.11.tar.bz2        7b852f4ef17c63857ca7b9388b782070 \
    http://www.buildroot.org/downloads/buildroot-2011.11.tar.bz2
@@ -126,7 +130,3 @@ uClibc-0.9.32.tar.bz2            cfcb6c25d8ebe12817499d8749ee8ae1 \
 
 zlib-1.2.5.tar.bz2               be1e89810e66150f5b0327984d8625a0 \
    http://kent.dl.sourceforge.net/sourceforge/libpng/zlib-1.2.5.tar.bz2
-
-wrs3-gw.tar.gz                   28a7ac3ec004d3e441c232fa125d820a \
-   http://www.ohwr.org/attachments/download/1474/wrs3-gw.tar.gz
-
