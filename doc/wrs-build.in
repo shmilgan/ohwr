@@ -224,6 +224,11 @@ have a similar prefix for the same reason).
         the output directory to force a full rebuild, without
         the overhead of re-downloading everything.
 
+@item WRS_HW_DIR
+	The absolute pathname of the directory where you build HDL, if any.
+        If this variable is set, FPGA binaries will be copied from there
+        instead of being extracted by the official archive on @code{owhr.org}.
+
 @item CROSS_COMPILE
 	The variable is the usual cross-compilation prefix. For example,
         @code{arm-linux-} if you have @i{arm-linux-gcc} in your path,

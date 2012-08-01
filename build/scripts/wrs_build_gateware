@@ -9,25 +9,24 @@ wrs_check_vars WRS_OUTPUT_DIR
 
 wrs_echo "--- Deploying FPGA firmware"
 
-mkdir -p ${WRS_OUTPUT_DIR}/images/wr
-mkdir -p ${WRS_OUTPUT_DIR}/images/wr/lib
-mkdir -p ${WRS_OUTPUT_DIR}/images/wr/lib/firmware
-
-echo "$WRS_HW_DIR"
+FWDIR="${WRS_OUTPUT_DIR}/images/wr/lib/firmware"
+mkdir -p "$FWDIR"
 
 if [ -f "${WRS_BASE_DIR}/../rt/rt_cpu.bin" ]; then
 	echo "Using self-compiled RT firmware"
-	cp ${WRS_BASE_DIR}/../rt/rt_cpu.bin ${WRS_OUTPUT_DIR}/images/wr/lib/firmware/rt_cpu.bin
+	cp ${WRS_BASE_DIR}/../rt/rt_cpu.bin "$FWDIR"
 else
 	echo "Using pre-compiled (binaries/) RT firmware"
-	cp ${WRS_BASE_DIR}/../binaries/rt_cpu.bin ${WRS_OUTPUT_DIR}/images/wr/lib/firmware/rt_cpu.bin
+	cp ${WRS_BASE_DIR}/../binaries/rt_cpu.bin "$FWDIR"
 fi
 
 if [ "$WRS_HW_DIR" != "" ]; then
-	cp ${WRS_HW_DIR}/syn/scb_8ports/scb_top_synthesis.bin ${WRS_OUTPUT_DIR}/images/wr/lib/firmware/8ports_mb.bin
-	cp ${WRS_HW_DIR}/syn/scb_18ports/scb_top_synthesis.bin ${WRS_OUTPUT_DIR}/images/wr/lib/firmware/18ports_mb.bin
+        wrs_echo "Copying binaries from $WRS_HW_DIR"
+	cp ${WRS_HW_DIR}/syn/scb_8ports/scb_top_synthesis.bin  $FWDIR/8ports_mb.bin
+	cp ${WRS_HW_DIR}/syn/scb_18ports/scb_top_synthesis.bin $FWDIR/18ports_mb.bin
 else
 	tarname="wrs3-gw-v3.0-20120801.tar.gz"
+        wrs_echo "Using pre-build binaries from $tarname"
 	wrs_download $tarname
-	tar xzf $WRS_DOWNLOAD_DIR/$tarname -C ${WRS_OUTPUT_DIR}/images/wr/lib/firmware
+	tar xzf $WRS_DOWNLOAD_DIR/$tarname -C $FWDIR
 fi
