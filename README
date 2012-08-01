@@ -1,33 +1,13 @@
 
-This package is meant to include all white-rabbit software. Part of
-this comes from the white-rabbit svn repository on ohwr.org, part comes
-from separate repositories that I merged here.
+This package is meant to include all white-rabbit software for the
+switch.  Part of this comes from the original white-rabbit svn
+repository on ohwr.org, part comes from separate repositories that I
+merged here.
 
-All documentation lives in doc/ , where all *.in files are the sources
-(texinfo files, plain ascii, but please ask me before adding or
-removing chapter or sections -- or emacs and its texinfo-mode).
+All documentation lives in doc/ , where the *.in files are the sources
+(one only, currently, other ones have been removed when obsoleted).
 
-Currently, the input files are the following ones:
-
-doc/wrs-software.in
-
-	top-level documentation. It has some duplication with other files
-	because it was born as an alternative setup to the svn repository
-	and build scripts.
-
-doc/wrs-build.in
-
-	documentation about the complete build procedure (i.e., the
-	part that has been documented so far). Directly related code
-	lives in the build/ subdirectory of this package, the other
-	is elsewhere (kernel/ userspace/ and patches/so on).
-
-doc/wrs-test.in
-
-	documentation about the testing procedures. Associated code libce
-
-When a tar archive is released, precompiled output files are included.
-
-As I write this (May 2011) this repository is somewhat messy because
-it's merge-in-progress between several packages written independently.
+The wrs-build documentation, thus, is what you actually need to build
+all the stuff that goes into the switch, and program to internal flash
+memory.
 
