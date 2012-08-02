@@ -75,17 +75,7 @@ granted write access).
 * Building::                    
 * Flashing of WRS-3::           
 * Booting with Barebox::        
-* The Compiler::                
-* Buildroot::                   
-* The IPL::                     
-* The Boot Loader::             
-* The Linux Kernel::            
-* Kernel Modules::              
-* Initial tools for the FPGA::  
-* PTPd::                        
-* User Space Applications::     
-* VHDL Binaries::               
-* The Complete Filesystem::     
+* The Individual Build Steps::  
 * Code layout in a production switch::  
 * Schematics are Available::    
 * Older Hardware Releases::     
@@ -857,8 +847,29 @@ it use the arrow keys (it is not like @i{vi}, for your pleasure but
 not for mine). To save and exit use @i{ctrl-D}.
 
 @c ##########################################################################
+@node The Individual Build Steps
+@chapter The Individual Build Steps
+
+This chapter details the individual build steps, for the users that want
+to customize their switch in any way. 
+
+@menu
+* The Compiler::                
+* Buildroot::                   
+* The IPL::                     
+* The Boot Loader::             
+* The Linux Kernel::            
+* Kernel Modules::              
+* Initial tools for the FPGA::  
+* PTPd::                        
+* User Space Applications::     
+* VHDL Binaries::               
+* The Complete Filesystem::     
+@end menu
+
+@c ==========================================================================
 @node The Compiler
-@chapter The Compiler
+@section The Compiler
 
 The predefined compiler used here is the one built by @i{buildroot}.
 The default configuration selects this choice.  If you pre-set a
@@ -872,9 +883,9 @@ In practice, you may want to set @code{CROSS_COMPILE} when you compile
 the boot loader and kernel by themselves, and avoid it when compiling
 the complete package.
 
-@c ##########################################################################
+@c ==========================================================================
 @node Buildroot
-@chapter Buildroot
+@section Buildroot
 
 The distribution being used here is @i{buildroot}. It is the first
 step being built, because it creates the cross-compiler it will use. This
@@ -901,9 +912,9 @@ your configuration file of choice. The file must be a copy of the
 Note that if the variable is not pointing to a regular file it is
 ignored with a simple warning -- rather than stopping the build procedure.
 
-@c ##########################################################################
+@c ==========================================================================
 @node The IPL
-@chapter The IPL
+@section The IPL
 
 The version of @i{at91bootstrap} being used in the switch as
 @i{Initial Program Loader} is version 3.3, download from  @code{timesys.com/}
@@ -939,9 +950,9 @@ the configuration program which has no actual effects and can be ignored.
 Maybe we will switch to another version in the future that doesn't show
 the bug, or to the newer @i{barebox} that obsoletes @i{at91boot}.
 
-@c ##########################################################################
+@c ==========================================================================
 @node The Boot Loader
-@chapter The Boot Loader
+@section The Boot Loader
 
 The switch uses @i{barebox} as a boot loader. We are running version
 2012-05, with a few local patches and the chosen configuration
@@ -992,9 +1003,9 @@ The ELF version is copied to @i{images} as well, as
 @code{images/barebox}; this file includes the symbol table and may (or may not) be
 useful.
 
-@c ##########################################################################
+@c ==========================================================================
 @node The Linux Kernel
-@chapter The Linux Kernel
+@section The Linux Kernel
 
 The kernel is currently version 2.6.39, compiled from an uncompressed
 tar file (so not within a @i{git} repository).  The upstream
@@ -1030,9 +1041,9 @@ The build scripts copy both @i{zImage} and all compiled kernel
 modules to the @i{images/} directory of the build place. This currently
 includes modules 
 
-@c ##########################################################################
+@c ==========================================================================
 @node Kernel Modules
-@chapter Kernel Modules
+@section Kernel Modules
 
 In the next step the scripts compile modules that are part of this
 package.  The step depends on the kernel being available in the
@@ -1053,9 +1064,9 @@ has it been tested.
 @b{Warning}: I plan to soon rename all modules to have a hyphen
 instead of an underscore in the name.
 
-@c ##########################################################################
+@c ==========================================================================
 @node Initial tools for the FPGA
-@chapter Initial tools for the FPGA
+@section Initial tools for the FPGA
 
 In order to make some tests with your board and be able to develop
 further, the directory @i{tools} includes the following programs:
@@ -1096,9 +1107,9 @@ directory (@code{LINUX=}) and the cross-compiler to use
 integrated in the build scripts.
 @c FIXME: tools
 
-@c ##########################################################################
+@c ==========================================================================
 @node PTPd
-@chapter PTPd
+@section PTPd
 
 @c FIXME: the new PTP
 @b{Warning}: This part of the document, about PTP,  needs to be updated, what
@@ -1130,9 +1141,9 @@ confident newer versions will be at least as good as the current one
 (for example, the current version as I write this has some concerning
 warning messages).
 
-@c ##########################################################################
+@c ==========================================================================
 @node User Space Applications
-@chapter User Space Applications
+@section User Space Applications
 
 @c FIXME: user space apps
 @b{Warning}: This part of the document, about user space, needs to be
@@ -1156,9 +1167,9 @@ The build of user space is concerned about the following steps:
 
 @end table
 
-@c ##########################################################################
+@c ==========================================================================
 @node VHDL Binaries
-@chapter VHDL and LM32 Binaries
+@section VHDL and LM32 Binaries
 
 The binaries are currently missing from the filesystem-making procedures.
 You will need to get the most recent binaries and copy them in the filesystem
@@ -1168,9 +1179,9 @@ switches are distributed for production.
 @c FIXME: the binaries.
 
 
-@c ##########################################################################
+@c ==========================================================================
 @node The Complete Filesystem
-@chapter The Complete Filesystem
+@section The Complete Filesystem
 
 The final step in compiling the filesystem is making the CPIO archive
 with the overall filesystem contents.  This archive can be used as an
