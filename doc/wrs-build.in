@@ -1111,35 +1111,21 @@ integrated in the build scripts.
 @node PTPd
 @section PTPd
 
-@c FIXME: the new PTP
-@b{Warning}: This part of the document, about PTP,  needs to be updated, what
-follows is the old text, kept here for reference.
-
-The Precision Time Protocol Daemon being used is host in a different
-repository. It is the code base that has been ported to compile in a
-freestanding environment, downloaded from
-@code{git://gnudd.com/ptp-noposix.git} .
-
+The Precision Time Protocol Daemon being used is hosted in a different
+repository, but it is registered as a @i{git} submodule in this package.
+The repository itself is on @code{ohwr}, like others.
 We are working on a better code base for a portable PTP, but it is
-not yet ready as of this writing.
+not yet ready as of this release.
 
-A plain @i{make} in the @i{ptp-noposix} directory will fail,
+A plain @i{make} in the @i{ptp-noposix} directory might fail, because of
+missing environment variables. 
 because after building
 @i{ptpd} other steps are tried, but they are only needed for
 the freestanding environment (i.e., LM32 with supporting code) and will
 fail for this @i{arm-linux} hosted build.
 
-Additionally, the script installs the header and library for
-@i{wr_ipc}, which are needed for later steps and are now part of the
-@c hal or HAL?
-@i{ptp} repository. Similarly, the script installs headers for the hal
+Additionally,  the script installs headers for the HAL
 and @i{libptpnetif}.
-
-The script is known to work with version @code{fea09f7} of the @i{git}
-repository, but the script checks out the @i{master} branch, being
-confident newer versions will be at least as good as the current one
-(for example, the current version as I write this has some concerning
-warning messages).
 
 @c ==========================================================================
 @node User Space Applications
