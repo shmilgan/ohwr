@@ -1,12 +1,12 @@
-From 868b709e683fd848afb0cdd8c17218e76d1cdcd6 Mon Sep 17 00:00:00 2001
+From 505eadc6d9766c0e0732ef09548a750847708e00 Mon Sep 17 00:00:00 2001
 From: Benoit Rat <benoit@sevensols.com>
 Date: Mon, 2 Jul 2012 12:59:15 +0200
-Subject: [PATCH 7/9] startup: load default environment when loading env
+Subject: [PATCH 6/8] startup: load default environment when loading env
  failed
 
 ---
  common/startup.c |    7 +++++++
- 1 file changed, 7 insertions(+)
+ 1 files changed, 7 insertions(+), 0 deletions(-)
 
 diff --git a/common/startup.c b/common/startup.c
 index abd1b77..2992c43 100644
@@ -27,5 +27,5 @@ index abd1b77..2992c43 100644
  #endif
  	/* main_loop() can return to retry autoboot, if so just run it again. */
 -- 
-1.7.9.5
+1.7.7.2
 

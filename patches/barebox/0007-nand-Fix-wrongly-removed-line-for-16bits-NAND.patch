@@ -1,11 +1,11 @@
-From 5b2b91f674f727fc1b40878e3f4a9ee721008eb2 Mon Sep 17 00:00:00 2001
+From 889d0e4db5a3aba95688411700c217cef1554a52 Mon Sep 17 00:00:00 2001
 From: Benoit Rat <benoit@sevensols.com>
 Date: Mon, 2 Jul 2012 13:00:43 +0200
-Subject: [PATCH 8/9] nand: Fix wrongly removed line for 16bits NAND
+Subject: [PATCH 7/8] nand: Fix wrongly removed line for 16bits NAND
 
 ---
  drivers/mtd/nand/atmel_nand.c |   26 ++++++++++++++++++++++----
- 1 file changed, 22 insertions(+), 4 deletions(-)
+ 1 files changed, 22 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/mtd/nand/atmel_nand.c b/drivers/mtd/nand/atmel_nand.c
 index 96624a1..bad75a9 100644
@@ -60,5 +60,5 @@ index 96624a1..bad75a9 100644
  	atmel_nand_enable(host);
  
 -- 
-1.7.9.5
+1.7.7.2
 

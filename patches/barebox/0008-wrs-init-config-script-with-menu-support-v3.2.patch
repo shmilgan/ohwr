@@ -1,7 +1,7 @@
-From 01f37c9783d48906f3ea2a672be734c5ebd3f9d2 Mon Sep 17 00:00:00 2001
+From a0a89716ee84c0bc09697211e5ce234bcbdd58c2 Mon Sep 17 00:00:00 2001
 From: Alessandro Rubini <rubini@gnudd.com>
 Date: Mon, 9 Jul 2012 13:40:30 +0200
-Subject: [PATCH 9/9] wrs: init & config script with menu (support v3.2)
+Subject: [PATCH 8/8] wrs: init & config script with menu (support v3.2)
 
 Author:    Benoit Rat <benoit@sevensols.com>
 ---
@@ -336,5 +336,5 @@ index a84e431..bbdf297 100644
  	dev_add_bb_dev("env_raw", "env0");
  
 -- 
-1.7.9.5
+1.7.7.2
 

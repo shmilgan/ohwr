@@ -1,11 +1,11 @@
-From 62f41545be940803c0f7639963183181ca04e721 Mon Sep 17 00:00:00 2001
+From a28e0d77a1cd896a049dfd5b7a28d28f72cf73b6 Mon Sep 17 00:00:00 2001
 From: Benoit Rat <benoit@sevensols.com>
 Date: Tue, 15 May 2012 17:08:41 +0200
-Subject: [PATCH 4/9] add DHCP retries by tom
+Subject: [PATCH 4/8] add DHCP retries by tom
 
 ---
  net/dhcp.c |   13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ 1 files changed, 13 insertions(+), 0 deletions(-)
 
 diff --git a/net/dhcp.c b/net/dhcp.c
 index ad32b53..88febea 100644
@@ -54,5 +54,5 @@ index ad32b53..88febea 100644
  				goto out1;
  		}
 -- 
-1.7.9.5
+1.7.7.2
 

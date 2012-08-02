@@ -1,11 +1,11 @@
-From c813f205325e95fac8e31ee616e43cacdc3dbd04 Mon Sep 17 00:00:00 2001
+From 6ea20bbe79dd86fd5d95bff00f8b685a2aa38ce9 Mon Sep 17 00:00:00 2001
 From: Benoit Rat <benoit@sevensols.com>
 Date: Mon, 28 May 2012 12:23:13 +0200
-Subject: [PATCH 6/9] gpio: add function to check them
+Subject: [PATCH 5/8] gpio: add function to check them
 
 ---
  arch/arm/boards/pm9g45/init.c |   21 +++++++++++++++++++++
- 1 file changed, 21 insertions(+)
+ 1 files changed, 21 insertions(+), 0 deletions(-)
 
 diff --git a/arch/arm/boards/pm9g45/init.c b/arch/arm/boards/pm9g45/init.c
 index 9ecd628..a84e431 100644
@@ -47,5 +47,5 @@ index 9ecd628..a84e431 100644
  	return 0;
  }
 -- 
-1.7.9.5
+1.7.7.2
 

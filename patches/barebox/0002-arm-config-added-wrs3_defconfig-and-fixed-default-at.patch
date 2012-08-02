@@ -1,13 +1,13 @@
-From 8347bb31200c92255b18cc76979c6abea1819409 Mon Sep 17 00:00:00 2001
+From a273273231f1544b8b9a01f5a27293b849c641e7 Mon Sep 17 00:00:00 2001
 From: Alessandro Rubini <rubini@gnudd.com>
 Date: Thu, 15 Sep 2011 23:53:57 +0200
-Subject: [PATCH 2/9] arm config: added wrs3_defconfig and fixed default
+Subject: [PATCH 2/8] arm config: added wrs3_defconfig and fixed default
  at91/Kconfig
 
 ---
  arch/arm/configs/wrs3_defconfig |  305 +++++++++++++++++++++++++++++++++++++++
  arch/arm/mach-at91/Kconfig      |    2 +-
- 2 files changed, 306 insertions(+), 1 deletion(-)
+ 2 files changed, 306 insertions(+), 1 deletions(-)
  create mode 100644 arch/arm/configs/wrs3_defconfig
 
 diff --git a/arch/arm/configs/wrs3_defconfig b/arch/arm/configs/wrs3_defconfig
@@ -335,5 +335,5 @@ index 1bec3e5..85becd0 100644
  	default "Calao TNY-A9260" if MACH_TNY_A9260
  	default "Calao TNY-A9263" if MACH_TNY_A9263
 -- 
-1.7.9.5
+1.7.7.2
 
