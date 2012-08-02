@@ -12,6 +12,7 @@ wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR CROSS_COMPILE
 
 wrs_echo "--- Linux kernel for switch"
 tarname="linux-2.6.39.tar.bz2"
+patchdir="${WRS_BASE_DIR}/../patches/kernel/v2.6.39"
 wrs_download $tarname
 
 mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
@@ -25,18 +26,18 @@ tar xjf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
 
 # apply patches
 cd $dirname
-for n in ${WRS_BASE_DIR}/../patches/kernel/v2.6.39/00*; do
+for n in ${patchdir}/00*; do
     patch -p1 < $n || wrs_die "patch kernel"
 done
 
 
 # copy the config and replace "-j" level. First remove it in case it's left in
-CFG="$WRS_BASE_DIR/../patches/kernel/v2.6.39/linux-config-wrswitch"
+CFG="${patchdir}/linux-config-wrswitch"
 if [ "x$WRS_KERNEL_CONFIG" != "x" ]; then
     if [ -f $WRS_KERNEL_CONFIG ]; then
 	CFG=$WRS_KERNEL_CONFIG
     else
-	wrs_warn "WRS_KERNEL_CONFIG is not a regularname: ignoring it"
+	wrs_warn "WRS_KERNEL_CONFIG does not refer to a regular file: ignoring it"
 	sleep 3
     fi
 fi
@@ -47,9 +48,6 @@ make oldconfig  || wrs_die "kernel config"
 
 make $WRS_MAKE_J zImage modules  || wrs_die "kernel compilation"
 
-mkdir -p $WRS_OUTPUT_DIR/images/lib
-mkdir -p $WRS_OUTPUT_DIR/images/lib/modules
-mkdir -p $WRS_OUTPUT_DIR/images/lib/modules/2.6.39
 mkdir -p $WRS_OUTPUT_DIR/images/lib/modules/2.6.39/kernel
 
 cp $(find . -name '*.ko') $WRS_OUTPUT_DIR/images/lib/modules/2.6.39/kernel

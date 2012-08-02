@@ -986,19 +986,14 @@ and are currently the following ones:
    0002-initramfs-stop-after-one-cpio-archive.patch
    0003-at91-NR_IRQS-increase-by-64-to-fit-custom-muxes.patch
    0004-irq-export-symbols-for-external-irq-controller.patch
+   0005-fix-nand-parition-layout-and-usb-vbus.patch
+   0006-fiq-support.patch
 @end example
 
-The configuration being used is copied from this package, so it
-is easier to change it if needed.
-
-@c again, maybe simplify this to a set of commands?
-If you want to change the configuration, you can do so after the first
-build iteration: change directory to @code{build/kernel}
-and run @code{make menuconfig}. After making your choices, copy back
-the file @code{.config} to
-@code{patches/kernel/v2.6.39/linux-config-wrswitch} in this package.
-
-You can also set @code{WRS_KERNEL_CONFIG} to the full pathname of
+The configuration we use to build the kernel is not a patch but a plan
+@code{.config} file, in the same directory as the patches, so you
+can change it easily, if needed. As an alternative,
+you can also set @code{WRS_KERNEL_CONFIG} to the full pathname of
 your configuration file of choice. The file must be a copy of the
 @code{.config} found in the main kernel directory,
 (for example the one left after the @code{make menuconfig} step).
