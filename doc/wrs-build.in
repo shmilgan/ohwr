@@ -682,7 +682,7 @@ forcing alternative boot, etc.
 
 @menu
 * Booting from NFS::            
-* Install and Booting from NAND::  
+* Install Kernel to NAND::      
 @end menu
 
 @c ==========================================================================
@@ -838,7 +838,6 @@ to customize their switch in any way.
 * The Boot Loader::             
 * The Linux Kernel::            
 * Kernel Modules::              
-* Initial tools for the FPGA::  
 * PTPd::                        
 * User Space Applications::     
 * VHDL Binaries::               
@@ -1043,49 +1042,6 @@ has it been tested.
 instead of an underscore in the name.
 
 @c ==========================================================================
-@node Initial tools for the FPGA
-@section Initial tools for the FPGA
-
-In order to make some tests with your board and be able to develop
-further, the directory @i{tools} includes the following programs:
-
-@table @i
-@item mapper
-@itemx wmapper
-	The programs read from @i{/dev/mem} writing to @i{stdout} and
-        read from @i{stdin} writing to @i{/dev/mem}, respectively.
-        They are classic tools distributed in the @i{Linux Device Drivers}
-        examples since 1998.
-
-@item load-virtex
-	Loads a bitstream to the Virtex6 device of the switch. The biststream
-        file name must be passed in the command line (@i{/dev/stdin} allowed).
-        The is a limit of 10MB (me lazy!), but the program complains if it
-        detects the limit is reached.
-
-@item load-lm32
-	Loads a program to the internal LM32 soft-core.
-
-@item spi-pll
-	Uses the @i{opencores_spi} device part of the FPGA bitstream to
-        talk with the AD9516 device that is mounted on the board. It is
-        only of historical relevance, as the internal LM32 is not dealing
-        with the PLL device.
-@end table
-
-The list above used to include @i{devmem2}, but now @i{devmem} is part
-of the installed @i{busybox} and has the same command-line interface.
-
-The functions to load the FPGA and the LM32 have been turned into a
-library, so external programs can link @code{libtools.a}.
-
-Please note that to compiler you need to specify both the kernel
-directory (@code{LINUX=}) and the cross-compiler to use
-(@code{CROSS_COMPILE=}). Moreover, the @i{tools} subdir is not
-integrated in the build scripts.
-@c FIXME: tools
-
-@c ==========================================================================
 @node PTPd
 @section PTPd
 
@@ -1109,27 +1065,73 @@ and @i{libptpnetif}.
 @node User Space Applications
 @section User Space Applications
 
-@c FIXME: user space apps
-@b{Warning}: This part of the document, about user space, needs to be
-updated, what follows is the old text, kept here for reference.
+The filesystem of the switch includes some user-space applications
+and tools.  Some of the @i{tools} are actually used by the init
+scripts and some are just utilities for the developer.
 
-The build of user space is concerned about the following steps:
+The subdirectories in @file{userspace} include the various applications
+needed for the operation of the switch itself, as well as support libraries
+used by the applications themselves.
+
+The main components are:
 
 @table @i
 
-@item libswitchhw 
-	This is a library of functions needed by the next
-        step. @code{libswitchhw.a} is thus installed in @code{images/wr/lib}.
+@item mini-rpc
+	A remote procedure call library used by most other programs
+        to exchange information among themselves or query the LM32
+        that is running on the FPGA.
+
+@item libswitchhw
+
+	A series of utility functions to access the switch itself.
 
 @item wrsw_hal
-	This is the main application program for the White Rabbit Switch
+	The main application program for the White Rabbit Switch
         operation. The script installs the executable in @code{images/wr/bin}.
 
 @item wrsw_rtud
-	This is the daemon for the routing table unit, installed in
+	The daemon for the routing table unit, used for routing around
+        data frames. It is installed in
         @code{images/wr/bin}.
 
 @end table
+
+The most important tools in @file{userspace/tools} are the following:
+
+@table @file
+
+@item load-virtex
+@itemx load-lm32
+
+	They load into the FPGA the gateware and the LM32 application.
+        They are used by the init scripts of the Linux system.
+
+
+@item mapper
+@itemx wmapper
+	The former reads from a file using @i{mmap}
+        (usually you run it on @i{/dev/mem}) and writes to @i{stdout}.
+        The latter read from @i{stdin} and writes using @i{mmap}.
+        They are classic tools distributed in the @i{Linux Device Drivers}
+        examples since 1998.
+
+@item com
+	The program is a simple program for talking with serial ports.
+
+@item wr_phytool
+	A tool to read and write PHY registers in the switch
+
+@item wr_mon
+	A simple monitor of White Rabbit status. It prints to @i{stdout}
+        using the standard escape sequences.
+
+@end table
+
+Please note that to compile the applications and tools outside of the build
+scripts you need to specify both the kernel
+directory (@code{LINUX=}) and the cross-compiler to use
+(@code{CROSS_COMPILE=}).
 
 @c ==========================================================================
 @node VHDL Binaries
