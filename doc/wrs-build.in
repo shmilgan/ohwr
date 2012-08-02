@@ -454,105 +454,114 @@ directory by deleting all compiled modules (except downloaded files), just call:
 @node Flashing of WRS-3
 @chapter Flashing of WRS-3
 
-This chapter quickly resumes the different steps to install the WRS-3 with the 
-correct firmware. This procedure described the installation of the switch
+This chapter describes the different steps to install the WRS-3 with the 
+correct firmware. This procedure describes the installation of the switch
 with a @i{SCB v3.2} and a @i{Mini-Backplane v3.2}. If you have an older 
 version you might look at the @ref{Older Hardware Releases} and the footnotes.
 
 @menu
-* USB connection::              
+* USB connections::             
 * Flashing Procedure::          
 @end menu
 
 @c ==========================================================================
-@node USB connection
-@section USB connection
+@node USB connections
+@section USB connections
+
+In order to perform the flashing operation easily, you should connect
+two @i{mini-USB} cables to the two front panel sockets. One is used
+to communicate with the intarnal ROM of the CPU, the other is a serial
+port used to interact with the various applications and FPGA. One
+of the GPIO pins of the CPU is connected to a switch, so that the
+same serial port can be used for either device (CPU and FPGA) in
+different times.
 
 @sp 1
 @center @image{frontpanel, 7cm,,front panel of the switch}
 @sp 1
 
-@menu
-* Serial-USB::                  
-* SAMBA & Gadget-USB::          
-@end menu
-
-@c --------------------------------------------------------------------------
-@node Serial-USB
-@subsection Serial-USB
-
-The first step is to plug a USB cable from your computer to the frontal 
-@b{right} mini-USB @i{(Test)} port of the switch. This USB port is connected to the 
-debug UART of the ARM (and then of the FPGA). Once connected a 
-@code{/dev/ttyUSB0} should appears on your machine, and you can read the
-output using minicom @footnote{You can use other programs for accessing serial ports, for example @uref{http://brokestream.com/tinyserial.html, tinyserial}} like this:
+The diagnostic serial port is the
+@b{right} mini-USB @i{(Test)} port of the switch. This is the debug UART
+of the ARM (default at boot time) and can later be switched to the FPGA.
+Once connected
+@code{/dev/ttyUSB0} should appears on your machine, and you can connect
+using minicom @footnote{You can use other programs for accessing serial ports, for example @uref{http://brokestream.com/tinyserial.html, tinyserial}} like this:
 
 @example
 	minicom -D /dev/ttyUSB0 -b 115200
 @end example
 
-@c --------------------------------------------------------------------------
-@node SAMBA & Gadget-USB
-@subsection SAMBA & Gadget-USB
-
-Then to flash the firmware a USB cable must be plugged into the frontal 
-@b{left} mini-USB port of the switch. 
-
-Once you have connected the USB cable you should see the SAMBA 
-bootloader on your machine:
+Unfortunately, the preferred way to communicate with the CPU internal ROM
+is through the other USB port, using the @b{left} mini-USB port of the switch. 
+When the ROM is unable to boot user code from its SPI flash memory, it
+accepts to be enumerated by the host. You can see the enumerated
+device in your own host:
 
 @smallexample
-   brezza% lsusb | grep Atmel
+   $ lsusb | grep Atmel
    Bus 001 Device 025: ID 03eb:6124 Atmel Corp. at91sam SAMBA bootloader
 @end smallexample
 
-The device should also appear as @code{/dev/ttyACM0} or equivalent.
+The kernel should automatically load the proper device driver, and you
+are expected to see @code{/dev/ttyACM0} or equivalent in your system.
 
-If it is not the case, this mean that there are already some code in the
-@i{dataflash}, that the switch try to boot. In order to disable the 
-dataflash you need to open the switch box and put a 1mm jumper
+If the device is not enumerated,
+this mean that there is already some code in the
+@i{dataflash}, which the switch tries to boot. In order to disable the 
+dataflash you need to open the switch box and fit a 1mm jumper
 @footnote{On v3.0 & v3.1 this jumper does not exist. Refer to 
 @ref{Flashing v3.1/v3.0}}
-on the @i{DFEN} pin as shown in picture below
+on the @i{DFEN} pin as shown in picture below.  Most of the switches are
+shipped with a jumper already plugged between two GND pins. If your switch
+has a jumper plugged, you can use it to disable the @i{dataflash}.
+a jumper in the switch, 
 
 @sp 1
 @center @image{jumpers, 10cm,,Booting jumpers}
 @sp 2
 
-
-After placing the jumper you can press reset (the button near the USB connector). 
-If things go well, the device is enumerated as shown; 
-you must @b{remove} the jumper at this point or you will
-not be able to write the new information to dataflash
+With the jumper in place, you should reset the machine pressing 
+the button near the 20-pin JTAG connector.  When you see that the
+USB device has been enumerated, you should remove the jumper so the
+programming procedure can access the @i{dataflash} device.
 
 @c =============================================================================
 @node Flashing Procedure
 @section Flashing Procedure
 
-To flash the firmware into the switch you need to use the @i{USB-loader}
-program. You can also use the flash-wrs script that ease the procedure.
+The tool used to flash the firmware into the switch is the @i{USB-loader}
+we inherited from Atmel. The @file{flash-wrs} script is what
+you'll use to run the loader with appropriate parameters.
 
-The script can be invoked in the following ways to flash a packege@footnote{read
-@ref{Release Package} to undestand how to create a package} into
-the switch, from the toplevel directory of @code{wr-switch-sw}:
+The script can be invoked in the following way to flash a
+ package@footnote{read
+@ref{Release Package} to understand how to create a package.} into
+the switch:
 
 @example
-    wr-switch-sw/build/flash-wrs -e wrs-firmware-<revision>.tar.gz 
+    /path/to/wr-switch-sw/build/flash-wrs -e wrs-firmware-<revision>.tar.gz 
 @end example
 
-The output you must expect from the flasher is like the following, and
-the process takes 3 minutes more or less:
+The process calls the flasher program twice (so you'll see the
+initialization strings two times) an takes around 3 minutes.
+This is the a summary of the output you are expected to see,
+trimmed to save pages:
 
-@c FIXME better example with timestamp
 @smallexample
-	Initializing SAM-BA: CPU ID: 0x819b05a2
-	[...]
-	Programming DataFlash Done!!!
-	Closing...
-	[...]
-	Programming done!
-	Programming NandFlash Done!!!
-        Closing...
+   Initializing SAM-BA: CPU ID: 0x819b05a2
+   Initializing DDR...
+   loading applet isp-extram-at91sam9g45 at 0x00300000
+   [...]
+   Programming DataFlash...
+            @ 0x70000000 : /tmp/at91bootstrap.bin ; size 0xf7c (3Kb)
+   DataFlash: Writing 197452 bytes at offset 0x8400 buffer 70000000....
+   Programming DataFlash Done!!!
+   [...]
+   Programming NandFlash...
+        @ 0x70100000 : /tmp/zImage ; size 0x1666c4 (1433Kb)
+   [...]
+   Programming NandFlash Done!!!
+   Closing...
 @end smallexample
 
 If you look at the serial port, during programming, you will see
@@ -1287,11 +1296,11 @@ readily available, unfortunately.
 @node Flashing v3.1/v3.0
 @section Flashing v3.1/v3.0
 
-To flash any switchusing USB flasher, you need to force the ROM to 
+To flash any switch using the USB flasher, you need to force the ROM to 
 run the boot protocol called SAMBA Monitor which mean that you must 
 prevent the ARM from finding valid code in the @i{data-flash}.
 
-In version 3.2 (see @ref{USB connection}) we have used a jumper to
+In version 3.2 (see @ref{USB connections}) there is a jumper to
 disable dataflash, however for version v3.0 & v3.1 it does not exist. 
 Thus, you need to short pins 1 and 4 of the dataflash chip,
 so the @code{CS*} pin never goes low and the internal ROM won't be
