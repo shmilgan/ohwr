@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month July 2012
+@set update-month August 2012
 
 @finalout
 
@@ -43,8 +43,7 @@
 @title White Rabbit Switch: software build scripts
 @subtitle @value{update-month}
 @subtitle How to rebuild the whole software package from sources
-@author Alessandro Rubini (@code{rubini@@gnudd.com})
-@author Benoit Rat (@code{benoit@@sevensols.com})
+@author Alessandro Rubini, Benoit Rat, Federico Vaga et al.
 @end titlepage
 @headings single
 
@@ -70,10 +69,11 @@ of the repository at
 (or @code{git@@ohwr.org:white-rabbit/wr-switch-sw.git} if you are
 granted write access).
 
-@c FIXME menu sbagliato
 @menu
 * Overview::                    
-* Quick Build::                 
+* Building::                    
+* Flashing of WRS-3::           
+* Booting with Barebox::        
 * The Compiler::                
 * Buildroot::                   
 * The IPL::                     
@@ -85,9 +85,11 @@ granted write access).
 * User Space Applications::     
 * VHDL Binaries::               
 * The Complete Filesystem::     
-* Installation of WRS-3::       
 * Code layout in a production switch::  
+* v3.0 & v3.1::                 
+* Installing from Jtag::        
 * Troubleshooting::             
+* Schematics::                  
 @end menu
 
 @c ##########################################################################
@@ -143,7 +145,6 @@ rebuilding it all from scratch.
 * Portability::                 
 * Environment Variables::       
 * Downloading Files::           
-* Rebuilding Parts::            
 @end menu
 
 @c ==========================================================================
@@ -287,6 +288,11 @@ The messages of a download run are like the following ones:
 @node Building
 @chapter Building
 
+@menu
+* Building Procedure::          
+* Build Script Description::    
+@end menu
+
 @c ==========================================================================
 @node Building Procedure
 @section Building Procedure
@@ -379,6 +385,12 @@ in this chapter. You might also want to check its embedded documentation using:
    /path/to/wr-switch-sw/build/wrs_build-all --help
 @end example
 
+@menu
+* Release Package::             
+* Rebuilding Parts::            
+* Rebuilding From Scratch::     
+@end menu
+
 @c ==========================================================================
 @node Release Package
 @subsection Release Package
@@ -457,11 +469,9 @@ with a @i{SCB v3.2} and a @i{Mini-Backplane v3.2}. If you have an older
 version you might look at the @ref{v3.0 & v3.1} and the various footnotes.
 
 @menu
-* USB connection::    
-* The Flasher Script::  
-* Quick Barebox::          
+* USB connection::              
+* Flashing Procedure::          
 @end menu
-
 
 @c ==========================================================================
 @node USB connection
@@ -470,6 +480,11 @@ version you might look at the @ref{v3.0 & v3.1} and the various footnotes.
 @sp 1
 @center @image{frontpanel, 7cm,,front panel of the switch}
 @sp 1
+
+@menu
+* Serial-USB::                  
+* SAMBA & Gadget-USB::          
+@end menu
 
 @c --------------------------------------------------------------------------
 @node Serial-USB
@@ -559,6 +574,10 @@ messages like these:
    [...]
    -I-     End of applet (command : 2 --- status : 0)
 @end smallexample
+
+@menu
+* Flash Script Description::    
+@end menu
 
 @c -------------------------------------------------------------------
 @node Flash Script Description
@@ -669,6 +688,11 @@ These "network" booting options can be explained as:
 Finally in save & edit config you have some parameters to easily fit
 the booting process to your need. i.e, Selecting alternative boot method,
 forcing alternative boot, etc.
+
+@menu
+* Booting from NFS::            
+* Install and Booting from NAND::  
+@end menu
 
 @c ==========================================================================
 @node Booting from NFS
@@ -1260,6 +1284,11 @@ This appendix keep the documentation of deprecated devices like the
 switch v3.0 and the v3.1. A list of changes between these version can be
 found in 
 
+@menu
+* SAMBA-Monitor (USB Flasher)::  
+* Serial Port::                 
+@end menu
+
 @c ==========================================================================
 @node SAMBA-Monitor (USB Flasher)
 @section SAMBA-Monitor (USB Flasher)
@@ -1329,6 +1358,12 @@ communicate with the switch.
 
 Each debugger has its own command language, so you will need to adapt 
 to yours. What is shown here refers to the @i{peedi} & @i{sam-ice} tools.
+
+@menu
+* PEEDI Tool::                  
+* SAM-ICE Tool::                
+* Booting & Flashing::          
+@end menu
 
 @c ==========================================================================
 @node PEEDI Tool
