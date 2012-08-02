@@ -60,8 +60,9 @@ This document describes the software build procedures for the White
 Rabbit Switch.  The procedure described is for version 3 of the
 hardware project, which  has been successfully booted for the first
 time on Sep 13th 2011.
-The different steps focus on the v3.2, however you can find specific
-documentation for v3.0 & v3.1 in @ref{v3.0 & v3.1}
+The different steps focus on the v3.2, however you can find some
+(though limited)
+documentation for v3.0 & v3.1 in @ref{Older Hardware Releases}
 
 If you have an older Version-2 switch, please refer to the v2 branch
 of the repository at
@@ -86,10 +87,10 @@ granted write access).
 * VHDL Binaries::               
 * The Complete Filesystem::     
 * Code layout in a production switch::  
-* v3.0 & v3.1::                 
+* Schematics are Available::    
+* Older Hardware Releases::     
 * Installing from Jtag::        
 * Troubleshooting::             
-* Schematics::                  
 @end menu
 
 @c ##########################################################################
@@ -466,7 +467,7 @@ directory by deleting all compiled modules (except downloaded files), just call:
 This chapter quickly resumes the different steps to install the WRS-3 with the 
 correct firmware. This procedure described the installation of the switch
 with a @i{SCB v3.2} and a @i{Mini-Backplane v3.2}. If you have an older 
-version you might look at the @ref{v3.0 & v3.1} and the various footnotes.
+version you might look at the @ref{Older Hardware Releases} and the footnotes.
 
 @menu
 * USB connection::              
@@ -521,7 +522,7 @@ If it is not the case, this mean that there are already some code in the
 @i{dataflash}, that the switch try to boot. In order to disable the 
 dataflash you need to open the switch box and put a 1mm jumper
 @footnote{On v3.0 & v3.1 this jumper does not exist. Refer to 
-@ref{SAMBA-Monitor (USB Flasher)}}
+@ref{Flashing v3.1/v3.0}}
 on the @i{DFEN} pin as shown in picture below
 
 @sp 1
@@ -1277,30 +1278,47 @@ procedures, as well as building rules for the production versions of
 
 
 @c ##########################################################################
-@node v3.0 & v3.1
-@appendix v3.0 & v3.1
+@node Schematics are Available
+@appendix Schematics are Available
 
-This appendix keep the documentation of deprecated devices like the 
-switch v3.0 and the v3.1. A list of changes between these version can be
-found in 
+The switch schematics for all PCB versions (3.0, 3.1 and 3.2 of the
+SCB as well as both 3.1 and 3.2 of the backplane)
+are available on the Open Hardware Repository, at
+@uref{http://www.ohwr.org/documents/180}, which can also be reached
+from the @i{Documents} tab of the @i{White Rabbit} project.
+
+Plese note that only version 3.2 of both the motherboard and the backplane
+has been shipped commercially; you are interested in previous versions only
+if you are an early developer and have one of those in your hands.
+
+
+@c ##########################################################################
+@node Older Hardware Releases
+@appendix Older Hardware Releases
+
+So, if you have an older PCB in your hands, your hardware is unsupported,
+but here are some notes that may be useful.  The differences are minor,
+mainly in GPIO routing, but there is no complete list of changes
+readily available, unfortunately.
 
 @menu
-* SAMBA-Monitor (USB Flasher)::  
-* Serial Port::                 
+* Flashing v3.1/v3.0::          
+* Serial Ports in 3.0/3.1::     
 @end menu
 
 @c ==========================================================================
-@node SAMBA-Monitor (USB Flasher)
-@section SAMBA-Monitor (USB Flasher)
+@node Flashing v3.1/v3.0
+@section Flashing v3.1/v3.0
 
-To flash the switch using USB flasher, you need to force the ROM to 
+To flash any switchusing USB flasher, you need to force the ROM to 
 run the boot protocol called SAMBA Monitor which mean that you must 
 prevent the ARM from finding valid code in the @i{data-flash}.
 
-In @ref{USB connection} we have used a jumper to
+In version 3.2 (see @ref{USB connection}) we have used a jumper to
 disable dataflash, however for version v3.0 & v3.1 it does not exist. 
-Thus, you need to short pins 1 and 4 of the dataflash chip 
--- this shorts CS* and 5V to the ROM can access to the memory's contents. 
+Thus, you need to short pins 1 and 4 of the dataflash chip,
+so the @code{CS*} pin never goes low and the internal ROM won't be
+able to access your @i{at91boot} code.
 
 I used two wires to be shorted together as needed. The next figure
 shows both the shorted pins (the @i{dataflash} is on the left and there
@@ -1313,61 +1331,58 @@ USB cable (on the right).
 After shorting the pins you can press reset (the button near the USB
 connector). If things go well, the device is enumerated as shown;
 you must un-short the wires at this point or you will not be able
-to write the new information to @i{dataflash}
+to write the new information to @i{dataflash}.
 
 @smallexample
    brezza% lsusb | grep Atmel
    Bus 001 Device 025: ID 03eb:6124 Atmel Corp. at91sam SAMBA bootloader
 @end smallexample
 
-The device should also appear as @code{/dev/ttyACM0} or equivalent.
-
-
-
+The device should also appear as @code{/dev/ttyACM0} or equivalent, and
+the further flashing procedure is the same as in versione 3.2.
 
 @c ==========================================================================
-@node Serial Port
-@section Serial Port
+@node Serial Ports in 3.0/3.1
+@section Serial Ports in 3.0/3.1
 
-If you have a @i{mini-backplane}, you can connect the 6 pins of P2 to
+If you have a 6-port @i{mini-backplane}, you can connect the 6 pins of P2 to
 the similar connector on the backplane labeled as @code{Connect to
 MCH/P2}. The backplane hosts a CP2102 USB adapter and a mini-USB
 socket.  Note that you may connect all 6 pins, but only TX and RX
-signals are needed.
+signals are needed. If you need more details for this setup, please
+write to the mailing list.
 
-You can work without a serial port, but it is strongly suggested to
-connect it.  With a UART you are able to see diagnostics and interact
-with the boot loader or the operating system even if it fails to
-configure the network.  The port uses 3.3V signals, so you will most
-likely need a level converter; the figure below shows the connection
+The port uses 2.5V signals, but a level converter for 3.3V usually works
+without issues or damages; the figure below shows the connection
 (black is GND, orange is RX and white is TX).
 @sp 1
 @center @image{wrs-v3-uart, 5cm}
 @sp 1
 
-
 @c ##########################################################################
 @node Installing from Jtag
 @appendix Installing from Jtag
 
-
-You can boot and install the system using a JTAG debugger, although
-the @i{USB Flasher} is currently the preferred technique. However you 
-might have a problem with the USB-Flasher and JTAG is the only way to
+As an alternative to the serial flasher, you can take control of the
+system with a JTAG debugger. Please note that 
+the @i{USB Flasher} is @b{really} the preferred technique, but in case
+it doesn't work for your, JTAG is the only way to
 communicate with the switch.
 
 Each debugger has its own command language, so you will need to adapt 
 to yours. What is shown here refers to the @i{peedi} & @i{sam-ice} tools.
+These notes are only aimed at low-level developers and leave a lot
+unsaid.
 
 @menu
-* PEEDI Tool::                  
-* SAM-ICE Tool::                
-* Booting & Flashing::          
+* Using PEEDI::                 
+* Using SAM-ICE::               
+* Installation the Boot Loader from JTAG::  
 @end menu
 
 @c ==========================================================================
-@node PEEDI Tool
-@section PEEDI Tool
+@node Using PEEDI
+@section Using PEEDI
 
 As a first step, you will need to ensure the JTAG clock is slow enough.
 The clock can be no faster than 1/6th of the CPU clock, so you need
@@ -1403,10 +1418,10 @@ it would take several dozen minutes.
 @end smallexample
 
 @c ==========================================================================
-@node SAM-ICE Tool
-@section SAM-ICE Tool
+@node Using SAM-ICE
+@section Using SAM-ICE
 
-This section follows the same steps as in @ref{PEEDI Tool}, but using
+This section follows the same steps as in @ref{Using PEEDI}, but using
 the syntax of the SAM-ICE tool recommended by Atmel
 
 @example
@@ -1439,10 +1454,11 @@ g
 
 
 @c ==========================================================================
-@node Booting & Flashing
-@section Booting & Flashing
+@node Installation the Boot Loader from JTAG
+@section Installing the Boot Loader from JTAG
 
-On the serial port you will see the following messages at 115200,8N1.
+After tou managed to load and run @i{barebox.bin},
+you will see the following messages on the serial port, at 115200,8N1.
 The first 4 lines are printed by @i{at91bootstrap}, the rest by @i{barebox}.
 
 @c FIXME: the messages and prompts
@@ -1475,6 +1491,7 @@ According to the partition table you have in your kernel sources, you will
 see a different set of @i{mtd} files, but you can identify them by looking
 at @code{/proc/mtd}:
 
+@c FIXME: mtd layout
 @example
    # cat /proc/mtd
    dev:    size   erasesize  name
@@ -1492,14 +1509,18 @@ of the DataFlash and @i{barebox} to offset 0x8400 (33792):
    dd bs=33792 seek=1 if=barebox.bin of=/dev/mtd2
 @end example
 
-Now you can detach the debugger, press reset and see @i{barebox} starting.
+Now you can detach the debugger, press reset and see @i{barebox} starting
+without the need for the JTAG any more. The following stes are the same
+as already described.
 
 @c ##########################################################################
 @node Troubleshooting
 @appendix Troubleshooting
 
 This chapter includes notes about issues we found and how to address them,
-or extra tools 
+or extra tools. The information is not exaustive nor complete, but we
+hope to extend this chapter over time, if any of our users have
+problems with the released package.
 
 @menu
 * Testing SDRAM::               
@@ -1508,6 +1529,9 @@ or extra tools
 @c ==========================================================================
 @node Testing SDRAM
 @section Testing SDRAM
+
+@b{Note}: This section is imcomplete, if needed please ask to the
+mailing list.
 
 In case you suspect to have RAM issues and are not even able to boot
 @i{barebox}, this package offers the program @i{g45memtest}. It is a
@@ -1525,26 +1549,18 @@ following commands are what I used to compile it (you will need to set
 @code{CROSS_COMPILE} first, though).
 
 @example
-   tar xzf /opt/wrs-build/downloads/at91bootstrap-3-3.0.tar.gz
+   tar xzf ${WRS_DOWNLOAD_DIR}/at91bootstrap-3-3.0.tar.gz
    cd at91bootstrap-3-3.0
-   git init .
-   git am $WRS_BASE_DIR/../patches/g45memtest/00*
+   git init
+   git add .
+   git commit -m "original code"
+   git am --whitespace=nowarn $WRS_BASE_DIR/../patches/g45memtest/00*
    make at91sam9g45ek_defconfig
    make
 @end example
 
 The output binary is the only file called ``@code{binaries/*.bin}'',
 that should be renamed to @code{g45memtest}.
-
-
-
-@c ##########################################################################
-@node Schematics
-@appendix Schematics
-The switch schematics version: 3.0, 3.1 and 3.2 are available on the 
-OpenHardware repository of the white-rabbit project at the following link:
-@uref{http://www.ohwr.org/documents/180}
-
 
 @c ##########################################################################
 @bye
