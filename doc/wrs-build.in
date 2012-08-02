@@ -881,28 +881,37 @@ ignored with a simple warning -- rather than stopping the build procedure.
 @chapter The IPL
 
 The version of @i{at91bootstrap} being used in the switch as
-@i{Initial Program Loader} is found at @code{http://repository.timesys.com/}
+@i{Initial Program Loader} is version 3.3, download from  @code{timesys.com/}
+(the full URL is in @i{build/download-info}.
 The patches we applied are in the directory @i{patches/at91boot/v3.3},
-and currently it is only a single patch (we are piggy-backing on the Atmel
+and we are piggy-backing on the Atmel
 evaluation board without even changing the board name):
 
 @example
-   0001-board-9g45ek-fix-ddr-config-for-WRS-V3.patch
+   0001-printf-added-files-from-pptp-unchanged.patch
+   0002-printf-fixes-and-addition-to-makefile.patch
+   0003-build-Add-gitversion-to-binary-and-a-script-to-compi.patch
+   0004-board-9g45ek-fix-ddr-config-for-WRS-V3.patch
+   0005-boot-disable-watchdog-asap-added-flip_leds-count-run.patch
+   0006-boot-Correct-crash-due-to-an-Atmel-bug-during-boot-w.patch
+   0007-gpios-Correct-FPGA-LED-problems-and-add-CPU-LEDs-FAN.patch
 @end example
 
-The script uncompresses, patches and builds, leaving
+The script @i{wrs_build_at91boot} uncompresses, patches and builds, leaving
 @code{images/at91bootstrap.bin} after it is over. This file is
 the one to be loaded in the hardware.
-
 For simplicity, a known-working binary is part of the @i{binaries}
-@c The 'sane' name?? do you mean 'same'?
-directory of this package as @code{at91bootstrap.bin}, the sane name used
+directory of this package as @code{at91bootstrap.bin}, the same name used
 later in the installation instructions.
 
-@b{Warning}: with some distributions, this compilation step will print
+If you build using a local @i{git} repository, please ignore the copious
+messages about white space error in this patch set, we apologize for that.
+
+@b{Warning}: with most distributions, this compilation step will print
 a scary message about memory corruption. The message is reporting a bug in
 the configuration program which has no actual effects and can be ignored.
-Maybe we will switch to another version in the future.
+Maybe we will switch to another version in the future that doesn't show
+the bug, or to the newer @i{barebox} that obsoletes @i{at91boot}.
 
 @c ##########################################################################
 @node The Boot Loader
