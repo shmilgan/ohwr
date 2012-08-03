@@ -1146,13 +1146,24 @@ directory (@code{LINUX=}) and the cross-compiler to use
 @node VHDL Binaries
 @section VHDL and LM32 Binaries
 
-The binaries are currently missing from the filesystem-making procedures.
-You will need to get the most recent binaries and copy them in the filesystem
-by yourself. This part will be filled last in this document, when the
-switches are distributed for production.
+The gateware binaries that are needed to run the FPGA are added to the
+target filesystem by the @file{wrs_build_gateware} script. If the
+variable @code{WRS_HW_DIR} is set, the script uses it to retrieve the
+binaries you just compiled (but the script is not compiling gateware).
 
-@c FIXME: the binaries.
+If the variable is not set, the script extract a tar file downloaded
+from @code{ohwr.org} as part of the initial download step. The tar is
+currently called @code{wrs3-gw-v3.0-20120801.tar.gz} and has been
+build from the @code{wr-switch-sw-v3.0} of the @code{wr-switch-hdl}
+repository.  Please note that the repository uses @i{git} submodules,
+so it depends on other @code{ohwr} repositories too, which in turn
+have not been tagged because the submodule mechanism ensures you'll
+get the exact version you need.
 
+The LM32 program is provided as a precompiled binary in
+@code{binaries/rt_cpu.bin}. The respective source code is in the
+@file{rt} directory of this package, but the build scripts don't deal
+with it to avoid requiring an LM32 development environment.
 
 @c ==========================================================================
 @node The Complete Filesystem
