@@ -1,0 +1,25 @@
+From 424c448cb23511056074cda16f2e330a1f395e60 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Mon, 6 Aug 2012 12:00:27 +0200
+Subject: [PATCH 7/7] mtd/nand: sam9g45 can hwecc like 9263
+
+---
+ drivers/mtd/nand/Kconfig |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/drivers/mtd/nand/Kconfig b/drivers/mtd/nand/Kconfig
+index edec457..06aaaa6 100644
+--- a/drivers/mtd/nand/Kconfig
++++ b/drivers/mtd/nand/Kconfig
+@@ -357,7 +357,7 @@ choice
+ 
+ config MTD_NAND_ATMEL_ECC_HW
+ 	bool "Hardware ECC"
+-	depends on ARCH_AT91SAM9263 || ARCH_AT91SAM9260 || AVR32
++	depends on ARCH_AT91SAM9263 || ARCH_AT91SAM9260 || AVR32 || ARCH_AT91SAM9G45
+ 	help
+ 	  Use hardware ECC instead of software ECC when the chip
+ 	  supports it.
+-- 
+1.7.7.2
+
