@@ -534,13 +534,19 @@ we inherited from Atmel. The @file{flash-wrs} script is what
 you'll use to run the loader with appropriate parameters.
 
 The script can be invoked in the following way to flash a
- package@footnote{read
-@ref{Release Package} to understand how to create a package.} into
-the switch:
+@i{package} into the switch. To the package is the @code{.tar.gz}
+file created by ``@code{wrs_build-all --pack}'' (see @ref{Release Package}).
+
+The command to flash is this:
 
 @example
     /path/to/wr-switch-sw/build/flash-wrs -e wrs-firmware-<revision>.tar.gz 
 @end example
+
+Please note that the ``@code{-e}'', which requires erasing the
+whole flash, is mandatory because otherwise bits of your previous filesystem
+may leak into the newly-programmed one. Only on factory-new devices you
+can avoid this ``@code{-e}'' argument.
 
 The process calls the flasher program twice (so you'll see the
 initialization strings two times) an takes around 3 minutes.
