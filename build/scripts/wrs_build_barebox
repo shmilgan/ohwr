@@ -23,14 +23,16 @@ dirname="barebox-2012.05.0"
 rm -rf $dirname
 tar xjf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
 cd $dirname
-
+patchdir="$WRS_BASE_DIR/../patches/barebox/"
 wrs_echo "Patching Barebox"
-for n in $WRS_BASE_DIR/../patches/barebox/*patch; do
+for n in $patchdir/*patch; do
     # the shell passes the "*" over if no matches are there, so check
     if test -f "$n"; then
 	patch -p1 < $n || wrs_die "Apply $n"
     fi
 done
+cp "$patchdir/wrs3_defconfig" arch/arm/configs
+cp -r $patchdir/env/* arch/arm/boards/pm9g45/env
 
 wrs_echo "Building Barebox"
 export ARCH=arm

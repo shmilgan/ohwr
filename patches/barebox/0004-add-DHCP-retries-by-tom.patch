@@ -1,14 +1,14 @@
-From a28e0d77a1cd896a049dfd5b7a28d28f72cf73b6 Mon Sep 17 00:00:00 2001
+From d1a2f69e329a2affd7d201916e43c7d758392932 Mon Sep 17 00:00:00 2001
 From: Benoit Rat <benoit@sevensols.com>
 Date: Tue, 15 May 2012 17:08:41 +0200
-Subject: [PATCH 4/8] add DHCP retries by tom
+Subject: [PATCH 4/7] add DHCP retries by tom
 
 ---
  net/dhcp.c |   13 +++++++++++++
  1 files changed, 13 insertions(+), 0 deletions(-)
 
 diff --git a/net/dhcp.c b/net/dhcp.c
-index ad32b53..88febea 100644
+index ad32b53..befb536 100644
 --- a/net/dhcp.c
 +++ b/net/dhcp.c
 @@ -607,6 +607,7 @@ static void dhcp_reset_env(void)
@@ -37,12 +37,12 @@ index ad32b53..88febea 100644
  	while (dhcp_state != BOUND) {
  		if (ctrlc())
  			break;
-+		if (!retries) 
++		if (!retries)
 +		{
 +			ret = ETIMEDOUT;
 +			goto out1;
 +		}
-+		
++
  		net_poll();
  		if (is_timeout(dhcp_start, 3 * SECOND)) {
  			dhcp_start = get_time_ns();

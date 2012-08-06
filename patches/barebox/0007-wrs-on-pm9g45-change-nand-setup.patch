@@ -1,0 +1,34 @@
+From ac10c839955dd332630cc497f6a5f69d5bfb9201 Mon Sep 17 00:00:00 2001
+From: Benoit Rat <benoit@sevensols.com>
+Date: Mon, 9 Jul 2012 13:40:30 +0200
+Subject: [PATCH 7/7] wrs (on pm9g45): change nand setup
+
+---
+ arch/arm/boards/pm9g45/init.c |    4 +---
+ 1 files changed, 1 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm/boards/pm9g45/init.c b/arch/arm/boards/pm9g45/init.c
+index 4fba7c2..182afd5 100644
+--- a/arch/arm/boards/pm9g45/init.c
++++ b/arch/arm/boards/pm9g45/init.c
+@@ -19,7 +19,6 @@
+  * MA 02111-1307 USA
+  *
+  */
+-
+ #include <common.h>
+ #include <net.h>
+ #include <init.h>
+@@ -160,8 +159,7 @@ static int pm9g45_devices_init(void)
+ 	at91_add_device_eth(0, &macb_pdata);
+ 	pm9g45_add_device_usbh();
+ 
+-	devfs_add_partition("nand0", 0x00000, 0x80000, PARTITION_FIXED, "self_raw");
+-	dev_add_bb_dev("self_raw", "self0");
++	//device, offset, size, flag, name
+ 	devfs_add_partition("nand0", 0x40000, 0x40000, PARTITION_FIXED, "env_raw");
+ 	dev_add_bb_dev("env_raw", "env0");
+ 
+-- 
+1.7.7.2
+

@@ -956,13 +956,12 @@ the set is made up of the following ones:
 
 @smallexample
    0001-sam945-include-mtd-nand.h-in-device-file.patch
-   0002-arm-config-added-wrs3_defconfig-and-fixed-default-at.patch
-   0003-nand-wrs-it-s-16-bits-not-8.patch
+   0002-arm-change-prompt-for-pm9263-wrs-piggy-backs-on-that.patch
+   0003-nand-wrs-our-nand-is-16-bit-connected-fix-accordingl.patch
    0004-add-DHCP-retries-by-tom.patch
    0005-gpio-add-function-to-check-them.patch
    0006-startup-load-default-environment-when-loading-env-fa.patch
-   0007-nand-Fix-wrongly-removed-line-for-16bits-NAND.patch
-   0008-wrs-init-config-script-with-menu-support-v3.2.patch
+   0007-wrs-on-pm9g45-change-nand-setup.patch
 @end smallexample
 
 If you build using a local @i{git} repository, we suggest to use

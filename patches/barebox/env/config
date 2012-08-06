@@ -1,0 +1,27 @@
+#!/bin/sh
+## You must use Ctrl+D to Save & Ctrl+C to Exit
+
+
+##eth0.ethaddr corresponds to the MAC address of the switch, it can also be changes using flasher
+eth0.ethaddr=02:0B:AD:C0:FF:EE
+
+## use 'dhcp' to do dhcp in barebox and in kernel
+ip=dhcp
+
+## or set your networking parameters here
+#eth0.serverip=a.b.c.d
+#eth0.ipaddr=a.b.c.d
+#eth0.netmask=a.b.c.d
+#eth0.gateway=a.b.c.d
+
+## Timeout to autoboot in the pre-selected menu
+autoboot_timeout="10";
+
+## In case the default boot doesn't work we can use a specified alternative boot
+#autoboot_altforced="0";
+#autoboot_altmode="2";
+
+## Timeout to show the error Message
+#error_timeout="10";
+
+
