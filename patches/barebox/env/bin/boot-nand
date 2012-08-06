@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# boot kernel from bad block aware partition
+cp /dev/nand0.kernel.bb /dev/mem.kernel
+bootargs="console=ttyS0,115200 panic=10"
+bootargs="$bootargs root=/dev/mtdblock1 rootfstype=jffs2"
+bootz /dev/mem.kernel
+
+# If it don't boot, show the menu
+echo "Can't boot from NAND"
+# Sleep 2 seconds so you can see the message and return to menu
+sleep 2
+menu -s boot
