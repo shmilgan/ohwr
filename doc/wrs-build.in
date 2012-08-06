@@ -1517,53 +1517,20 @@ without the need for the JTAG any more. The following stes are the same
 as already described.
 
 @c ##########################################################################
-@node Troubleshooting
-@appendix Troubleshooting
+@node Bugs and Troubleshooting
+@appendix Bugs and Troubleshooting
 
-This chapter includes notes about issues we found and how to address them,
-or extra tools. The information is not exaustive nor complete, but we
-hope to extend this chapter over time, if any of our users have
-problems with the released package.
+Even if we released the package as version 3.0 (being the first
+release for version 3 of the hardware), some details can be
+suboptimal, while some procedures may be tricky and need more explanation.
 
-@menu
-* Testing SDRAM::               
-@end menu
-
-@c ==========================================================================
-@node Testing SDRAM
-@section Testing SDRAM
-
-@b{Note}: This section is imcomplete, if needed please ask to the
-mailing list.
-
-In case you suspect to have RAM issues and are not even able to boot
-@i{barebox}, this package offers the program @i{g45memtest}. It is a
-merge of @i{at91boot} and @code{commands/memtest.c} from barebox, with
-the small @i{printf} I use in other projects (e.g. @i{pptp}).
-
-The binary is included in the package as @code{binaries/g45memtest}.
-It should be loaded like @code{at91boot}: it configures the RAM and
-the PLL, and then runs the test.
-
-The source is distributed as a patch-set over @i{at91boot} (the same
-version we use to boot the switch), in @code{patches/g45memtest}.  To
-compile, untar the source, apply the patches and compile.  The
-following commands are what I used to compile it (you will need to set
-@code{CROSS_COMPILE} first, though).
-
-@example
-   tar xzf ${WRS_DOWNLOAD_DIR}/at91bootstrap-3-3.0.tar.gz
-   cd at91bootstrap-3-3.0
-   git init
-   git add .
-   git commit -m "original code"
-   git am --whitespace=nowarn $WRS_BASE_DIR/../patches/g45memtest/00*
-   make at91sam9g45ek_defconfig
-   make
-@end example
-
-The output binary is the only file called ``@code{binaries/*.bin}'',
-that should be renamed to @code{g45memtest}.
+We are collecting all those issues in the @i{wiki} page of the
+project, to avoid frequent updates to this manual to just collect
+those details. So please visit
+@url{http://www.ohwr.org/projects/wr-switch-sw/wiki/Bugs} and
+@url{http://www.ohwr.org/projects/wr-switch-sw/wiki/Troubleshooting}
+if you have any problem with this package, but feel free to reach us
+on the mailing list if you don't find help there.
 
 @c ##########################################################################
 @bye
