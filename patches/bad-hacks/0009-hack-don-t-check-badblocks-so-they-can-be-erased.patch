@@ -1,0 +1,39 @@
+From 4be1e50a4719a750cc4b1b2a905705abea2024ed Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Mon, 6 Aug 2012 15:38:49 +0200
+Subject: [PATCH 9/9] hack: don't check badblocks, so they can be erased
+
+---
+ drivers/mtd/nand/nand_base.c  |    2 +-
+ drivers/mtd/nand/nand_write.c |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/mtd/nand/nand_base.c b/drivers/mtd/nand/nand_base.c
+index c4eca0d..3b08e31 100644
+--- a/drivers/mtd/nand/nand_base.c
++++ b/drivers/mtd/nand/nand_base.c
+@@ -280,7 +280,7 @@ int nand_block_checkbad(struct mtd_info *mtd, loff_t ofs, int getchip,
+ 			       int allowbbt)
+ {
+ 	struct nand_chip *chip = mtd->priv;
+-
++	return 0; /* This to allow erasing bad blocks (bad!) */
+ #ifdef CONFIG_NAND_BBT
+ 	if (!chip->bbt)
+ 		return chip->block_bad(mtd, ofs, getchip);
+diff --git a/drivers/mtd/nand/nand_write.c b/drivers/mtd/nand/nand_write.c
+index 13b6c89..a9cfd03 100644
+--- a/drivers/mtd/nand/nand_write.c
++++ b/drivers/mtd/nand/nand_write.c
+@@ -629,7 +629,7 @@ int nand_erase_nand(struct mtd_info *mtd, struct erase_info *instr,
+ 		/*
+ 		 * heck if we have a bad block, we do not erase bad blocks !
+ 		 */
+-		if (nand_block_checkbad(mtd, ((loff_t) page) <<
++		if (0 && nand_block_checkbad(mtd, ((loff_t) page) <<
+ 					chip->page_shift, 0, allowbbt)) {
+ 			printk(KERN_WARNING "nand_erase: attempt to erase a "
+ 			       "bad block at page 0x%08x\n", page);
+-- 
+1.7.7.2
+
