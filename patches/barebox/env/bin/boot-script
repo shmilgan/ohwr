@@ -1,24 +1,24 @@
 #!/bin/sh
 
 # This script loads a wrboot script from the TFTP server and runs it.
-dhcp 5
-if [ "$?" -ne "0" ]; then
-    echo "Cannot obtain IP from DHCP server"
-else
-    # fetch wrboot-<MAC> script
-    tftp wrboot-$eth0.ethaddr wrboot
-    if [ "$?" -ne "0" ]; then
-	sleep 1
-	tftp $eth0.ipaddr/wrboot wrboot
-    fi
-    if [ "$?" -ne "0" ]; then
-	sleep 1
-	tftp wrboot wrboot
-    fi
-    if [ "$?" -eq "0" ]; then
-	./wrboot
-    fi
+if [ "x$eth0.ipaddr" = "x" ]; then
+    dhcp 5;
 fi
+
+# fetch wrboot-<MAC> script, or <IP>/wrboot or wrboot
+tftp wrboot-$eth0.ethaddr wrboot
+if [ "$?" -ne "0" ]; then
+    sleep 1
+    tftp $eth0.ipaddr/wrboot wrboot
+fi
+if [ "$?" -ne "0" ]; then
+    sleep 1
+    tftp wrboot wrboot
+fi
+if [ "$?" -eq "0" ]; then
+    ./wrboot
+fi
+
 # If the script doesn't boot return to menu after some time to read output
 sleep 2
 menu -s boot
