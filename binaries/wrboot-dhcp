@@ -1,0 +1,10 @@
+bootargs="console=ttyS0,115200 panic=10"
+bootargs="$bootargs root=nfs ip=dhcp"
+
+# if we didn't do it already, get our dhcp-based address in barebox
+if [ "x$eth0.ipaddr" = "x" ]; then
+    dhcp 5;
+fi
+
+tftp zImage-wrs3 /dev/mem.kernel
+bootz /dev/mem.kernel
