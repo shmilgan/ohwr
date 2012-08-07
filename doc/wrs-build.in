@@ -64,6 +64,12 @@ The different steps focus on the v3.2, however you can find some
 (though limited)
 documentation for v3.0 & v3.1 in @ref{Older Hardware Releases}
 
+@b{Note:} the switch, as shipped, works perfectly with the provided
+binaries (@url{http://www.ohwr.org/projects/wr-switch-sw/files}), and
+most users will only need to run the flasher -- see @ref{Flashing of
+WRS-3}.  This document as a whole is mainly aimed at developers who
+want to customize their own switch, which is actually a GNU/Linux host.
+
 If you have an older Version-2 switch, please refer to the v2 branch
 of the repository at
 @code{git://ohwr.org/white-rabbit/wr-switch-sw.git}
@@ -90,12 +96,6 @@ granted write access).
 The scripts build over previous work by Tomasz Wlostowski, who first
 made the whole thing work and stick together -- a serious result from
 serious efforts, I am really amazed by his achievements.
-
-The rewriting described in this document (and embodied in the @code{build/}
-subdirectory of the @code{wr-switch-sw} package) is meant to make the stuff
-more maintainable over time.  I am an old-fashioned follower of the rule
-``first make it work then make it work well'', and this step is expected
-to make it work well for everybody.
 
 The purpose of the build-script rewrite is achieving the following targets:
 
@@ -383,7 +383,7 @@ in this chapter. You might also want to check its embedded documentation using:
 * Rebuilding From Scratch::     
 @end menu
 
-@c ==========================================================================
+@c --------------------------------------------------------------------------
 @node Release Package
 @subsection Release Package
 
@@ -406,7 +406,7 @@ on some personal commit the name includes some extra information to describe
 your commit: number of commits form the last tag (if any), SHA1 code of the
 commit. If you have uncommited changed, the suffix @code{-dirty} is there too.
 
-@c ==========================================================================
+@c --------------------------------------------------------------------------
 @node Rebuilding Parts
 @subsection Rebuilding Parts
 
@@ -424,7 +424,7 @@ in the @code{wrs_build-all} script. For example if you want to recompile
 kernel you should execute.
 
 @example
-   /path/to/wr-switch-sw/build/wrs_build-all --step=04
+   /path/to/wr-switch-sw/build/wrs_build-all --step-04
 @end example
 
 You can list all compiled module by calling
@@ -438,7 +438,7 @@ As an alternative, you can run the individual script from within
 @i{scripts/}, after setting the proper environment variables.
 
 
-@c ==========================================================================
+@c --------------------------------------------------------------------------
 @node Rebuilding From Scratch
 @subsection Rebuilding From Scratch
 
@@ -1133,110 +1133,121 @@ The final step in building the switch software is wrapping together
 the filesystem for the switch, also making the archives and the
 @i{jffs2} image file.
 
-@c FIXME: all of this
-  This archive can be used as an
-@i{initramfs} or uncompressed to some directory.  The build procedure
+The step of setting up the complete filesystem is performed by
+@file{build/scripts/wrs_build_wraprootfs}.  The script
 does not leave a directory tree on disk because that would require
-administrator privileges. I think it is best not to call @i{sudo} from
+administrator privileges. We think it is best not to call @i{sudo} from
 within build scripts, to respect our users' security concerns.
 
-The output file is called @i{images/wrs-image.cpio.gz} in the build
-directory.  You can uncompress it, for example to run NFS-root,
-with the following command in a newly-created empty directory:
+The script creates three output files, that can be used in different
+situations, like @i{initramfs} or unpacking for NFS-Root.  All of them
+are around 15MB of data, and the flashing script only uses the first
+listed here:
+
+@table @code
+
+@item wrs-image.jffs2.img
+
+	This is a raw image in JFFS2 format, which is ready to be
+        written to NAND flash. This is used bt the USB flasher.
+
+@item wrs-image.cpio.gz
+
+	If you prefer to run an @i{initramfs} system, this is the file
+        you should use. We used it a lot during development, to avoid
+        wearing the flash device and wasting time waiting for the flasher
+        to run.
+
+@item wrs-image.tar.gz
+
+	We added this out of laziness, because it's easier to create
+        your NFS-Root directory from @i{tar} than from @i{cpio}.
+
+@end table
+
+You can uncompress either @i{cpio} or @i{tar}, for example to run NFS-root,
+by running one of the following commands in a newly-created empty directory:
 
 @example
    zcat $WRS_OUTPUT_DIR/images/wrs-image.cpio.gz | sudo cpio --extract
+
+   tar xzf $WRS_OUTPUT_DIR/images/wrs-image.tar.gz
 @end example
 
-The @i{cpio} archive includes a number of device special files in
-@i{dev}, even though the configured @i{buildroot} uses @code{mdev -s}
-to build all needed devices. The pre-created devices come from
+Each of the three archives include a number of device special files in
+@i{dev}. The pre-created devices come from
 @i{userspace/devices.tar.gz}. Note that the buildroot output
 directory, @i{build/buildroot-2011.11/output/target} does not
-include any target (and no white-rabbit specific files), so it
+include any device (and no white-rabbit specific files), so it
 cannot be used as a root filesystem by itself.
 
-The @i{cpio} filesystem is built by copying the @i{buildroot} file
-tree and overlaying it with @code{userspace/rootfs_override/}; device
-files, as said,  are extracted from @code{userspace/devices.tar.gz}.
+The content of the final filesystem comes from several sources:
 
-The @i{root} user has an empty password (set forth in
-@code{userspace/rootfs_override/}) and authorizes a few @i{ssh} keys,
-to allow @i{ssh} login (and @i{scp}) without the need to provide a
-password -- though empty.  The script authorizes the key of the user
-running the script and all keys listed in the file @code{authorized_keys}
-in the main directory of this package, if present.
+@itemize @bullet
+
+@item The @i{buildroot} output (from its own @file{output/target/}).
+@item The switch-specific overlay (@file{userspace/roofs_override}).
+@item The @file{images/wr} and @file{images/lib} trees,
+      filled but the build scripts.
+@item The file @file{userspace/devices.tar.gz}
+@item The file @file{$WRS_BASE_DIR/authorized_keys} if it exists.
+
+@end itemize
+
+The final step allows a predefined set of users to enter as system
+administrator without the need to type a password (which, anyways is
+empty by default).  It is useful if you @i{scp} files in and out of
+the switch. In the shipped binaries no user is authorized, but the
+root password is still the empty string.
 
 @c ##########################################################################
 @node Code layout in a production switch
 @chapter Code layout in a production switch
 
-@b{NOTE}: This chapter might be out-dated
+This final chapter is a summary of how we used the two internal flash
+memories in the switch, when programmed with the official firmware
+binaries. It is meant for people who want to better understand the
+boot procedure and possibly customize stuff using higher-level tools,
+like erasing and rewriting flash-memory areas from Linux itself.
 
-This is the suggested arrangement of the various binary blobs in the
-final switch. Any comment and suggestion is welcome, as nothing
-is cast in stone at this point.
+Unfortunately, the CPU is not able to boot from NAND memory directly,
+so the first steps of booting are performed from the @i{dataflash}
+device.  Such an SPI memory is used to host the IPL (@i{at91boot}) and
+the executable code of @i{barebox}.  The user is not expected to
+ever erase this memory; if it happens, the system won't boot and
+you'll be forced to re-flash it entirely (or at least the @i{dataflash}
+area.
 
-The basic idea is to have two systems installed: one is the production
-system, that boots by default, and the other is the fail-safe system that
-users will be able to boot if they messed up badly with the production
-code base.  There will be a button to select the fail-safe system when
-needed.
+NAND memory is used for user-data: tke boot loader configuration, the
+kernel and the filesystem.
 
-The two boot procedures will be like this:
+This is how the memory is used. While it definitely looks suboptimal,
+it is the result of our own history of development and there are
+no problems with this ``strange'' split up of space:
 
-@table @i
+@example
+   0x0000.0000 - 0x0004.0000    Empty (space for a barebox)
+   0x0004.0000 - 0x0008.0000    Barebox environment
+   0x0008.0000 - 0x0010.0000    Empty
+   0x0010.0000 - 0x0090.0000    Kernel (plenty of space)
+   0x0090.0000 - 0x0400.0000    Empty
+   0x0400.0000 - 0x0c00.0000    Filesystem space, jffs2
+   0x0c00.0000 - 0x2000.0000    Available
+@end example
 
-@item Fail-safe boot
+When you boot Linux, the three empty areas are not visible, while
+the last area is accessible. This is the content of @file{/proc/mtd}
+after boot:
 
-	This is using the binaries that are already built by the
-        package in its current status.  The IPL lives in @i{dataflash};
-        if loads @i{barebox} from @i{dataflash} and the configuration
-        fetches the boot procedure from the network.  This gives
-        technicians complete freedom to boot whatever they want, either
-        fore development or recovery purposes
+@example
+@end example
 
-@item Production boot
-
-	During normal work the switch would boot from NAND flash. The
-        IPL lives in NAND memory (the manufactures certifies that the
-        first block can never be bad) and it loads a @i{barebox} binary
-        from @i{dataflash}. This is a different @i{barebox} than the
-        one used in fail-safe boot.  This @i{barebox} loads a kernel
-        from NAND memory and runs it, mounting the root filesystem
-        from another NAND partition.
-
-@end table
-
-With this setup, the @i{dataflash} can be made read-only when accessed
-by Linux, for better safety.  Normal use cases will be able to change
-either the kernel or the filesystem (or both) without touching
-@i{dataflash}. On the other hand, @i{at91boot} is unable to deal with
-bad blocks in NAND, or with correction of single-bit errors; that is
-why it will load its @i{barebox} from @i{dataflash}.
-
-The internal CPU ROM will boot from NAND if it finds the magic
-signature in there. If no signature is there, it will bot from
-@i{dataflash}.  Thus, the production boot will be entered by default;
-it will boot the fail-safe sequence only if the NAND flash is erased
-(or has never been programmed) or somebody pressed the spacial
-@i{fail-safe} at power-up.  The button simply disables the
-@i{chip-select} pin of NAND memory; the ROM will fail reading NAND and
-will go on booting from @i{dataflash}.
-
-We foresee no issues in making the @i{dataflash} read-only, because
-user customization is expected to be limited to the kernel and the
-filesystem; we therefor think that preventing accidental erasure of
-@i{dataflash} is good policy.  Those users who want to replace their
-@i{at91boot} or @i{barebox} will be able to do that anyways, either
-from @i{barebox} itself or from a custom build of the kernel.
-
-Later releases of this document will include the complete recovery
-procedures, as well as building rules for the production versions of
-@i{at91boot} and @i{barebox}.
-
-
-
+If you are customizing the switch, you may use the
+@file{flash_eraseall} and @file{cat} to replace individual parts of
+the system, like the kernel, or erase the @i{barebox} configuration to
+restore the factory defaults.  Note however that you shouldn't
+modify the @i{dataflash} device (@code{/dev/mtd5}) unless you really
+know what you are doing.
 
 @c ##########################################################################
 @node Schematics are Available
