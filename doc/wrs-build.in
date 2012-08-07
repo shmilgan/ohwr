@@ -401,7 +401,7 @@ This is the same naming policy of the kernel and other packages.
 The prefix is @code{wrs-firmware-}; the information about the current status are
 retrived by using the git commmand @code{git describe --always --dirty}.
 For example, if you are building the tag @code{wr-switch-sw-v3.0}, your package
-name will be @code{wrs-firmware-wr-switch-sw-v3.0.tag.gz}. If you are building
+name will be @code{wrs-firmware-wr-switch-sw-v3.0.tar.gz}. If you are building
 on some personal commit the name includes some extra information to describe
 your commit: number of commits form the last tag (if any), SHA1 code of the
 commit. If you have uncommited changed, the suffix @code{-dirty} is there too.
