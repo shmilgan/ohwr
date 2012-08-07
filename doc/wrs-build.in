@@ -1240,6 +1240,12 @@ the last area is accessible. This is the content of @file{/proc/mtd}
 after boot:
 
 @example
+   dev:    size   erasesize  name
+   mtd0: 00800000 00020000 "Kernel"
+   mtd1: 08000000 00020000 "Filesystem"
+   mtd2: 00040000 00020000 "Barebox Environment"
+   mtd3: 14000000 00020000 "Available"
+   mtd4: 00840000 00000420 "spi0.0-AT45DB642x"
 @end example
 
 If you are customizing the switch, you may use the
@@ -1436,24 +1442,32 @@ The first 4 lines are printed by @i{at91bootstrap}, the rest by @i{barebox}.
 @c FIXME: the messages and prompts
 @smallexample
    Start AT91Bootstrap...
+   DDR2 Config: 0x39 (NC=0xa, NR=0xd, CAS=0x3, ba_offset = 0x18)
+   DDR2 Config: 0x39 (NC=0xa, NR=0xd, CAS=0x3, ba_offset = 0x18)
+   Compiled by federico (Jul 31 2012 @ 16:14:34)
+   git rev:
+
    Begin to load image...
    ++++++++
    Loading image done.
 
 
-   barebox 2011.09.0-dirty (Sep 12 2011 - 17:09:12)
+   barebox 2012.05.0 (Aug  7 2012 - 13:44:23)
 
-   Board: Ronetix PM9G45
+   Board: CERN White Rabbit Switch V3
    Clocks: CPU 400 MHz, master 133 MHz, main 12.000 MHz
    registered netconsole as cs1
-   Malloc space: 0x73b00000 -> 0x73f00000 (size  4 MB)
+   NAND device: Manufacturer ID: 0x2c, Chip ID: 0xbc (Micron NAND 512MiB 1,8V 16-bi
+   t)
+   Scanning device for bad blocks
+   GPIOs: PA4=1 (36), PC7=1 (103)
+   Malloc space: 0x73b00000 -> 0x73efffff (size  4 MB)
    Stack space : 0x73af8000 -> 0x73b00000 (size 32 kB)
-   Open /dev/env0 No such file or directory
+   envfs: wrong magic on /dev/env0
    no valid environment found on /dev/env0. Using default environment
    running /env/bin/init...
-
-   Hit any key to stop autoboot:  2
-   barebox@@Ronetix PM9G45:/
+   Starting up barebox [wrs3] (MAC=02:0B:AD:C0:FF:EE)
+   starting menu in 5 seconds
 @end smallexample
 
 When the boot loader is running, you can boot a kernel and use its
@@ -1467,18 +1481,20 @@ at @code{/proc/mtd}:
 @example
    # cat /proc/mtd
    dev:    size   erasesize  name
-   mtd0: 04000000 00020000 "Partition 1"
-   mtd1: 1c000000 00020000 "Partition 2"
-   mtd2: 00840000 00000420 "spi0.0-AT45DB642x"
+   mtd0: 00800000 00020000 "Kernel"
+   mtd1: 08000000 00020000 "Filesystem"
+   mtd2: 00040000 00020000 "Barebox Environment"
+   mtd3: 14000000 00020000 "Available"
+   mtd4: 00840000 00000420 "spi0.0-AT45DB642x"
 @end example
 
-Here above, the DataFlash is @i{/dev/mtd2}, whereas the former partitions
+Here above, the DataFlash is @i{/dev/mtd4}, whereas the former partitions
 refer to NAND memory.  You should then write @i{at91boot} to offset 0
 of the DataFlash and @i{barebox} to offset 0x8400 (33792):
 
 @example
-   cat at91bootstrap.bin > /dev/mtd2
-   dd bs=33792 seek=1 if=barebox.bin of=/dev/mtd2
+   cat at91bootstrap.bin > /dev/mtd4
+   dd bs=33792 seek=1 if=barebox.bin of=/dev/mtd4
 @end example
 
 Now you can detach the debugger, press reset and see @i{barebox} starting
