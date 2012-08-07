@@ -1,0 +1,46 @@
+From 111a2f978f9e3271ed9e0a62e391e9d81d393d62 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 7 Aug 2012 12:42:36 +0200
+Subject: [PATCH 8/8] wrs3: use correct nand partitioning
+
+---
+ arch/arm/mach-at91/board-sam9m10g45ek.c |   21 ++++++++++++++++-----
+ 1 files changed, 16 insertions(+), 5 deletions(-)
+
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index 8df2e47..d40aa3c 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -131,13 +131,24 @@ static struct at91_eth_data __initdata ek_macb_data = {
+  */
+ static struct mtd_partition __initdata ek_nand_partition[] = {
+ 	{
+-		.name	= "Partition 1",
+-		.offset	= 0,
+-		.size	= SZ_64M,
++		.name	= "Kernel",
++		.offset	= 1 << 20,
++		.size	= SZ_8M,
+ 	},
+ 	{
+-		.name	= "Partition 2",
+-		.offset	= MTDPART_OFS_NXTBLK,
++		.name	= "Filesystem", /* We _want_ this to be mtd1 */
++		.offset	= 64 << 20,
++		.size	= SZ_128M,
++	},
++	{
++		.name	= "Barebox Environment",
++		.offset	= 256 << 10,
++		.size	= SZ_256K,
++	},
++	/* This is actuallywas MTDPART_OFS_APPEND over the filesystem */
++	{
++		.name	= "Available",
++		.offset	= (128+64) << 20,
+ 		.size	= MTDPART_SIZ_FULL,
+ 	},
+ };
+-- 
+1.7.7.2
+

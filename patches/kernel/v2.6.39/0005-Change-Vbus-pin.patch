@@ -1,0 +1,25 @@
+From d77686b1021c98a971ff3aadb8269540bdb46dd2 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tomasz=20W=C5=82ostowski?= <tomasz.wlostowski@cern.ch>
+Date: Thu, 31 May 2012 13:26:20 +0200
+Subject: [PATCH 5/8] Change Vbus pin
+
+---
+ arch/arm/mach-at91/board-sam9m10g45ek.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index d0e1e67..8df2e47 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -81,7 +81,7 @@ static struct at91_usbh_data __initdata ek_usbh_hs_data = {
+  * USB HS Device port
+  */
+ static struct usba_platform_data __initdata ek_usba_udc_data = {
+-	.vbus_pin	= AT91_PIN_PB19,
++	.vbus_pin	= AT91_PIN_PB8,
+ };
+ 
+ 
+-- 
+1.7.7.2
+
