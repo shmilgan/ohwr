@@ -121,7 +121,7 @@ The purpose of the build-script rewrite is achieving the following targets:
         retrieved. Even if you ``make distclean'' in the build scripts you
         will not need re-get everything from the network.  In a similar
         mood, people who already have a local copy of the big packages
-        (kernel, u-boot, white-rabbit svn) will not need to re-download not
+        (kernel, barebox, white-rabbit svn) will not need to re-download not
         even the first time they build the WRS software.
 @end itemize
 
@@ -146,9 +146,10 @@ The scripts in their current status are not expected to be very
 portable. I am sure a number of @i{bashisms} exist, and I did no effort
 to even identify them.  To relieve the user from possible pain,
 internally the name @i{bash} is used instead of @i{sh}, so things
-should work even if your default shell is @i{ash} or @i{dash};
-actually the scripts have been tested in one system where the
-default @i{sh} is @i{dash}.
+should work even if your default shell is @i{ash} or @i{dash}.
+@c FIXME test this again
+@c actually the scripts have been tested in one system where the
+@c default @i{sh} is @i{dash}.
 
 Similarly, the scripts are likely to fail if you use spaces in directory
 names; that is because not all
@@ -395,7 +396,7 @@ package in @code{WRS_OUTPUT_DIR} using the following command:
 
 This will generate a @code{tar.gz} package. The name of the package is composed
 by the prefix and the description of the current status of the git repository.
-This is the same naming policy the kernel and other packages.
+This is the same naming policy of the kernel and other packages.
 
 The prefix is @code{wrs-firmware-}; the information about the current status are
 retrived by using the git commmand @code{git describe --always --dirty}.
@@ -403,7 +404,7 @@ For example, if you are building the tag @code{wr-switch-sw-v3.0}, your package
 name will be @code{wrs-firmware-wr-switch-sw-v3.0.tag.gz}. If you are building
 on some personal commit the name includes some extra information to describe
 your commit: number of commits form the last tag (if any), SHA1 code of the
-commit. IF you have uncommited changed, the suffix @code{-dirty} is there too.
+commit. If you have uncommited changed, the suffix @code{-dirty} is there too.
 
 @c ==========================================================================
 @node Rebuilding Parts
@@ -540,7 +541,7 @@ file created by ``@code{wrs_build-all --pack}'' (see @ref{Release Package}).
 The command to flash is this:
 
 @example
-    /path/to/wr-switch-sw/build/flash-wrs -e wrs-firmware-<revision>.tar.gz 
+    /path/to/wr-switch-sw/build/flash-wrs --silent -e wrs-firmware-<revision>.tar.gz 
 @end example
 
 Please note that the ``@code{-e}'', which requires erasing the
@@ -609,27 +610,38 @@ Options:
   --silent       Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE
 @end smallexample
 
-The @i{DEV} is optional. It defaults to @code{/dev/ttyACM0}.
+The @i{DEV} is optional and the default is @code{/dev/ttyACM0}.
 If your system maps the Atmel ROM to a different device name, please
 pass the name on the command line. The script wants a full pathname 
 starting with @code{/}.
 
 If the @code{--silent} flag is used the MAC will be by default
 02:0B:AD:C0:FF:EE; otherwise MAC is mandatory. If MAC is not specified
-the script exit.
-
-If you want to flash your own @i{at91boot.bin} or @i{barebox.bin} you
-can just place them in the @i{binaries} subdirectory before calling
-the script.
+the script exit. In this version, the MAC address is unused but this field is
+mandatory for the script; so, we suggest to use the @code{--silent} option.
+Future version of the switch will use the MAC address configuration.
 
 You can also flash the image you have build using @ref{Building} by
 adding the tag @code{-b|--build}.
 
-Finally you can select a mode using the @code{-m|--mode} flag to choose
-to write in dataflash (df), nandflash (nf), both (default) or ddr memories (ddr). The last option is for developers.
-You can also erase the selected memory before write your binaries; to do this
-add the option @code{-e}.
+If you want to flash your own @i{at91boot.bin}, @i{barebox.bin}, @i{kernel}
+or @i{file-system} you can just place them in the @file{$WRS_OUTPUT_DIR/images}
+directory and call the script with @code{-b|--build} option.
 
+You can select a mode using the @code{-m|--mode} flag to choose
+to write in dataflash (df), nandflash (nf), both (default) or ddr memories
+(ddr)@footnote{The ddr memory mode is only for developers}. The memory mode
+is used to select the kind of memory to write. The flash script is used to
+install different binaries on these memories: 
+@itemize @bullet
+@item dataflash: @emph{at91boot} and @emph{barebox} binaries
+@item nandflash: @emph{kernel} zImage and the @emph{file-system}
+@end itemize
+
+You can also erase the selected memory before write your binaries; to do this
+add the option @code{-e}. Note that if you use this option with the default
+memory mode you will erase both the nandflash and dataflash. If you want to
+erase only one memory please select it with @code{-m|--mode} option.
 
 The script performs the following steps:
 
@@ -760,7 +772,7 @@ you can add something like the following line to your @file{wrboot} script:
     bootargs="$bootargs nfsroot=/opt/root/wrs-3"
 @end example
 
-IF you use static IP addresses, please note that you should fix
+If you use static IP addresses, please note that you should fix
 @file{/etc/init.d/S40network} in the filesystem for your switch,
 so it doesn't run the DHCP client.
 
@@ -979,8 +991,8 @@ includes modules
 
 In the next step the scripts compile modules that are part of this
 package.  The step depends on the kernel being available in the
-build directory. The modules are then copied into the @code{images}
-subdirectory of the main build directory.
+build directory. The modules are then copied into the
+@file{images/wr/lib/modules/} subdirectory of the main build directory.
 
 Please note that modules (and later user-space) are compiled in-place;
 ie. not in the output directory.  The disadvantage is that your repository
