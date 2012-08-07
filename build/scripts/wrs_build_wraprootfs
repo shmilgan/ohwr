@@ -56,7 +56,7 @@ chown -R root:root $TMPFS/etc/dropbear
 
 (cd "$TMPFS" && find . | cpio -o -H newc | gzip) > $ROOTFS_IMAGE_CPIO
 (cd "$TMPFS" && tar cz .> $ROOTFS_IMAGE_TGZ)
-/usr/sbin/mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $ROOTFS_IMAGE_JFFS2.img
+mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $ROOTFS_IMAGE_JFFS2.img
 EOF
 
 fakeroot bash $WRS_SH_OPTIONS $TMPSCRIPT
