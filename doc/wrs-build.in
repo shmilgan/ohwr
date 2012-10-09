@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month August 2012
+@set update-month October 2012
 
 @finalout
 
@@ -1249,11 +1249,153 @@ after boot:
 @end example
 
 If you are customizing the switch, you may use the
-@file{flash_eraseall} and @file{cat} to replace individual parts of
+@file{flash_erase} and @file{cat} to replace individual parts of
 the system, like the kernel, or erase the @i{barebox} configuration to
 restore the factory defaults.  Note however that you shouldn't
-modify the @i{dataflash} device (@code{/dev/mtd5}) unless you really
-know what you are doing.
+modify the @i{dataflash} device (@code{/dev/mtd4}) unless you really
+know what you are doing (for example, the following chapter changes
+it by using magic offsets in the commands).
+
+@c ##########################################################################
+@node Switching from HW-ECC to SW-ECC
+@chapter Switching from HW-ECC to SW-ECC
+
+After release 3.0 of this package we found that hardware ECC for NAND
+memory is bugged in the CPU we are using.  Thus, we'll soon have a new
+release using software ECC, which however is not compatible, so a complete
+reinstall will be needed.
+
+As a ``quick and dirty'' solution to the reliability problem, to be
+used before we develop and thoroughly test the new installation
+procedure, you can take and installed switch and turn it to software
+ECC support.  The difference is in the ECC algorithms used by both
+@i{barebox} and the kernel. So both need to be recompiled.
+
+To recompile the kernel, just undefine @code{CONFIG_MTD_NAND_ATMEL_ECC_HW}
+and define @code{CONFIG_MTD_NAND_ATMEL_ECC_SOFT} instead. To recompile
+barebox, similary, just adapt the configuration. The new configurations,
+for both @i{barebox} and the kernel, are included in this commit of
+the repository.
+
+The following services and files are prerequisites to run this update:
+
+@itemize @bullet
+@item An installed switch, that runs the older @i{barebox}.
+@item A TFTP server, whence you can serve the kernel.
+@item Optionally, the current kernel, using hardware ECC for NAND.
+@item An NFS-Root installation (even a minimal one, with MTD tools).
+@item The new barebox, using software ECC
+@item The new kernel, using software ECC
+@item An archive of the filesystem (unchanged from release 3.0).
+@end itemize
+
+An archive with all the pieces you'll need for this upgrade (and maybe
+a little more than that) can be downloaded from the @i{files} section
+of the @i{White Rabbit} project on @code{ohwr.org}. (However, the
+archive doesn't include the filesystem image, which is big and didn't
+change from release 3.0).  The direct link is
+@url{http://www.ohwr.org/attachments/download/1648/reflash-2012-10-09.tar.gz}
+
+@sp 1
+
+The manual steps for the upgrade, then, are the following ones:
+
+@table @r
+
+@item 1. Boot the switch using the TFTP script.
+
+	If your switch has been installed and the @i{dataflash}
+        is valid, you can boot it using the
+        @t{boot from TFTP script} menu entry. See @ref{Using wrboot}
+        for details.  You don't need to access any NAND memory for this
+        to work (so even if it got corrupted, you'll be able to boot).
+
+@item 2. Erase NAND. 
+
+	Before switching to a different ECC model, you should erase
+        your NAND memory. All bits in erased blocks are set, so all
+        bytes are 0xff with either ECC convention. All areas used
+        by the system must be erased before switching to software ecc.
+        This means @t{/dev/mtd0}, @t{/dev/mtd1} and @t{/dev/mtd2}
+        (kernel, filesystem and barebox environment).  This will forget
+        your local barebox configuration (e.g., MAC address).
+
+@item 3. Boot again, with a new kernel
+
+	Run again the TFTP script to boot from NFS-Root, but using a
+        kernel that supports software ECC.
+
+@item 4. Write the kernel and filesystem to flash
+
+	With this new kernel, you can write to NAND memory using software
+        ECC. @t{/dev/mtd0} will host the new kernel (the same you booted)
+        and @t{/dev/mtd1} will host the filesystem (unchanged from the
+        previous installation).
+
+@item 5. Update barebox in data flash
+
+	The final step is updating barebox, so it can read and boot
+        the new kernel that is stored in flash with software ECC.
+        Barebox must be stored at offset 0x8400 of the SPI memory.
+
+@end table
+
+The following example shows step 2 (erasing flash):
+
+@example
+   # flash_erase /dev/mtd0 0 0
+   Erasing 128 Kibyte @ 7e0000 -- 100 % complete
+
+   # flash_erase /dev/mtd1 0 0
+   Erasing 128 Kibyte @ 7fe0000 -- 100 % complete
+
+   # flash_erase /dev/mtd2 0 0
+   Erasing 128 Kibyte @ 20000 -- 100 % complete
+@end example
+
+The following example shows step 4 (writing the kernel and FS).  You
+can't just ``@t{cat zImage > /dev/mtd0}'' because NAND memory can only
+be written in multiples of 512 bytes. So we'll add trailing unused
+data to the zImage before writing to flash, and the final error can
+be ignored. The final command (writing the filesystem) will take
+50 seconds (uncompressing alone would take 18 seconds).
+
+@example
+   # dd bs=1k count=1 < /dev/zero > /tmp/1k
+   1+0 records in
+   1+0 records out
+
+   # cat zImage-wrs3-swecc /tmp/1k | dd obs=512 > /dev/mtd0
+   nand_do_write_ops: Attempt to write not page aligned data
+   dd: writing 'standard output': Invalid argument
+   2886+1 records in
+   2886+0 records out
+
+   # mount -t jffs2 /dev/mtdblock1 /mnt
+
+   # cd /mnt
+
+   # zcat /path/to/your/copy/of/wrs-image.tar.gz | tar xf -
+@end example
+
+The following example shows step 5 (updating barebox). The block size
+of the @i{dataflash} is 1056 bytes, and partial writes are supported
+(unless what happens with NAND flash) so no padding is needed.
+The command takes a few seconds to run:
+
+@example
+   # cat barebox.bin-swecc | dd bs=1056 seek=32 > /dev/mtd4
+   182+1 records in
+   182+1 records out
+@end example
+
+@b{Hint}: at any time, if in doubt about what version of @i{barebox}
+and the kernel you are running, you can check the date (@code{version}
+in @i{barebox} and @code{uname -a} in Linux).  Hardware-ECC images are
+from August 2012 (official v3.0 release), while software-ECC images
+are from October 2012.  If you recompiled and are in doubt about
+the kernel, you can @i{zgrep} for @code{ECC} in @code{/proc/config.gz}.
+
 
 @c ##########################################################################
 @node Schematics are Available
