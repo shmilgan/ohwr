@@ -384,7 +384,7 @@ int ddr_load(int nFile, const sndfile* pFileArray)
 		len += samba_send_file(pFileArray[i].fname, SDRAM_START+pFileArray[i].offset,0, 0, 0);
 	}
 	mem_write(MEMTYPE_DDR,0,SDRAM_START,len);
-	fprintf(stderr,"Loading DDR...!!!\n");
+	fprintf(stderr,"\n");
 	return 0;
 }
 
@@ -488,6 +488,9 @@ int mem_write(int type, uint32_t offset, uint32_t buf_addr, uint32_t size)
 
 	samba_run(INTERNAL_SRAM_BUF, timeout);
 	fprintf(stderr,"F");
+	
+	if(type == MEMTYPE_DDR) // booting a barebox/kernel will fuck up USB, so we'll never get any response
+		return 0;
 
 	if(samba_read(INTERNAL_SRAM_BUF + MBOX_COMMAND, 4, 10000000) != ~APPLET_CMD_WRITE) die(" invalid response from applet");
 	if(samba_read(INTERNAL_SRAM_BUF + MBOX_STATUS, 4, 10000000) != APPLET_SUCCESS) die(" write failure");
@@ -534,6 +537,7 @@ void show_help(const char* serial_port)
 	printf("\t-e \t\t erase the memory\n");
 	printf("\t-c \t\t check the memory (not available for df)\n");
 	printf("\t-s \t\t scrub the memory (only available for nf)\n");
+	printf("\t-r \t\t addr run the image at address addr\n");
 	printf("\t-p SERIAL_PORT\t By default it is: -p %s\n",serial_port);
 	printf("\t-h \t\t Show this little help\n");
 	printf("\n");
@@ -547,9 +551,10 @@ main(int argc, char *argv[])
 	char opt;
 	int erase=0, check=0, scrub=0;
 	int type=-1;
-	unsigned int offset=0;
+	unsigned int offset=0, run_addr=0;
 	int noopts=1;
 	int nFile=0;
+	int run =0 ;
 
 
 	program_name = basename(argv[0]);
@@ -562,7 +567,7 @@ main(int argc, char *argv[])
 	}
 
 	//Parse options
-	while ((opt = getopt (argc, argv, "m:p:ecsh")) != -1)
+	while ((opt = getopt (argc, argv, "m:p:r:ecsh")) != -1)
 		switch (opt)
 		{
 		case 'm': mode_str = optarg; 	break;
@@ -570,6 +575,8 @@ main(int argc, char *argv[])
 		case 'e': erase = 1; 			break;
 		case 'c': check = 1; 			break;
 		case 's': scrub = 1; 			break;
+		case 'r': run = 1;sscanf(optarg,"%i", &run_addr);		break;
+		
 		case 'h':
 		case '?':
 			show_help(serial_port);
@@ -620,6 +627,11 @@ main(int argc, char *argv[])
 	if(scrub && type==MEMTYPE_NAND)	nand_scrub();
 	if(nFile>0) mem_program(type,nFile,(const sndfile*)&filearray);
 
+	if(run)
+	{
+		fprintf(stderr,"Executing payload @ %x\n", run_addr);
+		samba_run(run_addr, 0);
+	}
 
 	serial_close();
 	printf("Closing...\n");
