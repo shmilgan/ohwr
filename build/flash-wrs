@@ -79,16 +79,17 @@ modifyMAC()
 }
 
 # Go to the top directory
-topdir=$(dirname $0)/..
+dir=$(dirname $0)/..
+WRS_BASE_DIR=$(cd $dir && /bin/pwd)
 
 # Sanity checks
-if [ -d ${topdir}/usb-loader ]; then true; else
+if [ -d ${WRS_BASE_DIR}/usb-loader ]; then true; else
     echo "$0: usb-loader is not found" >& 2
     exit 1
 fi
 
 # build flasher itself
-if CC=cc make -s -C ${topdir}/usb-loader; then true; else
+if CC=cc make -s -C ${WRS_BASE_DIR}/usb-loader; then true; else
 	echo "$0: Error compiling usb-loader" >&2; exit 1;
 fi
 
@@ -104,8 +105,8 @@ MAC2=$MAC2_DEF
 DEV=""
 FLAGS=""
 
-at91bs="${topdir}/binaries/at91bootstrap.bin"
-barebox="${topdir}/binaries/barebox.bin"
+at91bs="${WRS_BASE_DIR}/binaries/at91bootstrap.bin"
+barebox="${WRS_BASE_DIR}/binaries/barebox.bin"
 kernel="${WRS_OUTPUT_DIR}/images/zImage"
 rootfs="${WRS_OUTPUT_DIR}/images/wrs-image.jffs2.img"
 
@@ -116,6 +117,7 @@ while [ $# -ge 1 ]; do
 		barebox=${WRS_OUTPUT_DIR}/images/barebox.bin
 		kernel=${WRS_OUTPUT_DIR}/images/zImage
 		rootfs=${WRS_OUTPUT_DIR}/images/wrs-image.jffs2.img
+		rootfscpio=${WRS_OUTPUT_DIR}/images/wrs-image.cpio.gz
 		shift;;
 
 	*.tar.gz) 
@@ -125,6 +127,7 @@ while [ $# -ge 1 ]; do
 		barebox=/tmp/barebox.bin
 		kernel=/tmp/zImage
 		rootfs=/tmp/wrs-image.jffs2.img
+		rootfscpio=${WRS_OUTPUT_DIR}/images/wrs-image.cpio.gz
 		shift;;
 
 	-h|--help) 	showhelp; shift;;
@@ -219,23 +222,55 @@ modifyMAC ${barebox} ${Tbarebox}
 ## Flashing DataFlash
 if [ $df ]; then
 	checkExit $at91bs
-	${topdir}/usb-loader/mch_flasher -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792
+	${WRS_BASE_DIR}/usb-loader/mch_flasher -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792
 fi
 
 ## Prepare for the NAND flashing procedure
 if [ $nf ]; then
 	checkExit $kernel
-	checkExit $rootfs
-	${topdir}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${rootfs} 0x2000000
+	checkExit $rootfscpio
+	TMPFS=$(mktemp -d /tmp/wrsfs.XXXXXX)
+	TMPCPIO=$(mktemp /tmp/wrsflash-cpio.XXXXXX.cpio.gz)
+	TMPSCRIPT=$(mktemp /tmp/wrsrootfs-script.XXXXXX)
+
+	cat > $TMPSCRIPT << EOF
+cd $TMPFS
+zcat $rootfscpio | cpio --extract
+mkdir flashing
+
+# Remove heavy and useless stuff to make a light file system to
+# load in RAM
+rm -rf $TMPFS/etc/init.d/S*
+rm -rf $TMPFS/wr
+rm -rf $TMPFS/usr/bin
+rm -rf $TMPFS/usr/lib
+rm -rf $TMPFS/usr/share
+
+cp ${rootfs} $TMPFS/flashing/wrs-image.jffs2.img
+cp ${kernel} $TMPFS/flashing/zImage
+cp ${WRS_BASE_DIR}/usb-loader/S99flash-from-kernel.sh $TMPFS/etc/init.d/
+cd ..
+(cd "$TMPFS" && find . | cpio -o -H newc | gzip) > $TMPCPIO
+EOF
+	fakeroot bash $TMPSCRIPT
+
+	TMPSTRFILE=$(mktemp /tmp/natale.XXXXXX)
+	echo -e "\xBA\xBB\x00\xBA\xBB\x00" > $TMPSTRFILE
+	${WRS_BASE_DIR}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${TMPCPIO} 0x2000000
+
+	rm -rf $TMPFS
+	rm -rf $TMPCPIO
+	rm -rf $TMPSCRIPT
+	rm -rf $TMPSTRFILE
 fi
 
 ## Loading in DDR
 if [ $test ]; then
 	checkExit $kernel
 	checkExit $rootfs
-	${topdir}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${rootfs} 0x2000000
+	
+	${WRS_BASE_DIR}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${rootfs} 0x2000000
 fi
 
 rm $Tbarebox
 echo -e "\n\nDone\n"
-
