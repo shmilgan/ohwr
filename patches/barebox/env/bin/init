@@ -13,7 +13,10 @@ if [ $? -eq 0 ]; then
 	bootm /dev/ram0.kernel
 fi
 
-autoboot_timeout="10";
+#default value (can changed in /env/config)
+preboot_timeout="5"
+autoboot_timeout="10"
+autoboot_select="1"
 
 ### Override default value using /env/config
 . /env/config
@@ -57,6 +60,9 @@ menu -e -a -m boot -c 'exit 0' -d "exit to shell"
 menu -e -a -m boot -c reset -d "reboot"
 
 # allow the user to see previous messages
-echo "starting menu in 5 seconds"
-sleep 5
+echo "starting menu in ${preboot_timeout} seconds"
+sleep ${preboot_timeout}
+# Select by default a specific menu
+menu -m boot -S -n $autoboot_select
+#Use a timeout to let the user change the entry in menu
 menu -s boot $menu_timeout
