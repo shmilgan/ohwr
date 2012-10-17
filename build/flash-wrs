@@ -17,7 +17,7 @@
 
 showhelp()
 {
-	printf "Usage: $0 [options] MAC [<firmware>.tar.gz] [DEV]\n\n"
+	printf "Usage: $0 [options] [<firmware>.tar.gz] [DEV]\n\n"
 	printf "MAC:\t MAC address in hexadecimal seperated by ':' (i.e, AB:CD:EF:01:23:45)\n"
 	printf "<firmware>.tar.gz: Use the file in the firmware to flash the device\n"
 	printf "DEV:\t The usb device (by default it is /dev/ttyACM0)\n"
@@ -27,7 +27,8 @@ showhelp()
 	printf "  -e \t\t Completely erase the memory (Can erase your configuration)\n"
 	printf "  -b|--build\t Use file that you have build in the WRS_OUTPUT_DIR\n"
 	printf "  --test\t Use file for testing the switch (not available)\n"
-	printf "  --silent\t Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE\n\n"
+	printf "  -m1|--mac1\t Default MAC address for the ethernet port on board\n"
+	printf "  -m2|--mac2\t Default base MAC address for the switch ports"
 	exit 0
 }
 
@@ -62,13 +63,18 @@ modifyMAC()
 	new=$2
 	cp $origin $new
 	
+	echo "Configure the MAC addresses:"
+	echo "  MAC1 $MAC1"
+	echo "  MAC2 $MAC2"
 	# MAC address doesn't need any modification
 	if [ $silent ]; then 
 	    return 1;
 	fi
 	# Modify MAC address
-	sed -i "s/02:0B:AD:C0:FF:EE/$MAC/" $new
-	echo "MAC is now: $MAC"
+	sed -i "s/$MAC1_DEF/$MAC1/" $new
+	echo "MAC1 is now: $MAC1"
+	sed -i "s/$MAC2_DEF/$MAC2/" $new
+	echo "MAC2 is now: $MAC2"
 	return 0
 }
 
@@ -87,7 +93,14 @@ if CC=cc make -s -C ${topdir}/usb-loader; then true; else
 fi
 
 # parse command line
-MAC=""
+
+# Default MAC address for the switch board ethernet
+MAC1_DEF="02:34:56:78:9A:BC"
+MAC1=$MAC1_DEF
+# Default base MAC address for the 18 switch ports
+MAC2_DEF="02:34:56:78:9A:00"
+MAC2=$MAC2_DEF
+
 DEV=""
 FLAGS=""
 
@@ -104,6 +117,7 @@ while [ $# -ge 1 ]; do
 		kernel=${WRS_OUTPUT_DIR}/images/zImage
 		rootfs=${WRS_OUTPUT_DIR}/images/wrs-image.jffs2.img
 		shift;;
+
 	*.tar.gz) 
 		checkExit $1
 		tar --directory /tmp -xzf $1	
@@ -112,7 +126,9 @@ while [ $# -ge 1 ]; do
 		kernel=/tmp/zImage
 		rootfs=/tmp/wrs-image.jffs2.img
 		shift;;
+
 	-h|--help) 	showhelp; shift;;
+
 	-m|--memmode)
 	    # verify memory mode
 	    if [ "$2" != "nf" ] && [ "$2" != "df" ] && [ "$2" != "ddr" ] && [ "$2" != "default" ]; then
@@ -122,33 +138,46 @@ while [ $# -ge 1 ]; do
 	    fi
 	    memmode="$2"
 	    shift; shift;;
-	--silent)
-	    # set default the MAC address if user didn't set a MAC address
-	    if [ "x$MAC" = "x" ]; then
-		MAC="02:0B:AD:C0:FF:EE"
-	    fi
-	    silent=1;
-	    shift;;
+
 	/* ) DEV="-s $1"; shift ;;
-	*:* ) MAC="$1"; shift ;;
-	
+
+	-m1|--mac1)
+	    MAC1="$2"
+	    checkMAC $MAC1
+	    if [ $? -eq 1 ];then
+		echo "Error: MAC address 1 invalid ($MAC1)"
+		exit 1
+	    fi
+	    shift; shift;;
+
+	-m2|--mac2)
+	    MAC2="$2"
+	    checkMAC $MAC2
+	    if [ $? -eq 1 ];then
+		echo "Error: MAC address 2 invalid ($MAC2)"
+		exit 1
+	    fi
+	    shift; shift;;
+
 	-*) FLAGS="${FLAGS} $1"; shift;;
+
 	* ) echo "$0: Invalid argument \"$1\"" >&2; exit 1;;
     esac
 done
 
-#MAC address is a mandatory field
-if [ "x$MAC" = "x" ]; then
-    echo "Error: MAC address is mandatory"
-    showhelp
-    exit 1
-else
-    checkMAC $MAC
-    if [ $? -eq 1 ];then
-	echo "Error: MAC address is invalid ($MAC)"
-	exit 1
-    fi
+## MAC1 and MAC2 are really recommended
+if [ "x$MAC1" = "x$MAC1_DEF" ]; then
+    echo "---------------------------------------"
+    echo "WARNING: YOU DID NOT SET THE MAC1 FIELD"
+    echo "---------------------------------------"
 fi
+if [ "x$MAC2" = "x$MAC2_DEF" ]; then
+    echo "---------------------------------------"
+    echo "WARNING: YOU DID NOT SET THE MAC2 FIELD"
+    echo "---------------------------------------"
+fi
+echo "Starting flashing procedure in 3 seconds ..."
+sleep 3
 
 ## Selecting the running memmode
 if [ "x$memmode" = "xdf" ]; then
