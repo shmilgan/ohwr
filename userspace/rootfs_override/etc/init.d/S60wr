@@ -1,4 +1,35 @@
-#!/bin/sh
-#!/bin/bash
+#!/bin/ash
 
-/wr/sbin/startup-mb.sh
+start() {
+ 	echo -n "Starting WR minibackplane: "
+	/wr/sbin/startup-mb.sh
+	echo "OK"
+}
+stop() {
+	echo -n "Stopping WR minibackplane: "
+	/wr/sbin/stop-mb.sh
+	echo "OK"
+}
+restart() {
+	stop
+	start
+}
+
+
+
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart|reload)
+  	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?

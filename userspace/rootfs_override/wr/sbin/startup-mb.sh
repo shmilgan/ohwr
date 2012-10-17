@@ -1,6 +1,4 @@
 #!/bin/ash
-
-echo "Starting up WR Switch (18-ports MiniBackplane version)..."
 export WR_HOME="/wr"
 
 # Get parameter from kernel commandline
@@ -19,3 +17,4 @@ insmod $WR_HOME/lib/modules/wr_vic.ko
 insmod $WR_HOME/lib/modules/wr-nic.ko macaddr=$val
 insmod $WR_HOME/lib/modules/wr_rtu.ko
 $WR_HOME/sbin/start-daemons.sh
+
