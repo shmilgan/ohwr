@@ -211,38 +211,31 @@ if [ -z "$msg" ]; then
 	read -p "Remove the Dataflash jumper (Press any key)" notused
 fi
 
+# Create a temporary barebox binary with modified MAC addresses
+checkExit $barebox
+Tbarebox=$(mktemp /tmp/barebox.XXXXXX)
+modifyMAC ${barebox} ${Tbarebox}
+
 ## Flashing DataFlash
 if [ $df ]; then
-
 	checkExit $at91bs
-	checkExit $barebox
-	
-	Tbarebox=$(mktemp /tmp/barebox.XXXXXX)
-	modifyMAC ${barebox} ${Tbarebox}
-
-	${topdir}/usb-loader/mch_flasher -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792		
+	${topdir}/usb-loader/mch_flasher -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792
 fi
 
-## Flashing NANDFlash
+## Prepare for the NAND flashing procedure
 if [ $nf ]; then
-
 	checkExit $kernel
 	checkExit $rootfs
-
-	${topdir}/usb-loader/mch_flasher -m nand $FLAGS $DEV ${kernel} 0x00100000 ${rootfs} 0x04000000	
+	${topdir}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${rootfs} 0x2000000
 fi
 
 ## Loading in DDR
 if [ $test ]; then
-
-	checkExit $barebox
 	checkExit $kernel
 	checkExit $rootfs
-	
-	Tbarebox=$(mktemp /tmp/barebox.XXXXXX)
-	modifyMAC ${barebox} ${Tbarebox}
-
 	${topdir}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${rootfs} 0x2000000
 fi
 
+rm $Tbarebox
+echo -e "\n\nDone\n"
 
