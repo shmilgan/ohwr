@@ -233,6 +233,14 @@ if [ $nf ]; then
 	TMPCPIO=$(mktemp /tmp/wrsflash-cpio.XXXXXX.cpio.gz)
 	TMPSCRIPT=$(mktemp /tmp/wrsrootfs-script.XXXXXX)
 
+
+	# The TMPCPIO is used for the NAND flashing procedure. It
+	# contains the magic string "paperino" (0x61706570 0x69726f6e)
+	# in the first 8bytes and in the following byte the whole
+	# file system. Barebox use this magic string to identify
+	# the flashing procedure.
+	echo -n "paperino" > $TMPCPIO
+
 	cat > $TMPSCRIPT << EOF
 cd $TMPFS
 zcat $rootfscpio | cpio --extract
@@ -250,18 +258,15 @@ cp ${rootfs} $TMPFS/flashing/wrs-image.jffs2.img
 cp ${kernel} $TMPFS/flashing/zImage
 cp ${WRS_BASE_DIR}/usb-loader/S99flash-from-kernel.sh $TMPFS/etc/init.d/
 cd ..
-(cd "$TMPFS" && find . | cpio -o -H newc | gzip) > $TMPCPIO
+(cd "$TMPFS" && find . | cpio -o -H newc | gzip) >> $TMPCPIO
 EOF
 	fakeroot bash $TMPSCRIPT
-
-	TMPSTRFILE=$(mktemp /tmp/natale.XXXXXX)
-	echo -e "\xBA\xBB\x00\xBA\xBB\x00" > $TMPSTRFILE
-	${WRS_BASE_DIR}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${TMPCPIO} 0x2000000
+        
+	${WRS_BASE_DIR}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${TMPCPIO} 0x1FFFFF8
 
 	rm -rf $TMPFS
 	rm -rf $TMPCPIO
 	rm -rf $TMPSCRIPT
-	rm -rf $TMPSTRFILE
 fi
 
 ## Loading in DDR
