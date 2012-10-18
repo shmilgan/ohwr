@@ -1,5 +1,18 @@
 #!/bin/sh
 
+# If we are in the flashing procedure, start with the kernel and file system
+# loaded into the DDR memory
+memcmp -s /dev/mem -d /env/magicstr 0x71FFFFF8 0x0 8
+if [ $? -eq 0 ]; then
+	echo "Booting kernel for NAND flashing procedure"
+	bootargs="console=ttyS0,115200 panic=10 mem=64M"
+	bootargs="$bootargs initrd=0x72000000,20M"
+	bootargs="$bootargs root=/dev/ram0"
+	addpart /dev/ram0 0x1000000@0x1000000(kernel)
+	addpart /dev/ram0 0x1000000@0x2000000(initrd)
+	bootm /dev/ram0.kernel
+fi
+
 autoboot_timeout="10";
 
 ### Override default value using /env/config
