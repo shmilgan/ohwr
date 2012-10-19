@@ -12,7 +12,7 @@
 # packaging of this file.  Please review the following information to
 # ensure the GNU Lesser General Public License version 2.1 requirements
 # will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
-#########################################################################	
+#########################################################################
 
 
 showhelp()
@@ -50,11 +50,11 @@ checkExit()
 
 checkMAC()
 {
-    X="[0-9a-fA-F][0-9a-fA-F]"
-    if echo $1 | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
-	return 0
-    fi
-    return 1
+	X="[0-9a-fA-F][0-9a-fA-F]"
+	if echo $1 | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
+		return 0
+	fi
+	return 1
 }
 
 modifyMAC()
@@ -62,12 +62,12 @@ modifyMAC()
 	origin=$1
 	new=$2
 	cp $origin $new
-	
+
 	echo "Configure the MAC addresses:"
 	echo "  MAC1 $MAC1"
 	echo "  MAC2 $MAC2"
 	# MAC address doesn't need any modification
-	if [ $silent ]; then 
+	if [ $silent ]; then
 	    return 1;
 	fi
 	# Modify MAC address
@@ -111,8 +111,8 @@ kernel="${WRS_OUTPUT_DIR}/images/zImage"
 rootfs="${WRS_OUTPUT_DIR}/images/wrs-image.jffs2.img"
 
 while [ $# -ge 1 ]; do
-    case $1 in
-	-b|--build) 
+	case $1 in
+	-b|--build)
 		at91bs=${WRS_OUTPUT_DIR}/images/at91bootstrap.bin;
 		barebox=${WRS_OUTPUT_DIR}/images/barebox.bin
 		kernel=${WRS_OUTPUT_DIR}/images/zImage
@@ -120,9 +120,9 @@ while [ $# -ge 1 ]; do
 		rootfscpio=${WRS_OUTPUT_DIR}/images/wrs-image.cpio.gz
 		shift;;
 
-	*.tar.gz) 
+	*.tar.gz)
 		checkExit $1
-		tar --directory /tmp -xzf $1	
+		tar --directory /tmp -xzf $1
 		at91bs=/tmp/at91bootstrap.bin;
 		barebox=/tmp/barebox.bin
 		kernel=/tmp/zImage
@@ -133,34 +133,34 @@ while [ $# -ge 1 ]; do
 	-h|--help) 	showhelp; shift;;
 
 	-m|--memmode)
-	    # verify memory mode
-	    if [ "$2" != "nf" ] && [ "$2" != "df" ] && [ "$2" != "ddr" ] && [ "$2" != "default" ]; then
-		echo "Error: Invalid memory mode"
-		showhelp
-		exit 1
-	    fi
-	    memmode="$2"
-	    shift; shift;;
+		# verify memory mode
+		if [ "$2" != "nf" ] && [ "$2" != "df" ] && [ "$2" != "ddr" ] && [ "$2" != "default" ]; then
+			echo "Error: Invalid memory mode"
+			showhelp
+			exit 1
+		fi
+		memmode="$2"
+		shift; shift;;
 
 	/* ) DEV="-s $1"; shift ;;
 
 	-m1|--mac1)
-	    MAC1="$2"
-	    checkMAC $MAC1
-	    if [ $? -eq 1 ];then
-		echo "Error: MAC address 1 invalid ($MAC1)"
-		exit 1
-	    fi
-	    shift; shift;;
+		MAC1="$2"
+		checkMAC $MAC1
+		if [ $? -eq 1 ];then
+			echo "Error: MAC address 1 invalid ($MAC1)"
+			exit 1
+		fi
+		shift; shift;;
 
 	-m2|--mac2)
-	    MAC2="$2"
-	    checkMAC $MAC2
-	    if [ $? -eq 1 ];then
-		echo "Error: MAC address 2 invalid ($MAC2)"
-		exit 1
-	    fi
-	    shift; shift;;
+		MAC2="$2"
+		checkMAC $MAC2
+		if [ $? -eq 1 ];then
+			echo "Error: MAC address 2 invalid ($MAC2)"
+			exit 1
+		fi
+		shift; shift;;
 
 	-*) FLAGS="${FLAGS} $1"; shift;;
 
@@ -189,7 +189,7 @@ elif [ "x$memmode" = "xnf" ]; then
 	nf=1
 elif [ "x$memmode" = "xddr" ]; then
 	test=1
-else 
+else
 	df=1
 	nf=1
 fi
@@ -199,7 +199,7 @@ msg="Waiting for at91sam SAMBA bootloader on usb\nPlease check that the Dataflas
 while true; do
 	lsusb | grep "at91sam" > /dev/null
 	if [ "$?" -eq "0" ]; then
-		break    
+		break
 	else
 		if [ -n "$msg" ]; then
 			printf "$msg"
@@ -261,7 +261,7 @@ cd ..
 (cd "$TMPFS" && find . | cpio -o -H newc | gzip) >> $TMPCPIO
 EOF
 	fakeroot bash $TMPSCRIPT
-        
+
 	${WRS_BASE_DIR}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${TMPCPIO} 0x1FFFFF8
 
 	rm -rf $TMPFS
@@ -273,7 +273,7 @@ fi
 if [ $test ]; then
 	checkExit $kernel
 	checkExit $rootfs
-	
+
 	${WRS_BASE_DIR}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${rootfs} 0x2000000
 fi
 
