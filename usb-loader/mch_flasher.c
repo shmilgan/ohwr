@@ -176,8 +176,8 @@ uint32_t samba_read (uint32_t addr, int size, int timeout)
 
 	tstart = sys_get_clock_usec();
 
-	for(i=0;i<1024 && c!='>';) 
-	{ 
+	for(i=0;i<1024 && c!='>';)
+	{
 		if(serial_data_avail())
 		{
 			tmpbuf[i]=c=serial_read_byte();
@@ -194,7 +194,7 @@ uint32_t samba_read (uint32_t addr, int size, int timeout)
 
 	sscanf(tmpbuf, "%x", &rval);
 	//	fprintf(stderr,"samba_read: %x\n", rval);
-	return rval;	
+	return rval;
 }
 
 /**
@@ -282,7 +282,7 @@ static void samba_load_applet(char *applet_name, uint32_t address)
 static void mbox_write(uint32_t base, uint32_t offset, uint32_t value)
 {
 	samba_write(base+offset, value, 4, SERIAL_TIMEOUT);
-}	
+}
 
 void samba_run(uint32_t addr, int timeout)
 {
@@ -353,8 +353,8 @@ int ddr_init(int board_rev)
 {
 	if(board_rev == BOARD_REV_V2)
 		samba_load_applet("isp-extram-at91sam9263", INTERNAL_SRAM_BUF);
-	else if(board_rev == BOARD_REV_V3) 
-		samba_load_applet("isp-extram-at91sam9g45", INTERNAL_SRAM_BUF); 
+	else if(board_rev == BOARD_REV_V3)
+		samba_load_applet("isp-extram-at91sam9g45", INTERNAL_SRAM_BUF);
 
 	mbox_write(INTERNAL_SRAM_BUF, MBOX_COMMAND, APPLET_CMD_INIT);
 
@@ -452,7 +452,7 @@ void mem_check(int type)
 	mbox_write(INTERNAL_SRAM_BUF, MBOX_COMMAND, APPLET_CMD_LIST_BAD_BLOCKS);
 	samba_run(INTERNAL_SRAM_BUF, 0);
 	if((samba_read(INTERNAL_SRAM_BUF + MBOX_COMMAND, 4, 10000000)) != ~APPLET_CMD_LIST_BAD_BLOCKS) die("invalid response from applet write");
-	if((samba_read(INTERNAL_SRAM_BUF + MBOX_STATUS, 4, 10000000)) != APPLET_SUCCESS) die("invalid response from applet status");	
+	if((samba_read(INTERNAL_SRAM_BUF + MBOX_STATUS, 4, 10000000)) != APPLET_SUCCESS) die("invalid response from applet status");
 }
 
 void mem_full_erase(int type)
@@ -488,7 +488,7 @@ int mem_write(int type, uint32_t offset, uint32_t buf_addr, uint32_t size)
 
 	samba_run(INTERNAL_SRAM_BUF, timeout);
 	fprintf(stderr,"F");
-	
+
 	if(type == MEMTYPE_DDR) // booting a barebox/kernel will fuck up USB, so we'll never get any response
 		return 0;
 
@@ -568,15 +568,27 @@ main(int argc, char *argv[])
 
 	//Parse options
 	while ((opt = getopt (argc, argv, "m:p:r:ecsh")) != -1)
-		switch (opt)
-		{
-		case 'm': mode_str = optarg; 	break;
-		case 'p': serial_port = optarg; break;
-		case 'e': erase = 1; 			break;
-		case 'c': check = 1; 			break;
-		case 's': scrub = 1; 			break;
-		case 'r': run = 1;sscanf(optarg,"%i", &run_addr);		break;
-		
+		switch (opt) {
+		case 'm':
+			mode_str = optarg;
+			break;
+		case 'p':
+			serial_port = optarg;
+			break;
+		case 'e':
+			erase = 1;
+			break;
+		case 'c':
+			check = 1;
+			break;
+		case 's':
+			scrub = 1;
+			break;
+		case 'r':
+			run = 1;
+			sscanf(optarg,"%i", &run_addr);
+			break;
+
 		case 'h':
 		case '?':
 			show_help(serial_port);
@@ -607,11 +619,13 @@ main(int argc, char *argv[])
 	fprintf(stderr,"Initializing DDR > Done\n\n");
 
 	//Obtain the memory type mode
-	if(strcmp(mode_str,"nand")==0 || strcmp(mode_str,"nf")==0) type=MEMTYPE_NAND;
-	else if(strcmp(mode_str,"dataflash")==0 || strcmp(mode_str,"df")==0) type=MEMTYPE_DF;
-	else if(strcmp(mode_str,"ddr")==0 || strcmp(mode_str,"ram")==0) type=MEMTYPE_DDR;
-	else
-	{
+	if(strcmp(mode_str,"nand")==0 || strcmp(mode_str,"nf")==0) {
+		type=MEMTYPE_NAND;
+	} else if(strcmp(mode_str,"dataflash")==0 || strcmp(mode_str,"df")==0) {
+		type=MEMTYPE_DF;
+	} else if(strcmp(mode_str,"ddr")==0 || strcmp(mode_str,"ram")==0) {
+		type=MEMTYPE_DDR;
+	} else {
 		fprintf(stderr,"Bad memory type %s...\n\n",mode_str);
 		show_help(serial_port);
 		return 0;
@@ -619,13 +633,18 @@ main(int argc, char *argv[])
 
 
 	//Init the memory (except DDR which is already init)
-	if(type!=MEMTYPE_DDR) memflash_init(type, board_rev);
+	if(type!=MEMTYPE_DDR)
+		memflash_init(type, board_rev);
 
 	//Run the action
-	if(erase) 	mem_full_erase(type);
-	if(check) 	mem_check(type);
-	if(scrub && type==MEMTYPE_NAND)	nand_scrub();
-	if(nFile>0) mem_program(type,nFile,(const sndfile*)&filearray);
+	if(erase)
+		mem_full_erase(type);
+	if(check)
+		mem_check(type);
+	if(scrub && type==MEMTYPE_NAND)
+		nand_scrub();
+	if(nFile>0)
+		mem_program(type,nFile,(const sndfile*)&filearray);
 
 	if(run)
 	{
