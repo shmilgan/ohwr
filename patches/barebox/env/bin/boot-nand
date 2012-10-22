@@ -2,7 +2,7 @@
 
 # boot kernel from bad block aware partition
 cp /dev/nand0.kernel.bb /dev/mem.kernel
-bootargs="console=ttyS0,115200 panic=10"
+bootargs="console=ttyS0,115200 panic=10 mem=64M"
 bootargs="$bootargs root=/dev/mtdblock1 rootfstype=jffs2"
 bootz /dev/mem.kernel
 
