@@ -1,0 +1,49 @@
+From 8892b8a2a8b0bec9f5f2bead0401cb56f5be9227 Mon Sep 17 00:00:00 2001
+From: Federico Vaga <federico.vaga@gmail.com>
+Date: Tue, 23 Oct 2012 01:44:59 +0200
+Subject: [PATCH] barebox: add MAC addresses to environment
+
+This patch add to default mac addresses to the barebox evironment. The
+first MAC address (eth0.ethaddr) is the one to assign to the ethernet
+port on board.
+The second MAC address (macaddr) is the base for all switch ports
+
+Signed-off-by: Federico Vaga <federico.vaga@gmail.com>
+---
+ common/environment.c | 13 +++++++++++++
+ 1 file modificato, 13 inserzioni(+)
+
+diff --git a/common/environment.c b/common/environment.c
+index 0fdbd03..7b5d5ea 100644
+--- a/common/environment.c
++++ b/common/environment.c
+@@ -176,6 +176,10 @@ int envfs_load(char *filename, char *dir)
+ 	char *str, *tmp;
+ 	int namelen_full;
+ 	unsigned long size;
++#ifdef __BAREBOX__
++	char *mac_addr_1="02:34:56:78:9A:BC";
++	char *mac_addr_2="02:34:56:78:9A:00";
++#endif
+ 
+ 	envfd = open(filename, O_RDONLY);
+ 	if (envfd < 0) {
+@@ -269,6 +273,15 @@ int envfs_load(char *filename, char *dir)
+ 	}
+ 
+ 	ret = 0;
++
++#ifdef __BAREBOX__
++	/* When the environment is correctly loaded, set the MAC address */
++	setenv("eth0.ethaddr", mac_addr_1);
++	export("eth0.ethaddr");
++	setenv("macaddr", mac_addr_2);
++	export("macaddr");
++#endif
++
+ out:
+ 	close(envfd);
+ 	if (buf_free)
+-- 
+1.7.11.7
+
