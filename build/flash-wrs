@@ -1,8 +1,9 @@
 #!/bin/sh
 # A script to ease the use of the usb loader, possibly changing the mac address
 #
-# Authors: 
+# Authors:
 #	- Benoit Rat (Seven Solutions, www.sevensols.com)
+#	- Federico Vaga
 # 	- Alessandro Rubini
 #
 # GNU Lesser General Public License Usage
@@ -262,6 +263,9 @@ cd ..
 EOF
 	fakeroot bash $TMPSCRIPT
 
+	# Erase all nand memory
+	${WRS_BASE_DIR}/usb-loader/mch_flasher -e -m nand
+	# Start nand flashing procedure
 	${WRS_BASE_DIR}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${TMPCPIO} 0x1FFFFF8
 
 	rm -rf $TMPFS
