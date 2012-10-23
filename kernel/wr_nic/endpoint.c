@@ -15,8 +15,36 @@
 #include <linux/errno.h>
 #include <linux/etherdevice.h>
 #include <linux/io.h>
+#include <linux/moduleparam.h>
 
 #include "wr-nic.h"
+
+static char *macaddr = "00:00:00:00:00:00";
+module_param(macaddr, charp, 0444);
+
+/* Copied from kernel 3.6 net/utils.c, it converts from MAC string to u8 array */
+static int mac_pton(const char *s, u8 *mac)
+{
+	int i;
+
+	/* XX:XX:XX:XX:XX:XX */
+	if (strlen(s) < 3 * ETH_ALEN - 1)
+		 return -EINVAL;
+
+	/* Don't dirty result unless string is valid MAC. */
+	for (i = 0; i < ETH_ALEN; i++) {
+		if (!strchr("0123456789abcdefABCDEF", s[i * 3]))
+			return -EINVAL;
+		if (!strchr("0123456789abcdefABCDEF", s[i * 3 + 1]))
+			return -EINVAL;
+		if (i != ETH_ALEN - 1 && s[i * 3 + 2] != ':')
+			return -EINVAL;
+	}
+	for (i = 0; i < ETH_ALEN; i++) {
+		mac[i] = (hex_to_bin(s[i * 3]) << 4) | hex_to_bin(s[i * 3 + 1]);
+	}
+	return 0;
+}
 
 /*
  * Phy access: used by link status, enable, calibration ioctl etc.
@@ -60,7 +88,7 @@ static void wrn_update_link_status(struct net_device *dev)
 //	printk("%s: read %x %x %x\n", __func__, bmsr, bmcr);
 
 		/* Link wnt down? */
-	if (!mii_link_ok(&ep->mii)) {	
+	if (!mii_link_ok(&ep->mii)) {
 		if(netif_carrier_ok(dev)) {
 			netif_carrier_off(dev);
 			clear_bit(WRN_EP_UP, &ep->ep_flags);
@@ -187,8 +215,16 @@ static void __wrn_endpoint_shutdown(struct wrn_ep *ep)
 int wrn_endpoint_probe(struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
+	static u8 wraddr[6];
 	int epnum, err;
 	u32 val;
+
+	if (is_zero_ether_addr(wraddr)) {
+		err = mac_pton(macaddr, wraddr);
+		if (err)
+			pr_err("wr_nic: probably invalid MAC address %s."
+			       "Use format XX:XX:XX:XX:XX:XX\n");
+	}
 
 	epnum = ep->ep_number;
 
@@ -217,6 +253,21 @@ int wrn_endpoint_probe(struct net_device *dev)
 	ep->mii.advertising = ADVERTISE_1000XFULL;
 	ep->mii.full_duplex = 1;
 
+	/* If the MAC address is 0, then randomize the first MAC */
+	if (is_zero_ether_addr(wraddr)) {
+		pr_warn("wr_nic: missing MAC address, randomize\n");
+		/* randomize a MAC address, so lazy users can avoid ifconfig */
+		random_ether_addr(wraddr);
+		/* Clear the MSB on fourth octect to prevent bit overflow on OUI */
+		wraddr[3] &= 0x7F;
+	}
+
+	/* Use sequential MAC */
+	val = get_unaligned_be32(wraddr + 2);
+	put_unaligned_be32(val + 1, wraddr + 2);
+	memcpy(dev->dev_addr, wraddr, ETH_ALEN);
+	pr_debug("wr_nic: assign MAC %pM to wr%d\n", dev->dev_addr, epnum);
+
 	/* Finally, register and succeed, or fail and undo */
 	err = register_netdev(dev);
 	if (err) {
@@ -226,9 +277,6 @@ int wrn_endpoint_probe(struct net_device *dev)
 		/* ENODEV means "no more" for the caller, so avoid it */
 		return err == -ENODEV ? -EIO : err;
 	}
-
-	/* randomize a MAC address, so lazy users can avoid ifconfig */
-	random_ether_addr(dev->dev_addr);
 
 	return 0;
 }
