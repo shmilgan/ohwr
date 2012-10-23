@@ -143,7 +143,8 @@ wrs_download () {
 
     # Download from upstream
     wget -q $upstream -O $output
-    if [ -s $output ]; then
+    ourmd5=$(cat $output | md5sum | sed 's/ .*$//')
+    if [ -s $output -a "$ourmd5" = "$md5" ]; then
 	wrs_echo "Retrieved $file from upstream"
 	return
     else
@@ -151,8 +152,9 @@ wrs_download () {
     fi
 
     # Download from buildroot
-    wget -q http://sources.buildroot.net/$file
-    if [ -s $output ]; then
+    wget -q http://sources.buildroot.net/$file -O $output
+    ourmd5=$(cat $output | md5sum | sed 's/ .*$//')
+    if [ -s $output -a "$ourmd5" = "$md5" ]; then
 	wrs_echo "Retrieved $file from sources.buildroot.net"
 	return
     else
