@@ -229,8 +229,6 @@ int hal_init_port(const char *name, int index)
 	char cmd[128];
 	hal_port_state_t *p = &ports[index];
 
-	uint8_t mac_addr[6];
-
 /* check if the port is compiled into the firmware, if not, just ignore it. */
 	if(!check_port_presence(name))
 	{
@@ -245,17 +243,7 @@ int hal_init_port(const char *name, int index)
 	p->state = HAL_PORT_STATE_DISABLED;
 	p->in_use = 1;
 
-/* generate a (hopefully) unique MAC */
-	get_mac_address(name, mac_addr);
-
-	TRACE(TRACE_INFO,"Initializing port '%s' [%02x:%02x:%02x:%02x:%02x:%02x]", name, mac_addr[0],  mac_addr[1],  mac_addr[2],  mac_addr[3],  mac_addr[4],  mac_addr[5] );
-
 	strncpy(p->name, name, 16);
-	memcpy(p->hw_addr, mac_addr, 6);
-
-/* ... and assign it to the port */
-	snprintf(cmd, sizeof(cmd), "/sbin/ifconfig %s hw ether %02x:%02x:%02x:%02x:%02x:%02x", name, mac_addr[0],  mac_addr[1],  mac_addr[2],  mac_addr[3],  mac_addr[4],  mac_addr[5] );
-	system(cmd);
 
 /* read calibraton parameters (unwrapping and constant deltas) */
 	cfg_get_port_param(name, "phy_rx_min",   &p->calib.phy_rx_min,   AT_INT32, 18*800);
@@ -483,7 +471,7 @@ static void port_fsm(hal_port_state_t *p)
 		   	p->phase_val = rts_state.channels[p->hw_index].phase_loopback;
         p->phase_val_valid = rts_state.channels[p->hw_index].flags & CHAN_PMEAS_READY ? 1 : 0;
 				//hal_port_check_lock(p->name);
-				//p->locked = 
+				//p->locked =
 		}
 
 		break;
