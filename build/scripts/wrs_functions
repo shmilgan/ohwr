@@ -163,21 +163,6 @@ wrs_download () {
     wrs_err "Cannot download $file"
 }
 
-# The following builds one step if needed: if file $1 exists, then the
-# step has already been acoomplished
-wrs_build_step () {
-    markerfile=$WRS_DONE_DIR/$1
-    script=$2
-    wrs_check_vars WRS_DONE_DIR
-
-    if [ -f $markerfile ]; then return; fi
-
-    # The step is build in a sub-process, so we can continue with the next
-    # Note that 
-    sh $WRS_SH_OPTIONS
-    
-}
-
 
 # Every time wrs_functions is loaded, re-set WRS_MAKE_J
 export WRS_MAKE_J_NUMBER=$(expr $(grep ^processor /proc/cpuinfo | wc -l) + 1)
