@@ -1,4 +1,4 @@
-bootargs="console=ttyS0,115200 panic=10"
+bootargs="console=ttyS0,115200 panic=10 mem=64m"
 bootargs="$bootargs root=nfs ip=dhcp"
 
 # if we didn't do it already, get our dhcp-based address in barebox
