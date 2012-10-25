@@ -27,9 +27,8 @@ showhelp()
 	printf "  -m|--mode\t can be: default (df and nf), df (dataflash),\n\t\t nf (nandflash), ddr (ddr memories).\n"
 	printf "  -e \t\t Completely erase the memory (Can erase your configuration)\n"
 	printf "  -b|--build\t Use file that you have build in the WRS_OUTPUT_DIR\n"
-	printf "  --test\t Use file for testing the switch (not available)\n"
 	printf "  -m1|--mac1\t Default MAC address for the ethernet port on board\n"
-	printf "  -m2|--mac2\t Default base MAC address for the switch ports"
+	printf "  -m2|--mac2\t Default base MAC address for the switch ports\n"
 	exit 0
 }
 
