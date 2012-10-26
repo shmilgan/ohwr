@@ -535,19 +535,55 @@ we inherited from Atmel. The @file{flash-wrs} script is what
 you'll use to run the loader with appropriate parameters.
 
 The script can be invoked in the following way to flash a
-@i{package} into the switch. To the package is the @code{.tar.gz}
+@i{package} into the switch. The package is the @code{.tar.gz}
 file created by ``@code{wrs_build-all --pack}'' (see @ref{Release Package}).
 
 The command to flash is this:
 
 @example
-    /path/to/wr-switch-sw/build/flash-wrs --silent -e wrs-firmware-<revision>.tar.gz 
+    /path/to/wr-switch-sw/build/flash-wrs -e wrs-firmware-<revision>.tar.gz 
+@end example
+
+You can also flash the image you have build using @ref{Building} by
+adding the tag @code{-b|--build}. To use this option you must define the
+WRS_OUTPUT_DIR environment variable.
+
+@example
+    /path/to/wr-switch-sw/build/flash-wrs -e -b
 @end example
 
 Please note that the ``@code{-e}'', which requires erasing the
-whole flash, is mandatory because otherwise bits of your previous filesystem
-may leak into the newly-programmed one. Only on factory-new devices you
-can avoid this ``@code{-e}'' argument.
+whole data flash, is mandatory because otherwise bits of your previous
+installation may leak into the newly-programmed one. Only on factory-new
+devices you can avoid this ``@code{-e}'' argument. When you program
+the NAND memory the script applies automatically @code{-e} option.
+
+It is recomended to configure the MAC addresses during the flashing
+procedure. With the option @code{-m1|--mac1} you can select the MAC address
+to assign to the Ethernet port on board. With the option @code{-m2|--mac2}
+you can select the base MAC address; the @code{wr_nic} driver will use this
+MAC address to sequentially assign a MAC address for every switch ports.
+
+@example
+    /path/to/wr-switch-sw/build/flash-wrs -e -b -m1 02:34:56:77:65:43
+    -m2 02:34:34:34:34:00
+@end example
+
+If you don't configure a MAC address, a big warning will be displayed and
+you have 3 seconds to abort the procedure. If you don't abort the flashing
+procedure, the script will use default MAC addresses. Default MAC addresses
+are: 02:34:56:78:9A:BC for MAC1, 02:34:56:78:9A:00 for MAC2.
+
+@example
+/path/to/wr-switch-sw/build/flash-wrs -e -b    
+---------------------------------------
+WARNING: YOU DID NOT SET THE MAC1 FIELD
+---------------------------------------
+---------------------------------------
+WARNING: YOU DID NOT SET THE MAC2 FIELD
+---------------------------------------
+Starting flashing procedure in 3 seconds ...
+@end example
 
 The process calls the flasher program twice (so you'll see the
 initialization strings two times) an takes around 3 minutes.
@@ -555,20 +591,50 @@ This is the a summary of the output you are expected to see,
 trimmed to save pages:
 
 @smallexample
-   Initializing SAM-BA: CPU ID: 0x819b05a2
-   Initializing DDR...
-   loading applet isp-extram-at91sam9g45 at 0x00300000
-   [...]
-   Programming DataFlash...
-            @ 0x70000000 : /tmp/at91bootstrap.bin ; size 0xf7c (3Kb)
-   DataFlash: Writing 197452 bytes at offset 0x8400 buffer 70000000....
-   Programming DataFlash Done!!!
-   [...]
-   Programming NandFlash...
-        @ 0x70100000 : /tmp/zImage ; size 0x1666c4 (1433Kb)
-   [...]
-   Programming NandFlash Done!!!
-   Closing...
+Initializing SAM-BA: CPU ID: 0x819b05a2
+
+[...]
+
+Initializing DDR...
+loading applet isp-extram-at91sam9g45 at 0x00300000
+Initializing DDR > Done
+
+Initializing DataFlash...
+loading applet isp-dataflash-at91sam9g45 at 0x00300000
+Initializing DataFlash > Done! 
+
+Erasing DataFlash > DONE
+
+Programming DataFlash...
+	 @ 0x70000000 : at91bootstrap.bin ; size 0xf7c (3Kb)
+DataFlash: Writing 3964 bytes at offset 0x0 buffer 70000000....ABCDEF OK
+	 @ 0x70008400 : barebox.Fb09jx ; size 0x2f1bc (188Kb)
+DataFlash: Writing 192956 bytes at offset 0x8400 buffer 70000000....ABCDEF OK
+Programming DataFlash Done!!!
+[...]
+
+Initializing NandFlash...
+loading applet isp-nandflash-at91sam9g45 at 0x00300000
+Initializing NandFlash > Done! 
+
+Erasing NandFlash > DONE
+
+[...]
+
+Initializing DDR...
+loading applet isp-extram-at91sam9g45 at 0x00300000
+Initializing DDR > Done
+
+Erasing DDR > DONE
+
+Loading DDR...
+	 @ 0x70000000 : /tmp/barebox.Fb09jx ; size 0x2f1bc (188Kb)
+	 @ 0x71000000 : /data/morgana/build-v3-fede/images/zImage ; size 0x16886c (1442Kb)
+	 @ 0x71fffff8 : /tmp/wrsflash-cpio.jrPKMY.cpio.gz ; size 0x128c722 (18993Kb)
+DDR: Writing 21119306 bytes at offset 0x0 buffer 70000000....ABCDEF
+
+[...]
+
 @end smallexample
 
 If you look at the serial port, during programming, you will see
@@ -580,6 +646,31 @@ messages like these:
    -I- -- AT91SAM9G45-EK
    [...]
    -I-     End of applet (command : 2 --- status : 0)
+
+[...]
+
+barebox 2012.05.0 (Oct 26 2012 - 20:51:43)
+
+Board: CERN White Rabbit Switch V3
+
+[...]
+
+Uncompressing Linux... done, booting the kernel.
+
+[...]
+
+FLASHING: flashing kernel to /dev/mtd0 ...
+Writing data to block 0 at offset 0x0
+Writing data to block 1 at offset 0x20000
+
+[...]
+
+FLASHING: flashing kernel to /dev/mtd0 ...
+Writing data to block 0 at offset 0x0
+Writing data to block 1 at offset 0x20000
+
+[...]
+
 @end smallexample
 
 @menu
@@ -596,33 +687,25 @@ You might also want to check its embedded documentations using:
 
 @smallexample
 $ ./build/flash-wrs --help
-Usage: ./build/flash-wrs [options] MAC [<firmware>.tar.gz] [DEV]
+Usage: ./build/flash-wrs [options] [<firmware>.tar.gz] [DEV]
 
-MAC:     MAC address in hexadecimal seperated by ':' (i.e, 00:01:02:03:04:05)
+MAC:	 MAC address in hexadecimal seperated by ':' (i.e, AB:CD:EF:01:23:45)
 <firmware>.tar.gz: Use the file in the firmware to flash the device
-DEV:     The usb device (by default it is /dev/ttyACM0)
+DEV:	 The usb device (by default it is /dev/ttyACM0)
 Options: 
-  -h|--help      Show this help message
-  -m|--mode      can be: default, df (dataflash), nf (nandflash), test.
-  -e             Completely erase the memory (Can erase your configuration)
-  -b|--build     Use file that you have build in the WRS_OUTPUT_DIR
-  --test         Use file for testing the switch (not available)
-  --silent       Don't ask MAC or S/N and use default 02:0B:AD:C0:FF:EE
+  -h|--help	 Show this help message
+  -m|--mode	 can be: default (df and nf), df (dataflash),
+		 nf (nandflash), ddr (ddr memories).
+  -e 		 Completely erase the memory (Can erase your configuration)
+  -b|--build	 Use file that you have build in the WRS_OUTPUT_DIR
+  -m1|--mac1	 Default MAC address for the ethernet port on board
+  -m2|--mac2	 Default base MAC address for the switch ports
 @end smallexample
 
 The @i{DEV} is optional and the default is @code{/dev/ttyACM0}.
 If your system maps the Atmel ROM to a different device name, please
 pass the name on the command line. The script wants a full pathname 
 starting with @code{/}.
-
-If the @code{--silent} flag is used the MAC will be by default
-02:0B:AD:C0:FF:EE; otherwise MAC is mandatory. If MAC is not specified
-the script exit. In this version, the MAC address is unused but this field is
-mandatory for the script; so, we suggest to use the @code{--silent} option.
-Future version of the switch will use the MAC address configuration.
-
-You can also flash the image you have build using @ref{Building} by
-adding the tag @code{-b|--build}.
 
 If you want to flash your own @i{at91boot.bin}, @i{barebox.bin}, @i{kernel}
 or @i{file-system} you can just place them in the @file{$WRS_OUTPUT_DIR/images}
@@ -638,10 +721,11 @@ install different binaries on these memories:
 @item nandflash: @emph{kernel} zImage and the @emph{file-system}
 @end itemize
 
-You can also erase the selected memory before write your binaries; to do this
-add the option @code{-e}. Note that if you use this option with the default
-memory mode you will erase both the nandflash and dataflash. If you want to
-erase only one memory please select it with @code{-m|--mode} option.
+You can also erase the dataflash memory before write your binaries; to do this
+add the option @code{-e}. Note that the script always erase nandflash before
+write on it.
+
+Finally, 
 
 The script performs the following steps:
 
@@ -649,11 +733,11 @@ The script performs the following steps:
 @item It compiles the loader (@i{usb-loader/} subdir).
 @item Check if SAMBA bootloader is present.
 @item It picks the correct binaries according to the options.
-@item Optionally, it changes the default MAC address in @i{barebox}
+@item Optionally, it changes the default MAC addresses in @i{barebox}
       default environment, so you can make all switches different.
-@item It erases the memory selected by mode.
+@item Optionally, it erases the dataflash memory.
 @item And finally, it writes the corresponding binaries to @i{dataflash}, 
-@i{nandflash} or @i{ddr}.
+      or @i{ddr}.
 @end itemize
 
 @c ############################################################################
