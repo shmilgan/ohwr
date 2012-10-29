@@ -53,6 +53,6 @@ load-lm32: load-lm32.o lm32-loader.o
 clean:
 	rm -f $(TOOLS) *.o *~
 
-install:
+install: all
 	install -d $(WR_INSTALL_ROOT)/bin
 	install $(TOOLS) $(WR_INSTALL_ROOT)/bin
