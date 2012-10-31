@@ -12,6 +12,9 @@
 /* Routing Table */
 #define FPGA_BASE_RTU 	   0x60000
 
+/* Simple PWM module */
+#define FPGA_BASE_SPWM 		0x57000
+
 
 #define FPGA_BASE_ADDR _fpga_base_virt
 
