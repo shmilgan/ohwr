@@ -6,11 +6,12 @@
  *
  * Authors:     Juan Luis Manas (juan.manas@integrasys.es)
  *
- * Description: MAC address type related operations. 
+ * Description: MAC address type related operations.
  *
- * Fixes:       
+ * Fixes:
  *              Alessandro Rubini
- *              
+ *              Benoit Rat
+ *
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,9 +35,10 @@
 #include <string.h>
 
 #define ETH_ALEN 6
+#define ETH_ALEN_STR 18
 
-/** 
- * \brief Check whether two mac addresses are equal.  
+/**
+ * \brief Check whether two mac addresses are equal.
  * @return 1 if both addresses are equal. 0 otherwise.
  */
 static inline int mac_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN])
@@ -57,12 +59,18 @@ static inline uint8_t* mac_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
  * \brief Set MAC address to 00:00:00:00:00:00.
  * @return pointer to mac address
  */
-static inline uint8_t* mac_clean(uint8_t mac[ETH_ALEN]) 
+static inline uint8_t* mac_clean(uint8_t mac[ETH_ALEN])
 {
     return memset(mac, 0x00, ETH_ALEN);
 }
 
 char *mac_to_string(uint8_t mac[ETH_ALEN]);
+char *mac_to_buffer(uint8_t mac[ETH_ALEN],char buffer[ETH_ALEN_STR]);
+int mac_from_str(uint8_t* tomac, const char *fromstr);
+
+
+
+
 
 #endif /* __WHITERABBIT_RTU_MAC_H */
 
