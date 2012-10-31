@@ -9,6 +9,7 @@
  * Description: Dump the filtering database. Based on libwripc
  *
  * Fixes:
+ * 		Benoit RAT
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -23,7 +24,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 
 #include <stdio.h>
@@ -39,18 +40,26 @@
 #include "rtud_exports.h"
 #include "mac.h"
 
+#include <hal_client.h>
+
 /* The channel */
 static struct minipc_ch *rtud_ch;
 
+/* Define shortcut */
+#define MINIPC_EXP_FUNC(stru,func) stru.f= func; \
+		if (minipc_export(rtud_ch, &stru) < 0) { TRACE(TRACE_FATAL,"Could not export %s (rtu_ch=%d)",stru.name,rtud_ch); }
+
+
 /* The exported function */
 int rtudexp_get_fd_list(const struct minipc_pd *pd,
-			uint32_t *args, void *ret)
+		uint32_t *args, void *ret)
 {
 	int i;
 	rtudexp_fd_list_t *list = ret;
 	int start_from = args[0];
 
-	//TRACE(TRACE_INFO,"GetFDList start=%d",start_from);
+
+	TRACE(TRACE_INFO,"GetFDList start=%d",start_from);
 
 	for(i=0;i<8;i++)
 	{
@@ -59,7 +68,7 @@ int rtudexp_get_fd_list(const struct minipc_pd *pd,
 
 
 		memcpy(list->list[i].mac, ent->mac, sizeof(ent->mac));
-//		printf("Ent: %s %x\n", mac_to_string(ent->mac), ent->port_mask_dst);
+		//printf("Ent: %s %x\n", mac_to_string(ent->mac), ent->port_mask_dst);
 
 		list->list[i].dpm = ent->port_mask_dst;
 		list->list[i].spm = ent->port_mask_src;
@@ -76,6 +85,53 @@ int rtudexp_get_fd_list(const struct minipc_pd *pd,
 }
 
 
+int rtudexp_clear_entries(const struct minipc_pd *pd,
+		uint32_t *args, void *ret)
+{
+	int iface_num=(int)args[0];
+	int force=(int)args[1];
+	int *p_ret=(int*)ret; //force pointed to int type
+
+	TRACE(TRACE_INFO,"iface=%d, force=%d",iface_num,force);
+
+	//Do nothing
+	if(force) TRACE(TRACE_INFO,"wr%d > force %d is not implemented",iface_num,force);
+
+	rtu_fd_clear_entries_for_port(iface_num);
+	*p_ret=0;
+	return *p_ret;
+}
+
+
+
+int rtudexp_add_entry(const struct minipc_pd *pd,
+		uint32_t *args, void *ret)
+{
+	uint8_t mac_tmp[ETH_ALEN] = {0};
+	hexp_port_list_t ports;
+
+	char *strEHA;
+	int port, mode;
+	int *p_ret=(int*)ret; //force pointed to int type
+
+	strEHA = (char *)args;
+	args = minipc_get_next_arg(args, pd->args[0]);
+	port = (int)args[0];
+	mode = (int)args[1];
+
+	//TRACE(TRACE_INFO,"iface=%s, port=%d, dynamic=%d",strEHA,port,mode);
+
+	halexp_query_ports(&ports);
+
+	if(mac_from_str(mac_tmp,strEHA))
+		TRACE(TRACE_ERROR,"%s is an invalid MAC format (XX:XX:XX:XX:XX)",strEHA);
+
+
+	TRACE(TRACE_INFO,"Create entry for (MAC=%s) port %x, mode:%s",mac_to_string(mac_tmp),1 << port,(mode)?"DYNAMIC":"STATIC");
+	*p_ret=rtu_fd_create_entry(mac_tmp, 0, 1 << port, mode);
+	return *p_ret;
+}
+
 
 int rtud_init_exports()
 {
@@ -85,11 +141,12 @@ int rtud_init_exports()
 		return -1;
 
 	TRACE(TRACE_INFO,"wripc server created [fd %d]",
-	      minipc_fileno(rtud_ch));
+			minipc_fileno(rtud_ch));
 
-	rtud_export_get_fd_list.f = rtudexp_get_fd_list;
-	if (minipc_export(rtud_ch, &rtud_export_get_fd_list) < 0)
-		return -1;
+	MINIPC_EXP_FUNC(rtud_export_get_fd_list,rtudexp_get_fd_list);
+	MINIPC_EXP_FUNC(rtud_export_clear_entries,rtudexp_clear_entries);
+	MINIPC_EXP_FUNC(rtud_export_add_entry,rtudexp_add_entry);
+
 	return 0;
 }
 
