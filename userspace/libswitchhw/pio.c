@@ -10,8 +10,9 @@
 #include <at91/at91_pmc.h>
 #include <at91/at91_pio.h>
 
-#include <pio.h>
-#include <trace.h>
+#include "pio.h"
+#include "trace.h"
+#include "shw_io.h"
 
 volatile uint8_t *_pio_base[4][NUM_PIO_BANKS+1];
 volatile uint8_t *_sys_base;
@@ -99,9 +100,13 @@ void shw_pio_toggle_pin(pio_pin_t* pin, uint32_t udelay)
 
 void shw_pio_configure_all()
 {
-	int i = 0;
-	while (_all_cpu_gpio_pins[i] != NULL)
-		shw_pio_configure(_all_cpu_gpio_pins[i++]);
+	int i;
+	const shw_io_t* all_io=(shw_io_t*)_all_shw_io;
+	for(i=0;i<NUM_SHW_IO_ID;i++)
+	{
+		if(all_io[i].type==SHW_CPU_PIO)
+			shw_pio_configure(all_io[i].ptr);
+	}
 }
 
 void shw_pio_configure(const pio_pin_t *pin)

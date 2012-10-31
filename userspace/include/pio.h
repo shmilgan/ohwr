@@ -48,7 +48,6 @@ typedef struct pio_pin
 extern volatile uint8_t *_sys_base;
 extern volatile uint8_t *_pio_base[4][NUM_PIO_BANKS+1];
 
-int shw_pio_init();
 void shw_pio_configure(const pio_pin_t *pin);
 void shw_pio_configure_pins(const pio_pin_t *pins);
 
@@ -58,6 +57,10 @@ volatile uint8_t *shw_pio_get_port_base(int port);
 void shw_set_fp_led(int led, int state);
 
 
+int shw_pio_mmap_init();
+void shw_pio_toggle_pin(pio_pin_t* pin, uint32_t udelay);
+void shw_pio_configure_all();
+void shw_pio_configure(const pio_pin_t *pin);
 
 static inline void shw_pio_set(const pio_pin_t *pin, int state)
 {
@@ -93,11 +96,5 @@ static inline int shw_pio_setdir(const pio_pin_t *pin, int dir)
 	return 0;
 }
 
-#include "pio_pins.h"
-
-int shw_pio_mmap_init();
-void shw_pio_toggle_pin(pio_pin_t* pin, uint32_t udelay);
-void shw_pio_configure_all();
-void shw_pio_configure(const pio_pin_t *pin);
 
 #endif //PIO_H
