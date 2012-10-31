@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+#define atoidef(str,def) (str)?atoi(str):def
 
 void shw_udelay(uint32_t microseconds);
 void *shw_malloc(size_t nbytes);
