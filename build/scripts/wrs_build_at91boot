@@ -33,9 +33,7 @@ for n in $WRS_BASE_DIR/../patches/at91boot/v3.3/*patch; do
 done
 
 wrs_echo "Building AT91Boot"
-yes "" | make at91sam9g45ek_defconfig > /dev/null
-# the above command fails miserably for memory corruption...
-test -f .config  || wrs_die "configuring at91boot"
+cp $WRS_BASE_DIR/../patches/at91boot/v3.3/at91boot-wrs-config .config
 make || wrs_die "building at91boot"
 cp ./binaries/at91sam9g45ek-dataflashcardboot-3.0.bin \
     $WRS_OUTPUT_DIR/images/at91bootstrap.bin \
