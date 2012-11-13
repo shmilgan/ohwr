@@ -70,7 +70,7 @@ pack()
 	name=$(git describe --always --dirty)
 
 	echo "Packing into wrs-firmware-$name.tar.gz";
-	tar -czvf "$WRS_OUTPUT_DIR/wrs-firmware-$name.tar.gz" -C ${WRS_OUTPUT_DIR}/images/ at91bootstrap.bin barebox.bin zImage wrs-image.jffs2.img
+	tar -czvf "$WRS_OUTPUT_DIR/wrs-firmware-$name.tar.gz" -C ${WRS_OUTPUT_DIR}/images/ at91bootstrap.bin barebox.bin zImage wrs-image.jffs2.img wrs-image.cpio.gz
 	exit 0
 }
 

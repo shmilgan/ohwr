@@ -127,7 +127,7 @@ while [ $# -ge 1 ]; do
 		barebox=/tmp/barebox.bin
 		kernel=/tmp/zImage
 		rootfs=/tmp/wrs-image.jffs2.img
-		rootfscpio=${WRS_OUTPUT_DIR}/images/wrs-image.cpio.gz
+		rootfscpio=/tmp/wrs-image.cpio.gz
 		shift;;
 
 	-h|--help) 	showhelp; shift;;
