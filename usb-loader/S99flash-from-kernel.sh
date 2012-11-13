@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Write kernel and filesystem to NAND memory
+ls /
+cat /etc/init.d/rcS
 echo "FLASHING: flashing kernel to /dev/mtd0 ..."
 nandwrite -m -p -a /dev/mtd0 /flashing/zImage
 echo "FLASHING: flashing file system to /dev/mtd1 ..."
