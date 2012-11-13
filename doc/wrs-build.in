@@ -665,7 +665,7 @@ Writing data to block 1 at offset 0x20000
 
 [...]
 
-FLASHING: flashing kernel to /dev/mtd0 ...
+FLASHING: flashing file system to /dev/mtd1 ...
 Writing data to block 0 at offset 0x0
 Writing data to block 1 at offset 0x20000
 
