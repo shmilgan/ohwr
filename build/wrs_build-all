@@ -63,6 +63,13 @@ showhelp() {
 	exit 0;
 }
 
+## Create a package for distribution. The package contains:
+#  - at91bootstrap.bin
+#  - barebox.bin
+#  - zImage
+#  - wrs-image.tar.gz
+#  it includes wrs-image.tar.gz because it is easier to generate cpio
+#  and jff2 images
 pack()
 {
 	#Check if the current git repo correspond to a tag
@@ -70,7 +77,7 @@ pack()
 	name=$(git describe --always --dirty)
 
 	echo "Packing into wrs-firmware-$name.tar.gz";
-	tar -czvf "$WRS_OUTPUT_DIR/wrs-firmware-$name.tar.gz" -C ${WRS_OUTPUT_DIR}/images/ at91bootstrap.bin barebox.bin zImage wrs-image.jffs2.img wrs-image.cpio.gz
+	tar -czvf "$WRS_OUTPUT_DIR/wrs-firmware-$name.tar.gz" -C ${WRS_OUTPUT_DIR}/images/ at91bootstrap.bin barebox.bin zImage wrs-image.tar.gz
 	exit 0
 }
 

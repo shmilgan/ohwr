@@ -105,10 +105,13 @@ MAC2=$MAC2_DEF
 DEV=""
 FLAGS=""
 
-at91bs="${WRS_BASE_DIR}/binaries/at91bootstrap.bin"
-barebox="${WRS_BASE_DIR}/binaries/barebox.bin"
-kernel="${WRS_OUTPUT_DIR}/images/zImage"
-rootfs="${WRS_OUTPUT_DIR}/images/wrs-image.jffs2.img"
+at91bs=""
+barebox=""
+kernel=""
+rootfs=""
+rootfsgz=""
+rootfscpio=""
+TMPFSGZ=""
 
 while [ $# -ge 1 ]; do
 	case $1 in
@@ -116,8 +119,7 @@ while [ $# -ge 1 ]; do
 		at91bs=${WRS_OUTPUT_DIR}/images/at91bootstrap.bin;
 		barebox=${WRS_OUTPUT_DIR}/images/barebox.bin
 		kernel=${WRS_OUTPUT_DIR}/images/zImage
-		rootfs=${WRS_OUTPUT_DIR}/images/wrs-image.jffs2.img
-		rootfscpio=${WRS_OUTPUT_DIR}/images/wrs-image.cpio.gz
+		rootfsgz=${WRS_OUTPUT_DIR}/images/wrs-image.tar.gz
 		shift;;
 
 	*.tar.gz)
@@ -126,8 +128,7 @@ while [ $# -ge 1 ]; do
 		at91bs=/tmp/at91bootstrap.bin;
 		barebox=/tmp/barebox.bin
 		kernel=/tmp/zImage
-		rootfs=/tmp/wrs-image.jffs2.img
-		rootfscpio=/tmp/wrs-image.cpio.gz
+		rootfsgz=/tmp/wrs-image.tar.gz
 		shift;;
 
 	-h|--help) 	showhelp; shift;;
@@ -168,19 +169,38 @@ while [ $# -ge 1 ]; do
     esac
 done
 
+echo "---------------------------------------"
 ## MAC1 and MAC2 are really recommended
 if [ "x$MAC1" = "x$MAC1_DEF" ]; then
-    echo "---------------------------------------"
     echo "WARNING: YOU DID NOT SET THE MAC1 FIELD"
     echo "---------------------------------------"
 fi
 if [ "x$MAC2" = "x$MAC2_DEF" ]; then
-    echo "---------------------------------------"
     echo "WARNING: YOU DID NOT SET THE MAC2 FIELD"
     echo "---------------------------------------"
 fi
-echo "Starting flashing procedure in 3 seconds ..."
-sleep 3
+
+if [ -f $rootfsgz ]; then
+    TMPFSTGZ=$(mktemp -d /tmp/wrsfs-tgz.XXXXXX)
+    tar --directory $TMPFSPK -xzf $rootfsgz
+    rootfscpio=/tmp/wrs-image.cpio.gz
+    rootfsjffs2=/tmp/wrs-image.jffs2.img
+    # make cpio and jffs2 image
+    TMPSCRIPT=$(mktemp /tmp/wrsrootfs-script.XXXXXX)
+    cat > $TMPSCRIPT << EOF
+(cd "$TMPFSTGZ" && find . | cpio -o -H newc | gzip) > $rootfscpio
+mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFSTGZ -o $rootfsjffs2.img
+EOF
+    fakeroot bash $TMPSCRIPT
+    rm $TMPSCRIPT
+else
+    echo "WARNING: MISSING FILE SYSTEM"
+    echo "---------------------------------------"
+fi
+
+
+echo "Starting flashing procedure in 5 seconds ..."
+sleep 5
 
 ## Selecting the running memmode
 if [ "x$memmode" = "xdf" ]; then
@@ -228,7 +248,7 @@ fi
 ## Prepare for the NAND flashing procedure
 if [ $nf ]; then
 	checkExit $kernel
-	checkExit $rootfscpio
+	checkExit $rootfsgz
 	TMPFS=$(mktemp -d /tmp/wrsfs.XXXXXX)
 	TMPCPIO=$(mktemp /tmp/wrsflash-cpio.XXXXXX.cpio.gz)
 	TMPSCRIPT=$(mktemp /tmp/wrsrootfs-script.XXXXXX)
@@ -240,11 +260,10 @@ if [ $nf ]; then
 	# file system. Barebox use this magic string to identify
 	# the flashing procedure.
 	echo -n "paperino" > $TMPCPIO
-
+	
+	# make flashing cpio from the unzipped file system
 	cat > $TMPSCRIPT << EOF
-cd $TMPFS
-zcat $rootfscpio | cpio --extract
-mkdir flashing
+cd $TMPFSTGZ
 
 # Remove heavy and useless stuff to make a light file system to
 # load in RAM
@@ -254,13 +273,14 @@ rm -rf $TMPFS/usr/bin
 rm -rf $TMPFS/usr/lib
 rm -rf $TMPFS/usr/share
 
-cp ${rootfs} $TMPFS/flashing/wrs-image.jffs2.img
+cp ${rootfsjffs2} $TMPFS/flashing/wrs-image.jffs2.img
 cp ${kernel} $TMPFS/flashing/zImage
 cp ${WRS_BASE_DIR}/usb-loader/S99flash-from-kernel.sh $TMPFS/etc/init.d/
 cd ..
-(cd "$TMPFS" && find . | cpio -o -H newc | gzip) >> $TMPCPIO
+(cd "$TMPFSTGZ" && find . | cpio -o -H newc | gzip) >> $TMPCPIO
 EOF
 	fakeroot bash $TMPSCRIPT
+	rm $TMPSCRIPT
 
 	# Erase all nand memory
 	${WRS_BASE_DIR}/usb-loader/mch_flasher -e -m nand

@@ -25,9 +25,7 @@ rootfs_vanilla="$WRS_OUTPUT_DIR/build/buildroot-2011.11/output/target"
 rootfs_override="$WRS_BASE_DIR/../userspace/rootfs_override"
 
 TMPSCRIPT=$(mktemp /tmp/rootfs-script.XXXXXX)
-ROOTFS_IMAGE_CPIO="$WRS_OUTPUT_DIR/images/wrs-image.cpio.gz"
 ROOTFS_IMAGE_TGZ="$WRS_OUTPUT_DIR/images/wrs-image.tar.gz"
-ROOTFS_IMAGE_JFFS2="$WRS_OUTPUT_DIR/images/wrs-image.jffs2"
 
 cat > $TMPSCRIPT << EOF
 mkdir -p $TMPFS/wr
@@ -53,10 +51,7 @@ chown -R root:root $TMPFS/root
 chown -R root:root $TMPFS/etc/dropbear
 
 ##Test Anchor
-
-(cd "$TMPFS" && find . | cpio -o -H newc | gzip) > $ROOTFS_IMAGE_CPIO
 (cd "$TMPFS" && tar cz .> $ROOTFS_IMAGE_TGZ)
-mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $ROOTFS_IMAGE_JFFS2.img
 EOF
 
 fakeroot bash $WRS_SH_OPTIONS $TMPSCRIPT
