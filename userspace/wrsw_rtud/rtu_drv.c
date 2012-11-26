@@ -400,7 +400,7 @@ void rtu_enable(void)
 {
 	uint32_t gcr = rtu_rd( GCR);
 	rtu_wr(GCR, gcr | RTU_GCR_G_ENA);
-  TRACE_DBG(TRACE_INFO,"updated gcr (enable): %x\n", gcr);
+       TRACE(TRACE_INFO,"updated gcr (enable): %x\n", gcr);
 }
 
 /**
@@ -410,7 +410,7 @@ void rtu_disable(void)
 {
 	uint32_t gcr = rtu_rd( GCR);
 	rtu_wr(GCR, gcr & (~RTU_GCR_G_ENA));
-  TRACE_DBG(TRACE_INFO,"updated gcr (disable): %x\n", gcr);
+       TRACE(TRACE_INFO,"updated gcr (disable): %x\n", gcr);
 }
 
 /**
@@ -555,6 +555,51 @@ int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
 	write_pcr(port, pcr);
   return 0;
 }
+// --------------------------------------------
+// RTU eXtension
+// --------------------------------------------
+
+int rtu_ext_simple_test() 
+{
+  uint32_t val;
+  
+  
+  TRACE(TRACE_INFO,"RTU eXtension simple test (19 Nov 2012, 10am)\n");
+  val = rtu_rd(GCR);
+  
+  if(RTU_GCR_RTU_VERSION_R(val) == 2)
+  {
+    TRACE(TRACE_INFO,"RTUeX: G/W version : %d (correct G/W !!! )\n",RTU_GCR_RTU_VERSION_R(val));
+  }
+  else
+  {
+    TRACE(TRACE_INFO,"RTUeX: G/W version : %d (in correct G/W !!! )\n",RTU_GCR_RTU_VERSION_R(val));
+    TRACE(TRACE_INFO,"RTUeX: TEST FAILED ");
+//     return -1;
+  }
+      
+  val = 8;
+  rtu_wr(RX_CTR, RTU_RX_CTR_PRIO_MASK_W(val));
+  TRACE(TRACE_INFO,"writing to the RX_CTR register value = %d\n",val);
+  val = rtu_rd(RX_CTR);
+  TRACE(TRACE_INFO,"reading from the RX_CTR register value = %d\n",val);
+  
+  
+  
+//   TRACE(TRACE_INFO,"reading from the RTU_RX_FF_MAC_R1 max number values:\n");
+//   val = rtu_rd(RX_FF_MAC_R1);
+//   TRACE(TRACE_INFO,"\trange max number:%d (should be 1)\n",RTU_RX_FF_MAC_R1_HI_ID_R(val));
+//   TRACE(TRACE_INFO,"\trange max number:%d (should be 4)\n",RTU_RX_FF_MAC_R1_ID_R(val));
+/*  
+  TRACE(TRACE_INFO,"mirror traffic from port 2 into port 3\n");
+  val = 1 << 2;
+  rtu_wr(RX_MP_R0, RTU_RX_MP_R0_SRC_MASK_W(val));  
+  val = 1 << 3;
+  rtu_wr(RX_MP_R1, RTU_RX_MP_R1_DST_MASK_W(val));  */
+
+  return 0;
+}
+
 
 
 //---------------------------------------------
@@ -626,3 +671,104 @@ static uint32_t mac_entry_word4_w(struct filtering_entry *ent)
 }
 
 
+
+void rtu_show_port_status(int port_id) 
+{
+  uint32_t pcr       = read_pcr(port_id);
+  int      b_unrec   = (RTU_PCR_B_UNREC   & pcr) != 0 ? 1 : 0;
+  int      fix_prio  = (RTU_PCR_FIX_PRIO  & pcr) != 0 ? 1 : 0;
+  int      pass_bpdu = (RTU_PCR_PASS_BPDU & pcr) != 0 ? 1 : 0;
+  int      pass_all  = (RTU_PCR_PASS_ALL  & pcr) != 0 ? 1 : 0;
+  int      learn_en  = (RTU_PCR_LEARN_EN  & pcr) != 0 ? 1 : 0;
+  int      prio      = RTU_PCR_PRIO_VAL_R(pcr);
+  
+  TRACE(TRACE_INFO, "Port %2d: b_unrec=%d,prio=%d,fix_prio=%d,pass_bpdu=%d,pass_all=%d,learn_en=%d",  
+                     port_id, b_unrec, prio, fix_prio, pass_bpdu, pass_all, learn_en); 
+}
+
+int rtu_port_setting(int port_id) 
+{
+  uint32_t pcr       = read_pcr(port_id);
+  return ((RTU_PCR_PASS_ALL  & pcr) != 0 ? 1 : 0);
+}
+
+void rtu_show_status() 
+{
+   int i;
+   uint32_t gcr = rtu_rd( GCR);
+   uint32_t psr = rtu_rd(PSR);
+   int num_ports= RTU_PSR_N_PORTS_R(psr);
+   if(gcr & RTU_GCR_G_ENA)
+   {
+      TRACE(TRACE_INFO, "RTU enabled");
+   }
+   else
+   {
+      TRACE(TRACE_INFO, "RTU disabled");
+   }
+   TRACE(TRACE_INFO, "[G/W version =%d, port_numeber=%d]",RTU_GCR_RTU_VERSION_R(gcr),
+                                                          num_ports);
+   for(i=0;i<num_ports;i++)
+     rtu_show_port_status(i);
+}
+
+
+void rtu_set_life(char *optarg)
+{
+  
+  int i;
+  uint32_t n1,n2, n3,n4;
+  int opt         = strtol(optarg,   &optarg, 0);
+  int sub_opt     = strtol(optarg+1, &optarg, 0);
+  int sub_sub_opt = strtol(optarg+1, &optarg, 0);
+  
+  int err = shw_fpga_mmap_init();
+  if(err)
+  {
+     TRACE(TRACE_INFO, "Problem with fpga mapping");
+     exit(1);
+  }
+  
+  TRACE(TRACE_INFO, "opt: %ld, sub_opt  %ld, sub_sub_opt %ld",opt, sub_opt,sub_sub_opt);
+  
+  switch(opt){
+    case 1:
+       if(sub_opt == 1)
+	 rtu_enable();
+       else
+         rtu_disable();
+    break;
+    case  2:
+       rtu_pass_all_on_port(sub_sub_opt,sub_opt);
+       TRACE(TRACE_INFO, "PORT_%d config ena_flag=%d",sub_sub_opt,sub_opt);
+    break;
+    case  3:
+
+      vlan_entry_vd( sub_opt,      //vid, 
+                     sub_sub_opt,  //port_mask, 
+                     sub_opt,      //fid, 
+                     0,            //prio,
+                     0,            //has_prio,
+		      0,            //prio_override, 
+                     0             //drop
+                     );
+      TRACE(TRACE_INFO, "VLAN_e: vid=%d, port_mask=%d, fid=%d, prio=0, drop=0",
+                       sub_opt,sub_sub_opt, sub_opt);
+    break;
+    case  4:
+
+    case  10:
+       rtu_show_status();
+    break;
+    default:
+       TRACE(TRACE_INFO, "RTU control options");
+       TRACE(TRACE_INFO, "Usage: wrsw_rtu -0 [<option> <value>]");
+       TRACE(TRACE_INFO, "-o 0           show this info");
+       TRACE(TRACE_INFO, "-o 1 1/0       enable/disable RTU");
+       TRACE(TRACE_INFO, "-o 2 1/0  num  enable/disable port num");
+       TRACE(TRACE_INFO, "-o 3 vlan mask show status");
+       TRACE(TRACE_INFO, "-o 10          show status");
+  };
+  exit(1);
+  
+}

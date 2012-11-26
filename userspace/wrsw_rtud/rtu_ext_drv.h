@@ -1,6 +1,10 @@
 /*
  * White Rabbit RTU (Routing Table Unit)
+<<<<<<< HEAD
  * Copyright (C) 2014, CERN.
+=======
+ * Copyright (C) 2010, CERN.
+>>>>>>> [RTUx and TRU] adding functionality for extended RTU functionality and TRU stuff to wrsw_rtud daemon
  *
  * Version:     wrsw_rtud v1.1
  *
@@ -31,7 +35,9 @@
 
 #include "rtu.h"
 
+
 int rtux_init(void);
+int  rtux_simple_test();
 void rtux_add_ff_mac_single(int mac_id, int valid, uint8_t mac[ETH_ALEN]);
 void rtux_add_ff_mac_range(int mac_id, int valid, uint8_t mac_lower[ETH_ALEN],
                                                    uint8_t mac_upper[ETH_ALEN]);
@@ -44,5 +50,8 @@ void rtux_set_feature_ctrl(int mr, int mac_ptp, int mac_ll, int mac_single, int 
                        int mac_br, int at_fm);
 void rtux_set_fw_to_CPU(int hp, int unrec);
 void rtux_disp_ctrl(void);
+void rtux_set_cpu_port(uint32_t llf_mask);
+void rtux_set_life(char *optarg);
+
 
 #endif /*__WHITERABBIT_RTU_DRV_H*/

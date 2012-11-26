@@ -86,6 +86,9 @@ void usage(char *name)
         "\t-p   polynomial for hash calculation. Possible values are CCITT, IBM, DECT\n"
         "\t-r   aging resolution (in sec). 20 sec by default\n"
         "\t-t   aging time (10 to 10000 sec). 300 sec by default.\n",
+        "\t-o 0 show menu of RTU config options \n",
+        "\t-u 0 show menu of TRU config options \n",
+        "\t-x 0 show menu of RTU extension config options \n",	
         name);
     exit(1);
 }

@@ -88,11 +88,14 @@ int rtu_pass_all_on_port(int port, int pass_all)
 int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
         __attribute__((warn_unused_result));
 
+int rtu_ext_simple_test(); 
 // IRQs
 
 void rtu_enable_irq(void);
 void rtu_disable_irq(void);
 void rtu_clear_irq(void);
-
-
+void rtu_show_status() ;
+void rtu_show_port_status(int port_id) ;
+void rtu_set_life(char *optarg);
+int rtu_port_setting(int port_id) ;
 #endif /*__WHITERABBIT_RTU_DRV_H*/

@@ -629,7 +629,6 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid, uint8_t 
     vlan_tab[vid].has_prio        = has_prio;
     vlan_tab[vid].prio_override   = prio_override;
     vlan_tab[vid].prio            = prio;
-        
     rtu_write_vlan_entry(vid, &vlan_tab[vid]);
 }
 
@@ -644,4 +643,5 @@ struct vlan_table_entry *rtu_vlan_entry_get(int vid)
     // First entry reserved for untagged packets.
     if(vid > NUM_VLANS) return NULL;
     return &vlan_tab[vid];
+
 }
