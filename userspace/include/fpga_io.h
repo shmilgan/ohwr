@@ -12,6 +12,8 @@
 /* Routing Table */
 #define FPGA_BASE_RTU 	   0x60000
 
+/* Topology Resolution Unit */
+#define FPGA_BASE_TRU 	   0x57000
 
 #define FPGA_BASE_ADDR _fpga_base_virt
 
