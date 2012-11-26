@@ -47,12 +47,14 @@
 #include "mac.h"
 #include "rtu_fd.h"
 #include "rtu_drv.h"
+#include "rtu_ext_drv.h"
 #include "rtu_hash.h"
 #include "utils.h"
 
 
 static pthread_t aging_process;
 static pthread_t wripc_process;
+static pthread_t truud_process; //tru update process
 
 static struct {
 	int in_use;
@@ -168,6 +170,134 @@ static void rtu_update_ports_state()
 		
 	}
 }
+#define TRU_PORT_MASK    0x0E
+#define TRU_ALL_WORKS    0x06
+#define TRU_PORT_1       0x02
+#define TRU_PORT_2       0x04
+#define INITIAL_ACTIVE_PORT 1
+#define INITIAL_BACKUP_PORT 2
+
+
+
+/*
+ input_active_port:
+                    >  0 - indictest active port to be set (run from command line, not deamon)
+                    = -1 - indicates that automatic update of active port should be done
+                    = -2 - indicates that update should be made with no change of active port
+ */
+static void tru_update_ports_state(int input_active_port )
+{
+   int static active_port = INITIAL_ACTIVE_PORT;
+   int static backup_port = INITIAL_BACKUP_PORT;
+   int change_active_port = 0;
+   int i;
+   int port_state, port_setting;
+   int remembered_active_port;
+   uint32_t ports_stable_up, ports_up, bank, port_down, port_woke_up, port_up, ports_setting;
+   if(input_active_port >= 0) // run not from daemon
+   {
+      int err = shw_fpga_mmap_init();
+      if(err)
+      {
+         TRACE(TRACE_INFO, "Problem with fpga mapping");
+         exit(1);
+      }
+   }
+   remembered_active_port =  active_port;
+   // disable ports which are down
+   ports_setting = 0;
+   tru_read_status(&bank, &ports_up, &ports_stable_up,0);
+   for(i=0; i <= MAX_PORT; i++)
+   {
+       port_state   = 0x1 & (ports_up >> i);
+       port_setting = rtu_port_setting(i);
+       if (port_setting == 1 &&  port_state== 0)
+       {
+         port_setting = 0;
+         rtu_pass_all_on_port(i,0);   // disable port if it's down
+         TRACE(TRACE_INFO, "Disabling port %d in RTU [it is down]",i);
+       }
+       ports_setting = port_setting ? 
+                                       (1<<i)    |  ports_setting :
+                                       (~(1<<i)) &  ports_setting ;
+   }
+   usleep(100);
+   tru_read_status(&bank, &ports_up, &ports_stable_up,0);
+
+   // port state masks
+   port_down     = ((~ports_up) & (~ports_stable_up)) & TRU_ALL_WORKS;
+   port_up       =    ports_up  &   ports_stable_up   & TRU_ALL_WORKS;
+   port_woke_up  = ((~ports_up) &   ports_stable_up)  ;
+   
+   TRACE(TRACE_INFO, "rtu_update: port_down=0x%x, port_up=0x%x, port_woke_up=0x%x,"
+                     "active_port=%d [remembered=%d], backup_port=%d, mode=%d",
+                      port_down,port_up,port_woke_up, active_port,remembered_active_port,
+                      backup_port,input_active_port);
+
+   /**************************** ports roles setting  ***********************************/
+   if(input_active_port < -1)
+   {
+//       TRACE(TRACE_INFO, "Automatic update of active port disabled"); //       do nothing
+   }
+   else if(input_active_port == -1) 
+   {
+      if((active_port == 1) && (port_down == TRU_PORT_1) && (port_up == TRU_PORT_2))
+      {
+         active_port = 2;
+         backup_port = 1;       
+         change_active_port = 1;
+      }
+      else if((active_port == 2) && (port_down == TRU_PORT_2) && (port_up == TRU_PORT_1))
+      {
+         active_port = 1;
+         backup_port = 2;      
+         change_active_port = 1;       
+      }
+      else 
+         change_active_port = 0;
+   }
+   else if(input_active_port >= 0)
+   {
+      if(input_active_port == 1) 
+      {
+         active_port = 1;
+         backup_port = 2;      
+         change_active_port = 1;       
+      }  
+      if(input_active_port == 2) 
+      {
+         active_port = 2;
+         backup_port = 1;      
+         change_active_port = 1;       
+      }  
+   }
+   if(change_active_port)
+      tru_set_port_roles(active_port,backup_port);
+   
+   /*****************************************************************************************/
+   
+   for(i=0; i <= MAX_PORT; i++)
+   {
+      if(0x1 & (port_woke_up>>i))
+      {
+         rtu_pass_all_on_port(i,1);      
+         TRACE(TRACE_INFO, "Wake up port %d",i); 
+      }
+   }   
+}
+
+// tru update
+static void *rtu_daemon_truud_process(void *arg)
+{
+    int argument = (int)arg;
+    argument = - argument ;
+//     TRACE(TRACE_INFO, "-----------\n\n\nrtu_daemon arg %d\n\n\n-----------",argument);
+    while(1){
+        tru_update_ports_state(argument);
+        sleep(2);
+    }
+    return NULL;
+}
 
 /**
  * \brief Periodically removes the filtering database old entries.
@@ -271,10 +401,16 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 
     // init RTU HW
     TRACE(TRACE_INFO, "init rtu hardware.");
-    err = rtu_init();
+    err   = rtu_init();
     if(err)
-        return err;
-
+        return err;    
+    err  = rtux_init();
+    if(err)
+        return err;    
+    err  = tru_init();
+    if(err)
+        return err;    
+    
     // disable RTU
     TRACE(TRACE_INFO, "disable rtu.");
     rtu_disable();
@@ -290,6 +426,10 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
         err = rtu_set_fixed_prio_on_port(i,0);
         err = rtu_set_unrecognised_behaviour_on_port(i,1);
     }
+
+    ///////////////// RTU eXtension ///////
+//     rtu_ext_simple_test();
+    // ////////////////////////////////////////
 
     // init filtering database
     TRACE(TRACE_INFO, "init fd.");
@@ -319,6 +459,7 @@ static void rtu_daemon_destroy()
     // Threads stuff
     pthread_cancel(wripc_process);
     pthread_cancel(aging_process);
+//     pthread_cancel(truud_process);
 
     // Turn off RTU
     rtu_disable();
@@ -341,7 +482,7 @@ int main(int argc, char **argv)
     uint16_t poly            = HW_POLYNOMIAL_CCITT;  // Hash polinomial
     unsigned long aging_res  = DEFAULT_AGING_RES;    // Aging resolution [sec.]
     unsigned long aging_time = DEFAULT_AGING_TIME;   // Aging time       [sec.]
-
+    int truud_thread_run = 0;
     trace_log_stderr();
 
     if (argc > 1) {
@@ -352,7 +493,7 @@ int main(int argc, char **argv)
             }
         }
         // Parse daemon options
-        optstring = "dhp:r:t:";
+        optstring = "?dhp:r:t:u:x:o:y:v:";
         while ((op = getopt(argc, argv, optstring)) != -1) {
             switch(op) {
             case 'd':
@@ -386,6 +527,24 @@ int main(int argc, char **argv)
                     usage(name);
                 }
                 break;
+            case 'u':
+                tru_set_life(optarg);
+                break;
+            case 'x':
+                rtux_set_life(optarg);
+                break;
+            case 'o':
+                rtu_set_life(optarg);
+                break;
+            case 'y':
+                tru_update_ports_state(atol(optarg));
+                 exit(1);
+                break;
+            case 'v':
+               truud_thread_run = atol(optarg);
+               fprintf(stderr, "TRU thread: %d\n", truud_thread_run);
+               break;
+            case '?':
             default:
                 usage(name);
             }
@@ -406,12 +565,26 @@ int main(int argc, char **argv)
         daemonize();
 
     // Start up aging process and auxiliary WRIPC thread
+//     if ((err = pthread_create(&aging_process, NULL, rtu_daemon_aging_process, (void *) aging_res)) ||
+//         (err = pthread_create(&wripc_process, NULL, rtu_daemon_wripc_process, NULL))               ||
+//         (err = pthread_create(&truud_process, NULL, rtu_daemon_truud_process, NULL))) {
+//         rtu_daemon_destroy();
+//         return err;
+//     }
+
     if ((err = pthread_create(&aging_process, NULL, rtu_daemon_aging_process, (void *) aging_res)) ||
         (err = pthread_create(&wripc_process, NULL, rtu_daemon_wripc_process, NULL))) {
         rtu_daemon_destroy();
         return err;
     }
-    
+    if(truud_thread_run)
+    {
+       if(err = pthread_create(&truud_process, NULL, rtu_daemon_truud_process, (void * ) truud_thread_run))
+       {
+          pthread_cancel(truud_process);
+          return err;
+       }
+    }
     // Start up learning process.
     err = rtu_daemon_learning_process();
     // On error, release RTU resources

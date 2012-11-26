@@ -585,3 +585,16 @@ static void rtu_fd_commit(void)
     hw_req_list = NULL;
 }
 
+void vlan_entry_vd(int vid, uint32_t port_mask, uint8_t fid, uint8_t prio,
+                         int has_prio,int prio_override, int drop)
+{
+    // First entry reserved for untagged packets.
+    vlan_tab[vid].port_mask       = port_mask;
+    vlan_tab[vid].drop            = drop;
+    vlan_tab[vid].fid             = fid;
+    vlan_tab[vid].has_prio        = has_prio;
+    vlan_tab[vid].prio_override   = prio_override;
+    vlan_tab[vid].prio            = prio;
+
+    rtu_write_vlan_entry(vid, &vlan_tab[vid]);
+}
