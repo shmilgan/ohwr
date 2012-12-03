@@ -51,11 +51,13 @@
 extern int shw_fpga_mmap_init();
 	 
 #define TRU_TAB_SUBENTRY_NUM 8 /* as in H/W */  
-int tru_init(void)
+int tru_init(int tru_enabled )
 {
    uint32_t val;
    int i;
    /**/
+   tru_disable();
+   
    tru_simple_test();
    tru_pattern_config(1/*replacement*/,2/*addition*/);
 
@@ -77,8 +79,9 @@ int tru_init(void)
 
   tru_set_port_roles(1 /*active port*/,2/*backup port*/);
 //   tru_set_port_roles(2 /*active port*/,1/*backup port*/);
+  if(tru_enabled)
+    tru_enable();
 
-  tru_enable();
   return 0;
 }
 

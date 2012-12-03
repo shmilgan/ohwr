@@ -73,7 +73,7 @@ static int rtu_create_static_entries()
 {
     uint8_t bcast_mac[]         = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
     uint8_t slow_proto_mac[]    = {0x01, 0x80, 0xc2, 0x00, 0x00, 0x01};
-    uint8_t ptp_mcast_mac[]    = {0x01, 0x1b, 0x19, 0x00, 0x00, 0x00};
+    uint8_t ptp_mcast_mac[]     = {0x01, 0x1b, 0x19, 0x00, 0x00, 0x00};
     hexp_port_state_t pstate;
 		hexp_port_list_t ports;
     int i, err;
@@ -229,18 +229,21 @@ static void tru_update_ports_state(int input_active_port )
    port_up       =    ports_up  &   ports_stable_up   & TRU_ALL_WORKS;
    port_woke_up  = ((~ports_up) &   ports_stable_up)  ;
    
-   TRACE(TRACE_INFO, "rtu_update: port_down=0x%x, port_up=0x%x, port_woke_up=0x%x,"
-                     "active_port=%d [remembered=%d], backup_port=%d, mode=%d",
-                      port_down,port_up,port_woke_up, active_port,remembered_active_port,
-                      backup_port,input_active_port);
+
 
    /**************************** ports roles setting  ***********************************/
    if(input_active_port < -1)
    {
-//       TRACE(TRACE_INFO, "Automatic update of active port disabled"); //       do nothing
+      TRACE(TRACE_INFO, "rtu_update [mode=%d]: ports_up=0x%x, ports_stable_up=0x%x, "
+                        "port_woke_up=0x%x (no automatic active port switching)",
+                         input_active_port, ports_up,ports_stable_up,port_woke_up);
    }
    else if(input_active_port == -1) 
    {
+      TRACE(TRACE_INFO, "rtu_update [mode=%d]: port_down=0x%x, port_up=0x%x, port_woke_up=0x%x,"
+                        "active_port=%d [remembered=%d], backup_port=%d",
+                         input_active_port, port_down,port_up,port_woke_up, active_port,
+                         remembered_active_port, backup_port);
       if((active_port == 1) && (port_down == TRU_PORT_1) && (port_up == TRU_PORT_2))
       {
          active_port = 2;
@@ -395,7 +398,8 @@ static int rtu_daemon_learning_process()
  * @param aging_time Aging time in seconds.
  * @return error code.
  */
-static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
+static int rtu_daemon_init(uint16_t poly, unsigned long aging_time, int unrec_behavior,
+           int static_entries, int tru_enabled)
 {
     int i, err;
 
@@ -406,8 +410,9 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
         return err;    
     err  = rtux_init();
     if(err)
-        return err;    
-    err  = tru_init();
+        return err;   
+    
+    err  = tru_init(tru_enabled);
     if(err)
         return err;    
     
@@ -424,7 +429,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
         err = rtu_pass_all_on_port(i,1);
         err = rtu_pass_bpdu_on_port(i,0);
         err = rtu_set_fixed_prio_on_port(i,0);
-        err = rtu_set_unrecognised_behaviour_on_port(i,1);
+        err = rtu_set_unrecognised_behaviour_on_port(i,unrec_behavior);
     }
 
     ///////////////// RTU eXtension ///////
@@ -438,7 +443,8 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
         return err;
 
     // create static filtering entries
-    err = rtu_create_static_entries();
+    if(static_entries)
+      err = rtu_create_static_entries();
     if(err)
         return err;
 
@@ -482,7 +488,11 @@ int main(int argc, char **argv)
     uint16_t poly            = HW_POLYNOMIAL_CCITT;  // Hash polinomial
     unsigned long aging_res  = DEFAULT_AGING_RES;    // Aging resolution [sec.]
     unsigned long aging_time = DEFAULT_AGING_TIME;   // Aging time       [sec.]
-    int truud_thread_run = 0;
+    int truud_thread_run     = 0;
+    int config_mode          = 0;
+    int static_entries       = 1; // yes by default
+    int unrec_behavior       = 1; //broadcast by default
+    int tru_enabled          = 1; // TRU disabled by default
     trace_log_stderr();
 
     if (argc > 1) {
@@ -493,7 +503,7 @@ int main(int argc, char **argv)
             }
         }
         // Parse daemon options
-        optstring = "?dhp:r:t:u:x:o:y:v:";
+        optstring = "?dhp:r:t:u:x:o:y:v:c:";
         while ((op = getopt(argc, argv, optstring)) != -1) {
             switch(op) {
             case 'd':
@@ -542,7 +552,28 @@ int main(int argc, char **argv)
                 break;
             case 'v':
                truud_thread_run = atol(optarg);
+               tru_enabled      = 1; // tru enabled
                fprintf(stderr, "TRU thread: %d\n", truud_thread_run);
+               break;
+            case 'c':
+               config_mode = atol(optarg);
+               fprintf(stderr, "\n>>>>>>>>>>>>>>>>>> Config-mode: %d <<<<<<<<<<<<<<<<\n", config_mode);
+               if(config_mode == 1)
+               {
+                 truud_thread_run = 1;
+                 tru_enabled      = 1;
+                 fprintf(stderr, "\nTRU update with pref-configured active/backup port"
+                                 "(1 is active, 2 is backup)\n");
+               }
+               else if(config_mode == 2)
+               {
+                 truud_thread_run = 2;
+                 static_entries   = 0;
+                 unrec_behavior   = 0;
+                 tru_enabled      = 0;
+                 fprintf(stderr, "\nNo static entrie, drop unrecognized, TRU disabled\n");               
+               }                  
+               fprintf(stderr, "\n>>>>>>>>>>>>>>>>>>>>>>>  <<<<<<<<<<<<<<<<<<<<<<<<<<\n");
                break;
             case '?':
             default:
@@ -552,7 +583,7 @@ int main(int argc, char **argv)
     }
 
     // Initialise RTU. 
-    if((err = rtu_daemon_init(poly, aging_time)) < 0) {
+    if((err = rtu_daemon_init(poly, aging_time,unrec_behavior,static_entries,tru_enabled)) < 0) {
         rtu_daemon_destroy();
         return err;
     }

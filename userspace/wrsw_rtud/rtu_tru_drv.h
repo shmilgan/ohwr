@@ -30,7 +30,7 @@
 #define __WHITERABBIT_RTU_TRU_DRV_H
 
 #include "rtu.h"
-
+int tru_init(int tru_enabled );
 int tru_simple_test() ;
 void tru_write_tab_entry(int valid,      int fid,          int subfid, 
                          int patrn_mask, int patrn_match,  int patrn_mode,

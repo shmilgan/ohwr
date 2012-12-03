@@ -85,10 +85,17 @@ void usage(char *name)
         "\t-h   help\n"
         "\t-p   polynomial for hash calculation. Possible values are CCITT, IBM, DECT\n"
         "\t-r   aging resolution (in sec). 20 sec by default\n"
-        "\t-t   aging time (10 to 10000 sec). 300 sec by default.\n",
-        "\t-o 0 show menu of RTU config options \n",
-        "\t-u 0 show menu of TRU config options \n",
-        "\t-x 0 show menu of RTU extension config options \n",	
+        "\t-t   aging time (10 to 10000 sec). 300 sec by default.\n"
+        "\t-o 0 show menu of RTU config options \n"
+        "\t-u 0 show menu of TRU config options \n"
+        "\t-x 0 show menu of RTU extension config options \n"
+        "\t-v n enable TRU thread : \n"
+        "\t     n: 1 for updating pre-configured active/backup ports (1-actie, 2-backup) and what in n=2\n"
+        "\t     n: 2 for monioring ports up/down, wake up ports\n"
+        "\t-c m config-mode (specific configuration for e.g.: testing different stuff): \n"
+        "\t     n: 1 hard-configured TRU\n"
+        "\t     n: 2 no static entries\n",
+
         name);
     exit(1);
 }

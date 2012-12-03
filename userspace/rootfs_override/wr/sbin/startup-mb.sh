@@ -12,7 +12,9 @@ for arg in $(cat /proc/cmdline); do
 done
 
 
-$WR_HOME/bin/load-virtex $WR_HOME/lib/firmware/18ports_mb.bin
+$WR_HOME/bin/load-virtex $WR_HOME/lib/firmware/8ports_mb-tru-bigFPGA.bin
+#$WR_HOME/bin/load-virtex $WR_HOME/lib/firmware/8ports_mb-tru.bin
+#$WR_HOME/bin/load-virtex $WR_HOME/lib/firmware/18ports_mb.bin
 $WR_HOME/bin/load-lm32 $WR_HOME/lib/firmware/rt_cpu.bin
 insmod $WR_HOME/lib/modules/at91_softpwm.ko
 insmod $WR_HOME/lib/modules/wr_vic.ko
