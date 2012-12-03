@@ -56,9 +56,9 @@ int rtux_init(void)
    rtux_simple_test();
    
    rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_A/*MAC*/);
-//    rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_B/*MAC*/);
-   rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, UNICAST_MAC_ETH_5/*MAC*/);
-   rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, UNICAST_MAC_ETH_4_RENAME/*MAC*/);
+   rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_B/*MAC*/);
+//    rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, UNICAST_MAC_ETH_5/*MAC*/);
+//    rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, UNICAST_MAC_ETH_4_RENAME/*MAC*/);
    rtux_add_ff_mac_range (0/*ID*/, 1/*valid*/, mac_range_lower/*MAC_lower*/, 
                                                mac_range_upper /*MAC_upper*/);  
    rtux_set_port_mirror  (1<<1/*mirror src*/,1<<7/*mirror dst*/,1/*rx*/,1/*tx*/);
@@ -131,17 +131,17 @@ int rtux_simple_test()
 static uint32_t get_mac_lo(uint8_t mac[ETH_ALEN])
 {
     return
-        ((0xFF & mac[0])                        << 24)  |
-        ((0xFF & mac[1])                        << 16)  |
-        ((0xFF & mac[2])                        <<  8)  |
-        ((0xFF & mac[3])                             )  ;
+        ((0xFF & mac[2])                        << 24)  |
+        ((0xFF & mac[3])                        << 16)  |
+        ((0xFF & mac[4])                        <<  8)  |
+        ((0xFF & mac[5])                             )  ;
 }
 
 static uint32_t get_mac_hi(uint8_t mac[ETH_ALEN])
 {
     return
-        ((0xFF & mac[4])                        <<  8)  |
-        ((0xFF & mac[5])                             )  ;
+        ((0xFF & mac[0])                        <<  8)  |
+        ((0xFF & mac[1])                             )  ;
 }
 
 
@@ -149,16 +149,16 @@ void rtux_add_ff_mac_single(int mac_id, int valid, uint8_t mac[ETH_ALEN])
 {
    uint32_t mac_hi, mac_lo;
 
-   mac_lo = RTU_RX_FF_MAC_R0_LO_W   (get_mac_lo(mac)) ;
-   mac_hi = RTU_RX_FF_MAC_R1_ID_R   (get_mac_hi(mac)) |
-            RTU_RX_FF_MAC_R1_HI_ID_W(mac_id)      |
+   mac_lo = RTU_RX_FF_MAC_R0_LO_W    (get_mac_lo(mac)) ;
+   mac_hi = RTU_RX_FF_MAC_R1_HI_ID_W (get_mac_hi(mac)) |
+            RTU_RX_FF_MAC_R1_ID_W    (mac_id)          |
             //RTU_RX_FF_MAC_R1_TYPE                     // type = 0
             RTU_RX_FF_MAC_R1_VALID;
                 
    rtu_wr(RX_FF_MAC_R0, mac_lo);
    rtu_wr(RX_FF_MAC_R1, mac_hi);
  
-   TRACE(TRACE_INFO,"RTU eXtension: set fast forward single mac (id=%d, valid=%d) of"
+   TRACE(TRACE_INFO,"RTU eXtension: set fast forward single mac (id=%d, valid=%d) of "
          "%x:%x:%x:%x:%x:%x", mac_id, valid,mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 }
 
@@ -171,10 +171,10 @@ void rtux_add_ff_mac_range(int mac_id, int valid, uint8_t mac_lower[ETH_ALEN],
    // writting lower boundary of the mac range
    m_mac_id = (~(1 << 7) ) & mac_id; // lower range (highest bit is low)
 
-   mac_lo = RTU_RX_FF_MAC_R0_LO_W   (get_mac_lo(mac_lower)) ;
-   mac_hi = RTU_RX_FF_MAC_R1_ID_R   (get_mac_hi(mac_lower)) |
-            RTU_RX_FF_MAC_R1_HI_ID_W(mac_id)                |
-            RTU_RX_FF_MAC_R1_TYPE                           | // type = 1
+   mac_lo = RTU_RX_FF_MAC_R0_LO_W    (get_mac_lo(mac_lower)) ;
+   mac_hi = RTU_RX_FF_MAC_R1_HI_ID_W (get_mac_hi(mac_lower)) |
+            RTU_RX_FF_MAC_R1_ID_W    (m_mac_id)                |
+            RTU_RX_FF_MAC_R1_TYPE                            | // type = 1
             RTU_RX_FF_MAC_R1_VALID;
                 
    rtu_wr(RX_FF_MAC_R0, mac_lo);
@@ -183,10 +183,10 @@ void rtux_add_ff_mac_range(int mac_id, int valid, uint8_t mac_lower[ETH_ALEN],
    // writting upper boundary of the mac range
    m_mac_id = (1 << 7) | mac_id; // upper range high (highest bit is low)
 
-   mac_lo = RTU_RX_FF_MAC_R0_LO_W   (get_mac_lo(mac_upper)) ;
-   mac_hi = RTU_RX_FF_MAC_R1_ID_R   (get_mac_hi(mac_upper)) |
-            RTU_RX_FF_MAC_R1_HI_ID_W(mac_id)                |
-            RTU_RX_FF_MAC_R1_TYPE                           | // type = 1
+   mac_lo = RTU_RX_FF_MAC_R0_LO_W    (get_mac_lo(mac_upper)) ;
+   mac_hi = RTU_RX_FF_MAC_R1_HI_ID_W (get_mac_hi(mac_upper)) |
+            RTU_RX_FF_MAC_R1_ID_W    (m_mac_id)                |
+            RTU_RX_FF_MAC_R1_TYPE                            | // type = 1
             RTU_RX_FF_MAC_R1_VALID;
                 
    rtu_wr(RX_FF_MAC_R0, mac_lo);
@@ -217,24 +217,25 @@ void rtux_set_port_mirror(uint32_t mirror_src_mask, uint32_t mirror_dst_mask, in
    rtu_wr(RX_MP_R0,mp_sel);
    rtu_wr(RX_MP_R1,mp_dst);
 
+
    if(rx) 
-   {
      mp_src_rx = RTU_RX_MP_R1_MASK_W(mirror_src_mask);
-     mp_sel    = 0;
-     mp_sel    = RTU_RX_MP_R0_DST_SRC; // destination (dst_src=0), reception traffic (rx_tx=0)
-     rtu_wr(RX_MP_R0,mp_sel);
-     rtu_wr(RX_MP_R1,mp_dst);
-   }
+   else
+     mp_src_rx = 0;
+   mp_sel    = 0;
+   mp_sel    = RTU_RX_MP_R0_DST_SRC; // source (dst_src=1), reception traffic (rx_tx=0)
+   rtu_wr(RX_MP_R0,mp_sel);
+   rtu_wr(RX_MP_R1,mp_src_rx);
     
    if(tx) 
-   {
-     mp_src_rx = RTU_RX_MP_R1_MASK_W(mirror_src_mask);
-     mp_sel    = 0;
-     mp_sel    = RTU_RX_MP_R0_DST_SRC | RTU_RX_MP_R0_RX_TX; 
-                           // destination (dst_src=0), reception traffic (rx_tx=0)
-     rtu_wr(RX_MP_R0,mp_sel);
-     rtu_wr(RX_MP_R1,mp_dst);
-   }  
+     mp_src_tx = RTU_RX_MP_R1_MASK_W(mirror_src_mask);
+   else
+     mp_src_tx = 0;
+   mp_sel    = 0;
+   mp_sel    = RTU_RX_MP_R0_DST_SRC | RTU_RX_MP_R0_RX_TX; 
+                           //  source (dst_src=1), transmission traffic (rx_tx=1)
+   rtu_wr(RX_MP_R0,mp_sel);
+   rtu_wr(RX_MP_R1,mp_src_tx);    
 
    TRACE(TRACE_INFO,"\t mirror output port(s) mask                 (dst)    = 0x%x",mp_dst);
    TRACE(TRACE_INFO,"\t ingress traffic mirror source port(s) mask (src_rx) = 0x%x",mp_src_rx);   
@@ -383,15 +384,15 @@ void rtux_set_life(char *optarg)
     case  4:
        if(sub_opt == 1)
        {
-          rtux_set_port_mirror(1<<0 /*mirror_src_mask*/, 1<<7 /*mirror_dst_mask*/, 1/*rx*/, 1/*tx*/);
+          rtux_set_port_mirror(1<<1 /*mirror_src_mask*/, 1<<7 /*mirror_dst_mask*/, 1/*rx*/, 1/*tx*/);
        }
        else if(sub_opt == 2)
        {
-          rtux_set_port_mirror(1<<7/*mirror_src_mask*/, 1<<1/*mirror_dst_mask*/, 1/*rx*/, 0/*tx*/);
+          rtux_set_port_mirror(1<<1/*mirror_src_mask*/, 1<<7/*mirror_dst_mask*/, 1/*rx*/, 0/*tx*/);
        }
        else if(sub_opt == 3)
        {
-          rtux_set_port_mirror(1<<7/*mirror_src_mask*/, 1<<5/*mirror_dst_mask*/, 1/*rx*/, 1/*tx*/);
+          rtux_set_port_mirror(1<<1/*mirror_src_mask*/, 1<<7/*mirror_dst_mask*/, 0/*rx*/, 1/*tx*/);
        }
        else
        {
@@ -412,9 +413,9 @@ void rtux_set_life(char *optarg)
        TRACE(TRACE_INFO, "-x 2  p_id   sets port of p_id to be cpu virual port recognized in fast match");
        TRACE(TRACE_INFO, "-x 3  prio   sets prio to be recognized as HP");
        TRACE(TRACE_INFO, "-x 4  opt    MIRRORING configuration (the mirroring needs to be enabled with set ctrl)");
-       TRACE(TRACE_INFO, "-x 4  1      sets traffic on port 0 (tx/rx) to be mirrored on port 7");
-       TRACE(TRACE_INFO, "-x 4  2      sets traffic on port 7 (rx) to be mirrored on port 1");
-       TRACE(TRACE_INFO, "-x 4  3      sets traffic on port 5 (tx/rx) to be mirrored on port 7");
+       TRACE(TRACE_INFO, "-x 4  1      sets traffic tx-ed/rx-ed on port 1 to be mirrored on port 7");
+       TRACE(TRACE_INFO, "-x 4  2      sets traffic rx-ed       on port 1 to be mirrored on port 7");
+       TRACE(TRACE_INFO, "-x 4  3      sets traffic tx-ed       on port 1 to be mirrored on port 7");
        TRACE(TRACE_INFO, "-x 10        show status");
   };
   exit(1);
