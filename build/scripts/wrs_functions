@@ -125,6 +125,7 @@ wrs_download () {
 	    break
     done
     . $T
+    rm -f $T
 
     mkdir -p ${WRS_DOWNLOAD_DIR} || wrs_die "mkdir ${WRS_DOWNLOAD_DIR}"
 

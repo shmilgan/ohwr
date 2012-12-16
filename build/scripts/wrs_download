@@ -15,7 +15,6 @@ wrs_echo "--- Downloading all files"
 
 # download all files
 DLLIST=${WRS_BASE_DIR}/download-info
-T=$(mktemp /tmp/wrs-download-XXXXXX)
 
 # ok, this duplicates the loop in wrs_download itself....
 grep -v '^#' $DLLIST | grep -v '^[ 	]*$' | \
