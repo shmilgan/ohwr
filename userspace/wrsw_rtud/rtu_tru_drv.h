@@ -55,4 +55,5 @@ void tru_show_status(int port_number);
 int tru_port_state_up(int port_id);
 uint32_t tru_port_stable_up_mask(void);
 void tru_set_port_roles(int active_port, int backup_port);
+void tru_lacp_config(uint32_t df_hp_id, uint32_t df_br_id, uint32_t df_un_id);
 #endif /*__WHITERABBIT_RTU_DRV_H*/

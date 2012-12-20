@@ -60,7 +60,7 @@ int tru_init(int tru_enabled )
    
    tru_simple_test();
    tru_pattern_config(1/*replacement*/,2/*addition*/);
-
+   tru_lacp_config(0 /* df_hp_id */,2 /* df_br_id */,1 /* df_un_id */);
 //    tru_rt_reconf_config(4 /*tx_frame_id*/, 4/*rx_frame_id*/, 1 /*mode*/);
 //    tru_rt_reconf_enable();
 //    tru_transition_config(0          /*mode */,     
@@ -285,9 +285,14 @@ void tru_pattern_config(uint32_t replacement,  uint32_t addition)
       TRACE(TRACE_INFO,"\tAddition    pattern ID = %d: ",addition);
       TRACE(TRACE_INFO,"\tChoice info: ");
       TRACE(TRACE_INFO,"\t\t0: non: zeros ");
-      TRACE(TRACE_INFO,"\t\t1: ports status ");
-      TRACE(TRACE_INFO,"\t\t2: received special frames (filtered by endpoints) ");
-      TRACE(TRACE_INFO,"\t\tx: non: zero ");
+      TRACE(TRACE_INFO,"\t\t1: ports status (bit HIGH when port down");
+      TRACE(TRACE_INFO,"\t\t2: received special frames - filtered by endpoints according to" 
+                              "configuration (pfliter in endpoint + RTR_RX class ID in " 
+                              "Real Time Reconfiguration Control Register)");
+      TRACE(TRACE_INFO,"\t\t3: according to aggregation ID (the source of the ID depends on "
+                              "the traffic kind: HP/Broadcast/Uniast, set in Link Aggregation "
+                              "Control Register)");
+      TRACE(TRACE_INFO,"\t\t4: received port");
    }
 }
 
@@ -405,6 +410,23 @@ void tru_read_status(uint32_t *bank, uint32_t *ports_up, uint32_t *ports_stb_up,
       TRACE(TRACE_INFO,"\tports stable (1:up, 0:down) : 0x%x", *ports_stb_up);
    }
 }
+
+void tru_lacp_config(uint32_t df_hp_id, uint32_t df_br_id, uint32_t df_un_id)
+{
+      uint64_t val;
+      val = TRU_LACR_AGG_DF_HP_ID_W(df_hp_id) |
+            TRU_LACR_AGG_DF_BR_ID_W(df_br_id) |
+            TRU_LACR_AGG_DF_UN_ID_W(df_un_id) ;
+      tru_wr(LACR, val);    
+      if(m_dbg)
+      {
+        TRACE(TRACE_INFO,"TRU: Link Aggregation config:");
+        TRACE(TRACE_INFO,"\tDistribution Function for High Priority traffic: id = %2d",df_hp_id);
+        TRACE(TRACE_INFO,"\tDistribution Function for Broadcast     traffic: id = %2d",df_br_id);
+        TRACE(TRACE_INFO,"\tDistribution Function for Unicast       traffic: id = %2d",df_un_id);
+      }
+}
+
 void tru_set_port_roles(int active_port, int backup_port)
 {
   if(active_port == 1 && backup_port == 2)
@@ -501,6 +523,7 @@ void tru_set_port_roles(int active_port, int backup_port)
    }  
    
 }
+
 void tru_set_life(char *optarg)
 {
   
@@ -613,6 +636,71 @@ void tru_set_life(char *optarg)
                                    0x00000002 /* ports_egress */,      
                                    0x00000002 /* ports_ingress   */); 	     
              break;	     
+          case 8: 
+             // basic config, excluding link aggregation, only the standard non-LACP ports
+             tru_write_tab_entry(  1          /* valid         */,
+                                   0          /* entry_addr    */,    
+                                   0          /* subentry_addr */,
+                                   0x00000000 /* pattern_mask  */, 
+                                   0x00000000 /* pattern_match */,   
+                                   0x000      /* pattern_mode  */,
+                                   0x00000F0F /* ports_mask    */, 
+                                   0x00000F0F /* ports_egress  */,      
+                                   0x00000F0F /* ports_ingress */); 
+             // a bunch of link aggregation ports (ports 4 to 7 and 12&15)
+             // received FEC msg of class 0      
+             tru_write_tab_entry(  1          /* valid         */,
+                                   0          /* entry_addr    */,    
+                                   1          /* subentry_addr */,
+                                   0x0000000F /* pattern_mask  */, 
+                                   0x00000001 /* pattern_match */,   
+                                   0x000      /* pattern_mode  */,
+                                   0x000090F0 /* ports_mask    */, 
+                                   0x00008010 /* ports_egress  */,      
+                                   0x00000000 /* ports_ingress */); 
+             // received FEC msg of class 1
+             tru_write_tab_entry(  1          /* valid         */,
+                                   0          /* entry_addr    */,    
+                                   2          /* subentry_addr */,
+                                   0x0000000F /* pattern_mask  */, 
+                                   0x00000002 /* pattern_match */,   
+                                   0x000      /* pattern_mode  */,
+                                   0x000090F0 /* ports_mask    */, 
+                                   0x00008020 /* ports_egress  */,      
+                                   0x00000000 /* ports_ingress */);
+             // received FEC msg of class 2
+             tru_write_tab_entry(  1          /* valid         */,
+                                   0          /* entry_addr    */,    
+                                   3          /* subentry_addr */,
+                                   0x0000000F /* pattern_mask  */, 
+                                   0x00000004 /* pattern_match */,   
+                                   0x000      /* pattern_mode  */,
+                                   0x000090F0 /* ports_mask    */, 
+                                   0x00001040 /* ports_egress  */,      
+                                   0x00000000 /* ports_ingress */);
+             // received FEC msg of class 3
+             tru_write_tab_entry(  1          /* valid         */,
+                                   0          /* entry_addr    */,    
+                                   4          /* subentry_addr */,
+                                   0x0000000F /* pattern_mask  */, 
+                                   0x00000008 /* pattern_match */,   
+                                   0x000      /* pattern_mode  */,
+                                   0x000090F0 /* ports_mask    */, 
+                                   0x00001080 /* ports_egress  */,      
+                                   0x00000000 /* ports_ingress */);
+             // collector: receiving frames on the aggregation ports, 
+             // forwarding to "normal" (others)
+             tru_write_tab_entry(  1          /* valid         */,
+                                   0          /* entry_addr    */,    
+                                   5          /* subentry_addr */,
+                                   0x000090F0 /* pattern_mask  */, 
+                                   0x000090F0 /* pattern_match */,   
+                                   0x002      /* pattern_mode  */,
+                                   0x000090F0 /* ports_mask    */, 
+                                   0x00000000 /* ports_egress  */,      
+                                   0x000090F0 /* ports_ingress */);
+
+	     break;	     
 	     
 	  case 10:
 	     tru_swap_bank();
@@ -652,7 +740,12 @@ void tru_set_life(char *optarg)
        TRACE(TRACE_INFO, "             pattern = 00000010 [mask=00000110]");           
        TRACE(TRACE_INFO, "-u 4  7      Write TRU Table: FID=0, subFID=1");
        TRACE(TRACE_INFO, "             ports   = 10000010 [mask=00000110]");
-       TRACE(TRACE_INFO, "             pattern = 00000100 [mask=00000110]");           
+       TRACE(TRACE_INFO, "             pattern = 00000100 [mask=00000110]"); 
+       TRACE(TRACE_INFO, "-u 4  8      LACP config --  Ports are as follows: ");          
+       TRACE(TRACE_INFO, "             -  0  - 3  *normal ports*      -- ports are not in any agg group");
+       TRACE(TRACE_INFO, "             -  4  - 7  *aggregation group* -- ports in single aggr group");
+       TRACE(TRACE_INFO, "             -  13 & 15 *aggregation group* -- ports in single aggr group (not for 8-port switch) ");
+       TRACE(TRACE_INFO, "             -  14 & 16 *blocked ports*     -- (not for 8-port switch) ");
        TRACE(TRACE_INFO, "-u 4  10     Commit TRU TAB chagnes (swap banks)");
        TRACE(TRACE_INFO, "-u 10        show status");
   };

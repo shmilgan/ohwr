@@ -129,17 +129,17 @@
 
 /* definitions for register: VLAN Control Register 1 */
 
-/* definitions for field: Egress untagged set bitmap VID in reg: VLAN Control Register 1 */
-#define EP_VCR1_VID_MASK                      WBGEN2_GEN_MASK(0, 12)
-#define EP_VCR1_VID_SHIFT                     0
-#define EP_VCR1_VID_W(value)                  WBGEN2_GEN_WRITE(value, 0, 12)
-#define EP_VCR1_VID_R(reg)                    WBGEN2_GEN_READ(reg, 0, 12)
+/* definitions for field: VLAN Untagged Set/Injection Buffer offset in reg: VLAN Control Register 1 */
+#define EP_VCR1_OFFSET_MASK                   WBGEN2_GEN_MASK(0, 10)
+#define EP_VCR1_OFFSET_SHIFT                  0
+#define EP_VCR1_OFFSET_W(value)               WBGEN2_GEN_WRITE(value, 0, 10)
+#define EP_VCR1_OFFSET_R(reg)                 WBGEN2_GEN_READ(reg, 0, 10)
 
-/* definitions for field: Egress untagged set bitmap value in reg: VLAN Control Register 1 */
-#define EP_VCR1_VALUE_MASK                    WBGEN2_GEN_MASK(12, 1)
-#define EP_VCR1_VALUE_SHIFT                   12
-#define EP_VCR1_VALUE_W(value)                WBGEN2_GEN_WRITE(value, 12, 1)
-#define EP_VCR1_VALUE_R(reg)                  WBGEN2_GEN_READ(reg, 12, 1)
+/* definitions for field: VLAN Untagged Set/Injection Buffer value in reg: VLAN Control Register 1 */
+#define EP_VCR1_DATA_MASK                     WBGEN2_GEN_MASK(10, 18)
+#define EP_VCR1_DATA_SHIFT                    10
+#define EP_VCR1_DATA_W(value)                 WBGEN2_GEN_WRITE(value, 10, 18)
+#define EP_VCR1_DATA_R(reg)                   WBGEN2_GEN_READ(reg, 10, 18)
 
 /* definitions for register: Packet Filter Control Register 0 */
 
@@ -270,7 +270,6 @@
 /* definitions for field: DMTD Phase shift value ready in reg: DMTD Status register */
 #define EP_DMSR_PS_RDY                        WBGEN2_GEN_MASK(24, 1)
 /* definitions for RAM: Event counters memory */
-#define EP_RMON_RAM_BASE 0x00000080 /* base address */                                
 #define EP_RMON_RAM_BYTES 0x00000080 /* size in bytes */                               
 #define EP_RMON_RAM_WORDS 0x00000020 /* size in 32-bit words, 32-bit aligned */        
 
