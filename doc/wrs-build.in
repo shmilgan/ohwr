@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month October 2012
+@set update-month December 2012
 
 @finalout
 
@@ -400,8 +400,8 @@ This is the same naming policy of the kernel and other packages.
 
 The prefix is @code{wrs-firmware-}; the information about the current status are
 retrived by using the git commmand @code{git describe --always --dirty}.
-For example, if you are building the tag @code{wr-switch-sw-v3.0}, your package
-name will be @code{wrs-firmware-wr-switch-sw-v3.0.tar.gz}. If you are building
+For example, if you are building the tag @code{wr-switch-sw-v3.1}, your package
+name will be @code{wrs-firmware-wr-switch-sw-v3.1.tar.gz}. If you are building
 on some personal commit the name includes some extra information to describe
 your commit: number of commits form the last tag (if any), SHA1 code of the
 commit. If you have uncommited changed, the suffix @code{-dirty} is there too.
@@ -572,6 +572,13 @@ MAC address to sequentially assign a MAC address for every switch ports.
     -m2 02:34:34:34:34:00
 @end example
 
+Please remember that bits 0 and 1 of the first byte are special: if
+the first byte is odd, the MAC address is reserved for multicast
+transmission (the script doesn't check, and the kernel will refuse to
+enact such address).  Bit 1 is set for ``locally assigned'' numbers:
+while official MAC addresses have bit 1 clear, if you choose your
+unofficial addresses you should set the bit.
+
 If you don't configure a MAC address, a warning will be displayed and
 you can abort the procedure. If you don't abort the flashing
 procedure, the script will use default MAC addresses. Default MAC addresses
@@ -715,9 +722,14 @@ If your system maps the Atmel ROM to a different device name, please
 pass the name on the command line. The script wants a full pathname 
 starting with @code{/}.
 
-If you want to flash your own @i{at91boot.bin}, @i{barebox.bin}, @i{kernel}
-or @i{file-system} you can just place them in the @file{$WRS_OUTPUT_DIR/images}
-directory and call the script with @code{-b|--build} option.
+If you want to flash the @i{at91boot.bin}, @i{barebox.bin}, @i{kernel}
+or @i{file-system} that you just built, you can just call the script
+from the build directory and use the @code{-b} option.
+
+The official binaries for installation of version 3.1 of this package
+are available in the @i{files} tab of @t{ohwr.org}. The complete link
+is:@*
+@url{www.ohwr.org/attachments/download/1770/wr-switch-sw-v3.1-2012-12-20-binaries.tar.gz} .
 
 You can select a mode using the @code{-m|--mode} flag to choose
 to write in dataflash (df), nandflash (nf), both (default) or ddr memories
@@ -731,9 +743,7 @@ install different binaries on these memories:
 
 You can also erase the dataflash memory before writing your binaries; to do this
 add the option @code{-e}. Note that the script always erases nandflash before
-writing on it.
-
-Finally, 
+writing to it.
 
 The script performs the following steps:
 
@@ -955,7 +965,7 @@ evaluation board without even changing the board name):
 @end example
 
 The script @i{wrs_build_at91boot} uncompresses, patches and builds, leaving
-@code{images/at91bootstrap.bin} after it is over. This file is
+@code{images/@-at91bootstrap.bin} after it is over.  This file is
 the one to be loaded in the hardware.
 For simplicity, a known-working binary is part of the @i{binaries}
 directory of this package as @code{at91bootstrap.bin}, the same name used
@@ -1009,8 +1019,8 @@ configuration are described in @ref{Booting with Barebox}.
 
 Building @i{barebox} relies on a @i{Kconfig} setup, and the
 configuration file we use is
-@file{patches/barebox/wrs3_defconfig}. Again, this is copied over and
-not patched in (see the simple @file{build/scripts/wrs_build_barebox}
+@file{patches/barebox/@-wrs3_defconfig}. Again, this is copied over and
+not patched in (see the simple @file{build/scripts/@-wrs_build_barebox}
 for details).
 
 After patching and copying over the files, the following commands
@@ -1226,7 +1236,7 @@ the filesystem for the switch, also making the archives and the
 @i{jffs2} image file.
 
 The step of setting up the complete filesystem is performed by
-@file{build/scripts/wrs_build_wraprootfs}.  The script
+@file{build/scripts/@-wrs_build_wraprootfs}.  The script
 does not leave a directory tree on disk because that would require
 administrator privileges. We think it is best not to call @i{sudo} from
 within build scripts, to respect our users' security concerns.
@@ -1631,8 +1641,8 @@ An archive with all the pieces you'll need for this upgrade (and maybe
 a little more than that) can be downloaded from the @i{files} section
 of the @i{White Rabbit} project on @code{ohwr.org}. (However, the
 archive doesn't include the filesystem image, which is big and didn't
-change from release 3.0).  The direct link is
-@url{http://www.ohwr.org/attachments/download/1648/reflash-2012-10-09.tar.gz}
+change from release 3.0).  The direct link is:@*
+@url{www.ohwr.org/attachments/download/1648/reflash-2012-10-09.tar.gz}
 
 @sp 1
 
@@ -1744,9 +1754,9 @@ suboptimal, while some procedures may be tricky and need more explanation.
 
 We are collecting all those issues in the @i{wiki} page of the
 project, to avoid frequent updates to this manual to just collect
-those details. So please visit
-@url{http://www.ohwr.org/projects/wr-switch-sw/wiki/Bugs} and
-@url{http://www.ohwr.org/projects/wr-switch-sw/wiki/Troubleshooting}
+those details.  So please visit
+@url{www.ohwr.org/projects/wr-switch-sw/wiki/Bugs} and
+@url{www.ohwr.org/projects/wr-switch-sw/wiki/Troubleshooting}
 if you have any problem with this package, but feel free to reach us
 on the mailing list if you don't find help there.
 
