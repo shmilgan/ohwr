@@ -262,14 +262,17 @@ int wrn_endpoint_probe(struct net_device *dev)
 		wraddr[3] &= 0x7F;
 	}
 
-	/* Use sequential MAC */
-	val = get_unaligned_be32(wraddr + 2);
-	put_unaligned_be32(val + 1, wraddr + 2);
+	/* Use wraddr as MAC */
 	memcpy(dev->dev_addr, wraddr, ETH_ALEN);
 	pr_debug("wr_nic: assign MAC %pM to wr%d\n", dev->dev_addr, epnum);
 
 	/* Finally, register and succeed, or fail and undo */
 	err = register_netdev(dev);
+
+	/* Increment MAC address for next endpoint */
+	val = get_unaligned_be32(wraddr + 2);
+	put_unaligned_be32(val + 1, wraddr + 2);
+
 	if (err) {
 		printk(KERN_ERR DRV_NAME "Can't register dev %s\n",
 		       dev->name);
