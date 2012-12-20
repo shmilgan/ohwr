@@ -545,17 +545,20 @@ The command to flash is this:
 @end example
 
 You can also flash the image you have build using @ref{Building} by
-adding the tag @code{-b|--build}. To use this option you must define the
-WRS_OUTPUT_DIR environment variable.
+adding the tag @code{-b|--build}. To use this option you must call
+the script from the build directory, or define the @t{WRS_OUTPUT_DIR}
+environment variable.
 
 @example
     /path/to/wr-switch-sw/build/flash-wrs -e -b
 @end example
 
 Please note that the ``@code{-e}'', which requires erasing the
-whole data flash, is mandatory because otherwise bits of your previous
+whole data flash, is almost mandatory because otherwise bits of your previous
 installation may leak into the newly-programmed one. Only on factory-new
-devices you can avoid this ``@code{-e}'' argument. When you program
+devices you can avoid this ``@code{-e}'' argument. 
+
+When you program
 the NAND memory the script applies automatically @code{-e} option.
 
 It is recomended to configure the MAC addresses during the flashing
@@ -569,24 +572,30 @@ MAC address to sequentially assign a MAC address for every switch ports.
     -m2 02:34:34:34:34:00
 @end example
 
-If you don't configure a MAC address, a big warning will be displayed and
-you have 3 seconds to abort the procedure. If you don't abort the flashing
+If you don't configure a MAC address, a warning will be displayed and
+you can abort the procedure. If you don't abort the flashing
 procedure, the script will use default MAC addresses. Default MAC addresses
-are: 02:34:56:78:9A:BC for MAC1, 02:34:56:78:9A:00 for MAC2.
+are: 02:34:56:78:9A:BC for MAC1 (the Ethernet port of the ARM CPU)
+and 02:34:56:78:9A:00 for MAC2 (the base address for the 18 SFP ports).
 
-@example
-/path/to/wr-switch-sw/build/flash-wrs -e -b    
----------------------------------------
-WARNING: YOU DID NOT SET THE MAC1 FIELD
----------------------------------------
----------------------------------------
-WARNING: YOU DID NOT SET THE MAC2 FIELD
----------------------------------------
-Starting flashing procedure in 3 seconds ...
-@end example
+@smallexample
+   tornado% ~/wip/wr-switch-sw/build/flash-wrs -e -b
+   flash-wrs: Working in /tmp/flash-wrs-1vV9z6
+   Warning: you did not set the MAC1 value; using "02:34:56:78:9A:BC"
+   Warning: you did not set the MAC2 value; using "02:34:56:78:9A:00"
+   flash-wrs: I'm talking with the switch;
+      please remove the jumper and press Enter to start flashing:
+@end smallexample
+
+If the script cannot find the Atmel programming interface on your USB
+bus, it prints a message and waits for the switch to be turned on
+in the proper way (with the humber plugged).
 
 The process calls the flasher program twice (so you'll see the
-initialization strings two times) an takes around 3 minutes.
+initialization strings two times) an takes slightly less than 3
+minutes.  the longest step is erasure of @i{DataFlash}: if run
+without @t{-e} the script takes just 20 seconds.
+
 This is the a summary of the output you are expected to see,
 trimmed to save pages:
 
@@ -603,7 +612,7 @@ Initializing DataFlash...
 loading applet isp-dataflash-at91sam9g45 at 0x00300000
 Initializing DataFlash > Done! 
 
-Erasing DataFlash > DONE
+Erasing DataFlash [... there is a long delay here ...] > DONE
 
 Programming DataFlash...
 	 @ 0x70000000 : at91bootstrap.bin ; size 0xf7c (3Kb)
@@ -634,11 +643,10 @@ Loading DDR...
 DDR: Writing 21119306 bytes at offset 0x0 buffer 70000000....ABCDEF
 
 [...]
-
 @end smallexample
 
-If you look at the serial port, during programming, you will see
-messages like these:
+It is suggested to look at the CPU's serial port during programming,
+where you you will see messages like these:
 
 @smallexample
    -I- Statup: PMC_MCKR 1202 MCK = 100000000 command = 0
@@ -697,7 +705,7 @@ Options:
   -m|--mode	 can be: default (df and nf), df (dataflash),
 		 nf (nandflash), ddr (ddr memories).
   -e 		 Completely erase the memory (Can erase your configuration)
-  -b|--build	 Use file that you have build in the WRS_OUTPUT_DIR
+  -b|--build	 Use files that you have built in the WRS_OUTPUT_DIR
   -m1|--mac1	 Default MAC address for the ethernet port on board
   -m2|--mac2	 Default base MAC address for the switch ports
 @end smallexample
@@ -721,9 +729,9 @@ install different binaries on these memories:
 @item nandflash: @emph{kernel} zImage and the @emph{file-system}
 @end itemize
 
-You can also erase the dataflash memory before write your binaries; to do this
-add the option @code{-e}. Note that the script always erase nandflash before
-write on it.
+You can also erase the dataflash memory before writing your binaries; to do this
+add the option @code{-e}. Note that the script always erases nandflash before
+writing on it.
 
 Finally, 
 
@@ -731,13 +739,13 @@ The script performs the following steps:
 
 @itemize @bullet
 @item It compiles the loader (@i{usb-loader/} subdir).
-@item Check if SAMBA bootloader is present.
+@item It checks if the SAMBA bootloader is present.
 @item It picks the correct binaries according to the options.
 @item Optionally, it changes the default MAC addresses in @i{barebox}
-      default environment, so you can make all switches different.
+      default environment, so you can use a different MAC for each switch.
 @item Optionally, it erases the dataflash memory.
 @item And finally, it writes the corresponding binaries to @i{dataflash}, 
-      or @i{ddr}.
+      or @i{nand}.
 @end itemize
 
 @c ############################################################################

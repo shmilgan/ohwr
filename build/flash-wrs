@@ -26,7 +26,7 @@ showhelp()
 	printf "  -h|--help\t Show this help message\n"
 	printf "  -m|--mode\t can be: default (df and nf), df (dataflash),\n\t\t nf (nandflash), ddr (ddr memories).\n"
 	printf "  -e \t\t Completely erase the memory (Can erase your configuration)\n"
-	printf "  -b|--build\t Use file that you have build in the WRS_OUTPUT_DIR\n"
+	printf "  -b|--build\t Use files that you have built in the WRS_OUTPUT_DIR\n"
 	printf "  -m1|--mac1\t Default MAC address for the ethernet port on board\n"
 	printf "  -m2|--mac2\t Default base MAC address for the switch ports\n"
 	exit 0
@@ -35,17 +35,14 @@ showhelp()
 
 checkExit()
 {
-	err=0;
-	if [ $1 ]; then
-		if [ -f $1 ]; then
-			return 0;
-		else
-			echo "Can't find $1" >& 2;
-		fi
+	# $1 == what, $2 == filename
+	# (assumes $me is the script name)
+	if [ -f $2 ]; then
+		return 0;
 	else
-		echo "varname not set"
+		echo "$me: Can't find file \"$2\" ($1)" >& 2;
+		exit 1
 	fi
-	exit 1
 }
 
 checkMAC()
@@ -72,9 +69,7 @@ modifyMAC()
 	fi
 	# Modify MAC address
 	sed -i "s/$MAC1_DEF/$MAC1/" $new
-	echo "MAC1 is now: $MAC1"
 	sed -i "s/$MAC2_DEF/$MAC2/" $new
-	echo "MAC2 is now: $MAC2"
 	return 0
 }
 
@@ -84,13 +79,22 @@ WRS_BASE_DIR=$(cd $dir && /bin/pwd)
 
 # Sanity checks
 if [ -d ${WRS_BASE_DIR}/usb-loader ]; then true; else
-    echo "$0: usb-loader is not found" >& 2
+    echo "$0: ${WRS_BASE_DIR}/usb-loader: no such directory" >& 2
     exit 1
 fi
 
+if [ "x${WRS_OUTPUT_DIR}" = "x" ]; then
+    export WRS_OUTPUT_DIR=$(/bin/pwd)
+fi
+
 # build flasher itself
-if CC=cc make -s -C ${WRS_BASE_DIR}/usb-loader; then true; else
-	echo "$0: Error compiling usb-loader" >&2; exit 1;
+FLASHER="${WRS_BASE_DIR}/usb-loader/mch_flasher"
+if [ -x $FLASHER ]; then
+    true
+else
+    if CC=cc make -s -C ${WRS_BASE_DIR}/usb-loader; then true; else
+	echo "$0: Error compiling in directory ${WRS_BASE_DIR}/usb-loader" >&2; exit 1;
+    fi
 fi
 
 # add /usr/sbin for mkfs.jffs2
@@ -121,6 +125,8 @@ rootfsjffs2=""
 # full path to the file system directory
 TMPFS=""
 
+TMPDIR=$(mktemp -d /tmp/flash-wrs-XXXXXX)
+
 while [ $# -ge 1 ]; do
 	case $1 in
 	-b|--build)
@@ -131,12 +137,12 @@ while [ $# -ge 1 ]; do
 		shift;;
 
 	*.tar.gz)
-		checkExit $1
-		tar --directory /tmp -xzf $1
-		at91bs=/tmp/at91bootstrap.bin;
-		barebox=/tmp/barebox.bin
-		kernel=/tmp/zImage
-		rootfsgz=/tmp/wrs-image.tar.gz
+		checkExit "tar-file" $1
+		tar --directory $TMPDIR -xzf $1
+		at91bs=$TMPDIR/at91bootstrap.bin;
+		barebox=$TMPDIR/barebox.bin
+		kernel=$TMPDIR/zImage
+		rootfsgz=$TMPDIR/wrs-image.tar.gz
 		shift;;
 
 	-h|--help) 	showhelp; shift;;
@@ -144,7 +150,7 @@ while [ $# -ge 1 ]; do
 	-m|--memmode)
 		# verify memory mode
 		if [ "$2" != "nf" ] && [ "$2" != "df" ] && [ "$2" != "ddr" ] && [ "$2" != "default" ]; then
-			echo "Error: Invalid memory mode"
+			echo "Error: Invalid memory mode \"$2\""
 			showhelp
 			exit 1
 		fi
@@ -171,7 +177,9 @@ while [ $# -ge 1 ]; do
 		fi
 		shift; shift;;
 
-	-*) FLAGS="${FLAGS} $1"; shift;;
+	-[ecs])
+		# e == erase, c == check, s == scrub
+		FLAGS="${FLAGS} $1"; shift;;
 
 	* ) echo "$0: Invalid argument \"$1\"" >&2; exit 1;;
     esac
@@ -181,19 +189,22 @@ if [ "x$rootfsgz" = "x" ]; then
     showhelp
 fi
 
-echo "---------------------------------------"
+# Even if not all files are always needed, check all of them immediately
+me=$(basename $0)
+echo "${me}: Working in $TMPDIR"
+checkExit barebox $barebox
+checkExit at91bootstrap $at91bs
+checkExit kernel $kernel
+checkExit root-filesystem $rootfsgz
+
+
 ## MAC1 and MAC2 are really recommended
 if [ "x$MAC1" = "x$MAC1_DEF" ]; then
-    echo "WARNING: YOU DID NOT SET THE MAC1 FIELD"
-    echo "---------------------------------------"
+    echo "Warning: you did not set the MAC1 value; using \"$MAC1_DEF\""
 fi
 if [ "x$MAC2" = "x$MAC2_DEF" ]; then
-    echo "WARNING: YOU DID NOT SET THE MAC2 FIELD"
-    echo "---------------------------------------"
+    echo "Warning: you did not set the MAC2 value; using \"$MAC2_DEF\""
 fi
-
-echo "Starting flashing procedure in 5 seconds ..."
-sleep 5
 
 ## Selecting the running memmode
 if [ "x$memmode" = "xdf" ]; then
@@ -207,56 +218,55 @@ else
 	nf=1
 fi
 
-# Check if atmel sam-ba is find by lusb
-msg="Waiting for at91sam SAMBA bootloader on usb\nPlease check that the Dataflash is short-circuited!\n"
-while true; do
-	lsusb | grep "at91sam" > /dev/null
-	if [ "$?" -eq "0" ]; then
-		break
-	else
-		if [ -n "$msg" ]; then
-			printf "$msg"
-			msg=""
+# Check if atmel sam-ba is found by lsusb
+if lsusb | grep -q "at91sam"; then
+	true;
+else
+	echo ""
+	echo "$me: Waiting for at91sam SAMBA bootloader on usb."
+	echo "    Please check the jumper is plugged"
+	echo "    and the USB cable is connected."
+	echo "    Then reset the switch or turn it on."
+	while true; do
+		if lsusb | grep -q "at91sam"; then
+			break
 		fi
 		sleep 1
-		printf "."
-	fi
-done
-if [ -z "$msg" ]; then
-	printf "\tOK\n"
-	read -p "Remove the Dataflash jumper (Press any key)" notused
+		echo -n "."
+	done
+	echo " Ok"
 fi
 
+# Remove the jumper now, before proceeding
+echo "$me: I'm talking with the switch;"
+echo -n "   please remove the jumper and press Enter to start flashing: "
+read unused
+
 # Create a temporary barebox binary with modified MAC addresses
-checkExit $barebox
-Tbarebox=$(mktemp /tmp/barebox.XXXXXX)
+Tbarebox=$TMPDIR/bb.new
 modifyMAC ${barebox} ${Tbarebox}
 
 
 ## Flashing DataFlash
 if [ $df ]; then
-	checkExit $at91bs
-	${WRS_BASE_DIR}/usb-loader/mch_flasher -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792
+	${FLASHER} -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792
 fi
 
 ## Prepare for the NAND flashing procedure
 if [ $nf ]; then
-	checkExit $kernel
-	checkExit $rootfsgz
-	TMPCPIO=$(mktemp /tmp/wrsflash-cpio.XXXXXX.cpio.gz)
 
-	TMPFS=$(mktemp -d /tmp/wrsfs-tgz.XXXXXX)
-	rootfsjffs2=/tmp/wrs-image.jffs2.img
+	TMPFS=$TMPDIR/wrsfs-tgz; mkdir $TMPFS
+	rootfsjffs2=$TMPDIR/wrs-image.jffs2
 
 	# The TMPCPIO is used for the NAND flashing procedure. It
 	# contains the magic string "paperino" (0x61706570 0x69726f6e)
 	# in the first 8bytes and in the following byte the whole
 	# file system. Barebox use this magic string to identify
 	# the flashing procedure.
-	echo -n "paperino" > $TMPCPIO
-	
+	TMPCPIO=$TMPDIR/wrsflash.cpio.gz
+
 	# make flashing cpio from the unzipped file system
-	TMPSCRIPT=$(mktemp /tmp/wrsrootfs-script.XXXXXX)
+	TMPSCRIPT=$TMPDIR/wrsrootfs-script
 	cat > $TMPSCRIPT << EOF
 tar --directory $TMPFS -xzf $rootfsgz
 
@@ -276,15 +286,16 @@ cp ${rootfsjffs2} $TMPFS/flashing/wrs-image.jffs2.img
 cp ${kernel} $TMPFS/flashing/zImage
 cp ${WRS_BASE_DIR}/usb-loader/S99flash-from-kernel.sh $TMPFS/etc/init.d/
 cd ..
+echo -n "paperino" > $TMPCPIO
 (cd "$TMPFS" && find . | cpio -o -H newc | gzip) >> $TMPCPIO
 EOF
 	fakeroot bash $TMPSCRIPT
 	rm $TMPSCRIPT
 
 	# Erase all nand memory
-	${WRS_BASE_DIR}/usb-loader/mch_flasher -e -m nand
+	$FLASHER -e -m nand
 	# Start nand flashing procedure
-	${WRS_BASE_DIR}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${TMPCPIO} 0x1FFFFF8
+	$FLASHER -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${TMPCPIO} 0x1FFFFF8
 
 	rm -rf $TMPFS
 	rm -rf $TMPCPIO
@@ -293,8 +304,6 @@ fi
 
 ## Loading in DDR
 if [ $test ]; then
-	checkExit $kernel
-	checkExit $rootfsgz
 
 	TMPFS=$(mktemp -d /tmp/wrsfs-tgz.XXXXXX)
 	rootfsjffs2=/tmp/wrs-image.jffs2.img
@@ -308,7 +317,7 @@ EOF
 	rm $TMPSCRIPT
 	rm $TMPFS
 
-	${WRS_BASE_DIR}/usb-loader/mch_flasher -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${rootfsjffs2} 0x2000000
+	$FLASHER -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${rootfsjffs2} 0x2000000
 fi
 
 rm $Tbarebox
