@@ -254,6 +254,7 @@ peripheral {
 					name = "RX 802.1q port mode";
 					description = "00: ACCESS port - tags untagged received packets with VID from RX_VID field. Drops all tagged packets not belonging to RX_VID VLAN\
 					               01: TRUNK port - passes only tagged VLAN packets. Drops all untagged packets.\
+					               10: VLAN disabled on port - passes the packets as is.\
 					               11: unqualified port - passes all traffic regardless of VLAN configuration";
 					type = SLV;
 					size = 2;
@@ -301,31 +302,29 @@ peripheral {
 
     reg {
        name = "VLAN Control Register 1";
-       description = "Controls the access to the egress VLAN untagged set.\
-                      Each write can enable (VALUE=1) / disable (VALUE=0) untagging frames\
-                      with given VID";
+       description = "Provides access to the egress VLAN untagged set and packet injection template buffer. In order to write to the buffer, set the DATA and OFFSET fields to the desired buffer location/value.\
+       The buffer layout goes as follows:\
+          - the lower part (offsets 0 to 255) contains the VLAN untagged set bitmap. Each bit represents a single VLAN, where VID = OFFSET * 16 + bit position. For bits set to 1, VLAN headers containing corrensponding VID value are untagged.\
+       - the higher part (offsets 512 to 1024) contains the packet injection template buffer.         The buffer can store up to 8 packet templates of up to 128 bytes of size. Bits [15:0] of each entry contain the data value to be sent, bit 16 indicates the last word to transfer and bit 17 indicates that the current word shall be replaced by the user value (inject_user_value_i)."; 
                      
        prefix = "VCR1";
        
        field {
-          name = "Egress untagged set bitmap VID";
-          description = "write: the VID to be tagged/untagged\
-                         read: undefined";
+          name = "VLAN Untagged Set/Injection Buffer offset";
+          description = "Buffer address to be written";
 
-          prefix = "VID";
+          prefix = "OFFSET";
           type = PASS_THROUGH;
-          size = 12;
+          size = 10;
        };
 
        field {
-          name = "Egress untagged set bitmap value";
-          description = "write 1: frames with matching VID are untagged\
-                         write 0: frames with matching VID are not modified\
-                         read: undefined";
+          name = "VLAN Untagged Set/Injection Buffer value";
+          description = "Buffer value to be written";
 
-          prefix = "VALUE";
+          prefix = "DATA";
           type = PASS_THROUGH;
-          size = 1;
+          size = 18;
        };
     };
 
@@ -377,9 +376,7 @@ peripheral {
           size = 12;
           name = "Microcode Memory Data (12 LSBs)";
           prefix = "MM_DATA_LSB";
-          type = SLV;
-          access_bus = READ_WRITE;
-          access_dev = READ_ONLY;
+          type = PASS_THROUGH;
        };
     };
 
@@ -395,7 +392,8 @@ peripheral {
           size = 24;
           type = SLV;
           access_bus = READ_WRITE;
-          access_dev = READ_ONLY;
+          access_dev = READ_WRITE;
+          load = LOAD_EXT;
        };
 
     };
@@ -411,8 +409,9 @@ peripheral {
                        0: disable reception of pause frames";
 				prefix = "RXPAUSE";
 				access_bus = READ_WRITE;
-				access_dev = READ_ONLY;
+				access_dev = READ_WRITE;
 				type = BIT;
+        load = LOAD_EXT;
 		 };
 
 		 field {
@@ -421,8 +420,9 @@ peripheral {
                        0: disable transmission of pause frames";
 				prefix = "TXPAUSE";
 				access_bus = READ_WRITE;
-				access_dev = READ_ONLY;
+				access_dev = READ_WRITE;
 				type = BIT;
+        load = LOAD_EXT;
 		 };
 
 
@@ -431,10 +431,11 @@ peripheral {
 				description = "Defines the percentage of space occupied in the RX buffer which triggers the transmission of a PAUSE frame. 0 = empty buffer, 255 = full buffer";
 				prefix = "TX_THR";
 				access_bus = READ_WRITE;
-				access_dev = READ_ONLY;
+				access_dev = READ_WRITE;
 				type = SLV;
 				size = 8;
 				align = 8;
+        load = LOAD_EXT;
 		 };
 
 		 field {
@@ -442,10 +443,11 @@ peripheral {
 				description = "Defines the quanta value carried bypause frames sent by the Endpoint";
 				prefix = "TX_QUANTA";
 				access_bus = READ_WRITE;
-				access_dev = READ_ONLY;
+				access_dev = READ_WRITE;
 				type = SLV;
 				size = 16;
 				align = 16;
+        load = LOAD_EXT;
 		 };
 	};
 
@@ -594,8 +596,9 @@ peripheral {
 				 description = "1: enables DMTD phase measurement";
 				 type = BIT;
 				 prefix = "EN";
-				 access_dev = READ_ONLY;
+				 access_dev = READ_WRITE;
 				 access_bus = READ_WRITE;
+         load = LOAD_EXT;
 			};
 
 			field {
@@ -605,8 +608,9 @@ peripheral {
 				 type = SLV;
 				 size = 12;
 				 align = 16;
-				 access_dev = READ_ONLY;
+				 access_dev = READ_WRITE;
 				 access_bus = READ_WRITE;
+         load = LOAD_EXT;
 			};
 	 };
 
