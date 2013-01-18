@@ -15,4 +15,6 @@ if [ "$rootloc" != "" ]; then
 else
 	echo "Starting ifplugd..."
 	/usr/sbin/ifplugd -I -f -i eth0
+	#Pull up the interface (check static/dynamic config in /etc/network/interfaces)
+	ifup eth0
 fi
