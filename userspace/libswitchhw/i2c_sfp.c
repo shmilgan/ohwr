@@ -202,7 +202,7 @@ int shw_sfp_bus_scan(int num, uint8_t *dev_map)
 	int i;
 	int detect;
 
-	if (num < 0 || num > ARRAY_SIZE(i2c_buses))
+	if (num < 0 || num >= ARRAY_SIZE(i2c_buses))
 		return -1;
 
 	if (i2c_buses[num].err)
