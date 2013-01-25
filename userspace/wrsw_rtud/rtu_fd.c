@@ -8,12 +8,12 @@
  *              Miguel Baizan   (miguel.baizan@integrasys.es)
  *              Maciej Lipinski (maciej.lipinski@cern.ch)
  *
- * Description: RTU Filtering database. 
- *              Filtering database management related operations and filtering 
- *              database mirror. Note there is a single Filtering Database 
+ * Description: RTU Filtering database.
+ *              Filtering database management related operations and filtering
+ *              database mirror. Note there is a single Filtering Database
  *              object per Bridge (See 802.1Q - 12.7.1)
  *
- * Fixes:       
+ * Fixes:
  *              Alessandro Rubini
  *              Tomasz Wlostowski
  *
@@ -52,10 +52,10 @@
 
 
 /**
- * \brief Filtering Database entry handle. 
+ * \brief Filtering Database entry handle.
  */
 struct fd_handle {
-    struct rtu_addr addr;                      
+    struct rtu_addr addr;
     struct filtering_entry *entry_ptr;  // pointer to entry at mirror fd
 };
 
@@ -82,7 +82,7 @@ struct hw_req *hw_req_list;
 static struct filtering_entry rtu_htab[HTAB_ENTRIES][RTU_BUCKETS];
 
 /**
- * \brief Mirror of Aging RAM. 
+ * \brief Mirror of Aging RAM.
  */
 static uint32_t rtu_agr_htab[RTU_ARAM_WORDS];
 
@@ -149,34 +149,34 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 }
 
 static int htab_search (
-        uint8_t mac[ETH_ALEN], 
-        uint8_t fid, 
+        uint8_t mac[ETH_ALEN],
+        uint8_t fid,
         struct filtering_entry **ent)
 {
 	int i, j;
-	
+
 	for(i=0; i<HTAB_ENTRIES; i++)
 		for(j=0; j<RTU_BUCKETS; j++)
 		{
 			struct filtering_entry *tmp = &rtu_htab[i][j];
-			
+
 			if(!tmp->valid)
 				continue;
-			
+
 			if(mac_equal(tmp->mac, mac) && tmp->fid == fid)
 			{
 				*ent = tmp;
 				return 1;
 			}
 		}
-	
+
 	return 0;
 }
 
 static int htab_count_buckets(struct rtu_addr addr)
 {
 	int n = 0, i;
-	
+
 	for(i=0; i<RTU_BUCKETS; i++)
 		if(rtu_htab[addr.hash][i].valid)
 			n++;
@@ -192,7 +192,7 @@ static int htab_count_buckets(struct rtu_addr addr)
  * @param port_map a port map specification with a control element for each
  * outbound port to specify filtering for that MAC address specification and VID
  * @param dynamic it indicates whether it's a dynamic entry
- * @return 0 if entry was created or updated. -ENOMEM if no space is available. 
+ * @return 0 if entry was created or updated. -ENOMEM if no space is available.
  */
 int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask, int dynamic)
 {
@@ -201,7 +201,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
     int ret = 0;                            		// return value
     uint32_t mask_src, mask_dst;            		// used to check port masks update
 		struct rtu_addr eaddr;
-		
+
 
     pthread_mutex_lock(&fd_mutex);
     // if VLAN is registered (otherwise just ignore request)
@@ -224,7 +224,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
             }
 				/* Case 2: MAC not found */
 				} else {
-						int n_buckets; 
+						int n_buckets;
 
 						eaddr.hash = rtu_hash(mac, fid);
 						n_buckets = htab_count_buckets(eaddr);
@@ -234,9 +234,9 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 							TRACE(TRACE_ERROR, "Hash %03x has no buckets left.", eaddr.hash);
 							return -ENOMEM;
 						}
-				
+
 						eaddr.bucket = n_buckets;
-				
+
 						ent = &rtu_htab[eaddr.hash][eaddr.bucket];
 						ent->addr          = eaddr;
 
@@ -251,7 +251,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
             mac_copy(ent->mac, mac);
             hw_request(HW_WRITE_REQ, eaddr, ent);
 				}
-        
+
     }
     rtu_fd_commit();
     pthread_mutex_unlock(&fd_mutex);
@@ -263,24 +263,24 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
  * Changing the hash polynomial requires removing any existing
  * entry from RTU table.
  * Note in case RTU table becomes full, this function may
- * be used to change hash polynomial (thus leading to a different hash 
+ * be used to change hash polynomial (thus leading to a different hash
  * distribution).
- * @param poly binary polynomial representation. 
- * CRC-16-CCITT -> 1+x^5+x^12+x^16          -> 0x1021   
+ * @param poly binary polynomial representation.
+ * CRC-16-CCITT -> 1+x^5+x^12+x^16          -> 0x1021
  * CRC-16-IBM   -> 1+x^2+x^15+x^16          -> 0x8005
  * CRC-16-DECT  -> 1+x^3+x^7+x^8+x^10+x^16  -> 0x0589
  */
 void rtu_fd_set_hash_poly(uint16_t poly)
-{   
+{
     pthread_mutex_lock(&fd_mutex);
     rtu_write_hash_poly(poly);
-    rtu_hash_set_poly(poly);  
-    pthread_mutex_unlock(&fd_mutex);  
+    rtu_hash_set_poly(poly);
+    pthread_mutex_unlock(&fd_mutex);
 }
 
 /**
  * \brief Sets the aging time for dynamic filtering entries.
- * @param t new aging time value [seconds]. 
+ * @param t new aging time value [seconds].
  * @return -EINVAL if t < 10 or t > 1000000 (802.1Q, Table 8.3); 0 otherwise.
  */
 int rtu_fd_set_aging_time(unsigned long t)
@@ -297,11 +297,11 @@ int rtu_fd_set_aging_time(unsigned long t)
  * changes in active topology.
  */
 void rtu_fd_flush(void)
-{    
-    rtu_fd_age_update();    // Update filtering entries age    
+{
+    rtu_fd_age_update();    // Update filtering entries age
 
     pthread_mutex_lock(&fd_mutex);
-    rtu_fd_age_out();       // Remove old entries    
+    rtu_fd_age_out();       // Remove old entries
     pthread_mutex_unlock(&fd_mutex);
 }
 
@@ -316,9 +316,9 @@ struct filtering_entry *rtu_fd_lookup_htab_entry(int index)
 			{
 				if(n == index) return &rtu_htab[i][j];
 				n++;
-			}	
-		}	
-    }		
+			}
+		}
+    }
 	return  NULL;
 }
 
@@ -357,7 +357,7 @@ static int hw_request(int type, struct rtu_addr addr,  struct filtering_entry *e
     req = (struct hw_req*) malloc(sizeof(struct hw_req));
     if(!req)
         return -ENOMEM;
-    
+
     req->type             = type;
     req->handle.addr      = addr;
     req->handle.entry_ptr = ent;
@@ -400,7 +400,7 @@ static void clean_fd(void)
 }
 
 /**
- * VLAN database initialisation. VLANs are initially marked as disabled. 
+ * VLAN database initialisation. VLANs are initially marked as disabled.
  */
 static void clean_vd(void)
 {
@@ -423,39 +423,39 @@ static void clean_vd(void)
 }
 
 /**
- * \brief Updates the age of filtering entries accessed in the last period. 
+ * \brief Updates the age of filtering entries accessed in the last period.
  */
 static void rtu_fd_age_update(void)
 {
     int i;                              // Aging Bitmap word loop index
     int j;                              // Word bits loop index
-    uint32_t agr_word;                  // Aux var for manipulating aging RAM 
+    uint32_t agr_word;                  // Aux var for manipulating aging RAM
     uint16_t hash;                      // HTAB entry hash (index)
     int bucket;                         // HTAB entry bucket
     int bit_cnt;                        // Absolute bit counter
     unsigned long t;                    // Time since epoch (secs)
 
 		uint32_t bitmap[RTU_ENTRIES / 32];
-		
+
 		rtu_read_aging_bitmap(bitmap);
 
     // Update 'last access time' for accessed entries
     t = now();
     // HTAB
-    for(i = 0; i < RTU_ENTRIES / 32; i++) 
+    for(i = 0; i < RTU_ENTRIES / 32; i++)
 	    for(j = 0; j < 32; j++) {
         agr_word = bitmap[i];
 				if(agr_word & (1 << j)) {
-	        bit_cnt = (i << 5) | j;   
+	        bit_cnt = (i << 5) | j;
           hash    = bit_cnt >> 2;             // 4 buckets per hash
-          bucket  = bit_cnt & 0x03;           // last 2 bits    
- 
+          bucket  = bit_cnt & 0x03;           // last 2 bits
+
  					if(!rtu_htab[hash][bucket].dynamic)
  						continue;
- 
+
           TRACE(
-            TRACE_INFO, 
-            "Updated htab entry age: mac = %s, hash = %03x:%d, delta_t = %d", 
+            TRACE_INFO,
+            "Updated htab entry age: mac = %s, hash = %03x:%d, delta_t = %d",
             mac_to_string(rtu_htab[hash][bucket].mac),
             hash,
             bucket,
@@ -483,7 +483,7 @@ void rtu_fd_clear_entries_for_port(int dest_port)
                 hw_request(HW_REMOVE_REQ, ent->addr, ent);
               else {
 								TRACE(TRACE_ERROR, "cleaning multicast entries not supported yet...\n");
-              	
+
               }
             }
         }
@@ -493,8 +493,8 @@ void rtu_fd_clear_entries_for_port(int dest_port)
 }
 
 /**
- * For each filtering entry in the filtering database, this method checks its 
- * last access time and removes it in case entry is older than the aging time. 
+ * For each filtering entry in the filtering database, this method checks its
+ * last access time and removes it in case entry is older than the aging time.
  */
 static void rtu_fd_age_out(void)
 {
@@ -504,14 +504,14 @@ static void rtu_fd_age_out(void)
     unsigned long t;                            // (secs)
 
     t = now() - aging_time;
-    // HTAB    
+    // HTAB
     for (i = HTAB_ENTRIES; i-- > 0;) {
         for (j = RTU_BUCKETS; j-- > 0;) {
             ent = &rtu_htab[i][j];
             if(ent->valid && ent->dynamic && (time_after(t, ent->last_access_t) || ent->force_remove)){
                 TRACE(
-                    TRACE_INFO, 
-                    "Deleting htab entry: mac = %s, hash = 0x%x, bucket = %d, forced=%d\n", 
+                    TRACE_INFO,
+                    "Deleting htab entry: mac = %s, hash = 0x%x, bucket = %d, forced=%d\n",
                     mac_to_string(ent->mac),
                     i,
                     j,
@@ -526,7 +526,7 @@ static void rtu_fd_age_out(void)
 }
 
 /**
- * \brief Read changes from hw_req_list and invoke RTU driver to efectively 
+ * \brief Read changes from hw_req_list and invoke RTU driver to efectively
  * write or clean the entry.
  */
 static void delete_htab_entry(struct rtu_addr addr)
@@ -536,12 +536,12 @@ static void delete_htab_entry(struct rtu_addr addr)
 	TRACE(TRACE_INFO, "Deleted entry for MAC %s : hash %03x:%d.", mac_to_string(rtu_htab[addr.hash][addr.bucket].mac), addr.hash, addr.bucket);
 
 	memset(&rtu_htab[addr.hash][addr.bucket], 0, sizeof(struct filtering_entry));
-	
+
 	if(addr.bucket < n_buckets-1)
-		memmove(&rtu_htab[addr.hash][addr.bucket], 
-						&rtu_htab[addr.hash][addr.bucket+1], 
+		memmove(&rtu_htab[addr.hash][addr.bucket],
+						&rtu_htab[addr.hash][addr.bucket+1],
 						(n_buckets-addr.bucket-1) * sizeof(struct filtering_entry));
-	
+
 
 	for(i=0; i<n_buckets; i++)
 	{
@@ -549,9 +549,9 @@ static void delete_htab_entry(struct rtu_addr addr)
 		a.hash = addr.hash;
 		a.bucket = i;
 		rtu_write_htab_entry(to_mem_addr(a), &rtu_htab[a.hash][a.bucket], (i == n_buckets-1) ? 1 : 0);
-	}	
+	}
 }
- 
+
 static void rtu_hw_commit(void)
 {
     struct hw_req *req;     // used to scan hw_req_list
@@ -561,13 +561,13 @@ static void rtu_hw_commit(void)
         case HW_WRITE_REQ:
             rtu_write_htab_entry(to_mem_addr(req->handle.addr), req->handle.entry_ptr, 1);
             break;
- 
+
         case HW_REMOVE_REQ:
             delete_htab_entry(req->handle.addr);
             break;
- 
+
         }
-    }        
+    }
 }
 
 /**

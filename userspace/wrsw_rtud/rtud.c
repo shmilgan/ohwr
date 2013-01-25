@@ -7,14 +7,14 @@
  * Authors:     Juan Luis Manas (juan.manas@integrasys.es)
  *              Miguel Baizan   (miguel.baizan@integrasys.es)
  *
- * Description: RTU daemon. 
- *              Handles the learning and aging processes. 
+ * Description: RTU daemon.
+ *              Handles the learning and aging processes.
  *              Manages the filtering and VLAN databases.
  *
- * Fixes:       
+ * Fixes:
  *              Alessandro Rubini
- *              Tomasz Wlostowski 
- *              
+ *              Tomasz Wlostowski
+ *
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,7 +63,7 @@ static struct {
 
 
 /**
- * \brief Creates the static entries in the filtering database 
+ * \brief Creates the static entries in the filtering database
  * @return error code
  */
 
@@ -79,9 +79,9 @@ static int rtu_create_static_entries()
 
 
 		halexp_query_ports(&ports);
-		
+
 		TRACE(TRACE_INFO, "Number of physical ports: %d, active ports: %d\n", ports.num_physical_ports, ports.num_ports);
-	
+
     // VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
     TRACE(TRACE_INFO,"adding static routes for slow protocols...");
     for(i = 0; i < NUM_RESERVED_ADDR; i++) {
@@ -90,23 +90,23 @@ static int rtu_create_static_entries()
         if(err)
             return err;
     }
-    
+
   	memset(port_state, 0, sizeof(port_state));
-  	
+
     for(i = 0; i < ports.num_ports; i++) {
-        halexp_get_port_state(&pstate, ports.port_names[i]); 
+        halexp_get_port_state(&pstate, ports.port_names[i]);
         enabled_port_mask |= (1 << pstate.hw_index);
-        
+
         strncpy(port_state[i].if_name, ports.port_names[i], 16);
         port_state[i].is_up = 0;
         port_state[i].hw_index = pstate.hw_index;
     		port_state[i].in_use = 1;
-    		    
+
         TRACE(
             TRACE_INFO,
-            "adding static route for port %s index %d [mac %s]", 
-            ports.port_names[i], 
-            pstate.hw_index, 
+            "adding static route for port %s index %d [mac %s]",
+            ports.port_names[i],
+            pstate.hw_index,
             mac_to_string(pstate.hw_addr)
         );
 
@@ -147,25 +147,25 @@ static void rtu_update_ports_state()
 	if(fd_raw < 0)
 	{
 		fd_raw = socket(AF_PACKET, SOCK_DGRAM, 0);
-	  if(fd_raw < 0) 
+	  if(fd_raw < 0)
 	  	return;
 	}
-	
+
 	for(i=0; i <= MAX_PORT; i++)
 	{
 		if(!port_state[i].in_use)
 			continue;
-			
+
 		int link_up = check_link(fd_raw, port_state[i].if_name);
 		if(port_state[i].is_up && !link_up)
 		{
 			TRACE(TRACE_INFO, "Port %s went down, removing corresponding entries...", port_state[i].if_name)
-			
+
 			rtu_fd_clear_entries_for_port(port_state[i].hw_index);
-		} 
-		
+		}
+
 		port_state[i].is_up = link_up;
-		
+
 	}
 }
 
@@ -177,7 +177,7 @@ static void *rtu_daemon_aging_process(void *arg)
 {
 
     while(1) {
-				rtu_update_ports_state();    		
+				rtu_update_ports_state();
         rtu_fd_flush();
         sleep(1);
     }
@@ -204,12 +204,12 @@ static void *rtu_daemon_wripc_process(void *arg)
 
 
 /**
- * \brief Handles the learning process. 
+ * \brief Handles the learning process.
  * @return error code
  */
 static int rtu_daemon_learning_process()
 {
-    int err, i, port_down;                            
+    int err, i, port_down;
     struct rtu_request req;             // Request read from learning queue
     uint32_t port_map;                  // Destination port map
     uint16_t vid;                       // VLAN identifier
@@ -220,20 +220,20 @@ static int rtu_daemon_learning_process()
         if (!err) {
             TRACE(
                 TRACE_INFO,
-                "ureq: port %d src %s VID %d priority %d", 
-                req.port_id, 
+                "ureq: port %d src %s VID %d priority %d",
+                req.port_id,
                 mac_to_string(req.src),
                 req.has_vid  ? req.vid:0,
                 req.has_prio ? req.prio:0
             );
-            
+
 						for(port_down=i=0; i<=MAX_PORT;i++)
 							if(port_state[i].in_use && port_state[i].hw_index == req.port_id && !port_state[i].is_up)
 							{
 								port_down = 1;
 								break;
 							}
-							
+
 						/* don't learn on ports that are down (FIFO tail?) */
             if(port_down)
             	continue;
@@ -259,7 +259,7 @@ static int rtu_daemon_learning_process()
 
 
 /**
- * \brief RTU set up. 
+ * \brief RTU set up.
  * Initialises routing table cache and RTU at hardware.
  * @param poly hash polinomial.
  * @param aging_time Aging time in seconds.
@@ -294,7 +294,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
     // init filtering database
     TRACE(TRACE_INFO, "init fd.");
     err = rtu_fd_init(poly, aging_time);
-    if (err) 
+    if (err)
         return err;
 
     // create static filtering entries
@@ -315,7 +315,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
  * \brief RTU shutdown.
  */
 static void rtu_daemon_destroy()
-{ 
+{
     // Threads stuff
     pthread_cancel(wripc_process);
     pthread_cancel(aging_process);
@@ -332,11 +332,11 @@ void sigint(int signum) {
 
 /**
  * \brief Starts up the learning and aging processes.
- */ 
+ */
 int main(int argc, char **argv)
 {
 	int op, err;
-    char *s, *name, *optstring;			
+    char *s, *name, *optstring;
     int run_as_daemon        = 0;
     uint16_t poly            = HW_POLYNOMIAL_CCITT;  // Hash polinomial
     unsigned long aging_res  = DEFAULT_AGING_RES;    // Aging resolution [sec.]
@@ -359,7 +359,7 @@ int main(int argc, char **argv)
                 run_as_daemon = 1;
                 break;
             case 'h':
-                usage(name);                
+                usage(name);
             case 'p':
                 if (strcmp(optarg, "CCITT") == 0) {
                     poly = HW_POLYNOMIAL_CCITT;
@@ -380,7 +380,7 @@ int main(int argc, char **argv)
                 break;
             case 't':
                 aging_time = atol(optarg);
-                if ((aging_time < MIN_AGING_TIME) || 
+                if ((aging_time < MIN_AGING_TIME) ||
                     (aging_time > MAX_AGING_TIME)) {
                     fprintf(stderr, "Invalid aging time\n");
                     usage(name);
@@ -392,7 +392,7 @@ int main(int argc, char **argv)
         }
     }
 
-    // Initialise RTU. 
+    // Initialise RTU.
     if((err = rtu_daemon_init(poly, aging_time)) < 0) {
         rtu_daemon_destroy();
         return err;
@@ -402,7 +402,7 @@ int main(int argc, char **argv)
 	signal(SIGINT, sigint);
 
     // daemonize _before_ creating threads
-    if(run_as_daemon) 
+    if(run_as_daemon)
         daemonize();
 
     // Start up aging process and auxiliary WRIPC thread
@@ -411,7 +411,7 @@ int main(int argc, char **argv)
         rtu_daemon_destroy();
         return err;
     }
-    
+
     // Start up learning process.
     err = rtu_daemon_learning_process();
     // On error, release RTU resources

@@ -8,16 +8,16 @@
  *              Miguel Baizan   (miguel.baizan@integrasys.es)
  *              Maciej Lipinski (maciej.lipinski@cern.ch)
  *
- * Description: RTU driver module in user space. Provides read/write access 
- *              to RTU_at_HW  components including: 
- *              - UFIFO 
+ * Description: RTU driver module in user space. Provides read/write access
+ *              to RTU_at_HW  components including:
+ *              - UFIFO
  *              - MFIFO
  *              - Aging RAM for Main Hashtable
  *              - VLAN Table
  *              - RTU Global Control Register
  *              - RTU Port settings
  *
- * Fixes:       
+ * Fixes:
  *              Alessandro Rubini
  *              Tomasz Wlostowski
  *
@@ -80,7 +80,7 @@ int rtu_init(void)
 {
     int err;
 
-    if(halexp_client_try_connect(HAL_CONNECT_RETRIES, HAL_CONNECT_TIMEOUT) < 0) 
+    if(halexp_client_try_connect(HAL_CONNECT_RETRIES, HAL_CONNECT_TIMEOUT) < 0)
     {
         TRACE(
             TRACE_FATAL,
@@ -88,7 +88,7 @@ int rtu_init(void)
             );
 				exit(-1);
 		}
-		
+
     // Used to 'get' RTU IRQs from kernel
 	fd = open(RTU_DEVNAME, O_RDWR);
 	if (fd < 0)
@@ -110,7 +110,7 @@ void rtu_exit(void)
 {
     if(fd >= 0)
         close(fd);
-            
+
     TRACE(TRACE_INFO, "module cleanup\n");
 }
 
@@ -184,7 +184,7 @@ int rtu_read_learning_queue(struct rtu_request *req)
     }
 
 
-    // read data from mapped IO memory 
+    // read data from mapped IO memory
     uint32_t r0 = rtu_rd( UFIFO_R0);
     uint32_t r1 = rtu_rd( UFIFO_R1);
     uint32_t r2 = rtu_rd( UFIFO_R2);
@@ -197,12 +197,12 @@ int rtu_read_learning_queue(struct rtu_request *req)
     uint32_t dmac_lo = RTU_UFIFO_R0_DMAC_LO_R(r0);
     uint32_t dmac_hi = RTU_UFIFO_R1_DMAC_HI_R(r1);
     uint32_t smac_lo = RTU_UFIFO_R2_SMAC_LO_R(r2);
-    uint32_t smac_hi = RTU_UFIFO_R3_SMAC_HI_R(r3);  
- 	
-    req->port_id  = RTU_UFIFO_R4_PID_R(r4);      
-    req->has_prio = RTU_UFIFO_R4_HAS_PRIO & r4;  
-    req->prio     = RTU_UFIFO_R4_PRIO_R(r4);     
-    req->has_vid  = RTU_UFIFO_R4_HAS_VID & r4; 
+    uint32_t smac_hi = RTU_UFIFO_R3_SMAC_HI_R(r3);
+
+    req->port_id  = RTU_UFIFO_R4_PID_R(r4);
+    req->has_prio = RTU_UFIFO_R4_HAS_PRIO & r4;
+    req->prio     = RTU_UFIFO_R4_PRIO_R(r4);
+    req->has_vid  = RTU_UFIFO_R4_HAS_VID & r4;
     req->vid      = RTU_UFIFO_R4_VID_R(r4);
     // destination mac
     req->dst[5]   = 0xFF &  dmac_lo;
@@ -218,9 +218,9 @@ int rtu_read_learning_queue(struct rtu_request *req)
     req->src[2]   = 0xFF & (smac_lo >> 24);
     req->src[1]   = 0xFF &  smac_hi;
     req->src[0]   = 0xFF & (smac_hi >> 8);
-	
+
 	  ioctl(fd, WR_RTU_IRQENA);
-  
+
     return 0;
 }
 
@@ -286,7 +286,7 @@ void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent, int fl
     TRACE_DBG(
         TRACE_INFO,
         "write htab entry [with flush]: addr %x ent %08x %08x %08x %08x %08x",
-        zbt_addr, 
+        zbt_addr,
         mac_entry_word0_w(ent),
         mac_entry_word1_w(ent),
         mac_entry_word2_w(ent),
@@ -308,8 +308,8 @@ void rtu_clean_htab(void)
         write_mfifo_data(0x00000000);
         write_mfifo_data(0x00000000);
         write_mfifo_data(0x00000000);
-        write_mfifo_data(0x00000000);            
-		flush_mfifo();        
+        write_mfifo_data(0x00000000);
+		flush_mfifo();
     }
 }
 
@@ -321,10 +321,10 @@ void rtu_clean_htab(void)
  * Aging RAM Size: 256 32-bit words
  */
 
-void rtu_read_aging_bitmap( uint32_t *bitmap ) 
+void rtu_read_aging_bitmap( uint32_t *bitmap )
 {
 	int i;
-	for(i=0; i< RTU_ENTRIES / 32; i++)	
+	for(i=0; i< RTU_ENTRIES / 32; i++)
 	{
    	bitmap[i] = _fpga_readl(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*i);
     _fpga_writel(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*i, 0);
@@ -350,12 +350,12 @@ void rtu_write_vlan_entry(int vid, struct vlan_table_entry *ent)
           | (ent->has_prio ? RTU_VTR1_HAS_PRIO : 0)
           | RTU_VTR1_PRIO_W(ent->prio)
           | RTU_VTR1_FID_W(ent->fid);
-   
+
 	rtu_wr(VTR2,  vtr2);
 	rtu_wr(VTR1,  vtr1);
 
 	TRACE(TRACE_INFO, "AddVlan: vid %d port_mask 0x%x", vid, ent->port_mask);
-	
+
 }
 
 /**
@@ -368,7 +368,7 @@ void rtu_clean_vlan_entry( int vid )
 
   vtr2 = 0;
   vtr1 = RTU_VTR1_UPDATE | RTU_VTR1_VID_W(vid);
-   
+
 	rtu_wr(VTR2,  vtr2);
 	rtu_wr(VTR1,  vtr1);
 }
@@ -379,7 +379,7 @@ void rtu_clean_vlan_entry( int vid )
 void rtu_clean_vlan(void)
 {
     int addr;
-   	for (addr = 0; addr < NUM_VLANS; addr++) 
+   	for (addr = 0; addr < NUM_VLANS; addr++)
 			rtu_clean_vlan_entry(addr);
 }
 
@@ -413,7 +413,7 @@ void rtu_disable(void)
 uint16_t rtu_read_hash_poly(void)
 {
 	uint32_t gcr = rtu_rd( GCR);
-  return RTU_GCR_POLY_VAL_R(gcr);    
+  return RTU_GCR_POLY_VAL_R(gcr);
 }
 
 /**
@@ -447,7 +447,7 @@ int rtu_set_fixed_prio_on_port(int port, uint8_t prio)
         return -EINVAL;
 
 	uint32_t pcr = read_pcr(port);
-	write_pcr(port, pcr | RTU_PCR_FIX_PRIO | RTU_PCR_PRIO_VAL_W(prio)); 
+	write_pcr(port, pcr | RTU_PCR_FIX_PRIO | RTU_PCR_PRIO_VAL_W(prio));
 	return 0;
 }
 
@@ -463,7 +463,7 @@ int rtu_unset_fixed_prio_on_port(int port)
         return -EINVAL;
 
 	uint32_t pcr = read_pcr(port);
-	write_pcr(port, pcr & (RTU_PCR_LEARN_EN | RTU_PCR_PASS_ALL | RTU_PCR_PASS_BPDU | RTU_PCR_B_UNREC)); 
+	write_pcr(port, pcr & (RTU_PCR_LEARN_EN | RTU_PCR_PASS_ALL | RTU_PCR_PASS_BPDU | RTU_PCR_B_UNREC));
 
 	return 0;
 }
@@ -471,7 +471,7 @@ int rtu_unset_fixed_prio_on_port(int port)
 /**
  * \brief Sets the LEARN_EN flag on indicated port.
  * @param port port number (0 to 9)
- * @param flag 0 disables learning. Otherwise: enables learning porcess on this port. 
+ * @param flag 0 disables learning. Otherwise: enables learning porcess on this port.
  * @return error code.
  */
 int rtu_learn_enable_on_port(int port, int flag)
@@ -484,7 +484,7 @@ int rtu_learn_enable_on_port(int port, int flag)
         RTU_PCR_LEARN_EN    | pcr :
         (~RTU_PCR_LEARN_EN) & pcr ;
 
-	write_pcr(port, pcr); 
+	write_pcr(port, pcr);
   return 0;
 }
 
@@ -492,10 +492,10 @@ int rtu_learn_enable_on_port(int port, int flag)
  * \brief Sets the PASS_BPDU flag on indicated port.
  * @param port port number (0 to 9)
  * @param flag 0: BPDU packets are passed RTU rules only if PASS_ALL is set.
- * Otherwise: BPDU packets are passed according to RTU rules. 
+ * Otherwise: BPDU packets are passed according to RTU rules.
  * @return error code.
  */
-int rtu_pass_bpdu_on_port(int port, int flag) 
+int rtu_pass_bpdu_on_port(int port, int flag)
 {
     if( (port < MIN_PORT) || (port > MAX_PORT) )
         return -EINVAL;
@@ -504,7 +504,7 @@ int rtu_pass_bpdu_on_port(int port, int flag)
   pcr = flag ?
         RTU_PCR_PASS_BPDU    | pcr :
        (~RTU_PCR_PASS_BPDU) & pcr ;
-	write_pcr(port, pcr); 
+	write_pcr(port, pcr);
   return 0;
 }
 
@@ -514,7 +514,7 @@ int rtu_pass_bpdu_on_port(int port, int flag)
  * @param flag 0: all packets are dropped. Otherwise: all packets are passed.
  * @return error code.
  */
-int rtu_pass_all_on_port(int port, int flag) 
+int rtu_pass_all_on_port(int port, int flag)
 {
   if( (port < MIN_PORT) || (port > MAX_PORT) )
       return -EINVAL;
@@ -524,17 +524,17 @@ int rtu_pass_all_on_port(int port, int flag)
   pcr = flag ?
         RTU_PCR_PASS_ALL    | pcr :
         (~RTU_PCR_PASS_ALL) & pcr ;
-	write_pcr(port, pcr); 
+	write_pcr(port, pcr);
   return 0;
 }
 
 /**
  * \brief Sets the B_UNREC flag on indicated port.
  * @param port port number (0 to 9)
- * @param flag 0: packet is dropped. Otherwise: packet is broadcast. 
+ * @param flag 0: packet is dropped. Otherwise: packet is broadcast.
  * @return error code.
  */
-int rtu_set_unrecognised_behaviour_on_port(int port, int flag) 
+int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
 {
     if( (port < MIN_PORT) || (port > MAX_PORT) )
         return -EINVAL;
@@ -545,7 +545,7 @@ int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
         RTU_PCR_B_UNREC    | pcr :
         (~RTU_PCR_B_UNREC) & pcr ;
 
-	write_pcr(port, pcr); 
+	write_pcr(port, pcr);
   return 0;
 }
 
@@ -572,13 +572,13 @@ static void write_mfifo_data(uint32_t word)
 
 static uint32_t mac_entry_word0_w(struct filtering_entry *ent)
 {
-    return 
+    return
         ((0xFF & ent->mac[0])                        << 24)  |
         ((0xFF & ent->mac[1])                        << 16)  |
-        ((0xFF & ent->fid)                           <<  4)  | 
-        ((0x1  & ent->is_bpdu)                       <<  2)  | 
-        ((0x1  & ent->end_of_bucket)                 <<  1)  | 
-        ((0x1  & ent->valid )                             )  ;	      
+        ((0xFF & ent->fid)                           <<  4)  |
+        ((0x1  & ent->is_bpdu)                       <<  2)  |
+        ((0x1  & ent->end_of_bucket)                 <<  1)  |
+        ((0x1  & ent->valid )                             )  ;
 }
 
 static uint32_t mac_entry_word1_w(struct filtering_entry *ent)
@@ -593,28 +593,28 @@ static uint32_t mac_entry_word1_w(struct filtering_entry *ent)
 static uint32_t mac_entry_word2_w(struct filtering_entry *ent)
 {
     return
-        ((0x1 & ent->drop_when_dest)                 << 28)  | 
-        ((0x1 & ent->prio_override_dst)              << 27)  | 
-        ((0x7 & ent->prio_dst)                       << 24)  | 
-        ((0x1 & ent->has_prio_dst)                   << 23)  | 
-        ((0x1 & ent->drop_unmatched_src_ports)       << 22)  | 
-        ((0x1 & ent->drop_when_source)               << 21)  | 
+        ((0x1 & ent->drop_when_dest)                 << 28)  |
+        ((0x1 & ent->prio_override_dst)              << 27)  |
+        ((0x7 & ent->prio_dst)                       << 24)  |
+        ((0x1 & ent->has_prio_dst)                   << 23)  |
+        ((0x1 & ent->drop_unmatched_src_ports)       << 22)  |
+        ((0x1 & ent->drop_when_source)               << 21)  |
         ((0x1 & ent->prio_override_src)              << 20)  |
-		    ((0x7 & ent->prio_src)                       << 17)  | 
+		    ((0x7 & ent->prio_src)                       << 17)  |
         ((0x1 & ent->has_prio_src)                   << 16);
 }
 
 static uint32_t mac_entry_word3_w(struct filtering_entry *ent)
 {
     return
-        ((0xFFFF & ent->port_mask_dst)               << 16)  | 
+        ((0xFFFF & ent->port_mask_dst)               << 16)  |
         ((0xFFFF & ent->port_mask_src)                    )  ;
 }
 
 static uint32_t mac_entry_word4_w(struct filtering_entry *ent)
 {
     return
-        ((0xFFFF & (ent->port_mask_dst >> 16))         << 16)  | 
+        ((0xFFFF & (ent->port_mask_dst >> 16))         << 16)  |
         ((0xFFFF & (ent->port_mask_src >> 16))              )  ;
 }
 
