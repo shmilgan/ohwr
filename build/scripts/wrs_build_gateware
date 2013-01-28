@@ -21,11 +21,13 @@ else
 fi
 
 if [ "$WRS_HW_DIR" != "" ]; then
-        wrs_echo "Copying binaries from $WRS_HW_DIR"
-	cp ${WRS_HW_DIR}/syn/scb_8ports/scb_top_synthesis.bin  $FWDIR/8ports_mb.bin
-	cp ${WRS_HW_DIR}/syn/scb_18ports/scb_top_synthesis.bin $FWDIR/18ports_mb.bin
+    wrs_echo "Copying binaries from $WRS_HW_DIR"
+	cp ${WRS_HW_DIR}/syn/scb_8ports/scb_top_synthesis.bin  $FWDIR/8p_mb-LX130T.bin
+	cp ${WRS_HW_DIR}/syn/scb_18ports/scb_top_synthesis.bin $FWDIR/18p_mb-LX130T.bin
+#	cp ${WRS_HW_DIR}/syn/scb_8ports/scb_top_synthesis.bin  $FWDIR/8p_mb-LX240T.bin
+#	cp ${WRS_HW_DIR}/syn/scb_18ports/scb_top_synthesis.bin $FWDIR/18p_mb-LX240T.bin
 else
-	tarname="wrs3-gw-v3.0-20120801.tar.gz"
+	tarname="wrs3-gw-v3.3-20130213.tar.gz"
         wrs_echo "Using pre-build binaries from $tarname"
 	wrs_download $tarname
 	tar xzf $WRS_DOWNLOAD_DIR/$tarname -C $FWDIR
