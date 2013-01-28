@@ -444,8 +444,12 @@ void shw_sfp_gpio_set(int num, uint8_t state)
 
 	send[0] = 0x1;
 	/* Read current state of pins */
+
+
 	i2c_transfer(bus, addr, 1, 0, send); 
 	i2c_transfer(bus, addr, 0, 1, &curr); 
+
+	//TRACE(TRACE_INFO,"%d: 0x%x 0x%x s=%d, send=%d,%d c=%d, \n",num,bus,addr,state,send[0],send[1],&curr);
 
 	if (top)
 		curr &= 0xf;
@@ -463,6 +467,8 @@ void shw_sfp_gpio_set(int num, uint8_t state)
 
 	send[1] = curr;
 	i2c_transfer(bus, addr, 2, 0, send); 
+
+	//TRACE(TRACE_INFO,"%d: 0x%x 0x%x s=%d, send=%d,%d c=%d, \n",num,bus,addr,state,send[0],send[1],curr);
 }
 
 uint8_t shw_sfp_gpio_get(int num)

@@ -11,6 +11,8 @@
 
 int shw_init()
 {
+	TRACE(TRACE_INFO,"%s\n=========================================================",__TIME__);
+
 	/* Init input/output (GPIO & CPU I2C) */
 	assert_init(shw_io_init());
 

@@ -8,17 +8,21 @@
 
 #include "i2c_bitbang.h"
 
+#include "trace.h"
 
 int i2c_bitbang_init_bus(struct i2c_bus *bus)
 {
 	struct i2c_bitbang *priv;
+
 
 	if (!bus && !bus->type_specific && bus->type != I2C_TYPE_BITBANG)
 		return -1;
 
 	priv = (struct i2c_bitbang *)bus->type_specific;
 
+	TRACE(TRACE_INFO,"%s (0x%x) ",bus->name,bus);
 	shw_pio_configure(priv->scl);
+	TRACE(TRACE_INFO,"%s (0x%x) ",bus->name,bus);
 	shw_pio_configure(priv->sda);
 	shw_pio_setdir(priv->scl, 0);
 	shw_pio_setdir(priv->sda, 0);
@@ -143,6 +147,8 @@ int	i2c_bitbang_transfer(i2c_bus_t* bus, uint32_t address, uint32_t to_write, ui
 	if (bus->type != I2C_TYPE_BITBANG)
 		return I2C_BUS_MISMATCH;
 	
+	//TRACE(TRACE_INFO,"%s (0x%x) @ 0x%x: w=%d/r=%d; cmd=%d d=%d (0b%s)",bus->name,bus,address,to_write,to_read,data[0],data[1],shw_2binary(data[1]));
+
 	struct i2c_bitbang* ts = (struct i2c_bitbang*)bus->type_specific;
 	
 	int sent = 0;
