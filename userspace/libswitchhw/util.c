@@ -45,3 +45,21 @@ uint64_t shw_get_tics()
   gettimeofday(&tv, &tz);
   return (uint64_t)tv.tv_usec + (uint64_t)tv.tv_sec * 1000000ULL;
 }
+
+
+
+const char *shw_2binary(uint8_t x)
+{
+    static char b[9];
+    int z;
+    char *p=b;
+
+    for (z=0x80; z > 0; z >>= 1)
+    {
+       *p++=(((x & z) == z) ? '1' : '0');
+    }
+    *p='\0';
+
+    return b;
+}
+
