@@ -12,6 +12,7 @@
 
 #include <trace.h>
 #include <switch_hw.h>
+#include <shw_io.h>
 
 #include "wrsw_hal.h"
 #include "rt_ipc.h"
@@ -138,6 +139,10 @@ int hal_load_kernel_modules()
 void sighandler(int sig)
 {
 	TRACE(TRACE_ERROR, "signal caught (%d)!", sig);
+
+	//Set state led to orange
+	shw_io_write(shw_io_led_state_o,1);
+	shw_io_write(shw_io_led_state_g,0);
 
 	call_cleanup_cbs();
 	exit(0);

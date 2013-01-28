@@ -29,6 +29,10 @@ int shw_init()
 	/* Init the FANs */
 	assert_init(shw_init_fans());
 
+	/* Finally setup the green led */
+	shw_io_write(shw_io_led_state_o,0);
+	shw_io_write(shw_io_led_state_g,1);
+
 	TRACE(TRACE_INFO, "HW initialization done!");
 }
 
