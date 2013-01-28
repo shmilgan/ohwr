@@ -1,14 +1,12 @@
 #include "libshw_i2c.h"
 
-int wrswhw_pca9554_configure(struct i2c_bus* bus, uint32_t address)
+int wrswhw_pca9554_configure(struct i2c_bus* bus, uint32_t address,uint8_t value)
 {
     //config initial port dir
-    uint8_t config_outputs[2] = {PCA9554_CMD_DIR_REG, WRSWHW_OUTPUT_BITMAP};
+    uint8_t config_outputs[2] = {PCA9554_CMD_DIR_REG, value};
     int result = i2c_transfer(bus, address, sizeof(config_outputs), 0, config_outputs);
     if (result < 0)
 	return result;
-
-    return wrswhw_pca9554_set_output_reg(bus, address, WRSWHW_INITIAL_OUTPUT_STATE);
 }
 
 
