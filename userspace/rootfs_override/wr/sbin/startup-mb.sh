@@ -9,8 +9,10 @@ for arg in $(cat /proc/cmdline); do
 	fi;
 done
 
+# Obtain the type of FPGA (LX130XT or LX240XT)
+tfpga=$($WR_HOME/bin/shw_ver -f)
 
-$WR_HOME/bin/load-virtex $WR_HOME/lib/firmware/18ports_mb.bin
+$WR_HOME/bin/load-virtex $WR_HOME/lib/firmware/18p_mb-${tfpga}.bin
 $WR_HOME/bin/load-lm32 $WR_HOME/lib/firmware/rt_cpu.bin
 insmod $WR_HOME/lib/modules/at91_softpwm.ko
 insmod $WR_HOME/lib/modules/wr_vic.ko
