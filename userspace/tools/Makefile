@@ -1,5 +1,5 @@
 TOOLS = rtu_stat wr_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex com
-TOOLS += mapper wmapper
+TOOLS += mapper wmapper shw_ver
 
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 
@@ -12,6 +12,10 @@ NM              = $(CROSS_COMPILE)nm
 STRIP           = $(CROSS_COMPILE)strip
 OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
+
+# 
+GIT_VER = $(shell git describe --always --dirty=+ | sed  's;^.*-\([v0-9\.]*\)\([a-z0-9\-+]*\)$$;\1\2;' )
+GIT_USR = $(shell  git config --get-all user.name)
 
 # LOTs of includes
 CFLAGS =  -O2 -DDEBUG -g \
@@ -49,6 +53,12 @@ load-virtex: load-virtex.o load-fpga.o
 
 load-lm32: load-lm32.o lm32-loader.o
 	${CC} -o $@ $^ $(LDFLAGS)
+	
+shw_ver.o: shw_ver.c
+	${CC} ${CFLAGS} -D__GIT_USR__="\"${GIT_USR}\"" -D__GIT_VER__="\"${GIT_VER}\"" $(LDFLAGS) -c -o $@ $^  
+	
+shw_ver: shw_ver.o
+	${CC} -o $@ $^ $(LDFLAGS)	
 
 clean:
 	rm -f $(TOOLS) *.o *~
