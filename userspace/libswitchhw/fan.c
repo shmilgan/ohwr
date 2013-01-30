@@ -141,11 +141,8 @@ void pwm_configure_fpga(int enmask, float rate)
 {
 	uint8_t u8speed=(uint8_t)((rate>=1)?0xff:(rate*255.0));
 
-	if(enmask & 0x1) spwm_wbr->DR0=u8speed;
-	else spwm_wbr->DR0=0;
-
-	if(enmask & 0x2) spwm_wbr->DR1=u8speed;
-	else spwm_wbr->DR0=0;
+	if((enmask & 0x1)>0) spwm_wbr->DR0=u8speed;
+	if((enmask & 0x2)>0) spwm_wbr->DR1=u8speed;
 }
 
 /* Configures a PWM output. Rate accepts range is from 0 (0%) to 1 (100%) */
@@ -241,8 +238,8 @@ int shw_init_fans()
 		//Point to the corresponding WB direction
 		spwm_wbr= (volatile struct SPWM_WB *) (FPGA_BASE_ADDR + FPGA_BASE_SPWM);
 
-		//Configure SPWM register the 60=(62.5MHz÷(4kHz×2^8))−1
-		val= SPWM_CR_PRESC_W(60) | SPWM_CR_PERIOD_W(255);
+		//Configure SPWM register the 30~=(62.5MHz÷(8kHz×2^8))−1
+		val= SPWM_CR_PRESC_W(30) | SPWM_CR_PERIOD_W(255);
 		spwm_wbr->CR=val;
 
 		fan_pi.ki = 1.0;
