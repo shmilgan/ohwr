@@ -102,7 +102,7 @@ int shw_i2c_io_scan(uint8_t *dev_map)
 }
 
 
-float shw_get_hw_ver()
+int shw_get_hw_ver()
 {
 	uint8_t ret;
 	struct i2c_bus *bus= &i2c_io_bus;
@@ -114,9 +114,9 @@ float shw_get_hw_ver()
 		ret= wrswhw_pca9554_get_input(bus,I2C_SCB_VER_ADDR);
 		switch((ret >> 1) & 0x7)
 		{
-			case 0: return 3.3;
-			case 1: return 3.4; //version is not available
-			case 2: return 3.41;
+			case 0: return 330;
+			case 1: return 340; //version is not available
+			case 2: return 341;
 			default:
 				TRACE(TRACE_FATAL,"Unknown HW version (0x%x), check the DIP switch under the SCB",(ret >> 1) & 0x7);
 				return -1;
@@ -127,7 +127,7 @@ float shw_get_hw_ver()
 	}
 	else
 	{
-		return 3.2;
+		return 320;
 
 	}
 }

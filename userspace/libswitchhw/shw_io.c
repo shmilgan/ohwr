@@ -69,8 +69,7 @@ const shw_io_t _all_shw_io[NUM_SHW_IO_ID];
 
 int shw_io_init()
 {
-	float ver;
-	int ret;
+	int ret, ver;
 
 	//Remove const for writing
 	shw_io_t* all_shw_io=(shw_io_t*)_all_shw_io;
@@ -86,7 +85,7 @@ int shw_io_init()
 	ver=shw_get_hw_ver();
 
 	//Finally assigned the input/ouput according to version number.
-	if(ver<3.3)
+	if(ver<330)
 	{
 		IOARR_SET_GPIO(shw_io_reset_n);
 		IOARR_SET_GPIO(shw_io_box_fan_en);
@@ -96,6 +95,7 @@ int shw_io_init()
 		IOARR_SET_GPIO(shw_io_led_cpu2);
 		IOARR_SET_GPIO(shw_io_arm_boot_sel);
 		IOARR_SET_GPIO(shw_io_arm_gen_but);
+		TRACE(TRACE_INFO, "version=%f %d %d %d",ver, ver>=3.3f, ver<3.3f, ver==3.3f);
 	}
 	else
 	{
@@ -234,11 +234,13 @@ int shw_io_write(shw_io_id_t id, uint32_t value)
 const char *get_shw_info(const char cmd)
 {
 	static char str_hwver[10];
+	int tmp;
 
 	switch(cmd)
 	{
 	case 'p':
-		snprintf(str_hwver,10,"%g",shw_get_hw_ver()); //generate a non harmful warning with our compiler
+		tmp = shw_get_hw_ver();
+		snprintf(str_hwver,10,"%d.%d",tmp/100,tmp%100);
 		return str_hwver;
 	case 'f':
 		return (shw_get_fpga_type()==SHW_FPGA_LX240T)?"LX240T":"LX130T";

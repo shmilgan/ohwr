@@ -217,7 +217,7 @@ int shw_init_fans()
 	TRACE(TRACE_INFO, "Configuring PWMs for fans (desired temperature = %.1f degC)...", DESIRED_TEMPERATURE);
 
 	//Set the type of PWM
-	if(shw_get_hw_ver()<3.3) is_cpu_pwn=1;
+	if(shw_get_hw_ver()<330) is_cpu_pwn=1;
 	else is_cpu_pwn=0;
 
 	if(is_cpu_pwn)
