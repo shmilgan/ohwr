@@ -211,11 +211,11 @@ int shw_init_fans()
 	uint32_t val=0;
 	int detect, i;
 
-	TRACE(TRACE_INFO, "Configuring PWMs for fans (desired temperature = %.1f degC)...", DESIRED_TEMPERATURE);
-
 	//Set the type of PWM
 	if(shw_get_hw_ver()<330) is_cpu_pwn=1;
 	else is_cpu_pwn=0;
+
+	TRACE(TRACE_INFO, "Configuring %s PWMs for fans (desired temperature = %.1f degC)... %d",is_cpu_pwn?"CPU":"FPGA");
 
 	if(is_cpu_pwn)
 	{
