@@ -56,4 +56,9 @@ int tru_port_state_up(int port_id);
 uint32_t tru_port_stable_up_mask(void);
 void tru_set_port_roles(int active_port, int backup_port);
 void tru_lacp_config(uint32_t df_hp_id, uint32_t df_br_id, uint32_t df_un_id);
+void tru_ep_debug_read_pfilter(uint32_t port);
+void tru_ep_debug_clear_pfilter(uint32_t port);
+void tru_ep_debug_inject_packet(uint32_t port, uint32_t user_val, uint32_t pck_sel);
+void tru_ep_debug_read_pinject(uint32_t port);
+
 #endif /*__WHITERABBIT_RTU_DRV_H*/

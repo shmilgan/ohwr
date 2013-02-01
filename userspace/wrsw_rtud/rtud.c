@@ -415,6 +415,11 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time, int unrec_be
     err  = tru_init(tru_enabled);
     if(err)
         return err;    
+
+    err  = ep_init(1,8);
+    if(err)
+        return err;    
+   
     
     // disable RTU
     TRACE(TRACE_INFO, "disable rtu.");
