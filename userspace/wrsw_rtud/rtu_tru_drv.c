@@ -233,7 +233,7 @@ void tru_transition_config(int mode,      int rx_id,       int prio, int time_di
          {TRACE(TRACE_INFO,"\tMode   : LACP distributor");}
       if(mode == 1)  
          {TRACE(TRACE_INFO,"\tMode   : LACP collector");}
-      TRACE(TRACE_INFO,"\tPorts  : A_ID = %2d (before tran), B_ID = %d2 (after trans)",
+      TRACE(TRACE_INFO,"\tPorts  : A_ID = %2d (before tran), B_ID = %2d (after trans)",
          port_a_id, port_b_id);
       TRACE(TRACE_INFO,"\tParams : Rx Frame ID =  %2d, Priority = %2d, Time diff = %3d", 
          rx_id, prio, time_diff);
@@ -410,18 +410,80 @@ void tru_read_status(uint32_t *bank, uint32_t *ports_up, uint32_t *ports_stb_up,
 
 void tru_lacp_config(uint32_t df_hp_id, uint32_t df_br_id, uint32_t df_un_id)
 {
-      uint64_t val;
-      val = TRU_LACR_AGG_DF_HP_ID_W(df_hp_id) |
-            TRU_LACR_AGG_DF_BR_ID_W(df_br_id) |
-            TRU_LACR_AGG_DF_UN_ID_W(df_un_id) ;
-      tru_wr(LACR, val);    
-      if(m_dbg)
-      {
-        TRACE(TRACE_INFO,"TRU: Link Aggregation config:");
-        TRACE(TRACE_INFO,"\tDistribution Function for High Priority traffic: id = %2d",df_hp_id);
-        TRACE(TRACE_INFO,"\tDistribution Function for Broadcast     traffic: id = %2d",df_br_id);
-        TRACE(TRACE_INFO,"\tDistribution Function for Unicast       traffic: id = %2d",df_un_id);
-      }
+   uint64_t val;
+   val = TRU_LACR_AGG_DF_HP_ID_W(df_hp_id) |
+         TRU_LACR_AGG_DF_BR_ID_W(df_br_id) |
+         TRU_LACR_AGG_DF_UN_ID_W(df_un_id) ;
+   tru_wr(LACR, val);    
+   if(m_dbg)
+   {
+     TRACE(TRACE_INFO,"TRU: Link Aggregation config:");
+     TRACE(TRACE_INFO,"\tDistribution Function for High Priority traffic: id = %2d",df_hp_id);
+     TRACE(TRACE_INFO,"\tDistribution Function for Broadcast     traffic: id = %2d",df_br_id);
+     TRACE(TRACE_INFO,"\tDistribution Function for Unicast       traffic: id = %2d",df_un_id);
+   }
+}
+
+void tru_ep_debug_read_pfilter(uint32_t port)
+{
+   uint64_t val;
+   tru_wr(DPS, TRU_DPS_PID_W(port));
+   val = tru_rd(PFDR);
+//    if(m_dbg)
+//    {
+      TRACE(TRACE_INFO, "TRU-DBG [pFILTER-port_%2d]: filtered classes = 0x%2x [cnt_filtered=%4d, cnt_all=%4d, raw=0x%4x]",port,       
+              (uint32_t)TRU_PFDR_CLASS_R(val), 
+              0xFF & (uint32_t)TRU_PFDR_CNT_R(val), 
+              0xFF & ((uint32_t)TRU_PFDR_CNT_R(val)>>8), 
+              (uint32_t)val);
+              
+//    }
+}
+void tru_ep_debug_clear_pfilter(uint32_t port)
+{
+   tru_wr(DPS, TRU_DPS_PID_W(port));
+   tru_wr(PFDR, TRU_PFDR_CLR);
+   if(m_dbg)
+   {
+      TRACE(TRACE_INFO, "TRU-DBG [pFILTER-port_%2d]: filtered packet classes & cnt cleared",port);
+   }
+}
+
+void tru_ep_debug_inject_packet(uint32_t port, uint32_t user_val, uint32_t pck_sel)
+{
+   uint64_t val;
+   tru_wr(DPS, TRU_DPS_PID_W(port));
+   val =             TRU_PIDR_INJECT |
+          TRU_PIDR_PSEL_W(pck_sel)   |
+          TRU_PIDR_UVAL_W(user_val);
+   tru_wr(PIDR, val);    
+   if(m_dbg)
+   {
+      TRACE(TRACE_INFO, "TRU-DBG [pINJECT-port_%2d]: inject packet: pck_sel=%2d, user_val=0x%x",
+                        port,pck_sel, user_val);
+   }   
+}
+
+void tru_ep_debug_read_pinject(uint32_t port)
+{
+   uint64_t val;
+   int ready;
+   tru_wr(DPS, TRU_DPS_PID_W(port));
+   val = tru_rd(PIDR);
+   if(val & TRU_PIDR_IREADY) ready = 1; else ready = 0;
+//    if(m_dbg)
+//    {
+      TRACE(TRACE_INFO, "TRU-DBG [pINJECT-port_%2d]: inject   ready   =   %2d [                               raw=0x%4x] ", port,ready,val);
+//    }               
+}
+void tru_ep_debug_status(uint32_t ports_num)
+{
+  uint32_t i;
+  for(i=0;i<ports_num;i++)
+  {
+    tru_ep_debug_read_pfilter(i);
+    tru_ep_debug_read_pinject(i);
+  }
 }
 
 void tru_set_port_roles(int active_port, int backup_port)
@@ -697,16 +759,69 @@ void tru_set_life(char *optarg)
                                    0x00000000 /* ports_egress  */,      
                                    0x000090F0 /* ports_ingress */);
 
-	     break;	     
-	     
-	  case 10:
-	     tru_swap_bank();
-	     break;
+             break;	     
+         case 10:
+             tru_swap_bank();
+             break;
           default:
              TRACE(TRACE_INFO, "bad option");
        };
        break;
+    case  5:
+       //writing new entries (the banks of TRU TAB wil be swapped on transition
+       tru_write_tab_entry(  1          /* valid     */,
+                             0          /* entry_addr   */,    
+                             0          /* subentry_addr*/,
+                             0x00000000 /*pattern_mask*/, 
+                             0x00000000 /* pattern_match*/,   
+                             0x000      /* pattern_mode */,
+                             0x000000FF /*ports_mask  */, 
+                             0x00000087 /* ports_egress: 1000_0111  */,     
+                             0x00000085 /* ports_ingress 1000_0101  */);         
+       tru_write_tab_entry(  1          /* valid     */,
+                             0          /* entry_addr   */,    
+                             1          /* subentry_addr*/,
+                             0x00000000 /*pattern_mask*/, 
+                             0x00000004 /* pattern_match*/,   
+                             0x000      /* pattern_mode */,
+                             0x00000006 /*ports_mask  */, 
+                             0x00000087 /* ports_egress  1000_0111 */,      
+                             0x00000082 /* ports_ingress 1000_0010  */);
+             //program transition
+       tru_transition_config(0          /*mode */,     
+                             1          /*rx_id*/, 
+                             0          /*prio*/, 
+                             20         /*time_diff*/, 
+                             1          /*port_a_id*/, 
+                             2          /*port_b_id*/);
+       tru_transition_enable();      
+       break;  
+    case  6:
+       ep_pfilter_status_N_ports((uint32_t)8);
+       break;
+    case  7:
+       ep_pfilter_reload_code(sub_opt);
+       break;
+    case  8:
+       pfilter_disable((uint32_t)sub_opt);
+       break;
+    case  9:
+       tru_ep_debug_status((uint32_t)8);
+       break;   
     case  10:
+       tru_ep_debug_clear_pfilter((uint32_t)sub_opt);
+       break;       
+    case  11:
+       tru_ep_debug_read_pfilter((uint32_t)sub_opt);
+       break;       
+    case  12:
+       tru_ep_debug_inject_packet((uint32_t)sub_opt, 0xBABE, 0);
+       break;       
+    case  13:
+       tru_ep_debug_inject_packet((uint32_t)sub_opt, 0xBABE, 1);
+       break;       
+    
+    case  100:
        tru_show_status(18) ;
        
     break;
@@ -744,7 +859,16 @@ void tru_set_life(char *optarg)
        TRACE(TRACE_INFO, "             -  13 & 15 *aggregation group* -- ports in single aggr group (not for 8-port switch) ");
        TRACE(TRACE_INFO, "             -  14 & 16 *blocked ports*     -- (not for 8-port switch) ");
        TRACE(TRACE_INFO, "-u 4  10     Commit TRU TAB chagnes (swap banks)");
-       TRACE(TRACE_INFO, "-u 10        show status");
+       TRACE(TRACE_INFO, "-u 5         Transition/injection/filter");
+       TRACE(TRACE_INFO, "-u 6         Endpoint filter: show status");
+       TRACE(TRACE_INFO, "-u 7  n      Endpoint filter: load + enable  on port n");
+       TRACE(TRACE_INFO, "-u 8  n      Endpoint filter: disable on port n");
+       TRACE(TRACE_INFO, "-u 9         DEBUG-EP: status ");
+       TRACE(TRACE_INFO, "-u 10 n      DEBUG-EP: clear pfilter record on port n");
+       TRACE(TRACE_INFO, "-u 11 n      DEBUG-EP: show  pfilter record on port n");
+       TRACE(TRACE_INFO, "-u 12 n      DEBUG-EP: inject BPDU  packet on port n [user_val=0xBABE]");
+       TRACE(TRACE_INFO, "-u 13 n      DEBUG-EP: inject PAUSE packet on port n [user_val=0xBABE]");
+       TRACE(TRACE_INFO, "-u 100       show status");
   };
   exit(1);
   
