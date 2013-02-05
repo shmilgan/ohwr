@@ -35,7 +35,7 @@ int tru_simple_test() ;
 void tru_write_tab_entry(int valid,      int fid,          int subfid, 
                          int patrn_mask, int patrn_match,  int patrn_mode,
                          int ports_mask, int ports_egress, int ports_ingress);
-void tru_transition_config(int mode,      int rx_id,       int prio, int time_diff,
+void tru_transition_config(int mode,      int rx_id,   int prio_mode,    int prio, int time_diff,
                            int port_a_id, int port_b_id);
 void tru_transition_enable();
 void tru_transition_disable();
@@ -60,5 +60,6 @@ void tru_ep_debug_read_pfilter(uint32_t port);
 void tru_ep_debug_clear_pfilter(uint32_t port);
 void tru_ep_debug_inject_packet(uint32_t port, uint32_t user_val, uint32_t pck_sel);
 void tru_ep_debug_read_pinject(uint32_t port);
+void tru_transition_status();
 
 #endif /*__WHITERABBIT_RTU_DRV_H*/

@@ -133,8 +133,8 @@ int ep_init(int ep_enabled, int port_num)
    for(i=0;i<port_num;i++)
    {
      ep_set_vlan((uint32_t)i, 0x2/*qmode*/, 0 /*fix_prio*/, 0 /*prio_val*/, 0 /*pvid*/);
-     ep_write_inj_pck_templ((uint32_t)i /*port*/, 0 /*slot*/, &BPDU_templ,20);
-     ep_write_inj_pck_templ((uint32_t)i /*port*/, 1 /*slot*/, &PAUSE_templ,16);
+     ep_write_inj_pck_templ((uint32_t)i /*port*/, 0 /*slot*/, &PAUSE_templ,16);
+     ep_write_inj_pck_templ((uint32_t)i /*port*/, 1 /*slot*/, &BPDU_templ,20);
      pfilter_load((uint32_t)i);
    }
    
