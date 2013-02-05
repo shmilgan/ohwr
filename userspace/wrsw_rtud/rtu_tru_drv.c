@@ -64,7 +64,8 @@ int tru_init(int tru_enabled )
 //    tru_rt_reconf_config(4 /*tx_frame_id*/, 4/*rx_frame_id*/, 1 /*mode*/);
 //    tru_rt_reconf_enable();
 //    tru_transition_config(0          /*mode */,     
-//                          4          /*rx_id*/, 
+//                          4          /*rx_id*/,
+//                          1          /*prio mode*/, 
 //                          0          /*prio*/, 
 //                          20         /*time_diff*/, 
 //                          3          /*port_a_id*/, 
@@ -142,7 +143,7 @@ void tru_show_status(int num_ports)
     else 
       {TRACE(TRACE_INFO, "Port %2d - not expected state",i);}
   }
- 
+  tru_transition_status();
 }
 
 int tru_port_state_up(int port_id)
@@ -209,14 +210,22 @@ void tru_write_tab_entry(int valid,      int fid,          int subfid,
 //    tru_swap_bank();
 }
 
-void tru_transition_config(int mode,      int rx_id,       int prio, int time_diff,
+void tru_transition_config(int mode,      int rx_id,   int prio_mode,    int prio, int time_diff,
                            int port_a_id, int port_b_id)
 {
-   uint32_t val;
-   val = TRU_TCGR_TRANS_MODE_W     (mode)      |
-         TRU_TCGR_TRANS_RX_ID_W    (rx_id)     |
-         TRU_TCGR_TRANS_PRIO_W     (prio)      |
-         TRU_TCGR_TRANS_TIME_DIFF_W(time_diff) ;
+   uint32_t val=0;
+   if(prio_mode)
+     val = TRU_TCGR_TRANS_PRIO_MODE              |
+           TRU_TCGR_TRANS_MODE_W     (mode)      |
+           TRU_TCGR_TRANS_RX_ID_W    (rx_id)     |
+           TRU_TCGR_TRANS_PRIO_W     (prio)      |
+           TRU_TCGR_TRANS_TIME_DIFF_W(time_diff) ;
+   else
+     val = TRU_TCGR_TRANS_MODE_W     (mode)      |
+           TRU_TCGR_TRANS_RX_ID_W    (rx_id)     |
+           TRU_TCGR_TRANS_PRIO_W     (prio)      |
+           TRU_TCGR_TRANS_TIME_DIFF_W(time_diff) ;
+     
    
    tru_wr(TCGR,val);
 
@@ -238,8 +247,8 @@ void tru_transition_config(int mode,      int rx_id,       int prio, int time_di
          {TRACE(TRACE_INFO,"\tMode   : LACP collector");}
       TRACE(TRACE_INFO,"\tPorts  : A_ID = %2d (before tran), B_ID = %2d (after trans)",
          port_a_id, port_b_id);
-      TRACE(TRACE_INFO,"\tParams : Rx Frame ID =  %2d, Priority = %2d, Time diff = %3d", 
-         rx_id, prio, time_diff);
+      TRACE(TRACE_INFO,"\tParams : Rx Frame ID =  %2d, PrioMode = %1d, Priority = %2d, Time diff = %3d", 
+         rx_id, prio_mode, prio, time_diff);
    }    
 }
 void tru_transition_enable()
@@ -270,6 +279,24 @@ void tru_transition_clear()
    if(m_dbg) 
       { TRACE(TRACE_INFO,"TRU: clear transition");}
 }
+
+void tru_transition_status()
+{
+   uint32_t val1, val2;
+   val1 = tru_rd(TCGR);
+   val2 = tru_rd(TSR);
+   if(val1 & TRU_TCGR_TRANS_ENA)
+   { 
+     TRACE(TRACE_INFO,"TRU->transition status: trans_finished=%1d, trans_active=%1d",
+                      ((val2 & TRU_TSR_TRANS_STAT_FINISHED) != 0) ? 1 : 0 ,
+                       (val2 & TRU_TSR_TRANS_STAT_ACTIVE));
+   }
+   else
+   {
+     TRACE(TRACE_INFO,"TRU->transition status: transition disabled");
+   }
+}
+
 
 void tru_pattern_config(uint32_t replacement,  uint32_t addition)
 {
@@ -342,7 +369,7 @@ void tru_rt_reconf_config(int tx_frame_id, int rx_frame_id, int mode)
 {
    uint32_t val;
    val = tru_rd(RTRCR);
-   val = (val & 0x0000000F)                |
+   val = (val & 0x00000001)                |
          TRU_RTRCR_RTR_MODE_W(mode       ) |
          TRU_RTRCR_RTR_RX_W  (rx_frame_id) |
          TRU_RTRCR_RTR_TX_W  (tx_frame_id) ;
@@ -615,7 +642,10 @@ void tru_set_life(char *optarg)
     break;
     case  3:
        if(sub_opt == 1)
-	 tru_rt_reconf_enable();
+       {
+         tru_rt_reconf_config(1 /*tx_frame_id*/, 1/*rx_frame_id*/, 1 /*mode*/);
+         tru_rt_reconf_enable();
+       }
        else
          tru_rt_reconf_disable();
     break;
@@ -792,7 +822,8 @@ void tru_set_life(char *optarg)
                              0x00000082 /* ports_ingress 1000_0010  */);
              //program transition
        tru_transition_config(0          /*mode */,     
-                             1          /*rx_id*/, 
+                             1          /*rx_id*/,
+                             1          /*prio mode*/,                               
                              0          /*prio*/, 
                              20         /*time_diff*/, 
                              1          /*port_a_id*/, 
@@ -834,7 +865,7 @@ void tru_set_life(char *optarg)
        TRACE(TRACE_INFO, "-u 0         show this info");
        TRACE(TRACE_INFO, "-u 1  1/0    TRU enable/disable");
        TRACE(TRACE_INFO, "-u 2         Real Time re-configuration reset (memory)");
-       TRACE(TRACE_INFO, "-u 3  1/0    Real Time re-configuration enable/disable");
+       TRACE(TRACE_INFO, "-u 3  1/0    Real Time re-configuration enable[tx_id=1, rx_id=1, mode=1]/disable");
        TRACE(TRACE_INFO, "-u 4  1      Write TRU Table: FID=0, subFID=0");
        TRACE(TRACE_INFO, "             ports   = 10110001 [mask=11111111]");
        TRACE(TRACE_INFO, "             pattern = 00000000 [mask=00000000]");
@@ -869,8 +900,8 @@ void tru_set_life(char *optarg)
        TRACE(TRACE_INFO, "-u 9         DEBUG-EP: status ");
        TRACE(TRACE_INFO, "-u 10 n      DEBUG-EP: clear pfilter record on port n");
        TRACE(TRACE_INFO, "-u 11 n      DEBUG-EP: show  pfilter record on port n");
-       TRACE(TRACE_INFO, "-u 12 n      DEBUG-EP: inject BPDU  packet on port n [user_val=0xBABE]");
-       TRACE(TRACE_INFO, "-u 13 n      DEBUG-EP: inject PAUSE packet on port n [user_val=0xBABE]");
+       TRACE(TRACE_INFO, "-u 12 n      DEBUG-EP: inject PAUSE  packet on port n [user_val=0xBABE]");
+       TRACE(TRACE_INFO, "-u 13 n      DEBUG-EP: inject BPDU packet on port n [user_val=0xBABE]");
        TRACE(TRACE_INFO, "-u 100       show status");
   };
   exit(1);
