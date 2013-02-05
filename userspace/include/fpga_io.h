@@ -15,6 +15,9 @@
 /* Topology Resolution Unit */
 #define FPGA_BASE_TRU 	   0x57000
 
+/* Endpoint  */
+#define FPGA_BASE_EP0 	   0x30000
+
 #define FPGA_BASE_ADDR _fpga_base_virt
 
 extern volatile uint8_t *_fpga_base_virt;
