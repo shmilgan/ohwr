@@ -1,3 +1,7 @@
+# This Makefile is meant to be used by the wr-switch. When built for wr-node
+# the relevant Makefile lived in the parent directory.
+
+ccflags-y += -DWR_SWITCH
 
 obj-m := wr-nic.o
 wr-nic-objs := module.o device.o nic-core.o endpoint.o ethtool.o \
