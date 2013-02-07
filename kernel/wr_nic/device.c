@@ -30,9 +30,11 @@ static int wrn_remove(struct platform_device *pdev)
 	struct wrn_dev *wrn = pdev->dev.platform_data;
 	int i;
 
-	spin_lock(&wrn->lock);
-	--wrn->use_count; /* Hmmm... looks like overkill... */
-	spin_unlock(&wrn->lock);
+	if (WR_IS_SWITCH) {
+		spin_lock(&wrn->lock);
+		--wrn->use_count; /* Hmmm... looks like overkill... */
+		spin_unlock(&wrn->lock);
+	}
 
 	/* First of all, stop any transmission */
 	writel(0, &wrn->regs->CR);
@@ -104,13 +106,15 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 	static irq_handler_t irq_handlers[] = WRN_IRQ_HANDLERS;
 
 	/* No need to lock_irq: we only protect count and continue unlocked */
-	spin_lock(&wrn->lock);
-	if (++wrn->use_count != 1) {
-		--wrn->use_count;
+	if (WR_IS_SWITCH) {
+		spin_lock(&wrn->lock);
+		if (++wrn->use_count != 1) {
+			--wrn->use_count;
+			spin_unlock(&wrn->lock);
+			return -EBUSY;
+		}
 		spin_unlock(&wrn->lock);
-		return -EBUSY;
 	}
-	spin_unlock(&wrn->lock);
 
 	/* Map our resource list and instantiate the shortcut pointers */
 	if ( (err = __wrn_map_resources(pdev)) )
