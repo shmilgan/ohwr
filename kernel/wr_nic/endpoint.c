@@ -242,7 +242,7 @@ int wrn_endpoint_probe(struct net_device *dev)
 	/* Check whether the ep has been sinthetized or not */
 	val = readl(&ep->ep_regs->IDCODE);
 	if (val != WRN_EP_MAGIC) {
-		pr_info(DRV_NAME "EP%i (%s) has not been sintethized\n",
+		pr_info(KBUILD_MODNAME " EP%i (%s) has not been sintethized\n",
 			ep->ep_number, dev->name);
 		return -ENODEV;
 	}
@@ -285,7 +285,7 @@ int wrn_endpoint_probe(struct net_device *dev)
 	put_unaligned_be32(val + 1, wraddr + 2);
 
 	if (err) {
-		printk(KERN_ERR DRV_NAME "Can't register dev %s\n",
+		printk(KERN_ERR KBUILD_MODNAME ": Can't register dev %s\n",
 		       dev->name);
 		__wrn_endpoint_shutdown(ep);
 		/* ENODEV means "no more" for the caller, so avoid it */

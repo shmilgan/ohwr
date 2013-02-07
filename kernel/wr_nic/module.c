@@ -45,7 +45,7 @@ static void wrn_release(struct device *dev)
 }
 
 static struct platform_device wrn_device = {
-	.name = DRV_NAME,
+	.name = KBUILD_MODNAME,
 	.id = 0,
 	.resource = wrn_resources,
 	.num_resources = ARRAY_SIZE(wrn_resources),

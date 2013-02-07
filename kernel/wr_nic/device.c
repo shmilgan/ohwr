@@ -25,7 +25,7 @@
 #include "nic-mem.h"
 
 /* The remove function is used by probe, so it's not __devexit */
-static int __devexit wrn_remove(struct platform_device *pdev)
+static int wrn_remove(struct platform_device *pdev)
 {
 	struct wrn_dev *wrn = pdev->dev.platform_data;
 	int i;
@@ -211,7 +211,7 @@ struct platform_driver wrn_driver = {
 	.remove		= wrn_remove, /* not __exit_p as probe calls it */
 	/* No suspend or resume by now */
 	.driver		= {
-		.name		= DRV_NAME,
+		.name		= KBUILD_MODNAME,
 		.owner		= THIS_MODULE,
 	},
 };
