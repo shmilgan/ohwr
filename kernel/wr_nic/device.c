@@ -42,6 +42,7 @@ static int wrn_remove(struct platform_device *pdev)
 	/* Then remove devices, memory maps, interrupts */
 	for (i = 0; i < WRN_NR_ENDPOINTS; i++) {
 		if (wrn->dev[i]) {
+			wrn_mezzanine_exit(wrn->dev[i]);
 			wrn_endpoint_remove(wrn->dev[i]);
 			free_netdev(wrn->dev[i]);
 			wrn->dev[i] = NULL;
@@ -168,7 +169,13 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 			goto out;
 		/* This endpoint went in properly */
 		wrn->dev[i] = netdev;
+		err = wrn_mezzanine_init(netdev);
+		if (err)
+			dev_err(&pdev->dev, "Init mezzanine code: "
+				"error %i\n", err);
 	}
+	if (i == 0)
+		return -ENODEV; /* no endpoints */
 
 	for (i = 0; i < WRN_NR_TXDESC; i++) { /* Clear all tx descriptors */
 		struct wrn_txd *tx;
