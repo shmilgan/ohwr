@@ -12,6 +12,19 @@
  */
 #ifndef __WR_NIC_H__
 #define __WR_NIC_H__
+
+/* Private ioctls, (the first 2 are the same as they were in wr_minic.c */
+#define PRIV_IOCGCALIBRATE	(SIOCDEVPRIVATE + 1)
+#define PRIV_IOCGGETPHASE	(SIOCDEVPRIVATE + 2)
+#define PRIV_IOCREADREG		(SIOCDEVPRIVATE + 3)
+#define PRIV_IOCPHYREG		(SIOCDEVPRIVATE + 4)
+
+/* The last two available are used for mezzanine-private stuff */
+#define PRIV_MEZZANINE_ID	(SIOCDEVPRIVATE + 14)
+#define PRIV_MEZZANINE_CMD	(SIOCDEVPRIVATE + 15)
+
+#ifdef __KERNEL__ /* The rest is kernel-only */
+
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
 #include <linux/mii.h>		/* Needed for stuct mii_if_info in wrn_dev */
@@ -167,12 +180,6 @@ enum wrn_resnames {
 #define wrn_ep_read(ep, reg) __raw_readl(&(ep)->ep_regs->reg)
 #define wrn_ep_write(ep, reg, val) __raw_writel((val), &(ep)->ep_regs->reg)
 
-/* Private ioctls, (the first 2 are the same as they were in wr_minic.c */
-#define PRIV_IOCGCALIBRATE	(SIOCDEVPRIVATE + 1)
-#define PRIV_IOCGGETPHASE	(SIOCDEVPRIVATE + 2)
-#define PRIV_IOCREADREG		(SIOCDEVPRIVATE + 3)
-#define PRIV_IOCPHYREG		(SIOCDEVPRIVATE + 4)
-
 #define NIC_READ_PHY_CMD(addr)  (((addr) & 0xff) << 16)
 #define NIC_RESULT_DATA(val) ((val) & 0xffff)
 #define NIC_WRITE_PHY_CMD(addr, value)  ((((addr) & 0xff) << 16) \
@@ -235,9 +242,17 @@ extern int wrn_tstamp_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 extern irqreturn_t wrn_tstamp_interrupt(int irq, void *dev_id);
 extern void wrn_tstamp_init(struct wrn_dev *wrn);
 
-/* Following functions from dmtd.c */
+/* Following functions from dmtd.c and pps.c */
 extern int wrn_phase_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 extern int wrn_calib_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 extern void wrn_ppsg_read_time(struct wrn_dev *wrn, u32 *fine_cnt, u32 *utc);
+
+/* Locally weak, designed for a mezzanine driver to implement */
+extern int wrn_mezzanine_ioctl(struct net_device *dev, struct ifreq *rq,
+			       int cmd);
+extern int wrn_mezzanine_init(struct net_device *dev);
+extern void wrn_mezzanine_exit(struct net_device *dev);
+
+#endif /* __KERNEL__ */
 
 #endif /* __WR_NIC_H__ */
