@@ -123,8 +123,8 @@ int rtudexp_add_entry(const struct minipc_pd *pd,
 
 	halexp_query_ports(&ports);
 
-	if(mac_from_str(mac_tmp,strEHA))
-		TRACE(TRACE_ERROR,"%s is an invalid MAC format (XX:XX:XX:XX:XX)",strEHA);
+	if(mac_from_str(mac_tmp,strEHA)!=ETH_ALEN)
+		TRACE(TRACE_ERROR,"%s is an invalid MAC format (XX:XX:XX:XX:XX:XX)",strEHA);
 
 
 	TRACE(TRACE_INFO,"Create entry for (MAC=%s) port %x, mode:%s",mac_to_string(mac_tmp),1 << port,(mode)?"DYNAMIC":"STATIC");
