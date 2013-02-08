@@ -127,8 +127,9 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 	wrn->rxd = ((void *)wrn->regs) + 0x100; /* was: RX1_D1 */
 	wrn->databuf = (void *)wrn->regs + offsetof(struct NIC_WB, MEM);
 	tasklet_init(&wrn->rx_tlet, wrn_rx_interrupt, (unsigned long)wrn);
-	printk("regs %p, txd %p, rxd %p, buffer %p\n",
-	       wrn->regs, wrn->txd, wrn->rxd, wrn->databuf);
+	if (0)
+		printk("regs %p, txd %p, rxd %p, buffer %p\n",
+		       wrn->regs, wrn->txd, wrn->rxd, wrn->databuf);
 
 	if (WR_IS_SWITCH) {
 		/* Register the interrupt handlers (not shared) */
@@ -154,7 +155,6 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 		ep = netdev_priv(netdev);
 		ep->wrn = wrn;
 		ep->ep_regs = wrn->bases[WRN_FB_EP] + i * FPGA_SIZE_EACH_EP;
-		printk("ep %p, regs %i = %p\n", ep, i, ep->ep_regs);
 		ep->ep_number = i;
 #if 0 /* FIXME: UPlink or not? */
 		if (i < WRN_NR_UPLINK)
@@ -202,7 +202,6 @@ static int __devinit wrn_probe(struct platform_device *pdev)
 
 	writel(NIC_CR_RX_EN | NIC_CR_TX_EN, &wrn->regs->CR);
 	writel(WRN_IRQ_ALL, (void *)wrn->regs + 0x24 /* EIC_IER */);
-	printk("imr: %08x\n", readl((void *)wrn->regs + 0x28 /* EIC_IMR */));
 
 	wrn_tstamp_init(wrn);
 	err = 0;
