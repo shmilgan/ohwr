@@ -25,6 +25,7 @@ showhelp()
 	printf "Options: \n"
 	printf "  -h|--help\t Show this help message\n"
 	printf "  -m|--mode\t can be: default (df and nf), df (dataflash),\n\t\t nf (nandflash), ddr (ddr memories).\n"
+	printf "  -g|--gateware\t Select the gateware: 18p (18 ports, default), 8p (8 ports), LX130T (small FPGA), LX240T (big FGPA)\n"
 	printf "  -e \t\t Completely erase the memory (Can erase your configuration)\n"
 	printf "  -b|--build\t Use files that you have built in the WRS_OUTPUT_DIR\n"
 	printf "  -m1|--mac1\t Default MAC address for the ethernet port on board\n"
@@ -107,6 +108,9 @@ MAC1=$MAC1_DEF
 MAC2_DEF="02:34:56:78:9A:00"
 MAC2=$MAC2_DEF
 
+# By default we select the gateware only for 18ports because 
+gateware="18p"
+
 DEV=""
 FLAGS=""
 
@@ -155,6 +159,19 @@ while [ $# -ge 1 ]; do
 			exit 1
 		fi
 		memmode="$2"
+		shift; shift;;
+		
+	-g|--gateware)
+		# Obtain which gateware type we want to flash
+		if [ "$2" = "18p" ] || [ "$2" = "8p" ]; then
+			gateware="$2*.bin";
+		elif [ "$2" = "LX240T" ] || [ "$2" = "LX130T" ]; then
+			gateware="*-$2.bin";
+		else
+			echo "Error: Invalid gateware selection \"$2\""
+			showhelp
+			exit 1
+		fi
 		shift; shift;;
 
 	/* ) DEV="-s $1"; shift ;;
@@ -269,6 +286,8 @@ if [ $nf ]; then
 	TMPSCRIPT=$TMPDIR/wrsrootfs-script
 	cat > $TMPSCRIPT << EOF
 tar --directory $TMPFS -xzf $rootfsgz
+# Remove the unnecessary HDL files
+find $TMPFS/wr/lib/firmware/ -type f \( ! -name ''${gateware}'' \) -a \( ! -name '*rt_cpu.bin' \) -exec rm -f {} \;
 
 mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $rootfsjffs2
 
