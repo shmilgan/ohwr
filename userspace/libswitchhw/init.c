@@ -7,7 +7,6 @@
 #include "i2c_sfp.h"
 #include "shw_io.h"
 
-#define assert_init(proc) { int ret; if((ret = proc) < 0) return ret; }
 
 int shw_init()
 {
@@ -44,4 +43,3 @@ int shw_exit_fatal()
 	exit(-1);
 }
 
-#undef assert_init
