@@ -48,7 +48,7 @@ checkExit()
 checkMAC()
 {
 	X="[0-9a-fA-F][0-9a-fA-F]"
-	if echo $1 | grep "^${X}:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
+	if echo $1 | grep "^[0-9a-fA-F][02468aceACE]:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
 		return 0
 	fi
 	return 1
