@@ -242,9 +242,9 @@ if lsusb | grep -q "at91sam"; then
 else
 	echo ""
 	echo "$me: Waiting for at91sam SAMBA bootloader on usb."
-	echo "    Please check the jumper is plugged"
-	echo "    and the USB cable is connected."
-	echo "    Then reset the switch or turn it on."
+	echo "    Please check the Managment USB cable is connected "
+	echo "    and keep pressed the Flash button while" 
+	echo "    resetting/powering the switch."
 	while true; do
 		if lsusb | grep -q "at91sam"; then
 			break
@@ -257,7 +257,7 @@ fi
 
 # Remove the jumper now, before proceeding
 echo "$me: I'm talking with the switch;"
-echo -n "   please remove the jumper and press Enter to start flashing: "
+echo -n "   please release the flash button and press Enter to start flashing: "
 read unused
 
 # Create a temporary barebox binary with modified MAC addresses
