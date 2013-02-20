@@ -37,6 +37,10 @@ if [ "x$WRS_BUILDROOT_CONFIG" != "x" ]; then
 fi
 
 cp $CFG .config
+# If busybox configuration is inside wr-switch-sw (currently it is),
+# fix the config filename
+sed -i "s,__WR_SWITCH_SW__,$WRS_BASE_DIR/..," .config
+
 sed -i /^BR2_JLEVEL/d .config
 # make 3.82 splits the work differently, and compilation fails. So no -j
 makefails=$(make -v | awk 'NR==1 {if ($NF > 3.81) print "fail"}')
