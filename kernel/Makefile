@@ -1,5 +1,5 @@
 
-DIRS = wr_vic wr_nic wr_rtu at91_softpwm
+DIRS = wr_vic wr_nic wr_rtu at91_softpwm wr_pstats
 
 # We may "LINUX ?= /usr/src/linux-wrswitch", but it's better to leave it empty
 
