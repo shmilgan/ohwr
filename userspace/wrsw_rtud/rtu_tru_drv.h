@@ -61,5 +61,6 @@ void tru_ep_debug_clear_pfilter(uint32_t port);
 void tru_ep_debug_inject_packet(uint32_t port, uint32_t user_val, uint32_t pck_sel);
 void tru_ep_debug_read_pinject(uint32_t port);
 void tru_transition_status();
+void tru_debug_rt_reconf_reg();
 
 #endif /*__WHITERABBIT_RTU_DRV_H*/
