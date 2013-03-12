@@ -369,7 +369,7 @@ void tru_rt_reconf_config(int tx_frame_id, int rx_frame_id, int mode)
 {
    uint32_t val;
    val = tru_rd(RTRCR);
-   val = (val & 0x00000001)                |
+   val = (val & 0x0000000F)                |
          TRU_RTRCR_RTR_MODE_W(mode       ) |
          TRU_RTRCR_RTR_RX_W  (rx_frame_id) |
          TRU_RTRCR_RTR_TX_W  (tx_frame_id) ;
@@ -516,6 +516,13 @@ void tru_ep_debug_status(uint32_t ports_num)
   }
 }
 
+void tru_debug_rt_reconf_reg()
+{
+  uint64_t val;
+  val = tru_rd(PTRDR);
+  TRACE(TRACE_INFO, "TRU-DBG [RT Reconfig]: GING_MASK=0x%x",val);  
+}
+
 void tru_set_port_roles(int active_port, int backup_port)
 {
   if(active_port == 1 && backup_port == 2)
@@ -548,8 +555,8 @@ void tru_set_port_roles(int active_port, int backup_port)
                             0x00000000 /* pattern_match*/,   
                             0x000      /* pattern_mode */,
                             0x000000FF /*ports_mask  */, 
-                            0x00000087 /* ports_egress */,      
-                            0x00000083 /* ports_ingress   */); 
+                            0x00000087 /* ports_egress  1000_0111*/,      
+                            0x00000083 /* ports_ingress 1000_0011  */); 
 
       tru_write_tab_entry(  1          /* valid     */,
                             0          /* entry_addr   */,    
@@ -558,8 +565,8 @@ void tru_set_port_roles(int active_port, int backup_port)
                             0x00000002 /* pattern_match*/,   
                             0x000      /* pattern_mode */,
                             0x00000006 /*ports_mask  */, 
-                            0x00000006 /* ports_egress */,     
-                            0x00000004 /* ports_ingress   */);    
+                            0x00000006 /* ports_egress   0000_0110 */,     
+                            0x00000004 /* ports_ingress  0000_0100 */);    
       tru_swap_bank();
       TRACE(TRACE_INFO, "PORT ROLES: active port %d, backup port %d", active_port,backup_port);
      }   
@@ -591,8 +598,8 @@ void tru_set_port_roles(int active_port, int backup_port)
                             0x00000000 /* pattern_match*/,   
                             0x000      /* pattern_mode */,
                             0x000000FF /*ports_mask  */, 
-                            0x00000087 /* ports_egress */,      
-                            0x00000085 /* ports_ingress   */); 
+                            0x00000087 /* ports_egress   1000_0111 */,      
+                            0x00000085 /* ports_ingress  1000_0101 */); 
       tru_write_tab_entry(  1          /* valid     */,
                             0          /* entry_addr   */,    
                             1          /* subentry_addr*/,
@@ -600,8 +607,8 @@ void tru_set_port_roles(int active_port, int backup_port)
                             0x00000004 /* pattern_match*/,   
                             0x000      /* pattern_mode */,
                             0x00000006 /*ports_mask  */, 
-                            0x00000006 /* ports_egress */,     
-                            0x00000002 /* ports_ingress   */);        
+                            0x00000006 /* ports_egress   0000_0110 */,     
+                            0x00000002 /* ports_ingress  0000_0010 */);        
       tru_swap_bank();
       TRACE(TRACE_INFO, "PORT ROLES: active port %d, backup port %d", active_port,backup_port);
    }
@@ -854,7 +861,9 @@ void tru_set_life(char *optarg)
     case  13:
        tru_ep_debug_inject_packet((uint32_t)sub_opt, 0xBABE, 1);
        break;       
-    
+    case  14:
+       tru_debug_rt_reconf_reg();
+       break;       
     case  100:
        tru_show_status(18) ;
        
@@ -902,6 +911,7 @@ void tru_set_life(char *optarg)
        TRACE(TRACE_INFO, "-u 11 n      DEBUG-EP: show  pfilter record on port n");
        TRACE(TRACE_INFO, "-u 12 n      DEBUG-EP: inject PAUSE  packet on port n [user_val=0xBABE]");
        TRACE(TRACE_INFO, "-u 13 n      DEBUG-EP: inject BPDU packet on port n [user_val=0xBABE]");
+       TRACE(TRACE_INFO, "-u 14        DEBUG-RT_Reconfig: read GING_MASK");
        TRACE(TRACE_INFO, "-u 100       show status");
   };
   exit(1);
