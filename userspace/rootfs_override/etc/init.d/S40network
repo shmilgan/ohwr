@@ -9,8 +9,7 @@
 #ifplugd -i eth0
 #udhcpc -n
 
-rootloc=`mount | grep rootfs | grep nfs`
-if [ "$rootloc" != "" ]; then
+if grep -q '/ nfs' /proc/mounts; then
 	echo "Running via NFS, no ifplugd."
 else
 	echo "Starting ifplugd..."
