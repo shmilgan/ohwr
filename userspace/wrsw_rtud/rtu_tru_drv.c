@@ -215,16 +215,20 @@ void tru_transition_config(int mode,      int rx_id,   int prio_mode,    int pri
      val = TRU_TCGR_TRANS_PRIO_MODE              |
            TRU_TCGR_TRANS_MODE_W     (mode)      |
            TRU_TCGR_TRANS_RX_ID_W    (rx_id)     |
-           TRU_TCGR_TRANS_PRIO_W     (prio)      |
-           TRU_TCGR_TRANS_TIME_DIFF_W(time_diff) ;
+           TRU_TCGR_TRANS_PRIO_W     (prio)      ;
    else
      val = TRU_TCGR_TRANS_MODE_W     (mode)      |
            TRU_TCGR_TRANS_RX_ID_W    (rx_id)     |
-           TRU_TCGR_TRANS_PRIO_W     (prio)      |
-           TRU_TCGR_TRANS_TIME_DIFF_W(time_diff) ;
+           TRU_TCGR_TRANS_PRIO_W     (prio)      ;
      
    
    tru_wr(TCGR,val);
+
+   val = 0;
+   val = TRU_TCPBR_TRANS_PAUSE_TIME_W(time_diff) |
+         TRU_TCPBR_TRANS_BLOCK_TIME_W(time_diff) ;
+   tru_wr(TCPBR,val);     
+
 
    val = 0;
    val = TRU_TCPR_TRANS_PORT_A_ID_W(port_a_id) |
@@ -310,13 +314,16 @@ void tru_pattern_config(uint32_t replacement,  uint32_t addition)
       TRACE(TRACE_INFO,"\tChoice info: ");
       TRACE(TRACE_INFO,"\t\t0: non: zeros ");
       TRACE(TRACE_INFO,"\t\t1: ports status (bit HIGH when port down");
-      TRACE(TRACE_INFO,"\t\t2: received special frames - filtered by endpoints according to" 
+      TRACE(TRACE_INFO,"\t\t2: received special frames to start forwarding - filtered by endpoints according to" 
                               "configuration (pfliter in endpoint + RTR_RX class ID in " 
                               "Real Time Reconfiguration Control Register)");
-      TRACE(TRACE_INFO,"\t\t3: according to aggregation ID (the source of the ID depends on "
+      TRACE(TRACE_INFO,"\t\t3: received special frames to start blocking - filtered by endpoints according to" 
+                              "configuration (pfliter in endpoint + RTR_RX class ID in " 
+                              "Real Time Reconfiguration Control Register)");
+      TRACE(TRACE_INFO,"\t\t4: according to aggregation ID (the source of the ID depends on "
                               "the traffic kind: HP/Broadcast/Uniast, set in Link Aggregation "
                               "Control Register)");
-      TRACE(TRACE_INFO,"\t\t4: received port");
+      TRACE(TRACE_INFO,"\t\t5: received port");
    }
 }
 
@@ -861,6 +868,18 @@ void tru_set_life(char *optarg)
     case  14:
        tru_debug_rt_reconf_reg();
        break;       
+    case  15:
+       ep_show_pause_config((uint32_t)sub_opt);
+       break;       
+    case  16:
+       ep_pause_config_dis((uint32_t)sub_opt);
+       break;       
+    case  17:
+       ep_pause_config_ena((uint32_t)sub_opt,1,0,0,0);
+       break;       
+    case  18:
+       ep_pause_config_ena((uint32_t)sub_opt,0,0,1,0);
+       break;       
     case  100:
        tru_show_status(18) ;
        
@@ -909,6 +928,10 @@ void tru_set_life(char *optarg)
        TRACE(TRACE_INFO, "-u 12 n      DEBUG-EP: inject PAUSE  packet on port n [user_val=0xBABE]");
        TRACE(TRACE_INFO, "-u 13 n      DEBUG-EP: inject BPDU packet on port n [user_val=0xBABE]");
        TRACE(TRACE_INFO, "-u 14        DEBUG-RT_Reconfig: read GING_MASK");
+       TRACE(TRACE_INFO, "-u 15 n      Endpoint PAUSE config: read status on port n");
+       TRACE(TRACE_INFO, "-u 16 n      Endpoint PAUSE config: disable all PAUSEs     on port n");
+       TRACE(TRACE_INFO, "-u 17 n      Endpoint PAUSE config: enable Tx PAUSE 802.3  on port n");
+       TRACE(TRACE_INFO, "-u 18 n      Endpoint PAUSE config: enable Tx PAUSE 802.1Q on port n");
        TRACE(TRACE_INFO, "-u 100       show status");
   };
   exit(1);

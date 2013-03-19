@@ -189,11 +189,17 @@
 
 /* definitions for register: Flow Control Register */
 
-/* definitions for field: RX Pause enable in reg: Flow Control Register */
+/* definitions for field: RX Pause 802.3 enable in reg: Flow Control Register */
 #define EP_FCR_RXPAUSE                        WBGEN2_GEN_MASK(0, 1)
 
-/* definitions for field: TX Pause enable in reg: Flow Control Register */
+/* definitions for field: TX Pause 802.3 enable in reg: Flow Control Register */
 #define EP_FCR_TXPAUSE                        WBGEN2_GEN_MASK(1, 1)
+
+/* definitions for field: Rx Pause 802.1Q enable in reg: Flow Control Register */
+#define EP_FCR_RXPAUSE_802_1Q                 WBGEN2_GEN_MASK(2, 1)
+
+/* definitions for field: Tx Pause 802.1Q enable (not implemented) in reg: Flow Control Register */
+#define EP_FCR_TXPAUSE_802_1Q                 WBGEN2_GEN_MASK(3, 1)
 
 /* definitions for field: TX pause threshold in reg: Flow Control Register */
 #define EP_FCR_TX_THR_MASK                    WBGEN2_GEN_MASK(8, 8)
@@ -276,9 +282,6 @@
 
 /* definitions for field: DMTD Phase shift value ready in reg: DMTD Status register */
 #define EP_DMSR_PS_RDY                        WBGEN2_GEN_MASK(24, 1)
-/* definitions for RAM: Event counters memory */
-#define EP_RMON_RAM_BYTES 0x00000080 /* size in bytes */                               
-#define EP_RMON_RAM_WORDS 0x00000020 /* size in 32-bit words, 32-bit aligned */        
 
 PACKED struct EP_WB {
   /* [0x0]: REG Endpoint Control Register */
@@ -315,10 +318,6 @@ PACKED struct EP_WB {
   uint32_t DMCR;
   /* [0x40]: REG DMTD Status register */
   uint32_t DMSR;
-  /* padding to: 32 words */
-  uint32_t __padding_0[15];
-  /* [0x80 - 0xff]: RAM Event counters memory, 32 32-bit words, 32-bit aligned, word-addressable */
-  uint32_t RMON_RAM [32];
 };
 
 #endif

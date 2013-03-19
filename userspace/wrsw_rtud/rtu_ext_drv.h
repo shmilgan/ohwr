@@ -53,5 +53,7 @@ void rtux_disp_ctrl(void);
 void rtux_set_cpu_port(uint32_t llf_mask);
 void rtux_set_life(char *optarg);
 
+void rtux_fw_to_CPU(int arg);
+void rtux_disp_fw_to_CPU();
 
 #endif /*__WHITERABBIT_RTU_DRV_H*/

@@ -350,7 +350,6 @@
 #define RTU_MFIFO_CSR_USEDW_W(value)          WBGEN2_GEN_WRITE(value, 0, 6)
 #define RTU_MFIFO_CSR_USEDW_R(reg)            WBGEN2_GEN_READ(reg, 0, 6)
 /* definitions for RAM: Aging bitmap for main hashtable */
-#define RTU_ARAM_BASE 0x00000400 /* base address */                                
 #define RTU_ARAM_BYTES 0x00000400 /* size in bytes */                               
 #define RTU_ARAM_WORDS 0x00000100 /* size in 32-bit words, 32-bit aligned */        
 

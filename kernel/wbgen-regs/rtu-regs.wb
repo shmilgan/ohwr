@@ -475,7 +475,6 @@ peripheral {
          access_bus = READ_WRITE;
          access_dev = READ_ONLY;
       };
-
       field {
          name = "HP Priorities Mask";
          description="Mask which defines which priorities of the Fast Forward traffic are considered High Priority (used also by SWcore)";
@@ -508,6 +507,7 @@ peripheral {
          access_bus = READ_WRITE;
          access_dev = READ_ONLY;
       };
+
       field {
          name = "Learn Destination MAC enable";
          description = "Allows to enable/disable learning based on Destination MAC address (works only if learning is enabled on a port, i.e. LEARN_EN=1) .\
