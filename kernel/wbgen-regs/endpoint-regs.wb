@@ -404,38 +404,50 @@ peripheral {
 		 prefix = "FCR";
 
 		 field {
-				name = "RX Pause enable";
-				description = "1: enable reception of pause frames and TX path throttling \
-                       0: disable reception of pause frames";
+				name = "RX Pause 802.3 enable";
+				description = "1: enable reception of pause frames defined in 802.3 (all priorities) and TX path throttling \
+                       0: disable reception of pause frames defined in 802.3";
 				prefix = "RXPAUSE";
 				access_bus = READ_WRITE;
-				access_dev = READ_WRITE;
+				access_dev = READ_ONLY;
 				type = BIT;
-        load = LOAD_EXT;
 		 };
-
 		 field {
-				name = "TX Pause enable";
+				name = "TX Pause 802.3 enable";
 				description = "1: enable transmission of pause frames and RX path throttling \
                        0: disable transmission of pause frames";
 				prefix = "TXPAUSE";
 				access_bus = READ_WRITE;
-				access_dev = READ_WRITE;
+				access_dev = READ_ONLY;
 				type = BIT;
-        load = LOAD_EXT;
 		 };
-
-
+		 field {
+				name = "Rx Pause 802.1Q enable";
+				description = "1: enable reception of priority-based pause frames (IEEE 802.1Q-2012 Flow Control)  \
+						0: disable reception of priority-based pause frames";
+				prefix = "RXPAUSE_802_1Q";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = BIT;
+		 };
+		 field {
+				name = "Tx Pause 802.1Q enable (not implemented)";
+				description = "1: enable transmission of priority-based pause frames (IEEE 802.1Q-2012) Flow Control \
+						0: disable transmission of priority-based pause frames";
+				prefix = "TXPAUSE_802_1Q";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = BIT;
+		 };
 		 field {
 				name = "TX pause threshold";
 				description = "Defines the percentage of space occupied in the RX buffer which triggers the transmission of a PAUSE frame. 0 = empty buffer, 255 = full buffer";
 				prefix = "TX_THR";
 				access_bus = READ_WRITE;
-				access_dev = READ_WRITE;
+				access_dev = READ_ONLY;
 				type = SLV;
 				size = 8;
 				align = 8;
-        load = LOAD_EXT;
 		 };
 
 		 field {
@@ -443,11 +455,10 @@ peripheral {
 				description = "Defines the quanta value carried bypause frames sent by the Endpoint";
 				prefix = "TX_QUANTA";
 				access_bus = READ_WRITE;
-				access_dev = READ_WRITE;
+				access_dev = READ_ONLY;
 				type = SLV;
 				size = 16;
 				align = 16;
-        load = LOAD_EXT;
 		 };
 	};
 
@@ -636,30 +647,5 @@ peripheral {
 				 access_bus = READ_WRITE;
 			};
 	 };
-
-
-		ram {
-			 name = "Event counters memory";
-			 description = "RMON event counters:\
-			 0x0 : TX PCS buffer underruns\
-			 0x4 : RX PCS invalid 8b10b codes\
-			 0x8 : RX PCS sync lost events\
-			 0xc : RX PCS buffer overruns\
-			 0x10: RX CRC errors\
-			 0x14: RX valid frames\
-			 0x18: RX runt frames\
-			 0x1c: RX giant frames\
-			 0x20: RX PCS errors\
-			 0x24: RX dropped frames";
-
-			 size = 32;
-			 width = 32;
-			 
-			 access_dev = READ_WRITE;
-			 access_bus = READ_WRITE;
-
-			 prefix = "rmon_ram";
-		};
-
 		
 };

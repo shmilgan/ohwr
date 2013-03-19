@@ -63,7 +63,8 @@ int rtux_init(void)
                                                mac_range_upper /*MAC_upper*/);  
    rtux_set_port_mirror  (1<<1/*mirror src*/,1<<7/*mirror dst*/,1/*rx*/,1/*tx*/);
    rtux_set_hp_prio_mask (0xFF/*hp prio mask*/); //
-   rtux_set_cpu_port     (1<<8/*mask: virtual port of CPU*/);
+//    rtux_set_cpu_port     (1<<8/*mask: virtual port of CPU*/);
+   rtux_read_cpu_port    ();
    rtux_feature_ctrl     (0 /*mr*/, 
                           0 /*mac_ptp*/, 
                           0/*mac_ll*/, 
@@ -255,15 +256,14 @@ void rtux_set_hp_prio_mask(uint8_t hp_prio_mask)
    "considered HP), mask=0x%x",hp_prio_mask );
 }
 
-void rtux_set_cpu_port(uint32_t llf_mask)
+void rtux_read_cpu_port()
 {
    uint32_t mask;
 
-   mask = RTU_RX_LLF_FF_MASK_W(llf_mask);
-                
-   rtu_wr(RX_LLF, mask);
-   TRACE(TRACE_INFO,"RTU eXtension: set port to which link-limited traffic is forwarded"
-   "(from the pool of reserved MAC adresses), mask=0x%x",mask );
+   mask = rtu_rd(CPU_PORT);
+   
+   TRACE(TRACE_INFO,"RTU eXtension: reading mask indicating which (virtual) port is connected"
+                    "to CPU mask=0x%x", RTU_CPU_PORT_MASK_R(mask));
 }
 
 void rtux_feature_ctrl(int mr, int mac_ptp, int mac_ll, int mac_single, int mac_range, 
@@ -308,6 +308,41 @@ void rtux_feature_ctrl(int mr, int mac_ptp, int mac_ll, int mac_single, int mac_
 //    else          {TRACE(TRACE_INFO,"\t Range of configured MACs fast forward    - disabled");} 
 //    if(at_fm     ){TRACE(TRACE_INFO,"\t When fast match engine too slow          - braodcast processed frame");} 
 //    else          {TRACE(TRACE_INFO,"\t When fast match engine too slow          - drop processed frame"); }
+
+}
+
+void rtux_fw_to_CPU(int arg)
+{
+   uint32_t mask;
+   int hp    = 0x1 & (arg >> 0);
+   int unrec = 0x1 & (arg >> 1);
+   mask = rtu_rd(RX_CTR);
+   mask = 0xFFF0FFFF & mask; 
+   
+   /*$display("RTU eXtension features debugging: 2: cleared mask: 0x%x",mask);*/         
+   
+   if(hp)    mask = RTU_RX_CTR_HP_FW_CPU_ENA   | mask;
+   if(unrec) mask = RTU_RX_CTR_UREC_FW_CPU_ENA | mask;
+   
+   rtu_wr(RX_CTR, mask);
+   rtux_disp_fw_to_CPU();
+
+}
+
+void rtux_disp_fw_to_CPU()
+{
+   uint32_t mask;
+   mask = rtu_rd(RX_CTR);
+   TRACE(TRACE_INFO,"RTU eXtension features (read):");
+   if(RTU_RX_CTR_HP_FW_CPU_ENA & mask)
+     {TRACE(TRACE_INFO,"\t (1 ) HP forwarding to CPU                    - enabled"); }
+   else          
+     {TRACE(TRACE_INFO,"\t (1 ) HP forwarding to CPU                    - disabled"); } 
+
+   if(RTU_RX_CTR_UREC_FW_CPU_ENA & mask)
+     {TRACE(TRACE_INFO,"\t (2 ) Unrec broadcast forwarding to CPU       - enabled"); }
+   else          
+     {TRACE(TRACE_INFO,"\t (2 ) Unrec broadcast forwarding to CPU       - disabled"); } 
 
 }
 
@@ -376,7 +411,8 @@ void rtux_set_life(char *optarg)
                          );
     break;
     case  2:
-      rtux_set_cpu_port(1<<sub_opt);
+//       rtux_set_cpu_port(1<<sub_opt);
+      rtux_read_cpu_port();
     break;
     case  3:
       rtux_set_hp_prio_mask(1<<sub_opt);
@@ -399,10 +435,15 @@ void rtux_set_life(char *optarg)
 	  TRACE(TRACE_INFO, "MIRRORING: unrecognzied option");
        }
        break;
+    case  5:
+      rtux_fw_to_CPU(sub_opt);
+    break;       
     case  10:
 
       rtux_disp_ctrl() ;
-       
+      rtux_disp_fw_to_CPU(); 
+      rtux_read_cpu_port();
+      
     break;
     default:
        TRACE(TRACE_INFO, "RTU extension control options");
@@ -410,12 +451,13 @@ void rtux_set_life(char *optarg)
        TRACE(TRACE_INFO, "-x 0         show this info");
        TRACE(TRACE_INFO, "-x 1  mask   set ctrl options, mask in decimal format:");
        TRACE(TRACE_INFO, "             mask = d'{at_fm,mac_br,mac_range,mac_single, mac_ll, mac_ptp, mr}");
-       TRACE(TRACE_INFO, "-x 2  p_id   sets port of p_id to be cpu virual port recognized in fast match");
+       TRACE(TRACE_INFO, "-x 2         read port mask cpu virual port recognized in fast match");
        TRACE(TRACE_INFO, "-x 3  prio   sets prio to be recognized as HP");
        TRACE(TRACE_INFO, "-x 4  opt    MIRRORING configuration (the mirroring needs to be enabled with set ctrl)");
        TRACE(TRACE_INFO, "-x 4  1      sets traffic tx-ed/rx-ed on port 1 to be mirrored on port 7");
        TRACE(TRACE_INFO, "-x 4  2      sets traffic rx-ed       on port 1 to be mirrored on port 7");
        TRACE(TRACE_INFO, "-x 4  3      sets traffic tx-ed       on port 1 to be mirrored on port 7");
+       TRACE(TRACE_INFO, "-x 5  n      set forwarding to CPU config: mask = {unrec_fw_to_CPU, hp_fw_to_CPU}");
        TRACE(TRACE_INFO, "-x 10        show status");
   };
   exit(1);

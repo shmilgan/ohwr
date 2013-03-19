@@ -167,6 +167,54 @@ void ep_set_vlan(uint32_t port, int qmode, int fix_prio, int prio_val, int pvid)
    TRACE(TRACE_INFO,"EP [Port %2d]: vlan setting:  qmode=%1d, fix_prio=%1d,"
                     "prio_val=%1d, pvid=%d",port, qmode, fix_prio, prio_val, pvid);
 }
+// 
+void ep_pause_config_ena(uint32_t port, int txpause_802_3,int rxpause_802_3, int txpause_802_1q, int rxpause_802_1q)
+{
+   uint32_t val = 0;
+   val = ep_rd(FCR,port); 
+   if(txpause_802_3)  val = val | EP_FCR_TXPAUSE;
+   if(rxpause_802_3)  val = val | EP_FCR_RXPAUSE;
+   if(txpause_802_1q) val = val | EP_FCR_TXPAUSE_802_1Q;
+   if(rxpause_802_1q) val = val | EP_FCR_RXPAUSE_802_1Q;
+
+   ep_wr(FCR,port,val);
+  
+   ep_show_pause_config(port);  
+}
+void ep_pause_config_dis(uint32_t port)
+{
+   uint32_t val = 0;
+   ep_wr(FCR,port,val);  
+   ep_show_pause_config(port);  
+}
+
+
+void ep_show_pause_config(uint32_t port)
+{
+   uint32_t val;
+   val = ep_rd(FCR,port);  
+   TRACE(TRACE_INFO,"EP [Port %2d]: PAUSE config ", port)
+   if(val & EP_FCR_RXPAUSE)
+     {TRACE(TRACE_INFO,"(1 ) RX PAUSE 802.3                      - enabled ")}
+   else
+     {TRACE(TRACE_INFO,"(1 ) RX PAUSE 802.3                      - disabled ")}
+     
+   if(val & EP_FCR_TXPAUSE)
+     {TRACE(TRACE_INFO,"(2 ) TX PAUSE 802.3                      - enabled ")}
+   else
+     {TRACE(TRACE_INFO,"(2 ) TX PAUSE 802.3                      - disabled ")}
+     
+   if(val & EP_FCR_RXPAUSE_802_1Q)
+     {TRACE(TRACE_INFO,"(4 ) RX PAUSE 802.1Q (per-prio)          - enabled ")}
+   else
+     {TRACE(TRACE_INFO,"(4 ) RX PAUSE 802.1Q (per-prio)          - disabled ")}
+   if(val & EP_FCR_TXPAUSE_802_1Q)
+     {TRACE(TRACE_INFO,"(8 ) TX PAUSE 802.1Q (per-prio)          - enabled ")}
+   else
+     {TRACE(TRACE_INFO,"(8 ) TX PAUSE 802.1Q (per-prio)          - disabled ")}
+  
+}
+
 
 int ep_simple_test() 
 {
@@ -219,8 +267,10 @@ int ep_write_inj_pck_templ(uint32_t port, int slot, pck_inject_templ_t *pck_temp
   for(i=0;i< pck_temp->size;i+=2)
   {
     v = ((pck_temp->data[i] << 8) | pck_temp->data[i+1]) & 0x0000FFFF;
+    if(i == 0)
+      v |= (1<<16); // start of template
     if(i == pck_temp->size - 2)
-      v |= (1<<16);
+      v |= (1<<16); // end of template
 
     if(i == user_offset)
       v |= (1<<17);

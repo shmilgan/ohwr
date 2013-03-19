@@ -161,6 +161,12 @@
 #define RTU_RX_CTR_PRIO_MASK_W(value)         WBGEN2_GEN_WRITE(value, 8, 8)
 #define RTU_RX_CTR_PRIO_MASK_R(reg)           WBGEN2_GEN_READ(reg, 8, 8)
 
+/* definitions for field: HP forward to CPU in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_HP_FW_CPU_ENA              WBGEN2_GEN_MASK(16, 1)
+
+/* definitions for field: Urecognized forward to CPU in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_UREC_FW_CPU_ENA            WBGEN2_GEN_MASK(17, 1)
+
 /* definitions for register: RTU Extension: Fast Forward MAC bits [31:0] (validated on write to RX_FF_MAC_R1). */
 
 /* definitions for field: Fast Forward MAC in reg: RTU Extension: Fast Forward MAC bits [31:0] (validated on write to RX_FF_MAC_R1). */
@@ -189,13 +195,13 @@
 /* definitions for field: Fast Forward MAC valid in reg: RTU Extension: Fast Forward MAC and control */
 #define RTU_RX_FF_MAC_R1_VALID                WBGEN2_GEN_MASK(25, 1)
 
-/* definitions for register: RTU Extension: Link-Limited Frames Fast Forward Mask */
+/* definitions for register: RTU Extension: CPU port mask (Link-Limited Frames Fast Forward Mask) */
 
-/* definitions for field: Fast Forward Mask in reg: RTU Extension: Link-Limited Frames Fast Forward Mask */
-#define RTU_RX_LLF_FF_MASK_MASK               WBGEN2_GEN_MASK(0, 32)
-#define RTU_RX_LLF_FF_MASK_SHIFT              0
-#define RTU_RX_LLF_FF_MASK_W(value)           WBGEN2_GEN_WRITE(value, 0, 32)
-#define RTU_RX_LLF_FF_MASK_R(reg)             WBGEN2_GEN_READ(reg, 0, 32)
+/* definitions for field:  CPU/LL Mask in reg: RTU Extension: CPU port mask (Link-Limited Frames Fast Forward Mask) */
+#define RTU_CPU_PORT_MASK_MASK                WBGEN2_GEN_MASK(0, 32)
+#define RTU_CPU_PORT_MASK_SHIFT               0
+#define RTU_CPU_PORT_MASK_W(value)            WBGEN2_GEN_WRITE(value, 0, 32)
+#define RTU_CPU_PORT_MASK_R(reg)              WBGEN2_GEN_READ(reg, 0, 32)
 
 /* definitions for register: RTU Extension: Mirroring Ports Control Register - select for the mask written using RX_MP_R1 */
 
@@ -335,7 +341,6 @@
 #define RTU_MFIFO_CSR_USEDW_W(value)          WBGEN2_GEN_WRITE(value, 0, 6)
 #define RTU_MFIFO_CSR_USEDW_R(reg)            WBGEN2_GEN_READ(reg, 0, 6)
 /* definitions for RAM: Aging bitmap for main hashtable */
-#define RTU_ARAM_BASE 0x00000400 /* base address */                                
 #define RTU_ARAM_BYTES 0x00000400 /* size in bytes */                               
 #define RTU_ARAM_WORDS 0x00000100 /* size in 32-bit words, 32-bit aligned */        
 
@@ -356,8 +361,8 @@ PACKED struct RTU_WB {
   uint32_t RX_FF_MAC_R0;
   /* [0x1c]: REG RTU Extension: Fast Forward MAC and control */
   uint32_t RX_FF_MAC_R1;
-  /* [0x20]: REG RTU Extension: Link-Limited Frames Fast Forward Mask */
-  uint32_t RX_LLF;
+  /* [0x20]: REG RTU Extension: CPU port mask (Link-Limited Frames Fast Forward Mask) */
+  uint32_t CPU_PORT;
   /* [0x24]: REG RTU Extension: Mirroring Ports Control Register - select for the mask written using RX_MP_R1 */
   uint32_t RX_MP_R0;
   /* [0x28]: REG RTU Extension: Mirroring Ports Control Register 1 */
