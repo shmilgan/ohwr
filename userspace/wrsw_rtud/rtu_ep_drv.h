@@ -30,6 +30,7 @@
 #define __WHITERABBIT_RTU_EP_DRV_H
 
 #include "rtu.h"
+#include "ep_pfilter.h"
 
 typedef struct {
   char info[30];
@@ -47,6 +48,6 @@ int ep_write_inj_pck_templ(uint32_t port, int slot, pck_inject_templ_t *pck_temp
 void ep_pfilter_status_N_ports(int port_num);
 void ep_pfilter_reload_code(int port);
 void ep_show_pause_config(uint32_t port);
-void ep_pause_config(uint32_t port, int txpause_802_3,int rxpause_802_3, int txpause_802_1q, int rxpause_802_1q);
+void ep_pause_config_ena(uint32_t port, int txpause_802_3,int rxpause_802_3, int txpause_802_1q, int rxpause_802_1q);
 void ep_pause_config_dis(uint32_t port);
 #endif /*__WHITERABBIT_RTU_EP_DRV_H*/
