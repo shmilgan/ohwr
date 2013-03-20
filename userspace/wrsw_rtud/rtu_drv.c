@@ -320,6 +320,8 @@ void rtu_clean_htab(void)
  * \brief Read word from aging HTAB.
  * Aging RAM Size: 256 32-bit words
  */
+// tmp hack-fix
+#define RTU_ARAM_BASE 0x400 
 
 void rtu_read_aging_bitmap( uint32_t *bitmap )
 {
@@ -327,7 +329,7 @@ void rtu_read_aging_bitmap( uint32_t *bitmap )
 	for(i=0; i< RTU_ENTRIES / 32; i++)
 	{
    	bitmap[i] = _fpga_readl(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*i);
-    _fpga_writel(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*i, 0);
+    _fpga_writel(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*i, 0);	  
 	}
 }
 
