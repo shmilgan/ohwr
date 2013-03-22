@@ -1,4 +1,4 @@
-/*
+/*\
  * WR Switch PHY testing tool
  	 Tomasz Wlostowski / 2012
 
@@ -223,7 +223,6 @@ void calc_trans(int ep, int argc, char *argv[])
 	int bitslide,phase, i;
 
 	signal (SIGINT, sighandler);
-	
 	for(i=0;i<MAX_BITSLIDES;i++)
 	{
 		bslides[i].occupied = 0;
@@ -244,11 +243,18 @@ void calc_trans(int ep, int argc, char *argv[])
   sock = ptpd_netif_create_socket(PTPD_SOCK_RAW_ETHERNET, 0, &sock_addr);
 //	fpga_writel(EP_DMCR_N_AVG_W(1024) | EP_DMCR_EN, IDX_TO_EP(ep) + EP_REG(DMCR));
 
+	if(	rts_connect() < 0)
+	{
+		printf("Can't connect to the RT subsys\n");
+		return -1;
+	}
+
 
 	while(!quit)
 	{
 		char buf[64];
 		wr_sockaddr_t to;
+		struct rts_pll_state pstate;
 
 		pcs_write(ep, MII_BMCR, BMCR_PDOWN);
 		usleep(10000);
@@ -258,12 +264,20 @@ void calc_trans(int ep, int argc, char *argv[])
 
 		while(! (pcs_read(ep, MII_BMSR) & BMSR_LSTATUS)) usleep(10000);
 
+
 		usleep(200000);
 		bitslide = get_bitslide(ep);
-				usleep(1000000);
+		rts_enable_ptracker(ep, 0);
+		rts_enable_ptracker(ep, 1);
+		usleep(1000000);
 
 //		get_phase(ep, &phase);
-		ptpd_netif_get_dmtd_phase(sock, &phase);
+		rts_get_state(&pstate);
+
+		phase = pstate.channels[ep].phase_loopback;
+		printf("phase %d flags %x\n", phase,  pstate.channels[ep].flags);
+
+	//		ptpd_netif_get_dmtd_phase(sock, &phase);
 
 
 
@@ -430,6 +444,12 @@ void rt_command(int ep, int argc, char *argv[])
 				printf("rv: %d\n", rts_set_mode(RTS_MODE_GM_FREERUNNING));
 		}
 //		rts_lock_channel(ep);
+	}
+	else if (!strcmp(argv[3], "track"))
+	{
+		printf("Enabling ptracker @ port %d\n", ep);
+		
+		rts_enable_ptracker(ep, 1);
 	}
 }
 
