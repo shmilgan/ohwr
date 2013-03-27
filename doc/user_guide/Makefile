@@ -32,8 +32,8 @@ ifneq "$(TEMPLATE)" ""
 TEMPLATEARG=--template=$(TEMPLATE)
 endif
 
-## Obtain the version ($ is replaced by $$)
-VERSION = $(shell git describe --always --dirty=+ | sed  's;^.*-\([v0-9\.]*\)\([a-z0-9\-+]*\)$$;\1\2;' )
+## Obtain the version
+VERSION = $(shell git describe --always --dirty=+ | sed  's;^wr-switch-sw-;;')
 DATE	= $(shell date +"%d %b. %Y")
 
 #--highlight-style=pygments (the default), kate, monochrome, espresso, haddock, and tango
