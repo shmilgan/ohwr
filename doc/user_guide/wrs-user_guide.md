@@ -1,0 +1,660 @@
+% WRS-3/18 - User Guide
+% Benoit Rat, Rodrigo Agis (Seven Solutions)
+
+### Copyright
+
+This document is copyrighted (under the Berne Convention) by Seven
+Solutions company and is formally licensed to the public under **CC-BY-SA** license.
+Report content can be copied, modified, and redistributed.
+
+The Seven Solutions Logo can not be modified in any form, or by any means without prior
+written permission by Seven Solutions.
+
+### Licenses
+
+~~~~~~~
+The "User Guide" (as defined above) is provided under the terms of creative commons 
+public license (CC BY-SA 3.0, "ccpl" or "license"). 
+The work is protected by copyright and/or other applicable law. 
+Any use of the work other than as authorized under this license or copyright law
+is prohibited.
+By exercising any rights to the work provided here, you accept and agree to be bound
+by the terms of this license. To the extent this license may be considered to be 
+a contract, the licensor grants you the rights contained here in consideration 
+of your acceptance of such terms and conditions.
+~~~~~~~~~
+
+
+The [WRS] has been released under the **CERN OHL** licence.
+
+~~~~~~~
+Copyright CERN 2011.
+This documentation describes Open Hardware and is licensed under the CERN OHL v. 1.1.
+
+You may redistribute and modify this documentation under the terms of the
+CERN OHL v.1.1. (http://ohwr.org/cernohl). This documentation is distributed
+WITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING OF
+MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A
+PARTICULAR PURPOSE. Please see the CERN OHL v.1.1 for applicable
+conditions
+~~~~~~~~~~~~~~~~~
+
+
+\clearpage
+
+
+
+### Revision table
+
+
+------------------------------------------------------------------------
+ Rev      Date          Author          Comments
+-----  ----------- -------------------  --------------------------------
+ 0.1   18/02/2013   Benoit Rat\         Initial Version\
+                    [Seven Solutions]   Reviewer: Rodrigo Agis ([7S])
+                                  
+------------------------------------------------------------------------
+
+
+
+\clearpage
+
+
+Introduction
+=================
+
+The White Rabbit Switch ([WRS]) is the key component of the 
+White Rabbit Protocol that provides precision timing and high synchronization over an Ethernet-based network.
+
+About this Guide
+-----------------
+
+This document is intended as a user guide for quickly setup your switch in
+a White Rabbit Network. For more details on advanced topics please
+refers to the [Advanced configuration section](#advanced-configuration) or
+to the [wr-switch-sw.pdf] guide.
+
+
+
+Product Overview
+==================
+
+Package
+------------
+
+The [WRS] package is composed of various elements:
+
+* The packaging box
+* A power cable according to the country of distribution.
+* The 18 SFP ports switch.
+* SFP LC connectors[^1] 
+    * 16x AXGE-3454-0531 (violet)
+    * 2x AXGE-1254-0531 (blue)
+
+
+[^1]: The SFP LC connectors are optional. Consult the [SFPs Wiki] for more information about the compatibility of SFPs and how to use them.
+
+
+Front panel (Legend)
+---------------------
+
+
+![Front Panel of the WRS](front_panel.png)
+
+1. The 18 SFP ports
+#. Synced/Activity LEDs
+#. Link/WR Mode LEDs
+#. Management Mini-USB (B) port 
+#. Status LED
+#. Power LED
+#. PPS output
+#. Synced 125MHz Output
+#. PPS input (GPS Clock) 
+#. 10MHz reference clock input (GPS/Cesium)
+#. 125MHz reference clock input (GPS/Cesium)
+#. Ethernet 100Mbps Management Port
+
+
+
+
+Back panel (Legend)
+--------------------
+
+![Back Panel of the WRS](back_panel.png)
+
+
+13. Ground Connector
+#. Generic Button
+#. Flashing Button ([See firmware update](#firmware-update))
+#. RS232 Management Port (GPRMC) 
+#. FPGA Mini-USB (B) UART
+#. ARM Mini-USB (B) UART
+#. Power Switch
+#. Power Plug
+#. Serial Number and MACs 
+
+
+
+Basics
+==================
+
+
+Default Setting
+----------------
+
+The device is factory configured with the following default settings:
+
+* IP configuration is **DHCP**
+* MACs are given by the manufacturer; labeled on back panel [#21](#back-panel-legend)
+* WR mode is **BoundaryClock** (Simple Master)
+* SSH user: **root**
+* SSH password: (empty/just press enter)
+* Boot method: from Nandflash firmware
+
+
+Quick Startup
+--------------
+
+To get the switch quickly working we recommend you to:
+
+1. Plug an Ethernet cable to the *Ethernet 100Mpbs Management Port*.
+#. Plug the power cable to the *Power Plug*.
+
+After all connections have been made, toggle the power-switch on to turn 
+the device on. After the power on, the [WRS] should behave as follows:
+
+4. The *Power LED* goes green
+#. After 15s, the *Status LED* goes orange which means that the [WRS]'s kernel
+has started.
+#. Finally, it goes green and the FANs start working.
+
+You have now the [WRS] ready to be used in a WR network.
+
+7. Connect the blue SFPs (AXGE-1254-0531) to the SFP port 1 and 2 of the 
+[WRS]. These SFPs are the ones that will receive synchronization message 
+from another master [WRS] or from the grandmaster [WRS]. If you only have
+one switch in your network you might configure it in the 
+[GrandMaster mode](#grandmaster-mode).
+#. You can plug the other SFP ports [2-16] with violet SFPs (AXGE-3454-0531)
+to the WR node such as [SPEC], [SVEC], ...
+
+USB Connections
+----------------
+
+The [WRS] has three different USB ports used to communicate/monitorize 
+through a PC.
+
+a. Management Mini-USB (B) port 
+b. FPGA Mini-USB (B) UART
+c. ARM Mini-USB (B) UART
+
+These ports correspond themselve to different devices on your computer.
+
+a. ttyACM0 (when the *Status LED* is green)
+b. ttyUSB0
+c. ttyUSB1
+
+To connect to them you need to open a serial console such as minicom[^minicom]
+
+~~~~~{.bash}
+## Connecting to the ARM UART
+minicom -D /dev/ttyUSB1 -b 115200
+
+## Connecting to the FPGA UART
+minicom -D /dev/ttyUSB0 -b 115200
+
+## Connecting to the Management USB port
+minicom -D /dev/ttyACM0 -b 115200
+~~~~~~~~~~~~
+
+[^minicom]: In debian's like distribution you can install minicom by executing
+`sudo apt-get install minicom` command. 
+
+
+Login Via USB
+--------------
+
+Once the device has been correctly started up (*Status LED* is green),
+It is recommended to use the USB management port to connect to the device
+instead of the ARM UART. 
+
+~~~~~{.bash}
+## Connecting to the Management USB port
+minicom -D /dev/ttyACM0 -b 115200
+~~~~~~~~~~
+
+The ARM UART is usually employed during development and monitoring because
+the kernel and daemons messages are thrown to this console.
+
+
+Login via SSH
+--------------
+
+The Ethernet management port automatically obtains its IP using the DHCP 
+protocol. If you don't have any DHCP router/server in your network please
+refer to the [non-DHCP](#non-dhcp-user) section.
+
+To obtain the IP of the [WRS] you can connect to your DHCP server interface 
+and retrieve the IP, or [connect via USB](#login-via-usb) to retrieve the
+IP (`ipconfig eth0`).
+
+If the [WRS] IP is for example `192.168.1.50` you might connect using:
+
+
+
+	ssh root@192.168.1.50
+
+And press enter when requesting the password.
+
+
+Login using Windows
+-----------------------
+
+The process of login to the switch using Windows (XP,Vista,7,8) is pretty 
+similar:
+
+1. You first need to download the [Putty Tool] and install it.
+
+2. Then you need to list and find out which serial port in Windows corresponds
+to which interface. A simple way to perform this is to plug only one USB 
+cable at a time, and go to 
+
+`Device Manager > Ports (COM & LPT)` to check
+the name of the `COM<X>` port. 
+
+3. Finally to connect through the USB you just need to open the Putty 
+tool and configure it as indicated in the figure below. Do not forget to replace the
+`COM9` port name by the one that corresponds to the USB management.
+
+
+![Putty - USB connection](putty-ACM0.png)
+
+4. Similarly, you can connect to the [WRS] using the SSH protocol. 
+You should not forget to replace the IP of your [WRS] (yellow) 
+by the one in your subnetwork. 
+
+![Putty - SSH connection](putty-SSH.png)
+
+
+Configurations
+==================
+
+
+Booting
+------------
+
+After 10 seconds, the bootloader automatically loads the [WRS] firmware
+from the Flash NAND memory of the switch.  If you connect to the ARM debug 
+port you might see the following message:
+
+
+~~~~~{.bash}
+Welcome on WRSv3 Boot Sequence
+      1: boot from nand (default)
+      2: boot from TFTP script   
+      3: edit config             
+      4: exit to shell           
+      5: reboot    
+~~~~~~~~~~~~~~~~~~~
+
+> Notes: If you want to change how
+the [WRS] is booted you can place a `wrboot` script in your TFTP root 
+folder and select the second option or you can edit the configuration 
+(third option). Please find more explanations in the 
+[Advanced configuration](#advanced-configuration)
+
+
+Non-DHCP user
+---------------
+
+If you have no DHCP server in your network you must connect to the [WRS] 
+using the [login via USB method](#login-via-usb) and then edit the 
+`interfaces` file:
+
+~~~~{.bash}
+vi /etc/network/interfaces
+~~~~~~~~~~~
+
+for example, in a `192.168.1.x` subnetwork you might replace the 
+`iface eth0 inet dhcp` by 
+
+~~~~~{.bash}
+iface eth0 inet static
+     address 192.168.1.10
+     netmask 255.255.255.0
+     network 192.168.1.0
+     broadcast 192.168.1.255
+     gateway 192.168.1.1
+~~~~~~~~~~~~~~
+
+
+> Notes: If you are willing to use TFTP script in a non-DHCP network, you 
+must also statically set the IP in the bootloader configuration.
+
+
+GrandMaster mode
+-----------------
+
+![White Rabbit Network](wr_network2.jpg)
+
+In a White Rabbit network, almost all the switches are configured as "Simple Master"
+(default configuration). They transmit the clock signal that cames from other switches.
+However the "top" switch connected to the GPS signal is called the **Grand Master**
+and is configured in a specific way.
+
+To configure a switch in GrandMaster mode you must edit[^viedit] the `wrsw_hal.conf` file
+
+~~~~{.C}
+vi /wr/etc/wrsw_hal.conf
+~~~~~~~~
+
+And uncommenting the timing.mode value the line below:
+
+~~~~{.Haskell}
+timing =  {
+	-- other values
+	mode = "GrandMaster"; -- grand-master with external reference
+};
+~~~~~~
+
+
+For a more detailed explanation on how to configure and connect the switch in grand master mode, please consult the
+[wr_external_reference.pdf] document.
+
+
+[^viedit]: To edit in `vi`: `Ins` Insert text; `Esc` back to normal mode; `:wq` Save and Exit
+
+
+
+Firmware updates
+------------------
+
+This section proposes a simple way to update the firmware of the [WRS]
+by flashing the memory using the *Management Mini-USB*[^flashlinux].
+
+1. Download the [flashing package] and extract it.
+#. Download the [latest stable release] of the [WRS] 
+binaries in a tar.gz package.
+#. Connect the *Management Mini-USB* port to the PC.
+#. Start the flashing procedure by doing:  
+
+~~~~{.bash}
+flash-wrs -e -m1 <MAC1> -m2 <MAC2> wr-switch-sw-<latest_version>.tar.gz
+~~~~~~~~~~~~
+
+where MAC1 and MAC2 are written in the pack panel (*Serial Number and MACs*)
+
+4. At this step you will be asked to restart the [WRS], using the *Power 
+Switch*, while pressing the *Flash Button*.
+#. The flashing procedure should start and it takes some time to perform. 
+#. The switch will restart by itself which means that the flashing operation
+as performed successfully.
+
+[^flashlinux]: The flashing operation is only available for linux environment, and
+it is recommended to use debian's like distribution such as "Ubuntu"
+
+Advanced configuration
+-----------------------
+
+For more complex topics about the [WRS] you must look at the [wr-switch-sw.pdf] 
+written for advanced user and developer. You will find informations about:
+
+* Advanced flashing options.
+* Configuring specific MAC address.
+* Modification of the bootloader.
+* Building from the sources.
+* etc.
+
+
+
+
+
+
+
+Safety Notes
+=============
+
+#### Warning: 
+Do not block the air vents which are located on back panel of the [WRS],
+the internal temperature might increase and damage the switch.
+
+#### Warning: 
+To increase the lifetime of the [WRS] it is recommended to use the switch
+in a controlled ambient environment and limit to the ambient condition
+stated in the [Specification Appendix](#specification).
+
+#### Warning:
+The standard power source for this equipment is designed to work in the 
+range of 110-240V with 50-60Hz.
+
+#### Warning:
+This equipment is intended to be grounded using the *Grounded Connector*.
+Ensure that the host is connected to earth ground during normal use.
+
+#### Warning:
+To prevent bodily injury when mounting or servicing this unit in a rack, you must 
+take special precautions to ensure that the system remains stable. 
+This unit should be mounted at the bottom of the rack if it is the only unit in the 
+rack.
+When mounting this unit in a partially filled rack, load the rack from the bottom 
+to the top with the heaviest component at the bottom of the rack.
+
+
+
+Appendix
+============
+
+Specification
+----------------
+
+
+
++--------------------+-------------------------------------------------+
+| ***FPGA***         |                                                 |
++====================+=================================================+
+| **Type**           | Xilinx Virtex-6 (LX240T)                        |
++--------------------+-------------------------------------------------+
+| **Package**        | 1156-pin BGA                                    |
++--------------------+-------------------------------------------------+
+| **Slices**         | 37,680 (4 LUTs and 8 flip-flops)                |
++--------------------+-------------------------------------------------+
+| **Memories**       | 416x36Kb (9,504Kb) Block RAM\                   |
+|                    | 32MB NOR Flash                                  |
++--------------------+-------------------------------------------------+
+| **Softcore**       | LatticeMico32 (LM32)                            |
++--------------------+-------------------------------------------------+
+| **I/O**            | 20 GTX transceivers for SFP links\              |
+|                    | 40 GPIO for generic purpose                     |
+|                    | (LEDs, SFP detection, ...)                      |
++--------------------+-------------------------------------------------+
+| **Monitoring**     | Monitoring power supply                         |
++--------------------+-------------------------------------------------+
+| **Temperature**    | Sensor control                                  |
++--------------------+-------------------------------------------------+
+
++--------------------+-------------------------------------------------+
+| ***CPU***          |                                                 |
++====================+=================================================+
+| **Type**           | ARM Atmel AT91 SAM9G45                          |
++--------------------+-------------------------------------------------+
+| **Core**           | 400MHz (ARM926E)                                |
++--------------------+-------------------------------------------------+
+| **Memories**       | 64MB DDR2 (16-bit bus chip)\                    |
+|                    | 256MB NAND flash chip\                          |
+|                    | 8MB boot flash                                  |
++--------------------+-------------------------------------------------+
+| **I/O**            | 32bit Async Bridge with FPGA\                   |
+|                    | 100Base-T Ethernet                              |
++--------------------+-------------------------------------------------+
+| **OS**             | Linux (Kernel v2.6.39)                          |
++--------------------+-------------------------------------------------+
+
+            
++--------------------+-------------------------------------------------+
+| ***OnChip Clock*** |                                                 |
++====================+=================================================+
+| **PLL**            | AD9516 (14-Output Clock Generator               |
+|                    | with Integrated 1.6 GHz VCO)                    |
++--------------------+-------------------------------------------------+
+| **Synthesizer**    | TI CDCM61002RHBT (28-683MHz)                    |
++--------------------+-------------------------------------------------+
+| **DAC**            | 2xAD5662BRJ (16bit; 2.7-5.54V)                  |
++--------------------+-------------------------------------------------+
+
++--------------------+-------------------------------------------------+
+| ***Others***       |                                                 |
++====================+=================================================+
+| **Soldering**      | IPC- 610 Rev E Class 2                          |
++--------------------+-------------------------------------------------+
+| **Certification**  | ISO-9001, ISO-14001, CE, RoHS                   |
++--------------------+-------------------------------------------------+
+| **Power Supply**   | 100-240VAC, 2.0A 50-60 Hz\                      |
+|                    | 12V DC, 6.66A – 80W max                         |
++--------------------+-------------------------------------------------+
+| **Environmental**  | Temperature: -10ºC ~ +50ºC\                     |
+| **Conditions**     | Humidity:    0% ~ 90% RH                        |
++--------------------+-------------------------------------------------+
+
+
+Features
+----------
+
+* PTPv2 (IEEE 1588-2008)
+* WRP daemon (node discovery, etc.)
+* DHCP client
+* SSH server
+* Python Support
+* NTP Client/Relay/Server
+* ARP/ DNS / EtherWake protocol
+
+
+Warranty
+-------------
+
+The [WRS] is fully factory tested and warranted against manufacturing defects for a period of one year.  As the
+circumstances under which this [WRS] is installed can not be controlled, failure of the [WRS] due to
+installation problems can not be warranted. This includes misuse, miswiring, overheating, operation under loads beyond the
+design range of the [WRS]. 
+For warranty or non-warranty replacement send the [WRS] to: 
+
+> Seven Solutions\
+C/ Baza, parcela 19, nave 3 \
+Polígono Industrial Juncaril, \
+18210 Peligros \
+(Granada), SPAIN.
+
+
+FAQs & Troubleshooting
+--------------------------
+
+
+If you are experiencing some issues please look first at the [FAQ] wiki 
+page if you can find an answer.
+
+You can also reach out the wiki to see if your issue is a known
+bug and if a solution was found: 
+<http://www.ohwr.org/projects/wr-switch-sw/wiki/Bugs> 
+
+You can also request Technical Support by 
+[contacting our company](#contact-us)
+
+Contact-Us
+-----------
+
+To contact Seven Solutions company please use:
+
+* <info@sevensols.com>
+* (+34) 958 285 024
+* <http://www.sevensols.com>
+
+
+Save Our Environment
+---------------------
+
+![Trash](trash.jpg)\ 
+
+This symbol means that when the equipment has 
+reached the end of its life cycle, it must be taken 
+to a recycling centre and processed separate from 
+domestic waste.
+
+The cardboard box, the plastic contained in the packaging, 
+and the parts that make up this device can be recycled in 
+accordance with regionally established regulations.
+
+Never throw this electronic equipment out along with 
+your household waste. You may be subject to penalties or 
+sanctions under the law. Instead, ask for instructions from 
+your municipal government on how to correctly dispose of it. 
+Please be responsible and protect our environment.
+
+
+Glossary
+===========
+
+DHCP
+:   The Dynamic Host Configuration Protocol to obtain network configuration  
+PTP
+:	Precise Time Protocol, a time synchronization protocol
+NAND
+:	NAND Flash Memory, a type of reprogrammable non-volatile computer memory
+FMC
+:	FPGA Mezzanine Card, an ANSI standard for mezzanine card form factor.
+SMC
+:	SubMiniature version C, coaxial connector used in radio-frequency circuits.
+SFP
+:	Small form-factor pluggable transceiver, a hot-pluggable transceiver for optical fiber
+PCIe
+:	Peripheral Component Interconnect Express, a high-speed serial computer expansion bus standard
+LM32
+:	LatticeMico32 is a 32-bit microprocessor soft core optimized for field-programmable gate arrays (FPGAs).
+HDL
+:	Hardware description language
+SPEC
+:	Simple PCIe FMC carrier
+SVEC
+:	Simple VME FMC carrier
+UART
+:	Universal Asynchronous Receiver/Transmitter
+WR
+: 	White Rabbit
+WRS
+: 	White Rabbit Switch
+
+
+References
+==============
+
+* [wrs-3/18.pdf] Datasheet for the White Rabbit Switch v3 - 18 SFPs
+* [wr-switch-sw.pdf] Advanced documentation on how using the software
+* [wr_external_reference.pdf] Connect the [WRS] in GrandMaster mode.
+* [whiterabbitsolution] White Rabbit as a complete timing solutions
+* [WRS Wiki]: White Rabbit Switch Wiki on ohwr.org
+* [wr-switch-testing] Project for testing the switch itself 
+* [SFPs Wiki] Type of SFP supported by the [WRS]
+
+
+<!-- List of links -->
+
+
+[whiterabbitsolution]: http://www.sevensols.com/whiterabbitsolution/
+[WRS]: http://www.sevensols.com/index.php?seccion=1410&subseccion=1435
+[WR Wiki]:	http://www.ohwr.org/projects/white-rabbit/wiki
+[WRS Wiki]:	http://www.ohwr.org/projects/white-rabbit/wiki/Switch
+[wr-switch-sw]: http://www.ohwr.org/projects/wr-switch-sw/
+[wr-switch-hdl]: http://www.ohwr.org/projects/wr-switch-sw/
+[wr-switch-hw]: http://www.ohwr.org/projects/wr-switch-hw/
+[wr-switch-testing]: http://www.ohwr.org/projects/wr-switch-testing
+[wr-starting-kit]: http://www.ohwr.org/projects/wr-starting-kit/
+[SPEC]: http://www.ohwr.org/projects/spec/
+[SVEC]: http://www.ohwr.org/projects/svec/
+[SFPs Wiki]: http://www.ohwr.org/projects/white-rabbit/wiki/SFP
+[Seven Solutions]: http://www.sevensols.com
+[7S]: http://www.sevensols.com
+[Putty Tool]: http://www.putty.org/
+[FAQ]: http://www.ohwr.org/projects/white-rabbit/wiki/FAQswitch
+[wr-switch-sw.pdf]: http://www.ohwr.org/attachments/download/1772/wr-switch-sw-v3.1-2012-12-20.pdf
+[wr_external_reference.pdf]: http://www.ohwr.org/attachments/1647/wr_external_reference.pdf
+[wrs-3/18.pdf]: http://www.sevensols.com/whiterabbitsolution/files/7SP-WRS-3_18.pdf
+[latest stable release]: http://www.sevensols.com/dl/wr-switch-sw/bin/latest_stable.tar.gz
+[flashing package]: http://www.sevensols.com/dl/wrs-flashing/latest_stable.tar.gz
