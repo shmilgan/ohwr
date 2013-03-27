@@ -4,7 +4,7 @@
 ### Copyright
 
 This document is copyrighted (under the Berne Convention) by Seven
-Solutions company and is formally licensed to the public under **CC-BY-SA** license.
+Solutions company and is formally licensed to the public under **GPL v2.0** license.
 Report content can be copied, modified, and redistributed.
 
 The Seven Solutions Logo can not be modified in any form, or by any means without prior
@@ -13,15 +13,22 @@ written permission by Seven Solutions.
 ### Licenses
 
 ~~~~~~~
-The "User Guide" (as defined above) is provided under the terms of creative commons 
-public license (CC BY-SA 3.0, "ccpl" or "license"). 
-The work is protected by copyright and/or other applicable law. 
-Any use of the work other than as authorized under this license or copyright law
-is prohibited.
-By exercising any rights to the work provided here, you accept and agree to be bound
-by the terms of this license. To the extent this license may be considered to be 
-a contract, the licensor grants you the rights contained here in consideration 
-of your acceptance of such terms and conditions.
+The "User Guide" (as defined above) is provided under the terms of GPL v2.0
+Copyright (C) 2013 - Seven Solutions
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ~~~~~~~~~
 
 
@@ -55,6 +62,9 @@ conditions
                     
  0.2   26/03/2013   Benoit Rat\         Adding suggestion from\
                     [Seven Solutions]   Beck, Dietrich Dr (GSI)
+                    
+ 0.3   27/03/2013   Benoit Rat\         Modifying licence to GPL v2.0\
+                    [Seven Solutions]   to be comptabile with the package
 ------------------------------------------------------------------------
 
 
