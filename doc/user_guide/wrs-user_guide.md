@@ -52,7 +52,9 @@ conditions
 -----  ----------- -------------------  --------------------------------
  0.1   18/02/2013   Benoit Rat\         Initial Version\
                     [Seven Solutions]   Reviewer: Rodrigo Agis ([7S])
-                                  
+                    
+ 0.2   26/03/2013   Benoit Rat\         Adding suggestion from\
+                    [Seven Solutions]   Beck, Dietrich Dr (GSI)
 ------------------------------------------------------------------------
 
 
@@ -146,7 +148,11 @@ The device is factory configured with the following default settings:
 
 * IP configuration is **DHCP**
 * MACs are given by the manufacturer; labeled on back panel [#21](#back-panel-legend)
+	* MAC1 corresponds to the managment port (RJ45).
+	* MAC2 corresponds to the first SFP port ($wr[0-17] \Leftrightarrow \textrm{MAC2}+[0-17]$).
 * WR mode is **BoundaryClock** (Simple Master)
+	* The first two ports (SFPs 1 & 2) are configured as WR slave.
+	* The other ports (SFPs [3-18]) are configured as WR master.
 * SSH user: **root**
 * SSH password: (empty/just press enter)
 * Boot method: from Nandflash firmware
@@ -276,6 +282,26 @@ by the one in your subnetwork.
 ![Putty - SSH connection](putty-SSH.png)
 
 
+After login:
+-------------------
+
+Once you are login you can use various tools to monitorize the [WRS]. 
+All these tools are found in `/wr/bin/` which is included in the `$PATH`.
+ 
+The following list resumed the most interesting one: 
+
+ * `shw_ver`:	Print informations about the SW & HW version of the [WRS].
+ * `rtu_stat`:	Routing Table Unit Statistic, returns the routing table information where we can find which MAC need to be forward to which port. It also allows to add and delete entries.
+ * `wr_mon`:	WR Switch Sync Monitor, outputs informations about the state of WR syncrhonisation such as Phase Tracking, Master-Slave delay, link asymmetry, etc...
+ * `spll_dbg_proxy`: 	SoftPLL debug proxy, reads out the debug FIFO datastream from the SoftPLL and proxies it  via TCP connection to the application running on an outside host, where it can be plotted, analyzed, etc.
+
+> Notes: More information about each tools can be obtain using the embedded help argument: `--help`, `-h` or `help`.
+
+#### Warning: 
+The SFP ports are labeled from 1 to 18 on the front panel but their corresponding 
+network interface are named from `wr0` to `wr17`, remind it. 
+
+
 Configurations
 ==================
 
@@ -402,6 +428,7 @@ written for advanced user and developer. You will find informations about:
 * Advanced flashing options.
 * Configuring specific MAC address.
 * Modification of the bootloader.
+* Changing Slave/Master port type.
 * Building from the sources.
 * etc.
 
@@ -547,7 +574,6 @@ Polígono Industrial Juncaril, \
 FAQs & Troubleshooting
 --------------------------
 
-
 If you are experiencing some issues please look first at the [FAQ] wiki 
 page if you can find an answer.
 
@@ -557,6 +583,29 @@ bug and if a solution was found:
 
 You can also request Technical Support by 
 [contacting our company](#contact-us)
+
+### Bug report
+
+Feel free to send us a bug report with the full state of the [WRS] by 
+executing the following command: 
+ 
+~~~~~{.bash}
+#On the WRS
+shw_ver > /tmp/bug_report.txt
+rtu_stat >> /tmp/bug_report.txt
+dmesg >> /tmp/bug_report.txt
+
+#Obtain the IP of the switch
+ifconfig eth0 | grep addr
+~~~~~~~~~~~~
+
+And retrieving the file from your computer by using SSH:
+
+~~~~~{.bash}
+#On your client
+scp root@<IP_of_the_switch>:/tmp/bug_report.txt ~
+~~~~~~~~~~~~~~
+
 
 Contact-Us
 -----------
@@ -630,8 +679,10 @@ References
 * [wr_external_reference.pdf] Connect the [WRS] in GrandMaster mode.
 * [whiterabbitsolution] White Rabbit as a complete timing solutions
 * [WRS Wiki]: White Rabbit Switch Wiki on ohwr.org
+* WRS [FAQ]: WR-Switch Frequently Added Questions
 * [wr-switch-testing] Project for testing the switch itself 
 * [SFPs Wiki] Type of SFP supported by the [WRS]
+
 
 
 <!-- List of links -->
@@ -653,7 +704,7 @@ References
 [7S]: http://www.sevensols.com
 [Putty Tool]: http://www.putty.org/
 [FAQ]: http://www.ohwr.org/projects/white-rabbit/wiki/FAQswitch
-[wr-switch-sw.pdf]: http://www.ohwr.org/attachments/download/1772/wr-switch-sw-v3.1-2012-12-20.pdf
+[wr-switch-sw.pdf]: http://www.sevensols.com/dl/wr-switch-sw/latest_stable.pdf
 [wr_external_reference.pdf]: http://www.ohwr.org/attachments/1647/wr_external_reference.pdf
 [wrs-3/18.pdf]: http://www.sevensols.com/whiterabbitsolution/files/7SP-WRS-3_18.pdf
 [latest stable release]: http://www.sevensols.com/dl/wr-switch-sw/bin/latest_stable.tar.gz
