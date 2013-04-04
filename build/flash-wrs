@@ -25,6 +25,7 @@ showhelp()
 	printf "Options: \n"
 	printf "  -h|--help\t Show this help message\n"
 	printf "  -m|--mode\t can be: default (df and nf), df (dataflash),\n\t\t nf (nandflash), ddr (ddr memories).\n"
+	printf "  -g|--gateware\t Select the gateware: 18p (18 ports, default), 8p (8 ports), LX130T (small FPGA), LX240T (big FGPA)\n"
 	printf "  -e \t\t Completely erase the memory (Can erase your configuration)\n"
 	printf "  -b|--build\t Use files that you have built in the WRS_OUTPUT_DIR\n"
 	printf "  -m1|--mac1\t Default MAC address for the ethernet port on board\n"
@@ -107,6 +108,10 @@ MAC1=$MAC1_DEF
 MAC2_DEF="02:34:56:78:9A:00"
 MAC2=$MAC2_DEF
 
+# By default we select the gateware only for 18ports because 8ports are
+# only used by developper.
+gateware="18p*.bin"
+
 DEV=""
 FLAGS=""
 
@@ -155,6 +160,19 @@ while [ $# -ge 1 ]; do
 			exit 1
 		fi
 		memmode="$2"
+		shift; shift;;
+		
+	-g|--gateware)
+		# Obtain which gateware type we want to keep for flash
+		if [ "$2" = "18p" ] || [ "$2" = "8p" ]; then
+			gateware="$2*.bin";
+		elif [ "$2" = "LX240T" ] || [ "$2" = "LX130T" ]; then
+			gateware="*-$2.bin";
+		else
+			echo "Error: Invalid gateware selection \"$2\""
+			showhelp
+			exit 1
+		fi
 		shift; shift;;
 
 	/* ) DEV="-s $1"; shift ;;
@@ -224,9 +242,9 @@ if lsusb | grep -q "at91sam"; then
 else
 	echo ""
 	echo "$me: Waiting for at91sam SAMBA bootloader on usb."
-	echo "    Please check the jumper is plugged"
-	echo "    and the USB cable is connected."
-	echo "    Then reset the switch or turn it on."
+	echo "    Please check the Managment USB cable is connected "
+	echo "    and keep pressed the Flash button while" 
+	echo "    resetting/powering the switch."
 	while true; do
 		if lsusb | grep -q "at91sam"; then
 			break
@@ -239,7 +257,7 @@ fi
 
 # Remove the jumper now, before proceeding
 echo "$me: I'm talking with the switch;"
-echo -n "   please remove the jumper and press Enter to start flashing: "
+echo -n "   please release the flash button and press Enter to start flashing: "
 read unused
 
 # Create a temporary barebox binary with modified MAC addresses
@@ -269,6 +287,9 @@ if [ $nf ]; then
 	TMPSCRIPT=$TMPDIR/wrsrootfs-script
 	cat > $TMPSCRIPT << EOF
 tar --directory $TMPFS -xzf $rootfsgz
+# Remove the unnecessary HDL files, by default we keep 18 ports HDL for both FPGA type
+# (There is not enough place in DDR to extract 4 HDLs, be carefull if you add custom files)
+find $TMPFS/wr/lib/firmware/ -type f \( ! -name ''${gateware}'' \) -a \( ! -name '*rt_cpu.bin' \) -exec rm -f {} \;
 
 mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $rootfsjffs2
 

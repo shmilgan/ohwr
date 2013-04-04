@@ -13,8 +13,8 @@ STRIP           = $(CROSS_COMPILE)strip
 OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
-# 
-GIT_VER = $(shell git describe --always --dirty=+ | sed  's;^[a-zA-Z\-]*-\(.*\)$$;\1;' )
+#
+GIT_VER = $(shell git describe --always --dirty=+ | sed  's;^wr-switch-sw-;;')
 GIT_USR = $(shell  git config --get-all user.name)
 
 # LOTs of includes

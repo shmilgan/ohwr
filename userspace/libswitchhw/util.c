@@ -47,7 +47,10 @@ uint64_t shw_get_tics()
 }
 
 
-
+/**
+ * \brief Helper function to quickly display byte into binary code.
+ * WARNING: this returns static storage
+ */
 const char *shw_2binary(uint8_t x)
 {
     static char b[9];

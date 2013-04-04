@@ -60,15 +60,19 @@ This document describes the software build procedures for the White
 Rabbit Switch.  The procedure described is for version 3 of the
 hardware project, which  has been successfully booted for the first
 time on Sep 13th 2011.
-The different steps focus on the v3.2, however you can find some
+The different steps focus on the v3.3, however you can find some
 (though limited)
-documentation for v3.0 & v3.1 in @ref{Older Hardware Releases}
+documentation for v3.0, v3.1 & v3.2 in @ref{Older Hardware Releases}
 
 @b{Note:} the switch, as shipped, works perfectly with the provided
 binaries (@url{http://www.ohwr.org/projects/wr-switch-sw/files}), and
 most users will only need to run the flasher -- see @ref{Flashing of
 WRS-3}.  This document as a whole is mainly aimed at developers who
 want to customize their own switch, which is actually a GNU/Linux host.
+
+If you do not need to modify/hack anything in the switch and just learn
+how to use it, you should first refer at the @b{User Guide} that you can
+find in the @url{http://www.ohwr.org/projects/wr-switch-sw/files}
 
 If you have an older Version-2 switch, please refer to the v2 branch
 of the repository at
@@ -387,7 +391,7 @@ in this chapter. You might also want to check its embedded documentation using:
 @node Release Package
 @subsection Release Package
 
-Once all the building steps have succeed, you can easily create a 
+Once all the building steps have succeeded, you can easily create a
 package in @code{WRS_OUTPUT_DIR} using the following command:
 
 @example
@@ -433,6 +437,13 @@ You can list all compiled module by calling
    /path/to/wr-switch-sw/build/wrs_build-all --list
 @end example
  
+If you want to rebuild various modules at the same time, you should run
+something similar as:
+
+@example
+   /path/to/wr-switch-sw/build/wrs_build-all --step="5 7 9"
+@end example
+
 
 As an alternative, you can run the individual script from within
 @i{scripts/}, after setting the proper environment variables.
@@ -457,7 +468,7 @@ directory by deleting all compiled modules (except downloaded files), just call:
 
 This chapter describes the different steps to install the WRS-3 with the 
 correct firmware. This procedure describes the installation of the switch
-with a @i{SCB v3.2} and a @i{Mini-Backplane v3.2}. If you have an older 
+with a @i{SCB v3.3} and a @i{Mini-Backplane v3.3}. If you have an older
 version you might look at the @ref{Older Hardware Releases} and the footnotes.
 
 @menu
@@ -470,32 +481,39 @@ version you might look at the @ref{Older Hardware Releases} and the footnotes.
 @section USB connections
 
 In order to perform the flashing operation easily, you should connect
-two @i{mini-USB} cables to the two front panel sockets. One is used
-to communicate with the intarnal ROM of the CPU, the other is a serial
-port used to interact with the various applications and FPGA. One
-of the GPIO pins of the CPU is connected to a switch, so that the
-same serial port can be used for either device (CPU and FPGA) in
-different times.
+three @i{mini-USB} cables to the switches. 
 
-@sp 1
-@center @image{frontpanel, 7cm,,front panel of the switch}
-@sp 1
+The two back panel @i{mini-USB} sockets correspond to the serial 
+port of the FPGA and the ARM. They are labeled @b{FPGA test} and 
+@b{ARM test} and respectively correspond to the devices 
+@code{/dev/ttyUSB0} and @code{/dev/ttyUSB1} on your host. 
 
-The diagnostic serial port is the
-@b{right} mini-USB @i{(Test)} port of the switch. This is the debug UART
-of the ARM (default at boot time) and can later be switched to the FPGA.
-Once connected
-@code{/dev/ttyUSB0} should appears on your machine, and you can connect
-using minicom @footnote{You can use other programs for accessing serial ports, for example @uref{http://brokestream.com/tinyserial.html, tinyserial}} like this:
+You can connect to them using minicom 
+@footnote{You can use other programs for accessing serial ports, for 
+example @uref{http://brokestream.com/tinyserial.html, tinyserial}} 
+like this:
 
 @example
 	minicom -D /dev/ttyUSB0 -b 115200
+	minicom -D /dev/ttyUSB1 -b 115200
 @end example
 
-Unfortunately, the preferred way to communicate with the CPU internal ROM
-is through the other USB port, using the @b{left} mini-USB port of the switch. 
-When the ROM is unable to boot user code from its SPI flash memory, it
-accepts to be enumerated by the host. You can see the enumerated
+Unfortunately, this order depends on how the USB cables are plugged 
+so you might have the @code{ttyUSB0} device that corresponds to the ARM 
+and the @code{ttyUSB1} to the FPGA.
+
+@sp 1
+
+The front panel USB connection, labeled as @b{managment} USB port, communicates 
+with the internal ROM of the CPU. It is the one used to perform the 
+flashing procedure.
+
+You first need to set up the switch in @emph{"Flashing mode"} to 
+continue with the flashing procedure. To do so, you should turn on 
+the power while pressing the @b{flash button} on the rear panel.
+
+If the operation succeed you should see the message @code{bootROM} 
+appears on the ARM UART. You can also see the enumerated
 device in your own host:
 
 @smallexample
@@ -503,28 +521,21 @@ device in your own host:
    Bus 001 Device 025: ID 03eb:6124 Atmel Corp. at91sam SAMBA bootloader
 @end smallexample
 
-The kernel should automatically load the proper device driver, and you
+Finally, the kernel should also load the proper device driver, and you
 are expected to see @code{/dev/ttyACM0} or equivalent in your system.
 
-If the device is not enumerated,
-this mean that there is already some code in the
-@i{dataflash}, which the switch tries to boot. In order to disable the 
-dataflash you need to open the switch box and fit a 1mm jumper
-@footnote{On v3.0 & v3.1 this jumper does not exist. Refer to 
-@ref{Flashing v3.1/v3.0}}
-on the @i{DFEN} pin as shown in picture below.  Most of the switches are
-shipped with a jumper already plugged between two GND pins. If your switch
-has a jumper plugged, you can use it to disable the @i{dataflash}.
-a jumper in the switch, 
+If it is not the case, this mean that the buton used to disable the dataflash 
+during the boot so that the CPU ROM do not find any valid code and enter in
+@emph{"Flashing mode"} is not working. You can open your box and follow 
+the instruction explained @ref{Flashing v3.2} or contact support.
 
-@sp 1
-@center @image{jumpers, 10cm,,Booting jumpers}
-@sp 2
+Please note that this procedure is not available with the previous 
+version. Refer to your corresponding flashing section in @ref{Older 
+Hardware Releases}.
 
-With the jumper in place, you should reset the machine pressing 
-the button near the 20-pin JTAG connector.  When you see that the
-USB device has been enumerated, you should remove the jumper so the
-programming procedure can access the @i{dataflash} device.
+
+
+
 
 @c =============================================================================
 @node Flashing Procedure
@@ -599,11 +610,11 @@ bus, it prints a message and waits for the switch to be turned on
 in the proper way (with the humber plugged).
 
 The process calls the flasher program twice (so you'll see the
-initialization strings two times) an takes slightly less than 3
+initialization strings two times) and takes slightly less than 3
 minutes.  the longest step is erasure of @i{DataFlash}: if run
 without @t{-e} the script takes just 20 seconds.
 
-This is the a summary of the output you are expected to see,
+This is the summary of the output you are expected to see,
 trimmed to save pages:
 
 @smallexample
@@ -653,7 +664,7 @@ DDR: Writing 21119306 bytes at offset 0x0 buffer 70000000....ABCDEF
 @end smallexample
 
 It is suggested to look at the CPU's serial port during programming,
-where you you will see messages like these:
+where you will see messages like these:
 
 @smallexample
    -I- Statup: PMC_MCKR 1202 MCK = 100000000 command = 0
@@ -711,10 +722,12 @@ Options:
   -h|--help	 Show this help message
   -m|--mode	 can be: default (df and nf), df (dataflash),
 		 nf (nandflash), ddr (ddr memories).
+  -g|--gateware	 Select the gateware: 18p (18 ports, default), 8p (8 ports), LX130T (small FPGA), LX240T (big FGPA)
   -e 		 Completely erase the memory (Can erase your configuration)
   -b|--build	 Use files that you have built in the WRS_OUTPUT_DIR
   -m1|--mac1	 Default MAC address for the ethernet port on board
   -m2|--mac2	 Default base MAC address for the switch ports
+
 @end smallexample
 
 The @i{DEV} is optional and the default is @code{/dev/ttyACM0}.
@@ -740,6 +753,17 @@ install different binaries on these memories:
 @item dataflash: @emph{at91boot} and @emph{barebox} binaries
 @item nandflash: @emph{kernel} zImage and the @emph{file-system}
 @end itemize
+
+You can select which type of gateware you want to flash on your 
+switch. By default we only write on the nandflash the gateware 
+for 18 ports for both its light (@code{LX130T}) and full 
+(@code{LX240T}) FPGA size. If you know which type of FPGA you are 
+using (i.e, @code{LX240T}) and you want to have the gateware for 8 
+and 18 ports you can use the flag as below:
+
+@smallexample
+$ ./build/flash-wrs --gateware LX240T <...>
+@end smallexample
 
 You can also erase the dataflash memory before writing your binaries; to do this
 add the option @code{-e}. Note that the script always erases nandflash before
@@ -1197,6 +1221,9 @@ The most important tools in @file{userspace/tools} are the following:
 	A simple monitor of White Rabbit status. It prints to @i{stdout}
         using the standard escape sequences.
 
+@item shw_ver
+	Print informations about the SW & HW version of the WRS. 
+	See also @ref{DIP Switch HW version}.
 @end table
 
 Please note that to compile the applications and tools outside of the build
@@ -1362,15 +1389,46 @@ it by using magic offsets in the commands).
 @node Schematics are Available
 @appendix Schematics are Available
 
-The switch schematics for all PCB versions (3.0, 3.1 and 3.2 of the
-SCB as well as both 3.1 and 3.2 of the backplane)
+The switch schematics for all PCB versions (3.x of the
+SCB as well as both 3.1, 3.2 and 3.3 of the backplane)
 are available on the Open Hardware Repository, at
 @uref{http://www.ohwr.org/documents/180}, which can also be reached
 from the @i{Documents} tab of the @i{White Rabbit} project.
 
-Plese note that only version 3.2 of both the motherboard and the backplane
-has been shipped commercially; you are interested in previous versions only
-if you are an early developer and have one of those in your hands.
+Plese note that only version 3.2 and 3.3 of both the motherboard and 
+the backplane has been shipped commercially; you are interested in 
+previous versions only if you are an early developer and have one of 
+those in your hands.
+
+@menu
+* DIP Switch HW version::
+@end menu
+
+
+@c ==========================================================================
+@node DIP Switch HW version
+@section DIP Switch HW version
+
+Since v3.3, the backplane include a DIP switch configured by the 
+manufacturer in order to define a specific SCB and backplane 
+version. This setup is then read by the software in order to load 
+the correct FPGA binaries and use the proper I/Os. Please be aware 
+that if you upgrade your SCB from LX130T to LX240T but keep the same 
+backplane you might need to change the DIP switch configuration. 
+Check the code from @code{userspace/libswitchhw/i2c_io.c} code to 
+know how to reconfigure the DIP switch for you upgraded device.
+
+For example, the v3.3 backplane with v3.3 LX240T SCB must be configured as bellow:
+@example
++--------------+---+---+---+---+
+| DIP position | 1 | 2 | 3 | 4 |
++==============+===+===+===+===+
+| DIP value    | 1 | 1 | 1 | 0 |
++--------------+---+---+---+---+
+@end example
+
+
+
 
 
 @c ##########################################################################
@@ -1383,13 +1441,97 @@ mainly in GPIO routing, but there is no complete list of changes
 readily available, unfortunately.
 
 @menu
+* v3.2::
+* v3.1/v3.0
+@end menu
+
+
+@c ==========================================================================
+@node v3.2
+@section v3.2
+
+This version should be fully supported with the latest firmware but 
+few things haven been modified to enable backport compatibility.
+
+@menu
+* Flashing with v3.2::
+* The Serial Ports in v3.2::
+@end menu
+
+
+
+@c --------------------------------------------------------------------------
+@node Flashing v3.2
+@subsection Flashing v3.2
+
+
+The preferred way to communicate with the CPU internal ROM
+is through the @b{left} mini-USB port of the switch, also called
+managment USB port.
+
+Once the USB cable plugged to your computer, the kernel should
+automatically load the proper device driver, and you are expected to see
+@code{/dev/ttyACM0} or equivalent in your system and it should be
+enumerated as below:
+
+@smallexample
+   $ lsusb | grep Atmel
+   Bus 001 Device 025: ID 03eb:6124 Atmel Corp. at91sam SAMBA bootloader
+@end smallexample
+
+
+If it is not the case, this mean that there is already some code in 
+the @i{dataflash}, which the switch tries to boot. In order to 
+disable the dataflash you need to open the switch box and fit a 1mm 
+jumper @footnote{On v3.0 & v3.1 this jumper does not exist. Refer 
+to @ref{Flashing v3.1/v3.0}} on the @i{DFEN} pin as shown in 
+picture below to shortcut the @i{dataflash}. 
+
+@sp 1
+@center @image{jumpers, 10cm,,Booting jumpers}
+@sp 2
+
+With the jumper in place, you should reset the machine pressing
+the button near the 20-pin JTAG connector.  When you see that the
+USB device has been enumerated, you should remove the jumper so the
+programming procedure can access the @i{dataflash} device.
+
+After these steps you can follow the normal @ref{Flashing Procedure} to
+flash your device.
+
+
+@c --------------------------------------------------------------------------
+@node The Serial Ports in v3.2
+@subsection The Serial Ports in v3.2
+
+
+@sp 1
+@center @image{frontpanel, 7cm,,front panel of the switch}
+@sp 1
+
+In v3.2, the debug UART of the ARM is shared with the one from FPGA, and
+it can be switched by the FPGA. This multiplexed port is located on the
+front panel of the switch and corresponds to the @b{right} mini-USB
+@i{(Test)} port. By default, it is multiplexed on ARM UART until the FPGA
+toogle it sharing it with the FPGA UART.
+
+Therefore, if you do not toogle, it should behave exactly like the ARM
+debug port in the v3.3.
+
+
+
+@c ==========================================================================
+@node v3.1/v3.0
+@section v3.1/v3.0
+
+@menu
 * Flashing v3.1/v3.0::          
 * Serial Ports in 3.0/3.1::     
 @end menu
 
-@c ==========================================================================
+@c --------------------------------------------------------------------------
 @node Flashing v3.1/v3.0
-@section Flashing v3.1/v3.0
+@subsection Flashing v3.1/v3.0
 
 To flash any switch using the USB flasher, you need to force the ROM to 
 run the boot protocol called SAMBA Monitor which mean that you must 
@@ -1422,9 +1564,10 @@ to write the new information to @i{dataflash}.
 The device should also appear as @code{/dev/ttyACM0} or equivalent, and
 the further flashing procedure is the same as in versione 3.2.
 
-@c ==========================================================================
+
+@c --------------------------------------------------------------------------
 @node Serial Ports in 3.0/3.1
-@section Serial Ports in 3.0/3.1
+@subsection Serial Ports in 3.0/3.1
 
 If you have a 6-port @i{mini-backplane}, you can connect the 6 pins of P2 to
 the similar connector on the backplane labeled as @code{Connect to
@@ -1439,6 +1582,7 @@ without issues or damages; the figure below shows the connection
 @sp 1
 @center @image{wrs-v3-uart, 5cm}
 @sp 1
+
 
 @c ##########################################################################
 @node Installing from Jtag

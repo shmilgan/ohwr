@@ -32,6 +32,7 @@
 
 /**
  * \brief Helper function to convert mac address into a string
+ * WARNING: this returns static storage
  */
 char *mac_to_string(uint8_t mac[ETH_ALEN])
 {
