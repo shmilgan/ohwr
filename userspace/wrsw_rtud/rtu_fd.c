@@ -214,12 +214,14 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 				{
 						TRACE_DBG(TRACE_INFO, "Entry for mac %s already found.", mac_to_string(mac));
 
-            mask_dst = ent->port_mask_dst | port_mask;
+            mask_dst = port_mask; //ML: aging bugfix-> if we receive ureq for an existing entry,
+                                  //it means that the port moved, so we override the existing mask...
             mask_src = ent->port_mask_src | vlan_tab[vid].port_mask;
             if ((ent->port_mask_dst != mask_dst) ||
                 (ent->port_mask_src != mask_src)) { // something new
                 ent->port_mask_dst = mask_dst;
                 ent->port_mask_src = mask_src;
+                ent->last_access_t = now(); //ML: update time always when updating the entry
                 hw_request(HW_WRITE_REQ, ent->addr, ent);
             }
 				/* Case 2: MAC not found */
