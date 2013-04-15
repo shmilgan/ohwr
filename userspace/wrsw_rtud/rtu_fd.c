@@ -216,7 +216,8 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 
             mask_dst = port_mask; //ML: aging bugfix-> if we receive ureq for an existing entry,
                                   //it means that the port moved, so we override the existing mask...
-            mask_src = ent->port_mask_src | vlan_tab[vid].port_mask;
+            mask_src = 0xFFFFFFFF;//ML: filtering on ingress is optional according to 802.1Q-2012
+                                  //by default it should not happen. TODO: add optional config
             if ((ent->port_mask_dst != mask_dst) ||
                 (ent->port_mask_src != mask_src)) { // something new
                 ent->port_mask_dst = mask_dst;
@@ -247,7 +248,8 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
             ent->valid         = 1;
             ent->fid           = fid;
             ent->port_mask_dst = port_mask;
-            ent->port_mask_src = vlan_tab[vid].port_mask;
+            ent->port_mask_src = 0xFFFFFFFF;//ML: filtering on ingress is optional according to 802.1Q-2012
+                                            //by default it should not happen. TODO: add optional config
             ent->dynamic       = dynamic;
             ent->last_access_t = now();
             mac_copy(ent->mac, mac);
