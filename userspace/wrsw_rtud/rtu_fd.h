@@ -61,6 +61,8 @@ struct filtering_entry *rtu_fd_lookup_htab_entry(int index);
 
 void vlan_entry_vd(int vid, uint32_t port_mask, uint8_t fid, uint8_t prio,
                          int has_prio,int prio_override, int drop);
+                         
+void vlan_entry_rd(int vid);
 
 #endif /*__WHITERABBIT_RTU_FD_H*/
 

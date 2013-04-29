@@ -202,7 +202,8 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
     uint32_t mask_src, mask_dst;            		// used to check port masks update
 		struct rtu_addr eaddr;
 		
-
+    TRACE_DBG(TRACE_INFO, "ML: create entry, vid=%d, vlan.drop=%d, vlan.fid=%d, vlan.mask=0x%x",
+    vid, vlan_tab[vid].drop, vlan_tab[vid].fid, vlan_tab[vid].port_mask);
     pthread_mutex_lock(&fd_mutex);
     // if VLAN is registered (otherwise just ignore request)
     if (! vlan_tab[vid].drop) {
@@ -404,7 +405,8 @@ static void clean_fd(void)
  */
 static void clean_vd(void)
 {
-    int i;
+    int i,j;
+    int pvid = 3;
 
     rtu_clean_vlan();
     for(i = 1; i < NUM_VLANS; i++) {
@@ -420,6 +422,7 @@ static void clean_vd(void)
     vlan_tab[0].prio            = 0;
 
     rtu_write_vlan_entry(0, &vlan_tab[0]);
+        
 }
 
 /**
@@ -595,6 +598,25 @@ void vlan_entry_vd(int vid, uint32_t port_mask, uint8_t fid, uint8_t prio,
     vlan_tab[vid].has_prio        = has_prio;
     vlan_tab[vid].prio_override   = prio_override;
     vlan_tab[vid].prio            = prio;
-
+    
+    TRACE(TRACE_INFO, "vlan_entry_vd: vid %d, drop=%d, fid=%d, port_mask 0x%x", 
+    vid,
+    vlan_tab[vid].drop,
+    vlan_tab[vid].fid,
+    vlan_tab[vid].port_mask
+    );
+    
     rtu_write_vlan_entry(vid, &vlan_tab[vid]);
+}
+
+void vlan_entry_rd(int vid)
+{
+    // First entry reserved for untagged packets.
+    
+    TRACE(TRACE_INFO, "vlan_entry_vd: vid %d, drop=%d, fid=%d, port_mask 0x%x", 
+    vid,
+    vlan_tab[vid].drop,
+    vlan_tab[vid].fid,
+    vlan_tab[vid].port_mask
+    );    
 }

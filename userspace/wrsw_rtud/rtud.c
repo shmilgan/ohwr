@@ -63,6 +63,45 @@ static struct {
 	int hw_index;
 } port_state[MAX_PORT + 1];
 
+static int rtu_set_startup_config()
+{
+  int i;
+  int pvid = 1;
+  vlan_entry_vd( 10,           //vid, 
+                 0xffffffff,  //port_mask, 
+                 10,           //fid, 
+                 0,           //prio,
+                 0,           //has_prio,
+                 0,           //prio_override, 
+                 0           //drop
+                );    
+  vlan_entry_vd( 11,           //vid, 
+                 0xffffffff,  //port_mask, 
+                 11,           //fid, 
+                 0,           //prio,
+                 0,           //has_prio,
+                 0,           //prio_override, 
+                 0           //drop
+                );    
+
+  for(i=0;i < 18;i++)
+  {
+     if(i%2==0 && i!=0) pvid++;
+     vlan_entry_vd( pvid,          //vid, 
+                    (0x3 << 2*(pvid-1)),  //port_mask, 
+                    pvid,      //fid, 
+                    0,            //prio,
+                    0,            //has_prio,
+                    0,            //prio_override, 
+                    0             //drop
+                   );     
+          
+  }    
+  
+//   ep_snake_config(0);
+  return 0;
+}
+
 
 /**
  * \brief Creates the static entries in the filtering database 
@@ -402,6 +441,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time, int unrec_be
            int static_entries, int tru_enabled)
 {
     int i, err;
+    int startup_config = 1; //TODO: make configurabel
 
     // init RTU HW
     TRACE(TRACE_INFO, "init rtu hardware.");
@@ -416,7 +456,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time, int unrec_be
     if(err)
         return err;    
 
-    err  = ep_init(1,8);
+    err  = ep_init(1,MAX_PORT);
     if(err)
         return err;    
    
@@ -452,6 +492,11 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time, int unrec_be
       err = rtu_create_static_entries();
     if(err)
         return err;
+        
+    if(startup_config)
+      err = rtu_set_startup_config();
+    if(err)
+      return err;
 
     // turn on RTU
     TRACE(TRACE_INFO, "enable rtu.");
