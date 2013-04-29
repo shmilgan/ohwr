@@ -194,19 +194,20 @@ int main(int argc, char **argv)
 
 	printf("RTU Filtering Database Dump: %d rules\n", n_entries);
 	printf("\n");
-	printf("MAC                       Dst.ports              Type                   Age [s]\n");
+	printf("MAC                     Dst.ports      FID          Type               Age [s]\n");
 	printf("----------------------------------------------------------------------------------\n");
 
 	char mac_buf[ETH_ALEN_STR];
 
 	for(i=0;i<n_entries;i++)
 	{
-		printf("%-25s %-22s %s (hash %03x:%x)   ",
-				mac_to_buffer(fd_list[i].mac,mac_buf),
-				decode_ports(fd_list[i].dpm),
-				fd_list[i].dynamic ? "DYNAMIC":"STATIC ",
-						fd_list[i].hash,
-						fd_list[i].bucket);
+		printf("%-25s %-12s %2d          %s (hash %03x:%x)   ", 
+			mac_to_buffer(fd_list[i].mac,mac_buf), 
+			decode_ports(fd_list[i].dpm), 
+			fd_list[i].fid,
+			fd_list[i].dynamic ? "DYNAMIC":"STATIC ", 
+			fd_list[i].hash,
+			fd_list[i].bucket);
 		if(fd_list[i].dynamic)
 			printf("%d\n", fd_list[i].age);
 		else
