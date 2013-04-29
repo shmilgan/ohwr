@@ -42,6 +42,7 @@ typedef struct
 		uint16_t hash;
 		int bucket;
 		int age;
+		int fid;
 } rtudexp_fd_entry_t;
 
 typedef struct  {
