@@ -50,4 +50,5 @@ void ep_pfilter_reload_code(int port);
 void ep_show_pause_config(uint32_t port);
 void ep_pause_config_ena(uint32_t port, int txpause_802_3,int rxpause_802_3, int txpause_802_1q, int rxpause_802_1q);
 void ep_pause_config_dis(uint32_t port);
+void ep_snake_config(int option);
 #endif /*__WHITERABBIT_RTU_EP_DRV_H*/

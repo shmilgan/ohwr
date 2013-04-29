@@ -123,10 +123,10 @@ int ep_init(int ep_enabled, int port_num)
     pfilter_logic2(25, 1, MOV, 0);    
     
    TRACE(TRACE_INFO,"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-   TRACE(TRACE_INFO,"                       Endpoint init (EP)");
+   TRACE(TRACE_INFO,"                       Endpoint init config (EP)[before changing by RTU]");
    ep_show_status(8);
    TRACE(TRACE_INFO," "); 
-   TRACE(TRACE_INFO,"                       configure"); 
+   TRACE(TRACE_INFO,"                       now we configure as we want ..."); 
    TRACE(TRACE_INFO," ");  
    
    for(i=0;i<port_num;i++)
@@ -284,6 +284,8 @@ void ep_vcr1_wr(uint32_t port,int is_vlan, int addr, uint32_t data)
   val = EP_VCR1_OFFSET_W((is_vlan ? 0 : 0x200) + addr) |
         EP_VCR1_DATA_W(data);
   ep_wr(VCR1, port, val);
+  TRACE(TRACE_INFO,"EP [ep_vcr1_wr] val=0x%x, port=%d, offset=0x%x, data=0x%x",
+  val, port, ((is_vlan ? 0 : 0x200) + addr), data);
 }
 
 void ep_pfilter_status_N_ports(int port_num)
@@ -310,4 +312,98 @@ void ep_pfilter_reload_code(int port)
   pfilter_cmp(6, 0xbabe, 0xffff, AND, 1);    
   pfilter_logic2(25, 1, MOV, 0);  
   pfilter_load((uint32_t)port);//enable port sub_opt
+}
+
+void ep_snake_config(int option)
+{
+  int i,j=0;
+  int low_snake_port = 0;
+  int up_snake_port  = 0;
+  uint32_t wval;
+  int pvid = 1;
+  // option = 0
+  switch(option)
+  {
+    case 0: 
+      low_snake_port = 0;
+      up_snake_port  = 17;
+    break;
+    case 1: 
+    case 2: 
+      low_snake_port = 2;
+      up_snake_port  = 7;
+      ep_set_vlan(0 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, pvid /*pvid*/);
+      ep_vcr1_wr( 0 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+      ep_set_vlan(1 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, pvid /*pvid*/);
+      ep_vcr1_wr( 1 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+      pvid++;
+      // enable fast forward for broadcast
+      rtux_feature_ctrl(0x0, /*mr*/        0x0, /*mac_pto*/ 0x0, /*mac_ll*/ 0x1, /*mac_single*/
+                        0x0, /*mac_range*/ 0x1, /*mac_br*/  0x0  /*at_fm*/); 
+      // set  HP prio to be 7
+      rtux_set_hp_prio_mask(1<<7);
+      
+    break;    
+    default:
+      low_snake_port = 0;
+      up_snake_port  = 17;    
+    break;
+  }  
+  
+  // configure ports : 2 ports per vlan    
+  for(i=low_snake_port;i <= up_snake_port;i++)
+  {
+     if(i%2==0 && i!=low_snake_port) pvid++;  
+     // port ingress setting
+     ep_set_vlan(i /*port*/, 0/*access port*/, 0 /*fix_prio*/, 0 /*prio_val*/, pvid /*pvid*/);
+     
+     // untag VIDs 0 to 31 on egress
+     ep_vcr1_wr( i /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+     ep_vcr1_wr( i /*port*/, 1/*is_vlan*/, 1 /*address*/, 0xFFFF /*data */ ); 
+  }
+  
+  // configure TRU for different VLANs - simply enable all ports for each VLAN (TRU-wise).
+  // this will be masked with VLAN mask (which is for each pair)
+  for(i=0;i <32;i++)
+  {
+    tru_write_tab_entry(1          /* valid     */,
+                        i          /* entry_addr/FID   */,    
+                        0          /* subentry_addr*/,
+                        0x00000000 /*pattern_mask*/, 
+                        0x00000000 /* pattern_match*/,   
+                        0x000      /* pattern_mode */,
+                        0x0003FFFF /*ports_mask  */, 
+                        0x0003FFFF /* ports_egress */,     
+                        0x0003FFFF /* ports_ingress   */); 
+
+  }
+  
+  // just in case, override possibly-existing old entries for VLAN 0
+  tru_write_tab_entry(0          /* valid     */,
+                      0          /* entry_addr   */,    
+                      1          /* subentry_addr*/,
+                      0x00000000 /*pattern_mask*/, 
+                      0x00000000 /* pattern_match*/,   
+                      0x000      /* pattern_mode */,
+                      0x0003FFFF /*ports_mask  */, 
+                      0x0003FFFF /* ports_egress */,     
+                      0x0003FFFF /* ports_ingress   */); 
+  tru_write_tab_entry(0          /* valid     */,
+                      0          /* entry_addr   */,    
+                      2          /* subentry_addr*/,
+                      0x00000000 /*pattern_mask*/, 
+                      0x00000000 /* pattern_match*/,   
+                      0x000      /* pattern_mode */,
+                      0x0003FFFF /*ports_mask  */, 
+                      0x0003FFFF /* ports_egress */,     
+                      0x0003FFFF /* ports_ingress   */); 
+  tru_write_tab_entry(0          /* valid     */,
+                      0          /* entry_addr   */,    
+                      3          /* subentry_addr*/,
+                      0x00000000 /*pattern_mask*/, 
+                      0x00000000 /* pattern_match*/,   
+                      0x000      /* pattern_mode */,
+                      0x0003FFFF /*ports_mask  */, 
+                      0x0003FFFF /* ports_egress */,     
+                      0x0003FFFF /* ports_ingress   */);   
 }
