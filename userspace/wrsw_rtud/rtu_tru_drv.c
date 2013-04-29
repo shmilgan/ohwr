@@ -69,15 +69,29 @@ int tru_init(void)
 //                          3          /*port_a_id*/, 
 //                          4          /*port_b_id*/);
   
-   //clear tru tab subentries for FID=0
-   for(i=0;i<TRU_TAB_SUBENTRY_NUM;i++)
+  //clear tru tab subentries for FID=0
+  for(i=0;i<TRU_TAB_SUBENTRY_NUM;i++)
      tru_write_tab_entry(0,0,i,0,0,0,0,0,0);
      
-   /// port 1 active
-   /// port 2 backup
+  //  make TRU transparent   
+  tru_write_tab_entry(1          /* valid     */,
+                      0          /* entry_addr   */,    
+                      0          /* subentry_addr*/,
+                      0x00000000 /*pattern_mask*/, 
+                      0x00000000 /* pattern_match*/,   
+                      0x000      /* pattern_mode */,
+                      0x0003FFFF /*ports_mask  */, 
+                      0x0003FFFF /* ports_egress */,     
+                      0x0003FFFF /* ports_ingress   */); 
+  
+  /// port 1 active
+  /// port 2 backup
+  //tru_set_port_roles(1 /*active port*/,2/*backup port*/); //TODO: make it config
 
   tru_set_port_roles(1 /*active port*/,2/*backup port*/);
 //   tru_set_port_roles(2 /*active port*/,1/*backup port*/);
+  if(tru_enabled)
+    tru_enable();
 
   tru_enable();
   return 0;
@@ -880,6 +894,55 @@ void tru_set_life(char *optarg)
     case  18:
        ep_pause_config_ena((uint32_t)sub_opt,0,0,1,0);
        break;       
+    case  19:
+       ep_snake_config((uint32_t)sub_opt);       
+       break;       
+    case 20: 
+       tru_write_tab_entry(1          /* valid     */,
+                           0          /* entry_addr   */,    
+                           0          /* subentry_addr*/,
+                           0x00000000 /*pattern_mask*/, 
+                           0x00000000 /* pattern_match*/,   
+                           0x000      /* pattern_mode */,
+                           0x0003FFFF /*ports_mask  */, 
+                           0x0003FFFF /* ports_egress */,     
+                           0x0003FFFF /* ports_ingress   */); 
+       // override possibly-existing old entries for VLAN 0
+       tru_write_tab_entry(0          /* valid     */,
+                           0          /* entry_addr   */,    
+                           1          /* subentry_addr*/,
+                           0x00000000 /*pattern_mask*/, 
+                           0x00000000 /* pattern_match*/,   
+                           0x000      /* pattern_mode */,
+                           0x0003FFFF /*ports_mask  */, 
+                           0x0003FFFF /* ports_egress */,     
+                           0x0003FFFF /* ports_ingress   */); 
+       tru_write_tab_entry(0          /* valid     */,
+                           0          /* entry_addr   */,    
+                           2          /* subentry_addr*/,
+                           0x00000000 /*pattern_mask*/, 
+                           0x00000000 /* pattern_match*/,   
+                           0x000      /* pattern_mode */,
+                           0x0003FFFF /*ports_mask  */, 
+                           0x0003FFFF /* ports_egress */,     
+                           0x0003FFFF /* ports_ingress   */); 
+       tru_write_tab_entry(0          /* valid     */,
+                           0          /* entry_addr   */,    
+                           3          /* subentry_addr*/,
+                           0x00000000 /*pattern_mask*/, 
+                           0x00000000 /* pattern_match*/,   
+                           0x000      /* pattern_mode */,
+                           0x0003FFFF /*ports_mask  */, 
+                           0x0003FFFF /* ports_egress */,     
+                           0x0003FFFF /* ports_ingress   */);       
+       break;
+    case  21:
+       ep_set_vlan((uint32_t)sub_opt /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 1/*pvid*/);
+       break;
+    case  22:
+       ep_vcr1_wr((uint32_t)sub_opt /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+       TRACE(TRACE_INFO, "Untag frames on port %d, untagging mask: 0x%x", (uint32_t)sub_opt, 0xFFFF);
+       break;       
     case  100:
        tru_show_status(18) ;
        
@@ -932,6 +995,18 @@ void tru_set_life(char *optarg)
        TRACE(TRACE_INFO, "-u 16 n      Endpoint PAUSE config: disable all PAUSEs     on port n");
        TRACE(TRACE_INFO, "-u 17 n      Endpoint PAUSE config: enable Tx PAUSE 802.3  on port n");
        TRACE(TRACE_INFO, "-u 18 n      Endpoint PAUSE config: enable Tx PAUSE 802.1Q on port n");
+       TRACE(TRACE_INFO, "-u 19 n      Snake testing port configuration, config number: n");
+       TRACE(TRACE_INFO, "-u 19 0      Simple snake test:");
+       TRACE(TRACE_INFO, "             snake-ports: 0-7 (access port, untagging on egress");
+       TRACE(TRACE_INFO, "-u 19 1      Snake test + other traffic on 2 ports:");
+       TRACE(TRACE_INFO, "             snake-ports: 2-7 (access port, untagging on egress");
+       TRACE(TRACE_INFO, "             free-ports : 0-1 no vlan (unqualified)");
+       TRACE(TRACE_INFO, "-u 19 2      Snake test + HP traffic on 2 ports:");
+       TRACE(TRACE_INFO, "             snake-ports: 2-7 (access port, untagging on egress");
+       TRACE(TRACE_INFO, "             HP-ports   : 0-1 HP traffic (access with tagging for special VLAN + HP priority)");
+       TRACE(TRACE_INFO, "-u 20        Configure TRU to be transparent");
+       TRACE(TRACE_INFO, "-u 21 n      Set port n as Access port with pvid=1");
+       TRACE(TRACE_INFO, "-u 22 n      Set port n to untagg VIDs 0 - 15");
        TRACE(TRACE_INFO, "-u 100       show status");
   };
   exit(1);

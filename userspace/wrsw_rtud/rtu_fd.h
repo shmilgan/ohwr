@@ -68,14 +68,9 @@ struct filtering_entry * rtu_fd_lookup_htab_entry(int index);
 
 struct filtering_entry *rtu_fd_lookup_htab_entry(int index);
 
-<<<<<<< HEAD
 void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid, uint8_t prio,
                          int has_prio,int prio_override, int drop);
 struct vlan_table_entry *rtu_vlan_entry_get(int vid);
-=======
-void vlan_entry_vd(int vid, uint32_t port_mask, uint8_t fid, uint8_t prio,
-                         int has_prio,int prio_override, int drop);
->>>>>>> [RTUx and TRU] adding functionality for extended RTU functionality and TRU stuff to wrsw_rtud daemon
 
 #endif /*__WHITERABBIT_RTU_FD_H*/
 
