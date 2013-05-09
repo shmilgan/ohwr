@@ -319,19 +319,40 @@ void ep_snake_config(int option)
   int i,j=0;
   int low_snake_port = 0;
   int up_snake_port  = 0;
+  int qmode          = 0; //access
+  int untagging      = 0;
   uint32_t wval;
   int pvid = 1;
   // option = 0
+  TRACE(TRACE_INFO, "Simple snake test with config=%d",option);
   switch(option)
   {
-    case 0: 
+    case 0:
       low_snake_port = 0;
       up_snake_port  = 17;
-    break;
+      qmode          = 2; //disable VLAN on port
+      untagging      = 1;//disable untagging
+      rtux_feature_ctrl(0x0, /*mr*/        0x0, /*mac_pto*/ 0x0, /*mac_ll*/ 0x0, /*mac_single*/
+                        0x0, /*mac_range*/ 0x0, /*mac_br*/  0x0  /*at_fm*/); 
+      rtux_set_hp_prio_mask(0x00);      
+      break;
     case 1: 
+      low_snake_port = 0;
+      up_snake_port  = 17;
+      qmode          = 0; //access
+      untagging      = 1;//untag
+    break;
     case 2: 
       low_snake_port = 2;
-      up_snake_port  = 7;
+      up_snake_port  = 17;
+      qmode          = 0; //access
+      untagging      = 1;//untag
+      break;      
+    case 3: 
+      low_snake_port = 2;
+      up_snake_port  = 17;
+      qmode          = 0; //access
+      untagging      = 1;//untag    
       ep_set_vlan(0 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, pvid /*pvid*/);
       ep_vcr1_wr( 0 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
       ep_set_vlan(1 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, pvid /*pvid*/);
@@ -340,13 +361,15 @@ void ep_snake_config(int option)
       // enable fast forward for broadcast
       rtux_feature_ctrl(0x0, /*mr*/        0x0, /*mac_pto*/ 0x0, /*mac_ll*/ 0x1, /*mac_single*/
                         0x0, /*mac_range*/ 0x1, /*mac_br*/  0x0  /*at_fm*/); 
-      // set  HP prio to be 7
-      rtux_set_hp_prio_mask(1<<7);
+      // set  HP prio for all priorities
+      rtux_set_hp_prio_mask(0xFF);
       
     break;    
     default:
       low_snake_port = 0;
       up_snake_port  = 17;    
+      qmode          = 2; //access
+      untagging      = 0;//untag
     break;
   }  
   
@@ -355,55 +378,22 @@ void ep_snake_config(int option)
   {
      if(i%2==0 && i!=low_snake_port) pvid++;  
      // port ingress setting
-     ep_set_vlan(i /*port*/, 0/*access port*/, 0 /*fix_prio*/, 0 /*prio_val*/, pvid /*pvid*/);
+     if(qmode != 2)
+       ep_set_vlan(i /*port*/, qmode/*access port*/, 0 /*fix_prio*/, 0 /*prio_val*/, pvid /*pvid*/);
+     else
+       ep_set_vlan(i /*port*/, qmode/*access port*/, 0 /*fix_prio*/, 0 /*prio_val*/, 0 /*pvid*/);
      
-     // untag VIDs 0 to 31 on egress
-     ep_vcr1_wr( i /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
-     ep_vcr1_wr( i /*port*/, 1/*is_vlan*/, 1 /*address*/, 0xFFFF /*data */ ); 
+     if(untagging)
+     {
+       // untag VIDs 0 to 31 on egress
+       ep_vcr1_wr( i /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+       ep_vcr1_wr( i /*port*/, 1/*is_vlan*/, 1 /*address*/, 0xFFFF /*data */ ); 
+     }
+     else
+     {
+       ep_vcr1_wr( i /*port*/, 1/*is_vlan*/, 0 /*address*/, 0x0000 /*data */ ); 
+       ep_vcr1_wr( i /*port*/, 1/*is_vlan*/, 1 /*address*/, 0x0000 /*data */ ); 
+       
+     }
   }
-  
-  // configure TRU for different VLANs - simply enable all ports for each VLAN (TRU-wise).
-  // this will be masked with VLAN mask (which is for each pair)
-  for(i=0;i <32;i++)
-  {
-    tru_write_tab_entry(1          /* valid     */,
-                        i          /* entry_addr/FID   */,    
-                        0          /* subentry_addr*/,
-                        0x00000000 /*pattern_mask*/, 
-                        0x00000000 /* pattern_match*/,   
-                        0x000      /* pattern_mode */,
-                        0x0003FFFF /*ports_mask  */, 
-                        0x0003FFFF /* ports_egress */,     
-                        0x0003FFFF /* ports_ingress   */); 
-
-  }
-  
-  // just in case, override possibly-existing old entries for VLAN 0
-  tru_write_tab_entry(0          /* valid     */,
-                      0          /* entry_addr   */,    
-                      1          /* subentry_addr*/,
-                      0x00000000 /*pattern_mask*/, 
-                      0x00000000 /* pattern_match*/,   
-                      0x000      /* pattern_mode */,
-                      0x0003FFFF /*ports_mask  */, 
-                      0x0003FFFF /* ports_egress */,     
-                      0x0003FFFF /* ports_ingress   */); 
-  tru_write_tab_entry(0          /* valid     */,
-                      0          /* entry_addr   */,    
-                      2          /* subentry_addr*/,
-                      0x00000000 /*pattern_mask*/, 
-                      0x00000000 /* pattern_match*/,   
-                      0x000      /* pattern_mode */,
-                      0x0003FFFF /*ports_mask  */, 
-                      0x0003FFFF /* ports_egress */,     
-                      0x0003FFFF /* ports_ingress   */); 
-  tru_write_tab_entry(0          /* valid     */,
-                      0          /* entry_addr   */,    
-                      3          /* subentry_addr*/,
-                      0x00000000 /*pattern_mask*/, 
-                      0x00000000 /* pattern_match*/,   
-                      0x000      /* pattern_mode */,
-                      0x0003FFFF /*ports_mask  */, 
-                      0x0003FFFF /* ports_egress */,     
-                      0x0003FFFF /* ports_ingress   */);   
 }

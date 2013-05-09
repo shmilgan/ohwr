@@ -215,11 +215,12 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 				{
 						TRACE_DBG(TRACE_INFO, "Entry for mac %s already found.", mac_to_string(mac));
 
-	    if(at_existing_entry == ADD_TO_EXISTING) // enable multipath for redundancy
-	      mask_dst = port_mask | ent->port_mask_dst ;
+            if(at_existing_entry == ADD_TO_EXISTING)
+              mask_dst = port_mask | ent->port_mask_dst ;	      
             else
-	      mask_dst = port_mask; //ML: aging bugfix-> if we receive ureq for an existing entry,
-                                  //it means that the port moved, so we override the existing mask...
+              mask_dst = port_mask; //ML: aging bugfix-> if we receive ureq for an existing entry,
+                                    //it means that the port moved, so we override the existing mask...
+	    
             mask_src = 0xFFFFFFFF;//ML: filtering on ingress is optional according to 802.1Q-2012
                                   //by default it should not happen. TODO: add optional config
             if ((ent->port_mask_dst != mask_dst) ||
@@ -261,6 +262,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 				}
 
     }
+    TRACE_DBG(TRACE_INFO, "Entry for mac %s written: mask=0x%x, fid=%d", mac_to_string(mac),port_mask, fid );
     rtu_fd_commit();
     pthread_mutex_unlock(&fd_mutex);
     return ret;
@@ -490,11 +492,10 @@ void rtu_fd_clear_entries_for_port(int dest_port)
         for (j = RTU_BUCKETS; j-- > 0;) {
             ent = &rtu_htab[i][j];
             if(ent->valid && ent->dynamic) {
-							if(ent->port_mask_dst == (1<<dest_port))
+              if(ent->port_mask_dst == (1<<dest_port))
                 hw_request(HW_REMOVE_REQ, ent->addr, ent);
               else {
-								TRACE(TRACE_ERROR, "cleaning multicast entries not supported yet...\n");
-
+                TRACE(TRACE_ERROR, "cleaning multicast entries not supported yet...\n");
               }
             }
         }

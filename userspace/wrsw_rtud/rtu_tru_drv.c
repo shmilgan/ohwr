@@ -58,7 +58,9 @@ int tru_init(void)
    /**/
    tru_simple_test();
    tru_pattern_config(1/*replacement*/,2/*addition*/);
-   tru_lacp_config(0 /* df_hp_id */,2 /* df_br_id */,1 /* df_un_id */);
+//    tru_lacp_config(0 /* df_hp_id */,2 /* df_br_id */,1 /* df_un_id */);
+   
+///////////////////////// old:   //////////////////////////////////////
 //    tru_rt_reconf_config(4 /*tx_frame_id*/, 4/*rx_frame_id*/, 1 /*mode*/);
 //    tru_rt_reconf_enable();
 //    tru_transition_config(0          /*mode */,     
@@ -68,25 +70,30 @@ int tru_init(void)
 //                          20         /*time_diff*/, 
 //                          3          /*port_a_id*/, 
 //                          4          /*port_b_id*/);
+//////////////////////////////////////////////////////////////////////
   
   //clear tru tab subentries for FID=0
-  for(i=0;i<TRU_TAB_SUBENTRY_NUM;i++)
-     tru_write_tab_entry(0,0,i,0,0,0,0,0,0);
+//   for(i=0;i<TRU_TAB_SUBENTRY_NUM;i++)
+//      tru_write_tab_entry(0,0,i,0,0,0,0,0,0);
      
-  //  make TRU transparent   
-  tru_write_tab_entry(1          /* valid     */,
-                      0          /* entry_addr   */,    
-                      0          /* subentry_addr*/,
-                      0x00000000 /*pattern_mask*/, 
-                      0x00000000 /* pattern_match*/,   
-                      0x000      /* pattern_mode */,
-                      0x0003FFFF /*ports_mask  */, 
-                      0x0003FFFF /* ports_egress */,     
-                      0x0003FFFF /* ports_ingress   */); 
-  
+  //  make TRU transparent 
+  for(i=0;i<12;i++)  
+    tru_write_tab_entry(1          /* valid     */,
+                        i          /* entry_addr   */,    
+                        0          /* subentry_addr*/,
+                        0x00000000 /*pattern_mask*/, 
+                        0x00000000 /* pattern_match*/,   
+                        0x000      /* pattern_mode */,
+                        0x0003FFFF /*ports_mask  */, 
+                        0x0003FFFF /* ports_egress */,     
+                        0x0003FFFF /* ports_ingress   */,
+                        1          /* validate */,
+                        1          /* print */ );                                    
+
+
   /// port 1 active
   /// port 2 backup
-  //tru_set_port_roles(1 /*active port*/,2/*backup port*/); //TODO: make it config
+   tru_set_port_roles(1 /*active port*/,2/*backup port*/, 0 /*fid*/); //TODO: make it config
 
   tru_set_port_roles(1 /*active port*/,2/*backup port*/);
 //   tru_set_port_roles(2 /*active port*/,1/*backup port*/);
@@ -173,7 +180,8 @@ uint32_t tru_port_stable_up_mask(void)
 
 void tru_write_tab_entry(int valid,      int fid,          int subfid, 
                          int patrn_mask, int patrn_match,  int patrn_mode,
-                         int ports_mask, int ports_egress, int ports_ingress)
+                         int ports_mask, int ports_egress, int ports_ingress,
+                         int validate,   int print)
 {
    
    uint32_t ttr0;   
@@ -197,7 +205,18 @@ void tru_write_tab_entry(int valid,      int fid,          int subfid,
    
    tru_wr(TTR0, ttr0);
    
-   if(m_dbg & valid) 
+   if(validate)
+   {
+     tru_swap_bank();
+     tru_wr(TTR1,TRU_TTR1_PORTS_INGRESS_W(ports_ingress));
+     tru_wr(TTR2,TRU_TTR2_PORTS_EGRESS_W (ports_egress));
+     tru_wr(TTR3,TRU_TTR3_PORTS_MASK_W   (ports_mask));
+     tru_wr(TTR4,TRU_TTR4_PATRN_MATCH_W  (patrn_match));
+     tru_wr(TTR5,TRU_TTR5_PATRN_MASK_W   (patrn_mask));     
+     tru_wr(TTR0, ttr0);
+   }
+   
+   if(m_dbg & valid & print) 
    {
       TRACE(TRACE_INFO,"TRU: TAB entry write [fid = %2d, subfid = %2d, pattern mode = %2d]:",
                                                fid, subfid, patrn_mode);
@@ -216,7 +235,7 @@ void tru_write_tab_entry(int valid,      int fid,          int subfid,
       TRACE(TRACE_INFO,"\t Pattern config : match = 0x%x , mask = 0x%x",patrn_match, 
           patrn_mask);
    }
-   if(m_dbg & !valid) 
+   if(m_dbg & !valid & print) 
       {TRACE(TRACE_INFO,"TRU: TAB entry clear [fid = %2d, subfid = %2d]:",fid, subfid);}
 //    tru_swap_bank();
 }
@@ -541,95 +560,320 @@ void tru_debug_rt_reconf_reg()
   TRACE(TRACE_INFO, "TRU-DBG [RT Reconfig]: GING_MASK=0x%x",val);  
 }
 
-void tru_set_port_roles(int active_port, int backup_port)
+void tru_set_port_roles(int active_port, int backup_port, int fid)
 {
   if(active_port == 1 && backup_port == 2)
   {
-   
-//       tru_write_tab_entry(  1          /* valid     */,
-//                             0          /* entry_addr   */,    
-//                             0          /* subentry_addr*/,
-//                             0x00000000 /*pattern_mask*/, 
-//                             0x00000000 /* pattern_match*/,   
-//                             0x000      /* pattern_mode */,
-//                             0x000000FF /*ports_mask  */, 
-//                             0x00000083 /* ports_egress */,      
-//                             0x00000083 /* ports_ingress   */); 
-// 
-//       tru_write_tab_entry(  1          /* valid     */,
-//                             0          /* entry_addr   */,    
-//                             1          /* subentry_addr*/,
-//                             0x00000006 /*pattern_mask*/, 
-//                             0x00000002 /* pattern_match*/,   
-//                             0x000      /* pattern_mode */,
-//                             0x00000006 /*ports_mask  */, 
-//                             0x00000004 /* ports_egress */,     
-//                             0x00000004 /* ports_ingress   */);        
-    
+       
       tru_write_tab_entry(  1          /* valid     */,
-                            0          /* entry_addr   */,    
+                            fid        /* entry_addr   */,    
                             0          /* subentry_addr*/,
                             0x00000000 /*pattern_mask*/, 
                             0x00000000 /* pattern_match*/,   
                             0x000      /* pattern_mode */,
                             0x000000FF /*ports_mask  */, 
-                            0x00000087 /* ports_egress  1000_0111*/,      
-                            0x00000083 /* ports_ingress 1000_0011  */); 
+                            0x000000C7 /* ports_egress  1000_0111*/,      
+                            0x000000C3 /* ports_ingress 1000_0011  */,
+                            0          /* validate */,
+                            1          /* print */ ); 
 
       tru_write_tab_entry(  1          /* valid     */,
-                            0          /* entry_addr   */,    
+                            fid        /* entry_addr   */,    
                             1          /* subentry_addr*/,
                             0x00000006 /*pattern_mask*/, 
                             0x00000002 /* pattern_match*/,   
                             0x000      /* pattern_mode */,
                             0x00000006 /*ports_mask  */, 
                             0x00000006 /* ports_egress   0000_0110 */,     
-                            0x00000004 /* ports_ingress  0000_0100 */);    
+                            0x00000004 /* ports_ingress  0000_0100 */,
+                            0          /* validate */,
+                            1          /* print */ );    
       tru_swap_bank();
-      TRACE(TRACE_INFO, "PORT ROLES: active port %d, backup port %d", active_port,backup_port);
-     }   
-   else if(active_port == 2 && backup_port == 1)
-   {
-//       tru_write_tab_entry(  1          /* valid     */,
-//                             0          /* entry_addr   */,    
-//                             0          /* subentry_addr*/,
-//                             0x00000000 /*pattern_mask*/, 
-//                             0x00000000 /* pattern_match*/,   
-//                             0x000      /* pattern_mode */,
-//                             0x000000FF /*ports_mask  */, 
-//                             0x00000085 /* ports_egress */,      
-//                             0x00000085 /* ports_ingress   */); 
-//       tru_write_tab_entry(  1          /* valid     */,
-//                             0          /* entry_addr   */,    
-//                             1          /* subentry_addr*/,
-//                             0x00000006 /*pattern_mask*/, 
-//                             0x00000004 /* pattern_match*/,   
-//                             0x000      /* pattern_mode */,
-//                             0x00000006 /*ports_mask  */, 
-//                             0x00000002 /* ports_egress */,     
-//                             0x00000002 /* ports_ingress   */);    
-      
+      //write the same to the second back (just in case)
       tru_write_tab_entry(  1          /* valid     */,
-                            0          /* entry_addr   */,    
+                            fid        /* entry_addr   */,    
                             0          /* subentry_addr*/,
                             0x00000000 /*pattern_mask*/, 
                             0x00000000 /* pattern_match*/,   
                             0x000      /* pattern_mode */,
                             0x000000FF /*ports_mask  */, 
-                            0x00000087 /* ports_egress   1000_0111 */,      
-                            0x00000085 /* ports_ingress  1000_0101 */); 
+                            0x000000C7 /* ports_egress  1000_0111*/,      
+                            0x000000C3 /* ports_ingress 1000_0011  */,
+                            0          /* validate */,
+                            0          /* print */ ); 
+
       tru_write_tab_entry(  1          /* valid     */,
-                            0          /* entry_addr   */,    
+                            fid        /* entry_addr   */,    
+                            1          /* subentry_addr*/,
+                            0x00000006 /*pattern_mask*/, 
+                            0x00000002 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x00000006 /*ports_mask  */, 
+                            0x00000006 /* ports_egress   0000_0110 */,     
+                            0x00000004 /* ports_ingress  0000_0100 */,
+                            0          /* validate */,
+                            0          /* print */ );    
+      
+      TRACE(TRACE_INFO, "PORT ROLES: active port %d, backup port %d", active_port,backup_port);
+     }   
+   else if(active_port == 2 && backup_port == 1)
+   {
+      
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            0          /* subentry_addr*/,
+                            0x00000000 /*pattern_mask*/, 
+                            0x00000000 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x000000FF /*ports_mask  */, 
+                            0x000000C7 /* ports_egress   1000_0111 */,      
+                            0x000000C5 /* ports_ingress  1000_0101 */,
+                            0          /* validate */,
+                            1          /* print */ );                             
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
                             1          /* subentry_addr*/,
                             0x00000006 /*pattern_mask*/, 
                             0x00000004 /* pattern_match*/,   
                             0x000      /* pattern_mode */,
                             0x00000006 /*ports_mask  */, 
                             0x00000006 /* ports_egress   0000_0110 */,     
-                            0x00000002 /* ports_ingress  0000_0010 */);        
+                            0x00000002 /* ports_ingress  0000_0010 */,
+                            0          /* validate */,
+                            1          /* print */ );                             
       tru_swap_bank();
+      //write the same to the second back (just in case)
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            0          /* subentry_addr*/,
+                            0x00000000 /*pattern_mask*/, 
+                            0x00000000 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x000000FF /*ports_mask  */, 
+                            0x000000C7 /* ports_egress   1000_0111 */,      
+                            0x000000C5 /* ports_ingress  1000_0101 */,
+                            0          /* validate */,
+                            0          /* print */ );                             
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            1          /* subentry_addr*/,
+                            0x00000006 /*pattern_mask*/, 
+                            0x00000004 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x00000006 /*ports_mask  */, 
+                            0x00000006 /* ports_egress   0000_0110 */,     
+                            0x00000002 /* ports_ingress  0000_0010 */,
+                            0          /* validate */,
+                            0          /* print */ );         
       TRACE(TRACE_INFO, "PORT ROLES: active port %d, backup port %d", active_port,backup_port);
    }
+  else if(active_port == 2 && backup_port == 3)
+  {
+       
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            0          /* subentry_addr*/,
+                            0x00000000 /*pattern_mask*/, 
+                            0x00000000 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x000000FF /*ports_mask  */, 
+                            0x000000CC /* ports_egress  1100_1100*/,      
+                            0x000000C4 /* ports_ingress 1100_0100  */,
+                            0          /* validate */,
+                            1          /* print */ );                              
+
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            1          /* subentry_addr*/,
+                            0x0000000C /*pattern_mask*/, 
+                            0x00000004 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x0000000C /*ports_mask  */, 
+                            0x0000000C /* ports_egress   0000_1100 */,     
+                            0x00000008 /* ports_ingress  0000_1000 */,
+                            0          /* validate */,
+                            1          /* print */ );                              
+      tru_swap_bank();
+      //write the same to the second back (just in case)
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            0          /* subentry_addr*/,
+                            0x00000000 /*pattern_mask*/, 
+                            0x00000000 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x000000FF /*ports_mask  */, 
+                            0x000000CC /* ports_egress  1100_1100*/,      
+                            0x000000C4 /* ports_ingress 1100_0100  */,
+                            0          /* validate */,
+                            0          /* print */ );                              
+
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            1          /* subentry_addr*/,
+                            0x0000000C /*pattern_mask*/, 
+                            0x00000004 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x0000000C /*ports_mask  */, 
+                            0x0000000C /* ports_egress   0000_1100 */,     
+                            0x00000008 /* ports_ingress  0000_1000 */,
+                            0          /* validate */,
+                            0          /* print */ );      
+      TRACE(TRACE_INFO, "PORT ROLES: active port %d, backup port %d", active_port,backup_port);
+     }   
+   else if(active_port == 3 && backup_port == 2)
+   {
+      
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            0          /* subentry_addr*/,
+                            0x00000000 /*pattern_mask*/, 
+                            0x00000000 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x000000FF /*ports_mask  */, 
+                            0x000000CC /* ports_egress   1100_1100 */,      
+                            0x000000C8 /* ports_ingress  1100_1000 */,
+                            0          /* validate */,
+                            1          /* print */ );                             
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            1          /* subentry_addr*/,
+                            0x0000000C /*pattern_mask*/, 
+                            0x00000008 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x0000000C /*ports_mask  */, 
+                            0x0000000C /* ports_egress   0000_1100 */,     
+                            0x00000004 /* ports_ingress  0000_0100 */,
+                            0          /* validate */,
+                            1          /* print */ ); 
+      tru_swap_bank();
+      //write the same to the second back (just in case)
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            0          /* subentry_addr*/,
+                            0x00000000 /*pattern_mask*/, 
+                            0x00000000 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x000000FF /*ports_mask  */, 
+                            0x000000CC /* ports_egress   1100_1100 */,      
+                            0x000000C8 /* ports_ingress  1100_1000 */,
+                            0          /* validate */,
+                            0          /* print */ );                             
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            1          /* subentry_addr*/,
+                            0x0000000C /*pattern_mask*/, 
+                            0x00000008 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x0000000C /*ports_mask  */, 
+                            0x0000000C /* ports_egress   0000_1100 */,     
+                            0x00000004 /* ports_ingress  0000_0100 */,
+                            0          /* validate */,
+                            0          /* print */ );       
+      TRACE(TRACE_INFO, "PORT ROLES: active port %d, backup port %d", active_port,backup_port);
+   }   
+  else if(active_port == 4 && backup_port == 5)
+  {       
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            0          /* subentry_addr*/,
+                            0x00000000 /*pattern_mask*/, 
+                            0x00000000 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x000000FF /*ports_mask  */, 
+                            0x000000F0 /* ports_egress  1111_0000*/,      
+                            0x000000D0 /* ports_ingress 1101_0000  */,
+                            0          /* validate */,
+                            1          /* print */ );                              
+
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            1          /* subentry_addr*/,
+                            0x0000000C /*pattern_mask*/, 
+                            0x00000010 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x00000030  /*ports_mask  */, 
+                            0x00000030 /* ports_egress   0011_0000 */,     
+                            0x00000020 /* ports_ingress  0010_0000 */,
+                            0          /* validate */,
+                            1          /* print */ );                              
+      tru_swap_bank();
+      //write the same to the second back (just in case)
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            0          /* subentry_addr*/,
+                            0x00000000 /*pattern_mask*/, 
+                            0x00000000 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x000000FF /*ports_mask  */, 
+                            0x000000F0 /* ports_egress  1111_0000*/,      
+                            0x000000D0 /* ports_ingress 1101_0000  */,
+                            0          /* validate */,
+                            0          /* print */ );                              
+
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            1          /* subentry_addr*/,
+                            0x0000000C /*pattern_mask*/, 
+                            0x00000010 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x00000030  /*ports_mask  */, 
+                            0x00000030 /* ports_egress   0011_0000 */,     
+                            0x00000020 /* ports_ingress  0010_0000 */,
+                            0          /* validate */,
+                            0          /* print */ );     
+      TRACE(TRACE_INFO, "PORT ROLES: active port %d, backup port %d", active_port,backup_port);
+     }   
+   else if(active_port == 5 && backup_port == 4)
+   {
+      
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            0          /* subentry_addr*/,
+                            0x00000000 /*pattern_mask*/, 
+                            0x00000000 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x000000FF /*ports_mask  */, 
+                            0x000000F0 /* ports_egress   1111_0000 */,      
+                            0x000000D0 /* ports_ingress  1110_0000 */,
+                            0          /* validate */,
+                            1          /* print */ );                             
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            1          /* subentry_addr*/,
+                            0x0000000C /*pattern_mask*/, 
+                            0x00000020 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x00000030 /*ports_mask  */, 
+                            0x00000030 /* ports_egress   0011_0000 */,     
+                            0x00000010 /* ports_ingress  00001_0000 */,
+                            0          /* validate */,
+                            1          /* print */ ); 
+      tru_swap_bank();
+      //write the same to the second back (just in case)
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            0          /* subentry_addr*/,
+                            0x00000000 /*pattern_mask*/, 
+                            0x00000000 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x000000FF /*ports_mask  */, 
+                            0x000000F0 /* ports_egress   1111_0000 */,      
+                            0x000000D0 /* ports_ingress  1110_0000 */,
+                            0          /* validate */,
+                            0          /* print */ );                             
+      tru_write_tab_entry(  1          /* valid     */,
+                            fid        /* entry_addr   */,    
+                            1          /* subentry_addr*/,
+                            0x0000000C /*pattern_mask*/, 
+                            0x00000020 /* pattern_match*/,   
+                            0x000      /* pattern_mode */,
+                            0x00000030 /*ports_mask  */, 
+                            0x00000030 /* ports_egress   0011_0000 */,     
+                            0x00000010 /* ports_ingress  00001_0000 */,
+                            0          /* validate */,
+                            0          /* print */ );    
+      TRACE(TRACE_INFO, "PORT ROLES: active port %d, backup port %d", active_port,backup_port);
+   }      
    else
    {
       TRACE(TRACE_INFO, "PORT ROLES: setting not supported [active port %d, backup port %d]", 
@@ -685,7 +929,9 @@ void tru_set_life(char *optarg)
                                    0x000      /* pattern_mode */,
                                    0x000000FF /*ports_mask  */, 
                                    0x000000F3 /* ports_egress */,     //32'b111000000010110001
-                                   0x000000F3 /* ports_ingress   */); //32'b111000000010110001
+                                   0x000000F3 /* ports_ingress   */, //32'b111000000010110001
+                                   1          /* validate */,
+                                   1          /* print */ );                                    
               break;
           case 2:
              tru_write_tab_entry(  1          /* valid     */,
@@ -696,7 +942,9 @@ void tru_set_life(char *optarg)
                                    0x000      /* pattern_mode */,
                                    0x0003FFFF /*ports_mask  */, 
                                    0x0003FFFF /* ports_egress */,     //32'b111000000010110001
-                                   0x0003FFFF /* ports_ingress   */); //32'b111000000010110001
+                                   0x0003FFFF /* ports_ingress   */,  //32'b111000000010110001
+                                   1          /* validate */,
+                                   1          /* print */ );                                    
              break;
           case 3:
              tru_write_tab_entry(  1          /* valid     */,
@@ -707,7 +955,10 @@ void tru_set_life(char *optarg)
                                    0x000      /* pattern_mode */,
                                    0x00000003 /*ports_mask  */, 
                                    0x00000002 /* ports_egress */,     //32'b111000000010110001
-                                   0x00000002 /* ports_ingress   */); //32'b111000000010110001	
+                                   0x00000002 /* ports_ingress   */,  //32'b111000000010110001	
+                                   1          /* validate */,
+                                   1          /* print */ );                                    
+   
              break;
           case 4: 
              tru_write_tab_entry(  1          /* valid     */,
@@ -718,7 +969,10 @@ void tru_set_life(char *optarg)
                                    0x000      /* pattern_mode */,
                                    0x000000FF /*ports_mask  */, 
                                    0x00000083 /* ports_egress */,      
-                                   0x00000083 /* ports_ingress   */); 	     
+                                   0x00000083 /* ports_ingress   */,
+                                   1          /* validate */,
+                                   1          /* print */ );                                    
+				   
              break;
           case 5: 
              tru_write_tab_entry(  1          /* valid     */,
@@ -729,7 +983,9 @@ void tru_set_life(char *optarg)
                                    0x000      /* pattern_mode */,
                                    0x000000FF /*ports_mask  */, 
                                    0x00000085 /* ports_egress */,      
-                                   0x00000085 /* ports_ingress   */); 	     
+                                   0x00000085 /* ports_ingress   */,
+                                   1          /* validate */,
+                                   1          /* print */ );                                    
              break;
           case 6: 
              tru_write_tab_entry(  1          /* valid     */,
@@ -740,7 +996,9 @@ void tru_set_life(char *optarg)
                                    0x000      /* pattern_mode */,
                                    0x00000006 /*ports_mask  */, 
                                    0x00000004 /* ports_egress */,      
-                                   0x00000004 /* ports_ingress   */); 	     
+                                   0x00000004 /* ports_ingress   */,
+                                   1          /* validate */,
+                                   1          /* print */ );                                    
              break;	     
           case 7: 
              tru_write_tab_entry(  1          /* valid     */,
@@ -751,7 +1009,9 @@ void tru_set_life(char *optarg)
                                    0x000      /* pattern_mode */,
                                    0x00000006 /*ports_mask  */, 
                                    0x00000002 /* ports_egress */,      
-                                   0x00000002 /* ports_ingress   */); 	     
+                                   0x00000002 /* ports_ingress   */,
+                                   1          /* validate */,
+                                   1          /* print */ );                                    
              break;	     
           case 8: 
              // basic config, excluding link aggregation, only the standard non-LACP ports
@@ -763,7 +1023,9 @@ void tru_set_life(char *optarg)
                                    0x000      /* pattern_mode  */,
                                    0x00000F0F /* ports_mask    */, 
                                    0x00000F0F /* ports_egress  */,      
-                                   0x00000F0F /* ports_ingress */); 
+                                   0x00000F0F /* ports_ingress */,
+                                   1          /* validate */,
+                                   1          /* print */ );                                    
              // a bunch of link aggregation ports (ports 4 to 7 and 12&15)
              // received FEC msg of class 0      
              tru_write_tab_entry(  1          /* valid         */,
@@ -774,7 +1036,9 @@ void tru_set_life(char *optarg)
                                    0x000      /* pattern_mode  */,
                                    0x000090F0 /* ports_mask    */, 
                                    0x00008010 /* ports_egress  */,      
-                                   0x00000000 /* ports_ingress */); 
+                                   0x00000000 /* ports_ingress */,
+                                   1          /* validate */,
+                                   1          /* print */ );                                    
              // received FEC msg of class 1
              tru_write_tab_entry(  1          /* valid         */,
                                    0          /* entry_addr    */,    
@@ -784,7 +1048,9 @@ void tru_set_life(char *optarg)
                                    0x000      /* pattern_mode  */,
                                    0x000090F0 /* ports_mask    */, 
                                    0x00008020 /* ports_egress  */,      
-                                   0x00000000 /* ports_ingress */);
+                                   0x00000000 /* ports_ingress */,
+                                   1          /* validate */,
+                                   1          /* print */ );                                    
              // received FEC msg of class 2
              tru_write_tab_entry(  1          /* valid         */,
                                    0          /* entry_addr    */,    
@@ -794,7 +1060,9 @@ void tru_set_life(char *optarg)
                                    0x000      /* pattern_mode  */,
                                    0x000090F0 /* ports_mask    */, 
                                    0x00001040 /* ports_egress  */,      
-                                   0x00000000 /* ports_ingress */);
+                                   0x00000000 /* ports_ingress */,
+                                   1          /* validate */,
+                                   1          /* print */ );                                    
              // received FEC msg of class 3
              tru_write_tab_entry(  1          /* valid         */,
                                    0          /* entry_addr    */,    
@@ -804,7 +1072,9 @@ void tru_set_life(char *optarg)
                                    0x000      /* pattern_mode  */,
                                    0x000090F0 /* ports_mask    */, 
                                    0x00001080 /* ports_egress  */,      
-                                   0x00000000 /* ports_ingress */);
+                                   0x00000000 /* ports_ingress */,
+                                   1          /* validate */,
+                                   1          /* print */ );                                    
              // collector: receiving frames on the aggregation ports, 
              // forwarding to "normal" (others)
              tru_write_tab_entry(  1          /* valid         */,
@@ -815,8 +1085,9 @@ void tru_set_life(char *optarg)
                                    0x002      /* pattern_mode  */,
                                    0x000090F0 /* ports_mask    */, 
                                    0x00000000 /* ports_egress  */,      
-                                   0x000090F0 /* ports_ingress */);
-
+                                   0x000090F0 /* ports_ingress */,
+                                   1          /* validate */,
+                                   1          /* print */ );                                    
              break;	     
          case 10:
              tru_swap_bank();
@@ -835,7 +1106,9 @@ void tru_set_life(char *optarg)
                              0x000      /* pattern_mode */,
                              0x000000FF /*ports_mask  */, 
                              0x00000087 /* ports_egress: 1000_0111  */,     
-                             0x00000085 /* ports_ingress 1000_0101  */);         
+                             0x00000085 /* ports_ingress 1000_0101  */,
+                             1          /* validate */,
+                             1          /* print */ );                                    
        tru_write_tab_entry(  1          /* valid     */,
                              0          /* entry_addr   */,    
                              1          /* subentry_addr*/,
@@ -844,7 +1117,9 @@ void tru_set_life(char *optarg)
                              0x000      /* pattern_mode */,
                              0x00000006 /*ports_mask  */, 
                              0x00000087 /* ports_egress  1000_0111 */,      
-                             0x00000082 /* ports_ingress 1000_0010  */);
+                             0x00000082 /* ports_ingress 1000_0010  */,
+                             1          /* validate */,
+                             1          /* print */ );                                    
              //program transition
        tru_transition_config(0          /*mode */,     
                              1          /*rx_id*/,
@@ -898,43 +1173,16 @@ void tru_set_life(char *optarg)
        ep_snake_config((uint32_t)sub_opt);       
        break;       
     case 20: 
-       tru_write_tab_entry(1          /* valid     */,
-                           0          /* entry_addr   */,    
-                           0          /* subentry_addr*/,
-                           0x00000000 /*pattern_mask*/, 
-                           0x00000000 /* pattern_match*/,   
-                           0x000      /* pattern_mode */,
-                           0x0003FFFF /*ports_mask  */, 
-                           0x0003FFFF /* ports_egress */,     
-                           0x0003FFFF /* ports_ingress   */); 
-       // override possibly-existing old entries for VLAN 0
-       tru_write_tab_entry(0          /* valid     */,
-                           0          /* entry_addr   */,    
-                           1          /* subentry_addr*/,
-                           0x00000000 /*pattern_mask*/, 
-                           0x00000000 /* pattern_match*/,   
-                           0x000      /* pattern_mode */,
-                           0x0003FFFF /*ports_mask  */, 
-                           0x0003FFFF /* ports_egress */,     
-                           0x0003FFFF /* ports_ingress   */); 
-       tru_write_tab_entry(0          /* valid     */,
-                           0          /* entry_addr   */,    
-                           2          /* subentry_addr*/,
-                           0x00000000 /*pattern_mask*/, 
-                           0x00000000 /* pattern_match*/,   
-                           0x000      /* pattern_mode */,
-                           0x0003FFFF /*ports_mask  */, 
-                           0x0003FFFF /* ports_egress */,     
-                           0x0003FFFF /* ports_ingress   */); 
-       tru_write_tab_entry(0          /* valid     */,
-                           0          /* entry_addr   */,    
-                           3          /* subentry_addr*/,
-                           0x00000000 /*pattern_mask*/, 
-                           0x00000000 /* pattern_match*/,   
-                           0x000      /* pattern_mode */,
-                           0x0003FFFF /*ports_mask  */, 
-                           0x0003FFFF /* ports_egress */,     
-                           0x0003FFFF /* ports_ingress   */);       
+       ep_snake_config(1); // set VLANs 1-9 on ports
+       ep_set_vlan(2 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 11 /*pvid*/);
+       ep_vcr1_wr( 2 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+       ep_set_vlan(3 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 11 /*pvid*/);
+       ep_vcr1_wr( 3 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ );        
+       
+       ep_set_vlan(6 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 11 /*pvid*/);
+       ep_vcr1_wr( 6 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+       ep_set_vlan(7 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 11 /*pvid*/);
+       ep_vcr1_wr( 7 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ );       
        break;
     case  21:
        ep_set_vlan((uint32_t)sub_opt /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 1/*pvid*/);
@@ -942,6 +1190,18 @@ void tru_set_life(char *optarg)
     case  22:
        ep_vcr1_wr((uint32_t)sub_opt /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
        TRACE(TRACE_INFO, "Untag frames on port %d, untagging mask: 0x%x", (uint32_t)sub_opt, 0xFFFF);
+       break;   
+    case 23: 
+       ep_snake_config(1); // set VLANs 1-9 on ports
+       ep_set_vlan(4 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 11 /*pvid*/);
+       ep_vcr1_wr( 4 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+       ep_set_vlan(5 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 11 /*pvid*/);
+       ep_vcr1_wr( 5 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ );        
+       
+       ep_set_vlan(6 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 11 /*pvid*/);
+       ep_vcr1_wr( 6 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+       ep_set_vlan(7 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 11 /*pvid*/);
+       ep_vcr1_wr( 7 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ );       
        break;       
     case  100:
        tru_show_status(18) ;
@@ -996,17 +1256,24 @@ void tru_set_life(char *optarg)
        TRACE(TRACE_INFO, "-u 17 n      Endpoint PAUSE config: enable Tx PAUSE 802.3  on port n");
        TRACE(TRACE_INFO, "-u 18 n      Endpoint PAUSE config: enable Tx PAUSE 802.1Q on port n");
        TRACE(TRACE_INFO, "-u 19 n      Snake testing port configuration, config number: n");
-       TRACE(TRACE_INFO, "-u 19 0      Simple snake test:");
-       TRACE(TRACE_INFO, "             snake-ports: 0-7 (access port, untagging on egress");
-       TRACE(TRACE_INFO, "-u 19 1      Snake test + other traffic on 2 ports:");
-       TRACE(TRACE_INFO, "             snake-ports: 2-7 (access port, untagging on egress");
+       TRACE(TRACE_INFO, "-u 19 n      Simple snake test:");
+       TRACE(TRACE_INFO, "-u 19 0      Disable Simple snake test");
+       TRACE(TRACE_INFO, "-u 19 1      Enable Simple snake test with the following config");
+       TRACE(TRACE_INFO, "             snake-ports: 0-17 (access port, untagging on egress");
+       TRACE(TRACE_INFO, "-u 19 2      Enable Simple snake test with the following config");
+       TRACE(TRACE_INFO, "             snake-ports: 2-17 (access port, untagging on egress");
        TRACE(TRACE_INFO, "             free-ports : 0-1 no vlan (unqualified)");
-       TRACE(TRACE_INFO, "-u 19 2      Snake test + HP traffic on 2 ports:");
+       TRACE(TRACE_INFO, "-u 19 3      Enable Simple snake test with the following config");
        TRACE(TRACE_INFO, "             snake-ports: 2-7 (access port, untagging on egress");
        TRACE(TRACE_INFO, "             HP-ports   : 0-1 HP traffic (access with tagging for special VLAN + HP priority)");
-       TRACE(TRACE_INFO, "-u 20        Configure TRU to be transparent");
+       TRACE(TRACE_INFO, "-u 20        Redundancy test (works on VLAN 11):");
+       TRACE(TRACE_INFO, "             * active ports: 2, 6 ,7");
+       TRACE(TRACE_INFO, "             * backup ports: 3 (backup for 2)");
        TRACE(TRACE_INFO, "-u 21 n      Set port n as Access port with pvid=1");
        TRACE(TRACE_INFO, "-u 22 n      Set port n to untagg VIDs 0 - 15");
+       TRACE(TRACE_INFO, "-u 23        Redundancy test (works on VLAN 11):");
+       TRACE(TRACE_INFO, "             * active ports: 4, 6 ,7");
+       TRACE(TRACE_INFO, "             * backup ports: 5 (backup for 4)");       
        TRACE(TRACE_INFO, "-u 100       show status");
   };
   exit(1);

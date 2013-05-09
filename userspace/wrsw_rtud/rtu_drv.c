@@ -52,6 +52,8 @@
 #include "rtu_drv.h"
 #include "wr_rtu.h"
 
+#include "rtu_hwdu_drv.h"
+#include "rtu_tatsu_drv.h"
 
 extern int shw_fpga_mmap_init();
 
@@ -708,8 +710,9 @@ void rtu_show_status()
    {
       TRACE(TRACE_INFO, "RTU disabled");
    }
-   TRACE(TRACE_INFO, "[G/W version =%d, port_numeber=%d]",RTU_GCR_RTU_VERSION_R(gcr),
+   TRACE(TRACE_INFO, "[RTU G/W version =%d, port_numeber=%d]",RTU_GCR_RTU_VERSION_R(gcr),
                                                           num_ports);
+   hwdu_gw_version_dump();                                                           
    for(i=0;i<num_ports;i++)
      rtu_show_port_status(i);
 }
@@ -741,26 +744,21 @@ void rtu_set_life(char *optarg)
          rtu_disable();
     break;
     case  2:
-       rtu_pass_all_on_port(sub_sub_opt,sub_opt);
-       TRACE(TRACE_INFO, "PORT_%d config ena_flag=%d",sub_sub_opt,sub_opt);
-    break;
-//     case  3:
-// 
-//       vlan_entry_vd( sub_opt,      //vid, 
-//                      sub_sub_opt,  //port_mask, 
-//                      sub_opt,      //fid, 
-//                      0,            //prio,
-//                      0,            //has_prio,
-// 		      0,            //prio_override, 
-//                      0             //drop
-//                      );
-//       TRACE(TRACE_INFO, "VLAN_e: vid=%d, port_mask=%d, fid=%d, prio=0, drop=0",
-//                        sub_opt,sub_sub_opt, sub_opt);
-//       break;
-//     case  4:
-//       vlan_entry_rd(sub_opt);
-//       break;
-    case  10:
+      rtu_pass_all_on_port(sub_sub_opt,sub_opt);
+      TRACE(TRACE_INFO, "PORT_%d config ena_flag=%d",sub_sub_opt,sub_opt);
+      break;
+    case  3:
+      if     (sub_opt == 0) tatsu_drop_nonHP_disable();
+      else if(sub_opt == 1) tatsu_drop_nonHP_enable();
+      else {TRACE(TRACE_INFO, "ERROR: wrong arg=%d (allowed 0 or 1)",sub_opt);}
+      break;
+    case 20:
+      hwdu_mpm_resoruces_dump();
+      break;
+    case 21: 
+      hwdu_gw_version_dump();
+      break;
+    case  100:
        rtu_show_status();
     break;
     default:
@@ -769,9 +767,11 @@ void rtu_set_life(char *optarg)
        TRACE(TRACE_INFO, "-o 0           show this info");
        TRACE(TRACE_INFO, "-o 1 1/0       enable/disable RTU");
        TRACE(TRACE_INFO, "-o 2 1/0  num  enable/disable port num");
-//        TRACE(TRACE_INFO, "-o 3 vlan mask write vlan mask");
-//        TRACE(TRACE_INFO, "-o 4 vlan      read  vlan data");
-       TRACE(TRACE_INFO, "-o 10          show status");
+       TRACE(TRACE_INFO, "-o 3 1/0       enable/disable dropping of non-HP frames when HP arrives (TATSU)");
+       
+       TRACE(TRACE_INFO, "-o 20          DBG: mpm resource dump (number of allocated pages)");       
+       TRACE(TRACE_INFO, "-o 21          DBG: show GW version");
+       TRACE(TRACE_INFO, "-o 100         show status");
   };
   exit(1);
   

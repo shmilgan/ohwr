@@ -31,10 +31,14 @@
 
 #include "rtu.h"
 
+#define TRU_DEFAULT_FID 0
+
+int tru_init(int tru_enabled );
 int tru_simple_test() ;
 void tru_write_tab_entry(int valid,      int fid,          int subfid, 
                          int patrn_mask, int patrn_match,  int patrn_mode,
-                         int ports_mask, int ports_egress, int ports_ingress);
+                         int ports_mask, int ports_egress, int ports_ingress,
+                         int validate,   int print);
 void tru_transition_config(int mode,      int rx_id,   int prio_mode,    int prio, int time_diff,
                            int port_a_id, int port_b_id);
 void tru_transition_enable();
@@ -54,7 +58,7 @@ void tru_set_life(char *optarg);
 void tru_show_status(int port_number);
 int tru_port_state_up(int port_id);
 uint32_t tru_port_stable_up_mask(void);
-void tru_set_port_roles(int active_port, int backup_port);
+void tru_set_port_roles(int active_port, int backup_port, int fid);
 void tru_lacp_config(uint32_t df_hp_id, uint32_t df_br_id, uint32_t df_un_id);
 void tru_ep_debug_read_pfilter(uint32_t port);
 void tru_ep_debug_clear_pfilter(uint32_t port);

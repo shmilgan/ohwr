@@ -48,8 +48,13 @@
 #include "rtu_fd.h"
 #include "rtu_drv.h"
 #include "rtu_ext_drv.h"
+#include "rtu_tru_drv.h"
+#include "rtu_hwdu_drv.h"
 #include "rtu_hash.h"
 #include "utils.h"
+
+#define TRU_TEST_1 1
+#define SNAKE_TEST 2
 
 
 static pthread_t aging_process;
@@ -63,42 +68,66 @@ static struct {
 	int hw_index;
 } port_state[MAX_PORT + 1];
 
-static int rtu_set_startup_config()
+static int set_startup_config(int startup_config)
 {
   int i;
   int pvid = 1;
-  vlan_entry_vd( 10,           //vid, 
-                 0xffffffff,  //port_mask, 
-                 10,           //fid, 
-                 0,           //prio,
-                 0,           //has_prio,
-                 0,           //prio_override, 
-                 0           //drop
-                );    
-  vlan_entry_vd( 11,           //vid, 
-                 0xffffffff,  //port_mask, 
-                 11,           //fid, 
-                 0,           //prio,
-                 0,           //has_prio,
-                 0,           //prio_override, 
-                 0           //drop
-                );    
-
-  for(i=0;i < 18;i++)
-  {
-     if(i%2==0 && i!=0) pvid++;
-     vlan_entry_vd( pvid,          //vid, 
-                    (0x3 << 2*(pvid-1)),  //port_mask, 
-                    pvid,      //fid, 
-                    0,            //prio,
-                    0,            //has_prio,
-                    0,            //prio_override, 
-                    0             //drop
-                   );     
-          
-  }    
+  uint8_t mac_single_A[]    = {0x00,0x10,0x94,0x00,0x00,0x01}; // spirent MAC of port 1
+  uint8_t mac_single_B[]    = {0x00,0x10,0x94,0x00,0x00,0x02}; // spirent MAC of port 2
   
-//   ep_snake_config(0);
+  
+  switch(startup_config)
+  {
+    case TRU_TEST_1:
+      rtux_feature_ctrl(0 /*mr*/, 
+                        0 /*mac_ptp*/, 
+                        0/*mac_ll*/, 
+                        1/*mac_single*/, 
+                        0/*mac_range*/, 
+                        0/*mac_br*/,
+                        0/*drop when full_match full*/);
+      
+    break;
+    case SNAKE_TEST: 
+  
+      // "just in case" VLAN
+      vlan_entry_vd( 10,           //vid, 
+                     0xffffffff,  //port_mask, 
+                     10,           //fid, 
+                     0,           //prio,
+                     0,           //has_prio,
+                     0,           //prio_override, 
+                     0           //drop
+                    );    
+  
+      // for TRU redundancy test
+      vlan_entry_vd( 11,           //vid, 
+                     0x000000F0,  //port_mask, 
+                     11,           //fid, 
+                     0,           //prio,
+                     0,           //has_prio,
+                     0,           //prio_override, 
+                     0           //drop
+                    );    
+
+      // for snake test
+      for(i=0;i < 18;i++)
+      {
+         if(i%2==0 && i!=0) pvid++;
+         vlan_entry_vd( pvid,          //vid, 
+                        (0x3 << 2*(pvid-1)),  //port_mask, 
+                        pvid,      //fid, 
+                        0,            //prio,
+                        0,            //has_prio,
+                        0,            //prio_override, 
+                        0             //drop
+                       );     
+          
+      }    
+  
+      tru_set_port_roles(4 /*active*/,5 /*backup*/,TRU_DEFAULT_FID /*FID*/);
+      break;
+  }
   return 0;
 }
 
@@ -311,7 +340,7 @@ static void tru_update_ports_state(int input_active_port )
       }  
    }
    if(change_active_port)
-      tru_set_port_roles(active_port,backup_port);
+      tru_set_port_roles(active_port,backup_port, TRU_DEFAULT_FID);
    
    /*****************************************************************************************/
    
@@ -376,7 +405,7 @@ static void *rtu_daemon_wripc_process(void *arg)
  * \brief Handles the learning process.
  * @return error code
  */
-static int rtu_daemon_learning_process()
+static int rtu_daemon_learning_process(int at_existing_entry )
 {
     int err, i, port_down;
     struct rtu_request req;             // Request read from learning queue
@@ -410,7 +439,7 @@ static int rtu_daemon_learning_process()
             vid      = req.has_vid ? req.vid:0;
             port_map = (1 << req.port_id);
             // create or update entry at filtering database
-            err = rtu_fd_create_entry(req.src, vid, port_map, DYNAMIC, OVERRIDE_EXISTING);
+            err = rtu_fd_create_entry(req.src, vid, port_map, DYNAMIC, at_existing_entry);
 						err= 0;
             if (err == -ENOMEM) {
                 // TODO remove oldest entries (802.1D says you MAY do it)
@@ -434,10 +463,10 @@ static int rtu_daemon_learning_process()
  * @param aging_time Aging time in seconds.
  * @return error code.
  */
-static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
+static int rtu_daemon_init(uint16_t poly, unsigned long aging_time, int unrec_behavior,
+           int static_entries, int tru_enabled,int startup_config)
 {
     int i, err;
-    int startup_config = 1; //TODO: make configurabel
 
     // init RTU HW
     TRACE(TRACE_INFO, "init rtu hardware.");
@@ -446,15 +475,15 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
         return err;    
     err  = rtux_init();
     if(err)
-        return err;    
-    err  = tru_init();
-    if(err)
-        return err;    
-
+        return err;   
+    
     err  = ep_init(1,MAX_PORT);
     if(err)
         return err;    
-   
+
+    err  = tru_init(tru_enabled);
+    if(err)
+        return err;      
     
     // disable RTU
     TRACE(TRACE_INFO, "disable rtu.");
@@ -488,10 +517,10 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
         return err;
         
     if(startup_config)
-      err = rtu_set_startup_config();
+      err = set_startup_config(startup_config);
     if(err)
       return err;
-
+    hwdu_gw_version_dump();
     // turn on RTU
     TRACE(TRACE_INFO, "enable rtu.");
     rtu_enable();
@@ -532,7 +561,13 @@ int main(int argc, char **argv)
     uint16_t poly            = HW_POLYNOMIAL_CCITT;  // Hash polinomial
     unsigned long aging_res  = DEFAULT_AGING_RES;    // Aging resolution [sec.]
     unsigned long aging_time = DEFAULT_AGING_TIME;   // Aging time       [sec.]
-    int truud_thread_run = 0;
+    int truud_thread_run     = 0;
+    int config_mode          = 0;
+    int static_entries       = 1; // yes by default
+    int unrec_behavior       = 1; //broadcast by default
+    int tru_enabled          = 1; // TRU disabled by default
+    int at_existing_entry    = OVERRIDE_EXISTING; //by default, override
+    int startup_config       = 0;
     trace_log_stderr();
 
     if (argc > 1) {
@@ -592,7 +627,31 @@ int main(int argc, char **argv)
                 break;
             case 'v':
                truud_thread_run = atol(optarg);
+               tru_enabled      = 1; // tru enabled
+               at_existing_entry= ADD_TO_EXISTING;
+               startup_config   = TRU_TEST_1;
                fprintf(stderr, "TRU thread: %d\n", truud_thread_run);
+               break;
+            case 'c':
+               config_mode = atol(optarg);
+               fprintf(stderr, "\n>>>>>>>>>>>>>>>>>> Config-mode: %d <<<<<<<<<<<<<<<<\n", config_mode);
+               if(config_mode == 1)
+               {
+                 truud_thread_run = 1;
+                 tru_enabled      = 1;
+                 at_existing_entry= ADD_TO_EXISTING;
+                 fprintf(stderr, "\nTRU update with pref-configured active/backup port"
+                                 "(1 is active, 2 is backup)\n");
+               }
+               else if(config_mode == 2)
+               {
+                 truud_thread_run = 2;
+                 static_entries   = 0;
+                 unrec_behavior   = 0;
+                 tru_enabled      = 0;
+                 fprintf(stderr, "\nNo static entrie, drop unrecognized, TRU disabled\n");               
+               }                  
+               fprintf(stderr, "\n>>>>>>>>>>>>>>>>>>>>>>>  <<<<<<<<<<<<<<<<<<<<<<<<<<\n");
                break;
             case '?':
             default:
@@ -601,8 +660,8 @@ int main(int argc, char **argv)
         }
     }
 
-    // Initialise RTU.
-    if((err = rtu_daemon_init(poly, aging_time)) < 0) {
+    // Initialise RTU. 
+    if((err = rtu_daemon_init(poly, aging_time,unrec_behavior,static_entries,tru_enabled, startup_config)) < 0) {
         rtu_daemon_destroy();
         return err;
     }
@@ -638,7 +697,7 @@ int main(int argc, char **argv)
     }
 
     // Start up learning process.
-    err = rtu_daemon_learning_process();
+    err = rtu_daemon_learning_process(at_existing_entry);
     // On error, release RTU resources
     rtu_daemon_destroy();
 	return err;

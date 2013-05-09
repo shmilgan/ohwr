@@ -63,7 +63,7 @@ int rtux_init(void)
    rtux_add_ff_mac_range (0/*ID*/, 1/*valid*/, mac_range_lower/*MAC_lower*/, 
                                                mac_range_upper /*MAC_upper*/);  
    rtux_set_port_mirror  (1<<1/*mirror src*/,1<<7/*mirror dst*/,1/*rx*/,1/*tx*/);
-   rtux_set_hp_prio_mask (0xFF/*hp prio mask*/); //
+   rtux_set_hp_prio_mask (0x00/*hp prio mask*/); //
 //    rtux_set_cpu_port     (1<<8/*mask: virtual port of CPU*/);
    rtux_read_cpu_port    ();
    rtux_feature_ctrl     (0 /*mr*/, 
