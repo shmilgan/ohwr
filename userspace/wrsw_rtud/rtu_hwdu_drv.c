@@ -50,13 +50,85 @@
 
 extern int shw_fpga_mmap_init();
 	 
+char alloc_FSM[][30]={
+                      {"S_IDLE"},
+                      {"S_PCKSTART_SET_USECNT"},
+                      {"S_PCKSTART_PAGE_REQ"},
+                      {"S_PCKINTER_PAGE_REQ"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"}
+                     };
 
+char trans_FSM[][30]={ 
+                      {"S_IDLE"},
+                      {"S_READY"},
+                      {"S_WAIT_RTU_VALID"},
+                      {"S_WAIT_SOF"},
+                      {"S_SET_USECNT"},
+                      {"S_WAIT_WITH_TRANSFER"},
+                      {"S_TOO_LONG_TRANSFER"},
+                      {"S_TRANSFER"},
+                      {"S_TRANSFERED"},
+                      {"S_DROP"},
+                      {"fucked"},
+                      {"fucked"}, 
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"}
+                     };
+char rcv_p_FSM[][30]={ 
+                      {"S_IDLE"},
+                      {"S_READY"},
+                      {"S_PAUSE"},
+                      {"S_RCV_DATA"},
+                      {"S_DROP"},
+                      {"S_WAIT_FORCE_FREE"},
+                      {"S_INPUT_STUCK"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"} 
+                     };
+char linkl_FSM[][30]={ 
+                      {"S_IDLE"},
+                      {"S_READY_FOR_PGR_AND_DLAST"},
+                      {"S_READY_FOR_DLAST_ONLY"},
+                      {"S_WRITE"},
+                      {"S_EOF_ON_WR"},
+                      {"S_SOF_ON_WR"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},
+                      {"fucked"},  
+                     };
 int tatsu_init()
 {
   return 0;
 }
 
-uint32_t hwdu_read(uint32_t addr)
+uint32_t hwdu_read(uint32_t addr, int dbg)
 {
   uint32_t val;
   val = HWDU_CR_RD_EN | HWDU_CR_ADR_W(addr);
@@ -79,7 +151,8 @@ uint32_t hwdu_read(uint32_t addr)
     }
   }
   val = hwdu_rd(REG_VAL);
-  TRACE(TRACE_INFO,"[HWDP] raw value: 0x%x, addr: %d",val, addr);
+  if(dbg)
+    {TRACE(TRACE_INFO,"[HWDP] raw value: 0x%x, addr: %d",val, addr);}
   return val;
   
 }
@@ -87,7 +160,7 @@ uint32_t hwdu_read(uint32_t addr)
 int hwdu_gw_version_dump()
 {
   uint32_t val;
-  val = hwdu_read(HWDU_GW_VERSION_ADDR);
+  val = hwdu_read(HWDU_GW_VERSION_ADDR,0);
   
   TRACE(TRACE_INFO,"[HWDP] day: %x, month: %x, year: 20%2x, version of day: %x",
                        0xFF & (val >> 24),0xFF & (val >> 16),0xFF & (val >> 8),0xFF & val);
@@ -97,10 +170,40 @@ int hwdu_gw_version_dump()
 int hwdu_mpm_resoruces_dump()
 {
   uint32_t val;
-  val = hwdu_read(HWDU_MPM_RESOURCE_ADDR);
+  val = hwdu_read(HWDU_MPM_RESOURCE_ADDR,0);
   
   TRACE(TRACE_INFO,"[HWDP] unknown   resources, page cnt :%d",0x3FF & val);
   TRACE(TRACE_INFO,"[HWDP] high prio resources, page cnt :%d",0x3FF & (val >> 10));
   TRACE(TRACE_INFO,"[HWDP] normal    resources, page cnt :%d",0x3FF & (val >> 20));
+  return 0;
+}
+
+   
+int hwdu_swc_in_b_pstates_dump(int port_num)
+{
+  uint32_t val, i;
+   
+  int read_num = 0; /// = port_num/2 + (0x1 & port_num);
+  
+  for(i=0;i<port_num;i++)
+  {
+    if(i%2 == 0)
+    {
+      val = hwdu_read(HWDU_SWC_IN_B_P0_ADDR + read_num,0);
+      read_num++;
+    }
+    else
+      val = val >> 16;
+    
+      TRACE(TRACE_INFO,"[HWDP] port %2d =>> alloc: %s, trans_FSM: %s, rcv_p_FSM: %s, linkl_FSM:"
+                       " %s, rtu_rsp_valid=%d", i,
+                        alloc_FSM[(0xF & (val >> 12))],
+                        trans_FSM[(0xF & (val >> 8 ))],
+                        rcv_p_FSM[(0xF & (val >> 4 ))],
+                        linkl_FSM[(0x7 & (val >> 0 ))],
+                                   0x1 & (val >> 15));
+    
+  }
+  
   return 0;
 }

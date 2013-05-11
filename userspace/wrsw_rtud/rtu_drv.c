@@ -758,6 +758,9 @@ void rtu_set_life(char *optarg)
     case 21: 
       hwdu_gw_version_dump();
       break;
+    case 22: 
+      hwdu_swc_in_b_pstates_dump(8 /*port number*/);
+      break;      
     case  100:
        rtu_show_status();
     break;
@@ -771,6 +774,7 @@ void rtu_set_life(char *optarg)
        
        TRACE(TRACE_INFO, "-o 20          DBG: mpm resource dump (number of allocated pages)");       
        TRACE(TRACE_INFO, "-o 21          DBG: show GW version");
+       TRACE(TRACE_INFO, "-o 22          DBG: dump SWcore input_block states");
        TRACE(TRACE_INFO, "-o 100         show status");
   };
   exit(1);

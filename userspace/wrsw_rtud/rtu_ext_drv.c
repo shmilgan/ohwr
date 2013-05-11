@@ -43,9 +43,12 @@
 
 int rtux_init(void)
 {
-
-   uint8_t mac_single_A[]    = {0x11,0x50,0xca,0xfe,0xba,0xbe};
-   uint8_t mac_single_B[]    = {0x11,0x11,0x11,0x11,0x11,0x11};
+//    uint8_t mac_single_A[]    = {0x11,0x50,0xca,0xfe,0xba,0xbe};
+//    uint8_t mac_single_B[]    = {0x11,0x11,0x11,0x11,0x11,0x11};
+   uint8_t mac_single_A[]    = {0x00,0x10,0x94,0x00,0x00,0x01}; // spirent MAC of port 1
+   uint8_t mac_single_B[]    = {0x00,0x10,0x94,0x00,0x00,0x02}; // spirent MAC of port 2
+   uint8_t mac_single_C[]    = {0xb8,0xac,0x6f,0x5a,0x1a,0xd2}; // my laptop (new)
+   uint8_t mac_single_D[]    = {0x00,0x15,0xb7,0x2f,0x81,0x69}; // my laptop (old)   
    uint8_t mac_range_lower[] = {0x00,0x50,0xca,0xfe,0xba,0xbe};
    uint8_t mac_range_upper[] = {0x08,0x50,0xca,0xfe,0xba,0xbe};   
    
@@ -57,9 +60,12 @@ int rtux_init(void)
    rtux_simple_test();
    
    rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_A/*MAC*/);
-//    rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_B/*MAC*/);
-   rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, UNICAST_MAC_ETH_5/*MAC*/);
-   rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, UNICAST_MAC_ETH_4_RENAME/*MAC*/);
+   rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_B/*MAC*/);
+   rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, mac_single_C/*MAC*/);
+   rtux_add_ff_mac_single(3/*ID*/, 1/*valid*/, mac_single_D/*MAC*/);
+   
+//    rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, UNICAST_MAC_ETH_5/*MAC*/);
+//    rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, UNICAST_MAC_ETH_4_RENAME/*MAC*/);
    rtux_add_ff_mac_range (0/*ID*/, 1/*valid*/, mac_range_lower/*MAC_lower*/, 
                                                mac_range_upper /*MAC_upper*/);  
    rtux_set_port_mirror  (1<<1/*mirror src*/,1<<7/*mirror dst*/,1/*rx*/,1/*tx*/);

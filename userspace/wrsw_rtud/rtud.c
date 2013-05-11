@@ -72,9 +72,6 @@ static int set_startup_config(int startup_config)
 {
   int i;
   int pvid = 1;
-  uint8_t mac_single_A[]    = {0x00,0x10,0x94,0x00,0x00,0x01}; // spirent MAC of port 1
-  uint8_t mac_single_B[]    = {0x00,0x10,0x94,0x00,0x00,0x02}; // spirent MAC of port 2
-  
   
   switch(startup_config)
   {
