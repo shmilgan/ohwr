@@ -37,7 +37,9 @@
 #include "minipc.h"
 #include "rtu.h"
 #include "rtu_fd.h"
+#include "rtu_drv.h"
 #include "rtud_exports.h"
+#include "rtu_tru_drv.h"
 #include "mac.h"
 
 #include <hal_client.h>
@@ -49,7 +51,32 @@ static struct minipc_ch *rtud_ch;
 #define MINIPC_EXP_FUNC(stru,func) stru.f= func; \
 		if (minipc_export(rtud_ch, &stru) < 0) { TRACE(TRACE_FATAL,"Could not export %s (rtu_ch=%d)",stru.name,rtud_ch); }
 
+/* The exported function */
+int rtudexp_get_tru_info(const struct minipc_pd *pd,
+		uint32_t *args, void *ret)
+{
+	int i;
+	uint32_t bank, ports_up, ports_stb_up;
+	uint32_t ports_pass_all = 0;
+	truexp_info_t *info = ret;
+	int arg = args[0];
 
+
+	TRACE(TRACE_INFO,"GetTRUinfo arg=%d",arg);
+	tru_read_status(&bank, &ports_up, &ports_stb_up,0);
+	for(i=0;i<18;i++)
+	  ports_pass_all = ((0x1 & rtu_port_setting(i)) << i) | ports_pass_all;
+	
+	info-> tru_enabled    = 1;
+	info-> bank           = bank;
+	info-> active_port    = 1;
+	info-> backup_port    = 2;
+	info-> ports_pass_all = ports_pass_all;
+	info-> ports_up       = ports_up;
+	info-> ports_stb_up   = ports_stb_up;
+	
+	return 0;
+}
 /* The exported function */
 int rtudexp_get_fd_list(const struct minipc_pd *pd,
 		uint32_t *args, void *ret)
@@ -202,10 +229,11 @@ int rtud_init_exports()
 	MINIPC_EXP_FUNC(rtud_export_get_vd_list,rtudexp_get_vd_list);
 	MINIPC_EXP_FUNC(rtud_export_clear_entries,rtudexp_clear_entries);
 	MINIPC_EXP_FUNC(rtud_export_add_entry,rtudexp_add_entry);
-	MINIPC_EXP_FUNC(rtud_export_vlan_entry,rtudexp_vlan_entry);
-
+	//tru stuff
+	MINIPC_EXP_FUNC(rtud_export_get_tru_info,rtudexp_get_tru_info);
 	return 0;
 }
+
 
 void rtud_handle_wripc()
 {

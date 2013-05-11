@@ -31,6 +31,33 @@
 
 #include <stdint.h>
 #include <minipc.h>
+////////////////////////////////////////////////////////////////// TRU STUFF
+
+
+typedef struct  {
+	int      tru_enabled;
+	int      bank;
+	int      active_port;
+	int      backup_port;
+	uint32_t ports_pass_all;
+	uint32_t ports_up;
+	uint32_t ports_stb_up;
+} truexp_info_t;
+
+/* Export this function: it returns a structure */
+struct minipc_pd rtud_export_get_tru_info = {
+	.name = "get_tru_info",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
+				    truexp_info_t),
+	.args = {
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+		MINIPC_ARG_END,
+	},				    
+};
+
+
+
+//////////////////////////////////////////////////////////////////
 
 typedef struct
 {
