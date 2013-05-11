@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 TOOLS = rtu_stat wr_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex com
 TOOLS += mapper wmapper shw_ver wr_date wr_management lm32-vuart
+=======
+TOOLS = rtu_stat wr_mon tru_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex com
+TOOLS += mapper wmapper shw_ver wrsw_pstats 
+>>>>>>> [tool] forgot to add makefile chagnes
 
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 
@@ -42,6 +47,7 @@ wr_mon: wr_mon.o term.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
 wr_management: wr_management.o term.o
+tru_mon: tru_mon.o term.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
 wr_phytool: wr_phytool.o ../wrsw_hal/rt_client.o
@@ -72,6 +78,8 @@ port_calibrator: port_calibrator.o ../wrsw_hal/rt_client.o
 	${CC} -o $@ $^ $(LDFLAGS)	
 
 lm32-vuart: lm32-vuart.o
+
+wrsw_pstats: wrsw_pstats.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
 clean:
