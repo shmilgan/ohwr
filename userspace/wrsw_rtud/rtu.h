@@ -194,5 +194,7 @@ unsigned long now()
 
 int rtud_init_exports();
 void rtud_handle_wripc();
+ int return_active_p(void);
+ int return_backup_p(void);
 
 #endif /*__WHITERABBIT_RTU_H*/

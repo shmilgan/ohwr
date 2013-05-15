@@ -122,7 +122,7 @@ void show_ports()
 	int i, j;
 	hexp_port_state_t state;
 	truexp_info_t tru_info;
-	term_pcprintf(3, 1, C_BLUE, "Switch ports:");
+// 	term_pcprintf(3, 1, C_BLUE, "Switch ports:");
 
 	rtudexp_get_tru_info(&tru_info,0);
 	parse_sysfs(0);
@@ -132,7 +132,7 @@ void show_ports()
 		char if_name[10], found = 0;
 		hexp_port_state_t state;
 
-		snprintf(if_name, 10, "wr%d", i);
+		snprintf(if_name, 5, "wr%d", i);
 		
 		for(j=0;j<port_list.num_ports;j++)
 			if(!strcmp(port_list.port_names[j], if_name)) { found = 1; break; }
@@ -143,18 +143,18 @@ void show_ports()
 
 		term_pcprintf(5+i, 1, C_WHITE, "%05s: ", if_name);
 		if(state.up)
-			term_cprintf(C_GREEN, "Link up    ");
+			term_cprintf(C_GREEN, "Link OK ");
 		else
-			term_cprintf(C_RED,   "Link down  ");
+			term_cprintf(C_RED,   "No Link ");
 
-		term_cprintf(C_GREY, "RTU Config: ");
+		term_cprintf(C_GREY, "RTU: ");
 
 		if(0x1 & (tru_info.ports_pass_all >> i))
-			term_cprintf(C_GREEN, "Pass  traffic");
+			term_cprintf(C_GREEN, "Enable  traffic");
 		else
-			term_cprintf(C_RED,   "Block traffic");
+			term_cprintf(C_RED,   "Disable traffic");
 		
-		term_cprintf(C_GREY, " TRU Config: ");
+		term_cprintf(C_GREY, " TRU: ");
 
 		if(0x1 & (tru_info.ports_up >> i))
 			term_cprintf(C_GREEN, "up   ");
@@ -167,16 +167,18 @@ void show_ports()
 			term_cprintf(C_GREY,  "(surely dead) ");
 		
 		if((0x1 & (tru_info.ports_pass_all >> i)) && (i != tru_info.backup_port))
-			term_cprintf(C_GREEN, " ACTIVE       ");
+			term_cprintf(C_GREEN, " ACTIVE   ");
 		else if((0x1 & (tru_info.ports_pass_all >> i)) && (i == tru_info.backup_port))
-			term_cprintf(C_WHITE, " BACKUP (P%2d) ",tru_info.active_port);
+			term_cprintf(C_WHITE, " BACKUP %d ",tru_info.active_port);
 		else 
-			term_cprintf(C_WHITE, "              ",tru_info.active_port);
+			term_cprintf(C_WHITE, "          ",tru_info.active_port);
 		
-		term_cprintf(C_GREY, " Tx:");
-		term_cprintf(C_GREEN," %10u:",cnt[i][CNT_TX_FRAME]);
-		term_cprintf(C_GREY, " Rx:");
-		term_cprintf(C_GREEN," %10u:",cnt[i][CNT_RX_FRAME]);
+		term_cprintf(C_GREY, " [Tx:");
+		term_cprintf(C_WHITE," %10u",cnt[i][CNT_TX_FRAME]);
+		term_cprintf(C_GREY, "]");
+		term_cprintf(C_GREY, " [Rx:");
+		term_cprintf(C_WHITE," %10u",cnt[i][CNT_RX_FRAME]);
+		term_cprintf(C_GREY, "]");
 	}
 }
 
@@ -185,7 +187,7 @@ int track_onoff = 1;
 void show_screen()
 {
 	term_clear();
-	term_pcprintf(1, 1, C_BLUE, "WR Switch Sync Monitor v 1.0 [q = quit]");
+	term_pcprintf(1, 1, C_BLUE, "WR Switch Topology Resolution Unit (TRU) Monitor v 1.0 [q = quit]");
 
 	show_ports();
 }

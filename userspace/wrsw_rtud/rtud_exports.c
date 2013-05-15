@@ -69,8 +69,8 @@ int rtudexp_get_tru_info(const struct minipc_pd *pd,
 	
 	info-> tru_enabled    = 1;
 	info-> bank           = bank;
-	info-> active_port    = 1;
-	info-> backup_port    = 2;
+	info-> active_port    = return_active_p();
+	info-> backup_port    = return_backup_p();
 	info-> ports_pass_all = ports_pass_all;
 	info-> ports_up       = ports_up;
 	info-> ports_stb_up   = ports_stb_up;
