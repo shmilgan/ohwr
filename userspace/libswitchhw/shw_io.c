@@ -106,9 +106,6 @@ int shw_io_init()
 
 		IOARR_SET_IO(shw_io_led_state_g,SHW_I2C,I2C_shw_io_led_state_g);
 		IOARR_SET_IO(shw_io_led_state_o,SHW_I2C,I2C_shw_io_led_state_o);
-
-		//Finally setup the orange led state before initiate anything else
-		shw_io_write(shw_io_led_state_o,1);
 	}
 
 	TRACE(TRACE_INFO, "version=%g",ver);

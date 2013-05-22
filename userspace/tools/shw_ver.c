@@ -41,7 +41,8 @@ void help(const char* pgrname)
 	printf("usage: %s <command>\n", pgrname);
 	printf("available commands are:\n"
 				"   -p PCB version\n"
-				"   -f FPGA size\n"
+				"   -f FPGA type\n"
+				"   -F FPGA type and init status LED\n"
 				"   -c Compiling time\n"
 				"   -v version (git)\n"
 				"   -a All (default)\n"
@@ -61,15 +62,26 @@ int main(int argc, char **argv)
 
     assert_init(shw_pio_mmap_init());
 	shw_io_init();
+	shw_io_configure_all();
 
 	shw_io_t* all_io = (shw_io_t*)_all_shw_io;
-
 
 	switch(func)
 	{
 	case 'p':
 		printf("%s\n",get_shw_info(func));
 		break;
+	case 'F':
+		/* When the linux has boot the status led
+		 * is unpowered so we set it to yellow
+		 * until the HAL start (LED is orange) and finally
+		 * WR is setup (LED is green) */
+		if(shw_io_read(shw_io_led_state_g)==0)
+		{
+			shw_io_write(shw_io_led_state_o,1);
+			shw_io_write(shw_io_led_state_g,1);
+		}
+		func='f';
 	case 'f':
 		printf("%s\n",get_shw_info(func));
 		break;
