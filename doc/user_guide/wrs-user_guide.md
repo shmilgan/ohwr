@@ -65,6 +65,9 @@ conditions
                     
  0.3   27/03/2013   Benoit Rat\         Modifying licence to GPL v2.0\
                     [Seven Solutions]   to be comptabile with the package
+
+ 0.4   23/05/2013   Benoit Rat\         Updating 125MHz out to CLK
+                    [Seven Solutions]   
 ------------------------------------------------------------------------
 
 
@@ -120,10 +123,10 @@ Front panel (Legend)
 #. Status LED
 #. Power LED
 #. PPS output
-#. Synced 125MHz Output
+#. Synced CLK reference Output (62.5 MHz)
 #. PPS input (GPS Clock) 
 #. 10MHz reference clock input (GPS/Cesium)
-#. 125MHz reference clock input (GPS/Cesium)
+#. 125MHz reference clock input (Not used)
 #. Ethernet 100Mbps Management Port
 
 
@@ -411,7 +414,7 @@ by flashing the memory using the *Management Mini-USB*[^flashlinux].
 1. Download the [flashing package] and extract it.
 #. Download the [latest stable release] of the [WRS] 
 binaries in a tar.gz package.
-#. Connect the *Management Mini-USB* port to the PC.
+#. Connect the *Management Mini-USB* port to the PC[^checkusb].
 #. Start the flashing procedure by doing:  
 
 ~~~~{.bash}
@@ -428,6 +431,9 @@ as performed successfully.
 
 [^flashlinux]: The flashing operation is only available for linux environment, and
 it is recommended to use debian's like distribution such as "Ubuntu"
+
+[^checkusb]: Please, make sure that the managment USB port (ttyACM0)
+is not used by another process such as minicom.
 
 Advanced configuration
 -----------------------
