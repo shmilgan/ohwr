@@ -51,6 +51,7 @@
 #include "rtu_tru_drv.h"
 #include "rtu_hwdu_drv.h"
 #include "rtu_hash.h"
+#include "rtu_configs.h"
 #include "utils.h"
 
 #define TRU_TEST_1 1
@@ -82,80 +83,6 @@ static int backup_p_number;
   return backup_p_number;
 }
 
-
-static int set_startup_config(int startup_config)
-{
-  int i;
-  int pvid = 1;
-  uint8_t mac_single_A[]    = {0x00,0x10,0x94,0x00,0x00,0x01}; // spirent MAC of port 1
-  uint8_t mac_single_B[]    = {0x00,0x10,0x94,0x00,0x00,0x02}; // spirent MAC of port 2
-  uint8_t mac_single_C[]    = {0x00,0x10,0x94,0x00,0x00,0x03}; // spirent MAC of port 1
-  uint8_t mac_single_D[]    = {0x00,0x10,0x94,0x00,0x00,0x04}; // spirent MAC of port 2  
-  
-  switch(startup_config)
-  {
-    case TRU_TEST_1:
-      rtux_feature_ctrl(0 /*mr*/, 
-                        0 /*mac_ptp*/, 
-                        0/*mac_ll*/, 
-                        1/*mac_single*/, 
-                        0/*mac_range*/, 
-                        0/*mac_br*/,
-                        0/*drop when full_match full*/);
-      
-    break;
-    case SNAKE_TEST: 
-  
-      // for snake test
-      for(i=0;i < 18;i++)
-      {
-         if(i%2==0 && i!=0) pvid++;
-         vlan_entry_vd( pvid,          //vid, 
-                        (0x3 << 2*(pvid-1)),  //port_mask, 
-                        pvid,      //fid, 
-                        0,            //prio,
-                        0,            //has_prio,
-                        0,            //prio_override, 
-                        0             //drop
-                       );     
-          
-      }    
-       ep_snake_config(1 /*VLANS 0-17 port, access/untag*/);   
-//       tru_set_port_roles(4 /*active*/,5 /*backup*/,TRU_DEFAULT_FID /*FID*/);
-      break;
-    case ONE_TO_ONE_FF: 
-  
-      // for snake test
-      for(i=0;i < 18;i++)
-      {
-         if(i%2==0 && i!=0) pvid++;
-         vlan_entry_vd( pvid,          //vid, 
-                        (0x3 << 2*(pvid-1)),  //port_mask, 
-                        pvid,      //fid, 
-                        0,            //prio,
-                        0,            //has_prio,
-                        0,            //prio_override, 
-                        0             //drop
-                       );     
-          
-      }    
-      rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_A/*MAC*/);
-      rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_B/*MAC*/);
-      rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, mac_single_C/*MAC*/);
-      rtux_add_ff_mac_single(3/*ID*/, 1/*valid*/, mac_single_D/*MAC*/);
-      
-      rtux_feature_ctrl(0 /*mr*/, 
-                        0 /*mac_ptp*/, 
-                        0/*mac_ll*/, 
-                        1/*mac_single*/, 
-                        0/*mac_range*/, 
-                        0/*mac_br*/,
-                        0/*drop when full_match full*/);
-       ep_snake_config(1 /*VLANS 0-17 port, access/untag*/); 
-      break;      
-  }
-  return 0;
-}
 
 
 /**
@@ -492,7 +419,7 @@ static int rtu_daemon_learning_process(int at_existing_entry )
  * @return error code.
  */
 static int rtu_daemon_init(uint16_t poly, unsigned long aging_time, int unrec_behavior,
-           int static_entries, int tru_enabled,int startup_config, int ep_config)
+           int static_entries, int tru_enabled,int startup_config, int startup_sub_config, int ep_config)
 {
     int i, err;
 
@@ -538,7 +465,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time, int unrec_be
 
     // init filtering database
     TRACE(TRACE_INFO, "init fd.");
-    err = rtu_fd_init(poly, aging_time);
+    err = rtu_fd_init(poly, aging_time); // set VLAN=0
     if (err)
         return err;
 
@@ -547,8 +474,8 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time, int unrec_be
     if(err)
         return err;
         
-    if(startup_config)
-      err = set_startup_config(startup_config);
+    if(startup_config >0)
+      err = config_startup(startup_config, startup_sub_config, MAX_PORT);
     if(err)
       return err;
     hwdu_gw_version_dump();
@@ -596,9 +523,10 @@ int main(int argc, char **argv)
     int config_mode          = 0;
     int static_entries       = 1; // yes by default
     int unrec_behavior       = 1; //broadcast by default
-    int tru_enabled          = 1; // TRU disabled by default
+    int tru_enabled          = 0; // TRU disabled by default
     int at_existing_entry    = OVERRIDE_EXISTING; //by default, override
-    int startup_config       = 0;
+    int startup_config       = -1;
+    int startup_sub_config   = 0;
     int ep_config            = 1;
     trace_log_stderr();
 
@@ -686,32 +614,15 @@ int main(int argc, char **argv)
                fprintf(stderr, "\n>>>>>>>>>>>>>>>>>>>>>>>  <<<<<<<<<<<<<<<<<<<<<<<<<<\n");
                break;
             case 's':
-               config_mode = atol(optarg);
-               fprintf(stderr, "\n>>>>>>>>>>>>>>>>>> Config-mode: %d <<<<<<<<<<<<<<<<\n", config_mode);
-               if(config_mode == 1)
-               {
-                 fprintf(stderr, "\nBare bones - TRU disabled, no VLANS, simple test\n");
-                 truud_thread_run = 0;
-                 static_entries   = 1;
-                 unrec_behavior   = 1;
-                 tru_enabled      = 0;
-                 startup_config   = 0;
-                 ep_config        = 0;
-                   
-               }
-               else if(config_mode == 2)
-               {
-                 fprintf(stderr, "\nFast forward for spirent ports - VLANS, \n");
-                 truud_thread_run = 0;
-                 static_entries   = 1;
-                 unrec_behavior   = 1;
-                 tru_enabled      = 0;
-                 startup_config   = ONE_TO_ONE_FF;
-                 ep_config        = 0;
-               }                  
-               fprintf(stderr, "\n>>>>>>>>>>>>>>>>>>>>>>>  <<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+               startup_config     = strtol(optarg,   &optarg, 0);
+               startup_sub_config = strtol(optarg+1, &optarg, 0);
+               
+               if(startup_config == 0) //startup info
+                 config_startup(startup_config,0,0);
+               tru_enabled     = 0;
+               ep_config       = 0; // all the config in rtu_config.c
+
                break;
-	       
             case '?':
             default:
                 usage(name);
@@ -720,7 +631,8 @@ int main(int argc, char **argv)
     }
 
     // Initialise RTU. 
-    if((err = rtu_daemon_init(poly, aging_time,unrec_behavior,static_entries,tru_enabled, startup_config,ep_config)) < 0) {
+    if((err = rtu_daemon_init(poly, aging_time,unrec_behavior,static_entries,tru_enabled, 
+        startup_config, startup_sub_config, ep_config)) < 0) {
         rtu_daemon_destroy();
         return err;
     }

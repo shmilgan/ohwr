@@ -425,6 +425,7 @@ static void clean_vd(void)
 
     // First entry reserved for untagged packets.
     vlan_tab[0].port_mask       = 0xffffffff;
+//     vlan_tab[0].port_mask       = 0x0000000c;
     vlan_tab[0].drop            = 0;
     vlan_tab[0].fid             = 0;
     vlan_tab[0].has_prio        = 0;

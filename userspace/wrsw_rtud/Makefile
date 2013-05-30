@@ -1,7 +1,7 @@
 
 PROGRAM		= wrsw_rtud
 SRCFILES	= mac.c rtu_drv.c rtu_ext_drv.c ep_pfilter.c rtu_tru_drv.c rtu_ep_drv.c rtu_hash.c rtu_fd.c rtud.c \
-			rtud_exports.c utils.c rtu_hwdu_drv.c rtu_tatsu_drv.c ../ptp-noposix/libptpnetif/hal_client.c
+			rtud_exports.c utils.c rtu_hwdu_drv.c rtu_tatsu_drv.c rtu_configs.c  ../ptp-noposix/libptpnetif/hal_client.c
 OBJFILES	= $(patsubst %.c,%.o,$(SRCFILES))
 
 CC		= $(CROSS_COMPILE)gcc

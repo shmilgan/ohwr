@@ -93,7 +93,7 @@ int tru_init(void)
 
   /// port 1 active
   /// port 2 backup
-   tru_set_port_roles(1 /*active port*/,2/*backup port*/, 0 /*fid*/); //TODO: make it config
+//    tru_set_port_roles(1 /*active port*/,2/*backup port*/, 0 /*fid*/); //TODO: make it config
 
   tru_set_port_roles(1 /*active port*/,2/*backup port*/);
 //   tru_set_port_roles(2 /*active port*/,1/*backup port*/);

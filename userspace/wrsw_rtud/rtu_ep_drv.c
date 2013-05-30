@@ -365,6 +365,13 @@ void ep_snake_config(int option)
       rtux_set_hp_prio_mask(0xFF);
       
     break;    
+    case 4: 
+      low_snake_port = 0;
+      up_snake_port  = 17;
+      qmode          = 0; //access
+      untagging      = 1;//untag
+      pvid           = 0;//starat with zero
+    break;    
     default:
       low_snake_port = 0;
       up_snake_port  = 17;    

@@ -39,7 +39,7 @@
 
 #include "rtu_ext_drv.h"
 #include "wr_rtu.h"
-
+#include "rtu_tatsu_drv.h"
 
 int rtux_init(void)
 {
@@ -59,18 +59,16 @@ int rtux_init(void)
    
    rtux_simple_test();
    
-   rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_A/*MAC*/);
-   rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_B/*MAC*/);
-   rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, mac_single_C/*MAC*/);
-   rtux_add_ff_mac_single(3/*ID*/, 1/*valid*/, mac_single_D/*MAC*/);
+//    rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_A/*MAC*/);
+//    rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_B/*MAC*/);
+//    rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, mac_single_C/*MAC*/);
+//    rtux_add_ff_mac_single(3/*ID*/, 1/*valid*/, mac_single_D/*MAC*/);
    
-//    rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, UNICAST_MAC_ETH_5/*MAC*/);
-//    rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, UNICAST_MAC_ETH_4_RENAME/*MAC*/);
-   rtux_add_ff_mac_range (0/*ID*/, 1/*valid*/, mac_range_lower/*MAC_lower*/, 
-                                               mac_range_upper /*MAC_upper*/);  
-   rtux_set_port_mirror  (1<<1/*mirror src*/,1<<7/*mirror dst*/,1/*rx*/,1/*tx*/);
-   rtux_set_hp_prio_mask (0x00/*hp prio mask*/); //
-//    rtux_set_cpu_port     (1<<8/*mask: virtual port of CPU*/);
+//    rtux_add_ff_mac_range (0/*ID*/, 1/*valid*/, mac_range_lower/*MAC_lower*/, 
+//                                                mac_range_upper /*MAC_upper*/);  
+//    rtux_set_port_mirror  (1<<1/*mirror src*/,1<<7/*mirror dst*/,1/*rx*/,1/*tx*/);
+   rtux_set_hp_prio_mask (0x00/*hp prio mask*/); // no HP
+
    rtux_read_cpu_port    ();
    rtux_feature_ctrl     (0 /*mr*/, 
                           0 /*mac_ptp*/, 
@@ -325,8 +323,18 @@ void rtux_set_feature_ctrl(int mr, int mac_ptp, int mac_ll, int mac_single, int 
 {
    uint32_t mask;
    mask = rtu_rd(RX_CTR);
-   mask = 0xFFFFFF80 & mask;
-  
+//    $display("RTU eXtension features debugging: 1: read mask: 0x%x",mask);
+//    mask = !(`RTU_RX_CTR_MR_ENA        |
+//             `RTU_RX_CTR_FF_MAC_PTP    |
+//             `RTU_RX_CTR_FF_MAC_LL     |
+//             `RTU_RX_CTR_FF_MAC_SINGLE |
+//             `RTU_RX_CTR_FF_MAC_RANGE  |
+//             `RTU_RX_CTR_FF_MAC_BR     |
+//             32'h00000000) &
+//              mask; 
+   mask = 0xFFFFFF80 & mask; 
+   /*$display("RTU eXtension features debugging: 2: cleared mask: 0x%x",mask);*/         
+   
    if(mr)         mask = RTU_RX_CTR_MR_ENA              | mask;
    if(mac_ptp)    mask = RTU_RX_CTR_FF_MAC_PTP          | mask;
    if(mac_ll)     mask = RTU_RX_CTR_FF_MAC_LL           | mask;
@@ -490,6 +498,10 @@ void rtux_set_life(char *optarg)
     case  5:
       rtux_fw_to_CPU(sub_opt);
     break;       
+    case 6:
+       if(sub_opt == 1 ) tatsu_drop_nonHP_enable();
+       else if(sub_opt == 0 ) tatsu_drop_nonHP_disable();
+      break;
     case  10:
 
       rtux_disp_ctrl() ;
@@ -510,6 +522,7 @@ void rtux_set_life(char *optarg)
        TRACE(TRACE_INFO, "-x 4  2      sets traffic rx-ed       on port 1 to be mirrored on port 7");
        TRACE(TRACE_INFO, "-x 4  3      sets traffic tx-ed       on port 1 to be mirrored on port 7");
        TRACE(TRACE_INFO, "-x 5  n      set forwarding to CPU config: mask = {unrec_fw_to_CPU, hp_fw_to_CPU}");
+       TRACE(TRACE_INFO, "-x 6  0/1    TATSU: drop_nonHP frames disable/enable");
        TRACE(TRACE_INFO, "-x 10        show status");
   };
   exit(1);
