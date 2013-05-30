@@ -89,15 +89,14 @@ void usage(char *name)
         "\t-o 0 show menu of RTU config options \n"
         "\t-u 0 show menu of TRU config options \n"
         "\t-x 0 show menu of RTU extension config options \n"
-        "\t-v n enable TRU thread : \n"
+        "\t-v n [temporarily does not work !!!!!] enable TRU thread : \n"
         "\t     n: 1 for updating pre-configured active/backup ports (1-actie, 2-backup) and what in n=2\n"
         "\t     n: 2 for monioring ports up/down, wake up ports\n"
-        "\t-c m config-mode (specific configuration for e.g.: testing different stuff): \n"
+        "\t-c n config-mode (specific configuration for e.g.: testing different stuff): \n"
         "\t     n: 1 hard-configured TRU\n"
-        "\t     n: 2 no static entries\n",
-        "\t-s m Spirent tests \n"
-        "\t     n: 1 bare - no additional stuff (e.g.: TRU, HP)\n"
-        "\t     n: 2 \n",
+        "\t     n: 2 no static entries\n"
+        "\t-s n Spirent tests \n"
+        "\t     0: Print out info about options\n",
         name);
     exit(1);
 }
