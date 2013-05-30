@@ -66,9 +66,9 @@ int tatsu_drop_nonHP_disable()
 {
   uint32_t val;
   val = tatsu_rd(TCR);
-  val = val | TATSU_TCR_DROP_ENA;
+  val = val & ~TATSU_TCR_DROP_ENA;
   tatsu_wr(TCR, val);
-  TRACE(TRACE_INFO,"TATSU: drop_nonHP_enable (when HP comes) - enabled ");
+  TRACE(TRACE_INFO,"TATSU: drop_nonHP_enable (when HP comes) - disable ");
   return 0;
   
 }

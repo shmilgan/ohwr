@@ -348,7 +348,7 @@ void rtu_write_vlan_entry(int vid, struct vlan_table_entry *ent)
 
   vtr2 = ent->port_mask;
   vtr1 = RTU_VTR1_UPDATE
-					| RTU_VTR1_VID_W(vid)
+          | RTU_VTR1_VID_W(vid)
           | (ent->drop ? RTU_VTR1_DROP : 0)
           | (ent->prio_override ? RTU_VTR1_PRIO_OVERRIDE : 0)
           | (ent->has_prio ? RTU_VTR1_HAS_PRIO : 0)
