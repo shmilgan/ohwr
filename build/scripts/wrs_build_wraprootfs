@@ -20,6 +20,7 @@ wrs_echo "--- Wrapping filesystem"
 DEVTAR="$WRS_BASE_DIR/../userspace/devices.tar.gz"
 
 TMPFS=$(mktemp -d /tmp/rootfs.XXXXXX)
+chmod a+rx $TMPFS
 
 rootfs_vanilla="$WRS_OUTPUT_DIR/build/buildroot-2011.11/output/target"
 rootfs_override="$WRS_BASE_DIR/../userspace/rootfs_override"
