@@ -270,6 +270,8 @@ if [ $nf ]; then
 	cat > $TMPSCRIPT << EOF
 tar --directory $TMPFS -xzf $rootfsgz
 
+export PATH="\$PATH:/usr/sbin"
+
 mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $rootfsjffs2
 
 # Remove heavy and useless stuff to make a light file system to
