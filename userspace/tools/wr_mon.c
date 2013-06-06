@@ -158,7 +158,7 @@ void show_screen()
 	show_servo();
 }
 
-main()
+int main()
 {
 	init();
 
@@ -187,5 +187,5 @@ main()
 	term_cprintf(C_GREY,"bye...\n\n");
 	term_clear();
 	term_restore();
-
+	return 0;
 }

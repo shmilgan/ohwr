@@ -63,7 +63,7 @@ int rtudexp_add_entry(const char *eha, int port, int mode)
 
 
 
-int fetch_rtu_fd(rtudexp_fd_entry_t *d, int *n_entries)
+void fetch_rtu_fd(rtudexp_fd_entry_t *d, int *n_entries)
 {
 	int start = 0, n = 0;
 	rtudexp_fd_list_t list;
@@ -213,4 +213,5 @@ int main(int argc, char **argv)
 			printf("-\n");
 	}
 	printf("\n");	
+	return 0;
 }

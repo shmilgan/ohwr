@@ -20,6 +20,7 @@
 #include <sys/mman.h>
 #include <signal.h>
 
+#define __EXPORTED_HEADERS__ /* prevent a #warning notice from linux/types.h */
 #include <linux/mii.h>
 
 #include <regs/endpoint-regs.h>
@@ -96,7 +97,7 @@ void dump_pcs_regs(int ep, int argc, char *argv[])
 
 void write_pcs_reg(int ep, int argc, char *argv[])
 {
-	int i, reg, data;
+	int reg, data;
 	sscanf(argv[3], "%x", &reg);
 	sscanf(argv[4], "%x", &data);
 	pcs_write(ep, reg, data);
@@ -218,7 +219,7 @@ void calc_trans(int ep, int argc, char *argv[])
 	wr_timestamp_t ts_tx, ts_rx;
   wr_socket_t *sock;
 	FILE *f_log = NULL;
-  wr_sockaddr_t sock_addr, to, from;
+  wr_sockaddr_t sock_addr, from;
 	int bitslide,phase, i;
 
 	signal (SIGINT, sighandler);
@@ -335,7 +336,7 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 {
 	wr_timestamp_t ts_tx, ts_rx;
   wr_socket_t *sock;
-  wr_sockaddr_t sock_addr, to, from;
+  wr_sockaddr_t sock_addr, from;
   int adjust_count = 0;
 
 	signal (SIGINT, sighandler);
@@ -368,7 +369,7 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 //		if(!ptpd_netif_adjust_in_progress())
 		{	
 			ptpd_netif_sendto(sock, &to, buf, 64, &ts_tx);
-			int n = ptpd_netif_recvfrom(sock, &from, buf, 64, &ts_rx);
+			ptpd_netif_recvfrom(sock, &from, buf, 64, &ts_rx);
 			printf("TX timestamp: correct %d %12lld:%12d\n", ts_tx.correct, ts_tx.sec, ts_tx.nsec);
 			printf("RX timestamp: correct %d %12lld:%12d\n", ts_rx.correct, ts_rx.sec, ts_rx.nsec);
 			adjust_count --;
@@ -387,7 +388,7 @@ void rt_command(int ep, int argc, char *argv[])
 	if(	rts_connect() < 0)
 	{
 		printf("Can't connect to the RT subsys\n");
-		return -1;
+		return;
 	}
 
 	if(	halexp_client_init() < 0)

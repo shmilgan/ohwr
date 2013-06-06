@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 	}
 	else func='a';
 
-    assert_init(shw_pio_mmap_init());
+	assert_init(shw_pio_mmap_init());
 	shw_io_init();
 	shw_io_configure_all();
 
