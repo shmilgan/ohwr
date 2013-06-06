@@ -1,5 +1,5 @@
 TOOLS = rtu_stat wr_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex com
-TOOLS += mapper wmapper shw_ver
+TOOLS += mapper wmapper shw_ver wr_date
 
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 
@@ -53,10 +53,10 @@ load-virtex: load-virtex.o load-fpga.o
 
 load-lm32: load-lm32.o lm32-loader.o
 	${CC} -o $@ $^ $(LDFLAGS)
-	
+
 shw_ver.o: shw_ver.c
 	${CC} ${CFLAGS} -D__GIT_USR__="\"${GIT_USR}\"" -D__GIT_VER__="\"${GIT_VER}\"" $(LDFLAGS) -c -o $@ $^  
-	
+
 shw_ver: shw_ver.o
 	${CC} -o $@ $^ $(LDFLAGS)	
 
