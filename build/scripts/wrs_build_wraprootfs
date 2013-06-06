@@ -50,6 +50,7 @@ fi
 chmod g-w $TMPFS/root $TMPFS/root/.ssh
 chown -R root:root $TMPFS/root
 chown -R root:root $TMPFS/etc/dropbear
+chmod a+rx $TMPFS
 
 ##Test Anchor
 (cd "$TMPFS" && tar cz .> $ROOTFS_IMAGE_TGZ)
