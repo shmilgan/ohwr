@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include <shw_io.h>
+#include <hwiu.h>
 #include "pio.h"
 
 
@@ -43,6 +44,7 @@ void help(const char* pgrname)
 				"   -p PCB version\n"
 				"   -f FPGA type\n"
 				"   -F FPGA type and init status LED\n"
+				"   -g Gateware version\n"
 				"   -c Compiling time\n"
 				"   -v version (git)\n"
 				"   -a All (default)\n"
@@ -50,6 +52,27 @@ void help(const char* pgrname)
 		exit(1);
 }
 
+void print_gw_info()
+{
+	struct gw_info info;
+
+	shw_fpga_mmap_init();
+	printf("Reading GW info\n");
+	if( shw_hwiu_gwver(&info) < 0 ) {
+		printf("Could not get GW version info\n");
+		return;
+	}
+	if( info.struct_ver != HWIU_STRUCT_VERSION )
+		printf("WARNING: dealing with unsupported info struct, sw:%u, gw:%u\n",
+		HWIU_STRUCT_VERSION, info.struct_ver);
+
+	printf("WRSW Gateware: version %u.%u\n", info.ver_major, info.ver_minor);
+	printf("WRSW Gateware: build %02u/%02u/%02u.%02u\n", info.build_day,
+		info.build_month, info.build_year, info.build_no);
+	printf("WRSW Gateware: wr_switch_hdl commit: %x\n", info.switch_hdl_hash);
+	printf("WRSW Gateware: general-cores commit: %x\n", info.general_cores_hash);
+	printf("WRSW Gateware: wr-cores commit: %x\n", info.wr_cores_hash);
+}
 
 int main(int argc, char **argv)
 {
@@ -84,6 +107,9 @@ int main(int argc, char **argv)
 		func='f';
 	case 'f':
 		printf("%s\n",get_shw_info(func));
+		break;
+	case 'g':
+		print_gw_info();
 		break;
 	case 'c':
 		printf("%s %s\n",__DATE__,__TIME__);
