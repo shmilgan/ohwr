@@ -1,0 +1,18 @@
+#!/bin/sh
+
+F=/wr/etc/wr_date.conf
+# if there is no config file, do nothing.
+test -f $F || exit 0
+
+# pick the first server, if any
+S=$(grep 'ntpserver' $F | sed 's/ntpserver//' | head -n 1)
+
+# if none, exit
+text -z "$D" && exit 0
+
+# pick busybox ntpd explicitly, to avoid real ntpd instances
+echo "Setting host time using ntpd"
+busybox ntpd -n -q -p $S
+
+echo "Setting WR time from host time"
+/wr/bin/wr_date set host
