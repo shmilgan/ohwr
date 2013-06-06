@@ -15,6 +15,9 @@
 /* Simple PWM module */
 #define FPGA_BASE_SPWM 		0x57000
 
+/* HW Info Unit */
+#define FPGA_BASE_HWIU    0x57800
+
 
 #define FPGA_BASE_ADDR _fpga_base_virt
 
