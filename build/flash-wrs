@@ -30,6 +30,7 @@ showhelp()
 	printf "  -b|--build\t Use files that you have built in the WRS_OUTPUT_DIR\n"
 	printf "  -m1|--mac1\t Default MAC address for the ethernet port on board\n"
 	printf "  -m2|--mac2\t Default base MAC address for the switch ports\n"
+	printf "  -r|--remote\t Create the files needed for remote update\n"
 	exit 0
 }
 
@@ -74,6 +75,48 @@ modifyMAC()
 	return 0
 }
 
+nandFlashingProcedure()
+{
+	TMPFS=$TMPDIR/wrsfs-tgz; mkdir $TMPFS
+	rootfsjffs2=$TMPDIR/wrs-image.jffs2
+
+	# The TMPCPIO is used for the NAND flashing procedure. It
+	# contains the magic string "paperino" (0x61706570 0x69726f6e)
+	# in the first 8bytes and in the following byte the whole
+	# file system. Barebox use this magic string to identify
+	# the flashing procedure.
+	TMPCPIO=$TMPDIR/wrsflash.cpio.gz
+
+	# make flashing cpio from the unzipped file system
+	TMPSCRIPT=$TMPDIR/wrsrootfs-script
+	cat > $TMPSCRIPT << EOF
+tar --directory $TMPFS -xzf $rootfsgz
+# Remove the unnecessary HDL files
+find $TMPFS/wr/lib/firmware/ -type f \( ! -name ''${gateware}'' \) -a \( ! -name '*rt_cpu.bin' \) -exec rm -f {} \;
+
+mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $rootfsjffs2
+
+# Remove heavy and useless stuff to make a light file system to
+# load in RAM
+rm -rf $TMPFS/etc/init.d/S*
+rm -rf $TMPFS/wr
+rm -rf $TMPFS/usr/bin
+rm -rf $TMPFS/usr/lib
+rm -rf $TMPFS/usr/share
+
+mkdir $TMPFS/flashing/
+cp -a /dev/kmsg $TMPFS/dev/kmsg
+cp ${rootfsjffs2} $TMPFS/flashing/wrs-image.jffs2.img
+cp ${kernel} $TMPFS/flashing/zImage
+cp ${WRS_BASE_DIR}/usb-loader/S99flash-from-kernel.sh $TMPFS/etc/init.d/
+cd ..
+echo -n "paperino" > $TMPCPIO
+(cd "$TMPFS" && find . | cpio -o -H newc | gzip) >> $TMPCPIO
+EOF
+	fakeroot bash $TMPSCRIPT
+	rm $TMPSCRIPT
+}
+
 # Go to the top directory
 dir=$(dirname $0)/..
 WRS_BASE_DIR=$(cd $dir && /bin/pwd)
@@ -93,7 +136,11 @@ FLASHER="${WRS_BASE_DIR}/usb-loader/mch_flasher"
 if [ -x $FLASHER ]; then
     true
 else
-    if CC=cc make -s -C ${WRS_BASE_DIR}/usb-loader; then true; else
+  
+
+
+
+  if CC=cc make -s -C ${WRS_BASE_DIR}/usb-loader; then true; else
 	echo "$0: Error compiling in directory ${WRS_BASE_DIR}/usb-loader" >&2; exit 1;
     fi
 fi
@@ -193,6 +240,18 @@ while [ $# -ge 1 ]; do
 			exit 1
 		fi
 		shift; shift;;
+	-r|--remote)
+
+		if [ -d ${WRS_OUTPUT_DIR}/images/wrs-remote ] ; then
+			rm -rf ${WRS_OUTPUT_DIR}/images/wrs-remote
+		fi 
+		mkdir ${WRS_OUTPUT_DIR}/images/wrs-remote
+		TMPDIR=${WRS_OUTPUT_DIR}/images/wrs-remote		
+	
+		kernel=${WRS_OUTPUT_DIR}/images/zImage
+
+		remote_flash=1
+		shift;;
 
 	-[ecs])
 		# e == erase, c == check, s == scrub
@@ -214,6 +273,38 @@ checkExit at91bootstrap $at91bs
 checkExit kernel $kernel
 checkExit root-filesystem $rootfsgz
 
+## Create the remote update firmware 
+
+if [ $remote_flash ] ; then
+	#preparing the files 
+	nandFlashingProcedure
+	cp $kernel $TMPDIR/
+   
+   if [ -z $WRS_OUTPUT_DIR ] ; then
+         echo "Please set the variable WRS_OUTPUT_DIR"
+            exit
+   fi
+
+	WRS_BUILD=${WRS_OUTPUT_DIR}/wr-switch-sw/build/scripts
+	#get from git version
+   VERSION=$(git --git-dir=${WRS_OUTPUT_DIR}/wr-switch-sw/.git describe --exact-match | sed -e 's/[^0-9]*//g')
+	#write_script version $VERSION
+	#sed 's/=/='"$VERSION"'/' < ${WRS_BUILD}/wrs_version >${TMPDIR}/wrs_version
+	
+	#creates update config file
+	read -p "Enable remote WR firmware update (y/n): " answer
+        while [ $answer != "y" ] && [ $answer != "n" ]
+        do
+                read -p "Please type y or n: " answer
+        done
+	#sed 's/=/='"$answer"'/' < ${WRS_BUILD}/wrs_remote_update >${TMPDIR}/wrs_remote_update
+   . ${WRS_OUTPUT_DIR}/wr-switch-sw/build/scripts/wrs_remote_update $answer $VERSION
+
+	rm -rf $TMPCPIO
+   rm -rf $TMPFS
+	exit 1
+fi
+
 
 ## MAC1 and MAC2 are really recommended
 if [ "x$MAC1" = "x$MAC1_DEF" ]; then
@@ -234,6 +325,10 @@ else
 	df=1
 	nf=1
 fi
+
+# Create a temporary barebox binary with modified MAC addresses
+Tbarebox=$TMPDIR/bb.new
+modifyMAC ${barebox} ${Tbarebox}
 
 # Check if atmel sam-ba is found by lsusb
 if lsusb | grep -q "at91sam"; then
@@ -259,10 +354,6 @@ echo "$me: I'm talking with the switch;"
 echo -n "   please release the flash button and press Enter to start flashing: "
 read unused
 
-# Create a temporary barebox binary with modified MAC addresses
-Tbarebox=$TMPDIR/bb.new
-modifyMAC ${barebox} ${Tbarebox}
-
 
 ## Flashing DataFlash
 if [ $df ]; then
@@ -272,44 +363,7 @@ fi
 ## Prepare for the NAND flashing procedure
 if [ $nf ]; then
 
-	TMPFS=$TMPDIR/wrsfs-tgz; mkdir $TMPFS
-	rootfsjffs2=$TMPDIR/wrs-image.jffs2
-
-	# The TMPCPIO is used for the NAND flashing procedure. It
-	# contains the magic string "paperino" (0x61706570 0x69726f6e)
-	# in the first 8bytes and in the following byte the whole
-	# file system. Barebox use this magic string to identify
-	# the flashing procedure.
-	TMPCPIO=$TMPDIR/wrsflash.cpio.gz
-
-	# make flashing cpio from the unzipped file system
-	TMPSCRIPT=$TMPDIR/wrsrootfs-script
-	cat > $TMPSCRIPT << EOF
-tar --directory $TMPFS -xzf $rootfsgz
-# Remove the unnecessary HDL files
-find $TMPFS/wr/lib/firmware/ -type f \( ! -name ''${gateware}'' \) -a \( ! -name '*rt_cpu.bin' \) -exec rm -f {} \;
-
-mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $rootfsjffs2
-
-# Remove heavy and useless stuff to make a light file system to
-# load in RAM
-rm -rf $TMPFS/etc/init.d/S*
-rm -rf $TMPFS/wr
-rm -rf $TMPFS/usr/bin
-rm -rf $TMPFS/usr/lib
-rm -rf $TMPFS/usr/share
-
-mkdir $TMPFS/flashing/
-cp -a /dev/kmsg $TMPFS/dev/kmsg
-cp ${rootfsjffs2} $TMPFS/flashing/wrs-image.jffs2.img
-cp ${kernel} $TMPFS/flashing/zImage
-cp ${WRS_BASE_DIR}/usb-loader/S99flash-from-kernel.sh $TMPFS/etc/init.d/
-cd ..
-echo -n "paperino" > $TMPCPIO
-(cd "$TMPFS" && find . | cpio -o -H newc | gzip) >> $TMPCPIO
-EOF
-	fakeroot bash $TMPSCRIPT
-	rm $TMPSCRIPT
+	nandFlashingProcedure
 
 	# Erase all nand memory
 	$FLASHER -e -m nand

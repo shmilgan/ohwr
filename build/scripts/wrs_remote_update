@@ -1,0 +1,50 @@
+#!/bin/sh
+#This script creates the scripts needed for 
+#a remote update of the wr switch firmware using
+#barebox.
+
+if [ -z $1 ] || [ -z $2 ] ; then
+   echo "parameters not right!"
+   exit
+fi
+
+if [ -z $WRS_OUTPUT_DIR ] ; then
+   echo "Please set the variable WRS_OUTPUT_DIR"
+   exit
+fi
+
+WRS_REMOTE_DIR=${WRS_OUTPUT_DIR}/images/wrs-remote
+
+#wrs_remote_update
+cat > ${WRS_REMOTE_DIR}/wrs_remote_update << EOF
+#!/bin/sh
+#This file is auto generated, change it if you think
+#you know what you're doing.
+#
+#This scripts is loaded from a server into
+#a wr-switch and provide the configuration
+#for remote updates. The default configuratio
+#enables the update of the kernel and rootfs
+
+#Remote update(y/n)
+remote=$1
+
+#update kernel rootfs barebox (y/n)
+update_kernel=$1
+update_rootfs=$1
+
+EOF
+
+#wrs_version
+cat > ${WRS_REMOTE_DIR}/wrs_version << EOF
+#!/bin/sh
+#This file is auto generated
+#
+#This scripts is loaded from a server into
+#a wr-switch and provide the version that
+#the server offers to update
+
+#wr switch sw version
+version=$2
+
+EOF
