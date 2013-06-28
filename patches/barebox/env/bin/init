@@ -50,12 +50,18 @@ else
     nand -a /dev/nand0.*
 fi
 
+# auto-update of the firmware
+if [ "$auto_update" = "y" ] ; then
+        update-firmware
+fi
+
 # Create the menu
 #menu -r -m boot
 menu -a -m boot -d "Welcome on WRSv3 Boot Sequence"
 menu -e -a -m boot -c 'boot-nand' -d "boot from nand (default)"
 menu -e -a -m boot -c 'boot-script' -d "boot from TFTP script"
 menu -e -a -m boot -c 'edit-config' -d "edit config"
+menu -e -a -m boot -c 'update-firmware' -d "update firmware"
 menu -e -a -m boot -c 'exit 0' -d "exit to shell"
 menu -e -a -m boot -c reset -d "reboot"
 
