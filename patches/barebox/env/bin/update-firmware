@@ -1,0 +1,114 @@
+#!/bin/sh
+. /env/config
+
+firmware_version=/env/firmware_version
+update_cfg=wrs_remote_update
+update_version=wrs_version
+TMP=/env/tmp
+
+source $firmware_version
+
+#Init remote update
+echo "##############################"
+echo "##### WR FIRMWARE UPDATE #####"
+echo "##############################"
+
+#check if the configuration in client allows the update
+if [ "$auto_update" = "n" ] ; then
+	echo "The configuration does not allow the update"
+        exit 1
+fi
+
+#get ip in case we don't have it
+#if [ x$ip = xdhcp -o x$ip = "xdhcp-barebox" ] ; then
+        dhcp
+#fi
+
+#Check if the server is alive
+ping $eth0.serverip
+if [ $? -ne 0 ] ; then
+        echo "Server does not reply, remote update aborted"
+        exit 1
+fi
+
+#tmp directory
+mkdir $TMP
+
+#fetch the remote_update
+tftp wrs-remote/$update_cfg $TMP/$update_cfg
+update_cfg=$TMP/$update_cfg
+
+if [ ! -f "$update_cfg" ] ; then
+        echo "Remote update file not found, remote update aborted"
+        exit 1
+fi
+
+source $update_cfg
+
+#check if the server allows updates
+if [ "$remote" = "n" ] ; then
+	echo "The server does not allow remote updates"
+	# clean up
+   rm $TMP/*
+	rmdir $TMP
+	exit 1
+fi 
+
+#backup the version of the firmware in flash
+version_flash=$version
+
+#download the new firmware versioning 
+tftp wrs-remote/$update_version "$TMP/$update_version"
+update_version="$TMP/$update_version"
+
+#compare the update version with the version in flash
+if [ ! -f "$update_version" ] ; then
+        echo "Remote version file not found, remote update aborted"
+        exit 1
+fi
+
+source $update_version
+
+echo "Proposed firmware $version vs firmware in flash $version_flash"
+if [ "$version" -gt "$version_flash" ] ; then
+
+	echo -e "The firmware is going to be update!!!"
+	echo -e "The nand will be erased and flashed with a new firmware"
+	readline "Do you really want to do it? (y/n): " answer
+	while [ $answer != "y" ] && [ $answer != "n" ]
+	do 
+		readline "Please type y or n: " answer 
+	done 
+	if [ "$answer" = "n" ] ; then
+		exit 1
+	fi
+
+else
+
+   echo "The firmware is up-to-date"
+	# clean up
+   rm $TMP/*
+	rmdir $TMP
+
+	exit 1
+fi
+
+if [ "$update_kernel" = "y" ] ; then
+	echo "The kernel is goint to be flash"
+	update -t kernel -d nand -m tftp -f zImage
+fi
+
+if [ "$update_rootfs" = "y" ] ; then
+	echo "The rootfs is goint to be flash"
+	update -t rootfs -d nand -m tftp -f wrs-image.jffs2
+fi
+
+#delete old firmware file and copy the new one
+rm $firmware_version 
+cp $update_version $firmware_version
+# clean up
+rm $TMP/*
+rmdir $TMP
+#save the changes and reset the cpu loading again barebox
+saveenv
+reset

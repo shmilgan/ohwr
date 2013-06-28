@@ -1,0 +1,4 @@
+#!/bin/sh
+#wr switch sw version
+version=
+

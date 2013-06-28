@@ -1,0 +1,25 @@
+From da5e492ce731ffd594176afdaa74a2e3cb95853e Mon Sep 17 00:00:00 2001
+From: image_maker <image_maker@wr-image.(none)>
+Date: Mon, 17 Jun 2013 17:52:20 +0200
+Subject: [PATCH 1/1] bin/update:change name of the bb for the rootfs
+
+---
+ defaultenv/bin/update |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/defaultenv/bin/update b/defaultenv/bin/update
+index 96442b1..4d6c8d6 100644
+--- a/defaultenv/bin/update
++++ b/defaultenv/bin/update
+@@ -30,7 +30,7 @@ if [ x${type} = xkernel ]; then
+ 	disk_part=$kernel_part
+ elif [ x${type} = xrootfs ]; then
+ 	image=$rootfsimage
+-	type=root
++	type=rootfs
+ elif [ x${type} = xbarebox ]; then
+ 	image=$bareboximage
+ 	if [ -z ${image} ]; then
+-- 
+1.7.10.4
+
