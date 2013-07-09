@@ -15,7 +15,7 @@
 
 # Startup the system
 ::sysinit:/bin/mount -t proc proc /proc
-::sysinit:/bin/mount -o remount,rw / # REMOUNT_ROOTFS_RW
+#::sysinit:/bin/mount -o remount,rw / # REMOUNT_ROOTFS_RW
 ::sysinit:/bin/mkdir -p /dev/pts
 ::sysinit:/bin/mkdir -p /dev/shm
 ::sysinit:/bin/mount -a
