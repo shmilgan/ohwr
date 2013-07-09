@@ -301,7 +301,7 @@ void hal_parse_cmdline(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 
-	trace_log_file("/hal_log");
+	trace_log_file("/tmp/hal_log");
 /* Prevent from running HAL twice - this will likely freeze the system */
 	if(hal_check_running())
 	{
