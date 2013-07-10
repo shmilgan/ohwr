@@ -161,7 +161,7 @@ int hal_init()
 {
 	char sfp_db_path[1024];
 	
-	trace_log_stderr();
+	//trace_log_stderr();
 
 	TRACE(TRACE_INFO,"HAL initializing...");
 
@@ -301,7 +301,7 @@ void hal_parse_cmdline(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 
-	trace_log_file("/tmp/hal_log");
+	trace_log_file("/dev/kmsg");
 /* Prevent from running HAL twice - this will likely freeze the system */
 	if(hal_check_running())
 	{
