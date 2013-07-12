@@ -1,5 +1,5 @@
 TOOLS = rtu_stat wr_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex com
-TOOLS += mapper wmapper shw_ver wr_date wr_management lm32-vuart
+TOOLS += mapper wmapper shw_ver wr_date wr_management lm32-vuart wrsw_pstats
 
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 
@@ -70,6 +70,8 @@ test_ts: test_ts.o ../wrsw_hal/rt_client.o
 
 port_calibrator: port_calibrator.o ../wrsw_hal/rt_client.o
 	${CC} -o $@ $^ $(LDFLAGS)	
+wrsw_pstats: wrsw_pstats.o
+	${CC} -o $@ $^ $(LDFLAGS)
 
 lm32-vuart: lm32-vuart.o
 	${CC} -o $@ $^ $(LDFLAGS)
