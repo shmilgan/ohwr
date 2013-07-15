@@ -69,7 +69,7 @@ static uint32_t mac_entry_word4_w(struct filtering_entry *ent);
  */
 static int fd;
 
-#define HAL_CONNECT_RETRIES 10
+#define HAL_CONNECT_RETRIES 1000
 #define HAL_CONNECT_TIMEOUT 2000000 /* us */
 
 /**
