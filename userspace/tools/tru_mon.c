@@ -141,18 +141,18 @@ void show_ports()
 		
 		halexp_get_port_state(&state, if_name);
 
-		term_pcprintf(5+i, 1, C_WHITE, "%05s: ", if_name);
+		term_pcprintf(2+i, 1, C_WHITE, "%05s: ", if_name);
 		if(state.up)
-			term_cprintf(C_GREEN, "Link OK ");
+			term_cprintf(C_GREEN, "OK ");
 		else
-			term_cprintf(C_RED,   "No Link ");
+			term_cprintf(C_RED,   "-- ");
 
 		term_cprintf(C_GREY, "RTU: ");
 
 		if(0x1 & (tru_info.ports_pass_all >> i))
-			term_cprintf(C_GREEN, "Enable  traffic");
+			term_cprintf(C_GREEN, "Forward ");
 		else
-			term_cprintf(C_RED,   "Disable traffic");
+			term_cprintf(C_RED,   "Block   ");
 		
 		term_cprintf(C_GREY, " TRU: ");
 
@@ -187,7 +187,7 @@ int track_onoff = 1;
 void show_screen()
 {
 	term_clear();
-	term_pcprintf(1, 1, C_BLUE, "WR Switch Topology Resolution Unit (TRU) Monitor v 1.0 [q = quit]");
+	term_pcprintf(1, 1, C_BLUE, "WR Switch Topology Resolution Unit (TRU) Monitor v 1.1 [q = quit]");
 
 	show_ports();
 }
