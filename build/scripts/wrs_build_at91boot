@@ -15,6 +15,10 @@ dirname="at91bootstrap-3-3.0"
 tarname="$dirname.tar.gz"
 wrs_download $tarname
 
+#Export git version to the children call so that it can be use by Makefile
+export WRS_GIT_USER="$(cd ${WRS_BASE_DIR} && git config --get user.name)"
+export WRS_GIT_REV="$(cd ${WRS_BASE_DIR} && git describe --always --dirty=+)"
+
 mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
 mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 
