@@ -84,6 +84,43 @@ int rtudexp_get_fd_list(const struct minipc_pd *pd,
 	list->next = (i < 8 ? 0 : start_from+i);
 	return 0;
 }
+/* The exported vlan */
+int rtudexp_get_vd_list(const struct minipc_pd *pd,
+		uint32_t *args, void *ret)
+{
+	int i = 0;
+	rtudexp_vd_list_t *list = ret;
+	int current = args[0];
+
+
+	TRACE(TRACE_INFO,"GetVDList start=%d",current);
+
+	do
+	{
+	       struct vlan_table_entry *ent = rtu_vlan_entry_get(current);
+	       if(!ent) break;
+	        
+		if(ent->drop == 0)
+		{
+		  list->list[i].vid           = current;
+		  list->list[i].port_mask     = ent->port_mask;
+		  list->list[i].drop          = ent->drop;
+		  list->list[i].fid           = ent->fid;
+		  list->list[i].has_prio      = ent->has_prio;
+		  list->list[i].prio_override = ent->prio_override;
+		  list->list[i].prio          = ent->prio;  
+		  i++;
+		}
+		current++;
+		
+		if(current == NUM_VLANS) break;
+
+	} while(i < 8);
+
+	list->num_entries = i;
+	list->next = (i < 8 ? 0 : current);
+	return 0;
+}
 
 
 int rtudexp_clear_entries(const struct minipc_pd *pd,
@@ -133,6 +170,20 @@ int rtudexp_add_entry(const struct minipc_pd *pd,
 	return *p_ret;
 }
 
+int rtudexp_vlan_entry(const struct minipc_pd *pd,
+		uint32_t *args, void *ret)
+{
+	int vid, fid, mask, drop;
+	int *p_ret=(int*)ret; //force pointed to int type
+	*p_ret = 0;
+
+	vid = (int)args[0];
+	fid = (int)args[1];
+	mask= (int)args[2];
+	drop= (int)args[3];
+	rtu_fd_create_vlan_entry(vid, (uint32_t)mask, (uint8_t)fid, 0 /*prio*/, 0 /*has_prio*/,0 /*prio_override*/, drop /*drop */);
+	return *p_ret;
+}
 
 int rtud_init_exports()
 {
@@ -145,8 +196,10 @@ int rtud_init_exports()
 			minipc_fileno(rtud_ch));
 
 	MINIPC_EXP_FUNC(rtud_export_get_fd_list,rtudexp_get_fd_list);
+	MINIPC_EXP_FUNC(rtud_export_get_vd_list,rtudexp_get_vd_list);
 	MINIPC_EXP_FUNC(rtud_export_clear_entries,rtudexp_clear_entries);
 	MINIPC_EXP_FUNC(rtud_export_add_entry,rtudexp_add_entry);
+	MINIPC_EXP_FUNC(rtud_export_vlan_entry,rtudexp_vlan_entry);
 
 	return 0;
 }

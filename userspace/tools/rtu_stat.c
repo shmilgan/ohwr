@@ -36,12 +36,20 @@
 
 static struct minipc_ch *rtud_ch;
 static hexp_port_list_t plist;
+
+// forwarding entries
 void rtudexp_get_fd_list(rtudexp_fd_list_t *list, int start_from)
 {
 	minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_get_fd_list, list,
 			start_from);
 }
 
+// vlan entries
+void rtudexp_get_vd_list(rtudexp_vd_list_t *list, int current)
+{
+	minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_get_vd_list, list,
+			current);
+}
 
 int rtudexp_clear_entries(int netif, int force)
 {
@@ -57,10 +65,17 @@ int rtudexp_add_entry(const char *eha, int port, int mode)
 	return (ret<0)?ret:val;
 }
 
-
+int rtudexp_vlan_entry(int vid, int fid, const char *ch_mask, int drop)
+{
+	int val, ret;
+	int mask;
+	sscanf(ch_mask,"%x", &mask);
+	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry,&val,vid,fid,mask,drop);
+	return (ret<0)?ret:val;
+}
 
 #define RTU_MAX_ENTRIES 8192
-
+#define NUM_VLANS       4096
 
 
 void fetch_rtu_fd(rtudexp_fd_entry_t *d, int *n_entries)
@@ -78,6 +93,20 @@ void fetch_rtu_fd(rtudexp_fd_entry_t *d, int *n_entries)
 	} while(start > 0);
 
 	//	printf("%d rules \n", n);
+	*n_entries = n;
+}
+
+int fetch_rtu_vd(rtudexp_vd_entry_t *d, int *n_entries)
+{
+	int start = 0, n = 0;
+	rtudexp_vd_list_t list;
+
+	do {
+		rtudexp_get_vd_list(&list, start);
+		memcpy( d+n, list.list, sizeof(rtudexp_vd_entry_t) * list.num_entries);
+		start=list.next;
+		n+=list.num_entries;
+	} while(start > 0);
 	*n_entries = n;
 }
 
@@ -136,7 +165,8 @@ void show_help(char *prgname)
 			"   help:             Show this message\n"
 			"   list:             List the routing table (same as empty command)\n"
 			"   remove  <ifnum> [<force>]: Remove all dynamic entries for one interface\n"
-			"   add 	<mac (XX:XX:XX:XX:XX)> <ifnum> [<mode>]: Add entry for a specific MAC address\n");
+			"   add 	<mac (XX:XX:XX:XX:XX)> <ifnum> [<mode>]: Add entry for a specific MAC address\n"
+			"   vlan    <vid> <fid> <hex mask> [<drop>]: Add VLAN entry with vid, fid, mask and drop flag\n");
 
 	exit(1);
 }
@@ -145,8 +175,9 @@ int main(int argc, char **argv)
 {
 
 	rtudexp_fd_entry_t fd_list[RTU_MAX_ENTRIES];
+	rtudexp_vd_entry_t vd_list[NUM_VLANS];
 
-	int n_entries;
+	int n_fd_entries, n_vd_entries;
 	int i, isok;
 
 	if(	halexp_client_init() < 0)
@@ -164,7 +195,6 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	minipc_set_logfile(rtud_ch,stderr);
-
 	isok=0;
 	if(argc>1)
 	{
@@ -179,6 +209,12 @@ int main(int argc, char **argv)
 			if((argc > 3) && (rtudexp_add_entry(argv[2],atoi(argv[3]),atoidef(argv[4],0))==0)) isok=1;
 			else printf("Could not %s entry for %s\n",argv[2],argv[3]);
 		}
+		else if(strcmp(argv[1], "vlan")==0)
+		{
+			if((argc > 3 ) && (rtudexp_vlan_entry(atoi(argv[2]),atoi(argv[3]),argv[4],atoidef(argv[5],0))==0))  isok=1;
+			else printf("Could not %s entry for %s\n",argv[2],argv[3]);
+			exit(1);
+		}
 		else if(strcmp(argv[1], "list")==0) isok=1;
 
 		//Does not continue
@@ -188,18 +224,18 @@ int main(int argc, char **argv)
 	}
 
 	halexp_query_ports(&plist);
-	fetch_rtu_fd(fd_list, &n_entries);
+	fetch_rtu_fd(fd_list, &n_fd_entries);
 
-	qsort(fd_list, n_entries,  sizeof(rtudexp_fd_entry_t), cmp_entries);
+	qsort(fd_list, n_fd_entries,  sizeof(rtudexp_fd_entry_t), cmp_entries);
 
-	printf("RTU Filtering Database Dump: %d rules\n", n_entries);
+	printf("RTU Filtering Database Dump: %d rules\n", n_fd_entries);
 	printf("\n");
 	printf("MAC                     Dst.ports      FID          Type               Age [s]\n");
 	printf("----------------------------------------------------------------------------------\n");
 
 	char mac_buf[ETH_ALEN_STR];
 
-	for(i=0;i<n_entries;i++)
+	for(i=0;i<n_fd_entries;i++)
 	{
 		printf("%-25s %-12s %2d          %s (hash %03x:%x)   ", 
 			mac_to_buffer(fd_list[i].mac,mac_buf), 
@@ -213,6 +249,27 @@ int main(int argc, char **argv)
 		else
 			printf("-\n");
 	}
+	printf("\n");
+
+	fetch_rtu_vd(vd_list, &n_vd_entries);
+
+		printf("RTU VLAN Table Dump: %d active VIDs defined\n", n_vd_entries);
+	printf("\n");
+	printf("  VID    FID       MASK       DROP    PRIO    PRIO_OVERRIDE\n");
+	printf("-----------------------------------------------------------\n");
+
+	for(i=0;i<n_vd_entries;i++)
+	{
+		printf("%4d   %4d      0x%8x    ", vd_list[i].vid, vd_list[i].fid, vd_list[i].port_mask);
+		if(vd_list[i].drop == 0)     printf("NO ");
+		else                         printf("YES");
+		if(vd_list[i].has_prio == 0) printf("     --    ");
+		else                         printf("     %1d    ",vd_list[i].prio);
+
+		if(vd_list[i].prio_override == 0) printf("     NO ");
+		else                              printf("    YES ");		
+		
+		printf("\n");
+	}
 	printf("\n");	
-	return 0;
 }
