@@ -79,7 +79,6 @@ int rtudexp_vlan_entry(int vid, int fid, const char *ch_mask, int drop, int prio
 #define RTU_MAX_ENTRIES 8192
 #define NUM_VLANS       4096
 
-
 void fetch_rtu_fd(rtudexp_fd_entry_t *d, int *n_entries)
 {
 	int start = 0, n = 0;

@@ -646,3 +646,11 @@ struct vlan_table_entry *rtu_vlan_entry_get(int vid)
     if(vid > NUM_VLANS) return NULL;
     return &vlan_tab[vid];
 }
+
+struct vlan_table_entry *rtu_vlan_entry_get(int vid)
+{
+    // First entry reserved for untagged packets.
+    if(vid > NUM_VLANS) return NULL;
+    if(vlan_tab[vid].drop == 0) vlan_entry_rd(vid);
+    return &vlan_tab[vid];
+}
