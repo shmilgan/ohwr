@@ -135,7 +135,13 @@ int rtudexp_get_vd_list(const struct minipc_pd *pd,
 		  list->list[i].fid           = ent->fid;
 		  list->list[i].has_prio      = ent->has_prio;
 		  list->list[i].prio_override = ent->prio_override;
-		  list->list[i].prio          = ent->prio;  
+		  list->list[i].prio          = ent->prio;
+		  TRACE(TRACE_INFO, "vlan_entry_vd: vid %d, drop=%d, fid=%d, port_mask 0x%x", 
+		  list->list[i].vid ,
+		  list->list[i].drop,
+		  list->list[i].fid,
+		  list->list[i].port_mask
+		  );    		  
 		  i++;
 		}
 		current++;
