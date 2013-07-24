@@ -166,6 +166,20 @@ void ep_set_vlan(uint32_t port, int qmode, int fix_prio, int prio_val, int pvid)
    TRACE(TRACE_INFO,"EP [Port %2d]: vlan setting:  qmode=%1d, fix_prio=%1d,"
                     "prio_val=%1d, pvid=%d",port, qmode, fix_prio, prio_val, pvid);
 }
+
+void ep_class_prio_map(uint32_t port, int prio_map[])
+{
+   uint32_t val;
+   int i;
+   for (i=0;i<8;i++)
+      val = (0x7 & prio_map[i]) << (i*3) | val;
+   ep_wr(TCAR, port, EP_TCAR_PCP_MAP_W(val));
+   TRACE(TRACE_INFO,"EP [Port %2d]: prio_map=%1d-%1d-%1d-%1d-%1d-%1d-%1d-%1d", port,
+                prio_map[7],prio_map[6],prio_map[5],prio_map[4],
+                prio_map[3],prio_map[2],prio_map[1],prio_map[0]);   
+}
+
+
 // 
 void ep_pause_config_ena(uint32_t port, int txpause_802_3,int rxpause_802_3, int txpause_802_1q, int rxpause_802_1q)
 {

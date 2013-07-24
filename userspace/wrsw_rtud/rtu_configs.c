@@ -40,6 +40,7 @@ uint8_t mac_single_PC_ETH8[]   = {0x90,0xe2,0xba,0x17,0xa7,0xAE}; // test PC
 uint8_t mac_single_PC_ETH9[]   = {0x90,0xe2,0xba,0x17,0xa7,0xAD}; // test PC
 
 uint8_t bcast_mac[]            = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+int     prio_map[]             = {0,1,2,3,4,5,6,7};
 /**
  * opt=0
  */
@@ -90,11 +91,14 @@ int config_info()
  */
 int config_default(int sub_opt, int port_num)
 {
-  int i;
+  int i;  
 //   tru_enable(); // should be transparent -> bug ????????
    tru_disable();
    for(i=0;i<port_num;i++)
+   {
      ep_set_vlan((uint32_t)i, 0x2/*qmode*/, 0 /*fix_prio*/, 0 /*prio_val*/, 0 /*pvid*/);
+     ep_class_prio_map((uint32_t)i, prio_map);
+   }
   return 0;
 }
 
