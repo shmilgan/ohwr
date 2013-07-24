@@ -55,23 +55,23 @@ char info[][20] = {{"Tu-run|"}, // 0
                    {"Tframe|"}, // 18
                    {"Rframe|"}, // 19
                    {"Rrtu_f|"}, // 20
-                   {"RTUreq|"}, // 21
-                   {"RTUrsp|"}, // 22
-                   {"RTUdrp|"}, // 23
-                   {"RTUhp |"}, // 24
-                   {"RTUf-f|"}, // 25
-                   {"RTUn-f|"}, // 26
-                   {"RTUfst|"}, // 27
-                   {"RTUful|"}, // 28
-                   {"RTUfwd|"}, // 29 ---
-                   {"Rpri_0|"}, // 30 -> p0
-                   {"Rpri_1|"}, // 31 -> p1
-                   {"Rpri_2|"}, // 32 -> p2
-                   {"Rpri_3|"}, // 33 -> p3
-                   {"Rpri_4|"}, // 34 -> p4
-                   {"Rpri_5|"}, // 35 -> p5
-                   {"Rpri_6|"}, // 36 -> p6
-                   {"Rpri_7|"}  // 37 -> p7
+                   {"Rpri_0|"}, // 21 -> p0
+                   {"Rpri_1|"}, // 22 -> p1
+                   {"Rpri_2|"}, // 23 -> p2
+                   {"Rpri_3|"}, // 24 -> p3
+                   {"Rpri_4|"}, // 25 -> p4
+                   {"Rpri_5|"}, // 26 -> p5
+                   {"Rpri_6|"}, // 27 -> p6
+                   {"Rpri_7|"}, // 28 -> p7
+                   {"RTUreq|"}, // 29
+                   {"RTUrsp|"}, // 30
+                   {"RTUdrp|"}, // 31
+                   {"RTUhp |"}, // 32
+                   {"RTUf-f|"}, // 33
+                   {"RTUn-f|"}, // 34
+                   {"RTUfst|"}, // 35
+                   {"RTUful|"}, // 36
+                   {"RTUfwd|"}  // 37 ---
                  };
 static void read_cntval(int port, int adr, uint32_t *data);
 
@@ -158,8 +158,6 @@ void print_chosen_cnts( int cnts_list[], int n_cnts)
 	int cnt = 0;
 	int port = 0;
 	
-	printf("                 --------Printing priority counters-----------\n\n");
-	
 	printf("P |");
 	for(cnt=0; cnt<n_cnts; ++cnt)
 		printf("%2d:%s", cnts_list[cnt],info[cnts_list[cnt]]);
@@ -181,19 +179,27 @@ void print_info(char *prgname)
 {
 	printf("usage: %s <command> [<values>]\n", prgname);
 	printf(""
-			"   -h        Show this message\n"
-			"   -p        Show counters for priorities\n");
+			"             Show >default< counters (no argument, counters which seem most useful and feeting on a wide screen)\n"
+			"   -r        Show counters from RTU\n"
+			"   -e        Show counters from Endpoints\n"
+			"   -p        Show counters for priorities only (from Endpoints)\n"
+			"   -a        Show all counters (don't fit screen)\n"
+			"   -h        Show this message\n");
+
 }
 
 int main(int argc, char **argv)
 {
 	time_t last_show=0;
 	int option=0;
-	int prio_cnts[] = {30,31,32,33,34,35,36,37};
+	int prio_cnts[] = {21,22,23,24,25,26,27,28}; //8
+	int def_cnts[]  = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,29,30,31,32,33,34,35,36,37}; //30
+	int rtu_cnts[]  = {29,30,31,32,33,34,35,36,37}; //9
+	int ep_cnts[]   = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28}; //29
 	int op = 0;
 
 	if(pstats_init()) return -1;
-	op = getopt(argc, argv, "ph");
+	op = getopt(argc, argv, "phera");
 	
 	while(1)
 	{
@@ -204,6 +210,15 @@ int main(int argc, char **argv)
 			case 'p':
 				print_chosen_cnts(prio_cnts, 8);
 				break;
+			case 'e':
+				print_chosen_cnts(ep_cnts, 29);
+				break;
+			case 'r':
+				print_chosen_cnts(rtu_cnts, 9);
+				break;
+			case 'a':
+				print_first_n_cnts(CNT_PP);
+				break;
 			case 'h':
 			default:
 				print_info(argv[0]);
@@ -211,7 +226,7 @@ int main(int argc, char **argv)
 				break;
 	       }
 		else
-			print_first_n_cnts(30);
+			print_chosen_cnts(def_cnts, 30);
                
 		parse_sysfs(0);
 		sleep(1);
