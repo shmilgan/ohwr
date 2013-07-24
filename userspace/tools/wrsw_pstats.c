@@ -23,27 +23,16 @@
 	 _fpga_writel(FPGA_BASE_PSTATS + offsetof(struct PSTATS_WB, reg), val)
 
 #define NPORTS 8
-#define CNT_PP 30
-#define CNT_WRDS ((CNT_PP+3)/4)
+#define CNT_PP 38
 
-struct s_word {
-	uint32_t cnt[4];	//4 cntrs per 32-bit word
-	uint32_t init[4];
-	time_t last;
+struct cnt_word {
+	uint32_t cnt;	//4 cntrs per 32-bit word
+	uint32_t init;
 };
 
-struct s_word cntrs[NPORTS][CNT_WRDS];
-uint8_t irqs[NPORTS];
-uint8_t dbg_cnt=0, dbg_evt=0, L2_dbg_cnt=0, L2_dbg_evt=0;
-uint8_t rrp_port, rrp_word;
-uint8_t rrr_port, rrr_word;
-uint32_t irqn = 0;
+struct cnt_word cnt_pp[NPORTS][CNT_PP];
 
 extern int shw_fpga_mmap_init();
-
-//TEMP
-uint8_t readouts[2][2000] = {{0}};
-uint32_t r_iter[2]={0};
 
 char info[][20] = {{"Tu-run|"}, // 0
                    {"Ro-run|"}, // 1
@@ -74,17 +63,24 @@ char info[][20] = {{"Tu-run|"}, // 0
                    {"RTUn-f|"}, // 26
                    {"RTUfst|"}, // 27
                    {"RTUful|"}, // 28
-                   {"RTUfwd|"}  // 29
+                   {"RTUfwd|"}, // 29 ---
+                   {"Rpri_0|"}, // 30 -> p0
+                   {"Rpri_1|"}, // 31 -> p1
+                   {"Rpri_2|"}, // 32 -> p2
+                   {"Rpri_3|"}, // 33 -> p3
+                   {"Rpri_4|"}, // 34 -> p4
+                   {"Rpri_5|"}, // 35 -> p5
+                   {"Rpri_6|"}, // 36 -> p6
+                   {"Rpri_7|"}  // 37 -> p7
                  };
 static void read_cntval(int port, int adr, uint32_t *data);
-
-int debug = 0;
 
 int pstats_init(void)
 {
 	int err, i, j;
 	uint32_t mem_val[2];
-
+	int ret = 0;
+	
 	err = shw_fpga_mmap_init();
 	if(err) {
 		printf("shw_fpga_mmap_init failed with %d\n", err);
@@ -94,52 +90,13 @@ int pstats_init(void)
 	printf("module initialized\n");
 
 	for(i=0; i<NPORTS; ++i)
-	for(j=0; j<CNT_WRDS; ++j) {
-		cntrs[i][j].cnt[0] = 0;
-		cntrs[i][j].cnt[1] = 0;
-		cntrs[i][j].cnt[2] = 0;
-		cntrs[i][j].cnt[3] = 0;
-		cntrs[i][j].last = 0;
-	}
-	parse_sysfs(1);
-
-	rrp_port = 0;
-	rrp_word = 0;
-	rrr_port = 0;
-	rrr_word = 0;
-
-	return 0;
-}
-
-static void read_cntval(int port, int adr, uint32_t *data)
-{
-	uint32_t cr_val;
-
-	cr_val = ( adr<<PSTATS_CR_ADDR_SHIFT |
-			port<<PSTATS_CR_PORT_SHIFT |
-			PSTATS_CR_RD_EN );
-	pstats_wr(CR, cr_val);
-
-	data[0] = pstats_rd(L1_CNT_VAL);
-	data[1] = pstats_rd(L2_CNT_VAL);
-}
-
-static void print_cntrs(void)
-{
-	uint8_t port, cnt;
-	/*clear screen*/
-	//printf("\e[2J\e[1;1H");
-	printf("\n");
-
-	for(port=0; port<NPORTS; ++port) {
-		printf("PORT %u:", port);
-		for(cnt=0; cnt<CNT_PP; ++cnt) { printf("\t%u", cntrs[port][cnt/4].cnt[cnt%4]);
+		for(j=0; j<CNT_PP; ++j)
+		{
+			cnt_pp[i][j].init = 0;
+			cnt_pp[i][j].cnt = 0;
 		}
-		printf("\n");
-	}
-	printf("L1: CNT_OV=%02x \tEVT_OV=%02x\n", dbg_cnt, dbg_evt);
-	printf("L2: CNT_OV=%02x \tEVT_OV=%02x\n", L2_dbg_cnt, L2_dbg_evt);
-	
+	parse_sysfs(1);
+	return 0;
 }
 
 void parse_sysfs(int init)
@@ -150,14 +107,12 @@ void parse_sysfs(int init)
 
 	if(init) {
 		for(port=0; port<NPORTS; ++port) {
-
 			sprintf(filename, "/proc/sys/pstats/port%u", port);
 			file = fopen(filename, "r");
 			for(cntr=0; cntr<CNT_PP; ++cntr) {
 				fscanf(file, "%u\t", &val);
-				cntrs[port][cntr/4].init[cntr%4] = val;
+				cnt_pp[port][cntr].init = val;
 			}
-			printf("\n");
 			fclose(file);
 		}
 	}
@@ -166,49 +121,100 @@ void parse_sysfs(int init)
 
 			sprintf(filename, "/proc/sys/pstats/port%u", port);
 			file = fopen(filename, "r");
-			printf("%2u|", port);
 			for(cntr=0; cntr<CNT_PP; ++cntr) {
 				fscanf(file, "%u\t", &val);
-				printf("%9u|", val-cntrs[port][cntr/4].init[cntr%4]);
+				cnt_pp[port][cntr].cnt = val - cnt_pp[port][cntr].init;
 			}
-			printf("\n");
 			fclose(file);
 		}
 	}
 }
 
 
-void print_info(void)
+void print_first_n_cnts(int n_cnts)
 {
-  int cnt = 0;
-  printf("P |");
-  for(cnt=0; cnt<CNT_PP; ++cnt)
-  {
-    printf("%2d:%s", cnt,info[cnt]);
-  }
-  printf("\n");
-  printf("----");
-  for(cnt=0; cnt<CNT_PP; ++cnt)
-  {
-    printf("----------");
-  }
-  
-  printf("\n");
+	int cnt = 0;
+	int port = 0;
+	printf("P |");
+	for(cnt=0; cnt<n_cnts; ++cnt)
+		printf("%2d:%s", cnt,info[cnt]);
+	printf("\n");
+	printf("----");
+	for(cnt=0; cnt<n_cnts; ++cnt)
+		printf("----------");
+
+	printf("\n");
+	for(port=0; port<NPORTS; ++port)
+	{
+		printf("%2u|", port);
+		for(cnt=0; cnt<n_cnts;++cnt)
+			printf("%9u|", cnt_pp[port][cnt].cnt);
+		printf("\n");
+	}
 }
 
+void print_chosen_cnts( int cnts_list[], int n_cnts)
+{
+	int cnt = 0;
+	int port = 0;
+	
+	printf("                 --------Printing priority counters-----------\n\n");
+	
+	printf("P |");
+	for(cnt=0; cnt<n_cnts; ++cnt)
+		printf("%2d:%s", cnts_list[cnt],info[cnts_list[cnt]]);
+	printf("\n");
+	printf("----");
+	for(cnt=0; cnt<n_cnts; ++cnt)
+	printf("----------");
+	printf("\n");
+	for(port=0; port<NPORTS; ++port)
+	{
+		printf("%2u|", port);
+		for(cnt=0; cnt<n_cnts;++cnt)
+			printf("%9u|", cnt_pp[port][cnts_list[cnt]].cnt);
+		printf("\n");
+	}
+}
 
-int main(void)
+void print_info(char *prgname)
+{
+	printf("usage: %s <command> [<values>]\n", prgname);
+	printf(""
+			"   -h        Show this message\n"
+			"   -p        Show counters for priorities\n");
+}
+
+int main(int argc, char **argv)
 {
 	time_t last_show=0;
+	int option=0;
+	int prio_cnts[] = {30,31,32,33,34,35,36,37};
+	int op = 0;
 
 	if(pstats_init()) return -1;
-
-	last_show = 0;
-	while(1) {
-               printf("\033[2J\033[1;1H");
-               print_info();
+	op = getopt(argc, argv, "ph");
+	
+	while(1)
+	{
+		printf("\033[2J\033[1;1H");
+		if(argc > 1 && op !=-1)
+	       	switch(op)
+		{
+			case 'p':
+				print_chosen_cnts(prio_cnts, 8);
+				break;
+			case 'h':
+			default:
+				print_info(argv[0]);
+				exit(1);
+				break;
+	       }
+		else
+			print_first_n_cnts(30);
+               
 		parse_sysfs(0);
-		sleep(5);
+		sleep(1);
 	}
 	return 0;
 }
