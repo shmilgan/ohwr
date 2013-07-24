@@ -28,8 +28,7 @@ CFLAGS =  -O2 -DDEBUG -g -Wall \
 		-I../ptp-noposix/PTPWRd \
 		-I../include 
 
-LDFLAGS =  -L$(WR_INSTALL_ROOT)/lib \
-		-L../mini-rpc \
+LDFLAGS = -L../mini-rpc \
 		-L../ptp-noposix \
 		-L../libswitchhw \
 		-lminipc -lptpnetif -lswitchhw
