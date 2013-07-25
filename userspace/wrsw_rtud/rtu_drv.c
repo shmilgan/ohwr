@@ -375,7 +375,7 @@ void rtu_write_vlan_entry(int vid, struct vlan_table_entry *ent)
  */
 void rtu_clean_vlan_entry( int vid )
 {
- 	uint32_t vtr1, vtr2;
+ 	uint32_t vtr1=0, vtr2=0;
 
   vtr2 = 0;
   vtr1 = RTU_VTR1_UPDATE | RTU_VTR1_VID_W(vid);

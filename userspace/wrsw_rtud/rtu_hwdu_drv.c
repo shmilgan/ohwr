@@ -130,7 +130,7 @@ int tatsu_init()
 
 uint32_t hwdu_read(uint32_t addr, int dbg)
 {
-  uint32_t val;
+  uint32_t val=0;
   val = HWDU_CR_RD_EN | HWDU_CR_ADR_W(addr);
   hwdu_wr(CR, val);
   val = hwdu_rd(CR);

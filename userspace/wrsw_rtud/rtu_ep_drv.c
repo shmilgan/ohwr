@@ -299,7 +299,7 @@ int ep_write_inj_pck_templ(uint32_t port, int slot, pck_inject_templ_t *pck_temp
 
 void ep_vcr1_wr(uint32_t port,int is_vlan, int addr, uint32_t data)
 {
-  uint32_t val;
+  uint32_t val = 0;
   val = EP_VCR1_OFFSET_W((is_vlan ? 0 : 0x200) + addr) |
         EP_VCR1_DATA_W(data);
   ep_wr(VCR1, port, val);
