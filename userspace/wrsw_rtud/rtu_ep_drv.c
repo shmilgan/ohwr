@@ -169,14 +169,19 @@ void ep_set_vlan(uint32_t port, int qmode, int fix_prio, int prio_val, int pvid)
 
 void ep_class_prio_map(uint32_t port, int prio_map[])
 {
-   uint32_t val;
+   uint32_t val=0;
    int i;
    for (i=0;i<8;i++)
       val = (0x7 & prio_map[i]) << (i*3) | val;
    ep_wr(TCAR, port, EP_TCAR_PCP_MAP_W(val));
-   TRACE(TRACE_INFO,"EP [Port %2d]: prio_map=%1d-%1d-%1d-%1d-%1d-%1d-%1d-%1d", port,
+   val = ep_rd(TCAR,port);
+   
+   TRACE(TRACE_INFO,"EP [Port %2d]: prio_map[wr]=0x%x = %1d-%1d-%1d-%1d-%1d-%1d-%1d-%1d", port, val,
                 prio_map[7],prio_map[6],prio_map[5],prio_map[4],
                 prio_map[3],prio_map[2],prio_map[1],prio_map[0]);   
+   TRACE(TRACE_INFO,"EP [Port %2d]: prio_map[rd]=%1d-%1d-%1d-%1d-%1d-%1d-%1d-%1d", port,
+                0x7 & (val >>7*3), 0x7 & (val >>6*3), 0x7 & (val >>5*3), 0x7 & (val >>4*3),
+                0x7 & (val >>3*3), 0x7 & (val >>2*3), 0x7 & (val >>1*3), 0x7 & (val >>0*3));   
 }
 
 

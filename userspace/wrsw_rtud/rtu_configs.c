@@ -41,6 +41,7 @@ uint8_t mac_single_PC_ETH9[]   = {0x90,0xe2,0xba,0x17,0xa7,0xAD}; // test PC
 
 uint8_t bcast_mac[]            = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 int     prio_map[]             = {0,1,2,3,4,5,6,7};
+int     rev_prio_map[]         = {7,6,5,4,3,2,1,0};
 /**
  * opt=0
  */
