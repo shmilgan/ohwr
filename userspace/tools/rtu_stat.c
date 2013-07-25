@@ -37,22 +37,14 @@
 static struct minipc_ch *rtud_ch;
 static hexp_port_list_t plist;
 
-<<<<<<< HEAD
 // forwarding entries
-=======
-// forwarding entries 
->>>>>>> [tool] adding dump of VLANs to rtu_stat tool (needs wrsw_rtud modifications)
 void rtudexp_get_fd_list(rtudexp_fd_list_t *list, int start_from)
 {
 	minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_get_fd_list, list,
 			start_from);
 }
 
-<<<<<<< HEAD
 // vlan entries
-=======
-// vlan entries 
->>>>>>> [tool] adding dump of VLANs to rtu_stat tool (needs wrsw_rtud modifications)
 void rtudexp_get_vd_list(rtudexp_vd_list_t *list, int current)
 {
 	minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_get_vd_list, list,
@@ -86,10 +78,6 @@ int rtudexp_vlan_entry(int vid, int fid, const char *ch_mask, int drop, int prio
 
 #define RTU_MAX_ENTRIES 8192
 #define NUM_VLANS       4096
-<<<<<<< HEAD
-
-=======
->>>>>>> [tool] adding dump of VLANs to rtu_stat tool (needs wrsw_rtud modifications)
 
 void fetch_rtu_fd(rtudexp_fd_entry_t *d, int *n_entries)
 {
@@ -116,21 +104,10 @@ int fetch_rtu_vd(rtudexp_vd_entry_t *d, int *n_entries)
 
 	do {
 		rtudexp_get_vd_list(&list, start);
-<<<<<<< HEAD
 		memcpy( d+n, list.list, sizeof(rtudexp_vd_entry_t) * list.num_entries);
 		start=list.next;
 		n+=list.num_entries;
 	} while(start > 0);
-=======
-		//	printf("num_rules %d\n", list.num_rules);
-
-		memcpy( d+n, list.list, sizeof(rtudexp_vd_entry_t) * list.num_entries);
-		start=list.next;	
-		n+=list.num_entries;	
-	} while(start > 0);
-
-	//	printf("%d rules \n", n);
->>>>>>> [tool] adding dump of VLANs to rtu_stat tool (needs wrsw_rtud modifications)
 	*n_entries = n;
 }
 
