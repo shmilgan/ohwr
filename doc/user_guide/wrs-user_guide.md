@@ -67,9 +67,48 @@ conditions
                     [Seven Solutions]   to be comptabile with the package
 
  0.4   23/05/2013   Benoit Rat\         Updating 125MHz out to CLK
-                    [Seven Solutions]   
+                    [Seven Solutions]
+
+ 0.5   26/07/2013   Benoit Rat\         Adding suggestion from\
+                    [Seven Solutions]   Erik Van Der Bij (CERN)
+                    
+ 1.0   26/07/2013   Benoit Rat\         Updating for v3.3 release
+                    [Seven Solutions]      
 ------------------------------------------------------------------------
 
+\clearpage
+
+### Glossary
+
+
+DHCP
+:   The Dynamic Host Configuration Protocol to obtain network configuration.
+FMC
+:	FPGA Mezzanine Card, an ANSI standard for mezzanine card form factor.
+HDL
+:	Hardware description language. 
+LM32
+:	LatticeMico32 is a 32-bit microprocessor soft core optimized for field-programmable gate arrays (FPGAs).
+NAND
+:	NAND Flash Memory, a type of reprogrammable non-volatile computer memory.
+PCIe
+:	Peripheral Component Interconnect Express, a high-speed serial computer expansion bus standard.
+PTP
+:	Precise Time Protocol, a time synchronization protocol.
+SMC
+:	SubMiniature version C, coaxial connector used in radio-frequency circuits.
+SFP
+:	Small form-factor pluggable transceiver, a hot-pluggable transceiver for optical fiber.
+SPEC
+:	Simple PCIe FMC carrier.
+SVEC
+:	Simple VME FMC carrier.
+UART
+:	Universal Asynchronous Receiver/Transmitter.
+WR
+: 	White Rabbit.
+WRS
+: 	White Rabbit Switch.
 
 
 \clearpage
@@ -102,17 +141,15 @@ The [WRS] package is composed of various elements:
 * The packaging box
 * A power cable according to the country of distribution.
 * The 18 SFP ports switch.
-* SFP LC connectors[^1] 
+* SFP LC connectors 
     * 16x AXGE-3454-0531 (violet)
     * 2x AXGE-1254-0531 (blue)
 
-
-[^1]: The SFP LC connectors are optional. Consult the [SFPs Wiki] for more information about the compatibility of SFPs and how to use them.
+> ***Note:*** The SFP LC connectors are optional. Consult the [SFPs Wiki] for more information about the compatibility of SFPs and how to use them.
 
 
 Front panel (Legend)
 ---------------------
-
 
 ![Front Panel of the WRS](front_panel.png)
 
@@ -182,10 +219,11 @@ To get the switch quickly working we recommend you to:
 After all connections have been made, toggle the power-switch on to turn 
 the device on. After the power on, the [WRS] should behave as follows:
 
-4. The *Power LED* goes green
+3. The *Power LED* goes green
 #. After 15s, the *Status LED* goes orange which means that the [WRS]'s kernel
 has started.
-#. Finally, it goes green and the FANs start working.
+#. Then the fan start working which means that FPGA has been correctly programmed.
+#. Finally, it goes green when everything is succesful (PLL is locked).
 
 You have now the [WRS] ready to be used in a WR network.
 
@@ -216,21 +254,24 @@ c. ttyUSB1
 To connect to them you need to open a serial console such as minicom[^minicom]
 
 ~~~~~{.bash}
-## Connecting to the ARM UART
-minicom -D /dev/ttyUSB1 -b 115200
+## Connecting to the Management USB port
+minicom -D /dev/ttyACM0 -b 115200
 
 ## Connecting to the FPGA UART
 minicom -D /dev/ttyUSB0 -b 115200
 
-## Connecting to the Management USB port
-minicom -D /dev/ttyACM0 -b 115200
+## Connecting to the ARM UART
+minicom -D /dev/ttyUSB1 -b 115200
+
 ~~~~~~~~~~~~
 
-[^minicom]: In debian's like distribution you can install minicom by executing
-`sudo apt-get install minicom` command. 
+[^minicom]: In Debian-like distribution you can install minicom by executing
+`sudo apt-get install minicom`. 
 
+> Note: ttyUSB0 and ttyUSB1 usally correspond respectively to FGPA and ARM UART.
+However this order can change dependably on how you plug the cable.
 
-Login Via USB
+Login via USB
 --------------
 
 Once the device has been correctly started up (*Status LED* is green),
@@ -243,7 +284,7 @@ minicom -D /dev/ttyACM0 -b 115200
 ~~~~~~~~~~
 
 The ARM UART is usually employed during development and monitoring because
-the kernel and daemons messages are thrown to this console.
+the kernel and daemons messages are sent to this console.
 
 
 Login via SSH
@@ -254,7 +295,7 @@ protocol. If you don't have any DHCP router/server in your network please
 refer to the [non-DHCP](#non-dhcp-user) section.
 
 To obtain the IP of the [WRS] you can connect to your DHCP server interface 
-and retrieve the IP, or [connect via USB](#login-via-usb) to retrieve the
+and retrieve the IP, or [connect to ttyACM0](#login-via-usb) to retrieve the
 IP (`ipconfig eth0`).
 
 If the [WRS] IP is for example `192.168.1.50` you might connect using:
@@ -276,10 +317,8 @@ similar:
 
 2. Then you need to list and find out which serial port in Windows corresponds
 to which interface. A simple way to perform this is to plug only one USB 
-cable at a time, and go to 
-
-`Device Manager > Ports (COM & LPT)` to check
-the name of the `COM<X>` port. 
+cable at a time, and go to `Device Manager > Ports (COM & LPT)`
+to check the name of the `COM<X>` port. 
 
 3. Finally to connect through the USB you just need to open the Putty 
 tool and configure it as indicated in the figure below. Do not forget to replace the
@@ -298,21 +337,21 @@ by the one in your subnetwork.
 After login:
 -------------------
 
-Once you are login you can use various tools to monitorize the [WRS]. 
+Once you are logged in you can use various tools to monitor the [WRS]. 
 All these tools are found in `/wr/bin/` which is included in the `$PATH`.
  
-The following list resumed the most interesting one: 
+The following list resumes the most interesting commands: 
 
- * `shw_ver`:	Print informations about the SW & HW version of the [WRS].
- * `rtu_stat`:	Routing Table Unit Statistic, returns the routing table information where we can find which MAC need to be forward to which port. It also allows to add and delete entries.
- * `wr_mon`:	WR Switch Sync Monitor, outputs informations about the state of WR syncrhonisation such as Phase Tracking, Master-Slave delay, link asymmetry, etc...
+ * `shw_ver`:	Print information about the SW & HW version of the [WRS].
+ * `rtu_stat`:	Routing Table Unit Statistic, returns the routing table information where we can find which MAC needs to be forwarded to which port. It also allows to add and delete entries.
+ * `wr_mon`:	WR Switch Sync Monitor, outputs information about the state of WR syncrhonisation such as Phase Tracking, Master-Slave delay, link asymmetry, etc...
  * `spll_dbg_proxy`: 	SoftPLL debug proxy, reads out the debug FIFO datastream from the SoftPLL and proxies it  via TCP connection to the application running on an outside host, where it can be plotted, analyzed, etc.
 
-> Notes: More information about each tools can be obtain using the embedded help argument: `--help`, `-h` or `help`.
+> Note: More information about each tool can be obtain using the embedded help argument: `--help`, `-h` or `help`.
 
 #### Warning: 
 The SFP ports are labeled from 1 to 18 on the front panel but their corresponding 
-network interface are named from `wr0` to `wr17`, remind it. 
+network interface are named from `wr0` to `wr17`. 
 
 
 Configurations
@@ -336,7 +375,7 @@ Welcome on WRSv3 Boot Sequence
       5: reboot    
 ~~~~~~~~~~~~~~~~~~~
 
-> Notes: If you want to change how
+> Note: If you want to change how
 the [WRS] is booted you can place a `wrboot` script in your TFTP root 
 folder and select the second option or you can edit the configuration 
 (third option). Please find more explanations in the 
@@ -367,7 +406,7 @@ iface eth0 inet static
 ~~~~~~~~~~~~~~
 
 
-> Notes: If you are willing to use TFTP script in a non-DHCP network, you 
+> Note: If you are willing to use TFTP script in a non-DHCP network, you 
 must also statically set the IP in the bootloader configuration.
 
 
@@ -376,12 +415,12 @@ GrandMaster mode
 
 ![White Rabbit Network](wr_network2.jpg)
 
-In a White Rabbit network, almost all the switches are configured as "Simple Master"
+In a White Rabbit network, almost all the switches are configured as master (a.k.a SimpleMaster)
 (default configuration). They transmit the clock signal that cames from other switches.
-However the "top" switch connected to the GPS signal is called the **Grand Master**
+However the "top" switch connected to the GPS signal is called the **GrandMaster**
 and is configured in a specific way.
 
-To configure a switch in GrandMaster mode you must edit[^viedit] the `wrsw_hal.conf` file
+To configure a switch as GrandMaster you must edit[^viedit] the `wrsw_hal.conf` file
 
 ~~~~{.C}
 vi /wr/etc/wrsw_hal.conf
@@ -397,7 +436,7 @@ timing =  {
 ~~~~~~
 
 
-For a more detailed explanation on how to configure and connect the switch in grand master mode, please consult the
+For a more detailed explanation on how to configure and connect the switch as GrandMaster, please consult the
 [wr_external_reference.pdf] document.
 
 
@@ -412,25 +451,20 @@ This section proposes a simple way to update the firmware of the [WRS]
 by flashing the memory using the *Management Mini-USB*[^flashlinux].
 
 1. Download the [flashing package] and extract it.
-#. Download the [latest stable release] of the [WRS] 
-binaries in a tar.gz package.
+#. Download the [latest stable release] of the [WRS] firmware in a tar.gz package.
 #. Connect the *Management Mini-USB* port to the PC[^checkusb].
-#. Start the flashing procedure by doing:  
+#. Start the flashing procedure by executing in a linux console:
+`flash-wrs -e -m1 <MAC1> -m2 <MAC2> wr-switch-sw-<latest_version>.tar.gz`
+where MAC1 and MAC2 are written in the [back panel (label #21)](#back-panel-legend)
 
-~~~~{.bash}
-flash-wrs -e -m1 <MAC1> -m2 <MAC2> wr-switch-sw-<latest_version>.tar.gz
-~~~~~~~~~~~~
-
-where MAC1 and MAC2 are written in the pack panel (*Serial Number and MACs*)
-
-4. At this step you will be asked to restart the [WRS], using the *Power 
+5. At this step you will be asked to restart the [WRS], using the *Power 
 Switch*, while pressing the *Flash Button*.
 #. The flashing procedure should start and it takes some time to perform. 
 #. The switch will restart by itself which means that the flashing operation
-as performed successfully.
+has finished.
 
 [^flashlinux]: The flashing operation is only available for linux environment, and
-it is recommended to use debian's like distribution such as "Ubuntu"
+it is recommended to use Debian-like distribution such as "Ubuntu"
 
 [^checkusb]: Please, make sure that the managment USB port (ttyACM0)
 is not used by another process such as minicom.
@@ -438,8 +472,8 @@ is not used by another process such as minicom.
 Advanced configuration
 -----------------------
 
-For more complex topics about the [WRS] you must look at the [wr-switch-sw.pdf] 
-written for advanced user and developer. You will find informations about:
+Please refer to the White Rabbit Switch: software build scripts manual
+([wr-switch-sw.pdf]) that explains advanced topics such as:
 
 * Advanced flashing options.
 * Configuring specific MAC address.
@@ -473,14 +507,6 @@ range of 110-240V with 50-60Hz.
 #### Warning:
 This equipment is intended to be grounded using the *Grounded Connector*.
 Ensure that the host is connected to earth ground during normal use.
-
-#### Warning:
-To prevent bodily injury when mounting or servicing this unit in a rack, you must 
-take special precautions to ensure that the system remains stable. 
-This unit should be mounted at the bottom of the rack if it is the only unit in the 
-rack.
-When mounting this unit in a partially filled rack, load the rack from the bottom 
-to the top with the heaviest component at the bottom of the rack.
 
 
 
@@ -590,7 +616,7 @@ Polígono Industrial Juncaril, \
 FAQs & Troubleshooting
 --------------------------
 
-If you are experiencing some issues please look first at the [FAQ] wiki 
+If you are experiencing some issues please look first at the [WRS FAQ] wiki 
 page if you can find an answer.
 
 You can also reach out the wiki to see if your issue is a known
@@ -654,50 +680,21 @@ your municipal government on how to correctly dispose of it.
 Please be responsible and protect our environment.
 
 
-Glossary
-===========
-
-DHCP
-:   The Dynamic Host Configuration Protocol to obtain network configuration  
-PTP
-:	Precise Time Protocol, a time synchronization protocol
-NAND
-:	NAND Flash Memory, a type of reprogrammable non-volatile computer memory
-FMC
-:	FPGA Mezzanine Card, an ANSI standard for mezzanine card form factor.
-SMC
-:	SubMiniature version C, coaxial connector used in radio-frequency circuits.
-SFP
-:	Small form-factor pluggable transceiver, a hot-pluggable transceiver for optical fiber
-PCIe
-:	Peripheral Component Interconnect Express, a high-speed serial computer expansion bus standard
-LM32
-:	LatticeMico32 is a 32-bit microprocessor soft core optimized for field-programmable gate arrays (FPGAs).
-HDL
-:	Hardware description language
-SPEC
-:	Simple PCIe FMC carrier
-SVEC
-:	Simple VME FMC carrier
-UART
-:	Universal Asynchronous Receiver/Transmitter
-WR
-: 	White Rabbit
-WRS
-: 	White Rabbit Switch
 
 
 References
 ==============
 
-* [wrs-3/18.pdf] Datasheet for the White Rabbit Switch v3 - 18 SFPs
-* [wr-switch-sw.pdf] Advanced documentation on how using the software
-* [wr_external_reference.pdf] Connect the [WRS] in GrandMaster mode.
-* [whiterabbitsolution] White Rabbit as a complete timing solutions
+* [wrs-3/18.pdf]: Datasheet for the White Rabbit Switch v3 - 18 SFPs
+* [wr-switch-sw.pdf]: Advanced documentation on how using the software
+* [wr_external_reference.pdf]: Connect the [WRS] in GrandMaster mode.
+* [whiterabbitsolution]: White Rabbit as a complete timing solutions
 * [WRS Wiki]: White Rabbit Switch Wiki on ohwr.org
-* WRS [FAQ]: WR-Switch Frequently Added Questions
-* [wr-switch-testing] Project for testing the switch itself 
-* [SFPs Wiki] Type of SFP supported by the [WRS]
+* [WRS FAQ]: WR-Switch Frequently Added Questions
+* [wr-switch-testing]: Project for testing the switch itself 
+* [SFPs Wiki]: Type of SFP supported by the [WRS]
+* [latest stable release]: http://www.sevensols.com/dl/wr-switch-sw/bin/latest_stable.tar.gz
+* [flashing package]: http://www.sevensols.com/dl/wrs-flashing/latest_stable.tar.gz
 
 
 
@@ -719,7 +716,7 @@ References
 [Seven Solutions]: http://www.sevensols.com
 [7S]: http://www.sevensols.com
 [Putty Tool]: http://www.putty.org/
-[FAQ]: http://www.ohwr.org/projects/white-rabbit/wiki/FAQswitch
+[WRS FAQ]: http://www.ohwr.org/projects/white-rabbit/wiki/FAQswitch
 [wr-switch-sw.pdf]: http://www.sevensols.com/dl/wr-switch-sw/latest_stable.pdf
 [wr_external_reference.pdf]: http://www.ohwr.org/attachments/1647/wr_external_reference.pdf
 [wrs-3/18.pdf]: http://www.sevensols.com/whiterabbitsolution/files/7SP-WRS-3_18.pdf
