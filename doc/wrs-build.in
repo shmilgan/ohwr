@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month December 2012
+@set update-month July 2013
 
 @finalout
 
@@ -404,8 +404,8 @@ This is the same naming policy of the kernel and other packages.
 
 The prefix is @code{wrs-firmware-}; the information about the current status are
 retrived by using the git commmand @code{git describe --always --dirty}.
-For example, if you are building the tag @code{wr-switch-sw-v3.1}, your package
-name will be @code{wrs-firmware-wr-switch-sw-v3.1.tar.gz}. If you are building
+For example, if you are building the tag @code{wr-switch-sw-v3.3}, your package
+name will be @code{wrs-firmware-wr-switch-sw-v3.3.tar.gz}. If you are building
 on some personal commit the name includes some extra information to describe
 your commit: number of commits form the last tag (if any), SHA1 code of the
 commit. If you have uncommited changed, the suffix @code{-dirty} is there too.
@@ -428,7 +428,7 @@ in the @code{wrs_build-all} script. For example if you want to recompile
 kernel you should execute.
 
 @example
-   /path/to/wr-switch-sw/build/wrs_build-all --step-04
+   /path/to/wr-switch-sw/build/wrs_build-all --step=04
 @end example
 
 You can list all compiled module by calling
@@ -739,10 +739,10 @@ If you want to flash the @i{at91boot.bin}, @i{barebox.bin}, @i{kernel}
 or @i{file-system} that you just built, you can just call the script
 from the build directory and use the @code{-b} option.
 
-The official binaries for installation of version 3.1 of this package
+The official binaries for installation of version 3.3 of this package
 are available in the @i{files} tab of @t{ohwr.org}. The complete link
 is:@*
-@url{www.ohwr.org/attachments/download/1770/wr-switch-sw-v3.1-2012-12-20-binaries.tar.gz} .
+@url{www.ohwr.org/attachments/download/2262/wr-switch-sw-v3.3-20130725_binaries.tar.gz}
 
 You can select a mode using the @code{-m|--mode} flag to choose
 to write in dataflash (df), nandflash (nf), both (default) or ddr memories
