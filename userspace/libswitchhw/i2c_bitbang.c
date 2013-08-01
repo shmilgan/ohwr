@@ -20,9 +20,8 @@ int i2c_bitbang_init_bus(struct i2c_bus *bus)
 
 	priv = (struct i2c_bitbang *)bus->type_specific;
 
-	TRACE(TRACE_INFO,"%s (0x%x) ",bus->name,bus);
+	TRACE(TRACE_INFO,"init: %s (0x%x) ",bus->name,bus);
 	shw_pio_configure(priv->scl);
-	TRACE(TRACE_INFO,"%s (0x%x) ",bus->name,bus);
 	shw_pio_configure(priv->sda);
 	shw_pio_setdir(priv->scl, 0);
 	shw_pio_setdir(priv->sda, 0);

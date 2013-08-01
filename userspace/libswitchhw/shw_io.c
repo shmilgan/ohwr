@@ -95,7 +95,6 @@ int shw_io_init()
 		IOARR_SET_GPIO(shw_io_led_cpu2);
 		IOARR_SET_GPIO(shw_io_arm_boot_sel);
 		IOARR_SET_GPIO(shw_io_arm_gen_but);
-		TRACE(TRACE_INFO, "version=%f %d %d %d",ver, ver>=3.3f, ver<3.3f, ver==3.3f);
 	}
 	else
 	{
@@ -108,7 +107,7 @@ int shw_io_init()
 		IOARR_SET_IO(shw_io_led_state_o,SHW_I2C,I2C_shw_io_led_state_o);
 	}
 
-	TRACE(TRACE_INFO, "version=%g",ver);
+	TRACE(TRACE_INFO, "version=%d (CPUPWN=%d)",ver, ver<330);
 	return 0;
 }
 

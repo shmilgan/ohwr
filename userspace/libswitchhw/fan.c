@@ -215,11 +215,10 @@ int shw_init_fans()
 	if(shw_get_hw_ver()<330) is_cpu_pwn=1;
 	else is_cpu_pwn=0;
 
-	TRACE(TRACE_INFO, "Configuring %s PWMs for fans (desired temperature = %.1f degC)... %d",is_cpu_pwn?"CPU":"FPGA");
+	TRACE(TRACE_INFO, "Configuring %s PWMs for fans (desired temperature = %.1f degC)...",is_cpu_pwn?"CPU":"FPGA",DESIRED_TEMPERATURE);
 
 	if(is_cpu_pwn)
 	{
-
 		pwm_fd = open("/dev/at91_softpwm", O_RDWR);
 		if(pwm_fd < 0)
 		{

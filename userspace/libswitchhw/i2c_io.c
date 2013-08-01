@@ -138,7 +138,7 @@ uint8_t shw_get_fpga_type()
 
 		if(bus && bus->scan(bus,I2C_SCB_VER_ADDR))
 		{
-		//The 0b00001110 bits are used for SCB HW version
+		//The 0b00000001 bit is used for FPGA type
 			if(wrswhw_pca9554_get_input(bus,I2C_SCB_VER_ADDR) & 0x1)
 				return SHW_FPGA_LX240T;
 		}
