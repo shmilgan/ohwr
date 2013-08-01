@@ -43,14 +43,14 @@
 pio_pin_t wr_i2c_io_sda = {
 	.port = PIOB,
 	.pin = 24,
-	.mode = PIO_MODE_PULLUP | PIO_MODE_GPIO,
+	.mode = PIO_MODE_GPIO, //PullUp by i2c when miniBP >v3.3, PullDown in miniBP v3.2
 	.dir = PIO_OUT_0,
 };
 //Connected to miniBP to PB7>PB0>PB20
 pio_pin_t wr_i2c_io_scl = {
 	.port = PIOB,
 	.pin = 20,
-	.mode = PIO_MODE_PULLUP | PIO_MODE_GPIO,
+	.mode = PIO_MODE_GPIO,	//PullUp by i2c when miniBP >v3.3, PullDown in miniBP v3.2
 	.dir = PIO_OUT_0,
 };
 struct i2c_bitbang wr_i2c_io_reg = {

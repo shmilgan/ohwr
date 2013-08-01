@@ -21,7 +21,6 @@
 #define I2C_WRITE	0
 #define I2C_READ	1
 
-
 typedef struct i2c_bus
 {
 	const char	*name;

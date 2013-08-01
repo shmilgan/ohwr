@@ -123,19 +123,35 @@ static uint8_t mi2c_get_byte(struct i2c_bitbang *bus, int ack)
 
 }
 
+/**
+ * Scan if an i2c chip reply with the given address
+ *
+ * All i2c chip are pullup, so we first check if we have a pullup connected, then we send
+ * the address and wait for acknowledge (pull down)
+ *
+ * \input bus Generic i2c bus
+ * \input address chip address on the bus
+ * \output Return 1 (true) or 0 (false) if the bus has replied correctly
+ */
 int32_t i2c_bitbang_scan(struct i2c_bus* bus, uint32_t address)
 {
 	if (!bus)
 		return I2C_NULL_PARAM;
+	uint8_t state;
 
 	struct i2c_bitbang* ts = (struct i2c_bitbang*)bus->type_specific;
 
-	mi2c_start(ts);
-	int   ack = mi2c_write_byte(ts, (address << 1) | 0);
+	//Check if we have pull up on the data line of iic bus
+	shw_pio_setdir(ts->sda, PIO_IN);
+	state=shw_pio_get(ts->sda);
+	if(state!=1) return 0;
 
+	//Then write address and check acknowledge
+	mi2c_start(ts);
+	state = mi2c_write_byte(ts, (address << 1) | 0);
 	mi2c_stop(ts);
 
-	return ack ? 1: 0;
+	return state ? 1: 0;
 }
  
 int	i2c_bitbang_transfer(i2c_bus_t* bus, uint32_t address, uint32_t to_write, uint32_t to_read, uint8_t* data)
