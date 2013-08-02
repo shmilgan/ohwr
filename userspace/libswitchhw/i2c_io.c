@@ -136,13 +136,17 @@ uint8_t shw_get_fpga_type()
 {
 	struct i2c_bus *bus= &i2c_io_bus;
 
-		if(bus && bus->scan(bus,I2C_SCB_VER_ADDR))
-		{
-		//The 0b00000001 bit is used for FPGA type
-			if(wrswhw_pca9554_get_input(bus,I2C_SCB_VER_ADDR) & 0x1)
-				return SHW_FPGA_LX240T;
-		}
-		return SHW_FPGA_LX130T;
+	if(bus && bus->scan(bus,I2C_SCB_VER_ADDR))
+	{
+	//The 0b00000001 bit is used for FPGA type
+		if(wrswhw_pca9554_get_input(bus,I2C_SCB_VER_ADDR) & 0x1)
+			return SHW_FPGA_LX240T;
+		else
+			return SHW_FPGA_LX130T;
+	}
+	//HACK: Check if file exists. This enable v3.2 miniBP and v3.3 SCB with LX240T
+	if(access("/wr/etc/lx240t.conf", F_OK) == 0) return SHW_FPGA_LX240T;
+	return SHW_FPGA_LX130T;
 }
 
 
