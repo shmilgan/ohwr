@@ -73,11 +73,12 @@ showhelp() {
 pack()
 {
 	#Check if the current git repo correspond to a tag
+	#if prefix 'wr-switch-sw-' is not set in tagname, we force it to 'wr-switch-sw-unof-'
         cd $WRS_BASE_DIR
-	name=$(git describe --always --dirty)
+	name=$(git describe --always --dirty | sed  '/^wr-switch-sw-/! s/.*/wr-switch-sw-unof-\0/')-$(date +%Y%m%d)_binaries.tar.gz
 
-	echo "Packing into wrs-firmware-$name.tar.gz";
-	tar -czvf "$WRS_OUTPUT_DIR/wrs-firmware-$name.tar.gz" -C ${WRS_OUTPUT_DIR}/images/ at91bootstrap.bin barebox.bin zImage wrs-image.tar.gz
+	echo "Packing into $name";
+	tar -czvf "$WRS_OUTPUT_DIR/$name" -C ${WRS_OUTPUT_DIR}/images/ at91bootstrap.bin barebox.bin zImage wrs-image.tar.gz
 	exit 0
 }
 
