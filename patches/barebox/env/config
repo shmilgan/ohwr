@@ -20,4 +20,4 @@ if false; then
 fi
 
 ## Timeout to autoboot in the pre-selected menu
-autoboot_timeout="10";
+autoboot_timeout="5";

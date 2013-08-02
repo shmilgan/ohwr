@@ -13,9 +13,9 @@ if [ $? -eq 0 ]; then
 	bootm /dev/ram0.kernel
 fi
 
-#default value (can changed in /env/config)
-preboot_timeout="5"
-autoboot_timeout="10"
+#default value (can be overridden in /env/config)
+preboot_timeout="3"
+autoboot_timeout="5"
 autoboot_select="1"
 
 ### Override default value using /env/config
