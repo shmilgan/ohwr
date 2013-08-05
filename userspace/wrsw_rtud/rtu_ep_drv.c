@@ -333,6 +333,42 @@ void ep_pfilter_reload_code(int port)
   pfilter_load((uint32_t)port);//enable port sub_opt
 }
 
+void ep_pfilter_lacp_test_code(int port)
+{
+  pfilter_new();
+  
+//   pfilter_nop();
+//   pfilter_nop();//1st frame byte
+//   pfilter_nop();//2nd
+//   pfilter_nop();//3rd
+//   pfilter_nop();//3
+//   pfilter_nop();//4
+//   pfilter_nop();//5
+//   pfilter_cmp(6, 0x8100, 0xffff, AND, 1); //for simplicity -> recognized VLAN-tagged
+//   pfilter_cmp(7, 0x2000, 0xF000, MOV, 2); // prio=1
+//   pfilter_cmp(7, 0x4000, 0xF000, MOV, 3); // prio=2
+//   pfilter_cmp(7, 0x6000, 0xF000, MOV, 4); // prio=3
+//   pfilter_cmp(7, 0x8000, 0xF000, MOV, 5); // prio=4
+  
+  pfilter_cmp(0, 0x90e2, 0xffff, MOV, 1);
+  pfilter_cmp(1, 0xba17, 0xffff, AND, 1);
+  pfilter_cmp(2, 0xa7ca, 0xffff, AND, 1);
+  pfilter_nop();
+  pfilter_nop();
+  pfilter_nop();
+  pfilter_cmp(6, 0x0001, 0xffff, MOV, 2); 
+  pfilter_cmp(6, 0x0002, 0xffff, MOV, 3); 
+  pfilter_cmp(6, 0x0003, 0xffff, MOV, 4); 
+  pfilter_cmp(6, 0x0004, 0xffff, MOV, 5); 
+  
+  pfilter_logic2(24, 2, AND, 1); 
+  pfilter_logic2(25, 3, AND, 1); 
+  pfilter_logic2(26, 4, AND, 1); 
+  pfilter_logic2(27, 5, AND, 1); 
+  
+  pfilter_load((uint32_t)port);//enable port sub_opt
+}
+
 void ep_snake_config(int option)
 {
   int i,j=0;

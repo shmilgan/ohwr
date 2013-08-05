@@ -52,4 +52,5 @@ void ep_pause_config_ena(uint32_t port, int txpause_802_3,int rxpause_802_3, int
 void ep_pause_config_dis(uint32_t port);
 void ep_snake_config(int option);
 void ep_class_prio_map(uint32_t port, int prio_map[]);
+void ep_pfilter_lacp_test_code(int port);
 #endif /*__WHITERABBIT_RTU_EP_DRV_H*/

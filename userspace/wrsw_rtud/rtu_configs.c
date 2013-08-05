@@ -83,7 +83,9 @@ int config_info()
   TRACE(TRACE_INFO, "             5: nothing special");
   TRACE(TRACE_INFO, "-s 7  n      High Prio tunneling, kind of:  ");
   TRACE(TRACE_INFO, "      0      nonHP frame dropping disabled ");    
-  TRACE(TRACE_INFO, "      1      nonHP frame dropping enabled ");      
+  TRACE(TRACE_INFO, "      1      nonHP frame dropping enabled ");  
+  TRACE(TRACE_INFO, "-s 8         LACP test config:  ");
+    
   return 0;
 }
 
@@ -494,6 +496,136 @@ int config_hp_test(int sub_opt, int port_num)
   return 0;
 }
 
+int config_lacp_test(int sub_opt, int port_num)
+{
+  int i;
+  // set propper distribution functions for different types of traffic (hp, broadcast, unicast)
+  tru_lacp_config(0 /* df_hp_id */,2 /* df_br_id */,1 /* df_un_id */);
+    
+  // set my PC's ports MACs as Fast-Forwrad
+  rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_PC_ETH6/*MAC*/);
+  rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_PC_ETH7/*MAC*/);
+  rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, mac_single_PC_ETH8/*MAC*/);
+  rtux_add_ff_mac_single(3/*ID*/, 1/*valid*/, mac_single_PC_ETH9/*MAC*/);     
+      
+  // enable Fast-Forward for single MACs (above)
+  rtux_feature_ctrl(0 /*mr*/, 
+                    0 /*mac_ptp*/, 
+                    0/*mac_ll*/, 
+                    1/*mac_single*/, 
+                    0/*mac_range*/, 
+                    0/*mac_br*/,
+                    0/*drop when full_match full*/);  
+  
+  // set all fast forward traffic to be recognized as HP (bug, all or nothing)
+  rtux_set_hp_prio_mask(0xFF);    
+  
+  //set true pattern sources
+  //replacement = 4: packet filter
+  //addition    = 5: received port mask
+  tru_pattern_config(4/*replacement*/,5/*addition*/);
+  
+  // set VLAN: ports to take part in the game (as on simulation)
+  vlan_entry_vd( 0,            //vid, 
+                 0xF0F1,       //port_mask, 
+                 0,            //fid, 
+                 0,            //prio,
+                 0,            //has_prio,
+                 0,            //prio_override, 
+                 0             //drop
+                );   
+  
+  // ----------------------------------------------------------------------------------------
+  // basic config:
+  // excluding link aggregation, only the standard non-LACP ports
+  tru_write_tab_entry(  1          /* valid         */,
+                        0          /* entry_addr    */,    
+                        0          /* subentry_addr */,
+                        0x00000000 /* pattern_mask  */, 
+                        0x00000000 /* pattern_match */,   
+                        0x000      /* pattern_mode  */,
+                        0x00000F0F /* ports_mask    */, 
+                        0x00000F0F /* ports_egress  */,      
+                        0x00000F0F /* ports_ingress */,
+                        1          /* validate */,
+                        1          /* print */ );                                    
+  
+   // ----------------------------------------------------------------------------------------
+   // a bunch of link aggregation ports (ports 4 to 7 and 12&15):
+   // 1) received FEC msg of class 0      
+   tru_write_tab_entry(  1          /* valid         */,
+                         0          /* entry_addr    */,    
+                         1          /* subentry_addr */,
+                         0x0000000F /* pattern_mask  */, 
+                         0x00000001 /* pattern_match */,   
+                         0x000      /* pattern_mode  */,
+                         0x000090F0 /* ports_mask    */, 
+                         0x00008010 /* ports_egress  */,      
+                         0x00000000 /* ports_ingress */,
+                         1          /* validate */,
+                         1          /* print */ );                                    
+   // 2) received FEC msg of class 1
+   tru_write_tab_entry(  1          /* valid         */,
+                         0          /* entry_addr    */,    
+                         2          /* subentry_addr */,
+                         0x0000000F /* pattern_mask  */, 
+                         0x00000002 /* pattern_match */,   
+                         0x000      /* pattern_mode  */,
+                         0x000090F0 /* ports_mask    */, 
+                         0x00008020 /* ports_egress  */,      
+                         0x00000000 /* ports_ingress */,
+                         1          /* validate */,
+                         1          /* print */ );                                    
+   // 3) received FEC msg of class 2
+   tru_write_tab_entry(  1          /* valid         */,
+                         0          /* entry_addr    */,    
+                         3          /* subentry_addr */,
+                         0x0000000F /* pattern_mask  */, 
+                         0x00000004 /* pattern_match */,   
+                         0x000      /* pattern_mode  */,
+                         0x000090F0 /* ports_mask    */, 
+                         0x00001040 /* ports_egress  */,      
+                         0x00000000 /* ports_ingress */,
+                         1          /* validate */,
+                         1          /* print */ );                                    
+   // 4) received FEC msg of class 3
+   tru_write_tab_entry(  1          /* valid         */,
+                         0          /* entry_addr    */,    
+                         4          /* subentry_addr */,
+                         0x0000000F /* pattern_mask  */, 
+                         0x00000008 /* pattern_match */,   
+                         0x000      /* pattern_mode  */,
+                         0x000090F0 /* ports_mask    */, 
+                         0x00001080 /* ports_egress  */,      
+                         0x00000000 /* ports_ingress */,
+                         1          /* validate */,
+                         1          /* print */ );        
+   
+   // ----------------------------------------------------------------------------------------
+   // collector: receiving frames on the aggregation ports:
+   // forwarding to "normal" (others)
+   tru_write_tab_entry(  1          /* valid         */,
+                         0          /* entry_addr    */,    
+                         5          /* subentry_addr */,
+                         0x000090F0 /* pattern_mask  */, 
+                         0x000090F0 /* pattern_match */,   
+                         0x002      /* pattern_mode  */,
+                         0x000090F0 /* ports_mask    */, 
+                         0x00000000 /* ports_egress  */,      
+                         0x000090F0 /* ports_ingress */,
+                         1          /* validate */,
+                         1          /* print */ );         
+   // ----------------------------------------------------------------------------------------
+   
+   //program pfilter
+   for(i=0;i< port_num;i++)
+     ep_pfilter_lacp_test_code(i);
+   
+   //enable TRU (quite useful to do...)
+   tru_enable(); 
+   
+   return 0;
+}
 
 int config_startup(int opt, int sub_opt, int port_num)
 {
@@ -521,6 +653,9 @@ int config_startup(int opt, int sub_opt, int port_num)
       break;
     case 7:
       config_hp_test(sub_opt,port_num);
+      break;
+    case 8: 
+      config_lacp_test(sub_opt,8);
       break;
     //////////////////////////////////////////////////////////////////
     case 0:
