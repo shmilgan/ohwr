@@ -55,5 +55,6 @@ void rtux_set_life(char *optarg);
 
 void rtux_fw_to_CPU(int arg);
 void rtux_disp_fw_to_CPU();
+void rtux_read_hp_prio_mask();
 
 #endif /*__WHITERABBIT_RTU_DRV_H*/

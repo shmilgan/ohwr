@@ -274,7 +274,6 @@ uint8_t rtux_get_hp_prio_mask()
  * \brief Set the mask which which priorities are considered High Priority (this only
  *        concerns the traffic which is fast-forwarded)
  * @param hp_prio_mask mask with priorities (eg. 0x9 => priority 7 and 0 are considered HP)
-
  */
 void rtux_set_hp_prio_mask(uint8_t hp_prio_mask)
 {
@@ -475,7 +474,7 @@ void rtux_set_life(char *optarg)
       rtux_read_cpu_port();
     break;
     case  3:
-      rtux_set_hp_prio_mask(1<<sub_opt);
+       rtux_set_hp_prio_mask((0xFF & sub_opt));
     break;
     case  4:
        if(sub_opt == 1)
@@ -507,6 +506,7 @@ void rtux_set_life(char *optarg)
       rtux_disp_ctrl() ;
       rtux_disp_fw_to_CPU(); 
       rtux_read_cpu_port();
+      rtux_read_hp_prio_mask();
       
     break;
     default:
@@ -516,7 +516,7 @@ void rtux_set_life(char *optarg)
        TRACE(TRACE_INFO, "-x 1  mask   set ctrl options, mask in decimal format:");
        TRACE(TRACE_INFO, "             mask = d'{at_fm,mac_br,mac_range,mac_single, mac_ll, mac_ptp, mr}");
        TRACE(TRACE_INFO, "-x 2         read port mask cpu virual port recognized in fast match");
-       TRACE(TRACE_INFO, "-x 3  prio   sets prio to be recognized as HP");
+       TRACE(TRACE_INFO, "-x 3  prio   sets prio to be recognized as HP (provide mask)");
        TRACE(TRACE_INFO, "-x 4  opt    MIRRORING configuration (the mirroring needs to be enabled with set ctrl)");
        TRACE(TRACE_INFO, "-x 4  1      sets traffic tx-ed/rx-ed on port 1 to be mirrored on port 7");
        TRACE(TRACE_INFO, "-x 4  2      sets traffic rx-ed       on port 1 to be mirrored on port 7");
