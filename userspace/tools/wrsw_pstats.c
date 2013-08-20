@@ -23,7 +23,7 @@
 	 _fpga_writel(FPGA_BASE_PSTATS + offsetof(struct PSTATS_WB, reg), val)
 
 #define NPORTS 8
-#define CNT_PP 38
+#define CNT_PP 39
 
 struct cnt_word {
 	uint32_t cnt;	//4 cntrs per 32-bit word
@@ -71,7 +71,8 @@ char info[][20] = {{"Tu-run|"}, // 0
                    {"RTUn-f|"}, // 34
                    {"RTUfst|"}, // 35
                    {"RTUful|"}, // 36
-                   {"RTUfwd|"}  // 37 ---
+                   {"RTUfwd|"}, // 37 ---
+                   {"TRUrsp|"}  // 38 
                  };
 static void read_cntval(int port, int adr, uint32_t *data);
 
@@ -194,7 +195,7 @@ int main(int argc, char **argv)
 	int option=0;
 	int prio_cnts[] = {21,22,23,24,25,26,27,28}; //8
 	int def_cnts[]  = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,29,30,31,32,33,34,35,36,37}; //30
-	int rtu_cnts[]  = {29,30,31,32,33,34,35,36,37}; //9
+	int rtu_cnts[]  = {29,30,31,32,33,34,35,36,37,38}; //10
 	int ep_cnts[]   = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28}; //29
 	int op = 0;
 
@@ -214,7 +215,7 @@ int main(int argc, char **argv)
 				print_chosen_cnts(ep_cnts, 29);
 				break;
 			case 'r': 
-				print_chosen_cnts(rtu_cnts, 9);
+				print_chosen_cnts(rtu_cnts, 10);
 				break;
 			case 'a':
 				print_first_n_cnts(CNT_PP);
