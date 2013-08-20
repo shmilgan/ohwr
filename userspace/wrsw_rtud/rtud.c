@@ -291,8 +291,8 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
         err = rtu_learn_enable_on_port(i,1);
         err = rtu_pass_all_on_port(i,1);
         err = rtu_pass_bpdu_on_port(i,0);
-        err = rtu_set_fixed_prio_on_port(i,0);
-        err = rtu_set_unrecognised_behaviour_on_port(i,1);
+        err = rtu_unset_fixed_prio_on_port(i);
+        err = rtu_set_unrecognised_behaviour_on_port(i, 1);
     }
 
     // init filtering database
