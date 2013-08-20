@@ -455,8 +455,10 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time, int unrec_be
         err = rtu_learn_enable_on_port(i,1);
         err = rtu_pass_all_on_port(i,1);
         err = rtu_pass_bpdu_on_port(i,0);
-        err = rtu_set_fixed_prio_on_port(i,0);
-        err = rtu_set_unrecognised_behaviour_on_port(i,1);
+//         err = rtu_set_fixed_prio_on_port(i,0); //this should not be default config, wasted 
+                                                  //too many hours because of this (polite version)
+        err = rtu_unset_fixed_prio_on_port(i);
+        err = rtu_set_unrecognised_behaviour_on_port(i,unrec_behavior);
     }
 
     ///////////////// RTU eXtension ///////
