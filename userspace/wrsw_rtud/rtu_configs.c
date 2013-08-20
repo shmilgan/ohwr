@@ -84,7 +84,9 @@ int config_info()
   TRACE(TRACE_INFO, "-s 7  n      High Prio tunneling, kind of:  ");
   TRACE(TRACE_INFO, "      0      nonHP frame dropping disabled ");    
   TRACE(TRACE_INFO, "      1      nonHP frame dropping enabled ");  
-  TRACE(TRACE_INFO, "-s 8         LACP test config:  ");
+  TRACE(TRACE_INFO, "-s 8         LACP test config  ");
+  TRACE(TRACE_INFO, "-s 9         Configuration for debugging VLANS (VID=0->discard; VIDs>0, different masks, TRU enabled");
+  TRACE(TRACE_INFO, "-s 10        Testing Fast Match (confiured but not enabled singleMAC, etc)");
     
   return 0;
 }
@@ -496,6 +498,9 @@ int config_hp_test(int sub_opt, int port_num)
   return 0;
 }
 
+/**
+ * opt=8
+ */
 int config_lacp_test(int sub_opt, int port_num)
 {
   int i;
@@ -627,10 +632,93 @@ int config_lacp_test(int sub_opt, int port_num)
    return 0;
 }
 
+/**
+ * opt=9
+ */
+int config_VLAN_dbg(int sub_opt, int port_num)
+{
+  int i;  
+  tru_disable();
+  for(i=0;i<port_num;i++)
+  {
+    ep_set_vlan((uint32_t)i, 0x2/*qmode*/, 0 /*fix_prio*/, 0 /*prio_val*/, 0 /*pvid*/);
+    ep_class_prio_map((uint32_t)i, prio_map);
+  }
+  
+  vlan_entry_vd(0               /* vid           */, 
+                0               /* port_mask     */, 
+                0               /* fid           */, 
+                0               /* prio          */,
+                0               /* has_prio      */,
+                0               /* prio_override */, 
+                1                /* drop          */);  
+  
+  tru_write_tab_entry(1          /* valid         */,
+                      0          /* entry_addr    */,    
+                      0          /* subentry_addr */,
+                      0x00000000 /* pattern_mask  */, 
+                      0x00000000 /* pattern_match */,   
+                      0x000      /* pattern_mode  */,
+                      0x0000FFFF /* ports_mask    */, 
+                      0x0000FFFF /* ports_egress  */,      
+                      0x0000FFFF /* ports_ingress */,
+                      1          /* validate      */,
+                      1          /* print         */ );      
+    
+  for(i=1;i<10;i++)
+  {
+    vlan_entry_vd(i                /* vid           */, 
+                  1<<i             /* port_mask     */, 
+                  i                /* fid           */, 
+                  0                /* prio          */,
+                  0                /* has_prio      */,
+                  0                /* prio_override */, 
+                  0                /* drop          */);      
+    
+    tru_write_tab_entry(1          /* valid         */,
+                        i          /* entry_addr    */,    
+                        0          /* subentry_addr */,
+                        0x00000000 /* pattern_mask  */, 
+                        0x00000000 /* pattern_match */,   
+                        0x000      /* pattern_mode  */,
+                        0x0000FFFF /* ports_mask    */, 
+                        0x0000FFFF /* ports_egress  */,      
+                        0x0000FFFF /* ports_ingress */,
+                        1          /* validate */,
+                        1          /* print */ );     
+  }
+  tru_enable(); 
+  
+  return 0;
+}
+
+/**
+ * opt=10
+ */
+int config_FF_test(int sub_opt, int port_num)
+{
+  int i;  
+//   tru_enable(); // should be transparent -> bug ????????
+   tru_disable();
+   for(i=0;i<port_num;i++)
+   {
+     ep_set_vlan((uint32_t)i, 0x2/*qmode*/, 0 /*fix_prio*/, 0 /*prio_val*/, 0 /*pvid*/);
+     ep_class_prio_map((uint32_t)i, prio_map);
+   }
+  rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_PC_ETH6/*MAC*/);
+  rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_PC_ETH7/*MAC*/);
+  
+  rtux_add_ff_mac_range (0/*ID*/, 1/*valid*/, mac_single_PC_ETH9 /*MAC_lower*/, 
+                                              mac_single_PC_ETH6 /*MAC_upper*/);   
+  
+  return 0;
+}
+
+
 int config_startup(int opt, int sub_opt, int port_num)
 {
  
-   TRACE(TRACE_INFO,"config_startup: opt = %ds sub_opt = %d ",opt, sub_opt);
+  TRACE(TRACE_INFO,"config_startup: opt = %ds sub_opt = %d ",opt, sub_opt);
   switch(opt)
   {
     case 1:
@@ -657,6 +745,12 @@ int config_startup(int opt, int sub_opt, int port_num)
     case 8: 
       config_lacp_test(sub_opt,8);
       break;
+    case 9:
+      config_VLAN_dbg(sub_opt,8);
+      break;
+    case 10:
+      config_FF_test(sub_opt,8);
+      break;      
     //////////////////////////////////////////////////////////////////
     case 0:
     default:
