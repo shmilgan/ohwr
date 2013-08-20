@@ -9,7 +9,7 @@
 
 
 #define PSTATS_NPORTS 8	/* how many eth ports are in the switch */
-#define PSTATS_CNT_PP 38	/* how many counters per port */
+#define PSTATS_CNT_PP 39	/* how many counters per port */
 #define PSTATS_ADR_PP ((PSTATS_CNT_PP+3)/4)	/* how many address words are
 						 * there per counter (each of
 						 * them stores the state of 4
