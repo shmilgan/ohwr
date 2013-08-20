@@ -398,6 +398,36 @@ void rtux_disp_fw_to_CPU()
 
 }
 
+int rtux_dbg_force_match(int arg)
+{
+   uint32_t mask;
+   mask = rtu_rd(RX_CTR);
+   mask = 0xF3FFFFFF & mask; 
+   
+   if(arg == 0) 
+   {
+     mask;
+     TRACE(TRACE_INFO,"RTU eXtension DBG features: disable forcing Match Mechanism [mask=0x%x]", mask);
+   }
+   else if(arg == 1)
+   {
+     mask = RTU_RX_CTR_FORCE_FAST_MATCH_ENA | mask;
+     TRACE(TRACE_INFO,"RTU eXtension DBG features: force Fast Match Mechanism [mask=0x%x]", mask);
+   }
+   else if(arg == 2)
+   {
+     mask = RTU_RX_CTR_FORCE_FULL_MATCH_ENA | mask;
+     TRACE(TRACE_INFO,"RTU eXtension DBG features: force Full Match Mechanism [mask=0x%x]", mask);
+   }
+   else
+   {
+     TRACE(TRACE_INFO,"RTU eXtension DBG features: FAILED: wrong input value [value=%d, allowed: 0,1,2]", arg);
+     return 0;
+   }
+   rtu_wr(RX_CTR, mask);
+   
+}
+
 void rtux_disp_ctrl(void)
 {
    uint32_t mask;
@@ -501,6 +531,9 @@ void rtux_set_life(char *optarg)
        if(sub_opt == 1 ) tatsu_drop_nonHP_enable();
        else if(sub_opt == 0 ) tatsu_drop_nonHP_disable();
       break;
+    case 7:
+      rtux_dbg_force_match(sub_opt);
+      break;      
     case  10:
 
       rtux_disp_ctrl() ;
@@ -523,6 +556,10 @@ void rtux_set_life(char *optarg)
        TRACE(TRACE_INFO, "-x 4  3      sets traffic tx-ed       on port 1 to be mirrored on port 7");
        TRACE(TRACE_INFO, "-x 5  n      set forwarding to CPU config: mask = {unrec_fw_to_CPU, hp_fw_to_CPU}");
        TRACE(TRACE_INFO, "-x 6  0/1    TATSU: drop_nonHP frames disable/enable");
+       TRACE(TRACE_INFO, "-x 7  opt    DBG: enable/disable forcing particular MATCH mechanism in RTU:");
+       TRACE(TRACE_INFO, "-x 7  0           disable this stuff");
+       TRACE(TRACE_INFO, "-x 7  1           force Fast Match only ");
+       TRACE(TRACE_INFO, "-x 7  2           force Full Match only ");
        TRACE(TRACE_INFO, "-x 10        show status");
   };
   exit(1);
