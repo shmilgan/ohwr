@@ -85,6 +85,7 @@ pack()
 clean()
 {
 	echo "Cleaning all outputs except downloads"
+	make -C ${WRS_BASE_DIR}/../userspace clean
 	rm -Rf ${WRS_OUTPUT_DIR}/build/
 	rm -Rf ${WRS_OUTPUT_DIR}/images/
 	rm -Rf ${WRS_OUTPUT_DIR}/doc/
