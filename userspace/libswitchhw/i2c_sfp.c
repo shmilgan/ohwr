@@ -95,12 +95,14 @@ uint32_t pca9554_masks[] = {
 
 /* The two FPGA i2c masters */
 i2c_fpga_reg_t fpga_bus0_reg = {
-	.base_address = FPGA_I2C0_ADDRESS,
+  .base_address = FPGA_I2C_ADDRESS,
+	.if_num = FPGA_I2C0_IFNUM,
 	.prescaler = 500,
 };
 
 i2c_fpga_reg_t fpga_bus1_reg = {
-	.base_address = FPGA_I2C1_ADDRESS,
+  .base_address = FPGA_I2C_ADDRESS,
+	.if_num = FPGA_I2C1_IFNUM,
 	.prescaler = 500,
 };
 
