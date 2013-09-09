@@ -13,11 +13,25 @@
 #define FPGA_BASE_RTU 	   0x60000
 
 /* Simple PWM module */
-#define FPGA_BASE_SPWM 		0x57000
+#define FPGA_BASE_SPWM 		0x55000
 
 /* HW Info Unit */
 #define FPGA_BASE_HWIU    0x57800
 
+/* Topology Resolution Unit */
+#define FPGA_BASE_TRU 	  0x56000 // 0x57000
+
+/* Time-Aware Traffic Shaper Unit */
+#define FPGA_BASE_TATSU 	  0x57000 // 0x57000
+
+/* per-port Statistics */
+#define FPGA_BASE_PSTATS 0x58000
+
+/* HardWare Debugging Unit */
+#define FPGA_BASE_HWDU 	  0x59000 
+
+/* Endpoint  */
+#define FPGA_BASE_EP0 	   0x30000
 
 #define FPGA_BASE_ADDR _fpga_base_virt
 
