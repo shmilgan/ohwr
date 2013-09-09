@@ -47,7 +47,8 @@ static int is_cpu_pwn = 0;
 static int enable_d0 = 0;
 
 static i2c_fpga_reg_t fpga_sensors_bus_master = {
-		.base_address = FPGA_I2C_SENSORS_ADDRESS,
+    .base_address = FPGA_I2C_ADDRESS,
+		.if_num = FPGA_I2C_SENSORS_IFNUM,
 		.prescaler = 500,
 };
 

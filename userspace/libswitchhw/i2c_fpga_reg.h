@@ -16,6 +16,7 @@
 #define FPGA_I2C_REG_RXR	0x0C
 #define FPGA_I2C_REG_CR		0x10
 #define FPGA_I2C_REG_SR		0x10
+#define FPGA_I2C_REG_IFS  0x14
 
 #define CTR_EN 			(1<<7)
 #define CR_STA			(1<<7)
@@ -25,14 +26,17 @@
 #define CR_ACK			(1<<3)
 #define SR_RXACK		(1<<7)
 #define SR_TIP			(1<<1)
+#define IFS_BUSY    (1<<7)
 
-#define FPGA_I2C0_ADDRESS 0x54000
-#define FPGA_I2C1_ADDRESS 0x55000
-#define FPGA_I2C_SENSORS_ADDRESS 0x56000
+#define FPGA_I2C_ADDRESS 0x54000
+#define FPGA_I2C0_IFNUM 0
+#define FPGA_I2C1_IFNUM 1
+#define FPGA_I2C_SENSORS_IFNUM 2
 
 typedef struct
 {
     uint32_t base_address;
+    uint32_t if_num;
     uint32_t prescaler;
 } i2c_fpga_reg_t;
 
