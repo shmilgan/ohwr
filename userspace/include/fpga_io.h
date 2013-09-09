@@ -34,13 +34,13 @@
 #define FPGA_BASE_EP0 	   0x30000
 
 /* Time-Aware Traffic Shaper Unit */
-#define FPGA_BASE_TATSU 	  0x59000 // 0x57000
+#define FPGA_BASE_TATSU 	  0x57000 // 0x57000
 
 /* per-port Statistics */
-#define FPGA_BASE_PSTATS 0x70000
+#define FPGA_BASE_PSTATS 0x58000
 
 /* HardWare Debugging Unit */
-#define FPGA_BASE_HWDU 	  0x71000 
+#define FPGA_BASE_HWDU 	  0x59000 
 
 /* Endpoint  */
 #define FPGA_BASE_EP0 	   0x30000
