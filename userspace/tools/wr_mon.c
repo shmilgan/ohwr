@@ -14,7 +14,7 @@ hexp_port_list_t port_list;
 
 static struct minipc_ch *ptp_ch;
 
-void init()
+void init(int usecolor)
 {
 	halexp_client_init();
 
@@ -27,14 +27,21 @@ void init()
 	}
 
 
-	term_init();
+	term_init(usecolor);
 	halexp_query_ports(&port_list);
 }
 
 void show_ports()
 {
 	int i, j;
-	term_pcprintf(3, 1, C_BLUE, "Switch ports:");
+	time_t t;
+	struct tm *tm;
+	char datestr[32];
+
+	time(&t);
+	tm = localtime(&t);
+	strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
+	term_pcprintf(3, 1, C_BLUE, "Switch ports at %s\n", datestr);
 
 	for(i=0; i<18;i++)
 	{
@@ -50,7 +57,7 @@ void show_ports()
 		
 		halexp_get_port_state(&state, if_name);
 
-		term_pcprintf(5+i, 1, C_WHITE, "%05s: ", if_name);
+		term_cprintf(C_WHITE, " %05s: ", if_name);
 		if(state.up)
 			term_cprintf(C_GREEN, "Link up    ");
 		else
@@ -74,9 +81,9 @@ void show_ports()
 			term_cprintf(C_RED, "NoLock  ");
 
 		if(state.rx_calibrated  && state.tx_calibrated)
-			term_cprintf(C_GREEN, "Calibrated  ");
+			term_cprintf(C_GREEN, "Calibrated  \n");
 		else
-			term_cprintf(C_RED, "Uncalibrated  ");
+			term_cprintf(C_RED, "Uncalibrated  \n");
 	}
 }
 
@@ -86,11 +93,11 @@ void show_servo()
 
 	minipc_call(ptp_ch, 2000, &__rpcdef_get_sync_state, &ss);
 
-	term_cprintf(C_BLUE, "\n\nSynchronization status:\n\n");
+	term_cprintf(C_BLUE, "Synchronization status:\n");
 
 	if(!ss.valid)
 	{
-		term_cprintf(C_RED, "Master mode or sync info not valid\n\n");
+		term_cprintf(C_RED, "Master mode or sync info not valid\n");
 		return;
 	}
 
@@ -156,15 +163,21 @@ void show_screen()
 
 	show_ports();
 	show_servo();
+	fflush(stdout);
 }
 
-int main()
+int main(int argc, char **argv)
 {
-	init();
+	int usecolor = 1;
 
+	if (argc > 1 && !strcmp(argv[1], "-b"))
+		usecolor = 0;
+	init(usecolor);
+
+	setvbuf(stdout, NULL, _IOFBF, 4096);
 	for(;;)
 	{
-		if(term_poll())
+		if(term_poll(500))
 		{
 			int c = term_get();
 
@@ -179,13 +192,10 @@ int main()
 					    track_onoff);
 			}
 		}
-
 		show_screen();
-		usleep(500000);
 	}
-
-	term_cprintf(C_GREY,"bye...\n\n");
-	term_clear();
 	term_restore();
+	setlinebuf(stdout);
+	printf("\n");
 	return 0;
 }

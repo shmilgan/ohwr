@@ -11,8 +11,8 @@
 #define C_BLUE 4
 
 void term_restore(void);
-void term_init(void);
-int term_poll(void);
+void term_init(int usecolor);
+int term_poll(int msec_timeout);
 int term_get(void);
 void term_cprintf(int color, const char *fmt, ...);
 void term_pcprintf(int row, int col, int color, const char *fmt, ...);
