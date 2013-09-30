@@ -1219,7 +1219,21 @@ The most important tools in @file{userspace/tools} are the following:
 
 @item wr_mon
 	A simple monitor of White Rabbit status. It prints to @i{stdout}
-        using the standard escape sequences.
+        using the standard escape sequences for color output. The
+        @t{-b} command line options removes color change (b/w).
+
+@item wr_date
+
+	The program can read or set the White Rabbit date. When setting,
+        using ``@t{wr_date set} @i{value}'' assigns an arbitrary date,
+        and ``@t{wr_date set host}'' passes the host time to White Rabbit.
+        If the file @t{/etc/leap-seconds.list} exists, it is used to
+        pass the TAI offset to the kernel, and to consider it in setting
+        White Rabbit time to the current TAI value.  The program is
+        meant to prime the White Rabbit counter at boot time, and is
+        run by @t{/etc/init.d/S70wr_date} -- this script uses NTP
+        to set host time as a first step, if @t{/wr/etc/wr_date.conf}
+        exists and includes a line of the form @t{ntpserver 192.168.16.1}.
 
 @item shw_ver
 	Print informations about the SW & HW version of the WRS. 
