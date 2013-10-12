@@ -36,12 +36,14 @@
 @setchapternewpage off
 
 @set update-month July 2013
+@c the release name below is substituted at build time
+@set release __RELEASE_GIT_ID__
 
 @finalout
 
 @titlepage
 @title White Rabbit Switch: software build scripts
-@subtitle @value{update-month}
+@subtitle @value{update-month} (@value{release})
 @subtitle How to rebuild the whole software package from sources
 @author Alessandro Rubini, Benoit Rat, Federico Vaga et al.
 @end titlepage
