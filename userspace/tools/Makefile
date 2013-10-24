@@ -1,5 +1,5 @@
 TOOLS = rtu_stat wr_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex com
-TOOLS += mapper wmapper shw_ver wr_date
+TOOLS += mapper wmapper shw_ver
 
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 
@@ -31,7 +31,7 @@ CFLAGS =  -O2 -DDEBUG -g -Wall \
 LDFLAGS = -L../mini-rpc \
 		-L../libptpnetif \
 		-L../libswitchhw \
-		-lminipc -lptpnetif -lswitchhw
+		-lminipc -lptpnetif -lswitchhw -llua -lm -ldl
 
 all: 	$(TOOLS)
 
@@ -57,6 +57,15 @@ shw_ver.o: shw_ver.c
 	${CC} ${CFLAGS} -D__GIT_USR__="\"${GIT_USR}\"" -D__GIT_VER__="\"${GIT_VER}\"" $(LDFLAGS) -c -o $@ $^  
 
 shw_ver: shw_ver.o
+	${CC} -o $@ $^ $(LDFLAGS)	
+
+test_rt: test_rt.o ../wrsw_hal/rt_client.o
+	${CC} -o $@ $^ $(LDFLAGS)	
+
+test_ts: test_ts.o ../wrsw_hal/rt_client.o
+	${CC} -o $@ $^ $(LDFLAGS)	
+
+port_calibrator: port_calibrator.o ../wrsw_hal/rt_client.o
 	${CC} -o $@ $^ $(LDFLAGS)	
 
 clean:

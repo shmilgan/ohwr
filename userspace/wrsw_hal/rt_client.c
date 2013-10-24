@@ -111,6 +111,17 @@ int rts_enable_ptracker(int channel, int enable)
     return rval;
 }
 
+int rts_debug_command(int command, int value)
+{
+    int rval;
+		int ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_debug_command_struct, &rval, command, value);
+
+    if(ret < 0)
+        return ret;
+
+    return rval;
+}
+
 
 int rts_connect()
 {

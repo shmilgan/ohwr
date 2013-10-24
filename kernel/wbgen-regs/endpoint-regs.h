@@ -78,6 +78,13 @@
 /* definitions for field: Timestamping counter synchronization done in reg: Timestamping Control Register */
 #define EP_TSCR_CS_DONE                       WBGEN2_GEN_MASK(3, 1)
 
+/* definitions for field: Start calibration of RX timestamper in reg: Timestamping Control Register */
+#define EP_TSCR_RX_CAL_START                  WBGEN2_GEN_MASK(4, 1)
+
+/* definitions for field: RX timestamper calibration result flag in reg: Timestamping Control Register */
+#define EP_TSCR_RX_CAL_RESULT                 WBGEN2_GEN_MASK(5, 1)
+
+
 /* definitions for register: RX Deframer Control Register */
 
 /* definitions for field: RX accept runts in reg: RX Deframer Control Register */

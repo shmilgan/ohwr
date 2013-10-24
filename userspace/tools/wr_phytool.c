@@ -516,6 +516,8 @@ int main(int argc, char **argv)
 	if (fpga_map(argv[0]) < 0)
 		exit(1);
 
+	shw_init();
+
 	if(argc<3)
 	{
 

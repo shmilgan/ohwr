@@ -14,6 +14,8 @@
 
 #include "ad9516.h"
 
+#include "rt_ipc.h"
+
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
@@ -244,3 +246,22 @@ int ad9516_init(int ref_source)
 	return 0;
 }
 
+
+int rts_debug_command(int command, int value)
+{
+	switch(command)
+	{
+		case RTS_DEBUG_ENABLE_SERDES_CLOCKS:
+			if(value)
+			{
+				ad9516_write_reg(0xf4, 0x08); // OUT4 enabled
+				ad9516_write_reg(0x232, 0x0);
+				ad9516_write_reg(0x232, 0x1);
+			} else {
+				ad9516_write_reg(0xf4, 0x0a); // OUT4 power-down, no serdes clock
+				ad9516_write_reg(0x232, 0x0);
+				ad9516_write_reg(0x232, 0x1);
+			}
+			break;
+	}
+}

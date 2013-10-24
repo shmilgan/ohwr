@@ -15,8 +15,8 @@ main()
 
 	uart_init();
 	
-	TRACE("WR Switch Real Time Subsystem (c) CERN 2011-2012\n");
-	TRACE("Revision: %s, built at %s.\n", build_revision, build_date);
+	TRACE("WR Switch Real Time Subsystem (c) CERN 2011 - 2013\n");
+	TRACE("Revision: %s, built %s.\n", build_revision, build_date);
 	TRACE("--");
 
 	ad9516_init();
@@ -27,8 +27,9 @@ main()
 	{
 			uint32_t tics = timer_get_tics();
 			
-			if(tics - start_tics > TICS_PER_SECOND)
+			if(tics - start_tics > TICS_PER_SECOND/5)
 			{
+//				TRACE("tick!\n");
 				spll_show_stats();
 				start_tics = tics;
 			}
