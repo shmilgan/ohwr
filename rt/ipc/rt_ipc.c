@@ -151,8 +151,6 @@ static int rts_get_state_func(const struct minipc_pd *pd, uint32_t *args, void *
     struct rts_pll_state *tmp = (struct rts_pll_state *)ret;
     int i;
 
-//    TRACE("IPC Call: %s [rv at %x]\n", __FUNCTION__, ret);
-
 		pstate.ipc_count++;
 
     /* gaaaah, somebody should write a SWIG plugin for generating this stuff. */
@@ -162,8 +160,6 @@ static int rts_get_state_func(const struct minipc_pd *pd, uint32_t *args, void *
     tmp->mode = htonl(pstate.mode);
 		tmp->delock_count = spll_get_delock_count();
 		tmp->ipc_count = pstate.ipc_count;
-		
-		softpll_copy_debug_data(&tmp->debug_data[0]);
 		
     for(i=0; i<RTS_PLL_CHANNELS;i++)
     {
@@ -199,7 +195,8 @@ static int rts_adjust_phase_func(const struct minipc_pd *pd, uint32_t *args, voi
 static int rts_enable_ptracker_func(const struct minipc_pd *pd, uint32_t *args, void *ret)
 {
 		pstate.ipc_count++;
-    *(int *) ret = spll_enable_ptracker((int)args[0], (int)args[1]);
+		spll_enable_ptracker((int)args[0], (int)args[1]);
+    *(int *) ret = 0;
 }
 
 static int rts_debug_command_func(const struct minipc_pd *pd, uint32_t *args, void *ret)
