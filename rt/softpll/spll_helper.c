@@ -11,16 +11,22 @@
 
 #include "spll_helper.h"
 #include "spll_debug.h"
- 
+
+const int helper_precomp_coefs [] = 
+{ /*b0*/ 60648,
+  /*b1*/ 60648,
+  /*b2*/ 0,
+  /*a1*/ 55760,
+  /*a2*/ 0};
+   
 void helper_init(struct spll_helper_state *s, int ref_channel)
 {
 
 	/* Phase branch PI controller */
 	s->pi.y_min = 5;
 	s->pi.y_max = (1 << DAC_BITS) - 5;
-	s->pi.kp = (int)(0.3 * 32.0 * 16.0);	// / 2;
-	s->pi.ki = (int)(0.03 * 32.0 * 3.0);	// / 2;
-
+	s->pi.kp = 150;//(int)(0.3 * 32.0 * 16.0);	// / 2;
+	s->pi.ki = 2;//(int)(0.03 * 32.0 * 3.0);	// / 2;
 	s->pi.anti_windup = 1;
 
 	/* Phase branch lock detection */
@@ -29,6 +35,7 @@ void helper_init(struct spll_helper_state *s, int ref_channel)
 	s->ld.delock_samples = 100;
 	s->ref_src = ref_channel;
 	s->delock_count = 0;
+
 }
 
 int helper_update(struct spll_helper_state *s, int tag,
@@ -58,6 +65,8 @@ int helper_update(struct spll_helper_state *s, int tag,
 			if (err > HELPER_ERROR_CLAMP)
 				err = HELPER_ERROR_CLAMP;
 		}
+
+//		err = biquad_update(&s->precomp, err);
 
 		if ((tag + s->p_adder) > HELPER_TAG_WRAPAROUND
 		    && s->p_setpoint > HELPER_TAG_WRAPAROUND) {
@@ -95,6 +104,9 @@ void helper_start(struct spll_helper_state *s)
 	pi_init((spll_pi_t *)&s->pi);
 	ld_init((spll_lock_det_t *)&s->ld);
 
+	biquad_init(&s->precomp, helper_precomp_coefs, 16);
+
 	spll_enable_tagger(s->ref_src, 1);
 	spll_debug(DBG_EVENT | DBG_HELPER, DBG_EVT_START, 1);
+
 }
