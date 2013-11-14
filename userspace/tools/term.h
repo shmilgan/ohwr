@@ -14,6 +14,8 @@ void term_restore(void);
 void term_init(int usecolor);
 int term_poll(int msec_timeout);
 int term_get(void);
-void term_cprintf(int color, const char *fmt, ...);
-void term_pcprintf(int row, int col, int color, const char *fmt, ...);
+void term_cprintf(int color, const char *fmt, ...)
+	__attribute__((format(printf,2,3)));
+void term_pcprintf(int row, int col, int color, const char *fmt, ...)
+	__attribute__((format(printf,4,5)));
 void term_clear(void);
