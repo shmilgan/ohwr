@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month July 2013
+@set update-month November 2013
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -59,12 +59,13 @@
 @top Introduction
 
 This document describes the software build procedures for the White
-Rabbit Switch.  The procedure described is for version 3 of the
-hardware project, which  has been successfully booted for the first
-time on Sep 13th 2011.
-The different steps focus on the v3.3, however you can find some
-(though limited)
-documentation for v3.0, v3.1 & v3.2 in @ref{Older Hardware Releases}
+Rabbit Switch.  The procedure described is for version 3.3 of the
+hardware project and post-v3.3 software package.
+If you are running the official 3.3 release, please
+refer to the associated manual (at
+@url{http://www.ohwr.org/attachments/download/2264/wr-switch-sw-v3.3-20130725_build.pdf},
+which includes some (though limited) documentation for v3.0, v3.1
+& v3.2 in its Appendixes.
 
 @b{Note:} the switch, as shipped, works perfectly with the provided
 binaries (@url{http://www.ohwr.org/projects/wr-switch-sw/files}), and
@@ -75,12 +76,6 @@ want to customize their own switch, which is actually a GNU/Linux host.
 If you do not need to modify/hack anything in the switch and just learn
 how to use it, you should first refer at the @b{User Guide} that you can
 find in the @url{http://www.ohwr.org/projects/wr-switch-sw/files}
-
-If you have an older Version-2 switch, please refer to the v2 branch
-of the repository at
-@code{git://ohwr.org/white-rabbit/wr-switch-sw.git}
-(or @code{git@@ohwr.org:white-rabbit/wr-switch-sw.git} if you are
-granted write access).
 
 @menu
 * Overview::                    
@@ -470,13 +465,9 @@ directory by deleting all compiled modules (except downloaded files), just call:
 
 This chapter describes the different steps to install the WRS-3 with the 
 correct firmware. This procedure describes the installation of the switch
-with a @i{SCB v3.3} and a @i{Mini-Backplane v3.3}. If you have an older
-version you might look at the @ref{Older Hardware Releases} and the footnotes.
-
-@menu
-* USB connections::             
-* Flashing Procedure::          
-@end menu
+with a @i{SCB v3.3} and a @i{Mini-Backplane v3.3}. Older
+versions are not documented here any more (please get an older
+manual, if needed).
 
 @c ==========================================================================
 @node USB connections
@@ -526,18 +517,8 @@ device in your own host:
 Finally, the kernel should also load the proper device driver, and you
 are expected to see @code{/dev/ttyACM0} or equivalent in your system.
 
-If it is not the case, this mean that the buton used to disable the dataflash 
-during the boot so that the CPU ROM do not find any valid code and enter in
-@emph{"Flashing mode"} is not working. You can open your box and follow 
-the instruction explained @ref{Flashing v3.2} or contact support.
-
-Please note that this procedure is not available with the previous 
-version. Refer to your corresponding flashing section in @ref{Older 
-Hardware Releases}.
-
-
-
-
+If it is not the case, this mean that the button used to disable the dataflash
+and enter @emph{"Flashing mode"} is not working. You should contact support.
 
 @c =============================================================================
 @node Flashing Procedure
@@ -1448,159 +1429,6 @@ For example, the v3.3 backplane with v3.3 LX240T SCB must be configured as bello
 
 
 @c ##########################################################################
-@node Older Hardware Releases
-@appendix Older Hardware Releases
-
-So, if you have an older PCB in your hands, your hardware is unsupported,
-but here are some notes that may be useful.  The differences are minor,
-mainly in GPIO routing, but there is no complete list of changes
-readily available, unfortunately.
-
-@menu
-* v3.2::
-* v3.1/v3.0
-@end menu
-
-
-@c ==========================================================================
-@node v3.2
-@section v3.2
-
-This version should be fully supported with the latest firmware but 
-few things haven been modified to enable backport compatibility.
-
-@menu
-* Flashing with v3.2::
-* The Serial Ports in v3.2::
-@end menu
-
-
-
-@c --------------------------------------------------------------------------
-@node Flashing v3.2
-@subsection Flashing v3.2
-
-
-The preferred way to communicate with the CPU internal ROM
-is through the @b{left} mini-USB port of the switch, also called
-managment USB port.
-
-Once the USB cable plugged to your computer, the kernel should
-automatically load the proper device driver, and you are expected to see
-@code{/dev/ttyACM0} or equivalent in your system and it should be
-enumerated as below:
-
-@smallexample
-   $ lsusb | grep Atmel
-   Bus 001 Device 025: ID 03eb:6124 Atmel Corp. at91sam SAMBA bootloader
-@end smallexample
-
-
-If it is not the case, this mean that there is already some code in 
-the @i{dataflash}, which the switch tries to boot. In order to 
-disable the dataflash you need to open the switch box and fit a 1mm 
-jumper @footnote{On v3.0 & v3.1 this jumper does not exist. Refer 
-to @ref{Flashing v3.1/v3.0}} on the @i{DFEN} pin as shown in 
-picture below to shortcut the @i{dataflash}. 
-
-@sp 1
-@center @image{jumpers, 10cm,,Booting jumpers}
-@sp 2
-
-With the jumper in place, you should reset the machine pressing
-the button near the 20-pin JTAG connector.  When you see that the
-USB device has been enumerated, you should remove the jumper so the
-programming procedure can access the @i{dataflash} device.
-
-After these steps you can follow the normal @ref{Flashing Procedure} to
-flash your device.
-
-
-@c --------------------------------------------------------------------------
-@node The Serial Ports in v3.2
-@subsection The Serial Ports in v3.2
-
-
-@sp 1
-@center @image{frontpanel, 7cm,,front panel of the switch}
-@sp 1
-
-In v3.2, the debug UART of the ARM is shared with the one from FPGA, and
-it can be switched by the FPGA. This multiplexed port is located on the
-front panel of the switch and corresponds to the @b{right} mini-USB
-@i{(Test)} port. By default, it is multiplexed on ARM UART until the FPGA
-toogle it sharing it with the FPGA UART.
-
-Therefore, if you do not toogle, it should behave exactly like the ARM
-debug port in the v3.3.
-
-
-
-@c ==========================================================================
-@node v3.1/v3.0
-@section v3.1/v3.0
-
-@menu
-* Flashing v3.1/v3.0::          
-* Serial Ports in 3.0/3.1::     
-@end menu
-
-@c --------------------------------------------------------------------------
-@node Flashing v3.1/v3.0
-@subsection Flashing v3.1/v3.0
-
-To flash any switch using the USB flasher, you need to force the ROM to 
-run the boot protocol called SAMBA Monitor which mean that you must 
-prevent the ARM from finding valid code in the @i{data-flash}.
-
-In version 3.2 (see @ref{USB connections}) there is a jumper to
-disable dataflash, however for version v3.0 & v3.1 it does not exist. 
-Thus, you need to short pins 1 and 4 of the dataflash chip,
-so the @code{CS*} pin never goes low and the internal ROM won't be
-able to access your @i{at91boot} code.
-
-I used two wires to be shorted together as needed. The next figure
-shows both the shorted pins (the @i{dataflash} is on the left and there
-are two arrowheads pointing to them) and the
-USB cable (on the right).
-@sp 1
-@center @image{flasher, 14cm}
-@sp 1
-
-After shorting the pins you can press reset (the button near the USB
-connector). If things go well, the device is enumerated as shown;
-you must un-short the wires at this point or you will not be able
-to write the new information to @i{dataflash}.
-
-@smallexample
-   brezza% lsusb | grep Atmel
-   Bus 001 Device 025: ID 03eb:6124 Atmel Corp. at91sam SAMBA bootloader
-@end smallexample
-
-The device should also appear as @code{/dev/ttyACM0} or equivalent, and
-the further flashing procedure is the same as in versione 3.2.
-
-
-@c --------------------------------------------------------------------------
-@node Serial Ports in 3.0/3.1
-@subsection Serial Ports in 3.0/3.1
-
-If you have a 6-port @i{mini-backplane}, you can connect the 6 pins of P2 to
-the similar connector on the backplane labeled as @code{Connect to
-MCH/P2}. The backplane hosts a CP2102 USB adapter and a mini-USB
-socket.  Note that you may connect all 6 pins, but only TX and RX
-signals are needed. If you need more details for this setup, please
-write to the mailing list.
-
-The port uses 2.5V signals, but a level converter for 3.3V usually works
-without issues or damages; the figure below shows the connection
-(black is GND, orange is RX and white is TX).
-@sp 1
-@center @image{wrs-v3-uart, 5cm}
-@sp 1
-
-
-@c ##########################################################################
 @node Installing from Jtag
 @appendix Installing from Jtag
 
@@ -1761,155 +1589,15 @@ of the DataFlash and @i{barebox} to offset 0x8400 (33792):
 @end example
 
 Now you can detach the debugger, press reset and see @i{barebox} starting
-without the need for the JTAG any more. The following stes are the same
+without the need for the JTAG any more. The following steps are the same
 as already described.
-
-@c ##########################################################################
-@node Switching from HW-ECC to SW-ECC
-@appendix Switching from HW-ECC to SW-ECC
-
-After release 3.0 of this package we found that hardware ECC for NAND
-memory is bugged in the CPU we are using.  Thus, we'll soon have a new
-release using software ECC, which however is not compatible, so a complete
-reinstall will be needed.
-
-As a ``quick and dirty'' solution to the reliability problem, to be
-used before we develop and thoroughly test the new installation
-procedure, you can take and installed switch and turn it to software
-ECC support.  The difference is in the ECC algorithms used by both
-@i{barebox} and the kernel. So both need to be recompiled.
-
-To recompile the kernel, just undefine @code{CONFIG_MTD_NAND_ATMEL_ECC_HW}
-and define @code{CONFIG_MTD_NAND_ATMEL_ECC_SOFT} instead. To recompile
-barebox, similary, just adapt the configuration. The new configurations,
-for both @i{barebox} and the kernel, are included in this commit of
-the repository.
-
-The following services and files are prerequisites to run this update:
-
-@itemize @bullet
-@item An installed switch, that runs the older @i{barebox}.
-@item A TFTP server, whence you can serve the kernel.
-@item Optionally, the current kernel, using hardware ECC for NAND.
-@item An NFS-Root installation (even a minimal one, with MTD tools).
-@item The new barebox, using software ECC
-@item The new kernel, using software ECC
-@item An archive of the filesystem (unchanged from release 3.0).
-@end itemize
-
-An archive with all the pieces you'll need for this upgrade (and maybe
-a little more than that) can be downloaded from the @i{files} section
-of the @i{White Rabbit} project on @code{ohwr.org}. (However, the
-archive doesn't include the filesystem image, which is big and didn't
-change from release 3.0).  The direct link is:@*
-@url{www.ohwr.org/attachments/download/1648/reflash-2012-10-09.tar.gz}
-
-@sp 1
-
-The manual steps for the upgrade, then, are the following ones:
-
-@table @r
-
-@item 1. Boot the switch using the TFTP script.
-
-	If your switch has been installed and the @i{dataflash}
-        is valid, you can boot it using the
-        @t{boot from TFTP script} menu entry. See @ref{Using wrboot}
-        for details.  You don't need to access any NAND memory for this
-        to work (so even if it got corrupted, you'll be able to boot).
-
-@item 2. Erase NAND. 
-
-	Before switching to a different ECC model, you should erase
-        your NAND memory. All bits in erased blocks are set, so all
-        bytes are 0xff with either ECC convention. All areas used
-        by the system must be erased before switching to software ecc.
-        This means @t{/dev/mtd0}, @t{/dev/mtd1} and @t{/dev/mtd2}
-        (kernel, filesystem and barebox environment).  This will forget
-        your local barebox configuration (e.g., MAC address).
-
-@item 3. Boot again, with a new kernel
-
-	Run again the TFTP script to boot from NFS-Root, but using a
-        kernel that supports software ECC.
-
-@item 4. Write the kernel and filesystem to flash
-
-	With this new kernel, you can write to NAND memory using software
-        ECC. @t{/dev/mtd0} will host the new kernel (the same you booted)
-        and @t{/dev/mtd1} will host the filesystem (unchanged from the
-        previous installation).
-
-@item 5. Update barebox in data flash
-
-	The final step is updating barebox, so it can read and boot
-        the new kernel that is stored in flash with software ECC.
-        Barebox must be stored at offset 0x8400 of the SPI memory.
-
-@end table
-
-The following example shows step 2 (erasing flash):
-
-@example
-   # flash_erase /dev/mtd0 0 0
-   Erasing 128 Kibyte @ 7e0000 -- 100 % complete
-
-   # flash_erase /dev/mtd1 0 0
-   Erasing 128 Kibyte @ 7fe0000 -- 100 % complete
-
-   # flash_erase /dev/mtd2 0 0
-   Erasing 128 Kibyte @ 20000 -- 100 % complete
-@end example
-
-The following example shows step 4 (writing the kernel and FS).  You
-can't just ``@t{cat zImage > /dev/mtd0}'' because NAND memory can only
-be written in multiples of 512 bytes. So we'll add trailing unused
-data to the zImage before writing to flash, and the final error can
-be ignored. The final command (writing the filesystem) will take
-50 seconds (uncompressing alone would take 18 seconds).
-
-@example
-   # dd bs=1k count=1 < /dev/zero > /tmp/1k
-   1+0 records in
-   1+0 records out
-
-   # cat zImage-wrs3-swecc /tmp/1k | dd obs=512 > /dev/mtd0
-   nand_do_write_ops: Attempt to write not page aligned data
-   dd: writing 'standard output': Invalid argument
-   2886+1 records in
-   2886+0 records out
-
-   # mount -t jffs2 /dev/mtdblock1 /mnt
-
-   # cd /mnt
-
-   # zcat /path/to/your/copy/of/wrs-image.tar.gz | tar xf -
-@end example
-
-The following example shows step 5 (updating barebox). The block size
-of the @i{dataflash} is 1056 bytes, and partial writes are supported
-(unless what happens with NAND flash) so no padding is needed.
-The command takes a few seconds to run:
-
-@example
-   # cat barebox.bin-swecc | dd bs=1056 seek=32 > /dev/mtd4
-   182+1 records in
-   182+1 records out
-@end example
-
-@b{Hint}: at any time, if in doubt about what version of @i{barebox}
-and the kernel you are running, you can check the date (@code{version}
-in @i{barebox} and @code{uname -a} in Linux).  Hardware-ECC images are
-from August 2012 (official v3.0 release), while software-ECC images
-are from October 2012.  If you recompiled and are in doubt about
-the kernel, you can @i{zgrep} for @code{ECC} in @code{/proc/config.gz}.
 
 @c ##########################################################################
 @node Bugs and Troubleshooting
 @appendix Bugs and Troubleshooting
 
-Even if we released the package as version 3.0 (being the first
-release for version 3 of the hardware), some details can be
+Even if the package is already released and used in production,
+some details can be
 suboptimal, while some procedures may be tricky and need more explanation.
 
 We are collecting all those issues in the @i{wiki} page of the
