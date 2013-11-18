@@ -126,6 +126,17 @@ The purpose of the build-script rewrite is achieving the following targets:
         even the first time they build the WRS software.
 @end itemize
 
+After release 3.3, we decided to add @i{Kconfig} support. This means
+that the first build step is expected to be ``@t{make menuconfig}'',
+like it happens for the kernel.  The default configuration is selected
+by default when one of the build scripts is run, so the procedure for
+the final user is the same as for v3.3 and earlier.  A build with a
+non-default configuration, however, is not considered as
+``supported'', and @i{Kconfig} is there mainly to help developers try
+new packages and setups without changing the repository or
+introducing problems for other users.  For some more information about
+@i{Kconfig} in this package, see @ref{Kconfig Support}.
+
 The build system is set up as a mix of scripts and makefiles. Every
 sub-package is built by its own script and/or Makefile, and configuration is
 passed over through environment variables. The top-level build script
@@ -458,6 +469,35 @@ directory by deleting all compiled modules (except downloaded files), just call:
    /path/to/wr-switch-sw/build/wrs_build-all --clean
 @end example
 
+
+@c ##########################################################################
+@node Kconfig Support
+@chapter Kconfig Support
+
+After release 3.3 of this software package, we added Kconfig support
+to wr-switch-sw.  The user can ignore this step: building as usual
+(by running @t{wrs_build-all} from an empty directory) silently selects
+the default configuration.  Developers may use the feature to try
+different choices of packages.
+
+To change configuration, you are expected to run ``@t{make
+menuconfig}'' (or @i{gconfig} or @i{kconfig} or the old text-mode
+@i{config}) from the top-level directory of @i{wr-switch-sw}.  To
+silently enact the default configuration, run ``@t{make defconfig}''
+(this is done by the normal build if no configuration is present).
+
+The following configuration options are available
+
+@table @code
+
+@item CONFIG_BR2_CONFIGFILE
+
+	This string option lists a file to be used as Buildroot (BR2)
+        configuration. A simple filename or relative pathname refers to the 
+        @t{configs/buildroot} directory; an absolute pathname is used
+        unchanged.
+
+@end table
 
 @c ##########################################################################
 @node Flashing of WRS-3
@@ -931,22 +971,29 @@ compiler is later used to compile all other software for the White
 Rabbit Switch.
 
 The configuration for @i{buildroot} comes from
-@code{patches/buildroot/buildroot-config-wrswitch}. The configuration
+@code{configs/buildroot/wrs_release_br2_config}. The configuration
 is then changed only if you pre-set your own @code{CROSS_COMPILE}
-variable.
+variable.  A different configuration can be chosen in the Kconfig
+interface, by running ``@t{make menuconfig}'' or equivalent, in the
+top-level source directory.
 
 @c The following can be shown in a set of commands instead of this hard
 @c to read explanation.
 
 If you want to change the configuration, you can do so after the first
 build iteration: change directory to @code{build/buildroot-2011.11}
-and run @code{make menuconfig}. After making your choices, copy back
-the file @code{.config} to
-@code{patches/buildroot/buildroot-config-wrswitch} in this package.
+and run @code{make menuconfig} (this the Buildroot configuration,
+not the one of wr-switch-sw). After making your choices, copy back
+the file @code{.config} to @t{configs/buildroot} in this package,
+so you can select it by running @t{make menuconfig} in wr-switch-sw.
+Otherwise, the saved configuration file can be selected as a full
+path name in @i{menuconfig}.
 
 You can also set @code{WRS_BUILDROOT_CONFIG} to the full pathname of
-your configuration file of choice. The file must be a copy of the
-@code{.config} after the @code{make menuconfig} step described above.
+your configuration file of choice (this used to be the only way
+to pass a custom configuration file). The file must be a copy of the
+@code{.config} after the @code{make menuconfig} step described above,
+withing buildroot.
 Note that if the variable is not pointing to a regular file it is
 ignored with a simple warning -- rather than stopping the build procedure.
 
@@ -1029,6 +1076,8 @@ configuration file we use is
 @file{patches/barebox/@-wrs3_defconfig}. Again, this is copied over and
 not patched in (see the simple @file{build/scripts/@-wrs_build_barebox}
 for details).
+
+@c FIXME: describe how to change the barebox configuration file
 
 After patching and copying over the files, the following commands
 build the boot loader using the
