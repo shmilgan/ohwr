@@ -168,3 +168,17 @@ wrs_download () {
 # Every time wrs_functions is loaded, re-set WRS_MAKE_J
 export WRS_MAKE_J_NUMBER=$(expr $(grep ^processor /proc/cpuinfo | wc -l) + 1)
 export WRS_MAKE_J=-j$WRS_MAKE_J_NUMBER
+
+
+# Also, check the configuration each time this is executed (i.e., each step)
+WRS_CONFIG_DIR=$(dirname "$WRS_BASE_DIR")
+if [ -f "$WRS_CONFIG_DIR/.config" ]; then
+    true
+else
+    echo "No configuration, using default" >& 2
+    (cd "$WRS_CONFIG_DIR" && make defconfig)
+    if [ $? -ne 0 ]; then wrs_die "Configuration failed"; fi
+fi
+
+# and import the configuration variables
+. $WRS_CONFIG_DIR/.config
