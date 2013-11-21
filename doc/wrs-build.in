@@ -400,7 +400,7 @@ by the prefix and the description of the current status of the git repository.
 This is the same naming policy of the kernel and other packages.
 
 The prefix is @code{wrs-firmware-}; the information about the current status are
-retrived by using the git commmand @code{git describe --always --dirty}.
+retrieved by using the git command @code{git describe --always --dirty}.
 For example, if you are building the tag @code{wr-switch-sw-v3.3}, your package
 name will be @code{wrs-firmware-wr-switch-sw-v3.3.tar.gz}. If you are building
 on some personal commit the name includes some extra information to describe
@@ -497,7 +497,7 @@ and the @code{ttyUSB1} to the FPGA.
 
 @sp 1
 
-The front panel USB connection, labeled as @b{managment} USB port, communicates 
+The front panel USB connection, labeled as @b{management} USB port, communicates 
 with the internal ROM of the CPU. It is the one used to perform the 
 flashing procedure.
 
@@ -555,7 +555,7 @@ devices you can avoid this ``@code{-e}'' argument.
 When you program
 the NAND memory the script applies automatically @code{-e} option.
 
-It is recomended to configure the MAC addresses during the flashing
+It is recommended to configure the MAC addresses during the flashing
 procedure. With the option @code{-m1|--mac1} you can select the MAC address
 to assign to the Ethernet port on board. With the option @code{-m2|--mac2}
 you can select the base MAC address; the @code{wr_nic} driver will use this
@@ -590,7 +590,7 @@ and 02:34:56:78:9A:00 for MAC2 (the base address for the 18 SFP ports).
 
 If the script cannot find the Atmel programming interface on your USB
 bus, it prints a message and waits for the switch to be turned on
-in the proper way (with the humber plugged).
+in the proper way (with the jumper plugged or the button pressed).
 
 The process calls the flasher program twice (so you'll see the
 initialization strings two times) and takes slightly less than 3
@@ -708,7 +708,7 @@ Options:
   -g|--gateware	 Select the gateware: 18p (18 ports, default), 8p (8 ports), LX130T (small FPGA), LX240T (big FGPA)
   -e 		 Completely erase the memory (Can erase your configuration)
   -b|--build	 Use files that you have built in the WRS_OUTPUT_DIR
-  -m1|--mac1	 Default MAC address for the ethernet port on board
+  -m1|--mac1	 Default MAC address for the Ethernet port on board
   -m2|--mac2	 Default base MAC address for the switch ports
 
 @end smallexample
@@ -1246,7 +1246,7 @@ so it depends on other @code{ohwr} repositories too, which in turn
 have not been tagged because the submodule mechanism ensures you'll
 get the exact version you need.
 
-The LM32 program is provided as a precompiled binary in
+The LM32 program is provided as a pre-compiled binary in
 @code{binaries/rt_cpu.bin}. The respective source code is in the
 @file{rt} directory of this package, but the build scripts don't deal
 with it to avoid requiring an LM32 development environment.
@@ -1392,7 +1392,7 @@ are available on the Open Hardware Repository, at
 @uref{http://www.ohwr.org/documents/180}, which can also be reached
 from the @i{Documents} tab of the @i{White Rabbit} project.
 
-Plese note that only version 3.2 and 3.3 of both the motherboard and 
+Please note that only version 3.2 and 3.3 of both the motherboard and 
 the backplane has been shipped commercially; you are interested in 
 previous versions only if you are an early developer and have one of 
 those in your hands.
@@ -1618,4 +1618,5 @@ on the mailing list if you don't find help there.
 @c  LocalWords:  menuconfig config dataflash whiterabbit stdout stderr svnsync
 @c  LocalWords:  filesystem diff ohwr http mkdir linux rubini itemize PTPd VHDL
 @c  LocalWords:  noposix ptpd userspace libswitchhw DataFlash NAND barebox FPGA
-@c  LocalWords:  Atmel
+@c  LocalWords:  Atmel Kconfig minicom tinyserial ttyUSB bootloader logfile
+@c  LocalWords:  nandflash gateware TFTP init wrboot wiki
