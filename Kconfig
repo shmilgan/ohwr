@@ -1,0 +1,17 @@
+
+mainmenu "White Rabbit Switch  configuration"
+
+config BR2_CONFIGFILE
+	string "Configuration file for Buildroot"
+	default "wrs_release_br2_config"
+	help
+	  The configuration file selects which packages are to be
+	  included in the WRS filesystem and which are not.  If
+	  you pass a relative pathname, the build procedure will
+	  look for it in wr-switch-sw/configs/buildroot, while
+	  absolute pathnames are used unchanged.
+
+	  If the string being passed doesn't refer to a file, the
+	  scripts print a warning and use the default file. Incorrect
+	  files lead to unpredicatable results.
+

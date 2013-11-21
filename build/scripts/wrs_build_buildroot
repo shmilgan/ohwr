@@ -24,23 +24,34 @@ wrs_echo "Uncompressing buildroot"
 rm -rf $dirname
 tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
 
-# copy the config and replace "-j" level. First remove it in case it's left in
-cd $WRS_OUTPUT_DIR/build/${dirname}
-CFG="$WRS_BASE_DIR/../patches/buildroot/buildroot-config-wrswitch"
+# select configuration: old default, overridden by Kconfig and environment
+CFG_DEFAULT="$WRS_BASE_DIR/../configs/buildroot/wrs_release_br2_config"
+CFG="$CONFIG_BR2_CONFIGFILE"
 if [ "x$WRS_BUILDROOT_CONFIG" != "x" ]; then
-    if [ -f $WRS_BUILDROOT_CONFIG ]; then
 	CFG=$WRS_BUILDROOT_CONFIG
-    else
-	wrs_warn "WRS_BUILDROOT_CONFIG is not a regular file: ignoring it"
-	sleep 3
-    fi
 fi
 
+# turn a relative CFG pathname into an absolute name
+if echo $CFG | grep -q '^/'; then
+    true
+else
+    CFG="$WRS_BASE_DIR/../configs/buildroot/$CFG"
+fi
+
+# check, and revert to default if needed
+if [ ! -f "$CFG" ]; then
+    wrs_warn "Ignoring \"$CFG\" (not a regular file)"
+    CFG="$CFG_DEFAULT"
+fi
+wrs_echo "Configuring with \"$CFG\""
+
+cd $WRS_OUTPUT_DIR/build/${dirname}
 cp $CFG .config
 # If busybox configuration is inside wr-switch-sw (currently it is),
 # fix the config filename
-sed -i "s,__WR_SWITCH_SW__,$WRS_BASE_DIR/..," .config
+sed -i "s,__WR_SWITCH_SW__,$WRS_BASE_DIR/../configs/buildroot," .config
 
+# replace "-j" level. First remove it in case it's left in
 sed -i /^BR2_JLEVEL/d .config
 # make 3.82 splits the work differently, and compilation fails. So no -j
 makefails=$(make -v | awk 'NR==1 {if ($NF > 3.81) print "fail"}')
