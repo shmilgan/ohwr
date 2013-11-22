@@ -597,6 +597,9 @@ static void rtu_fd_commit(void)
     clean_list(hw_req_list);
     hw_req_list = NULL;
 }
+//------- extremelly dirty hack to make it work - no time for more elegant solutioh -----------
+//ofsetof
+#include <stddef.h>
 
 /**
  * \brief Creates or updates a filtering entry in the VLAN table.
