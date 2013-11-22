@@ -418,7 +418,6 @@ void ep_snake_config(int option)
                         0x0, /*mac_range*/ 0x1, /*mac_br*/  0x0  /*at_fm*/); 
       // set  HP prio for all priorities
       rtux_set_hp_prio_mask(0xFF);
-      
     break;    
     case 4: 
       low_snake_port = 0;
@@ -426,6 +425,14 @@ void ep_snake_config(int option)
       qmode          = 0; //access
       untagging      = 1;//untag
       pvid           = 0;//starat with zero
+    break;    
+    case 5: 
+      low_snake_port = 2;
+      up_snake_port  = 17;
+      qmode          = 0; //access
+      untagging      = 1; //untag
+      ep_set_vlan(0 /*port*/, 2/*access port*/, 0 /*fix_prio*/, 0 /*prio_val*/, 0 /*pvid*/);
+      ep_set_vlan(1 /*port*/, 2/*access port*/, 0 /*fix_prio*/, 0 /*prio_val*/, 0 /*pvid*/);
     break;    
     default:
       low_snake_port = 0;
@@ -458,4 +465,30 @@ void ep_snake_config(int option)
        
      }
   }
+}
+
+void ep_strange_config(int opt)
+{
+  switch(opt)
+  {
+    case 1:  
+      ep_set_vlan(0 /*port*/, 0/*access port*/, 0 /*fix_prio*/, 0 /*prio_val*/, 1 /*pvid*/);
+      ep_vcr1_wr( 0 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+      ep_set_vlan(7 /*port*/, 0/*access port*/, 0 /*fix_prio*/, 0 /*prio_val*/, 1 /*pvid*/);
+      ep_vcr1_wr( 7 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ );
+    case 2:
+      ep_set_vlan(0 /*port*/, 0/*access port*/, 0 /*fix_prio*/, 0 /*prio_val*/, 1 /*pvid*/);
+      ep_vcr1_wr( 0 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+      ep_vcr1_wr( 0 /*port*/, 1/*is_vlan*/, 1 /*address*/, 0xFFFF /*data */ ); 
+      ep_set_vlan(17/*port*/, 0/*access port*/, 0 /*fix_prio*/, 0 /*prio_val*/, 1 /*pvid*/);
+      ep_vcr1_wr( 17/*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ );      
+      ep_vcr1_wr( 17/*port*/, 1/*is_vlan*/, 1 /*address*/, 0xFFFF /*data */ );      
+      break;
+    default:
+    case 0: 
+     TRACE(TRACE_INFO,"config_startup: opt = 12 sub_opt = %d NOT SUPPORTED", opt);
+     break;
+  }       
+    
+     
 }

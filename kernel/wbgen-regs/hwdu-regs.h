@@ -51,11 +51,15 @@
 
 /* definitions for register: Value of the requested register */
 
+/* definitions for register: Choose Chipscope input */
+
 PACKED struct HWDU_WB {
   /* [0x0]: REG Control Register */
   uint32_t CR;
   /* [0x4]: REG Value of the requested register */
   uint32_t REG_VAL;
+  /* [0x8]: REG Choose Chipscope input */
+  uint32_t CHPS_ID;
 };
 
 #endif

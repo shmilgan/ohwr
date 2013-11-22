@@ -23,11 +23,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <stddef.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
 
+
+#include <switch_hw.h>
+#include <hal_client.h>
 #include "rtu_configs.h"
 #include "rtu_tatsu_drv.h"
 #include "rtu_ep_drv.h"
 #include "rtu_ext_drv.h"
+#include "rtu_fd.h"
+#include <fpga_io.h>
+#include <regs/hwdu-regs.h>
+#include <regs/rtu-regs.h>
 
 uint8_t mac_single_spirent_A[] = {0x00,0x10,0x94,0x00,0x00,0x01}; // spirent MAC of port 1
 uint8_t mac_single_spirent_B[] = {0x00,0x10,0x94,0x00,0x00,0x02}; // spirent MAC of port 2
@@ -87,7 +99,25 @@ int config_info()
   TRACE(TRACE_INFO, "-s 8         LACP test config  ");
   TRACE(TRACE_INFO, "-s 9         Configuration for debugging VLANS (VID=0->discard; VIDs>0, different masks, TRU enabled");
   TRACE(TRACE_INFO, "-s 10        Testing Fast Match (confiured but not enabled singleMAC, etc)");
-    
+  TRACE(TRACE_INFO, "-s 11 n      Testing tagging/untagging:");
+  TRACE(TRACE_INFO, "      1      Only tagging   on ingress");
+  TRACE(TRACE_INFO, "      2      Only untagging on egress");  
+  TRACE(TRACE_INFO, "      other  Both tagging   on ingress and untagging on egress");  
+  TRACE(TRACE_INFO, "-s 12 n      VLAN 1 for two ports, tagging/untagging");  
+  TRACE(TRACE_INFO, "      1      VLAN 1 for ports 0 and 7, tagging/untagging");  
+  TRACE(TRACE_INFO, "      2      VLAN 1 for ports 0 and 7, tagging/untagging"); 
+  TRACE(TRACE_INFO, "-s 13 n      High Prio tunneling:p0 (HP) and p1 (nonHP) sending on p2:  ");
+  TRACE(TRACE_INFO, "      0      nonHP frame dropping disabled ");    
+  TRACE(TRACE_INFO, "      1      nonHP frame dropping enabled ");   
+  TRACE(TRACE_INFO, "-s 14 n      High Prio tunneling:p0 (HP) sending on p2:  ");
+  TRACE(TRACE_INFO, "      0      nonHP frame dropping disabled ");    
+  TRACE(TRACE_INFO, "      1      nonHP frame dropping enabled ");   
+  TRACE(TRACE_INFO, "-s 15 n      PTP and HP at ports p0 & p1:  ");
+  TRACE(TRACE_INFO, "      0      nonHP frame dropping disabled ");    
+  TRACE(TRACE_INFO, "      1      nonHP frame dropping enabled ");   
+  TRACE(TRACE_INFO, "-s 16 n      two first ports not tagged/untagged, and no VLAN=1, other ports snake:  ");
+
+
   return 0;
 }
 
@@ -99,11 +129,25 @@ int config_default(int sub_opt, int port_num)
   int i;  
 //   tru_enable(); // should be transparent -> bug ????????
    tru_disable();
+   
+   // just add to be able to use alter..
+   rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_spirent_A/*MAC*/);
+   rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_spirent_B/*MAC*/);
+   rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, mac_single_spirent_C/*MAC*/);
+   rtux_add_ff_mac_single(3/*ID*/, 1/*valid*/, mac_single_spirent_D/*MAC*/);   
+   
    for(i=0;i<port_num;i++)
    {
      ep_set_vlan((uint32_t)i, 0x2/*qmode*/, 0 /*fix_prio*/, 0 /*prio_val*/, 0 /*pvid*/);
      ep_class_prio_map((uint32_t)i, prio_map);
    }
+   rtux_feature_ctrl(0 /*mr*/, 
+                     0 /*mac_ptp*/, 
+                     0/*mac_ll*/, 
+                     0/*mac_single*/, 
+                     0/*mac_range*/, 
+                     0/*mac_br*/,
+                     1/*broadcast when full_match full ->> dropping does not work*/);   
   return 0;
 }
 
@@ -707,17 +751,338 @@ int config_FF_test(int sub_opt, int port_num)
    }
   rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_PC_ETH6/*MAC*/);
   rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_PC_ETH7/*MAC*/);
-  
+
+  rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, mac_single_spirent_A/*MAC*/);
+  rtux_add_ff_mac_single(3/*ID*/, 1/*valid*/, mac_single_spirent_B/*MAC*/);
+   
   rtux_add_ff_mac_range (0/*ID*/, 1/*valid*/, mac_single_PC_ETH9 /*MAC_lower*/, 
                                               mac_single_PC_ETH6 /*MAC_upper*/);   
   
   return 0;
 }
+/**
+ * opt=11
+ */
+int config_tag_untag_test(int sub_opt, int port_num)
+{
+  int i;  
+//   tru_enable(); // should be transparent -> bug ????????
+   tru_disable();
+   for(i=0;i<port_num;i++)
+   {
+     ep_class_prio_map((uint32_t)i, prio_map);
+     if(sub_opt == 1) // only tagging on ingress
+     {
+       ep_set_vlan((uint32_t)i, 0x3/*qmode*/, 0 /*fix_prio*/, 0 /*prio_val*/, 0 /*pvid*/);
+       ep_vcr1_wr((uint32_t)i /*port*/, 1/*is_vlan*/, 0 /*address*/, 0x0000 /*data */ );       
+     }
+     else if(sub_opt == 2) // only untagging on egress
+     {
+       ep_set_vlan((uint32_t)i, 0x2/*qmode*/, 0 /*fix_prio*/, 0 /*prio_val*/, 0 /*pvid*/);      
+       ep_vcr1_wr((uint32_t)i /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ );
+     }
+     else
+     {
+       ep_set_vlan((uint32_t)i, 0x3/*qmode*/, 0 /*fix_prio*/, 0 /*prio_val*/, 0 /*pvid*/);
+       ep_vcr1_wr((uint32_t)i /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ );       
+     }
+   }
+  
+  return 0;
+}
+/**
+ * opt=12
+ */
+int config_two_ports_vlan(int sub_opt, int port_num)
+{
+  int i;
+  int pvid = 1;
+  tru_disable();
+  
+  switch(sub_opt)
+  {
+    case 1:  
+      vlan_entry_vd(  1,          //vid, 
+                   0x81,  //port_mask, 
+                      1,      //fid, 
+                      0,            //prio,
+                      0,            //has_prio,
+                      0,            //prio_override, 
+                      0             //drop
+                      );     
+      break;
+    case 2: 
+      vlan_entry_vd(  1,          //vid, 
+                   0x20001,  //port_mask, 
+                      1,      //fid, 
+                      0,            //prio,
+                      0,            //has_prio,
+                      0,            //prio_override, 
+                      0             //drop
+                      );     
+      break;
+    
+    default:
+    case 0: 
+     TRACE(TRACE_INFO,"config_startup: opt = 12 sub_opt = %d NOT SUPPORTED", sub_opt);
+     break;
+  }   
+   ep_strange_config(sub_opt/*option-not implemented*/);// config ports 0 and 7 in VLAN=1 and as access
+      rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_spirent_A/*MAC*/);
+      rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_spirent_B/*MAC*/);
+      rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, mac_single_spirent_C/*MAC*/);
+      rtux_add_ff_mac_single(3/*ID*/, 1/*valid*/, mac_single_spirent_D/*MAC*/);   
+   return 0;  
+}
 
+/**
+ * opt=13
+ */
+int config_hp_test_1(int sub_opt, int port_num)
+{
+  int i;
+  int pvid = 1;
+  tru_disable();
+  // for snake test
+  
+  vlan_entry_vd( 0,          //vid, 
+                 0xFF,  //port_mask, 
+                 0,      //fid, 
+                 0,            //prio,
+                 0,            //has_prio,
+                 0,            //prio_override, 
+                 0             //drop
+                );    
+
+  vlan_entry_vd( 1,          //vid, 
+                 0x5,  //port_mask, 
+                 1,      //fid, 
+                 0,            //prio,
+                 0,            //has_prio,
+                 0,            //prio_override, 
+                 0             //drop
+                );      
+  vlan_entry_vd( 2,          //vid, 
+                 0x6,  //port_mask, 
+                 2,      //fid, 
+                 0,            //prio,
+                 0,            //has_prio,
+                 0,            //prio_override, 
+                 0             //drop
+                );      
+
+  
+  
+  rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_spirent_A/*MAC*/);
+  rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_spirent_B/*MAC*/);  
+  rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, mac_single_spirent_C/*MAC*/);
+  rtux_add_ff_mac_single(3/*ID*/, 1/*valid*/, mac_single_spirent_D/*MAC*/);  
+
+  
+  ep_set_vlan(0 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 1 /*pvid*/);
+  ep_set_vlan(1 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 0 /*prio_val*/, 2 /*pvid*/);  
+
+  ep_vcr1_wr( 0 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+  ep_vcr1_wr( 1 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ );      
+  ep_vcr1_wr( 2 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+  ep_vcr1_wr( 3 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+  
+  rtux_feature_ctrl(0 /*mr*/, 
+                    0 /*mac_ptp*/, 
+                    0/*mac_ll*/, 
+                    1/*mac_single*/, 
+                    0/*mac_range*/, 
+                    0/*mac_br*/,
+                    0/*drop when full_match full*/);  
+  
+   //rtux_set_hp_prio_mask(1<<0); // 7 prio_val
+   rtux_set_hp_prio_mask(1<<7); // 0 prio_val
+  
+  if(sub_opt == 1)
+    tatsu_drop_nonHP_enable();
+  else 
+   tatsu_drop_nonHP_disable();
+
+  
+  return 0;
+}
+
+/**
+ * opt=14
+ */
+int config_hp_test_2(int sub_opt, int port_num)
+{
+  int i;
+  int pvid = 1;
+  tru_disable();
+  // for snake test
+  
+  vlan_entry_vd( 0,          //vid, 
+                 0xFF,  //port_mask, 
+                 0,      //fid, 
+                 0,            //prio,
+                 0,            //has_prio,
+                 0,            //prio_override, 
+                 0             //drop
+                );    
+
+  vlan_entry_vd( 1,          //vid, 
+                 0x5,  //port_mask, 
+                 1,      //fid, 
+                 0,            //prio,
+                 0,            //has_prio,
+                 0,            //prio_override, 
+                 0             //drop
+                );      
+  
+  
+  rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_spirent_C/*MAC*/);
+  ep_set_vlan(0 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 1 /*pvid*/); 
+  ep_vcr1_wr( 0 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+  ep_vcr1_wr( 1 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ );      
+  ep_vcr1_wr( 2 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+  ep_vcr1_wr( 3 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+  
+  
+  rtux_feature_ctrl(0 /*mr*/, 
+                    0 /*mac_ptp*/, 
+                    0/*mac_ll*/, 
+                    1/*mac_single*/, 
+                    0/*mac_range*/, 
+                    0/*mac_br*/,
+                    0/*drop when full_match full*/);  
+  
+   //rtux_set_hp_prio_mask(1<<0); // 7 prio_val
+   rtux_set_hp_prio_mask(1<<7); // 0 prio_val
+  
+  if(sub_opt == 1)
+    tatsu_drop_nonHP_enable();
+  else 
+   tatsu_drop_nonHP_disable();
+
+  
+  return 0;
+}
+
+
+/**
+ * opt=15
+ */
+int config_hp_and_ptp(int sub_opt, int port_num)
+{
+  int i;
+  int pvid = 1;
+  tru_disable();
+  // for snake test
+  
+  vlan_entry_vd( 0,          //vid, 
+                 0xFF,  //port_mask, 
+                 0,      //fid, 
+                 0,            //prio,
+                 0,            //has_prio,
+                 0,            //prio_override, 
+                 0             //drop
+                );    
+
+  vlan_entry_vd( 1,          //vid, 
+                 0x3,  //port_mask, 
+                 1,      //fid, 
+                 0,            //prio,
+                 0,            //has_prio,
+                 0,            //prio_override, 
+                 0             //drop
+                );      
+  
+  
+  rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_spirent_C/*MAC*/);
+  ep_set_vlan(0 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 1 /*pvid*/); 
+  ep_set_vlan(1 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 1 /*pvid*/); 
+  ep_vcr1_wr( 0 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+  ep_vcr1_wr( 1 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ );      
+  ep_vcr1_wr( 2 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+  ep_vcr1_wr( 3 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
+  
+  
+  rtux_feature_ctrl(0 /*mr*/, 
+                    1 /*mac_ptp*/, 
+                    0/*mac_ll*/, 
+                    1/*mac_single*/, 
+                    0/*mac_range*/, 
+                    0/*mac_br*/,
+                    0/*drop when full_match full*/);  
+  
+   //rtux_set_hp_prio_mask(1<<0); // 7 prio_val
+   rtux_set_hp_prio_mask(1<<7); // 0 prio_val
+  
+  if(sub_opt == 1)
+    tatsu_drop_nonHP_enable();
+  else 
+   tatsu_drop_nonHP_disable();
+
+  
+  return 0;
+}
+
+
+/**
+ * opt=16
+ */
+int config_snake_with_PTP_hacked_test(int sub_opt, int port_num)
+{
+  int i;
+  int pvid = 0; 
+  uint8_t ptp_mcast_mac[]     = {0x01, 0x1b, 0x19, 0x00, 0x00, 0x00};
+  tru_disable();
+  // for snake test
+
+  
+  for(i=0;i < 18;i++)
+  {
+    if(i%2==0 && i!=0) pvid++;
+    vlan_entry_vd( pvid,          //vid, 
+                  ((0x3 << 2*pvid) | (0x1 << 18)),  //port_mask, 
+                  pvid,      //fid, 
+                  0,            //prio,
+                  0,            //has_prio,
+                  0,            //prio_override, 
+                  0             //drop
+                  );     
+
+   }
+  //add PTP forwarding to CPU on first vlan
+   rtu_fd_create_entry(ptp_mcast_mac, 1, (1 << port_num), STATIC, OVERRIDE_EXISTING);
+   rtu_fd_create_entry(ptp_mcast_mac, 2, (1 << port_num), STATIC, OVERRIDE_EXISTING);
+   rtu_fd_create_entry(ptp_mcast_mac, 3, (1 << port_num), STATIC, OVERRIDE_EXISTING);
+   rtu_fd_create_entry(ptp_mcast_mac, 4, (1 << port_num), STATIC, OVERRIDE_EXISTING);
+   rtu_fd_create_entry(ptp_mcast_mac, 5, (1 << port_num), STATIC, OVERRIDE_EXISTING);
+   rtu_fd_create_entry(ptp_mcast_mac, 6, (1 << port_num), STATIC, OVERRIDE_EXISTING);
+   rtu_fd_create_entry(ptp_mcast_mac, 7, (1 << port_num), STATIC, OVERRIDE_EXISTING);
+   rtu_fd_create_entry(ptp_mcast_mac, 8, (1 << port_num), STATIC, OVERRIDE_EXISTING);
+   
+   rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_spirent_A/*MAC*/);
+   rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_spirent_B/*MAC*/);
+   rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, mac_single_spirent_C/*MAC*/);
+   rtux_add_ff_mac_single(3/*ID*/, 1/*valid*/, mac_single_spirent_D/*MAC*/);     
+   ep_snake_config(5 /* ports 2-17: VLANS + access/untag*/);   
+   rtux_feature_ctrl(0 /*mr*/, 
+                     0 /*mac_ptp*/, 
+                     0/*mac_ll*/, 
+                     1/*mac_single*/, 
+                     0/*mac_range*/, 
+                     0/*mac_br*/,
+                     1/*broadcast full_match full*/);   
+   return 0;  
+}
+
+#define rtu_rd(reg) \
+	 _fpga_readl(FPGA_BASE_RTU + offsetof(struct RTU_WB, reg))
+
+#define rtu_wr(reg, val) \
+	 _fpga_writel(FPGA_BASE_RTU + offsetof(struct RTU_WB, reg), val)
 
 int config_startup(int opt, int sub_opt, int port_num)
 {
- 
+  
   TRACE(TRACE_INFO,"config_startup: opt = %ds sub_opt = %d ",opt, sub_opt);
   switch(opt)
   {
@@ -751,6 +1116,25 @@ int config_startup(int opt, int sub_opt, int port_num)
     case 10:
       config_FF_test(sub_opt,8);
       break;      
+    case 11:
+      config_tag_untag_test(sub_opt,8);
+      break;      
+    case 12:
+      config_two_ports_vlan(sub_opt,0);
+      break;  
+    case 13:
+      config_hp_test_1(sub_opt,port_num);
+      break;  
+    case 14:
+      config_hp_test_2(sub_opt,port_num);
+      break;       
+    case 15:
+      config_hp_and_ptp(sub_opt, port_num);
+      break;    
+    case 16:
+      port_num= RTU_PSR_N_PORTS_R(rtu_rd(PSR));
+      config_snake_with_PTP_hacked_test(sub_opt,port_num);
+      break;
     //////////////////////////////////////////////////////////////////
     case 0:
     default:
@@ -758,5 +1142,6 @@ int config_startup(int opt, int sub_opt, int port_num)
       exit(1);
       break;    
   }
+
   
 }

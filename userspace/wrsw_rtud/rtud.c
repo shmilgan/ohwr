@@ -477,7 +477,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time, int unrec_be
         return err;
         
     if(startup_config >0)
-      err = config_startup(startup_config, startup_sub_config, MAX_PORT);
+      err = config_startup(startup_config, startup_sub_config, (MAX_PORT+1));
     if(err)
       return err;
     hwdu_gw_version_dump();

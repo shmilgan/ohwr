@@ -34,11 +34,14 @@
 #define HWDU_GW_VERSION_ADDR   0
 #define HWDU_MPM_RESOURCE_ADDR 1
 #define HWDU_SWC_IN_B_P0_ADDR  2
+#define HWDU_SWC_OUT_B_P0_ADDR 2
 
 
 
 int hwdu_mpm_resoruces_dump();
 int hwdu_gw_version_dump();
 int hwdu_swc_in_b_pstates_dump(int port_num);
-
+int hwdu_swc_out_b_pstates_dump(int port_num);
+int hwdu_chps_get_id();
+int hwdu_chps_set_id(int id);
 #endif /*__WHITERABBIT_RTU_TATSU_DRV_H*/

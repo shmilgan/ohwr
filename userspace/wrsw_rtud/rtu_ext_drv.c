@@ -540,6 +540,7 @@ void rtux_set_life(char *optarg)
       rtux_disp_fw_to_CPU(); 
       rtux_read_cpu_port();
       rtux_read_hp_prio_mask();
+      tatsu_read_status();
       
     break;
     default:

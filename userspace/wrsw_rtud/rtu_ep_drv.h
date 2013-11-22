@@ -53,4 +53,5 @@ void ep_pause_config_dis(uint32_t port);
 void ep_snake_config(int option);
 void ep_class_prio_map(uint32_t port, int prio_map[]);
 void ep_pfilter_lacp_test_code(int port);
+void ep_strange_config(int opt);
 #endif /*__WHITERABBIT_RTU_EP_DRV_H*/

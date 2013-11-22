@@ -72,3 +72,20 @@ int tatsu_drop_nonHP_disable()
   return 0;
   
 }
+
+int tatsu_read_status()
+{
+  uint32_t val;
+  val = tatsu_rd(TCR);
+  
+  if(val & TATSU_TCR_DROP_ENA)
+  {
+    TRACE(TRACE_INFO,"TATSU: drop_nonHP_enable (when HP comes) - enabled ");
+  }
+  else
+  {
+    TRACE(TRACE_INFO,"TATSU: drop_nonHP_enable (when HP comes) - disable ");
+  }
+  return 0;
+  
+}

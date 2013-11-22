@@ -33,5 +33,5 @@
 
 int tatsu_drop_nonHP_enable();
 int tatsu_drop_nonHP_disable();
-
+int tatsu_read_status();
 #endif /*__WHITERABBIT_RTU_TATSU_DRV_H*/

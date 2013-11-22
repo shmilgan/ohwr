@@ -726,7 +726,7 @@ void rtu_set_life(char *optarg)
   int opt         = strtol(optarg,   &optarg, 0);
   int sub_opt     = strtol(optarg+1, &optarg, 0);
   int sub_sub_opt = strtol(optarg+1, &optarg, 0);
-  
+  int num_ports   = 8;
   int err = shw_fpga_mmap_init();
   if(err)
   {
@@ -759,8 +759,18 @@ void rtu_set_life(char *optarg)
       hwdu_gw_version_dump();
       break;
     case 22: 
-      hwdu_swc_in_b_pstates_dump(8 /*port number*/);
+      num_ports= RTU_PSR_N_PORTS_R(rtu_rd(PSR));
+      TRACE(TRACE_INFO, "Port number = %d", num_ports);
+      hwdu_swc_in_b_pstates_dump(num_ports /*port number*/);
+      hwdu_swc_out_b_pstates_dump(num_ports /*port number*/);
       break;      
+    case 23:       
+      hwdu_chps_get_id();
+      break;
+    case 24:       
+      hwdu_chps_set_id(sub_opt);
+      break;
+
     case  100:
        rtu_show_status();
     break;
@@ -775,6 +785,8 @@ void rtu_set_life(char *optarg)
        TRACE(TRACE_INFO, "-o 20          DBG: mpm resource dump (number of allocated pages)");       
        TRACE(TRACE_INFO, "-o 21          DBG: show GW version");
        TRACE(TRACE_INFO, "-o 22          DBG: dump SWcore input_block states");
+       TRACE(TRACE_INFO, "-o 23          DBG: Chipscope input ID get");
+       TRACE(TRACE_INFO, "-o 24  id      DBG: Chipscope input ID set");
        TRACE(TRACE_INFO, "-o 100         show status");
   };
   exit(1);
