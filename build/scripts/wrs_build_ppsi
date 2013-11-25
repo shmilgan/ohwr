@@ -8,19 +8,19 @@ fi
 . ${WRS_BASE_DIR}/scripts/wrs_functions
 
 # This step is controlled by Kconfig: skip it if not selected
-if [ "x$CONFIG_PTP_NOPOSIX" = "x" ]; then
+if [ "x$CONFIG_PPSI" = "x" ]; then
     exit 0
 fi
 
 wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR CROSS_COMPILE
 
-wrs_echo "--- PTP daemon (noposix repository as a submodule)"
+wrs_echo "--- PTP daemon (PPSi repository as a submodule)"
 
 # checkout, in case the user didn't do that
 cd ${WRS_BASE_DIR}/..
 git submodule init -q
 git submodule update -q
-cd userspace/ptp-noposix
+cd userspace/ppsi
 make clean
 
 # we need LINUX and CROSS_COMPILE. The latter is there for sure
@@ -28,14 +28,6 @@ if [ "x$LINUX" == "x" ]; then
     export LINUX="$WRS_OUTPUT_DIR/build/linux-2.6.39"
 fi
 
-make ptpd || wrs_die "cannot build ptp-noposix"
+make ARCH=wrs PROTO_EXT=whiterabbit || wrs_die "cannot build PPSi"
 install -d "$WRS_OUTPUT_DIR/images/wr/bin"
-install -d "$WRS_OUTPUT_DIR/images/wr/lib"
-install -d "$WRS_OUTPUT_DIR/images/wr/include"
-install ptpd "$WRS_OUTPUT_DIR/images/wr/bin"
-install libptpnetif.a "$WRS_OUTPUT_DIR/images/wr/lib"
-install libptpnetif/ptpd_netif.h "$WRS_OUTPUT_DIR/images/wr/include"
-install libptpnetif/hal_client.h "$WRS_OUTPUT_DIR/images/wr/include"
-
-#make $WRS_MAKE_J uImage modules  || wrs_die "kernel compilation"
-#cp arch/$ARCH/boot/uImage $(find . -name '*.ko') $WRS_OUTPUT_DIR/images
+install ppsi "$WRS_OUTPUT_DIR/images/wr/bin"

@@ -124,8 +124,7 @@ wrs_build_step () {
     script="$WRS_SCRIPTS_DIR/$2"
 
     if [ -f $markerfile ]; then
-	wrs_echo "Marker $1 exists:"
-	wrs_echo "   not running $2"
+	wrs_echo "$1 done; skipping script $2"
 	return
     fi
 
@@ -157,6 +156,7 @@ wrs_build_step    03-barebox             wrs_build_barebox
 wrs_build_step    04-kernel              wrs_build_kernel
 wrs_build_step    05-modules             wrs_build_modules
 wrs_build_step    06-ptp-noposix         wrs_build_ptp_noposix
+wrs_build_step    06-ppsi                wrs_build_ppsi
 wrs_build_step    07-wrs-userspace       wrs_build_userspace
 wrs_build_step    08-wrs-gateware        wrs_build_gateware
 wrs_build_step    09-wrap-rootfs         wrs_build_wraprootfs

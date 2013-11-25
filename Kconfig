@@ -15,3 +15,21 @@ config BR2_CONFIGFILE
 	  scripts print a warning and use the default file. Incorrect
 	  files lead to unpredicatable results.
 
+choice
+	prompt "PTP daemon implementation"
+
+config PTP_NOPOSIX
+	bool "Use ptp-noposix daemon"
+	help
+	  This implementation is being phased out, because it became
+	  unmaintainable over time. However, it is still the default
+	  at this point in time, because it has been tested and used
+	  for a long time.
+
+config PPSI
+	bool "Use PPSi daemon"
+	help
+	  PPSi (PTP Ported to Silicon) is the new implementation, which
+	  is already the default PTP run in the White Rabbit node.
+
+endchoice
