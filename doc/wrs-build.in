@@ -497,6 +497,13 @@ The following configuration options are available
         @t{configs/buildroot} directory; an absolute pathname is used
         unchanged.
 
+@item CONFIG_PTP_NOPOSIX
+@itemx CONFIG_PPSI
+
+	Users can select one of these options, to build with one or the other
+        flavour of @sc{wr-ptp}.  PPSi is going to be the default, and later
+        the only supported option.
+
 @end table
 
 @c ##########################################################################
@@ -1172,18 +1179,18 @@ switching core and the associated user-space daemon.
 @node PTPd
 @section PTPd
 
-The Precision Time Protocol Daemon being used is hosted in a different
-repository, but it is registered as a @i{git} submodule in this package.
-The repository itself is on @code{ohwr}, like others.
-We are working on a better code base for a portable PTP, but it is
-not yet ready as of this release.
+Configuration supports two different PTP engines: either @t{ptp-noposix}
+(default at this point in time) or PPSi. The latter will become
+the default choice, and then the only choice, as we test it on a larger
+use base.
 
-A plain @i{make} in the @i{ptp-noposix} directory might fail, because of
+Both implementations are hosted in their own respective different
+repository; both are registered as  @i{git} submodules in this package.
+The repositories are hosted  on @code{ohwr}, like others.
+
+A plain @i{make} in either  @i{userspace/ptp-noposix} or
+@t{userspace/ppsi} will likely fail, because of
 missing environment variables. 
-because after building
-@i{ptpd} other steps are tried, but they are only needed for
-the freestanding environment (i.e., LM32 with supporting code) and will
-fail for this @i{arm-linux} hosted build.
 
 Additionally,  the script installs headers for the HAL
 and @i{libptpnetif}.
