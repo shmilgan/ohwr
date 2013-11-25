@@ -1,0 +1,50 @@
+#!/bin/bash
+# check variables, like all scripts herein do
+WRS_SCRIPT_NAME=$(basename $0)
+if [ -z "$WRS_BASE_DIR" ]; then
+    echo "$0: Plesae set WRS_BASE_DIR" >& 2
+    exit 1
+fi
+. ${WRS_BASE_DIR}/scripts/wrs_functions
+
+wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR CROSS_COMPILE
+
+# This step is controlled by Kconfig: skip it if not selected
+if [ "x$CONFIG_PTP_NOPOSIX" != "x" ]; then
+    old_ptp=true; new_ptp=false
+    ptpname="ptp-noposix"
+fi
+if [ "x$CONFIG_PPSI" != "x" ]; then
+    old_ptp=false; new_ptp=true
+    ptpname="ppsi"
+fi
+
+wrs_echo "--- PTP daemon ($ptpname repository as a submodule)"
+
+# checkout, in case the user didn't do that
+cd ${WRS_BASE_DIR}/..
+git submodule init -q
+git submodule update -q
+cd userspace/$ptpname
+make clean
+
+# we need LINUX and CROSS_COMPILE. The latter is there for sure
+if [ "x$LINUX" == "x" ]; then
+    export LINUX="$WRS_OUTPUT_DIR/build/linux-2.6.39"
+fi
+
+
+if [ $ptpname = ppsi ]; then
+   make ARCH=wrs PROTO_EXT=whiterabbit || wrs_die "Failure building PPSi"
+   install -d "$WRS_OUTPUT_DIR/images/wr/bin"
+   install ppsi "$WRS_OUTPUT_DIR/images/wr/bin"
+else
+   make || wrs_die "Failure building $ptpname"
+   install -d "$WRS_OUTPUT_DIR/images/wr/bin"
+   install -d "$WRS_OUTPUT_DIR/images/wr/lib"
+   install -d "$WRS_OUTPUT_DIR/images/wr/include"
+   install ptpd "$WRS_OUTPUT_DIR/images/wr/bin"
+   install libptpnetif.a "$WRS_OUTPUT_DIR/images/wr/lib"
+   install libptpnetif/ptpd_netif.h "$WRS_OUTPUT_DIR/images/wr/include"
+   install libptpnetif/hal_client.h "$WRS_OUTPUT_DIR/images/wr/include"
+fi
