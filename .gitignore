@@ -16,3 +16,10 @@ Module.symvers
 kernel/wbgen-regs/wbgen-regs
 userspace/include/regs
 
+*.cmd
+*.o
+.tmp_*
+.config
+.config.old
+include/config
+include/generated

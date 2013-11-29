@@ -1,0 +1,4 @@
+#
+# Automatically generated make config: don't edit
+#
+CONFIG_BR2_CONFIGFILE="wrs_release_br2_config"
