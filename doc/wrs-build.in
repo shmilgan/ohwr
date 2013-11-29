@@ -993,14 +993,17 @@ and run @code{make menuconfig} (this the Buildroot configuration,
 not the one of wr-switch-sw). After making your choices, copy back
 the file @code{.config} to @t{configs/buildroot} in this package,
 so you can select it by running @t{make menuconfig} in wr-switch-sw.
-Otherwise, the saved configuration file can be selected as a full
-path name in @i{menuconfig}.
+
+Then, please run @t{configs/buildroot/RUNME} (without arguments)
+in order to remove your local pathnames in the configuration file;
+the file without local pathnames can be committed and published for
+other people to use.
 
 You can also set @code{WRS_BUILDROOT_CONFIG} to the full pathname of
 your configuration file of choice (this used to be the only way
 to pass a custom configuration file). The file must be a copy of the
 @code{.config} after the @code{make menuconfig} step described above,
-withing buildroot.
+within buildroot.
 Note that if the variable is not pointing to a regular file it is
 ignored with a simple warning -- rather than stopping the build procedure.
 

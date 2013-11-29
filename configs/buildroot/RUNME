@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# Please run this script any time you copy a buildroot config in here.
+# This removes references to the location where wr-switch-sw is run,
+# so the configuration file can be used elsewhere.
+
+configs_dir=$(dirname $0)
+wr_switch_sw_dir=$(cd $configs_dir/../..; /bin/pwd)
+
+grep -l "$wr_switch_sw_dir" $configs_dir/* |
+while read fname; do
+    echo "Fixing $(basename $fname)"
+    sed -i "s,$wr_switch_sw_dir.*configs/buildroot,__WR_SWITCH_SW__," $fname
+done
+
