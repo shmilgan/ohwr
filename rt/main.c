@@ -1,6 +1,6 @@
 #include "defs.h"
 #include "uart.h"
-#include "timer.h"
+#include "syscon.h"
 
 #include "softpll_ng.h"
 

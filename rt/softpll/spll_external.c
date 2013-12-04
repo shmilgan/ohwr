@@ -13,8 +13,6 @@
 #include "spll_external.h"
 #include "spll_debug.h"
 
-#include "timer.h"
-
 #define BB_ERROR_BITS 16
 
 void external_init(volatile struct spll_external_state *s, int ext_ref,

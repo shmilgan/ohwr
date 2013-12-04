@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 #include "board.h"
-#include "timer.h"
+#include "syscon.h"
 #include "gpio.h"
 
 

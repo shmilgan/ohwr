@@ -1,6 +1,6 @@
 #include "board.h"
 
-#include "timer.h"
+#include "syscon.h"
 
 uint32_t timer_get_tics()
 {

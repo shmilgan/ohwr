@@ -1,5 +1,5 @@
-#ifndef __TIMER_H
-#define __TIMER_H
+#ifndef __SYSCON_H
+#define __SYSCON_H
 
 #include "defs.h"
 

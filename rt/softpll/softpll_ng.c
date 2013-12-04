@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <wrc.h>
 #include "board.h"
 #include "trace.h"
 #include "hw/softpll_regs.h"
@@ -10,7 +11,6 @@
 #include "softpll_ng.h"
 
 #include "irq.h"
-#include "timer.h"
 
 volatile int irq_count = 0;
 
@@ -519,7 +519,6 @@ void spll_show_stats()
 		     softpll.ext.ld.locked, softpll.mpll.ld.locked,
 		     softpll.helper.pi.y, softpll.mpll.pi.y, softpll.ext.pi.y,
 		     softpll.delock_count, softpll.ext.sample_n);
-
 }
 
 int spll_shifter_busy(int channel)

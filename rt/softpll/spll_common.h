@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <syscon.h>
 
 #include <hw/softpll_regs.h>
 #include <hw/pps_gen_regs.h>
@@ -29,6 +30,7 @@ extern int spll_n_chan_ref, spll_n_chan_out;
 
 extern volatile struct SPLL_WB *SPLL;
 extern volatile struct PPSG_WB *PPSG;
+
 
 /* PI regulator state */
 typedef struct {
