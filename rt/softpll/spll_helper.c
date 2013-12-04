@@ -35,7 +35,6 @@ void helper_init(struct spll_helper_state *s, int ref_channel)
 	s->ld.delock_samples = 100;
 	s->ref_src = ref_channel;
 	s->delock_count = 0;
-
 }
 
 int helper_update(struct spll_helper_state *s, int tag,
@@ -108,5 +107,4 @@ void helper_start(struct spll_helper_state *s)
 
 	spll_enable_tagger(s->ref_src, 1);
 	spll_debug(DBG_EVENT | DBG_HELPER, DBG_EVT_START, 1);
-
 }
