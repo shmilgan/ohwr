@@ -1,4 +1,4 @@
-OBJS += \
+obj-y += \
 	softpll/spll_common.o \
 	softpll/spll_external.o \
 	softpll/spll_helper.o \
