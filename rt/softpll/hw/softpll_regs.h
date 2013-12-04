@@ -14,7 +14,7 @@
 #ifndef __WBGEN2_REGDEFS_SPLL_WB_SLAVE_WB
 #define __WBGEN2_REGDEFS_SPLL_WB_SLAVE_WB
 
-#include <stdint.h>
+#include <inttypes.h>
 
 #if defined( __GNUC__)
 #define PACKED __attribute__ ((packed))
