@@ -26,8 +26,6 @@
 
 OUTPUT_FORMAT("elf32-lm32")
 ENTRY(_start)
-/*INPUT() */
-GROUP(-lgcc -lc)
 
 MEMORY
 {
@@ -120,6 +118,8 @@ SECTIONS
   
   /* First location in stack is highest address in RAM */
   PROVIDE(_fstack = ORIGIN(ram) + LENGTH(ram) - 4);
+
+  PROVIDE(mprintf = pp_printf); /* For later, when we replace mprintf */
   
   /* Stabs debugging sections.  */
   .stab          0 : { *(.stab) }
