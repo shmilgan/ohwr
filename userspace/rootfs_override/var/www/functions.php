@@ -19,5 +19,12 @@ function wrs_main_info(){
 	echo '</table>';
 
 }
+
+function wrs_check_writeable(){
+
+	$output = shell_exec('mount | grep "(ro,"');
+	echo (!isset($output) || trim($output) == "") ? "<br>WRS mounted as rw" : "<br><font color='red'>WARNING: WRS is mounted as ro, please contact the maintainer</font>";
+
+}
 	
 ?>
