@@ -11,14 +11,21 @@
 #include "syscon.h"
 #include "gpio.h"
 
-
-#include "ad9516.h"
-
 #include "rt_ipc.h"
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
+
+static inline void writel(uint32_t data, void *where)
+{
+	* (volatile uint32_t *)where = data;
+}
+
+static inline uint32_t readl(void *where)
+{
+	return * (volatile uint32_t *)where;
+}
 
 struct ad9516_reg {
 	uint16_t reg;

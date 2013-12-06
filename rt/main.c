@@ -1,4 +1,3 @@
-#include "defs.h"
 #include "uart.h"
 #include "syscon.h"
 

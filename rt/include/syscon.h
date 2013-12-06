@@ -1,7 +1,7 @@
 #ifndef __SYSCON_H
 #define __SYSCON_H
 
-#include "defs.h"
+#include <stdint.h>
 
 #define TICS_PER_SECOND 100000
 
