@@ -1,9 +1,0 @@
-
-    html, body {margin:0; padding:0;}
-    .page {text-align:center; position:relative;}
-    .left-bar {position:absolute ; top:150px; left:0px; width:200px; height:83%; border-right:2px solid gray; font: menu; }
-    .right-bar {margin-left:200px; padding-top:150px;}
-    .header {position:fixed; left:0px; top:0px; right:0px; height:150px; border:1px solid gray; }
-    .content {height:73%;} /*replace with height:auto; for real content*/
-    .footer {height:60px; border-top:1px solid gray ; background:#eeeeee;}
-    .wrs-info { margin:20px ; text-align:left ;width:350px; height:300px; font-size: 10pt; text-align:left;}

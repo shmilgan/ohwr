@@ -1,56 +1,68 @@
-<?php include 'title.php'; ?>
+<?php include 'functions.php'; include 'head.php'; ?>
 <body>
-
+<div class="main">
 <div class="page">
-    <div class="left-bar">
-        <div class="menu">
-			<?php include 'menu.php'; ?>
-        </div>
-    </div>
-    <div class="right-bar">
-        <div class="header"><?php include 'header.php'; ?></div>
-        <div class="content">
+<div class="header" >
+<!--<h1>White-Rabbit Switch Tool</h1>-->
+<div class="header-ports" ><?php wrs_header_ports(); ?></div>
+<div class="topmenu">
+	<?php include 'topmenu.php' ?>
+</div>
+</div>
+<div class="content">
+<div class="leftpanel">
+<h2>Main Menu</h2>
+	<?php include 'menu.php' ?>
+</div>
+<div class="rightpanel">
+<div class="rightbody">
+<h1 class="title">Load LM32 & FPGA Files</h1>
 
-			<br><br><br>
-			
-			<div>
-			<FORM method="POST" ENCTYPE="multipart/form-data">
-			Load FPGA binary		  <INPUT type=file name="file">
-									  <INPUT type=submit value="Load">
-									  <INPUT type=hidden name=MAX_FILE_SIZE  VALUE=8192>
-			</FORM>
-			</div>
+	<table border="0" align="center">	
+	
+	<tr>
+		<th ><FORM method="POST" ENCTYPE="multipart/form-data" >
+								  <INPUT type=file name="fpgafile"  >
+								  <INPUT type=submit Value="Load FPGA bin" class="btn" >
+								  <INPUT type=hidden name=MAX_FILE_SIZE  VALUE=<?php wrs_php_filesize();?>000>
+		</FORM></th>
+	</tr>
+	<tr>
+		 <th ><FORM method="POST" ENCTYPE="multipart/form-data">
+								 <INPUT type=file name="lm32file" >
+								  <INPUT type=submit value="Load lm32 bin" class="btn">
+								  <INPUT type=hidden name=MAX_FILE_SIZE  VALUE=<?php wrs_php_filesize();?>000>
+		</FORM></th>
+	</tr>
+	<tr>
+		<th ><FORM method="POST" ENCTYPE="multipart/form-data">
+								  <INPUT type=file name="file" >
+								  <INPUT type=submit value="Load firmware" class="btn" >
+								  <INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000>
+		</FORM></th>
+	</tr>
+	</table>
+	
+	<br><br><br><center>Max. filesize is <?php echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); 
+			echo '(<a href="management.php">Change it!</a>)';?></center>
+	
+	
+	<?  
+		wrs_load_files();
 
+		echo '<center>';
+			wrs_check_writeable();
+		echo '</center>';
+	?>
 			
-			
-			
-			
-			<?  
 
-				$uploaddir = '/tmp/';
-				$uploadfile = $uploaddir . basename($_FILES['file']['name']);
-				echo '<pre>';
-				if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
-					echo "File is valid, and was successfully uploaded.\n";
-				} //else {
-					//echo "Possible file upload attack!\n";
-				//}
-
-				//echo 'Here is some more debugging info:';
-				//print_r($_FILES);
-
-				print "</pre>";
-
-				
-			?>
-			
-			<?  include 'functions.php'; wrs_check_writeable(); ?>
-			
-        </div>
-        <div class="footer"><?php include 'footer.php'; ?></div>
-        
-    </div>
+</div>
+</div>
+</div>
+<div class="footer">
+	<?php include 'footer.php' ?>
+</div>
+</div>
 </div>
 </body>
 </html>
-
