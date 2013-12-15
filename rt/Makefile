@@ -3,7 +3,7 @@ CROSS_COMPILE ?= lm32-elf-
 LIBSOFTPLL_DIR = softpll
 
 
-OBJS = main.o dev/uart.o dev/timer.o lib/mprintf.o dev/ad9516.o ipc/minipc-mem-server.o ipc/rt_ipc.o 
+OBJS = main.o dev/uart.o dev/timer-wrs.o lib/mprintf.o dev/ad9516.o ipc/minipc-mem-server.o ipc/rt_ipc.o 
 
 include softpll/softpll.mk
 OBJS += $(obj-y)
