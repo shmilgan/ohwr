@@ -9,7 +9,7 @@
 
 #include "board.h"
 #include "syscon.h"
-#include "gpio.h"
+#include "gpio-wrs.h"
 
 #include "rt_ipc.h"
 
