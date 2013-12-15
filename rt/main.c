@@ -12,7 +12,7 @@ main()
 {
 	uint32_t start_tics = 0;
 
-	uart_init();
+	uart_init_hw();
 	
 	TRACE("WR Switch Real Time Subsystem (c) CERN 2011 - 2013\n");
 	TRACE("Revision: %s, built %s.\n", build_revision, build_date);
