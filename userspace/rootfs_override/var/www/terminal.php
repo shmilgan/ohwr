@@ -16,7 +16,7 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">White-Rabbit Switch Console</h1>
+<h1 class="title">White-Rabbit Switch Console <a href='help.php?help_id=console' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 	<FORM action="terminal.php" method="POST" accept-charset="UTF-8">
 	Unix Command: <input type="text" name="cmd">

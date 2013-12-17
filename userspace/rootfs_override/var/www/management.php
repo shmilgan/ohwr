@@ -16,7 +16,7 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Switch Management</h1>
+<h1 class="title">Switch Management <a href='help.php?help_id=management' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 	<table border="0" align="center">	
 		<tr>
@@ -35,14 +35,14 @@
 		<tr>
 			</form>
 			<form method="post">
-			<th><center>Mount partition as rw: </center><input type="hidden" name="cmd" value="rw"></th>
+			<th><center>Mount partition as writable: </center><input type="hidden" name="cmd" value="rw"></th>
 			<th><input type="submit" value="Remount"  class="btn"></th>
 			</form>
 		</tr>
 		<tr>
 			</form>
 			<form method="post">
-			<th><center>Mount partition as ro: </center><input type="hidden" name="cmd" value="ro"></th>
+			<th><center>Mount partition as read-only: </center><input type="hidden" name="cmd" value="ro"></th>
 			<th><input type="submit" value="Remount" class="btn"></th>
 			</form>
 		</tr>

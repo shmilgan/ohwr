@@ -16,7 +16,7 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Endpoint Configuration</h1>
+<h1 class="title">Endpoint Configuration <a href='help.php?help_id=endpoint' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 	<?php
 		echo '<form  method=POST>
@@ -31,8 +31,8 @@
 		echo '</select>';
 	
 		echo '<select name="option1" class="sec">';
-		echo '<option value="txcal1">Enable Calibration Transmittion</option>';	
-		echo '<option value="txcal0">Disable Calibration Transmittion</option>';	
+		echo '<option value="txcal1">Enable Calibration Transmission</option>';	
+		echo '<option value="txcal0">Disable Calibration Transmission</option>';	
 		echo '<option value="dump">See Registers</option>';	
 		echo '<option value="wr">Modify Registers</option>';	
 		//echo '<option value="rt">Show Flags</option>';	

@@ -16,34 +16,46 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">VLAN Configuration</h1>
+<h1 class="title">VLAN Configuration <a href='help.php?help_id=vlan' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1> 
 
 	<?php
 		echo '<table align=center border="1" class="altrowstable" id="alternatecolor">';
 		echo '<tr><th>Endpoint</th><th>VLANs</th></tr>';
 		for($i = 0; $i < 18; $i++){
 			echo '<tr>';
-			echo '<td>wr'.$i.'</td>';
-			//Print here all the vlans the endpoint belongs to. in <th> </th>
+			echo '<td><center><b>wr'.($i+1).'</b></center></td>';
 			
 			//Show the Vlan option button
 			echo '<td>';
-			echo '<form action="exe_program.php" method=POST><div>
-					<select name="cmd">';
+			echo '<form method=POST><div>
+					<select name='.($i).'>';
 					
 			for($op = 0; $op < 18; $op++){
 			
-				  echo '<option value="VLAN'.$op.'">Vlan'.$op.'</option>';							
+				  echo '<option class="btn" value="'.($op+1).'"><center>Vlan'.($op+1).'</center></option>';							
 				
 			}
-			echo '</select>
-					<input type="submit" value="Add VLAN">
-					</form>';
+			echo '</select>';
+					
 			echo '</td>';
-				
-			echo '</tr>';
+
+			
 		}
+		echo '<input type="hidden" value=cmd name=cmd>';
+		echo '<p align="right"><input type="submit" value="Add VLANs" class="btn" ></p>
+					</form>';	
+			echo '</tr>';
+		
 		echo '</table>';
+		
+		
+		//Parse input and run the command
+		if (!empty($_POST['cmd'])){
+			$input = $_POST;
+			wrs_vlan_configuration($input);
+		}
+		
+		wrs_vlan_display();
 
 	?>
 

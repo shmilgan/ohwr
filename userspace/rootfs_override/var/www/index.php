@@ -16,7 +16,7 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Dashboard</h1>
+<h1 class="title">Dashboard <a href='help.php?help_id=dashboard' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 	<?php
 		wrs_main_info();		

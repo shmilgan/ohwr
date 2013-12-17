@@ -6,4 +6,3 @@
 <a href='sysinfo.php' target="_blank"><IMG SRC='img/light_php.png' align=right , vspace=7, hspace=5, width=100 , hight=100 , border=0 , alt='PHP Info'></a>
 <img src="img/footnote.gif" class="copyright" alt="White-Rabbit OHR"></a>
 </p>
-<?php shell_exec('killall php-cgi'); ?>

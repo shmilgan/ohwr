@@ -16,12 +16,14 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Load LM32 & FPGA Files</h1>
+<h1 class="title">Load LM32 & FPGA Files <a href='help.php?help_id=load' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
+
+
 
 	<table border="0" align="center">	
 	
 	<tr>
-		<th ><FORM method="POST" ENCTYPE="multipart/form-data" >
+		<th><FORM method="POST" ENCTYPE="multipart/form-data" >
 								  <INPUT type=file name="fpgafile"  >
 								  <INPUT type=submit Value="Load FPGA bin" class="btn" >
 								  <INPUT type=hidden name=MAX_FILE_SIZE  VALUE=<?php wrs_php_filesize();?>000>
@@ -43,8 +45,12 @@
 	</tr>
 	</table>
 	
-	<br><br><br><center>Max. filesize is <?php echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); 
-			echo '(<a href="management.php">Change it!</a>)';?></center>
+	<br><br><br><center>Max. filesize is now <?php echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); 
+			?></center>
+			<form method="post">
+			Change PHP File Size Upload: <INPUT type="text" name="size" > 
+			<input type="submit" value="Change" class="btn">
+			</form>
 	
 	
 	<?  
