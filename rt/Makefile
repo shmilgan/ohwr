@@ -15,8 +15,8 @@ OBJS_PLATFORM=arch/lm32/crt0.o arch/lm32/irq.o
 CC=$(CROSS_COMPILE)gcc
 OBJCOPY=$(CROSS_COMPILE)objcopy
 OBJDUMP=$(CROSS_COMPILE)objdump
-CFLAGS= $(CFLAGS_PLATFORM) -ffunction-sections -fdata-sections -O3 -Iinclude/std -Iinclude -include include/trace.h  -ffreestanding -Iipc -I$(LIBSOFTPLL_DIR) -I. -DCONFIG_WR_SWITCH
-LDFLAGS= $(LDFLAGS_PLATFORM) -Wl,--gc-sections -O3 -Iinclude -ffreestanding \
+CFLAGS= $(CFLAGS_PLATFORM) -ffunction-sections -fdata-sections -Os -Iinclude/std -Iinclude -include include/trace.h  -ffreestanding -Iipc -I$(LIBSOFTPLL_DIR) -I. -DCONFIG_WR_SWITCH
+LDFLAGS= $(LDFLAGS_PLATFORM) -Wl,--gc-sections -Os -Iinclude -ffreestanding \
 	-lgcc -lc
 SIZE = $(CROSS_COMPILE)size
 OBJS += $(OBJS_PLATFORM)
