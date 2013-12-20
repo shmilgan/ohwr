@@ -31,7 +31,7 @@ function wrs_header_ports(){
 	for($i=1; $i<18*4; $i=$i+4){
 		
 		if (strstr($ports[($i-1)],"up")){
-			if (strcmp($ports[($i)],"Master")){
+			if (!strcmp($ports[($i)],"Master")){
 				echo '<th>'."<IMG SRC='img/master.png' align=left ,   width=40 , hight=40 , border=0 , alt='master'>".'</th>';
 			}else{
 				echo  '<th>'."<IMG SRC='img/slave.png' align=left ,  width=40 , hight=40 , border=0 , alt='slave'>".'</th>';
