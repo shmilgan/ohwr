@@ -37,8 +37,8 @@
 		echo '<option value="wr">Modify Registers</option>';	
 		//echo '<option value="rt">Show Flags</option>';	
 		echo '<option value="lock">Lock Endpoint</option>';	
-		echo '<option value="master">Make Endpoint Master</option>';	
-		echo '<option value="gm">Make Endpoint GrandMaster</option>';	
+		echo '<option value="master">Make Master</option>';	
+		echo '<option value="gm">Make GrandMaster</option>';	
 			
 			
 		echo '</select>
