@@ -649,8 +649,8 @@ function wrs_display_help($help_id){
 							- <b>See registers</b>: displays each endpoint registers (R0-R16) <br>
 							- <b>Modify registers</b>: used to modify endpoint registers (R0-R16) <br>
 							- <b>Lock endpoint</b>: used to lock endpoint <br>
-							- <b>Make endpoint master</b>: it chages endpoint state to master <br>
-							- <b>Make endpoint grandmaster</b>: it chages endpoint state to grandmaster<br>
+							- <b>Make switch master</b>: Switch works as master <br>
+							- <b>Make switch grandmaster</b>: Switch works as grandmaster<br>
 							</p>";
 	} else if (!strcmp($help_id, "login")){
 		$message = "<p>login</p>";
