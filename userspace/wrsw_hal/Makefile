@@ -23,7 +23,7 @@ $(BINARY): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 install: all
-	install -d        $(WR_INSTALL_ROOT)/bin
+	install -d        $(WR_INSTALL_ROOT)/bin $(WR_INSTALL_ROOT)/include
 	install $(BINARY) $(WR_INSTALL_ROOT)/bin
 	install hal_exports.h wrsw_hal.h $(WR_INSTALL_ROOT)/include
 
