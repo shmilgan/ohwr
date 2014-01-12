@@ -57,6 +57,10 @@
 /* null reference input */
 #define REF_NONE 255
 
+/* RT Subsystem debug commands, handled via rts_debug_command() */
+
+/* Serdes reference clock enable/disable */
+#define RTS_DEBUG_ENABLE_SERDES_CLOCKS 1
 
 struct rts_pll_state {
 
@@ -87,9 +91,16 @@ struct rts_pll_state {
 	uint32_t mode;
 
 	uint32_t delock_count;
+
+	uint32_t ipc_count;
+	
+	uint32_t debug_data[8];
 };
 
 /* API */
+
+/* Connects to the RT CPU */
+int rts_connect();
 
 /* Queries the RT CPU PLL state */
 int rts_get_state(struct rts_pll_state *state);
@@ -105,6 +116,9 @@ int rts_lock_channel(int channel, int priority);
 
 /* Enabled/disables phase tracking on a particular port */
 int rts_enable_ptracker(int channel, int enable);
+
+/* Enabled/disables phase tracking on a particular port */
+int rts_debug_command(int param, int value);
 
 #ifdef RTIPC_EXPORT_STRUCTURES
 
@@ -147,6 +161,16 @@ static struct minipc_pd rtipc_rts_adjust_phase_struct = {
 
 static struct minipc_pd rtipc_rts_enable_ptracker_struct = {
 	.name = "eeee",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
+	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
+	    MINIPC_ARG_END
+	},
+};
+
+static struct minipc_pd rtipc_rts_debug_command_struct = {
+	.name = "ffff",
 	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
 	.args = {
 	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),

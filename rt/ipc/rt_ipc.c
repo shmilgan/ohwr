@@ -33,6 +33,7 @@ static void clear_state()
     pstate.flags = 0;
     pstate.current_ref = 0;
     pstate.mode = RTS_MODE_DISABLED;
+    pstate.ipc_count = 0;
 }
 
 /* Sets the phase setpoint on a given channel */
@@ -150,7 +151,7 @@ static int rts_get_state_func(const struct minipc_pd *pd, uint32_t *args, void *
     struct rts_pll_state *tmp = (struct rts_pll_state *)ret;
     int i;
 
-//    TRACE("IPC Call: %s [rv at %x]\n", __FUNCTION__, ret);
+		pstate.ipc_count++;
 
     /* gaaaah, somebody should write a SWIG plugin for generating this stuff. */
     tmp->current_ref = htonl(pstate.current_ref);
@@ -158,6 +159,7 @@ static int rts_get_state_func(const struct minipc_pd *pd, uint32_t *args, void *
     tmp->holdover_duration = htonl(pstate.holdover_duration);
     tmp->mode = htonl(pstate.mode);
 		tmp->delock_count = spll_get_delock_count();
+		tmp->ipc_count = pstate.ipc_count;
 		
     for(i=0; i<RTS_PLL_CHANNELS;i++)
     {
@@ -173,23 +175,34 @@ static int rts_get_state_func(const struct minipc_pd *pd, uint32_t *args, void *
 
 static int rts_set_mode_func(const struct minipc_pd *pd, uint32_t *args, void *ret)
 {
+		pstate.ipc_count++;
     *(int *) ret = rts_set_mode(args[0]);
 }
 
 
 static int rts_lock_channel_func(const struct minipc_pd *pd, uint32_t *args, void *ret)
 {
+		pstate.ipc_count++;
     *(int *) ret = rts_lock_channel(args[0], (int)args[1]);
 }
 
 static int rts_adjust_phase_func(const struct minipc_pd *pd, uint32_t *args, void *ret)
 {
+		pstate.ipc_count++;
     *(int *) ret = rts_adjust_phase((int)args[0], (int)args[1]);
 }
 
 static int rts_enable_ptracker_func(const struct minipc_pd *pd, uint32_t *args, void *ret)
 {
-    *(int *) ret = spll_enable_ptracker((int)args[0], (int)args[1]);
+		pstate.ipc_count++;
+		spll_enable_ptracker((int)args[0], (int)args[1]);
+    *(int *) ret = 0;
+}
+
+static int rts_debug_command_func(const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+		pstate.ipc_count++;
+    *(int *) ret = rts_debug_command((int)args[0], (int)args[1]);
 }
 
 
@@ -210,12 +223,14 @@ int rtipc_init()
 	rtipc_rts_lock_channel_struct.f = rts_lock_channel_func;
 	rtipc_rts_adjust_phase_struct.f = rts_adjust_phase_func;
 	rtipc_rts_enable_ptracker_struct.f = rts_enable_ptracker_func;
+	rtipc_rts_debug_command_struct.f = rts_debug_command_func;
 	
 	minipc_export(server, &rtipc_rts_set_mode_struct);
 	minipc_export(server, &rtipc_rts_get_state_struct);
 	minipc_export(server, &rtipc_rts_lock_channel_struct);
   minipc_export(server, &rtipc_rts_adjust_phase_struct);
   minipc_export(server, &rtipc_rts_enable_ptracker_struct);
+  minipc_export(server, &rtipc_rts_debug_command_struct);
 
 
 	return 0;
