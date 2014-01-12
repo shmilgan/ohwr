@@ -92,8 +92,8 @@ clean()
 	exit 0
 }
 
-## Remove _done tag to a specific step or a list of specific test --step="5 7 9" 
-step()
+## Remove _done tag to a specific step or a list of steps like  --step="5 7 9" 
+redo_step()
 {
 	for num in $1; do 
 		rm -v ${WRS_OUTPUT_DIR}/build/_done/$(printf "%02d" ${num})-*
@@ -109,7 +109,8 @@ if [ -n "$1" ]; then
 		--clean) clean;;
 		--list) cd $WRS_DONE_DIR; ls 0*; exit 0;;
 		--pack) pack; exit 0;;
-		--step=*) seq=$(echo "$1" | sed -e 's/--step=//'); step "$seq";;
+		--step=*) seq=$(echo "$1" | sed -e 's/--step=//');
+			redo_step "$seq";;
 		*) showhelp;;
 	esac
 fi
@@ -135,8 +136,6 @@ wrs_build_step () {
 	then failed_step=true;
 	else touch $markerfile
     fi
-    # remove marker 00, re-checking the download has no issues
-    rm -f $WRS_DONE_DIR/00*
 }
 
 
@@ -146,6 +145,10 @@ wrs_build_step () {
 failed_step=false; # this is set to "true" but the wrs_build_step function
 
 # Now build the stuff one step at a time, only if not already done.
+# Steps 0 and 9 are redone in any case:
+#   step 0 is downloading, and re-cecking md5sum has no side effects
+#   step 9 is wrapping the filesystem: we need to re-wrap is something changed
+redo_step "0 9"
 
 #                 done-marker            script name
 wrs_build_step    00-download            wrs_download
