@@ -18,6 +18,8 @@
 <div class="rightbody">
 <h1 class="title">PTP Configuration <a href='help.php?help_id=ptp' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
+	<?php session_is_started() ?>
+	
 	<FORM method="POST">
 	<table border="0" align="center">	
 			<tr>

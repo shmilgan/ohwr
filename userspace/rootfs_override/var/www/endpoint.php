@@ -16,7 +16,9 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Endpoint Configuration <a href='help.php?help_id=endpoint' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
+<h1 class="title">Endpoint Tool <a href='help.php?help_id=endpoint' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
+
+<?php session_is_started() ?>
 
 	<?php
 		echo '<form  method=POST>
@@ -37,8 +39,8 @@
 		echo '<option value="wr">Modify Registers</option>';	
 		//echo '<option value="rt">Show Flags</option>';	
 		echo '<option value="lock">Lock Endpoint</option>';	
-		echo '<option value="master">Make Master</option>';	
-		echo '<option value="gm">Make GrandMaster</option>';	
+		//echo '<option value="master">Make Master</option>';	
+		//echo '<option value="gm">Make GrandMaster</option>';	
 			
 			
 		echo '</select>

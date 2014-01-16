@@ -1,5 +1,6 @@
 <?php
 
+
 /*
  * Displays the current status of each enpoint.
  * 
@@ -83,6 +84,7 @@ function wrs_main_info(){
 	$str = shell_exec("uname -n");
 	if(strcmp($str,"(none)")) shell_exec("/bin/busybox hostname -F /etc/hostname");
 	echo '<tr><th><b>Hostname:</b></th><th><center>'; $str = shell_exec("uname -n"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th> <b>Switch Mode:</b> </th><th><center>'; $str = check_switch_mode(); echo $str; echo '</center></th></tr>';
 	echo '<tr><th> <b>IP Address:</b> </th><th><center>'; $ip = shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'"); echo $ip;  echo '</center></th></tr>';
 	echo '<tr><th> <b>OS Release:</b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; echo '</center></th></tr>';
 	echo '<tr><th> <b>OS name:</b> </th><th><center>'; $str = shell_exec("uname -s"); echo $str; echo '</center></th></tr>';
@@ -271,6 +273,8 @@ function wr_endpoint_phytool($option1, $endpoint){
 		$output=shell_exec('/wr/bin/wr_phytool '.$endpoint.' rt gm');
 		echo 'Grandmastering finished' ;
 		
+		
+	} else if(!strcmp($option1, "hal_conf")){
 		
 	}
 }
@@ -461,6 +465,10 @@ function wrs_management(){
 			echo '<br><br><br>Partition is now READ-ONLY';
 		}else if (!strcmp($cmd, "size")){
 			php_file_transfer_size(htmlspecialchars($_POST["size"]));
+		}else if (!strcmp($cmd, "change")){
+			modify_switch_mode();
+			$mode = check_switch_mode(); 
+			echo '<br><br><br>Switch is now '.$mode;
 		}
 }
 
@@ -688,5 +696,123 @@ function extension($filename){
     return substr(strrchr($filename, '.'), 1);
 }
 
+/*
+ * Obtains the content of wrsw_hal_file
+ *  
+ * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
+ * 	
+ * @return $file: string containing endpoints master/slave
+ * 
+ */
+function parse_wrsw_hal_file(){
+	
+	$file =  shell_exec('cat /wr/etc/wrsw_hal.conf | grep wr_');
+	$file =  str_replace("mode =", "", $file);
+	$file =  str_replace('"', "", $file);
+	$file =  str_replace(';', "", $file);
+	$file =  str_replace('wr_', "", $file);
+	$file = explode(" ", $file);
+	return $file;
+}
+
+/*
+ * Obtains the content the switch mode from wrsw_hal.conf file
+ *  
+ * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
+ * 	
+ * @return true for GrandMaster mode, false for Master mode.
+ * 
+ */
+function check_switch_mode(){
+	$status = shell_exec("cat /wr/etc/wrsw_hal.conf | grep -c GrandMaster");
+	
+	if($status>0){
+		return "GrandMaster";
+	} else {
+		return "Master";
+	}
+
+}
+
+/*
+ * Obtains the current mode of the switch from wrsw_hal.conf file
+ * and changes it from master to Grandmaster and vicecersa
+ *  
+ * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
+ * 	
+ * 
+ */
+function modify_switch_mode(){
+	
+	if (!strcmp(check_switch_mode(), "GrandMaster")){
+		$cmd = 'sed -i "s/mode = \"GrandMaster\"/mode = \"Master\"/g" /wr/etc/wrsw_hal.conf';
+	}else{
+		$cmd = 'sed -i "s/mode = \"Master\"/mode = \"GrandMaster\"/g" /wr/etc/wrsw_hal.conf';
+	}
+	shell_exec($cmd);
+	
+}
+
+function wrs_modify_endpoint_mode($endpoint, $mode){
+	
+	(!strcmp($mode, "master")) ? $new_mode = "wr_slave" : $new_mode = "wr_master";
+	
+	if($endpoint>0 && $endpoint<19 && (((!strcmp($mode, "slave"))) || ((!strcmp($mode, "master"))))){
+		
+		
+		$file = "/wr/etc/wrsw_hal.conf";
+		$lines = file($file);
+		$output = "";
+		$count = 0;
+		$end_aux = $endpoint;
+		$endpoint = 'wr'.($endpoint-1).' =';
+		$found = false;
+		
+		foreach($lines as $line_num => $line)
+		{
+			if(substr_count($line, $endpoint)>0){
+				$found = true;
+			}
+			
+			if($found)$count++;
+			
+			
+			if($count==6){
+				$output.='		mode = "'.$new_mode.'";'."\n";
+				$count = 0;
+				$found = false;
+			}else{
+				$output.=$line;
+			}
+		}
+		
+		//We save the changes in a temporarely file in /tmp
+		$file = fopen("/tmp/wrsw_hal.conf","w+");
+		fwrite($file,$output);
+		fclose($file);
+		
+		//We move the file to /wr/etc/
+		copy('/tmp/wrsw_hal.conf', '/wr/etc/wrsw_hal.conf');
+		
+		echo '<br><br><br><br><br><br><br><br><center>Endpoint wr'.$end_aux.' is now '.$new_mode.'</center>';
+	}else{
+		echo '<br>Wrong parameters for endpoint-mode';
+	}
+	
+}
+
+function session_is_started(){
+	
+	ob_start();
+	
+	$login_url = "./index.php";
+	
+	if (!isset($_SESSION['myusername'])) {
+		echo '<br><br><br><center>Please <a href="' . $login_url . '">login.</center></a>';
+		exit;
+	}
+	
+	
+}
 	
 ?>

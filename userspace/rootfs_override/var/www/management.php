@@ -18,7 +18,15 @@
 <div class="rightbody">
 <h1 class="title">Switch Management <a href='help.php?help_id=management' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
+<?php session_is_started() ?>
+
 	<table border="0" align="center">	
+		<tr>
+			<form  method="post">
+			<th><center>Switch Mode: (<?php  $str = check_switch_mode(); echo $str; ?>) </center><input type="hidden" name="cmd" value="change"></th>
+			<th><input type="submit" value="Change Mode" class="btn"></th>
+			</form>
+		</tr>
 		<tr>
 			<form  method="post">
 			<th><center>Halt system: </center><input type="hidden" name="cmd" value="halt"></th>
@@ -61,6 +69,7 @@
 	
 	<?php 
 		wrs_management();
+		wrs_check_writeable();
 	
 	?>
 

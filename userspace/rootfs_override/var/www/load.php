@@ -18,7 +18,7 @@
 <div class="rightbody">
 <h1 class="title">Load LM32 & FPGA Files <a href='help.php?help_id=load' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
-
+	<?php session_is_started() ?>
 
 	<table border="0" align="center">	
 	

@@ -18,6 +18,8 @@
 <div class="rightbody">
 <h1 class="title">White-Rabbit Switch Console <a href='help.php?help_id=console' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
+	<?php session_is_started() ?>
+
 	<FORM action="terminal.php" method="POST" accept-charset="UTF-8">
 	Unix Command: <input type="text" name="cmd">
 	<input type="submit" value="Enter" class="btn">
