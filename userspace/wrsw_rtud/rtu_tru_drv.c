@@ -519,6 +519,7 @@ void tru_ep_debug_clear_pfilter(uint32_t port)
 void tru_ep_debug_inject_packet(uint32_t port, uint32_t user_val, uint32_t pck_sel)
 {
    uint64_t val;
+   
    tru_wr(DPS, TRU_DPS_PID_W(port));
    val =             TRU_PIDR_INJECT |
           TRU_PIDR_PSEL_W(pck_sel)   |
@@ -1149,9 +1150,11 @@ void tru_set_life(char *optarg)
        tru_ep_debug_read_pfilter((uint32_t)sub_opt);
        break;       
     case  12:
+       ep_config_inj_template((uint32_t)sub_opt,0);
        tru_ep_debug_inject_packet((uint32_t)sub_opt, 0xBABE, 0);
        break;       
     case  13:
+       ep_config_inj_template((uint32_t)sub_opt,1);
        tru_ep_debug_inject_packet((uint32_t)sub_opt, 0xBABE, 1);
        break;       
     case  14:
@@ -1202,7 +1205,17 @@ void tru_set_life(char *optarg)
        ep_vcr1_wr( 6 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
        ep_set_vlan(7 /*port*/, 0/*access port*/, 1 /*fix_prio*/, 7 /*prio_val*/, 11 /*pvid*/);
        ep_vcr1_wr( 7 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ );       
-       break;       
+       break;     
+    case 24:
+       ep_gen_pck_configure((uint32_t)sub_opt /*port*/,100/*interframe gap*/,250/*size*/);
+       break;  
+    case 25:
+       ep_gen_pck_start((uint32_t)sub_opt);
+       break;  
+    case 26:
+       ep_gen_pck_stop((uint32_t)sub_opt);
+       break;  
+       
     case  100:
        tru_show_status(18) ;
        
@@ -1273,7 +1286,10 @@ void tru_set_life(char *optarg)
        TRACE(TRACE_INFO, "-u 22 n      Set port n to untagg VIDs 0 - 15");
        TRACE(TRACE_INFO, "-u 23        Redundancy test (works on VLAN 11):");
        TRACE(TRACE_INFO, "             * active ports: 4, 6 ,7");
-       TRACE(TRACE_INFO, "             * backup ports: 5 (backup for 4)");       
+       TRACE(TRACE_INFO, "             * backup ports: 5 (backup for 4)");   
+       TRACE(TRACE_INFO, "-u 24 n      configure/prepare frame generation using pck_inj at port n");           
+       TRACE(TRACE_INFO, "-u 25 n      start frame generation using pck_inj at port n");           
+       TRACE(TRACE_INFO, "-u 26 n      stop  frame generation using pck_inj at port n");           
        TRACE(TRACE_INFO, "-u 100       show status");
   };
   exit(1);

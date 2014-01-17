@@ -84,7 +84,6 @@
 /* definitions for field: RX timestamper calibration result flag in reg: Timestamping Control Register */
 #define EP_TSCR_RX_CAL_RESULT                 WBGEN2_GEN_MASK(5, 1)
 
-
 /* definitions for register: RX Deframer Control Register */
 
 /* definitions for field: RX accept runts in reg: RX Deframer Control Register */
@@ -283,6 +282,26 @@
 /* definitions for field: DMTD Phase shift value ready in reg: DMTD Status register */
 #define EP_DMSR_PS_RDY                        WBGEN2_GEN_MASK(24, 1)
 
+/* definitions for register: PCK Injection CTRL */
+
+/* definitions for field: Config: Interframe GAP in reg: PCK Injection CTRL */
+#define EP_INJ_CTRL_PIC_CONF_IFG_MASK         WBGEN2_GEN_MASK(0, 16)
+#define EP_INJ_CTRL_PIC_CONF_IFG_SHIFT        0
+#define EP_INJ_CTRL_PIC_CONF_IFG_W(value)     WBGEN2_GEN_WRITE(value, 0, 16)
+#define EP_INJ_CTRL_PIC_CONF_IFG_R(reg)       WBGEN2_GEN_READ(reg, 0, 16)
+
+/* definitions for field: Config: packet pattern sel id in reg: PCK Injection CTRL */
+#define EP_INJ_CTRL_PIC_CONF_SEL_MASK         WBGEN2_GEN_MASK(16, 3)
+#define EP_INJ_CTRL_PIC_CONF_SEL_SHIFT        16
+#define EP_INJ_CTRL_PIC_CONF_SEL_W(value)     WBGEN2_GEN_WRITE(value, 16, 3)
+#define EP_INJ_CTRL_PIC_CONF_SEL_R(reg)       WBGEN2_GEN_READ(reg, 16, 3)
+
+/* definitions for field: Interframe GAP config valid in reg: PCK Injection CTRL */
+#define EP_INJ_CTRL_PIC_VALID                 WBGEN2_GEN_MASK(20, 1)
+
+/* definitions for field: Frame Generation Enabled in reg: PCK Injection CTRL */
+#define EP_INJ_CTRL_PIC_ENA                   WBGEN2_GEN_MASK(21, 1)
+
 PACKED struct EP_WB {
   /* [0x0]: REG Endpoint Control Register */
   uint32_t ECR;
@@ -318,6 +337,8 @@ PACKED struct EP_WB {
   uint32_t DMCR;
   /* [0x40]: REG DMTD Status register */
   uint32_t DMSR;
+  /* [0x44]: REG PCK Injection CTRL */
+  uint32_t INJ_CTRL;
 };
 
 #endif

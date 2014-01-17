@@ -45,6 +45,7 @@ int ep_simple_test() ;
 void ep_show_status(int num_ports) ;
 void ep_vcr1_wr(uint32_t port,int is_vlan, int addr, uint32_t data);
 int ep_write_inj_pck_templ(uint32_t port, int slot, pck_inject_templ_t *pck_temp, int user_offset);
+int ep_write_inj_gen_templ(uint32_t port, pck_inject_templ_t *header_tmpl, int frame_size, int slot);
 void ep_pfilter_status_N_ports(int port_num);
 void ep_pfilter_reload_code(int port);
 void ep_show_pause_config(uint32_t port);
@@ -54,4 +55,8 @@ void ep_snake_config(int option);
 void ep_class_prio_map(uint32_t port, int prio_map[]);
 void ep_pfilter_lacp_test_code(int port);
 void ep_strange_config(int opt);
+void ep_inj_gen_ctr_config(uint32_t port, int interframe_gap, int sel_id /*slot*/);
+void ep_inj_gen_ctr_enable(uint32_t port);
+void ep_gen_pck_start(uint32_t port);
+void ep_gen_pck_stop(uint32_t port);
 #endif /*__WHITERABBIT_RTU_EP_DRV_H*/

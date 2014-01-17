@@ -89,6 +89,7 @@ int ep_init(int ep_enabled, int port_num)
                                     0x00,0x00,0x00,0x00,0x00,0x00, //48-53: padding
                                     0x00,0x00,0x00,0x00,0x00,0x00, //54-59: padding
                                     0x00,0x00,0x00,0x00}};          //60-63: padding                                   
+                                 
     /*
     pfilter_new();    
     pfilter_nop();                                          
@@ -139,6 +140,55 @@ int ep_init(int ep_enabled, int port_num)
    
    
    ep_show_status(8);
+  return 0;
+}
+
+
+int ep_config_inj_template(int port, int template_sel)
+{
+   pck_inject_templ_t BPDU_templ = { "BPDU " /*info*/, 64, /*size*/
+                                  /* pck content */
+                                 { 0x01,0x80,0xC2,0x00,0x00,0x00, //0 - 5: dst addr
+                                   0x00,0x00,0x00,0x00,0x00,0x00,  //6 -11: src addr (to be filled in ?)
+                                   0x26,0x07,0x42,0x42,0x03,       //12-16: rest of the Eth Header
+                                   0x00,0x00,                      //17-18: protocol ID
+                                   0x00,                           //19   : protocol Version
+                                   0x00,                           //20   : BPDU type =>: repleacable
+                                   0x00,                           //21   : flags     =>: repleacable      
+                                   0x00,0x00,0x00,0x00,0x00,0x00,  //22-27: padding
+                                   0x00,0x00,0x00,0x00,0x00,0x00,  //28-33: padding
+                                   0x00,0x00,0x00,0x00,0x00,0x00,  //34-39: padding
+                                   0x00,0x00,0x00,0x00,0x00,0x00,  //40-45: padding
+                                   0x00,0x00,0x00,0x00,0x00,0x00,  //46-51: padding
+                                   0x00,0x00,0x00,0x00,0x00,0x00,  //52-57: padding
+                                   0x00,0x00,0x00,0x00,0x00,0x00}};//58-63: padding
+   pck_inject_templ_t PAUSE_templ ={ "PAUSE" /*info*/, 64 /*size*/,
+                                     /* pck content */
+				     {0x01,0x80,0xC2,0x00,0x00,0x01, //0 - 5: dst addr
+                                    0x00,0x00,0x00,0x00,0x00,0x00, //6 -11: src addr (to be filled in ?)
+                                    0x88,0x08,                     //12-13: Type Field = MAC control Frame
+                                    0x00,0x01,                     //14-15: MAC Control Opcode = PAUSE
+                                    0x00,0x00,                     //16-17: param: pause time: repleacable
+                                    0x00,0x00,0x00,0x00,0x00,0x00, //18-23: padding
+                                    0x00,0x00,0x00,0x00,0x00,0x00, //24-29: padding
+                                    0x00,0x00,0x00,0x00,0x00,0x00, //30-35: padding
+                                    0x00,0x00,0x00,0x00,0x00,0x00, //36-41: padding
+                                    0x00,0x00,0x00,0x00,0x00,0x00, //42-47: padding
+                                    0x00,0x00,0x00,0x00,0x00,0x00, //48-53: padding
+                                    0x00,0x00,0x00,0x00,0x00,0x00, //54-59: padding
+                                    0x00,0x00,0x00,0x00}};          //60-63: padding                                   
+                                 
+   TRACE(TRACE_INFO,"EP [Port %2d]: ep_config_inj_temp: sel=%1d",port,template_sel);
+   if(template_sel == 0) 
+     ep_write_inj_pck_templ((uint32_t)port /*port*/, 0 /*slot*/, &PAUSE_templ,16);
+   else if(template_sel == 1) 
+     ep_write_inj_pck_templ((uint32_t)port /*port*/, 1 /*slot*/, &BPDU_templ,20);
+   else
+   {
+     TRACE(TRACE_INFO,"EP [Port %2d]: ep_config_inj_temp: template sel id invalid =%1d",port,template_sel);  
+     return -1;
+   }
+   
   return 0;
 }
 
@@ -296,6 +346,91 @@ int ep_write_inj_pck_templ(uint32_t port, int slot, pck_inject_templ_t *pck_temp
     ep_vcr1_wr(port, 0,slot * 64 + i/2, v);
   }
 }
+int ep_write_inj_gen_templ(uint32_t port, pck_inject_templ_t *header_tmpl, int frame_size, int slot)
+{
+  int i;
+  uint32_t v = 0; 
+  if(header_tmpl->size & 1)
+  {
+    TRACE(TRACE_INFO,"EP [Port %2d] ep_write_inj_gen_templ(): header size must be even",port);
+    return -1;
+  }
+  if(frame_size < 64)
+  {
+    TRACE(TRACE_INFO,"EP [Port %2d] ep_write_inj_gen_templ(): frame size needs to be greater than 64",port);
+    return -1;
+  }  
+  
+  TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: writing HW-generated pck template %s [frame_size=%3d,"
+                   "header_size=%2d]", port, header_tmpl->info, frame_size, header_tmpl->size);
+      
+  for(i=0;i< frame_size;i+=2)
+  {
+    if(i < header_tmpl->size)
+      v = ((header_tmpl->data[i] << 8) | header_tmpl->data[i+1]) & 0x0000FFFF;
+    else
+      v = 0x0;
+    if(i == 0)
+      v |= (1<<16); // start of template    
+    if((frame_size & 1) && (i == (frame_size - 1))) // end of template with odd size
+      v |= (1<<16) | (1<<17);
+    else if(i == (frame_size - 2)) // end of template with even size
+      v |= (1<<16);
+           
+    if(i == header_tmpl->size)
+      v |= (1<<17); // place for frame ID
+
+    ep_vcr1_wr(port, 0,slot * 64 + i/2, v);
+  }  
+}
+void ep_inj_gen_ctr_config(uint32_t port, int interframe_gap, int sel_id /*slot*/)
+{
+   uint32_t val = 0;
+   val = EP_INJ_CTRL_PIC_CONF_IFG_W(interframe_gap) | 
+         EP_INJ_CTRL_PIC_CONF_SEL_W(sel_id)         | 
+         EP_INJ_CTRL_PIC_VALID;
+
+  ep_wr(INJ_CTRL,port,val);
+  TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen_config: interframe gap=%4d, slot/sel_id =%2d ", 
+                   port, interframe_gap, sel_id);   
+}
+
+void ep_inj_gen_ctr_enable(uint32_t port)
+{
+  uint32_t val = 0;
+  val = EP_INJ_CTRL_PIC_ENA;
+  ep_wr(INJ_CTRL,port,val);
+  TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: enabled", port);   
+}
+void ep_inj_gen_ctr_disable(uint32_t port)
+{
+   uint32_t val = 0;
+   ep_wr(INJ_CTRL,port,val);
+   TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: disabled", port);
+}
+
+void ep_gen_pck_configure(uint32_t port, int interframe_gap, int frame_size)
+{
+  pck_inject_templ_t GEN_templ = { "GEN FR " /*info*/, 14, /*size of header*/
+                                /* pck content */
+                               { 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, //0 - 5: dst addr
+                                 0x12,0x34,0x56,0x78,0x9A,0xBC, //6 -11: src addr (to be filled in ?)
+                                 0xDE,0xED}};                   //12-13: EtherType   
+   ep_write_inj_gen_templ(port, &GEN_templ, frame_size,0);
+   ep_inj_gen_ctr_config(port,interframe_gap,0);
+   ep_inj_gen_ctr_enable(port);
+}
+
+void ep_gen_pck_start(uint32_t port)
+{
+  ep_inj_gen_ctr_enable(port);
+}
+
+void ep_gen_pck_stop(uint32_t port)
+{
+  ep_inj_gen_ctr_disable(port); 
+}
+
 
 void ep_vcr1_wr(uint32_t port,int is_vlan, int addr, uint32_t data)
 {
@@ -489,6 +624,7 @@ void ep_strange_config(int opt)
      TRACE(TRACE_INFO,"config_startup: opt = 12 sub_opt = %d NOT SUPPORTED", opt);
      break;
   }       
-    
-     
 }
+
+
+
