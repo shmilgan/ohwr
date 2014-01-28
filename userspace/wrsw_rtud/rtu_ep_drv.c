@@ -197,9 +197,9 @@ void ep_ctrl(int enable, int port)
    uint32_t val;
    val = ep_rd(ECR,port);
    if(enable)
-     val = val | EP_ECR_RX_EN | EP_ECR_RX_EN;
+     val = val | EP_ECR_RX_EN | EP_ECR_TX_EN;
    else
-     val = val & ! (EP_ECR_RX_EN | EP_ECR_RX_EN);
+     val = val & ! (EP_ECR_RX_EN | EP_ECR_TX_EN);
    ep_wr(ECR,port,val);
    TRACE(TRACE_INFO,"EP [Port %2d]: enable=%1d",port,enable);
 }
@@ -395,6 +395,18 @@ void ep_inj_gen_ctr_config(uint32_t port, int interframe_gap, int sel_id /*slot*
                    port, interframe_gap, sel_id);   
 }
 
+void ep_inj_gen_ctr_config_N_ports(int N_port, int ifg, int size, int sel_id /*slot*/)
+{
+  uint32_t val = 0;
+  int i = 0;
+   
+  for(i=0;i<N_port;i++)
+  {
+     ep_gen_pck_configure((uint32_t)i /*port*/,ifg/*interframe gap*/,size/*size*/);
+  }
+
+}
+
 void ep_inj_gen_ctr_enable(uint32_t port)
 {
   uint32_t val = 0;
@@ -415,11 +427,31 @@ void ep_gen_pck_configure(uint32_t port, int interframe_gap, int frame_size)
                                 /* pck content */
                                { 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, //0 - 5: dst addr
                                  0x12,0x34,0x56,0x78,0x9A,0xBC, //6 -11: src addr (to be filled in ?)
-                                 0xDE,0xED}};                   //12-13: EtherType   
+                                 0xDE,0xED}};                   //12-13: EtherType  
+   uint32_t val = 0;
+   GEN_templ.data[11] = port; 
    ep_write_inj_gen_templ(port, &GEN_templ, frame_size,0);
    ep_inj_gen_ctr_config(port,interframe_gap,0);
-   ep_inj_gen_ctr_enable(port);
+   
+   val = ep_rd(ECR,port);
+   val = val & !(EP_ECR_RX_EN);
+   ep_wr(ECR,port,val);   
+   
+//    ep_inj_gen_ctr_enable(port);
 }
+
+void ep_gen_pck_config_show(uint32_t port)
+{
+   uint32_t val = ep_rd(INJ_CTRL,port);
+   if(val & EP_INJ_CTRL_PIC_ENA)
+   { TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: enabled", port);}
+   else
+   { TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: disabled", port);}
+   
+   TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: pck sel id = %1d, ifg=%3d", port, 
+   EP_INJ_CTRL_PIC_CONF_SEL_R(val), EP_INJ_CTRL_PIC_CONF_IFG_R(val));
+}
+
 
 void ep_gen_pck_start(uint32_t port)
 {
@@ -438,8 +470,8 @@ void ep_vcr1_wr(uint32_t port,int is_vlan, int addr, uint32_t data)
   val = EP_VCR1_OFFSET_W((is_vlan ? 0 : 0x200) + addr) |
         EP_VCR1_DATA_W(data);
   ep_wr(VCR1, port, val);
-  TRACE(TRACE_INFO,"EP [ep_vcr1_wr] val=0x%x, port=%d, offset=0x%x, data=0x%x",
-  val, port, ((is_vlan ? 0 : 0x200) + addr), data);
+  //TRACE(TRACE_INFO,"EP [ep_vcr1_wr] val=0x%x, port=%d, offset=0x%x, data=0x%x",
+  //val, port, ((is_vlan ? 0 : 0x200) + addr), data);
 }
 
 void ep_pfilter_status_N_ports(int port_num)

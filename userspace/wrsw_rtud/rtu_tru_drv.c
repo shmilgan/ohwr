@@ -1215,12 +1215,15 @@ void tru_set_life(char *optarg)
     case 26:
        ep_gen_pck_stop((uint32_t)sub_opt);
        break;  
-       
-    case  100:
+    case 27: 
+       ep_gen_pck_config_show((uint32_t)sub_opt);  
+       break;
+    case  50:
        tru_show_status(18) ;
+       ep_show_status(18);
        
     break;
-    default:
+    case  0:
        TRACE(TRACE_INFO, "TRU control options");
        TRACE(TRACE_INFO, "Usage: wrsw_rtu -u [<option> <value>]");
        TRACE(TRACE_INFO, "-u 0         show this info");
@@ -1289,9 +1292,20 @@ void tru_set_life(char *optarg)
        TRACE(TRACE_INFO, "             * backup ports: 5 (backup for 4)");   
        TRACE(TRACE_INFO, "-u 24 n      configure/prepare frame generation using pck_inj at port n");           
        TRACE(TRACE_INFO, "-u 25 n      start frame generation using pck_inj at port n");           
-       TRACE(TRACE_INFO, "-u 26 n      stop  frame generation using pck_inj at port n");           
-       TRACE(TRACE_INFO, "-u 100       show status");
+       TRACE(TRACE_INFO, "-u 26 n      stop  frame generation using pck_inj at port n");      
+       TRACE(TRACE_INFO, "-u 27 n      show  config of pck_inj at port n"); 
+       TRACE(TRACE_INFO, "-u 50        show status");
+       TRACE(TRACE_INFO, "----------------------");
+       TRACE(TRACE_INFO, "for -u Number  where Number > 64 && n < 1500"); 
+       TRACE(TRACE_INFO, "-u S  I      configure ports 0-7 for pck_inj with S size frames and I interframe gap size"); 
+       
+     break;
+     default:
+       if(opt > 64 && opt < 1500)
+         ep_inj_gen_ctr_config_N_ports(8 /*ports*/, sub_opt /*ifg*/, opt /*size*/, 0/*slot*/);
+     break;
   };
   exit(1);
+  
   
 }
