@@ -67,4 +67,5 @@ void tru_ep_debug_read_pinject(uint32_t port);
 void tru_transition_status();
 void tru_debug_rt_reconf_reg();
 int ep_config_inj_template(int port_num, int template_sel);
+void ep_inj_gen_ctr_probe_N_ports(int N_port);
 #endif /*__WHITERABBIT_RTU_DRV_H*/

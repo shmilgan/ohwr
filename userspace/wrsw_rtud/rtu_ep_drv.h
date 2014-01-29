@@ -59,6 +59,6 @@ void ep_inj_gen_ctr_config(uint32_t port, int interframe_gap, int sel_id /*slot*
 void ep_inj_gen_ctr_enable(uint32_t port);
 void ep_gen_pck_start(uint32_t port);
 void ep_gen_pck_stop(uint32_t port);
-void ep_inj_gen_ctr_config_N_ports(int N_port, int ifg, int size, int sel_id /*slot*/);
+void ep_inj_gen_ctr_config_N_ports(int N_port, int ifg, int size);
 void ep_gen_pck_config_show(uint32_t port);
 #endif /*__WHITERABBIT_RTU_EP_DRV_H*/

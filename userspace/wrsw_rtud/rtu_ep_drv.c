@@ -328,9 +328,17 @@ int ep_write_inj_pck_templ(uint32_t port, int slot, pck_inject_templ_t *pck_temp
     TRACE(TRACE_INFO,"EP [Port %2d] ep_write_inj_pck_templ(): data size must be even");
     return -1;
   }
-  TRACE(TRACE_INFO,"EP [Port %2d] inj_pck: writing HW-injected pck template %s [size=%3d, slot=%2d,"
-                   " user_offset=%2d]", port, pck_temp->info,pck_temp->size, slot, 
-                   user_offset);
+  if(user_offset >= pck_temp->size-2)
+  {
+     TRACE(TRACE_INFO,"EP [Port %2d] inj_pck: user data cannot be in the last word");
+     return -1;
+  }
+  if(user_offset & 1)
+  {
+     TRACE(TRACE_INFO,"EP [Port %2d] inj_pck: user data offset must be even");
+     return -1;
+  }
+  
       
   for(i=0;i< pck_temp->size;i+=2)
   {
@@ -364,7 +372,8 @@ int ep_write_inj_gen_templ(uint32_t port, pck_inject_templ_t *header_tmpl, int f
   TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: writing HW-generated pck template %s [frame_size=%3d,"
                    "header_size=%2d]", port, header_tmpl->info, frame_size, header_tmpl->size);
       
-  for(i=0;i< frame_size;i+=2)
+  frame_size = frame_size - 4;    
+  for(i=0;i< frame_size;i+=2) // 
   {
     if(i < header_tmpl->size)
       v = ((header_tmpl->data[i] << 8) | header_tmpl->data[i+1]) & 0x0000FFFF;
@@ -386,6 +395,9 @@ int ep_write_inj_gen_templ(uint32_t port, pck_inject_templ_t *header_tmpl, int f
 void ep_inj_gen_ctr_config(uint32_t port, int interframe_gap, int sel_id /*slot*/)
 {
    uint32_t val = 0;
+   if(interframe_gap <=5)        interframe_gap = 5;      // minimum IFG
+   if(interframe_gap > (2^16-1)) interframe_gap = 2^16-1; // max     IFG
+   
    val = EP_INJ_CTRL_PIC_CONF_IFG_W(interframe_gap) | 
          EP_INJ_CTRL_PIC_CONF_SEL_W(sel_id)         | 
          EP_INJ_CTRL_PIC_VALID;
@@ -395,16 +407,21 @@ void ep_inj_gen_ctr_config(uint32_t port, int interframe_gap, int sel_id /*slot*
                    port, interframe_gap, sel_id);   
 }
 
-void ep_inj_gen_ctr_config_N_ports(int N_port, int ifg, int size, int sel_id /*slot*/)
+void ep_inj_gen_ctr_config_N_ports(int N_port, int ifg, int size)
 {
   uint32_t val = 0;
   int i = 0;
    
   for(i=0;i<N_port;i++)
-  {
      ep_gen_pck_configure((uint32_t)i /*port*/,ifg/*interframe gap*/,size/*size*/);
-  }
+}
 
+void ep_inj_gen_ctr_probe_N_ports(int N_port)
+{
+  uint32_t val = 0;
+  int i = 0;
+  for(i=0;i<N_port;i++)
+     ep_inj_gen_ctr_probe((uint32_t)i);
 }
 
 void ep_inj_gen_ctr_enable(uint32_t port)
@@ -419,6 +436,15 @@ void ep_inj_gen_ctr_disable(uint32_t port)
    uint32_t val = 0;
    ep_wr(INJ_CTRL,port,val);
    TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: disabled", port);
+}
+void ep_inj_gen_ctr_probe(uint32_t port)
+{
+  uint32_t val = 0;
+  val = EP_INJ_CTRL_PIC_ENA;
+  ep_wr(INJ_CTRL,port,val);
+  val = 0;
+  ep_wr(INJ_CTRL,port,val);
+  TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: proble (on->off)", port);   
 }
 
 void ep_gen_pck_configure(uint32_t port, int interframe_gap, int frame_size)

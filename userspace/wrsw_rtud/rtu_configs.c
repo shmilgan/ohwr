@@ -116,6 +116,7 @@ int config_info()
   TRACE(TRACE_INFO, "      0      nonHP frame dropping disabled ");    
   TRACE(TRACE_INFO, "      1      nonHP frame dropping enabled ");   
   TRACE(TRACE_INFO, "-s 16 n      two first ports not tagged/untagged, and no VLAN=1, other ports snake:  ");
+  TRACE(TRACE_INFO, "-s 17        start switch as tester with default setings: frame size of 250 bytes and interframe gap of 100x16ns ");
 
 
   return 0;
@@ -1134,6 +1135,10 @@ int config_startup(int opt, int sub_opt, int port_num)
     case 16:
       port_num= RTU_PSR_N_PORTS_R(rtu_rd(PSR));
       config_snake_with_PTP_hacked_test(sub_opt,port_num);
+      break;
+    case 17:
+      config_default(sub_opt,port_num);
+      ep_inj_gen_ctr_config_N_ports(port_num, 100 /*ifg*/, 250/*size*/);
       break;
     //////////////////////////////////////////////////////////////////
     case 0:

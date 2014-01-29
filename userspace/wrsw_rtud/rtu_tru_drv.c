@@ -1218,7 +1218,10 @@ void tru_set_life(char *optarg)
     case 27: 
        ep_gen_pck_config_show((uint32_t)sub_opt);  
        break;
-    case  50:
+    case 28:
+       ep_inj_gen_ctr_probe_N_ports(8);
+       break;
+    case 50:
        tru_show_status(18) ;
        ep_show_status(18);
        
@@ -1294,6 +1297,7 @@ void tru_set_life(char *optarg)
        TRACE(TRACE_INFO, "-u 25 n      start frame generation using pck_inj at port n");           
        TRACE(TRACE_INFO, "-u 26 n      stop  frame generation using pck_inj at port n");      
        TRACE(TRACE_INFO, "-u 27 n      show  config of pck_inj at port n"); 
+       TRACE(TRACE_INFO, "-u 28        send probes on all ports for the other switch to learn MACs"); 
        TRACE(TRACE_INFO, "-u 50        show status");
        TRACE(TRACE_INFO, "----------------------");
        TRACE(TRACE_INFO, "for -u Number  where Number > 64 && n < 1500"); 
@@ -1301,8 +1305,12 @@ void tru_set_life(char *optarg)
        
      break;
      default:
-       if(opt > 64 && opt < 1500)
-         ep_inj_gen_ctr_config_N_ports(8 /*ports*/, sub_opt /*ifg*/, opt /*size*/, 0/*slot*/);
+       if(opt >= 64 && opt <= 1500)
+         ep_inj_gen_ctr_config_N_ports(8 /*ports*/, sub_opt /*ifg*/, opt /*size*/);
+       else
+       {
+	 TRACE(TRACE_INFO, "test frame hardware injection: wrong size"); 
+       }
      break;
   };
   exit(1);
