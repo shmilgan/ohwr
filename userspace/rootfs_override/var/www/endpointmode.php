@@ -19,6 +19,7 @@
 <h1 class="title">Endpoint Mode Configuration<a href='help.php?help_id=endpointmode' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 	<?php session_is_started() ?>
+	<?php $_SESSION['advance']=""; ?>
     
 	<?php
 		//Load all 
@@ -42,7 +43,7 @@
 		echo '</table>';
 		echo '<br>';
 		
-		wrs_check_writeable();
+		//wrs_check_writeable();
 		
 
 	?>

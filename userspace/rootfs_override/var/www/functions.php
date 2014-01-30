@@ -18,9 +18,21 @@ function wrs_header_ports(){
 		
 	// Check whether $WRS_MANAGEMENT is set or we take the program
 	// by default.
-	$cmd = wrs_env_sh();
-	$str = shell_exec($cmd." ports");
-	$ports = explode(" ", $str);
+
+	
+	if(!file_exists("/tmp/ports.conf")){
+		$cmd = wrs_env_sh();
+		shell_exec("killall wr_management");
+		$str = shell_exec($cmd." ports");
+		$fp = fopen('/tmp/ports.conf', 'w+');
+		fwrite($fp, $str);
+		fclose($fp);
+		$ports = $str;
+	}else{
+		$ports = shell_exec("cat /tmp/ports.conf");
+	}
+	
+	$ports = explode(" ", $ports);
 
 	// We parse and show the information comming from each endpoint.
 	echo "<table border='0' align='center'  vspace='1'>";
@@ -29,17 +41,19 @@ function wrs_header_ports(){
 	echo "<table border='0' align='center' vspace='15'>";
 	
 	echo '<tr>';
+	$cont = 0;
 	for($i=1; $i<18*4; $i=$i+4){
 		
 		if (strstr($ports[($i-1)],"up")){
 			if (!strcmp($ports[($i)],"Master")){
-				echo '<th>'."<IMG SRC='img/master.png' align=left ,   width=40 , hight=40 , border=0 , alt='master'>".'</th>';
+				echo '<th>'."<IMG SRC='img/master.png' align=left ,   width=40 , hight=40 , border=0 , alt='master', title='wr".$cont."'>".'</th>';
 			}else{
-				echo  '<th>'."<IMG SRC='img/slave.png' align=left ,  width=40 , hight=40 , border=0 , alt='slave'>".'</th>';
+				echo  '<th>'."<IMG SRC='img/slave.png' align=left ,  width=40 , hight=40 , border=0 , alt='slave', title='wr".$cont."'>".'</th>';
 			}
 		}else{
-			echo '<th>'."<IMG SRC='img/linkdown.png' align=left ,  width=40 , hight=40 , border=0 , alt='down'>".'</th>';
+			echo '<th>'."<IMG SRC='img/linkdown.png' align=left ,  width=40 , hight=40 , border=0 , alt='down', title='wr".$cont."'>".'</th>';
 		}
+		$cont++;
 		
 	}
 	echo '</tr>';
@@ -48,14 +62,14 @@ function wrs_header_ports(){
 	for($i=1; $i<18*4; $i=$i+4){
 		
 		if (!strstr($ports[($i+1)],"NoLock")){
-			echo '<th>'."<IMG SRC='img/locked.png' align=center ,  width=15 , hight=15 , border=0 , alt='locked'>";
+			echo '<th>'."<IMG SRC='img/locked.png' align=center ,  width=15 , hight=15 , border=0 , alt='locked', title = 'locked'>";
 		}else{
-			echo '<th>'."<IMG SRC='img/unlocked.png' align=center ,  width=15 , hight=15 , border=0 , alt='unlocked'>";
+			echo '<th>'."<IMG SRC='img/unlocked.png' align=center ,  width=15 , hight=15 , border=0 , alt='unlocked', title = 'unlocked'>";
 		}
 		if (!strstr($ports[($i+2)],"Uncalibrated")){
-			echo "<IMG SRC='img/check.png' align=center ,  width=15 , hight=15 , border=0 , alt='check'>".'</th>';
+			echo "<IMG SRC='img/check.png' align=center ,  width=15 , hight=15 , border=0 , alt='check', title = 'calibrated'>".'</th>';
 		}else{
-			echo "<IMG SRC='img/uncheck.png' align=center ,  width=15 , hight=15 , border=0 , alt='uncheck'>".'</th>';
+			echo "<IMG SRC='img/uncheck.png' align=center ,  width=15 , hight=15 , border=0 , alt='uncheck', title = 'uncalibrated'>".'</th>';
 		}
 	}
 	echo '</tr>';
@@ -86,9 +100,15 @@ function wrs_main_info(){
 	echo '<tr><th><b>Hostname:</b></th><th><center>'; $str = shell_exec("uname -n"); echo $str; echo '</center></th></tr>';
 	echo '<tr><th> <b>Switch Mode:</b> </th><th><center>'; $str = check_switch_mode(); echo $str; echo '</center></th></tr>';
 	echo '<tr><th> <b>IP Address:</b> </th><th><center>'; $ip = shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'"); echo $ip;  echo '</center></th></tr>';
-	echo '<tr><th> <b>OS Release:</b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>OS name:</b> </th><th><center>'; $str = shell_exec("uname -s"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>OS Version:</b> </th><th><center>'; $str = shell_exec("uname -v"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th> <b>HW Address:</b> </th><th><center>'; $mac = shell_exec("ifconfig eth0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'"); echo $mac; echo '</center></th></tr>';
+	//echo '<tr><th> <b>OS Release:</b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; echo '</center></th></tr>';
+	//echo '<tr><th> <b>OS name:</b> </th><th><center>'; $str = shell_exec("uname -s"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th> <b>OS Version:</b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; $str = shell_exec("uname -v"); echo $str; echo '</center></th></tr>';
+	
+	echo '<tr><th> <b>Gateware Version:</b> </th><th><center> '; $str = shell_exec("/wr/bin/shw_ver -g | grep version | awk '{ print $4}'");
+	echo '<a href="showfile.php?help_id=gateware&name=GateWare Info" onClick="showPopup(this.href);return(false);"</a>';
+	echo $str; echo '</center></th></tr>';
+	
 	echo '<tr><th> <b>PCB Version:</b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -p"); echo $str;  echo '</center></th></tr>';
 	echo '<tr><th> <b>FPGA:</b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -f"); echo $str; echo '</center></th></tr>';
 	echo '<tr><th> <b>Compiling time:</b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -c"); echo $str; echo '</center></th></tr>';
@@ -115,6 +135,20 @@ function wrs_check_writeable(){
 	$output = shell_exec('mount | grep "(ro,"');
 	echo (!isset($output) || trim($output) == "") ? "" : "<br><font color='red'>WARNING: WRS is mounted as READ-ONLY, please contact the maintainer</font>";
 
+}
+
+/*
+ * It modifies filesystem to rw o ro
+ * 
+ * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
+ *
+ * @param $m should be rw for writable and ro for read-only
+ * 
+ */
+function wrs_change_wrfs($m){
+	
+	$output = shell_exec('/wr/bin/wrfs_mnt.sh '.$m);
+	
 }
 
 /*
@@ -388,6 +422,8 @@ function wrs_load_files(){
 				echo '<center>Loading FPGA binary '.$_FILES['fpgafile']['name'].', please wait for the system to reboot</center>';
 				$str = shell_exec("/wr/bin/load-virtex ".$uploadfile); 
 				echo $str;
+				echo '<br>System is rebooting, please wait for 30 seconds';
+				$str = shell_exec("reboot"); 
 				
 			} else {
 				echo "<center>File is not valid, please upload a .bin file.</center>\n";
@@ -408,6 +444,8 @@ function wrs_load_files(){
 				echo '<center>Loading lm32 binary '.$_FILES['lm32file']['name'].',, please wait for the system to reboot</center>';
 				$str = shell_exec("/wr/bin/load-lm32 ".$uploadfile); 
 				echo $str;
+				echo '<br>System is rebooting, please wait for 30 seconds';
+				$str = shell_exec("reboot"); 
 				
 			}  else {
 				echo "<center>File is not valid, please upload a .bin file</center>\n";
@@ -604,7 +642,7 @@ function wrs_vlan_display(){
 	
 }
 
-function wrs_display_help($help_id){
+function wrs_display_help($help_id, $name){
 	
 	if(!strcmp($help_id, "dashboard")){
 		$message = "<p>
@@ -667,9 +705,8 @@ function wrs_display_help($help_id){
 	} else if (!strcmp($help_id, "management")){
 		$message = "<p>
 			Options: <br>
-			- <b>Halt switch</b>: shut down switch. <br>
+			- <b>Change mode:</b> It changes switch mode to Master/GrandMaster <br>
 			- <b>Reboot switch</b>: it reboots the switch <br>
-			- <b>Mounting partitions</b>: Switch filefolders are read-only by default (except /tmp folder). If you want to make all directories writable use the remount function as writable. <br>
 			- <b>PHP Filesize</b>: It changes the max. size of the files that can be uploaded to the switch (2 MegaBytes by default)<br>
 		</p>";
 	} else if (!strcmp($help_id, "ptp")){
@@ -679,7 +716,29 @@ function wrs_display_help($help_id){
 		$message = "<p>vlan</p>";
 	} else if (!strcmp($help_id, "console")){
 		$message = "<p>This is a switch console emulator windows. Use it as if you were using a ssh session.</p>";
+	} else if (!strcmp($help_id, "gateware")){
+		
+		$msg = shell_exec("/wr/bin/shw_ver -g");
+		$msg = explode("\n", $msg);
+		for($i=0; $i<5; $i++){
+			
+			$message .= "<p>".$msg[$i]."<br></p>";
+		}
+		
+	}  else if (!strcmp($help_id, "file")){
+		$msg = shell_exec("cat /wr/etc/".$name);
+		$msg = explode("\n", $msg);
+		for($i=0; $i<count($msg); $i++){
+			
+			$message .= $i.":   ".$msg[$i]."<br>";
+		}
+		
+	} else if (!strcmp($help_id, "endpointmode")){
+		$message = "<b>Change endpoint mode to master/slave by clicking on one of the items</b>";
 	}
+	
+	
+	
 	
 	echo $message;
 	

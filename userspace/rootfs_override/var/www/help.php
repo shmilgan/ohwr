@@ -8,7 +8,7 @@
 <hr>
 	
 <?php
-	wrs_display_help($_GET['help_id']);
+	wrs_display_help($_GET['help_id'],"");
 ?>
 </body>
 

@@ -27,15 +27,88 @@
 	
 
 	<?php
+	wrs_change_wrfs("rw");
+	/*$path = shell_exec("echo $PATH");
+	if(substr_count($path , "/wr/bin")==0){
+		//$new_path = shell_exec("export PATH=/wr/bin:$PATH");
+		$path = htmlspecialchars(shell_exec("echo $PATH"));
+		echo "PATH=".$path;
+	}*/
+	
+	// If pwd is empty, we go to the root directory
+	if(empty($_SESSION["pwd"])){$_SESSION["pwd"]="/";}
+	shell_exec("cd ".$_SESSION["pwd"]);
+	
 	$cmd = htmlspecialchars($_POST["cmd"]);
-	$output = shell_exec($cmd);
+	
+	
+	// user is moving to another directory
+	$cmd_aux = $cmd;
+	if(substr_count($cmd_aux , "cd")>0){
+		
+		$cmd = " ls ";
+		// moving backwards
+		if(substr_count($cmd_aux , "cd ..")>0){
+			
+			$back = explode("/", $_SESSION["pwd"]);
+			$size = count($back);
+			$_SESSION["pwd"] = str_replace("/".$back[$size-1],"",$_SESSION["pwd"]);
+			
+		// moving forwards
+		}else{
+			$cmd_aux = explode(" ", $cmd_aux);
+			
+			if(!strstr($cmd_aux[1][0],"/")){
+								
+				if(file_exists($_SESSION["pwd"]."/".$cmd_aux[1])){
+
+					if (!strcmp($_SESSION["pwd"], "/")){
+						$_SESSION["pwd"].= $cmd_aux[1];
+					}else{
+						$_SESSION["pwd"].= "/".$cmd_aux[1];
+					}
+					
+				}else{
+					
+					$output = "folder not found";
+					
+				}
+
+				
+			}else{
+				
+				if(file_exists($cmd_aux[1])){
+					$_SESSION["pwd"] = $cmd_aux[1];
+					
+				}else{
+					$output = "folder not found";
+				}
+				
+			}
+			
+		}
+	}else{
+		
+	}
+
+	$path = "PATH=/sbin:/usr/sbin:/bin:/usr/bin:/wr/bin";
+	
+	if(strstr($output,"folder not found")){
+		$output = 'folder "'.$cmd_aux[1].'" not found';
+		$cmd = "";
+	}else{
+		$output = shell_exec( $path." ; cd ".$_SESSION["pwd"]." ; ".$cmd);
+	}
 	
 	echo '<div align="center"> <div id="preview" style= "BORDER-RIGHT: #000 1px solid; PADDING-RIGHT: 0px; 
 		BORDER-TOP: #000 1px solid; PADDING-LEFT: 2px; PADDING-BOTTOM: 2px; WORD-SPACING: 1px; OVERFLOW: scroll; 
 		BORDER-LEFT: #000 1px solid; WIDTH: 100%; PADDING-TOP: 1px; 
 		BORDER-BOTTOM: #000 2px solid; HEIGHT: 350px; TEXT-ALIGN: left"> 
-		<p>$'.$cmd.':<br>'.$output.'</p> </div></div>';
-
+		<p>'.$_SESSION["pwd"].'$:'.$cmd.'<br>'.$output.'</p> </div></div>';
+		
+		
+	
+		wrs_change_wrfs("ro");
 	 ?>
 
 

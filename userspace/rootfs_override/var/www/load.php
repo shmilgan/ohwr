@@ -19,6 +19,7 @@
 <h1 class="title">Load LM32 & FPGA Files <a href='help.php?help_id=load' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 	<?php session_is_started() ?>
+	<?php $_SESSION['advance']=""; ?>
 
 	<table border="0" align="center">	
 	
@@ -47,18 +48,22 @@
 	
 	<br><br><br><center>Max. filesize is now <?php echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); 
 			?></center>
-			<form method="post">
+			<form align="center" method="post">
 			Change PHP File Size Upload: <INPUT type="text" name="size" > 
 			<input type="submit" value="Change" class="btn">
 			</form>
 	
+	<br><br><br><hr>
+	*Note: After loading a FPGA or lm32 binary the switch will reboot.
 	
 	<?  
+		wrs_change_wrfs("rw");
 		wrs_load_files();
+		wrs_change_wrfs("ro");
 
-		echo '<center>';
-			wrs_check_writeable();
-		echo '</center>';
+		//echo '<center>';
+			//wrs_check_writeable();
+		//echo '</center>';
 	?>
 			
 

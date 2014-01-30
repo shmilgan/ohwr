@@ -16,16 +16,13 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Dashboard <a href='help.php?help_id=logout' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
+<h1 class="title">Switch Management <a href='help.php?help_id=management' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
-<?php $_SESSION['advance']=""; ?>
+<?php session_is_started() ?>
 
-	<?php
-		//ob_start();
-
-		unset($_SESSION["myusername"]);
-		unset($_SESSION["mypassword"]);
-		echo '<br><br><center><h3>Logged out</h3></center>';
+	
+	<?php 
+		$_SESSION['advance']="yes";
 		header('Location: index.php');
 	?>
 

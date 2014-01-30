@@ -4,7 +4,7 @@
 <div class="page">
 <div class="header" >
 <!--<h1>White-Rabbit Switch Tool</h1>-->
-<div class="header-ports" ><?php wrs_header_ports(); ?></div>
+<div class="header-ports" ><?php shell_exec("rm /tmp/ports.conf"); wrs_header_ports(); ?></div>
 <div class="topmenu">
 	<?php include 'topmenu.php' ?>
 </div>
@@ -18,6 +18,7 @@
 <div class="rightbody">
 <h1 class="title">Dashboard <a href='help.php?help_id=dashboard' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
+
 	<?php
 		wrs_main_info();		
 		echo '<br><br>';
@@ -28,7 +29,7 @@
 </div>
 </div>
 <div class="footer">
-	<?php include 'footer.php' ?>
+	<?php include 'footer.php'; ?>
 </div>
 </div>
 </div>

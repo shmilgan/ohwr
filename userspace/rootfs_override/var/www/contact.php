@@ -18,6 +18,7 @@
 <div class="rightbody">
 <h1 class="title">Contact</h1>
 
+	<?php $_SESSION['advance']=""; ?>
 	
 	<p><strong>White-Rabbit switch Firmware v<?php $str = shell_exec("uname -v"); echo $str;  ?> </strong></p><p>&nbsp;</p>
 	<p><strong>Open Hardware Repository  <a href="http://www.ohwr.org/projects/white-rabbit/wiki">http://www.ohwr.org/projects/white-rabbit/wiki</a> </strong></p></strong></p><p>&nbsp;</p>

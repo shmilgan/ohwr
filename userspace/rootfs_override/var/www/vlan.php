@@ -19,6 +19,7 @@
 <h1 class="title">VLAN Configuration <a href='help.php?help_id=vlan' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1> 
 
 	<?php session_is_started() ?>
+	<?php $_SESSION['advance']=""; ?>
 	
 	<?php
 		echo '<table align=center border="1" class="altrowstable" id="alternatecolor">';

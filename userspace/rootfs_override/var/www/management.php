@@ -18,7 +18,8 @@
 <div class="rightbody">
 <h1 class="title">Switch Management <a href='help.php?help_id=management' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
-<?php session_is_started() ?>
+	<?php session_is_started() ?>
+	<?php $_SESSION['advance']=""; ?>
 
 	<table border="0" align="center">	
 		<tr>
@@ -27,12 +28,12 @@
 			<th><input type="submit" value="Change Mode" class="btn"></th>
 			</form>
 		</tr>
-		<tr>
+		<!--<tr>
 			<form  method="post">
 			<th><center>Halt system: </center><input type="hidden" name="cmd" value="halt"></th>
 			<th><input type="submit" value="Halt switch" class="btn"></th>
 			</form>
-		</tr>
+		</tr> -->
 		<tr>
 			<form  method="post">
 			<th><center>Reboot system: </center><input type="hidden" name="cmd" value="reboot"></th>
@@ -40,7 +41,7 @@
 			</form>
 		</tr>
 		</tr><th> </th><th> </th><tr></tr><th> </th><th> </th><tr>
-		<tr>
+		<!--<tr>
 			</form>
 			<form method="post">
 			<th><center>Mount partition as writable: </center><input type="hidden" name="cmd" value="rw"></th>
@@ -53,7 +54,7 @@
 			<th><center>Mount partition as read-only: </center><input type="hidden" name="cmd" value="ro"></th>
 			<th><input type="submit" value="Remount" class="btn"></th>
 			</form>
-		</tr>
+		</tr>-->
 		</tr><th> </th><th> </th><tr></tr><th> </th><th> </th><tr>
 		<tr>
 			<form method="post">
@@ -68,8 +69,10 @@
 	
 	
 	<?php 
+		wrs_change_wrfs("rw");
 		wrs_management();
-		wrs_check_writeable();
+		//wrs_check_writeable();
+		wrs_change_wrfs("ro");
 	
 	?>
 
