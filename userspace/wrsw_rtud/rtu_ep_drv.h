@@ -55,10 +55,11 @@ void ep_snake_config(int option);
 void ep_class_prio_map(uint32_t port, int prio_map[]);
 void ep_pfilter_lacp_test_code(int port);
 void ep_strange_config(int opt);
-void ep_inj_gen_ctr_config(uint32_t port, int interframe_gap, int sel_id /*slot*/);
+int ep_inj_gen_ctr_config(uint32_t port, int interframe_gap, int sel_id /*slot*/, int mode);
 void ep_inj_gen_ctr_enable(uint32_t port);
 void ep_gen_pck_start(uint32_t port);
 void ep_gen_pck_stop(uint32_t port);
-void ep_inj_gen_ctr_config_N_ports(int N_port, int ifg, int size);
+void ep_inj_gen_ctr_config_N_ports(int N_port, int ifg, int size, int mode);
+void ep_gen_pck_configure(uint32_t port, int interframe_gap, int frame_size, int mode );
 void ep_gen_pck_config_show(uint32_t port);
 #endif /*__WHITERABBIT_RTU_EP_DRV_H*/

@@ -368,7 +368,11 @@ int ep_write_inj_gen_templ(uint32_t port, pck_inject_templ_t *header_tmpl, int f
     TRACE(TRACE_INFO,"EP [Port %2d] ep_write_inj_gen_templ(): frame size needs to be greater than 64",port);
     return -1;
   }  
-  
+  if(frame_size > 1024)
+  {
+    TRACE(TRACE_INFO,"EP [Port %2d] ep_write_inj_gen_templ(): frame size needs to be less than 1024 (to be changed later, now the RAM limit)",port);
+    return -1;
+  }    
   TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: writing HW-generated pck template %s [frame_size=%3d,"
                    "header_size=%2d]", port, header_tmpl->info, frame_size, header_tmpl->size);
       
@@ -392,28 +396,37 @@ int ep_write_inj_gen_templ(uint32_t port, pck_inject_templ_t *header_tmpl, int f
     ep_vcr1_wr(port, 0,slot * 64 + i/2, v);
   }  
 }
-void ep_inj_gen_ctr_config(uint32_t port, int interframe_gap, int sel_id /*slot*/)
+int ep_inj_gen_ctr_config(uint32_t port, int interframe_gap, int sel_id /*slot*/, int mode)
 {
    uint32_t val = 0;
-   if(interframe_gap <=5)        interframe_gap = 5;      // minimum IFG
-   if(interframe_gap > (2^16-1)) interframe_gap = 2^16-1; // max     IFG
+ 
+   /*
+    * Scalling: interframe_gap = 0  =>>> 7 words in HW (so  7x16ns=112ns)
+    *           interframe_gap = 5  =>>>12 words in HW (so 12x16ns=192ns) -> min
+    **/
+   if(interframe_gap <=6)        interframe_gap = 5;  // minimum IFG
+   else                          interframe_gap = interframe_gap - 1; // scalling
+   if(interframe_gap > 65535) interframe_gap = 65535; // max     IFG: 2^16-1
    
    val = EP_INJ_CTRL_PIC_CONF_IFG_W(interframe_gap) | 
          EP_INJ_CTRL_PIC_CONF_SEL_W(sel_id)         | 
-         EP_INJ_CTRL_PIC_VALID;
+         EP_INJ_CTRL_PIC_CONF_MODE_W(mode)          |
+         EP_INJ_CTRL_PIC_CONF_VALID;
 
   ep_wr(INJ_CTRL,port,val);
-  TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen_config: interframe gap=%4d, slot/sel_id =%2d ", 
-                   port, interframe_gap, sel_id);   
+  
+  TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen_config: interframe %4d bytes [in_val=%4d], slot/sel_id =%2d, mode=%1d ", 
+                   port, 2*(interframe_gap+1),interframe_gap+1, sel_id, mode);   
+  return (interframe_gap+1);
 }
 
-void ep_inj_gen_ctr_config_N_ports(int N_port, int ifg, int size)
+void ep_inj_gen_ctr_config_N_ports(int N_port, int ifg, int size, int mode)
 {
   uint32_t val = 0;
   int i = 0;
    
   for(i=0;i<N_port;i++)
-     ep_gen_pck_configure((uint32_t)i /*port*/,ifg/*interframe gap*/,size/*size*/);
+     ep_gen_pck_configure((uint32_t)i /*port*/,ifg/*interframe gap*/,size/*size*/,0 /*inj mode*/);
 }
 
 void ep_inj_gen_ctr_probe_N_ports(int N_port)
@@ -447,7 +460,7 @@ void ep_inj_gen_ctr_probe(uint32_t port)
   TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: proble (on->off)", port);   
 }
 
-void ep_gen_pck_configure(uint32_t port, int interframe_gap, int frame_size)
+void ep_gen_pck_configure(uint32_t port, int interframe_gap, int frame_size, int mode)
 {
   pck_inject_templ_t GEN_templ = { "GEN FR " /*info*/, 14, /*size of header*/
                                 /* pck content */
@@ -455,13 +468,18 @@ void ep_gen_pck_configure(uint32_t port, int interframe_gap, int frame_size)
                                  0x12,0x34,0x56,0x78,0x9A,0xBC, //6 -11: src addr (to be filled in ?)
                                  0xDE,0xED}};                   //12-13: EtherType  
    uint32_t val = 0;
+   int load;
+   int ifg;
    GEN_templ.data[11] = port; 
    ep_write_inj_gen_templ(port, &GEN_templ, frame_size,0);
-   ep_inj_gen_ctr_config(port,interframe_gap,0);
+   ifg=ep_inj_gen_ctr_config(port,interframe_gap,0,mode);
    
    val = ep_rd(ECR,port);
    val = val & !(EP_ECR_RX_EN);
    ep_wr(ECR,port,val);   
+   load = ((frame_size-2*(ifg-6))*100/frame_size);
+   TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: estimated load: %2d [%%]", port, load);
+   
    
 //    ep_inj_gen_ctr_enable(port);
 }

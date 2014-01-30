@@ -1221,6 +1221,9 @@ void tru_set_life(char *optarg)
     case 28:
        ep_inj_gen_ctr_probe_N_ports(8);
        break;
+    case 29:
+       ep_inj_gen_ctr_config_N_ports(8, sub_opt, 250, 1);
+       break;         
     case 50:
        tru_show_status(18) ;
        ep_show_status(18);
@@ -1297,16 +1300,17 @@ void tru_set_life(char *optarg)
        TRACE(TRACE_INFO, "-u 25 n      start frame generation using pck_inj at port n");           
        TRACE(TRACE_INFO, "-u 26 n      stop  frame generation using pck_inj at port n");      
        TRACE(TRACE_INFO, "-u 27 n      show  config of pck_inj at port n"); 
-       TRACE(TRACE_INFO, "-u 28        send probes on all ports for the other switch to learn MACs"); 
+       TRACE(TRACE_INFO, "-u 28        send probes on all ports for the other switch to learn MACs");
+       TRACE(TRACE_INFO, "-u 29 I      configure on ports generation of corrupted frames with size 250bytes and I interframe gap");  
        TRACE(TRACE_INFO, "-u 50        show status");
        TRACE(TRACE_INFO, "----------------------");
        TRACE(TRACE_INFO, "for -u Number  where Number > 64 && n < 1500"); 
-       TRACE(TRACE_INFO, "-u S  I      configure ports 0-7 for pck_inj with S size frames and I interframe gap size"); 
+       TRACE(TRACE_INFO, "-u S  I      configure ports 0-7 for pck_inj with S size frames and I interframe gap size (the unit of IFG is 2 bytes, so the if you enter I=6, it will be 12 bytes)"); 
        
      break;
      default:
        if(opt >= 64 && opt <= 1500)
-         ep_inj_gen_ctr_config_N_ports(8 /*ports*/, sub_opt /*ifg*/, opt /*size*/);
+         ep_inj_gen_ctr_config_N_ports(8 /*ports*/, sub_opt /*ifg*/, opt /*size*/, 0/*mode*/);
        else
        {
 	 TRACE(TRACE_INFO, "test frame hardware injection: wrong size"); 
