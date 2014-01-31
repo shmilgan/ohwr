@@ -1223,7 +1223,13 @@ void tru_set_life(char *optarg)
        break;
     case 29:
        ep_inj_gen_ctr_config_N_ports(8, sub_opt, 250, 1);
-       break;         
+       break; 
+    case 30:
+       ep_inj_gen_ctr_mode((uint32_t)sub_opt, 1); // enable corruption
+       break; 
+    case 31:
+       ep_inj_gen_ctr_mode((uint32_t)sub_opt, 0); // enable corruption
+       break;        
     case 50:
        tru_show_status(18) ;
        ep_show_status(18);
@@ -1302,6 +1308,8 @@ void tru_set_life(char *optarg)
        TRACE(TRACE_INFO, "-u 27 n      show  config of pck_inj at port n"); 
        TRACE(TRACE_INFO, "-u 28        send probes on all ports for the other switch to learn MACs");
        TRACE(TRACE_INFO, "-u 29 I      configure on ports generation of corrupted frames with size 250bytes and I interframe gap");  
+       TRACE(TRACE_INFO, "-u 30 n      enable  corruption mode on port n");  
+       TRACE(TRACE_INFO, "-u 31 n      disable corruption mode on port n");  
        TRACE(TRACE_INFO, "-u 50        show status");
        TRACE(TRACE_INFO, "----------------------");
        TRACE(TRACE_INFO, "for -u Number  where Number > 64 && n < 1500"); 

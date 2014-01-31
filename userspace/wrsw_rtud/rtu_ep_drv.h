@@ -62,4 +62,5 @@ void ep_gen_pck_stop(uint32_t port);
 void ep_inj_gen_ctr_config_N_ports(int N_port, int ifg, int size, int mode);
 void ep_gen_pck_configure(uint32_t port, int interframe_gap, int frame_size, int mode );
 void ep_gen_pck_config_show(uint32_t port);
+void ep_inj_gen_ctr_mode(uint32_t port, int mode);
 #endif /*__WHITERABBIT_RTU_EP_DRV_H*/

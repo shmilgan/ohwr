@@ -404,14 +404,17 @@ int ep_inj_gen_ctr_config(uint32_t port, int interframe_gap, int sel_id /*slot*/
     * Scalling: interframe_gap = 0  =>>> 7 words in HW (so  7x16ns=112ns)
     *           interframe_gap = 5  =>>>12 words in HW (so 12x16ns=192ns) -> min
     **/
-   if(interframe_gap <=6)        interframe_gap = 5;  // minimum IFG
-   else                          interframe_gap = interframe_gap - 1; // scalling
-   if(interframe_gap > 65535) interframe_gap = 65535; // max     IFG: 2^16-1
+   if((interframe_gap < 0) && (interframe_gap > - 6)) interframe_gap = (-interframe_gap)-1;//non-standard hidden option
+   else if(interframe_gap <=6)                        interframe_gap = 5;  // minimum IFG
+   else if(interframe_gap > 65535)                    interframe_gap = 65535; // max     IFG: 2^16-1
+   else                                               interframe_gap = interframe_gap - 1; // scalling
+   
    
    val = EP_INJ_CTRL_PIC_CONF_IFG_W(interframe_gap) | 
          EP_INJ_CTRL_PIC_CONF_SEL_W(sel_id)         | 
-         EP_INJ_CTRL_PIC_CONF_MODE_W(mode)          |
-         EP_INJ_CTRL_PIC_CONF_VALID;
+         EP_INJ_CTRL_PIC_MODE_ID_W(mode)            |
+         EP_INJ_CTRL_PIC_MODE_VALID                 |
+         EP_INJ_CTRL_PIC_CONF_VALID                 ;
 
   ep_wr(INJ_CTRL,port,val);
   
@@ -426,7 +429,7 @@ void ep_inj_gen_ctr_config_N_ports(int N_port, int ifg, int size, int mode)
   int i = 0;
    
   for(i=0;i<N_port;i++)
-     ep_gen_pck_configure((uint32_t)i /*port*/,ifg/*interframe gap*/,size/*size*/,0 /*inj mode*/);
+     ep_gen_pck_configure((uint32_t)i /*port*/,ifg/*interframe gap*/,size/*size*/,mode /*inj mode*/);
 }
 
 void ep_inj_gen_ctr_probe_N_ports(int N_port)
@@ -450,6 +453,16 @@ void ep_inj_gen_ctr_disable(uint32_t port)
    ep_wr(INJ_CTRL,port,val);
    TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: disabled", port);
 }
+
+void ep_inj_gen_ctr_mode(uint32_t port, int mode)
+{
+   uint32_t val = ep_rd(INJ_CTRL,port);
+   val = val & ! (EP_INJ_CTRL_PIC_MODE_ID_MASK    | EP_INJ_CTRL_PIC_MODE_VALID);
+   val = val |  EP_INJ_CTRL_PIC_MODE_ID_W(mode) | EP_INJ_CTRL_PIC_MODE_VALID;   
+   ep_wr(INJ_CTRL,port,val);
+   TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: mode=%1d, gen_ena=%1d", port, mode,0x1&(EP_INJ_CTRL_PIC_MODE_VALID&val));
+}
+
 void ep_inj_gen_ctr_probe(uint32_t port)
 {
   uint32_t val = 0;
@@ -477,7 +490,7 @@ void ep_gen_pck_configure(uint32_t port, int interframe_gap, int frame_size, int
    val = ep_rd(ECR,port);
    val = val & !(EP_ECR_RX_EN);
    ep_wr(ECR,port,val);   
-   load = ((frame_size-2*(ifg-6))*100/frame_size);
+   load = ((frame_size)*100)/(frame_size+2*(ifg-6));
    TRACE(TRACE_INFO,"EP [Port %2d] inj_pck_gen: estimated load: %2d [%%]", port, load);
    
    
