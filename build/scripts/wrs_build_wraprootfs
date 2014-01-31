@@ -45,6 +45,14 @@ if [ ! -z "$CONFIG_NTP_SERVER" ]; then
     echo "ntpserver $CONFIG_NTP_SERVER" > $TMPFS/wr/etc/wr_date.conf
 fi
 
+if [ ! -z "$CONFIG_DNS_SERVER" ]; then
+    rm $TMPFS/etc/resolv.conf
+    echo "nameserver $CONFIG_DNS_SERVER" > $TMPFS/etc/resolv.conf
+    if [ ! -z "$CONFIG_DNS_DOMAIN" ]; then
+        echo "domain $CONFIG_DNS_DOMAIN" >> $TMPFS/etc/resolv.conf
+    fi
+fi
+
 mkdir -p $TMPFS/root/.ssh
 #cat $HOME/.ssh/id_?sa.pub >> $TMPFS/root/.ssh/authorized_keys
 if [ -f $WRS_BASE_DIR/authorized_keys ]; then

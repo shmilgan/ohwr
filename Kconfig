@@ -44,6 +44,21 @@ config NTP_SERVER
 	  IPV4 address (e.g.: "192.168.16.1"); an empty string
 	  disables NTP-based priming.
 
+config DNS_SERVER
+	string "static IP address of local DNS server (empty for none)"
+	help
+	  Using names instead of IP addresses is sometimes handy. This
+	  option allow to specify a static server name, that is stored
+	  in /etc/resolv.conf, within the WRS image being built. If
+	  the string is empty, /etc/resolv.conf is managed according
+	  to buildroot defaults.
+
+config DNS_DOMAIN
+	string "Default domain for DNS resolution"
+	help
+	  If CONFIG_DNS_SERVER is being used, this option may be
+	  useful as well.
+
 config KEEP_ROOTFS
 	bool "Keep generated filesystem and related script"
 	help
