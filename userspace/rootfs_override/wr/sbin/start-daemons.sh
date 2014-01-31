@@ -12,11 +12,18 @@ if [ -x $WR_HOME/bin/ptpd ]; then
     $WR_HOME/bin/ptpd -A -c >& /dev/null &
     exit 0
 fi
-if [ -x $WR_HOME/bin/ppsi ]; then
-    $WR_HOME/bin/pppsi >& /dev/kmsg &
-    exit 0
+if [ ! -x $WR_HOME/bin/ppsi ]; then
+    echo "No WR-PTP daemon found" >&2
+    exit 1
 fi
-echo "No WR-PTP dameon found" >&2
-exit 1
+
+# Fire ppsi. Unfortinately the hal takes a while to start, and
+# until ppsi waits by itself (not in this submodule commit, yet),
+# wait here...  This is the last script of the wr startup, and it can wait
+for i in $(seq 1 10); do
+    if [ -S /tmp/.minipc/wrsw_hal ]; then break; fi
+    sleep 1
+done
+$WR_HOME/bin/ppsi >& /dev/kmsg &
 
 
