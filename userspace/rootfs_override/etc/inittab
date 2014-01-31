@@ -28,12 +28,9 @@ ttyGS0::respawn:/bin/ash --login
 ttyS0::respawn:/bin/ash --login
 
 # Logging junk
-null::sysinit:/bin/touch /var/log/messages
-null::respawn:/sbin/syslogd -n -m 0
-null::respawn:/sbin/klogd -n
+null::respawn:/usr/sbin/rsyslogd
 
 # Stuff to do before rebooting
-null::shutdown:/usr/bin/killall klogd
-null::shutdown:/usr/bin/killall syslogd
+null::shutdown:/usr/bin/killall rsyslogd
 null::shutdown:/bin/umount -a -r
 
