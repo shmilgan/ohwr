@@ -1,4 +1,4 @@
-bootargs="console=ttyS0,115200 panic=10 mem=64m"
+bootargs="quiet console=ttyS0,115200 panic=10 mem=64m"
 bootargs="$bootargs root=nfs ip=192.168.16.9:192.168.16.1:255.255.255.0"
 
 eth0.ipaddr=192.168.16.9
