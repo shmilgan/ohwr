@@ -36,6 +36,14 @@ endchoice
 
 menu "Local configuration"
 
+config NTP_SERVER
+	string "IP address of local NTP server (empty for none)"
+	help
+	  At boot time, the White Rabbit time is primed by querying
+	  an NTP server, if any is there.  Please write here the
+	  IPV4 address (e.g.: "192.168.16.1"); an empty string
+	  disables NTP-based priming.
+
 config KEEP_ROOTFS
 	bool "Keep generated filesystem and related script"
 	help

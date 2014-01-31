@@ -41,6 +41,10 @@ rm -rf $TMPFS/dev
 (cd $TMPFS && tar xzf $DEVTAR)
 (cd $TMPFS && ln -fs sbin/init .)
 
+if [ ! -z "$CONFIG_NTP_SERVER" ]; then
+    echo "ntpserver $CONFIG_NTP_SERVER" > $TMPFS/wr/etc/wr_date.conf
+fi
+
 mkdir -p $TMPFS/root/.ssh
 #cat $HOME/.ssh/id_?sa.pub >> $TMPFS/root/.ssh/authorized_keys
 if [ -f $WRS_BASE_DIR/authorized_keys ]; then
