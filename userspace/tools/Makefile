@@ -1,5 +1,5 @@
 TOOLS = rtu_stat wr_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex com
-TOOLS += mapper wmapper shw_ver
+TOOLS += mapper wmapper shw_ver wr_date
 
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 
