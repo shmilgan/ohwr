@@ -58,5 +58,10 @@ EOF
 
 fakeroot bash $WRS_SH_OPTIONS $TMPSCRIPT
 
-rm -rf $TMPFS
-rm -rf $TMPSCRIPT
+if [ -z "$CONFIG_KEEP_ROOTFS" ]; then
+    rm -rf $TMPFS
+    rm -rf $TMPSCRIPT
+else
+    wrs_echo "Image FS is in $TMPFS/"
+    wrs_echo "Gerenated by $TMPSCRIPT"
+fi

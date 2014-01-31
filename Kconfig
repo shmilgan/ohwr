@@ -33,3 +33,16 @@ config PPSI
 	  is already the default PTP run in the White Rabbit node.
 
 endchoice
+
+menu "Local configuration"
+
+config KEEP_ROOTFS
+	bool "Keep generated filesystem and related script"
+	help
+	  During development of build scripts, it may be useful
+	  to keep the generated root filesystem as well as the
+	  script used to create it. If selected, the build script
+	  will report the actual file names at each build.
+	  If unsusre, say N.
+
+endmenu
