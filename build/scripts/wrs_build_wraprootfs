@@ -53,6 +53,14 @@ if [ ! -z "$CONFIG_DNS_SERVER" ]; then
     fi
 fi
 
+if [ "$CONFIG_REMOTE_SYSLOG_UDP" = "y" ]; then
+    sed -i 's/@@remote-host/@remote-host/' $TMPFS/etc/rsyslog.conf
+fi
+if [ ! -z "$CONFIG_REMOTE_SYSLOG_SERVER" ]; then
+    sed -i '/remote-host/ s/^##//' $TMPFS/etc/rsyslog.conf
+    sed -i 's/remote-host/$CONFIG_REMOTE_SYSLOG_SERVER/' $TMPFS/etc/rsyslog.conf
+fi
+
 mkdir -p $TMPFS/root/.ssh
 #cat $HOME/.ssh/id_?sa.pub >> $TMPFS/root/.ssh/authorized_keys
 if [ -f $WRS_BASE_DIR/authorized_keys ]; then

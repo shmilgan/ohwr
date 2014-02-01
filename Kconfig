@@ -59,6 +59,18 @@ config DNS_DOMAIN
 	  If CONFIG_DNS_SERVER is being used, this option may be
 	  useful as well.
 
+config REMOTE_SYSLOG_SERVER
+	string "Send WRS syslog messages to this remote host"
+	help
+	  This IP address or name, if not empty enables remote syslog
+	  in the switch; all messages are sent to this specific host.
+
+config REMOTE_SYSLOG_UDP
+	bool "Use UDP for syslog messages"
+	default y
+	help
+	  Select UDP to send system logs. If not set, TCP is used.
+
 config KEEP_ROOTFS
 	bool "Keep generated filesystem and related script"
 	help
