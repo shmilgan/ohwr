@@ -3,8 +3,10 @@ CROSS_COMPILE ?= lm32-elf-
 LIBSOFTPLL_DIR = softpll
 
 
-OBJS = main.o dev/uart.o dev/timer-wrs.o lib/mprintf.o dev/ad9516.o ipc/minipc-mem-server.o ipc/rt_ipc.o 
+OBJS = main.o dev/uart.o dev/timer-wrs.o  dev/ad9516.o ipc/minipc-mem-server.o ipc/rt_ipc.o 
 
+
+include pp_printf/printf.mk
 include softpll/softpll.mk
 OBJS += $(obj-y)
 
@@ -23,6 +25,10 @@ OBJS += $(OBJS_PLATFORM)
 REVISION=$(shell git describe --always --dirty=+ | sed 's/wr-switch-sw-//')
 
 OUTPUT=rt_cpu
+
+# temporary fix for pp_printf
+CONFIG_PRINTF_XINT=y
+CFLAGS += -I$(CURDIR)/pp_printf -DCONFIG_PRINT_BUFSIZE=256
 
 all: 		$(OBJS)
 				$(SIZE) -t $(OBJS)
