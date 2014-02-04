@@ -296,14 +296,17 @@
 #define EP_INJ_CTRL_PIC_CONF_SEL_W(value)     WBGEN2_GEN_WRITE(value, 16, 3)
 #define EP_INJ_CTRL_PIC_CONF_SEL_R(reg)       WBGEN2_GEN_READ(reg, 16, 3)
 
-/* definitions for field: Config: packet generate mode in reg: PCK Injection CTRL */
-#define EP_INJ_CTRL_PIC_CONF_MODE_MASK        WBGEN2_GEN_MASK(20, 3)
-#define EP_INJ_CTRL_PIC_CONF_MODE_SHIFT       20
-#define EP_INJ_CTRL_PIC_CONF_MODE_W(value)    WBGEN2_GEN_WRITE(value, 20, 3)
-#define EP_INJ_CTRL_PIC_CONF_MODE_R(reg)      WBGEN2_GEN_READ(reg, 20, 3)
-
 /* definitions for field: Config: valid in reg: PCK Injection CTRL */
-#define EP_INJ_CTRL_PIC_CONF_VALID            WBGEN2_GEN_MASK(23, 1)
+#define EP_INJ_CTRL_PIC_CONF_VALID            WBGEN2_GEN_MASK(19, 1)
+
+/* definitions for field: Mode: packet generate mode in reg: PCK Injection CTRL */
+#define EP_INJ_CTRL_PIC_MODE_ID_MASK          WBGEN2_GEN_MASK(20, 3)
+#define EP_INJ_CTRL_PIC_MODE_ID_SHIFT         20
+#define EP_INJ_CTRL_PIC_MODE_ID_W(value)      WBGEN2_GEN_WRITE(value, 20, 3)
+#define EP_INJ_CTRL_PIC_MODE_ID_R(reg)        WBGEN2_GEN_READ(reg, 20, 3)
+
+/* definitions for field: Mode: valid in reg: PCK Injection CTRL */
+#define EP_INJ_CTRL_PIC_MODE_VALID            WBGEN2_GEN_MASK(23, 1)
 
 /* definitions for field: Frame Generation Enabled in reg: PCK Injection CTRL */
 #define EP_INJ_CTRL_PIC_ENA                   WBGEN2_GEN_MASK(24, 1)
