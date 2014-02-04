@@ -1,5 +1,5 @@
 TOOLS = rtu_stat wr_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex com
-TOOLS += mapper wmapper shw_ver wr_date
+TOOLS += mapper wmapper shw_ver wr_date wr_management
 
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 
@@ -39,6 +39,9 @@ rtu_stat: rtu_stat.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
 wr_mon: wr_mon.o term.o
+	${CC} -o $@ $^ $(LDFLAGS)
+
+wr_management: wr_management.o term.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
 wr_phytool: wr_phytool.o ../wrsw_hal/rt_client.o
