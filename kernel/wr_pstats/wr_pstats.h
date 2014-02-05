@@ -2,7 +2,7 @@
 #define __WR_PSTATS_H__
 
 /*General VIC IRQ stuff*/
-#define FPGA_BASE_PSTATS 0x10070000
+#define FPGA_BASE_PSTATS 0x10058000
 #define WR_PSTATS_IRQ	3
 #define WRVIC_BASE_IRQ  (NR_AIC_IRQS + (5 * 32))
 /*****/
