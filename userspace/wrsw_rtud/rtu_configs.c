@@ -1138,7 +1138,7 @@ int config_startup(int opt, int sub_opt, int port_num)
       break;
     case 17:
       config_default(sub_opt,port_num);
-      ep_inj_gen_ctr_config_N_ports(port_num, 100 /*ifg*/, 250/*size*/);
+      ep_inj_gen_ctr_config_N_ports(port_num, 100 /*ifg*/, 250/*size*/, 0);
       break;
     //////////////////////////////////////////////////////////////////
     case 0:
