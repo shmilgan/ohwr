@@ -77,6 +77,9 @@ lm32-vuart: lm32-vuart.o
 wrsw_pstats: wrsw_pstats.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
+lm32-vuart: lm32-vuart.o
+	${CC} -o $@ $^ $(LDFLAGS)
+
 clean:
 	rm -f $(TOOLS) *.o *~
 
