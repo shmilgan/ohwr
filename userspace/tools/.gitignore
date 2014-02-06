@@ -11,3 +11,7 @@ shw_ver
 wr_date
 fix_tai_offset
 wr_management
+lm32-vuart
+tru_mon
+wrsw_pstats
+
