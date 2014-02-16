@@ -24,11 +24,12 @@ if [ -z "$1" ] || [ -z "$2" ] ; then
 	exit 1
 fi
 
-[ "$2" = "up" ] && exec /sbin/udhcpc -n $1
-if [ "$2" = "down" ]; then
-  exec /sbin/ifconfig $1 down
-  killall udhcpc
+[ "$2" = "up" ]; then
+   exec /sbin/udhcpc -n $1
 fi
-
+if [ "$2" = "down" ]; then
+  killall udhcpc
+  exit 0
+fi
 
 exit 1
