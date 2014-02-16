@@ -12,13 +12,8 @@ wrs_echo "--- Deploying FPGA firmware"
 FWDIR="${WRS_OUTPUT_DIR}/images/wr/lib/firmware"
 mkdir -p "$FWDIR"
 
-if [ -f "${WRS_BASE_DIR}/../rt/rt_cpu.bin" ]; then
-	echo "Using self-compiled RT firmware"
-	cp ${WRS_BASE_DIR}/../rt/rt_cpu.bin "$FWDIR"
-else
-	echo "Using pre-compiled (binaries/) RT firmware"
-	cp ${WRS_BASE_DIR}/../binaries/rt_cpu.bin "$FWDIR"
-fi
+echo "Using pre-compiled (binaries/) RT firmware"
+cp ${WRS_BASE_DIR}/../binaries/rt_cpu.bin "$FWDIR"
 
 if [ "$WRS_HW_DIR" != "" ]; then
     wrs_echo "Copying binaries from $WRS_HW_DIR"
