@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month November 2013
+@set update-month February 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -1306,9 +1306,16 @@ have not been tagged because the submodule mechanism ensures you'll
 get the exact version you need.
 
 The LM32 program is provided as a pre-compiled binary in
-@code{binaries/rt_cpu.bin}. The respective source code is in the
-@file{rt} directory of this package, but the build scripts don't deal
-with it to avoid requiring an LM32 development environment.
+@code{binaries/rt_cpu.bin}. The respective source code is the
+@i{wrpc-sw} package, because all WR installations run the same
+@sc{pll} software code and we chose to avoid duplication. Moreover,
+@i{wr-switch-sw} builds to not require an LM32 development environment.
+
+If you need to rebuild the @t{rt_cpu.bin} file from source, to make
+your own modifications, you can run @t{make wr_switch_defconfig}
+in @i{wrpc-sw} and then @t{make}.  The exact commit identifier
+is stored in the binary itself, and you can get it back using
+``@t{strings binaries/rt_cpu.bin | grep wrpc}''.
 
 @c ==========================================================================
 @node The Complete Filesystem
