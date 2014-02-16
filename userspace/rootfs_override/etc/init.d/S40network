@@ -3,17 +3,15 @@
 # Start the network....
 #
 
-#MAC=`/wr/bin/get_board_mac`
-#echo "Management port MAC address: $MAC"
-#ifconfig eth0 hw ether $MAC
-#ifplugd -i eth0
-#udhcpc -n
-
 if grep -q '/ nfs' /proc/mounts; then
-	echo "Running via NFS, no ifplugd."
+	echo "Running via NFS: leaving eth0 config alone"
+	exit 0
+fi
+
+if grep -v '#' /etc/network/interfaces | grep -q 'eth0.*dhcp'; then
+    # run dhcp client in background, as ifup would run in one-shot mode
+    udhcpc -b -i eth0
 else
-	echo "Starting ifplugd..."
-	/usr/sbin/ifplugd -I -f -i eth0
-	#Pull up the interface (check static/dynamic config in /etc/network/interfaces)
-	ifup eth0
+    # ifup to use static parameters from /etc/netwrok/interfaces
+    ifup eth0
 fi

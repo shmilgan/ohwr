@@ -19,6 +19,7 @@
 
 set -e
 
+## NOTE: wr-switch-sw doesn't run ifplugd by default any more
 if [ -z "$1" ] || [ -z "$2" ] ; then
 	echo "Wrong arguments" > /dev/stderr
 	exit 1
