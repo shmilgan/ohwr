@@ -128,7 +128,7 @@ int rtudexp_add_entry(const struct minipc_pd *pd,
 
 
 	TRACE(TRACE_INFO,"Create entry for (MAC=%s) port %x, mode:%s",mac_to_string(mac_tmp),1 << port,(mode)?"DYNAMIC":"STATIC");
-	*p_ret=rtu_fd_create_entry(mac_tmp, 0, 1 << port, mode);
+	*p_ret=rtu_fd_create_entry(mac_tmp, 0, 1 << port, mode, OVERRIDE_EXISTING);
 	return *p_ret;
 }
 

@@ -39,6 +39,14 @@
 // Filtering entries may be static (permanent) or dynamic (learned)
 #define STATIC          0
 #define DYNAMIC         1
+// Tells the rtu_fd_create_entry() function what to do if MAC entry is added
+// and the same MAC is already known to be at some port (coud be the same or different).
+// Most of the time we would like to override the entry because the device simply moved
+// to different "location" (port) but if we want to have redundant connection, we need to 
+// actually add this port to the entry and risk having loop in the network (if the TRU is
+// not ON)
+#define OVERRIDE_EXISTING  0
+#define ADD_TO_EXISTING    1
 
 int rtu_fd_init(uint16_t poly, unsigned long aging)
         __attribute__((warn_unused_result));
@@ -47,7 +55,8 @@ int  rtu_fd_create_entry(
             uint8_t mac[ETH_ALEN],
             uint16_t vid,
             uint32_t port_map,
-            int dynamic
+            int dynamic,
+            int at_existing_entry
      ) __attribute__((warn_unused_result));
 
 int  rtu_fd_set_aging_time(unsigned long t) __attribute__((warn_unused_result));
