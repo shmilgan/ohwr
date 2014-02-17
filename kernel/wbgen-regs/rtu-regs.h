@@ -49,6 +49,12 @@
 #define RTU_GCR_POLY_VAL_W(value)             WBGEN2_GEN_WRITE(value, 8, 16)
 #define RTU_GCR_POLY_VAL_R(reg)               WBGEN2_GEN_READ(reg, 8, 16)
 
+/* definitions for field: Version in reg: RTU Global Control Register */
+#define RTU_GCR_RTU_VERSION_MASK              WBGEN2_GEN_MASK(24, 4)
+#define RTU_GCR_RTU_VERSION_SHIFT             24
+#define RTU_GCR_RTU_VERSION_W(value)          WBGEN2_GEN_WRITE(value, 24, 4)
+#define RTU_GCR_RTU_VERSION_R(reg)            WBGEN2_GEN_READ(reg, 24, 4)
+
 /* definitions for register: Port Select Register */
 
 /* definitions for field: Port Select in reg: Port Select Register */
@@ -125,6 +131,108 @@
 #define RTU_VTR2_PORT_MASK_SHIFT              0
 #define RTU_VTR2_PORT_MASK_W(value)           WBGEN2_GEN_WRITE(value, 0, 32)
 #define RTU_VTR2_PORT_MASK_R(reg)             WBGEN2_GEN_READ(reg, 0, 32)
+
+/* definitions for register: RTU Extension: Control Register */
+
+/* definitions for field: Fast Forward for Broadcast in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_FF_MAC_BR                  WBGEN2_GEN_MASK(0, 1)
+
+/* definitions for field: Fast Forward for MAC Range in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_FF_MAC_RANGE               WBGEN2_GEN_MASK(1, 1)
+
+/* definitions for field: Fast Forward for MAC Single Entries in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_FF_MAC_SINGLE              WBGEN2_GEN_MASK(2, 1)
+
+/* definitions for field: Fast Forward for Link-Limited (Reserved) MACs in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_FF_MAC_LL                  WBGEN2_GEN_MASK(3, 1)
+
+/* definitions for field: Fast Forward for PTP frames (PTP over IEEE 802.3 /Ethernet) in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_FF_MAC_PTP                 WBGEN2_GEN_MASK(4, 1)
+
+/* definitions for field: Port Mirror Enable in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_MR_ENA                     WBGEN2_GEN_MASK(5, 1)
+
+/* definitions for field: Drop/Forward on FullMatch Full in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_AT_FMATCH_TOO_SLOW         WBGEN2_GEN_MASK(6, 1)
+
+/* definitions for field: HP Priorities Mask in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_PRIO_MASK_MASK             WBGEN2_GEN_MASK(8, 8)
+#define RTU_RX_CTR_PRIO_MASK_SHIFT            8
+#define RTU_RX_CTR_PRIO_MASK_W(value)         WBGEN2_GEN_WRITE(value, 8, 8)
+#define RTU_RX_CTR_PRIO_MASK_R(reg)           WBGEN2_GEN_READ(reg, 8, 8)
+
+/* definitions for field: HP forward to CPU in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_HP_FW_CPU_ENA              WBGEN2_GEN_MASK(16, 1)
+
+/* definitions for field: Urecognized forward to CPU in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_UREC_FW_CPU_ENA            WBGEN2_GEN_MASK(17, 1)
+
+/* definitions for field: Learn Destination MAC enable in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_LEARN_DST_ENA              WBGEN2_GEN_MASK(18, 1)
+
+/* definitions for field: DBG: Force Fast Match only in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_FORCE_FAST_MATCH_ENA       WBGEN2_GEN_MASK(24, 1)
+
+/* definitions for field: DBG: Force Full Match only in reg: RTU Extension: Control Register */
+#define RTU_RX_CTR_FORCE_FULL_MATCH_ENA       WBGEN2_GEN_MASK(25, 1)
+
+/* definitions for register: RTU Extension: Fast Forward MAC bits [31:0] (validated on write to RX_FF_MAC_R1). */
+
+/* definitions for field: Fast Forward MAC in reg: RTU Extension: Fast Forward MAC bits [31:0] (validated on write to RX_FF_MAC_R1). */
+#define RTU_RX_FF_MAC_R0_LO_MASK              WBGEN2_GEN_MASK(0, 32)
+#define RTU_RX_FF_MAC_R0_LO_SHIFT             0
+#define RTU_RX_FF_MAC_R0_LO_W(value)          WBGEN2_GEN_WRITE(value, 0, 32)
+#define RTU_RX_FF_MAC_R0_LO_R(reg)            WBGEN2_GEN_READ(reg, 0, 32)
+
+/* definitions for register: RTU Extension: Fast Forward MAC and control */
+
+/* definitions for field: Fast Forward MAC in reg: RTU Extension: Fast Forward MAC and control */
+#define RTU_RX_FF_MAC_R1_HI_ID_MASK           WBGEN2_GEN_MASK(0, 16)
+#define RTU_RX_FF_MAC_R1_HI_ID_SHIFT          0
+#define RTU_RX_FF_MAC_R1_HI_ID_W(value)       WBGEN2_GEN_WRITE(value, 0, 16)
+#define RTU_RX_FF_MAC_R1_HI_ID_R(reg)         WBGEN2_GEN_READ(reg, 0, 16)
+
+/* definitions for field: Fast Forward entry index (single/range) in reg: RTU Extension: Fast Forward MAC and control */
+#define RTU_RX_FF_MAC_R1_ID_MASK              WBGEN2_GEN_MASK(16, 8)
+#define RTU_RX_FF_MAC_R1_ID_SHIFT             16
+#define RTU_RX_FF_MAC_R1_ID_W(value)          WBGEN2_GEN_WRITE(value, 16, 8)
+#define RTU_RX_FF_MAC_R1_ID_R(reg)            WBGEN2_GEN_READ(reg, 16, 8)
+
+/* definitions for field: Fast Forward MAC single/range entry in reg: RTU Extension: Fast Forward MAC and control */
+#define RTU_RX_FF_MAC_R1_TYPE                 WBGEN2_GEN_MASK(24, 1)
+
+/* definitions for field: Fast Forward MAC valid in reg: RTU Extension: Fast Forward MAC and control */
+#define RTU_RX_FF_MAC_R1_VALID                WBGEN2_GEN_MASK(25, 1)
+
+/* definitions for register: RTU Extension: CPU port mask (Link-Limited Frames Fast Forward Mask) */
+
+/* definitions for field:  CPU/LL Mask in reg: RTU Extension: CPU port mask (Link-Limited Frames Fast Forward Mask) */
+#define RTU_CPU_PORT_MASK_MASK                WBGEN2_GEN_MASK(0, 32)
+#define RTU_CPU_PORT_MASK_SHIFT               0
+#define RTU_CPU_PORT_MASK_W(value)            WBGEN2_GEN_WRITE(value, 0, 32)
+#define RTU_CPU_PORT_MASK_R(reg)              WBGEN2_GEN_READ(reg, 0, 32)
+
+/* definitions for register: RTU Extension: Mirroring Ports Control Register - select for the mask written using RX_MP_R1 */
+
+/* definitions for field: DST/SRC Mirror port in reg: RTU Extension: Mirroring Ports Control Register - select for the mask written using RX_MP_R1 */
+#define RTU_RX_MP_R0_DST_SRC                  WBGEN2_GEN_MASK(0, 1)
+
+/* definitions for field: RX/TX mirror port source in reg: RTU Extension: Mirroring Ports Control Register - select for the mask written using RX_MP_R1 */
+#define RTU_RX_MP_R0_RX_TX                    WBGEN2_GEN_MASK(1, 1)
+
+/* definitions for field: Mirrored Port MASK Index in reg: RTU Extension: Mirroring Ports Control Register - select for the mask written using RX_MP_R1 */
+#define RTU_RX_MP_R0_MASK_ID_MASK             WBGEN2_GEN_MASK(16, 16)
+#define RTU_RX_MP_R0_MASK_ID_SHIFT            16
+#define RTU_RX_MP_R0_MASK_ID_W(value)         WBGEN2_GEN_WRITE(value, 16, 16)
+#define RTU_RX_MP_R0_MASK_ID_R(reg)           WBGEN2_GEN_READ(reg, 16, 16)
+
+/* definitions for register: RTU Extension: Mirroring Ports Control Register 1 */
+
+/* definitions for field: Mirror Port MASK in reg: RTU Extension: Mirroring Ports Control Register 1 */
+#define RTU_RX_MP_R1_MASK_MASK                WBGEN2_GEN_MASK(0, 32)
+#define RTU_RX_MP_R1_MASK_SHIFT               0
+#define RTU_RX_MP_R1_MASK_W(value)            WBGEN2_GEN_WRITE(value, 0, 32)
+#define RTU_RX_MP_R1_MASK_R(reg)              WBGEN2_GEN_READ(reg, 0, 32)
 
 /* definitions for register: Interrupt disable register */
 
@@ -257,36 +365,48 @@ PACKED struct RTU_WB {
   uint32_t VTR1;
   /* [0x10]: REG VLAN Table Register 2 */
   uint32_t VTR2;
-  /* padding to: 8 words */
-  uint32_t __padding_0[3];
-  /* [0x20]: REG Interrupt disable register */
+  /* [0x14]: REG RTU Extension: Control Register */
+  uint32_t RX_CTR;
+  /* [0x18]: REG RTU Extension: Fast Forward MAC bits [31:0] (validated on write to RX_FF_MAC_R1). */
+  uint32_t RX_FF_MAC_R0;
+  /* [0x1c]: REG RTU Extension: Fast Forward MAC and control */
+  uint32_t RX_FF_MAC_R1;
+  /* [0x20]: REG RTU Extension: CPU port mask (Link-Limited Frames Fast Forward Mask) */
+  uint32_t CPU_PORT;
+  /* [0x24]: REG RTU Extension: Mirroring Ports Control Register - select for the mask written using RX_MP_R1 */
+  uint32_t RX_MP_R0;
+  /* [0x28]: REG RTU Extension: Mirroring Ports Control Register 1 */
+  uint32_t RX_MP_R1;
+  /* padding to: 16 words */
+  uint32_t __padding_0[5];
+  /* [0x40]: REG Interrupt disable register */
   uint32_t EIC_IDR;
-  /* [0x24]: REG Interrupt enable register */
+  /* [0x44]: REG Interrupt enable register */
   uint32_t EIC_IER;
-  /* [0x28]: REG Interrupt mask register */
+  /* [0x48]: REG Interrupt mask register */
   uint32_t EIC_IMR;
-  /* [0x2c]: REG Interrupt status register */
+  /* [0x4c]: REG Interrupt status register */
   uint32_t EIC_ISR;
-  /* [0x30]: REG FIFO 'Unrecognized request FIFO (UFIFO)' data output register 0 */
+  /* [0x50]: REG FIFO 'Unrecognized request FIFO (UFIFO)' data output register 0 */
   uint32_t UFIFO_R0;
-  /* [0x34]: REG FIFO 'Unrecognized request FIFO (UFIFO)' data output register 1 */
+  /* [0x54]: REG FIFO 'Unrecognized request FIFO (UFIFO)' data output register 1 */
   uint32_t UFIFO_R1;
-  /* [0x38]: REG FIFO 'Unrecognized request FIFO (UFIFO)' data output register 2 */
+  /* [0x58]: REG FIFO 'Unrecognized request FIFO (UFIFO)' data output register 2 */
   uint32_t UFIFO_R2;
-  /* [0x3c]: REG FIFO 'Unrecognized request FIFO (UFIFO)' data output register 3 */
+  /* [0x5c]: REG FIFO 'Unrecognized request FIFO (UFIFO)' data output register 3 */
   uint32_t UFIFO_R3;
-  /* [0x40]: REG FIFO 'Unrecognized request FIFO (UFIFO)' data output register 4 */
+  /* [0x60]: REG FIFO 'Unrecognized request FIFO (UFIFO)' data output register 4 */
   uint32_t UFIFO_R4;
-  /* [0x44]: REG FIFO 'Unrecognized request FIFO (UFIFO)' control/status register */
+  /* [0x64]: REG FIFO 'Unrecognized request FIFO (UFIFO)' control/status register */
   uint32_t UFIFO_CSR;
-  /* [0x48]: REG FIFO 'Main hashtable CPU access FIFO (MFIFO)' data input register 0 */
+  /* [0x68]: REG FIFO 'Main hashtable CPU access FIFO (MFIFO)' data input register 0 */
   uint32_t MFIFO_R0;
-  /* [0x4c]: REG FIFO 'Main hashtable CPU access FIFO (MFIFO)' data input register 1 */
+  /* [0x6c]: REG FIFO 'Main hashtable CPU access FIFO (MFIFO)' data input register 1 */
   uint32_t MFIFO_R1;
-  /* [0x50]: REG FIFO 'Main hashtable CPU access FIFO (MFIFO)' control/status register */
+  /* [0x70]: REG FIFO 'Main hashtable CPU access FIFO (MFIFO)' control/status register */
   uint32_t MFIFO_CSR;
   /* padding to: 256 words */
-  uint32_t __padding_1[235];
+  uint32_t __padding_1[227];
   /* [0x400 - 0x7ff]: RAM Aging bitmap for main hashtable, 256 32-bit words, 32-bit aligned, word-addressable */
   uint32_t ARAM [256];
 };
