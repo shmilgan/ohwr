@@ -130,6 +130,9 @@ pcre-7.9.tar.gz                  2256d0a1d0a358265165ca70e7cfc47a \
 pkg-config-0.25.tar.gz           a3270bab3f4b69b7dc6dbdacbcae9745 \
    http://pkgconfig.freedesktop.org/releases/pkg-config-0.25.tar.gz
 
+procps-3.2.8.tar.gz              9532714b6846013ca9898984ba4cd7e0 \
+   http://procps.sourceforge.net/procps-3.2.8.tar.gz
+
 Python-2.7.2.tar.bz2             ba7b2f11ffdbf195ee0d111b9455a5bd \
    http://www.python.org/ftp/python/2.7.2/Python-2.7.2.tar.bz2
 
