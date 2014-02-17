@@ -86,7 +86,7 @@ static int rtu_create_static_entries()
     TRACE(TRACE_INFO,"adding static routes for slow protocols...");
     for(i = 0; i < NUM_RESERVED_ADDR; i++) {
         slow_proto_mac[5] = i;
-        err = rtu_fd_create_entry(slow_proto_mac, 0, (1 << ports.num_physical_ports), STATIC);
+        err = rtu_fd_create_entry(slow_proto_mac, 0, (1 << ports.num_physical_ports), STATIC, OVERRIDE_EXISTING);
         if(err)
             return err;
     }
@@ -110,15 +110,15 @@ static int rtu_create_static_entries()
             mac_to_string(pstate.hw_addr)
         );
 
-				err = rtu_fd_create_entry(pstate.hw_addr, 0, (1 << ports.num_physical_ports), STATIC);
+				err = rtu_fd_create_entry(pstate.hw_addr, 0, (1 << ports.num_physical_ports), STATIC, OVERRIDE_EXISTING);
         if(err)
             return err;
     }
 
     // Broadcast MAC
     TRACE(TRACE_INFO,"adding static route for broadcast MAC...");
-    err = rtu_fd_create_entry(bcast_mac, 0, enabled_port_mask | (1 << ports.num_physical_ports), STATIC);
-    err = rtu_fd_create_entry(ptp_mcast_mac, 0, (1 << ports.num_physical_ports), STATIC);
+    err = rtu_fd_create_entry(bcast_mac, 0, enabled_port_mask | (1 << ports.num_physical_ports), STATIC, OVERRIDE_EXISTING);
+    err = rtu_fd_create_entry(ptp_mcast_mac, 0, (1 << ports.num_physical_ports), STATIC, OVERRIDE_EXISTING);
     if(err)
         return err;
 
@@ -241,7 +241,7 @@ static int rtu_daemon_learning_process()
             vid      = req.has_vid ? req.vid:0;
             port_map = (1 << req.port_id);
             // create or update entry at filtering database
-            err = rtu_fd_create_entry(req.src, vid, port_map, DYNAMIC);
+            err = rtu_fd_create_entry(req.src, vid, port_map, DYNAMIC, OVERRIDE_EXISTING);
 						err= 0;
             if (err == -ENOMEM) {
                 // TODO remove oldest entries (802.1D says you MAY do it)

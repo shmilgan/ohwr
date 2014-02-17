@@ -194,7 +194,7 @@ static int htab_count_buckets(struct rtu_addr addr)
  * @param dynamic it indicates whether it's a dynamic entry
  * @return 0 if entry was created or updated. -ENOMEM if no space is available.
  */
-int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask, int dynamic)
+int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask, int dynamic, int at_existing_entry)
 {
     struct filtering_entry *ent; 							  // pointer to scan hashtable
     uint8_t fid;                            		// Filtering database identifier
@@ -214,7 +214,10 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 				{
 						TRACE_DBG(TRACE_INFO, "Entry for mac %s already found.", mac_to_string(mac));
 
-            mask_dst = port_mask; //ML: aging bugfix-> if we receive ureq for an existing entry,
+	    if(at_existing_entry == ADD_TO_EXISTING) // enable multipath for redundancy
+	      mask_dst = port_mask | ent->port_mask_dst ;
+            else
+	      mask_dst = port_mask; //ML: aging bugfix-> if we receive ureq for an existing entry,
                                   //it means that the port moved, so we override the existing mask...
             mask_src = 0xFFFFFFFF;//ML: filtering on ingress is optional according to 802.1Q-2012
                                   //by default it should not happen. TODO: add optional config
