@@ -20,9 +20,17 @@ mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 # go to the build dir and compile it, using our configuration
 cd $WRS_OUTPUT_DIR/build
 dirname="buildroot-2011.11"
-wrs_echo "Uncompressing buildroot"
-rm -rf $dirname
-tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
+if [ ! -d $dirname ]; then
+    unset WRS_NO_REPLACE_BUILDROOT
+fi
+
+if [ -n "$WRS_NO_REPLACE_BUILDROOT" ]; then
+    wrs_echo "Preserving current buildroot build"
+else
+    wrs_echo "Uncompressing buildroot"
+    rm -rf $dirname
+    tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
+fi
 
 # select configuration: old default, overridden by Kconfig and environment
 CFG_DEFAULT="$WRS_BASE_DIR/../configs/buildroot/wrs_release_br2_config"
@@ -62,15 +70,17 @@ else
     echo "BR2_JLEVEL=$WRS_MAKE_J_NUMBER" >> .config
 fi
 
-# apply any pending patches
-wrs_echo "Patching buildroot"
-cd $WRS_OUTPUT_DIR/build/${dirname}
-for n in $WRS_BASE_DIR/../patches/buildroot/*patch; do
-    # the shell passes the "*" over if no matches are there, so check
-    if test -f "$n"; then
-	patch -p1 < $n || wrs_die "Apply $n"
-    fi
-done
+# apply any pending patches (only if we untarred a fresh copy)
+if [ -z "$WRS_NO_REPLACE_BUILDROOT" ]; then
+    wrs_echo "Patching buildroot"
+    cd $WRS_OUTPUT_DIR/build/${dirname}
+    for n in $WRS_BASE_DIR/../patches/buildroot/*patch; do
+	# the shell passes the "*" over if no matches are there, so check
+	if test -f "$n"; then
+	    patch -p1 < $n || wrs_die "Apply $n"
+	fi
+    done
+fi
 
 # now, if CROSS_COMPILE is already set and is not ours, change the config
 if [ "x$CROSS_COMPILE" != "x" ]; then
