@@ -1029,7 +1029,7 @@ BR2_PACKAGE_TCPDUMP=y
 # Shell and utilities
 #
 # BR2_PACKAGE_AT is not set
-# BR2_PACKAGE_BASH is not set
+BR2_PACKAGE_BASH=y
 # BR2_PACKAGE_DASH is not set
 # BR2_PACKAGE_DIALOG is not set
 # BR2_PACKAGE_FILE is not set

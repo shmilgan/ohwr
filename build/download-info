@@ -32,6 +32,9 @@ autoconf-2.65.tar.bz2            a6de1cc6434cd64038b0a0ae4e252b33 \
 automake-1.11.1.tar.bz2          c2972c4d9b3e29c03d5f2af86249876f \
    http://ftp.gnu.org/pub/gnu/automake/automake-1.11.1.tar.bz2
 
+bash-4.1.tar.gz                  9800d8724815fd84994d9be65ab5e7b8 \
+   http://ftp.gnu.org/pub/gnu/bash/bash-4.1.tar.gz
+
 binutils-2.21.1.tar.bz2          bde820eac53fa3a8d8696667418557ad \
    http://ftp.gnu.org/pub/gnu/binutils/binutils-2.21.1.tar.bz2
 
