@@ -198,6 +198,11 @@ int hal_init()
 /* Create a WRIPC server for HAL public API */
 	assert_init(hal_init_wripc());
 
+  //everything is fine up to here, we can blink green LED
+	shw_io_write(shw_io_led_state_o,0);
+	shw_io_write(shw_io_led_state_g,1);
+  
+
 	if(daemon_mode)
 		hal_deamonize();
 
