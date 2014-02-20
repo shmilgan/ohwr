@@ -73,8 +73,14 @@ int hal_init_timing()
 
 		if(tmo_expired(&lock_tmo))
 		{
-			TRACE(TRACE_ERROR, "Can't lock the PLL. If running in the GrandMaster mode, are you sure the 1-PPS and 10 MHz reference clock signals are properly connected?");
-			return -1;
+			TRACE(TRACE_ERROR, "Can't lock the PLL. If running in the GrandMaster mode, are you sure the 1-PPS and 10 MHz reference clock signals are properly connected?, retrying...");
+			if(timing_mode == HAL_TIMING_MODE_GRAND_MASTER) {
+				/*ups... something went wrong, but instead of giving-up, try one more time*/
+				rts_set_mode(RTS_MODE_GM_EXTERNAL);
+				tmo_init(&lock_tmo, LOCK_TIMEOUT_EXT, 0);
+			}
+			else
+				return -1;
 		}
 
 		if(rts_get_state(&pstate) < 0)
