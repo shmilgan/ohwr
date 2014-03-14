@@ -416,6 +416,7 @@ static void clean_vd(void)
     rtu_clean_vlan();
     for(i = 1; i < NUM_VLANS; i++) {
         vlan_tab[i].drop = 1;
+        vlan_tab[i].port_mask = 0x0;
     }
 
     // First entry reserved for untagged packets.
@@ -592,3 +593,53 @@ static void rtu_fd_commit(void)
     hw_req_list = NULL;
 }
 
+/**
+ * \brief Creates or updates a filtering entry in the VLAN table.
+ * @param vid       VLAN ID
+ * @param port_mask mask of ports on which VLAN is registered
+ * @param fid       Filtering Database ID
+ * @param prio      Priority to override the VLAN-tagged receive frames(if prio_override true)
+ * @param has_prio  Indicates there is valid PRIO
+ * @param prio_override Use the PRIO in the VLAN Table to override the frame's PRIO in the tag 
+ * @param drop      Drop frames with this VID
+ */
+//--------------------------------------------------------------------------------------------
+void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid, uint8_t prio,
+                         int has_prio,int prio_override, int drop)
+{
+    /*****************************************************************************************
+     * this is obviously wrong - the number of ports needs to be passed here in some beautiful
+     * way using beautiful code. We need the number of ports to know where is CPU (always
+     * the n-th port) -> this is to add CPU to the VLAN so taht all the protocols can reach
+     * CPU. The alternative to that is set the HW forwarding which is less felxible. So, in
+     * principle we might not need it in the end, but it would be good if it was possible to 
+     * say whether we want or not
+     */
+    #include <stddef.h>
+    #define rtu_rd(reg) \
+	 _fpga_readl(FPGA_BASE_RTU + offsetof(struct RTU_WB, reg))
+    int port_num= RTU_PSR_N_PORTS_R(rtu_rd(PSR));
+    /****************************************************************************************/
+    // First entry reserved for untagged packets.
+    vlan_tab[vid].port_mask       = port_mask | (0x1 << port_num);
+    vlan_tab[vid].drop            = drop;
+    vlan_tab[vid].fid             = fid;
+    vlan_tab[vid].has_prio        = has_prio;
+    vlan_tab[vid].prio_override   = prio_override;
+    vlan_tab[vid].prio            = prio;
+        
+    rtu_write_vlan_entry(vid, &vlan_tab[vid]);
+}
+
+/**
+ * \brief Creates or updates a filtering entry in the VLAN table.
+ * @param vid       VLAN ID
+ * @return entry of VLAN table at given VID-address 
+ */
+
+struct rtu_fd_vlan_table_entry *rtu_vlan_entry_get(int vid)
+{
+    // First entry reserved for untagged packets.
+    if(vid > NUM_VLANS) return NULL;  
+    return &vlan_tab[vid];
+}
