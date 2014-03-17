@@ -340,7 +340,7 @@ void rtu_read_aging_bitmap( uint32_t *bitmap )
  */
 void rtu_write_vlan_entry(int vid, struct vlan_table_entry *ent)
 {
- 	uint32_t vtr1, vtr2;
+ 	uint32_t vtr1=0, vtr2=0;
 
   vtr2 = ent->port_mask;
   vtr1 = RTU_VTR1_UPDATE
@@ -354,7 +354,14 @@ void rtu_write_vlan_entry(int vid, struct vlan_table_entry *ent)
 	rtu_wr(VTR2,  vtr2);
 	rtu_wr(VTR1,  vtr1);
 
-	TRACE(TRACE_INFO, "AddVlan: vid %d port_mask 0x%x", vid, ent->port_mask);
+	if(ent->drop > 0 && ent->port_mask == 0x0)
+	{
+	  TRACE(TRACE_INFO, "RemoveVlan: vid %d (fid %d)", vid, ent->fid);
+	}
+	else
+	{
+	  TRACE(TRACE_INFO, "AddVlan: vid %d (fid %d) port_mask 0x%x", vid, ent->fid, ent->port_mask);
+	}
 
 }
 
