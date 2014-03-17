@@ -65,12 +65,14 @@ int rtudexp_add_entry(const char *eha, int port, int mode)
 	return (ret<0)?ret:val;
 }
 
-int rtudexp_vlan_entry(int vid, int fid, const char *ch_mask, int drop)
+int rtudexp_vlan_entry(int vid, int fid, const char *ch_mask, int drop, int prio, int has_prio,
+		        int prio_override)
 {
 	int val, ret;
 	int mask;
 	sscanf(ch_mask,"%x", &mask);
-	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry,&val,vid,fid,mask,drop);
+	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry,&val,vid,fid,mask,
+			    drop,prio,has_prio,prio_override);
 	return (ret<0)?ret:val;
 }
 
@@ -164,9 +166,12 @@ void show_help(char *prgname)
 	fprintf(stderr,""
 			"   help:             Show this message\n"
 			"   list:             List the routing table (same as empty command)\n"
-			"   remove  <ifnum> [<force>]: Remove all dynamic entries for one interface\n"
-			"   add 	<mac (XX:XX:XX:XX:XX)> <ifnum> [<mode>]: Add entry for a specific MAC address\n"
-			"   vlan    <vid> <fid> <hex mask> [<drop>]: Add VLAN entry with vid, fid, mask and drop flag\n");
+			"   remove <ifnum> [<force>]: Remove all dynamic entries for one interface\n"
+			"   add    <mac (XX:XX:XX:XX:XX)> <ifnum> [<mode>]: Add entry for a specific \n"
+			"                     MAC address (mode={1=dynamic,0=static}\n"
+			"   vlan   <vid> <fid> <hex mask> [<drop>, <prio>, <has_prio>, <prio_override>]: \n"
+			"                    Add VLAN entry with vid, fid, mask and drop flag (Write mask=0x0 \n"
+			"                    and drop=1 to remove the VLAN)\n");
 
 	exit(1);
 }
@@ -211,7 +216,9 @@ int main(int argc, char **argv)
 		}
 		else if(strcmp(argv[1], "vlan")==0)
 		{
-			if((argc > 3 ) && (rtudexp_vlan_entry(atoi(argv[2]),atoi(argv[3]),argv[4],atoidef(argv[5],0))==0))  isok=1;
+			if((argc > 3 ) && (rtudexp_vlan_entry(atoi(argv[2]),atoi(argv[3]),argv[4],
+					    atoidef(argv[5],0),atoidef(argv[6],0),atoidef(argv[7],0),
+					    atoidef(argv[8],0))==0))  isok=1;
 			else printf("Could not %s entry for %s\n",argv[2],argv[3]);
 			exit(1);
 		}
@@ -267,9 +274,8 @@ int main(int argc, char **argv)
 		else                         printf("     %1d    ",vd_list[i].prio);
 
 		if(vd_list[i].prio_override == 0) printf("     NO ");
-		else                              printf("    YES ");		
-		
+		else                              printf("     YES ");
 		printf("\n");
 	}
-	printf("\n");	
+	printf("\n");
 }

@@ -122,10 +122,13 @@ struct minipc_pd rtud_export_vlan_entry = {
 	.name = "vlan_entry",
 	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT,int),
 	.args = {
-		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
-		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
-		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
-		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), // 0: vid
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), // 1: fid
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), // 2: mask
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), // 3: drop
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), // 4: prio
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), // 5: has_prio
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), // 6: prio_override
 		MINIPC_ARG_END,
 	},
 };

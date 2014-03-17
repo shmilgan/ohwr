@@ -100,7 +100,7 @@ int rtudexp_get_vd_list(const struct minipc_pd *pd,
 	       struct vlan_table_entry *ent = rtu_vlan_entry_get(current);
 	       if(!ent) break;
 	        
-		if(ent->drop == 0)
+		if(ent->drop == 0 || ent->port_mask != 0x0)
 		{
 		  list->list[i].vid           = current;
 		  list->list[i].port_mask     = ent->port_mask;
@@ -173,15 +173,18 @@ int rtudexp_add_entry(const struct minipc_pd *pd,
 int rtudexp_vlan_entry(const struct minipc_pd *pd,
 		uint32_t *args, void *ret)
 {
-	int vid, fid, mask, drop;
+	int vid, fid, mask, drop, prio, has_prio, prio_override;
 	int *p_ret=(int*)ret; //force pointed to int type
 	*p_ret = 0;
 
-	vid = (int)args[0];
-	fid = (int)args[1];
-	mask= (int)args[2];
-	drop= (int)args[3];
-	rtu_fd_create_vlan_entry(vid, (uint32_t)mask, (uint8_t)fid, 0 /*prio*/, 0 /*has_prio*/,0 /*prio_override*/, drop /*drop */);
+	vid =          (int)args[0];
+	fid =          (int)args[1];
+	mask=          (int)args[2];
+	drop=          (int)args[3];
+	prio=          (int)args[4];
+	has_prio=      (int)args[5];
+	prio_override= (int)args[6];
+	rtu_fd_create_vlan_entry(vid, (uint32_t)mask, (uint8_t)fid, (uint8_t)prio, has_prio,prio_override, drop);
 	return *p_ret;
 }
 
