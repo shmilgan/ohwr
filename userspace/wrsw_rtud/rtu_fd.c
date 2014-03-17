@@ -620,8 +620,10 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid, uint8_t 
 	 _fpga_readl(FPGA_BASE_RTU + offsetof(struct RTU_WB, reg))
     int port_num= RTU_PSR_N_PORTS_R(rtu_rd(PSR));
     /****************************************************************************************/
-    // First entry reserved for untagged packets.
-    vlan_tab[vid].port_mask       = port_mask | (0x1 << port_num);
+    if(port_mask == 0x0 && drop == 1)
+       vlan_tab[vid].port_mask    = 0x0;
+    else
+       vlan_tab[vid].port_mask    = port_mask | (0x1 << port_num);
     vlan_tab[vid].drop            = drop;
     vlan_tab[vid].fid             = fid;
     vlan_tab[vid].has_prio        = has_prio;
