@@ -611,7 +611,7 @@ void ep_snake_config(int option)
       up_snake_port  = 17;
       qmode          = 2; //disable VLAN on port
       untagging      = 1;//disable untagging
-      rtux_feature_ctrl(0x0, /*mr*/        0x0, /*mac_pto*/ 0x0, /*mac_ll*/ 0x0, /*mac_single*/
+      rtux_set_feature_ctrl(0x0, /*mr*/        0x0, /*mac_pto*/ 0x0, /*mac_ll*/ 0x0, /*mac_single*/
                         0x0, /*mac_range*/ 0x0, /*mac_br*/  0x0  /*at_fm*/); 
       rtux_set_hp_prio_mask(0x00);      
       break;
@@ -638,7 +638,7 @@ void ep_snake_config(int option)
       ep_vcr1_wr( 1 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
       pvid++;
       // enable fast forward for broadcast
-      rtux_feature_ctrl(0x0, /*mr*/        0x0, /*mac_pto*/ 0x0, /*mac_ll*/ 0x1, /*mac_single*/
+      rtux_set_feature_ctrl(0x0, /*mr*/        0x0, /*mac_pto*/ 0x0, /*mac_ll*/ 0x1, /*mac_single*/
                         0x0, /*mac_range*/ 0x1, /*mac_br*/  0x0  /*at_fm*/); 
       // set  HP prio for all priorities
       rtux_set_hp_prio_mask(0xFF);

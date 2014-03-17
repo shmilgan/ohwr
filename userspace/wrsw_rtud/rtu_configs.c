@@ -142,7 +142,7 @@ int config_default(int sub_opt, int port_num)
      ep_set_vlan((uint32_t)i, 0x2/*qmode*/, 0 /*fix_prio*/, 0 /*prio_val*/, 0 /*pvid*/);
      ep_class_prio_map((uint32_t)i, prio_map);
    }
-   rtux_feature_ctrl(0 /*mr*/, 
+   rtux_set_feature_ctrl(0 /*mr*/, 
                      0 /*mac_ptp*/, 
                      0/*mac_ll*/, 
                      0/*mac_single*/, 
@@ -178,7 +178,7 @@ int config_snake_standard_traffic_test(int sub_opt, int port_num)
   for(i=0;i < 18;i++)
   {
     if(i%2==0 && i!=0) pvid++;
-    vlan_entry_vd( pvid,          //vid, 
+    rtu_fd_create_vlan_entry( pvid,          //vid, 
                   (0x3 << 2*(pvid-1)),  //port_mask, 
                   pvid,      //fid, 
                   0,            //prio,
@@ -214,7 +214,7 @@ int config_snake_ff_traffic_test(int sub_opt, int port_num)
   for(i=0;i < 18;i++)
   {
      if(i%2==0 && i!=0) pvid++;
-     vlan_entry_vd( pvid,          //vid, 
+     rtu_fd_create_vlan_entry( pvid,          //vid, 
                    (0x3 << 2*(pvid-1)),  //port_mask, 
                     pvid,      //fid, 
                     0,            //prio,
@@ -256,7 +256,7 @@ int config_snake_ff_traffic_test(int sub_opt, int port_num)
   }
       
   if(sub_opt == 0 || sub_opt == 1)
-    rtux_feature_ctrl(0 /*mr*/, 
+    rtux_set_feature_ctrl(0 /*mr*/, 
                       0 /*mac_ptp*/, 
                       0/*mac_ll*/, 
                       1/*mac_single*/, 
@@ -264,7 +264,7 @@ int config_snake_ff_traffic_test(int sub_opt, int port_num)
                       0/*mac_br*/,
                       0/*drop when full_match full*/);
   else if(sub_opt == 2 || sub_opt == 3)
-    rtux_feature_ctrl(0 /*mr*/, 
+    rtux_set_feature_ctrl(0 /*mr*/, 
                       0 /*mac_ptp*/, 
                       0/*mac_ll*/, 
                       0/*mac_single*/, 
@@ -272,7 +272,7 @@ int config_snake_ff_traffic_test(int sub_opt, int port_num)
                       0/*mac_br*/,
                       0/*drop when full_match full*/);
   else if(sub_opt == 4)                     
-    rtux_feature_ctrl(0 /*mr*/, 
+    rtux_set_feature_ctrl(0 /*mr*/, 
                       0 /*mac_ptp*/, 
                       0/*mac_ll*/, 
                       0/*mac_single*/, 
@@ -294,7 +294,7 @@ int config_VLAN_test(int sub_opt, int port_num)
   tru_disable();
   if(sub_opt == 0)
   {
-    vlan_entry_vd( 1,            //vid, 
+    rtu_fd_create_vlan_entry( 1,            //vid, 
                    0xF,          //port_mask, 
                    1,            //fid, 
                    0,            //prio,
@@ -309,7 +309,7 @@ int config_VLAN_test(int sub_opt, int port_num)
     for(i=0;i < 18;i++)
     {
       
-      vlan_entry_vd(pvid,           //vid, 
+      rtu_fd_create_vlan_entry(pvid,           //vid, 
                     (0x1 << pvid),  //port_mask, 
                     pvid,           //fid, 
                     0,              //prio,
@@ -323,7 +323,7 @@ int config_VLAN_test(int sub_opt, int port_num)
   }
   else if(sub_opt == 2)
   {
-    vlan_entry_vd( 0,            //vid, 
+    rtu_fd_create_vlan_entry( 0,            //vid, 
                    0xF,          //port_mask, 
                    0,            //fid, 
                    0,            //prio,
@@ -337,7 +337,7 @@ int config_VLAN_test(int sub_opt, int port_num)
     pvid = 1;
     for(i=0;i < 18;i++)
     {
-      vlan_entry_vd( pvid,          //vid, 
+      rtu_fd_create_vlan_entry( pvid,          //vid, 
                     (0x3 << (pvid-1)),  //port_mask, 
                      pvid,      //fid, 
                      0,            //prio,
@@ -355,7 +355,7 @@ int config_VLAN_test(int sub_opt, int port_num)
      * 1. for full match for VID=1 it drops
      *
      */
-    vlan_entry_vd( 0,            //vid, 
+    rtu_fd_create_vlan_entry( 0,            //vid, 
                    0x7,          //port_mask, 
                    0,            //fid, 
                    0,            //prio,
@@ -363,7 +363,7 @@ int config_VLAN_test(int sub_opt, int port_num)
                    0,            //prio_override, 
                    0             //drop
                  ); 
-    vlan_entry_vd( 1,            //vid, 
+    rtu_fd_create_vlan_entry( 1,            //vid, 
                    0xF8,          //port_mask, 
                    0,            //fid, 
                    0,            //prio,
@@ -394,7 +394,7 @@ int config_snake_ff_hacked_traffic_test(int sub_opt, int port_num)
   for(i=0;i < 18;i++)
   {
     if(i%2==0 && i!=0) pvid++;
-    vlan_entry_vd( pvid,          //vid, 
+    rtu_fd_create_vlan_entry( pvid,          //vid, 
                   (0x3 << 2*(pvid-1)),  //port_mask, 
                   pvid,      //fid, 
                   0,            //prio,
@@ -408,7 +408,7 @@ int config_snake_ff_hacked_traffic_test(int sub_opt, int port_num)
   }    
   ep_snake_config(1 /*VLANS 0-17 port, access/untag*/); 
   
-  vlan_entry_vd( 0,          //vid, 
+  rtu_fd_create_vlan_entry( 0,          //vid, 
                  0x3,  //port_mask, 
                  0,      //fid, 
                   0,            //prio,
@@ -452,7 +452,7 @@ int config_snake_ff_hacked_traffic_test(int sub_opt, int port_num)
   }
       
   if(sub_opt == 0 || sub_opt == 1)
-    rtux_feature_ctrl(0 /*mr*/, 
+    rtux_set_feature_ctrl(0 /*mr*/, 
                       0 /*mac_ptp*/, 
                       0/*mac_ll*/, 
                       1/*mac_single*/, 
@@ -460,7 +460,7 @@ int config_snake_ff_hacked_traffic_test(int sub_opt, int port_num)
                       0/*mac_br*/,
                       0/*drop when full_match full*/);
   else if(sub_opt == 2 || sub_opt == 3)
-    rtux_feature_ctrl(0 /*mr*/, 
+    rtux_set_feature_ctrl(0 /*mr*/, 
                       0 /*mac_ptp*/, 
                       0/*mac_ll*/, 
                       0/*mac_single*/, 
@@ -468,7 +468,7 @@ int config_snake_ff_hacked_traffic_test(int sub_opt, int port_num)
                       0/*mac_br*/,
                       0/*drop when full_match full*/);
   else if(sub_opt == 4)                     
-    rtux_feature_ctrl(0 /*mr*/, 
+    rtux_set_feature_ctrl(0 /*mr*/, 
                       0 /*mac_ptp*/, 
                       0/*mac_ll*/, 
                       0/*mac_single*/, 
@@ -490,7 +490,7 @@ int config_hp_test(int sub_opt, int port_num)
   tru_disable();
   // for snake test
   
-  vlan_entry_vd( 0,          //vid, 
+  rtu_fd_create_vlan_entry( 0,          //vid, 
                  0x3,  //port_mask, 
                  0,      //fid, 
                  0,            //prio,
@@ -499,7 +499,7 @@ int config_hp_test(int sub_opt, int port_num)
                  0             //drop
                 );    
 
-  vlan_entry_vd( 1,          //vid, 
+  rtu_fd_create_vlan_entry( 1,          //vid, 
                  0xF,  //port_mask, 
                  1,      //fid, 
                  0,            //prio,
@@ -525,7 +525,7 @@ int config_hp_test(int sub_opt, int port_num)
   ep_vcr1_wr( 2 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
   ep_vcr1_wr( 3 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
   
-  rtux_feature_ctrl(0 /*mr*/, 
+  rtux_set_feature_ctrl(0 /*mr*/, 
                     0 /*mac_ptp*/, 
                     0/*mac_ll*/, 
                     1/*mac_single*/, 
@@ -559,7 +559,7 @@ int config_lacp_test(int sub_opt, int port_num)
   rtux_add_ff_mac_single(3/*ID*/, 1/*valid*/, mac_single_PC_ETH9/*MAC*/);     
       
   // enable Fast-Forward for single MACs (above)
-  rtux_feature_ctrl(0 /*mr*/, 
+  rtux_set_feature_ctrl(0 /*mr*/, 
                     0 /*mac_ptp*/, 
                     0/*mac_ll*/, 
                     1/*mac_single*/, 
@@ -576,7 +576,7 @@ int config_lacp_test(int sub_opt, int port_num)
   tru_pattern_config(4/*replacement*/,5/*addition*/);
   
   // set VLAN: ports to take part in the game (as on simulation)
-  vlan_entry_vd( 0,            //vid, 
+  rtu_fd_create_vlan_entry( 0,            //vid, 
                  0xF0F1,       //port_mask, 
                  0,            //fid, 
                  0,            //prio,
@@ -690,7 +690,7 @@ int config_VLAN_dbg(int sub_opt, int port_num)
     ep_class_prio_map((uint32_t)i, prio_map);
   }
   
-  vlan_entry_vd(0               /* vid           */, 
+  rtu_fd_create_vlan_entry(0               /* vid           */, 
                 0               /* port_mask     */, 
                 0               /* fid           */, 
                 0               /* prio          */,
@@ -712,7 +712,7 @@ int config_VLAN_dbg(int sub_opt, int port_num)
     
   for(i=1;i<10;i++)
   {
-    vlan_entry_vd(i                /* vid           */, 
+    rtu_fd_create_vlan_entry(i                /* vid           */, 
                   1<<i             /* port_mask     */, 
                   i                /* fid           */, 
                   0                /* prio          */,
@@ -803,7 +803,7 @@ int config_two_ports_vlan(int sub_opt, int port_num)
   switch(sub_opt)
   {
     case 1:  
-      vlan_entry_vd(  1,          //vid, 
+      rtu_fd_create_vlan_entry(  1,          //vid, 
                    0x81,  //port_mask, 
                       1,      //fid, 
                       0,            //prio,
@@ -813,7 +813,7 @@ int config_two_ports_vlan(int sub_opt, int port_num)
                       );     
       break;
     case 2: 
-      vlan_entry_vd(  1,          //vid, 
+      rtu_fd_create_vlan_entry(  1,          //vid, 
                    0x20001,  //port_mask, 
                       1,      //fid, 
                       0,            //prio,
@@ -846,7 +846,7 @@ int config_hp_test_1(int sub_opt, int port_num)
   tru_disable();
   // for snake test
   
-  vlan_entry_vd( 0,          //vid, 
+  rtu_fd_create_vlan_entry( 0,          //vid, 
                  0xFF,  //port_mask, 
                  0,      //fid, 
                  0,            //prio,
@@ -855,7 +855,7 @@ int config_hp_test_1(int sub_opt, int port_num)
                  0             //drop
                 );    
 
-  vlan_entry_vd( 1,          //vid, 
+  rtu_fd_create_vlan_entry( 1,          //vid, 
                  0x5,  //port_mask, 
                  1,      //fid, 
                  0,            //prio,
@@ -863,7 +863,7 @@ int config_hp_test_1(int sub_opt, int port_num)
                  0,            //prio_override, 
                  0             //drop
                 );      
-  vlan_entry_vd( 2,          //vid, 
+  rtu_fd_create_vlan_entry( 2,          //vid, 
                  0x6,  //port_mask, 
                  2,      //fid, 
                  0,            //prio,
@@ -888,7 +888,7 @@ int config_hp_test_1(int sub_opt, int port_num)
   ep_vcr1_wr( 2 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
   ep_vcr1_wr( 3 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
   
-  rtux_feature_ctrl(0 /*mr*/, 
+  rtux_set_feature_ctrl(0 /*mr*/, 
                     0 /*mac_ptp*/, 
                     0/*mac_ll*/, 
                     1/*mac_single*/, 
@@ -918,7 +918,7 @@ int config_hp_test_2(int sub_opt, int port_num)
   tru_disable();
   // for snake test
   
-  vlan_entry_vd( 0,          //vid, 
+  rtu_fd_create_vlan_entry( 0,          //vid, 
                  0xFF,  //port_mask, 
                  0,      //fid, 
                  0,            //prio,
@@ -927,7 +927,7 @@ int config_hp_test_2(int sub_opt, int port_num)
                  0             //drop
                 );    
 
-  vlan_entry_vd( 1,          //vid, 
+  rtu_fd_create_vlan_entry( 1,          //vid, 
                  0x5,  //port_mask, 
                  1,      //fid, 
                  0,            //prio,
@@ -945,7 +945,7 @@ int config_hp_test_2(int sub_opt, int port_num)
   ep_vcr1_wr( 3 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
   
   
-  rtux_feature_ctrl(0 /*mr*/, 
+  rtux_set_feature_ctrl(0 /*mr*/, 
                     0 /*mac_ptp*/, 
                     0/*mac_ll*/, 
                     1/*mac_single*/, 
@@ -976,7 +976,7 @@ int config_hp_and_ptp(int sub_opt, int port_num)
   tru_disable();
   // for snake test
   
-  vlan_entry_vd( 0,          //vid, 
+  rtu_fd_create_vlan_entry( 0,          //vid, 
                  0xFF,  //port_mask, 
                  0,      //fid, 
                  0,            //prio,
@@ -985,7 +985,7 @@ int config_hp_and_ptp(int sub_opt, int port_num)
                  0             //drop
                 );    
 
-  vlan_entry_vd( 1,          //vid, 
+  rtu_fd_create_vlan_entry( 1,          //vid, 
                  0x3,  //port_mask, 
                  1,      //fid, 
                  0,            //prio,
@@ -1004,7 +1004,7 @@ int config_hp_and_ptp(int sub_opt, int port_num)
   ep_vcr1_wr( 3 /*port*/, 1/*is_vlan*/, 0 /*address*/, 0xFFFF /*data */ ); 
   
   
-  rtux_feature_ctrl(0 /*mr*/, 
+  rtux_set_feature_ctrl(0 /*mr*/, 
                     1 /*mac_ptp*/, 
                     0/*mac_ll*/, 
                     1/*mac_single*/, 
@@ -1040,7 +1040,7 @@ int config_snake_with_PTP_hacked_test(int sub_opt, int port_num)
   for(i=0;i < 18;i++)
   {
     if(i%2==0 && i!=0) pvid++;
-    vlan_entry_vd( pvid,          //vid, 
+    rtu_fd_create_vlan_entry( pvid,          //vid, 
                   ((0x3 << 2*pvid) | (0x1 << 18)),  //port_mask, 
                   pvid,      //fid, 
                   0,            //prio,
@@ -1065,7 +1065,7 @@ int config_snake_with_PTP_hacked_test(int sub_opt, int port_num)
    rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, mac_single_spirent_C/*MAC*/);
    rtux_add_ff_mac_single(3/*ID*/, 1/*valid*/, mac_single_spirent_D/*MAC*/);     
    ep_snake_config(5 /* ports 2-17: VLANS + access/untag*/);   
-   rtux_feature_ctrl(0 /*mr*/, 
+   rtux_set_feature_ctrl(0 /*mr*/, 
                      0 /*mac_ptp*/, 
                      0/*mac_ll*/, 
                      1/*mac_single*/, 

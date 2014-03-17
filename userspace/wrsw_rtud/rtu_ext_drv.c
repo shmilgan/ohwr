@@ -59,18 +59,8 @@ int rtux_init(void)
    
    rtux_simple_test();
    
-//    rtux_add_ff_mac_single(0/*ID*/, 1/*valid*/, mac_single_A/*MAC*/);
-//    rtux_add_ff_mac_single(1/*ID*/, 1/*valid*/, mac_single_B/*MAC*/);
-//    rtux_add_ff_mac_single(2/*ID*/, 1/*valid*/, mac_single_C/*MAC*/);
-//    rtux_add_ff_mac_single(3/*ID*/, 1/*valid*/, mac_single_D/*MAC*/);
-   
-//    rtux_add_ff_mac_range (0/*ID*/, 1/*valid*/, mac_range_lower/*MAC_lower*/, 
-//                                                mac_range_upper /*MAC_upper*/);  
-//    rtux_set_port_mirror  (1<<1/*mirror src*/,1<<7/*mirror dst*/,1/*rx*/,1/*tx*/);
-   rtux_set_hp_prio_mask (0x00/*hp prio mask*/); // no HP
-
-   rtux_read_cpu_port    ();
-   rtux_feature_ctrl     (0 /*mr*/, 
+   rtux_get_cpu_port    ();
+   rtux_set_feature_ctrl (0 /*mr*/, 
                           0 /*mac_ptp*/, 
                           0/*mac_ll*/, 
                           0/*mac_single*/, 
@@ -490,7 +480,7 @@ void rtux_set_life(char *optarg)
   
   switch(opt){
     case 1:
-       rtux_feature_ctrl((sub_opt>>0)&0x1, //mr
+       rtux_set_feature_ctrl((sub_opt>>0)&0x1, //mr
                          (sub_opt>>1)&0x1, //mac_pto
                          (sub_opt>>2)&0x1, //mac_ll
                          (sub_opt>>3)&0x1, //mac_single
@@ -501,7 +491,7 @@ void rtux_set_life(char *optarg)
     break;
     case  2:
 //       rtux_set_cpu_port(1<<sub_opt);
-      rtux_read_cpu_port();
+      rtux_get_cpu_port();
     break;
     case  3:
        rtux_set_hp_prio_mask((0xFF & sub_opt));
@@ -538,8 +528,8 @@ void rtux_set_life(char *optarg)
 
       rtux_disp_ctrl() ;
       rtux_disp_fw_to_CPU(); 
-      rtux_read_cpu_port();
-      rtux_read_hp_prio_mask();
+      rtux_get_cpu_port();
+      rtux_get_hp_prio_mask();
       tatsu_read_status();
       
     break;
