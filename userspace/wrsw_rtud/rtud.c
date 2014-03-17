@@ -47,6 +47,7 @@
 #include "mac.h"
 #include "rtu_fd.h"
 #include "rtu_drv.h"
+#include "rtu_ext_drv.h"
 #include "rtu_hash.h"
 #include "utils.h"
 
@@ -272,6 +273,9 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
     // init RTU HW
     TRACE(TRACE_INFO, "init rtu hardware.");
     err = rtu_init();
+    if(err)
+        return err;
+    err = rtux_init();
     if(err)
         return err;
 
