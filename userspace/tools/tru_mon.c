@@ -53,7 +53,7 @@ void init()
   }
 
 
-  term_init();
+  term_init(1);
   halexp_query_ports(&port_list);
 }
 void parse_sysfs(int init)
@@ -198,7 +198,7 @@ main()
         pstats_init();
 	for(;;)
 	{
-		if(term_poll())
+		if(term_poll(500))
 		{
 			int c = term_get();
 
