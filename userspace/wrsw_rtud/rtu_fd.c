@@ -635,12 +635,12 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid, uint8_t 
 /**
  * \brief Creates or updates a filtering entry in the VLAN table.
  * @param vid       VLAN ID
- * @return entry of VLAN table at given VID-address 
+ * @return entry of VLAN table at given VID-address
  */
 
-struct rtu_fd_vlan_table_entry *rtu_vlan_entry_get(int vid)
+struct vlan_table_entry *rtu_vlan_entry_get(int vid)
 {
     // First entry reserved for untagged packets.
-    if(vid > NUM_VLANS) return NULL;  
+    if(vid > NUM_VLANS) return NULL;
     return &vlan_tab[vid];
 }
