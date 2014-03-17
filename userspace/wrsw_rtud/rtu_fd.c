@@ -639,18 +639,21 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid, uint8_t 
  * @param vid       VLAN ID
  * @return entry of VLAN table at given VID-address
  */
-
-struct vlan_table_entry *rtu_vlan_entry_get(int vid)
-{
-    // First entry reserved for untagged packets.
-    if(vid > NUM_VLANS) return NULL;
-    return &vlan_tab[vid];
-}
-
 struct vlan_table_entry *rtu_vlan_entry_get(int vid)
 {
     // First entry reserved for untagged packets.
     if(vid > NUM_VLANS) return NULL;
     if(vlan_tab[vid].drop == 0) vlan_entry_rd(vid);
     return &vlan_tab[vid];
+}
+void vlan_entry_rd(int vid)
+{
+    // First entry reserved for untagged packets.
+    
+    TRACE(TRACE_INFO, "vlan_entry_vd: vid %d, drop=%d, fid=%d, port_mask 0x%x",
+    vid,
+    vlan_tab[vid].drop,
+    vlan_tab[vid].fid,
+    vlan_tab[vid].port_mask
+    );
 }
