@@ -22,6 +22,9 @@ linux-2.6.39.tar.bz2            1aab7a741abe08d42e8eccf20de61e05 \
 wrs3-gw-v3.3-20130719.tar.gz    ce202924f26f38c3674cb5d21928ee34 \
    http://www.ohwr.org/attachments/download/2249/wrs3-gw-v3.3-20130719.tar.gz
 
+wrs-gw-v4.0-dev-20140328.tar.gz 92c83e296314c6f468a0491efd9c6880 \
+   http://www.ohwr.org/attachments/download/2773/wrs-gw-v4.0-dev-20140328.tar.gz
+
 # buildroot core and packages
 buildroot-2011.11.tar.bz2        7b852f4ef17c63857ca7b9388b782070 \
    http://www.buildroot.org/downloads/buildroot-2011.11.tar.bz2
