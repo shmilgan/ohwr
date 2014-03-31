@@ -457,6 +457,7 @@ static void rtu_fd_age_update(void)
  					if(!rtu_htab[hash][bucket].dynamic)
  						continue;
 
+      if (0)
           TRACE(
             TRACE_INFO,
             "Updated htab entry age: mac = %s, hash = %03x:%d, delta_t = %d",
