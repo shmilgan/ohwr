@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Log to syslog at daemon level. Amd log source address (-a)
+snmpd -Lsd -p /var/run/snmpd.pid -a -c /wr/etc/snmpd.conf
