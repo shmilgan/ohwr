@@ -222,9 +222,11 @@ int wrn_endpoint_probe(struct net_device *dev)
 	if (is_zero_ether_addr(wraddr)) {
 		err = mac_pton(macaddr, wraddr);
 		if (err)
-			pr_err("wr_nic: probably invalid MAC address %s."
-			       "Use format XX:XX:XX:XX:XX:XX\n");
+			pr_err("wr_nic: probably invalid MAC address \"%s\".\n"
+			       "Use format XX:XX:XX:XX:XX:XX\n", macaddr);
 	}
+	if (ep->ep_number == 0)
+		pr_info("WR-nic: Using address %pM\n", wraddr);
 
 	epnum = ep->ep_number;
 
