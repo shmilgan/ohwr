@@ -28,7 +28,7 @@ ttyGS0::respawn:/bin/ash --login
 ttyS0::respawn:/bin/ash --login
 
 # Logging junk
-null::respawn:/usr/sbin/rsyslogd
+null::sysinit:/usr/sbin/rsyslogd
 
 # Stuff to do before rebooting
 null::shutdown:/usr/bin/killall rsyslogd
