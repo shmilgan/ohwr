@@ -1383,6 +1383,7 @@ The content of the final filesystem comes from several sources:
       filled but the build scripts.
 @item The file @file{userspace/devices.tar.gz}
 @item The file @file{$WRS_BASE_DIR/authorized_keys} if it exists.
+@item The @t{CONFIG_} items, used to pre-set configuration files.
 
 @end itemize
 
