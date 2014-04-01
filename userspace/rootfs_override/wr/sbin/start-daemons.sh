@@ -1,15 +1,37 @@
 #!/bin/ash
-
 echo "Starting up WR daemons..."
+
+# The following variables are modified at build time, with Kconfig values
+LOG_HAL=CONFIG_WRS_LOG_HAL
+LOG_RTU=CONFIG_WRS_LOG_RTU
+LOG_PTP=CONFIG_WRS_LOG_PTP
+
+# The loop below is a little intricate because of the eval, but I need it this
+# to have pipe and file as both supported.
+# Also, to have both stdout and stderr, we need "2>&1" before the pipe, but
+# after the file redirection (why????)
+
+for n in HAL RTU PTP; do
+    # if empty turn it to /dev/null
+    if eval test -z "\$LOG_$n"; then LOG_$n="/dev/null"; fi
+    # if a pathname, use it
+    eval value="\$LOG_$n"
+    if echo "$value" | grep / > /dev/null; then
+	eval LOGPIPE_$n=\" \> $value 2\>\&1 \";
+	continue;
+    fi
+    # not a pathname: use verbatim
+    eval LOGPIPE_$n=\" 2\>\&1 \| logger -t wr-switch -p $value\"
+done
 
 export WR_HOME="/wr"
 
-$WR_HOME/bin/wrsw_hal -c $WR_HOME/etc/wrsw_hal.conf &> /dev/kmsg &
-$WR_HOME/bin/wrsw_rtud >& /dev/kmsg &
+eval $WR_HOME/bin/wrsw_hal -c $WR_HOME/etc/wrsw_hal.conf $LOGPIPE_HAL \&
+eval $WR_HOME/bin/wrsw_rtud                              $LOGPIPE_RTU \&
 
 # run ptp-noposix or ppsi, whatever is installed
 if [ -x $WR_HOME/bin/ptpd ]; then
-    $WR_HOME/bin/ptpd -A -c >& /dev/null &
+    eval $WR_HOME/bin/ptpd -A -c  $LOGPIPE_PTP \&
     exit 0
 fi
 if [ ! -x $WR_HOME/bin/ppsi ]; then
@@ -24,6 +46,6 @@ for i in $(seq 1 10); do
     if [ -S /tmp/.minipc/wrsw_hal ]; then break; fi
     sleep 1
 done
-$WR_HOME/bin/ppsi >& /dev/kmsg &
+eval $WR_HOME/bin/ppsi  $LOGPIPE_PTP \&
 
 
