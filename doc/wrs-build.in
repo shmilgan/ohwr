@@ -631,13 +631,20 @@ and 02:34:56:78:9A:00 for MAC2 (the base address for the 18 SFP ports).
    flash-wrs: Working in /tmp/flash-wrs-1vV9z6
    Warning: you did not set the MAC1 value; using "02:34:56:78:9A:BC"
    Warning: you did not set the MAC2 value; using "02:34:56:78:9A:00"
+
+   flash-wrs: Waiting for at91sam SAMBA bootloader on usb.
+       Please check the Managment USB cable is connected
+       and keep pressed the Flash button while
+       resetting/powering the switch.
+   ............. Ok
    flash-wrs: I'm talking with the switch;
-      please remove the jumper and press Enter to start flashing:
+      please release the flash button and press Enter to start flashing:
 @end smallexample
 
 If the script cannot find the Atmel programming interface on your USB
 bus, it prints a message and waits for the switch to be turned on
-in the proper way (with the jumper plugged or the button pressed).
+in the proper way (with the button pressed or, for older hardware
+versions, the jumper plugged).
 
 The process calls the flasher program twice (so you'll see the
 initialization strings two times) and takes slightly less than 3

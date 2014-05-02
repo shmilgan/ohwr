@@ -266,7 +266,7 @@ Tbarebox=$TMPDIR/bb.new
 modifyMAC ${barebox} ${Tbarebox}
 
 
-## Flashing DataFlash
+## Flashing DataFlash: at91bootstrap at 0, then barebox at 0x8400 (33792)
 if $df; then
 	${FLASHER} -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792
 fi
