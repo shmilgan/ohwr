@@ -225,15 +225,16 @@ if [ "x$MAC2" = "x$MAC2_DEF" ]; then
 fi
 
 ## Selecting the running memmode
+df=false; nf=false, ddr=false
 if [ "x$memmode" = "xdf" ]; then
-	df=1
+	df=true
 elif [ "x$memmode" = "xnf" ]; then
-	nf=1
+	nf=true
 elif [ "x$memmode" = "xddr" ]; then
-	test=1
+	ddr=true
 else
-	df=1
-	nf=1
+	df=true
+	nf=true
 fi
 
 # Check if atmel sam-ba is found by lsusb
@@ -266,12 +267,12 @@ modifyMAC ${barebox} ${Tbarebox}
 
 
 ## Flashing DataFlash
-if [ $df ]; then
+if $df; then
 	${FLASHER} -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792
 fi
 
 ## Prepare for the NAND flashing procedure
-if [ $nf ]; then
+if $nf; then
 
 	TMPFS=$TMPDIR/wrsfs-tgz; mkdir $TMPFS
 	rootfsjffs2=$TMPDIR/wrs-image.jffs2
@@ -324,7 +325,7 @@ EOF
 fi
 
 ## Loading in DDR
-if [ $test ]; then
+if $ddr; then
 
 	TMPFS=$(mktemp -d /tmp/wrsfs-tgz.XXXXXX)
 	rootfsjffs2=/tmp/wrs-image.jffs2.img
