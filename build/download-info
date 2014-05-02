@@ -11,8 +11,8 @@ at91bootstrap-3-3.0.tar.gz       059a3e99cd93727c642ab7843c714887 \
 http://repository.timesys.com/buildsources/a/at91bootstrap-3/at91bootstrap-3-3.0/at91bootstrap-3-3.0.tar.gz
 
 # boot loader
-barebox-2012.05.0.tar.bz2       208495f31b832eb6ae0c887787431def \
-   http://www.barebox.org/download/barebox-2012.05.0.tar.bz2
+barebox-2014.04.0.tar.bz2       e1f089fc24cc7f24478e663c0e3b91d9 \
+   http://www.barebox.org/download/barebox-2014.04.0.tar.bz2
 
 # kernel
 linux-2.6.39.tar.bz2            1aab7a741abe08d42e8eccf20de61e05 \

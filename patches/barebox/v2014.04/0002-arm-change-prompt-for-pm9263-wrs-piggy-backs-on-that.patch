@@ -1,0 +1,29 @@
+From 3824d57e37a5576a094adfe889cc55c9ea323e4d Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Thu, 15 Sep 2011 23:53:57 +0200
+Subject: [PATCH 2/8] arm: change prompt for pm9263 (wrs piggy-backs on that
+ code)
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ arch/arm/boards/pm9g45/init.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/boards/pm9g45/init.c b/arch/arm/boards/pm9g45/init.c
+index 1e43be5..629a1ab 100644
+--- a/arch/arm/boards/pm9g45/init.c
++++ b/arch/arm/boards/pm9g45/init.c
+@@ -169,8 +169,8 @@ device_initcall(pm9g45_devices_init);
+ 
+ static int pm9g45_console_init(void)
+ {
+-	barebox_set_model("Ronetix PM9G45");
+-	barebox_set_hostname("pm9g45");
++	barebox_set_model("White Rabbit Switch");
++	barebox_set_hostname("wrs");
+ 
+ 	at91_register_uart(0, 0);
+ 	return 0;
+-- 
+1.7.7.2
+

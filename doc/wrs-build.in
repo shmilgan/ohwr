@@ -631,13 +631,20 @@ and 02:34:56:78:9A:00 for MAC2 (the base address for the 18 SFP ports).
    flash-wrs: Working in /tmp/flash-wrs-1vV9z6
    Warning: you did not set the MAC1 value; using "02:34:56:78:9A:BC"
    Warning: you did not set the MAC2 value; using "02:34:56:78:9A:00"
+
+   flash-wrs: Waiting for at91sam SAMBA bootloader on usb.
+       Please check the Managment USB cable is connected
+       and keep pressed the Flash button while
+       resetting/powering the switch.
+   ............. Ok
    flash-wrs: I'm talking with the switch;
-      please remove the jumper and press Enter to start flashing:
+      please release the flash button and press Enter to start flashing:
 @end smallexample
 
 If the script cannot find the Atmel programming interface on your USB
 bus, it prints a message and waits for the switch to be turned on
-in the proper way (with the jumper plugged or the button pressed).
+in the proper way (with the button pressed or, for older hardware
+versions, the jumper plugged).
 
 The process calls the flasher program twice (so you'll see the
 initialization strings two times) and takes slightly less than 3
@@ -918,6 +925,10 @@ this is the default place where the NFS-Root filesystem is mounted
 from, as shown in the log excerpt above. So you'll have your
 @file{wrboot} in the same place
 
+@b{Note:} recent @i{barebox} versions require scripts to include a
+leading @t{#!/bin/sh}. Examples in @i{wr-switch-sw} did not include the
+line until April 2014 included.
+
 The @file{binaries} subdirectory of this package includes two known-working
 wrboot scripts as examples; one if for use with static IP addresses and
 the other relies on DHCP. If you want to override the default NFS-Root
@@ -1054,7 +1065,7 @@ The switch uses @i{barebox} as a boot loader. We are running version
 file. Note that we are piggy-backing on the Ronetix PM9G45 board, out
 of laziness.
 
-The patches are part of this package in @i{patches/barebox} and
+The patches are part of this package in @i{patches/barebox/v2012.05/} and
 the set is made up of the following ones:
 
 @smallexample
@@ -1076,14 +1087,14 @@ environment, and its own configuration and scripts live in a small
 filesystem.  To ease modification of such configuration and boot steps
 the build script copies over the configuration instead of patching it
 in the sources.  You can thus edit the files you find in
-@file{patches/barebox/env} and rebuild your customized bootloader.
+@file{patches/barebox/v2012.05/env} and rebuild your customized bootloader.
 The script that is executed at boot time is @file{env/bin/init} and as
 you see it calls the other ones.  The menus included in the shipped
 configuration are described in @ref{Booting with Barebox}.
 
 Building @i{barebox} relies on a @i{Kconfig} setup, and the
 configuration file we use is
-@file{patches/barebox/@-wrs3_defconfig}. Again, this is copied over and
+@file{patches/barebox/v2012.05/@-wrs3_defconfig}. Again, this is copied over and
 not patched in (see the simple @file{build/scripts/@-wrs_build_barebox}
 for details).
 
@@ -1597,35 +1608,38 @@ After tou managed to load and run @i{barebox.bin},
 you will see the following messages on the serial port, at 115200,8N1.
 The first 4 lines are printed by @i{at91bootstrap}, the rest by @i{barebox}.
 
-@c FIXME: the messages and prompts
 @smallexample
    Start AT91Bootstrap...
    DDR2 Config: 0x39 (NC=0xa, NR=0xd, CAS=0x3, ba_offset = 0x18)
    DDR2 Config: 0x39 (NC=0xa, NR=0xd, CAS=0x3, ba_offset = 0x18)
-   Compiled by federico (Jul 31 2012 @ 16:14:34)
-   git rev:
+   Compiled by Alessandro Rubini (May  2 2014 @ 18:32:34)
+   git rev:wr-switch-sw-v3.3.1-113-g0b2af1f+
 
    Begin to load image...
-   ++++++++
+   ++++++++++++++++
    Loading image done.
 
+   barebox 2014.04.0 #1 Fri May 2 18:32:51 CEST 2014
 
-   barebox 2012.05.0 (Aug  7 2012 - 13:44:23)
-
-   Board: CERN White Rabbit Switch V3
+   Board: White Rabbit Switch
+   AT91: Detected soc type: at91sam9g45
+   AT91: Detected soc subtype: Unknown
    Clocks: CPU 400 MHz, master 133 MHz, main 12.000 MHz
-   registered netconsole as cs1
-   NAND device: Manufacturer ID: 0x2c, Chip ID: 0xbc (Micron NAND 512MiB 1,8V 16-bi
-   t)
-   Scanning device for bad blocks
-   GPIOs: PA4=1 (36), PC7=1 (103)
-   Malloc space: 0x73b00000 -> 0x73efffff (size  4 MB)
-   Stack space : 0x73af8000 -> 0x73b00000 (size 32 kB)
-   envfs: wrong magic on /dev/env0
-   no valid environment found on /dev/env0. Using default environment
+   netconsole: registered as cs1
+   atmel_nand: Use On Flash BBT
+   nand: Trying ONFI probe in 16 bits mode, aborting !
+   nand: NAND device: Manufacturer ID: 0x2c, Chip ID: 0xbc (Micron NAND 512MiB 1,8V 16-bit), 512MiB, page size: 2048, OOB size: 64
+   Bad block table found at page 262080, version 0x01
+   Bad block table found at page 262016, version 0x01
+   mtd_dataflash mtd_dataflash0: AT45DB642x (8448 KBytes) pagesize 1056 bytes (OTP)
+   mdio_bus: miibus0: probed
+   macb macb0: Cadence MACB at 0xfffbc000
+   GPIOs: PA4=1 (4), PC7=1 (71)
+   malloc space: 0x73b00000 -> 0x73efffff (size 4 MiB)
    running /env/bin/init...
-   Starting up barebox [wrs3] (MAC=02:0B:AD:C0:FF:EE)
-   starting menu in 5 seconds
+   files differ at offset 0
+   Starting up barebox [wrs3] (MAC=22:23:24:25:26:27)
+   starting menu in 3 seconds
 @end smallexample
 
 When the boot loader is running, you can boot a kernel and use its
