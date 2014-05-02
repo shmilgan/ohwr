@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# This script loads a wrboot script from the TFTP server and runs it.
+if [ "x$eth0.ipaddr" = "x" ] || [ "$eth0.ipaddr" = "0.0.0.0" ]; then
+    dhcp 5;
+fi
+
+# fetch wrboot-<MAC> script, or <IP>/wrboot or wrboot
+tftp wrboot-$eth0.ethaddr wrboot
+if [ "$?" -ne "0" ]; then
+    sleep 1
+    tftp $eth0.ipaddr/wrboot wrboot
+fi
+if [ "$?" -ne "0" ]; then
+    sleep 1
+    tftp wrboot wrboot
+fi
+if [ "$?" -eq "0" ]; then
+    ./wrboot
+fi
+
+# If the script doesn't boot return to menu after some time to read output
+sleep 2
+menu -s boot

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+edit /env/config
+. /env/config
+saveenv
+
+sleep 2
+menu -s boot

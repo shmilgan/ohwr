@@ -1,0 +1,51 @@
+From 81987499eefe5a714bbc0653ea5daf573e11eeba Mon Sep 17 00:00:00 2001
+From: Benoit Rat <benoit@sevensols.com>
+Date: Mon, 28 May 2012 12:23:13 +0200
+Subject: [PATCH 4/8] gpio: add function to check them
+
+---
+ arch/arm/boards/pm9g45/init.c |   21 +++++++++++++++++++++
+ 1 files changed, 21 insertions(+), 0 deletions(-)
+
+diff --git a/arch/arm/boards/pm9g45/init.c b/arch/arm/boards/pm9g45/init.c
+index e2286ed..e5b1e12 100644
+--- a/arch/arm/boards/pm9g45/init.c
++++ b/arch/arm/boards/pm9g45/init.c
+@@ -43,6 +43,25 @@ struct w1_gpio_platform_data w1_pdata = {
+ 	.is_open_drain = 0,
+ };
+ 
++/*
++ * board revision encoding
++ *  V3.1 => by default: PA4 is 1 & PC7 is 0.
++ *  V3.2 => by default: PA4 is 0 & PC7 is 1
++ */
++static void wrs3_check_gpios(void)
++{
++	if (!gpio_request(AT91_PIN_PA4, "") &&
++		!gpio_request(AT91_PIN_PC7, ""))
++	{
++		printf("GPIOs: PA4=%d (%d), PC7=%d (%d)\n",
++			gpio_get_value(AT91_PIN_PA4),AT91_PIN_PA4,gpio_get_value(AT91_PIN_PC7),AT91_PIN_PC7);
++	}
++	else
++	{
++		printf("Error: unable to acquire board GPIOs\n");
++	}
++}
++
+ static struct atmel_nand_data nand_pdata = {
+ 	.ale		= 21,
+ 	.cle		= 22,
+@@ -163,6 +182,8 @@ static int pm9g45_devices_init(void)
+ 
+ 	armlinux_set_architecture(MACH_TYPE_PM9G45);
+ 
++	wrs3_check_gpios();
++
+ 	return 0;
+ }
+ device_initcall(pm9g45_devices_init);
+-- 
+1.7.7.2
+

@@ -1,0 +1,39 @@
+From 8ec5e0b30090928df96318f043f30610653b0b3d Mon Sep 17 00:00:00 2001
+From: Benoit Rat <benoit@sevensols.com>
+Date: Mon, 9 Jul 2012 13:40:30 +0200
+Subject: [PATCH 5/8] wrs (on pm9g45): change nand setup
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ arch/arm/boards/pm9g45/init.c |    8 ++------
+ 1 files changed, 2 insertions(+), 6 deletions(-)
+
+diff --git a/arch/arm/boards/pm9g45/init.c b/arch/arm/boards/pm9g45/init.c
+index e5b1e12..93efaff 100644
+--- a/arch/arm/boards/pm9g45/init.c
++++ b/arch/arm/boards/pm9g45/init.c
+@@ -15,7 +15,6 @@
+  *
+  *
+  */
+-
+ #include <common.h>
+ #include <net.h>
+ #include <init.h>
+@@ -173,11 +172,8 @@ static int pm9g45_devices_init(void)
+ 	pm9g45_add_device_eth();
+ 	pm9g45_add_device_usbh();
+ 
+-	devfs_add_partition("nand0", 0x00000, SZ_128K, DEVFS_PARTITION_FIXED, "at91bootstrap_raw");
+-	dev_add_bb_dev("at91bootstrap_raw", "at91bootstrap");
+-	devfs_add_partition("nand0", SZ_128K, SZ_256K, DEVFS_PARTITION_FIXED, "self_raw");
+-	dev_add_bb_dev("self_raw", "self0");
+-	devfs_add_partition("nand0", SZ_256K + SZ_128K, SZ_128K, DEVFS_PARTITION_FIXED, "env_raw");
++	//device, offset, size, flag, name
++	devfs_add_partition("nand0", 0x40000, 0x40000, DEVFS_PARTITION_FIXED, "env_raw");
+ 	dev_add_bb_dev("env_raw", "env0");
+ 
+ 	armlinux_set_architecture(MACH_TYPE_PM9G45);
+-- 
+1.7.7.2
+

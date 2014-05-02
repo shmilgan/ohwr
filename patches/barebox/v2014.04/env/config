@@ -1,0 +1,23 @@
+#!/bin/sh
+## Please type Ctrl+D to Save-and-exit or Ctrl+C to Exit
+
+## eth0.ethaddr corresponds to the MAC address of the switch, it can also be
+## changes using flasher
+# eth0.ethaddr=
+
+## macaddr is the base MAC address to assign to the first switch port. All
+## the other ports are sequentially assigned
+# macaddr=
+
+## You can set your networking parameters here
+## If unset, then boot-script will use dhcp
+## This is shipped as unset ("if false" below)
+if false; then
+    eth0.serverip=192.168.1.1
+    eth0.ipaddr=192.168.1.2
+    eth0.netmask=255.255.255.0
+    eth0.gateway=192.168.1.254
+fi
+
+## Timeout to autoboot in the pre-selected menu
+autoboot_timeout="5";

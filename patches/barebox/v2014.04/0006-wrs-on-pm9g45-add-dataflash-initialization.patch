@@ -1,0 +1,48 @@
+From b0c7f0b480138a99d95ea967334a10579288f6a5 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Fri, 2 May 2014 12:43:47 +0200
+Subject: [PATCH 6/8] wrs (on pm9g45): add dataflash initialization
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ arch/arm/boards/pm9g45/init.c |   17 +++++++++++++++++
+ 1 files changed, 17 insertions(+), 0 deletions(-)
+
+diff --git a/arch/arm/boards/pm9g45/init.c b/arch/arm/boards/pm9g45/init.c
+index 93efaff..9665c18 100644
+--- a/arch/arm/boards/pm9g45/init.c
++++ b/arch/arm/boards/pm9g45/init.c
+@@ -114,6 +114,22 @@ static void pm9g45_add_device_mci(void)
+ static void pm9g45_add_device_mci(void) {}
+ #endif
+ 
++static const struct spi_board_info ek_spi_devices[] = {
++	{
++		.name		= "mtd_dataflash",
++		.chip_select	= 0,
++		.max_speed_hz	= 15 * 1000 * 1000,
++		.bus_num	= 0,
++	}
++};
++
++static void ek_add_device_spi(void)
++{
++	spi_register_board_info(ek_spi_devices,
++			ARRAY_SIZE(ek_spi_devices));
++	at91_add_device_spi(0, NULL);
++}
++
+ /*
+  * USB OHCI Host port
+  */
+@@ -168,6 +184,7 @@ static int pm9g45_devices_init(void)
+ 	add_generic_device_res("w1-gpio", DEVICE_ID_SINGLE, NULL, 0, &w1_pdata);
+ 
+ 	pm_add_device_nand();
++	ek_add_device_spi();
+ 	pm9g45_add_device_mci();
+ 	pm9g45_add_device_eth();
+ 	pm9g45_add_device_usbh();
+-- 
+1.7.7.2
+
