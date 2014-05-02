@@ -19,11 +19,12 @@ mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 
 # go to the build dir and compile it
 cd $WRS_OUTPUT_DIR/build
+version="v2012.05"
 dirname="barebox-2012.05.0"
 rm -rf $dirname
 tar xjf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
 cd $dirname
-patchdir="$WRS_BASE_DIR/../patches/barebox/"
+patchdir="$WRS_BASE_DIR/../patches/barebox/$version"
 wrs_echo "Patching Barebox"
 for n in $patchdir/*patch; do
     # the shell passes the "*" over if no matches are there, so check

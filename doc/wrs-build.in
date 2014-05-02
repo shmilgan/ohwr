@@ -1054,7 +1054,7 @@ The switch uses @i{barebox} as a boot loader. We are running version
 file. Note that we are piggy-backing on the Ronetix PM9G45 board, out
 of laziness.
 
-The patches are part of this package in @i{patches/barebox} and
+The patches are part of this package in @i{patches/barebox/v2012.05/} and
 the set is made up of the following ones:
 
 @smallexample
@@ -1076,14 +1076,14 @@ environment, and its own configuration and scripts live in a small
 filesystem.  To ease modification of such configuration and boot steps
 the build script copies over the configuration instead of patching it
 in the sources.  You can thus edit the files you find in
-@file{patches/barebox/env} and rebuild your customized bootloader.
+@file{patches/barebox/v2012.05/env} and rebuild your customized bootloader.
 The script that is executed at boot time is @file{env/bin/init} and as
 you see it calls the other ones.  The menus included in the shipped
 configuration are described in @ref{Booting with Barebox}.
 
 Building @i{barebox} relies on a @i{Kconfig} setup, and the
 configuration file we use is
-@file{patches/barebox/@-wrs3_defconfig}. Again, this is copied over and
+@file{patches/barebox/v2012.05/@-wrs3_defconfig}. Again, this is copied over and
 not patched in (see the simple @file{build/scripts/@-wrs_build_barebox}
 for details).
 
