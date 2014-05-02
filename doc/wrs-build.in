@@ -918,6 +918,10 @@ this is the default place where the NFS-Root filesystem is mounted
 from, as shown in the log excerpt above. So you'll have your
 @file{wrboot} in the same place
 
+@b{Note:} recent @i{barebox} versions require scripts to include a
+leading @t{#!/bin/sh}. Examples in @i{wr-switch-sw} did not include the
+line until April 2014 included.
+
 The @file{binaries} subdirectory of this package includes two known-working
 wrboot scripts as examples; one if for use with static IP addresses and
 the other relies on DHCP. If you want to override the default NFS-Root
