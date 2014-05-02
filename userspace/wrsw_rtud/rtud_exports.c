@@ -235,6 +235,7 @@ int rtud_init_exports()
 	MINIPC_EXP_FUNC(rtud_export_get_vd_list,rtudexp_get_vd_list);
 	MINIPC_EXP_FUNC(rtud_export_clear_entries,rtudexp_clear_entries);
 	MINIPC_EXP_FUNC(rtud_export_add_entry,rtudexp_add_entry);
+	MINIPC_EXP_FUNC(rtud_export_vlan_entry,rtudexp_vlan_entry);
 	//tru stuff
 	MINIPC_EXP_FUNC(rtud_export_get_tru_info,rtudexp_get_tru_info);
 	return 0;
