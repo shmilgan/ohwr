@@ -130,7 +130,9 @@ rootfsjffs2=""
 # full path to the file system directory
 TMPFS=""
 
-TMPDIR=$(mktemp -d /tmp/flash-wrs-XXXXXX)
+if [ "x$TMPDIR" = "x" ]; then TMPDIR="/tmp"; fi
+
+WRSTMPDIR=$(mktemp -d $TMPDIR/flash-wrs-XXXXXX)
 
 while [ $# -ge 1 ]; do
 	case $1 in
@@ -143,11 +145,11 @@ while [ $# -ge 1 ]; do
 
 	*.tar.gz)
 		checkExit "tar-file" $1
-		tar --directory $TMPDIR -xzf $1
-		at91bs=$TMPDIR/at91bootstrap.bin;
-		barebox=$TMPDIR/barebox.bin
-		kernel=$TMPDIR/zImage
-		rootfsgz=$TMPDIR/wrs-image.tar.gz
+		tar --directory $WRSTMPDIR -xzf $1
+		at91bs=$WRSTMPDIR/at91bootstrap.bin;
+		barebox=$WRSTMPDIR/barebox.bin
+		kernel=$WRSTMPDIR/zImage
+		rootfsgz=$WRSTMPDIR/wrs-image.tar.gz
 		shift;;
 
 	-h|--help) 	showhelp; shift;;
@@ -209,7 +211,7 @@ fi
 
 # Even if not all files are always needed, check all of them immediately
 me=$(basename $0)
-echo "${me}: Working in $TMPDIR"
+echo "${me}: Working in $WRSTMPDIR"
 checkExit barebox $barebox
 checkExit at91bootstrap $at91bs
 checkExit kernel $kernel
@@ -262,7 +264,7 @@ echo -n "   please release the flash button and press Enter to start flashing: "
 read unused
 
 # Create a temporary barebox binary with modified MAC addresses
-Tbarebox=$TMPDIR/bb.new
+Tbarebox=$WRSTMPDIR/bb.new
 modifyMAC ${barebox} ${Tbarebox}
 
 
@@ -274,18 +276,18 @@ fi
 ## Prepare for the NAND flashing procedure
 if $nf; then
 
-	TMPFS=$TMPDIR/wrsfs-tgz; mkdir $TMPFS
-	rootfsjffs2=$TMPDIR/wrs-image.jffs2
+	TMPFS=$WRSTMPDIR/wrsfs-tgz; mkdir $TMPFS
+	rootfsjffs2=$WRSTMPDIR/wrs-image.jffs2
 
 	# The TMPCPIO is used for the NAND flashing procedure. It
 	# contains the magic string "paperino" (0x61706570 0x69726f6e)
 	# in the first 8bytes and in the following byte the whole
 	# file system. Barebox use this magic string to identify
 	# the flashing procedure.
-	TMPCPIO=$TMPDIR/wrsflash.cpio.gz
+	TMPCPIO=$WRSTMPDIR/wrsflash.cpio.gz
 
 	# make flashing cpio from the unzipped file system
-	TMPSCRIPT=$TMPDIR/wrsrootfs-script
+	TMPSCRIPT=$WRSTMPDIR/wrsrootfs-script
 	cat > $TMPSCRIPT << EOF
 tar --directory $TMPFS -xzf $rootfsgz
 # Remove the unnecessary HDL files, by default we keep 18 ports HDL for both FPGA type
@@ -327,10 +329,10 @@ fi
 ## Loading in DDR
 if $ddr; then
 
-	TMPFS=$(mktemp -d /tmp/wrsfs-tgz.XXXXXX)
-	rootfsjffs2=/tmp/wrs-image.jffs2.img
+	TMPFS=$(mktemp -d $TMPDIR/wrsfs-tgz.XXXXXX)
+	rootfsjffs2=$TMPDIR/wrs-image.jffs2.img
 	# make cpio and jffs2 image
-	TMPSCRIPT=$(mktemp /tmp/wrsrootfs-script.XXXXXX)
+	TMPSCRIPT=$(mktemp $TMPDIR/wrsrootfs-script.XXXXXX)
 	cat > $TMPSCRIPT << EOF
 tar --directory $TMPFS -xzf $rootfsgz
 mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $rootfsjffs2
