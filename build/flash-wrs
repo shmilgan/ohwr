@@ -15,6 +15,28 @@
 # will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
 #########################################################################
 
+#hack: allow some environment variables to change behavior, for developing
+if [ "x$WRS_FAKE_FLASHER" = "x" ]; then
+    fake=false
+else
+    fake=true
+    echo "Using fake flasher (no action on switch is done)"
+    sleep 1
+fi
+
+if [ "x$WRS_KEEP_TEMPORARIES" = "x" ]; then
+    remove_temps=true
+else
+    remove_temps=false
+fi
+
+fake_flasher()
+{
+    echo "NOT FLASHING with command:"
+    echo "   $*"
+    echo ""
+    sleep 3
+}
 
 showhelp()
 {
@@ -94,8 +116,14 @@ if [ -x $FLASHER ]; then
     true
 else
     if CC=cc make -s -C ${WRS_BASE_DIR}/usb-loader; then true; else
-	echo "$0: Error compiling in directory ${WRS_BASE_DIR}/usb-loader" >&2; exit 1;
+	echo "$0: Error compiling in directory ${WRS_BASE_DIR}/usb-loader" >&2;
+	exit 1;
     fi
+fi
+
+# allow faking operations
+if $fake;  then
+    FLASHER="fake_flasher $FLASHER"
 fi
 
 # add /usr/sbin for mkfs.jffs2
@@ -240,7 +268,7 @@ else
 fi
 
 # Check if atmel sam-ba is found by lsusb
-if lsusb | grep -q "at91sam"; then
+if lsusb | grep -q "at91sam" || $fake; then
 	true;
 else
 	echo ""
@@ -259,7 +287,11 @@ else
 fi
 
 # Remove the jumper now, before proceeding
-echo "$me: I'm talking with the switch;"
+if $fake; then
+    echo "$me: fake operations, let's continue withouth a WR switch;"
+else
+    echo "$me: I'm talking with the switch;"
+fi
 echo -n "   please release the flash button and press Enter to start flashing: "
 read unused
 
@@ -313,17 +345,27 @@ cd ..
 echo -n "paperino" > $TMPCPIO
 (cd "$TMPFS" && find . | cpio -o -H newc | gzip) >> $TMPCPIO
 EOF
+	echo -n "Creating filesystem for installation..."
 	fakeroot bash $TMPSCRIPT
-	rm $TMPSCRIPT
+	echo " Done"
 
 	# Erase all nand memory
 	$FLASHER -e -m nand
 	# Start nand flashing procedure
 	$FLASHER -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${TMPCPIO} 0x1FFFFF8
 
-	rm -rf $TMPFS
-	rm -rf $TMPCPIO
-	rm -rf $rootfsjffs2
+	if $remove_temps; then
+	    rm $TMPSCRIPT
+	    rm -rf $TMPFS
+	    rm -rf $TMPCPIO
+	    rm -rf $rootfsjffs2
+	else
+	    echo "Keeping temporaries"
+	    echo "   script is $TMPSCRIPT"
+	    echo "   filesystem image (no attributes) is $TMPFS"
+	    echo "   jffs2 image is in $rootfsjffs2"
+	    echo "   cpio file is in $TMPCPIO at offset 8 bytes"
+	fi
 fi
 
 ## Loading in DDR
@@ -338,11 +380,15 @@ tar --directory $TMPFS -xzf $rootfsgz
 mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $rootfsjffs2
 EOF
 	fakeroot bash $TMPSCRIPT
-	rm $TMPSCRIPT
-	rm $TMPFS
+	if $remove_temps; then
+	    rm $TMPSCRIPT
+	    rm $TMPFS
+	fi
 
 	$FLASHER -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${rootfsjffs2} 0x2000000
 fi
 
-rm $Tbarebox
+if $remove_temps; then
+    rm $Tbarebox
+fi
 echo -e "\n\nDone\n"
