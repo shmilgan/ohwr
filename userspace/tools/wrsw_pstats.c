@@ -22,7 +22,7 @@
 #define pstats_wr(reg, val) \
 	 _fpga_writel(FPGA_BASE_PSTATS + offsetof(struct PSTATS_WB, reg), val)
 
-#define NPORTS 8
+#define NPORTS 18
 #define CNT_PP 39
 
 struct cnt_word {
