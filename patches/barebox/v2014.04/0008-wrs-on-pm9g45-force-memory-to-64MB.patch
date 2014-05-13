@@ -1,0 +1,42 @@
+From 19d3d10267b52b3e4f35ec60051c0d96b0effdd8 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 13 May 2014 10:10:28 +0200
+Subject: [PATCH 08/10] wrs (on pm9g45): force memory to 64MB
+
+For some reason, yet unknown, autodetection of memory size during
+installation fails and returns 8MB instead of 64MB. This make
+installation fail.  The sam9g45 code reads the ddr configuration to
+calculate memory size, but it looks like memory configuration is
+different from the runtime one
+
+At install time (loader-configured RAM)    CR = 0x7024, MDR = 0x10
+At run time (at91boot-configured RAM)      CR = 0x0030, MDR = 0x16
+
+However, memory is actually all working, there is no 8MB-wide aliasing
+in place.
+
+I didn't go as far as to check what is happening, and just restored
+the hardwired value, like we had in barebox-v2012.05 (actually,
+*there* it was oversized).
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ arch/arm/boards/pm9g45/init.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/arch/arm/boards/pm9g45/init.c b/arch/arm/boards/pm9g45/init.c
+index 9665c18..1f7cc1c 100644
+--- a/arch/arm/boards/pm9g45/init.c
++++ b/arch/arm/boards/pm9g45/init.c
+@@ -172,7 +172,7 @@ static void pm9g45_add_device_eth(void)
+ 
+ static int pm9g45_mem_init(void)
+ {
+-	at91_add_device_sdram(0);
++	at91_add_device_sdram(64 << 20); /* Hack: autodetection fails */
+ 
+ 	return 0;
+ }
+-- 
+1.7.7.2
+
