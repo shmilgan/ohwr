@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month February 2014
+@set update-month May 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -521,40 +521,41 @@ manual, if needed).
 @section USB connections
 
 In order to perform the flashing operation easily, you should connect
-three @i{mini-USB} cables to the switches. 
+two @i{mini-USB} cables to the switch ports (Actually, one is enough, but the
+second one is useful to get more diagnostics while flashing).
 
 The two back panel @i{mini-USB} sockets correspond to the serial 
 port of the FPGA and the ARM. They are labeled @b{FPGA test} and 
-@b{ARM test} and respectively correspond to the devices 
-@code{/dev/ttyUSB0} and @code{/dev/ttyUSB1} on your host. 
+@b{ARM test}.  You should connect to ``ARM test'' to get diagnostics.
 
-You can connect to them using minicom 
+You can connect to it using minicom 
 @footnote{You can use other programs for accessing serial ports, for 
 example @uref{http://brokestream.com/tinyserial.html, tinyserial}} 
 like this:
 
 @example
 	minicom -D /dev/ttyUSB0 -b 115200
-	minicom -D /dev/ttyUSB1 -b 115200
 @end example
 
-Unfortunately, this order depends on how the USB cables are plugged 
-so you might have the @code{ttyUSB0} device that corresponds to the ARM 
-and the @code{ttyUSB1} to the FPGA.
+The port, however, will only appear on the PC after the switch is turned
+on, so you may want to delay this operation.
 
 @sp 1
 
 The front panel USB connection, labeled as @b{management} USB port, communicates 
 with the internal ROM of the CPU. It is the one used to perform the 
-flashing procedure.
+flashing procedure.  No special program is needed, as the flashing tool
+will communicate with this port by itself.
 
 You first need to set up the switch in @emph{"Flashing mode"} to 
 continue with the flashing procedure. To do so, you should turn on 
 the power while pressing the @b{flash button} on the rear panel.
 
 If the operation succeed you should see the message @code{bootROM} 
-appears on the ARM UART. You can also see the enumerated
-device in your own host:
+appears on the ARM UART. (You will likely not see it, because your
+@i{minicom} or equivalent can't run before the switch is turned on).
+
+You can also see the enumerated device in your own host:
 
 @smallexample
    $ lsusb | grep Atmel
@@ -563,6 +564,7 @@ device in your own host:
 
 Finally, the kernel should also load the proper device driver, and you
 are expected to see @code{/dev/ttyACM0} or equivalent in your system.
+This is the device used for flashing.
 
 If it is not the case, this mean that the button used to disable the dataflash
 and enter @emph{"Flashing mode"} is not working. You should contact support.
@@ -570,6 +572,22 @@ and enter @emph{"Flashing mode"} is not working. You should contact support.
 @c =============================================================================
 @node Flashing Procedure
 @section Flashing Procedure
+
+Unlike what happened with previous releaseses (up to the end of 2013),
+the filesystem of the switch can't fit in RAM memory during installation
+any more: the image is not downloaded through the network.  Thus
+you need to following items to flash a switch:
+
+@itemize @bullet
+@item The USB cable connected to the front ``management'' USB port
+@item A Linux host connected as a master to this cable
+@item An Ethernet cable connected to the fron ``management'' Ethernet port
+@item A DHCP server on your network, offering an IP address to the switch
+@item A TFTP server, exporting the file @t{wrs-image.tar.gz}
+@end itemize
+
+The flashing procedure will use the @i{server address} reported by
+DHCP as IP address for the TFTP transfer.
 
 The tool used to flash the firmware into the switch is the @i{USB-loader}
 we inherited from Atmel. The @file{flash-wrs} script is what
@@ -585,7 +603,7 @@ The command to flash is this:
     /path/to/wr-switch-sw/build/flash-wrs -e wrs-firmware-<revision>.tar.gz 
 @end example
 
-You can also flash the image you have build using @ref{Building} by
+You can also flash the image you have built using @ref{Building} by
 adding the tag @code{-b|--build}. To use this option you must call
 the script from the build directory, or define the @t{WRS_OUTPUT_DIR}
 environment variable.
@@ -647,9 +665,9 @@ in the proper way (with the button pressed or, for older hardware
 versions, the jumper plugged).
 
 The process calls the flasher program twice (so you'll see the
-initialization strings two times) and takes slightly less than 3
+initialization strings two times) and takes slightly less than 5
 minutes.  the longest step is erasure of @i{DataFlash}: if run
-without @t{-e} the script takes just 20 seconds.
+without @t{-e} the script takes 2 minutes.
 
 This is the summary of the output you are expected to see,
 trimmed to save pages:
@@ -698,7 +716,18 @@ Loading DDR...
 DDR: Writing 21119306 bytes at offset 0x0 buffer 70000000....ABCDEF
 
 [...]
+Installation procedure starts
+Flashing kernel to /dev/mtd0 ... done
+Getting tftp://192.168.16.1/wrs-image.tar.gz ... done
+Mounting target filesystem... done
+Uncompressing image... done
 @end smallexample
+
+Please note that the IP address used in the TFTP transfer depends on
+the DHCP handshake: the value above is what your developers use.
+The name @t{wrs-image.tar.gz}, on the other hand, is hardwired:
+it matches the result of a firmware build, and the file name used
+within the archive of official binaries we ship at release time.
 
 It is suggested to look at the CPU's serial port during programming,
 where you will see messages like these:
@@ -722,15 +751,16 @@ Uncompressing Linux... done, booting the kernel.
 
 [...]
 
-FLASHING: flashing kernel to /dev/mtd0 ...
+Installation procedure starts
+Flashing kernel to /dev/mtd0 ...
 Writing data to block 0 at offset 0x0
 Writing data to block 1 at offset 0x20000
 
 [...]
 
-FLASHING: flashing file system to /dev/mtd1 ...
-Writing data to block 0 at offset 0x0
-Writing data to block 1 at offset 0x20000
+Getting tftp://192.168.16.1/wrs-image.tar.gz ... done
+Mounting target filesystem... done
+Uncompressing image... done
 
 [...]
 
@@ -815,9 +845,24 @@ The script performs the following steps:
 @item Optionally, it changes the default MAC addresses in @i{barebox}
       default environment, so you can use a different MAC for each switch.
 @item Optionally, it erases the dataflash memory.
-@item And finally, it writes the corresponding binaries to @i{dataflash}, 
-      or @i{nand}.
+@item It loads a temporary kernel and filesytem to RAM and boots them
+@item It reads /dev/ttyACM0 to report the messages printed during flashing
 @end itemize
+
+@c ==========================================================================
+@node Plans for Flashing
+@section Plans for Flashing
+
+The current flashing procedure is still temporary. We plan to change
+it to the better before the next release, moving to UBI and ubifs for
+the switch itself, and a setup where @i{dataflash} is not expected to
+ever be changed after the device is shipped.
+
+The new procedure, however, won't change the user-visible actions:
+we'll still have the same connection (usb and ethernet), the same command
+names and the same file names.  So users getting acquainted with the
+current flashing steps won't have any issues with the upcoming software
+release.
 
 @c ############################################################################
 @node Booting with Barebox
