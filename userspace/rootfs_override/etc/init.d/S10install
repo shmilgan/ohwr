@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# This is the installation script for wr-switch. It is activated by
+# a special kernel argument, that reaches user-space environment variables
+
+
+if [ "x$WRS_IMAGE" = "x" ]; then exit 0; fi
+
+echo 1 > /proc/sys/kernel/printk
+
+# keep /dev/ttyGS0 open, to prevent EOF being seen from the PC
+sleep 99999 > /dev/ttyGS0 &
+
+echo "Installation procedure starts" | tee /dev/ttyGS0
+sleep 2
+
+echo -n "Flashing kernel to /dev/mtd0 ..." | tee /dev/ttyGS0
+nandwrite -m -p -a /dev/mtd0 /flashing/zImage
+echo " done" | tee /dev/ttyGS0
+
+# Eth0 is already up, thanks to ip= passed by bootloader
+cd /flashing
+echo -n "Getting tftp://$SERVERIP/$WRS_IMAGE ..." | tee /dev/ttyGS0
+tftp -g -r $WRS_IMAGE -l $WRS_IMAGE $SERVERIP
+echo " done" | tee /dev/ttyGS0
+
+echo -n "Mounting target filesystem..." | tee /dev/ttyGS0
+mount -t jffs2 /dev/mtdblock1 /mnt
+echo " done" | tee /dev/ttyGS0
+
+echo -n "Uncompressing image..." | tee /dev/ttyGS0
+cd /mnt; zcat /flashing/wrs-image.tar.gz | tar xf -
+echo " done" | tee /dev/ttyGS0
+
+#/bin/sh
+
+reboot

@@ -5,11 +5,15 @@
 memcmp -s /dev/mem -d /env/magicstr 0x71FFFFF8 0x0 8
 if [ $? -eq 0 ]; then
 	echo "Booting kernel for NAND flashing procedure"
+	dhcp 5
 	bootargs="console=ttyS0,115200 panic=10 mem=64M"
-	bootargs="$bootargs initrd=0x72000000,25M"
+	bootargs="$bootargs initrd=0x72000000,10M"
 	bootargs="$bootargs root=/dev/ram0"
-	addpart /dev/ram0 0x1000000@0x1000000(kernel)
-	addpart /dev/ram0 0x1000000@0x2000000(initrd)
+	bootargs="$bootargs SERVERIP=$eth0.serverip WRS_IMAGE=wrs-image.tar.gz"
+	bootargs="$bootargs ip=$eth0.ipaddr:$eth0.serverip:$eth0.gateway:$eth0.netmask:wrs:eth0"
+
+	addpart /dev/ram0 0x400000@0x1000000(kernel)
+	addpart /dev/ram0 0xa00000@0x2000000(initrd)
 	bootm /dev/ram0.kernel
 fi
 
