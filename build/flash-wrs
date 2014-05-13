@@ -126,9 +126,6 @@ if $fake;  then
     FLASHER="fake_flasher $FLASHER"
 fi
 
-# add /usr/sbin for mkfs.jffs2
-export PATH="$PATH:/usr/sbin"
-
 # Default MAC address for the switch board ethernet
 MAC1_DEF="02:34:56:78:9A:BC"
 MAC1=$MAC1_DEF
@@ -153,8 +150,6 @@ kernel=""
 rootfsgz=""
 # full path to the cpio image
 rootfscpio=""
-# full path to the jffs2 image
-rootfsjffs2=""
 # full path to the file system directory
 TMPFS=""
 
@@ -309,7 +304,6 @@ fi
 if $nf; then
 
 	TMPFS=$WRSTMPDIR/wrsfs-tgz; mkdir $TMPFS
-	rootfsjffs2=$WRSTMPDIR/wrs-image.jffs2
 
 	# The TMPCPIO is used for the NAND flashing procedure. It
 	# contains the magic string "paperino" (0x61706570 0x69726f6e)
@@ -326,21 +320,22 @@ tar --directory $TMPFS -xzf $rootfsgz
 # (There is not enough place in DDR to extract 4 HDLs, be carefull if you add custom files)
 find $TMPFS/wr/lib/firmware/ -type f \( ! -name ''${gateware}'' \) -a \( ! -name '*rt_cpu.bin' \) -exec rm -f {} \;
 
-mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $rootfsjffs2
-
 # Remove heavy and useless stuff to make a light file system to
 # load in RAM
-rm -rf $TMPFS/etc/init.d/S*
 rm -rf $TMPFS/wr
-rm -rf $TMPFS/usr/bin
-rm -rf $TMPFS/usr/lib
+
+for n in top ltrace gdbserver strace rsync screen php php-cgi gdb; do
+   rm -f $TMPFS/usr/bin/\$n
+done
+
+for n in python2.7 lighttpd rsyslog; do
+   rm -rf $TMPFS/usr/lib/\$n
+done
 rm -rf $TMPFS/usr/share
+rm -rf $TMPFS/var/www
 
 mkdir $TMPFS/flashing/
-cp -a /dev/kmsg $TMPFS/dev/kmsg
-cp ${rootfsjffs2} $TMPFS/flashing/wrs-image.jffs2.img
 cp ${kernel} $TMPFS/flashing/zImage
-cp ${WRS_BASE_DIR}/usb-loader/S99flash-from-kernel.sh $TMPFS/etc/init.d/
 cd ..
 echo -n "paperino" > $TMPCPIO
 (cd "$TMPFS" && find . | cpio -o -H newc | gzip) >> $TMPCPIO
@@ -358,34 +353,29 @@ EOF
 	    rm $TMPSCRIPT
 	    rm -rf $TMPFS
 	    rm -rf $TMPCPIO
-	    rm -rf $rootfsjffs2
 	else
 	    echo "Keeping temporaries"
 	    echo "   script is $TMPSCRIPT"
 	    echo "   filesystem image (no attributes) is $TMPFS"
-	    echo "   jffs2 image is in $rootfsjffs2"
 	    echo "   cpio file is in $TMPCPIO at offset 8 bytes"
 	fi
+
+	# Now, flashing proceeds by booting a kernel, get its messages
+
+	# Wait for the device to disappear
+	while [ -e /dev/ttyACM0 ]; do sleep 0.1; done
+	# Wait for the device to appear again
+	while [ ! -e /dev/ttyACM0 ]; do sleep 0.1; done
+	# Report install messages until the device disappears again
+	cat /dev/ttyACM0
+
 fi
 
 ## Loading in DDR
 if $ddr; then
-
-	TMPFS=$(mktemp -d $TMPDIR/wrsfs-tgz.XXXXXX)
-	rootfsjffs2=$TMPDIR/wrs-image.jffs2.img
-	# make cpio and jffs2 image
-	TMPSCRIPT=$(mktemp $TMPDIR/wrsrootfs-script.XXXXXX)
-	cat > $TMPSCRIPT << EOF
-tar --directory $TMPFS -xzf $rootfsgz
-mkfs.jffs2 --little-endian --eraseblock=0x20000 -n --pad -d $TMPFS -o $rootfsjffs2
-EOF
-	fakeroot bash $TMPSCRIPT
-	if $remove_temps; then
-	    rm $TMPSCRIPT
-	    rm $TMPFS
-	fi
-
-	$FLASHER -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${rootfsjffs2} 0x2000000
+	echo ""
+	echo "DDR loading (the test procedure) is currently not supported"
+	echo ""
 fi
 
 if $remove_temps; then
