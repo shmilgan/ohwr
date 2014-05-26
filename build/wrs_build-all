@@ -22,6 +22,8 @@ if [ "${WRS_DOWNLOAD_DIR:0:1}" != "/" ]; then
 	wrs_die "Invalid WRS_DOWNLOAD_DIR, only absolute paths are allowed"
 
 fi
+# make the directory, in case it's a completely new build
+mkdir -p $WRS_DOWNLOAD_DIR
 
 #project is WRS_BASE_DIR path without build directory at the end
 project=${WRS_BASE_DIR:0:(${#WRS_BASE_DIR}-6)}
@@ -32,9 +34,9 @@ fi
 
 # Check the tools, also in /usr/sbin
 export PATH="$PATH:/usr/sbin"
-WRS_TOOLS="curl svn git gcc g++ ar as m4 libtool gettext md5sum make"
+WRS_TOOLS="git gcc g++ ar as m4 msgfmt md5sum make"
 WRS_TOOLS="$WRS_TOOLS awk unzip patch bison flex ncursesw5-config"
-WRS_TOOLS="$WRS_TOOLS lua fakeroot gettext mkfs.jffs2 makeinfo"
+WRS_TOOLS="$WRS_TOOLS fakeroot makeinfo"
 
 wrs_check_tools $WRS_TOOLS
 
@@ -96,7 +98,7 @@ clean()
 redo_step()
 {
 	for num in $1; do 
-		rm -v ${WRS_OUTPUT_DIR}/build/_done/$(printf "%02d" ${num})-*
+		rm -fv ${WRS_OUTPUT_DIR}/build/_done/$(printf "%02d" ${num})-*
 	done
 }
 
