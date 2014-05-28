@@ -18,5 +18,6 @@ insmod $WR_HOME/lib/modules/at91_softpwm.ko
 insmod $WR_HOME/lib/modules/wr_vic.ko
 insmod $WR_HOME/lib/modules/wr-nic.ko macaddr=$val
 insmod $WR_HOME/lib/modules/wr_rtu.ko
+insmod $WR_HOME/lib/modules/wr_pstats.ko pstats_nports=18
 $WR_HOME/sbin/start-daemons.sh
 
