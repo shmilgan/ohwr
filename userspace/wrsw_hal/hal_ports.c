@@ -593,13 +593,13 @@ static hal_port_state_t *lookup_port(const char *name)
 	return NULL;
 }
 
-int hal_enable_tracking(const char  *port_name)
+int hal_enable_tracking(const char  *port_name, int enable)
 {
 	hal_port_state_t *p = lookup_port(port_name);
 
 	if(!p) return PORT_ERROR;
 
-  return rts_enable_ptracker(p->hw_index, 1) < 0 ? PORT_ERROR : PORT_OK;
+  return rts_enable_ptracker(p->hw_index, enable) < 0 ? PORT_ERROR : PORT_OK;
 }
 
 /* Triggers the locking state machine, called by the PTPd during the WR link setup phase. */

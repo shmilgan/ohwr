@@ -284,11 +284,11 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
     for(i = MIN_PORT; i <= MAX_PORT; i++) {
         // MIN_PORT <= port <= MAX_PORT, thus no err returned
 
-        err = rtu_learn_enable_on_port(i,1);
+        err = rtu_learn_enable_on_port(i,0);
         err = rtu_pass_all_on_port(i,1);
         err = rtu_pass_bpdu_on_port(i,0);
         err = rtu_set_fixed_prio_on_port(i,0);
-        err = rtu_set_unrecognised_behaviour_on_port(i,1);
+        err = rtu_set_unrecognised_behaviour_on_port(i,0);
     }
 
     // init filtering database

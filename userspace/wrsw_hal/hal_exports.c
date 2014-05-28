@@ -27,7 +27,7 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 	switch(command)
 	{
 		case HEXP_LOCK_CMD_ENABLE_TRACKING:
-			return hal_enable_tracking(port_name);
+			return hal_enable_tracking(port_name,priority);
 			
 
 /* Start locking - i.e. tell the HAL locking state machine to use the port (port_name) as the source of the reference
