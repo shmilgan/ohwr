@@ -14,3 +14,4 @@ wr_management
 lm32-vuart
 tru_mon
 wrsw_pstats
+wrsw_vlans
