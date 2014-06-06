@@ -31,43 +31,102 @@
 int debug = 0;
 struct minipc_ch *rtud_ch;
 struct rtu_vlans_t *rtu_vlans = NULL;
+char *prgname;
+
+/* runtime options */
+struct option ropts[] = {
+	{"help", 0, NULL, OPT_HELP},
+	{"debug", 0, &debug, 1},
+	{"clear", 0, NULL, OPT_CLEAR},
+	{"list", 0, NULL, OPT_LIST},
+	{"ep", 1, NULL, OPT_EP_PORT},
+	{"emode", 1, NULL, OPT_EP_QMODE},
+	{"evid", 1, NULL, OPT_EP_VID},
+	{"eprio", 1, NULL, OPT_EP_PRIO},
+	{"eumask", 1, NULL, OPT_EP_UMASK},
+	{"rvid", 1, NULL, OPT_RTU_VID},
+	{"rfid", 1, NULL, OPT_RTU_FID},
+	{"rmask", 1, NULL, OPT_RTU_PMASK},
+	{"rdrop", 1, NULL, OPT_RTU_DROP},
+	{"rprio", 1, NULL, OPT_RTU_PRIO},
+	{"del", 0, NULL, OPT_RTU_DEL},
+	{0,}};
+/*******************/
+
+struct s_port_vlans vlans[NPORTS];
+
+unsigned long portmask;
+
+static inline int nextport(int i) /* helper for for_each_port() below */
+{
+	while (++i < NPORTS)
+		if (portmask & (1 << i))
+			return i;
+	return -1;
+}
+
+#define for_each_port(i) \
+	for (i = -1; (i = nextport(i)) >= 0;)
+
+static int parse_mask(char *arg)
+{
+	int p1, p2;
+	char c, *newarg, *s;
+
+	newarg = strdup(arg);
+	while ( (s = strtok(newarg, ",")) ) {
+		newarg = NULL; /* for next iteration */
+		switch (sscanf(s, "%i-%i%c", &p1, &p2, &c)) {
+		case 1:
+			p2 = p1;
+		case 2:
+			break;
+		default:
+			return -1;
+		}
+		if ((p1 > p2) || (p1 < 0) || (p2 >= NPORTS))
+			return -1;
+		for (; p1 <= p2; p1++)
+			portmask |= (1 << p1);
+	}
+	if (!debug)
+		return 0;
+
+	fprintf(stderr, "%s: working on ports:", prgname);
+	for_each_port(p1)
+		printf(" %i", p1);
+	printf("\n");
+}
+
+static void exit_mask(int present)
+{
+	if (present)
+		fprintf(stderr, "%s: can't set mask twice from cmdline\n",
+			prgname);
+	else
+		fprintf(stderr, "%s: please set port mask before config\n",
+			prgname);
+	exit(1);
+}
+
 
 int main(int argc, char *argv[])
 {
-	/* runtime options */
-	struct option ropts[NOPTS+1] = {
-		{"help", 0, NULL, OPT_HELP},
-		{"debug", 0, &debug, 1},
-		{"clear", 0, NULL, OPT_CLEAR},
-		{"list", 0, NULL, OPT_LIST},
-		{"ep", 1, NULL, OPT_EP_PORT},
-		{"emode", 1, NULL, OPT_EP_QMODE},
-		{"evid", 1, NULL, OPT_EP_VID},
-		{"eprio", 1, NULL, OPT_EP_PRIO},
-		{"eumask", 1, NULL, OPT_EP_UMASK},
-		{"rvid", 1, NULL, OPT_RTU_VID},
-		{"rfid", 1, NULL, OPT_RTU_FID},
-		{"rmask", 1, NULL, OPT_RTU_PMASK},
-		{"rdrop", 1, NULL, OPT_RTU_DROP},
-		{"rprio", 1, NULL, OPT_RTU_PRIO},
-		{"del", 0, NULL, OPT_RTU_DEL},
-		{0, 0, 0, 0}};
-	/*******************/
-
-	int c, i;
-	struct s_port_vlans vlans[MAXPORTS];
-	char *prgname;
-	char *pidpart;
-	int pid = -1;	  //is a port ID (Endpoint ID)
-	int pid_e = -1;	//for the range of pids
+	int c, i, mask_ok = 0;
 
 	prgname = argv[0];
 
-	bzero( vlans, MAXPORTS*sizeof(struct s_port_vlans) );
+	if (NPORTS > 8 * sizeof(portmask)) {
+		/* build error: too big maxports */
+		static __attribute__((used)) int
+			array[8 * sizeof(portmask) - NPORTS];
+	}
+
 
 	rtud_ch = minipc_client_create("rtud", 0);
 	if(!rtud_ch) {
-		fprintf(stderr, "Can't connect to RTUd mini-rpc server\n");
+		fprintf(stderr, "%s: Can't connect to RTUd mini-rpc server\n",
+			prgname);
 		return -1;
 	}
 	if(debug)
@@ -78,34 +137,29 @@ int main(int argc, char *argv[])
 		switch(c) {
 			case OPT_EP_PORT:
 				//port number
-				pidpart = strtok(optarg, "-");
-				pid = atoi(pidpart);
-				pidpart = strtok(NULL, "-");
-				if(pidpart == NULL) {
-					//it's not a range, it's a single pid
-					pid_e = pid;
+				if (mask_ok)
+					exit_mask(mask_ok);
+				if (parse_mask(optarg) < 0) {
+					fprintf(stderr, "%s: wrong port mask "
+						"\"%s\"\n", prgname, optarg);
+					exit(1);
 				}
-				else
-					pid_e = atoi(pidpart);
+				mask_ok = 1;
 
-				if(pid >= MAXPORTS || pid_e >= MAXPORTS) {
-					fprintf(stderr, "Port ID outside range\n");
-					return 0;
-				}
-
-				for(i=pid; i<=pid_e; ++i)
-					vlans[i].valid_mask = VALID_CONFIG;
 				break;
 			case OPT_EP_QMODE:
+				if (!mask_ok)
+					exit_mask(mask_ok);
+
 				//qmode for port
-				for(i=pid; i<=pid_e; ++i) {
+				for_each_port(i) {
 					vlans[i].qmode = atoi(optarg);
 					vlans[i].valid_mask |= VALID_QMODE;
 				}
 				break;
 			case OPT_EP_PRIO:
 				//priority value for port, forces fix_prio=1
-				for(i=pid; i<=pid_e; ++i) {
+				for_each_port(i) {
 					vlans[i].prio_val = atoi(optarg);
 					vlans[i].fix_prio = 1;
 					vlans[i].valid_mask |= VALID_PRIO;
@@ -113,14 +167,14 @@ int main(int argc, char *argv[])
 				break;
 			case OPT_EP_VID:
 				//VID for port
-				for(i=pid; i<=pid_e; ++i) {
+				for_each_port(i) {
 					vlans[i].vid = atoi(optarg);
 					vlans[i].valid_mask |= VALID_VID;
 				}
 				break;
 			case OPT_EP_UMASK:
 				//untag mask
-				for(i=pid; i<=pid_e; ++i) {
+				for_each_port(i) {
 					vlans[i].untag_mask = (int) strtol(optarg, NULL, 16);
 					vlans[i].valid_mask |= VALID_UNTAG;
 				}
@@ -209,15 +263,13 @@ void print_config(struct s_port_vlans *vlans)
 {
 	int i;
 
-	for(i=0; i<MAXPORTS; ++i) {
-		if( vlans[i].valid_mask & VALID_CONFIG ) {
-			printf("port: %d, qmode: %d, qmode_valid: %d, fix_prio: %d, prio_val: %d, "
-					"prio_valid: %d, vid: %d, vid_valid: %d, untag_mask: 0x%X, untag_valid: %d\n",
-					i, vlans[i].qmode, ((vlans[i].valid_mask & VALID_QMODE) != 0), vlans[i].fix_prio,
-					vlans[i].prio_val, ((vlans[i].valid_mask & VALID_PRIO) != 0),vlans[i].vid,
-					((vlans[i].valid_mask & VALID_VID) != 0), vlans[i].untag_mask,
-					((vlans[i].valid_mask & VALID_UNTAG) != 0) );
-		}
+	for_each_port(i) {
+		printf("port: %d, qmode: %d, qmode_valid: %d, fix_prio: %d, prio_val: %d, "
+		       "prio_valid: %d, vid: %d, vid_valid: %d, untag_mask: 0x%X, untag_valid: %d\n",
+		       i, vlans[i].qmode, ((vlans[i].valid_mask & VALID_QMODE) != 0), vlans[i].fix_prio,
+		       vlans[i].prio_val, ((vlans[i].valid_mask & VALID_PRIO) != 0),vlans[i].vid,
+		       ((vlans[i].valid_mask & VALID_VID) != 0), vlans[i].untag_mask,
+		       ((vlans[i].valid_mask & VALID_UNTAG) != 0) );
 	}
 }
 
@@ -225,10 +277,8 @@ int apply_settings(struct s_port_vlans *vlans)
 {
 	int i;
 
-	for(i=0; i<MAXPORTS; ++i) {
-		if( vlans[i].valid_mask & VALID_CONFIG ) {
-			//TODO: call apropriate ioctls to configure tagging/untagging
-		}
+	for_each_port(i) {
+		//TODO: call apropriate ioctls to configure tagging/untagging
 	}
 
 	config_rtud();

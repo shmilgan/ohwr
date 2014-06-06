@@ -21,7 +21,7 @@
 #ifndef __WR_VLANS_H__
 #define __WR_VLANS_H__
 
-#define MAXPORTS 18
+#define NPORTS 18
 
 #define QMODE_ACCESS 0
 #define QMODE_TRUNK	 1
