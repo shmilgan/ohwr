@@ -22,7 +22,7 @@
 	<?php $_SESSION['advance']=""; ?>
 	
 	<FORM method="POST">
-	<table border="0" align="center">	
+	<table id="daemon" border="0" align="center">	
 			<tr>
 				<th align=left>PTP Daemon: </th>
 				<th><input type="radio" name="daemongroup" value="On" <?php echo (wrs_check_ptp_status()) ? 'checked' : ''; ?> > On <br>
@@ -66,10 +66,9 @@
 			<tr>
 				<th align=left>Priority: </th>
 				<th><INPUT type="text" name="p" ></th>
-				<th><INPUT type="submit" value="Submit Configuration" class="btn"></th>
 			</tr>
-
 		</table>
+		<INPUT type="submit" value="Submit Configuration" class="btn last">
 		</FORM>
 		
 	<?php

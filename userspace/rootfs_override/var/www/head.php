@@ -18,9 +18,9 @@ function altRows(id){
 		 
 		for(i = 0; i < rows.length; i++){          
 			if(i % 2 == 0){
-				rows[i].className = "evenrowcolor";
+				rows[i].className += " evenrowcolor";
 			}else{
-				rows[i].className = "oddrowcolor";
+				rows[i].className += " oddrowcolor";
 			}      
 		}
 	}
