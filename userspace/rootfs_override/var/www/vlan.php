@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body>
+<body id="vlan">
 <div class="main">
 <div class="page">
 <div class="header" >

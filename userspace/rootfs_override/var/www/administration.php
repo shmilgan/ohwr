@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body>
+<body id="admin">
 <div class="main">
 <div class="page">
 <div class="header" >
