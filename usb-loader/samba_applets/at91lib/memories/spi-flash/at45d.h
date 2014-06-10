@@ -65,6 +65,7 @@
 extern void AT45D_WaitReady(At45 *pAt45); 
 
 extern unsigned char AT45D_GetStatus(At45 *pAt45);
+extern unsigned int AT45D_GetJEDEC(At45 *pAt45);
 
 extern void AT45D_Read(
     At45 *pAt45,
