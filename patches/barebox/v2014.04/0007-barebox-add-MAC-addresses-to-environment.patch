@@ -1,7 +1,7 @@
-From fd575013159dcb486c3f59877edc9c9beec08d7b Mon Sep 17 00:00:00 2001
+From dddb05b892f093c4ad6766880190c7c154f0686f Mon Sep 17 00:00:00 2001
 From: Federico Vaga <federico.vaga@gmail.com>
 Date: Tue, 23 Oct 2012 01:44:59 +0200
-Subject: [PATCH 7/9] barebox: add MAC addresses to environment
+Subject: [PATCH 7/8] barebox: add MAC addresses to environment
 
 This patch add to default mac addresses to the barebox evironment. The
 first MAC address (eth0.ethaddr) is the one to assign to the ethernet
@@ -10,14 +10,14 @@ The second MAC address (macaddr) is the base for all switch ports
 
 Signed-off-by: Federico Vaga <federico.vaga@gmail.com>
 ---
- common/environment.c |   13 +++++++++++++
- 1 files changed, 13 insertions(+), 0 deletions(-)
+ common/environment.c |   12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
 diff --git a/common/environment.c b/common/environment.c
-index 9f4e098..9346927 100644
+index 9f4e098..5013c3a 100644
 --- a/common/environment.c
 +++ b/common/environment.c
-@@ -384,6 +384,10 @@ int envfs_load(const char *filename, const char *dir, unsigned flags)
+@@ -384,6 +384,18 @@ int envfs_load(const char *filename, const char *dir, unsigned flags)
  	int envfd;
  	int ret = 0;
  	size_t size;
@@ -25,13 +25,6 @@ index 9f4e098..9346927 100644
 +	char *mac_addr_1="02:34:56:78:9A:BC";
 +	char *mac_addr_2="02:34:56:78:9A:00";
 +#endif
- 
- 	envfd = open(filename, O_RDONLY);
- 	if (envfd < 0) {
-@@ -420,6 +424,15 @@ int envfs_load(const char *filename, const char *dir, unsigned flags)
- 		goto out;
- 
- 	ret = 0;
 +
 +#ifdef __BAREBOX__
 +	/* When the environment is correctly loaded, set the MAC address */
@@ -40,10 +33,9 @@ index 9f4e098..9346927 100644
 +	setenv("macaddr", mac_addr_2);
 +	export("macaddr");
 +#endif
-+
- out:
- 	close(envfd);
- 	free(buf);
+ 
+ 	envfd = open(filename, O_RDONLY);
+ 	if (envfd < 0) {
 -- 
-1.7.7.2
+1.7.9.5
 
