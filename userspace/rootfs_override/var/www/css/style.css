@@ -260,12 +260,17 @@ table.altrowstable td {
 	border-style: solid;
 	border-color: #a9c6c9;
 }
+table tr.sub{
+	color:white;
+	background-color:#3A8AAF;
+}
 .oddrowcolor{
 	background-color: #d4e3e5;
 }
 .evenrowcolor{
 	background-color: #c3dde0;
 }
+
 .tableheader {
 background-color: #95BEE6;
 color:white;
@@ -292,8 +297,6 @@ form input.last {
 	margin-left: 30%; /**TODO: Bad Hack **/
 }
 
-
-
 #epcalib form {
 	width:90%;
 	margin: 0 auto;
@@ -302,10 +305,7 @@ form input.last {
 	width:100%;
 	border:none;
 }
-#epcalib form table .sub{
-	color:white;
-	background-color:#3A8AAF;
-}
+
 #epcalib form table .empty, #epcalib form table .empty th{
 	background:none;
 	border:none;

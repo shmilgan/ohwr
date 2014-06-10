@@ -93,7 +93,7 @@ function wrs_header_ports(){
 function wrs_main_info(){
 	
 	echo "<table border='1' align='left' class='altrowstable' id='alternatecolor'>";
-	echo '<tr><td> <b><center>Switch Info </center></b></td></tr>';
+	echo '<tr class="sub"><td> <b><center>Switch Info </center></b></td></tr>';
 
 	$str = shell_exec("uname -n");
 	if(strcmp($str,"(none)")) shell_exec("/bin/busybox hostname -F /etc/hostname");
