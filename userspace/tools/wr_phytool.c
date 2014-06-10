@@ -30,6 +30,7 @@
 
 #include "rt_ipc.h"
 #include "hal_client.h"
+#include "switch_hw.h"
 
 #define WRS3_FPGA_BASE 0x10000000
 #define WRS3_FPGA_SIZE 0x100000
@@ -246,7 +247,7 @@ void calc_trans(int ep, int argc, char *argv[])
 	if(	rts_connect() < 0)
 	{
 		printf("Can't connect to the RT subsys\n");
-		return -1;
+		return;
 	}
 
 

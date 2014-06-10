@@ -82,11 +82,6 @@ struct hw_req *hw_req_list;
 static struct filtering_entry rtu_htab[HTAB_ENTRIES][RTU_BUCKETS];
 
 /**
- * \brief Mirror of Aging RAM.
- */
-static uint32_t rtu_agr_htab[RTU_ARAM_WORDS];
-
-/**
  * \brief Max time that a dynamic MAC entry can remain
  * in the MAC table after being used. [seconds]
  */
@@ -105,9 +100,6 @@ static pthread_mutex_t fd_mutex;
 static struct hw_req *tail(struct hw_req *head);
 static void clean_list(struct hw_req *head);
 static int hw_request(int type, struct rtu_addr addr,  struct filtering_entry *ent);
-
-static inline int to_hw_addr(struct rtu_addr addr);
-static inline struct rtu_addr from_hw_addr(int hw_addr);
 
 static void clean_fd(void);
 static void clean_vd(void);

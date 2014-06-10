@@ -109,6 +109,7 @@ int fetch_rtu_vd(rtudexp_vd_entry_t *d, int *n_entries)
 		n+=list.num_entries;
 	} while(start > 0);
 	*n_entries = n;
+	return 0;
 }
 
 /**
@@ -277,4 +278,5 @@ int main(int argc, char **argv)
 		printf("\n");
 	}
 	printf("\n");
+	return 0;
 }

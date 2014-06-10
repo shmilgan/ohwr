@@ -3,8 +3,10 @@
 #include <termios.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <shw_io.h>
-#include <fpga_io.h>
+
+#include "shw_io.h"
+#include "fpga_io.h"
+#include "switch_hw.h"
 
 #define VUART_BASE 0x10000
 #define VUART_TDR 0x10
@@ -16,13 +18,14 @@ int vuart_tx(char *buf, int size)
 {
 	while(size--)
 		_fpga_writel(VUART_BASE+VUART_TDR, *buf++);
+	return 0;
 }
 
 int vuart_rx(char *buf, int size)
 {
-	int n_rx;
+	int n_rx = 0;
 	int rdr;
-	
+
 	while(size--) {
 		rdr = _fpga_readl(VUART_BASE+VUART_RDR);
 		if(rdr & RDR_RDY) {

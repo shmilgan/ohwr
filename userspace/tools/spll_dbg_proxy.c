@@ -25,6 +25,8 @@
 #include <fpga_io.h>
 #include <regs/softpll-regs.h>
 
+#include "switch_hw.h"
+
 /* TCP Port to listen on */
 #define MY_PORT 12345
 
@@ -201,8 +203,6 @@ void proxy_stuff(int fd)
 	}
 
 }
-
-extern void shw_fpga_mmap_init();
 
 int main(int argc, char *argv[])
 {

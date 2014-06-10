@@ -209,7 +209,6 @@ int wrdate_internal_set(struct PPSG_WB *pps)
 	struct timeval tvh, tvr; /* host, rabbit */
 	signed long long diff64;
 	signed long diff;
-	unsigned long prev;
 	int tai_offset;
 
 	tai_offset = fix_host_tai();

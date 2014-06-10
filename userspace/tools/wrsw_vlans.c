@@ -96,6 +96,7 @@ static int parse_mask(char *arg)
 	for_each_port(p1)
 		printf(" %i", p1);
 	printf("\n");
+	return 0;
 }
 
 static void exit_mask(int present)

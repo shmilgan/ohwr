@@ -126,34 +126,6 @@ int any_port_locked()
     return rts_state.current_ref;
 }
 
-/* generates a unique MAC address for port if_name (currently produced from the MAC of the
-   management port). */
-/* FIXME: MAC addresses should be kept in some EEPROM */
-static int get_mac_address(const char *if_name, uint8_t *mac_addr)
-{
-	struct ifreq ifr;
-	int idx;
-
-	sscanf(if_name, "wr%d", &idx);
-
-	strncpy(ifr.ifr_name, "eth0", sizeof(ifr.ifr_name));
-
-	if(ioctl(fd_raw, SIOCGIFHWADDR, &ifr) < 0)
-		return -1;
-
-	if(mac_addr)
-	{
-		mac_addr[0] = 0x8 | 0x2; // locally administered MAC
-		mac_addr[1] = 0x00;
-		mac_addr[2] = 0x30;
-		mac_addr[3] = ifr.ifr_hwaddr.sa_data[3];
-		mac_addr[4] = ifr.ifr_hwaddr.sa_data[4];
-		mac_addr[5] = (ifr.ifr_hwaddr.sa_data[5] & 0xc0) + (idx + 2);
-	}
-
-	return 0;
-}
-
 /* Resets the state variables of a particular port and re-starts its state machines */
 static void reset_port_state(hal_port_state_t *p)
 {
@@ -226,7 +198,6 @@ int hal_init_port(const char *name, int index)
 {
 	char key_name[128];
 	char val[128];
-	char cmd[128];
 	hal_port_state_t *p = &ports[index];
 
 /* check if the port is compiled into the firmware, if not, just ignore it. */

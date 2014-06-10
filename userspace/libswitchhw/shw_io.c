@@ -22,6 +22,7 @@
 #include <pio.h>
 #include <trace.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "shw_io.h"
 

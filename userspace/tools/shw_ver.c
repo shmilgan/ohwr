@@ -25,7 +25,7 @@
 
 #include <shw_io.h>
 #include <hwiu.h>
-#include "pio.h"
+#include "switch_hw.h"
 
 
 #ifndef __GIT_VER__
@@ -86,8 +86,6 @@ int main(int argc, char **argv)
 	assert_init(shw_pio_mmap_init());
 	shw_io_init();
 	shw_io_configure_all();
-
-	shw_io_t* all_io = (shw_io_t*)_all_shw_io;
 
 	switch(func)
 	{

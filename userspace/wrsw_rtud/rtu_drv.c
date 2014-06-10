@@ -52,9 +52,6 @@
 #include "rtu_drv.h"
 #include "wr_rtu.h"
 
-
-extern int shw_fpga_mmap_init();
-
 static void write_mfifo_addr(uint32_t zbt_addr);
 static void write_mfifo_data(uint32_t word);
 

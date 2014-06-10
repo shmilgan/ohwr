@@ -14,7 +14,7 @@
 #include <switch_hw.h>
 #include <hal_client.h>
 
-
+static void parse_sysfs(int init);
 
 #define pstats_rd(reg) \
 	 _fpga_readl(FPGA_BASE_PSTATS + offsetof(struct PSTATS_WB, reg))
@@ -31,8 +31,6 @@ struct cnt_word {
 };
 
 struct cnt_word cnt_pp[NPORTS][CNT_PP];
-
-extern int shw_fpga_mmap_init();
 
 char info[][20] = {{"Tu-run|"}, // 0
                    {"Ro-run|"}, // 1
@@ -74,14 +72,11 @@ char info[][20] = {{"Tu-run|"}, // 0
                    {"RTUfwd|"}, // 37 ---
                    {"TRUrsp|"}  // 38
                  };
-static void read_cntval(int port, int adr, uint32_t *data);
 
 int pstats_init(void)
 {
 	int err, i, j;
-	uint32_t mem_val[2];
-	int ret = 0;
-	
+
 	err = shw_fpga_mmap_init();
 	if(err) {
 		printf("shw_fpga_mmap_init failed with %d\n", err);
@@ -100,7 +95,7 @@ int pstats_init(void)
 	return 0;
 }
 
-void parse_sysfs(int init)
+static void parse_sysfs(int init)
 {
 	FILE *file;
 	uint32_t port, cntr, val;
@@ -191,8 +186,6 @@ void print_info(char *prgname)
 
 int main(int argc, char **argv)
 {
-	time_t last_show=0;
-	int option=0;
 	int prio_cnts[] = {21,22,23,24,25,26,27,28}; //8
 	int def_cnts[]  = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,29,30,31,32,33,34,35,36,37}; //30
 	int rtu_cnts[]  = {29,30,31,32,33,34,35,36,37,38}; //10
