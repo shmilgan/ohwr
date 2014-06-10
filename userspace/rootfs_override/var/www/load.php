@@ -37,13 +37,6 @@
 								  <INPUT type=hidden name=MAX_FILE_SIZE  VALUE=<?php wrs_php_filesize();?>000>
 		</FORM></th>
 	</tr>
-	<tr>
-		<th ><FORM method="POST" ENCTYPE="multipart/form-data">
-								  <INPUT type=file name="file" >
-								  <INPUT type=submit value="Load firmware" class="btn" >
-								  <INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000>
-		</FORM></th>
-	</tr>
 	</table>
 	
 	<br><br><br><center>Max. filesize is now <?php echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); 

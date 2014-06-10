@@ -40,6 +40,12 @@
 			<th><input type="submit" value="Reboot switch" class="btn"></th>
 			</form>
 		</tr>
+		<tr>
+		<FORM method="POST" ENCTYPE="multipart/form-data">
+		<th ><INPUT type=file name="file" ></th>
+		<th><INPUT type=submit value="Load firmware" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></th>
+		</FORM>
+		</tr>
 		</tr><th> </th><th> </th><tr></tr><th> </th><th> </th><tr>
 		<!--<tr>
 			</form>
