@@ -105,6 +105,42 @@ unsigned char AT45D_GetStatus(At45 *pAt45)
     return status;
 }
 
+
+//------------------------------------------------------------------------------
+/// Retrieves and returns the At45 JEDEC code into a unsigned int, or 0 if an error
+/// happened.
+/// \param pAt45  Pointer to a At45 driver instance.
+//------------------------------------------------------------------------------
+unsigned int AT45D_GetJEDEC(At45 *pAt45)
+{
+    unsigned char error;
+    unsigned char buff[4]={0};
+    unsigned int id;
+    
+
+    SANITY_CHECK(pAt45);
+
+    // Issue a status register read command
+    error = AT45_SendCommand(pAt45, AT45_ID_READ, 1, &buff, 4, 0, 0, 0);
+    ASSERT(!error, "-F- AT45_GetJEDEC: Failed to issue command.\n\r");
+
+    // Wait for command to terminate
+    while (AT45_IsBusy(pAt45)) {
+    
+        AT45D_Wait(pAt45);
+    }
+
+    //Swap byte (BE to LE) to fit JEDEC u32 format
+    id=0;
+    id |= ((buff[0] & 0xFF) << 24);
+    id |= ((buff[1] & 0xFF) << 16);
+    id |= ((buff[2] & 0xFF) << 8) ;
+    id |= ((buff[3] & 0xFF) <<0 ) ;
+
+    return id;
+}
+
+
 //------------------------------------------------------------------------------
 /// Reads data from the At45 inside the provided buffer. Since a continuous
 /// read command is used, there is no restriction on the buffer size and read

@@ -206,6 +206,8 @@ typedef struct {
 	unsigned char id;
     /// Identifier.
 	const char *name;
+	/// JEDEC (Optional).
+	unsigned int jedec;
 
 } At45Desc;
 

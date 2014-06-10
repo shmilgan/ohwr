@@ -55,17 +55,20 @@ static unsigned char configuredBinaryPage;
 //         Internal variables
 //------------------------------------------------------------------------------
 
+    /// pageNumber, hasBinaryPage, pageSize, pageOffset, id, name, jedec
+    //TODO: Same density, use JEDEC instead and then check if new ID found.
 static const At45Desc at45Devices[] = {
-    {  512,  1, 264,   9, 0x0C, "AT45DB011D"},
-    { 1024,  1, 264,   9, 0x14, "AT45DB021D"},
-    { 2048,  1, 264,   9, 0x1C, "AT45DB041D"},
-    { 4096,  1, 264,   9, 0x24, "AT45DB081D"},
-    { 4096,  1, 528,  10, 0x2C, "AT45DB161D"},
-    { 8192,  1, 528,  10, 0x34, "AT45DB321D"},
-    { 8192,  1, 1056, 11, 0x3C, "AT45DB642D"},
-    {16384,  1, 1056, 11, 0x10, "AT45DB1282"},
-    {16384,  1, 2112, 12, 0x18, "AT45DB2562"},
-    {32768,  1, 2112, 12, 0x20, "AT45DB5122"}
+    {  512,  1, 264,   9, 0x0C, "AT45DB011D",0},
+    { 1024,  1, 264,   9, 0x14, "AT45DB021D",0},
+    { 2048,  1, 264,   9, 0x1C, "AT45DB041D",0},
+    { 4096,  1, 264,   9, 0x24, "AT45DB081D",0},
+    { 4096,  1, 528,  10, 0x2C, "AT45DB161D",0},
+    { 8192,  1, 528,  10, 0x34, "AT45DB321D",0},
+    { 8192,  1, 1056, 11, 0x3C, "AT45DB642D",0x1F280000}, //v3.[0-3]
+    {16384,  1, 1056, 11, 0x10, "AT45DB1282",0},
+    {16384,  1, 2112, 12, 0x18, "AT45DB2562",0},
+    {32768,  1, 2112, 12, 0x20, "AT45DB5122",0},
+    {32768,  1, 264,   9, 0x3C, "AT45DB641E",0x1F280001}  //v3.[4-x]
 };
 
 //------------------------------------------------------------------------------
@@ -144,8 +147,8 @@ unsigned char AT45_SendCommand(
 
     // Sanity checks
     ASSERT(pAt45, "AT45_Command: pAt45 is 0.\n\r");
-    ASSERT(pDesc || (cmd == AT45_STATUS_READ),
-           "AT45_Command: Device has no descriptor, only STATUS_READ command allowed\n\r");
+    ASSERT(pDesc || (cmd == AT45_STATUS_READ) || (cmd == AT45_ID_READ),
+           "AT45_Command: Device has no descriptor, only STATUS_READ & ID_READ command allowed\n\r");
 
     // Check if the SPI driver is available
     if (AT45_IsBusy(pAt45)) {
@@ -218,7 +221,7 @@ unsigned char AT45_SendCommand(
 //------------------------------------------------------------------------------
 const At45Desc * AT45_FindDevice(At45 *pAt45, unsigned char status)
 {
-    unsigned int i;
+    unsigned int i, jedec;
     unsigned char id = AT45_STATUS_ID(status);
 
     // Check if status is all one; in which case, it is assumed that no device
@@ -227,18 +230,39 @@ const At45Desc * AT45_FindDevice(At45 *pAt45, unsigned char status)
 
         return 0;
     }
+    
+    //AT45DB642D & AT45DB641E have same ID, using JEDEC
+	if (id == 0x3C)
+	{
+		jedec=AT45D_GetJEDEC(pAt45);
+		TRACE_INFO("\tJEDEC=0x%x\n\r",jedec);
+		
+		// Look in device array
+		i = 0;
+		pAt45->pDesc = 0;
+		while ((i < NUMDATAFLASH) && !(pAt45->pDesc)) {
 
-    // Look in device array
-    i = 0;
-    pAt45->pDesc = 0;
-    while ((i < NUMDATAFLASH) && !(pAt45->pDesc)) {
+			if ((at45Devices[i].id == id) && (at45Devices[i].jedec == jedec)) {
 
-        if (at45Devices[i].id == id) {
+				pAt45->pDesc = &(at45Devices[i]);
+			}
+			i++;
+		}
+	}
+	else
+	{
+		// Look in device array
+		i = 0;
+		pAt45->pDesc = 0;
+		while ((i < NUMDATAFLASH) && !(pAt45->pDesc)) {
 
-            pAt45->pDesc = &(at45Devices[i]);
-        }
-        i++;
-    }
+			if (at45Devices[i].id == id) {
+
+				pAt45->pDesc = &(at45Devices[i]);
+			}
+			i++;
+		}
+	}
     configuredBinaryPage = AT45_STATUS_BINARY(status);
     return pAt45->pDesc;
 }
