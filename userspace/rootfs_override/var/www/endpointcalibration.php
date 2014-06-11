@@ -77,7 +77,7 @@
 			echo '</table>';
 			echo '<div>';
 			echo '<input type="hidden" name="newconf" value="newconf">';
-			echo '<input align="right" type="submit" value="Create new file & Reboot" class="btn">';
+			echo '<input align="right" type="submit" value="Create new file & Reboot" class="btn last">';
 			echo '</div>';
 			echo '</form>';
 			
