@@ -94,6 +94,22 @@ h1, h2, h3, h4, h5, h6, p, ul, ol, li, form, input, textarea {
 .topmenu ul li a:hover {
 	color: #23b14d;
 }
+
+#sfp_panel .port img
+{
+	width:40px;
+	height:40px;
+	border:0
+}
+
+#sfp_panel .status img
+{
+	width:15px;
+	height:15px;
+	border:0
+}
+
+
 .content {
 	width: 800px;
 	float: left;

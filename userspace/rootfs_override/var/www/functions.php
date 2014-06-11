@@ -53,46 +53,52 @@ function wrs_header_ports(){
 	}else{
 		$ports = shell_exec("cat /tmp/ports.conf");
 	}
-
 	$ports = explode(" ", $ports);
 
 	// We parse and show the information comming from each endpoint.
 	echo "<table border='0' align='center'  vspace='1'>";
 	echo '<tr><th><h1 align=center>White-Rabbit Switch Manager</h1></th></tr>';
 	echo '</table>';
-	echo "<table border='0' align='center' vspace='15'>";
+	echo "<table id='sfp_panel' border='0' align='center' vspace='15'>";
 	
-	echo '<tr>';
-	$cont = 1;
+	echo '<tr class="port">';
+	$cont = 0;
 	for($i=1; $i<18*4; $i=$i+4){
 		
 		if (strstr($ports[($i-1)],"up")){
 			if (!strcmp($ports[($i)],"Master")){
-				echo '<th>'."<IMG SRC='img/master.png' align=left ,   width=40 , hight=40 , border=0 , alt='master', title='wr".$cont."'>".'</th>';
+				$mode="master";
 			}else{
-				echo  '<th>'."<IMG SRC='img/slave.png' align=left ,  width=40 , hight=40 , border=0 , alt='slave', title='wr".$cont."'>".'</th>';
+				$mode="slave";
 			}
-		}else{
-			echo '<th>'."<IMG SRC='img/linkdown.png' align=left ,  width=40 , hight=40 , border=0 , alt='down', title='wr".$cont."'>".'</th>';
 		}
+		else $mode="linkdown";
+
+		$desc=sprintf("#%02d: wr%d (%s)",$cont+1,$cont,$mode);
+		echo '<th>'."<img class='".$mode."' src='img/".$mode.".png' alt='".$desc."', title='".$desc."'>".'</th>';
 		$cont++;
 		
 	}
 	echo '</tr>';
 	
-	echo '<tr>';
+	echo '<tr class="status">';
 	for($i=1; $i<18*4; $i=$i+4){
 		
 		if (!strstr($ports[($i+1)],"NoLock")){
-			echo '<th>'."<IMG SRC='img/locked.png' align=center ,  width=15 , hight=15 , border=0 , alt='locked', title = 'locked'>";
+			$mode="locked";
 		}else{
-			echo '<th>'."<IMG SRC='img/unlocked.png' align=center ,  width=15 , hight=15 , border=0 , alt='unlocked', title = 'unlocked'>";
+			$mode="unlocked";
 		}
+		echo '<th>'."<img class='syntonization ".$mode."' SRC='img/".$mode.".png' alt='syntonization: ".$mode."', title = 'syntonization: ".$mode."'>";
+
 		if (!strstr($ports[($i+2)],"Uncalibrated")){
-			echo "<IMG SRC='img/check.png' align=center ,  width=15 , hight=15 , border=0 , alt='check', title = 'calibrated'>".'</th>';
+			$mode="calibrated";
+			$img="check.png";
 		}else{
-			echo "<IMG SRC='img/uncheck.png' align=center ,  width=15 , hight=15 , border=0 , alt='uncheck', title = 'uncalibrated'>".'</th>';
+			$mode="uncalibrated";
+			$img="uncheck.png";
 		}
+		echo "<img class='calibration ".$mode."' SRC='img/".$img."'  alt='".$mode."', title = '".$mode."'>".'</th>';
 	}
 	echo '</tr>';
 	
@@ -185,7 +191,6 @@ function wrs_interface_setup(){
 	
 	return (strcmp($interfaces[0],"#")) ? "dhcp" : "static";
 }
-
 /*
  * It checks whether the filesystem is writable or not.
  * 
@@ -768,7 +773,6 @@ function wrs_management(){
 		
 }
 
-
 /**
      * Download file
      *
@@ -815,7 +819,6 @@ function wrs_management(){
 
         return((connection_status() == 0) && !connection_aborted());
     }  
-
 /*
  * This function configures the PTP daemon.
  * 
@@ -904,6 +907,7 @@ function wrs_ptp_configuration(){
 		
 		header('Location: ptp.php');
 		exit;
+
 	}
 	echo '</center>';
 	
@@ -1158,7 +1162,6 @@ function parse_ppsi_conf_file(){
 	return $file;
 	
 }
-
 /*
  * Obtains the content the switch mode from wrsw_hal.conf file
  *  
@@ -1316,7 +1319,6 @@ function wrs_modify_endpoint_mode($endpoint, $mode){
 		
 		//We move the file to /wr/etc/
 		copy('/tmp/'.$GLOBALS['wrswhalconf'], $GLOBALS['etcdir'].$GLOBALS['wrswhalconf']);
-
 	}else{
 		echo '<br>Wrong parameters for endpoint-mode';
 	}
