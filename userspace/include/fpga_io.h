@@ -16,7 +16,7 @@
 #define FPGA_BASE_SPWM 		0x55000
 
 /* HW Info Unit */
-#define FPGA_BASE_HWIU    0x57800
+#define FPGA_BASE_HWIU    0x59000
 
 /* Topology Resolution Unit */
 #define FPGA_BASE_TRU 	  0x56000 // 0x57000
