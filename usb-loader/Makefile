@@ -16,4 +16,4 @@ version.c: ../.git/HEAD ../.git/index
 	echo "" >> $@
 
 clean:
-		rm -f version.c $(OBJS) $(OUTPUT):q:q 
+		rm -f version.c $(OBJS) $(OUTPUT)

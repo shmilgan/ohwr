@@ -21,7 +21,7 @@
 #include <termios.h>
 #include <fcntl.h>
 
-static int serial_fd;
+static int serial_fd = -1;
 
 void serial_set_dtr(int s) // pin 4
 {

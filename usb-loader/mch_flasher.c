@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <errno.h>
 #include <getopt.h>
 
 #include <libgen.h>
@@ -609,7 +610,11 @@ main(int argc, char *argv[])
 
 	printf("n=%d, mode=%s, nFile=%d, serial=%s, (e=%d,c=%d,s=%d)\n", argc, mode_str, nFile, serial_port, erase,check,scrub);
 
-	serial_open(serial_port, PORT_SPEED);
+	if (serial_open(serial_port, PORT_SPEED) < 0) {
+		fprintf(stderr, "%s: %s: %s\n", argv[0], serial_port,
+			strerror(errno));
+		exit(1);
+	}
 	fprintf(stderr,"Initializing SAM-BA: ");
 	samba_connect(board_rev);
 
