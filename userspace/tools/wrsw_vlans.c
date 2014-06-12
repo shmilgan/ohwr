@@ -204,7 +204,8 @@ int main(int argc, char *argv[])
 		  /****************************************************/
 			/* Other settings */
 			case OPT_CLEAR:
-				clear_all();
+				if (clear_all())
+					exit(1); /* message already printed */
 				break;
 			case OPT_DEBUG:
 			case 0:
@@ -296,7 +297,7 @@ int config_rtud(void)
 	struct rtu_vlans_t *old_list, *old_entry;
 	int ret, val;
 
-	old_list = rtu_read_config();
+	old_list = rtu_retrieve_config();
 
 	cur = rtu_vlans;
 	while(cur) {
@@ -363,7 +364,13 @@ int clear_all()
 	int idx = 0, i, val;
 
 	do {
-		minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_get_vd_list, &vlist, idx);
+		if (minipc_call(rtud_ch, MINIPC_TIMEOUT,
+				&rtud_export_get_vd_list, &vlist, idx) < 0) {
+			/* Duplicated from above */
+			fprintf(stderr, "%s: minipc_call: %s\n", prgname, strerror(errno));
+			return -1;
+		}
+
 		/*remove vlans from the list*/
 		for(i=0; i<vlist.num_entries; ++i) {
 			ventry = &vlist.list[i];
@@ -453,33 +460,36 @@ void free_rtu_vlans(struct rtu_vlans_t *ptr)
 	}
 }
 
-struct rtu_vlans_t* rtu_read_config()
+struct rtu_vlans_t* rtu_retrieve_config(void)
 {
 	rtudexp_vd_list_t vlist;
 	rtudexp_vd_entry_t *ventry;
 	int idx = 0, i;
-	struct rtu_vlans_t *config = NULL, *cur = NULL;
+	struct rtu_vlans_t *config = NULL, *cur = NULL, *ptr;
 
 	do {
-		minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_get_vd_list, &vlist, idx);
+		if (minipc_call(rtud_ch, MINIPC_TIMEOUT,
+				&rtud_export_get_vd_list, &vlist, idx) < 0) {
+			/* Duplicated from above */
+			fprintf(stderr, "%s: minipc_call: %s\n", prgname, strerror(errno));
+			return config; /* maybe partly good */
+		}
+
 		for(i=0; i<vlist.num_entries; ++i) {
-			ventry = &vlist.list[i];
-			if(config == NULL) {
-				config = (struct rtu_vlans_t*) malloc(sizeof(struct rtu_vlans_t));
-				cur = config;
-				if(config == NULL) {
-					fprintf(stderr, "Could not allocate memory for reading RTUd VLAN tab\n");
-					return NULL;
-				}
+			ptr = malloc(sizeof(struct rtu_vlans_t));
+			if (!ptr) {
+				fprintf(stderr, "%s: reading RTUd table: %s\n",
+					prgname, strerror(errno));
+				return config; /* may be partly good */
 			}
-			else {
-				cur->next = (struct rtu_vlans_t*) malloc(sizeof(struct rtu_vlans_t));
-				if(cur->next == NULL) {
-					fprintf(stderr, "Could not allocate memory for reading RTUd VLAN tab\n");
-					free_rtu_vlans(config);
-					return NULL;
-				}
-				cur = cur->next;
+
+			ventry = &vlist.list[i];
+
+			if(config == NULL) { /* first item */
+				config = cur = ptr;
+			} else {
+				cur->next = ptr;
+				cur = ptr;
 			}
 			cur->vid = ventry->vid;
 			cur->fid = ventry->fid;
