@@ -124,7 +124,10 @@ int main(int argc, char *argv[])
 			array[8 * sizeof(portmask) - NPORTS];
 	}
 
-
+	if (argc == 1) {
+		print_help(prgname);
+		exit(0);
+	}
 	rtud_ch = minipc_client_create("rtud", 0);
 	if(!rtud_ch) {
 		fprintf(stderr, "%s: Can't connect to RTUd mini-rpc server\n",
@@ -337,12 +340,12 @@ void list_rtu_vlans(void)
 	do {
 		if (minipc_call(rtud_ch, MINIPC_TIMEOUT,
 				&rtud_export_get_vd_list, &vlist, idx) < 0) {
-			fprintf(stderr, "%s: minipc_call: %s\n", prgname, strerror(errno));
+			fprintf(stderr, "%s: minipc_call: %s (%s)\n", prgname, strerror(errno), strerror(*(int *)&vlist));
 			return;
 		}
 		for(i=0; i<vlist.num_entries; ++i) {
 			ventry = &vlist.list[i];
-			printf("%4d   %4d      0x%8x    ", ventry->vid, ventry->fid, ventry->port_mask);
+			printf("%4d   %4d      0x%08x    ", ventry->vid, ventry->fid, ventry->port_mask);
 			if(ventry->drop == 0)     printf("NO ");
 			else                      printf("YES");
 			if(ventry->has_prio == 0) printf("     --    ");
@@ -368,6 +371,7 @@ int clear_all()
 				&rtud_export_get_vd_list, &vlist, idx) < 0) {
 			/* Duplicated from above */
 			fprintf(stderr, "%s: minipc_call: %s\n", prgname, strerror(errno));
+			fprintf(stderr, "%s: minipc_call: %s (%s)\n", prgname, strerror(errno), strerror(*(int *)&vlist));
 			return -1;
 		}
 
@@ -391,32 +395,27 @@ int clear_all()
 
 int set_rtu_vlan(int vid, int fid, int pmask, int drop, int prio, int del, int flags)
 {
-	static struct rtu_vlans_t *cur;
+	struct rtu_vlans_t *cur = rtu_vlans;;
 
-	if ( vid > 0 && rtu_vlans == NULL) {
-		/* allocate first element of the list */
-		rtu_vlans = (struct rtu_vlans_t*) malloc( sizeof(struct rtu_vlans_t) );
-		if (rtu_vlans == NULL) {
-			fprintf(stderr, "Could not allocate rtu_vlans\n");
-			return -1;
-		}
-		cur = rtu_vlans;
-	}
-	else if( vid > 0 ) {
-		/* allocate next element of the list */
-		cur->next = (struct rtu_vlans_t*) malloc( sizeof(struct rtu_vlans_t) );
-		if (cur->next == NULL) {
-			fprintf(stderr, "Could not allocate next rtu_vlans\n");
-			return -1;
-		}
-		cur = cur->next;
+	if (!rtu_vlans && vid <= 0) {
+		fprintf(stderr, "%s: missing \"--rvid <vid>\" before rtu cmd\n",
+			prgname);
+		return -1;
 	}
 
-	if(vid > 0) {
-		bzero(cur, sizeof(struct rtu_vlans_t));
+	if (vid > 0) {
+		cur = calloc(1, sizeof(*cur));
+		if (!cur) {
+			fprintf(stderr, "%s: %s\n", prgname, strerror(errno));
+			return -1;
+		}
 		cur->vid = vid;
 		cur->fid = vid;
 		cur->flags |= VALID_VID;
+
+		/* link to the list, next time head is "cur" */
+		cur->next = rtu_vlans;
+		rtu_vlans = cur;
 	}
 	if(flags & VALID_FID)
 		cur->fid = fid;
