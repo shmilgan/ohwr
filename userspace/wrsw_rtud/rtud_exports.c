@@ -197,6 +197,8 @@ int rtud_init_exports()
 
 	TRACE(TRACE_INFO, "wripc server created [fd %d]",
 	      minipc_fileno(rtud_ch));
+	if (getenv("RTUD_MINIPC_DEBUG"))
+		minipc_set_logfile(rtud_ch, stderr);
 
 	MINIPC_EXP_FUNC(rtud_export_get_fd_list, rtudexp_get_fd_list);
 	MINIPC_EXP_FUNC(rtud_export_get_vd_list, rtudexp_get_vd_list);
