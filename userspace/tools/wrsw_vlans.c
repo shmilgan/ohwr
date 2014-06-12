@@ -23,6 +23,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/ioctl.h>
 #include <minipc.h>
 #include <rtud_exports.h>
@@ -130,8 +131,6 @@ int main(int argc, char *argv[])
 			prgname);
 		return -1;
 	}
-	if(debug)
-		minipc_set_logfile(rtud_ch,stderr);
 
 	/*parse parameters*/
 	while( (c = getopt_long(argc, argv, "h", ropts, NULL)) != -1) {
@@ -211,6 +210,8 @@ int main(int argc, char *argv[])
 			case 0:
 				break;
 			case OPT_LIST:
+				if (debug)
+					minipc_set_logfile(rtud_ch,stderr);
 				list_rtu_vlans();
 				break;
 			case '?':
@@ -220,9 +221,10 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if(debug)
+	if(debug) {
+		minipc_set_logfile(rtud_ch,stderr);
 		print_config(vlans);
-
+	}
 	apply_settings(vlans);
 	free_rtu_vlans(rtu_vlans);
 
@@ -279,6 +281,7 @@ int apply_settings(struct s_port_vlans *vlans)
 	int i;
 
 	for_each_port(i) {
+		printf("port %i\n", i);
 		//TODO: call apropriate ioctls to configure tagging/untagging
 	}
 
@@ -331,7 +334,11 @@ void list_rtu_vlans(void)
 	printf("  VID    FID       MASK       DROP    PRIO    PRIO_OVERRIDE\n");
 	printf("-----------------------------------------------------------\n");
 	do {
-		minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_get_vd_list, &vlist, idx);
+		if (minipc_call(rtud_ch, MINIPC_TIMEOUT,
+				&rtud_export_get_vd_list, &vlist, idx) < 0) {
+			fprintf(stderr, "%s: minipc_call: %s\n", prgname, strerror(errno));
+			return;
+		}
 		for(i=0; i<vlist.num_entries; ++i) {
 			ventry = &vlist.list[i];
 			printf("%4d   %4d      0x%8x    ", ventry->vid, ventry->fid, ventry->port_mask);
