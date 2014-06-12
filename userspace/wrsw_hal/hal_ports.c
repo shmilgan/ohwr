@@ -480,7 +480,7 @@ static void on_insert_sfp(hal_port_state_t *p)
 {
 		struct shw_sfp_header shdr;
 		if(shw_sfp_read_verify_header(p->hw_index, &shdr) < 0)
-			TRACE(TRACE_ERROR, "Failed to read SFP configuration header")
+			TRACE(TRACE_ERROR, "Failed to read SFP configuration header");
 		else {
 			struct shw_sfp_caldata *cdata;
 			TRACE(TRACE_INFO, "SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s", shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);

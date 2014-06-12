@@ -181,7 +181,7 @@ int hal_init()
   if(!hal_config_get_string("global.sfp_database_path", sfp_db_path, sizeof(sfp_db_path)))
   {
  		if(shw_sfp_read_db(sfp_db_path) < 0) {
-			TRACE(TRACE_ERROR, "Can't read SFP database (%s)", sfp_db_path)
+			TRACE(TRACE_ERROR, "Can't read SFP database (%s)", sfp_db_path);
 		} else {
 			TRACE(TRACE_INFO, "Loaded SFP database (%s)", sfp_db_path);
 		}

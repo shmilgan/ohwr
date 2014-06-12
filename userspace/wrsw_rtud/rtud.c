@@ -167,7 +167,7 @@ static void rtu_update_ports_state()
 		if (port_state[i].is_up && !link_up) {
 			TRACE(TRACE_INFO,
 			      "Port %s went down, removing corresponding entries...",
-			      port_state[i].if_name)
+			      port_state[i].if_name);
 
 			    rtu_fd_clear_entries_for_port(port_state[i].
 							  hw_index);

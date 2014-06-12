@@ -9,7 +9,7 @@
 #define TRACE_FATAL 3
 
 #ifdef DEBUG
-#define TRACE(...) trace_printf(__FILE__, __LINE__, __VA_ARGS__);
+#define TRACE(...) trace_printf(__FILE__, __LINE__, __VA_ARGS__)
 #else
 #define TRACE(...)
 #endif
