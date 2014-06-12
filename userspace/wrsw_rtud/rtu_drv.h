@@ -27,7 +27,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef __WHITERABBIT_RTU_DRV_H
 #define __WHITERABBIT_RTU_DRV_H
 
@@ -39,7 +38,7 @@
 #define RTU_DEVNAME             "/dev/wr_rtu"
 
 int rtu_init(void)
-        __attribute__((warn_unused_result));
+    __attribute__ ((warn_unused_result));
 void rtu_exit(void);
 
 // UFIFO
@@ -50,12 +49,13 @@ int rtu_read_learning_queue(struct rtu_request *req);
 
 // HTAB access
 
-void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent, int flush);
+void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent,
+			  int flush);
 void rtu_clean_htab(void);
 
 // AGING - HTAB
 
-void rtu_read_aging_bitmap(uint32_t *bitmap);
+void rtu_read_aging_bitmap(uint32_t * bitmap);
 
 // VLAN TABLE
 
@@ -76,23 +76,22 @@ void rtu_set_active_bank(uint8_t bank);
 // PORT SETTINGS
 
 int rtu_set_fixed_prio_on_port(int port, uint8_t prio)
-        __attribute__((warn_unused_result));
+    __attribute__ ((warn_unused_result));
 int rtu_unset_fixed_prio_on_port(int port)
-        __attribute__((warn_unused_result));
+    __attribute__ ((warn_unused_result));
 int rtu_learn_enable_on_port(int port, int flag)
-        __attribute__((warn_unused_result));
+    __attribute__ ((warn_unused_result));
 int rtu_pass_bpdu_on_port(int port, int flag)
-        __attribute__((warn_unused_result));
+    __attribute__ ((warn_unused_result));
 int rtu_pass_all_on_port(int port, int pass_all)
-        __attribute__((warn_unused_result));
+    __attribute__ ((warn_unused_result));
 int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
-        __attribute__((warn_unused_result));
+    __attribute__ ((warn_unused_result));
 
 // IRQs
 
 void rtu_enable_irq(void);
 void rtu_disable_irq(void);
 void rtu_clear_irq(void);
-
 
 #endif /*__WHITERABBIT_RTU_DRV_H*/

@@ -27,7 +27,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef __WHITERABBIT_RTU_MAC_H
 #define __WHITERABBIT_RTU_MAC_H
 
@@ -43,34 +42,29 @@
  */
 static inline int mac_equal(uint8_t a[ETH_ALEN], uint8_t b[ETH_ALEN])
 {
-    return !memcmp(a, b, ETH_ALEN);
+	return !memcmp(a, b, ETH_ALEN);
 }
 
 /**
  * \brief copies src mac address into dst mac address.
  * @return pointer to dst mac address
  */
-static inline uint8_t* mac_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
+static inline uint8_t *mac_copy(uint8_t dst[ETH_ALEN], uint8_t src[ETH_ALEN])
 {
-    return memcpy(dst, src, ETH_ALEN);
+	return memcpy(dst, src, ETH_ALEN);
 }
 
 /**
  * \brief Set MAC address to 00:00:00:00:00:00.
  * @return pointer to mac address
  */
-static inline uint8_t* mac_clean(uint8_t mac[ETH_ALEN])
+static inline uint8_t *mac_clean(uint8_t mac[ETH_ALEN])
 {
-    return memset(mac, 0x00, ETH_ALEN);
+	return memset(mac, 0x00, ETH_ALEN);
 }
 
 char *mac_to_string(uint8_t mac[ETH_ALEN]);
-char *mac_to_buffer(uint8_t mac[ETH_ALEN],char buffer[ETH_ALEN_STR]);
-int mac_from_str(uint8_t* tomac, const char *fromstr);
-
-
-
-
+char *mac_to_buffer(uint8_t mac[ETH_ALEN], char buffer[ETH_ALEN_STR]);
+int mac_from_str(uint8_t * tomac, const char *fromstr);
 
 #endif /* __WHITERABBIT_RTU_MAC_H */
-

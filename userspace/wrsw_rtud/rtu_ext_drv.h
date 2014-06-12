@@ -25,7 +25,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef __WHITERABBIT_RTU_EXT_DRV_H
 #define __WHITERABBIT_RTU_EXT_DRV_H
 
@@ -34,14 +33,15 @@
 int rtux_init(void);
 void rtux_add_ff_mac_single(int mac_id, int valid, uint8_t mac[ETH_ALEN]);
 void rtux_add_ff_mac_range(int mac_id, int valid, uint8_t mac_lower[ETH_ALEN],
-                                                   uint8_t mac_upper[ETH_ALEN]);
-void rtux_set_port_mirror(uint32_t mirror_src_mask, uint32_t mirror_dst_mask, int rx, int tx);
+			   uint8_t mac_upper[ETH_ALEN]);
+void rtux_set_port_mirror(uint32_t mirror_src_mask, uint32_t mirror_dst_mask,
+			  int rx, int tx);
 void rtux_set_hp_prio_mask(uint8_t hp_prio_mask);
 uint8_t rtux_get_hp_prio_mask();
 
 int rtux_get_cpu_port();
-void rtux_set_feature_ctrl(int mr, int mac_ptp, int mac_ll, int mac_single, int mac_range,
-                       int mac_br, int at_fm);
+void rtux_set_feature_ctrl(int mr, int mac_ptp, int mac_ll, int mac_single,
+			   int mac_range, int mac_br, int at_fm);
 void rtux_set_fw_to_CPU(int hp, int unrec);
 void rtux_disp_ctrl(void);
 

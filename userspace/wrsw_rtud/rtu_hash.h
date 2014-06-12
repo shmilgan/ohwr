@@ -49,4 +49,3 @@ void rtu_hash_set_poly(uint16_t poly);
 uint16_t rtu_hash(uint8_t mac[ETH_ALEN], uint8_t fid);
 
 #endif /*__WHITERABBIT_RTU_HASH_H*/
-

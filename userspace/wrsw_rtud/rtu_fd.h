@@ -30,7 +30,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #ifndef __WHITERABBIT_RTU_FD_H
 #define __WHITERABBIT_RTU_FD_H
 
@@ -49,30 +48,29 @@
 #define ADD_TO_EXISTING    1
 
 int rtu_fd_init(uint16_t poly, unsigned long aging)
-        __attribute__((warn_unused_result));
+    __attribute__ ((warn_unused_result));
 
-int  rtu_fd_create_entry(
-            uint8_t mac[ETH_ALEN],
-            uint16_t vid,
-            uint32_t port_map,
-            int dynamic,
-            int at_existing_entry
-     ) __attribute__((warn_unused_result));
+int rtu_fd_create_entry(uint8_t mac[ETH_ALEN],
+			uint16_t vid,
+			uint32_t port_map,
+			int dynamic,
+			int at_existing_entry)
+    __attribute__ ((warn_unused_result));
 
-int  rtu_fd_set_aging_time(unsigned long t) __attribute__((warn_unused_result));
+int rtu_fd_set_aging_time(unsigned long t) __attribute__ ((warn_unused_result));
 void rtu_fd_set_hash_poly(uint16_t poly);
 void rtu_fd_flush(void);
 void rtu_fd_clear_entries_for_port(int dest_port);
 
-struct filtering_entry * rtu_fd_lookup_htab_entry(int index);
+struct filtering_entry *rtu_fd_lookup_htab_entry(int index);
 
 struct filtering_entry *rtu_fd_lookup_htab_entry(int index);
 
-void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid, uint8_t prio,
-                         int has_prio,int prio_override, int drop);
-                         
+void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid,
+			      uint8_t prio, int has_prio, int prio_override,
+			      int drop);
+
 void vlan_entry_rd(int vid);
 struct vlan_table_entry *rtu_vlan_entry_get(int vid);
 
 #endif /*__WHITERABBIT_RTU_FD_H*/
-

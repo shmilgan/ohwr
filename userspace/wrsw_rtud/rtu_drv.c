@@ -42,7 +42,6 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 
-
 #include <switch_hw.h>
 #include <hal_client.h>
 
@@ -67,7 +66,7 @@ static uint32_t mac_entry_word4_w(struct filtering_entry *ent);
 static int fd;
 
 #define HAL_CONNECT_RETRIES 1000
-#define HAL_CONNECT_TIMEOUT 2000000 /* us */
+#define HAL_CONNECT_TIMEOUT 2000000	/* us */
 
 /**
  * \brief Initialize HW RTU memory map
@@ -75,42 +74,39 @@ static int fd;
 
 int rtu_init(void)
 {
-    int err;
+	int err;
 
-    if(halexp_client_try_connect(HAL_CONNECT_RETRIES, HAL_CONNECT_TIMEOUT) < 0)
-    {
-        TRACE(
-            TRACE_FATAL,
-            "The HAL is not responding... Are you sure it's running on your switch?\n"
-            );
-				exit(-1);
-		}
-
-    // Used to 'get' RTU IRQs from kernel
+	if (halexp_client_try_connect(HAL_CONNECT_RETRIES, HAL_CONNECT_TIMEOUT)
+	    < 0) {
+		TRACE(TRACE_FATAL,
+		      "The HAL is not responding... Are you sure it's running on your switch?\n");
+		exit(-1);
+	}
+	// Used to 'get' RTU IRQs from kernel
 	fd = open(RTU_DEVNAME, O_RDWR);
-	if (fd < 0)
-	{
-   		TRACE(TRACE_ERROR, "Can't open %s: is the RTU kernel driver loaded?", RTU_DEVNAME);
+	if (fd < 0) {
+		TRACE(TRACE_ERROR,
+		      "Can't open %s: is the RTU kernel driver loaded?",
+		      RTU_DEVNAME);
 		return errno;
 	}
-    // init IO memory map
-    err = shw_fpga_mmap_init();
-    if(err)
-        return err;
+	// init IO memory map
+	err = shw_fpga_mmap_init();
+	if (err)
+		return err;
 
-    TRACE(TRACE_INFO,"module initialized\n");
+	TRACE(TRACE_INFO, "module initialized\n");
 
-    return 0;
+	return 0;
 }
 
 void rtu_exit(void)
 {
-    if(fd >= 0)
-        close(fd);
+	if (fd >= 0)
+		close(fd);
 
-    TRACE(TRACE_INFO, "module cleanup\n");
+	TRACE(TRACE_INFO, "module cleanup\n");
 }
-
 
 #define rtu_rd(reg) \
 	 _fpga_readl(FPGA_BASE_RTU + offsetof(struct RTU_WB, reg))
@@ -138,8 +134,8 @@ static inline uint32_t read_pcr(int port)
  */
 int rtu_ufifo_is_empty(void)
 {
-    uint32_t csr =  rtu_rd( UFIFO_CSR);
-    return RTU_UFIFO_CSR_EMPTY & csr;
+	uint32_t csr = rtu_rd(UFIFO_CSR);
+	return RTU_UFIFO_CSR_EMPTY & csr;
 }
 
 /**
@@ -148,10 +144,10 @@ int rtu_ufifo_is_empty(void)
  */
 int rtu_read_learning_queue_cnt(void)
 {
-    // Get counter from UFIFO Control-Status Register
-    // Fixme: USEDW returns 0 (FIFO overflow?)
-    uint32_t csr = rtu_rd( UFIFO_CSR);
-    return RTU_UFIFO_CSR_USEDW_R(csr);
+	// Get counter from UFIFO Control-Status Register
+	// Fixme: USEDW returns 0 (FIFO overflow?)
+	uint32_t csr = rtu_rd(UFIFO_CSR);
+	return RTU_UFIFO_CSR_USEDW_R(csr);
 }
 
 /**
@@ -165,62 +161,58 @@ static int irq_disabled = 1;
 
 int rtu_read_learning_queue(struct rtu_request *req)
 {
-    int err;
+	int err;
 
-		if(irq_disabled)
-		{
-        ioctl(fd, WR_RTU_IRQENA);
-        irq_disabled = 0;
-		}
+	if (irq_disabled) {
+		ioctl(fd, WR_RTU_IRQENA);
+		irq_disabled = 0;
+	}
+	// If learning queue is empty, wait for UFIFO IRQ
+	if (rtu_ufifo_is_empty()) {
+		err = ioctl(fd, WR_RTU_IRQWAIT);
+		if (err && (err != -EAGAIN))
+			return err;
+	}
 
-    // If learning queue is empty, wait for UFIFO IRQ
-    if (rtu_ufifo_is_empty()) {
-        err = ioctl(fd, WR_RTU_IRQWAIT);
-        if (err && (err != -EAGAIN))
-            return err;
-    }
+	// read data from mapped IO memory
+	uint32_t r0 = rtu_rd(UFIFO_R0);
+	uint32_t r1 = rtu_rd(UFIFO_R1);
+	uint32_t r2 = rtu_rd(UFIFO_R2);
+	uint32_t r3 = rtu_rd(UFIFO_R3);
+	uint32_t r4 = rtu_rd(UFIFO_R4);
 
+	// Once read: if learning queue becomes empty again, enable UFIFO IRQ
 
-    // read data from mapped IO memory
-    uint32_t r0 = rtu_rd( UFIFO_R0);
-    uint32_t r1 = rtu_rd( UFIFO_R1);
-    uint32_t r2 = rtu_rd( UFIFO_R2);
-    uint32_t r3 = rtu_rd( UFIFO_R3);
-    uint32_t r4 = rtu_rd( UFIFO_R4);
+	// unmarshall data and populate request
+	uint32_t dmac_lo = RTU_UFIFO_R0_DMAC_LO_R(r0);
+	uint32_t dmac_hi = RTU_UFIFO_R1_DMAC_HI_R(r1);
+	uint32_t smac_lo = RTU_UFIFO_R2_SMAC_LO_R(r2);
+	uint32_t smac_hi = RTU_UFIFO_R3_SMAC_HI_R(r3);
 
-    // Once read: if learning queue becomes empty again, enable UFIFO IRQ
+	req->port_id = RTU_UFIFO_R4_PID_R(r4);
+	req->has_prio = RTU_UFIFO_R4_HAS_PRIO & r4;
+	req->prio = RTU_UFIFO_R4_PRIO_R(r4);
+	req->has_vid = RTU_UFIFO_R4_HAS_VID & r4;
+	req->vid = RTU_UFIFO_R4_VID_R(r4);
+	// destination mac
+	req->dst[5] = 0xFF & dmac_lo;
+	req->dst[4] = 0xFF & (dmac_lo >> 8);
+	req->dst[3] = 0xFF & (dmac_lo >> 16);
+	req->dst[2] = 0xFF & (dmac_lo >> 24);
+	req->dst[1] = 0xFF & dmac_hi;
+	req->dst[0] = 0xFF & (dmac_hi >> 8);
+	// source mac
+	req->src[5] = 0xFF & smac_lo;
+	req->src[4] = 0xFF & (smac_lo >> 8);
+	req->src[3] = 0xFF & (smac_lo >> 16);
+	req->src[2] = 0xFF & (smac_lo >> 24);
+	req->src[1] = 0xFF & smac_hi;
+	req->src[0] = 0xFF & (smac_hi >> 8);
 
-    // unmarshall data and populate request
-    uint32_t dmac_lo = RTU_UFIFO_R0_DMAC_LO_R(r0);
-    uint32_t dmac_hi = RTU_UFIFO_R1_DMAC_HI_R(r1);
-    uint32_t smac_lo = RTU_UFIFO_R2_SMAC_LO_R(r2);
-    uint32_t smac_hi = RTU_UFIFO_R3_SMAC_HI_R(r3);
+	ioctl(fd, WR_RTU_IRQENA);
 
-    req->port_id  = RTU_UFIFO_R4_PID_R(r4);
-    req->has_prio = RTU_UFIFO_R4_HAS_PRIO & r4;
-    req->prio     = RTU_UFIFO_R4_PRIO_R(r4);
-    req->has_vid  = RTU_UFIFO_R4_HAS_VID & r4;
-    req->vid      = RTU_UFIFO_R4_VID_R(r4);
-    // destination mac
-    req->dst[5]   = 0xFF &  dmac_lo;
-    req->dst[4]   = 0xFF & (dmac_lo >> 8);
-    req->dst[3]   = 0xFF & (dmac_lo >> 16);
-    req->dst[2]   = 0xFF & (dmac_lo >> 24);
-    req->dst[1]   = 0xFF &  dmac_hi;
-    req->dst[0]   = 0xFF & (dmac_hi >> 8);
-    // source mac
-    req->src[5]   = 0xFF &  smac_lo;
-    req->src[4]   = 0xFF & (smac_lo >> 8);
-    req->src[3]   = 0xFF & (smac_lo >> 16);
-    req->src[2]   = 0xFF & (smac_lo >> 24);
-    req->src[1]   = 0xFF &  smac_hi;
-    req->src[0]   = 0xFF & (smac_hi >> 8);
-
-	  ioctl(fd, WR_RTU_IRQENA);
-
-    return 0;
+	return 0;
 }
-
 
 // MFIFO -> HTAB
 
@@ -230,9 +222,9 @@ int rtu_read_learning_queue(struct rtu_request *req)
  */
 int rtu_read_mfifo_cnt(void)
 {
-    // Get counter from MFIFO Control-Status Register
-    uint32_t csr = rtu_rd( MFIFO_CSR);
-    return RTU_MFIFO_CSR_USEDW_R(csr);
+	// Get counter from MFIFO Control-Status Register
+	uint32_t csr = rtu_rd(MFIFO_CSR);
+	return RTU_MFIFO_CSR_USEDW_R(csr);
 }
 
 /**
@@ -241,8 +233,8 @@ int rtu_read_mfifo_cnt(void)
  */
 int rtu_mfifo_is_full(void)
 {
-    uint32_t csr = rtu_rd( MFIFO_CSR);
-    return RTU_MFIFO_CSR_FULL & csr;
+	uint32_t csr = rtu_rd(MFIFO_CSR);
+	return RTU_MFIFO_CSR_FULL & csr;
 }
 
 /**
@@ -251,16 +243,16 @@ int rtu_mfifo_is_full(void)
  */
 int rtu_mfifo_is_empty(void)
 {
-    uint32_t csr = rtu_rd( MFIFO_CSR);
-    return RTU_MFIFO_CSR_EMPTY & csr;
+	uint32_t csr = rtu_rd(MFIFO_CSR);
+	return RTU_MFIFO_CSR_EMPTY & csr;
 }
 
 static void flush_mfifo()
 {
-	uint32_t gcr = rtu_rd (GCR);
+	uint32_t gcr = rtu_rd(GCR);
 	rtu_wr(GCR, gcr | RTU_GCR_MFIFOTRIG);
 
-	while(!rtu_rd(GCR) & RTU_GCR_MFIFOTRIG); /* wait while the RTU is busy flushing the MFIFO */
+	while (!rtu_rd(GCR) & RTU_GCR_MFIFOTRIG) ;	/* wait while the RTU is busy flushing the MFIFO */
 }
 
 /**
@@ -268,28 +260,27 @@ static void flush_mfifo()
  * @param ent MAC table entry to be written to MFIFO.
  * @param zbt_addr ZBT SRAM memory address in which MAC entry shoud be added.
  */
-void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent, int flush)
+void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent,
+			  int flush)
 {
-    write_mfifo_addr(zbt_addr);
-    write_mfifo_data(mac_entry_word0_w(ent));
-    write_mfifo_data(mac_entry_word1_w(ent));
-    write_mfifo_data(mac_entry_word2_w(ent));
-    write_mfifo_data(mac_entry_word3_w(ent));
-    write_mfifo_data(mac_entry_word4_w(ent));
+	write_mfifo_addr(zbt_addr);
+	write_mfifo_data(mac_entry_word0_w(ent));
+	write_mfifo_data(mac_entry_word1_w(ent));
+	write_mfifo_data(mac_entry_word2_w(ent));
+	write_mfifo_data(mac_entry_word3_w(ent));
+	write_mfifo_data(mac_entry_word4_w(ent));
 
-		if(flush)
-			flush_mfifo();
+	if (flush)
+		flush_mfifo();
 
-    TRACE_DBG(
-        TRACE_INFO,
-        "write htab entry [with flush]: addr %x ent %08x %08x %08x %08x %08x",
-        zbt_addr,
-        mac_entry_word0_w(ent),
-        mac_entry_word1_w(ent),
-        mac_entry_word2_w(ent),
-        mac_entry_word3_w(ent),
-        mac_entry_word4_w(ent)
-    );
+	TRACE_DBG(TRACE_INFO,
+		  "write htab entry [with flush]: addr %x ent %08x %08x %08x %08x %08x",
+		  zbt_addr,
+		  mac_entry_word0_w(ent),
+		  mac_entry_word1_w(ent),
+		  mac_entry_word2_w(ent),
+		  mac_entry_word3_w(ent), mac_entry_word4_w(ent)
+	    );
 }
 
 /**
@@ -298,18 +289,17 @@ void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent, int fl
  */
 void rtu_clean_htab(void)
 {
-    int addr;
-    for (addr = 0; addr < RTU_ENTRIES; addr++) {
-        write_mfifo_addr(addr * 8);
-        write_mfifo_data(0x00000000);
-        write_mfifo_data(0x00000000);
-        write_mfifo_data(0x00000000);
-        write_mfifo_data(0x00000000);
-        write_mfifo_data(0x00000000);
+	int addr;
+	for (addr = 0; addr < RTU_ENTRIES; addr++) {
+		write_mfifo_addr(addr * 8);
+		write_mfifo_data(0x00000000);
+		write_mfifo_data(0x00000000);
+		write_mfifo_data(0x00000000);
+		write_mfifo_data(0x00000000);
+		write_mfifo_data(0x00000000);
 		flush_mfifo();
-    }
+	}
 }
-
 
 // AGING RAM - HTAB
 
@@ -318,13 +308,12 @@ void rtu_clean_htab(void)
  * Aging RAM Size: 256 32-bit words
  */
 
-void rtu_read_aging_bitmap( uint32_t *bitmap )
+void rtu_read_aging_bitmap(uint32_t * bitmap)
 {
 	int i;
-	for(i=0; i< RTU_ENTRIES / 32; i++)
-	{
-   	bitmap[i] = _fpga_readl(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*i);
-    _fpga_writel(FPGA_BASE_RTU + RTU_ARAM_BASE + 4*i, 0);
+	for (i = 0; i < RTU_ENTRIES / 32; i++) {
+		bitmap[i] = _fpga_readl(FPGA_BASE_RTU + RTU_ARAM_BASE + 4 * i);
+		_fpga_writel(FPGA_BASE_RTU + RTU_ARAM_BASE + 4 * i, 0);
 	}
 }
 
@@ -337,27 +326,24 @@ void rtu_read_aging_bitmap( uint32_t *bitmap )
  */
 void rtu_write_vlan_entry(int vid, struct vlan_table_entry *ent)
 {
- 	uint32_t vtr1=0, vtr2=0;
+	uint32_t vtr1 = 0, vtr2 = 0;
 
-  vtr2 = ent->port_mask;
-  vtr1 = RTU_VTR1_UPDATE
-					| RTU_VTR1_VID_W(vid)
-          | (ent->drop ? RTU_VTR1_DROP : 0)
-          | (ent->prio_override ? RTU_VTR1_PRIO_OVERRIDE : 0)
-          | (ent->has_prio ? RTU_VTR1_HAS_PRIO : 0)
-          | RTU_VTR1_PRIO_W(ent->prio)
-          | RTU_VTR1_FID_W(ent->fid);
+	vtr2 = ent->port_mask;
+	vtr1 = RTU_VTR1_UPDATE | RTU_VTR1_VID_W(vid)
+	    | (ent->drop ? RTU_VTR1_DROP : 0)
+	    | (ent->prio_override ? RTU_VTR1_PRIO_OVERRIDE : 0)
+	    | (ent->has_prio ? RTU_VTR1_HAS_PRIO : 0)
+	    | RTU_VTR1_PRIO_W(ent->prio)
+	    | RTU_VTR1_FID_W(ent->fid);
 
-	rtu_wr(VTR2,  vtr2);
-	rtu_wr(VTR1,  vtr1);
+	rtu_wr(VTR2, vtr2);
+	rtu_wr(VTR1, vtr1);
 
-	if(ent->drop > 0 && ent->port_mask == 0x0)
-	{
-	  TRACE(TRACE_INFO, "RemoveVlan: vid %d (fid %d)", vid, ent->fid);
-	}
-	else
-	{
-	  TRACE(TRACE_INFO, "AddVlan: vid %d (fid %d) port_mask 0x%x", vid, ent->fid, ent->port_mask);
+	if (ent->drop > 0 && ent->port_mask == 0x0) {
+		TRACE(TRACE_INFO, "RemoveVlan: vid %d (fid %d)", vid, ent->fid);
+	} else {
+		TRACE(TRACE_INFO, "AddVlan: vid %d (fid %d) port_mask 0x%x",
+		      vid, ent->fid, ent->port_mask);
 	}
 
 }
@@ -366,15 +352,15 @@ void rtu_write_vlan_entry(int vid, struct vlan_table_entry *ent)
  * \brief Cleans VLAN entry in VLAN table
  * @param addr memory address which shoud be cleaned.
  */
-void rtu_clean_vlan_entry( int vid )
+void rtu_clean_vlan_entry(int vid)
 {
- 	uint32_t vtr1=0, vtr2=0;
+	uint32_t vtr1 = 0, vtr2 = 0;
 
-  vtr2 = 0;
-  vtr1 = RTU_VTR1_UPDATE | RTU_VTR1_VID_W(vid);
+	vtr2 = 0;
+	vtr1 = RTU_VTR1_UPDATE | RTU_VTR1_VID_W(vid);
 
-	rtu_wr(VTR2,  vtr2);
-	rtu_wr(VTR1,  vtr1);
+	rtu_wr(VTR2, vtr2);
+	rtu_wr(VTR1, vtr1);
 }
 
 /**
@@ -382,11 +368,10 @@ void rtu_clean_vlan_entry( int vid )
  */
 void rtu_clean_vlan(void)
 {
-    int addr;
-   	for (addr = 0; addr < NUM_VLANS; addr++)
-			rtu_clean_vlan_entry(addr);
+	int addr;
+	for (addr = 0; addr < NUM_VLANS; addr++)
+		rtu_clean_vlan_entry(addr);
 }
-
 
 // RTU Global Control Register
 
@@ -395,9 +380,9 @@ void rtu_clean_vlan(void)
  */
 void rtu_enable(void)
 {
-	uint32_t gcr = rtu_rd( GCR);
+	uint32_t gcr = rtu_rd(GCR);
 	rtu_wr(GCR, gcr | RTU_GCR_G_ENA);
-  TRACE_DBG(TRACE_INFO,"updated gcr (enable): %x\n", gcr);
+	TRACE_DBG(TRACE_INFO, "updated gcr (enable): %x\n", gcr);
 }
 
 /**
@@ -405,9 +390,9 @@ void rtu_enable(void)
  */
 void rtu_disable(void)
 {
-	uint32_t gcr = rtu_rd( GCR);
+	uint32_t gcr = rtu_rd(GCR);
 	rtu_wr(GCR, gcr & (~RTU_GCR_G_ENA));
-  TRACE_DBG(TRACE_INFO,"updated gcr (disable): %x\n", gcr);
+	TRACE_DBG(TRACE_INFO, "updated gcr (disable): %x\n", gcr);
 }
 
 /**
@@ -416,8 +401,8 @@ void rtu_disable(void)
  */
 uint16_t rtu_read_hash_poly(void)
 {
-	uint32_t gcr = rtu_rd( GCR);
-  return RTU_GCR_POLY_VAL_R(gcr);
+	uint32_t gcr = rtu_rd(GCR);
+	return RTU_GCR_POLY_VAL_R(gcr);
 }
 
 /**
@@ -426,15 +411,14 @@ uint16_t rtu_read_hash_poly(void)
  */
 void rtu_write_hash_poly(uint16_t hash_poly)
 {
-    // Get current GCR
-	uint32_t gcr = rtu_rd( GCR);
-    // Clear previous hash poly and insert the new one
-    gcr = (gcr & (~RTU_GCR_POLY_VAL_MASK)) | RTU_GCR_POLY_VAL_W(hash_poly);
-    // Update GCR
-	rtu_wr(GCR, gcr );
-    TRACE_DBG(TRACE_INFO,"updated gcr (poly): %x\n", gcr);
+	// Get current GCR
+	uint32_t gcr = rtu_rd(GCR);
+	// Clear previous hash poly and insert the new one
+	gcr = (gcr & (~RTU_GCR_POLY_VAL_MASK)) | RTU_GCR_POLY_VAL_W(hash_poly);
+	// Update GCR
+	rtu_wr(GCR, gcr);
+	TRACE_DBG(TRACE_INFO, "updated gcr (poly): %x\n", gcr);
 }
-
 
 // PORT SETTINGS
 
@@ -447,8 +431,8 @@ void rtu_write_hash_poly(uint16_t hash_poly)
  */
 int rtu_set_fixed_prio_on_port(int port, uint8_t prio)
 {
-    if( (port < MIN_PORT) || (port > MAX_PORT) )
-        return -EINVAL;
+	if ((port < MIN_PORT) || (port > MAX_PORT))
+		return -EINVAL;
 
 	uint32_t pcr = read_pcr(port);
 	write_pcr(port, pcr | RTU_PCR_FIX_PRIO | RTU_PCR_PRIO_VAL_W(prio));
@@ -463,11 +447,13 @@ int rtu_set_fixed_prio_on_port(int port, uint8_t prio)
  */
 int rtu_unset_fixed_prio_on_port(int port)
 {
-    if( (port < MIN_PORT) || (port > MAX_PORT) )
-        return -EINVAL;
+	if ((port < MIN_PORT) || (port > MAX_PORT))
+		return -EINVAL;
 
 	uint32_t pcr = read_pcr(port);
-	write_pcr(port, pcr & (RTU_PCR_LEARN_EN | RTU_PCR_PASS_ALL | RTU_PCR_PASS_BPDU | RTU_PCR_B_UNREC));
+	write_pcr(port,
+		  pcr & (RTU_PCR_LEARN_EN | RTU_PCR_PASS_ALL | RTU_PCR_PASS_BPDU
+			 | RTU_PCR_B_UNREC));
 
 	return 0;
 }
@@ -480,16 +466,14 @@ int rtu_unset_fixed_prio_on_port(int port)
  */
 int rtu_learn_enable_on_port(int port, int flag)
 {
-    if( (port < MIN_PORT) || (port > MAX_PORT) )
-        return -EINVAL;
+	if ((port < MIN_PORT) || (port > MAX_PORT))
+		return -EINVAL;
 
 	uint32_t pcr = read_pcr(port);
-  pcr = flag ?
-        RTU_PCR_LEARN_EN    | pcr :
-        (~RTU_PCR_LEARN_EN) & pcr ;
+	pcr = flag ? RTU_PCR_LEARN_EN | pcr : (~RTU_PCR_LEARN_EN) & pcr;
 
 	write_pcr(port, pcr);
-  return 0;
+	return 0;
 }
 
 /**
@@ -501,15 +485,13 @@ int rtu_learn_enable_on_port(int port, int flag)
  */
 int rtu_pass_bpdu_on_port(int port, int flag)
 {
-    if( (port < MIN_PORT) || (port > MAX_PORT) )
-        return -EINVAL;
+	if ((port < MIN_PORT) || (port > MAX_PORT))
+		return -EINVAL;
 
 	uint32_t pcr = read_pcr(port);
-  pcr = flag ?
-        RTU_PCR_PASS_BPDU    | pcr :
-       (~RTU_PCR_PASS_BPDU) & pcr ;
+	pcr = flag ? RTU_PCR_PASS_BPDU | pcr : (~RTU_PCR_PASS_BPDU) & pcr;
 	write_pcr(port, pcr);
-  return 0;
+	return 0;
 }
 
 /**
@@ -520,16 +502,14 @@ int rtu_pass_bpdu_on_port(int port, int flag)
  */
 int rtu_pass_all_on_port(int port, int flag)
 {
-  if( (port < MIN_PORT) || (port > MAX_PORT) )
-      return -EINVAL;
+	if ((port < MIN_PORT) || (port > MAX_PORT))
+		return -EINVAL;
 
 	uint32_t pcr = read_pcr(port);
 
-  pcr = flag ?
-        RTU_PCR_PASS_ALL    | pcr :
-        (~RTU_PCR_PASS_ALL) & pcr ;
+	pcr = flag ? RTU_PCR_PASS_ALL | pcr : (~RTU_PCR_PASS_ALL) & pcr;
 	write_pcr(port, pcr);
-  return 0;
+	return 0;
 }
 
 /**
@@ -540,19 +520,16 @@ int rtu_pass_all_on_port(int port, int flag)
  */
 int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
 {
-    if( (port < MIN_PORT) || (port > MAX_PORT) )
-        return -EINVAL;
+	if ((port < MIN_PORT) || (port > MAX_PORT))
+		return -EINVAL;
 
 	uint32_t pcr = read_pcr(port);
 
-  pcr = flag ?
-        RTU_PCR_B_UNREC    | pcr :
-        (~RTU_PCR_B_UNREC) & pcr ;
+	pcr = flag ? RTU_PCR_B_UNREC | pcr : (~RTU_PCR_B_UNREC) & pcr;
 
 	write_pcr(port, pcr);
-  return 0;
+	return 0;
 }
-
 
 //---------------------------------------------
 // Private Methods
@@ -562,64 +539,59 @@ int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
 
 static void write_mfifo_addr(uint32_t zbt_addr)
 {
-    rtu_wr(MFIFO_R0, RTU_MFIFO_R0_AD_SEL);
-    rtu_wr(MFIFO_R1, zbt_addr);
+	rtu_wr(MFIFO_R0, RTU_MFIFO_R0_AD_SEL);
+	rtu_wr(MFIFO_R1, zbt_addr);
 }
 
 static void write_mfifo_data(uint32_t word)
 {
-    rtu_wr(MFIFO_R0, RTU_MFIFO_R0_DATA_SEL);
-    rtu_wr(MFIFO_R1, word);
+	rtu_wr(MFIFO_R0, RTU_MFIFO_R0_DATA_SEL);
+	rtu_wr(MFIFO_R1, word);
 }
 
 // to marshall MAC entries
 
 static uint32_t mac_entry_word0_w(struct filtering_entry *ent)
 {
-    return
-        ((0xFF & ent->mac[0])                        << 24)  |
-        ((0xFF & ent->mac[1])                        << 16)  |
-        ((0xFF & ent->fid)                           <<  4)  |
-        ((0x1  & ent->is_bpdu)                       <<  2)  |
-        ((0x1  & ent->end_of_bucket)                 <<  1)  |
-        ((0x1  & ent->valid )                             )  ;
+	return
+	    ((0xFF & ent->mac[0]) << 24) |
+	    ((0xFF & ent->mac[1]) << 16) |
+	    ((0xFF & ent->fid) << 4) |
+	    ((0x1 & ent->is_bpdu) << 2) |
+	    ((0x1 & ent->end_of_bucket) << 1) | ((0x1 & ent->valid));
 }
 
 static uint32_t mac_entry_word1_w(struct filtering_entry *ent)
 {
-    return
-        ((0xFF & ent->mac[2])                        << 24)  |
-        ((0xFF & ent->mac[3])                        << 16)  |
-        ((0xFF & ent->mac[4])                        <<  8)  |
-        ((0xFF & ent->mac[5])                             )  ;
+	return
+	    ((0xFF & ent->mac[2]) << 24) |
+	    ((0xFF & ent->mac[3]) << 16) |
+	    ((0xFF & ent->mac[4]) << 8) | ((0xFF & ent->mac[5]));
 }
 
 static uint32_t mac_entry_word2_w(struct filtering_entry *ent)
 {
-    return
-        ((0x1 & ent->drop_when_dest)                 << 28)  |
-        ((0x1 & ent->prio_override_dst)              << 27)  |
-        ((0x7 & ent->prio_dst)                       << 24)  |
-        ((0x1 & ent->has_prio_dst)                   << 23)  |
-        ((0x1 & ent->drop_unmatched_src_ports)       << 22)  |
-        ((0x1 & ent->drop_when_source)               << 21)  |
-        ((0x1 & ent->prio_override_src)              << 20)  |
-		    ((0x7 & ent->prio_src)                       << 17)  |
-        ((0x1 & ent->has_prio_src)                   << 16);
+	return
+	    ((0x1 & ent->drop_when_dest) << 28) |
+	    ((0x1 & ent->prio_override_dst) << 27) |
+	    ((0x7 & ent->prio_dst) << 24) |
+	    ((0x1 & ent->has_prio_dst) << 23) |
+	    ((0x1 & ent->drop_unmatched_src_ports) << 22) |
+	    ((0x1 & ent->drop_when_source) << 21) |
+	    ((0x1 & ent->prio_override_src) << 20) |
+	    ((0x7 & ent->prio_src) << 17) | ((0x1 & ent->has_prio_src) << 16);
 }
 
 static uint32_t mac_entry_word3_w(struct filtering_entry *ent)
 {
-    return
-        ((0xFFFF & ent->port_mask_dst)               << 16)  |
-        ((0xFFFF & ent->port_mask_src)                    )  ;
+	return
+	    ((0xFFFF & ent->port_mask_dst) << 16) |
+	    ((0xFFFF & ent->port_mask_src));
 }
 
 static uint32_t mac_entry_word4_w(struct filtering_entry *ent)
 {
-    return
-        ((0xFFFF & (ent->port_mask_dst >> 16))         << 16)  |
-        ((0xFFFF & (ent->port_mask_src >> 16))              )  ;
+	return
+	    ((0xFFFF & (ent->port_mask_dst >> 16)) << 16) |
+	    ((0xFFFF & (ent->port_mask_src >> 16)));
 }
-
-

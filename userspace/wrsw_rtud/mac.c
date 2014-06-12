@@ -28,34 +28,36 @@
 #include "mac.h"
 #include <stdio.h>
 
-
-
 /**
  * \brief Helper function to convert mac address into a string
  * WARNING: this returns static storage
  */
 char *mac_to_string(uint8_t mac[ETH_ALEN])
 {
- 	static char str[40];
-    snprintf(str, 40, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
-    return str;
+	static char str[40];
+	snprintf(str, 40, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1],
+		 mac[2], mac[3], mac[4], mac[5]);
+	return str;
 }
 
 /**
  * \brief Write mac address into a buffer to avoid concurrent access on static variable.
  */
-char *mac_to_buffer(uint8_t mac[ETH_ALEN],char buffer[ETH_ALEN_STR])
+char *mac_to_buffer(uint8_t mac[ETH_ALEN], char buffer[ETH_ALEN_STR])
 {
- 	if(mac && buffer)
- 		snprintf(buffer, ETH_ALEN_STR, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
-    return buffer;
+	if (mac && buffer)
+		snprintf(buffer, ETH_ALEN_STR, "%02x:%02x:%02x:%02x:%02x:%02x",
+			 mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	return buffer;
 }
 
 /**
  * \brief Function to retrieve mac address from text input (argument in terminal)
  */
-int mac_from_str(uint8_t* tomac, const char *fromstr)
+int mac_from_str(uint8_t * tomac, const char *fromstr)
 {
-	if(tomac==0 || fromstr==0) return -1;
-	return sscanf(fromstr,"%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",tomac+0,tomac+1,tomac+2,tomac+3,tomac+4,tomac+5);
+	if (tomac == 0 || fromstr == 0)
+		return -1;
+	return sscanf(fromstr, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", tomac + 0,
+		      tomac + 1, tomac + 2, tomac + 3, tomac + 4, tomac + 5);
 }

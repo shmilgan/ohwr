@@ -39,19 +39,19 @@ static uint16_t crc16(uint16_t const init_crc, uint16_t const message);
 
 void rtu_hash_set_poly(uint16_t poly)
 {
-    hash_poly = ((0x10000 | poly) << 3 );
+	hash_poly = ((0x10000 | poly) << 3);
 }
 
 uint16_t rtu_hash(uint8_t mac[ETH_ALEN], uint8_t fid)
 {
-  uint16_t hash = 0xFFFF;
+	uint16_t hash = 0xFFFF;
 
-  hash = crc16(hash, (0xFFFF & fid));
-  hash = crc16(hash, ((uint16_t)mac[0] << 8) | mac[1]);
-  hash = crc16(hash, ((uint16_t)mac[2] << 8) | mac[3]);
-  hash = crc16(hash, ((uint16_t)mac[4] << 8) | mac[5]);
+	hash = crc16(hash, (0xFFFF & fid));
+	hash = crc16(hash, ((uint16_t) mac[0] << 8) | mac[1]);
+	hash = crc16(hash, ((uint16_t) mac[2] << 8) | mac[3]);
+	hash = crc16(hash, ((uint16_t) mac[4] << 8) | mac[5]);
 
-  return hash & (HTAB_ENTRIES - 1); /* warning: assumes that HTAB_ENTRIES is a power of 2 */
+	return hash & (HTAB_ENTRIES - 1);	/* warning: assumes that HTAB_ENTRIES is a power of 2 */
 }
 
 /*
@@ -91,24 +91,21 @@ uint16_t rtu_hash(uint8_t mac[ETH_ALEN], uint8_t fid)
 */
 static uint16_t crc16(uint16_t const init_crc, uint16_t const message)
 {
-    uint32_t remainder;
-    int bit;
+	uint32_t remainder;
+	int bit;
 
-    // Initially, the dividend is the remainder.
-    remainder = message^init_crc;
-    // For each bit position in the message....
-    for (bit = 20; bit > 0; --bit) {
-        // If the uppermost bit is a 1...
-        if (remainder & 0x80000) {
-            // XOR the previous remainder with the divisor.
-            remainder ^= hash_poly;
-        }
-        //Shift the next bit of the message into the remainder.
-        remainder = (remainder << 1);
-    }
-    // Return only the relevant bits of the remainder as CRC.
-    return (remainder >> 4);
+	// Initially, the dividend is the remainder.
+	remainder = message ^ init_crc;
+	// For each bit position in the message....
+	for (bit = 20; bit > 0; --bit) {
+		// If the uppermost bit is a 1...
+		if (remainder & 0x80000) {
+			// XOR the previous remainder with the divisor.
+			remainder ^= hash_poly;
+		}
+		//Shift the next bit of the message into the remainder.
+		remainder = (remainder << 1);
+	}
+	// Return only the relevant bits of the remainder as CRC.
+	return (remainder >> 4);
 }
-
-
-
