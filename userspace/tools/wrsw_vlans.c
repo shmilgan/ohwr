@@ -331,62 +331,45 @@ int config_rtud(void)
 
 void list_rtu_vlans(void)
 {
-	rtudexp_vd_list_t vlist;
-	rtudexp_vd_entry_t *ventry;
-	int idx = 0, i;
+	struct rtu_vlans_t *p = rtu_retrieve_config();
 
-	printf("  VID    FID       MASK       DROP    PRIO    PRIO_OVERRIDE\n");
-	printf("-----------------------------------------------------------\n");
-	do {
-		if (minipc_call(rtud_ch, MINIPC_TIMEOUT,
-				&rtud_export_get_vd_list, &vlist, idx) < 0) {
-			fprintf(stderr, "%s: minipc_call: %s (%s)\n", prgname, strerror(errno), strerror(*(int *)&vlist));
-			return;
-		}
-		for(i=0; i<vlist.num_entries; ++i) {
-			ventry = &vlist.list[i];
-			printf("%4d   %4d      0x%08x    ", ventry->vid, ventry->fid, ventry->port_mask);
-			if(ventry->drop == 0)     printf("NO ");
-			else                      printf("YES");
-			if(ventry->has_prio == 0) printf("     --    ");
-			else                      printf("     %1d    ", ventry->prio);
+	if (!p)
+		return;
 
-			if(ventry->prio_override == 0) printf("     NO ");
-			else                           printf("     YES ");
-			printf("\n");
-		}
-		idx = vlist.next;
-	} while(idx>0);
+	printf("# VID    FID       MASK       DROP    PRIO    PRIO_OVERRIDE\n");
+	printf("#----------------------------------------------------------\n");
+
+	while(p) {
+		printf("%4d   %4d      0x%08x    ", p->vid, p->fid, p->pmask);
+		if(p->drop == 0)     printf("NO ");
+		else                 printf("YES");
+		if(p->has_prio == 0) printf("     --    ");
+		else                 printf("     %1d    ", p->prio);
+
+		if(p->prio_override == 0) printf("     NO ");
+		else                      printf("     YES ");
+		printf("\n");
+		p = p->next;
+	}
 	printf("\n");
 }
 
 int clear_all()
 {
-	rtudexp_vd_list_t vlist;
-	rtudexp_vd_entry_t *ventry;
-	int idx = 0, i, val;
+	struct rtu_vlans_t *p = rtu_retrieve_config();
+	int val;
 
-	do {
-		if (minipc_call(rtud_ch, MINIPC_TIMEOUT,
-				&rtud_export_get_vd_list, &vlist, idx) < 0) {
-			/* Duplicated from above */
-			fprintf(stderr, "%s: minipc_call: %s\n", prgname, strerror(errno));
-			fprintf(stderr, "%s: minipc_call: %s (%s)\n", prgname, strerror(errno), strerror(*(int *)&vlist));
-			return -1;
-		}
-
-		/*remove vlans from the list*/
-		for(i=0; i<vlist.num_entries; ++i) {
-			ventry = &vlist.list[i];
-			if(ventry->vid != 0)
-				minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry, &val, ventry->vid,
-						ventry->fid, 0, 1, 0, 0, 0);
-			else
-				minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry, &val, 0, 0,
-						0xffffffff, 0, 0, 0, 0);
-		}
-		idx = vlist.next;
-	} while(idx>0);
+	while (p) {
+		if(p->vid != 0)
+			minipc_call(rtud_ch, MINIPC_TIMEOUT,
+				    &rtud_export_vlan_entry, &val, p->vid,
+				    p->fid, 0, 1, 0, 0, 0);
+		else
+			minipc_call(rtud_ch, MINIPC_TIMEOUT,
+				    &rtud_export_vlan_entry, &val, 0,
+				    0, 0xffffffff, 0, 0, 0, 0);
+		p = p->next;
+	}
 
 	/*TODO: cancel tagging/untagging in all endpoints*/
 
