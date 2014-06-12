@@ -11,8 +11,12 @@ WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
 WR_INCLUDE = $(WR_INSTALL_ROOT)/include
 WR_LIB = $(WR_INSTALL_ROOT)/lib
 
-CFLAGS = -g -Wall -DDEBUG -DRT_CLIENT\
+CFLAGS = -g -Wall -DRT_CLIENT\
 	-I../include -I../mini-rpc -I$(WR_INCLUDE)
+
+ifdef WRS_HAL_DEBUG
+  CFLAGS += -DDEBUG
+endif
 
 LDFLAGS = -L../libswitchhw -L../mini-rpc \
 	 -lminipc -llua -lm -ldl -lswitchhw 

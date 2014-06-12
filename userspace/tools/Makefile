@@ -19,7 +19,7 @@ GIT_VER = $(shell git describe --always --dirty=+ | sed  's;^wr-switch-sw-;;')
 GIT_USR = $(shell  git config --get-all user.name)
 
 # LOTs of includes
-CFLAGS =  -O2 -DDEBUG -g -Wall \
+CFLAGS =  -O2 -g -Wall \
 		-I$(LINUX)/include \
 		-I$(LINUX)/arch/arm/mach-at91/include \
 		-I../libptpnetif \
@@ -28,6 +28,10 @@ CFLAGS =  -O2 -DDEBUG -g -Wall \
 		-I../mini-rpc \
 		-I../ptp-noposix/PTPWRd \
 		-I../include 
+
+ifdef WRS_TOOLS_DEBUG
+  CFLAGS += -DDEBUG
+endif
 
 LDFLAGS = -L../mini-rpc \
 		-L../libptpnetif \

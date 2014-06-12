@@ -12,10 +12,15 @@ WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
 WR_INCLUDE = $(WR_INSTALL_ROOT)/include
 WR_LIB = $(WR_INSTALL_ROOT)/lib
 
-CFLAGS		= -O2 -DDEBUG -Wall -ggdb  \
+CFLAGS		= -O2 -Wall -ggdb  \
 		-I../libptpnetif -I../wrsw_hal \
 		-I../mini-rpc -I../include -I$(WR_INCLUDE) -I$(LINUX)/include
 # -I$(CROSS_COMPILE_ARM_PATH)/../include
+
+ifdef WRS_RTUD_DEBUG
+  CFLAGS += -DDEBUG
+endif
+
 
 LDFLAGS 	:= -L../libptpnetif -L../libswitchhw -L../mini-rpc\
 		-lswitchhw -lptpnetif -lpthread -lminipc
