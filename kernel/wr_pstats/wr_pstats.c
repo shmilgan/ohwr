@@ -229,7 +229,19 @@ static ctl_table proc_table[] = {
 	{0,}
 };
 
+/*
+ * This module is optional, in a way, and if there it is loaded after
+ * wr_nic. So it must register itself to wr_nic, to export this.
+ */
+int pstats_callback(int epnum, unsigned int cntr[PSTATS_CNT_PP])
+{
+	int i;
 
+	pstats_rd_cntrs(epnum);
+	for (i = 0; i < PSTATS_CNT_PP; i++)
+		cntr[i] = *cntr_idx(pstats_dev.cntrs, epnum, i);
+	return 0;
+}
 
 static struct ctl_table_header *pstats_header;
 
@@ -249,7 +261,7 @@ static int __init pstats_init(void)
 		pstats_ctl_table[i].maxlen = PSTATS_CNT_PP*sizeof(unsigned int);
 		pstats_ctl_table[i].mode = 0444;
 		pstats_ctl_table[i].proc_handler = pstats_handler;
-		pstats_ctl_table[i].extra1 = i;
+		pstats_ctl_table[i].extra1 = (void *)i;
 	}
 
 	pstats_header = register_sysctl_table(proc_table);
@@ -284,6 +296,8 @@ static int __init pstats_init(void)
 	for (i = 0; i < PSTATS_NPORTS; ++i)
 		spin_lock_init(&pstats_dev.port_mutex[i]);
 	pstats_irq_enable(portmsk);
+
+	wr_nic_pstats_callback = pstats_callback;
 
 	printk(KERN_INFO "%s: initialized\n", KBUILD_MODNAME);
 	return 0;
