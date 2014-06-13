@@ -22,12 +22,19 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <minipc.h>
 #include <rtud_exports.h>
+#include "regs/endpoint-regs.h"
+
+#include "switch_hw.h"
+#include "fpga_io.h"
 #include "wrsw_vlans.h"
+
+
 
 int debug = 0;
 struct minipc_ch *rtud_ch;
@@ -114,7 +121,7 @@ static void exit_mask(int present)
 
 int main(int argc, char *argv[])
 {
-	int c, i, mask_ok = 0;
+	int c, i, arg, mask_ok = 0;
 
 	prgname = argv[0];
 
@@ -132,7 +139,12 @@ int main(int argc, char *argv[])
 	if(!rtud_ch) {
 		fprintf(stderr, "%s: Can't connect to RTUd mini-rpc server\n",
 			prgname);
-		return -1;
+		exit(1);
+	}
+
+	if (shw_fpga_mmap_init() < 0) {
+		fprintf(stderr, "%s: Can't access device memory\n", prgname);
+		exit(1);
 	}
 
 	/*parse parameters*/
@@ -155,9 +167,18 @@ int main(int argc, char *argv[])
 					exit_mask(mask_ok);
 
 				//qmode for port
+				arg = atoi(optarg);
+				if (arg < 0 || arg > 3) {
+					fprintf(stderr, "%s: invalid qmode %i (\"%s\")\n",
+						prgname, arg, optarg);
+					exit(1);
+				}
 				for_each_port(i) {
-					vlans[i].qmode = atoi(optarg);
+					vlans[i].qmode = arg;
 					vlans[i].valid_mask |= VALID_QMODE;
+					/* untag is all-or-nothing: default untag if access mode */
+					if ((vlans[i].valid_mask & VALID_UNTAG) == 0)
+						vlans[i].untag_mask = (arg == 0);
 				}
 				break;
 			case OPT_EP_PRIO:
@@ -176,9 +197,15 @@ int main(int argc, char *argv[])
 				}
 				break;
 			case OPT_EP_UMASK:
-				//untag mask
+				//untag mask -- currently 0 or 1. Overrides default set in QMODE above
+				arg = atoi(optarg);
+				if (arg < 0 || arg > 1) {
+					fprintf(stderr, "%s: invalid unmask bit %i (\"%s\")\n",
+						prgname, arg, optarg);
+					exit(1);
+				}
 				for_each_port(i) {
-					vlans[i].untag_mask = (int) strtol(optarg, NULL, 16);
+					vlans[i].untag_mask = arg;
 					vlans[i].valid_mask |= VALID_UNTAG;
 				}
 				break;
@@ -280,15 +307,47 @@ void print_config(struct s_port_vlans *vlans)
 	}
 }
 
+static uint32_t ep_read(int ep, int offset)
+{
+	return _fpga_readl(0x30000 + ep * 0x400 + offset);
+}
+
+static void ep_write(int ep, int offset, uint32_t value)
+{
+	_fpga_writel(0x30000 + ep * 0x400 + offset, value);
+}
+
 int apply_settings(struct s_port_vlans *vlans)
 {
-	int i;
+	int ep;
+	uint32_t v, r;
 
-	for_each_port(i) {
-		printf("port %i\n", i);
-		//TODO: call apropriate ioctls to configure tagging/untagging
+	for_each_port(ep) {
+		/* VCR0 */
+		r = offsetof(struct EP_WB, VCR0);
+		v = ep_read(ep, r);
+		if (vlans[ep].valid_mask & VALID_QMODE)
+			v = (v & ~EP_VCR0_QMODE_MASK) | EP_VCR0_QMODE_W(vlans[ep].qmode);
+		if (vlans[ep].valid_mask & VALID_PRIO) {
+			v |= EP_VCR0_FIX_PRIO;
+			v = (v & ~EP_VCR0_PRIO_VAL_MASK) | EP_VCR0_PRIO_VAL_W(vlans[ep].prio_val);
+		}
+		if (vlans[ep].valid_mask & VALID_VID)
+			v = (v & ~EP_VCR0_PVID_MASK) | EP_VCR0_PVID_W(vlans[ep].vid);
+		ep_write(ep, r, v);
+		/* VCR1: loop over the whole bitmask */
+		if (vlans[ep].untag_mask) {
+			int i;
+
+			r = offsetof(struct EP_WB, VCR1);
+			for (i = 0;i < 4096/16; i++) {
+				if (vlans[ep].untag_mask)
+					ep_write(ep, r, (0xffff << 10) | i);
+				else
+					ep_write(ep, r, (0x0000 << 10) | i);
+			}
+		}
 	}
-
 	config_rtud();
 
 	return 0;
@@ -356,9 +415,13 @@ void list_rtu_vlans(void)
 
 int clear_all()
 {
-	struct rtu_vlans_t *p = rtu_retrieve_config();
-	int val;
+	struct rtu_vlans_t *p;
+	uint32_t v, r;
+	int val, i;
+	int ep;
 
+	/* cancel all rtu-administered vlans */
+	p= rtu_retrieve_config();
 	while (p) {
 		if(p->vid != 0)
 			minipc_call(rtud_ch, MINIPC_TIMEOUT,
@@ -371,8 +434,16 @@ int clear_all()
 		p = p->next;
 	}
 
-	/*TODO: cancel tagging/untagging in all endpoints*/
+	/* cancel tagging/untagging in all endpoints*/
+	for (ep = 0; ep < NPORTS; ep++) {
+		r = offsetof(struct EP_WB, VCR0);
+		ep_write(ep, r, 0x3 /* QMODE */);
 
+		r = offsetof(struct EP_WB, VCR1);
+		for (i = 0;i < 4096/16; i++) {
+			ep_write(ep, r, (0x0000 << 10) | i); /* no untag */
+		}
+	}
 	return 0;
 }
 
