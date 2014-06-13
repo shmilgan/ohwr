@@ -52,6 +52,7 @@ struct option ropts[] = {
 	{"evid", 1, NULL, OPT_EP_VID},
 	{"eprio", 1, NULL, OPT_EP_PRIO},
 	{"eumask", 1, NULL, OPT_EP_UMASK},
+	{"elist", 1, NULL, OPT_EP_LIST},
 	{"rvid", 1, NULL, OPT_RTU_VID},
 	{"rfid", 1, NULL, OPT_RTU_FID},
 	{"rmask", 1, NULL, OPT_RTU_PMASK},
@@ -209,6 +210,9 @@ int main(int argc, char *argv[])
 					vlans[i].valid_mask |= VALID_UNTAG;
 				}
 				break;
+			case OPT_EP_LIST:
+				// list endpoint stuff
+				list_ep_vlans();
 
 		  /****************************************************/
 			/* RTU settings */
@@ -278,6 +282,7 @@ int print_help(char *prgname)
 			"\t --eprio <priority>  sets priority for retagging\n"
 			"\t --evid  <vid>       sets VLAN Id for port\n"
 			"\t --eumask <hex mask> sets untag mask for port\n"
+			"\t --elist             lists current EP configuration\n"
 			"RTU options:\n"
 			"\t --rvid <vid>        configure VLAN <vid> in rtud\n"
 			"\t --del               delete selected VLAN from rtud\n"
@@ -413,10 +418,33 @@ void list_rtu_vlans(void)
 	printf("\n");
 }
 
+void list_ep_vlans(void)
+{
+	uint32_t v, r;
+	int ep;
+	static char *names[] = {"ACCESS", "TRUNK", "disabled", "unqualified"};
+
+	printf("#  QMODE FIX_PRIO  PRIO    PVID     MAC\n");
+	printf("#--------------------------------------\n");
+	for (ep = 0; ep < NPORTS; ep++) {
+		r = offsetof(struct EP_WB, VCR0);
+		v = ep_read(ep, r);
+		printf(" %i %6s  %i  %i  %4i  %08x%04x\n",
+		       r & 3,
+		       names[r & 3],
+		       r & EP_VCR0_FIX_PRIO ? 1 : 0,
+		       EP_VCR0_PRIO_VAL_R(r),
+		       EP_VCR0_PVID_R(r),
+		       (int)ep_read(ep, offsetof(struct EP_WB, MACH)),
+		       (int)ep_read(ep, offsetof(struct EP_WB, MACL)));
+	}
+	return;
+}
+
 int clear_all()
 {
 	struct rtu_vlans_t *p;
-	uint32_t v, r;
+	uint32_t r;
 	int val, i;
 	int ep;
 
