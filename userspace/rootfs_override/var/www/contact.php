@@ -16,16 +16,27 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Contact</h1>
+<h1 class="title">About</h1>
 
 	<?php $_SESSION['advance']=""; ?>
 	
-	<p><strong>White-Rabbit switch Firmware v<?php $str = shell_exec("uname -v"); echo $str;  ?> </strong></p><p>&nbsp;</p>
-	<p><strong>Open Hardware Repository  <a href="http://www.ohwr.org/projects/white-rabbit/wiki">http://www.ohwr.org/projects/white-rabbit/wiki</a> </strong></p></strong></p><p>&nbsp;</p>
-	<p><strong>Built in <?php $str = shell_exec("/wr/bin/shw_ver -c"); echo $str; ?></strong></p><p>&nbsp;</p>
+	<p><strong>WRSW OS: <?php $str = shell_exec("uname -r"); echo $str;  ?> </strong></p>
+	<p><strong><?php $str = shell_exec("/wr/bin/shw_ver -g"); $str = str_replace("\n","<br>",$str); 
+		$str=str_replace("Reading GW info","",$str); echo $str; ?></strong></p><p>&nbsp;</p>
+	<br>
+	<center><p align=right><strong>Open Hardware Repository  <a href="http://www.ohwr.org/projects/white-rabbit/wiki">http://www.ohwr.org/projects/white-rabbit/wiki</a> </strong></p></strong></p><p>&nbsp;</p>
+	<p align=right><strong>White-Rabbit Mailing List <a href="mailto:white-rabbit-dev@ohwr.org?subject=[White-Rabbit Switch Local Management Tool]">(white-rabbit-dev@ohwr.org)</a> </strong></p></center>
 	
-	<a href='http://www.ugr.es'><IMG SRC='img/ugr.gif' align=right  width=250 , hight=100 , border=0 , alt='UGR'></a><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>
-	<p align=right><strong>Developed by Jos&eacute; Luis Guti&eacute;rrez <a href="mailto:jlgutierrez@ugr.es?subject=[White-Rabbit Switch Local Management Tool]">(jlgutierrez@ugr.es)</a> </strong></p>
+	<br><br><br><br><br>
+	<center>
+	<IMG SRC="img/cern.jpg" WIDTH=80  ALT="CERN">
+	<IMG SRC="img/7s.png" WIDTH=80  ALT="Seven Solutions">
+	<IMG SRC="img/ugr.gif" WIDTH=140 ALT="University of Granada">
+	<IMG SRC="img/integrasys.jpg" WIDTH=140  ALT="Integrasys">
+	</center>
+	
+	<br><br>
+	<p align=right><strong>Developers: </strong>Alessandro Rubini, Tomasz Wlostowski, Benoit Rat, Federico Vega, Grzegorz Daniluk, Maciej Lipinski, Jose Luis Gutierrez</p>
 
 </div>
 </div>
