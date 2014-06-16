@@ -24,12 +24,11 @@ echo '<div class="login">
 }else{
 	
 	//The rest of the menu for logged users
-	if(file_exists('/wr/bin/wrsw_rtud_new')) {echo '<li><a href="vlan.php"> VLAN Configuration </a></li>';}
-	echo '<li><a href="ptp.php"> PTP Configuration </a></li>';
+	echo '<li><a href="ptp.php"> PPSi Setup </a></li>';
 	echo '<li><a href="endpointmode.php">  Endpoint Mode</a></li>';
-	
+	echo '<li><a href="vlan.php"> VLAN Setup </a></li>';
 	echo '<li><a href="management.php"> Switch Management </a></li>';
-	echo '<li><a href="advance.php"> Advance Mode </a></li>';
+	echo '<li><a href="advance.php"> Advanced Mode </a></li>';
 	//echo '<li><a href="administration.php"> Switch Administration </a></li>';
 	if(!empty($_SESSION['advance'])){
 		echo '<ul class="advance">';
@@ -38,6 +37,7 @@ echo '<div class="login">
 		echo '<li><a href="endpointcalibration.php">Endpoint Calibration</a></li>';
 		echo '<li><a href="load.php">LM32 & FPGA</a></li>';
 		echo '<li><a href="terminal.php">Virtual Console</a></li>';
+		echo '<li><a href="firmware.php">Firmware</a></li>';
 		echo '</ul>';
 	}
 	echo '</ul><br><hr>';

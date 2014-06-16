@@ -26,7 +26,7 @@
 	<?php 
 	
 		$file_init  = 'global = {'."\n";
-		$file_init .= "\t".'sfp_database_path = "/wr/etc/sfp_database.conf";'."\n";
+		$file_init .= "\t".'sfp_database_path = "'.$GLOBALS['etcdir'].'sfp_database.conf";'."\n";
 		$file_init .= '};'."\n\n";
 
 		$file_init .= 'timing =  {'."\n\n";
@@ -141,7 +141,7 @@
 			fclose($file);
 			
 			//We move the file to /wr/etc/
-			copy('/tmp/wrsw_hal.conf', '/wr/etc/wrsw_hal.conf');
+			copy('/tmp/wrsw_hal.conf', $GLOBALS['etcdir'].'wrsw_hal.conf');
 			
 			echo '<center><font color="green">File successfully created. Rebooting switch. </font></center>';
 			

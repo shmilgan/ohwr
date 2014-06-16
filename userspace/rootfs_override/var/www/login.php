@@ -32,6 +32,7 @@
 				$_SESSION["myusername"] = $username;
 				
 				
+				
 				echo 'Logged in as '.$_SESSION["myusername"];
 				header('Location: index.php');
 			}else{

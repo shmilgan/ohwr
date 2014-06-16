@@ -100,6 +100,9 @@
 		$output = shell_exec( $path." ; cd ".$_SESSION["pwd"]." ; ".$cmd);
 	}
 	
+	//Format output
+	$output=str_replace("\n","<br>",$output);
+	
 	echo '<div align="center"> <div id="preview" style= "BORDER-RIGHT: #000 1px solid; PADDING-RIGHT: 0px; 
 		BORDER-TOP: #000 1px solid; PADDING-LEFT: 2px; PADDING-BOTTOM: 2px; WORD-SPACING: 1px; OVERFLOW: scroll; 
 		BORDER-LEFT: #000 1px solid; WIDTH: 100%; PADDING-TOP: 1px; 

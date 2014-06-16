@@ -29,6 +29,9 @@
 		wrs_modify_endpoint_mode($endpoint, $mode);
 		wrs_change_wrfs("ro");
 		
+		header('Location: endpointmode.php');
+		exit;
+		
 	?>
 	<hr>
 	<FORM align="right" action="endpointmode.php" method="post">

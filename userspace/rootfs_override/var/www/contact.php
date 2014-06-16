@@ -32,7 +32,6 @@
 	<IMG SRC="img/cern.jpg" WIDTH=80  ALT="CERN">
 	<IMG SRC="img/7s.png" WIDTH=80  ALT="Seven Solutions">
 	<IMG SRC="img/ugr.gif" WIDTH=140 ALT="University of Granada">
-	<IMG SRC="img/integrasys.jpg" WIDTH=140  ALT="Integrasys">
 	</center>
 	
 	<br><br>
