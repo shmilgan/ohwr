@@ -125,7 +125,7 @@ function wrs_main_info(){
 	echo '<tr><th> <b>White-Rabbit Date:</b></th><th><center>'; $str = shell_exec("TZ=".$_SESSION['utc']." /wr/bin/wr_date get"); echo $str; echo '</center></th></tr>';
 	echo '<tr><th> <b>PPSi:</b> </th><th><center>';  echo wrs_check_ptp_status() ? '[<A HREF="ptp.php">on</A>]' : '[<A HREF="ptp.php">off</A>]'; echo '</center></th></tr>';
 	echo '<tr><th> <b>Net-SNMP:</b> </th><th><center>';  echo check_snmp_status() ? '[on] ' : '[off] '; echo '&nbsp;&nbsp;ver. '; echo shell_exec("snmpd -v | grep version | awk '{print $3}'");
-			echo '( port '; $str = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf | grep agent | cut -d: -f3 | awk '{print $1}'"); echo $str; echo ')'; 	echo '</center></th></tr>';
+			echo '( port '; $str = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf | grep agent | cut -d: -f3 | awk '{print $1}'"); echo $str; echo ')'; 	echo " <a href='help.php?help_id=snmp' onClick='showPopup(this.href);return(false);'> [OIDs]</a></center></th></tr>";
 	echo '<tr><th> <b>NTP Server:</b> </th><th><center> <A HREF="management.php">';  $str = check_ntp_server(); echo $str;	echo $_SESSION['utc']; echo '</A></center></th></tr>';
 	echo '<tr><th> <b>Max. Filesize Upload: </b></th><th><center>'; echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); echo '</center></th></tr>';
 	echo '</table>';
@@ -279,9 +279,9 @@ function wr_endpoint_phytool($option1, $endpoint){
 		echo '</tr>';
 		echo '</table>';
 		
-		if (!strcmp($_POST['update'], "yes")){
-			echo 'aki stamos!';
-		}
+		//if (!strcmp($_POST['update'], "yes")){
+			//echo 'aki stamos!';
+		//}
 	
 	// User wants to modify endpoint's registers
 	} else if(!strcmp($option1, "wr")){
@@ -952,8 +952,7 @@ function wrs_display_help($help_id, $name){
 		$message = "<p>Loading files: <br>
 					- <b>Load FPGA File</b>: Loads a .bin file for the gateware on the FPGA.<br>
 					- <b>Load LM32 File</b>: Loads a .bin file into the lm32 processor.<br>
-					- <b>Load firmware</b>: It moves a binary file into the /tmp folder<br>
-					- <b>PHP Filesize</b>: It changes the max. size of the files that can be uploaded to the switch (2 MegaBytes by default)<br>
+					- <b>PHP Filesize</b>: It changes the max. size of the files that can be uploaded to the switch (40 MegaBytes by default)<br>
 					</p>";
 	} else if (!strcmp($help_id, "endpoint")){
 		$message = "<p>It is used to configure each point of the switch with different parameters as well as wrs_phytool program does. <br>
@@ -974,15 +973,15 @@ function wrs_display_help($help_id, $name){
 	} else if (!strcmp($help_id, "management")){
 		$message = "<p>
 			Options: <br>
-			- <b>Change mode:</b> It changes switch mode to Master/GrandMaster <br>
-			- <b>Reboot switch</b>: it reboots the switch <br>
-			- <b>PHP Filesize</b>: It changes the max. size of the files that can be uploaded to the switch (2 MegaBytes by default)<br>
-		</p>";
+			- <b>Change mode:</b> Changes switch mode to Master/GrandMaster <br>
+			- <b>Reboot switch</b>: Reboots the switch <br>
+			- <b>NTP Server</b>: Sets the IP address of an external NTP server. By default it is configured as UTC, please use the second box to change it. This change is done on the webserver, not in the switch command line environment.<br>
+			- <b>Load Configuration Files</b>: You can upload individual configuration files to the switch (ppsi.conf, wrsw_hal.conf, snmp.conf, sfp_database.conf or a .tar.gz file with all of them.<br>
+			- <b>Backup Configuration Files</b>: Downloads a tar.gz file with all configuration files of the switch.<br>
+			</p>"; 
 	} else if (!strcmp($help_id, "ptp")){
-		$message = "<p>The update button is used to stop or run the ptp daemon. It runs with the <b>default options (-A -c)</b> <br>
-					<b>If you want to run a ptp daemon with a specific configuration, use the text boxes and the 'Submit Configuration' button</b>. <br></p>";
-	} else if (!strcmp($help_id, "vlan")){
-		$message = "<p>vlan</p>";
+		$message = "<p><b>Enable or disable PPSi service. <br>
+					<b>Changing Clock CLass and Clock Accuracy fields modifies ppsi.conf file for those values and relanches the service again.</b>. <br></p>";
 	} else if (!strcmp($help_id, "console")){
 		$message = "<p>This is a switch console emulator windows. Use it as if you were using a ssh session.</p>";
 	} else if (!strcmp($help_id, "gateware")){
@@ -1003,7 +1002,52 @@ function wrs_display_help($help_id, $name){
 		}
 		
 	} else if (!strcmp($help_id, "endpointmode")){
-		$message = "<b>Change endpoint mode to master/slave by clicking on one of the items</b>";
+		$message = "<br><b>Change endpoint mode to master/slave/auto by clicking on one of the items.</b><br>";
+		$message .= "<b>It modifies both wrsw_hal.conf and ppsi.conf files</b>";
+	} else if (!strcmp($help_id, "snmp")){
+		$message = "<p align=left>List of public SNMP OIDs</p><br>";
+		$message .= shell_exec("snmpwalk -v1 -c public localhost");
+		$message = str_replace("\n","<br>",$message);
+		
+	} else if (!strcmp($help_id, "vlan")){
+		
+		$message = "<br><b>Add new VLANs to the WRS</b>";
+		$message .= "<br><b>- VID --> VLAN ID in rtud</b>";
+		$message .= "<br><b>- FID --> Assign FID to configured VLAN</b>";
+		$message .= "<br><b>- DROP --> Enable/Disable drop frames on VLAN</b>";
+		$message .= "<br><b>- PRIO --> Sets Priority</b>";
+		$message .= "<br><b>- MASK --> Mask for ports belonging to configured VLAN</b>";
+		$message .= "<br><br>If you want to assign port to VLANs, please add VLANs first and then click on <strong>Assign Ports to VLANs</strong>. ";
+		
+	} else if (!strcmp($help_id, "vlanassignment")){
+		
+		$message = "<br><b>Assign ports to created VLANs</b>";
+		$message .= "<br><b>VLANs ID --> VLANs ID already created in rtud</b>";
+		$message .= "<br><b>Mode --> Sets mode for the endpoint:</b>";
+		$message .= "<br><b><ul><li>Access --> tags untagged frames, drops tagged frames not belinging to configured VLAN</b></li>";
+		$message .= "<br><b><li>Trunk --> passes only tagged frames, drops all untagged frames</b></li>";
+		$message .= "<br><b><li>Disable --> passess all frames as is</b></li>";
+		$message .= "<br><b><li>Unqualified Port --> passess all frames regardless VLAN config</b></li></ul>";
+		$message .= "<br><b>Priority --> sets priority for retagging</b>";
+		$message .= "<br><b>Mask --> sets untag mask for port</b>";
+		
+		
+	} else if (!strcmp($help_id, "network")){
+		$message = "<br><b>Set a DHCP network interface configuration or a static one.</b>";
+		$message = "<br><b>If you set a static configuration, you have to define: </b>";
+		$message .= "<br><b><ul><li>IP Address --> IP Address of your switch</b></li>";
+		$message .= "<br><b><li>Netmask --> Netmask</b></li>";
+		$message .= "<br><b><li>Network--> IP Address of your network</b></li>";
+		$message .= "<br><b><li>Broadcast --> Broadcast address</b></li>";
+		$message .= "<br><b><li>Gateway--> Gateway of the switch network</b></li></ul>";
+		$message .= "<br><br><b>NOTE: This network configuration only works for NAND-flashed switches. If you are using a NFS server, the configurtion is set by default in busybox and it is not possible to be changed.</b>";
+		
+	} else if (!strcmp($help_id, "firmware")){
+		$message = "<p>Firmware features: <br>
+					- <b>PHP Filesize</b>: It changes the max. size of the files that can be uploaded to the switch (40 MegaBytes by default)<br>
+					- <b>Flash firmware</b>: It moves a binary file into the /tmp folder<br>
+					- <b>Backup firmware</b>: It downloads a copy of the entire WRS to your PC<br>
+					</p>";
 	}
 	
 	
