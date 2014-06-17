@@ -507,6 +507,7 @@ function wrs_load_files(){
 		
 		} else if (!empty($_POST["size"])){
 			php_file_transfer_size(htmlspecialchars($_POST["size"]));
+			header ('Location: load.php');
 		}
 
 	
@@ -548,6 +549,8 @@ function wrs_management(){
 			modify_switch_mode();
 			$mode = check_switch_mode(); 
 			echo '<br><br><br>Switch is now '.$mode;
+			header ('Location: management.php');
+			
 		} else if (!empty($_FILES['file']['name'])){
 			$uploaddir = '/tmp/';
 			$uploadfile = $uploaddir . basename($_FILES['file']['name']);
@@ -684,6 +687,7 @@ function wrs_management(){
 			//Backup wrs firmware
 			
 		}
+		
 }
 
 
@@ -789,8 +793,8 @@ function wrs_ptp_configuration(){
 		$output = shell_exec($ptp_command); 
 		
 		//Relaunching wrsw_hal to commit endpoint changes
-		shell_exec("killall wrsw_hal");
-		shell_exec("/wr/bin/wrsw_hal -c ".$GLOBALS['etcdir']."wrsw_hal.conf > /dev/null 2>&1 &");
+		//shell_exec("killall wrsw_hal");
+		//shell_exec("/wr/bin/wrsw_hal -c ".$GLOBALS['etcdir']."wrsw_hal.conf > /dev/null 2>&1 &");
 		echo '<center>PPSi enabled!</center>';
 		header('Location: ptp.php');
 		exit;
@@ -798,7 +802,7 @@ function wrs_ptp_configuration(){
 	}
 	if ((!empty($_POST["daemongroup"])) && (!strcmp(htmlspecialchars($_POST["daemongroup"]),"Off"))){
 		shell_exec("killall ppsi"); 
-		shell_exec("killall wrsw_hal");
+		//shell_exec("killall wrsw_hal");
 		echo '<center>PPSi stopped!</center>';
 		header('Location: ptp.php');
 		exit;
