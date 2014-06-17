@@ -29,7 +29,6 @@ echo '<div class="login">
 	echo '<li><a href="vlan.php"> VLAN Setup </a></li>';
 	echo '<li><a href="management.php"> Switch Management </a></li>';
 	echo '<li><a href="advance.php"> Advanced Mode </a></li>';
-	//echo '<li><a href="administration.php"> Switch Administration </a></li>';
 	if(!empty($_SESSION['advance'])){
 		echo '<ul class="advance">';
 		echo '<li><a href="sfpcalibration.php">SFP Calibration</a></li>';
@@ -42,7 +41,7 @@ echo '<div class="login">
 	}
 	echo '</ul><br><hr>';
 	
-	echo '<b>User: <font color="blue">'.$_SESSION["myusername"].' </font></b>';
+	echo '<b>User: <font color="blue"><a href="change_passwd.php">'.$_SESSION["myusername"].'</a> </font></b>';
 	echo '<a href="./logout.php">(logout)</a>';
 }
 ?>

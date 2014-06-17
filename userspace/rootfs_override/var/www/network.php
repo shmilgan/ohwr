@@ -16,7 +16,7 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Network Interface Setup <a href='help.php?help_id=ptp' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
+<h1 class="title">Network Interface Setup <a href='help.php?help_id=network' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 	<?php session_is_started() ?>
 	<?php $_SESSION['advance']=""; ?>
@@ -35,6 +35,7 @@
 
 	<?php
 	
+	wrs_change_wrfs("rw");
 	
 		if((empty($_POST["networkgroup"]))){
 			
@@ -139,6 +140,7 @@
 		}
 			
 			
+		wrs_change_wrfs("ro");
 			
 	?>
 

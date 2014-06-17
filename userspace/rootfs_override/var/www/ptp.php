@@ -88,15 +88,12 @@
 		<hr>
 		<p align="right">Click <A HREF="endpointmode.php">here</A> to modify endpoint mode configuration</p>
 
+	
 		
 	<?php
-		// Generating the form
-		
-	?>
-		
-	<?php
-
+		wrs_change_wrfs("rw");
 		wrs_ptp_configuration();
+		wrs_change_wrfs("ro");
 
 	?>
 

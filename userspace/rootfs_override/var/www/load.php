@@ -54,9 +54,6 @@
 		wrs_load_files();
 		wrs_change_wrfs("ro");
 
-		//echo '<center>';
-			//wrs_check_writeable();
-		//echo '</center>';
 	?>
 			
 
