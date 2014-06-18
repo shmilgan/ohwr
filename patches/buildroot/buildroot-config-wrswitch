@@ -1,6 +1,6 @@
 #
 # Automatically generated make config: don't edit
-# Wed Apr  6 22:52:49 2011
+# Wed Jun 18 18:43:07 2014
 #
 BR2_HAVE_DOT_CONFIG=y
 BR2_VERSION="2009.11"
@@ -161,6 +161,7 @@ BR2_AT91_PATCH_MIRROR="http://maxim.org.za/AT91RM9200/2.6/"
 BR2_STAGING_DIR="$(BASE_DIR)/staging"
 BR2_GNU_BUILD_SUFFIX="pc-linux-gnu"
 BR2_GNU_TARGET_SUFFIX="linux-uclibcgnueabi"
+BR2_JLEVEL=5
 # BR2_PREFER_IMA is not set
 # BR2_DEPRECATED is not set
 BR2_RECENT=y
@@ -492,6 +493,8 @@ BR2_PACKAGE_NETSNMP=y
 # BR2_PACKAGE_OPENNTPD is not set
 # BR2_PACKAGE_OPENSSH is not set
 BR2_PACKAGE_OPENSSL=y
+# BR2_PACKAGE_OPENSSL_BIN is not set
+# BR2_PACKAGE_OPENSSL_ENGINES is not set
 # BR2_PACKAGE_OPENVPN is not set
 
 #
