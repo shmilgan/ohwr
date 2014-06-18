@@ -24,7 +24,7 @@
 	<table border="0" align="center">	
 		<tr>
 			<form method="post">
-			<th>Change PHP File Size Upload: (<?php wrs_php_filesize();?>M)<INPUT type="text" name="size" > </th>
+			<th>New PHP filesize: (<?php wrs_php_filesize();?>M) <INPUT type="text" name="size" ></th>
 			<input type="hidden" name="cmd" value="size">
 			<th><input type="submit" value="Change" class="btn"></th>
 			</form>

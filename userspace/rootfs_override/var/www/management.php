@@ -22,30 +22,32 @@
 	<?php $_SESSION['advance']=""; ?>
 
 	<table border="0" align="center">	
-		
+	<tr>
+	<center>
+	<form  method="post">
+		<th>Switch Mode: (<?php  $str = check_switch_mode(); echo $str; ?>)</th>
+		<input type="hidden" name="cmd" value="change">
+		<th><input type="submit" value="Change Mode" class="btn"></th>
+	</form>
+	</tr>
+	<tr>
+	<form  method="post">
+		<th>Reboot system: </th>
+		<input type="hidden" name="cmd" value="reboot">
+		<th><input type="submit" value="Reboot switch" class="btn">	</th>
+	</form>
+	</center>
+	</tr>
+	
 	</table>
+		
 
 	<table border="0" align="center">	
 		<tr>
 			<form  method="post">
-			<th><center>Switch Mode: (<?php  $str = check_switch_mode(); echo $str; ?>) </center><input type="hidden" name="cmd" value="change"></th>
-			<th><input type="submit" value="Change Mode" class="btn"></th>
-			</form>
-		</tr>
-		<tr>
-			<form  method="post">
-			<th><center>Reboot system: </center><input type="hidden" name="cmd" value="reboot"></th>
-			<th><input type="submit" value="Reboot switch" class="btn"></th>
-			</form>
-		</tr>
-		</tr><th> </th><th> </th><tr></tr><th> </th><th> </th><tr>
-		</tr><th> </th><th> </th><tr></tr><th> </th><th> </th><tr>
-		<hr>
-		<tr>
-			<form  method="post">
-			<th>NTP Server:   <INPUT type="text" name="ntpip" value="<?php  $str = check_ntp_server(); echo $str; ?>"> </th>
-			<input type="hidden" name="cmd" value="ntp">
-			<th><select name="utc" >
+			<th><center>NTP Server:</center></th><th><INPUT type="text" name="ntpip" value="<?php  $str = check_ntp_server(); echo $str; ?>"> </th>
+			<th><input type="hidden" name="cmd" value="ntp">
+			<select name="utc" >
 					<?php 
 						$selected_utc=$_SESSION['utc'];
 						$selected_utc=str_replace("UTC","",$selected_utc);
@@ -81,7 +83,7 @@
 	<hr>
 	<br><br>
 	<center><p><strong>Load configuration files</strong></p></center>
-	<table border="1" align="center" class='altrowstable' id='alternatecolor'>	
+	<table border="1" align="center" class='altrowstable' id='alternatecolor' width="80%">	
 		<tr>
 		<FORM method="POST" ENCTYPE="multipart/form-data">
 			<th>PPSi Config </th>
@@ -126,11 +128,13 @@
 	</table>
 	
 	<br><br><br><br>
-	<FORM align="right" method="POST" ENCTYPE="multipart/form-data">
+	<center>
+	<FORM align="center" method="POST" ENCTYPE="multipart/form-data">
 			<th>Backup Configuration files to your computer </th>
 			<input type="hidden" name="cmd" value="Backup">
 			<th><INPUT type=submit value="Backup" class="btn" ></th>
 	</form>
+	</center>
 	
 	<?php 
 		wrs_change_wrfs("rw");

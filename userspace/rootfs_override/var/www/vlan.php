@@ -28,7 +28,7 @@
 		$vlans = shell_exec("cat ".$tmp_vlan_file." |  sed -n '/ /s/ \+/ /gp'");
 		$vlans = explode("\n", $vlans);
 		
-		echo '<table align=center border="1" class="altrowstable" id="alternatecolor">';
+		echo '<table align=center border="1" class="altrowstable" id="alternatecolor" width="100%">';
 		echo '<tr align=center><th>VID</th><th>FID</th><th>Ports</th><th>DROP</th><th>PRIO</th><th>Action</th></tr>';
 		$counter = 0;
 		foreach($vlans as $line){

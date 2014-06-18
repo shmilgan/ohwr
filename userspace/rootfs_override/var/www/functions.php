@@ -101,7 +101,7 @@ function wrs_main_info(){
 	
 	if(empty($_SESSION["utc"])) $_SESSION["utc"]="UTC";
 	
-	echo "<table border='1' align='left' class='altrowstable' id='alternatecolor'>";
+	echo "<table border='1' align='center' class='altrowstabledash' id='alternatecolor'>";
 	echo '<tr class="sub"><td> <b><center>Switch Info </center></b></td></tr>';
 
 	$str = shell_exec("uname -n");

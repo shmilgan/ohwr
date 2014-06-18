@@ -26,7 +26,7 @@
 		//$modes = parse_wrsw_hal_file();
 		$modes = parse_ppsi_conf_file();
 				
-		echo '<table align=center border="1" class="altrowstable" id="alternatecolor">';
+		echo '<table align=center border="1" class="altrowstable" id="alternatecolor" width="50%">';
 		//echo '<tr><th><center>Endpoint</center></th><th><center>Mode</center></th></tr>';
 		for($i = 0; $i < 9; $i++){
 			echo '<tr>';

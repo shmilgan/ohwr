@@ -242,7 +242,7 @@ a:hover {
 
 table.altrowstable {
 	font-family: verdana,arial,sans-serif;
-	font-size: 10px;
+	font-size: 11px;
 	color: #333333;
 	border-width: 1px;
 	border-color: #a9c6c9;
@@ -250,13 +250,33 @@ table.altrowstable {
 }
 table.altrowstable th {
 	border-width: 1px;
-	padding: 8px;
+	padding: 2px;
 	border-style: solid;
 	border-color: #a9c6c9;
 }
 table.altrowstable td {
 	border-width: 1px;
-	padding: 8px;
+	padding: 4px;
+	border-style: solid;
+	border-color: #a9c6c9;
+}
+table.altrowstabledash {
+	font-family: verdana,arial,sans-serif;
+	font-size: 11px;
+	color: #333333;
+	border-width: 1px;
+	border-color: #a9c6c9;
+	border-collapse: collapse;
+}
+table.altrowstabledash th {
+	border-width: 1px;
+	padding: 4px;
+	border-style: solid;
+	border-color: #a9c6c9;
+}
+table.altrowstabledash td {
+	border-width: 1px;
+	padding: 4px;
 	border-style: solid;
 	border-color: #a9c6c9;
 }

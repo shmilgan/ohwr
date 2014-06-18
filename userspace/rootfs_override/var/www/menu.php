@@ -10,8 +10,8 @@ echo '</ul><br><hr>';
 echo '<div class="login">
       <h3>Login</h3>
       <form method="post" action="login.php">
-        <p><input type="text" name="login" value="" placeholder="Username"></p>
-        <p><input type="password" name="password" value="" placeholder="Password"></p>
+        <input type="text" name="login" value="" placeholder="Username" size="15">
+        <input type="password" name="password" value="" placeholder="Password" size="15">
         <!--<p class="remember_me">
           <label>
             <input type="checkbox" name="remember_me" id="remember_me">
