@@ -1277,5 +1277,30 @@ function session_is_started(){
 	
 	
 }
+
+function parse_mask2ports($vlanmask){
+	$vlanmask = str_replace("0x","", $vlanmask);
+	$bin = decbin(hexdec($vlanmask)); 
+	$bin = strrev($bin);
+	$size = strlen($bin);
+	$counter = 0;
+	$ports = "";
+	
+	for($i=0; $i<18; $i++){
+		if($bin[$i]=="1"){
+			$ports .= "wr".($i+1)." "; 
+			$counter++;
+			if($counter==4){
+				$ports .= "<br>";
+				$counter = 0;
+			}
+		}
+		
+	}
+	
+	
+    return $ports; 
+	
+}
 	
 ?>

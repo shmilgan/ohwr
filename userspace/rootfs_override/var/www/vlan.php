@@ -29,7 +29,7 @@
 		$vlans = explode("\n", $vlans);
 		
 		echo '<table align=center border="1" class="altrowstable" id="alternatecolor">';
-		echo '<tr align=center><th>VID</th><th>FID</th><th>MASK</th><th>DROP</th><th>PRIO</th><th>PRIO_OVERRIDE</th></tr>';
+		echo '<tr align=center><th>VID</th><th>FID</th><th>Ports</th><th>DROP</th><th>PRIO</th><th>Action</th></tr>';
 		$counter = 0;
 		foreach($vlans as $line){
 			$counter++;
@@ -37,9 +37,10 @@
 			if($counter>=2 && !empty($line)){
 				$line = explode(" ", $line);
 				if(strcmp($line[3],"0x")){
-					echo '<tr align=center><th>'.$line[1].'</th><th>'.$line[2].'</th><th>'.$line[3].'</th><th>'.$line[4].'</th><th>'.$line[5].'</th><th>'.$line[6].'</th><th><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></th></tr>';
+					
+					echo '<tr align=center><th>'.$line[1].'</th><th>'.$line[2].'</th><th>'.parse_mask2ports($line[3]).'</th><th>'.$line[4].'</th><th>'.$line[5].'</th><th><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></th></tr>';
 				}else{
-					echo '<tr align=center><th>'.$line[1].'</th><th>'.$line[2].'</th><th>'.$line[3].$line[4].'</th><th>'.$line[5].'</th><th>'.$line[6].'</th><th>'.$line[7].'</th><th><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></th></tr>';
+					echo '<tr align=center><th>'.$line[1].'</th><th>'.$line[2].'</th><th>'.parse_mask2ports($line[3].$line[4]).'</th><th>'.$line[5].'</th><th>'.$line[6].'</th><th><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></th></tr>';
 				}
 				
 			}
@@ -67,7 +68,6 @@
 					  <option value="4">4</option>
 					</select>
 				</th>
-				<th></th>
 				<th align=center><INPUT type=submit value="Add VLAN" class="btn"></th>
 			</form>
 		</tr>';

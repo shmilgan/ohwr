@@ -133,7 +133,7 @@
 			//We move the file to /wr/etc/
 			copy($tmpfile, $interface_file);
 			
-			echo '<center>New static configuration saved for eth0<br>Restarting network</center>';
+			echo '<center>New static configuration saved for eth0<br>Changes will take place after reboot.</center>';
 			
 			//Let's up eth0
 			shell_exec('/etc/init.d/S40network restart');

@@ -107,17 +107,17 @@
 			for($i = 0; $i < 18; $i++){
 				if(strcmp($_POST['vlan'.$i],"disabled")){ //VLAN selected
 					$vlan_cmd .= " --ep ".$i;
-					$vlan_cmd .= " --emode ".$_POST['mode'.$i];
-					$vlan_cmd .= " --eprio ".$_POST['prio'.$i];
-					$vlan_cmd .= " --evid ".$_POST['vlan'.$i];
-					if(!empty($_POST['mask'.$i]))$vlan_cmd .= " --eumask ".$_POST['mask'.$i];
+					if(!empty($_POST['mode'.$i])){$vlan_cmd .= " --emode ".$_POST['mode'.$i];}
+					if(!empty($_POST['prio'.$i])){$vlan_cmd .= " --eprio ".$_POST['prio'.$i];}
+					if(!empty($_POST['vlan'.$i])){$vlan_cmd .= " --evid ".$_POST['vlan'.$i];}
+					if(!empty($_POST['mask'.$i])){$vlan_cmd .= " --eumask ".$_POST['mask'.$i];}
 					$output = shell_exec($vlan_cmd);
 					echo '<br><p><center>Port WR'.($i+1).' added to VLAN'.$_POST['vlan'.$i].'</center></p>';
 					
 				}else{
 					if(!strcmp($_POST['mode'.$i],"2")){ //Disable VLAN for endpoint
 						$vlan_cmd .= " --ep ".$i;
-						$vlan_cmd .= " --emode ".$_POST['mode'.$i];
+						if(!empty($_POST['mode'.$i])){$vlan_cmd .= " --emode ".$_POST['mode'.$i];}
 						$output = shell_exec($vlan_cmd);
 						echo '<br><p><center>VLAN removed for port WR'.($i+1).'</center></p>';
 					}
@@ -131,7 +131,9 @@
 		
 
 	?>
-
+	<br><br><FORM align="right" method="POST" action="vlan.php" ENCTYPE="multipart/form-data">
+			<INPUT type=submit value="Go back" class="btn" >
+	</form>
 
 </div>
 </div>

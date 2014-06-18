@@ -26,11 +26,11 @@
 	
 	<?php 
 		$vlan_cmd = "/wr/bin/wrsw_vlans ";
-		$vlan_cmd .= " --rvid ".$_POST['vid'];
-		$vlan_cmd .= " --rfid ".$_POST['fid'];
-		$vlan_cmd .= " --rmask ".$_POST['mask'];
-		$vlan_cmd .= " --rdrop ".$_POST['drop'];
-		$vlan_cmd .= " --rprio ".$_POST['prio'];
+		if(!empty($_POST['vid'])){ $vlan_cmd .= " --rvid ".$_POST['vid'];}
+		if(!empty($_POST['fid'])){$vlan_cmd .= " --rfid ".$_POST['fid'];}
+		if(!empty($_POST['mask'])){$vlan_cmd .= " --rmask ".$_POST['mask'];}
+		if(!empty($_POST['drop'])){$vlan_cmd .= " --rdrop ".$_POST['drop'];}
+		if(!empty($_POST['prio'])){$vlan_cmd .= " --rprio ".$_POST['prio'];}
 		
 		shell_exec($vlan_cmd);
 		
