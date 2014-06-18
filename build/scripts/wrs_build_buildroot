@@ -114,7 +114,9 @@ fi
 
 # apply patches
 for n in ${WRS_BASE_DIR}/../patches/buildroot/00*; do
-    patch -p1 < $n || wrs_die "patch buildroot"
+    if test -f "$n"; then
+	patch -p1 < $n || wrs_die "patch buildroot"
+    fi
 done
 
 # We don't want CC to be pre-set at this point (some of us do :)
