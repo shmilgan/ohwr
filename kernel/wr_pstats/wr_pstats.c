@@ -312,6 +312,8 @@ static void __exit pstats_exit(void)
 	pstats_irq_disable(PSTATS_ALL_MSK);
 	free_irq(WRVIC_BASE_IRQ+WR_PSTATS_IRQ, &pstats_dev);
 
+	wr_nic_pstats_callback = NULL;
+
 	iounmap(pstats_dev.regs);
 	unregister_sysctl_table(pstats_header);
 
