@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month May 2014
+@set update-month June 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -566,7 +566,7 @@ Finally, the kernel should also load the proper device driver, and you
 are expected to see @code{/dev/ttyACM0} or equivalent in your system.
 This is the device used for flashing.
 
-If it is not the case, this mean that the button used to disable the dataflash
+If it is not the case, this means that the button used to disable the dataflash
 and enter @emph{"Flashing mode"} is not working. You should contact support.
 
 @c =============================================================================
@@ -1104,21 +1104,23 @@ the bug, or to the newer @i{barebox} that obsoletes @i{at91boot}.
 @section The Boot Loader
 
 The switch uses @i{barebox} as a boot loader. We are running version
-2012-05, with a few local patches and the chosen configuration
+2014-04, with a few local patches and the chosen configuration
 file. Note that we are piggy-backing on the Ronetix PM9G45 board, out
 of laziness.
 
-The patches are part of this package in @i{patches/barebox/v2012.05/} and
+The patches are part of this package in @i{patches/barebox/v2014.04/} and
 the set is made up of the following ones:
 
 @smallexample
    0001-sam945-include-mtd-nand.h-in-device-file.patch
    0002-arm-change-prompt-for-pm9263-wrs-piggy-backs-on-that.patch
    0003-nand-wrs-our-nand-is-16-bit-connected-fix-accordingl.patch
-   0004-add-DHCP-retries-by-tom.patch
-   0005-gpio-add-function-to-check-them.patch
-   0006-startup-load-default-environment-when-loading-env-fa.patch
-   0007-wrs-on-pm9g45-change-nand-setup.patch
+   0004-gpio-add-function-to-check-them.patch
+   0005-wrs-on-pm9g45-change-nand-setup.patch
+   0006-wrs-on-pm9g45-add-dataflash-initialization.patch
+   0007-barebox-add-MAC-addresses-to-environment.patch
+   0008-wrs-on-pm9g45-force-memory-to-64MB.patch
+   0009-pm9g45-init-for-wrs-move-environment-for-the-UBI-mov.patch
 @end smallexample
 
 If you build using a local @i{git} repository, we suggest to use
@@ -1130,14 +1132,14 @@ environment, and its own configuration and scripts live in a small
 filesystem.  To ease modification of such configuration and boot steps
 the build script copies over the configuration instead of patching it
 in the sources.  You can thus edit the files you find in
-@file{patches/barebox/v2012.05/env} and rebuild your customized bootloader.
+@file{patches/barebox/v2014.04/env} and rebuild your customized bootloader.
 The script that is executed at boot time is @file{env/bin/init} and as
 you see it calls the other ones.  The menus included in the shipped
 configuration are described in @ref{Booting with Barebox}.
 
 Building @i{barebox} relies on a @i{Kconfig} setup, and the
 configuration file we use is
-@file{patches/barebox/v2012.05/@-wrs3_defconfig}. Again, this is copied over and
+@file{patches/barebox/v2014.04/@-wrs3_defconfig}. Again, this is copied over and
 not patched in (see the simple @file{build/scripts/@-wrs_build_barebox}
 for details).
 
@@ -1188,8 +1190,12 @@ and are currently the following ones:
    0002-initramfs-stop-after-one-cpio-archive.patch
    0003-at91-NR_IRQS-increase-by-64-to-fit-custom-muxes.patch
    0004-irq-export-symbols-for-external-irq-controller.patch
-   0005-fix-nand-parition-layout-and-usb-vbus.patch
-   0006-fiq-support.patch
+   0005-Change-Vbus-pin.patch
+   0006-arm-fiq-allow-modules-to-exploit-the-fiq-mechanism.patch
+   0007-mtd-nand-sam9g45-can-hwecc-like-9263.patch
+   0008-wrs3-use-correct-nand-partitioning.patch
+   0009-at91-udc-force-full-speed.patch
+   0010-sam9m10g45ek-for-wrs-new-partitioning.patch
 @end example
 
 The configuration we use to build the kernel is not a patch but a plain
@@ -1227,7 +1233,7 @@ Currently, the package includes the following modules:
 @itemize @bullet
 @item @i{wr_vic.ko}: the interrupt controller for in-FPGA devices.
 @item @i{wr-nic.ko}: the network ``card'' driver for WR ports.
-@item @i{at91_softpwm}: a tool that generates a PWM signal for the fan.
+@item @i{at91_softpwm.ko}: a driver that generates a PWM signal for the fan.
 @item @i{wr_rtu.ko}: the routing-table interface between the
 switching core and the associated user-space daemon.
 @end itemize
@@ -1450,33 +1456,35 @@ it is the result of our own history of development and there are
 no problems with this ``strange'' split up of space:
 
 @example
-   0x0000.0000 - 0x0004.0000    Empty (space for a barebox)
-   0x0004.0000 - 0x0008.0000    Barebox environment
-   0x0008.0000 - 0x0010.0000    Empty
+   0x0000.0000 - 0x0010.0000    Barebox Environment
    0x0010.0000 - 0x0090.0000    Kernel (plenty of space)
    0x0090.0000 - 0x0400.0000    Empty
    0x0400.0000 - 0x0c00.0000    Filesystem space, jffs2
    0x0c00.0000 - 0x2000.0000    Available
 @end example
 
-When you boot Linux, the three empty areas are not visible, while
-the last area is accessible. This is the content of @file{/proc/mtd}
+When you boot Linux, the two empty areas are not visible, while
+the last area is accessible. Also, the @i{dataflash} partitioning
+is visible (thus, you can replace @t{barebox.bin} by just writing
+it to the right device file). This is the content of @file{/proc/mtd}
 after boot:
 
 @example
-   dev:    size   erasesize  name
-   mtd0: 00800000 00020000 "Kernel"
-   mtd1: 08000000 00020000 "Filesystem"
-   mtd2: 00040000 00020000 "Barebox Environment"
-   mtd3: 14000000 00020000 "Available"
-   mtd4: 00840000 00000420 "spi0.0-AT45DB642x"
+   mtd0: 00100000 00020000 "Barebox-environment-backup"
+   mtd1: 00800000 00020000 "Kernel"
+   mtd2: 08000000 00020000 "Filesystem"
+   mtd3: 14000000 00020000 "Available-nand"
+   mtd4: 00008400 00000420 "at91boot"
+   mtd5: 00084000 00000420 "Barebox"
+   mtd6: 00008400 00000420 "Barebox-Environment"
+   mtd7: 007ab800 00000420 "Available-dataflash"
 @end example
 
 If you are customizing the switch, you may use the
 @file{flash_erase} and @file{cat} to replace individual parts of
 the system, like the kernel, or erase the @i{barebox} configuration to
 restore the factory defaults.  Note however that you shouldn't
-modify the @i{dataflash} device (@code{/dev/mtd4}) unless you really
+modify the @i{dataflash} device (@code{/dev/mtd4-7}) unless you really
 know what you are doing (for example, the following chapter changes
 it by using magic offsets in the commands).
 
@@ -1639,7 +1647,7 @@ The first 4 lines are printed by @i{at91bootstrap}, the rest by @i{barebox}.
    ++++++++++++++++
    Loading image done.
 
-   barebox 2014.04.0 #1 Fri May 2 18:32:51 CEST 2014
+   barebox 2014.04.0 #1 Thu Jun 19 12:27:42 CEST 2014
 
    Board: White Rabbit Switch
    AT91: Detected soc type: at91sam9g45
@@ -1672,21 +1680,27 @@ at @code{/proc/mtd}:
 @c FIXME: mtd layout
 @example
    # cat /proc/mtd
-   dev:    size   erasesize  name
-   mtd0: 00800000 00020000 "Kernel"
-   mtd1: 08000000 00020000 "Filesystem"
-   mtd2: 00040000 00020000 "Barebox Environment"
-   mtd3: 14000000 00020000 "Available"
-   mtd4: 00840000 00000420 "spi0.0-AT45DB642x"
+   mtd0: 00100000 00020000 "Barebox-environment-backup"
+   mtd1: 00800000 00020000 "Kernel"
+   mtd2: 08000000 00020000 "Filesystem"
+   mtd3: 14000000 00020000 "Available-nand"
+   mtd4: 00008400 00000420 "at91boot"
+   mtd5: 00084000 00000420 "Barebox"
+   mtd6: 00008400 00000420 "Barebox-Environment"
+   mtd7: 007ab800 00000420 "Available-dataflash"
 @end example
 
-Here above, the DataFlash is @i{/dev/mtd4}, whereas the former partitions
-refer to NAND memory.  You should then write @i{at91boot} to offset 0
-of the DataFlash and @i{barebox} to offset 0x8400 (33792):
+Here above, the DataFlash is @i{/dev/mtd4} and later,
+whereas the former partitions
+refer to NAND memory.  You should then write @i{at91boot} to @t{/dev/mtd4}
+and @i{barebox} to @t{/dev/mtd5}, but the devices are not created
+by default:
 
 @example
+   mknod /dev/mtd4 c 90 8
    cat at91bootstrap.bin > /dev/mtd4
-   dd bs=33792 seek=1 if=barebox.bin of=/dev/mtd4
+   mknod /dev/mtd5 c 90 10
+   cat barebox.bin > /dev/mtd5
 @end example
 
 Now you can detach the debugger, press reset and see @i{barebox} starting
