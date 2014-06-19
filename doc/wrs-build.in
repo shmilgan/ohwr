@@ -1387,42 +1387,19 @@ does not leave a directory tree on disk because that would require
 administrator privileges. We think it is best not to call @i{sudo} from
 within build scripts, to respect our users' security concerns.
 
-The script creates three output files, that can be used in different
-situations, like @i{initramfs} or unpacking for NFS-Root.  All of them
-are around 15MB of data, and the flashing script only uses the first
-listed here:
+The script creates an archive for the whole filesystem,
+called @t{wrs-image.tar.gz}.  It is used by the installation
+procedure and it is ready to be unpacked for NFS-Root. It is currently 
+slightly less than 20MB of data.
 
-@table @code
-
-@item wrs-image.jffs2.img
-
-	This is a raw image in JFFS2 format, which is ready to be
-        written to NAND flash. This is used bt the USB flasher.
-
-@item wrs-image.cpio.gz
-
-	If you prefer to run an @i{initramfs} system, this is the file
-        you should use. We used it a lot during development, to avoid
-        wearing the flash device and wasting time waiting for the flasher
-        to run.
-
-@item wrs-image.tar.gz
-
-	We added this out of laziness, because it's easier to create
-        your NFS-Root directory from @i{tar} than from @i{cpio}.
-
-@end table
-
-You can uncompress either @i{cpio} or @i{tar}, for example to run NFS-root,
-by running one of the following commands in a newly-created empty directory:
+To make your NFS-root place, you can run
+the following command in a newly-created empty directory:
 
 @example
-   zcat $WRS_OUTPUT_DIR/images/wrs-image.cpio.gz | sudo cpio --extract
-
    tar xzf $WRS_OUTPUT_DIR/images/wrs-image.tar.gz
 @end example
 
-Each of the three archives include a number of device special files in
+The archives include a number of device special files in
 @i{dev}. The pre-created devices come from
 @i{userspace/devices.tar.gz}. Note that the buildroot output
 directory, @i{build/buildroot-2011.11/output/target} does not
