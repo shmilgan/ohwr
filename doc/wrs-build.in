@@ -789,7 +789,7 @@ Options:
   -h|--help	 Show this help message
   -m|--mode	 can be: default (df and nf), df (dataflash),
 		 nf (nandflash), ddr (ddr memories).
-  -g|--gateware	 Select the gateware: 18p (18 ports, default), 8p (8 ports), LX130T (small FPGA), LX240T (big FGPA)
+  -g|--gateware	 Select the gateware: 18p (18 ports, default), 8p (8 ports)
   -e 		 Completely erase the memory (Can erase your configuration)
   -b|--build	 Use files that you have built in the WRS_OUTPUT_DIR
   -m1|--mac1	 Default MAC address for the Ethernet port on board
@@ -822,11 +822,9 @@ install different binaries on these memories:
 @end itemize
 
 You can select which type of gateware you want to flash on your 
-switch. By default we only write on the nandflash the gateware 
-for 18 ports for both its light (@code{LX130T}) and full 
-(@code{LX240T}) FPGA size. If you know which type of FPGA you are 
-using (i.e, @code{LX240T}) and you want to have the gateware for 8 
-and 18 ports you can use the flag as below:
+switch. Currently we only support LX240T (the current circuit doesn't
+fit in the LX130T any more).  8-port images are sometimes used for
+testing. And you can select it like this:
 
 @smallexample
 $ ./build/flash-wrs --gateware LX240T <...>
