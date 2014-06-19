@@ -5,8 +5,10 @@ wr-nic-objs := module.o device.o nic-core.o endpoint.o ethtool.o \
 
 # accept WRN_DEBUG from the environment. It turns pr_debug() into printk.
 ifdef WRN_DEBUG
-	EXTRA_CFLAGS += -DDEBUG
+	ccflags-y += -DDEBUG
 endif
+
+ccflags-y += -I$(src)/../wr_pstats
 
 # What follows is standard stuff
 export ARCH ?= arm

@@ -425,17 +425,16 @@ void list_ep_vlans(void)
 	int ep;
 	static char *names[] = {"ACCESS", "TRUNK", "disabled", "unqualified"};
 
-	printf("#  QMODE FIX_PRIO  PRIO    PVID     MAC\n");
-	printf("#--------------------------------------\n");
+	printf("#      QMODE    FIX_PRIO  PRIO    PVID     MAC\n");
+	printf("#---------------------------------------------\n");
 	for (ep = 0; ep < NPORTS; ep++) {
 		r = offsetof(struct EP_WB, VCR0);
 		v = ep_read(ep, r);
-		printf(" %i %6s  %i  %i  %4i  %08x%04x\n",
-		       r & 3,
-		       names[r & 3],
-		       r & EP_VCR0_FIX_PRIO ? 1 : 0,
-		       EP_VCR0_PRIO_VAL_R(r),
-		       EP_VCR0_PVID_R(r),
+		printf(" %2i    %i %6.6s     %i      %i     %4i    %04x%08x\n",
+		       ep, v & 3, names[v & 3],
+		       v & EP_VCR0_FIX_PRIO ? 1 : 0,
+		       EP_VCR0_PRIO_VAL_R(v),
+		       EP_VCR0_PVID_R(v),
 		       (int)ep_read(ep, offsetof(struct EP_WB, MACH)),
 		       (int)ep_read(ep, offsetof(struct EP_WB, MACL)));
 	}
