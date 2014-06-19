@@ -13,11 +13,11 @@ WR_INCLUDE = $(WR_INSTALL_ROOT)/include
 WR_LIB = $(WR_INSTALL_ROOT)/lib
 
 # Use -DV3 with v3 HW (sets default PVID = 1 and checks for reserved VIDs)
-CFLAGS		= -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL \
+CFLAGS		= -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL -I../libwripc -I../wrsw_hal \
 			-I. -I../include -I$(WR_INCLUDE) -I$(LINUX)/include # -DV3
 # -I$(CROSS_COMPILE_ARM_PATH)/../include
 
-LDFLAGS 	:= -L. -L$(WR_LIB) \
+LDFLAGS 	:= -L. -L$(WR_LIB) -L../libwripc \
                -lswitchhw -lptpnetif -lminipc -lwripc -lpthread
 
 RM 	    := rm -f

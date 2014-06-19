@@ -12,10 +12,10 @@ WR_INCLUDE = $(WR_INSTALL_ROOT)/include
 WR_LIB = $(WR_INSTALL_ROOT)/lib
 
 CFLAGS = -g -Wall -DDEBUG \
-	-I. -I../include -I../3rdparty/include -I$(WR_INCLUDE)
+	-I. -I../include -I../3rdparty/include -I$(WR_INCLUDE) -I../libwripc
 
 LDFLAGS = -L$(WR_INSTALL_ROOT)/lib -L../3rdparty/lib -L$(WR_LIB) \
-	-L../rubi-repos/ptp-noposix \
+	-L../rubi-repos/ptp-noposix -L../libwripc \
 	-lswitchhw -lwripc -llua -lm
 
 all: $(BINARY)

@@ -15,7 +15,8 @@ MON_OBJS = wr_mon.o term.o
 CFLAGS += -O2 -DDEBUG -I$(LINUX)/include -I../include \
 	-I../libptpnetif -I../wrsw_hal -I../libwripc
 
-LDFLAGS =  -L$(WR_INSTALL_ROOT)/lib -lptpnetif -lwripc
+LDFLAGS =  -L$(WR_INSTALL_ROOT)/lib -L../libwripc -L../mini-rpc \
+	-lptpnetif -lwripc -lminipc
 
 BINARY = wr_mon
 

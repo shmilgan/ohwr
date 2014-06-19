@@ -10,13 +10,13 @@ WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
 WR_INCLUDE = $(WR_INSTALL_ROOT)/include
 WR_LIB = $(WR_INSTALL_ROOT)/lib
 
-CFLAGS := -fPIC -shared -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL \
-         -I. -I../include -I$(WR_INCLUDE) -I$(LINUX)/include \
+CFLAGS := -fPIC -shared -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL -I../wrsw_hal \
+         -I. -I../include -I../libwripc -I$(WR_INCLUDE) -I$(LINUX)/include \
          -I$(WRS_OUTPUT_DIR)/build/ptp-noposix/libwripc
 
 # -I$(CROSS_COMPILE_ARM_PATH)/../include
 
-LDFLAGS := -fPIC -shared -L. -L$(WR_LIB) \
+LDFLAGS := -fPIC -shared -L. -L$(WR_LIB) -L../libwripc \
            -lwripc -lminipc
 
 RM := rm -f
@@ -34,5 +34,5 @@ clean:
 install: all
 	install -d $(WR_INSTALL_ROOT)/lib
 	install $(LIB) $(WR_INSTALL_ROOT)/lib
-	install libminipc.so $(ROOTFS_OVERRIDE)/usr/lib
-	install libwripc.so $(ROOTFS_OVERRIDE)/usr/lib
+	#install libminipc.so $(ROOTFS_OVERRIDE)/usr/lib
+	#install libwripc.so $(ROOTFS_OVERRIDE)/usr/lib
