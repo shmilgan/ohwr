@@ -52,7 +52,7 @@ struct option ropts[] = {
 	{"evid", 1, NULL, OPT_EP_VID},
 	{"eprio", 1, NULL, OPT_EP_PRIO},
 	{"eumask", 1, NULL, OPT_EP_UMASK},
-	{"elist", 1, NULL, OPT_EP_LIST},
+	{"elist", 0, NULL, OPT_EP_LIST},
 	{"rvid", 1, NULL, OPT_RTU_VID},
 	{"rfid", 1, NULL, OPT_RTU_FID},
 	{"rmask", 1, NULL, OPT_RTU_PMASK},
@@ -213,6 +213,7 @@ int main(int argc, char *argv[])
 			case OPT_EP_LIST:
 				// list endpoint stuff
 				list_ep_vlans();
+				break;
 
 		  /****************************************************/
 			/* RTU settings */
