@@ -1,2 +1,9 @@
 wrsw_hal/wrsw_hal
 wrsw_rtud/wrsw_rtud
+wr_mon/wr_mon
+wrsw_mrp/libwrmrp.so
+wrsw_mvrp/libwrmvrp.so
+wrsw_mvrp/wrsw_mvrpd
+wrsw_rtud/libwrrtu.so
+wrsw_snmpd/ieee8021Qbridge/libieee8021qbridge.so
+wrsw_snmpd/ieee8021bridge/libieee8021bridge.so

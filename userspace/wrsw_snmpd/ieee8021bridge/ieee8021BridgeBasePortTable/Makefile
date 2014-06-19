@@ -8,7 +8,7 @@ WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
 WR_INCLUDE = $(WR_INSTALL_ROOT)/include
 WR_LIB = $(WR_INSTALL_ROOT)/lib
 
-CFLAGS 	= -fPIC -Wall -I. -I../../../wrsw_hal -I../../../../../build/ptp-noposix/libwripc `$(NET-SNMP-CONFIG) --cflags`
+CFLAGS 	= -fPIC -Wall -I. -I../../../wrsw_hal -I../../../libwripc `$(NET-SNMP-CONFIG) --cflags`
 
 OBJS =  ieee8021BridgeBasePortTable_data_get.o \
 	    ieee8021BridgeBasePortTable_data_set.o \

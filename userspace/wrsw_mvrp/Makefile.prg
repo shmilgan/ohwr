@@ -14,8 +14,8 @@ CFLAGS  := -O2 -DDEBUG -Wall -ggdb -DTRACE_ALL \
            -I. -I../include -I../wrsw_rtud -I../wrsw_mrp -I$(WR_INCLUDE) \
            -I$(LINUX)/include
 
-LDFLAGS := -L. -L$(WR_LIB) \
-           -lswitchhw -lwripc -lminipc -lwrrtu -lwrmrp
+LDFLAGS := -L. -L$(WR_LIB) -L../wrsw_mrp \
+           -lswitchhw -lwripc -lminipc -lwrrtu -lwrmrp -lm
 
 RM := rm -f
 

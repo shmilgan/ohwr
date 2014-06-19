@@ -13,7 +13,7 @@ CFLAGS = -fPIC -shared -I. -DV2 `$(NET-SNMP-CONFIG) --cflags` \
 
 
 LDFLAGS = -fPIC -shared `$(NET-SNMP-CONFIG) --ldflags` \
-          -L. -L$(WR_LIB) -lwrrtu -lwrmvrp
+          -L. -L$(WR_LIB) -L../../wrsw_mvrp -lwrrtu -lwrmvrp
 
 OBJS 	= \
 utils.o \

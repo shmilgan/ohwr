@@ -14,7 +14,7 @@ WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
 WR_INCLUDE = $(WR_INSTALL_ROOT)/include
 WR_LIB = $(WR_INSTALL_ROOT)/lib
 
-LDFLAGS = -fPIC -shared -L. -lwripc `$(NET-SNMP-CONFIG) --ldflags`
+LDFLAGS = -fPIC -shared -L. -L../../libwripc -lwripc `$(NET-SNMP-CONFIG) --ldflags`
 
 
 OBJS =  $(IEEE8021BRIDGEBASETABLE)_data_get.o \
@@ -62,7 +62,7 @@ all:
 install: all
 	install -d $(ROOTFS_OVERRIDE)/usr/lib
 	install $(LIB) $(ROOTFS_OVERRIDE)/usr/lib
-	install libwripc.so $(ROOTFS_OVERRIDE)/usr/lib
+#	install libwripc.so $(ROOTFS_OVERRIDE)/usr/lib
 
 clean:
 	rm -f $(LIB) $(OBJS)
