@@ -345,7 +345,7 @@ EOF
 	# Erase all nand memory
 	$FLASHER -e -m nand
 	# Start nand flashing procedure
-	$FLASHER -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${TMPCPIO} 0x1FFFFF8
+	$FLASHER -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${TMPCPIO} 0x17FFFF8
 
 	if $remove_temps; then
 	    rm $TMPSCRIPT
