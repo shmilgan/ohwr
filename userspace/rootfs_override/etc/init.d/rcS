@@ -1,5 +1,8 @@
 #!/bin/sh
-
+if [ -n "$WRS_VERBOSE" ]; then
+    set -x;
+    SH_X="sh -x"
+fi
 
 # Start all init scripts in /etc/init.d
 # executing them in numerical order.
@@ -21,7 +24,7 @@ for i in /etc/init.d/S??* ;do
 	    ;;
 	*)
 	    # No sh extension, so fork subprocess.
-	    $i start
+	    eval $SH_X $i start
 	    ;;
     esac
 done
