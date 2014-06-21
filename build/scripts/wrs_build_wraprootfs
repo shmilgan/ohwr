@@ -117,10 +117,29 @@ EOF
 
 fakeroot bash $WRS_SH_OPTIONS $TMPSCRIPT
 
-# finally, create the overall tarball for installation
-(cd "$WRS_OUTPUT_DIR/images"; \
-    tar cf wrs-firmware.tar zImage wrs-initramfs.gz wrs-usr.tar.gz)
+#### Finally, create the overall tarball for installation
 
+## Create a package for distribution. The package contains:
+#  - at91bootstrap.bin
+#  - barebox.bin
+#  - zImage
+#  - wrs-iniramfs.gz
+#  - wrs-usr.tar.gz
+# Actually, the pack is already built by "wrs_build_wraprootfs", so check
+packlist="at91bootstrap.bin barebox.bin zImage wrs-initramfs.gz wrs-usr.tar.gz"
+
+# Check if the current git repo correspond to a tag
+version=$(cd $WRS_BASE_DIR; git describe --always --dirty)
+# If prefix 'wr-switch-sw-' is not set in tagname, we force it to
+# 'wr-switch-sw-unof-'
+name=$(echo $version | sed  '/^wr-switch-sw-/! s/.*/wr-switch-sw-unof-\0/')
+# add date and suffix
+name="${name}-$(date +%Y%m%d)_binaries.tar"
+
+wrs_echo "--- Packing into $name";
+(cd "$WRS_OUTPUT_DIR/images"; tar cf "../$name"  $packlist) || exit 1
+
+# remove temporaries or keep them
 if [ -z "$CONFIG_KEEP_ROOTFS" ]; then
     rm -rf $TMPFS
     rm -rf $TMPSCRIPT
