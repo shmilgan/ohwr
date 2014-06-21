@@ -16,9 +16,10 @@
 # Startup the system
 ::sysinit:/bin/mount -t proc proc /proc
 #::sysinit:/bin/mount -o remount,rw / # REMOUNT_ROOTFS_RW
-::sysinit:/bin/mkdir -p /dev/pts
-::sysinit:/bin/mkdir -p /dev/shm
-::sysinit:/bin/mount -a
+
+# He re had several "mount" as sysinit actions; coalesce in one command only
+
+::sysinit:/etc/init.d/wrs-boot-procedure
 
 # now run any rc scripts
 ::sysinit:/etc/init.d/rcS

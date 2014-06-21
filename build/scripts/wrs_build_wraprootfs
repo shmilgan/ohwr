@@ -100,6 +100,10 @@ sed -i '/^default/ d' $TMPFS/etc/passwd
 # move /wr and /var to /usr/wr and /usr/var
 mv $TMPFS/wr  $TMPFS/usr; ln -s usr/wr  $TMPFS
 mv $TMPFS/var $TMPFS/usr; ln -s usr/var $TMPFS
+#
+mv ubi commands to /sbin: they are needed for boot time
+mv $TMPFS/usr/sbin/ubi* $TMPFS/sbin
+
 # copy /etc to /usr/etc, where it can be edited (boot sequence copies back)
 cp -a $TMPFS/etc $TMPFS/usr/etc
 
@@ -112,6 +116,10 @@ cp -a $TMPFS/etc $TMPFS/usr/etc
 EOF
 
 fakeroot bash $WRS_SH_OPTIONS $TMPSCRIPT
+
+# finally, create the overall tarball for installation
+(cd "$WRS_OUTPUT_DIR/images"; \
+    tar cf wrs-firmware.tar zImage wrs-initramfs.gz wrs-usr.tar.gz)
 
 if [ -z "$CONFIG_KEEP_ROOTFS" ]; then
     rm -rf $TMPFS
