@@ -63,7 +63,7 @@ typedef struct {
 	uint32_t offset;
 } sndfile;
 
-sndfile filearray[3];
+sndfile filearray[16];
 
 
 //External variable from version.c
