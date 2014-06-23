@@ -51,6 +51,10 @@
 #define MEMTYPE_DF 		1
 #define MEMTYPE_NAND 	2
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
+#endif
+
 const char* memName[3] = { "DDR", "DataFlash", "NandFlash" };
 
 
@@ -604,6 +608,11 @@ main(int argc, char *argv[])
 	//Obtain the various filename & offset (3 MAX)
 	for(nFile=0; optind < argc; nFile++)
 	{
+		if (nFile >= ARRAY_SIZE(filearray)) {
+			fprintf(stderr, "%s: too may arguments\n",
+				argv[0]);
+			exit(1);
+		}
 		filearray[nFile].fname=argv[optind++];
 		filearray[nFile].offset=getOffset(argv[optind++]);
 	}
