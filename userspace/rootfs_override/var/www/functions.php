@@ -7,6 +7,7 @@ $ppsiconf="ppsi.conf";
 $wrswhalconf="wrsw_hal.conf";
 $sfpdatabaseconf="sfp_database.conf";
 $wrdateconf="wr_date.conf";
+$vlancolor = array("#27DE2A", "#B642A8", "#6E42B6", "#425DB6" , "#428DB6", "#42B6B4", "#42B68B", "#42B65F", "#82B642", "#B6AE42", "#B67E42");
 
 /*
  * Displays the current status of each enpoint.
@@ -106,28 +107,28 @@ function wrs_main_info(){
 
 	$str = shell_exec("uname -n");
 	if(strcmp($str,"(none)")) shell_exec("/bin/busybox hostname -F /etc/hostname");
-	echo '<tr><th><b>Hostname:</b></th><th><center>'; $str = shell_exec("uname -n"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>Switch Mode:</b> </th><th><center>'; $str = check_switch_mode(); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>IP Address:</b> </th><th><center>'; $ip = shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'"); echo $ip;  
+	echo '<tr><th align=center><b><font color="darkblue">Hostname</font></b></th><th><center>'; $str = shell_exec("uname -n"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">Switch Mode</font></b> </th><th><center>'; $str = check_switch_mode(); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">IP Address</font></b> </th><th><center>'; $ip = shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'"); echo $ip;  
 			echo '(<a href="network.php">'; echo wrs_interface_setup(); echo '</a>)'; echo '</center></th></tr>';
-	echo '<tr><th> <b>HW Address:</b> </th><th><center>'; $mac = shell_exec("ifconfig eth0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'"); echo $mac; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">HW Address</font></b> </th><th><center>'; $mac = shell_exec("ifconfig eth0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'"); echo $mac; echo '</center></th></tr>';
 	//echo '<tr><th> <b>OS Release:</b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; echo '</center></th></tr>';
 	//echo '<tr><th> <b>OS name:</b> </th><th><center>'; $str = shell_exec("uname -s"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>OS Version:</b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; $str = shell_exec("uname -v"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">OS Version</font></b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; $str = shell_exec("uname -v"); echo $str; echo '</center></th></tr>';
 	
-	echo '<tr><th> <b>Gateware Version:</b> </th><th><center> '; $str = shell_exec("/wr/bin/shw_ver -g | grep version | awk '{ print $4}'");
+	echo '<tr><th  align=center> <b><font color="darkblue">Gateware Version</font></b> </th><th><center> '; $str = shell_exec("/wr/bin/shw_ver -g | grep version | awk '{ print $4}'");
 	echo '<a href="showfile.php?help_id=gateware&name=GateWare Info" onClick="showPopup(this.href);return(false);"</a>';
 	echo $str; echo '</center></th></tr>';
 	
-	echo '<tr><th> <b>PCB Version:</b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -p"); echo $str;  echo '</center></th></tr>';
-	echo '<tr><th> <b>FPGA:</b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -f"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>Compiling time:</b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -c"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>White-Rabbit Date:</b></th><th><center>'; $str = shell_exec("TZ=".$_SESSION['utc']." /wr/bin/wr_date get"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>PPSi:</b> </th><th><center>';  echo wrs_check_ptp_status() ? '[<A HREF="ptp.php">on</A>]' : '[<A HREF="ptp.php">off</A>]'; echo '</center></th></tr>';
-	echo '<tr><th> <b>Net-SNMP:</b> </th><th><center>';  echo check_snmp_status() ? '[on] ' : '[off] '; echo '&nbsp;&nbsp;ver. '; echo shell_exec("snmpd -v | grep version | awk '{print $3}'");
+	echo '<tr><th  align=center> <b><font color="darkblue">PCB Version</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -p"); echo $str;  echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">FPGA</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -f"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">Compiling Time</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -c"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">White-Rabbit Date</font></b></th><th><center>'; $str = shell_exec("TZ=".$_SESSION['utc']." /wr/bin/wr_date get"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">PPSi</font></b> </th><th><center>';  echo wrs_check_ptp_status() ? '[<A HREF="ptp.php">on</A>]' : '[<A HREF="ptp.php">off</A>]'; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">Net-SNMP Server</font></b> </th><th><center>';  echo check_snmp_status() ? '[on] ' : '[off] '; echo '&nbsp;&nbsp;ver. '; echo shell_exec("snmpd -v | grep version | awk '{print $3}'");
 			echo '( port '; $str = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf | grep agent | cut -d: -f3 | awk '{print $1}'"); echo $str; echo ')'; 	echo " <a href='help.php?help_id=snmp' onClick='showPopup(this.href);return(false);'> [OIDs]</a></center></th></tr>";
-	echo '<tr><th> <b>NTP Server:</b> </th><th><center> <A HREF="management.php">';  $str = check_ntp_server(); echo $str;	echo $_SESSION['utc']; echo '</A></center></th></tr>';
-	echo '<tr><th> <b>Max. Filesize Upload: </b></th><th><center>'; echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">NTP Server</font></b> </th><th><center> <A HREF="management.php">';  $str = check_ntp_server(); echo $str;	echo $_SESSION['utc']; echo '</A></center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">Max. Filesize Upload</font> </b></th><th><center>'; echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); echo '</center></th></tr>';
 	echo '</table>';
 	
 	
@@ -686,7 +687,23 @@ function wrs_management(){
 			
 			//Backup wrs firmware
 			
+		}  else if (!strcmp($cmd, "snmp")){
+			
+			if(check_snmp_status()){ //It is running
+				
+				//Stop SNMP
+				shell_exec("killall snmpd");
+				
+			}else{ //Not running
+				
+				shell_exec("/etc/init.d/S80snmp > /dev/null 2>&1 &");
+				
+			}
+			
+			header('Location: management.php');
 		}
+		
+		
 		
 }
 
@@ -785,34 +802,17 @@ function wrs_ptp_configuration(){
 		$cmd .= " -p ".htmlspecialchars($_POST["p"]); 
 		echo '<br>Priority changed to '.htmlspecialchars($_POST["p"]);
 	} 
-	if ((!empty($_POST["daemongroup"])) && (!strcmp(htmlspecialchars($_POST["daemongroup"]),"On"))){
+	
+	if(!strcmp($_POST['cmd'],"ppsiupdate")){
 		
-		//We must relaunch ptpd too. (by default)
-		shell_exec("killall ppsi"); 
-		$ptp_command = "/wr/bin/ppsi > /dev/null 2>&1 &";
-		$output = shell_exec($ptp_command); 
-		
-		//Relaunching wrsw_hal to commit endpoint changes
-		//shell_exec("killall wrsw_hal");
-		//shell_exec("/wr/bin/wrsw_hal -c ".$GLOBALS['etcdir']."wrsw_hal.conf > /dev/null 2>&1 &");
-		echo '<center>PPSi enabled!</center>';
+		if(wrs_check_ptp_status()){ //PPSi is enabled.
+			shell_exec("killall ppsi"); 	
+		}else{  //PPSi is disabled.
+			$ptp_command = "/wr/bin/ppsi > /dev/null 2>&1 &";
+			$output = shell_exec($ptp_command); 		
+		}
 		header('Location: ptp.php');
-		exit;
 		
-	}
-	if ((!empty($_POST["daemongroup"])) && (!strcmp(htmlspecialchars($_POST["daemongroup"]),"Off"))){
-		shell_exec("killall ppsi"); 
-		//shell_exec("killall wrsw_hal");
-		echo '<center>PPSi stopped!</center>';
-		header('Location: ptp.php');
-		exit;
-	}
-	if(!empty($cmd)){
-		shell_exec("killall ppsi"); 
-		$ptp_command = "/wr/bin/ppsi -c ".$cmd. "  > /dev/null 2>&1 &";
-		$output = shell_exec($ptp_command); 
-		echo '<center>PTP initialized.</center>';
-
 	}
 	if (!empty($_POST["clkclass"])){
 		$old_value= rtrim(shell_exec("cat ".$GLOBALS['etcdir'].$GLOBALS['ppsiconf']." | grep class "));
@@ -838,8 +838,8 @@ function wrs_ptp_configuration(){
 		$output = shell_exec($ptp_command); 
 		
 		//Relaunching wrsw_hal to commit endpoint changes
-		shell_exec("killall wrsw_hal");
-		shell_exec("/wr/bin/wrsw_hal -c ".$GLOBALS['etcdir']."wrsw_hal.conf > /dev/null 2>&1 &");
+		//shell_exec("killall wrsw_hal");
+		//shell_exec("/wr/bin/wrsw_hal -c ".$GLOBALS['etcdir']."wrsw_hal.conf > /dev/null 2>&1 &");
 		
 		header('Location: ptp.php');
 		exit;
@@ -979,6 +979,7 @@ function wrs_display_help($help_id, $name){
 			Options: <br>
 			- <b>Change mode:</b> Changes switch mode to Master/GrandMaster <br>
 			- <b>Reboot switch</b>: Reboots the switch <br>
+			- <b>Net-SNMP Server</b>: Enables/Disables remote management using SNMP <br>
 			- <b>NTP Server</b>: Sets the IP address of an external NTP server. By default it is configured as UTC, please use the second box to change it. This change is done on the webserver, not in the switch command line environment.<br>
 			- <b>Load Configuration Files</b>: You can upload individual configuration files to the switch (ppsi.conf, wrsw_hal.conf, snmp.conf, sfp_database.conf or a .tar.gz file with all of them.<br>
 			- <b>Backup Configuration Files</b>: Downloads a tar.gz file with all configuration files of the switch.<br>

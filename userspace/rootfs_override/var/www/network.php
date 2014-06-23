@@ -44,15 +44,15 @@
 						<table border="0" align="center">	
 							<tr>
 								<th align=left>IP Address: </th>
-								<th ><INPUT type="text" align="center" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'").'" readonly name="ip" ></th>
+								<th ><INPUT type="text" STYLE="text-align:center;" align="center" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'").'" readonly name="ip" ></th>
 							</tr>
 							<tr>
 								<th align=left>Netmask: </th>
-								<th><INPUT type="text" align="center" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f4 | awk '{ print $1}'").'" readonly name="netmask" ></th>
+								<th><INPUT type="text" STYLE="text-align:center;" align="center" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f4 | awk '{ print $1}'").'" readonly name="netmask" ></th>
 							</tr>
 							<tr>
 								<th align=left>Broadcast: </th>
-								<th><INPUT type="text" align="center" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f3 | awk '{ print $1}'").'"  readonly name="broadcast" ></th>
+								<th><INPUT type="text" STYLE="text-align:center;" align="center" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f3 | awk '{ print $1}'").'"  readonly name="broadcast" ></th>
 							</tr>
 						</table>';
 		}
@@ -89,23 +89,23 @@
 					<table border="0" align="center">	
 						<tr>
 							<th align=left>IP Address: </th>
-							<th><INPUT type="text" value="192.168.1.10" name="ip" ></th>
+							<th><INPUT STYLE="text-align:center;" type="text" value="192.168.1.10" name="ip" ></th>
 						</tr>
 						<tr>
 							<th align=left>Netmask: </th>
-							<th><INPUT type="text" value="255.255.255.0" name="netmask" ></th>
+							<th><INPUT STYLE="text-align:center;" type="text" value="255.255.255.0" name="netmask" ></th>
 						</tr>
 						<tr>
 							<th align=left>Network: </th>
-							<th><INPUT type="text" value="192.168.1.0" name="network" ></th>
+							<th><INPUT  STYLE="text-align:center;" type="text" value="192.168.1.0" name="network" ></th>
 						</tr>
 						<tr>
 							<th align=left>Broadcast: </th>
-							<th><INPUT type="text" value="192.168.1.255" name="broadcast" ></th>
+							<th><INPUT STYLE="text-align:center;" type="text" value="192.168.1.255" name="broadcast" ></th>
 						</tr>
 						<tr>
 							<th align=left>Gateway: </th>
-							<th><INPUT type="text" value="192.168.1.1" name="gateway" ></th>
+							<th><INPUT STYLE="text-align:center;" type="text" value="192.168.1.1" name="gateway" ></th>
 						</tr>
 					</table>
 					<INPUT type="submit" value="Save New Configuration" class="btn last">

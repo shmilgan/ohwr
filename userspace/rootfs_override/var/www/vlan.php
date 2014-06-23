@@ -22,6 +22,9 @@
 	<?php $_SESSION['advance']=""; ?>
 	
 	<?php
+	
+		
+	
 		echo '<center><strong>Existing VLANs</strong></center><hr>';
 		$tmp_vlan_file="/tmp/vlans.conf";
 		$vlans = shell_exec("/wr/bin/wrsw_vlans --list >".$tmp_vlan_file);
@@ -29,7 +32,7 @@
 		$vlans = explode("\n", $vlans);
 		
 		echo '<table align=center border="1" class="altrowstable" id="alternatecolor" width="100%">';
-		echo '<tr align=center><th>VID</th><th>FID</th><th>Ports</th><th>DROP</th><th>PRIO</th><th>Action</th></tr>';
+		echo '<tr align=center><th><font color="blue">Vlan ID</font></th><th><font color="blue">FID</font></th><th><font color="blue">Ports</font></th><th><font color="blue">Drop?</font></th><th><font color="blue">Priority</font></th><th><font color="blue">Action</font></th></tr>';
 		$counter = 0;
 		foreach($vlans as $line){
 			$counter++;
@@ -38,7 +41,7 @@
 				$line = explode(" ", $line);
 				if(strcmp($line[3],"0x")){
 					
-					echo '<tr align=center><th>'.$line[1].'</th><th>'.$line[2].'</th><th>'.parse_mask2ports($line[3]).'</th><th>'.$line[4].'</th><th>'.$line[5].'</th><th><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></th></tr>';
+					echo '<tr align=center><th bgcolor="'.$vlancolor[$line[1]].'">VLAN '.$line[1].'</th><th>'.$line[2].'</th><th>'.parse_mask2ports($line[3]).'</th><th>'.$line[4].'</th><th>'.$line[5].'</th><th><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></th></tr>';
 				}else{
 					echo '<tr align=center><th>'.$line[1].'</th><th>'.$line[2].'</th><th>'.parse_mask2ports($line[3].$line[4]).'</th><th>'.$line[5].'</th><th>'.$line[6].'</th><th><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></th></tr>';
 				}
@@ -72,9 +75,39 @@
 			</form>
 		</tr>';
 		echo '</table>';
+		?>
+		
+		<br><p align="right"><A HREF="delvlan.php?vlan=all" onclick="return confirm('You are deleting all VLANs, are you sure?')">Delete All VLANs</A></p>
+		
+		<?php
+		//Display Port2Vlan assignment
+		echo '<br><br>';
+		echo '<center><strong>Port2Vlan assignments</strong></center><hr>';
+		echo '<table align=center border="1" class="altrowstable" id="alternatecolor1" width="100%">';
+		echo '<tr align=center><th><font color="blue">Port</font></strong></th><th><font color="blue">QMode</font></th><th><font color="blue">Priority</font></th><th><font color="blue">VLAN ID</font></th><th><font color="blue">MAC Address</font></th></tr>';
+		
+		$tmp_vlan_file="/tmp/port2vlan.conf";
+		$vlans = shell_exec("/wr/bin/wrsw_vlans --elist >".$tmp_vlan_file);
+		$vlans = shell_exec("cat ".$tmp_vlan_file." |  sed -n '/ /s/ \+/ /gp'");
+		$vlans = explode("\n", $vlans);
+		
+		$counter = 0;
+		foreach($vlans as $line){
+			$counter++;
+			
+			if($counter>=2 && !empty($line)){
+				$line = explode(" ", $line);
+					
+				echo '<tr align=center><th>WR'.($line[1]+1).'</th><th>'.$line[2]." (".$line[3].')</th><th>'.($line[5]).'</th><th bgcolor="'.$vlancolor[$line[6]].'">VLAN '.$line[6].'</th><th>'.$line[7].'</th></th></tr>';
+
+			}
+         
+		}
+		
+		echo '</table>';
 		
 		?>
-		<br><p align="right"><A HREF="delvlan.php?vlan=all" onclick="return confirm('You are deleting all VLANs, are you sure?')">Delete All VLANs</A></p>
+		
 		
 		<br><br><br><br><hr><p align="right"><A HREF="port2vlan.php">Assign Ports to VLANs</A></p>
 		

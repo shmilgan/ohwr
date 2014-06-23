@@ -24,28 +24,34 @@
 	<table border="0" align="center">	
 	<tr>
 	<center>
-	<form  method="post">
-		<th>Switch Mode: (<?php  $str = check_switch_mode(); echo $str; ?>)</th>
-		<input type="hidden" name="cmd" value="change">
-		<th><input type="submit" value="Change Mode" class="btn"></th>
-	</form>
+		<form  method="post">
+			<th>Switch Mode: (<?php  $str = check_switch_mode(); echo $str; ?>)</th>
+			<input type="hidden" name="cmd" value="change">
+			<th><input type="submit" value="Change Mode" class="btn"></th>
+		</form>
 	</tr>
 	<tr>
-	<form  method="post">
-		<th>Reboot system: </th>
-		<input type="hidden" name="cmd" value="reboot">
-		<th><input type="submit" value="Reboot switch" class="btn">	</th>
-	</form>
+		<form  method="post">
+			<th>Reboot system: </th>
+			<input type="hidden" name="cmd" value="reboot">
+			<th><input type="submit" value="Reboot switch" class="btn">	</th>
+		</form>
 	</center>
 	</tr>
-	
+	<tr>
+		<form  method="post">
+			<th align=left>Net-SNMP Server: </th>
+			<input type="hidden" name="cmd" value="snmp">
+			<th><INPUT type="submit" STYLE="text-align:center;" value="<?php echo (check_snmp_status()) ? 'Disable SNMP' : 'Enable SNMP'; ?>" class="btn"></th>	
+		</form>
+	</tr>
 	</table>
 		
 
 	<table border="0" align="center">	
 		<tr>
 			<form  method="post">
-			<th><center>NTP Server:</center></th><th><INPUT type="text" name="ntpip" value="<?php  $str = check_ntp_server(); echo $str; ?>"> </th>
+			<th><center>NTP Server:</center></th><th><INPUT type="text" STYLE="text-align:center;" name="ntpip" value="<?php  $str = check_ntp_server(); echo $str; ?>"> </th>
 			<th><input type="hidden" name="cmd" value="ntp">
 			<select name="utc" >
 					<?php 
@@ -75,10 +81,11 @@
 						}
 					?>
 			</th>
+			
 			<th><input type="submit" value="Add NTP Server" class="btn"></th>
 			</form>
 		</tr>
-		
+
 	</table>
 	<hr>
 	<br><br>

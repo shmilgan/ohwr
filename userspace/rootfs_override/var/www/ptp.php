@@ -24,9 +24,8 @@
 	<FORM method="POST">
 	<table id="daemon" border="0" align="center">	
 			<tr>
-				<th align=left>PPSi Daemon: </th>
-				<th><input type="radio" name="daemongroup" value="On" <?php echo (wrs_check_ptp_status()) ? 'checked' : ''; ?> > On <br>
-					<input type="radio" name="daemongroup" value="Off" <?php echo (wrs_check_ptp_status()) ? '' : 'checked'; ?> > Off <br>
+				<th align=center>PPSi Daemon: </th>
+				<input type="hidden" name="cmd" value="ppsiupdate">
 				<th><INPUT type="submit" value="<?php echo (wrs_check_ptp_status()) ? 'Disable PPSi' : 'Enable PPSi'; ?>" class="btn"></th>	
 			</tr>
 	</table>
@@ -38,11 +37,11 @@
 		<table border="0" align="center">	
 			<tr>
 				<th align=left>Clock Class: </th>
-				<th><INPUT type="text" name="clkclass" value="<?php echo shell_exec("cat ".$GLOBALS['etcdir'].$GLOBALS['ppsiconf']." | grep class | awk '{print $2}'");?>" ></th>
+				<th><INPUT type="text" STYLE="text-align:center;" size="10" name="clkclass" value="<?php echo shell_exec("cat ".$GLOBALS['etcdir'].$GLOBALS['ppsiconf']." | grep class | awk '{print $2}'");?>" ></th>
 			</tr>
 			<tr>
 				<th align=left>Clock Accuracy: </th>
-				<th><INPUT type="text" name="clkacc" value="<?php echo shell_exec("cat ".$GLOBALS['etcdir'].$GLOBALS['ppsiconf']." | grep accuracy | awk '{print $2}'");?>"></th>
+				<th><INPUT type="text" STYLE="text-align:center;" size="10" name="clkacc" value="<?php echo shell_exec("cat ".$GLOBALS['etcdir'].$GLOBALS['ppsiconf']." | grep accuracy | awk '{print $2}'");?>"></th>
 			</tr>
 <!--
 			<tr>
@@ -79,7 +78,7 @@
 			</tr>
 -->
 		</table>
-		<INPUT type="submit" value="Update & Relaunch" class="btn last">
+		<INPUT align="right" type="submit" value="Update & Relaunch" class="btn last">
 		</FORM>
 		
 		

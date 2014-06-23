@@ -52,7 +52,7 @@
 	<hr>
 	<FORM align="right" method="post">
 	<input type="hidden" name="hal" value="hal">
-	<INPUT type="submit" value="Reboot PPSi&Hal daemons" class="btn">
+	<INPUT type="submit" value="Restart PPSi" class="btn">
     </FORM>
     
     <?php
@@ -63,8 +63,8 @@
 			$output = shell_exec($ptp_command); 
 			
 			//Relaunching wrsw_hal to commit endpoint changes
-			shell_exec("killall wrsw_hal");
-			shell_exec("/wr/bin/wrsw_hal -c ".$GLOBALS['etcdir']."wrsw_hal.conf > /dev/null 2>&1 &");
+			//shell_exec("killall wrsw_hal");
+			//shell_exec("/wr/bin/wrsw_hal -c ".$GLOBALS['etcdir']."wrsw_hal.conf > /dev/null 2>&1 &");
 			
 			
 		}
