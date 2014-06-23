@@ -558,8 +558,8 @@ main(int argc, char *argv[])
 	int run =0 ;
 
 
-	program_name = basename(argv[0]);
-	program_path = dirname(argv[0]);
+	program_name = basename(strdup(argv[0]));
+	program_path = dirname(strdup(argv[0]));
 
 	if(argc==1)
 	{
