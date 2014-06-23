@@ -66,18 +66,21 @@ struct s_port_vlans vlans[NPORTS];
 
 unsigned long portmask;
 
-static inline int nextport(int i) /* helper for for_each_port() below */
+static inline int nextport(int i, unsigned long pmask) /* helper for for_each_port() below */
 {
 	while (++i < NPORTS)
-		if (portmask & (1 << i))
+		if (pmask & (1 << i))
 			return i;
 	return -1;
 }
 
-#define for_each_port(i) \
-	for (i = -1; (i = nextport(i)) >= 0;)
+#define iterate_ports(i, pmask) \
+	for (i = -1; (i = nextport(i, pmask)) >= 0;)
 
-static int parse_mask(char *arg)
+#define for_each_port(i) \
+	iterate_ports(i, portmask)
+
+static int parse_mask(char *arg, unsigned long *pmask)
 {
 	int p1, p2;
 	char c, *newarg, *s;
@@ -95,14 +98,16 @@ static int parse_mask(char *arg)
 		}
 		if ((p1 > p2) || (p1 < 0) || (p2 >= NPORTS))
 			return -1;
-		for (; p1 <= p2; p1++)
+		for (; p1 <= p2; p1++) {
+			*pmask |= (1 << p1);
 			portmask |= (1 << p1);
+		}
 	}
 	if (!debug)
 		return 0;
 
 	fprintf(stderr, "%s: working on ports:", prgname);
-	for_each_port(p1)
+	iterate_ports(p1, *pmask)
 		printf(" %i", p1);
 	printf("\n");
 	return 0;
@@ -122,7 +127,8 @@ static void exit_mask(int present)
 
 int main(int argc, char *argv[])
 {
-	int c, i, arg, mask_ok = 0;
+	int c, i, arg;
+	unsigned long conf_pmask;	//current '--ep' port mask for which we parse other args
 
 	prgname = argv[0];
 
@@ -153,19 +159,15 @@ int main(int argc, char *argv[])
 		switch(c) {
 			case OPT_EP_PORT:
 				//port number
-				if (mask_ok)
-					exit_mask(mask_ok);
-				if (parse_mask(optarg) < 0) {
+				conf_pmask = 0;
+				if (parse_mask(optarg, &conf_pmask) < 0) {
 					fprintf(stderr, "%s: wrong port mask "
 						"\"%s\"\n", prgname, optarg);
 					exit(1);
 				}
-				mask_ok = 1;
 
 				break;
 			case OPT_EP_QMODE:
-				if (!mask_ok)
-					exit_mask(mask_ok);
 
 				//qmode for port
 				arg = atoi(optarg);
@@ -174,7 +176,7 @@ int main(int argc, char *argv[])
 						prgname, arg, optarg);
 					exit(1);
 				}
-				for_each_port(i) {
+				iterate_ports(i, conf_pmask) {
 					vlans[i].qmode = arg;
 					vlans[i].valid_mask |= VALID_QMODE;
 					/* untag is all-or-nothing: default untag if access mode */
@@ -184,7 +186,7 @@ int main(int argc, char *argv[])
 				break;
 			case OPT_EP_PRIO:
 				//priority value for port, forces fix_prio=1
-				for_each_port(i) {
+				iterate_ports(i, conf_pmask) {
 					vlans[i].prio_val = atoi(optarg);
 					vlans[i].fix_prio = 1;
 					vlans[i].valid_mask |= VALID_PRIO;
@@ -192,7 +194,7 @@ int main(int argc, char *argv[])
 				break;
 			case OPT_EP_VID:
 				//VID for port
-				for_each_port(i) {
+				iterate_ports(i, conf_pmask) {
 					vlans[i].vid = atoi(optarg);
 					vlans[i].valid_mask |= VALID_VID;
 				}
@@ -205,7 +207,7 @@ int main(int argc, char *argv[])
 						prgname, arg, optarg);
 					exit(1);
 				}
-				for_each_port(i) {
+				iterate_ports(i, conf_pmask) {
 					vlans[i].untag_mask = arg;
 					vlans[i].valid_mask |= VALID_UNTAG;
 				}
