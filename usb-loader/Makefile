@@ -1,6 +1,8 @@
 OBJS=mch_flasher.o serial_linux.o version.o
 OUTPUT=mch_flasher
 
+CFLAGS = -Wall
+
 all:	$(OBJS)
 		${CC} -o $(OUTPUT) $(OBJS)
 

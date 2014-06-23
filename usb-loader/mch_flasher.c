@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
@@ -82,7 +83,7 @@ unsigned int buffer_addr ;
 
 
 
-
+int mem_write(int type, uint32_t offset, uint32_t buf_addr, uint32_t size);
 
 int crc16(int value, int crcin)
 {
@@ -102,9 +103,9 @@ int crc16(int value, int crcin)
 }
 
 
-static int write_xmodem(int index, char *p)
+int write_xmodem(int index, char *p)
 {
-	unsigned char data[133],c;
+	unsigned char data[133];
 	unsigned short crc=0;
 	int i;
 	data[0]=1;
@@ -141,7 +142,7 @@ void die(const char *fmt, ...)
 
 void samba_write (uint32_t addr, uint32_t data, int size, int timeout)
 {
-	char tmpbuf[1024],c;
+	char tmpbuf[1024];
 	uint32_t tstart;
 
 	serial_purge();
@@ -212,12 +213,8 @@ static int samba_send_file(const char *filename, uint32_t address, uint32_t offs
 {
 	FILE *f;
 	unsigned char *buf;
-	uint32_t file_size, sent;
-	int idx = 0;
 	int boffset = 0;
 	char tmp[4097];
-
-	uint32_t tstart;
 
 	//    printf("SendFile: %s\n", filename);
 
@@ -338,9 +335,7 @@ void samba_run(uint32_t addr, int timeout)
 
 int samba_connect(int board_rev)
 {
-	char handshake[] = {0x80, 0x80, 0x23}, cmd[128], buffer[16384];
-	int tstart,i,length,npages;
-	int c;
+	char handshake[] = {0x80, 0x80, 0x23};
 
 	serial_write(handshake,3);
 	sys_delay(100);
@@ -501,6 +496,7 @@ int mem_write(int type, uint32_t offset, uint32_t buf_addr, uint32_t size)
 	if(samba_read(INTERNAL_SRAM_BUF + MBOX_STATUS, 4, 10000000) != APPLET_SUCCESS) die(" write failure");
 
 	printf(" OK\n");
+	return 0;
 }
 
 void nand_scrub()
@@ -548,7 +544,7 @@ void show_help(const char* serial_port)
 	printf("\n");
 }
 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int board_rev  = BOARD_REV_V3;
 	char *serial_port = "/dev/ttyACM0";
@@ -556,8 +552,7 @@ main(int argc, char *argv[])
 	char opt;
 	int erase=0, check=0, scrub=0;
 	int type=-1;
-	unsigned int offset=0, run_addr=0;
-	int noopts=1;
+	unsigned int run_addr=0;
 	int nFile=0;
 	int run =0 ;
 

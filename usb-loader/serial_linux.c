@@ -20,6 +20,7 @@
 #include <string.h>
 #include <termios.h>
 #include <fcntl.h>
+#include "serial.h"
 
 static int serial_fd = -1;
 
@@ -68,10 +69,10 @@ void serial_close()
     close(serial_fd);
 }
 
-int serial_write(char *data, int len)
+int serial_write(void *data, int len)
 {
 //    printf("WS: '");
-    int i;
+//    int i;
 //    for(i=0;i<len;i++) printf("%c", data[i]);
 //    printf("'\n");
 
@@ -79,7 +80,7 @@ int serial_write(char *data, int len)
 }
 
 
-int serial_read(char *data, int len)
+int serial_read(void *data, int len)
 {
     int nbytes=0;
     while(len)
