@@ -24,6 +24,7 @@ echo '<div class="login">
 }else{
 	
 	//The rest of the menu for logged users
+	echo '<li><a href="network.php"> Network Setup </a></li>';
 	echo '<li><a href="ptp.php"> PPSi Setup </a></li>';
 	echo '<li><a href="endpointmode.php">  Endpoint Mode</a></li>';
 	echo '<li><a href="vlan.php"> VLAN Setup </a></li>';

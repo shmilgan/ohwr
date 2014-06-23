@@ -19,23 +19,17 @@
 <h1 class="title">Firmware Management <a href='help.php?help_id=firmware' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 	<?php session_is_started() ?>
-	<?php $_SESSION['advance']=""; ?>
+	<?php $_SESSION['advance']="";?>
 
 	<table border="0" align="center">	
 		<tr>
-			<form method="post">
-			<th>New PHP filesize: (<?php wrs_php_filesize();?>M) <INPUT type="text" name="size" ></th>
-			<input type="hidden" name="cmd" value="size">
-			<th><input type="submit" value="Change" class="btn"></th>
-			</form>
-		</tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr></tr><tr>
 			<FORM method="POST" ENCTYPE="multipart/form-data" onsubmit="return confirm('Are you sure you want to upload and flash a new firmware?');">
 			<th ><INPUT type=file name="file" ></th>
-			<th><INPUT type=submit value="Flash Firmware" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></th>
+			<th><INPUT type=submit value="Flash Firmware" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE=<?php echo wrs_php_filesize();?>000></th>
 			</FORM>
 		</tr><tr></tr><tr></tr><tr>
 			<FORM method="POST" ENCTYPE="multipart/form-data" >
-			<th>Download a backup of the entire wrs</th>
+			<th align=center>Download a backup of the entire Switch</th>
 			<th><INPUT type=submit value="Backup Firmware" class="btn"><input type="hidden" name="cmd" value="backup-wrs"></th>
 			</FORM>
 		</tr>

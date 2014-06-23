@@ -7,7 +7,8 @@ $ppsiconf="ppsi.conf";
 $wrswhalconf="wrsw_hal.conf";
 $sfpdatabaseconf="sfp_database.conf";
 $wrdateconf="wr_date.conf";
-$vlancolor = array("#27DE2A", "#B642A8", "#6E42B6", "#425DB6" , "#428DB6", "#42B6B4", "#42B68B", "#42B65F", "#82B642", "#B6AE42", "#B67E42");
+$vlancolor = array("#27DE2A", "#B642A8", "#6E42B6", "#425DB6" , "#428DB6", "#4686B6", "#43B88B", "#42B65F", "#82B642", "#B6AE42", "#B67E42");
+$MAX_PHP_FILESIZE = 40;
 
 /*
  * Displays the current status of each enpoint.
@@ -100,6 +101,9 @@ function wrs_header_ports(){
  */
 function wrs_main_info(){
 	
+	//Changing php filesize in case it is necessary
+	if(wrs_php_filesize()<$MAX_PHP_FILESIZE){php_file_transfer_size($MAX_PHP_FILESIZE);}
+	
 	if(empty($_SESSION["utc"])) $_SESSION["utc"]="UTC";
 	
 	echo "<table border='1' align='center' class='altrowstabledash' id='alternatecolor'>";
@@ -114,20 +118,20 @@ function wrs_main_info(){
 	echo '<tr><th  align=center> <b><font color="darkblue">HW Address</font></b> </th><th><center>'; $mac = shell_exec("ifconfig eth0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'"); echo $mac; echo '</center></th></tr>';
 	//echo '<tr><th> <b>OS Release:</b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; echo '</center></th></tr>';
 	//echo '<tr><th> <b>OS name:</b> </th><th><center>'; $str = shell_exec("uname -s"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">OS Version</font></b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; $str = shell_exec("uname -v"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">Kernel Version</font></b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; $str = shell_exec("uname -v"); echo $str; echo '</center></th></tr>';
 	
-	echo '<tr><th  align=center> <b><font color="darkblue">Gateware Version</font></b> </th><th><center> '; $str = shell_exec("/wr/bin/shw_ver -g | grep version | awk '{ print $4}'");
+	echo '<tr><th  align=center> <b><font color="darkblue">Firmware Version</font></b> </th><th><center> '; $str = shell_exec("/wr/bin/shw_ver  |  awk '{print $4}'");
 	echo '<a href="showfile.php?help_id=gateware&name=GateWare Info" onClick="showPopup(this.href);return(false);"</a>';
 	echo $str; echo '</center></th></tr>';
 	
 	echo '<tr><th  align=center> <b><font color="darkblue">PCB Version</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -p"); echo $str;  echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">FPGA</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -f"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">Compiling Time</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -c"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">Compiling Date</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -c"); echo $str; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">White-Rabbit Date</font></b></th><th><center>'; $str = shell_exec("TZ=".$_SESSION['utc']." /wr/bin/wr_date get"); echo $str; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">PPSi</font></b> </th><th><center>';  echo wrs_check_ptp_status() ? '[<A HREF="ptp.php">on</A>]' : '[<A HREF="ptp.php">off</A>]'; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">Net-SNMP Server</font></b> </th><th><center>';  echo check_snmp_status() ? '[on] ' : '[off] '; echo '&nbsp;&nbsp;ver. '; echo shell_exec("snmpd -v | grep version | awk '{print $3}'");
 			echo '( port '; $str = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf | grep agent | cut -d: -f3 | awk '{print $1}'"); echo $str; echo ')'; 	echo " <a href='help.php?help_id=snmp' onClick='showPopup(this.href);return(false);'> [OIDs]</a></center></th></tr>";
-	echo '<tr><th  align=center> <b><font color="darkblue">NTP Server</font></b> </th><th><center> <A HREF="management.php">';  $str = check_ntp_server(); echo $str;	echo $_SESSION['utc']; echo '</A></center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">NTP Server</font></b> </th><th><center> <A HREF="management.php">';  $str = check_ntp_server(); echo $str; echo '</A> ['.$_SESSION['utc'].']</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">Max. Filesize Upload</font> </b></th><th><center>'; echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); echo '</center></th></tr>';
 	echo '</table>';
 	
@@ -224,6 +228,8 @@ function php_file_transfer_size($size){
 	// We remove the blank space
 	$size=trim($size);
 	
+		
+	wrs_change_wrfs("rw");
 	// We modify fist upload_max_filesize in php.ini
 	$prev_size = shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'");
 	$prev_size=trim($prev_size);
@@ -235,6 +241,7 @@ function php_file_transfer_size($size){
 	$prev_size=trim($prev_size);
 	$cmd ="sed -i 's/post_max_size = ".$prev_size."/post_max_size = ".$size."M/g' /etc/php.ini";
 	shell_exec($cmd);
+	wrs_change_wrfs("ro");
 	
 	//echo '<p align=center>File upload size changed to '.$size.'</p>';	
 }
@@ -431,7 +438,7 @@ function wrs_php_filesize(){
 	
 	 $size=shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); 
 	 $size=substr($size, 0, -2);
-	 echo $size;
+	 return $size;
 	
 }
 
@@ -1049,7 +1056,6 @@ function wrs_display_help($help_id, $name){
 		
 	} else if (!strcmp($help_id, "firmware")){
 		$message = "<p>Firmware features: <br>
-					- <b>PHP Filesize</b>: It changes the max. size of the files that can be uploaded to the switch (40 MegaBytes by default)<br>
 					- <b>Flash firmware</b>: It moves a binary file into the /tmp folder<br>
 					- <b>Backup firmware</b>: It downloads a copy of the entire WRS to your PC<br>
 					</p>";

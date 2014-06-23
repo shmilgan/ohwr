@@ -103,7 +103,7 @@
 			}
          
 		}
-		
+		echo '<tr><th></th><th></th><th></th><th></th><th align=center><FORM method="POST" action="port2vlan.php"><INPUT type=submit align=center value="Edit Table" class="btn"></form></th></tr>';
 		echo '</table>';
 		
 		?>

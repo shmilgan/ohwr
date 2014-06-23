@@ -16,7 +16,7 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Network Interface Setup <a href='help.php?help_id=network' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
+<h1 class="title">Network Management <a href='help.php?help_id=network' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 	<?php session_is_started() ?>
 	<?php $_SESSION['advance']=""; ?>
@@ -39,9 +39,12 @@
 	
 		if((empty($_POST["networkgroup"]))){
 			
-			echo '<center>Current eth0 setup<br></center>';
+			
 			echo '
-						<table border="0" align="center">	
+						<table border="0"  class="altrowstable" id="alternatecolor" align="center">	
+							<tr>
+								<th><font color="blue">Current eth0</font></th>
+							</tr><tr></tr><tr></tr>
 							<tr>
 								<th align=left>IP Address: </th>
 								<th ><INPUT type="text" STYLE="text-align:center;" align="center" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'").'" readonly name="ip" ></th>
@@ -86,7 +89,7 @@
 		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"Static"))){
 			//shell_exec('sed -i "s/iface eth0 inet dhcp/#iface eth0 inet dhcp/g" /etc/network/interfaces');
 			echo '<FORM method="POST">
-					<table border="0" align="center">	
+					<table border="0" align="center" class="altrowstable" id="alternatecolor">	
 						<tr>
 							<th align=left>IP Address: </th>
 							<th><INPUT STYLE="text-align:center;" type="text" value="192.168.1.10" name="ip" ></th>
