@@ -138,7 +138,8 @@ name=$(echo $version | sed  '/^wr-switch-sw-/! s/.*/wr-switch-sw-unof-\0/')
 name="${name}-$(date +%Y%m%d)_binaries.tar"
 
 wrs_echo "--- Packing into $name";
-(cd "$WRS_OUTPUT_DIR/images"; tar cf "../$name"  $packlist) || exit 1
+(cd "$WRS_OUTPUT_DIR/images" && tar cf wrs-firmware.tar  $packlist) || exit 1
+(cd "$WRS_OUTPUT_DIR/images" && cp wrs-firmware.tar ../$name) || exit 1
 
 # remove temporaries or keep them
 if [ -z "$CONFIG_KEEP_ROOTFS" ]; then
