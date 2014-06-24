@@ -12,7 +12,7 @@ CFLAGS  = -fPIC   $$($(NET_SNMP_CONFIG) --cflags)
 LDFLAGS = -shared $$($(NET_SNMP_CONFIG) --ldflags)
 
 SHLIB = wrsSnmp.so
-SOURCES = wrsPstats.c
+SOURCES = init.c wrsPstats.c
 OBJECTS = $(SOURCES:.c=.o)
 
 all: $(SHLIB)
