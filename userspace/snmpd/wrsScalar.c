@@ -8,6 +8,9 @@
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 #include "wrsScalar.h"
 
+#include <stdint.h>
+static uint32_t fakeStatValue;
+
 /** Initializes the wrsScalar module */
 void
 init_wrsScalar(void)
@@ -44,13 +47,10 @@ handle_wrsScalarOne(netsnmp_mib_handler *handler,
     switch (reqinfo->mode) {
 
     case MODE_GET:
+        fakeStatValue++;
         snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-                                 /*
-                                  * XXX: a pointer to the scalar's data 
-                                  */ ,
-                                 /*
-                                  * XXX: the length of the data in bytes 
-                                  */ );
+                                 &fakeStatValue,
+                                 sizeof(fakeStatValue));
         break;
 
         /*
@@ -70,57 +70,19 @@ handle_wrsScalarOne(netsnmp_mib_handler *handler,
         break;
 
     case MODE_SET_RESERVE2:
-        /*
-         * XXX malloc "undo" storage buffer 
-         */
-        if ( /* XXX if malloc, or whatever, failed: */ ) {
-            netsnmp_set_request_error(reqinfo, requests,
-                                      SNMP_ERR_RESOURCEUNAVAILABLE);
-        }
-        break;
-
     case MODE_SET_FREE:
-        /*
-         * XXX: free resources allocated in RESERVE1 and/or
-         * RESERVE2.  Something failed somewhere, and the states
-         * below won't be called. 
-         */
         break;
 
     case MODE_SET_ACTION:
-        /*
-         * XXX: perform the value change here 
-         */
-        if ( /* XXX: error? */ ) {
-            netsnmp_set_request_error(reqinfo, requests, /* some error */
-                                      );
-        }
+        /* FIXME: set... */
         break;
 
     case MODE_SET_COMMIT:
-        /*
-         * XXX: delete temporary storage 
-         */
-        if ( /* XXX: error? */ ) {
-            /*
-             * try _really_really_ hard to never get to this point 
-             */
-            netsnmp_set_request_error(reqinfo, requests,
-                                      SNMP_ERR_COMMITFAILED);
-        }
+        /* FIXME: commit */
         break;
 
     case MODE_SET_UNDO:
-        /*
-         * XXX: UNDO and return to previous value for the object 
-         */
-        if ( /* XXX: error? */ ) {
-            /*
-             * try _really_really_ hard to never get to this point 
-             */
-            netsnmp_set_request_error(reqinfo, requests,
-                                      SNMP_ERR_UNDOFAILED);
-        }
+        /* FIXME: undo */
         break;
 
     default:
