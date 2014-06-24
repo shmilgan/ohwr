@@ -85,14 +85,14 @@ if $install; then
     cd /; umount /update
     echo " done" | busybox tee /dev/ttyGS0
     
+else
+    # Not installing, access existing UBI volumes
+    ubiattach -p /dev/mtd1
+    mkdev_sh "/sys/devices/virtual/ubi/ubi0"
+    mkdev_sh "/sys/devices/virtual/ubi/ubi0/ubi0_0"
+    mkdev_sh "/sys/devices/virtual/ubi/ubi0/ubi0_1"
+    mkdev_sh "/sys/devices/virtual/ubi/ubi0/ubi0_2"
 fi
-
-# We have volumes, so create their devices
-ubiattach -p /dev/mtd1
-mkdev_sh "/sys/devices/virtual/ubi/ubi0"
-mkdev_sh "/sys/devices/virtual/ubi/ubi0/ubi0_0"
-mkdev_sh "/sys/devices/virtual/ubi/ubi0/ubi0_1"
-mkdev_sh "/sys/devices/virtual/ubi/ubi0/ubi0_2"
 
 # Now, whether installing or not, mount /update and check what is there
 mkdir -p /update
@@ -100,7 +100,7 @@ mount -t ubifs ubi0:update /update
 
 if [ -f /update/$WRS_FW ]; then
     # FIXME: save configuration somewhere, and recover it later
-    echo "Extracting filesystem" | busybox tee /dev/ttyGS0
+    echo -n "Extracting filesystem..." | busybox tee /dev/ttyGS0
     # since we are upgrading, we'd better remove and recreate the volume
     ubirmvol /dev/ubi0 --name=usr
     ubimkvol /dev/ubi0 -s 150MiB -N usr
