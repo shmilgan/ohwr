@@ -10,5 +10,7 @@ And then this "intuitive" command:
    $BUILD_DIR/netsnmp-5.6.1.1/local/mib2c \
           -I $BUILD_DIR//netsnmp-5.6.1.1/local \
           -c mib2c.scalar.conf \
-          wrsPstats
+          wrsScalar
+
+Clearly, if you rename the item, the code must be completely rewritten.
 

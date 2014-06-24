@@ -28,18 +28,18 @@ wrSwitchMIB MODULE-IDENTITY
 
 -- Define typical mib nodes
 -- we'll prefix everything in this mib with wrs (White Rabbit Switch)
-wrsPstats     OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
-wrsPpsi       OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }
+wrsScalar     OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
+wrsPstats     OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }
+wrsPpsi       OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }
 
--- define 1 stupid object for a start
+-- define one stupid object for a start
 
-wrsPstatsOne   OBJECT-TYPE
+wrsScalarOne   OBJECT-TYPE
     SYNTAX      Integer32
     MAX-ACCESS  read-write
     STATUS      current
     DESCRIPTION
         "Just an integer"
-    DEFVAL { 666 }
-    ::= { wrsPstats 1 }
+    ::= { wrsScalar 1 }
 
 END
