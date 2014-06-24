@@ -1,0 +1,144 @@
+#!/bin/sh
+
+# This is executed as "sysinit" level, before all /etc/init.d/rcS* scripts.
+
+# Warning: this file (and only this one) is executed in initramfs
+# *before* /etc is copied from flash, so you can't edit this on
+# flash, as it won't work. This can only be modified at build time.
+
+echo "$0: Running"
+
+# This allows me to pass WRS_VERBOSE=y on the command line...
+if [ -n "$WRS_VERBOSE" ]; then
+    set -x
+fi
+
+# This used to be S01modules
+insmod /lib/modules/2.6.39/kernel/g_serial.ko
+rmmod g_serial
+insmod /lib/modules/2.6.39/kernel/g_serial.ko
+
+/bin/mkdir -p /dev/pts
+/bin/mkdir -p /dev/shm
+
+# See fstab:  /dev/pts, /tmp, /sys
+/bin/mount -a;
+
+# Allow me to have a shell at this point in time,
+# by passing WRS_INTERACTIVE=y in the command line.
+#echo "WRS_INTERACTIVE: \"$WRS_INTERACTIVE\""
+if [ -n "$WRS_INTERACTIVE" ]; then sh; fi
+
+
+# At installation time, we have WRS_INSTALLING=y
+if [ -n "$WRS_INSTALLING" ]; then install=true; else install=false; fi
+
+# A name that is used several times in this file
+WRS_FW="wrs-firmware.tar"
+OLD_FW="wrs-firmware-old.tar"
+
+# This helps create the devices that we need over time (and are dynamic)
+mkdev_sh () {
+    f="$1/dev"
+    name=$(busybox basename $1)
+    maj=$(busybox awk -F: '{print $1}' $f)
+    min=$(busybox awk -F: '{print $2}' $f)
+    rm -f /dev/$name
+    mknod /dev/$name c $maj $min
+}
+
+# Create ubi_ctrl in any case
+mkdev_sh "/sys/devices/virtual/misc/ubi_ctrl"
+
+
+# Installing is like updating, but there are more steps to do initially
+if $install; then
+
+    # keep /dev/ttyGS0 open, to prevent EOF being seen from the PC
+    sleep 99999 > /dev/ttyGS0 &
+    sleep 1; # extra delay, so sleep above opens device before echo below
+
+    # format the ubi device and create volumes
+    echo -n "Formatting UBI device..." | busybox tee /dev/ttyGS0
+    busybox yes yes | ubiformat /dev/mtd1; # takes 40s
+    echo " done" | busybox tee /dev/ttyGS0
+
+    ubiattach -p /dev/mtd1
+    mkdev_sh "/sys/devices/virtual/ubi/ubi0"
+    ubimkvol /dev/ubi0 -s  32MiB -N boot
+    ubimkvol /dev/ubi0 -s 150MiB -N usr
+    ubimkvol /dev/ubi0 -s 150MiB -N update
+
+    # be able to access them in /dev
+    mkdev_sh "/sys/devices/virtual/ubi/ubi0/ubi0_0"
+    mkdev_sh "/sys/devices/virtual/ubi/ubi0/ubi0_1"
+    mkdev_sh "/sys/devices/virtual/ubi/ubi0/ubi0_2"
+
+    # mount the "update" directory, and download stuff in there
+    mkdir -p /update
+    mount -t ubifs ubi0:update /update
+
+    # Eth0 is already up, thanks to ip= passed by bootloader
+    cd /update
+    echo -n "Getting tftp://$SERVERIP/$WRS_FW ..." | busybox tee /dev/ttyGS0
+    busybox tftp -g -r $WRS_FW -l $WRS_FW $SERVERIP
+    cd /; umount /update
+    echo " done" | busybox tee /dev/ttyGS0
+    
+else
+    # Not installing, access existing UBI volumes
+    ubiattach -p /dev/mtd1
+    mkdev_sh "/sys/devices/virtual/ubi/ubi0"
+    mkdev_sh "/sys/devices/virtual/ubi/ubi0/ubi0_0"
+    mkdev_sh "/sys/devices/virtual/ubi/ubi0/ubi0_1"
+    mkdev_sh "/sys/devices/virtual/ubi/ubi0/ubi0_2"
+fi
+
+# Now, whether installing or not, mount /update and check what is there
+mkdir -p /update
+mount -t ubifs ubi0:update /update
+
+if [ -f /update/$WRS_FW ]; then
+    # FIXME: save configuration somewhere, and recover it later
+    echo -n "Extracting filesystem..." | busybox tee /dev/ttyGS0
+    # since we are upgrading, we'd better remove and recreate the volume
+    ubirmvol /dev/ubi0 --name=usr
+    ubimkvol /dev/ubi0 -s 150MiB -N usr
+    # So, it's new: mount and untar
+    mount -t ubifs ubi0:usr /usr
+    cd /usr
+    tar -xOf /update/$WRS_FW wrs-usr.tar.gz | zcat | tar xf -
+    sync; cd /; umount /usr
+    echo " done" | busybox tee /dev/ttyGS0
+
+    # check if we have an initramfs and/or kernel too
+    mkdir -p /boot
+    mount -t ubifs ubi0:boot /boot
+    # FIXME: should rather check first and save a backup
+    cd /boot
+    reboot=false
+    tar -xf /update/$WRS_FW zImage && reboot=true
+    tar -xf /update/$WRS_FW wrs-initramfs.gz && reboot=true
+
+    # done: rename the firmware file
+    mv /update/$WRS_FW /update/$OLD_FW; sync
+  
+    # if this changed kernel or iniramfs, we reboot. Otherwise just proceed.
+    if $reboot; then
+	umount /update
+	reboot
+	# Init has been notified, but it takes time. Dont proceed this script
+	sleep 9999
+    fi
+
+fi
+
+# Here we are: boot normally: if initrd, mount /usr and copy /etc
+# Otherwise do not do that, because we likely are nfs-root
+if grep -q initrd= /proc/cmdline; then
+    mount -t ubifs ubi0:usr /usr
+    # Remove "us": avoid overwriting an open file
+    rm /etc/init.d/wrs-boot-procedure;
+    cp -a /usr/etc/* /etc
+fi
+

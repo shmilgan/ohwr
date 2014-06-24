@@ -40,9 +40,9 @@ fake_flasher()
 
 showhelp()
 {
-	printf "Usage: $0 [options] [<firmware>.tar.gz] [DEV]\n\n"
+	printf "Usage: $0 [options] [<firmware>.tar] [DEV]\n\n"
 	printf "MAC:\t MAC address in hexadecimal seperated by ':' (i.e, AB:CD:EF:01:23:45)\n"
-	printf "<firmware>.tar.gz: Use the file in the firmware to flash the device\n"
+	printf "<firmware>.tar: Use the file in the firmware to flash the device\n"
 	printf "DEV:\t The usb device (by default it is /dev/ttyACM0)\n"
 	printf "Options: \n"
 	printf "  -h|--help\t Show this help message\n"
@@ -146,12 +146,10 @@ at91bs=""
 barebox=""
 # full path to the kernel image
 kernel=""
-# full path to the tar.gz file system
-rootfsgz=""
+# full path to the /usr.gz file system
+usrtar=""
 # full path to the cpio image
-rootfscpio=""
-# full path to the file system directory
-TMPFS=""
+initramfs=""
 
 if [ "x$TMPDIR" = "x" ]; then TMPDIR="/tmp"; fi
 
@@ -163,16 +161,18 @@ while [ $# -ge 1 ]; do
 		at91bs=${WRS_OUTPUT_DIR}/images/at91bootstrap.bin;
 		barebox=${WRS_OUTPUT_DIR}/images/barebox.bin
 		kernel=${WRS_OUTPUT_DIR}/images/zImage
-		rootfsgz=${WRS_OUTPUT_DIR}/images/wrs-image.tar.gz
+		initramfs=${WRS_OUTPUT_DIR}/images/wrs-initramfs.gz
+		usrtar=${WRS_OUTPUT_DIR}/images/wrs-usr.tar.gz
 		shift;;
 
-	*.tar.gz)
+	*.tar)
 		checkExit "tar-file" $1
-		tar --directory $WRSTMPDIR -xzf $1
+		tar --directory $WRSTMPDIR -xf $1
 		at91bs=$WRSTMPDIR/at91bootstrap.bin;
 		barebox=$WRSTMPDIR/barebox.bin
 		kernel=$WRSTMPDIR/zImage
-		rootfsgz=$WRSTMPDIR/wrs-image.tar.gz
+		initramfs=$WRSTMPDIR/images/wrs-initramfs.gz
+		usrtar=$WRSTMPDIR/images/wrs-usr.tar.gz
 		shift;;
 
 	-h|--help) 	showhelp; shift;;
@@ -226,17 +226,18 @@ while [ $# -ge 1 ]; do
     esac
 done
 
-if [ "x$rootfsgz" = "x" ]; then
+if [ "x$usrtar" = "x" ]; then
     showhelp
 fi
 
 # Even if not all files are always needed, check all of them immediately
 me=$(basename $0)
 echo "${me}: Working in $WRSTMPDIR"
-checkExit barebox $barebox
-checkExit at91bootstrap $at91bs
-checkExit kernel $kernel
-checkExit root-filesystem $rootfsgz
+checkExit "AT91Bootstrap IPL"           $at91bs
+checkExit "BareBox boot loader"         $barebox
+checkExit "Linux kernel"                $kernel
+checkExit "initial RAM disk"            $rootfsgz
+checkExit "archive for /usr filesystem" $usrtar
 
 
 ## MAC1 and MAC2 are really recommended
@@ -298,64 +299,32 @@ if $df; then
 	${FLASHER} -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792
 fi
 
-## Prepare for the NAND flashing procedure
+## Prepare for the NAND flashing procedure (kernel, initramfs, /usr)
 if $nf; then
 
-	TMPFS=$WRSTMPDIR/wrsfs-tgz; mkdir $TMPFS
+	# A this poinit, we used to create a special filesystem but that
+	# step is not needed any more: the standard initramfs works for
+	# installation too.
 
-	# The TMPCPIO is used for the NAND flashing procedure. It
-	# contains the magic string "paperino" (0x61706570 0x69726f6e)
-	# in the first 8bytes and in the following byte the whole
-	# file system. Barebox use this magic string to identify
-	# the flashing procedure.
-	TMPCPIO=$WRSTMPDIR/wrsflash.cpio.gz
+	# So, the only things that remains is setting up the magic string
+	# before the initramfs itself:
+	MAGICSTR=$WRSTMPDIR/magicstr
+	echo -n paperino > $MAGICSTR
 
-	# make flashing cpio from the unzipped file system
-	TMPSCRIPT=$WRSTMPDIR/wrsrootfs-script
-	cat > $TMPSCRIPT << EOF
-tar --directory $TMPFS -xzf $rootfsgz
-# Remove the unnecessary HDL files, by default we keep 18 ports HDL for both FPGA type
-# (There is not enough place in DDR to extract 4 HDLs, be carefull if you add custom files)
-find $TMPFS/wr/lib/firmware/ -type f \( ! -name ''${gateware}'' \) -a \( ! -name '*rt_cpu.bin' \) -exec rm -f {} \;
+	# Also, we don't erase nand: the initramfs does it at install time
+	#$FLASHER -e -m nand
 
-# Remove heavy and useless stuff to make a light file system to
-# load in RAM
-rm -rf $TMPFS/wr
-
-for n in top ltrace gdbserver strace rsync screen php php-cgi gdb; do
-   rm -f $TMPFS/usr/bin/\$n
-done
-
-for n in python2.7 lighttpd rsyslog; do
-   rm -rf $TMPFS/usr/lib/\$n
-done
-rm -rf $TMPFS/usr/share
-rm -rf $TMPFS/var/www
-
-mkdir $TMPFS/flashing/
-cp ${kernel} $TMPFS/flashing/zImage
-cd ..
-echo -n "paperino" > $TMPCPIO
-(cd "$TMPFS" && find . | cpio -o -H newc | gzip) >> $TMPCPIO
-EOF
-	echo -n "Creating filesystem for installation..."
-	fakeroot bash $TMPSCRIPT
-	echo " Done"
-
-	# Erase all nand memory
-	$FLASHER -e -m nand
 	# Start nand flashing procedure
-	$FLASHER -m ddr $FLAGS $DEV ${Tbarebox} 0x0 ${kernel} 0x1000000 ${TMPCPIO} 0x1FFFFF8
+	$FLASHER -m ddr $FLAGS $DEV \
+	    ${Tbarebox}  0x0000000 \
+	    ${kernel}    0x1000000 \
+	    ${MAGICSTR}  0x17FFFF8 \
+	    ${initramfs} 0x1800000
 
 	if $remove_temps; then
-	    rm $TMPSCRIPT
-	    rm -rf $TMPFS
-	    rm -rf $TMPCPIO
+	    rm -rf $WRSTMPDIR
 	else
-	    echo "Keeping temporaries"
-	    echo "   script is $TMPSCRIPT"
-	    echo "   filesystem image (no attributes) is $TMPFS"
-	    echo "   cpio file is in $TMPCPIO at offset 8 bytes"
+	    echo "Keeping temporary directory: ${WRSTMPDIR}"
 	fi
 
 	# Now, flashing proceeds by booting a kernel, get its messages

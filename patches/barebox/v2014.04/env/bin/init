@@ -1,28 +1,45 @@
 #!/bin/sh
 
+# V4: we boot with kernel and initramfs in both install and normal run
+# Also, 4MB are enough for either (2M currently, but let's get some margin)
+addpart /dev/ram0 4M@0x01000000(kernel)
+addpart /dev/ram0 4M@0x01800000(initramfs)
+# Also mem.kernel and mem.initrd, as we use both conventions, unfortunately
+addpart /dev/mem  4M@0x71000000(kernel)
+addpart /dev/mem  4M@0x71800000(initramfs)
+
 # If we are in the flashing procedure, start with the kernel and file system
-# loaded into the DDR memory
-memcmp -s /dev/mem -d /env/magicstr 0x71FFFFF8 0x0 8
+# pre-loaded into the DDR memory
+memcmp -s /dev/mem -d /env/magicstr 0x717FFFF8 0x0 8
 if [ $? -eq 0 ]; then
 	echo "Booting kernel for NAND flashing procedure"
 	dhcp 5
 	bootargs="console=ttyS0,115200 panic=10 mem=64M"
-	bootargs="$bootargs initrd=0x72000000,10M"
+	bootargs="$bootargs initrd=0x71800000,4M"
 	bootargs="$bootargs root=/dev/ram0"
-	bootargs="$bootargs SERVERIP=$eth0.serverip WRS_IMAGE=wrs-image.tar.gz"
+	bootargs="$bootargs SERVERIP=$eth0.serverip WRS_INSTALLING=y"
 	bootargs="$bootargs ip=$eth0.ipaddr:$eth0.serverip:$eth0.gateway:$eth0.netmask:wrs:eth0"
 
-	addpart /dev/ram0 0x400000@0x1000000(kernel)
-	addpart /dev/ram0 0xa00000@0x2000000(initrd)
 	bootm /dev/ram0.kernel
 fi
+
+# Not installing: assume we have ubi in place: attach and mount it now,
+# either it is used for booting, or an interactive user can see it
+addpart /dev/nand0 511M@1M(ubi-nand)
+ubiattach /dev/nand0.ubi-nand
+mkdir /boot
+mount /dev/ubi0.boot /boot
+# we don't mount /usr and /update, although a user can do it as shown here
+#    mkdir /usr; mount /dev/ubi0.usr /usr
+#    mkdir /update; mount /dev/ubi0.update /update
+
 
 #default value (can be overridden in /env/config)
 preboot_timeout="3"
 autoboot_timeout="5"
 autoboot_select="1"
 
-### Override default value using /env/config
+### Override default value using /env/config (empty by default)
 . /env/config
 echo "Starting up barebox [wrs3] (MAC=$eth0.ethaddr)"
 
@@ -39,20 +56,6 @@ fi
 gpio_set_value 33 0
 
 PS1="wrs-$eth0.ethaddr# "
-
-### Creating the partitions:
-if [ -e /dev/mem.kernel ]; then
-else
-    addpart /dev/mem  8M@0x71000000(kernel)
-fi
-if [ -e /dev/nand0.kernel ]; then
-else
-    addpart /dev/nand0 256k@0x4000(bareboxenv),8M@0x100000(kernel),-@0x4000000(rootfs)
-fi
-if [ -e /dev/nand0.kernel.bb ]; then
-else
-    nand -a /dev/nand0.*
-fi
 
 # Create the menu
 #menu -r -m boot

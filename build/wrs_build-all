@@ -65,32 +65,12 @@ showhelp() {
 	exit 0;
 }
 
-## Create a package for distribution. The package contains:
-#  - at91bootstrap.bin
-#  - barebox.bin
-#  - zImage
-#  - wrs-image.tar.gz
-#  it includes wrs-image.tar.gz because it is easier to generate cpio
-#  and jff2 images
-pack()
-{
-	#Check if the current git repo correspond to a tag
-	#if prefix 'wr-switch-sw-' is not set in tagname, we force it to 'wr-switch-sw-unof-'
-        cd $WRS_BASE_DIR
-	name=$(git describe --always --dirty | sed  '/^wr-switch-sw-/! s/.*/wr-switch-sw-unof-\0/')-$(date +%Y%m%d)_binaries.tar.gz
-
-	echo "Packing into $name";
-	tar -czvf "$WRS_OUTPUT_DIR/$name" -C ${WRS_OUTPUT_DIR}/images/ at91bootstrap.bin barebox.bin zImage wrs-image.tar.gz
-	exit 0
-}
-
 clean()
 {
 	echo "Cleaning all outputs except downloads"
 	make -C ${WRS_BASE_DIR}/../userspace clean
 	rm -Rf ${WRS_OUTPUT_DIR}/build/
 	rm -Rf ${WRS_OUTPUT_DIR}/images/
-	rm -Rf ${WRS_OUTPUT_DIR}/doc/
 	exit 0
 }
 
@@ -110,7 +90,9 @@ if [ -n "$1" ]; then
 		--help) showhelp;;
 		--clean) clean;;
 		--list) cd $WRS_DONE_DIR; ls 0*; exit 0;;
-		--pack) pack; exit 0;;
+		--pack) 
+			echo "Normal build makes the pack too; nothing to do"
+			exit 0;;
 		--step=*) seq=$(echo "$1" | sed -e 's/--step=//');
 			redo_step "$seq";;
 		*) showhelp;;

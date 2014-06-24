@@ -4,5 +4,6 @@ edit /env/config
 . /env/config
 saveenv
 
+echo "Environment saved, going back to menu in 2s"
 sleep 2
 menu -s boot

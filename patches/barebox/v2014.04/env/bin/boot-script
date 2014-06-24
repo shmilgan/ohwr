@@ -20,5 +20,6 @@ if [ "$?" -eq "0" ]; then
 fi
 
 # If the script doesn't boot return to menu after some time to read output
+echo "Script exited: re-running menu in 2 seconds"
 sleep 2
 menu -s boot

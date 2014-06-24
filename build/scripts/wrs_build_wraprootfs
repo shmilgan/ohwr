@@ -27,6 +27,8 @@ rootfs_override="$WRS_BASE_DIR/../userspace/rootfs_override"
 
 TMPSCRIPT=$(mktemp /tmp/rootfs-script.XXXXXX)
 ROOTFS_IMAGE_TGZ="$WRS_OUTPUT_DIR/images/wrs-image.tar.gz"
+ROOTFS_USR_TGZ="$WRS_OUTPUT_DIR/images/wrs-usr.tar.gz"
+ROOTFS_INITRAMFS="$WRS_OUTPUT_DIR/images/wrs-initramfs.gz"
 
 cat > $TMPSCRIPT << EOF
 . $WRS_BASE_DIR/../.config
@@ -91,12 +93,55 @@ chown -R root:root $TMPFS/root
 chown -R root:root $TMPFS/etc/dropbear
 chmod a+rx $TMPFS
 
-##Test Anchor
-(cd "$TMPFS" && tar cz .> $ROOTFS_IMAGE_TGZ)
+##### now move stuff to usr (we need usr to be in flash, / remains initramfs)
+# remove needless stuff
+rm -rf $TMPFS/home $TMPFS/opt
+sed -i '/^default/ d' $TMPFS/etc/passwd
+# move /wr and /var to /usr/wr and /usr/var
+mv $TMPFS/wr  $TMPFS/usr; ln -s usr/wr  $TMPFS
+mv $TMPFS/var $TMPFS/usr; ln -s usr/var $TMPFS
+# var/run links to ../tmp, so create /usr/tmp
+ln -s ../tmp $TMPFS/usr/tmp
+# mv ubi commands to /sbin: they are needed for boot time
+mv $TMPFS/usr/sbin/ubi* $TMPFS/sbin
+
+# copy /etc to /usr/etc, where it can be edited (boot sequence copies back)
+cp -a $TMPFS/etc $TMPFS/usr/etc
+
+(cd "$TMPFS" && tar cz . > $ROOTFS_IMAGE_TGZ)
+(cd "$TMPFS/usr" && tar cz . > $ROOTFS_USR_TGZ)
+# include /usr but nothing within usr
+(cd "$TMPFS" &&  find . | grep -v '^./usr.' | \
+      cpio -o -H newc | gzip > $ROOTFS_INITRAMFS)
+
 EOF
 
 fakeroot bash $WRS_SH_OPTIONS $TMPSCRIPT
 
+#### Finally, create the overall tarball for installation
+
+## Create a package for distribution. The package contains:
+#  - at91bootstrap.bin
+#  - barebox.bin
+#  - zImage
+#  - wrs-iniramfs.gz
+#  - wrs-usr.tar.gz
+# Actually, the pack is already built by "wrs_build_wraprootfs", so check
+packlist="at91bootstrap.bin barebox.bin zImage wrs-initramfs.gz wrs-usr.tar.gz"
+
+# Check if the current git repo correspond to a tag
+version=$(cd $WRS_BASE_DIR; git describe --always --dirty)
+# If prefix 'wr-switch-sw-' is not set in tagname, we force it to
+# 'wr-switch-sw-unof-'
+name=$(echo $version | sed  '/^wr-switch-sw-/! s/.*/wr-switch-sw-unof-\0/')
+# add date and suffix
+name="${name}-$(date +%Y%m%d)_binaries.tar"
+
+wrs_echo "--- Packing into $name";
+(cd "$WRS_OUTPUT_DIR/images" && tar cf wrs-firmware.tar  $packlist) || exit 1
+(cd "$WRS_OUTPUT_DIR/images" && cp wrs-firmware.tar ../$name) || exit 1
+
+# remove temporaries or keep them
 if [ -z "$CONFIG_KEEP_ROOTFS" ]; then
     rm -rf $TMPFS
     rm -rf $TMPSCRIPT

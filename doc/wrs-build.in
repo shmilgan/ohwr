@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month May 2014
+@set update-month June 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -76,19 +76,6 @@ want to customize their own switch, which is actually a GNU/Linux host.
 If you do not need to modify/hack anything in the switch and just learn
 how to use it, you should first refer at the @b{User Guide} that you can
 find in the @url{http://www.ohwr.org/projects/wr-switch-sw/files}
-
-@menu
-* Overview::                    
-* Building::                    
-* Flashing of WRS-3::           
-* Booting with Barebox::        
-* The Individual Build Steps::  
-* Code layout in a production switch::  
-* Schematics are Available::    
-* Older Hardware Releases::     
-* Installing from Jtag::        
-* Bugs and Troubleshooting::    
-@end menu
 
 @c ##########################################################################
 @node Overview
@@ -144,12 +131,6 @@ sets all environment variables, while keeping defaults from your
 preexisting environment -- so you can override anything even when
 rebuilding it all from scratch.
 
-@menu
-* Portability::                 
-* Environment Variables::       
-* Downloading Files::           
-@end menu
-
 @c ==========================================================================
 @node Portability
 @section Portability
@@ -158,10 +139,8 @@ The scripts in their current status are not expected to be very
 portable. I am sure a number of @i{bashisms} exist, and I did no effort
 to even identify them.  To relieve the user from possible pain,
 internally the name @i{bash} is used instead of @i{sh}, so things
-should work even if your default shell is @i{ash} or @i{dash}.
-@c FIXME test this again
-@c actually the scripts have been tested in one system where the
-@c default @i{sh} is @i{dash}.
+work in systems where the default shell is @i{dash}, provided @i{bash}
+is installed.
 
 Similarly, the scripts are likely to fail if you use spaces in directory
 names; that is because not all
@@ -180,10 +159,11 @@ The scripts use a number of environment variables; you can pre-set
 them as you wish. If they are not pre-set, defaults apply as
 described below.
 
-When rebuilding everything, the defaults are applied for each unset
-variable; but when rebuilding a sub-package you will need to set the
-variables beforehand.  Each sub-package complains if it needs variables
-that are not set in your environment.
+When building running the @i{build/wrs_build-all} script (whether you
+build everything or rebuild individual steps) the defaults are applied
+for each unset variable.  Developers working under the hood will need
+to set the variables.  Each sub-package complains if it needs
+variables that are not set in their environment.
 
 The following variables are used in one or more parts of the scripts;
 let me restate, though, that sensible default values apply by default,
@@ -225,12 +205,15 @@ have a similar prefix for the same reason).
         created if needed.  By pre-setting this variable you can
         simply recursively delete
         the output directory to force a full rebuild, without
-        the overhead of re-downloading everything.
+        the overhead of re-downloading everything. I personally pre-set
+        this so it always points to the same place, even when I remove
+        the whole output directory.
 
 @item WRS_HW_DIR
 	The absolute pathname of the directory where you build HDL, if any.
         If this variable is set, FPGA binaries will be copied from there
         instead of being extracted by the official archive on @code{owhr.org}.
+        This is only used by HDL developers.
 
 @item CROSS_COMPILE
 	The variable is the usual cross-compilation prefix. For example,
@@ -245,23 +228,20 @@ Other variables are used internally in the script; since they are only
 useful to people working on the script itself, they are documented in
 place.
 
-If you compiled for version 2 you will notice we do not have
-@code{WRS_WR_REPOSITORY} any more. We used to rely on upstream
-archives to be part of the @i{White Rabbit} subversion tree, but I
-did not add the new archives in there because of their size.
 
 @c ==========================================================================
 @node Downloading Files
 @section Downloading Files
 
-Every downloaded file is saved to the @code{download} directory 
-(if set @code{WRS_DOWNLOAD_DIR} else the default
+Every downloaded file is saved to the @code{downloads} directory 
+(@code{$WRS_DOWNLOAD_DIR} if set, or the default place
 @code{$WRS_OUPUT_DIR/downloads}). You should
 arrange not to remove that directory when you recompile over and over
 during development. I chose to make the first
-script download everything, because I think this eases development in a
-way: you first wait a while but can tell download errors from other
-issues, and then you can build it all even without a network connection.
+script download everything, before starting any build, to help
+telling download errors from other
+issues. Also, after downloading is over you can work
+even without a network connection.
 
 For each upstream archive needed, the following steps are performed:
 
@@ -291,11 +271,6 @@ The messages of a download run are like the following ones:
 @c ##########################################################################
 @node Building
 @chapter Building
-
-@menu
-* Building Procedure::          
-* Build Script Description::    
-@end menu
 
 @c ==========================================================================
 @node Building Procedure
@@ -330,28 +305,30 @@ quite verbose.
 
 The following example shows a run on a quad core system (18k
 bogoMips in total). If files had already been downloaded, the first
-step takes only a pair of seconds to verify the checksums:
+step takes only a few seconds, as shown, to verify the checksums:
 
 @smallexample
-2012-07-06 17:23:57: --- Downloading all files
-2012-07-06 17:24:02: --- Buildroot compiler and filesystem
-2012-07-06 17:24:02: Uncompressing buildroot
-2012-07-06 17:24:02: Patching buildroot
-2012-07-06 17:24:02: Reconfiguring buildroot
-2012-07-06 17:24:04: Compiling buildroot
-2012-07-06 17:48:46: --- AT91Boot
-2012-07-06 17:48:46: Patching AT91Boot
-2012-07-06 17:48:46: Building AT91Boot
-2012-07-06 17:48:50: --- Barebox
-2012-07-06 17:48:50: Patching Barebox
-2012-07-06 17:48:50: Building Barebox
-2012-07-06 17:48:59: --- Linux kernel for switch
-2012-07-06 17:50:32: --- Kernel modules from this package
-2012-07-06 17:50:35: --- PTP daemon (noposix repository as a submodule)
-2012-07-06 17:50:38: --- User space tools
-2012-07-06 17:50:39: --- Deploying FPGA firmware
-2012-07-06 17:50:39: --- Wrapping filesystem
-2012-07-06 17:50:53: Complete build succeeded, apparently
+2014-06-21 17:01:57: --- Downloading all files
+2014-06-21 17:02:02: --- Buildroot compiler and filesystem
+2014-06-21 17:02:02: Uncompressing buildroot
+2014-06-21 17:02:02: Patching buildroot
+2014-06-21 17:02:02: Reconfiguring buildroot
+2014-06-21 17:02:04: Compiling buildroot
+2014-06-21 17:26:40: --- AT91Boot
+2014-06-21 17:26:40: Patching AT91Boot
+2014-06-21 17:26:40: Building AT91Boot
+2014-06-21 17:26:41: --- Barebox
+2014-06-21 17:26:44: Patching Barebox
+2014-06-21 17:26:44: Building Barebox
+2014-06-21 17:26:58: --- Linux kernel for switch
+2014-06-21 17:29:15: --- Kernel modules from this package
+2014-06-21 17:29:19: --- PTP daemon (ppsi repository as a submodule)
+2014-06-21 17:29:26: --- User space tools
+2014-06-21 17:29:33: --- Deploying FPGA firmware
+2014-06-21 17:29:33: Using pre-built binaries from wrs-gw-v4.0-dev-20140328.tar.gz
+2014-06-21 17:29:33: --- Wrapping filesystem
+2014-06-21 17:29:46: --- Packing into wr-switch-sw-v4.0-20140621_binaries.tar
+2014-06-21 17:29:46: Complete build succeeded, apparently
 @end smallexample
 
 You may prefer to save @i{stderr} with @i{stdout} to the log file
@@ -367,15 +344,15 @@ to generate the terse output shown above:
 If you are lucky, everything completes by itself. The time taken
 depends on you CPU, disk and network speed.
 At the end you will find your final files in the @code{images}
-subdirectory.  If you are not too lucky, the build stops because
+subdirectory, 
+
+If you are not too lucky, the build stops because
 you have found a bug in the build scripts; most likely because your
 setup differs from the ones we have been testing on.
 
 In order to re-run the build from the beginning, please remove (or
 rename) the output directory and reissue the command.  To only
-redo one step, you can remove the marker in @code{build/_done}
-(the markers are empty files with name like @code{01-buildroot}
-and @code{04-kernel}).
+redo some steps, please see @ref{Rebuilding Parts}.
 
 @c ==========================================================================
 @node Build Script Description
@@ -389,34 +366,43 @@ in this chapter. You might also want to check its embedded documentation using:
    /path/to/wr-switch-sw/build/wrs_build-all --help
 @end example
 
-@menu
-* Release Package::             
-* Rebuilding Parts::            
-* Rebuilding From Scratch::     
-@end menu
-
 @c --------------------------------------------------------------------------
 @node Release Package
 @subsection Release Package
 
-Once all the building steps have succeeded, you can easily create a
-package in @code{WRS_OUTPUT_DIR} using the following command:
+By default, a complete compilation creates a ``release'' package,
+i.e. a @i{tar} archive of all files needed to flash a brand new WR
+Switch.  The example above shows that the name is something like:
 
 @example
-   /path/to/wr-switch-sw/build/wrs_build-all --pack
-@end example 
+	wr-switch-sw-v4.0-20140621_binaries.tar
+@end example
 
-This will generate a @code{tar.gz} package. The name of the package is composed
-by the prefix and the description of the current status of the git repository.
-This is the same naming policy of the kernel and other packages.
+In other words, we include both the tag name (from @t{git describe})
+and a date.  If the repository is not checked-out at a release (a ``tag''),
+this will be apparent in the filename used for the output.
 
-The prefix is @code{wrs-firmware-}; the information about the current status are
-retrieved by using the git command @code{git describe --always --dirty}.
-For example, if you are building the tag @code{wr-switch-sw-v3.3}, your package
-name will be @code{wrs-firmware-wr-switch-sw-v3.3.tar.gz}. If you are building
-on some personal commit the name includes some extra information to describe
-your commit: number of commits form the last tag (if any), SHA1 code of the
-commit. If you have uncommited changed, the suffix @code{-dirty} is there too.
+The ``official'' release package is available from @t{ohwr.org}, in
+the @i{Files} section of the @t{wr-switch-sw} project.
+
+In any case, the file must be renamed to @t{wrs-firmware.tar}
+to be used at installation time. See @ref{Flashing Procedure} for details.
+
+@c --------------------------------------------------------------------------
+@node Build Time Configuration
+@subsection Build Time Configuration
+
+
+Some details of the complete firmware archive depend on the values of
+active @t{Kconfig} variables. If no manual configuration is performed,
+what applies is @t{configs/wrs_release_defconfig}.
+
+If you want to customize your configuration to install several
+switches pre-configured for your network, we suggest you rebuild
+the @i{firmware} archive after running @t{make menuconfig} to select
+your own values
+
+FIXME FIXME FIXME: Store kconfig and build info in the archive itself
 
 @c --------------------------------------------------------------------------
 @node Rebuilding Parts
@@ -433,13 +419,13 @@ self-explicative.
 
 To ease the rebuilding of a specific module a shortcut has been created 
 in the @code{wrs_build-all} script. For example if you want to recompile
-kernel you should execute.
+the kernel alone you should execute.
 
 @example
    /path/to/wr-switch-sw/build/wrs_build-all --step=04
 @end example
 
-You can list all compiled module by calling
+You can list all compiled modules by calling
 
 @example
    /path/to/wr-switch-sw/build/wrs_build-all --list
@@ -449,12 +435,16 @@ If you want to rebuild various modules at the same time, you should run
 something similar as:
 
 @example
-   /path/to/wr-switch-sw/build/wrs_build-all --step="5 7 9"
+   /path/to/wr-switch-sw/build/wrs_build-all --step="5 7"
 @end example
 
+Please note that the final step (``@i{wrap root filesystem''}) is
+always performed, to ensure any changes are applied in the generated
+firmware file.
 
-As an alternative, you can run the individual script from within
-@i{scripts/}, after setting the proper environment variables.
+An alternative way to build parts, though a more difficult one, is running the
+individual script from within @i{build/scripts/}, after setting the proper
+environment variables.
 
 
 @c --------------------------------------------------------------------------
@@ -476,9 +466,11 @@ directory by deleting all compiled modules (except downloaded files), just call:
 
 After release 3.3 of this software package, we added Kconfig support
 to wr-switch-sw.  The user can ignore this step: building as usual
-(by running @t{wrs_build-all} from an empty directory) silently selects
-the default configuration.  Developers may use the feature to try
-different choices of packages.
+from a fresh checkout of @t{wr-switch-sw} silently selects
+the default configuration.
+
+You may exploit this @t{Kconfig} option to build firmware images
+preconfigured for your own network.
 
 To change configuration, you are expected to run ``@t{make
 menuconfig}'' (or @i{gconfig} or @i{kconfig} or the old text-mode
@@ -497,12 +489,64 @@ The following configuration options are available
         @t{configs/buildroot} directory; an absolute pathname is used
         unchanged.
 
+@c FIXME: remove noposix option
 @item CONFIG_PTP_NOPOSIX
 @itemx CONFIG_PPSI
 
 	Users can select one of these options, to build with one or the other
-        flavour of @sc{wr-ptp}.  PPSi is going to be the default, and later
-        the only supported option.
+        flavour of @sc{wr-ptp}.  PPSi is the default choice, and
+        @i{ptp-noposix} is scheduled for removal in a later release.
+
+@item CONFIG_NTP_SERVER
+
+	The NTP server used to prime White Rabbit time, at system boot.
+        The option can be an IP address or a host name, if DNS is properly
+        configured.  The configuration value is stored in
+        @t{/wr/etc/wr_date.conf}. An empty string (default) disables
+        NTP access at boot time.
+
+@item CONFIG_DNS_SERVER
+@itemx CONFIG_DNS_DOMAIN
+
+	The DNS server (as an IP address) and default domain. The values
+        end up in @t{/etc/resolv.conf} of the generated filesystem.
+        By default the two strings are empty.
+
+@item CONFIG_REMOTE_SYSLOG_SERVER
+@itemx CONFIG_REMOTE_SYSLOG_UDP
+
+	Configuration for system log. The name (or IP address) of the
+        server is stored in @t{/etc/rsyslog.conf} of the generated
+        filesystem.  The UDP option, set by default, chooses UDP transmission;
+        if unset it selects TCP communication.
+
+@item CONFIG_SNMP_TRAPSINK_ADDRESS
+@itemx CONFIG_SNMP_TRAP2SINK_ADDRESS
+@itemx CONFIG_SNMP_RO_COMMUNITY
+@itemx CONFIG_SNMP_RW_COMMUNITY
+
+	Configuration for the @sc{snmp} agent. Addresses can be IP addresses
+        or names (if DNS is configured and working), they are unset by
+        default. Community values are strings and they default to
+        @t{public} and @t{private}.
+
+@item CONFIG_WRS_LOG_HAL
+@itemx CONFIG_WRS_LOG_RTU
+@itemx CONFIG_WRS_LOG_PTP
+
+	Logging options for the three main WRS processes. Each value
+        can be a pathname, to select logging to file (and @t{/dev/kmsg}
+        is a possible ``file'' target) or a @i{facility}.@i{level} string,
+        like @t{daemon.debug}, for syslog-based logging.
+        An empty strings selects no logging at all.  Please note that
+        unknown facility names will generate a runtime error on the switch.
+        All three strings default to ``@t{daemon.info}''.
+
+@item CONFIG_KEEP_ROOTFS
+
+	A boolean option for developers: if set the build script does
+        not delete the temporary copy of the generated filesystem and
+        reports its pathname in the build messages.
 
 @end table
 
@@ -510,11 +554,11 @@ The following configuration options are available
 @node Flashing of WRS-3
 @chapter Flashing of WRS-3
 
-This chapter describes the different steps to install the WRS-3 with the 
-correct firmware. This procedure describes the installation of the switch
-with a @i{SCB v3.3} and a @i{Mini-Backplane v3.3}. Older
-versions are not documented here any more (please get an older
-manual, if needed).
+This chapter describes the steps to install the WRS-3 with the 
+current firmware images. As far as hardware is concerned, this
+procedure describes the installation of the switch with a @i{SCB v3.3}
+and a @i{Mini-Backplane v3.3}. Older versions are not documented here
+any more (please get an older manual, if needed).
 
 @c ==========================================================================
 @node USB connections
@@ -538,7 +582,7 @@ like this:
 @end example
 
 The port, however, will only appear on the PC after the switch is turned
-on, so you may want to delay this operation.
+on, so you may want to delay this command.
 
 @sp 1
 
@@ -566,24 +610,24 @@ Finally, the kernel should also load the proper device driver, and you
 are expected to see @code{/dev/ttyACM0} or equivalent in your system.
 This is the device used for flashing.
 
-If it is not the case, this mean that the button used to disable the dataflash
+If it is not the case, this means that the button used to disable the dataflash
 and enter @emph{"Flashing mode"} is not working. You should contact support.
 
 @c =============================================================================
 @node Flashing Procedure
 @section Flashing Procedure
 
-Unlike what happened with previous releaseses (up to the end of 2013),
+Unlike what happened with previous releases (up to the end of 2013),
 the filesystem of the switch can't fit in RAM memory during installation
-any more: the image is not downloaded through the network.  Thus
+any more: the image is now downloaded through the network.  Thus
 you need to following items to flash a switch:
 
 @itemize @bullet
 @item The USB cable connected to the front ``management'' USB port
 @item A Linux host connected as a master to this cable
-@item An Ethernet cable connected to the fron ``management'' Ethernet port
+@item An Ethernet cable connected to the front ``management'' Ethernet port
 @item A DHCP server on your network, offering an IP address to the switch
-@item A TFTP server, exporting the file @t{wrs-image.tar.gz}
+@item A TFTP server, exporting the file @t{wrs-firmware.tar}
 @end itemize
 
 The flashing procedure will use the @i{server address} reported by
@@ -594,11 +638,15 @@ we inherited from Atmel. The @file{flash-wrs} script is what
 you'll use to run the loader with appropriate parameters.
 
 The script can be invoked in the following way to flash a
-@i{package} into the switch. The package is the @code{.tar.gz}
-file created by ``@code{wrs_build-all --pack}'' (see @ref{Release Package}).
+@i{package} into the switch. The package is the @code{wrs-firmware.tar}
+file created by ``@code{wrs_build-all}'' (see @ref{Release Package}).
 
-The command to flash is this:
+@b{Note:} the release file must be renamed to @code{wrs-firmware.tar},
+because the pathname is hardwired in the installation procedure.
 
+The command to flash is as follows:
+
+@c FIXME: check this ``-e''
 @example
     /path/to/wr-switch-sw/build/flash-wrs -e wrs-firmware-<revision>.tar.gz 
 @end example
@@ -617,9 +665,6 @@ whole data flash, is almost mandatory because otherwise bits of your previous
 installation may leak into the newly-programmed one. Only on factory-new
 devices you can avoid this ``@code{-e}'' argument. 
 
-When you program
-the NAND memory the script applies automatically @code{-e} option.
-
 It is recommended to configure the MAC addresses during the flashing
 procedure. With the option @code{-m1|--mac1} you can select the MAC address
 to assign to the Ethernet port on board. With the option @code{-m2|--mac2}
@@ -630,6 +675,10 @@ MAC address to sequentially assign a MAC address for every switch ports.
     /path/to/wr-switch-sw/build/flash-wrs -e -b -m1 02:34:56:77:65:43
     -m2 02:34:34:34:34:00
 @end example
+
+@b{Note:} White Rabbit switches are shipped with their preallocated
+MAC addresses, reported in a sticker on the back side of the switch;
+if re-flashing, you may want to use the same values.
 
 Please remember that bits 0 and 1 of the first byte are special: if
 the first byte is odd, the MAC address is reserved for multicast
@@ -643,6 +692,7 @@ you can abort the procedure. If you don't abort the flashing
 procedure, the script will use default MAC addresses. Default MAC addresses
 are: 02:34:56:78:9A:BC for MAC1 (the Ethernet port of the ARM CPU)
 and 02:34:56:78:9A:00 for MAC2 (the base address for the 18 SFP ports).
+
 
 @smallexample
    tornado% ~/wip/wr-switch-sw/build/flash-wrs -e -b
@@ -707,25 +757,25 @@ Initializing DDR...
 loading applet isp-extram-at91sam9g45 at 0x00300000
 Initializing DDR > Done
 
-Erasing DDR > DONE
-
 Loading DDR...
-	 @ 0x70000000 : /tmp/barebox.Fb09jx ; size 0x2f1bc (188Kb)
-	 @ 0x71000000 : /data/morgana/build-v3-fede/images/zImage ; size 0x16886c (1442Kb)
-	 @ 0x71fffff8 : /tmp/wrsflash-cpio.jrPKMY.cpio.gz ; size 0x128c722 (18993Kb)
-DDR: Writing 21119306 bytes at offset 0x0 buffer 70000000....ABCDEF
-
-[...]
-Installation procedure starts
-Flashing kernel to /dev/mtd0 ... done
-Getting tftp://192.168.16.1/wrs-image.tar.gz ... done
-Mounting target filesystem... done
-Uncompressing image... done
+         @ 0x70000000 : /tmp/flash-wrs-tAqUAs/bb.new ; size 0x637b0 (397Kb)
+         @ 0x71000000 : /data/morgana/build-v4/images/zImage ; size 0x1afb44 (1726Kb)
+         @ 0x717ffff8 : /tmp/flash-wrs-tAqUAs/magicstr ; size 0x8 (0Kb)
+         @ 0x71800000 : /data/morgana/build-v4/images/wrs-initramfs.gz ; size 0x196f84 (1627Kb)
+DDR: Writing 3842688 bytes at offset 0x0 buffer 70000000....ABCDEF
+Closing...
+Formatting UBI device... done
+Getting tftp://192.168.16.1/wrs-firmware.tar ... done
+Extracting filesystem...  done
 @end smallexample
+
+The longest steps are erasing @i{dataflash} (it takes 2 minutes) and
+the last three steps: formatting, tftp and extraction; each of them takes
+around 1 minute.
 
 Please note that the IP address used in the TFTP transfer depends on
 the DHCP handshake: the value above is what your developers use.
-The name @t{wrs-image.tar.gz}, on the other hand, is hardwired:
+The name @t{wrs-firmware.tar}, on the other hand, is hardwired:
 it matches the result of a firmware build, and the file name used
 within the archive of official binaries we ship at release time.
 
@@ -738,37 +788,36 @@ where you will see messages like these:
    -I- -- AT91SAM9G45-EK
    [...]
    -I-     End of applet (command : 2 --- status : 0)
-
 [...]
-
-barebox 2012.05.0 (Oct 26 2012 - 20:51:43)
-
-Board: CERN White Rabbit Switch V3
-
+barebox 2014.04.0 #1 Tue Jun 24 09:05:43 CEST 2014
+Board: White Rabbit Switch
 [...]
-
+Booting kernel for NAND flashing procedure
+100Mbps full duplex link detected
+DHCP client bound to address 192.168.16.246
+[...]
 Uncompressing Linux... done, booting the kernel.
-
 [...]
+/etc/init.d/wrs-boot-procedure: Running
 
-Installation procedure starts
-Flashing kernel to /dev/mtd0 ...
-Writing data to block 0 at offset 0x0
-Writing data to block 1 at offset 0x20000
-
+Formatting UBI device... [...] done
+UBI: attaching mtd1 to ubi0
+UBI: physical eraseblock size:   131072 bytes (128 KiB)
+UBI: logical eraseblock size:    129024 bytes
+UBI: smallest flash I/O unit:    2048
+UBI: sub-page size:              512
 [...]
-
-Getting tftp://192.168.16.1/wrs-image.tar.gz ... done
-Mounting target filesystem... done
-Uncompressing image... done
-
-[...]
-
+Getting tftp://192.168.16.1/wrs-firmware.tar ... done
+UBIFS: mounted UBI device 0, volume 1, name "usr"
+Extracting filesystem...  done
+Requesting system reboot
+Restarting system.
 @end smallexample
 
-@menu
-* Flash Script Description::    
-@end menu
+Please note, however, that many more messages flow, as
+formatting/mounting/umounting UBI devices is very verbose in the
+kernel.  The sequence above is a summary of what happens at
+installation time.
 
 @c -------------------------------------------------------------------
 @node Flash Script Description
@@ -806,33 +855,33 @@ If you want to flash the @i{at91boot.bin}, @i{barebox.bin}, @i{kernel}
 or @i{file-system} that you just built, you can just call the script
 from the build directory and use the @code{-b} option.
 
-The official binaries for installation of version 3.3 of this package
+The official binaries for installation of version 4.0 of this package
 are available in the @i{files} tab of @t{ohwr.org}. The complete link
 is:@*
-@url{www.ohwr.org/attachments/download/2262/wr-switch-sw-v3.3-20130725_binaries.tar.gz}
+@url{www.ohwr.org/attachments/download/FIXME-TO-BE-FILLED}
 
 You can select a mode using the @code{-m|--mode} flag to choose
-to write in dataflash (df), nandflash (nf), both (default) or ddr memories
-(ddr)@footnote{The ddr memory mode is only for developers}. The memory mode
-is used to select the kind of memory to write. The flash script is used to
-install different binaries on these memories: 
+to write in dataflash (df), nandflash (nf) or both (default).
+The memory mode is used to select a partial re-flashing; this
+is how the switch firmware is split among the two memories:
 @itemize @bullet
 @item dataflash: @emph{at91boot} and @emph{barebox} binaries
-@item nandflash: @emph{kernel} zImage and the @emph{file-system}
+@item nandflash: @emph{kernel}, @emph{initramfs} and /usr @emph{file-system}
 @end itemize
 
 You can select which type of gateware you want to flash on your 
 switch. Currently we only support LX240T (the current circuit doesn't
 fit in the LX130T any more).  8-port images are sometimes used for
-testing. And you can select it like this:
+testing. And you can select this option like this:
 
 @smallexample
-$ ./build/flash-wrs --gateware LX240T <...>
+$ ./build/flash-wrs --gateware 8p <...>
 @end smallexample
 
 You can also erase the dataflash memory before writing your binaries; to do this
-add the option @code{-e}. Note that the script always erases nandflash before
-writing to it.
+add the option @code{-e}.   There is no need to especially erase
+nand flash, because the installation procedure does the right thing with
+it in any case.
 
 The script performs the following steps:
 
@@ -843,30 +892,22 @@ The script performs the following steps:
 @item Optionally, it changes the default MAC addresses in @i{barebox}
       default environment, so you can use a different MAC for each switch.
 @item Optionally, it erases the dataflash memory.
-@item It loads a temporary kernel and filesytem to RAM and boots them
+@item It places a magic string in RAM, to tell barebox we are installing
+@item It loads the kernel and filesytem to RAM and boots them
 @item It reads /dev/ttyACM0 to report the messages printed during flashing
 @end itemize
 
-@c ==========================================================================
-@node Plans for Flashing
-@section Plans for Flashing
-
-The current flashing procedure is still temporary. We plan to change
-it to the better before the next release, moving to UBI and ubifs for
-the switch itself, and a setup where @i{dataflash} is not expected to
-ever be changed after the device is shipped.
-
-The new procedure, however, won't change the user-visible actions:
-we'll still have the same connection (usb and ethernet), the same command
-names and the same file names.  So users getting acquainted with the
-current flashing steps won't have any issues with the upcoming software
-release.
+The boot loader being booted finds the the magic string in memory, and
+changes the kernel command line to force installation-mode.  The
+kernel and filesystem being booted in the switch are the same images
+for installation and run-time. (Releases before 4.0 built a special
+installation filesystem, but now the procedure is simplified).
 
 @c ############################################################################
 @node Booting with Barebox
 @chapter Booting with Barebox
 
-After the initial installation, the boot loader will offer you an
+After the initial installation, the boot loader offers an
 interactive  menu, where the first entry is selected by default.
 The menu is a simple ASCII interface on the serial port, and looks
 like the following:
@@ -887,13 +928,10 @@ you leave the Ethernet port unconnected or you have no DHCP server
 when the switch is operational.
 
 If booting from NAND memory fails (for example because you erased the
-kernel partition) the menu is re-entered automatically.
+kernel or incurred in other mishaps during development)
+the menu is re-entered automatically.
 
 The other entries are provided to help developers.
-
-@menu
-* The Compiler::                
-@end menu
 
 @c ==========================================================================
 @node Description of the menus
@@ -948,6 +986,13 @@ The individual menu items perform the following actions:
 If you use the @i{wrboot} script option, you can for example run
 an NFS-Root system or do whatever customization and testing you want.
 
+The complete filesystem after a successful build is called
+@t{images/wrs-image.tar.gz}, and is not included in the release
+firmware file, because an installed switch runs an @i{initramfs}
+system with a separate @t{/usr} partition in flash memory.
+
+@sp 1
+
 The provided procedure tries to load the script from TFTP under three
 different names, from most specific to most generic, and the first
 match will be used.  The first name is MAC-address-based, the
@@ -966,7 +1011,7 @@ This is for example what I see in my logs when only providing @file{wrboot}:
 We chose to place the IP-address-based name in a subdirectory because
 this is the default place where the NFS-Root filesystem is mounted
 from, as shown in the log excerpt above. So you'll have your
-@file{wrboot} in the same place
+@file{wrboot} in the same place.
 
 @b{Note:} recent @i{barebox} versions require scripts to include a
 leading @t{#!/bin/sh}. Examples in @i{wr-switch-sw} did not include the
@@ -992,19 +1037,6 @@ so it doesn't run the DHCP client.
 
 This chapter details the individual build steps, for the users that want
 to customize their switch in any way. 
-
-@menu
-* The Compiler::                
-* Buildroot::                   
-* The IPL::                     
-* The Boot Loader::             
-* The Linux Kernel::            
-* Kernel Modules::              
-* PTPd::                        
-* User Space Applications::     
-* VHDL Binaries::               
-* The Complete Filesystem::     
-@end menu
 
 @c ==========================================================================
 @node The Compiler
@@ -1104,21 +1136,23 @@ the bug, or to the newer @i{barebox} that obsoletes @i{at91boot}.
 @section The Boot Loader
 
 The switch uses @i{barebox} as a boot loader. We are running version
-2012-05, with a few local patches and the chosen configuration
+2014-04, with a few local patches and the chosen configuration
 file. Note that we are piggy-backing on the Ronetix PM9G45 board, out
 of laziness.
 
-The patches are part of this package in @i{patches/barebox/v2012.05/} and
+The patches are part of this package in @i{patches/barebox/v2014.04/} and
 the set is made up of the following ones:
 
 @smallexample
    0001-sam945-include-mtd-nand.h-in-device-file.patch
    0002-arm-change-prompt-for-pm9263-wrs-piggy-backs-on-that.patch
    0003-nand-wrs-our-nand-is-16-bit-connected-fix-accordingl.patch
-   0004-add-DHCP-retries-by-tom.patch
-   0005-gpio-add-function-to-check-them.patch
-   0006-startup-load-default-environment-when-loading-env-fa.patch
-   0007-wrs-on-pm9g45-change-nand-setup.patch
+   0004-gpio-add-function-to-check-them.patch
+   0005-wrs-on-pm9g45-change-nand-setup.patch
+   0006-wrs-on-pm9g45-add-dataflash-initialization.patch
+   0007-barebox-add-MAC-addresses-to-environment.patch
+   0008-wrs-on-pm9g45-force-memory-to-64MB.patch
+   0009-pm9g45-init-for-wrs-move-environment-for-the-UBI-mov.patch
 @end smallexample
 
 If you build using a local @i{git} repository, we suggest to use
@@ -1130,14 +1164,14 @@ environment, and its own configuration and scripts live in a small
 filesystem.  To ease modification of such configuration and boot steps
 the build script copies over the configuration instead of patching it
 in the sources.  You can thus edit the files you find in
-@file{patches/barebox/v2012.05/env} and rebuild your customized bootloader.
+@file{patches/barebox/v2014.04/env} and rebuild your customized bootloader.
 The script that is executed at boot time is @file{env/bin/init} and as
 you see it calls the other ones.  The menus included in the shipped
 configuration are described in @ref{Booting with Barebox}.
 
 Building @i{barebox} relies on a @i{Kconfig} setup, and the
 configuration file we use is
-@file{patches/barebox/v2012.05/@-wrs3_defconfig}. Again, this is copied over and
+@file{patches/barebox/v2014.04/@-wrs3_defconfig}. Again, this is copied over and
 not patched in (see the simple @file{build/scripts/@-wrs_build_barebox}
 for details).
 
@@ -1188,8 +1222,13 @@ and are currently the following ones:
    0002-initramfs-stop-after-one-cpio-archive.patch
    0003-at91-NR_IRQS-increase-by-64-to-fit-custom-muxes.patch
    0004-irq-export-symbols-for-external-irq-controller.patch
-   0005-fix-nand-parition-layout-and-usb-vbus.patch
-   0006-fiq-support.patch
+   0005-Change-Vbus-pin.patch
+   0006-arm-fiq-allow-modules-to-exploit-the-fiq-mechanism.patch
+   0007-mtd-nand-sam9g45-can-hwecc-like-9263.patch
+   0008-wrs3-use-correct-nand-partitioning.patch
+   0009-at91-udc-force-full-speed.patch
+   0010-sam9m10g45ek-for-wrs-new-partitioning.patch
+   0011-sam9m10g45ek-for-wrs-final-partitions-for-V4.patch
 @end example
 
 The configuration we use to build the kernel is not a patch but a plain
@@ -1227,9 +1266,10 @@ Currently, the package includes the following modules:
 @itemize @bullet
 @item @i{wr_vic.ko}: the interrupt controller for in-FPGA devices.
 @item @i{wr-nic.ko}: the network ``card'' driver for WR ports.
-@item @i{at91_softpwm}: a tool that generates a PWM signal for the fan.
 @item @i{wr_rtu.ko}: the routing-table interface between the
-switching core and the associated user-space daemon.
+      switching core and the associated user-space daemon.
+@item @i{wr_pstats.ko}: exports per-port statistics to /proc/sys.
+@item @i{at91_softpwm.ko}: a driver that generates a PWM signal for the fan.
 @end itemize
 
 @c ==========================================================================
@@ -1237,9 +1277,9 @@ switching core and the associated user-space daemon.
 @section PTPd
 
 Configuration supports two different PTP engines: either @t{ptp-noposix}
-(default at this point in time) or PPSi. The latter will become
-the default choice, and then the only choice, as we test it on a larger
-use base.
+(default at this point in time) or PPSi. The latter is
+the default choice, and will later be the only choice, as we phase
+out the former implementation.
 
 Both implementations are hosted in their own respective different
 repository; both are registered as  @i{git} submodules in this package.
@@ -1334,6 +1374,9 @@ The most important tools in @file{userspace/tools} are the following:
 @item shw_ver
 	Print informations about the SW & HW version of the WRS. 
 	See also @ref{DIP Switch HW version}.
+
+@c FIXME: document lm32-vuart rtu_stat spll_dbg_proxy wr_management
+@c FIXME: document wrsw_pstats wrsw_vlans
 @end table
 
 Please note that to compile the applications and tools outside of the build
@@ -1437,48 +1480,89 @@ like erasing and rewriting flash-memory areas from Linux itself.
 Unfortunately, the CPU is not able to boot from NAND memory directly,
 so the first steps of booting are performed from the @i{dataflash}
 device.  Such an SPI memory is used to host the IPL (@i{at91boot}) and
-the executable code of @i{barebox}.  The user is not expected to
+the executable code of the @i{barebox} boot loader.  The user is not expected to
 ever erase this memory; if it happens, the system won't boot and
-you'll be forced to re-flash it entirely (or at least the @i{dataflash}
-area.
+you'll be forced to re-flash it entirely, which requires access to the back
+side of the switch..
 
 NAND memory is used for user-data: tke boot loader configuration, the
 kernel and the filesystem.
 
-This is how the memory is used. While it definitely looks suboptimal,
-it is the result of our own history of development and there are
-no problems with this ``strange'' split up of space:
+This is how the memory is used:
 
 @example
-   0x0000.0000 - 0x0004.0000    Empty (space for a barebox)
-   0x0004.0000 - 0x0008.0000    Barebox environment
-   0x0008.0000 - 0x0010.0000    Empty
-   0x0010.0000 - 0x0090.0000    Kernel (plenty of space)
-   0x0090.0000 - 0x0400.0000    Empty
-   0x0400.0000 - 0x0c00.0000    Filesystem space, jffs2
-   0x0c00.0000 - 0x2000.0000    Available
+   0x0000.0000 - 0x0010.0000    Barebox-environment-backup
+   0x0010.0000 - 0x2000.0000    UBIfied-NAND
 @end example
 
-When you boot Linux, the three empty areas are not visible, while
-the last area is accessible. This is the content of @file{/proc/mtd}
+The first area is used to save the boot loader's configuration (if ever
+changed from the default and saved), and the second one is later split
+in UBI volumes.  In the future we plan to move the barebox
+environment to dataflash memory.
+
+The @i{dataflash} is partitioned too, and such partitioning is visible.
+(thus, you can replace @t{barebox.bin} by just writing
+it to the right device file). Overall, this is the content of @file{/proc/mtd}
 after boot:
 
 @example
    dev:    size   erasesize  name
-   mtd0: 00800000 00020000 "Kernel"
-   mtd1: 08000000 00020000 "Filesystem"
-   mtd2: 00040000 00020000 "Barebox Environment"
-   mtd3: 14000000 00020000 "Available"
-   mtd4: 00840000 00000420 "spi0.0-AT45DB642x"
+   mtd0: 00100000 00020000 "Barebox-environment-backup"
+   mtd1: 1ff00000 00020000 "UBIfied-NAND"
+   mtd2: 00008400 00000420 "at91boot"
+   mtd3: 00084000 00000420 "Barebox"
+   mtd4: 00008400 00000420 "Barebox-Environment"
+   mtd5: 007ab800 00000420 "Available-dataflash"
+   mtd6: 0201d800 0001f800 "boot"
+   mtd7: 0961e000 0001f800 "usr"
+   mtd8: 0961e000 0001f800 "update"
 @end example
 
-If you are customizing the switch, you may use the
-@file{flash_erase} and @file{cat} to replace individual parts of
-the system, like the kernel, or erase the @i{barebox} configuration to
-restore the factory defaults.  Note however that you shouldn't
-modify the @i{dataflash} device (@code{/dev/mtd4}) unless you really
-know what you are doing (for example, the following chapter changes
-it by using magic offsets in the commands).
+If you are customizing the switch, you may use the UBI commands to
+change volumes: the commands are installed in the system,
+within the @i{initramfs} image so they can be used before the flash
+is accessed.
+
+This is the role of the three UBI volumes (you can change the size
+of the volumes or add new ones, but these three names appear in the
+boot scripts):
+
+@table @code
+
+@item boot
+
+	The boot volume hosts the kernel and @i{initramfs} image.
+        It is mounted by the boot loader for the default boot procedure,
+        and is not mounted by the kernel by default.
+
+@item usr
+
+	This is the main filesystem, mounted under @t{/usr} during normal
+        operation.  Both @t{/wr} and @t{/var} point to @t{/usr/wr} and
+        @t{/usr/var}.  Moreover, the boot procedure copies @t{/usr/etc}
+        to @t{/etc} as a first step, so any on-flash configuration is
+        actually used by the running system.
+
+@item update
+
+	The volume is a storage place for firmware upgrade. If you
+        copy @t{wrs-firwware.tar} in this volume, the next boot will
+        completely replace @t{/usr} with this new image. If the tar
+        file includes them, the kernel and @i{initramfs} image are
+        replaced as well.
+
+@end table
+
+If you want to mount UBI partitions, the command is, for example:
+@example
+   mount -t ubifs ubi0:boot /boot
+@end example
+where ``@t{ubi0}'' refers to the first (and only) UBI partition,
+and @t{boot} refers to the symbolic name of the volume, as listed above.
+
+For further details on the update procedure, please see
+@t{/etc/init.d/wrs-boot-procedure} (in the source archive it is
+distributed in @t{userspace/rootfs_override/}.
 
 @c ##########################################################################
 @node Schematics are Available
@@ -1494,11 +1578,6 @@ Please note that only version 3.2 and 3.3 of both the motherboard and
 the backplane has been shipped commercially; you are interested in 
 previous versions only if you are an early developer and have one of 
 those in your hands.
-
-@menu
-* DIP Switch HW version::
-@end menu
-
 
 @c ==========================================================================
 @node DIP Switch HW version
@@ -1522,10 +1601,6 @@ For example, the v3.3 backplane with v3.3 LX240T SCB must be configured as bello
 +--------------+---+---+---+---+
 @end example
 
-
-
-
-
 @c ##########################################################################
 @node Installing from Jtag
 @appendix Installing from Jtag
@@ -1533,165 +1608,16 @@ For example, the v3.3 backplane with v3.3 LX240T SCB must be configured as bello
 As an alternative to the serial flasher, you can take control of the
 system with a JTAG debugger. Please note that 
 the @i{USB Flasher} is @b{really} the preferred technique, but in case
-it doesn't work for your, JTAG is the only way to
+it doesn't work for you, JTAG is the only way to
 communicate with the switch.
 
-Each debugger has its own command language, so you will need to adapt 
-to yours. What is shown here refers to the @i{peedi} & @i{sam-ice} tools.
-These notes are only aimed at low-level developers and leave a lot
-unsaid.
+Previous versions of this manual included detailed instructions about
+such recovery procedure, but we have not been using JTAG for a long
+while, so we didn't update the information to the V4 filesystem layout.
 
-@menu
-* Using PEEDI::                 
-* Using SAM-ICE::               
-* Installation the Boot Loader from JTAG::  
-@end menu
-
-@c ==========================================================================
-@node Using PEEDI
-@section Using PEEDI
-
-As a first step, you will need to ensure the JTAG clock is slow enough.
-The clock can be no faster than 1/6th of the CPU clock, so you need
-3kHz at most (the G45 starts up with an internal oscillator, which has
-an unpredictable value between 20kHz and 40kHz).  Then, I would verify
-that the internal SRAM is working; I do that with cool food and bad
-coffee instead of the usual smelly dead beef.
-
-@smallexample
-   clock init
-   mem write 0x300000 0xc001f00d
-   mem write 0x300004 0xbadc0ffe
-   mem read  0x300000 2
-   ==> 0x300000: 0xC001F00D 0xBADC0FFE
-@end smallexample
-
-Now, you can load your @i{at91bootstrap} to the internal SRAM,
-retrieving it from the network or your host filesystem.  Since no boot
-loader is there, you should place a breakpoint after @i{at91bootstrap}
-initialized SDRAM and the PLL. Finally you can load @i{barebox} and jump
-to it. Such step is better performed with the full JTAG clock, or
-it would take several dozen minutes.
-
-@smallexample
-  mem load at91bootstrap.bin 0x300000
-  break add hard 0x300088
-  go
-  ## wait for the breakpoint to happen
-  break del all
-  clock normal
-  mem load barebox.bin 0x73f00000
-  go
-@end smallexample
-
-@c ==========================================================================
-@node Using SAM-ICE
-@section Using SAM-ICE
-
-This section follows the same steps as in @ref{Using PEEDI}, but using
-the syntax of the SAM-ICE tool recommended by Atmel
-
-@example
-./start
-@end example
-
-Checking SRAM
-
-@smallexample
-speed 2
-w4 0x300000 0xc001f00d
-w4 0x300004 0xcbadc0ffe
-mem32 0x300000 2
-@end smallexample
-
-Uploading at91bootstrap & barebox to DDR
-
-@smallexample
-speed 2
-r
-wreg "R15 (PC)" 300000
-loadbin /tftpboot/at91bootstrap.bin 0x300000
-SetBP 0x300088 H #Check 0x300088
-g
-speed a
-loadbin /tftpboot/barebox.bin 0x73f00000
-ClrBP 1
-g
-@end smallexample
-
-
-@c ==========================================================================
-@node Installation the Boot Loader from JTAG
-@section Installing the Boot Loader from JTAG
-
-After tou managed to load and run @i{barebox.bin},
-you will see the following messages on the serial port, at 115200,8N1.
-The first 4 lines are printed by @i{at91bootstrap}, the rest by @i{barebox}.
-
-@smallexample
-   Start AT91Bootstrap...
-   DDR2 Config: 0x39 (NC=0xa, NR=0xd, CAS=0x3, ba_offset = 0x18)
-   DDR2 Config: 0x39 (NC=0xa, NR=0xd, CAS=0x3, ba_offset = 0x18)
-   Compiled by Alessandro Rubini (May  2 2014 @ 18:32:34)
-   git rev:wr-switch-sw-v3.3.1-113-g0b2af1f+
-
-   Begin to load image...
-   ++++++++++++++++
-   Loading image done.
-
-   barebox 2014.04.0 #1 Fri May 2 18:32:51 CEST 2014
-
-   Board: White Rabbit Switch
-   AT91: Detected soc type: at91sam9g45
-   AT91: Detected soc subtype: Unknown
-   Clocks: CPU 400 MHz, master 133 MHz, main 12.000 MHz
-   netconsole: registered as cs1
-   atmel_nand: Use On Flash BBT
-   nand: Trying ONFI probe in 16 bits mode, aborting !
-   nand: NAND device: Manufacturer ID: 0x2c, Chip ID: 0xbc (Micron NAND 512MiB 1,8V 16-bit), 512MiB, page size: 2048, OOB size: 64
-   Bad block table found at page 262080, version 0x01
-   Bad block table found at page 262016, version 0x01
-   mtd_dataflash mtd_dataflash0: AT45DB642x (8448 KBytes) pagesize 1056 bytes (OTP)
-   mdio_bus: miibus0: probed
-   macb macb0: Cadence MACB at 0xfffbc000
-   GPIOs: PA4=1 (4), PC7=1 (71)
-   malloc space: 0x73b00000 -> 0x73efffff (size 4 MiB)
-   running /env/bin/init...
-   files differ at offset 0
-   Starting up barebox [wrs3] (MAC=22:23:24:25:26:27)
-   starting menu in 3 seconds
-@end smallexample
-
-When the boot loader is running, you can boot a kernel and use its
-own @i{/dev/mtd} devices to write to the DataFlash and NAND memories.
-
-According to the partition table you have in your kernel sources, you will
-see a different set of @i{mtd} files, but you can identify them by looking
-at @code{/proc/mtd}:
-
-@c FIXME: mtd layout
-@example
-   # cat /proc/mtd
-   dev:    size   erasesize  name
-   mtd0: 00800000 00020000 "Kernel"
-   mtd1: 08000000 00020000 "Filesystem"
-   mtd2: 00040000 00020000 "Barebox Environment"
-   mtd3: 14000000 00020000 "Available"
-   mtd4: 00840000 00000420 "spi0.0-AT45DB642x"
-@end example
-
-Here above, the DataFlash is @i{/dev/mtd4}, whereas the former partitions
-refer to NAND memory.  You should then write @i{at91boot} to offset 0
-of the DataFlash and @i{barebox} to offset 0x8400 (33792):
-
-@example
-   cat at91bootstrap.bin > /dev/mtd4
-   dd bs=33792 seek=1 if=barebox.bin of=/dev/mtd4
-@end example
-
-Now you can detach the debugger, press reset and see @i{barebox} starting
-without the need for the JTAG any more. The following steps are the same
-as already described.
+If you need to boot from JTAG, please refer to documentation in
+version 3.3 or earlier of @t{wr-switch-sw} for generic ideas, knowing the
+details are different.
 
 @c ##########################################################################
 @node Bugs and Troubleshooting

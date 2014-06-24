@@ -1,0 +1,54 @@
+From 685747bfa8bc8a41f5e47077a67c0db18b7561c7 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Thu, 19 Jun 2014 11:34:24 +0200
+Subject: [PATCH 9/9] pm9g45/init (for wrs): move environment for the UBI move
+
+This moves environment to the first meg of nand so we can ubify the
+rest of the nand memory.  Also, prepare for dataflash placement, even
+if it doesn't work yet.
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ arch/arm/boards/pm9g45/init.c |   26 +++++++++++++++++++++++---
+ 1 files changed, 23 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm/boards/pm9g45/init.c b/arch/arm/boards/pm9g45/init.c
+index 1f7cc1c..d4cea02 100644
+--- a/arch/arm/boards/pm9g45/init.c
++++ b/arch/arm/boards/pm9g45/init.c
+@@ -189,9 +189,29 @@ static int pm9g45_devices_init(void)
+ 	pm9g45_add_device_eth();
+ 	pm9g45_add_device_usbh();
+ 
+-	//device, offset, size, flag, name
+-	devfs_add_partition("nand0", 0x40000, 0x40000, DEVFS_PARTITION_FIXED, "env_raw");
+-	dev_add_bb_dev("env_raw", "env0");
++	if (0) {
++		/*
++		 * This is where we want to go, but dataflash access is
++		 * currently not working, so we can't saveenv in there
++		 */
++		devfs_add_partition("dataflash0", /* after at91boot + bbox */
++				    0x8400 + 0x84000, 0x8400,
++				    DEVFS_PARTITION_FIXED, "env0");
++	} else {
++		/*
++		 * This is similar to the previous setup, but we'd better
++		 * use the first meg for the environment. This gives us
++		 * ample space for bad blocks, and a known place (0) with
++		 * an easy-to-remember size (1M).  Previous partitioning left
++		 * the first meg unused, so this is compatible with the
++		 * v3.x layout of the partitions
++		 */
++		devfs_add_partition("nand0", /* 1M at the begginning */
++				    0, 1<<20,
++				    DEVFS_PARTITION_FIXED, "env_raw");
++		/* This is the bad-block-aware mirror of env_raw */
++		dev_add_bb_dev("env_raw", "env0");
++	}
+ 
+ 	armlinux_set_architecture(MACH_TYPE_PM9G45);
+ 
+-- 
+1.7.7.2
+

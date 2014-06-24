@@ -1,0 +1,43 @@
+From dc89605b7cb7be4e1bad004b689222fcef15678a Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Sat, 21 Jun 2014 08:48:04 +0200
+Subject: [PATCH 11/11] sam9m10g45ek (for wrs): final partitions for V4
+
+This changes the partitions in an incompatible way: then NAND
+now has one partition for barebox environment (1M: 5 blocks to
+protect against bad blocks) and one big partition fro UBI volumes.
+Real stuff is then split in UBI volumes. Please see documentation
+(in a later commit) for details.
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ arch/arm/mach-at91/board-sam9m10g45ek.c |   12 +-----------
+ 1 files changed, 1 insertions(+), 11 deletions(-)
+
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index afc6418..2eb70d5 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -167,18 +167,8 @@ static struct mtd_partition __initdata ek_nand_partition[] = {
+ 		.size	= SZ_1M,
+ 	},
+ 	{
+-		.name	= "Kernel",
++		.name	= "UBIfied-NAND",
+ 		.offset	= 1 << 20,
+-		.size	= SZ_8M,
+-	},
+-	{
+-		.name	= "Filesystem", /* We _want_ this to be mtd1 */
+-		.offset	= 64 << 20,
+-		.size	= SZ_128M,
+-	},
+-	{
+-		.name	= "Available-nand",
+-		.offset	= MTDPART_OFS_APPEND,
+ 		.size	= MTDPART_SIZ_FULL,
+ 	},
+ };
+-- 
+1.7.7.2
+
