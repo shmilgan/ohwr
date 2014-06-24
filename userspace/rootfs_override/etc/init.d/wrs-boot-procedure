@@ -133,8 +133,12 @@ if [ -f /update/$WRS_FW ]; then
 
 fi
 
-# Here we are: boot normally: /update is muonted: mount /usr, and copy /etc
-mount -t ubifs ubi0:usr /usr
-rm /etc/init.d/wrs-boot-procedure; # This is us: avoid overwriting an open file
-cp -a /usr/etc/* /etc
+# Here we are: boot normally: if initrd, mount /usr and copy /etc
+# Otherwise do not do that, because we likely are nfs-root
+if grep -q initrd= /proc/cmdline; then
+    mount -t ubifs ubi0:usr /usr
+    # Remove "us": avoid overwriting an open file
+    rm /etc/init.d/wrs-boot-procedure;
+    cp -a /usr/etc/* /etc
+fi
 
