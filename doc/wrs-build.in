@@ -77,19 +77,6 @@ If you do not need to modify/hack anything in the switch and just learn
 how to use it, you should first refer at the @b{User Guide} that you can
 find in the @url{http://www.ohwr.org/projects/wr-switch-sw/files}
 
-@menu
-* Overview::                    
-* Building::                    
-* Flashing of WRS-3::           
-* Booting with Barebox::        
-* The Individual Build Steps::  
-* Code layout in a production switch::  
-* Schematics are Available::    
-* Older Hardware Releases::     
-* Installing from Jtag::        
-* Bugs and Troubleshooting::    
-@end menu
-
 @c ##########################################################################
 @node Overview
 @chapter Overview
@@ -143,12 +130,6 @@ passed over through environment variables. The top-level build script
 sets all environment variables, while keeping defaults from your
 preexisting environment -- so you can override anything even when
 rebuilding it all from scratch.
-
-@menu
-* Portability::                 
-* Environment Variables::       
-* Downloading Files::           
-@end menu
 
 @c ==========================================================================
 @node Portability
@@ -291,11 +272,6 @@ The messages of a download run are like the following ones:
 @node Building
 @chapter Building
 
-@menu
-* Building Procedure::          
-* Build Script Description::    
-@end menu
-
 @c ==========================================================================
 @node Building Procedure
 @section Building Procedure
@@ -389,12 +365,6 @@ in this chapter. You might also want to check its embedded documentation using:
 @example
    /path/to/wr-switch-sw/build/wrs_build-all --help
 @end example
-
-@menu
-* Release Package::             
-* Rebuilding Parts::            
-* Rebuilding From Scratch::     
-@end menu
 
 @c --------------------------------------------------------------------------
 @node Release Package
@@ -787,22 +757,21 @@ Initializing DDR...
 loading applet isp-extram-at91sam9g45 at 0x00300000
 Initializing DDR > Done
 
-Erasing DDR > DONE
-
-@c FIXME: this is different (we have magicstr separated now)
 Loading DDR...
-	 @ 0x70000000 : /tmp/barebox.Fb09jx ; size 0x2f1bc (188Kb)
-	 @ 0x71000000 : /data/morgana/build-v3-fede/images/zImage ; size 0x16886c (1442Kb)
-	 @ 0x71fffff8 : /tmp/wrsflash-cpio.jrPKMY.cpio.gz ; size 0x128c722 (18993Kb)
-DDR: Writing 21119306 bytes at offset 0x0 buffer 70000000....ABCDEF
-
-[...]
-Installation procedure starts
-Flashing kernel to /dev/mtd0 ... done
+         @ 0x70000000 : /tmp/flash-wrs-tAqUAs/bb.new ; size 0x637b0 (397Kb)
+         @ 0x71000000 : /data/morgana/build-v4/images/zImage ; size 0x1afb44 (1726Kb)
+         @ 0x717ffff8 : /tmp/flash-wrs-tAqUAs/magicstr ; size 0x8 (0Kb)
+         @ 0x71800000 : /data/morgana/build-v4/images/wrs-initramfs.gz ; size 0x196f84 (1627Kb)
+DDR: Writing 3842688 bytes at offset 0x0 buffer 70000000....ABCDEF
+Closing...
+Formatting UBI device... done
 Getting tftp://192.168.16.1/wrs-firmware.tar ... done
-Mounting target filesystem... done
-Uncompressing image... done
+Extracting filesystem...  done
 @end smallexample
+
+The longest steps are erasing @i{dataflash} (it takes 2 minutes) and
+the last three steps: formatting, tftp and extraction; each of them takes
+around 1 minute.
 
 Please note that the IP address used in the TFTP transfer depends on
 the DHCP handshake: the value above is what your developers use.
@@ -819,37 +788,36 @@ where you will see messages like these:
    -I- -- AT91SAM9G45-EK
    [...]
    -I-     End of applet (command : 2 --- status : 0)
-
 [...]
-
-barebox 2012.05.0 (Oct 26 2012 - 20:51:43)
-
-Board: CERN White Rabbit Switch V3
-
+barebox 2014.04.0 #1 Tue Jun 24 09:05:43 CEST 2014
+Board: White Rabbit Switch
 [...]
-
+Booting kernel for NAND flashing procedure
+100Mbps full duplex link detected
+DHCP client bound to address 192.168.16.246
+[...]
 Uncompressing Linux... done, booting the kernel.
-
 [...]
+/etc/init.d/wrs-boot-procedure: Running
 
-Installation procedure starts
-Flashing kernel to /dev/mtd0 ...
-Writing data to block 0 at offset 0x0
-Writing data to block 1 at offset 0x20000
-
+Formatting UBI device... [...] done
+UBI: attaching mtd1 to ubi0
+UBI: physical eraseblock size:   131072 bytes (128 KiB)
+UBI: logical eraseblock size:    129024 bytes
+UBI: smallest flash I/O unit:    2048
+UBI: sub-page size:              512
 [...]
-
-Getting tftp://192.168.16.1/wrs-image.tar.gz ... done
-Mounting target filesystem... done
-Uncompressing image... done
-
-[...]
-
+Getting tftp://192.168.16.1/wrs-firmware.tar ... done
+UBIFS: mounted UBI device 0, volume 1, name "usr"
+Extracting filesystem...  done
+Requesting system reboot
+Restarting system.
 @end smallexample
 
-@menu
-* Flash Script Description::    
-@end menu
+Please note, however, that many more messages flow, as
+formatting/mounting/umounting UBI devices is very verbose in the
+kernel.  The sequence above is a summary of what happens at
+installation time.
 
 @c -------------------------------------------------------------------
 @node Flash Script Description
@@ -965,10 +933,6 @@ the menu is re-entered automatically.
 
 The other entries are provided to help developers.
 
-@menu
-* The Compiler::                
-@end menu
-
 @c ==========================================================================
 @node Description of the menus
 @section Description of the menus
@@ -1073,19 +1037,6 @@ so it doesn't run the DHCP client.
 
 This chapter details the individual build steps, for the users that want
 to customize their switch in any way. 
-
-@menu
-* The Compiler::                
-* Buildroot::                   
-* The IPL::                     
-* The Boot Loader::             
-* The Linux Kernel::            
-* Kernel Modules::              
-* PTPd::                        
-* User Space Applications::     
-* VHDL Binaries::               
-* The Complete Filesystem::     
-@end menu
 
 @c ==========================================================================
 @node The Compiler
@@ -1627,11 +1578,6 @@ Please note that only version 3.2 and 3.3 of both the motherboard and
 the backplane has been shipped commercially; you are interested in 
 previous versions only if you are an early developer and have one of 
 those in your hands.
-
-@menu
-* DIP Switch HW version::
-@end menu
-
 
 @c ==========================================================================
 @node DIP Switch HW version
