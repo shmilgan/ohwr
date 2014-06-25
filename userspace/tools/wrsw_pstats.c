@@ -31,6 +31,7 @@ struct cnt_word {
 };
 
 struct cnt_word cnt_pp[NPORTS][CNT_PP];
+int use_ports;
 
 char info[][20] = {{"Tu-run|"}, // 0
                    {"Ro-run|"}, // 1
@@ -85,7 +86,7 @@ int pstats_init(void)
 
 	printf("module initialized\n");
 
-	for(i=0; i<NPORTS; ++i)
+	for(i=0; i<use_ports; ++i)
 		for(j=0; j<CNT_PP; ++j)
 		{
 			cnt_pp[i][j].init = 0;
@@ -102,7 +103,7 @@ static void parse_sysfs(int init)
 	char filename[30];
 
 	if(init) {
-		for(port=0; port<NPORTS; ++port) {
+		for(port=0; port<use_ports; ++port) {
 			sprintf(filename, "/proc/sys/pstats/port%u", port);
 			file = fopen(filename, "r");
 			for(cntr=0; cntr<CNT_PP; ++cntr) {
@@ -113,7 +114,7 @@ static void parse_sysfs(int init)
 		}
 	}
 	else {
-		for(port=0; port<NPORTS; ++port) {
+		for(port=0; port<use_ports; ++port) {
 
 			sprintf(filename, "/proc/sys/pstats/port%u", port);
 			file = fopen(filename, "r");
@@ -140,7 +141,7 @@ void print_first_n_cnts(int n_cnts)
 		printf("----------");
 
 	printf("\n");
-	for(port=0; port<NPORTS; ++port)
+	for(port=0; port<use_ports; ++port)
 	{
 		printf("%2u|", port);
 		for(cnt=0; cnt<n_cnts;++cnt)
@@ -162,7 +163,7 @@ void print_chosen_cnts( int cnts_list[], int n_cnts)
 	for(cnt=0; cnt<n_cnts; ++cnt)
 	printf("----------");
 	printf("\n");
-	for(port=0; port<NPORTS; ++port)
+	for(port=0; port<use_ports; ++port)
 	{
 		printf("%2u|", port);
 		for(cnt=0; cnt<n_cnts;++cnt)
@@ -180,6 +181,7 @@ void print_info(char *prgname)
 			"   -e        Show counters from Endpoints\n"
 			"   -p        Show counters for priorities only (from Endpoints)\n"
 			"   -a        Show all counters (don't fit screen)\n"
+			"   -n        Define 8/18 ports version\n"
 			"   -h        Show this message\n");
 
 }
@@ -190,17 +192,34 @@ int main(int argc, char **argv)
 	int def_cnts[]  = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,29,30,31,32,33,34,35,36,37}; //30
 	int rtu_cnts[]  = {29,30,31,32,33,34,35,36,37,38}; //10
 	int ep_cnts[]   = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28}; //29
-	int op = 0;
+	int op = 0, c;
+
+	use_ports = NPORTS;
+	while ( (c = getopt(argc, argv, "pheran:")) != -1) {
+		switch(c) {
+			case 'n':
+				use_ports = atoi(optarg);
+				break;
+			case 'p':
+			case 'e':
+			case 'r':
+			case 'a':
+				op = c;
+				break;
+			case 'h':
+			default:
+				print_info(argv[0]);
+				exit(1);
+		}
+	}
 
 	if(pstats_init()) return -1;
-	op = getopt(argc, argv, "phera");
 	
 	while(1)
 	{
 		printf("\033[2J\033[1;1H");
-		if(argc > 1 && op !=-1)
-	       	switch(op)
-		{
+		parse_sysfs(0);
+		switch(op) {
 			case 'p':
 				print_chosen_cnts(prio_cnts, 8);
 				break;
@@ -213,16 +232,9 @@ int main(int argc, char **argv)
 			case 'a':
 				print_first_n_cnts(CNT_PP);
 				break;
-			case 'h':
 			default:
-				print_info(argv[0]);
-				exit(1);
-				break;
-	       }
-		else
-			print_chosen_cnts(def_cnts, 30);
-               
-		parse_sysfs(0);
+				print_chosen_cnts(def_cnts, 30);
+		}
 		sleep(1);
 	}
 	return 0;
