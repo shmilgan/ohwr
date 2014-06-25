@@ -59,6 +59,9 @@ struct cntrs_dev {
 
 static struct cntrs_dev pstats_dev;	/*static data cleared at build time*/
 
+/* pstats info for sysfs */
+static int pstats_info[PINFO_SIZE];
+
 static unsigned int *cntr_idx(unsigned int *tab, int port, int idx)
 {
 	return &tab[port*PSTATS_CNT_PP+idx];
@@ -214,17 +217,26 @@ static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 {
 	int ret;
 	int port;
+  unsigned int data;
 
 	port = (int)ctl->extra1;
-	if (!write)
-		pstats_rd_cntrs(port);
+  if( port < pstats_nports && !write ) {
+	  pstats_rd_cntrs(port);
+  }
+  else if( !write ) {
+    /* read stuff for info file */
+    data = pstats_readl(pstats_dev, INFO);
+    pstats_info[PINFO_VER] = PSTATS_INFO_VER_R(data);
+    pstats_info[PINFO_CNTPW] = PSTATS_INFO_CPW_R(data);
+    pstats_info[PINFO_CNTPP] = PSTATS_INFO_CPP_R(data);
+  }
 
 	ret = proc_dointvec(ctl, 0, buffer, lenp, ppos);
 
 	return ret;
 }
 
-static ctl_table pstats_ctl_table[19];	/* initialized in _init function */
+static ctl_table pstats_ctl_table[20];	/* initialized in _init function */
 
 static ctl_table proc_table[] = {
 	{
@@ -269,6 +281,13 @@ static int __init pstats_init(void)
 		pstats_ctl_table[i].proc_handler = pstats_handler;
 		pstats_ctl_table[i].extra1 = (void *)i;
 	}
+  /* the last one with info about pstats */
+  pstats_ctl_table[i].procname = "info";
+  pstats_ctl_table[i].data = pstats_info;
+  pstats_ctl_table[i].maxlen = PINFO_SIZE * sizeof(int);
+  pstats_ctl_table[i].mode = 0444;
+  pstats_ctl_table[i].proc_handler = pstats_handler;
+  pstats_ctl_table[i].extra1 = (void *)i;
 
 	pstats_header = register_sysctl_table(proc_table);
 

@@ -21,6 +21,11 @@
 
 #define PSTATS_IRQBUFSZ  16
 
+#define PINFO_SIZE  3
+#define PINFO_VER   0
+#define PINFO_CNTPW 1
+#define PINFO_CNTPP 2
+
 extern int (*wr_nic_pstats_callback)(int epnum,
 				     unsigned int ctr[PSTATS_CNT_PP]);
 
