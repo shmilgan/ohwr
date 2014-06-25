@@ -65,7 +65,7 @@ static unsigned int *cntr_idx(unsigned int *tab, int port, int idx)
 }
 
 /* function converting Layer1 and Layer2 words read from HW to counter value */
-static int hwcnt_to_sw(uint32_t l1_val, uint32_t l2_val, int n)
+static unsigned int hwcnt_to_sw(uint32_t l1_val, uint32_t l2_val, int n)
 {
 	uint32_t lsb, msb;
 
@@ -96,20 +96,26 @@ static uint32_t pstats_irq_status(void)
 	return pstats_readl(pstats_dev, EIC_ISR);
 }
 
-static uint32_t pstats_irq_cntrs(int port)
+static uint64_t pstats_irq_cntrs(int port)
 {
 	uint32_t val;
+	uint64_t mask = 0;
 
 	val = (port<<PSTATS_CR_PORT_SHIFT | PSTATS_CR_RD_IRQ);
 	pstats_writel(val, pstats_dev, CR);
-	return pstats_readl(pstats_dev, L1_CNT_VAL);
+	//read lower half of cntrs overflow mask
+	mask = (((uint64_t)pstats_readl(pstats_dev, L2_CNT_VAL)) << 32);
+	mask &= 0xFFFFFFFF00000000LL;
+	mask |= (uint64_t) pstats_readl(pstats_dev, L1_CNT_VAL);
+	return mask;
 }
 
 /* Tasklet function, takes irq status for all ports, gets counters' overflow
  * flags and increments appropriate counters*/
 static void pstats_tlet_fn(unsigned long arg)
 {
-	uint32_t irqs, cntrs_ov;
+	uint32_t irqs;
+	uint64_t cntrs_ov;
 	int port, cntr;
 	unsigned int *ptr;
 	struct cntrs_dev *device = (struct cntrs_dev *)arg;
