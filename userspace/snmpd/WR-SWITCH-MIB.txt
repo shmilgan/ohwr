@@ -1,15 +1,16 @@
 WR-SWITCH-MIB DEFINITIONS ::= BEGIN
 
--- This is blatantly copied from  NET-SNMP-TUTORIAL-MIB.txt and adapted
+-- This is blatantly copied from  NET-SNMP-TUTORIAL-MIB.txt and IF-MIB.txt
 -- URL: http://www.net-snmp.org/tutorial/tutorial-5/
 --                            toolkit/mib_module/NET-SNMP-TUTORIAL-MIB.txt
 -- Bugs and swearing by Alessandro Rubini
 
 -- IMPORTS: Include definitions from other mibs here
 IMPORTS
-	OBJECT-TYPE, Integer32,
-	MODULE-IDENTITY,enterprises           FROM SNMPv2-SMI
-	MODULE-COMPLIANCE, OBJECT-GROUP       FROM SNMPv2-CONF;
+        OBJECT-TYPE, Integer32, Counter32,
+        MODULE-IDENTITY,enterprises           FROM SNMPv2-SMI
+        DisplayString                         FROM SNMPv2-TC
+        MODULE-COMPLIANCE, OBJECT-GROUP       FROM SNMPv2-CONF;
 
 CERN OBJECT IDENTIFIER ::= { enterprises 96 }
 
@@ -20,7 +21,7 @@ wrSwitchMIB MODULE-IDENTITY
     LAST-UPDATED "201406181915Z"    -- 18 june 2014, 19:15 (why saying again?)
     ORGANIZATION "CERN"
     CONTACT-INFO "postal:   BE-CO-HT, CERN, Geneva
-		  email:    ht-drivers@cern.ch
+                  email:    ht-drivers@cern.ch
                  "
     DESCRIPTION  "White Rabbit Switch internal details
                  "
@@ -41,5 +42,233 @@ wrsScalarOne   OBJECT-TYPE
     DESCRIPTION
         "Just an integer"
     ::= { wrsScalar 1 }
+
+-- This pstats stuff is copied, in a way, from the ifTable stuff (IF-MIB.txt)
+-- We have the ports as columns, so they are a fixed number. And the
+-- counters at lines.  This allows to change counters following gateware.
+-- even if it is not standard practice.  Otherwise, we'd need to rewrite
+-- code every time (I *hate* this obsolete crap: code generators should not
+-- be like that).
+
+pstatsNumber  OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The number of current statistic counters, in this gateware."
+
+    ::= { wrsPstats 1 }
+
+pstatsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF pstatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "A list of pstat counters. One column per interface.
+             The number of entries is given by the value of pstatsNumber."
+    ::= { wrsPstats 2 }
+
+pstatsEntry OBJECT-TYPE
+    SYNTAX      PstatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "An entry containing a pstat name and values for all WR ports."
+    INDEX   { pstatsIndex }
+    ::= { pstatsTable 1 }
+
+PstatsEntry ::=
+    SEQUENCE {
+        pstatsIndex                 Integer32,
+        pstatsDescr                 DisplayString,
+        pstatsWR0                   Counter32,
+        pstatsWR1                   Counter32,
+        pstatsWR2                   Counter32,
+        pstatsWR3                   Counter32,
+        pstatsWR4                   Counter32,
+        pstatsWR5                   Counter32,
+        pstatsWR6                   Counter32,
+        pstatsWR7                   Counter32,
+        pstatsWR8                   Counter32,
+        pstatsWR9                   Counter32,
+        pstatsWR10                  Counter32,
+        pstatsWR11                  Counter32,
+        pstatsWR12                  Counter32,
+        pstatsWR13                  Counter32,
+        pstatsWR14                  Counter32,
+        pstatsWR15                  Counter32,
+        pstatsWR16                  Counter32,
+        pstatsWR17                  Counter32
+    }
+
+pstatsIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The index of this statistics counter."
+
+    ::= { pstatsEntry 1 }
+
+pstatsDescr OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "A textual string describing this counter"
+    ::= { pstatsEntry 2 }
+
+pstatsWR0 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr0."
+    ::= {pstatsEntry 3 }
+
+pstatsWR0 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr0."
+    ::= {pstatsEntry 3 }
+
+pstatsWR1 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr1."
+    ::= {pstatsEntry 4 }
+
+pstatsWR2 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr2."
+    ::= {pstatsEntry 5 }
+
+pstatsWR3 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr3."
+    ::= {pstatsEntry 6 }
+
+pstatsWR4 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr4."
+    ::= {pstatsEntry 7 }
+
+pstatsWR5 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr5."
+    ::= {pstatsEntry 8 }
+
+pstatsWR6 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr6."
+    ::= {pstatsEntry 9 }
+
+pstatsWR7 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr7."
+    ::= {pstatsEntry 10 }
+
+pstatsWR8 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr8."
+    ::= {pstatsEntry 11 }
+
+pstatsWR9 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr9."
+    ::= {pstatsEntry 12 }
+
+pstatsWR10 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr10."
+    ::= {pstatsEntry 13 }
+
+pstatsWR11 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr11."
+    ::= {pstatsEntry 14 }
+
+pstatsWR12 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr12."
+    ::= {pstatsEntry 15 }
+
+pstatsWR13 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr13."
+    ::= {pstatsEntry 16 }
+
+pstatsWR14 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr14."
+    ::= {pstatsEntry 17 }
+
+pstatsWR15 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr15."
+    ::= {pstatsEntry 18 }
+
+pstatsWR16 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr16."
+    ::= {pstatsEntry 19 }
+
+pstatsWR17 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr17."
+    ::= {pstatsEntry 20 }
+
 
 END
