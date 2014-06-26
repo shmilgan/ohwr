@@ -171,8 +171,8 @@ while [ $# -ge 1 ]; do
 		at91bs=$WRSTMPDIR/at91bootstrap.bin;
 		barebox=$WRSTMPDIR/barebox.bin
 		kernel=$WRSTMPDIR/zImage
-		initramfs=$WRSTMPDIR/images/wrs-initramfs.gz
-		usrtar=$WRSTMPDIR/images/wrs-usr.tar.gz
+		initramfs=$WRSTMPDIR/wrs-initramfs.gz
+		usrtar=$WRSTMPDIR/wrs-usr.tar.gz
 		shift;;
 
 	-h|--help) 	showhelp; shift;;
