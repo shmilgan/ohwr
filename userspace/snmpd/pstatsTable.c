@@ -69,6 +69,47 @@ struct pstatsTable_entry {
     int             valid;
 };
 
+#include <stdarg.h>
+static FILE *logf;
+
+static int logmsg(const char *fmt, ...)
+{
+        va_list args;
+        int ret;
+
+	if (WRS_WITH_SNMP_HACKISH_LOG) {
+		if (!logf)
+			logf = fopen("/dev/console", "w");
+
+		va_start(args, fmt);
+		ret = vfprintf(logf, fmt, args);
+		va_end(args);
+
+		return ret;
+	} else {
+		return 0;
+	}
+}
+
+int dumpstruct(FILE *dest, char *name, void *ptr, int size)
+{
+    int ret = 0, i;
+    unsigned char *p = ptr;
+
+	if (WRS_WITH_SNMP_HACKISH_LOG) {
+		ret = fprintf(dest, "dump %s at %p (size 0x%x)\n",
+			      name, ptr, size);
+		for (i = 0; i < size; ) {
+			ret += fprintf(dest, "%02x", p[i]);
+			i++;
+			ret += fprintf(dest, i & 3 ? " " : i & 0xf ? "  " : "\n");
+		}
+		if (i & 0xf)
+			ret += fprintf(dest, "\n");
+	}
+	return ret;
+}
+
 /*
  * create a new row in the table 
  */
@@ -77,6 +118,7 @@ pstatsTable_createEntry(int dummy, long pstatsIndex)
 {
     struct pstatsTable_entry *entry;
 
+    logmsg("%s: %i\n", __func__, __LINE__);
     entry = SNMP_MALLOC_TYPEDEF(struct pstatsTable_entry);
     if (!entry)
         return NULL;
@@ -93,8 +135,10 @@ pstatsTable_createEntry(int dummy, long pstatsIndex)
 static void
 pstatsTable_removeEntry(struct pstatsTable_entry *entry)
 {
+    logmsg("%s: %i\n", __func__, __LINE__);
     if (!entry)
         return;                 /* Nothing to remove */
+    logmsg("%s: %i\n", __func__, __LINE__);
 
     /*
      * XXX - remove entry from local data structure 
@@ -111,6 +155,7 @@ pstatsTable_get_entry(netsnmp_variable_list * indexes)
 {
     struct pstatsTable_entry *row = NULL;
 
+    logmsg("%s: %i\n", __func__, __LINE__);
     /*
      * XXX - Use the 'indexes' parameter to retrieve the data
      * structure for the requested row, and return this. 
@@ -129,10 +174,18 @@ pstatsTable_get_next_entry(netsnmp_handler_registration *reginfo,
     size_t          build_space_len = 0;
     size_t          index_oid_len = 0;
 
+    logmsg("%s: %i\n", __func__, __LINE__);
     /*
      * XXX - Use the 'indexes' parameter to identify the
      * next row in the table.... 
      */
+    {
+	    int i;
+	    dumpstruct(logf, "variable_list", indexes, sizeof(*indexes));
+	    logmsg("indexes: \n");
+	    for (i = 0; i < indexes->name_length; i++)
+		    logmsg(".%i", (int)indexes->name[i]);
+    }
 
     /*
      * XXX   .... update the 'indexes' parameter with the
@@ -172,6 +225,7 @@ pstatsTable_handler(netsnmp_mib_handler *handler,
     netsnmp_table_request_info *table_info;
     struct pstatsTable_entry *table_entry;
 
+    logmsg("%s: mode %i\n", __func__, reqinfo->mode);
     switch (reqinfo->mode) {
         /*
          * Read-support
@@ -181,6 +235,7 @@ pstatsTable_handler(netsnmp_mib_handler *handler,
             table_info = netsnmp_extract_table_info(request);
             table_entry = pstatsTable_get_entry(table_info->indexes);
 
+	    logmsg("%s: colnum %i\n", __func__, table_info->colnum);
             switch (table_info->colnum) {
             case COLUMN_PSTATSINDEX:
                 if (!table_entry) {
@@ -374,6 +429,7 @@ pstatsTable_handler(netsnmp_mib_handler *handler,
     case MODE_GETNEXT:
         for (request = requests; request; request = request->next) {
             table_info = netsnmp_extract_table_info(request);
+	    logmsg("%s: colnum %i\n", __func__, table_info->colnum);
             table_entry = pstatsTable_get_next_entry(reginfo, request,
                                                      table_info->colnum,
                                                      table_info->indexes);
@@ -581,6 +637,7 @@ initialize_table_pstatsTable(void)
     netsnmp_handler_registration *reg;
     netsnmp_table_registration_info *table_info;
 
+    logmsg("%s: %i\n", __func__, __LINE__);
     reg =
         netsnmp_create_handler_registration("pstatsTable",
                                             pstatsTable_handler,
@@ -606,6 +663,7 @@ initialize_table_pstatsTable(void)
 void
 init_pstatsTable(void)
 {
+    logmsg("%s: %i\n", __func__, __LINE__);
     /*
      * here we initialize all the tables we're planning on supporting 
      */
