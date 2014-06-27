@@ -35,7 +35,9 @@ fi
 
 
 if [ $ptpname = ppsi ]; then
-   make ARCH=wrs PROTO_EXT=whiterabbit || wrs_die "Failure building PPSi"
+   make clean
+   make wrs_defconfig
+   make CROSS_COMPILE=$CROSS_COMPILE || wrs_die "Failure building PPSi"
    install -d "$WRS_OUTPUT_DIR/images/wr/bin"
    install ppsi "$WRS_OUTPUT_DIR/images/wr/bin"
 else

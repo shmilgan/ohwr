@@ -12,7 +12,7 @@
 #undef FALSE
 #undef TRUE
 
-#include <ppsi/ppsi.h>
+#include <ppsi/ieee1588_types.h> /* for ClockIdentity */
 #include <minipc.h>
 
 #include <stdio.h>
