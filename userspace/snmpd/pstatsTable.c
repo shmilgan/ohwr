@@ -45,7 +45,7 @@ struct pstatsTable_entry {
     /*
      * Column values 
      */
-    char            pstatsDescr[NNN];
+    char            pstatsDescr[32];
     size_t          pstatsDescr_len;
     u_long          pstatsWR0;
     u_long          pstatsWR1;
@@ -573,7 +573,7 @@ pstatsTable_handler(netsnmp_mib_handler *handler,
 }
 
 /** Initialize the pstatsTable table by defining its contents and how it's structured */
-static void
+void
 initialize_table_pstatsTable(void)
 {
     const oid       pstatsTable_oid[] =
