@@ -8,13 +8,11 @@ CC      = $(CROSS_COMPILE)gcc
 LD	= $(CROSS_COMPILE)ld
 
 # defer running "net-snmp-config --cflags" so it is visible in make output
-CFLAGS  = -fPIC   $$($(NET_SNMP_CONFIG) --cflags) -Wall
+CFLAGS  = -fPIC   $$($(NET_SNMP_CONFIG) --cflags)
 LDFLAGS = -shared $$($(NET_SNMP_CONFIG) --ldflags)
 
-CFLAGS += -DWRS_WITH_SNMP_HACKISH_LOG
-
 SHLIB = wrsSnmp.so
-SOURCES = init.c wrsScalar.c pstatsTable.o
+SOURCES = init.c wrsScalar.c
 OBJECTS = $(SOURCES:.c=.o)
 
 all: $(SHLIB)
