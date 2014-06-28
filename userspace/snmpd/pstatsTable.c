@@ -243,7 +243,7 @@ tcpTable_handler(netsnmp_mib_handler          *handler,
 #endif
                 break;
             case TCPCONNLOCALPORT:
-                port = TCP_PORT_TO_HOST_ORDER((u_short)entry->TCPTABLE_LOCALPORT);
+		    port = /* TCP_PORT_TO_HOST_ORDER( */ (u_short)entry->TCPTABLE_LOCALPORT;
 	        snmp_set_var_typed_value(requestvb, ASN_INTEGER,
                                  (u_char *)&port, sizeof(port));
                 break;
@@ -259,7 +259,7 @@ tcpTable_handler(netsnmp_mib_handler          *handler,
 #endif
                 break;
             case TCPCONNREMOTEPORT:
-                port = TCP_PORT_TO_HOST_ORDER((u_short)entry->TCPTABLE_REMOTEPORT);
+		    port = /* TCP_PORT_TO_HOST_ORDER( */ (u_short)entry->TCPTABLE_REMOTEPORT;
 	        snmp_set_var_typed_value(requestvb, ASN_INTEGER,
                                  (u_char *)&port, sizeof(port));
                 break;
@@ -435,11 +435,11 @@ tcpTable_next_entry( void **loop_context,
 #if defined(osf5) && defined(IN6_EXTRACT_V4ADDR)
     addr = ntohl(IN6_EXTRACT_V4ADDR(&entry->pcb.inp_laddr));
 #else
-    addr = ntohl(entry->TCPTABLE_LOCALADDRESS);
+    addr = /* ntohl( */ entry->TCPTABLE_LOCALADDRESS;
 #endif
     snmp_set_var_value(idx, (u_char *)&addr, sizeof(addr));
 
-    port = TCP_PORT_TO_HOST_ORDER(entry->TCPTABLE_LOCALPORT);
+    port = /* TCP_PORT_TO_HOST_ORDER( */ entry->TCPTABLE_LOCALPORT;
     idx = idx->next_variable;
     snmp_set_var_value(idx, (u_char*)&port, sizeof(port));
 
@@ -447,11 +447,11 @@ tcpTable_next_entry( void **loop_context,
 #if defined(osf5) && defined(IN6_EXTRACT_V4ADDR)
     addr = ntohl(IN6_EXTRACT_V4ADDR(&entry->pcb.inp_faddr));
 #else
-    addr = ntohl(entry->TCPTABLE_REMOTEADDRESS);
+    addr = /* ntohl( */ entry->TCPTABLE_REMOTEADDRESS;
 #endif
     snmp_set_var_value(idx, (u_char *)&addr, sizeof(addr));
 
-    port = TCP_PORT_TO_HOST_ORDER(entry->TCPTABLE_REMOTEPORT);
+    port = /* TCP_PORT_TO_HOST_ORDER( */ entry->TCPTABLE_REMOTEPORT;
     idx = idx->next_variable;
     snmp_set_var_value(idx, (u_char*)&port, sizeof(port));
 
@@ -693,8 +693,8 @@ tcpTable_load(netsnmp_cache *cache, void *vmagic)
                         &pcb.inp_faddr.s_addr, &fp, &state, &uid))
             continue;
 
-        pcb.inp_lport = htons((unsigned short) lp);
-        pcb.inp_fport = htons((unsigned short) fp);
+        pcb.inp_lport = lp; //htons((unsigned short) lp);
+        pcb.inp_fport = fp; //htons((unsigned short) fp);
 
         pcb.inp_state = (state & 0xf) < 12 ? linux_states[state & 0xf] : 2;
         if (pcb.inp_state == 5 /* established */ ||
