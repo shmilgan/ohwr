@@ -32,6 +32,7 @@
 #define	TCPTABLE_REMOTEADDRESS	inp_faddr.s_addr
 #define	TCPTABLE_REMOTEPORT	inp_fport
 #define	TCPTABLE_IS_LINKED_LIST
+//#define TCPTABLE_IS_TABLE  /* This is not working it seems */
 
 				/* Head of linked list, or root of table */
 TCPTABLE_ENTRY_TYPE	*tcp_head  = NULL;
@@ -266,7 +267,7 @@ tcpTable_next_entry( void **loop_context,
     snmp_set_var_value(idx, (u_char *)&tcp_head[i].TCPTABLE_LOCALADDRESS,
                                 sizeof(tcp_head[i].TCPTABLE_LOCALADDRESS));
 
-    port = TCP_PORT_TO_HOST_ORDER((u_short)tcp_head[i].TCPTABLE_LOCALPORT);
+    port = /* TCP_PORT_TO_HOST_ORDER( */ (u_short)tcp_head[i].TCPTABLE_LOCALPORT;
     idx = idx->next_variable;
     snmp_set_var_value(idx, (u_char*)&port, sizeof(port));
 
@@ -274,7 +275,7 @@ tcpTable_next_entry( void **loop_context,
     snmp_set_var_value(idx, (u_char *)&tcp_head[i].TCPTABLE_REMOTEADDRESS,
                                 sizeof(tcp_head[i].TCPTABLE_REMOTEADDRESS));
 
-    port = TCP_PORT_TO_HOST_ORDER((u_short)tcp_head[i].TCPTABLE_REMOTEPORT);
+    port = /* TCP_PORT_TO_HOST_ORDER( */ (u_short)tcp_head[i].TCPTABLE_REMOTEPORT;
     idx = idx->next_variable;
     snmp_set_var_value(idx, (u_char*)&port, sizeof(port));
 
