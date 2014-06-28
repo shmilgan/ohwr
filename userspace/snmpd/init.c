@@ -12,4 +12,5 @@ void
 init_wrsSnmp(void)
 {
 	init_wrsScalar();
+	init_tcpTable();
 }
