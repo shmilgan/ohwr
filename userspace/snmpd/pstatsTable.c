@@ -25,6 +25,51 @@
 #include "tcp.h"
 #include "pstatsTable.h"
 
+
+#include <stdarg.h>
+static FILE *logf;
+
+/* local hack */
+static int logmsg(const char *fmt, ...)
+{
+	va_list args;
+	int ret;
+
+	if (WRS_WITH_SNMP_HACKISH_LOG) {
+		if (!logf)
+			logf = fopen("/dev/console", "w");
+
+		va_start(args, fmt);
+		ret = vfprintf(logf, fmt, args);
+		va_end(args);
+
+		return ret;
+	} else {
+		return 0;
+	}
+}
+
+int dumpstruct(FILE *dest, char *name, void *ptr, int size)
+{
+    int ret = 0, i;
+    unsigned char *p = ptr;
+
+	if (WRS_WITH_SNMP_HACKISH_LOG) {
+		ret = fprintf(dest, "dump %s at %p (size 0x%x)\n",
+			      name, ptr, size);
+		for (i = 0; i < size; ) {
+			ret += fprintf(dest, "%02x", p[i]);
+			i++;
+			ret += fprintf(dest, i & 3 ? " " : i & 0xf ? "	" : "\n");
+		}
+		if (i & 0xf)
+			ret += fprintf(dest, "\n");
+	}
+	return ret;
+}
+
+
+
 #define	TCPTABLE_ENTRY_TYPE	struct inpcb
 #define	TCPTABLE_STATE		inp_state
 #define	TCPTABLE_LOCALADDRESS	inp_laddr.s_addr
@@ -50,12 +95,6 @@ int                      tcp_estab = 0;
 #endif
 #ifndef TCP_STATS_CACHE_TIMEOUT
 #define TCP_STATS_CACHE_TIMEOUT	MIB_STATS_CACHE_TIMEOUT
-#endif
-
-#if defined(TCP_PORTS_IN_HOST_ORDER) && TCP_PORTS_IN_HOST_ORDER
-#define TCP_PORT_TO_HOST_ORDER(x) x
-#else
-#define TCP_PORT_TO_HOST_ORDER(x) ntohs(x)
 #endif
 
 void
@@ -236,8 +275,10 @@ tcpTable_first_entry(void **loop_context,
      * XXX - How can we tell if the cache is valid?
      *       No access to 'reqinfo'
      */
+	logmsg("%s: %i\n", __func__, __LINE__);
     if (tcp_size == 0)
         return NULL;
+	logmsg("%s: %i\n", __func__, __LINE__);
 
     /*
      * Point to the first entry, and use the
@@ -257,8 +298,10 @@ tcpTable_next_entry( void **loop_context,
     netsnmp_variable_list *idx;
     long port;
 
+    logmsg("%s: %i -- size %i, i %i\n", __func__, __LINE__, tcp_size, i);
     if (tcp_size < i)
         return NULL;
+	logmsg("%s: %i\n", __func__, __LINE__);
 
     /*
      * Set up the indexing for the specified row...
@@ -292,6 +335,7 @@ tcpTable_next_entry( void **loop_context,
 void
 tcpTable_free(netsnmp_cache *cache, void *magic)
 {
+	logmsg("%s: %i\n", __func__, __LINE__);
 	if (tcp_head)
         free(tcp_head);
     tcp_head  = NULL;
@@ -310,8 +354,10 @@ tcpTable_first_entry(void **loop_context,
      * XXX - How can we tell if the cache is valid?
      *       No access to 'reqinfo'
      */
+	//logmsg("%s: %i\n", __func__, __LINE__);
     if (tcp_head == NULL)
         return NULL;
+    //logmsg("%s: %i\n", __func__, __LINE__);
 
     /*
      * Point to the first entry, and use the
@@ -331,8 +377,10 @@ tcpTable_next_entry( void **loop_context,
     netsnmp_variable_list *idx;
     long addr, port;
 
+    //logmsg("%s: %i\n", __func__, __LINE__);
     if (!entry)
         return NULL;
+    //logmsg("%s: %i\n", __func__, __LINE__);
 
     /*
      * Set up the indexing for the specified row...
@@ -366,7 +414,9 @@ void
 tcpTable_free(netsnmp_cache *cache, void *magic)
 {
     TCPTABLE_ENTRY_TYPE *p;
+	logmsg("%s: %i\n", __func__, __LINE__);
     while (tcp_head) {
+	logmsg("%s: %i\n", __func__, __LINE__);
         p = tcp_head;
         tcp_head = tcp_head->INP_NEXT_SYMBOL;
         free(p);
@@ -401,6 +451,7 @@ tcpTable_load(netsnmp_cache *cache, void *vmagic)
     FILE           *in;
     char            line[256];
 
+	logmsg("%s: %i\n", __func__, __LINE__);
     tcpTable_free(cache, NULL);
 
     if (!(in = fopen("/proc/net/tcp", "r"))) {
@@ -409,12 +460,14 @@ tcpTable_load(netsnmp_cache *cache, void *vmagic)
         return -1;
     }
 
+	logmsg("%s: %i\n", __func__, __LINE__);
     /*
      * scan proc-file and build up a linked list 
      * This will actually be built up in reverse,
      *   but since the entries are unsorted, that doesn't matter.
      */
     while (line == fgets(line, sizeof(line), in)) {
+	logmsg("%s: %i\n", __func__, __LINE__);
         struct inpcb    pcb, *nnew;
         static int      linux_states[12] =
             { 1, 5, 3, 4, 6, 7, 11, 1, 8, 9, 2, 10 };
