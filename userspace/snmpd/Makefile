@@ -10,6 +10,7 @@ LD	= $(CROSS_COMPILE)ld
 # defer running "net-snmp-config --cflags" so it is visible in make output
 CFLAGS  = -fPIC   $$($(NET_SNMP_CONFIG) --cflags)
 LDFLAGS = -shared $$($(NET_SNMP_CONFIG) --ldflags)
+CFLAGS += -Iinclude
 
 SHLIB = wrsSnmp.so
 SOURCES = init.c wrsScalar.c pstatsTable.c
