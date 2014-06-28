@@ -40,7 +40,7 @@
 #include <net-snmp/agent/auto_nlist.h>
 
 #include "tcp.h"
-#include "tcpTable.h"
+#include "pstatsTable.h"
 
 #ifdef hpux11
 #define	TCPTABLE_ENTRY_TYPE	mib_tcpConnEnt 
