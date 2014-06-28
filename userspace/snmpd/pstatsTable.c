@@ -135,7 +135,7 @@ int                      tcp_estab = 0;
 void
 init_tcpTable(void)
 {
-    const oid tcpTable_oid[] = { SNMP_OID_MIB2, 6, 13 };
+	const oid tcpTable_oid[] = {  1, 3, 6, 1, 4, 1, 96, 100, 2, };
 
     netsnmp_table_registration_info *table_info;
     netsnmp_iterator_info           *iinfo;
