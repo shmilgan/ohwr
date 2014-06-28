@@ -76,8 +76,6 @@ int dumpstruct(FILE *dest, char *name, void *ptr, int size)
 #define	TCPTABLE_LOCALPORT	inp_lport
 #define	TCPTABLE_REMOTEADDRESS	inp_faddr.s_addr
 #define	TCPTABLE_REMOTEPORT	inp_fport
-#define	TCPTABLE_IS_LINKED_LIST
-//#define TCPTABLE_IS_TABLE  /* This is not working it seems */
 
 				/* Head of linked list, or root of table */
 TCPTABLE_ENTRY_TYPE	*tcp_head  = NULL;
@@ -264,86 +262,6 @@ TCP_Count_Connections( void ) {
 	 * Also applies to the cache-handler free routine
 	 */
 
-#ifdef	TCPTABLE_IS_TABLE
-netsnmp_variable_list *
-tcpTable_first_entry(void **loop_context,
-                     void **data_context,
-                     netsnmp_variable_list *index,
-                     netsnmp_iterator_info *data)
-{
-    /*
-     * XXX - How can we tell if the cache is valid?
-     *       No access to 'reqinfo'
-     */
-	logmsg("%s: %i\n", __func__, __LINE__);
-    if (tcp_size == 0)
-        return NULL;
-	logmsg("%s: %i\n", __func__, __LINE__);
-
-    /*
-     * Point to the first entry, and use the
-     * 'next_entry' hook to retrieve this row
-     */
-    *loop_context = 0;
-    return tcpTable_next_entry( loop_context, data_context, index, data );
-}
-
-netsnmp_variable_list *
-tcpTable_next_entry( void **loop_context,
-                     void **data_context,
-                     netsnmp_variable_list *index,
-                     netsnmp_iterator_info *data)
-{
-    int i = (int)*loop_context;
-    netsnmp_variable_list *idx;
-    long port;
-
-    logmsg("%s: %i -- size %i, i %i\n", __func__, __LINE__, tcp_size, i);
-    if (tcp_size < i)
-        return NULL;
-	logmsg("%s: %i\n", __func__, __LINE__);
-
-    /*
-     * Set up the indexing for the specified row...
-     */
-    idx = index;
-    snmp_set_var_value(idx, (u_char *)&tcp_head[i].TCPTABLE_LOCALADDRESS,
-                                sizeof(tcp_head[i].TCPTABLE_LOCALADDRESS));
-
-    port = /* TCP_PORT_TO_HOST_ORDER( */ (u_short)tcp_head[i].TCPTABLE_LOCALPORT;
-    idx = idx->next_variable;
-    snmp_set_var_value(idx, (u_char*)&port, sizeof(port));
-
-    idx = idx->next_variable;
-    snmp_set_var_value(idx, (u_char *)&tcp_head[i].TCPTABLE_REMOTEADDRESS,
-                                sizeof(tcp_head[i].TCPTABLE_REMOTEADDRESS));
-
-    port = /* TCP_PORT_TO_HOST_ORDER( */ (u_short)tcp_head[i].TCPTABLE_REMOTEPORT;
-    idx = idx->next_variable;
-    snmp_set_var_value(idx, (u_char*)&port, sizeof(port));
-
-    /*
-     * ... return the data structure for this row,
-     * and update the loop context ready for the next one.
-     */
-    *data_context = (void*)&tcp_head[i];
-    *loop_context = (void*)++i;
-
-    return index;
-}
-
-void
-tcpTable_free(netsnmp_cache *cache, void *magic)
-{
-	logmsg("%s: %i\n", __func__, __LINE__);
-	if (tcp_head)
-        free(tcp_head);
-    tcp_head  = NULL;
-    tcp_size  = 0;
-    tcp_estab = 0;
-}
-#else
-#ifdef TCPTABLE_IS_LINKED_LIST
 netsnmp_variable_list *
 tcpTable_first_entry(void **loop_context,
                      void **data_context,
@@ -426,8 +344,6 @@ tcpTable_free(netsnmp_cache *cache, void *magic)
     tcp_size  = 0;
     tcp_estab = 0;
 }
-#endif		/* TCPTABLE_IS_LINKED_LIST */
-#endif		/* TCPTABLE_IS_TABLE */
 
 
 	/*
