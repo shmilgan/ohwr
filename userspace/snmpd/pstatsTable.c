@@ -15,7 +15,6 @@
  */
 
 #include <net-snmp/net-snmp-config.h>
-#include "mibII_common.h"
 
 #if HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
