@@ -17,7 +17,7 @@ Clearly, if you rename the item, the code must be completely rewritten
 
 
 
-For pstats, this is the magic
+For pstats, this is the magic (but the result is too complex)
 
    export MIBS=./WR-SWITCH-MIB.txt
    $BUILD_DIR/netsnmp-5.6.1.1/local/mib2c \
@@ -26,6 +26,7 @@ For pstats, this is the magic
           -c mib2c.mfd.conf \
           pstatsTable
 
+Or this (one file only, but again too complex: I don't know how to getnext)
 
    export MIBS=./WR-SWITCH-MIB.txt
    $BUILD_DIR/netsnmp-5.6.1.1/local/mib2c \
@@ -33,4 +34,36 @@ For pstats, this is the magic
           -I $BUILD_DIR/netsnmp-5.6.1.1/local/mib2c-conf.d \
           -c mib2c.raw-table.conf \
           pstatsTable
+
+Using "mib2c.create-dataset.conf" is even worse, becahse the dataset
+is static and hidden in some obscure place, I can't change it after
+creation.
+
+So I finally copied the tcpTable and manage to build as a shlib under
+a different OID. The MIB itlself is not used in this case.
+
+This is the complete result, with two open ssh coonections. Note that
+ntohl used host assembly, so I had to remove it (unexplained header problem).
+
+SNMPv2-SMI::enterprises.96.100.1.1.0 = INTEGER: 4
+SNMPv2-SMI::enterprises.96.100.2.1.1.0.0.0.0.22.0.0.0.0.0 = INTEGER: 2
+SNMPv2-SMI::enterprises.96.100.2.1.1.0.0.0.0.80.0.0.0.0.0 = INTEGER: 2
+SNMPv2-SMI::enterprises.96.100.2.1.1.9.16.168.192.22.1.16.168.192.46602 = INTEGER: 5
+SNMPv2-SMI::enterprises.96.100.2.1.1.9.16.168.192.22.35.16.168.192.56559 = INTEGER: 5
+SNMPv2-SMI::enterprises.96.100.2.1.2.0.0.0.0.22.0.0.0.0.0 = IpAddress: 0.0.0.0
+SNMPv2-SMI::enterprises.96.100.2.1.2.0.0.0.0.80.0.0.0.0.0 = IpAddress: 0.0.0.0
+SNMPv2-SMI::enterprises.96.100.2.1.2.9.16.168.192.22.1.16.168.192.46602 = IpAddress: 192.168.16.9
+SNMPv2-SMI::enterprises.96.100.2.1.2.9.16.168.192.22.35.16.168.192.56559 = IpAddress: 192.168.16.9
+SNMPv2-SMI::enterprises.96.100.2.1.3.0.0.0.0.22.0.0.0.0.0 = INTEGER: 22
+SNMPv2-SMI::enterprises.96.100.2.1.3.0.0.0.0.80.0.0.0.0.0 = INTEGER: 80
+SNMPv2-SMI::enterprises.96.100.2.1.3.9.16.168.192.22.1.16.168.192.46602 = INTEGER: 22
+SNMPv2-SMI::enterprises.96.100.2.1.3.9.16.168.192.22.35.16.168.192.56559 = INTEGER: 22
+SNMPv2-SMI::enterprises.96.100.2.1.4.0.0.0.0.22.0.0.0.0.0 = IpAddress: 0.0.0.0
+SNMPv2-SMI::enterprises.96.100.2.1.4.0.0.0.0.80.0.0.0.0.0 = IpAddress: 0.0.0.0
+SNMPv2-SMI::enterprises.96.100.2.1.4.9.16.168.192.22.1.16.168.192.46602 = IpAddress: 192.168.16.1
+SNMPv2-SMI::enterprises.96.100.2.1.4.9.16.168.192.22.35.16.168.192.56559 = IpAddress: 192.168.16.35
+SNMPv2-SMI::enterprises.96.100.2.1.5.0.0.0.0.22.0.0.0.0.0 = INTEGER: 0
+SNMPv2-SMI::enterprises.96.100.2.1.5.0.0.0.0.80.0.0.0.0.0 = INTEGER: 0
+SNMPv2-SMI::enterprises.96.100.2.1.5.9.16.168.192.22.1.16.168.192.46602 = INTEGER: 46602
+SNMPv2-SMI::enterprises.96.100.2.1.5.9.16.168.192.22.35.16.168.192.56559 = INTEGER: 56559
 
