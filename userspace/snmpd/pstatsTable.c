@@ -112,12 +112,24 @@ init_tcpTable(void)
     if (!table_info) {
         return;
     }
+    /*
+     * Likely add_indexes below is used to make a longer OID string, like:
+
+     SNMPv2-SMI::enterprises.96.100.2.1.1.9.16.168.192.22.35.16.168.192.56559 = INTEGER: 5
+     SNMPv2-SMI::enterprises.96.100.2.1.2.9.16.168.192.22.35.16.168.192.56559 = IpAddress: 192.168.16.9
+     SNMPv2-SMI::enterprises.96.100.2.1.3.9.16.168.192.22.35.16.168.192.56559 = INTEGER: 22
+     SNMPv2-SMI::enterprises.96.100.2.1.4.9.16.168.192.22.35.16.168.192.56559 = IpAddress: 192.168.16.35
+     SNMPv2-SMI::enterprises.96.100.2.1.5.9.16.168.192.22.35.16.168.192.56559 = INTEGER: 56559
+                                        | |                                 |
+                      column is here --/  |                                 |
+              and line/row is all of this |---------------------------------|
+    */
     netsnmp_table_helper_add_indexes(table_info, ASN_IPADDRESS,
                                                  ASN_INTEGER,
                                                  ASN_IPADDRESS,
                                                  ASN_INTEGER, 0);
-    table_info->min_column = TCPCONNSTATE;
-    table_info->max_column = TCPCONNREMOTEPORT;
+    table_info->min_column = TCPCONNSTATE;  /* 1 */
+    table_info->max_column = TCPCONNREMOTEPORT; /* 5 */
 
 
     /*
@@ -188,12 +200,12 @@ tcpTable_handler(netsnmp_mib_handler          *handler,
             subid      = table_info->colnum;
 
             switch (subid) {
-            case TCPCONNSTATE:
+            case TCPCONNSTATE: // 1
                 state = entry->TCPTABLE_STATE;
 	        snmp_set_var_typed_value(requestvb, ASN_INTEGER,
                                  (u_char *)&state, sizeof(state));
                 break;
-            case TCPCONNLOCALADDRESS:
+            case TCPCONNLOCALADDRESS: // 2
 #if defined(osf5) && defined(IN6_EXTRACT_V4ADDR)
 	        snmp_set_var_typed_value(requestvb, ASN_IPADDRESS,
                               (u_char*)IN6_EXTRACT_V4ADDR(&entry->pcb.inp_laddr),
@@ -204,12 +216,12 @@ tcpTable_handler(netsnmp_mib_handler          *handler,
                                      sizeof(entry->TCPTABLE_LOCALADDRESS));
 #endif
                 break;
-            case TCPCONNLOCALPORT:
+            case TCPCONNLOCALPORT: // 3
 		    port = /* TCP_PORT_TO_HOST_ORDER( */ (u_short)entry->TCPTABLE_LOCALPORT;
 	        snmp_set_var_typed_value(requestvb, ASN_INTEGER,
                                  (u_char *)&port, sizeof(port));
                 break;
-            case TCPCONNREMOTEADDRESS:
+            case TCPCONNREMOTEADDRESS: // 4
 #if defined(osf5) && defined(IN6_EXTRACT_V4ADDR)
 	        snmp_set_var_typed_value(requestvb, ASN_IPADDRESS,
                               (u_char*)IN6_EXTRACT_V4ADDR(&entry->pcb.inp_laddr),
@@ -220,7 +232,7 @@ tcpTable_handler(netsnmp_mib_handler          *handler,
                                      sizeof(entry->TCPTABLE_REMOTEADDRESS));
 #endif
                 break;
-            case TCPCONNREMOTEPORT:
+            case TCPCONNREMOTEPORT: // 5
 		    port = /* TCP_PORT_TO_HOST_ORDER( */ (u_short)entry->TCPTABLE_REMOTEPORT;
 	        snmp_set_var_typed_value(requestvb, ASN_INTEGER,
                                  (u_char *)&port, sizeof(port));
