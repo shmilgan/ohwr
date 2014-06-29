@@ -124,10 +124,15 @@ init_tcpTable(void)
                       column is here --/  |                                 |
               and line/row is all of this |---------------------------------|
     */
+#if 0
     netsnmp_table_helper_add_indexes(table_info, ASN_IPADDRESS,
                                                  ASN_INTEGER,
                                                  ASN_IPADDRESS,
                                                  ASN_INTEGER, 0);
+#else
+    netsnmp_table_helper_add_indexes(table_info, ASN_INTEGER, 0);
+#endif
+
     table_info->min_column = TCPCONNSTATE;  /* 1 */
     table_info->max_column = TCPCONNREMOTEPORT; /* 5 */
 
@@ -284,10 +289,10 @@ tcpTable_first_entry(void **loop_context,
      * XXX - How can we tell if the cache is valid?
      *       No access to 'reqinfo'
      */
-	//logmsg("%s: %i\n", __func__, __LINE__);
+	logmsg("%s: %i\n", __func__, __LINE__);
     if (tcp_head == NULL)
         return NULL;
-    //logmsg("%s: %i\n", __func__, __LINE__);
+    logmsg("%s: %i\n", __func__, __LINE__);
 
     /*
      * Point to the first entry, and use the
@@ -306,30 +311,21 @@ tcpTable_next_entry( void **loop_context,
     TCPTABLE_ENTRY_TYPE	 *entry = (TCPTABLE_ENTRY_TYPE *)*loop_context;
     netsnmp_variable_list *idx;
     long addr, port;
+    static int i;
 
-    //logmsg("%s: %i\n", __func__, __LINE__);
+    logmsg("%s: %i\n", __func__, __LINE__);
     if (!entry)
         return NULL;
-    //logmsg("%s: %i\n", __func__, __LINE__);
+    logmsg("%s: %i\n", __func__, __LINE__);
 
+    if (*loop_context == (void*)tcp_head)
+	    i = 0;
+    i++;
     /*
      * Set up the indexing for the specified row...
      */
     idx = index;
-    addr = /* ntohl( */ entry->TCPTABLE_LOCALADDRESS;
-    snmp_set_var_value(idx, (u_char *)&addr, sizeof(addr));
-
-    port = /* TCP_PORT_TO_HOST_ORDER( */ entry->TCPTABLE_LOCALPORT;
-    idx = idx->next_variable;
-    snmp_set_var_value(idx, (u_char*)&port, sizeof(port));
-
-    idx = idx->next_variable;
-    addr = /* ntohl( */ entry->TCPTABLE_REMOTEADDRESS;
-    snmp_set_var_value(idx, (u_char *)&addr, sizeof(addr));
-
-    port = /* TCP_PORT_TO_HOST_ORDER( */ entry->TCPTABLE_REMOTEPORT;
-    idx = idx->next_variable;
-    snmp_set_var_value(idx, (u_char*)&port, sizeof(port));
+    snmp_set_var_value(idx, (u_char*)&i, sizeof(i));
 
     /*
      * ... return the data structure for this row,
