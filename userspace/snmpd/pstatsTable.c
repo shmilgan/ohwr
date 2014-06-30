@@ -55,6 +55,18 @@ int dumpstruct(FILE *dest, char *name, void *ptr, int size)
 }
 /* end local hack */
 
+/* Our structure for caching data */
+#define PSTATS_N_COUNTERS  39
+#define PSTATS_N_PORTS 18 /* this hardwired in the mib too */
+
+struct pstats_per_port {
+	uint32_t  val[PSTATS_N_COUNTERS];
+};
+
+struct pstats_global_data {
+	struct pstats_per_port port[PSTATS_N_PORTS];
+	char *pname[PSTATS_N_PORTS];
+} pstats_global_data;
 
 
 #define	TCPTABLE_ENTRY_TYPE	struct inpcb
@@ -88,8 +100,8 @@ init_pstatsTable(void)
 	/* Add indexes: we only use one integer OID member as line identifier */
 	netsnmp_table_helper_add_indexes(table_info, ASN_INTEGER, 0);
 
-	table_info->min_column = TCPCONNSTATE;  /* 1 */
-	table_info->max_column = TCPCONNREMOTEPORT; /* 5 */
+	table_info->min_column = 1;
+	table_info->max_column = PSTATS_N_PORTS;
 
 	/* Iterator info */
 	iinfo  = SNMP_MALLOC_TYPEDEF(netsnmp_iterator_info);
@@ -125,63 +137,31 @@ pstatsTable_handler(netsnmp_mib_handler          *handler,
     netsnmp_table_request_info *table_info;
     TCPTABLE_ENTRY_TYPE	  *entry;
     oid      subid;
-    long     port;
     long     state;
+
+    struct pstats_global_data *data = &pstats_global_data; /* a shorter name */
+    int counter;
+    int wrport;
+    uint32_t *c;
 
     switch (reqinfo->mode) {
     case MODE_GET:
         for (request=requests; request; request=request->next) {
             requestvb = request->requestvb;
-            DEBUGMSGTL(( "mibII/tcpTable", "oid: "));
-            DEBUGMSGOID(("mibII/tcpTable", requestvb->name,
-                                           requestvb->name_length));
-            DEBUGMSG((   "mibII/tcpTable", "\n"));
 
-            entry = (TCPTABLE_ENTRY_TYPE *)netsnmp_extract_iterator_context(request);
-            if (!entry)
-                continue;
+	    /* our "context" is the counter number; "subid" the column i.e. the port */
+            counter = (int)netsnmp_extract_iterator_context(request);
+   
             table_info = netsnmp_extract_table_info(request);
-            subid      = table_info->colnum;
+            wrport = table_info->colnum - 1; /* port is 0-based */
+	    logmsg("counter %i, port %i\n", counter, wrport);
+	    /* FIXME: the name as first column */
 
-            switch (subid) {
-            case TCPCONNSTATE: // 1
-                state = entry->TCPTABLE_STATE;
-	        snmp_set_var_typed_value(requestvb, ASN_INTEGER,
-                                 (u_char *)&state, sizeof(state));
-                break;
-            case TCPCONNLOCALADDRESS: // 2
-#if defined(osf5) && defined(IN6_EXTRACT_V4ADDR)
-	        snmp_set_var_typed_value(requestvb, ASN_IPADDRESS,
-                              (u_char*)IN6_EXTRACT_V4ADDR(&entry->pcb.inp_laddr),
-                                sizeof(IN6_EXTRACT_V4ADDR(&entry->pcb.inp_laddr)));
-#else
-	        snmp_set_var_typed_value(requestvb, ASN_IPADDRESS,
-                                 (u_char *)&entry->TCPTABLE_LOCALADDRESS,
-                                     sizeof(entry->TCPTABLE_LOCALADDRESS));
-#endif
-                break;
-            case TCPCONNLOCALPORT: // 3
-		    port = /* TCP_PORT_TO_HOST_ORDER( */ (u_short)entry->TCPTABLE_LOCALPORT;
-	        snmp_set_var_typed_value(requestvb, ASN_INTEGER,
-                                 (u_char *)&port, sizeof(port));
-                break;
-            case TCPCONNREMOTEADDRESS: // 4
-#if defined(osf5) && defined(IN6_EXTRACT_V4ADDR)
-	        snmp_set_var_typed_value(requestvb, ASN_IPADDRESS,
-                              (u_char*)IN6_EXTRACT_V4ADDR(&entry->pcb.inp_laddr),
-                                sizeof(IN6_EXTRACT_V4ADDR(&entry->pcb.inp_laddr)));
-#else
-	        snmp_set_var_typed_value(requestvb, ASN_IPADDRESS,
-                                 (u_char *)&entry->TCPTABLE_REMOTEADDRESS,
-                                     sizeof(entry->TCPTABLE_REMOTEADDRESS));
-#endif
-                break;
-            case TCPCONNREMOTEPORT: // 5
-		    port = /* TCP_PORT_TO_HOST_ORDER( */ (u_short)entry->TCPTABLE_REMOTEPORT;
-	        snmp_set_var_typed_value(requestvb, ASN_INTEGER,
-                                 (u_char *)&port, sizeof(port));
-                break;
-	    }
+	    /* While most tables do "switch(subid)" we'd better just index */
+	    data->port[wrport].val[counter]++;
+	    c = &data->port[wrport].val[counter];
+	    snmp_set_var_typed_value(requestvb, ASN_INTEGER, /* FIXME: counter32 */
+				     (u_char *)c, sizeof(*c));
 	}
         break;
 
@@ -197,8 +177,8 @@ pstatsTable_handler(netsnmp_mib_handler          *handler,
         break;
     default:
 	    /* unknown mode */
-        break;
-    }
+	    break;
+	}
 
     return SNMP_ERR_NOERROR;
 }
@@ -210,12 +190,9 @@ pstatsTable_first_entry(void **loop_context,
 			netsnmp_iterator_info *data)
 {
 	logmsg("%s: %i\n", __func__, __LINE__);
-	if (tcp_head == NULL)
-		return NULL;
-	logmsg("%s: %i\n", __func__, __LINE__);
 
 	/* reset internal position, so "next" is "first" */
-	*loop_context = (void*)tcp_head;
+	*loop_context = (void*)0; /* first counter */
 	return pstatsTable_next_entry(loop_context, data_context, index, data);
 }
 
@@ -225,49 +202,31 @@ pstatsTable_next_entry( void **loop_context,
 			netsnmp_variable_list *index,
 			netsnmp_iterator_info *data)
 {
-    TCPTABLE_ENTRY_TYPE	 *entry = (TCPTABLE_ENTRY_TYPE *)*loop_context;
-    netsnmp_variable_list *idx;
-    long addr, port;
-    static int i;
+	long addr, port;
+	short i;
 
-    logmsg("%s: %i\n", __func__, __LINE__);
-    if (!entry)
-        return NULL;
-    logmsg("%s: %i\n", __func__, __LINE__);
+	//logmsg("%s: %i\n", __func__, __LINE__);
 
-    if (*loop_context == (void*)tcp_head)
-	    i = 0;
-    i++;
-    /*
-     * Set up the indexing for the specified row...
-     */
-    idx = index;
-    snmp_set_var_value(idx, (u_char*)&i, sizeof(i));
+	/* create the line ID from counter number */
+	i = (short)*loop_context;
+	logmsg("%s: %i (i = %i)\n", __func__, __LINE__, i);
+	if (i >= PSTATS_N_COUNTERS)
+		return NULL; /* no more */
+	i++;
+	/* Create the row OID: only the counter index */
+	snmp_set_var_value(index, (u_char*)&i, sizeof(i));
 
-    /*
-     * ... return the data structure for this row,
-     * and update the loop context ready for the next one.
-     */
-    *data_context = (void*)entry;
-    *loop_context = (void*)entry->INP_NEXT_SYMBOL;
+    /* Set the data context (1..39 -> 0..38) */
+    *data_context = (void *)(i - 1);
+    /* and set the loop context for the next iteration */
+    *loop_context = (void *)i;
     return index;
 }
 
 void
 pstatsTable_free(netsnmp_cache *cache, void *magic)
 {
-    TCPTABLE_ENTRY_TYPE *p;
-	logmsg("%s: %i\n", __func__, __LINE__);
-    while (tcp_head) {
-	logmsg("%s: %i\n", __func__, __LINE__);
-        p = tcp_head;
-        tcp_head = tcp_head->INP_NEXT_SYMBOL;
-        free(p);
-    }
-
-    tcp_head  = NULL;
-    tcp_size  = 0;
-    tcp_estab = 0;
+	/* nothing to free  */
 }
 
 int
@@ -276,54 +235,6 @@ pstatsTable_load(netsnmp_cache *cache, void *vmagic)
     FILE           *in;
     char            line[256];
 
-	logmsg("%s: %i\n", __func__, __LINE__);
-    pstatsTable_free(cache, NULL);
-
-    if (!(in = fopen("/proc/net/tcp", "r"))) {
-        DEBUGMSGTL(("mibII/tcpTable", "Failed to load TCP Table (linux1)\n"));
-        NETSNMP_LOGONCE((LOG_ERR, "snmpd: cannot open /proc/net/tcp ...\n"));
-        return -1;
-    }
-
-	logmsg("%s: %i\n", __func__, __LINE__);
-    /*
-     * scan proc-file and build up a linked list 
-     * This will actually be built up in reverse,
-     *   but since the entries are unsorted, that doesn't matter.
-     */
-    while (line == fgets(line, sizeof(line), in)) {
-	logmsg("%s: %i\n", __func__, __LINE__);
-        struct inpcb    pcb, *nnew;
-        static int      linux_states[12] =
-            { 1, 5, 3, 4, 6, 7, 11, 1, 8, 9, 2, 10 };
-        unsigned int    lp, fp;
-        int             state, uid;
-
-        if (6 != sscanf(line,
-                        "%*d: %x:%x %x:%x %x %*X:%*X %*X:%*X %*X %d",
-                        &pcb.inp_laddr.s_addr, &lp,
-                        &pcb.inp_faddr.s_addr, &fp, &state, &uid))
-            continue;
-
-        pcb.inp_lport = lp; //htons((unsigned short) lp);
-        pcb.inp_fport = fp; //htons((unsigned short) fp);
-
-        pcb.inp_state = (state & 0xf) < 12 ? linux_states[state & 0xf] : 2;
-        if (pcb.inp_state == 5 /* established */ ||
-            pcb.inp_state == 8 /*  closeWait  */ )
-            tcp_estab++;
-        pcb.uid = uid;
-
-        nnew = SNMP_MALLOC_TYPEDEF(struct inpcb);
-        if (nnew == NULL)
-            break;
-        memcpy(nnew, &pcb, sizeof(struct inpcb));
-        nnew->inp_next = tcp_head;
-        tcp_head       = nnew;
-    }
-
-    fclose(in);
-
-    DEBUGMSGTL(("mibII/tcpTable", "Loaded TCP Table\n"));
+    /* nothing to load -- FIXME: values */
     return 0;
 }
