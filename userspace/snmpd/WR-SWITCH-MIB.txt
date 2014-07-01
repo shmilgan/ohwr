@@ -15,7 +15,7 @@ IMPORTS
 CERN OBJECT IDENTIFIER ::= { enterprises 96 }
 
 -- A brief description and update information about this mib.
--- (I follow the CamelCase to be sure I don't mysype. Who knows the rules...
+-- (I follow the CamelCase to be sure I don't mistype. Who knows the rules...
 
 wrSwitchMIB MODULE-IDENTITY
     LAST-UPDATED "201406181915Z"    -- 18 june 2014, 19:15 (why saying again?)
@@ -45,28 +45,19 @@ wrsScalarOne   OBJECT-TYPE
 
 -- This pstats stuff is copied, in a way, from the ifTable stuff (IF-MIB.txt)
 -- We have the ports as columns, so they are a fixed number. And the
--- counters at lines.  This allows to change counters following gateware.
+-- counters as lines.  This allows to change counters following gateware.
 -- even if it is not standard practice.  Otherwise, we'd need to rewrite
 -- code every time (I *hate* this obsolete crap: code generators should not
 -- be like that).
 
-pstatsNumber  OBJECT-TYPE
-    SYNTAX      Integer32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The number of current statistic counters, in this gateware."
-
-    ::= { wrsPstats 1 }
-
-pstatsTable OBJECT-TYPE
+wrsPstats OBJECT-TYPE
     SYNTAX      SEQUENCE OF pstatsEntry
     MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
             "A list of pstat counters. One column per interface.
              The number of entries is given by the value of pstatsNumber."
-    ::= { wrsPstats 2 }
+    ::= { wrSwitchMIB 2 }
 
 pstatsEntry OBJECT-TYPE
     SYNTAX      PstatsEntry
@@ -75,11 +66,10 @@ pstatsEntry OBJECT-TYPE
     DESCRIPTION
             "An entry containing a pstat name and values for all WR ports."
     INDEX   { pstatsIndex }
-    ::= { pstatsTable 1 }
+    ::= { wrsPstats 1 }
 
 PstatsEntry ::=
     SEQUENCE {
-        pstatsIndex                 Integer32,
         pstatsDescr                 DisplayString,
         pstatsWR0                   Counter32,
         pstatsWR1                   Counter32,
@@ -101,22 +91,13 @@ PstatsEntry ::=
         pstatsWR17                  Counter32
     }
 
-pstatsIndex OBJECT-TYPE
-    SYNTAX      Integer32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The index of this statistics counter."
-
-    ::= { pstatsEntry 1 }
-
 pstatsDescr OBJECT-TYPE
     SYNTAX      DisplayString (SIZE (0..32))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "A textual string describing this counter"
-    ::= { pstatsEntry 2 }
+    ::= { pstatsEntry 1 }
 
 pstatsWR0 OBJECT-TYPE
     SYNTAX      Counter32
@@ -124,15 +105,7 @@ pstatsWR0 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr0."
-    ::= {pstatsEntry 3 }
-
-pstatsWR0 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr0."
-    ::= {pstatsEntry 3 }
+    ::= {pstatsEntry 2 }
 
 pstatsWR1 OBJECT-TYPE
     SYNTAX      Counter32
@@ -140,7 +113,7 @@ pstatsWR1 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr1."
-    ::= {pstatsEntry 4 }
+    ::= {pstatsEntry 3 }
 
 pstatsWR2 OBJECT-TYPE
     SYNTAX      Counter32
@@ -148,7 +121,7 @@ pstatsWR2 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr2."
-    ::= {pstatsEntry 5 }
+    ::= {pstatsEntry 4 }
 
 pstatsWR3 OBJECT-TYPE
     SYNTAX      Counter32
@@ -156,7 +129,7 @@ pstatsWR3 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr3."
-    ::= {pstatsEntry 6 }
+    ::= {pstatsEntry 5 }
 
 pstatsWR4 OBJECT-TYPE
     SYNTAX      Counter32
@@ -164,7 +137,7 @@ pstatsWR4 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr4."
-    ::= {pstatsEntry 7 }
+    ::= {pstatsEntry 6 }
 
 pstatsWR5 OBJECT-TYPE
     SYNTAX      Counter32
@@ -172,7 +145,7 @@ pstatsWR5 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr5."
-    ::= {pstatsEntry 8 }
+    ::= {pstatsEntry 7 }
 
 pstatsWR6 OBJECT-TYPE
     SYNTAX      Counter32
@@ -180,7 +153,7 @@ pstatsWR6 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr6."
-    ::= {pstatsEntry 9 }
+    ::= {pstatsEntry 8 }
 
 pstatsWR7 OBJECT-TYPE
     SYNTAX      Counter32
@@ -188,7 +161,7 @@ pstatsWR7 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr7."
-    ::= {pstatsEntry 10 }
+    ::= {pstatsEntry 9 }
 
 pstatsWR8 OBJECT-TYPE
     SYNTAX      Counter32
@@ -196,7 +169,7 @@ pstatsWR8 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr8."
-    ::= {pstatsEntry 11 }
+    ::= {pstatsEntry 10 }
 
 pstatsWR9 OBJECT-TYPE
     SYNTAX      Counter32
@@ -204,7 +177,7 @@ pstatsWR9 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr9."
-    ::= {pstatsEntry 12 }
+    ::= {pstatsEntry 11 }
 
 pstatsWR10 OBJECT-TYPE
     SYNTAX      Counter32
@@ -212,7 +185,7 @@ pstatsWR10 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr10."
-    ::= {pstatsEntry 13 }
+    ::= {pstatsEntry 12 }
 
 pstatsWR11 OBJECT-TYPE
     SYNTAX      Counter32
@@ -220,7 +193,7 @@ pstatsWR11 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr11."
-    ::= {pstatsEntry 14 }
+    ::= {pstatsEntry 13 }
 
 pstatsWR12 OBJECT-TYPE
     SYNTAX      Counter32
@@ -228,7 +201,7 @@ pstatsWR12 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr12."
-    ::= {pstatsEntry 15 }
+    ::= {pstatsEntry 14 }
 
 pstatsWR13 OBJECT-TYPE
     SYNTAX      Counter32
@@ -236,7 +209,7 @@ pstatsWR13 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr13."
-    ::= {pstatsEntry 16 }
+    ::= {pstatsEntry 15 }
 
 pstatsWR14 OBJECT-TYPE
     SYNTAX      Counter32
@@ -244,7 +217,7 @@ pstatsWR14 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr14."
-    ::= {pstatsEntry 17 }
+    ::= {pstatsEntry 16 }
 
 pstatsWR15 OBJECT-TYPE
     SYNTAX      Counter32
@@ -252,7 +225,7 @@ pstatsWR15 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr15."
-    ::= {pstatsEntry 18 }
+    ::= {pstatsEntry 17 }
 
 pstatsWR16 OBJECT-TYPE
     SYNTAX      Counter32
@@ -260,7 +233,7 @@ pstatsWR16 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr16."
-    ::= {pstatsEntry 19 }
+    ::= {pstatsEntry 18 }
 
 pstatsWR17 OBJECT-TYPE
     SYNTAX      Counter32
@@ -268,7 +241,6 @@ pstatsWR17 OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The value of this counter for interface wr17."
-    ::= {pstatsEntry 20 }
-
+    ::= {pstatsEntry 19 }
 
 END
