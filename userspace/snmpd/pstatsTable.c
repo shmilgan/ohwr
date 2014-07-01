@@ -53,6 +53,8 @@ int dumpstruct(FILE *dest, char *name, void *ptr, int size)
 }
 /* end local hack */
 
+#define PSTATS_CACHE_TIMEOUT 5 /* seconds */
+
 /* Our structure for caching data */
 #define PSTATS_N_COUNTERS  39
 #define PSTATS_N_PORTS 18 /* this hardwired in the mib too */
@@ -66,8 +68,51 @@ static struct pstats_global_data {
 	char *pname[PSTATS_N_PORTS];
 } pstats_global_data;
 
-#define PSTATS_CACHE_TIMEOUT 5 /* seconds */
 
+
+static char *pstats_names[] = {
+	[0] = "TX Underrun",
+	[1] = "RX Overrun",
+	[2] = "RX Invalid Code",
+	[3] = "RX Sync Lost",
+	[4] = "RX Pause Frames",
+	[5] = "RX Pfilter Dropped",
+	[6] = "RX PCS Errors",
+	[7] = "RX Giant Frames",
+	[8] = "RX Runt Frames",
+	[9] = "RX CRC Errors",
+	[10] = "RX Pclass 0",
+	[11] = "RX Pclass 1",
+	[12] = "RX Pclass 2",
+	[13] = "RX Pclass 3",
+	[14] = "RX Pclass 4",
+	[15] = "RX Pclass 5",
+	[16] = "RX Pclass 6",
+	[17] = "RX Pclass 7",
+	[18] = "TX Frames",
+	[19] = "RX Frames",
+	[20] = "RX Drop RTU Full",
+	[21] = "RX PRIO 0",
+	[22] = "RX PRIO 1",
+	[23] = "RX PRIO 2",
+	[24] = "RX PRIO 3",
+	[25] = "RX PRIO 4",
+	[26] = "RX PRIO 5",
+	[27] = "RX PRIO 6",
+	[28] = "RX PRIO 7",
+	[29] = "RTU Valid",
+	[30] = "RTU Responses",
+	[31] = "RTU Dropped",
+	[32] = "FastMatch: Priority",
+	[33] = "FastMatch: FastForward",
+	[34] = "FastMatch: NonForward",
+	[35] = "FastMatch: Resp Valid",
+	[36] = "FullMatch: Resp Valid",
+	[37] = "Forwarded",
+	[38] = "TRU Resp Valid"
+};
+
+/* FIXME: build error if ARRAY_SIZE(pstats_names) != PSTATS_N_COUNTERS */
 
 static int
 pstatsTable_handler(netsnmp_mib_handler          *handler,
@@ -101,8 +146,8 @@ pstatsTable_handler(netsnmp_mib_handler          *handler,
 			logmsg("counter %i, port %i\n", counter, wrport);
 
 			if (wrport < 0) {
-				snmp_set_var_typed_value(requestvb, ASN_OCTET_STR,
-						 (u_char *)"counter name", sizeof("counter name"));
+				char *s = pstats_names[counter];
+				snmp_set_var_typed_value(requestvb, ASN_OCTET_STR, s, strlen(s));
 				continue;
 			}
 			/* While most tables do "switch(subid)" we'd better just index */
