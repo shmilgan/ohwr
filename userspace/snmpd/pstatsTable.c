@@ -97,13 +97,17 @@ pstatsTable_handler(netsnmp_mib_handler          *handler,
 			counter = (int)netsnmp_extract_iterator_context(request);
 
 			table_info = netsnmp_extract_table_info(request);
-			wrport = table_info->colnum - 1; /* port is 0-based */
+			wrport = table_info->colnum - 2; /* port is 0-based and position 1 is the string */
 			logmsg("counter %i, port %i\n", counter, wrport);
-			/* FIXME: the name as first column */
 
+			if (wrport < 0) {
+				snmp_set_var_typed_value(requestvb, ASN_OCTET_STR,
+						 (u_char *)"counter name", sizeof("counter name"));
+				continue;
+			}
 			/* While most tables do "switch(subid)" we'd better just index */
 			c = &data->port[wrport].val[counter];
-			snmp_set_var_typed_value(requestvb, ASN_INTEGER, /* FIXME: counter32 */
+			snmp_set_var_typed_value(requestvb, ASN_COUNTER,
 						 (u_char *)c, sizeof(*c));
 		}
 		break;
@@ -208,7 +212,7 @@ init_pstatsTable(void)
 	netsnmp_table_helper_add_indexes(table_info, ASN_INTEGER, 0);
 
 	table_info->min_column = 1;
-	table_info->max_column = PSTATS_N_PORTS; /* FIXME: string missing */
+	table_info->max_column = 1 + PSTATS_N_PORTS;
 
 	/* Iterator info */
 	iinfo  = SNMP_MALLOC_TYPEDEF(netsnmp_iterator_info);
