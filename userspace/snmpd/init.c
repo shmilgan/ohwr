@@ -7,11 +7,11 @@
 
 /* The sub-init functions */
 #include "wrsScalar.h"
-#include "pstatsTable.h"
+#include "wrsPstats.h"
 
 void
 init_wrsSnmp(void)
 {
 	init_wrsScalar();
-	init_pstatsTable();
+	init_wrsPstats();
 }

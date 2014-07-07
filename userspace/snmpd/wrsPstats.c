@@ -8,7 +8,7 @@
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 #include <net-snmp/agent/auto_nlist.h>
 
-#include "pstatsTable.h"
+#include "wrsPstats.h"
 
 #include <stdarg.h>
 static FILE *logf;
@@ -115,7 +115,7 @@ static char *pstats_names[] = {
 /* FIXME: build error if ARRAY_SIZE(pstats_names) != PSTATS_N_COUNTERS */
 
 static int
-pstatsTable_handler(netsnmp_mib_handler          *handler,
+wrsPstats_handler(netsnmp_mib_handler          *handler,
 		    netsnmp_handler_registration *reginfo,
 		    netsnmp_agent_request_info   *reqinfo,
 		    netsnmp_request_info         *requests)
@@ -177,7 +177,7 @@ pstatsTable_handler(netsnmp_mib_handler          *handler,
 
 
 static netsnmp_variable_list *
-pstatsTable_next_entry( void **loop_context,
+wrsPstats_next_entry( void **loop_context,
 			void **data_context,
 			netsnmp_variable_list *index,
 			netsnmp_iterator_info *data)
@@ -202,7 +202,7 @@ pstatsTable_next_entry( void **loop_context,
 }
 
 static netsnmp_variable_list *
-pstatsTable_first_entry(void **loop_context,
+wrsPstats_first_entry(void **loop_context,
 			void **data_context,
 			netsnmp_variable_list *index,
 			netsnmp_iterator_info *data)
@@ -211,11 +211,11 @@ pstatsTable_first_entry(void **loop_context,
 
 	/* reset internal position, so "next" is "first" */
 	*loop_context = (void*)0; /* first counter */
-	return pstatsTable_next_entry(loop_context, data_context, index, data);
+	return wrsPstats_next_entry(loop_context, data_context, index, data);
 }
 
 static int
-pstatsTable_load(netsnmp_cache *cache, void *vmagic)
+wrsPstats_load(netsnmp_cache *cache, void *vmagic)
 {
 	FILE *f;
 	char fname[32];
@@ -241,9 +241,9 @@ pstatsTable_load(netsnmp_cache *cache, void *vmagic)
 }
 
 void
-init_pstatsTable(void)
+init_wrsPstats(void)
 {
-	const oid pstatsTable_oid[] = {  1, 3, 6, 1, 4, 1, 96, 100, 2 };
+	const oid wrsPstats_oid[] = {  1, 3, 6, 1, 4, 1, 96, 100, 2 };
 
 	netsnmp_table_registration_info *table_info;
 	netsnmp_iterator_info *iinfo;
@@ -264,20 +264,20 @@ init_pstatsTable(void)
 	if (!iinfo)
 		return; /* free table_info? */
 
-	iinfo->get_first_data_point = pstatsTable_first_entry;
-	iinfo->get_next_data_point  = pstatsTable_next_entry;
+	iinfo->get_first_data_point = wrsPstats_first_entry;
+	iinfo->get_next_data_point  = wrsPstats_next_entry;
 	iinfo->table_reginfo        = table_info;
 
 	/* register the table */
-	reginfo = netsnmp_create_handler_registration("pstatsTable",
-						      pstatsTable_handler,
-						      pstatsTable_oid, OID_LENGTH(pstatsTable_oid),
+	reginfo = netsnmp_create_handler_registration("wrsPstats",
+						      wrsPstats_handler,
+						      wrsPstats_oid, OID_LENGTH(wrsPstats_oid),
 						      HANDLER_CAN_RONLY);
 	netsnmp_register_table_iterator(reginfo, iinfo);
 
 	/* and create a local cache */
 	netsnmp_inject_handler(reginfo,
 				netsnmp_get_cache_handler(PSTATS_CACHE_TIMEOUT,
-							  pstatsTable_load, NULL,
-							  pstatsTable_oid, OID_LENGTH(pstatsTable_oid)));
+							  wrsPstats_load, NULL,
+							  wrsPstats_oid, OID_LENGTH(wrsPstats_oid)));
 }
