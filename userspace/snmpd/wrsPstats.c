@@ -123,8 +123,6 @@ wrsPstats_handler(netsnmp_mib_handler          *handler,
 	netsnmp_request_info  *request;
 	netsnmp_variable_list *requestvb;
 	netsnmp_table_request_info *table_info;
-	oid      subid;
-	long     state;
 
 	struct pstats_global_data *data = &pstats_global_data; /* a shorter name */
 	int counter;
@@ -182,7 +180,6 @@ wrsPstats_next_entry( void **loop_context,
 			netsnmp_variable_list *index,
 			netsnmp_iterator_info *data)
 {
-	long addr, port;
 	intptr_t i;
 
 	/* create the line ID from counter number */
