@@ -13,7 +13,7 @@ LDFLAGS = -shared $$($(NET_SNMP_CONFIG) --ldflags)
 CFLAGS += -Iinclude -DWRS_WITH_SNMP_HACKISH_LOG=0
 
 SHLIB = wrsSnmp.so
-SOURCES = init.c wrsScalar.c wrsPstats.c
+SOURCES = init.c wrsScalar.c wrsPstats.c wrsVersion.c
 OBJECTS = $(SOURCES:.c=.o)
 
 all: $(SHLIB)

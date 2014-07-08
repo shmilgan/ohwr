@@ -32,6 +32,7 @@ wrSwitchMIB MODULE-IDENTITY
 wrsScalar     OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
 wrsPstats     OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }
 wrsPpsi       OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }
+wrsVersion    OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }
 
 -- define one stupid object for a start
 
@@ -242,5 +243,58 @@ pstatsWR17 OBJECT-TYPE
     DESCRIPTION
             "The value of this counter for interface wr17."
     ::= {pstatsEntry 19 }
+
+
+-- FIXME: wrsPpsi (3)
+
+-- Versions (4) are all just strings, 6 of them
+
+wrsVersionSw    OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The software version, as returned from 'git describe' at build time"
+    ::= { wrsVersion 1 }
+
+wrsVersionGw1   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The gateware version: commit of wr_switch_hdl"
+    ::= { wrsVersion 2 }
+
+wrsVersionGw2   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The gateware version: commit of general-cores"
+    ::= { wrsVersion 3 }
+
+wrsVersionGw3   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The gateware version: commit of wr-cores"
+    ::= { wrsVersion 4 }
+
+wrsVersionHw1   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The hardware version: PCB"
+    ::= { wrsVersion 5 }
+
+wrsVersionHw2   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The hardware version: FPGA"
+    ::= { wrsVersion 6 }
 
 END

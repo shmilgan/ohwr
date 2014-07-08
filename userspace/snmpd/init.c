@@ -8,10 +8,12 @@
 /* The sub-init functions */
 #include "wrsScalar.h"
 #include "wrsPstats.h"
+#include "wrsVersion.h"
 
 void
 init_wrsSnmp(void)
 {
 	init_wrsScalar();
 	init_wrsPstats();
+	init_wrsVersion();
 }
