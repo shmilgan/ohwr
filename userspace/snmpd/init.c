@@ -6,9 +6,7 @@
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
 /* The sub-init functions */
-#include "wrsScalar.h"
-#include "wrsPstats.h"
-#include "wrsVersion.h"
+#include "wrsSnmp.h"
 
 void
 init_wrsSnmp(void)

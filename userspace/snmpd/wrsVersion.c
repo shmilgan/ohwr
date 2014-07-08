@@ -9,7 +9,7 @@
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 #include <net-snmp/agent/auto_nlist.h>
 
-#include "wrsVersion.h"
+#include "wrsSnmp.h"
 
 /* Our structure for caching data */
 #define VERSION_N_STRINGS 6  /* sw, 3 gw, 2 hw */
@@ -48,8 +48,7 @@ void
 init_wrsVersion(void)
 {
 
-	const oid wrsVersion_oid[] = {  WRS_VERSION_OID };
-
+	const oid wrsVersion_oid[] = {  WRS_OID, 4 };
 	netsnmp_handler_registration *hreg;
 
 	/* FIXME.... */

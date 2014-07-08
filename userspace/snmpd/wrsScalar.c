@@ -6,28 +6,12 @@
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
-#include "wrsScalar.h"
+#include "wrsSnmp.h"
 
 #include <stdint.h>
 static uint32_t fakeStatValue;
 
-/** Initializes the wrsScalar module */
-void
-init_wrsScalar(void)
-{
-    const oid       wrsScalarOne_oid[] =
-        { 1, 3, 6, 1, 4, 1, 96, 100, 1, 1 };
-
-    DEBUGMSGTL(("wrsScalar", "Initializing\n"));
-
-    netsnmp_register_scalar(netsnmp_create_handler_registration
-                            ("wrsScalarOne", handle_wrsScalarOne,
-                             wrsScalarOne_oid,
-                             OID_LENGTH(wrsScalarOne_oid),
-                             HANDLER_CAN_RWRITE));
-}
-
-int
+static int
 handle_wrsScalarOne(netsnmp_mib_handler *handler,
                     netsnmp_handler_registration *reginfo,
                     netsnmp_agent_request_info *reqinfo,
@@ -96,3 +80,19 @@ handle_wrsScalarOne(netsnmp_mib_handler *handler,
 
     return SNMP_ERR_NOERROR;
 }
+
+/** Initializes the wrsScalar module */
+void
+init_wrsScalar(void)
+{
+    const oid wrsScalarOne_oid[] = { WRS_OID, 1 };
+
+    DEBUGMSGTL(("wrsScalar", "Initializing\n"));
+
+    netsnmp_register_scalar(netsnmp_create_handler_registration
+                            ("wrsScalarOne", handle_wrsScalarOne,
+                             wrsScalarOne_oid,
+                             OID_LENGTH(wrsScalarOne_oid),
+                             HANDLER_CAN_RWRITE));
+}
+

@@ -8,7 +8,7 @@
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 #include <net-snmp/agent/auto_nlist.h>
 
-#include "wrsPstats.h"
+#include "wrsSnmp.h"
 
 #include <stdarg.h>
 static FILE *logf;
@@ -137,7 +137,7 @@ wrsPstats_handler(netsnmp_mib_handler          *handler,
 
 			logmsg("%s: %i\n", __func__, __LINE__);
 			/* our "context" is the counter number; "subid" the column i.e. the port */
-			counter = (int)netsnmp_extract_iterator_context(request);
+			counter = (intptr_t)netsnmp_extract_iterator_context(request);
 
 			table_info = netsnmp_extract_table_info(request);
 			wrport = table_info->colnum - 2; /* port is 0-based and position 1 is the string */
@@ -240,7 +240,7 @@ wrsPstats_load(netsnmp_cache *cache, void *vmagic)
 void
 init_wrsPstats(void)
 {
-	const oid wrsPstats_oid[] = {  1, 3, 6, 1, 4, 1, 96, 100, 2 };
+	const oid wrsPstats_oid[] = { WRS_OID, 2 };
 
 	netsnmp_table_registration_info *table_info;
 	netsnmp_iterator_info *iinfo;
