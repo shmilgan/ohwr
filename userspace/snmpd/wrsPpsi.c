@@ -26,12 +26,12 @@ static struct wrs_p_globals {
 	int ppsi_mode;
 	int ppsi_servo_state;
 	int phase_tracking;
-	int sync_source;
-	int clock_offset;
-	int skew;
-	int rtt;
-	int llength;
-	int servo_updates;
+	char sync_source[32];
+	int64_t clock_offset;
+	int32_t skew;
+	int64_t rtt;
+	uint32_t llength;
+	int64_t servo_updates;
 } wrs_p_globals;
 
 static struct wrs_p_perport {
@@ -55,15 +55,15 @@ struct ppsi_pickinfo {
 static struct ppsi_pickinfo g_pickinfo[] = {
 	FIELD(wrs_p_globals, ASN_OCTET_STR, gm_id),
 	FIELD(wrs_p_globals, ASN_OCTET_STR, my_id),
-	FIELD(wrs_p_globals, ASN_COUNTER, ppsi_mode),
-	FIELD(wrs_p_globals, ASN_COUNTER, ppsi_servo_state),
-	FIELD(wrs_p_globals, ASN_COUNTER, phase_tracking),
-	FIELD(wrs_p_globals, ASN_COUNTER, sync_source),
-	FIELD(wrs_p_globals, ASN_COUNTER, clock_offset),
-	FIELD(wrs_p_globals, ASN_COUNTER, skew),
-	FIELD(wrs_p_globals, ASN_COUNTER, rtt),
-	FIELD(wrs_p_globals, ASN_COUNTER, llength),
-	FIELD(wrs_p_globals, ASN_COUNTER, servo_updates),
+	FIELD(wrs_p_globals, ASN_INTEGER, ppsi_mode),
+	FIELD(wrs_p_globals, ASN_INTEGER, ppsi_servo_state),
+	FIELD(wrs_p_globals, ASN_INTEGER, phase_tracking),
+	FIELD(wrs_p_globals, ASN_OCTET_STR, sync_source), /* special case! */
+	FIELD(wrs_p_globals, ASN_COUNTER64, clock_offset),
+	FIELD(wrs_p_globals, ASN_INTEGER, skew),
+	FIELD(wrs_p_globals, ASN_COUNTER64, rtt),
+	FIELD(wrs_p_globals, ASN_INTEGER, llength),
+	FIELD(wrs_p_globals, ASN_COUNTER64, servo_updates),
 };
 
 static struct ppsi_pickinfo p_pickinfo[] = {
@@ -81,6 +81,8 @@ static int ppsi_g_group(netsnmp_mib_handler          *handler,
 {
 	int obj; /* the final index */
 	struct ppsi_pickinfo *pi;
+	void *ptr;
+	int len;
 
 	/* FIXME: retrieve information from ppsi itself */
 
@@ -97,10 +99,12 @@ static int ppsi_g_group(netsnmp_mib_handler          *handler,
 			return SNMP_ERR_GENERR;
 		}
 		pi = g_pickinfo + obj;
+		ptr = (void *)&wrs_p_globals + pi->offset;
+		len = pi->len;
+		if (len > 8) /* special case for strings */
+			;//len = strlen(ptr);
 		snmp_set_var_typed_value(requests->requestvb,
-					 pi->type,
-					 (void *)&wrs_p_globals + pi->offset,
-					 pi->len);
+					 pi->type, ptr, len);
 		break;
 	default:
 		snmp_log(LOG_ERR, "unknown mode (%d) in wrs ppsi group\n",
@@ -151,6 +155,7 @@ static int
 ppsi_p_load(netsnmp_cache *cache, void *vmagic)
 {
 	/* FIXME: load information */
+	strcpy(wrs_p_globals.sync_source, "wr I suppose");
 	return 0;
 }
 

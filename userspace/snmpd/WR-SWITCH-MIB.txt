@@ -7,10 +7,9 @@ WR-SWITCH-MIB DEFINITIONS ::= BEGIN
 
 -- IMPORTS: Include definitions from other mibs here
 IMPORTS
-        OBJECT-TYPE, Integer32, Counter32,
-        MODULE-IDENTITY,enterprises           FROM SNMPv2-SMI
-        DisplayString                         FROM SNMPv2-TC
-        MODULE-COMPLIANCE, OBJECT-GROUP       FROM SNMPv2-CONF;
+        OBJECT-TYPE, Integer32, Counter32, Counter64
+        MODULE-IDENTITY, enterprises          FROM SNMPv2-SMI
+        DisplayString                         FROM SNMPv2-TC;
 
 CERN OBJECT IDENTIFIER ::= { enterprises 96 }
 
@@ -280,7 +279,7 @@ ppsiMode OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "The mode if this clock"
+            "The mode of this clock"
     ::= { wrsPpsiGlobals 3 }
  
 ppsiServoState OBJECT-TYPE
@@ -298,61 +297,63 @@ ppsiServoState OBJECT-TYPE
             "The servo state if slave"
     ::= { wrsPpsiGlobals 4 }
 
--- FIXME: what follows is to be defined; they are placeholders so to build
 ppsiPhaseTracking OBJECT-TYPE
-    SYNTAX      Counter32
+    SYNTAX INTEGER {
+               not-tracking(0)
+               tracking(1)
+    }          
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "To be described"
+            "Whether phase tracking is enabled in the servo"
     ::= { wrsPpsiGlobals 5 }
 
 ppsiSyncSource OBJECT-TYPE
-    SYNTAX      Counter32
+    SYNTAX      DisplayString (SIZE (0..32))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "To be described"
+            "The port name that is currently the synchronization source"
     ::= { wrsPpsiGlobals 6 }
 
-ppsiClockOffset OBJECT-TYPE
-    SYNTAX      Counter32
+ppsiClockOffsetPs OBJECT-TYPE
+    SYNTAX      Counter64 -- should be integer64 (signed)
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "To be described"
+            "Current clock offset from master, in picoseconds"
     ::= { wrsPpsiGlobals 7 }
 
 ppsiSkew OBJECT-TYPE
-    SYNTAX      Counter32
+    SYNTAX      INTEGER
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "To be described"
+            "The estimated change of master-to-slave delay, in picoseconds"
     ::= { wrsPpsiGlobals 8 }
 
 ppsiRTT OBJECT-TYPE
-    SYNTAX      Counter32
+    SYNTAX      Counter64 -- does unsigned64 exits?
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "To be described"
+            "The round-trip-time, from master, in picoseconds"
     ::= { wrsPpsiGlobals 9 }
 
 ppsiLinkLength OBJECT-TYPE
-    SYNTAX      Counter32
+    SYNTAX      Unsigned32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "To be described"
+            "Estimated fiber length, from master-to-slave delay, in meters"
     ::= { wrsPpsiGlobals 10 }
 
 ppsiServoUpdates OBJECT-TYPE
-    SYNTAX      Counter32
+    SYNTAX      Counter64
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "To be described"
+            "How many time did the servo run"
     ::= { wrsPpsiGlobals 11 }
 
 -- per-port (.3.2)
