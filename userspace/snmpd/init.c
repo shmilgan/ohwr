@@ -18,3 +18,20 @@ void init_wrsSnmp(void)
 	init_wrsVersion();
 }
 
+/* open a file or a pipe, so I test with files, and run with pipes */
+FILE *wrs_fpopen(char *file_or_pipe, char *mode)
+{
+	if (file_or_pipe[0] == '|')
+		return popen(file_or_pipe + 1, mode);
+	else
+		return fopen(file_or_pipe, mode);
+}
+
+void wrs_fpclose(FILE *f, char *file_or_pipe)
+{
+	if (file_or_pipe[0] == '|')
+		pclose(f);
+	else
+		fclose(f);
+}
+

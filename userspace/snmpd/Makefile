@@ -2,7 +2,7 @@
 SNMP_BUILD := $(wildcard $(WRS_OUTPUT_DIR)/build/buildroot-2*)
 SNMP_BUILD := $(wildcard $(SNMP_BUILD)/output/build/netsnmp-*)
 
-NET_SNMP_CONFIG = $(SNMP_BUILD)/net-snmp-config
+NET_SNMP_CONFIG ?= $(SNMP_BUILD)/net-snmp-config
 
 CC      = $(CROSS_COMPILE)gcc
 LD	= $(CROSS_COMPILE)ld
