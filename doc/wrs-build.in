@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month June 2014
+@set update-month July 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -402,7 +402,7 @@ switches pre-configured for your network, we suggest you rebuild
 the @i{firmware} archive after running @t{make menuconfig} to select
 your own values
 
-FIXME FIXME FIXME: Store kconfig and build info in the archive itself
+@c FIXME FIXME FIXME: Store kconfig and build info in the archive itself
 
 @c --------------------------------------------------------------------------
 @node Rebuilding Parts
@@ -1372,11 +1372,16 @@ The most important tools in @file{userspace/tools} are the following:
         exists and includes a line of the form @t{ntpserver 192.168.16.1}.
 
 @item shw_ver
-	Print informations about the SW & HW version of the WRS. 
+	Print information about the SW & HW version of the WRS. 
 	See also @ref{DIP Switch HW version}.
 
+@item wrs_vlans
+	The tool allows to configure and unconfigure the VLAN settings
+        for each port and for the RTU daemon. The @t{--help} option
+        lists all configuration items of the tool.
+
 @c FIXME: document lm32-vuart rtu_stat spll_dbg_proxy wr_management
-@c FIXME: document wrsw_pstats wrsw_vlans
+@c FIXME: document wrsw_pstats
 @end table
 
 Please note that to compile the applications and tools outside of the build
@@ -1563,6 +1568,138 @@ and @t{boot} refers to the symbolic name of the volume, as listed above.
 For further details on the update procedure, please see
 @t{/etc/init.d/wrs-boot-procedure} (in the source archive it is
 distributed in @t{userspace/rootfs_override/}.
+
+@c ##########################################################################
+@node SNMP Support
+@appendix SNMP Support
+
+The White Rabbit Switch supports SNMP, although some more work is needed
+in this respect.  The default read-only ``community'' name is @t{private},
+but you can change it from the @t{Kconfig} interface before building.
+The default read-write community is @t{private}.
+
+The switch supports all the standard information throught the @i{net-snmp}
+installation.  We'll remove some of the items in a later release, because
+nobody wants to check running processes or disk space usage.
+
+The additional, switch-specific information are in the
+``enterprise.96.100 subtree, where @t{96} is CERN and @t{100} is White
+Rabbit. The associatd MIB is in the directory @t{userspace/snmpd},
+where related source files live as well.
+
+
+
+@c ==========================================================================
+@node The WRS MIB
+@section The WRS MIB
+
+This a summary of the available tables and scalars:
+
+@table @code
+
+@item 96.100.1
+
+	This is a simple scalar as a test. It is an integer value
+        that is incremented each time you access it. It can be used to
+        test basic functionality.
+
+@item 96.100.2
+
+	Port statistics, as an SNMP table.  The first column is the
+        name of each counter, and further columns represent interfaces
+        @t{wr0} through @t{wr17}. Each counters is shown in a table line,
+        as the number and names of the counters may change in the future.
+
+@item 96.100.3
+
+	White Rabbit specific information.  Subid @t{.1} is the global
+        items, and subid @t{.2} is a table with per-port items.
+
+@item 96.100.4
+
+	Hardware, gateware and software versions. It currently
+        returns fake data, we'll complete it soon.
+
+@end table
+
+@b{Note:} due to a buglet of mine, there is an extra item at
+the end of each table (@t{96.100.2} and @t{96.100.3.2}. It makes no
+harm, so its removal is not high priority.
+
+@c @b{Note:} due to a bug in management of 64-bit values in @i{net-snmp},
+@c we are using a bad work-around in the code, that may cause wrong values
+@c to be returned by other versions of the agent, where this bug is fixed.
+
+the easiest way to retrieve the values is using @i{snmpwalk}, telling
+it to access our MIB file in order to use symbolic names. Assuming
+@t{wrs} is the DNS name for your White Rabbit Switch and @t{WR_SWITCH_SW}
+is an environment variable pointing to this package:
+
+@smallexample
+   snmpwalk -c public -v 2c wrs \
+       -m +${WR_SWITCH_SW})/userspace/snmpd/WR-SWITCH-MIB.txt \
+       1.3.6.1.4.1.96.100
+@end smallexample
+
+Using SNMP version 1 instead of 2c is fine as well, but you won't receive
+the 64-bit values for slave/tracking information.
+
+The output you will get back is something like the following:
+
+@smallexample
+WR-SWITCH-MIB::wrsScalar.0 = INTEGER: 2
+WR-SWITCH-MIB::pstatsDescr.1 = STRING: TX Underrun
+WR-SWITCH-MIB::pstatsDescr.2 = STRING: RX Overrun
+WR-SWITCH-MIB::pstatsDescr.3 = STRING: RX Invalid Code
+[...]
+WR-SWITCH-MIB::pstatsDescr.38 = STRING: Forwarded
+WR-SWITCH-MIB::pstatsDescr.39 = STRING: TRU Resp Valid
+WR-SWITCH-MIB::pstatsWR0.1 = Counter32: 0
+[...]
+WR-SWITCH-MIB::pstatsWR17.38 = Counter32: 50819
+WR-SWITCH-MIB::pstatsWR17.39 = Counter32: 0
+WR-SWITCH-MIB::pstatsEntry.20 = Counter32: 0
+WR-SWITCH-MIB::ppsiGrandmaterID.0 = Hex-STRING: 00 00 00 00 00 00 00 00
+WR-SWITCH-MIB::ppsiOwnID.0 = Hex-STRING: 00 00 00 00 00 00 00 00
+WR-SWITCH-MIB::ppsiMode.0 = INTEGER: unknown(0)
+WR-SWITCH-MIB::ppsiServoState.0 = STRING:
+WR-SWITCH-MIB::ppsiPhaseTracking.0 = INTEGER: not-tracking(0)
+[...]
+WR-SWITCH-MIB::portLink.14 = INTEGER: down(0)
+WR-SWITCH-MIB::portLink.15 = INTEGER: up(1)
+WR-SWITCH-MIB::portLink.16 = INTEGER: down(0)
+[...]
+WR-SWITCH-MIB::portPeer.18 = Hex-STRING: FF FF FF FF FF FF FF FF
+WR-SWITCH-MIB::ppsiPort.5 = Hex-STRING: FF FF FF FF FF FF FF FF
+WR-SWITCH-MIB::wrsVersionSw.0 = STRING:  fake-v4.0-rc1
+WR-SWITCH-MIB::wrsVersionGw1.0 = STRING: fake-7cce708
+WR-SWITCH-MIB::wrsVersionGw2.0 = STRING: fake-5118070
+WR-SWITCH-MIB::wrsVersionGw3.0 = STRING: fake-7efeb16
+WR-SWITCH-MIB::wrsVersionHw1.0 = STRING: fake-3.30
+WR-SWITCH-MIB::wrsVersionHw2.0 = STRING: fake-LX240T
+@end smallexample
+
+@c ==========================================================================
+@node show-pstats
+@section show-pstats
+
+To visualize all port statistics in a single window, this package
+includes the simple tool @t{userspace/snmpd/show-pstats}.  It is
+a Tk script, so you need to install @t{tk8.5} or any other version.
+
+The script receives one or more host names (or IP addresses) on the command
+line. They must refer to a switch (or switches) or the program fails like this:
+
+@smallexample
+   laptopo% ./show-pstats morgana
+   Error in snmpwalk for host morgana
+   No log handling enabled - using stderr logging
+   .1.3.6.1.4.1.96.100.2.1.: Unknown Object Identifier (Sub-id not found: enterprises -> )
+@end smallexample
+
+If everything goes well, you'll get a window like the following one:
+
+@center @image{show-pstats, 10cm,, show-pstats}
 
 @c ##########################################################################
 @node Schematics are Available
