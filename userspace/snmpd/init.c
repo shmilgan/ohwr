@@ -13,5 +13,6 @@ init_wrsSnmp(void)
 {
 	init_wrsScalar();
 	init_wrsPstats();
+	init_wrsPpsi();
 	init_wrsVersion();
 }
