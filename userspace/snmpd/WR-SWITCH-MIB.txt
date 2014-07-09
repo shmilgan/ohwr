@@ -283,14 +283,7 @@ ppsiMode OBJECT-TYPE
     ::= { wrsPpsiGlobals 3 }
  
 ppsiServoState OBJECT-TYPE
-    SYNTAX INTEGER {
-                sync-nsec(1),      -- same as WR_SYNC macros in wr-servo.c
-                sync-tai(2),
-                sync-phase(3),
-                sync-track-phase(4),
-                sync-wait-sync-idle(5),
-                sync-wait-offset-stable(6)
-    }
+    SYNTAX      DisplayString (SIZE (0..32))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION

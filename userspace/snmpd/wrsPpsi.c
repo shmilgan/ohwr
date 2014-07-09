@@ -43,7 +43,7 @@ static struct wrs_p_globals {
 	ClockIdentity gm_id; /* Scanned as %x:... because it's 8-long */
 	ClockIdentity my_id; /* Same as above */
 	int ppsi_mode;
-	int ppsi_servo_state;
+	char ppsi_servo_state[32]; /* Scanned as "%s" */
 	int phase_tracking;
 	char sync_source[32]; /* Scanned as "%s" because length > 8 bytes */
 	int64_t clock_offset;
@@ -54,17 +54,17 @@ static struct wrs_p_globals {
 } wrs_p_globals;
 
 static struct ppsi_pickinfo g_pickinfo[] = {
+	/* Warning: strings are a special case for snmp format */
 	FIELD(wrs_p_globals, ASN_OCTET_STR, gm_id, "gm_id:"),
 	FIELD(wrs_p_globals, ASN_OCTET_STR, my_id, "clock_id:"),
 	FIELD(wrs_p_globals, ASN_INTEGER, ppsi_mode, "mode:"),
-	FIELD(wrs_p_globals, ASN_INTEGER, ppsi_servo_state, "servo_state:"),
+	FIELD(wrs_p_globals, ASN_OCTET_STR, ppsi_servo_state, "servo_state:"),
 	FIELD(wrs_p_globals, ASN_INTEGER, phase_tracking, "tracking:"),
-	/* Warning: the folloing is a special case for snmp format */
 	FIELD(wrs_p_globals, ASN_OCTET_STR, sync_source, "source:"),
 	FIELD(wrs_p_globals, ASN_COUNTER64, clock_offset, "ck_offset:"),
 	FIELD(wrs_p_globals, ASN_INTEGER, skew, "skew:"),
 	FIELD(wrs_p_globals, ASN_COUNTER64, rtt, "rtt:"),
-	FIELD(wrs_p_globals, ASN_INTEGER, llength, "llength:"),
+	FIELD(wrs_p_globals, ASN_UNSIGNED, llength, "llength:"),
 	FIELD(wrs_p_globals, ASN_COUNTER64, servo_updates, "servo_upd:"),
 };
 
@@ -88,12 +88,14 @@ static struct ppsi_pickinfo p_pickinfo[] = {
 static void wrs_ppsi_parse_line(char *line, void *baseaddr,
 				struct ppsi_pickinfo *pi, int npi)
 {
-	char key[20], value[20];
+	char key[20], value[60];
 	void *addr;
 	long long *ptr64;
 	int i;
 
 	i = sscanf(line, "%s %s", key, value); /* value string has no spaces */
+	logmsg("%s", line);
+	logmsg("--%s--%s--\n", key, value);
 	if (i == 0)
 		return;
 	if (i != 2) {
@@ -113,8 +115,13 @@ static void wrs_ppsi_parse_line(char *line, void *baseaddr,
 
 	addr = baseaddr + pi->offset;
 
+	/* Here I'm lazy in error checking, let's hope it's ok */
 	switch(pi->type) {
-		/* Here I'm lazy in error checking, let's hope it's ok */
+	case ASN_UNSIGNED:
+		/*
+		 * our unsigned is line length, definitely less than 2G,
+		 * so fall through...
+		 */
 	case ASN_INTEGER:
 		sscanf(value, "%i", (int *)addr);
 		break;
@@ -171,7 +178,7 @@ static void wrs_ppsi_get_globals(void)
 		snmp_log(LOG_ERR, "%s: can't open \"%s\"\n", __func__, fname);
 		return;
 	}
-
+	memset(&wrs_p_globals, 0, sizeof(wrs_p_globals));
 	while (fgets(s, sizeof(s), f)) {
 		wrs_ppsi_parse_line(s, &wrs_p_globals, g_pickinfo,
 				    ARRAY_SIZE(g_pickinfo));
@@ -200,6 +207,7 @@ static void wrs_ppsi_get_per_port(void)
 	}
 	logmsg("opened %s\n", fname);
 
+	memset(wrs_p_array, 0, sizeof(wrs_p_array));
 	while (fgets(s, sizeof(s), f)) {
 		/* we have a special "PORT %i" header */
 		if (sscanf(s, "PORT %i", &port) == 1)
