@@ -22,7 +22,7 @@ if [ "$WRS_HW_DIR" != "" ]; then
 	cp ${WRS_HW_DIR}/syn/scb_18ports/scb_top_synthesis.bin \
 	    $FWDIR/18p_mb-LX240T.bin
 else
-	tarname="wrs-gw-v4.0-dev-20140328.tar.gz"
+	tarname="wrs-gw-v4.0-dev-20140710.tar.gz"
         wrs_echo "Using pre-built binaries from $tarname"
 	wrs_download $tarname
 	tar xzf $WRS_DOWNLOAD_DIR/$tarname -C $FWDIR
