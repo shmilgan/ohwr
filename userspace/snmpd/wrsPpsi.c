@@ -122,6 +122,12 @@ static void wrs_ppsi_parse_line(char *line, void *baseaddr,
 	case ASN_COUNTER64:
 		ptr64 = addr;
 		sscanf(value, "%lli", ptr64);
+		/*
+		 * WARNING: the current snmpd is bugged: it has
+		 * endianness problems with 64 bit, and the two
+		 * halves are swapped. So pre-swap them here
+		 */
+		*ptr64 = (*ptr64 << 32) | (*ptr64 >> 32);
 		break;
 
 	case ASN_OCTET_STR:
