@@ -8,11 +8,13 @@
 /* The sub-init functions */
 #include "wrsSnmp.h"
 
-void
-init_wrsSnmp(void)
+FILE *wrs_logf; /* for the local-hack messages */
+
+void init_wrsSnmp(void)
 {
 	init_wrsScalar();
 	init_wrsPstats();
 	init_wrsPpsi();
 	init_wrsVersion();
 }
+

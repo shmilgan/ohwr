@@ -10,49 +10,6 @@
 
 #include "wrsSnmp.h"
 
-#include <stdarg.h>
-static FILE *logf;
-
-/* local hack */
-static int logmsg(const char *fmt, ...)
-{
-	va_list args;
-	int ret;
-
-	if (WRS_WITH_SNMP_HACKISH_LOG) {
-		if (!logf)
-			logf = fopen("/dev/console", "w");
-
-		va_start(args, fmt);
-		ret = vfprintf(logf, fmt, args);
-		va_end(args);
-
-		return ret;
-	} else {
-		return 0;
-	}
-}
-
-int dumpstruct(FILE *dest, char *name, void *ptr, int size)
-{
-	int ret = 0, i;
-	unsigned char *p = ptr;
-
-	if (WRS_WITH_SNMP_HACKISH_LOG) {
-		ret = fprintf(dest, "dump %s at %p (size 0x%x)\n",
-			      name, ptr, size);
-		for (i = 0; i < size; ) {
-			ret += fprintf(dest, "%02x", p[i]);
-			i++;
-			ret += fprintf(dest, i & 3 ? " " : i & 0xf ? "	" : "\n");
-		}
-		if (i & 0xf)
-			ret += fprintf(dest, "\n");
-	}
-	return ret;
-}
-/* end local hack */
-
 #define PSTATS_CACHE_TIMEOUT 5 /* seconds */
 
 /* Our structure for caching data */
@@ -67,8 +24,6 @@ static struct pstats_global_data {
 	struct pstats_per_port port[PSTATS_N_PORTS];
 	char *pname[PSTATS_N_PORTS];
 } pstats_global_data;
-
-
 
 static char *pstats_names[] = {
 	[0] = "TX Underrun",
