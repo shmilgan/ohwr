@@ -55,12 +55,12 @@ void show_ports(int mode)
 			hexp_port_state_t state;
 
 			snprintf(if_name, 10, "wr%d", i);
-			
+
 			for(j=0;j<port_list.num_ports;j++)
 				if(!strcmp(port_list.port_names[j], if_name)) { found = 1; break; }
-				
+
 			if(!found) continue;
-			
+
 			halexp_get_port_state(&state, if_name);
 
 			term_cprintf(C_WHITE, " %-5s: ", if_name);
@@ -101,9 +101,9 @@ void show_ports(int mode)
 			snprintf(if_name, 10, "wr%d", i);
 			for(j=0;j<port_list.num_ports;j++)
 				if(!strcmp(port_list.port_names[j], if_name)) { found = 1; break; }
-				
+
 			if(!found) continue;
-			
+
 			halexp_get_port_state(&state, if_name);
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state.up ? 1:0);
@@ -262,6 +262,9 @@ int main(int argc, char *argv[])
 		}
 		if(stats) show_stats();
 		else show_screen();
+		/* If we got broken pipe or anything, exit */
+		if (ferror(stdout))
+			exit(1);
 	}
 	term_restore();
 	setlinebuf(stdout);
