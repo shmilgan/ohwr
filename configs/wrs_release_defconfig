@@ -2,5 +2,22 @@
 # Automatically generated make config: don't edit
 #
 CONFIG_BR2_CONFIGFILE="wrs_release_br2_config"
-# CONFIG_PTP_NOPOSIX is not ser
+# CONFIG_PTP_NOPOSIX is not set
 CONFIG_PPSI=y
+
+#
+# Local configuration
+#
+CONFIG_NTP_SERVER=""
+CONFIG_DNS_SERVER=""
+CONFIG_DNS_DOMAIN=""
+CONFIG_REMOTE_SYSLOG_SERVER=""
+CONFIG_REMOTE_SYSLOG_UDP=y
+CONFIG_SNMP_TRAPSINK_ADDRESS=""
+CONFIG_SNMP_TRAP2SINK_ADDRESS=""
+CONFIG_SNMP_RO_COMMUNITY="public"
+CONFIG_SNMP_RW_COMMUNITY="private"
+CONFIG_WRS_LOG_HAL="daemon.info"
+CONFIG_WRS_LOG_RTU="daemon.info"
+CONFIG_WRS_LOG_PTP="daemon.info"
+# CONFIG_KEEP_ROOTFS is not set
