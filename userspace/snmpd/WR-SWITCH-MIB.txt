@@ -1,0 +1,454 @@
+WR-SWITCH-MIB DEFINITIONS ::= BEGIN
+
+-- This is blatantly copied from  NET-SNMP-TUTORIAL-MIB.txt and IF-MIB.txt
+-- URL: http://www.net-snmp.org/tutorial/tutorial-5/
+--                            toolkit/mib_module/NET-SNMP-TUTORIAL-MIB.txt
+-- Bugs and swearing by Alessandro Rubini
+
+-- IMPORTS: Include definitions from other mibs here
+IMPORTS
+        OBJECT-TYPE, Integer32, Counter32, Counter64
+        MODULE-IDENTITY, enterprises          FROM SNMPv2-SMI
+        DisplayString                         FROM SNMPv2-TC;
+
+CERN OBJECT IDENTIFIER ::= { enterprises 96 }
+
+-- A brief description and update information about this mib.
+-- (I follow the CamelCase to be sure I don't mistype. Who knows the rules...
+
+wrSwitchMIB MODULE-IDENTITY
+    LAST-UPDATED "201406181915Z"    -- 18 june 2014, 19:15 (why saying again?)
+    ORGANIZATION "CERN"
+    CONTACT-INFO "postal:   BE-CO-HT, CERN, Geneva
+                  email:    ht-drivers@cern.ch
+                 "
+    DESCRIPTION  "White Rabbit Switch internal details
+                 "
+    ::= { CERN 100 }
+
+-- Define typical mib nodes
+-- we'll prefix everything in this mib with wrs (White Rabbit Switch)
+wrsScalar     OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
+wrsPstats     OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }
+wrsPpsi       OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }
+wrsVersion    OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }
+
+-- define one stupid object for a start
+
+wrsScalarOne   OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Just an integer"
+    ::= { wrsScalar 1 }
+
+-- This pstats stuff is copied, in a way, from the ifTable stuff (IF-MIB.txt)
+-- We have the ports as columns, so they are a fixed number. And the
+-- counters as lines.  This allows to change counters following gateware.
+-- even if it is not standard practice.  Otherwise, we'd need to rewrite
+-- code every time (I *hate* this obsolete crap: code generators should not
+-- be like that).
+
+wrsPstats OBJECT-TYPE
+    SYNTAX      SEQUENCE OF pstatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "A list of pstat counters. One column per interface.
+             The number of entries is given by the value of pstatsNumber."
+    ::= { wrSwitchMIB 2 }
+
+pstatsEntry OBJECT-TYPE
+    SYNTAX      PstatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "An entry containing a pstat name and values for all WR ports."
+    INDEX   { pstatsIndex }
+    ::= { wrsPstats 1 }
+
+PstatsEntry ::=
+    SEQUENCE {
+        pstatsDescr                 DisplayString,
+        pstatsWR0                   Counter32,
+        pstatsWR1                   Counter32,
+        pstatsWR2                   Counter32,
+        pstatsWR3                   Counter32,
+        pstatsWR4                   Counter32,
+        pstatsWR5                   Counter32,
+        pstatsWR6                   Counter32,
+        pstatsWR7                   Counter32,
+        pstatsWR8                   Counter32,
+        pstatsWR9                   Counter32,
+        pstatsWR10                  Counter32,
+        pstatsWR11                  Counter32,
+        pstatsWR12                  Counter32,
+        pstatsWR13                  Counter32,
+        pstatsWR14                  Counter32,
+        pstatsWR15                  Counter32,
+        pstatsWR16                  Counter32,
+        pstatsWR17                  Counter32
+    }
+
+pstatsDescr OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "A textual string describing this counter"
+    ::= { pstatsEntry 1 }
+
+pstatsWR0 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr0."
+    ::= {pstatsEntry 2 }
+
+pstatsWR1 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr1."
+    ::= {pstatsEntry 3 }
+
+pstatsWR2 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr2."
+    ::= {pstatsEntry 4 }
+
+pstatsWR3 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr3."
+    ::= {pstatsEntry 5 }
+
+pstatsWR4 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr4."
+    ::= {pstatsEntry 6 }
+
+pstatsWR5 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr5."
+    ::= {pstatsEntry 7 }
+
+pstatsWR6 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr6."
+    ::= {pstatsEntry 8 }
+
+pstatsWR7 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr7."
+    ::= {pstatsEntry 9 }
+
+pstatsWR8 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr8."
+    ::= {pstatsEntry 10 }
+
+pstatsWR9 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr9."
+    ::= {pstatsEntry 11 }
+
+pstatsWR10 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr10."
+    ::= {pstatsEntry 12 }
+
+pstatsWR11 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr11."
+    ::= {pstatsEntry 13 }
+
+pstatsWR12 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr12."
+    ::= {pstatsEntry 14 }
+
+pstatsWR13 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr13."
+    ::= {pstatsEntry 15 }
+
+pstatsWR14 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr14."
+    ::= {pstatsEntry 16 }
+
+pstatsWR15 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr15."
+    ::= {pstatsEntry 17 }
+
+pstatsWR16 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr16."
+    ::= {pstatsEntry 18 }
+
+pstatsWR17 OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The value of this counter for interface wr17."
+    ::= {pstatsEntry 19 }
+
+
+-- The Wr/PTP/Ppsi information is two items: an array of scalars
+-- and a table. In the table, the "channel" name is the row. But
+-- the index is integer, following what ppsi does internally
+
+wrsPpsiGlobals OBJECT IDENTIFIER ::= { wrsPpsi 1 }
+wrsPpsiPerport OBJECT IDENTIFIER ::= { wrsPpsi 2 }
+
+-- globals (.3.1)
+
+ppsiGrandmaterID OBJECT-TYPE
+    SYNTAX       OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The ClockID of the current grandmaster"
+    ::= { wrsPpsiGlobals 1 }
+
+ppsiOwnID OBJECT-TYPE
+    SYNTAX       OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The ClockID of this WR device"
+    ::= { wrsPpsiGlobals 2 }
+
+ppsiMode OBJECT-TYPE
+    SYNTAX INTEGER {
+                unknown(0),        -- same as WRC_MODE macros
+                grandmaster(1),
+                master(2),
+                slave(3)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The mode of this clock"
+    ::= { wrsPpsiGlobals 3 }
+ 
+ppsiServoState OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The servo state if slave"
+    ::= { wrsPpsiGlobals 4 }
+
+ppsiPhaseTracking OBJECT-TYPE
+    SYNTAX INTEGER {
+               not-tracking(0)
+               tracking(1)
+    }          
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Whether phase tracking is enabled in the servo"
+    ::= { wrsPpsiGlobals 5 }
+
+ppsiSyncSource OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The port name that is currently the synchronization source"
+    ::= { wrsPpsiGlobals 6 }
+
+ppsiClockOffsetPs OBJECT-TYPE
+    SYNTAX      Counter64 -- should be integer64 (signed)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Current clock offset from master, in picoseconds"
+    ::= { wrsPpsiGlobals 7 }
+
+ppsiSkew OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The estimated change of master-to-slave delay, in picoseconds"
+    ::= { wrsPpsiGlobals 8 }
+
+ppsiRTT OBJECT-TYPE
+    SYNTAX      Counter64 -- does unsigned64 exits?
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The round-trip-time, from master, in picoseconds"
+    ::= { wrsPpsiGlobals 9 }
+
+ppsiLinkLength OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Estimated fiber length, from master-to-slave delay, in meters"
+    ::= { wrsPpsiGlobals 10 }
+
+ppsiServoUpdates OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "How many time did the servo run"
+    ::= { wrsPpsiGlobals 11 }
+
+-- per-port (.3.2)
+
+ppsiPort OBJECT-TYPE
+    SYNTAX      PpsiPort
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "The ppsi line: information for each port"
+    INDEX   { portIndex }
+    ::= { wrsPpsiPerport 1 }
+
+PpsiPort ::=
+    SEQUENCE {
+        portLink             INTEGER
+        portMode             INTEGER
+        portLocked           INTEGER {not-locked(0), locked(1)},
+        portPeer             OCTET STRING
+    }
+
+portLink OBJECT-TYPE
+    SYNTAX         INTEGER {down(0), up(1)}
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Whether the link is up or down"
+    ::= { ppsiPort 1 }
+
+portMode OBJECT-TYPE
+    SYNTAX         INTEGER {slave(0), master(1)}
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Whether the port is master or slave"
+    ::= { ppsiPort 2 }
+
+portLocked OBJECT-TYPE
+    SYNTAX         INTEGER {not-locked(0), locked(1)}
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Whether the peers are locked or not"
+    ::= { ppsiPort 3 }
+
+portPeer OBJECT-TYPE
+    SYNTAX         OCTET STRING (SIZE(8))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "the ClockID of the peer, if available. Or 0"
+    ::= { ppsiPort 4 }
+
+
+-- Versions (4) are all just strings, 6 of them
+
+wrsVersionSw    OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The software version, as returned from 'git describe' at build time"
+    ::= { wrsVersion 1 }
+
+wrsVersionGw1   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The gateware version: commit of wr_switch_hdl"
+    ::= { wrsVersion 2 }
+
+wrsVersionGw2   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The gateware version: commit of general-cores"
+    ::= { wrsVersion 3 }
+
+wrsVersionGw3   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The gateware version: commit of wr-cores"
+    ::= { wrsVersion 4 }
+
+wrsVersionHw1   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The hardware version: PCB"
+    ::= { wrsVersion 5 }
+
+wrsVersionHw2   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The hardware version: FPGA"
+    ::= { wrsVersion 6 }
+
+END

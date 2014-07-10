@@ -11,8 +11,12 @@
 
 #include "hal_client.h"
 
-#define SHOW_GUI	 0
-#define SHOW_STATS 1
+#define SHOW_GUI		0
+#define SHOW_STATS		1
+#define SHOW_SNMP_PORTS		2
+#define SHOW_SNMP_GLOBALS	3
+
+int mode = SHOW_GUI;
 
 
 hexp_port_list_t port_list;
@@ -36,7 +40,7 @@ void init(int usecolor)
 	halexp_query_ports(&port_list);
 }
 
-void show_ports(int mode)
+void show_ports(void)
 {
 	int i, j;
 	time_t t;
@@ -55,12 +59,12 @@ void show_ports(int mode)
 			hexp_port_state_t state;
 
 			snprintf(if_name, 10, "wr%d", i);
-			
+
 			for(j=0;j<port_list.num_ports;j++)
 				if(!strcmp(port_list.port_names[j], if_name)) { found = 1; break; }
-				
+
 			if(!found) continue;
-			
+
 			halexp_get_port_state(&state, if_name);
 
 			term_cprintf(C_WHITE, " %-5s: ", if_name);
@@ -101,9 +105,9 @@ void show_ports(int mode)
 			snprintf(if_name, 10, "wr%d", i);
 			for(j=0;j<port_list.num_ports;j++)
 				if(!strcmp(port_list.port_names[j], if_name)) { found = 1; break; }
-				
+
 			if(!found) continue;
-			
+
 			halexp_get_port_state(&state, if_name);
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state.up ? 1:0);
@@ -112,9 +116,29 @@ void show_ports(int mode)
 		}
 		printf("\n");
 	}
+	else if (mode == SHOW_SNMP_PORTS) {
+		for(i=0; i<18; ++i) {
+			char if_name[10], found = 0;
+			hexp_port_state_t state;
+
+			printf("PORT %i\n", i);
+			snprintf(if_name, 10, "wr%d", i);
+			for(j=0;j<port_list.num_ports;j++)
+				if(!strcmp(port_list.port_names[j], if_name)) { found = 1; break; }
+
+			if(!found) continue;
+
+			halexp_get_port_state(&state, if_name);
+			printf("linkup: %d\n", state.up ? 1:0);
+			printf("mode: %d\n", state.mode==HEXP_PORT_MODE_WR_SLAVE
+			       ? 0 : 1);
+			printf("locked: %d\n", state.is_locked ? 1:0);
+			printf("peer_id: ff:ff:ff:ff:ff:ff:ff:ff\n"); /* FIXME */
+		}
+	}
 }
 
-void show_servo(int mode)
+void show_servo(void)
 {
 	ptpdexp_sync_state_t ss;
 
@@ -196,44 +220,63 @@ void show_servo(int mode)
 		printf("setp:%lld ", ss.cur_setpoint);
 		printf("ucnt:%llu ", ss.update_count);
 		printf("\n");
+	} else if (mode == SHOW_SNMP_GLOBALS) {
+		if(!ss.valid)
+			return;
+		/* This is oh so similar to the above, but by lines */
+		printf("gm_id: f0:f0:f0:f0:f0:f0:f0:f0\n"); /* FIXME */
+		printf("clock_id: f1:f1:f1:f1:f1:f1:f1:f1\n"); /* FIXME */
+		printf("mode: 9999\n"); /* FIXME */
+		printf("servo_state: %s\n", ss.slave_servo_state);
+		printf("tracking: %i\n", ss.tracking_enabled ? 1 : 0);
+		printf("source: %s\n", ss.sync_source);
+		printf("ck_offset: %lli\n", ss.cur_offset);
+		printf("skew: %li\n", (long)ss.cur_skew);
+		printf("rtt: %lli\n", ss.mu);
+		printf("llength: %li\n", (long)(ss.delay_ms/1e12 * 300e6 / 1.55));
+		printf("servo_upd: %lli\n", ss.update_count);
 	}
 }
 
 int track_onoff = 1;
 
-void show_screen()
+void show_all()
 {
-	term_clear();
-	term_pcprintf(1, 1, C_BLUE, "WR Switch Sync Monitor v 1.0 [q = quit]");
-
-	show_ports(SHOW_GUI);
-	show_servo(SHOW_GUI);
-	fflush(stdout);
-}
-
-void show_stats()
-{
-	show_ports(SHOW_STATS);
-	show_servo(SHOW_STATS);
+	if (mode == SHOW_GUI) {
+		term_clear();
+		term_pcprintf(1, 1, C_BLUE,
+			      "WR Switch Sync Monitor v 1.0 [q = quit]");
+	}
+	show_ports();
+	show_servo();
 	fflush(stdout);
 }
 
 int main(int argc, char *argv[])
 {
 	int opt;
-	int stats = 0;
 	int usecolor = 1;
 
-	while((opt=getopt(argc, argv, "sb")) != -1)
+	while((opt=getopt(argc, argv, "sbgp")) != -1)
 	{
 		switch(opt)
 		{
 			case 's':
-				stats = 1;
+				mode = SHOW_STATS;
 				break;
 			case 'b':
 				usecolor = 0;
 				break;
+			case 'g':
+				mode = SHOW_SNMP_GLOBALS;
+				init(0);
+				show_all();
+				exit(0);
+			case 'p':
+				mode = SHOW_SNMP_PORTS;
+				init(0);
+				show_all();
+				exit(0);
 			default:
 				fprintf(stderr, "Unrecognized option.\n");
 				break;
@@ -260,8 +303,10 @@ int main(int argc, char *argv[])
 					    track_onoff);
 			}
 		}
-		if(stats) show_stats();
-		else show_screen();
+		show_all();
+		/* If we got broken pipe or anything, exit */
+		if (ferror(stdout))
+			exit(1);
 	}
 	term_restore();
 	setlinebuf(stdout);

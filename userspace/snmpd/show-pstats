@@ -1,0 +1,69 @@
+#!/usr/bin/wish
+
+# Allow user override
+if [catch "set cmd \"\$env(SHOWPS_CMD)\""] {
+    set cmd "snmpwalk -c public -v 2c -On -Oq HOST .1.3.6.1.4.1.96.100.2.1"
+}
+
+if ![llength $argv] {
+    puts stderr "$argv0: Pass IP number of names of switch(es) as arguments"
+    exit 1
+}
+
+# A procedure to update the window's content
+proc updatew {wname} {
+    global w
+
+    set new [expr ![llength [winfo children $wname]]]
+    if $new {
+	grid [label $wname.name -text "CTR NAME" -fg blue] -row 0 -column 1
+	for {set i 0; set c 2} {$i < 18} {incr i; incr c} {
+	    grid [label $wname.wr$i -text "WR$i" -fg blue] -row 0 -column $c
+	}
+    }
+
+    # open a file according to the command given
+    set F [open "| $w($wname:cmd)" r]
+    while {[gets $F str] > 0} {
+	foreach {oid value} $str {
+	    # remove the leading part
+	    regsub ".1.3.6.1.4.1.96.100.2.1." $oid "" oid
+	    # extract column and row
+	    foreach {col row} [split $oid .] {
+		if ![string length $row] break
+		set name $wname.${col}_${row}
+		if $new {
+		    label $name
+		} 
+		set width "-width 8"
+		if {$col == 1} {set width ""}
+		eval $name config -text \"$value\" $width
+		grid $name -row $row -column $col
+	    }
+	}
+    }		    
+    if [catch "close $F" message] {
+	puts stderr "Error in snmpwalk for host $w($wname:host)"
+	puts stderr $message
+	exit 1
+    }
+
+    # our cache is 5 seconds: make sure it changed
+    after 6000 "updatew $wname"
+}
+
+
+foreach host $argv {
+    # turn "10.0.0.1" into "10_0_0_1"
+    regsub -all "\\\." $host "_" win
+    wm withdraw .
+    toplevel .$win
+
+    # create the command name. Use "w" array, in case we need more info later
+    regsub "HOST" $cmd $host  w(.$win:cmd)
+    set w(.$win:host) $host
+
+    # get the first batch of items and schedule the next
+    updatew .$win
+    wm deiconify .$win
+}
