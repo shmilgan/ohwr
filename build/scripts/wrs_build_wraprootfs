@@ -40,7 +40,7 @@ cp -r $WRS_OUTPUT_DIR/images/lib/* $TMPFS/lib
 rm -f $TMPFS/etc/init.d/*
 cp -r $rootfs_override/* $TMPFS
 # remove leftovers from on-going edits in rootfs_override
-find $TMPFS -name '*~' | xargs rm
+find $TMPFS -name '*~' | xargs rm -f
 
 rm -rf $TMPFS/dev
 (cd $TMPFS && tar xzf $DEVTAR)
@@ -51,7 +51,7 @@ if [ ! -z "$CONFIG_NTP_SERVER" ]; then
 fi
 
 if [ ! -z "$CONFIG_DNS_SERVER" ]; then
-    rm $TMPFS/etc/resolv.conf
+    rm -f $TMPFS/etc/resolv.conf
     echo "nameserver $CONFIG_DNS_SERVER" > $TMPFS/etc/resolv.conf
     if [ ! -z "$CONFIG_DNS_DOMAIN" ]; then
         echo "domain $CONFIG_DNS_DOMAIN" >> $TMPFS/etc/resolv.conf
