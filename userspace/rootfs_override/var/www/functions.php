@@ -102,7 +102,7 @@ function wrs_header_ports(){
 function wrs_main_info(){
 	
 	//Changing php filesize in case it is necessary
-	if(wrs_php_filesize()<$MAX_PHP_FILESIZE){php_file_transfer_size($MAX_PHP_FILESIZE);}
+	if(wrs_php_filesize()<$GLOBALS['MAX_PHP_FILESIZE']){php_file_transfer_size($GLOBALS['MAX_PHP_FILESIZE']);}
 	
 	if(empty($_SESSION["utc"])) $_SESSION["utc"]="UTC";
 	
@@ -127,7 +127,7 @@ function wrs_main_info(){
 	echo '<tr><th  align=center> <b><font color="darkblue">PCB Version</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -p"); echo $str;  echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">FPGA</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -f"); echo $str; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">Compiling Date</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -c"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">White-Rabbit Date</font></b></th><th><center>'; $str = shell_exec("TZ=".$_SESSION['utc']." /wr/bin/wr_date get"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">White-Rabbit Date</font></b></th><th><center>'; $str = shell_exec("TZ=".$_SESSION['utc']." /wr/bin/wr_date -n get"); echo $str; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">PPSi</font></b> </th><th><center>';  echo wrs_check_ptp_status() ? '[<A HREF="ptp.php">on</A>]' : '[<A HREF="ptp.php">off</A>]'; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">Net-SNMP Server</font></b> </th><th><center>';  echo check_snmp_status() ? '[on] ' : '[off] '; echo '&nbsp;&nbsp;ver. '; echo shell_exec("snmpd -v | grep version | awk '{print $3}'");
 			echo '( port '; $str = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf | grep agent | cut -d: -f3 | awk '{print $1}'"); echo $str; echo ')'; 	echo " <a href='help.php?help_id=snmp' onClick='showPopup(this.href);return(false);'> [OIDs]</a></center></th></tr>";
