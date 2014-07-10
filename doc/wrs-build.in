@@ -856,9 +856,9 @@ or @i{file-system} that you just built, you can just call the script
 from the build directory and use the @code{-b} option.
 
 The official binaries for installation of version 4.0 of this package
-are available in the @i{files} tab of @t{ohwr.org}. The complete link
-is:@*
-@url{www.ohwr.org/attachments/download/FIXME-TO-BE-FILLED}
+are available in the @i{files} tab of this project in @t{ohwr.org}.
+We don't provide a complete link here, but one is available in the
+list of downloaded files: @t{build/download-info}.
 
 You can select a mode using the @code{-m|--mode} flag to choose
 to write in dataflash (df), nandflash (nf) or both (default).
