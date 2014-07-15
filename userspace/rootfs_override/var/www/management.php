@@ -57,9 +57,10 @@
 					<?php 
 						$selected_utc=$_SESSION['utc'];
 						$selected_utc=str_replace("UTC","",$selected_utc);
+						$selected_utc=trim($selected_utc);
 						for($op = -12; $op < 0; $op++){
 							
-							if($selected_utc==$op){
+							if($selected_utc==$op && !empty($selected_utc)){
 								echo '<option selected="UTC'.$op.'" class="btn" value="UTC'.($op).'"><center>UTC'.($op).'</center></option>';
 							}else{
 								echo '<option  class="btn" value="UTC'.($op).'"><center>UTC'.($op).'</center></option>';
@@ -73,7 +74,7 @@
 						}
 						
 						for($op = 1; $op < 15; $op++){
-							if($selected_utc==$op){
+							if($selected_utc==$op && !empty($selected_utc)){
 								echo '<option elected="UTC'.$op.'" class="btn" value="UTC+'.($op).'"><center>UTC+'.($op).'</center></option>';
 							}else{
 								echo '<option class="btn" value="UTC+'.($op).'"><center>UTC+'.($op).'</center></option>';		
