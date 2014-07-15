@@ -25,7 +25,7 @@
 		if(count($_POST)>0) {
 			
 			//If /etc/phpusers does not exist we create the file and "admin" "" user&pass
-			if (!file_exists("/etc/phpusers")) {
+			if (!file_exists($GLOBALS['phpusersfile'])) {
 				$username = "admin";
 				$password = "";
 				$salt="wrs4.0salt";
@@ -35,7 +35,7 @@
 				$hash_md5_double = md5(sha1($salt.$pass)); // md5 hash with salt & sha1 #3 
 				$output= $username." ".$hash_md5_double."\n";
 				wrs_change_wrfs("rw");
-				$file = fopen("/etc/phpusers","w+");
+				$file = fopen($GLOBALS['phpusersfile'],"w+");
 				fwrite($file,$output);
 				fclose($file);
 				wrs_change_wrfs("ro");
@@ -43,9 +43,9 @@
 			
 			$username = $_POST["login"];
 			$password = $_POST["password"];
-			$saved_hash = shell_exec("cat /etc/phpusers | grep ".$username." | awk '{print $2}'");
+			$saved_hash = shell_exec("cat ".$GLOBALS['phpusersfile']." | grep ".$username." | awk '{print $2}'");
 			$saved_hash = str_replace("\n","",$saved_hash);
-			$user_exists = shell_exec("cat /etc/phpusers | grep -c ".$username);
+			$user_exists = shell_exec("cat ".$GLOBALS['phpusersfile']." | grep -c ".$username);
 			
 			
 			$salt="wrs4.0salt";

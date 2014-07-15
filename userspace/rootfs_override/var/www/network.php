@@ -61,9 +61,9 @@
 		}
 		
 		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"DHCP"))){
-			$interface_file = "/etc/network/interfaces";
+			$interface_file = $GLOBALS['interfacesfile'];
 			$tmpfile="/tmp/interfaces";
-			shell_exec('rm /etc/network/interfaces');
+			shell_exec('rm '.$interface_file);
 			
 			$output="# Configure Loopback\nauto lo\niface lo inet loopback\n\n#Force eth0 to be configured by DHCP\nauto eth0\niface eth0 inet dhcp\n\n# Uncomment this example for static configuration\n";
 			$output.="#iface eth0 inet static\n";
@@ -77,17 +77,17 @@
 			fwrite($file,$output);
 			fclose($file);
 			
-			//We move the file to /wr/etc/
+			//We move the file to /usr/etc/network
 			copy($tmpfile, $interface_file);
 			
-			echo '<center>DHCP is now set for eth0<br>Restarting network</center>';
-			//Let's up eth0
-			shell_exec('/etc/init.d/S40network restart');
+			echo '<center>DHCP is now set for eth0<br>Rebooting switch</center>';
+			//Let's reboot
+			shell_exec('reboot');
 			
 		}
 		
 		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"Static"))){
-			//shell_exec('sed -i "s/iface eth0 inet dhcp/#iface eth0 inet dhcp/g" /etc/network/interfaces');
+
 			echo '<FORM method="POST">
 					<table border="0" align="center" class="altrowstable" id="alternatecolor">	
 						<tr>
@@ -117,9 +117,9 @@
 		}
 		
 		if ((!empty($_POST["ip"])) && (!empty($_POST["netmask"])) && (!empty($_POST["network"])) && (!empty($_POST["broadcast"])) && (!empty($_POST["gateway"]))){
-			$interface_file = "/etc/network/interfaces";
+			$interface_file = $GLOBALS['interfacesfile'];
 			$tmpfile="/tmp/interfaces";
-			shell_exec('rm /etc/network/interfaces');
+			shell_exec('rm '.$interface_file);
 			
 			$output="# Configure Loopback\nauto lo\niface lo inet loopback\n\n#Force eth0 to be configured by DHCP\n#auto eth0\n#iface eth0 inet dhcp\n\n# Uncomment this example for static configuration\n";
 			$output.="iface eth0 inet static\n";
@@ -133,13 +133,13 @@
 			fwrite($file,$output);
 			fclose($file);
 			
-			//We move the file to /wr/etc/
+			//We move the file to /usr/etc/network
 			copy($tmpfile, $interface_file);
 			
 			echo '<center>New static configuration saved for eth0<br>Changes will take place after reboot.</center>';
 			
-			//Let's up eth0
-			shell_exec('/etc/init.d/S40network restart');
+			//Let's reboot
+			shell_exec('reboot');
 		}
 			
 			

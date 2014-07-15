@@ -43,7 +43,7 @@
 			echo '<br><br><br><p align=center>Please fill fields.<br></p>';
 				
 		}else{
-			$saved_hash = shell_exec("cat /etc/phpusers | grep ".$_POST["user"]." | awk '{print $2}'");
+			$saved_hash = shell_exec("cat ".$GLOBALS['phpusersfile']." | grep ".$_POST["user"]." | awk '{print $2}'");
 			$saved_hash = str_replace("\n","",$saved_hash);
 			
 			$username = $_POST["user"];
@@ -72,7 +72,7 @@
 				$old_value=$username." ".$saved_hash;
 				$new_value=$username." ".$hash_md5_double;
 
-				$output = shell_exec('cat /etc/phpusers | sed -i "s/'.$old_value.'/'.$new_value.'/g" /etc/phpusers'); //replace password for the user
+				$output = shell_exec('cat '.$GLOBALS['phpusersfile'].' | sed -i "s/'.$old_value.'/'.$new_value.'/g" '.$GLOBALS['phpusersfile']); //replace password for the user
 				
 				//$file = fopen("/etc/phpusers","w+");
 				//fwrite($file,$output);

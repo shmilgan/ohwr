@@ -1,7 +1,7 @@
 <?php
 
 //Global Variables
-$etcdir="/wr/etc/"; //configuration file folder for WRS
+$etcdir="/usr/wr/etc/"; //configuration file folder for WRS
 $snmpconf="snmpd.conf";
 $ppsiconf="ppsi.conf";
 $wrswhalconf="wrsw_hal.conf";
@@ -9,6 +9,10 @@ $sfpdatabaseconf="sfp_database.conf";
 $wrdateconf="wr_date.conf";
 $vlancolor = array("#27DE2A", "#B642A8", "#6E42B6", "#425DB6" , "#428DB6", "#4686B6", "#43B88B", "#42B65F", "#82B642", "#B6AE42", "#B67E42");
 $MAX_PHP_FILESIZE = 40;
+$phpusersfile="/usr/etc/phpusers";
+$profilefile="/usr/etc/profile";
+$phpinifile="/etc/php.ini";
+$interfacesfile = "/usr/etc/network/interfaces";
 
 /*
  * Displays the current status of each enpoint.
@@ -104,7 +108,14 @@ function wrs_main_info(){
 	//Changing php filesize in case it is necessary
 	if(wrs_php_filesize()<$GLOBALS['MAX_PHP_FILESIZE']){php_file_transfer_size($GLOBALS['MAX_PHP_FILESIZE']);}
 	
-	if(empty($_SESSION["utc"])) $_SESSION["utc"]="UTC";
+	if(empty($_SESSION["utc"])){
+		$utc_exists = shell_exec("cat ".$GLOBALS['profilefile']." | grep -c TZ");
+		if($utc_exists){
+			$_SESSION["utc"]=shell_exec("cat ".$GLOBALS['profilefile']." | grep TZ | awk '{print $2}' | sed 's/TZ=//g'");
+		}else{
+			$_SESSION["utc"]="UTC";
+		}
+	}
 	
 	echo "<table border='1' align='center' class='altrowstabledash' id='alternatecolor'>";
 	echo '<tr class="sub"><td> <b><center>Switch Info </center></b></td></tr>';
@@ -127,12 +138,12 @@ function wrs_main_info(){
 	echo '<tr><th  align=center> <b><font color="darkblue">PCB Version</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -p"); echo $str;  echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">FPGA</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -f"); echo $str; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">Compiling Date</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -c"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">White-Rabbit Date</font></b></th><th><center>'; $str = shell_exec("TZ=".$_SESSION['utc']." /wr/bin/wr_date -n get"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">White-Rabbit Date</font></b></th><th><center>'; $str = shell_exec("export TZ=".$_SESSION['utc']." /wr/bin/wr_date -n get"); echo $str; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">PPSi</font></b> </th><th><center>';  echo wrs_check_ptp_status() ? '[<A HREF="ptp.php">on</A>]' : '[<A HREF="ptp.php">off</A>]'; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">Net-SNMP Server</font></b> </th><th><center>';  echo check_snmp_status() ? '[on] ' : '[off] '; echo '&nbsp;&nbsp;ver. '; echo shell_exec("snmpd -v | grep version | awk '{print $3}'");
 			echo '( port '; $str = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf | grep agent | cut -d: -f3 | awk '{print $1}'"); echo $str; echo ')'; 	echo " <a href='help.php?help_id=snmp' onClick='showPopup(this.href);return(false);'> [OIDs]</a></center></th></tr>";
 	echo '<tr><th  align=center> <b><font color="darkblue">NTP Server</font></b> </th><th><center> <A HREF="management.php">';  $str = check_ntp_server(); echo $str; echo '</A> ['.$_SESSION['utc'].']</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">Max. Filesize Upload</font> </b></th><th><center>'; echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">Max. Filesize Upload</font> </b></th><th><center>'; echo shell_exec("cat ".$GLOBALS['phpinifile']." | grep upload_max_filesize | awk '{print $3}'"); echo '</center></th></tr>';
 	echo '</table>';
 	
 	
@@ -161,7 +172,7 @@ function check_snmp_status(){
 
 function wrs_interface_setup(){
 	
-	$interfaces = shell_exec('cat /etc/network/interfaces | grep dhcp');
+	$interfaces = shell_exec('cat '.$GLOBALS['interfacesfile'].' | grep dhcp');
 	
 	return (strcmp($interfaces[0],"#")) ? "dhcp" : "static";
 }
@@ -231,17 +242,19 @@ function php_file_transfer_size($size){
 		
 	wrs_change_wrfs("rw");
 	// We modify fist upload_max_filesize in php.ini
-	$prev_size = shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'");
+	$prev_size = shell_exec("cat ".$GLOBALS['phpinifile']." | grep upload_max_filesize | awk '{print $3}'");
 	$prev_size=trim($prev_size);
-	$cmd = "sed -i 's/upload_max_filesize = ".$prev_size."/upload_max_filesize = ".$size."M/g' /etc/php.ini";
+	$cmd = "sed -i 's/upload_max_filesize = ".$prev_size."/upload_max_filesize = ".$size."M/g' ".$GLOBALS['phpinifile'];
 	shell_exec($cmd);
 	
 	// We modify post_max_size in php.ini
-	$prev_size = shell_exec("cat /etc/php.ini | grep post_max_size | awk '{print $3}'");
+	$prev_size = shell_exec("cat ".$GLOBALS['phpinifile']." | grep post_max_size | awk '{print $3}'");
 	$prev_size=trim($prev_size);
-	$cmd ="sed -i 's/post_max_size = ".$prev_size."/post_max_size = ".$size."M/g' /etc/php.ini";
+	$cmd ="sed -i 's/post_max_size = ".$prev_size."/post_max_size = ".$size."M/g' ".$GLOBALS['phpinifile'];
 	shell_exec($cmd);
+	shell_exec("cat ".$GLOBALS['phpinifile']." >/usr/etc/php.ini"); //We store it in /usr/etc/php.ini copy. Just in case
 	wrs_change_wrfs("ro");
+	
 	
 	//echo '<p align=center>File upload size changed to '.$size.'</p>';	
 }
@@ -436,7 +449,7 @@ function wr_show_endpoint_rt_show(){
  */
 function wrs_php_filesize(){
 	
-	 $size=shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); 
+	 $size=shell_exec("cat ".$GLOBALS['phpinifile']." | grep upload_max_filesize | awk '{print $3}'"); 
 	 $size=substr($size, 0, -2);
 	 return $size;
 	
@@ -563,14 +576,29 @@ function wrs_management(){
 			$uploaddir = '/tmp/';
 			$uploadfile = $uploaddir . basename($_FILES['file']['name']);
 			echo '<pre>';
-			if (/*(!strcmp(extension($_FILES['file']['name']), "bin")) &&*/ move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
-				echo "<center>File is valid, and was successfully uploaded to tmp folder\n";
+			if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
+				echo '<p align=center ><font color="red"><br>Upgrade procedure will take place after reboot.<br>Please do not switch off the device during flashing procedure.</font></p>';
+				rename($uploadfile, "/update/".($_FILES['file']['name']));
+				//Reboot switch
+				shell_exec("reboot");
 			}  else {
-				echo "<center>File is not valid, please upload a .bin file</center>\n";
+				echo "<center>Something went wrong. File was not uploaded.</center>\n";
 			}
 
 			echo "</pre>";
+		} else if (!strcmp($cmd, "remoteflash")){
+			
+			echo '<p align=center>Downloading '.$ohwrlink.'</p>';
+			
+			$filename="/tmp/wr-switch-sw-v4.0-rc1-20140710_binaries.tar";
+			$firmware="/update/wrs-firmware.tar";
+			$ohwrlink="http://www.ohwr.org/attachments/download/3095/wr-switch-sw-v4.0-rc1-20140710_binaries.tar";
 		
+			file_put_contents($filename, file_get_contents($ohwrlink));
+			rename($filename, $firmware);
+			echo '<p align=center>File successfully downloaded. Rebooting.</p>';
+			shell_exec("reboot");
+			
 		} else if (!empty($_FILES['ppsi_conf']['name'])){
 			
 			$uploaddir = $GLOBALS['etcdir'];
@@ -686,9 +714,24 @@ function wrs_management(){
 			
 			//Set UTC
 			$UTC=htmlspecialchars($_POST["utc"]); 
-			$_SESSION['utc']=$UTC;	
+			$_SESSION['utc']=$UTC;				
 			
-			header('Location: management.php');
+			//Export to /etc/profile --> when /etc/profile remains saved...
+			$utc_exists = shell_exec("cat ".$GLOBALS['profilefile']." | grep -c TZ");
+			$utc_prev = shell_exec("cat ".$GLOBALS['profilefile']." | grep TZ");
+			$utc_prev=trim($utc_prev);
+			if($utc_exists>0){ 
+				$sed_cmd = 'sed -i "s/'.$utc_prev.'/export TZ='.$_SESSION['utc'].'/g" '.$GLOBALS['profilefile'];
+				shell_exec ($sed_cmd);
+			}else{ // Add TZ to profile file
+				shell_exec ('echo "export TZ='.$_SESSION['utc'].'" >>'.$GLOBALS['profilefile']);	
+			}
+			
+			echo '<br><p align=center>Rebooting...</p>';
+			//Reboot the switch
+			shell_exec("reboot");
+			
+			
 			
 		} else if (!strcmp($cmd, "backup-wrs")){
 			
@@ -1056,8 +1099,7 @@ function wrs_display_help($help_id, $name){
 		
 	} else if (!strcmp($help_id, "firmware")){
 		$message = "<p>Firmware features: <br>
-					- <b>Flash firmware</b>: It moves a binary file into the /tmp folder<br>
-					- <b>Backup firmware</b>: It downloads a copy of the entire WRS to your PC<br>
+					- <b>Flash firmware</b>: It flashes a new firmware to the switch. Do it under your own risk.<br>
 					</p>";
 	}
 	
