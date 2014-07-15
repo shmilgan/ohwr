@@ -21,7 +21,7 @@
 	<?php session_is_started() ?>
 
 	<FORM action="terminal.php" method="POST" accept-charset="UTF-8">
-	Unix Command: <input type="text" name="cmd">
+	Unix Command: <input type="text" name="cmd" autofocus="autofocus">
 	<input type="submit" value="Enter" class="btn">
 	</FORM>
 	

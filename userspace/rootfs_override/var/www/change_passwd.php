@@ -24,7 +24,7 @@
 	<table border="0" align="left">	
 		
 			<form method="post">
-			<tr><th>Username: </th><th><INPUT type="text" name="user" ></th></tr>
+			<tr><th>Username: </th><th><INPUT type="text" name="user" value="admin" readonly></th></tr>
 			<tr><th>Old Password: </th><th><INPUT type="password" name="oldpasswd" > </th></tr>
 			<tr><th>New Password: </th><th> <INPUT type="password" name="newpasswd" > </th></tr>
 			<tr><th>Confirm Password: </th><th><INPUT type="password" name="confirmpasswd" > </th></tr>
