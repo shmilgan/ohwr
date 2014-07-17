@@ -60,7 +60,7 @@ if $install; then
 
     # format the ubi device and create volumes
     echo -n "Formatting UBI device..." | busybox tee /dev/ttyGS0
-    busybox yes yes | ubiformat /dev/mtd1; # takes 40s
+    busybox yes yes | ubiformat -q /dev/mtd1; # takes 40s
     echo " done" | busybox tee /dev/ttyGS0
 
     ubiattach -p /dev/mtd1
