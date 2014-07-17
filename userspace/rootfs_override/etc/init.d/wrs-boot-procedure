@@ -81,7 +81,16 @@ if $install; then
     # Eth0 is already up, thanks to ip= passed by bootloader
     cd /update
     echo -n "Getting tftp://$SERVERIP/$WRS_FW ..." | busybox tee /dev/ttyGS0
-    busybox tftp -g -r $WRS_FW -l $WRS_FW $SERVERIP
+    busybox tftp -g -r $WRS_FW -l $WRS_FW $SERVERIP 2>&1 | tee /dev/ttyGS0
+    while [ ! -f $WRS_FW ]; do
+	echo "Downloading tftp://$SERVERIP/$WRS_FW failed" | \
+		busybox tee /dev/ttyGS0
+	# this loops forever
+	sleep 5
+	busybox tftp -g -r $WRS_FW -l $WRS_FW $SERVERIP 2>&1 | tee /dev/ttyGS0
+    done
+
+
     cd /; umount /update
     echo " done" | busybox tee /dev/ttyGS0
     
