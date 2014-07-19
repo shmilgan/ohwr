@@ -1637,7 +1637,7 @@ is an environment variable pointing to this package:
 
 @smallexample
    snmpwalk -c public -v 2c wrs \
-       -m +${WR_SWITCH_SW})/userspace/snmpd/WR-SWITCH-MIB.txt \
+       -m +${WR_SWITCH_SW}/userspace/snmpd/WR-SWITCH-MIB.txt \
        1.3.6.1.4.1.96.100
 @end smallexample
 
