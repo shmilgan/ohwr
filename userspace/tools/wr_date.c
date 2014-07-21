@@ -125,7 +125,8 @@ int wrdate_get(struct PPSG_WB *pps)
 	t = utc;
 	localtime_r(&t, &tm);
 	strftime(s, sizeof(s), "%Y-%m-%d %H:%M:%S", &tm);
-	printf("%lli.%09li\n%s.%09li\n", utc, nsec, s, nsec);
+	printf("%lli.%09li TAI\n"
+	       "%s.%09li TAI\n", utc, nsec, s, nsec);
 	return 0;
 }
 
