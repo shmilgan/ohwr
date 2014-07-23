@@ -18,15 +18,26 @@
 <div class="rightbody">
 <h1 class="title">White-Rabbit Switch Console <a href='help.php?help_id=console' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
-	<?php session_is_started() ?>
-
-	<FORM action="terminal.php" method="POST" accept-charset="UTF-8">
-	Unix Command: <input type="text" name="cmd" autofocus="autofocus">
-	<input type="submit" value="Enter" class="btn">
-	</FORM>
+	<?php session_is_started(); 
+	
+	$hostname = $_SESSION['hostname'];
+	$ip = $_SESSION['ip'];
+	if(empty($hostname) || empty($ip)){
+		$_SESSION['hostname'] = trim(shell_exec("hostname"));
+		$_SESSION['ip'] = trim(shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'"));
+		$hostname = $_SESSION['hostname'];
+		$ip = $_SESSION['ip'];
+	}
+	
 	
 
-	<?php
+	echo '<FORM action="terminal.php" method="POST" accept-charset="UTF-8">
+		'.$hostname.'@'.$_SESSION["ip"].'$: <input type="text" name="cmd" autofocus="autofocus" autocomplete="off">
+		<input type="submit" value="Enter" class="btn">
+		</FORM>';
+	
+
+	
 	wrs_change_wrfs("rw");
 	/*$path = shell_exec("echo $PATH");
 	if(substr_count($path , "/wr/bin")==0){
@@ -34,6 +45,7 @@
 		$path = htmlspecialchars(shell_exec("echo $PATH"));
 		echo "PATH=".$path;
 	}*/
+	
 	
 	// If pwd is empty, we go to the root directory
 	if(empty($_SESSION["pwd"])){$_SESSION["pwd"]="/";}
@@ -46,7 +58,7 @@
 	$cmd_aux = $cmd;
 	if(substr_count($cmd_aux , "cd")>0){
 		
-		$cmd = " ls ";
+		//$cmd = " ls ";
 		// moving backwards
 		if(substr_count($cmd_aux , "cd ..")>0){
 			
@@ -103,11 +115,13 @@
 	//Format output
 	$output=str_replace("\n","<br>",$output);
 	
+	
+	
 	echo '<div align="center"> <div id="preview" style= "BORDER-RIGHT: #000 1px solid; PADDING-RIGHT: 0px; 
 		BORDER-TOP: #000 1px solid; PADDING-LEFT: 2px; PADDING-BOTTOM: 2px; WORD-SPACING: 1px; OVERFLOW: scroll; 
 		BORDER-LEFT: #000 1px solid; WIDTH: 100%; PADDING-TOP: 1px; 
 		BORDER-BOTTOM: #000 2px solid; HEIGHT: 350px; TEXT-ALIGN: left"> 
-		<p>'.$_SESSION["pwd"].'$:'.$cmd.'<br>'.$output.'</p> </div></div>';
+		<p>'.$hostname.'@'.$ip.':'.$_SESSION["pwd"].'$ '.$cmd.'<br>'.$output.'</p> </div></div>';
 		
 		
 	
