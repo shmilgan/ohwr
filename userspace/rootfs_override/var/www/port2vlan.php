@@ -89,11 +89,15 @@
 			
 			echo '<th>'; // Priority selection
 				echo '<select name=prio'.($i).'>';
-				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"0")) ? 'selected="selected"' : ''; echo ' value="0"><center>0</center></option>';	
+				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"0")) ? 'selected="selected"' : ''; echo 'value="0"><center>0</center></option>';	
 				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"1")) ? 'selected="selected"' : ''; echo 'value="1"><center>1</center></option>';	
-				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"2")) ? 'selected="selected"' : ''; echo ' value="2"><center>2</center></option>';	
+				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"2")) ? 'selected="selected"' : ''; echo 'value="2"><center>2</center></option>';	
 				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"3")) ? 'selected="selected"' : ''; echo 'value="3"><center>3</center></option>';	
 				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"4")) ? 'selected="selected"' : ''; echo 'value="4"><center>4</center></option>';	
+				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"5")) ? 'selected="selected"' : ''; echo 'value="5"><center>5</center></option>';
+				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"6")) ? 'selected="selected"' : ''; echo 'value="6"><center>6</center></option>';
+				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"7")) ? 'selected="selected"' : ''; echo 'value="7"><center>7</center></option>';
+				
 				echo '</select>'; // end Priority 
 			
 			echo '</th>';
