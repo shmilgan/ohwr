@@ -19,7 +19,6 @@
 <h1 class="title">Firmware Management <a href='help.php?help_id=firmware' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 	<?php session_is_started() ?>
-	<?php $_SESSION['advance']="";?>
 
 	<table border="0" align="center">	
 		<tr>

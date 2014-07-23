@@ -138,11 +138,11 @@ function wrs_main_info(){
 	echo '<tr><th  align=center> <b><font color="darkblue">PCB Version</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -p"); echo $str;  echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">FPGA</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -f"); echo $str; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">Compiling Date</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -c"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">White-Rabbit Date</font></b></th><th><center>'; $str = shell_exec("export TZ=".$_SESSION['utc']." /wr/bin/wr_date -n get"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">White-Rabbit Date</font></b></th><th><center>'; $str = shell_exec("export TZ=".$_SESSION['utc']." /wr/bin/wr_date -n get"); echo str_replace("\n","<br>",$str); echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">PPSi</font></b> </th><th><center>';  echo wrs_check_ptp_status() ? '[<A HREF="ptp.php">on</A>]' : '[<A HREF="ptp.php">off</A>]'; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">Net-SNMP Server</font></b> </th><th><center>';  echo check_snmp_status() ? '[on] ' : '[off] '; echo '&nbsp;&nbsp;ver. '; echo shell_exec("snmpd -v | grep version | awk '{print $3}'");
-			echo '( port '; $str = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf | grep agent | cut -d: -f3 | awk '{print $1}'"); echo $str; echo ')'; 	echo " <a href='help.php?help_id=snmp' onClick='showPopup(this.href);return(false);'> [OIDs]</a></center></th></tr>";
-	echo '<tr><th  align=center> <b><font color="darkblue">NTP Server</font></b> </th><th><center> <A HREF="management.php">';  $str = check_ntp_server(); echo $str; echo '</A> ['.$_SESSION['utc'].']</center></th></tr>';
+			echo '( port '; $str = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf | grep agent | cut -d: -f3 | awk '{print $1}'"); echo $str; echo ')'; 	echo /*" <a href='help.php?help_id=snmp' onClick='showPopup(this.href);return(false);'> [OIDs]</a>*/"</center></th></tr>";
+	echo '<tr><th  align=center> <b><font color="darkblue">NTP Server</font></b> </th><th><center> <A HREF="management.php">';  $str = check_ntp_server(); echo $str; echo '</A> '.$_SESSION['utc'].'</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">Max. Filesize Upload</font> </b></th><th><center>'; echo shell_exec("cat ".$GLOBALS['phpinifile']." | grep upload_max_filesize | awk '{print $3}'"); echo '</center></th></tr>';
 	echo '</table>';
 	
@@ -728,7 +728,9 @@ function wrs_management(){
 			}
 			
 			echo '<br><p align=center>Rebooting...</p>';
-			//Reboot the switch
+			
+			//Reboot the switch after 1s
+			usleep(1000000);
 			shell_exec("reboot");
 			
 			
@@ -1006,7 +1008,6 @@ function wrs_display_help($help_id, $name){
 		$message = "<p>Loading files: <br>
 					- <b>Load FPGA File</b>: Loads a .bin file for the gateware on the FPGA.<br>
 					- <b>Load LM32 File</b>: Loads a .bin file into the lm32 processor.<br>
-					- <b>PHP Filesize</b>: It changes the max. size of the files that can be uploaded to the switch (40 MegaBytes by default)<br>
 					</p>";
 	} else if (!strcmp($help_id, "endpoint")){
 		$message = "<p>It is used to configure each point of the switch with different parameters as well as wrs_phytool program does. <br>
