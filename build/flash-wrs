@@ -345,7 +345,4 @@ if $ddr; then
 	echo ""
 fi
 
-if $remove_temps; then
-    rm $Tbarebox
-fi
 echo -e "\n\nDone\n"
