@@ -51,6 +51,8 @@ mkdev_sh () {
 mkdev_sh "/sys/devices/virtual/misc/ubi_ctrl"
 
 
+TEE="busybox tee"; # often used.
+
 # Installing is like updating, but there are more steps to do initially
 if $install; then
 
@@ -59,9 +61,9 @@ if $install; then
     sleep 1; # extra delay, so sleep above opens device before echo below
 
     # format the ubi device and create volumes
-    echo -n "Formatting UBI device..." | busybox tee /dev/ttyGS0
+    echo -n "Formatting UBI device..." | $TEE /dev/ttyGS0
     busybox yes yes | ubiformat -q /dev/mtd1; # takes 40s
-    echo " done" | busybox tee /dev/ttyGS0
+    echo " done" | $TEE /dev/ttyGS0
 
     ubiattach -p /dev/mtd1
     mkdev_sh "/sys/devices/virtual/ubi/ubi0"
@@ -80,19 +82,19 @@ if $install; then
 
     # Eth0 is already up, thanks to ip= passed by bootloader
     cd /update
-    echo -n "Getting tftp://$SERVERIP/$WRS_FW ..." | busybox tee /dev/ttyGS0
-    busybox tftp -g -r $WRS_FW -l $WRS_FW $SERVERIP 2>&1 | tee /dev/ttyGS0
+    echo -n "Getting tftp://$SERVERIP/$WRS_FW ..." | $TEE /dev/ttyGS0
+    busybox tftp -g -r $WRS_FW -l $WRS_FW $SERVERIP 2>&1 | $TEE /dev/ttyGS0
     while [ ! -f $WRS_FW ]; do
 	echo "Downloading tftp://$SERVERIP/$WRS_FW failed" | \
-		busybox tee /dev/ttyGS0
+		$TEE /dev/ttyGS0
 	# this loops forever
 	sleep 5
-	busybox tftp -g -r $WRS_FW -l $WRS_FW $SERVERIP 2>&1 | tee /dev/ttyGS0
+	busybox tftp -g -r $WRS_FW -l $WRS_FW $SERVERIP 2>&1 | $TEE /dev/ttyGS0
     done
 
 
     cd /; umount /update
-    echo " done" | busybox tee /dev/ttyGS0
+    echo " done" | $TEE /dev/ttyGS0
     
 else
     # Not installing, access existing UBI volumes
@@ -109,7 +111,7 @@ mount -t ubifs ubi0:update /update
 
 if [ -f /update/$WRS_FW ]; then
     # FIXME: save configuration somewhere, and recover it later
-    echo -n "Extracting filesystem..." | busybox tee /dev/ttyGS0
+    echo -n "Extracting filesystem..." | $TEE /dev/ttyGS0
     # since we are upgrading, we'd better remove and recreate the volume
     ubirmvol /dev/ubi0 --name=usr
     ubimkvol /dev/ubi0 -s 150MiB -N usr
@@ -118,7 +120,7 @@ if [ -f /update/$WRS_FW ]; then
     cd /usr
     tar -xOf /update/$WRS_FW wrs-usr.tar.gz | zcat | tar xf -
     sync; cd /; umount /usr
-    echo " done" | busybox tee /dev/ttyGS0
+    echo " done" | $TEE /dev/ttyGS0
 
     # check if we have an initramfs and/or kernel too
     mkdir -p /boot
