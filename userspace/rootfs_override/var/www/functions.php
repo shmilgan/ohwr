@@ -32,8 +32,16 @@ function wrs_header_ports(){
 	// Check whether $WRS_MANAGEMENT is set or we take the program
 	// by default.
 
-	
-	if(!file_exists("/tmp/ports.conf")){
+	session_start();
+	if(empty($_SESSION['portsupdated'])){
+		$_SESSION['portsupdated'] = intval(shell_exec("date +%s"));
+	}
+	 
+	// Let's update endpoints info every 15 seconds.
+	$currenttime = intval(shell_exec("date +%s"));
+	$interval = $currenttime - $_SESSION['portsupdated'];
+		
+	if(!file_exists("/tmp/ports.conf") || $interval>15){
 		$cmd = wrs_env_sh();
 		shell_exec("killall wr_management");
 		$str = shell_exec($cmd." ports");
@@ -41,10 +49,11 @@ function wrs_header_ports(){
 		fwrite($fp, $str);
 		fclose($fp);
 		$ports = $str;
+		$_SESSION['portsupdated'] = intval(shell_exec("date +%s"));	
 	}else{
 		$ports = shell_exec("cat /tmp/ports.conf");
 	}
-	
+
 	$ports = explode(" ", $ports);
 
 	// We parse and show the information comming from each endpoint.

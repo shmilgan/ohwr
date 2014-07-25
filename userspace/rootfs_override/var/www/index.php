@@ -4,7 +4,7 @@
 <div class="page">
 <div class="header" >
 <!--<h1>White-Rabbit Switch Tool</h1>-->
-<div class="header-ports" ><?php shell_exec("rm /tmp/ports.conf"); wrs_header_ports(); ?></div>
+<div class="header-ports" ><?php wrs_header_ports(); ?></div>
 <div class="topmenu">
 	<?php include 'topmenu.php' ?>
 </div>
