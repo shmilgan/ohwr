@@ -903,6 +903,24 @@ kernel and filesystem being booted in the switch are the same images
 for installation and run-time. (Releases before 4.0 built a special
 installation filesystem, but now the procedure is simplified).
 
+@c -------------------------------------------------------------------
+@node Rebuilding Sam-ba Applets
+@subsection Rebuilding Sam-ba Applets
+
+The loader depends on code by the CPU vendor, which is very bad
+quality as typical in the field.   If, by unlucky chance, you need to
+rebuild the applets, you need a specific version of the cross-compiler,
+and everything else will spit horrible errors.
+
+A binary copy is uploaded in the @i{Files} sections of the @sc{ohwr}
+project. The direct link is
+@url{http://www.ohwr.org/attachments/download/3138/cd-g__lite.tar.gz}
+(the name was @t{cd-g++lite.tar.gz}, but @sc{ohwr} changed the @t{+}
+into @t{_}).
+
+To build, you can run Benoit's script
+@t{usb-loader/samba_applets/isp-project/build.sh}.
+
 @c ############################################################################
 @node Booting with Barebox
 @chapter Booting with Barebox
