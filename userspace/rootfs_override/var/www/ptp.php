@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body>
+<body id="ptp">
 <div class="main">
 <div class="page">
 <div class="header" >
@@ -16,25 +16,34 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">PTP Configuration <a href='help.php?help_id=ptp' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
+<h1 class="title">PPSi Configuration <a href='help.php?help_id=ptp' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 	<?php session_is_started() ?>
 	<?php $_SESSION['advance']=""; ?>
 	
 	<FORM method="POST">
-	<table border="0" align="center">	
+	<table id="daemon" border="0" align="center">	
 			<tr>
-				<th align=left>PTP Daemon: </th>
-				<th><input type="radio" name="daemongroup" value="On" <?php echo (wrs_check_ptp_status()) ? 'checked' : ''; ?> > On <br>
-					<input type="radio" name="daemongroup" value="Off" <?php echo (wrs_check_ptp_status()) ? '' : 'checked'; ?> > Off <br>
-				<th><INPUT type="submit" value="Update" class="btn"></th>	
+				<th align=center>PPSi Daemon: </th>
+				<input type="hidden" name="cmd" value="ppsiupdate">
+				<th><INPUT type="submit" value="<?php echo (wrs_check_ptp_status()) ? 'Disable PPSi' : 'Enable PPSi'; ?>" class="btn"></th>	
 			</tr>
 	</table>
 						
 	</FORM>
 
+
 	<FORM method="POST">
 		<table border="0" align="center">	
+			<tr>
+				<th align=left>Clock Class: </th>
+				<th><INPUT type="text" STYLE="text-align:center;" size="10" name="clkclass" value="<?php echo shell_exec("cat ".$GLOBALS['etcdir'].$GLOBALS['ppsiconf']." | grep class | awk '{print $2}'");?>" ></th>
+			</tr>
+			<tr>
+				<th align=left>Clock Accuracy: </th>
+				<th><INPUT type="text" STYLE="text-align:center;" size="10" name="clkacc" value="<?php echo shell_exec("cat ".$GLOBALS['etcdir'].$GLOBALS['ppsiconf']." | grep accuracy | awk '{print $2}'");?>"></th>
+			</tr>
+<!--
 			<tr>
 				<th align=left>Network Interface Binding: </th>
 				<th><INPUT type="text" name="b" ></th>
@@ -66,15 +75,24 @@
 			<tr>
 				<th align=left>Priority: </th>
 				<th><INPUT type="text" name="p" ></th>
-				<th><INPUT type="submit" value="Submit Configuration" class="btn"></th>
 			</tr>
-
+-->
 		</table>
+		<INPUT align="right" type="submit" value="Update & Relaunch" class="btn last">
 		</FORM>
 		
-	<?php
+		
+		
+		<br><br><br><br><br><br><br><br><br><br><br><br>
+		<hr>
+		<p align="right">Click <A HREF="endpointmode.php">here</A> to modify endpoint mode configuration</p>
 
+	
+		
+	<?php
+		wrs_change_wrfs("rw");
 		wrs_ptp_configuration();
+		wrs_change_wrfs("ro");
 
 	?>
 

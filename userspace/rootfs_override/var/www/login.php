@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body>
+<body id="login">
 <div class="main">
 <div class="page">
 <div class="header" >
@@ -23,24 +23,50 @@
 
 		$message="";
 		if(count($_POST)>0) {
-			$users = shell_exec('cat /etc/users');
-			$users = explode(" ", $users);
+			
+			//If /etc/phpusers does not exist we create the file and "admin" "" user&pass
+			if (!file_exists($GLOBALS['phpusersfile'])) {
+				$username = "admin";
+				$password = "";
+				$salt="wrs4.0salt";
+				$pass = $password;
+				$hash = md5($pass); // md5 hash #1 
+				$hash_md5 = md5($salt.$pass); // md5 hash with salt #2 
+				$hash_md5_double = md5(sha1($salt.$pass)); // md5 hash with salt & sha1 #3 
+				$output= $username." ".$hash_md5_double."\n";
+				wrs_change_wrfs("rw");
+				$file = fopen($GLOBALS['phpusersfile'],"w+");
+				fwrite($file,$output);
+				fclose($file);
+				wrs_change_wrfs("ro");
+			}
+			
 			$username = $_POST["login"];
 			$password = $_POST["password"];
-			if ((!strcmp($username, "root")) && (!strcmp($password, ""))){
+			$saved_hash = shell_exec("cat ".$GLOBALS['phpusersfile']." | grep ".$username." | awk '{print $2}'");
+			$saved_hash = str_replace("\n","",$saved_hash);
+			$user_exists = shell_exec("cat ".$GLOBALS['phpusersfile']." | grep -c ".$username);
+			
+			
+			$salt="wrs4.0salt";
+			$pass = $password;
+			$hash = md5($pass); // md5 hash #1 
+			$hash_md5 = md5($salt.$pass); // md5 hash with salt #2 
+			$hash_md5_double = md5(sha1($salt.$pass)); // md5 hash with salt & sha1 #3 
+						
+			if (!strcmp($hash_md5_double,$saved_hash) && $user_exists>0){
 				session_start(); 
 				$_SESSION["myusername"] = $username;
 				
-				
+					
 				echo 'Logged in as '.$_SESSION["myusername"];
 				header('Location: index.php');
 			}else{
 				echo 'Invalid Username or Password';
+				
 			}
 
 		}
-			//if(isset($_SESSION["user_id"])) {
-			//header("Location:index.php");
 		
 	?>
 

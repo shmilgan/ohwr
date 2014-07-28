@@ -109,6 +109,8 @@ WR
 : 	White Rabbit.
 WRS
 : 	White Rabbit Switch.
+WMI
+:   Web Management Interface
 
 
 \clearpage
@@ -206,6 +208,8 @@ The device is factory configured with the following default settings:
 * SSH user: **root**
 * SSH password: (empty/just press enter)
 * Boot method: from Nandflash firmware
+* Web Management Interface user: **admin**
+* Web Management Interface password: (empty)
 
 
 Quick Startup
@@ -334,6 +338,26 @@ by the one in your subnetwork.
 ![Putty - SSH connection](putty-SSH.png)
 
 
+Login using the Web Management Interface
+-----------------------
+
+If you want to access and manage the [WRS] using the web interface, it is necessary to connect the [WRS] manager ethernet port to your local network. 
+The access should be carried out by a network browser (Mozilla Firefox and Google Chrome supported) as it follows: 
+
+1. Open your browser and type the IP address (i.e. 192.168.1.50) of the [WRS]. By default, the network IP configuration 
+is provided by the DHCP server in the same network and can be retrieved from it.
+
+![Web Management Interface - Login](wwwlogin.png)
+
+2. After accessing the [WMI], you should enter the web interface user and password, which is not
+same for the SSH connection, otherwise you will be only able to see the Dashboard info. 
+By default the user is **admin** with no password. For this reason it is strongly recommended to change the password.
+
+In order to change the [WMI] password you just need to click on "**User: admin**" on the left side of the webpage. 
+You have to enter your username (**admin**), old password, new password and repeat the new password. 
+Once you submit the new password you will be redirected to the main screen and logged out.
+
+
 After login:
 -------------------
 
@@ -352,6 +376,34 @@ The following list resumes the most interesting commands:
 #### Warning: 
 The SFP ports are labeled from 1 to 18 on the front panel but their corresponding 
 network interface are named from `wr0` to `wr17`. 
+
+
+Web Management Interface Features:
+-------------------
+
+[WMI] is a web interface that allows the [WRS] management from a web browser. It displays the main configuration and status of the main services and programms that are available for the switch, such as endpoints' mode and calibration status, SFP calibration, PTP, SNMP, VLANs, etc. It acts as an abstraction layer between the back-end scritps and programs in */wr/bin/* folder, making the WR switch management easier for the user.
+
+![Web Management Interface - Switch Management](wwwmanagement.png)
+
+List of all the actions that can be performed by using the [WMI]:
+
+- Display info: IP configuration, switch HW/SW/GW description, WR date, PPSi status, SNMP server status, NTP server status.
+- Stop/run services: PPSi, WRSW_HAL, NTP.
+- NTP server setup.
+- Modify endpoint wr_master/wr_slave mode.
+- VLAN setup.
+- White-Rabbit timing.
+- Modify maximum filesize of uploaded files to the switch.
+- PPSi daemon configuration: clock class, clock accuracy, etc.
+- Terminal simulation avoiding SSH connections.
+- Login system.
+- Modify login password.
+- Load lm32 and FPGA binaries into the switch.
+- Switch reboot.
+- Backup and restore configuration files for services (PPSi, HAL, SNMP, etc).
+- Restore configuration files from tarball.
+- Flash firmware.
+- Backup firmware.
 
 
 Configurations
@@ -592,6 +644,7 @@ Features
 * WRP daemon (node discovery, etc.)
 * DHCP client
 * SSH server
+* Web Management Interface
 * Python Support
 * NTP Client/Relay/Server
 * ARP/ DNS / EtherWake protocol

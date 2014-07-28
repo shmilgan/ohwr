@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body id="advance">
+<body id="management">
 <div class="main">
 <div class="page">
 <div class="header" >
@@ -16,14 +16,25 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Switch Management <a href='help.php?help_id=management' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
+<h1 class="title">VLAN Management <a href='help.php?help_id=firmware' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
-<?php session_is_started() ?>
+	<?php session_is_started() ?>
+	<?php $_SESSION['advance']=""; ?>
 
 	
+	
+	
 	<?php 
-		$_SESSION['advance']="yes";
-		header('Location: index.php');
+		if(!strcmp($_GET['vlan'],"all")){ // Delete all vlans and free ports
+			shell_exec("/wr/bin/wrsw_vlans --clear");
+			
+		}else{
+			shell_exec("/wr/bin/wrsw_vlans --rvid ".$_GET['vlan']." --del");
+			
+		}
+		
+		header('Location: vlan.php');
+	
 	?>
 
 

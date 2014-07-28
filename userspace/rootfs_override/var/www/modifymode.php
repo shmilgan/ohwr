@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body>
+<body id="modifymode">
 <div class="main">
 <div class="page">
 <div class="header" >
@@ -28,6 +28,9 @@
 		wrs_change_wrfs("rw");
 		wrs_modify_endpoint_mode($endpoint, $mode);
 		wrs_change_wrfs("ro");
+		
+		header('Location: endpointmode.php');
+		exit;
 		
 	?>
 	<hr>

@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body>
+<body id="sfpcalib">
 <div class="main">
 <div class="page">
 <div class="header" >
@@ -119,7 +119,7 @@
 			fclose($file);
 			
 			//We move the file to /wr/etc/
-			copy('/tmp/sfp_database.conf', '/wr/etc/sfp_database.conf');
+			copy('/tmp/sfp_database.conf',$GLOBALS['etcdir'].'sfp_database.conf');
 			
 			echo '<center><font color="green">File successfully created. Rebooting switch. </font></center>';
 			

@@ -1,3 +1,23 @@
+/*
+ * This work is part of the White Rabbit project
+ *
+ * Color scheme:
+ *
+ *
+ * Button:
+ *   
+ *   Light:    #3A8AAF
+ *   Dark:     #002350
+ *
+ * 
+ *
+ * Copyright (C) 2014 UGR (www.ugr.es)
+ * Copyright (C) 2014 7S (www.sevensols.com)
+ * Author: Jose Luis Gutierrez <jlgutierrez@ugr.es>
+ * Author: Benoit Rat <benoit@sevensols.com>
+ *
+ * Released according to the GNU GPL, version 2 or any later version.
+ */
 body {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: 11px;
@@ -6,6 +26,8 @@ body {
 	background-repeat: repeat;
 	margin: 30px 0px 0px 0px;
 }
+
+
 h1, h2, h3, h4, h5, h6, p, ul, ol, li, form, input, textarea {
 	padding: 0px;
 	margin: 0px;
@@ -28,7 +50,7 @@ h1, h2, h3, h4, h5, h6, p, ul, ol, li, form, input, textarea {
 }
 
 .header-ports {
-	background-image: url(../img/header.jpg);
+	background-color:#ACD0DB;
 	height: 140px;
 	margin-top: 15px;
 
@@ -83,6 +105,7 @@ h1, h2, h3, h4, h5, h6, p, ul, ol, li, form, input, textarea {
 	padding: 25px 20px;
 	margin-right: -260px;
 	position: relative;
+	min-height:400px;
 }
 .leftpanel h2 {
 	font-size: 14px;
@@ -108,9 +131,15 @@ h1, h2, h3, h4, h5, h6, p, ul, ol, li, form, input, textarea {
 	color: #000000;
 	text-decoration: none;
 }
-.leftpanel ul li a:hover {
+.leftpanel ul a:hover, .leftpanel ul.advance li a:hover {
 	color: #23b14d;
 }
+
+.leftpanel ul.advance li a {
+	color:grey;
+	margin-left:10px;
+}
+
 .rightpanel {
 	width: 540px;
 	float: left;
@@ -136,19 +165,32 @@ h1, h2, h3, h4, h5, h6, p, ul, ol, li, form, input, textarea {
 	border-bottom-style: dashed;
 	border-bottom-color: #cccccc;
 }
+
+.title a {
+top: -20px;
+position: relative;
+width: 100%;
+float: left;
+}
+
+.title a img {
+	width:20px;
+}
+
 .copyright {
 	border: 0px;
 	height: 1px;
 	width: 1px;
 }
+
 .footer {
-	background-image: url(../img/footer.jpg);
-	background-repeat: no-repeat;
-	background-position: left top;
+	/*background: #002350;*/
+	background:black;
 	width: 800px;
-	height: 77px;
 	float: left;
+	margin-bottom: 10px;
 }
+
 .footer p {
 	font-size: 11px;
 	line-height: 57px;
@@ -159,63 +201,48 @@ h1, h2, h3, h4, h5, h6, p, ul, ol, li, form, input, textarea {
 	color:#ffffff; 
 	text-decoration:none; 
 }
+
+a, a:visited {
+	color: #002350;
+}
+
+a:hover {
+	color: #3A8AAF;
+}
+
 .btn {
-  background: #3498db;
-  background-image: -webkit-linear-gradient(top, #3498db, #2980b9);
-  background-image: -moz-linear-gradient(top, #3498db, #2980b9);
-  background-image: -ms-linear-gradient(top, #3498db, #2980b9);
-  background-image: -o-linear-gradient(top, #3498db, #2980b9);
-  background-image: linear-gradient(to bottom, #3498db, #2980b9);
-  -webkit-border-radius: 60;
-  -moz-border-radius: 60;
-  border-radius: 60px;
+  background: #3A8AAF;
+  background-image: -webkit-linear-gradient(top, #3A8AAF, #002350);
+  background-image: -moz-linear-gradient(top, #3A8AAF, #002350);
+  background-image: -ms-linear-gradient(top, #3A8AAF, #002350);
+  background-image: -o-linear-gradient(top, #3A8AAF, #002350);
+  background-image: linear-gradient(to bottom, #3A8AAF, #002350);
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
   font-family: Arial;
   color: #ffffff;
   font-size: 12px;
-  padding: 1px 5px 2px 7px;
+  padding: 1px 6px;
   text-decoration: none;
+  border:1px solid darkgrey;
+  min-height:20px;
 }
 
 .btn:hover {
-  background: #3cb0fd;
-  background-image: -webkit-linear-gradient(top, #3cb0fd, #3498db);
-  background-image: -moz-linear-gradient(top, #3cb0fd, #3498db);
-  background-image: -ms-linear-gradient(top, #3cb0fd, #3498db);
-  background-image: -o-linear-gradient(top, #3cb0fd, #3498db);
-  background-image: linear-gradient(to bottom, #3cb0fd, #3498db);
+  background: #3A8AAF;
   text-decoration: none;
 }
 
-.sec {
-  background: #9bcff2;
-  background-image: -webkit-linear-gradient(top, #9bcff2, #4fa2d6);
-  background-image: -moz-linear-gradient(top, #9bcff2, #4fa2d6);
-  background-image: -ms-linear-gradient(top, #9bcff2, #4fa2d6);
-  background-image: -o-linear-gradient(top, #9bcff2, #4fa2d6);
-  background-image: linear-gradient(to bottom, #9bcff2, #4fa2d6);
-  -webkit-border-radius: 5;
-  -moz-border-radius: 5;
-  border-radius: 5px;
-  font-family: Arial;
-  color: #ffffff;
-  font-size: 12px;
-  padding: 1px 5px 2px 7px;
-  text-decoration: none;
-}
+/**
+ *   Light:    #3A8AAF
+ *   Dark:     #002350
+**/
 
-.sec:hover {
-  background: #3cb0fd;
-  background-image: -webkit-linear-gradient(top, #3cb0fd, #3498db);
-  background-image: -moz-linear-gradient(top, #3cb0fd, #3498db);
-  background-image: -ms-linear-gradient(top, #3cb0fd, #3498db);
-  background-image: -o-linear-gradient(top, #3cb0fd, #3498db);
-  background-image: linear-gradient(to bottom, #3cb0fd, #3498db);
-  text-decoration: none;
-}
 
 table.altrowstable {
 	font-family: verdana,arial,sans-serif;
-	font-size: 10px;
+	font-size: 11px;
 	color: #333333;
 	border-width: 1px;
 	border-color: #a9c6c9;
@@ -223,15 +250,39 @@ table.altrowstable {
 }
 table.altrowstable th {
 	border-width: 1px;
-	padding: 8px;
+	padding: 2px;
 	border-style: solid;
 	border-color: #a9c6c9;
 }
 table.altrowstable td {
 	border-width: 1px;
-	padding: 8px;
+	padding: 4px;
 	border-style: solid;
 	border-color: #a9c6c9;
+}
+table.altrowstabledash {
+	font-family: verdana,arial,sans-serif;
+	font-size: 11px;
+	color: #333333;
+	border-width: 1px;
+	border-color: #a9c6c9;
+	border-collapse: collapse;
+}
+table.altrowstabledash th {
+	border-width: 1px;
+	padding: 4px;
+	border-style: solid;
+	border-color: #a9c6c9;
+}
+table.altrowstabledash td {
+	border-width: 1px;
+	padding: 4px;
+	border-style: solid;
+	border-color: #a9c6c9;
+}
+table tr.sub{
+	color:white;
+	background-color:#3A8AAF;
 }
 .oddrowcolor{
 	background-color: #d4e3e5;
@@ -239,6 +290,7 @@ table.altrowstable td {
 .evenrowcolor{
 	background-color: #c3dde0;
 }
+
 .tableheader {
 background-color: #95BEE6;
 color:white;
@@ -254,3 +306,46 @@ font-weight: bold;
 text-align: center;
 width: 80%;
 }
+
+input {
+	padding:0px 1px;
+}
+
+form input.last {
+	min-height:22px;
+	margin: 20px auto;
+	margin-left: 30%; /**TODO: Bad Hack **/
+}
+
+#epcalib form {
+	width:90%;
+	margin: 0 auto;
+}
+#epcalib form table {
+	width:100%;
+	border:none;
+}
+
+#epcalib form table .empty, #epcalib form table .empty th{
+	background:none;
+	border:none;
+	height:2px;
+}
+
+#ptp #daemon {
+	width: 50%;
+	border-bottom: 1px dotted grey;
+	margin-bottom:10px;
+	padding-bottom:10px;
+}
+
+#ptp #daemon input.btn {
+	height: 22px;
+	width: 80px;
+}
+
+#management input.btn, #load input.btn {
+width: 100px;
+height: 22px;
+}
+

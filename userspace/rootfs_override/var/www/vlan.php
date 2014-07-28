@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body>
+<body id="vlan">
 <div class="main">
 <div class="page">
 <div class="header" >
@@ -22,45 +22,100 @@
 	<?php $_SESSION['advance']=""; ?>
 	
 	<?php
-		echo '<table align=center border="1" class="altrowstable" id="alternatecolor">';
-		echo '<tr><th>Endpoint</th><th>VLANs</th></tr>';
-		for($i = 0; $i < 18; $i++){
-			echo '<tr>';
-			echo '<td><center><b>wr'.($i+1).'</b></center></td>';
+	
+		
+	
+		echo '<center><strong>Existing VLANs</strong></center><hr>';
+		$tmp_vlan_file="/tmp/vlans.conf";
+		$vlans = shell_exec("/wr/bin/wrsw_vlans --list >".$tmp_vlan_file);
+		$vlans = shell_exec("cat ".$tmp_vlan_file." |  sed -n '/ /s/ \+/ /gp'");
+		$vlans = explode("\n", $vlans);
+		
+		echo '<table align=center border="1" class="altrowstable" id="alternatecolor" width="100%">';
+		echo '<tr align=center><th><font color="blue">Vlan ID</font></th><th><font color="blue">FID</font></th><th><font color="blue">Ports</font></th><th><font color="blue">Drop?</font></th><th><font color="blue">Priority</font></th><th><font color="blue">Action</font></th></tr>';
+		$counter = 0;
+		foreach($vlans as $line){
+			$counter++;
 			
-			//Show the Vlan option button
-			echo '<td>';
-			echo '<form method=POST><div>
-					<select name='.($i).'>';
+			if($counter>=2 && !empty($line)){
+				$line = explode(" ", $line);
+				if(strcmp($line[3],"0x")){
 					
-			for($op = 0; $op < 18; $op++){
-			
-				  echo '<option class="btn" value="'.($op+1).'"><center>Vlan'.($op+1).'</center></option>';							
+					echo '<tr align=center><th bgcolor="'.$vlancolor[$line[1]].'">VLAN '.$line[1].'</th><th>'.$line[2].'</th><th>'.parse_mask2ports($line[3]).'</th><th>'.$line[4].'</th><th>'.$line[5].'</th><th><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></th></tr>';
+				}else{
+					echo '<tr align=center><th>'.$line[1].'</th><th>'.$line[2].'</th><th>'.parse_mask2ports($line[3].$line[4]).'</th><th>'.$line[5].'</th><th>'.$line[6].'</th><th><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></th></tr>';
+				}
 				
 			}
-			echo '</select>';
-					
-			echo '</td>';
-
-			
+         
 		}
-		echo '<input type="hidden" value=cmd name=cmd>';
-		echo '<p align="right"><input type="submit" value="Add VLANs" class="btn" ></p>
-					</form>';	
-			echo '</tr>';
+		//Form for a new one:
+		echo '<tr align=center>
+			<FORM method="POST" action="newvlan.php" "ENCTYPE="multipart/form-data">
+				<th align=center><INPUT type="text" size="3" name="vid" ></th>
+				<th align=center><INPUT type="text" size="3"name="fid" ></th>
+				<th align=center><INPUT type="text" size="5" name="mask" ></th>
+				<th align=center>
+					<select name="drop">
+					  <option value="1">YES</option>
+					  <option selected="selected" value="0">NO</option>
+					</select>
+				</th>
+				<th align=center>
+					<select name="prio">
+					  <option selected="selected"value=""></option>
+					  <option value="0">0</option>
+					  <option value="1">1</option>
+					  <option value="2">2</option>
+					  <option value="3">3</option>
+					  <option value="4">4</option>
+					  <option value="5">5</option>
+					  <option value="6">6</option>
+					  <option value="7">7</option>
+					</select>
+				</th>
+				<th align=center><INPUT type=submit value="Add VLAN" class="btn"></th>
+			</form>
+		</tr>';
+		echo '</table>';
+		?>
 		
+		<br><p align="right"><A HREF="delvlan.php?vlan=all" onclick="return confirm('You are deleting all VLANs, are you sure?')">Delete All VLANs</A></p>
+		
+		<?php
+		//Display Port2Vlan assignment
+		echo '<br><br>';
+		echo '<center><strong>Port2Vlan assignments</strong></center><hr>';
+		echo '<table align=center border="1" class="altrowstable" id="alternatecolor1" width="100%">';
+		echo '<tr align=center><th><font color="blue">Port</font></strong></th><th><font color="blue">QMode</font></th><th><font color="blue">Priority</font></th><th><font color="blue">VLAN ID</font></th><th><font color="blue">MAC Address</font></th></tr>';
+		
+		$tmp_vlan_file="/tmp/port2vlan.conf";
+		$vlans = shell_exec("/wr/bin/wrsw_vlans --elist >".$tmp_vlan_file);
+		$vlans = shell_exec("cat ".$tmp_vlan_file." |  sed -n '/ /s/ \+/ /gp'");
+		$vlans = explode("\n", $vlans);
+		
+		$counter = 0;
+		foreach($vlans as $line){
+			$counter++;
+			
+			if($counter>=2 && !empty($line)){
+				$line = explode(" ", $line);
+					
+				echo '<tr align=center><th>WR'.($line[1]+1).'</th><th>'.$line[2]." (".$line[3].')</th><th>'.($line[5]).'</th><th bgcolor="'.$vlancolor[$line[6]].'">VLAN '.$line[6].'</th><th>'.$line[7].'</th></th></tr>';
+
+			}
+         
+		}
+		echo '<tr><th></th><th></th><th></th><th></th><th align=center><FORM method="POST" action="port2vlan.php"><INPUT type=submit align=center value="Edit Table" class="btn"></form></th></tr>';
 		echo '</table>';
 		
+		?>
 		
-		//Parse input and run the command
-		if (!empty($_POST['cmd'])){
-			$input = $_POST;
-			wrs_vlan_configuration($input);
-		}
 		
-		wrs_vlan_display();
-
-	?>
+		<br><br><br><br><hr><p align="right"><A HREF="port2vlan.php">Assign Ports to VLANs</A></p>
+		
+		
+	
 
 
 </div>

@@ -1,0 +1,20 @@
+/*
+ * This work is part of the White Rabbit project
+ *
+ * Copyright (C) 2014 UGR (www.ugr.es)
+ * Copyright (C) 2014 7S (www.sevensols.com)
+ * Author: Jose Luis Gutierrez <jlgutierrez@ugr.es>
+ * Author: Benoit Rat <benoit@sevensols.com>
+ *
+ * Released according to the GNU GPL, version 2 or any later version.
+ */
+body {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 11px;
+}
+
+hr {
+	border: none;
+	border-top: 1px dashed black;
+	height: 1px;
+}

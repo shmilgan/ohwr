@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body>
+<body id="epcalib">
 <div class="main">
 <div class="page">
 <div class="header" >
@@ -26,7 +26,7 @@
 	<?php 
 	
 		$file_init  = 'global = {'."\n";
-		$file_init .= "\t".'sfp_database_path = "/wr/etc/sfp_database.conf";'."\n";
+		$file_init .= "\t".'sfp_database_path = "'.$GLOBALS['etcdir'].'sfp_database.conf";'."\n";
 		$file_init .= '};'."\n\n";
 
 		$file_init .= 'timing =  {'."\n\n";
@@ -54,7 +54,7 @@
 			
 			
 			// Timing values:
-			echo '<tr><th>Switch Timing Values</th></tr>';
+			echo '<tr class="sub"><th>Switch Timing Values</th></tr>';
 			echo '<tr><th>PPS Width: </th><th><INPUT type="text" value = "100000" name="pps" > </th></tr>';
 			echo '<tr><th>Use NMEA: </th><th><INPUT type="text" value = "1" name="nmea" > </th></tr>';
 			echo '<tr><th>Switch Mode: [Master/GrandMaster] </th><th><INPUT type="text" value = "GrandMaster" name="switchmode" > </th></tr>';
@@ -62,7 +62,8 @@
 			// port values:
 			for($i=0; $i<18; $i++){
 
-				echo '<tr><th>Endpoint '.($i+1).'</th></tr>';
+				echo '<tr class="empty"><th></th></tr>';
+				echo '<tr class="sub"><th>Endpoint '.($i+1).'</th></tr>';
 				if($i<4){ echo '<tr><th>Rx min:</th><th><INPUT type="text" value = "160000" name="rx'.$i.'" > </th></tr>';
 				}else{ echo '<tr><th>Rx min:</th><th><INPUT type="text" value = "161200" name="rx'.$i.'" > </th></tr>';}
 				echo '<tr><th>Tx min:</th><th><INPUT type="text" value = "0" name="tx'.$i.'" > </th></tr>';
@@ -73,9 +74,11 @@
 				
 			}
 			
-			echo '<input type="hidden" name="newconf" value="newconf">';
 			echo '</table>';
+			echo '<div>';
+			echo '<input type="hidden" name="newconf" value="newconf">';
 			echo '<input align="right" type="submit" value="Create new file & Reboot" class="btn">';
+			echo '</div>';
 			echo '</form>';
 			
 			
@@ -138,7 +141,7 @@
 			fclose($file);
 			
 			//We move the file to /wr/etc/
-			copy('/tmp/wrsw_hal.conf', '/wr/etc/wrsw_hal.conf');
+			copy('/tmp/wrsw_hal.conf', $GLOBALS['etcdir'].'wrsw_hal.conf');
 			
 			echo '<center><font color="green">File successfully created. Rebooting switch. </font></center>';
 			

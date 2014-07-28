@@ -1,5 +1,18 @@
 <?php
 
+//Global Variables
+$etcdir="/usr/wr/etc/"; //configuration file folder for WRS
+$snmpconf="snmpd.conf";
+$ppsiconf="ppsi.conf";
+$wrswhalconf="wrsw_hal.conf";
+$sfpdatabaseconf="sfp_database.conf";
+$wrdateconf="wr_date.conf";
+$vlancolor = array("#27DE2A", "#B642A8", "#6E42B6", "#425DB6" , "#428DB6", "#4686B6", "#43B88B", "#42B65F", "#82B642", "#B6AE42", "#B67E42");
+$MAX_PHP_FILESIZE = 40;
+$phpusersfile="/usr/etc/phpusers";
+$profilefile="/usr/etc/profile";
+$phpinifile="/etc/php.ini";
+$interfacesfile = "/usr/etc/network/interfaces";
 
 /*
  * Displays the current status of each enpoint.
@@ -19,8 +32,16 @@ function wrs_header_ports(){
 	// Check whether $WRS_MANAGEMENT is set or we take the program
 	// by default.
 
-	
-	if(!file_exists("/tmp/ports.conf")){
+	session_start();
+	if(empty($_SESSION['portsupdated'])){
+		$_SESSION['portsupdated'] = intval(shell_exec("date +%s"));
+	}
+	 
+	// Let's update endpoints info every 15 seconds.
+	$currenttime = intval(shell_exec("date +%s"));
+	$interval = $currenttime - $_SESSION['portsupdated'];
+		
+	if(!file_exists("/tmp/ports.conf") || $interval>15){
 		$cmd = wrs_env_sh();
 		shell_exec("killall wr_management");
 		$str = shell_exec($cmd." ports");
@@ -28,10 +49,11 @@ function wrs_header_ports(){
 		fwrite($fp, $str);
 		fclose($fp);
 		$ports = $str;
+		$_SESSION['portsupdated'] = intval(shell_exec("date +%s"));	
 	}else{
 		$ports = shell_exec("cat /tmp/ports.conf");
 	}
-	
+
 	$ports = explode(" ", $ports);
 
 	// We parse and show the information comming from each endpoint.
@@ -41,7 +63,7 @@ function wrs_header_ports(){
 	echo "<table border='0' align='center' vspace='15'>";
 	
 	echo '<tr>';
-	$cont = 0;
+	$cont = 1;
 	for($i=1; $i<18*4; $i=$i+4){
 		
 		if (strstr($ports[($i-1)],"up")){
@@ -92,33 +114,76 @@ function wrs_header_ports(){
  */
 function wrs_main_info(){
 	
-	echo "<table border='1' align='left' class='altrowstable' id='alternatecolor'>";
-	echo '<tr><td> <b><center>Switch Info </center></b></td></tr>';
+	//Changing php filesize in case it is necessary
+	if(wrs_php_filesize()<$GLOBALS['MAX_PHP_FILESIZE']){php_file_transfer_size($GLOBALS['MAX_PHP_FILESIZE']);}
+	
+	if(empty($_SESSION["utc"])){
+		$utc_exists = shell_exec("cat ".$GLOBALS['profilefile']." | grep -c TZ");
+		if($utc_exists){
+			$_SESSION["utc"]=shell_exec("cat ".$GLOBALS['profilefile']." | grep TZ | awk '{print $2}' | sed 's/TZ=//g'");
+		}else{
+			$_SESSION["utc"]="UTC";
+		}
+	}
+	
+	echo "<table border='1' align='center' class='altrowstabledash' id='alternatecolor'>";
+	echo '<tr class="sub"><td> <b><center>Switch Info </center></b></td></tr>';
 
 	$str = shell_exec("uname -n");
 	if(strcmp($str,"(none)")) shell_exec("/bin/busybox hostname -F /etc/hostname");
-	echo '<tr><th><b>Hostname:</b></th><th><center>'; $str = shell_exec("uname -n"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>Switch Mode:</b> </th><th><center>'; $str = check_switch_mode(); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>IP Address:</b> </th><th><center>'; $ip = shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'"); echo $ip;  echo '</center></th></tr>';
-	echo '<tr><th> <b>HW Address:</b> </th><th><center>'; $mac = shell_exec("ifconfig eth0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'"); echo $mac; echo '</center></th></tr>';
+	echo '<tr><th align=center><b><font color="darkblue">Hostname</font></b></th><th><center>'; $str = shell_exec("uname -n"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">Switch Mode</font></b> </th><th><center>'; $str = check_switch_mode(); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">IP Address</font></b> </th><th><center>'; $ip = shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'"); echo $ip;  
+			echo '(<a href="network.php">'; echo wrs_interface_setup(); echo '</a>)'; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">HW Address</font></b> </th><th><center>'; $mac = shell_exec("ifconfig eth0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'"); echo $mac; echo '</center></th></tr>';
 	//echo '<tr><th> <b>OS Release:</b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; echo '</center></th></tr>';
 	//echo '<tr><th> <b>OS name:</b> </th><th><center>'; $str = shell_exec("uname -s"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>OS Version:</b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; $str = shell_exec("uname -v"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">Kernel Version</font></b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; $str = shell_exec("uname -v"); echo $str; echo '</center></th></tr>';
 	
-	echo '<tr><th> <b>Gateware Version:</b> </th><th><center> '; $str = shell_exec("/wr/bin/shw_ver -g | grep version | awk '{ print $4}'");
+	echo '<tr><th  align=center> <b><font color="darkblue">Firmware Version</font></b> </th><th><center> '; $str = shell_exec("/wr/bin/shw_ver  |  awk '{print $4}'");
 	echo '<a href="showfile.php?help_id=gateware&name=GateWare Info" onClick="showPopup(this.href);return(false);"</a>';
 	echo $str; echo '</center></th></tr>';
 	
-	echo '<tr><th> <b>PCB Version:</b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -p"); echo $str;  echo '</center></th></tr>';
-	echo '<tr><th> <b>FPGA:</b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -f"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>Compiling time:</b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -c"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>White-Rabbit Date:</b></th><th><center>'; $str = shell_exec("/wr/bin/wr_date get"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th> <b>PTP:</b> </th><th><center>';  echo wrs_check_ptp_status() ? 'On' : 'Off'; echo '</center></th></tr>';
-	echo '<tr><th> <b>Max. Filesize Upload: </b></th><th><center>'; echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">PCB Version</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -p"); echo $str;  echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">FPGA</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -f"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">Compiling Date</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -c"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">White-Rabbit Date</font></b></th><th><center>'; $str = shell_exec("export TZ=".$_SESSION['utc']." /wr/bin/wr_date -n get"); echo str_replace("\n","<br>",$str); echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">PPSi</font></b> </th><th><center>';  echo wrs_check_ptp_status() ? '[<A HREF="ptp.php">on</A>]' : '[<A HREF="ptp.php">off</A>]'; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">Net-SNMP Server</font></b> </th><th><center>';  echo check_snmp_status() ? '[on] ' : '[off] '; echo '&nbsp;&nbsp;ver. '; echo shell_exec("snmpd -v | grep version | awk '{print $3}'");
+			echo '( port '; $str = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf | grep agent | cut -d: -f3 | awk '{print $1}'"); echo $str; echo ')'; 	echo /*" <a href='help.php?help_id=snmp' onClick='showPopup(this.href);return(false);'> [OIDs]</a>*/"</center></th></tr>";
+	echo '<tr><th  align=center> <b><font color="darkblue">NTP Server</font></b> </th><th><center> <A HREF="management.php">';  $str = check_ntp_server(); echo $str; echo '</A> '.$_SESSION['utc'].'</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">Max. Filesize Upload</font> </b></th><th><center>'; echo shell_exec("cat ".$GLOBALS['phpinifile']." | grep upload_max_filesize | awk '{print $3}'"); echo '</center></th></tr>';
 	echo '</table>';
 	
 	
+	  
 
+}
+
+function check_ntp_server(){
+	$output = "cat ".$GLOBALS['etcdir'].$GLOBALS['wrdateconf']. " | grep ntpserver | awk '{print $2}' ";
+	$output = shell_exec($output);
+
+	if(!strcmp($output, "")){
+		return "not set";
+	}else{
+		return $output;
+	}
+	
+}
+function check_snmp_status(){
+	$output = intval(shell_exec("ps aux | grep -c snmpd"));
+	return ($output>2) ? 1 : 0;
+	
+	
+}
+
+
+function wrs_interface_setup(){
+	
+	$interfaces = shell_exec('cat '.$GLOBALS['interfacesfile'].' | grep dhcp');
+	
+	return (strcmp($interfaces[0],"#")) ? "dhcp" : "static";
 }
 
 /*
@@ -163,7 +228,7 @@ function wrs_change_wrfs($m){
  * 
  */
 function wrs_check_ptp_status(){
-	$output = intval(shell_exec("ps | grep -c ptpd"));
+	$output = intval(shell_exec("ps aux | grep -c ppsi"));
 	return ($output>2) ? 1 : 0;
 }
 
@@ -183,19 +248,24 @@ function php_file_transfer_size($size){
 	// We remove the blank space
 	$size=trim($size);
 	
+		
+	wrs_change_wrfs("rw");
 	// We modify fist upload_max_filesize in php.ini
-	$prev_size = shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'");
+	$prev_size = shell_exec("cat ".$GLOBALS['phpinifile']." | grep upload_max_filesize | awk '{print $3}'");
 	$prev_size=trim($prev_size);
-	$cmd = "sed -i 's/upload_max_filesize = ".$prev_size."/upload_max_filesize = ".$size."M/g' /etc/php.ini";
+	$cmd = "sed -i 's/upload_max_filesize = ".$prev_size."/upload_max_filesize = ".$size."M/g' ".$GLOBALS['phpinifile'];
 	shell_exec($cmd);
 	
 	// We modify post_max_size in php.ini
-	$prev_size = shell_exec("cat /etc/php.ini | grep post_max_size | awk '{print $3}'");
+	$prev_size = shell_exec("cat ".$GLOBALS['phpinifile']." | grep post_max_size | awk '{print $3}'");
 	$prev_size=trim($prev_size);
-	$cmd ="sed -i 's/post_max_size = ".$prev_size."/post_max_size = ".$size."M/g' /etc/php.ini";
+	$cmd ="sed -i 's/post_max_size = ".$prev_size."/post_max_size = ".$size."M/g' ".$GLOBALS['phpinifile'];
 	shell_exec($cmd);
+	shell_exec("cat ".$GLOBALS['phpinifile']." >/usr/etc/php.ini"); //We store it in /usr/etc/php.ini copy. Just in case
+	wrs_change_wrfs("ro");
 	
-	echo '<p align=center>File upload size changed to '.$size.'</p>';	
+	
+	//echo '<p align=center>File upload size changed to '.$size.'</p>';	
 }
 
 /*
@@ -239,9 +309,9 @@ function wr_endpoint_phytool($option1, $endpoint){
 		echo '</tr>';
 		echo '</table>';
 		
-		if (!strcmp($_POST['update'], "yes")){
-			echo 'aki stamos!';
-		}
+		//if (!strcmp($_POST['update'], "yes")){
+			//echo 'aki stamos!';
+		//}
 	
 	// User wants to modify endpoint's registers
 	} else if(!strcmp($option1, "wr")){
@@ -388,9 +458,9 @@ function wr_show_endpoint_rt_show(){
  */
 function wrs_php_filesize(){
 	
-	 $size=shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); 
+	 $size=shell_exec("cat ".$GLOBALS['phpinifile']." | grep upload_max_filesize | awk '{print $3}'"); 
 	 $size=substr($size, 0, -2);
-	 echo $size;
+	 return $size;
 	
 }
 
@@ -452,21 +522,22 @@ function wrs_load_files(){
 			}
 
 			
-		// Loading  and copying binary file to /wr/lib/firmware folder on the switch.
+		// Loading  and copying binary file to /tmp folder on the switch.
 		} else if (!empty($_FILES['file']['name'])){
-			$uploaddir = '/wr/lib/firmware/';
+			$uploaddir = '/tmp/';
 			$uploadfile = $uploaddir . basename($_FILES['file']['name']);
 			echo '<pre>';
-			if ((!strcmp(extension($_FILES['file']['name']), "bin")) && move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
-				echo "<center>File is valid, and was successfully uploaded to firmware folder\n";
+			if (/*(!strcmp(extension($_FILES['file']['name']), "bin")) &&*/ move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
+				echo "<center>File is valid, and was successfully uploaded to tmp folder\n";
 			}  else {
 				echo "<center>File is not valid, please upload a .bin file</center>\n";
 			}
 
-			print "</pre>";
+			echo "</pre>";
 		
 		} else if (!empty($_POST["size"])){
 			php_file_transfer_size(htmlspecialchars($_POST["size"]));
+			header ('Location: load.php');
 		}
 
 	
@@ -503,12 +574,247 @@ function wrs_management(){
 			echo '<br><br><br>Partition is now READ-ONLY';
 		}else if (!strcmp($cmd, "size")){
 			php_file_transfer_size(htmlspecialchars($_POST["size"]));
+			header('Location: firmware.php');
 		}else if (!strcmp($cmd, "change")){
 			modify_switch_mode();
 			$mode = check_switch_mode(); 
 			echo '<br><br><br>Switch is now '.$mode;
+			header ('Location: management.php');
+			
+		} else if (!empty($_FILES['file']['name'])){
+			$uploaddir = '/tmp/';
+			$uploadfile = $uploaddir . basename($_FILES['file']['name']);
+			echo '<pre>';
+			if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
+				echo '<p align=center ><font color="red"><br>Upgrade procedure will take place after reboot.<br>Please do not switch off the device during flashing procedure.</font></p>';
+				rename($uploadfile, "/update/".($_FILES['file']['name']));
+				//Reboot switch
+				shell_exec("reboot");
+			}  else {
+				echo "<center>Something went wrong. File was not uploaded.</center>\n";
+			}
+
+			echo "</pre>";
+		} else if (!strcmp($cmd, "remoteflash")){
+			
+			echo '<p align=center>Downloading '.$ohwrlink.'</p>';
+			
+			$filename="/tmp/wr-switch-sw-v4.0-rc1-20140710_binaries.tar";
+			$firmware="/update/wrs-firmware.tar";
+			$ohwrlink="http://www.ohwr.org/attachments/download/3095/wr-switch-sw-v4.0-rc1-20140710_binaries.tar";
+		
+			file_put_contents($filename, file_get_contents($ohwrlink));
+			rename($filename, $firmware);
+			echo '<p align=center>File successfully downloaded. Rebooting.</p>';
+			shell_exec("reboot");
+			
+		} else if (!empty($_FILES['ppsi_conf']['name'])){
+			
+			$uploaddir = $GLOBALS['etcdir'];
+			$uploadfile = $uploaddir . basename($_FILES['ppsi_conf']['name']);
+			echo '<pre>';
+			if ((!strcmp($_FILES['ppsi_conf']['name'],$GLOBALS['ppsiconf']) && (!strcmp(extension($_FILES['ppsi_conf']['name']), "conf")) && move_uploaded_file($_FILES['ppsi_conf']['tmp_name'], $uploadfile))) {
+				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder\n";
+			}  else {
+				echo "<center>File is not valid, please upload a ".$GLOBALS['ppsiconf']." file</center>\n";
+			}
+
+			echo "</pre>";
+			
+		} else if (!empty($_FILES['sfp_conf']['name'])){
+			
+			$uploaddir = $GLOBALS['etcdir'];
+			$uploadfile = $uploaddir . basename($_FILES['sfp_conf']['name']);
+			echo '<pre>';
+			if ((!strcmp($_FILES['sfp_conf']['name'],$GLOBALS['sfpdatabaseconf'])) && (!strcmp(extension($_FILES['sfp_conf']['name']), "conf")) && move_uploaded_file($_FILES['sfp_conf']['tmp_name'], $uploadfile)) {
+				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder\n";
+			}  else {
+				echo "<center>File is not valid, please upload a ".$GLOBALS['sfpdatabaseconf']." file</center>\n";
+			}
+
+			echo "</pre>";
+			
+		} else if (!empty($_FILES['snmp_conf']['name'])){
+			
+			$uploaddir = $GLOBALS['etcdir'];
+			$uploadfile = $uploaddir . basename($_FILES['snmp_conf']['name']);
+			echo '<pre>';
+			if ((!strcmp($_FILES['snmp_conf']['name'],$GLOBALS['snmpconf'])) && (!strcmp(extension($_FILES['snmp_conf']['name']), "conf")) && move_uploaded_file($_FILES['snmp_conf']['tmp_name'], $uploadfile)) {
+				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder\n";
+			}  else {
+				echo "<center>File is not valid, please upload a ".$GLOBALS['snmpconf']." file</center>\n";
+			}
+
+			echo "</pre>";
+			
+		} else if (!empty($_FILES['hal_conf']['name'])){
+			
+			$uploaddir = $GLOBALS['etcdir'];
+			$uploadfile = $uploaddir . basename($_FILES['hal_conf']['name']);
+			echo '<pre>';
+			if ((!strcmp($_FILES['hal_conf']['name'],$GLOBALS['wrswhalconf'])) && (!strcmp(extension($_FILES['hal_conf']['name']), "conf")) && move_uploaded_file($_FILES['hal_conf']['tmp_name'], $uploadfile)) {
+				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder\n";
+			}  else {
+				echo "<center>File is not valid, please upload a ".$GLOBALS['wrswhalconf']." file</center>\n";
+			}
+
+			echo "</pre>";
+			
+		} else if (!empty($_FILES['restore_conf']['name'])){
+			
+			$uploaddir = $GLOBALS['etcdir'];
+			$uploadfile = $uploaddir . basename($_FILES['restore_conf']['name']);
+			echo '<pre>';
+			if ((!strcmp(extension($_FILES['restore_conf']['name']), "gz")) && move_uploaded_file($_FILES['restore_conf']['tmp_name'], $uploadfile)) {
+				
+				shell_exec("tar -xvf ".$uploadfile. " -C ". $GLOBALS['etcdir'] ); //untar the file
+				
+				echo "<center>Configuration restored sucessfully. Rebooting system.\n";
+				shell_exec("reboot");
+			}  else {
+				echo "<center>File is not valid, please upload a .tar.gz file</center>\n";
+			}
+
+			shell_exec("rm $uploadfile");
+			
+			echo "</pre>";
+			
+		} else if (!strcmp($cmd, "Backup")){
+			
+			//Prepare backup (tar)
+			$backupfile="backup".date("Y-m-d").".tar.gz";
+			shell_exec("cd ".$GLOBALS['etcdir']."; tar -cvf ".$backupfile." *; mv ".$backupfile." /var/www/download/".$backupfile);
+			$backupfile="/download/$backupfile";
+			
+			//Download the file
+			header('Location: '.$backupfile);
+			 
+		} else if (!strcmp($cmd, "ntp")){
+			
+			$output = "ntpserver ". htmlspecialchars($_POST["ntpip"])."\n\n";
+			
+			if (file_exists($GLOBALS['etcdir'].$GLOBALS['wrdateconf'])) {
+				
+				$current = file_get_contents($GLOBALS['etcdir'].$GLOBALS['wrdateconf']);
+				
+				if(substr_count($current,"ntpserver")>0){
+					
+					$current = shell_exec("sed '/ntpserver/d' ".$GLOBALS['etcdir'].$GLOBALS['wrdateconf']);
+					$current = str_replace("\n", "", $current);
+				}
+				
+				$current .= $output;
+				
+				$file=$GLOBALS['etcdir'].$GLOBALS['wrdateconf'];
+				unlink($GLOBALS['etcdir'].$GLOBALS['wrdateconf']);
+				$file = fopen($GLOBALS['etcdir'].$GLOBALS['wrdateconf'],"w+");
+				fwrite($file,$current);
+				fclose($file);
+				
+			} else {
+				
+				$file = fopen("/tmp/".$GLOBALS['wrdateconf'],"w+");
+				fwrite($file,$output);
+				fclose($file);
+				
+				//We move the file to /wr/etc/
+				copy('/tmp/'.$GLOBALS['wrdateconf'], $GLOBALS['etcdir'].$GLOBALS['wrdateconf']);
+			}
+			
+			//Set UTC
+			$UTC=htmlspecialchars($_POST["utc"]); 
+			$_SESSION['utc']=$UTC;				
+			
+			//Export to /etc/profile --> when /etc/profile remains saved...
+			$utc_exists = shell_exec("cat ".$GLOBALS['profilefile']." | grep -c TZ");
+			$utc_prev = shell_exec("cat ".$GLOBALS['profilefile']." | grep TZ");
+			$utc_prev=trim($utc_prev);
+			if($utc_exists>0){ 
+				$sed_cmd = 'sed -i "s/'.$utc_prev.'/export TZ='.$_SESSION['utc'].'/g" '.$GLOBALS['profilefile'];
+				shell_exec ($sed_cmd);
+			}else{ // Add TZ to profile file
+				shell_exec ('echo "export TZ='.$_SESSION['utc'].'" >>'.$GLOBALS['profilefile']);	
+			}
+			
+			echo '<br><p align=center>Rebooting...</p>';
+			
+			//Reboot the switch after 1s
+			usleep(1000000);
+			shell_exec("reboot");
+			
+			
+			
+		} else if (!strcmp($cmd, "backup-wrs")){
+			
+			//Backup wrs firmware
+			
+		}  else if (!strcmp($cmd, "snmp")){
+			
+			if(check_snmp_status()){ //It is running
+				
+				//Stop SNMP
+				shell_exec("killall snmpd");
+				
+			}else{ //Not running
+				
+				shell_exec("/etc/init.d/S80snmp > /dev/null 2>&1 &");
+				
+			}
+			
+			header('Location: management.php');
 		}
+		
+		
+		
 }
+
+
+/**
+     * Download file
+     *
+     * @param string $path
+     * @param string $type
+     * @param string $name
+     * @param bool $force_download
+     * @return bool
+     */
+    function download($path, $name = '', $type = 'application/octet-stream', $force_download = true) {
+
+        if (!is_file($path) || connection_status() !== 0);
+
+        if($force_download) {
+            header("Cache-Control: public");
+        } else {
+            header("Cache-Control: no-store, no-cache, must-revalidate");
+            header("Cache-Control: post-check=0, pre-check=0", false);
+            header("Pragma: no-cache");
+        }
+
+        header("Expires: ".gmdate("D, d M Y H:i:s", mktime(date("H")+2, date("i"), date("s"), date("m"), date("d"), date("Y")))." GMT");
+        header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT");
+        header("Content-Type: $type");
+        header("Content-Length: ".(string)(filesize($path)));
+
+        $disposition = $force_download ? 'attachment' : 'inline';
+
+        if(trim($name) == '') {
+            header("Content-Disposition: $disposition; filename=" . basename($path));
+        } else {
+            header("Content-Disposition: $disposition; filename=\"" . trim($name)."\"");
+        }
+
+        header("Content-Transfer-Encoding: binary\n");
+
+        if ($file = fopen($path, 'rb')) {
+            while(!feof($file) and (connection_status()==0)) {
+                print(fread($file, 1024*8));
+                flush();
+            }
+            fclose($file);
+        }
+
+        return((connection_status() == 0) && !connection_aborted());
+    }  
 
 /*
  * This function configures the PTP daemon.
@@ -527,7 +833,7 @@ function wrs_ptp_configuration(){
 	echo '<center>';
 	if(!empty($_POST["b"])){
 		$cmd .= " -b ".htmlspecialchars($_POST["b"]); 
-		echo '<br>Network Interface binded to '.htmlspecialchars($_POST["b"]);
+		echo '<br>Network Interface bound to '.htmlspecialchars($_POST["b"]);
 	} 
 	if (!empty($_POST["u"])){
 		$cmd .= " -u ".htmlspecialchars($_POST["u"]); 
@@ -557,22 +863,50 @@ function wrs_ptp_configuration(){
 		$cmd .= " -p ".htmlspecialchars($_POST["p"]); 
 		echo '<br>Priority changed to '.htmlspecialchars($_POST["p"]);
 	} 
-	if ((!empty($_POST["daemongroup"])) && (!strcmp(htmlspecialchars($_POST["daemongroup"]),"On"))){
-		$cmd = shell_exec("/wr/bin/ptpd -A "); 
-		echo '<center>PTPd enabled with default values!</center>';
+	
+	if(!strcmp($_POST['cmd'],"ppsiupdate")){
+		
+		if(wrs_check_ptp_status()){ //PPSi is enabled.
+			shell_exec("killall ppsi"); 	
+		}else{  //PPSi is disabled.
+			$ptp_command = "/wr/bin/ppsi > /dev/null 2>&1 &";
+			$output = shell_exec($ptp_command); 		
+		}
+		header('Location: ptp.php');
+		
 	}
-	if ((!empty($_POST["daemongroup"])) && (!strcmp(htmlspecialchars($_POST["daemongroup"]),"Off"))){
-		$cmd = shell_exec("killall ptpd"); 
-		echo '<center>PTPd stopped!</center>';
-	}
-	if(!empty($cmd)){
-		shell_exec("killall ptpd"); 
-		$ptp_command = "/wr/bin/ptpd -c ".$cmd. "  > /dev/null 2>&1 &";
+	if (!empty($_POST["clkclass"])){
+		$old_value= rtrim(shell_exec("cat ".$GLOBALS['etcdir'].$GLOBALS['ppsiconf']." | grep class "));
+		$new_value="clock-class ".htmlspecialchars($_POST["clkclass"]); 
+		$sed = 'sed -i "s/'.$old_value.'/'.$new_value.'/g" '.$GLOBALS['etcdir'].$GLOBALS['ppsiconf'];echo $sed;
+		shell_exec($sed);
+		echo '<br>Clock Class changed to '.htmlspecialchars($_POST["clkclass"]);
+	} 
+	if (!empty($_POST["clkacc"])){
+		$old_value= rtrim(shell_exec("cat ".$GLOBALS['etcdir'].$GLOBALS['ppsiconf']." | grep accuracy "));
+		$new_value="clock-accuracy ".htmlspecialchars($_POST["clkacc"]);
+		$sed ='sed -i "s/'.$old_value.'/'.$new_value.'/g" '.$GLOBALS['etcdir'].$GLOBALS['ppsiconf'];echo $sed;
+		shell_exec($sed);
+		echo '<br>Clock Accuracy changed to '.htmlspecialchars($_POST["clkacc"]);
+	} 
+	if ((!empty($_POST["clkclass"])) || !empty($_POST["clkacc"])){
+		// Redirect & relaunch.
+		echo '<br>Clock values changed. Rebooting PPSi daemon.</br';
+			
+		//We must relaunch ptpd too. (by default)
+		shell_exec("killall ppsi"); 
+		$ptp_command = "/wr/bin/ppsi > /dev/null 2>&1 &";
 		$output = shell_exec($ptp_command); 
-		echo '<center>PTP initialized.</center>';
-
+		
+		//Relaunching wrsw_hal to commit endpoint changes
+		//shell_exec("killall wrsw_hal");
+		//shell_exec("/wr/bin/wrsw_hal -c ".$GLOBALS['etcdir']."wrsw_hal.conf > /dev/null 2>&1 &");
+		
+		header('Location: ptp.php');
+		exit;
 	}
 	echo '</center>';
+	
 	
 }
 
@@ -683,8 +1017,6 @@ function wrs_display_help($help_id, $name){
 		$message = "<p>Loading files: <br>
 					- <b>Load FPGA File</b>: Loads a .bin file for the gateware on the FPGA.<br>
 					- <b>Load LM32 File</b>: Loads a .bin file into the lm32 processor.<br>
-					- <b>Load firmware</b>: It moves a binary file into the /wr/lib/firmware folder<br>
-					- <b>PHP Filesize</b>: It changes the max. size of the files that can be uploaded to the switch (2 MegaBytes by default)<br>
 					</p>";
 	} else if (!strcmp($help_id, "endpoint")){
 		$message = "<p>It is used to configure each point of the switch with different parameters as well as wrs_phytool program does. <br>
@@ -705,15 +1037,16 @@ function wrs_display_help($help_id, $name){
 	} else if (!strcmp($help_id, "management")){
 		$message = "<p>
 			Options: <br>
-			- <b>Change mode:</b> It changes switch mode to Master/GrandMaster <br>
-			- <b>Reboot switch</b>: it reboots the switch <br>
-			- <b>PHP Filesize</b>: It changes the max. size of the files that can be uploaded to the switch (2 MegaBytes by default)<br>
-		</p>";
+			- <b>Change mode:</b> Changes switch mode to Master/GrandMaster <br>
+			- <b>Reboot switch</b>: Reboots the switch <br>
+			- <b>Net-SNMP Server</b>: Enables/Disables remote management using SNMP <br>
+			- <b>NTP Server</b>: Sets the IP address of an external NTP server. By default it is configured as UTC, please use the second box to change it. This change is done on the webserver, not in the switch command line environment.<br>
+			- <b>Load Configuration Files</b>: You can upload individual configuration files to the switch (ppsi.conf, wrsw_hal.conf, snmp.conf, sfp_database.conf or a .tar.gz file with all of them.<br>
+			- <b>Backup Configuration Files</b>: Downloads a tar.gz file with all configuration files of the switch.<br>
+			</p>"; 
 	} else if (!strcmp($help_id, "ptp")){
-		$message = "<p>The update button is used to stop or run the ptp daemon. It runs with the <b>default options (-A -c)</b> <br>
-					<b>If you want to run a ptp daemon with a specific configuration, use the text boxes and the 'Submit Configuration' button</b>. <br></p>";
-	} else if (!strcmp($help_id, "vlan")){
-		$message = "<p>vlan</p>";
+		$message = "<p><b>Enable or disable PPSi service. <br>
+					<b>Changing Clock CLass and Clock Accuracy fields modifies ppsi.conf file for those values and relanches the service again.</b>. <br></p>";
 	} else if (!strcmp($help_id, "console")){
 		$message = "<p>This is a switch console emulator windows. Use it as if you were using a ssh session.</p>";
 	} else if (!strcmp($help_id, "gateware")){
@@ -726,7 +1059,7 @@ function wrs_display_help($help_id, $name){
 		}
 		
 	}  else if (!strcmp($help_id, "file")){
-		$msg = shell_exec("cat /wr/etc/".$name);
+		$msg = shell_exec("cat ".$GLOBALS['etcdir'].$name);
 		$msg = explode("\n", $msg);
 		for($i=0; $i<count($msg); $i++){
 			
@@ -734,7 +1067,50 @@ function wrs_display_help($help_id, $name){
 		}
 		
 	} else if (!strcmp($help_id, "endpointmode")){
-		$message = "<b>Change endpoint mode to master/slave by clicking on one of the items</b>";
+		$message = "<br><b>Change endpoint mode to master/slave/auto by clicking on one of the items.</b><br>";
+		$message .= "<b>It modifies both wrsw_hal.conf and ppsi.conf files</b>";
+	} else if (!strcmp($help_id, "snmp")){
+		$message = "<p align=left>List of public SNMP OIDs</p><br>";
+		$message .= shell_exec("snmpwalk -v1 -c public localhost");
+		$message = str_replace("\n","<br>",$message);
+		
+	} else if (!strcmp($help_id, "vlan")){
+		
+		$message = "<br><b>Add new VLANs to the WRS</b>";
+		$message .= "<br><b>- VID --> VLAN ID in rtud</b>";
+		$message .= "<br><b>- FID --> Assign FID to configured VLAN</b>";
+		$message .= "<br><b>- DROP --> Enable/Disable drop frames on VLAN</b>";
+		$message .= "<br><b>- PRIO --> Sets Priority</b>";
+		$message .= "<br><b>- MASK --> Mask for ports belonging to configured VLAN</b>";
+		$message .= "<br><br>If you want to assign port to VLANs, please add VLANs first and then click on <strong>Assign Ports to VLANs</strong>. ";
+		
+	} else if (!strcmp($help_id, "vlanassignment")){
+		
+		$message = "<br><b>Assign ports to created VLANs</b>";
+		$message .= "<br><b>VLANs ID --> VLANs ID already created in rtud</b>";
+		$message .= "<br><b>Mode --> Sets mode for the endpoint:</b>";
+		$message .= "<br><b><ul><li>Access --> tags untagged frames, drops tagged frames not belinging to configured VLAN</b></li>";
+		$message .= "<br><b><li>Trunk --> passes only tagged frames, drops all untagged frames</b></li>";
+		$message .= "<br><b><li>Disable --> passess all frames as is</b></li>";
+		$message .= "<br><b><li>Unqualified Port --> passess all frames regardless VLAN config</b></li></ul>";
+		$message .= "<br><b>Priority --> sets priority for retagging</b>";
+		$message .= "<br><b>Mask --> sets untag mask for port</b>";
+		
+		
+	} else if (!strcmp($help_id, "network")){
+		$message = "<br><b>Set a DHCP network interface configuration or a static one.</b>";
+		$message = "<br><b>If you set a static configuration, you have to define: </b>";
+		$message .= "<br><b><ul><li>IP Address --> IP Address of your switch</b></li>";
+		$message .= "<br><b><li>Netmask --> Netmask</b></li>";
+		$message .= "<br><b><li>Network--> IP Address of your network</b></li>";
+		$message .= "<br><b><li>Broadcast --> Broadcast address</b></li>";
+		$message .= "<br><b><li>Gateway--> Gateway of the switch network</b></li></ul>";
+		$message .= "<br><br><b>NOTE: This network configuration only works for NAND-flashed switches. If you are using a NFS server, the configurtion is set by default in busybox and it is not possible to be changed.</b>";
+		
+	} else if (!strcmp($help_id, "firmware")){
+		$message = "<p>Firmware features: <br>
+					- <b>Flash firmware</b>: It flashes a new firmware to the switch. Do it under your own risk.<br>
+					</p>";
 	}
 	
 	
@@ -765,13 +1141,22 @@ function extension($filename){
  */
 function parse_wrsw_hal_file(){
 	
-	$file =  shell_exec('cat /wr/etc/wrsw_hal.conf | grep wr_');
+	$file =  shell_exec('cat '.$GLOBALS['etcdir'].'wrsw_hal.conf | grep wr_');
 	$file =  str_replace("mode =", "", $file);
 	$file =  str_replace('"', "", $file);
 	$file =  str_replace(';', "", $file);
 	$file =  str_replace('wr_', "", $file);
 	$file = explode(" ", $file);
 	return $file;
+}
+
+function parse_ppsi_conf_file(){
+	
+	$file =  shell_exec('cat '.$GLOBALS['etcdir'].'ppsi.conf | grep role');
+	$file =  str_replace("role", "", $file);
+	$file = explode(" ", $file);
+	return $file;
+	
 }
 
 /*
@@ -783,7 +1168,7 @@ function parse_wrsw_hal_file(){
  * 
  */
 function check_switch_mode(){
-	$status = shell_exec("cat /wr/etc/wrsw_hal.conf | grep -c GrandMaster");
+	$status = shell_exec("cat ".$GLOBALS['etcdir']."wrsw_hal.conf | grep -c GrandMaster");
 	
 	if($status>0){
 		return "GrandMaster";
@@ -804,22 +1189,101 @@ function check_switch_mode(){
 function modify_switch_mode(){
 	
 	if (!strcmp(check_switch_mode(), "GrandMaster")){
-		$cmd = 'sed -i "s/mode = \"GrandMaster\"/mode = \"Master\"/g" /wr/etc/wrsw_hal.conf';
+		$cmd = 'sed -i "s/mode = \"GrandMaster\"/mode = \"Master\"/g" '.$GLOBALS['etcdir'].'wrsw_hal.conf';
 	}else{
-		$cmd = 'sed -i "s/mode = \"Master\"/mode = \"GrandMaster\"/g" /wr/etc/wrsw_hal.conf';
+		$cmd = 'sed -i "s/mode = \"Master\"/mode = \"GrandMaster\"/g" '.$GLOBALS['etcdir'].'wrsw_hal.conf';
 	}
 	shell_exec($cmd);
 	
 }
 
 function wrs_modify_endpoint_mode($endpoint, $mode){
+		
+	switch ($mode) {
+		case "master":
+			$new_mode = "slave";
+			break;
+		case "slave":
+			$new_mode = "auto";
+			break;
+		case "auto":
+			$new_mode = "master";
+			break;
+	}
 	
-	(!strcmp($mode, "master")) ? $new_mode = "wr_slave" : $new_mode = "wr_master";
 	
-	if($endpoint>0 && $endpoint<19 && (((!strcmp($mode, "slave"))) || ((!strcmp($mode, "master"))))){
+	
+	// ### Code for ppsi.conf ###
+	if($endpoint>0 && $endpoint<19 && (((!strcmp($mode, "slave"))) || ((!strcmp($mode, "master"))) || ((!strcmp($mode, "auto"))))){
 		
 		
-		$file = "/wr/etc/wrsw_hal.conf";
+		$file = $GLOBALS['etcdir'].$GLOBALS['ppsiconf']; 
+		$lines = file($file);
+		$output = "";
+		$count = 0;
+		$end_aux = $endpoint;
+		
+		if($endpoint == 1){ //Slave port
+			$endpoint= "port slave";
+		}else{ //Master ports
+			$endpoint= "port master".($end_aux-1)."\n";
+			
+		}
+		
+		$found = false;
+		
+		foreach($lines as $line_num => $line)
+		{
+			if(substr_count($line, $endpoint)>0){
+				$found = true;
+			}
+			
+			if($found)$count++;
+			
+			
+			if($count==3){
+				$output.='role '.$new_mode."\n";
+				$count = 0;
+				$found = false;
+			}else{
+				$output.=$line;
+			}
+		}
+		
+		//We save the changes in a temporarely file in /tmp
+		$file = fopen("/tmp/".$GLOBALS['ppsiconf'],"w+");
+		fwrite($file,$output);
+		fclose($file);
+		
+		//We move the file to /wr/etc/
+		copy('/tmp/'.$GLOBALS['ppsiconf'], $GLOBALS['etcdir'].$GLOBALS['ppsiconf']);
+		
+		//echo '<br><br><br><br><br><br><br><br><center>Endpoint wr'.$end_aux.' is now '.$new_mode.'</center>';
+	}else{
+		echo '<br>Wrong parameters for endpoint-mode';
+	}
+	
+	
+	
+	// ##### old code for wrsw_hal.conf ######
+	switch ($mode) {
+		case "master":
+			$new_mode = "wr_slave";
+			break;
+		case "slave":
+			$new_mode = "wr_master";
+			break;
+		case "auto":
+			$new_mode = "wr_slave";
+			break;
+	}
+	
+	echo $mode, "---", $new_mode;
+	
+	if($endpoint>0 && $endpoint<19 && (((!strcmp($mode, "slave"))) || ((!strcmp($mode, "master"))) || ((!strcmp($mode, "auto"))))){
+		
+		
+		$file = $GLOBALS['etcdir'].$GLOBALS['wrswhalconf'];
 		$lines = file($file);
 		$output = "";
 		$count = 0;
@@ -846,14 +1310,13 @@ function wrs_modify_endpoint_mode($endpoint, $mode){
 		}
 		
 		//We save the changes in a temporarely file in /tmp
-		$file = fopen("/tmp/wrsw_hal.conf","w+");
+		$file = fopen("/tmp/".$GLOBALS['wrswhalconf'],"w+");
 		fwrite($file,$output);
 		fclose($file);
 		
 		//We move the file to /wr/etc/
-		copy('/tmp/wrsw_hal.conf', '/wr/etc/wrsw_hal.conf');
-		
-		echo '<br><br><br><br><br><br><br><br><center>Endpoint wr'.$end_aux.' is now '.$new_mode.'</center>';
+		copy('/tmp/'.$GLOBALS['wrswhalconf'], $GLOBALS['etcdir'].$GLOBALS['wrswhalconf']);
+
 	}else{
 		echo '<br>Wrong parameters for endpoint-mode';
 	}
@@ -871,6 +1334,31 @@ function session_is_started(){
 		exit;
 	}
 	
+	
+}
+
+function parse_mask2ports($vlanmask){
+	$vlanmask = str_replace("0x","", $vlanmask);
+	$bin = decbin(hexdec($vlanmask)); 
+	$bin = strrev($bin);
+	$size = strlen($bin);
+	$counter = 0;
+	$ports = "";
+	
+	for($i=0; $i<18; $i++){
+		if($bin[$i]=="1"){
+			$ports .= "wr".($i+1)." "; 
+			$counter++;
+			if($counter==4){
+				$ports .= "<br>";
+				$counter = 0;
+			}
+		}
+		
+	}
+	
+	
+    return $ports; 
 	
 }
 	

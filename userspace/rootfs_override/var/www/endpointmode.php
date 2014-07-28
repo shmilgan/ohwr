@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body>
+<body id="epmode">
 <div class="main">
 <div class="page">
 <div class="header" >
@@ -23,9 +23,10 @@
     
 	<?php
 		//Load all 
-		$modes = parse_wrsw_hal_file();
+		//$modes = parse_wrsw_hal_file();
+		$modes = parse_ppsi_conf_file();
 				
-		echo '<table align=center border="1" class="altrowstable" id="alternatecolor">';
+		echo '<table align=center border="1" class="altrowstable" id="alternatecolor" width="50%">';
 		//echo '<tr><th><center>Endpoint</center></th><th><center>Mode</center></th></tr>';
 		for($i = 0; $i < 9; $i++){
 			echo '<tr>';
@@ -47,24 +48,25 @@
 		
 
 	?>
-	<br>
+	<br><br><br><br><br><br>
 	<hr>
 	<FORM align="right" method="post">
 	<input type="hidden" name="hal" value="hal">
-	<INPUT type="submit" value="Reboot Hal daemon" class="btn">
+	<INPUT type="submit" value="Restart PPSi" class="btn">
     </FORM>
     
     <?php
 		if (!empty($_POST["hal"])){
+			//We must relaunch ptpd too. (by default)
+			shell_exec("killall ppsi"); 
+			$ptp_command = "/wr/bin/ppsi > /dev/null 2>&1 &";
+			$output = shell_exec($ptp_command); 
 			
 			//Relaunching wrsw_hal to commit endpoint changes
-			shell_exec("killall wrsw_hal");
-			shell_exec("/wr/bin/wrsw_hal -c /wr/etc/wrsw_hal.conf > /dev/null 2>&1 &");
+			//shell_exec("killall wrsw_hal");
+			//shell_exec("/wr/bin/wrsw_hal -c ".$GLOBALS['etcdir']."wrsw_hal.conf > /dev/null 2>&1 &");
 			
-			//We must relaunch ptpd too. (by default)
-			shell_exec("killall ptpd"); 
-			$ptp_command = "/wr/bin/ptpd -A -c  > /dev/null 2>&1 &";
-			$output = shell_exec($ptp_command); 
+			
 		}
     ?>
 
