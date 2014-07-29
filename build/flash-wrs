@@ -249,7 +249,7 @@ if [ "x$MAC2" = "x$MAC2_DEF" ]; then
 fi
 
 ## Selecting the running memmode
-df=false; nf=false, ddr=false
+df=false; nf=false; ddr=false
 if [ "x$memmode" = "xdf" ]; then
 	df=true
 elif [ "x$memmode" = "xnf" ]; then
@@ -338,11 +338,25 @@ if $nf; then
 
 fi
 
-## Loading in DDR
+## Loading in DDR. This is used to boot without booting (i.e. no at91boot)
 if $ddr; then
-	echo ""
-	echo "DDR loading (the test procedure) is currently not supported"
-	echo ""
+
+	# barebox would be enough, but place kernel and initramfs too. it costs nothing
+	$FLASHER -m ddr $FLAGS $DEV \
+	    ${Tbarebox}  0x0000000 \
+	    ${kernel}    0x1000000 \
+	    ${initramfs} 0x1800000
+
+	# It looks like this does it all. We are done
+
+	if $remove_temps; then
+	    rm -rf $WRSTMPDIR
+	else
+	    echo "Keeping temporary directory: ${WRSTMPDIR}"
+	fi
+
+
+
 fi
 
 echo -e "\n\nDone\n"
