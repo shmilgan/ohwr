@@ -1,5 +1,6 @@
 TOOLS = rtu_stat wr_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex com
-TOOLS += mapper wmapper shw_ver wr_date wr_management lm32-vuart wrsw_pstats
+TOOLS += mapper wmapper
+TOOLS += wrsw_version wr_date wr_management lm32-vuart wrsw_pstats
 TOOLS += wrsw_vlans
 
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
@@ -61,10 +62,11 @@ load-virtex: load-virtex.o load-fpga.o
 load-lm32: load-lm32.o lm32-loader.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
-shw_ver.o: shw_ver.c
-	${CC} ${CFLAGS} -D__GIT_USR__="\"${GIT_USR}\"" -D__GIT_VER__="\"${GIT_VER}\"" $(LDFLAGS) -c -o $@ $^  
+wrsw_version.o: wrsw_version.c
+	${CC} ${CFLAGS} -D__GIT_USR__="\"${GIT_USR}\"" \
+		-D__GIT_VER__="\"${GIT_VER}\"" $(LDFLAGS) -c -o $@ $^  
 
-shw_ver: shw_ver.o
+wrsw_version: wrsw_version.o
 	${CC} -o $@ $^ $(LDFLAGS)	
 
 test_rt: test_rt.o ../wrsw_hal/rt_client.o

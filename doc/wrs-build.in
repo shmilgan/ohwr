@@ -1389,11 +1389,17 @@ The most important tools in @file{userspace/tools} are the following:
         to set host time as a first step, if @t{/wr/etc/wr_date.conf}
         exists and includes a line of the form @t{ntpserver 192.168.16.1}.
 
-@item shw_ver
-	Print information about the SW & HW version of the WRS. 
-	See also @ref{DIP Switch HW version}.
+@item wrs_version
+	Print information about the SW & HW version of the WRS. Please
+        check the help message.	See also @ref{DIP Switch HW version}.
 
-@item wrs_vlans
+@item shw_ver
+	A symbolic link to @t{wrs_version}, to be compatible with
+        older versions that used this tool name. The name is
+        inconsistent with anything else in the switch, so it is being
+        replaces.
+
+@item wrsw_vlans
 	The tool allows to configure and unconfigure the VLAN settings
         for each port and for the RTU daemon. The @t{--help} option
         lists all configuration items of the tool.
