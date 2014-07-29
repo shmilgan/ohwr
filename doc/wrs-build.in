@@ -1668,7 +1668,9 @@ is an environment variable pointing to this package:
 Using SNMP version 1 instead of 2c is fine as well, but you won't receive
 the 64-bit values for slave/tracking information.
 
-The output you will get back is something like the following:
+The output you will get back is something like the following. Clearly
+the software commit in this example is my own development version while writing
+this section:
 
 @smallexample
 WR-SWITCH-MIB::wrsScalar.0 = INTEGER: 2
@@ -1695,12 +1697,12 @@ WR-SWITCH-MIB::portLink.16 = INTEGER: down(0)
 [...]
 WR-SWITCH-MIB::portPeer.18 = Hex-STRING: FF FF FF FF FF FF FF FF
 WR-SWITCH-MIB::ppsiPort.5 = Hex-STRING: FF FF FF FF FF FF FF FF
-WR-SWITCH-MIB::wrsVersionSw.0 = STRING:  fake-v4.0-rc1
-WR-SWITCH-MIB::wrsVersionGw1.0 = STRING: fake-7cce708
-WR-SWITCH-MIB::wrsVersionGw2.0 = STRING: fake-5118070
-WR-SWITCH-MIB::wrsVersionGw3.0 = STRING: fake-7efeb16
-WR-SWITCH-MIB::wrsVersionHw1.0 = STRING: fake-3.30
-WR-SWITCH-MIB::wrsVersionHw2.0 = STRING: fake-LX240T
+WR-SWITCH-MIB::wrsVersionSw.0 = STRING: v4.0-rc1-42-gcec7805+
+WR-SWITCH-MIB::wrsVersionGw1.0 = STRING: 7cce708
+WR-SWITCH-MIB::wrsVersionGw2.0 = STRING: 5118070
+WR-SWITCH-MIB::wrsVersionGw3.0 = STRING: 7efeb16
+WR-SWITCH-MIB::wrsVersionHw1.0 = STRING: 3.30
+WR-SWITCH-MIB::wrsVersionHw2.0 = STRING: LX240T
 @end smallexample
 
 @c ==========================================================================

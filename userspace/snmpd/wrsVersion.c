@@ -13,9 +13,22 @@
 
 /* Our structure for caching data */
 #define VERSION_N_STRINGS 6  /* sw, 3 gw, 2 hw */
-static struct wrs_version {
-	char *value[VERSION_N_STRINGS];
-} wrs_version;
+
+struct wrs_v_item {
+	char *key;
+	char *value;
+};
+
+static struct wrs_v_item wrs_version[] = {
+	/* Warning: the order here msut match the MIB file */
+	[0] = {.key = "software-version:"},
+	[1] = {"wr_switch_hdl-commit:"},
+	[2] = {"general-cores-commit:"},
+	[3] = {"wr-cores-commit:"},
+	[4] = {"pcb-version:"},
+	[5] = {"fpga-type:"},
+};
+
 
 static int version_group(netsnmp_mib_handler          *handler,
 			 netsnmp_handler_registration *reginfo,
@@ -32,7 +45,7 @@ static int version_group(netsnmp_mib_handler          *handler,
 			requests->requestvb->name_length - 2
 			];
 
-		s = wrs_version.value[obj - 1];
+		s = wrs_version[obj - 1].value ? : "unknown";
 		snmp_set_var_typed_value(requests->requestvb,
 					 ASN_OCTET_STR, s, strlen(s));
 		break;
@@ -44,6 +57,34 @@ static int version_group(netsnmp_mib_handler          *handler,
 	return SNMP_ERR_NOERROR;
 }
 
+/*
+ * We parse versions at initialization time, as they won't change.
+ * FIXME: we should factorize parsing, this duplicates ./wrsPpsi.c
+ * (while being different, as here we need simpler stuff)
+ */
+static void wrs_v_init(void)
+{
+	char s[80], key[40], value[40];
+	FILE *f = popen("/wr/bin/wrsw_version -t", "r");
+	int i;
+
+	if (!f) {
+		/* The "unknown" above will apply, bad but acceptable */
+		return;
+	}
+
+	while (fgets(s, sizeof(s), f)) {
+		if (sscanf(s, "%s %[^\n]", key, value) != 2)
+			continue; /* error... */
+		for (i = 0; i < ARRAY_SIZE(wrs_version); i++) {
+			if (strcmp(key, wrs_version[i].key))
+				continue;
+			wrs_version[i].value = strdup(value);
+		}
+	}
+	pclose(f);
+}
+
 void
 init_wrsVersion(void)
 {
@@ -51,13 +92,7 @@ init_wrsVersion(void)
 	const oid wrsVersion_oid[] = {  WRS_OID, 4 };
 	netsnmp_handler_registration *hreg;
 
-	/* FIXME.... */
-	wrs_version.value[0] = "fake-v4.0-rc1";
-	wrs_version.value[1] = "fake-7cce708";
-	wrs_version.value[2] = "fake-5118070";
-	wrs_version.value[3] = "fake-7efeb16";
-	wrs_version.value[4] = "fake-3.30";
-	wrs_version.value[5] = "fake-LX240T";
+	wrs_v_init();
 
 	/* do the registration */
 	hreg = netsnmp_create_handler_registration(
