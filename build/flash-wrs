@@ -163,6 +163,7 @@ while [ $# -ge 1 ]; do
 		kernel=${WRS_OUTPUT_DIR}/images/zImage
 		initramfs=${WRS_OUTPUT_DIR}/images/wrs-initramfs.gz
 		usrtar=${WRS_OUTPUT_DIR}/images/wrs-usr.tar.gz
+		tarball=${WRS_OUTPUT_DIR}/images/wrs-firmware.tar
 		shift;;
 
 	*.tar)
@@ -173,6 +174,7 @@ while [ $# -ge 1 ]; do
 		kernel=$WRSTMPDIR/zImage
 		initramfs=$WRSTMPDIR/wrs-initramfs.gz
 		usrtar=$WRSTMPDIR/wrs-usr.tar.gz
+		tarball=$1
 		shift;;
 
 	-h|--help) 	showhelp; shift;;
@@ -229,6 +231,25 @@ done
 if [ "x$usrtar" = "x" ]; then
     showhelp
 fi
+
+
+# Check that there is a tftpboot place with the right thing...
+tartftp=wrs-firmware.tar
+tarsum=$(md5sum < $tarball)
+for n in /tftpboot /home/tftpboot $HOME/tftpboot $HOME/[wW][rR]/tftpboot; do
+    if [ ! -d $n ]; then continue; fi
+    if [ ! -f $n/$tartftp ]; then continue; fi
+    sum2=$(md5sum < $n/$tartftp)
+    if [ "$tarsum" != "$sum2" ]; then
+	echo "Warning: File $n/$tartftp not up to date";
+	echo "Maybe you want to run the following command:"
+	echo ""
+	echo "  cp $tarball $n/"
+	echo ""
+	echo "Press enter to continue"
+	read a
+    fi
+done
 
 # Even if not all files are always needed, check all of them immediately
 me=$(basename $0)
