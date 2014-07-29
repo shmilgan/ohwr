@@ -16,6 +16,7 @@ void init_wrsSnmp(void)
 	init_wrsPstats();
 	init_wrsPpsi();
 	init_wrsVersion();
+	init_wrsDate();
 }
 
 /* open a file or a pipe, so I test with files, and run with pipes */

@@ -81,6 +81,7 @@ extern void init_wrsScalar(void);
 extern void init_wrsPstats(void);
 extern void init_wrsPpsi(void);
 extern void init_wrsVersion(void);
+extern void init_wrsDate(void);
 
 #define WRS_OID 1, 3, 6, 1, 4, 1, 96, 100
 

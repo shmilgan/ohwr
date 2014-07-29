@@ -1644,6 +1644,10 @@ This a summary of the available tables and scalars:
 	Hardware, gateware and software versions. It currently
         returns fake data, we'll complete it soon.
 
+@item 96.100.5
+
+	The internal White Rabbit time, as a number and a string.
+
 @end table
 
 @b{Note:} due to a buglet of mine, there is an extra item at
@@ -1703,6 +1707,8 @@ WR-SWITCH-MIB::wrsVersionGw2.0 = STRING: 5118070
 WR-SWITCH-MIB::wrsVersionGw3.0 = STRING: 7efeb16
 WR-SWITCH-MIB::wrsVersionHw1.0 = STRING: 3.30
 WR-SWITCH-MIB::wrsVersionHw2.0 = STRING: LX240T
+WR-SWITCH-MIB::wrsDateTAI.0 = Counter64: 6041400259542777856
+WR-SWITCH-MIB::wrsDateString.0 = STRING: 2014-07-29-08:38:31
 @end smallexample
 
 @c ==========================================================================

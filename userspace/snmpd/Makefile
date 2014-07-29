@@ -14,7 +14,7 @@ CFLAGS += -Iinclude -I../ppsi/include  -I../ppsi/arch-wrs/include -I../mini-rpc
 CFLAGS += -DWRS_WITH_SNMP_HACKISH_LOG=0
 
 SHLIB = wrsSnmp.so
-SOURCES = init.c wrsScalar.c wrsPstats.c wrsPpsi.c wrsVersion.c
+SOURCES = init.c wrsScalar.c wrsPstats.c wrsPpsi.c wrsVersion.c wrsDate.c
 OBJECTS = $(SOURCES:.c=.o)
 
 all: $(SHLIB)

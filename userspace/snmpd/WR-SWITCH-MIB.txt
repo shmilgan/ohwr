@@ -32,6 +32,7 @@ wrsScalar     OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
 wrsPstats     OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }
 wrsPpsi       OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }
 wrsVersion    OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }
+wrsDate       OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }
 
 -- define one stupid object for a start
 
@@ -450,5 +451,24 @@ wrsVersionHw2   OBJECT-TYPE
     DESCRIPTION
         "The hardware version: FPGA"
     ::= { wrsVersion 6 }
+
+-- Date (5), to quickly check wr status
+
+wrsDateTAI      OBJECT-TYPE
+    SYNTAX      Counter64 -- actually integer, but it is unsigned so ok
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current time, in TAI seconds"
+    ::= { wrsDate 1 }
+
+wrsDateString   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current TAI time, printed as %y-%m-%d-%H:%M:%S (no time zone)"
+    ::= { wrsDate 2 }
+
 
 END
