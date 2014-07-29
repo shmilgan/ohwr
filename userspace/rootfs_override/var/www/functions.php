@@ -109,7 +109,7 @@ function wrs_header_ports(){
  * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
  *
  * Displays the info comming from the following commands:
- * 	 uname, shw_ver, wr_date and php.ini
+ * 	 uname, wrsw_version, wr_date and php.ini
  * 
  */
 function wrs_main_info(){
@@ -140,13 +140,13 @@ function wrs_main_info(){
 	//echo '<tr><th> <b>OS name:</b> </th><th><center>'; $str = shell_exec("uname -s"); echo $str; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">Kernel Version</font></b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; $str = shell_exec("uname -v"); echo $str; echo '</center></th></tr>';
 	
-	echo '<tr><th  align=center> <b><font color="darkblue">Firmware Version</font></b> </th><th><center> '; $str = shell_exec("/wr/bin/shw_ver  |  awk '{print $4}'");
+	echo '<tr><th  align=center> <b><font color="darkblue">Firmware Version</font></b> </th><th><center> '; $str = shell_exec("/wr/bin/wrsw_version  |  awk '{print $4}'");
 	echo '<a href="showfile.php?help_id=gateware&name=GateWare Info" onClick="showPopup(this.href);return(false);"</a>';
 	echo $str; echo '</center></th></tr>';
 	
-	echo '<tr><th  align=center> <b><font color="darkblue">PCB Version</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -p"); echo $str;  echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">FPGA</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -f"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">Compiling Date</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/shw_ver -c"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">PCB Version</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/wrsw_version -p"); echo $str;  echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">FPGA</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/wrsw_version -f"); echo $str; echo '</center></th></tr>';
+	echo '<tr><th  align=center> <b><font color="darkblue">Compiling Date</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/wrsw_version -c"); echo $str; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">White-Rabbit Date</font></b></th><th><center>'; $str = shell_exec("export TZ=".$_SESSION['utc']." /wr/bin/wr_date -n get"); echo str_replace("\n","<br>",$str); echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">PPSi</font></b> </th><th><center>';  echo wrs_check_ptp_status() ? '[<A HREF="ptp.php">on</A>]' : '[<A HREF="ptp.php">off</A>]'; echo '</center></th></tr>';
 	echo '<tr><th  align=center> <b><font color="darkblue">Net-SNMP Server</font></b> </th><th><center>';  echo check_snmp_status() ? '[on] ' : '[off] '; echo '&nbsp;&nbsp;ver. '; echo shell_exec("snmpd -v | grep version | awk '{print $3}'");
@@ -1051,7 +1051,7 @@ function wrs_display_help($help_id, $name){
 		$message = "<p>This is a switch console emulator windows. Use it as if you were using a ssh session.</p>";
 	} else if (!strcmp($help_id, "gateware")){
 		
-		$msg = shell_exec("/wr/bin/shw_ver -g");
+		$msg = shell_exec("/wr/bin/wrsw_version -g");
 		$msg = explode("\n", $msg);
 		for($i=0; $i<5; $i++){
 			
