@@ -1,0 +1,30 @@
+From cb2e8fe3a1c0aaf31e3b00482a8a50c7b34619dd Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 29 Jul 2014 14:34:45 +0200
+Subject: [PATCH 8/8] fix refresh value
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ board/at91sam9g45ek/at91sam9g45ek.c |    6 +++++-
+ 1 files changed, 5 insertions(+), 1 deletions(-)
+
+diff --git a/board/at91sam9g45ek/at91sam9g45ek.c b/board/at91sam9g45ek/at91sam9g45ek.c
+index 30e7b57..638ce6c 100644
+--- a/board/at91sam9g45ek/at91sam9g45ek.c
++++ b/board/at91sam9g45ek/at91sam9g45ek.c
+@@ -184,7 +184,11 @@ void ddramc_hw_init()
+                               AT91C_DDRC2_CAS_3 |       // CAS Latency 3
+                               AT91C_DDRC2_DLL_RESET_DISABLED);  // DLL not reset
+ 
+-    ddram_config.ddramc_rtr = 0x24B;
++    /* from data sheet: The DDR2-SDRAM device requires a
++     * refresh every 15.625 s or 7.81 s. With a 133 MHz frequency, the
++     * refresh timer count register must to be set with (15.625*133
++     * MHz) = 2079 i.e. 0x081f or (7.81*133 MHz) = 1039 i.e. 0x040f. */
++    ddram_config.ddramc_rtr = 0x40f;
+ 
+     ddram_config.ddramc_t0pr = (AT91C_DDRC2_TRAS_6  |    //  6 * 7.5 = 45   ns
+                                 AT91C_DDRC2_TRCD_2  |    //  2 * 7.5 = 15   ns
+-- 
+1.7.7.2
+
