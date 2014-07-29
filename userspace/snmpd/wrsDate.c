@@ -85,6 +85,14 @@ static int date_group(netsnmp_mib_handler          *handler,
 
 		wrs_d_get();
 
+		/*
+		 * WARNING: the current snmpd is bugged: it has
+		 * endianness problems with 64 bit, and the two
+		 * halves are swapped. So pre-swap them here
+		 */
+		wrs_d_current_64 =
+			(wrs_d_current_64 << 32) | (wrs_d_current_64 >> 32);
+
 		/* "- 2" because last is 0 for all scalars, I suppose */
 		obj = requests->requestvb->name[
 			requests->requestvb->name_length - 2

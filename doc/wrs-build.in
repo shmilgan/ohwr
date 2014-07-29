@@ -1707,8 +1707,8 @@ WR-SWITCH-MIB::wrsVersionGw2.0 = STRING: 5118070
 WR-SWITCH-MIB::wrsVersionGw3.0 = STRING: 7efeb16
 WR-SWITCH-MIB::wrsVersionHw1.0 = STRING: 3.30
 WR-SWITCH-MIB::wrsVersionHw2.0 = STRING: LX240T
-WR-SWITCH-MIB::wrsDateTAI.0 = Counter64: 6041400259542777856
-WR-SWITCH-MIB::wrsDateString.0 = STRING: 2014-07-29-08:38:31
+WR-SWITCH-MIB::wrsDateTAI.0 = Counter64: 1406623390
+WR-SWITCH-MIB::wrsDateString.0 = STRING: 2014-07-29-08:43:10
 @end smallexample
 
 @c ==========================================================================
