@@ -1,0 +1,61 @@
+From 6c21f7a0bf0665598ee571bca9c9aecf7a5a7c7b Mon Sep 17 00:00:00 2001
+From: Grzegorz Daniluk <grzegorz.daniluk@cern.ch>
+Date: Wed, 30 Jul 2014 23:01:28 +0200
+Subject: [PATCH 09/10] one more fix to RAM timing according to datasheet
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ board/at91sam9g45ek/at91sam9g45ek.c |    6 +++---
+ include/AT91SAM9G45_inc.h           |    8 +++++++-
+ 2 files changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/board/at91sam9g45ek/at91sam9g45ek.c b/board/at91sam9g45ek/at91sam9g45ek.c
+index 638ce6c..b57d6a4 100644
+--- a/board/at91sam9g45ek/at91sam9g45ek.c
++++ b/board/at91sam9g45ek/at91sam9g45ek.c
+@@ -196,15 +196,15 @@ void ddramc_hw_init()
+                                 AT91C_DDRC2_TRC_8   |    //  8 * 7.5 = 75   ns
+                                 AT91C_DDRC2_TRP_2   |    //  2 * 7.5 = 22.5 ns
+                                 AT91C_DDRC2_TRRD_XX |    //  see include/DDR2_MT47H_inc.h
+-                                AT91C_DDRC2_TWTR_1  |    //  1 clock cycle
+-                                AT91C_DDRC2_TMRD_2);     //  2 clock cycles
++                                AT91C_DDRC2_TWTR_2  |    //  2 clock cycles
++                                AT91C_DDRC2_TMRD_2);     //  2 clock cycles (note 37 in D.S.)
+ 
+     ddram_config.ddramc_t1pr = (AT91C_DDRC2_TXP_2 |     //  2 * 7.5 = 15 ns
+                                 200 << 16 |     // 200 clock cycles, TXSRD: Exit self refresh delay to Read command
+                                 16 << 8 |       // 16 * 7.5 = 120 ns TXSNR: Exit self refresh delay to non read command
+                                 AT91C_DDRC2_TRFC_14 << 0);      // 14 * 7.5 = 142 ns (must be 140 ns for 1Gb DDR)
+ 
+-    ddram_config.ddramc_t2pr = (AT91C_DDRC2_TRTP_1    |  //  1 * 7.5 = 7.5 ns
++    ddram_config.ddramc_t2pr = (AT91C_DDRC2_TRTP_2    |  //  2 * 7.5 = 15 ns (note 37 in D.S.)
+                                 AT91C_DDRC2_TRPA_XX   |  // see include/DDR2_MT47H_inc.h 
+                                 AT91C_DDRC2_TXARDS_XX |  // see include/DDR2_MT47H_inc.h
+                                 AT91C_DDRC2_TXARD_2);    //  2 clock cycles
+diff --git a/include/AT91SAM9G45_inc.h b/include/AT91SAM9G45_inc.h
+index a73fcd3..d41f919 100644
+--- a/include/AT91SAM9G45_inc.h
++++ b/include/AT91SAM9G45_inc.h
+@@ -396,6 +396,12 @@
+ #define AT91C_DDRC2_TWTR          (0x1 << 24)   // (HDDRSDRC2) Internal write to read delay
+ #define 	AT91C_DDRC2_TWTR_0                    (0x0 << 24)       // (HDDRSDRC2) Value :  0
+ #define 	AT91C_DDRC2_TWTR_1                    (0x1 << 24)       // (HDDRSDRC2) Value :  1
++#define 	AT91C_DDRC2_TWTR_2                    (0x2 << 24)       // (HDDRSDRC2) Value :  2
++#define 	AT91C_DDRC2_TWTR_3                    (0x3 << 24)       // (HDDRSDRC2) Value :  3
++#define 	AT91C_DDRC2_TWTR_4                    (0x4 << 24)       // (HDDRSDRC2) Value :  4
++#define 	AT91C_DDRC2_TWTR_5                    (0x5 << 24)       // (HDDRSDRC2) Value :  5
++#define 	AT91C_DDRC2_TWTR_6                    (0x6 << 24)       // (HDDRSDRC2) Value :  6
++#define 	AT91C_DDRC2_TWTR_7                    (0x7 << 24)       // (HDDRSDRC2) Value :  7
+ #define AT91C_DDRC2_TMRD          (0xF << 28)   // (HDDRSDRC2) Load mode register command to active or refresh command
+ #define 	AT91C_DDRC2_TMRD_0                    (0x0 << 28)       // (HDDRSDRC2) Value :  0
+ #define 	AT91C_DDRC2_TMRD_1                    (0x1 << 28)       // (HDDRSDRC2) Value :  1
+@@ -6352,4 +6358,4 @@
+ #define CHIP_SRAM0_BASEADDR 0x300000
+ 
+ //Hacks to include our DDR without modifying the whole board
+-#include "DDR2_MT47H_inc.h"
+\ No newline at end of file
++#include "DDR2_MT47H_inc.h"
+-- 
+1.7.7.2
+
