@@ -14,7 +14,8 @@ memcmp -s /dev/mem -d /env/magicstr 0x717FFFF8 0x0 8
 if [ $? -eq 0 ]; then
 	echo "Booting kernel for NAND flashing procedure"
 	dhcp 5
-	bootargs="console=ttyS0,115200 panic=10 mem=64M"
+	# It looks like our sam-ba setup, for installing, fails at mem=64M
+	bootargs="console=ttyS0,115200 panic=10 mem=32M"
 	bootargs="$bootargs initrd=0x71800000,4M"
 	bootargs="$bootargs root=/dev/ram0"
 	bootargs="$bootargs SERVERIP=$eth0.serverip WRS_INSTALLING=y"
