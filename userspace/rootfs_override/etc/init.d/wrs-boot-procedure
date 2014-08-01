@@ -24,15 +24,6 @@ insmod /lib/modules/2.6.39/kernel/g_serial.ko
 # See fstab:  /dev/pts, /tmp, /sys
 /bin/mount -a;
 
-# check sdram....
-for n in 00 04 08 0c 10 14 1c 20 24 2c 40 44 48 4c e4 e4; do
-    echo -n "0xffffe.$n: "
-    devmem 0xffffe4$n | busybox tr -d '\n'
-    echo -n " "
-    devmem 0xffffe6$n
-done
-
-
 # Allow me to have a shell at this point in time,
 # by passing WRS_INTERACTIVE=y in the command line.
 #echo "WRS_INTERACTIVE: \"$WRS_INTERACTIVE\""
