@@ -19,8 +19,8 @@ linux-2.6.39.tar.bz2            1aab7a741abe08d42e8eccf20de61e05 \
    http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.39.tar.bz2
 
 # our gateware binaries
-wrs-gw-v4.0-dev-20140710.tar.gz 9a96c0f5f134b3b04475fb89e9d2a290 \
-   http://www.ohwr.org/attachments/download/3080/wrs-gw-v4.0-dev-20140710.tar.gz
+wrs-gw-v4.0-20140807.tar.gz 60030b4f8d6e3ab7d2bbf231031fa026 \
+   http://www.ohwr.org/attachments/download/3212/wrs-gw-v4.0-20140807.tar.gz
 
 # buildroot core and packages
 buildroot-2011.11.tar.bz2        7b852f4ef17c63857ca7b9388b782070 \
