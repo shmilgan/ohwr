@@ -1135,9 +1135,6 @@ evaluation board without even changing the board name):
 The script @i{wrs_build_at91boot} uncompresses, patches and builds, leaving
 @code{images/@-at91bootstrap.bin} after it is over.  This file is
 the one to be loaded in the hardware.
-For simplicity, a known-working binary is part of the @i{binaries}
-directory of this package as @code{at91bootstrap.bin}, the same name used
-later in the installation instructions.
 
 If you build using a local @i{git} repository, we suggest to use
 @code{git am --whitespace=nowarn} because we have a number of
@@ -1215,11 +1212,6 @@ in two lines with a local variable to fit the page with in documentation):
    BR=${WRS_OUTPUT_DIR}/build/buildroot-2011.11
    export CROSS_COMPILE=${BR}/output/host/usr/bin/arm-linux-
 @end smallexample
-
-A pre-built binary is available as @code{binaries/barebox.bin}.
-The ELF version is copied to @i{images} as well, as
-@code{images/barebox}; this file includes the symbol table and may (or
-may not) be useful.
 
 @c ==========================================================================
 @node The Linux Kernel
