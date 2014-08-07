@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month July 2014
+@set update-month August 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -60,7 +60,7 @@
 
 This document describes the software build procedures for the White
 Rabbit Switch.  The procedure described is for version 3.3 of the
-hardware project and post-v3.3 software package.
+hardware project and the official v4.0 release of the software.
 If you are running the official 3.3 release, please
 refer to the associated manual (at
 @url{http://www.ohwr.org/attachments/download/2264/wr-switch-sw-v3.3-20130725_build.pdf},
@@ -1416,8 +1416,8 @@ binaries you just compiled (but the script is not compiling gateware).
 
 If the variable is not set, the script extract a tar file downloaded
 from @code{ohwr.org} as part of the initial download step. The tar is
-currently called @code{wrs3-gw-v3.0-20120801.tar.gz} and has been
-build from the @code{wr-switch-sw-v3.0} of the @code{wr-switch-hdl}
+currently called @code{wrs-gw-v4.0-20140807.tar.gz} and has been
+build from the @code{wr-switch-sw-v4.0} of the @code{wr-switch-hdl}
 repository.  Please note that the repository uses @i{git} submodules,
 so it depends on other @code{ohwr} repositories too, which in turn
 have not been tagged because the submodule mechanism ensures you'll
@@ -1431,9 +1431,8 @@ The LM32 program is provided as a pre-compiled binary in
 
 If you need to rebuild the @t{rt_cpu.bin} file from source, to make
 your own modifications, you can run @t{make wr_switch_defconfig}
-in @i{wrpc-sw} and then @t{make}.  The exact commit identifier
-is stored in the binary itself, and you can get it back using
-``@t{strings binaries/rt_cpu.bin | grep wrpc}''.
+in @i{wrpc-sw} and then @t{make}. Please checkout the @code{wr-switch-sw-v4.0}
+tag to get the exact commit.
 
 @c ==========================================================================
 @node The Complete Filesystem
