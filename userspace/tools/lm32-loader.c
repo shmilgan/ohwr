@@ -84,20 +84,19 @@ void copy_lm32(uint32_t *buf, int buf_nwords, uint32_t base_addr)
 	printf("OK.\n");
 }
 
+/* being a lazy bastard, I fork a process to avoid free, munmap etc */
 int load_lm32_child(char *fname)
 {
 	uint32_t *buf;
 	FILE *f;
 	int fdmem;
 
-	/* /dev/mem for mmap of both gpio and spi1 */
 	if ((fdmem = open("/dev/mem", O_RDWR | O_SYNC)) < 0) {
 		fprintf(stderr, "%s: /dev/mem: %s\n", __func__,
 			strerror(errno));
 		exit(1);
 	}
 
-	/* map a whole page (4kB, but we called getpagesize to know it) */
 	base_fpga = mmap(0, SIZE_FPGA, PROT_READ | PROT_WRITE,
 		       MAP_SHARED, fdmem,
 		       BASE_FPGA);
@@ -127,8 +126,6 @@ int load_lm32_child(char *fname)
 	rst_lm32(1);
 	copy_lm32(buf, (size + 3) / 4, 0);
 	rst_lm32(0);
-
-//	mbn_stats(mb_handle);
 
   return 0;
 }
