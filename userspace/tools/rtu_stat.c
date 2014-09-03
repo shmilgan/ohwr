@@ -89,8 +89,8 @@ void fetch_rtu_fd(rtudexp_fd_entry_t *d, int *n_entries)
 		//	printf("num_rules %d\n", list.num_rules);
 
 		memcpy( d+n, list.list, sizeof(rtudexp_fd_entry_t) * list.num_rules);
-		start=list.next;	
-		n+=list.num_rules;	
+		start=list.next;
+		n+=list.num_rules;
 	} while(start > 0);
 
 	//	printf("%d rules \n", n);
@@ -142,8 +142,8 @@ char *decode_ports(int dpm)
 	if((dpm & ((1<<plist.num_physical_ports)-1)) == ((1<<plist.num_physical_ports)-1))
 	{
 		strcpy(str,"ALL");
-		return str;		
-	}	
+		return str;
+	}
 	strcpy(str,"");
 
 
@@ -152,13 +152,13 @@ char *decode_ports(int dpm)
 	{
 		sprintf(str2,"%d ", i);
 		if(dpm&(1<<i)) strcat(str,str2);
-	}	
+	}
 
 	if(dpm & (1<<plist.num_physical_ports))
 		strcat(str, "CPU");
 
 	return str;
-}            
+}
 
 void show_help(char *prgname)
 {
@@ -244,11 +244,11 @@ int main(int argc, char **argv)
 
 	for(i=0;i<n_fd_entries;i++)
 	{
-		printf("%-25s %-12s %2d          %s (hash %03x:%x)   ", 
-			mac_to_buffer(fd_list[i].mac,mac_buf), 
-			decode_ports(fd_list[i].dpm), 
+		printf("%-25s %-12s %2d          %s (hash %03x:%x)   ",
+			mac_to_buffer(fd_list[i].mac,mac_buf),
+			decode_ports(fd_list[i].dpm),
 			fd_list[i].fid,
-			fd_list[i].dynamic ? "DYNAMIC":"STATIC ", 
+			fd_list[i].dynamic ? "DYNAMIC":"STATIC ",
 			fd_list[i].hash,
 			fd_list[i].bucket);
 		if(fd_list[i].dynamic)

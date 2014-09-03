@@ -154,7 +154,7 @@ void print_chosen_cnts( int cnts_list[], int n_cnts)
 {
 	int cnt = 0;
 	int port = 0;
-	
+
 	printf("P |");
 	for(cnt=0; cnt<n_cnts; ++cnt)
 		printf("%2d:%s", cnts_list[cnt],info[cnts_list[cnt]]);
@@ -214,7 +214,7 @@ int main(int argc, char **argv)
 	}
 
 	if(pstats_init()) return -1;
-	
+
 	while(1)
 	{
 		printf("\033[2J\033[1;1H");

@@ -44,7 +44,7 @@ static uint32_t fpga_readl(uint32_t addr)
 
 int conv_endian(int x)
 {
-  return ((x&0xff000000)>>24)
+	return ((x&0xff000000)>>24)
 	  + ((x&0x00ff0000)>>8)
 	  + ((x&0x0000ff00)<<8)
 	  + ((x&0x000000ff)<<24);
@@ -63,22 +63,22 @@ void copy_lm32(uint32_t *buf, int buf_nwords, uint32_t base_addr)
 
   for(i=0;i<buf_nwords;i++)
   {
-  	fpga_writel(conv_endian(buf[i]), base_addr + i *4);
-  	if(!(i & 0xfff)) { printf("."); fflush(stdout); }
+	fpga_writel(conv_endian(buf[i]), base_addr + i *4);
+	if(!(i & 0xfff)) { printf("."); fflush(stdout); }
   }
 
   printf("\nVerifing memory: ");
 
   for(i=0;i<buf_nwords;i++)
   {
-  	uint32_t x = fpga_readl(base_addr+ i*4);
+	uint32_t x = fpga_readl(base_addr+ i*4);
 	if(conv_endian(buf[i]) != x)
 	{
-	 	printf("Verify failed (%x vs %x)\n", conv_endian(buf[i]), x);
-	 	return ;
+		printf("Verify failed (%x vs %x)\n", conv_endian(buf[i]), x);
+		return ;
 	}
 
-  	if(!(i & 0xfff)) { printf("."); fflush(stdout); }
+	if(!(i & 0xfff)) { printf("."); fflush(stdout); }
   }
 
 	printf("OK.\n");
@@ -108,26 +108,26 @@ int load_lm32_child(char *fname)
 	}
 
 
-   	f=fopen(fname,"rb");
-   	if(!f)
-   	{
-   	 	fprintf(stderr, "Input file not found.\n");
-   	 	return -1;
-   	}
+	f=fopen(fname,"rb");
+	if(!f)
+	{
+		fprintf(stderr, "Input file not found.\n");
+		return -1;
+	}
 
-   	fseek(f, 0, SEEK_END);
-   	int size = ftell(f);
-   	rewind(f);
+	fseek(f, 0, SEEK_END);
+	int size = ftell(f);
+	rewind(f);
 
-   	buf = malloc(size + 4);
-   	fread(buf, 1, size, f);
-   	fclose(f);
+	buf = malloc(size + 4);
+	fread(buf, 1, size, f);
+	fclose(f);
 
 	rst_lm32(1);
 	copy_lm32(buf, (size + 3) / 4, 0);
 	rst_lm32(0);
 
-  return 0;
+	return 0;
 }
 
 int load_lm32_main(char *fname)

@@ -171,7 +171,7 @@ static int load_fpga_child(char *fname)
 
 	/* enable SSC controller clock */
 	__PMC(AT91_PMC_PCER) = 1<<AT91SAM9G45_ID_SSC0;
-	
+
 	__SSC(AT91_SSC_CR) = AT91_SSC_SWRST;
 	__SSC(AT91_SSC_CR) = 0;
 
