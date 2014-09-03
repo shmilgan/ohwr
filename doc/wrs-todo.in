@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month August 2014
+@set update-month September 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -206,8 +206,9 @@ no change there would be needed if and when the counters change.
 @item We should have SDB in the switch gateware, to simplify a number
 of things and avoid explicit addresses in so many places.
 
-@item the ``pstats'' counters should export a version (even before SDB
-is used). Thus, the kernel driver will know what the counters are, and
+@item The ``pstats'' counters should export a version (even before SDB
+is used). (@b{Update}: it is there, it just not used yet -- thanks Greg).
+Thus, the kernel driver will know what the counters are, and
 we could run different gateware images with the same filesystem, because
 the driver will support the various versions counter sets.
 
@@ -342,6 +343,24 @@ the code base stronger and more maintainable.
 neighbors, and to advertise ourselves as a more ``complete'' PTP
 implementation.
 
+@item WR GrandMaster Switch should be holy provided it has an
+external reference. Currently if we have a GrandMaster Switch and we
+connect a Free-running Master to it's Slave port (wr0) then it becomes
+Slave to the Free-running Master and jumps it's WR time.  All the
+mechanism is in place, this should be trivial to fix.
+
+@item If Slave is in TRACK_PHASE state and a time jump occurs it doesn't
+reset its servo. It stays in TRACK_PHASE forever with a huge offset.
+That is something we've already observed in AD test system for
+Jean-Claude when GrandMaster was unlocking from the reference GPS. Not
+following the time jump will be also a problem if we power on in the
+same time all switches in the chain with GrandMaster on the top. It
+takes some time for GM to lock so the network would start as
+free-running to the second switch in the chain, but once GM is
+synchronized all slaves will stay in TRACK_PHASE with large offset to
+GrandMaster.
+
+
 @end itemize
 
 @c ##########################################################################
@@ -356,7 +375,7 @@ for every switch-specific thing.  (Actually, @t{wrs_} would be better,
 as it doesn't look like ``software'' and we use wrs/wrn internally already,
 but several tools use @t{wrsw_} as a prefix already. 
 We fixed the ``shower'' name -- (@t{shw_ver}: switch hardware version),
-but more are there.
+but more are there. (@b{Update}: Greg says to use @t{wrs_} and do it soon).
 
 @item A number of tools @t{mmap()} FPGA memory, but there is no
 locking so it is (remotely) possible for tools to interfere and get
@@ -407,7 +426,8 @@ I must learn how to deal with read-write objects before trying to
 extend our MIB.
 
 @item There is no support yet for sending traps on WR events.
-We'll likely won't to notify WR time jumps and lock/unlock events.
+This is even more important thatn @i{set}, because we want to notify
+WR time jumps and lock/unlock events.
 
 @item We need to seriously audit the web interface, and verify
 everything is hooked properly to the system.  This relates to the
