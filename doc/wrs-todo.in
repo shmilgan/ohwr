@@ -100,14 +100,6 @@ its place is the software repository. Other people's opinion differ.
 @item Documentation about the web interface (by 7S) must find a proper
 place in the overall design, too.
 
-@item This document, and likely the @t{snmp-pain} one, should be made
-available to users, somehow. We need to choose how.  I have nothing against
-putting both in the @t{doc} directory of @t{wr-switch-sw}, as we should
-not be shy about our own errors and problems, but I need an acknowledge
-from higher levels about this.  (As a positive side effect, by being part
-of the package the documents will remain up to date to the exact
-version you check out -- as long as developers are careful enough.
-
 @end itemize
 
 
