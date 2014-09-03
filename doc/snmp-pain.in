@@ -1,0 +1,660 @@
+\input texinfo    @c -*-texinfo-*-
+%
+% snmp-pain.in - main file for the documentation
+%
+%%%%
+
+%------------------------------------------------------------------------------
+%
+%                         NOTE FOR THE UNAWARE USER
+%                         =========================
+%
+%    This file is a texinfo source. It isn't the binary file of some strange
+%    editor of mine. If you want ASCII, you should "make snmp-pain.txt".
+%
+%------------------------------------------------------------------------------
+
+%
+% This is not a conventional info file...
+% I use three extra features:
+%   - The '%' as a comment marker, if at beginning of line ("\%" -> "%")
+%   - leading blanks are allowed (this is something I cannot live without)
+%   - braces are automatically escaped when they appear in example blocks
+%
+
+@comment %**start of header
+@documentlanguage en
+@documentencoding ISO-8859-1
+@setfilename snmp-pain.info
+@settitle snmp-pain
+@iftex
+@afourpaper
+@end iftex
+@paragraphindent none
+@comment %**end of header
+
+@setchapternewpage off
+
+@set update-month August 2014
+@c the release name below is substituted at build time
+@set release __RELEASE_GIT_ID__
+
+@finalout
+
+@titlepage
+@title SNMP Pain
+@subtitle Why (and how) I suffered while adding SNMP to White Rabbit
+@subtitle @value{update-month} (@value{release})
+
+@author Alessandro Rubini
+@end titlepage
+@headings single
+
+@c ##########################################################################
+@iftex
+@contents
+@end iftex
+
+@c ##########################################################################
+@node Top
+@top Introduction
+
+This summarizes my experience with @sc{snmp} and the WR switch, which
+has been a real pain to me.
+
+I know it's mainly me, as it looks like the rest of the world is
+happily using both @sc{snmp} as a protocol and @i{net-snmp} as a daemon.  I
+hope these notes may help other people within BE-CO-HT in finding a
+better way through @sc{snmp} and its implementations.
+
+This version of the document reflects the status of my knowledge and
+implementation as of @t{wr-switch-sw-v4.0}.
+
+As of Sep 2014 the document is included in the master branch of the
+repository because my mates consider is useful as refernce of what
+is there and why.  I'll try to keep it up to date with the various
+MIB object I add or modify.
+
+@c ##########################################################################
+@node The SNMP Protocol
+@chapter The SNMP Protocol
+
+The protocol itself is simple, as the name implies, but not really
+trivial to digest (unlike SMTP or HTTP, for example).  The datagrams
+are binary data: it makes sense for efficiency and to avoid writing a
+text parser in microcontrollers running the protocol, but it prevents
+testing using @t{telnet} or @t{wget}.
+
+The ``easiest'' testing tool is @i{snmpwalk}, which is bloated like
+the package it is part of. This is unavoidable for ``complete''
+implementations; my problem here is the lack of a simpler tool for
+an easy start. See @ref{Tools} for more details.
+
+@c =========================================================================
+@node Protocol Definition
+@section Protocol Definition
+
+@sc{snmp} is defined in the public RFC documents, but the list of them is
+too long to even list here -- it is really dozens of such documents.
+A good selection is found in the @t{doc/rfc} subdirectory of the
+@i{net-snmp} source archive.  Most of the relevant RFCs deal with
+defining MIB files (see @ref{The MIB Idea}), and the actual protocol
+bits (the frame format) is difficult to find.
+
+Actually, unlike most or all other IETF protocols, @sc{snmp} isn't really
+defined in any RFC, but relies on the @i{basic encoding rules} (ITU-T
+X.690) for the @i{abstract syntax notation} ASN.1 (i.e., again the MIB
+stuff).  So the huge lot of information out there tastes like a big loop of
+nothing, where everyone takes a lot for granted and refers to everyone
+else for details.  For me it was like learning Chinese relying on
+a number of Chinese dictionaries and nothing else.
+
+Eventually, after making sense of the protocol itself (mainly by
+sniffing and reverse engineering, while referring to the Chinese
+dictionaries any now and then), I finally changed my mind and agreed
+that it makes a good choice, and might be considered for the WR node
+as well (SPEC or equivalent). This however is not covered here.
+
+@c =========================================================================
+@node Basic Concepts
+@section Basic Concepts
+
+The network device runs an ``agent'' and the user runs a ``manager''.
+
+@sc{snmp} is based on the concept of management objects, that can be read
+or written.  So the requests a manager sends to agents are mainly
+``get'' and ``set''.
+
+Management objects are laid out in a tree. Thus an ``object
+identifier'' (OID) is like a pathname.  The textual representation of
+an OID uses a dot as a separator; the binary representation is an
+array of integers. For example WR owns the subtree
+``1.3.6.1.4.1.96.100'', where the ``...96'' is CERN and ``....1'' is
+for organizations. Identifiers are allocated by relevant organizations:
+CERN gave us our ``100'' and we are responsible for further levels.
+
+The manager can travel the whole tree or a subtree using a special
+``get next'' request.
+
+Additionally, an agent can send traps, but I have no experience with
+generating custom traps.
+
+@c =========================================================================
+@node The MIB Idea
+@section The MIB Idea
+
+The main aim of @sc{snmp} is being simple for the agent, while still
+remaining flexible. Thus the choice of a binary protocol and a get/set
+approach with an extensible tree of objects as described.
+
+When using a binary protocol on the wire and a simple pathname-based
+tree with integers as path components, the need for an higher-level
+description of the item arises immediately.  The solution adopted by
+@sc{snmp} designers is relying on a very-flexible and very-abstract notation:
+ASN.1, as already noted.
+
+Each and every management object is thus defined by a MIB, short for
+@i{management information base}. At least in the golden theory.  A MIB
+is a text file, with a very boresome structure, usually suffering from
+an over-engineering syndrome.  I must admit, though, that the thing
+was over-engineered enough to survive the decades passing: it allowed
+casting of a number of new and unexpected needs into this old and
+unpleasant abstract notation; modern and complex management tools can
+make sense of unforeseen management objects, thanks to their
+description found in the MIB file.
+
+The @sc{snmp} mantra is ``everything is a MIB''. Or ``just write the MIB
+and everything will automatically follow''. The theory says that
+the MIB text file can be parsed by the manager's application to show
+an user-friendly view of any object; it says that it can be parsed by
+the command-line tools so to use user-friendly names in the requests;
+it says that it can be parsed by the agent to create reply frames; that
+it can be parsed by a code-generator to fill he low-level bits. 
+
+So @sc{snmp} is mainly boring stuff for bureaucrats. Everything is hidden
+behind ASN.1: it either magically works or it magically fails; there
+is no clear documentation of the various levels of software or
+protocol, because it is claimed to ``just work'', which is not always
+true, despite theory.  Also, in practice sensible implementations avoid
+the suggested MIB-driven path.
+
+In the end, the @i{wr-switch-sw} package includes
+@t{WR-SWITCH-MIB.txt}, but clearly it's not true that this file is the
+whole of it.
+
+@c ##########################################################################
+@node Choosing an Agent
+@chapter Choosing an Agent
+
+When adding @sc{snmp} support to a network device, you should always at
+least include the standard management objects, the ones that every
+manager expects to find on the system.  This is the list of network
+interfaces, their features, their traffic statistics, and so on.
+
+Thus, writing your own is not an option: it doesn't make sense to have
+an incomplete wr-switch @sc{snmp} support, and re-implementing the huge
+number of standard management objects in a custom @sc{snmp} implementation
+is too big an effort to even consider it.
+
+I therefore looked at available free-software implementations.
+
+@c =========================================================================
+@node Requirements for WR
+@section Requirements for WR
+
+In order to choose a proper @sc{snmp} engine, we first need to know what
+we expect from it.  This a quick attempt at summarizing our requirements:
+
+@itemize @bullet
+
+@item We need support for all the basic actions, including traps, even if
+version 4 is not yet using them.
+
+@item We need to customize standard tables. This
+mainly involves VLAN support, because the WR switch needs a different
+backend than the normal kernel-driven Linux VLANs. Again, not yet
+implemented in version 4.
+
+@item We need to add a custom subtree, that includes both simple items
+and tables. Simple items are things such as the version string and the
+current time (the former is static and the latter is dynamic); tables
+are things such as the per-port statistic counters or the PTP slave
+list, if and when we choose it implement it.
+
+@end itemize
+
+@c =========================================================================
+@node net-snmp
+@section net-snmp
+
+Everybody, in the Unix world, is using @i{net-snmp}.
+
+This is a big and bloated implementation, using GNU autotools for
+configuration, shared libraries and everything else. It includes
+``simple'' tools for querying agents using the command line, and the
+usual bells and whistles.
+
+It is included in all Linux distributions, both hosted and embedded ones,
+and it really looks like the only choice available.  So we installed
+this one in the WR switch, by selecting the proper packages in our
+@i{buildroot} configuration.
+
+Documentation for @i{net-snmp} is mainly online: the promising @t{doc}
+subdirectory in the source tree only hosts the RFC documents, but
+fortunately @t{man/} includes documentation for the API and basic
+daemon use.  Tutorials and all the rest are available on the project
+site.  This means, among other things, that you can't access most
+documentation while off-line (like I am while writing this document)
+and you can't easily get documentation for the specific version you
+are using, excluding the manual pages.
+
+Still, the documentation is quite complete and well-done, though
+featuring the @sc{snmp}-wide misfeature of taking a lot for granted, it is
+useful for an expert user but not a great way to become one such beast.
+
+@c =========================================================================
+@node Other agents
+@section Other agents
+
+Simply put, there are no other choices other than @i{net-snmp}.  A
+number of proprietary implementations exist, but the free world seems
+bound to this implementation.
+
+(This section needs an update with the aid of a net search; I did it
+back then but since I found nothing I didn't save the results; and
+I'm now offline while writing this).
+
+@c =========================================================================
+@node Sub-agents
+@section Sub-agents
+
+Adding custom tables to an @sc{snmp} agent is a common requirement, so
+RFC-2741 defines the @i{AgentX} protocol.  The protocol is run on a
+local socket interface, and allows registering handlers for specific
+subtrees.  @i{net-snmp} supports the AgentX protocol, so this looked
+like an interesting option.
+
+This is the result of my evaluation:
+
+@itemize @bullet
+
+@item It is definitely not much used. I could not find any mainstream user
+of the feature; @t{lldpd} is the only one Debian package that names
+AgentX but it looks like the feature is not used in the Debian build.
+
+@item The code base supports both C and Perl bindings, the preferred
+one being Perl. Besides any performance concern, we can't easily run Perl
+on the WR switch because @i{buildroot} doesn't support it.
+
+@item It looks like support in @i{net-snmp} is incomplete, but I can't
+currently find the reference about this while being offline.
+
+@end itemize
+
+Still, AgentX looked promising, so I evaluated the thing.  The most
+interesting path being the various Python implementations: we already
+have Python in the WR Switch, because @i{buildroot} supports it and we
+needed it for the production test suite.
+
+There are three Python implementations, as far as I know:
+
+@table @code
+
+@item https://github.com/rayed/pyagentx
+
+	A 2013-2014 implementation, BSD license.  This only implements
+        ``get'' and ``get-next'' so it doesn't support our post-v4.0
+        needs.
+
+@item https://pypi.python.org/pypi/agentx/0.7
+
+	This is a 2010 GPL implementation. It looks a little too small
+        and simplified. I feared support dynamic tables herein would not
+        be easy.
+
+@item https://pypi.python.org/pypi/netsnmpagent/0.5.0
+
+	A 2012-2013 implementation, GPL3.  This seems serious, and it
+        paints itself as the result of a lot of frustration using the
+        available tools, something I sympathize with. It credits
+        @i{agentx} (preceding item in this list).  Unfortunately traps
+        are still missing.
+
+@end table
+
+The last option seems a viable one, but I eventually ruled it out
+because I'm not confident enough with Python to easily master it (for
+example, I'm sure I wouldn't be able to add traps in a reasonable time
+frame), and our WR management objects require a C language backend, at
+times -- which is another area where my Python lacks.
+
+Likely I was also scared by the length of the @t{SIMPLE-MIB.txt} it
+includes, even if in the end I wrote my MIB anyways.
+
+After evaluating sub-agents, I chose to stick to the shared-library
+mechanism offered by @i{net-snmp}, as described in later chapters.
+
+@c =========================================================================
+@node Tools
+@section Tools
+
+As said, I didn't find any simple tool to make @sc{snmp} queries. So I stuck
+to @t{snmpwalk}.  It's worth noting that @t{pysnmpwalk} (part
+of the @t{python-pysnmp4-apps} Debian package) works as well, with a
+compatible command line and output format.
+
+The reason why @t{snmpwalk} is not simple enough for me, is that it
+includes a MIB parser, in order to turn numeric pathnames and data into
+user-friendly names and values.
+
+I won't repeat here how to use the tool (see other documentation or
+the trivial examples in the @t{wr-switch-sw} manual), but I'll note
+that @t{-d} provides a dump of @sc{snmp} frames being sent and received,
+which is a good helper to understand what is happening under the hood,
+and hopefully avoiding a detailed read of the ITU specification for
+basic encoding.
+
+@c ##########################################################################
+@node Using the Code Generator
+@chapter Using the Code Generator
+
+What @i{net-snmp} suggests is the use of its own code generator,
+which outputs C sources built from a specified MIB file and command-line
+options. The generator is called @i{mib2c}.
+
+There are a number of drawbacks in using the generator, so I finally
+refrained from and chose to write code using the internal API
+
+@itemize @bullet
+
+@item The generated code includes parts that must be filled before it
+      can build and parts just marked as ``@t{XXX}'' but that otherwise
+      build. Thus, you really need to review the whole ``generated'' files
+      to bring them to a working state.
+
+@item Some of the calls to be filled are normal API calls, so you need
+      to be confident with @i{net-snmp} internal data structures; the
+      same effort you need to spend before you are able to write code
+      by yourself.
+
+@item The code is laid out as a number of big @t{switch} stanzas, without
+      relying on data structures. This makes editing the generated files
+      a heavy, repeating and failure-proof procedure.
+
+@item The generated code includes a number of repetitions, so the same edits
+      must be redone at least twice (like filling the same @t{switch}
+      construct in two different places.
+
+@item There are a number of options for the code generator: @i{mib2c}
+      uses a number of different templates, and I'm pretty sure not
+      all of them are used in practice; so I fear making the wrong choice
+      and finally hit bugs that are not my own.
+
+@item Experimenting several options to compare them is unfeasible, because
+      every edit to fill specific data structures must be redone each
+      time.  Similarly, you risk making the wrong choice and redo the
+      edits under a different template at a later time.
+
+@item @i{mib2c} leaks object names found in the MIB file into the source
+      code it outputs, and it does it everywhere in the output files. Thus,
+      during development, you'll need to redo your
+      edits several times to keep the C files in sync with a moving MIB
+      definition. And the usual trick of re-applying the same patch doesn't
+      always work, because the MIB names appear all around the generated
+      file.
+
+@item Documentation claims that the standard @i{net-snmp} modules are
+      based on @i{mib2c}, but while looking at the actual code I
+      didn't really found such traces. I admit that grepping for
+      ``@t{auto-generated by mib2c}'' on the source tree finds a
+      number of matches, but most of them look heavily edited, and
+      none of them matches my expectations of a ``simple'' file.
+
+@end itemize
+
+I used the generator for the initial trial, @i{wrsScalar}, as
+described in detail in @ref{wrsScalar}, but then I gave up. My failed
+experiments are still part of the @t{netsnmp-pain} branch, pushed to
+@t{ohwr.org}.
+
+For example, commit @t{ed1d654} uses the ``mib for dummies'' option of
+@i{mib2c} for the @t{pStats} table included in the local WR MIB file.
+This crated 4000 lines of source code, in 12 files, and 1000 lines of
+``README'' files. I would take days just to make sense of them.
+
+The final statistics source file, not using the generator, is 230
+lines of code.
+
+@c ##########################################################################
+@node Writing Real Code
+@chapter Writing Real Code
+
+In the end, I managed to make the thing work, using different
+approaches for the different objects in the WR subtree.  The objects
+currently defined are the following ones, all under
+@t{.1.3.6.1.4.1.96.100}, as defined in @t{WR-SWITCH-MIB.txt}:
+
+@example
+   wrsScalar     OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
+   wrsPstats     OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }
+   wrsPpsi       OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }
+   wrsVersion    OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }
+   wrsDate       OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }
+@end example
+
+All of the objects are read-only as of @t{wr-switch-sw-v4.0}.  The
+CamelCase naming convention matches what is found all over
+@t{net-snmp}.
+
+The various source files are built as a shared library; the
+configuration file of @t{snmpd} instructs it to load the library at
+run time.
+
+Documentation claims that the same source files can be compiled to run
+as an AgentX process or be directly linked to the @t{snmpd} binary.  I
+chose the shared-library build because this avoids patching
+@t{net-snmp} within @i{buildroot}: maintaining direct source files
+rather than patches is way easier.  I didn't feel safe in using the
+little-practiced AgentX protocol (especially for the upcoming ``set''
+queries). Last but not least, the shared library build is what
+Integrasys successfully used for version 2 of the WR switch.
+
+@c =========================================================================
+@node wrsScalar
+@section wrsScalar
+
+This is my first trial in making sense of the thing, and has no
+relevance for White Rabbit. The object is an integer that is
+incremented each time it is read.  The source file comes from @i{mib2c}
+using this ``intuitive'' sequence of commands (assuming you
+build @t{wr-switch-sw} and @t{WRS_OUTOUT_DIR} is available.
+
+@example
+   export BUILD_DIR="$WRS_OUTPUT_DIR/build/buildroot-2011.11/output/build"
+   export MIBDIRS=$BUILD_DIR/netsnmp-5.6.1.1/mibs
+
+   export MIBS=./WR-SWITCH-MIB.txt
+   $BUILD_DIR/netsnmp-5.6.1.1/local/mib2c \
+          -I $BUILD_DIR/netsnmp-5.6.1.1/local \
+          -c mib2c.scalar.conf \
+          wrsScalar
+@end example
+
+In practice, you need to set @t{MIBSDIR} and @t{MIBS} in the
+environment, so both your own MIB and the ``standard'' ones are
+available to the tool.  Standard MIBs are needed to get type
+definitions, using an ``import'' statement. Then you point your @i{-I}
+to @i{mib2c} inside @i{net-snmp} itself and execute the program from
+the same place.
+
+The integer itself, like all scalar values, is returned in
+item ``0'' of the subtree (thus, @t{1.3.6.1.4.1.96.100.1.0}).
+
+@c =========================================================================
+@node wrsPstats
+@section wrsPstats
+
+@c -------------------------------------------------------------------------
+@node The pStats Table
+@subsection The pStats Table
+
+This subtree, @t{wrSwitchMIB.2}, is a table.  All tables in @sc{snmp} are
+described as being made of ``lines'' and ``columns''. The columns are
+hardwired (in the MIB and in the code), and the lines can be dynamic
+(this matches how people usually write tables).
+
+The OID scanning, however, is reversed from our habit and the tables
+are returned column by column.  This happens because columns are
+defined in the MIB (each column is a directory, or a subtree, in the
+pathname of OIDs) while lines being dynamic can only appear as
+trailing items in the scanning.
+
+This implies, among other things, that any piece of code returning a
+dynamic table should build an internal data structure representing the
+whole table, in order to be able to consistently report the same lines
+for each column.
+
+Usually in a network-related table, the predefined columns represent
+the counters (tx/rx byte, errors, and so on) and each network
+interface is a line.  This approach allows the same MIB to work for
+every possible configuration.  For WR port statistics we chose a
+different approach: the counters themselves are somehow dynamic (they
+may change across versions, while the gateware develops) while the
+interfaces are restricted to be in the set @t{wr0}--@t{wr17}.
+
+So our pStats table is reversed from the common use of @sc{snmp} tables.
+As a side effect this allows the WR switch to return the name of each
+counter, in column 0. This allows greater flexibility when we'll have
+a new set of counters: the user-space tools will know the role of the
+new set of counters without any need to change them or the MIB file
+(we'll still need to change Switch @sc{snmp} code to match the new gateware.
+
+@c -------------------------------------------------------------------------
+@node pStats Code
+@subsection pStats Code
+
+After several distressing attempts with @i{mib2c}, still present in
+the history of the @i{netsnmp-pain} branch in the @t{wr-switch-sw}
+repository, I chose to base my code on the ``tcpTable'' implementation
+that is present in the core @i{net-snmp} implementation.  The TCP
+table does not use any @i{mib2c} template but is rather using directly
+the API.  To be exceedingly safe in my steps, I started by replicating
+the TCP table under the WRS subtree, and then I changed it
+step-by-step to support the counters. Each and every small commit is
+still in the @i{netsnmp-pain} branch, but the final source file was
+separately committed to @i{snmp-for-wrs}, which was later merged to
+@i{master}.
+
+As described in @ref{The pStats Table}, @sc{snmp} tables are first filled
+in local memory and then returned item-by-item to the network manager.
+Table filling is performed by @t{wrsPstats_load()}, registered by
+@t{init_wrsPstats()} using @t{netsnmp_inject_handler()}.  Unlike what
+happens in the TCP table, that allocates memory, I use static storage
+to load the counter values.  Then @t{wrsPstats_first_entry()}
+and @t{wrsPstats_next_entry()} are used to scan the table, building the
+indexes, but the actual value is returned by @t{wrsPstats_handler()}.
+I suspect the thing is not very efficient overall.
+
+One thing I found especially unpleasant in this implementation is the
+use of ``context pointers'' in looping through the table. The API
+supports the idea of a @t{loop_context} and @t{data_context}, but
+elsewhere the loop context is called @t{iterator_context}. This
+mismatch in naming in the tcpTable is now inherited in wrsPstats,
+but sooner or later I'll fix it. As a side effect, I now use
+the two contexts concurrently in an ambiguous way.  No, I'm not
+proud of this code.
+
+I don't feel confident with all the data structures as yet, and there
+still is some magic in all of this.  This is confirmed by a buglet in
+the current code, that makes @i{snmpwalk} always return one item after
+the end of the table -- most likely I need to fix @t{next_entry()}
+to return @t{NULL} earlier.
+
+@c =========================================================================
+@node wrsPpsi
+@section wrsPpsi
+
+This subtree was written in a hurry, and I feel likely we have some
+buglets; for example ``servo updates'' is the number of iterations,
+which will never exceed 32 bits, but it is reported using a 64-bit
+counter.  Moreover, not all management objects are actually filled,
+but I chose to nail down the MIB even if the code is not completely
+there.
+
+This @t{wrSwitchMIB.3} is split in two subtrees: @t{wrSwitchMIB.3.1}
+is an array of scalar values (all of them instantiated as @t{.0});
+@t{wrSwitchMIB.3.2} is a table.  Most functions in the code
+use @t{ppsi_g} for globals and @t{ppsi_p} for the per-port table.
+
+To keep the code compact and extensible, I chose to @t{popen(3)} a
+connection to existing tools.  The tools report information to
+@i{stdout} in a line-oriented tagged-format: ``@t{<key>: <value>\n}''.
+Thus, @t{wr_mon} now supports @t{-g} (``@t{SHOW_SNMP_GLOBALS}'') and
+@t{-p} (``@t{SHOW_SNMP_PORTS}'').  By pre-setting environment variables
+it's also possible to override the command names, for testing; see
+source code for details.
+
+Parsing is implemented using a @t{pickinfo} structure, where each key
+is associated to a data type, a pointer and a size.  This is is used
+to actually @t{sscanf} the value into a global structure.  The same
+``pickinfo'' table is later used to feed the binary data to @sc{snmp}.
+
+This parsing trick is concise and completely debugged/tested, so I
+plan to use to more widely when cleaning up and extending this WR @sc{snmp}
+support.
+
+The table of per-port values is scanned using the same steps as of
+@i{wrsPstats} (i.e. the tcpTable way, using the @i{net-snmp} iterator
+API).
+
+The global items are registered as a ``scalar group'' using the
+@i{net-snmp} API. I used @t{disman/expr/expScalars.c} as a reference
+and starting point. The function @t{ppsi_g_group()} refreshes the
+values (by calling @t{wr_mon -g}) whenever a request happens more than
+1 second later than the previous refresh. I'm aware this is a quick
+hack, but it works reliably without learning too many intricated API
+calls.
+
+@b{Note:} due to a bug in current @i{snmpwalk} implementations and
+64-bit values, 64-bit counters are returned with the two halves
+swapped.  Also, there is no ``signed'' 64-bit value defined anywhere
+in @sc{snmp}, thus the picosecond signed offset will be represented by
+tools as a huge number when it actually is a small negative value.
+
+@c =========================================================================
+@node wrsVersion
+@section wrsVersion
+
+The version is an array of scalars, so I used the ``scalar group''
+approach like the global PPSi values described in @ref{wrsPpsi}.
+
+The implementation is easier, because I rely on the fact that versions
+never change while the process runs. So I retrieve the version strings
+at initialization time, by calling ``@t{wrsw_version -t}'' (tagged)
+and parsing its @i{stdout}.  Parsing is easier than what we have in
+@i{wrsPpsi}, but my plan is having a unified parser overall, and eventually
+get rid of this simplified special case.
+
+@c =========================================================================
+@node wrsDate
+@section wrsDate
+
+This subtree includes two scalars: the TAI seconds as a ``counter64''
+value, and the human-readable equivalent string.
+
+The code uses a scalar group, as other subtrees described above already did.
+It maps @sc{fpga}  memory to get the WR date and return it as scalar @sc{snmp}
+values.
+
+@b{Note:} due to a bug in current @i{snmpwalk} implementations and
+64-bit values, the two halves of the 64-bit date are returned swapped.
+We feel returning a 32-bit value would be a worse choice, not being
+2038 safe.  When the bug is overall fixed, we'll be able to avoid
+word-swapping and be 2038-safe without changing the MIB file.
+
+
+@bye
+
+@c  LocalWords:  snmp wrSwitchMIB netsnmp ohwr snmpwalk AgentX buildroot
+@c  LocalWords:  pStats gateware wrsScalar wrsPstats wrsPpsi wrsVersion
+@c  LocalWords:  wrsDate subtree pathname

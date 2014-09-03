@@ -1,0 +1,435 @@
+\input texinfo    @c -*-texinfo-*-
+%
+% wrs-todo.in - main file for the documentation
+%
+%%%%
+
+%------------------------------------------------------------------------------
+%
+%                         NOTE FOR THE UNAWARE USER
+%                         =========================
+%
+%    This file is a texinfo source. It isn't the binary file of some strange
+%    editor of mine. If you want ASCII, you should "make wrs-todo.txt".
+%
+%------------------------------------------------------------------------------
+
+%
+% This is not a conventional info file...
+% I use three extra features:
+%   - The '%' as a comment marker, if at beginning of line ("\%" -> "%")
+%   - leading blanks are allowed (this is something I cannot live without)
+%   - braces are automatically escaped when they appear in example blocks
+%
+
+@comment %**start of header
+@documentlanguage en
+@documentencoding ISO-8859-1
+@setfilename wrs-todo.info
+@settitle wrs-todo
+@iftex
+@afourpaper
+@end iftex
+@paragraphindent none
+@comment %**end of header
+
+@setchapternewpage off
+
+@set update-month September 2014
+@c the release name below is substituted at build time
+@set release __RELEASE_GIT_ID__
+
+@finalout
+
+@titlepage
+@title WRS-Todo
+@subtitle What is missing or lacking in wr-switch-sw (my own opinion)
+@subtitle @value{update-month} (@value{release})
+
+@author Alessandro Rubini
+@end titlepage
+@headings single
+
+@c ##########################################################################
+@iftex
+@contents
+@end iftex
+
+@c ##########################################################################
+@node Top
+@top Introduction
+
+This document lists the items I think are suboptimal in the current
+@t{wr-switch-sw} package.  This is Alessandro's own personal opition,
+but it is more or less agreed-with by other developers in the group.
+The items here more a wish list, or long-time planning, rather than
+a list of pending bugs. For that, please use the @i{issues} feature
+of @t{ohwr.org}.
+
+The document is now included in the master branch, because the list,
+seen as a review of the project, is considered useful. Besides, we are
+going to fix things over time, from September 2014 onwards, and this
+document will be shortened accordingly.
+
+@sp 1
+
+Some things are more important and some are less. Each developer has different
+judgment metrics, so I won't mark the items by importance; rather, they
+are split into topics and randomly listed within each of them.
+
+@c ##########################################################################
+@node Documentation
+@chapter Documentation
+
+@itemize @bullet
+
+@item @t{wrs-build} grew to not only cover building. It has some of
+the internals, which should be split off to somewhere else.
+
+@item We need a document about internals, but it would somehow conflict
+with the 7S user manual. We need to agree carefully about what lives
+where.  I started one, some time ago, which is not published anywhere;
+it still needs serious work but everything depends on how we split
+the material.
+
+@item The user manual is not part of the software package, and I'm not
+sure whether it should be or not -- it covers hardware as well.  But I
+really think a user manual is mainly about how to use the thing, so
+its place is the software repository. Other people's opinion differ.
+
+@item Documentation about the web interface (by 7S) must find a proper
+place in the overall design, too.
+
+@end itemize
+
+
+@c ##########################################################################
+@node Buildroot
+@chapter Buildroot
+
+@itemize @bullet
+
+@item Buildroot, the embedded distribution we are using, should be updated
+any now and then. This is not really needed or urgent at this point,
+but updating the distribution allows us to stay current with features
+people may expect on ``current'' networking gears.  This means porting
+and verifying our patches -- but they are few and it is not much work.
+
+@item The @i{net-snmp} configuration should be patched to avoid
+needless configuration items, like disk usage, processes and the list of
+installed packages.  For this we can lift a patch by Integrasys, that
+must be cherry-picked and verified on the current code base. As a matter
+of fact, the @i{snmpd} process is currently more than 1M in RAM footprint.
+
+@item @i{bash} should be the default interactive shell. The management
+of history in @i{barebox} is unacceptable (if you @i{ssh} in twice,
+the up-arrow will show interference between shells).
+
+@item We need a way to set a root password during configuration.
+
+@end itemize
+
+@c ##########################################################################
+@node Booting 
+@chapter Booting
+
+@itemize @bullet
+
+@item @i{dataflash} support in our version of @i{barebox} is not working.
+We need to either upgrade @i{barebox} or fix the bug.  I don't know
+whether the bug has been fixed in recent boot loader versions (last time
+I checked the @i{git} logs I found nothing meaningful, but it was around
+May 2014.
+
+@item We need to save some hardware information items to @i{dataflash}.
+Such information should never be modified after the switch is shipped.
+The plan is using SDB for it (i.e. SDBFS) but we must define proper
+procedures and prevent accidental erasure of such data. This is urgent,
+and we need it by September for release 4.1.
+
+@item Installation and run-time boots in two different ways. At installation
+we do everything using the @i{sam-ba} tools, while runtime relies on
+@i{at91boot}.  This means we are currently maintaining two different
+and very different code bases; SDRAM and clocks configuration is
+done twice, in different ways.  Both code bases are horrible-quality
+code, so we wasted a lot of time already, and more is expected -- all of
+this twice. We should get rid of the @i{sam-ba} tools
+and use @i{at91boot} for installation.  Not trivial, because @i{at91boot}
+loads the boot loader from storage, while at installation it must stop
+waiting for the boot loader to be sent to RAM from USB.
+
+@end itemize
+
+@c ##########################################################################
+@node Kernel and Drivers
+@chapter Kernel and Drivers
+
+@itemize @bullet
+
+@item 2.6.39 is pretty old nowadays. We should move to a recent kernel.
+Unfortunately this means writing the ``device tree'' crap for our board,
+as everything nowadays is device-tree-based.  Which in my opinion has
+been designed by our competitors, to kill us slowly and painfully.
+In addition, our patches must be ported forward.
+
+@item The @i{wr-nic} driver is very similar to what we run for the SPEC,
+which is not surprising because the gateware is basically the same.
+We should make the two drivers identical.  I did some initial work
+on this, available in the @i{wr-nic-130207} branch, but it must be
+completed (a similar branch exists in @i{spec-sw}, changing the
+@t{wr-nic.ko} to use the same code base as the switch.
+
+@item We should push upstream the generic changes we made to the kernel,
+like increasing @t{NR_IRQ} and exporting symbols for externally-loaded
+@t{irq_chip} drivers.
+
+@item We'd benefit from having ``pstats'' names in @t{/proc/sys} where
+the counters are. This would make the @sc{snmp} code generic, so
+no change there would be needed if and when the counters change.
+
+@end itemize
+
+@c ##########################################################################
+@node Gateware
+@chapter Gateware
+
+@itemize @bullet
+
+@item We should have SDB in the switch gateware, to simplify a number
+of things and avoid explicit addresses in so many places.
+
+@item The ``pstats'' counters should export a version (even before SDB
+is used). (@b{Update}: it is there, it just not used yet -- thanks Greg).
+Thus, the kernel driver will know what the counters are, and
+we could run different gateware images with the same filesystem, because
+the driver will support the various versions counter sets.
+
+@end itemize
+
+@c ##########################################################################
+@node The WR Processes and Libraries
+@chapter The WR Processes and Libraries
+
+@b{Note:} I didn't yet review seriously the WR processes, and I'm sure
+I'll have more to complain about when I'm done. Please note that my
+criticism is only about the code itself and I've nothing against the
+authors of the code: I know the history of the project and why things
+are how they are.
+
+@itemize @bullet
+
+@item The most serious problem here is that we have no real design around
+the code base.  The bunch of things is sticking together, more or less, but
+it's not clear to me (and to most other people) what is the role of each
+library and how the various items communicate.
+
+@item Related to the previous item, we lack proper locking for FPGA access,
+and we should really have a single entry point to hardware, with
+serialized access.  This may be addressed by writing a driver, or
+clarifying the library. I don't know the details at this point in time,
+but I know everybody's calling @t{mmap} by itself, which makes me feel
+very uneasy.
+
+@item As an example for the above issue, we may well have a @i{wr}
+kernel object where the WR date is returned as a @i{sysfs} item. This
+would simplify a number of tools that all @t{mmap} the hardware and
+arrange for the seconds and fractional part to be returned consistently.
+Avoiding repetition of code avoids repetition of bugs as well.
+Ideally, in the long run, we'll have a real @i{wr} driver, likely driven
+by SDB, so this @i{date} attribute will be part of the WR ABI.
+As a side effect, a file-based interface allows off-switch simulation
+and development (which includes simulating errors to test error paths in
+the actual code).
+
+@item Whether or not we port some stuff in kernel space, we need to have
+a single @i{libwr}, to merge and replace @i{libptpnetif} and
+@i{libswitchhw}.  The role of each of them is not really clear to
+developers at this point, and using a single library will simplify
+building the tools;
+
+@item While merging the libraries, we should seriously audit them.
+Some functions do nothing, some are never called, and some are only
+used withing the @i{hal} process, so there's no need to have them
+public in an exported library.  The library code rusted over the years,
+and we can't trust it any more without some clean up. I'm personally
+scared every time I look in that code base.
+
+@item The @i{mini-ipc} mechanism is showing its limits. We are communicating
+too much information, and the polling mechanism used in some processes
+introduces significant delays.  Most of the communication is just
+about reporting status, so this should be brought to a shared-memory
+area with a well-defined structure. Again, this allows simulation and
+development off-switch, with fault injection.
+
+@item Whenever @i{ipc} is used for actions, rather than just status passing,
+we should audit the processes to ensure the are based on @i{select}
+rather than a timely poll.  Actually, the HAL process is using quite
+a lot of cpu time, and it could do much better.
+
+@item The @i{rtud} should be seriously audited and simplified.  The
+interface with gateware is now simpler than it was, but software still
+has remnants of old data structure.  Also, the multi-threaded approach
+is overkill, and the program could benefit from a simplification.
+
+@item We need to sort out configuration files. I especially plan to
+get rid of @i{lua}; it is only used to set internal variables in the @i{lua}
+data structures, that are then queried. This means if you set an unused
+item (e.g. because of a typo or some old wishful-thinking documents) it won't
+have any effect and it will report no error.  The best action may be move
+all configurations to the PPSi config file -- the delays and all the rest
+are PTP-specific anyways, and PPSi supports per-architecture configuration
+items.
+
+@item  We need a way to change parameters at run time in the @i{softpll}
+implementation running on the switch.  We may base this on the @i{ipc}
+mechanism that is already in place, or design a well-know structure in
+the LM32 code, so the main CPU can just change parameters on the fly.
+I prefer the latter approach, but I need to talk with LM32 developers
+to agree about how to do that, and ensure everybody follows the policy
+we define.
+
+@end itemize
+
+@c ##########################################################################
+@node PTP
+@chapter PTP
+
+@itemize @bullet
+
+@item We should remove @i{ptp-noposix}.  Keeping it around brings a number
+of issues; mainly it prevents changes in WR libraries.  That's because
+any change and cleanup must now be verified against both PPSi and
+@i{ptp-noposix}.  But the latter is not being used routinely, so those
+changes require extra effort and remain not very well tested anyways.
+
+@item PPSi support for @t{arch-wrs} has some strange use for the timeouts,
+and some of the code is more complex than it should.  I need to audit
+it and make it shine.  This applies to both the WR servo and the
+@t{arch-wrs} code. For the latter, I'm already confident with it,
+after fixing the lost-frame problem. Still, some time must be devoted
+to this.
+
+@item We should drive the WR PLL when being slave to a non-WR master.
+The performance of wr-switch as a slave of another PTP host is now
+unacceptable, because we only jump time without adjusting frequency.
+
+@item PPSi should be able to rescan its configuration file. This is needed
+to allow management actors to change the configuration and see it
+effective soon after.
+
+@item PPSi should be able to scan network interfaces, and apply a default
+configuration to them.  Listing 18 times the same information is definitely
+neither beautiful nor useful.
+
+@item We should clarify how VLANs are managed in our PTP implementation,
+and by matching the standard if possible.  It currently works ``by
+chance'' -- but for example we didn't test on a PC, and there we'll
+clearly need to rescan network interfaces to send PTP frames on new
+VLANs as they are configured.
+
+@item Our BSD mate @t{phk} made a serious review of PPSi code, and he
+outlined a number of lacking areas. We should work on his input, to make
+the code base stronger and more maintainable.
+
+@item We should support UDP over IPV6, to be interoperable with our
+neighbors, and to advertise ourselves as a more ``complete'' PTP
+implementation.
+
+@item WR GrandMaster Switch should be holy provided it has an
+external reference. Currently if we have a GrandMaster Switch and we
+connect a Free-running Master to it's Slave port (wr0) then it becomes
+Slave to the Free-running Master and jumps it's WR time.  All the
+mechanism is in place, this should be trivial to fix.
+
+@item If Slave is in TRACK_PHASE state and a time jump occurs it doesn't
+reset its servo. It stays in TRACK_PHASE forever with a huge offset.
+That is something we've already observed in AD test system for
+Jean-Claude when GrandMaster was unlocking from the reference GPS. Not
+following the time jump will be also a problem if we power on in the
+same time all switches in the chain with GrandMaster on the top. It
+takes some time for GM to lock so the network would start as
+free-running to the second switch in the chain, but once GM is
+synchronized all slaves will stay in TRACK_PHASE with large offset to
+GrandMaster.
+
+
+@end itemize
+
+@c ##########################################################################
+@node Tools
+@chapter Tools
+
+@itemize @bullet
+
+@item Tool naming is completely inconsistent. We should move everything
+to use unambiguous naming: @t{wr_} for every wr-wide item, and @t{wrsw_}
+for every switch-specific thing.  (Actually, @t{wrs_} would be better,
+as it doesn't look like ``software'' and we use wrs/wrn internally already,
+but several tools use @t{wrsw_} as a prefix already. 
+We fixed the ``shower'' name -- (@t{shw_ver}: switch hardware version),
+but more are there. (@b{Update}: Greg says to use @t{wrs_} and do it soon).
+
+@item A number of tools @t{mmap()} FPGA memory, but there is no
+locking so it is (remotely) possible for tools to interfere and get
+wrong results.  We should define a good policy with proper locking, to
+avoid mishaps. This problem is listed in @ref{The WR Processes and
+Libraries} too.
+
+@item There are too many @i{load} source files in @t{userspace/tools};
+some are definitely not used any more. We need to clean up.
+
+@item @t{wr_management} is an incomplete mess; mostly a copy of
+@t{wr_mon}, slightly modify in its way toward being something else,
+but nobody knows what it is now.  We need to make it a serious thing
+if it is used (by the web interface, it seems, called by
+@t{functions.php}), or kill it outright.
+
+@end itemize
+
+@c ##########################################################################
+@node Management
+@chapter Management
+
+@itemize @bullet
+
+@item There is no grand design for management as yet. @sc{snmp} support,
+the tools and the web interface are all indepenent items. If something
+changes we must change it in several places.
+
+@item Current @sc{snmp} code  is not beautiful at all (as documented
+in the @i{snmp-pain} document) and should be made better. Some stuff
+needs to be factorized, some variables should be renamed and the use
+of ``context'' items in tables should be fixed.
+
+@item Some items that are already in the WR MIB are not filled, especially
+in the PTP/PPSi area.
+
+@item We lack support for the VLAN configuration items. This means
+implementing the standardized VLAN MIB.  Unfortunately we can't
+really have any sensible code using @i{mib2c} (see the @i{snmp-pain}
+document, so previous work by Integrasys can be only used as a reference.
+also considering the gateware implementation is different from what they
+used.  Integrasys properly committed the auto-generated code and their
+edits separately, so their work can be of help.
+
+@item There is no ``set'' support, we only return values to the
+manager by now.  While current configuration objects are read-only,
+I must learn how to deal with read-write objects before trying to
+extend our MIB.
+
+@item There is no support yet for sending traps on WR events.
+This is even more important thatn @i{set}, because we want to notify
+WR time jumps and lock/unlock events.
+
+@item We need to seriously audit the web interface, and verify
+everything is hooked properly to the system.  This relates to the
+changes in configuration files and everything else that is going to be
+modified in the package at large.  Ideally, we should agree about
+a single interface between the web and the rest of the system.
+If we are brave enough, the web interface might make @sc{snmp} calls;
+but this requires having strong @sc{snmp} support for everything, first.
+
+
+@end itemize
+
+@bye
