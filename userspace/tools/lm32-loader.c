@@ -50,13 +50,13 @@ int conv_endian(int x)
 	  + ((x&0x000000ff)<<24);
 }
 
-void rst_lm32(int rst)
+static void rst_lm32(int rst)
 {
 	fpga_writel(1 << LM32_RESET_PIN,
 		    GPIO_BASE + (rst ? GPIO_SOR : GPIO_COR));
 }
 
-void copy_lm32(uint32_t *buf, int buf_nwords, uint32_t base_addr)
+static int copy_lm32(uint32_t *buf, int buf_nwords, uint32_t base_addr)
 {
   int i;
   printf("Writing memory: ");
@@ -64,7 +64,8 @@ void copy_lm32(uint32_t *buf, int buf_nwords, uint32_t base_addr)
   for(i=0;i<buf_nwords;i++)
   {
 	fpga_writel(conv_endian(buf[i]), base_addr + i *4);
-	if(!(i & 0xfff)) { printf("."); fflush(stdout); }
+	if(!(i & 0xfff))
+		printf(".");
   }
 
   printf("\nVerifing memory: ");
@@ -75,14 +76,17 @@ void copy_lm32(uint32_t *buf, int buf_nwords, uint32_t base_addr)
 	if(conv_endian(buf[i]) != x)
 	{
 		printf("Verify failed (%x vs %x)\n", conv_endian(buf[i]), x);
-		return ;
+		return -1;
 	}
 
-	if(!(i & 0xfff)) { printf("."); fflush(stdout); }
+	if(!(i & 0xfff))
+		printf(".");
   }
-
-	printf("OK.\n");
+  printf(" OK.\n");
+  return 0;
 }
+
+
 
 /* being a lazy bastard, I fork a process to avoid free, munmap etc */
 int load_lm32_child(char *fname)
@@ -91,6 +95,7 @@ int load_lm32_child(char *fname)
 	FILE *f;
 	int fdmem;
 
+	setbuffer(stdout, NULL, 0);
 	if ((fdmem = open("/dev/mem", O_RDWR | O_SYNC)) < 0) {
 		fprintf(stderr, "%s: /dev/mem: %s\n", __func__,
 			strerror(errno));
@@ -111,7 +116,8 @@ int load_lm32_child(char *fname)
 	f=fopen(fname,"rb");
 	if(!f)
 	{
-		fprintf(stderr, "Input file not found.\n");
+		fprintf(stderr, "%s: %s: %s\n", __func__,
+			fname, strerror(errno));
 		return -1;
 	}
 
@@ -124,7 +130,8 @@ int load_lm32_child(char *fname)
 	fclose(f);
 
 	rst_lm32(1);
-	copy_lm32(buf, (size + 3) / 4, 0);
+	if (copy_lm32(buf, (size + 3) / 4, 0))
+		return -1;
 	rst_lm32(0);
 
 	return 0;
@@ -140,7 +147,8 @@ int load_lm32_main(char *fname)
 		fprintf(stderr, "fork(): %s\n", strerror(errno));
 		return -1;
 	case 0: /* child */
-		load_lm32_child(fname);
+		if (load_lm32_child(fname))
+			exit(1);
 		exit(0);
 	default: /* parent */
 		waitpid(pid, &status, 0);

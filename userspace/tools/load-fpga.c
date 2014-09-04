@@ -313,7 +313,8 @@ int load_fpga_main(char *fname)
 		fprintf(stderr, "fork(): %s\n", strerror(errno));
 		return -1;
 	case 0: /* child */
-		load_fpga_child(fname);
+		if (load_fpga_child(fname))
+			exit(1);
 		exit(0);
 	default: /* parent */
 		waitpid(pid, &status, 0);
