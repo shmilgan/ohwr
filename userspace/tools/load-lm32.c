@@ -34,6 +34,8 @@
 #define LM32_RESET_PIN 2
 
 static void *base_fpga;
+static char *prgname;
+
 
 static void fpga_writel(uint32_t data, uint32_t addr)
 {
@@ -63,11 +65,15 @@ static void rst_lm32(int rst)
 		    GPIO_BASE + (rst ? GPIO_SOR : GPIO_COR));
 }
 
-static int copy_lm32(void *data, int size, uint32_t base_addr)
+static int copy_lm32(void *data, int noload, int size, uint32_t base_addr)
 {
   int i;
   uint32_t *buf = data; /* be 32-bit oriented in writing */
   int buf_nwords = (size + 3) / 4;
+
+  /* Do not actually load anything. This is used to read/write variables */
+  if (noload)
+	  return 0;
 
   printf("Writing memory (0x%04x bytes at 0x%04x): ", size, base_addr);
 
@@ -100,7 +106,7 @@ static char *global_strptr;
 static Elf32_Shdr *global_sh;
 
 /* The elf loader relies on the binary loader above (and the global mmap) */
-static int copy_lm32_elf(void *data, int size)
+static int copy_lm32_elf(void *data, int noload, int size)
 {
 	int i, flags, verbose = getenv("LOAD_LM32_VERBOSE") != NULL;
 	Elf32_Ehdr *eh;
@@ -187,14 +193,15 @@ static int copy_lm32_elf(void *data, int size)
 		 * First argument is base in file, third is offset
 		 * in both fpga and file, so adjust file base (hack)
 		 */
-		if (copy_lm32(data + off, len, ram))
+		if (copy_lm32(data + off, noload, len, ram))
 			return -1;
 	}
 	return 0;
 }
 
 
-int load_lm32(char *fname)
+
+int load_lm32(char *fname, int noload)
 {
 	void *buf;
 	FILE *f;
@@ -202,7 +209,7 @@ int load_lm32(char *fname)
 
 	setbuffer(stdout, NULL, 0);
 	if ((fdmem = open("/dev/mem", O_RDWR | O_SYNC)) < 0) {
-		fprintf(stderr, "%s: /dev/mem: %s\n", __func__,
+		fprintf(stderr, "%s: /dev/mem: %s\n", prgname,
 			strerror(errno));
 		exit(1);
 	}
@@ -214,7 +221,7 @@ int load_lm32(char *fname)
 
 	if (base_fpga == MAP_FAILED) {
 		fprintf(stderr, "%s: mmap(/dev/mem): %s\n",
-			__func__, strerror(errno));
+			prgname, strerror(errno));
 		exit(1);
 	}
 
@@ -222,7 +229,7 @@ int load_lm32(char *fname)
 	f=fopen(fname,"rb");
 	if(!f)
 	{
-		fprintf(stderr, "%s: %s: %s\n", __func__,
+		fprintf(stderr, "%s: %s: %s\n", prgname,
 			fname, strerror(errno));
 		return -1;
 	}
@@ -235,7 +242,7 @@ int load_lm32(char *fname)
 	ret = fread(buf, 1, size, f);
 	fclose(f);
 	if (ret != size) {
-		fprintf(stderr, "%s: %s: read error (\n", __func__, fname);
+		fprintf(stderr, "%s: %s: read error (\n", prgname, fname);
 		return -1;
 	}
 
@@ -244,26 +251,109 @@ int load_lm32(char *fname)
 	else if (!memcmp(buf, "\x98\0\0\0", 4))
 		iself = 0;
 	else {
-		fprintf(stderr, "%s: %s: Unrecognized file type\n", __func__,
+		fprintf(stderr, "%s: %s: Unrecognized file type\n", prgname,
 			fname);
 		return -1;
 	}
 
-	rst_lm32(1);
+	if (!noload)
+		rst_lm32(1);
+
+	/*
+	 * If else, we need to call the function even if (noload)
+	 * because the function parses ELF and sets global variables.
+	 * To the same to the binary loader for symmetry.
+	 */
 	if (iself)
-		ret = copy_lm32_elf(buf, size);
+		ret = copy_lm32_elf(buf, noload, size);
 	else
-		ret = copy_lm32(buf, size, 0);
-	rst_lm32(0);
+		ret = copy_lm32(buf, noload, size, 0);
+	if (!noload)
+		rst_lm32(0);
 	free(buf);
 	return ret;
 }
 
+/* Set, or read, a variable. We already loaded to memory the file */
+static int varaction_lm32(char *fname, char *action)
+{
+	char vname[64], sname[64];
+	char stmp[256];
+	int i, write, vvalue, saddr;
+	FILE *f;
+	char eq;
+
+	if (!global_strptr) {
+		fprintf(stderr, "%s: Can't execute \"%s\" on a non-elf file\n",
+			prgname, action);
+		return -1;
+	}
+	i = sscanf(action, "%[^=]%c%i", vname, &eq, &vvalue);
+	if (i < 2 || eq != '=') {
+		fprintf(stderr, "%s: Can't parse action \"%s\"\n",
+			prgname, action);
+		return -1;
+	}
+	if (i == 3)
+		write = 1;
+	else
+		write = 0;
+
+	/* Open "nm" (lazy me)" to find the variable's address */
+	sprintf(stmp, "nm %s", fname);
+	f = popen(stmp, "r");
+	if (!f) {
+		fprintf(stderr, "%s: Can't run \"%s\" (%s)\n",
+			prgname, stmp, strerror(errno));
+		return -1;
+	}
+	while (fgets(stmp, sizeof(stmp), f)) {
+		if (sscanf(stmp, "%x %*c %s", &saddr, sname) != 2)
+			continue;
+		if (!strcmp(vname, sname))
+			break;
+	}
+	if (feof(f)) {
+		fprintf(stderr, "%s: no symbol \"%s\" int \"%s\"\n",
+			prgname, sname, fname);
+		pclose(f);
+		return -1;
+	}
+	pclose(f);
+
+	/* NOTE: we must not convert endianness here: it's bitwise ok */
+	if (write) {
+		/* FIXME: check it is in a writable section */
+		fpga_writel(vvalue, saddr);
+	} else {
+		vvalue = fpga_readl(saddr);
+		printf("%s = %i (0x%08x)\n", vname, vvalue, vvalue);
+	}
+	return 0;
+}
 
 int main(int argc, char **argv)
 {
-	if (argc < 2) {
-		fprintf(stderr, "Use: \"%s <filename>\"\n", argv[0]);
+	int ret;
+	int i, noload = 0;
+
+	prgname = argv[0];
+	if (argc > 1 && !strcmp(argv[1], "-n")) {
+		noload = 1;
+		argv++;
+		argc--;
 	}
-	return load_lm32(argv[1]);
+
+	if (argc < 2) {
+		fprintf(stderr, "%s: Use: \"%s [-n] <filename> "
+			"[<var>=<value> ...]\"\n", prgname, prgname);
+	}
+	ret = load_lm32(argv[1], noload);
+	if (ret)
+		exit(1);
+
+	for (i = 2; i < argc; i++)
+		if (varaction_lm32(argv[1], argv[i]))
+			exit(1);
+	return 0;
 }
