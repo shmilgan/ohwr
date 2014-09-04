@@ -172,7 +172,7 @@ unsigned char AT45_SendCommand(
             dfAddress = address;
         }
         // Write address bytes
-        if (pDesc->pageNumber >= 16384) {
+        if (pDesc->pageNumber >= 16777216) {
 
             pAt45->pCmdBuffer[1] = ((dfAddress & 0x0F000000) >> 24);
             pAt45->pCmdBuffer[2] = ((dfAddress & 0x00FF0000) >> 16);
