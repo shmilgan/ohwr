@@ -1,5 +1,6 @@
 /* 
  * Copyright (c) 2011 Grzegorz Daniluk <g.daniluk@elproma.com.pl>
+ * ELF support added by Alessandro Rubini for CERN, 2014
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -13,12 +14,14 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <elf.h>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <arpa/inet.h> /* htonl */
 
 #define BASE_FPGA 0x10000000
 #define SIZE_FPGA 0x20000
@@ -42,13 +45,17 @@ static uint32_t fpga_readl(uint32_t addr)
 	return	*(volatile uint32_t *)(base_fpga + addr);
 }
 
-int conv_endian(int x)
-{
-	return ((x&0xff000000)>>24)
-	  + ((x&0x00ff0000)>>8)
-	  + ((x&0x0000ff00)<<8)
-	  + ((x&0x000000ff)<<24);
-}
+/* The original "conv_endian" was bound to 32 bits. This is any-size */
+#define BE(datum)					\
+({	     __typeof__(datum) result;				\
+	     switch(sizeof(datum)) {				\
+	     case 1: result = (datum); break;			\
+	     case 2: result = htons((datum)); break;		\
+	     case 4: result = htonl((datum)); break;		\
+	     default: kill(getpid(), SIGUSR1);			\
+	     }							\
+	     result;						\
+})
 
 static void rst_lm32(int rst)
 {
@@ -56,14 +63,17 @@ static void rst_lm32(int rst)
 		    GPIO_BASE + (rst ? GPIO_SOR : GPIO_COR));
 }
 
-static int copy_lm32(uint32_t *buf, int buf_nwords, uint32_t base_addr)
+static int copy_lm32(void *data, int size, uint32_t base_addr)
 {
   int i;
-  printf("Writing memory: ");
+  uint32_t *buf = data; /* be 32-bit oriented in writing */
+  int buf_nwords = (size + 3) / 4;
+
+  printf("Writing memory (0x%04x bytes at 0x%04x): ", size, base_addr);
 
   for(i=0;i<buf_nwords;i++)
   {
-	fpga_writel(conv_endian(buf[i]), base_addr + i *4);
+	fpga_writel(BE(buf[i]), base_addr + i *4);
 	if(!(i & 0xfff))
 		printf(".");
   }
@@ -73,9 +83,9 @@ static int copy_lm32(uint32_t *buf, int buf_nwords, uint32_t base_addr)
   for(i=0;i<buf_nwords;i++)
   {
 	uint32_t x = fpga_readl(base_addr+ i*4);
-	if(conv_endian(buf[i]) != x)
+	if(BE(buf[i]) != x)
 	{
-		printf("Verify failed (%x vs %x)\n", conv_endian(buf[i]), x);
+		printf("Verify failed (%x vs %x)\n", BE(buf[i]), x);
 		return -1;
 	}
 
@@ -86,11 +96,109 @@ static int copy_lm32(uint32_t *buf, int buf_nwords, uint32_t base_addr)
   return 0;
 }
 
+static char *global_strptr;
+static Elf32_Shdr *global_sh;
+
+/* The elf loader relies on the binary loader above (and the global mmap) */
+static int copy_lm32_elf(void *data, int size)
+{
+	int i, flags, verbose = getenv("LOAD_LM32_VERBOSE") != NULL;
+	Elf32_Ehdr *eh;
+	Elf32_Phdr *ph;
+	Elf32_Shdr *sh;
+	char *strptr;
+
+	eh = data;
+	if (verbose) {
+		printf("type:    %8i\n", BE(eh->e_type));
+		printf("machine: %8i\n", BE(eh->e_machine));
+		printf("version: %8i\n", BE(eh->e_version));
+		printf("entry:   %08lx\n", (long)BE(eh->e_entry));
+		printf("phoff:   %8i\n", BE(eh->e_phoff));
+		printf("shoff:   %8i\n", BE(eh->e_shoff));
+		printf("ehsize:  %8i\n", BE(eh->e_ehsize));
+		printf("shstrndx:%8i\n", BE(eh->e_shstrndx));
+	}
+
+	ph = (Elf32_Phdr *)((char *)eh + (int)(BE(eh->e_phoff)));
+
+	/* program headers. Irrelevant, actually... */
+	for (i = 0; i < BE(eh->e_phnum); i++) {
+		flags = BE(ph->p_flags);
+		if (verbose) {
+			printf("prg: %i 0x%08lx, 0x%08lx, 0x%08lx, %c%c%c "
+			       "(%08x), %i, %i %i\n",
+			       BE(ph->p_type),
+			       (long)(BE(ph->p_offset)),
+			       (long)(BE(ph->p_vaddr)),
+			       (long)(BE(ph->p_paddr)),
+			       flags & PF_R ? 'r' : '-',
+			       flags & PF_W ? 'w' : '-',
+			       flags & PF_X ? 'x' : '-',
+			       flags,
+			       BE(ph->p_filesz),
+			       BE(ph->p_memsz),
+			       BE(ph->p_align));
+		}
+	}
+
+	/* first loop: look for strtab */
+	sh = (Elf32_Shdr *)((char *)eh + (int)(BE(eh->e_shoff)));
+	for (i = 0; i < BE(eh->e_shstrndx); i++)
+		sh=(Elf32_Shdr *)((char *)sh + (int)BE(eh->e_shentsize));
+	strptr = (char *)eh + BE(sh->sh_offset);
+	sh = (Elf32_Shdr *)((char *)eh + (int)(BE(eh->e_shoff)));
+
+	/* Save them for later (setting vriables) */
+	global_strptr = strptr;
+	global_sh = sh;
+
+	/* Section headers: this is what we load */
+	for (i = 0; i < BE(eh->e_shnum); i++) {
+		unsigned long off, len, ram;
+		if (i) /* next header */
+			sh = (Elf32_Shdr *)((char *)sh
+					    + (int)BE(eh->e_shentsize));
+
+		if (verbose) {
+		printf("sect: %3i %-25.25s %2i 0x%08lx, 0x%08lx, (%i) %i %i\n",
+		       BE(sh->sh_name),
+		       strptr + BE(sh->sh_name),
+		       BE(sh->sh_type),
+		       (long)(BE(sh->sh_offset)),
+		       (long)(BE(sh->sh_addr)),
+		       BE(sh->sh_size),
+		       BE(sh->sh_addralign),
+		       BE(sh->sh_entsize));
+		}
+		off = BE(sh->sh_offset);
+		len = BE(sh->sh_size);
+		ram = BE(sh->sh_addr) & 0x0fffffff;
+
+		/* ignore unloadable sections */
+		if (BE(sh->sh_type) != SHT_PROGBITS)
+			continue;
+		if (!(BE(sh->sh_flags) & SHF_ALLOC))
+			continue;
+		if (len == 0)
+			continue;
+
+		/*
+		 * First argument is base in file, third is offset
+		 * in both fpga and file, so adjust file base (hack)
+		 */
+		if (copy_lm32(data + off, len, ram))
+			return -1;
+	}
+	return 0;
+}
+
+
 int load_lm32(char *fname)
 {
-	uint32_t *buf;
+	void *buf;
 	FILE *f;
-	int fdmem;
+	int fdmem, iself, ret;
 
 	setbuffer(stdout, NULL, 0);
 	if ((fdmem = open("/dev/mem", O_RDWR | O_SYNC)) < 0) {
@@ -102,6 +210,7 @@ int load_lm32(char *fname)
 	base_fpga = mmap(0, SIZE_FPGA, PROT_READ | PROT_WRITE,
 		       MAP_SHARED, fdmem,
 		       BASE_FPGA);
+	close(fdmem);
 
 	if (base_fpga == MAP_FAILED) {
 		fprintf(stderr, "%s: mmap(/dev/mem): %s\n",
@@ -123,15 +232,31 @@ int load_lm32(char *fname)
 	rewind(f);
 
 	buf = malloc(size + 4);
-	fread(buf, 1, size, f);
+	ret = fread(buf, 1, size, f);
 	fclose(f);
+	if (ret != size) {
+		fprintf(stderr, "%s: %s: read error (\n", __func__, fname);
+		return -1;
+	}
+
+	if (!memcmp(buf, ELFMAG, SELFMAG))
+		iself = 1;
+	else if (!memcmp(buf, "\x98\0\0\0", 4))
+		iself = 0;
+	else {
+		fprintf(stderr, "%s: %s: Unrecognized file type\n", __func__,
+			fname);
+		return -1;
+	}
 
 	rst_lm32(1);
-	if (copy_lm32(buf, (size + 3) / 4, 0))
-		return -1;
+	if (iself)
+		ret = copy_lm32_elf(buf, size);
+	else
+		ret = copy_lm32(buf, size, 0);
 	rst_lm32(0);
-
-	return 0;
+	free(buf);
+	return ret;
 }
 
 
