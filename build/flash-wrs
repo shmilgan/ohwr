@@ -244,7 +244,7 @@ for n in /tftpboot /home/tftpboot $HOME/tftpboot $HOME/[wW][rR]/tftpboot; do
 	echo "Warning: File $n/$tartftp not up to date";
 	echo "Maybe you want to run the following command:"
 	echo ""
-	echo "  cp $tarball $n/"
+	echo "  cp $tarball $n/$tartftp"
 	echo ""
 	echo "Press enter to continue"
 	read a
