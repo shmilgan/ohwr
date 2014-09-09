@@ -205,26 +205,7 @@ int load_lm32(char *fname, int noload)
 {
 	void *buf;
 	FILE *f;
-	int fdmem, iself, ret;
-
-	setbuffer(stdout, NULL, 0);
-	if ((fdmem = open("/dev/mem", O_RDWR | O_SYNC)) < 0) {
-		fprintf(stderr, "%s: /dev/mem: %s\n", prgname,
-			strerror(errno));
-		exit(1);
-	}
-
-	base_fpga = mmap(0, SIZE_FPGA, PROT_READ | PROT_WRITE,
-		       MAP_SHARED, fdmem,
-		       BASE_FPGA);
-	close(fdmem);
-
-	if (base_fpga == MAP_FAILED) {
-		fprintf(stderr, "%s: mmap(/dev/mem): %s\n",
-			prgname, strerror(errno));
-		exit(1);
-	}
-
+	int iself, ret;
 
 	f=fopen(fname,"rb");
 	if(!f)
@@ -256,11 +237,8 @@ int load_lm32(char *fname, int noload)
 		return -1;
 	}
 
-	if (!noload)
-		rst_lm32(1);
-
 	/*
-	 * If else, we need to call the function even if (noload)
+	 * If ELF, we need to call the function even if (noload)
 	 * because the function parses ELF and sets global variables.
 	 * To the same to the binary loader for symmetry.
 	 */
@@ -268,8 +246,6 @@ int load_lm32(char *fname, int noload)
 		ret = copy_lm32_elf(buf, noload, size);
 	else
 		ret = copy_lm32(buf, noload, size, 0);
-	if (!noload)
-		rst_lm32(0);
 	free(buf);
 	return ret;
 }
@@ -334,7 +310,7 @@ static int varaction_lm32(char *fname, char *action)
 
 int main(int argc, char **argv)
 {
-	int ret;
+	int fdmem, ret;
 	int i, noload = 0;
 
 	prgname = argv[0];
@@ -348,6 +324,28 @@ int main(int argc, char **argv)
 		fprintf(stderr, "%s: Use: \"%s [-n] <filename> "
 			"[<var>=<value> ...]\"\n", prgname, prgname);
 	}
+
+	setbuffer(stdout, NULL, 0);
+	if ((fdmem = open("/dev/mem", O_RDWR | O_SYNC)) < 0) {
+		fprintf(stderr, "%s: /dev/mem: %s\n", prgname,
+			strerror(errno));
+		exit(1);
+	}
+
+	base_fpga = mmap(0, SIZE_FPGA, PROT_READ | PROT_WRITE,
+		       MAP_SHARED, fdmem,
+		       BASE_FPGA);
+	close(fdmem);
+
+	if (base_fpga == MAP_FAILED) {
+		fprintf(stderr, "%s: mmap(/dev/mem): %s\n",
+			prgname, strerror(errno));
+		exit(1);
+	}
+
+	if (!noload)
+		rst_lm32(1);
+
 	ret = load_lm32(argv[1], noload);
 	if (ret)
 		exit(1);
@@ -355,5 +353,7 @@ int main(int argc, char **argv)
 	for (i = 2; i < argc; i++)
 		if (varaction_lm32(argv[1], argv[i]))
 			exit(1);
+	if (!noload)
+		rst_lm32(0);
 	return 0;
 }
