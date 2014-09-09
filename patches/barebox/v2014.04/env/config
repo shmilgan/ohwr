@@ -19,5 +19,6 @@ if false; then
     eth0.gateway=192.168.1.254
 fi
 
-## Timeout to autoboot in the pre-selected menu
+## Timeout and select default entry in autoboot menu
 autoboot_timeout="5";
+autoboot_select="1";

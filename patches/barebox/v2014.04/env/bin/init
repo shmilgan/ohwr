@@ -38,7 +38,7 @@ mount /dev/ubi0.boot /boot
 
 
 #default value (can be overridden in /env/config)
-preboot_timeout="3"
+preboot_timeout="0"
 autoboot_timeout="5"
 autoboot_select="1"
 
