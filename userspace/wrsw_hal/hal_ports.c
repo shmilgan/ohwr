@@ -589,9 +589,10 @@ int hal_port_start_lock(const char  *port_name, int priority)
 
 	TRACE(TRACE_INFO, "Locking to port: %s", port_name);
 
-	rts_set_mode(RTS_MODE_BC);
+	if(priority == 0)
+		rts_set_mode(RTS_MODE_BC);
 
-  return rts_lock_channel(p->hw_index, 0) < 0 ? PORT_ERROR : PORT_OK;
+  return rts_lock_channel(p->hw_index, priority) < 0 ? PORT_ERROR : PORT_OK;
 }
 
 
