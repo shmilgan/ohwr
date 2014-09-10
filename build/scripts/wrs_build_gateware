@@ -13,7 +13,7 @@ FWDIR="${WRS_OUTPUT_DIR}/images/wr/lib/firmware"
 mkdir -p "$FWDIR"
 
 echo "Using pre-compiled (binaries/) RT firmware"
-cp ${WRS_BASE_DIR}/../binaries/rt_cpu.bin "$FWDIR"
+cp ${WRS_BASE_DIR}/../binaries/rt_cpu.elf "$FWDIR"
 
 if [ "$WRS_HW_DIR" != "" ]; then
     wrs_echo "Copying binaries from $WRS_HW_DIR"
