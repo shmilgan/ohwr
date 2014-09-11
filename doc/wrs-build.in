@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month August 2014
+@set update-month September 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -1346,8 +1346,11 @@ The most important tools in @file{userspace/tools} are the following:
 @itemx load-lm32
 
 	They load into the FPGA the gateware and the LM32 application.
-        They are used by the init scripts of the Linux system.
-
+        They are used by the init scripts of the Linux system. The LM32
+        loader can also change variables in the loaded binary, and
+        read or write variables without stopping the running CPU.
+        This is limited to 32-bit integer variaables, though. See the
+        commit message for details.
 
 @item mapper
 @itemx wmapper
