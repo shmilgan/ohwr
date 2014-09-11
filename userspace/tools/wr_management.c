@@ -82,12 +82,12 @@ void show_ports()
 		hexp_port_state_t state;
 
 		snprintf(if_name, 10, "wr%d", i);
-		
+
 		for(j=0;j<port_list.num_ports;j++)
 			if(!strcmp(port_list.port_names[j], if_name)) { found = 1; break; }
-			
+
 		if(!found) continue;
-		
+
 		halexp_get_port_state(&state, if_name);
 
 		if(state.up)
@@ -133,10 +133,10 @@ void show_screen()
 int main(int argc, char **argv)
 {
 	int usecolor = 1;
-	
+
 	if(argc > 1){
 		if(!strcmp(argv[1], "ports")){
-			
+
 			usecolor = 0;
 			init(usecolor);
 
@@ -157,10 +157,10 @@ int main(int argc, char **argv)
 			term_restore();
 			setlinebuf(stdout);
 			printf("\n");
-			
+
 		}else if (!strcmp(argv[1], "fan")){
-			
-			
+
+
 		}else{
 			printf("\nParam required: ");
 			printf("\nProgram usage: %s [param]", argv[0]);
@@ -169,9 +169,9 @@ int main(int argc, char **argv)
 	}else{
 		printf("\nParam required: ");
 		printf("\nProgram usage: %s [param]", argv[0]);
-		printf("\tports\t-->\tWRS ports state\n");	
+		printf("\tports\t-->\tWRS ports state\n");
 	}
-	
-	
+
+
 	return 0;
 }

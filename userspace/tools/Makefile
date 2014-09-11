@@ -59,7 +59,7 @@ spll_dbg_proxy: spll_dbg_proxy.o
 load-virtex: load-virtex.o load-fpga.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
-load-lm32: load-lm32.o lm32-loader.o
+load-lm32: load-lm32.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
 wrsw_version.o: wrsw_version.c

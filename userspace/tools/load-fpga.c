@@ -171,7 +171,7 @@ static int load_fpga_child(char *fname)
 
 	/* enable SSC controller clock */
 	__PMC(AT91_PMC_PCER) = 1<<AT91SAM9G45_ID_SSC0;
-	
+
 	__SSC(AT91_SSC_CR) = AT91_SSC_SWRST;
 	__SSC(AT91_SSC_CR) = 0;
 
@@ -313,7 +313,8 @@ int load_fpga_main(char *fname)
 		fprintf(stderr, "fork(): %s\n", strerror(errno));
 		return -1;
 	case 0: /* child */
-		load_fpga_child(fname);
+		if (load_fpga_child(fname))
+			exit(1);
 		exit(0);
 	default: /* parent */
 		waitpid(pid, &status, 0);

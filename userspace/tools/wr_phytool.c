@@ -4,7 +4,7 @@
 
 	 WARNING: This is just my internal code for testing some timing-related stuff.
 	 				  I'll document it and clean it up in the future, but for now, please
-	 				  don't ask questions. sorry 
+	 				  don't ask questions. sorry
  */
 
 #include <stdio.h>
@@ -92,7 +92,7 @@ void dump_pcs_regs(int ep, int argc, char *argv[])
 {
 	int i;
 	printf("PCS registers dump for endpoint %d:\n", ep);
-	for(i=0;i<17;i++)	
+	for(i=0;i<17;i++)
 		printf("R%d = 0x%08x\n",i,pcs_read(ep, i));
 }
 
@@ -110,15 +110,15 @@ void tx_cal(int ep, int argc, char *argv[])
 {
 	int on_off = atoi(argv[3]) ? 1 : 0;
 	printf("TX cal pattern %s\n", on_off ? "ON":"OFF");
-	
-	pcs_write(ep, 16, on_off); 
-	printf("rdbk:%x\n",pcs_read(ep, 16)); 
+
+	pcs_write(ep, 16, on_off);
+	printf("rdbk:%x\n",pcs_read(ep, 16));
 }
 
 void try_autonegotiation(int ep, int argc, char *argv[])
 {
-	pcs_write(ep, MII_ADVERTISE, 0x1a0); 
-	pcs_write(ep, MII_BMCR, BMCR_ANENABLE | BMCR_ANRESTART); 
+	pcs_write(ep, MII_ADVERTISE, 0x1a0);
+	pcs_write(ep, MII_BMCR, BMCR_ANENABLE | BMCR_ANRESTART);
 
 	printf("Autonegotiation: ");
 	for(;;)
@@ -164,10 +164,10 @@ static	struct {
 int bslide_bins()
 {
 	int i, hits = 0;
-	
+
 	for(i=0;i<MAX_BITSLIDES;i++)
 		if(bslides[i].occupied) hits++;
-	
+
 	return hits;
 }
 
@@ -199,14 +199,14 @@ static void print_cal_stats()
 	for(i=0;i<MAX_BITSLIDES;i++)
 		if(bslides[i].occupied)
 		{
-			printf("%-15d %-11d %-13d %-17d %-17d %-17d %-6d %d\n", 
-				i, 
-				bslides[i].delta, 
-				bslides[i].rx_ahead, 
-				bslides[i].phase_min, 
-				bslides[i].phase_max, 
-				bslides[i].phase_dev, 
-				bslides[i].hits, 
+			printf("%-15d %-11d %-13d %-17d %-17d %-17d %-6d %d\n",
+				i,
+				bslides[i].delta,
+				bslides[i].rx_ahead,
+				bslides[i].phase_min,
+				bslides[i].phase_max,
+				bslides[i].phase_dev,
+				bslides[i].hits,
 				(last_occupied >= 0) ? bslides[i].delta-bslides[last_occupied].delta:0
 			);
 
@@ -218,9 +218,9 @@ static void print_cal_stats()
 void calc_trans(int ep, int argc, char *argv[])
 {
 	wr_timestamp_t ts_tx, ts_rx;
-  wr_socket_t *sock;
+	wr_socket_t *sock;
 	FILE *f_log = NULL;
-  wr_sockaddr_t sock_addr, from;
+	wr_sockaddr_t sock_addr, from;
 	int bitslide,phase, i;
 
 	signal (SIGINT, sighandler);
@@ -233,18 +233,18 @@ void calc_trans(int ep, int argc, char *argv[])
 
 	if(argc >= 3)
 		f_log = fopen(argv[3], "wb");
-	
+
 	sprintf(sock_addr.if_name, "wr%d", ep);
-  sock_addr.family = PTPD_SOCK_RAW_ETHERNET; // socket type
-  sock_addr.ethertype = 12345;
-  memset(sock_addr.mac, 0xff, 6);
+	sock_addr.family = PTPD_SOCK_RAW_ETHERNET; // socket type
+	sock_addr.ethertype = 12345;
+	memset(sock_addr.mac, 0xff, 6);
 
 	assert(ptpd_netif_init() == 0);
-    
-  sock = ptpd_netif_create_socket(PTPD_SOCK_RAW_ETHERNET, 0, &sock_addr);
+
+	sock = ptpd_netif_create_socket(PTPD_SOCK_RAW_ETHERNET, 0, &sock_addr);
 //	fpga_writel(EP_DMCR_N_AVG_W(1024) | EP_DMCR_EN, IDX_TO_EP(ep) + EP_REG(DMCR));
 
-	if(	rts_connect() < 0)
+	if( rts_connect() < 0)
 	{
 		printf("Can't connect to the RT subsys\n");
 		return;
@@ -259,7 +259,7 @@ void calc_trans(int ep, int argc, char *argv[])
 
 		pcs_write(ep, MII_BMCR, BMCR_PDOWN);
 		usleep(10000);
-		pcs_write(ep, MII_BMCR, 0); //BMCR_ANENABLE | BMCR_ANRESTART); 
+		pcs_write(ep, MII_BMCR, 0); //BMCR_ANENABLE | BMCR_ANRESTART);
 		pcs_read(ep, MII_BMSR);
 
 
@@ -282,16 +282,16 @@ void calc_trans(int ep, int argc, char *argv[])
 
 
 
-	  memset(to.mac, 0xff, 6);
- 	  to.ethertype = 12345;
-	  to.family = PTPD_SOCK_RAW_ETHERNET; // socket type
+		memset(to.mac, 0xff, 6);
+		to.ethertype = 12345;
+		to.family = PTPD_SOCK_RAW_ETHERNET; // socket type
 
 		ptpd_netif_sendto(sock, &to, buf, 64, &ts_tx);
 		int n = ptpd_netif_recvfrom(sock, &from, buf, 64, &ts_rx);
-		
+
 
 		if(n>0)
-		{			
+		{
 			int delta = ts_rx.nsec * 1000 + ts_rx.phase - ts_tx.nsec * 1000;
 			bslide_update(phase, delta, ts_rx.raw_ahead, bitslide);
 			printf("delta %d (adv %d), bitslide: %d bins: %d phase %d, rxphase %d\n", delta, ts_rx.raw_ahead, bitslide, bslide_bins(), phase, ts_rx.phase);
@@ -301,7 +301,7 @@ void calc_trans(int ep, int argc, char *argv[])
 		usleep(500000);
 	}
 
-	if(f_log) fclose(f_log);	
+	if(f_log) fclose(f_log);
 	print_cal_stats();
 }
 
@@ -318,7 +318,7 @@ void analyze_phase_log(int ep, int argc, char *argv[])
 		trans_point = atoi(argv[4]);
 	else
 		trans_point = 1000;
-			
+
 	for(i=0;i<MAX_BITSLIDES;i++)
 	{
 		bslides[i].occupied = 0;
@@ -326,7 +326,7 @@ void analyze_phase_log(int ep, int argc, char *argv[])
 		bslides[i].phase_max= -1000000;
 	}
 
-	
+
 	while(!feof(f_log))
 	{
 			wr_timestamp_t ts_tx, ts_rx;
@@ -334,36 +334,36 @@ void analyze_phase_log(int ep, int argc, char *argv[])
 
 			ts_rx.nsec = ts_rx.raw_nsec;
 			phase = ts_rx.raw_phase;
-			
+
 			ptpd_netif_linearize_rx_timestamp(&ts_rx, ts_rx.raw_phase, ts_rx.raw_ahead, trans_point, 16000);
 
 			int delta = ts_rx.nsec * 1000 + ts_rx.phase - ts_tx.nsec * 1000;
 			bslide_update(phase, delta, ts_rx.raw_ahead, bitslide);
 
-  }
-  
-  printf("Transition point: %d ps. \n", trans_point);
-  print_cal_stats();
+	}
+
+	printf("Transition point: %d ps. \n", trans_point);
+	print_cal_stats();
 	fclose(f_log);
 }
 
 void pps_adjustment_test(int ep, int argc, char *argv[])
 {
 	wr_timestamp_t ts_tx, ts_rx;
-  wr_socket_t *sock;
-  wr_sockaddr_t sock_addr, from;
-  int adjust_count = 0;
+	wr_socket_t *sock;
+	wr_sockaddr_t sock_addr, from;
+	int adjust_count = 0;
 
 	signal (SIGINT, sighandler);
 
 	sprintf(sock_addr.if_name, "wr%d", ep);
-  sock_addr.family = PTPD_SOCK_RAW_ETHERNET; // socket type
-  sock_addr.ethertype = 12345;
-  memset(sock_addr.mac, 0xff, 6);
+	sock_addr.family = PTPD_SOCK_RAW_ETHERNET; // socket type
+	sock_addr.ethertype = 12345;
+	memset(sock_addr.mac, 0xff, 6);
 
 	assert(ptpd_netif_init() == 0);
-    
-  sock = ptpd_netif_create_socket(PTPD_SOCK_RAW_ETHERNET, 0, &sock_addr);
+
+	sock = ptpd_netif_create_socket(PTPD_SOCK_RAW_ETHERNET, 0, &sock_addr);
 
 
 	while(!quit)
@@ -371,9 +371,9 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 		char buf[64];
 		wr_sockaddr_t to;
 
-	  memset(to.mac, 0xff, 6);
- 	  to.ethertype = 12345;
-	  to.family = PTPD_SOCK_RAW_ETHERNET; // socket type
+		memset(to.mac, 0xff, 6);
+		to.ethertype = 12345;
+		to.family = PTPD_SOCK_RAW_ETHERNET; // socket type
 
 		if(adjust_count == 0)
 		{
@@ -382,14 +382,14 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 		}
 
 //		if(!ptpd_netif_adjust_in_progress())
-		{	
+		{
 			ptpd_netif_sendto(sock, &to, buf, 64, &ts_tx);
 			ptpd_netif_recvfrom(sock, &from, buf, 64, &ts_rx);
 			printf("TX timestamp: correct %d %12lld:%12d\n", ts_tx.correct, ts_tx.sec, ts_tx.nsec);
 			printf("RX timestamp: correct %d %12lld:%12d\n", ts_rx.correct, ts_rx.sec, ts_rx.nsec);
 			adjust_count --;
 		}// else printf("AdjustInProgress\n");
-			
+
 		sleep(1);
 	}
 }
@@ -399,7 +399,7 @@ void rt_command(int ep, int argc, char *argv[])
 	struct rts_pll_state pstate;
 	hexp_port_list_t plist;
 	int i;
-	
+
 	if(	rts_connect() < 0)
 	{
 		printf("Can't connect to the RT subsys\n");
@@ -415,17 +415,17 @@ void rt_command(int ep, int argc, char *argv[])
 
 	rts_get_state(&pstate);
 //	halexp_query_ports(&plist);
-	
+
 	if(!strcmp(argv[3], "show"))
 	{
-    printf("RTS State Dump [%d physical ports]: \n", plist.num_physical_ports);
-    printf("CurrentRef: %d Mode: %d Flags: %x\n", pstate.current_ref, pstate.mode, pstate.flags);
-    for(i=0;i<plist.num_physical_ports;i++)
-        printf("wr%-2d: setpoint: %-8dps current: %-8dps loopback: %-8dps flags: %x\n", i,
-               pstate.channels[i].phase_setpoint,
-               pstate.channels[i].phase_current,
-               pstate.channels[i].phase_loopback,
-               pstate.channels[i].flags);
+		printf("RTS State Dump [%d physical ports]: \n", plist.num_physical_ports);
+		printf("CurrentRef: %d Mode: %d Flags: %x\n", pstate.current_ref, pstate.mode, pstate.flags);
+		for(i=0;i<plist.num_physical_ports;i++)
+			printf("wr%-2d: setpoint: %-8dps current: %-8dps loopback: %-8dps flags: %x\n", i,
+			       pstate.channels[i].phase_setpoint,
+			       pstate.channels[i].phase_current,
+			       pstate.channels[i].phase_loopback,
+			       pstate.channels[i].flags);
 	} else if (!strcmp(argv[3], "lock"))
 	{
 		int i;
@@ -449,7 +449,7 @@ void rt_command(int ep, int argc, char *argv[])
 	else if (!strcmp(argv[3], "track"))
 	{
 		printf("Enabling ptracker @ port %d\n", ep);
-		
+
 		rts_enable_ptracker(ep, 1);
 	}
 }
@@ -526,18 +526,18 @@ int main(int argc, char **argv)
 		printf("usage: %s endpoint command [parameters]\n", argv[0]);
 		printf("Commands:\n");
 		for(i=0; commands[i].cmd;i++)
-			printf("%-20s %-20s: %s\n", commands[i].cmd, commands[i].params, commands[i].desc);		
+			printf("%-20s %-20s: %s\n", commands[i].cmd, commands[i].params, commands[i].desc);
 		return 0;
 	}
 
-	
+
 	for(i=0; commands[i].cmd;i++)
 		if(!strcmp(commands[i].cmd, argv[2]))
 		{
 			commands[i].func(atoi(argv[1]), argc, argv);
 			return 0;
 		}
-	
+
 	printf("Unrecognized command '%s'\n", argv[2]);
 	return -1;
 }
