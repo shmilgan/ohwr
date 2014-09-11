@@ -12,8 +12,13 @@ done
 # Obtain the type of FPGA (LX130XT or LX240XT)
 tfpga=$($WR_HOME/bin/shw_ver -F)
 
+scb_ver=33
+if mtdinfo -a | grep -A 1 dataflash | grep 264 &> /dev/null; then
+	scb_ver=34
+fi
+
 $WR_HOME/bin/load-virtex $WR_HOME/lib/firmware/18p_mb-${tfpga}.bin
-$WR_HOME/bin/load-lm32 $WR_HOME/lib/firmware/rt_cpu.bin
+$WR_HOME/bin/load-lm32 $WR_HOME/lib/firmware/rt_cpu-${scb_ver}.bin
 insmod $WR_HOME/lib/modules/at91_softpwm.ko
 insmod $WR_HOME/lib/modules/wr_vic.ko
 insmod $WR_HOME/lib/modules/wr-nic.ko macaddr=$val

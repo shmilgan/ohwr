@@ -17,7 +17,7 @@ if [ -f "${WRS_BASE_DIR}/../rt/rt_cpu.bin" ]; then
 	cp ${WRS_BASE_DIR}/../rt/rt_cpu.bin "$FWDIR"
 else
 	echo "Using pre-compiled (binaries/) RT firmware"
-	cp ${WRS_BASE_DIR}/../binaries/rt_cpu.bin "$FWDIR"
+	cp -v ${WRS_BASE_DIR}/../binaries/rt_cpu*.bin "$FWDIR"
 fi
 
 if [ "$WRS_HW_DIR" != "" ]; then
