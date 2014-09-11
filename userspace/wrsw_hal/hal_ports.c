@@ -126,6 +126,15 @@ int any_port_locked()
     return rts_state.current_ref;
 }
 
+int backup_port()
+{
+    if(!rts_state_valid) return -1;
+    if(rts_state.backup_ref == REF_NONE) return -1;
+    TRACE(TRACE_INFO, "backup port: %d",rts_state.backup_ref);
+    return rts_state.backup_ref;
+}
+
+
 /* Resets the state variables of a particular port and re-starts its state machines */
 static void reset_port_state(hal_port_state_t *p)
 {
@@ -376,16 +385,27 @@ static int handle_link_down(hal_port_state_t *p, int link_up)
 	{
 		if(p->locked)
 		{
-			TRACE(TRACE_INFO, "switching RTS to use local reference");
+			
 			if(hal_get_timing_mode() != HAL_TIMING_MODE_GRAND_MASTER)
-				 rts_set_mode(RTS_MODE_GM_FREERUNNING);
+				if(backup_port() == REF_NONE)
+				{
+					rts_set_mode(RTS_MODE_GM_FREERUNNING);
+					TRACE(TRACE_INFO, "switching RTS to use local reference");
+				}
+				else
+				{
+					rts_set_mode(RTS_MODE_BACKUP_SLAVE);
+					TRACE(TRACE_INFO, "switching RTS backup reference");
+				}
+			else
+				  TRACE(TRACE_INFO, "I'm grandmaster, now switching of reference");
 		}
 
 		shw_sfp_set_led_link(p->hw_index, 0);
 		p->state = HAL_PORT_STATE_LINK_DOWN;
 		reset_port_state(p);
 
-		rts_enable_ptracker(p->hw_index, 0);
+		rts_enable_ptracker(p->hw_index, 0); // switch over ?
 		TRACE(TRACE_INFO, "%s: link down", p->name);
 
 		return 1;

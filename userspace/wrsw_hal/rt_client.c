@@ -36,6 +36,7 @@ int rts_get_state(struct rts_pll_state *state)
 
 
     state->current_ref = (state->current_ref);
+    state->backup_ref = (state->backup_ref);
     state->flags = (state->flags);
     state->holdover_duration = (state->holdover_duration);
     state->mode = (state->mode);
