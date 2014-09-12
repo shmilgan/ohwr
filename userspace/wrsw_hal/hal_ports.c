@@ -392,10 +392,15 @@ static int handle_link_down(hal_port_state_t *p, int link_up)
 					rts_set_mode(RTS_MODE_GM_FREERUNNING);
 					TRACE(TRACE_INFO, "switching RTS to use local reference");
 				}
+				else if(backup_port() == p->hw_index)
+				{
+					rts_backup_channel(p->hw_index, RTS_BACKUP_CH_DOWN);
+					TRACE(TRACE_INFO, "switching off backup reference");
+				}
 				else
 				{
-					rts_set_mode(RTS_MODE_BACKUP_SLAVE);
-					TRACE(TRACE_INFO, "switching RTS backup reference");
+					rts_backup_channel(p->hw_index, RTS_BACKUP_CH_ACTIVATE);
+					TRACE(TRACE_INFO, "switching to backup reference");
 				}
 			else
 				  TRACE(TRACE_INFO, "I'm grandmaster, now switching of reference");
@@ -629,7 +634,7 @@ int hal_port_check_lock(const char  *port_name)
 		if(rts_state.delock_count > 0)
 				return 0;
 
-    return (rts_state.current_ref == p->hw_index &&
+    return ((rts_state.current_ref == p->hw_index || rts_state.backup_ref == p->hw_index )&&
             (rts_state.flags & RTS_DMTD_LOCKED) &&
             (rts_state.flags & RTS_REF_LOCKED));
 }

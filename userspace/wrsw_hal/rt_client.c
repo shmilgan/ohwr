@@ -77,6 +77,19 @@ int rts_set_mode(int mode)
     return rval;
 }
 
+/* Manage the backup channel */
+int rts_backup_channel(int channel, int cmd)
+{
+	int rval;
+	int ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_backup_channel_struct, &rval, 
+			      channel, cmd);
+
+    if(ret < 0)
+        return ret;
+
+    return rval;
+}
+
 /* Sets the phase setpoint on a given channel */
 int rts_adjust_phase(int channel, int32_t phase_setpoint)
 {
