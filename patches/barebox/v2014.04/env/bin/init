@@ -1,5 +1,8 @@
 #!/bin/sh
 
+#Turn led CPU1 on (PA0)
+gpio_set_value 0 0
+
 # V4: we boot with kernel and initramfs in both install and normal run
 # Also, 4MB are enough for either (2M currently, but let's get some margin)
 addpart /dev/ram0 4M@0x01000000(kernel)
@@ -52,8 +55,8 @@ if [ x$autoboot_timeout != x ]; then
     menu_timeout="-A $autoboot_timeout"
 fi
 
-#Set 2nd LED ON (PA2)
-gpio_set_value 33 0
+#Set 2nd LED ON (PA1)
+gpio_set_value 1 0
 
 PS1="wrs-$eth0.ethaddr# "
 
