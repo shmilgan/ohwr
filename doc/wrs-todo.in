@@ -135,12 +135,6 @@ the up-arrow will show interference between shells).
 
 @itemize @bullet
 
-@item @i{dataflash} support in our version of @i{barebox} is not working.
-We need to either upgrade @i{barebox} or fix the bug.  I don't know
-whether the bug has been fixed in recent boot loader versions (last time
-I checked the @i{git} logs I found nothing meaningful, but it was around
-May 2014.
-
 @item We need to save some hardware information items to @i{dataflash}.
 Such information should never be modified after the switch is shipped.
 The plan is using SDB for it (i.e. SDBFS) but we must define proper
