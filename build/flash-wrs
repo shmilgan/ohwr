@@ -41,7 +41,6 @@ fake_flasher()
 showhelp()
 {
 	printf "Usage: $0 [options] [<firmware>.tar] [DEV]\n\n"
-	printf "MAC:\t MAC address in hexadecimal seperated by ':' (i.e, AB:CD:EF:01:23:45)\n"
 	printf "<firmware>.tar: Use the file in the firmware to flash the device\n"
 	printf "DEV:\t The usb device (by default it is /dev/ttyACM0)\n"
 	printf "Options: \n"
@@ -50,8 +49,6 @@ showhelp()
 	printf "  -g|--gateware\t Select the gateware: 18p (18 ports, default), 8p (8 ports)\n"
 	printf "  -e \t\t Completely erase the memory (Can erase your configuration)\n"
 	printf "  -b|--build\t Use files that you have built in the WRS_OUTPUT_DIR\n"
-	printf "  -m1|--mac1\t Default MAC address for the ethernet port on board\n"
-	printf "  -m2|--mac2\t Default base MAC address for the switch ports\n"
 	exit 0
 }
 
@@ -66,34 +63,6 @@ checkExit()
 		echo "$me: Can't find file \"$2\" ($1)" >& 2;
 		exit 1
 	fi
-}
-
-checkMAC()
-{
-	X="[0-9a-fA-F][0-9a-fA-F]"
-	if echo $1 | grep "^[0-9a-fA-F][02468aceACE]:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
-		return 0
-	fi
-	return 1
-}
-
-modifyMAC()
-{
-	origin=$1
-	new=$2
-	cp $origin $new
-
-	echo "Configure the MAC addresses:"
-	echo "  MAC1 $MAC1"
-	echo "  MAC2 $MAC2"
-	# MAC address doesn't need any modification
-	if [ $silent ]; then
-	    return 1;
-	fi
-	# Modify MAC address
-	sed -i "s/$MAC1_DEF/$MAC1/" $new
-	sed -i "s/$MAC2_DEF/$MAC2/" $new
-	return 0
 }
 
 # Go to the top directory
@@ -202,22 +171,8 @@ while [ $# -ge 1 ]; do
 
 	/* ) DEV="-s $1"; shift ;;
 
-	-m1|--mac1)
-		MAC1="$2"
-		checkMAC $MAC1
-		if [ $? -eq 1 ];then
-			echo "Error: MAC address 1 invalid ($MAC1)"
-			exit 1
-		fi
-		shift; shift;;
-
-	-m2|--mac2)
-		MAC2="$2"
-		checkMAC $MAC2
-		if [ $? -eq 1 ];then
-			echo "Error: MAC address 2 invalid ($MAC2)"
-			exit 1
-		fi
+	-m1|--mac1|-m2|--mac2)
+		echo "Error: can't change mac1 and mac2 any more. See docs" >& 2
 		shift; shift;;
 
 	-[ecs])
@@ -310,14 +265,9 @@ fi
 echo -n "   please release the flash button and press Enter to start flashing: "
 read unused
 
-# Create a temporary barebox binary with modified MAC addresses
-Tbarebox=$WRSTMPDIR/bb.new
-modifyMAC ${barebox} ${Tbarebox}
-
-
 ## Flashing DataFlash: at91bootstrap at 0, then barebox at 0x8400 (33792)
 if $df; then
-	${FLASHER} -m df $FLAGS $DEV ${at91bs} 0 ${Tbarebox} 33792
+	${FLASHER} -m df $FLAGS $DEV ${at91bs} 0 ${barebox} 33792
 fi
 
 ## Prepare for the NAND flashing procedure (kernel, initramfs, /usr)
@@ -337,7 +287,7 @@ if $nf; then
 
 	# Start nand flashing procedure
 	$FLASHER -m ddr $FLAGS $DEV \
-	    ${Tbarebox}  0x0000000 \
+	    ${barebox}  0x0000000 \
 	    ${kernel}    0x1000000 \
 	    ${MAGICSTR}  0x17FFFF8 \
 	    ${initramfs} 0x1800000
@@ -364,7 +314,7 @@ if $ddr; then
 
 	# barebox would be enough, but place kernel and initramfs too. it costs nothing
 	$FLASHER -m ddr $FLAGS $DEV \
-	    ${Tbarebox}  0x0000000 \
+	    ${barebox}  0x0000000 \
 	    ${kernel}    0x1000000 \
 	    ${initramfs} 0x1800000
 
