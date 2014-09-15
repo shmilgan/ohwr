@@ -1,0 +1,87 @@
+From 55893c8ebab97be71eacc2f4814a2b41616ec7c1 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Mon, 15 Sep 2014 11:40:34 +0200
+Subject: [PATCH 12/13] libsdb: integrate in build system
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ lib/Kconfig      |    3 +++
+ lib/Makefile     |    1 +
+ lib/sdb/Makefile |   44 +-------------------------------------------
+ 3 files changed, 5 insertions(+), 43 deletions(-)
+
+diff --git a/lib/Kconfig b/lib/Kconfig
+index d9ad4aa..7a2884e 100644
+--- a/lib/Kconfig
++++ b/lib/Kconfig
+@@ -47,6 +47,9 @@ config LIBUBIGEN
+ config LIBMTD
+ 	bool
+ 
++config LIBSDB
++	bool
++
+ config STMP_DEVICE
+ 	bool
+ 
+diff --git a/lib/Makefile b/lib/Makefile
+index e8769a9..d4295fe 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -44,3 +44,4 @@ obj-y			+= gui/
+ obj-$(CONFIG_XYMODEM)	+= xymodem.o
+ obj-y			+= unlink-recursive.o
+ obj-$(CONFIG_STMP_DEVICE) += stmp-device.o
++obj-$(CONFIG_LIBSDB)	+= sdb/
+diff --git a/lib/sdb/Makefile b/lib/sdb/Makefile
+index 4699673..d3f06a4 100644
+--- a/lib/sdb/Makefile
++++ b/lib/sdb/Makefile
+@@ -1,43 +1 @@
+-
+-LINUX ?= /lib/modules/$(shell uname -r)/build
+-
+-# If we compile for the kernel, we need to include real kernel headers.
+-# The thing is enough a mess that I moved it to a different file
+-include Makefile.arch
+-
+-
+-AS              = $(CROSS_COMPILE)as
+-LD              = $(CROSS_COMPILE)ld
+-CC              = $(CROSS_COMPILE)gcc
+-CPP             = $(CC) -E
+-AR              = $(CROSS_COMPILE)ar
+-NM              = $(CROSS_COMPILE)nm
+-STRIP           = $(CROSS_COMPILE)strip
+-OBJCOPY         = $(CROSS_COMPILE)objcopy
+-OBJDUMP         = $(CROSS_COMPILE)objdump
+-
+-# calculate endianness at compile time
+-ENDIAN := $(shell ./check-endian $(CC))
+-
+-CFLAGS = -Wall -ggdb -O2
+-CFLAGS += -I../include/linux -I../include # for <sdb.h>
+-CFLAGS += -ffunction-sections -fdata-sections
+-CFLAGS += -Wno-pointer-sign
+-CFLAGS += $(ENDIAN) $(LINUXINCLUDE)
+-
+-
+-LIB = libsdbfs.a
+-OBJS = glue.o access.o
+-
+-all: $(LIB)
+-
+-$(OBJS): $(wildcard *.h)
+-
+-$(LIB): $(OBJS)
+-	$(AR) r $@ $(OBJS)
+-
+-clean:
+-	rm -f $(OBJS) $(LIB) *~ core
+-
+-# add the other unused targets, so the rule in ../Makefile works
+-modules install modules_install:
++obj-y += glue.o access.o
+-- 
+1.7.10.4
+
