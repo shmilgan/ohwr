@@ -26,7 +26,9 @@
 #include <shw_io.h>
 #include <hwiu.h>
 #include "switch_hw.h"
+#include "libsdbfs.h"
 
+#define SDBFS_NAME "/dev/mtd5"
 
 #ifndef __GIT_VER__
 #define __GIT_VER__ "x.x"
@@ -53,6 +55,97 @@ void help(const char* pgrname)
 		exit(1);
 }
 
+/*
+ * This is the backend of sdb access, using the sdb library. I don't run
+ * sdb-read because it pretends to mmap the file, and mtd can't be mapped
+ * (this I'll fix in fpga-config-space); and it would add overhead
+ */
+struct drvdata {
+	FILE *f;
+};
+
+static struct drvdata drvdata;
+
+static int sdb_read(struct sdbfs *fs, int offset, void *buf, int count)
+{
+	struct drvdata *dd = fs->drvdata;
+	FILE *f = dd->f;
+
+	if (fseek(f, offset, SEEK_SET) < 0)
+		return -1;
+	return fread(buf, 1, count, f);
+}
+
+static struct sdbfs sdb_instance = {
+	.drvdata = &drvdata,
+	.entrypoint = 0, /* unfortunately: to be fixed */
+	.read = sdb_read,
+};
+
+/* This uses the sdb library, with backend above */
+static char *sdb_get(char *fname, char *tagname)
+{
+	static char buf[0x420];
+	static char result[64];
+	char *unknown = "UNKNOWN";
+	static FILE *f = (FILE *)-1;
+	int i, j;
+	char *s;
+
+	if (f == (FILE *)-1) {
+		f = fopen(SDBFS_NAME, "r");
+		if (!f) {
+			fprintf(stderr, "%s: %s\n", SDBFS_NAME,
+				strerror(errno));
+			return unknown;
+		}
+		drvdata.f = f;
+		i = sdbfs_dev_create(&sdb_instance, 0 /* verbose */);
+		if (i != 0) {
+			printf("Error accessing SDB filesystem in \"%s\"\n",
+			       SDBFS_NAME);
+			f = NULL;
+			return unknown;
+		}
+	}
+
+	if (!f) /* already failed, already reported */
+		return unknown;
+
+	i = sdbfs_open_name(&sdb_instance, fname);
+	if (i < 0) {
+		fprintf(stderr, "Can't open \"%s\" in \"%s\"\n",
+			fname, SDBFS_NAME);
+		return unknown;
+	}
+	i = sdbfs_fread(&sdb_instance, -1, buf, sizeof(buf) - 1);
+	if (i <= 0)
+		return unknown;
+	j = i - 1;
+	/* trim trailing garbage as the file is assumed to be text */
+	while (j >= 0 && (buf[j] == 0xff  || buf[j] == 0x00))
+		j--;
+	if (j >= 0 && buf[j] == '\n')
+		j--; /* trailing newline too */
+	buf [j + 1] = '\0';
+
+	if (!tagname) {
+		strncpy(result, buf, sizeof(result));
+		return result;
+	}
+	/* Look for the tag */
+	s = strstr(buf, tagname);
+	sscanf(s, "%*[^:]:%*c%[^\n]", result);
+	return result;
+}
+
+
+static char *get_fpga(void)
+{
+	return sdb_get("hw_info", "fpga");
+}
+
+/* Previous stuff follows */
 static void print_gw_info(void)
 {
 	struct gw_info info;
@@ -82,8 +175,11 @@ static void wrsw_tagged_versions(void)
 	printf("software-version: %s\n", __GIT_VER__); /* see Makefile */
 	printf("bult-by: %s\n", __GIT_USR__); /* see Makefile */
 	printf("build-date: %s %s\n", __DATE__, __TIME__);
-	printf("pcb-version: %s\n", get_shw_info('p'));
-	printf("fpga-type: %s\n", get_shw_info('f'));
+	printf("backplane-version: %s\n", get_shw_info('p'));
+	printf("fpga-type: %s\n", get_fpga());
+	printf("manufacturer: %s\n", sdb_get("manufacturer", NULL));
+	printf("serial-number: %s\n", sdb_get("hw_info", "scb_serial"));
+	printf("scb-version: %s\n", sdb_get("scb_version", NULL));
 	print_gw_info(); /* This is already tagged */
 }
 
@@ -114,9 +210,10 @@ int main(int argc, char **argv)
 		}
 		func='f';
 		/* fall through */
-	case 'p':
-	case 'f':
-		/* Warning: this -p and -f is used by the web interface */
+	case 'f': /* Warning: this -p and -f is used by the web interface */
+		printf("%s\n", get_fpga());
+		break;
+	case 'p': /* Warning: this -p and -f is used by the web interface */
 		printf("%s\n",get_shw_info(func));
 		break;
 	case 'g':
@@ -135,7 +232,7 @@ int main(int argc, char **argv)
 	case 'a':
 		/* Warning: this with "awk '{print $4}'" is ued by the web if */
 		printf("PCB:%s, FPGA:%s; version: %s (%s); compiled at %s %s\n",
-		       get_shw_info('p'), get_shw_info('f'),
+		       get_shw_info('p'), get_fpga(),
 		       __GIT_VER__, __GIT_USR__, __DATE__, __TIME__);
 		break;
 	case 'h':
