@@ -633,6 +633,12 @@ you need to following items to flash a switch:
 The flashing procedure will use the @i{server address} reported by
 DHCP as IP address for the TFTP transfer.
 
+Also, since release 4.1, you should not provide MAC addresses
+while flashing any more. The two MAC addresses are expected to be stored
+in @i{dataflash} by the manufacturer and not changed any more. If you
+upgraded your switch from a previous software version, please refer
+to 
+
 The tool used to flash the firmware into the switch is the @i{USB-loader}
 we inherited from Atmel. The @file{flash-wrs} script is what
 you'll use to run the loader with appropriate parameters.
@@ -665,16 +671,7 @@ whole data flash, is almost mandatory because otherwise bits of your previous
 installation may leak into the newly-programmed one. Only on factory-new
 devices you can avoid this ``@code{-e}'' argument. 
 
-It is recommended to configure the MAC addresses during the flashing
-procedure. With the option @code{-m1|--mac1} you can select the MAC address
-to assign to the Ethernet port on board. With the option @code{-m2|--mac2}
-you can select the base MAC address; the @code{wr_nic} driver will use this
-MAC address to sequentially assign a MAC address for every switch ports.
-
-@example
-    /path/to/wr-switch-sw/build/flash-wrs -e -b -m1 02:34:56:77:65:43
-    -m2 02:34:34:34:34:00
-@end example
+@c FIXME: -e for dataflash
 
 @b{Note:} White Rabbit switches are shipped with their preallocated
 MAC addresses, reported in a sticker on the back side of the switch;
@@ -1257,7 +1254,8 @@ and are currently the following ones:
    0008-wrs3-use-correct-nand-partitioning.patch
    0009-at91-udc-force-full-speed.patch
    0010-sam9m10g45ek-for-wrs-new-partitioning.patch
-   0011-sam9m10g45ek-for-wrs-final-partitions-for-V4.patch
+   0011-sam9m10g45ek-for-wrs-final-partitions-for-V4.1.patch
+   0012-sam9m10g45ek-for-wrs-more-relaxed-nand-timings.patch
 @end example
 
 The configuration we use to build the kernel is not a patch but a plain
@@ -1555,10 +1553,11 @@ after boot:
    mtd2: 00008400 00000420 "at91boot"
    mtd3: 00084000 00000420 "Barebox"
    mtd4: 00008400 00000420 "Barebox-Environment"
-   mtd5: 007ab800 00000420 "Available-dataflash"
-   mtd6: 0201d800 0001f800 "boot"
-   mtd7: 0961e000 0001f800 "usr"
-   mtd8: 0961e000 0001f800 "update"
+   mtd5: 00000840 00000420 "hwinfo"
+   mtd6: 007aafc0 00000420 "Available-dataflash"
+   mtd7: 0201d800 0001f800 "boot"
+   mtd8: 0961e000 0001f800 "usr"
+   mtd9: 0961e000 0001f800 "update"
 @end example
 
 If you are customizing the switch, you may use the UBI commands to
@@ -1608,6 +1607,183 @@ For further details on the update procedure, please see
 distributed in @t{userspace/rootfs_override/}.
 
 @c ##########################################################################
+@node SDB and Hardware Information
+@appendix SDB and Hardware Information
+
+This appendix is for manufacturers, and  users who bought a
+switch with version 4.0 or earlier of the software, but are upgrading.
+
+There are a number of information items that should be known to the
+software, like the MAC addresses, the serial number of the device, and
+what FPGA model is mounted on the PCB.  This information must be
+available in some storage device, written at manufacture time and
+never modified.
+
+The storage device of choice, given the hardware architecture of the
+White Rabbit Switch, is the @i{dataflash}.  The data format we chose
+is @sc{sdb}, that we are using in a number of situations.
+
+A description of @sc{sdb} is to be found in the @t{ohwr} project
+called @i{fpga-config-space}. The @i{Self Describing Bus} was born
+to describe address spaces (i.e. the cores that are part of an @sc{fpga}
+design) but is also a good way to implement a small filesystem
+in limited storage.
+
+@c ==========================================================================
+@node Hwinfo Placement in Dataflash
+@section Hwinfo Placement in Dataflash
+
+The @i{hwinfo} @sc{sdb} image in the White Rabbit Switch lives at offset
+0x94800 in @i{dataflash}, and is 2112 bytes long (0x840: two or eight
+erase regions, according to the device in use).
+
+The area is available as @t{/dev/mtd5} from the Linux kernel, and can
+be accessed as a partition from @i{barebox} (the default boot scripts
+create it as @t{/dev/dataflash0.hwinfo}).
+
+The binary image includes 4 files, stored as an @sc{sdb} filesystem:
+
+@table @code
+@item manufacturer
+
+	The manufacturer name, as an ASCII string.
+
+@item scb_version
+
+	The ``Switch Core Board'' version, which is in the digit.digit
+        form, like @t{3.3} or @t{3.4}.
+
+@item eth0.ethaddr
+
+	The MAC address for the management Ethernet port (RJ45, 100Mb/s).
+
+@item wr0.ethaddr
+
+	The MAC address for the first fiber port (SFP, 1Gb/s). Other ports
+        are assigned sequential addresses starting from this one.
+
+@item hw_info
+
+	A line-oriented ASCII file including other ``@t{tag: value}''
+        information.
+
+@end table
+
+@c ==========================================================================
+@node Creating the Hwinfo File
+@section Creating the Hwinfo File
+
+The @i{hwinfo} file is created using @i{gensdbfs}. The tool is part of
+@i{fpga-config-space} and is not included in @t{wr-switch-sw}, because
+the package ships a pre-built base image that is then edited in-place.
+
+To re-build the image, please follow the instructions included as
+comments in the configuration file, @t{hwinfo-sdb/--SDB-CONFIG--}
+and the respective commit message.  You most likely won't need to
+rebuild the image, unless you want to add data files or change
+the manufacturer name from the default.
+
+A pre-built image is included as @t{binaries/sdb-for-dataflash}.
+
+The script @i{build/wrs_hwinfo} can be used to edit the file
+upgrading the MAC addresses and the tagged text file.  The tool
+creates a copy of the base file and modifies it in @t{/tmp}.
+It finally prints the new file name on @i{stdout}.
+
+The following example with ``strange'' values by design shows how to
+use the script, assuming @t{/tftpboot} is the public directory
+accessed by the @sc{tftp} server.
+
+@smallexample
+
+  F=$(./build/wrs_hwinfo \
+     -m1 00:02:04:06:08:0a \
+     -m2 22:33:44:55:66:77 \
+     -v 3.3 \
+     -x "fpga: LX240T" -n 12345)
+
+  chmod a+r $F
+  cp $F /tftpboot
+@end smallexample
+
+Please check the source code for details about the command-line options.
+The @i{version} argument is mandatory, because the software must know
+what version the SCB is (this is not really needed to identify  3.4 from
+3.4, but we don't know if we will be able to auto detect 3.5 or 4.0).
+
+Some information items are not really mandatory (the script will
+not fail if the are not specified), but should be defined anyways
+because @sc{snmp} code retrieves them to tell network administrators.
+Currently this only applies to the serial number (@t{-n})
+
+@c ==========================================================================
+@node Storing Hwinfo in a White Rabbit Switch
+@section Storing Hwinfo in a White Rabbit Switch
+
+Linux partitioning accesses the hardware information as a read-only
+partition, to prevent accidental erasure. The boot loader, on the
+other hand, has full access to the @i{dataflash} device.
+
+To write the hardware information in a switch that misses it, or
+replace an existing set of values, you may use the following
+@i{barebox} commands (erasing is not needed if the device is blank).
+
+@smallexample
+   addpart /dev/dataflash0 0x840@@0x94800(hwinfo)
+   erase /dev/dataflash0.hwinfo
+   dhcp 5
+   tftp hwinfo /dev/dataflash0.hwinfo
+@end smallexample
+
+The code above assumes that the @i{hwinfo} file is available from your
+@sc{dhcp/tftp} server. According to your configuration one or more
+commands may be redundant.
+
+You can verify successful writing by running @i{sdbinfo}, as shown
+below.
+
+@c ==========================================================================
+@node Accessing Hwinfo at Run Time
+@section Accessing Hwinfo at Run Time
+
+You can access the hardware information from @i{barebox} using the new
+@i{sdbinfo}, @i{sdbread} and @i{sdbset} commands. The following
+example shows an example session, using the file built in
+@ref{Creating the Hwinfo File} and featuring a simplified @i{barebox}
+prompt of ``@t{bb> }'':
+
+@smallexample
+  bb> addpart /dev/dataflash0 0x840@@0x94800(hwinfo)
+  bb> sdbinfo /dev/dataflash0.hwinfo
+  46696c6544617461:2e202020 @ 00000000-0000083f .
+  46696c6544617461:7363625f @ 00000240-00000243 scb_version
+  46696c6544617461:7772302e @ 00000220-00000231 wr0.ethaddr
+  46696c6544617461:6d616e75 @ 00000260-0000026f manufacturer
+  46696c6544617461:68775f69 @ 00000420-0000083f hw_info
+  46696c6544617461:65746830 @ 00000200-00000211 eth0.ethaddr
+
+  bb> sdbread /dev/dataflash0.hwinfo manufacturer
+  Seven Solutions
+  bb> sdbread /dev/dataflash0.hwinfo hw_info
+  fpga: LX240T
+  scb_serial: 12345
+  bb> sdbset /dev/dataflash0.hwinfo wraddr wr0.ethaddr
+  bb> echo $wraddr
+  22:33:44:55:66:77
+
+  bb> sdbread /dev/dataflash0.hwinfo eth0.ethaddr
+  00:02:04:06:08:0a
+@end smallexample
+
+@i{Barebox} passes the MAC address information to the Linux kernel by
+setting proper environment variables using @i{sdbset}.
+
+After boot, @i{sdb} can be accessed using the @i{sdb-read} command
+(that this package copied from @t{fpga-config-space}.  The @sc{snmp}
+code accesses the files directly, by linking the @i{libsdb} code base
+-- again, from @t{fpga-config-space}.
+
+@c ##########################################################################
 @node SNMP Support
 @appendix SNMP Support
 
@@ -1616,16 +1792,14 @@ in this respect.  The default read-only ``community'' name is @t{private},
 but you can change it from the @t{Kconfig} interface before building.
 The default read-write community is @t{private}.
 
-The switch supports all the standard information throught the @i{net-snmp}
+The switch supports all the standard information through the @i{net-snmp}
 installation.  We'll remove some of the items in a later release, because
 nobody wants to check running processes or disk space usage.
 
 The additional, switch-specific information are in the
 ``enterprise.96.100 subtree, where @t{96} is CERN and @t{100} is White
-Rabbit. The associatd MIB is in the directory @t{userspace/snmpd},
+Rabbit. The associated MIB is in the directory @t{userspace/snmpd},
 where related source files live as well.
-
-
 
 @c ==========================================================================
 @node The WRS MIB
@@ -1655,8 +1829,8 @@ This a summary of the available tables and scalars:
 
 @item 96.100.4
 
-	Hardware, gateware and software versions. It currently
-        returns fake data, we'll complete it soon.
+	Hardware, gateware and software versions, plus serial
+        number and other hardware information.
 
 @item 96.100.5
 
@@ -1721,6 +1895,9 @@ WR-SWITCH-MIB::wrsVersionGw2.0 = STRING: 5118070
 WR-SWITCH-MIB::wrsVersionGw3.0 = STRING: 7efeb16
 WR-SWITCH-MIB::wrsVersionHw1.0 = STRING: 3.30
 WR-SWITCH-MIB::wrsVersionHw2.0 = STRING: LX240T
+WR-SWITCH-MIB::wrsManufacturer.0 = STRING: Seven Solutions
+WR-SWITCH-MIB::wrsSerialNumber.0 = STRING: 12345
+WR-SWITCH-MIB::wrsScbVersion.0 = STRING: 3.3
 WR-SWITCH-MIB::wrsDateTAI.0 = Counter64: 1406623390
 WR-SWITCH-MIB::wrsDateString.0 = STRING: 2014-07-29-08:43:10
 @end smallexample

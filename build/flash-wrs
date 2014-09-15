@@ -287,7 +287,7 @@ if $nf; then
 
 	# Start nand flashing procedure
 	$FLASHER -m ddr $FLAGS $DEV \
-	    ${barebox}  0x0000000 \
+	    ${barebox}   0x0000000 \
 	    ${kernel}    0x1000000 \
 	    ${MAGICSTR}  0x17FFFF8 \
 	    ${initramfs} 0x1800000
@@ -314,7 +314,7 @@ if $ddr; then
 
 	# barebox would be enough, but place kernel and initramfs too. it costs nothing
 	$FLASHER -m ddr $FLAGS $DEV \
-	    ${barebox}  0x0000000 \
+	    ${barebox}   0x0000000 \
 	    ${kernel}    0x1000000 \
 	    ${initramfs} 0x1800000
 
