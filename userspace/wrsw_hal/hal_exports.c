@@ -83,7 +83,7 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
    fine adjustments are done with ADJUST_PHASE call, independently for each uplink to accommodate
    the different phase shifts on each port (and the fiber/cable connected to it).
  */
-      return rts_adjust_phase(0, params->adjust_phase_shift) ? 0 : -1;
+      return rts_adjust_phase(params->channel, params->adjust_phase_shift) ? 0 : -1;
 
     case HEXP_PPSG_CMD_ADJUST_NSEC:
       shw_pps_gen_adjust(PPSG_ADJUST_NSEC, params->adjust_nsec);
