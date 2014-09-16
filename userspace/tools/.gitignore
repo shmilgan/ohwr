@@ -15,3 +15,4 @@ lm32-vuart
 tru_mon
 wrs_pstats
 wrs_vlans
+sdb-read
