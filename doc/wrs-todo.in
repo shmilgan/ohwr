@@ -347,14 +347,6 @@ GrandMaster.
 
 @itemize @bullet
 
-@item Tool naming is completely inconsistent. We should move everything
-to use unambiguous naming: @t{wr_} for every wr-wide item, and @t{wrsw_}
-for every switch-specific thing.  (Actually, @t{wrs_} would be better,
-as it doesn't look like ``software'' and we use wrs/wrn internally already,
-but several tools use @t{wrsw_} as a prefix already. 
-We fixed the ``shower'' name -- (@t{shw_ver}: switch hardware version),
-but more are there. (@b{Update}: Greg says to use @t{wrs_} and do it soon).
-
 @item A number of tools @t{mmap()} FPGA memory, but there is no
 locking so it is (remotely) possible for tools to interfere and get
 wrong results.  We should define a good policy with proper locking, to
