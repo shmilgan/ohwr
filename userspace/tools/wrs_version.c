@@ -1,5 +1,5 @@
 /*
- * wrsw_version.c
+ * wrs_version.c
  *
  * Obtain the HW version and FPGA type.
  *

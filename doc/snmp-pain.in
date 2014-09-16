@@ -630,7 +630,7 @@ approach like the global PPSi values described in @ref{wrsPpsi}.
 
 The implementation is easier, because I rely on the fact that versions
 never change while the process runs. So I retrieve the version strings
-at initialization time, by calling ``@t{wrsw_version -t}'' (tagged)
+at initialization time, by calling ``@t{wrs_version -t}'' (tagged)
 and parsing its @i{stdout}.  Parsing is easier than what we have in
 @i{wrsPpsi}, but my plan is having a unified parser overall, and eventually
 get rid of this simplified special case.

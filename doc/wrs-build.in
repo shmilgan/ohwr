@@ -1414,13 +1414,13 @@ The most important tools in @file{userspace/tools} are the following:
         inconsistent with anything else in the switch, so it is being
         replaces.
 
-@item wrsw_vlans
+@item wrs_vlans
 	The tool allows to configure and unconfigure the VLAN settings
         for each port and for the RTU daemon. The @t{--help} option
         lists all configuration items of the tool.
 
 @c FIXME: document lm32-vuart rtu_stat spll_dbg_proxy wr_management
-@c FIXME: document wrsw_pstats
+@c FIXME: document wrs_pstats
 @end table
 
 Please note that to compile the applications and tools outside of the build

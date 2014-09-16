@@ -32,7 +32,7 @@
 
 #include "switch_hw.h"
 #include "fpga_io.h"
-#include "wrsw_vlans.h"
+#include "wrs_vlans.h"
 
 
 

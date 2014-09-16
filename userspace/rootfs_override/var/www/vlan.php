@@ -27,7 +27,7 @@
 	
 		echo '<center><strong>Existing VLANs</strong></center><hr>';
 		$tmp_vlan_file="/tmp/vlans.conf";
-		$vlans = shell_exec("/wr/bin/wrsw_vlans --list >".$tmp_vlan_file);
+		$vlans = shell_exec("/wr/bin/wrs_vlans --list >".$tmp_vlan_file);
 		$vlans = shell_exec("cat ".$tmp_vlan_file." |  sed -n '/ /s/ \+/ /gp'");
 		$vlans = explode("\n", $vlans);
 		
@@ -90,7 +90,7 @@
 		echo '<tr align=center><th><font color="blue">Port</font></strong></th><th><font color="blue">QMode</font></th><th><font color="blue">Priority</font></th><th><font color="blue">VLAN ID</font></th><th><font color="blue">MAC Address</font></th></tr>';
 		
 		$tmp_vlan_file="/tmp/port2vlan.conf";
-		$vlans = shell_exec("/wr/bin/wrsw_vlans --elist >".$tmp_vlan_file);
+		$vlans = shell_exec("/wr/bin/wrs_vlans --elist >".$tmp_vlan_file);
 		$vlans = shell_exec("cat ".$tmp_vlan_file." |  sed -n '/ /s/ \+/ /gp'");
 		$vlans = explode("\n", $vlans);
 		

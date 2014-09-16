@@ -65,7 +65,7 @@ static int version_group(netsnmp_mib_handler          *handler,
 static void wrs_v_init(void)
 {
 	char s[80], key[40], value[40];
-	FILE *f = popen("/wr/bin/wrsw_version -t", "r");
+	FILE *f = popen("/wr/bin/wrs_version -t", "r");
 	int i;
 
 	if (!f) {
