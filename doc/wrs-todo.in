@@ -135,12 +135,6 @@ the up-arrow will show interference between shells).
 
 @itemize @bullet
 
-@item We need to save some hardware information items to @i{dataflash}.
-Such information should never be modified after the switch is shipped.
-The plan is using SDB for it (i.e. SDBFS) but we must define proper
-procedures and prevent accidental erasure of such data. This is urgent,
-and we need it by September for release 4.1.
-
 @item Installation and run-time boots in two different ways. At installation
 we do everything using the @i{sam-ba} tools, while runtime relies on
 @i{at91boot}.  This means we are currently maintaining two different
