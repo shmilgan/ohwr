@@ -33,7 +33,7 @@ void help(char *prgname)
 	fprintf(stderr, "%s: Use: \"%s [<options>] <cmd> [<args>]\n",
 		prgname, prgname);
 	fprintf(stderr,
-		"  The program usss %s as default config file name\n"
+		"  The program uses %s as default config file name\n"
 		"  -f       force: run even if not on a WR switch\n"
 		"  -c <cfg> configfile to use in place of the default\n"
 		"  -v       verbose: report what the program does\n"
