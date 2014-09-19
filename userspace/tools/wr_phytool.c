@@ -452,6 +452,12 @@ void rt_command(int ep, int argc, char *argv[])
 		
 		rts_enable_ptracker(ep, 1);
 	}
+	else if (!strcmp(argv[3], "adj"))
+	{
+		printf("Enabling ptracker @ port %d\n", ep);
+		
+		rts_adjust_phase(ep, atoi(argv[4]));
+	}	
 }
 
 
@@ -504,7 +510,7 @@ struct {
 	{
 	"rt",
 	"",
-	"RT subsystem command [show,lock,master,gm]",
+	"RT subsystem command [show,lock,master,gm,adj ]",
 	rt_command},
 	{NULL}
 
