@@ -468,6 +468,10 @@ static void port_fsm(hal_port_state_t *p)
         p->phase_val_valid = rts_state.channels[p->hw_index].flags & CHAN_PMEAS_READY ? 1 : 0;
 				//hal_port_check_lock(p->name);
 				//p->locked =
+		TRACE(TRACE_ERROR,"[main-fsm] Port %s| state up, phase % d, valid %d", p->name,
+		p->phase_val,p->phase_val_valid);
+		TRACE(TRACE_INFO,"[main-fsm] Port %s| state up, phase % d, valid %d", p->name,
+		p->phase_val,p->phase_val_valid);		
 		}
 
 		break;
