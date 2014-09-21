@@ -126,6 +126,9 @@ int any_port_locked()
     return rts_state.current_ref;
 }
 
+/*
+ * return id of the backup channel, if available
+ */
 int backup_port()
 {
     if(!rts_state_valid) return -1;
@@ -380,24 +383,26 @@ uint32_t pcs_readl(hal_port_state_t *p, int reg)
 
 static int handle_link_down(hal_port_state_t *p, int link_up)
 {
-/* If, at any moment, the link goes down, reset the FSM and the port state structure. */
+/* If, at any moment, the link goes down, reset the FSM and the port state structure unless
+   - it is a backup port, in this case don't touch the sPLL
+   - it has a backup port, in this case switch the timing to backup  */
 	if(!link_up && p->state != HAL_PORT_STATE_LINK_DOWN && p->state != HAL_PORT_STATE_DISABLED)
 	{
 		if(p->locked)
 		{
 			
 			if(hal_get_timing_mode() != HAL_TIMING_MODE_GRAND_MASTER)
-				if(backup_port() == REF_NONE)
+				if(backup_port() == REF_NONE) // not a backup & no backup for it
 				{
 					rts_set_mode(RTS_MODE_GM_FREERUNNING);
 					TRACE(TRACE_INFO, "switching RTS to use local reference");
 				}
-				else if(backup_port() == p->hw_index)
+				else if(backup_port() == p->hw_index) // it is backup port
 				{
 					rts_backup_channel(p->hw_index, RTS_BACKUP_CH_DOWN);
 					TRACE(TRACE_INFO, "switching off backup reference");
 				}
-				else
+				else //it has a backup port
 				{
 					rts_backup_channel(p->hw_index, RTS_BACKUP_CH_ACTIVATE);
 					TRACE(TRACE_INFO, "switching to backup reference");
@@ -618,7 +623,7 @@ int hal_port_start_lock(const char  *port_name, int priority)
 
 	TRACE(TRACE_INFO, "Locking to port: %s", port_name);
 
-	if(priority == 0)
+	if(priority == 0) // only primary slave port needs that, don't do for backups
 		rts_set_mode(RTS_MODE_BC);
 
   return rts_lock_channel(p->hw_index, priority) < 0 ? PORT_ERROR : PORT_OK;
