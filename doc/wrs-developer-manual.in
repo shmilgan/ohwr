@@ -1,6 +1,6 @@
 \input texinfo    @c -*-texinfo-*-
 %
-% wrs-build.in - main file for the documentation
+% wrs-developer-manual.in - main file for the documentation
 %
 %%%%
 
@@ -10,7 +10,7 @@
 %                         =========================
 %
 %    This file is a texinfo source. It isn't the binary file of some strange
-%    editor of mine. If you want ASCII, you should "make wrs-build.txt".
+%    editor of mine. If you want ASCII, you should "make wrs-developer-manual.txt".
 %
 %------------------------------------------------------------------------------
 
@@ -25,8 +25,8 @@
 @comment %**start of header
 @documentlanguage en
 @documentencoding ISO-8859-1
-@setfilename wrs-build.info
-@settitle wrs-build
+@setfilename wrs-developer-manual.info
+@settitle wrs-developer-manual
 @iftex
 @afourpaper
 @end iftex
@@ -42,9 +42,9 @@
 @finalout
 
 @titlepage
-@title White Rabbit Switch: software build scripts
+@title White Rabbit Switch: Developer's Manual
+@subtitle Information about software in the White Rabbit switch, for developers and advanced users
 @subtitle @value{update-month} (@value{release})
-@subtitle How to rebuild the whole software package from sources
 @author Alessandro Rubini, Benoit Rat, Federico Vaga et al.
 @end titlepage
 @headings single
@@ -55,31 +55,87 @@
 @end iftex
 
 @c ##########################################################################
+@c in texinfo we are mandated to have a Top node
 @node Top
 @top Introduction
 
-This document describes the software build procedures for the White
-Rabbit Switch.  The procedure described is for version 3.3 of the
-hardware project and the official v4.0 release of the software.
-If you are running the official 3.3 release, please
-refer to the associated manual (at
-@url{http://www.ohwr.org/attachments/download/2264/wr-switch-sw-v3.3-20130725_build.pdf},
-which includes some (though limited) documentation for v3.0, v3.1
-& v3.2 in its Appendixes.
+The White Rabbit switch (or @sc{wrs}) is a major component of the
+White Rabbit (@sc{wr}) network.  Like any modern managed switch, the
+@sc{wrs} includes a CPU with its own operating system.
 
-@b{Note:} the switch, as shipped, works perfectly with the provided
-binaries (@url{http://www.ohwr.org/projects/wr-switch-sw/files}), and
-most users will only need to run the flasher -- see @ref{Flashing of
-WRS-3}.  This document as a whole is mainly aimed at developers who
-want to customize their own switch, which is actually a GNU/Linux host.
-
-If you do not need to modify/hack anything in the switch and just learn
-how to use it, you should first refer at the @b{User Guide} that you can
-find in the @url{http://www.ohwr.org/projects/wr-switch-sw/files}
+This manual is for people rebuilding or modifying @sc{wrs} software.
+It explains how to rebuild the whole software stack from source
+and how is the switch itself designed.
 
 @c ##########################################################################
-@node Overview
-@chapter Overview
+@node WRS Documentation
+@chapter WRS Documentation
+
+
+Up to and including release 4.0 of @sc{wrs} software this manual
+was the only official documentation item; now that the device is mature
+and the deployed base increases, we reorganized documentation.
+
+@c ==========================================================================
+@node The Official Manuals
+@section The Official Manuals
+
+This is the current set of manuals that accompany the @sc{wrs}:
+
+@itemize @bullet
+
+@item @i{White Rabbit Switch: Startup Guide}: hardware installation
+   instructions. This manual is provided by the manufacturer: it describes
+   handling measures, the external connectors, hardware features and the
+   initial bring-up of the device.
+
+@item @i{White Rabbit Switch: User's Manual}: documentation about
+   configuring the @sc{wrs}, at software level.  This guide is maintained
+   by software developers.  The manual describes
+   configuration in a deployed network, either as a standalone device or
+   as network-booted equipment.  The guide also describes how to upgrade
+   the switch, because we'll release new official firmware images over
+   time, as new features are implemented.
+
+@item @i{White Rabbit Switch: Developer's Manual}: it describes the
+   build procedure and how internals work; use of scripts and
+   @sc{wrs}-specific executables and so on.  The manual is by developers
+   and for developers.  This is the
+   document to check if you need to customize your @i{wrs} rebuild
+   software from new repository commits that are not an official release
+   point, or just install your @i{wrs} with custom configuration values.
+
+@end itemize
+
+The official @sc{pdf} copy of the three manuals at each release
+is published in The @i{files} tab of the software project in @t{ohwr.org}:
+(@url{http://www.ohwr.org/projects/wr-switch-sw/files}).
+This doesn't apply to release 4.0 and earlier.
+
+The source form of all three manuals is maintained in
+@t{wr-switch-sw/doc}. Within the repository, both the @i{User's
+Manual} and the @i{Developer's Manual} are always tracking the
+software commits, while the @i{Startup Guide} may not be authoritative
+because it is bound to device shipping rather than software
+development.
+
+@c ==========================================================================
+@node Supported Hardware Versions
+@section Supported Hardware Versions
+
+This document applies to versions 3.3 and 3.4 of the @sc{wrs}
+device.
+
+Very few specimens of @t{wrs} 3.0 though 3.2 were manufactured; if you
+are the owner of one of them, please refer to version 3.3 of the
+@i{wrs-build} document, that includes appendixes about using older
+versions. As usual, it is in the @i{files} tab of @t{ohwr.org}.
+
+V1 and V2 were development items, never shipped.
+
+@c ##########################################################################
+@node Overview of the Build Procedure
+@chapter Overview of the Build Procedure
 
 The scripts build over previous work by Tomasz Wlostowski, who first
 made the whole thing work and stick together -- a serious result from
