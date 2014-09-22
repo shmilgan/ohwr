@@ -1045,9 +1045,28 @@ you can add something like the following line to your @file{wrboot} script:
     bootargs="$bootargs nfsroot=/opt/root/wrs-3"
 @end example
 
-If you use static IP addresses, please note that you should fix
-@file{/etc/init.d/S40network} in the filesystem for your switch,
-so it doesn't run the DHCP client.
+In order to create an NFS root directory, you should uncompress
+@t{wrs-image.tar.gz} that is created at build time.  If you use
+a released @t{wrs-firmware.tar}, however, you'll have no overall
+filesystem for the switch, and you should rebuild it from two
+parts.  This is how to create your NFS filesystem (please adapt
+for your local pathnames):
+
+@example
+   FW=/tftpboot/wrs-firmware.tar
+   DIR=/opt/root/wrs-3
+
+   mkdir -p $DIR
+   tar xOf $FW wrs-initramfs.gz | zcat | \
+       (cd $DIR && sudo cpio --make-directories --extract)
+   tar xOf $FW wrs-usr.tar.gz | sudo tar xzf - -C $DIR/usr
+@end example
+
+The above commands extract to @i{stdout} the two parts of the @sc{wrs}
+filesystem, to then uncompress them to the proper directories.  The
+first @i{tar} pipe is less friendly because the @i{initramfs} is a
+compressed @i{cpio} archive, and @i{cpio} as a command lacks automatic
+decompression and the @t{-C} (change directory) option.
 
 @c ##########################################################################
 @node The Individual Build Steps
