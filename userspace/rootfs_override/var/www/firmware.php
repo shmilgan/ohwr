@@ -49,12 +49,13 @@
 		
 		?>
 	</table>
-	<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-	<hr>
-	<p align=center ><font color="red">NOTE: Flashing the switch with a wrong binary file might damage your device. <br>Please visit the 
-		<A HREF="http://www.ohwr.org/projects/wr-switch-sw/files" TARGET="_new">OHR website</A> for more details.</font>
-	</p>
-	<hr>
+		<div id="bottommsg">
+		<hr>
+		<p align=center ><font color="red">NOTE: Flashing the switch with a wrong binary file might damage your device. <br>Please visit the
+			<A HREF="http://www.ohwr.org/projects/wr-switch-sw/files" TARGET="_new">OHR website</A> for more details.</font>
+		</p>
+		<hr>
+	</div>
 	<?php 
 		wrs_change_wrfs("rw");
 		wrs_management();

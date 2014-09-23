@@ -52,9 +52,12 @@
 			</form>
 			</table>
 -->	
-	<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><hr>
 
-	*Note: After loading a FPGA or lm32 binary the switch will reboot.
+	<div id="bottommsg">
+		<center>
+		*NOTE: After loading a FPGA or lm32 binary the switch will reboot.
+		</center>
+	</div>
 	
 	<?  
 		wrs_change_wrfs("rw");

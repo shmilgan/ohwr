@@ -112,7 +112,7 @@
 		?>
 		
 		
-		<br><br><br><br><hr><p align="right"><A HREF="port2vlan.php">Assign Ports to VLANs</A></p>
+		<div id="bottommsg"><hr><p align="right"><A HREF="port2vlan.php">Assign Ports to VLANs</A></p></div>
 		
 		
 	

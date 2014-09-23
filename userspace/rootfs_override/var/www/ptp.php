@@ -81,12 +81,10 @@
 		<INPUT align="right" type="submit" value="Update & Relaunch" class="btn last">
 		</FORM>
 		
-		
-		
-		<br><br><br><br><br><br><br><br><br><br><br><br>
+		<div id="bottommsg">
 		<hr>
 		<p align="right">Click <A HREF="endpointmode.php">here</A> to modify endpoint mode configuration</p>
-
+		</div>
 	
 		
 	<?php

@@ -38,8 +38,8 @@
 				<input type="submit" value="Add" class="btn">
 				</form></div>';
 				
-			echo "<br><br><br><br><br><br><br><br><br><br><br><br><br><br><hr>
-				<div>
+			echo "<div id='bottommsg'>
+				<hr>
 				NOTE: This action will delete the previous sfp_database.conf file. <a href='showfile.php?help_id=file&name=sfp_database.conf'
 				onClick='showPopup(this.href);return(false);'> (see current configuration) </a>
 				<center>**If you do not know how to calibrate SFPs please click on <a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration' target='_blank'> here </a>**</center>
