@@ -95,6 +95,10 @@ h1, h2, h3, h4, h5, h6, p, ul, ol, li, form, input, textarea {
 	color: #23b14d;
 }
 
+.topmenu ul li.selected {
+	border-bottom: 1px dotted #a9c6c9;
+}
+
 #sfp_panel .port img
 {
 	width:40px;
