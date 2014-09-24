@@ -26,10 +26,10 @@
 	
 	<?php 
 		if(!strcmp($_GET['vlan'],"all")){ // Delete all vlans and free ports
-			shell_exec("/wr/bin/wrsw_vlans --clear");
+			shell_exec("/wr/bin/wrs_vlans --clear");
 			
 		}else{
-			shell_exec("/wr/bin/wrsw_vlans --rvid ".$_GET['vlan']." --del");
+			shell_exec("/wr/bin/wrs_vlans --rvid ".$_GET['vlan']." --del");
 			
 		}
 		

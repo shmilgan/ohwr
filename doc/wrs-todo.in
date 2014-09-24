@@ -135,12 +135,6 @@ the up-arrow will show interference between shells).
 
 @itemize @bullet
 
-@item We need to save some hardware information items to @i{dataflash}.
-Such information should never be modified after the switch is shipped.
-The plan is using SDB for it (i.e. SDBFS) but we must define proper
-procedures and prevent accidental erasure of such data. This is urgent,
-and we need it by September for release 4.1.
-
 @item Installation and run-time boots in two different ways. At installation
 we do everything using the @i{sam-ba} tools, while runtime relies on
 @i{at91boot}.  This means we are currently maintaining two different
@@ -274,14 +268,6 @@ all configurations to the PPSi config file -- the delays and all the rest
 are PTP-specific anyways, and PPSi supports per-architecture configuration
 items.
 
-@item  We need a way to change parameters at run time in the @i{softpll}
-implementation running on the switch.  We may base this on the @i{ipc}
-mechanism that is already in place, or design a well-know structure in
-the LM32 code, so the main CPU can just change parameters on the fly.
-I prefer the latter approach, but I need to talk with LM32 developers
-to agree about how to do that, and ensure everybody follows the policy
-we define.
-
 @end itemize
 
 @c ##########################################################################
@@ -354,14 +340,6 @@ GrandMaster.
 @chapter Tools
 
 @itemize @bullet
-
-@item Tool naming is completely inconsistent. We should move everything
-to use unambiguous naming: @t{wr_} for every wr-wide item, and @t{wrsw_}
-for every switch-specific thing.  (Actually, @t{wrs_} would be better,
-as it doesn't look like ``software'' and we use wrs/wrn internally already,
-but several tools use @t{wrsw_} as a prefix already. 
-We fixed the ``shower'' name -- (@t{shw_ver}: switch hardware version),
-but more are there. (@b{Update}: Greg says to use @t{wrs_} and do it soon).
 
 @item A number of tools @t{mmap()} FPGA memory, but there is no
 locking so it is (remotely) possible for tools to interfere and get

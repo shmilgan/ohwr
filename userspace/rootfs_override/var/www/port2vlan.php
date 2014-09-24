@@ -26,7 +26,7 @@
 		// Get VLANS
 		echo '<center><strong>Port-VLAN List</strong></center><hr>';
 		$tmp_vlan_file="/tmp/vlans.conf";
-		$vlans = shell_exec("/wr/bin/wrsw_vlans --list >".$tmp_vlan_file);
+		$vlans = shell_exec("/wr/bin/wrs_vlans --list >".$tmp_vlan_file);
 		$vlans = shell_exec("cat ".$tmp_vlan_file." |  sed -n '/ /s/ \+/ /gp'");
 		$vlans = explode("\n", $vlans);
 		$name_vlans="";
@@ -44,7 +44,7 @@
 		
 		// Get Previous assignment
 		$tmp_assign_file="/tmp/port2vlan.conf";
-		$vlans_assignment = shell_exec("/wr/bin/wrsw_vlans --elist >".$tmp_assign_file);
+		$vlans_assignment = shell_exec("/wr/bin/wrs_vlans --elist >".$tmp_assign_file);
 		$vlans_assignment = shell_exec("cat ".$tmp_assign_file." |  sed -n '/ /s/ \+/ /gp'");
 		$vlans_assignment = explode("\n", $vlans_assignment);
 		
@@ -116,7 +116,7 @@
 		echo '<br>'.$_POST['mode0'];
 		//Parse input and run the command
 		if (!empty($_POST['updatevlan'])){
-			$vlan_cmd= "/wr/bin/wrsw_vlans ";
+			$vlan_cmd= "/wr/bin/wrs_vlans ";
 			
 			for($i = 0; $i < 18; $i++){
 				//if(strcmp($_POST['vlan'.$i],"disabled")){ //VLAN selected
@@ -139,7 +139,7 @@
 						
 				//}
 				
-				$vlan_cmd= "/wr/bin/wrsw_vlans ";
+				$vlan_cmd= "/wr/bin/wrs_vlans ";
 			}
 			header('Location: vlan.php');
 		}

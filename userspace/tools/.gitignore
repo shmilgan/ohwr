@@ -7,11 +7,12 @@ wr_phytool
 com
 mapper
 wmapper
-wrsw_version
+wrs_version
 wr_date
 fix_tai_offset
 wr_management
 lm32-vuart
 tru_mon
-wrsw_pstats
-wrsw_vlans
+wrs_pstats
+wrs_vlans
+sdb-read

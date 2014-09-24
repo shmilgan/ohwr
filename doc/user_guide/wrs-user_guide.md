@@ -366,7 +366,7 @@ All these tools are found in `/wr/bin/` which is included in the `$PATH`.
  
 The following list resumes the most interesting commands: 
 
- * `wrsw_version`:	Print information about the SW & HW version of the [WRS].
+ * `wrs_version`:	Print information about the SW & HW version of the [WRS].
  * `rtu_stat`:	Routing Table Unit Statistic, returns the routing table information where we can find which MAC needs to be forwarded to which port. It also allows to add and delete entries.
  * `wr_mon`:	WR Switch Sync Monitor, outputs information about the state of WR syncrhonisation such as Phase Tracking, Master-Slave delay, link asymmetry, etc...
  * `spll_dbg_proxy`: 	SoftPLL debug proxy, reads out the debug FIFO datastream from the SoftPLL and proxies it  via TCP connection to the application running on an outside host, where it can be plotted, analyzed, etc.
@@ -686,7 +686,7 @@ executing the following command:
  
 ~~~~~{.bash}
 #On the WRS
-wrsw_version > /tmp/bug_report.txt
+wrs_version > /tmp/bug_report.txt
 rtu_stat >> /tmp/bug_report.txt
 dmesg >> /tmp/bug_report.txt
 

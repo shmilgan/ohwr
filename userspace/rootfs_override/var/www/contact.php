@@ -21,7 +21,7 @@
 	<?php $_SESSION['advance']=""; ?>
 	
 	<p><strong>WRSW OS: <?php $str = shell_exec("uname -r"); echo $str;  ?> </strong></p>
-	<p><strong><?php $str = shell_exec("/wr/bin/wrsw_version -g"); $str = str_replace("\n","<br>",$str); 
+	<p><strong><?php $str = shell_exec("/wr/bin/wrs_version -g"); $str = str_replace("\n","<br>",$str); 
 		$str=str_replace("Reading GW info","",$str); echo $str; ?></strong></p><p>&nbsp;</p>
 	<br>
 	<center><p align=right><strong>Open Hardware Repository  <a href="http://www.ohwr.org/projects/white-rabbit/wiki">http://www.ohwr.org/projects/white-rabbit/wiki</a> </strong></p></strong></p><p>&nbsp;</p>

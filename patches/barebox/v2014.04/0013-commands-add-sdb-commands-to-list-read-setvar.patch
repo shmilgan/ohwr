@@ -1,0 +1,244 @@
+From e5312e4e8b58dfe5480b6bd3e22470527cfb85f7 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Mon, 15 Sep 2014 11:40:59 +0200
+Subject: [PATCH 13/13] commands: add sdb commands to list, read, setvar
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ commands/Kconfig  |    7 ++
+ commands/Makefile |    1 +
+ commands/sdb.c    |  192 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 200 insertions(+)
+ create mode 100644 commands/sdb.c
+
+diff --git a/commands/Kconfig b/commands/Kconfig
+index 352e8bf..89cadec 100644
+--- a/commands/Kconfig
++++ b/commands/Kconfig
+@@ -756,6 +756,13 @@ config CMD_DETECT
+ 	  actual probe of the client devices until they are needed. Use the
+ 	  'detect' command on the physical device to trigger probing.
+ 
++config CMD_SDB
++	bool
++	select LIBSDB
++	prompt "commands for reading SDB information"
++	help
++	  This enables "sdbinfo", "sdbset" and "sdbread".
++
+ menuconfig CMD_WD
+ 	bool
+ 	depends on WATCHDOG
+diff --git a/commands/Makefile b/commands/Makefile
+index 91ec0e9..e97291e 100644
+--- a/commands/Makefile
++++ b/commands/Makefile
+@@ -91,6 +91,7 @@ obj-$(CONFIG_CMD_FILETYPE)	+= filetype.o
+ obj-$(CONFIG_CMD_BAREBOX_UPDATE)+= barebox-update.o
+ obj-$(CONFIG_CMD_MIITOOL)	+= miitool.o
+ obj-$(CONFIG_CMD_DETECT)	+= detect.o
++obj-$(CONFIG_CMD_SDB)		+= sdb.o
+ obj-$(CONFIG_CMD_BOOT)		+= boot.o
+ obj-$(CONFIG_CMD_DEVINFO)	+= devinfo.o
+ obj-$(CONFIG_CMD_READF)		+= readf.o
+diff --git a/commands/sdb.c b/commands/sdb.c
+new file mode 100644
+index 0000000..e0cd5a4
+--- /dev/null
++++ b/commands/sdb.c
+@@ -0,0 +1,192 @@
++/*
++ * Copyright (c) 2014 CERN.
++ * Author: Alessandro Rubini for BE-CO-HT (White Rabbit project)
++ *
++ * Please use according to GNU GPL 2 or later
++ */
++#include <common.h>
++#include <command.h>
++#include <init.h>
++#include <malloc.h>
++#include <errno.h>
++#include <fs.h>
++#include <fcntl.h>
++#include <xfuncs.h>
++#include <getopt.h>
++#include <environment.h>
++
++#include <../lib/sdb/libsdbfs.h> /* hackish */
++
++#define BUFSIZE 1024 /* like cat.c in this directory */
++
++/* This is the drvdata in the SDB information */
++struct bb_sdb_drvdata {
++	int fd;
++};
++
++static struct bb_sdb_drvdata drvdata;
++
++/* and how to read the thing: use straight barebox POSIX interface */
++static int bb_sdb_read(struct sdbfs *fs, int offset, void *buf, int count)
++{
++	struct bb_sdb_drvdata *dd = fs->drvdata;
++	int fd = dd->fd;
++
++	if (lseek(fd, offset, SEEK_SET) < 0)
++		return -1;
++	return read(fd, buf, count);
++}
++
++static struct sdbfs bb_sdb_instance = {
++	.drvdata = &drvdata,
++	.entrypoint = 0, /* unfortunately: to be fixed */
++	.read = bb_sdb_read,
++};
++
++/* The subcommands, assuming the device is opened and closed by the caller */
++static int bb_sdb_ls(void)
++{
++	struct sdb_device *d;
++	struct sdb_product *p;
++	struct sdb_component *c;
++	int new = 1;
++
++	while ( (d = sdbfs_scan(&bb_sdb_instance, new)) != NULL) {
++		new = 0; /* for next time */
++
++		c = &d->sdb_component;
++		p = &c->product;
++
++		printf("%016llx:%08x @ %08llx-%08llx ",
++		       ntohll(p->vendor_id), ntohl(p->device_id),
++		       ntohll(c->addr_first), ntohll(c->addr_last));
++		printf("%.19s\n", p->name);
++        }
++	return 0;
++}
++
++static int bb_sdb_cat(char *sdbfile)
++{	char *buf;
++	int i, j;
++
++	/*
++	 * Read a file, skipping trailing 0x00 or 0xff bytes, as a convenience.
++	 * The function is based on bb::commands/cat (Sascha Hauer)
++	 */
++	i = sdbfs_open_name(&bb_sdb_instance, sdbfile);
++	if (i < 0) {
++		printf("can't open \"%s\" in SDB device\n", sdbfile);
++		return COMMAND_ERROR;
++	}
++	buf = xmalloc(BUFSIZE);
++
++	while ( (i = sdbfs_fread(&bb_sdb_instance, -1, buf, BUFSIZE)) > 0) {
++
++		/* trim trailing garbage as the file is assumed to be text */
++		j = i - 1;
++		while (j > 0 && (buf[j] == 0xff  || buf[j] == 0x00))
++			j--;
++		for (i = 0; i <= j; i++)
++			putchar(buf[i]);
++		/* no ctrl-C support; this is expected to be fast */
++	}
++	/* most files have the trailing newline already, avoid adding it */
++	free(buf);
++	sdbfs_close(&bb_sdb_instance);
++	return 0;
++}
++
++static int bb_sdb_set(char *varname, char *sdbfile)
++{
++	char *buf;
++	int i;
++
++	i = sdbfs_open_name(&bb_sdb_instance, sdbfile);
++	if (i < 0) {
++		printf("can't open \"%s\" in SDB device\n", sdbfile);
++		return COMMAND_ERROR;
++	}
++	buf = xmalloc(BUFSIZE);
++	i = sdbfs_fread(&bb_sdb_instance, -1, buf, BUFSIZE);
++	sdbfs_close(&bb_sdb_instance);
++
++	while (i > 0  && (buf[i - 1] == 0xff  || buf[i - 1] == 0x00)) {
++		/* trim trailing garbage as the file is assumed to be text */
++		i--;
++	}
++	if (i > 0 && buf[i - 1] == '\n')
++		i--; /* remove trailing newline too */
++	buf[i] = '\0';
++	setenv(varname, buf);
++	free(buf);
++	sdbfs_close(&bb_sdb_instance);
++	return 0;
++}
++
++
++/* And finally the real command */
++static int do_sdb(int argc, char *argv[])
++{
++	unsigned long entrypoint = 0;
++	int fd, ret, opt;
++
++	while ((opt = getopt(argc, argv, "e:")) > 0) {
++		switch (opt) {
++		case 'e':
++			entrypoint = simple_strtoul(optarg, NULL, 0);
++			break;
++		default:
++			return COMMAND_ERROR_USAGE;
++		}
++	}
++	argc -= (optind - 1);
++	argv += (optind - 1);
++	if (argc < 3)
++		return COMMAND_ERROR_USAGE;
++
++	/* for all subcommands we neet to create the device */
++	fd = open(argv[2], O_RDONLY);
++
++	if (fd < 0) {
++		printf("could not open %s: %s\n", argv[2], errno_str());
++		return fd;
++	}
++	drvdata.fd = fd;
++	bb_sdb_instance.entrypoint = entrypoint;
++	ret = sdbfs_dev_create(&bb_sdb_instance, 0 /* not verbose */);
++	if (ret != 0) {
++		printf("Error accessing SDB filesystem in \"%s\"\n",
++		       argv[2]);
++		return COMMAND_ERROR;
++	}
++
++	/* now do the three subcommands */
++	ret = COMMAND_ERROR_USAGE;
++	if (!strcmp(argv[1], "ls")) {
++		if (argc == 3)
++			ret = bb_sdb_ls();
++	} else if  (!strcmp(argv[1], "cat")) {
++		if (argc == 4)
++			ret = bb_sdb_cat(argv[3]);
++	} else if (!strcmp(argv[1], "set")) {
++		if (argc == 4 || argc == 5)
++			ret = bb_sdb_set(argv[3], argv[4] ?: argv[3]);
++	}
++	sdbfs_dev_destroy(&bb_sdb_instance);
++	return ret;
++}
++
++
++
++static const __maybe_unused char cmd_sdb_help[] =
++"Usage: sdb [options] <command> <dev> [<sdbfile>]"
++"\n"
++"\"sdb [-e <entrypoint>] ls <dev>\"  lists device content\n"
++"\"sdb [-e <entrypoint>] cat <dev> <sdbfile>\"  prints a file\n"
++"\"sdb [-e <entrypoint>] set <dev> <varname> [<file>]\" sets var from SDB\n";
++
++BAREBOX_CMD_START(sdb)
++	.cmd		= do_sdb,
++	.usage		= "read/use SDB information in device",
++	BAREBOX_CMD_HELP(cmd_sdb_help)
++BAREBOX_CMD_END
+-- 
+1.7.10.4
+

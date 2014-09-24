@@ -1,0 +1,827 @@
+From 5a35bbb8b324be0fe2b40113c26e1c1d9ca1374b Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Mon, 15 Sep 2014 09:54:24 +0200
+Subject: [PATCH 11/13] lib/sdb and sdb.h: from fpga-config-space/sdbfs,
+ commit 17445a2
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ include/sdb.h                   |  159 ++++++++++++++++++++++++++
+ lib/sdb/Makefile                |   43 +++++++
+ lib/sdb/Makefile.arch           |   58 ++++++++++
+ lib/sdb/access.c                |   60 ++++++++++
+ lib/sdb/check-endian            |   24 ++++
+ lib/sdb/glue.c                  |  234 +++++++++++++++++++++++++++++++++++++++
+ lib/sdb/libsdbfs-freestanding.h |   19 ++++
+ lib/sdb/libsdbfs-kernel.h       |   35 ++++++
+ lib/sdb/libsdbfs-user.h         |   15 +++
+ lib/sdb/libsdbfs.h              |   87 +++++++++++++++
+ 10 files changed, 734 insertions(+)
+ create mode 100644 include/sdb.h
+ create mode 100644 lib/sdb/Makefile
+ create mode 100644 lib/sdb/Makefile.arch
+ create mode 100644 lib/sdb/access.c
+ create mode 100755 lib/sdb/check-endian
+ create mode 100644 lib/sdb/glue.c
+ create mode 100644 lib/sdb/libsdbfs-freestanding.h
+ create mode 100644 lib/sdb/libsdbfs-kernel.h
+ create mode 100644 lib/sdb/libsdbfs-user.h
+ create mode 100644 lib/sdb/libsdbfs.h
+
+diff --git a/include/sdb.h b/include/sdb.h
+new file mode 100644
+index 0000000..fbb76a4
+--- /dev/null
++++ b/include/sdb.h
+@@ -0,0 +1,159 @@
++/*
++ * This is the official version 1.1 of sdb.h
++ */
++#ifndef __SDB_H__
++#define __SDB_H__
++#ifdef __KERNEL__
++#include <linux/types.h>
++#else
++#include <stdint.h>
++#endif
++
++/*
++ * All structures are 64 bytes long and are expected
++ * to live in an array, one for each interconnect.
++ * Most fields of the structures are shared among the
++ * various types, and most-specific fields are at the
++ * beginning (for alignment reasons, and to keep the
++ * magic number at the head of the interconnect record
++ */
++
++/* Product, 40 bytes at offset 24, 8-byte aligned
++ *
++ * device_id is vendor-assigned; version is device-specific,
++ * date is hex (e.g 0x20120501), name is UTF-8, blank-filled
++ * and not terminated with a 0 byte.
++ */
++struct sdb_product {
++	uint64_t		vendor_id;	/* 0x18..0x1f */
++	uint32_t		device_id;	/* 0x20..0x23 */
++	uint32_t		version;	/* 0x24..0x27 */
++	uint32_t		date;		/* 0x28..0x2b */
++	uint8_t			name[19];	/* 0x2c..0x3e */
++	uint8_t			record_type;	/* 0x3f */
++};
++
++/*
++ * Component, 56 bytes at offset 8, 8-byte aligned
++ *
++ * The address range is first to last, inclusive
++ * (for example 0x100000 - 0x10ffff)
++ */
++struct sdb_component {
++	uint64_t		addr_first;	/* 0x08..0x0f */
++	uint64_t		addr_last;	/* 0x10..0x17 */
++	struct sdb_product	product;	/* 0x18..0x3f */
++};
++
++/* Type of the SDB record */
++enum sdb_record_type {
++	sdb_type_interconnect	= 0x00,
++	sdb_type_device		= 0x01,
++	sdb_type_bridge		= 0x02,
++	sdb_type_integration	= 0x80,
++	sdb_type_repo_url	= 0x81,
++	sdb_type_synthesis	= 0x82,
++	sdb_type_empty		= 0xFF,
++};
++
++/* Type 0: interconnect (first of the array)
++ *
++ * sdb_records is the length of the table including this first
++ * record, version is 1. The bus type is enumerated later.
++ */
++#define				SDB_MAGIC	0x5344422d /* "SDB-" */
++struct sdb_interconnect {
++	uint32_t		sdb_magic;	/* 0x00-0x03 */
++	uint16_t		sdb_records;	/* 0x04-0x05 */
++	uint8_t			sdb_version;	/* 0x06 */
++	uint8_t			sdb_bus_type;	/* 0x07 */
++	struct sdb_component	sdb_component;	/* 0x08-0x3f */
++};
++
++/* Type 1: device
++ *
++ * class is 0 for "custom device", other values are
++ * to be standardized; ABI version is for the driver,
++ * bus-specific bits are defined by each bus (see below)
++ */
++struct sdb_device {
++	uint16_t		abi_class;	/* 0x00-0x01 */
++	uint8_t			abi_ver_major;	/* 0x02 */
++	uint8_t			abi_ver_minor;	/* 0x03 */
++	uint32_t		bus_specific;	/* 0x04-0x07 */
++	struct sdb_component	sdb_component;	/* 0x08-0x3f */
++};
++
++/* Type 2: bridge
++ *
++ * child is the address of the nested SDB table
++ */
++struct sdb_bridge {
++	uint64_t		sdb_child;	/* 0x00-0x07 */
++	struct sdb_component	sdb_component;	/* 0x08-0x3f */
++};
++
++/* Type 0x80: integration
++ *
++ * all types with bit 7 set are meta-information, so
++ * software can ignore the types it doesn't know. Here we
++ * just provide product information for an aggregate device
++ */
++struct sdb_integration {
++	uint8_t			reserved[24];	/* 0x00-0x17 */
++	struct sdb_product	product;	/* 0x08-0x3f */
++};
++
++/* Type 0x81: Top module repository url
++ *
++ * again, an informative field that software can ignore
++ */
++struct sdb_repo_url {
++	uint8_t			repo_url[63];	/* 0x00-0x3e */
++	uint8_t			record_type;	/* 0x3f */
++};
++
++/* Type 0x82: Synthesis tool information
++ *
++ * this informative record
++ */
++struct sdb_synthesis {
++	uint8_t			syn_name[16];	/* 0x00-0x0f */
++	uint8_t			commit_id[16];	/* 0x10-0x1f */
++	uint8_t			tool_name[8];	/* 0x20-0x27 */
++	uint32_t		tool_version;	/* 0x28-0x2b */
++	uint32_t		date;		/* 0x2c-0x2f */
++	uint8_t			user_name[15];	/* 0x30-0x3e */
++	uint8_t			record_type;	/* 0x3f */
++};
++
++/* Type 0xff: empty
++ *
++ * this allows keeping empty slots during development,
++ * so they can be filled later with minimal efforts and
++ * no misleading description is ever shipped -- hopefully.
++ * It can also be used to pad a table to a desired length.
++ */
++struct sdb_empty {
++	uint8_t			reserved[63];	/* 0x00-0x3e */
++	uint8_t			record_type;	/* 0x3f */
++};
++
++/* The type of bus, for bus-specific flags */
++enum sdb_bus_type {
++	sdb_wishbone = 0x00,
++	sdb_data     = 0x01,
++};
++
++#define SDB_WB_WIDTH_MASK	0x0f
++#define SDB_WB_ACCESS8			0x01
++#define SDB_WB_ACCESS16			0x02
++#define SDB_WB_ACCESS32			0x04
++#define SDB_WB_ACCESS64			0x08
++#define SDB_WB_LITTLE_ENDIAN	0x80
++
++#define SDB_DATA_READ		0x04
++#define SDB_DATA_WRITE		0x02
++#define SDB_DATA_EXEC		0x01
++
++#endif /* __SDB_H__ */
+diff --git a/lib/sdb/Makefile b/lib/sdb/Makefile
+new file mode 100644
+index 0000000..4699673
+--- /dev/null
++++ b/lib/sdb/Makefile
+@@ -0,0 +1,43 @@
++
++LINUX ?= /lib/modules/$(shell uname -r)/build
++
++# If we compile for the kernel, we need to include real kernel headers.
++# The thing is enough a mess that I moved it to a different file
++include Makefile.arch
++
++
++AS              = $(CROSS_COMPILE)as
++LD              = $(CROSS_COMPILE)ld
++CC              = $(CROSS_COMPILE)gcc
++CPP             = $(CC) -E
++AR              = $(CROSS_COMPILE)ar
++NM              = $(CROSS_COMPILE)nm
++STRIP           = $(CROSS_COMPILE)strip
++OBJCOPY         = $(CROSS_COMPILE)objcopy
++OBJDUMP         = $(CROSS_COMPILE)objdump
++
++# calculate endianness at compile time
++ENDIAN := $(shell ./check-endian $(CC))
++
++CFLAGS = -Wall -ggdb -O2
++CFLAGS += -I../include/linux -I../include # for <sdb.h>
++CFLAGS += -ffunction-sections -fdata-sections
++CFLAGS += -Wno-pointer-sign
++CFLAGS += $(ENDIAN) $(LINUXINCLUDE)
++
++
++LIB = libsdbfs.a
++OBJS = glue.o access.o
++
++all: $(LIB)
++
++$(OBJS): $(wildcard *.h)
++
++$(LIB): $(OBJS)
++	$(AR) r $@ $(OBJS)
++
++clean:
++	rm -f $(OBJS) $(LIB) *~ core
++
++# add the other unused targets, so the rule in ../Makefile works
++modules install modules_install:
+diff --git a/lib/sdb/Makefile.arch b/lib/sdb/Makefile.arch
+new file mode 100644
+index 0000000..12ca01c
+--- /dev/null
++++ b/lib/sdb/Makefile.arch
+@@ -0,0 +1,58 @@
++
++srctree = $(LINUX)
++
++#
++# This set of contortions comes from the kernel Makefile. We need this
++# in order to properly compile libsdbfs for the kernel without being
++# in a kernel build environment (for example, to check for compile errors).
++#
++
++ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
++                                  -e s/arm.*/arm/ -e s/sa110/arm/ \
++                                  -e s/s390x/s390/ -e s/parisc64/parisc/ \
++                                  -e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
++                                  -e s/sh[234].*/sh/ )
++
++SRCARCH         := $(ARCH)
++
++# Additional ARCH settings for x86
++ifeq ($(ARCH),i386)
++        SRCARCH := x86
++endif
++ifeq ($(ARCH),x86_64)
++        SRCARCH := x86
++endif
++
++# Additional ARCH settings for sparc
++ifeq ($(ARCH),sparc32)
++       SRCARCH := sparc
++endif
++ifeq ($(ARCH),sparc64)
++       SRCARCH := sparc
++endif
++
++# Additional ARCH settings for sh
++ifeq ($(ARCH),sh64)
++       SRCARCH := sh
++endif
++
++# Additional ARCH settings for tile
++ifeq ($(ARCH),tilepro)
++       SRCARCH := tile
++endif
++ifeq ($(ARCH),tilegx)
++       SRCARCH := tile
++endif
++
++# Where to locate arch specific headers
++hdr-arch  := $(SRCARCH)
++
++ifeq ($(ARCH),m68knommu)
++       hdr-arch  := m68k
++endif
++
++# Use LINUXINCLUDE when you must reference the include/ directory.
++# Needed to be compatible with the O= option
++LINUXINCLUDE    := -I$(srctree)/arch/$(hdr-arch)/include \
++                   -Iarch/$(hdr-arch)/include/generated \
++                   -I$(srctree)/include
+diff --git a/lib/sdb/access.c b/lib/sdb/access.c
+new file mode 100644
+index 0000000..93b5696
+--- /dev/null
++++ b/lib/sdb/access.c
+@@ -0,0 +1,60 @@
++/*
++ * Copyright (C) 2012,2013 CERN (www.cern.ch)
++ * Author: Alessandro Rubini <rubini@gnudd.com>
++ *
++ * Released according to the GNU GPL, version 2 or any later version.
++ *
++ * This work is part of the White Rabbit project, a research effort led
++ * by CERN, the European Institute for Nuclear Research.
++ */
++
++/* To avoid many #ifdef and associated mess, all headers are included there */
++#include "libsdbfs.h"
++
++int sdbfs_fstat(struct sdbfs *fs, struct sdb_device *record_return)
++{
++	if (!fs->currentp)
++		return -ENOENT;
++	memcpy(record_return, fs->currentp, sizeof(*record_return));
++	return 0;
++}
++
++int sdbfs_fread(struct sdbfs *fs, int offset, void *buf, int count)
++{
++	int ret;
++
++	if (!fs->currentp)
++		return -ENOENT;
++	if (offset < 0)
++		offset = fs->read_offset;
++	if (offset + count > fs->f_len)
++		count = fs->f_len - offset;
++	ret = count;
++	if (fs->data)
++		memcpy(buf, fs->data + fs->f_offset + offset, count);
++	else
++		ret = fs->read(fs, fs->f_offset + offset, buf, count);
++	if (ret > 0)
++		fs->read_offset = offset + ret;
++	return ret;
++}
++
++int sdbfs_fwrite(struct sdbfs *fs, int offset, void *buf, int count)
++{
++	int ret;
++
++	if (!fs->currentp)
++		return -ENOENT;
++	if (offset < 0)
++		offset = fs->read_offset;
++	if (offset + count > fs->f_len)
++		count = fs->f_len - offset;
++	ret = count;
++	if (fs->data)
++		memcpy(buf, fs->data + fs->f_offset + offset, count);
++	else
++		ret = fs->write(fs, fs->f_offset + offset, buf, count);
++	if (ret > 0)
++		fs->read_offset = offset + ret;
++	return ret;
++}
+diff --git a/lib/sdb/check-endian b/lib/sdb/check-endian
+new file mode 100755
+index 0000000..0c2acff
+--- /dev/null
++++ b/lib/sdb/check-endian
+@@ -0,0 +1,24 @@
++#!/bin/bash
++
++# Check endianness at compile time, so we can pass the -D to CFLAGS
++
++CC=$1
++if [ "x$CC" == "x" ]; then
++    echo "$0: pass the compiler path (\$CC) as argument" >& 2
++    exit 1
++fi
++
++# Check endianness, by making an object file
++TMPC=$(mktemp /tmp/endian-c-XXXXXX)
++TMPO=$(mktemp /tmp/endian-o-XXXXXX)
++echo "int i = 0xbbee;" > $TMPC
++
++$CC -x c -c $TMPC -o $TMPO
++OBJCOPY=$(echo $CC | sed 's/gcc$/objcopy/')
++if $OBJCOPY -O binary $TMPO /dev/stdout | od -t x1 -An | \
++    grep -q 'bb ee'; then
++    echo " -DSDBFS_BIG_ENDIAN"
++else
++    echo " -DSDBFS_LITTLE_ENDIAN"
++fi
++rm -f $TMPC $TMPO
+diff --git a/lib/sdb/glue.c b/lib/sdb/glue.c
+new file mode 100644
+index 0000000..d8ef3cf
+--- /dev/null
++++ b/lib/sdb/glue.c
+@@ -0,0 +1,234 @@
++/*
++ * Copyright (C) 2012,2014 CERN (www.cern.ch)
++ * Author: Alessandro Rubini <rubini@gnudd.com>
++ *
++ * Released according to the GNU GPL, version 2 or any later version.
++ *
++ * This work is part of the White Rabbit project, a research effort led
++ * by CERN, the European Institute for Nuclear Research.
++ */
++
++/* To avoid many #ifdef and associated mess, all headers are included there */
++#include "libsdbfs.h"
++
++static struct sdbfs *sdbfs_list;
++
++/* All fields unused by the caller are expected to be zeroed */
++int sdbfs_dev_create(struct sdbfs *fs, int verbose)
++{
++	unsigned int magic;
++
++	/* First, check we have the magic */
++	if (fs->data)
++		magic = *(unsigned int *)(fs->data + fs->entrypoint);
++	else
++		fs->read(fs, fs->entrypoint, &magic, sizeof(magic));
++	if (magic == SDB_MAGIC) {
++		/* Uh! If we are little-endian, we must convert */
++		if (ntohl(1) != 1)
++			fs->flags |= SDBFS_F_CONVERT32;
++	} else if (htonl(magic) == SDB_MAGIC) {
++		/* ok, don't convert */
++	} else {
++		return -ENOTDIR;
++	}
++
++	if (verbose)
++		fs->flags |= SDBFS_F_VERBOSE;
++	fs->next = sdbfs_list;
++	sdbfs_list = fs;
++
++	return 0;
++}
++
++int sdbfs_dev_destroy(struct sdbfs *fs)
++{
++	struct sdbfs **p;
++
++	for (p = &sdbfs_list; *p && *p != fs; p = &(*p)->next)
++		;
++	if (!*p)
++		return -ENOENT;
++	*p = fs->next;
++	return 0;
++}
++
++struct sdbfs *sdbfs_dev_find(const char *name)
++{
++	struct sdbfs *l;
++
++	for (l = sdbfs_list; l && strcmp(l->name, name); l = l->next)
++		;
++	if (!l)
++		return NULL;
++	return l;
++}
++
++/*
++ * To open by name or by ID we need to scan the tree. The scan
++ * function is also exported in order for "sdb-ls" to use it
++ */
++
++static struct sdb_device *sdbfs_readentry(struct sdbfs *fs,
++					  unsigned long offset)
++{
++	/*
++	 * This function reads an entry from a known good offset. It
++	 * returns the pointer to the entry, which may be stored in
++	 * the fs structure itself. Only touches fs->current_record.
++	 */
++	if (fs->data) {
++		if (!(fs->flags & SDBFS_F_CONVERT32))
++			return (struct sdb_device *)(fs->data + offset);
++		/* copy to local storage for conversion */
++		memcpy(&fs->current_record, fs->data + offset,
++		       sizeof(fs->current_record));
++	} else {
++		if (!fs->read)
++			return NULL;
++		fs->read(fs, offset, &fs->current_record,
++			 sizeof(fs->current_record));
++	}
++
++	if (fs->flags & SDBFS_F_CONVERT32) {
++		uint32_t *p = (void *)&fs->current_record;
++		int i;
++
++		for (i = 0; i < sizeof(fs->current_record) / sizeof(*p); i++)
++			p[i] = ntohl(p[i]);
++	}
++
++	return &fs->current_record;
++}
++
++/* Helper for scanning: we enter a new directory, and we must validate */
++static struct sdb_device *scan_newdir(struct sdbfs *fs, int depth)
++{
++	struct sdb_device *dev;
++	struct sdb_interconnect *intercon;
++
++	dev = fs->currentp = sdbfs_readentry(fs, fs->this[depth]);
++	if (dev->sdb_component.product.record_type != sdb_type_interconnect)
++		return NULL;
++
++	intercon = (typeof(intercon))dev;
++	if (ntohl(intercon->sdb_magic) != SDB_MAGIC)
++		return NULL;
++
++	fs->nleft[depth] = ntohs(intercon->sdb_records) - 1;
++	fs->this[depth] += sizeof(*intercon);
++	fs->depth = depth;
++	return dev;
++}
++
++struct sdb_device *sdbfs_scan(struct sdbfs *fs, int newscan)
++{
++	/*
++	 * This returns a pointer to the next sdb record, or the first one.
++	 * Subdirectories (bridges) are returned before their contents.
++	 * It only uses internal fields.
++	 */
++	struct sdb_device *dev;
++	struct sdb_bridge *bridge;
++	int depth, type, newdir = 0; /* check there's the magic */
++
++	if (newscan) {
++		fs->base[0] = 0;
++		fs->this[0] = fs->entrypoint;
++		depth = fs->depth = 0;
++		newdir = 1;
++		goto scan;
++	}
++
++	/* If we already returned a bridge, go inside it (check type) */
++	depth = fs->depth;
++	type = fs->currentp->sdb_component.product.record_type;
++
++	if (type == sdb_type_bridge && depth + 1 < SDBFS_DEPTH) {
++		bridge = (typeof(bridge))fs->currentp;
++		fs->this[depth + 1] = fs->base[depth]
++			+ ntohll(bridge->sdb_child);
++		fs->base[depth + 1] = fs->base[depth]
++			+ ntohll(bridge->sdb_component.addr_first);
++		depth++;
++		newdir++;
++	}
++
++scan:
++	/* If entering a new directory, verify magic and set nleft */
++	if (newdir) {
++		dev = scan_newdir(fs, depth);
++		if (dev)
++			return dev;
++		/* Otherwise the directory is not there: no intercon */
++		if (!depth)
++			return NULL; /* no entries at all */
++		depth--;
++	}
++
++	while (fs->nleft[depth] == 0) {
++		/* No more at this level, "cd .." if possible */
++		if (!depth)
++			return NULL;
++		fs->depth = --depth;
++	}
++
++	/* so, read the next entry */
++	dev = fs->currentp = sdbfs_readentry(fs, fs->this[depth]);
++	fs->this[depth] += sizeof(*dev);
++	fs->nleft[depth]--;
++	return dev;
++}
++
++static void __open(struct sdbfs *fs)
++{
++	fs->f_offset = fs->base[fs->depth]
++		+ htonll(fs->currentp->sdb_component.addr_first);
++	fs->f_len = htonll(fs->currentp->sdb_component.addr_last)
++		+ 1 - htonll(fs->currentp->sdb_component.addr_first);
++	fs->read_offset = 0;
++}
++
++int sdbfs_open_name(struct sdbfs *fs, const char *name)
++{
++	struct sdb_device *d;
++	int len = strlen(name);
++
++	if (len > 19)
++		return -ENOENT;
++	sdbfs_scan(fs, 1); /* new scan: get the interconnect and igore it */
++	while ( (d = sdbfs_scan(fs, 0)) != NULL) {
++		if (strncmp(name, d->sdb_component.product.name, len))
++			continue;
++		if (len < 19 && d->sdb_component.product.name[len] != ' ')
++			continue;
++		fs->currentp = d;
++		__open(fs);
++		return 0;
++	}
++	return -ENOENT;
++}
++
++int sdbfs_open_id(struct sdbfs *fs, uint64_t vid, uint32_t did)
++{
++	struct sdb_device *d;
++
++	sdbfs_scan(fs, 1); /* new scan: get the interconnect and igore it */
++	while ( (d = sdbfs_scan(fs, 0)) != NULL) {
++		if (vid != d->sdb_component.product.vendor_id)
++			continue;
++		if (did != d->sdb_component.product.device_id)
++			continue;
++		fs->currentp = d;
++		__open(fs);
++		return 0;
++	}
++	return -ENOENT;
++}
++
++int sdbfs_close(struct sdbfs *fs)
++{
++	fs->currentp = NULL;
++	return 0;
++}
++
+diff --git a/lib/sdb/libsdbfs-freestanding.h b/lib/sdb/libsdbfs-freestanding.h
+new file mode 100644
+index 0000000..3f7868d
+--- /dev/null
++++ b/lib/sdb/libsdbfs-freestanding.h
+@@ -0,0 +1,19 @@
++
++/* Though freestanding, some minimal headers are expected to exist */
++#include <stdlib.h>
++#include <stdint.h>
++#include <string.h>
++#include <errno.h>
++
++#define SDB_KERNEL	0
++#define SDB_USER	0
++#define SDB_FREESTAND	1
++
++#ifdef SDBFS_BIG_ENDIAN
++#  define ntohs(x) (x)
++#  define htons(x) (x)
++#  define ntohl(x) (x)
++#  define htonl(x) (x)
++#else
++#  error "No support, yet, for little-endian freestanding library"
++#endif
+diff --git a/lib/sdb/libsdbfs-kernel.h b/lib/sdb/libsdbfs-kernel.h
+new file mode 100644
+index 0000000..5f545e8
+--- /dev/null
++++ b/lib/sdb/libsdbfs-kernel.h
+@@ -0,0 +1,35 @@
++/*
++ * This supports both the Linux kernel and barebox, that is similar
++ * by design, and defines __KERNEL__ too.
++ */
++#ifdef __BAREBOX__
++#  include <errno.h>
++#else /* really linux */
++#  include <linux/errno.h>
++#endif
++
++#include <linux/types.h>
++#include <linux/string.h>
++#include <asm/byteorder.h>
++
++/*
++ * The default installed /usr/include/linux stuff misses the __KERNEL__ parts.
++ * For libsdbfs it means we won't get uint32_t and similar types.
++ *
++ * So, check if we got the information we need before strange errors happen.
++ * The DECLARE_BITMAP macro is in <linux/types.h> since the epoch, but it
++ * is not installed in /usr/include/linux/types.h, so use it to check.
++ *
++ * If building for barebox, we miss the macro, but we are sure that
++ * we are picking the correct header, because the library is only built
++ * within the barebox source tree.
++ */
++#if !defided(DECLARE_BITMAP) && !defined(__BAREBOX__)
++#  error "Please point LINUX to a source tree if you define __KERNEL__"
++#endif
++
++#define SDB_KERNEL	1
++#define SDB_USER	0
++#define SDB_FREESTAND	0
++
++#define sdb_print(format, ...) printk(format, __VA_ARGS__)
+diff --git a/lib/sdb/libsdbfs-user.h b/lib/sdb/libsdbfs-user.h
+new file mode 100644
+index 0000000..d54961c
+--- /dev/null
++++ b/lib/sdb/libsdbfs-user.h
+@@ -0,0 +1,15 @@
++#ifndef __LIBSDBFS_USER_H__
++#define __LIBSDBFS_USER_H__
++
++#include <stdio.h>
++#include <string.h>
++#include <errno.h>
++#include <arpa/inet.h> /* htonl */
++
++#define SDB_KERNEL	0
++#define SDB_USER	1
++#define SDB_FREESTAND	0
++
++#define sdb_print(format, ...) fprintf(stderr, format, __VA_ARGS__)
++
++#endif /* __LIBSDBFS_USER_H__ */
+diff --git a/lib/sdb/libsdbfs.h b/lib/sdb/libsdbfs.h
+new file mode 100644
+index 0000000..15325be
+--- /dev/null
++++ b/lib/sdb/libsdbfs.h
+@@ -0,0 +1,87 @@
++#ifndef __LIBSDBFS_H__
++#define __LIBSDBFS_H__
++
++/* The library can work in different environments, take care of them */
++#ifdef __KERNEL__
++#  include "libsdbfs-kernel.h"
++#elif defined(__unix__)
++#  include "libsdbfs-user.h"
++#else
++#  include "libsdbfs-freestanding.h"
++#endif
++
++#include <sdb.h> /* Please point your "-I" to some sensible place */
++
++#define SDBFS_DEPTH 4 /* Max number of subdirectory depth */
++/*
++ * Data structures: please not that the library intself doesn't use
++ * malloc, so it's the caller who must deal withallocation/removal.
++ * For this reason we can have no opaque structures, but some fields
++ * are private
++ */
++
++struct sdbfs {
++
++	/* Some fields are informative */
++	char *name;			/* may be null */
++	void *drvdata;			/* driver may need some detail.. */
++	unsigned long blocksize;
++	unsigned long entrypoint;
++
++	/* The "driver" must offer some methods */
++	void *data;			/* Use this if directly mapped */
++	unsigned long datalen;		/* Length of the above array */
++	int (*read)(struct sdbfs *fs, int offset, void *buf, int count);
++	int (*write)(struct sdbfs *fs, int offset, void *buf, int count);
++	int (*erase)(struct sdbfs *fs, int offset, int count);
++
++	/* All fields from here onwards are library-private */
++	struct sdb_device *currentp;
++	struct sdb_device current_record;
++	unsigned long f_len;
++	unsigned long f_offset;		/* start of file */
++	unsigned long read_offset;	/* current location */
++	unsigned long flags;
++	struct sdbfs *next;
++	/* The following ones are directory-aware */
++	unsigned long base[SDBFS_DEPTH];	/* for relative addresses */
++	unsigned long this[SDBFS_DEPTH];	/* current sdb record */
++	int nleft[SDBFS_DEPTH];
++	int depth;
++};
++
++#define SDBFS_F_VERBOSE		0x0001
++#define SDBFS_F_CONVERT32	0x0002 /* swap SDB words as they are read */
++
++
++/* Defined in glue.c */
++int sdbfs_dev_create(struct sdbfs *fs, int verbose);
++int sdbfs_dev_destroy(struct sdbfs *fs);
++struct sdbfs *sdbfs_dev_find(const char *name);
++int sdbfs_open_name(struct sdbfs *fs, const char *name);
++int sdbfs_open_id(struct sdbfs *fs, uint64_t vid, uint32_t did);
++int sdbfs_close(struct sdbfs *fs);
++struct sdb_device *sdbfs_scan(struct sdbfs *fs, int newscan);
++
++/* Defined in access.c */
++int sdbfs_fstat(struct sdbfs *fs, struct sdb_device *record_return);
++int sdbfs_fread(struct sdbfs *fs, int offset, void *buf, int count);
++int sdbfs_fwrite(struct sdbfs *fs, int offset, void *buf, int count);
++
++/* This is needed to convert endianness. Hoping it is not defined elsewhere */
++static inline uint64_t htonll(uint64_t ll)
++{
++        uint64_t res;
++
++        if (htonl(1) == 1)
++                return ll;
++        res = htonl(ll >> 32);
++        res |= (uint64_t)(htonl((uint32_t)ll)) << 32;
++        return res;
++}
++static inline uint64_t ntohll(uint64_t ll)
++{
++	return htonll(ll);
++}
++
++#endif /* __LIBSDBFS_H__ */
+-- 
+1.7.10.4
+

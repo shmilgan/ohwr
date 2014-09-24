@@ -12,7 +12,7 @@
 #include "wrsSnmp.h"
 
 /* Our structure for caching data */
-#define VERSION_N_STRINGS 6  /* sw, 3 gw, 2 hw */
+#define VERSION_N_STRINGS 9  /* sw, 3 gw, 2 hw, 3 added later */
 
 struct wrs_v_item {
 	char *key;
@@ -25,8 +25,11 @@ static struct wrs_v_item wrs_version[] = {
 	[1] = {"wr_switch_hdl-commit:"},
 	[2] = {"general-cores-commit:"},
 	[3] = {"wr-cores-commit:"},
-	[4] = {"pcb-version:"},
+	[4] = {"backplane-version:"},
 	[5] = {"fpga-type:"},
+	[6] = {"manufacturer:"},
+	[7] = {"serial-number:"},
+	[8] = {"scb-version:"},
 };
 
 
@@ -65,7 +68,7 @@ static int version_group(netsnmp_mib_handler          *handler,
 static void wrs_v_init(void)
 {
 	char s[80], key[40], value[40];
-	FILE *f = popen("/wr/bin/wrsw_version -t", "r");
+	FILE *f = popen("/wr/bin/wrs_version -t", "r");
 	int i;
 
 	if (!f) {

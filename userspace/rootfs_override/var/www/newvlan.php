@@ -25,7 +25,7 @@
 	
 	
 	<?php 
-		$vlan_cmd = "/wr/bin/wrsw_vlans ";
+		$vlan_cmd = "/wr/bin/wrs_vlans ";
 		if(!empty($_POST['vid'])){ $vlan_cmd .= " --rvid ".$_POST['vid'];}
 		if(!empty($_POST['fid'])){$vlan_cmd .= " --rfid ".$_POST['fid'];}
 		if(!empty($_POST['mask'])){$vlan_cmd .= " --rmask ".$_POST['mask'];}

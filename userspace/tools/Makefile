@@ -1,7 +1,8 @@
 TOOLS = rtu_stat wr_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex com
 TOOLS += mapper wmapper
-TOOLS += wrsw_version wr_date wr_management lm32-vuart wrsw_pstats
-TOOLS += wrsw_vlans
+TOOLS += wrs_version wr_date wr_management lm32-vuart wrs_pstats
+TOOLS += wrs_vlans
+TOOLS += sdb-read
 
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 
@@ -27,6 +28,7 @@ CFLAGS =  -O2 -g -Wall \
 		-I../wrsw_hal \
 		-I../wrsw_rtud \
 		-I../mini-rpc \
+		-I../libsdb \
 		-I../ptp-noposix/PTPWRd \
 		-I../include 
 
@@ -37,7 +39,8 @@ endif
 LDFLAGS = -L../mini-rpc \
 		-L../libptpnetif \
 		-L../libswitchhw \
-		-lminipc -lptpnetif -lswitchhw -llua -lm -ldl
+		-L../libsdb \
+		-lminipc -lptpnetif -lswitchhw -lsdbfs -llua -lm -ldl
 
 all: 	$(TOOLS)
 
@@ -62,11 +65,11 @@ load-virtex: load-virtex.o load-fpga.o
 load-lm32: load-lm32.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
-wrsw_version.o: wrsw_version.c
+wrs_version.o: wrs_version.c
 	${CC} ${CFLAGS} -D__GIT_USR__="\"${GIT_USR}\"" \
 		-D__GIT_VER__="\"${GIT_VER}\"" $(LDFLAGS) -c -o $@ $^  
 
-wrsw_version: wrsw_version.o
+wrs_version: wrs_version.o
 	${CC} -o $@ $^ $(LDFLAGS)	
 
 test_rt: test_rt.o ../wrsw_hal/rt_client.o
@@ -77,13 +80,16 @@ test_ts: test_ts.o ../wrsw_hal/rt_client.o
 
 port_calibrator: port_calibrator.o ../wrsw_hal/rt_client.o
 	${CC} -o $@ $^ $(LDFLAGS)	
-wrsw_pstats: wrsw_pstats.o
+wrs_pstats: wrs_pstats.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
 lm32-vuart: lm32-vuart.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
-wrsw_vlans: wrsw_vlans.o
+wrs_vlans: wrs_vlans.o
+	${CC} -o $@ $^ $(LDFLAGS)
+
+sdb-read: sdb-read.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
 clean:

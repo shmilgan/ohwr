@@ -1,0 +1,138 @@
+#!/bin/bash
+
+# This program, that should only be used by the manufacturer, 
+# creates and SDB image file, to be written in dataflash:
+# (/dev/mtd5 in the switch).
+#
+#     0x000000094800-0x000000095040 : "hwinfo"
+#
+
+# The sdb file has a predefined structure, and we are not expected to
+# change the manufacturer name.  We chose to have it "hardwired", in a
+# way, to avoid building gensdbfs during switch installation, as it's
+# an extra burden and an extra dependency.  We rather use sed for mac
+# addresses (like we always did) and we write hwinfo in place, at
+# offset 0x420.
+
+# See hwinfo-sdb/--SDB-CONFIG-- and the respective
+# commit for details.
+
+dir=$(dirname $0)/..
+WRS_BASE_DIR=$(cd $dir && /bin/pwd)
+
+SDB_TMP=$(mktemp /tmp/wrs-hwinfo.XXXXXX)
+XTRA_TMP=$(mktemp /tmp/wrs-hwinfo.xtra.XXXXXX)
+
+cp $WRS_BASE_DIR/binaries/sdb-for-dataflash $SDB_TMP
+
+# Some of what follows comes from ./flash-wrs, where we used to do the same
+
+# Default MAC address for the switch board ethernet
+MAC1_DEF="02:34:56:78:9A:BC"
+MAC1=$MAC1_DEF
+# Default base MAC address for the 18 switch ports
+MAC2_DEF="02:34:56:78:9A:00"
+MAC2=$MAC2_DEF
+
+checkMAC()
+{
+    X="[0-9a-fA-F][0-9a-fA-F]"
+    if echo $1 | grep "^[0-9a-fA-F][02468aceACE]:${X}:${X}:${X}:${X}:${X}\$" > /dev/null; then
+	return 0
+    fi
+    return 1
+}
+
+noversion=true
+
+# parse arguments and modify the temporary copy of the sdb image
+while [ $# -ge 1 ]; do
+    case $1 in
+	-m1|--mac1|--eth0.ethaddr)
+	    MAC1="$2"
+	    checkMAC $MAC1
+	    if [ $? -eq 1 ];then
+		echo "Error: MAC address 1 invalid ($MAC1)"
+		exit 1
+	    fi
+	    sed -i "s/$MAC1_DEF/$MAC1/" $SDB_TMP
+	    shift; shift
+	    ;;
+	
+	-m2|--mac2|--wr0.ethaddr)
+	    MAC2="$2"
+	    checkMAC $MAC2
+	    if [ $? -eq 1 ];then
+		echo "Error: MAC address 2 invalid ($MAC2)"
+		exit 1
+	    fi
+	    sed -i "s/$MAC2_DEF/$MAC2/" $SDB_TMP
+   	    shift; shift
+	    ;;
+
+	-v|--version)
+	    V="$2"
+	    if echo $V | grep -v -q '^[0-9]\.[0-9]$'; then
+		echo "Version must be <digit>.<digit>, not \"$V\"" >& 2
+		exit 1;
+	    fi
+	    noversion=false
+	    sed -i "s/000/$V/" $SDB_TMP
+   	    shift; shift
+	    ;;
+	    
+	# all other information goes in the "extra" file
+	-n|--scb_sn)
+	    echo "scb_serial: $2" >> $XTRA_TMP
+   	    shift; shift
+	    ;;
+	
+	-b|--scb_batch)
+	    echo "scb_batch: $2" >> $XTRA_TMP
+   	    shift; shift
+	    ;;
+
+	-f|--fpga)
+	    echo "fpga_type: $2" >> $XTRA_TMP
+   	    shift; shift
+	    ;;
+
+	-x|--extra)
+	    # this argument is expected to be tagged format
+	    echo "$2" >> $XTRA_TMP
+   	    shift; shift
+	    ;;
+
+	-F|--file)
+	    # and the file is expected to be tagged format too
+	    cat "$2" >> $XTRA_TMP
+   	    shift; shift
+	    ;;
+
+	*)
+	    echo "Unknown argument \"$1\"; please see sources/docs" >& 2
+	    exit 1
+	    ;;
+
+    esac
+done
+
+if $noversion; then
+    echo "You must specify the SCB version (e.g. \"-v 3.3\")" >& 2
+    exit 1
+fi
+
+# Finally, replace the XTRA part (second half)
+# But dd is crappy, it prints statistics to stderr, we don't want them
+dd conv=notrunc if=$XTRA_TMP of=$SDB_TMP bs=1056 seek=1 2> /dev/null
+
+if [ $? -ne 0 ]; then
+    # do it again, so we see the errors
+    dd conv=notrunc if=$XTRA_TMP of=$SDB_TMP bs=1056 seek=1
+    exit 1
+fi
+rm $XXTRA_TMP
+
+# echo the name, to be used by the manufacturer build procedure.
+echo $SDB_TMP
+

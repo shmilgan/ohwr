@@ -1,0 +1,34 @@
+# We have 5 files only: eth0.ethaddr, wr0.ethaddr, manufacturer, scb_version
+# and hw_info.
+#
+# They are at static addresses so to be able to change them from a script
+# without re-running "gensdbfs", even if currently we change in-place with
+# sed by forcing the size of the file to remain unchanged.
+#
+# The directory, at offset 0, takes 64 * (5 + 1) = 0x140: reserve
+# 0x200 to be safe
+
+.
+	position = 0
+
+eth0.ethaddr
+	position = 0x200
+
+wr0.ethaddr
+	position = 0x220
+
+scb_version
+	position = 0x240
+
+manufacturer
+	position = 0x260
+
+
+# this is a tagged text file, using a whole dataflash page, at a page offset
+# the offset and size amount to one page of the old device, 4 pages of the new.
+# in the end, we reserve 0x840 bytes for this hwinfo.
+
+hw_info
+	position = 0x420
+	maxsize = 0x420
+
