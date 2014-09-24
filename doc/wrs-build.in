@@ -1370,6 +1370,7 @@ The most important tools in @file{userspace/tools} are the following:
         read or write variables without stopping the running CPU.
         This is limited to 32-bit integer variaables, though. See the
         commit message for details.
+@c FIXME: document better load-lm32 for elf.
 
 @item mapper
 @itemx wmapper

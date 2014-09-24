@@ -274,14 +274,6 @@ all configurations to the PPSi config file -- the delays and all the rest
 are PTP-specific anyways, and PPSi supports per-architecture configuration
 items.
 
-@item  We need a way to change parameters at run time in the @i{softpll}
-implementation running on the switch.  We may base this on the @i{ipc}
-mechanism that is already in place, or design a well-know structure in
-the LM32 code, so the main CPU can just change parameters on the fly.
-I prefer the latter approach, but I need to talk with LM32 developers
-to agree about how to do that, and ensure everybody follows the policy
-we define.
-
 @end itemize
 
 @c ##########################################################################
