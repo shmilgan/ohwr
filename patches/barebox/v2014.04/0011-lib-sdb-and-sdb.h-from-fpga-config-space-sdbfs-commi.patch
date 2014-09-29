@@ -1,8 +1,8 @@
-From 5a35bbb8b324be0fe2b40113c26e1c1d9ca1374b Mon Sep 17 00:00:00 2001
+From 3113d0c15f8378e4b7ce9185ec1a61855f392589 Mon Sep 17 00:00:00 2001
 From: Alessandro Rubini <rubini@gnudd.com>
 Date: Mon, 15 Sep 2014 09:54:24 +0200
 Subject: [PATCH 11/13] lib/sdb and sdb.h: from fpga-config-space/sdbfs,
- commit 17445a2
+ commit 66a1ff4
 
 Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
 ---
@@ -669,7 +669,7 @@ index 0000000..3f7868d
 +#endif
 diff --git a/lib/sdb/libsdbfs-kernel.h b/lib/sdb/libsdbfs-kernel.h
 new file mode 100644
-index 0000000..5f545e8
+index 0000000..5733658
 --- /dev/null
 +++ b/lib/sdb/libsdbfs-kernel.h
 @@ -0,0 +1,35 @@
@@ -699,7 +699,7 @@ index 0000000..5f545e8
 + * we are picking the correct header, because the library is only built
 + * within the barebox source tree.
 + */
-+#if !defided(DECLARE_BITMAP) && !defined(__BAREBOX__)
++#if !defined(DECLARE_BITMAP) && !defined(__BAREBOX__)
 +#  error "Please point LINUX to a source tree if you define __KERNEL__"
 +#endif
 +
