@@ -36,6 +36,8 @@ if [ -n "$WRS_INSTALLING" ]; then install=true; else install=false; fi
 # A name that is used several times in this file
 WRS_FW="wrs-firmware.tar"
 OLD_FW="wrs-firmware-old.tar"
+WRS_USR="wrs-usr.tar.gz"
+OLD_USR="wrs-usr-old.tar.gz"
 
 # This helps create the devices that we need over time (and are dynamic)
 mkdev_sh () {
@@ -62,7 +64,7 @@ if $install; then
 
     # format the ubi device and create volumes
     echo -n "Formatting UBI device..." | $TEE /dev/ttyGS0
-    ubiformat -y -q /dev/mtd1; # takes 40s
+    ubiformat -y -q /dev/mtd1; # This takes up to 40s if flash is dirty
     echo " done" | $TEE /dev/ttyGS0
 
     ubiattach -p /dev/mtd1
@@ -108,48 +110,80 @@ fi
 # Now, whether installing or not, mount /update and check what is there
 mkdir -p /update
 mount -t ubifs ubi0:update /update
+# Mount /boot too, as we check for files in there, later
+mkdir -p /boot
+mount -t ubifs ubi0:boot /boot
 
-if [ -f /update/$WRS_FW ]; then
+# Some steps later set reboot=true; prepare a sane default.
+reboot=false
+
+# First: update usr: we may have the whole thing, or just wrs-usr.tar.gz
+if [ -f /update/$WRS_FW -o -f /update/$WRS_USR ]; then
     # FIXME: save configuration somewhere, and recover it later
     echo -n "Extracting filesystem..." | $TEE /dev/ttyGS0
     # since we are upgrading, we'd better remove and recreate the volume
     ubirmvol /dev/ubi0 --name=usr
     ubimkvol /dev/ubi0 -s 150MiB -N usr
-    # So, it's new: mount and untar
+    # So, it's new: mount and untar, from whole-tar or usr only
     mount -t ubifs ubi0:usr /usr
     cd /usr
-    tar -xOf /update/$WRS_FW wrs-usr.tar.gz | zcat | tar xf -
+    if [ -f /update/$WRS_FW ]; then
+	tar -xOf /update/$WRS_FW $WRS_USR | zcat | tar xf -
+    else
+	tar xzf /update/$WRS_USR
+    fi
     sync; cd /; umount /usr
     echo " done" | $TEE /dev/ttyGS0
 
     # check if we have an initramfs and/or kernel too
-    mkdir -p /boot
-    mount -t ubifs ubi0:boot /boot
     # FIXME: should rather check first and save a backup
     cd /boot
-    reboot=false
+    # The commands may fail because we miss wrs-firmware.tar or the content
     tar -xf /update/$WRS_FW zImage && reboot=true
     tar -xf /update/$WRS_FW wrs-initramfs.gz && reboot=true
-
-    # done: rename the firmware file
-    mv /update/$WRS_FW /update/$OLD_FW; sync
-  
-    # if this changed kernel or iniramfs, we reboot. Otherwise just proceed.
-    if $reboot; then
-	umount /update
-	reboot
-	# Init has been notified, but it takes time. Dont proceed this script
-	sleep 9999
+    # Do the same for barebox.bin, so we can upgrade it all in a step
+    cd /
+    tar -xf /update/$WRS_FW barebox.bin 
+    if [ -f barebox.bin ]; do
+	cat barebox.bin > /dev/mtd3
+	rm barebox.bin
     fi
 
+    # done: rename the firmware file (whole or usr, whatever is there)
+    mv /update/$WRS_FW /update/$OLD_FW || \
+	mv /update/$WRS_USR /update/$OLD_USR; sync
+fi
+
+# Allow replacing the kernel or initramfs alone (new in v4.1 of wr-switch-sw)
+for file in zImage wrs-initramfs.gz; do
+    if [ -f /update/$file ]; then
+	cp /update/$file /boot; sync
+	mv /update/$file /update/${file}-old
+	reboot = true
+    fi
+done
+
+# Allow changing the boot loader (new in v4.1 of wr-switch-sw)
+if [ -f /update/barebox.bin]; then
+    cat /update/barebox.bin > /dev/mtd3
+    mv /update/barebox.bin /update/barebox.bin-old
+    reboot = true
+fi
+
+# If we changed bloader or kernel or initramfs, we reboot. Otherwise proceed.
+if $reboot; then
+    umount /update
+    umount /boot
+    reboot
+    # We notified init, but it takes time. Stop breathing while waiting to die.
+    sleep 9999
 fi
 
 # Here we are: boot normally: if initrd, mount /usr and copy /etc
 # Otherwise do not do that, because we likely are nfs-root
 if grep -q initrd= /proc/cmdline; then
     mount -t ubifs ubi0:usr /usr
-    # Remove "us": avoid overwriting an open file
+    # Remove this script: avoid overwriting an open file
     rm /etc/init.d/wrs-boot-procedure;
     cp -a /usr/etc/* /etc
 fi
-
