@@ -28,7 +28,7 @@
 #include "switch_hw.h"
 #include "libsdbfs.h"
 
-#define SDBFS_NAME "/dev/mtd5"
+#define SDBFS_NAME "/dev/mtd5ro"
 
 #ifndef __GIT_VER__
 #define __GIT_VER__ "x.x"
