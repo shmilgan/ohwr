@@ -33,11 +33,17 @@ if [ -n "$WRS_INTERACTIVE" ]; then sh; fi
 # At installation time, we have WRS_INSTALLING=y
 if [ -n "$WRS_INSTALLING" ]; then install=true; else install=false; fi
 
-# A name that is used several times in this file
+# All special file names are factorized here. All "old" copies use
+# "current-" as a prefix. And we support "previous-" too.
 WRS_FW="wrs-firmware.tar"
-OLD_FW="wrs-firmware-old.tar"
 WRS_USR="wrs-usr.tar.gz"
-OLD_USR="wrs-usr-old.tar.gz"
+WRS_KER="zImage"
+WRS_RAMFS="wrs-initramfs.gz"
+WRS_BB="barebox.bin"
+
+# This is an old name we need to remove so users are not confused
+OLD_FW_OLDNAME="wrs-firmware-old.tar"
+
 
 # This helps create the devices that we need over time (and are dynamic)
 mkdev_sh () {
@@ -139,35 +145,46 @@ if [ -f /update/$WRS_FW -o -f /update/$WRS_USR ]; then
     # FIXME: should rather check first and save a backup
     cd /boot
     # The commands may fail because we miss wrs-firmware.tar or the content
-    tar -xf /update/$WRS_FW zImage && reboot=true
-    tar -xf /update/$WRS_FW wrs-initramfs.gz && reboot=true
+    for file in $WRS_KER $WRS_RAMFS; do
+	tar -xf /update/$WRS_FW $file && reboot=true
+    done
     # Do the same for barebox.bin, so we can upgrade it all in a step
-    cd /
-    tar -xf /update/$WRS_FW barebox.bin 
-    if [ -f barebox.bin ]; do
-	cat barebox.bin > /dev/mtd3
-	rm barebox.bin
+    cd /tmp
+    tar -xf /update/$WRS_FW $WRS_BB
+    if [ -f $WRS_BB ]; then
+	cat $WRS_BB > /dev/mtd3
+	rm $WRS_BB
     fi
 
     # done: rename the firmware file (whole or usr, whatever is there)
-    mv /update/$WRS_FW /update/$OLD_FW || \
-	mv /update/$WRS_USR /update/$OLD_USR; sync
+    if [ -f /update/$WRS_FW ]; then
+	mv /update/current-$WRS_FW /update/previous-$WRS_FW 2> /dev/null
+	mv /update/$WRS_FW /update/current-$WRS_FW
+    else
+	mv /update/current-$WRS_USR  /update/previous-$WRS_USR 2> /dev/null
+	mv /update/$WRS_USR  /update/current-$WRS_USR
+    fi
+    # And, to be sure, remove a file that may exist from a 4.0 install
+    rm -f /update/$OLD_FW_OLDNAME
+
 fi
 
 # Allow replacing the kernel or initramfs alone (new in v4.1 of wr-switch-sw)
-for file in zImage wrs-initramfs.gz; do
+for file in $WRS_KER $WRS_RAMFS; do
     if [ -f /update/$file ]; then
 	cp /update/$file /boot; sync
-	mv /update/$file /update/${file}-old
-	reboot = true
+	mv /update/current-$file /update/previous-${file} 2> /dev/null
+	mv /update/$file /update/current-$file
+	reboot=true
     fi
 done
 
 # Allow changing the boot loader (new in v4.1 of wr-switch-sw)
-if [ -f /update/barebox.bin]; then
-    cat /update/barebox.bin > /dev/mtd3
-    mv /update/barebox.bin /update/barebox.bin-old
-    reboot = true
+if [ -f /update/$WRS_BB ]; then
+    cat /update/$WRS_BB > /dev/mtd3
+    mv /update/current-$WRS_BB /update/previous-$WRS_BB
+    mv /update/$WRS_BB /update/current-$WRS_BB
+    reboot=true
 fi
 
 # If we changed bloader or kernel or initramfs, we reboot. Otherwise proceed.
