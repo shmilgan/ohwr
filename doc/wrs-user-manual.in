@@ -1,0 +1,542 @@
+\input texinfo    @c -*-texinfo-*-
+%
+% wrs-user-manual.in - main file for the documentation
+%
+%%%%
+
+%------------------------------------------------------------------------------
+%
+%                         NOTE FOR THE UNAWARE USER
+%                         =========================
+%
+%    This file is a texinfo source. It isn't the binary file of some strange
+%    editor of mine. If you want ASCII, you should "make wrs-user-manual.txt".
+%
+%------------------------------------------------------------------------------
+
+%
+% This is not a conventional info file...
+% I use three extra features:
+%   - The '%' as a comment marker, if at beginning of line ("\%" -> "%")
+%   - leading blanks are allowed (this is something I cannot live without)
+%   - braces are automatically escaped when they appear in example blocks
+%
+
+@comment %**start of header
+@documentlanguage en
+@documentencoding ISO-8859-1
+@setfilename wrs-user-manual.info
+@settitle wrs-user-manual
+@iftex
+@afourpaper
+@end iftex
+@paragraphindent none
+@comment %**end of header
+
+@setchapternewpage off
+
+@set update-month September 2014
+@c the release name below is substituted at build time
+@set release __RELEASE_GIT_ID__
+
+@finalout
+
+@titlepage
+@title White Rabbit Switch: User's Manual
+@subtitle Information about configuring the White Rabbit switch, for final users
+@subtitle @value{update-month} (@value{release})
+@author Alessandro Rubini, Benoit Rat, Federico Vaga et al.
+@end titlepage
+@headings single
+
+@c ##########################################################################
+@iftex
+@contents
+@end iftex
+
+@c ##########################################################################
+@c in texinfo we are mandated to have a Top node
+@node Top
+@top Introduction
+
+The White Rabbit switch (or @sc{wrs}) is a major component of the
+White Rabbit (@sc{wr}) network.  Like any modern managed switch, the
+@sc{wrs} includes a CPU with its own operating system.
+
+This manual is for people installing @sc{wrs} devices, who need to
+configure them in their network.
+
+@c ##########################################################################
+@node WRS Documentation
+@chapter WRS Documentation
+
+Up to and including release 4.0 of @sc{wrs} software this manual
+didn't exist, and the ``WRS Build Manual'' included some information
+about configuration.
+
+@c ==========================================================================
+@node The Official Manuals
+@section The Official Manuals
+
+This is the current set of manuals that accompany the @sc{wrs}:
+
+@itemize @bullet
+
+@item @i{White Rabbit Switch: Startup Guide}: hardware installation
+   instructions. This manual is provided by the manufacturer: it describes
+   handling measures, the external connectors, hardware features and the
+   initial bring-up of the device.
+
+@item @i{White Rabbit Switch: User's Manual}: documentation about
+   configuring the @sc{wrs}, at software level.  This guide is maintained
+   by software developers.  The manual describes
+   configuration in a deployed network, either as a standalone device or
+   as network-booted equipment.  The guide also describes how to upgrade
+   the switch, because we'll release new official firmware images over
+   time, as new features are implemented.
+
+@item @i{White Rabbit Switch: Developer's Manual}: it describes the
+   build procedure and how internals work; use of scripts and
+   @sc{wrs}-specific executables and so on.  The manual is by developers
+   and for developers.  This is the
+   document to check if you need to customize your @i{wrs} rebuild
+   software from new repository commits that are not an official release
+   point, or just install your @i{wrs} with custom configuration values.
+
+@end itemize
+
+The official @sc{pdf} copy of the three manuals at each release
+is published in The @i{files} tab of the software project in @t{ohwr.org}:
+(@url{http://www.ohwr.org/projects/wr-switch-sw/files}).
+This doesn't apply to release 4.0 and earlier.
+
+The source form of all three manuals is maintained in
+@t{wr-switch-sw/doc}. Within the repository, both the @i{User's
+Manual} and the @i{Developer's Manual} are always tracking the
+software commits, while the @i{Startup Guide} may not be authoritative
+because it is bound to device shipping rather than software
+development.
+
+@c ==========================================================================
+@node Supported Hardware Versions
+@section Supported Hardware Versions
+
+This document applies to versions 3.3 and 3.4 of the @sc{wrs}
+device.
+
+Very few specimens of @t{wrs} 3.0 though 3.2 were manufactured; if you
+are the owner of one of them, please refer to version 3.3 of the
+@i{wrs-build} document, that includes appendixes about using older
+versions. As usual, it is in the @i{files} tab of @t{ohwr.org}.
+
+V1 and V2 were development items, never shipped.
+
+
+@c ##########################################################################
+@node Kconfig Support
+@chapter Kconfig Support
+
+After release 3.3 of this software package, we added Kconfig support
+to wr-switch-sw.  The user can ignore this step: building as usual
+from a fresh checkout of @t{wr-switch-sw} silently selects
+the default configuration.
+
+You may exploit this @t{Kconfig} option to build firmware images
+preconfigured for your own network.
+
+To change configuration, you are expected to run ``@t{make
+menuconfig}'' (or @i{gconfig} or @i{kconfig} or the old text-mode
+@i{config}) from the top-level directory of @i{wr-switch-sw}.  To
+silently enact the default configuration, run ``@t{make defconfig}''
+(this is done by the normal build if no configuration is present).
+
+The following configuration options are available
+
+@table @code
+
+@item CONFIG_BR2_CONFIGFILE
+
+	This string option lists a file to be used as Buildroot (BR2)
+        configuration. A simple filename or relative pathname refers to the 
+        @t{configs/buildroot} directory; an absolute pathname is used
+        unchanged.
+
+@c FIXME: remove noposix option
+@item CONFIG_PTP_NOPOSIX
+@itemx CONFIG_PPSI
+
+	Users can select one of these options, to build with one or the other
+        flavour of @sc{wr-ptp}.  PPSi is the default choice, and
+        @i{ptp-noposix} is scheduled for removal in a later release.
+
+@item CONFIG_NTP_SERVER
+
+	The NTP server used to prime White Rabbit time, at system boot.
+        The option can be an IP address or a host name, if DNS is properly
+        configured.  The configuration value is stored in
+        @t{/wr/etc/wr_date.conf}. An empty string (default) disables
+        NTP access at boot time.
+
+@item CONFIG_DNS_SERVER
+@itemx CONFIG_DNS_DOMAIN
+
+	The DNS server (as an IP address) and default domain. The values
+        end up in @t{/etc/resolv.conf} of the generated filesystem.
+        By default the two strings are empty.
+
+@item CONFIG_REMOTE_SYSLOG_SERVER
+@itemx CONFIG_REMOTE_SYSLOG_UDP
+
+	Configuration for system log. The name (or IP address) of the
+        server is stored in @t{/etc/rsyslog.conf} of the generated
+        filesystem.  The UDP option, set by default, chooses UDP transmission;
+        if unset it selects TCP communication.
+
+@item CONFIG_SNMP_TRAPSINK_ADDRESS
+@itemx CONFIG_SNMP_TRAP2SINK_ADDRESS
+@itemx CONFIG_SNMP_RO_COMMUNITY
+@itemx CONFIG_SNMP_RW_COMMUNITY
+
+	Configuration for the @sc{snmp} agent. Addresses can be IP addresses
+        or names (if DNS is configured and working), they are unset by
+        default. Community values are strings and they default to
+        @t{public} and @t{private}.
+
+@item CONFIG_WRS_LOG_HAL
+@itemx CONFIG_WRS_LOG_RTU
+@itemx CONFIG_WRS_LOG_PTP
+
+	Logging options for the three main WRS processes. Each value
+        can be a pathname, to select logging to file (and @t{/dev/kmsg}
+        is a possible ``file'' target) or a @i{facility}.@i{level} string,
+        like @t{daemon.debug}, for syslog-based logging.
+        An empty strings selects no logging at all.  Please note that
+        unknown facility names will generate a runtime error on the switch.
+        All three strings default to ``@t{daemon.info}''.
+
+@item CONFIG_KEEP_ROOTFS
+
+	A boolean option for developers: if set the build script does
+        not delete the temporary copy of the generated filesystem and
+        reports its pathname in the build messages.
+
+@end table
+
+@c ############################################################################
+@node Booting with Barebox
+@chapter Booting with Barebox
+
+After the initial installation, the boot loader offers an
+interactive  menu, where the first entry is selected by default.
+The menu is a simple ASCII interface on the serial port, and looks
+like the following:
+
+@example
+   Welcome on WRSv3 Boot Sequence
+       1: boot from nand (default)
+       2: boot from TFTP script
+       3: edit config
+       4: exit to shell
+       5: reboot
+@end example
+
+If flashing of the whole system was successful, the first entry will
+simply work, booting the switch without any network access.  Although
+a DCHP client runs by default after boot, everything will work even if
+you leave the Ethernet port unconnected or you have no DHCP server
+when the switch is operational.
+
+If booting from NAND memory fails (for example because you erased the
+kernel or incurred in other mishaps during development)
+the menu is re-entered automatically.
+
+The other entries are provided to help developers.
+
+@c ==========================================================================
+@node Description of the menus
+@section Description of the menus
+
+The individual menu items perform the following actions:
+@table @code
+
+@item 1: boot from nand (default)
+
+	This entry is selected by default after 10 seconds of
+        inactivity on the serial port. It boots the system from its
+        own NAND memory. This ``just works''.
+
+@item 2: boot from TFTP script
+
+	This entry tries to download a @i{barebox} script from your TFTP
+        server; if successful it then executes it. Developers are
+        expected to customize the script to support any kind of environment,
+        from customized kernel command-line to NFS-Root environments.
+        See @ref{Using wrboot} for details.
+
+@item 3: edit config
+
+	This fires the editor on the configuration file, and
+        saves it to flash when the user is done. This is useful to
+        change the MAC address of the ARM network port. Please note
+        that saving save the whole @file{/env} file tree, so you
+        can also change the init scripts interactively and have them
+        stored persistently on the flash.
+
+@item 4: exit to shell
+
+	By choosing this entry, the user can access the shell-like
+        interface of @i{barebox}. The entry is aimed at developers
+        who know what they are going to type.
+
+@item 5: reboot
+
+	This entry is useful to see and log the exact boot messages.
+        Since the serial-USB converter is @i{switch-powered} and not
+        @i{USB-powered}, you won't be able to hook at the serial port
+        soon enough after power-on.  Actually, the menu timeout is
+        left to 10 seconds and not less for the very same reason.
+
+@end table
+
+@c ==========================================================================
+@node Using wrboot
+@section Using wrboot
+
+If you use the @i{wrboot} script option, you can for example run
+an NFS-Root system or do whatever customization and testing you want.
+
+The complete filesystem after a successful build is called
+@t{images/wrs-image.tar.gz}, and is not included in the release
+firmware file, because an installed switch runs an @i{initramfs}
+system with a separate @t{/usr} partition in flash memory.
+
+@sp 1
+
+The provided procedure tries to load the script from TFTP under three
+different names, from most specific to most generic, and the first
+match will be used.  The first name is MAC-address-based, the
+second is IP-address-based and the third is just @file{wrboot}.
+
+This is for example what I see in my logs when only providing @file{wrboot}:
+
+@smallexample
+   dhcpd: DHCPOFFER on 192.168.16.224 to 02:0b:ad:c0:ff:ee via eth0
+   atftpd[5623]: Serving wrboot-02:0B:AD:C0:FF:EE to 192.168.16.224:1029
+   atftpd[5623]: Serving 192.168.16.224/wrboot to 192.168.16.224:1030
+   atftpd[5623]: Serving wrboot to 192.168.16.224:1031
+   mountd[21014]: NFS mount of /tftpboot/192.168.16.9 attempted from 192.168.16.9
+@end smallexample
+
+We chose to place the IP-address-based name in a subdirectory because
+this is the default place where the NFS-Root filesystem is mounted
+from, as shown in the log excerpt above. So you'll have your
+@file{wrboot} in the same place.
+
+@b{Note:} recent @i{barebox} versions require scripts to include a
+leading @t{#!/bin/sh}. Examples in @i{wr-switch-sw} did not include the
+line until April 2014 included.
+
+The @file{binaries} subdirectory of this package includes two known-working
+wrboot scripts as examples; one if for use with static IP addresses and
+the other relies on DHCP. If you want to override the default NFS-Root
+directory mounted from the server (which is @code{/tftpboot/<ip-address>})
+you can add something like the following line to your @file{wrboot} script:
+
+@example
+    bootargs="$bootargs nfsroot=/opt/root/wrs-3"
+@end example
+
+In order to create an NFS root directory, you should uncompress
+@t{wrs-image.tar.gz} that is created at build time.  If you use
+a released @t{wrs-firmware.tar}, however, you'll have no overall
+filesystem for the switch, and you should rebuild it from two
+parts.  This is how to create your NFS filesystem (please adapt
+for your local pathnames):
+
+@example
+   FW=/tftpboot/wrs-firmware.tar
+   DIR=/opt/root/wrs-3
+
+   mkdir -p $DIR
+   tar xOf $FW wrs-initramfs.gz | zcat | \
+       (cd $DIR && sudo cpio --make-directories --extract)
+   tar xOf $FW wrs-usr.tar.gz | sudo tar xzf - -C $DIR/usr
+@end example
+
+The above commands extract to @i{stdout} the two parts of the @sc{wrs}
+filesystem, to then uncompress them to the proper directories.  The
+first @i{tar} pipe is less friendly because the @i{initramfs} is a
+compressed @i{cpio} archive, and @i{cpio} as a command lacks automatic
+decompression and the @t{-C} (change directory) option.
+
+
+@c ##########################################################################
+@node SNMP Support
+@chapter SNMP Support
+
+The White Rabbit Switch supports SNMP, although some more work is needed
+in this respect.  The default read-only ``community'' name is @t{private},
+but you can change it from the @t{Kconfig} interface before building.
+The default read-write community is @t{private}.
+
+The switch supports all the standard information through the @i{net-snmp}
+installation.  We'll remove some of the items in a later release, because
+nobody wants to check running processes or disk space usage.
+
+The additional, switch-specific information are in the
+``enterprise.96.100 subtree, where @t{96} is CERN and @t{100} is White
+Rabbit. The associated MIB is in the directory @t{userspace/snmpd},
+where related source files live as well.
+
+@c ==========================================================================
+@node The WRS MIB
+@section The WRS MIB
+
+This a summary of the available tables and scalars:
+
+@table @code
+
+@item 96.100.1
+
+	This is a simple scalar as a test. It is an integer value
+        that is incremented each time you access it. It can be used to
+        test basic functionality.
+
+@item 96.100.2
+
+	Port statistics, as an SNMP table.  The first column is the
+        name of each counter, and further columns represent interfaces
+        @t{wr0} through @t{wr17}. Each counters is shown in a table line,
+        as the number and names of the counters may change in the future.
+
+@item 96.100.3
+
+	White Rabbit specific information.  Subid @t{.1} is the global
+        items, and subid @t{.2} is a table with per-port items.
+
+@item 96.100.4
+
+	Hardware, gateware and software versions, plus serial
+        number and other hardware information.
+
+@item 96.100.5
+
+	The internal White Rabbit time, as a number and a string.
+
+@end table
+
+@b{Note:} due to a buglet of mine, there is an extra item at
+the end of each table (@t{96.100.2} and @t{96.100.3.2}. It makes no
+harm, so its removal is not high priority.
+
+@c @b{Note:} due to a bug in management of 64-bit values in @i{net-snmp},
+@c we are using a bad work-around in the code, that may cause wrong values
+@c to be returned by other versions of the agent, where this bug is fixed.
+
+the easiest way to retrieve the values is using @i{snmpwalk}, telling
+it to access our MIB file in order to use symbolic names. Assuming
+@t{wrs} is the DNS name for your White Rabbit Switch and @t{WR_SWITCH_SW}
+is an environment variable pointing to this package:
+
+@smallexample
+   snmpwalk -c public -v 2c wrs \
+       -m +${WR_SWITCH_SW}/userspace/snmpd/WR-SWITCH-MIB.txt \
+       1.3.6.1.4.1.96.100
+@end smallexample
+
+Using SNMP version 1 instead of 2c is fine as well, but you won't receive
+the 64-bit values for slave/tracking information.
+
+The output you will get back is something like the following. Clearly
+the software commit in this example is my own development version while writing
+this section:
+
+@smallexample
+WR-SWITCH-MIB::wrsScalar.0 = INTEGER: 2
+WR-SWITCH-MIB::pstatsDescr.1 = STRING: TX Underrun
+WR-SWITCH-MIB::pstatsDescr.2 = STRING: RX Overrun
+WR-SWITCH-MIB::pstatsDescr.3 = STRING: RX Invalid Code
+[...]
+WR-SWITCH-MIB::pstatsDescr.38 = STRING: Forwarded
+WR-SWITCH-MIB::pstatsDescr.39 = STRING: TRU Resp Valid
+WR-SWITCH-MIB::pstatsWR0.1 = Counter32: 0
+[...]
+WR-SWITCH-MIB::pstatsWR17.38 = Counter32: 50819
+WR-SWITCH-MIB::pstatsWR17.39 = Counter32: 0
+WR-SWITCH-MIB::pstatsEntry.20 = Counter32: 0
+WR-SWITCH-MIB::ppsiGrandmaterID.0 = Hex-STRING: 00 00 00 00 00 00 00 00
+WR-SWITCH-MIB::ppsiOwnID.0 = Hex-STRING: 00 00 00 00 00 00 00 00
+WR-SWITCH-MIB::ppsiMode.0 = INTEGER: unknown(0)
+WR-SWITCH-MIB::ppsiServoState.0 = STRING:
+WR-SWITCH-MIB::ppsiPhaseTracking.0 = INTEGER: not-tracking(0)
+[...]
+WR-SWITCH-MIB::portLink.14 = INTEGER: down(0)
+WR-SWITCH-MIB::portLink.15 = INTEGER: up(1)
+WR-SWITCH-MIB::portLink.16 = INTEGER: down(0)
+[...]
+WR-SWITCH-MIB::portPeer.18 = Hex-STRING: FF FF FF FF FF FF FF FF
+WR-SWITCH-MIB::ppsiPort.5 = Hex-STRING: FF FF FF FF FF FF FF FF
+WR-SWITCH-MIB::wrsVersionSw.0 = STRING: v4.0-rc1-42-gcec7805+
+WR-SWITCH-MIB::wrsVersionGw1.0 = STRING: 7cce708
+WR-SWITCH-MIB::wrsVersionGw2.0 = STRING: 5118070
+WR-SWITCH-MIB::wrsVersionGw3.0 = STRING: 7efeb16
+WR-SWITCH-MIB::wrsVersionHw1.0 = STRING: 3.30
+WR-SWITCH-MIB::wrsVersionHw2.0 = STRING: LX240T
+WR-SWITCH-MIB::wrsManufacturer.0 = STRING: Seven Solutions
+WR-SWITCH-MIB::wrsSerialNumber.0 = STRING: 12345
+WR-SWITCH-MIB::wrsScbVersion.0 = STRING: 3.3
+WR-SWITCH-MIB::wrsDateTAI.0 = Counter64: 1406623390
+WR-SWITCH-MIB::wrsDateString.0 = STRING: 2014-07-29-08:43:10
+@end smallexample
+
+@c ==========================================================================
+@node show-pstats
+@section show-pstats
+
+To visualize all port statistics in a single window, this package
+includes the simple tool @t{userspace/snmpd/show-pstats}.  It is
+a Tk script, so you need to install @t{tk8.5} or any other version.
+
+The script receives one or more host names (or IP addresses) on the command
+line. They must refer to a switch (or switches) or the program fails like this:
+
+@smallexample
+   laptopo% ./show-pstats morgana
+   Error in snmpwalk for host morgana
+   No log handling enabled - using stderr logging
+   .1.3.6.1.4.1.96.100.2.1.: Unknown Object Identifier (Sub-id not found: enterprises -> )
+@end smallexample
+
+If everything goes well, you'll get a window like the following one:
+
+@center @image{show-pstats, 10cm,, show-pstats}
+
+
+@c ##########################################################################
+@node Bugs and Troubleshooting
+@appendix Bugs and Troubleshooting
+
+Even if the package is already released and used in production,
+some details can be
+suboptimal, while some procedures may be tricky and need more explanation.
+
+We are collecting all those issues in the @i{wiki} page of the
+project, to avoid frequent updates to this manual to just collect
+those details.  So please visit
+@url{www.ohwr.org/projects/wr-switch-sw/wiki/Bugs} and
+@url{www.ohwr.org/projects/wr-switch-sw/wiki/Troubleshooting}
+if you have any problem with this package, but feel free to reach us
+on the mailing list if you don't find help there.
+
+@c ##########################################################################
+@bye
+
+
+@c  LocalWords:  gnudd titlepage iftex texinfo CERN timestamping smallexample
+@c  LocalWords:  LocalWords ietf timestamp misc timestamps ttstamp onestamp
+@c  LocalWords:  Tomasz Wlostowski buildroot distclean defconfig wrswitch REPO
+@c  LocalWords:  menuconfig config dataflash whiterabbit stdout stderr svnsync
+@c  LocalWords:  filesystem diff ohwr http mkdir linux rubini itemize PTPd VHDL
+@c  LocalWords:  noposix ptpd userspace libswitchhw DataFlash NAND barebox FPGA
+@c  LocalWords:  Atmel Kconfig minicom tinyserial ttyUSB bootloader logfile
+@c  LocalWords:  nandflash gateware TFTP init wrboot wiki

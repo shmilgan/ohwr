@@ -134,8 +134,12 @@ versions. As usual, it is in the @i{files} tab of @t{ohwr.org}.
 V1 and V2 were development items, never shipped.
 
 @c ##########################################################################
-@node Overview of the Build Procedure
-@chapter Overview of the Build Procedure
+@node Building WRS Software
+@chapter Building WRS Software
+
+@c ==========================================================================
+@node Overview
+@section Overview
 
 The scripts build over previous work by Tomasz Wlostowski, who first
 made the whole thing work and stick together -- a serious result from
@@ -178,7 +182,7 @@ non-default configuration, however, is not considered as
 ``supported'', and @i{Kconfig} is there mainly to help developers try
 new packages and setups without changing the repository or
 introducing problems for other users.  For some more information about
-@i{Kconfig} in this package, see @ref{Kconfig Support}.
+@i{Kconfig} in this package, see the @i{@sc{wrs} User's Manual}.
 
 The build system is set up as a mix of scripts and makefiles. Every
 sub-package is built by its own script and/or Makefile, and configuration is
@@ -187,9 +191,9 @@ sets all environment variables, while keeping defaults from your
 preexisting environment -- so you can override anything even when
 rebuilding it all from scratch.
 
-@c ==========================================================================
+@c --------------------------------------------------------------------------
 @node Portability
-@section Portability
+@subsection Portability
 
 The scripts in their current status are not expected to be very
 portable. I am sure a number of @i{bashisms} exist, and I did no effort
@@ -207,9 +211,9 @@ It should go without saying that the build environment is expected to
 be a native GNU/Linux system; success reports about other environments
 (e.g. cygwin) are welcome, possibly with associated patches.
 
-@c ==========================================================================
+@c --------------------------------------------------------------------------
 @node Environment Variables
-@section Environment Variables
+@subsection Environment Variables
 
 The scripts use a number of environment variables; you can pre-set
 them as you wish. If they are not pre-set, defaults apply as
@@ -285,9 +289,9 @@ useful to people working on the script itself, they are documented in
 place.
 
 
-@c ==========================================================================
+@c --------------------------------------------------------------------------
 @node Downloading Files
-@section Downloading Files
+@subsection Downloading Files
 
 Every downloaded file is saved to the @code{downloads} directory 
 (@code{$WRS_DOWNLOAD_DIR} if set, or the default place
@@ -323,10 +327,6 @@ The messages of a download run are like the following ones:
    2012-01-12 18:37:53: Retrieved uClibc-0.9.32.tar.bz2 from upstream
    2012-01-12 18:37:56: Retrieved zlib-1.2.5.tar.bz2 from upstream
 @end smallexample
-
-@c ##########################################################################
-@node Building
-@chapter Building
 
 @c ==========================================================================
 @node Building Procedure
@@ -516,95 +516,526 @@ directory by deleting all compiled modules (except downloaded files), just call:
 @end example
 
 
-@c ##########################################################################
-@node Kconfig Support
-@chapter Kconfig Support
+@c ==========================================================================
+@node The Individual Build Steps
+@section The Individual Build Steps
 
-After release 3.3 of this software package, we added Kconfig support
-to wr-switch-sw.  The user can ignore this step: building as usual
-from a fresh checkout of @t{wr-switch-sw} silently selects
-the default configuration.
+This chapter details the individual build steps, for the users that want
+to customize their switch in any way. 
 
-You may exploit this @t{Kconfig} option to build firmware images
-preconfigured for your own network.
+@c --------------------------------------------------------------------------
+@node The Compiler
+@subsection The Compiler
 
-To change configuration, you are expected to run ``@t{make
-menuconfig}'' (or @i{gconfig} or @i{kconfig} or the old text-mode
-@i{config}) from the top-level directory of @i{wr-switch-sw}.  To
-silently enact the default configuration, run ``@t{make defconfig}''
-(this is done by the normal build if no configuration is present).
+The predefined compiler used here is the one built by @i{buildroot}.
+The default configuration selects this choice.  If you pre-set a
+different @code{CROSS_COMPILE} prefix in your environment, your own
+choice will be used by modifying the @i{buildroot} configuration file.
+Note, however, that not all cross-compilers will work (@i{buildroot}
+wants one that has been configured with @code{--sysroot} and it is
+quite unlikely yours has been).
 
-The following configuration options are available
+In practice, you may want to set @code{CROSS_COMPILE} when you compile
+the boot loader and kernel by themselves, and avoid it when compiling
+the complete package.
+
+@c --------------------------------------------------------------------------
+@node Buildroot
+@subsection Buildroot
+
+The distribution being used here is @i{buildroot}. It is the first
+step being built, because it creates the cross-compiler it will use. This
+compiler is later used to compile all other software for the White
+Rabbit Switch.
+
+The configuration for @i{buildroot} comes from
+@code{configs/buildroot/wrs_release_br2_config}. The configuration
+is then changed only if you pre-set your own @code{CROSS_COMPILE}
+variable.  A different configuration can be chosen in the Kconfig
+interface, by running ``@t{make menuconfig}'' or equivalent, in the
+top-level source directory.
+
+@c The following can be shown in a set of commands instead of this hard
+@c to read explanation.
+
+If you want to change the configuration, you can do so after the first
+build iteration: change directory to @code{build/buildroot-2011.11}
+and run @code{make menuconfig} (this the Buildroot configuration,
+not the one of wr-switch-sw). After making your choices, copy back
+the file @code{.config} to @t{configs/buildroot} in this package,
+so you can select it by running @t{make menuconfig} in wr-switch-sw.
+
+Then, please run @t{configs/buildroot/RUNME} (without arguments)
+in order to remove your local pathnames in the configuration file;
+the file without local pathnames can be committed and published for
+other people to use.
+
+You can also set @code{WRS_BUILDROOT_CONFIG} to the full pathname of
+your configuration file of choice (this used to be the only way
+to pass a custom configuration file). The file must be a copy of the
+@code{.config} after the @code{make menuconfig} step described above,
+within buildroot.
+Note that if the variable is not pointing to a regular file it is
+ignored with a simple warning -- rather than stopping the build procedure.
+
+@c --------------------------------------------------------------------------
+@node The IPL
+@subsection The IPL
+
+The version of @i{at91bootstrap} being used in the switch as
+@i{Initial Program Loader} is version 3.3, download from  @code{timesys.com/}
+(the full URL is in @i{build/download-info}.
+The patches we applied are in the directory @i{patches/at91boot/v3.3},
+and we are piggy-backing on the Atmel
+evaluation board without even changing the board name):
+
+@example
+   0001-printf-added-files-from-pptp-unchanged.patch
+   0002-printf-fixes-and-addition-to-makefile.patch
+   0003-build-Add-gitversion-to-binary-and-a-script-to-compi.patch
+   0004-board-9g45ek-fix-ddr-config-for-WRS-V3.patch
+   0005-boot-disable-watchdog-asap-added-flip_leds-count-run.patch
+   0006-boot-Correct-crash-due-to-an-Atmel-bug-during-boot-w.patch
+   0007-gpios-Correct-FPGA-LED-problems-and-add-CPU-LEDs-FAN.patch
+@end example
+
+The script @i{wrs_build_at91boot} uncompresses, patches and builds, leaving
+@code{images/@-at91bootstrap.bin} after it is over.  This file is
+the one to be loaded in the hardware.
+
+If you build using a local @i{git} repository, we suggest to use
+@code{git am --whitespace=nowarn} because we have a number of
+white space errors, and we apologize for that.
+
+@b{Warning}: with most distributions, this compilation step will print
+a scary message about memory corruption. The message is reporting a bug in
+the configuration program which has no actual effects and can be ignored.
+Maybe we will switch to another version in the future that doesn't show
+the bug, or to the newer @i{barebox} that obsoletes @i{at91boot}.
+
+@c --------------------------------------------------------------------------
+
+@node The Boot Loader
+@subsection The Boot Loader
+
+The switch uses @i{barebox} as a boot loader. We are running version
+2014-04, with a few local patches and the chosen configuration
+file. Note that we are piggy-backing on the Ronetix PM9G45 board, out
+of laziness.
+
+The patches are part of this package in @i{patches/barebox/v2014.04/} and
+the set is made up of the following ones:
+
+@smallexample
+   0001-sam945-include-mtd-nand.h-in-device-file.patch
+   0002-arm-change-prompt-for-pm9263-wrs-piggy-backs-on-that.patch
+   0003-nand-wrs-our-nand-is-16-bit-connected-fix-accordingl.patch
+   0004-gpio-add-function-to-check-them.patch
+   0005-wrs-on-pm9g45-change-nand-setup.patch
+   0006-wrs-on-pm9g45-add-dataflash-initialization.patch
+   0007-barebox-add-MAC-addresses-to-environment.patch
+   0008-wrs-on-pm9g45-force-memory-to-64MB.patch
+   0009-pm9g45-init-for-wrs-move-environment-for-the-UBI-mov.patch
+@end smallexample
+
+If you build using a local @i{git} repository, we suggest to use
+@code{git am --whitespace=nowarn} because we have a number of
+white space errors, and we apologize for that.
+
+The @i{barebox} boot loader is organized as a small Unix-like
+environment, and its own configuration and scripts live in a small
+filesystem.  To ease modification of such configuration and boot steps
+the build script copies over the configuration instead of patching it
+in the sources.  You can thus edit the files you find in
+@file{patches/barebox/v2014.04/env} and rebuild your customized bootloader.
+The script that is executed at boot time is @file{env/bin/init} and as
+you see it calls the other ones.  The menus included in the shipped
+configuration are described in the the @i{@sc{wrs} User's Manual}.
+
+Building @i{barebox} relies on a @i{Kconfig} setup, and the
+configuration file we use is
+@file{patches/barebox/v2014.04/@-wrs3_defconfig}. Again, this is copied over and
+not patched in (see the simple @file{build/scripts/@-wrs_build_barebox}
+for details).
+
+@c FIXME: describe how to change the barebox configuration file
+
+After patching and copying over the files, the following commands
+build the boot loader using the
+cross-compiler built by @i{buildroot}. If you run these
+by hand you can use a different compiler (as shown):
+
+@example
+   export CROSS_COMPILE=/opt/arm-2010q1/bin/arm-none-eabi-
+   export ARCH=arm
+   make wrs3_defconfig
+   make
+   cp barebox.bin images/
+@end example
+
+To use the same compiler the scripts use, you need this setting (which is split
+in two lines with a local variable to fit the page with in documentation):
+
+@smallexample
+   BR=${WRS_OUTPUT_DIR}/build/buildroot-2011.11
+   export CROSS_COMPILE=${BR}/output/host/usr/bin/arm-linux-
+@end smallexample
+
+@c --------------------------------------------------------------------------
+@node The Linux Kernel
+@subsection The Linux Kernel
+
+The kernel is currently version 2.6.39, compiled from an uncompressed
+tar file (so not within a @i{git} repository).  The upstream
+vanilla kernel is downloaded, then
+local patches are applied (they come from a @i{git}
+repository, but they are currently applied with a simple @i{patch}
+command).
+
+The relevant patches are available in @i{patches/kernel/v2.6.39},
+and are currently the following ones:
+
+@example
+   0001-wrs3-changes-to-g45ek.patch
+   0002-initramfs-stop-after-one-cpio-archive.patch
+   0003-at91-NR_IRQS-increase-by-64-to-fit-custom-muxes.patch
+   0004-irq-export-symbols-for-external-irq-controller.patch
+   0005-Change-Vbus-pin.patch
+   0006-arm-fiq-allow-modules-to-exploit-the-fiq-mechanism.patch
+   0007-mtd-nand-sam9g45-can-hwecc-like-9263.patch
+   0008-wrs3-use-correct-nand-partitioning.patch
+   0009-at91-udc-force-full-speed.patch
+   0010-sam9m10g45ek-for-wrs-new-partitioning.patch
+   0011-sam9m10g45ek-for-wrs-final-partitions-for-V4.1.patch
+   0012-sam9m10g45ek-for-wrs-more-relaxed-nand-timings.patch
+@end example
+
+The configuration we use to build the kernel is not a patch but a plain
+@code{.config} file, in the same directory as the patches, so you
+can change it easily, if needed. As an alternative,
+you can also set @code{WRS_KERNEL_CONFIG} to the full pathname of
+your configuration file of choice. The file must be a copy of the
+@code{.config} found in the main kernel directory,
+(for example the one left after the @code{make menuconfig} step).
+Note that if the @code{WRS_KERNEL_CONFIG}
+variable is not pointing to a regular file it is
+ignored with a simple warning, without stopping the build procedure.
+
+The build scripts copy both @i{zImage} and all compiled kernel
+modules to the @i{images/} directory of the build place. This currently
+includes modules 
+
+@c --------------------------------------------------------------------------
+@node Kernel Modules
+@subsection Kernel Modules
+
+In the next step the scripts compile modules that are part of this
+package.  The step depends on the kernel being available in the
+build directory. The modules are then copied into the
+@file{images/wr/lib/modules/} subdirectory of the main build directory.
+
+Please note that modules (and later user-space) are compiled in-place;
+ie. not in the output directory.  The disadvantage is that your repository
+becomes dirty with output and intermediate files. The advantage is that
+any modification you make to the code is already in the repository
+for your to commit.
+
+Currently, the package includes the following modules:
+
+@itemize @bullet
+@item @i{wr_vic.ko}: the interrupt controller for in-FPGA devices.
+@item @i{wr-nic.ko}: the network ``card'' driver for WR ports.
+@item @i{wr_rtu.ko}: the routing-table interface between the
+      switching core and the associated user-space daemon.
+@item @i{wr_pstats.ko}: exports per-port statistics to /proc/sys.
+@item @i{at91_softpwm.ko}: a driver that generates a PWM signal for the fan.
+@end itemize
+
+@c --------------------------------------------------------------------------
+@node PTPd
+@subsection PTPd
+
+Configuration supports two different PTP engines: either @t{ptp-noposix}
+(default at this point in time) or PPSi. The latter is
+the default choice, and will later be the only choice, as we phase
+out the former implementation.
+
+Both implementations are hosted in their own respective different
+repository; both are registered as  @i{git} submodules in this package.
+The repositories are hosted  on @code{ohwr}, like others.
+
+A plain @i{make} in either  @i{userspace/ptp-noposix} or
+@t{userspace/ppsi} will likely fail, because of
+missing environment variables. 
+
+Additionally,  the script installs headers for the HAL
+and @i{libptpnetif}.
+
+@c --------------------------------------------------------------------------
+@node User Space Applications
+@subsection User Space Applications
+
+The filesystem of the switch includes some user-space applications
+and tools.  Some of the @i{tools} are actually used by the init
+scripts and some are just utilities for the developer.
+
+The subdirectories in @file{userspace} include the various applications
+needed for the operation of the switch itself, as well as support libraries
+used by the applications themselves.
+
+The main components are:
+
+@table @i
+
+@item mini-rpc
+	A remote procedure call library used by most other programs
+        to exchange information among themselves or query the LM32
+        that is running on the FPGA.
+
+@item libswitchhw
+
+	A series of utility functions to access the switch itself.
+
+@item wrsw_hal
+	The main application program for the White Rabbit Switch
+        operation. The script installs the executable in @code{images/wr/bin}.
+
+@item wrsw_rtud
+	The daemon for the routing table unit, used for routing around
+        data frames. It is installed in
+        @code{images/wr/bin}.
+
+@end table
+
+The most important tools in @file{userspace/tools} are the following:
+
+@table @file
+
+@item load-virtex
+@itemx load-lm32
+
+	They load into the FPGA the gateware and the LM32 application.
+        They are used by the init scripts of the Linux system. The LM32
+        loader can also change variables in the loaded binary, and
+        read or write variables without stopping the running CPU.
+        This is limited to 32-bit integer variaables, though. See the
+        commit message for details.
+@c FIXME: document better load-lm32 for elf.
+
+@item mapper
+@itemx wmapper
+	The former reads from a file using @i{mmap}
+        (usually you run it on @i{/dev/mem}) and writes to @i{stdout}.
+        The latter read from @i{stdin} and writes using @i{mmap}.
+        They are classic tools distributed in the @i{Linux Device Drivers}
+        examples since 1998.
+
+@item com
+	The program is a simple program for talking with serial ports.
+
+@item wr_phytool
+	A tool to read and write PHY registers in the switch
+
+@item wr_mon
+	A simple monitor of White Rabbit status. It prints to @i{stdout}
+        using the standard escape sequences for color output. The
+        @t{-b} command line options removes color change (b/w).
+
+@item wr_date
+
+	The program can read or set the White Rabbit date. When setting,
+        using ``@t{wr_date set} @i{value}'' assigns an arbitrary date,
+        and ``@t{wr_date set host}'' passes the host time to White Rabbit.
+        If the file @t{/etc/leap-seconds.list} exists, it is used to
+        pass the TAI offset to the kernel, and to consider it in setting
+        White Rabbit time to the current TAI value.  The program is
+        meant to prime the White Rabbit counter at boot time, and is
+        run by @t{/etc/init.d/S70wr_date} -- this script uses NTP
+        to set host time as a first step, if @t{/wr/etc/wr_date.conf}
+        exists and includes a line of the form @t{ntpserver 192.168.16.1}.
+
+@item wrs_version
+	Print information about the SW & HW version of the WRS. Please
+        check the help message.	See also @ref{DIP Switch HW version}.
+
+@item shw_ver
+	A symbolic link to @t{wrs_version}, to be compatible with
+        older versions that used this tool name. The name is
+        inconsistent with anything else in the switch, so it is being
+        replaces.
+
+@item wrs_vlans
+	The tool allows to configure and unconfigure the VLAN settings
+        for each port and for the RTU daemon. The @t{--help} option
+        lists all configuration items of the tool.
+
+@item sdb-read
+	The tool, copied from the @t{fpga-config-space} project,
+	is documented in the next section,
+@c FIXME: document lm32-vuart rtu_stat spll_dbg_proxy wr_management
+@c FIXME: document wrs_pstats
+@end table
+
+Please note that to compile the applications and tools outside of the build
+scripts you need to specify both the kernel
+directory (@code{LINUX=}) and the cross-compiler to use
+(@code{CROSS_COMPILE=}).
+
+@c --------------------------------------------------------------------------
+@node sdb-read
+@subsection sdb-read
+
+[Note: this documentation section comes from the @t{ohwr} project
+called @t{fpga-config-space}.]
+
+
+The @i{sdb-read} program can be used to access an @i{sdbfs} image
+stored in a disk file or an FPGA area in physical memory.
+It works both as @i{ls} (to list the files
+included in the image) and as @i{cat} (to print to its own @i{stdout}
+one of the files that live in the binary image).
+
+The program can be used in three ways:
 
 @table @code
 
-@item CONFIG_BR2_CONFIGFILE
+@item sdb-read [options] <image-file>
 
-	This string option lists a file to be used as Buildroot (BR2)
-        configuration. A simple filename or relative pathname refers to the 
-        @t{configs/buildroot} directory; an absolute pathname is used
-        unchanged.
+	This invocation lists the contents of the image. With @code{-l}
+        the listing is @i{long}, including more information than the
+        file name.
 
-@c FIXME: remove noposix option
-@item CONFIG_PTP_NOPOSIX
-@itemx CONFIG_PPSI
+@item sdb-read [options] <image-file> <filename>
 
-	Users can select one of these options, to build with one or the other
-        flavour of @sc{wr-ptp}.  PPSi is the default choice, and
-        @i{ptp-noposix} is scheduled for removal in a later release.
+	When called with two arguments, the program prints to @i{stdout}
+        the content of the named file, extracted from the image. Please
+        note that if the file has been over-sized at creation time,
+        the whole allocated data area is printed to standard output.
 
-@item CONFIG_NTP_SERVER
+@item sdb-read [options] <image-file> <hex-vendor>:<hex-device>
 
-	The NTP server used to prime White Rabbit time, at system boot.
-        The option can be an IP address or a host name, if DNS is properly
-        configured.  The configuration value is stored in
-        @t{/wr/etc/wr_date.conf}. An empty string (default) disables
-        NTP access at boot time.
-
-@item CONFIG_DNS_SERVER
-@itemx CONFIG_DNS_DOMAIN
-
-	The DNS server (as an IP address) and default domain. The values
-        end up in @t{/etc/resolv.conf} of the generated filesystem.
-        By default the two strings are empty.
-
-@item CONFIG_REMOTE_SYSLOG_SERVER
-@itemx CONFIG_REMOTE_SYSLOG_UDP
-
-	Configuration for system log. The name (or IP address) of the
-        server is stored in @t{/etc/rsyslog.conf} of the generated
-        filesystem.  The UDP option, set by default, chooses UDP transmission;
-        if unset it selects TCP communication.
-
-@item CONFIG_SNMP_TRAPSINK_ADDRESS
-@itemx CONFIG_SNMP_TRAP2SINK_ADDRESS
-@itemx CONFIG_SNMP_RO_COMMUNITY
-@itemx CONFIG_SNMP_RW_COMMUNITY
-
-	Configuration for the @sc{snmp} agent. Addresses can be IP addresses
-        or names (if DNS is configured and working), they are unset by
-        default. Community values are strings and they default to
-        @t{public} and @t{private}.
-
-@item CONFIG_WRS_LOG_HAL
-@itemx CONFIG_WRS_LOG_RTU
-@itemx CONFIG_WRS_LOG_PTP
-
-	Logging options for the three main WRS processes. Each value
-        can be a pathname, to select logging to file (and @t{/dev/kmsg}
-        is a possible ``file'' target) or a @i{facility}.@i{level} string,
-        like @t{daemon.debug}, for syslog-based logging.
-        An empty strings selects no logging at all.  Please note that
-        unknown facility names will generate a runtime error on the switch.
-        All three strings default to ``@t{daemon.info}''.
-
-@item CONFIG_KEEP_ROOTFS
-
-	A boolean option for developers: if set the build script does
-        not delete the temporary copy of the generated filesystem and
-        reports its pathname in the build messages.
+	If the second argument is built as two hex numbers separated
+        by a colon, then the program uses them as vendor-id and device-id
+        to find the file.  If more than one file have the same identifiers,
+        the @i{first} of them is printed.
 
 @end table
+
+The following option flags are supported:
+
+@table @code
+
+@item -l
+
+	For listing, use @i{long} format. A @i{verbose} format will
+        be added later.
+
+@item -e <entrypoint>
+
+	Specify the offset of the magic number in the image file.
+
+@item -m <size>@@<addr>
+@itemx -m <addr>+<size>
+
+	Either form is used to specify a memory range. This is the
+        preferred way to read from a memory-mapped area, like an FPGA
+        memory space.  Please note that in general you should not
+        read a ``file'' in FPGA space, because this would mean read
+        all device registers. The form ``@t{<image-file> <filename>}''
+        is thus discouraged for in-memory SDB trees (i.e. where
+        @t{<image-file>} is @t{/dev/mem}).
+
+@item -r
+
+	Register the device with a @i{read} method instead of the @i{data}
+        pointer. In this way the
+        tool can be used to test the library with either access method.
+        If @i{mmap} fails on the file (e.g., it is a non-mappable device),
+        @i{read} is used automatically, irrespective of @t{-r}.
+
+@end table
+
+@c --------------------------------------------------------------------------
+@node VHDL Binaries
+@subsection VHDL and LM32 Binaries
+
+The gateware binaries that are needed to run the FPGA are added to the
+target filesystem by the @file{wrs_build_gateware} script. If the
+variable @code{WRS_HW_DIR} is set, the script uses it to retrieve the
+binaries you just compiled (but the script is not compiling gateware).
+
+If the variable is not set, the script extract a tar file downloaded
+from @code{ohwr.org} as part of the initial download step. The tar is
+currently called @code{wrs-gw-v4.0-20140807.tar.gz} and has been
+build from the @code{wr-switch-sw-v4.0} of the @code{wr-switch-hdl}
+repository.  Please note that the repository uses @i{git} submodules,
+so it depends on other @code{ohwr} repositories too, which in turn
+have not been tagged because the submodule mechanism ensures you'll
+get the exact version you need.
+
+The LM32 program is provided as a pre-compiled binary in
+@code{binaries/rt_cpu.bin}. The respective source code is the
+@i{wrpc-sw} package, because all WR installations run the same
+@sc{pll} software code and we chose to avoid duplication. Moreover,
+@i{wr-switch-sw} builds to not require an LM32 development environment.
+
+If you need to rebuild the @t{rt_cpu.bin} file from source, to make
+your own modifications, you can run @t{make wr_switch_defconfig}
+in @i{wrpc-sw} and then @t{make}. Please checkout the @code{wr-switch-sw-v4.0}
+tag to get the exact commit.
+
+@c --------------------------------------------------------------------------
+@node The Complete Filesystem
+@subsection The Complete Filesystem
+
+The final step in building the switch software is wrapping together
+the filesystem for the switch, also making the archives and the
+@i{jffs2} image file.
+
+The step of setting up the complete filesystem is performed by
+@file{build/scripts/@-wrs_build_wraprootfs}.  The script
+does not leave a directory tree on disk because that would require
+administrator privileges. We think it is best not to call @i{sudo} from
+within build scripts, to respect our users' security concerns.
+
+The script creates an archive for the whole filesystem,
+called @t{wrs-image.tar.gz}.  It is used by the installation
+procedure and it is ready to be unpacked for NFS-Root. It is currently 
+slightly less than 20MB of data.
+
+To make your NFS-root place, you can run
+the following command in a newly-created empty directory:
+
+@example
+   tar xzf $WRS_OUTPUT_DIR/images/wrs-image.tar.gz
+@end example
+
+The archives include a number of device special files in
+@i{dev}. The pre-created devices come from
+@i{userspace/devices.tar.gz}. Note that the buildroot output
+directory, @i{build/buildroot-2011.11/output/target} does not
+include any device (and no white-rabbit specific files), so it
+cannot be used as a root filesystem by itself.
+
+The content of the final filesystem comes from several sources:
+
+@itemize @bullet
+
+@item The @i{buildroot} output (from its own @file{output/target/}).
+@item The switch-specific overlay (@file{userspace/roofs_override}).
+@item The @file{images/wr} and @file{images/lib} trees,
+      filled but the build scripts.
+@item The file @file{userspace/devices.tar.gz}
+@item The file @file{$WRS_BASE_DIR/authorized_keys} if it exists.
+@item The @t{CONFIG_} items, used to pre-set configuration files.
+
+@end itemize
+
+The final step allows a predefined set of users to enter as system
+administrator without the need to type a password (which, anyways is
+empty by default).  It is useful if you @i{scp} files in and out of
+the switch. In the shipped binaries no user is authorized, but the
+root password is still the empty string.
 
 @c ##########################################################################
 @node Flashing of WRS-3
@@ -713,7 +1144,8 @@ The command to flash is as follows:
     /path/to/wr-switch-sw/build/flash-wrs -e wrs-firmware-<revision>.tar.gz 
 @end example
 
-You can also flash the image you have built using @ref{Building} by
+You can also flash the image you have built using the procedure
+described in @ref{Building WRS Software} by
 adding the tag @code{-b|--build}. To use this option you must call
 the script from the build directory, or define the @t{WRS_OUTPUT_DIR}
 environment variable.
@@ -974,673 +1406,6 @@ into @t{_}).
 To build, you can run Benoit's script
 @t{usb-loader/samba_applets/isp-project/build.sh}.
 
-@c ############################################################################
-@node Booting with Barebox
-@chapter Booting with Barebox
-
-After the initial installation, the boot loader offers an
-interactive  menu, where the first entry is selected by default.
-The menu is a simple ASCII interface on the serial port, and looks
-like the following:
-
-@example
-   Welcome on WRSv3 Boot Sequence
-       1: boot from nand (default)
-       2: boot from TFTP script
-       3: edit config
-       4: exit to shell
-       5: reboot
-@end example
-
-If flashing of the whole system was successful, the first entry will
-simply work, booting the switch without any network access.  Although
-a DCHP client runs by default after boot, everything will work even if
-you leave the Ethernet port unconnected or you have no DHCP server
-when the switch is operational.
-
-If booting from NAND memory fails (for example because you erased the
-kernel or incurred in other mishaps during development)
-the menu is re-entered automatically.
-
-The other entries are provided to help developers.
-
-@c ==========================================================================
-@node Description of the menus
-@section Description of the menus
-
-The individual menu items perform the following actions:
-@table @code
-
-@item 1: boot from nand (default)
-
-	This entry is selected by default after 10 seconds of
-        inactivity on the serial port. It boots the system from its
-        own NAND memory. This ``just works''.
-
-@item 2: boot from TFTP script
-
-	This entry tries to download a @i{barebox} script from your TFTP
-        server; if successful it then executes it. Developers are
-        expected to customize the script to support any kind of environment,
-        from customized kernel command-line to NFS-Root environments.
-        See @ref{Using wrboot} for details.
-
-@item 3: edit config
-
-	This fires the editor on the configuration file, and
-        saves it to flash when the user is done. This is useful to
-        change the MAC address of the ARM network port. Please note
-        that saving save the whole @file{/env} file tree, so you
-        can also change the init scripts interactively and have them
-        stored persistently on the flash.
-
-@item 4: exit to shell
-
-	By choosing this entry, the user can access the shell-like
-        interface of @i{barebox}. The entry is aimed at developers
-        who know what they are going to type.
-
-@item 5: reboot
-
-	This entry is useful to see and log the exact boot messages.
-        Since the serial-USB converter is @i{switch-powered} and not
-        @i{USB-powered}, you won't be able to hook at the serial port
-        soon enough after power-on.  Actually, the menu timeout is
-        left to 10 seconds and not less for the very same reason.
-
-@end table
-
-@c ==========================================================================
-@node Using wrboot
-@section Using wrboot
-
-If you use the @i{wrboot} script option, you can for example run
-an NFS-Root system or do whatever customization and testing you want.
-
-The complete filesystem after a successful build is called
-@t{images/wrs-image.tar.gz}, and is not included in the release
-firmware file, because an installed switch runs an @i{initramfs}
-system with a separate @t{/usr} partition in flash memory.
-
-@sp 1
-
-The provided procedure tries to load the script from TFTP under three
-different names, from most specific to most generic, and the first
-match will be used.  The first name is MAC-address-based, the
-second is IP-address-based and the third is just @file{wrboot}.
-
-This is for example what I see in my logs when only providing @file{wrboot}:
-
-@smallexample
-   dhcpd: DHCPOFFER on 192.168.16.224 to 02:0b:ad:c0:ff:ee via eth0
-   atftpd[5623]: Serving wrboot-02:0B:AD:C0:FF:EE to 192.168.16.224:1029
-   atftpd[5623]: Serving 192.168.16.224/wrboot to 192.168.16.224:1030
-   atftpd[5623]: Serving wrboot to 192.168.16.224:1031
-   mountd[21014]: NFS mount of /tftpboot/192.168.16.9 attempted from 192.168.16.9
-@end smallexample
-
-We chose to place the IP-address-based name in a subdirectory because
-this is the default place where the NFS-Root filesystem is mounted
-from, as shown in the log excerpt above. So you'll have your
-@file{wrboot} in the same place.
-
-@b{Note:} recent @i{barebox} versions require scripts to include a
-leading @t{#!/bin/sh}. Examples in @i{wr-switch-sw} did not include the
-line until April 2014 included.
-
-The @file{binaries} subdirectory of this package includes two known-working
-wrboot scripts as examples; one if for use with static IP addresses and
-the other relies on DHCP. If you want to override the default NFS-Root
-directory mounted from the server (which is @code{/tftpboot/<ip-address>})
-you can add something like the following line to your @file{wrboot} script:
-
-@example
-    bootargs="$bootargs nfsroot=/opt/root/wrs-3"
-@end example
-
-In order to create an NFS root directory, you should uncompress
-@t{wrs-image.tar.gz} that is created at build time.  If you use
-a released @t{wrs-firmware.tar}, however, you'll have no overall
-filesystem for the switch, and you should rebuild it from two
-parts.  This is how to create your NFS filesystem (please adapt
-for your local pathnames):
-
-@example
-   FW=/tftpboot/wrs-firmware.tar
-   DIR=/opt/root/wrs-3
-
-   mkdir -p $DIR
-   tar xOf $FW wrs-initramfs.gz | zcat | \
-       (cd $DIR && sudo cpio --make-directories --extract)
-   tar xOf $FW wrs-usr.tar.gz | sudo tar xzf - -C $DIR/usr
-@end example
-
-The above commands extract to @i{stdout} the two parts of the @sc{wrs}
-filesystem, to then uncompress them to the proper directories.  The
-first @i{tar} pipe is less friendly because the @i{initramfs} is a
-compressed @i{cpio} archive, and @i{cpio} as a command lacks automatic
-decompression and the @t{-C} (change directory) option.
-
-@c ##########################################################################
-@node The Individual Build Steps
-@chapter The Individual Build Steps
-
-This chapter details the individual build steps, for the users that want
-to customize their switch in any way. 
-
-@c ==========================================================================
-@node The Compiler
-@section The Compiler
-
-The predefined compiler used here is the one built by @i{buildroot}.
-The default configuration selects this choice.  If you pre-set a
-different @code{CROSS_COMPILE} prefix in your environment, your own
-choice will be used by modifying the @i{buildroot} configuration file.
-Note, however, that not all cross-compilers will work (@i{buildroot}
-wants one that has been configured with @code{--sysroot} and it is
-quite unlikely yours has been).
-
-In practice, you may want to set @code{CROSS_COMPILE} when you compile
-the boot loader and kernel by themselves, and avoid it when compiling
-the complete package.
-
-@c ==========================================================================
-@node Buildroot
-@section Buildroot
-
-The distribution being used here is @i{buildroot}. It is the first
-step being built, because it creates the cross-compiler it will use. This
-compiler is later used to compile all other software for the White
-Rabbit Switch.
-
-The configuration for @i{buildroot} comes from
-@code{configs/buildroot/wrs_release_br2_config}. The configuration
-is then changed only if you pre-set your own @code{CROSS_COMPILE}
-variable.  A different configuration can be chosen in the Kconfig
-interface, by running ``@t{make menuconfig}'' or equivalent, in the
-top-level source directory.
-
-@c The following can be shown in a set of commands instead of this hard
-@c to read explanation.
-
-If you want to change the configuration, you can do so after the first
-build iteration: change directory to @code{build/buildroot-2011.11}
-and run @code{make menuconfig} (this the Buildroot configuration,
-not the one of wr-switch-sw). After making your choices, copy back
-the file @code{.config} to @t{configs/buildroot} in this package,
-so you can select it by running @t{make menuconfig} in wr-switch-sw.
-
-Then, please run @t{configs/buildroot/RUNME} (without arguments)
-in order to remove your local pathnames in the configuration file;
-the file without local pathnames can be committed and published for
-other people to use.
-
-You can also set @code{WRS_BUILDROOT_CONFIG} to the full pathname of
-your configuration file of choice (this used to be the only way
-to pass a custom configuration file). The file must be a copy of the
-@code{.config} after the @code{make menuconfig} step described above,
-within buildroot.
-Note that if the variable is not pointing to a regular file it is
-ignored with a simple warning -- rather than stopping the build procedure.
-
-@c ==========================================================================
-@node The IPL
-@section The IPL
-
-The version of @i{at91bootstrap} being used in the switch as
-@i{Initial Program Loader} is version 3.3, download from  @code{timesys.com/}
-(the full URL is in @i{build/download-info}.
-The patches we applied are in the directory @i{patches/at91boot/v3.3},
-and we are piggy-backing on the Atmel
-evaluation board without even changing the board name):
-
-@example
-   0001-printf-added-files-from-pptp-unchanged.patch
-   0002-printf-fixes-and-addition-to-makefile.patch
-   0003-build-Add-gitversion-to-binary-and-a-script-to-compi.patch
-   0004-board-9g45ek-fix-ddr-config-for-WRS-V3.patch
-   0005-boot-disable-watchdog-asap-added-flip_leds-count-run.patch
-   0006-boot-Correct-crash-due-to-an-Atmel-bug-during-boot-w.patch
-   0007-gpios-Correct-FPGA-LED-problems-and-add-CPU-LEDs-FAN.patch
-@end example
-
-The script @i{wrs_build_at91boot} uncompresses, patches and builds, leaving
-@code{images/@-at91bootstrap.bin} after it is over.  This file is
-the one to be loaded in the hardware.
-
-If you build using a local @i{git} repository, we suggest to use
-@code{git am --whitespace=nowarn} because we have a number of
-white space errors, and we apologize for that.
-
-@b{Warning}: with most distributions, this compilation step will print
-a scary message about memory corruption. The message is reporting a bug in
-the configuration program which has no actual effects and can be ignored.
-Maybe we will switch to another version in the future that doesn't show
-the bug, or to the newer @i{barebox} that obsoletes @i{at91boot}.
-
-@c ==========================================================================
-@node The Boot Loader
-@section The Boot Loader
-
-The switch uses @i{barebox} as a boot loader. We are running version
-2014-04, with a few local patches and the chosen configuration
-file. Note that we are piggy-backing on the Ronetix PM9G45 board, out
-of laziness.
-
-The patches are part of this package in @i{patches/barebox/v2014.04/} and
-the set is made up of the following ones:
-
-@smallexample
-   0001-sam945-include-mtd-nand.h-in-device-file.patch
-   0002-arm-change-prompt-for-pm9263-wrs-piggy-backs-on-that.patch
-   0003-nand-wrs-our-nand-is-16-bit-connected-fix-accordingl.patch
-   0004-gpio-add-function-to-check-them.patch
-   0005-wrs-on-pm9g45-change-nand-setup.patch
-   0006-wrs-on-pm9g45-add-dataflash-initialization.patch
-   0007-barebox-add-MAC-addresses-to-environment.patch
-   0008-wrs-on-pm9g45-force-memory-to-64MB.patch
-   0009-pm9g45-init-for-wrs-move-environment-for-the-UBI-mov.patch
-@end smallexample
-
-If you build using a local @i{git} repository, we suggest to use
-@code{git am --whitespace=nowarn} because we have a number of
-white space errors, and we apologize for that.
-
-The @i{barebox} boot loader is organized as a small Unix-like
-environment, and its own configuration and scripts live in a small
-filesystem.  To ease modification of such configuration and boot steps
-the build script copies over the configuration instead of patching it
-in the sources.  You can thus edit the files you find in
-@file{patches/barebox/v2014.04/env} and rebuild your customized bootloader.
-The script that is executed at boot time is @file{env/bin/init} and as
-you see it calls the other ones.  The menus included in the shipped
-configuration are described in @ref{Booting with Barebox}.
-
-Building @i{barebox} relies on a @i{Kconfig} setup, and the
-configuration file we use is
-@file{patches/barebox/v2014.04/@-wrs3_defconfig}. Again, this is copied over and
-not patched in (see the simple @file{build/scripts/@-wrs_build_barebox}
-for details).
-
-@c FIXME: describe how to change the barebox configuration file
-
-After patching and copying over the files, the following commands
-build the boot loader using the
-cross-compiler built by @i{buildroot}. If you run these
-by hand you can use a different compiler (as shown):
-
-@example
-   export CROSS_COMPILE=/opt/arm-2010q1/bin/arm-none-eabi-
-   export ARCH=arm
-   make wrs3_defconfig
-   make
-   cp barebox.bin images/
-@end example
-
-To use the same compiler the scripts use, you need this setting (which is split
-in two lines with a local variable to fit the page with in documentation):
-
-@smallexample
-   BR=${WRS_OUTPUT_DIR}/build/buildroot-2011.11
-   export CROSS_COMPILE=${BR}/output/host/usr/bin/arm-linux-
-@end smallexample
-
-@c ==========================================================================
-@node The Linux Kernel
-@section The Linux Kernel
-
-The kernel is currently version 2.6.39, compiled from an uncompressed
-tar file (so not within a @i{git} repository).  The upstream
-vanilla kernel is downloaded, then
-local patches are applied (they come from a @i{git}
-repository, but they are currently applied with a simple @i{patch}
-command).
-
-The relevant patches are available in @i{patches/kernel/v2.6.39},
-and are currently the following ones:
-
-@example
-   0001-wrs3-changes-to-g45ek.patch
-   0002-initramfs-stop-after-one-cpio-archive.patch
-   0003-at91-NR_IRQS-increase-by-64-to-fit-custom-muxes.patch
-   0004-irq-export-symbols-for-external-irq-controller.patch
-   0005-Change-Vbus-pin.patch
-   0006-arm-fiq-allow-modules-to-exploit-the-fiq-mechanism.patch
-   0007-mtd-nand-sam9g45-can-hwecc-like-9263.patch
-   0008-wrs3-use-correct-nand-partitioning.patch
-   0009-at91-udc-force-full-speed.patch
-   0010-sam9m10g45ek-for-wrs-new-partitioning.patch
-   0011-sam9m10g45ek-for-wrs-final-partitions-for-V4.1.patch
-   0012-sam9m10g45ek-for-wrs-more-relaxed-nand-timings.patch
-@end example
-
-The configuration we use to build the kernel is not a patch but a plain
-@code{.config} file, in the same directory as the patches, so you
-can change it easily, if needed. As an alternative,
-you can also set @code{WRS_KERNEL_CONFIG} to the full pathname of
-your configuration file of choice. The file must be a copy of the
-@code{.config} found in the main kernel directory,
-(for example the one left after the @code{make menuconfig} step).
-Note that if the @code{WRS_KERNEL_CONFIG}
-variable is not pointing to a regular file it is
-ignored with a simple warning, without stopping the build procedure.
-
-The build scripts copy both @i{zImage} and all compiled kernel
-modules to the @i{images/} directory of the build place. This currently
-includes modules 
-
-@c ==========================================================================
-@node Kernel Modules
-@section Kernel Modules
-
-In the next step the scripts compile modules that are part of this
-package.  The step depends on the kernel being available in the
-build directory. The modules are then copied into the
-@file{images/wr/lib/modules/} subdirectory of the main build directory.
-
-Please note that modules (and later user-space) are compiled in-place;
-ie. not in the output directory.  The disadvantage is that your repository
-becomes dirty with output and intermediate files. The advantage is that
-any modification you make to the code is already in the repository
-for your to commit.
-
-Currently, the package includes the following modules:
-
-@itemize @bullet
-@item @i{wr_vic.ko}: the interrupt controller for in-FPGA devices.
-@item @i{wr-nic.ko}: the network ``card'' driver for WR ports.
-@item @i{wr_rtu.ko}: the routing-table interface between the
-      switching core and the associated user-space daemon.
-@item @i{wr_pstats.ko}: exports per-port statistics to /proc/sys.
-@item @i{at91_softpwm.ko}: a driver that generates a PWM signal for the fan.
-@end itemize
-
-@c ==========================================================================
-@node PTPd
-@section PTPd
-
-Configuration supports two different PTP engines: either @t{ptp-noposix}
-(default at this point in time) or PPSi. The latter is
-the default choice, and will later be the only choice, as we phase
-out the former implementation.
-
-Both implementations are hosted in their own respective different
-repository; both are registered as  @i{git} submodules in this package.
-The repositories are hosted  on @code{ohwr}, like others.
-
-A plain @i{make} in either  @i{userspace/ptp-noposix} or
-@t{userspace/ppsi} will likely fail, because of
-missing environment variables. 
-
-Additionally,  the script installs headers for the HAL
-and @i{libptpnetif}.
-
-@c ==========================================================================
-@node User Space Applications
-@section User Space Applications
-
-The filesystem of the switch includes some user-space applications
-and tools.  Some of the @i{tools} are actually used by the init
-scripts and some are just utilities for the developer.
-
-The subdirectories in @file{userspace} include the various applications
-needed for the operation of the switch itself, as well as support libraries
-used by the applications themselves.
-
-The main components are:
-
-@table @i
-
-@item mini-rpc
-	A remote procedure call library used by most other programs
-        to exchange information among themselves or query the LM32
-        that is running on the FPGA.
-
-@item libswitchhw
-
-	A series of utility functions to access the switch itself.
-
-@item wrsw_hal
-	The main application program for the White Rabbit Switch
-        operation. The script installs the executable in @code{images/wr/bin}.
-
-@item wrsw_rtud
-	The daemon for the routing table unit, used for routing around
-        data frames. It is installed in
-        @code{images/wr/bin}.
-
-@end table
-
-The most important tools in @file{userspace/tools} are the following:
-
-@table @file
-
-@item load-virtex
-@itemx load-lm32
-
-	They load into the FPGA the gateware and the LM32 application.
-        They are used by the init scripts of the Linux system. The LM32
-        loader can also change variables in the loaded binary, and
-        read or write variables without stopping the running CPU.
-        This is limited to 32-bit integer variaables, though. See the
-        commit message for details.
-@c FIXME: document better load-lm32 for elf.
-
-@item mapper
-@itemx wmapper
-	The former reads from a file using @i{mmap}
-        (usually you run it on @i{/dev/mem}) and writes to @i{stdout}.
-        The latter read from @i{stdin} and writes using @i{mmap}.
-        They are classic tools distributed in the @i{Linux Device Drivers}
-        examples since 1998.
-
-@item com
-	The program is a simple program for talking with serial ports.
-
-@item wr_phytool
-	A tool to read and write PHY registers in the switch
-
-@item wr_mon
-	A simple monitor of White Rabbit status. It prints to @i{stdout}
-        using the standard escape sequences for color output. The
-        @t{-b} command line options removes color change (b/w).
-
-@item wr_date
-
-	The program can read or set the White Rabbit date. When setting,
-        using ``@t{wr_date set} @i{value}'' assigns an arbitrary date,
-        and ``@t{wr_date set host}'' passes the host time to White Rabbit.
-        If the file @t{/etc/leap-seconds.list} exists, it is used to
-        pass the TAI offset to the kernel, and to consider it in setting
-        White Rabbit time to the current TAI value.  The program is
-        meant to prime the White Rabbit counter at boot time, and is
-        run by @t{/etc/init.d/S70wr_date} -- this script uses NTP
-        to set host time as a first step, if @t{/wr/etc/wr_date.conf}
-        exists and includes a line of the form @t{ntpserver 192.168.16.1}.
-
-@item wrs_version
-	Print information about the SW & HW version of the WRS. Please
-        check the help message.	See also @ref{DIP Switch HW version}.
-
-@item shw_ver
-	A symbolic link to @t{wrs_version}, to be compatible with
-        older versions that used this tool name. The name is
-        inconsistent with anything else in the switch, so it is being
-        replaces.
-
-@item wrs_vlans
-	The tool allows to configure and unconfigure the VLAN settings
-        for each port and for the RTU daemon. The @t{--help} option
-        lists all configuration items of the tool.
-
-@item sdb-read
-	The tool, copied from the @t{fpga-config-space} project,
-	is documented in the next section,
-@c FIXME: document lm32-vuart rtu_stat spll_dbg_proxy wr_management
-@c FIXME: document wrs_pstats
-@end table
-
-Please note that to compile the applications and tools outside of the build
-scripts you need to specify both the kernel
-directory (@code{LINUX=}) and the cross-compiler to use
-(@code{CROSS_COMPILE=}).
-
-@c ==========================================================================
-@node sdb-read
-@section sdb-read
-
-[Note: this documentation section comes from the @t{ohwr} project
-called @t{fpga-config-space}.]
-
-
-The @i{sdb-read} program can be used to access an @i{sdbfs} image
-stored in a disk file or an FPGA area in physical memory.
-It works both as @i{ls} (to list the files
-included in the image) and as @i{cat} (to print to its own @i{stdout}
-one of the files that live in the binary image).
-
-The program can be used in three ways:
-
-@table @code
-
-@item sdb-read [options] <image-file>
-
-	This invocation lists the contents of the image. With @code{-l}
-        the listing is @i{long}, including more information than the
-        file name.
-
-@item sdb-read [options] <image-file> <filename>
-
-	When called with two arguments, the program prints to @i{stdout}
-        the content of the named file, extracted from the image. Please
-        note that if the file has been over-sized at creation time,
-        the whole allocated data area is printed to standard output.
-
-@item sdb-read [options] <image-file> <hex-vendor>:<hex-device>
-
-	If the second argument is built as two hex numbers separated
-        by a colon, then the program uses them as vendor-id and device-id
-        to find the file.  If more than one file have the same identifiers,
-        the @i{first} of them is printed.
-
-@end table
-
-The following option flags are supported:
-
-@table @code
-
-@item -l
-
-	For listing, use @i{long} format. A @i{verbose} format will
-        be added later.
-
-@item -e <entrypoint>
-
-	Specify the offset of the magic number in the image file.
-
-@item -m <size>@@<addr>
-@itemx -m <addr>+<size>
-
-	Either form is used to specify a memory range. This is the
-        preferred way to read from a memory-mapped area, like an FPGA
-        memory space.  Please note that in general you should not
-        read a ``file'' in FPGA space, because this would mean read
-        all device registers. The form ``@t{<image-file> <filename>}''
-        is thus discouraged for in-memory SDB trees (i.e. where
-        @t{<image-file>} is @t{/dev/mem}).
-
-@item -r
-
-	Register the device with a @i{read} method instead of the @i{data}
-        pointer. In this way the
-        tool can be used to test the library with either access method.
-        If @i{mmap} fails on the file (e.g., it is a non-mappable device),
-        @i{read} is used automatically, irrespective of @t{-r}.
-
-@end table
-
-@c ==========================================================================
-@node VHDL Binaries
-@section VHDL and LM32 Binaries
-
-The gateware binaries that are needed to run the FPGA are added to the
-target filesystem by the @file{wrs_build_gateware} script. If the
-variable @code{WRS_HW_DIR} is set, the script uses it to retrieve the
-binaries you just compiled (but the script is not compiling gateware).
-
-If the variable is not set, the script extract a tar file downloaded
-from @code{ohwr.org} as part of the initial download step. The tar is
-currently called @code{wrs-gw-v4.0-20140807.tar.gz} and has been
-build from the @code{wr-switch-sw-v4.0} of the @code{wr-switch-hdl}
-repository.  Please note that the repository uses @i{git} submodules,
-so it depends on other @code{ohwr} repositories too, which in turn
-have not been tagged because the submodule mechanism ensures you'll
-get the exact version you need.
-
-The LM32 program is provided as a pre-compiled binary in
-@code{binaries/rt_cpu.bin}. The respective source code is the
-@i{wrpc-sw} package, because all WR installations run the same
-@sc{pll} software code and we chose to avoid duplication. Moreover,
-@i{wr-switch-sw} builds to not require an LM32 development environment.
-
-If you need to rebuild the @t{rt_cpu.bin} file from source, to make
-your own modifications, you can run @t{make wr_switch_defconfig}
-in @i{wrpc-sw} and then @t{make}. Please checkout the @code{wr-switch-sw-v4.0}
-tag to get the exact commit.
-
-@c ==========================================================================
-@node The Complete Filesystem
-@section The Complete Filesystem
-
-The final step in building the switch software is wrapping together
-the filesystem for the switch, also making the archives and the
-@i{jffs2} image file.
-
-The step of setting up the complete filesystem is performed by
-@file{build/scripts/@-wrs_build_wraprootfs}.  The script
-does not leave a directory tree on disk because that would require
-administrator privileges. We think it is best not to call @i{sudo} from
-within build scripts, to respect our users' security concerns.
-
-The script creates an archive for the whole filesystem,
-called @t{wrs-image.tar.gz}.  It is used by the installation
-procedure and it is ready to be unpacked for NFS-Root. It is currently 
-slightly less than 20MB of data.
-
-To make your NFS-root place, you can run
-the following command in a newly-created empty directory:
-
-@example
-   tar xzf $WRS_OUTPUT_DIR/images/wrs-image.tar.gz
-@end example
-
-The archives include a number of device special files in
-@i{dev}. The pre-created devices come from
-@i{userspace/devices.tar.gz}. Note that the buildroot output
-directory, @i{build/buildroot-2011.11/output/target} does not
-include any device (and no white-rabbit specific files), so it
-cannot be used as a root filesystem by itself.
-
-The content of the final filesystem comes from several sources:
-
-@itemize @bullet
-
-@item The @i{buildroot} output (from its own @file{output/target/}).
-@item The switch-specific overlay (@file{userspace/roofs_override}).
-@item The @file{images/wr} and @file{images/lib} trees,
-      filled but the build scripts.
-@item The file @file{userspace/devices.tar.gz}
-@item The file @file{$WRS_BASE_DIR/authorized_keys} if it exists.
-@item The @t{CONFIG_} items, used to pre-set configuration files.
-
-@end itemize
-
-The final step allows a predefined set of users to enter as system
-administrator without the need to type a password (which, anyways is
-empty by default).  It is useful if you @i{scp} files in and out of
-the switch. In the shipped binaries no user is authorized, but the
-root password is still the empty string.
-
 @c ##########################################################################
 @node Code layout in a production switch
 @chapter Code layout in a production switch
@@ -1741,10 +1506,10 @@ distributed in @t{userspace/rootfs_override/}.
 
 @c ##########################################################################
 @node SDB and Hardware Information
-@appendix SDB and Hardware Information
+@chapter SDB and Hardware Information
 
-This appendix is for manufacturers, and  users who bought a
-switch with version 4.0 or earlier of the software, but are upgrading.
+This chapter describes how hardware information is stored and retrieved
+in version 4.1 and later. 
 
 There are a number of information items that should be known to the
 software, like the MAC addresses, the serial number of the device, and
@@ -1916,150 +1681,10 @@ After boot, @i{sdb} can be accessed using the @i{sdb-read} command
 code accesses the files directly, by linking the @i{libsdb} code base
 -- again, from @t{fpga-config-space}.
 
-@c ##########################################################################
-@node SNMP Support
-@appendix SNMP Support
-
-The White Rabbit Switch supports SNMP, although some more work is needed
-in this respect.  The default read-only ``community'' name is @t{private},
-but you can change it from the @t{Kconfig} interface before building.
-The default read-write community is @t{private}.
-
-The switch supports all the standard information through the @i{net-snmp}
-installation.  We'll remove some of the items in a later release, because
-nobody wants to check running processes or disk space usage.
-
-The additional, switch-specific information are in the
-``enterprise.96.100 subtree, where @t{96} is CERN and @t{100} is White
-Rabbit. The associated MIB is in the directory @t{userspace/snmpd},
-where related source files live as well.
-
-@c ==========================================================================
-@node The WRS MIB
-@section The WRS MIB
-
-This a summary of the available tables and scalars:
-
-@table @code
-
-@item 96.100.1
-
-	This is a simple scalar as a test. It is an integer value
-        that is incremented each time you access it. It can be used to
-        test basic functionality.
-
-@item 96.100.2
-
-	Port statistics, as an SNMP table.  The first column is the
-        name of each counter, and further columns represent interfaces
-        @t{wr0} through @t{wr17}. Each counters is shown in a table line,
-        as the number and names of the counters may change in the future.
-
-@item 96.100.3
-
-	White Rabbit specific information.  Subid @t{.1} is the global
-        items, and subid @t{.2} is a table with per-port items.
-
-@item 96.100.4
-
-	Hardware, gateware and software versions, plus serial
-        number and other hardware information.
-
-@item 96.100.5
-
-	The internal White Rabbit time, as a number and a string.
-
-@end table
-
-@b{Note:} due to a buglet of mine, there is an extra item at
-the end of each table (@t{96.100.2} and @t{96.100.3.2}. It makes no
-harm, so its removal is not high priority.
-
-@c @b{Note:} due to a bug in management of 64-bit values in @i{net-snmp},
-@c we are using a bad work-around in the code, that may cause wrong values
-@c to be returned by other versions of the agent, where this bug is fixed.
-
-the easiest way to retrieve the values is using @i{snmpwalk}, telling
-it to access our MIB file in order to use symbolic names. Assuming
-@t{wrs} is the DNS name for your White Rabbit Switch and @t{WR_SWITCH_SW}
-is an environment variable pointing to this package:
-
-@smallexample
-   snmpwalk -c public -v 2c wrs \
-       -m +${WR_SWITCH_SW}/userspace/snmpd/WR-SWITCH-MIB.txt \
-       1.3.6.1.4.1.96.100
-@end smallexample
-
-Using SNMP version 1 instead of 2c is fine as well, but you won't receive
-the 64-bit values for slave/tracking information.
-
-The output you will get back is something like the following. Clearly
-the software commit in this example is my own development version while writing
-this section:
-
-@smallexample
-WR-SWITCH-MIB::wrsScalar.0 = INTEGER: 2
-WR-SWITCH-MIB::pstatsDescr.1 = STRING: TX Underrun
-WR-SWITCH-MIB::pstatsDescr.2 = STRING: RX Overrun
-WR-SWITCH-MIB::pstatsDescr.3 = STRING: RX Invalid Code
-[...]
-WR-SWITCH-MIB::pstatsDescr.38 = STRING: Forwarded
-WR-SWITCH-MIB::pstatsDescr.39 = STRING: TRU Resp Valid
-WR-SWITCH-MIB::pstatsWR0.1 = Counter32: 0
-[...]
-WR-SWITCH-MIB::pstatsWR17.38 = Counter32: 50819
-WR-SWITCH-MIB::pstatsWR17.39 = Counter32: 0
-WR-SWITCH-MIB::pstatsEntry.20 = Counter32: 0
-WR-SWITCH-MIB::ppsiGrandmaterID.0 = Hex-STRING: 00 00 00 00 00 00 00 00
-WR-SWITCH-MIB::ppsiOwnID.0 = Hex-STRING: 00 00 00 00 00 00 00 00
-WR-SWITCH-MIB::ppsiMode.0 = INTEGER: unknown(0)
-WR-SWITCH-MIB::ppsiServoState.0 = STRING:
-WR-SWITCH-MIB::ppsiPhaseTracking.0 = INTEGER: not-tracking(0)
-[...]
-WR-SWITCH-MIB::portLink.14 = INTEGER: down(0)
-WR-SWITCH-MIB::portLink.15 = INTEGER: up(1)
-WR-SWITCH-MIB::portLink.16 = INTEGER: down(0)
-[...]
-WR-SWITCH-MIB::portPeer.18 = Hex-STRING: FF FF FF FF FF FF FF FF
-WR-SWITCH-MIB::ppsiPort.5 = Hex-STRING: FF FF FF FF FF FF FF FF
-WR-SWITCH-MIB::wrsVersionSw.0 = STRING: v4.0-rc1-42-gcec7805+
-WR-SWITCH-MIB::wrsVersionGw1.0 = STRING: 7cce708
-WR-SWITCH-MIB::wrsVersionGw2.0 = STRING: 5118070
-WR-SWITCH-MIB::wrsVersionGw3.0 = STRING: 7efeb16
-WR-SWITCH-MIB::wrsVersionHw1.0 = STRING: 3.30
-WR-SWITCH-MIB::wrsVersionHw2.0 = STRING: LX240T
-WR-SWITCH-MIB::wrsManufacturer.0 = STRING: Seven Solutions
-WR-SWITCH-MIB::wrsSerialNumber.0 = STRING: 12345
-WR-SWITCH-MIB::wrsScbVersion.0 = STRING: 3.3
-WR-SWITCH-MIB::wrsDateTAI.0 = Counter64: 1406623390
-WR-SWITCH-MIB::wrsDateString.0 = STRING: 2014-07-29-08:43:10
-@end smallexample
-
-@c ==========================================================================
-@node show-pstats
-@section show-pstats
-
-To visualize all port statistics in a single window, this package
-includes the simple tool @t{userspace/snmpd/show-pstats}.  It is
-a Tk script, so you need to install @t{tk8.5} or any other version.
-
-The script receives one or more host names (or IP addresses) on the command
-line. They must refer to a switch (or switches) or the program fails like this:
-
-@smallexample
-   laptopo% ./show-pstats morgana
-   Error in snmpwalk for host morgana
-   No log handling enabled - using stderr logging
-   .1.3.6.1.4.1.96.100.2.1.: Unknown Object Identifier (Sub-id not found: enterprises -> )
-@end smallexample
-
-If everything goes well, you'll get a window like the following one:
-
-@center @image{show-pstats, 10cm,, show-pstats}
 
 @c ##########################################################################
 @node Schematics are Available
-@appendix Schematics are Available
+@chapter Schematics are Available
 
 The switch schematics for all PCB versions (3.x of the
 SCB as well as both 3.1, 3.2 and 3.3 of the backplane)
