@@ -48,4 +48,6 @@ for i in $(seq 1 10); do
 done
 eval $WR_HOME/bin/ppsi  $LOGPIPE_PTP \&
 
+# ensure we receive UDP PTP frames, since ppsi supports UDP too.
+(sleep 4; $WR_HOME/bin/rtu_stat add 01:00:5e:00:01:81 18 0) &
 
