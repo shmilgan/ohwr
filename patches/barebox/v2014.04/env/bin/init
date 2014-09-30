@@ -42,9 +42,15 @@ preboot_timeout="0"
 autoboot_timeout="5"
 autoboot_select="1"
 
+# Ethernet addresses are taken from sdb in hwinfo partition
+addpart /dev/dataflash0 0x840@0x94800(hwinfo)
+sdb set /dev/dataflash0.hwinfo             eth0.ethaddr
+sdb set /dev/dataflash0.hwinfo wr0_ethaddr wr0.ethaddr
+export wr0_ethaddr
+
 ### Override default value using /env/config (empty by default)
 . /env/config
-echo "Starting up barebox [wrs3] (MAC=$eth0.ethaddr)"
+echo "Starting up barebox [wrs3] (MAC=$eth0.ethaddr WR_MAC=$wr0_ethaddr)"
 
 
 ### Generic setup
