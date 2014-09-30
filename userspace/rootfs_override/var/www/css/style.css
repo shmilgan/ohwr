@@ -5,11 +5,11 @@
  *
  *
  * Button:
- *   
+ *
  *   Light:    #3A8AAF
  *   Dark:     #002350
  *
- * 
+ *
  *
  * Copyright (C) 2014 UGR (www.ugr.es)
  * Copyright (C) 2014 7S (www.sevensols.com)
@@ -45,8 +45,8 @@ h1, h2, h3, h4, h5, h6, p, ul, ol, li, form, input, textarea {
 }
 .header, .header-img {
 	width: 800px;
-	float: left;	
-	
+	float: left;
+
 }
 
 .header-ports {
@@ -214,8 +214,8 @@ float: left;
 	text-align: center;
 }
 .footer-link {
-	color:#ffffff; 
-	text-decoration:none; 
+	color:#ffffff;
+	text-decoration:none;
 }
 
 a, a:visited {
@@ -383,16 +383,21 @@ form input.last {
 	padding-bottom:10px;
 }
 
-#ptp #daemon input.btn {
-	height: 22px;
-	width: 80px;
-}
 
-#management input.btn, #load input.btn {
+#ptp #daemon input.btn, #management input.btn, #load input.btn {
 width: 100px;
 height: 22px;
 }
 
+#logo {
+margin: 10px 0px;
+}
 #bottommsg{
 	margin-top:300px
+}
+
+.center {
+margin-left:auto;
+margin-right:auto;
+text-align:center;
 }

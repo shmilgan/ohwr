@@ -78,7 +78,8 @@
 			</tr>
 -->
 		</table>
-		<INPUT align="right" type="submit" value="Update & Relaunch" class="btn last">
+		<hr>
+		<p align=right><INPUT align="right" type="submit" value="Update & Relaunch" class="btn last"></p>
 		</FORM>
 		
 		<div id="bottommsg">

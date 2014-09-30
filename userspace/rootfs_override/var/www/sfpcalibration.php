@@ -82,12 +82,11 @@
 					
 				}
 			}
-			
+			echo '</table>';
 			echo '<input type="hidden" name="newconf" value="newconf">';
 			echo '<input type="hidden" name="newnumber" value="'.$_POST['number'].'">';
-			echo '<input type="submit" value="Create new file & Reboot" class="btn">';
+			echo '<input type="submit" value="Create new file & Reboot" class="btn last">';
 			echo '</form>';
-			echo '</table>';
 			echo '</div>';
 			
 		}

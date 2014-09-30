@@ -48,12 +48,13 @@
 		
 
 	?>
-	<br><br><br><br><br><br>
-	<hr>
-	<FORM align="right" method="post">
-	<input type="hidden" name="hal" value="hal">
-	<INPUT type="submit" value="Restart PPSi" class="btn">
-    </FORM>
+	<div>
+		<hr>
+		<FORM align="right" method="post">
+		<input type="hidden" name="hal" value="hal">
+		<INPUT type="submit" value="Restart PPSi" class="btn">
+		</FORM>
+    </div>
     
     <?php
 		if (!empty($_POST["hal"])){

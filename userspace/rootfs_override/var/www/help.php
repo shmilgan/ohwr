@@ -4,7 +4,7 @@
 <title>Help Menu</title>
 <link href="css/help.css" rel="stylesheet" type="text/css">
 </head>
-<body  bgcolor="#FFFF99">
+<body  bgcolor="#FFD100">
 <h1><center>Help</center></h1>	
 <hr>
 	

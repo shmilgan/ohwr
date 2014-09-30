@@ -1058,10 +1058,13 @@ function wrs_display_help($help_id, $name){
 		
 		$msg = shell_exec("/wr/bin/wrs_version -g");
 		$msg = explode("\n", $msg);
+		$message .= "<ul>";
+
 		for($i=0; $i<5; $i++){
 			
-			$message .= "<p>".$msg[$i]."<br></p>";
+			$message .= "<li>".$msg[$i]."</li>";
 		}
+		$message .= "</ul>";
 		
 	}  else if (!strcmp($help_id, "file")){
 		$msg = shell_exec("cat ".$GLOBALS['etcdir'].$name);
