@@ -1,0 +1,40 @@
+#!/bin/sh
+
+start() {
+    # Check the configuration file: if there's no target, don't run the thing.
+    if ! grep -q '^##.*remote-host' /etc/rsyslog.conf; then
+	echo -n "Starting rsyslog: "
+	/usr/sbin/rsyslogd
+	echo "OK"
+    else
+	echo "Not starting rsyslog: no target host selected"
+    fi
+}
+
+stop() {
+    if pidof rsyslogd > /dev/null; then
+	echo -n "Stopping rsyslog: "
+	start-stop-daemon -K -q -p /var/log/rsyslog.pid
+	echo "OK"
+    fi
+}
+restart() {
+    stop
+    start
+}
+
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart|reload)
+  	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+	;;
+esac
