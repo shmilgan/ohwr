@@ -29,7 +29,6 @@ CFLAGS =  -O2 -g -Wall \
 		-I../wrsw_rtud \
 		-I../mini-rpc \
 		-I../libsdb \
-		-I../ptp-noposix/PTPWRd \
 		-I../include 
 
 ifdef WRS_TOOLS_DEBUG

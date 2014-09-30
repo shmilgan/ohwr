@@ -161,14 +161,6 @@ The following configuration options are available
         @t{configs/buildroot} directory; an absolute pathname is used
         unchanged.
 
-@c FIXME: remove noposix option
-@item CONFIG_PTP_NOPOSIX
-@itemx CONFIG_PPSI
-
-	Users can select one of these options, to build with one or the other
-        flavour of @sc{wr-ptp}.  PPSi is the default choice, and
-        @i{ptp-noposix} is scheduled for removal in a later release.
-
 @item CONFIG_NTP_SERVER
 
 	The NTP server used to prime White Rabbit time, at system boot.

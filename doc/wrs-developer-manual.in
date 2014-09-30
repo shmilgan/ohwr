@@ -755,16 +755,14 @@ Currently, the package includes the following modules:
 @node PTPd
 @subsection PTPd
 
-Configuration supports two different PTP engines: either @t{ptp-noposix}
-(default at this point in time) or PPSi. The latter is
-the default choice, and will later be the only choice, as we phase
-out the former implementation.
+Configuration used to support two different PTP engines, but now
+we only support PPSi.
 
-Both implementations are hosted in their own respective different
-repository; both are registered as  @i{git} submodules in this package.
-The repositories are hosted  on @code{ohwr}, like others.
+The code is hosted in its own
+repository; it is a @i{git} submodules in this package.
+The repository is hosted on @code{ohwr}, like others.
 
-A plain @i{make} in either  @i{userspace/ptp-noposix} or
+A plain @i{make} in
 @t{userspace/ppsi} will likely fail, because of
 missing environment variables. 
 

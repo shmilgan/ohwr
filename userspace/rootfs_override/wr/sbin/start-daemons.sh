@@ -29,11 +29,6 @@ export WR_HOME="/wr"
 eval $WR_HOME/bin/wrsw_hal -c $WR_HOME/etc/wrsw_hal.conf $LOGPIPE_HAL \&
 eval $WR_HOME/bin/wrsw_rtud                              $LOGPIPE_RTU \&
 
-# run ptp-noposix or ppsi, whatever is installed
-if [ -x $WR_HOME/bin/ptpd ]; then
-    eval $WR_HOME/bin/ptpd -A -c  $LOGPIPE_PTP \&
-    exit 0
-fi
 if [ ! -x $WR_HOME/bin/ppsi ]; then
     echo "No WR-PTP daemon found" >&2
     exit 1
@@ -48,4 +43,6 @@ for i in $(seq 1 10); do
 done
 eval $WR_HOME/bin/ppsi  $LOGPIPE_PTP \&
 
+# ensure we receive UDP PTP frames, since ppsi supports UDP too.
+(sleep 4; $WR_HOME/bin/rtu_stat add 01:00:5e:00:01:81 18 0) &
 
