@@ -1648,11 +1648,12 @@ You can access the hardware information from @i{barebox} using the new
 @i{sdbinfo}, @i{sdbread} and @i{sdbset} commands. The following
 example shows an example session, using the file built in
 @ref{Creating the Hwinfo File} and featuring a simplified @i{barebox}
-prompt of ``@t{bb> }'':
+prompt of ``@t{bb> }''. Please note that most of this is already
+in the boot scripts, as we now extract the mac addresses from sdb.
 
 @smallexample
   bb> addpart /dev/dataflash0 0x840@@0x94800(hwinfo)
-  bb> sdbinfo /dev/dataflash0.hwinfo
+  bb> sdb ls /dev/dataflash0.hwinfo
   46696c6544617461:2e202020 @ 00000000-0000083f .
   46696c6544617461:7363625f @ 00000240-00000243 scb_version
   46696c6544617461:7772302e @ 00000220-00000231 wr0.ethaddr
@@ -1660,16 +1661,16 @@ prompt of ``@t{bb> }'':
   46696c6544617461:68775f69 @ 00000420-0000083f hw_info
   46696c6544617461:65746830 @ 00000200-00000211 eth0.ethaddr
 
-  bb> sdbread /dev/dataflash0.hwinfo manufacturer
+  bb> sdb cat /dev/dataflash0.hwinfo manufacturer
   Seven Solutions
-  bb> sdbread /dev/dataflash0.hwinfo hw_info
+  bb> sdb cat /dev/dataflash0.hwinfo hw_info
   fpga: LX240T
   scb_serial: 12345
-  bb> sdbset /dev/dataflash0.hwinfo wraddr wr0.ethaddr
+  bb> sdb set /dev/dataflash0.hwinfo wraddr wr0.ethaddr
   bb> echo $wraddr
   22:33:44:55:66:77
 
-  bb> sdbread /dev/dataflash0.hwinfo eth0.ethaddr
+  bb> sdb set /dev/dataflash0.hwinfo eth0.ethaddr
   00:02:04:06:08:0a
 @end smallexample
 
