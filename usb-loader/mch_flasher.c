@@ -40,10 +40,15 @@
 #define MBOX_MEM_BUF_OFFSET 0x14
 
 #define MBOX_MEM_ERASE_TYPE 0xc
+#define MBOX_MEM_ERASE_START 0x10
+#define MBOX_MEM_ERASE_END   0x14
 
 
 #define INTERNAL_SRAM_BUF 		0x300000
 #define SDRAM_START 			0x70000000
+
+#define DF_HWINFO_START			0x000000094800
+#define DF_HWINFO_END			0x000000095040
 
 
 #define PORT_SPEED 			115200
@@ -455,14 +460,36 @@ void mem_check(int type)
 	if((samba_read(INTERNAL_SRAM_BUF + MBOX_STATUS, 4, 10000000)) != APPLET_SUCCESS) die("invalid response from applet status");
 }
 
-void mem_full_erase(int type)
+void mem_erase(int type, int scrub)
 {
-	fprintf(stderr,"Erasing %s...",memName[type]);
+	const char *action=(scrub)?"Scrubing":"Erasing";
+	fprintf(stderr,"%s %s...",action,memName[type]);
 
-	mbox_write(INTERNAL_SRAM_BUF, MBOX_COMMAND, APPLET_CMD_FULL_ERASE);
-	samba_run(INTERNAL_SRAM_BUF, 0);
-
-	fprintf(stderr,"\rErasing %s > DONE\n\n",memName[type]);
+	if(type==MEMTYPE_DF)
+	{
+		mbox_write(INTERNAL_SRAM_BUF, MBOX_COMMAND, APPLET_CMD_FULL_ERASE);
+		mbox_write(INTERNAL_SRAM_BUF, MBOX_MEM_ERASE_TYPE,0);
+		mbox_write(INTERNAL_SRAM_BUF, MBOX_MEM_ERASE_START,0);
+		if(scrub)
+			mbox_write(INTERNAL_SRAM_BUF, MBOX_MEM_ERASE_END,0);
+		else
+			mbox_write(INTERNAL_SRAM_BUF, MBOX_MEM_ERASE_END,DF_HWINFO_START);
+		samba_run(INTERNAL_SRAM_BUF, 0);
+//		fprint("\rDF: 2nd part...");
+//		mbox_write(INTERNAL_SRAM_BUF, MBOX_COMMAND, APPLET_CMD_FULL_ERASE);
+//		mbox_write(INTERNAL_SRAM_BUF, MBOX_MEM_ERASE_TYPE,0);
+//		mbox_write(INTERNAL_SRAM_BUF, MBOX_MEM_ERASE_START,DF_HWINFO_END);
+//		mbox_write(INTERNAL_SRAM_BUF, MBOX_MEM_ERASE_END,0);
+//		samba_run(INTERNAL_SRAM_BUF, 0);
+	}
+	else
+	{
+		//Full NF Erase
+		mbox_write(INTERNAL_SRAM_BUF, MBOX_COMMAND, APPLET_CMD_FULL_ERASE);
+		if(scrub) mbox_write(INTERNAL_SRAM_BUF, MBOX_MEM_ERASE_TYPE,0x0000EA11);
+		samba_run(INTERNAL_SRAM_BUF, 0);
+	}
+	fprintf(stderr,"\r%s %s > DONE\n\n",action,memName[type]);
 }
 
 
@@ -499,18 +526,6 @@ int mem_write(int type, uint32_t offset, uint32_t buf_addr, uint32_t size)
 	return 0;
 }
 
-void nand_scrub()
-{
-	fprintf(stderr,"Scrubing NAND...");
-
-	mbox_write(INTERNAL_SRAM_BUF, MBOX_COMMAND, APPLET_CMD_FULL_ERASE);
-	mbox_write(INTERNAL_SRAM_BUF, MBOX_MEM_ERASE_TYPE,0x0000EA11);
-	samba_run(INTERNAL_SRAM_BUF, 0);
-
-	fprintf(stderr,"Done\n\n");
-}
-
-
 
 uint32_t getOffset(const char *str)
 {
@@ -537,7 +552,7 @@ void show_help(const char* serial_port)
 	printf("\t-m \t Select the memory type: ddr, nf, df\n");
 	printf("\t-e \t\t erase the memory\n");
 	printf("\t-c \t\t check the memory (not available for df)\n");
-	printf("\t-s \t\t scrub the memory (only available for nf)\n");
+	printf("\t-s \t\t scrub the memory (WARNING: full erase)\n");
 	printf("\t-r \t\t addr run the image at address addr\n");
 	printf("\t-p SERIAL_PORT\t By default it is: -p %s\n",serial_port);
 	printf("\t-h \t\t Show this little help\n");
@@ -646,12 +661,10 @@ int main(int argc, char *argv[])
 		memflash_init(type, board_rev);
 
 	//Run the action
-	if(erase)
-		mem_full_erase(type);
+	if((erase || scrub) && type!=MEMTYPE_DDR)
+		mem_erase(type,scrub);
 	if(check)
 		mem_check(type);
-	if(scrub && type==MEMTYPE_NAND)
-		nand_scrub();
 	if(nFile>0)
 		mem_program(type,nFile,(const sndfile*)&filearray);
 

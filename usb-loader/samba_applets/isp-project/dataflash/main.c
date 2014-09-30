@@ -159,7 +159,15 @@ struct _Mailbox {
         } outputRead;
 
         /// Input arguments for the Full Erase command.
-        // NONE
+        struct {
+            /// eraseType: unused for DF.
+            unsigned int eraseType;
+        	/// Memory start; first position to be erase.
+           unsigned int memoryStart;
+           /// Memory end: last position to be erased.
+           unsigned int memoryEnd;
+
+       } inputFullErase;
 
         /// Output arguments for the Full Erase command.
         // NONE
@@ -577,10 +585,12 @@ int main(int argc, char **argv)
     // ----------------------------------------------------------
     else if (pMailbox->command == APPLET_CMD_FULL_ERASE) {
 
-        TRACE_INFO("FULL ERASE command:\n\r");
-
-        memoryOffset = 0;
-        while (memoryOffset < (pageSize * numPages)) {
+        if(pMailbox->argument.inputFullErase.memoryEnd==0 || pMailbox->argument.inputFullErase.memoryEnd>(pageSize * numPages))
+        	pMailbox->argument.inputFullErase.memoryEnd=(pageSize * numPages);
+        memoryOffset = pMailbox->argument.inputFullErase.memoryStart;
+        TRACE_INFO("FULL ERASE command: (0x%x => 0x%x)\n\r",
+        		memoryOffset,pMailbox->argument.inputFullErase.memoryEnd);
+        while (memoryOffset < pMailbox->argument.inputFullErase.memoryEnd) {
 			DBGU_PutChar('.');
             // Erase the page
             AT45D_Erase(&at45, memoryOffset);
