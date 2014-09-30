@@ -131,7 +131,7 @@ if [ $? -ne 0 ]; then
     dd conv=notrunc if=$XTRA_TMP of=$SDB_TMP bs=1056 seek=1
     exit 1
 fi
-rm $XXTRA_TMP
+rm $XTRA_TMP
 
 # echo the name, to be used by the manufacturer build procedure.
 echo $SDB_TMP
