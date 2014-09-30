@@ -12,16 +12,19 @@ start() {
 	if [ ! -d /etc/dropbear ] ; then
 		mkdir -p /etc/dropbear
 	fi
+	mkdir -p /usr/etc/dropbear
 	# Check for the Dropbear RSA key
 	if [ ! -f /etc/dropbear/dropbear_rsa_host_key ] ; then
 		echo -n "generating rsa key... "
 		/usr/bin/dropbearkey -t rsa -f /etc/dropbear/dropbear_rsa_host_key > /dev/null 2>&1
+		cp /etc/dropbear/dropbear_rsa_host_key /usr/etc/dropbear
 	fi
 
 	# Check for the Dropbear DSS key
 	if [ ! -f /etc/dropbear/dropbear_dss_host_key ] ; then
 		echo -n "generating dsa key... "
 		/usr/bin/dropbearkey -t dss -f /etc/dropbear/dropbear_dss_host_key > /dev/null 2>&1
+		cp /etc/dropbear/dropbear_dss_host_key /usr/etc/dropbear
 	fi
 	umask 077
 	start-stop-daemon -S -q -p /var/run/dropbear.pid --exec /usr/sbin/dropbear

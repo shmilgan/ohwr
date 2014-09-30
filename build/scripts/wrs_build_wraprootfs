@@ -90,7 +90,7 @@ if [ -f $WRS_BASE_DIR/authorized_keys ]; then
 fi
 chmod g-w $TMPFS/root $TMPFS/root/.ssh
 chown -R root:root $TMPFS/root
-chown -R root:root $TMPFS/etc/dropbear
+mkdir -p $TMPFS/etc/dropbear; chown -R root:root $TMPFS/etc/dropbear
 chmod a+rx $TMPFS
 
 ##### now move stuff to usr (we need usr to be in flash, / remains initramfs)
