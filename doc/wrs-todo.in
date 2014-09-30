@@ -260,22 +260,12 @@ items.
 
 @itemize @bullet
 
-@item We should remove @i{ptp-noposix}.  Keeping it around brings a number
-of issues; mainly it prevents changes in WR libraries.  That's because
-any change and cleanup must now be verified against both PPSi and
-@i{ptp-noposix}.  But the latter is not being used routinely, so those
-changes require extra effort and remain not very well tested anyways.
-
 @item PPSi support for @t{arch-wrs} has some strange use for the timeouts,
 and some of the code is more complex than it should.  I need to audit
 it and make it shine.  This applies to both the WR servo and the
 @t{arch-wrs} code. For the latter, I'm already confident with it,
 after fixing the lost-frame problem. Still, some time must be devoted
 to this.
-
-@item We should drive the WR PLL when being slave to a non-WR master.
-The performance of wr-switch as a slave of another PTP host is now
-unacceptable, because we only jump time without adjusting frequency.
 
 @item PPSi should be able to rescan its configuration file. This is needed
 to allow management actors to change the configuration and see it
