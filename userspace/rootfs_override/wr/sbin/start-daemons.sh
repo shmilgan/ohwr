@@ -29,11 +29,6 @@ export WR_HOME="/wr"
 eval $WR_HOME/bin/wrsw_hal -c $WR_HOME/etc/wrsw_hal.conf $LOGPIPE_HAL \&
 eval $WR_HOME/bin/wrsw_rtud                              $LOGPIPE_RTU \&
 
-# run ptp-noposix or ppsi, whatever is installed
-if [ -x $WR_HOME/bin/ptpd ]; then
-    eval $WR_HOME/bin/ptpd -A -c  $LOGPIPE_PTP \&
-    exit 0
-fi
 if [ ! -x $WR_HOME/bin/ppsi ]; then
     echo "No WR-PTP daemon found" >&2
     exit 1

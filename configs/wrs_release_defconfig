@@ -2,7 +2,6 @@
 # Automatically generated make config: don't edit
 #
 CONFIG_BR2_CONFIGFILE="wrs_release_br2_config"
-# CONFIG_PTP_NOPOSIX is not set
 CONFIG_PPSI=y
 
 #
