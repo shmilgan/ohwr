@@ -1,4 +1,4 @@
-From a15f036b4e47dcbc8e9f4b739605975658ddb61f Mon Sep 17 00:00:00 2001
+From 382270adecef6b4950ecaa459c50ec725c2985b3 Mon Sep 17 00:00:00 2001
 From: Alessandro Rubini <rubini@gnudd.com>
 Date: Sat, 21 Jun 2014 08:48:04 +0200
 Subject: [PATCH 11/12] sam9m10g45ek (for wrs): final partitions for V4.1
@@ -9,15 +9,16 @@ protect against bad blocks) and one big partition fro UBI volumes.
 Real stuff is then split in UBI volumes. Please see documentation
 (in a later commit) for details.
 
-Also, this adds the read-only hwinfo in dataflash, for V4.1 stuff.
+And hwinfo is not read-only, as we need to change it sometimes.
+Though rarely.
 
 Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
 ---
- arch/arm/mach-at91/board-sam9m10g45ek.c |   19 ++++++++-----------
- 1 file changed, 8 insertions(+), 11 deletions(-)
+ arch/arm/mach-at91/board-sam9m10g45ek.c |   18 +++++++-----------
+ 1 files changed, 7 insertions(+), 11 deletions(-)
 
 diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
-index afc6418..552c209 100644
+index afc6418..6ad8462 100644
 --- a/arch/arm/mach-at91/board-sam9m10g45ek.c
 +++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
 @@ -26,6 +26,7 @@
@@ -28,20 +29,19 @@ index afc6418..552c209 100644
  
  #include <mach/hardware.h>
  #include <video/atmel_lcdc.h>
-@@ -106,6 +107,12 @@ static struct mtd_partition wrs_df_parts[] = {
+@@ -106,6 +107,11 @@ static struct mtd_partition wrs_df_parts[] = {
  		.size	= 0x8400,
  	},
  	{
 +		.name	= "hwinfo",
 +		.offset	= MTDPART_OFS_APPEND,
 +		.size	= 0x840,
-+		.mask_flags = MTD_WRITEABLE,
 +	},
 +	{
  		.name	= "Available-dataflash",
  		.offset	= MTDPART_OFS_APPEND,
  		.size	= MTDPART_SIZ_FULL,
-@@ -167,18 +174,8 @@ static struct mtd_partition __initdata ek_nand_partition[] = {
+@@ -167,18 +173,8 @@ static struct mtd_partition __initdata ek_nand_partition[] = {
  		.size	= SZ_1M,
  	},
  	{
@@ -62,5 +62,5 @@ index afc6418..552c209 100644
  	},
  };
 -- 
-1.7.10.4
+1.7.7.2
 
