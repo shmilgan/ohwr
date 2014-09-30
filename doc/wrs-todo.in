@@ -81,26 +81,10 @@ are split into topics and randomly listed within each of them.
 @node Documentation
 @chapter Documentation
 
-@itemize @bullet
-
-@item @t{wrs-build} grew to not only cover building. It has some of
-the internals, which should be split off to somewhere else.
-
-@item We need a document about internals, but it would somehow conflict
-with the 7S user manual. We need to agree carefully about what lives
-where.  I started one, some time ago, which is not published anywhere;
-it still needs serious work but everything depends on how we split
-the material.
-
-@item The user manual is not part of the software package, and I'm not
-sure whether it should be or not -- it covers hardware as well.  But I
-really think a user manual is mainly about how to use the thing, so
-its place is the software repository. Other people's opinion differ.
-
-@item Documentation about the web interface (by 7S) must find a proper
-place in the overall design, too.
-
-@end itemize
+Documentation is mostly in place. Some information is still missing
+and some things are to be moved around, but the layout is there, as
+of the ``doc-shakeup'' merge commit (that doesn't include this wrs-todo
+update.
 
 
 @c ##########################################################################
