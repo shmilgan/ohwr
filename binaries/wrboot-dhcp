@@ -2,6 +2,7 @@
 
 bootargs="quiet console=ttyS0,115200 panic=10 mem=64m"
 bootargs="$bootargs root=nfs ip=dhcp"
+bootargs="$bootargs wr_nic.macaddr=$wr0_ethaddr"
 
 # if we didn't do it already, get our dhcp-based address in barebox
 if [ "x$eth0.ipaddr" = "x" ]; then
