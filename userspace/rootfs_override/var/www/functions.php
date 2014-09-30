@@ -18,6 +18,7 @@ $interfacesfile = "/usr/etc/network/interfaces";
  * Displays the current status of each enpoint.
  * 
  * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
+ * @author Benoit Rat <benoit<AT>sevensols.com>
  *
  * Displays the current status of each endpoint as wr_mon tool 
  * in the swich does. It retrieves the information from wr_mon
@@ -132,33 +133,33 @@ function wrs_main_info(){
 		}
 	}
 	
-	echo "<table border='1' align='center' class='altrowstabledash' id='alternatecolor'>";
-	echo '<tr class="sub"><td> <b><center>Switch Info </center></b></td></tr>';
+	echo "<table class='altrowstable firstcol'  id='alternatecolor'  width='80%'>";
+	echo '<tr><th>Switch Info</th></tr>';
 
 	$str = shell_exec("uname -n");
 	if(strcmp($str,"(none)")) shell_exec("/bin/busybox hostname -F /etc/hostname");
-	echo '<tr><th align=center><b><font color="darkblue">Hostname</font></b></th><th><center>'; $str = shell_exec("uname -n"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">Switch Mode</font></b> </th><th><center>'; $str = check_switch_mode(); echo $str; echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">IP Address</font></b> </th><th><center>'; $ip = shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'"); echo $ip;  
-			echo '(<a href="network.php">'; echo wrs_interface_setup(); echo '</a>)'; echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">HW Address</font></b> </th><th><center>'; $mac = shell_exec("ifconfig eth0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'"); echo $mac; echo '</center></th></tr>';
-	//echo '<tr><th> <b>OS Release:</b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; echo '</center></th></tr>';
-	//echo '<tr><th> <b>OS name:</b> </th><th><center>'; $str = shell_exec("uname -s"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">Kernel Version</font></b> </th><th><center>'; $str = shell_exec("uname -r"); echo $str; $str = shell_exec("uname -v"); echo $str; echo '</center></th></tr>';
-	
-	echo '<tr><th  align=center> <b><font color="darkblue">Firmware Version</font></b> </th><th><center> '; $str = shell_exec("/wr/bin/wrs_version  |  awk '{print $4}'");
-	echo '<a href="showfile.php?help_id=gateware&name=GateWare Info" onClick="showPopup(this.href);return(false);"</a>';
-	echo $str; echo '</center></th></tr>';
-	
-	echo '<tr><th  align=center> <b><font color="darkblue">PCB Version</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/wrs_version -p"); echo $str;  echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">FPGA</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/wrs_version -f"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">Compiling Date</font></b> </th><th><center>'; $str = shell_exec("/wr/bin/wrs_version -c"); echo $str; echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">White-Rabbit Date</font></b></th><th><center>'; $str = shell_exec("export TZ=".$_SESSION['utc']." /wr/bin/wr_date -n get"); echo str_replace("\n","<br>",$str); echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">PPSi</font></b> </th><th><center>';  echo wrs_check_ptp_status() ? '[<A HREF="ptp.php">on</A>]' : '[<A HREF="ptp.php">off</A>]'; echo '</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">Net-SNMP Server</font></b> </th><th><center>';  echo check_snmp_status() ? '[on] ' : '[off] '; echo '&nbsp;&nbsp;ver. '; echo shell_exec("snmpd -v | grep version | awk '{print $3}'");
-			echo '( port '; $str = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf | grep agent | cut -d: -f3 | awk '{print $1}'"); echo $str; echo ')'; 	echo /*" <a href='help.php?help_id=snmp' onClick='showPopup(this.href);return(false);'> [OIDs]</a>*/"</center></th></tr>";
-	echo '<tr><th  align=center> <b><font color="darkblue">NTP Server</font></b> </th><th><center> <A HREF="management.php">';  $str = check_ntp_server(); echo $str; echo '</A> '.$_SESSION['utc'].'</center></th></tr>';
-	echo '<tr><th  align=center> <b><font color="darkblue">Max. Filesize Upload</font> </b></th><th><center>'; echo shell_exec("cat ".$GLOBALS['phpinifile']." | grep upload_max_filesize | awk '{print $3}'"); echo '</center></th></tr>';
+	echo '<tr><td>Hostname</td><td>'; $str = shell_exec("uname -n"); echo $str; echo '</td></tr>';
+	echo '<tr><td>Switch Mode</td><td>'; $str = check_switch_mode(); echo $str; echo '</td></tr>';
+	echo '<tr><td>IP Address</td><td>'; $ip = shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'"); echo $ip;
+			echo '(<a href="network.php">'; echo wrs_interface_setup(); echo '</a>)'; echo '</td></tr>';
+	echo '<tr><td>HW Address</td><td>'; $mac = shell_exec("ifconfig eth0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'"); echo $mac; echo '</td></tr>';
+	//echo '<tr><td>OS Release:</td><td>'; $str = shell_exec("uname -r"); echo $str; echo '</td></tr>';
+	//echo '<tr><td>OS name:</td><td>'; $str = shell_exec("uname -s"); echo $str; echo '</td></tr>';
+	echo '<tr><td>Kernel Version</td><td>'; $str = shell_exec("uname -r"); echo $str; $str = shell_exec("uname -v"); echo $str; echo '</td></tr>';
+
+	echo '<tr><td>Firmware Version</td><td> '; $str = shell_exec("/wr/bin/wrs_version  |  awk '{print $4}'");
+	echo '<a href="showfile.php?help_id=gateware&name=GateWare Info" onClick="showPopup(this.href);return(false);">';
+	echo $str; echo '</a></td></tr>';
+
+	echo '<tr><td>PCB Version</td><td>'; $str = shell_exec("/wr/bin/wrs_version -p"); echo $str;  echo '</td></tr>';
+	echo '<tr><td>FPGA</td><td>'; $str = shell_exec("/wr/bin/wrs_version -f"); echo $str; echo '</td></tr>';
+	echo '<tr><td>Compiling Date</td><td>'; $str = shell_exec("/wr/bin/wrs_version -c"); echo $str; echo '</td></tr>';
+	echo '<tr><td>White-Rabbit Date</td><td>'; $str = shell_exec("export TZ=".$_SESSION['utc']." /wr/bin/wr_date -n get"); echo str_replace("\n","<br>",$str); echo '</td></tr>';
+	echo '<tr><td>PPSi</td><td>';  echo wrs_check_ptp_status() ? '[<a href="ptp.php">on</A>]' : '[<a href="ptp.php">off</A>]'; echo '</td></tr>';
+	echo '<tr><td>Net-SNMP Server</td><td>';  echo check_snmp_status() ? '[on] ' : '[off] '; echo '&nbsp;&nbsp;ver. '; echo shell_exec("snmpd -v | grep version | awk '{print $3}'");
+			echo '( port '; $str = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf | grep agent | cut -d: -f3 | awk '{print $1}'"); echo $str; echo ')'; 	echo /*" <a href='help.php?help_id=snmp' onClick='showPopup(this.href);return(false);'> [OIDs]</a>*/"</td></tr>";
+	echo '<tr><td>NTP Server</td><td> <a href="management.php">';  $str = check_ntp_server(); echo $str; echo '</A> '.$_SESSION['utc'].'</td></tr>';
+	echo '<tr><td>Max. Filesize Upload</td><td>'; echo shell_exec("cat ".$GLOBALS['phpinifile']." | grep upload_max_filesize | awk '{print $3}'"); echo '</td></tr>';
 	echo '</table>';
 	
 	

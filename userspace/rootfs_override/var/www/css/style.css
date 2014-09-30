@@ -296,15 +296,43 @@ table.altrowstabledash td {
 	border-style: solid;
 	border-color: #a9c6c9;
 }
-table tr.sub{
+
+table .oddrowcolor{
+	background-color: #d4e3e5;
+}
+table .evenrowcolor{
+	background-color: #c3dde0;
+}
+
+table.firstcol {
+	text-align:center;
+	margin: 0 auto;
+}
+
+table.firstcol th {
+	padding: 3px;
 	color:white;
 	background-color:#3A8AAF;
 }
-.oddrowcolor{
-	background-color: #d4e3e5;
+
+table.firstcol tr td:first-of-type {
+		font-weight:bold;
 }
-.evenrowcolor{
-	background-color: #c3dde0;
+
+table.firstcol tr input {
+	text-align:center;
+}
+
+#network table.firstcol td:first-of-type, #epcalib table.firstcol td:first-of-type
+{
+	text-align:left;
+}
+
+#management table td.first
+{
+	width:150px;
+	text-align:left;
+	font-weight:bold;
 }
 
 .tableheader {

@@ -50,26 +50,26 @@
 			// Starting the form (timing + ports)
 			echo '<form method="post">';
 
-			echo "<table border='1' align='left' class='altrowstable' id='alternatecolor'>";
+			echo "<table border='1' align='left' class='altrowstable firstcol' id='alternatecolor'>";
 			
 			
 			// Timing values:
 			echo '<tr class="sub"><th>Switch Timing Values</th></tr>';
-			echo '<tr><th>PPS Width: </th><th><INPUT type="text" value = "100000" name="pps" > </th></tr>';
-			echo '<tr><th>Use NMEA: </th><th><INPUT type="text" value = "1" name="nmea" > </th></tr>';
-			echo '<tr><th>Switch Mode: [Master/GrandMaster] </th><th><INPUT type="text" value = "GrandMaster" name="switchmode" > </th></tr>';
+			echo '<tr><td>PPS Width: </td><td><INPUT type="text" value = "100000" name="pps" > </td></tr>';
+			echo '<tr><td>Use NMEA: </td><td><INPUT type="text" value = "1" name="nmea" > </td></tr>';
+			echo '<tr><td>Switch Mode: [Master/GrandMaster] </td><td><INPUT type="text" value = "GrandMaster" name="switchmode" > </td></tr>';
 			
 			// port values:
 			for($i=0; $i<18; $i++){
 
 				echo '<tr class="empty"><th></th></tr>';
 				echo '<tr class="sub"><th>Endpoint '.($i+1).'</th></tr>';
-				if($i<4){ echo '<tr><th>Rx min:</th><th><INPUT type="text" value = "160000" name="rx'.$i.'" > </th></tr>';
-				}else{ echo '<tr><th>Rx min:</th><th><INPUT type="text" value = "161200" name="rx'.$i.'" > </th></tr>';}
-				echo '<tr><th>Tx min:</th><th><INPUT type="text" value = "0" name="tx'.$i.'" > </th></tr>';
-				echo '<tr><th>Mac address:</th><th><INPUT type="text" value = "auto" name="mac'.$i.'" > </th></tr>';
-				if($i==0){ echo '<tr><th>Endpoint mode: [wr_slave/wr_master] </th><th><INPUT type="text" value = "wr_slave" name="mode'.$i.'" > </th></tr>';
-				}else{  echo '<tr><th>Endpoint mode: [wr_slave/wr_master] </th><th><INPUT type="text" value = "wr_master" name="mode'.$i.'" > </th></tr>';}
+				if($i<4){ echo '<tr><td>Rx min:</td><td><INPUT type="text" value = "160000" name="rx'.$i.'" > </td></tr>';
+				}else{ echo '<tr><td>Rx min:</td><td><INPUT type="text" value = "161200" name="rx'.$i.'" > </td></tr>';}
+				echo '<tr><td>Tx min:</td><td><INPUT type="text" value = "0" name="tx'.$i.'" > </td></tr>';
+				echo '<tr><td>Mac address:</td><td><INPUT type="text" value = "auto" name="mac'.$i.'" > </td></tr>';
+				if($i==0){ echo '<tr><td>Endpoint mode: [wr_slave/wr_master] </td><td><INPUT type="text" value = "wr_slave" name="mode'.$i.'" > </td></tr>';
+				}else{  echo '<tr><td>Endpoint mode: [wr_slave/wr_master] </td><td><INPUT type="text" value = "wr_master" name="mode'.$i.'" > </td></tr>';}
 				
 				
 			}

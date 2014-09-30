@@ -31,8 +31,8 @@
 		$vlans = shell_exec("cat ".$tmp_vlan_file." |  sed -n '/ /s/ \+/ /gp'");
 		$vlans = explode("\n", $vlans);
 		
-		echo '<table align=center border="1" class="altrowstable" id="alternatecolor" width="100%">';
-		echo '<tr align=center><th><font color="blue">Vlan ID</font></th><th><font color="blue">FID</font></th><th><font color="blue">Ports</font></th><th><font color="blue">Drop?</font></th><th><font color="blue">Priority</font></th><th><font color="blue">Action</font></th></tr>';
+		echo '<table class="altrowstable firstcol" id="alternatecolor" width="100%">';
+		echo '<tr class="sub" align=center><th>Vlan ID</th><th>FID</th><th>Ports</th><th>Drop?</th><th>Priority</th><th>Action</th></tr>';
 		$counter = 0;
 		foreach($vlans as $line){
 			$counter++;
@@ -41,9 +41,9 @@
 				$line = explode(" ", $line);
 				if(strcmp($line[3],"0x")){
 					
-					echo '<tr align=center><th bgcolor="'.$vlancolor[$line[1]].'">VLAN '.$line[1].'</th><th>'.$line[2].'</th><th>'.parse_mask2ports($line[3]).'</th><th>'.$line[4].'</th><th>'.$line[5].'</th><th><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></th></tr>';
+					echo '<tr align=center><td bgcolor="'.$vlancolor[$line[1]].'">VLAN '.$line[1].'</td><td>'.$line[2].'</td><td>'.parse_mask2ports($line[3]).'</td><td>'.$line[4].'</td><td>'.$line[5].'</td><td><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></td></tr>';
 				}else{
-					echo '<tr align=center><th>'.$line[1].'</th><th>'.$line[2].'</th><th>'.parse_mask2ports($line[3].$line[4]).'</th><th>'.$line[5].'</th><th>'.$line[6].'</th><th><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></th></tr>';
+					echo '<tr align=center><td>'.$line[1].'</td><td>'.$line[2].'</td><td>'.parse_mask2ports($line[3].$line[4]).'</td><td>'.$line[5].'</td><td>'.$line[6].'</td><td><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></td></tr>';
 				}
 				
 			}
@@ -52,16 +52,16 @@
 		//Form for a new one:
 		echo '<tr align=center>
 			<FORM method="POST" action="newvlan.php" "ENCTYPE="multipart/form-data">
-				<th align=center><INPUT type="text" size="3" name="vid" ></th>
-				<th align=center><INPUT type="text" size="3"name="fid" ></th>
-				<th align=center><INPUT type="text" size="5" name="mask" ></th>
-				<th align=center>
+				<td align=center><INPUT type="text" size="3" name="vid" ></td>
+				<td align=center><INPUT type="text" size="3"name="fid" ></td>
+				<td align=center><INPUT type="text" size="5" name="mask" ></td>
+				<td align=center>
 					<select name="drop">
 					  <option value="1">YES</option>
 					  <option selected="selected" value="0">NO</option>
 					</select>
-				</th>
-				<th align=center>
+				</td>
+				<td align=center>
 					<select name="prio">
 					  <option selected="selected"value=""></option>
 					  <option value="0">0</option>
@@ -73,8 +73,8 @@
 					  <option value="6">6</option>
 					  <option value="7">7</option>
 					</select>
-				</th>
-				<th align=center><INPUT type=submit value="Add VLAN" class="btn"></th>
+				</td>
+				<td align=center><INPUT type=submit value="Add VLAN" class="btn"></td>
 			</form>
 		</tr>';
 		echo '</table>';
@@ -86,8 +86,8 @@
 		//Display Port2Vlan assignment
 		echo '<br><br>';
 		echo '<center><strong>Port2Vlan assignments</strong></center><hr>';
-		echo '<table align=center border="1" class="altrowstable" id="alternatecolor1" width="100%">';
-		echo '<tr align=center><th><font color="blue">Port</font></strong></th><th><font color="blue">QMode</font></th><th><font color="blue">Priority</font></th><th><font color="blue">VLAN ID</font></th><th><font color="blue">MAC Address</font></th></tr>';
+		echo '<table class="altrowstable firstcol" id="alternatecolor1" width="100%">';
+		echo '<tr><th>Port</strong></th><th>QMode</th><th>Priority</th><th>VLAN ID</th><th>MAC Address</th></tr>';
 		
 		$tmp_vlan_file="/tmp/port2vlan.conf";
 		$vlans = shell_exec("/wr/bin/wrs_vlans --elist >".$tmp_vlan_file);
@@ -101,12 +101,12 @@
 			if($counter>=2 && !empty($line)){
 				$line = explode(" ", $line);
 					
-				echo '<tr align=center><th>WR'.($line[1]+1).'</th><th>'.$line[2]." (".$line[3].')</th><th>'.($line[5]).'</th><th bgcolor="'.$vlancolor[$line[6]].'">VLAN '.$line[6].'</th><th>'.$line[7].'</th></th></tr>';
+				echo '<tr align=center><td>WR'.($line[1]+1).'</td><td>'.$line[2]." (".$line[3].')</td><td>'.($line[5]).'</td><td bgcolor="'.$vlancolor[$line[6]].'">VLAN '.$line[6].'</td><td>'.$line[7].'</td></td></tr>';
 
 			}
          
 		}
-		echo '<tr><th></th><th></th><th></th><th></th><th align=center><FORM method="POST" action="port2vlan.php"><INPUT type=submit align=center value="Edit Table" class="btn"></form></th></tr>';
+		echo '<tr><td></td><td></td><td></td><td></td><td align=center><FORM method="POST" action="port2vlan.php"><INPUT type=submit align=center value="Edit Table" class="btn"></form></td></tr>';
 		echo '</table>';
 		
 		?>

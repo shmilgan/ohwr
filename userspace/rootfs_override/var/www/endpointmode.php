@@ -26,15 +26,15 @@
 		//$modes = parse_wrsw_hal_file();
 		$modes = parse_ppsi_conf_file();
 				
-		echo '<table align=center border="1" class="altrowstable" id="alternatecolor" width="50%">';
+		echo '<table class="altrowstable" id="alternatecolor" style="width:100%;text-align:center">';
 		//echo '<tr><th><center>Endpoint</center></th><th><center>Mode</center></th></tr>';
 		for($i = 0; $i < 9; $i++){
 			echo '<tr>';
-			echo '<td><center><b>wr'.($i+1).'</b></center></td>';
-			echo '<td><center><a href="modifymode.php?wr='.($i+1).'&mode='.$modes[$i+1].'">'.$modes[$i+1].'</a></center></td>';
+			echo '<th>wr'.($i+1).'</td>';
+			echo '<td><a href="modifymode.php?wr='.($i+1).'&mode='.$modes[$i+1].'">'.$modes[$i+1].'</a></th>';
 			
-			echo '<td><center><b>wr'.($i+1+9).'</b></center></td>';
-			echo '<td><center><a href="modifymode.php?wr='.($i+1+9).'&mode='.$modes[$i+1+9].'">'.$modes[$i+1+9].'</a></center></td>';
+			echo '<th>wr'.($i+1+9).'</th>';
+			echo '<td><a href="modifymode.php?wr='.($i+1+9).'&mode='.$modes[$i+1+9].'">'.$modes[$i+1+9].'</a></td>';
 			echo '</tr>';
 			
 		}

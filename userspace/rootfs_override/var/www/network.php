@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body id="ptp">
+<body id="network">
 <div class="main">
 <div class="page">
 <div class="header" >
@@ -41,21 +41,21 @@
 			
 			
 			echo '
-						<table border="0"  class="altrowstable" id="alternatecolor" align="center">	
+						<table class="altrowstable firstcol" id="alternatecolor">
 							<tr>
-								<th><font color="blue">Current eth0</font></th>
-							</tr><tr></tr><tr></tr>
-							<tr>
-								<th align=left>IP Address: </th>
-								<th ><INPUT type="text" STYLE="text-align:center;" align="center" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'").'" readonly name="ip" ></th>
+								<th>Current eth0</th>
 							</tr>
 							<tr>
-								<th align=left>Netmask: </th>
-								<th><INPUT type="text" STYLE="text-align:center;" align="center" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f4 | awk '{ print $1}'").'" readonly name="netmask" ></th>
+								<td>IP Address: </td>
+								<td ><INPUT type="text" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'").'" readonly name="ip" ></td>
 							</tr>
 							<tr>
-								<th align=left>Broadcast: </th>
-								<th><INPUT type="text" STYLE="text-align:center;" align="center" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f3 | awk '{ print $1}'").'"  readonly name="broadcast" ></th>
+								<td>Netmask: </td>
+								<td><INPUT type="text" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f4 | awk '{ print $1}'").'" readonly name="netmask" ></td>
+							</tr>
+							<tr>
+								<td>Broadcast: </td>
+								<td><INPUT type="text" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f3 | awk '{ print $1}'").'"  readonly name="broadcast" ></td>
 							</tr>
 						</table>';
 		}
@@ -91,24 +91,24 @@
 			echo '<FORM method="POST">
 					<table border="0" align="center" class="altrowstable" id="alternatecolor">	
 						<tr>
-							<th align=left>IP Address: </th>
-							<th><INPUT STYLE="text-align:center;" type="text" value="192.168.1.10" name="ip" ></th>
+							<td>IP Address: </td>
+							<td><INPUT type="text" value="192.168.1.10" name="ip" ></td>
 						</tr>
 						<tr>
-							<th align=left>Netmask: </th>
-							<th><INPUT STYLE="text-align:center;" type="text" value="255.255.255.0" name="netmask" ></th>
+							<td>Netmask: </td>
+							<td><INPUT type="text" value="255.255.255.0" name="netmask" ></td>
 						</tr>
 						<tr>
-							<th align=left>Network: </th>
-							<th><INPUT  STYLE="text-align:center;" type="text" value="192.168.1.0" name="network" ></th>
+							<td>Network: </td>
+							<td><INPUT  type="text" value="192.168.1.0" name="network" ></td>
 						</tr>
 						<tr>
-							<th align=left>Broadcast: </th>
-							<th><INPUT STYLE="text-align:center;" type="text" value="192.168.1.255" name="broadcast" ></th>
+							<td>Broadcast: </td>
+							<td><INPUT type="text" value="192.168.1.255" name="broadcast" ></td>
 						</tr>
 						<tr>
-							<th align=left>Gateway: </th>
-							<th><INPUT STYLE="text-align:center;" type="text" value="192.168.1.1" name="gateway" ></th>
+							<td>Gateway: </td>
+							<td><INPUT type="text" value="192.168.1.1" name="gateway" ></td>
 						</tr>
 					</table>
 					<INPUT type="submit" value="Save New Configuration" class="btn last">

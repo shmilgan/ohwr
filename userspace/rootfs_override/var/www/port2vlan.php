@@ -50,7 +50,7 @@
 		
 		
 		echo '<table align=center border="1" class="altrowstable" id="alternatecolor">';
-		echo '<tr align=center><th><font color="blue">Endpoint</font></th><th><font color="blue">VLAN ID</font></th><th><font color="blue">Mode</font></th><th><font color="blue">Priority</font></th><th><font color="blue">Mask</font></th></tr>';
+		echo '<tr class="sub" align=center><th>Endpoint</th><th>VLAN ID</th><th>Mode</font></th><th>Priority</th><th>Mask</th></tr>';
 		echo '<form method=POST>';
 		
 		for($i = 0; $i < 18; $i++){

@@ -47,18 +47,19 @@
 		}else{
 			
 			echo '*all fields are mandatory<br><br>';
-			echo "<div><table border='1' align='left' class='altrowstable' id='alternatecolor'>";
-			//echo '<tr><td> <b><center> </center></b></td></tr>';
 			echo '<form method="post">';
+			echo "<div><table class='altrowstable firstcol' id='alternatecolor'>";
+			//echo '<tr><td> <b><center> </center></b></td></tr>';
+
 			
 			if (($_POST['number']!=2)){
 				for($i=0; $i<$_POST['number']; $i++){
 
 					echo '<tr><th>SFP '.($i+1).'</th></tr>';
-					echo '<tr><th>Part Number</th><th><INPUT type="text" name="sfpnumber'.$i.'" > </th></tr>';
-					echo '<tr><th>Alpha</th><th><INPUT type="text" name="alpha'.$i.'" > </th></tr>';
-					echo '<tr><th>Delta Tx</th><th><INPUT type="text" name="tx'.$i.'" > </th></tr>';
-					echo '<tr><th>Delta Rx</th><th><INPUT type="text" name="rx'.$i.'" > </th></tr>';
+					echo '<tr><td>Part Number</td><td><INPUT type="text" name="sfpnumber'.$i.'" > </td></tr>';
+					echo '<tr><td>Alpha</td><td><INPUT type="text" name="alpha'.$i.'" > </td></tr>';
+					echo '<tr><td>Delta Tx</td><td><INPUT type="text" name="tx'.$i.'" > </td></tr>';
+					echo '<tr><td>Delta Rx</td><td><INPUT type="text" name="rx'.$i.'" > </td></tr>';
 					
 				}
 			}else{
@@ -68,15 +69,15 @@
 					echo '<tr><th>SFP '.($i+1).'</th></tr>';
 					
 					if($i==0){
-						echo '<tr><th>Part Number</th><th><INPUT type="text" value = "AXGE-1254-0531" name="sfpnumber'.$i.'" > </th></tr>';
-						echo '<tr><th>Alpha</th><th><INPUT type="text" value="2.67871791665542e-04" name="alpha'.$i.'" > </th></tr>';
-						echo '<tr><th>Delta Tx</th><th><INPUT type="text" value="10" name="tx'.$i.'" > </th></tr>';
-						echo '<tr><th>Delta Rx</th><th><INPUT type="text" value="10" name="rx'.$i.'" > </th></tr>';
+						echo '<tr><td>Part Number</td><td><INPUT type="text" value = "AXGE-1254-0531" name="sfpnumber'.$i.'" > </td></tr>';
+						echo '<tr><td>Alpha</td><td><INPUT type="text" value="2.67871791665542e-04" name="alpha'.$i.'" > </td></tr>';
+						echo '<tr><td>Delta Tx</td><td><INPUT type="text" value="10" name="tx'.$i.'" > </td></tr>';
+						echo '<tr><td>Delta Rx</td><td><INPUT type="text" value="10" name="rx'.$i.'" > </td></tr>';
 					}else{
-						echo '<tr><th>Part Number</th><th><INPUT type="text" value = "AXGE-3454-0531" name="sfpnumber'.$i.'" > </th></tr>';
-						echo '<tr><th>Alpha</th><th><INPUT type="text" value="-2.67800055584799e-04" name="alpha'.$i.'" > </th></tr>';
-						echo '<tr><th>Delta Tx</th><th><INPUT type="text" value="10"  name="tx'.$i.'" > </th></tr>';
-						echo '<tr><th>Delta Rx</th><th><INPUT type="text" value="10"  name="rx'.$i.'" > </th></tr>';
+						echo '<tr><td>Part Number</td><td><INPUT type="text" value = "AXGE-3454-0531" name="sfpnumber'.$i.'" > </td></tr>';
+						echo '<tr><td>Alpha</td><td><INPUT type="text" value="-2.67800055584799e-04" name="alpha'.$i.'" > </td></tr>';
+						echo '<tr><td>Delta Tx</td><td><INPUT type="text" value="10"  name="tx'.$i.'" > </td></tr>';
+						echo '<tr><td>Delta Rx</td><td><INPUT type="text" value="10"  name="rx'.$i.'" > </td></tr>';
 					}
 					
 				}

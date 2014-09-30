@@ -91,45 +91,40 @@
 	<hr>
 	<br><br>
 	<center><p><strong>Load configuration files</strong></p></center>
-	<table border="1" align="center" class='altrowstable' id='alternatecolor' width="80%">	
+	<table class='altrowstable' id='alternatecolor' width="100%">
 		<tr>
 		<FORM method="POST" ENCTYPE="multipart/form-data">
-			<th>PPSi Config </th>
-			<th ><INPUT type=file name="ppsi_conf" ></th>
-			<th><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></th>
+			<td class="first">PPSi Config </td>
+			<td ><INPUT type=file name="ppsi_conf" ></td>
+			<td><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
 		</form>
 		</tr>
 		<tr>
 		<FORM method="POST" ENCTYPE="multipart/form-data">
-			<th>SFP Config </th>
-			<th ><INPUT type=file name="sfp_conf" ></th>
-			<th><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></th>
+			<td class="first">SFP Config </td>
+			<td ><INPUT type=file name="sfp_conf" ></td>
+			<td><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
 		</form>
 		</tr>
 		<tr>
 		<FORM method="POST" ENCTYPE="multipart/form-data">
-			<th>SNMP Config</th>
-			<th ><INPUT type=file name="snmp_conf" ></th>
-			<th><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></th>
+			<td class="first">SNMP Config</td>
+			<td ><INPUT type=file name="snmp_conf" ></td>
+			<td><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
 		</form>
 		</tr>
 		<tr>
 		<FORM method="POST" ENCTYPE="multipart/form-data">
-			<th>HAL Config </th>
-			<th ><INPUT type=file name="hal_conf" ></th>
-			<th><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></th>
+			<td class="first">HAL Config </td>
+			<td ><INPUT type=file name="hal_conf" ></td>
+			<td><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
 		</form>
 		</tr>
 		<tr>
-			<th></th>
-			<th></th>
-			<th></th>
-		</tr>
-		<tr>
 		<FORM method="POST" ENCTYPE="multipart/form-data">
-			<th>Restore from backup</th>
-			<th ><INPUT type=file name="restore_conf" ></th>
-			<th><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></th>
+			<td class="first">Restore from backup</td>
+			<td ><INPUT type=file name="restore_conf" ></td>
+			<td><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
 		</form>
 		</tr>
 
