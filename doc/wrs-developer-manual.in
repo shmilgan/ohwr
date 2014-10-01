@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month September 2014
+@set update-month October 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -1036,14 +1036,21 @@ the switch. In the shipped binaries no user is authorized, but the
 root password is still the empty string.
 
 @c ##########################################################################
-@node Flashing of WRS-3
-@chapter Flashing of WRS-3
+@node Flashing the Switch
+@chapter Flashing the Switch
 
-This chapter describes the steps to install the WRS-3 with the 
+This chapter describes the steps to install the @sc{wrs} with the 
 current firmware images. As far as hardware is concerned, this
-procedure describes the installation of the switch with a @i{SCB v3.3}
-and a @i{Mini-Backplane v3.3}. Older versions are not documented here
+procedure describes the installation of the switch with a @sc{scb}
+version 3.3 or 3.4, and a @sc{Mini-Backplane} version 3.3.
+Older versions are not documented here
 any more (please get an older manual, if needed).
+
+@b{Note:} Most likely you won't need to reflash your @sc{wrs}.
+Even if you rebuilt software from scratch, the ``update'' procedure
+that is available since August 2014 (release 4.0 of @t{wr-switch-sw})
+allows complete replacement of the firmware image without physical
+access to the device.
 
 @c ==========================================================================
 @node USB connections
@@ -1102,6 +1109,10 @@ and enter @emph{"Flashing mode"} is not working. You should contact support.
 @node Flashing Procedure
 @section Flashing Procedure
 
+If the update procedure, described in the @i{User's Manual}
+is not suitable for you (because, for example, you are the manufacturer),
+you need physical access to your @sc{wrs} to flash it.
+
 Unlike what happened with previous releases (up to the end of 2013),
 the filesystem of the switch can't fit in RAM memory during installation
 any more: the image is now downloaded through the network.  Thus
@@ -1121,8 +1132,8 @@ DHCP as IP address for the TFTP transfer.
 Also, since release 4.1, you should not provide MAC addresses
 while flashing any more. The two MAC addresses are expected to be stored
 in @i{dataflash} by the manufacturer and not changed any more. If you
-upgraded your switch from a previous software version, please refer
-to 
+upgrade your switch from a previous software version, please refer
+to the @i{User's Manual} for details.
 
 The tool used to flash the firmware into the switch is the @i{USB-loader}
 we inherited from Atmel. The @file{flash-wrs} script is what
@@ -1616,16 +1627,49 @@ Currently this only applies to the serial number (@t{-n})
 @node Storing Hwinfo in a White Rabbit Switch
 @section Storing Hwinfo in a White Rabbit Switch
 
-Linux partitioning accesses the hardware information as a read-only
-partition, to prevent accidental erasure. The boot loader, on the
-other hand, has full access to the @i{dataflash} device.
+You can store your @i{hwinfo} using either the @sc{wrs} shell
+or the boot loader. The former technique can be performed remotely,
+the latter requires access to the serial
+console, on the backplane. 
 
-To write the hardware information in a switch that misses it, or
-replace an existing set of values, you may use the following
-@i{barebox} commands (erasing is not needed if the device is blank).
+@c --------------------------------------------------------------------------
+@node From the Linux Shell
+@section From the Linux Shell
+
+The information lives in partion @t{mtd5}, as shown in @t{/proc/mtd}
+(Memory Technology Device). To avoid accidental erasure, our
+filesystem doesn't include the device file @t{/dev/mtd5}, but only
+the read-only counterpart, @t{/dev/mtd5ro}.
+
+If you built your own @i{hwinfo}, with your MAC addresses, and you
+copied it to @i{/update} (a good staging place for files copied
+over the network), the following commands will place the information
+in place:
 
 @smallexample
-   addpart /dev/dataflash0 0x840@@0x94800(hwinfo)
+   test -c /dev/mtd5 || mknod /dev/mtd5 c 90 10
+   flash_erase /dev/mtd5 0 0
+   cat /update/hwinfo > /dev/mtd5
+   rm /dev/mtd5
+@end smallexample
+
+The commands create the device file if missing (to prevent an ugly
+error message if you already created it), erase and overwrite the
+data area, and finally remove the device file.
+
+You new MAC addresses will be effective at the next boot.
+
+@c --------------------------------------------------------------------------
+@node From the Barebox Shell
+@section From the Barebox Shell
+
+If you prefer creating or replacing @i{hwinfo} from the boot loader,
+this is the procedure. You can't run it with software version 4.0 or
+earlier, because our boot loader was unable to access
+@i{dataflash}. V4.1 fixed this problem and introduced the @t{sdb}
+command in the booloader to access your @i{hwinfo} structure.
+
+@smallexample
    erase /dev/dataflash0.hwinfo
    dhcp 5
    tftp hwinfo /dev/dataflash0.hwinfo
@@ -1635,7 +1679,14 @@ The code above assumes that the @i{hwinfo} file is available from your
 @sc{dhcp/tftp} server. According to your configuration one or more
 commands may be redundant.
 
-You can verify successful writing by running @i{sdbinfo}, as shown
+The commands rely on a partition being there, and the default
+script already created it using the following command:
+
+@smallexample
+   addpart /dev/dataflash0 0x840@@0x94800(hwinfo)
+@end smallexample
+
+You can verify successful writing by running @i{sdb ls}, as shown
 below.
 
 @c ==========================================================================

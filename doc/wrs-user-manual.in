@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month September 2014
+@set update-month October 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -133,6 +133,126 @@ V1 and V2 were development items, never shipped.
 
 
 @c ##########################################################################
+@node Upgrading WRS Software
+@chapter Upgrading WRS Software
+
+The @sc{wrs} is shipped with a current version of its software image,
+which is sometiems called @i{firmware}.
+If your devices are running a previous version of the software you may
+want to upgrade, or you may want to replace the firmware images after
+rebuilding your own, as explained in the @i{Developer's Manual}.
+
+If you run version 4.1 or later, you can ignore this chapter, that
+explains a transition between the initial way we passed MAC addresses
+and the safer approach we introduced in v4.1
+
+@c ==========================================================================
+@node hwinfo
+@section hwinfo
+
+Version 4.1 (October 2014) and later ones use a new way to pass
+hardware information to all levels of software, such information
+includes the MAC addresses for the management Ethernet and the
+@sc{sfp} ports.  Information is now stored in a Flash partition called
+@i{hwinfo}, using the @sc{sdb} file format. @sc{sdb} is defined in the
+@t{fpga-configuration-space} within @t{ohwr.org}.  Before using
+@sc{sdb} we used to edit the boot loader's configuration at flash
+time, a bad practice developed in a hurry.
+
+The @i{hwinfo} structure is now written to @i{dataflash} by the
+manufacturer, and never changed even when perforiming a complete re-flash
+of the device, because the flashing scripts preserve the @i{hwinfo}
+memory area.
+
+When upgrading from a pre-4.1 switch software, you need to create this
+@i{hwinfo} data structure. This procedure is mostly automatic, but you
+need to be aware of the steps involved, in case something goes wrong.
+
+@c ==========================================================================
+@node Upgrading from v4.0
+@section Upgrading from v4.0
+
+Version 4.0 and later of @t{wr-switch-sw} are able to upgrade
+themselves if you place the profer files in the @i{/update} directory
+of the @sc{wrs}.  However, in version 4.0 we forgot to provide for
+an upgrade of the boot loader.
+
+To upgrade from version 4.0, therefore, the procedure is the following
+one:
+
+@itemize @bullet
+
+   @item Copy your own @t{wrs-firmware.tar} for v4.1 into the @i{/update}
+   partition. This can be the official firwmare or one you built yourself.
+   Then reboot and wait for everything to settle (the system will reboot
+   once more by itself).
+
+   @item Copy @t{wrs-firmware.tar} again. And reboot again. The system
+   will reboot once more by itself.
+
+   @item Now you have a running v4.1 with your @i{hwinfo} in place
+   and the old MAC addresses preserved.
+
+@end itemize
+
+What follows is a details description of what is happening during
+the update, so you can follow the steps without being too
+scared (I usually am...):
+
+@itemize @bullet
+
+   @item The first time you reboot, the on-switch v4.0 boot scripts
+   will replace the complete filesystem, the kernel and the @i{initramfs}
+   -- but not the boot loader.  Having replaced the kernel, it
+   reboots to make it active.
+
+   @item At this point in time, we are running the 4.0 boot loader,
+   that knows its own MAC addresses in the old ugly way, with a 4.1
+   kernel and filesystem.
+
+   @item The v4.1 boot procedure includes a script to create @i{hwinfo}
+   and save it to flash using the current MAC addresses, if no
+   valid @i{hwinfo} exists.  Thus, after
+   the system is booted, @i{hwinfo} is in place, even if the boot loader
+   is not using it.
+
+   @item Now you place @t{wrs-firmware.tar} into @i{/update}
+   a second time, to replace the boot loader using the v4.1
+   upgrade scripts.  (As an alternative, you can just place
+   @t{barebox.bin} into @i{/update}, as v4.1 looks for such file name).
+
+   @item When booting, the contents of @i{/update} are
+   processed by the v4.1 boot scripts, which install everything
+   included in @t{wrs-firmware.tar}, including the boot
+   loader.
+
+   @item When the system automatically reboots to finalize the second
+   upgrade, you are running the new boot loader, that retrieves your MAC
+   addresses from the @i{hwinfo} partition.
+
+@end itemize
+
+@c ==========================================================================
+@node Upgrading from v3.x
+@section Upgrading from v3.x
+
+Upgrading from versions older than 4.0 (August 2014) requires physical
+access to the device and, unfortunately, requires some extra steps
+especially if you want to preserve your MAC addresses.
+
+One possible path is flashing version 4.0 (please refer to v4.0
+manuals) and then proceed as described in @ref{Upgrading from v4.0}.
+When flashing version 4.0 you'll need to pass your MAC addresses on
+the command line of the flasher, so please take not of what they are.
+
+Another option is flashing the latest firwmare version and then build
+your own @i{hwinfo} structure by specifying your MAC addresses.
+@t{wr-switch-sw} includes specific tools for both steps. They are
+described in the @i{Developer's Manual}, because they are expected to
+only be performed by the manufacturer, not the final user.
+
+
+@c ##########################################################################
 @node Kconfig Support
 @chapter Kconfig Support
 
@@ -149,6 +269,10 @@ menuconfig}'' (or @i{gconfig} or @i{kconfig} or the old text-mode
 @i{config}) from the top-level directory of @i{wr-switch-sw}.  To
 silently enact the default configuration, run ``@t{make defconfig}''
 (this is done by the normal build if no configuration is present).
+
+The released firmware image uses the default configuration, but we'll
+soon offer the option to change most of these values at boot-time
+(by downloading configuration from a network server) or run-time.
 
 The following configuration options are available
 
@@ -328,7 +452,7 @@ from, as shown in the log excerpt above. So you'll have your
 leading @t{#!/bin/sh}. Examples in @i{wr-switch-sw} did not include the
 line until April 2014 included.
 
-The @file{binaries} subdirectory of this package includes two known-working
+The @file{binaries} subdirectory of @t{wr-switch-sw} includes two known-working
 wrboot scripts as examples; one if for use with static IP addresses and
 the other relies on DHCP. If you want to override the default NFS-Root
 directory mounted from the server (which is @code{/tftpboot/<ip-address>})
@@ -337,6 +461,10 @@ you can add something like the following line to your @file{wrboot} script:
 @example
     bootargs="$bootargs nfsroot=/opt/root/wrs-3"
 @end example
+
+@c ==========================================================================
+@node Creating an NFS-Root Environment for WRS
+@section Creating an NFS-Root Environment for WRS
 
 In order to create an NFS root directory, you should uncompress
 @t{wrs-image.tar.gz} that is created at build time.  If you use
