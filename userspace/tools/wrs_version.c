@@ -135,6 +135,8 @@ static char *sdb_get(char *fname, char *tagname)
 	}
 	/* Look for the tag */
 	s = strstr(buf, tagname);
+	if (!s)
+		return unknown;
 	sscanf(s, "%*[^:]:%*c%[^\n]", result);
 	return result;
 }
