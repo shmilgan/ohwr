@@ -860,7 +860,7 @@ The most important tools in @file{userspace/tools} are the following:
 	A symbolic link to @t{wrs_version}, to be compatible with
         older versions that used this tool name. The name is
         inconsistent with anything else in the switch, so it is being
-        replaces.
+        replaced.
 
 @item wrs_vlans
 	The tool allows to configure and unconfigure the VLAN settings
