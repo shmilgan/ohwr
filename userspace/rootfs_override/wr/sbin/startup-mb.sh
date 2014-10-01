@@ -11,15 +11,30 @@ done
 
 # Obtain the type of FPGA (LX130XT or LX240XT)
 tfpga=$($WR_HOME/bin/wrs_version -F)
+if [ "$tfpga" = "UNKNOWN" ]; then
+    tfpga="LX240T"
+fi
+FP_FILE="$WR_HOME/lib/firmware/18p_mb-${tfpga}.bin"
+
 
 # TODO: Update wrsw_version to read this value from DF.
 scb_ver=33
 if mtdinfo -a | grep -A 1 dataflash | grep 264 &> /dev/null; then
 	scb_ver=34
 fi
+LM_FILE="$WR_HOME/lib/firmware/rt_cpu.elf"
 
-$WR_HOME/bin/load-virtex $WR_HOME/lib/firmware/18p_mb-${tfpga}.bin
-$WR_HOME/bin/load-lm32 $WR_HOME/lib/firmware/rt_cpu.elf scb_ver=${scb_ver}
+if ! [ -f "$FP_FILE" ]; then
+    echo "Fatal: can't find \"$FP_FILE\"" >& 2
+    exit 1;
+fi
+if ! [ -f "$LM_FILE" ]; then
+    echo "Fatal: can't find \"$LM_FILE\"" >& 2
+    exit 1;
+fi
+
+$WR_HOME/bin/load-virtex $FP_FILE
+$WR_HOME/bin/load-lm32   $LM_FILE scb_ver=${scb_ver}
 insmod $WR_HOME/lib/modules/at91_softpwm.ko
 insmod $WR_HOME/lib/modules/wr_vic.ko
 insmod $WR_HOME/lib/modules/wr-nic.ko macaddr=$val
