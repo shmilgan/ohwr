@@ -19,15 +19,15 @@
 <h1 class="title">About</h1>
 
 	<?php $_SESSION['advance']=""; ?>
-	
+
 	<div>
 		<?php
-			$msg = shell_exec("/wr/bin/wrs_version -g");
+			$msg = shell_exec("/wr/bin/wrs_version -t");
 			$msg = explode("\n", $msg);
 			$message .= "<ul>";
 
-			$message .= "<li>WRSW OS:".shell_exec("uname -r")."</li>";
-			for($i=0; $i<5; $i++){
+			$message .= "<li>wr-switch-os: ".shell_exec("uname -r")."</li>";
+			for($i=0; $i<count($msg)-1; $i++){
 
 				$message .= "<li>".$msg[$i]."</li>";
 			}

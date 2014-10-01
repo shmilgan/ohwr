@@ -151,15 +151,16 @@ function wrs_main_info(){
 	echo '<a href="showfile.php?help_id=gateware&name=GateWare Info" onClick="showPopup(this.href);return(false);">';
 	echo $str; echo '</a></td></tr>';
 
-	echo '<tr><td>PCB Version</td><td>'; $str = shell_exec("/wr/bin/wrs_version -p"); echo $str;  echo '</td></tr>';
+	echo '<tr><td>HW Version</td><td>'; $str = shell_exec("/wr/bin/wrs_version -t | grep 'scb\|back' | sort -r | sed 's/-version: /: v/'"); echo str_replace("\n"," / ",rtrim($str));  echo '</td></tr>';
 	echo '<tr><td>FPGA</td><td>'; $str = shell_exec("/wr/bin/wrs_version -f"); echo $str; echo '</td></tr>';
+	echo '<tr><td>Manufacturer</td><td>'; $str = shell_exec("/wr/bin/wrs_version -t | grep 'manufacturer' | sed 's/[^:]*: //'"); echo str_replace("\n","",$str);  echo '</td></tr>';
+	echo '<tr><td>Serial Number</td><td>'; $str = shell_exec("/wr/bin/wrs_version -t | grep 'serial' | sed 's/[^:]*: //'"); echo str_replace("\n","",$str);  echo '</td></tr>';
 	echo '<tr><td>Compiling Date</td><td>'; $str = shell_exec("/wr/bin/wrs_version -c"); echo $str; echo '</td></tr>';
-	echo '<tr><td>White-Rabbit Date</td><td>'; $str = shell_exec("export TZ=".$_SESSION['utc']." /wr/bin/wr_date -n get"); echo str_replace("\n","<br>",$str); echo '</td></tr>';
+	echo '<tr><td>White-Rabbit Date</td><td>'; $str = shell_exec("export TZ=".$_SESSION['utc']."; /wr/bin/wr_date -n get"); echo str_replace("\n","<br>",$str); echo '</td></tr>';
 	echo '<tr><td>PPSi</td><td>';  echo wrs_check_ptp_status() ? '[<a href="ptp.php">on</A>]' : '[<a href="ptp.php">off</A>]'; echo '</td></tr>';
 	echo '<tr><td>Net-SNMP Server</td><td>';  echo check_snmp_status() ? '[on] ' : '[off] '; echo '&nbsp;&nbsp;ver. '; echo shell_exec("snmpd -v | grep version | awk '{print $3}'");
 			echo '( port '; $str = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf | grep agent | cut -d: -f3 | awk '{print $1}'"); echo $str; echo ')'; 	echo /*" <a href='help.php?help_id=snmp' onClick='showPopup(this.href);return(false);'> [OIDs]</a>*/"</td></tr>";
 	echo '<tr><td>NTP Server</td><td> <a href="management.php">';  $str = check_ntp_server(); echo $str; echo '</A> '.$_SESSION['utc'].'</td></tr>';
-	echo '<tr><td>Max. Filesize Upload</td><td>'; echo shell_exec("cat ".$GLOBALS['phpinifile']." | grep upload_max_filesize | awk '{print $3}'"); echo '</td></tr>';
 	echo '</table>';
 	
 	
