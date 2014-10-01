@@ -14,9 +14,9 @@ WR_LIB = $(WR_INSTALL_ROOT)/lib
 CFLAGS = -g -Wall -DRT_CLIENT\
 	-I../include -I../mini-rpc -I$(WR_INCLUDE)
 
-ifdef WRS_HAL_DEBUG
+#ifdef WRS_HAL_DEBUG
   CFLAGS += -DDEBUG
-endif
+#endif
 
 LDFLAGS = -L../libswitchhw -L../mini-rpc \
 	 -lminipc -llua -lm -ldl -lswitchhw 

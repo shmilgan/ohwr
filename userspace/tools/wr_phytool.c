@@ -458,6 +458,10 @@ void rt_command(int ep, int argc, char *argv[])
 		
 		rts_adjust_phase(ep, atoi(argv[4]));
 	}	
+	else if (!strcmp(argv[3], "bp")) {
+		printf("Playing with backup channel\n");
+		rts_backup_channel(1, atoi(argv[4]));
+	}
 }
 
 

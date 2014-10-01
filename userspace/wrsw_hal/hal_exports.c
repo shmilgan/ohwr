@@ -124,6 +124,10 @@ int halexp_get_timing_state(hexp_timing_state_t *state)
 }
 
 
+int halexp_swover_poll()
+{
+	return active_port();
+}
 
 static void hal_cleanup_wripc()
 {
@@ -164,6 +168,16 @@ static int export_lock_cmd(const struct minipc_pd *pd,
 	return 0;
 }
 
+static int export_swover_cmd(const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+	int rval;
+
+	rval = halexp_swover_poll();
+	*(int *)ret = rval;
+	//*(int *)ret = 1;
+	return 1;
+}
+
 static int export_query_ports(const struct minipc_pd *pd,
 			      uint32_t *args, void *ret)
 {
@@ -198,12 +212,14 @@ int hal_init_wripc()
 	__rpcdef_lock_cmd.f = export_lock_cmd;
 	__rpcdef_query_ports.f = export_query_ports;
 	__rpcdef_get_timing_state.f = export_get_timing_state;
+	__rpcdef_swover_cmd.f = export_swover_cmd;
 
 	minipc_export(hal_ch, &__rpcdef_pps_cmd);
 	minipc_export(hal_ch, &__rpcdef_get_port_state);
 	minipc_export(hal_ch, &__rpcdef_lock_cmd);
 	minipc_export(hal_ch, &__rpcdef_query_ports);
     minipc_export(hal_ch, &__rpcdef_get_timing_state);
+	minipc_export(hal_ch, &__rpcdef_swover_cmd);
 
 
 	/* FIXME: pll_cmd is empty anyways???? */
