@@ -59,10 +59,10 @@ conditions
 -----  ----------- -------------------  --------------------------------
  0.1   18/02/2013   Benoit Rat\         Initial Version\
                     [Seven Solutions]   Reviewer: Rodrigo Agis ([7S])
-                    
+
  0.2   26/03/2013   Benoit Rat\         Adding suggestion from\
                     [Seven Solutions]   Beck, Dietrich Dr (GSI)
-                    
+
  0.3   27/03/2013   Benoit Rat\         Modifying licence to GPL v2.0\
                     [Seven Solutions]   to be comptabile with the package
 
@@ -71,9 +71,9 @@ conditions
 
  0.5   26/07/2013   Benoit Rat\         Adding suggestion from\
                     [Seven Solutions]   Erik Van Der Bij (CERN)
-                    
+
  1.0   26/07/2013   Benoit Rat\         Updating for v3.3 release
-                    [Seven Solutions]      
+                    [Seven Solutions]
 ------------------------------------------------------------------------
 
 \clearpage
@@ -86,7 +86,7 @@ DHCP
 FMC
 :	FPGA Mezzanine Card, an ANSI standard for mezzanine card form factor.
 HDL
-:	Hardware description language. 
+:	Hardware description language.
 LM32
 :	LatticeMico32 is a 32-bit microprocessor soft core optimized for field-programmable gate arrays (FPGAs).
 NAND
@@ -119,7 +119,7 @@ WMI
 Introduction
 =================
 
-The White Rabbit Switch ([WRS]) is the key component of the 
+The White Rabbit Switch ([WRS]) is the key component of the
 White Rabbit Protocol that provides precision timing and high synchronization over an Ethernet-based network.
 
 About this Guide
@@ -143,7 +143,7 @@ The [WRS] package is composed of various elements:
 * The packaging box
 * A power cable according to the country of distribution.
 * The 18 SFP ports switch.
-* SFP LC connectors 
+* SFP LC connectors
     * 16x AXGE-3454-0531 (violet)
     * 2x AXGE-1254-0531 (blue)
 
@@ -158,12 +158,12 @@ Front panel (Legend)
 1. The 18 SFP ports
 #. Synced/Activity LEDs
 #. Link/WR Mode LEDs
-#. Management Mini-USB (B) port 
+#. Management Mini-USB (B) port
 #. Status LED
 #. Power LED
 #. PPS output
 #. Synced CLK reference Output (62.5 MHz)
-#. PPS input (GPS Clock) 
+#. PPS input (GPS Clock)
 #. 10MHz reference clock input (GPS/Cesium)
 #. 125MHz reference clock input (Not used)
 #. Ethernet 100Mbps Management Port
@@ -180,12 +180,12 @@ Back panel (Legend)
 13. Ground Connector
 #. Generic Button
 #. Flashing Button ([See firmware update](#firmware-update))
-#. RS232 Management Port (GPRMC) 
+#. RS232 Management Port (GPRMC)
 #. FPGA Mini-USB (B) UART
 #. ARM Mini-USB (B) UART
 #. Power Switch
 #. Power Plug
-#. Serial Number and MACs 
+#. Serial Number and MACs
 
 
 
@@ -220,7 +220,7 @@ To get the switch quickly working we recommend you to:
 1. Plug an Ethernet cable to the *Ethernet 100Mpbs Management Port*.
 #. Plug the power cable to the *Power Plug*.
 
-After all connections have been made, toggle the power-switch on to turn 
+After all connections have been made, toggle the power-switch on to turn
 the device on. After the power on, the [WRS] should behave as follows:
 
 3. The *Power LED* goes green
@@ -231,10 +231,10 @@ has started.
 
 You have now the [WRS] ready to be used in a WR network.
 
-7. Connect the blue SFPs (AXGE-1254-0531) to the SFP port 1 and 2 of the 
-[WRS]. These SFPs are the ones that will receive synchronization message 
+7. Connect the blue SFPs (AXGE-1254-0531) to the SFP port 1 and 2 of the
+[WRS]. These SFPs are the ones that will receive synchronization message
 from another master [WRS] or from the grandmaster [WRS]. If you only have
-one switch in your network you might configure it in the 
+one switch in your network you might configure it in the
 [GrandMaster mode](#grandmaster-mode).
 #. You can plug the other SFP ports [2-16] with violet SFPs (AXGE-3454-0531)
 to the WR node such as [SPEC], [SVEC], ...
@@ -242,10 +242,10 @@ to the WR node such as [SPEC], [SVEC], ...
 USB Connections
 ----------------
 
-The [WRS] has three different USB ports used to communicate/monitorize 
+The [WRS] has three different USB ports used to communicate/monitorize
 through a PC.
 
-a. Management Mini-USB (B) port 
+a. Management Mini-USB (B) port
 b. FPGA Mini-USB (B) UART
 c. ARM Mini-USB (B) UART
 
@@ -270,7 +270,7 @@ minicom -D /dev/ttyUSB1 -b 115200
 ~~~~~~~~~~~~
 
 [^minicom]: In Debian-like distribution you can install minicom by executing
-`sudo apt-get install minicom`. 
+`sudo apt-get install minicom`.
 
 > Note: ttyUSB0 and ttyUSB1 usally correspond respectively to FGPA and ARM UART.
 However this order can change dependably on how you plug the cable.
@@ -280,7 +280,7 @@ Login via USB
 
 Once the device has been correctly started up (*Status LED* is green),
 It is recommended to use the USB management port to connect to the device
-instead of the ARM UART. 
+instead of the ARM UART.
 
 ~~~~~{.bash}
 ## Connecting to the Management USB port
@@ -294,11 +294,11 @@ the kernel and daemons messages are sent to this console.
 Login via SSH
 --------------
 
-The Ethernet management port automatically obtains its IP using the DHCP 
+The Ethernet management port automatically obtains its IP using the DHCP
 protocol. If you don't have any DHCP router/server in your network please
 refer to the [non-DHCP](#non-dhcp-user) section.
 
-To obtain the IP of the [WRS] you can connect to your DHCP server interface 
+To obtain the IP of the [WRS] you can connect to your DHCP server interface
 and retrieve the IP, or [connect to ttyACM0](#login-via-usb) to retrieve the
 IP (`ipconfig eth0`).
 
@@ -314,26 +314,26 @@ And press enter when requesting the password.
 Login using Windows
 -----------------------
 
-The process of login to the switch using Windows (XP,Vista,7,8) is pretty 
+The process of login to the switch using Windows (XP,Vista,7,8) is pretty
 similar:
 
 1. You first need to download the [Putty Tool] and install it.
 
 2. Then you need to list and find out which serial port in Windows corresponds
-to which interface. A simple way to perform this is to plug only one USB 
+to which interface. A simple way to perform this is to plug only one USB
 cable at a time, and go to `Device Manager > Ports (COM & LPT)`
-to check the name of the `COM<X>` port. 
+to check the name of the `COM<X>` port.
 
-3. Finally to connect through the USB you just need to open the Putty 
+3. Finally to connect through the USB you just need to open the Putty
 tool and configure it as indicated in the figure below. Do not forget to replace the
 `COM9` port name by the one that corresponds to the USB management.
 
 
 ![Putty - USB connection](putty-ACM0.png)
 
-4. Similarly, you can connect to the [WRS] using the SSH protocol. 
-You should not forget to replace the IP of your [WRS] (yellow) 
-by the one in your subnetwork. 
+4. Similarly, you can connect to the [WRS] using the SSH protocol.
+You should not forget to replace the IP of your [WRS] (yellow)
+by the one in your subnetwork.
 
 ![Putty - SSH connection](putty-SSH.png)
 
@@ -341,30 +341,30 @@ by the one in your subnetwork.
 Login using the Web Management Interface
 -----------------------
 
-If you want to access and manage the [WRS] using the web interface, it is necessary to connect the [WRS] manager ethernet port to your local network. 
-The access should be carried out by a network browser (Mozilla Firefox and Google Chrome supported) as it follows: 
+If you want to access and manage the [WRS] using the web interface, it is necessary to connect the [WRS] manager ethernet port to your local network.
+The access should be carried out by a network browser (Mozilla Firefox and Google Chrome supported) as it follows:
 
-1. Open your browser and type the IP address (i.e. 192.168.1.50) of the [WRS]. By default, the network IP configuration 
+1. Open your browser and type the IP address (i.e. 192.168.1.50) of the [WRS]. By default, the network IP configuration
 is provided by the DHCP server in the same network and can be retrieved from it.
 
 ![Web Management Interface - Login](wwwlogin.png)
 
 2. After accessing the [WMI], you should enter the web interface user and password, which is not
-same for the SSH connection, otherwise you will be only able to see the Dashboard info. 
+same for the SSH connection, otherwise you will be only able to see the Dashboard info.
 By default the user is **admin** with no password. For this reason it is strongly recommended to change the password.
 
-In order to change the [WMI] password you just need to click on "**User: admin**" on the left side of the webpage. 
-You have to enter your username (**admin**), old password, new password and repeat the new password. 
+In order to change the [WMI] password you just need to click on "**User: admin**" on the left side of the webpage.
+You have to enter your username (**admin**), old password, new password and repeat the new password.
 Once you submit the new password you will be redirected to the main screen and logged out.
 
 
 After login:
 -------------------
 
-Once you are logged in you can use various tools to monitor the [WRS]. 
+Once you are logged in you can use various tools to monitor the [WRS].
 All these tools are found in `/wr/bin/` which is included in the `$PATH`.
- 
-The following list resumes the most interesting commands: 
+
+The following list resumes the most interesting commands:
 
  * `wrs_version`:	Print information about the SW & HW version of the [WRS].
  * `rtu_stat`:	Routing Table Unit Statistic, returns the routing table information where we can find which MAC needs to be forwarded to which port. It also allows to add and delete entries.
@@ -373,9 +373,9 @@ The following list resumes the most interesting commands:
 
 > Note: More information about each tool can be obtain using the embedded help argument: `--help`, `-h` or `help`.
 
-#### Warning: 
-The SFP ports are labeled from 1 to 18 on the front panel but their corresponding 
-network interface are named from `wr0` to `wr17`. 
+#### Warning:
+The SFP ports are labeled from 1 to 18 on the front panel but their corresponding
+network interface are named from `wr0` to `wr17`.
 
 
 Web Management Interface Features:
@@ -414,39 +414,39 @@ Booting
 ------------
 
 After 10 seconds, the bootloader automatically loads the [WRS] firmware
-from the Flash NAND memory of the switch.  If you connect to the ARM debug 
+from the Flash NAND memory of the switch.  If you connect to the ARM debug
 port you might see the following message:
 
 
 ~~~~~{.bash}
 Welcome on WRSv3 Boot Sequence
       1: boot from nand (default)
-      2: boot from TFTP script   
-      3: edit config             
-      4: exit to shell           
-      5: reboot    
+      2: boot from TFTP script
+      3: edit config
+      4: exit to shell
+      5: reboot
 ~~~~~~~~~~~~~~~~~~~
 
 > Note: If you want to change how
-the [WRS] is booted you can place a `wrboot` script in your TFTP root 
-folder and select the second option or you can edit the configuration 
-(third option). Please find more explanations in the 
+the [WRS] is booted you can place a `wrboot` script in your TFTP root
+folder and select the second option or you can edit the configuration
+(third option). Please find more explanations in the
 [Advanced configuration](#advanced-configuration)
 
 
 Non-DHCP user
 ---------------
 
-If you have no DHCP server in your network you must connect to the [WRS] 
-using the [login via USB method](#login-via-usb) and then edit the 
+If you have no DHCP server in your network you must connect to the [WRS]
+using the [login via USB method](#login-via-usb) and then edit the
 `interfaces` file:
 
 ~~~~{.bash}
 vi /etc/network/interfaces
 ~~~~~~~~~~~
 
-for example, in a `192.168.1.x` subnetwork you might replace the 
-`iface eth0 inet dhcp` by 
+for example, in a `192.168.1.x` subnetwork you might replace the
+`iface eth0 inet dhcp` by
 
 ~~~~~{.bash}
 iface eth0 inet static
@@ -458,7 +458,7 @@ iface eth0 inet static
 ~~~~~~~~~~~~~~
 
 
-> Note: If you are willing to use TFTP script in a non-DHCP network, you 
+> Note: If you are willing to use TFTP script in a non-DHCP network, you
 must also statically set the IP in the bootloader configuration.
 
 
@@ -509,9 +509,9 @@ by flashing the memory using the *Management Mini-USB*[^flashlinux].
 `flash-wrs -e -m1 <MAC1> -m2 <MAC2> wr-switch-sw-<latest_version>.tar.gz`
 where MAC1 and MAC2 are written in the [back panel (label #21)](#back-panel-legend)
 
-5. At this step you will be asked to restart the [WRS], using the *Power 
+5. At this step you will be asked to restart the [WRS], using the *Power
 Switch*, while pressing the *Flash Button*.
-#. The flashing procedure should start and it takes some time to perform. 
+#. The flashing procedure should start and it takes some time to perform.
 #. The switch will restart by itself which means that the flashing operation
 has finished.
 
@@ -543,17 +543,17 @@ Please refer to the White Rabbit Switch: software build scripts manual
 Safety Notes
 =============
 
-#### Warning: 
+#### Warning:
 Do not block the air vents which are located on back panel of the [WRS],
 the internal temperature might increase and damage the switch.
 
-#### Warning: 
+#### Warning:
 To increase the lifetime of the [WRS] it is recommended to use the switch
 in a controlled ambient environment and limit to the ambient condition
 stated in the [Specification Appendix](#specification).
 
 #### Warning:
-The standard power source for this equipment is designed to work in the 
+The standard power source for this equipment is designed to work in the
 range of 110-240V with 50-60Hz.
 
 #### Warning:
@@ -610,7 +610,7 @@ Specification
 | **OS**             | Linux (Kernel v2.6.39)                          |
 +--------------------+-------------------------------------------------+
 
-            
+
 +--------------------+-------------------------------------------------+
 | ***OnChip Clock*** |                                                 |
 +====================+=================================================+
@@ -656,8 +656,8 @@ Warranty
 The [WRS] is fully factory tested and warranted against manufacturing defects for a period of one year.  As the
 circumstances under which this [WRS] is installed can not be controlled, failure of the [WRS] due to
 installation problems can not be warranted. This includes misuse, miswiring, overheating, operation under loads beyond the
-design range of the [WRS]. 
-For warranty or non-warranty replacement send the [WRS] to: 
+design range of the [WRS].
+For warranty or non-warranty replacement send the [WRS] to:
 
 > Seven Solutions\
 C/ Baza, parcela 19, nave 3 \
@@ -669,21 +669,21 @@ Polígono Industrial Juncaril, \
 FAQs & Troubleshooting
 --------------------------
 
-If you are experiencing some issues please look first at the [WRS FAQ] wiki 
+If you are experiencing some issues please look first at the [WRS FAQ] wiki
 page if you can find an answer.
 
 You can also reach out the wiki to see if your issue is a known
-bug and if a solution was found: 
-<http://www.ohwr.org/projects/wr-switch-sw/wiki/Bugs> 
+bug and if a solution was found:
+<http://www.ohwr.org/projects/wr-switch-sw/wiki/Bugs>
 
-You can also request Technical Support by 
+You can also request Technical Support by
 [contacting our company](#contact-us)
 
 ### Bug report
 
-Feel free to send us a bug report with the full state of the [WRS] by 
-executing the following command: 
- 
+Feel free to send us a bug report with the full state of the [WRS] by
+executing the following command:
+
 ~~~~~{.bash}
 #On the WRS
 wrs_version > /tmp/bug_report.txt
@@ -715,21 +715,21 @@ To contact Seven Solutions company please use:
 Save Our Environment
 ---------------------
 
-![Trash](trash.jpg)\ 
+![Trash](trash.jpg)\
 
-This symbol means that when the equipment has 
-reached the end of its life cycle, it must be taken 
-to a recycling centre and processed separate from 
+This symbol means that when the equipment has
+reached the end of its life cycle, it must be taken
+to a recycling centre and processed separate from
 domestic waste.
 
-The cardboard box, the plastic contained in the packaging, 
-and the parts that make up this device can be recycled in 
+The cardboard box, the plastic contained in the packaging,
+and the parts that make up this device can be recycled in
 accordance with regionally established regulations.
 
-Never throw this electronic equipment out along with 
-your household waste. You may be subject to penalties or 
-sanctions under the law. Instead, ask for instructions from 
-your municipal government on how to correctly dispose of it. 
+Never throw this electronic equipment out along with
+your household waste. You may be subject to penalties or
+sanctions under the law. Instead, ask for instructions from
+your municipal government on how to correctly dispose of it.
 Please be responsible and protect our environment.
 
 
@@ -744,7 +744,7 @@ References
 * [whiterabbitsolution]: White Rabbit as a complete timing solutions
 * [WRS Wiki]: White Rabbit Switch Wiki on ohwr.org
 * [WRS FAQ]: WR-Switch Frequently Added Questions
-* [wr-switch-testing]: Project for testing the switch itself 
+* [wr-switch-testing]: Project for testing the switch itself
 * [SFPs Wiki]: Type of SFP supported by the [WRS]
 * [latest stable release]: http://www.sevensols.com/dl/wr-switch-sw/bin/latest_stable.tar.gz
 * [flashing package]: http://www.sevensols.com/dl/wrs-flashing/latest_stable.tar.gz
