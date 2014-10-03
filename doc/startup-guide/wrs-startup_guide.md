@@ -1,4 +1,4 @@
-% WRS-3/18 - User Guide
+% WRS-3/18 - Startup Guide
 % Benoit Rat, Rodrigo Agis (Seven Solutions)
 
 ### Copyright
@@ -13,8 +13,8 @@ written permission by Seven Solutions.
 ### Licenses
 
 ~~~~~~~
-The "User Guide" (as defined above) is provided under the terms of GPL v2.0
-Copyright (C) 2013 - Seven Solutions
+The "Startup Guide" (as defined below) is provided under the terms of GPL v2.0
+Copyright (C) 2014 - Seven Solutions
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -36,13 +36,13 @@ The [WRS] has been released under the **CERN OHL** licence.
 
 ~~~~~~~
 Copyright CERN 2011.
-This documentation describes Open Hardware and is licensed under the CERN OHL v. 1.1.
+This documentation describes Open Hardware and is licensed under the CERN OHL v. 1.2.
 
 You may redistribute and modify this documentation under the terms of the
-CERN OHL v.1.1. (http://ohwr.org/cernohl). This documentation is distributed
+CERN OHL v.1.2. (http://ohwr.org/cernohl). This documentation is distributed
 WITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING OF
 MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A
-PARTICULAR PURPOSE. Please see the CERN OHL v.1.1 for applicable
+PARTICULAR PURPOSE. Please see the CERN OHL v.1.2 for applicable
 conditions
 ~~~~~~~~~~~~~~~~~
 
@@ -73,6 +73,12 @@ conditions
                     [Seven Solutions]   Erik Van Der Bij (CERN)
 
  1.0   26/07/2013   Benoit Rat\         Updating for v3.3 release
+                    [Seven Solutions]
+
+ 1.1   26/07/2014   Jose Luis Gutierrez\ Adding WMI for v4.0 release
+                    [Seven Solutions]
+
+ 1.2   02/10/2014   Benoit Rat\         Updating for v4.1 release
                     [Seven Solutions]
 ------------------------------------------------------------------------
 
@@ -125,10 +131,45 @@ White Rabbit Protocol that provides precision timing and high synchronization ov
 About this Guide
 -----------------
 
-This document is intended as a user guide for quickly setup your switch in
+This document is intended as a **Startup Guide** for quickly setup your switch in
 a White Rabbit Network. For more details on advanced topics please
 refers to the [Advanced configuration section](#advanced-configuration) or
-to the [wr-switch-sw.pdf] guide.
+to the other manuals.
+
+This document will refer only to [WRS] v3.3 and v3.4.
+
+The Official Manuals
+---------------------
+
+This is the current set of manuals that accompany the [WRS]:
+
+WRS Startup Guide:
+:	hardware installation instructions.
+
+This manual is provided by
+the manufacturer. It describes handling measures, the external
+connectors, hardware features and the initial bring-up of the device.
+
+WRS User's Manual:
+:	documentation about configuring the [WRS], at software level.
+
+This guide is maintained by software developers. The manual
+describes configuration in a deployed network, either as a
+standalone device or as network-booted equipment.  The guide also
+describes how to upgrade the switch, because we'll release new
+official firmware images over time, as new features are implemented.
+
+WRS Developer's Manual:
+:	it describes the build procedure and how internals work.
+
+The manual is by
+developers and for developers.  This is the document to check if you
+need to customize your [WRS] rebuild software from new repository
+commits that are not an official release point, or just install your
+[WRS] with custom configuration values.
+
+
+
 
 
 
@@ -150,10 +191,29 @@ The [WRS] package is composed of various elements:
 > ***Note:*** The SFP LC connectors are optional. Consult the [SFPs Wiki] for more information about the compatibility of SFPs and how to use them.
 
 
-Front panel (Legend)
+Front panel v3.4 (Legend)
 ---------------------
 
-![Front Panel of the WRS](front_panel.png)
+![Front Panel of the WRS v3.4](front_panel-v3.4.png)
+
+1. The 18 SFP ports
+#. Synced/Activity LEDs
+#. Link/WR Mode LEDs
+#. Management Mini-USB (B) port
+#. Status LED
+#. Power LED
+#. PPS output
+#. CLK1 output (10MHz from PLL)
+#. CLK2 output (10MHz from FPGA)
+#. 10MHz reference clock input (GPS/Cesium)
+#. PPS in
+#. Ethernet 100Mbps Management Port
+
+
+Front panel v3.3 (Legend)
+---------------------
+
+![Front Panel of the WRS v3.3](front_panel-v3.3.png)
 
 1. The 18 SFP ports
 #. Synced/Activity LEDs
@@ -217,7 +277,7 @@ Quick Startup
 
 To get the switch quickly working we recommend you to:
 
-1. Plug an Ethernet cable to the *Ethernet 100Mpbs Management Port*.
+1. Plug the *Ethernet 100Mpbs Management Port* of the switch to a DHCP network using RJ45 patch-cord.
 #. Plug the power cable to the *Power Plug*.
 
 After all connections have been made, toggle the power-switch on to turn
@@ -272,7 +332,7 @@ minicom -D /dev/ttyUSB1 -b 115200
 [^minicom]: In Debian-like distribution you can install minicom by executing
 `sudo apt-get install minicom`.
 
-> Note: ttyUSB0 and ttyUSB1 usally correspond respectively to FGPA and ARM UART.
+> ***Note***: ttyUSB0 and ttyUSB1 usally correspond respectively to FGPA and ARM UART.
 However this order can change dependably on how you plug the cable.
 
 Login via USB
@@ -338,10 +398,11 @@ by the one in your subnetwork.
 ![Putty - SSH connection](putty-SSH.png)
 
 
-Login using the Web Management Interface
+Login using the Web Management Interface (WMI)
 -----------------------
 
-If you want to access and manage the [WRS] using the web interface, it is necessary to connect the [WRS] manager ethernet port to your local network.
+If you want to access and manage the [WRS] using the web interface, it is necessary to connect the [WRS] manager ethernet port to
+your local network and obtain the IP as explained in [login via SSH](#login-via-ssh).
 The access should be carried out by a network browser (Mozilla Firefox and Google Chrome supported) as it follows:
 
 1. Open your browser and type the IP address (i.e. 192.168.1.50) of the [WRS]. By default, the network IP configuration
@@ -349,45 +410,25 @@ is provided by the DHCP server in the same network and can be retrieved from it.
 
 ![Web Management Interface - Login](wwwlogin.png)
 
-2. After accessing the [WMI], you should enter the web interface user and password, which is not
+2. After accessing the **WMI**, you should enter the web interface user and password, which is not
 same for the SSH connection, otherwise you will be only able to see the Dashboard info.
 By default the user is **admin** with no password. For this reason it is strongly recommended to change the password.
 
-In order to change the [WMI] password you just need to click on "**User: admin**" on the left side of the webpage.
+In order to change the **WMI** password you just need to click on "**User: admin**" on the left side of the webpage.
 You have to enter your username (**admin**), old password, new password and repeat the new password.
 Once you submit the new password you will be redirected to the main screen and logged out.
-
-
-After login:
--------------------
-
-Once you are logged in you can use various tools to monitor the [WRS].
-All these tools are found in `/wr/bin/` which is included in the `$PATH`.
-
-The following list resumes the most interesting commands:
-
- * `wrs_version`:	Print information about the SW & HW version of the [WRS].
- * `rtu_stat`:	Routing Table Unit Statistic, returns the routing table information where we can find which MAC needs to be forwarded to which port. It also allows to add and delete entries.
- * `wr_mon`:	WR Switch Sync Monitor, outputs information about the state of WR syncrhonisation such as Phase Tracking, Master-Slave delay, link asymmetry, etc...
- * `spll_dbg_proxy`: 	SoftPLL debug proxy, reads out the debug FIFO datastream from the SoftPLL and proxies it  via TCP connection to the application running on an outside host, where it can be plotted, analyzed, etc.
-
-> Note: More information about each tool can be obtain using the embedded help argument: `--help`, `-h` or `help`.
-
-#### Warning:
-The SFP ports are labeled from 1 to 18 on the front panel but their corresponding
-network interface are named from `wr0` to `wr17`.
 
 
 Web Management Interface Features:
 -------------------
 
-[WMI] is a web interface that allows the [WRS] management from a web browser. It displays the main configuration and status of the main services and programms that are available for the switch, such as endpoints' mode and calibration status, SFP calibration, PTP, SNMP, VLANs, etc. It acts as an abstraction layer between the back-end scritps and programs in */wr/bin/* folder, making the WR switch management easier for the user.
+**WMI** is a web interface that allows the [WRS] management from a web browser. It displays the main configuration and status of the main services and programms that are available for the switch, such as endpoints' mode and calibration status, SFP calibration, PTP, SNMP, VLANs, etc. It acts as an abstraction layer between the back-end scritps and programs in */wr/bin/* folder, making the WR switch management easier for the user.
 
 ![Web Management Interface - Switch Management](wwwmanagement.png)
 
-List of all the actions that can be performed by using the [WMI]:
+List of all the actions that can be performed by using the **WMI**:
 
-- Display info: IP configuration, switch HW/SW/GW description, WR date, PPSi status, SNMP server status, NTP server status.
+- Display info: HW information, services status and main configuration.
 - Stop/run services: PPSi, WRSW_HAL, NTP.
 - NTP server setup.
 - Modify endpoint wr_master/wr_slave mode.
@@ -405,9 +446,35 @@ List of all the actions that can be performed by using the [WMI]:
 - Flash firmware.
 - Backup firmware.
 
+If you want to know more about each section you can click the help icon
+that you will find on the top-right corner of each page.
+
+
+Console tools:
+-------------------
+
+Once you are logged via a terminal you can use various tools to monitor the [WRS].
+All these tools are found in `/wr/bin/` which is included in the `$PATH`.
+
+The following list resumes the most interesting commands:
+
+ * `wrs_version`:	Print information about the SW & HW version of the [WRS].
+ * `rtu_stat`:	Routing Table Unit Statistic, returns the routing table information where we can find which MAC needs to be forwarded to which port. It also allows to add and delete entries.
+ * `wr_mon`:	WR Switch Sync Monitor, outputs information about the state of WR syncrhonisation such as Phase Tracking, Master-Slave delay, link asymmetry, etc...
+ * `wrs_vlans`: 	Creation and configuration of VLANs.
+
+> ***Note:*** More information about the tools are explained in the [wrs-user-manual.pdf] or can be obtain using the embedded help argument: `--help`, `-h` or `help`.
+
+#### Warning:
+The SFP ports are labeled from 1 to 18 on the front panel but their corresponding
+network interface are named from `wr0` to `wr17`.
+
 
 Configurations
 ==================
+
+We strongly suggest you to configure the switch using the Web Management Interface.
+However if you prefer to configure it using a terminal just follow some examples below.
 
 
 Booting
@@ -427,11 +494,11 @@ Welcome on WRSv3 Boot Sequence
       5: reboot
 ~~~~~~~~~~~~~~~~~~~
 
-> Note: If you want to change how
+> ***Note:*** If you want to change how
 the [WRS] is booted you can place a `wrboot` script in your TFTP root
 folder and select the second option or you can edit the configuration
 (third option). Please find more explanations in the
-[Advanced configuration](#advanced-configuration)
+[wrs-user-manual.pdf]
 
 
 Non-DHCP user
@@ -458,7 +525,7 @@ iface eth0 inet static
 ~~~~~~~~~~~~~~
 
 
-> Note: If you are willing to use TFTP script in a non-DHCP network, you
+> ***Note:*** If you are willing to use TFTP script in a non-DHCP network, you
 must also statically set the IP in the bootloader configuration.
 
 
@@ -487,6 +554,7 @@ timing =  {
 };
 ~~~~~~
 
+Finally you need to connect the 10MHz and PPS from a clock source to the switch SMC inputs, and reboot the switch.
 
 For a more detailed explanation on how to configure and connect the switch as GrandMaster, please consult the
 [wr_external_reference.pdf] document.
@@ -495,37 +563,28 @@ For a more detailed explanation on how to configure and connect the switch as Gr
 [^viedit]: To edit in `vi`: `Ins` Insert text; `Esc` back to normal mode; `:wq` Save and Exit
 
 
-
 Firmware updates
 ------------------
 
-This section proposes a simple way to update the firmware of the [WRS]
-by flashing the memory using the *Management Mini-USB*[^flashlinux].
+Since the firmware v4.1 we have improved the update procedure and the
+switch is able to upgrade by itself.
 
-1. Download the [flashing package] and extract it.
-#. Download the [latest stable release] of the [WRS] firmware in a tar.gz package.
-#. Connect the *Management Mini-USB* port to the PC[^checkusb].
-#. Start the flashing procedure by executing in a linux console:
-`flash-wrs -e -m1 <MAC1> -m2 <MAC2> wr-switch-sw-<latest_version>.tar.gz`
-where MAC1 and MAC2 are written in the [back panel (label #21)](#back-panel-legend)
+Just copy the firmware you have donwload to the `/update` folder of the switch.
+For instance you can do:
 
-5. At this step you will be asked to restart the [WRS], using the *Power
-Switch*, while pressing the *Flash Button*.
-#. The flashing procedure should start and it takes some time to perform.
-#. The switch will restart by itself which means that the flashing operation
-has finished.
+	scp wr-switch-sw-v<X.X-YYYYMMDD>_binaries.tar root@192.168.1.50:/update/wrs-firmware.tar
 
-[^flashlinux]: The flashing operation is only available for linux environment, and
-it is recommended to use Debian-like distribution such as "Ubuntu"
+and then reboot the switch.
 
-[^checkusb]: Please, make sure that the managment USB port (ttyACM0)
-is not used by another process such as minicom.
+You can also use the `Advanced Mode > Firmware` menu in the Web Interface to perform this step.
+
+> ***Note:*** If you are upgrading from v3.3 or v4.0 please refer to the old manual.
 
 Advanced configuration
 -----------------------
 
 Please refer to the White Rabbit Switch: software build scripts manual
-([wr-switch-sw.pdf]) that explains advanced topics such as:
+([wrs-user-manual.pdf]) that explains advanced topics such as:
 
 * Advanced flashing options.
 * Configuring specific MAC address.
@@ -640,11 +699,14 @@ Specification
 Features
 ----------
 
-* PTPv2 (IEEE 1588-2008)
+* PTPv2 (IEEE 1588-2008) with PPSi
 * WRP daemon (node discovery, etc.)
+* VLANs
 * DHCP client
 * SSH server
 * Web Management Interface
+* SNMP
+* Rsyslog
 * Python Support
 * NTP Client/Relay/Server
 * ARP/ DNS / EtherWake protocol
@@ -739,7 +801,7 @@ References
 ==============
 
 * [wrs-3/18.pdf]: Datasheet for the White Rabbit Switch v3 - 18 SFPs
-* [wr-switch-sw.pdf]: Advanced documentation on how using the software
+* [wrs-user-manual.pdf]: User manual documentation of the tools.
 * [wr_external_reference.pdf]: Connect the [WRS] in GrandMaster mode.
 * [whiterabbitsolution]: White Rabbit as a complete timing solutions
 * [WRS Wiki]: White Rabbit Switch Wiki on ohwr.org
@@ -750,16 +812,15 @@ References
 * [flashing package]: http://www.sevensols.com/dl/wrs-flashing/latest_stable.tar.gz
 
 
-
 <!-- List of links -->
 
 
 [whiterabbitsolution]: http://www.sevensols.com/whiterabbitsolution/
-[WRS]: http://www.sevensols.com/index.php?seccion=1410&subseccion=1435
+[WRS]: http://www.sevensols.com/en/products/wr-switch.html
 [WR Wiki]:	http://www.ohwr.org/projects/white-rabbit/wiki
 [WRS Wiki]:	http://www.ohwr.org/projects/white-rabbit/wiki/Switch
 [wr-switch-sw]: http://www.ohwr.org/projects/wr-switch-sw/
-[wr-switch-hdl]: http://www.ohwr.org/projects/wr-switch-sw/
+[wr-switch-hdl]: http://www.ohwr.org/projects/wr-switch-hdl/
 [wr-switch-hw]: http://www.ohwr.org/projects/wr-switch-hw/
 [wr-switch-testing]: http://www.ohwr.org/projects/wr-switch-testing
 [wr-starting-kit]: http://www.ohwr.org/projects/wr-starting-kit/
@@ -770,8 +831,7 @@ References
 [7S]: http://www.sevensols.com
 [Putty Tool]: http://www.putty.org/
 [WRS FAQ]: http://www.ohwr.org/projects/white-rabbit/wiki/FAQswitch
-[wr-switch-sw.pdf]: http://www.sevensols.com/dl/wr-switch-sw/latest_stable.pdf
+[wrs-user-manual.pdf]: http://www.sevensols.com/dl/wr-switch-sw/latest_stable.pdf
 [wr_external_reference.pdf]: http://www.ohwr.org/attachments/1647/wr_external_reference.pdf
 [wrs-3/18.pdf]: http://www.sevensols.com/whiterabbitsolution/files/7SP-WRS-3_18.pdf
 [latest stable release]: http://www.sevensols.com/dl/wr-switch-sw/bin/latest_stable.tar.gz
-[flashing package]: http://www.sevensols.com/dl/wrs-flashing/latest_stable.tar.gz
