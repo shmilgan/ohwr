@@ -565,8 +565,8 @@ function wrs_load_files(){
 function wrs_management(){
 	
 		$cmd =  htmlspecialchars($_POST["cmd"]); 
-		
-		
+
+
 		if(!strcmp($cmd, "halt")){
 			echo '<br><br><br></be>System is halting';
 			$output = shell_exec($cmd);
@@ -590,15 +590,32 @@ function wrs_management(){
 			
 		} else if (!empty($_FILES['file']['name'])){
 			$uploaddir = '/tmp/';
-			$uploadfile = $uploaddir . basename($_FILES['file']['name']);
+			$uploadfname= basename($_FILES['file']['name']);
+			$uploadfile = $uploaddir . $uploadfname;
 			echo '<pre>';
 			if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
 				echo '<p align=center ><font color="red"><br>Upgrade procedure will take place after reboot.<br>Please do not switch off the device during flashing procedure.</font></p>';
-				rename($uploadfile, "/update/".($_FILES['file']['name']));
-				//Reboot switch
-				shell_exec("reboot");
+				if ($uploadfname=="barebox.bin" || $uploadfname=="wrs-firmware.tar" || $uploadfname=="zImage")
+				{
+					rename($uploadfile, "/update/".($_FILES['file']['name']));
+					unlink($uploadfile);
+					//Reboot switch
+					shell_exec("$(sleep 10; reboot) &");
+				}
+				else if(substr($uploadfname,0,14)=="wr-switch-sw-v" && substr($uploadfname,-13)=="_binaries.tar")
+				{
+					rename($uploadfile, "/update/wrs-firmware.tar");
+					unlink($uploadfile);
+					//Reboot switch
+					shell_exec("$(sleep 10; reboot) &");
+				}
+				else
+				{
+					echo "<center class=\"error\">Incorrect filename, please choose a filename as:<br> barebox.bin, zImage, wrs-firmware.tar or wr-switch-sw-vX.X-YYYYMMDD_binaries.tar.</center>\n";
+					unlink($uploadfile);
+				}
 			}  else {
-				echo "<center>Something went wrong. File was not uploaded.</center>\n";
+				echo "<center class=\"error\">Something went wrong. File was not uploaded.</center>\n";
 			}
 
 			echo "</pre>";
