@@ -24,7 +24,7 @@
  * we are picking the correct header, because the library is only built
  * within the barebox source tree.
  */
-#if !defided(DECLARE_BITMAP) && !defined(__BAREBOX__)
+#if !defined(DECLARE_BITMAP) && !defined(__BAREBOX__)
 #  error "Please point LINUX to a source tree if you define __KERNEL__"
 #endif
 

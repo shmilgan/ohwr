@@ -14,12 +14,12 @@
 static struct sdbfs *sdbfs_list;
 
 /* All fields unused by the caller are expected to be zeroed */
-int sdbfs_dev_create(struct sdbfs *fs, int verbose)
+int sdbfs_dev_create(struct sdbfs *fs)
 {
 	unsigned int magic;
 
 	/* First, check we have the magic */
-	if (fs->data)
+	if (fs->data || (fs->flags & SDBFS_F_ZEROBASED))
 		magic = *(unsigned int *)(fs->data + fs->entrypoint);
 	else
 		fs->read(fs, fs->entrypoint, &magic, sizeof(magic));
@@ -33,8 +33,6 @@ int sdbfs_dev_create(struct sdbfs *fs, int verbose)
 		return -ENOTDIR;
 	}
 
-	if (verbose)
-		fs->flags |= SDBFS_F_VERBOSE;
 	fs->next = sdbfs_list;
 	sdbfs_list = fs;
 
@@ -77,7 +75,7 @@ static struct sdb_device *sdbfs_readentry(struct sdbfs *fs,
 	 * returns the pointer to the entry, which may be stored in
 	 * the fs structure itself. Only touches fs->current_record.
 	 */
-	if (fs->data) {
+	if (fs->data || (fs->flags & SDBFS_F_ZEROBASED)) {
 		if (!(fs->flags & SDBFS_F_CONVERT32))
 			return (struct sdb_device *)(fs->data + offset);
 		/* copy to local storage for conversion */
@@ -159,7 +157,7 @@ scan:
 	if (newdir) {
 		dev = scan_newdir(fs, depth);
 		if (dev)
-			return dev;
+			goto out;
 		/* Otherwise the directory is not there: no intercon */
 		if (!depth)
 			return NULL; /* no entries at all */
@@ -177,6 +175,9 @@ scan:
 	dev = fs->currentp = sdbfs_readentry(fs, fs->this[depth]);
 	fs->this[depth] += sizeof(*dev);
 	fs->nleft[depth]--;
+out:
+	fs->f_offset = fs->base[fs->depth]
+		+ htonll(fs->currentp->sdb_component.addr_first);
 	return dev;
 }
 
@@ -232,3 +233,31 @@ int sdbfs_close(struct sdbfs *fs)
 	return 0;
 }
 
+/* to "find" a device, open it, get the current offset, then close */
+unsigned long sdbfs_find_name(struct sdbfs *fs, const char *name)
+{
+	unsigned long offset;
+	int ret;
+
+	ret = sdbfs_open_name(fs, name);
+	if (ret < 0)
+		return (unsigned long)ret;
+
+	offset = fs->f_offset;
+	sdbfs_close(fs);
+	return offset;
+}
+
+unsigned long sdbfs_find_id(struct sdbfs *fs, uint64_t vid, uint32_t did)
+{
+	unsigned long offset;
+	int ret;
+
+	ret = sdbfs_open_id(fs, vid, did);
+	if (ret < 0)
+		return (unsigned long)ret;
+
+	offset = fs->f_offset;
+	sdbfs_close(fs);
+	return offset;
+}
