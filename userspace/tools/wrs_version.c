@@ -102,7 +102,8 @@ static char *sdb_get(char *fname, char *tagname)
 		drvdata.f = f;
 		i = sdbfs_dev_create(&sdb_instance);
 		if (i != 0) {
-			printf("Error accessing SDB filesystem in \"%s\"\n",
+			fprintf(stderr,
+				"Error accessing SDB filesystem in \"%s\"\n",
 			       SDBFS_NAME);
 			f = NULL;
 			return unknown;
