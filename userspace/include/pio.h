@@ -59,7 +59,6 @@ void shw_set_fp_led(int led, int state);
 
 int shw_pio_mmap_init();
 void shw_pio_toggle_pin(pio_pin_t* pin, uint32_t udelay);
-void shw_pio_configure_all();
 void shw_pio_configure(const pio_pin_t *pin);
 
 static inline void shw_pio_set(const pio_pin_t *pin, int state)
