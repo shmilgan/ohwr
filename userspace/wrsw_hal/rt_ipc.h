@@ -86,6 +86,8 @@ struct rts_pll_state {
 		int32_t phase_current;
 		/* TX-RX Loopback phase measurement in picoseconds. */
 		int32_t phase_loopback;
+		/* TX-Rx looback stable measurement of the phase*/
+		int32_t phase_good_val;
 		/* flags (per channel - see CHAN_xxx defines) */
 		uint32_t flags;
 	} channels[RTS_PLL_CHANNELS];
