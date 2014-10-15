@@ -25,7 +25,7 @@ GIT_USR = $(shell  git config --get-all user.name)
 CFLAGS =  -O2 -g -Wall \
 		-I$(LINUX)/include \
 		-I$(LINUX)/arch/arm/mach-at91/include \
-		-I../libptpnetif \
+		-I../libwr \
 		-I../wrsw_hal \
 		-I../wrsw_rtud \
 		-I../mini-rpc \
@@ -37,10 +37,9 @@ ifdef WRS_TOOLS_DEBUG
 endif
 
 LDFLAGS = -L../mini-rpc \
-		-L../libptpnetif \
-		-L../libswitchhw \
+		-L../libwr \
 		-L../libsdb \
-		-lminipc -lptpnetif -lswitchhw -lsdbfs -llua -lm -ldl
+		-lminipc -lwr -lsdbfs -llua -lm -ldl
 
 all: 	$(TOOLS)
 
