@@ -10,6 +10,9 @@
 
 #include "trace.h"
 
+static int32_t		i2c_bitbang_transfer(struct i2c_bus* bus, uint32_t address,  uint32_t to_write, uint32_t to_read, uint8_t* data);
+static int32_t		i2c_bitbang_scan(struct i2c_bus* bus, uint32_t address);
+
 int i2c_bitbang_init_bus(struct i2c_bus *bus)
 {
 	struct i2c_bitbang *priv;
@@ -37,7 +40,7 @@ int i2c_bitbang_init_bus(struct i2c_bus *bus)
 
 #define I2C_DELAY 4
 
-void mi2c_pin_out(pio_pin_t* pin, int state)
+static void mi2c_pin_out(pio_pin_t* pin, int state)
 {
        shw_pio_setdir(pin, state ? 0 : 1);
        shw_udelay(I2C_DELAY);
@@ -133,7 +136,7 @@ static uint8_t mi2c_get_byte(struct i2c_bitbang *bus, int ack)
  * \input address chip address on the bus
  * \output Return 1 (true) or 0 (false) if the bus has replied correctly
  */
-int32_t i2c_bitbang_scan(struct i2c_bus* bus, uint32_t address)
+static int32_t i2c_bitbang_scan(struct i2c_bus* bus, uint32_t address)
 {
 	if (!bus)
 		return I2C_NULL_PARAM;
@@ -154,7 +157,7 @@ int32_t i2c_bitbang_scan(struct i2c_bus* bus, uint32_t address)
 	return state ? 1: 0;
 }
  
-int	i2c_bitbang_transfer(i2c_bus_t* bus, uint32_t address, uint32_t to_write, uint32_t to_read, uint8_t* data)
+static int i2c_bitbang_transfer(i2c_bus_t* bus, uint32_t address, uint32_t to_write, uint32_t to_read, uint8_t* data)
 {
 	if (!bus)
 		return I2C_NULL_PARAM;
