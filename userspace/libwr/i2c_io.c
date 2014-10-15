@@ -148,10 +148,3 @@ uint8_t shw_get_fpga_type()
 	if(access("/wr/etc/lx240t.conf", F_OK) == 0) return SHW_FPGA_LX240T;
 	return SHW_FPGA_LX130T;
 }
-
-
-
-struct i2c_bus* shw_i2c_io_get_bus()
-{
-	return &i2c_io_bus;
-}
