@@ -3,6 +3,7 @@ TOOLS += mapper wmapper
 TOOLS += wrs_version wr_date wr_management lm32-vuart wrs_pstats
 TOOLS += wrs_vlans
 TOOLS += sdb-read
+TOOLS += nbtee
 
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 

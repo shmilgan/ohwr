@@ -59,7 +59,7 @@ mkdev_sh () {
 mkdev_sh "/sys/devices/virtual/misc/ubi_ctrl"
 
 
-TEE="busybox tee"; # often used.
+TEE="/bin/nbtee"; # often used. And non-blocking, in case ttyGS0 is unplugged
 
 # Installing is like updating, but there are more steps to do initially
 if $install; then

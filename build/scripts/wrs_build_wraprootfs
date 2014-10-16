@@ -108,6 +108,9 @@ mv $TMPFS/usr/sbin/ubi* $TMPFS/sbin
 # copy /etc to /usr/etc, where it can be edited (boot sequence copies back)
 cp -a $TMPFS/etc $TMPFS/usr/etc
 
+# copy non-blocking tee to /bin where it is used during boot
+cp $TMPFS/wr/bin/nbtee $TMPFS/bin
+
 (cd "$TMPFS" && tar cz . > $ROOTFS_IMAGE_TGZ)
 (cd "$TMPFS/usr" && tar cz . > $ROOTFS_USR_TGZ)
 # include /usr but nothing within usr
