@@ -19,12 +19,24 @@ if ! grep -q hwinfo /proc/mtd; then exit 0; fi
 # Is there sdb in there? If so, nothing to do.
 if /wr/bin/sdb-read /dev/mtd5ro > /dev/null; then exit 0; fi
 
+echo "Creating SDB filesystem in /dev/mtd5"
+
 # So, we must create an sdb file, we need the template
 cp /wr/etc/sdb-for-dataflash /tmp || exit 1
 
-# and we need the eth addresses
+# we need the eth addresses
 ethaddr=$(ifconfig eth0 | grep HWaddr | awk '{print $5}')
 wraddr=$(ifconfig wr0 | grep HWaddr | awk '{print $5}')
+
+# if we run this early (upgrade mess from v4.0) there is no wr0,
+# so pick if from the command line:
+if [ "x$wraddr" = "x" ]; then
+    wraddr=$(awk 'BEGIN {FS="="; RS=" "} /wr_nic.macaddr/ {print $2}' \
+	/proc/cmdline)
+fi
+# and, to be super-pedantic, if empty use default and don't corrupt hwinfo
+if [ "x$ethaddr" = "x" ]; then ethaddr="02:34:56:78:9A:BC"; fi
+if [ "x$wraddr"  = "x" ]; then  wraddr="02:34:56:78:9A:00"; fi
 
 # we lack sdb-write...
 sed -i s,02:34:56:78:9A:BC,$ethaddr, /tmp/sdb-for-dataflash
