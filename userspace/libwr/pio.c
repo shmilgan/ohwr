@@ -13,6 +13,7 @@
 #include "pio.h"
 #include "trace.h"
 #include "shw_io.h"
+#include "util.h"
 
 volatile uint8_t *_pio_base[4][NUM_PIO_BANKS+1];
 volatile uint8_t *_sys_base;

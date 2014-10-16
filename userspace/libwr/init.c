@@ -31,6 +31,7 @@ int shw_init()
 	assert_init(shw_init_fans());
 
 	TRACE(TRACE_INFO, "HW initialization done!");
+	return 0;
 }
 
 int shw_exit_fatal()

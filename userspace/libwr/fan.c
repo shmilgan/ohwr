@@ -32,11 +32,12 @@
 #include <at91_softpwm.h>
 
 #include "i2c.h"
+#include "i2c_io.h"
 #include "i2c_fpga_reg.h"
 #include "fpga_io.h"
 #include "shw_io.h"
 #include "spwm-regs.h"
-
+#include "util.h"
 
 #define FAN_TEMP_SENSOR_ADDR 0x4c
 
@@ -204,13 +205,12 @@ int shw_init_i2c_sensors()
 		TRACE(TRACE_FATAL, "can't initialize temperature sensors I2C bus.\n");
 		return -1;
 	}
+	return 0;
 }
 
 int shw_init_fans()
 {
-	uint8_t dev_map[128];
 	uint32_t val=0;
-	int detect, i;
 
 	//Set the type of PWM
 	if(shw_get_hw_ver()<330) is_cpu_pwn=1;

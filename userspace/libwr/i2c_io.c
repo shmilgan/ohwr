@@ -69,8 +69,6 @@ struct i2c_bus i2c_io_bus = {
 
 int shw_i2c_io_init(void)
 {
-	int i;
-
 	TRACE(TRACE_INFO, "Initializing IO I2C bus...%s",__TIME__);
 	if (i2c_init_bus(&i2c_io_bus) < 0) {
 		TRACE(TRACE_ERROR,"init failed: %s", i2c_io_bus.name);

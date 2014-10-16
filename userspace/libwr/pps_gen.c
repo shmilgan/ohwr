@@ -3,6 +3,7 @@
 /* Warning: references to "UTC" in the registers DO NOT MEAN actual UTC time, it's just a plain second counter
 	 It doesn't care about leap seconds. */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
@@ -40,13 +41,12 @@ int shw_pps_gen_init()
   ppsg_write(CR, cr | PPSG_CR_CNT_SET);
   ppsg_write(CR, cr);
   ppsg_write(ESCR, 0x6); /* enable PPS output */
+  return 0;
 }
 
 /* Adjusts the nanosecond (refclk cycle) counter by atomically adding (how_much) cycles. */
 int shw_pps_gen_adjust(int counter, int64_t how_much)
 {
-  uint32_t cr;
-
   TRACE(TRACE_INFO, "Adjust: counter = %s [%c%lld]", 
   	counter == PPSG_ADJUST_SEC ? "seconds" : "nanoseconds", how_much<0?'-':'+', abs(how_much));
 

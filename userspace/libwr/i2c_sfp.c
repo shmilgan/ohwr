@@ -13,8 +13,9 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-#include <pio.h>
-#include <trace.h>
+#include "pio.h"
+#include "trace.h"
+#include "util.h"
 
 #include "i2c.h"
 #include "i2c_sfp.h"
@@ -285,7 +286,7 @@ void shw_sfp_print_header(struct shw_sfp_header *head)
 	for (i = 0; i < 16; i++)
 		printf("%c", head->vendor_serial[i]);
 	printf("\n");
-	uint8_t *date = (uint8_t *)&head->date_code;
+
 	printf("Date Code: ");
 	for (i = 0; i < 8; i++)
 		printf("%c", head->date_code[i]);
@@ -429,7 +430,6 @@ void shw_sfp_gpio_set(int num, uint8_t state)
 	struct i2c_bus *bus;
 	uint8_t addr = 0x20;
 	uint8_t send[2];
-	uint8_t out = 0;
 	uint8_t curr;
 
 	id = shw_sfp_id(num);
@@ -568,11 +568,11 @@ int shw_sfp_read_db(char *filename)
 			lua_pop( L, 1 );
 			continue;
 		}
-		int i = 0;
+
 		const char *sfp_pn = 0;
 		const char *sfp_vs = 0;
-		int vals[2];
-		double alpha;
+		int vals[2] = {0, 0};
+		double alpha = 0;
 		lua_pushnil(L);
 		while (lua_next(L, -2)) {
 			const char *key = lua_tostring(L, -2);

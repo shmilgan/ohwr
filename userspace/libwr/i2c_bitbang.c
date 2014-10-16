@@ -52,6 +52,7 @@ static void mi2c_start(struct i2c_bitbang* bus)
        mi2c_pin_out(bus->scl, 0);
 }
 
+/* not used right now 
 static void mi2c_restart(struct i2c_bitbang* bus)
 {
        mi2c_pin_out(bus->sda, 1);
@@ -59,7 +60,7 @@ static void mi2c_restart(struct i2c_bitbang* bus)
        mi2c_pin_out(bus->sda, 0);
        mi2c_pin_out(bus->scl, 0);
 }
-
+*/
 
 static void mi2c_stop(struct i2c_bitbang* bus)
 {
