@@ -766,9 +766,6 @@ A plain @i{make} in
 @t{userspace/ppsi} will likely fail, because of
 missing environment variables. 
 
-Additionally,  the script installs headers for the HAL
-and @i{libptpnetif}.
-
 @c --------------------------------------------------------------------------
 @node User Space Applications
 @subsection User Space Applications
@@ -790,7 +787,7 @@ The main components are:
         to exchange information among themselves or query the LM32
         that is running on the FPGA.
 
-@item libswitchhw
+@item libwr
 
 	A series of utility functions to access the switch itself.
 
@@ -1757,7 +1754,7 @@ version. This setup is then read by the software in order to load
 the correct FPGA binaries and use the proper I/Os. Please be aware 
 that if you upgrade your SCB from LX130T to LX240T but keep the same 
 backplane you might need to change the DIP switch configuration. 
-Check the code from @code{userspace/libswitchhw/i2c_io.c} code to 
+Check the code from @code{userspace/libwr/i2c_io.c} code to 
 know how to reconfigure the DIP switch for you upgraded device.
 
 For example, the v3.3 backplane with v3.3 LX240T SCB must be configured as bellow:
@@ -1812,6 +1809,6 @@ on the mailing list if you don't find help there.
 @c  LocalWords:  Tomasz Wlostowski buildroot distclean defconfig wrswitch REPO
 @c  LocalWords:  menuconfig config dataflash whiterabbit stdout stderr svnsync
 @c  LocalWords:  filesystem diff ohwr http mkdir linux rubini itemize PTPd VHDL
-@c  LocalWords:  noposix ptpd userspace libswitchhw DataFlash NAND barebox FPGA
+@c  LocalWords:  noposix ptpd userspace libwr DataFlash NAND barebox FPGA
 @c  LocalWords:  Atmel Kconfig minicom tinyserial ttyUSB bootloader logfile
 @c  LocalWords:  nandflash gateware TFTP init wrboot wiki

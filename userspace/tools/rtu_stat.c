@@ -115,7 +115,7 @@ int fetch_rtu_vd(rtudexp_vd_entry_t *d, int *n_entries)
 /**
  * \brief Write mac address into a buffer to avoid concurrent access on static variable.
  */
-//TODO: already defined in wrsw_rtud lib but we do not link to it. 3 opts: make it inline, move to libswitchhw or link to the rtud lib?
+//TODO: already defined in wrsw_rtud lib but we do not link to it. 3 opts: make it inline, move to libwr or link to the rtud lib?
 char *mac_to_buffer(uint8_t mac[ETH_ALEN],char buffer[ETH_ALEN_STR])
 {
  	if(mac && buffer)

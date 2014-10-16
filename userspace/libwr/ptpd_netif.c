@@ -504,8 +504,6 @@ int ptpd_netif_recvfrom(wr_socket_t *sock, wr_sockaddr_t *from, void *data,
 	return ret - sizeof(struct ethhdr);
 }
 
-/* We don't need these functions in V3/spec anymore - the transceivers are deterministic! */
-
 int ptpd_netif_adjust_counters(int64_t adjust_sec, int32_t adjust_nsec)
 {
 	hexp_pps_params_t p;

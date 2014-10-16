@@ -685,6 +685,6 @@ on the mailing list if you don't find help there.
 @c  LocalWords:  Tomasz Wlostowski buildroot distclean defconfig wrswitch REPO
 @c  LocalWords:  menuconfig config dataflash whiterabbit stdout stderr svnsync
 @c  LocalWords:  filesystem diff ohwr http mkdir linux rubini itemize PTPd VHDL
-@c  LocalWords:  noposix ptpd userspace libswitchhw DataFlash NAND barebox FPGA
+@c  LocalWords:  noposix ptpd userspace libwr DataFlash NAND barebox FPGA
 @c  LocalWords:  Atmel Kconfig minicom tinyserial ttyUSB bootloader logfile
 @c  LocalWords:  nandflash gateware TFTP init wrboot wiki

@@ -85,7 +85,7 @@ wr_rtu.h:
     ============
 
 ../include
-../libswitchhw
+../libwr
 ../../kernel/include/
 
 The support for the RTU IRQ is implemented in the package "wr_rtu" at 

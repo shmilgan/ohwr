@@ -213,12 +213,6 @@ As a side effect, a file-based interface allows off-switch simulation
 and development (which includes simulating errors to test error paths in
 the actual code).
 
-@item Whether or not we port some stuff in kernel space, we need to have
-a single @i{libwr}, to merge and replace @i{libptpnetif} and
-@i{libswitchhw}.  The role of each of them is not really clear to
-developers at this point, and using a single library will simplify
-building the tools;
-
 @item While merging the libraries, we should seriously audit them.
 Some functions do nothing, some are never called, and some are only
 used withing the @i{hal} process, so there's no need to have them
