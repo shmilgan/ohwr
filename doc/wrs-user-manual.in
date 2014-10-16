@@ -175,10 +175,27 @@ need to be aware of the steps involved, in case something goes wrong.
 Version 4.0 and later of @t{wr-switch-sw} are able to upgrade
 themselves if you place the profer files in the @i{/update} directory
 of the @sc{wrs}.  However, in version 4.0 we forgot to provide for
-an upgrade of the boot loader.
+an upgrade of the boot loader and didn't note that if the fron USB
+cable is not plugged, the upgrade procedure blocks.
 
-To upgrade from version 4.0, therefore, the procedure is the following
-one:
+This latter problem happens because messages are written to the
+management USB port, to help people flashing from scratch, and the
+write is a blocking one by default: if nobody collects the USB data,
+the system waits for a recipient. With version 4.1.1 we fixed the
+problem, using non-blocking operations; we'd better loose messages
+than block installation because nobody is reading.
+
+Thus, there are two different ways to upgrade; which one
+you prefer we can't tell. Both work, each with its own drawbacks.
+Each of them preserves the current MAC addresses.
+
+@c =-------------------------------------------------------------------------
+@node Upgrading from v4.0 with the USB cable
+@subsection Upgrading from v4.0 with the USB cable
+
+This is the procedure if you are able to walk to your @sc{wrs} and
+connect to the management USB port, even if the port is not
+actually used:
 
 @itemize @bullet
 
@@ -195,42 +212,53 @@ one:
 
 @end itemize
 
-What follows is a details description of what is happening during
-the update, so you can follow the steps without being too
-scared (I usually am...):
+We save you from the long description of what is happening in the
+various steps. If needed, it is in the @i{git} history of @t{wr-switch-sw},
+at release point @t{v4.1}.
 
-@itemize @bullet
 
-   @item The first time you reboot, the on-switch v4.0 boot scripts
-   will replace the complete filesystem, the kernel and the @i{initramfs}
-   -- but not the boot loader.  Having replaced the kernel, it
-   reboots to make it active.
+@c =-------------------------------------------------------------------------
+@node Upgrading from v4.0 remotely
+@subsection Upgrading from v4.0 remotely
 
-   @item At this point in time, we are running the 4.0 boot loader,
-   that knows its own MAC addresses in the old ugly way, with a 4.1
-   kernel and filesystem.
+If you can't walk to the switch, the procedure is faster but more
+commands need to be typed on the root shell of the switch.  We
+support a single upgrade provided you change the kernel and initial
+filesystem before rebooting.
 
-   @item The v4.1 boot procedure includes a script to create @i{hwinfo}
-   and save it to flash using the current MAC addresses, if no
-   valid @i{hwinfo} exists.  Thus, after
-   the system is booted, @i{hwinfo} is in place, even if the boot loader
-   is not using it.
+@itemize
 
-   @item Now you place @t{wrs-firmware.tar} into @i{/update}
-   a second time, to replace the boot loader using the v4.1
-   upgrade scripts.  (As an alternative, you can just place
-   @t{barebox.bin} into @i{/update}, as v4.1 looks for such file name).
+   @item Copy your own @t{wrs-firmware.tar} for v4.1 into the @i{/update}
+   partition. This can be the official firwmare or one you built yourself.
 
-   @item When booting, the contents of @i{/update} are
-   processed by the v4.1 boot scripts, which install everything
-   included in @t{wrs-firmware.tar}, including the boot
-   loader.
+   @item Create and mount @i{/boot} within the switch. This means
+   running the following commands in @i{ssh}:
 
-   @item When the system automatically reboots to finalize the second
-   upgrade, you are running the new boot loader, that retrieves your MAC
-   addresses from the @i{hwinfo} partition.
+      @t{mkdir /boot}
+
+      @t{mount -t ubifs ubi0:boot /boot}
+
+   @item Copy @t{wrs-initramfs.gz} (which is to be found inside
+   @t{wrs-firmware.tar}) to the @i{/boot} partition just mounted.  This
+   ensures the new upgrade procedure will run, the one that doesn't block
+   if the USB cable is unplugged.
+
+   @item Copy @t{zImage} (again, to be found inside
+   @t{wrs-firmware.tar}) to the @i{/boot} partition.  This is need to
+   be able to access the @i{hwinfo} partition at next boot.
+
+   @item Reboot and wait for everything to settle (the system will reboot
+   once more by itself after upgrading everything).  The MAC addresses
+   will be saved to @i{hwinfo} during the update procedure, thanks to
+   the new kernel and new boot procedure you manually  copied to @i{/boot}.
 
 @end itemize
+
+@b{Note:} if you forget to place the new kernel or @t{wrs-initramfs.gz}
+in @i{/boot}, no big damage will happen, but you'll have lost your
+MAC address for the @sc{wr} ports.  You'll find a randomly-chosen value,
+that will however be persistent over reboot (because it is saved to
+@i{hwinfo} after you boot with the new kernel.
 
 @c ==========================================================================
 @node Upgrading from v3.x
