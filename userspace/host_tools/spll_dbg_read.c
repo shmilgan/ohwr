@@ -54,7 +54,8 @@ char event[][20] = {{"non       "}, // 0
                     {"Locked    "}}; // 2
                     
 __attribute__((packed)) struct fifo_entry {
-	uint32_t value;
+// 	uint32_t value;
+	int value;
 	uint16_t seq_id;
 };
 #define F_ALL 0xFF;
@@ -69,6 +70,7 @@ struct pll_stat {
 	int period;
 	int flags;
 	int printed;
+	int mark_event;
 };
 int term_get(void)
 {
@@ -84,6 +86,18 @@ int term_get(void)
 		exit(0);
 	return q;
 }
+struct pll_stat clear_stat={-1,0,0,0,0,0,0,0,0,0};
+// int convertNumber(unsigned int value) { return (unsigned char)(-value); } 
+
+int convertNumber(unsigned int value)
+{
+    int bitLength = 24;
+    int signedValue = value;
+    if (value >> (bitLength - 1))
+        signedValue |= -1 << bitLength;
+    return signedValue;
+}
+
 void print_pll(struct pll_stat *s,FILE *f)
 {
     if((s->flags >> DBG_SAMPLE_ID) & 0x1) fprintf(f,"%10d",s->sample_id); else fprintf(f,"%10d",0);
@@ -93,36 +107,43 @@ void print_pll(struct pll_stat *s,FILE *f)
     if((s->flags >> DBG_REF)       & 0x1) fprintf(f,"%10d",s->setpoint);  else fprintf(f,"%10d",0);
     if((s->flags >> DBG_PERIOD)    & 0x1) fprintf(f,"%10d",s->period);    else fprintf(f,"%10d",0);
     fprintf(f,"\n");
+    printf("printed");
 }
 
-int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int what)
+int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int what, int mark_event)
 {
     if(s->seq_id == seq_id)
         s->flags = s->flags | 0x1 << what;
-    else if (seq_id >=0)
+    else if (seq_id >0)
     {
-        print_pll(s,f); // print previous
+        if(s->seq_id>0) 
+           print_pll(s,f); // print previous
         s->y = 0; s->err = 0; s->tag = 0; s->setpoint = 0; s->period = 0; s->sample_id = 0;
         s->flags  = 0x1 << what;
         s->seq_id = seq_id;
     }
     else
         return -1;
+    
+    s->mark_event = 0;
+    if(what == DBG_Y)         s->y         = value; 
+    if(what == DBG_ERR)       s->err       = convertNumber(value); 
+    if(what == DBG_TAG)       s->tag       = value; 
+    if(what == DBG_REF)       s->setpoint  = value; 
+    if(what == DBG_PERIOD)    s->period    = value; 
+    if(what == DBG_SAMPLE_ID) s->sample_id = value; 
+    if(what == DBG_EVENT && (0xf & value) == mark_event) s->mark_event;
 
-    if(what == DBG_Y)         s->y         = value;
-    if(what == DBG_ERR)       s->err       = value;
-    if(what == DBG_TAG)       s->tag       = value;
-    if(what == DBG_REF)       s->setpoint  = value;
-    if(what == DBG_PERIOD)    s->period    = value;
-    if(what == DBG_SAMPLE_ID) s->sample_id = value;
-
-    printf("seq=%d | %d , val=%d , what=%d flags=0x%x [%d, %d, %d, %d, %d, %d]\n",
+    printf("seq=%6d | %6d , val=%8d , what=%d flags=0x%x [%8d, %8d, %8d, %8d, %8d, %8d]\n",
     seq_id,s->seq_id, value, what, s->flags,s->y, s->err, s->tag, s->setpoint, s->period,s->sample_id);
     return 0;
 }
 
 int main(int argc, char *argv[])
 {
+    
+    int mark_event=0;
+    
     int sd, rc, length = sizeof(int);
     struct sockaddr_in serveraddr;
     char server[255];
@@ -131,11 +152,14 @@ int main(int argc, char *argv[])
     int totalcnt = 0;
     FILE *mPLL, *bPLL, *hPLL;
     struct pll_stat mpll_stat, bpll_stat, hpll_stat;
+    mpll_stat=clear_stat;
+    bpll_stat=clear_stat;
+    hpll_stat=clear_stat;
     struct hostent *hostp;
     
-    mpll_stat.seq_id=-1; 
-    bpll_stat.seq_id=-1;
-    hpll_stat.seq_id=-1;
+    mpll_stat.seq_id=0; 
+    bpll_stat.seq_id=0;
+    hpll_stat.seq_id=0;
 
 
     if((sd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -218,27 +242,28 @@ int main(int argc, char *argv[])
            printf("Read %d byes of data\n", rc);
            for(i=0;i<ENTRIES_PER_PACKET;i++)
            {
-//               printf("[ID:%8d] VAL:0x%8x | ", tx_buf[i].seq_id, tx_buf[i].value);
-//               printf("%s [0x%x] %s [0x%x] :",
-//                  where[0x7 & (tx_buf[i].value>>28)], (0x7 & (tx_buf[i].value>>28)),
-//                  what [0xF & (tx_buf[i].value>>24)], (0xF & (tx_buf[i].value>>24)));
-//               if( (0xF & (tx_buf[i].value>>24)) == DBG_EVENT) 
-//                  printf("%s [0x%x] \n", 
-//                     event[(0x00000f & tx_buf[i].value)],(0x00000f & tx_buf[i].value));
-//               else
-//                  printf("%8d \n", (0xffffff & tx_buf[i].value));
-//               if(0x80000000 &  tx_buf[i].value)
-//                   printf("-------------------------------------------------------------------------\n");
-              if(0x7 & (tx_buf[i].value>>28) == DBG_MAIN)
-                 process(&mpll_stat, mPLL, tx_buf[i].seq_id,(0xffffff & tx_buf[i].value) , (0xF & (tx_buf[i].value>>24)));
-              if(0x7 & (tx_buf[i].value>>28) == DBG_HELPER)
-                 process(&hpll_stat, hPLL, tx_buf[i].seq_id,(0xffffff & tx_buf[i].value) , (0xF & (tx_buf[i].value>>24)));
-              if(0x7 & (tx_buf[i].value>>28) == DBG_BACKUP)
-                 process(&bpll_stat, bPLL, tx_buf[i].seq_id,(0xffffff & tx_buf[i].value) , (0xF & (tx_buf[i].value>>24)));
+              int value = (0xffffff & tx_buf[i].value);
+              printf("[ID:%8d] VAL:0x%8x | ", tx_buf[i].seq_id, tx_buf[i].value);
+              printf("%s [0x%x] %s [0x%x] :",
+                 where[0x7 & (tx_buf[i].value>>28)], (0x7 & (tx_buf[i].value>>28)),
+                 what [0xF & (tx_buf[i].value>>24)], (0xF & (tx_buf[i].value>>24)));
+              if( (0xF & (tx_buf[i].value>>24)) == DBG_EVENT) 
+                 printf("%s [0x%x] \n", 
+                    event[(0x00000f & tx_buf[i].value)],(0x00000f & value));
+              else
+                 printf("%8d\n", value);
+              if(0x80000000 &  tx_buf[i].value)
+                  printf("-------------------------------------------------------------------------\n");
+              if((0x7 & (tx_buf[i].value>>28)) == DBG_MAIN)
+                 process(&mpll_stat, mPLL, tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event); else
+              if((0x7 & (tx_buf[i].value>>28)) == DBG_HELPER)
+                 process(&hpll_stat, hPLL, tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event); else
+              if((0x7 & (tx_buf[i].value>>28)) == DBG_BACKUP)
+                 process(&bpll_stat, bPLL, tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event);
           }
         }
-        int c = term_get();
-        if(c=='q') break;
+//         int c = term_get();
+//         if(c=='q') break;
     }
     close(sd);
     fclose(mPLL);
