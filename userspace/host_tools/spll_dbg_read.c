@@ -32,7 +32,8 @@
 
 #define DBG_EVT_START 1       /* PLL has just started */
 #define DBG_EVT_LOCKED 2      /* PLL has just become locked */
-#define DBG_EVT_SWITCHOVER 3
+#define DBG_EVT_SWITCHOVER 4
+#define DBG_EVT_STARTBACKUP 8
 
 const char *tab_content = "        ID,        y,      err,      tag, setpiont,   period\n";
 
@@ -54,7 +55,12 @@ char where[][10] = {{"mPLL : "}, // 0
 char event[][20] = {{"non       "}, // 0
                     {"Start PLL "}, // 1
                     {"Locked    "}, // 2
-                    {"Switchover"}
+                    {"          "}, // 3
+                    {"Switchover"}, // 4
+                    {"          "}, // 5
+		     {"          "}, // 6
+		     {"          "}, // 7
+		     {"Start bckp"}  // 8
                     }; 
                     
 __attribute__((packed)) struct fifo_entry {
@@ -75,6 +81,7 @@ struct pll_stat {
 	int flags;
 	int printed;
 	int mark_event;
+	int event;
 };
 int term_get(void)
 {
@@ -109,6 +116,11 @@ void print_pll(struct pll_stat *s,FILE *f)
        fprintf(f,"====================== switchover  ===================\n"); 
        return;
     }
+    if(((s->flags >> DBG_EVENT)     & 0x1) && s->event == DBG_EVT_STARTBACKUP) 
+    {
+       fprintf(f,"====================== star backup  ===================\n"); 
+       return;
+    }
     if((s->flags >> DBG_SAMPLE_ID) & 0x1) fprintf(f,"%10d",s->sample_id); else fprintf(f,"%10d",0);
     if((s->flags >> DBG_Y)         & 0x1) fprintf(f,"%10d",s->y);         else fprintf(f,"%10d",0);
     if((s->flags >> DBG_ERR)       & 0x1) fprintf(f,"%10d",s->err);       else fprintf(f,"%10d",0);
@@ -141,6 +153,7 @@ int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int wh
     if(what == DBG_REF)       s->setpoint  = value; 
     if(what == DBG_PERIOD)    s->period    = value; 
     if(what == DBG_SAMPLE_ID) s->sample_id = value; 
+    if(what == DBG_EVENT)     s->event     = 0xF & value; 
     if(what == DBG_EVENT && (0xf & value) == mark_event) s->mark_event = 1;
 
 //     printf("seq=%6d | %6d , val=%8d , what=%d flags=0x%x [%8d, %8d, %8d, %8d, %8d, %8d]\n",
