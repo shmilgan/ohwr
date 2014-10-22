@@ -20,9 +20,10 @@
 #define DBG_ERR 1
 #define DBG_TAG 2
 #define DBG_REF 5
-#define DBG_PERIOD 3
+#define DBG_AVG_L 3
 #define DBG_EVENT 4
 #define DBG_SAMPLE_ID 6
+#define DBG_AVG_S 7
 
 #define DBG_HELPER 0x2       /* Sample source: Helper PLL */
 #define DBG_EXT 0x4          /* Sample source: External Reference PLL */
@@ -35,15 +36,16 @@
 #define DBG_EVT_SWITCHOVER 4
 #define DBG_EVT_STARTBACKUP 8
 
-const char *tab_content = "        ID,        y,      err,      tag, setpiont,   event\n";
+const char *tab_content = "        ID,        y,      err,      tag, setpiont,   event,   avg_l,     avg_s\n";
 
 char what[][20] = {{"Y         : "}, // 0
                    {"ERROR     : "}, // 1
                    {"TAG       : "}, // 2
-                   {"PERIOD    : "}, // 3
+                   {"AVG LONG  : "}, // 3
                    {"EVENT     : "}, // 4
                    {"REFERENCE : "}, // 5
-                   {"SAMPLE ID : "}};// 6 
+                   {"SAMPLE ID : "},  // 6 
+                   {"AVG SHORT : "}};// 7 
 
 char where[][10] = {{"mPLL : "}, // 0
                     {"bPLL : "}, // 1
@@ -77,7 +79,8 @@ struct pll_stat {
 	int tag;
 	int y;
 	int err;
-	int period;
+	int avg_l;
+	int avg_s;
 	int flags;
 	int printed;
 	int mark_event;
@@ -98,7 +101,7 @@ int term_get(void)
 		exit(0);
 	return q;
 }
-struct pll_stat clear_stat={-1,0,0,0,0,0,0,0,0,0,0};
+struct pll_stat clear_stat={-1,0,0,0,0,0,0,0,0,0,0,0,0};
 // int convertNumber(unsigned int value) { return (unsigned char)(-value); } 
 
 int convertNumber(unsigned int value)
@@ -130,6 +133,8 @@ void print_pll(struct pll_stat *s,FILE *f)
     if((s->flags >> DBG_TAG)       & 0x1) fprintf(f,"%10d",s->tag);       else fprintf(f,"%10d",0);
     if((s->flags >> DBG_REF)       & 0x1) fprintf(f,"%10d",s->setpoint);  else fprintf(f,"%10d",0);
     if((s->flags >> DBG_EVENT)     & 0x1) fprintf(f,"%10d",s->mark_event);else fprintf(f,"%10d",0);
+    if((s->flags >> DBG_AVG_L)     & 0x1) fprintf(f,"%10d",s->avg_l);     else fprintf(f,"%10d",0);
+    if((s->flags >> DBG_AVG_S)     & 0x1) fprintf(f,"%10d",s->avg_s);     else fprintf(f,"%10d",0);
     
 //     if((s->flags >> DBG_PERIOD)    & 0x1) fprintf(f,"%10d",s->period);    else fprintf(f,"%10d",0);
 
@@ -144,7 +149,7 @@ int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int wh
     {
         if(s->seq_id>0) 
            print_pll(s,f); // print previous
-        s->y = 0; s->err = 0; s->tag = 0; s->setpoint = 0; s->period = 0; s->sample_id = 0; s->event=0;
+        s->y = 0; s->err = 0; s->tag = 0; s->setpoint = 0; s->avg_l = 0; s->avg_s = 0; s->sample_id = 0; s->event=0;
         s->flags  = 0x1 << what;
         s->seq_id = seq_id;
     }
@@ -156,7 +161,8 @@ int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int wh
     if(what == DBG_ERR)       s->err       = convertNumber(value); 
     if(what == DBG_TAG)       s->tag       = value; 
     if(what == DBG_REF)       s->setpoint  = value; 
-    if(what == DBG_PERIOD)    s->period    = value; 
+    if(what == DBG_AVG_L)     s->avg_l     = convertNumber(value); 
+    if(what == DBG_AVG_S)     s->avg_s     = convertNumber(value); 
     if(what == DBG_SAMPLE_ID) s->sample_id = value; 
     if(what == DBG_EVENT)     s->event     = 0xF & value; 
     if(what == DBG_EVENT && (0xf & value) == mark_event) s->mark_event = 1;
