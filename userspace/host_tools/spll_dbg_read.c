@@ -35,7 +35,7 @@
 #define DBG_EVT_SWITCHOVER 4
 #define DBG_EVT_STARTBACKUP 8
 
-const char *tab_content = "        ID,        y,      err,      tag, setpiont,   period\n";
+const char *tab_content = "        ID,        y,      err,      tag, setpiont,   event\n";
 
 char what[][20] = {{"Y         : "}, // 0
                    {"ERROR     : "}, // 1
@@ -82,6 +82,7 @@ struct pll_stat {
 	int printed;
 	int mark_event;
 	int event;
+	int record;
 };
 int term_get(void)
 {
@@ -97,7 +98,7 @@ int term_get(void)
 		exit(0);
 	return q;
 }
-struct pll_stat clear_stat={-1,0,0,0,0,0,0,0,0,0};
+struct pll_stat clear_stat={-1,0,0,0,0,0,0,0,0,0,0};
 // int convertNumber(unsigned int value) { return (unsigned char)(-value); } 
 
 int convertNumber(unsigned int value)
@@ -111,22 +112,26 @@ int convertNumber(unsigned int value)
 
 void print_pll(struct pll_stat *s,FILE *f)
 {
-    if(((s->flags >> DBG_EVENT)     & 0x1) && s->mark_event) 
-    {
-       fprintf(f,"====================== switchover  ===================\n"); 
-       return;
-    }
-    if(((s->flags >> DBG_EVENT)     & 0x1) && s->event == DBG_EVT_STARTBACKUP) 
-    {
-       fprintf(f,"====================== star backup  ===================\n"); 
-       return;
-    }
+//     if(((s->flags >> DBG_EVENT)     & 0x1) && s->mark_event) 
+//     {
+//        fprintf(f,"====================== switchover  ===================\n"); 
+//        return;
+//     }
+//     if(((s->flags >> DBG_EVENT)     & 0x1) && s->event == DBG_EVT_STARTBACKUP) 
+//     {
+//        fprintf(f,"====================== star backup  ===================\n"); 
+//        return;
+//     }
+    if(s->record == 0) return;
+    
     if((s->flags >> DBG_SAMPLE_ID) & 0x1) fprintf(f,"%10d",s->sample_id); else fprintf(f,"%10d",0);
     if((s->flags >> DBG_Y)         & 0x1) fprintf(f,"%10d",s->y);         else fprintf(f,"%10d",0);
     if((s->flags >> DBG_ERR)       & 0x1) fprintf(f,"%10d",s->err);       else fprintf(f,"%10d",0);
     if((s->flags >> DBG_TAG)       & 0x1) fprintf(f,"%10d",s->tag);       else fprintf(f,"%10d",0);
     if((s->flags >> DBG_REF)       & 0x1) fprintf(f,"%10d",s->setpoint);  else fprintf(f,"%10d",0);
-    if((s->flags >> DBG_PERIOD)    & 0x1) fprintf(f,"%10d",s->period);    else fprintf(f,"%10d",0);
+    if((s->flags >> DBG_EVENT)     & 0x1) fprintf(f,"%10d",s->mark_event);else fprintf(f,"%10d",0);
+    
+//     if((s->flags >> DBG_PERIOD)    & 0x1) fprintf(f,"%10d",s->period);    else fprintf(f,"%10d",0);
 
     fprintf(f,"\n");
 }
@@ -139,7 +144,7 @@ int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int wh
     {
         if(s->seq_id>0) 
            print_pll(s,f); // print previous
-        s->y = 0; s->err = 0; s->tag = 0; s->setpoint = 0; s->period = 0; s->sample_id = 0;
+        s->y = 0; s->err = 0; s->tag = 0; s->setpoint = 0; s->period = 0; s->sample_id = 0; s->event=0;
         s->flags  = 0x1 << what;
         s->seq_id = seq_id;
     }
@@ -155,6 +160,9 @@ int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int wh
     if(what == DBG_SAMPLE_ID) s->sample_id = value; 
     if(what == DBG_EVENT)     s->event     = 0xF & value; 
     if(what == DBG_EVENT && (0xf & value) == mark_event) s->mark_event = 1;
+    
+    if(what == DBG_EVENT && (0xf & value) == DBG_EVT_STARTBACKUP) s-> record = 1;
+//     if(what == DBG_EVENT && (0xf & value) == DBG_EVT_SWITCHOVER)  s-> record = 0;
 
 //     printf("seq=%6d | %6d , val=%8d , what=%d flags=0x%x [%8d, %8d, %8d, %8d, %8d, %8d]\n",
 //     seq_id,s->seq_id, value, what, s->flags,s->y, s->err, s->tag, s->setpoint, s->period,s->sample_id);
