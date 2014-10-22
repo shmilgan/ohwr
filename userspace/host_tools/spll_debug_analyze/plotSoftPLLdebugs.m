@@ -5,7 +5,7 @@ function [mpll, bpll, hpll, switchover] = plotSoftPLLdebugs(path_name, history_o
 % >0: don't print, other optinos use this functions as a part of another computations
 
 %  hack_offset = 510000;
-
+close all;
 
 if(history_offset <5000)
   disp('history_offset argument too small, make it min 5000')
@@ -22,9 +22,15 @@ hpll_tmp=load('-ascii', sprintf('%s/hPLL.txt',path_name), 'data');
 
 hack_offset = detectSwitchover(bpll_tmp,6) - 2*history_offset;
 
-mpll_cleared = outliers(mpll_tmp(hack_offset:end,:),[0.7, 0.7, 0, 0, 0, 0], 'mpll');
-bpll_cleared = outliers(bpll_tmp(hack_offset:end,:),[0.7, 0.7, 0, 0, 0, 0], 'bpll');
-hpll_cleared = outliers(hpll_tmp(hack_offset:end,:),[0.7, 0.7, 0, 0, 0, 0], 'hpll');
+threshold_vec = zeros(size(mpll_tmp,2));
+threshold_vec(1)=0.7;
+threshold_vec(2)=0.7;
+if(option == 2)
+  threshold_vec(4)=0.7;
+end
+mpll_cleared = outliers(mpll_tmp(hack_offset:end,:),threshold_vec, 'mpll');
+bpll_cleared = outliers(bpll_tmp(hack_offset:end,:),threshold_vec, 'bpll');
+hpll_cleared = outliers(hpll_tmp(hack_offset:end,:),threshold_vec, 'hpll');
 
 
 mpll_switchover = detectSwitchover(mpll_cleared,6)
@@ -65,9 +71,23 @@ hpll_switchover = detectSwitchover(hpll,6)
 
 %  finish_plots=length(bpll);
 
+if(option == 2)
+  start = switchover - 1000;
+  finish= switchover + 1000;
+  draw2(mpll, bpll, hpll, switchover, start, finish);
+  start = switchover - 500;
+  finish= switchover + 100;
+  draw2(mpll, bpll, hpll, switchover, start, finish);
+  start = switchover - 1000;
+  finish= switchover - 1;
+  draw2(mpll, bpll, hpll, switchover, start, finish);
+  return
+end
+
 if(option > 0)
   return
 end
+
 
 figure %1
 hold on;
