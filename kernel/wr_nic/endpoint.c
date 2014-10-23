@@ -16,14 +16,19 @@
 #include <linux/etherdevice.h>
 #include <linux/io.h>
 #include <linux/moduleparam.h>
+#include <linux/version.h>
 
 #include "wr-nic.h"
 
 static char *macaddr = "00:00:00:00:00:00";
 module_param(macaddr, charp, 0444);
 
-/* Copied from kernel 3.6 net/utils.c, it converts from MAC string to u8 array */
-static int mac_pton(const char *s, u8 *mac)
+/*
+ * Copied from kernel 3.6 net/utils.c, it converts from MAC string to u8 array.
+ * This is prototyped in <linux/kerne.h> as mac_pton() since 3.10.
+ * We rename it to be able tobuild with both newer and older kernels.
+ */
+static int wrs_mac_pton(const char *s, u8 *mac)
 {
 	int i;
 
@@ -229,7 +234,7 @@ int wrn_endpoint_probe(struct net_device *dev)
 	u32 val;
 
 	if (is_zero_ether_addr(wraddr)) {
-		err = mac_pton(macaddr, wraddr);
+		err = wrs_mac_pton(macaddr, wraddr);
 		if (err)
 			pr_err("wr_nic: probably invalid MAC address \"%s\".\n"
 			       "Use format XX:XX:XX:XX:XX:XX\n", macaddr);

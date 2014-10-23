@@ -38,9 +38,14 @@
 #include <linux/sched.h>
 #include <linux/wait.h>
 #include <linux/spinlock.h>
+#include <linux/io.h>
 
 #include "../wbgen-regs/rtu-regs.h"
 #include "wr_rtu.h"
+
+#ifndef NR_AIC_IRQS
+#define NR_AIC_IRQS 32 /* hack to build old-way with newer kernels */
+#endif
 
 #define DRV_MODULE_VERSION      "0.1"
 

@@ -1,6 +1,9 @@
 #ifndef __WR_PSTATS_H__
 #define __WR_PSTATS_H__
 
+#ifndef NR_AIC_IRQS
+#define NR_AIC_IRQS 32 /* hack to build old-way with newer kernels */
+#endif
 /*General VIC IRQ stuff*/
 #define FPGA_BASE_PSTATS 0x10058000
 #define WR_PSTATS_IRQ	3

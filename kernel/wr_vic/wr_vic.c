@@ -19,12 +19,20 @@
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
-#define DRV_NAME "wr_vic"
-#define PFX DRV_NAME ": "
+/* we want to work with different versions, but only 2.6.39 and 3.14 */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,0,0)
+#  define WRS_2_6_39
+#else
+#  define WRS_3_14
+#endif
+
+#define PFX KBUILD_MODNAME ": "
 
 #define WRVIC_NR_IRQS 32 /* We have 32 possible interrupt sources */
 
-/* The following stanza comes from <mach/irq.h>: */
+#ifdef WRS_2_6_39
+/* The following stanza comes from <mach/irq.h> (2.6.39): */
      /*
       * IRQ interrupt symbols are the AT91xxx_ID_* symbols
       * for IRQs handled directly through the AIC, or else the AT91_PIN_*
@@ -33,8 +41,11 @@
      #define NR_IRQS         (NR_AIC_IRQS + (5 * 32))
       */
 /* Therefore, we must have a bigger NR_IRQS and can't work otherwise */
-#if NR_IRQS < (NR_AIC_IRQS + (5 * 32) + WRVIC_NR_IRQS)
-#error "Please fix the kernel to allow for WR-VIC interrupts"
+#  if NR_IRQS < (NR_AIC_IRQS + (5 * 32) + WRVIC_NR_IRQS)
+#  error "Please fix the kernel to allow for WR-VIC interrupts"
+#  endif
+#else /* WRS_3_14 */
+#  define NR_AIC_IRQS 32 /* this is not published any more */
 #endif
 
 #define WRVIC_BASE_IRQ (NR_AIC_IRQS + (5 * 32)) /* top of GPIO interrupts */
@@ -130,6 +141,12 @@ static void wrvic_handler(unsigned int irq, struct irq_desc *desc)
 int __init wrvic_init(void)
 {
 	int i;
+
+	/* Refuse loading if the kernel doesn't allow our interrupt vectors */
+	if (nr_irqs < (NR_AIC_IRQS + (5 * 32) + WRVIC_NR_IRQS)) {
+		pr_err(PFX "please patch the kernel to allow extern irqs\n");
+		return -ENODEV;
+	}
 
 	wrvic_regs = ioremap(FPGA_BASE_WRVIC, FPGA_SIZE_WRVIC);
 	if (!wrvic_regs)
