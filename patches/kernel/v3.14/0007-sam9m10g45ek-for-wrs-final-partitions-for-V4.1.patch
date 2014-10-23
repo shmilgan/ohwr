@@ -1,0 +1,103 @@
+From ca3a5fd7b1297f61b2bc86e1dae101e7ab192140 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 7 Aug 2012 12:42:36 +0200
+Subject: [PATCH 07/11] sam9m10g45ek (for wrs): final partitions for V4.1
+
+[this is the combination of 3 commits in our initial v2.6.39 port]
+
+This changes the partitions in an incompatible way: then NAND
+now has one partition for barebox environment (1M: 5 blocks to
+protect against bad blocks) and one big partition fro UBI volumes.
+Real stuff is then split in UBI volumes. Please see documentation
+(in a later commit) for details.
+
+And hwinfo is not read-only, as we need to change it sometimes.
+Though rarely.
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ arch/arm/mach-at91/board-sam9m10g45ek.c |   45 ++++++++++++++++++++++++++++---
+ 1 files changed, 41 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index ec59291..210fe6e 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -26,6 +26,8 @@
+ #include <linux/leds.h>
+ #include <linux/atmel-mci.h>
+ #include <linux/delay.h>
++#include <linux/spi/flash.h>
++#include <linux/mtd/mtd.h>
+ 
+ #include <linux/platform_data/at91_adc.h>
+ 
+@@ -80,12 +82,47 @@ static struct usba_platform_data __initdata ek_usba_udc_data = {
+ /*
+  * SPI devices.
+  */
++static struct mtd_partition wrs_df_parts[] = {
++	{
++		.name	= "at91boot",
++		.offset	= 0,
++		.size	= 0x8400,
++	},
++	{
++		.name	= "Barebox",
++		.offset	= MTDPART_OFS_APPEND,
++		.size	= 0x84000,
++	},
++	{
++		.name	= "Barebox-Environment",
++		.offset	= MTDPART_OFS_APPEND,
++		.size	= 0x8400,
++	},
++	{
++		.name	= "hwinfo",
++		.offset	= MTDPART_OFS_APPEND,
++		.size	= 0x840,
++	},
++	{
++		.name	= "Available-dataflash",
++		.offset	= MTDPART_OFS_APPEND,
++		.size	= MTDPART_SIZ_FULL,
++	},
++};
++
++static struct flash_platform_data wrs_df_pdata = {
++	.name = "wrs-dataflash",
++	.parts = wrs_df_parts,
++	.nr_parts = ARRAY_SIZE(wrs_df_parts),
++};
++
+ static struct spi_board_info ek_spi_devices[] = {
+ 	{	/* DataFlash chip */
+ 		.modalias	= "mtd_dataflash",
+ 		.chip_select	= 0,
+ 		.max_speed_hz	= 15 * 1000 * 1000,
+ 		.bus_num	= 0,
++		.platform_data	= &wrs_df_pdata,
+ 	},
+ };
+ 
+@@ -124,13 +161,13 @@ static struct macb_platform_data __initdata ek_macb_data = {
+  */
+ static struct mtd_partition __initdata ek_nand_partition[] = {
+ 	{
+-		.name	= "Partition 1",
++		.name	= "Barebox-environment-backup",
+ 		.offset	= 0,
+-		.size	= SZ_64M,
++		.size	= SZ_1M,
+ 	},
+ 	{
+-		.name	= "Partition 2",
+-		.offset	= MTDPART_OFS_NXTBLK,
++		.name	= "UBIfied-NAND",
++		.offset	= 1 << 20,
+ 		.size	= MTDPART_SIZ_FULL,
+ 	},
+ };
+-- 
+1.7.7.2
+

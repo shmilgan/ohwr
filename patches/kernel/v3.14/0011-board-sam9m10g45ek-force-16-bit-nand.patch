@@ -1,0 +1,26 @@
+From e408575e6524eda8f069ae926a65989acb6f380b Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Thu, 23 Oct 2014 12:08:57 +0200
+Subject: [PATCH 11/11] board-sam9m10g45ek: force 16-bit nand
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ arch/arm/mach-at91/board-sam9m10g45ek.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index 2bd9540..8239b1c 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -205,7 +205,7 @@ static struct sam9_smc_config __initdata ek_nand_smc_config = {
+ 
+ static void __init ek_add_device_nand(void)
+ {
+-	ek_nand_data.bus_width_16 = board_have_nand_16bit();
++	ek_nand_data.bus_width_16 = 1;
+ 	/* setup bus-width (8 or 16) */
+ 	if (ek_nand_data.bus_width_16)
+ 		ek_nand_smc_config.mode |= AT91_SMC_DBW_16;
+-- 
+1.7.7.2
+

@@ -1,0 +1,65 @@
+From a9a975108f47597e51d924ec1c84ca2bc03fbbde Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Wed, 14 Sep 2011 11:23:29 +0200
+Subject: [PATCH 01/11] wrs3 changes to g45ek
+
+- Cherry-picked from v2.6.39 patch
+- Fixed the conflict
+- Fixed use of at91_sys_write, replaced with a call to
+   sam9_smc_configure() as this is the new suggested cleaner way
+   to pass configuration information.
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ arch/arm/mach-at91/board-sam9m10g45ek.c |   35 +++++++++++++++++++++++++++++++
+ 1 files changed, 35 insertions(+), 0 deletions(-)
+
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index ef39078..99e5c73 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -498,6 +498,41 @@ static void __init ek_board_init(void)
+ 	at91_pwm_leds(ek_pwm_led, ARRAY_SIZE(ek_pwm_led));
+ 	/* Other platform devices */
+ 	platform_add_devices(devices, ARRAY_SIZE(devices));
++
++	{ /* Configure the EBI1 pins for the wr switch */
++		static struct sam9_smc_config __initdata wr_fpga_smc_config = {
++			.ncs_read_setup		= 2,
++			.nrd_setup		= 4,
++			.ncs_write_setup	= 2,
++			.nwe_setup		= 0,
++
++			.ncs_read_pulse		= 34,
++			.nrd_pulse		= 30,
++			.ncs_write_pulse	= 34,
++			.nwe_pulse		= 30,
++
++			.read_cycle		= 40,
++			.write_cycle		= 40,
++
++			.tdf_cycles		= 0,
++			.mode			=
++				AT91_SMC_READMODE | AT91_SMC_WRITEMODE |
++				AT91_SMC_DBW_32,
++		};
++		int i;
++
++		/* PC16..31: periphA as EBI1_D16..31 */
++		for (i = AT91_PIN_PC16; i <= AT91_PIN_PC31; i++)
++			at91_set_A_periph(i, 0);
++		/* PC2 and PC3 too: EBI1_A19 EBI1_A20 */
++		at91_set_A_periph(AT91_PIN_PC2, 0);
++		at91_set_A_periph(AT91_PIN_PC3, 0);
++
++		/* FIXME: We should pull rst high for when it is programmed */
++
++		/* configure EBI1 NCS0 (0x10000.0000) */
++		sam9_smc_configure(0, 0, &wr_fpga_smc_config);
++	}
+ }
+ 
+ MACHINE_START(AT91SAM9M10G45EK, "Atmel AT91SAM9M10G45-EK")
+-- 
+1.7.7.2
+

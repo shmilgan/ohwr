@@ -1,0 +1,24 @@
+From b9c0d1e4ffc4f5f898a65e868e772d403efd9e57 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Sat, 20 Nov 2010 13:15:48 +0100
+Subject: [PATCH 02/11] initramfs: stop after one cpio archive
+
+---
+ init/initramfs.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/init/initramfs.c b/init/initramfs.c
+index 93b6139..6bba258 100644
+--- a/init/initramfs.c
++++ b/init/initramfs.c
+@@ -471,6 +471,7 @@ static char * __init unpack_to_rootfs(char *buf, unsigned len)
+ 			error("junk in compressed archive");
+ 		if (state != Reset)
+ 			error("junk in compressed archive");
++		break; /* so we can use a bigger initrd size in the cmdline */
+ 		this_header = saved_offset + my_inptr;
+ 		buf += my_inptr;
+ 		len -= my_inptr;
+-- 
+1.7.7.2
+

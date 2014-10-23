@@ -1,0 +1,31 @@
+From 3384d5cd9307ceb26155e337c4d53ae057696a02 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Thu, 23 Oct 2014 10:09:06 +0200
+Subject: [PATCH 10/11] board-sam9m10g45ek: hack to support our machine number
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ arch/arm/mach-at91/board-sam9m10g45ek.c |    7 +++++--
+ 1 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index fff54cf..2bd9540 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -572,8 +572,11 @@ static void __init ek_board_init(void)
+ 	}
+ }
+ 
+-MACHINE_START(AT91SAM9M10G45EK, "Atmel AT91SAM9M10G45-EK")
+-	/* Maintainer: Atmel */
++/* A hack: our boot loader passes 2672 as a machine ID, and we are WRS */
++#define MACH_TYPE_WR_SWITCH 2672
++
++MACHINE_START(WR_SWITCH, "White Rabbit Switch")
++	/* Maintainer: CERN BE-CO-HT (was: Atmel as in sam9m10g45ek) */
+ 	.init_time	= at91sam926x_pit_init,
+ 	.map_io		= at91_map_io,
+ 	.handle_irq	= at91_aic_handle_irq,
+-- 
+1.7.7.2
+
