@@ -14,9 +14,13 @@ http://repository.timesys.com/buildsources/a/at91bootstrap-3/at91bootstrap-3-3.0
 barebox-2014.04.0.tar.bz2       e1f089fc24cc7f24478e663c0e3b91d9 \
    http://www.barebox.org/download/barebox-2014.04.0.tar.bz2
 
-# kernel
-linux-2.6.39.tar.bz2            1aab7a741abe08d42e8eccf20de61e05 \
-   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.39.tar.bz2
+# kernel: download both, we don't know what is being built
+linux-2.6.39.tar.xz             25cd73d797a49ad5b4119b67f1caf2cc \
+   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.39.tar.xz
+linux-3.14.tar.xz               b621207b3f6ecbb67db18b13258f8ea8 \
+   http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+
+
 
 # our gateware binaries
 wrs-gw-v4.0-20140807.tar.gz 60030b4f8d6e3ab7d2bbf231031fa026 \

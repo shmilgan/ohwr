@@ -8,6 +8,13 @@ if [ -z "$WRS_BASE_DIR" ]; then
 fi
 . ${WRS_BASE_DIR}/scripts/wrs_functions
 
+# Warning: same stanza appears in wrs_build_kernel
+if [ -n "$CONFIG_USE_KERNEL_3_14" ]; then
+    kver="3.14"
+else
+    kver="2.6.39"
+fi
+
 wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR CROSS_COMPILE
 
 wrs_echo "--- Kernel modules from this package"
@@ -16,7 +23,7 @@ mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
 mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 
 # check that the kernel has been compiled (or at least configured)
-export LINUX="$WRS_OUTPUT_DIR/build/linux-2.6.39"
+export LINUX="$WRS_OUTPUT_DIR/build/linux-${kver}"
 test -f $LINUX/.config || wrs_die "no kernel in $LINUX"
 cd $WRS_BASE_DIR/../kernel
 make $WRS_MAKE_J  || wrs_die "white rabbit kernel modules"

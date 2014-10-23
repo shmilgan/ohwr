@@ -10,9 +10,16 @@ fi
 
 wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR CROSS_COMPILE
 
-wrs_echo "--- Linux kernel for switch"
-tarname="linux-2.6.39.tar.bz2"
-patchdir="${WRS_BASE_DIR}/../patches/kernel/v2.6.39"
+# Warning: same stanza appears in wrs_build_modules
+if [ -n "$CONFIG_USE_KERNEL_3_14" ]; then
+    kver="3.14"
+else
+    kver="2.6.39"
+fi
+
+wrs_echo "--- Linux kernel for switch (version $kver)"
+tarname="linux-${kver}.tar.xz"
+patchdir="${WRS_BASE_DIR}/../patches/kernel/v${kver}"
 wrs_download $tarname
 
 mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
@@ -20,9 +27,9 @@ mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 
 # go to the build dir and compile it, using our configuration
 cd $WRS_OUTPUT_DIR/build
-dirname="linux-2.6.39"
+dirname="linux-${kver}"
 rm -rf $dirname
-tar xjf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
+tar xf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
 
 # apply patches
 cd $dirname
@@ -48,7 +55,7 @@ make oldconfig  || wrs_die "kernel config"
 
 make $WRS_MAKE_J zImage modules  || wrs_die "kernel compilation"
 
-mkdir -p $WRS_OUTPUT_DIR/images/lib/modules/2.6.39/kernel
+mkdir -p $WRS_OUTPUT_DIR/images/lib/modules/${kver}/kernel
 
-cp $(find . -name '*.ko') $WRS_OUTPUT_DIR/images/lib/modules/2.6.39/kernel
+cp $(find . -name '*.ko') $WRS_OUTPUT_DIR/images/lib/modules/${kver}/kernel
 cp arch/$ARCH/boot/zImage $WRS_OUTPUT_DIR/images

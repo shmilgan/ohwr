@@ -19,6 +19,13 @@ config PPSI
 	bool "Use PPSi daemon"
 	default y
 
+config USE_KERNEL_3_14
+	bool "Build Linux-3.14 for the switch, instead of 2.6.39"
+	help
+	  This selects and experimental build with a newer kernel
+	  version.  The port is not complete, and a number of details
+	  are still to be fixed.  You'd better say N.
+
 menu "Local configuration"
 
 config NTP_SERVER
