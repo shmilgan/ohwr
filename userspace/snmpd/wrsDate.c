@@ -14,6 +14,10 @@
 #include <sys/stat.h>
 
 #include "wrsSnmp.h"
+/* defines for nic-hardware.h */
+#define WR_SWITCH
+#define WR_IS_NODE 0
+#define WR_IS_SWITCH 1
 #include "../../kernel/wr_nic/nic-hardware.h"
 #include "../../kernel/wbgen-regs/ppsg-regs.h"
 
