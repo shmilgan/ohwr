@@ -87,6 +87,14 @@ struct pll_stat {
 	int event;
 	int record;
 };
+
+void usage(char *name)
+{
+    printf("Usage: %s [-dh] \n"
+        "\t-d   test\n",
+        name);
+    exit(1);
+}
 int term_get(void)
 {
 	unsigned char c;
@@ -97,8 +105,8 @@ int term_get(void)
 		q=c;
 	} else q=-1;
 
-	if (c == 3) /* ctrl-C */
-		exit(0);
+// 	if (c == 3) /* ctrl-C */
+// 		exit(0);
 	return q;
 }
 struct pll_stat clear_stat={-1,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -155,7 +163,7 @@ int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int wh
     }
     else
         return -1;
-    
+    int event = 0;
     s->mark_event = 0;
     if(what == DBG_Y)         s->y         = value; 
     if(what == DBG_ERR)       s->err       = convertNumber(value); 
@@ -165,27 +173,29 @@ int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int wh
     if(what == DBG_AVG_S)     s->avg_s     = convertNumber(value); 
     if(what == DBG_SAMPLE_ID) s->sample_id = value; 
     if(what == DBG_EVENT)     s->event     = 0xF & value; 
-    if(what == DBG_EVENT && (0xf & value) == mark_event) s->mark_event = 1;
+    if(what == DBG_EVENT && (0xf & value) == mark_event) {s->mark_event = 1; event = 1; printf("process event\n");}
     
-    if(what == DBG_EVENT && (0xf & value) == DBG_EVT_STARTBACKUP) s-> record = 1;
+    if(what == DBG_EVENT && (0xf & value) == DBG_EVT_STARTBACKUP) s-> record = 1; 
 //     if(what == DBG_EVENT && (0xf & value) == DBG_EVT_SWITCHOVER)  s-> record = 0;
 
 //     printf("seq=%6d | %6d , val=%8d , what=%d flags=0x%x [%8d, %8d, %8d, %8d, %8d, %8d]\n",
 //     seq_id,s->seq_id, value, what, s->flags,s->y, s->err, s->tag, s->setpoint, s->period,s->sample_id);
-    return 0;
+    return event;
 }
 
 int main(int argc, char *argv[])
 {
     
     int mark_event=DBG_EVT_SWITCHOVER;
-    
+    int op;
+    char *s, *name, *optstring;
     int sd, rc, length = sizeof(int);
     struct sockaddr_in serveraddr;
     char server[255];
     char temp;
     int i;
     int totalcnt = 0;
+    int finish_after_marker = 0;
     FILE *mPLL, *bPLL, *hPLL;
     struct pll_stat mpll_stat, bpll_stat, hpll_stat;
     mpll_stat=clear_stat;
@@ -197,7 +207,30 @@ int main(int argc, char *argv[])
     bpll_stat.seq_id=0;
     hpll_stat.seq_id=0;
 
-
+    if (argc > 1) 
+    {
+        // Strip out path from argv[0] if exists, and extract command name
+        for (name = s = argv[0]; s[0]; s++) 
+            if (s[0] == '/' && s[1]) 
+                name = &s[1];
+        optstring = "?d:";
+        while ((op = getopt(argc, argv, optstring)) != -1) 
+        {
+            switch(op) 
+            {
+                case 'd':
+                   finish_after_marker = atol(optarg);
+                   printf("Matlab-ready (no header) acqusition, finish %d samples after"
+                          " switchover marker\n",finish_after_marker);
+                   break;
+                case '?':
+                default:
+                   usage(name);
+            }
+        }
+    }
+    
+    
     if((sd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         perror("Client-socket() error");
@@ -206,13 +239,13 @@ int main(int argc, char *argv[])
     else
         printf("Client-socket() OK\n");
 
-    if(argc > 1)
-    {
-        strcpy(server, argv[1]);
-        printf("Connecting to %s, port %d ...\n", server, SERVPORT);
-    }
-    else
-        strcpy(server, SERVER);
+//     if(argc > 1)
+//     {
+//         strcpy(server, argv[1]);
+//         printf("Connecting to %s, port %d ...\n", server, SERVPORT);
+//     }
+//     else
+    strcpy(server, SERVER);
 
     memset(&serveraddr, 0x00, sizeof(struct sockaddr_in));
     serveraddr.sin_family = AF_INET;
@@ -248,14 +281,15 @@ int main(int argc, char *argv[])
     else 
         printf("Problem to created files\n");
 
-    fprintf(mPLL,"%s \n", tab_content);
-    fprintf(bPLL,"%s \n", tab_content);
-    fprintf(hPLL,"%s \n", tab_content);
+    if(finish_after_marker == 0)
+    {
+        fprintf(mPLL,"%s \n", tab_content);
+        fprintf(bPLL,"%s \n", tab_content);
+        fprintf(hPLL,"%s \n", tab_content);
+    }
 
-//     close(sd);
-//     exit(0);
-//     return 0;
-    
+    int got_marker=0;
+    int after_marker_cnt = 0;
     while(1)
     {
         struct fifo_entry tx_buf[ENTRIES_PER_PACKET];
@@ -279,6 +313,7 @@ int main(int argc, char *argv[])
            for(i=0;i<ENTRIES_PER_PACKET;i++)
            {
               int value = (0xffffff & tx_buf[i].value);
+              
               printf("[ID:%8d] VAL:0x%8x | ", tx_buf[i].seq_id, tx_buf[i].value);
               printf("%s [0x%x] %s [0x%x] :",
                  where[0x7 & (tx_buf[i].value>>28)], (0x7 & (tx_buf[i].value>>28)),
@@ -291,15 +326,23 @@ int main(int argc, char *argv[])
               if(0x80000000 &  tx_buf[i].value)
                   printf("-------------------------------------------------------------------------\n");
               if((0x7 & (tx_buf[i].value>>28)) == DBG_MAIN)
-                 process(&mpll_stat, mPLL, tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event); else
+                 got_marker =+ process(&mpll_stat, mPLL, tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event); else
               if((0x7 & (tx_buf[i].value>>28)) == DBG_HELPER)
-                 process(&hpll_stat, hPLL, tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event); else
+                 got_marker =+ process(&hpll_stat, hPLL, tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event); else
               if((0x7 & (tx_buf[i].value>>28)) == DBG_BACKUP)
-                 process(&bpll_stat, bPLL, tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event);
+                 got_marker =+ process(&bpll_stat, bPLL, tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event);
+              if((got_marker>0 && finish_after_marker>0) || after_marker_cnt>0 )
+              {
+                 if(finish_after_marker == after_marker_cnt)
+                    break;
+                 else
+                    after_marker_cnt++;
+              }
           }
-        }
-//         int c = term_get();
-//         if(c=='q') break;
+       }
+//        int c = term_get();
+//        if(c=='q') break;
+       if(finish_after_marker > 0 && finish_after_marker == after_marker_cnt) break;
     }
     close(sd);
     fclose(mPLL);
