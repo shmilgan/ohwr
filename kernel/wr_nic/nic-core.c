@@ -295,9 +295,8 @@ static int wrn_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	case SIOCSHWTSTAMP:
 		return wrn_tstamp_ioctl(dev, rq, cmd);
 	case PRIV_IOCGCALIBRATE:
-		return wrn_calib_ioctl(dev, rq, cmd);
 	case PRIV_IOCGGETPHASE:
-		return wrn_phase_ioctl(dev, rq, cmd);
+		return -EOPNOTSUPP;
 	case PRIV_IOCREADREG:
 		if (get_user(reg, (u32 *)rq->ifr_data) < 0)
 			return -EFAULT;
