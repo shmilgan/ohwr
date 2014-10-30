@@ -26,7 +26,8 @@ threshold_vec = zeros(size(mpll_tmp,2));
 threshold_vec(1)=0.7;
 threshold_vec(2)=0.7;
 if(option == 2)
-  threshold_vec(4)=0.7;
+  threshold_vec(4)=0.3;
+  threshold_vec(5)=0.7;
 end
 mpll_cleared = outliers(mpll_tmp(hack_offset:end,:),threshold_vec, 'mpll');
 bpll_cleared = outliers(bpll_tmp(hack_offset:end,:),threshold_vec, 'bpll');

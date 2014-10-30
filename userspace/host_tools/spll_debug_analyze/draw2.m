@@ -18,7 +18,8 @@ hold on
 plot(start:finish,bpll(start:finish,3),'b',start:finish,bpll(start:finish,6)*max(bpll(start:finish,3)),'b' );
 plot(start:finish,bpll(start:finish,7),'g');
 plot(start:finish,bpll(start:finish,8),'m');
-legend('err','long average','short average');
+plot(start:finish,bpll(start:finish,5),'k');
+legend('err','long average','short average','rememberd');
 title('bPLL');
 subplot(4,1,3)
 plot(start:finish,hpll(start:finish,3),'b',start:finish,hpll(start:finish,6)*max(hpll(start:finish,3)),'r' );

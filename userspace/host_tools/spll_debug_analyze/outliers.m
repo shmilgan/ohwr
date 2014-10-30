@@ -42,7 +42,11 @@ for i=2:size_t(1)
   for j=1:size_t(2)
     if threshold(j) > 0 && ((input(i,j) < (average(j)-threshold(j))) || (input(i,j) > (average(j)+threshold(j))))
 %        disp(sprintf('i=%d, j=%d: replace %d with %d',i,j,input(i,j),input(i-1,j)));
-      tmp(cnt,j) = input(i-1,j);
+      if(input(i-1,j) == 0)
+	  tmp(cnt,j) = input(i-2,j);
+      else
+	  tmp(cnt,j) = input(i-1,j);
+      end
       counter=counter+1;
     else
       tmp(cnt,j) = input(i,j);

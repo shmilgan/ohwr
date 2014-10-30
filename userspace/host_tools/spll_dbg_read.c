@@ -160,7 +160,7 @@ int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int wh
     if(what == DBG_Y)         s->y         = value; 
     if(what == DBG_ERR)       s->err       = convertNumber(value); 
     if(what == DBG_TAG)       s->tag       = value; 
-    if(what == DBG_REF)       s->setpoint  = value; 
+    if(what == DBG_REF)       s->setpoint  = convertNumber(value); 
     if(what == DBG_AVG_L)     s->avg_l     = convertNumber(value); 
     if(what == DBG_AVG_S)     s->avg_s     = convertNumber(value); 
     if(what == DBG_SAMPLE_ID) s->sample_id = value; 
