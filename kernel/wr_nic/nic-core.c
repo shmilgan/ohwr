@@ -20,7 +20,9 @@
 #include <asm/unaligned.h>
 
 #include "wr-nic.h"
+#if WR_IS_SWITCH
 #include "wr_pstats.h"
+#endif
 #include "nic-mem.h"
 
 /*
@@ -220,17 +222,20 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	return 0;
 }
 
+#if WR_IS_SWITCH
 int (*wr_nic_pstats_callback)(int epnum,
 			      unsigned int ctr[PSTATS_CNT_PP]);
 EXPORT_SYMBOL(wr_nic_pstats_callback);
 
 static unsigned int nic_counters[PSTATS_CNT_PP];
 static DEFINE_SPINLOCK(nic_counters_lock);
+#endif
 
 struct net_device_stats *wrn_get_stats(struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
 
+#if WR_IS_SWITCH
 	if (wr_nic_pstats_callback) {
 		int i;
 
@@ -259,9 +264,8 @@ struct net_device_stats *wrn_get_stats(struct net_device *dev)
 		}
 		spin_unlock(&nic_counters_lock);
 	}
-
+#endif
 	return &ep->stats;
-	return NULL;
 }
 
 /*
