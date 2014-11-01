@@ -2,7 +2,10 @@
 % 
 % scripts to analyzer debugging messages from the SoftPLL of the switch
 % 
-function draw2(mpll, bpll, hpll, switchover, start, finish)
+% options:
+% 
+% 
+function draw2(mpll, bpll, hpll, switchover, start, finish, option)
 
 unitScale = (1/((62.5-(62.5*((2^14)/(1+2^14))))*10^6)); % [s]
 %  Xaxis     = (start:finish)*unitScale;
@@ -13,10 +16,17 @@ figure
 subplot(4,1,1)
 hold on
 plot(Xaxis,mpll(start:finish,3)*to_ps,'b');
+if(option == 3)
+    plot(Xaxis,mpll(start:finish,5)*to_ps,'k');
+end
 plot(Xaxis,mpll(start:finish,7)*to_ps,'g');
 plot(Xaxis,mpll(start:finish,8)*to_ps,'m');
 plot(Xaxis,mpll(start:finish,6)*max(mpll(start:finish,3)),'r' );
-legend('err','long average','short average','switchover','Location','northwest');
+if(option == 3)
+   legend('corrected err (input to PI)','real error','long average','short average','switchover','Location','northwest');
+else
+   legend('err (input to PI)','long average','short average','switchover','Location','northwest');
+end
 
 title('mPLL');
 xlabel('time [s]');

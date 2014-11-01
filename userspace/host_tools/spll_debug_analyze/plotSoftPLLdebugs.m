@@ -3,6 +3,8 @@ function [mpll, bpll, hpll, switchover] = plotSoftPLLdebugs(path_name, history_o
 % options
 % 0 : print nice plots
 % >0: don't print, other optinos use this functions as a part of another computations
+%  2: use standalone, print results of single test, output of spll_dbg_read -d XXX
+%  3: as above, but there is one more signal shown: "real err"
 
 %  hack_offset = 510000;
 close all;
@@ -25,8 +27,8 @@ hack_offset = detectSwitchover(bpll_tmp,6) - 2*history_offset;
 threshold_vec = zeros(size(mpll_tmp,2));
 threshold_vec(1)=0.7;
 threshold_vec(2)=0.7;
-if(option == 2)
-  threshold_vec(4)=0.3;
+if(option == 2 || option == 3)
+  threshold_vec(4)=0.7;
   threshold_vec(5)=0.7;
 end
 mpll_cleared = outliers(mpll_tmp(hack_offset:end,:),threshold_vec, 'mpll');
@@ -77,16 +79,16 @@ hpll_switchover = detectSwitchover(hpll,6);
 
 %  finish_plots=length(bpll);
 
-if(option == 2)
-  start = switchover - 1000;
+if(option == 2 || option == 3)
+  start = switchover - 5000;
   finish= switchover + 1000;
-  draw2(mpll, bpll, hpll, switchover, start, finish);
+  draw2(mpll, bpll, hpll, switchover, start, finish, option);
   start = switchover - 500;
-  finish= switchover + 100;
-  draw2(mpll, bpll, hpll, switchover, start, finish);
+  finish= switchover + 300;
+  draw2(mpll, bpll, hpll, switchover, start, finish, option);
   start = switchover - 1000;
   finish= switchover - 1;
-  draw2(mpll, bpll, hpll, switchover, start, finish);
+  draw2(mpll, bpll, hpll, switchover, start, finish, option);
   return
 end
 
