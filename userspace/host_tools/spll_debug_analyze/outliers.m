@@ -4,7 +4,7 @@
 % 
 function output = outliers(input, threshold_vec, name)
 
-size_t  = size(input)
+size_t  = size(input);
 tmp     = zeros(size_t);
 average = mean(input);
 tlength = length(threshold_vec);

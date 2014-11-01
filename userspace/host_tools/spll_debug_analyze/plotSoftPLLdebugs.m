@@ -34,9 +34,14 @@ bpll_cleared = outliers(bpll_tmp(hack_offset:end,:),threshold_vec, 'bpll');
 hpll_cleared = outliers(hpll_tmp(hack_offset:end,:),threshold_vec, 'hpll');
 
 
-mpll_switchover = detectSwitchover(mpll_cleared,6)
-bpll_switchover = detectSwitchover(bpll_cleared,6)
-hpll_switchover = detectSwitchover(hpll_cleared,6)
+mpll_switchover = detectSwitchover(mpll_cleared,6);
+bpll_switchover = detectSwitchover(bpll_cleared,6);
+hpll_switchover = detectSwitchover(hpll_cleared,6);
+
+unitScale = (1/((62.5-(62.5*((2^14)/(1+2^14))))*10^6))*10^3; % [ms]
+switchover_length = detectSwitchover(mpll_cleared(mpll_switchover+1:end,:),6);
+switchover_time   = ceil(switchover_length*unitScale);
+disp(sprintf('switchover took %d samples which is %d [ms]',switchover_length,switchover_time));
 
 %  switchover   = min([mpll_switchover,hpll_switchover,bpll_switchover])
 switchover = history_offset;
@@ -51,24 +56,24 @@ if(tmp_len - switchover < future_offset)
 elseif(tmp_len - switchover > future_offset)
    mpll = mpll(1:(switchover+future_offset),:);
 end
-size(mpll)
+size(mpll);
 tmp_len = length(bpll);
 if(tmp_len - switchover < future_offset)
    bpll = [bpll;zeros(switchover+future_offset-tmp_len,size(bpll,2))];
 elseif(tmp_len - switchover > future_offset)
    bpll = bpll(1:(switchover+future_offset),:);
 end
-size(bpll)
+size(bpll);
 tmp_len = length(hpll);
 if(tmp_len - switchover < future_offset)
    hpll = [hpll;zeros(switchover+future_offset-tmp_len,size(hpll,2))];
 elseif(tmp_len  - switchover > future_offset)
    hpll = hpll(1:(switchover+future_offset),:);
 end
-size(hpll)
-mpll_switchover = detectSwitchover(mpll,6)
-bpll_switchover = detectSwitchover(bpll,6)
-hpll_switchover = detectSwitchover(hpll,6)
+size(hpll);
+mpll_switchover = detectSwitchover(mpll,6);
+bpll_switchover = detectSwitchover(bpll,6);
+hpll_switchover = detectSwitchover(hpll,6);
 
 %  finish_plots=length(bpll);
 
