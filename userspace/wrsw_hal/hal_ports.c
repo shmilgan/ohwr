@@ -137,6 +137,10 @@ int backup_port()
     return rts_state.backup_ref;
 }
 
+int active_port()
+{
+	return rts_state.current_ref;
+}
 
 /* Resets the state variables of a particular port and re-starts its state machines */
 static void reset_port_state(hal_port_state_t *p)
