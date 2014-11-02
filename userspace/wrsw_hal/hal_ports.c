@@ -141,6 +141,10 @@ int active_port()
 {
 	return rts_state.current_ref;
 }
+int old_backup_port()
+{
+	return rts_state.old_ref;
+}
 
 /* Resets the state variables of a particular port and re-starts its state machines */
 static void reset_port_state(hal_port_state_t *p)
@@ -406,10 +410,14 @@ static int handle_link_down(hal_port_state_t *p, int link_up)
 					rts_backup_channel(p->hw_index, RTS_BACKUP_CH_DOWN);
 					TRACE(TRACE_INFO, "switching off backup reference");
 				}
-				else //it has a backup port
+				else if(old_backup_port() == p->hw_index)
 				{
 					rts_backup_channel(p->hw_index, RTS_BACKUP_CH_ACTIVATE);
 					TRACE(TRACE_INFO, "switching to backup reference");
+				}
+				else 
+				{
+					TRACE(TRACE_INFO, "master port went down");
 				}
 			else
 				  TRACE(TRACE_INFO, "I'm grandmaster, now switching of reference");
