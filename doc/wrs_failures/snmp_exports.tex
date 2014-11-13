@@ -1,0 +1,379 @@
+\section{SNMP exports}
+\label{sec:snmp_exports}
+
+\subsection{Operator/basic objects (WIP)}
+Objects providing basic status of the WR Switch. It should be used by control
+system operators and people without deep knowledge of the White Rabbit
+internals. These values report the general status of the device and high level
+errors.
+
+\noindent \rule{\textwidth}{2pt}
+{\bf Note}: Basically I think we should have another process monitoring various
+stuff according to possible faults that may occur. This process should then be
+used to report high-level information i.e. if this OK, is that OK, etc. At least
+for more complex stuff, e.g. we can simply export temperature or CPU load and
+let NMS to decide when it's bad.\\
+\noindent \rule{\textwidth}{2pt}
+
+\begin{itemize}[leftmargin=0pt]
+	\item [] \texttt{WR-SWITCH-MIB::status}\\ - general status word for WR Switch.
+		It is split into several 2-bit fields. Each of them describes one
+		function of the WR Switch and can be:
+		\begin{packed_items}
+			\item [] {\bf "00"} - Status OK
+			\item [] {\bf "01"} - Status Warning
+			\item [] {\bf "10"} - Status Failure
+		\end{packed_items}
+		\vspace{12pt}
+		\begin{tabular}{|c|l|}
+			\hline
+			bits & description\\
+			\hline \hline
+			1:0 & PTP status\\
+			3:2 & SoftPLL status - OK if locked and aligned\\
+			5:4 & Switching status\\
+			7:6 & System status\\
+			 & Redundancy status\\
+			\hline
+		\end{tabular}
+
+	\item [] \texttt{WR-SWITCH-MIB::ppsiMode}\\
+		Synchronization mode: Grand Master / Free-running Master / Slave
+	\item [] \texttt{WR-SWITCH-MIB::spllState}\\
+		\begin{packed_items}
+		\item [] \texttt{WR-SWITCH-MIB::spllState.mode}: (Grand Master /
+			Free-running Master / Slave)
+		%\item [] \texttt{WR-SWITCH-MIB::spllState.locked}: is Helper/Main locked (true / false)
+		%\item [] \texttt{WR-SWITCH-MIB::spllState.aligned}: is it phase-aligned (true / false)
+		\item [] \texttt{WR-SWITCH-MIB::spllState.hover}: is in holdover (true /
+			false)
+		\item [] \texttt{WR-SWITCH-MIB::spllState.sover}: is it switched-over to a
+			backup link (true / false)
+		\end{packed_items}
+
+	\item [] \texttt{WR-SWITCH-MIB::ppsiClockOffsetPs}\\
+		Clock offset calculated by PPSi
+
+	\item [] \texttt{WR-SWITCH-MIB::tempFPGA}\\ - SCB temperature below the FPGA
+	\item [] \texttt{WR-SWITCH-MIB::tempScbPsu.1}\\ - SCB temperature near the
+		power supply circuit
+	\item [] \texttt{WR-SWITCH-MIB::tempScbPsu.2}\\ - SCB temperature near the
+		power supply circuit
+	\item [] \texttt{WR-SWITCH-MIB::tempPLL}\\ - SCB temperature near the VCXO and
+		PLLs
+
+	\item [] \texttt{WR-SWITCH-MIB::portLink.<n>}
+\end{itemize}
+
+\begin{itemize}
+	\item Uptime
+	\item Firmware version
+	\item Hardware version
+	\item Manufacturer
+	\item Serial number
+	\item How WRS was configured (manually / .config fetched from server/...)
+	\item Current WR time
+	\item Last date/time when firmware was upgraded
+	\item Contact info
+	\item Link failure detected, switched over to a backup link No. X
+	\item WRS has booted successfully, none of the steps has failed (reading HW
+		info, programming FPGA and LM32, loading kernel modules, starting daemons)
+\end{itemize}
+
+\newpage
+\subsection{Expert objects}
+Expert objects can be used by White Rabbit experts for the in-depth diagnosis of
+the switch failures. These values are verbose and should not be used by
+operators.
+
+\subsubsection{PTP/WR parameters}
+{\bf Note}: PTP related objects should be called \texttt{WR-SWITCH-MIB::ptp*}
+instead of\\
+\texttt{WR-SWITCH-MIB::ppsi*}. People need to know it's PTP related,
+not necessary that the running PTP engine is PPSi.
+\begin{itemize}[leftmargin=0pt]
+	\item [] \texttt{WR-SWITCH-MIB::ppsiGrandmasterID}\\ - is it really Grand
+		Master, so the same ID for the whole network ? or is it a Master higher in
+		the sync hierarchy for a given device ?
+	\item [] \texttt{WR-SWITCH-MIB::ppsiOwnID}
+	\item [] \texttt{WR-SWITCH-MIB::ppsiMode}
+	\item [] \texttt{WR-SWITCH-MIB::ppsiSyncSource}\\ - port number
+		\emph{wr0}/\emph{wr1}/... for Slave mode or \emph{ext} for Grand Master mode
+	\item [] \texttt{WR-SWITCH-MIB::ppsiServoState}\\ - string, WR servo state
+		(\emph{SYNC\_IDLE}, \emph{SYNC\_SEC}, \emph{SYNC\_NSEC}, \emph{SYNC\_PHASE},
+		\emph{OFFSET\_STABLE}, \emph{TRACK\_PHASE}) (timing:
+		\ref{fail:timing:ppsi_track_phase})
+	\item [] \texttt{WR-SWITCH-MIB::ppsiServoStateN}\\ - would it be usefull to
+		report also ppsiServoState in a numeric form ? (timing:
+		\ref{fail:timing:ppsi_track_phase})
+	\item [] \texttt{WR-SWITCH-MIB::ppsiRTT}\\ - Round-trip delay ($delay_{MM}$)
+		(timing: \ref{fail:timing:rtt_jump})
+	\item [] \texttt{WR-SWITCH-MIB::ppsiDelayMS}\\ - one-way M-S delay
+		($delay_{MS}$)
+	\item [] \texttt{WR-SWITCH-MIB::ppsiLinkLength}
+	\item [] \texttt{WR-SWITCH-MIB::ppsiPhaseTracking}\\ - if phase tracking is
+		enabled (only for WR-demo purposes I think)
+	\item [] \texttt{WR-SWITCH-MIB::ppsiClockOffsetPs}\\ (timing:
+		\ref{fail:timing:offset_jump})
+	\item [] \texttt{WR-SWITCH-MIB::ppsiSkew}
+	\item [] \texttt{WR-SWITCH-MIB::ppsiPhSetpoint}
+	\item [] \texttt{WR-SWITCH-MIB::ServoUpdates}
+	\item [] \texttt{WR-SWITCH-MIB::portLink.<n>}\\ (timing:
+		\ref{fail:timing:master_down}, \ref{fail:timing:no_frames}; data:
+		\ref{fail:data:link_down})
+	\item [] \texttt{WR-SWITCH-MIB::portMode.<n>}\\ (timing:
+		\ref{fail:timing:master_down}, \ref{fail:timing:no_frames})
+	\item [] \texttt{WR-SWITCH-MIB::portLocked.<n>}
+	\item [] \texttt{WR-SWITCH-MIB::portPeer.<n>}
+	\item [] \texttt{WR-SWITCH-MIB::portPtpState.<n>}\\ - does it make sense to
+		report PTP state for each port ? (regular PTP, not WR state)
+	\item [] \texttt{WR-SWITCH-MIB::portPtpTxFrames.<n>}\\ - how many PTP frames
+		were sent from the port (counted by PPSi) (timing:
+		\ref{fail:timing:no_frames})
+	\item [] \texttt{WR-SWITCH-MIB::portPtpRxFrames.<n>}\\ - how many PTP frames
+		were received on the port (counted by PPSi) (timing:
+		\ref{fail:timing:no_frames})
+	\item [] \texttt{WR-SWITCH-MIB::portActiveSlave.<n>}\\ - 0/1 to mark which one
+		is the active Slave (if there are also Backups and timing switchover)
+	\item [] \texttt{WR-SWITCh-MIB::portDeltaTxM.<n>}\\ - for each Slave and
+		Backup port (timing: \ref{fail:timing:deltas_report})
+	\item [] \texttt{WR-SWITCH-MIB::portDeltaRxM.<n>}\\ - for each Slave and
+		Backup port (timing: \ref{fail:timing:deltas_report})
+	\item [] \texttt{WR-SWITCH-MIB::portDeltaTxS.<n>}\\ - for each Slave and
+		Backup port (timing: \ref{fail:timing:deltas_report})
+	\item [] \texttt{WR-SWITCH-MIB::portDeltaRxS.<n>}\\ - for each Slave and
+		Backup port (timing: \ref{fail:timing:deltas_report})
+	\item [] \texttt{WR-SWITCH-MIB::}
+		\begin{itemize}[topsep=-12pt]
+			\item any other usefull to report stuff from backup channels
+			\item holdover information (e.g. timestamp when it was activated)
+		\end{itemize}
+\end{itemize}
+
+\subsubsection{SoftPLL parameters}
+\begin{itemize}[leftmargin=0pt]
+	\item [] \texttt{WR-SWITCH-MIB::spllMode}\\ - Grand Master / Free-running
+		Master / Slave / Disabled (timing: \ref{fail:timing:spll_unlock})
+	\item [] \texttt{WR-SWITCH-MIB::spllIrqCnt}\\ - IRQ counter
+	\item [] \texttt{WR-SWITCH-MIB::spllSeqState}\\ (timing:
+		\ref{fail:timing:spll_unlock})
+	\item [] \texttt{WR-SWITCH-MIB::spllAlignState}\\ (timing:
+		\ref{fail:timing:spll_unlock})
+	\item [] \texttt{WR-SWITCH-MIB::spllHlock}\\ (timing:
+		\ref{fail:timing:spll_unlock})
+	\item [] \texttt{WR-SWITCH-MIB::spllMlock}\\ (timing:
+		\ref{fail:timing:spll_unlock})
+	\item [] \texttt{WR-SWITCH-MIB::spllBlock}\\ - All backup channels locked
+	\item [] \texttt{WR-SWITCH-MIB::spllHY}\\ - Helper DAC setting (Helper PI.Y)
+	\item [] \texttt{WR-SWITCH-MIB::spllMY}\\ - Main DAC setting (Main PI.Y)
+	\item [] \texttt{WR-SWITCH-MIB::spllDelCnt}\\ - De-lock counter (timing:
+		\ref{fail:timing:spll_unlock})
+	\item [] \texttt{WR-SWITCH-MIB::spllCrashCnt}\\ - counter incremented when
+		LM32 SoftPLL software crash was detected (e.g. CPU has followed a NULL
+		pointer). Should this be a counter ? (timing: \ref{fail:timing:spll_crash})
+	\item [] \texttt{WR-SWITCH-MIB::}
+		\begin{itemize}[topsep=-12pt]
+			\item per-port stuff for active and backup channels related to timing
+				switchover
+		\end{itemize}
+\end{itemize}
+
+\subsubsection{Per-port statistics}
+\begin{itemize}[leftmargin=0pt]
+	\item [] \texttt{WR-SWITCH-MIB::pstatsDescr.<x>} - string describing counter
+		$<$x$>$
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.1} - Tx PCS FIFO underruns (data:
+		\ref{fail:data:ep_txrx})
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.2} - Rx PCS FIFO overruns (data:
+		\ref{fail:data:ep_txrx})
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.3} - Rx invalid 8b10b codes (data:
+		\ref{fail:data:ep_txrx})
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.4} - Rx sync losts (data:
+		\ref{fail:data:ep_txrx})
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.5} - received pause frames
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.6} - Packet Filter frame drops
+		(data: \ref{fail:data:ep_txrx})
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.7} - Rx PCS Errors (data:
+		\ref{fail:data:ep_txrx})
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.8} - received giant frames
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.9} - received runt frames
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.10} - Rx CRC errors (data:
+		\ref{fail:data:ep_txrx})
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.11 - 18} - Rx framess assigned by
+		Packet Filter to classes 0 to 7
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.19} - transmitted frames (data:
+		\ref{fail:data:swcore_hang})
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.20} - received frames (data:
+		\ref{fail:data:too_much_HP})
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.21} - Rx frames dropped due to RTU
+		being full and not accepting requests (data: \ref{fail:data:rtu_full})
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.22 - 29} - received frames with
+		priority 0 - 7 (based on 802.1q tag priorities to traffic classes mapping)
+		(data: \ref{fail:data:too_much_HP})
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.30} - valid RTU requests
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.31} - valid RTU responses
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.32} - dropped frames based on RTU
+		decision
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.33} - Fast Match high priority
+		frames (data: \ref{fail:data:too_much_HP})
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.34} - Fast Match fast-forward
+		frames
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.35} - Fast Match non-forward
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.36} - Fast Match valid responses
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.37} - Full Match valid responses
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.38} - RTU forward decisions to the
+		port (data: \ref{fail:data:swcore_hang})
+	\item [] \texttt{WR-SWITCH-MIB::pstatsWR<n>.39} - TRU valid responses (not
+		supported)
+\end{itemize}
+
+\subsubsection{Other per-port status}
+\begin{itemize}[leftmargin=0pt]
+	\item [] \texttt{IF-MIB::ifOperStatus.<n>}\\ - is link up or down (data:
+		\ref{fail:data:link_down})
+	\item [] \texttt{WR-SWITCH-MIB::portSfpID.<n>}\\ (timing:
+		\ref{fail:timing:wrong_sfp})
+	\item [] \texttt{WR-SWITCH-MIB::portSfpInDB.<n>}\\ - was SFP ID found in SFP
+		database with fixed delays and alpha ? (timing: \ref{fail:timing:wrong_sfp})
+	\item [] \texttt{WR-SWITCH-MIB::portSfpGbE.<n>}\\ - is there Gigabit Ethernet
+		SFP plugged ? (other: \ref{fail:other:sfp})
+	\item [] \texttt{WR-SWITCH-MIB::portSfpCopper.<n>}\\ - is there a copper Gigabit
+		Ethernet SFP plugged ?
+	\item [] \texttt{WR-SWITCH-MIB::portNoTiming.<n>}\\ - port is used only for data
+		transfer, no timing, or non-WR timing; timing-unsupported SFP may be used
+		there (it's a signal for NMS not to raise an alarm if
+		\texttt{WR-SWITCH-MIB::portSfpInDB} is \emph{false})
+	\item [] \texttt{WR-SWITCH-MIB::confVLAN.<n>}\\ - per-port VLAN configuration
+	\item [] \texttt{WR-SWITCH-MIB::portEnabled.<n>}\\
+		- read/write value\\
+		- if the port is enabled / enable or disable the port; this may be useful of
+		part of the network causing problem would have to be remotely disconnected
+\end{itemize}
+
+\subsubsection{Other HDL info}
+\begin{itemize}[leftmargin=0pt]
+	\item [] \texttt{WR-SWITCH-MIB::swcoreUsedPages}\\ - number of used pages in
+		the MPM memory (data: \ref{fail:data:swcore_hang})
+	\item [] \texttt{WR-SWITCH-MIB::swcoreFreePages}\\ - number of free pages in
+		the MPM memory (data: \ref{fail:data:swcore_hang})
+\end{itemize}
+
+\subsubsection{System status and configuration}
+\begin{itemize}[leftmargin=0pt]
+	\item [] \texttt{WR-SWITCH-MIB::ppsWidth}\\ - configured width of 1-PPS signal
+	% info from wrs_version -t
+	\item [] \texttt{WR-SWITCH-MIB::swVer}\\ - version of the WRS software
+	\item [] \texttt{WR-SWITCH-MIB::swBuildBy}\\ - who compiled the firmware
+	\item [] \texttt{WR-SWITCH-MIB::swBuildDate}\\ - when the firmware was
+		compiled
+	\item [] \texttt{WR-SWITCH-MIB::swSpllVer}\\ - version of the LM32 software
+		(revision reported in rt\_cpu.elf)
+	\item [] \texttt{WR-SWITCH-MIB::swSpllBuildDate}\\ - when LM32 firmware was
+		compiled
+	\item [] \texttt{WR-SWITCH-MIB::gwVer}\\ - version of the WRS gateware
+	\item [] \texttt{WR-SWITCH-MIB::gwBuild}\\ - gateware build
+	\item [] \texttt{WR-SWITCH-MIB::gwHash.0}\\ - commit hash of the
+		\emph{wr-switch-hdl} repo
+	\item [] \texttt{WR-SWITCH-MIB::gwHash.1}\\ - commit hash of the
+		\emph{general-cores} repo
+	\item [] \texttt{WR-SWITCH-MIB::gwHash.2}\\ - commit hash of the
+		\emph{wr-cores} repo
+	\item [] \texttt{WR-SWITCH-MIB::hwVer.0}\\ - version of the scb
+	\item [] \texttt{WR-SWITCH-MIB::hwVer.1}\\ - version of the backplane
+	\item [] \texttt{WR-SWITCH-MIB::hwFpga}\\ - FPGA type
+	\item [] \texttt{WR-SWITCH-MIB::hwSN}\\ - serial number of the device
+	\item [] \texttt{WR-SWITCH-MIB::hwProd}\\ - manufacturer of the hardware
+
+	\item [] \texttt{HOST-RESOURCES-MIB::hrSWRunName.<x>}\\ - is a list of running
+		processes in the system. Each object \emph{x} is a string with process name,
+		and \emph{x} is PID of this process. We need to filter processes like:
+		\begin{packed_items}
+			\item \emph{ppsi}
+			\item \emph{wrsw\_hal}
+			\item \emph{wrsw\_rtud}
+			\item \emph{dropbear}
+			\item \emph{udhcpc}
+			\item \emph{rsyslogd}
+			\item \emph{snmpd}
+			\item \emph{lighttpd}
+		\end{packed_items}
+		\vspace{12pt}
+		(timing: \ref{fail:timing:ppsi_crash}, \ref{fail:timing:hal_crash}; data:
+		\ref{fail:data:rtu_crash}; other: \ref{fail:other:daemon_crash})
+	\item [] \texttt{WR-SWITCH-MIB::ppsiCrashCnt}\\ - how many times PPSi daemon
+		has crashed (timing: \ref{fail:timing:ppsi_crash})
+	\item [] \texttt{WR-SWITCH-MIB::halCrashCnt}\\ - how many times HAL daemon
+		has crashed (timing: \ref{fail:timing:hal_crash})
+	\item [] \texttt{WR-SWITCH-MIB::rtuCrashCnt}\\ - how many times RTU daemon
+		has crashed (data: \ref{fail:data:rtu_crash})
+	\item [] \texttt{WR-SWITCH-MIB::sshCrashCnt}\\ - how many times Dropbear
+		daemon has crashed (other: \ref{fail:other:daemon_crash})
+	\item [] \texttt{WR-SWITCH-MIB::udhcpdCrashCnt}\\ - how many times DHCP daemon
+		has crashed (other: \ref{fail:other:daemon_crash})
+	\item [] \texttt{WR-SWITCH-MIB::rsyslogCrashCnt}\\ - how many times rsyslog
+		daemon has crashed (other: \ref{fail:other:daemon_crash})
+	\item [] \texttt{WR-SWITCH-MIB::snmpdCrashCnt}\\ - how many times SNMP daemon
+		has crashed (other: \ref{fail:other:daemon_crash})
+	\item [] \texttt{WR-SWITCH-MIB::httpdCrashCnt}\\ - how many times HTTPd daemon
+		has crashed (other: \ref{fail:other:daemon_crash})
+	\item [] \texttt{WR-SWITCH-MIB::sysCnfDate}\\ - TAI seconds when last
+		time the configuration was changed
+	\item [] \texttt{WR-SWITCH-MIB::sysCnfCrit}\\ - is \emph{true} when any of
+		the critical configuration options was modified during the last
+		reconfiguration. Critical configuration options:
+		\begin{packed_items}
+			\item PPSi timing mode
+			\item fixed hardware delays
+		\end{packed_items}
+		(timing: \ref{fail:timing:wrong_config})
+	\item [] \texttt{WR-SWITCH-MIB::sysRst}\\ - if true, system had to auto-reboot
+		due to a serious fault (e.g. kernel crash)
+	\item [] \texttt{WR-SWITCH-MIB::rtuRules}\\ - RTU table with dynamic and
+		static entries (\emph{rtu\_stat}) (data: \ref{fail:data:net_loop})
+	\item [] \texttt{HOST-RESOURCES-MIB::hrStorageDescr.<x>}\\ - description of
+		the memory/partition. \emph{x} can be:
+		\begin{packed_items}
+			\item [] {\bf 1} - Physical memory
+			\item [] {\bf 3} - Virtual memory
+			\item [] {\bf 6} - Memory buffers
+			\item [] {\bf 7} - Cached memory
+			\item [] {\bf 10} - Swap space
+			\item [] {\bf 31} - /update partition
+			\item [] {\bf 32} - /boot partition
+			\item [] {\bf 33} - /usr partition
+		\end{packed_items}
+		(other: \ref{fail:other:no_mem})
+	\item [] \texttt{HOST-RESOURCES-MIB::hrStorageSize.<x>}\\ - size of the
+		memory/partition (other: \ref{fail:other:no_mem})
+	\item [] \texttt{HOST-RESOURCES-MIB::hrStorageUsed.<x>}\\ - utilization of the
+		memory/partition (other: \ref{fail:other:no_mem})
+	\item [] \texttt{WR-SWITCH-MIB::sysNoMem}\\ - if true, system is nearly out of
+		memory (other: \ref{fail:other:no_mem})
+	\item [] \texttt{WR-SWITCH-MIB::cpuLoad}\\ - current CPU utilization (\%)
+		(other: \ref{fail:other:cpu})
+	\item [] \texttt{WR-SWITCH-MIB::tempFPGA}\\ - SCB temperature below the FPGA
+		(other: \ref{fail:other:temp})
+	\item [] \texttt{WR-SWITCH-MIB::tempScbPsu.1}\\ - SCB temperature near the
+		power supply circuit (other: \ref{fail:other:temp})
+	\item [] \texttt{WR-SWITCH-MIB::tempScbPsu.2}\\ - SCB temperature near the
+		power supply circuit (other: \ref{fail:other:temp})
+	\item [] \texttt{WR-SWITCH-MIB::tempPLL}\\ - SCB temperature near the VCXO and
+		PLLs (other: \ref{fail:other:temp})
+\end{itemize}
+
+\noindent \rule{\textwidth}{2pt}
+
+%%%%%%%%%%%%%%%%%%5
+%% Other notes
+%
+% What else should be reported in the future
+% Status of Primary Slave port and backup links
+% For backup timing links, report parameters from Backup SPLL channels and PTP servo
+% What can be reported regarding eRSTP ?
+% %	role of the bridge - root/designated
+% % port role - root/designated/backup/alternate/disabled
+% % number of exchanged BPDUs
+%
+% * we could use information from RSTP to visualize the topology of network made of switches
+% * switches exchange BPDU messages to leard about other switches
+% * RFC 2674 - Bridges with priority, multicast pruning and VLAN

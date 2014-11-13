@@ -1,0 +1,41 @@
+\section{Introduction}
+
+This document tries to list all possible ways the White Rabbit Switch can
+brake. It is my brain dump and should be a starting point to improve SNMP
+implementation and alarms (traps) generation. The document also tries to
+describe what should be the operator's action for each failure. Whether it's
+enough to reboot the switch or if it should be replaced with a new unit.
+
+The document is organized in two parts. First one (section \ref{sec:failures})
+tries to list all the possible failures that may disturb synchronization and
+Ethernet switching. The structure of each failure description is the following:
+\begin{itemize}[leftmargin=0pt]
+	\item [] \underline{Mode}: for timing failures, it says which modes are
+		affected. Possible values are:
+		\begin{itemize}
+			\item \emph{Slave} - WR Switch has at least one Slave port synchronized to
+				another WR device higher in the timing hierarchy (though it may be also
+				Master to other WR/PTP devices lower in the timing hierarchy).
+			\item \emph{Grand Master} - WR Switch at the top of the synchronization
+				hierarchy. It is synchronized to an external clock (e.g. GPSDO, Cesium)
+				and provides timing to other WR/PTP devices.
+			\item \emph{Free-Running Master} - WR Switch at the top of the
+				synchronization hierarchy. It provides timing to other WR/PTP devices
+				but runs from a local oscillator (not synchronized to external atomic
+				clock).
+		\end{itemize}
+
+	\item [] \underline{Description}: what the problem is about, how important it
+		is and what bad may happen if it occurs.
+	\item [] \underline{SNMP objects}: which SNMP objects should be monitored to
+		detect the failure. These may be objects from \texttt{WR-SWITCH-MIB} or one
+		of the standard MIBs used by the \emph{net-snmp}.
+	\item [] \underline{Notes}: optional comment in case required SNMP objects are
+		not yet exported by our current implementation of the SNMP agent. It
+		describes some preliminary ideas what should be exported in the near future.
+\end{itemize}
+
+Section \ref{sec:snmp_exports} is a documentation for people integrating WR
+switch into a control system, operators and WR experts. It describes all
+essential SNMP objects exported by the device divided into two groups:
+\emph{Operator/basic objects}, \emph{Expert objects}
