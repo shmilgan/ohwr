@@ -11,7 +11,7 @@
 #define hwiu_read(reg) \
   _fpga_readl(FPGA_BASE_HWIU + offsetof(struct HWIU_WB, reg))
 
-int hwiu_read_word(uint32_t adr, uint32_t *data)
+static int hwiu_read_word(uint32_t adr, uint32_t *data)
 {
   uint32_t temp;
   int timeout = 0;

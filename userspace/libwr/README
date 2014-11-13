@@ -1,0 +1,14 @@
+Switch V3 Hardware Library (libwr)
+-------------------------------
+
+Libwr is a collection of low-level userspace drivers for various 
+peripherals in the switch, which do not need kernel modules. These are:
+- Main FPGA (fpga_io.c) and CPU GPIO ports (pio.c), pin definitions (shw_io.c)
+- PPS generator (pps_gen.c, adjustment of time)
+- fan control (fan.c)
+- i2c communication (i2c.c)
+- SFP communication (i2c_sfp.c)
+- Network API for WR-PTPd (ptpd_netif.c)
+
+Libwr also provides a single routine to initialize all that stuff (see init.c)
+and some utility/tracing functions (trace.c, util.c)

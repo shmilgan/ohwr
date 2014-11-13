@@ -8,6 +8,10 @@
 
 #include "i2c_fpga_reg.h"
 
+static int32_t i2c_fpga_reg_transfer(struct i2c_bus* bus, uint32_t address,  uint32_t to_write, uint32_t to_read, uint8_t* data);
+static int32_t i2c_fpga_reg_scan(struct i2c_bus* bus, uint32_t i2c_address);
+
+
 int i2c_fpga_reg_init_bus(struct i2c_bus *bus)
 {
 	i2c_fpga_reg_t *priv;
@@ -103,7 +107,7 @@ static int mi2c_read_byte(uint32_t fpga_address, uint32_t last)
 }
 
 
-int32_t		i2c_fpga_reg_scan(struct i2c_bus* bus, uint32_t i2c_address)
+static int32_t i2c_fpga_reg_scan(struct i2c_bus* bus, uint32_t i2c_address)
 {
 	if (!bus)
 		return I2C_NULL_PARAM;
@@ -133,7 +137,7 @@ int32_t		i2c_fpga_reg_scan(struct i2c_bus* bus, uint32_t i2c_address)
 	return 0;
 }
 
-int32_t		i2c_fpga_reg_transfer(struct i2c_bus* bus, uint32_t i2c_address,  uint32_t to_write, uint32_t to_read, uint8_t* data)
+static int32_t i2c_fpga_reg_transfer(struct i2c_bus* bus, uint32_t i2c_address,  uint32_t to_write, uint32_t to_read, uint8_t* data)
 {
 	if (!bus)
 		return I2C_NULL_PARAM;

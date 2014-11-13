@@ -70,7 +70,7 @@ const shw_io_t _all_shw_io[NUM_SHW_IO_ID];
 
 int shw_io_init()
 {
-	int ret, ver;
+	int ver;
 
 	//Remove const for writing
 	shw_io_t* all_shw_io=(shw_io_t*)_all_shw_io;
@@ -148,6 +148,7 @@ const pio_pin_t* get_pio_pin(shw_io_id_t id)
 	const shw_io_t *wrpin=get_shw_io(id);
 	if(wrpin && wrpin->type==SHW_CPU_PIO)
 		return (wrpin)?(const pio_pin_t*)wrpin->ptr:0;
+	return NULL;
 }
 
 const shw_io_t* get_shw_io(shw_io_id_t id)
@@ -158,15 +159,13 @@ const shw_io_t* get_shw_io(shw_io_id_t id)
 		else TRACE(TRACE_ERROR,"IO %d does not correspond to its ID %s",id,_all_shw_io[id].name);
 	}
 	else TRACE(TRACE_ERROR,"IO %d does not exist",id);
-	return 0;
+	return NULL;
 }
 
 
 uint32_t shw_io_read(shw_io_id_t id)
 {
-	uint32_t ret;
 	int32_t i32data;
-	uint8_t u8data[2];
 	const shw_io_t* io=&_all_shw_io[id];
 	const shw_io_bus_t *iobus;
 
@@ -189,14 +188,12 @@ uint32_t shw_io_read(shw_io_id_t id)
 			TRACE(TRACE_ERROR,"Unknow type %d for io #%d",io->type,id); break;
 		}
 	}
-	return ret;
+	return 0;
 }
 
 int shw_io_write(shw_io_id_t id, uint32_t value)
 {
-	int ret=-1;
 	int32_t i32data;
-	uint8_t u8data[2];
 	const shw_io_t* io=&_all_shw_io[id];
 	const shw_io_bus_t *iobus;
 

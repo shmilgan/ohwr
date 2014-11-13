@@ -32,11 +32,12 @@
 #include <at91_softpwm.h>
 
 #include "i2c.h"
+#include "i2c_io.h"
 #include "i2c_fpga_reg.h"
 #include "fpga_io.h"
 #include "shw_io.h"
 #include "spwm-regs.h"
-
+#include "util.h"
 
 #define FAN_TEMP_SENSOR_ADDR 0x4c
 
@@ -80,7 +81,7 @@ static int pwm_fd;
 static volatile struct SPWM_WB *spwm_wbr;
 //----------------------------------------
 
-void shw_pwm_update_timeout(int tout_100ms)
+static void shw_pwm_update_timeout(int tout_100ms)
 {
 	fan_update_timeout=tout_100ms*100000;
 	TRACE(TRACE_INFO,"Fan tick timeout is =%d",fan_update_timeout);
@@ -122,7 +123,7 @@ static inline void pi_init(pi_controller_t *pi)
 }
 
 /* Configures a PWM output on gpio pin (pin). Rate accepts range from 0 (0%) to 1000 (100%) */
-void pwm_configure_pin(const pio_pin_t *pin, int enable, int rate)
+static void pwm_configure_pin(const pio_pin_t *pin, int enable, int rate)
 {
 	int index = pin->port * 32 + pin->pin;
 	if(pin==0) return;
@@ -138,7 +139,7 @@ void pwm_configure_pin(const pio_pin_t *pin, int enable, int rate)
 
 
 /* Configures a PWM output on gpio pin (pin). Rate accepts range from 0 (0%) to 1000 (100%) */
-void pwm_configure_fpga(int enmask, float rate)
+static void pwm_configure_fpga(int enmask, float rate)
 {
 	uint8_t u8speed=(uint8_t)((rate>=1)?0xff:(rate*255.0));
 
@@ -147,7 +148,7 @@ void pwm_configure_fpga(int enmask, float rate)
 }
 
 /* Configures a PWM output. Rate accepts range is from 0 (0%) to 1 (100%) */
-void shw_pwm_speed(int enmask, float rate)
+static void shw_pwm_speed(int enmask, float rate)
 {
 	//TRACE(TRACE_INFO,"%x %f",enmask,rate);
 	if(is_cpu_pwn)
@@ -162,7 +163,7 @@ void shw_pwm_speed(int enmask, float rate)
 
 
 /* Texas Instruments TMP100 temperature sensor driver */
-uint32_t tmp100_read_reg(int dev_addr, uint8_t reg_addr, int n_bytes)
+static uint32_t tmp100_read_reg(int dev_addr, uint8_t reg_addr, int n_bytes)
 {
 	uint8_t data[8];
 	uint32_t rv=0, i;
@@ -182,7 +183,7 @@ uint32_t tmp100_read_reg(int dev_addr, uint8_t reg_addr, int n_bytes)
 
 
 
-void tmp100_write_reg(int dev_addr, uint8_t reg_addr, uint8_t value)
+static void tmp100_write_reg(int dev_addr, uint8_t reg_addr, uint8_t value)
 {
 	uint8_t data[2];
 
@@ -192,25 +193,24 @@ void tmp100_write_reg(int dev_addr, uint8_t reg_addr, uint8_t value)
 }
 
 
-float tmp100_read_temp(int dev_addr)
+static float tmp100_read_temp(int dev_addr)
 {
 	int temp = tmp100_read_reg(dev_addr, 0, 2);
 	return ((float) (temp >> 4)) / 16.0;
 }
 
-int shw_init_i2c_sensors()
+static int shw_init_i2c_sensors()
 {
 	if (i2c_init_bus(&fpga_sensors_i2c) < 0) {
 		TRACE(TRACE_FATAL, "can't initialize temperature sensors I2C bus.\n");
 		return -1;
 	}
+	return 0;
 }
 
 int shw_init_fans()
 {
-	uint8_t dev_map[128];
 	uint32_t val=0;
-	int detect, i;
 
 	//Set the type of PWM
 	if(shw_get_hw_ver()<330) is_cpu_pwn=1;

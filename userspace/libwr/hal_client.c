@@ -11,29 +11,6 @@
 
 static struct minipc_ch *hal_ch;
 
-int halexp_check_running()
-{
-	//int res_int;
-	//return wripc_call(hal_ipc, "halexp_check_running", ;
-	return 0;
-}
-
-int halexp_reset_port(const char *port_name)
-{
-//  TRACE(TRACE_INFO, "resetting port %s\n", port_name);
-  return 0;
-}
-
-int halexp_calibration_cmd(const char *port_name, int command, int on_off)
-{
-	int ret, rval;
-	ret = minipc_call(hal_ch, DEFAULT_TO, &__rpcdef_calibration_cmd,
-			  &rval, port_name, command, on_off);
-	if (ret < 0)
-		return ret;
-	return rval;
-}
-
 int halexp_lock_cmd(const char *port_name, int command, int priority)
 {
 	int ret, rval;

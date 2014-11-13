@@ -69,8 +69,6 @@ struct i2c_bus i2c_io_bus = {
 
 int shw_i2c_io_init(void)
 {
-	int i;
-
 	TRACE(TRACE_INFO, "Initializing IO I2C bus...%s",__TIME__);
 	if (i2c_init_bus(&i2c_io_bus) < 0) {
 		TRACE(TRACE_ERROR,"init failed: %s", i2c_io_bus.name);
@@ -147,11 +145,4 @@ uint8_t shw_get_fpga_type()
 	//HACK: Check if file exists. This enable v3.2 miniBP and v3.3 SCB with LX240T
 	if(access("/wr/etc/lx240t.conf", F_OK) == 0) return SHW_FPGA_LX240T;
 	return SHW_FPGA_LX130T;
-}
-
-
-
-struct i2c_bus* shw_i2c_io_get_bus()
-{
-	return &i2c_io_bus;
 }

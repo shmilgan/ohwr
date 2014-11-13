@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 
-/* Base addresses of all FPGA peripherals used in libswitchhw */
+/* Base addresses of all FPGA peripherals used in libwr */
 
 /* PPS Generator */
 #define FPGA_BASE_PPS_GEN  0x10500

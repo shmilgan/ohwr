@@ -60,7 +60,7 @@ int hal_setup_fpga_images()
 
 //  shw_set_fpga_firmware_path(fpga_dir);
 
-/* check if the config demands a particular bitstream (otherwise libswitchhw will load the default ones) */
+/* check if the config demands a particular bitstream (otherwise libwr will load the default ones) */
 /*  if( !hal_config_get_string("global.main_firmware", fw_name, sizeof(fw_name)))
  		shw_request_fpga_firmware(FPGA_ID_MAIN, fw_name);
 

@@ -14,6 +14,7 @@
 /* System reference clock rate (in Hertz). Update together with REF_CLOCK_PERIOD_PS */
 #define REF_CLOCK_RATE_HZ						62500000
 
+/* return 0 on success */
 int shw_init(void);
 int shw_fpga_mmap_init(void);
 #endif

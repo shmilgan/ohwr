@@ -18,8 +18,8 @@ ifdef WRS_HAL_DEBUG
   CFLAGS += -DDEBUG
 endif
 
-LDFLAGS = -L../libswitchhw -L../mini-rpc \
-	 -lminipc -llua -lm -ldl -lswitchhw 
+LDFLAGS = -L../libwr -L../mini-rpc \
+	 -lminipc -llua -lm -ldl -lwr 
 
 all: $(BINARY)
 
