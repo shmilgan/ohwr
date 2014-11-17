@@ -11,7 +11,7 @@ fi
 wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR
 
 wrs_echo "--- Buildroot compiler and filesystem"
-zipname="buildroot-2011.11.tar.bz2"
+zipname="buildroot-2014.08.tar.bz2"
 wrs_download $zipname
 
 mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
@@ -19,7 +19,7 @@ mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 
 # go to the build dir and compile it, using our configuration
 cd $WRS_OUTPUT_DIR/build
-dirname="buildroot-2011.11"
+dirname="buildroot-2014.08"
 if [ ! -d $dirname ]; then
     unset WRS_NO_REPLACE_BUILDROOT
 fi
@@ -113,4 +113,4 @@ cd $buildrootdir
 unset CC
 wrs_echo "Compiling buildroot"
 # tell to buildroot to use our download directory
-make BUILDROOT_DL_DIR=$WRS_DOWNLOAD_DIR || wrs_die "buildroot compilation"
+make BR2_DL_DIR=$WRS_DOWNLOAD_DIR || wrs_die "buildroot compilation"

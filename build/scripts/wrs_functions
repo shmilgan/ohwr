@@ -101,7 +101,7 @@ wrs_unset_config () {
 
 # We'll need to set CROSS_COMPILE to the buildroot one, if unset
 wrs_default_compiler () {
-    hostdir=$WRS_OUTPUT_DIR/build/buildroot-2011.11/output/host
+    hostdir=$WRS_OUTPUT_DIR/build/buildroot-2014.08/output/host
 	if [ -e $hostdir/usr/bin/arm-linux-gcc ]; then
 	    wrs_setenv_default CROSS_COMPILE $hostdir/usr/bin/arm-linux-
 	fi
