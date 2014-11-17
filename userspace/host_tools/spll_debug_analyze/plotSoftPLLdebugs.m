@@ -80,7 +80,7 @@ hpll_switchover = detectSwitchover(hpll,6);
 %  finish_plots=length(bpll);
 
 if(option == 2 || option == 3)
-  start = switchover - 5000;
+  start = switchover - 9000;
   finish= switchover + 1000;
   draw2(mpll, bpll, hpll, switchover, start, finish, option);
   start = switchover - 500;
