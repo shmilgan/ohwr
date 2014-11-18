@@ -19,12 +19,12 @@ void term_restore(void)
 
 void term_init(int usecolor)
 {
-
 	term_usecolor = usecolor;
-	if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO))
-	    return;
+	tcgetattr(STDIN_FILENO,&oldkey); /* save it soon, for term_restore() */
 
-	tcgetattr(STDIN_FILENO,&oldkey);
+	if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO))
+		return;
+
 	newkey = oldkey;
 	cfmakeraw(&newkey);
 	newkey.c_oflag |= OPOST; /* don't require \r in source files */
