@@ -14,6 +14,8 @@ static int term_usecolor;
 
 void term_restore(void)
 {
+	if (term_usecolor)
+		printf("\033[0m"); /* restore normal color */
 	tcsetattr(STDIN_FILENO,TCSANOW,&oldkey);
 }
 
