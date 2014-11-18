@@ -24,7 +24,6 @@ void term_init(int usecolor)
 	if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO))
 	    return;
 
-	fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
 	tcgetattr(STDIN_FILENO,&oldkey);
 	newkey = oldkey;
 	cfmakeraw(&newkey);
