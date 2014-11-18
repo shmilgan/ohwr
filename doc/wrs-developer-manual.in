@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month October 2014
+@set update-month Novembre 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -1509,6 +1509,144 @@ and @t{boot} refers to the symbolic name of the volume, as listed above.
 For further details on the update procedure, please see
 @t{/etc/init.d/wrs-boot-procedure} (in the source archive it is
 distributed in @t{userspace/rootfs_override/}.
+
+@c ##########################################################################
+@node Inter-Process Comnunication
+@chapter Inter-Process Communication
+
+This chapter described the network of IPC/RPC communications that are
+active inside the switch.
+
+@c ==========================================================================
+@node mini-rpc
+@section mini-rpc
+
+Inter-process communication in the WR switch is based on remote
+procedure calls (RPC), relying on the @i{mini-rpc} package.
+The package is a submodule, currently at this commit:
+
+@smallexample
+  4c87062d userspace/mini-rpc (v1.0-4-g4c87062)
+@end smallexample
+
+The library is documented in its own doc/ directory. The basic
+idea is that an RPC server exports stuff through a Unix socket;
+the library can return the file descriptor to be used for @i{select}/@i{poll}
+and all RPC is handled by calling a specific function.  The client
+connects to the server and makes function calls using a library helper.
+
+Each procedure being exported is described by a structure, that lists
+the number and types of all arguments and the return type of the
+function.  This is, unfortunately, heavier than we initially expected.
+
+If you are studying the code and making sense of the RPC calls,
+the important things to look for are @t{struct minipc_pd} (procedure
+definition), @t{minipc_server_create}, @t{minipc_client_create}. To see
+what procedure are exported, look for the function @t{minipc_export}.
+
+As a special case, the RPC mechanism can happen over shared memory;
+this is how the user-space programs can interact with the soft-pll
+(the so-called @i{rt subsystem}).
+
+The library is built from a @i{git} submodule in
+@t{userspace/mini-rpc}.  Previous versions of this package included
+more copies of the library: one within @i{ptp-noposix} and a subset in
+@i{rt/ipc}.  Since version 4.1 (Oct 2014) of @i{wr-switch-sw} we
+stopped supporting @i{ptp-noposix}, and the @i{rt} subsystem is built
+from @i{wrpc-sw} since version 4.0 (Aug 2014).
+
+@c ==========================================================================
+@node RPC Sockets and Communication
+@section RPC Sockets and Communication
+
+This section describes the network of RPC calls that exist in the
+whitre rabbir switch.
+
+First, @t{rtud} creates a socket with name @t{rtud}
+which is only used by @t{rtu_stat}, to 
+Other RPC servers are created in the following places:
+
+@table @code
+@item userspace/wrsw_rtud/rtud_exports.c
+
+	The socket is called @t{rtud} and is used by the @i{rtu_stat}
+        program to gather runtime information, and by @i{wrs_vlans}
+        to request actual actions.
+
+@item userspace/ppsi/arch-wrs/wrs-startup.c
+
+	The @t{ptpd} channel is created to report PTP status information.
+
+@item userspace/wrsw_hal/hal_exports.c
+
+	This channel is called @t{wrsw_hal} but the code uses is through
+        the macro @t{WRSW_HAL_SERVER_ADDR}.
+
+@item wrpc-sw::ipc/rt_ipc.c
+
+	This is a memory-mapped channel, at address 0x10007000
+        (@t{RTS_MAILBOX_ADDR}).
+
+@end table
+
+Clients are created in the following places:
+
+@table @code
+
+@item userspace/tools/rtu_stat.c
+
+	The tool connects to @i{rtud} to get runtime information.
+
+@item userspace/tools/wrs_vlans.c
+
+	@t{wrs_vlans} connects to the @i{rtud} to ask for configuration
+        actions related to vlan setup.
+
+@item userspace/wrsw_hal/hal_exports.c
+
+	A temporary client is created to check whether a HAL process
+        is already running.
+
+@item userspace/wrsw_hal/rt_client.c
+
+	The hal connects to the @i{rt} subsystem to control the
+        soft-pll.
+
+@item userspace/tools/wr_mon.c
+
+	The tty-based monitoring interface connects to @i{ptpd} (@i{ppsi})
+        to get run-time information.
+
+userspace/tools/wr_management.c
+
+	To be verified. (FIXME)
+
+@item userspace/libwr/hal_client.c
+
+	The library allows connecting to the HAL socket to ask
+        for various actions (all librarized). The function
+        @t{halexp_client_try_connect()} is called directly by
+        @i{rtud} and through @t{halexp_client_init} by @i{rtu_stat},
+        @i{wr_phytool}, @i{wr_mon} and @i{wr_management}.
+
+@end table
+
+Functions exported by the HAL and PTP are defined in two headers:
+@t{hal_exports.h} and @t{ptpd_exports.h}. The former exists
+in two places, because @i{ppsi} is a separate package; the two
+are identical and are expected to remain so. Same applies to @t{rt_ipc.h},
+which appears both here and in @i{wrpc-sw}.
+
+@c FIXME: check the headers...
+
+@c ==========================================================================
+@node The RT Subsystem
+@section The RT Subsystem
+
+The in-FPGA processor running the real-time subsystem of the switch
+is using a shared memory connection for communication. The details
+are documented in the @t{mini-rpc} manual.  Only the hal process
+sends commands to the @t{rt} subsystem.
 
 @c ##########################################################################
 @node SDB and Hardware Information
