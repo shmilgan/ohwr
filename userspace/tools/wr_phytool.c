@@ -26,7 +26,7 @@
 #include <regs/endpoint-regs.h>
 
 #undef PACKED
-#include "ptpd_netif.h"
+#include <libwr/ptpd_netif.h>
 
 #include "rt_ipc.h"
 #include <libwr/hal_client.h>

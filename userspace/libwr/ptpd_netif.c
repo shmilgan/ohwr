@@ -23,7 +23,7 @@
 
 #include <asm/socket.h>
 
-#include "ptpd_netif.h"
+#include <libwr/ptpd_netif.h>
 #include <libwr/hal_client.h>
 
 #ifdef NETIF_VERBOSE
