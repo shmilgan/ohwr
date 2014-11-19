@@ -14,7 +14,7 @@
 #include <lualib.h>
 
 #include <libwr/pio.h>
-#include "trace.h"
+#include <libwr/trace.h>
 #include "util.h"
 
 #include "i2c.h"

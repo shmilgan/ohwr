@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <trace.h>
+#include <libwr/trace.h>
 #include <libwr/pps_gen.h> /* for direct access to DMPLL and PPS generator */
 
 #include "wrsw_hal.h"

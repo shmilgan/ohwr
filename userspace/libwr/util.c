@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#include <trace.h>
+#include <libwr/trace.h>
 #include <util.h>
 
 void shw_udelay(uint32_t microseconds)

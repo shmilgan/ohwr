@@ -8,7 +8,7 @@
 
 #include "i2c_bitbang.h"
 
-#include "trace.h"
+#include <libwr/trace.h>
 
 static int32_t		i2c_bitbang_transfer(struct i2c_bus* bus, uint32_t address,  uint32_t to_write, uint32_t to_read, uint8_t* data);
 static int32_t		i2c_bitbang_scan(struct i2c_bus* bus, uint32_t address);

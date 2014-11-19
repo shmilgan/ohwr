@@ -38,7 +38,7 @@
 #include <sys/ioctl.h>
 #include <linux/if.h>
 
-#include <trace.h>
+#include <libwr/trace.h>
 #include <libwr/switch_hw.h>
 #include <hal_client.h>
 

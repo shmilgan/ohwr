@@ -14,7 +14,7 @@
 #include <regs/ppsg-regs.h>
 
 #include <libwr/switch_hw.h>
-#include <trace.h>
+#include <libwr/trace.h>
 
 /* Default width (in 8ns units) of the pulses on the PPS output */
 #define PPS_WIDTH 100000

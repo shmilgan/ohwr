@@ -31,7 +31,7 @@
 #include <stdint.h>
 #include <errno.h>
 
-#include <trace.h>
+#include <libwr/trace.h>
 
 #include "minipc.h"
 #include "rtu.h"

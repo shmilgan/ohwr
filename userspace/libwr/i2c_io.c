@@ -26,7 +26,7 @@
 #include <errno.h>
 
 #include <libwr/pio.h>
-#include <trace.h>
+#include <libwr/trace.h>
 
 #include "i2c.h"
 #include "i2c_io.h"

@@ -1,5 +1,5 @@
-#ifndef __TRACE_H
-#define __TRACE_H
+#ifndef __LIBWR_TRACE_H
+#define __LIBWR_TRACE_H
 
 #define TRACE_INFO 0x10
 #define TRACE_INFO_L1 0x11
@@ -18,4 +18,4 @@ void trace_log_stderr();
 void trace_log_file(const char *filename);
 void trace_printf(const char *fname, int lineno, int level, const char *fmt, ...);
 
-#endif
+#endif /* __LIBWR_TRACE_H */

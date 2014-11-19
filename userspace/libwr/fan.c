@@ -24,7 +24,7 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <trace.h>
+#include <libwr/trace.h>
 
 #include <libwr/pio.h>
 #include <libwr/fan.h>

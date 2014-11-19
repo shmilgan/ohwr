@@ -11,7 +11,7 @@
 #include <at91/at91_pio.h>
 
 #include <libwr/pio.h>
-#include "trace.h"
+#include <libwr/trace.h>
 #include <libwr/shw_io.h>
 #include "util.h"
 

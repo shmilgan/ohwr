@@ -20,7 +20,7 @@
  * You should have received a copy of the GNU General Public License...
  */
 #include <libwr/pio.h>
-#include <trace.h>
+#include <libwr/trace.h>
 #include <string.h>
 #include <stdio.h>
 

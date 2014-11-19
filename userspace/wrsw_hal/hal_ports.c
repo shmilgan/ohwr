@@ -17,7 +17,7 @@
 
 /* LOTs of hardware includes */
 #include <libwr/switch_hw.h>
-#include <trace.h>
+#include <libwr/trace.h>
 #include <libwr/pio.h>
 #include <libwr/sfp_lib.h>
 

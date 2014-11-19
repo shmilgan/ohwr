@@ -38,7 +38,7 @@
 #include <fpga_io.h>
 #include <regs/rtu-regs.h>
 
-#include <trace.h>
+#include <libwr/trace.h>
 
 #include "rtu_fd.h"
 #include "rtu_drv.h"
