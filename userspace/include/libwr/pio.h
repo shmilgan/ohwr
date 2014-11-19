@@ -1,5 +1,5 @@
-#ifndef __CPU_IO_H
-#define __CPU_IO_H
+#ifndef __LIBWR_CPU_IO_H
+#define __LIBWR_CPU_IO_H
 
 #include <stdint.h>
 
@@ -96,4 +96,4 @@ static inline int shw_pio_setdir(const pio_pin_t *pin, int dir)
 }
 
 
-#endif //PIO_H
+#endif /* __LIBWR_CPU_IO_H */

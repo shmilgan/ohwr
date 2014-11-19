@@ -18,7 +18,7 @@
 /* LOTs of hardware includes */
 #include <switch_hw.h>
 #include <trace.h>
-#include <pio.h>
+#include <libwr/pio.h>
 #include <sfp_lib.h>
 
 #include <fpga_io.h>

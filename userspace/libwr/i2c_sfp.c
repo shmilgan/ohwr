@@ -13,7 +13,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-#include "pio.h"
+#include <libwr/pio.h>
 #include "trace.h"
 #include "util.h"
 

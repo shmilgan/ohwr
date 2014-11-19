@@ -19,7 +19,7 @@
  *
  * You should have received a copy of the GNU General Public License...
  */
-#include <pio.h>
+#include <libwr/pio.h>
 #include <trace.h>
 #include <string.h>
 #include <stdio.h>

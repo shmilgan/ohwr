@@ -25,7 +25,7 @@
 
 #include <stdint.h>
 
-#include "pio.h"
+#include <libwr/pio.h>
 
 
 #define assert_init(proc) { int ret; if((ret = proc) < 0) return ret; }

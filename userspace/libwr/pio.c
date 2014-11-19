@@ -10,7 +10,7 @@
 #include <at91/at91_pmc.h>
 #include <at91/at91_pio.h>
 
-#include "pio.h"
+#include <libwr/pio.h>
 #include "trace.h"
 #include "shw_io.h"
 #include "util.h"

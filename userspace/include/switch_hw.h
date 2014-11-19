@@ -1,7 +1,7 @@
 #ifndef __SWITCH_HW_H
 #define __SWITCH_HW_H
 
-#include "pio.h"
+#include <libwr/pio.h>
 #include "trace.h"
 #include "pps_gen.h"
 #include  <libwr/fan.h>
