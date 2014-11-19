@@ -24,7 +24,7 @@
 #include <string.h>
 
 #include <shw_io.h>
-#include <hwiu.h>
+#include <libwr/hwiu.h>
 #include "switch_hw.h"
 #include "libsdbfs.h"
 

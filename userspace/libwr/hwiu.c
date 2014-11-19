@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <fpga_io.h>
 #include <regs/hwiu-regs.h>
-#include <hwiu.h>
+#include <libwr/hwiu.h>
 
 #define hwiu_write(reg, val) \
   _fpga_writel(FPGA_BASE_HWIU + offsetof(struct HWIU_WB, reg), val)
