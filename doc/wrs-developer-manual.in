@@ -1515,18 +1515,28 @@ For further details on the update procedure, please see
 distributed in @t{userspace/rootfs_override/}.
 
 @c ##########################################################################
-@node Inter-Process Comnunication
+@node Inter-Process Communication
 @chapter Inter-Process Communication
 
 This chapter described the network of IPC/RPC communications that are
 active inside the switch.
 
+Currently there are two mechanisms in place: a simple RPC library
+(``Remote Procedure Call'', so a process can ask another process
+to perform an action, and a shared memory mechanism, so status of
+each @sc{wrs} process can be shared with other processes.
+
+Initially, and up to  release 4.1 of
+@t{wr-switch-sw} everything was RPC-based, including the passing
+of status information.  Starting in November 2014 we introduced
+shared memory, to lower the CPU usage and increase the ability
+to monitor overall Switch status.
+
 @c ==========================================================================
 @node mini-rpc
 @section mini-rpc
 
-Inter-process communication in the WR switch is based on remote
-procedure calls (RPC), relying on the @i{mini-rpc} package.
+The RPC mechanism in the switch relies on the @i{mini-rpc} package.
 The package is a submodule, currently at this commit:
 
 @smallexample
@@ -1564,20 +1574,20 @@ from @i{wrpc-sw} since version 4.0 (Aug 2014).
 @section RPC Sockets and Communication
 
 This section describes the network of RPC calls that exist in the
-whitre rabbir switch.
+White Rabbit Switch.
 
-First, @t{rtud} creates a socket with name @t{rtud}
-which is only used by @t{rtu_stat}, to 
-Other RPC servers are created in the following places:
+RPC servers are created in the following places:
 
 @table @code
 @item userspace/wrsw_rtud/rtud_exports.c
+@c FIXME: rtud should use shmem for status
 
 	The socket is called @t{rtud} and is used by the @i{rtu_stat}
         program to gather runtime information, and by @i{wrs_vlans}
         to request actual actions.
 
 @item userspace/ppsi/arch-wrs/wrs-startup.c
+@c FIXME: ppsi should use shmem
 
 	The @t{ptpd} channel is created to report PTP status information.
 
@@ -1598,6 +1608,7 @@ Clients are created in the following places:
 @table @code
 
 @item userspace/tools/rtu_stat.c
+@c FIXME: rtu_stat should use shmem
 
 	The tool connects to @i{rtud} to get runtime information.
 
@@ -1607,6 +1618,7 @@ Clients are created in the following places:
         actions related to vlan setup.
 
 @item userspace/wrsw_hal/hal_exports.c
+@c FIXME: no more check using a socked, but with the shmem mechanism
 
 	A temporary client is created to check whether a HAL process
         is already running.
@@ -1617,13 +1629,14 @@ Clients are created in the following places:
         soft-pll.
 
 @item userspace/tools/wr_mon.c
+@c FIXME: wr_mon should use shmem
 
 	The tty-based monitoring interface connects to @i{ptpd} (@i{ppsi})
         to get run-time information.
 
-userspace/tools/wr_management.c
+@item userspace/tools/wr_management.c
 
-	To be verified. (FIXME)
+	To be removed as soon as possible, using wr_mon instead.
 
 @item userspace/libwr/hal_client.c
 
@@ -1641,8 +1654,6 @@ in two places, because @i{ppsi} is a separate package; the two
 are identical and are expected to remain so. Same applies to @t{rt_ipc.h},
 which appears both here and in @i{wrpc-sw}.
 
-@c FIXME: check the headers...
-
 @c ==========================================================================
 @node The RT Subsystem
 @section The RT Subsystem
@@ -1650,7 +1661,78 @@ which appears both here and in @i{wrpc-sw}.
 The in-FPGA processor running the real-time subsystem of the switch
 is using a shared memory connection for communication. The details
 are documented in the @t{mini-rpc} manual.  Only the hal process
-sends commands to the @t{rt} subsystem.
+sends commands to the @sc{rt} subsystem.
+
+@c ==========================================================================
+@node WRS Shared Memory
+@section WRS Shared Memory
+
+The White Rabbit Switch has a shared memory system, with librarized
+functions to access it.  All status information is collected in a single
+file, where each process has 32kB of storage for local structures.
+
+The initial part of each process' area is a @t{stuct wrs_shm_head}, which
+allows to make some sense of the overall area.  The structure
+is filled by library functions and accessed by shared memory users.
+You can see how it is used in @t{tools/wrs_dump_shmem.c}.
+
+The following functions are defined. Pleae look in the source code
+for details about how they are used:
+
+@table @code
+@item void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags);
+@itemx void wrs_shm_put(void *headptr);
+
+	Request access to a shared memory area, and stop using it.
+        Currently only @t{WRS_SHM_WRITE} and @t{WRS_SHM_READ} are defined as 
+        a flag. If non-zero the head is properly initialized. 
+        On error NULL is returned, and errno is set.
+
+@item void *wrs_shm_alloc(void *headptr, size_t size);
+
+	Allocate data space within the shared memory area. The returned
+        pointer can be used directly. Only writers should allocate
+        but the code is not checking for this. The function is used,
+        for example, in @t{wrsw_hal/hal_ports.c}.
+
+@item void *wrs_shm_follow(void *headptr, void *ptr);
+
+	A reader can follow a pointer using this function.  The writer
+        can allocate shared memory with @t{wrs_shm_alloc} and store the
+        pointer in the same shared memory area, thus instantiating
+        structures that point to other structures.  But the reader processes
+        map the shared memory at a different address: this function
+        can be used to convert a pointer in the writer's address space
+        to a pointer in the reader's address space, or NULL if on error.
+        Please see @t{tools/wrs_dump_shmem.c} about how this is used.
+        
+
+@item void wrs_shm_write(void *headptr, int begin);
+
+	Whenever internal consistency of data structure is needed, the
+        writer should call this function before modifying shared structures,
+        with @t{begin} set to 1. It should also call the function again
+        when all modifications are done and data is internally consistent,
+        this time with @t{begin} set to zero.
+
+@item unsigned wrs_shm_seqbegin(void *headptr);
+@itemx int wrs_shm_seqretry(void *headptr, unsigned start);
+
+	A reader can use these functions to ensure it reads
+        internally-consistent data from a shared structure. It relies
+        on proper use of @t{wrs_shm_write()} by the writer.
+
+@item int wrs_shm_age(void *headptr);
+
+	The function returns the age, in seconds, of the last
+        modification to the memory area.  It relies
+        on proper use of @t{wrs_shm_write()} by the writer.
+
+@item void *wrs_shm_data(void *headptr, unsigned version);
+
+	Returns a pointer to data after the @t{struct wrs_shm_head}.
+
+@end table
 
 @c ##########################################################################
 @node Reboot/Reset Diagnostics

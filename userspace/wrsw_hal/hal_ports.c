@@ -268,7 +268,6 @@ int hal_init_ports()
 	int index = 0, i;
 	char port_name[128];
 
-
 	TRACE(TRACE_INFO, "Initializing switch ports...");
 
 /* default timeouts */

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+test -d /dev/shm && rmdir /dev/shm
+mkdir -m 1777 /dev/shm
+mount -t tmpfs -o nosuid,nodev,size=4096k none /dev/shm
