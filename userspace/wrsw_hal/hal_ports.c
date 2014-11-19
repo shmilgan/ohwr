@@ -19,7 +19,7 @@
 #include <switch_hw.h>
 #include <trace.h>
 #include <libwr/pio.h>
-#include <sfp_lib.h>
+#include <libwr/sfp_lib.h>
 
 #include <fpga_io.h>
 #include <regs/endpoint-regs.h>

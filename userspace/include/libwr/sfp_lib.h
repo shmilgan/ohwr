@@ -1,5 +1,5 @@
-#ifndef __SHW_SFPLIB_H
-#define __SHW_SFPLIB_H
+#ifndef __LIBWR_SHW_SFPLIB_H
+#define __LIBWR_SHW_SFPLIB_H
 
 #define SFP_LED_LINK	(1 << 0)
 #define SFP_LED_WRMODE	(1 << 1)
@@ -100,4 +100,4 @@ struct shw_sfp_caldata *shw_sfp_get_cal_data(int num);
 /* Read and verify the header all at once. returns -1 on failure */
 int shw_sfp_read_verify_header(int num, struct shw_sfp_header *head);
 
-#endif			// __SHW_SFPLIB_H
+#endif /* __LIBWR_SHW_SFPLIB_H */
