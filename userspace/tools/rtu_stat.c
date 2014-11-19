@@ -26,7 +26,7 @@
 
 #include <libwr/util.h>
 
-#include <hal_client.h>
+#include <libwr/hal_client.h>
 #include <minipc.h>
 #include <rtud_exports.h>
 #include <mac.h>

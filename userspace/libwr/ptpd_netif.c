@@ -24,7 +24,7 @@
 #include <asm/socket.h>
 
 #include "ptpd_netif.h"
-#include "hal_client.h"
+#include <libwr/hal_client.h>
 
 #ifdef NETIF_VERBOSE
 #define netif_dbg(...) printf(__VA_ARGS__)

@@ -29,7 +29,7 @@
 #include "ptpd_netif.h"
 
 #include "rt_ipc.h"
-#include "hal_client.h"
+#include <libwr/hal_client.h>
 #include <libwr/switch_hw.h>
 
 #define WRS3_FPGA_BASE 0x10000000

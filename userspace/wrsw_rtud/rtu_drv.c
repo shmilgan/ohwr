@@ -43,7 +43,7 @@
 #include <sys/ioctl.h>
 
 #include <libwr/switch_hw.h>
-#include <hal_client.h>
+#include <libwr/hal_client.h>
 
 #include <fpga_io.h>
 #include <regs/rtu-regs.h>

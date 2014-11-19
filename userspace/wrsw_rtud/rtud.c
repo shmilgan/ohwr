@@ -40,7 +40,7 @@
 
 #include <libwr/trace.h>
 #include <libwr/switch_hw.h>
-#include <hal_client.h>
+#include <libwr/hal_client.h>
 
 #include "rtu.h"
 #include "mac.h"
