@@ -24,7 +24,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "shw_io.h"
+#include <libwr/shw_io.h>
 
 #include "i2c_io.h"
 #include "libshw_i2c.h"

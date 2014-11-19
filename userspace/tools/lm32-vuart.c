@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "shw_io.h"
+#include <libwr/shw_io.h>
 #include "fpga_io.h"
 #include "switch_hw.h"
 

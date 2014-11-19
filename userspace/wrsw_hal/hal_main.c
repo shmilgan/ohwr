@@ -12,7 +12,7 @@
 
 #include <trace.h>
 #include <switch_hw.h>
-#include <shw_io.h>
+#include <libwr/shw_io.h>
 
 #include "wrsw_hal.h"
 #include "rt_ipc.h"

@@ -35,7 +35,7 @@
 #include "i2c_io.h"
 #include "i2c_fpga_reg.h"
 #include "fpga_io.h"
-#include "shw_io.h"
+#include <libwr/shw_io.h>
 #include "spwm-regs.h"
 #include "util.h"
 

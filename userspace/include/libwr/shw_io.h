@@ -20,11 +20,12 @@
  * You should have received a copy of the GNU General Public License...
  */
 
-#ifndef _SHW_IO_H_
-#define _SHW_IO_H_
+#ifndef _LIBWR_SHW_IO_H_
+#define _LIBWR_SHW_IO_H_
 
 #include <stdint.h>
 
+#include <libwr/shw_io.h>
 #include <libwr/pio.h>
 
 
@@ -116,5 +117,5 @@ const char* get_shw_info(const char cmd);
 
 
 
-#endif /* _SHW_IO_H_ */
+#endif /* _LIBWR_SHW_IO_H_ */
 

@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <shw_io.h>
+#include <libwr/shw_io.h>
 #include <libwr/hwiu.h>
 #include "switch_hw.h"
 #include "libsdbfs.h"
