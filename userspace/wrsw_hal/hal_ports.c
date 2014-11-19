@@ -122,7 +122,6 @@ int any_port_locked()
 {
     if(!rts_state_valid) return -1;
     if(rts_state.current_ref == REF_NONE) return -1;
-
     return rts_state.current_ref;
 }
 
@@ -139,10 +138,14 @@ int backup_port()
 
 int active_port()
 {
+	if(!rts_state_valid) return -1;
+	if(rts_state.current_ref == REF_NONE) return -1;	
 	return rts_state.current_ref;
 }
 int old_backup_port()
 {
+	if(!rts_state_valid) return -1;
+	if(rts_state.old_ref == REF_NONE) return -1;	
 	return rts_state.old_ref;
 }
 
@@ -364,6 +367,7 @@ static void poll_rts_state()
     if(tmo_expired(&tmo_rts))
     {
         rts_state_valid = rts_get_state(&rts_state) < 0 ? 0 : 1;
+        TRACE(TRACE_INFO,"rts_get_state updated, ports=0x%x\n",rts_state.port_status);
         if(!rts_state_valid)
             printf("rts_get_state failure, weird...\n");
     }
@@ -388,32 +392,56 @@ uint32_t pcs_readl(hal_port_state_t *p, int reg)
 	return NIC_RESULT_DATA(rv);
 }
 
+/* this function returns status of ports (up/down) provided by softPLL
+ * This is to synchronize info about link-down betwen the information provided by 
+ * check_link_up() and view of ports provided by rts_state structure. The later is 
+ * updated periodically. It might happen  that check_link_up() provides info about link
+ * down while the rts_state structure is not yet updated and provides state of the softPLL
+ * from when the link was still up... it's a hack
+ */
+int link_status(int channel)
+{
+	TRACE(TRACE_INFO, "HW link down from SoftPLL: port_%d = %d [0x%x]\n",
+	channel,0x1 & (rts_state.port_status >> channel),  rts_state.port_status);
+	if(!rts_state_valid) return -1;
+	return (0x1 & (rts_state.port_status >> channel));
+}
 
 static int handle_link_down(hal_port_state_t *p, int link_up)
 {
 /* If, at any moment, the link goes down, reset the FSM and the port state structure unless
    - it is a backup port, in this case don't touch the sPLL
    - it has a backup port, in this case switch the timing to backup  */
-	if(!link_up && p->state != HAL_PORT_STATE_LINK_DOWN && p->state != HAL_PORT_STATE_DISABLED)
+	if(!link_up && p->state != HAL_PORT_STATE_LINK_DOWN && p->state != HAL_PORT_STATE_DISABLED &&
+	link_status(p->hw_index) == 0) //received updated from softPLL with the info that link is down
 	{
 		if(p->locked)
 		{
 			
+			TRACE(TRACE_INFO, "LINK DOWN [%d]: active: %d | backup %d | old %d ",
+			p->hw_index, active_port(),backup_port(),old_backup_port());
 			if(hal_get_timing_mode() != HAL_TIMING_MODE_GRAND_MASTER)
-				if(backup_port() == REF_NONE) // not a backup & no backup for it
+				
+				if(old_backup_port() == p->hw_index) // we just switche over from this port
 				{
-					rts_set_mode(RTS_MODE_GM_FREERUNNING);
-					TRACE(TRACE_INFO, "switching RTS to use local reference");
+					rts_backup_channel(p->hw_index, RTS_BACKUP_CH_ACTIVATE);
+					rts_state.old_ref = REF_NONE; //nasty: to make hal in sync with RT
+					TRACE(TRACE_INFO, "switching to backup reference");
 				}
 				else if(backup_port() == p->hw_index) // it is backup port
 				{
 					rts_backup_channel(p->hw_index, RTS_BACKUP_CH_DOWN);
+					rts_state.backup_ref = REF_NONE; //nasty: to make hal in sync with RT
 					TRACE(TRACE_INFO, "switching off backup reference");
 				}
-				else if(old_backup_port() == p->hw_index)
+				// this is active slave, not a backup & no backup for it
+				else if(active_port() == p->hw_index && backup_port() < 0) 
 				{
-					rts_backup_channel(p->hw_index, RTS_BACKUP_CH_ACTIVATE);
-					TRACE(TRACE_INFO, "switching to backup reference");
+					rts_set_mode(RTS_MODE_GM_FREERUNNING);
+					rts_state.current_ref = REF_NONE; //nasty: to make hal in sync with RT
+					rts_state.backup_ref = REF_NONE; 
+					rts_state.old_ref = REF_NONE; 
+					TRACE(TRACE_INFO, "switching RTS to use local reference");
 				}
 				else 
 				{
@@ -485,10 +513,10 @@ static void port_fsm(hal_port_state_t *p)
         p->phase_val_valid = rts_state.channels[p->hw_index].flags & CHAN_PMEAS_READY ? 1 : 0;
 				//hal_port_check_lock(p->name);
 				//p->locked =
-		TRACE(TRACE_ERROR,"[main-fsm] Port %s| state up, phase % d, valid %d", p->name,
+/*		TRACE(TRACE_ERROR,"[main-fsm] Port %s| state up, phase % d, valid %d", p->name,
 		p->phase_val,p->phase_val_valid);
 		TRACE(TRACE_INFO,"[main-fsm] Port %s| state up, phase % d, valid %d", p->name,
-		p->phase_val,p->phase_val_valid);		
+		p->phase_val,p->phase_val_valid);	*/	
 		}
 
 		break;
@@ -597,6 +625,12 @@ void hal_update_ports()
 	for(i=0; i<HAL_MAX_PORTS;i++)
 		if(ports[i].in_use)
 			port_fsm(&ports[i]);
+		
+	//ML BUG: 
+	//    hmmm, the loop might result in change of pstate in rt_ipc,
+	//    i.e. current_ref & backup_ref are set to REF_NONE when link
+	//    down detected. If we don't update, the info will be out of
+	//    sync
 }
 
 /* Queries the port state structre for a given network interface. */
@@ -635,7 +669,8 @@ int hal_port_start_lock(const char  *port_name, int priority)
 
 	TRACE(TRACE_INFO, "Locking to port: %s", port_name);
 
-	if(priority == 0) // only primary slave port needs that, don't do for backups
+	// single slave mode or no slave yet, don't do for backups
+	if(priority == 0 || active_port() < 0) //the same condition in  rts_lock_channel()
 		rts_set_mode(RTS_MODE_BC);
 
   return rts_lock_channel(p->hw_index, priority) < 0 ? PORT_ERROR : PORT_OK;
