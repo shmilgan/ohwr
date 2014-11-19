@@ -4,7 +4,7 @@
 #include "pio.h"
 #include "trace.h"
 #include "pps_gen.h"
-#include "fan.h"
+#include  <libwr/fan.h>
 
 /* Some global, very important constants */
 

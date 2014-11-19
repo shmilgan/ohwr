@@ -27,7 +27,7 @@
 #include <trace.h>
 
 #include <pio.h>
-#include <fan.h>
+#include <libwr/fan.h>
 
 #include <at91_softpwm.h>
 
