@@ -25,7 +25,7 @@
 
 #include <libwr/shw_io.h>
 #include <libwr/hwiu.h>
-#include "switch_hw.h"
+#include <libwr/switch_hw.h>
 #include "libsdbfs.h"
 
 #define SDBFS_NAME "/dev/mtd5ro"

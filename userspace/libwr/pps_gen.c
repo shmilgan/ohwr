@@ -13,7 +13,7 @@
 #include <fpga_io.h>
 #include <regs/ppsg-regs.h>
 
-#include <switch_hw.h>
+#include <libwr/switch_hw.h>
 #include <trace.h>
 
 /* Default width (in 8ns units) of the pulses on the PPS output */

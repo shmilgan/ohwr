@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 
-#include <switch_hw.h>
+#include <libwr/switch_hw.h>
 #include <hal_client.h>
 
 #include <fpga_io.h>

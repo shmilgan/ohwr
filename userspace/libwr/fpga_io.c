@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <poll.h>
 
-#include <switch_hw.h>
+#include <libwr/switch_hw.h>
 
 #include <fpga_io.h>
 

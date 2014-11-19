@@ -30,7 +30,7 @@
 
 #include "rt_ipc.h"
 #include "hal_client.h"
-#include "switch_hw.h"
+#include <libwr/switch_hw.h>
 
 #define WRS3_FPGA_BASE 0x10000000
 #define WRS3_FPGA_SIZE 0x100000

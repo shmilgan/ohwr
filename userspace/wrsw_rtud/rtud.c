@@ -39,7 +39,7 @@
 #include <linux/if.h>
 
 #include <trace.h>
-#include <switch_hw.h>
+#include <libwr/switch_hw.h>
 #include <hal_client.h>
 
 #include "rtu.h"

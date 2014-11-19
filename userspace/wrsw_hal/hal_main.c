@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 
 #include <trace.h>
-#include <switch_hw.h>
+#include <libwr/switch_hw.h>
 #include <libwr/shw_io.h>
 
 #include "wrsw_hal.h"
