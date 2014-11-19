@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <util.h>
+#include <libwr/util.h>
 
 #include "i2c_bitbang.h"
 

@@ -1,5 +1,5 @@
-#ifndef __HW_UTIL_H
-#define __HW_UTIL_H
+#ifndef __LIBWR_HW_UTIL_H
+#define __LIBWR_HW_UTIL_H
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -12,4 +12,4 @@ void shw_free(void *ptr);
 const char *shw_2binary(uint8_t x);
 uint64_t shw_get_tics();
 
-#endif
+#endif /* __LIBWR_HW_UTIL_H */

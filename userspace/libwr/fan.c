@@ -37,7 +37,7 @@
 #include "fpga_io.h"
 #include <libwr/shw_io.h>
 #include "spwm-regs.h"
-#include "util.h"
+#include <libwr/util.h>
 
 #define FAN_TEMP_SENSOR_ADDR 0x4c
 

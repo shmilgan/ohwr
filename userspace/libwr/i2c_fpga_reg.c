@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <util.h> //for shw_udelay();
+#include <libwr/util.h> //for shw_udelay();
 
 #include "i2c_fpga_reg.h"
 

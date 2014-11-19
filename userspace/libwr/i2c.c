@@ -7,7 +7,7 @@
 #include "i2c_fpga_reg.h"
 
 #include <libwr/trace.h>
-#include "util.h"
+#include <libwr/util.h>
 
 int i2c_init_bus(struct i2c_bus *bus)
 {

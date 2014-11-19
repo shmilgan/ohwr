@@ -15,7 +15,7 @@
 
 #include <libwr/pio.h>
 #include <libwr/trace.h>
-#include "util.h"
+#include <libwr/util.h>
 
 #include "i2c.h"
 #include "i2c_sfp.h"

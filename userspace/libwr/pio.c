@@ -13,7 +13,7 @@
 #include <libwr/pio.h>
 #include <libwr/trace.h>
 #include <libwr/shw_io.h>
-#include "util.h"
+#include <libwr/util.h>
 
 volatile uint8_t *_pio_base[4][NUM_PIO_BANKS+1];
 volatile uint8_t *_sys_base;

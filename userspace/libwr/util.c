@@ -3,7 +3,7 @@
 #include <sys/time.h>
 
 #include <libwr/trace.h>
-#include <util.h>
+#include <libwr/util.h>
 
 void shw_udelay(uint32_t microseconds)
 {
