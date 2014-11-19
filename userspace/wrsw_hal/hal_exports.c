@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #include <trace.h>
-#include <pps_gen.h> /* for direct access to DMPLL and PPS generator */
+#include <libwr/pps_gen.h> /* for direct access to DMPLL and PPS generator */
 
 #include "wrsw_hal.h"
 #include "rt_ipc.h"

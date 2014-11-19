@@ -3,8 +3,8 @@
 
 #include <libwr/pio.h>
 #include "trace.h"
-#include "pps_gen.h"
-#include  <libwr/fan.h>
+#include <libwr/pps_gen.h>
+#include <libwr/fan.h>
 
 /* Some global, very important constants */
 
