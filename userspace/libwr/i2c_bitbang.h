@@ -1,6 +1,6 @@
 /*
 	i2c_bitbang.h
-	2012 CERN B.Bielawski 
+	2012 CERN B.Bielawski
 */
 
 #ifndef I2C_CPU_BB_H

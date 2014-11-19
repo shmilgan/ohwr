@@ -169,8 +169,8 @@ static uint32_t tmp100_read_reg(int dev_addr, uint8_t reg_addr, int n_bytes)
 	uint32_t rv=0, i;
 
 	data[0] = reg_addr;
-	i2c_write(&fpga_sensors_i2c, dev_addr, 1, data); 
-	i2c_read(&fpga_sensors_i2c, dev_addr, n_bytes, data); 
+	i2c_write(&fpga_sensors_i2c, dev_addr, 1, data);
+	i2c_read(&fpga_sensors_i2c, dev_addr, n_bytes, data);
 
 	for(i=0; i<n_bytes;i++)
 	{
@@ -189,7 +189,7 @@ static void tmp100_write_reg(int dev_addr, uint8_t reg_addr, uint8_t value)
 
 	data[0] = reg_addr;
 	data[1] = value;
-	i2c_write(&fpga_sensors_i2c, dev_addr, 2, data); 
+	i2c_write(&fpga_sensors_i2c, dev_addr, 2, data);
 }
 
 

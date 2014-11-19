@@ -143,7 +143,7 @@ static int32_t i2c_fpga_reg_transfer(struct i2c_bus* bus, uint32_t i2c_address, 
 		return I2C_NULL_PARAM;
 	if (bus->type != I2C_BUS_TYPE_FPGA_REG)
 		return I2C_BUS_MISMATCH;
-	
+
 	i2c_fpga_reg_t* ts = (i2c_fpga_reg_t*)bus->type_specific;
 	uint32_t fpga_address = ts->base_address;
 
@@ -168,10 +168,10 @@ static int32_t i2c_fpga_reg_transfer(struct i2c_bus* bus, uint32_t i2c_address, 
 				mi2c_sel_if(fpga_address, ts->if_num, 0);
 				return I2C_NO_ACK_RCVD;
 			}
-			sent++; 
+			sent++;
 		}
 	}
-    
+
 	if (to_read) {
 		ack = mi2c_start(fpga_address, i2c_address, I2C_READ);
 		if (!ack) {		//NAK

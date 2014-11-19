@@ -62,17 +62,17 @@ int halexp_get_timing_state(hexp_timing_state_t *tstate)
 
 int halexp_client_try_connect(int retries, int timeout)
 {
-	
+
 	for(;;) {
 		hal_ch = minipc_client_create(WRSW_HAL_SERVER_ADDR, MINIPC_FLAG_VERBOSE);
 		if (hal_ch == 0)
 			retries--;
-		else 
+		else
 			return 0;
-		
+
 		if(!retries)
 			return -1;
-			
+
 		usleep(timeout);
 	}
 

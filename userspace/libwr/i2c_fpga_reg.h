@@ -1,6 +1,6 @@
 /*
 	i2c_fpga_reg.h
-	2012 CERN B.Bielawski 
+	2012 CERN B.Bielawski
 */
 
 #ifndef I2C_FPGA_REG_H

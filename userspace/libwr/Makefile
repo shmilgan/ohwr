@@ -8,7 +8,7 @@ OBJS = trace.o init.o fpga_io.o util.o pps_gen.o i2c.o shw_io.o i2c_bitbang.o \
 
 LIB = libwr.a
 
-all: $(LIB) 
+all: $(LIB)
 
 $(LIB): $(OBJS)
 	$(AR) rc $@ $^

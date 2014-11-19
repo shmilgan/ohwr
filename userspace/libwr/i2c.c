@@ -33,7 +33,7 @@ void i2c_free(struct i2c_bus* bus)
 {
     if (!bus)
 	return;
-	
+
     if (bus->type_specific)
 	shw_free(bus->type_specific);
 
@@ -59,18 +59,18 @@ int32_t i2c_scan(struct i2c_bus* bus, uint8_t* data)
 {
     if (!bus)
         return I2C_NULL_PARAM;
-        
+
 //    const int devices = 128;
-    
+
     int address;
-    
+
     const int first_valid_address = 0;
     const int last_valid_address = 0x7f;
 
     memset((void*)data, 0, 16);		//16 bytes * 8 addresses per byte == 128 addresses
-    
+
     int found = 0;
-    
+
     for (address = first_valid_address; address <= last_valid_address; address++)
     {
 	int res = bus->scan(bus, address);

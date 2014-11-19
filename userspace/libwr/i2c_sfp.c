@@ -396,15 +396,15 @@ void shw_sfp_gpio_init(void)
 	struct i2c_bus *bus = &i2c_buses[WR_FPGA_BUS0];
 
 	/* configure the pins as outputs */
-	i2c_transfer(bus, addr, 2, 0, conf_output); 
-	i2c_transfer(bus, addr, 2, 0, set_output); 
+	i2c_transfer(bus, addr, 2, 0, conf_output);
+	i2c_transfer(bus, addr, 2, 0, set_output);
 
 	bus = &i2c_buses[WR_FPGA_BUS1];
 	for (i = 0; i < 8; i++) {
-		i2c_transfer(bus, addr + i, 2, 0, conf_output); 
-		i2c_transfer(bus, addr + i, 2, 0, set_output); 
+		i2c_transfer(bus, addr + i, 2, 0, conf_output);
+		i2c_transfer(bus, addr + i, 2, 0, set_output);
 	}
-	
+
 	for(i=0; i<18;i++)
 	{
 		shw_sfp_set_led_synced(i, 1);
@@ -420,7 +420,7 @@ void shw_sfp_gpio_init(void)
 		shw_udelay(7000);
 	}
 
-	
+
 }
 
 void shw_sfp_gpio_set(int num, uint8_t state)
@@ -448,8 +448,8 @@ void shw_sfp_gpio_set(int num, uint8_t state)
 	/* Read current state of pins */
 
 
-	i2c_transfer(bus, addr, 1, 0, send); 
-	i2c_transfer(bus, addr, 0, 1, &curr); 
+	i2c_transfer(bus, addr, 1, 0, send);
+	i2c_transfer(bus, addr, 0, 1, &curr);
 
 	//TRACE(TRACE_INFO,"%d: 0x%x 0x%x s=%d, send=%d,%d c=%d, \n",num,bus,addr,state,send[0],send[1],&curr);
 
@@ -468,7 +468,7 @@ void shw_sfp_gpio_set(int num, uint8_t state)
 		curr |= SFP_TX_DISABLE_MASK(top);
 
 	send[1] = curr;
-	i2c_transfer(bus, addr, 2, 0, send); 
+	i2c_transfer(bus, addr, 2, 0, send);
 
 	//TRACE(TRACE_INFO,"%d: 0x%x 0x%x s=%d, send=%d,%d c=%d, \n",num,bus,addr,state,send[0],send[1],curr);
 }
@@ -497,8 +497,8 @@ uint8_t shw_sfp_gpio_get(int num)
 
 	send[0] = 0x1;
 	/* Read current state of pins */
-	i2c_transfer(bus, addr, 1, 0, send); 
-	i2c_transfer(bus, addr, 0, 1, &curr); 
+	i2c_transfer(bus, addr, 1, 0, send);
+	i2c_transfer(bus, addr, 0, 1, &curr);
 
 	if (curr & SFP_LED_LINK_MASK(top))
 		out |= SFP_LED_LINK;

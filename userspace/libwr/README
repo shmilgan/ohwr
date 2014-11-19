@@ -1,7 +1,7 @@
 Switch V3 Hardware Library (libwr)
 -------------------------------
 
-Libwr is a collection of low-level userspace drivers for various 
+Libwr is a collection of low-level userspace drivers for various
 peripherals in the switch, which do not need kernel modules. These are:
 - Main FPGA (fpga_io.c) and CPU GPIO ports (pio.c), pin definitions (shw_io.c)
 - PPS generator (pps_gen.c, adjustment of time)

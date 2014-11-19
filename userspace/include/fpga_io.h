@@ -28,7 +28,7 @@
 #define FPGA_BASE_PSTATS 0x58000
 
 /* HardWare Debugging Unit */
-#define FPGA_BASE_HWDU 	  0x59000 
+#define FPGA_BASE_HWDU 	  0x59000
 
 /* Endpoint  */
 #define FPGA_BASE_EP0 	   0x30000
