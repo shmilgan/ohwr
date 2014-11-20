@@ -12,7 +12,7 @@ WR_INCLUDE = $(WR_INSTALL_ROOT)/include
 WR_LIB = $(WR_INSTALL_ROOT)/lib
 
 CFLAGS = -g -Wall -DRT_CLIENT\
-	-I../include -I../mini-rpc -I$(WR_INCLUDE)
+	-I../include -I../libwr/include -I../mini-rpc -I$(WR_INCLUDE)
 
 ifdef WRS_HAL_DEBUG
   CFLAGS += -DDEBUG
