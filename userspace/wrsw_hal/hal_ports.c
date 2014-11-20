@@ -193,7 +193,7 @@ static void enable_port(int port, int enable)
 
 /* Port initialization. Assigns the MAC address, WR timing mode, reads
  * parameters from the config file. */
-int hal_init_port(const char *name, int index)
+static int hal_init_port(const char *name, int index)
 {
 	char key_name[128];
 	char val[128];
@@ -355,7 +355,7 @@ static void poll_rts_state()
 	}
 }
 
-uint32_t pcs_readl(hal_port_state_t * p, int reg)
+static uint32_t pcs_readl(hal_port_state_t * p, int reg)
 {
 	struct ifreq ifr;
 	uint32_t rv;

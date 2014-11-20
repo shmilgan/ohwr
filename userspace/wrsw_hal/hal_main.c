@@ -48,100 +48,7 @@ static void call_cleanup_cbs()
 			cleanup_cb[i] ();
 }
 
-/* Determines which FPGA bitstreams shall be loaded */
-int hal_setup_fpga_images()
-{
-	char fpga_dir[128];
-
-	/* query the path to the firmware directory in the config file */
-	if (hal_config_get_string("global.hal_firmware_path",
-				  fpga_dir, sizeof(fpga_dir)) < 0)
-		return -1;
-
-	//  shw_set_fpga_firmware_path(fpga_dir);
-
-/* check if the config demands a particular bitstream (otherwise libwr
- * will load the default ones) */
-
-/*
-	if( !hal_config_get_string("global.main_firmware",
-				   fw_name, sizeof(fw_name)))
-		shw_request_fpga_firmware(FPGA_ID_MAIN, fw_name);
-
-	if( !hal_config_get_string("global.clkb_firmware",
-				   fw_name, sizeof(fw_name)))
-		shw_request_fpga_firmware(FPGA_ID_CLKB, fw_name);
-*/
-
-	return 0;
-}
-
-/* loads (load = 1) or unloads (load = 0) a WR kernel module (name). */
-static int load_unload_kmod(const char *name, int load)
-{
-	static char modules_path[128];
-	static int modules_path_valid = 0;
-	char cmd[256];
-
-	if (!modules_path_valid) {
-		if (hal_config_get_string("global.hal_modules_path",
-					  modules_path, sizeof(modules_path))
-		    < 0) {
-			TRACE(TRACE_ERROR, "Unable to locate kernel "
-			      "modules directory!");
-			return -1;
-		}
-		modules_path_valid = 1;
-	}
-
-	TRACE(TRACE_INFO, "%s kernel module '%s'",
-	      load ? "Loading" : "Unloading", name);
-	snprintf(cmd, sizeof(cmd), "%s %s/%s",
-		 load ? "/sbin/insmod" : "/sbin/rmmod", modules_path, name);
-
-	system(cmd);
-
-	return 0;
-}
-
-/* Unloads all WR kernel modules during the shutdown */
-static void unload_kernel_modules()
-{
-	char module_name[80];
-	int index = 0;
-
-	for (;;) {
-		if (!hal_config_iterate("global.modules", index++,
-					module_name, sizeof(module_name)))
-			break;
-
-		load_unload_kmod(module_name, 0);
-	}
-}
-
-/* Loads all WR kernel modules specified in the HAL config file */
-int hal_load_kernel_modules()
-{
-	char module_name[80];
-	int index = 0;
-
-	TRACE(TRACE_INFO, "Loading kernel modules...");
-
-	for (;;) {
-		if (!hal_config_iterate("global.modules", index++,
-					module_name, sizeof(module_name)))
-			break;
-
-		assert_init(load_unload_kmod(module_name, 1));
-	}
-
-	hal_add_cleanup_callback(unload_kernel_modules);
-
-	return 0;
-
-}
-
-void sighandler(int sig)
+static void sighandler(int sig)
 {
 	TRACE(TRACE_ERROR, "signal caught (%d)!", sig);
 
@@ -153,16 +60,16 @@ void sighandler(int sig)
 	exit(0);
 }
 
-int hal_shutdown()
+static int hal_shutdown()
 {
 	call_cleanup_cbs();
 	return 0;
 }
 
-void hal_deamonize();
+static void hal_deamonize();
 
 /* Main initialization function */
-int hal_init()
+static int hal_init()
 {
 	char sfp_db_path[1024];
 
@@ -183,7 +90,6 @@ int hal_init()
 
 	/* parse the config file and choose the bitstreams to load */
 	assert_init(hal_parse_config());
-//      assert_init(hal_setup_fpga_images());
 
 	if (!hal_config_get_string("global.sfp_database_path",
 				   sfp_db_path, sizeof(sfp_db_path))) {
@@ -219,7 +125,7 @@ int hal_init()
 
 /* Main loop update - polls for WRIPC requests and rolls the port
  * state machines */
-void hal_update()
+static void hal_update()
 {
 	hal_update_wripc();
 	hal_update_ports();
@@ -228,7 +134,7 @@ void hal_update()
 }
 
 /* Turns a nice and well-behaving HAL into an evil servant of satan. */
-void hal_deamonize()
+static void hal_deamonize()
 {
 	pid_t pid, sid;
 
@@ -280,7 +186,7 @@ Usage: wrsw_hal [options], where [options] can be:\n\
 -c [file]: specify your own config file\n\n");
 }
 
-void hal_parse_cmdline(int argc, char *argv[])
+static void hal_parse_cmdline(int argc, char *argv[])
 {
 	int opt;
 
