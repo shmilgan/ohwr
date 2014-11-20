@@ -15,7 +15,7 @@
 #include <libwr/shw_io.h>
 
 #include "wrsw_hal.h"
-#include "rt_ipc.h"
+#include <rt_ipc.h>
 
 #define MAX_CLEANUP_CALLBACKS 16
 

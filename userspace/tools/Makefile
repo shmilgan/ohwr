@@ -25,7 +25,6 @@ GIT_USR = $(shell  git config --get-all user.name)
 CFLAGS =  -O2 -g -Wall \
 		-I$(LINUX)/include \
 		-I$(LINUX)/arch/arm/mach-at91/include \
-		-I../wrsw_hal \
 		-I../wrsw_rtud \
 		-I../mini-rpc \
 		-I../libsdb \

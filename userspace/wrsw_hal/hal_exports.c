@@ -7,12 +7,12 @@
 #include <libwr/pps_gen.h> /* for direct access to DMPLL and PPS generator */
 
 #include "wrsw_hal.h"
-#include "rt_ipc.h"
+#include <rt_ipc.h>
 
 #include <minipc.h>
 
 #define HAL_EXPORT_STRUCTURES
-#include "hal_exports.h" /* for exported structs/function protos */
+#include <hal/hal_exports.h> /* for exported structs/function protos */
 
 static struct minipc_ch *hal_ch;
 

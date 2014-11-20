@@ -16,7 +16,7 @@
 #include "minipc.h"
 
 #define RTIPC_EXPORT_STRUCTURES
-#include "rt_ipc.h"
+#include <rt_ipc.h>
 
 #define RTS_MAILBOX_ADDR "mem:10007000"
 

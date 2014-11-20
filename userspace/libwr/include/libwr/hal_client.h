@@ -2,7 +2,7 @@
 #ifndef __LIBWR_HAL_CLIENT_H
 #define __LIBWR_HAL_CLIENT_H
 
-#include "../wrsw_hal/hal_exports.h"
+#include <hal/hal_exports.h>
 
 int halexp_client_init();
 int halexp_client_try_connect(int retries, int timeout);

@@ -10,8 +10,8 @@
 
 #include "wrsw_hal.h"
 #include "timeout.h"
-#include "rt_ipc.h"
-#include "hal_exports.h"
+#include <rt_ipc.h>
+#include <hal/hal_exports.h>
 
 #include "gps_resync/gps_resync.h"
 

@@ -5,7 +5,7 @@
 #include <minipc.h>
 
 #define HAL_EXPORT_STRUCTURES
-#include "hal_exports.h"
+#include <hal/hal_exports.h>
 
 #define DEFAULT_TO 200000	/* ms */
 

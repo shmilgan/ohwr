@@ -28,7 +28,7 @@
 #undef PACKED
 #include <libwr/ptpd_netif.h>
 
-#include "rt_ipc.h"
+#include <rt_ipc.h>
 #include <libwr/hal_client.h>
 #include <libwr/switch_hw.h>
 
