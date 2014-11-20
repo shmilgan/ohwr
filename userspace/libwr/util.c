@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#include <trace.h>
-#include <util.h>
+#include <libwr/trace.h>
+#include <libwr/util.h>
 
 void shw_udelay(uint32_t microseconds)
 {

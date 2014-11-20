@@ -4,9 +4,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "shw_io.h"
+#include <libwr/shw_io.h>
 #include "fpga_io.h"
-#include "switch_hw.h"
+#include <libwr/switch_hw.h>
 
 #define VUART_BASE 0x10000
 #define VUART_TDR 0x10

@@ -1,10 +1,10 @@
-#ifndef __SWITCH_HW_H
-#define __SWITCH_HW_H
+#ifndef __LIBWR_SWITCH_HW_H
+#define __LIBWR_SWITCH_HW_H
 
-#include "pio.h"
-#include "trace.h"
-#include "pps_gen.h"
-#include "fan.h"
+#include <libwr/pio.h>
+#include <libwr/trace.h>
+#include <libwr/pps_gen.h>
+#include <libwr/fan.h>
 
 /* Some global, very important constants */
 
@@ -17,4 +17,4 @@
 /* return 0 on success */
 int shw_init(void);
 int shw_fpga_mmap_init(void);
-#endif
+#endif /* __LIBWR_SWITCH_HW_H */

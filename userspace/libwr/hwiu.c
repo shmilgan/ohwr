@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <fpga_io.h>
 #include <regs/hwiu-regs.h>
-#include <hwiu.h>
+#include <libwr/hwiu.h>
 
 #define hwiu_write(reg, val) \
   _fpga_writel(FPGA_BASE_HWIU + offsetof(struct HWIU_WB, reg), val)
@@ -46,7 +46,7 @@ int shw_hwiu_gwver(struct gw_info *info)
     printf("nwords: sw=%u, hw=%u, ver=%u, data=%x\n", info->nwords, HWIU_INFO_WORDS, info->struct_ver, data[0]);
     return -1;
   }
-  
+
   //now read info words
   for(i=0; i<info->nwords; ++i) {
     if( hwiu_read_word(HWIU_INFO_WORDS_START+i, data+i+1) < 0 )

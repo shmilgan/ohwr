@@ -19,12 +19,12 @@
  *
  * You should have received a copy of the GNU General Public License...
  */
-#include <pio.h>
-#include <trace.h>
+#include <libwr/pio.h>
+#include <libwr/trace.h>
 #include <string.h>
 #include <stdio.h>
 
-#include "shw_io.h"
+#include <libwr/shw_io.h>
 
 #include "i2c_io.h"
 #include "libshw_i2c.h"

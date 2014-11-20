@@ -1,12 +1,12 @@
 /*
 	i2c_bitbang.h
-	2012 CERN B.Bielawski 
+	2012 CERN B.Bielawski
 */
 
 #ifndef I2C_CPU_BB_H
 #define I2C_CPU_BB_H
 
-#include <pio.h>
+#include <libwr/pio.h>
 #include "i2c.h"
 
 struct i2c_bitbang {

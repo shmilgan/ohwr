@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <switch_hw.h>
+#include <libwr/switch_hw.h>
 #include "i2c_sfp.h"
-#include "shw_io.h"
+#include <libwr/shw_io.h>
 
 
 int shw_init()

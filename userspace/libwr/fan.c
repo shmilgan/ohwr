@@ -24,10 +24,10 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <trace.h>
+#include <libwr/trace.h>
 
-#include <pio.h>
-#include <fan.h>
+#include <libwr/pio.h>
+#include <libwr/fan.h>
 
 #include <at91_softpwm.h>
 
@@ -35,9 +35,9 @@
 #include "i2c_io.h"
 #include "i2c_fpga_reg.h"
 #include "fpga_io.h"
-#include "shw_io.h"
+#include <libwr/shw_io.h>
 #include "spwm-regs.h"
-#include "util.h"
+#include <libwr/util.h>
 
 #define FAN_TEMP_SENSOR_ADDR 0x4c
 
@@ -169,8 +169,8 @@ static uint32_t tmp100_read_reg(int dev_addr, uint8_t reg_addr, int n_bytes)
 	uint32_t rv=0, i;
 
 	data[0] = reg_addr;
-	i2c_write(&fpga_sensors_i2c, dev_addr, 1, data); 
-	i2c_read(&fpga_sensors_i2c, dev_addr, n_bytes, data); 
+	i2c_write(&fpga_sensors_i2c, dev_addr, 1, data);
+	i2c_read(&fpga_sensors_i2c, dev_addr, n_bytes, data);
 
 	for(i=0; i<n_bytes;i++)
 	{
@@ -189,7 +189,7 @@ static void tmp100_write_reg(int dev_addr, uint8_t reg_addr, uint8_t value)
 
 	data[0] = reg_addr;
 	data[1] = value;
-	i2c_write(&fpga_sensors_i2c, dev_addr, 2, data); 
+	i2c_write(&fpga_sensors_i2c, dev_addr, 2, data);
 }
 
 

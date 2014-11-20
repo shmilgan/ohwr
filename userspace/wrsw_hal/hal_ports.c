@@ -16,10 +16,10 @@
 #include <linux/if.h>
 
 /* LOTs of hardware includes */
-#include <switch_hw.h>
-#include <trace.h>
-#include <pio.h>
-#include <sfp_lib.h>
+#include <libwr/switch_hw.h>
+#include <libwr/trace.h>
+#include <libwr/pio.h>
+#include <libwr/sfp_lib.h>
 
 #include <fpga_io.h>
 #include <regs/endpoint-regs.h>

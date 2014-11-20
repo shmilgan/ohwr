@@ -9,7 +9,7 @@
 #define PTP_EXPORT_STRUCTURES
 #include "ptpd_exports.h"
 
-#include "hal_client.h"
+#include <libwr/hal_client.h>
 
 #define SHOW_GUI		0
 #define SHOW_STATS		1

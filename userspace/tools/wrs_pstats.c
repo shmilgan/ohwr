@@ -11,8 +11,8 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
-#include <switch_hw.h>
-#include <hal_client.h>
+#include <libwr/switch_hw.h>
+#include <libwr/hal_client.h>
 
 static void parse_sysfs(int init);
 

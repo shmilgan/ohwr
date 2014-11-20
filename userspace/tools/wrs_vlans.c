@@ -30,7 +30,7 @@
 #include <rtud_exports.h>
 #include "regs/endpoint-regs.h"
 
-#include "switch_hw.h"
+#include <libwr/switch_hw.h>
 #include "fpga_io.h"
 #include "wrs_vlans.h"
 

@@ -25,8 +25,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <pio.h>
-#include <trace.h>
+#include <libwr/pio.h>
+#include <libwr/trace.h>
 
 #include "i2c.h"
 #include "i2c_io.h"

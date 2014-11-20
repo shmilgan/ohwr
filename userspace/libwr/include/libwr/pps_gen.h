@@ -1,7 +1,7 @@
 /* PPS Generator - a.k.a. WR Real-time clock driver */
 
-#ifndef __PPS_GEN_H
-#define __PPS_GEN_H
+#ifndef __LIBWR_PPS_GEN_H
+#define __LIBWR_PPS_GEN_H
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -24,4 +24,4 @@ int shw_pps_gen_enable_output(int enable);
 /* Reads the current time and stores at <seconds,nanoseconds>. */
 void shw_pps_gen_read_time(uint64_t *seconds, uint32_t *nanoseconds);
 
-#endif
+#endif /* __LIBWR_PPS_GEN_H */

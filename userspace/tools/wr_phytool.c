@@ -26,11 +26,11 @@
 #include <regs/endpoint-regs.h>
 
 #undef PACKED
-#include "ptpd_netif.h"
+#include <libwr/ptpd_netif.h>
 
 #include "rt_ipc.h"
-#include "hal_client.h"
-#include "switch_hw.h"
+#include <libwr/hal_client.h>
+#include <libwr/switch_hw.h>
 
 #define WRS3_FPGA_BASE 0x10000000
 #define WRS3_FPGA_SIZE 0x100000

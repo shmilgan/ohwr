@@ -1,5 +1,5 @@
-#ifndef __HWIU_H__
-#define __HWIU_H__
+#ifndef __LIBWR_HWIU_H__
+#define __LIBWR_HWIU_H__
 
 #define HWIU_INFO_START 0
 #define HWIU_INFO_WORDS_START 1
@@ -20,4 +20,4 @@ struct gw_info {
 
 int shw_hwiu_gwver(struct gw_info *info);
 
-#endif
+#endif /* __LIBWR_HWIU_H__ */

@@ -8,7 +8,7 @@
 #include "serial.h"
 #include "nmea.h"
 
-#include <switch_hw.h>
+#include <libwr/switch_hw.h>
 
 void read_nmea_msg(char *msgbuf, int len)
 {

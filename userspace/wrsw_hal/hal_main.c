@@ -10,9 +10,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <trace.h>
-#include <switch_hw.h>
-#include <shw_io.h>
+#include <libwr/trace.h>
+#include <libwr/switch_hw.h>
+#include <libwr/shw_io.h>
 
 #include "wrsw_hal.h"
 #include "rt_ipc.h"

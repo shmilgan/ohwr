@@ -30,8 +30,8 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 
-#include <switch_hw.h>
-#include <hal_client.h>
+#include <libwr/switch_hw.h>
+#include <libwr/hal_client.h>
 
 #include <fpga_io.h>
 #include <regs/rtu-regs.h>

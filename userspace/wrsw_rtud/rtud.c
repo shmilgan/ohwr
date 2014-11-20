@@ -38,9 +38,9 @@
 #include <sys/ioctl.h>
 #include <linux/if.h>
 
-#include <trace.h>
-#include <switch_hw.h>
-#include <hal_client.h>
+#include <libwr/trace.h>
+#include <libwr/switch_hw.h>
+#include <libwr/hal_client.h>
 
 #include "rtu.h"
 #include "mac.h"

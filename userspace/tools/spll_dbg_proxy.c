@@ -25,7 +25,7 @@
 #include <fpga_io.h>
 #include <regs/softpll-regs.h>
 
-#include "switch_hw.h"
+#include <libwr/switch_hw.h>
 
 /* TCP Port to listen on */
 #define MY_PORT 12345

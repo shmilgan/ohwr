@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include <switch_hw.h>
+#include <libwr/switch_hw.h>
 
 #include "wrsw_hal.h"
 #include "timeout.h"

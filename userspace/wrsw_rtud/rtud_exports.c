@@ -31,7 +31,7 @@
 #include <stdint.h>
 #include <errno.h>
 
-#include <trace.h>
+#include <libwr/trace.h>
 
 #include "minipc.h"
 #include "rtu.h"
@@ -39,7 +39,7 @@
 #include "rtud_exports.h"
 #include "mac.h"
 
-#include <hal_client.h>
+#include <libwr/hal_client.h>
 
 /* The channel */
 static struct minipc_ch *rtud_ch;

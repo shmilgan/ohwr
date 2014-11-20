@@ -2,8 +2,7 @@
 #define __WRSW_HAL_H
 
 #include <inttypes.h>
-
-#include <sfp_lib.h>
+#include <libwr/sfp_lib.h>
 
 typedef void (*hal_cleanup_callback_t)();
 

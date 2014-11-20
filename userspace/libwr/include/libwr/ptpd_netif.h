@@ -1,7 +1,7 @@
 // Network API for WR-PTPd
 
-#ifndef __PTPD_NETIF_H
-#define __PTPD_NETIF_H
+#ifndef __LIBWR_PTPD_NETIF_H
+#define __LIBWR_PTPD_NETIF_H
 
 #include <stdio.h>
 //#include <inttypes.h>
@@ -134,4 +134,4 @@ int ptpd_netif_adjust_counters(int64_t adjust_sec, int32_t adjust_nsec);
 int ptpd_netif_get_dmtd_phase(wr_socket_t *sock, int32_t *phase);
 void ptpd_netif_linearize_rx_timestamp(wr_timestamp_t *ts, int32_t dmtd_phase, int cntr_ahead, int transition_point, int clock_period);
 
-#endif
+#endif  /* __LIBWR_PTPD_NETIF_H */

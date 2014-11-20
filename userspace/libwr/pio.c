@@ -10,10 +10,10 @@
 #include <at91/at91_pmc.h>
 #include <at91/at91_pio.h>
 
-#include "pio.h"
-#include "trace.h"
-#include "shw_io.h"
-#include "util.h"
+#include <libwr/pio.h>
+#include <libwr/trace.h>
+#include <libwr/shw_io.h>
+#include <libwr/util.h>
 
 volatile uint8_t *_pio_base[4][NUM_PIO_BANKS+1];
 volatile uint8_t *_sys_base;
@@ -90,14 +90,14 @@ extern const pio_pin_t* _all_fpga_gpio_pins[];
 void shw_pio_toggle_pin(pio_pin_t* pin, uint32_t udelay)
 {
     while (1)
-    {    
+    {
 	shw_pio_set(pin, 0);
 	shw_udelay(udelay);
 	shw_pio_set(pin, 1);
 	shw_udelay(udelay);
     }
 }
-    
+
 void shw_pio_configure(const pio_pin_t *pin)
 {
     uint32_t mask = (1<<pin->pin);
@@ -148,8 +148,8 @@ void shw_pio_configure(const pio_pin_t *pin)
             _writel(base + PIO_ODR, mask);	// select input
         }
         break;
-        
-        
+
+
     case PIO_FPGA:
         ddr = _readl(base + FPGA_PIO_REG_DDR);
 
@@ -166,7 +166,7 @@ void shw_pio_configure(const pio_pin_t *pin)
 
         _writel(base + FPGA_PIO_REG_DDR, ddr);
         break;
-        
+
     }		//switch
 }
 
