@@ -26,145 +26,183 @@ wrs-gw-v4.0-20140807.tar.gz 60030b4f8d6e3ab7d2bbf231031fa026 \
 buildroot-2014.08.tar.bz2        8566e722aa5c5e9f37a637715121124a \
    http://www.buildroot.org/downloads/buildroot-2014.08.tar.bz2
 
-autoconf-2.65.tar.bz2            a6de1cc6434cd64038b0a0ae4e252b33 \
-   http://ftp.gnu.org/pub/gnu/autoconf/autoconf-2.65.tar.bz2
+binutils-2.22.tar.bz2 	ee0f10756c84979622b992a4a61ea3f5 \
+   http://ftp.gnu.org/pub/gnu/binutils/binutils-2.22.tar.bz2
 
-automake-1.11.1.tar.bz2          c2972c4d9b3e29c03d5f2af86249876f \
-   http://ftp.gnu.org/pub/gnu/automake/automake-1.11.1.tar.bz2
+m4-1.4.17.tar.xz 	12a3c829301a4fd6586a57d3fcf196dc \
+   http://ftp.gnu.org/pub/gnu/m4/m4-1.4.17.tar.xz
 
-bash-4.1.tar.gz                  9800d8724815fd84994d9be65ab5e7b8 \
-   http://ftp.gnu.org/pub/gnu/bash/bash-4.1.tar.gz
+gmp-6.0.0a.tar.xz 	1e6da4e434553d2811437aa42c7f7c76 \
+   http://ftp.gnu.org/pub/gnu/gmp/gmp-6.0.0a.tar.xz
 
-binutils-2.21.1.tar.bz2          bde820eac53fa3a8d8696667418557ad \
-   http://ftp.gnu.org/pub/gnu/binutils/binutils-2.21.1.tar.bz2
+mpfr-3.1.2.tar.xz 	e3d203d188b8fe60bb6578dd3152e05c \
+   http://www.mpfr.org/mpfr-3.1.2/mpfr-3.1.2.tar.xz
 
-bridge-utils-1.5.tar.gz          ec7b381160b340648dede58c31bb2238 \
-   http://kent.dl.sourceforge.net/sourceforge/bridge/bridge-utils-1.5.tar.gz
+mpc-1.0.2.tar.gz 	68fadff3358fb3e7976c7a398a0af4c3 \
+   http://ftp.gnu.org/pub/gnu/mpc/mpc-1.0.2.tar.gz
 
-busybox-1.19.3.tar.bz2           c3938e1ac59602387009bbf1dd1af7f6 \
-   http://www.busybox.net/downloads/busybox-1.19.3.tar.bz2
+gcc-4.8.3.tar.bz2 	7c60f24fab389f77af203d2516ee110f \
+   http://ftp.gnu.org/pub/gnu/gcc/gcc-4.8.3/gcc-4.8.3.tar.bz2
 
-dhcpdump-1.8.tar.gz              099c786997c424f196414f9575f1fb90 \
+linux-3.16.1.tar.xz 	e7a985a243b7941b6bc6240fcbc797fc \
+   https://www.kernel.org/pub//linux/kernel/v3.x/linux-3.16.1.tar.xz
+
+uClibc-0.9.33.2.tar.xz 	73e6fe215648d02246f4d195b25fb17e \
+   http://www.uclibc.org/downloads/uClibc-0.9.33.2.tar.xz
+
+argp-standalone-1.3.tar.gz 	720704bac078d067111b32444e24ba69 \
+   http://www.lysator.liu.se/~nisse/archive/argp-standalone-1.3.tar.gz
+
+busybox-1.22.1.tar.bz2 	337d1a15ab1cb1d4ed423168b1eb7d7e \
+   http://www.busybox.net/downloads/busybox-1.22.1.tar.bz2
+
+libtool-2.4.2.tar.xz 	2ec8997e0c07249eb4cbd072417d70fe \
+   http://ftp.gnu.org/pub/gnu/libtool/libtool-2.4.2.tar.xz
+
+autoconf-2.69.tar.xz 	50f97f4159805e374639a73e2636f22e \
+   http://ftp.gnu.org/pub/gnu/autoconf/autoconf-2.69.tar.xz
+
+automake-1.14.1.tar.xz 	7fc29854c520f56b07aa232a0f880292 \
+   http://ftp.gnu.org/pub/gnu/automake/automake-1.14.1.tar.xz
+
+bison-3.0.2.tar.xz 	146be9ff9fbd27497f0bf2286a5a2082 \
+   http://ftp.gnu.org/pub/gnu/bison/bison-3.0.2.tar.xz
+
+ncurses-5.9.tar.gz 	8cb9c412e5f2d96bc6f459aa8c6282a1 \
+   http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.9.tar.gz
+
+readline-6.3.tar.gz 	33c8fb279e981274f485fd91da77e94a \
+   http://ftp.gnu.org/pub/gnu/readline/readline-6.3.tar.gz
+
+bash-4.3.tar.gz 	81348932d5da294953e15d4814c74dd1 \
+   http://ftp.gnu.org/pub/gnu/bash/bash-4.3.tar.gz
+
+bridge-utils-1.5.tar.gz 	ec7b381160b340648dede58c31bb2238 \
+   http://optimate.dl.sourceforge.net/project/bridge/bridge/bridge-utils-1.5.tar.gz
+
+flex-2.5.37.tar.gz 	6c16fa35ba422bf809effa106d022a39 \
+   http://netcologne.dl.sourceforge.net/project/flex/flex-2.5.37.tar.gz
+
+zlib-1.2.8.tar.xz 	28f1205d8dd2001f26fec1e8c2cebe37 \
+   http://heanet.dl.sourceforge.net/project/libpng/zlib/1.2.8/zlib-1.2.8.tar.xz
+
+libpcap-1.6.1.tar.gz 	5eb05edf6b6c6e63d536d1c9fbfb2f7c \
+   http://www.tcpdump.org/release/libpcap-1.6.1.tar.gz
+
+dhcpdump-1.8.tar.gz 	099c786997c424f196414f9575f1fb90 \
    http://www.mavetju.org/download/dhcpdump-1.8.tar.gz
 
-dropbear-0.53.1.tar.gz           6b8d901859d9b8a18e2f6bfe0a892a03 \
-   http://matt.ucc.asn.au/dropbear/releases/dropbear-0.53.1.tar.gz
+dropbear-2014.65.tar.bz2 	1918604238817385a156840fa2c39490 \
+   http://matt.ucc.asn.au/dropbear/releases/dropbear-2014.65.tar.bz2
 
-ethtool-3.0.tar.gz               a339cbdcbe1c1fbe377c36d84231bda6 \
-   http://www.kernel.org/pub/software/network/ethtool/ethtool-3.0.tar.gz
+gettext-0.19.2.tar.gz 	6898a2fc5d711b17278a59cfbfc10bc5 \
+   http://ftp.gnu.org/pub/gnu/gettext/gettext-0.19.2.tar.gz
 
-expat-2.0.1.tar.gz               ee8b492592568805593f81f8cdf2a04c \
-  http://kent.dl.sourceforge.net/sourceforge/expat/expat-2.0.1.tar.gz
+elfutils-0.155.tar.bz2 	163a5712b86f6bdfebdf233cc6e2192d \
+   https://fedorahosted.org/releases/e/l/elfutils/0.155/elfutils-0.155.tar.bz2
 
-fakeroot_1.9.5.tar.gz            95c0c78c734b9782ec8d47e99c8e3fc8 \
-  http://snapshot.debian.org/archive/debian/20080427T000000Z/pool/main/f/fakeroot/fakeroot_1.9.5.tar.gz
+elfutils-portability.patch 	f51905350ed67b5d963e31da64f87908 \
+   https://fedorahosted.org/releases/e/l/elfutils/0.155/elfutils-portability.patch
 
-gcc-4.3.6.tar.bz2                55ddf934bc9f8d1eaff7a77e7d598a85 \
-   http://ftp.gnu.org/pub/gnu/gcc/gcc-4.3.6/gcc-4.3.6.tar.bz2
+elfutils-robustify.patch 	5d4bdb4c1612e6f14971fee777a9e63c \
+   https://fedorahosted.org/releases/e/l/elfutils/0.155/elfutils-robustify.patch
 
-gdb-7.3.1.tar.bz2                b89a5fac359c618dda97b88645ceab47 \
-   http://ftp.gnu.org/pub/gnu/gdb/gdb-7.3.1.tar.bz2
+ethtool-3.15.tar.xz 	e7bf0c355d2bf6ee281ebc713c5fb987 \
+   https://www.kernel.org/pub//software/network/ethtool/ethtool-3.15.tar.xz
 
-gmp-5.0.2.tar.bz2                0bbaedc82fb30315b06b1588b9077cd3 \
-   http://ftp.gnu.org/pub/gnu/gmp/gmp-5.0.2.tar.bz2
+gdb-7.6.2.tar.bz2 	496399e96654fc0f899a5c964bc1f0f8 \
+   http://ftp.gnu.org/pub/gnu/gdb/gdb-7.6.2.tar.bz2
 
-gperf-3.0.4.tar.gz               c1f1db32fb6598d6a93e6e88796a8632 \
-   http://ftp.gnu.org/pub/gnu/gperf/gperf-3.0.4.tar.gz
+pkgconf-0.8.9.tar.bz2 	2273d8f5186e56886bc83454002c84ed \
+   http://rabbit.dereferenced.org/~nenolod/distfiles/pkgconf-0.8.9.tar.bz2
 
-ifplugd-0.28.tar.gz              df6f4bab52f46ffd6eb1f5912d4ccee3 \
-   http://0pointer.de/lennart/projects/ifplugd/ifplugd-0.28.tar.gz
+libdaemon-0.14.tar.gz 	509dc27107c21bcd9fbf2f95f5669563 \
+   http://sources.buildroot.net//libdaemon-0.14.tar.gz
 
-iproute2-2.6.39.tar.gz           8a3b6bc77c2ecf752284aa4a6fc630a6 \
-   http://devresources.linuxfoundation.org/dev/iproute2/download/iproute2-2.6.39.tar.gz
+ifplugd-0.28.tar.gz 	df6f4bab52f46ffd6eb1f5912d4ccee3 \
+   http://sources.buildroot.net//ifplugd-0.28.tar.gz
 
-libdaemon-0.14.tar.gz            509dc27107c21bcd9fbf2f95f5669563 \
-   http://0pointer.de/lennart/projects/libdaemon/libdaemon-0.14.tar.gz
+iproute2-3.16.0.tar.xz 	6c823b40fdcfa7b8120743349a52ac18 \
+   https://www.kernel.org/pub//linux/utils/net/iproute2/iproute2-3.16.0.tar.xz
 
-libelf-0.8.12.tar.gz             e21f8273d9f5f6d43a59878dc274fec7 \
+json-c-0.11.tar.gz 	aa02367d2f7a830bf1e3376f77881e98 \
+   https://s3.amazonaws.com/json-c_releases/releases/json-c-0.11.tar.gz
+
+libelf-0.8.12.tar.gz 	e21f8273d9f5f6d43a59878dc274fec7 \
    http://www.mr511.de/software/libelf-0.8.12.tar.gz
 
-libffi-3.0.9.tar.gz              1f300a7a7f975d4046f51c3022fa5ff1 \
-   ftp://sources.redhat.com/pub/libffi/libffi-3.0.9.tar.gz
+libestr-0.1.9.tar.gz 	681ca0ed7e5ae6ddff70fdec413096e4 \
+   http://libestr.adiscon.com/files/download/libestr-0.1.9.tar.gz
 
-libpcap-1.1.1.tar.gz             1bca27d206970badae248cfa471bbb47 \
-   http://www.tcpdump.org/release/libpcap-1.1.1.tar.gz
+libffi-3.1.tar.gz 	f5898b29bbfd70502831a212d9249d10 \
+   ftp://sourceware.org/pub/libffi/libffi-3.1.tar.gz
 
-libtool-2.2.10.tar.gz            b745d220e88163fcd9eea0a90ccf21b0 \
-   http://ftp.gnu.org/pub/gnu/libtool/libtool-2.2.10.tar.gz
+liblogging-1.0.2.tar.gz 	ba57db94a8fdddce92e3bf720ced40b9 \
+   http://download.rsyslog.com/liblogging/liblogging-1.0.2.tar.gz
 
-lighttpd-1.4.29.tar.gz           4130d2440777b7911e62de6a89c98a90 \
-   http://download.lighttpd.net/lighttpd/releases-1.4.x/lighttpd-1.4.29.tar.gz
+pcre-8.35.tar.gz 	ed58bcbe54d3b1d59e9f5415ef45ce1c \
+   ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.35.tar.gz
 
-linux-3.1.4.tar.bz2              52643e5a013d450ad69627c3cac490cb \
-   http://www.kernel.org/pub//linux/kernel/v3.x//linux-3.1.4.tar.bz2
+lighttpd-1.4.35.tar.xz 	c7ae774eab4cb7ac85e41b712f4ee9ba \
+   http://download.lighttpd.net/lighttpd/releases-1.4.x/lighttpd-1.4.35.tar.xz
 
-lsof_4.85.tar.bz2                102ee2081172bbe76dccaa6cceda8573 \
-   ftp://lsof.itap.purdue.edu/pub/tools/unix/lsof//lsof_4.85.tar.bz2
+lsof_4.87.tar.bz2 	80e2a76d0e05826db910ec88e631296c \
+   http://sources.buildroot.net//lsof_4.87.tar.bz2
 
-ltrace_0.5.3.orig.tar.gz         3fa7fe715ab879db08bd06d1d59fd90f \
-   http://ftp.debian.org/debian/pool/main/l/ltrace/ltrace_0.5.3.orig.tar.gz
+lua-5.1.5.tar.gz 	2e115fe26e435e33b0d5c022e4490567 \
+   http://www.lua.org/ftp/lua-5.1.5.tar.gz
 
-ltrace_0.5.3-2.1.diff.gz         38bc944c53ab602a7854aa4fa71c1f46 \
-   http://ftp.debian.org/debian/pool/main/l/ltrace/ltrace_0.5.3-2.1.diff.gz
+lzo-2.08.tar.gz 	fcec64c26a0f4f4901468f360029678f \
+   http://www.oberhumer.com/opensource/lzo/download/lzo-2.08.tar.gz
 
-lua-5.1.4.tar.gz                 d0870f2de55d59c1c8419f36e8fac150 \
-   http://www.lua.org/ftp/lua-5.1.4.tar.gz
+openssl-1.0.1i.tar.gz 	c8dc151a671b9b92ff3e4c118b174972 \
+   http://www.openssl.org/source/openssl-1.0.1i.tar.gz
 
-lzo-2.06.tar.gz                  95380bd4081f85ef08c5209f4107e9f8 \
-   http://www.oberhumer.com/opensource/lzo/download/lzo-2.06.tar.gz
+monit-5.7.tar.gz 	82f07274c129e1098afa27fd36786df6 \
+   http://mmonit.com/monit/dist/monit-5.7.tar.gz
 
-m4-1.4.15.tar.bz2                c7c32540bc3842d5550f88d47ef551d8 \
-   http://ftp.gnu.org/pub/gnu/m4/m4-1.4.15.tar.bz2
+mtd-utils-1.5.1.tar.bz2 	4ad1f758d49615efe14edb107eddac5c \
+   ftp://ftp.infradead.org/pub/mtd-utils/mtd-utils-1.5.1.tar.bz2
 
-mpfr-3.0.1.tar.bz2               bfbecb2eacb6d48432ead5cfc3f7390a \
-   http://www.mpfr.org/mpfr-3.0.1/mpfr-3.0.1.tar.bz2
+nano-2.3.5.tar.gz 	a771f6283ac1edee8e5486209910c829 \
+   http://www.nano-editor.org/dist/v2.3/nano-2.3.5.tar.gz
 
-mtd-utils-1.4.6.tar.bz2          a0418afcf6026824a5fa5e9051793f3c \
-   ftp://ftp.infradead.org/pub/mtd-utils/mtd-utils-1.4.6.tar.bz2
+net-snmp-5.7.2.1.tar.gz 	7db683faba037249837b226f64d566d4 \
+   http://softlayer-ams.dl.sourceforge.net/project/net-snmp/net-snmp/5.7.2.1/net-snmp-5.7.2.1.tar.gz
 
-nano-2.2.6.tar.gz                03233ae480689a008eb98feb1b599807 \
-   http://www.nano-editor.org/dist/v2.2/nano-2.2.6.tar.gz
+php-5.5.16.tar.gz 	5def6d89792caa70448c67cd510e0f3e \
+   http://php.net/distributions/php-5.5.16.tar.gz
 
-ncurses-5.7.tar.gz               cce05daf61a64501ef6cd8da1f727ec6 \
-   http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.7.tar.gz
+popt-1.16.tar.gz 	3743beefa3dd6247a73f8f7a32c14c33 \
+   http://anduin.linuxfromscratch.org/sources/BLFS/svn/p/popt-1.16.tar.gz
 
-openssl-1.0.0e.tar.gz            7040b89c4c58c7a1016c0dfa6e821c86 \
-   http://www.openssl.org/source/openssl-1.0.0e.tar.gz
+procps-ng-3.3.9.tar.xz 	0980646fa25e0be58f7afb6b98f79d74 \
+   http://heanet.dl.sourceforge.net/project/procps-ng/Production/procps-ng-3.3.9.tar.xz
 
-pcre-7.9.tar.gz                  2256d0a1d0a358265165ca70e7cfc47a \
-   ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-7.9.tar.gz
-pkg-config-0.25.tar.gz           a3270bab3f4b69b7dc6dbdacbcae9745 \
-   http://pkgconfig.freedesktop.org/releases/pkg-config-0.25.tar.gz
+expat-2.1.0.tar.gz 	dd7dab7a5fea97d2a6a43f511449b7cd \
+   http://garr.dl.sourceforge.net/project/expat/expat/2.1.0/expat-2.1.0.tar.gz
 
-procps-3.2.8.tar.gz              9532714b6846013ca9898984ba4cd7e0 \
-   http://procps.sourceforge.net/procps-3.2.8.tar.gz
+Python-2.7.8.tar.xz 	d235bdfa75b8396942e360a70487ee00 \
+   https://www.python.org/ftp/python/2.7.8/Python-2.7.8.tar.xz
 
-php-5.2.17.tar.bz2               b27947f3045220faf16e4d9158cbfe13 \
-   http://sources.buildroot.net//php-5.2.17.tar.bz2
+rsync-3.1.1.tar.gz 	43bd6676f0b404326eee2d63be3cdcfe \
+   http://rsync.samba.org/ftp/rsync/src/rsync-3.1.1.tar.gz
 
-Python-2.7.2.tar.bz2             ba7b2f11ffdbf195ee0d111b9455a5bd \
-   http://www.python.org/ftp/python/2.7.2/Python-2.7.2.tar.bz2
+util-linux-2.24.2.tar.xz 	3f191727a0d28f7204b755cf1b6ea0aa \
+   https://www.kernel.org/pub//linux/utils/util-linux/v2.24/util-linux-2.24.2.tar.xz
 
-readline-6.2.tar.gz              67948acb2ca081f23359d0256e9a271c \
-   http://ftp.gnu.org/pub/gnu/readline/readline-6.2.tar.gz
+rsyslog-7.6.0.tar.gz 	26a12cb6d6693839aea07d29f8654bc9 \
+   http://www.rsyslog.com/files/download/rsyslog/rsyslog-7.6.0.tar.gz
 
-rsync-3.0.9.tar.gz               5ee72266fe2c1822333c407e1761b92b \
-   http://rsync.samba.org/ftp/rsync/src/rsync-3.0.9.tar.gz
-
-rsyslog-5.8.0.tar.gz             37562d0e71a24938a9ed7f242bd32d35 \
-   http://www.rsyslog.com/files/download/rsyslog//rsyslog-5.8.0.tar.gz
-
-screen-4.0.3.tar.gz              8506fd205028a96c741e4037de6e3c42 \
+screen-4.0.3.tar.gz 	8506fd205028a96c741e4037de6e3c42 \
    http://ftp.gnu.org/pub/gnu/screen/screen-4.0.3.tar.gz
 
-strace-4.5.20.tar.bz2            64dfe10d9db0c1e34030891695ffca4b \
-   http://kent.dl.sourceforge.net/sourceforge/strace/strace-4.5.20.tar.bz2
+strace-4.8.tar.xz 	c575ef43829586801f514fd91bfe7575 \
+   http://cznic.dl.sourceforge.net/project/strace/strace/4.8/strace-4.8.tar.xz
 
-tcpdump-4.1.1.tar.gz             d0dd58bbd6cd36795e05c6f1f74420b0 \
-   http://www.tcpdump.org/release/tcpdump-4.1.1.tar.gz
+tcpdump-4.6.1.tar.gz 	dab267ec30216a069747d10314079ec7 \
+   http://www.tcpdump.org/release/tcpdump-4.6.1.tar.gz
 
-uClibc-0.9.32.tar.bz2            cfcb6c25d8ebe12817499d8749ee8ae1 \
-   http://www.uclibc.org/downloads/uClibc-0.9.32.tar.bz2
+fakeroot_1.18.2.orig.tar.bz2 	79f32331358ad58499704ea5e19fd0ae \
+   http://snapshot.debian.org/archive/debian/20111201T093630Z/pool/main/f/fakeroot/fakeroot_1.18.2.orig.tar.bz2
 
-zlib-1.2.5.tar.bz2               be1e89810e66150f5b0327984d8625a0 \
-   http://kent.dl.sourceforge.net/sourceforge/libpng/zlib-1.2.5.tar.bz2
