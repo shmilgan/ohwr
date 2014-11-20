@@ -13,8 +13,6 @@
 #include <rt_ipc.h>
 #include <hal/hal_exports.h>
 
-#include "gps_resync/gps_resync.h"
-
 static int timing_mode;
 
 #define LOCK_TIMEOUT_EXT 60000
@@ -24,7 +22,6 @@ int hal_init_timing()
 {
 	char str[128];
 	timeout_t lock_tmo;
-	int use_utc = 0;
 
 	if (rts_connect() < 0) {
 		TRACE(TRACE_ERROR,
@@ -96,13 +93,10 @@ int hal_init_timing()
 		usleep(100000);
 	}
 
-	if (hal_config_get_int("timing.use_nmea", &use_utc) < 0)
-		use_utc = 0;
-
-	if (timing_mode == HAL_TIMING_MODE_GRAND_MASTER && use_utc) {
-		TRACE(TRACE_INFO, "re-syncing to UTC from serial port");
-		nmea_resync_ppsgen("/dev/ttyS2");
-	}
+	/*
+	 * We had "timing.use_nmea", but it was hardwired to /dev/ttyS2
+	 * which is not wired out any more, so this is removed after v4.1
+	 */
 
 	return 0;
 }

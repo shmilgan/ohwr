@@ -1,7 +1,8 @@
 
 CC = $(CROSS_COMPILE)gcc
 
-OBJS = hal_exports.o hal_main.o hal_ports.o hal_config.o rt_client.o hal_timing.o gps_resync/serial_linux.o gps_resync/nmea.o gps_resync/gps_resync.o
+OBJS = hal_exports.o hal_main.o hal_ports.o hal_config.o rt_client.o \
+	hal_timing.o
 
 BINARY = wrsw_hal
 
