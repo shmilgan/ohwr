@@ -11,7 +11,7 @@ WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
 WR_INCLUDE = $(WR_INSTALL_ROOT)/include
 WR_LIB = $(WR_INSTALL_ROOT)/lib
 
-CFLAGS = -g -Wall -DRT_CLIENT\
+CFLAGS = -O -g -Wall -DRT_CLIENT\
 	-I../include -I../libwr/include -I../mini-rpc -I$(WR_INCLUDE)
 
 ifdef WRS_HAL_DEBUG
