@@ -29,27 +29,11 @@ static struct minipc_ch *client;
 /* Queries the RT CPU PLL state */
 int rts_get_state(struct rts_pll_state *state)
 {
-	int i, ret = minipc_call(client, RTS_TIMEOUT,
+	int ret = minipc_call(client, RTS_TIMEOUT,
 				 &rtipc_rts_get_state_struct, state);
 
 	if (ret < 0)
 		return ret;
-
-	state->current_ref = (state->current_ref);
-	state->flags = (state->flags);
-	state->holdover_duration = (state->holdover_duration);
-	state->mode = (state->mode);
-
-	for (i = 0; i < RTS_PLL_CHANNELS; i++) {
-		state->channels[i].priority = (state->channels[i].priority);
-		state->channels[i].phase_setpoint =
-		    (state->channels[i].phase_setpoint);
-		state->channels[i].phase_current =
-		    (state->channels[i].phase_current);
-		state->channels[i].phase_loopback =
-		    (state->channels[i].phase_loopback);
-		state->channels[i].flags = (state->channels[i].flags);
-	}
 
 #ifdef VERBOSE
 	printf("RTS State Dump: \n");
