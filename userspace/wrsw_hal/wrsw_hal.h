@@ -17,12 +17,12 @@ typedef void (*hal_cleanup_callback_t)();
 typedef struct {
 
 	/* PHY delay measurement parameters for PHYs which require
-	external calibration (i.e. with the feedback network. */
+	   external calibration (i.e. with the feedback network. */
 
 	/* minimum possible delay introduced by the PHY. Expressed as time
-	(in picoseconds) between the beginning of the symbol on the serial input
-	and the rising edge of the RX clock at which the deserialized word is
-	available at the parallel output of the PHY. */
+	   (in picoseconds) between the beginning of the symbol on the serial input
+	   and the rising edge of the RX clock at which the deserialized word is
+	   available at the parallel output of the PHY. */
 	uint32_t phy_rx_min;
 
 	/* the same set of parameters, but for the TX path of the PHY */
@@ -33,19 +33,18 @@ typedef struct {
 	uint32_t delta_rx_phy;
 
 	/* Current board routing delays (between the DDMTD inputs to
-	the PHY clock inputs/outputs), in picoseconds */
+	   the PHY clock inputs/outputs), in picoseconds */
 	uint32_t delta_tx_board;
 	uint32_t delta_rx_board;
 
-  /* When non-zero: RX path is calibrated (delta_*_rx contain valid values) */
-  int rx_calibrated;
-  /* When non-zero: TX path is calibrated */
-  int tx_calibrated;
+	/* When non-zero: RX path is calibrated (delta_*_rx contain valid values) */
+	int rx_calibrated;
+	/* When non-zero: TX path is calibrated */
+	int tx_calibrated;
 
 	struct shw_sfp_caldata sfp;
 
 } hal_port_calibration_t;
-
 
 int hal_check_running();
 

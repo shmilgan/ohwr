@@ -21,16 +21,15 @@
 
 #define assert_init(proc) { int ret; if((ret = proc) < 0) return ret; }
 
-static int daemon_mode= 0;
+static int daemon_mode = 0;
 static hal_cleanup_callback_t cleanup_cb[MAX_CLEANUP_CALLBACKS];
 
 /* Adds a function to be called during the HAL shutdown. */
 int hal_add_cleanup_callback(hal_cleanup_callback_t cb)
 {
 	int i;
-	for(i=0;i<MAX_CLEANUP_CALLBACKS;i++)
-		if(!cleanup_cb[i])
-		{
+	for (i = 0; i < MAX_CLEANUP_CALLBACKS; i++)
+		if (!cleanup_cb[i]) {
 			cleanup_cb[i] = cb;
 			return 0;
 		}
@@ -44,10 +43,10 @@ static void call_cleanup_cbs()
 	int i;
 
 	TRACE(TRACE_INFO, "Cleaning up...");
-	for(i=0;i<MAX_CLEANUP_CALLBACKS;i++)
-		if(cleanup_cb[i]) cleanup_cb[i]();
+	for (i = 0; i < MAX_CLEANUP_CALLBACKS; i++)
+		if (cleanup_cb[i])
+			cleanup_cb[i] ();
 }
-
 
 /* Determines which FPGA bitstreams shall be loaded */
 int hal_setup_fpga_images()
@@ -55,7 +54,7 @@ int hal_setup_fpga_images()
 	char fpga_dir[128];
 
 	/* query the path to the firmware directory in the config file */
-	if( hal_config_get_string("global.hal_firmware_path",
+	if (hal_config_get_string("global.hal_firmware_path",
 				  fpga_dir, sizeof(fpga_dir)) < 0)
 		return -1;
 
@@ -77,7 +76,6 @@ int hal_setup_fpga_images()
 	return 0;
 }
 
-
 /* loads (load = 1) or unloads (load = 0) a WR kernel module (name). */
 static int load_unload_kmod(const char *name, int load)
 {
@@ -85,12 +83,10 @@ static int load_unload_kmod(const char *name, int load)
 	static int modules_path_valid = 0;
 	char cmd[256];
 
-	if(!modules_path_valid)
-	{
-		if(hal_config_get_string("global.hal_modules_path",
-					 modules_path, sizeof(modules_path))
-		   < 0)
-		{
+	if (!modules_path_valid) {
+		if (hal_config_get_string("global.hal_modules_path",
+					  modules_path, sizeof(modules_path))
+		    < 0) {
 			TRACE(TRACE_ERROR, "Unable to locate kernel "
 			      "modules directory!");
 			return -1;
@@ -108,17 +104,15 @@ static int load_unload_kmod(const char *name, int load)
 	return 0;
 }
 
-
 /* Unloads all WR kernel modules during the shutdown */
 static void unload_kernel_modules()
 {
 	char module_name[80];
 	int index = 0;
 
-	for(;;)
-	{
-		if(!hal_config_iterate("global.modules", index++,
-				       module_name, sizeof(module_name)))
+	for (;;) {
+		if (!hal_config_iterate("global.modules", index++,
+					module_name, sizeof(module_name)))
 			break;
 
 		load_unload_kmod(module_name, 0);
@@ -133,10 +127,9 @@ int hal_load_kernel_modules()
 
 	TRACE(TRACE_INFO, "Loading kernel modules...");
 
-	for(;;)
-	{
-		if(!hal_config_iterate("global.modules", index++,
-				       module_name, sizeof(module_name)))
+	for (;;) {
+		if (!hal_config_iterate("global.modules", index++,
+					module_name, sizeof(module_name)))
 			break;
 
 		assert_init(load_unload_kmod(module_name, 1));
@@ -153,8 +146,8 @@ void sighandler(int sig)
 	TRACE(TRACE_ERROR, "signal caught (%d)!", sig);
 
 	//Set state led to orange
-	shw_io_write(shw_io_led_state_o,1);
-	shw_io_write(shw_io_led_state_g,0);
+	shw_io_write(shw_io_led_state_o, 1);
+	shw_io_write(shw_io_led_state_g, 0);
 
 	call_cleanup_cbs();
 	exit(0);
@@ -175,7 +168,7 @@ int hal_init()
 
 	//trace_log_stderr();
 
-	TRACE(TRACE_INFO,"HAL initializing...");
+	TRACE(TRACE_INFO, "HAL initializing...");
 
 	memset(cleanup_cb, 0, sizeof(cleanup_cb));
 
@@ -190,12 +183,11 @@ int hal_init()
 
 	/* parse the config file and choose the bitstreams to load */
 	assert_init(hal_parse_config());
-//	assert_init(hal_setup_fpga_images());
+//      assert_init(hal_setup_fpga_images());
 
-	if(!hal_config_get_string("global.sfp_database_path",
-				  sfp_db_path, sizeof(sfp_db_path)))
-	{
-		if(shw_sfp_read_db(sfp_db_path) < 0) {
+	if (!hal_config_get_string("global.sfp_database_path",
+				   sfp_db_path, sizeof(sfp_db_path))) {
+		if (shw_sfp_read_db(sfp_db_path) < 0) {
 			TRACE(TRACE_ERROR, "Can't read SFP database (%s)",
 			      sfp_db_path);
 		} else {
@@ -216,10 +208,10 @@ int hal_init()
 	assert_init(hal_init_wripc());
 
 	//everything is fine up to here, we can blink green LED
-	shw_io_write(shw_io_led_state_o,0);
-	shw_io_write(shw_io_led_state_g,1);
+	shw_io_write(shw_io_led_state_o, 0);
+	shw_io_write(shw_io_led_state_g, 1);
 
-	if(daemon_mode)
+	if (daemon_mode)
 		hal_deamonize();
 
 	return 0;
@@ -232,7 +224,7 @@ void hal_update()
 	hal_update_wripc();
 	hal_update_ports();
 	shw_update_fans();
-//	usleep(1000);
+//      usleep(1000);
 }
 
 /* Turns a nice and well-behaving HAL into an evil servant of satan. */
@@ -241,7 +233,8 @@ void hal_deamonize()
 	pid_t pid, sid;
 
 	/* already a daemon */
-	if ( getppid() == 1 ) return;
+	if (getppid() == 1)
+		return;
 
 	/* Fork off the parent process */
 	pid = fork();
@@ -271,9 +264,9 @@ void hal_deamonize()
 	}
 
 	/* Redirect standard files to /dev/null */
-	freopen( "/dev/null", "r", stdin);
-	freopen( "/dev/null", "w", stdout);
-	freopen( "/dev/null", "w", stderr);
+	freopen("/dev/null", "r", stdin);
+	freopen("/dev/null", "w", stdout);
+	freopen("/dev/null", "w", stderr);
 
 }
 
@@ -291,10 +284,8 @@ void hal_parse_cmdline(int argc, char *argv[])
 {
 	int opt;
 
-	while((opt=getopt(argc, argv, "dfhx:c:")) != -1)
-	{
-		switch(opt)
-		{
+	while ((opt = getopt(argc, argv, "dfhx:c:")) != -1) {
+		switch (opt) {
 		case 'd':
 			daemon_mode = 1;
 			break;
@@ -306,15 +297,17 @@ void hal_parse_cmdline(int argc, char *argv[])
 			hal_config_set_config_file(optarg);
 			break;
 
-			//		case 'f':
-//				shw_fpga_force_firmware_reload();
-//				break;
+			//              case 'f':
+//                              shw_fpga_force_firmware_reload();
+//                              break;
 		case 'h':
 			show_help();
 			exit(0);
 			break;
 		default:
-			fprintf(stderr,"Unrecognized option. Call %s -h for help.\n", argv[0]);
+			fprintf(stderr,
+				"Unrecognized option. Call %s -h for help.\n",
+				argv[0]);
 			break;
 		}
 	}
@@ -325,8 +318,7 @@ int main(int argc, char *argv[])
 
 	trace_log_file("/dev/kmsg");
 	/* Prevent from running HAL twice - it will likely freeze the system */
-	if(hal_check_running())
-	{
+	if (hal_check_running()) {
 		fprintf(stderr, "Fatal: There is another WR HAL "
 			"instance running. We can't work together.\n\n");
 		return -1;
@@ -336,8 +328,8 @@ int main(int argc, char *argv[])
 
 	hal_init();
 
-
-	for(;;) hal_update();
+	for (;;)
+		hal_update();
 	hal_shutdown();
 
 	return 0;

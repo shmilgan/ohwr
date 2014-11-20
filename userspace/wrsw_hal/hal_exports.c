@@ -27,11 +27,9 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 		TRACE(TRACE_INFO, "halexp_lock_cmd: cmd=%d port=%s "
 		      "tics =%lld\n", command, port_name, shw_get_tics());
 
-	switch(command)
-	{
+	switch (command) {
 	case HEXP_LOCK_CMD_ENABLE_TRACKING:
 		return hal_enable_tracking(port_name);
-
 
 		/* Start locking - i.e. tell the HAL locking state
 		   machine to use the port (port_name) as the source
@@ -46,7 +44,7 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 		   will switch to holdover mode. In V3, calling this
 		   command with negative (priority) removes the port
 		   from the locking list.
-		*/
+		 */
 	case HEXP_LOCK_CMD_START:
 		return hal_port_start_lock(port_name, priority);
 
@@ -57,7 +55,7 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 	case HEXP_LOCK_CMD_CHECK:
 		rval = hal_port_check_lock(port_name);
 
-		if(rval > 0)
+		if (rval > 0)
 			return HEXP_LOCK_STATUS_LOCKED;
 		else if (!rval)
 			return HEXP_LOCK_STATUS_BUSY;
@@ -66,18 +64,16 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 		break;
 	}
 
-	return -100; /* fixme: add real error code */
+	return -100;		/* fixme: add real error code */
 }
-
 
 /* Phase/Clock adjutsment call. Called by the PTPd servo. Controls
  * both the PLLs and the PPS Generator. */
-int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
+int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 {
 	int busy;
 
-	switch(cmd)
-	{
+	switch (cmd) {
 		/* fixme: TODO: implement HEXP_PPSG_CMD_GET call */
 
 		/* Phase adjustment call: adjusts the phase shift
@@ -93,7 +89,7 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
 		   adjustment shall result in the same VCTCXO
 		   phase. Keeping the coherency between the phase
 		   setpoints for different uplinks is the task of the
-		   PTPd.*/
+		   PTPd. */
 	case HEXP_PPSG_CMD_ADJUST_PHASE:
 
 		/* PPS adjustment call, independent for the nanosecond
@@ -106,7 +102,7 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
 		   ADJUST_PHASE call, independently for each uplink to
 		   accommodate the different phase shifts on each port
 		   (and the fiber/cable connected to it).
-		*/
+		 */
 		return rts_adjust_phase(0, params->adjust_phase_shift) ? 0 : -1;
 
 	case HEXP_PPSG_CMD_ADJUST_NSEC:
@@ -140,20 +136,18 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t *params)
 		return shw_pps_gen_enable_output(params->pps_valid);
 
 	}
-	return -1; /* fixme: real error code */
+	return -1;		/* fixme: real error code */
 }
 
 extern int any_port_locked();
 
-int halexp_get_timing_state(hexp_timing_state_t *state)
+int halexp_get_timing_state(hexp_timing_state_t * state)
 {
 	state->timing_mode = hal_get_timing_mode();
 	state->locked_port = any_port_locked();
 
 	return 0;
 }
-
-
 
 static void hal_cleanup_wripc()
 {
@@ -162,26 +156,26 @@ static void hal_cleanup_wripc()
 
 /* The functions to manage packet/args conversions */
 static int export_pps_cmd(const struct minipc_pd *pd,
-			  uint32_t *args, void *ret)
+			  uint32_t * args, void *ret)
 {
 	int rval;
 
 	/* First argument is command next is param structure */
-	rval = halexp_pps_cmd(args[0], (hexp_pps_params_t *)(args + 1));
+	rval = halexp_pps_cmd(args[0], (hexp_pps_params_t *) (args + 1));
 	*(int *)ret = rval;
 	return 0;
 }
 
 static int export_get_port_state(const struct minipc_pd *pd,
-				 uint32_t *args, void *ret)
+				 uint32_t * args, void *ret)
 {
 	hexp_port_state_t *state = ret;
 
-	return halexp_get_port_state(state, (char *)args /* name */);
+	return halexp_get_port_state(state, (char *)args /* name */ );
 }
 
 static int export_lock_cmd(const struct minipc_pd *pd,
-			   uint32_t *args, void *ret)
+			   uint32_t * args, void *ret)
 {
 	int rval;
 	char *pname = (void *)args;
@@ -189,13 +183,13 @@ static int export_lock_cmd(const struct minipc_pd *pd,
 	/* jump over the string */
 	args = minipc_get_next_arg(args, pd->args[0]);
 
-	rval = halexp_lock_cmd(pname, args[0] /* cmd */, args[1] /* prio */);
+	rval = halexp_lock_cmd(pname, args[0] /* cmd */ , args[1] /* prio */ );
 	*(int *)ret = rval;
 	return 0;
 }
 
 static int export_query_ports(const struct minipc_pd *pd,
-			      uint32_t *args, void *ret)
+			      uint32_t * args, void *ret)
 {
 	hexp_port_list_t *list = ret;
 	halexp_query_ports(list);
@@ -203,7 +197,7 @@ static int export_query_ports(const struct minipc_pd *pd,
 }
 
 static int export_get_timing_state(const struct minipc_pd *pd,
-				   uint32_t *args, void *ret)
+				   uint32_t * args, void *ret)
 {
 	halexp_get_timing_state(ret);
 	return 0;
@@ -214,10 +208,9 @@ int hal_init_wripc()
 {
 	hal_ch = minipc_server_create(WRSW_HAL_SERVER_ADDR, 0);
 
-
-	if(hal_ch < 0)
-	{
-		TRACE(TRACE_ERROR, "Failed to create mini-rpc server '%s'", WRSW_HAL_SERVER_ADDR);
+	if (hal_ch < 0) {
+		TRACE(TRACE_ERROR, "Failed to create mini-rpc server '%s'",
+		      WRSW_HAL_SERVER_ADDR);
 		return -1;
 	}
 	/* NOTE: check_running is not remotely called, so I don't export it */
@@ -235,7 +228,6 @@ int hal_init_wripc()
 	minipc_export(hal_ch, &__rpcdef_query_ports);
 	minipc_export(hal_ch, &__rpcdef_get_timing_state);
 
-
 	/* FIXME: pll_cmd is empty anyways???? */
 
 	hal_add_cleanup_callback(hal_cleanup_wripc);
@@ -248,10 +240,9 @@ int hal_init_wripc()
 /* wripc update function, must be called in the main program loop */
 int hal_update_wripc()
 {
-	minipc_server_action(hal_ch, 10 /* ms */);
+	minipc_server_action(hal_ch, 10 /* ms */ );
 	return 0;
 }
-
 
 /* Returns 1 if there's already an instance of the HAL running. Used
    to prevent from launching multiple HALs simultaneously. */
