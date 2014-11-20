@@ -320,12 +320,13 @@ main build directory.
 The messages of a download run are like the following ones:
 
 @smallexample
-   2012-01-12 18:30:46: --- Downloading all files
-   2012-01-12 18:30:53: Retrieved at91bootstrap-3-3.0.tar.gz from upstream
-   2012-01-12 18:31:00: Retrieved buildroot-2011.11.tar.bz2 from upstream
+   2014-11-20 11:41:52: --- Downloading all files
+   2014-11-20 11:41:57: Retrieved at91bootstrap-3-3.0.tar.gz from upstream
+   2014-11-20 11:41:58: Retrieved barebox-2014.04.0.tar.bz2 from upstream
    [...]
-   2012-01-12 18:37:53: Retrieved uClibc-0.9.32.tar.bz2 from upstream
-   2012-01-12 18:37:56: Retrieved zlib-1.2.5.tar.bz2 from upstream
+   2014-11-20 11:44:21: Retrieved tcpdump-4.6.1.tar.gz from upstream
+   2014-11-20 11:44:21: Retrieved fakeroot_1.18.2.orig.tar.bz2 from upstream
+
 @end smallexample
 
 @c ==========================================================================
@@ -559,7 +560,7 @@ top-level source directory.
 @c to read explanation.
 
 If you want to change the configuration, you can do so after the first
-build iteration: change directory to @code{build/buildroot-2011.11}
+build iteration: change directory to @code{build/buildroot-2014.08}
 and run @code{make menuconfig} (this the Buildroot configuration,
 not the one of wr-switch-sw). After making your choices, copy back
 the file @code{.config} to @t{configs/buildroot} in this package,
@@ -677,7 +678,7 @@ To use the same compiler the scripts use, you need this setting (which is split
 in two lines with a local variable to fit the page with in documentation):
 
 @smallexample
-   BR=${WRS_OUTPUT_DIR}/build/buildroot-2011.11
+   BR=${WRS_OUTPUT_DIR}/build/buildroot-2014.08
    export CROSS_COMPILE=${BR}/output/host/usr/bin/arm-linux-
 @end smallexample
 
@@ -1011,7 +1012,7 @@ the following command in a newly-created empty directory:
 The archives include a number of device special files in
 @i{dev}. The pre-created devices come from
 @i{userspace/devices.tar.gz}. Note that the buildroot output
-directory, @i{build/buildroot-2011.11/output/target} does not
+directory, @i{build/buildroot-2014.08/output/target} does not
 include any device (and no white-rabbit specific files), so it
 cannot be used as a root filesystem by itself.
 
