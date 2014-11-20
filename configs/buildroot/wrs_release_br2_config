@@ -410,7 +410,7 @@ BR2_PACKAGE_GOOGLE_BREAKPAD_ARCH_SUPPORTS=y
 #
 # BR2_PACKAGE_LATENCYTOP is not set
 # BR2_PACKAGE_LMBENCH is not set
-BR2_PACKAGE_LSOF=y
+# BR2_PACKAGE_LSOF is not set
 
 #
 # ltp-testsuite needs a toolchain w/ IPv6, RPC, largefile, threads
