@@ -58,45 +58,45 @@
 
 /* Internal port state structure */
 typedef struct {
-/* non-zero: allocated */
+	/* non-zero: allocated */
 	int in_use;
-/* linux i/f name */
+	/* linux i/f name */
 	char name[16];
 
-/* MAC addr */
+	/* MAC addr */
 	uint8_t hw_addr[6];
 
-/* ioctl() hw index */
+	/* ioctl() hw index */
 	int hw_index;
 
-/* file descriptor for ioctls() */
+	/* file descriptor for ioctls() */
 	int fd;
 	int hw_addr_auto;
 
-/* port timing mode (HAL_PORT_MODE_xxxx) */
+	/* port timing mode (HAL_PORT_MODE_xxxx) */
 	int mode;
 
-/* port FSM state (HAL_PORT_STATE_xxxx) */
+	/* port FSM state (HAL_PORT_STATE_xxxx) */
 	int state;
 
-/* unused */
+	/* unused */
 	int index;
 
-/* 1: PLL is locked to this port */
+	/* 1: PLL is locked to this port */
 	int locked;
 
-/* calibration data */
+	/* calibration data */
 	hal_port_calibration_t calib;
 
-/* current DMTD loopback phase (picoseconds) and whether is it valid or not */
+	/* current DMTD loopback phase (ps) and whether is it valid or not */
 	uint32_t phase_val;
 	int phase_val_valid;
 	int tx_cal_pending, rx_cal_pending;
-/* locking FSM state */
+	/* locking FSM state */
 	int lock_state;
 
 
-/* Endpoint's base address */
+	/* Endpoint's base address */
 	uint32_t ep_base;
 } hal_port_state_t;
 
@@ -120,13 +120,13 @@ int hal_port_check_lock(const char  *port_name);
 
 int any_port_locked()
 {
-    if(!rts_state_valid) return -1;
-    if(rts_state.current_ref == REF_NONE) return -1;
+	if(!rts_state_valid) return -1;
+	if(rts_state.current_ref == REF_NONE) return -1;
 
-    return rts_state.current_ref;
+	return rts_state.current_ref;
 }
 
-/* Resets the state variables of a particular port and re-starts its state machines */
+/* Resets the state variables of a port and re-starts its state machines */
 static void reset_port_state(hal_port_state_t *p)
 {
 	p->calib.rx_calibrated = 0;
@@ -141,9 +141,11 @@ static void reset_port_state(hal_port_state_t *p)
 #define AT_INT32 0
 #define AT_DOUBLE 1
 
-/* helper function for retreiving port parameters from the config files with type checking and defaulting
-   to a given value when the parameter is not found */
-static void cfg_get_port_param(const char *port_name, const char *param_name, void *rval, int param_type, ...)
+/* helper function for retreiving port parameters from the config
+   files with type checking and defaulting to a given value when the
+   parameter is not found */
+static void cfg_get_port_param(const char *port_name, const char *param_name,
+			       void *rval, int param_type, ...)
 {
 	va_list ap;
 
@@ -187,20 +189,21 @@ static int check_port_presence(const char *if_name)
 
 static void enable_port(int port, int enable)
 {
-    char str[50];
-    snprintf(str, sizeof(str), "/sbin/ifconfig wr%d %s", port, enable ? "up" : "down");
-    system(str);
+	char str[50];
+	snprintf(str, sizeof(str), "/sbin/ifconfig wr%d %s", port,
+		 enable ? "up" : "down");
+	system(str);
 }
 
-
-/* Port initialization. Assigns the MAC address, WR timing mode, reads parameters from the config file. */
+/* Port initialization. Assigns the MAC address, WR timing mode, reads
+ * parameters from the config file. */
 int hal_init_port(const char *name, int index)
 {
 	char key_name[128];
 	char val[128];
 	hal_port_state_t *p = &ports[index];
 
-/* check if the port is compiled into the firmware, if not, just ignore it. */
+	/* check if the port is compiled into the firmware, if not, ignore. */
 	if(!check_port_presence(name))
 	{
 		reset_port_state(p);
@@ -208,7 +211,7 @@ int hal_init_port(const char *name, int index)
 		return 0;
 	}
 
-/* make sure the states and other port variables are in their initial state */
+	/* make sure the states and other variables are in their init state */
 	reset_port_state(p);
 
 	p->state = HAL_PORT_STATE_DISABLED;
@@ -216,24 +219,28 @@ int hal_init_port(const char *name, int index)
 
 	strncpy(p->name, name, 16);
 
-/* read calibraton parameters (unwrapping and constant deltas) */
-	cfg_get_port_param(name, "phy_rx_min",   &p->calib.phy_rx_min,   AT_INT32, 18*800);
-	cfg_get_port_param(name, "phy_tx_min",   &p->calib.phy_tx_min,    AT_INT32, 18*800);
+	/* read calibraton parameters (unwrapping and constant deltas) */
+	cfg_get_port_param(name, "phy_rx_min",      &p->calib.phy_rx_min,
+			   AT_INT32, 18*800);
+	cfg_get_port_param(name, "phy_tx_min",      &p->calib.phy_tx_min,
+			   AT_INT32, 18*800);
 
-	cfg_get_port_param(name, "delta_tx_board",  &p->calib.delta_tx_board,  AT_INT32, 0);
-	cfg_get_port_param(name, "delta_rx_board",  &p->calib.delta_rx_board,  AT_INT32, 0);
+	cfg_get_port_param(name, "delta_tx_board",  &p->calib.delta_tx_board,
+			   AT_INT32, 0);
+	cfg_get_port_param(name, "delta_rx_board",  &p->calib.delta_rx_board,
+			   AT_INT32, 0);
 
 
 	sscanf(p->name+2, "%d", &p->hw_index);
 
 	enable_port(p->hw_index, 1);
 
-/* Set up the endpoint's base address (fixme: do this with the driver) */
+	/* Set up the endpoint's address (fixme: do this with the driver) */
 
-/* FIXME: this address should come from the driver header */
+	/* FIXME: this address should come from the driver header */
 	p->ep_base = 0x30000 + 0x400  *  p->hw_index;
 
-/* Configure the port's timing role depending on the contents of the config file */
+	/* Configure the port's timing role depending on the config file */
 	snprintf(key_name, sizeof(key_name),  "ports.%s.mode", p->name);
 
 	if(!hal_config_get_string(key_name, val, sizeof(val)))
@@ -247,22 +254,24 @@ int hal_init_port(const char *name, int index)
 		else if(!strcasecmp(val, "non_wr"))
 			p->mode = HEXP_PORT_MODE_NON_WR;
 		else {
-			TRACE(TRACE_ERROR,"Invalid mode specified for port %s. Defaulting to Non-WR", p->name);
+			TRACE(TRACE_ERROR,"Invalid mode specified for port %s."
+			      " Defaulting to Non-WR", p->name);
 			p->mode = HEXP_PORT_MODE_NON_WR;
 		}
 
 		TRACE(TRACE_INFO,"Port %s: mode %s", p->name, val);
-/* nothing in the config file? Disable WR mode */
+		/* nothing in the config file? Disable WR mode */
 	} else {
 		p->mode = HEXP_PORT_MODE_NON_WR;
 	}
 
-/* Used to pre-calibrate the TX path for each port. No more in V3 */
+	/* Used to pre-calibrate the TX path for each port. No more in V3 */
 
 	return 0;
 }
 
-/* Interates via all the ports defined in the config file and intializes them one after another. */
+/* Interates via all the ports defined in the config file and
+ * intializes them one after another. */
 int hal_init_ports()
 {
 	int index = 0, i;
@@ -270,15 +279,15 @@ int hal_init_ports()
 
 	TRACE(TRACE_INFO, "Initializing switch ports...");
 
-/* default timeouts */
+	/* default timeouts */
 	tmo_init(&tmo_sfp, SFP_POLL_INTERVAL, 1);
 	tmo_init(&tmo_rts, RTS_POLL_INTERVAL, 1);
 
-/* Open a single raw socket for accessing the MAC addresses, etc. */
+	/* Open a single raw socket for accessing the MAC addresses, etc. */
 	fd_raw = socket(AF_PACKET, SOCK_DGRAM, 0);
 	if(fd_raw < 0) return -1;
 
-/* Count the number of physical WR network interfaces */
+	/* Count the number of physical WR network interfaces */
 	num_physical_ports = 0;
 	for(i=0;i<HAL_MAX_PORTS;i++)
 	{
@@ -287,13 +296,16 @@ int hal_init_ports()
 		if(check_port_presence(if_name)) num_physical_ports++;
 	}
 
-	TRACE(TRACE_INFO, "Number of physical ports supported in HW: %d", num_physical_ports);
+	TRACE(TRACE_INFO, "Number of physical ports supported in HW: %d",
+	      num_physical_ports);
 
 	memset(ports, 0, sizeof(ports));
 
 	for(;;)
 	{
-		if(!hal_config_iterate("ports", index++, port_name, sizeof(port_name))) break;
+		if(!hal_config_iterate("ports", index++,
+				       port_name, sizeof(port_name)))
+			break;
 		hal_init_port(port_name, index);
 	}
 
@@ -313,39 +325,42 @@ static int check_link_up(const char *if_name)
 }
 
 
-/* Port locking state machine - controls the HPLL/DMPLL.
-   TODO (v3): get rid of this code - this will all be moved to the realtime CPU inside the FPGA
-   and the softpll. */
+/* Port locking state machine - controls the HPLL/DMPLL.  TODO (v3):
+   get rid of this code - this will all be moved to the realtime CPU
+   inside the FPGA and the softpll. */
 static void port_locking_fsm(hal_port_state_t *p)
 {
 }
 
 int hal_phase_shifter_busy()
 {
-    if(!rts_state_valid)
-        return 1;
+	if(!rts_state_valid)
+		return 1;
 
-    if(rts_state.current_ref != REF_NONE)
-    {
-        int busy = rts_state.channels[rts_state.current_ref].flags & CHAN_SHIFTING ? 1 : 0;
+	if(rts_state.current_ref != REF_NONE)
+	{
+		int busy = rts_state.channels[rts_state.current_ref].flags & CHAN_SHIFTING ? 1 : 0;
 
-//        TRACE(TRACE_INFO, "PSBusy %d, flags %x", busy, rts_state.channels[rts_state.current_ref].flags);
-        return busy;
-    }
+		if (0)
+			TRACE(TRACE_INFO, "PSBusy %d, flags %x", busy,
+			      rts_state.channels[rts_state.current_ref].flags);
+		return busy;
+	}
 
 
-    return 1;
+	return 1;
 }
 
-/* Updates the current value of the phase shift on a given port. Called by the main update function regularly. */
+/* Updates the current value of the phase shift on a given
+ * port. Called by the main update function regularly. */
 static void poll_rts_state()
 {
-    if(tmo_expired(&tmo_rts))
-    {
-        rts_state_valid = rts_get_state(&rts_state) < 0 ? 0 : 1;
-        if(!rts_state_valid)
-            printf("rts_get_state failure, weird...\n");
-    }
+	if(tmo_expired(&tmo_rts))
+	{
+		rts_state_valid = rts_get_state(&rts_state) < 0 ? 0 : 1;
+		if(!rts_state_valid)
+			printf("rts_get_state failure, weird...\n");
+	}
 }
 
 uint32_t pcs_readl(hal_port_state_t *p, int reg)
@@ -370,14 +385,18 @@ uint32_t pcs_readl(hal_port_state_t *p, int reg)
 
 static int handle_link_down(hal_port_state_t *p, int link_up)
 {
-/* If, at any moment, the link goes down, reset the FSM and the port state structure. */
-	if(!link_up && p->state != HAL_PORT_STATE_LINK_DOWN && p->state != HAL_PORT_STATE_DISABLED)
+	/* If, at any moment, the link goes down, reset the FSM and
+	 * the port state structure. */
+	if(!link_up && p->state != HAL_PORT_STATE_LINK_DOWN
+	   && p->state != HAL_PORT_STATE_DISABLED)
 	{
 		if(p->locked)
 		{
-			TRACE(TRACE_INFO, "switching RTS to use local reference");
-			if(hal_get_timing_mode() != HAL_TIMING_MODE_GRAND_MASTER)
-				 rts_set_mode(RTS_MODE_GM_FREERUNNING);
+			TRACE(TRACE_INFO,
+			      "switching RTS to use local reference");
+			if(hal_get_timing_mode()
+			   != HAL_TIMING_MODE_GRAND_MASTER)
+				rts_set_mode(RTS_MODE_GM_FREERUNNING);
 		}
 
 		shw_sfp_set_led_link(p->hw_index, 0);
@@ -415,41 +434,48 @@ static void port_fsm(hal_port_state_t *p)
 	{
 		if(link_up)
 		{
-		p->calib.tx_calibrated = 1;
-		p->calib.rx_calibrated = 1;
-		/* FIXME: use proper register names */
-		TRACE(TRACE_INFO, "Bitslide: %d", ((pcs_readl(p, 16) >> 4) & 0x1f));
-		p->calib.delta_rx_phy = p->calib.phy_rx_min + ((pcs_readl(p, 16) >> 4) & 0x1f) * 800;
-		p->calib.delta_tx_phy = p->calib.phy_tx_min;
+			p->calib.tx_calibrated = 1;
+			p->calib.rx_calibrated = 1;
+			/* FIXME: use proper register names */
+			TRACE(TRACE_INFO, "Bitslide: %d",
+			      ((pcs_readl(p, 16) >> 4) & 0x1f));
+			p->calib.delta_rx_phy = p->calib.phy_rx_min + ((pcs_readl(p, 16) >> 4) & 0x1f) * 800;
+			p->calib.delta_tx_phy = p->calib.phy_tx_min;
 
-//		TRACE(TRACE_INFO,"Bypassing calibration for downlink port %s [dTx %d, dRx %d]", p->name, p->calib.delta_tx_phy, 	p->calib.delta_rx_phy);
+			if (0)
+				TRACE(TRACE_INFO,"Bypassing calibration for "
+				      "downlink port %s [dTx %d, dRx %d]",
+				      p->name, p->calib.delta_tx_phy,
+				      p->calib.delta_rx_phy);
 
-		p->tx_cal_pending = 0;
-		p->rx_cal_pending = 0;
+			p->tx_cal_pending = 0;
+			p->rx_cal_pending = 0;
 
-		shw_sfp_set_led_link(p->hw_index, 1);
-		TRACE(TRACE_INFO, "%s: link up", p->name);
-		p->state = HAL_PORT_STATE_UP;
+			shw_sfp_set_led_link(p->hw_index, 1);
+			TRACE(TRACE_INFO, "%s: link up", p->name);
+			p->state = HAL_PORT_STATE_UP;
 		}
 		break;
 	}
 
-/* Default "on" state - just keep polling the phase value. */
+	/* Default "on" state - just keep polling the phase value. */
 	case HAL_PORT_STATE_UP:
 		if(rts_state_valid)
 		{
-		   	p->phase_val = rts_state.channels[p->hw_index].phase_loopback;
-        p->phase_val_valid = rts_state.channels[p->hw_index].flags & CHAN_PMEAS_READY ? 1 : 0;
-				//hal_port_check_lock(p->name);
-				//p->locked =
+		   	p->phase_val =
+				rts_state.channels[p->hw_index].phase_loopback;
+			p->phase_val_valid =
+				rts_state.channels[p->hw_index].flags & CHAN_PMEAS_READY ? 1 : 0;
+			//hal_port_check_lock(p->name);
+			//p->locked =
 		}
 
 		break;
 
-/* Locking state (entered upon calling hal_port_start_lock()). */
+		/* Locking state (entered on calling hal_port_start_lock()). */
 	case HAL_PORT_STATE_LOCKING:
 
-/* Once the locking FSM is done, go back to the "UP" state. */
+		/* Once the locking FSM is done, go back to the "UP" state. */
 
 		p->locked = hal_port_check_lock(p->name);
 
@@ -461,12 +487,14 @@ static void port_fsm(hal_port_state_t *p)
 
 		break;
 
-/* Calibration state (entered by starting the calibration with halexp_calibration_cmd()) */
+		/* Calibration state (entered by starting the
+		 * calibration with halexp_calibration_cmd()) */
 	case HAL_PORT_STATE_CALIBRATION:
 
-/* Calibration still pending - if not anymore, go back to the "UP" state */
+		/* Calibration still pending - if not anymore, go back
+		 * to the "UP" state */
 		if(p->rx_cal_pending || p->tx_cal_pending)
-			{}//calibration_fsm(p);
+		{}//calibration_fsm(p);
 		else
 			p->state = HAL_PORT_STATE_UP;
 
@@ -477,25 +505,35 @@ static void port_fsm(hal_port_state_t *p)
 
 static void on_insert_sfp(hal_port_state_t *p)
 {
-		struct shw_sfp_header shdr;
-		if(shw_sfp_read_verify_header(p->hw_index, &shdr) < 0)
-			TRACE(TRACE_ERROR, "Failed to read SFP configuration header");
-		else {
-			struct shw_sfp_caldata *cdata;
-			TRACE(TRACE_INFO, "SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s", shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
-			cdata = shw_sfp_get_cal_data(p->hw_index);
-			if(cdata)
-			{
-				TRACE(TRACE_INFO, "SFP Info: (%s) deltaTx %d delta Rx %d alpha %.3f (* 1e6)",
-					cdata->flags & SFP_FLAG_CLASS_DATA ? "class-specific" : "device-specific",
-					cdata->delta_tx, cdata->delta_rx, cdata->alpha * 1e6);
+	struct shw_sfp_header shdr;
+	if(shw_sfp_read_verify_header(p->hw_index, &shdr) < 0)
+		TRACE(TRACE_ERROR, "Failed to read SFP configuration header");
+	else {
+		struct shw_sfp_caldata *cdata;
+		TRACE(TRACE_INFO,
+		      "SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s",
+		      shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
+		cdata = shw_sfp_get_cal_data(p->hw_index);
+		if(cdata)
+		{
+			TRACE(TRACE_INFO, "SFP Info: (%s) deltaTx %d "
+			      "delta Rx %d alpha %.3f (* 1e6)",
+			      cdata->flags & SFP_FLAG_CLASS_DATA
+			      ? "class-specific" : "device-specific",
+			      cdata->delta_tx, cdata->delta_rx,
+			      cdata->alpha * 1e6);
 
-				memcpy(&p->calib.sfp, cdata, sizeof(struct shw_sfp_caldata));
-			} else {
-				TRACE(TRACE_ERROR, "WARNING! SFP on port %s is NOT registered in the DB (using default delta & alpha values). This may cause severe timing performance degradation!", p->name);
-				p->calib.sfp.delta_tx = 0;
-				p->calib.sfp.delta_rx = 0;
-				p->calib.sfp.alpha = DEFAULT_FIBER_ALPHA_COEF;
+			memcpy(&p->calib.sfp, cdata,
+			       sizeof(struct shw_sfp_caldata));
+		} else {
+			TRACE(TRACE_ERROR, "WARNING! SFP on port %s is "
+			      "NOT registered in the DB (using default "
+			      "delta & alpha values). This may cause "
+			      "severe timing performance degradation!",
+			      p->name);
+			p->calib.sfp.delta_tx = 0;
+			p->calib.sfp.delta_rx = 0;
+			p->calib.sfp.alpha = DEFAULT_FIBER_ALPHA_COEF;
 		}
 
 		p->state = HAL_PORT_STATE_LINK_DOWN;
@@ -524,10 +562,14 @@ static void poll_sfps()
 			{
 				hw_index = ports[i].hw_index;
 
-				if(ports[i].in_use && (mask ^ old_mask) & (1<<hw_index))
+				if(ports[i].in_use
+				   && (mask ^ old_mask) & (1<<hw_index))
 				{
 					int insert = mask & (1<<hw_index);
-					TRACE(TRACE_INFO, "Detected SFP %s on port %s.", insert ? "insertion" : "removal", ports[i].name);
+					TRACE(TRACE_INFO, "Detected SFP %s "
+					      "on port %s.",
+					      insert ? "insertion" : "removal",
+					      ports[i].name);
 					if(insert)
 						on_insert_sfp(&ports[i]);
 					else
@@ -569,28 +611,29 @@ int hal_enable_tracking(const char  *port_name)
 
 	if(!p) return PORT_ERROR;
 
-  return rts_enable_ptracker(p->hw_index, 1) < 0 ? PORT_ERROR : PORT_OK;
+	return rts_enable_ptracker(p->hw_index, 1) < 0 ? PORT_ERROR : PORT_OK;
 }
 
-/* Triggers the locking state machine, called by the PTPd during the WR link setup phase. */
+/* Triggers the locking state machine, called by the PTPd during the
+ * WR link setup phase. */
 int hal_port_start_lock(const char  *port_name, int priority)
 {
 	hal_port_state_t *p = lookup_port(port_name);
 
 	if(!p) return PORT_ERROR;
 
-/* can't lock to a disconnected port */
+	/* can't lock to a disconnected port */
 	if(p->state != HAL_PORT_STATE_UP)
 		return PORT_BUSY;
 
-/* fixme: check the main FSM state before */
+	/* fixme: check the main FSM state before */
 	p->state = HAL_PORT_STATE_LOCKING;
 
 	TRACE(TRACE_INFO, "Locking to port: %s", port_name);
 
 	rts_set_mode(RTS_MODE_BC);
 
-  return rts_lock_channel(p->hw_index, 0) < 0 ? PORT_ERROR : PORT_OK;
+	return rts_lock_channel(p->hw_index, 0) < 0 ? PORT_ERROR : PORT_OK;
 }
 
 
@@ -601,36 +644,39 @@ int hal_port_check_lock(const char  *port_name)
 
 	if(!p) return PORT_ERROR;
 
-    if(!rts_state_valid)
-        return 0;
+	if(!rts_state_valid)
+		return 0;
 
-		if(rts_state.delock_count > 0)
-				return 0;
+	if(rts_state.delock_count > 0)
+		return 0;
 
-    return (rts_state.current_ref == p->hw_index &&
-            (rts_state.flags & RTS_DMTD_LOCKED) &&
-            (rts_state.flags & RTS_REF_LOCKED));
+	return (rts_state.current_ref == p->hw_index &&
+		(rts_state.flags & RTS_DMTD_LOCKED) &&
+		(rts_state.flags & RTS_REF_LOCKED));
 }
 
-/* Public function for querying the state of a particular port (DMTD phase, calibration deltas, etc.) */
+/* Public function for querying the state of a particular port (DMTD
+ * phase, calibration deltas, etc.) */
 int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 {
 	hal_port_state_t *p = lookup_port(port_name);
 
 //	TRACE(TRACE_INFO, "GetPortState %s [lup %x]\n", port_name, p);
 
-  if(!p)
-			return -1;
+	if(!p)
+		return -1;
 
 
 
-/* WARNING! when alpha = 1.0 (no asymmetry), fiber_fix_alpha = 0! */
+	/* WARNING! when alpha = 1.0 (no asymmetry), fiber_fix_alpha = 0! */
 
-	state->fiber_fix_alpha = (double)pow(2.0, 40.0) * ((p->calib.sfp.alpha + 1.0) / (p->calib.sfp.alpha + 2.0) - 0.5);
+	state->fiber_fix_alpha = (double)pow(2.0, 40.0) *
+		((p->calib.sfp.alpha + 1.0) / (p->calib.sfp.alpha + 2.0) - 0.5);
 
 	state->valid = 1;
 	state->mode = p->mode;
-	state->up = (p->state != HAL_PORT_STATE_LINK_DOWN && p->state != HAL_PORT_STATE_DISABLED);
+	state->up = (p->state != HAL_PORT_STATE_LINK_DOWN 
+		     && p->state != HAL_PORT_STATE_DISABLED);
 
 	state->is_locked = p->locked; //lock_state == LOCK_STATE_LOCKED;
 	state->phase_val = p->phase_val;
@@ -639,8 +685,10 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 	state->tx_calibrated = p->calib.tx_calibrated;
 	state->rx_calibrated = p->calib.rx_calibrated;
 
-	state->delta_tx = p->calib.delta_tx_phy + p->calib.sfp.delta_tx + p->calib.delta_tx_board;
-	state->delta_rx = p->calib.delta_rx_phy + p->calib.sfp.delta_rx + p->calib.delta_rx_board;
+	state->delta_tx = p->calib.delta_tx_phy
+		+ p->calib.sfp.delta_tx + p->calib.delta_tx_board;
+	state->delta_rx = p->calib.delta_rx_phy
+		+ p->calib.sfp.delta_rx + p->calib.delta_rx_board;
 
 	state->t2_phase_transition = DEFAULT_T2_PHASE_TRANS;
 	state->t4_phase_transition = DEFAULT_T4_PHASE_TRANS;
@@ -651,7 +699,8 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 
 	return 0;
 }
-/* Public API function - returns the array of names of all WR network interfaces */
+/* Public API function - returns the array of names of all WR network
+ * interfaces */
 int halexp_query_ports(hexp_port_list_t *list)
 {
 	int i;
@@ -669,6 +718,6 @@ int halexp_query_ports(hexp_port_list_t *list)
 /* Maciek's ptpx export for checking the presence of the external 10 MHz ref clock */
 int hal_extsrc_check_lock()
 {
-    return (hal_get_timing_mode() != HAL_TIMING_MODE_BC) ? 1 : 0;
+	return (hal_get_timing_mode() != HAL_TIMING_MODE_BC) ? 1 : 0;
 }
 

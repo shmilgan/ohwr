@@ -8,8 +8,8 @@
 typedef struct
 {
 	int repeat;
-  uint64_t start_tics;
-  uint64_t timeout;
+	uint64_t start_tics;
+	uint64_t timeout;
 } timeout_t ;
 
 static inline uint64_t tm_get_tics()
@@ -38,7 +38,7 @@ static inline int tmo_restart(timeout_t *tmo)
 static inline int tmo_expired(timeout_t *tmo)
 {
 	int expired = (tm_get_tics() - tmo->start_tics > tmo->timeout);
-	
+
 	if(tmo->repeat && expired)
 		tmo->start_tics = tm_get_tics();
 

@@ -16,8 +16,8 @@ typedef void (*hal_cleanup_callback_t)();
 /* Port delay calibration parameters */
 typedef struct {
 
-	/* PHY delay measurement parameters for PHYs which require external calibration (i.e. with
-	the feedback network. */
+	/* PHY delay measurement parameters for PHYs which require
+	external calibration (i.e. with the feedback network. */
 
 	/* minimum possible delay introduced by the PHY. Expressed as time
 	(in picoseconds) between the beginning of the symbol on the serial input
@@ -28,12 +28,12 @@ typedef struct {
 	/* the same set of parameters, but for the TX path of the PHY */
 	uint32_t phy_tx_min;
 
-	/* Current PHY (clock-to-serial-symbol) TX and RX delays, in picoseconds */
+	/* Current PHY (clock-to-serial-symbol) TX and RX delays, in ps */
 	uint32_t delta_tx_phy;
 	uint32_t delta_rx_phy;
 
-	/* Current board routing delays (between the DDMTD inputs to the PHY clock
-	inputs/outputs), in picoseconds */
+	/* Current board routing delays (between the DDMTD inputs to
+	the PHY clock inputs/outputs), in picoseconds */
 	uint32_t delta_tx_board;
 	uint32_t delta_rx_board;
 
@@ -55,7 +55,8 @@ int hal_config_extra_cmdline(const char *str);
 int hal_config_get_int(const char *name, int *value);
 int hal_config_get_double(const char *name, double *value);
 int hal_config_get_string(const char *name, char *value, int max_len);
-int hal_config_iterate(const char *section, int index, char *subsection, int max_len);
+int hal_config_iterate(const char *section, int index,
+		       char *subsection, int max_len);
 
 int hal_init_ports();
 void hal_update_ports();
