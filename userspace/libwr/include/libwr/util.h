@@ -6,6 +6,7 @@
 
 #define atoidef(str,def) (str)?atoi(str):def
 
+void shw_udelay_init(void);
 void shw_udelay(uint32_t microseconds);
 uint64_t shw_get_tics();
 
