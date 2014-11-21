@@ -120,6 +120,7 @@ int rts_debug_command(int command, int value)
 
 int rts_connect()
 {
+	minipc_set_poll(25000); /* 25ms, default is 10ms */
 	client = minipc_client_create(RTS_MAILBOX_ADDR, 0 /* not verbose */ );
 	if (!client)
 		return -1;

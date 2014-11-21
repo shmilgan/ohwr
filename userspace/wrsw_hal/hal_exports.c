@@ -240,7 +240,7 @@ int hal_init_wripc()
 /* wripc update function, must be called in the main program loop */
 int hal_update_wripc()
 {
-	minipc_server_action(hal_ch, 10 /* ms */ );
+	minipc_server_action(hal_ch, 25 /* ms */ );
 	return 0;
 }
 
