@@ -1820,6 +1820,35 @@ for details about how they are used:
 @end table
 
 @c ##########################################################################
+@node The HAL Process
+@chapter The HAL Process
+
+In the initial days of White Rabbit Switch, developers tried to have
+everything managed by a single ``Hardware Abstraction Layer'' process,
+the HAL.  The process still exists but its role is smaller than it
+used to, so some of the code is likely unused.  After release 4.1
+we started a serious audit of the @sc{hal}.
+
+The implementation is currently split between @i{userspace/wrsw_hal}
+and @i{userspace/libwr}.  Some of the @i{libwr} functions are
+used by other processes, but some are just librarized parts of
+the @sc{hal} process (again, we are not very clean and tidy).
+
+If you run @t{ps} in the switch, you'll see there are two @sc{hal}
+process, one being a child of the other.  The child is forked by the
+@i{mini-rpc} library, to poll shared memory (the communication channel
+with the @i{rt} subsystem).  @i{mini-rpc} has one file descriptor per
+channel, so users can run @i{select()} or @i{poll()}, thus this trick
+to be able to turn a shared-memory channel into a file descriptor.
+This is documented in @i{mini-rpc} documentation.  The polling time is
+currently 25ms.
+
+The @sc{hal} process is in charge of replying to IPC requests
+(@i{hal_exports.c}), driving the fan speed according to temperature
+(@i{libwr/fan.c}) and monitoring ports (this is spread in several
+files related to @i{i2c} communication).
+
+@c ##########################################################################
 @node Reboot/Reset Diagnostics
 @chapter Reboot/Reset Diagnostics
 
