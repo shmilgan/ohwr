@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#include <libwr/trace.h>
 #include <libwr/util.h>
 
 void shw_udelay(uint32_t microseconds)
@@ -19,22 +18,6 @@ void shw_udelay(uint32_t microseconds)
 		    (uint64_t) tv.tv_sec * 1000000ULL + (uint64_t) tv.tv_usec;
 
 	} while (t_cur <= t_start + (uint64_t) microseconds);
-}
-
-void *shw_malloc(size_t nbytes)
-{
-	void *p = malloc(nbytes);
-
-	if (!p) {
-		TRACE(TRACE_FATAL, "malloc(%d) failed!", nbytes);
-		exit(-1);
-	}
-	return p;
-}
-
-void shw_free(void *ptr)
-{
-	free(ptr);
 }
 
 uint64_t shw_get_tics()

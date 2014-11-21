@@ -29,17 +29,6 @@ int32_t i2c_transfer(struct i2c_bus * bus, uint32_t address, uint32_t to_write,
 	return bus->transfer(bus, address, to_write, to_read, data);
 }
 
-void i2c_free(struct i2c_bus *bus)
-{
-	if (!bus)
-		return;
-
-	if (bus->type_specific)
-		shw_free(bus->type_specific);
-
-	shw_free(bus);
-}
-
 int32_t i2c_write(struct i2c_bus *bus, uint32_t address, uint32_t to_write,
 		  uint8_t * data)
 {
