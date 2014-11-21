@@ -165,7 +165,7 @@ static int i2c_bitbang_transfer(i2c_bus_t * bus, uint32_t address,
 	if (bus->type != I2C_TYPE_BITBANG)
 		return I2C_BUS_MISMATCH;
 
-	//TRACE(TRACE_INFO,"%s (0x%x) @ 0x%x: w=%d/r=%d; cmd=%d d=%d (0b%s)",bus->name,bus,address,to_write,to_read,data[0],data[1],shw_2binary(data[1]));
+	//TRACE(TRACE_INFO,"%s (0x%x) @ 0x%x: w=%d/r=%d; cmd=%d d=%d (0x%02x)",bus->name,bus,address,to_write,to_read,data[0],data[1],(data[1]));
 
 	struct i2c_bitbang *ts = (struct i2c_bitbang *)bus->type_specific;
 
