@@ -37,7 +37,9 @@ extern volatile uint8_t        *_fpga_base_virt; /* libwr/fpga_io.c */
 #define FPGA_BASE_ADDR          _fpga_base_virt
 
 
-#define _fpga_writel(reg, val){ *(volatile uint32_t *)(FPGA_BASE_ADDR + (reg)) = (val); }
-#define _fpga_readl(reg) (*(volatile uint32_t *)(FPGA_BASE_ADDR + (reg)))
+#define _fpga_writel(reg, val) \
+	(*(volatile uint32_t *)(FPGA_BASE_ADDR + (reg)) = (val))
+#define _fpga_readl(reg) \
+	(*(volatile uint32_t *)(FPGA_BASE_ADDR + (reg)))
 
 #endif
