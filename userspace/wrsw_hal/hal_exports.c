@@ -29,7 +29,7 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 
 	switch (command) {
 	case HEXP_LOCK_CMD_ENABLE_TRACKING:
-		return hal_enable_tracking(port_name);
+		return hal_port_enable_tracking(port_name);
 
 		/* Start locking - i.e. tell the HAL locking state
 		   machine to use the port (port_name) as the source
@@ -129,7 +129,7 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 		   delay calculation. */
 
 	case HEXP_PPSG_CMD_POLL:
-		busy = shw_pps_gen_busy() || hal_phase_shifter_busy();
+		busy = shw_pps_gen_busy() || hal_port_pshifter_busy();
 		return busy ? 0 : 1;
 
 	case HEXP_PPSG_CMD_SET_VALID:
@@ -139,12 +139,12 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 	return -1;		/* fixme: real error code */
 }
 
-extern int any_port_locked();
+extern int hal_port_any_locked();
 
 int halexp_get_timing_state(hexp_timing_state_t * state)
 {
 	state->timing_mode = hal_get_timing_mode();
-	state->locked_port = any_port_locked();
+	state->locked_port = hal_port_any_locked();
 
 	return 0;
 }
@@ -171,7 +171,7 @@ static int export_get_port_state(const struct minipc_pd *pd,
 {
 	hexp_port_state_t *state = ret;
 
-	return halexp_get_port_state(state, (char *)args /* name */ );
+	return hal_port_get_exported_state(state, (char *)args /* name */ );
 }
 
 static int export_lock_cmd(const struct minipc_pd *pd,
@@ -192,7 +192,7 @@ static int export_query_ports(const struct minipc_pd *pd,
 			      uint32_t * args, void *ret)
 {
 	hexp_port_list_t *list = ret;
-	halexp_query_ports(list);
+	hal_port_query_ports(list);
 	return 0;
 }
 

@@ -57,8 +57,14 @@ int hal_config_get_string(const char *name, char *value, int max_len);
 int hal_config_iterate(const char *section, int index,
 		       char *subsection, int max_len);
 
-int hal_init_ports();
-void hal_update_ports();
+int hal_port_init_all();
+void hal_port_update_all();
+struct hexp_port_state;
+int hal_port_get_exported_state(struct hexp_port_state *state,
+				const char *port_name);
+struct hexp_port_list;
+int hal_port_query_ports(struct hexp_port_list *list);
+
 
 int hal_init_wripc();
 int hal_update_wripc();
@@ -67,11 +73,11 @@ int hal_add_cleanup_callback(hal_cleanup_callback_t cb);
 
 int hal_port_start_lock(const char  *port_name, int priority);
 int hal_port_check_lock(const char  *port_name);
-int hal_enable_tracking(const char  *port_name);
+int hal_port_enable_tracking(const char  *port_name);
 int hal_extsrc_check_lock(void); // added by ML
 
 int hal_init_timing();
 int hal_get_timing_mode();
-int hal_phase_shifter_busy();
+int hal_port_pshifter_busy();
 
 #endif

@@ -108,7 +108,7 @@ static int hal_init()
 	assert_init(hal_init_timing());
 
 	/* Initialize port FSMs - see hal_ports.c */
-	assert_init(hal_init_ports());
+	assert_init(hal_port_init_all());
 
 	/* Create a WRIPC server for HAL public API */
 	assert_init(hal_init_wripc());
@@ -128,7 +128,7 @@ static int hal_init()
 static void hal_update()
 {
 	hal_update_wripc();
-	hal_update_ports();
+	hal_port_update_all();
 	shw_update_fans();
 //      usleep(1000);
 }
