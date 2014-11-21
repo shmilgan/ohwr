@@ -367,7 +367,6 @@ static void poll_rts_state()
     if(tmo_expired(&tmo_rts))
     {
         rts_state_valid = rts_get_state(&rts_state) < 0 ? 0 : 1;
-        TRACE(TRACE_INFO,"rts_get_state updated, ports=0x%x\n",rts_state.port_status);
         if(!rts_state_valid)
             printf("rts_get_state failure, weird...\n");
     }
