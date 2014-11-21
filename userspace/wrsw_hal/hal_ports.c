@@ -670,7 +670,9 @@ int hal_port_start_lock(const char  *port_name, int priority)
 	TRACE(TRACE_INFO, "Locking to port: %s", port_name);
 
 	// single slave mode or no slave yet, don't do for backups
-	if(priority == 0 || active_port() < 0) //the same condition in  rts_lock_channel()
+	// (the same condition in  rts_lock_channel())
+	if(priority      < 0  || // single slave only (prio disabled
+	   active_port() < 0)    // no slave yet
 		rts_set_mode(RTS_MODE_BC);
 
   return rts_lock_channel(p->hw_index, priority) < 0 ? PORT_ERROR : PORT_OK;
