@@ -22,6 +22,6 @@ int shw_pps_gen_busy();
 int shw_pps_gen_enable_output(int enable);
 
 /* Reads the current time and stores at <seconds,nanoseconds>. */
-void shw_pps_gen_read_time(uint64_t *seconds, uint32_t *nanoseconds);
+void shw_pps_gen_read_time(uint64_t * seconds, uint32_t * nanoseconds);
 
 #endif /* __LIBWR_PPS_GEN_H */

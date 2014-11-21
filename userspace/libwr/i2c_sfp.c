@@ -45,7 +45,6 @@
 #define WR_SFP16_BUS	16
 #define WR_SFP17_BUS	17
 
-
 #define SFP_LED_SYNCED_MASK(t)	((t) ? (1 << 6) : (1 << 0))
 #define SFP_LED_LINK_MASK(t)	((t) ? (1 << 4) : (1 << 1))
 #define SFP_LED_WRMODE_MASK(t)	((t) ? (1 << 5) : (1 << 3))
@@ -96,13 +95,13 @@ uint32_t pca9554_masks[] = {
 
 /* The two FPGA i2c masters */
 i2c_fpga_reg_t fpga_bus0_reg = {
-  .base_address = FPGA_I2C_ADDRESS,
+	.base_address = FPGA_I2C_ADDRESS,
 	.if_num = FPGA_I2C0_IFNUM,
 	.prescaler = 500,
 };
 
 i2c_fpga_reg_t fpga_bus1_reg = {
-  .base_address = FPGA_I2C_ADDRESS,
+	.base_address = FPGA_I2C_ADDRESS,
 	.if_num = FPGA_I2C1_IFNUM,
 	.prescaler = 500,
 };
@@ -114,12 +113,14 @@ pio_pin_t wr_mux_scl = {
 	.mode = PIO_MODE_GPIO,
 	.dir = PIO_OUT_0,
 };
+
 pio_pin_t wr_mux_sda = {
 	.port = PIOB,
 	.pin = 27,
 	.mode = PIO_MODE_GPIO,
 	.dir = PIO_OUT_0,
 };
+
 struct i2c_bitbang wr_mux_bus_reg = {
 	.scl = &wr_mux_scl,
 	.sda = &wr_mux_sda,
@@ -132,12 +133,14 @@ pio_pin_t wr_link0_sda = {
 	.mode = PIO_MODE_GPIO,
 	.dir = PIO_OUT_0,
 };
+
 pio_pin_t wr_link0_scl = {
 	.port = PIOB,
 	.pin = 26,
 	.mode = PIO_MODE_GPIO,
 	.dir = PIO_OUT_0,
 };
+
 struct i2c_bitbang wr_link0_reg = {
 	.scl = &wr_link0_scl,
 	.sda = &wr_link0_sda,
@@ -150,12 +153,14 @@ pio_pin_t wr_link1_sda = {
 	.mode = PIO_MODE_GPIO,
 	.dir = PIO_OUT_0,
 };
+
 pio_pin_t wr_link1_scl = {
 	.port = PIOB,
 	.pin = 21,
 	.mode = PIO_MODE_GPIO,
 	.dir = PIO_OUT_0,
 };
+
 struct i2c_bitbang wr_link1_reg = {
 	.scl = &wr_link1_scl,
 	.sda = &wr_link1_sda,
@@ -163,26 +168,26 @@ struct i2c_bitbang wr_link1_reg = {
 
 struct i2c_bus i2c_buses[] = {
 	{
-		.name = "fpga_bus0",
-		.type = I2C_BUS_TYPE_FPGA_REG,
-		.type_specific = &fpga_bus0_reg,
-	}, {
-		.name = "fpga_bus1",
-		.type = I2C_BUS_TYPE_FPGA_REG,
-		.type_specific = &fpga_bus1_reg,
-	}, {
-		.name = "wr_mux_bus",
-		.type = I2C_TYPE_BITBANG,
-		.type_specific = &wr_mux_bus_reg,
-	}, {
-		.name = "wr_sfp0_link0",
-		.type = I2C_TYPE_BITBANG,
-		.type_specific = &wr_link0_reg,
-	}, {
-		.name = "wr_sfp0_link1",
-		.type = I2C_TYPE_BITBANG,
-		.type_specific = &wr_link1_reg,
-	},
+	 .name = "fpga_bus0",
+	 .type = I2C_BUS_TYPE_FPGA_REG,
+	 .type_specific = &fpga_bus0_reg,
+	 }, {
+	     .name = "fpga_bus1",
+	     .type = I2C_BUS_TYPE_FPGA_REG,
+	     .type_specific = &fpga_bus1_reg,
+	     }, {
+		 .name = "wr_mux_bus",
+		 .type = I2C_TYPE_BITBANG,
+		 .type_specific = &wr_mux_bus_reg,
+		 }, {
+		     .name = "wr_sfp0_link0",
+		     .type = I2C_TYPE_BITBANG,
+		     .type_specific = &wr_link0_reg,
+		     }, {
+			 .name = "wr_sfp0_link1",
+			 .type = I2C_TYPE_BITBANG,
+			 .type_specific = &wr_link1_reg,
+			 },
 };
 
 int shw_sfp_buses_init(void)
@@ -195,12 +200,12 @@ int shw_sfp_buses_init(void)
 			printf("init failed: %s\n", i2c_buses[i].name);
 			return -1;
 		}
-//		printf("init: success: %s\n", i2c_buses[i].name);
+//              printf("init: success: %s\n", i2c_buses[i].name);
 	}
 	return 0;
 }
 
-int shw_sfp_bus_scan(int num, uint8_t *dev_map)
+int shw_sfp_bus_scan(int num, uint8_t * dev_map)
 {
 	int i;
 	int detect;
@@ -209,12 +214,12 @@ int shw_sfp_bus_scan(int num, uint8_t *dev_map)
 		return -1;
 
 	if (i2c_buses[num].err)
-			return -1;
+		return -1;
 
-	detect  = i2c_scan(&i2c_buses[num], dev_map);
+	detect = i2c_scan(&i2c_buses[num], dev_map);
 	printf("\ni2c_bus: %s: %d devices\n", i2c_buses[num].name, detect);
 	for (i = 0; i < 128; i++)
-		if (dev_map[i/8] & (1 << (i%8)))
+		if (dev_map[i / 8] & (1 << (i % 8)))
 			printf("device at: 0x%02X\n", i);
 
 	return detect;
@@ -226,7 +231,7 @@ int shw_sfp_header_verify_base(struct shw_sfp_header *head)
 	uint32_t sum = 0;
 
 	for (i = 0; i < 63; i++)
-		sum += ((uint8_t *)head)[i];
+		sum += ((uint8_t *) head)[i];
 	sum &= 0xff;
 
 	return (sum == head->cc_base) ? 0 : -1;
@@ -238,7 +243,7 @@ int shw_sfp_header_verify_ext(struct shw_sfp_header *head)
 	uint32_t sum = 0;
 
 	for (i = 64; i < 95; i++)
-		sum += ((uint8_t *)head)[i];
+		sum += ((uint8_t *) head)[i];
 	sum &= 0xff;
 
 	return (sum == head->cc_ext) ? 0 : -1;
@@ -258,19 +263,20 @@ void shw_sfp_print_header(struct shw_sfp_header *head)
 	printf("Extended Identifier: %02X\n", head->ext_id);
 	printf("Connector: %02X\n", head->connector);
 	printf("Connector: %02X\n", head->connector);
-	printf("Tranciever: %016llX\n", ((uint64_t *)head->transciever)[0]);
+	printf("Tranciever: %016llX\n", ((uint64_t *) head->transciever)[0]);
 	printf("Encoding: %02x\n", head->encoding);
-	printf("Nominal Bit Rate: %d Megabits/s\n", head->br_nom*100);
+	printf("Nominal Bit Rate: %d Megabits/s\n", head->br_nom * 100);
 	printf("Length (9m): %dkm\n", head->length1);
-	printf("Length (9m): %dm\n", head->length2*100);
-	printf("Length (50m): %dm\n", head->length3*10);
-	printf("Length (62.5m): %dm\n", head->length4*10);
+	printf("Length (9m): %dm\n", head->length2 * 100);
+	printf("Length (50m): %dm\n", head->length3 * 10);
+	printf("Length (62.5m): %dm\n", head->length4 * 10);
 	printf("Length (copper): %dm\n", head->length5);
 	printf("Vendor Name: ");
 	for (i = 0; i < 16; i++)
 		printf("%c", head->vendor_name[i]);
 	printf("\n");
-	printf("Company ID: %02X%02X%02X\n", head->vendor_oui[0], head->vendor_oui[1], head->vendor_oui[2]);
+	printf("Company ID: %02X%02X%02X\n", head->vendor_oui[0],
+	       head->vendor_oui[1], head->vendor_oui[2]);
 	printf("Vendor Part Number: ");
 	for (i = 0; i < 16; i++)
 		printf("%c", head->vendor_pn[i]);
@@ -279,7 +285,7 @@ void shw_sfp_print_header(struct shw_sfp_header *head)
 	for (i = 0; i < 4; i++)
 		printf("%c", head->vendor_rev[i]);
 	printf("\n");
-	printf("Options: %04X\n", ((uint16_t *)head->options)[0]);
+	printf("Options: %04X\n", ((uint16_t *) head->options)[0]);
 	printf("Bitrate (MAX): %02X\n", head->br_max);
 	printf("Bitrate (MIN): %02X\n", head->br_min);
 	printf("Vendor Serial: ");
@@ -296,7 +302,7 @@ void shw_sfp_print_header(struct shw_sfp_header *head)
 void shw_sfp_header_dump(struct shw_sfp_header *head)
 {
 	int i;
-	uint8_t *dump = (uint8_t *)head;
+	uint8_t *dump = (uint8_t *) head;
 	printf("Header Dump:");
 	for (i = 0; i < sizeof(struct shw_sfp_header); i++) {
 		if (i % 8 == 0)
@@ -315,7 +321,7 @@ inline int shw_sfp_id(int num)
 	return num;
 }
 
-int32_t shw_sfp_read(int num, uint32_t addr, int off, int len, uint8_t *buf)
+int32_t shw_sfp_read(int num, uint32_t addr, int off, int len, uint8_t * buf)
 {
 	int id;
 	uint8_t byte1, byte2;
@@ -339,12 +345,12 @@ int32_t shw_sfp_read(int num, uint32_t addr, int off, int len, uint8_t *buf)
 
 	/* Send the offset we want to read from */
 	if (off >= 0)
-		i2c_transfer(bus, addr, 1, 0, (uint8_t *)&off);
+		i2c_transfer(bus, addr, 1, 0, (uint8_t *) & off);
 	/* Do the read */
 	return i2c_transfer(bus, addr, 0, len, buf);
 }
 
-int32_t shw_sfp_write(int num, uint32_t addr, int off, int len, uint8_t *buf)
+int32_t shw_sfp_write(int num, uint32_t addr, int off, int len, uint8_t * buf)
 {
 	int id;
 	uint8_t byte1, byte2;
@@ -367,7 +373,7 @@ int32_t shw_sfp_write(int num, uint32_t addr, int off, int len, uint8_t *buf)
 
 	/* Send the offset we want to write to if requested */
 	if (off >= 0)
-		i2c_transfer(bus, addr, 1, 0, (uint8_t *)&off);
+		i2c_transfer(bus, addr, 1, 0, (uint8_t *) & off);
 	/* Do the read */
 	return i2c_transfer(bus, addr, len, 0, buf);
 }
@@ -391,8 +397,8 @@ void shw_sfp_gpio_init(void)
 {
 	int i;
 	uint8_t addr = 0x20;
-	uint8_t conf_output[] = {0x3, 0x0};
-	uint8_t set_output[] = {0x1, 0x0};
+	uint8_t conf_output[] = { 0x3, 0x0 };
+	uint8_t set_output[] = { 0x1, 0x0 };
 	struct i2c_bus *bus = &i2c_buses[WR_FPGA_BUS0];
 
 	/* configure the pins as outputs */
@@ -405,21 +411,18 @@ void shw_sfp_gpio_init(void)
 		i2c_transfer(bus, addr + i, 2, 0, set_output);
 	}
 
-	for(i=0; i<18;i++)
-	{
+	for (i = 0; i < 18; i++) {
 		shw_sfp_set_led_synced(i, 1);
 		shw_udelay(7000);
 		shw_sfp_set_led_link(i, 1);
 		shw_udelay(7000);
 	}
-	for(i=0; i<18;i++)
-	{
+	for (i = 0; i < 18; i++) {
 		shw_sfp_set_led_synced(i, 0);
 		shw_udelay(7000);
 		shw_sfp_set_led_link(i, 0);
 		shw_udelay(7000);
 	}
-
 
 }
 
@@ -438,15 +441,14 @@ void shw_sfp_gpio_set(int num, uint8_t state)
 		bus = &i2c_buses[WR_FPGA_BUS0];
 
 	if (id > 1) {
-		addr += pca9554_masks[id]/2;
-		top = pca9554_masks[id]%2;
+		addr += pca9554_masks[id] / 2;
+		top = pca9554_masks[id] % 2;
 	} else {
-		top = id%2;
+		top = id % 2;
 	}
 
 	send[0] = 0x1;
 	/* Read current state of pins */
-
 
 	i2c_transfer(bus, addr, 1, 0, send);
 	i2c_transfer(bus, addr, 0, 1, &curr);
@@ -489,10 +491,10 @@ uint8_t shw_sfp_gpio_get(int num)
 		bus = &i2c_buses[WR_FPGA_BUS0];
 
 	if (id > 1) {
-		addr += pca9554_masks[id]/2;
-		top = pca9554_masks[id]%2;
+		addr += pca9554_masks[id] / 2;
+		top = pca9554_masks[id] % 2;
 	} else {
-		top = id%2;
+		top = id % 2;
 	}
 
 	send[0] = 0x1;
@@ -523,8 +525,9 @@ int shw_sfp_read_header(int num, struct shw_sfp_header *head)
 	if (!(ret & (1 << num)))
 		return -1;
 
-	ret = shw_sfp_read(num, I2C_SFP_ADDRESS, 0x0, sizeof(struct shw_sfp_header),
-		(uint8_t *)head);
+	ret =
+	    shw_sfp_read(num, I2C_SFP_ADDRESS, 0x0,
+			 sizeof(struct shw_sfp_header), (uint8_t *) head);
 	if (ret == I2C_DEV_NOT_FOUND)
 		return -ENODEV;
 
@@ -553,7 +556,7 @@ int shw_sfp_read_db(char *filename)
 
 	if (luaL_loadfile(L, filename) || lua_pcall(L, 0, 0, 0)) {
 		printf("cannot run configuration file: %s",
-				lua_tostring(L, -1));
+		       lua_tostring(L, -1));
 		return -1;
 	}
 
@@ -564,14 +567,14 @@ int shw_sfp_read_db(char *filename)
 	}
 	lua_pushnil(L);
 	while (lua_next(L, -2)) {
-		if(!lua_istable(L, -1)) {
-			lua_pop( L, 1 );
+		if (!lua_istable(L, -1)) {
+			lua_pop(L, 1);
 			continue;
 		}
 
 		const char *sfp_pn = 0;
 		const char *sfp_vs = 0;
-		int vals[2] = {0, 0};
+		int vals[2] = { 0, 0 };
 		double alpha = 0;
 		lua_pushnil(L);
 		while (lua_next(L, -2)) {
@@ -605,7 +608,7 @@ int shw_sfp_read_db(char *filename)
 		sfp->next = shw_sfp_cal_list;
 		shw_sfp_cal_list = sfp;
 	}
-	lua_pop( L, 1 );
+	lua_pop(L, 1);
 	lua_close(L);
 
 	return 0;
@@ -640,10 +643,12 @@ struct shw_sfp_caldata *shw_sfp_get_cal_data(int num)
 	t = shw_sfp_cal_list;
 	/* In the first pass, look for serial number */
 	while (t) {
-//		printf("search1 %s %s\n", t->part_num, t->vendor_serial);
-		if (strncmp(pn, t->part_num, 16) == 0 && strncmp(t->vendor_serial, "", 16) == 0)
+//              printf("search1 %s %s\n", t->part_num, t->vendor_serial);
+		if (strncmp(pn, t->part_num, 16) == 0
+		    && strncmp(t->vendor_serial, "", 16) == 0)
 			other = t;
-		else if (strncmp(pn, t->part_num, 16) == 0 && strncmp(vs, t->vendor_serial, 16) == 0)
+		else if (strncmp(pn, t->part_num, 16) == 0
+			 && strncmp(vs, t->vendor_serial, 16) == 0)
 			return t;
 		t = t->next;
 	}

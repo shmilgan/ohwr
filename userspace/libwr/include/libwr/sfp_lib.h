@@ -62,8 +62,7 @@ struct shw_sfp_header {
 	uint8_t date_code[8];
 	uint8_t reserved[3];
 	uint8_t cc_ext;
-} __attribute__((packed));
-
+} __attribute__ ((packed));
 
 /* Public API */
 
