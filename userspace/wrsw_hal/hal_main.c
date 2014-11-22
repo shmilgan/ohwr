@@ -170,11 +170,8 @@ static void hal_deamonize()
 		exit(EXIT_FAILURE);
 	}
 
-	/* Redirect standard files to /dev/null */
+	/* Redirect stdin to /dev/null -- keep output/error: they are logged */
 	freopen("/dev/null", "r", stdin);
-	freopen("/dev/null", "w", stdout);
-	freopen("/dev/null", "w", stderr);
-
 }
 
 static void show_help()
