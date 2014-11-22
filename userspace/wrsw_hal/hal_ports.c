@@ -21,9 +21,6 @@
 #include <libwr/pio.h>
 #include <libwr/sfp_lib.h>
 
-#include <fpga_io.h>
-#include <regs/endpoint-regs.h>
-
 #include "wrsw_hal.h"
 #include "timeout.h"
 #include <rt_ipc.h>
