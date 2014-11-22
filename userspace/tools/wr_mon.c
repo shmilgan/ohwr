@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <getopt.h>
 
 #include <minipc.h>
@@ -61,7 +62,9 @@ void show_ports(void)
 			snprintf(if_name, 10, "wr%d", i);
 
 			for(j=0;j<port_list.num_ports;j++)
-				if(!strcmp(port_list.port_names[j], if_name)) { found = 1; break; }
+				if(!strcmp(port_list.port_names[j], if_name)) {
+					found = 1; break;
+				}
 
 			if(!found) continue;
 

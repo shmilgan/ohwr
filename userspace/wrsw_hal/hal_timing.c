@@ -62,6 +62,7 @@ int hal_init_timing()
 
 	case HAL_TIMING_MODE_FREE_MASTER:
 	case HAL_TIMING_MODE_BC:
+	default: /* never hit, but having it here prevents a warning */
 		rts_set_mode(RTS_MODE_GM_FREERUNNING);
 		tmo_init(&lock_tmo, LOCK_TIMEOUT_INT, 0);
 		break;
