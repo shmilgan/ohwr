@@ -89,7 +89,6 @@ static int hal_init()
 	signal(SIGTERM, sighandler);
 	signal(SIGILL, sighandler);
 
-	/* parse the config file and choose the bitstreams to load */
 	assert_init(hal_parse_config());
 
 	if (!hal_config_get_string("global.sfp_database_path",
@@ -103,7 +102,7 @@ static int hal_init()
 		}
 	}
 
-	/* Low-level hw init, load bitstreams, init non-kernel drivers */
+	/* Low-level hw init, init non-kernel drivers */
 	assert_init(shw_init());
 
 	assert_init(hal_init_timing());
