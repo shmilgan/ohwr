@@ -8,7 +8,7 @@
  * but with moving to shared memory they are run in the caller.
  */
 
-extern struct hal_port_state  ports[]; /* FIXME: temporarily */
+extern struct hal_port_state  *ports; /* FIXME: temporarily */
 extern int hal_port_nports;
 
 struct hal_port_state *hal_port_lookup(const char *name)

@@ -35,8 +35,10 @@
 #define RTS_POLL_INTERVAL 200 /* ms */
 #define SFP_POLL_INTERVAL 1000 /* ms */
 
+static void *hal_port_shmem;
+
 /* Port table: the only item which is not "hal_port_*", as it's much used */
-struct hal_port_state ports[HAL_MAX_PORTS];
+struct hal_port_state *ports;
 
 /* An fd of always opened raw sockets for ioctl()-ing Ethernet devices */
 static int hal_port_fd;
@@ -206,6 +208,8 @@ int hal_port_init_all()
 {
 	int index = 0, i;
 	char port_name[128];
+	struct hal_shmem_header *hal_hdr;
+	struct wrs_shm_head *head;
 
 	TRACE(TRACE_INFO, "Initializing switch ports...");
 
@@ -232,7 +236,24 @@ int hal_port_init_all()
 	TRACE(TRACE_INFO, "Number of physical ports supported in HW: %d",
 	      hal_port_nports);
 
-	memset(ports, 0, sizeof(ports));
+	/* Allocate the ports in shared memory, so wr_mon etc can see them */
+	hal_port_shmem = wrs_shm_get(wrs_shm_hal, "wrsw_hal", WRS_SHM_WRITE);
+	if (!hal_port_shmem) {
+		fprintf(stderr, "%s: Can't join shmem: %s\n", __func__,
+			strerror(errno));
+		return -1;
+	}
+	head = hal_port_shmem;
+	hal_hdr = wrs_shm_alloc(hal_port_shmem, sizeof(*hal_hdr));
+	ports = wrs_shm_alloc(hal_port_shmem,
+			      sizeof(struct hal_port_state)
+			      * HAL_MAX_PORTS);
+	if (!hal_hdr ||  !ports) {
+		fprintf(stderr, "%s: can't allocate in shmem\n", __func__);
+		return -1;
+	}
+
+	hal_hdr->ports = ports;
 
 	for (;;) {
 		if (!hal_config_iterate("ports", index++,
@@ -240,6 +261,9 @@ int hal_port_init_all()
 			break;
 		hal_port_init(port_name, index);
 	}
+	/* We are done, mark things as valid */
+	hal_hdr->nports = hal_port_nports;
+	head->version = HAL_SHMEM_VERSION;
 
 	return 0;
 }

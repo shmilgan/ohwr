@@ -229,7 +229,8 @@ int main(int argc, char *argv[])
 
 	hal_parse_cmdline(argc, argv);
 
-	hal_init();
+	if (hal_init())
+		exit(1);
 
 	for (;;)
 		hal_update();

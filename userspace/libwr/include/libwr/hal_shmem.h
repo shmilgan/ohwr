@@ -90,6 +90,13 @@ struct hal_port_state {
 	uint32_t ep_base;
 };
 
+/* This is the overall structure stored in shared memory */
+#define HAL_SHMEM_VERSION 1
+struct hal_shmem_header {
+	int nports;
+	struct hal_port_state *ports;
+};
+
 /*
  * The following two functions were in userspace/wrsw_hal/hal_ports.c,
  * and are used to marshall data for the RPC format. Now that we
