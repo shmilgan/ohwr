@@ -30,11 +30,6 @@
 #include <hal/hal_exports.h>
 #include "driver_stuff.h"
 
-/* Port modes - WR Uplink/Downlink/Non-WR-at-all */
-#define HAL_PORT_MODE_WR_UPLINK 1
-#define HAL_PORT_MODE_WR_DOWNLINK 2
-#define HAL_PORT_MODE_NON_WR 3
-
 /* Port state machine states */
 #define HAL_PORT_STATE_DISABLED 0
 #define HAL_PORT_STATE_LINK_DOWN 1
@@ -72,7 +67,7 @@ struct hal_port_state {
 	int fd;
 	int hw_addr_auto;
 
-	/* port timing mode (HAL_PORT_MODE_xxxx) */
+	/* port timing mode (HEXP_PORT_MODE_xxxx) */
 	int mode;
 
 	/* port FSM state (HAL_PORT_STATE_xxxx) */
