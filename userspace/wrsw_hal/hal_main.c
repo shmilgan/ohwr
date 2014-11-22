@@ -13,6 +13,7 @@
 #include <libwr/trace.h>
 #include <libwr/switch_hw.h>
 #include <libwr/shw_io.h>
+#include <libwr/sfp_lib.h>
 
 #include "wrsw_hal.h"
 #include <rt_ipc.h>

@@ -6,7 +6,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <math.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -20,19 +19,14 @@
 #include <libwr/trace.h>
 #include <libwr/pio.h>
 #include <libwr/sfp_lib.h>
+#include <libwr/shmem.h>
 
 #include "wrsw_hal.h"
 #include "timeout.h"
 #include <rt_ipc.h>
 #include <hal/hal_exports.h>
+#include <libwr/hal_shmem.h>
 #include "driver_stuff.h"
-
-/* Port state machine states */
-#define HAL_PORT_STATE_DISABLED 0
-#define HAL_PORT_STATE_LINK_DOWN 1
-#define HAL_PORT_STATE_UP 2
-#define HAL_PORT_STATE_CALIBRATION 3
-#define HAL_PORT_STATE_LOCKING 4
 
 /* Default fiber alpha coefficient (G.652 @ 1310 nm TX / 1550 nm RX) */
 #define DEFAULT_FIBER_ALPHA_COEF (1.4682e-04*1.76)
@@ -40,51 +34,8 @@
 #define RTS_POLL_INTERVAL 200 /* ms */
 #define SFP_POLL_INTERVAL 1000 /* ms */
 
-/* Internal port state structure */
-struct hal_port_state {
-	/* non-zero: allocated */
-	int in_use;
-	/* linux i/f name */
-	char name[16];
-
-	/* MAC addr */
-	uint8_t hw_addr[6];
-
-	/* ioctl() hw index */
-	int hw_index;
-
-	/* file descriptor for ioctls() */
-	int fd;
-	int hw_addr_auto;
-
-	/* port timing mode (HEXP_PORT_MODE_xxxx) */
-	int mode;
-
-	/* port FSM state (HAL_PORT_STATE_xxxx) */
-	int state;
-
-	/* unused */
-	int index;
-
-	/* 1: PLL is locked to this port */
-	int locked;
-
-	/* calibration data */
-	hal_port_calibration_t calib;
-
-	/* current DMTD loopback phase (ps) and whether is it valid or not */
-	uint32_t phase_val;
-	int phase_val_valid;
-	int tx_cal_pending, rx_cal_pending;
-	/* locking FSM state */
-	int lock_state;
-
-	/* Endpoint's base address */
-	uint32_t ep_base;
-};
-
 /* Port table: the only item which is not "hal_port_*", as it's much used */
-static struct hal_port_state ports[HAL_MAX_PORTS];
+struct hal_port_state ports[HAL_MAX_PORTS];
 
 /* An fd of always opened raw sockets for ioctl()-ing Ethernet devices */
 static int hal_port_fd;
@@ -95,7 +46,7 @@ static int hal_port_rts_state_valid = 0;
 
 /* Polling timeouts (RT Subsystem & SFP detection) */
 static timeout_t hal_port_tmo_rts, hal_port_tmo_sfp;
-static int hal_port_nports;
+int hal_port_nports;
 
 int hal_port_check_lock(const char *port_name);
 
@@ -567,17 +518,6 @@ void hal_port_update_all()
 			hal_port_fsm(&ports[i]);
 }
 
-/* Queries the port state structre for a given network interface. */
-static struct hal_port_state *hal_port_lookup(const char *name)
-{
-	int i;
-	for (i = 0; i < HAL_MAX_PORTS; i++)
-		if (ports[i].in_use && !strcmp(name, ports[i].name))
-			return &ports[i];
-
-	return NULL;
-}
-
 int hal_port_enable_tracking(const char *port_name)
 {
 	struct hal_port_state *p = hal_port_lookup(port_name);
@@ -633,61 +573,3 @@ int hal_port_check_lock(const char *port_name)
 
 /* Public function for querying the state of a particular port (DMTD
  * phase, calibration deltas, etc.) */
-int hal_port_get_exported_state(struct hexp_port_state *state,
-				const char *port_name)
-{
-	struct hal_port_state *p = hal_port_lookup(port_name);
-
-//      TRACE(TRACE_INFO, "GetPortState %s [lup %x]\n", port_name, p);
-
-	if (!p)
-		return -1;
-
-	/* WARNING! when alpha = 1.0 (no asymmetry), fiber_fix_alpha = 0! */
-
-	state->fiber_fix_alpha = (double)pow(2.0, 40.0) *
-	    ((p->calib.sfp.alpha + 1.0) / (p->calib.sfp.alpha + 2.0) - 0.5);
-
-	state->valid = 1;
-	state->mode = p->mode;
-	state->up = (p->state != HAL_PORT_STATE_LINK_DOWN
-		     && p->state != HAL_PORT_STATE_DISABLED);
-
-	state->is_locked = p->locked;	//lock_state == LOCK_STATE_LOCKED;
-	state->phase_val = p->phase_val;
-	state->phase_val_valid = p->phase_val_valid;
-
-	state->tx_calibrated = p->calib.tx_calibrated;
-	state->rx_calibrated = p->calib.rx_calibrated;
-
-	state->delta_tx = p->calib.delta_tx_phy
-	    + p->calib.sfp.delta_tx + p->calib.delta_tx_board;
-	state->delta_rx = p->calib.delta_rx_phy
-	    + p->calib.sfp.delta_rx + p->calib.delta_rx_board;
-
-	state->t2_phase_transition = DEFAULT_T2_PHASE_TRANS;
-	state->t4_phase_transition = DEFAULT_T4_PHASE_TRANS;
-	state->clock_period = REF_CLOCK_PERIOD_PS;
-
-	memcpy(state->hw_addr, p->hw_addr, 6);
-	state->hw_index = p->hw_index;
-
-	return 0;
-}
-
-/* Public API function - returns the array of names of all WR network
- * interfaces */
-int hal_port_query_ports(struct hexp_port_list *list)
-{
-	int i;
-	int n = 0;
-
-	for (i = 0; i < HAL_MAX_PORTS; i++)
-		if (ports[i].in_use)
-			strcpy(list->port_names[n++], ports[i].name);
-
-	list->num_physical_ports = hal_port_nports;
-	list->num_ports = n;
-	return 0;
-}
-
