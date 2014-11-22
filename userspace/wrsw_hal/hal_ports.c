@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -214,9 +215,11 @@ int hal_port_init_all()
 
 	/* Open a single raw socket for accessing the MAC addresses, etc. */
 	hal_port_fd = socket(AF_PACKET, SOCK_DGRAM, 0);
-	if (hal_port_fd < 0)
+	if (hal_port_fd < 0) {
+		fprintf(stderr, "%s: Can't create socket: %s\n",
+			__func__, strerror(errno));
 		return -1;
-
+	}
 	/* Count the number of physical WR network interfaces */
 	hal_port_nports = 0;
 	for (i = 0; i < HAL_MAX_PORTS; i++) {
