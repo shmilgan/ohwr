@@ -691,8 +691,3 @@ int hal_port_query_ports(struct hexp_port_list *list)
 	return 0;
 }
 
-/* Maciek's ptpx export for checking the presence of the external 10 MHz ref clock */
-int hal_extsrc_check_lock()
-{
-	return (hal_get_timing_mode() != HAL_TIMING_MODE_BC) ? 1 : 0;
-}

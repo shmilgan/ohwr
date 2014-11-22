@@ -74,7 +74,6 @@ int hal_add_cleanup_callback(hal_cleanup_callback_t cb);
 int hal_port_start_lock(const char  *port_name, int priority);
 int hal_port_check_lock(const char  *port_name);
 int hal_port_enable_tracking(const char  *port_name);
-int hal_extsrc_check_lock(void); // added by ML
 
 int hal_init_timing();
 int hal_get_timing_mode();
