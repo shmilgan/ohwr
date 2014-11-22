@@ -37,13 +37,6 @@
 #define HAL_PORT_STATE_CALIBRATION 3
 #define HAL_PORT_STATE_LOCKING 4
 
-/* Locking state machine states */
-#define LOCK_STATE_NONE 0
-#define LOCK_STATE_WAIT_HPLL 1
-#define LOCK_STATE_WAIT_DMPLL 2
-#define LOCK_STATE_LOCKED 3
-#define LOCK_STATE_START 4
-
 /* Default fiber alpha coefficient (G.652 @ 1310 nm TX / 1550 nm RX) */
 #define DEFAULT_FIBER_ALPHA_COEF (1.4682e-04*1.76)
 
@@ -126,7 +119,7 @@ static void hal_port_reset_state(struct hal_port_state * p)
 	p->calib.tx_calibrated = 0;
 	p->locked = 0;
 	p->state = HAL_PORT_STATE_LINK_DOWN;
-	p->lock_state = LOCK_STATE_NONE;
+	p->lock_state = 0;
 	p->tx_cal_pending = 0;
 	p->rx_cal_pending = 0;
 }
