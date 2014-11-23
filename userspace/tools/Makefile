@@ -42,8 +42,8 @@ LDFLAGS = -L../mini-rpc \
 
 all: 	$(TOOLS)
 
-rtu_stat: rtu_stat.o
-	${CC} -o $@ $^ $(LDFLAGS)
+%: %.c
+	$(CC) $(CFLAGS) $*.c $(LDFLAGS) -o $*
 
 wr_mon: wr_mon.o term.o
 	${CC} -o $@ $^ $(LDFLAGS)
@@ -54,13 +54,7 @@ wr_management: wr_management.o term.o
 wr_phytool: wr_phytool.o ../wrsw_hal/rt_client.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
-spll_dbg_proxy: spll_dbg_proxy.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
 load-virtex: load-virtex.o load-fpga.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
-load-lm32: load-lm32.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
 wrs_version.o: wrs_version.c
@@ -78,17 +72,7 @@ test_ts: test_ts.o ../wrsw_hal/rt_client.o
 
 port_calibrator: port_calibrator.o ../wrsw_hal/rt_client.o
 	${CC} -o $@ $^ $(LDFLAGS)	
-wrs_pstats: wrs_pstats.o
-	${CC} -o $@ $^ $(LDFLAGS)
 
-lm32-vuart: lm32-vuart.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
-wrs_vlans: wrs_vlans.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
-sdb-read: sdb-read.o
-	${CC} -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -f $(TOOLS) *.o *~
