@@ -136,6 +136,14 @@ int backup_port()
     return rts_state.backup_ref;
 }
 
+int is_backup_port(int id)
+{
+    if(!rts_state_valid) return -1;
+    TRACE(TRACE_INFO, "is_backup_port(%d): mask is_backup %d",id,
+	  rts_state.backup_mask, ( 0x1 & (rts_state.backup_mask >> id)));
+    return(0x1 & (rts_state.backup_mask >> id)) ;
+}
+
 int active_port()
 {
 	if(!rts_state_valid) return -1;
@@ -367,6 +375,7 @@ static void poll_rts_state()
     if(tmo_expired(&tmo_rts))
     {
         rts_state_valid = rts_get_state(&rts_state) < 0 ? 0 : 1;
+// 	TRACE(TRACE_INFO,"rts_get_state updated, ports=0x%x, port[1].flags=0x%x \n",rts_state.port_status, rts_state.channels[1].flags );
         if(!rts_state_valid)
             printf("rts_get_state failure, weird...\n");
     }
@@ -417,29 +426,31 @@ static int handle_link_down(hal_port_state_t *p, int link_up)
 		if(p->locked)
 		{
 			
-			TRACE(TRACE_INFO, "LINK DOWN [%d]: active: %d | backup %d | old %d ",
-			p->hw_index, active_port(),backup_port(),old_backup_port());
+			TRACE(TRACE_INFO, "LINK DOWN [%d]: active: %d | backup %d | old %d | is backup=%d ",
+			p->hw_index, active_port(),backup_port(),old_backup_port(),is_backup_port(p->hw_index) );
 			if(hal_get_timing_mode() != HAL_TIMING_MODE_GRAND_MASTER)
 				
 				if(old_backup_port() == p->hw_index) // we just switche over from this port
 				{
 					rts_backup_channel(p->hw_index, RTS_BACKUP_CH_ACTIVATE);
-					rts_state.old_ref = REF_NONE; //nasty: to make hal in sync with RT
+// 					rts_state.old_ref = REF_NONE; //nasty: to make hal in sync with RT
 					TRACE(TRACE_INFO, "switching to backup reference");
 				}
-				else if(backup_port() == p->hw_index) // it is backup port
+// 				else if(backup_port() == p->hw_index) // it is backup port
+				else if(is_backup_port(p->hw_index) > 0)
 				{
 					rts_backup_channel(p->hw_index, RTS_BACKUP_CH_DOWN);
-					rts_state.backup_ref = REF_NONE; //nasty: to make hal in sync with RT
+// 					rts_state.backup_ref = REF_NONE; //nasty: to make hal in sync with RT
 					TRACE(TRACE_INFO, "switching off backup reference");
 				}
 				// this is active slave, not a backup & no backup for it
-				else if(active_port() == p->hw_index && backup_port() < 0) 
+// 				else if(active_port() == p->hw_index && backup_port() < 0) 
+				else if(active_port() == p->hw_index &&  is_backup_port(p->hw_index) == 0) 
 				{
 					rts_set_mode(RTS_MODE_GM_FREERUNNING);
-					rts_state.current_ref = REF_NONE; //nasty: to make hal in sync with RT
-					rts_state.backup_ref = REF_NONE; 
-					rts_state.old_ref = REF_NONE; 
+// 					rts_state.current_ref = REF_NONE; //nasty: to make hal in sync with RT
+// 					rts_state.backup_ref = REF_NONE; 
+// 					rts_state.old_ref = REF_NONE; 
 					TRACE(TRACE_INFO, "switching RTS to use local reference");
 				}
 				else 
@@ -449,7 +460,9 @@ static int handle_link_down(hal_port_state_t *p, int link_up)
 			else
 				  TRACE(TRACE_INFO, "I'm grandmaster, now switching of reference");
 		}
-
+		//async update of rts_state
+		rts_state_valid = rts_get_state(&rts_state) < 0 ? 0 : 1;
+		
 		shw_sfp_set_led_link(p->hw_index, 0);
 		p->state = HAL_PORT_STATE_LINK_DOWN;
 		reset_port_state(p);
@@ -476,6 +489,7 @@ static void port_fsm(hal_port_state_t *p)
 	{
 
 	case HAL_PORT_STATE_DISABLED:
+// 		TRACE(TRACE_INFO, "Port %s: state: HAL_PORT_STATE_DISABLED", p->name);
 		p->calib.tx_calibrated = 0;
 		p->calib.rx_calibrated = 0;
 		break;
@@ -483,6 +497,7 @@ static void port_fsm(hal_port_state_t *p)
 /* Default state - wait until the link goes up */
 	case HAL_PORT_STATE_LINK_DOWN:
 	{
+// 		TRACE(TRACE_INFO, "Port %s: state: HAL_PORT_STATE_LINK_DOWN", p->name);
 		if(link_up)
 		{
 		p->calib.tx_calibrated = 1;
@@ -506,15 +521,16 @@ static void port_fsm(hal_port_state_t *p)
 
 /* Default "on" state - just keep polling the phase value. */
 	case HAL_PORT_STATE_UP:
+// 		TRACE(TRACE_INFO, "Port %s: state: HAL_PORT_STATE_UP", p->name);
 		if(rts_state_valid)
 		{
 		   	p->phase_val = rts_state.channels[p->hw_index].phase_loopback;
         p->phase_val_valid = rts_state.channels[p->hw_index].flags & CHAN_PMEAS_READY ? 1 : 0;
 				//hal_port_check_lock(p->name);
 				//p->locked =
-/*		TRACE(TRACE_ERROR,"[main-fsm] Port %s| state up, phase % d, valid %d", p->name,
-		p->phase_val,p->phase_val_valid);
-		TRACE(TRACE_INFO,"[main-fsm] Port %s| state up, phase % d, valid %d", p->name,
+		TRACE(TRACE_ERROR,"[main-fsm] Port %s| state up, phase % d, valid %d | flags 0x%x \n", p->name,
+		p->phase_val,p->phase_val_valid, rts_state.channels[p->hw_index].flags);
+/*		TRACE(TRACE_INFO,"[main-fsm] Port %s| state up, phase % d, valid %d", p->name,
 		p->phase_val,p->phase_val_valid);	*/	
 		}
 
@@ -522,7 +538,7 @@ static void port_fsm(hal_port_state_t *p)
 
 /* Locking state (entered upon calling hal_port_start_lock()). */
 	case HAL_PORT_STATE_LOCKING:
-
+// 		TRACE(TRACE_INFO, "Port %s: state: HAL_PORT_STATE_LOCKING", p->name);
 /* Once the locking FSM is done, go back to the "UP" state. */
 
 		p->locked = hal_port_check_lock(p->name);
@@ -537,7 +553,7 @@ static void port_fsm(hal_port_state_t *p)
 
 /* Calibration state (entered by starting the calibration with halexp_calibration_cmd()) */
 	case HAL_PORT_STATE_CALIBRATION:
-
+// TRACE(TRACE_INFO, "Port %s: state: HAL_PORT_STATE_CALIBRATION", p->name);
 /* Calibration still pending - if not anymore, go back to the "UP" state */
 		if(p->rx_cal_pending || p->tx_cal_pending)
 			{}//calibration_fsm(p);
@@ -691,9 +707,14 @@ int hal_port_check_lock(const char  *port_name)
 		if(rts_state.delock_count > 0)
 				return 0;
 
-    return ((rts_state.current_ref == p->hw_index || rts_state.backup_ref == p->hw_index )&&
+		
+	return ((rts_state.current_ref == p->hw_index || is_backup_port(p->hw_index) == 1 )&&
             (rts_state.flags & RTS_DMTD_LOCKED) &&
             (rts_state.flags & RTS_REF_LOCKED));
+
+// 	return ((rts_state.current_ref == p->hw_index || rts_state.backup_ref == p->hw_index )&&
+//             (rts_state.flags & RTS_DMTD_LOCKED) &&
+//             (rts_state.flags & RTS_REF_LOCKED));
 }
 
 /* Public function for querying the state of a particular port (DMTD phase, calibration deltas, etc.) */
@@ -701,12 +722,12 @@ int halexp_get_port_state(hexp_port_state_t *state, const char *port_name)
 {
 	hal_port_state_t *p = lookup_port(port_name);
 
-//	TRACE(TRACE_INFO, "GetPortState %s [lup %x]\n", port_name, p);
+// 	TRACE(TRACE_INFO, "GetPortState %s [lup %x]\n", port_name, p);
 
   if(!p)
 			return -1;
 
-
+//       TRACE(TRACE_INFO, "GetPortState %s | idx=%d [lup %x] phase_val_valid=%d \n", port_name, p->hw_index, p, p->phase_val_valid);
 
 /* WARNING! when alpha = 1.0 (no asymmetry), fiber_fix_alpha = 0! */
 
