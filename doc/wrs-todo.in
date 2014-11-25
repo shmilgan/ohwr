@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month September 2014
+@set update-month November 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -324,9 +324,6 @@ locking so it is (remotely) possible for tools to interfere and get
 wrong results.  We should define a good policy with proper locking, to
 avoid mishaps. This problem is listed in @ref{The WR Processes and
 Libraries} too.
-
-@item There are too many @i{load} source files in @t{userspace/tools};
-some are definitely not used any more. We need to clean up.
 
 @end itemize
 

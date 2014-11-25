@@ -55,10 +55,6 @@ wr_mon: wr_mon.o term.o
 wr_management: wr_management.o term.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
-load-virtex: load-virtex.o load-fpga.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
-
 clean:
 	rm -f $(TOOLS) *.o *~
 
