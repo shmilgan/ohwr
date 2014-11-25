@@ -39,7 +39,7 @@ endif
 LDFLAGS = -L../mini-rpc \
 		-L../libwr \
 		-L../libsdb \
-		-lminipc -lwr -lsdbfs -llua -lm -ldl
+		-lwr -lminipc -lsdbfs -llua -lm -ldl
 
 all: 	$(TOOLS)
 
@@ -55,20 +55,8 @@ wr_mon: wr_mon.o term.o
 wr_management: wr_management.o term.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
-wr_phytool: wr_phytool.o ../wrsw_hal/rt_client.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
 load-virtex: load-virtex.o load-fpga.o
 	${CC} -o $@ $^ $(LDFLAGS)
-
-test_rt: test_rt.o ../wrsw_hal/rt_client.o
-	${CC} -o $@ $^ $(LDFLAGS)	
-
-test_ts: test_ts.o ../wrsw_hal/rt_client.o
-	${CC} -o $@ $^ $(LDFLAGS)	
-
-port_calibrator: port_calibrator.o ../wrsw_hal/rt_client.o
-	${CC} -o $@ $^ $(LDFLAGS)	
 
 
 clean:

@@ -1623,11 +1623,6 @@ Clients are created in the following places:
 	A temporary client is created to check whether a HAL process
         is already running.
 
-@item userspace/wrsw_hal/rt_client.c
-
-	The hal connects to the @i{rt} subsystem to control the
-        soft-pll.
-
 @item userspace/tools/wr_mon.c
 @c FIXME: wr_mon should use shmem
 
@@ -1645,6 +1640,11 @@ Clients are created in the following places:
         @t{halexp_client_try_connect()} is called directly by
         @i{rtud} and through @t{halexp_client_init} by @i{rtu_stat},
         @i{wr_phytool}, @i{wr_mon} and @i{wr_management}.
+
+@item userspace/libwr/rt_client.c
+
+	The hal connects to the @i{rt} subsystem to control the
+        soft-pll.
 
 @end table
 
