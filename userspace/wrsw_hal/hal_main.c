@@ -107,11 +107,8 @@ static int hal_init()
 
 	assert_init(hal_init_timing());
 
-	/* Initialize port FSMs - see hal_ports.c */
+	/* Initialize port FSMs and IPC/RPC - see hal_ports.c */
 	assert_init(hal_port_init_all());
-
-	/* Create a WRIPC server for HAL public API */
-	assert_init(hal_init_wripc());
 
 	//everything is fine up to here, we can blink green LED
 	shw_io_write(shw_io_led_state_o, 0);

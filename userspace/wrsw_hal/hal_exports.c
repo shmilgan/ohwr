@@ -15,6 +15,7 @@
 #include <hal/hal_exports.h> /* for exported structs/function protos */
 
 static struct minipc_ch *hal_ch;
+static struct hal_port_state *ports;
 
 /* Locking call - controls the HAL locking state machine. Called by
    the PTPd during the WR Link Setup phase, when it has detected a
@@ -171,7 +172,8 @@ static int export_get_port_state(const struct minipc_pd *pd,
 {
 	hexp_port_state_t *state = ret;
 
-	return hal_port_get_exported_state(state, (char *)args /* name */ );
+	return hal_port_get_exported_state(state, ports,
+					   (char *)args /* name */ );
 }
 
 static int export_lock_cmd(const struct minipc_pd *pd,
@@ -192,7 +194,7 @@ static int export_query_ports(const struct minipc_pd *pd,
 			      uint32_t * args, void *ret)
 {
 	hexp_port_list_t *list = ret;
-	hal_port_query_ports(list);
+	hal_port_query_ports(list, ports);
 	return 0;
 }
 
@@ -204,8 +206,10 @@ static int export_get_timing_state(const struct minipc_pd *pd,
 }
 
 /* Creates a wripc server and exports all public API functions */
-int hal_init_wripc()
+int hal_init_wripc(struct hal_port_state *hal_ports)
 {
+	ports = hal_ports; /* static pointer used later */
+
 	hal_ch = minipc_server_create(WRSW_HAL_SERVER_ADDR, 0);
 
 	if (hal_ch < 0) {

@@ -19,10 +19,13 @@ int hal_config_iterate(const char *section, int index,
 int hal_port_init_all();
 void hal_port_update_all();
 struct hexp_port_state;
+struct hal_port_state;
 int hal_port_get_exported_state(struct hexp_port_state *state,
+				struct hal_port_state *ports,
 				const char *port_name);
 struct hexp_port_list;
-int hal_port_query_ports(struct hexp_port_list *list);
+int hal_port_query_ports(struct hexp_port_list *list,
+			 const struct hal_port_state *ports);
 
 
 int hal_init_wripc();

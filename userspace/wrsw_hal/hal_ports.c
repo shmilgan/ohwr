@@ -38,7 +38,7 @@
 static void *hal_port_shmem;
 
 /* Port table: the only item which is not "hal_port_*", as it's much used */
-struct hal_port_state *ports;
+static struct hal_port_state *ports;
 
 /* An fd of always opened raw sockets for ioctl()-ing Ethernet devices */
 static int hal_port_fd;
@@ -49,7 +49,7 @@ static int hal_port_rts_state_valid = 0;
 
 /* Polling timeouts (RT Subsystem & SFP detection) */
 static timeout_t hal_port_tmo_rts, hal_port_tmo_sfp;
-int hal_port_nports;
+static int hal_port_nports;
 
 int hal_port_check_lock(const char *port_name);
 
@@ -264,6 +264,9 @@ int hal_port_init_all()
 	/* We are done, mark things as valid */
 	hal_hdr->nports = hal_port_nports;
 	head->version = HAL_SHMEM_VERSION;
+
+	/* Create a WRIPC server for HAL public API */
+	return hal_init_wripc(ports);
 
 	return 0;
 }
@@ -547,7 +550,7 @@ void hal_port_update_all()
 
 int hal_port_enable_tracking(const char *port_name)
 {
-	struct hal_port_state *p = hal_port_lookup(port_name);
+	const struct hal_port_state *p = hal_port_lookup(ports, port_name);
 
 	if (!p)
 		return -1;
@@ -559,7 +562,7 @@ int hal_port_enable_tracking(const char *port_name)
  * WR link setup phase. */
 int hal_port_start_lock(const char *port_name, int priority)
 {
-	struct hal_port_state *p = hal_port_lookup(port_name);
+	struct hal_port_state *p = hal_port_lookup(ports, port_name);
 
 	if (!p)
 		return -1;
@@ -581,7 +584,7 @@ int hal_port_start_lock(const char *port_name, int priority)
 /* Returns 1 if the port is locked */
 int hal_port_check_lock(const char *port_name)
 {
-	struct hal_port_state *p = hal_port_lookup(port_name);
+	const struct hal_port_state *p = hal_port_lookup(ports, port_name);
 	struct rts_pll_state *hs = &hal_port_rts_state;
 
 	if (!p)

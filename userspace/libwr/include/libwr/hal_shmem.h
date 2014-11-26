@@ -98,18 +98,17 @@ struct hal_shmem_header {
 };
 
 /*
- * The following two functions were in userspace/wrsw_hal/hal_ports.c,
+ * The following functions were in userspace/wrsw_hal/hal_ports.c,
  * and are used to marshall data for the RPC format. Now that we
  * offer shared memory, it is the caller who must convert data to
  * the expected format (which remains the RPC one as I write this).
  */
-
-extern struct hal_port_state *hal_port_lookup(const char *name);
-extern int hal_port_query_ports(struct hexp_port_list *list);
-extern int hal_port_get_exported_state(struct hexp_port_state *state,
-				       const char *port_name);
-
-
-
+struct hal_port_state *hal_port_lookup(struct hal_port_state *ports,
+				       const char *name);
+int hal_port_query_ports(struct hexp_port_list *list,
+			 const struct hal_port_state *ports);
+int hal_port_get_exported_state(struct hexp_port_state *state,
+				struct hal_port_state *ports,
+				const char *port_name);
 
 #endif /*  __LIBWR_HAL_SHMEM_H__ */

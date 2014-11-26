@@ -11,7 +11,8 @@
 extern struct hal_port_state  *ports; /* FIXME: temporarily */
 extern int hal_port_nports;
 
-struct hal_port_state *hal_port_lookup(const char *name)
+struct hal_port_state *hal_port_lookup(struct hal_port_state *ports,
+				       const char *name)
 {
 	int i;
 	for (i = 0; i < HAL_MAX_PORTS; i++)
@@ -23,9 +24,10 @@ struct hal_port_state *hal_port_lookup(const char *name)
 
 
 int hal_port_get_exported_state(struct hexp_port_state *state,
+				struct hal_port_state *ports,
 				const char *port_name)
 {
-	struct hal_port_state *p = hal_port_lookup(port_name);
+	const struct hal_port_state *p = hal_port_lookup(ports, port_name);
 
 //      TRACE(TRACE_INFO, "GetPortState %s [lup %x]\n", port_name, p);
 
@@ -66,7 +68,8 @@ int hal_port_get_exported_state(struct hexp_port_state *state,
 
 /* Public API function - returns the array of names of all WR network
  * interfaces */
-int hal_port_query_ports(struct hexp_port_list *list)
+int hal_port_query_ports(struct hexp_port_list *list,
+			 const struct hal_port_state *ports)
 {
 	int i;
 	int n = 0;
@@ -75,7 +78,7 @@ int hal_port_query_ports(struct hexp_port_list *list)
 		if (ports[i].in_use)
 			strcpy(list->port_names[n++], ports[i].name);
 
-	list->num_physical_ports = hal_port_nports;
+	list->num_physical_ports = 18; /* was hal_port_nports */
 	list->num_ports = n;
 	return 0;
 }
