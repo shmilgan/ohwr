@@ -1,6 +1,6 @@
 TOOLS = rtu_stat wr_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex com
 TOOLS += mapper wmapper
-TOOLS += wrs_version wr_date wr_management lm32-vuart wrs_pstats
+TOOLS += wrs_version wr_date lm32-vuart wrs_pstats
 TOOLS += wrs_vlans wrs_dump_shmem
 TOOLS += sdb-read
 TOOLS += nbtee

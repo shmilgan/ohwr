@@ -43,17 +43,10 @@ function wrs_header_ports(){
 	$interval = $currenttime - $_SESSION['portsupdated'];
 		
 	if(!file_exists("/tmp/ports.conf") || $interval>15){
-		$cmd = wrs_env_sh();
-		shell_exec("killall wr_management");
-		$str = shell_exec($cmd." ports");
-		$fp = fopen('/tmp/ports.conf', 'w+');
-		fwrite($fp, $str);
-		fclose($fp);
-		$ports = $str;
-		$_SESSION['portsupdated'] = intval(shell_exec("date +%s"));	
-	}else{
-		$ports = shell_exec("cat /tmp/ports.conf");
+		shell_exec("/wr/bin/wr_mon -w > /tmp/ports.conf");
+		$_SESSION['portsupdated'] = intval(shell_exec("date +%s"));
 	}
+	$ports = shell_exec("cat /tmp/ports.conf");
 	$ports = explode(" ", $ports);
 
 	// We parse and show the information comming from each endpoint.
@@ -931,28 +924,6 @@ function wrs_ptp_configuration(){
 	echo '</center>';
 	
 	
-}
-
-/*
- * Checks whether $WRS_MANAGEMENT exists with the wr_management program
- * 
- * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
- *
- * Checks whether $WRS_MANAGEMENT exists, if not, it points to the 
- * program by default (/wr/bin/wr_management)
- * 	
- * 
- */
-function wrs_env_sh(){
-
-	$output = shell_exec("echo $WRS_MANAGEMENT");
-	if(file_exists($output)){
-		$sh=$output;
-	}else{
-		$sh="/wr/bin/wr_management";
-	}
-	return $sh;
-
 }
 
 function wrs_vlan_configuration($input){

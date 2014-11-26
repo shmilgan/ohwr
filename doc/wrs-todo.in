@@ -328,12 +328,6 @@ Libraries} too.
 @item There are too many @i{load} source files in @t{userspace/tools};
 some are definitely not used any more. We need to clean up.
 
-@item @t{wr_management} is an incomplete mess; mostly a copy of
-@t{wr_mon}, slightly modify in its way toward being something else,
-but nobody knows what it is now.  We need to make it a serious thing
-if it is used (by the web interface, it seems, called by
-@t{functions.php}), or kill it outright.
-
 @end itemize
 
 @c ##########################################################################
