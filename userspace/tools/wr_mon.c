@@ -141,6 +141,44 @@ void show_ports(void)
 	}
 }
 
+/*
+ * This is almost a copy of the above, used by web interface.
+ * Code duplication is bad, but this is better than a separate tool
+ * which is almost identical but even broken
+ */
+static void show_unadorned_ports(void)
+{
+	int i, j;
+
+	for(i=0; i<18;i++)
+	{
+		char if_name[10], found = 0;
+		hexp_port_state_t state;
+
+		snprintf(if_name, 10, "wr%d", i);
+		for(j=0;j<port_list.num_ports;j++)
+			if(!strcmp(port_list.port_names[j], if_name)) {
+				found = 1;
+				break;
+			}
+		if(!found)
+			continue;
+
+		halexp_get_port_state(&state, if_name);
+
+		printf("%s %s %s %s \n", /* trailing space needed? */
+		       state.up
+		       ? "up" : "down",
+		       state.mode == HEXP_PORT_MODE_WR_MASTER
+		       ? "Master" : "Slave", /* FIXME: other options? */
+		       state.is_locked
+		       ? "Locked" : "NoLock",
+		       state.rx_calibrated  && state.tx_calibrated
+		       ? "Calibrated" : "Uncalibrated");
+	}
+}
+
+
 void show_servo(void)
 {
 	ptpdexp_sync_state_t ss;
@@ -260,7 +298,7 @@ int main(int argc, char *argv[])
 	int opt;
 	int usecolor = 1;
 
-	while((opt=getopt(argc, argv, "sbgp")) != -1)
+	while((opt=getopt(argc, argv, "sbgpw")) != -1)
 	{
 		switch(opt)
 		{
@@ -279,6 +317,10 @@ int main(int argc, char *argv[])
 				mode = SHOW_SNMP_PORTS;
 				init(0);
 				show_all();
+				exit(0);
+			case 'w': /* for the web interface */
+				init(0);
+				show_unadorned_ports();
 				exit(0);
 			default:
 				fprintf(stderr, "Unrecognized option.\n");
