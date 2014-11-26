@@ -1655,6 +1655,91 @@ are identical and are expected to remain so. Same applies to @t{rt_ipc.h},
 which appears both here and in @i{wrpc-sw}.
 
 @c ==========================================================================
+@node The Functions being Exported
+@section The Functions being Exported
+
+This section lists all functions that are being exported to @sc{rpc} by
+the processes (excluding the @sc{rt} subsystem). I also ignored any
+use by @i{wr_management}, which is very rusty and probably broken by
+design.
+
+@table @code
+
+@item ppsi::get_sync_state
+@c FIXME: shmem this
+
+	Called by @i{wr_mon} to fill a @t{ptpdexp_sync_state_t}
+        structure.  This can be moved to shared memory.
+
+@item ppsi::cmd
+
+	Called by @i{wr_mon} to ask for two wr-servo operations:
+        enable or disable tracking and adjust phase to a specified
+        value.
+        @c see wr_servo_enable_tracking
+        @c see wr_servo_man_adjust_phase
+
+@item hal::pps_cmd
+
+	Called by library code (@t{halexp_pps_cmd}), in
+        turn called by @t{ptpd_netif_adjust_counters}, called
+        by @i{wr_phytool}.
+        Called by @i{ppsi} directly (no @i{libwr}) in @t{wrs-time.c}.
+
+@item hal::get_port_state
+@c FIXME: shmem this
+
+	This is the most used @sc{rpc} function, and should
+        definitely be moved to shared memory.      
+	Called by library code: @t{halexp_get_port_state} (called
+        by @i{rtud} and following functions),
+        @t{update_dmtd}, @t{ptpd_netif_recvfrom},
+        @t{ptpd_netif_create_socket} and (unused)
+        @t{ptpd_netif_get_dmtd_phase}).  The functions are used
+        by @i{wr_phytool}.
+        Also called by @i{ppsi} directly, in several place.
+
+@item hal::get_timing_state
+@c FIXME: shmem this if used (not  used it seems)
+
+	Called by library code (@t{halexp_get_timing_state},
+        but not used. The function fills a structure of type 
+        @t{hexp_timing_state_t} that is never used.
+
+@item hal::lock_cmd
+
+	Called by library code (@t{halexp_lock_cmd}) but not used.
+        Called by @i{ppsi} directly in @t{wrs-time.c}.
+
+@item hal::query_ports
+@c FIXME: shmem this
+
+	Called by library code (@t{halexp_query_ports}). This
+        in turn is called by @i{rtu_stat}, @i{wr_mon} and @i{rtud}.
+        If fills a structure @t{hexp_port_list_t}. It may be
+        moved to shared memory.
+
+@item  rtud::get_fd_list
+@itemx rtud::get_vd_list
+@c FIXME: shmem these
+
+	Called by @i{rtu_stat} to report information. They can be
+        moved to shared memory.
+
+@item  rtud::clear_entries
+@itemx rtud::add_entry
+
+	Called by @i{rtu_stat} when performing actions.
+
+@item rtud::vlan_entry
+
+	Called by both @i{rtu_stat} and @i{wrs_vlans}. It is
+        used to pass a number of parameters to @i{rtud} and
+        make it perform actions
+
+@end table
+
+@c ==========================================================================
 @node The RT Subsystem
 @section The RT Subsystem
 
