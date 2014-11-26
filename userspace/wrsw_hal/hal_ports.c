@@ -206,7 +206,7 @@ static int hal_port_init(const char *name, int index)
  * intializes them one after another. */
 int hal_port_init_all()
 {
-	int index = 0, i;
+	int index, i;
 	char port_name[128];
 	struct hal_shmem_header *hal_hdr;
 	struct wrs_shm_head *head;
@@ -255,8 +255,8 @@ int hal_port_init_all()
 
 	hal_hdr->ports = ports;
 
-	for (;;) {
-		if (!hal_config_iterate("ports", index++,
+	for (index = 0; index < HAL_MAX_PORTS; index++) {
+		if (!hal_config_iterate("ports", index,
 					port_name, sizeof(port_name)))
 			break;
 		hal_port_init(port_name, index);
