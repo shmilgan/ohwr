@@ -5,10 +5,6 @@
 
 typedef void (*hal_cleanup_callback_t)();
 
-#define PORT_BUSY 1
-#define PORT_OK 0
-#define PORT_ERROR -1
-
 int hal_check_running();
 
 int hal_parse_config();

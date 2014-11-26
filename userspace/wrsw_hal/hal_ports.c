@@ -550,9 +550,9 @@ int hal_port_enable_tracking(const char *port_name)
 	struct hal_port_state *p = hal_port_lookup(port_name);
 
 	if (!p)
-		return PORT_ERROR;
+		return -1;
 
-	return rts_enable_ptracker(p->hw_index, 1) < 0 ? PORT_ERROR : PORT_OK;
+	return rts_enable_ptracker(p->hw_index, 1); /* 0 or -1 already */
 }
 
 /* Triggers the locking state machine, called by the PTPd during the
@@ -562,11 +562,11 @@ int hal_port_start_lock(const char *port_name, int priority)
 	struct hal_port_state *p = hal_port_lookup(port_name);
 
 	if (!p)
-		return PORT_ERROR;
+		return -1;
 
 	/* can't lock to a disconnected port */
 	if (p->state != HAL_PORT_STATE_UP)
-		return PORT_BUSY;
+		return -1;
 
 	/* fixme: check the main FSM state before */
 	p->state = HAL_PORT_STATE_LOCKING;
@@ -575,7 +575,7 @@ int hal_port_start_lock(const char *port_name, int priority)
 
 	rts_set_mode(RTS_MODE_BC);
 
-	return rts_lock_channel(p->hw_index, 0) < 0 ? PORT_ERROR : PORT_OK;
+	return rts_lock_channel(p->hw_index, 0); /* 0 or -1 already */
 }
 
 /* Returns 1 if the port is locked */
@@ -585,7 +585,7 @@ int hal_port_check_lock(const char *port_name)
 	struct rts_pll_state *hs = &hal_port_rts_state;
 
 	if (!p)
-		return PORT_ERROR;
+		return 0; /* was -1, but it would confuse the caller */
 
 	if (!hal_port_rts_state_valid)
 		return 0;
