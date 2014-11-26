@@ -48,6 +48,7 @@ enum dump_type {
 	/* normal types follow */
 	dump_type_uint32_t,
 	dump_type_int,
+	dump_type_double,
 };
 
 void dump_one_field(void *addr, struct dump_info *info)
@@ -70,6 +71,9 @@ void dump_one_field(void *addr, struct dump_info *info)
 		break;
 	case dump_type_uint32_t:
 		printf("0x%08lx\n", (long)*(uint32_t *)p);
+		break;
+	case dump_type_double:
+		printf("%lf\n", *(double *)p);
 		break;
 	}
 }
@@ -118,7 +122,14 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, calib.rx_calibrated),
 	DUMP_FIELD(int, calib.tx_calibrated),
 
-	// FIXME: add these struct shw_sfp_caldata sfp;
+	/* Another internal structure, with a final pointer, so int32_t */
+	DUMP_FIELD(int,       calib.sfp.flags),
+	DUMP_FIELD_SIZE(char, calib.sfp.part_num, 16),
+	DUMP_FIELD_SIZE(char, calib.sfp.vendor_serial, 16),
+	DUMP_FIELD(double,    calib.sfp.alpha),
+	DUMP_FIELD(uint32_t,  calib.sfp.delta_tx),
+	DUMP_FIELD(uint32_t,  calib.sfp.delta_rx),
+	DUMP_FIELD(uint32_t,  calib.sfp.next),
 
 	DUMP_FIELD(uint32_t, phase_val),
 	DUMP_FIELD(int, phase_val_valid),
