@@ -78,6 +78,10 @@ int hal_port_query_ports(struct hexp_port_list *list,
 		if (ports[i].in_use)
 			strcpy(list->port_names[n++], ports[i].name);
 
+	/*
+	 * This "18" is returned through RPC; shmem users fix it in the
+	 * caller function.  We have too many plain "18" around anyways
+	 */
 	list->num_physical_ports = 18; /* was hal_port_nports */
 	list->num_ports = n;
 	return 0;
