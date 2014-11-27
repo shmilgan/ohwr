@@ -89,9 +89,7 @@
 	
 		
 	<?php
-		wrs_change_wrfs("rw");
 		wrs_ptp_configuration();
-		wrs_change_wrfs("ro");
 
 	?>
 

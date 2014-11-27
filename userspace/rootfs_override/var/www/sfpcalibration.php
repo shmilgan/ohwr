@@ -110,7 +110,6 @@
 			
 		}
 			
-		wrs_change_wrfs("rw");
 
 		if(!empty($_POST['newconf']) && !$error){
 			//We save the changes in a temporarely file in /tmp
@@ -123,14 +122,12 @@
 			
 			echo '<center><font color="green">File successfully created. Rebooting switch. </font></center>';
 			
-			wrs_change_wrfs("ro");
 			shell_exec("reboot"); 
 			
 		}else if(!empty($_POST['newconf']) && $error){
 			echo '<center><font color="red">WARNING: Conf. file not created. Please fill in all fields</font></center>';
 		}
 		
-		wrs_change_wrfs("ro");
 	?>
 	
 	

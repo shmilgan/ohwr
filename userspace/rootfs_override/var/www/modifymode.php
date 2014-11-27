@@ -25,9 +25,7 @@
 		$endpoint = $_GET["wr"];
 		$mode = $_GET["mode"];
 		
-		wrs_change_wrfs("rw");
 		wrs_modify_endpoint_mode($endpoint, $mode);
-		wrs_change_wrfs("ro");
 		
 		header('Location: endpointmode.php');
 		exit;

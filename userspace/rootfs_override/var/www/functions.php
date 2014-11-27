@@ -203,20 +203,6 @@ function wrs_check_writeable(){
 }
 
 /*
- * It modifies filesystem to rw o ro
- * 
- * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
- *
- * @param $m should be rw for writable and ro for read-only
- * 
- */
-function wrs_change_wrfs($m){
-	
-	$output = shell_exec('/wr/bin/wrfs_mnt.sh '.$m);
-	
-}
-
-/*
  * It checks whether the ptpd daemon is running or not.
  * 
  * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
@@ -249,7 +235,6 @@ function php_file_transfer_size($size){
 	$size=trim($size);
 	
 		
-	wrs_change_wrfs("rw");
 	// We modify fist upload_max_filesize in php.ini
 	$prev_size = shell_exec("cat ".$GLOBALS['phpinifile']." | grep upload_max_filesize | awk '{print $3}'");
 	$prev_size=trim($prev_size);
@@ -262,7 +247,6 @@ function php_file_transfer_size($size){
 	$cmd ="sed -i 's/post_max_size = ".$prev_size."/post_max_size = ".$size."M/g' ".$GLOBALS['phpinifile'];
 	shell_exec($cmd);
 	shell_exec("cat ".$GLOBALS['phpinifile']." >/usr/etc/php.ini"); //We store it in /usr/etc/php.ini copy. Just in case
-	wrs_change_wrfs("ro");
 	
 	
 	//echo '<p align=center>File upload size changed to '.$size.'</p>';	
@@ -566,12 +550,6 @@ function wrs_management(){
 		}else if (!strcmp($cmd, "reboot")){
 			echo '<br><br><br>System is rebooting. Please wait 30 seconds.';
 			$output = shell_exec($cmd);
-		}else if (!strcmp($cmd, "rw")){
-			$output = shell_exec("/wr/bin/wrfs_mnt.sh rw");
-			echo '<br><br><br>Partition is now writable';
-		}else if (!strcmp($cmd, "ro")){
-			$output = shell_exec("/wr/bin/wrfs_mnt.sh ro");
-			echo '<br><br><br>Partition is now READ-ONLY';
 		}else if (!strcmp($cmd, "size")){
 			php_file_transfer_size(htmlspecialchars($_POST["size"]));
 			header('Location: firmware.php');
