@@ -47,14 +47,6 @@ rm -rf $TMPFS/dev
 (cd $TMPFS && tar xzf $DEVTAR)
 (cd $TMPFS && ln -fs sbin/init .)
 
-# Fix log values
-cfgfile="$TMPFS/wr/sbin/start-daemons.sh"
-set | grep CONFIG_WRS_LOG | sed 's/=/ /' | while read varname value; do
-    if [ -z "\$value" ]; then continue; fi
-    sed -i "/\$varname/ s,\$varname,\$value," \$cfgfile
-done
-
-
 mkdir -p $TMPFS/root/.ssh
 #cat $HOME/.ssh/id_?sa.pub >> $TMPFS/root/.ssh/authorized_keys
 if [ -f $WRS_BASE_DIR/authorized_keys ]; then
