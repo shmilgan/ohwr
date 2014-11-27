@@ -35,7 +35,6 @@
 
 	<?php
 	
-	wrs_change_wrfs("rw");
 	
 		if((empty($_POST["networkgroup"]))){
 			
@@ -143,7 +142,6 @@
 		}
 			
 			
-		wrs_change_wrfs("ro");
 			
 	?>
 

@@ -140,9 +140,7 @@
 	</center>
 	
 	<?php 
-		wrs_change_wrfs("rw");
 		wrs_management();
-		wrs_change_wrfs("ro");
 		
 		
 	

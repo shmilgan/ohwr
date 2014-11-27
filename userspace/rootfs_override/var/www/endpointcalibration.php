@@ -132,7 +132,6 @@
 		
 		
 			
-		wrs_change_wrfs("rw");
 
 		if(!empty($_POST['newconf']) && !$error){
 			//We save the changes in a temporarely file in /tmp
@@ -145,7 +144,6 @@
 			
 			echo '<center><font color="green">File successfully created. Rebooting switch. </font></center>';
 			
-			wrs_change_wrfs("ro");
 			shell_exec("reboot"); 
 			
 		}else if(!empty($_POST['newconf']) && $error){
@@ -154,7 +152,6 @@
 			echo '<center><font color="red">** Endpoint mode must be wr_slave or wr_master </font></center>';
 		}
 		
-		wrs_change_wrfs("ro");
 		
 		
 		
