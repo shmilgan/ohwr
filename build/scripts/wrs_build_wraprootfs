@@ -47,14 +47,6 @@ rm -rf $TMPFS/dev
 (cd $TMPFS && tar xzf $DEVTAR)
 (cd $TMPFS && ln -fs sbin/init .)
 
-if [ "$CONFIG_REMOTE_SYSLOG_UDP" = "y" ]; then
-    sed -i 's/@@remote-host/@remote-host/' $TMPFS/etc/rsyslog.conf
-fi
-if [ ! -z "$CONFIG_REMOTE_SYSLOG_SERVER" ]; then
-    sed -i '/remote-host/ s/^##//' $TMPFS/etc/rsyslog.conf
-    sed -i 's/remote-host/$CONFIG_REMOTE_SYSLOG_SERVER/' $TMPFS/etc/rsyslog.conf
-fi
-
 # Fix SNMP values: for all not-empty configs remove commend and replace value
 cfgfile="$TMPFS/wr/etc/snmpd.conf"
 set | grep CONFIG_SNMP | sed 's/=/ /' | while read varname value; do
