@@ -47,14 +47,6 @@ rm -rf $TMPFS/dev
 (cd $TMPFS && tar xzf $DEVTAR)
 (cd $TMPFS && ln -fs sbin/init .)
 
-# Fix SNMP values: for all not-empty configs remove commend and replace value
-cfgfile="$TMPFS/wr/etc/snmpd.conf"
-set | grep CONFIG_SNMP | sed 's/=/ /' | while read varname value; do
-    if [ -z "\$value" ]; then continue; fi
-    sed -i "/\$varname/ s/^#//" \$cfgfile
-    sed -i "/\$varname/ s/\$varname/\$value/" \$cfgfile
-done
-
 # Fix log values
 cfgfile="$TMPFS/wr/sbin/start-daemons.sh"
 set | grep CONFIG_WRS_LOG | sed 's/=/ /' | while read varname value; do
