@@ -6,8 +6,11 @@
 # without the need to rember wheter this is S20 or S10 during boot.
 
 # First, read dot-config to get the new location, if any.
-if [ -f /wr/etc/dot-config ]; then
-    . /wr/etc/dot-config
+dotconfig=/wr/etc/dot-config
+tmpconfig=/tmp/dot-config
+
+if [ -f $dotconfig ]; then
+    . $dotconfig
 fi
 
 # Create /etc/resolv.conf, so we can use it. /etc is ramdisk anyways
@@ -30,22 +33,22 @@ if [ -n "$CONFIG_DOTCONF_URL" ]; then
     host=$(echo $URL | cut -d/ -f 3)
     filename=$(echo $URL | cut -d/ -f 4-)
 
-    rm -f /tmp/dot-config
+    rm -f $tmpconfig
     case $proto in
 	http|ftp)
-	    wget $URL -O /tmp/dot-config
+	    wget $URL -O $tmpconfig
 	    ;;
 	tftp)
-	    tftp -g -r "$filename" -l /tmp/dot-config $host
+	    tftp -g -r "$filename" -l $tmpconfig $host
 	    ;;
 	*)
 	    echo "Invalid URL for dot-config: \"$URL\"" >& 2
 	    ;;
     esac
     # If it exists and it is not empty or awfully small, trust it
-    if [ -f /tmp/dot-config ] &&
-	[ $(cat /tmp/dot-config | wc -c) -gt 200 ]; then
-	mv /tmp/dot-config /wr/etc
+    if [ -f $tmpconfig ] &&
+	[ $(cat $tmpconfig | wc -c) -gt 200 ]; then
+	cmp -s $tmpconfig $dotconfig || cp $tmpconfig $dotconfig
     fi
 fi
 

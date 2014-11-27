@@ -1,6 +1,20 @@
 
 mainmenu "White Rabbit Switch  configuration"
 
+config DOTCONF_URL
+
+	string "URL for a run-time replacement of dot-config"
+	help
+	  The White Rabbit Switch is configured at run-time,
+	  according to a dot-config .config file. The file
+	  is the same .config you are defining now.  If you
+	  select an empty string, dot-config is not replaced
+	  at run time.  Otherwise, tftp://, ftp:// or http://
+	  URLs are allowed. Names are allowed if you configured
+	  a DNS server.  The special strings IPADDR and MACADDR
+	   are substituted before retrieving the file.
+	  Example:  "tftp://morgana/wrs-config-IPADDR"
+
 config BR2_CONFIGFILE
 	string "Configuration file for Buildroot"
 	default "wrs_release_br2_config"
@@ -20,20 +34,6 @@ config PPSI
 	default y
 
 menu "Local configuration"
-
-config DOTCONF_URL
-
-	string "URL for a run-time replacement of dot-config"
-	help
-	  The White Rabbit Switch is configured at run-time,
-	  according to a dot-config .config file. The file
-	  is the same .config you are defining now.  If you
-	  select an empty string, dot-config is not replaced
-	  at run time.  Otherwise, tftp://, ftp:// or http://
-	  URLs are allowed. Names are allowed if you configured
-	  a DNS server.  The special strings IPADDR and MACADDR
-	   are substituted before retrieving the file.
-	  Example:  "tftp//morgana/wrs-config-IPADDR"
 
 config NTP_SERVER
 	string "IP address of local NTP server (empty for none)"

@@ -281,28 +281,121 @@ only be performed by the manufacturer, not the final user.
 
 
 @c ##########################################################################
-@node Kconfig Support
-@chapter Kconfig Support
+@node Configuration of the Device
+@chapter Configuration of the Device
 
 After release 3.3 of this software package, we added Kconfig support
-to wr-switch-sw.  The user can ignore this step: building as usual
-from a fresh checkout of @t{wr-switch-sw} silently selects
-the default configuration.
+to wr-switch-sw.  If you build your software image (as documented
+in the @i{@sc{wrs} Developer's Manual}),  you can make some
+configuration choices for your customized firmware image.  But most
+users are not expected to rebuild.
 
-You may exploit this @t{Kconfig} option to build firmware images
-preconfigured for your own network.
+After release 4.1, we moved most of the configuration to run-time
+(rather than build-time): the @t{.config} file that you create
+with a ``@t{make menuconfig}'' or equivalent command, is now copied
+to the @sc{wrs} filesystem and used during boot.  Moreover, the
+switch can download a new configuration at boot time, if so
+configured. This allows customization of each installed switch
+through a central server, without modifying the filesystem image in
+each specimen.
 
-To change configuration, you are expected to run ``@t{make
-menuconfig}'' (or @i{gconfig} or @i{kconfig} or the old text-mode
-@i{config}) from the top-level directory of @i{wr-switch-sw}.  To
-silently enact the default configuration, run ``@t{make defconfig}''
-(this is done by the normal build if no configuration is present).
+@c ==========================================================================
+@node Dynamic WRS Configuration
+@section Dynamic WRS Configuration
 
-The released firmware image uses the default configuration, but we'll
-soon offer the option to change most of these values at boot-time
-(by downloading configuration from a network server) or run-time.
+The switch can boot using its internal @sc{nand} memory or as an NFS-Root
+host. In the latter case configuration can be changed on the server,
+and if a unit is replaced, a change in the @sc{dhcp} database is all
+that's needed to recover network operation.  But this option implies
+some network traffic on your management network, as well as an NFS
+server able to host all of your switches.
 
-The following configuration options are available
+When a switch is booted from internal storage, we used to rely on
+internal configuration (either selected at build time or modified
+using @i{ssh} or the web interface).  This approach doesn't scale
+well to large installation, because if a device needs to be replaced,
+its own configuration is lost.
+
+With @i{dynamic configuration}, each @sc{wrs} device loads its own
+configuration file each time it is booted, and applies the choices
+before starting any service.  The name of the configuration file can
+include the @sc{mac} or @sc{ip} address of the device, to allow
+running several switches with different configurations in the same
+network.
+
+@c ==========================================================================
+@node The Configuration File
+@section The Configuration File
+
+The main configuration file for the @sc{wrs} is
+@t{/wr/etc/dot-config}.  You create this file by running ``@t{make
+menuconfig}'' within @t{wr-switch-sw}, and making your choices.
+You can also edit the text file, or run other configurators: @t{make xconfig},
+@t{make gconfig}, @t{make config}.
+
+The configuration step creates @t{.config}, that you can copy to your
+@sc{wrs} as @t{/wr/etc/dot-config}. After reboot, you'll see your
+choices in effect.
+
+The first configuration choice is @t{CONFIG_DOTCONF_URL}.  If the
+selected string is not empty, the Switch will download a new @t{dot-config}
+file, and replace the copy in local storage if it is different. If
+the string is empty, no network access is performed.
+
+@t{CONFIG_DOTCONF_URL} is of the form
+``@i{protocol}@t{://}@i{host}@t{/}@i{pathname}''.  The special upper-case
+strings @t{IPADDR} and @t{MACADDR} are substituted with the current
+addresses of the management port of the switch.
+
+The three parts of the URL are as follows:
+
+@table @i
+
+@item protocol
+
+	We support @t{http}, @t{ftp} and @t{tftp}.  Any other protocols
+        result in an error, and the @t{dot-config} file is not replaced.
+
+@item host
+
+	The host can be an IP address, or a name. In order to use
+        a name you must specify a valid @t{CONFIG_DNS_SERVER} and
+        optionally @t{CONFIG_DNS_DOMAIN}.  The values
+        in the current @t{dot-config} are used to load the new file.
+
+@item path
+
+	The pathname can include directory components and @t{IPADDR}
+        or @t{MACADDR} (or both).
+
+@end table
+
+For example this is a valid configuration for run-time update:
+
+@smallexample
+   CONFIG_DOTCONF_URL="tftp://morgana/wrs-config-IPADDR"
+   CONFIG_DNS_SERVER="192.168.16.1"
+   CONFIG_DNS_DOMAIN="i.gnudd.com"
+@end smallexample
+
+And it results, in my case, in @t{wrs-config-192.168.16.9} being
+served to the @sc{wrs}.
+
+Please remember that the new @t{dot-config} should include a valid
+@t{DOTCONF_URL} setting, or you won't be able to update the configuration
+at the next boot.   In any case, you can always copy a configuration
+file using @i{ssh}, or use the web interface to change the configuration.
+Changes performed using the web interface are immediately active, because
+the web server takes proper action; the new file copied over with @i{ssh},
+or any hand-edits, are only effective at next boot, unless overwritten by
+a remote configuration file.
+
+@c ==========================================================================
+@node Configuration Items that Apply at Build Time
+@section Configuration Items that Apply at Build Time
+
+The following items in @t{dot-config} are used at build time; changing
+them in the installed version has no effect:
 
 @table @code
 
@@ -312,6 +405,31 @@ The following configuration options are available
         configuration. A simple filename or relative pathname refers to the 
         @t{configs/buildroot} directory; an absolute pathname is used
         unchanged.
+
+@item CONFIG_KEEP_ROOTFS
+
+	A boolean option for developers: if set the build script does
+        not delete the temporary copy of the generated filesystem and
+        reports its pathname in the build messages.
+
+@end table
+
+@c ==========================================================================
+@node Configuration Items that Apply at Run Time
+@section Configuration Items that Apply at Run Time
+
+The following items in @t{dot-config} are used at run time: at every
+boot the value (the old one or the just-downloaded one) is used in the
+appropriate way, before the respective service is started.  When the
+value is changed by the web interface, proper action is taken.
+
+@table @code
+
+@item CONFIG_DOTCONF_URL
+
+	The location of a config file to be used at a replacement
+        the next time the system boots. See @ref{Dynamic WRS Configuration}
+        and @ref{The Configuration File} for details.
 
 @item CONFIG_NTP_SERVER
 
@@ -357,12 +475,6 @@ The following configuration options are available
         An empty strings selects no logging at all.  Please note that
         unknown facility names will generate a runtime error on the switch.
         All three strings default to ``@t{daemon.info}''.
-
-@item CONFIG_KEEP_ROOTFS
-
-	A boolean option for developers: if set the build script does
-        not delete the temporary copy of the generated filesystem and
-        reports its pathname in the build messages.
 
 @end table
 

@@ -177,12 +177,11 @@ After release 3.3, we decided to add @i{Kconfig} support. This means
 that the first build step is expected to be ``@t{make menuconfig}'',
 like it happens for the kernel.  The default configuration is selected
 by default when one of the build scripts is run, so the procedure for
-the final user is the same as for v3.3 and earlier.  A build with a
-non-default configuration, however, is not considered as
-``supported'', and @i{Kconfig} is there mainly to help developers try
-new packages and setups without changing the repository or
-introducing problems for other users.  For some more information about
-@i{Kconfig} in this package, see the @i{@sc{wrs} User's Manual}.
+the final user is the same as for v3.3 and earlier.
+
+After release 4.1 we support dynamic reconfiguration. As opposed
+to build-time configuration, run-time configuration is expected to
+be frequent, and it's thus documented in the @i{@sc{wrs} Users' Manual}.
 
 The build system is set up as a mix of scripts and makefiles. Every
 sub-package is built by its own script and/or Makefile, and configuration is
@@ -451,14 +450,9 @@ to be used at installation time. See @ref{Flashing Procedure} for details.
 
 Some details of the complete firmware archive depend on the values of
 active @t{Kconfig} variables. If no manual configuration is performed,
-what applies is @t{configs/wrs_release_defconfig}.
-
-If you want to customize your configuration to install several
-switches pre-configured for your network, we suggest you rebuild
-the @i{firmware} archive after running @t{make menuconfig} to select
-your own values
-
-@c FIXME FIXME FIXME: Store kconfig and build info in the archive itself
+what applies is @t{configs/wrs_release_defconfig}. Please note that
+we now support dynamic reconfiguration at run-time. See the @i{@sc{wrs}
+Users' Manual}.
 
 @c --------------------------------------------------------------------------
 @node Rebuilding Parts
