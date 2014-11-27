@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# This script applies the current dot-config to make
+# the choices users wanted.  You can change the dot-config on flash,
+# and call this script to apply changes (please note that some changes
+# require restarting running processes).  The script is called at
+# every boot by /etc/init.d/S20dot-config
+
+# We create a temporary file in /tmp, to avoid wearing flash if not
+# needed. Then we replace the real file if different.
+
+T=$(mktemp /tmp/config-XXXXXX)
+
+copy_conf() {
+    # busybox cmp exits 1 or 2 according to GNU man page
+    for dest in $*; do
+	cmp -s $T $1 || cp $T $1
+    done
+}
+
+# Check and complain, but we need to edit some files even if unconfigured.
+if [ -f /wr/etc/dot-config ]; then
+    . /wr/etc/dot-config
+    configured=true
+else
+    echo "No /wr/etc/dot-config to use" >& 2
+    configured=false
+fi
+
+##### Actual configuration actions start here.
+
+# A non-existent wr_date.conf means no NTP. So "rm" if unconfigured
+if [ ! -z "$CONFIG_NTP_SERVER" ]; then
+    echo "ntpserver $CONFIG_NTP_SERVER" > $T
+    copy_conf /wr/etc/wr_date.conf
+else
+    rm -f /wr/etc/wr_date.conf
+fi
+
+# /etc/resolv.conf can be empty, so start empty
+> $T
+if [ ! -z "$CONFIG_DNS_SERVER" ]; then
+    echo "nameserver $CONFIG_DNS_SERVER" >> $T
+    if [ ! -z "$CONFIG_DNS_DOMAIN" ]; then
+        echo "domain $CONFIG_DNS_DOMAIN" >> $T
+    fi
+fi
+copy_conf /etc/resolv.conf /usr/etc/resolv.conf
+
+
+

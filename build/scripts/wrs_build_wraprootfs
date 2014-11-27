@@ -47,18 +47,6 @@ rm -rf $TMPFS/dev
 (cd $TMPFS && tar xzf $DEVTAR)
 (cd $TMPFS && ln -fs sbin/init .)
 
-if [ ! -z "$CONFIG_NTP_SERVER" ]; then
-    echo "ntpserver $CONFIG_NTP_SERVER" > $TMPFS/wr/etc/wr_date.conf
-fi
-
-if [ ! -z "$CONFIG_DNS_SERVER" ]; then
-    rm -f $TMPFS/etc/resolv.conf
-    echo "nameserver $CONFIG_DNS_SERVER" > $TMPFS/etc/resolv.conf
-    if [ ! -z "$CONFIG_DNS_DOMAIN" ]; then
-        echo "domain $CONFIG_DNS_DOMAIN" >> $TMPFS/etc/resolv.conf
-    fi
-fi
-
 if [ "$CONFIG_REMOTE_SYSLOG_UDP" = "y" ]; then
     sed -i 's/@@remote-host/@remote-host/' $TMPFS/etc/rsyslog.conf
 fi

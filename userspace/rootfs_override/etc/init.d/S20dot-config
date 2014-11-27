@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# This script applies the dot-config. It is a boot script, but actual
+# functionality is moved to a separate binary, so the web interface
+# could edit dot-config and run /wr/bin/apply_dot-config like we do here,
+# without the need to rember wheter this is S20 or S10 during boot.
+
+. /wr/bin/apply_dot-config
