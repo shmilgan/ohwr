@@ -32,7 +32,8 @@ ROOTFS_INITRAMFS="$WRS_OUTPUT_DIR/images/wrs-initramfs.gz"
 
 cat > $TMPSCRIPT << EOF
 . $WRS_BASE_DIR/../.config
-mkdir -p $TMPFS/wr
+mkdir -p $TMPFS/wr/etc
+cp $WRS_BASE_DIR/../.config $TMPFS/wr/etc/dot-config
 
 cp -r $rootfs_vanilla/* $TMPFS
 cp -r $WRS_OUTPUT_DIR/images/wr/* $TMPFS/wr
