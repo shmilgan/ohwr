@@ -1,0 +1,53 @@
+#!/bin/sh
+
+# This is an example wrboot script.  The switch first does a DHCP pass
+# to get this script while using a valid IP address. You can
+# keep that address or replace it from within the script itself.
+#
+# A few "wrboot" scripts are provided in wr-switch-sw/binaries/ Your
+# script should be placed in your /tftpboot or equivalent directory,
+# using one of the following names, that are tried in this order:
+#
+# wrboot-$eth0.ethaddr     (i.e. using the specific MAC address of the wrs)
+# $eth0.ipaddr/wrboot      (i.e. in the default filesystem for your DHCP IP)
+# wrboot                   (a generic catch-all name)
+
+#### This example performs installation without using the USB cable.
+#
+# It relies on a working boot loader being present and use useful to
+# recover the whole filesystem, in case you lost your /boot partition.
+# or other mishaps.  Users are not expected to run this, developers may.
+# You need the following files in the tftp server.
+#
+#    wrs-firmware.tar        used by installation itself
+#    zImage                  extracted from above, used by this script
+#    wrs-initramfs.gz        extracted from above, used by this script
+#
+# You can extract by using this on the host, in your TFTP directory:
+#    tar xf wrs-firmware.tar zImage wrs-initramfs.gz
+
+# The first command below is not needed if we got this from tftp
+# but if you lost barebox environment, you may copy it to the console
+dhcp 5
+
+# Creating the partitions should not be needed, unless you lost environment
+addpart /dev/ram0 4M@0x01000000(kernel)
+addpart /dev/ram0 4M@0x01800000(initramfs)
+addpart /dev/mem  4M@0x71000000(kernel)
+addpart /dev/mem  4M@0x71800000(initramfs)
+
+# These files are sent in by sam-ba tools when installing from usb
+tftp zImage/dev/mem.kernel
+tftp wrs-initramfs.gz /dev/mem.initramfs
+
+# The following stanza comes from env/bin/init in the install case
+   echo "Booting kernel for NAND flashing procedure"
+   bootargs="console=ttyS0,115200 panic=10 mem=64M"
+   bootargs="$bootargs initrd=0x71800000,4M"
+   bootargs="$bootargs root=/dev/ram0"
+   bootargs="$bootargs SERVERIP=$eth0.serverip WRS_INSTALLING=y"
+   bootargs="$bootargs ip=$eth0.ipaddr:$eth0.serverip:$eth0.gateway:$eth0.netmask:wrs:eth0"
+
+   bootm /dev/mem.kernel
+
+# Now it installs, thanks to WRS_INSTALLING=y and the in-memory filesystem

@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month Novembre 2014
+@set update-month November 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -1004,6 +1004,10 @@ the following command in a newly-created empty directory:
 @example
    tar xzf $WRS_OUTPUT_DIR/images/wrs-image.tar.gz
 @end example
+
+To boot with NFS-root you should use a custom boot script,
+as described in the section @i{Using wrboot}, in the @i{@sc{wrs} User's
+Manual}.
 
 The archives include a number of device special files in
 @i{dev}. The pre-created devices come from

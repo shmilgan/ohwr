@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month October 2014
+@set update-month November 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -424,7 +424,8 @@ The individual menu items perform the following actions:
         change the MAC address of the ARM network port. Please note
         that saving save the whole @file{/env} file tree, so you
         can also change the init scripts interactively and have them
-        stored persistently on the flash.
+        stored persistently on the flash. Users are not expected to
+        change any configuration, though, as further updates may fail.
 
 @item 4: exit to shell
 
@@ -437,8 +438,8 @@ The individual menu items perform the following actions:
 	This entry is useful to see and log the exact boot messages.
         Since the serial-USB converter is @i{switch-powered} and not
         @i{USB-powered}, you won't be able to hook at the serial port
-        soon enough after power-on.  Actually, the menu timeout is
-        left to 10 seconds and not less for the very same reason.
+        soon enough after power-on.  Actually, the menu startup time
+        is a few seconds long for the very same reason.
 
 @end table
 
@@ -456,12 +457,26 @@ system with a separate @t{/usr} partition in flash memory.
 
 @sp 1
 
-The provided procedure tries to load the script from TFTP under three
-different names, from most specific to most generic, and the first
-match will be used.  The first name is MAC-address-based, the
-second is IP-address-based and the third is just @file{wrboot}.
+The @i{boot from TFTP script} menu entry looks for the script
+using three
+different names, from most specific to most generic; the first found
+is be used.  When using the boot script, the @sc{wrs} first performs
+a @sc{dhcp} query, and then uses that IP address to retrieve
+the script using the following names (the @t{eth0.ethaddr} is
+stored by the manufacturer in static storage and retrieved by the
+boot loader; the @t{eth0.ipaddr} comes from @sc{dhcp}):
 
-This is for example what I see in my logs when only providing @file{wrboot}:
+@smallexample
+   wrboot-$eth0.ethaddr
+   $eth0.ipaddr/wrboot
+   wrboot
+@end smallexample
+
+As an example, the following excerpt shows what I see in my logs when
+only providing @file{wrboot}.  The last message uses a different IP
+address because my script forces a static address into the kernel,
+whereas the initial one was assigned to the boot loader using
+@sc{dhcp}.
 
 @smallexample
    dhcpd: DHCPOFFER on 192.168.16.224 to 02:0b:ad:c0:ff:ee via eth0
@@ -480,15 +495,34 @@ from, as shown in the log excerpt above. So you'll have your
 leading @t{#!/bin/sh}. Examples in @i{wr-switch-sw} did not include the
 line until April 2014 included.
 
-The @file{binaries} subdirectory of @t{wr-switch-sw} includes two known-working
-wrboot scripts as examples; one if for use with static IP addresses and
-the other relies on DHCP. If you want to override the default NFS-Root
-directory mounted from the server (which is @code{/tftpboot/<ip-address>})
-you can add something like the following line to your @file{wrboot} script:
+The @file{binaries} subdirectory of @t{wr-switch-sw} includes a number
+of known-working wrboot scripts as examples;
 
-@example
-    bootargs="$bootargs nfsroot=/opt/root/wrs-3"
-@end example
+@table @t
+
+@item wrboot-static-ip
+
+	The script forces a static IP address, server and gateway, and
+        a custom mount point for an NFS-root system.
+
+@item wrboot-dhcp
+
+	The script preserves the @sc{dhcp}-assigned address, and runs
+        a custom NFS-root system.
+
+@item wrboot-install
+
+	This performs an installation, by loading everything to RAM
+        and forcing install mode. Please check comments in the script.
+
+@item wrboot-nand
+
+	This script is a copy of the default boot script executed
+        bt standalone switches.  Booting from a script allows
+        changing the kernel command line or anything else it may
+        be useful to developers.
+
+@end table
 
 @c ==========================================================================
 @node Creating an NFS-Root Environment for WRS

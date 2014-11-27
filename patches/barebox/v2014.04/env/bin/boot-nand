@@ -5,8 +5,8 @@
 cp /boot/zImage /dev/mem.kernel
 cp /boot/wrs-initramfs.gz /dev/mem.initramfs
 
-#bootargs="verbose console=ttyS0,115200 panic=10 mem=64M"
-bootargs="quiet console=ttyS0,115200 panic=10 mem=64M"
+#bootargs="verbose console=ttyS0,115200 panic=10"
+bootargs="quiet console=ttyS0,115200 panic=10"
 bootargs="$bootargs initrd=0x71800000,0x400000"
 bootargs="$bootargs wr_nic.macaddr=$wr0_ethaddr"
 bootz /dev/mem.kernel

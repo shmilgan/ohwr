@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# This is an example wrboot script.  The switch first does a DHCP pass
+# to get this script while using a valid IP address. You can
+# keep that address or replace it from within the script itself.
+#
+# A few "wrboot" scripts are provided in wr-switch-sw/binaries/ Your
+# script should be placed in your /tftpboot or equivalent directory,
+# using one of the following names, that are tried in this order:
+#
+# wrboot-$eth0.ethaddr     (i.e. using the specific MAC address of the wrs)
+# $eth0.ipaddr/wrboot      (i.e. in the default filesystem for your DHCP IP)
+# wrboot                   (a generic catch-all name)
+
+#### This example is a copy of /env/bin/boot-nand, so you can edit it
+
+# boot kernel from the UBI partition, already mounted by init script
+
+cp /boot/zImage /dev/mem.kernel
+cp /boot/wrs-initramfs.gz /dev/mem.initramfs
+
+#bootargs="verbose console=ttyS0,115200 panic=10"
+bootargs="quiet console=ttyS0,115200 panic=10"
+bootargs="$bootargs initrd=0x71800000,0x400000"
+bootargs="$bootargs wr_nic.macaddr=$wr0_ethaddr"
+bootz /dev/mem.kernel
+
+# Sleep 2 seconds so you can see the message and return to menu
+echo "Can't boot from NAND: going back to menu in 2s"
+sleep 2
+menu -s boot
