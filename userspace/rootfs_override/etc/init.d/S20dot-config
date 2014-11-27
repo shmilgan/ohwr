@@ -5,4 +5,49 @@
 # could edit dot-config and run /wr/bin/apply_dot-config like we do here,
 # without the need to rember wheter this is S20 or S10 during boot.
 
+# First, read dot-config to get the new location, if any.
+if [ -f /wr/etc/dot-config ]; then
+    . /wr/etc/dot-config
+fi
+
+# Create /etc/resolv.conf, so we can use it. /etc is ramdisk anyways
+if [ ! -z "$CONFIG_DNS_SERVER" ]; then
+    echo "nameserver $CONFIG_DNS_SERVER" > /etc/resolv.conf
+    if [ ! -z "$CONFIG_DNS_DOMAIN" ]; then
+        echo "domain $CONFIG_DNS_DOMAIN" >> /etc/resolv.conf
+    fi
+fi
+
+# If we are expected to get a new dot-conf, do it
+if [ -n "$CONFIG_DOTCONF_URL" ]; then
+    # replace IPADDR and MACADDR, to have a device-specific name
+    macaddr=$(cat /sys/class/net/eth0/address)
+    ipaddr=$(ifconfig eth0 | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
+    URL=$(echo $CONFIG_DOTCONF_URL | \
+	sed -e s/MACADDR/$macaddr/ -e s/IPADDR/$ipaddr/)
+    # split the parts, as we need to handle tftp by hand
+    proto=$(echo $URL | cut -d: -f 1)
+    host=$(echo $URL | cut -d/ -f 3)
+    filename=$(echo $URL | cut -d/ -f 4-)
+
+    rm -f /tmp/dot-config
+    case $proto in
+	http|ftp)
+	    wget $URL -O /tmp/dot-config
+	    ;;
+	tftp)
+	    tftp -g -r "$filename" -l /tmp/dot-config $host
+	    ;;
+	*)
+	    echo "Invalid URL for dot-config: \"$URL\"" >& 2
+	    ;;
+    esac
+    # If it exists and it is not empty or awfully small, trust it
+    if [ -f /tmp/dot-config ] &&
+	[ $(cat /tmp/dot-config | wc -c) -gt 200 ]; then
+	mv /tmp/dot-config /wr/etc
+    fi
+fi
+
+# Finally, apply what we have, be it old or new
 . /wr/bin/apply_dot-config
