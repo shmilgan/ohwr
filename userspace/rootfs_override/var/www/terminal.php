@@ -38,7 +38,6 @@
 	
 
 	
-	wrs_change_wrfs("rw");
 	/*$path = shell_exec("echo $PATH");
 	if(substr_count($path , "/wr/bin")==0){
 		//$new_path = shell_exec("export PATH=/wr/bin:$PATH");
@@ -125,7 +124,6 @@
 		
 		
 	
-		wrs_change_wrfs("ro");
 	 ?>
 
 

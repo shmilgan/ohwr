@@ -1,7 +1,7 @@
 TOOLS = rtu_stat wr_mon wr_phytool spll_dbg_proxy load-lm32 load-virtex com
 TOOLS += mapper wmapper
-TOOLS += wrs_version wr_date wr_management lm32-vuart wrs_pstats
-TOOLS += wrs_vlans
+TOOLS += wrs_version wr_date lm32-vuart wrs_pstats
+TOOLS += wrs_vlans wrs_dump_shmem
 TOOLS += sdb-read
 TOOLS += nbtee
 
@@ -17,20 +17,20 @@ STRIP           = $(CROSS_COMPILE)strip
 OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
-#
-GIT_VER = $(shell git describe --always --dirty=+ | sed  's;^wr-switch-sw-;;')
-GIT_USR = $(shell  git config --get-all user.name)
-
 # LOTs of includes
 CFLAGS =  -O2 -g -Wall \
 		-I$(LINUX)/include \
 		-I$(LINUX)/arch/arm/mach-at91/include \
-		-I../wrsw_hal \
 		-I../wrsw_rtud \
 		-I../mini-rpc \
 		-I../libsdb \
 		-I../include \
 		-I../libwr/include
+
+# for wrs_version alone (but others may use this)
+GIT_VER = $(shell git describe --always --dirty=+ | sed  's;^wr-switch-sw-;;')
+GIT_USR = $(shell  git config --get-all user.name)
+CFLAGS += -D__GIT_USR__="\"${GIT_USR}\"" -D__GIT_VER__="\"${GIT_VER}\""
 
 ifdef WRS_TOOLS_DEBUG
   CFLAGS += -DDEBUG
@@ -39,56 +39,20 @@ endif
 LDFLAGS = -L../mini-rpc \
 		-L../libwr \
 		-L../libsdb \
-		-lminipc -lwr -lsdbfs -llua -lm -ldl
+		-lwr -lminipc -lsdbfs -llua -lm -ldl
 
 all: 	$(TOOLS)
 
-rtu_stat: rtu_stat.o
-	${CC} -o $@ $^ $(LDFLAGS)
+%: %.c
+	$(CC) $(CFLAGS) $*.c $(LDFLAGS) -o $*
+
+%: %.o
+	$(CC) $*.o $(LDFLAGS) -o $*
 
 wr_mon: wr_mon.o term.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
 wr_management: wr_management.o term.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
-wr_phytool: wr_phytool.o ../wrsw_hal/rt_client.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
-spll_dbg_proxy: spll_dbg_proxy.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
-load-virtex: load-virtex.o load-fpga.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
-load-lm32: load-lm32.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
-wrs_version.o: wrs_version.c
-	${CC} ${CFLAGS} -D__GIT_USR__="\"${GIT_USR}\"" \
-		-D__GIT_VER__="\"${GIT_VER}\"" $(LDFLAGS) -c -o $@ $^  
-
-wrs_version: wrs_version.o
-	${CC} -o $@ $^ $(LDFLAGS)	
-
-test_rt: test_rt.o ../wrsw_hal/rt_client.o
-	${CC} -o $@ $^ $(LDFLAGS)	
-
-test_ts: test_ts.o ../wrsw_hal/rt_client.o
-	${CC} -o $@ $^ $(LDFLAGS)	
-
-port_calibrator: port_calibrator.o ../wrsw_hal/rt_client.o
-	${CC} -o $@ $^ $(LDFLAGS)	
-wrs_pstats: wrs_pstats.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
-lm32-vuart: lm32-vuart.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
-wrs_vlans: wrs_vlans.o
-	${CC} -o $@ $^ $(LDFLAGS)
-
-sdb-read: sdb-read.o
 	${CC} -o $@ $^ $(LDFLAGS)
 
 clean:

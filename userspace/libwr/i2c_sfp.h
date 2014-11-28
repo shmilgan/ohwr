@@ -38,7 +38,7 @@ void shw_sfp_gpio_init(void);
  * 128 possible addresses. The dev_map is set to a bitmask representing
  * which devices are present.
  */
-int shw_sfp_bus_scan(int num, uint8_t *dev_map);
+int shw_sfp_bus_scan(int num, uint8_t * dev_map);
 
 /* Read a header from a specific port (num = 0..17) */
 int shw_sfp_read_header(int num, struct shw_sfp_header *head);
@@ -63,11 +63,11 @@ void shw_sfp_header_dump(struct shw_sfp_header *head);
  *
  * @return number of bytes sent+received
  */
-int32_t shw_sfp_read(int num, uint32_t addr, int off, int len, uint8_t *buf);
-int32_t shw_sfp_write(int num, uint32_t addr, int off, int len, uint8_t *buf);
+int32_t shw_sfp_read(int num, uint32_t addr, int off, int len, uint8_t * buf);
+int32_t shw_sfp_write(int num, uint32_t addr, int off, int len, uint8_t * buf);
 
 /* Set/get the 4 GPIO's connected to PCA9554's for a particular SFP */
 void shw_sfp_gpio_set(int num, uint8_t state);
 uint8_t shw_sfp_gpio_get(int num);
 
-#endif			//I2C_SFP_H
+#endif //I2C_SFP_H

@@ -113,22 +113,10 @@ static int parse_mask(char *arg, unsigned long *pmask)
 	return 0;
 }
 
-static void exit_mask(int present)
-{
-	if (present)
-		fprintf(stderr, "%s: can't set mask twice from cmdline\n",
-			prgname);
-	else
-		fprintf(stderr, "%s: please set port mask before config\n",
-			prgname);
-	exit(1);
-}
-
-
 int main(int argc, char *argv[])
 {
 	int c, i, arg;
-	unsigned long conf_pmask;	//current '--ep' port mask for which we parse other args
+	unsigned long conf_pmask = 0;	//current '--ep' port mask
 
 	prgname = argv[0];
 

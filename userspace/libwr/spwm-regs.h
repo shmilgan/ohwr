@@ -30,7 +30,6 @@
 #define WBGEN2_SIGN_EXTEND(value, bits) (((value) & (1<<bits) ? ~((1<<(bits))-1): 0 ) | (value))
 #endif
 
-
 /* definitions for register: Control Register */
 
 /* definitions for field: Prescaler Ratio in reg: Control Register */
@@ -70,26 +69,26 @@
 /* definitions for register: Channel 7 Drive Register */
 
 PACKED struct SPWM_WB {
-  /* [0x0]: REG Control Register */
-  uint32_t CR;
-  /* [0x4]: REG Status Register */
-  uint32_t SR;
-  /* [0x8]: REG Channel 0 Drive Register */
-  uint32_t DR0;
-  /* [0xc]: REG Channel 1 Drive Register */
-  uint32_t DR1;
-  /* [0x10]: REG Channel 2 Drive Register */
-  uint32_t DR2;
-  /* [0x14]: REG Channel 3 Drive Register */
-  uint32_t DR3;
-  /* [0x18]: REG Channel 4 Drive Register */
-  uint32_t DR4;
-  /* [0x1c]: REG Channel 5 Drive Register */
-  uint32_t DR5;
-  /* [0x20]: REG Channel 6 Drive Register */
-  uint32_t DR6;
-  /* [0x24]: REG Channel 7 Drive Register */
-  uint32_t DR7;
+	/* [0x0]: REG Control Register */
+	uint32_t CR;
+	/* [0x4]: REG Status Register */
+	uint32_t SR;
+	/* [0x8]: REG Channel 0 Drive Register */
+	uint32_t DR0;
+	/* [0xc]: REG Channel 1 Drive Register */
+	uint32_t DR1;
+	/* [0x10]: REG Channel 2 Drive Register */
+	uint32_t DR2;
+	/* [0x14]: REG Channel 3 Drive Register */
+	uint32_t DR3;
+	/* [0x18]: REG Channel 4 Drive Register */
+	uint32_t DR4;
+	/* [0x1c]: REG Channel 5 Drive Register */
+	uint32_t DR5;
+	/* [0x20]: REG Channel 6 Drive Register */
+	uint32_t DR6;
+	/* [0x24]: REG Channel 7 Drive Register */
+	uint32_t DR7;
 };
 
 #endif

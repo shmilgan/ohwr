@@ -34,11 +34,9 @@
 				$hash_md5 = md5($salt.$pass); // md5 hash with salt #2 
 				$hash_md5_double = md5(sha1($salt.$pass)); // md5 hash with salt & sha1 #3 
 				$output= $username." ".$hash_md5_double."\n";
-				wrs_change_wrfs("rw");
 				$file = fopen($GLOBALS['phpusersfile'],"w+");
 				fwrite($file,$output);
 				fclose($file);
-				wrs_change_wrfs("ro");
 			}
 			
 			$username = $_POST["login"];

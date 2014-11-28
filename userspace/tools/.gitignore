@@ -15,5 +15,6 @@ lm32-vuart
 tru_mon
 wrs_pstats
 wrs_vlans
+wrs_dump_shmem
 sdb-read
 nbtee

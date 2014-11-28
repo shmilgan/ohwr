@@ -22,25 +22,27 @@ volatile uint8_t *_fpga_base_virt;
 /* Initializes the mapping of the Main FPGA to the CPU address space. */
 int shw_fpga_mmap_init()
 {
-  int fd;
+	int fd;
 
-    TRACE(TRACE_INFO, "Initializing FPGA memory mapping.");
+	TRACE(TRACE_INFO, "Initializing FPGA memory mapping.");
 
-    fd = open("/dev/mem", O_RDWR | O_SYNC);
-    if (fd < 0) {
-	    perror("/dev/mem");
-	    return -1;
-    }
-    _fpga_base_virt = mmap(NULL, SMC_CS0_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, SMC_CS0_BASE);
-    close(fd);
+	fd = open("/dev/mem", O_RDWR | O_SYNC);
+	if (fd < 0) {
+		perror("/dev/mem");
+		return -1;
+	}
+	_fpga_base_virt =
+	    mmap(NULL, SMC_CS0_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd,
+		 SMC_CS0_BASE);
+	close(fd);
 
-    if(_fpga_base_virt == MAP_FAILED) {
-	    perror("mmap()");
-	    return -1;
-    }
+	if (_fpga_base_virt == MAP_FAILED) {
+		perror("mmap()");
+		return -1;
+	}
 
-    TRACE(TRACE_INFO, "FPGA virtual base = 0x%08x", _fpga_base_virt);
+	TRACE(TRACE_INFO, "FPGA virtual base = 0x%08x", _fpga_base_virt);
 
-    return 0;
+	return 0;
 
 }
