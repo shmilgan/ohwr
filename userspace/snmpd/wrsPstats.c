@@ -13,59 +13,23 @@
 #define PSTATS_CACHE_TIMEOUT 5 /* seconds */
 
 /* Our structure for caching data */
-#define PSTATS_N_COUNTERS  39
+#define PSTATS_MAX_N_COUNTERS  50 /* Maximum number of counters */
 #define PSTATS_N_PORTS 18 /* this hardwired in the mib too */
+#define PSTATS_MAX_COUNTERS_NAME_LEN 35 /* maximum length of counter's name */
+#define PSTATS_SYSCTL_PATH "/proc/sys/pstats/" /* Path to sysclt entries */
+#define PSTATS_SYSCTL_DESCRIPTION_FILE "description" /* file with counters' descriptions */
+
 
 struct pstats_per_port {
-	uint32_t  val[PSTATS_N_COUNTERS];
+	uint32_t  val[PSTATS_MAX_N_COUNTERS];
 };
 
 static struct pstats_global_data {
 	struct pstats_per_port port[PSTATS_N_PORTS];
-	char *pname[PSTATS_N_PORTS];
+	char counter_name[PSTATS_MAX_N_COUNTERS][PSTATS_MAX_COUNTERS_NAME_LEN];
+	int n_counters;
 } pstats_global_data;
 
-static char *pstats_names[] = {
-	[0] = "TX Underrun",
-	[1] = "RX Overrun",
-	[2] = "RX Invalid Code",
-	[3] = "RX Sync Lost",
-	[4] = "RX Pause Frames",
-	[5] = "RX Pfilter Dropped",
-	[6] = "RX PCS Errors",
-	[7] = "RX Giant Frames",
-	[8] = "RX Runt Frames",
-	[9] = "RX CRC Errors",
-	[10] = "RX Pclass 0",
-	[11] = "RX Pclass 1",
-	[12] = "RX Pclass 2",
-	[13] = "RX Pclass 3",
-	[14] = "RX Pclass 4",
-	[15] = "RX Pclass 5",
-	[16] = "RX Pclass 6",
-	[17] = "RX Pclass 7",
-	[18] = "TX Frames",
-	[19] = "RX Frames",
-	[20] = "RX Drop RTU Full",
-	[21] = "RX PRIO 0",
-	[22] = "RX PRIO 1",
-	[23] = "RX PRIO 2",
-	[24] = "RX PRIO 3",
-	[25] = "RX PRIO 4",
-	[26] = "RX PRIO 5",
-	[27] = "RX PRIO 6",
-	[28] = "RX PRIO 7",
-	[29] = "RTU Valid",
-	[30] = "RTU Responses",
-	[31] = "RTU Dropped",
-	[32] = "FastMatch: Priority",
-	[33] = "FastMatch: FastForward",
-	[34] = "FastMatch: NonForward",
-	[35] = "FastMatch: Resp Valid",
-	[36] = "FullMatch: Resp Valid",
-	[37] = "Forwarded",
-	[38] = "TRU Resp Valid"
-};
 
 /* FIXME: build error if ARRAY_SIZE(pstats_names) != PSTATS_N_COUNTERS */
 
@@ -99,7 +63,7 @@ wrsPstats_handler(netsnmp_mib_handler          *handler,
 			logmsg("counter %i, port %i\n", counter, wrport);
 
 			if (wrport < 0) {
-				char *s = pstats_names[counter];
+				char *s = pstats_global_data.counter_name[counter];
 				snmp_set_var_typed_value(requestvb, ASN_OCTET_STR, s, strlen(s));
 				continue;
 			}
@@ -140,7 +104,7 @@ wrsPstats_next_entry( void **loop_context,
 	/* create the line ID from counter number */
 	i = (intptr_t)*loop_context;
 	//logmsg("%s: %i (i = %i)\n", __func__, __LINE__, i);
-	if (i >= PSTATS_N_COUNTERS)
+	if (i >= pstats_global_data.n_counters)
 		return NULL; /* no more */
 	i++;
 	/* Create the row OID: only the counter index */
@@ -173,18 +137,51 @@ wrsPstats_load(netsnmp_cache *cache, void *vmagic)
 	char fname[32];
 	int wrport, counter;
 	struct pstats_per_port  *stat;
+	char *p;
+
+	/* fill names of counters */
+	f = fopen(PSTATS_SYSCTL_PATH PSTATS_SYSCTL_DESCRIPTION_FILE, "r");
+	if (f) {
+		for (counter = 0; counter < PSTATS_MAX_N_COUNTERS; counter++) {
+			/* parse new line delimited file */
+			p = fgets(pstats_global_data.counter_name[counter],
+				  PSTATS_MAX_COUNTERS_NAME_LEN, f);
+			if(p == NULL)
+				break;
+			/* fgets usualy returns strings with newline, return
+			   string shall contain maximum one newline character */
+			p = strchr(pstats_global_data.counter_name[counter],
+				   '\n');
+			if(p != NULL)
+				*p = '\0';
+
+		}
+		pstats_global_data.n_counters = counter;
+		fclose(f);
+	} else {
+		/* use PSTATS_MAX_N_COUNTERS as number of counters */
+		pstats_global_data.n_counters = PSTATS_MAX_N_COUNTERS;
+		/* fill counters' names */
+		for (counter = 0; counter < PSTATS_MAX_N_COUNTERS; counter++) {
+			snprintf(pstats_global_data.counter_name[counter],
+				 PSTATS_MAX_COUNTERS_NAME_LEN,
+				 "pstats counter %d", counter);
+		}
+	}
 
 	for (wrport = 0; wrport < PSTATS_N_PORTS; wrport++) {
-		sprintf(fname, "/proc/sys/pstats/port%i", wrport);
+		sprintf(fname, PSTATS_SYSCTL_PATH"port%i", wrport);
 		stat = pstats_global_data.port + wrport;
 		f = fopen(fname, "r");
 		if (!f) {
 			memset(stat, 0x7f, sizeof(*stat));
 			continue;
 		}
-		for (counter = 0; counter < PSTATS_N_COUNTERS; counter++) {
+		for (counter = 0;
+		     counter < pstats_global_data.n_counters;
+		     counter++) {
 			if (fscanf(f, "%u", stat->val + counter) != 1)
-				stat->val[counter] = 0xffffff;
+				stat->val[counter] = 0xffffffff;
 		}
 		fclose(f);
 	}
