@@ -1649,6 +1649,86 @@ are documented in the @t{mini-rpc} manual.  Only the hal process
 sends commands to the @t{rt} subsystem.
 
 @c ##########################################################################
+@node Reboot/Reset Diagnostics
+@chapter Reboot/Reset Diagnostics
+
+For management and diagnostics, the @sc{wrs} keeps track of the number
+of boots since power on. It does so relying on 4 32-bit @sc{cpu}
+registers that are unpredictable at power-up and remain unchanged over
+reboots. They are called ``backup registers'' in vendor documentation
+(@t{GPBR}): they actually read 0 on power-up but the documentation
+doesn`t say anything so we can't count on it.
+
+Our kernel patches use the 16 bytes in the following way; all values
+are little-endian.
+
+@table @code
+
+@item bytes 0..2
+
+	A magic number: if not found, then this is a power-on boot.
+	(Note: we may use the "reset reason" register as an alternative)
+
+@item byte 3
+
+	Another magic number: it is `@t{R}' (0x52) if the last reboot
+	has been requested by an operator.  The value is reset to
+	`@t{U}' (for ``unknown'') right after boot.
+
+@item bytes 4..5
+
+	The number of boots since power on. This is at least 1. If zero,
+	the code is not working.
+
+@item bytes 6..7
+
+	The number of soft reboots. This is incremented by the
+	@i{reboot} system call, and not by accidental reboots
+	(i.e. panic or other yet-unforeseen situation).  A healthy
+	sytem should feature one soft-reboot less than total boots.
+
+@item bytes 8..11
+
+	(Not implemented yet).
+        The fault address of the last panic. This is the instruction
+	pointer normally printed by the stack backtrace. The register
+	is zeroed at first boot and only modified within @i{panic}.
+
+@item bytes 12..15
+
+	(Not implemented yet).
+	The "link register" register at last panic, like above.
+	This is usually the caller of the function that failed,
+	but it may be a local register if the failing function
+	saved @t{lr} to the stack and used it as a scratch register.
+
+@end table
+
+The kernel exports the current status in @t{/proc/wrs-bootcount}
+in a tagged text format for easy parsing.
+
+This is an example, after power-on, one @t{reboot} command and
+one hard reset (by pressing the button on the @sc{scb}):
+
+@smallexample
+   # cat /proc/wrs-bootcount
+   boot_count: 3
+   reboot_count: 1
+   last_is_reboot: 0
+   fault_ip: 0x00000000
+   fault_lr: 0x00000000
+@end smallexample
+
+@sp 1
+
+We will likely introduce support for the hardware watchdog, but it
+is not supported at this time.
+
+We may also consider to use one of the kernel's mechanisms for persistent
+storage of information across reboots, to recover panic messages
+after a reboot.
+
+@c ##########################################################################
 @node SDB and Hardware Information
 @chapter SDB and Hardware Information
 

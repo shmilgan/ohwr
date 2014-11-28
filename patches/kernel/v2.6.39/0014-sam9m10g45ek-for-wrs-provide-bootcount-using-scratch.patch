@@ -1,0 +1,168 @@
+From dd4abd9483cdb6bc31cba97763028770cabbfed0 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Fri, 28 Nov 2014 14:18:27 +0100
+Subject: [PATCH 14/14] sam9m10g45ek (for wrs): provide bootcount using
+ scratch registers
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ arch/arm/kernel/process.c          |   13 ++++
+ arch/arm/mach-at91/Makefile        |    1 +
+ arch/arm/mach-at91/wrs-bootcount.c |  109 ++++++++++++++++++++++++++++++++++++
+ 3 files changed, 123 insertions(+), 0 deletions(-)
+ create mode 100644 arch/arm/mach-at91/wrs-bootcount.c
+
+diff --git a/arch/arm/kernel/process.c b/arch/arm/kernel/process.c
+index 5e1e541..720d1e1 100644
+--- a/arch/arm/kernel/process.c
++++ b/arch/arm/kernel/process.c
+@@ -93,6 +93,19 @@ __setup("hlt", hlt_setup);
+ 
+ void arm_machine_restart(char mode, const char *cmd)
+ {
++	uint32_t gpbr_val;
++	char *gpbr_str = (void *)&gpbr_val;
++	unsigned short *gpbr_short = (void *)&gpbr_val;
++
++	/* WRS: Change the static registers. See wrs-bootcount.c for details */
++	gpbr_val = at91_sys_read(AT91_GPBR);
++	gpbr_str[3] = 'R'; /* reboot requested by user */
++	at91_sys_write(AT91_GPBR, gpbr_val);
++
++	gpbr_val = at91_sys_read(AT91_GPBR + 4);
++	gpbr_short[1]++; /* count the user-requeted reboots */
++	at91_sys_write(AT91_GPBR + 4, gpbr_val);
++
+ 	/* Disable interrupts first */
+ 	local_irq_disable();
+ 	local_fiq_disable();
+diff --git a/arch/arm/mach-at91/Makefile b/arch/arm/mach-at91/Makefile
+index a83835e..f1db0b2 100644
+--- a/arch/arm/mach-at91/Makefile
++++ b/arch/arm/mach-at91/Makefile
+@@ -74,6 +74,7 @@ obj-$(CONFIG_MACH_SNAPPER_9260)	+= board-snapper9260.o
+ 
+ # AT91SAM9G45 board-specific support
+ obj-$(CONFIG_MACH_AT91SAM9M10G45EK) += board-sam9m10g45ek.o
++obj-$(CONFIG_MACH_AT91SAM9M10G45EK) += wrs-bootcount.o
+ 
+ # AT91CAP9 board-specific support
+ obj-$(CONFIG_MACH_AT91CAP9ADK)	+= board-cap9adk.o
+diff --git a/arch/arm/mach-at91/wrs-bootcount.c b/arch/arm/mach-at91/wrs-bootcount.c
+new file mode 100644
+index 0000000..9088377
+--- /dev/null
++++ b/arch/arm/mach-at91/wrs-bootcount.c
+@@ -0,0 +1,109 @@
++/* Alessandro Rubini for CERN 2014 */
++#include <linux/kernel.h>
++#include <linux/init.h>
++#include <linux/proc_fs.h>
++#include <linux/seq_file.h>
++#include <linux/io.h>
++
++#include <mach/hardware.h>
++#include <asm/mach/map.h>
++
++#ifdef CONFIG_RTC_DRV_AT91SAM9
++#error "This is incompatible with CONFIG_RTC_DRV_AT91SAM9"
++#endif
++
++/* This structures is mapped over the general purpose registers */
++struct wrs_bc {
++	unsigned char magic[3];
++	unsigned char last_is_reboot;
++	unsigned short boot_count;
++	unsigned short reboot_count;
++	uint32_t fault_ip;
++	uint32_t fault_lr;
++};
++
++static struct wrs_bc __bc_soft, __bc_hard;
++
++/* bc_regs points there, bc_hw is a local tmp working copy, bc_sw is sw */
++static struct wrs_bc __iomem *bc_regs;
++static struct wrs_bc *bc_hw = &__bc_hard;
++static struct wrs_bc *bc_sw = &__bc_soft;
++
++/*
++ * For some reason, memcpy_fromio and toio is not working. The MSB
++ * is repeated 4 times in the resulting word. So do it by hand
++ */
++static void copy16_fromio(void *dest, void __iomem *src)
++{
++	uint32_t __iomem *s = src;
++	uint32_t *d = dest;
++	int i;
++	for (i = 0; i < 4; i++)
++		d[i] = __raw_readl(s + i);
++}
++
++static void copy16_toio(void __iomem *dest, void *src)
++{
++	uint32_t __iomem *d = dest;
++	uint32_t *s = src;
++	int i;
++	for (i = 0; i < 4; i++)
++		__raw_writel(s[i], d + i);
++}
++
++/* As soon as possible, copy stuff over */
++static int __init wrs_bc_early_init(void)
++{
++	bc_regs = (void __iomem *)AT91_VA_BASE_SYS + AT91_GPBR;
++	copy16_fromio(bc_hw, bc_regs);
++
++	if (strncmp(bc_hw->magic, "WRS", 3)) /* power on */
++		memset(bc_hw, 0, sizeof(*bc_hw));
++
++	strncpy(bc_hw->magic, "WRS", 3);
++	bc_hw->boot_count++;
++
++	/* save sw for printing, fix hw and copy back */
++	memcpy(bc_sw, bc_hw, sizeof(*bc_sw));
++	bc_hw->last_is_reboot = 'U';
++	bc_hw->fault_ip = bc_hw->fault_lr = 0;
++	copy16_toio(bc_regs, bc_hw);
++	return 0;
++}
++early_initcall(wrs_bc_early_init);
++
++/* Over time, export in proc */
++static int wrs_bc_proc_show(struct seq_file *m, void *v)
++{
++        seq_printf(m, "boot_count: %i\n"
++		   "reboot_count: %i\n"
++		   "last_is_reboot: %i\n"
++		   "fault_ip: 0x%08x\n"
++		   "fault_lr: 0x%08x\n",
++		   bc_sw->boot_count,
++		   bc_sw->reboot_count,
++		   bc_sw->last_is_reboot == 'R',
++		   bc_sw->fault_ip,
++		   bc_sw->fault_lr);
++        return 0;
++}
++
++static int wrs_bc_proc_open(struct inode *inode, struct file *file)
++{
++        return single_open(file, wrs_bc_proc_show, NULL);
++}
++
++static const struct file_operations wrs_bc_proc_fops = {
++        .open           = wrs_bc_proc_open,
++        .read           = seq_read,
++        .llseek         = seq_lseek,
++        .release        = single_release,
++};
++
++static int __init proc_wrs_bc_init(void)
++{
++	/* two files use dash and two use underscore in /proc. Pick one */
++        proc_create("wrs-bootcount", 0, NULL, &wrs_bc_proc_fops);
++        return 0;
++}
++module_init(proc_wrs_bc_init);
+-- 
+1.7.7.2
+
