@@ -27,8 +27,7 @@
 #define _writel(reg, val) *(volatile uint32_t *)(reg) = (val)
 #define _readl(reg) (*(volatile uint32_t *)(reg))
 
-typedef struct pio_pin
-{
+typedef struct pio_pin {
 	int port;
 	int pin;
 	int mode;
@@ -46,54 +45,55 @@ typedef struct pio_pin
 #define FPGA_PIO_REG_PSR	0xC
 
 extern volatile uint8_t *_sys_base;
-extern volatile uint8_t *_pio_base[4][NUM_PIO_BANKS+1];
+extern volatile uint8_t *_pio_base[4][NUM_PIO_BANKS + 1];
 
-void shw_pio_configure(const pio_pin_t *pin);
-void shw_pio_configure_pins(const pio_pin_t *pins);
+void shw_pio_configure(const pio_pin_t * pin);
+void shw_pio_configure_pins(const pio_pin_t * pins);
 
 int shw_clock_out_enable(int pck_num, int prescaler, int source);
 volatile uint8_t *shw_pio_get_sys_base();
 volatile uint8_t *shw_pio_get_port_base(int port);
 void shw_set_fp_led(int led, int state);
 
-
 int shw_pio_mmap_init();
-void shw_pio_toggle_pin(pio_pin_t* pin, uint32_t udelay);
-void shw_pio_configure(const pio_pin_t *pin);
+void shw_pio_toggle_pin(pio_pin_t * pin, uint32_t udelay);
+void shw_pio_configure(const pio_pin_t * pin);
 
-static inline void shw_pio_set(const pio_pin_t *pin, int state)
+static inline void shw_pio_set(const pio_pin_t * pin, int state)
 {
 
-  if(state)
-	_writel(_pio_base[IDX_REG_SODR][pin->port], (1<<pin->pin));
-  else
-  	_writel(_pio_base[IDX_REG_CODR][pin->port], (1<<pin->pin));
+	if (state)
+		_writel(_pio_base[IDX_REG_SODR][pin->port], (1 << pin->pin));
+	else
+		_writel(_pio_base[IDX_REG_CODR][pin->port], (1 << pin->pin));
 }
 
-static inline void shw_pio_set1(const pio_pin_t *pin)
+static inline void shw_pio_set1(const pio_pin_t * pin)
 {
-	_writel(_pio_base[IDX_REG_SODR][pin->port], (1<<pin->pin));
+	_writel(_pio_base[IDX_REG_SODR][pin->port], (1 << pin->pin));
 }
 
-static inline void shw_pio_set0(const pio_pin_t *pin)
+static inline void shw_pio_set0(const pio_pin_t * pin)
 {
-	_writel(_pio_base[IDX_REG_CODR][pin->port], (1<<pin->pin));
+	_writel(_pio_base[IDX_REG_CODR][pin->port], (1 << pin->pin));
 }
 
-static inline int shw_pio_get(const pio_pin_t *pin)
+static inline int shw_pio_get(const pio_pin_t * pin)
 {
-    return (_readl(_pio_base[IDX_REG_PDSR][pin->port]) & (1<<pin->pin)) ? 1 : 0;
+	return (_readl(_pio_base[IDX_REG_PDSR][pin->port]) & (1 << pin->pin)) ?
+	    1 : 0;
 }
 
-static inline int shw_pio_setdir(const pio_pin_t *pin, int dir)
+static inline int shw_pio_setdir(const pio_pin_t * pin, int dir)
 {
-  if(dir == PIO_OUT)
-		_writel((_pio_base[IDX_REG_BASE][pin->port] + PIO_OER), (1<<pin->pin));
-  else
-  	_writel((_pio_base[IDX_REG_BASE][pin->port] + PIO_ODR), (1<<pin->pin));
+	if (dir == PIO_OUT)
+		_writel((_pio_base[IDX_REG_BASE][pin->port] + PIO_OER),
+			(1 << pin->pin));
+	else
+		_writel((_pio_base[IDX_REG_BASE][pin->port] + PIO_ODR),
+			(1 << pin->pin));
 
 	return 0;
 }
-
 
 #endif /* __LIBWR_CPU_IO_H */

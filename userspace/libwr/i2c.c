@@ -23,65 +23,53 @@ int i2c_init_bus(struct i2c_bus *bus)
 	return ret;
 }
 
-int32_t i2c_transfer(struct i2c_bus* bus, uint32_t address, uint32_t to_write, uint32_t to_read, uint8_t* data)
+int32_t i2c_transfer(struct i2c_bus * bus, uint32_t address, uint32_t to_write,
+		     uint32_t to_read, uint8_t * data)
 {
 	return bus->transfer(bus, address, to_write, to_read, data);
 }
 
-
-void i2c_free(struct i2c_bus* bus)
-{
-    if (!bus)
-	return;
-
-    if (bus->type_specific)
-	shw_free(bus->type_specific);
-
-    shw_free(bus);
-}
-
-
-int32_t i2c_write(struct i2c_bus* bus, uint32_t address, uint32_t to_write, uint8_t* data)
+int32_t i2c_write(struct i2c_bus *bus, uint32_t address, uint32_t to_write,
+		  uint8_t * data)
 {
 	//TRACE(TRACE_INFO,"%s (0x%X): 0x%X 2w:%d 2r:%d %d",bus->name,bus,address,to_write,0,data[0]);
-    return bus->transfer(bus, address, to_write, 0, data);
+	return bus->transfer(bus, address, to_write, 0, data);
 }
 
-
-int32_t i2c_read (struct i2c_bus* bus, uint32_t address, uint32_t to_read,  uint8_t* data)
+int32_t i2c_read(struct i2c_bus * bus, uint32_t address, uint32_t to_read,
+		 uint8_t * data)
 {
-    return bus->transfer(bus, address, 0, to_read, data);
-    //TRACE(TRACE_INFO,"%s (0x%X): 0x%X 2w:%d 2r:%d %d",bus->name,bus,address,0,to_read,data[0]);
+	return bus->transfer(bus, address, 0, to_read, data);
+	//TRACE(TRACE_INFO,"%s (0x%X): 0x%X 2w:%d 2r:%d %d",bus->name,bus,address,0,to_read,data[0]);
 }
 
-
-int32_t i2c_scan(struct i2c_bus* bus, uint8_t* data)
+int32_t i2c_scan(struct i2c_bus * bus, uint8_t * data)
 {
-    if (!bus)
-        return I2C_NULL_PARAM;
+	if (!bus)
+		return I2C_NULL_PARAM;
 
 //    const int devices = 128;
 
-    int address;
+	int address;
 
-    const int first_valid_address = 0;
-    const int last_valid_address = 0x7f;
+	const int first_valid_address = 0;
+	const int last_valid_address = 0x7f;
 
-    memset((void*)data, 0, 16);		//16 bytes * 8 addresses per byte == 128 addresses
+	memset((void *)data, 0, 16);	//16 bytes * 8 addresses per byte == 128 addresses
 
-    int found = 0;
+	int found = 0;
 
-    for (address = first_valid_address; address <= last_valid_address; address++)
-    {
-	int res = bus->scan(bus, address);
-	if (res)		//device present
-	{
-	    int offset = address >> 3;			//choose proper byte
-	    int bit = (1 << (address%8));		//choose proper bit
-	    data[offset] |= bit;
-	    found++;
+	for (address = first_valid_address; address <= last_valid_address;
+	     address++) {
+		int res = bus->scan(bus, address);
+		if (res)	//device present
+		{
+			int offset = address >> 3;	//choose proper byte
+			int bit = (1 << (address % 8));	//choose proper bit
+			data[offset] |= bit;
+			found++;
+		}
 	}
-    }
-    TRACE(TRACE_INFO,"%s (0x%X): ndev=%d",bus->name,bus,found);
-    return found;
+	TRACE(TRACE_INFO, "%s (0x%X): ndev=%d", bus->name, bus, found);
+	return found;
 }

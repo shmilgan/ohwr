@@ -7,10 +7,11 @@
 #include "i2c_sfp.h"
 #include <libwr/shw_io.h>
 
-
 int shw_init()
 {
-	TRACE(TRACE_INFO,"%s\n=========================================================",__TIME__);
+	TRACE(TRACE_INFO,
+	      "%s\n=========================================================",
+	      __TIME__);
 
 	/* Init input/output (GPIO & CPU I2C) */
 	assert_init(shw_io_init());
@@ -39,4 +40,3 @@ int shw_exit_fatal()
 	TRACE(TRACE_FATAL, "exiting due to fatal error.");
 	exit(-1);
 }
-

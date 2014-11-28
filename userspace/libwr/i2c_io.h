@@ -3,7 +3,6 @@
 
 #include "i2c.h"
 
-
 //address from AT24C01 datasheet (1k, all address lines shorted to the ground)
 #define I2C_SFP_ADDRESS 0x50
 
@@ -21,9 +20,9 @@
 extern struct i2c_bus i2c_io_bus;
 
 int shw_i2c_io_init(void);
-int shw_i2c_io_scan(uint8_t *dev_map);
+int shw_i2c_io_scan(uint8_t * dev_map);
 
 int shw_get_hw_ver();
 uint8_t shw_get_fpga_type();
 
-#endif			//I2C_SFP_H
+#endif //I2C_SFP_H

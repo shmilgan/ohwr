@@ -20,7 +20,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-
 #include <asm/socket.h>
 
 #include <libwr/ptpd_netif.h>
@@ -46,11 +45,10 @@ PACKED struct etherpacket {
 	char data[ETHER_MTU];
 };
 
-typedef struct
-{
+typedef struct {
 	uint64_t start_tics;
 	uint64_t timeout;
-} timeout_t ;
+} timeout_t;
 
 struct my_socket {
 	int fd;
@@ -68,27 +66,27 @@ struct my_socket {
 
 static uint64_t get_tics()
 {
-	struct timezone tz = {0, 0};
+	struct timezone tz = { 0, 0 };
 	struct timeval tv;
 	gettimeofday(&tv, &tz);
 
 	return (uint64_t) tv.tv_sec * 1000000ULL + (uint64_t) tv.tv_usec;
 }
 
-static inline int tmo_init(timeout_t *tmo, uint32_t milliseconds)
+static inline int tmo_init(timeout_t * tmo, uint32_t milliseconds)
 {
 	tmo->start_tics = get_tics();
-	tmo->timeout = (uint64_t) milliseconds * 1000ULL;
+	tmo->timeout = (uint64_t) milliseconds *1000ULL;
 	return 0;
 }
 
-static inline int tmo_restart(timeout_t *tmo)
+static inline int tmo_restart(timeout_t * tmo)
 {
 	tmo->start_tics = get_tics();
 	return 0;
 }
 
-static inline int tmo_expired(timeout_t *tmo)
+static inline int tmo_expired(timeout_t * tmo)
 {
 	return (get_tics() - tmo->start_tics > tmo->timeout);
 }
@@ -96,31 +94,31 @@ static inline int tmo_expired(timeout_t *tmo)
 // cheks if x is inside range <min, max>
 static inline int inside_range(int min, int max, int x)
 {
-	if(min < max)
-		return (x>=min && x<=max);
+	if (min < max)
+		return (x >= min && x <= max);
 	else
-		return (x<=max || x>=min);
+		return (x <= max || x >= min);
 }
 
 /* For debugging/testing purposes */
-int ptpd_netif_get_dmtd_phase(wr_socket_t *sock, int32_t *phase)
+int ptpd_netif_get_dmtd_phase(wr_socket_t * sock, int32_t * phase)
 {
-	struct my_socket *s = (struct my_socket *) sock;
+	struct my_socket *s = (struct my_socket *)sock;
 	hexp_port_state_t pstate;
 
 	halexp_get_port_state(&pstate, s->bind_addr.if_name);
 
-	if(phase) *phase = pstate.phase_val;
+	if (phase)
+		*phase = pstate.phase_val;
 	return pstate.phase_val_valid;
 }
 
-static void update_dmtd(wr_socket_t *sock)
+static void update_dmtd(wr_socket_t * sock)
 {
-	struct my_socket *s = (struct my_socket *) sock;
+	struct my_socket *s = (struct my_socket *)sock;
 	hexp_port_state_t pstate;
 
-	if(tmo_expired(&s->dmtd_update_tmo))
-	{
+	if (tmo_expired(&s->dmtd_update_tmo)) {
 		halexp_get_port_state(&pstate, s->bind_addr.if_name);
 
 		// FIXME: ccheck if phase value is ready
@@ -131,7 +129,9 @@ static void update_dmtd(wr_socket_t *sock)
 	}
 }
 
-void ptpd_netif_linearize_rx_timestamp(wr_timestamp_t *ts, int32_t dmtd_phase, int cntr_ahead, int transition_point, int clock_period)
+void ptpd_netif_linearize_rx_timestamp(wr_timestamp_t * ts, int32_t dmtd_phase,
+				       int cntr_ahead, int transition_point,
+				       int clock_period)
 {
 	int trip_lo, trip_hi;
 	int phase;
@@ -141,18 +141,19 @@ void ptpd_netif_linearize_rx_timestamp(wr_timestamp_t *ts, int32_t dmtd_phase, i
 	// TS counter will appear
 	ts->raw_phase = dmtd_phase;
 
-  phase = clock_period -1 -dmtd_phase;
+	phase = clock_period - 1 - dmtd_phase;
 
 	// calculate the range within which falling edge timestamp is stable
 	// (no possible transitions)
 	trip_lo = transition_point - clock_period / 4;
-	if(trip_lo < 0) trip_lo += clock_period;
+	if (trip_lo < 0)
+		trip_lo += clock_period;
 
 	trip_hi = transition_point + clock_period / 4;
-	if(trip_hi >= clock_period) trip_hi -= clock_period;
+	if (trip_hi >= clock_period)
+		trip_hi -= clock_period;
 
-	if(inside_range(trip_lo, trip_hi, phase))
-	{
+	if (inside_range(trip_lo, trip_hi, phase)) {
 		// We are within +- 25% range of transition area of
 		// rising counter. Take the falling edge counter value as the
 		// "reliable" one. cntr_ahead will be 1 when the rising edge
@@ -164,31 +165,31 @@ void ptpd_netif_linearize_rx_timestamp(wr_timestamp_t *ts, int32_t dmtd_phase, i
 		// and eventually increase the counter by 1 to simulate a
 		// timestamp transition exactly at s->phase_transition
 		//DMTD phase value
-		if(inside_range(trip_lo, transition_point, phase))
+		if (inside_range(trip_lo, transition_point, phase))
 			ts->nsec += clock_period / 1000;
 
 	}
 
 	ts->phase = phase - transition_point - 1;
-	if(ts->phase  < 0) ts->phase += clock_period;
-	ts->phase = clock_period - 1 -ts->phase;
+	if (ts->phase < 0)
+		ts->phase += clock_period;
+	ts->phase = clock_period - 1 - ts->phase;
 }
 
 #define HAL_CONNECT_RETRIES 1000
-#define HAL_CONNECT_TIMEOUT 2000000 /* us */
-
+#define HAL_CONNECT_TIMEOUT 2000000	/* us */
 
 int ptpd_netif_init()
 {
-	if(halexp_client_try_connect(HAL_CONNECT_RETRIES, HAL_CONNECT_TIMEOUT) < 0)
+	if (halexp_client_try_connect(HAL_CONNECT_RETRIES, HAL_CONNECT_TIMEOUT)
+	    < 0)
 		return PTPD_NETIF_ERROR;
 
 	return PTPD_NETIF_OK;
 }
 
-
 wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
-				      wr_sockaddr_t *bind_addr)
+				      wr_sockaddr_t * bind_addr)
 {
 	struct my_socket *s;
 	struct sockaddr_ll sll;
@@ -200,16 +201,15 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 
 	//    fprintf(stderr,"CreateSocket!\n");
 
-	if(sock_type != PTPD_SOCK_RAW_ETHERNET)
+	if (sock_type != PTPD_SOCK_RAW_ETHERNET)
 		return NULL;
 
-	if(halexp_get_port_state(&pstate, bind_addr->if_name) < 0)
+	if (halexp_get_port_state(&pstate, bind_addr->if_name) < 0)
 		return NULL;
 
 	fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 
-	if(fd < 0)
-	{
+	if (fd < 0) {
 		perror("socket()");
 		return NULL;
 	}
@@ -218,34 +218,35 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 
 	// Put the controller in promiscious mode, so it receives everything
 	strcpy(f.ifr_name, bind_addr->if_name);
-	if(ioctl(fd, SIOCGIFFLAGS,&f) < 0) { perror("ioctl()"); return NULL; }
+	if (ioctl(fd, SIOCGIFFLAGS, &f) < 0) {
+		perror("ioctl()");
+		return NULL;
+	}
 	f.ifr_flags |= IFF_PROMISC;
-	if(ioctl(fd, SIOCSIFFLAGS,&f) < 0) { perror("ioctl()"); return NULL; }
-
+	if (ioctl(fd, SIOCSIFFLAGS, &f) < 0) {
+		perror("ioctl()");
+		return NULL;
+	}
 	// Find the inteface index
 	strcpy(f.ifr_name, bind_addr->if_name);
 	ioctl(fd, SIOCGIFINDEX, &f);
 
-
 	sll.sll_ifindex = f.ifr_ifindex;
-	sll.sll_family   = AF_PACKET;
+	sll.sll_family = AF_PACKET;
 	sll.sll_protocol = htons(bind_addr->ethertype);
 	sll.sll_halen = 6;
 
 	memcpy(sll.sll_addr, bind_addr->mac, 6);
 
-	if(bind(fd, (struct sockaddr *)&sll, sizeof(struct sockaddr_ll)) < 0)
-	{
+	if (bind(fd, (struct sockaddr *)&sll, sizeof(struct sockaddr_ll)) < 0) {
 		close(fd);
 		perror("bind()");
 		return NULL;
 	}
-
 	// timestamping stuff:
 
 	int so_timestamping_flags = SOF_TIMESTAMPING_TX_HARDWARE |
-		SOF_TIMESTAMPING_RX_HARDWARE |
-		SOF_TIMESTAMPING_RAW_HARDWARE;
+	    SOF_TIMESTAMPING_RX_HARDWARE | SOF_TIMESTAMPING_RAW_HARDWARE;
 
 	struct ifreq ifr;
 	struct hwtstamp_config hwconfig;
@@ -257,27 +258,27 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 
 	ifr.ifr_data = &hwconfig;
 
-	if (ioctl(fd, SIOCSHWTSTAMP, &ifr) < 0)
-	{
+	if (ioctl(fd, SIOCSHWTSTAMP, &ifr) < 0) {
 		perror("SIOCSHWTSTAMP");
 		return NULL;
 	}
 
-	if(setsockopt(fd, SOL_SOCKET, SO_TIMESTAMPING, &so_timestamping_flags,
-		      sizeof(int)) < 0)
-	{
+	if (setsockopt(fd, SOL_SOCKET, SO_TIMESTAMPING, &so_timestamping_flags,
+		       sizeof(int)) < 0) {
 		perror("setsockopt(SO_TIMESTAMPING)");
 		return NULL;
 	}
 
-	s=calloc(sizeof(struct my_socket), 1);
-	if (!s) return NULL;
+	s = calloc(sizeof(struct my_socket), 1);
+	if (!s)
+		return NULL;
 
 	s->if_index = f.ifr_ifindex;
 
 	// get interface MAC address
 	if (ioctl(fd, SIOCGIFHWADDR, &f) < 0) {
-		perror("ioctl()"); return NULL;
+		perror("ioctl()");
+		return NULL;
 	}
 
 	memcpy(s->local_mac, f.ifr_hwaddr.sa_data, 6);
@@ -293,14 +294,14 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 
 	tmo_init(&s->dmtd_update_tmo, DMTD_UPDATE_INTERVAL);
 
-	return (wr_socket_t*)s;
+	return (wr_socket_t *) s;
 }
 
-int ptpd_netif_close_socket(wr_socket_t *sock)
+int ptpd_netif_close_socket(wr_socket_t * sock)
 {
-	struct my_socket *s = (struct my_socket *) sock;
+	struct my_socket *s = (struct my_socket *)sock;
 
-	if(!s)
+	if (!s)
 		return 0;
 
 	close(s->fd);
@@ -308,32 +309,34 @@ int ptpd_netif_close_socket(wr_socket_t *sock)
 	return 0;
 }
 
-static void poll_tx_timestamp(wr_socket_t *sock, wr_timestamp_t *tx_timestamp);
+static void poll_tx_timestamp(wr_socket_t * sock,
+			      wr_timestamp_t * tx_timestamp);
 
-int ptpd_netif_sendto(wr_socket_t *sock, wr_sockaddr_t *to, void *data,
-		      size_t data_length, wr_timestamp_t *tx_ts)
+int ptpd_netif_sendto(wr_socket_t * sock, wr_sockaddr_t * to, void *data,
+		      size_t data_length, wr_timestamp_t * tx_ts)
 {
 	struct etherpacket pkt;
 	struct my_socket *s = (struct my_socket *)sock;
 	struct sockaddr_ll sll;
 	int rval;
 
-	if(s->bind_addr.family != PTPD_SOCK_RAW_ETHERNET)
+	if (s->bind_addr.family != PTPD_SOCK_RAW_ETHERNET)
 		return -ENOTSUP;
 
-	if(data_length > ETHER_MTU-8) return -EINVAL;
+	if (data_length > ETHER_MTU - 8)
+		return -EINVAL;
 
 	memset(&pkt, 0, sizeof(struct etherpacket));
 
 	memcpy(pkt.ether.h_dest, to->mac, 6);
 	memcpy(pkt.ether.h_source, s->local_mac, 6);
-	pkt.ether.h_proto =htons(to->ethertype);
+	pkt.ether.h_proto = htons(to->ethertype);
 
 	memcpy(pkt.data, data, data_length);
 
 	size_t len = data_length + sizeof(struct ethhdr);
 
-	if(len < 60) /* pad to the minimum allowed packet size */
+	if (len < 60)		/* pad to the minimum allowed packet size */
 		len = 60;
 
 	memset(&sll, 0, sizeof(struct sockaddr_ll));
@@ -343,32 +346,31 @@ int ptpd_netif_sendto(wr_socket_t *sock, wr_sockaddr_t *to, void *data,
 	sll.sll_protocol = htons(to->ethertype);
 	sll.sll_halen = 6;
 
-	rval =  sendto(s->fd, &pkt, len, 0, (struct sockaddr *)&sll,
-		       sizeof(struct sockaddr_ll));
+	rval = sendto(s->fd, &pkt, len, 0, (struct sockaddr *)&sll,
+		      sizeof(struct sockaddr_ll));
 
 	poll_tx_timestamp(sock, tx_ts);
 
 	return rval;
 }
 
-
 #if 0
-static void hdump(uint8_t *buf, int size)
+static void hdump(uint8_t * buf, int size)
 {
 	int i;
 	netif_dbg("Dump: ");
-	for(i=0;i<size;i++) netif_dbg("%02x ", buf[i]);
+	for (i = 0; i < size; i++)
+		netif_dbg("%02x ", buf[i]);
 	netif_dbg("\n");
 }
 #endif
 
-
 /* Waits for the transmission timestamp and stores it in tx_timestamp (if not null). */
-static void poll_tx_timestamp(wr_socket_t *sock, wr_timestamp_t *tx_timestamp)
+static void poll_tx_timestamp(wr_socket_t * sock, wr_timestamp_t * tx_timestamp)
 {
 	char data[16384];
 
-	struct my_socket *s = (struct my_socket *) sock;
+	struct my_socket *s = (struct my_socket *)sock;
 	struct msghdr msg;
 	struct iovec entry;
 	struct sockaddr_ll from_addr;
@@ -388,48 +390,47 @@ static void poll_tx_timestamp(wr_socket_t *sock, wr_timestamp_t *tx_timestamp)
 	msg.msg_iovlen = 1;
 	entry.iov_base = data;
 	entry.iov_len = sizeof(data);
-	msg.msg_name = (caddr_t)&from_addr;
+	msg.msg_name = (caddr_t) & from_addr;
 	msg.msg_namelen = sizeof(from_addr);
 	msg.msg_control = &control;
 	msg.msg_controllen = sizeof(control);
 
-	res = recvmsg(s->fd, &msg, MSG_ERRQUEUE); //|MSG_DONTWAIT);
+	res = recvmsg(s->fd, &msg, MSG_ERRQUEUE);	//|MSG_DONTWAIT);
 
-	if(tx_timestamp) tx_timestamp->correct = 0;
+	if (tx_timestamp)
+		tx_timestamp->correct = 0;
 
-	if(res <= 0)
+	if (res <= 0)
 		return;
 
-	memcpy(&rtag, data+res-4, 4);
+	memcpy(&rtag, data + res - 4, 4);
 
-	for (cmsg = CMSG_FIRSTHDR(&msg);
-	     cmsg;
-	     cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
 
-			void *dp = CMSG_DATA(cmsg);
+		void *dp = CMSG_DATA(cmsg);
 
-			if(cmsg->cmsg_level == SOL_PACKET
-			   && cmsg->cmsg_type == PACKET_TX_TIMESTAMP)
-				serr = (struct sock_extended_err *) dp;
+		if (cmsg->cmsg_level == SOL_PACKET
+		    && cmsg->cmsg_type == PACKET_TX_TIMESTAMP)
+			serr = (struct sock_extended_err *)dp;
 
-			if(cmsg->cmsg_level == SOL_SOCKET
-			   && cmsg->cmsg_type == SO_TIMESTAMPING)
-				sts = (struct scm_timestamping *) dp;
+		if (cmsg->cmsg_level == SOL_SOCKET
+		    && cmsg->cmsg_type == SO_TIMESTAMPING)
+			sts = (struct scm_timestamping *)dp;
 
-			//fprintf(stderr, "Serr %x sts %x\n", serr, sts);
+		//fprintf(stderr, "Serr %x sts %x\n", serr, sts);
 
-			if(serr && sts && tx_timestamp)
-			{
-				tx_timestamp->correct = 1;
-				tx_timestamp->phase = 0;
-				tx_timestamp->nsec = sts->hwtimeraw.tv_nsec;
-				tx_timestamp->sec = (uint64_t) sts->hwtimeraw.tv_sec & 0x7fffffff;
-			}
+		if (serr && sts && tx_timestamp) {
+			tx_timestamp->correct = 1;
+			tx_timestamp->phase = 0;
+			tx_timestamp->nsec = sts->hwtimeraw.tv_nsec;
+			tx_timestamp->sec =
+			    (uint64_t) sts->hwtimeraw.tv_sec & 0x7fffffff;
+		}
 	}
 }
 
-int ptpd_netif_recvfrom(wr_socket_t *sock, wr_sockaddr_t *from, void *data,
-			size_t data_length, wr_timestamp_t *rx_timestamp)
+int ptpd_netif_recvfrom(wr_socket_t * sock, wr_sockaddr_t * from, void *data,
+			size_t data_length, wr_timestamp_t * rx_timestamp)
 {
 	struct my_socket *s = (struct my_socket *)sock;
 	struct etherpacket pkt;
@@ -450,17 +451,20 @@ int ptpd_netif_recvfrom(wr_socket_t *sock, wr_sockaddr_t *from, void *data,
 	msg.msg_iovlen = 1;
 	entry.iov_base = &pkt;
 	entry.iov_len = len;
-	msg.msg_name = (caddr_t)&from_addr;
+	msg.msg_name = (caddr_t) & from_addr;
 	msg.msg_namelen = sizeof(from_addr);
 	msg.msg_control = &control;
 	msg.msg_controllen = sizeof(control);
 
 	int ret = recvmsg(s->fd, &msg, MSG_DONTWAIT);
 
-	if(ret < 0 && errno == EAGAIN) return 0; // would be blocking
-	if(ret == -EAGAIN) return 0;
+	if (ret < 0 && errno == EAGAIN)
+		return 0;	// would be blocking
+	if (ret == -EAGAIN)
+		return 0;
 
-	if(ret <= 0) return ret;
+	if (ret <= 0)
+		return ret;
 
 	memcpy(data, pkt.data, ret - sizeof(struct ethhdr));
 
@@ -468,35 +472,35 @@ int ptpd_netif_recvfrom(wr_socket_t *sock, wr_sockaddr_t *from, void *data,
 	memcpy(from->mac, pkt.ether.h_source, 6);
 	memcpy(from->mac_dest, pkt.ether.h_dest, 6);
 
-	if(rx_timestamp)
+	if (rx_timestamp)
 		rx_timestamp->correct = 0;
 
-	for (cmsg = CMSG_FIRSTHDR(&msg);
-	     cmsg;
-	     cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
 
 		void *dp = CMSG_DATA(cmsg);
 
-		if(cmsg->cmsg_level == SOL_SOCKET
-		   && cmsg->cmsg_type == SO_TIMESTAMPING)
-			sts = (struct scm_timestamping *) dp;
+		if (cmsg->cmsg_level == SOL_SOCKET
+		    && cmsg->cmsg_type == SO_TIMESTAMPING)
+			sts = (struct scm_timestamping *)dp;
 
 	}
 
-	if(sts && rx_timestamp)
-	{
-		int cntr_ahead = sts->hwtimeraw.tv_sec & 0x80000000 ? 1: 0;
+	if (sts && rx_timestamp) {
+		int cntr_ahead = sts->hwtimeraw.tv_sec & 0x80000000 ? 1 : 0;
 		rx_timestamp->nsec = sts->hwtimeraw.tv_nsec;
 		rx_timestamp->sec =
-			(uint64_t) sts->hwtimeraw.tv_sec & 0x7fffffff;
+		    (uint64_t) sts->hwtimeraw.tv_sec & 0x7fffffff;
 
 		rx_timestamp->raw_nsec = sts->hwtimeraw.tv_nsec;
 		rx_timestamp->raw_ahead = cntr_ahead;
 
 		update_dmtd(sock);
-		if(s->dmtd_phase_valid)
-		{
-			ptpd_netif_linearize_rx_timestamp(rx_timestamp, s->dmtd_phase, cntr_ahead, s->phase_transition, s->clock_period);
+		if (s->dmtd_phase_valid) {
+			ptpd_netif_linearize_rx_timestamp(rx_timestamp,
+							  s->dmtd_phase,
+							  cntr_ahead,
+							  s->phase_transition,
+							  s->clock_period);
 			rx_timestamp->correct = 1;
 		}
 	}
@@ -509,26 +513,25 @@ int ptpd_netif_adjust_counters(int64_t adjust_sec, int32_t adjust_nsec)
 	hexp_pps_params_t p;
 	int cmd;
 
-    if(!adjust_nsec && !adjust_sec)
-        return PTPD_NETIF_OK;
+	if (!adjust_nsec && !adjust_sec)
+		return PTPD_NETIF_OK;
 
-	if(adjust_sec && adjust_nsec)
-	{
-	    fprintf(stderr, " FATAL : trying to adjust both the SEC and the NS counters simultaneously. \n");
-	    exit(-1);
+	if (adjust_sec && adjust_nsec) {
+		fprintf(stderr,
+			" FATAL : trying to adjust both the SEC and the NS counters simultaneously. \n");
+		exit(-1);
 	}
 
-	if(adjust_sec)
-	{
-	    cmd = HEXP_PPSG_CMD_ADJUST_SEC;
-	    p.adjust_sec = adjust_sec;
+	if (adjust_sec) {
+		cmd = HEXP_PPSG_CMD_ADJUST_SEC;
+		p.adjust_sec = adjust_sec;
 	} else {
-      cmd = HEXP_PPSG_CMD_ADJUST_NSEC;
-      p.adjust_nsec = adjust_nsec;
-  }
+		cmd = HEXP_PPSG_CMD_ADJUST_NSEC;
+		p.adjust_nsec = adjust_nsec;
+	}
 
-    if(!halexp_pps_cmd(cmd, &p))
-        return PTPD_NETIF_OK;
+	if (!halexp_pps_cmd(cmd, &p))
+		return PTPD_NETIF_OK;
 
-    return PTPD_NETIF_ERROR;
+	return PTPD_NETIF_ERROR;
 }

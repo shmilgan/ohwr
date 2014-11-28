@@ -35,7 +35,6 @@
 	
 	
 	<?php 
-		wrs_change_wrfs("rw");
 		//Change user password
 		
 		$success=false;
@@ -89,8 +88,6 @@
 			
 			
 		}
-		
-		wrs_change_wrfs("ro");
 		
 		if($success) header('Location: logout.php');
 	

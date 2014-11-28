@@ -33,13 +33,12 @@
 #define FPGA_I2C1_IFNUM 1
 #define FPGA_I2C_SENSORS_IFNUM 2
 
-typedef struct
-{
-    uint32_t base_address;
-    uint32_t if_num;
-    uint32_t prescaler;
+typedef struct {
+	uint32_t base_address;
+	uint32_t if_num;
+	uint32_t prescaler;
 } i2c_fpga_reg_t;
 
-int		i2c_fpga_reg_init_bus(struct i2c_bus *bus);
+int i2c_fpga_reg_init_bus(struct i2c_bus *bus);
 
 #endif //I2C_FPGA_REG_H

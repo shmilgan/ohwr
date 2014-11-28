@@ -60,9 +60,7 @@
 	</div>
 	
 	<?  
-		wrs_change_wrfs("rw");
 		wrs_load_files();
-		wrs_change_wrfs("ro");
 
 	?>
 			
