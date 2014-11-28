@@ -236,6 +236,27 @@ static int pstats_rd_cntrs(int port)
 	return 0;
 }
 
+/* SYSCTL handler, pass description of counters */
+static int pstats_desc_handler(ctl_table *ctl, int write, void *buffer,
+		size_t *lenp, loff_t *ppos)
+{
+	unsigned int data;
+	unsigned int version;
+
+	if (!write) {
+		/* get version number */
+		data = pstats_readl(pstats_dev, INFO);
+		version = PSTATS_INFO_VER_R(data);
+		if (version >= PSTATS_NAMES_ARRAY_SIZE) {
+			version = 0;
+		}
+
+		ctl->data = (void *)pstats_names[version];
+		ctl->maxlen = strlen(pstats_names[version]);
+	}
+	return proc_dostring(ctl, 0, buffer, lenp, ppos);
+}
+
 /* SYSCTL handler, reads counters from hw and passes to sysfs */
 static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 		size_t *lenp, loff_t *ppos)
@@ -260,7 +281,7 @@ static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 	return ret;
 }
 
-static ctl_table pstats_ctl_table[20];	/* initialized in _init function */
+static ctl_table pstats_ctl_table[21];	/* initialized in _init function */
 
 static ctl_table proc_table[] = {
 	{
@@ -290,6 +311,8 @@ static struct ctl_table_header *pstats_header;
 static int __init pstats_init(void)
 {
 	int i, err = 0;
+	unsigned int data;
+	unsigned int version;
 
 	/*convert nports to one-hot port mask (for enabling IRQs*/
 	printk(KERN_INFO "nports=%u\n", pstats_nports);
@@ -311,6 +334,16 @@ static int __init pstats_init(void)
 	pstats_ctl_table[i].maxlen = PINFO_SIZE * sizeof(int);
 	pstats_ctl_table[i].mode = 0444;
 	pstats_ctl_table[i].proc_handler = pstats_handler;
+	pstats_ctl_table[i].extra1 = (void *)i;
+
+	i++;
+	/* fill data and maxlen at open time, so we can replace FPGA
+	 * without reloading kernel module */
+	pstats_ctl_table[i].procname = "description";
+	pstats_ctl_table[i].data = NULL;
+	pstats_ctl_table[i].maxlen = 0;
+	pstats_ctl_table[i].mode = 0444;
+	pstats_ctl_table[i].proc_handler = pstats_desc_handler;
 	pstats_ctl_table[i].extra1 = (void *)i;
 
 	pstats_header = register_sysctl_table(proc_table);
@@ -347,6 +380,14 @@ static int __init pstats_init(void)
 	pstats_irq_enable(portmsk);
 
 	wr_nic_pstats_callback = pstats_callback;
+
+	/* get version number */
+	data = pstats_readl(pstats_dev, INFO);
+	version = PSTATS_INFO_VER_R(data);
+
+	if (version >= PSTATS_NAMES_ARRAY_SIZE)
+		printk(KERN_INFO "port stats version %d not supported\n",
+		       version);
 
 	printk(KERN_INFO "%s: initialized\n", KBUILD_MODNAME);
 	return 0;
