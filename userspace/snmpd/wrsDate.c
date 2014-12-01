@@ -37,8 +37,8 @@ void *create_map(unsigned long address, unsigned long size)
 	if (fd < 0)
 		return NULL;
 
-	offset = address & ~(ps -1);
-	fragment = address & (ps -1);
+	offset = address & ~(ps - 1);
+	fragment = address & (ps - 1);
 	len = address + size - offset;
 
 	mapaddr = mmap(0, len, PROT_READ | PROT_WRITE,
@@ -68,7 +68,7 @@ static void wrs_d_get(void)
 		utcl = pps->CNTR_UTCLO;
 		tmp1 = pps->CNTR_UTCHI;
 		tmp2 = pps->CNTR_UTCLO;
-	} while((tmp1 != utch) || (tmp2 != utcl));
+	} while ((tmp1 != utch) || (tmp2 != utcl));
 
 	wrs_d_current_64 = (uint64_t)(utch) << 32 | utcl;
 	t = wrs_d_current_64;

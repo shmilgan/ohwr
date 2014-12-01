@@ -116,7 +116,7 @@ static void wrs_ppsi_parse_line(char *line, void *baseaddr,
 	addr = baseaddr + pi->offset;
 
 	/* Here I'm lazy in error checking, let's hope it's ok */
-	switch(pi->type) {
+	switch (pi->type) {
 	case ASN_UNSIGNED:
 		/*
 		 * our unsigned is line length, definitely less than 2G,
@@ -276,7 +276,7 @@ static int ppsi_g_group(netsnmp_mib_handler          *handler,
 /* For the per-port table we use an iterator like in wrsPstats.c */
 
 static netsnmp_variable_list *
-ppsi_p_next_entry( void **loop_context,
+ppsi_p_next_entry(void **loop_context,
 			void **data_context,
 			netsnmp_variable_list *index,
 			netsnmp_iterator_info *data)
@@ -290,7 +290,7 @@ ppsi_p_next_entry( void **loop_context,
 		return NULL; /* no more */
 	i++;
 	/* Create the row OID: only the counter index */
-	snmp_set_var_value(index, (u_char*)&i, sizeof(i));
+	snmp_set_var_value(index, (u_char *)&i, sizeof(i));
 
 	/* Set the data context (1..4 -> 0..3) */
 	*data_context = (void *)(intptr_t)(i - 1);
@@ -306,7 +306,7 @@ ppsi_p_first_entry(void **loop_context,
 			netsnmp_iterator_info *data)
 {
 	/* reset internal position, so "next" is "first" */
-	*loop_context = (void*)0; /* first counter */
+	*loop_context = (void *)0; /* first counter */
 	return ppsi_p_next_entry(loop_context, data_context, index, data);
 }
 
@@ -353,7 +353,7 @@ ppsi_p_handler(netsnmp_mib_handler          *handler,
 	}
 
 
-	for (request=requests; request; request=request->next) {
+	for (request = requests; request; request = request->next) {
 		requestvb = request->requestvb;
 
 		//logmsg("%s: %i\n", __func__, __LINE__);
@@ -424,6 +424,4 @@ init_wrsPpsi(void)
 							  ppsi_p_load, NULL,
 							  wrsPpsiP_oid,
 							  OID_LENGTH(wrsPpsiP_oid)));
-	
-
 }

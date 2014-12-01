@@ -51,7 +51,7 @@ wrsPstats_handler(netsnmp_mib_handler          *handler,
 	logmsg("%s: %i\n", __func__, __LINE__);
 	switch (reqinfo->mode) {
 	case MODE_GET:
-		for (request=requests; request; request=request->next) {
+		for (request = requests; request; request = request->next) {
 			requestvb = request->requestvb;
 
 			logmsg("%s: %i\n", __func__, __LINE__);
@@ -94,7 +94,7 @@ wrsPstats_handler(netsnmp_mib_handler          *handler,
 
 
 static netsnmp_variable_list *
-wrsPstats_next_entry( void **loop_context,
+wrsPstats_next_entry(void **loop_context,
 			void **data_context,
 			netsnmp_variable_list *index,
 			netsnmp_iterator_info *data)
@@ -108,7 +108,7 @@ wrsPstats_next_entry( void **loop_context,
 		return NULL; /* no more */
 	i++;
 	/* Create the row OID: only the counter index */
-	snmp_set_var_value(index, (u_char*)&i, sizeof(i));
+	snmp_set_var_value(index, (u_char *)&i, sizeof(i));
 
 	/* Set the data context (1..39 -> 0..38) */
 	*data_context = (void *)(intptr_t)(i - 1);
@@ -126,7 +126,7 @@ wrsPstats_first_entry(void **loop_context,
 	logmsg("%s: %i\n", __func__, __LINE__);
 
 	/* reset internal position, so "next" is "first" */
-	*loop_context = (void*)0; /* first counter */
+	*loop_context = (void *)0; /* first counter */
 	return wrsPstats_next_entry(loop_context, data_context, index, data);
 }
 
@@ -146,13 +146,13 @@ wrsPstats_load(netsnmp_cache *cache, void *vmagic)
 			/* parse new line delimited file */
 			p = fgets(pstats_global_data.counter_name[counter],
 				  PSTATS_MAX_COUNTERS_NAME_LEN, f);
-			if(p == NULL)
+			if (p == NULL)
 				break;
 			/* fgets usualy returns strings with newline, return
 			   string shall contain maximum one newline character */
 			p = strchr(pstats_global_data.counter_name[counter],
 				   '\n');
-			if(p != NULL)
+			if (p != NULL)
 				*p = '\0';
 
 		}
@@ -185,7 +185,6 @@ wrsPstats_load(netsnmp_cache *cache, void *vmagic)
 		}
 		fclose(f);
 	}
-	//dumpstruct(logf, "global data", &pstats_global_data, sizeof(pstats_global_data));
 	return 0;
 }
 
