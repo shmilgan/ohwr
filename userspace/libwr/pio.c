@@ -6,9 +6,8 @@
 #include <inttypes.h>
 #include <fcntl.h>
 
-#include <at91/at91sam9g45.h>
-#include <at91/at91_pmc.h>
-#include <at91/at91_pio.h>
+#include <mach/at91_pmc.h>
+#include <mach/at91_pio.h>
 
 #include <libwr/pio.h>
 #include <libwr/trace.h>
@@ -44,7 +43,7 @@ int shw_pio_mmap_init()
 
 	_sys_base =
 	    mmap(NULL, 0x4000, PROT_READ | PROT_WRITE, MAP_SHARED, fd,
-		 (off_t) AT91C_BASE_SYS);
+		 AT91C_BASE_SYS_RAW);
 
 	if (_sys_base == NULL) {
 		TRACE(TRACE_FATAL, "can't mmap CPU GPIO regs");
