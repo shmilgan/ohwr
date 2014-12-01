@@ -5,6 +5,8 @@ OBJS = trace.o init.o fpga_io.o util.o pps_gen.o i2c.o shw_io.o i2c_bitbang.o \
 
 LIB = libwr.a
 
+WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
+
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 AS              = $(CROSS_COMPILE)as
 LD              = $(CROSS_COMPILE)ld
@@ -21,9 +23,6 @@ CFLAGS = -Wall -I. -O2  -DDEBUG -ggdb \
 	-I../include \
 	-I../mini-rpc \
 	-I$(LINUX)/arch/arm/mach-at91/include
-
-
-
 
 all: $(LIB)
 

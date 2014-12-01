@@ -5,6 +5,8 @@ TOOLS += wrs_vlans wrs_dump_shmem
 TOOLS += sdb-read
 TOOLS += nbtee
 
+WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
+
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 
 AS              = $(CROSS_COMPILE)as
