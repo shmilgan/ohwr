@@ -159,16 +159,6 @@ like increasing @t{NR_IRQ} and exporting symbols for externally-loaded
 the counters are. This would make the @sc{snmp} code generic, so
 no change there would be needed if and when the counters change.
 
-@item We need RTC driver to use WR time from FPGA as a system clock in Linux
-running on WR Switch (or to synchronize the system clock). Setting initial time
-from NTP is good for Grand Master in the network, but then we should keep all
-system clocks in sync with WR timescale. It will become important when people
-start gathering logs and SNMP info on a central server and would like to
-correlate logs if something bad happens. Let's keep in mind that currently
-unplugging fiber from the Slave port resets WR counters (i.e. current time
-00:00 01/01/1970). System clock should not follow this, we need to keep
-reporting failures timestamped with correct time.
-
 @end itemize
 
 @c ##########################################################################

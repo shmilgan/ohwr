@@ -748,6 +748,15 @@ Currently, the package includes the following modules:
 @item @i{wr_rtu.ko}: the routing-table interface between the
       switching core and the associated user-space daemon.
 @item @i{wr_pstats.ko}: exports per-port statistics to /proc/sys.
+
+@item @i{wr_clocksource.ko}: uses WR time as a source for system time.
+This driver uses the @sc{wr} counters to make host time flow at the
+right speed. The system time is moved to the current value, with an
+error not bigger than one second, as soon as @i{ppsi} synchronizes,
+and the clocksource grants it won't move ever after, keeping the same
+offset. This is considered acceptable, because system time is only
+used for logging.
+
 @item @i{at91_softpwm.ko}: a driver that generates a PWM signal for the fan.
 @end itemize
 
