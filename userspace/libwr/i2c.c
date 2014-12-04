@@ -70,6 +70,6 @@ int32_t i2c_scan(struct i2c_bus * bus, uint8_t * data)
 			found++;
 		}
 	}
-	TRACE(TRACE_INFO, "%s (0x%X): ndev=%d", bus->name, bus, found);
+	TRACE(TRACE_INFO, "%s (%p): ndev=%d", bus->name, bus, found);
 	return found;
 }

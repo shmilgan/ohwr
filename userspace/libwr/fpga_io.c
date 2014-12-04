@@ -41,7 +41,7 @@ int shw_fpga_mmap_init()
 		return -1;
 	}
 
-	TRACE(TRACE_INFO, "FPGA virtual base = 0x%08x", _fpga_base_virt);
+	TRACE(TRACE_INFO, "FPGA virtual base = %p", _fpga_base_virt);
 
 	return 0;
 

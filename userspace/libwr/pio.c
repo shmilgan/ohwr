@@ -52,7 +52,7 @@ int shw_pio_mmap_init()
 		exit(-1);
 	}
 
-	TRACE(TRACE_INFO, "AT91_SYS virtual base = 0x%08x", _sys_base);
+	TRACE(TRACE_INFO, "AT91_SYS virtual base = %p", _sys_base);
 
 	pmc_enable_clock(2);	/* enable PIO clocks */
 	pmc_enable_clock(3);
