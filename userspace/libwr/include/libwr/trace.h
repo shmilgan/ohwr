@@ -17,6 +17,8 @@
 void trace_log_stderr();
 void trace_log_file(const char *filename);
 void trace_printf(const char *fname, int lineno, int level, const char *fmt,
-		  ...);
+		  ...)
+	__attribute__((format(printf,4,5)));
+
 
 #endif /* __LIBWR_TRACE_H */
