@@ -47,16 +47,15 @@ int shw_pps_gen_init()
 /* Adjusts the nanosecond (refclk cycle) counter by atomically adding (how_much) cycles. */
 int shw_pps_gen_adjust(int counter, int64_t how_much)
 {
-	TRACE(TRACE_INFO, "Adjust: counter = %s [%c%lld]",
+	TRACE(TRACE_INFO, "Adjust: counter = %s [%+lld]",
 	      counter == PPSG_ADJUST_SEC ? "seconds" : "nanoseconds",
-	      how_much < 0 ? '-' : '+', abs(how_much));
+	      llabs(how_much));
 
 	if (counter == PPSG_ADJUST_NSEC) {
 		ppsg_write(ADJ_UTCLO, 0);
 		ppsg_write(ADJ_UTCHI, 0);
-		ppsg_write(ADJ_NSEC,
-			   (int32_t) ((int64_t) how_much * 1000LL /
-				      (int64_t) REF_CLOCK_PERIOD_PS));
+		ppsg_write(ADJ_NSEC, /* convert to pico for conversion */
+			   (int32_t) (how_much * 1000 / REF_CLOCK_PERIOD_PS));
 	} else {
 		ppsg_write(ADJ_UTCLO, (uint32_t) (how_much & 0xffffffffLL));
 		ppsg_write(ADJ_UTCHI, (uint32_t) (how_much >> 32) & 0xff);
