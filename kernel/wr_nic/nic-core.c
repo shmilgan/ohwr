@@ -20,7 +20,9 @@
 #include <asm/unaligned.h>
 
 #include "wr-nic.h"
+#if WR_IS_SWITCH
 #include "wr_pstats.h"
+#endif
 #include "nic-mem.h"
 
 /*
@@ -39,11 +41,13 @@ static int wrn_open(struct net_device *dev)
 	if (!is_valid_ether_addr(dev->dev_addr))
 		return -EADDRNOTAVAIL;
 
-	/* MACH gets the first two bytes, MACL the rest  */
-	val = get_unaligned_be16(dev->dev_addr);
-	writel(val, &ep->ep_regs->MACH);
-	val = get_unaligned_be32(dev->dev_addr+2);
-	writel(val, &ep->ep_regs->MACL);
+	if (WR_IS_SWITCH) {
+		/* MACH gets the first two bytes, MACL the rest  */
+		val = get_unaligned_be16(dev->dev_addr);
+		writel(val, &ep->ep_regs->MACH);
+		val = get_unaligned_be32(dev->dev_addr+2);
+		writel(val, &ep->ep_regs->MACL);
+	}
 
 	/* Mark it as down, and start the ep-specific polling timer */
 	clear_bit(WRN_EP_UP, &ep->ep_flags);
@@ -183,6 +187,8 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	spin_lock_irqsave(&wrn->lock, flags);
 	desc = __wrn_alloc_tx_desc(wrn);
 	id = (wrn->id++) & 0xffff;
+	if (id == 0) /* 0 cannot be used in the SPEC; irrelevant in WRS */
+		id = wrn->id++;
 	spin_unlock_irqrestore(&wrn->lock, flags);
 
 	if (desc < 0) /* error */
@@ -198,7 +204,7 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			__func__);
 	}
 	wrn->skb_desc[desc].skb = skb; /* Save for tx irq and stamping */
-	wrn->skb_desc[desc].id = id; /* Save for tx irq and stamping */
+	wrn->skb_desc[desc].frame_id = id; /* Save for tx irq and stamping */
 
 	//netif_stop_queue(dev); /* Queue stopped until tx is over (FIXME?) */
 
@@ -220,17 +226,20 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	return 0;
 }
 
+#if WR_IS_SWITCH
 int (*wr_nic_pstats_callback)(int epnum,
 			      unsigned int ctr[PSTATS_CNT_PP]);
 EXPORT_SYMBOL(wr_nic_pstats_callback);
 
 static unsigned int nic_counters[PSTATS_CNT_PP];
 static DEFINE_SPINLOCK(nic_counters_lock);
+#endif
 
 struct net_device_stats *wrn_get_stats(struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
 
+#if WR_IS_SWITCH
 	if (wr_nic_pstats_callback) {
 		int i;
 
@@ -259,10 +268,30 @@ struct net_device_stats *wrn_get_stats(struct net_device *dev)
 		}
 		spin_unlock(&nic_counters_lock);
 	}
-
+#endif
 	return &ep->stats;
-	return NULL;
 }
+
+/*
+ * If we have a mezzanine, we need the ioctl as well as init/exit. Provide
+ * three weak functions here, so to link even if no mezzanine is there.
+ */
+int __weak wrn_mezzanine_ioctl(struct net_device *dev, struct ifreq *rq,
+			       int cmd)
+{
+	return -ENOIOCTLCMD;
+}
+
+int __weak wrn_mezzanine_init(struct net_device *dev)
+{
+	return 0;
+}
+
+void __weak wrn_mezzanine_exit(struct net_device *dev)
+{
+	return;
+}
+
 
 static int wrn_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 {
@@ -274,9 +303,8 @@ static int wrn_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	case SIOCSHWTSTAMP:
 		return wrn_tstamp_ioctl(dev, rq, cmd);
 	case PRIV_IOCGCALIBRATE:
-		return wrn_calib_ioctl(dev, rq, cmd);
 	case PRIV_IOCGGETPHASE:
-		return wrn_phase_ioctl(dev, rq, cmd);
+		return -EOPNOTSUPP;
 	case PRIV_IOCREADREG:
 		if (get_user(reg, (u32 *)rq->ifr_data) < 0)
 			return -EFAULT;
@@ -299,6 +327,11 @@ static int wrn_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		if (put_user(reg, (u32 *)rq->ifr_data) < 0)
 			return -EFAULT;
 		return 0;
+
+	case PRIV_MEZZANINE_ID:
+	case PRIV_MEZZANINE_CMD:
+		/* Pass this to the mezzanine driver, or use internal weak */
+		return wrn_mezzanine_ioctl(dev, rq, cmd);
 
 	default:
 		spin_lock_irq(&ep->lock);
@@ -396,28 +429,38 @@ static void __wrn_rx_descriptor(struct wrn_dev *wrn, int desc)
 
 	wrn_ppsg_read_time(wrn, &counter_ppsg, &utc);
 
-	if(counter_ppsg < REFCLK_FREQ/4 && ts_r > 3*REFCLK_FREQ/4)
-		utc--;
+	if (WR_IS_NODE)
+		if (counter_ppsg < ts_r)
+			utc--;
+
+	if (WR_IS_SWITCH)
+		if (counter_ppsg < REFCLK_FREQ/4 && ts_r > 3*REFCLK_FREQ/4)
+			utc--;
 
 	ts.tv_sec = (s32)utc & 0x7fffffff;
 	cntr_diff = (ts_r & 0xf) - ts_f;
 	/* the bit says the rising edge cnter is 1tick ahead */
-	if(cntr_diff == 1 || cntr_diff == (-0xf))
+	if (cntr_diff == 1 || cntr_diff == (-0xf))
 		ts.tv_sec |= 0x80000000;
 	ts.tv_nsec = ts_r * NSEC_PER_TICK;
 
 	pr_debug("Timestamp: %li:%li, ahead = %d\n",
 	       ts.tv_sec & 0x7fffffff,
 	       ts.tv_nsec & 0x7fffffff,
-	       ts.tv_sec & 0x80000000 ? 1 :0);
+	       ts.tv_sec & 0x80000000 ? 1 : 0);
+
+	if (WR_IS_NODE) {
+		/* SPEC: don't do the strange stuff for wr-ptp */
+		ts.tv_sec &= ~0x80000000;
+		ts.tv_nsec &= 0x7fffffff;
+	}
 
 	/* If the timestamp was reported as incorrect, pass 0 instead */
-	if (! (r1 & NIC_RX1_D1_TS_INCORRECT)) /* FIXME: bit name possibly? */
-	{
+	if (!(r1 & NIC_RX1_D1_TS_INCORRECT)) {
 		hwts = skb_hwtstamps(skb);
 		hwts->hwtstamp = timespec_to_ktime(ts);
 	}
-	
+
 	skb->protocol = eth_type_trans(skb, dev);
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 	dev->last_rx = jiffies;
@@ -486,7 +529,7 @@ static void wrn_tx_interrupt(struct wrn_dev *wrn)
 			/* hardware timestamping is enabled */
 			info->tx_flags |= SKBTX_IN_PROGRESS;
 			pr_debug("%s: %i -- in progress\n", __func__, __LINE__);
-			wrn_tstamp_find_skb(wrn, i);
+			wrn_tx_tstamp_skb(wrn, i);
 			/* It has been freed if found; otherwise keep it */
 		} else {
 			dev_kfree_skb_irq(skb);

@@ -12,6 +12,30 @@
  */
 #ifndef __WR_NIC_H__
 #define __WR_NIC_H__
+
+/* Private ioctls, (the first 2 are the same as they were in wr_minic.c */
+#define PRIV_IOCGCALIBRATE	(SIOCDEVPRIVATE + 1)
+#define PRIV_IOCGGETPHASE	(SIOCDEVPRIVATE + 2)
+#define PRIV_IOCREADREG		(SIOCDEVPRIVATE + 3)
+#define PRIV_IOCPHYREG		(SIOCDEVPRIVATE + 4)
+
+/* The last two available are used for mezzanine-private stuff */
+#define PRIV_MEZZANINE_ID	(SIOCDEVPRIVATE + 14)
+#define PRIV_MEZZANINE_CMD	(SIOCDEVPRIVATE + 15)
+
+#ifdef __KERNEL__ /* The rest is kernel-only */
+
+/* The NIC can build for both the switch and the node. Prefer if to ifdef */
+#if defined WR_NODE
+#  define WR_IS_NODE 1
+#  define WR_IS_SWITCH 0
+#elif defined WR_SWITCH
+#  define WR_IS_NODE 0
+#  define WR_IS_SWITCH 1
+#else
+#  error "Please define WR_NODE or WR_SWITCH"
+#endif
+
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
 #include <linux/mii.h>		/* Needed for stuct mii_if_info in wrn_dev */
@@ -20,7 +44,6 @@
 
 #include "nic-hardware.h" /* Magic numbers: please fix them as needed */
 
-#define DRV_NAME "wr-nic" /* Used in messages and device/driver names */
 #define DRV_VERSION "0.1" /* For ethtool->get_drvinfo -- FIXME: auto-vers */
 
 /*
@@ -42,26 +65,20 @@
 #define WRN_IRQ_NAMES {"wr-nic", "wr-tstamp"}
 #define WRN_IRQ_HANDLERS {wrn_interrupt, wrn_tstamp_interrupt}
 
-#define WRN_TS_BUF_SIZE 1024 /* array of timestamp structures */
-
 struct wrn_ep; /* Defined later */
 
-/* A timestamping structure to keep information for user-space */
-struct wrn_tx_tstamp {
+/* We must remember skb, id and tstamp for each pending descriptor, */
+struct wrn_desc_pending {
+	struct sk_buff *skb;
 	u8 valid;
 	u8 port_id;
 	u16 frame_id;
-	u32 ts;
+	u32 cycles;
 };
+
 /* bits for "valid" field */
 #define TS_PRESENT 1
 #define TS_INVALID 2 /* as reported by hw: we return 0 as timestamp */
-
-/* We must remember both skb and id for each pending descriptor */
-struct wrn_desc_pending {
-	struct sk_buff *skb;
-	u32 id; /* only 16 bits, actually */
-};
 
 /*
  * This is the main data structure for our NIC device. As for locking,
@@ -88,7 +105,6 @@ struct wrn_dev {
 	int			id;
 
 	struct net_device	*dev[WRN_NR_ENDPOINTS];
-	struct wrn_tx_tstamp	ts_buf[WRN_TS_BUF_SIZE];
 
 	/* FIXME: all dev fields must be verified */
 
@@ -167,12 +183,6 @@ enum wrn_resnames {
 #define wrn_ep_read(ep, reg) __raw_readl(&(ep)->ep_regs->reg)
 #define wrn_ep_write(ep, reg, val) __raw_writel((val), &(ep)->ep_regs->reg)
 
-/* Private ioctls, (the first 2 are the same as they were in wr_minic.c */
-#define PRIV_IOCGCALIBRATE	(SIOCDEVPRIVATE + 1)
-#define PRIV_IOCGGETPHASE	(SIOCDEVPRIVATE + 2)
-#define PRIV_IOCREADREG		(SIOCDEVPRIVATE + 3)
-#define PRIV_IOCPHYREG		(SIOCDEVPRIVATE + 4)
-
 #define NIC_READ_PHY_CMD(addr)  (((addr) & 0xff) << 16)
 #define NIC_RESULT_DATA(val) ((val) & 0xffff)
 #define NIC_WRITE_PHY_CMD(addr, value)  ((((addr) & 0xff) << 16) \
@@ -230,14 +240,22 @@ extern int  wrn_endpoint_probe(struct net_device *netdev);
 extern void wrn_endpoint_remove(struct net_device *netdev);
 
 /* Following functions from timestamp.c */
-extern void wrn_tstamp_find_skb(struct wrn_dev *wrn, int i);
+extern void wrn_tx_tstamp_skb(struct wrn_dev *wrn, int desc);
 extern int wrn_tstamp_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 extern irqreturn_t wrn_tstamp_interrupt(int irq, void *dev_id);
 extern void wrn_tstamp_init(struct wrn_dev *wrn);
 
-/* Following functions from dmtd.c */
+/* Following functions from dmtd.c and pps.c */
 extern int wrn_phase_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 extern int wrn_calib_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
 extern void wrn_ppsg_read_time(struct wrn_dev *wrn, u32 *fine_cnt, u32 *utc);
+
+/* Locally weak, designed for a mezzanine driver to implement */
+extern int wrn_mezzanine_ioctl(struct net_device *dev, struct ifreq *rq,
+			       int cmd);
+extern int wrn_mezzanine_init(struct net_device *dev);
+extern void wrn_mezzanine_exit(struct net_device *dev);
+
+#endif /* __KERNEL__ */
 
 #endif /* __WR_NIC_H__ */

@@ -23,27 +23,27 @@ static char *macaddr = "00:00:00:00:00:00";
 module_param(macaddr, charp, 0444);
 
 /* Copied from kernel 3.6 net/utils.c, it converts from MAC string to u8 array */
-static int mac_pton(const char *s, u8 *mac)
+__weak int mac_pton(const char *s, u8 *mac)
 {
 	int i;
 
 	/* XX:XX:XX:XX:XX:XX */
 	if (strlen(s) < 3 * ETH_ALEN - 1)
-		 return -EINVAL;
+		return 0;
 
 	/* Don't dirty result unless string is valid MAC. */
 	for (i = 0; i < ETH_ALEN; i++) {
 		if (!strchr("0123456789abcdefABCDEF", s[i * 3]))
-			return -EINVAL;
+			return 0;
 		if (!strchr("0123456789abcdefABCDEF", s[i * 3 + 1]))
-			return -EINVAL;
+			return 0;
 		if (i != ETH_ALEN - 1 && s[i * 3 + 2] != ':')
-			return -EINVAL;
+			return 0;
 	}
 	for (i = 0; i < ETH_ALEN; i++) {
 		mac[i] = (hex_to_bin(s[i * 3]) << 4) | hex_to_bin(s[i * 3 + 1]);
 	}
-	return 0;
+	return 1;
 }
 
 /*
@@ -54,6 +54,16 @@ int wrn_phy_read(struct net_device *dev, int phy_id, int location)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
 	u32 val;
+
+	if (WR_IS_NODE) {
+		/*
+		 * We cannot access the phy from Linux, because the phy
+		 * is managed by the lm32 core. However, network manager
+		 * insists on doing that, so we'd better not warn about it
+		 */
+		//WARN_ON(1); /* SPEC: no access */
+		return -1;
+	}
 
 	wrn_ep_write(ep, MDIO_CR, EP_MDIO_CR_ADDR_W(location));
 	while( (wrn_ep_read(ep, MDIO_ASR) & EP_MDIO_ASR_READY) == 0)
@@ -67,6 +77,17 @@ void wrn_phy_write(struct net_device *dev, int phy_id, int location,
 		      int value)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
+
+	if (WR_IS_NODE) {
+		/*
+		 * We cannot access the phy from Linux, because the phy
+		 * is managed by the lm32 core. However, network manager
+		 * insists on doing that, so we'd better not warn about it
+		 */
+		//WARN_ON(1); /* SPEC: no access */
+		return;
+	}
+
 	wrn_ep_write(ep, MDIO_CR,
 		     EP_MDIO_CR_ADDR_W(location)
 		     | EP_MDIO_CR_DATA_W(value)
@@ -157,6 +178,11 @@ int wrn_ep_open(struct net_device *dev)
 	unsigned long timerarg = (unsigned long)dev;
 	int prio, prio_map;
 
+	if (WR_IS_NODE) {
+		netif_carrier_on(dev);
+		return 0; /* No access to EP registers in the SPEC */
+	}
+
 	/* Prepare hardware registers: first config, then bring up */
 	writel(0
 	       | EP_VCR0_QMODE_W(0x3)		/* unqualified port */
@@ -185,17 +211,13 @@ int wrn_ep_open(struct net_device *dev)
 	       | EP_ECR_RX_EN,
 		&ep->ep_regs->ECR);
 
-	/* Setup DMCR */
-	writel(0
-	       | EP_DMCR_EN
-	       | EP_DMCR_N_AVG_W(256 /* DMTD_AVG_SAMPLES */),
-	       &ep->ep_regs->DMCR);
-
 	wrn_phy_write(dev, 0, MII_LPA, 0);
 	wrn_phy_write(dev, 0, MII_BMCR, BMCR_ANENABLE | BMCR_ANRESTART);
 
 	/* Prepare the timer for link-up notifications */
 	setup_timer(&ep->ep_link_timer, wrn_ep_check_link, timerarg);
+	/* Not on spec. On spec this part of the function is never reached
+	 * due to return in if(WR_IS_NODE) */
 	mod_timer(&ep->ep_link_timer, jiffies + WRN_LINK_POLL_INTERVAL);
 	return 0;
 }
@@ -203,6 +225,13 @@ int wrn_ep_open(struct net_device *dev)
 int wrn_ep_close(struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
+
+	if (WR_IS_NODE)
+		return 0; /* No access to EP registers in the SPEC */
+	/*
+	 * Beware: the system loops in the del_timer_sync below if timer_setup
+	 * had not been called either (see "if (WR_IS_NODE)" in ep_open above)
+	 */
 
 	writel(0, &ep->ep_regs->ECR);
 	del_timer_sync(&ep->ep_link_timer);
@@ -225,24 +254,50 @@ int wrn_endpoint_probe(struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
 	static u8 wraddr[6];
-	int epnum, err;
+	int err;
 	u32 val;
 
 	if (is_zero_ether_addr(wraddr)) {
 		err = mac_pton(macaddr, wraddr);
-		if (err)
+		if (!err)
 			pr_err("wr_nic: probably invalid MAC address \"%s\".\n"
 			       "Use format XX:XX:XX:XX:XX:XX\n", macaddr);
 	}
+
+	if (WR_IS_NODE) {
+		/* If address is not provided as parameter read from lm32 */
+		if (is_zero_ether_addr(wraddr)) {
+			/* on the SPEC the lm32 already configured the mac address */
+			val = readl(&ep->ep_regs->MACH);
+			put_unaligned_be16(val, wraddr);
+			val = readl(&ep->ep_regs->MACL);
+			put_unaligned_be32(val, wraddr+2);
+		}
+	}
+
+	if (WR_IS_SWITCH) {
+		/* If the MAC address is 0, then randomize the first MAC */
+		/* Do not randomize for SPEC */
+		if (is_zero_ether_addr(wraddr)) {
+			pr_warn("wr_nic: missing MAC address, randomize\n");
+			/* randomize a MAC address, so lazy users can avoid ifconfig */
+			random_ether_addr(wraddr);
+			/* Clear the MSB on fourth octect to prevent bit overflow on OUI */
+			wraddr[3] &= 0x7F;
+		}
+	}
+
 	if (ep->ep_number == 0)
 		pr_info("WR-nic: Using address %pM\n", wraddr);
 
-	epnum = ep->ep_number;
+	/* Use wraddr as MAC */
+	memcpy(dev->dev_addr, wraddr, ETH_ALEN);
+	pr_debug("wr_nic: assign MAC %pM to wr%d\n", dev->dev_addr, ep->ep_number);
 
 	/* Check whether the ep has been sinthetized or not */
 	val = readl(&ep->ep_regs->IDCODE);
 	if (val != WRN_EP_MAGIC) {
-		pr_info(DRV_NAME "EP%i (%s) has not been sintethized\n",
+		pr_info(KBUILD_MODNAME " EP%i (%s) has not been sintethized\n",
 			ep->ep_number, dev->name);
 		return -ENODEV;
 	}
@@ -264,19 +319,6 @@ int wrn_endpoint_probe(struct net_device *dev)
 	ep->mii.advertising = ADVERTISE_1000XFULL;
 	ep->mii.full_duplex = 1;
 
-	/* If the MAC address is 0, then randomize the first MAC */
-	if (is_zero_ether_addr(wraddr)) {
-		pr_warn("wr_nic: missing MAC address, randomize\n");
-		/* randomize a MAC address, so lazy users can avoid ifconfig */
-		random_ether_addr(wraddr);
-		/* Clear the MSB on fourth octect to prevent bit overflow on OUI */
-		wraddr[3] &= 0x7F;
-	}
-
-	/* Use wraddr as MAC */
-	memcpy(dev->dev_addr, wraddr, ETH_ALEN);
-	pr_debug("wr_nic: assign MAC %pM to wr%d\n", dev->dev_addr, epnum);
-
 	/* Finally, register and succeed, or fail and undo */
 	err = register_netdev(dev);
 
@@ -285,7 +327,7 @@ int wrn_endpoint_probe(struct net_device *dev)
 	put_unaligned_be32(val + 1, wraddr + 2);
 
 	if (err) {
-		printk(KERN_ERR DRV_NAME "Can't register dev %s\n",
+		printk(KERN_ERR KBUILD_MODNAME ": Can't register dev %s\n",
 		       dev->name);
 		__wrn_endpoint_shutdown(ep);
 		/* ENODEV means "no more" for the caller, so avoid it */
