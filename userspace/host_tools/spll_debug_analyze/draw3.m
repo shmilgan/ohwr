@@ -13,7 +13,7 @@ Xaxis     = (1:(finish-start+1))*unitScale;
 to_ps     = 16000/(2^14); 
 
 figure
-subplot(4,1,1)
+subplot(5,1,1)
 hold on
 plot(Xaxis,mpll(start:finish,3)*to_ps,'b');
 if(option == 3)
@@ -35,7 +35,7 @@ axis tight
 
 clr=['r','g','b','c']
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-subplot(4,1,2)
+subplot(5,1,2)
 hold on
 for nn=1:backups_n;
   plot(Xaxis,bpll(start:finish,3,nn)*to_ps,clr(nn));
@@ -54,7 +54,7 @@ xlabel('time [s]');
 ylabel('phase [ps]');
 axis tight
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-subplot(4,1,3)
+subplot(5,1,3)
 hold on
 plot(Xaxis,bpll(start:finish,3,nn)*to_ps,'k');
 for nn=1:backups_n;
@@ -75,7 +75,7 @@ ylabel('phase [ps]');
 axis tight
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-subplot(4,1,4)
+subplot(5,1,4)
 hold on
 plot(Xaxis,bpll(start:finish,3,nn)*to_ps,'k');
 for nn=1:backups_n;
@@ -94,5 +94,31 @@ title('bPLLs: short average');
 xlabel('time [s]');
 ylabel('phase [ps]');
 axis tight
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+clrDASH=['r-.','g-.','b-.','c-.']
+
+subplot(5,1,5)
+hold on
+plot(Xaxis,bpll(start:finish,3,nn)*to_ps,'k');
+for nn=1:backups_n;
+  plot(Xaxis,bpll(start:finish,8,nn)*to_ps,clr(nn));
+  plot(Xaxis,bpll(start:finish,7,nn)*to_ps,clrDASH(nn));
+end
+if backups_n == 1
+  legend('err', 'bPLL 0 s_avg','bPLL 0 l_avg','Location','northwest');
+elseif backups_n == 2
+  legend('err', 'bPLL 0 s_avg','bPLL 0 l_avg','bPLL 1 s_avg','bPLL 1 l_avg','Location','northwest');
+elseif backups_n == 3
+  legend('err', 'bPLL 0 s_avg','bPLL 0 l_avg','bPLL 1 s_avg','bPLL 1 l_avg','bPLL 2 s_avg','bPLL 2 l_avg','Location','northwest');
+else
+  legend('err', 'bPLL 0 s_avg','bPLL 0 l_avg','bPLL 1 s_avg','bPLL 1 l_avg','bPLL 2 s_avg','bPLL 2 l_avg','bPLL 3 s_avg','bPLL 3 l_avg','Location','northwest');
+end
+title('bPLLs: short average');
+xlabel('time [s]');
+ylabel('phase [ps]');
+axis tight
+
 
 return
