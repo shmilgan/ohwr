@@ -39,6 +39,11 @@
 #define DBG_EVT_SWITCHOVER 4
 #define DBG_EVT_STARTBACKUP 8
 
+#define TRIG_ACQ(in,nr) (((in)==(nr))?1:0)
+//  c = (a > b)? a : b;
+//  
+//  getmax(a,b) ((a)>(b)?(a):(b))
+
 const char *tab_content = "        ID,        y,      err,      tag, setpiont,   event,   avg_l,     avg_s\n";
 
 char what[][20] = {{"Y         : "}, // 0
@@ -158,7 +163,7 @@ void print_pll(struct pll_stat *s,FILE *f)
     fprintf(f,"\n");
 }
 
-int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int what, int mark_event)
+int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int what, int mark_event, int trig_acq)
 {
     if(s->seq_id == seq_id)
         s->flags = s->flags | 0x1 << what;
@@ -183,7 +188,8 @@ int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int wh
     if(what == DBG_SAMPLE_ID) s->sample_id = value; 
     if(what == DBG_EVENT)     s->event     = 0xF & value; 
     if(what == DBG_EVENT && (0xf & value) == mark_event) {s->mark_event = 1; event = 1; printf("process event\n");}
-    if(what == DBG_EVENT && (0xf & value) == DBG_EVT_STARTBACKUP) s-> record = 1; 
+//     if(what == DBG_EVENT && (0xf & value) == DBG_EVT_STARTBACKUP && trig_acq) {s->record = 1; printf("started recording\n");}
+    if(what == DBG_EVENT && (0xf & value) == DBG_EVT_STARTBACKUP) {s->record = 1; printf("started recording\n");}
 
     return event;
 }
@@ -193,6 +199,8 @@ int main(int argc, char *argv[])
     
     int mark_event=DBG_EVT_SWITCHOVER;
     int op;
+    int backup_p = 0;
+    int print = 0;
     char *s, *name, *optstring;
     int sd, rc, length = sizeof(int);
     struct sockaddr_in serveraddr;
@@ -224,15 +232,25 @@ int main(int argc, char *argv[])
         for (name = s = argv[0]; s[0]; s++) 
             if (s[0] == '/' && s[1]) 
                 name = &s[1];
-        optstring = "?d:";
+        optstring = "?d:b:p";
+        printf("Startup options\n");
         while ((op = getopt(argc, argv, optstring)) != -1) 
         {
             switch(op) 
             {
                 case 'd':
                    finish_after_marker = atol(optarg);
-                   printf("Matlab-ready (no header) acqusition, finish %d samples after"
+                   printf("\tMatlab-ready (no header) acqusition, finish %d samples after"
                           " switchover marker\n",finish_after_marker);
+                   break;
+                case 'b':
+                   backup_p = atol(optarg);
+                   printf("\tBackup port number %d to that triggers start of the acquisition"
+                   " - this is to align nicely data for Matlab\n",backup_p);
+                   break;
+                case 'p':
+                   print = 1;
+                   printf("print all data to stdout\n");
                    break;
                 case '?':
                 default:
@@ -294,7 +312,7 @@ int main(int argc, char *argv[])
     xPLL[3] = fopen("bPLL3.txt", "w");
     /// ///////////////////////////////////////////////////////////////////////////
     
-    if(mPLL && bPLL && hPLL)
+    if(mPLL && hPLL && xPLL[0] && xPLL[1] && xPLL[2] && xPLL[3])
         printf("Created files OK\n");
     else 
         printf("Problem to created files\n");
@@ -333,38 +351,42 @@ int main(int argc, char *argv[])
         }
         else if(rc> 0)
         {
-           printf("Read %d byes of data\n", rc);
+           if(print) printf("Read %d byes of data\n", rc);
            for(i=0;i<ENTRIES_PER_PACKET;i++)
            {
               int value = (0xffffff & tx_buf[i].value);
               
-              printf("[ID:%8d] VAL:0x%8x | ", tx_buf[i].seq_id, tx_buf[i].value);
-              printf("%s [0x%x] %s [0x%x] :",
-                 where[0x7 & (tx_buf[i].value>>28)], (0x7 & (tx_buf[i].value>>28)),
-                 what [0xF & (tx_buf[i].value>>24)], (0xF & (tx_buf[i].value>>24)));
-              if( (0xF & (tx_buf[i].value>>24)) == DBG_EVENT) 
-                 printf("%s [0x%x] \n", 
-                    event[(0x00000f & tx_buf[i].value)],(0x00000f & value));
-              else
-                 printf("%8d\n", value);
-              if(0x80000000 &  tx_buf[i].value)
-                  printf("-------------------------------------------------------------------------\n");
+              if(print || (0xF & (tx_buf[i].value>>24)) == DBG_EVENT)
+	      {
+                 printf("[ID:%8d] VAL:0x%8x | ", tx_buf[i].seq_id, tx_buf[i].value);
+                 printf("%s [0x%x] %s [0x%x] :",
+                   where[0x7 & (tx_buf[i].value>>28)], (0x7 & (tx_buf[i].value>>28)),
+                   what [0xF & (tx_buf[i].value>>24)], (0xF & (tx_buf[i].value>>24)));
+                 if( (0xF & (tx_buf[i].value>>24)) == DBG_EVENT) 
+                   printf("%s [0x%x] \n", 
+                      event[(0x00000f & tx_buf[i].value)],(0x00000f & value));
+                 else
+                   printf("%8d\n", value);
+              
+                 if(0x80000000 &  tx_buf[i].value)
+                    printf("-------------------------------------------------------------------------\n");
+	      }   
               if((0x7 & (tx_buf[i].value>>28)) == DBG_MAIN)
-                 got_marker =+ process(&mpll_stat, mPLL, tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event); else
+                 got_marker =+ process(&mpll_stat, mPLL, tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event, 0); else
               if((0x7 & (tx_buf[i].value>>28)) == DBG_HELPER)
-                 got_marker =+ process(&hpll_stat, hPLL, tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event); else
+                 got_marker =+ process(&hpll_stat, hPLL, tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event,0); else
               if((0x7 & (tx_buf[i].value>>28)) == DBG_BACKUP)
-                 got_marker =+ process(&bpll_stat[0], xPLL[0], tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event); else
+                 got_marker =+ process(&bpll_stat[0], xPLL[0], tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event, TRIG_ACQ(backup_p,0)); else
 
 //               /// multibackup ////////////////////////////////////////////////////////////////
 //               if((0x7 & (tx_buf[i].value>>28)) == DBG_BACKUP_0)
 //                  got_marker =+ process(&bpll_stat, xPLL[0], tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event);
               if((0x7 & (tx_buf[i].value>>28)) == DBG_BACKUP_1)
-                 got_marker =+ process(&bpll_stat[1], xPLL[1], tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event); else
+                 got_marker =+ process(&bpll_stat[1], xPLL[1], tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event, TRIG_ACQ(backup_p,1)); else
               if((0x7 & (tx_buf[i].value>>28)) == DBG_BACKUP_2)
-                 got_marker =+ process(&bpll_stat[2], xPLL[2], tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event); else
+                 got_marker =+ process(&bpll_stat[2], xPLL[2], tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event, TRIG_ACQ(backup_p,2)); else
               if((0x7 & (tx_buf[i].value>>28)) == DBG_BACKUP_3)
-                 got_marker =+ process(&bpll_stat[3], xPLL[3], tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event);
+                 got_marker =+ process(&bpll_stat[3], xPLL[3], tx_buf[i].seq_id,value, (0xF & (tx_buf[i].value>>24)),mark_event, TRIG_ACQ(backup_p,3));
               /// ///////////////////////////////////////////////////////////////////////////
 
               if((got_marker>0 && finish_after_marker>0) || after_marker_cnt>0 )

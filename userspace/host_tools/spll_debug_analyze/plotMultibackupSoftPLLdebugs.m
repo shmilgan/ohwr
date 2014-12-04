@@ -17,30 +17,42 @@ bpll_tmp_3 =load('-ascii', sprintf('%s/bPLL3.txt',path_name), 'data');
 hpll_tmp   =load('-ascii', sprintf('%s/hPLL.txt',path_name), 'data');
 
 
-hack_offset = detectSwitchover(bpll_tmp_0,6) - 2*history_offset
+hack_offset_0 = detectSwitchover(bpll_tmp_0,6) - 2*history_offset
+if(backup_n > 1)
+  hack_offset_1 = detectSwitchover(bpll_tmp_1,6) - 2*history_offset
+end
+if(backup_n > 2)
+  hack_offset_2 = detectSwitchover(bpll_tmp_2,6) - 2*history_offset
+end
+if(backup_n > 3)
+  hack_offset_3 = detectSwitchover(bpll_tmp_3,6) - 2*history_offset
+end
 
 threshold_vec = zeros(size(mpll_tmp,2));
-threshold_vec(1)=0.7;
-threshold_vec(2)=0.7;
-threshold_vec(4)=0.7;
-threshold_vec(5)=0.7;
-mpll_cleared = outliers(mpll_tmp(hack_offset:end,:),threshold_vec, 'mpll');
-hpll_cleared = outliers(hpll_tmp(hack_offset:end,:),threshold_vec, 'hpll');
+threshold_vec(1)=0.5;
+threshold_vec(2)=0.5;
+threshold_vec(4)=0.5;
+threshold_vec(5)=0.5;
+mpll_cleared = outliers(mpll_tmp(hack_offset_0:end,:),threshold_vec, 'mpll');
+hpll_cleared = outliers(hpll_tmp(hack_offset_0:end,:),threshold_vec, 'hpll');
 
-bpll_cleared_0 = outliers(bpll_tmp_0(hack_offset:end,:),threshold_vec, 'bpll 0');
-bpll_cleared_1 = outliers(bpll_tmp_1(hack_offset:end,:),threshold_vec, 'bpll 1');
-bpll_cleared_2 = outliers(bpll_tmp_2(hack_offset:end,:),threshold_vec, 'bpll 2');
-bpll_cleared_3 = outliers(bpll_tmp_3(hack_offset:end,:),threshold_vec, 'bpll 3');
+bpll_cleared_0    = outliers(bpll_tmp_0(hack_offset_0:end,:),threshold_vec, 'bpll 0');
+bpll_switchover_0 = detectSwitchover(bpll_cleared_0,6)
+if(backup_n > 1)
+  bpll_cleared_1 = outliers(bpll_tmp_1(hack_offset_1:end,:),threshold_vec, 'bpll 1');
+  bpll_switchover_1 = detectSwitchover(bpll_cleared_1,6)
+end
+if(backup_n > 2)
+  bpll_cleared_2 = outliers(bpll_tmp_2(hack_offset_2:end,:),threshold_vec, 'bpll 2');
+  bpll_switchover_2 = detectSwitchover(bpll_cleared_2,6)
+end
+if(backup_n > 3)
+  bpll_cleared_3 = outliers(bpll_tmp_3(hack_offset_3:end,:),threshold_vec, 'bpll 3');
+  bpll_switchover_3 = detectSwitchover(bpll_cleared_3,6)
+end
 
 mpll_switchover = detectSwitchover(mpll_cleared,6);
 hpll_switchover = detectSwitchover(hpll_cleared,6);
-
-
-bpll_switchover_0 = detectSwitchover(bpll_cleared_0,6)
-bpll_switchover_1 = detectSwitchover(bpll_cleared_1,6)
-bpll_switchover_2 = detectSwitchover(bpll_cleared_2,6)
-bpll_switchover_3 = detectSwitchover(bpll_cleared_3,6)
-
 
 unitScale = (1/((62.5-(62.5*((2^14)/(1+2^14))))*10^6))*10^3; % [ms]
 switchover_length = detectSwitchover(mpll_cleared(mpll_switchover+1:end,:),6);
@@ -118,14 +130,14 @@ if (backup_n > 3)
   bpll_switchover_3 = detectSwitchover(bpll_3,6);
 end
 option = 3;
-start = switchover - 9000;
-finish= switchover + 1000;
+
 bpll       = bpll_0;
 bpll(:,:,2)= bpll_1;
 bpll(:,:,3)= bpll_2;
 bpll(:,:,4)= bpll_3;
 %  bpll = [bpll_0;bpll_1;bpll_2;bpll_3];
-
+start = switchover - 4000;
+finish= switchover + 1000;
 draw3(mpll, bpll, hpll, switchover, start, finish, option, backup_n);
 start = switchover - 500;
 finish= switchover + 300;
@@ -135,7 +147,7 @@ finish= switchover - 1;
 draw3(mpll, bpll, hpll, switchover, start, finish, option, backup_n);
 
 if (backup_n > 0)
-  start = switchover - 9000;
+  start = switchover - 4000;
   finish= switchover + 1000;
   draw2(mpll, bpll_0, hpll, switchover, start, finish, option);
   start = switchover - 500;
@@ -146,7 +158,7 @@ if (backup_n > 0)
   draw2(mpll, bpll_0, hpll, switchover, start, finish, option);
 end
 if (backup_n > 1)
-  start = switchover - 9000;
+  start = switchover - 4000;
   finish= switchover + 1000;
   draw2(mpll, bpll_1, hpll, switchover, start, finish, option);
   start = switchover - 500;
@@ -157,7 +169,7 @@ if (backup_n > 1)
   draw2(mpll, bpll_1, hpll, switchover, start, finish, option);
 end
 if (backup_n > 2)
-  start = switchover - 9000;
+  start = switchover - 4000;
   finish= switchover + 1000;
   draw2(mpll, bpll_2, hpll, switchover, start, finish, option);
   start = switchover - 500;
@@ -168,7 +180,7 @@ if (backup_n > 2)
   draw2(mpll, bpll_2, hpll, switchover, start, finish, option);
 end
 if (backup_n > 3)
-  start = switchover - 9000;
+  start = switchover - 4000;
   finish= switchover + 1000;
   draw2(mpll, bpll_3, hpll, switchover, start, finish, option);
   start = switchover - 500;
