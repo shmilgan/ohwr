@@ -167,7 +167,7 @@ int fix_host_tai(void)
 {
 	struct timex t;
 	char s[128];
-	unsigned long long now, leapt, expire = 0;
+	unsigned long long now, now_2014, leapt, expire = 0;
 	int i, *p, tai_offset = 0;
 
 	/* first: get the current offset */
@@ -178,8 +178,22 @@ int fix_host_tai(void)
 		return 0;
 	}
 
+	/*
+	 * At the very start, we believe to be Jan 1st 1970. But
+	 * what we really want is counting the tai_offset, so WR
+	 * can then set system time by itself.  And, being wrong by
+	 * 1-2 seconds is ok (system time is for log messages only),
+	 * but being off by 35 seconds is not. So let's use "35" by
+	 * default, i.e. be aware we are at least in 2014
+	 */
+	now_2014 = 1417806803; /* as I write this */
+
 	/* then, find the current time, using such offset */
-	now = time(NULL) +  2208988800LL; /* (for TAI: + utc_offset) */
+	now = time(NULL);
+	if (now < now_2014)
+		now = now_2014;
+
+	now += 2208988800LL; /* (for TAI: + utc_offset) */
 
 	FILE *f = fopen(WRDATE_LEAP_FILE, "r");
 	if (!f) {
@@ -192,7 +206,7 @@ int fix_host_tai(void)
 			continue;
 		if (sscanf(s, "%lli %i", &leapt, &i) != 2)
 			continue;
-		/* check this line, and apply if if it's in the past */
+		/* check this line, and apply it if it's in the past */
 		if (leapt < now)
 			tai_offset = i;
 	}

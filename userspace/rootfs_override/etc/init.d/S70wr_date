@@ -1,7 +1,10 @@
 #!/bin/sh
 
+# First of all, run wr_date, so to fix tai_offset in the kernel
+/wr/bin/wr_date get > /dev/null
+
 F=/wr/etc/wr_date.conf
-# if there is no config file, do nothing.
+# if there is no config file, do nothing else.
 test -f $F || exit 0
 
 # pick the first server, if any
