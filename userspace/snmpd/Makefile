@@ -4,8 +4,18 @@ SNMP_BUILD := $(wildcard $(SNMP_BUILD)/output/build/netsnmp-*)
 
 NET_SNMP_CONFIG ?= $(SNMP_BUILD)/net-snmp-config
 
-CC      = $(CROSS_COMPILE)gcc
-LD	= $(CROSS_COMPILE)ld
+WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
+
+# # Standard stanza for cross-compilation (courtesy of the linux makefile)
+AS              = $(CROSS_COMPILE)as
+LD              = $(CROSS_COMPILE)ld
+CC              = $(CROSS_COMPILE)gcc
+CPP             = $(CC) -E
+AR              = $(CROSS_COMPILE)ar
+NM              = $(CROSS_COMPILE)nm
+STRIP           = $(CROSS_COMPILE)strip
+OBJCOPY         = $(CROSS_COMPILE)objcopy
+OBJDUMP         = $(CROSS_COMPILE)objdump
 
 # defer running "net-snmp-config --cflags" so it is visible in make output
 CFLAGS  += -fPIC -Wall  $$($(NET_SNMP_CONFIG) --cflags | sed s,-I/usr/include,,)

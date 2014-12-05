@@ -1,12 +1,4 @@
 
-# Most of the sub makefiles require some variables that used to be
-# in the auto-generated ../Makedefs (when software was in svn).
-# So let's add all of the needed variables here (environment can override)
-
-ARCH ?= arm
-CROSS_COMPILE ?= $(CROSS_COMPILE_ARM_PATH)$(CROSS_COMPILE_ARM_PREFIX)
-CROSS_COMPILE_ARM ?= $(CROSS_COMPILE)
-
 # Installation of all of this stuff goes to images/wr in the output dir
 WR_INSTALL_ROOT ?= $(WRS_OUTPUT_DIR)/images/wr
 WRDEV_DIR ?= $(WRS_BASE_DIR)/..

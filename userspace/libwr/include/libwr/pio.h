@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include <at91/at91_pio.h>
+#include <mach/at91_pio.h>
 
 #define NUM_PIO_BANKS 6
 
