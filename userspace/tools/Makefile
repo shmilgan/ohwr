@@ -25,7 +25,9 @@ CFLAGS =  -O2 -g -Wall \
 		-I../mini-rpc \
 		-I../libsdb \
 		-I../include \
-		-I../libwr/include
+		-I../libwr/include \
+		-I../ppsi/include \
+		-I../ppsi/arch-wrs/include
 
 # for wrs_version alone (but others may use this)
 GIT_VER = $(shell git describe --always --dirty=+ | sed  's;^wr-switch-sw-;;')
