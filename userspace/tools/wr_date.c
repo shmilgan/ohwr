@@ -39,6 +39,7 @@ void help(char *prgname)
 		"  -v       verbose: report what the program does\n"
 		"  -n       do not act in practice\n"
 		"    get             print WR time to stdout\n"
+		"    get tohost      print WR time and set system time\n"
 		"    set <value>     set WR time to scalar seconds\n"
 		"    set host        set TAI from current host time\n"
 /*		"    set ntp         set TAI from ntp and leap seconds" */
@@ -96,52 +97,68 @@ void *create_map(int fdmem, unsigned long address, unsigned long size)
 	return mapaddr + fragment;
 }
 
-int wrdate_get(struct PPSG_WB *pps)
+int wrdate_get(struct PPSG_WB *pps, int tohost)
 {
-	unsigned long utch, utcl, nsec, tmp1, tmp2;
-	uint64_t utc;
+	int fix_host_tai(void); /* defined later */
+	unsigned long taih, tail, nsec, tmp1, tmp2;
+	uint64_t tai;
 	time_t t;
 	struct timeval tv;
 	struct tm tm;
-	char s[64];
+	char utcs[64], tais[64];
+	int tai_offset;
+
+	tai_offset = fix_host_tai();
 
 	if (opt_not) {
 		gettimeofday(&tv, NULL);
-		utch = 0;
-		utcl = tv.tv_sec;
+		taih = 0;
+		tail = tv.tv_sec + tai_offset;
 		nsec = tv.tv_usec * 1000;
 	} else {
-		utch = pps->CNTR_UTCHI;
+		taih = pps->CNTR_UTCHI;
 
 		do {
-			utcl = pps->CNTR_UTCLO;
+			tail = pps->CNTR_UTCLO;
 			nsec = pps->CNTR_NSEC * 16; /* we count a 16.5MHz */
 			tmp1 = pps->CNTR_UTCHI;
 			tmp2 = pps->CNTR_UTCLO;
-		} while((tmp1 != utch) || (tmp2 != utcl));
+		} while((tmp1 != taih) || (tmp2 != tail));
 	}
 
-	utc = (uint64_t)(utch) << 32 | utcl;
-	t = utc;
-	localtime_r(&t, &tm);
-	strftime(s, sizeof(s), "%Y-%m-%d %H:%M:%S", &tm);
+	tai = (uint64_t)(taih) << 32 | tail;
+
+	/* Before printing (which takes time), set host time if so asked to */
+	if (tohost) {
+		tv.tv_sec = tai - tai_offset;
+		tv.tv_usec = nsec / 1000;
+		if (settimeofday(&tv, NULL))
+			fprintf(stderr, "wr_date: settimeofday(): %s\n",
+				strerror(errno));
+	}
+
+	t = tai; localtime_r(&t, &tm);
+	strftime(tais, sizeof(tais), "%Y-%m-%d %H:%M:%S", &tm);
+	t -= tai_offset; localtime_r(&t, &tm);
+	strftime(utcs, sizeof(utcs), "%Y-%m-%d %H:%M:%S", &tm);
 	printf("%lli.%09li TAI\n"
-	       "%s.%09li TAI\n", utc, nsec, s, nsec);
+	       "%s.%09li TAI\n"
+	       "%s.%09li UTC\n", tai, nsec, tais, nsec, utcs, nsec);
 	return 0;
 }
 
 /* This returns wr time, used for syncing to a second transition */
 void gettimeof_wr(struct timeval *tv, struct PPSG_WB *pps)
 {
-	unsigned long utcl, nsec, tmp2;
+	unsigned long tail, nsec, tmp2;
 
 	/* FIXME: not 2038-clean */
 	do {
-		utcl = pps->CNTR_UTCLO;
+		tail = pps->CNTR_UTCLO;
 		nsec = pps->CNTR_NSEC * 16; /* we count a 16.5MHz */
 		tmp2 = pps->CNTR_UTCLO;
-	} while(tmp2 != utcl);
-	tv->tv_sec = utcl;
+	} while(tmp2 != tail);
+	tv->tv_sec = tail;
 	tv->tv_usec = nsec / 1000;
 }
 
@@ -293,7 +310,7 @@ int wrdate_set(struct PPSG_WB *pps, char *arg)
 
 int main(int argc, char **argv)
 {
-	int c, fd;
+	int c, fd, tohost = 0;
 	char *cmd;
 	struct PPSG_WB *pps;
 
@@ -335,9 +352,12 @@ int main(int argc, char **argv)
 	wrdate_cfgfile(opt_cfgfile);
 
 	if (!strcmp(cmd, "get")) {
-		if (optind < argc)
+		/* parse the optional "tohost" argument */
+		if (optind == argc - 1 && !strcmp(argv[optind], "tohost"))
+			tohost = 1;
+		else if (optind < argc)
 			help(argv[0]);
-		return wrdate_get(pps);
+		return wrdate_get(pps, tohost);
 	}
 
 	/* only other command is "set", with one argument */

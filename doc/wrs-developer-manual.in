@@ -849,6 +849,13 @@ The most important tools in @file{userspace/tools} are the following:
         to set host time as a first step, if @t{/wr/etc/wr_date.conf}
         exists and includes a line of the form @t{ntpserver 192.168.16.1}.
 
+        With ``@t{wr_date get}'' you can read White Rabbit time, and
+        by using @t{wr_date get tohost}'' you can set host time to
+        White Rabbit time. This can be useful in slave switches that
+        are not synced to NTP at boot. Please note that we'll have
+        a kernel module soon to automatically track WR time to
+        host time.
+
 @item wrs_version
 	Print information about the SW & HW version of the WRS. Please
         check the help message.	See also @ref{DIP Switch HW version}.
