@@ -44,7 +44,9 @@ const char *portnames[]  = {"port0", "port1", "port2", "port3", "port4",
 
 
 struct cntrs_dev {
-	unsigned int cntrs[PSTATS_NPORTS*PSTATS_CNT_PP];
+	unsigned int cntrs[PSTATS_NPORTS][PSTATS_CNT_PP];
+	unsigned int zeros[PSTATS_NPORTS][PSTATS_CNT_PP];
+	unsigned int userv[PSTATS_NPORTS][PSTATS_CNT_PP];
 	struct PSTATS_WB __iomem *regs;
 
 	/* prevents from simultaneous access to cntrs array from tasklet and
@@ -62,11 +64,6 @@ static struct cntrs_dev pstats_dev;	/*static data cleared at build time*/
 
 /* pstats info for sysfs */
 static int pstats_info[PINFO_SIZE];
-
-static unsigned int *cntr_idx(unsigned int *tab, int port, int idx)
-{
-	return &tab[port*PSTATS_CNT_PP+idx];
-}
 
 /* function converting Layer1 and Layer2 words read from HW to counter value */
 static unsigned int hwcnt_to_sw(uint32_t l1_val, uint32_t l2_val, int n)
@@ -165,7 +162,7 @@ static void pstats_tlet_fn(unsigned long arg)
 			for (cntr = 0; cntr < PSTATS_CNT_PP; ++cntr) {
 				/*decode counters overflow flags to increment coutners*/
 				if ((*cntrs_ov)>>cntr & 0x01) {
-					ptr = cntr_idx(device->cntrs, port, cntr);
+					ptr = &(device->cntrs[port][cntr]);
 					*ptr += 1<<PSTATS_MSB_SHIFT;
 				}
 			}
@@ -217,7 +214,7 @@ static int rd_cnt_word(int port, int adr)
 		if (4*adr+i >= PSTATS_CNT_PP)
 			break;
 		spin_lock(&pstats_dev.port_mutex[port]);
-		ptr = cntr_idx(pstats_dev.cntrs, port, 4*adr+i);
+		ptr = &(pstats_dev.cntrs[port][4 * adr + i]);
 		*ptr &= PSTATS_MSB_MSK;
 		*ptr |= hwcnt_to_sw(val[0], val[1], i);
 		spin_unlock(&pstats_dev.port_mutex[port]);
@@ -236,15 +233,29 @@ static int pstats_rd_cntrs(int port)
 	return 0;
 }
 
+static void pstats_zero(int port)
+{
+	pstats_rd_cntrs(port);
+	spin_lock(&pstats_dev.port_mutex[port]);
+	memcpy(pstats_dev.zeros[port],
+	       pstats_dev.cntrs[port],
+	       sizeof(pstats_dev.zeros[port]));
+	spin_unlock(&pstats_dev.port_mutex[port]);
+}
+
 /* SYSCTL handler, pass description of counters */
 static int pstats_desc_handler(ctl_table *ctl, int write, void *buffer,
 		size_t *lenp, loff_t *ppos)
 {
 	unsigned int data;
 	unsigned int version;
+	int port;
 
-	if (write) /* write not supported */
-		return 0;
+	if (write) { /* write description: zero all ports */
+		for (port = 0; port < pstats_nports; port++)
+			pstats_zero(port);
+		return *lenp;
+	}
 
 	/* get version number */
 	data = pstats_readl(pstats_dev, INFO);
@@ -258,20 +269,33 @@ static int pstats_desc_handler(ctl_table *ctl, int write, void *buffer,
 	return proc_dostring(ctl, 0, buffer, lenp, ppos);
 }
 
+
 /* SYSCTL handler, reads counters from hw and passes to sysfs */
 static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 		size_t *lenp, loff_t *ppos)
 {
-	int port;
-	uint32_t int data;
-
-	if (write) /* write not supported */
-		return 0;
+	int i, port;
+	uint32_t data;
+	struct cntrs_dev *d = &pstats_dev;
 
 	port = (int)ctl->extra1;
+
+	if (write) {
+		/* on write, we zero the counters */
+		if (port < pstats_nports) {
+			pstats_zero(port);
+		} else { /* write to info: zero them all */
+			for (port = 0; port < pstats_nports; port++)
+				pstats_zero(port);
+		}
+		return *lenp;
+	}
+
 	if (port < pstats_nports) {
 		pstats_rd_cntrs(port);
-	} else  {
+		for (i = 0; i < PSTATS_CNT_PP; i++)
+			d->userv[port][i] = d->cntrs[port][i] - d->zeros[port][i];
+	} else {
 		/* read stuff for info file */
 		data = pstats_readl(pstats_dev, INFO);
 		pstats_info[PINFO_VER] = PSTATS_INFO_VER_R(data);
@@ -279,10 +303,11 @@ static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 		pstats_info[PINFO_CNTPP] = PSTATS_INFO_CPP_R(data);
 	}
 
-	return_dointvec(ctl, 0, buffer, lenp, ppos);
+	return proc_dointvec(ctl, 0, buffer, lenp, ppos);
 }
 
-static ctl_table pstats_ctl_table[21];	/* initialized in _init function */
+/* one per port, then info and description, and terminator, filled at init time */
+static ctl_table pstats_ctl_table[PSTATS_NPORTS + 3];
 
 static ctl_table proc_table[] = {
 	{
@@ -302,8 +327,10 @@ int pstats_callback(int epnum, unsigned int cntr[PSTATS_CNT_PP])
 	int i;
 
 	pstats_rd_cntrs(epnum);
+
+	/* We could just memcpy, but this has to change anyways*/
 	for (i = 0; i < PSTATS_CNT_PP; i++)
-		cntr[i] = *cntr_idx(pstats_dev.cntrs, epnum, i);
+		cntr[i] = pstats_dev.cntrs[epnum][i];
 	return 0;
 }
 
@@ -323,17 +350,17 @@ static int __init pstats_init(void)
 
 	for (i = 0; i < pstats_nports; ++i) {
 		pstats_ctl_table[i].procname = portnames[i];
-		pstats_ctl_table[i].data = &pstats_dev.cntrs[i*PSTATS_CNT_PP];
+		pstats_ctl_table[i].data = &pstats_dev.userv[i];
 		pstats_ctl_table[i].maxlen = PSTATS_CNT_PP*sizeof(unsigned int);
-		pstats_ctl_table[i].mode = 0444;
+		pstats_ctl_table[i].mode = 0644;
 		pstats_ctl_table[i].proc_handler = pstats_handler;
 		pstats_ctl_table[i].extra1 = (void *)i;
 	}
-	/* the last one with info about pstats */
+	/* the last-but-one with info about pstats */
 	pstats_ctl_table[i].procname = "info";
 	pstats_ctl_table[i].data = pstats_info;
 	pstats_ctl_table[i].maxlen = PINFO_SIZE * sizeof(int);
-	pstats_ctl_table[i].mode = 0444;
+	pstats_ctl_table[i].mode = 0644;
 	pstats_ctl_table[i].proc_handler = pstats_handler;
 	pstats_ctl_table[i].extra1 = (void *)i;
 
@@ -343,7 +370,7 @@ static int __init pstats_init(void)
 	pstats_ctl_table[i].procname = "description";
 	pstats_ctl_table[i].data = NULL;
 	pstats_ctl_table[i].maxlen = 0;
-	pstats_ctl_table[i].mode = 0444;
+	pstats_ctl_table[i].mode = 0644;
 	pstats_ctl_table[i].proc_handler = pstats_desc_handler;
 	pstats_ctl_table[i].extra1 = (void *)i;
 
