@@ -243,17 +243,18 @@ static int pstats_desc_handler(ctl_table *ctl, int write, void *buffer,
 	unsigned int data;
 	unsigned int version;
 
-	if (!write) {
-		/* get version number */
-		data = pstats_readl(pstats_dev, INFO);
-		version = PSTATS_INFO_VER_R(data);
-		if (version >= PSTATS_NAMES_ARRAY_SIZE) {
-			version = 0;
-		}
+	if (write) /* write not supported */
+		return 0;
 
-		ctl->data = (void *)pstats_names[version];
-		ctl->maxlen = strlen(pstats_names[version]);
+	/* get version number */
+	data = pstats_readl(pstats_dev, INFO);
+	version = PSTATS_INFO_VER_R(data);
+	if (version >= PSTATS_NAMES_ARRAY_SIZE) {
+		version = 0;
 	}
+
+	ctl->data = (void *)pstats_names[version];
+	ctl->maxlen = strlen(pstats_names[version]);
 	return proc_dostring(ctl, 0, buffer, lenp, ppos);
 }
 
@@ -261,14 +262,16 @@ static int pstats_desc_handler(ctl_table *ctl, int write, void *buffer,
 static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 		size_t *lenp, loff_t *ppos)
 {
-	int ret;
 	int port;
-	unsigned int data;
+	uint32_t int data;
+
+	if (write) /* write not supported */
+		return 0;
 
 	port = (int)ctl->extra1;
-	if (port < pstats_nports && !write) {
+	if (port < pstats_nports) {
 		pstats_rd_cntrs(port);
-	}	else if (!write) {
+	} else  {
 		/* read stuff for info file */
 		data = pstats_readl(pstats_dev, INFO);
 		pstats_info[PINFO_VER] = PSTATS_INFO_VER_R(data);
@@ -276,9 +279,7 @@ static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 		pstats_info[PINFO_CNTPP] = PSTATS_INFO_CPP_R(data);
 	}
 
-	ret = proc_dointvec(ctl, 0, buffer, lenp, ppos);
-
-	return ret;
+	return_dointvec(ctl, 0, buffer, lenp, ppos);
 }
 
 static ctl_table pstats_ctl_table[21];	/* initialized in _init function */
