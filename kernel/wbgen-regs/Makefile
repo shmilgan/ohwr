@@ -16,10 +16,11 @@ WB_PPSG     = $(MODULES_WRC)/wr_pps_gen/pps_gen_wb.wb
 WB_TSTAMP   = $(MODULES_WRS)/wrsw_txtsu/wrsw_txtsu.wb
 WB_RTU      = $(MODULES_WRS)/wrsw_rtu/rtu_wishbone_slave.wb
 WB_NIC      = $(MODULES_WRS)/wrsw_nic/wr_nic.wb
+WB_GEN10    = $(MODULES_WRS)/wrsw_rt_subsystem/wrsw_gen_10mhz.wb
 WB_SOFTPLL  = $(MODULES_WRC)/wr_softpll_ng/spll_wb_slave.wb
 
 HEADERS = endpoint-regs.h endpoint-mdio.h ppsg-regs.h tstamp-regs.h rtu-regs.h \
-          nic-regs.h softpll-regs.h pstats-regs.h
+          nic-regs.h softpll-regs.h pstats-regs.h gen10mhz-regs.h
 WBINPUT = $(HEADERS:.h=wb)
 
 # No default, for people who types "make" everywhere (like me)
@@ -47,4 +48,5 @@ wbinput:
 	@cp $(WB_RTU) rtu-regs.wb
 	@cp $(WB_NIC) nic-regs.wb
 	@cp $(WB_SOFTPLL) softpll-regs.wb
+	@cp $(WB_GEN10) gen10mhz-regs.wb
 	@echo "Copied input files from subversions to local directory"

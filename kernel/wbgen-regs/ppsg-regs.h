@@ -78,6 +78,12 @@
 /* definitions for field: Timecode output(UTC+cycles) valid in reg: External sync control register */
 #define PPSG_ESCR_TM_VALID                    WBGEN2_GEN_MASK(2, 1)
 
+/* definitions for field: Set seconds counter in reg: External sync control register */
+#define PPSG_ESCR_SEC_SET                     WBGEN2_GEN_MASK(3, 1)
+
+/* definitions for field: Set nanoseconds counter in reg: External sync control register */
+#define PPSG_ESCR_NSEC_SET                    WBGEN2_GEN_MASK(4, 1)
+
 PACKED struct PPSG_WB {
   /* [0x0]: REG Control Register */
   uint32_t CR;

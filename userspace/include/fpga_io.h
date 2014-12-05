@@ -8,6 +8,9 @@
 /* PPS Generator */
 #define FPGA_BASE_PPS_GEN      0x10500
 
+/* Aux Clk Generator */
+#define FPGA_BASE_GEN_10MHZ    0x10600
+
 /* Routing Table */
 #define FPGA_BASE_RTU          0x60000
 
