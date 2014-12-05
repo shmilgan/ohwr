@@ -4,6 +4,7 @@ TOOLS += wrs_version wr_date lm32-vuart wrs_pstats
 TOOLS += wrs_vlans wrs_dump_shmem
 TOOLS += sdb-read
 TOOLS += nbtee
+TOOLS += wrs_auxclk
 
 # # Standard stanza for cross-compilation (courtesy of the linux makefile)
 
