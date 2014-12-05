@@ -172,7 +172,7 @@ int dump_any_mem(struct wrs_shm_head *head)
 		if (i % 16 == 15) { /* ascii row */
 			printf("    ");
 			for (j = i & ~15; j <= i; j++)
-				printf("%c", p[j] >= 0x20 && p[j] > 0x7f
+				printf("%c", p[j] >= 0x20 && p[j] < 0x7f
 				       ? p[j] : '.');
 			printf("\n");
 		}
