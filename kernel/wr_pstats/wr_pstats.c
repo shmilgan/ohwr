@@ -43,8 +43,7 @@ const char *portnames[]  = {"port0", "port1", "port2", "port3", "port4",
 	"port5", "port6", "port7", "port8", "port9", "port10", "port11",
 	"port12", "port13", "port14", "port15", "port16", "port17"};
 
-static struct pstats_version_description
-			pstats_desc[PSTATS_NAMES_ARRAY_SIZE] = {
+static struct pstats_version_description pstats_desc[] = {
 	[0] = {
 		.cnt_names = "Inv pstats ver reported by FPGA",
 		.rx_packets = 0,

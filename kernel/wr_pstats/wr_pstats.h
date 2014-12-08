@@ -22,8 +22,6 @@
 
 #define PSTATS_IRQBUFSZ  16
 
-#define PSTATS_NAMES_ARRAY_SIZE 2
-
 #define PINFO_SIZE  3
 #define PINFO_VER   0
 #define PINFO_CNTPW 1
