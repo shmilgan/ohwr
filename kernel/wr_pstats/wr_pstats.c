@@ -27,6 +27,7 @@
 #include <linux/interrupt.h>
 #include <linux/spinlock.h>
 #include <linux/moduleparam.h>
+#include <linux/netdevice.h>
 
 #include "../wbgen-regs/pstats-regs.h"
 #include "wr_pstats.h"
@@ -42,6 +43,66 @@ const char *portnames[]  = {"port0", "port1", "port2", "port3", "port4",
 	"port5", "port6", "port7", "port8", "port9", "port10", "port11",
 	"port12", "port13", "port14", "port15", "port16", "port17"};
 
+static struct pstats_version_description
+			pstats_desc[PSTATS_NAMES_ARRAY_SIZE] = {
+	[0] = {
+		.cnt_names = "Inv pstats ver reported by FPGA",
+		.rx_packets = 0,
+		.tx_packets = 0,
+		.rx_length_errors = 0,
+		.rx_crc_errors = 0,
+		.rx_fifo_errors = 0,
+		.tx_fifo_errors = 0
+	},
+
+	[1] = {
+		.cnt_names = "TX Underrun\n"		/* 0 */
+			"RX Overrun\n"			/* 1 */
+			"RX Invalid Code\n"		/* 2 */
+			"RX Sync Lost\n"		/* 3 */
+			"RX Pause Frames\n"		/* 4 */
+			"RX Pfilter Dropped\n"		/* 5 */
+			"RX PCS Errors\n"		/* 6 */
+			"RX Giant Frames\n"		/* 7 */
+			"RX Runt Frames\n"		/* 8 */
+			"RX CRC Errors\n"		/* 9 */
+			"RX Pclass 0\n"			/* 10 */
+			"RX Pclass 1\n"			/* 11 */
+			"RX Pclass 2\n"			/* 12 */
+			"RX Pclass 3\n"			/* 13 */
+			"RX Pclass 4\n"			/* 14 */
+			"RX Pclass 5\n"			/* 15 */
+			"RX Pclass 6\n"			/* 16 */
+			"RX Pclass 7\n"			/* 17 */
+			"TX Frames\n"			/* 18 */
+			"RX Frames\n"			/* 19 */
+			"RX Drop RTU Full\n"		/* 20 */
+			"RX PRIO 0\n"			/* 21 */
+			"RX PRIO 1\n"			/* 22 */
+			"RX PRIO 2\n"			/* 23 */
+			"RX PRIO 3\n"			/* 24 */
+			"RX PRIO 4\n"			/* 25 */
+			"RX PRIO 5\n"			/* 26 */
+			"RX PRIO 6\n"			/* 27 */
+			"RX PRIO 7\n"			/* 28 */
+			"RTU Valid\n"			/* 29 */
+			"RTU Responses\n"		/* 30 */
+			"RTU Dropped\n"			/* 31 */
+			"FastMatch: Priority\n"		/* 32 */
+			"FastMatch: FastForward\n"	/* 33 */
+			"FastMatch: NonForward\n"	/* 34 */
+			"FastMatch: Resp Valid\n"	/* 35 */
+			"FullMatch: Resp Valid\n"	/* 36 */
+			"Forwarded\n"			/* 37 */
+			"TRU Resp Valid",		/* 38 */
+		.rx_packets = 19, /* RX Frames */
+		.tx_packets = 18, /* TX Frames */
+		.rx_length_errors = 7, /* RX Giant Frames */
+		.rx_crc_errors = 9, /* RX CRC Errors */
+		.rx_fifo_errors = 1, /* RX Overrun */
+		.tx_fifo_errors = 0 /* TX Underrun */
+	}
+};
 
 struct cntrs_dev {
 	unsigned int cntrs[PSTATS_NPORTS][PSTATS_CNT_PP];
@@ -260,12 +321,11 @@ static int pstats_desc_handler(ctl_table *ctl, int write, void *buffer,
 	/* get version number */
 	data = pstats_readl(pstats_dev, INFO);
 	version = PSTATS_INFO_VER_R(data);
-	if (version >= PSTATS_NAMES_ARRAY_SIZE) {
+	if (version >= ARRAY_SIZE(pstats_desc))
 		version = 0;
-	}
 
-	ctl->data = (void *)pstats_names[version];
-	ctl->maxlen = strlen(pstats_names[version]);
+	ctl->data = (void *)pstats_desc[version].cnt_names;
+	ctl->maxlen = strlen(pstats_desc[version].cnt_names);
 	return proc_dostring(ctl, 0, buffer, lenp, ppos);
 }
 
@@ -322,15 +382,34 @@ static ctl_table proc_table[] = {
  * This module is optional, in a way, and if there it is loaded after
  * wr_nic. So it must register itself to wr_nic, to export this.
  */
-int pstats_callback(int epnum, unsigned int cntr[PSTATS_CNT_PP])
+int pstats_callback(int epnum, struct net_device_stats *stats)
 {
-	int i;
+	unsigned int data;
+	unsigned int version;
+	unsigned int index;
 
+	data = pstats_readl(pstats_dev, INFO);
+	version = PSTATS_INFO_VER_R(data);
 	pstats_rd_cntrs(epnum);
 
-	/* We could just memcpy, but this has to change anyways*/
-	for (i = 0; i < PSTATS_CNT_PP; i++)
-		cntr[i] = pstats_dev.cntrs[epnum][i];
+	if (version >= ARRAY_SIZE(pstats_desc)) {
+		/* don't update counters,
+		 * wrong version suppouse to be already reported */
+		return 0;
+	}
+	index = pstats_desc[version].rx_packets;
+	stats->rx_packets = (unsigned long) pstats_dev.cntrs[epnum][index];
+	index = pstats_desc[version].tx_packets;
+	stats->tx_packets = (unsigned long) pstats_dev.cntrs[epnum][index];
+	index = pstats_desc[version].rx_length_errors;
+	stats->rx_length_errors = (unsigned long)pstats_dev.cntrs[epnum][index];
+	index = pstats_desc[version].rx_crc_errors;
+	stats->rx_crc_errors = (unsigned long)pstats_dev.cntrs[epnum][index];
+	index = pstats_desc[version].rx_fifo_errors;
+	stats->rx_fifo_errors = (unsigned long)pstats_dev.cntrs[epnum][index];
+	index = pstats_desc[version].tx_fifo_errors;
+	stats->tx_fifo_errors = (unsigned long)pstats_dev.cntrs[epnum][index];
+
 	return 0;
 }
 
@@ -413,8 +492,8 @@ static int __init pstats_init(void)
 	data = pstats_readl(pstats_dev, INFO);
 	version = PSTATS_INFO_VER_R(data);
 
-	if (version >= PSTATS_NAMES_ARRAY_SIZE)
-		printk(KERN_INFO "port stats version %d not supported\n",
+	if (version >= ARRAY_SIZE(pstats_desc))
+		printk(KERN_INFO "pstats version %d not supported\n",
 		       version);
 
 	printk(KERN_INFO "%s: initialized\n", KBUILD_MODNAME);
