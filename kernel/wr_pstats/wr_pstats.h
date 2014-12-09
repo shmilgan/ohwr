@@ -9,7 +9,11 @@
 
 #define PSTATS_NUM_OF_COUNTERS 39
 
-#define PSTATS_NPORTS 18	/* how many eth ports are in the switch */
+#define PSTATS_MAX_NPORTS 18			/* Maximum number of ports
+						 * supported by the driver */
+#define PSTATS_DEFAULT_NPORTS PSTATS_MAX_NPORTS	/* how many eth ports are
+						 * in the switch */
+
 #define PSTATS_CNT_PP PSTATS_NUM_OF_COUNTERS	/* how many counters per port */
 #define PSTATS_ADR_PP ((PSTATS_CNT_PP+3)/4)	/* how many address words are
 						 * there per counter (each of

@@ -35,7 +35,7 @@
 #define pstats_readl(device, r)		__raw_readl(&device.regs->r)
 #define pstats_writel(val, device, r)	__raw_writel(val, &device.regs->r)
 
-static int pstats_nports = PSTATS_NPORTS;
+static int pstats_nports = PSTATS_DEFAULT_NPORTS;
 static uint32_t portmsk;
 module_param(pstats_nports, int, S_IRUGO);
 
@@ -104,18 +104,18 @@ static struct pstats_version_description pstats_desc[] = {
 };
 
 struct cntrs_dev {
-	unsigned int cntrs[PSTATS_NPORTS][PSTATS_CNT_PP];
-	unsigned int zeros[PSTATS_NPORTS][PSTATS_CNT_PP];
-	unsigned int userv[PSTATS_NPORTS][PSTATS_CNT_PP];
+	unsigned int cntrs[PSTATS_MAX_NPORTS][PSTATS_CNT_PP];
+	unsigned int zeros[PSTATS_MAX_NPORTS][PSTATS_CNT_PP];
+	unsigned int userv[PSTATS_MAX_NPORTS][PSTATS_CNT_PP];
 	struct PSTATS_WB __iomem *regs;
 
 	/* prevents from simultaneous access to cntrs array from tasklet and
 	 * sysfs handler */
-	spinlock_t port_mutex[PSTATS_NPORTS];
+	spinlock_t port_mutex[PSTATS_MAX_NPORTS];
 	/* circular bufer for passing Port's IRQ mask between irq handler and
 	 * the tasklet */
 	uint32_t port_irqs[PSTATS_IRQBUFSZ];
-	uint64_t overflows[PSTATS_IRQBUFSZ][PSTATS_NPORTS];
+	uint64_t overflows[PSTATS_IRQBUFSZ][PSTATS_MAX_NPORTS];
 	volatile int irqs_head;
 	int irqs_tail;
 };
@@ -366,7 +366,7 @@ static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 }
 
 /* one per port, then info and description, and terminator, filled at init time */
-static ctl_table pstats_ctl_table[PSTATS_NPORTS + 3];
+static ctl_table pstats_ctl_table[PSTATS_MAX_NPORTS + 3];
 
 static ctl_table proc_table[] = {
 	{
@@ -420,6 +420,13 @@ static int __init pstats_init(void)
 	unsigned int data;
 	unsigned int version;
 
+	if (pstats_nports > PSTATS_MAX_NPORTS) {
+		printk(KERN_ERR "%s: Too many ports for pstats %u,"
+		       "only %d supported\n", KBUILD_MODNAME, pstats_nports,
+		       PSTATS_MAX_NPORTS);
+		err = -EFBIG; /* "File too large", not exact */
+		goto err_exit;
+	}
 	/*convert nports to one-hot port mask (for enabling IRQs*/
 	printk(KERN_INFO "nports=%u\n", pstats_nports);
 	portmsk = (1 << pstats_nports) - 1;
@@ -481,7 +488,7 @@ static int __init pstats_init(void)
 		goto err_exit;
 	}
 
-	for (i = 0; i < PSTATS_NPORTS; ++i)
+	for (i = 0; i < PSTATS_MAX_NPORTS; ++i)
 		spin_lock_init(&pstats_dev.port_mutex[i]);
 	pstats_irq_enable(portmsk);
 
