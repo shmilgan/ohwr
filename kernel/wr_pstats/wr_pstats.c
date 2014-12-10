@@ -37,6 +37,10 @@
 
 static int pstats_nports = PSTATS_DEFAULT_NPORTS;
 static uint32_t portmsk;
+unsigned int firmware_version; /* FPGA firmware version */
+unsigned int firmware_counters; /* number of counters */
+unsigned int firmware_adr_pp; /* number of words with counters */
+unsigned int firmware_cpw; /* number of counters per word */
 module_param(pstats_nports, int, S_IRUGO);
 
 const char *portnames[]  = {"port0", "port1", "port2", "port3", "port4",
@@ -306,8 +310,6 @@ static void pstats_zero(int port)
 static int pstats_desc_handler(ctl_table *ctl, int write, void *buffer,
 		size_t *lenp, loff_t *ppos)
 {
-	unsigned int data;
-	unsigned int version;
 	int port;
 
 	if (write) { /* write description: zero all ports */
@@ -316,14 +318,9 @@ static int pstats_desc_handler(ctl_table *ctl, int write, void *buffer,
 		return *lenp;
 	}
 
-	/* get version number */
-	data = pstats_readl(pstats_dev, INFO);
-	version = PSTATS_INFO_VER_R(data);
-	if (version >= ARRAY_SIZE(pstats_desc))
-		version = 0;
-
-	ctl->data = (void *)pstats_desc[version].cnt_names;
-	ctl->maxlen = strlen(pstats_desc[version].cnt_names);
+	/* version number is always valid due to check at module load */
+	ctl->data = (void *)pstats_desc[firmware_version].cnt_names;
+	ctl->maxlen = strlen(pstats_desc[firmware_version].cnt_names);
 	return proc_dostring(ctl, 0, buffer, lenp, ppos);
 }
 
@@ -333,7 +330,6 @@ static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 		size_t *lenp, loff_t *ppos)
 {
 	int i, port;
-	uint32_t data;
 	struct cntrs_dev *d = &pstats_dev;
 
 	port = (int)ctl->extra1;
@@ -354,11 +350,10 @@ static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 		for (i = 0; i < PSTATS_CNT_PP; i++)
 			d->userv[port][i] = d->cntrs[port][i] - d->zeros[port][i];
 	} else {
-		/* read stuff for info file */
-		data = pstats_readl(pstats_dev, INFO);
-		pstats_info[PINFO_VER] = PSTATS_INFO_VER_R(data);
-		pstats_info[PINFO_CNTPW] = PSTATS_INFO_CPW_R(data);
-		pstats_info[PINFO_CNTPP] = PSTATS_INFO_CPP_R(data);
+		/* stuff for info file, read at module load time */
+		pstats_info[PINFO_VER] = firmware_version;
+		pstats_info[PINFO_CNTPW] = firmware_cpw;
+		pstats_info[PINFO_CNTPP] = firmware_counters;
 	}
 
 	return proc_dointvec(ctl, 0, buffer, lenp, ppos);
@@ -382,30 +377,21 @@ static ctl_table proc_table[] = {
  */
 int pstats_callback(int epnum, struct net_device_stats *stats)
 {
-	unsigned int data;
-	unsigned int version;
 	unsigned int index;
 
-	data = pstats_readl(pstats_dev, INFO);
-	version = PSTATS_INFO_VER_R(data);
 	pstats_rd_cntrs(epnum);
-
-	if (version >= ARRAY_SIZE(pstats_desc)) {
-		/* don't update counters,
-		 * wrong version suppouse to be already reported */
-		return 0;
-	}
-	index = pstats_desc[version].rx_packets;
+	/* version number is always valid due to check at module load */
+	index = pstats_desc[firmware_version].rx_packets;
 	stats->rx_packets = (unsigned long) pstats_dev.cntrs[epnum][index];
-	index = pstats_desc[version].tx_packets;
+	index = pstats_desc[firmware_version].tx_packets;
 	stats->tx_packets = (unsigned long) pstats_dev.cntrs[epnum][index];
-	index = pstats_desc[version].rx_length_errors;
+	index = pstats_desc[firmware_version].rx_length_errors;
 	stats->rx_length_errors = (unsigned long)pstats_dev.cntrs[epnum][index];
-	index = pstats_desc[version].rx_crc_errors;
+	index = pstats_desc[firmware_version].rx_crc_errors;
 	stats->rx_crc_errors = (unsigned long)pstats_dev.cntrs[epnum][index];
-	index = pstats_desc[version].rx_fifo_errors;
+	index = pstats_desc[firmware_version].rx_fifo_errors;
 	stats->rx_fifo_errors = (unsigned long)pstats_dev.cntrs[epnum][index];
-	index = pstats_desc[version].tx_fifo_errors;
+	index = pstats_desc[firmware_version].tx_fifo_errors;
 	stats->tx_fifo_errors = (unsigned long)pstats_dev.cntrs[epnum][index];
 
 	return 0;
@@ -417,7 +403,6 @@ static int __init pstats_init(void)
 {
 	int i, err = 0;
 	unsigned int data;
-	unsigned int version;
 
 	if (pstats_nports > PSTATS_MAX_NPORTS) {
 		printk(KERN_ERR "%s: Too many ports for pstats %u,"
@@ -495,11 +480,27 @@ static int __init pstats_init(void)
 
 	/* get version number */
 	data = pstats_readl(pstats_dev, INFO);
-	version = PSTATS_INFO_VER_R(data);
+	firmware_version = PSTATS_INFO_VER_R(data);
+	firmware_counters = PSTATS_INFO_CPP_R(data);
+	firmware_cpw = PSTATS_INFO_CPW_R(data);
+	/* assume 4 counters per word */
+	firmware_adr_pp = (firmware_counters+3)/4;
 
-	if (version >= ARRAY_SIZE(pstats_desc))
-		printk(KERN_INFO "pstats version %d not supported\n",
-		       version);
+	if (firmware_version >= ARRAY_SIZE(pstats_desc)) {
+		printk(KERN_ERR "%s: pstats version %d not supported\n",
+		       KBUILD_MODNAME, firmware_version);
+		err = -EFBIG; /* "File too large", not exact */
+		goto err_exit;
+	}
+
+	if (firmware_counters > PSTATS_NUM_OF_COUNTERS) {
+		printk(KERN_ERR "%s: too many counters %d, "
+				"maximum supported %d\n",
+		       KBUILD_MODNAME, firmware_counters,
+		       PSTATS_NUM_OF_COUNTERS);
+		err = -EFBIG; /* "File too large", not exact */
+		goto err_exit;
+	}
 
 	printk(KERN_INFO "%s: initialized\n", KBUILD_MODNAME);
 	return 0;
