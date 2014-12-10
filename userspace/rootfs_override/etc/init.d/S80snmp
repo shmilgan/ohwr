@@ -1,4 +1,37 @@
 #!/bin/sh
 
-# Log to syslog at daemon level. Amd log source address (-a)
-snmpd -Lsd -p /var/run/snmpd.pid -a -c /wr/etc/snmpd.conf
+SNMP_PID=/var/run/snmpd.pid
+SNMP_CONF=/wr/etc/snmpd.conf
+
+start() {
+    # Log to syslog at daemon level. And log source address (-a)
+    snmpd -Lsd -p $SNMP_PID -a -c $SNMP_CONF
+}
+
+stop() {
+    if pidof snmpd > /dev/null; then
+	echo -n "Stopping snmpd: "
+	start-stop-daemon -K -q -p $SNMP_PID
+	echo "OK"
+    fi
+}
+restart() {
+    stop
+    start
+}
+
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart|reload)
+  	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+	;;
+esac
