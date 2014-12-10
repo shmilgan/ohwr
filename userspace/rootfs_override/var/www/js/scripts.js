@@ -51,3 +51,44 @@ function showPopup(url) {
 	}
 }
 
+/*
+ * Reboots the switch
+ * 
+ * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
+ *
+ * Reboots the switch using the rebooter.php file.
+ * This has been done to display the "rebooting" message after any
+ * configuration.
+ * 
+ */
+$(document).ready(
+		function() {
+			setTimeout(function() {
+				var path = window.location.pathname;
+				var page = path.split("/").pop();
+				if (page == "reboot.php"){
+					$('#rebootingtext').text("Rebooting WRS. The web interface will refresh automatically after 50s.");
+					$('#rebooting').load('rebooter.php');
+				}
+			}, 1500);
+		});
+
+/*
+ * Redirects users to index.php
+ * 
+ * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
+ *
+ * 50 seconds after the execution of the reboot cmd, the web browser 
+ * reloads automatically the web interface.
+ * 
+ */
+$(document).ready(
+		function() {
+			setTimeout(function() {
+				var path = window.location.pathname;
+				var page = path.split("/").pop();
+				if (page == "reboot.php"){
+					window.location.href = "index.php";
+				}
+			}, 50000);
+		});

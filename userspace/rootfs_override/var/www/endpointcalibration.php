@@ -144,7 +144,7 @@
 			
 			echo '<center><font color="green">File successfully created. Rebooting switch. </font></center>';
 			
-			shell_exec("reboot"); 
+			wrs_reboot();
 			
 		}else if(!empty($_POST['newconf']) && $error){
 			echo '<center><font color="red">WARNING: Conf. file not created. Please fill in all fields</font></center>';

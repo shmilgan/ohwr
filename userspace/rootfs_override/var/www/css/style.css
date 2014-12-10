@@ -400,6 +400,15 @@ margin: 10px 0px;
 	margin-top:300px
 }
 
+#rebootmsg{
+	margin-top:100px
+}
+
+#rebootmsg img{
+	width: 100px;
+	height: 100px;
+}
+
 .center {
 margin-left:auto;
 margin-right:auto;

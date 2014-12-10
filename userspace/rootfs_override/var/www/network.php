@@ -81,7 +81,7 @@
 			
 			echo '<center>DHCP is now set for eth0<br>Rebooting switch</center>';
 			//Let's reboot
-			shell_exec('reboot');
+			wrs_reboot();
 			
 		}
 		
@@ -138,7 +138,7 @@
 			echo '<center>New static configuration saved for eth0<br>Changes will take place after reboot.</center>';
 			
 			//Let's reboot
-			shell_exec('reboot');
+			wrs_reboot();
 		}
 			
 			
