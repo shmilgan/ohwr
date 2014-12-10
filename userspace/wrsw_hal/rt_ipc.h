@@ -43,6 +43,8 @@
 
 /* Holdover mode active */
 #define RTS_HOLDOVER_ACTIVE (1<<6)
+/* Channel is backup and get unlocked - this will trigger a forced reset of the  setpoint in wr_servo*/
+#define CHAN_BACKUP_UNLOCKED (1<<8)
 
 /* Grandmaster mode active (uses 10 MHz / 1-PPS reference) */
 #define RTS_MODE_GM_EXTERNAL 1
