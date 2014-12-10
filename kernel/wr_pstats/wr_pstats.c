@@ -166,7 +166,6 @@ static uint64_t pstats_irq_cntrs(int port)
 	pstats_writel(val, pstats_dev, CR);
 	/* read lower half of cntrs overflow mask */
 	mask = (((uint64_t)pstats_readl(pstats_dev, L2_CNT_VAL)) << 32);
-	mask &= 0xFFFFFFFF00000000LL;
 	mask |= (uint64_t) pstats_readl(pstats_dev, L1_CNT_VAL);
 	return mask;
 }
