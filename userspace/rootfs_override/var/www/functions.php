@@ -478,7 +478,7 @@ function wrs_php_filesize(){
  *
  * It runs: 
  * 	load-virtex for loading .bin to the FPGA
- * 	load-lm32 for loading .bin to the lm32 professor
+ * 	load-lm32 for loading .bin to the lm32 processor
  * 	
  * 
  * 
@@ -499,8 +499,8 @@ function wrs_load_files(){
 				echo '<center>Loading FPGA binary '.$_FILES['fpgafile']['name'].', please wait for the system to reboot</center>';
 				$str = shell_exec("/wr/bin/load-virtex ".$uploadfile); 
 				echo $str;
-				echo '<br>System is rebooting, please wait for 30 seconds';
-				$str = shell_exec("reboot"); 
+				
+				wrs_reboot();
 				
 			} else {
 				echo "<center>File is not valid, please upload a .bin file.</center>\n";
@@ -521,8 +521,8 @@ function wrs_load_files(){
 				echo '<center>Loading lm32 binary '.$_FILES['lm32file']['name'].',, please wait for the system to reboot</center>';
 				$str = shell_exec("/wr/bin/load-lm32 ".$uploadfile); 
 				echo $str;
-				echo '<br>System is rebooting, please wait for 30 seconds';
-				$str = shell_exec("reboot"); 
+				
+				wrs_reboot();
 				
 			}  else {
 				echo "<center>File is not valid, please upload a .bin file</center>\n";
@@ -572,13 +572,7 @@ function wrs_management(){
 			$output = shell_exec($cmd);
 		}else if (!strcmp($cmd, "reboot")){
 			echo '<br><br><br>System is rebooting. Please wait 30 seconds.';
-			$output = shell_exec($cmd);
-		}else if (!strcmp($cmd, "rw")){
-			$output = shell_exec("/wr/bin/wrfs_mnt.sh rw");
-			echo '<br><br><br>Partition is now writable';
-		}else if (!strcmp($cmd, "ro")){
-			$output = shell_exec("/wr/bin/wrfs_mnt.sh ro");
-			echo '<br><br><br>Partition is now READ-ONLY';
+			wrs_reboot();
 		}else if (!strcmp($cmd, "size")){
 			php_file_transfer_size(htmlspecialchars($_POST["size"]));
 			header('Location: firmware.php');
@@ -600,14 +594,14 @@ function wrs_management(){
 					rename($uploadfile, "/update/".($_FILES['file']['name']));
 					unlink($uploadfile);
 					//Reboot switch
-					shell_exec("$(sleep 10; reboot) &");
+					wrs_reboot();
 				}
 				else if(substr($uploadfname,0,14)=="wr-switch-sw-v" && substr($uploadfname,-13)=="_binaries.tar")
 				{
 					rename($uploadfile, "/update/wrs-firmware.tar");
 					unlink($uploadfile);
 					//Reboot switch
-					shell_exec("$(sleep 10; reboot) &");
+					wrs_reboot();
 				}
 				else
 				{
@@ -630,7 +624,8 @@ function wrs_management(){
 			file_put_contents($filename, file_get_contents($ohwrlink));
 			rename($filename, $firmware);
 			echo '<p align=center>File successfully downloaded. Rebooting.</p>';
-			shell_exec("reboot");
+			
+			wrs_reboot();
 			
 		} else if (!empty($_FILES['ppsi_conf']['name'])){
 			
@@ -694,7 +689,9 @@ function wrs_management(){
 				shell_exec("tar -xvf ".$uploadfile. " -C ". $GLOBALS['etcdir'] ); //untar the file
 				
 				echo "<center>Configuration restored sucessfully. Rebooting system.\n";
-				shell_exec("reboot");
+				
+				wrs_reboot();
+				
 			}  else {
 				echo "<center>File is not valid, please upload a .tar.gz file</center>\n";
 			}
@@ -764,7 +761,7 @@ function wrs_management(){
 			
 			//Reboot the switch after 1s
 			usleep(1000000);
-			shell_exec("reboot");
+			wrs_reboot();
 			
 			
 			
@@ -1392,6 +1389,11 @@ function echoSelectedClassIfRequestMatches($requestUri)
 
     if ($current_file_name == $requestUri)
         return 'class="selected"';
+}
+
+function wrs_reboot(){
+	sleep(1);
+	header ('Location: reboot.php');
 }
 	
 ?>
