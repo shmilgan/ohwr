@@ -108,9 +108,9 @@ static struct pstats_version_description pstats_desc[] = {
 };
 
 struct cntrs_dev {
-	unsigned int cntrs[PSTATS_MAX_NPORTS][PSTATS_CNT_PP];
-	unsigned int zeros[PSTATS_MAX_NPORTS][PSTATS_CNT_PP];
-	unsigned int userv[PSTATS_MAX_NPORTS][PSTATS_CNT_PP];
+	unsigned int cntrs[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
+	unsigned int zeros[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
+	unsigned int userv[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
 	struct PSTATS_WB __iomem *regs;
 
 	/* prevents from simultaneous access to cntrs array from tasklet and
@@ -222,7 +222,7 @@ static void pstats_tlet_fn(unsigned long arg)
 			//if(port==0)
 			//	printk(KERN_WARNING "cntrs_ov: %08x %08x\n", (uint32_t)((*cntrs_ov)>>32 & 0xffffffff),
 			//      (uint32_t)((*cntrs_ov) & 0x00ffffffffLL));
-			for (cntr = 0; cntr < PSTATS_CNT_PP; ++cntr) {
+			for (cntr = 0; cntr < firmware_counters; ++cntr) {
 				/*decode counters overflow flags to increment coutners*/
 				if ((*cntrs_ov)>>cntr & 0x01) {
 					ptr = &(device->cntrs[port][cntr]);
@@ -274,7 +274,7 @@ static int rd_cnt_word(int port, int adr)
 	val[1] = pstats_readl(pstats_dev, L2_CNT_VAL);
 
 	for (i = 0; i <= 3; ++i) {
-		if (4*adr+i >= PSTATS_CNT_PP)
+		if (4*adr+i >= firmware_counters)
 			break;
 		spin_lock(&pstats_dev.port_mutex[port]);
 		ptr = &(pstats_dev.cntrs[port][4 * adr + i]);
@@ -290,7 +290,7 @@ static int pstats_rd_cntrs(int port)
 {
 	int adr;
 
-	for (adr = 0; adr < PSTATS_ADR_PP; ++adr)
+	for (adr = 0; adr < firmware_adr_pp; ++adr)
 		rd_cnt_word(port, adr);
 
 	return 0;
@@ -347,7 +347,7 @@ static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 
 	if (port < pstats_nports) {
 		pstats_rd_cntrs(port);
-		for (i = 0; i < PSTATS_CNT_PP; i++)
+		for (i = 0; i < firmware_counters; i++)
 			d->userv[port][i] = d->cntrs[port][i] - d->zeros[port][i];
 	} else {
 		/* stuff for info file, read at module load time */
@@ -420,7 +420,8 @@ static int __init pstats_init(void)
 	for (i = 0; i < pstats_nports; ++i) {
 		pstats_ctl_table[i].procname = portnames[i];
 		pstats_ctl_table[i].data = &pstats_dev.userv[i];
-		pstats_ctl_table[i].maxlen = PSTATS_CNT_PP*sizeof(unsigned int);
+		pstats_ctl_table[i].maxlen =
+			firmware_counters*sizeof(unsigned int);
 		pstats_ctl_table[i].mode = 0644;
 		pstats_ctl_table[i].proc_handler = pstats_handler;
 		pstats_ctl_table[i].extra1 = (void *)i;
@@ -493,11 +494,11 @@ static int __init pstats_init(void)
 		goto err_exit;
 	}
 
-	if (firmware_counters > PSTATS_NUM_OF_COUNTERS) {
+	if (firmware_counters > PSTATS_MAX_NUM_OF_COUNTERS) {
 		printk(KERN_ERR "%s: too many counters %d, "
 				"maximum supported %d\n",
 		       KBUILD_MODNAME, firmware_counters,
-		       PSTATS_NUM_OF_COUNTERS);
+		       PSTATS_MAX_NUM_OF_COUNTERS);
 		err = -EFBIG; /* "File too large", not exact */
 		goto err_exit;
 	}
