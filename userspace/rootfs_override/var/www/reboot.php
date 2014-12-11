@@ -20,14 +20,17 @@
 	<?php session_is_started() ?>
 	
 	<div id="rebootmsg">
-		<p align=center>
-			<img src="./img/loader.gif">
-		</p>
-		<br>
-		<div id="rebootingtext" align=center>...Saving changes...</div>
+		<img src="./img/loader.gif">
+		<div id="rebootingtext">...Saving changes...</div>
 	</div>
 	
 	<div id="rebooting"></div>
+	
+	<div id="rebootwrlogo">
+		<img alt="open clipart http://www.ryanlerch.org/" src="./img/ryanlerch_The_White_Rabbit.png">
+		<p>Alice: How long is forever?<br>White Rabbit: Sometimes, just a nanosecond.</p>
+	</div>
+	
 
 </div>
 </div>

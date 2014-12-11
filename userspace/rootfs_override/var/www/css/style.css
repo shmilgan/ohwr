@@ -394,20 +394,44 @@ height: 22px;
 }
 
 #logo {
-margin: 10px 0px;
+	margin: 10px 0px;
 }
+
 #bottommsg{
 	margin-top:300px
 }
 
 #rebootmsg{
-	margin-top:100px
+	margin-top: 60px;
+	text-align: center;
 }
 
 #rebootmsg img{
-	width: 100px;
-	height: 100px;
+	width: 70px;
+	height: 70px;
+	margin-bottom: 10px;
 }
+
+#rebootwrlogo{
+	margin-top:30px;
+}
+
+#rebootwrlogo img{
+	float: right;
+	width: 90px;
+	height: 180px;
+	opacity: 0.4;
+	filter: alpha(opacity=40);
+}
+#rebootwrlogo p{
+	padding-top:30px;
+	padding-right:5px;
+	float: right;
+	font-size: 8px;
+	font-style: italic;
+	text-align: right;
+}
+
 
 .center {
 margin-left:auto;
