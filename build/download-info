@@ -168,3 +168,6 @@ uClibc-0.9.32.tar.bz2            cfcb6c25d8ebe12817499d8749ee8ae1 \
 
 zlib-1.2.5.tar.bz2               be1e89810e66150f5b0327984d8625a0 \
    http://kent.dl.sourceforge.net/sourceforge/libpng/zlib-1.2.5.tar.bz2
+
+monit-5.10.tar.gz                5b5b5cc7939b975bbbef73bd6426750a \
+   http://mmonit.com/monit/dist/monit-5.10.tar.gz

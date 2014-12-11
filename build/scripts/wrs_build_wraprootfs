@@ -105,6 +105,9 @@ ln -s ../tmp $TMPFS/usr/tmp
 # mv ubi commands to /sbin: they are needed for boot time
 mv $TMPFS/usr/sbin/ubi* $TMPFS/sbin
 
+#set permisions for monitrc
+chmod 600 $TMPFS/etc/monitrc
+
 # copy /etc to /usr/etc, where it can be edited (boot sequence copies back)
 cp -a $TMPFS/etc $TMPFS/usr/etc
 
