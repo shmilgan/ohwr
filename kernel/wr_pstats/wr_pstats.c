@@ -37,10 +37,10 @@
 
 static int pstats_nports = PSTATS_DEFAULT_NPORTS;
 static uint32_t portmsk;
-unsigned int firmware_version; /* FPGA firmware version */
-unsigned int firmware_counters; /* number of counters */
-unsigned int firmware_adr_pp; /* number of words with counters */
-unsigned int firmware_cpw; /* number of counters per word */
+static unsigned int firmware_version; /* FPGA firmware version */
+static unsigned int firmware_counters; /* number of counters */
+static unsigned int firmware_adr_pp; /* number of words with counters */
+static unsigned int firmware_cpw; /* number of counters per word */
 module_param(pstats_nports, int, S_IRUGO);
 
 const char *portnames[]  = {"port0", "port1", "port2", "port3", "port4",
@@ -417,6 +417,40 @@ static int __init pstats_init(void)
 
 	printk(KERN_INFO "PORTMSK=%x\n", portmsk);
 
+	/*map PSTATS Wishbone registers*/
+	pstats_dev.regs = ioremap(FPGA_BASE_PSTATS, sizeof(struct PSTATS_WB));
+	if (!pstats_dev.regs) {
+		printk(KERN_ERR "%s: could not map PSTATS registers\n",
+				KBUILD_MODNAME);
+		unregister_sysctl_table(pstats_header);
+		err = -ENOMEM;
+		goto err_exit;
+	}
+
+	/* get version number */
+	data = pstats_readl(pstats_dev, INFO);
+	firmware_version = PSTATS_INFO_VER_R(data);
+	firmware_counters = PSTATS_INFO_CPP_R(data);
+	firmware_cpw = PSTATS_INFO_CPW_R(data);
+	/* assume 4 counters per word */
+	firmware_adr_pp = (firmware_counters+3)/4;
+
+	if (firmware_version >= ARRAY_SIZE(pstats_desc)) {
+		printk(KERN_ERR "%s: pstats version %d not supported\n",
+		       KBUILD_MODNAME, firmware_version);
+		err = -EFBIG; /* "File too large", not exact */
+		goto err_exit;
+	}
+
+	if (firmware_counters > PSTATS_MAX_NUM_OF_COUNTERS) {
+		printk(KERN_ERR "%s: too many counters %d, "
+				"maximum supported %d\n",
+		       KBUILD_MODNAME, firmware_counters,
+		       PSTATS_MAX_NUM_OF_COUNTERS);
+		err = -EFBIG; /* "File too large", not exact */
+		goto err_exit;
+	}
+
 	for (i = 0; i < pstats_nports; ++i) {
 		pstats_ctl_table[i].procname = portnames[i];
 		pstats_ctl_table[i].data = &pstats_dev.userv[i];
@@ -451,16 +485,6 @@ static int __init pstats_init(void)
 		goto err_exit;
 	}
 
-	/*map PSTATS Wishbone registers*/
-	pstats_dev.regs = ioremap(FPGA_BASE_PSTATS, sizeof(struct PSTATS_WB));
-	if (!pstats_dev.regs) {
-		printk(KERN_ERR "%s: could not map PSTATS registers\n",
-				KBUILD_MODNAME);
-		unregister_sysctl_table(pstats_header);
-		err = -ENOMEM;
-		goto err_exit;
-	}
-
 	/*request pstats IRQ*/
 	pstats_irq_disable(PSTATS_ALL_MSK);
 	err = request_irq(WRVIC_BASE_IRQ+WR_PSTATS_IRQ, pstats_irq_handler,
@@ -479,34 +503,12 @@ static int __init pstats_init(void)
 
 	wr_nic_pstats_callback = pstats_callback;
 
-	/* get version number */
-	data = pstats_readl(pstats_dev, INFO);
-	firmware_version = PSTATS_INFO_VER_R(data);
-	firmware_counters = PSTATS_INFO_CPP_R(data);
-	firmware_cpw = PSTATS_INFO_CPW_R(data);
-	/* assume 4 counters per word */
-	firmware_adr_pp = (firmware_counters+3)/4;
-
-	if (firmware_version >= ARRAY_SIZE(pstats_desc)) {
-		printk(KERN_ERR "%s: pstats version %d not supported\n",
-		       KBUILD_MODNAME, firmware_version);
-		err = -EFBIG; /* "File too large", not exact */
-		goto err_exit;
-	}
-
-	if (firmware_counters > PSTATS_MAX_NUM_OF_COUNTERS) {
-		printk(KERN_ERR "%s: too many counters %d, "
-				"maximum supported %d\n",
-		       KBUILD_MODNAME, firmware_counters,
-		       PSTATS_MAX_NUM_OF_COUNTERS);
-		err = -EFBIG; /* "File too large", not exact */
-		goto err_exit;
-	}
-
 	printk(KERN_INFO "%s: initialized\n", KBUILD_MODNAME);
 	return 0;
 
 err_exit:
+	if (pstats_dev.regs)
+		iounmap(pstats_dev.regs);
 	printk(KERN_ERR "%s: could not initialize\n", KBUILD_MODNAME);
 	return err;
 }
