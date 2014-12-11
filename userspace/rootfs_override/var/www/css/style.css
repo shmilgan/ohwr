@@ -399,14 +399,33 @@ margin: 10px 0px;
 #bottommsg{
 	margin-top:300px
 }
-
-#rebootmsg{
-	margin-top:100px
+element.style {
 }
+	#rebootmsg{
+		margin-top:80px
+	}
 
-#rebootmsg img{
-	width: 100px;
-	height: 100px;
+	#rebootmsg img{
+		width: 70px;
+		height: 70px;
+	}
+
+	#rebootwrlogo img{
+		float: right;
+		width: 90px;
+		height: 180px;
+		float:bottom;
+		padding-top:20px;
+		opacity: 0.4;
+		filter: alpha(opacity=40);
+	}
+	#rebootwrlogo p{
+		padding-top:50px;
+		padding-right:5px;
+		float: right;
+		font-size: 8px;
+		font-style: italic;
+	}
 }
 
 .center {

@@ -28,6 +28,14 @@
 	</div>
 	
 	<div id="rebooting"></div>
+	
+	<div id="rebootwrlogo">
+		<br><br>
+		<img src="./img/ryanlerch_The_White_Rabbit.png">
+		<p align=right>Alice: How long is forever? 
+					<br>White Rabbit: Sometimes, just a nanosecond.</p>
+	</div>
+	
 
 </div>
 </div>
