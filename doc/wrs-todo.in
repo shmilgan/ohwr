@@ -155,10 +155,6 @@ completed (a similar branch exists in @i{spec-sw}, changing the
 like increasing @t{NR_IRQ} and exporting symbols for externally-loaded
 @t{irq_chip} drivers.
 
-@item We'd benefit from having ``pstats'' names in @t{/proc/sys} where
-the counters are. This would make the @sc{snmp} code generic, so
-no change there would be needed if and when the counters change.
-
 @end itemize
 
 @c ##########################################################################
@@ -169,12 +165,6 @@ no change there would be needed if and when the counters change.
 
 @item We should have SDB in the switch gateware, to simplify a number
 of things and avoid explicit addresses in so many places.
-
-@item The ``pstats'' counters should export a version (even before SDB
-is used). (@b{Update}: it is there, it just not used yet -- thanks Greg).
-Thus, the kernel driver will know what the counters are, and
-we could run different gateware images with the same filesystem, because
-the driver will support the various versions counter sets.
 
 @end itemize
 

@@ -7,13 +7,14 @@
 #define WRVIC_BASE_IRQ  (NR_AIC_IRQS + (5 * 32))
 /*****/
 
+#define PSTATS_MAX_NUM_OF_COUNTERS 39		/* Maximum number of counters
+						 * supported by the driver */
 
-#define PSTATS_NPORTS 18	/* how many eth ports are in the switch */
-#define PSTATS_CNT_PP 39	/* how many counters per port */
-#define PSTATS_ADR_PP ((PSTATS_CNT_PP+3)/4)	/* how many address words are
-						 * there per counter (each of
-						 * them stores the state of 4
-						 * counters) */
+#define PSTATS_MAX_NPORTS 18			/* Maximum number of ports
+						 * supported by the driver */
+#define PSTATS_DEFAULT_NPORTS PSTATS_MAX_NPORTS	/* how many eth ports are
+						 * in the switch */
+
 #define PSTATS_MSB_SHIFT	16	/*how many bits are stored in hw*/
 #define PSTATS_LSB_MSK 0x0000ffff
 #define PSTATS_MSB_MSK 0xffff0000
@@ -27,48 +28,16 @@
 #define PINFO_CNTPP 2
 
 extern int (*wr_nic_pstats_callback)(int epnum,
-				     unsigned int ctr[PSTATS_CNT_PP]);
+				     struct net_device_stats *stats);
 
-enum { /* names for values, from page 14 of hw/gw document */
-	PSTATS_C_T_UNDERRUN = 0,
-	PSTATS_C_R_OVERRUN,
-	PSTATS_C_R_INVALID_CODE,
-	PSTATS_C_R_SYNC_LOST,
-	PSTATS_C_R_PAUSE,
-	PSTATS_C_R_PFILTER_DROP,
-	PSTATS_C_R_PCS_ERROR,
-	PSTATS_C_R_GIANT,
-	PSTATS_C_R_RUNT,
-	PSTATS_C_R_CRC_ERROR,
-	PSTATS_C_R_PCLASS_0,
-	PSTATS_C_R_PCLASS_1,
-	PSTATS_C_R_PCLASS_2,
-	PSTATS_C_R_PCLASS_3,
-	PSTATS_C_R_PCLASS_4,
-	PSTATS_C_R_PCLASS_5,
-	PSTATS_C_R_PCLASS_6,
-	PSTATS_C_R_PCLASS_7,
-	PSTATS_C_T_FRAME,
-	PSTATS_C_R_FRAME,
-	PSTATS_C_RTU_REQ_FLAG,
-	PSTATS_C_R_PRI_0,
-	PSTATS_C_R_PRI_1,
-	PSTATS_C_R_PRI_2,
-	PSTATS_C_R_PRI_3,
-	PSTATS_C_R_PRI_4,
-	PSTATS_C_R_PRI_5,
-	PSTATS_C_R_PRI_6,
-	PSTATS_C_R_PRI_7,
-	PSTATS_C_RTU_REQ,
-	PSTATS_C_RTU_RESP,
-	PSTATS_C_RTU_DROPS,
-	PSTATS_C_RTU_HP,
-	PSTATS_C_RTU_FF,
-	PSTATS_C_RTU_NF,
-	PSTATS_C_RTU_FST,
-	PSTATS_C_RTU_FULL,
-	PSTATS_C_RTU_FWD,
-	PSTATS_C_RTU_RSP,
+struct pstats_version_description {
+	unsigned int rx_packets;
+	unsigned int tx_packets;
+	unsigned int rx_length_errors;
+	unsigned int rx_crc_errors;
+	unsigned int rx_fifo_errors;
+	unsigned int tx_fifo_errors;
+	char *cnt_names;
 };
 
 #endif
