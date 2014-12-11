@@ -16,11 +16,14 @@ if [ "$tfpga" = "UNKNOWN" ]; then
 fi
 FP_FILE="$WR_HOME/lib/firmware/18p_mb-${tfpga}.bin"
 
-
-# TODO: Update wrsw_version to read this value from DF.
-scb_ver=33
-if mtdinfo -a | grep -A 1 dataflash | grep 264 &> /dev/null; then
-	scb_ver=34
+# Get the SCB version from DF.
+scb_ver=$($WR_HOME/bin/wrs_version -t | grep scb-version | cut -d: -f2 | sed 's/[ \.]//g')
+if [ "$scb_ver" = "UNKNOWN" ]; then
+	scb_ver=33
+	# For backward compatibility we can also check the type of DF.
+	if mtdinfo -a | grep -A 1 dataflash | grep -q 264; then
+		scb_ver=34
+	fi
 fi
 LM_FILE="$WR_HOME/lib/firmware/rt_cpu.elf"
 
