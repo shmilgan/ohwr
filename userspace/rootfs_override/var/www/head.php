@@ -10,6 +10,6 @@
 
   <!-- Javascript goes in the document HEAD -->
   <!-- Javascript are located in /js/scripts.js -->
-  <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script type="text/javascript" src="js/jquery-1.10.1.min.js"></script>
   <script type="text/javascript" src="js/scripts.js"></script>
 </head>
