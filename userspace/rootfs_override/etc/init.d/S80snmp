@@ -21,16 +21,16 @@ restart() {
 }
 
 case "$1" in
-  start)
-  	start
+    start)
+	start
 	;;
-  stop)
-  	stop
+    stop)
+	stop
 	;;
-  restart|reload)
-  	restart
+    restart|reload)
+	restart
 	;;
-  *)
+    *)
 	echo $"Usage: $0 {start|stop|restart}"
 	exit 1
 	;;
