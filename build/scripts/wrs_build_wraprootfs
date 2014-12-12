@@ -32,7 +32,8 @@ ROOTFS_INITRAMFS="$WRS_OUTPUT_DIR/images/wrs-initramfs.gz"
 
 cat > $TMPSCRIPT << EOF
 . $WRS_BASE_DIR/../.config
-mkdir -p $TMPFS/wr
+mkdir -p $TMPFS/wr/etc
+cp $WRS_BASE_DIR/../.config $TMPFS/wr/etc/dot-config
 
 cp -r $rootfs_vanilla/* $TMPFS
 cp -r $WRS_OUTPUT_DIR/images/wr/* $TMPFS/wr
@@ -45,42 +46,6 @@ find $TMPFS -name '*~' | xargs rm -f
 rm -rf $TMPFS/dev
 (cd $TMPFS && tar xzf $DEVTAR)
 (cd $TMPFS && ln -fs sbin/init .)
-
-if [ ! -z "$CONFIG_NTP_SERVER" ]; then
-    echo "ntpserver $CONFIG_NTP_SERVER" > $TMPFS/wr/etc/wr_date.conf
-fi
-
-if [ ! -z "$CONFIG_DNS_SERVER" ]; then
-    rm -f $TMPFS/etc/resolv.conf
-    echo "nameserver $CONFIG_DNS_SERVER" > $TMPFS/etc/resolv.conf
-    if [ ! -z "$CONFIG_DNS_DOMAIN" ]; then
-        echo "domain $CONFIG_DNS_DOMAIN" >> $TMPFS/etc/resolv.conf
-    fi
-fi
-
-if [ "$CONFIG_REMOTE_SYSLOG_UDP" = "y" ]; then
-    sed -i 's/@@remote-host/@remote-host/' $TMPFS/etc/rsyslog.conf
-fi
-if [ ! -z "$CONFIG_REMOTE_SYSLOG_SERVER" ]; then
-    sed -i '/remote-host/ s/^##//' $TMPFS/etc/rsyslog.conf
-    sed -i 's/remote-host/$CONFIG_REMOTE_SYSLOG_SERVER/' $TMPFS/etc/rsyslog.conf
-fi
-
-# Fix SNMP values: for all not-empty configs remove commend and replace value
-cfgfile="$TMPFS/wr/etc/snmpd.conf"
-set | grep CONFIG_SNMP | sed 's/=/ /' | while read varname value; do
-    if [ -z "\$value" ]; then continue; fi
-    sed -i "/\$varname/ s/^#//" \$cfgfile
-    sed -i "/\$varname/ s/\$varname/\$value/" \$cfgfile
-done
-
-# Fix log values
-cfgfile="$TMPFS/wr/sbin/start-daemons.sh"
-set | grep CONFIG_WRS_LOG | sed 's/=/ /' | while read varname value; do
-    if [ -z "\$value" ]; then continue; fi
-    sed -i "/\$varname/ s,\$varname,\$value," \$cfgfile
-done
-
 
 mkdir -p $TMPFS/root/.ssh
 #cat $HOME/.ssh/id_?sa.pub >> $TMPFS/root/.ssh/authorized_keys

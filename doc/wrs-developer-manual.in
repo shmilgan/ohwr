@@ -177,12 +177,11 @@ After release 3.3, we decided to add @i{Kconfig} support. This means
 that the first build step is expected to be ``@t{make menuconfig}'',
 like it happens for the kernel.  The default configuration is selected
 by default when one of the build scripts is run, so the procedure for
-the final user is the same as for v3.3 and earlier.  A build with a
-non-default configuration, however, is not considered as
-``supported'', and @i{Kconfig} is there mainly to help developers try
-new packages and setups without changing the repository or
-introducing problems for other users.  For some more information about
-@i{Kconfig} in this package, see the @i{@sc{wrs} User's Manual}.
+the final user is the same as for v3.3 and earlier.
+
+After release 4.1 we support dynamic reconfiguration. As opposed
+to build-time configuration, run-time configuration is expected to
+be frequent, and it's thus documented in the @i{@sc{wrs} Users' Manual}.
 
 The build system is set up as a mix of scripts and makefiles. Every
 sub-package is built by its own script and/or Makefile, and configuration is
@@ -451,14 +450,9 @@ to be used at installation time. See @ref{Flashing Procedure} for details.
 
 Some details of the complete firmware archive depend on the values of
 active @t{Kconfig} variables. If no manual configuration is performed,
-what applies is @t{configs/wrs_release_defconfig}.
-
-If you want to customize your configuration to install several
-switches pre-configured for your network, we suggest you rebuild
-the @i{firmware} archive after running @t{make menuconfig} to select
-your own values
-
-@c FIXME FIXME FIXME: Store kconfig and build info in the archive itself
+what applies is @t{configs/wrs_release_defconfig}. Please note that
+we now support dynamic reconfiguration at run-time. See the @i{@sc{wrs}
+Users' Manual}.
 
 @c --------------------------------------------------------------------------
 @node Rebuilding Parts
@@ -811,7 +805,11 @@ The main components are:
 
 @end table
 
-The most important tools in @file{userspace/tools} are the following:
+@sc{wrs} user space includes also some tools and scripts. Tools
+are build from source files in @file{userspace/tools} while the
+scripts are copied directly from @file{userspace/rootfs_override/wr/bin}.
+
+The following tools and scripts are provided:
 
 @table @file
 
@@ -838,7 +836,7 @@ The most important tools in @file{userspace/tools} are the following:
 	The program is a simple program for talking with serial ports.
 
 @item wr_phytool
-	A tool to read and write PHY registers in the switch
+	A tool to read and write PHY registers in the switch.
 
 @item wr_mon
 	A simple monitor of White Rabbit status. It prints to @i{stdout}
@@ -879,6 +877,20 @@ The most important tools in @file{userspace/tools} are the following:
 	The tool allows to configure and unconfigure the VLAN settings
         for each port and for the RTU daemon. The @t{--help} option
         lists all configuration items of the tool.
+
+@item apply_dot-config
+	The script is used to apply @t{dot-config} settings to the
+        current configuration files.  It is run at boot time before
+        any service is started. The @t{dot-config} mechanism is
+        documented in the @i{@sc{wrs} Users' Manual}.
+
+@item change_dot-config
+	This script changes the current @t{dot-config} file. It is
+        designed to be the back-end of the web interface, when changing
+        configuration items.  The script does nothing to @i{apply}
+        the changes, and it only performs editing.
+        It is the responsibility of the caller to ensure the proper
+        service is restarted with the new configuration.
 
 @item sdb-read
 	The tool, copied from the @t{fpga-config-space} project,

@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# Change a configuration item in dot-config. "=n" is special and it means
+# the option is being unset. "=y" remains unquoted, all the rest is quoted.
+# We still lack support for integers, not used in wrs' .config so far.
+
+dotconfig="/wr/etc/dot-config"
+
+for action in "$*"; do
+    # We accept both CONFIG_THIS= and THIS=
+    item="CONFIG_$(echo $action | cut -d= -f 1 | sed 's/^CONFIG_//')"
+    value=$(echo $action | cut -d= -f 2)
+    if [ "$value" = "n" ]; then
+	line="# $item is not set"
+
+    else
+	if [ "$value" = "y" ]; then
+	    line="${item}=y"
+	else
+	    line="${item}=\"$value\""
+	fi
+    fi
+    # now, a config item may be a substring of another one: careful
+    sed -i -e "/^${item}=/d" -e "/# ${item} is/d" $dotconfig
+    echo $line >> $dotconfig
+done
