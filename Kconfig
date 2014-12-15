@@ -30,10 +30,9 @@ config BR2_CONFIGFILE
 	  files lead to unpredicatable results.
 
 config PPSI
-	bool "Use PPSi daemon"
 	default y
 
-menu "Local configuration"
+menu "Local Network Configuration"
 
 config NTP_SERVER
 	string "IP address of local NTP server (empty for none)"
