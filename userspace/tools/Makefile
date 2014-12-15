@@ -5,6 +5,7 @@ TOOLS += wrs_vlans wrs_dump_shmem
 TOOLS += sdb-read
 TOOLS += nbtee
 TOOLS += wrs_auxclk
+TOOLS += wrs_checkcfg
 
 WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
 

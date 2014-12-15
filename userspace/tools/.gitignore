@@ -19,3 +19,4 @@ wrs_dump_shmem
 sdb-read
 nbtee
 wrs_auxclk
+wrs_checkcfg
