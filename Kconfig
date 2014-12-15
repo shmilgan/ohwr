@@ -145,3 +145,84 @@ config KEEP_ROOTFS
 	  If unsusre, say N.
 
 endmenu
+
+menu "Port Timing Configuration"
+
+config PORT00_PARAMS
+	string "Parameters for the first port"
+	default "name=wr0,tx=0,rx=160000,role=slave,fiber=0"
+	help
+	  This item, and the following ones, are used to assign the
+	  constant delays (likely from calibration), port roles and
+	  type of fiber for each of the ports. Please refer to the
+	  user manual for more information.
+
+config PORT01_PARAMS
+	string "Parameters for the second port"
+	default "name=wr1,tx=0,rx=160000,role=slave,fiber=0"
+
+config PORT02_PARAMS
+	string "Parameters for a further port"
+	default "name=wr2,tx=0,rx=160000,role=master,fiber=0"
+
+config PORT03_PARAMS
+	string "Parameters for a further port"
+	default "name=wr3,tx=0,rx=160000,role=master,fiber=0"
+
+config PORT04_PARAMS
+	string "Parameters for a further port"
+	default "name=wr4,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT05_PARAMS
+	string "Parameters for a further port"
+	default "name=wr5,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT06_PARAMS
+	string "Parameters for a further port"
+	default "name=wr6,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT07_PARAMS
+	string "Parameters for a further port"
+	default "name=wr7,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT08_PARAMS
+	string "Parameters for a further port"
+	default "name=wr8,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT09_PARAMS
+	string "Parameters for a further port"
+	default "name=wr9,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT10_PARAMS
+	string "Parameters for a further port"
+	default "name=wr10,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT11_PARAMS
+	string "Parameters for a further port"
+	default "name=wr11,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT12_PARAMS
+	string "Parameters for a further port"
+	default "name=wr12,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT13_PARAMS
+	string "Parameters for a further port"
+	default "name=wr13,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT14_PARAMS
+	string "Parameters for a further port"
+	default "name=wr14,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT15_PARAMS
+	string "Parameters for a further port"
+	default "name=wr15,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT16_PARAMS
+	string "Parameters for a further port"
+	default "name=wr16,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT17_PARAMS
+	string "Parameters for a further port"
+	default "name=wr17,tx=0,rx=161200,role=master,fiber=0"
+
+endmenu
