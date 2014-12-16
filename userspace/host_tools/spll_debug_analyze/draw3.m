@@ -97,28 +97,49 @@ axis tight
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clrDASH=['r-.','g-.','b-.','c-.']
+%  clrDASH=['r-.','g-.','b-.','c-.']
+%  
+%  subplot(6,1,5)
+%  hold on
+%  plot(Xaxis,bpll(start:finish,3,nn)*to_ps,'k');
+%  for nn=1:backups_n;
+%    plot(Xaxis,bpll(start:finish,8,nn)*to_ps,clr(nn));
+%    plot(Xaxis,bpll(start:finish,7,nn)*to_ps,clrDASH(nn));
+%  end
+%  if backups_n == 1
+%    legend('err', 'bPLL 0 s_avg','bPLL 0 l_avg','Location','northwest');
+%  elseif backups_n == 2
+%    legend('err', 'bPLL 0 s_avg','bPLL 0 l_avg','bPLL 1 s_avg','bPLL 1 l_avg','Location','northwest');
+%  elseif backups_n == 3
+%    legend('err', 'bPLL 0 s_avg','bPLL 0 l_avg','bPLL 1 s_avg','bPLL 1 l_avg','bPLL 2 s_avg','bPLL 2 l_avg','Location','northwest');
+%  else
+%    legend('err', 'bPLL 0 s_avg','bPLL 0 l_avg','bPLL 1 s_avg','bPLL 1 l_avg','bPLL 2 s_avg','bPLL 2 l_avg','bPLL 3 s_avg','bPLL 3 l_avg','Location','northwest');
+%  end
+%  title('bPLLs: short average');
+%  xlabel('time [s]');
+%  ylabel('phase [ps]');
+%  axis tight
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 subplot(5,1,5)
 hold on
 plot(Xaxis,bpll(start:finish,3,nn)*to_ps,'k');
 for nn=1:backups_n;
-  plot(Xaxis,bpll(start:finish,8,nn)*to_ps,clr(nn));
-  plot(Xaxis,bpll(start:finish,7,nn)*to_ps,clrDASH(nn));
+  plot(Xaxis,abs(bpll(start:finish,7,nn) - bpll(start:finish,8,nn))*to_ps,clr(nn));
 end
 if backups_n == 1
-  legend('err', 'bPLL 0 s_avg','bPLL 0 l_avg','Location','northwest');
+  legend('err ','avgDiff 0','Location','northwest');
 elseif backups_n == 2
-  legend('err', 'bPLL 0 s_avg','bPLL 0 l_avg','bPLL 1 s_avg','bPLL 1 l_avg','Location','northwest');
+  legend('err','avgDiff 0','avgDiff 1','Location','northwest');
 elseif backups_n == 3
-  legend('err', 'bPLL 0 s_avg','bPLL 0 l_avg','bPLL 1 s_avg','bPLL 1 l_avg','bPLL 2 s_avg','bPLL 2 l_avg','Location','northwest');
+  legend('err','avgDiff 0','avgDiff 1','avgDiff 2','Location','northwest');
 else
-  legend('err', 'bPLL 0 s_avg','bPLL 0 l_avg','bPLL 1 s_avg','bPLL 1 l_avg','bPLL 2 s_avg','bPLL 2 l_avg','bPLL 3 s_avg','bPLL 3 l_avg','Location','northwest');
+  legend('err','avgDiff 0','avgDiff 1','avgDiff 2','avgDiff 3','Location','northwest');
 end
-title('bPLLs: short average');
+title('bPLLs: error vs Difference of short and long average (the pre-detection factor)');
 xlabel('time [s]');
 ylabel('phase [ps]');
 axis tight
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 return
