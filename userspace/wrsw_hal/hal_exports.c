@@ -123,12 +123,32 @@ int halexp_get_timing_state(hexp_timing_state_t *state)
 
     return 0;
 }
-
 extern int active_port(void);
 
-int halexp_swover_poll()
+/* communicatin between PPSi and wrsw_hal and SoftPLL, mainly getting state
+ * NOTE: reading the flags clears them in SoftPLL (it is kind-of synchronization of state)
+ */
+int halexp_swover_cmd(int cmd, int channel, hexp_backup_state_t *s)
 {
-	return active_port();
+	struct rts_bpll_state state;
+	s->phase_good_val =  0;
+	s->flags          =  0;
+	s->active_chan    = -1;
+	switch(cmd)
+	{
+	  case HEXP_BCKP_CMD_GET_ACTIVE:
+		s->active_chan = active_port();
+	  break;
+	  case HEXP_BCKP_CMD_GET_STATE :
+		rts_get_backup_state(&state,channel);
+		s->phase_good_val = state.phase_good_val;
+		s->flags = state.flags;
+	  break;
+	  default:
+		TRACE(TRACE_INFO, "[halexp_swover_cmd:err] ups, wrong cmd=%d\n", cmd);
+		return -1;
+	}
+	return 0;
 }
 
 static void hal_cleanup_wripc()
@@ -172,12 +192,10 @@ static int export_lock_cmd(const struct minipc_pd *pd,
 
 static int export_swover_cmd(const struct minipc_pd *pd, uint32_t *args, void *ret)
 {
-	int rval;
-
-	rval = halexp_swover_poll();
-	*(int *)ret = rval;
-	return 0;
+	hexp_backup_state_t *state = ret;
+	return halexp_swover_cmd(args[0] /*cmd*/,args[1] /*channel*/, state);
 }
+
 
 static int export_query_ports(const struct minipc_pd *pd,
 			      uint32_t *args, void *ret)
@@ -208,12 +226,12 @@ int hal_init_wripc()
 	/* NOTE: check_running is not remotely called, so I don't export it */
 
 	/* fill the function pointers */
-	__rpcdef_pps_cmd.f = export_pps_cmd;
-	__rpcdef_get_port_state.f = export_get_port_state;
-	__rpcdef_lock_cmd.f = export_lock_cmd;
+	__rpcdef_pps_cmd.f = export_pps_cmd;                 //wrs-time.c
+	__rpcdef_get_port_state.f = export_get_port_state;   //wrs-socket.c  & main-loop.c
+	__rpcdef_lock_cmd.f = export_lock_cmd;               //wrs-time.c
 	__rpcdef_query_ports.f = export_query_ports;
-	__rpcdef_get_timing_state.f = export_get_timing_state;
-	__rpcdef_swover_cmd.f = export_swover_cmd;
+	__rpcdef_get_timing_state.f = export_get_timing_state; 
+	__rpcdef_swover_cmd.f = export_swover_cmd;           //wrs-time.c
 
 	minipc_export(hal_ch, &__rpcdef_pps_cmd);
 	minipc_export(hal_ch, &__rpcdef_get_port_state);

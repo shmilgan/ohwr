@@ -90,6 +90,21 @@ int rts_backup_channel(int channel, int cmd)
     return rval;
 }
 
+/* Get state of the backup stuff, i.e. good phase, switchover & update notifications */
+int rts_get_backup_state(struct rts_bpll_state *s, int channel)
+{
+	int i, ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_get_backup_state_struct,
+			      s,channel);
+
+	if(ret < 0)
+		return ret;
+
+	s->flags          = (s->flags);
+	s->phase_good_val = (s->phase_good_val);
+	s->active_chan    = (s->active_chan);
+    return 0;
+}
+
 /* Sets the phase setpoint on a given channel */
 int rts_adjust_phase(int channel, int32_t phase_setpoint)
 {
