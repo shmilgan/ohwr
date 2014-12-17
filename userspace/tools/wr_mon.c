@@ -3,14 +3,14 @@
 #include <string.h>
 #include <getopt.h>
 
+#include <libwr/shmem.h>
+#include <libwr/hal_shmem.h>
 #include <minipc.h>
 
 #include "term.h"
 
 #define PTP_EXPORT_STRUCTURES
 #include "ptpd_exports.h"
-
-#include <libwr/hal_client.h>
 
 #define SHOW_GUI		0
 #define SHOW_STATS		1
@@ -24,9 +24,50 @@ hexp_port_list_t port_list;
 
 static struct minipc_ch *ptp_ch;
 
-void init(int usecolor)
+static struct wrs_shm_head *hal_head;
+static struct hal_port_state *hal_ports;
+/* local copy of port state */
+static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS];
+static int hal_nports_local;
+
+int read_ports(void){
+	unsigned ii;
+	unsigned retries = 0;
+
+	/* read data, with the sequential lock to have all data consistent */
+	do {
+		ii = wrs_shm_seqbegin(hal_head);
+		memcpy(hal_ports_local_copy, hal_ports,
+		       hal_nports_local*sizeof(struct hal_port_state));
+		retries++;
+	} while (wrs_shm_seqretry(hal_head, ii));
+	if (retries > 100)
+		return -1;
+
+	return 0;
+}
+
+void init_shm(void)
 {
-	halexp_client_init();
+	struct hal_shmem_header *h;
+
+	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
+	if (!hal_head) {
+		fprintf(stderr, "unable to open shm for HAL!\n");
+		exit(-1);
+	}
+	h = (void *)hal_head + hal_head->data_off;
+	/* Assume number of ports does not change in runtime */
+	hal_nports_local = h->nports;
+	/* Even after HAL restart, HAL will place structures at the same
+	 * addresses. No need to re-dereference pointer at each read. */
+	hal_ports = wrs_shm_follow(hal_head, h->ports);
+	if (hal_nports_local > HAL_MAX_PORTS) {
+		fprintf(stderr, "Too many ports reported by HAL. "
+			"%d vs %d supported\n",
+			hal_nports_local, HAL_MAX_PORTS);
+		exit(-1);
+	}
 
 	ptp_ch = minipc_client_create("ptpd", 0);
 	if (!ptp_ch)
@@ -36,17 +77,16 @@ void init(int usecolor)
 		exit(-1);
 	}
 
-
-	term_init(usecolor);
-	halexp_query_ports(&port_list);
+	read_ports();
 }
 
 void show_ports(void)
 {
-	int i, j;
+	int i;
 	time_t t;
 	struct tm *tm;
 	char datestr[32];
+	struct hal_port_state *port_state;
 
 	if(mode == SHOW_GUI) {
 		time(&t);
@@ -54,31 +94,27 @@ void show_ports(void)
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
 		term_pcprintf(3, 1, C_BLUE, "Switch ports at %s\n", datestr);
 
-		for(i=0; i<18;i++)
+		for (i = 0; i < hal_nports_local; i++)
 		{
-			char if_name[10], found = 0;
-			hexp_port_state_t state;
+			char if_name[10];
 
 			snprintf(if_name, 10, "wr%d", i);
 
-			for(j=0;j<port_list.num_ports;j++)
-				if(!strcmp(port_list.port_names[j], if_name)) {
-					found = 1; break;
-				}
-
-			if(!found) continue;
-
-			halexp_get_port_state(&state, if_name);
+			port_state = hal_lookup_port(hal_ports_local_copy,
+						    hal_nports_local, if_name);
+			if (!port_state)
+				continue;
 
 			term_cprintf(C_WHITE, " %-5s: ", if_name);
-			if(state.up)
+			/* check if link is up */
+			if (state_up(port_state->state))
 				term_cprintf(C_GREEN, "Link up    ");
 			else
 				term_cprintf(C_RED, "Link down  ");
 
 			term_cprintf(C_GREY, "mode: ");
 
-			switch(state.mode)
+			switch (port_state->mode)
 			{
 				case HEXP_PORT_MODE_WR_MASTER:
 					term_cprintf(C_WHITE, "WR Master  ");
@@ -88,54 +124,54 @@ void show_ports(void)
 					break;
 			}
 
-			if(state.is_locked)
+			if (port_state->locked)
 				term_cprintf(C_GREEN, "Locked  ");
 			else
 				term_cprintf(C_RED, "NoLock  ");
 
-			if(state.rx_calibrated  && state.tx_calibrated)
-				term_cprintf(C_GREEN, "Calibrated  \n");
+			if (port_state->calib.rx_calibrated
+			    && port_state->calib.tx_calibrated)
+				term_cprintf(C_GREEN, "Calibrated\n");
 			else
-				term_cprintf(C_RED, "Uncalibrated  \n");
+				term_cprintf(C_RED, "Uncalibrated\n");
 		}
 	}
 	else if(mode == SHOW_STATS) {
 		printf("PORTS ");
-		for(i=0; i<18; ++i) {
-			char if_name[10], found = 0;
-			hexp_port_state_t state;
+		for (i = 0; i < hal_nports_local; ++i) {
+			char if_name[10];
 
 			snprintf(if_name, 10, "wr%d", i);
-			for(j=0;j<port_list.num_ports;j++)
-				if(!strcmp(port_list.port_names[j], if_name)) { found = 1; break; }
+			port_state = hal_lookup_port(hal_ports_local_copy,
+						   hal_nports_local, if_name);
+			if (!port_state)
+				continue;
 
-			if(!found) continue;
-
-			halexp_get_port_state(&state, if_name);
 			printf("port:%s ", if_name);
-			printf("lnk:%d ", state.up ? 1:0);
-			printf("mode:%s ", state.mode==HEXP_PORT_MODE_WR_SLAVE ? "S":"M");
-			printf("lock:%d ", state.is_locked ? 1:0);
+			printf("lnk:%d ", state_up(port_state->state));
+			printf("mode:%s ",
+			       port_state->mode == HEXP_PORT_MODE_WR_SLAVE
+			       ? "S" : "M");
+			printf("lock:%d ", port_state->locked);
 		}
 		printf("\n");
 	}
 	else if (mode == SHOW_SNMP_PORTS) {
-		for(i=0; i<18; ++i) {
-			char if_name[10], found = 0;
-			hexp_port_state_t state;
+		for (i = 0; i < hal_nports_local; ++i) {
+			char if_name[10];
 
 			printf("PORT %i\n", i);
 			snprintf(if_name, 10, "wr%d", i);
-			for(j=0;j<port_list.num_ports;j++)
-				if(!strcmp(port_list.port_names[j], if_name)) { found = 1; break; }
+			port_state = hal_lookup_port(hal_ports_local_copy,
+						    hal_nports_local, if_name);
+			if (!port_state)
+				continue;
 
-			if(!found) continue;
-
-			halexp_get_port_state(&state, if_name);
-			printf("linkup: %d\n", state.up ? 1:0);
-			printf("mode: %d\n", state.mode==HEXP_PORT_MODE_WR_SLAVE
+			printf("linkup: %d\n", state_up(port_state->state));
+			printf("mode: %d\n",
+			       port_state->mode == HEXP_PORT_MODE_WR_SLAVE
 			       ? 0 : 1);
-			printf("locked: %d\n", state.is_locked ? 1:0);
+			printf("locked: %d\n", port_state->locked);
 			printf("peer_id: ff:ff:ff:ff:ff:ff:ff:ff\n"); /* FIXME */
 		}
 	}
@@ -148,32 +184,28 @@ void show_ports(void)
  */
 static void show_unadorned_ports(void)
 {
-	int i, j;
+	int i;
+	struct hal_port_state *port_state;
 
-	for(i=0; i<18;i++)
+	for (i = 0; i < hal_nports_local; i++)
 	{
-		char if_name[10], found = 0;
-		hexp_port_state_t state;
+		char if_name[10];
 
 		snprintf(if_name, 10, "wr%d", i);
-		for(j=0;j<port_list.num_ports;j++)
-			if(!strcmp(port_list.port_names[j], if_name)) {
-				found = 1;
-				break;
-			}
-		if(!found)
-			continue;
+			port_state = hal_lookup_port(hal_ports_local_copy,
+						     hal_nports_local, if_name);
+			if (!port_state)
+				continue;
 
-		halexp_get_port_state(&state, if_name);
-
-		printf("%s %s %s %s \n", /* trailing space needed? */
-		       state.up
+		printf("%s %s %s %s\n",
+		       state_up(port_state->state)
 		       ? "up" : "down",
-		       state.mode == HEXP_PORT_MODE_WR_MASTER
+		       port_state->mode == HEXP_PORT_MODE_WR_MASTER
 		       ? "Master" : "Slave", /* FIXME: other options? */
-		       state.is_locked
+		       port_state->locked
 		       ? "Locked" : "NoLock",
-		       state.rx_calibrated  && state.tx_calibrated
+		       port_state->calib.rx_calibrated
+			   && port_state->calib.tx_calibrated
 		       ? "Calibrated" : "Uncalibrated");
 	}
 }
@@ -297,7 +329,7 @@ int main(int argc, char *argv[])
 {
 	int opt;
 	int usecolor = 1;
-
+	init_shm();
 	while((opt=getopt(argc, argv, "sbgpw")) != -1)
 	{
 		switch(opt)
@@ -310,16 +342,13 @@ int main(int argc, char *argv[])
 				break;
 			case 'g':
 				mode = SHOW_SNMP_GLOBALS;
-				init(0);
 				show_all();
 				exit(0);
 			case 'p':
 				mode = SHOW_SNMP_PORTS;
-				init(0);
 				show_all();
 				exit(0);
 			case 'w': /* for the web interface */
-				init(0);
 				show_unadorned_ports();
 				exit(0);
 			default:
@@ -328,8 +357,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	init(usecolor);
-
+	term_init(usecolor);
 	setvbuf(stdout, NULL, _IOFBF, 4096);
 	for(;;)
 	{

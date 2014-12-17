@@ -3,6 +3,7 @@
 
 #include <hal/hal_exports.h>
 #include <libwr/sfp_lib.h>
+#include <string.h>
 
 /* Port state machine states */
 #define HAL_PORT_STATE_DISABLED 0
@@ -110,5 +111,22 @@ int hal_port_query_ports(struct hexp_port_list *list,
 int hal_port_get_exported_state(struct hexp_port_state *state,
 				struct hal_port_state *ports,
 				const char *port_name);
+
+static inline int state_up(int state)
+{
+	return (state != HAL_PORT_STATE_LINK_DOWN
+		     && state != HAL_PORT_STATE_DISABLED);
+}
+
+static inline struct hal_port_state *hal_lookup_port(
+			struct hal_port_state *ports, int nports, char *name)
+{
+	int i;
+
+	for (i = 0; i < nports; i++)
+		if (ports[i].in_use && (!strcmp(name, ports[i].name)))
+			return ports + i;
+	return NULL;
+}
 
 #endif /*  __LIBWR_HAL_SHMEM_H__ */
