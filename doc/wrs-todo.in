@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month November 2014
+@set update-month December 2014
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -210,14 +210,8 @@ public in an exported library.  The library code rusted over the years,
 and we can't trust it any more without some clean up. I'm personally
 scared every time I look in that code base.
 
-@item The @i{mini-ipc} mechanism is showing its limits. We are communicating
-too much information, and the polling mechanism used in some processes
-introduces significant delays.  Most of the communication is just
-about reporting status, so this should be brought to a shared-memory
-area with a well-defined structure. Again, this allows simulation and
-development off-switch, with fault injection.
-
 @item Whenever @i{ipc} is used for actions, rather than just status passing,
+which is now shmem-based,
 we should audit the processes to ensure the are based on @i{select}
 rather than a timely poll.  Actually, the HAL process is using quite
 a lot of cpu time, and it could do much better.
@@ -227,14 +221,21 @@ interface with gateware is now simpler than it was, but software still
 has remnants of old data structure.  Also, the multi-threaded approach
 is overkill, and the program could benefit from a simplification.
 
-@item We need to sort out configuration files. I especially plan to
-get rid of @i{lua}; it is only used to set internal variables in the @i{lua}
-data structures, that are then queried. This means if you set an unused
-item (e.g. because of a typo or some old wishful-thinking documents) it won't
-have any effect and it will report no error.  The best action may be move
-all configurations to the PPSi config file -- the delays and all the rest
-are PTP-specific anyways, and PPSi supports per-architecture configuration
-items.
+@item The SFP code needs to be cleaned up. There is unsafe string
+management in 16-wide non-terminated fields, and we don't really
+report all the information we have (we should copy to shmem so to
+get it out, at least).  Also, using the device name without the vendor
+name is unsafe: some vendors use generic device names.
+
+@item The @t{TRACE} support it not really working. We have serious
+warning messages that were never reported.  We should really print
+everything to stderr and let syslog manage it (according to user
+configuration: this is already in dot-config).
+
+@item Default values, when configuration is missing, are badly chosen.
+For example, @i{alpha} is always positive for an unknown SFP, but we
+should rather have zero (or a positive/negative thing according the
+the wavelength, if known).
 
 @end itemize
 
