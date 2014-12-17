@@ -30,6 +30,7 @@ config BR2_CONFIGFILE
 	  files lead to unpredicatable results.
 
 config PPSI
+	bool
 	default y
 
 menu "Local Network Configuration"
