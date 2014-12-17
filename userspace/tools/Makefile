@@ -45,7 +45,7 @@ endif
 LDFLAGS = -L../mini-rpc \
 		-L../libwr \
 		-L../libsdb \
-		-lwr -lminipc -lsdbfs -llua -lm -ldl
+		-lwr -lminipc -lsdbfs -lm -ldl
 
 all: 	$(TOOLS)
 

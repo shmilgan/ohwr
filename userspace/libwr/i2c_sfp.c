@@ -9,10 +9,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-
 #include <libwr/pio.h>
 #include <libwr/trace.h>
 #include <libwr/util.h>

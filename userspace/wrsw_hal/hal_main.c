@@ -91,8 +91,6 @@ static int hal_init()
 	signal(SIGTERM, sighandler);
 	signal(SIGILL, sighandler);
 
-	assert_init(hal_parse_config());
-
 	/* Low-level hw init, init non-kernel drivers */
 	assert_init(shw_init());
 
@@ -165,32 +163,19 @@ static void show_help()
 {
 	printf("WR Switch Hardware Abstraction Layer daemon (wrsw_hal)\n\
 Usage: wrsw_hal [options], where [options] can be:\n\
--f       : force FPGA firmware reload\n\
--d       : fork into background (daemon mode)\n\
--x [code]: execute arbitrary Lua [code] before loading configuration file\n\
--c [file]: specify your own config file\n\n");
+-d       : fork into background (daemon mode)\n");
 }
 
 static void hal_parse_cmdline(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "dfhx:c:")) != -1) {
+	while ((opt = getopt(argc, argv, "dh")) != -1) {
 		switch (opt) {
 		case 'd':
 			daemon_mode = 1;
 			break;
-		case 'x':
-			hal_config_extra_cmdline(optarg);
-			break;
 
-		case 'c':
-			hal_config_set_config_file(optarg);
-			break;
-
-			//              case 'f':
-//                              shw_fpga_force_firmware_reload();
-//                              break;
 		case 'h':
 			show_help();
 			exit(0);
