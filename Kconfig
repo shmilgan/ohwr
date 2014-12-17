@@ -227,7 +227,7 @@ config PORT17_PARAMS
 
 endmenu
 
-menu "SFP Configuration"
+menu "SFP and Media Timing Configuration"
 
 config SFP00_PARAMS
 	string "Parameters for one SFP device type"
@@ -267,5 +267,30 @@ config SFP08_PARAMS
 
 config SFP09_PARAMS
 	string "Parameters for one SFP device type"
+
+
+config FIBER00_PARAMS
+	string "Alpha parameters for fiber type 0"
+	default "alpha_1310_1490=2.6787e-04"
+	help
+	  This parameter, and the following ones, specify the physical
+	  features of your fiber type.  You need to specify the alpha
+	  value for each pair of wavelengths you are using. The index
+	  ("00" onwards) is used to match the port
+	  (CONFIG_PORTxx_PARAMS) with one of several installed fiber
+	  types.
+
+config FIBER01_PARAMS
+	string "Alpha parameters for fiber type 1"
+	default "alpha_1310_1490=2.6787e-04"
+
+config FIBER02_PARAMS
+	string "Alpha parameters for fiber type 2"
+	default "alpha_1310_1490=2.6787e-04"
+
+config FIBER03_PARAMS
+	string "Alpha parameters for fiber type 3"
+	default "alpha_1310_1490=2.6787e-04"
+
 
 endmenu
