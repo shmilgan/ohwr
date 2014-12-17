@@ -292,5 +292,31 @@ config FIBER03_PARAMS
 	string "Alpha parameters for fiber type 3"
 	default "alpha_1310_1490=2.6787e-04"
 
-
 endmenu
+
+choice
+	prompt "Timing Mode"
+	default TIME_BC
+
+config TIME_GM
+	bool "Grand-Master"
+	help
+	  This options selects the White Rabbit Switch as a grandmaster,
+	  i.e. it uses its input channels to track an Atomic or GPS and
+	  claim to be a PTP authoritative source on the network.
+
+config TIME_FM
+	bool "Free-Running Master"
+	help
+	  The White Rabbit Switch pretends to be a master on his PTP
+	  network, but it doesn't sync to an external source. Its own
+	  internal clocks and counters are used to drive timing.
+
+config TIME_BC
+	bool "Boundary Clock"
+	help
+	  The White Rabbit Switch is a normal PTP Boundary Clock: it is
+	  slave on one of its ports and master on the other ones, according
+	  to the standard Best Master Clock algorithm.
+
+endchoice
