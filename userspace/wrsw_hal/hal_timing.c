@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include <libwr/switch_hw.h>
+#include <libwr/config.h>
 
 #include "wrsw_hal.h"
 #include "timeout.h"
@@ -20,8 +21,16 @@ static int timing_mode;
 
 int hal_init_timing()
 {
-	char str[128];
 	timeout_t lock_tmo;
+	static struct {
+		char *cfgname;
+		int modevalue;
+	} *m, modes[] = {
+		{"TIME_GM", HAL_TIMING_MODE_GRAND_MASTER},
+		{"TIME_FM", HAL_TIMING_MODE_FREE_MASTER},
+		{"TIME_BC", HAL_TIMING_MODE_BC},
+		{NULL, HAL_TIMING_MODE_BC /* default */},
+	};
 
 	if (rts_connect() < 0) {
 		TRACE(TRACE_ERROR,
@@ -29,29 +38,14 @@ int hal_init_timing()
 		return -1;
 	}
 
-	if (hal_config_get_string("timing.mode", str, sizeof(str)) < 0) {
-		TRACE(TRACE_INFO,
-		      "Not timing mode specified in the config file. "
-		      "Defaulting to Boundary Clock.");
-		timing_mode = HAL_TIMING_MODE_BC;
-		strcpy(str, "BoundaryClock");
-	} else {
-		if (!strcasecmp(str, "GrandMaster") || !strcasecmp(str, "GM"))
-			timing_mode = HAL_TIMING_MODE_GRAND_MASTER;
-		else if (!strcasecmp(str, "FreeMaster")
-			 || !strcasecmp(str, "FM"))
-			timing_mode = HAL_TIMING_MODE_FREE_MASTER;
-		else if (!strcasecmp(str, "BoundaryClock")
-			 || !strcasecmp(str, "BC"))
-			timing_mode = HAL_TIMING_MODE_BC;
-		else {
-			TRACE(TRACE_ERROR, "Unrecognized timing mode '%s'",
-			      str);
-			return -1;
-		}
-	}
+	for (m = modes; m->cfgname; m++)
+		if (libwr_cfg_get(m->cfgname))
+			break;
+	timing_mode = m->modevalue;
 
-	TRACE(TRACE_INFO, "Timing mode: %s", str);
+	if (!m->cfgname)
+		fprintf(stderr, "%s: no config variable set, defaults used\n",
+			__func__);
 
 	/* initialize the RT Subsys */
 	switch (timing_mode) {
