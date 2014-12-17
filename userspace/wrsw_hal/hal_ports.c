@@ -430,38 +430,40 @@ static void hal_port_fsm(struct hal_port_state * p)
 static void hal_port_insert_sfp(struct hal_port_state * p)
 {
 	struct shw_sfp_header shdr;
-	if (shw_sfp_read_verify_header(p->hw_index, &shdr) < 0)
+	struct shw_sfp_caldata *cdata;
+
+	if (shw_sfp_read_verify_header(p->hw_index, &shdr) < 0) {
 		TRACE(TRACE_ERROR, "Failed to read SFP configuration header");
-	else {
-		struct shw_sfp_caldata *cdata;
-		TRACE(TRACE_INFO,
-		      "SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s",
-		      shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
-		cdata = shw_sfp_get_cal_data(p->hw_index);
-		if (cdata) {
-			TRACE(TRACE_INFO, "SFP Info: (%s) deltaTx %d "
-			      "delta Rx %d alpha %.3f (* 1e6)",
-			      cdata->flags & SFP_FLAG_CLASS_DATA
-			      ? "class-specific" : "device-specific",
-			      cdata->delta_tx, cdata->delta_rx,
-			      cdata->alpha * 1e6);
-
-			memcpy(&p->calib.sfp, cdata,
-			       sizeof(struct shw_sfp_caldata));
-		} else {
-			TRACE(TRACE_ERROR, "WARNING! SFP on port %s is "
-			      "NOT registered in the DB (using default "
-			      "delta & alpha values). This may cause "
-			      "severe timing performance degradation!",
-			      p->name);
-			p->calib.sfp.delta_tx = 0;
-			p->calib.sfp.delta_rx = 0;
-			p->calib.sfp.alpha = DEFAULT_FIBER_ALPHA_COEF;
-		}
-
-		p->state = HAL_PORT_STATE_LINK_DOWN;
-		shw_sfp_set_tx_disable(p->hw_index, 0);
+		return;
 	}
+
+	TRACE(TRACE_INFO,
+	      "SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s",
+	      shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
+	cdata = shw_sfp_get_cal_data(p->hw_index);
+	if (cdata) {
+		TRACE(TRACE_INFO, "SFP Info: (%s) deltaTx %d "
+		      "delta Rx %d alpha %.3f (* 1e6)",
+		      cdata->flags & SFP_FLAG_CLASS_DATA
+		      ? "class-specific" : "device-specific",
+		      cdata->delta_tx, cdata->delta_rx,
+		      cdata->alpha * 1e6);
+
+		memcpy(&p->calib.sfp, cdata,
+		       sizeof(struct shw_sfp_caldata));
+	} else {
+		TRACE(TRACE_ERROR, "WARNING! SFP on port %s is "
+		      "NOT registered in the DB (using default "
+		      "delta & alpha values). This may cause "
+		      "severe timing performance degradation!",
+		      p->name);
+		p->calib.sfp.delta_tx = 0;
+		p->calib.sfp.delta_rx = 0;
+		p->calib.sfp.alpha = DEFAULT_FIBER_ALPHA_COEF;
+	}
+
+	p->state = HAL_PORT_STATE_LINK_DOWN;
+	shw_sfp_set_tx_disable(p->hw_index, 0);
 }
 
 static void hal_port_remove_sfp(struct hal_port_state * p)
