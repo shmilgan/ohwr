@@ -207,7 +207,9 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(double,    calib.sfp.alpha),
 	DUMP_FIELD(uint32_t,  calib.sfp.delta_tx),
 	DUMP_FIELD(uint32_t,  calib.sfp.delta_rx),
-	DUMP_FIELD(pointer,  calib.sfp.next),
+	DUMP_FIELD(int,       calib.sfp.tx_wl),
+	DUMP_FIELD(int,       calib.sfp.rx_wl),
+	DUMP_FIELD(pointer,   calib.sfp.next),
 
 	DUMP_FIELD(uint32_t, phase_val),
 	DUMP_FIELD(int, phase_val_valid),

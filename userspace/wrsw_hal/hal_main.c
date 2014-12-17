@@ -73,8 +73,6 @@ static void hal_deamonize();
 /* Main initialization function */
 static int hal_init()
 {
-	char sfp_db_path[1024];
-
 	//trace_log_stderr();
 
 	TRACE(TRACE_INFO, "HAL initializing...");
@@ -82,6 +80,7 @@ static int hal_init()
 	memset(cleanup_cb, 0, sizeof(cleanup_cb));
 
 	libwr_cfg_read_file("/wr/etc/dot-config"); /* FIXME: accept -f */
+	shw_sfp_read_db();
 
 	/* Set up trap for some signals - the main purpose is to
 	   prevent the hardware from working when the HAL is shut down
@@ -93,17 +92,6 @@ static int hal_init()
 	signal(SIGILL, sighandler);
 
 	assert_init(hal_parse_config());
-
-	if (!hal_config_get_string("global.sfp_database_path",
-				   sfp_db_path, sizeof(sfp_db_path))) {
-		if (shw_sfp_read_db(sfp_db_path) < 0) {
-			TRACE(TRACE_ERROR, "Can't read SFP database (%s)",
-			      sfp_db_path);
-		} else {
-			TRACE(TRACE_INFO, "Loaded SFP database (%s)",
-			      sfp_db_path);
-		}
-	}
 
 	/* Low-level hw init, init non-kernel drivers */
 	assert_init(shw_init());

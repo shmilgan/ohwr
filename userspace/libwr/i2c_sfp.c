@@ -16,6 +16,7 @@
 #include <libwr/pio.h>
 #include <libwr/trace.h>
 #include <libwr/util.h>
+#include <libwr/config.h>
 
 #include "i2c.h"
 #include "i2c_sfp.h"
@@ -547,70 +548,79 @@ int shw_sfp_read_verify_header(int num, struct shw_sfp_header *head)
 
 static struct shw_sfp_caldata *shw_sfp_cal_list = NULL;
 
-int shw_sfp_read_db(char *filename)
+/* local helper */
+static void __err_msg(int index, char *pname, char *pvalue)
 {
-	lua_State *L = luaL_newstate();
+	fprintf(stderr, "Config item \"SFP%02i_PARAMS\": parameter \"%s\" ",
+		index, pname);
+	if (pvalue)
+		fprintf(stderr, "is wrong (\"%s\")\n", pvalue);
+	else
+		fprintf(stderr, "is not specified\n");
+}
+
+int shw_sfp_read_db(void)
+{
 	struct shw_sfp_caldata *sfp;
+	char s[128];
+	int error, val, index;
 
-	luaL_openlibs(L);
+	for (index = 0; ; index++) {
+		error = libwr_cfg_convert2("SFP%02i_PARAMS", "name",
+					   LIBWR_STRING, s, index);
+		if (error)
+			return 0; /* no more, no error */
 
-	if (luaL_loadfile(L, filename) || lua_pcall(L, 0, 0, 0)) {
-		printf("cannot run configuration file: %s",
-		       lua_tostring(L, -1));
-		return -1;
-	}
+		sfp = calloc(1, sizeof(*sfp));
+		strncpy(sfp->part_num, s, sizeof(sfp->part_num));
+		sfp->vendor_serial[0] = 0;
+		sfp->flags = SFP_FLAG_CLASS_DATA; /* never used */
 
-	lua_getglobal(L, "sfpdb");
-	if (!lua_istable(L, -1)) {
-		printf("`sfpdb' should be a table\n");
-		return -1;
-	}
-	lua_pushnil(L);
-	while (lua_next(L, -2)) {
-		if (!lua_istable(L, -1)) {
-			lua_pop(L, 1);
-			continue;
+		/* These are uint32_t as I write this. So use "int val" */
+		val = 0;
+		error = libwr_cfg_convert2("SFP%02i_PARAMS", "tx",
+					   LIBWR_INT, &val, index);
+		if (error)
+			__err_msg(index, "tx", NULL);
+		sfp->delta_tx = val;
+		val = 0;
+		error = libwr_cfg_convert2("SFP%02i_PARAMS", "rx",
+					   LIBWR_INT, &val, index);
+		if (error)
+			__err_msg(index, "rx", NULL);
+		sfp->delta_rx = val;
+
+		/* We also store the wavelength, used to get alpha */
+		error = libwr_cfg_convert2("SFP%02i_PARAMS", "wl_txrx",
+					   LIBWR_STRING, &s, index);
+		if (error)
+			__err_msg(index, "wl_txrx", NULL);
+		if (sscanf(s, "%i+%i", &sfp->tx_wl, &sfp->rx_wl) != 2) {
+			sfp->tx_wl = 0;
+			__err_msg(index, "wl_txrx", s);
 		}
 
-		const char *sfp_pn = 0;
-		const char *sfp_vs = 0;
-		int vals[2] = { 0, 0 };
-		double alpha = 0;
-		lua_pushnil(L);
-		while (lua_next(L, -2)) {
-			const char *key = lua_tostring(L, -2);
-			if (strcmp(key, "part_num") == 0)
-				sfp_pn = lua_tostring(L, -1);
-			else if (strcmp(key, "part_serial") == 0)
-				sfp_vs = lua_tostring(L, -1);
-			else if (strcmp(key, "alpha") == 0)
-				alpha = lua_tonumber(L, -1);
-			else if (strcmp(key, "delta_tx") == 0)
-				vals[0] = lua_tointeger(L, -1);
-			else if (strcmp(key, "delta_rx") == 0)
-				vals[1] = lua_tointeger(L, -1);
-			lua_pop(L, 1);
+		/*
+		 * Now, alpha is missing. We need to hardwire one, before
+		 * we add the fiber type so to pick it, instead
+		 */
+		sfp->alpha = 0.0;
+		if (sfp->tx_wl == 1310 && sfp->rx_wl == 1490)
+			sfp->alpha = 2.67871791665542e-04;
+		if (sfp->tx_wl == 1490 && sfp->rx_wl == 1310)
+			sfp->alpha = -2.67800055584799e-04;
+		if (sfp->alpha == 0.0) {
+			fprintf(stderr, "SFP%02i_PARAMS: Unexpected wl pair "
+				"(tx %i, rx %i)\n", index,
+				sfp->tx_wl, sfp->rx_wl);
+			/* Use DEFAULT_FIBER_ALPHA_COEF from hal_ports.c */
+			sfp->alpha = (1.4682e-04*1.76);
 		}
-		lua_pop(L, 1);
 
-		sfp = malloc(sizeof(struct shw_sfp_caldata));
-		strncpy(sfp->part_num, sfp_pn, sizeof(sfp->part_num));
-		if (!sfp_vs || strcmp(sfp_vs, "") == 0) {
-			sfp->vendor_serial[0] = 0;
-			sfp->flags |= SFP_FLAG_CLASS_DATA;
-		} else {
-			strcpy(sfp->vendor_serial, sfp_vs);
-			sfp->flags |= SFP_FLAG_DEVICE_DATA;
-		}
-		sfp->alpha = alpha;
-		sfp->delta_tx = vals[0];
-		sfp->delta_rx = vals[1];
+		/* link and continue */
 		sfp->next = shw_sfp_cal_list;
 		shw_sfp_cal_list = sfp;
 	}
-	lua_pop(L, 1);
-	lua_close(L);
-
 	return 0;
 }
 
