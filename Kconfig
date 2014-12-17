@@ -320,3 +320,49 @@ config TIME_BC
 	  to the standard Best Master Clock algorithm.
 
 endchoice
+
+choice
+	prompt "PTP Port Assignment"
+	default PTP_WR_DEFAULT if TIME_BC
+	default PTP_WR_MASTER
+
+config PTP_WR_DEFAULT
+	bool "Raw Ethernet, WR on, Slave on wr0/wr1, Master on other ports"
+	help
+	  You can choose between one from a set of predefined
+	  configuration files from your PTP server running in the
+	  switch, or define your own custom configuration file.
+
+	  The default setting for boundary clock forces ports wr0 and
+	  wr1 to be PTP slaves and all other ports to be master, in
+	  Ethernet mode and with full WR protocol extensions.  The default
+	  for a Grand-Master or Free-Running master has all ports as
+	  master ports.
+
+	  Other predefined choices select more flexible configuration used
+	  mainly for test purposes. Any special need can be addressed by
+	  providing your own ppsi.conf file, that you should copy
+	  to your switch.
+
+config PTP_WR_MASTER
+	bool "Raw Ethernet, WR on, Master on all ports"
+
+config PTP_WR_AUTO
+	bool "Raw Ethernet, WR on, Auto master/slave on all ports"
+
+config PTP_WR_AUTO_UDP
+	bool "UDP mode, WR on, Auto master/slave on all ports"
+
+config PTP_NONWR_UDP_ALL
+	bool "UDP mode, No WR, all ports (including eth0)"
+
+config PTP_CUSTOM
+	bool "Custom ppsi.conf"       
+
+endchoice
+
+config PTP_CUSTOM_FILENAME
+	string "Pathname for your custom ppsi.conf"
+	depends on PTP_CUSTOM
+	default "/wr/etc/ppsi-custom.conf"
+
