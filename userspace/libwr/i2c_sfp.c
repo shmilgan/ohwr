@@ -600,22 +600,7 @@ int shw_sfp_read_db(void)
 			__err_msg(index, "wl_txrx", s);
 		}
 
-		/*
-		 * Now, alpha is missing. We need to hardwire one, before
-		 * we add the fiber type so to pick it, instead
-		 */
-		sfp->alpha = 0.0;
-		if (sfp->tx_wl == 1310 && sfp->rx_wl == 1490)
-			sfp->alpha = 2.67871791665542e-04;
-		if (sfp->tx_wl == 1490 && sfp->rx_wl == 1310)
-			sfp->alpha = -2.67800055584799e-04;
-		if (sfp->alpha == 0.0) {
-			fprintf(stderr, "SFP%02i_PARAMS: Unexpected wl pair "
-				"(tx %i, rx %i)\n", index,
-				sfp->tx_wl, sfp->rx_wl);
-			/* Use DEFAULT_FIBER_ALPHA_COEF from hal_ports.c */
-			sfp->alpha = (1.4682e-04*1.76);
-		}
+		/* Alpha is filled later, per-port, in hal_port_insert_sfp() */
 
 		/* link and continue */
 		sfp->next = shw_sfp_cal_list;

@@ -431,6 +431,8 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 {
 	struct shw_sfp_header shdr;
 	struct shw_sfp_caldata *cdata;
+	char subname[48];
+	int err;
 
 	if (shw_sfp_read_verify_header(p->hw_index, &shdr) < 0) {
 		TRACE(TRACE_ERROR, "Failed to read SFP configuration header");
@@ -452,18 +454,44 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 		memcpy(&p->calib.sfp, cdata,
 		       sizeof(struct shw_sfp_caldata));
 	} else {
-		TRACE(TRACE_ERROR, "WARNING! SFP on port %s is "
-		      "NOT registered in the DB (using default "
-		      "delta & alpha values). This may cause "
-		      "severe timing performance degradation!",
-		      p->name);
-		p->calib.sfp.delta_tx = 0;
-		p->calib.sfp.delta_rx = 0;
+		fprintf(stderr, "Unknown SFP \"%.16s\" on port %s\n",
+			shdr.vendor_pn, p->name);
+		memset(&p->calib.sfp, 0, sizeof(p->calib.sfp));
 		p->calib.sfp.alpha = DEFAULT_FIBER_ALPHA_COEF;
 	}
 
 	p->state = HAL_PORT_STATE_LINK_DOWN;
 	shw_sfp_set_tx_disable(p->hw_index, 0);
+	/* Copy the strings anyways, for informative value in shmem */
+	strncpy(p->calib.sfp.part_num, (void *)shdr.vendor_pn, 16);
+	strncpy(p->calib.sfp.vendor_serial, (void *)shdr.vendor_serial, 16);
+
+	/*
+	 * Now, we should fix the alpha value according to fiber
+	 * type. Alpha does not depend on the SFP, but on the
+	 * speed ratio of the SFP frequencies over the specific
+	 * fiber. Thus, rely on the fiber type for this port.
+	 */
+	sprintf(subname, "alpha_%i_%i", p->calib.sfp.tx_wl, p->calib.sfp.rx_wl);
+	err = libwr_cfg_convert2("FIBER%02i_PARAMS", subname,
+				 LIBWR_DOUBLE, &p->calib.sfp.alpha,
+				 p->fiber_index);
+	if (!err)
+		return;
+
+	/* Try again, with the opposite direction (rx/tx) */
+	sprintf(subname, "alpha_%i_%i", p->calib.sfp.rx_wl, p->calib.sfp.tx_wl);
+	err = libwr_cfg_convert2("FIBER%02i_PARAMS", subname,
+				 LIBWR_DOUBLE, &p->calib.sfp.alpha,
+				 p->fiber_index);
+	if (!err) {
+		p->calib.sfp.alpha = (1.0 / (1.0 + p->calib.sfp.alpha)) - 1.0;
+		return;
+	}
+
+	fprintf(stderr, "Port %s, SFP \"%.16s\", fiber %i: no alpha known\n",
+		p->name, p->calib.sfp.part_num, p->fiber_index);
+	p->calib.sfp.alpha = DEFAULT_FIBER_ALPHA_COEF;
 }
 
 static void hal_port_remove_sfp(struct hal_port_state * p)
