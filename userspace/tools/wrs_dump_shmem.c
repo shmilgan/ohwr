@@ -78,12 +78,14 @@ void dump_one_field(void *addr, struct dump_info *info)
 	struct TimeInternal *ti = p;
 	struct PortIdentity *pi = p;
 	struct ClockQuality *cq = p;
+	char format[16];
 	int i;
 
 	printf("        %-30s ", info->name); /* name includes trailing ':' */
 	switch(info->type) {
 	case dump_type_char:
-		printf("\"%s\"\n", (char *)p);
+		sprintf(format,"\"%%.%is\"\n", info->size);
+		printf(format, (char *)p);
 		break;
 	case dump_type_bina:
 		for (i = 0; i < info->size; i++)
