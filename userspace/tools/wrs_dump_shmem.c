@@ -188,7 +188,7 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, hw_addr_auto),
 	DUMP_FIELD(int, mode),
 	DUMP_FIELD(int, state),
-	DUMP_FIELD(int, index),
+	DUMP_FIELD(int, fiber_index),
 	DUMP_FIELD(int, locked),
 	/* these fields are defined as uint32_t but we prefer %i to %x */
 	DUMP_FIELD(int, calib.phy_rx_min),

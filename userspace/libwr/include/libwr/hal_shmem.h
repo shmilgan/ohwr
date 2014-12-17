@@ -71,8 +71,8 @@ struct hal_port_state {
 	/* port FSM state (HAL_PORT_STATE_xxxx) */
 	int state;
 
-	/* unused */
-	int index;
+	/* fiber type, used to get alpha for SFP frequency */
+	int fiber_index;
 
 	/* 1: PLL is locked to this port */
 	int locked;
