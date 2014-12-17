@@ -226,3 +226,46 @@ config PORT17_PARAMS
 	default "name=wr17,tx=0,rx=161200,role=master,fiber=0"
 
 endmenu
+
+menu "SFP Configuration"
+
+config SFP00_PARAMS
+	string "Parameters for one SFP device type"
+	default "name=AXGE-1254-0531,tx=10,rx=10,wl_txrx=1310+1490"
+	help
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  tranceiver. The tranceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each tranceiver type that is installed in your
+	  device.
+
+config SFP01_PARAMS
+	string "Parameters for one SFP device type"
+	default "name=AXGE-3454-0531,tx=10,rx=10,wl_txrx=1490+1310"
+
+config SFP02_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP03_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP04_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP05_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP06_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP07_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP08_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP09_PARAMS
+	string "Parameters for one SFP device type"
+
+endmenu
