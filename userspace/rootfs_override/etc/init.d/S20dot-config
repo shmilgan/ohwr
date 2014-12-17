@@ -45,12 +45,14 @@ if [ -n "$CONFIG_DOTCONF_URL" ]; then
 	    echo "Invalid URL for dot-config: \"$URL\"" >& 2
 	    ;;
     esac
-    # If it exists and it is not empty or awfully small, trust it
+    # If it exists, it is not empty or too small, and the checker is happy..
     if [ -f $tmpconfig ] &&
-	[ $(cat $tmpconfig | wc -c) -gt 200 ]; then
+	[ $(cat $tmpconfig | wc -c) -gt 200 ] &&
+	/wr/bin/wrs_checkcfg $tmpconfig /wr/etc/Kconfig; then
+	# copy it in place to use the new file (unless it is identical)
 	cmp -s $tmpconfig $dotconfig || cp $tmpconfig $dotconfig
     fi
 fi
 
 # Finally, apply what we have, be it old or new
-. /wr/bin/apply_dot-config
+/wr/bin/apply_dot-config
