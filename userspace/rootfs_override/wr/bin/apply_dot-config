@@ -60,7 +60,7 @@ copy_conf /etc/rsyslog.conf /usr/etc/rsyslog.conf
 
 # Fix SNMP values: for all not-empty configs remove comment and replace value
 cp /wr/etc/snmpd.conf.in $T
-set | grep CONFIG_SNMP | sed 's/=/ /' | while read varname value; do
+set | tr -d \' | grep CONFIG_SNMP | sed 's/=/ /' | while read varname value; do
     if [ -z "$value" ]; then continue; fi
     sed -i "/$varname/ s/^#//" $T
     sed -i "/$varname/ s/$varname/$value/" $T
@@ -69,7 +69,7 @@ copy_conf /wr/etc/snmpd.conf
 
 # Fix log values
 cp /wr/sbin/start-daemons.sh.in $T
-set | grep CONFIG_WRS_LOG | sed 's/=/ /' | while read varname value; do
+set | tr -d \' | grep CONFIG_WRS_LOG | sed 's/=/ /' | while read varname value; do
     if [ -z "$value" ]; then continue; fi
     sed -i "/$varname/ s,$varname,$value," $T
 done
