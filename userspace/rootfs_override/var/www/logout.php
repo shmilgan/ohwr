@@ -25,6 +25,7 @@
 
 		unset($_SESSION["myusername"]);
 		unset($_SESSION["mypassword"]);
+		session_destroy();
 		echo '<br><br><center><h3>Logged out</h3></center>';
 		header('Location: index.php');
 	?>
