@@ -1,0 +1,96 @@
+# Autoselection of port modepgrandmasters
+
+# Global settings
+clock-class 187
+clock-accuracy 254
+
+port wr0
+iface wr0
+role auto
+extension whiterabbit
+
+port wr1
+iface wr1
+role auto
+extension whiterabbit
+
+port wr2
+iface wr2
+role auto
+extension whiterabbit
+
+port wr3
+iface wr3
+role auto
+extension whiterabbit
+
+port wr4
+iface wr4
+role auto
+extension whiterabbit
+
+port wr5
+iface wr5
+role auto
+extension whiterabbit
+
+port wr6
+iface wr6
+role auto
+extension whiterabbit
+
+port wr7
+iface wr7
+role auto
+extension whiterabbit
+
+port wr8
+iface wr8
+role auto
+extension whiterabbit
+
+port wr9
+iface wr9
+role auto
+extension whiterabbit
+
+port wr10
+iface wr10
+role auto
+extension whiterabbit
+
+port wr11
+iface wr11
+role auto
+extension whiterabbit
+
+port wr12
+iface wr12
+role auto
+extension whiterabbit
+
+port wr13
+iface wr13
+role auto
+extension whiterabbit
+
+port wr14
+iface wr14
+role auto
+extension whiterabbit
+
+port wr15
+iface wr15
+role auto
+extension whiterabbit
+
+port wr16
+iface wr16
+role auto
+extension whiterabbit
+
+port wr17
+iface wr17
+role auto
+extension whiterabbit
+
