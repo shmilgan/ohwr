@@ -32,31 +32,23 @@
 	</table>
 						
 	</FORM>
-
+	<br>
+	
 	<?php
 	
 	
 		if((empty($_POST["networkgroup"]))){
 			
+			$formatID = "alternatecolor";
+			$class = "altrowstable firstcol";
+			$infoname = "Current eth0";
+			$format = "table";
+			$section = "WRS_TABLE_INFO";
+			$subsection = "NETWORK_SETUP";
 			
-			echo '
-						<table class="altrowstable firstcol" id="alternatecolor">
-							<tr>
-								<th>Current eth0</th>
-							</tr>
-							<tr>
-								<td>IP Address: </td>
-								<td ><INPUT type="text" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'").'" readonly name="ip" ></td>
-							</tr>
-							<tr>
-								<td>Netmask: </td>
-								<td><INPUT type="text" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f4 | awk '{ print $1}'").'" readonly name="netmask" ></td>
-							</tr>
-							<tr>
-								<td>Broadcast: </td>
-								<td><INPUT type="text" value="'.shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f3 | awk '{ print $1}'").'"  readonly name="broadcast" ></td>
-							</tr>
-						</table>';
+			print_info($section, $subsection, $formatID, $class, $infoname, $format);
+			
+			
 		}
 		
 		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"DHCP"))){
@@ -110,7 +102,7 @@
 							<td><INPUT type="text" value="192.168.1.1" name="gateway" ></td>
 						</tr>
 					</table>
-					<INPUT type="submit" value="Save New Configuration" class="btn last">
+					<INPUT type="submit" value="Save & Reboot" class="btn last">
 					</FORM>';
 			
 		}

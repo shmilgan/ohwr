@@ -22,25 +22,32 @@
 
 	<div>
 		<?php
-			$msg = shell_exec("/wr/bin/wrs_version -t");
-			$msg = explode("\n", $msg);
-			$message .= "<ul>";
-
-			$message .= "<li>wr-switch-os: ".shell_exec("uname -r")."</li>";
-			for($i=0; $i<count($msg)-1; $i++){
-
-				$message .= "<li>".$msg[$i]."</li>";
-			}
-			$message .= "</ul>";
-			echo $message;
-
+			$formatID = "alternatecolor";
+			$class = "altrowstable firstcol";
+			$infoname = "";
+			$format = "list";
+			$section = "WRS_TABLE_INFO";
+			$subsection = "CONTACT";
+			
+			print_info($section, $subsection, $formatID, $class, $infoname, $format);
 		?>
 	</div>
 	<br>
 	
 	<div>
-		<center><p align=right><strong>Open Hardware Repository  <a href="http://www.ohwr.org/projects/white-rabbit/wiki">http://www.ohwr.org/projects/white-rabbit/wiki</a> </strong></p></strong></p><p>&nbsp;</p>
-		<p align=right><strong>White-Rabbit Mailing List <a href="mailto:white-rabbit-dev@ohwr.org?subject=[White-Rabbit Switch Local Management Tool]">(white-rabbit-dev@ohwr.org)</a> </strong></p></center>
+		<p align=right>
+			<strong>Open Hardware Repository  
+			<a href="http://www.ohwr.org/projects/white-rabbit/wiki">
+				http://www.ohwr.org/projects/white-rabbit/wiki</a>
+			</strong>
+		</p>
+		<br>
+		<p align=right>
+			<strong>White-Rabbit Mailing List 
+			<a href="mailto:white-rabbit-dev@ohwr.org?subject=[White-Rabbit Switch Local Management Tool]">
+				(white-rabbit-dev@ohwr.org)</a>
+			</strong>
+		</p>
 	</div>
 
 	<br><br><br><br>
@@ -54,7 +61,13 @@
 	</div>
 	
 	<div>
-		<p align=right><strong>Developers: </strong>Alessandro Rubini, Tomasz Wlostowski, Benoit Rat, Federico Vega, Grzegorz Daniluk, Maciej Lipinski, Jose Luis Gutierrez</p>
+		<p align=right><strong>Developers: </strong>Alessandro Rubini, 
+													Tomasz Wlostowski, 
+													Benoit Rat, 
+													Federico Vega, 
+													Grzegorz Daniluk, 
+													Maciej Lipinski, 
+													Jose Luis Gutierrez</p>
 	</div>
 
 </div>

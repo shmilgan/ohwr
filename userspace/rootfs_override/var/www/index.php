@@ -21,7 +21,6 @@
 
 	<?php
 		wrs_main_info();		
-		echo '<br><br>';
 	?>
 
 
