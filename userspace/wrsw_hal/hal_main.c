@@ -14,6 +14,7 @@
 #include <libwr/switch_hw.h>
 #include <libwr/shw_io.h>
 #include <libwr/sfp_lib.h>
+#include <libwr/config.h>
 
 #include "wrsw_hal.h"
 #include <rt_ipc.h>
@@ -79,6 +80,8 @@ static int hal_init()
 	TRACE(TRACE_INFO, "HAL initializing...");
 
 	memset(cleanup_cb, 0, sizeof(cleanup_cb));
+
+	libwr_cfg_read_file("/wr/etc/dot-config"); /* FIXME: accept -f */
 
 	/* Set up trap for some signals - the main purpose is to
 	   prevent the hardware from working when the HAL is shut down
