@@ -26,7 +26,7 @@ $options = Array (
 	Array ("MACADDRESS","Mac Address","ifconfig eth0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'","y"),
 	Array ("HOSTNAME","Hostname","uname -n","y"),
 	Array ("KERNEL","Kernel Version","uname -r","y"),
-	Array ("KERNELCOMPILEDDATE","Kernel Compiled Date","uname -m","y"),
+	Array ("KERNELCOMPILEDDATE","Kernel Compiled Date","uname -v","y"),
 	Array ("FIRMWARE","Firmware Version","/wr/bin/wrs_version  |  awk '{print $4}'","y"),
 	Array ("HARDWARE","Hardware Version","/wr/bin/wrs_version -t | grep 'scb\|back' | sort -r | sed 's/-version: /: v/'","y"),
 	Array ("FPGA","FPGA Version","/wr/bin/wrs_version -f","y"),
