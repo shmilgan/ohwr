@@ -20,11 +20,11 @@ OBJDUMP         = $(CROSS_COMPILE)objdump
 # defer running "net-snmp-config --cflags" so it is visible in make output
 CFLAGS  += -fPIC -Wall  $$($(NET_SNMP_CONFIG) --cflags | sed s,-I/usr/include,,)
 LDFLAGS = -shared $$($(NET_SNMP_CONFIG) --ldflags)
-CFLAGS += -Iinclude -I../ppsi/include  -I../ppsi/arch-wrs/include -I../mini-rpc
+CFLAGS += -I../include -I../libwr/include -I../ppsi/include -I../mini-rpc
 CFLAGS += -DWRS_WITH_SNMP_HACKISH_LOG=0
 
 SHLIB = wrsSnmp.so
-SOURCES = init.c wrsScalar.c wrsPstats.c wrsPpsi.c wrsVersion.c wrsDate.c
+SOURCES = init.c wrsScalar.c wrsPstats.c wrsPpsi.c wrsVersion.c wrsDate.c shmem.c
 OBJECTS = $(SOURCES:.c=.o)
 
 all: $(SHLIB)

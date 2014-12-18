@@ -14,6 +14,8 @@
 
 #include <ppsi/ieee1588_types.h> /* for ClockIdentity */
 #include <minipc.h>
+#include <libwr/shmem.h>
+#include <libwr/hal_shmem.h>
 
 #include <stdio.h>
 
@@ -28,6 +30,10 @@ struct ppsi_pickinfo {
 	/* The following field is used to scan the input */
 	char *name;
 };
+
+static struct wrs_shm_head *hal_head;
+static struct hal_port_state *hal_ports;
+static int hal_nports_local;
 
 #define FIELD(_struct, _type, _field, _name) {			\
 		.name = _name,					\
@@ -186,36 +192,67 @@ static void wrs_ppsi_get_globals(void)
 	wrs_fpclose(f, fname);
 }
 
+void init_shm(void)
+{
+	struct hal_shmem_header *h;
+
+	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
+	if (!hal_head) {
+		fprintf(stderr, "unable to open shm for HAL!\n");
+		exit(-1);
+	}
+	h = (void *)hal_head + hal_head->data_off;
+	/* Assume number of ports does not change in runtime */
+	hal_nports_local = h->nports;
+	/* Even after HAL restart, HAL will place structures at the same
+	 * addresses. No need to re-dereference pointer at each read. */
+	hal_ports = wrs_shm_follow(hal_head, h->ports);
+	if (hal_nports_local > WRS_N_PORTS) {
+		snmp_log(LOG_ERR, "Too many ports reported by HAL. "
+			"%d vs %d supported\n",
+			hal_nports_local, HAL_MAX_PORTS);
+		exit(-1);
+	}
+}
+
 static void wrs_ppsi_get_per_port(void)
 {
-	static char *fname;
-	FILE *f;
-	char s[80];
-	int port = 0;
+	unsigned ii, i;
+	unsigned retries = 0;
 
-	/* Allow the environment to override the fname, during development */
-	if (!fname) {
-		fname = getenv("WRS_SNMP_MON_FNAME_P");
-		if (!fname)
-			fname = "|/wr/bin/wr_mon -p";
-	}
-
-	f = wrs_fpopen(fname, "r");
-	if (!f) {
-		snmp_log(LOG_ERR, "%s: can't open \"%s\"\n", __func__, fname);
-		return;
-	}
-	logmsg("opened %s\n", fname);
-
+	/* read data, with the sequential lock to have all data consistent */
+	struct hal_port_state *port_state;
 	memset(wrs_p_array, 0, sizeof(wrs_p_array));
-	while (fgets(s, sizeof(s), f)) {
-		/* we have a special "PORT %i" header */
-		if (sscanf(s, "PORT %i", &port) == 1)
-			continue;
-		wrs_ppsi_parse_line(s, wrs_p_array + port, p_pickinfo,
-				    ARRAY_SIZE(p_pickinfo));
-	}
-	wrs_fpclose(f, fname);
+	do {
+		ii = wrs_shm_seqbegin(hal_head);
+		for (i = 0; i < hal_nports_local; ++i) {
+			/* Assume that number of ports does not change between
+			 * reads */
+			char if_name[10];
+
+			snprintf(if_name, 10, "wr%d", i);
+			port_state = hal_lookup_port(hal_ports,
+						    hal_nports_local, if_name);
+			/* No need to copy all ports structures, only what
+			 * we're interested in */
+			wrs_p_array[i].link_up = state_up(port_state->state);
+			wrs_p_array[i].port_mode = (port_state->mode ==
+					      HEXP_PORT_MODE_WR_SLAVE ? 0 : 1);
+			wrs_p_array[i].port_locked = port_state->locked;
+			/* FIXME: get real peer_id */
+			memset(&wrs_p_array[i].peer_id, 0xff,
+			       sizeof(ClockIdentity));
+			logmsg("reading ports name %s link %d, mode %d, "
+			 "locked %d\n", port_state->name,
+			 wrs_p_array[i].link_up, wrs_p_array[i].port_mode,
+			 wrs_p_array[i].port_locked);
+		}
+
+		retries++;
+	} while (wrs_shm_seqretry(hal_head, ii));
+	if (retries > 100)
+		snmp_log(LOG_ERR, "%s: too many retries to read HAL\n",
+			 __func__);
 }
 
 
@@ -381,6 +418,9 @@ init_wrsPpsi(void)
 	netsnmp_table_registration_info *table_info;
 	netsnmp_iterator_info *iinfo;
 	netsnmp_handler_registration *reginfo;
+
+	/* open shm */
+	init_shm();
 
 	/* do the registration for the scalars/globals */
 	hreg = netsnmp_create_handler_registration(
