@@ -14,20 +14,24 @@ $profilefile="/usr/etc/profile";
 $phpinifile="/etc/php.ini";
 $interfacesfile = "/usr/etc/network/interfaces";
 $kconfigfile = "/wr/etc/dot-config";
+$kconfigfilename = "dot-config";
 
-include_once "data/wrs-data.php";
 
-if (empty($_SESSION["WRS_INFO"])){
+
+/*if (empty($_SESSION["WRS_INFO"])){
 	generate_wrs_info();
+	include_once "data/wrs-info.php";
 	$_SESSION["WRS_INFO"] = $GLOBALS["WRS_INFO"];
-}
-if (empty($_SESSION["WRS_TABLE_INFO"])){
-	$_SESSION["WRS_TABLE_INFO"] = $GLOBALS["WRS_TABLE_INFO"];
-}
+}*/
+include "data/wrs-data.php";
 
-if (empty($_SESSION["WRS_FORMS"])){
+//if (empty($_SESSION["WRS_TABLE_INFO"])){
+	$_SESSION["WRS_TABLE_INFO"] = $GLOBALS["WRS_TABLE_INFO"];
+//}
+
+//if (empty($_SESSION["WRS_FORMS"])){
 	$_SESSION["WRS_FORMS"] = $GLOBALS["WRS_FORMS"];
-}
+//}
 
 if(empty($_SESSION["KCONFIG"])){
 	load_kconfig();
@@ -184,7 +188,7 @@ function print_info($section, $subsection, $formatID, $class, $infoname, $format
 			
 			foreach ($_SESSION[$section][$subsection] as $row) {
 				echo "<tr>";
-				echo "<td>".$row["name"]."</td>"."<td>".$row["value"]."</td>";
+				echo "<td>".$row["name"]."</td>"."<td>".(($row["value"]=="") ? "(not set)" : $row['value'])."</td>";
 				echo "</tr>";
 			}
 			echo '</table>';
@@ -196,7 +200,7 @@ function print_info($section, $subsection, $formatID, $class, $infoname, $format
 			echo '<ul>';
 			foreach ($_SESSION[$section][$subsection] as $row) {
 				echo "<li>";
-				echo $row["name"].": ".$row["value"];
+				echo $row["name"].": ".(($row["value"]=="") ? "(not set)" : $row['value']);
 				echo "</li>";
 			}
 			echo '<ul>';
@@ -226,6 +230,18 @@ function print_form($section, $subsection, $formatID, $class, $infoname, $format
 	
 }
 
+function process_form($section, $subsection){
+	
+	foreach ($_SESSION[$section][$subsection] as $row) {	
+		if(!empty($_POST)){
+			$_SESSION["KCONFIG"][$row["key"]]=$_POST[$row["vname"]];
+			$_SESSION[$section][$subsection][$row["value"]] = $_POST[$row["vname"]];
+			$modified = true;
+		}
+	}
+	return $modified;
+}
+
 function check_ntp_server(){	
 	$ntpserver = $_SESSION['KCONFIG']["CONFIG_NTP_SERVER"];
 	if(!strcmp($ntpserver, "")){
@@ -245,9 +261,7 @@ function check_snmp_status(){
 
 function wrs_interface_setup(){
 	
-	$interfaces = shell_exec('cat '.$GLOBALS['interfacesfile'].' | grep dhcp');
-	
-	return (strcmp($interfaces[0],"#")) ? "dhcp" : "static";
+	return (!empty($_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP"])) ? "dhcp" : "static";
 }
 /*
  * It checks whether the filesystem is writable or not.
@@ -551,21 +565,8 @@ function wrs_management(){
 		$cmd =  htmlspecialchars($_POST["cmd"]); 
 
 
-		if(!strcmp($cmd, "halt")){
-			echo '<br><br><br></be>System is halting';
-			$output = shell_exec($cmd);
-		}else if (!strcmp($cmd, "reboot")){
-			echo '<br><br><br>System is rebooting. Please wait 30 seconds.';
+		if (!strcmp($cmd, "reboot")){
 			wrs_reboot();
-		}else if (!strcmp($cmd, "size")){
-			php_file_transfer_size(htmlspecialchars($_POST["size"]));
-			header('Location: firmware.php');
-		}else if (!strcmp($cmd, "change")){
-			modify_switch_mode();
-			$mode = check_switch_mode(); 
-			echo '<br><br><br>Switch is now '.$mode;
-			header ('Location: management.php');
-			
 		} else if (!empty($_FILES['file']['name'])){
 			$uploaddir = '/tmp/';
 			$uploadfname= basename($_FILES['file']['name']);
@@ -613,84 +614,26 @@ function wrs_management(){
 			
 			wrs_reboot();
 			
-		} else if (!empty($_FILES['ppsi_conf']['name'])){
+		} else if (!empty($_FILES['kconfig']['name'])){
 			
 			$uploaddir = $GLOBALS['etcdir'];
-			$uploadfile = $uploaddir . basename($_FILES['ppsi_conf']['name']);
+			$uploadfile = $uploaddir . basename($_FILES['kconfig']['name']);
 			echo '<pre>';
-			if ((!strcmp($_FILES['ppsi_conf']['name'],$GLOBALS['ppsiconf']) && (!strcmp(extension($_FILES['ppsi_conf']['name']), "conf")) && move_uploaded_file($_FILES['ppsi_conf']['tmp_name'], $uploadfile))) {
-				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder\n";
-			}  else {
-				echo "<center>File is not valid, please upload a ".$GLOBALS['ppsiconf']." file</center>\n";
-			}
-
-			echo "</pre>";
-			
-		} else if (!empty($_FILES['sfp_conf']['name'])){
-			
-			$uploaddir = $GLOBALS['etcdir'];
-			$uploadfile = $uploaddir . basename($_FILES['sfp_conf']['name']);
-			echo '<pre>';
-			if ((!strcmp($_FILES['sfp_conf']['name'],$GLOBALS['sfpdatabaseconf'])) && (!strcmp(extension($_FILES['sfp_conf']['name']), "conf")) && move_uploaded_file($_FILES['sfp_conf']['tmp_name'], $uploadfile)) {
-				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder\n";
-			}  else {
-				echo "<center>File is not valid, please upload a ".$GLOBALS['sfpdatabaseconf']." file</center>\n";
-			}
-
-			echo "</pre>";
-			
-		} else if (!empty($_FILES['snmp_conf']['name'])){
-			
-			$uploaddir = $GLOBALS['etcdir'];
-			$uploadfile = $uploaddir . basename($_FILES['snmp_conf']['name']);
-			echo '<pre>';
-			if ((!strcmp($_FILES['snmp_conf']['name'],$GLOBALS['snmpconf'])) && (!strcmp(extension($_FILES['snmp_conf']['name']), "conf")) && move_uploaded_file($_FILES['snmp_conf']['tmp_name'], $uploadfile)) {
-				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder\n";
-			}  else {
-				echo "<center>File is not valid, please upload a ".$GLOBALS['snmpconf']." file</center>\n";
-			}
-
-			echo "</pre>";
-			
-		} else if (!empty($_FILES['hal_conf']['name'])){
-			
-			$uploaddir = $GLOBALS['etcdir'];
-			$uploadfile = $uploaddir . basename($_FILES['hal_conf']['name']);
-			echo '<pre>';
-			if ((!strcmp($_FILES['hal_conf']['name'],$GLOBALS['wrswhalconf'])) && (!strcmp(extension($_FILES['hal_conf']['name']), "conf")) && move_uploaded_file($_FILES['hal_conf']['tmp_name'], $uploadfile)) {
-				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder\n";
-			}  else {
-				echo "<center>File is not valid, please upload a ".$GLOBALS['wrswhalconf']." file</center>\n";
-			}
-
-			echo "</pre>";
-			
-		} else if (!empty($_FILES['restore_conf']['name'])){
-			
-			$uploaddir = $GLOBALS['etcdir'];
-			$uploadfile = $uploaddir . basename($_FILES['restore_conf']['name']);
-			echo '<pre>';
-			if ((!strcmp(extension($_FILES['restore_conf']['name']), "gz")) && move_uploaded_file($_FILES['restore_conf']['tmp_name'], $uploadfile)) {
-				
-				shell_exec("tar -xvf ".$uploadfile. " -C ". $GLOBALS['etcdir'] ); //untar the file
-				
-				echo "<center>Configuration restored sucessfully. Rebooting system.\n";
-				
+			if (($_FILES['kconfig']['name']==$GLOBALS['kconfigfilename']) && move_uploaded_file($_FILES['kconfig']['tmp_name'], $uploadfile)) {
+				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder. Applying changes\n";
+				sleep(1);
 				wrs_reboot();
-				
 			}  else {
-				echo "<center>File is not valid, please upload a .tar.gz file</center>\n";
+				echo "<center>File is not valid, please upload a valid file.<br>Filename must be '".$GLOBALS['kconfigfilename']."'</center>\n";
 			}
 
-			shell_exec("rm $uploadfile");
-			
 			echo "</pre>";
 			
 		} else if (!strcmp($cmd, "Backup")){
 			
-			//Prepare backup (tar)
-			$backupfile="backup".date("Y-m-d").".tar.gz";
-			shell_exec("cd ".$GLOBALS['etcdir']."; tar -cvf ".$backupfile." *; mv ".$backupfile." /var/www/download/".$backupfile);
+			//Prepare backup
+			$backupfile=$GLOBALS['kconfigfilename'];
+			shell_exec("cd ".$GLOBALS['etcdir']."; cp ".$backupfile." /var/www/download/".$backupfile);
 			$backupfile="/download/$backupfile";
 			
 			//Download the file
@@ -700,37 +643,16 @@ function wrs_management(){
 			
 			$ntpserver = htmlspecialchars($_POST["ntpip"]);
 			
-			$_SESSION["KCONFIG"]["CONFIG_NTP_SERVER"] = $ntpserver;
+			$_SESSION["KCONFIG"]["CONFIG_NTP_SERVER"] = $ntpserver;		
 			
-			//Set UTC
-			$UTC=htmlspecialchars($_POST["utc"]); 
-			$_SESSION['utc']=$UTC;				
-			
-			//Export to /etc/profile --> when /etc/profile remains saved...
-			$utc_exists = shell_exec("cat ".$GLOBALS['profilefile']." | grep -c TZ");
-			$utc_prev = shell_exec("cat ".$GLOBALS['profilefile']." | grep TZ");
-			$utc_prev=trim($utc_prev);
-			if($utc_exists>0){ 
-				$sed_cmd = 'sed -i "s/'.$utc_prev.'/export TZ='.$_SESSION['utc'].'/g" '.$GLOBALS['profilefile'];
-				shell_exec ($sed_cmd);
-			}else{ // Add TZ to profile file
-				shell_exec ('echo "export TZ='.$_SESSION['utc'].'" >>'.$GLOBALS['profilefile']);	
-			}
-			
-			echo '<br><p align=center>Rebooting...</p>';
-			
-			//Reboot the switch after 1s
-			sleep(1);
+			//Apply config
 			save_kconfig();
-			wrs_reboot();
+			apply_kconfig();
+			
+			header('Location: management.php');
 			
 			
-			
-		} else if (!strcmp($cmd, "backup-wrs")){
-			
-			//Backup wrs firmware
-			
-		}  else if (!strcmp($cmd, "snmp")){
+		} else if (!strcmp($cmd, "snmp")){
 			
 			if(check_snmp_status()){ //It is running
 				
@@ -1309,9 +1231,7 @@ function wrs_reboot(){
 }
 
 function load_kconfig(){
-	
 	$_SESSION['KCONFIG'] = parse_ini_file($GLOBALS['kconfigfile']);
-
 }
 
 function save_kconfig(){
@@ -1348,6 +1268,7 @@ function save_kconfig(){
         $counter++;
     }
     safefilerewrite($file, implode("\n", $res));
+
 }
 
 function safefilerewrite($fileName, $dataToSave){
@@ -1371,21 +1292,10 @@ function safefilerewrite($fileName, $dataToSave){
 
 }
 
-/*
- * Generates data/wrs-info.php
- *  
- * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
- * 	
- * Uses wrs-info-generator.php to generate wrs-info.php. 
- * It is generated once per session.
- * 
- * @PRE: No session is required.
- * 
- */
-function generate_wrs_info(){
-	
-	$wrsinfogenerator = "/var/www/data/wrs-info-generator.php";
-	shell_exec("/usr/bin/php-cgi ".$wrsinfogenerator);
+function apply_kconfig(){
+	$dotconfigapp = "/usr/wr/bin/apply_dot-config";
+	shell_exec($dotconfigapp. " > /dev/null 2>&1 &");
 }
+
 	
 ?>

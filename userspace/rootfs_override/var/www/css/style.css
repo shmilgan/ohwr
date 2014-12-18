@@ -329,7 +329,7 @@ table.firstcol tr input {
 
 #network table.firstcol td:first-of-type, #epcalib table.firstcol td:first-of-type
 {
-	text-align:left;
+	text-align:center;
 }
 
 #management table td.first
