@@ -393,7 +393,7 @@ int main(int argc, char *argv[])
               {
                  if(finish_after_marker == after_marker_cnt)
                     break;
-                 else
+                 else if ((0x80000000 &  tx_buf[i].value) && ((0x7 & (tx_buf[i].value>>28)) == DBG_MAIN))
                     after_marker_cnt++;
               }
           }
