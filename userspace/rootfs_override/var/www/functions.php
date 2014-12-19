@@ -232,13 +232,95 @@ function print_form($section, $subsection, $formatID, $class, $infoname, $format
 
 function process_form($section, $subsection){
 	
-	foreach ($_SESSION[$section][$subsection] as $row) {	
-		if(!empty($_POST)){
+	$modified = false;
+	
+	if(!empty($_POST)){
+		foreach ($_SESSION[$section][$subsection] as $row) {	
 			$_SESSION["KCONFIG"][$row["key"]]=$_POST[$row["vname"]];
 			$_SESSION[$section][$subsection][$row["value"]] = $_POST[$row["vname"]];
 			$modified = true;
 		}
 	}
+	return $modified;
+}
+
+function print_multi_form($matrix, $header, $formatID, $class, $infoname, $size){
+	
+	echo '<FORM method="POST">
+			<table border="0" align="center" class="'.$class.'" id="'.$formatID.'"  width="100%" >';
+	if (!empty($infoname)) echo '<tr><th>'.$infoname.'</th></tr>';
+	
+	// Printing fist line with column names.
+	if (!empty($header)){
+		echo "<tr class='sub'>";
+		foreach ($header as $column){
+			echo "<td>".($column)."</td>";
+		}
+		echo "</tr>";
+	}
+	
+	$i = 0;
+	
+	// Printing the content of the form.
+	foreach ($matrix as $array){
+		$elements = explode(",",$array);
+		
+		$first = 0;
+		echo "<tr>";
+		foreach ($elements as $element){
+			$column = explode("=",$element);
+			if ($column[0]=="key"){
+				echo '<INPUT type="hidden" value="'.$column[1].'" name="key'.$i.'" >';
+			}else{
+				echo '<td align="center"><INPUT size="'.$size.'" type="text" value="'.$column[1].'" name="'.$column[0].$i.'" ></td>';
+				$first = 1;
+			}
+		}
+		echo "</tr>";
+		$i++;
+		$first = 0;
+	}
+	echo '</table>';
+	
+	echo '<INPUT type="submit" value="Save New Configuration" class="btn last">';	
+	echo '</FORM>';	
+}
+
+function process_multi_form($matrix){
+	
+	
+	$modified = false;
+	
+	$i=0;
+	if(!empty($_POST)){
+		foreach ($matrix as $array){
+			$elements = explode(",",$array);
+			
+			foreach ($elements as $element){
+				$column = explode("=",$element);
+				if($column[0]!="key"){
+					$output .= preg_replace('/[0-9]+/', '', $column[0].$i)."=". $_POST[$column[0].$i].",";
+				}else{
+					$key = $_POST[$column[0].$i];
+				}
+				
+				//$_SESSION["KCONFIG"][$row["key"]]=$_POST[$row["vname"]];
+				//$_SESSION[$section][$subsection][$row["value"]] = $_POST[$row["vname"]];
+				
+			}
+			$output = rtrim($output, ",");
+			
+			// We have the line, put it in kconfig.
+			$_SESSION["KCONFIG"][$key]=$output;
+			
+			// Clean output
+			$output="";
+			$i++;
+			
+		}	
+		$modified = true;	
+	}
+	
 	return $modified;
 }
 
@@ -579,7 +661,7 @@ function wrs_management(){
 					rename($uploadfile, "/update/".($_FILES['file']['name']));
 					unlink($uploadfile);
 					//Reboot switch
-					sleep(10);
+					sleep(1);
 					wrs_reboot();
 				}
 				else if(substr($uploadfname,0,14)=="wr-switch-sw-v" && substr($uploadfname,-13)=="_binaries.tar")
@@ -587,7 +669,7 @@ function wrs_management(){
 					rename($uploadfile, "/update/wrs-firmware.tar");
 					unlink($uploadfile);
 					//Reboot switch
-					sleep(10);
+					sleep(1);
 					wrs_reboot();
 				}
 				else
@@ -1007,13 +1089,22 @@ function parse_wrsw_hal_file(){
 	return $file;
 }
 
-function parse_ppsi_conf_file(){
+function parse_endpoint_modes(){
 	
-	$file =  shell_exec('cat '.$GLOBALS['etcdir'].'ppsi.conf | grep role');
-	$file =  str_replace("role", "", $file);
-	$file = explode(" ", $file);
-	return $file;
+	$modes = array();
 	
+	for($i = 0; $i < 18; $i++){
+		$endpoint = intval($i);
+		$endpoint = sprintf("%02s", $endpoint);
+		$endpoint = strval($endpoint);
+		
+		$role = $_SESSION["KCONFIG"]["CONFIG_PORT".$endpoint."_PARAMS"];
+		$role = explode(",",$role);
+		$role = str_replace("role=","",$role[3]);
+		
+		array_push($modes,$role);			
+	}	
+	return $modes;
 }
 /*
  * Obtains the content the switch mode from wrsw_hal.conf file
@@ -1050,131 +1141,6 @@ function modify_switch_mode(){
 		$cmd = 'sed -i "s/mode = \"Master\"/mode = \"GrandMaster\"/g" '.$GLOBALS['etcdir'].'wrsw_hal.conf';
 	}
 	shell_exec($cmd);
-	
-}
-
-function wrs_modify_endpoint_mode($endpoint, $mode){
-		
-	switch ($mode) {
-		case "master":
-			$new_mode = "slave";
-			break;
-		case "slave":
-			$new_mode = "auto";
-			break;
-		case "auto":
-			$new_mode = "master";
-			break;
-	}
-	
-	
-	
-	// ### Code for ppsi.conf ###
-	if($endpoint>0 && $endpoint<19 && (((!strcmp($mode, "slave"))) || ((!strcmp($mode, "master"))) || ((!strcmp($mode, "auto"))))){
-		
-		
-		$file = $GLOBALS['etcdir'].$GLOBALS['ppsiconf']; 
-		$lines = file($file);
-		$output = "";
-		$count = 0;
-		$end_aux = $endpoint;
-		
-		if($endpoint == 1){ //Slave port
-			$endpoint= "port slave";
-		}else{ //Master ports
-			$endpoint= "port master".($end_aux-1)."\n";
-			
-		}
-		
-		$found = false;
-		
-		foreach($lines as $line_num => $line)
-		{
-			if(substr_count($line, $endpoint)>0){
-				$found = true;
-			}
-			
-			if($found)$count++;
-			
-			
-			if($count==3){
-				$output.='role '.$new_mode."\n";
-				$count = 0;
-				$found = false;
-			}else{
-				$output.=$line;
-			}
-		}
-		
-		//We save the changes in a temporarely file in /tmp
-		$file = fopen("/tmp/".$GLOBALS['ppsiconf'],"w+");
-		fwrite($file,$output);
-		fclose($file);
-		
-		//We move the file to /wr/etc/
-		copy('/tmp/'.$GLOBALS['ppsiconf'], $GLOBALS['etcdir'].$GLOBALS['ppsiconf']);
-		
-		//echo '<br><br><br><br><br><br><br><br><center>Endpoint wr'.$end_aux.' is now '.$new_mode.'</center>';
-	}else{
-		echo '<br>Wrong parameters for endpoint-mode';
-	}
-	
-	
-	
-	// ##### old code for wrsw_hal.conf ######
-	switch ($mode) {
-		case "master":
-			$new_mode = "wr_slave";
-			break;
-		case "slave":
-			$new_mode = "wr_master";
-			break;
-		case "auto":
-			$new_mode = "wr_slave";
-			break;
-	}
-	
-	echo $mode, "---", $new_mode;
-	
-	if($endpoint>0 && $endpoint<19 && (((!strcmp($mode, "slave"))) || ((!strcmp($mode, "master"))) || ((!strcmp($mode, "auto"))))){
-		
-		
-		$file = $GLOBALS['etcdir'].$GLOBALS['wrswhalconf'];
-		$lines = file($file);
-		$output = "";
-		$count = 0;
-		$end_aux = $endpoint;
-		$endpoint = 'wr'.($endpoint-1).' =';
-		$found = false;
-		
-		foreach($lines as $line_num => $line)
-		{
-			if(substr_count($line, $endpoint)>0){
-				$found = true;
-			}
-			
-			if($found)$count++;
-			
-			
-			if($count==6){
-				$output.='		mode = "'.$new_mode.'";'."\n";
-				$count = 0;
-				$found = false;
-			}else{
-				$output.=$line;
-			}
-		}
-		
-		//We save the changes in a temporarely file in /tmp
-		$file = fopen("/tmp/".$GLOBALS['wrswhalconf'],"w+");
-		fwrite($file,$output);
-		fclose($file);
-		
-		//We move the file to /wr/etc/
-		copy('/tmp/'.$GLOBALS['wrswhalconf'], $GLOBALS['etcdir'].$GLOBALS['wrswhalconf']);
-	}else{
-		echo '<br>Wrong parameters for endpoint-mode';
-	}
 	
 }
 

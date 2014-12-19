@@ -184,34 +184,6 @@ $WRS_FORMS = Array(
 		),
 	),
 	
-	NETWORK_SETUP => Array(
-		NETWORK_SETUP_00 => Array(
-			name => "IP Address",
-			value => "192.168.1.53",
-			vname => "ip",
-		),
-		NETWORK_SETUP_01 => Array(
-			name => "Netmask",
-			value => "255.255.255.0",
-			vname => "netmask",
-		),
-		NETWORK_SETUP_02 => Array(
-			name => "Broadcast",
-			value => "192.168.1.255",
-			vname => "broadcast",
-		),
-		NETWORK_SETUP_03 => Array(
-			name => "Network",
-			value => "192.168.1.0",
-			vname => "network",
-		),
-		NETWORK_SETUP_04 => Array(
-			name => "Gateway",
-			value => "192.168.1.1",
-			vname => "gateway",
-		),	
-	),
-	
 	CONFIG_PPSI => Array(
 		CONFIG_PPSI_00 => Array(
 			name => "Clock Class",

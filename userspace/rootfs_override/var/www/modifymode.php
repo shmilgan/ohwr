@@ -22,10 +22,30 @@
 	
 	<?php
 
-		$endpoint = $_GET["wr"];
+		$endpoint = intval($_GET["wr"]);
+		$endpoint = sprintf("%02s", $endpoint);
+		$endpoint = strval($endpoint);
+		
 		$mode = $_GET["mode"];
 		
-		wrs_modify_endpoint_mode($endpoint, $mode);
+		switch ($mode) {
+		case "master":
+			$new_mode = "slave";
+			break;
+		case "slave":
+			$new_mode = "auto";
+			break;
+		case "auto":
+			$new_mode = "master";
+			break;
+		}
+		
+		$string = $_SESSION["KCONFIG"]["CONFIG_PORT".$endpoint."_PARAMS"];
+		$string = str_replace($mode,$new_mode,$string);
+		$_SESSION["KCONFIG"]["CONFIG_PORT".$endpoint."_PARAMS"] = $string;
+		
+		save_kconfig();
+		apply_kconfig();
 		
 		header('Location: endpointmode.php');
 		exit;

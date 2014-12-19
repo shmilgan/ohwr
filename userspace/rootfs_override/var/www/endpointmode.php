@@ -23,29 +23,21 @@
     
 	<?php
 		//Load all 
-		//$modes = parse_wrsw_hal_file();
-		$modes = parse_ppsi_conf_file();
+		$modes = parse_endpoint_modes();
 				
 		echo '<table class="altrowstable" id="alternatecolor" style="width:100%;text-align:center">';
-		//echo '<tr><th><center>Endpoint</center></th><th><center>Mode</center></th></tr>';
 		for($i = 0; $i < 9; $i++){
 			echo '<tr>';
-			echo '<th>wr'.($i+1).'</td>';
-			echo '<td><a href="modifymode.php?wr='.($i+1).'&mode='.$modes[$i+1].'">'.$modes[$i+1].'</a></th>';
+			echo '<th>wr'.($i).'</td>';
+			echo '<td><a href="modifymode.php?wr='.($i).'&mode='.$modes[$i].'">'.$modes[$i].'</a></th>';
 			
-			echo '<th>wr'.($i+1+9).'</th>';
-			echo '<td><a href="modifymode.php?wr='.($i+1+9).'&mode='.$modes[$i+1+9].'">'.$modes[$i+1+9].'</a></td>';
+			echo '<th>wr'.($i+9).'</th>';
+			echo '<td><a href="modifymode.php?wr='.($i+9).'&mode='.$modes[$i+9].'">'.$modes[$i+9].'</a></td>';
 			echo '</tr>';
 			
-		}
-		
-		//echo '</tr>';
-		
+		}		
 		echo '</table>';
-		echo '<br>';
-		
-		//wrs_check_writeable();
-		
+		echo '<br>';		
 
 	?>
 	<div>
@@ -55,22 +47,6 @@
 		<INPUT type="submit" value="Restart PPSi" class="btn">
 		</FORM>
     </div>
-    
-    <?php
-		if (!empty($_POST["hal"])){
-			//We must relaunch ptpd too. (by default)
-			shell_exec("killall ppsi"); 
-			$ptp_command = "/wr/bin/ppsi > /dev/null 2>&1 &";
-			$output = shell_exec($ptp_command); 
-			
-			//Relaunching wrsw_hal to commit endpoint changes
-			//shell_exec("killall wrsw_hal");
-			//shell_exec("/wr/bin/wrsw_hal -c ".$GLOBALS['etcdir']."wrsw_hal.conf > /dev/null 2>&1 &");
-			
-			
-		}
-    ?>
-
 
 </div>
 </div>
