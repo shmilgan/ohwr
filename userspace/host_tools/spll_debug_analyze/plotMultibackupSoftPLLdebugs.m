@@ -138,12 +138,19 @@ bpll(:,:,4)= bpll_3;
 %  bpll = [bpll_0;bpll_1;bpll_2;bpll_3];
 start = switchover - 4000;
 finish= switchover + 1000;
+% fig 1
 draw3(mpll, bpll, hpll, switchover, start, finish, option, backup_n);
 start = switchover - 500;
 finish= switchover + 300;
+% fig 2
 draw3(mpll, bpll, hpll, switchover, start, finish, option, backup_n);
 start = switchover - 1000;
 finish= switchover - 1;
+% fig 13
+draw3(mpll, bpll, hpll, switchover, start, finish, option, backup_n);
+start = 1;
+finish= size(mpll,1)
+% fig 4
 draw3(mpll, bpll, hpll, switchover, start, finish, option, backup_n);
 
 if (backup_n > 0)
