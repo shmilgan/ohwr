@@ -16,7 +16,8 @@ bpll_tmp_2 =load('-ascii', sprintf('%s/bPLL2.txt',path_name), 'data');
 bpll_tmp_3 =load('-ascii', sprintf('%s/bPLL3.txt',path_name), 'data');
 hpll_tmp   =load('-ascii', sprintf('%s/hPLL.txt',path_name), 'data');
 
-
+disp('size mpll_tmp');
+size(mpll_tmp)
 hack_offset_0 = detectSwitchover(bpll_tmp_0,6) - 2*history_offset
 if(backup_n > 1)
   hack_offset_1 = detectSwitchover(bpll_tmp_1,6) - 2*history_offset
@@ -34,21 +35,24 @@ threshold_vec(2)=0.5;
 threshold_vec(4)=0.5;
 threshold_vec(5)=0.5;
 mpll_cleared = outliers(mpll_tmp(hack_offset_0:end,:),threshold_vec, 'mpll');
+disp('size mpll_cleared');
+size(mpll_cleared)
+
 hpll_cleared = outliers(hpll_tmp(hack_offset_0:end,:),threshold_vec, 'hpll');
 
 bpll_cleared_0    = outliers(bpll_tmp_0(hack_offset_0:end,:),threshold_vec, 'bpll 0');
-bpll_switchover_0 = detectSwitchover(bpll_cleared_0,6)
+bpll_switchover_0 = detectSwitchover(bpll_cleared_0,6);
 if(backup_n > 1)
   bpll_cleared_1 = outliers(bpll_tmp_1(hack_offset_1:end,:),threshold_vec, 'bpll 1');
-  bpll_switchover_1 = detectSwitchover(bpll_cleared_1,6)
+  bpll_switchover_1 = detectSwitchover(bpll_cleared_1,6);
 end
 if(backup_n > 2)
   bpll_cleared_2 = outliers(bpll_tmp_2(hack_offset_2:end,:),threshold_vec, 'bpll 2');
-  bpll_switchover_2 = detectSwitchover(bpll_cleared_2,6)
+  bpll_switchover_2 = detectSwitchover(bpll_cleared_2,6);
 end
 if(backup_n > 3)
   bpll_cleared_3 = outliers(bpll_tmp_3(hack_offset_3:end,:),threshold_vec, 'bpll 3');
-  bpll_switchover_3 = detectSwitchover(bpll_cleared_3,6)
+  bpll_switchover_3 = detectSwitchover(bpll_cleared_3,6);
 end
 
 mpll_switchover = detectSwitchover(mpll_cleared,6);
@@ -62,6 +66,8 @@ disp(sprintf('switchover took %d samples which is %d [ms]',switchover_length,swi
 switchover = history_offset;
 
 mpll   = [mpll_cleared(mpll_switchover-switchover+1:mpll_switchover-1,:);mpll_cleared(mpll_switchover:end,:)];
+disp('size mpll');
+size(mpll)
 hpll   = [hpll_cleared(hpll_switchover-switchover+1:hpll_switchover-1,:);hpll_cleared(hpll_switchover:end,:)];
 bpll_0 = [bpll_cleared_0(bpll_switchover_0-switchover+1:bpll_switchover_0-1,:);bpll_cleared_0(bpll_switchover_0+1:end,:);zeros(size(mpll_cleared(mpll_switchover:end,:)))];
 if(backup_n > 1)
@@ -81,12 +87,24 @@ else
 end
 
 tmp_len=length(mpll);
+if(future_offset < 0)
+    future_offset = min([length(mpll), length(hpll),length(bpll_0)]);
+  if (backup_n > 1)
+    future_offset = min([length(mpll), length(hpll),length(bpll_0),length(bpll_1)]);
+  elseif (backup_n > 2)
+    future_offset = min([length(mpll), length(hpll),length(bpll_0),length(bpll_1),length(bpll_2)]);
+  elseif (backup_n > 3)
+    future_offset = min([length(mpll), length(hpll),length(bpll_0),length(bpll_1),length(bpll_2),length(bpll_3)]);
+  end   
+end
+
 if(tmp_len - switchover < future_offset)
    mpll = [mpll(:,:);zeros(switchover+future_offset-tmp_len,size(mpll,2))];
 elseif(tmp_len - switchover > future_offset)
    mpll = mpll(1:(switchover+future_offset),:);
 end
-size(mpll);
+disp('size mpll');
+size(mpll)
 tmp_len = length(bpll_0);
 if(tmp_len - switchover < future_offset)
    bpll_0 = [bpll_0;zeros(switchover+future_offset-tmp_len,size(bpll_0,2))];
