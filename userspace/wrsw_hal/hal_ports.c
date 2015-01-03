@@ -30,9 +30,6 @@
 #include <libwr/hal_shmem.h>
 #include "driver_stuff.h"
 
-/* Default fiber alpha coefficient (G.652 @ 1310 nm TX / 1550 nm RX) */
-#define DEFAULT_FIBER_ALPHA_COEF (1.4682e-04*1.76)
-
 #define RTS_POLL_INTERVAL 200 /* ms */
 #define SFP_POLL_INTERVAL 1000 /* ms */
 
@@ -457,7 +454,6 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 		fprintf(stderr, "Unknown SFP \"%.16s\" on port %s\n",
 			shdr.vendor_pn, p->name);
 		memset(&p->calib.sfp, 0, sizeof(p->calib.sfp));
-		p->calib.sfp.alpha = DEFAULT_FIBER_ALPHA_COEF;
 	}
 
 	p->state = HAL_PORT_STATE_LINK_DOWN;
@@ -491,7 +487,7 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 
 	fprintf(stderr, "Port %s, SFP \"%.16s\", fiber %i: no alpha known\n",
 		p->name, p->calib.sfp.part_num, p->fiber_index);
-	p->calib.sfp.alpha = DEFAULT_FIBER_ALPHA_COEF;
+	p->calib.sfp.alpha = 0;
 }
 
 static void hal_port_remove_sfp(struct hal_port_state * p)
