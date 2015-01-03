@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month November 2014
+@set update-month January 2015
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -191,6 +191,33 @@ preexisting environment -- so you can override anything even when
 rebuilding it all from scratch.
 
 @c --------------------------------------------------------------------------
+@node Other Repositories
+@subsection Other Repositories
+
+Not everything that runs in the switch comes from this package:
+both the @i{gateware} image and the @i{lm32} firmware binary
+are built from sources external to this package.
+
+The @i{gateware} is being downloaded as a pre-build tar archive
+(currently called @code{wrs-gw-v4.0-20140807.tar.gz}).  This
+is build from the @code{wr-switch-sw-v4.0} tag of the @code{wr-switch-hdl}
+repository.  Please note that the repository uses @i{git} submodules,
+so it depends on other @code{ohwr} repositories too, which in turn
+have not been tagged because the submodule mechanism ensures you'll
+get the exact version you need.
+
+The LM32 program is provided as a pre-compiled binary in
+@code{binaries/rt_cpu.bin}. The respective source code is the
+@i{wrpc-sw} package, because all WR installations run the same
+@sc{pll} software code and we chose to avoid duplication. Moreover,
+@i{wr-switch-sw} builds to not require an LM32 development environment.
+
+If you need to rebuild the @t{rt_cpu.bin} file from source, to make
+your own modifications, you can run @t{make wr_switch_defconfig}
+in @i{wrpc-sw} and then @t{make}. Please checkout the @code{wr-switch-sw-v4.1}
+tag to get the exact commit.
+
+@c --------------------------------------------------------------------------
 @node Portability
 @subsection Portability
 
@@ -327,13 +354,15 @@ The messages of a download run are like the following ones:
    2012-01-12 18:37:56: Retrieved zlib-1.2.5.tar.bz2 from upstream
 @end smallexample
 
+
 @c ==========================================================================
 @node Building Procedure
 @section Building Procedure
 If you just want to build stuff, with no concern about network
 downloads and without even knowing what is happening, just create a
 directory where you want the output to be generated and start
-compilation. Note that it takes around 3GB of storage.
+compilation. Note that it takes around 4GB of storage in excess
+of the 330MB downloaded.
 
 Then run this (but please read more for a better command):
 
@@ -515,7 +544,8 @@ directory by deleting all compiled modules (except downloaded files), just call:
 @section The Individual Build Steps
 
 This chapter details the individual build steps, for the users that want
-to customize their switch in any way. 
+to customize one or more of them to build a different switch firmware
+image (or kernel, or whatever).
 
 @c --------------------------------------------------------------------------
 @node The Compiler
@@ -591,6 +621,8 @@ evaluation board without even changing the board name):
    0005-boot-disable-watchdog-asap-added-flip_leds-count-run.patch
    0006-boot-Correct-crash-due-to-an-Atmel-bug-during-boot-w.patch
    0007-gpios-Correct-FPGA-LED-problems-and-add-CPU-LEDs-FAN.patch
+   0008-fix-refresh-value.patch
+   0009-one-more-fix-to-RAM-timing-according-to-datasheet.patch
 @end example
 
 The script @i{wrs_build_at91boot} uncompresses, patches and builds, leaving
@@ -608,7 +640,6 @@ Maybe we will switch to another version in the future that doesn't show
 the bug, or to the newer @i{barebox} that obsoletes @i{at91boot}.
 
 @c --------------------------------------------------------------------------
-
 @node The Boot Loader
 @subsection The Boot Loader
 
@@ -630,6 +661,11 @@ the set is made up of the following ones:
    0007-barebox-add-MAC-addresses-to-environment.patch
    0008-wrs-on-pm9g45-force-memory-to-64MB.patch
    0009-pm9g45-init-for-wrs-move-environment-for-the-UBI-mov.patch
+   0010-pm9g45-init-for-wrs-more-relaxed-nand-timings.patch
+   0011-lib-sdb-and-sdb.h-from-fpga-config-space-sdbfs-commi.patch
+   0012-libsdb-integrate-in-build-system.patch
+   0013-commands-add-sdb-commands-to-list-read-setvar.patch
+   0014-Read-EDI-bytes-in-JEDEC-to-support-AT45DB641E.patch
 @end smallexample
 
 If you build using a local @i{git} repository, we suggest to use
@@ -702,6 +738,8 @@ and are currently the following ones:
    0010-sam9m10g45ek-for-wrs-new-partitioning.patch
    0011-sam9m10g45ek-for-wrs-final-partitions-for-V4.1.patch
    0012-sam9m10g45ek-for-wrs-more-relaxed-nand-timings.patch
+   0013-mtd_dataflash-Read-EDI-JEDEC-to-support-AT45DB641E.patch
+   0014-sam9m10g45ek-for-wrs-provide-bootcount-using-scratch.patch
 @end example
 
 The configuration we use to build the kernel is not a patch but a plain
@@ -737,6 +775,7 @@ for your to commit.
 Currently, the package includes the following modules:
 
 @itemize @bullet
+
 @item @i{wr_vic.ko}: the interrupt controller for in-FPGA devices.
 @item @i{wr-nic.ko}: the network ``card'' driver for WR ports.
 @item @i{wr_rtu.ko}: the routing-table interface between the
@@ -745,13 +784,14 @@ Currently, the package includes the following modules:
 
 @item @i{wr_clocksource.ko}: uses WR time as a source for system time.
 This driver uses the @sc{wr} counters to make host time flow at the
-right speed. The system time is moved to the current value, with an
-error not bigger than one second, as soon as @i{ppsi} synchronizes,
-and the clocksource grants it won't move ever after, keeping the same
-offset. This is considered acceptable, because system time is only
+right speed as soon as @i{ppsi} synchronizes. This ensures no drift
+will accumulate in system time, keeping the same
+offset (well lower than a second, after the initial ntp-driven setting event).
+This is considered acceptable, because system time is only
 used for logging.
 
 @item @i{at91_softpwm.ko}: a driver that generates a PWM signal for the fan.
+
 @end itemize
 
 @c --------------------------------------------------------------------------
@@ -765,9 +805,8 @@ The code is hosted in its own
 repository; it is a @i{git} submodules in this package.
 The repository is hosted on @code{ohwr}, like others.
 
-A plain @i{make} in
-@t{userspace/ppsi} will likely fail, because of
-missing environment variables. 
+PPSi is @i{Kconfig} based: you may build it in its own directory by
+using its @i{wrs_defconfig} and the proper @t{CROSS_COMPILE} variable.
 
 @c --------------------------------------------------------------------------
 @node User Space Applications
@@ -805,178 +844,14 @@ The main components are:
 
 @end table
 
-@sc{wrs} user space includes also some tools and scripts. Tools
-are build from source files in @file{userspace/tools} while the
-scripts are copied directly from @file{userspace/rootfs_override/wr/bin}.
-
-The following tools and scripts are provided:
-
-@table @file
-
-@item load-virtex
-@itemx load-lm32
-
-	They load into the FPGA the gateware and the LM32 application.
-        They are used by the init scripts of the Linux system. The LM32
-        loader can also change variables in the loaded binary, and
-        read or write variables without stopping the running CPU.
-        This is limited to 32-bit integer variaables, though. See the
-        commit message for details.
-@c FIXME: document better load-lm32 for elf.
-
-@item mapper
-@itemx wmapper
-	The former reads from a file using @i{mmap}
-        (usually you run it on @i{/dev/mem}) and writes to @i{stdout}.
-        The latter read from @i{stdin} and writes using @i{mmap}.
-        They are classic tools distributed in the @i{Linux Device Drivers}
-        examples since 1998.
-
-@item com
-	The program is a simple program for talking with serial ports.
-
-@item wr_phytool
-	A tool to read and write PHY registers in the switch.
-
-@item wr_mon
-	A simple monitor of White Rabbit status. It prints to @i{stdout}
-        using the standard escape sequences for color output. The
-        @t{-b} command line options removes color change (b/w).
-
-@item wr_date
-
-	The program can read or set the White Rabbit date. When setting,
-        using ``@t{wr_date set} @i{value}'' assigns an arbitrary date,
-        and ``@t{wr_date set host}'' passes the host time to White Rabbit.
-        If the file @t{/etc/leap-seconds.list} exists, it is used to
-        pass the TAI offset to the kernel, and to consider it in setting
-        White Rabbit time to the current TAI value.  The program is
-        meant to prime the White Rabbit counter at boot time, and is
-        run by @t{/etc/init.d/S70wr_date} -- this script uses NTP
-        to set host time as a first step, if @t{/wr/etc/wr_date.conf}
-        exists and includes a line of the form @t{ntpserver 192.168.16.1}.
-
-        With ``@t{wr_date get}'' you can read White Rabbit time, and
-        by using @t{wr_date get tohost}'' you can set host time to
-        White Rabbit time. This can be useful in slave switches that
-        are not synced to NTP at boot. Please note that we'll have
-        a kernel module soon to automatically track WR time to
-        host time.
-
-@item wrs_version
-	Print information about the SW & HW version of the WRS. Please
-        check the help message.	See also @ref{DIP Switch HW version}.
-
-@item shw_ver
-	A symbolic link to @t{wrs_version}, to be compatible with
-        older versions that used this tool name. The name is
-        inconsistent with anything else in the switch, so it is being
-        replaced.
-
-@item wrs_vlans
-	The tool allows to configure and unconfigure the VLAN settings
-        for each port and for the RTU daemon. The @t{--help} option
-        lists all configuration items of the tool.
-
-@item apply_dot-config
-	The script is used to apply @t{dot-config} settings to the
-        current configuration files.  It is run at boot time before
-        any service is started. The @t{dot-config} mechanism is
-        documented in the @i{@sc{wrs} Users' Manual}.
-
-@item change_dot-config
-	This script changes the current @t{dot-config} file. It is
-        designed to be the back-end of the web interface, when changing
-        configuration items.  The script does nothing to @i{apply}
-        the changes, and it only performs editing.
-        It is the responsibility of the caller to ensure the proper
-        service is restarted with the new configuration.
-
-@item sdb-read
-	The tool, copied from the @t{fpga-config-space} project,
-	is documented in the next section,
-@c FIXME: document lm32-vuart rtu_stat spll_dbg_proxy
-@c FIXME: document wrs_pstats
-@end table
+@sc{wrs} user space includes also some tools and scripts.
+They are all described in the User's Manual, even though some of
+them are only useful to software developers.
 
 Please note that to compile the applications and tools outside of the build
 scripts you need to specify both the kernel
 directory (@code{LINUX=}) and the cross-compiler to use
 (@code{CROSS_COMPILE=}).
-
-@c --------------------------------------------------------------------------
-@node sdb-read
-@subsection sdb-read
-
-[Note: this documentation section comes from the @t{ohwr} project
-called @t{fpga-config-space}.]
-
-
-The @i{sdb-read} program can be used to access an @i{sdbfs} image
-stored in a disk file or an FPGA area in physical memory.
-It works both as @i{ls} (to list the files
-included in the image) and as @i{cat} (to print to its own @i{stdout}
-one of the files that live in the binary image).
-
-The program can be used in three ways:
-
-@table @code
-
-@item sdb-read [options] <image-file>
-
-	This invocation lists the contents of the image. With @code{-l}
-        the listing is @i{long}, including more information than the
-        file name.
-
-@item sdb-read [options] <image-file> <filename>
-
-	When called with two arguments, the program prints to @i{stdout}
-        the content of the named file, extracted from the image. Please
-        note that if the file has been over-sized at creation time,
-        the whole allocated data area is printed to standard output.
-
-@item sdb-read [options] <image-file> <hex-vendor>:<hex-device>
-
-	If the second argument is built as two hex numbers separated
-        by a colon, then the program uses them as vendor-id and device-id
-        to find the file.  If more than one file have the same identifiers,
-        the @i{first} of them is printed.
-
-@end table
-
-The following option flags are supported:
-
-@table @code
-
-@item -l
-
-	For listing, use @i{long} format. A @i{verbose} format will
-        be added later.
-
-@item -e <entrypoint>
-
-	Specify the offset of the magic number in the image file.
-
-@item -m <size>@@<addr>
-@itemx -m <addr>+<size>
-
-	Either form is used to specify a memory range. This is the
-        preferred way to read from a memory-mapped area, like an FPGA
-        memory space.  Please note that in general you should not
-        read a ``file'' in FPGA space, because this would mean read
-        all device registers. The form ``@t{<image-file> <filename>}''
-        is thus discouraged for in-memory SDB trees (i.e. where
-        @t{<image-file>} is @t{/dev/mem}).
-
-@item -r
-
-	Register the device with a @i{read} method instead of the @i{data}
-        pointer. In this way the
-        tool can be used to test the library with either access method.
-        If @i{mmap} fails on the file (e.g., it is a non-mappable device),
-        @i{read} is used automatically, irrespective of @t{-r}.
-
-@end table
 
 @c --------------------------------------------------------------------------
 @node VHDL Binaries
@@ -987,37 +862,24 @@ target filesystem by the @file{wrs_build_gateware} script. If the
 variable @code{WRS_HW_DIR} is set, the script uses it to retrieve the
 binaries you just compiled (but the script is not compiling gateware).
 
-If the variable is not set, the script extract a tar file downloaded
-from @code{ohwr.org} as part of the initial download step. The tar is
-currently called @code{wrs-gw-v4.0-20140807.tar.gz} and has been
-build from the @code{wr-switch-sw-v4.0} of the @code{wr-switch-hdl}
-repository.  Please note that the repository uses @i{git} submodules,
-so it depends on other @code{ohwr} repositories too, which in turn
-have not been tagged because the submodule mechanism ensures you'll
-get the exact version you need.
+If the variable is not set, the script extracts a tar file downloaded
+from @code{ohwr.org} as part of the initial download step.
 
 The LM32 program is provided as a pre-compiled binary in
-@code{binaries/rt_cpu.bin}. The respective source code is the
-@i{wrpc-sw} package, because all WR installations run the same
-@sc{pll} software code and we chose to avoid duplication. Moreover,
-@i{wr-switch-sw} builds to not require an LM32 development environment.
+@code{binaries/rt_cpu.bin}.
 
-If you need to rebuild the @t{rt_cpu.bin} file from source, to make
-your own modifications, you can run @t{make wr_switch_defconfig}
-in @i{wrpc-sw} and then @t{make}. Please checkout the @code{wr-switch-sw-v4.0}
-tag to get the exact commit.
+More details about the binaries are in @ref{Other Repositories}.
 
 @c --------------------------------------------------------------------------
 @node The Complete Filesystem
 @subsection The Complete Filesystem
 
 The final step in building the switch software is wrapping together
-the filesystem for the switch, also making the archives and the
-@i{jffs2} image file.
+the filesystem for the switch, also making the archives.
 
 The step of setting up the complete filesystem is performed by
 @file{build/scripts/@-wrs_build_wraprootfs}.  The script
-does not leave a directory tree on disk because that would require
+does not leave a directory tree on the build system because that would require
 administrator privileges. We think it is best not to call @i{sudo} from
 within build scripts, to respect our users' security concerns.
 
@@ -1051,10 +913,9 @@ The content of the final filesystem comes from several sources:
 @item The @i{buildroot} output (from its own @file{output/target/}).
 @item The switch-specific overlay (@file{userspace/roofs_override}).
 @item The @file{images/wr} and @file{images/lib} trees,
-      filled but the build scripts.
+      filled by the build scripts.
 @item The file @file{userspace/devices.tar.gz}
 @item The file @file{$WRS_BASE_DIR/authorized_keys} if it exists.
-@item The @t{CONFIG_} items, used to pre-set configuration files.
 
 @end itemize
 
@@ -1346,6 +1207,9 @@ installation time.
 @node Flash Script Description
 @subsection Flash Script Description
 
+@c FIXME: flash script
+@b{Note}: this section may be slightly outdated, it needs review.
+
 The @code{flash-wrs} script can be used to quickly flash the White Rabbit switch
 as seen above. However it admits other functionalities detailed in this chapter.
 You might also want to check its embedded documentations using:
@@ -1364,8 +1228,6 @@ Options:
   -g|--gateware	 Select the gateware: 18p (18 ports, default), 8p (8 ports)
   -e 		 Completely erase the memory (Can erase your configuration)
   -b|--build	 Use files that you have built in the WRS_OUTPUT_DIR
-  -m1|--mac1	 Default MAC address for the Ethernet port on board
-  -m2|--mac2	 Default base MAC address for the switch ports
 
 @end smallexample
 
@@ -1445,10 +1307,10 @@ To build, you can run Benoit's script
 @t{usb-loader/samba_applets/isp-project/build.sh}.
 
 @c ##########################################################################
-@node Code layout in a production switch
-@chapter Code layout in a production switch
+@node Flash Memory Use in WRS
+@chapter Flash Memory Use in WRS
 
-This final chapter is a summary of how we used the two internal flash
+This is a summary of how we used the two internal flash
 memories in the switch, when programmed with the official firmware
 binaries. It is meant for people who want to better understand the
 boot procedure and possibly customize stuff using higher-level tools,
@@ -1475,22 +1337,42 @@ This is how the memory is used:
 The first area is used to save the boot loader's configuration (if ever
 changed from the default and saved), and the second one is later split
 in UBI volumes.  In the future we plan to move the barebox
-environment to dataflash memory.
+environment to dataflash memory, where a partition is currently reserved
+but is not being used.
 
-The @i{dataflash} is partitioned too, and such partitioning is visible.
-(thus, you can replace @t{barebox.bin} by just writing
-it to the right device file). Overall, this is the content of @file{/proc/mtd}
-after boot:
+The @i{dataflash} is partitioned too, in the following way:
+
+@example
+   0x0000.0000 - 0x0000.8400   at91boot
+   0x0000.8400 - 0x0008.c400   Barebox
+   0x0008.c400 - 0x0009.4800   Barebox-Environment
+   0x0009.4800 - 0x0009.5040   hwinfo
+   0x0009.5040 - 0x0084.0000   Available-dataflash
+@end example
+
+All those partitions are available as @i{mtd} partitions in @i{/dev};
+thus, for example, you can replace @t{barebox.bin} by just writing it
+to the right device file.  The @i{hwinfo} partition is only available
+as a read-only file (@i{/dev/mtd5ro}) because neither users nor
+developers are ever expected to change the hardware information data.
+
+Overall, the following is the content of @file{/proc/mtd}
+after boot.  It is divided in stanzas for a better reading:
+NAND partitioning, dataflash partitioning and the UBI volumes
+stored withing ``UBIfied-NAND'' are thus shown in selarate blocks:
 
 @example
    dev:    size   erasesize  name
+
    mtd0: 00100000 00020000 "Barebox-environment-backup"
    mtd1: 1ff00000 00020000 "UBIfied-NAND"
+
    mtd2: 00008400 00000420 "at91boot"
    mtd3: 00084000 00000420 "Barebox"
    mtd4: 00008400 00000420 "Barebox-Environment"
    mtd5: 00000840 00000420 "hwinfo"
    mtd6: 007aafc0 00000420 "Available-dataflash"
+
    mtd7: 0201d800 0001f800 "boot"
    mtd8: 0961e000 0001f800 "usr"
    mtd9: 0961e000 0001f800 "update"
@@ -1509,9 +1391,9 @@ boot scripts):
 
 @item boot
 
-	The boot volume hosts the kernel and @i{initramfs} image.
+	The boot volume hosts the kernel (@t{zImage}) and initial
+        RAM disk (@t{wrs-initramfs.gz}).
         It is mounted by the boot loader for the default boot procedure,
-        and is not mounted by the kernel by default.
 
 @item usr
 
@@ -1527,24 +1409,24 @@ boot scripts):
         copy @t{wrs-firwware.tar} in this volume, the next boot will
         completely replace @t{/usr} with this new image. If the tar
         file includes them, the kernel and @i{initramfs} image are
-        replaced as well.
+        replaced as well.  Developers can copy individual files,
+        to upgrade only one of boot loader, kernel, @i{initramfs}
+        and @i{/usr}.
 
 @end table
 
-If you want to mount UBI partitions, the command is, for example:
-@example
-   mount -t ubifs ubi0:boot /boot
-@end example
-where ``@t{ubi0}'' refers to the first (and only) UBI partition,
-and @t{boot} refers to the symbolic name of the volume, as listed above.
-
-For further details on the update procedure, please see
+For further details on the update procedure and exact file names to be
+used in partial updates during development, please see
 @t{/etc/init.d/wrs-boot-procedure} (in the source archive it is
 distributed in @t{userspace/rootfs_override/}.
 
 @c ##########################################################################
+@node WRS Internals
+@chapter WRS Internals
+
+@c ==========================================================================
 @node Inter-Process Communication
-@chapter Inter-Process Communication
+@section Inter-Process Communication
 
 This chapter described the network of IPC/RPC communications that are
 active inside the switch.
@@ -1560,9 +1442,9 @@ of status information.  Starting in November 2014 we introduced
 shared memory, to lower the CPU usage and increase the ability
 to monitor overall Switch status.
 
-@c ==========================================================================
+@c --------------------------------------------------------------------------
 @node mini-rpc
-@section mini-rpc
+@subsection mini-rpc
 
 The RPC mechanism in the switch relies on the @i{mini-rpc} package.
 The package is a submodule, currently at this commit:
@@ -1597,9 +1479,9 @@ more copies of the library: one within @i{ptp-noposix} and a subset in
 stopped supporting @i{ptp-noposix}, and the @i{rt} subsystem is built
 from @i{wrpc-sw} since version 4.0 (Aug 2014).
 
-@c ==========================================================================
+@c --------------------------------------------------------------------------
 @node RPC Sockets and Communication
-@section RPC Sockets and Communication
+@subsection RPC Sockets and Communication
 
 This section describes the network of RPC calls that exist in the
 White Rabbit Switch.
@@ -1617,12 +1499,17 @@ RPC servers are created in the following places:
 @item userspace/ppsi/arch-wrs/wrs-startup.c
 @c FIXME: ppsi should use shmem
 
-	The @t{ptpd} channel is created to report PTP status information.
+	The @t{ptpd} channel is created to report PTP status information,
+        but @i{ppsi} is already instrumented to export using shared
+        memory too. Thus, this RPC server will be removed soon.
 
 @item userspace/wrsw_hal/hal_exports.c
 
 	This channel is called @t{wrsw_hal} but the code uses is through
-        the macro @t{WRSW_HAL_SERVER_ADDR}.
+        the macro @t{WRSW_HAL_SERVER_ADDR}. The RPC server is used
+        both for status and commands, but status is already exported
+        in shared memory, and we are converting the clients; status
+        RPC calls will be removed soon.
 
 @item wrpc-sw::ipc/rt_ipc.c
 
@@ -1642,11 +1529,11 @@ Clients are created in the following places:
 
 @item userspace/tools/wrs_vlans.c
 
-	@t{wrs_vlans} connects to the @i{rtud} to ask for configuration
+	@t{wrs_vlans} connects to the @i{rtud} to request configuration
         actions related to vlan setup.
 
 @item userspace/wrsw_hal/hal_exports.c
-@c FIXME: no more check using a socked, but with the shmem mechanism
+@c FIXME: don't check with a socket, but with the shmem mechanism
 
 	A temporary client is created to check whether a HAL process
         is already running.
@@ -1655,7 +1542,8 @@ Clients are created in the following places:
 @c FIXME: wr_mon should use shmem
 
 	The tty-based monitoring interface connects to @i{ptpd} (@i{ppsi})
-        to get run-time information.
+        to get run-time information. It is going to be moved to
+        shared memory.
 
 @item userspace/libwr/hal_client.c
 
@@ -1674,13 +1562,13 @@ Clients are created in the following places:
 
 Functions exported by the HAL and PTP are defined in two headers:
 @t{hal_exports.h} and @t{ptpd_exports.h}. The former exists
-in two places, because @i{ppsi} is a separate package; the two
-are identical and are expected to remain so. Same applies to @t{rt_ipc.h},
+in two places, because @i{ppsi} is a separate package; the two copies
+are identical and are expected to remain so. The same applies to @t{rt_ipc.h},
 which appears both here and in @i{wrpc-sw}.
 
-@c ==========================================================================
+@c --------------------------------------------------------------------------
 @node The Functions being Exported
-@section The Functions being Exported
+@subsection The Functions being Exported
 
 This section lists all functions that are being exported to @sc{rpc} by
 the processes (excluding the @sc{rt} subsystem).
@@ -1737,8 +1625,8 @@ the processes (excluding the @sc{rt} subsystem).
 @c FIXME: shmem this
 
 	Called by library code (@t{halexp_query_ports}). This
-        in turn is called by @i{rtu_stat}, @i{wr_mon} and @i{rtud}.
-        If fills a structure @t{hexp_port_list_t}. It may be
+        in turn is called by @i{rtu_stat} and @i{rtud}.
+        If fills a structure @t{hexp_port_list_t}. It is being
         moved to shared memory.
 
 @item  rtud::get_fd_list
@@ -1757,26 +1645,28 @@ the processes (excluding the @sc{rt} subsystem).
 
 	Called by both @i{rtu_stat} and @i{wrs_vlans}. It is
         used to pass a number of parameters to @i{rtud} and
-        make it perform actions
+        make it perform actions.
 
 @end table
 
-@c ==========================================================================
+@c --------------------------------------------------------------------------
 @node The RT Subsystem
-@section The RT Subsystem
+@subsection The RT Subsystem
 
 The in-FPGA processor running the real-time subsystem of the switch
 is using a shared memory connection for communication. The details
 are documented in the @t{mini-rpc} manual.  Only the hal process
 sends commands to the @sc{rt} subsystem.
 
-@c ==========================================================================
+@c --------------------------------------------------------------------------
 @node WRS Shared Memory
-@section WRS Shared Memory
+@subsection WRS Shared Memory
 
 The White Rabbit Switch has a shared memory system, with librarized
-functions to access it.  All status information is collected in a single
-file, where each process has 32kB of storage for local structures.
+functions to access it.  Each process exports status
+information in its own file, withing @i{/dev/shm/}; each file has
+the same structure, but the size allocated in shared memory is
+process-specific.
 
 The initial part of each process' area is a @t{stuct wrs_shm_head}, which
 allows to make some sense of the overall area.  The structure
@@ -1813,7 +1703,6 @@ for details about how they are used:
         to a pointer in the reader's address space, or NULL if on error.
         Please see @t{tools/wrs_dump_shmem.c} about how this is used.
         
-
 @item void wrs_shm_write(void *headptr, int begin);
 
 	Whenever internal consistency of data structure is needed, the
@@ -1841,9 +1730,9 @@ for details about how they are used:
 
 @end table
 
-@c ##########################################################################
+@c ==========================================================================
 @node The HAL Process
-@chapter The HAL Process
+@section The HAL Process
 
 In the initial days of White Rabbit Switch, developers tried to have
 everything managed by a single ``Hardware Abstraction Layer'' process,
@@ -1870,9 +1759,9 @@ The @sc{hal} process is in charge of replying to IPC requests
 (@i{libwr/fan.c}) and monitoring ports (this is spread in several
 files related to @i{i2c} communication).
 
-@c ##########################################################################
+@c ==========================================================================
 @node Reboot/Reset Diagnostics
-@chapter Reboot/Reset Diagnostics
+@section Reboot/Reset Diagnostics
 
 For management and diagnostics, the @sc{wrs} keeps track of the number
 of boots since power on. It does so relying on 4 32-bit @sc{cpu}
@@ -1950,9 +1839,9 @@ We may also consider to use one of the kernel's mechanisms for persistent
 storage of information across reboots, to recover panic messages
 after a reboot.
 
-@c ##########################################################################
+@c ==========================================================================
 @node SDB and Hardware Information
-@chapter SDB and Hardware Information
+@section SDB and Hardware Information
 
 This chapter describes how hardware information is stored and retrieved
 in version 4.1 and later. 
@@ -1975,7 +1864,7 @@ in limited storage.
 
 @c ==========================================================================
 @node Hwinfo Placement in Dataflash
-@section Hwinfo Placement in Dataflash
+@subsection Hwinfo Placement in Dataflash
 
 The @i{hwinfo} @sc{sdb} image in the White Rabbit Switch lives at offset
 0x94800 in @i{dataflash}, and is 2112 bytes long (0x840: two or eight
@@ -2015,7 +1904,7 @@ The binary image includes 4 files, stored as an @sc{sdb} filesystem:
 
 @c ==========================================================================
 @node Creating the Hwinfo File
-@section Creating the Hwinfo File
+@subsection Creating the Hwinfo File
 
 The @i{hwinfo} file is created using @i{gensdbfs}. The tool is part of
 @i{fpga-config-space} and is not included in @t{wr-switch-sw}, because
@@ -2062,7 +1951,7 @@ Currently this only applies to the serial number (@t{-n})
 
 @c ==========================================================================
 @node Storing Hwinfo in a White Rabbit Switch
-@section Storing Hwinfo in a White Rabbit Switch
+@subsection Storing Hwinfo in a White Rabbit Switch
 
 You can store your @i{hwinfo} using either the @sc{wrs} shell
 or the boot loader. The former technique can be performed remotely,
@@ -2071,7 +1960,7 @@ console, on the backplane.
 
 @c --------------------------------------------------------------------------
 @node From the Linux Shell
-@section From the Linux Shell
+@subsection From the Linux Shell
 
 The information lives in partion @t{mtd5}, as shown in @t{/proc/mtd}
 (Memory Technology Device). To avoid accidental erasure, our
@@ -2098,7 +1987,7 @@ You new MAC addresses will be effective at the next boot.
 
 @c --------------------------------------------------------------------------
 @node From the Barebox Shell
-@section From the Barebox Shell
+@subsection From the Barebox Shell
 
 If you prefer creating or replacing @i{hwinfo} from the boot loader,
 this is the procedure. You can't run it with software version 4.0 or
@@ -2128,7 +2017,7 @@ below.
 
 @c ==========================================================================
 @node Accessing Hwinfo at Run Time
-@section Accessing Hwinfo at Run Time
+@subsection Accessing Hwinfo at Run Time
 
 You can access the hardware information from @i{barebox} using the new
 @i{sdbinfo}, @i{sdbread} and @i{sdbset} commands. The following
@@ -2171,7 +2060,7 @@ code accesses the files directly, by linking the @i{libsdb} code base
 
 @c ##########################################################################
 @node Schematics are Available
-@chapter Schematics are Available
+@appendix Schematics are Available
 
 The switch schematics for all PCB versions (3.x of the
 SCB as well as both 3.1, 3.2 and 3.3 of the backplane)

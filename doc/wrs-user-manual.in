@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month November 2014
+@set update-month January 2015
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -663,6 +663,178 @@ first @i{tar} pipe is less friendly because the @i{initramfs} is a
 compressed @i{cpio} archive, and @i{cpio} as a command lacks automatic
 decompression and the @t{-C} (change directory) option.
 
+
+@c ##########################################################################
+@node WRS Command-Line Tools
+@chapter WRS Command-Line Tools
+
+
+
+ Tools
+are build from source files in @file{userspace/tools} while the
+scripts are copied directly from @file{userspace/rootfs_override/wr/bin}.
+
+The following tools and scripts are provided:
+
+@table @file
+
+@item load-virtex
+@itemx load-lm32
+
+	They load into the FPGA the gateware and the LM32 application.
+        They are used by the init scripts of the Linux system. The LM32
+        loader can also change variables in the loaded binary, and
+        read or write variables without stopping the running CPU.
+        This is limited to 32-bit integer variaables, though. See the
+        commit message for details.
+@c FIXME: document better load-lm32 for elf.
+
+@item mapper
+@itemx wmapper
+	The former reads from a file using @i{mmap}
+        (usually you run it on @i{/dev/mem}) and writes to @i{stdout}.
+        The latter read from @i{stdin} and writes using @i{mmap}.
+        They are classic tools distributed in the @i{Linux Device Drivers}
+        examples since 1998.
+
+@item com
+	The program is a simple program for talking with serial ports.
+
+@item wr_phytool
+	A tool to read and write PHY registers in the switch.
+
+@item wr_mon
+	A simple monitor of White Rabbit status. It prints to @i{stdout}
+        using the standard escape sequences for color output. The
+        @t{-b} command line options removes color change (b/w).
+
+@item wr_date
+
+	The program can read or set the White Rabbit date. When setting,
+        using ``@t{wr_date set} @i{value}'' assigns an arbitrary date,
+        and ``@t{wr_date set host}'' passes the host time to White Rabbit.
+        If the file @t{/etc/leap-seconds.list} exists, it is used to
+        pass the TAI offset to the kernel, and to consider it in setting
+        White Rabbit time to the current TAI value.  The program is
+        meant to prime the White Rabbit counter at boot time, and is
+        run by @t{/etc/init.d/S70wr_date} -- this script uses NTP
+        to set host time as a first step, if @t{/wr/etc/wr_date.conf}
+        exists and includes a line of the form @t{ntpserver 192.168.16.1}.
+
+        With ``@t{wr_date get}'' you can read White Rabbit time, and
+        by using @t{wr_date get tohost}'' you can set host time from
+        White Rabbit time. This can be useful in slave switches that
+        are not synced to NTP at boot.
+
+@item wrs_version
+	Print information about the SW & HW version of the WRS. Please
+        check the help message.
+
+@item shw_ver
+	A symbolic link to @t{wrs_version}, to be compatible with
+        older versions that used this tool name. The name is
+        inconsistent with anything else in the switch, so it is being
+        replaced.
+
+@item wrs_vlans
+	The tool allows to configure and unconfigure the VLAN settings
+        for each port and for the RTU daemon. The @t{--help} option
+        lists all configuration items of the tool.
+
+@item apply_dot-config
+	The script is used to apply @t{dot-config} settings to the
+        current configuration files.  It is run at boot time before
+        any service is started. The @t{dot-config} mechanism is
+        documented in the @i{@sc{wrs} Users' Manual}.
+
+@item change_dot-config
+	This script changes the current @t{dot-config} file. It is
+        designed to be the back-end of the web interface, when changing
+        configuration items.  The script does nothing to @i{apply}
+        the changes, and it only performs editing.
+        It is the responsibility of the caller to ensure the proper
+        service is restarted with the new configuration.
+
+@item sdb-read
+	The tool, copied from the @t{fpga-config-space} project,
+	is documented in the next section,
+@c FIXME: document lm32-vuart rtu_stat spll_dbg_proxy
+@c FIXME: document wrs_pstats
+@end table
+
+@c --------------------------------------------------------------------------
+@node sdb-read
+@subsection sdb-read
+
+[Note: this documentation section comes from the @t{ohwr} project
+called @t{fpga-config-space}.]
+
+
+The @i{sdb-read} program can be used to access an @i{sdbfs} image
+stored in a disk file or an FPGA area in physical memory.
+It works both as @i{ls} (to list the files
+included in the image) and as @i{cat} (to print to its own @i{stdout}
+one of the files that live in the binary image).
+
+The program can be used in three ways:
+
+@table @code
+
+@item sdb-read [options] <image-file>
+
+	This invocation lists the contents of the image. With @code{-l}
+        the listing is @i{long}, including more information than the
+        file name.
+
+@item sdb-read [options] <image-file> <filename>
+
+	When called with two arguments, the program prints to @i{stdout}
+        the content of the named file, extracted from the image. Please
+        note that if the file has been over-sized at creation time,
+        the whole allocated data area is printed to standard output.
+
+@item sdb-read [options] <image-file> <hex-vendor>:<hex-device>
+
+	If the second argument is built as two hex numbers separated
+        by a colon, then the program uses them as vendor-id and device-id
+        to find the file.  If more than one file have the same identifiers,
+        the @i{first} of them is printed.
+
+@end table
+
+The following option flags are supported:
+
+@table @code
+
+@item -l
+
+	For listing, use @i{long} format. A @i{verbose} format will
+        be added later.
+
+@item -e <entrypoint>
+
+	Specify the offset of the magic number in the image file.
+
+@item -m <size>@@<addr>
+@itemx -m <addr>+<size>
+
+	Either form is used to specify a memory range. This is the
+        preferred way to read from a memory-mapped area, like an FPGA
+        memory space.  Please note that in general you should not
+        read a ``file'' in FPGA space, because this would mean read
+        all device registers. The form ``@t{<image-file> <filename>}''
+        is thus discouraged for in-memory SDB trees (i.e. where
+        @t{<image-file>} is @t{/dev/mem}).
+
+@item -r
+
+	Register the device with a @i{read} method instead of the @i{data}
+        pointer. In this way the
+        tool can be used to test the library with either access method.
+        If @i{mmap} fails on the file (e.g., it is a non-mappable device),
+        @i{read} is used automatically, irrespective of @t{-r}.
+
+@end table
 
 @c ##########################################################################
 @node SNMP Support
