@@ -14,6 +14,7 @@
 #include <libwr/switch_hw.h>
 #include <libwr/shw_io.h>
 #include <libwr/sfp_lib.h>
+#include <libwr/config.h>
 
 #include "wrsw_hal.h"
 #include <rt_ipc.h>
@@ -72,13 +73,14 @@ static void hal_deamonize();
 /* Main initialization function */
 static int hal_init()
 {
-	char sfp_db_path[1024];
-
 	//trace_log_stderr();
 
 	TRACE(TRACE_INFO, "HAL initializing...");
 
 	memset(cleanup_cb, 0, sizeof(cleanup_cb));
+
+	libwr_cfg_read_file("/wr/etc/dot-config"); /* FIXME: accept -f */
+	shw_sfp_read_db();
 
 	/* Set up trap for some signals - the main purpose is to
 	   prevent the hardware from working when the HAL is shut down
@@ -88,19 +90,6 @@ static int hal_init()
 	signal(SIGINT, sighandler);
 	signal(SIGTERM, sighandler);
 	signal(SIGILL, sighandler);
-
-	assert_init(hal_parse_config());
-
-	if (!hal_config_get_string("global.sfp_database_path",
-				   sfp_db_path, sizeof(sfp_db_path))) {
-		if (shw_sfp_read_db(sfp_db_path) < 0) {
-			TRACE(TRACE_ERROR, "Can't read SFP database (%s)",
-			      sfp_db_path);
-		} else {
-			TRACE(TRACE_INFO, "Loaded SFP database (%s)",
-			      sfp_db_path);
-		}
-	}
 
 	/* Low-level hw init, init non-kernel drivers */
 	assert_init(shw_init());
@@ -174,32 +163,19 @@ static void show_help()
 {
 	printf("WR Switch Hardware Abstraction Layer daemon (wrsw_hal)\n\
 Usage: wrsw_hal [options], where [options] can be:\n\
--f       : force FPGA firmware reload\n\
--d       : fork into background (daemon mode)\n\
--x [code]: execute arbitrary Lua [code] before loading configuration file\n\
--c [file]: specify your own config file\n\n");
+-d       : fork into background (daemon mode)\n");
 }
 
 static void hal_parse_cmdline(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "dfhx:c:")) != -1) {
+	while ((opt = getopt(argc, argv, "dh")) != -1) {
 		switch (opt) {
 		case 'd':
 			daemon_mode = 1;
 			break;
-		case 'x':
-			hal_config_extra_cmdline(optarg);
-			break;
 
-		case 'c':
-			hal_config_set_config_file(optarg);
-			break;
-
-			//              case 'f':
-//                              shw_fpga_force_firmware_reload();
-//                              break;
 		case 'h':
 			show_help();
 			exit(0);

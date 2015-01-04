@@ -1,0 +1,96 @@
+# Default for boundary clocks
+
+# Global settings
+clock-class 187
+clock-accuracy 254
+
+port slave0
+iface wr0
+role slave
+extension whiterabbit
+
+port slave1
+iface wr1
+role slave
+extension whiterabbit
+
+port master2
+iface wr2
+role master
+extension whiterabbit
+
+port master3
+iface wr3
+role master
+extension whiterabbit
+
+port master4
+iface wr4
+role master
+extension whiterabbit
+
+port master5
+iface wr5
+role master
+extension whiterabbit
+
+port master6
+iface wr6
+role master
+extension whiterabbit
+
+port master7
+iface wr7
+role master
+extension whiterabbit
+
+port master8
+iface wr8
+role master
+extension whiterabbit
+
+port master9
+iface wr9
+role master
+extension whiterabbit
+
+port master10
+iface wr10
+role master
+extension whiterabbit
+
+port master11
+iface wr11
+role master
+extension whiterabbit
+
+port master12
+iface wr12
+role master
+extension whiterabbit
+
+port master13
+iface wr13
+role master
+extension whiterabbit
+
+port master14
+iface wr14
+role master
+extension whiterabbit
+
+port master15
+iface wr15
+role master
+extension whiterabbit
+
+port master16
+iface wr16
+role master
+extension whiterabbit
+
+port master17
+iface wr17
+role master
+extension whiterabbit
+

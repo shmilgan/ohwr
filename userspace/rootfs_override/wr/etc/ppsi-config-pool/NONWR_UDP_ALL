@@ -1,0 +1,126 @@
+# Autoselection of port mode, including eth0 (both raw and udp, for variety)
+
+# Global settings
+clock-class 187
+clock-accuracy 254
+
+port eth-udp
+proto udp
+iface eth0
+role auto
+extension none
+
+port eth-raw
+proto raw
+iface eth0
+role auto
+extension none
+
+port wr0
+proto udp
+iface wr0
+role auto
+extension none
+
+port wr1
+proto udp
+iface wr1
+role auto
+extension none
+
+port wr2
+proto udp
+iface wr2
+role auto
+extension none
+
+port wr3
+proto udp
+iface wr3
+role auto
+extension none
+
+port wr4
+proto udp
+iface wr4
+role auto
+extension none
+
+port wr5
+proto udp
+iface wr5
+role auto
+extension none
+
+port wr6
+proto udp
+iface wr6
+role auto
+extension none
+
+port wr7
+proto udp
+iface wr7
+role auto
+extension none
+
+port wr8
+proto udp
+iface wr8
+role auto
+extension none
+
+port wr9
+proto udp
+iface wr9
+role auto
+extension none
+
+port wr10
+proto udp
+iface wr10
+role auto
+extension none
+
+port wr11
+proto udp
+iface wr11
+role auto
+extension none
+
+port wr12
+proto udp
+iface wr12
+role auto
+extension none
+
+port wr13
+proto udp
+iface wr13
+role auto
+extension none
+
+port wr14
+proto udp
+iface wr14
+role auto
+extension none
+
+port wr15
+proto udp
+iface wr15
+role auto
+extension none
+
+port wr16
+proto udp
+iface wr16
+role auto
+extension none
+
+port wr17
+proto udp
+iface wr17
+role auto
+extension none
+

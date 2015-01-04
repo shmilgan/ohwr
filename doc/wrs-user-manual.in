@@ -476,7 +476,160 @@ value is changed by the web interface, proper action is taken.
         unknown facility names will generate a runtime error on the switch.
         All three strings default to ``@t{daemon.info}''.
 
+@item CONFIG_PORT00_PARAMS
+@itemx CONFIG_PORT01_PARAMS
+@itemx ...
+@itemx CONFIG_PORT17_PARAMS
+
+	These configuration items are used to set up port parameters;
+        this includes the delays, the PTP role (not currently used,
+        though) and the fiber type as an integer index.  Most likely
+        the default values work for you. See @ref{Timing Configuration}
+        for details.
+
+@item CONFIG_SFP00_PARAMS
+@itemx ...
+@itemx CONFIG_SFP09_PARAMS
+
+	Configuration for @sc{sfp} models. You should fill values for
+        all @sc{sfp} models you are using in your @sc{wrs} and all
+        wavelengths you are using. See @ref{Timing Configuration}
+        for details.
+
+@item CONFIG_FIBER00_PARAMS
+@itemx ...
+@itemx CONFIG_FIBER03_PARAMS
+
+	Configuration for fiber types. You are expected to have no more
+        than 4 fiber types installed in your deployment (if more, you need
+        to add items to the @i{dot-config} file).  See @ref{Timing
+        Configuration} for details.
+
+@item CONFIG_TIME_GM
+@itemx CONFIG_TIME_FM
+@itemx CONFIG_TIME_BC
+
+	The type of PTP clock this switch is. Only one of the three
+        items should be set (running ``@t{make menuconfig}'' offers
+        them as an exclusive choice). The options select a grand-master
+        with external reference, from GPS or Cesium or both; a free-running
+        master, used for isolated acquisition networks, withouth an
+        external reference; or a normal ``boundary-clock'' device that
+        is slave on some ports and master on other ports.
+
+@item CONFIG_PTP_*
+
+	We support a set of PPSi configuration files, for different PTP
+        roles. The default option being selected by @i{Kconfig} is
+        @t{PTP_WR_DEFAULT} for @t{TIME_BC} devices and @t{PTP_WR_MASTER}
+        for @t{GM} and @t{FM} devices.  The former configuration selects
+        a mandated slave PTP role on ports @t{wr0} and @t{wr1}, and
+        mandated master on all other ports; the latter conifiguration
+        is master on all ports. Please see the help provided within
+	@i{Kconfig} for more details about the various options we support.
+
+@item CONFIG_PTP_CUSTOM_FILENAME
+
+	If you chose @t{CONFIG_PTP_CUSTOM} in the choice above, you
+        can provide your own filename for the PPSi configuration file;
+        the chosen name is expected to be intalled in the @sc{wrs}
+        filesystem.     
+
 @end table
+
+@c ==========================================================================
+@node Timing Configuration
+@section Timing Configuration
+
+This section describes how timing configuration works in the switch.
+Please note that up to version 4.1 (included) of @t{wr-switch-sw} things
+were different and not really documented.
+
+Timing configuration now depends on three sets of @i{dot-config}
+variables: per-port information, per-sfp information and fiber
+description.
+
+This is, for explanation's sake, an example of such items:
+
+@smallexample
+CONFIG_PORT09_PARAMS="name=wr9,tx=226214,rx=226758,role=slave,fiber=2"
+CONFIG_SFP00_PARAMS="name=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"
+CONFIG_FIBER02_PARAMS="alpha_1310_1490=2.6787e-04"
+@end smallexample
+
+When making timing calculation for port @t{wr9}, assuming the
+auto-detected @sc{sfp} model is``AXGE-1254-0531'', the software
+uses configuration in the following way:
+
+@itemize @bullet
+
+@item The port has known tx and rx delays (around 226ns); the
+values depend on trace length and other hardware-specific details
+and are determined by a calibration procedure.  These values are
+used as constant delays in the @i{tx} and @i{rx} directions.
+
+@item The port is also configured as slave (information not used
+at this point) and is deployed using fiber type 2 -- this number
+is just a local enumeration of fiber types; most likely you'll be
+using type ``0'' in every port.
+
+@item The transceiver installed uses 1310nm light for tx
+and 1490nm light for rx (this is part of the specification of the
+transceiver, but cannot be auto-detected). Moreover it has 0 constant
+delay in both tx and rx, determined by calibration.
+
+@item The fiber type being used (type 2 here), when driven
+with 1310nm and 1490nm wavelengths, features an @i{alpha} parameter of
+0.00026787 (i.e. a ratio of 1.00026787) between the speed of light in
+the two directions.  This value depends on both the fiber type and
+wavelength, and is determined, again, by calibration.
+
+@end itemize
+
+Please note that only one alpha value is provided, because the
+opposite one (@t{alpha_1490_1310}) is calculated by software.
+
+@subheading Other Deployments
+
+The example above matches the choices we make at CERN, where our
+White Rabbit networks are all run with a single monomodal fiber
+and  1310/1490 light.
+
+If you are using dual-fiber transceivers, which is acceptable for
+short links, you use the same wavelength in both direction, over two
+fibers of the same length. In this case you may choose to avoid
+writing the @t{wl_txrx} parameter in @sc{sfp} configuration and the
+@t{alpha_XX_XX} parameter in fiber configuration.  The missing
+parameters will cause warning messages on the console, but are not
+fatal, and a default alpha of 0 is used.
+
+If you are using a pair of transceivers with different wavelengths,
+and long fibers, you should provide an appropriate value of alpha,
+according to laboratory measures on your fiber type. The
+@t{CONFIG_FIBERxx_PARAMS} items are parsed as a list of
+comma-separated assignments, so you can specify and number of
+wavelength pairs.  The accuracy of your value depends on the length
+of the fiber link.  For a 10km fiber (100us round-trip) you need to know
+alpha up to 1e-7 if you want the related uncertainty to be
+less than 10ps.
+
+@subheading Calibration
+
+Calibration of per-port and per-@sc{sfp} delays is described in the
+White Rabbit wiki:
+@url{http://www.ohwr.org/projects/white-rabbit/wiki/Calibration}.  The
+procedure can measure the total constant delays, but splitting between
+the what depends on the port and what depends on the transceiver is
+arbitrary (also, the split between the tx and rx paths is arbitrary).
+
+The delays used in this example come from values listed in the above
+web page, and you should not be surprised by the fact that the
+transceiver specifies the delays as zero.  By performing the
+calibration procedure using this very transceiver type, the hardware
+engineers decided to assign the whole of the delay to the port (any
+split of the measured value is equally right).  Other transceiver
+types can be calibrated to either positive or negative values, to cope
+with the @i{difference} between them and the @t{AXGE} devices.
 
 @c ############################################################################
 @node Booting with Barebox

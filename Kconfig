@@ -145,3 +145,224 @@ config KEEP_ROOTFS
 	  If unsusre, say N.
 
 endmenu
+
+menu "Port Timing Configuration"
+
+config PORT00_PARAMS
+	string "Parameters for the first port"
+	default "name=wr0,tx=0,rx=160000,role=slave,fiber=0"
+	help
+	  This item, and the following ones, are used to assign the
+	  constant delays (likely from calibration), port roles and
+	  type of fiber for each of the ports. Please refer to the
+	  user manual for more information.
+
+config PORT01_PARAMS
+	string "Parameters for the second port"
+	default "name=wr1,tx=0,rx=160000,role=slave,fiber=0"
+
+config PORT02_PARAMS
+	string "Parameters for a further port"
+	default "name=wr2,tx=0,rx=160000,role=master,fiber=0"
+
+config PORT03_PARAMS
+	string "Parameters for a further port"
+	default "name=wr3,tx=0,rx=160000,role=master,fiber=0"
+
+config PORT04_PARAMS
+	string "Parameters for a further port"
+	default "name=wr4,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT05_PARAMS
+	string "Parameters for a further port"
+	default "name=wr5,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT06_PARAMS
+	string "Parameters for a further port"
+	default "name=wr6,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT07_PARAMS
+	string "Parameters for a further port"
+	default "name=wr7,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT08_PARAMS
+	string "Parameters for a further port"
+	default "name=wr8,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT09_PARAMS
+	string "Parameters for a further port"
+	default "name=wr9,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT10_PARAMS
+	string "Parameters for a further port"
+	default "name=wr10,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT11_PARAMS
+	string "Parameters for a further port"
+	default "name=wr11,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT12_PARAMS
+	string "Parameters for a further port"
+	default "name=wr12,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT13_PARAMS
+	string "Parameters for a further port"
+	default "name=wr13,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT14_PARAMS
+	string "Parameters for a further port"
+	default "name=wr14,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT15_PARAMS
+	string "Parameters for a further port"
+	default "name=wr15,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT16_PARAMS
+	string "Parameters for a further port"
+	default "name=wr16,tx=0,rx=161200,role=master,fiber=0"
+
+config PORT17_PARAMS
+	string "Parameters for a further port"
+	default "name=wr17,tx=0,rx=161200,role=master,fiber=0"
+
+endmenu
+
+menu "SFP and Media Timing Configuration"
+
+config SFP00_PARAMS
+	string "Parameters for one SFP device type"
+	default "name=AXGE-1254-0531,tx=10,rx=10,wl_txrx=1310+1490"
+	help
+	  This parameter, and the following ones, are used to
+	  configure the timing parameters of a specific SFP
+	  tranceiver. The tranceiver name is autodected for each port
+	  in the White Rabbit Switch, and you need one configuration
+	  entry for each tranceiver type that is installed in your
+	  device.
+
+config SFP01_PARAMS
+	string "Parameters for one SFP device type"
+	default "name=AXGE-3454-0531,tx=10,rx=10,wl_txrx=1490+1310"
+
+config SFP02_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP03_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP04_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP05_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP06_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP07_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP08_PARAMS
+	string "Parameters for one SFP device type"
+
+config SFP09_PARAMS
+	string "Parameters for one SFP device type"
+
+
+config FIBER00_PARAMS
+	string "Alpha parameters for fiber type 0"
+	default "alpha_1310_1490=2.6787e-04"
+	help
+	  This parameter, and the following ones, specify the physical
+	  features of your fiber type.  You need to specify the alpha
+	  value for each pair of wavelengths you are using. The index
+	  ("00" onwards) is used to match the port
+	  (CONFIG_PORTxx_PARAMS) with one of several installed fiber
+	  types.
+
+config FIBER01_PARAMS
+	string "Alpha parameters for fiber type 1"
+	default "alpha_1310_1490=2.6787e-04"
+
+config FIBER02_PARAMS
+	string "Alpha parameters for fiber type 2"
+	default "alpha_1310_1490=2.6787e-04"
+
+config FIBER03_PARAMS
+	string "Alpha parameters for fiber type 3"
+	default "alpha_1310_1490=2.6787e-04"
+
+endmenu
+
+choice
+	prompt "Timing Mode"
+	default TIME_BC
+
+config TIME_GM
+	bool "Grand-Master"
+	help
+	  This options selects the White Rabbit Switch as a grandmaster,
+	  i.e. it uses its input channels to track an Atomic or GPS and
+	  claim to be a PTP authoritative source on the network.
+
+config TIME_FM
+	bool "Free-Running Master"
+	help
+	  The White Rabbit Switch pretends to be a master on his PTP
+	  network, but it doesn't sync to an external source. Its own
+	  internal clocks and counters are used to drive timing.
+
+config TIME_BC
+	bool "Boundary Clock"
+	help
+	  The White Rabbit Switch is a normal PTP Boundary Clock: it is
+	  slave on one of its ports and master on the other ones, according
+	  to the standard Best Master Clock algorithm.
+
+endchoice
+
+choice
+	prompt "PTP Port Assignment"
+	default PTP_WR_DEFAULT if TIME_BC
+	default PTP_WR_MASTER
+
+config PTP_WR_DEFAULT
+	bool "Raw Ethernet, WR on, Slave on wr0/wr1, Master on other ports"
+	help
+	  You can choose between one from a set of predefined
+	  configuration files from your PTP server running in the
+	  switch, or define your own custom configuration file.
+
+	  The default setting for boundary clock forces ports wr0 and
+	  wr1 to be PTP slaves and all other ports to be master, in
+	  Ethernet mode and with full WR protocol extensions.  The default
+	  for a Grand-Master or Free-Running master has all ports as
+	  master ports.
+
+	  Other predefined choices select more flexible configuration used
+	  mainly for test purposes. Any special need can be addressed by
+	  providing your own ppsi.conf file, that you should copy
+	  to your switch.
+
+config PTP_WR_MASTER
+	bool "Raw Ethernet, WR on, Master on all ports"
+
+config PTP_WR_AUTO
+	bool "Raw Ethernet, WR on, Auto master/slave on all ports"
+
+config PTP_WR_AUTO_UDP
+	bool "UDP mode, WR on, Auto master/slave on all ports"
+
+config PTP_NONWR_UDP_ALL
+	bool "UDP mode, No WR, all ports (including eth0)"
+
+config PTP_CUSTOM
+	bool "Custom ppsi.conf"       
+
+endchoice
+
+config PTP_CUSTOM_FILENAME
+	string "Pathname for your custom ppsi.conf"
+	depends on PTP_CUSTOM
+	default "/wr/etc/ppsi-custom.conf"
+

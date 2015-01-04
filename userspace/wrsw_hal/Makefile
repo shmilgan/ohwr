@@ -1,5 +1,5 @@
 
-OBJS = hal_exports.o hal_main.o hal_ports.o hal_config.o hal_timing.o
+OBJS = hal_exports.o hal_main.o hal_ports.o hal_timing.o
 
 BINARY = wrsw_hal
 
@@ -27,7 +27,7 @@ ifdef WRS_HAL_DEBUG
 endif
 
 LDFLAGS = -L../libwr -L../mini-rpc \
-	 -lminipc -llua -lm -ldl -lwr 
+	 -lminipc -lm -ldl -lwr 
 
 all: $(BINARY)
 

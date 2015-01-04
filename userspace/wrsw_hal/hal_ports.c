@@ -21,6 +21,7 @@
 #include <libwr/pio.h>
 #include <libwr/sfp_lib.h>
 #include <libwr/shmem.h>
+#include <libwr/config.h>
 
 #include "wrsw_hal.h"
 #include "timeout.h"
@@ -28,9 +29,6 @@
 #include <hal/hal_exports.h>
 #include <libwr/hal_shmem.h>
 #include "driver_stuff.h"
-
-/* Default fiber alpha coefficient (G.652 @ 1310 nm TX / 1550 nm RX) */
-#define DEFAULT_FIBER_ALPHA_COEF (1.4682e-04*1.76)
 
 #define RTS_POLL_INTERVAL 200 /* ms */
 #define SFP_POLL_INTERVAL 1000 /* ms */
@@ -75,40 +73,6 @@ static void hal_port_reset_state(struct hal_port_state * p)
 	p->rx_cal_pending = 0;
 }
 
-#define AT_INT32 0
-#define AT_DOUBLE 1
-
-/* helper function for retreiving port parameters from the config
-   files with type checking and defaulting to a given value when the
-   parameter is not found */
-static void hal_port_cfg_get(const char *port_name, const char *param_name,
-			       void *rval, int param_type, ...)
-{
-	va_list ap;
-
-	char str[1024];
-	snprintf(str, sizeof(str), "ports.%s.%s", port_name, param_name);
-
-	va_start(ap, param_type);
-
-	switch (param_type) {
-	case AT_INT32:
-		if (hal_config_get_int(str, (int *)rval))
-			*(int *)rval = va_arg(ap, int);
-		break;
-
-	case AT_DOUBLE:
-		if (hal_config_get_double(str, (double *)rval))
-			*(double *)rval = va_arg(ap, double);
-		break;
-
-	default:
-		break;
-
-	}
-	va_end(ap);
-}
-
 /* checks if the port is supported by the FPGA firmware */
 static int hal_port_check_presence(const char *if_name)
 {
@@ -130,20 +94,12 @@ static void hal_port_enable(int port, int enable)
 	system(str);
 }
 
-/* Port initialization. Assigns the MAC address, WR timing mode, reads
- * parameters from the config file. */
-static int hal_port_init(const char *name, int index)
+/* Port initialization, from dot-config values */
+static int hal_port_init(int index)
 {
-	char key_name[128];
-	char val[128];
 	struct hal_port_state *p = &ports[index];
-
-	/* check if the port is compiled into the firmware, if not, ignore. */
-	if (!hal_port_check_presence(name)) {
-		hal_port_reset_state(p);
-		p->in_use = 0;
-		return 0;
-	}
+	char name[128], s[128];
+	int val, error;
 
 	/* make sure the states and other variables are in their init state */
 	hal_port_reset_state(p);
@@ -151,53 +107,70 @@ static int hal_port_init(const char *name, int index)
 	p->state = HAL_PORT_STATE_DISABLED;
 	p->in_use = 1;
 
+	/* read dot-config values for this index, starting from name */
+	error = libwr_cfg_convert2("PORT%02i_PARAMS", "name", LIBWR_STRING,
+				   name, index);
+	if (error)
+		return -1;
 	strncpy(p->name, name, 16);
 
-	/* read calibraton parameters (unwrapping and constant deltas) */
-	hal_port_cfg_get(name, "phy_rx_min", &p->calib.phy_rx_min,
-			   AT_INT32, 18 * 800);
-	hal_port_cfg_get(name, "phy_tx_min", &p->calib.phy_tx_min,
-			   AT_INT32, 18 * 800);
+	/* check if the port is built into the firmware, if not, we are done */
+	if (!hal_port_check_presence(name))
+		return -1;
 
-	hal_port_cfg_get(name, "delta_tx_board", &p->calib.delta_tx_board,
-			   AT_INT32, 0);
-	hal_port_cfg_get(name, "delta_rx_board", &p->calib.delta_rx_board,
-			   AT_INT32, 0);
+	val = 18 * 800; /* magic default from previous code */
+	error = libwr_cfg_convert2("PORT%02i_PARAMS", "tx", LIBWR_INT,
+				   &val, index);
+	if (error)
+		fprintf(stderr, "port index %i (%s): no \"tx=\" specified\n",
+			index, name);
+	p->calib.phy_tx_min = val;
 
+	val = 18 * 800; /* magic default from previous code */
+	error = libwr_cfg_convert2("PORT%02i_PARAMS", "rx", LIBWR_INT,
+				   &val, index);
+	if (error)
+		fprintf(stderr, "port index %i (%s): no \"rx=\" specified\n",
+			index, name);
+	p->calib.phy_rx_min = val;
+
+	p->calib.delta_tx_board = 0; /* never set */
+	p->calib.delta_rx_board = 0; /* never set */
 	sscanf(p->name + 2, "%d", &p->hw_index);
 
 	hal_port_enable(p->hw_index, 1);
 
-	/* Set up the endpoint's address (fixme: do this with the driver) */
+	{
+		static struct roletab { char *name; int value; } *rp, rt[] = {
+			{"auto",   HEXP_PORT_MODE_WR_M_AND_S},
+			{"master", HEXP_PORT_MODE_WR_MASTER},
+			{"slave",  HEXP_PORT_MODE_WR_SLAVE},
+			{"non-wr", HEXP_PORT_MODE_NON_WR},
+			{NULL,     HEXP_PORT_MODE_NON_WR /* default */},
+		};
+
+		strcpy(s, "non-wr"); /* default if no string passed */
+		p->mode = HEXP_PORT_MODE_NON_WR;
+		error = libwr_cfg_convert2("PORT%02i_PARAMS", "role",
+					   LIBWR_STRING, s, index);
+		if (error)
+			fprintf(stderr, "port index %i (%s): "
+				"no \"role=\" specified\n", index, name);
+
+		for (rp = rt; rp->name; rp++)
+			if (!strcasecmp(s, rp->name))
+				break;
+		p->mode = rp->value;
+		if (!rp->name)
+			fprintf(stderr, "port index %i (%s): invalid role "
+				"\"%s\" specified\n", index, name, s);
+
+		TRACE(TRACE_INFO, "Port %s: mode %i", p->name, val);
+	}
+	/* Used to pre-calibrate the TX path for each port. No more in V3 */
 
 	/* FIXME: this address should come from the driver header */
 	p->ep_base = 0x30000 + 0x400 * p->hw_index;
-
-	/* Configure the port's timing role depending on the config file */
-	snprintf(key_name, sizeof(key_name), "ports.%s.mode", p->name);
-
-	if (!hal_config_get_string(key_name, val, sizeof(val))) {
-		if (!strcasecmp(val, "wr_m_and_s"))
-			p->mode = HEXP_PORT_MODE_WR_M_AND_S;
-		else if (!strcasecmp(val, "wr_master"))
-			p->mode = HEXP_PORT_MODE_WR_MASTER;
-		else if (!strcasecmp(val, "wr_slave"))
-			p->mode = HEXP_PORT_MODE_WR_SLAVE;
-		else if (!strcasecmp(val, "non_wr"))
-			p->mode = HEXP_PORT_MODE_NON_WR;
-		else {
-			TRACE(TRACE_ERROR, "Invalid mode specified for port %s."
-			      " Defaulting to Non-WR", p->name);
-			p->mode = HEXP_PORT_MODE_NON_WR;
-		}
-
-		TRACE(TRACE_INFO, "Port %s: mode %s", p->name, val);
-		/* nothing in the config file? Disable WR mode */
-	} else {
-		p->mode = HEXP_PORT_MODE_NON_WR;
-	}
-
-	/* Used to pre-calibrate the TX path for each port. No more in V3 */
 
 	return 0;
 }
@@ -206,8 +179,7 @@ static int hal_port_init(const char *name, int index)
  * intializes them one after another. */
 int hal_port_init_all()
 {
-	int index, i;
-	char port_name[128];
+	int index;
 	struct hal_shmem_header *hal_hdr;
 	struct wrs_shm_head *head;
 
@@ -224,18 +196,6 @@ int hal_port_init_all()
 			__func__, strerror(errno));
 		return -1;
 	}
-	/* Count the number of physical WR network interfaces */
-	hal_port_nports = 0;
-	for (i = 0; i < HAL_MAX_PORTS; i++) {
-		char if_name[16];
-		snprintf(if_name, sizeof(if_name), "wr%d", i);
-		if (hal_port_check_presence(if_name))
-			hal_port_nports++;
-	}
-
-	TRACE(TRACE_INFO, "Number of physical ports supported in HW: %d",
-	      hal_port_nports);
-
 	/* Allocate the ports in shared memory, so wr_mon etc can see them */
 	hal_port_shmem = wrs_shm_get(wrs_shm_hal, "wrsw_hal", WRS_SHM_WRITE);
 	if (!hal_port_shmem) {
@@ -255,12 +215,14 @@ int hal_port_init_all()
 
 	hal_hdr->ports = ports;
 
-	for (index = 0; index < HAL_MAX_PORTS; index++) {
-		if (!hal_config_iterate("ports", index,
-					port_name, sizeof(port_name)))
+	for (index = 0; index < HAL_MAX_PORTS; index++)
+		if (hal_port_init(index) < 0)
 			break;
-		hal_port_init(port_name, index);
-	}
+	hal_port_nports = index;
+
+	TRACE(TRACE_INFO, "Number of physical ports supported in HW: %d",
+	      hal_port_nports);
+
 	/* We are done, mark things as valid */
 	hal_hdr->nports = hal_port_nports;
 	head->version = HAL_SHMEM_VERSION;
@@ -465,38 +427,67 @@ static void hal_port_fsm(struct hal_port_state * p)
 static void hal_port_insert_sfp(struct hal_port_state * p)
 {
 	struct shw_sfp_header shdr;
-	if (shw_sfp_read_verify_header(p->hw_index, &shdr) < 0)
+	struct shw_sfp_caldata *cdata;
+	char subname[48];
+	int err;
+
+	if (shw_sfp_read_verify_header(p->hw_index, &shdr) < 0) {
 		TRACE(TRACE_ERROR, "Failed to read SFP configuration header");
-	else {
-		struct shw_sfp_caldata *cdata;
-		TRACE(TRACE_INFO,
-		      "SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s",
-		      shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
-		cdata = shw_sfp_get_cal_data(p->hw_index);
-		if (cdata) {
-			TRACE(TRACE_INFO, "SFP Info: (%s) deltaTx %d "
-			      "delta Rx %d alpha %.3f (* 1e6)",
-			      cdata->flags & SFP_FLAG_CLASS_DATA
-			      ? "class-specific" : "device-specific",
-			      cdata->delta_tx, cdata->delta_rx,
-			      cdata->alpha * 1e6);
-
-			memcpy(&p->calib.sfp, cdata,
-			       sizeof(struct shw_sfp_caldata));
-		} else {
-			TRACE(TRACE_ERROR, "WARNING! SFP on port %s is "
-			      "NOT registered in the DB (using default "
-			      "delta & alpha values). This may cause "
-			      "severe timing performance degradation!",
-			      p->name);
-			p->calib.sfp.delta_tx = 0;
-			p->calib.sfp.delta_rx = 0;
-			p->calib.sfp.alpha = DEFAULT_FIBER_ALPHA_COEF;
-		}
-
-		p->state = HAL_PORT_STATE_LINK_DOWN;
-		shw_sfp_set_tx_disable(p->hw_index, 0);
+		return;
 	}
+
+	TRACE(TRACE_INFO,
+	      "SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s",
+	      shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
+	cdata = shw_sfp_get_cal_data(p->hw_index);
+	if (cdata) {
+		TRACE(TRACE_INFO, "SFP Info: (%s) deltaTx %d "
+		      "delta Rx %d alpha %.3f (* 1e6)",
+		      cdata->flags & SFP_FLAG_CLASS_DATA
+		      ? "class-specific" : "device-specific",
+		      cdata->delta_tx, cdata->delta_rx,
+		      cdata->alpha * 1e6);
+
+		memcpy(&p->calib.sfp, cdata,
+		       sizeof(struct shw_sfp_caldata));
+	} else {
+		fprintf(stderr, "Unknown SFP \"%.16s\" on port %s\n",
+			shdr.vendor_pn, p->name);
+		memset(&p->calib.sfp, 0, sizeof(p->calib.sfp));
+	}
+
+	p->state = HAL_PORT_STATE_LINK_DOWN;
+	shw_sfp_set_tx_disable(p->hw_index, 0);
+	/* Copy the strings anyways, for informative value in shmem */
+	strncpy(p->calib.sfp.part_num, (void *)shdr.vendor_pn, 16);
+	strncpy(p->calib.sfp.vendor_serial, (void *)shdr.vendor_serial, 16);
+
+	/*
+	 * Now, we should fix the alpha value according to fiber
+	 * type. Alpha does not depend on the SFP, but on the
+	 * speed ratio of the SFP frequencies over the specific
+	 * fiber. Thus, rely on the fiber type for this port.
+	 */
+	sprintf(subname, "alpha_%i_%i", p->calib.sfp.tx_wl, p->calib.sfp.rx_wl);
+	err = libwr_cfg_convert2("FIBER%02i_PARAMS", subname,
+				 LIBWR_DOUBLE, &p->calib.sfp.alpha,
+				 p->fiber_index);
+	if (!err)
+		return;
+
+	/* Try again, with the opposite direction (rx/tx) */
+	sprintf(subname, "alpha_%i_%i", p->calib.sfp.rx_wl, p->calib.sfp.tx_wl);
+	err = libwr_cfg_convert2("FIBER%02i_PARAMS", subname,
+				 LIBWR_DOUBLE, &p->calib.sfp.alpha,
+				 p->fiber_index);
+	if (!err) {
+		p->calib.sfp.alpha = (1.0 / (1.0 + p->calib.sfp.alpha)) - 1.0;
+		return;
+	}
+
+	fprintf(stderr, "Port %s, SFP \"%.16s\", fiber %i: no alpha known\n",
+		p->name, p->calib.sfp.part_num, p->fiber_index);
+	p->calib.sfp.alpha = 0;
 }
 
 static void hal_port_remove_sfp(struct hal_port_state * p)

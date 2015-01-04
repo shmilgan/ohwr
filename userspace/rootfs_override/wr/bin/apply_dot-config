@@ -75,3 +75,13 @@ set | tr -d \' | grep CONFIG_WRS_LOG | sed 's/=/ /' | while read varname value; 
 done
 copy_conf /wr/sbin/start-daemons.sh
 
+# Select a ppsi configuration file
+for n in /wr/etc/ppsi-conf-pool/*; do
+    cfg=CONFIG_PTP_$(basename $n)
+    if [ "$cfg" = "y" ]; then
+	cp $n /wr/etc/ppsi.conf
+    fi
+done
+if [ "$CONFIG_PTP_CUSTOM" = "y" ]; then
+    cp "$CONFIG_PTP_CUSTOM_FILENAME" /wr/etc/ppsi.conf
+fi

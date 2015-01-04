@@ -71,8 +71,8 @@ struct hal_port_state {
 	/* port FSM state (HAL_PORT_STATE_xxxx) */
 	int state;
 
-	/* unused */
-	int index;
+	/* fiber type, used to get alpha for SFP frequency */
+	int fiber_index;
 
 	/* 1: PLL is locked to this port */
 	int locked;
@@ -92,7 +92,7 @@ struct hal_port_state {
 };
 
 /* This is the overall structure stored in shared memory */
-#define HAL_SHMEM_VERSION 1
+#define HAL_SHMEM_VERSION 2 /* Version 2 because sfp calib changed */
 struct hal_shmem_header {
 	int nports;
 	struct hal_port_state *ports;
