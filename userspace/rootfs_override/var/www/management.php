@@ -53,97 +53,34 @@
 			<form  method="post">
 			<th><center>NTP Server:</center></th><th><INPUT type="text" STYLE="text-align:center;" name="ntpip" value="<?php  $str = check_ntp_server(); echo $str; ?>"> </th>
 			<th><input type="hidden" name="cmd" value="ntp">
-			<select name="utc" >
-					<?php 
-						$selected_utc=$_SESSION['utc'];
-						$selected_utc=str_replace("UTC","",$selected_utc);
-						$selected_utc=trim($selected_utc);
-						for($op = -12; $op < 0; $op++){
-							
-							if($selected_utc==$op && !empty($selected_utc)){
-								echo '<option selected="UTC'.$op.'" class="btn" value="UTC'.($op).'"><center>UTC'.($op).'</center></option>';
-							}else{
-								echo '<option  class="btn" value="UTC'.($op).'"><center>UTC'.($op).'</center></option>';
-							}
-														
-						}
-						if(!strcmp($selected_utc,"")){
-							echo '<option selected="UTC" class="btn" value="UTC"><center>UTC</center></option>';	
-						}else{
-							echo '<option class="btn" value="UTC"><center>UTC</center></option>';	
-						}
-						
-						for($op = 1; $op < 15; $op++){
-							if($selected_utc==$op && !empty($selected_utc)){
-								echo '<option elected="UTC'.$op.'" class="btn" value="UTC+'.($op).'"><center>UTC+'.($op).'</center></option>';
-							}else{
-								echo '<option class="btn" value="UTC+'.($op).'"><center>UTC+'.($op).'</center></option>';		
-							}					
-						}
-					?>
-			</th>
-			
 			<th><input type="submit" value="Add NTP Server" class="btn"></th>
 			</form>
 		</tr>
-
 	</table>
+	
 	<hr>
 	<br><br>
 	<center><p><strong>Load configuration files</strong></p></center>
 	<table class='altrowstable' id='alternatecolor' width="100%">
 		<tr>
 		<FORM method="POST" ENCTYPE="multipart/form-data">
-			<td class="first">PPSi Config </td>
-			<td ><INPUT type=file name="ppsi_conf" ></td>
-			<td><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
+			<td ><INPUT type=file name="kconfig" ></td>
+			<td><INPUT type=submit value="Load dot-config" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
 		</form>
 		</tr>
 		<tr>
-		<FORM method="POST" ENCTYPE="multipart/form-data">
-			<td class="first">SFP Config </td>
-			<td ><INPUT type=file name="sfp_conf" ></td>
-			<td><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
-		</form>
-		</tr>
-		<tr>
-		<FORM method="POST" ENCTYPE="multipart/form-data">
-			<td class="first">SNMP Config</td>
-			<td ><INPUT type=file name="snmp_conf" ></td>
-			<td><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
-		</form>
-		</tr>
-		<tr>
-		<FORM method="POST" ENCTYPE="multipart/form-data">
-			<td class="first">HAL Config </td>
-			<td ><INPUT type=file name="hal_conf" ></td>
-			<td><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
-		</form>
-		</tr>
-		<tr>
-		<FORM method="POST" ENCTYPE="multipart/form-data">
-			<td class="first">Restore from backup</td>
-			<td ><INPUT type=file name="restore_conf" ></td>
-			<td><INPUT type=submit value="Load" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
-		</form>
-		</tr>
-
 	</table>
-	
-	<br><br><br><br>
-	<center>
-	<FORM align="center" method="POST" ENCTYPE="multipart/form-data">
-			<th>Backup Configuration files to your computer </th>
-			<input type="hidden" name="cmd" value="Backup">
-			<th><INPUT type=submit value="Backup" class="btn" ></th>
-	</form>
 	</center>
+	
+	<br><br>
+	<FORM align="center" method="POST" ENCTYPE="multipart/form-data">
+			Backup configuration file to your computer</center>
+			<input type="hidden" name="cmd" value="Backup">
+			<INPUT type=submit value="Backup" class="btn" >
+	</form>
 	
 	<?php 
 		wrs_management();
-		
-		
-	
 	?>
 
 

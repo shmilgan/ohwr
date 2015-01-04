@@ -13,6 +13,31 @@ $phpusersfile="/usr/etc/phpusers";
 $profilefile="/usr/etc/profile";
 $phpinifile="/etc/php.ini";
 $interfacesfile = "/usr/etc/network/interfaces";
+$kconfigfile = "/wr/etc/dot-config";
+$kconfigfilename = "dot-config";
+
+
+
+/*if (empty($_SESSION["WRS_INFO"])){
+	generate_wrs_info();
+	include_once "data/wrs-info.php";
+	$_SESSION["WRS_INFO"] = $GLOBALS["WRS_INFO"];
+}*/
+include "data/wrs-data.php";
+
+//if (empty($_SESSION["WRS_TABLE_INFO"])){
+	$_SESSION["WRS_TABLE_INFO"] = $GLOBALS["WRS_TABLE_INFO"];
+//}
+
+//if (empty($_SESSION["WRS_FORMS"])){
+	$_SESSION["WRS_FORMS"] = $GLOBALS["WRS_FORMS"];
+//}
+
+if(empty($_SESSION["KCONFIG"])){
+	load_kconfig();
+}
+
+
 
 /*
  * Displays the current status of each enpoint.
@@ -34,6 +59,7 @@ function wrs_header_ports(){
 	// by default.
 
 	session_start();
+
 	if(empty($_SESSION['portsupdated'])){
 		$_SESSION['portsupdated'] = intval(shell_exec("date +%s"));
 	}
@@ -114,61 +140,196 @@ function wrs_header_ports(){
  */
 function wrs_main_info(){
 	
-	//Changing php filesize in case it is necessary
-	if(wrs_php_filesize()<$GLOBALS['MAX_PHP_FILESIZE']){php_file_transfer_size($GLOBALS['MAX_PHP_FILESIZE']);}
+	$formatID = "alternatecolor";
+	$class = "altrowstable firstcol";
+	$infoname = "Switch Info";
+	$format = "table";
+	$section = "WRS_TABLE_INFO";
+	$subsection = "DASHBOARD";
 	
-	if(empty($_SESSION["utc"])){
-		$utc_exists = shell_exec("cat ".$GLOBALS['profilefile']." | grep -c TZ");
-		if($utc_exists){
-			$_SESSION["utc"]=shell_exec("cat ".$GLOBALS['profilefile']." | grep TZ | awk '{print $2}' | sed 's/TZ=//g'");
-		}else{
-			$_SESSION["utc"]="UTC";
-		}
-	}
+	print_info($section, $subsection, $formatID, $class, $infoname, $format);
+
+	// Print dinamic stuff (PPSi status, WR Date, SNMP Server & NTP)
+	$class = "altrowstable firstcol";
+	$formatID = "alternatecolor1";
+	$infoname = "WRS Services";
 	
-	echo "<table class='altrowstable firstcol'  id='alternatecolor'  width='80%'>";
-	echo '<tr><th>Switch Info</th></tr>';
-
-	$str = shell_exec("uname -n");
-	if(strcmp($str,"(none)")) shell_exec("/bin/busybox hostname -F /etc/hostname");
-	echo '<tr><td>Hostname</td><td>'; $str = shell_exec("uname -n"); echo $str; echo '</td></tr>';
-	echo '<tr><td>Switch Mode</td><td>'; $str = check_switch_mode(); echo $str; echo '</td></tr>';
-	echo '<tr><td>IP Address</td><td>'; $ip = shell_exec("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'"); echo $ip;
-			echo '(<a href="network.php">'; echo wrs_interface_setup(); echo '</a>)'; echo '</td></tr>';
-	echo '<tr><td>HW Address</td><td>'; $mac = shell_exec("ifconfig eth0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'"); echo $mac; echo '</td></tr>';
-	//echo '<tr><td>OS Release:</td><td>'; $str = shell_exec("uname -r"); echo $str; echo '</td></tr>';
-	//echo '<tr><td>OS name:</td><td>'; $str = shell_exec("uname -s"); echo $str; echo '</td></tr>';
-	echo '<tr><td>Kernel Version</td><td>'; $str = shell_exec("uname -r"); echo $str; $str = shell_exec("uname -v"); echo $str; echo '</td></tr>';
-
-	echo '<tr><td>Firmware Version</td><td> '; $str = shell_exec("/wr/bin/wrs_version  |  awk '{print $4}'");
-	echo '<a href="showfile.php?help_id=gateware&name=GateWare Info" onClick="showPopup(this.href);return(false);">';
-	echo $str; echo '</a></td></tr>';
-
-	echo '<tr><td>HW Version</td><td>'; $str = shell_exec("/wr/bin/wrs_version -t | grep 'scb\|back' | sort -r | sed 's/-version: /: v/'"); echo str_replace("\n"," / ",rtrim($str));  echo '</td></tr>';
-	echo '<tr><td>FPGA</td><td>'; $str = shell_exec("/wr/bin/wrs_version -f"); echo $str; echo '</td></tr>';
-	echo '<tr><td>Manufacturer</td><td>'; $str = shell_exec("/wr/bin/wrs_version -t | grep 'manufacturer' | sed 's/[^:]*: //'"); echo str_replace("\n","",$str);  echo '</td></tr>';
-	echo '<tr><td>Serial Number</td><td>'; $str = shell_exec("/wr/bin/wrs_version -t | grep 'serial' | sed 's/[^:]*: //'"); echo str_replace("\n","",$str);  echo '</td></tr>';
-	echo '<tr><td>Compiling Date</td><td>'; $str = shell_exec("/wr/bin/wrs_version -c"); echo $str; echo '</td></tr>';
-	echo '<tr><td>White-Rabbit Date</td><td>'; $str = shell_exec("export TZ=".$_SESSION['utc']."; /wr/bin/wr_date -n get"); echo str_replace("\n","<br>",$str); echo '</td></tr>';
-	echo '<tr><td>PPSi</td><td>';  echo wrs_check_ptp_status() ? '[<a href="ptp.php">on</A>]' : '[<a href="ptp.php">off</A>]'; echo '</td></tr>';
-	echo '<tr><td>Net-SNMP Server</td><td>';  echo check_snmp_status() ? '[on] ' : '[off] '; echo '&nbsp;&nbsp;ver. '; echo shell_exec("snmpd -v | grep version | awk '{print $3}'");
-			echo '( port '; $str = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf | grep agent | cut -d: -f3 | awk '{print $1}'"); echo $str; echo ')'; 	echo /*" <a href='help.php?help_id=snmp' onClick='showPopup(this.href);return(false);'> [OIDs]</a>*/"</td></tr>";
-	echo '<tr><td>NTP Server</td><td> <a href="management.php">';  $str = check_ntp_server(); echo $str; echo '</A> '.$_SESSION['utc'].'</td></tr>';
+	// Load variables
+	$wr_date =  str_replace("\n","<br>",
+		shell_exec("/wr/bin/wr_date get"));
+	$PPSi = wrs_check_ptp_status() ? 
+		'[<a href="ptp.php">on</A>]' : '[<a href="ptp.php">off</A>]';
+	$SNMP = check_snmp_status() ? '[on] ' : '[off] '; 
+	$SNMP_version = '&nbsp;&nbsp;ver. '.
+		shell_exec("snmpd -v | grep version | awk '{print $3}'");
+	$SNMP_port = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf |
+		grep agent | cut -d: -f3 | awk '{print $1}'");
+	$NTP = $_SESSION['KCONFIG']["CONFIG_NTP_SERVER"];
+	
+	// Print services table
+	echo '<br><table class="'.$class.'" id="'.$formatID.'" width="100%">';
+	echo '<tr><th>'.$infoname.'</th></tr>';
+	
+	echo '<tr><td>White-Rabbit Date</td><td>'.$wr_date.'</td></tr>';
+	echo '<tr><td>PPSi</td><td>'.$PPSi.'</td></tr>';
+	echo '<tr><td>Net-SNMP Server</td><td>'.$SNMP.'( port '.$SNMP_port.")</td></tr>";
+	echo '<tr><td>NTP Server</td><td> <a href="management.php">'.$NTP.'</td></tr>';
 	echo '</table>';
 	
-	
-	  
-
 }
 
-function check_ntp_server(){
-	$output = "cat ".$GLOBALS['etcdir'].$GLOBALS['wrdateconf']. " | grep ntpserver | awk '{print $2}' ";
-	$output = shell_exec($output);
+function print_info($section, $subsection, $formatID, $class, $infoname, $format){
+	
+	switch ($format) {
+		case "table":
+		
+			echo "<table class='".$class."'  id='".$formatID."'  width='100%'>";
+			if (!empty($infoname)) echo '<tr><th>'.$infoname.'</th></tr>';
+			
+			foreach ($_SESSION[$section][$subsection] as $row) {
+				echo "<tr>";
+				echo "<td>".$row["name"]."</td>"."<td>".(($row["value"]=="") ? "(not set)" : $row['value'])."</td>";
+				echo "</tr>";
+			}
+			echo '</table>';
+		
+			break;
+		
+		case "list":
+		
+			echo '<ul>';
+			foreach ($_SESSION[$section][$subsection] as $row) {
+				echo "<li>";
+				echo $row["name"].": ".(($row["value"]=="") ? "(not set)" : $row['value']);
+				echo "</li>";
+			}
+			echo '<ul>';
+			
+			break;
+	}		
+}
 
-	if(!strcmp($output, "")){
+function print_form($section, $subsection, $formatID, $class, $infoname, $format){
+	
+	echo '<FORM method="POST">
+			<table border="0" align="center" class="'.$class.'" id="'.$formatID.'">';
+	if (!empty($infoname)) echo '<tr><th>'.$infoname.'</th></tr>';
+	
+	foreach ($_SESSION[$section][$subsection] as $row) {		
+		echo "<tr>";
+		echo "<td>".$row["name"]."</td>";
+		echo '<td align="center"><INPUT type="text" value="'.$row["value"].'" name="'.$row["vname"].'" ></td>';
+		echo "</tr>";
+	}
+	echo '</table>';
+	
+	echo '<INPUT type="submit" value="Save New Configuration" class="btn last">';	
+	echo '</FORM>';				
+					
+	
+	
+}
+
+function process_form($section, $subsection){
+	
+	$modified = false;
+	
+	if(!empty($_POST)){
+		foreach ($_SESSION[$section][$subsection] as $row) {	
+			$_SESSION["KCONFIG"][$row["key"]]=$_POST[$row["vname"]];
+			$_SESSION[$section][$subsection][$row["value"]] = $_POST[$row["vname"]];
+			$modified = true;
+		}
+	}
+	return $modified;
+}
+
+function print_multi_form($matrix, $header, $formatID, $class, $infoname, $size){
+	
+	echo '<FORM method="POST">
+			<table border="0" align="center" class="'.$class.'" id="'.$formatID.'"  width="100%" >';
+	if (!empty($infoname)) echo '<tr><th>'.$infoname.'</th></tr>';
+	
+	// Printing fist line with column names.
+	if (!empty($header)){
+		echo "<tr class='sub'>";
+		foreach ($header as $column){
+			echo "<td>".($column)."</td>";
+		}
+		echo "</tr>";
+	}
+	
+	$i = 0;
+	
+	// Printing the content of the form.
+	foreach ($matrix as $array){
+		$elements = explode(",",$array);
+		
+		$first = 0;
+		echo "<tr>";
+		foreach ($elements as $element){
+			$column = explode("=",$element);
+			if ($column[0]=="key"){
+				echo '<INPUT type="hidden" value="'.$column[1].'" name="key'.$i.'" >';
+			}else{
+				echo '<td align="center"><INPUT size="'.$size.'" type="text" value="'.$column[1].'" name="'.$column[0].$i.'" ></td>';
+				$first = 1;
+			}
+		}
+		echo "</tr>";
+		$i++;
+		$first = 0;
+	}
+	echo '</table>';
+	
+	echo '<INPUT type="submit" value="Save New Configuration" class="btn last">';	
+	echo '</FORM>';	
+}
+
+function process_multi_form($matrix){
+	
+	
+	$modified = false;
+	
+	$i=0;
+	if(!empty($_POST)){
+		foreach ($matrix as $array){
+			$elements = explode(",",$array);
+			
+			foreach ($elements as $element){
+				$column = explode("=",$element);
+				if($column[0]!="key"){
+					$output .= preg_replace('/[0-9]+/', '', $column[0].$i)."=". $_POST[$column[0].$i].",";
+				}else{
+					$key = $_POST[$column[0].$i];
+				}
+				
+				//$_SESSION["KCONFIG"][$row["key"]]=$_POST[$row["vname"]];
+				//$_SESSION[$section][$subsection][$row["value"]] = $_POST[$row["vname"]];
+				
+			}
+			$output = rtrim($output, ",");
+			
+			// We have the line, put it in kconfig.
+			$_SESSION["KCONFIG"][$key]=$output;
+			
+			// Clean output
+			$output="";
+			$i++;
+			
+		}	
+		$modified = true;	
+	}
+	
+	return $modified;
+}
+
+function check_ntp_server(){	
+	$ntpserver = $_SESSION['KCONFIG']["CONFIG_NTP_SERVER"];
+	if(!strcmp($ntpserver, "")){
 		return "not set";
 	}else{
-		return $output;
+		return $ntpserver;
 	}
 	
 }
@@ -182,9 +343,7 @@ function check_snmp_status(){
 
 function wrs_interface_setup(){
 	
-	$interfaces = shell_exec('cat '.$GLOBALS['interfacesfile'].' | grep dhcp');
-	
-	return (strcmp($interfaces[0],"#")) ? "dhcp" : "static";
+	return (!empty($_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP"])) ? "dhcp" : "static";
 }
 /*
  * It checks whether the filesystem is writable or not.
@@ -374,62 +533,6 @@ function wr_show_endpoint_rt_show(){
 		$output=shell_exec('/wr/bin/wr_phytool wr0 rt show');
 		$rts = nl2br($output);
 		echo $rts;
-		
-		/*//Show RTS State Dump
-		$output=shell_exec('/wr/bin/wr_phytool wr0 rt show');
-		$rts = explode(" ", $output);
-		
-		echo "<table border='1' align='center' vspace='1'>";
-		echo '<tr>';
-		echo '<th>Endpoint</th>';
-		echo '<th>Setpoint</th>';
-		echo '<th>PS Current</th>';
-		echo '<th>PS loopback</th>';
-		echo '<th>PS flags</th>';
-		echo '</tr>';
-		
-		$cont = 0;
-		
-		//First line
-		echo '<tr>';
-		echo '<th>wr'.$cont.'</th>';
-		echo '<th>'.$rts[14].'</th>';
-		echo '<th>'.$rts[14+7].'</th>';
-		echo '<th>'.$rts[14+16].'</th>';
-		echo '<th>'.$rts[14+22].'</th>';
-		echo '</tr>';
-		$cont++;
-					
-		for($op = 39; $op < 300; $op=$op+30){
-			
-			
-			echo '<tr>';
-			echo '<th>wr'.$cont.'</th>';
-			echo '<th>'.$rts[$op].'</th>';
-			echo '<th>'.$rts[($op+9)].'</th>';
-			echo '<th>'.$rts[($op+18)].'</th>';
-			echo '<th>'.$rts[($op+27)].'</th>';
-			echo '</tr>';
-			$cont++;
-			
-		}
-		
-		for($op = 310; $op < 500; $op=$op+29){
-			
-
-			echo '<tr>';
-			echo '<th>wr'.$cont.'</th>';
-			echo '<th>'.$rts[$op-2].'</th>';
-			echo '<th>'.$rts[($op+7)].'</th>';
-			echo '<th>'.$rts[($op+16)].'</th>';
-			echo '<th>'.$rts[($op+25)].'</th>';
-			echo '</tr>';
-			$cont++;
-			
-		}
-		echo '</table>';*/
-	
-	
 }
 
 /*
@@ -455,7 +558,7 @@ function wrs_php_filesize(){
  *
  * It runs: 
  * 	load-virtex for loading .bin to the FPGA
- * 	load-lm32 for loading .bin to the lm32 professor
+ * 	load-lm32 for loading .bin to the lm32 processor
  * 	
  * 
  * 
@@ -476,8 +579,8 @@ function wrs_load_files(){
 				echo '<center>Loading FPGA binary '.$_FILES['fpgafile']['name'].', please wait for the system to reboot</center>';
 				$str = shell_exec("/wr/bin/load-virtex ".$uploadfile); 
 				echo $str;
-				echo '<br>System is rebooting, please wait for 30 seconds';
-				$str = shell_exec("reboot"); 
+				
+				wrs_reboot();
 				
 			} else {
 				echo "<center>File is not valid, please upload a .bin file.</center>\n";
@@ -498,8 +601,8 @@ function wrs_load_files(){
 				echo '<center>Loading lm32 binary '.$_FILES['lm32file']['name'].',, please wait for the system to reboot</center>';
 				$str = shell_exec("/wr/bin/load-lm32 ".$uploadfile); 
 				echo $str;
-				echo '<br>System is rebooting, please wait for 30 seconds';
-				$str = shell_exec("reboot"); 
+				
+				wrs_reboot();
 				
 			}  else {
 				echo "<center>File is not valid, please upload a .bin file</center>\n";
@@ -544,21 +647,8 @@ function wrs_management(){
 		$cmd =  htmlspecialchars($_POST["cmd"]); 
 
 
-		if(!strcmp($cmd, "halt")){
-			echo '<br><br><br></be>System is halting';
-			$output = shell_exec($cmd);
-		}else if (!strcmp($cmd, "reboot")){
-			echo '<br><br><br>System is rebooting. Please wait 30 seconds.';
-			$output = shell_exec($cmd);
-		}else if (!strcmp($cmd, "size")){
-			php_file_transfer_size(htmlspecialchars($_POST["size"]));
-			header('Location: firmware.php');
-		}else if (!strcmp($cmd, "change")){
-			modify_switch_mode();
-			$mode = check_switch_mode(); 
-			echo '<br><br><br>Switch is now '.$mode;
-			header ('Location: management.php');
-			
+		if (!strcmp($cmd, "reboot")){
+			wrs_reboot();
 		} else if (!empty($_FILES['file']['name'])){
 			$uploaddir = '/tmp/';
 			$uploadfname= basename($_FILES['file']['name']);
@@ -571,14 +661,16 @@ function wrs_management(){
 					rename($uploadfile, "/update/".($_FILES['file']['name']));
 					unlink($uploadfile);
 					//Reboot switch
-					shell_exec("$(sleep 10; reboot) &");
+					sleep(1);
+					wrs_reboot();
 				}
 				else if(substr($uploadfname,0,14)=="wr-switch-sw-v" && substr($uploadfname,-13)=="_binaries.tar")
 				{
 					rename($uploadfile, "/update/wrs-firmware.tar");
 					unlink($uploadfile);
 					//Reboot switch
-					shell_exec("$(sleep 10; reboot) &");
+					sleep(1);
+					wrs_reboot();
 				}
 				else
 				{
@@ -601,84 +693,29 @@ function wrs_management(){
 			file_put_contents($filename, file_get_contents($ohwrlink));
 			rename($filename, $firmware);
 			echo '<p align=center>File successfully downloaded. Rebooting.</p>';
-			shell_exec("reboot");
 			
-		} else if (!empty($_FILES['ppsi_conf']['name'])){
+			wrs_reboot();
 			
-			$uploaddir = $GLOBALS['etcdir'];
-			$uploadfile = $uploaddir . basename($_FILES['ppsi_conf']['name']);
-			echo '<pre>';
-			if ((!strcmp($_FILES['ppsi_conf']['name'],$GLOBALS['ppsiconf']) && (!strcmp(extension($_FILES['ppsi_conf']['name']), "conf")) && move_uploaded_file($_FILES['ppsi_conf']['tmp_name'], $uploadfile))) {
-				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder\n";
-			}  else {
-				echo "<center>File is not valid, please upload a ".$GLOBALS['ppsiconf']." file</center>\n";
-			}
-
-			echo "</pre>";
-			
-		} else if (!empty($_FILES['sfp_conf']['name'])){
+		} else if (!empty($_FILES['kconfig']['name'])){
 			
 			$uploaddir = $GLOBALS['etcdir'];
-			$uploadfile = $uploaddir . basename($_FILES['sfp_conf']['name']);
+			$uploadfile = $uploaddir . basename($_FILES['kconfig']['name']);
 			echo '<pre>';
-			if ((!strcmp($_FILES['sfp_conf']['name'],$GLOBALS['sfpdatabaseconf'])) && (!strcmp(extension($_FILES['sfp_conf']['name']), "conf")) && move_uploaded_file($_FILES['sfp_conf']['tmp_name'], $uploadfile)) {
-				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder\n";
+			if (($_FILES['kconfig']['name']==$GLOBALS['kconfigfilename']) && move_uploaded_file($_FILES['kconfig']['tmp_name'], $uploadfile)) {
+				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder. Applying changes\n";
+				sleep(1);
+				wrs_reboot();
 			}  else {
-				echo "<center>File is not valid, please upload a ".$GLOBALS['sfpdatabaseconf']." file</center>\n";
+				echo "<center>File is not valid, please upload a valid file.<br>Filename must be '".$GLOBALS['kconfigfilename']."'</center>\n";
 			}
 
-			echo "</pre>";
-			
-		} else if (!empty($_FILES['snmp_conf']['name'])){
-			
-			$uploaddir = $GLOBALS['etcdir'];
-			$uploadfile = $uploaddir . basename($_FILES['snmp_conf']['name']);
-			echo '<pre>';
-			if ((!strcmp($_FILES['snmp_conf']['name'],$GLOBALS['snmpconf'])) && (!strcmp(extension($_FILES['snmp_conf']['name']), "conf")) && move_uploaded_file($_FILES['snmp_conf']['tmp_name'], $uploadfile)) {
-				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder\n";
-			}  else {
-				echo "<center>File is not valid, please upload a ".$GLOBALS['snmpconf']." file</center>\n";
-			}
-
-			echo "</pre>";
-			
-		} else if (!empty($_FILES['hal_conf']['name'])){
-			
-			$uploaddir = $GLOBALS['etcdir'];
-			$uploadfile = $uploaddir . basename($_FILES['hal_conf']['name']);
-			echo '<pre>';
-			if ((!strcmp($_FILES['hal_conf']['name'],$GLOBALS['wrswhalconf'])) && (!strcmp(extension($_FILES['hal_conf']['name']), "conf")) && move_uploaded_file($_FILES['hal_conf']['tmp_name'], $uploadfile)) {
-				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder\n";
-			}  else {
-				echo "<center>File is not valid, please upload a ".$GLOBALS['wrswhalconf']." file</center>\n";
-			}
-
-			echo "</pre>";
-			
-		} else if (!empty($_FILES['restore_conf']['name'])){
-			
-			$uploaddir = $GLOBALS['etcdir'];
-			$uploadfile = $uploaddir . basename($_FILES['restore_conf']['name']);
-			echo '<pre>';
-			if ((!strcmp(extension($_FILES['restore_conf']['name']), "gz")) && move_uploaded_file($_FILES['restore_conf']['tmp_name'], $uploadfile)) {
-				
-				shell_exec("tar -xvf ".$uploadfile. " -C ". $GLOBALS['etcdir'] ); //untar the file
-				
-				echo "<center>Configuration restored sucessfully. Rebooting system.\n";
-				shell_exec("reboot");
-			}  else {
-				echo "<center>File is not valid, please upload a .tar.gz file</center>\n";
-			}
-
-			shell_exec("rm $uploadfile");
-			
 			echo "</pre>";
 			
 		} else if (!strcmp($cmd, "Backup")){
 			
-			//Prepare backup (tar)
-			$backupfile="backup".date("Y-m-d").".tar.gz";
-			shell_exec("cd ".$GLOBALS['etcdir']."; tar -cvf ".$backupfile." *; mv ".$backupfile." /var/www/download/".$backupfile);
+			//Prepare backup
+			$backupfile=$GLOBALS['kconfigfilename'];
+			shell_exec("cd ".$GLOBALS['etcdir']."; cp ".$backupfile." /var/www/download/".$backupfile);
 			$backupfile="/download/$backupfile";
 			
 			//Download the file
@@ -686,64 +723,18 @@ function wrs_management(){
 			 
 		} else if (!strcmp($cmd, "ntp")){
 			
-			$output = "ntpserver ". htmlspecialchars($_POST["ntpip"])."\n\n";
+			$ntpserver = htmlspecialchars($_POST["ntpip"]);
 			
-			if (file_exists($GLOBALS['etcdir'].$GLOBALS['wrdateconf'])) {
-				
-				$current = file_get_contents($GLOBALS['etcdir'].$GLOBALS['wrdateconf']);
-				
-				if(substr_count($current,"ntpserver")>0){
-					
-					$current = shell_exec("sed '/ntpserver/d' ".$GLOBALS['etcdir'].$GLOBALS['wrdateconf']);
-					$current = str_replace("\n", "", $current);
-				}
-				
-				$current .= $output;
-				
-				$file=$GLOBALS['etcdir'].$GLOBALS['wrdateconf'];
-				unlink($GLOBALS['etcdir'].$GLOBALS['wrdateconf']);
-				$file = fopen($GLOBALS['etcdir'].$GLOBALS['wrdateconf'],"w+");
-				fwrite($file,$current);
-				fclose($file);
-				
-			} else {
-				
-				$file = fopen("/tmp/".$GLOBALS['wrdateconf'],"w+");
-				fwrite($file,$output);
-				fclose($file);
-				
-				//We move the file to /wr/etc/
-				copy('/tmp/'.$GLOBALS['wrdateconf'], $GLOBALS['etcdir'].$GLOBALS['wrdateconf']);
-			}
+			$_SESSION["KCONFIG"]["CONFIG_NTP_SERVER"] = $ntpserver;		
 			
-			//Set UTC
-			$UTC=htmlspecialchars($_POST["utc"]); 
-			$_SESSION['utc']=$UTC;				
+			//Apply config
+			save_kconfig();
+			apply_kconfig();
 			
-			//Export to /etc/profile --> when /etc/profile remains saved...
-			$utc_exists = shell_exec("cat ".$GLOBALS['profilefile']." | grep -c TZ");
-			$utc_prev = shell_exec("cat ".$GLOBALS['profilefile']." | grep TZ");
-			$utc_prev=trim($utc_prev);
-			if($utc_exists>0){ 
-				$sed_cmd = 'sed -i "s/'.$utc_prev.'/export TZ='.$_SESSION['utc'].'/g" '.$GLOBALS['profilefile'];
-				shell_exec ($sed_cmd);
-			}else{ // Add TZ to profile file
-				shell_exec ('echo "export TZ='.$_SESSION['utc'].'" >>'.$GLOBALS['profilefile']);	
-			}
-			
-			echo '<br><p align=center>Rebooting...</p>';
-			
-			//Reboot the switch after 1s
-			usleep(1000000);
-			shell_exec("reboot");
+			header('Location: management.php');
 			
 			
-			
-		} else if (!strcmp($cmd, "backup-wrs")){
-			
-			//Backup wrs firmware
-			
-		}  else if (!strcmp($cmd, "snmp")){
+		} else if (!strcmp($cmd, "snmp")){
 			
 			if(check_snmp_status()){ //It is running
 				
@@ -772,43 +763,44 @@ function wrs_management(){
      * @param bool $force_download
      * @return bool
      */
-    function download($path, $name = '', $type = 'application/octet-stream', $force_download = true) {
+function download($path, $name = '', $type = 'application/octet-stream', $force_download = true) {
 
-        if (!is_file($path) || connection_status() !== 0);
+	if (!is_file($path) || connection_status() !== 0);
 
-        if($force_download) {
-            header("Cache-Control: public");
-        } else {
-            header("Cache-Control: no-store, no-cache, must-revalidate");
-            header("Cache-Control: post-check=0, pre-check=0", false);
-            header("Pragma: no-cache");
-        }
+	if($force_download) {
+		header("Cache-Control: public");
+	} else {
+		header("Cache-Control: no-store, no-cache, must-revalidate");
+		header("Cache-Control: post-check=0, pre-check=0", false);
+		header("Pragma: no-cache");
+	}
 
-        header("Expires: ".gmdate("D, d M Y H:i:s", mktime(date("H")+2, date("i"), date("s"), date("m"), date("d"), date("Y")))." GMT");
-        header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT");
-        header("Content-Type: $type");
-        header("Content-Length: ".(string)(filesize($path)));
+	header("Expires: ".gmdate("D, d M Y H:i:s", mktime(date("H")+2, date("i"), date("s"), date("m"), date("d"), date("Y")))." GMT");
+	header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT");
+	header("Content-Type: $type");
+	header("Content-Length: ".(string)(filesize($path)));
 
-        $disposition = $force_download ? 'attachment' : 'inline';
+	$disposition = $force_download ? 'attachment' : 'inline';
 
-        if(trim($name) == '') {
-            header("Content-Disposition: $disposition; filename=" . basename($path));
-        } else {
-            header("Content-Disposition: $disposition; filename=\"" . trim($name)."\"");
-        }
+	if(trim($name) == '') {
+		header("Content-Disposition: $disposition; filename=" . basename($path));
+	} else {
+		header("Content-Disposition: $disposition; filename=\"" . trim($name)."\"");
+	}
 
-        header("Content-Transfer-Encoding: binary\n");
+	header("Content-Transfer-Encoding: binary\n");
 
-        if ($file = fopen($path, 'rb')) {
-            while(!feof($file) and (connection_status()==0)) {
-                print(fread($file, 1024*8));
-                flush();
-            }
-            fclose($file);
-        }
+	if ($file = fopen($path, 'rb')) {
+		while(!feof($file) and (connection_status()==0)) {
+			print(fread($file, 1024*8));
+			flush();
+		}
+		fclose($file);
+	}
 
-        return((connection_status() == 0) && !connection_aborted());
-    }  
+	return((connection_status() == 0) && !connection_aborted());
+}  
+
 /*
  * This function configures the PTP daemon.
  * 
@@ -824,38 +816,6 @@ function wrs_ptp_configuration(){
 	
 	
 	echo '<center>';
-	if(!empty($_POST["b"])){
-		$cmd .= " -b ".htmlspecialchars($_POST["b"]); 
-		echo '<br>Network Interface bound to '.htmlspecialchars($_POST["b"]);
-	} 
-	if (!empty($_POST["u"])){
-		$cmd .= " -u ".htmlspecialchars($_POST["u"]); 
-		echo '<br>Unicast sent to '.htmlspecialchars($_POST["u"]);
-	} 
-	if (!empty($_POST["i"])){
-		$cmd .= " -i ".htmlspecialchars($_POST["i"]); 
-		echo '<br>PTP Domain number is now '.htmlspecialchars($_POST["i"]);
-	} 
-	if (!empty($_POST["n"])){
-		$cmd .= " -n ".htmlspecialchars($_POST["n"]); 
-		echo '<br>Announce Interval set to '.htmlspecialchars($_POST["n"]);
-	} 
-	if (!empty($_POST["y"])){
-		$cmd .= " -y ".htmlspecialchars($_POST["y"]); 
-		echo '<br>Sync Interval set to '.htmlspecialchars($_POST["y"]);
-	} 
-	if (!empty($_POST["r"])){
-		$cmd .= " -r ".htmlspecialchars($_POST["r"]); 
-		echo '<br>Clock accuracy set to '.htmlspecialchars($_POST["r"]);
-	} 
-	if (!empty($_POST["v"])){
-		$cmd .= " -v ".htmlspecialchars($_POST["v"]); 
-		echo '<br>Clock Class is now set to '.htmlspecialchars($_POST["v"]);
-	} 
-	if (!empty($_POST["p"])){
-		$cmd .= " -p ".htmlspecialchars($_POST["p"]); 
-		echo '<br>Priority changed to '.htmlspecialchars($_POST["p"]);
-	} 
 	
 	if(!strcmp($_POST['cmd'],"ppsiupdate")){
 		
@@ -865,6 +825,14 @@ function wrs_ptp_configuration(){
 			$ptp_command = "/wr/bin/ppsi > /dev/null 2>&1 &";
 			$output = shell_exec($ptp_command); 		
 		}
+		header('Location: ptp.php');
+		
+	}
+	if(!strcmp($_POST['cmd'],"ppsibootupdate")){
+		
+		$_SESSION["KCONFIG"]["CONFIG_PPSI"] = ($_SESSION["KCONFIG"]["CONFIG_PPSI"]=="y") ? 'n' : 'y';
+		save_kconfig();
+		
 		header('Location: ptp.php');
 		
 	}
@@ -890,10 +858,6 @@ function wrs_ptp_configuration(){
 		shell_exec("killall ppsi"); 
 		$ptp_command = "/wr/bin/ppsi > /dev/null 2>&1 &";
 		$output = shell_exec($ptp_command); 
-		
-		//Relaunching wrsw_hal to commit endpoint changes
-		//shell_exec("killall wrsw_hal");
-		//shell_exec("/wr/bin/wrsw_hal -c ".$GLOBALS['etcdir']."wrsw_hal.conf > /dev/null 2>&1 &");
 		
 		header('Location: ptp.php');
 		exit;
@@ -1125,13 +1089,22 @@ function parse_wrsw_hal_file(){
 	return $file;
 }
 
-function parse_ppsi_conf_file(){
+function parse_endpoint_modes(){
 	
-	$file =  shell_exec('cat '.$GLOBALS['etcdir'].'ppsi.conf | grep role');
-	$file =  str_replace("role", "", $file);
-	$file = explode(" ", $file);
-	return $file;
+	$modes = array();
 	
+	for($i = 0; $i < 18; $i++){
+		$endpoint = intval($i);
+		$endpoint = sprintf("%02s", $endpoint);
+		$endpoint = strval($endpoint);
+		
+		$role = $_SESSION["KCONFIG"]["CONFIG_PORT".$endpoint."_PARAMS"];
+		$role = explode(",",$role);
+		$role = str_replace("role=","",$role[3]);
+		
+		array_push($modes,$role);			
+	}	
+	return $modes;
 }
 /*
  * Obtains the content the switch mode from wrsw_hal.conf file
@@ -1168,131 +1141,6 @@ function modify_switch_mode(){
 		$cmd = 'sed -i "s/mode = \"Master\"/mode = \"GrandMaster\"/g" '.$GLOBALS['etcdir'].'wrsw_hal.conf';
 	}
 	shell_exec($cmd);
-	
-}
-
-function wrs_modify_endpoint_mode($endpoint, $mode){
-		
-	switch ($mode) {
-		case "master":
-			$new_mode = "slave";
-			break;
-		case "slave":
-			$new_mode = "auto";
-			break;
-		case "auto":
-			$new_mode = "master";
-			break;
-	}
-	
-	
-	
-	// ### Code for ppsi.conf ###
-	if($endpoint>0 && $endpoint<19 && (((!strcmp($mode, "slave"))) || ((!strcmp($mode, "master"))) || ((!strcmp($mode, "auto"))))){
-		
-		
-		$file = $GLOBALS['etcdir'].$GLOBALS['ppsiconf']; 
-		$lines = file($file);
-		$output = "";
-		$count = 0;
-		$end_aux = $endpoint;
-		
-		if($endpoint == 1){ //Slave port
-			$endpoint= "port slave";
-		}else{ //Master ports
-			$endpoint= "port master".($end_aux-1)."\n";
-			
-		}
-		
-		$found = false;
-		
-		foreach($lines as $line_num => $line)
-		{
-			if(substr_count($line, $endpoint)>0){
-				$found = true;
-			}
-			
-			if($found)$count++;
-			
-			
-			if($count==3){
-				$output.='role '.$new_mode."\n";
-				$count = 0;
-				$found = false;
-			}else{
-				$output.=$line;
-			}
-		}
-		
-		//We save the changes in a temporarely file in /tmp
-		$file = fopen("/tmp/".$GLOBALS['ppsiconf'],"w+");
-		fwrite($file,$output);
-		fclose($file);
-		
-		//We move the file to /wr/etc/
-		copy('/tmp/'.$GLOBALS['ppsiconf'], $GLOBALS['etcdir'].$GLOBALS['ppsiconf']);
-		
-		//echo '<br><br><br><br><br><br><br><br><center>Endpoint wr'.$end_aux.' is now '.$new_mode.'</center>';
-	}else{
-		echo '<br>Wrong parameters for endpoint-mode';
-	}
-	
-	
-	
-	// ##### old code for wrsw_hal.conf ######
-	switch ($mode) {
-		case "master":
-			$new_mode = "wr_slave";
-			break;
-		case "slave":
-			$new_mode = "wr_master";
-			break;
-		case "auto":
-			$new_mode = "wr_slave";
-			break;
-	}
-	
-	echo $mode, "---", $new_mode;
-	
-	if($endpoint>0 && $endpoint<19 && (((!strcmp($mode, "slave"))) || ((!strcmp($mode, "master"))) || ((!strcmp($mode, "auto"))))){
-		
-		
-		$file = $GLOBALS['etcdir'].$GLOBALS['wrswhalconf'];
-		$lines = file($file);
-		$output = "";
-		$count = 0;
-		$end_aux = $endpoint;
-		$endpoint = 'wr'.($endpoint-1).' =';
-		$found = false;
-		
-		foreach($lines as $line_num => $line)
-		{
-			if(substr_count($line, $endpoint)>0){
-				$found = true;
-			}
-			
-			if($found)$count++;
-			
-			
-			if($count==6){
-				$output.='		mode = "'.$new_mode.'";'."\n";
-				$count = 0;
-				$found = false;
-			}else{
-				$output.=$line;
-			}
-		}
-		
-		//We save the changes in a temporarely file in /tmp
-		$file = fopen("/tmp/".$GLOBALS['wrswhalconf'],"w+");
-		fwrite($file,$output);
-		fclose($file);
-		
-		//We move the file to /wr/etc/
-		copy('/tmp/'.$GLOBALS['wrswhalconf'], $GLOBALS['etcdir'].$GLOBALS['wrswhalconf']);
-	}else{
-		echo '<br>Wrong parameters for endpoint-mode';
-	}
 	
 }
 
@@ -1342,5 +1190,78 @@ function echoSelectedClassIfRequestMatches($requestUri)
     if ($current_file_name == $requestUri)
         return 'class="selected"';
 }
+
+function wrs_reboot(){
+	sleep(1);
+	header ('Location: reboot.php');
+}
+
+function load_kconfig(){
+	$_SESSION['KCONFIG'] = parse_ini_file($GLOBALS['kconfigfile']);
+}
+
+function save_kconfig(){
+	
+	$array = $_SESSION['KCONFIG'];
+	$file = $GLOBALS['kconfigfile'];
+	
+	//$array = add_comments($array);
+	
+	// header of the dotconfig file
+	$head = array ("#", 
+					"# Automatically generated make config: don't edit",
+					"#");
+					
+    $res = array();
+    $res = $head;
+    
+    $counter = 0;
+    foreach($array as $key => $val)
+    {
+		// Including local configuration text 
+		if($counter==3){
+				$res[].=" ";
+				$res[].="#";
+				$res[].="# Local configuration";
+				$res[].="#";
+		}
+        if(is_array($val))
+        {
+            $res[] = "[$key]";
+            foreach($val as $skey => $sval) $res[] = "$skey=".(is_numeric($sval) ? $sval : '"'.$sval.'"');
+        }
+        else $res[] = "$key=".(is_numeric($val) ? $val : '"'.$val.'"');
+        $counter++;
+    }
+    safefilerewrite($file, implode("\n", $res));
+
+}
+
+function safefilerewrite($fileName, $dataToSave){
+	
+	if ($fp = fopen($fileName, 'w'))
+    {
+        $startTime = microtime();
+        do
+        {            $canWrite = flock($fp, LOCK_EX);
+           // If lock not obtained sleep for 0 - 100 milliseconds, to avoid collision and CPU load
+           if(!$canWrite) usleep(round(rand(0, 100)*1000));
+        } while ((!$canWrite)and((microtime()-$startTime) < 1000));
+
+        //file was locked so now we can store information
+        if ($canWrite)
+        {            fwrite($fp, $dataToSave);
+            flock($fp, LOCK_UN);
+        }
+        fclose($fp);
+    }
+
+}
+
+function apply_kconfig(){
+	$dotconfigapp = "/usr/wr/bin/apply_dot-config";
+	shell_exec($dotconfigapp. " > /dev/null 2>&1 &");
+}
+
 	
 ?>

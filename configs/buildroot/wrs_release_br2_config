@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Buildroot 2011.11 Configuration
-# Mon Mar 31 23:55:56 2014
+# Mon Dec 15 17:19:45 2014
 #
 BR2_HAVE_DOT_CONFIG=y
 BR2_arm=y
@@ -76,7 +76,7 @@ BR2_SOURCEFORGE_MIRROR="kent"
 BR2_KERNEL_MIRROR="http://www.kernel.org/pub/"
 BR2_GNU_MIRROR="http://ftp.gnu.org/pub/gnu"
 BR2_DEBIAN_MIRROR="http://ftp.debian.org"
-BR2_JLEVEL=5
+BR2_JLEVEL=9
 # BR2_CCACHE is not set
 # BR2_DEPRECATED is not set
 # BR2_ENABLE_DEBUG is not set
@@ -630,7 +630,7 @@ BR2_PACKAGE_PHP_EXT_ZLIB=y
 # BR2_PACKAGE_PHP_EXT_JSON is not set
 # BR2_PACKAGE_PHP_EXT_READLINE is not set
 # BR2_PACKAGE_PHP_EXT_NCURSES is not set
-# BR2_PACKAGE_PHP_EXT_PCRE is not set
+BR2_PACKAGE_PHP_EXT_PCRE=y
 # BR2_PACKAGE_PHP_EXT_PCNTL is not set
 # BR2_PACKAGE_PHP_EXT_SYSVMSG is not set
 # BR2_PACKAGE_PHP_EXT_SYSVSEM is not set

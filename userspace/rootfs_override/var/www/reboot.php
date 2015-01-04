@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body>
+<body id="management">
 <div class="main">
 <div class="page">
 <div class="header" >
@@ -16,20 +16,26 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Dashboard <a href='help.php?help_id=logout' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
-<?php $_SESSION['advance']=""; ?>
-
-	<?php
-		//ob_start();
-
-		unset($_SESSION["myusername"]);
-		unset($_SESSION["mypassword"]);
-		session_destroy();
-		echo '<br><br><center><h3>Logged out</h3></center>';
-		header('Location: index.php');
-	?>
-
+	<?php session_is_started() ?>
+	
+	<div id="rebootmsg">
+		<p align=center>
+			<img src="./img/loader.gif">
+		</p>
+		<br>
+		<div id="rebootingtext" align=center>...Saving changes...</div>
+	</div>
+	
+	<div id="rebooting"></div>
+	
+	<div id="rebootwrlogo">
+		<br><br>
+		<img src="./img/ryanlerch_The_White_Rabbit.png">
+		<p align=right>Alice: How long is forever? 
+					<br>White Rabbit: Sometimes, just a nanosecond.</p>
+	</div>
+	
 
 </div>
 </div>

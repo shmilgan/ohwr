@@ -36,6 +36,7 @@ echo '<div class="login">
 		echo '<li><a href="endpoint.php">Endpoint Tool </a></li>';
 		echo '<li><a href="endpointcalibration.php">Endpoint Calibration</a></li>';
 		echo '<li><a href="load.php">LM32 & FPGA</a></li>';
+		echo '<li><a href="logs.php">System logs</a></li>';
 		echo '<li><a href="terminal.php">Virtual Console</a></li>';
 		echo '<li><a href="firmware.php">Firmware</a></li>';
 		echo '</ul>';

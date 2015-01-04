@@ -22,139 +22,63 @@
 <?php session_is_started() ?>
 
 
-	<div>
 	<?php 
 	
-		$file_init  = 'global = {'."\n";
-		$file_init .= "\t".'sfp_database_path = "'.$GLOBALS['etcdir'].'sfp_database.conf";'."\n";
-		$file_init .= '};'."\n\n";
-
-		$file_init .= 'timing =  {'."\n\n";
-			
-		$file_end = '};'."\n";;
-		
-		
-
 		// Warning message
 		echo "<hr>
-				
-				NOTE: This action will delete the previous wrsw_hal.conf file. <a href='showfile.php?help_id=file&name=wrsw_hal.conf'
-				onClick='showPopup(this.href);return(false);'> (see current configuration) </a>
-				<center>*If you do not know how to calibrate endpoints please click on <a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration' target='_blank'> here </a>*";
-		echo '<br>**all fields are mandatory**</center></div><hr><br><br>';
+				<center>NOTE: If you do not know how to calibrate endpoints 
+				please click on <a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration' 
+				target='_blank'> here </a>*<hr><br>";
 		
-		//echo '<tr><td> <b><center> </center></b></td></tr>';
+		$formatID = "alternatecolor";
+		$class = "altrowstable firstcol";
+		$infoname = "Endpoint Configuration";
+		$size = "8";
 		
+		$header = array ("WR port","Tx","Rx","Mode","Fiber"); 
+		$matrix = array ("key=CONFIG_PORT00_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT00_PARAMS"], 
+							"key=CONFIG_PORT01_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],
+							"key=CONFIG_PORT02_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT02_PARAMS"],
+							"key=CONFIG_PORT03_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT03_PARAMS"],
+							"key=CONFIG_PORT04_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT04_PARAMS"],
+							"key=CONFIG_PORT05_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT05_PARAMS"],
+							"key=CONFIG_PORT06_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT06_PARAMS"],
+							"key=CONFIG_PORT07_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT07_PARAMS"],
+							"key=CONFIG_PORT08_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT08_PARAMS"],
+							"key=CONFIG_PORT09_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT09_PARAMS"],
+							"key=CONFIG_PORT10_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT10_PARAMS"],
+							"key=CONFIG_PORT11_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT11_PARAMS"],
+							"key=CONFIG_PORT12_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT12_PARAMS"],
+							"key=CONFIG_PORT13_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT13_PARAMS"],
+							"key=CONFIG_PORT14_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT14_PARAMS"],
+							"key=CONFIG_PORT15_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT15_PARAMS"],
+							"key=CONFIG_PORT16_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT16_PARAMS"],
+							"key=CONFIG_PORT17_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT17_PARAMS"],							
+							);
+		print_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
 		
-		if (empty($_POST['newconf'])){
-			// Starting the form (timing + ports)
-			echo '<form method="post">';
-
-			echo "<table border='1' align='left' class='altrowstable firstcol' id='alternatecolor'>";
+		if(process_multi_form($matrix)){
+			save_kconfig();
+			apply_kconfig();
 			
-			
-			// Timing values:
-			echo '<tr class="sub"><th>Switch Timing Values</th></tr>';
-			echo '<tr><td>PPS Width: </td><td><INPUT type="text" value = "100000" name="pps" > </td></tr>';
-			echo '<tr><td>Use NMEA: </td><td><INPUT type="text" value = "1" name="nmea" > </td></tr>';
-			echo '<tr><td>Switch Mode: [Master/GrandMaster] </td><td><INPUT type="text" value = "GrandMaster" name="switchmode" > </td></tr>';
-			
-			// port values:
-			for($i=0; $i<18; $i++){
-
-				echo '<tr class="empty"><th></th></tr>';
-				echo '<tr class="sub"><th>Endpoint '.($i+1).'</th></tr>';
-				if($i<4){ echo '<tr><td>Rx min:</td><td><INPUT type="text" value = "160000" name="rx'.$i.'" > </td></tr>';
-				}else{ echo '<tr><td>Rx min:</td><td><INPUT type="text" value = "161200" name="rx'.$i.'" > </td></tr>';}
-				echo '<tr><td>Tx min:</td><td><INPUT type="text" value = "0" name="tx'.$i.'" > </td></tr>';
-				echo '<tr><td>Mac address:</td><td><INPUT type="text" value = "auto" name="mac'.$i.'" > </td></tr>';
-				if($i==0){ echo '<tr><td>Endpoint mode: [wr_slave/wr_master] </td><td><INPUT type="text" value = "wr_slave" name="mode'.$i.'" > </td></tr>';
-				}else{  echo '<tr><td>Endpoint mode: [wr_slave/wr_master] </td><td><INPUT type="text" value = "wr_master" name="mode'.$i.'" > </td></tr>';}
-				
-				
-			}
-			
-			echo '</table>';
-			echo '<div>';
-			echo '<input type="hidden" name="newconf" value="newconf">';
-			echo '<input align="right" type="submit" value="Create new file & Reboot" class="btn last">';
-			echo '</div>';
-			echo '</form>';
-			
-			
-		}
-			
-
-		
-		if (!empty($_POST['newconf'])){
-			$outputfile = $file_init;
-			$error = false;
-			
-			if( empty($_POST['pps']) || empty($_POST['nmea']) || empty($_POST['switchmode'])){
-				$error = true;
-			}	
-			
-			// Switch mode must be Master or GrandMaster
-			if (!((!strcmp($_POST['switchmode'], "Master")) || !(strcmp($_POST['switchmode'], "GrandMaster")))){
-				$error = true;
-			}
-			
-			if(!$error){
-				$outputfile .= "\t"."pps_width = ".$_POST['pps']."; -- PPS pulse width"."\n";
-				$outputfile .= "--"."\t"."use_nmea = ".$_POST['nmea']."; -- take UTC seconds from NMEA GPS clock connected to /dev/ttyS2"."\n";
-				$outputfile .= "--"."\t"."mode = ".'"'.$_POST['switchmode'].'"'."; -- grand-master with external reference"."\n";
-				$outputfile .= "};"."\n\n";
-			}
-				
-			$outputfile .= "ports = {"."\n\n";
-			for($i=0; $i<18 && (!$error); $i++){
-				
-				if( empty($_POST['mac'.$i]) || empty($_POST['mode'.$i]) /*|| empty($_POST['tx'.$i])*/ || empty($_POST['rx'.$i])){
-					$error = true;
-					echo '<br>ERROR!!'.$i."--".empty($_POST['mac'.$i])."--".empty($_POST['mode'.$i])."--".empty($_POST['tx'.$i])."--".empty($_POST['rx'.$i]);
-				}
-				
-				// Switch mode must be Master or GrandMaster
-				if (!((!strcmp($_POST['mode'.$i], "wr_master")) || !(strcmp($_POST['mode'.$i], "wr_slave")))){
-					$error = true;
-				}
-				$outputfile .= "\t"."wr".$i." = {"."\n";
-				$outputfile .= "\t\t".'phy_rx_min = '.$_POST['rx'.$i].';'."\t"."-- minimal RX latency introduced by the PHY (in picoseconds)"."\n";
-				$outputfile .= "\t\t".'phy_tx_min = '.$_POST['tx'.$i].';'."\n\n";
-				$outputfile .= "\t\t".'mac_addr = '.'"'.$_POST['mac'.$i].'"'.';'."\n";
-				$outputfile .= "\t\t".'mode = '.'"'.$_POST['mode'.$i].'"'.';'."\n";
-				$outputfile .= "\t"."};"."\n\n";
-			}
-			$outputfile .= $file_end;
-			
+			header ('Location: endpointcalibration.php');
 			
 		}
 		
+		$formatID = "alternatecolor1";
+		$class = "altrowstable firstcol";
+		$infoname = "Available Fibers";
+		$size = "12";
 		
-			
-
-		if(!empty($_POST['newconf']) && !$error){
-			//We save the changes in a temporarely file in /tmp
-			$file = fopen("/tmp/wrsw_hal.conf","w+");
-			fwrite($file,$outputfile);
-			fclose($file);
-			
-			//We move the file to /wr/etc/
-			copy('/tmp/wrsw_hal.conf', $GLOBALS['etcdir'].'wrsw_hal.conf');
-			
-			echo '<center><font color="green">File successfully created. Rebooting switch. </font></center>';
-			
-			shell_exec("reboot"); 
-			
-		}else if(!empty($_POST['newconf']) && $error){
-			echo '<center><font color="red">WARNING: Conf. file not created. Please fill in all fields</font></center>';
-			echo '<center><font color="red">* Switch mode must be Master or GrandMaster </font></center>';
-			echo '<center><font color="red">** Endpoint mode must be wr_slave or wr_master </font></center>';
-		}
+		$header = array ("#","Alpha"); 
 		
+		$matrix = array ("id=0,key=CONFIG_FIBER00_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER00_PARAMS"],
+							"id=1,key=CONFIG_FIBER01_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER01_PARAMS"],
+							"id=2,key=CONFIG_FIBER02_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER02_PARAMS"],
+							"id=3,key=CONFIG_FIBER03_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER03_PARAMS"]);
 		
-		
-		
+		print_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
+				
 	?>
 
 </div>

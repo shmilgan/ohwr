@@ -9,40 +9,7 @@
   <link href="css/style.css" rel="stylesheet" type="text/css">
 
   <!-- Javascript goes in the document HEAD -->
-<script type="text/javascript">
-function altRows(id){
-	if(document.getElementsByTagName){  
-		var table = document.getElementById(id);  
-		var rows = table.getElementsByTagName("tr"); 
-		 
-		for(i = 0; i < rows.length; i++){          
-			if(i % 2 == 0){
-				rows[i].className += " evenrowcolor";
-			}else{
-				rows[i].className += " oddrowcolor";
-			}      
-		}
-		
-		var table = document.getElementById(id+1);  
-		var rows = table.getElementsByTagName("tr"); 
-		 
-		for(i = 0; i < rows.length; i++){          
-			if(i % 2 == 0){
-				rows[i].className += " evenrowcolor";
-			}else{
-				rows[i].className += " oddrowcolor";
-			}      
-		}
-	}
-}
-window.onload=function(){
-	altRows('alternatecolor');
-}
-</script>
-<script type="text/javascript">
-function showPopup(url) {
-newwindow=window.open(url,'name','height=250,width=520,top=200,left=300,resizable');
-if (window.focus) {newwindow.focus()}
-}
-</script>
+  <!-- Javascript are located in /js/scripts.js -->
+  <script type="text/javascript" src="js/jquery-1.10.1.min.js"></script>
+  <script type="text/javascript" src="js/scripts.js"></script>
 </head>
