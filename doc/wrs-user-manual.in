@@ -989,6 +989,136 @@ The following option flags are supported:
 
 @end table
 
+@c --------------------------------------------------------------------------
+@node wrs_vlans
+@section wrs_vlans
+
+The @i{wrs_vlans} shell tool can be used to setup VLANs in the switch. The
+configuration is divided into two parts:
+
+@table @code
+
+@item wrs_vlans --ep <port number or range> [options]
+
+  Per-port Endpoint VLAN configuration. Used to set VID and priority for ingress
+  frames tagging, egress untagging and port mode to:
+  @itemize @bullet
+  @item ACCESS - tags untagged frames with configured VID and priority, drops
+  tagged frames not belonging to the configured VLAN
+  @item TRUNK - passes only tagged frames, drops all untagged frames
+  @item Disabled - VLANs disabled
+  @item Unqualified port - passess all frames regardless of VLAN configuration
+  @end itemize
+
+@item wrs_vlans --rvid <vid> [options]
+
+  Per-VLAN configuration of the Routing Table Unit, used to configure port mask
+  describing which port belong to a given VLAN. RTU uses this information to be
+  able to forward incoming frames only to ports inside the VLAN.
+
+@end table
+
+Both per-port Endpoint and per-VLAN RTU configuration has to be performed in
+order to have a full VLAN setup on a WR Switch.
+
+For per-port configuration, multiple ways of specifying ports are supported:
+@table @code
+
+@item wrs_vlans --ep 1 [options]
+
+  Selected configuration will be applied only to port 1.
+
+@item wrs_vlans --ep 1,3,4 [options]
+
+  Selected configuration will be applied to ports 1,3 and 4.
+
+@item wrs_vlans --ep 5-8 [options]
+
+  Selected configuration will be applied to port range 5 to 8.
+
+@item wrs_vlans --ep 5-8,15 [options]
+
+  Selected configuration will be applied to port range 5 to 8 and port 15.
+
+@end table
+
+To configure each Endpoint the following options may be used:
+@table @code
+
+@item --emode <mode No.>
+  Sets qmode for a port (0 - ACCESS, 1 - TRUNK, 2 - disabled, 3 - unqualified)
+
+@item --evid <vid>
+  Sets VLAN id for tagging ingress frames.
+
+@item --eprio <priority>
+  Sets priority for tagging ingress frames.
+
+@item --eumask <hex mask>
+  Sets mask for egress untagging. By default, if you configure ingress tagging,
+  all VIDs are untagged on egress.
+
+@end table
+
+To configure VLANs in RTU the tool has to be used with parameter specifying
+VLAN id to be set up and then the list of configuration options:
+@table @code
+@item wrs_vlans --rvid <vid> [options]
+@end table
+
+Possible RTU VLAN configuration options:
+@table @code
+
+@item --rmask <hex mask>
+  Mask defines which physical ports of the WRS belong to a configured VLAN.
+
+@item --rfid <fid>
+  Assigns filtering ID @i{fid} to the configured VLAN. Multiple VLANs can be
+  configured to have the same @i{fid}. This way they create a group where
+  learning a new MAC address in one VLAN implies learning this MAC in the rest
+  of VLANs in the group as well.
+
+@item --rprio <prio>
+  Forces 802.1q priority override for VLAN. Setting @i{prio} to -1, cancels the
+  override.
+
+@item --rdrop <1/0>
+  Forces (if set to 1) or disables (if set to 0) frames drop for the configured
+  VLAN.
+
+@item --del
+  Deletes selected VLAN from the RTU configuration.
+
+@end table
+
+In addition to that @i{wrs_vlans} can be also used to display and clear current
+VLAN configuration of the switch:
+
+@table @code
+
+@item wrs_vlans --elist
+
+  Current Endpoints VLAN configuration
+
+@item wrs_vlans --list
+
+  Current RTU VLAN configuration.
+
+@item wrs_vlans --clear
+
+@end table
+
+@i{wrs_vlans} tool can be called multiple times to make a set of per-port and
+per-VLAN configurations. However, it is also possible to configure multiple
+ports/VLANs in one go. For example to configure ports 0,1,2,5 to VLAN 5 and
+ports 3,4 to VLAN 6 with tagging ingress frames one could call @i{wrs_vlans}
+with these parameters:
+
+@example
+  wrs_vlans --ep 0-2,5 --emode 0 --evid 5 --ep 3,4 --emode 0 --evid 6 \
+    --rvid 5 --rmask 0x27 --rvid 6 --rmask 0x18
+@end example
+
 @c ##########################################################################
 @node SNMP Support
 @chapter SNMP Support
