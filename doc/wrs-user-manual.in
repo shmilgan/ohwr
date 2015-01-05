@@ -911,6 +911,11 @@ The following tools and scripts are provided:
 @item sdb-read
 	The tool, copied from the @t{fpga-config-space} project,
 	is documented in the next section,
+
+@item wrs_auxclk
+  The tool allows to setup the parameters of a clock generated on the @i{clk2}
+  SMC.
+
 @c FIXME: document lm32-vuart rtu_stat spll_dbg_proxy
 @c FIXME: document wrs_pstats
 @end table
@@ -1118,6 +1123,59 @@ with these parameters:
   wrs_vlans --ep 0-2,5 --emode 0 --evid 5 --ep 3,4 --emode 0 --evid 6 \
     --rvid 5 --rmask 0x27 --rvid 6 --rmask 0x18
 @end example
+
+@c --------------------------------------------------------------------------
+@node wrs_auxclk
+@section wrs_auxclk
+
+The @i{wrs_auxclk} shell tool can be used to configure parameters of a clock
+signal generated on the @i{clk2} SMC connector.
+
+@b{Note:} you need to have WRS hardware at least in version 3.4 to have @i{clk2}
+output.
+
+By default @i{wrs_auxclk} is called by init scripts to generate 10MHz clock
+signal with 50% duty cycle. This configuration can be modified by using various
+options:
+
+@table @code
+
+@item --freq <f>
+  Desired frequency of the generated clock signal in MHz. Available range from
+  4kHz to 250MHz.
+
+@item --duty <frac>
+  Desired duty cycle given as a fraction (e.g. 0.5, 0.4).
+
+@item --cshift <csh>
+  Coarse shift (granularity 2ns) of the generated clock signal. This parameter
+  can be used to get desired delay relation between generated 1-PPS and
+  @i{clk2}. The delay between 1-PPS and @i{clk2} is constant for a given
+  bitstream but may be different for various hardware versions and
+  re-synthesized gateware. Therefore it should be measured and adjusted only
+  once for given hardware and gateware version.
+
+@item --sigdel <steps>
+  Clock signal generated from the FPGA is cleaned by a discrete flip-flop.
+  It may happen that generated aux clock is in phase with the flip-flop clock.
+  In that case it is visible on the oscilloscope that @i{clk2} clock is
+  jittering by 4ns. The @code{--sigdel} parameter allows to add a precise delay
+  to the FPGA-generated clock to avoid such jitter. This delay is specified in
+  steps, where each step is around 150ps. This value, same as the
+  @code{--cshift} parameter, is constant for a given bitstream so should be
+  verified only once.
+
+@item --ppshift <steps>
+  If one needs to precisely align 1-PPS output with the @i{clk2} aux clock using
+  @code{--cshift} parameter is not enough as it has 4ns granularity. In that
+  case @code{--ppshift} lets you shift 1-PPS output by a configured number
+  of 150ps steps. However, please have in mind that 1-PPS output is used as a
+  reference for WR calibration procedure. Therefore, once this parameter is
+  modified, the device should be re-calibrated. Otherwise, 1-PPS output
+  will be shifted from the WR timescale by <steps>*150ps.
+  
+
+@end table
 
 @c ##########################################################################
 @node SNMP Support
