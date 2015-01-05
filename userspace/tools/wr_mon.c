@@ -14,7 +14,6 @@
 
 #define SHOW_GUI		0
 #define SHOW_STATS		1
-#define SHOW_SNMP_PORTS		2
 #define SHOW_SNMP_GLOBALS	3
 
 int mode = SHOW_GUI;
@@ -155,25 +154,6 @@ void show_ports(void)
 			printf("lock:%d ", port_state->locked);
 		}
 		printf("\n");
-	}
-	else if (mode == SHOW_SNMP_PORTS) {
-		for (i = 0; i < hal_nports_local; ++i) {
-			char if_name[10];
-
-			printf("PORT %i\n", i);
-			snprintf(if_name, 10, "wr%d", i);
-			port_state = hal_lookup_port(hal_ports_local_copy,
-						    hal_nports_local, if_name);
-			if (!port_state)
-				continue;
-
-			printf("linkup: %d\n", state_up(port_state->state));
-			printf("mode: %d\n",
-			       port_state->mode == HEXP_PORT_MODE_WR_SLAVE
-			       ? 0 : 1);
-			printf("locked: %d\n", port_state->locked);
-			printf("peer_id: ff:ff:ff:ff:ff:ff:ff:ff\n"); /* FIXME */
-		}
 	}
 }
 
@@ -330,7 +310,7 @@ int main(int argc, char *argv[])
 	int opt;
 	int usecolor = 1;
 	init_shm();
-	while((opt=getopt(argc, argv, "sbgpw")) != -1)
+	while((opt=getopt(argc, argv, "sbgw")) != -1)
 	{
 		switch(opt)
 		{
@@ -342,10 +322,6 @@ int main(int argc, char *argv[])
 				break;
 			case 'g':
 				mode = SHOW_SNMP_GLOBALS;
-				show_all();
-				exit(0);
-			case 'p':
-				mode = SHOW_SNMP_PORTS;
 				show_all();
 				exit(0);
 			case 'w': /* for the web interface */

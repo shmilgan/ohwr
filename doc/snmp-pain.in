@@ -589,10 +589,12 @@ use @t{ppsi_g} for globals and @t{ppsi_p} for the per-port table.
 To keep the code compact and extensible, I chose to @t{popen(3)} a
 connection to existing tools.  The tools report information to
 @i{stdout} in a line-oriented tagged-format: ``@t{<key>: <value>\n}''.
-Thus, @t{wr_mon} now supports @t{-g} (``@t{SHOW_SNMP_GLOBALS}'') and
-@t{-p} (``@t{SHOW_SNMP_PORTS}'').  By pre-setting environment variables
+Thus, @t{wr_mon} now supports @t{-g} (``@t{SHOW_SNMP_GLOBALS}''). 
+By pre-setting environment variables
 it's also possible to override the command names, for testing; see
 source code for details.
+
+To get information about ports shm is used instead of wr_mon.
 
 Parsing is implemented using a @t{pickinfo} structure, where each key
 is associated to a data type, a pointer and a size.  This is is used
