@@ -917,7 +917,7 @@ The following tools and scripts are provided:
 
 @c --------------------------------------------------------------------------
 @node sdb-read
-@subsection sdb-read
+@section sdb-read
 
 [Note: this documentation section comes from the @t{ohwr} project
 called @t{fpga-config-space}.]
