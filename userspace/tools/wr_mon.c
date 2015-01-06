@@ -18,9 +18,6 @@
 
 int mode = SHOW_GUI;
 
-
-hexp_port_list_t port_list;
-
 static struct minipc_ch *ptp_ch;
 
 static struct wrs_shm_head *hal_head;
