@@ -5,6 +5,7 @@
 #include <string.h>
 #include <signal.h>
 #include <getopt.h>
+#include <time.h>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -181,6 +182,8 @@ static void hal_parse_cmdline(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
+	struct timespec t1, t2;
+
 	trace_log_file("/dev/kmsg");
 	/* Prevent from running HAL twice - it will likely freeze the system */
 	if (hal_check_running()) {
@@ -197,14 +200,38 @@ int main(int argc, char *argv[])
 	/*
 	 * Main loop update - polls for WRIPC requests and rolls the port
 	 * state machines. This is not a busy loop, as wripc waits for
-	 * the "max ms delay". Unless an RPC call comes, and then the
-	 * delay is smaller; so this loop really consumes a lot of
-	 * cpu time.
+	 * the "max ms delay". Unless an RPC call comes, in which
+	 * case it returns earlier.
+	 *
+	 * We thus check the actual time, and only proceed with
+	 * port and fan update every PORT_FAN_MS_PERIOD.  There still
+	 * is some jitter from hal_update_wripc() timing.
+	 * includes some jitter.
 	 */
+	#define PORT_FAN_MS_PERIOD 200
+
+	clock_gettime(CLOCK_MONOTONIC, &t1);
 	for (;;) {
+		int delay_ms;
+
 		hal_update_wripc(25 /* max ms delay */);
+
+		clock_gettime(CLOCK_MONOTONIC, &t2);
+		delay_ms = (t2.tv_sec - t1.tv_sec) * 1000;
+		delay_ms += (t2.tv_nsec - t1.tv_nsec) / 1000 / 1000;
+		if (delay_ms < PORT_FAN_MS_PERIOD)
+			continue;
+
+		/* update the "previous" stamp */
+		t1.tv_nsec += PORT_FAN_MS_PERIOD * 1000 * 1000;
+		if (t1.tv_nsec > 1000 * 1000 * 1000) {
+			t1.tv_nsec -= 1000 * 1000 * 1000;
+			t1.tv_sec++;
+		}
+
 		hal_port_update_all();
 		shw_update_fans();
+		t1 = t2;
 	}
 
 	hal_shutdown();
