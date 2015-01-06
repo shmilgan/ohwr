@@ -104,9 +104,6 @@ static int hal_port_init(int index)
 	/* make sure the states and other variables are in their init state */
 	hal_port_reset_state(p);
 
-	p->state = HAL_PORT_STATE_DISABLED;
-	p->in_use = 1;
-
 	/* read dot-config values for this index, starting from name */
 	error = libwr_cfg_convert2("PORT%02i_PARAMS", "name", LIBWR_STRING,
 				   name, index);
@@ -117,6 +114,9 @@ static int hal_port_init(int index)
 	/* check if the port is built into the firmware, if not, we are done */
 	if (!hal_port_check_presence(name))
 		return -1;
+
+	p->state = HAL_PORT_STATE_DISABLED;
+	p->in_use = 1;
 
 	val = 18 * 800; /* magic default from previous code */
 	error = libwr_cfg_convert2("PORT%02i_PARAMS", "tx", LIBWR_INT,
