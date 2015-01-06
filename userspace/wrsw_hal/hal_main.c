@@ -109,16 +109,6 @@ static int hal_init()
 	return 0;
 }
 
-/* Main loop update - polls for WRIPC requests and rolls the port
- * state machines */
-static void hal_update()
-{
-	hal_update_wripc();
-	hal_port_update_all();
-	shw_update_fans();
-//      usleep(1000);
-}
-
 /* Turns a nice and well-behaving HAL into an evil servant of satan. */
 static void hal_deamonize()
 {
@@ -191,7 +181,6 @@ static void hal_parse_cmdline(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-
 	trace_log_file("/dev/kmsg");
 	/* Prevent from running HAL twice - it will likely freeze the system */
 	if (hal_check_running()) {
@@ -205,8 +194,19 @@ int main(int argc, char *argv[])
 	if (hal_init())
 		exit(1);
 
-	for (;;)
-		hal_update();
+	/*
+	 * Main loop update - polls for WRIPC requests and rolls the port
+	 * state machines. This is not a busy loop, as wripc waits for
+	 * the "max ms delay". Unless an RPC call comes, and then the
+	 * delay is smaller; so this loop really consumes a lot of
+	 * cpu time.
+	 */
+	for (;;) {
+		hal_update_wripc(25 /* max ms delay */);
+		hal_port_update_all();
+		shw_update_fans();
+	}
+
 	hal_shutdown();
 
 	return 0;

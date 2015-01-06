@@ -29,7 +29,7 @@ int hal_port_query_ports(struct hexp_port_list *list,
 
 
 int hal_init_wripc();
-int hal_update_wripc();
+int hal_update_wripc(int ms_timeout);
 
 int hal_add_cleanup_callback(hal_cleanup_callback_t cb);
 

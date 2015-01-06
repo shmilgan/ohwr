@@ -242,9 +242,9 @@ int hal_init_wripc(struct hal_port_state *hal_ports)
 }
 
 /* wripc update function, must be called in the main program loop */
-int hal_update_wripc()
+int hal_update_wripc(int ms_timeout)
 {
-	minipc_server_action(hal_ch, 25 /* ms */ );
+	minipc_server_action(hal_ch, ms_timeout);
 	return 0;
 }
 
