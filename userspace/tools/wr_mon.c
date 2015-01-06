@@ -75,8 +75,6 @@ void init_shm(void)
 			"to the PTP daemon!\n");
 		exit(-1);
 	}
-
-	read_ports();
 }
 
 void show_ports(void)
@@ -322,9 +320,11 @@ int main(int argc, char *argv[])
 				break;
 			case 'g':
 				mode = SHOW_SNMP_GLOBALS;
+				read_ports();
 				show_all();
 				exit(0);
 			case 'w': /* for the web interface */
+				read_ports();
 				show_unadorned_ports();
 				exit(0);
 			default:
@@ -352,6 +352,7 @@ int main(int argc, char *argv[])
 					    track_onoff);
 			}
 		}
+		read_ports();
 		show_all();
 		/* If we got broken pipe or anything, exit */
 		if (ferror(stdout))
