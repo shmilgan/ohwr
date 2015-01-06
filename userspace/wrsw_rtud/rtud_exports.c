@@ -39,8 +39,6 @@
 #include "rtud_exports.h"
 #include "mac.h"
 
-#include <libwr/hal_client.h>
-
 /* The channel */
 static struct minipc_ch *rtud_ch;
 
@@ -143,7 +141,6 @@ int rtudexp_clear_entries(const struct minipc_pd *pd,
 int rtudexp_add_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 {
 	uint8_t mac_tmp[ETH_ALEN] = { 0 };
-	hexp_port_list_t ports;
 
 	char *strEHA;
 	int port, mode;
@@ -155,8 +152,6 @@ int rtudexp_add_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 	mode = (int)args[1];
 
 	//TRACE(TRACE_INFO,"iface=%s, port=%d, dynamic=%d",strEHA,port,mode);
-
-	halexp_query_ports(&ports);
 
 	if (mac_from_str(mac_tmp, strEHA) != ETH_ALEN)
 		TRACE(TRACE_ERROR,
