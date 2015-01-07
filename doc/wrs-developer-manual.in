@@ -1681,9 +1681,16 @@ for details about how they are used:
 @itemx void wrs_shm_put(void *headptr);
 
 	Request access to a shared memory area, and stop using it.
-        Currently only @t{WRS_SHM_WRITE} and @t{WRS_SHM_READ} are defined as 
-        a flag. If non-zero the head is properly initialized. 
-        On error NULL is returned, and errno is set.
+        Flags are  @t{WRS_SHM_WRITE}, @t{WRS_SHM_READ} and @t{WRS_SHM_LOCKED}.
+        If @t{WRS_SHM_WRITE} is set, head is properly initialized.
+        if @t{WRS_SHM_LOCKED} is set, a  writer will mark the area as locked
+        before writing its own @t{pid}, and a reader will wait for the @t{pid}
+        to be valid (i.e. it waits for a writer to be there). A writer using
+        the ``locked'' flag must release the lock after initialization
+        by calling @t{wrs_shme_write(WRS_SHM_WRITE_END)}.
+        On error NULL is returned, and errno is set to @t{EINVAL},
+        @t{ETIMEDOUT} or to the error returned by underlying system calls
+        (for example, @t{EPERM} if the file cannot be mapped).
 
 @item void *wrs_shm_alloc(void *headptr, size_t size);
 
@@ -1703,13 +1710,15 @@ for details about how they are used:
         to a pointer in the reader's address space, or NULL if on error.
         Please see @t{tools/wrs_dump_shmem.c} about how this is used.
         
-@item void wrs_shm_write(void *headptr, int begin);
+@item void wrs_shm_write(void *headptr, int flags);
 
+	@t{flags} is @t{WRS_SHM_WRITE_BEGIN} or @t{WRS_SHM_WRITE_END}.
 	Whenever internal consistency of data structure is needed, the
         writer should call this function before modifying shared structures,
-        with @t{begin} set to 1. It should also call the function again
-        when all modifications are done and data is internally consistent,
-        this time with @t{begin} set to zero.
+        and also
+        when all modifications are done and data is internally consistent.
+        A call with @t{WRS_SHM_WRITE_END} is mandatory for writers that
+        used @t{WRS_SHM_LOCKED} at @t{wrs_shm_get} time.
 
 @item unsigned wrs_shm_seqbegin(void *headptr);
 @itemx int wrs_shm_seqretry(void *headptr, unsigned start);
