@@ -26,8 +26,8 @@ done
 
 export WR_HOME="/wr"
 
-eval $WR_HOME/bin/wrsw_hal -c $WR_HOME/etc/wrsw_hal.conf $LOGPIPE_HAL \&
-eval $WR_HOME/bin/wrsw_rtud                              $LOGPIPE_RTU \&
+eval $WR_HOME/bin/wrsw_hal    $LOGPIPE_HAL \&
+eval $WR_HOME/bin/wrsw_rtud   $LOGPIPE_RTU \&
 
 if [ ! -x $WR_HOME/bin/ppsi ]; then
     echo "No WR-PTP daemon found" >&2
