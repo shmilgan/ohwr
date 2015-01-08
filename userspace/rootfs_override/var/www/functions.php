@@ -83,7 +83,7 @@ function wrs_header_ports(){
 	
 	echo '<tr class="port">';
 	$cont = 0;
-	for($i=1; $i<18*4; $i=$i+4){
+	for($i=1; $i<18*3; $i=$i+3){
 		
 		if (strstr($ports[($i-1)],"up")){
 			if (!strcmp($ports[($i)],"Master")){
@@ -102,7 +102,7 @@ function wrs_header_ports(){
 	echo '</tr>';
 	
 	echo '<tr class="status">';
-	for($i=1; $i<18*4; $i=$i+4){
+	for($i=1; $i<18*3; $i=$i+3){
 		
 		if (!strstr($ports[($i+1)],"NoLock")){
 			$mode="locked";
