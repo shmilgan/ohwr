@@ -249,10 +249,13 @@ static void wrs_ppsi_get_per_port(void)
 		}
 
 		retries++;
+		if (retries > 100) {
+			snmp_log(LOG_ERR, "%s: too many retries to read HAL\n",
+				 __func__);
+			retries = 0;
+			}
 	} while (wrs_shm_seqretry(hal_head, ii));
-	if (retries > 100)
-		snmp_log(LOG_ERR, "%s: too many retries to read HAL\n",
-			 __func__);
+
 }
 
 
