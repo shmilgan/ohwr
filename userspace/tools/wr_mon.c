@@ -36,9 +36,10 @@ int read_ports(void){
 		memcpy(hal_ports_local_copy, hal_ports,
 		       hal_nports_local*sizeof(struct hal_port_state));
 		retries++;
+		if (retries > 100)
+			return -1;
+		usleep(1000);
 	} while (wrs_shm_seqretry(hal_head, ii));
-	if (retries > 100)
-		return -1;
 
 	return 0;
 }
