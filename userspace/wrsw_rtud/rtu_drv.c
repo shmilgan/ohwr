@@ -43,7 +43,8 @@
 #include <sys/ioctl.h>
 
 #include <libwr/switch_hw.h>
-#include <libwr/hal_client.h>
+#include <libwr/shmem.h>
+#include <libwr/hal_shmem.h>
 
 #include <fpga_io.h>
 #include <regs/rtu-regs.h>
@@ -65,8 +66,44 @@ static uint32_t mac_entry_word4_w(struct filtering_entry *ent);
  */
 static int fd;
 
-#define HAL_CONNECT_RETRIES 1000
-#define HAL_CONNECT_TIMEOUT 2000000	/* us */
+extern struct wrs_shm_head *hal_head;
+extern struct hal_port_state *hal_ports;
+extern int hal_nports_local;
+
+void init_shm(void)
+{
+	struct hal_shmem_header *h;
+	int ii;
+
+	/* wait forever for HAL */
+	while ((hal_head = wrs_shm_get(wrs_shm_hal, "",
+				WRS_SHM_READ | WRS_SHM_LOCKED))
+		== NULL) {
+		TRACE(TRACE_INFO, "unable to open shm for HAL!\n");
+	}
+
+	h = (void *)hal_head + hal_head->data_off;
+
+	while (1) { /* wait forever for HAL to produce consistent nports */
+		ii = wrs_shm_seqbegin(hal_head);
+		/* Assume number of ports does not change in runtime */
+		hal_nports_local = h->nports;
+		if (!wrs_shm_seqretry(hal_head, ii))
+			break;
+		TRACE(TRACE_FATAL, "Wait for HAL.\n");
+		sleep(1);
+	}
+
+	/* Even after HAL restart, HAL will place structures at the same
+	 * addresses. No need to re-dereference pointer at each read. */
+	hal_ports = wrs_shm_follow(hal_head, h->ports);
+	if (hal_nports_local > HAL_MAX_PORTS) {
+		TRACE(TRACE_FATAL, "Too many ports reported by HAL. "
+			"%d vs %d supported\n",
+			hal_nports_local, HAL_MAX_PORTS);
+		exit(-1);
+	}
+}
 
 /**
  * \brief Initialize HW RTU memory map
@@ -76,12 +113,7 @@ int rtu_init(void)
 {
 	int err;
 
-	if (halexp_client_try_connect(HAL_CONNECT_RETRIES, HAL_CONNECT_TIMEOUT)
-	    < 0) {
-		TRACE(TRACE_FATAL,
-		      "The HAL is not responding... Are you sure it's running on your switch?\n");
-		exit(-1);
-	}
+	init_shm();
 	// Used to 'get' RTU IRQs from kernel
 	fd = open(RTU_DEVNAME, O_RDWR);
 	if (fd < 0) {

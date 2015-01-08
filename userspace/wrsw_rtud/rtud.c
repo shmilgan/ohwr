@@ -40,7 +40,8 @@
 
 #include <libwr/trace.h>
 #include <libwr/switch_hw.h>
-#include <libwr/hal_client.h>
+#include <libwr/shmem.h>
+#include <libwr/hal_shmem.h>
 
 #include "rtu.h"
 #include "mac.h"
@@ -53,12 +54,32 @@
 static pthread_t aging_process;
 static pthread_t wripc_process;
 
-static struct {
-	int in_use;
-	int is_up;
-	char if_name[16];
-	int hw_index;
-} port_state[MAX_PORT + 1];
+struct wrs_shm_head *hal_head;
+struct hal_port_state *hal_ports;
+/* local copy of port state */
+static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS];
+int hal_nports_local;
+
+int port_was_up[MAX_PORT + 1];
+
+/* copy ports' information from HALs shmem to local memory */
+int read_ports(void){
+	unsigned ii;
+	unsigned retries = 0;
+
+	/* read data, with the sequential lock to have all data consistent */
+	do {
+		ii = wrs_shm_seqbegin(hal_head);
+		memcpy(hal_ports_local_copy, hal_ports,
+		       hal_nports_local*sizeof(struct hal_port_state));
+		retries++;
+		if (retries > 100)
+			return -1;
+	} while (wrs_shm_seqretry(hal_head, ii));
+
+
+	return 0;
+}
 
 /**
  * \brief Creates the static entries in the filtering database
@@ -70,15 +91,13 @@ static int rtu_create_static_entries()
 	uint8_t bcast_mac[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 	uint8_t slow_proto_mac[] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x01 };
 	uint8_t ptp_mcast_mac[] = { 0x01, 0x1b, 0x19, 0x00, 0x00, 0x00 };
-	hexp_port_state_t pstate;
-	hexp_port_list_t ports;
 	int i, err;
 	uint32_t enabled_port_mask = 0;
 
-	halexp_query_ports(&ports);
+	read_ports();
 
-	TRACE(TRACE_INFO, "Number of physical ports: %d, active ports: %d\n",
-	      ports.num_physical_ports, ports.num_ports);
+	TRACE(TRACE_INFO, "Number of physical ports: %d\n",
+	      hal_nports_local);
 
 	// VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
 	TRACE(TRACE_INFO, "adding static routes for slow protocols...");
@@ -86,32 +105,27 @@ static int rtu_create_static_entries()
 		slow_proto_mac[5] = i;
 		err =
 		    rtu_fd_create_entry(slow_proto_mac, 0,
-					(1 << ports.num_physical_ports), STATIC,
+					(1 << hal_nports_local), STATIC,
 					OVERRIDE_EXISTING);
 		if (err)
 			return err;
 	}
 
-	memset(port_state, 0, sizeof(port_state));
+	for (i = 0; i < hal_nports_local; i++) {
+		enabled_port_mask |= (1 << hal_ports_local_copy[i].hw_index);
 
-	for (i = 0; i < ports.num_ports; i++) {
-		halexp_get_port_state(&pstate, ports.port_names[i]);
-		enabled_port_mask |= (1 << pstate.hw_index);
-
-		strncpy(port_state[i].if_name, ports.port_names[i], 16);
-		port_state[i].is_up = 0;
-		port_state[i].hw_index = pstate.hw_index;
-		port_state[i].in_use = 1;
+		port_was_up[i] = state_up(hal_ports_local_copy[i].state);
 
 		TRACE(TRACE_INFO,
 		      "adding static route for port %s index %d [mac %s]",
-		      ports.port_names[i],
-		      pstate.hw_index, mac_to_string(pstate.hw_addr)
+		      hal_ports_local_copy[i].name,
+		      hal_ports_local_copy[i].hw_index,
+		      mac_to_string(hal_ports_local_copy[i].hw_addr)
 		    );
 
 		err =
-		    rtu_fd_create_entry(pstate.hw_addr, 0,
-					(1 << ports.num_physical_ports), STATIC,
+		    rtu_fd_create_entry(hal_ports_local_copy[i].hw_addr, 0,
+					(1 << hal_nports_local), STATIC,
 					OVERRIDE_EXISTING);
 		if (err)
 			return err;
@@ -121,12 +135,11 @@ static int rtu_create_static_entries()
 	TRACE(TRACE_INFO, "adding static route for broadcast MAC...");
 	err =
 	    rtu_fd_create_entry(bcast_mac, 0,
-				enabled_port_mask | (1 << ports.
-						     num_physical_ports),
+				enabled_port_mask | (1 << hal_nports_local),
 				STATIC, OVERRIDE_EXISTING);
 	err =
 	    rtu_fd_create_entry(ptp_mcast_mac, 0,
-				(1 << ports.num_physical_ports), STATIC,
+				(1 << hal_nports_local), STATIC,
 				OVERRIDE_EXISTING);
 	if (err)
 		return err;
@@ -136,44 +149,27 @@ static int rtu_create_static_entries()
 	return 0;
 }
 
-/* Checks if the link is up on inteface (if_name). Returns non-zero if yes. */
-static int check_link(int fd_raw, const char *if_name)
-{
-	struct ifreq ifr;
-
-	strncpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
-	if (ioctl(fd_raw, SIOCGIFFLAGS, &ifr) > 0)
-		return -1;
-	return (ifr.ifr_flags & IFF_UP && ifr.ifr_flags & IFF_RUNNING);
-}
-
 static void rtu_update_ports_state()
 {
 	int i;
-	static int fd_raw = -1;
-
-	/* create a dummy socket for ioctls() to check link status on each port */
-	if (fd_raw < 0) {
-		fd_raw = socket(AF_PACKET, SOCK_DGRAM, 0);
-		if (fd_raw < 0)
-			return;
-	}
-
+	int link_up;
+	/* update hal_ports_local_copy */
+	read_ports();
 	for (i = 0; i <= MAX_PORT; i++) {
-		if (!port_state[i].in_use)
+		if (!hal_ports_local_copy[i].in_use)
 			continue;
 
-		int link_up = check_link(fd_raw, port_state[i].if_name);
-		if (port_state[i].is_up && !link_up) {
+		link_up = state_up(hal_ports_local_copy[i].state);
+		if (port_was_up[i] && !link_up) {
 			TRACE(TRACE_INFO,
 			      "Port %s went down, removing corresponding entries...",
-			      port_state[i].if_name);
+			      hal_ports_local_copy[i].name);
 
-			    rtu_fd_clear_entries_for_port(port_state[i].
-							  hw_index);
+			rtu_fd_clear_entries_for_port(hal_ports_local_copy[i].
+							hw_index);
 		}
 
-		port_state[i].is_up = link_up;
+		port_was_up[i] = link_up;
 
 	}
 }
@@ -219,6 +215,7 @@ static int rtu_daemon_learning_process()
 	struct rtu_request req;	// Request read from learning queue
 	uint32_t port_map;	// Destination port map
 	uint16_t vid;		// VLAN identifier
+	struct hal_port_state *p;
 
 	while (1) {
 		// Serve pending unrecognised request
@@ -232,10 +229,11 @@ static int rtu_daemon_learning_process()
 			      req.has_prio ? req.prio : 0);
 
 			for (port_down = i = 0; i <= MAX_PORT; i++)
-				if (port_state[i].in_use
-				    && port_state[i].hw_index == req.port_id
-				    && !port_state[i].is_up) {
+				p = &hal_ports_local_copy[i];
+				if (p->in_use && p->hw_index == req.port_id
+				    && !state_up(p->state)) {
 					port_down = 1;
+					TRACE(TRACE_INFO, "port down %d\n", i);
 					break;
 				}
 
@@ -354,7 +352,6 @@ int main(int argc, char **argv)
 	unsigned long aging_time = DEFAULT_AGING_TIME;	// Aging time       [sec.]
 
 	trace_log_stderr();
-
 	if (argc > 1) {
 		// Strip out path from argv[0] if exists, and extract command name
 		for (name = s = argv[0]; s[0]; s++) {
