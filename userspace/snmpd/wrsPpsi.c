@@ -210,7 +210,7 @@ void init_shm(void)
 	if (hal_nports_local > WRS_N_PORTS) {
 		snmp_log(LOG_ERR, "Too many ports reported by HAL. "
 			"%d vs %d supported\n",
-			hal_nports_local, HAL_MAX_PORTS);
+			hal_nports_local, WRS_N_PORTS);
 		exit(-1);
 	}
 }
