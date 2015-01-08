@@ -156,7 +156,7 @@ function wrs_main_info(){
 	
 	// Load variables
 	$wr_date =  str_replace("\n","<br>",
-		shell_exec("/wr/bin/wr_date get"));
+		shell_exec("/wr/bin/wr_date -n get"));
 	$PPSi = wrs_check_ptp_status() ? 
 		'[<a href="ptp.php">on</A>]' : '[<a href="ptp.php">off</A>]';
 	$SNMP = check_snmp_status() ? '[on] ' : '[off] '; 
