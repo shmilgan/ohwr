@@ -1196,50 +1196,72 @@ function wrs_reboot(){
 	header ('Location: reboot.php');
 }
 
+/*
+ * Parses kconfig (/wr/etc/dot-config) file and it is stored in a user
+ * session variable.
+ *  
+ * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
+ * 
+ */
+
 function load_kconfig(){
 	$_SESSION['KCONFIG'] = parse_ini_file($GLOBALS['kconfigfile']);
 }
 
+/*
+ * It saves the dotconfig configuration to dotfile file
+ * and changes it from master to Grandmaster and vicecersa
+ *  
+ * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
+ * @precondition: For disabling binary options, the web interface expects
+ * internally a "=n". A blank space "" would think the field is string and
+ * not binary. 
+ * i.e, 
+ * 	$_SESSION['KCONFIG'][CONFIG_PTP_WR_DEFAULT]=y; enables CONFIG_PTP_WR_DEFAULT
+ * 		by adding "CONFIG_PTP_WR_DEFAULT=y"
+ * 	$_SESSION['KCONFIG'][CONFIG_PTP_WR_DEFAULT]=n; disables CONFIG_PTP_WR_DEFAULT
+ * 		by adding "# CONFIG_PTP_WR_DEFAULT is not set"
+ * 
+ */
 function save_kconfig(){
 	
-	$array = $_SESSION['KCONFIG'];
-	$file = $GLOBALS['kconfigfile'];
-	
-	//$array = add_comments($array);
-	
-	// header of the dotconfig file
-	$head = array ("#", 
-					"# Automatically generated make config: don't edit",
-					"#");
-					
-    $res = array();
-    $res = $head;
-    
-    $counter = 0;
-    foreach($array as $key => $val)
-    {
-		// Including local configuration text 
-		if($counter==3){
-				$res[].=" ";
-				$res[].="#";
-				$res[].="# Local configuration";
-				$res[].="#";
-		}
-        if(is_array($val))
-        {
-            $res[] = "[$key]";
-            foreach($val as $skey => $sval) $res[] = "$skey=".(is_numeric($sval) ? $sval : '"'.$sval.'"');
-        }
-        else $res[] = "$key=".(is_numeric($val) ? $val : '"'.$val.'"');
-        $counter++;
-    }
-    safefilerewrite($file, implode("\n", $res));
+	$file = file_get_contents($GLOBALS['kconfigfile']);
+	$reading = fopen($GLOBALS['kconfigfile'], 'r');
+	$writing = fopen($GLOBALS['kconfigfile'].".tmp", 'w');
 
+	while (!feof($reading)) {
+	  $line = fgets($reading);
+	  $line_aux = $line;
+	  $element = explode("=",$line);
+	  
+		// Dealing with enabled options
+		if ((!empty($element)) && ($element[0]!="\n") && (!feof($reading)) && ($element[0][0]!="#")){
+			if($_SESSION['KCONFIG'][$element[0]]=="y") //Already enabled binary options
+				$line=$element[0].'='.$_SESSION['KCONFIG'][$element[0]]."\n";
+			else if ($_SESSION['KCONFIG'][$element[0]]=="n") //Binary must be disabled
+				$line="# ".$element[0]." is not set"."\n";
+			else
+				$line=$element[0].'="'.$_SESSION['KCONFIG'][$element[0]].'"'."\n";
+		} 
+
+		// Dealing with enabled options and comments
+		if (strpos($line_aux,'is not set') !== false){
+			$element = explode(" ",$line_aux);
+			if (!empty($element[1]) && empty($_SESSION['KCONFIG'][$element[1]]))
+				$line="# ".$element[1]." is not set"."\n";
+			else if (!empty($element[1]) && !empty($_SESSION['KCONFIG'][$element[1]]))
+				$line=$element[1].'='.$_SESSION['KCONFIG'][$element[1]]."\n";
+		}
+	  
+	  fputs($writing, $line);
+	}
+	fclose($reading); fclose($writing);
+	rename( $GLOBALS['kconfigfile'].".tmp", $GLOBALS['kconfigfile']);
 }
 
-function safefilerewrite($fileName, $dataToSave){
+function safefilerewrite($dotconfig, $tmpdotconfig){
 	
-	if ($fp = fopen($fileName, 'w'))
+	if ($fp = fopen($dotconfig, 'w'))
     {
         $startTime = microtime();
         do
@@ -1250,7 +1272,7 @@ function safefilerewrite($fileName, $dataToSave){
 
         //file was locked so now we can store information
         if ($canWrite)
-        {            fwrite($fp, $dataToSave);
+        {            rename($tmpdotconfig, $dotconfig);
             flock($fp, LOCK_UN);
         }
         fclose($fp);
