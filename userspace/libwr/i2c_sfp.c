@@ -578,13 +578,13 @@ int shw_sfp_read_db(void)
 					   LIBWR_INT, &val, index);
 		if (error)
 			__err_msg(index, "tx", NULL);
-		sfp->delta_tx = val;
+		sfp->delta_tx_ps = val;
 		val = 0;
 		error = libwr_cfg_convert2("SFP%02i_PARAMS", "rx",
 					   LIBWR_INT, &val, index);
 		if (error)
 			__err_msg(index, "rx", NULL);
-		sfp->delta_rx = val;
+		sfp->delta_rx_ps = val;
 
 		/* We also store the wavelength, used to get alpha */
 		error = libwr_cfg_convert2("SFP%02i_PARAMS", "wl_txrx",

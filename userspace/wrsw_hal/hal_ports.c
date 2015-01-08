@@ -453,7 +453,7 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 		      "delta Rx %d alpha %.3f (* 1e6)",
 		      cdata->flags & SFP_FLAG_CLASS_DATA
 		      ? "class-specific" : "device-specific",
-		      cdata->delta_tx, cdata->delta_rx,
+		      cdata->delta_tx_ps, cdata->delta_rx_ps,
 		      cdata->alpha * 1e6);
 
 		memcpy(&p->calib.sfp, cdata,

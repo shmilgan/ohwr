@@ -52,9 +52,9 @@ int hal_port_get_exported_state(struct hexp_port_state *state,
 	state->rx_calibrated = p->calib.rx_calibrated;
 
 	state->delta_tx = p->calib.delta_tx_phy
-	    + p->calib.sfp.delta_tx + p->calib.delta_tx_board;
+		+ p->calib.sfp.delta_tx_ps + p->calib.delta_tx_board;
 	state->delta_rx = p->calib.delta_rx_phy
-	    + p->calib.sfp.delta_rx + p->calib.delta_rx_board;
+	    + p->calib.sfp.delta_rx_ps + p->calib.delta_rx_board;
 
 	state->t2_phase_transition = DEFAULT_T2_PHASE_TRANS;
 	state->t4_phase_transition = DEFAULT_T4_PHASE_TRANS;
