@@ -23,7 +23,10 @@
 #include <asm/socket.h>
 
 #include <libwr/ptpd_netif.h>
+#include <libwr/shmem.h>
+#include <libwr/hal_shmem.h>
 #include <libwr/hal_client.h>
+#include <libwr/switch_hw.h>
 #include <net/ethernet.h>
 
 #ifdef NETIF_VERBOSE
@@ -83,27 +86,29 @@ static inline int inside_range(int min, int max, int x)
 }
 
 /* For debugging/testing purposes */
-int ptpd_netif_get_dmtd_phase(struct wr_socket *s, int32_t *phase)
+int ptpd_netif_get_dmtd_phase(int32_t *phase, struct hal_port_state *p)
 {
-	hexp_port_state_t pstate;
+	int phase_val_valid_local;
 
-	halexp_get_port_state(&pstate, s->bind_addr.if_name);
+	if (!p)
+		return -1;
 
+	phase_val_valid_local = p->phase_val_valid;
 	if (phase)
-		*phase = pstate.phase_val;
-	return pstate.phase_val_valid;
+		*phase = phase_val_valid_local;
+	return phase_val_valid_local;
 }
 
-static void update_dmtd(struct wr_socket *s)
+static void update_dmtd(struct wr_socket *s, struct hal_port_state *p)
 {
-	hexp_port_state_t pstate;
+
+	if (!p)
+		return;
 
 	if (tmo_expired(&s->dmtd_update_tmo)) {
-		halexp_get_port_state(&pstate, s->bind_addr.if_name);
-
 		// FIXME: ccheck if phase value is ready
-		s->dmtd_phase = pstate.phase_val;
-		s->dmtd_phase_valid = pstate.phase_val_valid;
+		s->dmtd_phase = p->phase_val;
+		s->dmtd_phase_valid = p->phase_val_valid;
 
 		tmo_restart(&s->dmtd_update_tmo);
 	}
@@ -169,13 +174,12 @@ int ptpd_netif_init()
 }
 
 struct wr_socket *ptpd_netif_create_socket(int sock_type, int flags,
-				      struct wr_sockaddr *bind_addr)
+				      struct wr_sockaddr *bind_addr,
+				      struct hal_port_state *port)
 {
 	struct wr_socket *s;
 	struct sockaddr_ll sll;
 	struct ifreq f;
-
-	hexp_port_state_t pstate;
 
 	int fd;
 
@@ -184,7 +188,7 @@ struct wr_socket *ptpd_netif_create_socket(int sock_type, int flags,
 	if (sock_type != PTPD_SOCK_RAW_ETHERNET)
 		return NULL;
 
-	if (halexp_get_port_state(&pstate, bind_addr->if_name) < 0)
+	if (!port)
 		return NULL;
 
 	fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
@@ -267,10 +271,10 @@ struct wr_socket *ptpd_netif_create_socket(int sock_type, int flags,
 	s->fd = fd;
 
 	// store the linearization parameters
-	s->clock_period = pstate.clock_period;
-	s->phase_transition = pstate.t2_phase_transition;
+	s->clock_period = REF_CLOCK_PERIOD_PS;
+	s->phase_transition = DEFAULT_T2_PHASE_TRANS;
 	s->dmtd_phase_valid = 0;
-	s->dmtd_phase = pstate.phase_val;
+	s->dmtd_phase = port->phase_val;
 
 	tmo_init(&s->dmtd_update_tmo, DMTD_UPDATE_INTERVAL);
 
@@ -406,7 +410,8 @@ static void poll_tx_timestamp(struct wr_socket *s, struct wr_tstamp *tx_timestam
 }
 
 int ptpd_netif_recvfrom(struct wr_socket *s, struct wr_sockaddr *from, void *data,
-			size_t data_length, struct wr_tstamp *rx_timestamp)
+			size_t data_length, struct wr_tstamp *rx_timestamp,
+			struct hal_port_state *port)
 {
 	struct etherpacket pkt;
 	struct msghdr msg;
@@ -468,7 +473,7 @@ int ptpd_netif_recvfrom(struct wr_socket *s, struct wr_sockaddr *from, void *dat
 		rx_timestamp->raw_nsec = sts->hwtimeraw.tv_nsec;
 		rx_timestamp->raw_ahead = cntr_ahead;
 
-		update_dmtd(s);
+		update_dmtd(s, port);
 		if (s->dmtd_phase_valid) {
 			ptpd_netif_linearize_rx_timestamp(rx_timestamp,
 							  s->dmtd_phase,

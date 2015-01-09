@@ -5,6 +5,8 @@
 
 #include <stdio.h>
 #include <net/ethernet.h>
+#include <libwr/hal_shmem.h>
+#include <libwr/hal_client.h>
 
 #define PTPD_SOCK_RAW_ETHERNET 	1
 #define PTPD_SOCK_UDP 		2
@@ -80,7 +82,8 @@ int ptpd_netif_init();
 // Creates UDP or Ethernet RAW socket (determined by sock_type) bound to bind_addr. If PTPD_FLAG_MULTICAST is set, the socket is
 // automatically added to multicast group. User can specify physical_port field to bind the socket to specific switch port only.
 struct wr_socket *ptpd_netif_create_socket(int sock_type, int flags,
-				      struct wr_sockaddr *bind_addr);
+				      struct wr_sockaddr *bind_addr,
+				      struct hal_port_state *port);
 
 // Sends a UDP/RAW packet (data, data_length) to address provided in wr_sockaddr
 // For raw frames, mac/ethertype needs to be provided, for UDP - ip/port.
@@ -94,7 +97,8 @@ int ptpd_netif_sendto(struct wr_socket *sock, struct wr_sockaddr *to, void *data
 // by data_length parameter. Sender information is stored in structure specified in 'from'. All RXed packets are timestamped and the timestamp
 // is stored in rx_timestamp (unless it's NULL).
 int ptpd_netif_recvfrom(struct wr_socket *sock, struct wr_sockaddr *from, void *data,
-			size_t data_length, struct wr_tstamp *rx_timestamp);
+			size_t data_length, struct wr_tstamp *rx_timestamp,
+			struct hal_port_state *port);
 
 // Closes the socket.
 int ptpd_netif_close_socket(struct wr_socket *sock);
@@ -112,7 +116,7 @@ int ptpd_netif_poll(struct wr_sockaddr *);
 
 /* Timebase adjustment functions - the servo should not call the HAL directly */
 int ptpd_netif_adjust_counters(int64_t adjust_sec, int32_t adjust_nsec);
-int ptpd_netif_get_dmtd_phase(struct wr_socket *sock, int32_t *phase);
+int ptpd_netif_get_dmtd_phase(int32_t *phase, struct hal_port_state *p);
 void ptpd_netif_linearize_rx_timestamp(struct wr_tstamp *ts, int32_t dmtd_phase,
 				       int cntr_ahead, int transition_point,
 				       int clock_period);

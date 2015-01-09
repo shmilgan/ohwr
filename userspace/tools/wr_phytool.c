@@ -50,27 +50,46 @@ static struct EP_WB _ep_wb;
 
 extern int rts_connect();
 
-int get_nports_from_hal(void)
-{
-	struct hal_shmem_header *h;
-	struct wrs_shm_head *hal_head;
-	int hal_nports_local; /* local copy of number of ports */
+static int hal_nports_local;
+static struct wrs_shm_head *hal_head;
+static struct hal_port_state *hal_ports;
 
-	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
+int hal_shm_init(void)
+{
+	int ii;
+	struct hal_shmem_header *h;
+
+	/* open shmem to HAL */
+	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ | WRS_SHM_LOCKED);
 	if (!hal_head) {
-		fprintf(stderr, "unable to open shm for HAL!\n");
-		exit(-1);
+		fprintf(stderr,
+			"FATAL: wr_phytool unable to open shm to HAL.\n");
+		return -1;
 	}
+
 	h = (void *)hal_head + hal_head->data_off;
-	/* Assume number of ports does not change in runtime */
-	hal_nports_local = h->nports;
+
+	while (1) { /* wait forever for HAL to produce consistent nports */
+		ii = wrs_shm_seqbegin(hal_head);
+		/* Assume number of ports does not change in runtime */
+		hal_nports_local = h->nports;
+		if (!wrs_shm_seqretry(hal_head, ii))
+			break;
+		fprintf(stderr, "INFO: wr_phytool Wait for HAL.\n");
+		sleep(1);
+	}
+
+	/* Even after HAL restart, HAL will place structures at the same
+	 * addresses. No need to re-dereference pointer at each read. */
+	hal_ports = wrs_shm_follow(hal_head, h->ports);
 	if (hal_nports_local > HAL_MAX_PORTS) {
-		fprintf(stderr, "Too many ports reported by HAL. "
+		fprintf(stderr,
+			"FATAL: wr_phytool Too many ports reported by HAL."
 			"%d vs %d supported\n",
 			hal_nports_local, HAL_MAX_PORTS);
-		exit(-1);
+		return -1;
 	}
-	return hal_nports_local;
+	return 0;
 }
 
 int fpga_map(char *prgname)
@@ -247,6 +266,7 @@ void calc_trans(int ep, int argc, char *argv[])
 	FILE *f_log = NULL;
 	struct wr_sockaddr sock_addr, from;
 	int bitslide,phase, i;
+	struct hal_port_state *port;
 
 	signal (SIGINT, sighandler);
 	for(i=0;i<MAX_BITSLIDES;i++)
@@ -265,8 +285,12 @@ void calc_trans(int ep, int argc, char *argv[])
 	memset(sock_addr.mac, 0xff, 6);
 
 	assert(ptpd_netif_init() == 0);
+	assert(hal_shm_init() == 0);
+	port = hal_lookup_port(hal_ports, hal_nports_local,
+			       sock_addr.if_name);
+	sock = ptpd_netif_create_socket(PTPD_SOCK_RAW_ETHERNET, 0, &sock_addr,
+					port);
 
-	sock = ptpd_netif_create_socket(PTPD_SOCK_RAW_ETHERNET, 0, &sock_addr);
 //	fpga_writel(EP_DMCR_N_AVG_W(1024) | EP_DMCR_EN, IDX_TO_EP(ep) + EP_REG(DMCR));
 
 	if( rts_connect() < 0)
@@ -312,7 +336,8 @@ void calc_trans(int ep, int argc, char *argv[])
 		to.family = PTPD_SOCK_RAW_ETHERNET; // socket type
 
 		ptpd_netif_sendto(sock, &to, buf, 64, &ts_tx);
-		int n = ptpd_netif_recvfrom(sock, &from, buf, 64, &ts_rx);
+		int n = ptpd_netif_recvfrom(sock, &from, buf, 64, &ts_rx,
+					    port);
 
 
 		if(n>0)
@@ -378,6 +403,7 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 	struct wr_socket *sock;
 	struct wr_sockaddr sock_addr, from;
 	int adjust_count = 0;
+	struct hal_port_state *port;
 
 	signal (SIGINT, sighandler);
 
@@ -387,9 +413,11 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 	memset(sock_addr.mac, 0xff, 6);
 
 	assert(ptpd_netif_init() == 0);
-
-	sock = ptpd_netif_create_socket(PTPD_SOCK_RAW_ETHERNET, 0, &sock_addr);
-
+	assert(hal_shm_init() == 0);
+	port = hal_lookup_port(hal_ports, hal_nports_local,
+			       sock_addr.if_name);
+	sock = ptpd_netif_create_socket(PTPD_SOCK_RAW_ETHERNET, 0, &sock_addr,
+					port);
 
 	while(!quit)
 	{
@@ -409,7 +437,8 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 //		if(!ptpd_netif_adjust_in_progress())
 		{
 			ptpd_netif_sendto(sock, &to, buf, 64, &ts_tx);
-			ptpd_netif_recvfrom(sock, &from, buf, 64, &ts_rx);
+			ptpd_netif_recvfrom(sock, &from, buf, 64, &ts_rx,
+					    port);
 			printf("TX timestamp: correct %d %12lld:%12d\n", ts_tx.correct, ts_tx.sec, ts_tx.nsec);
 			printf("RX timestamp: correct %d %12lld:%12d\n", ts_rx.correct, ts_rx.sec, ts_rx.nsec);
 			adjust_count --;
@@ -423,9 +452,8 @@ void rt_command(int ep, int argc, char *argv[])
 {
 	struct rts_pll_state pstate;
 	int i;
-	int nports;
 
-	nports = get_nports_from_hal();
+	assert(hal_shm_init() == 0); /* to get hal_nports_local */
 
 	if(	rts_connect() < 0)
 	{
@@ -437,9 +465,10 @@ void rt_command(int ep, int argc, char *argv[])
 
 	if(!strcmp(argv[3], "show"))
 	{
-		printf("RTS State Dump [%d physical ports]:\n", nports);
+		printf("RTS State Dump [%d physical ports]:\n",
+		       hal_nports_local);
 		printf("CurrentRef: %d Mode: %d Flags: %x\n", pstate.current_ref, pstate.mode, pstate.flags);
-		for (i = 0; i < nports; i++)
+		for (i = 0; i < hal_nports_local; i++)
 			printf("wr%-2d: setpoint: %-8dps current: %-8dps loopback: %-8dps flags: %x\n", i,
 			       pstate.channels[i].phase_setpoint,
 			       pstate.channels[i].phase_current,
