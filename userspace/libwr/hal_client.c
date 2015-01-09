@@ -26,16 +26,6 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 	return rval;
 }
 
-/* This used to be a mini-rpc call; it is now a shmem lookup, in libwr */
-int halexp_query_ports(hexp_port_list_t * list)
-{
-	hal_port_query_ports(list, hal_ports);
-	/* The function above wrote a plain 18 in there; but we know better */
-	list->num_physical_ports = hal_nports;
-
-	return 0;
-}
-
 /* This used to be a mini-rpc call; it is now a shmem lookup */
 int halexp_get_port_state(hexp_port_state_t * state, const char *port_name)
 {

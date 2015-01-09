@@ -23,10 +23,6 @@ struct hal_port_state;
 int hal_port_get_exported_state(struct hexp_port_state *state,
 				struct hal_port_state *ports,
 				const char *port_name);
-struct hexp_port_list;
-int hal_port_query_ports(struct hexp_port_list *list,
-			 const struct hal_port_state *ports);
-
 
 int hal_init_wripc();
 int hal_update_wripc(int ms_timeout);

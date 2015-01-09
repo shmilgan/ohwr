@@ -1620,14 +1620,6 @@ the processes (excluding the @sc{rt} subsystem).
 	Called by library code (@t{halexp_lock_cmd}) but not used.
         Called by @i{ppsi} directly in @t{wrs-time.c}.
 
-@item hal::query_ports
-@c FIXME: shmem this
-
-	Called by library code (@t{halexp_query_ports}). This
-        in turn is called by @i{rtu_stat} and @i{rtud}.
-        If fills a structure @t{hexp_port_list_t}. It is being
-        moved to shared memory.
-
 @item  rtud::get_fd_list
 @itemx rtud::get_vd_list
 @c FIXME: shmem these

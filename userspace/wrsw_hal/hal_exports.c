@@ -190,14 +190,6 @@ static int export_lock_cmd(const struct minipc_pd *pd,
 	return 0;
 }
 
-static int export_query_ports(const struct minipc_pd *pd,
-			      uint32_t * args, void *ret)
-{
-	hexp_port_list_t *list = ret;
-	hal_port_query_ports(list, ports);
-	return 0;
-}
-
 static int export_get_timing_state(const struct minipc_pd *pd,
 				   uint32_t * args, void *ret)
 {
@@ -223,13 +215,11 @@ int hal_init_wripc(struct hal_port_state *hal_ports)
 	__rpcdef_pps_cmd.f = export_pps_cmd;
 	__rpcdef_get_port_state.f = export_get_port_state;
 	__rpcdef_lock_cmd.f = export_lock_cmd;
-	__rpcdef_query_ports.f = export_query_ports;
 	__rpcdef_get_timing_state.f = export_get_timing_state;
 
 	minipc_export(hal_ch, &__rpcdef_pps_cmd);
 	minipc_export(hal_ch, &__rpcdef_get_port_state);
 	minipc_export(hal_ch, &__rpcdef_lock_cmd);
-	minipc_export(hal_ch, &__rpcdef_query_ports);
 	minipc_export(hal_ch, &__rpcdef_get_timing_state);
 
 	/* FIXME: pll_cmd is empty anyways???? */
