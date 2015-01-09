@@ -1550,8 +1550,7 @@ Clients are created in the following places:
 	The library allows connecting to the HAL socket to ask
         for various actions (all librarized). The function
         @t{halexp_client_try_connect()} is called directly by
-        @i{rtud} and through @t{halexp_client_init} by @i{rtu_stat},
-        @i{wr_phytool}, @i{wr_mon}.
+        @i{wr_phytool}.
 
 @item userspace/libwr/rt_client.c
 
@@ -1602,12 +1601,12 @@ the processes (excluding the @sc{rt} subsystem).
 	This is the most used @sc{rpc} function, and should
         definitely be moved to shared memory.      
 	Called by library code: @t{halexp_get_port_state} (called
-        by @i{rtud} and following functions),
+        by following functions
         @t{update_dmtd}, @t{ptpd_netif_recvfrom},
         @t{ptpd_netif_create_socket} and (unused)
-        @t{ptpd_netif_get_dmtd_phase}).  The functions are used
+        @t{ptpd_netif_get_dmtd_phase}).  These functions are used
         by @i{wr_phytool}.
-        Also called by @i{ppsi} directly, in several place.
+        Also called by @i{ppsi} directly, in function @i{wrpc_read_calibration_data}.
 
 @item hal::get_timing_state
 @c FIXME: shmem this if used (not  used it seems)
