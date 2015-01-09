@@ -1550,8 +1550,7 @@ Clients are created in the following places:
 	The library allows connecting to the HAL socket to ask
         for various actions (all librarized). The function
         @t{halexp_client_try_connect()} is called directly by
-        @i{rtud} and through @t{halexp_client_init} by @i{rtu_stat},
-        @i{wr_phytool}, @i{wr_mon}.
+        @i{wr_phytool}.
 
 @item userspace/libwr/rt_client.c
 
@@ -1602,12 +1601,12 @@ the processes (excluding the @sc{rt} subsystem).
 	This is the most used @sc{rpc} function, and should
         definitely be moved to shared memory.      
 	Called by library code: @t{halexp_get_port_state} (called
-        by @i{rtud} and following functions),
+        by following functions
         @t{update_dmtd}, @t{ptpd_netif_recvfrom},
         @t{ptpd_netif_create_socket} and (unused)
-        @t{ptpd_netif_get_dmtd_phase}).  The functions are used
+        @t{ptpd_netif_get_dmtd_phase}).  These functions are used
         by @i{wr_phytool}.
-        Also called by @i{ppsi} directly, in several place.
+        Also called by @i{ppsi} directly, in function @i{wrpc_read_calibration_data}.
 
 @item hal::get_timing_state
 @c FIXME: shmem this if used (not  used it seems)
@@ -1620,14 +1619,6 @@ the processes (excluding the @sc{rt} subsystem).
 
 	Called by library code (@t{halexp_lock_cmd}) but not used.
         Called by @i{ppsi} directly in @t{wrs-time.c}.
-
-@item hal::query_ports
-@c FIXME: shmem this
-
-	Called by library code (@t{halexp_query_ports}). This
-        in turn is called by @i{rtu_stat} and @i{rtud}.
-        If fills a structure @t{hexp_port_list_t}. It is being
-        moved to shared memory.
 
 @item  rtud::get_fd_list
 @itemx rtud::get_vd_list
@@ -1681,9 +1672,16 @@ for details about how they are used:
 @itemx void wrs_shm_put(void *headptr);
 
 	Request access to a shared memory area, and stop using it.
-        Currently only @t{WRS_SHM_WRITE} and @t{WRS_SHM_READ} are defined as 
-        a flag. If non-zero the head is properly initialized. 
-        On error NULL is returned, and errno is set.
+        Flags are  @t{WRS_SHM_WRITE}, @t{WRS_SHM_READ} and @t{WRS_SHM_LOCKED}.
+        If @t{WRS_SHM_WRITE} is set, head is properly initialized.
+        if @t{WRS_SHM_LOCKED} is set, a  writer will mark the area as locked
+        before writing its own @t{pid}, and a reader will wait for the @t{pid}
+        to be valid (i.e. it waits for a writer to be there). A writer using
+        the ``locked'' flag must release the lock after initialization
+        by calling @t{wrs_shme_write(WRS_SHM_WRITE_END)}.
+        On error NULL is returned, and errno is set to @t{EINVAL},
+        @t{ETIMEDOUT} or to the error returned by underlying system calls
+        (for example, @t{EPERM} if the file cannot be mapped).
 
 @item void *wrs_shm_alloc(void *headptr, size_t size);
 
@@ -1703,13 +1701,15 @@ for details about how they are used:
         to a pointer in the reader's address space, or NULL if on error.
         Please see @t{tools/wrs_dump_shmem.c} about how this is used.
         
-@item void wrs_shm_write(void *headptr, int begin);
+@item void wrs_shm_write(void *headptr, int flags);
 
+	@t{flags} is @t{WRS_SHM_WRITE_BEGIN} or @t{WRS_SHM_WRITE_END}.
 	Whenever internal consistency of data structure is needed, the
         writer should call this function before modifying shared structures,
-        with @t{begin} set to 1. It should also call the function again
-        when all modifications are done and data is internally consistent,
-        this time with @t{begin} set to zero.
+        and also
+        when all modifications are done and data is internally consistent.
+        A call with @t{WRS_SHM_WRITE_END} is mandatory for writers that
+        used @t{WRS_SHM_LOCKED} at @t{wrs_shm_get} time.
 
 @item unsigned wrs_shm_seqbegin(void *headptr);
 @itemx int wrs_shm_seqretry(void *headptr, unsigned start);

@@ -106,8 +106,7 @@ struct hal_shmem_header {
  */
 struct hal_port_state *hal_port_lookup(struct hal_port_state *ports,
 				       const char *name);
-int hal_port_query_ports(struct hexp_port_list *list,
-			 const struct hal_port_state *ports);
+
 int hal_port_get_exported_state(struct hexp_port_state *state,
 				struct hal_port_state *ports,
 				const char *port_name);

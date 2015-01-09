@@ -29,8 +29,10 @@
 #include <libwr/ptpd_netif.h>
 
 #include <rt_ipc.h>
-#include <libwr/hal_client.h>
 #include <libwr/switch_hw.h>
+
+#include <libwr/shmem.h>
+#include <libwr/hal_shmem.h>
 
 #define WRS3_FPGA_BASE 0x10000000
 #define WRS3_FPGA_SIZE 0x100000
@@ -47,6 +49,29 @@ static struct EP_WB _ep_wb;
 #define fpga_readl(addr) (*(volatile uint32_t *)(fpga + (addr)))
 
 extern int rts_connect();
+
+int get_nports_from_hal(void)
+{
+	struct hal_shmem_header *h;
+	struct wrs_shm_head *hal_head;
+	int hal_nports_local; /* local copy of number of ports */
+
+	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
+	if (!hal_head) {
+		fprintf(stderr, "unable to open shm for HAL!\n");
+		exit(-1);
+	}
+	h = (void *)hal_head + hal_head->data_off;
+	/* Assume number of ports does not change in runtime */
+	hal_nports_local = h->nports;
+	if (hal_nports_local > HAL_MAX_PORTS) {
+		fprintf(stderr, "Too many ports reported by HAL. "
+			"%d vs %d supported\n",
+			hal_nports_local, HAL_MAX_PORTS);
+		exit(-1);
+	}
+	return hal_nports_local;
+}
 
 int fpga_map(char *prgname)
 {
@@ -397,8 +422,10 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 void rt_command(int ep, int argc, char *argv[])
 {
 	struct rts_pll_state pstate;
-	hexp_port_list_t plist;
 	int i;
+	int nports;
+
+	nports = get_nports_from_hal();
 
 	if(	rts_connect() < 0)
 	{
@@ -406,21 +433,13 @@ void rt_command(int ep, int argc, char *argv[])
 		return;
 	}
 
-	if(	halexp_client_init() < 0)
-	{
-		printf("Can't connect to the HAL \n");
-		plist.num_physical_ports = 18;
-//		return -1;
-	}
-
 	rts_get_state(&pstate);
-//	halexp_query_ports(&plist);
 
 	if(!strcmp(argv[3], "show"))
 	{
-		printf("RTS State Dump [%d physical ports]: \n", plist.num_physical_ports);
+		printf("RTS State Dump [%d physical ports]:\n", nports);
 		printf("CurrentRef: %d Mode: %d Flags: %x\n", pstate.current_ref, pstate.mode, pstate.flags);
-		for(i=0;i<plist.num_physical_ports;i++)
+		for (i = 0; i < nports; i++)
 			printf("wr%-2d: setpoint: %-8dps current: %-8dps loopback: %-8dps flags: %x\n", i,
 			       pstate.channels[i].phase_setpoint,
 			       pstate.channels[i].phase_current,

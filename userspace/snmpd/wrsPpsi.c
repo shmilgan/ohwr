@@ -210,7 +210,7 @@ void init_shm(void)
 	if (hal_nports_local > WRS_N_PORTS) {
 		snmp_log(LOG_ERR, "Too many ports reported by HAL. "
 			"%d vs %d supported\n",
-			hal_nports_local, HAL_MAX_PORTS);
+			hal_nports_local, WRS_N_PORTS);
 		exit(-1);
 	}
 }
@@ -249,10 +249,13 @@ static void wrs_ppsi_get_per_port(void)
 		}
 
 		retries++;
+		if (retries > 100) {
+			snmp_log(LOG_ERR, "%s: too many retries to read HAL\n",
+				 __func__);
+			retries = 0;
+			}
 	} while (wrs_shm_seqretry(hal_head, ii));
-	if (retries > 100)
-		snmp_log(LOG_ERR, "%s: too many retries to read HAL\n",
-			 __func__);
+
 }
 
 

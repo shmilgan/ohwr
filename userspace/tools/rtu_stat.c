@@ -26,16 +26,16 @@
 
 #include <libwr/util.h>
 
-#include <libwr/hal_client.h>
+#include <libwr/shmem.h>
+#include <libwr/hal_shmem.h>
+
 #include <minipc.h>
 #include <rtud_exports.h>
 #include <mac.h>
 
 #define MINIPC_TIMEOUT 200
 
-
 static struct minipc_ch *rtud_ch;
-static hexp_port_list_t plist;
 
 // forwarding entries
 void rtudexp_get_fd_list(rtudexp_fd_list_t *list, int start_from)
@@ -134,27 +134,25 @@ static int cmp_entries(const void *p1, const void *p2)
 	//           return strcmp(* (char * const *) p1, * (char * const *) p2);
 }
 
-char *decode_ports(int dpm)
+char *decode_ports(int dpm, int nports)
 {
 	static char str[80],str2[20];
 	int i;
 
-	if((dpm & ((1<<plist.num_physical_ports)-1)) == ((1<<plist.num_physical_ports)-1))
+	if ((dpm & ((1<<nports)-1)) == ((1<<nports)-1))
 	{
 		strcpy(str,"ALL");
 		return str;
 	}
 	strcpy(str,"");
 
-
-
-	for(i=0;i<plist.num_physical_ports;i++)
+	for (i = 0; i < nports; i++)
 	{
 		sprintf(str2,"%d ", i);
 		if(dpm&(1<<i)) strcat(str,str2);
 	}
 
-	if(dpm & (1<<plist.num_physical_ports))
+	if (dpm & (1<<nports))
 		strcat(str, "CPU");
 
 	return str;
@@ -176,6 +174,29 @@ void show_help(char *prgname)
 	exit(1);
 }
 
+int get_nports_from_hal(void)
+{
+	struct hal_shmem_header *h;
+	struct wrs_shm_head *hal_head;
+	int hal_nports_local; /* local copy of number of ports */
+
+	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
+	if (!hal_head) {
+		fprintf(stderr, "unable to open shm for HAL!\n");
+		exit(-1);
+	}
+	h = (void *)hal_head + hal_head->data_off;
+	/* Assume number of ports does not change in runtime */
+	hal_nports_local = h->nports;
+	if (hal_nports_local > HAL_MAX_PORTS) {
+		fprintf(stderr, "Too many ports reported by HAL. "
+			"%d vs %d supported\n",
+			hal_nports_local, HAL_MAX_PORTS);
+		exit(-1);
+	}
+	return hal_nports_local;
+}
+
 int main(int argc, char **argv)
 {
 
@@ -184,13 +205,9 @@ int main(int argc, char **argv)
 
 	int n_fd_entries, n_vd_entries;
 	int i, isok;
+	int nports;
 
-	if(	halexp_client_init() < 0)
-	{
-		printf("Can't conenct to HAL mini-rpc server\n");
-		return -1;
-	}
-
+	nports = get_nports_from_hal();
 
 	rtud_ch = minipc_client_create("rtud", 0);
 
@@ -230,7 +247,6 @@ int main(int argc, char **argv)
 
 	}
 
-	halexp_query_ports(&plist);
 	fetch_rtu_fd(fd_list, &n_fd_entries);
 
 	qsort(fd_list, n_fd_entries,  sizeof(rtudexp_fd_entry_t), cmp_entries);
@@ -246,7 +262,7 @@ int main(int argc, char **argv)
 	{
 		printf("%-25s %-12s %2d          %s (hash %03x:%x)   ",
 			mac_to_buffer(fd_list[i].mac,mac_buf),
-			decode_ports(fd_list[i].dpm),
+			decode_ports(fd_list[i].dpm, nports),
 			fd_list[i].fid,
 			fd_list[i].dynamic ? "DYNAMIC":"STATIC ",
 			fd_list[i].hash,

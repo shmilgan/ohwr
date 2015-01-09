@@ -196,8 +196,10 @@ int hal_port_init_all()
 			__func__, strerror(errno));
 		return -1;
 	}
-	/* Allocate the ports in shared memory, so wr_mon etc can see them */
-	hal_port_shmem = wrs_shm_get(wrs_shm_hal, "wrsw_hal", WRS_SHM_WRITE);
+	/* Allocate the ports in shared memory, so wr_mon etc can see them
+	   Use lock since some (like rtud) wait for hal to be available */
+	hal_port_shmem = wrs_shm_get(wrs_shm_hal, "wrsw_hal",
+				WRS_SHM_WRITE | WRS_SHM_LOCKED);
 	if (!hal_port_shmem) {
 		fprintf(stderr, "%s: Can't join shmem: %s\n", __func__,
 			strerror(errno));
@@ -226,6 +228,12 @@ int hal_port_init_all()
 	/* We are done, mark things as valid */
 	hal_hdr->nports = hal_port_nports;
 	head->version = HAL_SHMEM_VERSION;
+
+	/* Release processes waiting for HAL's to fill shm with correct data
+	   When shm is opened successfully data in shm is still not populated!
+	   Read data with wrs_shm_seqbegin and wrs_shm_seqend!
+	   Especially for nports it is important */
+	wrs_shm_write(head, WRS_SHM_WRITE_END);
 
 	/* Create a WRIPC server for HAL public API */
 	return hal_init_wripc(ports);
