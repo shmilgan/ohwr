@@ -6,12 +6,12 @@
 #include <libwr/switch_hw.h>
 #include "i2c_sfp.h"
 #include <libwr/shw_io.h>
+#include <libwr/wrs-msg.h>
 
 int shw_init()
 {
-	TRACE(TRACE_INFO,
-	      "%s\n=========================================================",
-	      __TIME__);
+	pr_info("%s\n======================================================\n",
+		__TIME__);
 
 	/* Init input/output (GPIO & CPU I2C) */
 	assert_init(shw_io_init());
@@ -31,12 +31,12 @@ int shw_init()
 	/* Init the FANs */
 	assert_init(shw_init_fans());
 
-	TRACE(TRACE_INFO, "HW initialization done!");
+	pr_info("HW initialization done!\n");
 	return 0;
 }
 
 int shw_exit_fatal()
 {
-	TRACE(TRACE_FATAL, "exiting due to fatal error.");
+	pr_error("exiting due to fatal error.\n");
 	exit(-1);
 }

@@ -8,6 +8,7 @@
 
 #include <libwr/switch_hw.h>
 #include <libwr/config.h>
+#include <libwr/wrs-msg.h>
 
 #include "wrsw_hal.h"
 #include "timeout.h"
@@ -33,8 +34,8 @@ int hal_init_timing()
 	};
 
 	if (rts_connect() < 0) {
-		TRACE(TRACE_ERROR,
-		      "Failed to establish communication with the RT subsystem.");
+		pr_error(
+		      "Failed to establish communication with the RT subsystem.\n");
 		return -1;
 	}
 
@@ -66,11 +67,11 @@ int hal_init_timing()
 		struct rts_pll_state pstate;
 
 		if (tmo_expired(&lock_tmo)) {
-			TRACE(TRACE_ERROR, "Can't lock the PLL. "
+			pr_error("Can't lock the PLL. "
 			      "If running in the GrandMaster mode, "
 			      "are you sure the 1-PPS and 10 MHz "
 			      "reference clock signals are properly connected?,"
-			      " retrying...");
+			      " retrying...\n");
 			if (timing_mode == HAL_TIMING_MODE_GRAND_MASTER) {
 				/*ups... something went wrong, try again */
 				rts_set_mode(RTS_MODE_GM_EXTERNAL);

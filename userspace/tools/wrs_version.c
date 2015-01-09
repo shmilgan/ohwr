@@ -26,6 +26,7 @@
 #include <libwr/shw_io.h>
 #include <libwr/hwiu.h>
 #include <libwr/switch_hw.h>
+#include <libwr/wrs-msg.h>
 #include "libsdbfs.h"
 
 #define SDBFS_NAME "/dev/mtd5ro"
@@ -189,6 +190,10 @@ static void wrsw_tagged_versions(void)
 int main(int argc, char **argv)
 {
 	char func='a';
+
+	/* argc forced to 1: -t and -v are not "terse" and "verbose" */
+	wrs_msg_init(1, argv);
+
 	if(argc>=2 && argv[1][0]=='-')
 	{
 		func=argv[1][1];

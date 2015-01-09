@@ -20,7 +20,7 @@
  * You should have received a copy of the GNU General Public License...
  */
 #include <libwr/pio.h>
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -112,7 +112,7 @@ int shw_io_init()
 			     I2C_shw_io_led_state_o);
 	}
 
-	TRACE(TRACE_INFO, "version=%d (CPUPWN=%d)", ver, ver < 330);
+	pr_info("version=%d (CPUPWN=%d)\n", ver, ver < 330);
 	return 0;
 }
 
@@ -140,8 +140,8 @@ int shw_io_configure_all()
 			//Do nothing for undefined type
 			break;
 		default:
-			TRACE(TRACE_INFO,
-			      "Config not implemented for type %d for io #%d",
+			pr_info(
+			      "Config not implemented for type %d for io #%d\n",
 			      io->type, i);
 			break;
 		}
@@ -163,11 +163,11 @@ const shw_io_t *get_shw_io(shw_io_id_t id)
 		if (_all_shw_io[id].ID == id)
 			return &(_all_shw_io[id]);
 		else
-			TRACE(TRACE_ERROR,
-			      "IO %d does not correspond to its ID %s", id,
+			pr_error(
+			      "IO %d does not correspond to its ID %s\n", id,
 			      _all_shw_io[id].name);
 	} else
-		TRACE(TRACE_ERROR, "IO %d does not exist", id);
+		pr_error( "IO %d does not exist\n", id);
 	return NULL;
 }
 
@@ -192,10 +192,10 @@ uint32_t shw_io_read(shw_io_id_t id)
 					shift);
 			}
 		case SHW_UNDEF:
-			TRACE(TRACE_ERROR, "IO #%d is undef", id);
+			pr_error( "IO #%d is undef\n", id);
 			break;
 		default:
-			TRACE(TRACE_ERROR, "Unknow type %d for io #%d",
+			pr_error( "Unknow type %d for io #%d\n",
 			      io->type, id);
 			break;
 		}
@@ -232,10 +232,10 @@ int shw_io_write(shw_io_id_t id, uint32_t value)
 								     i32data);
 			}
 		case SHW_UNDEF:
-			TRACE(TRACE_ERROR, "Pin #%d is undef", id);
+			pr_error( "Pin #%d is undef\n", id);
 			break;
 		default:
-			TRACE(TRACE_ERROR, "Unknow type %d for io #%d",
+			pr_error( "Unknow type %d for io #%d\n",
 			      io->type, id);
 			break;
 		}

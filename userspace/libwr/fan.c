@@ -24,7 +24,7 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 
 #include <libwr/pio.h>
 #include <libwr/fan.h>
@@ -83,7 +83,7 @@ static volatile struct SPWM_WB *spwm_wbr;
 static void shw_pwm_update_timeout(int tout_100ms)
 {
 	fan_update_timeout = tout_100ms * 100000;
-	TRACE(TRACE_INFO, "Fan tick timeout is =%d", fan_update_timeout);
+	pr_info("Fan tick timeout is =%d\n", fan_update_timeout);
 }
 
 /* Processes a single sample (x) with Proportional Integrator control algorithm (pi). Returns the value (y) to
@@ -152,7 +152,7 @@ static void pwm_configure_fpga(int enmask, float rate)
 /* Configures a PWM output. Rate accepts range is from 0 (0%) to 1 (100%) */
 static void shw_pwm_speed(int enmask, float rate)
 {
-	//TRACE(TRACE_INFO,"%x %f",enmask,rate);
+	//pr_info("%x %f\n",enmask,rate);
 	if (is_cpu_pwn) {
 		pwm_configure_pin(get_pio_pin(shw_io_box_fan_en), enmask,
 				  rate * 1000);
@@ -197,7 +197,7 @@ static float tmp100_read_temp(int dev_addr)
 static int shw_init_i2c_sensors()
 {
 	if (i2c_init_bus(&fpga_sensors_i2c) < 0) {
-		TRACE(TRACE_FATAL,
+		pr_error(
 		      "can't initialize temperature sensors I2C bus.\n");
 		return -1;
 	}
@@ -214,14 +214,14 @@ int shw_init_fans()
 	else
 		is_cpu_pwn = 0;
 
-	TRACE(TRACE_INFO,
-	      "Configuring %s PWMs for fans (desired temperature = %.1f degC)...",
+	pr_info(
+	      "Configuring %s PWMs for fans (desired temperature = %.1f degC)\n",
 	      is_cpu_pwn ? "CPU" : "FPGA", DESIRED_TEMPERATURE);
 
 	if (is_cpu_pwn) {
 		pwm_fd = open("/dev/at91_softpwm", O_RDWR);
 		if (pwm_fd < 0) {
-			TRACE(TRACE_FATAL,
+			pr_error(
 			      "at91_softpwm driver not installed or device not created.\n");
 			return -1;
 		}
@@ -272,7 +272,7 @@ void shw_update_fans()
 	    && (last_tics < 0 || (cur_tics - last_tics) > fan_update_timeout)) {
 		float t_cur = tmp100_read_temp(FAN_TEMP_SENSOR_ADDR);
 		float drive = pi_update(&fan_pi, t_cur - DESIRED_TEMPERATURE);
-		//TRACE(TRACE_INFO,"t=%f,pwm=%f",t_cur , drive);
+		//pr_info("t=%f,pwm=%f\n",t_cur , drive);
 		shw_pwm_speed(0xFF, drive / 1000);	//enable two and one
 		last_tics = cur_tics;
 	}

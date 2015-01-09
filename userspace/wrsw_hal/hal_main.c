@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 #include <libwr/switch_hw.h>
 #include <libwr/shw_io.h>
 #include <libwr/sfp_lib.h>
@@ -45,7 +45,7 @@ static void call_cleanup_cbs()
 {
 	int i;
 
-	TRACE(TRACE_INFO, "Cleaning up...");
+	pr_info("Cleaning up...\n");
 	for (i = 0; i < MAX_CLEANUP_CALLBACKS; i++)
 		if (cleanup_cb[i])
 			cleanup_cb[i] ();
@@ -53,7 +53,7 @@ static void call_cleanup_cbs()
 
 static void sighandler(int sig)
 {
-	TRACE(TRACE_ERROR, "signal caught (%d)!", sig);
+	pr_error("signal caught (%d)!\n", sig);
 
 	//Set state led to orange
 	shw_io_write(shw_io_led_state_o, 1);
@@ -76,7 +76,7 @@ static int hal_init()
 {
 	//trace_log_stderr();
 
-	TRACE(TRACE_INFO, "HAL initializing...");
+	pr_info("initializing...\n");
 
 	memset(cleanup_cb, 0, sizeof(cleanup_cb));
 
@@ -161,7 +161,7 @@ static void hal_parse_cmdline(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "dh")) != -1) {
+	while ((opt = getopt(argc, argv, "dhqv")) != -1) {
 		switch (opt) {
 		case 'd':
 			daemon_mode = 1;
@@ -171,6 +171,10 @@ static void hal_parse_cmdline(int argc, char *argv[])
 			show_help();
 			exit(0);
 			break;
+
+		case 'q': break; /* done in wrs_msg_init() */
+		case 'v': break; /* done in wrs_msg_init() */
+
 		default:
 			fprintf(stderr,
 				"Unrecognized option. Call %s -h for help.\n",
@@ -184,7 +188,8 @@ int main(int argc, char *argv[])
 {
 	struct timespec t1, t2;
 
-	trace_log_file("/dev/kmsg");
+	wrs_msg_init(argc, argv);
+
 	/* Prevent from running HAL twice - it will likely freeze the system */
 	if (hal_check_running()) {
 		fprintf(stderr, "Fatal: There is another WR HAL "

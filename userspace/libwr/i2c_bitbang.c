@@ -8,7 +8,7 @@
 
 #include "i2c_bitbang.h"
 
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 
 static int32_t i2c_bitbang_transfer(struct i2c_bus *bus, uint32_t address,
 				    uint32_t to_write, uint32_t to_read,
@@ -24,7 +24,7 @@ int i2c_bitbang_init_bus(struct i2c_bus *bus)
 
 	priv = (struct i2c_bitbang *)bus->type_specific;
 
-	TRACE(TRACE_INFO, "init: %s (%p) ", bus->name, bus);
+	pr_info("init: %s (%p)\n", bus->name, bus);
 	shw_pio_configure(priv->scl);
 	shw_pio_configure(priv->sda);
 	shw_pio_setdir(priv->scl, 0);
@@ -165,7 +165,7 @@ static int i2c_bitbang_transfer(i2c_bus_t * bus, uint32_t address,
 	if (bus->type != I2C_TYPE_BITBANG)
 		return I2C_BUS_MISMATCH;
 
-	//TRACE(TRACE_INFO,"%s (0x%x) @ 0x%x: w=%d/r=%d; cmd=%d d=%d (0x%02x)",bus->name,bus,address,to_write,to_read,data[0],data[1],(data[1]));
+	//pr_info("%s (0x%x) @ 0x%x: w=%d/r=%d; cmd=%d d=%d (0x%02x)\n",bus->name,bus,address,to_write,to_read,data[0],data[1],(data[1]));
 
 	struct i2c_bitbang *ts = (struct i2c_bitbang *)bus->type_specific;
 

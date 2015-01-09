@@ -33,6 +33,7 @@
 
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
+#include <libwr/wrs-msg.h>
 
 #define WRS3_FPGA_BASE 0x10000000
 #define WRS3_FPGA_SIZE 0x100000
@@ -565,6 +566,7 @@ int main(int argc, char **argv)
 	if (fpga_map(argv[0]) < 0)
 		exit(1);
 
+	wrs_msg_init(1, argv); /* only use argv[0]: no cmdline */
 	shw_init();
 
 	if(argc<3)

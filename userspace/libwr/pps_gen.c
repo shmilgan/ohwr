@@ -14,7 +14,7 @@
 #include <regs/ppsg-regs.h>
 
 #include <libwr/switch_hw.h>
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 
 /* Default width (in 8ns units) of the pulses on the PPS output */
 #define PPS_WIDTH 100000
@@ -30,7 +30,7 @@ int shw_pps_gen_init()
 	uint32_t cr;
 
 	cr = PPSG_CR_CNT_EN | PPSG_CR_PWIDTH_W(PPS_WIDTH);
-	TRACE(TRACE_INFO, "Initializing PPS generator...");
+	pr_info("Initializing PPS generator...\n");
 
 	ppsg_write(CR, cr);
 
@@ -47,7 +47,7 @@ int shw_pps_gen_init()
 /* Adjusts the nanosecond (refclk cycle) counter by atomically adding (how_much) cycles. */
 int shw_pps_gen_adjust(int counter, int64_t how_much)
 {
-	TRACE(TRACE_INFO, "Adjust: counter = %s [%+lld]",
+	pr_info("Adjust: counter = %s [%+lld]\n",
 	      counter == PPSG_ADJUST_SEC ? "seconds" : "nanoseconds",
 	      llabs(how_much));
 

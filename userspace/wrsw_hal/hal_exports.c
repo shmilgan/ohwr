@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 #include <libwr/pps_gen.h> /* for direct access to DMPLL and PPS generator */
 
 #include "wrsw_hal.h"
@@ -24,9 +24,7 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 {
 	int rval;
 
-	if (0)
-		TRACE(TRACE_INFO, "halexp_lock_cmd: cmd=%d port=%s\n",
-		      command, port_name);
+	pr_debug("halexp_lock_cmd: cmd=%d port=%s\n", command, port_name);
 
 	switch (command) {
 	case HEXP_LOCK_CMD_ENABLE_TRACKING:
@@ -205,7 +203,7 @@ int hal_init_wripc(struct hal_port_state *hal_ports)
 	hal_ch = minipc_server_create(WRSW_HAL_SERVER_ADDR, 0);
 
 	if (hal_ch < 0) {
-		TRACE(TRACE_ERROR, "Failed to create mini-rpc server '%s'",
+		pr_error("Failed to create mini-rpc server '%s'\n",
 		      WRSW_HAL_SERVER_ADDR);
 		return -1;
 	}
@@ -226,7 +224,7 @@ int hal_init_wripc(struct hal_port_state *hal_ports)
 
 	hal_add_cleanup_callback(hal_cleanup_wripc);
 
-	TRACE(TRACE_INFO, "Started mini-rpc server '%s'", WRSW_HAL_SERVER_ADDR);
+	pr_info("Started mini-rpc server '%s'\n", WRSW_HAL_SERVER_ADDR);
 
 	return 0;
 }

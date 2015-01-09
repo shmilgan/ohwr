@@ -31,7 +31,7 @@
 #include <stdint.h>
 #include <errno.h>
 
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 
 #include "minipc.h"
 #include "rtu.h"
@@ -44,7 +44,8 @@ static struct minipc_ch *rtud_ch;
 
 /* Define shortcut */
 #define MINIPC_EXP_FUNC(stru,func) stru.f= func; \
-		if (minipc_export(rtud_ch, &stru) < 0) { TRACE(TRACE_FATAL,"Could not export %s (rtu_ch=%d)",stru.name,rtud_ch); }
+		if (minipc_export(rtud_ch, &stru) < 0) { \
+			pr_error("Could not export %s (rtu_ch=%p)\n",stru.name,rtud_ch); }
 
 /* The exported function */
 int rtudexp_get_fd_list(const struct minipc_pd *pd, uint32_t * args, void *ret)
@@ -53,7 +54,7 @@ int rtudexp_get_fd_list(const struct minipc_pd *pd, uint32_t * args, void *ret)
 	rtudexp_fd_list_t *list = ret;
 	int start_from = args[0];
 
-	TRACE(TRACE_INFO, "GetFDList start=%d", start_from);
+	pr_info("GetFDList start=%d\n", start_from);
 
 	for (i = 0; i < 8; i++) {
 		struct filtering_entry *ent =
@@ -86,7 +87,7 @@ int rtudexp_get_vd_list(const struct minipc_pd *pd, uint32_t * args, void *ret)
 	rtudexp_vd_list_t *list = ret;
 	int current = args[0];
 
-	TRACE(TRACE_INFO, "GetVDList start=%d", current);
+	pr_info("GetVDList start=%d\n", current);
 
 	do {
 		struct vlan_table_entry *ent = rtu_vlan_entry_get(current);
@@ -101,8 +102,8 @@ int rtudexp_get_vd_list(const struct minipc_pd *pd, uint32_t * args, void *ret)
 			list->list[i].has_prio = ent->has_prio;
 			list->list[i].prio_override = ent->prio_override;
 			list->list[i].prio = ent->prio;
-			TRACE(TRACE_INFO,
-			      "vlan_entry_vd: vid %d, drop=%d, fid=%d, port_mask 0x%x",
+			pr_info(
+			      "vlan_entry_vd: vid %d, drop=%d, fid=%d, port_mask 0x%x\n",
 			      list->list[i].vid, list->list[i].drop,
 			      list->list[i].fid, list->list[i].port_mask);
 			i++;
@@ -126,11 +127,11 @@ int rtudexp_clear_entries(const struct minipc_pd *pd,
 	int force = (int)args[1];
 	int *p_ret = (int *)ret;	//force pointed to int type
 
-	TRACE(TRACE_INFO, "iface=%d, force=%d", iface_num, force);
+	pr_info("iface=%d, force=%d\n", iface_num, force);
 
 	//Do nothing
 	if (force)
-		TRACE(TRACE_INFO, "wr%d > force %d is not implemented",
+		pr_info("wr%d > force %d is not implemented\n",
 		      iface_num, force);
 
 	rtu_fd_clear_entries_for_port(iface_num);
@@ -151,14 +152,14 @@ int rtudexp_add_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 	port = (int)args[0];
 	mode = (int)args[1];
 
-	//TRACE(TRACE_INFO,"iface=%s, port=%d, dynamic=%d",strEHA,port,mode);
+	//pr_info("iface=%s, port=%d, dynamic=%d\n",strEHA,port,mode);
 
 	if (mac_from_str(mac_tmp, strEHA) != ETH_ALEN)
-		TRACE(TRACE_ERROR,
-		      "%s is an invalid MAC format (XX:XX:XX:XX:XX:XX)",
+		pr_error(
+		      "%s is an invalid MAC format (XX:XX:XX:XX:XX:XX)\n",
 		      strEHA);
 
-	TRACE(TRACE_INFO, "Create entry for (MAC=%s) port %x, mode:%s",
+	pr_info("Create entry for (MAC=%s) port %x, mode:%s\n",
 	      mac_to_string(mac_tmp), 1 << port, (mode) ? "DYNAMIC" : "STATIC");
 	*p_ret =
 	    rtu_fd_create_entry(mac_tmp, 0, 1 << port, mode, OVERRIDE_EXISTING);
@@ -190,7 +191,7 @@ int rtud_init_exports()
 	if (!rtud_ch < 0)
 		return -1;
 
-	TRACE(TRACE_INFO, "wripc server created [fd %d]",
+	pr_info("wripc server created [fd %d]\n",
 	      minipc_fileno(rtud_ch));
 	if (getenv("RTUD_MINIPC_DEBUG"))
 		minipc_set_logfile(rtud_ch, stderr);

@@ -6,7 +6,7 @@
 #include "i2c_bitbang.h"
 #include "i2c_fpga_reg.h"
 
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 #include <libwr/util.h>
 
 int i2c_init_bus(struct i2c_bus *bus)
@@ -32,7 +32,7 @@ int32_t i2c_transfer(struct i2c_bus * bus, uint32_t address, uint32_t to_write,
 int32_t i2c_write(struct i2c_bus *bus, uint32_t address, uint32_t to_write,
 		  uint8_t * data)
 {
-	//TRACE(TRACE_INFO,"%s (0x%X): 0x%X 2w:%d 2r:%d %d",bus->name,bus,address,to_write,0,data[0]);
+	//pr_info("%s (0x%X): 0x%X 2w:%d 2r:%d %d\n",bus->name,bus,address,to_write,0,data[0]);
 	return bus->transfer(bus, address, to_write, 0, data);
 }
 
@@ -40,7 +40,7 @@ int32_t i2c_read(struct i2c_bus * bus, uint32_t address, uint32_t to_read,
 		 uint8_t * data)
 {
 	return bus->transfer(bus, address, 0, to_read, data);
-	//TRACE(TRACE_INFO,"%s (0x%X): 0x%X 2w:%d 2r:%d %d",bus->name,bus,address,0,to_read,data[0]);
+	//pr_info("%s (0x%X): 0x%X 2w:%d 2r:%d %d\n",bus->name,bus,address,0,to_read,data[0]);
 }
 
 int32_t i2c_scan(struct i2c_bus * bus, uint8_t * data)
@@ -70,6 +70,6 @@ int32_t i2c_scan(struct i2c_bus * bus, uint8_t * data)
 			found++;
 		}
 	}
-	TRACE(TRACE_INFO, "%s (%p): ndev=%d", bus->name, bus, found);
+	pr_info("%s (%p): ndev=%d\n", bus->name, bus, found);
 	return found;
 }

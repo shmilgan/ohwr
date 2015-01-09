@@ -32,6 +32,7 @@
 
 #include <libwr/switch_hw.h>
 #include <libwr/hal_client.h>
+#include <libwr/wrs-msg.h>
 
 #include <fpga_io.h>
 #include <regs/rtu-regs.h>
@@ -90,9 +91,9 @@ void rtux_add_ff_mac_single(int mac_id, int valid, uint8_t mac[ETH_ALEN])
 	rtu_wr(RX_FF_MAC_R0, mac_lo);
 	rtu_wr(RX_FF_MAC_R1, mac_hi);
 
-	TRACE(TRACE_INFO,
+	pr_info(
 	      "RTU eXtension: set fast forward single mac (id=%d, valid=%d) of "
-	      "%x:%x:%x:%x:%x:%x", mac_id, valid, mac[0], mac[1], mac[2],
+	      "%x:%x:%x:%x:%x:%x\n", mac_id, valid, mac[0], mac[1], mac[2],
 	      mac[3], mac[4], mac[5]);
 }
 
@@ -129,13 +130,13 @@ void rtux_add_ff_mac_range(int mac_id, int valid, uint8_t mac_lower[ETH_ALEN],
 	rtu_wr(RX_FF_MAC_R0, mac_lo);
 	rtu_wr(RX_FF_MAC_R1, mac_hi);
 
-	TRACE(TRACE_INFO,
-	      "RTU eXtension: set fast forward mac range: (id=%d, valid=%d):",
+	pr_info(
+	      "RTU eXtension: set fast forward mac range: (id=%d, valid=%d):\n",
 	      mac_id, valid);
-	TRACE(TRACE_INFO, "\t lower_mac = %x:%x:%x:%x:%x:%x", mac_lower[0],
+	pr_info("\t lower_mac = %x:%x:%x:%x:%x:%x\n", mac_lower[0],
 	      mac_lower[1], mac_lower[2], mac_lower[3], mac_lower[4],
 	      mac_lower[5]);
-	TRACE(TRACE_INFO, "\t upper_mac = %x:%x:%x:%x:%x:%x", mac_upper[0],
+	pr_info("\t upper_mac = %x:%x:%x:%x:%x:%x\n", mac_upper[0],
 	      mac_upper[1], mac_upper[2], mac_upper[3], mac_upper[4],
 	      mac_upper[5]);
 }
@@ -179,14 +180,14 @@ void rtux_set_port_mirror(uint32_t mirror_src_mask, uint32_t mirror_dst_mask,
 	rtu_wr(RX_MP_R0, mp_sel);
 	rtu_wr(RX_MP_R1, mp_src_tx);
 
-	TRACE(TRACE_INFO,
-	      "\t mirror output port(s) mask                 (dst)    = 0x%x",
+	pr_info(
+	      "\t mirror output port(s) mask                 (dst)    = 0x%x\n",
 	      mp_dst);
-	TRACE(TRACE_INFO,
-	      "\t ingress traffic mirror source port(s) mask (src_rx) = 0x%x",
+	pr_info(
+	      "\t ingress traffic mirror source port(s) mask (src_rx) = 0x%x\n",
 	      mp_src_rx);
-	TRACE(TRACE_INFO,
-	      "\t egress  traffic mirror source port(s) mask (src_tx) = 0x%x",
+	pr_info(
+	      "\t egress  traffic mirror source port(s) mask (src_tx) = 0x%x\n",
 	      mp_src_tx);
 }
 
@@ -201,9 +202,9 @@ uint8_t rtux_get_hp_prio_mask()
 	uint32_t val = 0;
 
 	val = rtu_rd(RX_CTR);
-	TRACE(TRACE_INFO,
+	pr_info(
 	      "RTU eXtension: read hp priorities (for which priorities traffic is "
-	      "considered HP),  mask[rd]=0x%x", RTU_RX_CTR_PRIO_MASK_R(val));
+	      "considered HP),  mask[rd]=0x%x\n", RTU_RX_CTR_PRIO_MASK_R(val));
 	return (uint8_t) RTU_RX_CTR_PRIO_MASK_R(val);
 }
 
@@ -223,9 +224,9 @@ void rtux_set_hp_prio_mask(uint8_t hp_prio_mask)
 						    ~RTU_RX_CTR_PRIO_MASK_MASK);
 	rtu_wr(RX_CTR, mask);
 	val = rtu_rd(RX_CTR);
-	TRACE(TRACE_INFO,
+	pr_info(
 	      "RTU eXtension: set hp priorities (for which priorities traffic is "
-	      "considered HP), mask[wr]=0x%x => mask[rd]=0x%x", mask,
+	      "considered HP), mask[wr]=0x%x => mask[rd]=0x%x\n", mask,
 	      RTU_RX_CTR_PRIO_MASK_R(val));
 }
 
@@ -240,9 +241,9 @@ int rtux_get_cpu_port()
 
 	mask = rtu_rd(CPU_PORT);
 
-	TRACE(TRACE_INFO,
+	pr_info(
 	      "RTU eXtension: reading mask indicating which (virtual) port is connected"
-	      "to CPU mask=0x%x", RTU_CPU_PORT_MASK_R(mask));
+	      "to CPU mask=0x%x\n", RTU_CPU_PORT_MASK_R(mask));
 	for (i = 0; i <= MAX_PORT + 1; i++) {
 		if (mask & 0x1)
 			return i;
@@ -313,68 +314,68 @@ void rtux_disp_ctrl(void)
 {
 	uint32_t mask;
 	mask = rtu_rd(RX_CTR);
-	TRACE(TRACE_INFO, "RTU eXtension features (read):");
+	pr_info("RTU eXtension features (read):\n");
 	if (RTU_RX_CTR_MR_ENA & mask) {
-		TRACE(TRACE_INFO,
-		      "\t (1 ) Port Mirroring                           - enabled");
+		pr_info(
+		      "\t (1 ) Port Mirroring                           - enabled\n");
 	} else {
-		TRACE(TRACE_INFO,
-		      "\t (1 ) Port Mirroring                           - disabled");
+		pr_info(
+		      "\t (1 ) Port Mirroring                           - disabled\n");
 	}
 	if (RTU_RX_CTR_FF_MAC_PTP & mask) {
-		TRACE(TRACE_INFO,
-		      "\t (2 ) PTP fast forward                         - enabled");
+		pr_info(
+		      "\t (2 ) PTP fast forward                         - enabled\n");
 	} else {
-		TRACE(TRACE_INFO,
-		      "\t (2 ) PTP fast forward                         - disabled");
+		pr_info(
+		      "\t (2 ) PTP fast forward                         - disabled\n");
 	}
 	if (RTU_RX_CTR_FF_MAC_LL & mask) {
-		TRACE(TRACE_INFO,
-		      "\t (4 ) Link-limited traffic (BPDU) fast forward - enabled");
+		pr_info(
+		      "\t (4 ) Link-limited traffic (BPDU) fast forward - enabled\n");
 	} else {
-		TRACE(TRACE_INFO,
-		      "\t (4 ) Link-limited traffic (BPDU) fast forward - disabled");
+		pr_info(
+		      "\t (4 ) Link-limited traffic (BPDU) fast forward - disabled\n");
 	}
 	if (RTU_RX_CTR_FF_MAC_SINGLE & mask) {
-		TRACE(TRACE_INFO,
-		      "\t (8 ) Single configured MACs fast forward      - enabled");
+		pr_info(
+		      "\t (8 ) Single configured MACs fast forward      - enabled\n");
 	} else {
-		TRACE(TRACE_INFO,
-		      "\t (8 ) Single configured MACs fast forward      - disabled");
+		pr_info(
+		      "\t (8 ) Single configured MACs fast forward      - disabled\n");
 	}
 	if (RTU_RX_CTR_FF_MAC_RANGE & mask) {
-		TRACE(TRACE_INFO,
-		      "\t (16) Range of configured MACs fast forward    - enabled");
+		pr_info(
+		      "\t (16) Range of configured MACs fast forward    - enabled\n");
 	} else {
-		TRACE(TRACE_INFO,
-		      "\t (16) Range of configured MACs fast forward    - disabled");
+		pr_info(
+		      "\t (16) Range of configured MACs fast forward    - disabled\n");
 	}
 	if (RTU_RX_CTR_FF_MAC_BR & mask) {
-		TRACE(TRACE_INFO,
-		      "\t (32) Broadcast fast forward                   - enabled");
+		pr_info(
+		      "\t (32) Broadcast fast forward                   - enabled\n");
 	} else {
-		TRACE(TRACE_INFO,
-		      "\t (32) Broadcast fast forward                   - disabled");
+		pr_info(
+		      "\t (32) Broadcast fast forward                   - disabled\n");
 	}
 	if (RTU_RX_CTR_AT_FMATCH_TOO_SLOW & mask) {
-		TRACE(TRACE_INFO,
-		      "\t (64) When fast match engine too slow          - braodcast processed frame");
+		pr_info(
+		      "\t (64) When fast match engine too slow          - braodcast processed frame\n");
 	} else {
-		TRACE(TRACE_INFO,
-		      "\t (64) When fast match engine too slow          - drop processed frame");
+		pr_info(
+		      "\t (64) When fast match engine too slow          - drop processed frame\n");
 	}
 	if (RTU_RX_CTR_FORCE_FAST_MATCH_ENA & mask) {
-		TRACE(TRACE_INFO,
-		      "\t DBG  Force Fast Mach Mechanism                - enabled");
+		pr_info(
+		      "\t DBG  Force Fast Mach Mechanism                - enabled\n");
 	} else {
-		TRACE(TRACE_INFO,
-		      "\t DBG  Force Fast Mach Mechanism                - disabled");
+		pr_info(
+		      "\t DBG  Force Fast Mach Mechanism                - disabled\n");
 	}
 	if (RTU_RX_CTR_FORCE_FULL_MATCH_ENA & mask) {
-		TRACE(TRACE_INFO,
-		      "\t DBG  Force Full Mach Mechanism                - enabled");
+		pr_info(
+		      "\t DBG  Force Full Mach Mechanism                - enabled\n");
 	} else {
-		TRACE(TRACE_INFO,
-		      "\t DBG  Force Full Mach Mechanism                - disabled");
+		pr_info(
+		      "\t DBG  Force Full Mach Mechanism                - disabled\n");
 	}
 }

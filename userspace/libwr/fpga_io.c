@@ -10,6 +10,7 @@
 #include <poll.h>
 
 #include <libwr/switch_hw.h>
+#include <libwr/wrs-msg.h>
 
 #include <fpga_io.h>
 
@@ -24,7 +25,7 @@ int shw_fpga_mmap_init()
 {
 	int fd;
 
-	TRACE(TRACE_INFO, "Initializing FPGA memory mapping.");
+	pr_info("Initializing FPGA memory mapping.\n");
 
 	fd = open("/dev/mem", O_RDWR | O_SYNC);
 	if (fd < 0) {
@@ -41,7 +42,7 @@ int shw_fpga_mmap_init()
 		return -1;
 	}
 
-	TRACE(TRACE_INFO, "FPGA virtual base = %p", _fpga_base_virt);
+	pr_info("FPGA virtual base = %p\n", _fpga_base_virt);
 
 	return 0;
 

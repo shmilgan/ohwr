@@ -26,7 +26,7 @@
 #include <errno.h>
 
 #include <libwr/pio.h>
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 
 #include "i2c.h"
 #include "i2c_io.h"
@@ -68,13 +68,13 @@ struct i2c_bus i2c_io_bus = {
 
 int shw_i2c_io_init(void)
 {
-	TRACE(TRACE_INFO, "Initializing IO I2C bus...%s", __TIME__);
+	pr_info("Initializing IO I2C bus...%s\n", __TIME__);
 	if (i2c_init_bus(&i2c_io_bus) < 0) {
-		TRACE(TRACE_ERROR, "init failed: %s", i2c_io_bus.name);
+		pr_error("init failed: %s\n", i2c_io_bus.name);
 		return -1;
 	}
 
-	TRACE(TRACE_INFO, "init: success: %s", i2c_io_bus.name);
+	pr_info("init: success: %s\n", i2c_io_bus.name);
 	return 0;
 }
 
@@ -112,8 +112,8 @@ int shw_get_hw_ver()
 		case 2:
 			return 341;
 		default:
-			TRACE(TRACE_FATAL,
-			      "Unknown HW version (0x%x), check the DIP switch under the SCB",
+			pr_error(
+			      "Unknown HW version (0x%x), check the DIP switch under the SCB\n",
 			      (ret >> 1) & 0x7);
 			return -1;
 

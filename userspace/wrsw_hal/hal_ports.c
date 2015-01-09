@@ -17,7 +17,7 @@
 
 /* LOTs of hardware includes */
 #include <libwr/switch_hw.h>
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 #include <libwr/pio.h>
 #include <libwr/sfp_lib.h>
 #include <libwr/shmem.h>
@@ -165,7 +165,7 @@ static int hal_port_init(int index)
 			fprintf(stderr, "port index %i (%s): invalid role "
 				"\"%s\" specified\n", index, name, s);
 
-		TRACE(TRACE_INFO, "Port %s: mode %i", p->name, val);
+		pr_info("Port %s: mode %i\n", p->name, val);
 	}
 	/* Used to pre-calibrate the TX path for each port. No more in V3 */
 
@@ -183,7 +183,7 @@ int hal_port_init_all()
 	struct hal_shmem_header *hal_hdr;
 	struct wrs_shm_head *head;
 
-	TRACE(TRACE_INFO, "Initializing switch ports...");
+	pr_info("Initializing switch ports...\n");
 
 	/* default timeouts */
 	tmo_init(&hal_port_tmo_sfp, SFP_POLL_INTERVAL, 1);
@@ -222,7 +222,7 @@ int hal_port_init_all()
 			break;
 	hal_port_nports = index;
 
-	TRACE(TRACE_INFO, "Number of physical ports supported in HW: %d",
+	pr_info("Number of physical ports supported in HW: %d\n",
 	      hal_port_nports);
 
 	/* We are done, mark things as valid */
@@ -274,7 +274,7 @@ int hal_port_pshifter_busy()
 		    flags & CHAN_SHIFTING ? 1 : 0;
 
 		if (0)
-			TRACE(TRACE_INFO, "PSBusy %d, flags %x", busy,
+			pr_info("PSBusy %d, flags %x\n", busy,
 			      hs->channels[hs->current_ref].flags);
 		return busy;
 	}
@@ -320,8 +320,7 @@ static int hal_port_link_down(struct hal_port_state * p, int link_up)
 	if (!link_up && p->state != HAL_PORT_STATE_LINK_DOWN
 	    && p->state != HAL_PORT_STATE_DISABLED) {
 		if (p->locked) {
-			TRACE(TRACE_INFO,
-			      "switching RTS to use local reference");
+			pr_info("Switching RTS to use local reference\n");
 			if (hal_get_timing_mode()
 			    != HAL_TIMING_MODE_GRAND_MASTER)
 				rts_set_mode(RTS_MODE_GM_FREERUNNING);
@@ -332,7 +331,7 @@ static int hal_port_link_down(struct hal_port_state * p, int link_up)
 		hal_port_reset_state(p);
 
 		rts_enable_ptracker(p->hw_index, 0);
-		TRACE(TRACE_INFO, "%s: link down", p->name);
+		pr_info("%s: link down\n", p->name);
 
 		return 1;
 	}
@@ -364,7 +363,7 @@ static void hal_port_fsm(struct hal_port_state * p)
 				p->calib.tx_calibrated = 1;
 				p->calib.rx_calibrated = 1;
 				/* FIXME: use proper register names */
-				TRACE(TRACE_INFO, "Bitslide: %d",
+				pr_info("Bitslide: %d\n",
 				      ((pcs_readl(p, 16) >> 4) & 0x1f));
 				p->calib.delta_rx_phy =
 				    p->calib.phy_rx_min +
@@ -372,9 +371,9 @@ static void hal_port_fsm(struct hal_port_state * p)
 				p->calib.delta_tx_phy = p->calib.phy_tx_min;
 
 				if (0)
-					TRACE(TRACE_INFO,
+					pr_info(
 					      "Bypassing calibration for "
-					      "downlink port %s [dTx %d, dRx %d]",
+					      "downlink port %s [dTx %d, dRx %d]\n",
 					      p->name, p->calib.delta_tx_phy,
 					      p->calib.delta_rx_phy);
 
@@ -382,7 +381,7 @@ static void hal_port_fsm(struct hal_port_state * p)
 				p->rx_cal_pending = 0;
 
 				shw_sfp_set_led_link(p->hw_index, 1);
-				TRACE(TRACE_INFO, "%s: link up", p->name);
+				pr_info("%s: link up\n", p->name);
 				p->state = HAL_PORT_STATE_UP;
 			}
 			break;
@@ -410,7 +409,7 @@ static void hal_port_fsm(struct hal_port_state * p)
 		p->locked = hal_port_check_lock(p->name);
 
 		if (p->locked) {
-			TRACE(TRACE_INFO, "[main-fsm] Port %s locked.",
+			pr_info("[main-fsm] Port %s locked.\n",
 			      p->name);
 			p->state = HAL_PORT_STATE_UP;
 		}
@@ -440,17 +439,16 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 	int err;
 
 	if (shw_sfp_read_verify_header(p->hw_index, &shdr) < 0) {
-		TRACE(TRACE_ERROR, "Failed to read SFP configuration header");
+		pr_error("Failed to read SFP configuration header\n");
 		return;
 	}
 
-	TRACE(TRACE_INFO,
-	      "SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s",
+	pr_info("SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s\n",
 	      shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
 	cdata = shw_sfp_get_cal_data(p->hw_index);
 	if (cdata) {
-		TRACE(TRACE_INFO, "SFP Info: (%s) deltaTx %d "
-		      "delta Rx %d alpha %.3f (* 1e6)",
+		pr_info("SFP Info: (%s) deltaTx %d "
+		      "delta Rx %d alpha %.3f (* 1e6)\n",
 		      cdata->flags & SFP_FLAG_CLASS_DATA
 		      ? "class-specific" : "device-specific",
 		      cdata->delta_tx_ps, cdata->delta_rx_ps,
@@ -519,8 +517,8 @@ static void hal_port_poll_sfp()
 				if (ports[i].in_use
 				    && (mask ^ old_mask) & (1 << hw_index)) {
 					int insert = mask & (1 << hw_index);
-					TRACE(TRACE_INFO, "Detected SFP %s "
-					      "on port %s.",
+					pr_info("Detected SFP %s "
+					      "on port %s.\n",
 					      insert ? "insertion" : "removal",
 					      ports[i].name);
 					if (insert)
@@ -573,7 +571,7 @@ int hal_port_start_lock(const char *port_name, int priority)
 	/* fixme: check the main FSM state before */
 	p->state = HAL_PORT_STATE_LOCKING;
 
-	TRACE(TRACE_INFO, "Locking to port: %s", port_name);
+	pr_info("Locking to port: %s\n", port_name);
 
 	rts_set_mode(RTS_MODE_BC);
 

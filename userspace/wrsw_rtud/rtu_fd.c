@@ -38,7 +38,7 @@
 #include <fpga_io.h>
 #include <regs/rtu-regs.h>
 
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 
 #include "rtu_fd.h"
 #include "rtu_drv.h"
@@ -118,20 +118,20 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 	uint32_t bitmap[RTU_ENTRIES / 32];
 	int err;
 
-	TRACE(TRACE_INFO, "clean filtering database.");
+	pr_info("clean filtering database.\n");
 	clean_fd();		// clean filtering database
-	TRACE(TRACE_INFO, "clean vlan database.");
+	pr_info("clean vlan database.\n");
 	clean_vd();		// clean VLAN database
-	TRACE(TRACE_INFO, "clean aging map.");
+	pr_info("clean aging map.\n");
 	rtu_read_aging_bitmap(bitmap);	// clean aging registers
-	TRACE(TRACE_INFO, "set aging time [%d].", aging);
+	pr_info("set aging time [%ld].\n", aging);
 	aging_time = aging;
 
 	err = pthread_mutex_init(&fd_mutex, NULL);
 	if (err)
 		return err;
 
-	TRACE(TRACE_INFO, "set hash poly.");
+	pr_info("set hash poly.\n");
 	rtu_fd_set_hash_poly(poly);
 
 	return 0;
@@ -219,8 +219,8 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 			n_buckets = htab_count_buckets(eaddr);
 
 			if (n_buckets == RTU_BUCKETS) {
-				TRACE(TRACE_ERROR,
-				      "Hash %03x has no buckets left.",
+				pr_error(
+				      "Hash %03x has no buckets left.\n",
 				      eaddr.hash);
 				return -ENOMEM;
 			}
@@ -230,8 +230,8 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 			ent = &rtu_htab[eaddr.hash][eaddr.bucket];
 			ent->addr = eaddr;
 
-			TRACE(TRACE_INFO,
-			      "Created new entry for MAC %s : hash %03x:%d.",
+			pr_info(
+			      "Created new entry for MAC %s : hash %03x:%d.\n",
 			      mac_to_string(mac), eaddr.hash, eaddr.bucket);
 
 			ent->valid = 1;
@@ -445,8 +445,8 @@ static void rtu_fd_age_update(void)
 					continue;
 
 				if (0)
-					TRACE(TRACE_INFO,
-					      "Updated htab entry age: mac = %s, hash = %03x:%d, delta_t = %d",
+					pr_info(
+					      "Updated htab entry age: mac = %s, hash = %03x:%d, delta_t = %ld\n",
 					      mac_to_string(rtu_htab[hash]
 							    [bucket].mac), hash,
 					      bucket,
@@ -475,7 +475,7 @@ void rtu_fd_clear_entries_for_port(int dest_port)
 					hw_request(HW_REMOVE_REQ, ent->addr,
 						   ent);
 				else {
-					TRACE(TRACE_ERROR,
+					pr_error(
 					      "cleaning multicast entries not supported yet...\n");
 
 				}
@@ -505,7 +505,7 @@ static void rtu_fd_age_out(void)
 			if (ent->valid && ent->dynamic
 			    && (time_after(t, ent->last_access_t)
 				|| ent->force_remove)) {
-				TRACE(TRACE_INFO,
+				pr_info(
 				      "Deleting htab entry: mac = %s, hash = 0x%x, bucket = %d, forced=%d\n",
 				      mac_to_string(ent->mac), i, j,
 				      ent->force_remove);
@@ -525,7 +525,7 @@ static void delete_htab_entry(struct rtu_addr addr)
 {
 	int i, n_buckets = htab_count_buckets(addr);
 
-	TRACE(TRACE_INFO, "Deleted entry for MAC %s : hash %03x:%d.",
+	pr_info("Deleted entry for MAC %s : hash %03x:%d.\n",
 	      mac_to_string(rtu_htab[addr.hash][addr.bucket].mac), addr.hash,
 	      addr.bucket);
 
@@ -642,7 +642,7 @@ void vlan_entry_rd(int vid)
 {
 	// First entry reserved for untagged packets.
 
-	TRACE(TRACE_INFO,
-	      "vlan_entry_vd: vid %d, drop=%d, fid=%d, port_mask 0x%x", vid,
+	pr_info(
+	      "vlan_entry_vd: vid %d, drop=%d, fid=%d, port_mask 0x%x\n", vid,
 	      vlan_tab[vid].drop, vlan_tab[vid].fid, vlan_tab[vid].port_mask);
 }

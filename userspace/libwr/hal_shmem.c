@@ -29,7 +29,7 @@ int hal_port_get_exported_state(struct hexp_port_state *state,
 {
 	const struct hal_port_state *p = hal_port_lookup(ports, port_name);
 
-//      TRACE(TRACE_INFO, "GetPortState %s [lup %x]\n", port_name, p);
+//      pr_info("GetPortState %s [lup %x]\n", port_name, p);
 
 	if (!p)
 		return -1;

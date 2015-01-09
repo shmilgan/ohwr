@@ -2,7 +2,6 @@
 #define __LIBWR_SWITCH_HW_H
 
 #include <libwr/pio.h>
-#include <libwr/trace.h>
 #include <libwr/pps_gen.h>
 #include <libwr/fan.h>
 

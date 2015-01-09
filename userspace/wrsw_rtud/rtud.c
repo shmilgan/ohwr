@@ -38,7 +38,7 @@
 #include <sys/ioctl.h>
 #include <linux/if.h>
 
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 #include <libwr/switch_hw.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
@@ -96,11 +96,11 @@ static int rtu_create_static_entries()
 
 	read_ports();
 
-	TRACE(TRACE_INFO, "Number of physical ports: %d\n",
+	pr_info("Number of physical ports: %d\n",
 	      hal_nports_local);
 
 	// VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
-	TRACE(TRACE_INFO, "adding static routes for slow protocols...");
+	pr_info("adding static routes for slow protocols...\n");
 	for (i = 0; i < NUM_RESERVED_ADDR; i++) {
 		slow_proto_mac[5] = i;
 		err =
@@ -116,8 +116,8 @@ static int rtu_create_static_entries()
 
 		port_was_up[i] = state_up(hal_ports_local_copy[i].state);
 
-		TRACE(TRACE_INFO,
-		      "adding static route for port %s index %d [mac %s]",
+		pr_info(
+		      "adding static route for port %s index %d [mac %s]\n",
 		      hal_ports_local_copy[i].name,
 		      hal_ports_local_copy[i].hw_index,
 		      mac_to_string(hal_ports_local_copy[i].hw_addr)
@@ -132,7 +132,7 @@ static int rtu_create_static_entries()
 	}
 
 	// Broadcast MAC
-	TRACE(TRACE_INFO, "adding static route for broadcast MAC...");
+	pr_info("adding static route for broadcast MAC...\n");
 	err =
 	    rtu_fd_create_entry(bcast_mac, 0,
 				enabled_port_mask | (1 << hal_nports_local),
@@ -144,7 +144,7 @@ static int rtu_create_static_entries()
 	if (err)
 		return err;
 
-	TRACE(TRACE_INFO, "done creating static entries.");
+	pr_info("done creating static entries.\n");
 
 	return 0;
 }
@@ -161,8 +161,8 @@ static void rtu_update_ports_state()
 
 		link_up = state_up(hal_ports_local_copy[i].state);
 		if (port_was_up[i] && !link_up) {
-			TRACE(TRACE_INFO,
-			      "Port %s went down, removing corresponding entries...",
+			pr_info(
+			      "Port %s went down, removing corresponding entries...\n",
 			      hal_ports_local_copy[i].name);
 
 			rtu_fd_clear_entries_for_port(hal_ports_local_copy[i].
@@ -221,8 +221,8 @@ static int rtu_daemon_learning_process()
 		// Serve pending unrecognised request
 		err = rtu_read_learning_queue(&req);
 		if (!err) {
-			TRACE(TRACE_INFO,
-			      "ureq: port %d src %s VID %d priority %d",
+			pr_info(
+			      "ureq: port %d src %s VID %d priority %d\n",
 			      req.port_id,
 			      mac_to_string(req.src),
 			      req.has_vid ? req.vid : 0,
@@ -233,7 +233,7 @@ static int rtu_daemon_learning_process()
 				if (p->in_use && p->hw_index == req.port_id
 				    && !state_up(p->state)) {
 					port_down = 1;
-					TRACE(TRACE_INFO, "port down %d\n", i);
+					pr_info("port down %d\n", i);
 					break;
 				}
 
@@ -250,14 +250,14 @@ static int rtu_daemon_learning_process()
 			err = 0;
 			if (err == -ENOMEM) {
 				// TODO remove oldest entries (802.1D says you MAY do it)
-				TRACE(TRACE_INFO, "filtering database full\n");
+				pr_info("filtering database full\n");
 			} else if (err) {
-				TRACE(TRACE_INFO, "create entry: err %d\n",
+				pr_info("create entry: err %d\n",
 				      err);
 				break;
 			}
 		} else {
-			TRACE(TRACE_INFO, "read learning queue: err %d\n", err);
+			pr_info("read learning queue: err %d\n", err);
 		}
 	}
 	return err;
@@ -275,7 +275,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 	int i, err;
 
 	// init RTU HW
-	TRACE(TRACE_INFO, "init rtu hardware.");
+	pr_info("init rtu hardware.\n");
 	err = rtu_init();
 	if (err)
 		return err;
@@ -284,11 +284,11 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 		return err;
 
 	// disable RTU
-	TRACE(TRACE_INFO, "disable rtu.");
+	pr_info("disable rtu.\n");
 	rtu_disable();
 
 	// init configuration for ports
-	TRACE(TRACE_INFO, "init port config.");
+	pr_info("init port config.\n");
 	for (i = MIN_PORT; i <= MAX_PORT; i++) {
 		// MIN_PORT <= port <= MAX_PORT, thus no err returned
 
@@ -300,7 +300,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 	}
 
 	// init filtering database
-	TRACE(TRACE_INFO, "init fd.");
+	pr_info("init fd.\n");
 	err = rtu_fd_init(poly, aging_time);
 	if (err)
 		return err;
@@ -311,7 +311,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 		return err;
 
 	// turn on RTU
-	TRACE(TRACE_INFO, "enable rtu.");
+	pr_info("enable rtu.\n");
 	rtu_enable();
 
 	rtud_init_exports();
@@ -351,7 +351,8 @@ int main(int argc, char **argv)
 	unsigned long aging_res = DEFAULT_AGING_RES;	// Aging resolution [sec.]
 	unsigned long aging_time = DEFAULT_AGING_TIME;	// Aging time       [sec.]
 
-	trace_log_stderr();
+	wrs_msg_init(argc, argv);
+
 	if (argc > 1) {
 		// Strip out path from argv[0] if exists, and extract command name
 		for (name = s = argv[0]; s[0]; s++) {
@@ -360,7 +361,7 @@ int main(int argc, char **argv)
 			}
 		}
 		// Parse daemon options
-		optstring = "dhp:r:t:";
+		optstring = "dhp:r:t:qv";
 		while ((op = getopt(argc, argv, optstring)) != -1) {
 			switch (op) {
 			case 'd':
@@ -395,6 +396,10 @@ int main(int argc, char **argv)
 					usage(name);
 				}
 				break;
+
+			case 'q': break; /* done in wrs_msg_init() */
+			case 'v': break; /* done in wrs_msg_init() */
+
 			default:
 				usage(name);
 			}

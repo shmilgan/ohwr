@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
 #include <unistd.h>
 #include <sys/mman.h>
@@ -10,7 +12,7 @@
 #include <mach/at91_pio.h>
 
 #include <libwr/pio.h>
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 #include <libwr/shw_io.h>
 #include <libwr/util.h>
 
@@ -36,8 +38,8 @@ int shw_pio_mmap_init()
 	int i;
 	int fd = open("/dev/mem", O_RDWR);
 
-	if (!fd) {
-		TRACE(TRACE_FATAL, "can't open /dev/mem! (no root?)");
+	if (fd < 0) {
+		pr_error("Can't open /dev/mem: %s\n", strerror(errno));
 		exit(-1);
 	}
 
@@ -46,12 +48,12 @@ int shw_pio_mmap_init()
 		 AT91C_BASE_SYS_RAW);
 
 	if (_sys_base == NULL) {
-		TRACE(TRACE_FATAL, "can't mmap CPU GPIO regs");
+		pr_error("Can't mmap CPU GPIO regs\n");
 		close(fd);
 		exit(-1);
 	}
 
-	TRACE(TRACE_INFO, "AT91_SYS virtual base = %p", _sys_base);
+	pr_info("AT91_SYS virtual base = %p\n", _sys_base);
 
 	pmc_enable_clock(2);	/* enable PIO clocks */
 	pmc_enable_clock(3);

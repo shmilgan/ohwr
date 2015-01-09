@@ -10,7 +10,7 @@
 #include <errno.h>
 
 #include <libwr/pio.h>
-#include <libwr/trace.h>
+#include <libwr/wrs-msg.h>
 #include <libwr/util.h>
 #include <libwr/config.h>
 
@@ -191,10 +191,10 @@ int shw_sfp_buses_init(void)
 {
 	int i;
 
-	TRACE(TRACE_INFO, "Initializing SFP I2C busses...");
+	pr_info("Initializing SFP I2C busses...\n");
 	for (i = 0; i < ARRAY_SIZE(i2c_buses); i++) {
 		if (i2c_init_bus(&i2c_buses[i]) < 0) {
-			printf("init failed: %s\n", i2c_buses[i].name);
+			pr_error("init failed: %s\n", i2c_buses[i].name);
 			return -1;
 		}
 //              printf("init: success: %s\n", i2c_buses[i].name);
@@ -450,7 +450,7 @@ void shw_sfp_gpio_set(int num, uint8_t state)
 	i2c_transfer(bus, addr, 1, 0, send);
 	i2c_transfer(bus, addr, 0, 1, &curr);
 
-	//TRACE(TRACE_INFO,"%d: 0x%x 0x%x s=%d, send=%d,%d c=%d, \n",num,bus,addr,state,send[0],send[1],&curr);
+	//pr_info("%d: 0x%x 0x%x s=%d, send=%d,%d c=%d, \n",num,bus,addr,state,send[0],send[1],&curr);
 
 	if (top)
 		curr &= 0xf;
@@ -469,7 +469,7 @@ void shw_sfp_gpio_set(int num, uint8_t state)
 	send[1] = curr;
 	i2c_transfer(bus, addr, 2, 0, send);
 
-	//TRACE(TRACE_INFO,"%d: 0x%x 0x%x s=%d, send=%d,%d c=%d, \n",num,bus,addr,state,send[0],send[1],curr);
+	//pr_info("%d: 0x%x 0x%x s=%d, send=%d,%d c=%d, \n",num,bus,addr,state,send[0],send[1],curr);
 }
 
 uint8_t shw_sfp_gpio_get(int num)

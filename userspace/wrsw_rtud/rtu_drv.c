@@ -45,6 +45,7 @@
 #include <libwr/switch_hw.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
+#include <libwr/wrs-msg.h>
 
 #include <fpga_io.h>
 #include <regs/rtu-regs.h>
@@ -79,7 +80,7 @@ void init_shm(void)
 	while ((hal_head = wrs_shm_get(wrs_shm_hal, "",
 				WRS_SHM_READ | WRS_SHM_LOCKED))
 		== NULL) {
-		TRACE(TRACE_INFO, "unable to open shm for HAL!\n");
+		pr_info("unable to open shm for HAL!\n");
 	}
 
 	h = (void *)hal_head + hal_head->data_off;
@@ -90,7 +91,7 @@ void init_shm(void)
 		hal_nports_local = h->nports;
 		if (!wrs_shm_seqretry(hal_head, ii))
 			break;
-		TRACE(TRACE_FATAL, "Wait for HAL.\n");
+		pr_error("Wait for HAL.\n");
 		sleep(1);
 	}
 
@@ -98,7 +99,7 @@ void init_shm(void)
 	 * addresses. No need to re-dereference pointer at each read. */
 	hal_ports = wrs_shm_follow(hal_head, h->ports);
 	if (hal_nports_local > HAL_MAX_PORTS) {
-		TRACE(TRACE_FATAL, "Too many ports reported by HAL. "
+		pr_error("Too many ports reported by HAL. "
 			"%d vs %d supported\n",
 			hal_nports_local, HAL_MAX_PORTS);
 		exit(-1);
@@ -117,8 +118,8 @@ int rtu_init(void)
 	// Used to 'get' RTU IRQs from kernel
 	fd = open(RTU_DEVNAME, O_RDWR);
 	if (fd < 0) {
-		TRACE(TRACE_ERROR,
-		      "Can't open %s: is the RTU kernel driver loaded?",
+		pr_error(
+		      "Can't open %s: is the RTU kernel driver loaded?\n",
 		      RTU_DEVNAME);
 		return errno;
 	}
@@ -127,7 +128,7 @@ int rtu_init(void)
 	if (err)
 		return err;
 
-	TRACE(TRACE_INFO, "module initialized\n");
+	pr_info("module initialized\n");
 
 	return 0;
 }
@@ -137,7 +138,7 @@ void rtu_exit(void)
 	if (fd >= 0)
 		close(fd);
 
-	TRACE(TRACE_INFO, "module cleanup\n");
+	pr_info("module cleanup\n");
 }
 
 #define rtu_rd(reg) \
@@ -372,9 +373,9 @@ void rtu_write_vlan_entry(int vid, struct vlan_table_entry *ent)
 	rtu_wr(VTR1, vtr1);
 
 	if (ent->drop > 0 && ent->port_mask == 0x0) {
-		TRACE(TRACE_INFO, "RemoveVlan: vid %d (fid %d)", vid, ent->fid);
+		pr_info("RemoveVlan: vid %d (fid %d)\n", vid, ent->fid);
 	} else {
-		TRACE(TRACE_INFO, "AddVlan: vid %d (fid %d) port_mask 0x%x",
+		pr_info("AddVlan: vid %d (fid %d) port_mask 0x%x\n",
 		      vid, ent->fid, ent->port_mask);
 	}
 
