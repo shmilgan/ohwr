@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <unistd.h>
 
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
