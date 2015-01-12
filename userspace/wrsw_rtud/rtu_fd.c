@@ -195,7 +195,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 
 		/* Case 1: entry already present in the hashtable */
 		if (htab_search(mac, fid, &ent)) {
-			TRACE_DBG(TRACE_INFO, "Entry for mac %s already found.",
+			pr_debug("Entry for mac %s already found.",
 				  mac_to_string(mac));
 
 			if (at_existing_entry == ADD_TO_EXISTING)	// enable multipath for redundancy

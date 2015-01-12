@@ -64,12 +64,6 @@
 // Keeping in mind year 2038
 #define time_after(a,b) ((long)(b) - (long)(a) < 0)
 
-#ifdef TRACE_ALL
-#define TRACE_DBG(...) TRACE(__VA_ARGS__)
-#else
-#define TRACE_DBG(...)
-#endif
-
 /* RTU entry address */
 struct rtu_addr {
 	int hash;

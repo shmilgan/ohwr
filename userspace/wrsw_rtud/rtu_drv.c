@@ -306,8 +306,7 @@ void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent,
 	if (flush)
 		flush_mfifo();
 
-	TRACE_DBG(TRACE_INFO,
-		  "write htab entry [with flush]: addr %x ent %08x %08x %08x %08x %08x",
+	pr_debug("write htab entry [with flush]: addr %x ent %08x %08x %08x %08x %08x",
 		  zbt_addr,
 		  mac_entry_word0_w(ent),
 		  mac_entry_word1_w(ent),
@@ -415,7 +414,7 @@ void rtu_enable(void)
 {
 	uint32_t gcr = rtu_rd(GCR);
 	rtu_wr(GCR, gcr | RTU_GCR_G_ENA);
-	TRACE_DBG(TRACE_INFO, "updated gcr (enable): %x\n", gcr);
+	pr_debug("updated gcr (enable): %x\n", gcr);
 }
 
 /**
@@ -425,7 +424,7 @@ void rtu_disable(void)
 {
 	uint32_t gcr = rtu_rd(GCR);
 	rtu_wr(GCR, gcr & (~RTU_GCR_G_ENA));
-	TRACE_DBG(TRACE_INFO, "updated gcr (disable): %x\n", gcr);
+	pr_debug("updated gcr (disable): %x\n", gcr);
 }
 
 /**
@@ -450,7 +449,7 @@ void rtu_write_hash_poly(uint16_t hash_poly)
 	gcr = (gcr & (~RTU_GCR_POLY_VAL_MASK)) | RTU_GCR_POLY_VAL_W(hash_poly);
 	// Update GCR
 	rtu_wr(GCR, gcr);
-	TRACE_DBG(TRACE_INFO, "updated gcr (poly): %x\n", gcr);
+	pr_debug("updated gcr (poly): %x\n", gcr);
 }
 
 // PORT SETTINGS
