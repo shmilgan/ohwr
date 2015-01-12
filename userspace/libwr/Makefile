@@ -19,7 +19,7 @@ STRIP           = $(CROSS_COMPILE)strip
 OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
-CFLAGS = -Wall -I. -O2  -DDEBUG -ggdb \
+CFLAGS = -Wall -I. -O2 -ggdb \
 	-DLIBWR_INTERNAL \
 	-I./include \
 	-I../include \

@@ -22,10 +22,6 @@ CFLAGS = -O -g -Wall \
 	-I../mini-rpc \
 	-I$(LINUX)/arch/arm/mach-at91/include
 
-ifdef WRS_HAL_DEBUG
-  CFLAGS += -DDEBUG
-endif
-
 LDFLAGS = -L../libwr -L../mini-rpc \
 	 -lminipc -lm -ldl -lwr 
 

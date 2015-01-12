@@ -18,7 +18,6 @@ installdir="$WRS_OUTPUT_DIR/images/wr"
 # This time build is done in-place, but the output is a tree in images/wr.
 # Some of the makefiles inside use 
 export LINUX="$WRS_OUTPUT_DIR/build/linux-2.6.39"
-export WRS_HAL_DEBUG=1
 
 cd $sourcedir
 make clean || wrs_die "Error cleaning user space"

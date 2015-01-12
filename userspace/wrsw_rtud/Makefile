@@ -23,10 +23,6 @@ CFLAGS = -O2 -Wall -ggdb  \
 	-I../libwr/include \
 	-I$(LINUX)/arch/arm/mach-at91/include
 
-ifdef WRS_RTUD_DEBUG
-  CFLAGS += -DDEBUG
-endif
-
 LDFLAGS 	:= -L../libwr -L../mini-rpc\
 		-lwr -lpthread -lminipc
 
