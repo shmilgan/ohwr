@@ -31,6 +31,27 @@ typedef struct {
 	uint16_t physical_port;
 } wr_sockaddr_t;
 
+#ifdef LIBWR_INTERNAL /* The following two used to be in ptpd_netif.c */
+struct wr_tmo { /* timeout */
+	uint64_t start_tics;
+	uint64_t timeout;
+};
+
+struct wr_socket {
+	int fd;
+	wr_sockaddr_t bind_addr;
+	uint8_t local_mac[ETH_ALEN];
+	int if_index;
+
+	// parameters for linearization of RX timestamps
+	uint32_t clock_period;
+	uint32_t phase_transition;
+	uint32_t dmtd_phase;
+	int dmtd_phase_valid;
+	struct wr_tmo dmtd_update_tmo;
+};
+#endif
+
 PACKED struct _wr_timestamp {
 
 	// Seconds

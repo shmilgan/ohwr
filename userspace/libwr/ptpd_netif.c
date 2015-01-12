@@ -45,25 +45,6 @@ PACKED struct etherpacket {
 	char data[ETHER_MTU];
 };
 
-typedef struct {
-	uint64_t start_tics;
-	uint64_t timeout;
-} timeout_t;
-
-struct my_socket {
-	int fd;
-	wr_sockaddr_t bind_addr;
-	uint8_t local_mac[ETH_ALEN];
-	int if_index;
-
-	// parameters for linearization of RX timestamps
-	uint32_t clock_period;
-	uint32_t phase_transition;
-	uint32_t dmtd_phase;
-	int dmtd_phase_valid;
-	timeout_t dmtd_update_tmo;
-};
-
 static uint64_t get_tics()
 {
 	struct timezone tz = { 0, 0 };
@@ -73,20 +54,20 @@ static uint64_t get_tics()
 	return (uint64_t) tv.tv_sec * 1000000ULL + (uint64_t) tv.tv_usec;
 }
 
-static inline int tmo_init(timeout_t * tmo, uint32_t milliseconds)
+static inline int tmo_init(struct wr_tmo * tmo, uint32_t milliseconds)
 {
 	tmo->start_tics = get_tics();
 	tmo->timeout = (uint64_t) milliseconds *1000ULL;
 	return 0;
 }
 
-static inline int tmo_restart(timeout_t * tmo)
+static inline int tmo_restart(struct wr_tmo * tmo)
 {
 	tmo->start_tics = get_tics();
 	return 0;
 }
 
-static inline int tmo_expired(timeout_t * tmo)
+static inline int tmo_expired(struct wr_tmo * tmo)
 {
 	return (get_tics() - tmo->start_tics > tmo->timeout);
 }
@@ -103,7 +84,7 @@ static inline int inside_range(int min, int max, int x)
 /* For debugging/testing purposes */
 int ptpd_netif_get_dmtd_phase(wr_socket_t * sock, int32_t * phase)
 {
-	struct my_socket *s = (struct my_socket *)sock;
+	struct wr_socket *s = (struct wr_socket *)sock;
 	hexp_port_state_t pstate;
 
 	halexp_get_port_state(&pstate, s->bind_addr.if_name);
@@ -115,7 +96,7 @@ int ptpd_netif_get_dmtd_phase(wr_socket_t * sock, int32_t * phase)
 
 static void update_dmtd(wr_socket_t * sock)
 {
-	struct my_socket *s = (struct my_socket *)sock;
+	struct wr_socket *s = (struct wr_socket *)sock;
 	hexp_port_state_t pstate;
 
 	if (tmo_expired(&s->dmtd_update_tmo)) {
@@ -191,7 +172,7 @@ int ptpd_netif_init()
 wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 				      wr_sockaddr_t * bind_addr)
 {
-	struct my_socket *s;
+	struct wr_socket *s;
 	struct sockaddr_ll sll;
 	struct ifreq f;
 
@@ -269,7 +250,7 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 		return NULL;
 	}
 
-	s = calloc(sizeof(struct my_socket), 1);
+	s = calloc(sizeof(struct wr_socket), 1);
 	if (!s)
 		return NULL;
 
@@ -299,7 +280,7 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 
 int ptpd_netif_close_socket(wr_socket_t * sock)
 {
-	struct my_socket *s = (struct my_socket *)sock;
+	struct wr_socket *s = (struct wr_socket *)sock;
 
 	if (!s)
 		return 0;
@@ -316,7 +297,7 @@ int ptpd_netif_sendto(wr_socket_t * sock, wr_sockaddr_t * to, void *data,
 		      size_t data_length, wr_timestamp_t * tx_ts)
 {
 	struct etherpacket pkt;
-	struct my_socket *s = (struct my_socket *)sock;
+	struct wr_socket *s = (struct wr_socket *)sock;
 	struct sockaddr_ll sll;
 	int rval;
 
@@ -370,7 +351,7 @@ static void poll_tx_timestamp(wr_socket_t * sock, wr_timestamp_t * tx_timestamp)
 {
 	char data[16384];
 
-	struct my_socket *s = (struct my_socket *)sock;
+	struct wr_socket *s = (struct wr_socket *)sock;
 	struct msghdr msg;
 	struct iovec entry;
 	struct sockaddr_ll from_addr;
@@ -432,7 +413,7 @@ static void poll_tx_timestamp(wr_socket_t * sock, wr_timestamp_t * tx_timestamp)
 int ptpd_netif_recvfrom(wr_socket_t * sock, wr_sockaddr_t * from, void *data,
 			size_t data_length, wr_timestamp_t * rx_timestamp)
 {
-	struct my_socket *s = (struct my_socket *)sock;
+	struct wr_socket *s = (struct wr_socket *)sock;
 	struct etherpacket pkt;
 	struct msghdr msg;
 	struct iovec entry;

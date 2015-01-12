@@ -20,6 +20,7 @@ OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
 CFLAGS = -Wall -I. -O2  -DDEBUG -ggdb \
+	-DLIBWR_INTERNAL \
 	-I./include \
 	-I../include \
 	-I../mini-rpc \
