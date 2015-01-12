@@ -242,10 +242,10 @@ static void print_cal_stats()
 
 void calc_trans(int ep, int argc, char *argv[])
 {
-	wr_timestamp_t ts_tx, ts_rx;
-	wr_socket_t *sock;
+	struct wr_tstamp ts_tx, ts_rx;
+	struct wr_socket *sock;
 	FILE *f_log = NULL;
-	wr_sockaddr_t sock_addr, from;
+	struct wr_sockaddr sock_addr, from;
 	int bitslide,phase, i;
 
 	signal (SIGINT, sighandler);
@@ -259,7 +259,7 @@ void calc_trans(int ep, int argc, char *argv[])
 	if(argc >= 3)
 		f_log = fopen(argv[3], "wb");
 
-	sprintf(sock_addr.if_name, "wr%d", ep);
+	snprintf(sock_addr.if_name, sizeof(sock_addr.if_name), "wr%d", ep);
 	sock_addr.family = PTPD_SOCK_RAW_ETHERNET; // socket type
 	sock_addr.ethertype = 12345;
 	memset(sock_addr.mac, 0xff, 6);
@@ -279,7 +279,7 @@ void calc_trans(int ep, int argc, char *argv[])
 	while(!quit)
 	{
 		char buf[64];
-		wr_sockaddr_t to;
+		struct wr_sockaddr to;
 		struct rts_pll_state pstate;
 
 		pcs_write(ep, MII_BMCR, BMCR_PDOWN);
@@ -354,7 +354,7 @@ void analyze_phase_log(int ep, int argc, char *argv[])
 
 	while(!feof(f_log))
 	{
-			wr_timestamp_t ts_tx, ts_rx;
+			struct wr_tstamp ts_tx, ts_rx;
 			fscanf(f_log, "%d %d %d %d %d\n", &bitslide, &ts_tx.nsec, &ts_rx.raw_nsec, &ts_rx.raw_phase, &ts_rx.raw_ahead);
 
 			ts_rx.nsec = ts_rx.raw_nsec;
@@ -374,14 +374,14 @@ void analyze_phase_log(int ep, int argc, char *argv[])
 
 void pps_adjustment_test(int ep, int argc, char *argv[])
 {
-	wr_timestamp_t ts_tx, ts_rx;
-	wr_socket_t *sock;
-	wr_sockaddr_t sock_addr, from;
+	struct wr_tstamp ts_tx, ts_rx;
+	struct wr_socket *sock;
+	struct wr_sockaddr sock_addr, from;
 	int adjust_count = 0;
 
 	signal (SIGINT, sighandler);
 
-	sprintf(sock_addr.if_name, "wr%d", ep);
+	snprintf(sock_addr.if_name, sizeof(sock_addr.if_name), "wr%d", ep);
 	sock_addr.family = PTPD_SOCK_RAW_ETHERNET; // socket type
 	sock_addr.ethertype = 12345;
 	memset(sock_addr.mac, 0xff, 6);
@@ -394,7 +394,7 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 	while(!quit)
 	{
 		char buf[64];
-		wr_sockaddr_t to;
+		struct wr_sockaddr to;
 
 		memset(to.mac, 0xff, 6);
 		to.ethertype = 12345;

@@ -24,6 +24,7 @@
 
 #include <libwr/ptpd_netif.h>
 #include <libwr/hal_client.h>
+#include <net/ethernet.h>
 
 #ifdef NETIF_VERBOSE
 #define netif_dbg(...) printf(__VA_ARGS__)
@@ -40,28 +41,9 @@ struct scm_timestamping {
 	struct timespec hwtimeraw;
 };
 
-PACKED struct etherpacket {
+struct etherpacket {
 	struct ethhdr ether;
-	char data[ETHER_MTU];
-};
-
-typedef struct {
-	uint64_t start_tics;
-	uint64_t timeout;
-} timeout_t;
-
-struct my_socket {
-	int fd;
-	wr_sockaddr_t bind_addr;
-	mac_addr_t local_mac;
-	int if_index;
-
-	// parameters for linearization of RX timestamps
-	uint32_t clock_period;
-	uint32_t phase_transition;
-	uint32_t dmtd_phase;
-	int dmtd_phase_valid;
-	timeout_t dmtd_update_tmo;
+	char data[ETH_DATA_LEN];
 };
 
 static uint64_t get_tics()
@@ -73,20 +55,20 @@ static uint64_t get_tics()
 	return (uint64_t) tv.tv_sec * 1000000ULL + (uint64_t) tv.tv_usec;
 }
 
-static inline int tmo_init(timeout_t * tmo, uint32_t milliseconds)
+static inline int tmo_init(struct wr_tmo * tmo, uint32_t milliseconds)
 {
 	tmo->start_tics = get_tics();
 	tmo->timeout = (uint64_t) milliseconds *1000ULL;
 	return 0;
 }
 
-static inline int tmo_restart(timeout_t * tmo)
+static inline int tmo_restart(struct wr_tmo * tmo)
 {
 	tmo->start_tics = get_tics();
 	return 0;
 }
 
-static inline int tmo_expired(timeout_t * tmo)
+static inline int tmo_expired(struct wr_tmo * tmo)
 {
 	return (get_tics() - tmo->start_tics > tmo->timeout);
 }
@@ -101,9 +83,8 @@ static inline int inside_range(int min, int max, int x)
 }
 
 /* For debugging/testing purposes */
-int ptpd_netif_get_dmtd_phase(wr_socket_t * sock, int32_t * phase)
+int ptpd_netif_get_dmtd_phase(struct wr_socket *s, int32_t *phase)
 {
-	struct my_socket *s = (struct my_socket *)sock;
 	hexp_port_state_t pstate;
 
 	halexp_get_port_state(&pstate, s->bind_addr.if_name);
@@ -113,9 +94,8 @@ int ptpd_netif_get_dmtd_phase(wr_socket_t * sock, int32_t * phase)
 	return pstate.phase_val_valid;
 }
 
-static void update_dmtd(wr_socket_t * sock)
+static void update_dmtd(struct wr_socket *s)
 {
-	struct my_socket *s = (struct my_socket *)sock;
 	hexp_port_state_t pstate;
 
 	if (tmo_expired(&s->dmtd_update_tmo)) {
@@ -129,7 +109,7 @@ static void update_dmtd(wr_socket_t * sock)
 	}
 }
 
-void ptpd_netif_linearize_rx_timestamp(wr_timestamp_t * ts, int32_t dmtd_phase,
+void ptpd_netif_linearize_rx_timestamp(struct wr_tstamp *ts, int32_t dmtd_phase,
 				       int cntr_ahead, int transition_point,
 				       int clock_period)
 {
@@ -183,15 +163,15 @@ int ptpd_netif_init()
 {
 	if (halexp_client_try_connect(HAL_CONNECT_RETRIES, HAL_CONNECT_TIMEOUT)
 	    < 0)
-		return PTPD_NETIF_ERROR;
+		return -1;
 
-	return PTPD_NETIF_OK;
+	return 0;
 }
 
-wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
-				      wr_sockaddr_t * bind_addr)
+struct wr_socket *ptpd_netif_create_socket(int sock_type, int flags,
+				      struct wr_sockaddr *bind_addr)
 {
-	struct my_socket *s;
+	struct wr_socket *s;
 	struct sockaddr_ll sll;
 	struct ifreq f;
 
@@ -234,9 +214,9 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 	sll.sll_ifindex = f.ifr_ifindex;
 	sll.sll_family = AF_PACKET;
 	sll.sll_protocol = htons(bind_addr->ethertype);
-	sll.sll_halen = 6;
+	sll.sll_halen = ETH_ALEN;
 
-	memcpy(sll.sll_addr, bind_addr->mac, 6);
+	memcpy(sll.sll_addr, bind_addr->mac, ETH_ALEN);
 
 	if (bind(fd, (struct sockaddr *)&sll, sizeof(struct sockaddr_ll)) < 0) {
 		close(fd);
@@ -269,7 +249,7 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 		return NULL;
 	}
 
-	s = calloc(sizeof(struct my_socket), 1);
+	s = calloc(sizeof(struct wr_socket), 1);
 	if (!s)
 		return NULL;
 
@@ -281,8 +261,8 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 		return NULL;
 	}
 
-	memcpy(s->local_mac, f.ifr_hwaddr.sa_data, 6);
-	memcpy(&s->bind_addr, bind_addr, sizeof(wr_sockaddr_t));
+	memcpy(s->local_mac, f.ifr_hwaddr.sa_data, ETH_ALEN);
+	memcpy(&s->bind_addr, bind_addr, sizeof(s->bind_addr));
 
 	s->fd = fd;
 
@@ -294,13 +274,11 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 
 	tmo_init(&s->dmtd_update_tmo, DMTD_UPDATE_INTERVAL);
 
-	return (wr_socket_t *) s;
+	return s;
 }
 
-int ptpd_netif_close_socket(wr_socket_t * sock)
+int ptpd_netif_close_socket(struct wr_socket *s)
 {
-	struct my_socket *s = (struct my_socket *)sock;
-
 	if (!s)
 		return 0;
 
@@ -309,14 +287,13 @@ int ptpd_netif_close_socket(wr_socket_t * sock)
 	return 0;
 }
 
-static void poll_tx_timestamp(wr_socket_t * sock,
-			      wr_timestamp_t * tx_timestamp);
+static void poll_tx_timestamp(struct wr_socket *sock,
+			      struct wr_tstamp *tx_timestamp);
 
-int ptpd_netif_sendto(wr_socket_t * sock, wr_sockaddr_t * to, void *data,
-		      size_t data_length, wr_timestamp_t * tx_ts)
+int ptpd_netif_sendto(struct wr_socket *s, struct wr_sockaddr *to, void *data,
+		      size_t data_length, struct wr_tstamp *tx_ts)
 {
 	struct etherpacket pkt;
-	struct my_socket *s = (struct my_socket *)sock;
 	struct sockaddr_ll sll;
 	int rval;
 
@@ -328,8 +305,8 @@ int ptpd_netif_sendto(wr_socket_t * sock, wr_sockaddr_t * to, void *data,
 
 	memset(&pkt, 0, sizeof(struct etherpacket));
 
-	memcpy(pkt.ether.h_dest, to->mac, 6);
-	memcpy(pkt.ether.h_source, s->local_mac, 6);
+	memcpy(pkt.ether.h_dest, to->mac, ETH_ALEN);
+	memcpy(pkt.ether.h_source, s->local_mac, ETH_ALEN);
 	pkt.ether.h_proto = htons(to->ethertype);
 
 	memcpy(pkt.data, data, data_length);
@@ -349,7 +326,7 @@ int ptpd_netif_sendto(wr_socket_t * sock, wr_sockaddr_t * to, void *data,
 	rval = sendto(s->fd, &pkt, len, 0, (struct sockaddr *)&sll,
 		      sizeof(struct sockaddr_ll));
 
-	poll_tx_timestamp(sock, tx_ts);
+	poll_tx_timestamp(s, tx_ts);
 
 	return rval;
 }
@@ -366,11 +343,10 @@ static void hdump(uint8_t * buf, int size)
 #endif
 
 /* Waits for the transmission timestamp and stores it in tx_timestamp (if not null). */
-static void poll_tx_timestamp(wr_socket_t * sock, wr_timestamp_t * tx_timestamp)
+static void poll_tx_timestamp(struct wr_socket *s, struct wr_tstamp *tx_timestamp)
 {
 	char data[16384];
 
-	struct my_socket *s = (struct my_socket *)sock;
 	struct msghdr msg;
 	struct iovec entry;
 	struct sockaddr_ll from_addr;
@@ -429,10 +405,9 @@ static void poll_tx_timestamp(wr_socket_t * sock, wr_timestamp_t * tx_timestamp)
 	}
 }
 
-int ptpd_netif_recvfrom(wr_socket_t * sock, wr_sockaddr_t * from, void *data,
-			size_t data_length, wr_timestamp_t * rx_timestamp)
+int ptpd_netif_recvfrom(struct wr_socket *s, struct wr_sockaddr *from, void *data,
+			size_t data_length, struct wr_tstamp *rx_timestamp)
 {
-	struct my_socket *s = (struct my_socket *)sock;
 	struct etherpacket pkt;
 	struct msghdr msg;
 	struct iovec entry;
@@ -469,8 +444,7 @@ int ptpd_netif_recvfrom(wr_socket_t * sock, wr_sockaddr_t * from, void *data,
 	memcpy(data, pkt.data, ret - sizeof(struct ethhdr));
 
 	from->ethertype = ntohs(pkt.ether.h_proto);
-	memcpy(from->mac, pkt.ether.h_source, 6);
-	memcpy(from->mac_dest, pkt.ether.h_dest, 6);
+	memcpy(from->mac, pkt.ether.h_source, ETH_ALEN);
 
 	if (rx_timestamp)
 		rx_timestamp->correct = 0;
@@ -494,7 +468,7 @@ int ptpd_netif_recvfrom(wr_socket_t * sock, wr_sockaddr_t * from, void *data,
 		rx_timestamp->raw_nsec = sts->hwtimeraw.tv_nsec;
 		rx_timestamp->raw_ahead = cntr_ahead;
 
-		update_dmtd(sock);
+		update_dmtd(s);
 		if (s->dmtd_phase_valid) {
 			ptpd_netif_linearize_rx_timestamp(rx_timestamp,
 							  s->dmtd_phase,
@@ -514,7 +488,7 @@ int ptpd_netif_adjust_counters(int64_t adjust_sec, int32_t adjust_nsec)
 	int cmd;
 
 	if (!adjust_nsec && !adjust_sec)
-		return PTPD_NETIF_OK;
+		return 0;
 
 	if (adjust_sec && adjust_nsec) {
 		fprintf(stderr,
@@ -531,7 +505,7 @@ int ptpd_netif_adjust_counters(int64_t adjust_sec, int32_t adjust_nsec)
 	}
 
 	if (!halexp_pps_cmd(cmd, &p))
-		return PTPD_NETIF_OK;
+		return 0;
 
-	return PTPD_NETIF_ERROR;
+	return -1;
 }
