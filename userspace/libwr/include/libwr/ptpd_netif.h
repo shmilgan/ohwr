@@ -12,8 +12,6 @@
 // GCC-specific
 #define PACKED __attribute__((packed))
 
-#define IFACE_NAME_LEN 16
-
 // Some system-independent definitions
 typedef uint8_t mac_addr_t[6];
 typedef uint32_t ipv4_addr_t;
@@ -24,7 +22,7 @@ typedef void *wr_socket_t;
 // Socket address for ptp_netif_ functions
 typedef struct {
 // Network interface name (eth0, ...)
-	char if_name[IFACE_NAME_LEN];
+	char if_name[16];
 // Socket family (RAW ethernet/UDP)
 	int family;
 // MAC address
