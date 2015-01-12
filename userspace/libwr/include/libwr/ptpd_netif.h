@@ -9,31 +9,13 @@
 #define PTPD_SOCK_RAW_ETHERNET 	1
 #define PTPD_SOCK_UDP 		2
 
-#define PTPD_FLAGS_MULTICAST		0x1
-
-// error codes (to be extended)
-#define PTPD_NETIF_READY		1
-
 #define PTPD_NETIF_OK 			0
 #define PTPD_NETIF_ERROR 		-1
-#define PTPD_NETIF_NOT_READY 		-2
-#define PTPD_NETIF_NOT_FOUND 		-3
 
 // GCC-specific
 #define PACKED __attribute__((packed))
 
-#define PHYS_PORT_ANY			(0xffff)
-
-#define PTPD_NETIF_TX  1
-#define PTPD_NETIF_RX  2
-
 #define IFACE_NAME_LEN 16
-
-#define SLAVE_PRIORITY_0 0
-#define SLAVE_PRIORITY_1 1
-#define SLAVE_PRIORITY_2 2
-#define SLAVE_PRIORITY_3 3
-#define SLAVE_PRIORITY_4 4
 
 // Some system-independent definitions
 typedef uint8_t mac_addr_t[6];
