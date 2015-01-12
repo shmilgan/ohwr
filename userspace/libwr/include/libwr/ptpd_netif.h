@@ -9,9 +9,6 @@
 #define PTPD_SOCK_RAW_ETHERNET 	1
 #define PTPD_SOCK_UDP 		2
 
-// GCC-specific
-#define PACKED __attribute__((packed))
-
 // WhiteRabbit socket - it's void pointer as the real socket structure is private and probably platform-specific.
 typedef void *wr_socket_t;
 
@@ -52,7 +49,7 @@ struct wr_socket {
 };
 #endif
 
-PACKED struct _wr_timestamp {
+struct wr_tstamp {
 
 	// Seconds
 	int64_t sec;
@@ -73,8 +70,6 @@ PACKED struct _wr_timestamp {
 	//int cntr_ahead;
 };
 
-typedef struct _wr_timestamp wr_timestamp_t;
-
 /* OK. These functions we'll develop along with network card driver. You can write your own UDP-based stubs for testing purposes. */
 
 // Initialization of network interface:
@@ -94,13 +89,13 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 // for recovering the precise transmit timestamp. If user doesn't need it, tag parameter can be left NULL.
 
 int ptpd_netif_sendto(wr_socket_t * sock, wr_sockaddr_t * to, void *data,
-		      size_t data_length, wr_timestamp_t * tx_ts);
+		      size_t data_length, struct wr_tstamp *tx_ts);
 
 // Receives an UDP/RAW packet. Data is written to (data) and length is returned. Maximum buffer length can be specified
 // by data_length parameter. Sender information is stored in structure specified in 'from'. All RXed packets are timestamped and the timestamp
 // is stored in rx_timestamp (unless it's NULL).
 int ptpd_netif_recvfrom(wr_socket_t * sock, wr_sockaddr_t * from, void *data,
-			size_t data_length, wr_timestamp_t * rx_timestamp);
+			size_t data_length, struct wr_tstamp *rx_timestamp);
 
 // Closes the socket.
 int ptpd_netif_close_socket(wr_socket_t * sock);
@@ -119,7 +114,7 @@ int ptpd_netif_poll(wr_socket_t *);
 /* Timebase adjustment functions - the servo should not call the HAL directly */
 int ptpd_netif_adjust_counters(int64_t adjust_sec, int32_t adjust_nsec);
 int ptpd_netif_get_dmtd_phase(wr_socket_t * sock, int32_t * phase);
-void ptpd_netif_linearize_rx_timestamp(wr_timestamp_t * ts, int32_t dmtd_phase,
+void ptpd_netif_linearize_rx_timestamp(struct wr_tstamp *ts, int32_t dmtd_phase,
 				       int cntr_ahead, int transition_point,
 				       int clock_period);
 

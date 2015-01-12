@@ -24,6 +24,7 @@
 
 #include <libwr/ptpd_netif.h>
 #include <libwr/hal_client.h>
+#include <net/ethernet.h>
 
 #ifdef NETIF_VERBOSE
 #define netif_dbg(...) printf(__VA_ARGS__)
@@ -40,9 +41,9 @@ struct scm_timestamping {
 	struct timespec hwtimeraw;
 };
 
-PACKED struct etherpacket {
+struct etherpacket {
 	struct ethhdr ether;
-	char data[ETHER_MTU];
+	char data[ETH_DATA_LEN];
 };
 
 static uint64_t get_tics()
@@ -110,7 +111,7 @@ static void update_dmtd(wr_socket_t * sock)
 	}
 }
 
-void ptpd_netif_linearize_rx_timestamp(wr_timestamp_t * ts, int32_t dmtd_phase,
+void ptpd_netif_linearize_rx_timestamp(struct wr_tstamp *ts, int32_t dmtd_phase,
 				       int cntr_ahead, int transition_point,
 				       int clock_period)
 {
@@ -291,10 +292,10 @@ int ptpd_netif_close_socket(wr_socket_t * sock)
 }
 
 static void poll_tx_timestamp(wr_socket_t * sock,
-			      wr_timestamp_t * tx_timestamp);
+			      struct wr_tstamp *tx_timestamp);
 
 int ptpd_netif_sendto(wr_socket_t * sock, wr_sockaddr_t * to, void *data,
-		      size_t data_length, wr_timestamp_t * tx_ts)
+		      size_t data_length, struct wr_tstamp *tx_ts)
 {
 	struct etherpacket pkt;
 	struct wr_socket *s = (struct wr_socket *)sock;
@@ -347,7 +348,7 @@ static void hdump(uint8_t * buf, int size)
 #endif
 
 /* Waits for the transmission timestamp and stores it in tx_timestamp (if not null). */
-static void poll_tx_timestamp(wr_socket_t * sock, wr_timestamp_t * tx_timestamp)
+static void poll_tx_timestamp(wr_socket_t * sock, struct wr_tstamp *tx_timestamp)
 {
 	char data[16384];
 
@@ -411,7 +412,7 @@ static void poll_tx_timestamp(wr_socket_t * sock, wr_timestamp_t * tx_timestamp)
 }
 
 int ptpd_netif_recvfrom(wr_socket_t * sock, wr_sockaddr_t * from, void *data,
-			size_t data_length, wr_timestamp_t * rx_timestamp)
+			size_t data_length, struct wr_tstamp *rx_timestamp)
 {
 	struct wr_socket *s = (struct wr_socket *)sock;
 	struct etherpacket pkt;

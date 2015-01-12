@@ -242,7 +242,7 @@ static void print_cal_stats()
 
 void calc_trans(int ep, int argc, char *argv[])
 {
-	wr_timestamp_t ts_tx, ts_rx;
+	struct wr_tstamp ts_tx, ts_rx;
 	wr_socket_t *sock;
 	FILE *f_log = NULL;
 	wr_sockaddr_t sock_addr, from;
@@ -354,7 +354,7 @@ void analyze_phase_log(int ep, int argc, char *argv[])
 
 	while(!feof(f_log))
 	{
-			wr_timestamp_t ts_tx, ts_rx;
+			struct wr_tstamp ts_tx, ts_rx;
 			fscanf(f_log, "%d %d %d %d %d\n", &bitslide, &ts_tx.nsec, &ts_rx.raw_nsec, &ts_rx.raw_phase, &ts_rx.raw_ahead);
 
 			ts_rx.nsec = ts_rx.raw_nsec;
@@ -374,7 +374,7 @@ void analyze_phase_log(int ep, int argc, char *argv[])
 
 void pps_adjustment_test(int ep, int argc, char *argv[])
 {
-	wr_timestamp_t ts_tx, ts_rx;
+	struct wr_tstamp ts_tx, ts_rx;
 	wr_socket_t *sock;
 	wr_sockaddr_t sock_addr, from;
 	int adjust_count = 0;
