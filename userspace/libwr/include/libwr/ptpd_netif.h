@@ -27,10 +27,6 @@ typedef struct {
 	int family;
 // MAC address
 	mac_addr_t mac;
-// Destination MASC address, filled by recvfrom() function on interfaces bound to multiple addresses
-	mac_addr_t mac_dest;
-// IP address
-	ipv4_addr_t ip;
 // UDP port
 	uint16_t port;
 // RAW ethertype

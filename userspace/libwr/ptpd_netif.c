@@ -470,7 +470,6 @@ int ptpd_netif_recvfrom(wr_socket_t * sock, wr_sockaddr_t * from, void *data,
 
 	from->ethertype = ntohs(pkt.ether.h_proto);
 	memcpy(from->mac, pkt.ether.h_source, 6);
-	memcpy(from->mac_dest, pkt.ether.h_dest, 6);
 
 	if (rx_timestamp)
 		rx_timestamp->correct = 0;
