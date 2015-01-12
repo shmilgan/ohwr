@@ -243,9 +243,9 @@ static void print_cal_stats()
 void calc_trans(int ep, int argc, char *argv[])
 {
 	struct wr_tstamp ts_tx, ts_rx;
-	wr_socket_t *sock;
+	struct wr_socket *sock;
 	FILE *f_log = NULL;
-	wr_sockaddr_t sock_addr, from;
+	struct wr_sockaddr sock_addr, from;
 	int bitslide,phase, i;
 
 	signal (SIGINT, sighandler);
@@ -279,7 +279,7 @@ void calc_trans(int ep, int argc, char *argv[])
 	while(!quit)
 	{
 		char buf[64];
-		wr_sockaddr_t to;
+		struct wr_sockaddr to;
 		struct rts_pll_state pstate;
 
 		pcs_write(ep, MII_BMCR, BMCR_PDOWN);
@@ -375,8 +375,8 @@ void analyze_phase_log(int ep, int argc, char *argv[])
 void pps_adjustment_test(int ep, int argc, char *argv[])
 {
 	struct wr_tstamp ts_tx, ts_rx;
-	wr_socket_t *sock;
-	wr_sockaddr_t sock_addr, from;
+	struct wr_socket *sock;
+	struct wr_sockaddr sock_addr, from;
 	int adjust_count = 0;
 
 	signal (SIGINT, sighandler);
@@ -394,7 +394,7 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 	while(!quit)
 	{
 		char buf[64];
-		wr_sockaddr_t to;
+		struct wr_sockaddr to;
 
 		memset(to.mac, 0xff, 6);
 		to.ethertype = 12345;

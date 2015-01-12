@@ -83,7 +83,7 @@ static inline int inside_range(int min, int max, int x)
 }
 
 /* For debugging/testing purposes */
-int ptpd_netif_get_dmtd_phase(wr_socket_t * sock, int32_t * phase)
+int ptpd_netif_get_dmtd_phase(struct wr_socket *sock, int32_t *phase)
 {
 	struct wr_socket *s = (struct wr_socket *)sock;
 	hexp_port_state_t pstate;
@@ -95,7 +95,7 @@ int ptpd_netif_get_dmtd_phase(wr_socket_t * sock, int32_t * phase)
 	return pstate.phase_val_valid;
 }
 
-static void update_dmtd(wr_socket_t * sock)
+static void update_dmtd(struct wr_socket *sock)
 {
 	struct wr_socket *s = (struct wr_socket *)sock;
 	hexp_port_state_t pstate;
@@ -170,8 +170,8 @@ int ptpd_netif_init()
 	return 0;
 }
 
-wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
-				      wr_sockaddr_t * bind_addr)
+struct wr_socket *ptpd_netif_create_socket(int sock_type, int flags,
+				      struct wr_sockaddr *bind_addr)
 {
 	struct wr_socket *s;
 	struct sockaddr_ll sll;
@@ -264,7 +264,7 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 	}
 
 	memcpy(s->local_mac, f.ifr_hwaddr.sa_data, ETH_ALEN);
-	memcpy(&s->bind_addr, bind_addr, sizeof(wr_sockaddr_t));
+	memcpy(&s->bind_addr, bind_addr, sizeof(s->bind_addr));
 
 	s->fd = fd;
 
@@ -276,10 +276,10 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 
 	tmo_init(&s->dmtd_update_tmo, DMTD_UPDATE_INTERVAL);
 
-	return (wr_socket_t *) s;
+	return (struct wr_socket *) s;
 }
 
-int ptpd_netif_close_socket(wr_socket_t * sock)
+int ptpd_netif_close_socket(struct wr_socket *sock)
 {
 	struct wr_socket *s = (struct wr_socket *)sock;
 
@@ -291,10 +291,10 @@ int ptpd_netif_close_socket(wr_socket_t * sock)
 	return 0;
 }
 
-static void poll_tx_timestamp(wr_socket_t * sock,
+static void poll_tx_timestamp(struct wr_socket *sock,
 			      struct wr_tstamp *tx_timestamp);
 
-int ptpd_netif_sendto(wr_socket_t * sock, wr_sockaddr_t * to, void *data,
+int ptpd_netif_sendto(struct wr_socket *sock, struct wr_sockaddr *to, void *data,
 		      size_t data_length, struct wr_tstamp *tx_ts)
 {
 	struct etherpacket pkt;
@@ -348,7 +348,7 @@ static void hdump(uint8_t * buf, int size)
 #endif
 
 /* Waits for the transmission timestamp and stores it in tx_timestamp (if not null). */
-static void poll_tx_timestamp(wr_socket_t * sock, struct wr_tstamp *tx_timestamp)
+static void poll_tx_timestamp(struct wr_socket *sock, struct wr_tstamp *tx_timestamp)
 {
 	char data[16384];
 
@@ -411,7 +411,7 @@ static void poll_tx_timestamp(wr_socket_t * sock, struct wr_tstamp *tx_timestamp
 	}
 }
 
-int ptpd_netif_recvfrom(wr_socket_t * sock, wr_sockaddr_t * from, void *data,
+int ptpd_netif_recvfrom(struct wr_socket *sock, struct wr_sockaddr *from, void *data,
 			size_t data_length, struct wr_tstamp *rx_timestamp)
 {
 	struct wr_socket *s = (struct wr_socket *)sock;
