@@ -527,6 +527,7 @@ static void port_fsm(hal_port_state_t *p)
 		{
 			rts_set_mode(RTS_MODE_BC);
 			rts_lock_channel(p->hw_index, 0);
+			p->state = HAL_PORT_STATE_LOCKING;
 		}
 		
 		}
