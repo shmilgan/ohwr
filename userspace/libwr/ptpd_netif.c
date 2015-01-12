@@ -53,7 +53,7 @@ typedef struct {
 struct my_socket {
 	int fd;
 	wr_sockaddr_t bind_addr;
-	mac_addr_t local_mac;
+	uint8_t local_mac[ETH_ALEN];
 	int if_index;
 
 	// parameters for linearization of RX timestamps
@@ -234,9 +234,9 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 	sll.sll_ifindex = f.ifr_ifindex;
 	sll.sll_family = AF_PACKET;
 	sll.sll_protocol = htons(bind_addr->ethertype);
-	sll.sll_halen = 6;
+	sll.sll_halen = ETH_ALEN;
 
-	memcpy(sll.sll_addr, bind_addr->mac, 6);
+	memcpy(sll.sll_addr, bind_addr->mac, ETH_ALEN);
 
 	if (bind(fd, (struct sockaddr *)&sll, sizeof(struct sockaddr_ll)) < 0) {
 		close(fd);
@@ -281,7 +281,7 @@ wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
 		return NULL;
 	}
 
-	memcpy(s->local_mac, f.ifr_hwaddr.sa_data, 6);
+	memcpy(s->local_mac, f.ifr_hwaddr.sa_data, ETH_ALEN);
 	memcpy(&s->bind_addr, bind_addr, sizeof(wr_sockaddr_t));
 
 	s->fd = fd;
@@ -328,8 +328,8 @@ int ptpd_netif_sendto(wr_socket_t * sock, wr_sockaddr_t * to, void *data,
 
 	memset(&pkt, 0, sizeof(struct etherpacket));
 
-	memcpy(pkt.ether.h_dest, to->mac, 6);
-	memcpy(pkt.ether.h_source, s->local_mac, 6);
+	memcpy(pkt.ether.h_dest, to->mac, ETH_ALEN);
+	memcpy(pkt.ether.h_source, s->local_mac, ETH_ALEN);
 	pkt.ether.h_proto = htons(to->ethertype);
 
 	memcpy(pkt.data, data, data_length);
@@ -469,7 +469,7 @@ int ptpd_netif_recvfrom(wr_socket_t * sock, wr_sockaddr_t * from, void *data,
 	memcpy(data, pkt.data, ret - sizeof(struct ethhdr));
 
 	from->ethertype = ntohs(pkt.ether.h_proto);
-	memcpy(from->mac, pkt.ether.h_source, 6);
+	memcpy(from->mac, pkt.ether.h_source, ETH_ALEN);
 
 	if (rx_timestamp)
 		rx_timestamp->correct = 0;

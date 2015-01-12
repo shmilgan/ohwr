@@ -4,17 +4,13 @@
 #define __LIBWR_PTPD_NETIF_H
 
 #include <stdio.h>
-//#include <inttypes.h>
+#include <net/ethernet.h>
 
 #define PTPD_SOCK_RAW_ETHERNET 	1
 #define PTPD_SOCK_UDP 		2
 
 // GCC-specific
 #define PACKED __attribute__((packed))
-
-// Some system-independent definitions
-typedef uint8_t mac_addr_t[6];
-typedef uint32_t ipv4_addr_t;
 
 // WhiteRabbit socket - it's void pointer as the real socket structure is private and probably platform-specific.
 typedef void *wr_socket_t;
@@ -26,7 +22,7 @@ typedef struct {
 // Socket family (RAW ethernet/UDP)
 	int family;
 // MAC address
-	mac_addr_t mac;
+	uint8_t mac[ETH_ALEN];
 // UDP port
 	uint16_t port;
 // RAW ethertype
