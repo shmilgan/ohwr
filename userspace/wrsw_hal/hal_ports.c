@@ -246,6 +246,12 @@ int hal_init_port(const char *name, int index)
 			p->mode = HEXP_PORT_MODE_WR_SLAVE;
 		else if(!strcasecmp(val, "non_wr"))
 			p->mode = HEXP_PORT_MODE_NON_WR;
+		else if(!strcasecmp(val, "synce_slave"))
+		{
+			p->mode = HEXP_PORT_MODE_SYNCE_SLAVE;
+			TRACE(TRACE_INFO,"WARNING: using development and experiment feature "
+			"at Port %s [mode: synce_slave]", p->name);
+		}
 		else {
 			TRACE(TRACE_ERROR,"Invalid mode specified for port %s. Defaulting to Non-WR", p->name);
 			p->mode = HEXP_PORT_MODE_NON_WR;
@@ -431,6 +437,14 @@ static void port_fsm(hal_port_state_t *p)
 		shw_sfp_set_led_link(p->hw_index, 1);
 		TRACE(TRACE_INFO, "%s: link up", p->name);
 		p->state = HAL_PORT_STATE_UP;
+		
+		//This is for testing with SyncE devices, lock regardless of PTP
+		if(p->mode == HEXP_PORT_MODE_SYNCE_SLAVE)
+		{
+			rts_set_mode(RTS_MODE_BC);
+			rts_lock_channel(p->hw_index, 0);
+		}
+		
 		}
 		break;
 	}

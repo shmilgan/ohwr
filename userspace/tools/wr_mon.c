@@ -83,6 +83,9 @@ void show_ports(void)
 				case HEXP_PORT_MODE_WR_SLAVE:
 					term_cprintf(C_WHITE, "WR Slave   ");
 					break;
+				case HEXP_PORT_MODE_SYNCE_SLAVE:
+					term_cprintf(C_WHITE, "SyE Slave  ");
+					break;
 			}
 
 			if(state.is_locked)
