@@ -9,9 +9,6 @@
 #define PTPD_SOCK_RAW_ETHERNET 	1
 #define PTPD_SOCK_UDP 		2
 
-#define PTPD_NETIF_OK 			0
-#define PTPD_NETIF_ERROR 		-1
-
 // GCC-specific
 #define PACKED __attribute__((packed))
 

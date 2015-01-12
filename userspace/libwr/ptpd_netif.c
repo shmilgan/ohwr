@@ -183,9 +183,9 @@ int ptpd_netif_init()
 {
 	if (halexp_client_try_connect(HAL_CONNECT_RETRIES, HAL_CONNECT_TIMEOUT)
 	    < 0)
-		return PTPD_NETIF_ERROR;
+		return -1;
 
-	return PTPD_NETIF_OK;
+	return 0;
 }
 
 wr_socket_t *ptpd_netif_create_socket(int sock_type, int flags,
@@ -514,7 +514,7 @@ int ptpd_netif_adjust_counters(int64_t adjust_sec, int32_t adjust_nsec)
 	int cmd;
 
 	if (!adjust_nsec && !adjust_sec)
-		return PTPD_NETIF_OK;
+		return 0;
 
 	if (adjust_sec && adjust_nsec) {
 		fprintf(stderr,
@@ -531,7 +531,7 @@ int ptpd_netif_adjust_counters(int64_t adjust_sec, int32_t adjust_nsec)
 	}
 
 	if (!halexp_pps_cmd(cmd, &p))
-		return PTPD_NETIF_OK;
+		return 0;
 
-	return PTPD_NETIF_ERROR;
+	return -1;
 }
