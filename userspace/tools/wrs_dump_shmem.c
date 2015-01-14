@@ -216,6 +216,9 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, tx_cal_pending),
 	DUMP_FIELD(int, rx_cal_pending),
 	DUMP_FIELD(int, lock_state),
+	DUMP_FIELD(uint32_t, clock_period),
+	DUMP_FIELD(uint32_t, t2_phase_transition),
+	DUMP_FIELD(uint32_t, t4_phase_transition),
 	DUMP_FIELD(uint32_t, ep_base),
 };
 

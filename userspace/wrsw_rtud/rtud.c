@@ -39,7 +39,6 @@
 #include <linux/if.h>
 
 #include <libwr/wrs-msg.h>
-#include <libwr/switch_hw.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 

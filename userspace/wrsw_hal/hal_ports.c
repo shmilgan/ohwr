@@ -138,6 +138,10 @@ static int hal_port_init(int index)
 	p->calib.delta_rx_board = 0; /* never set */
 	sscanf(p->name + 2, "%d", &p->hw_index);
 
+	p->t2_phase_transition = DEFAULT_T2_PHASE_TRANS;
+	p->t4_phase_transition = DEFAULT_T4_PHASE_TRANS;
+	p->clock_period = REF_CLOCK_PERIOD_PS;
+
 	hal_port_enable(p->hw_index, 1);
 
 	{

@@ -26,7 +26,6 @@
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/hal_client.h>
-#include <libwr/switch_hw.h>
 #include <net/ethernet.h>
 
 #ifdef NETIF_VERBOSE
@@ -271,8 +270,8 @@ struct wr_socket *ptpd_netif_create_socket(int sock_type, int flags,
 	s->fd = fd;
 
 	// store the linearization parameters
-	s->clock_period = REF_CLOCK_PERIOD_PS;
-	s->phase_transition = DEFAULT_T2_PHASE_TRANS;
+	s->clock_period = port->clock_period;
+	s->phase_transition = port->t2_phase_transition;
 	s->dmtd_phase_valid = 0;
 	s->dmtd_phase = port->phase_val;
 
