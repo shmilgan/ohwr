@@ -165,15 +165,6 @@ static int export_pps_cmd(const struct minipc_pd *pd,
 	return 0;
 }
 
-static int export_get_port_state(const struct minipc_pd *pd,
-				 uint32_t * args, void *ret)
-{
-	hexp_port_state_t *state = ret;
-
-	return hal_port_get_exported_state(state, ports,
-					   (char *)args /* name */ );
-}
-
 static int export_lock_cmd(const struct minipc_pd *pd,
 			   uint32_t * args, void *ret)
 {
@@ -211,12 +202,10 @@ int hal_init_wripc(struct hal_port_state *hal_ports)
 
 	/* fill the function pointers */
 	__rpcdef_pps_cmd.f = export_pps_cmd;
-	__rpcdef_get_port_state.f = export_get_port_state;
 	__rpcdef_lock_cmd.f = export_lock_cmd;
 	__rpcdef_get_timing_state.f = export_get_timing_state;
 
 	minipc_export(hal_ch, &__rpcdef_pps_cmd);
-	minipc_export(hal_ch, &__rpcdef_get_port_state);
 	minipc_export(hal_ch, &__rpcdef_lock_cmd);
 	minipc_export(hal_ch, &__rpcdef_get_timing_state);
 

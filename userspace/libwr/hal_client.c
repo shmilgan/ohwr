@@ -26,12 +26,6 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 	return rval;
 }
 
-/* This used to be a mini-rpc call; it is now a shmem lookup */
-int halexp_get_port_state(hexp_port_state_t * state, const char *port_name)
-{
-	return hal_port_get_exported_state(state, hal_ports, port_name);
-}
-
 int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 {
 	int ret, rval;
