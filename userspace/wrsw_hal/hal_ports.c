@@ -551,7 +551,8 @@ void hal_port_update_all()
 
 int hal_port_enable_tracking(const char *port_name)
 {
-	const struct hal_port_state *p = hal_port_lookup(ports, port_name);
+	const struct hal_port_state *p = hal_lookup_port(ports,
+						  hal_port_nports, port_name);
 
 	if (!p)
 		return -1;
@@ -563,7 +564,8 @@ int hal_port_enable_tracking(const char *port_name)
  * WR link setup phase. */
 int hal_port_start_lock(const char *port_name, int priority)
 {
-	struct hal_port_state *p = hal_port_lookup(ports, port_name);
+	struct hal_port_state *p = hal_lookup_port(ports, hal_port_nports,
+						   port_name);
 
 	if (!p)
 		return -1;
@@ -585,7 +587,8 @@ int hal_port_start_lock(const char *port_name, int priority)
 /* Returns 1 if the port is locked */
 int hal_port_check_lock(const char *port_name)
 {
-	const struct hal_port_state *p = hal_port_lookup(ports, port_name);
+	const struct hal_port_state *p = hal_lookup_port(ports,
+						hal_port_nports, port_name);
 	struct rts_pll_state *hs = &hal_port_rts_state;
 
 	if (!p)

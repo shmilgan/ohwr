@@ -1,7 +1,7 @@
 OBJS = init.o fpga_io.o util.o pps_gen.o i2c.o shw_io.o i2c_bitbang.o \
        i2c_fpga_reg.o pio.o libshw_i2c.o i2c_sfp.o fan.o i2c_io.o hwiu.o \
        ptpd_netif.o hal_client.o \
-       shmem.o hal_shmem.o rt_client.o \
+       shmem.o rt_client.o \
        dot-config.o wrs-msg.o
 
 LIB = libwr.a
