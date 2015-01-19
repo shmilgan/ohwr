@@ -92,7 +92,7 @@ threshold_vec(5)=0.5;
 % outliers by number of standard deviations
 smart_threshold_vec = zeros(size(mpll_tmp,2));
 smart_threshold_vec(1)=3;
-smart_threshold_vec(2)=3; % Y
+smart_threshold_vec(2)=9; % Y
 smart_threshold_vec(4)=3; % long avg %
 smart_threshold_vec(5)=3;
 
@@ -165,8 +165,9 @@ else
 end
 
 tmp_len=length(mpll);
+%  [length(mpll), length(hpll)]
 if(future_offset < 0)
- future_offset = min([length(mpll), length(hpll)]) - switchover;
+ future_offset = length(mpll) - switchover
 end
 
 if(tmp_len - switchover < future_offset)
@@ -245,9 +246,26 @@ end
 bpll_mean = mean(bpll_0(1:(switchover-bef),3));
 bpll_sdev = std(bpll_0(1:(switchover-bef),3));
 bpll_mte  = max(bpll_0(1:(switchover-bef),3))-min(bpll_0(1:(switchover-bef),3));
-disp(sprintf('ForTable: MPLL sdev: before=%0.1f => all=%0.1f | MTE: before=%0.1f => all=%0.1f ', mpll_sdev_b, mpll_sdev_a, mpll_mte_b, mpll_mte_a));
-disp(sprintf('ForTable: BPLL MEAN: before=%0.1f | sdev: before=%0.1f  | MTE: before=%0.1f', bpll_mean, bpll_sdev, bpll_mte));
-disp(sprintf('ForTable: estimated phase jump mpll=%0.1f | bpll=%0.1f ', max(mpll(1:(switchover+bef),5)), max(bpll_0(1:(switchover),3))));
+
+y_mean_dithering = mean(mpll(switchover:end,2));
+y_sdev_dithering = std(mpll(switchover:end,2));
+if(switchover > 2^15)
+  y_avg            = mpll((switchover-(2^15)),4);
+else
+  y_avg = -1;
+end
+%  disp(sprintf('ForTable: MPLL sdev: before=%0.1f => all=%0.1f | MTE: before=%0.1f => all=%0.1f ', mpll_sdev_b, mpll_sdev_a, mpll_mte_b, mpll_mte_a));
+%  disp(sprintf('ForTable: BPLL MEAN: before=%0.1f | sdev: before=%0.1f  | MTE: before=%0.1f', bpll_mean, bpll_sdev, bpll_mte));
+%  disp(sprintf('ForTable: estimated phase jump mpll=%0.1f | bpll=%0.1f ', max(mpll(1:(switchover+bef),5)), max(bpll_0(1:(switchover),3))));
+len_avg= length(mpll(switchover:end,2));
+disp(sprintf('Y control word in holdover mean=%f | sde =%0.1f | samples %0.1f [%0.1f s]', y_mean_dithering, y_sdev_dithering,len_avg ,len_avg*T ));
+
+
+
+y_mean_dithering = mean(mpll(1:switchover,2));
+y_sdev_dithering = std(mpll(1:switchover,2));
+len_avg= length(mpll(1:switchover,2));
+disp(sprintf('Y control word before holdover mean=%f | sde =%0.1f  | samples %0.1f [%0.1f s]', y_mean_dithering, y_sdev_dithering,y_avg ,len_avg*T ));
 
 if(plotOptions==1)
     disp('-----------------------------------------------------------------------------------------------');
@@ -257,15 +275,30 @@ end;
 %  bpll = [bpll_0;bpll_1;bpll_2;bpll_3];
 start = 1 ; %switchover - 4000;
 finish= switchover + 1000;
+if(finish > length(mpll))
+  finish = length(mpll);
+end
 % fig 1
 draw3(mpll, bpll, hpll, switchover, start, finish, option, backup_n);
 
 if (backup_n > 0)
   start = 1; %switchover - 4000;
   finish= length(mpll);
-  draw2(mpll, bpll_0, hpll, switchover, start, finish, option);
+  draw5(mpll, bpll_0, hpll, switchover, start, finish, option);
   draw4(mpll, bpll_0, hpll, switchover, start, finish, option);
-    
+  draw6(mpll, bpll_0, hpll, switchover, start, finish, option);
+  
+  start = switchover - 400;
+  finish= switchover + 400;
+  if(start < 1)
+    start = 1;
+  end
+  
+%    if(finish > length(mpll))
+%      finish = length(mpll);
+%    end
+%    
+%    draw5(mpll, bpll_0, hpll, switchover, start, finish, option);
 end
 
 
