@@ -1595,13 +1595,6 @@ the processes (excluding the @sc{rt} subsystem).
         by @i{wr_phytool}.
         Called by @i{ppsi} directly (no @i{libwr}) in @t{wrs-time.c}.
 
-@item hal::get_timing_state
-@c FIXME: shmem this if used (not  used it seems)
-
-	Called by library code (@t{halexp_get_timing_state},
-        but not used. The function fills a structure of type 
-        @t{hexp_timing_state_t} that is never used.
-
 @item hal::lock_cmd
 
 	Called by library code (@t{halexp_lock_cmd}) but not used.

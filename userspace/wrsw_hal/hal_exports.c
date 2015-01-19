@@ -140,14 +140,6 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 
 extern int hal_port_any_locked();
 
-int halexp_get_timing_state(hexp_timing_state_t * state)
-{
-	state->timing_mode = hal_get_timing_mode();
-	state->locked_port = hal_port_any_locked();
-
-	return 0;
-}
-
 static void hal_cleanup_wripc()
 {
 	minipc_close(hal_ch);
@@ -179,13 +171,6 @@ static int export_lock_cmd(const struct minipc_pd *pd,
 	return 0;
 }
 
-static int export_get_timing_state(const struct minipc_pd *pd,
-				   uint32_t * args, void *ret)
-{
-	halexp_get_timing_state(ret);
-	return 0;
-}
-
 /* Creates a wripc server and exports all public API functions */
 int hal_init_wripc(struct hal_port_state *hal_ports)
 {
@@ -203,11 +188,9 @@ int hal_init_wripc(struct hal_port_state *hal_ports)
 	/* fill the function pointers */
 	__rpcdef_pps_cmd.f = export_pps_cmd;
 	__rpcdef_lock_cmd.f = export_lock_cmd;
-	__rpcdef_get_timing_state.f = export_get_timing_state;
 
 	minipc_export(hal_ch, &__rpcdef_pps_cmd);
 	minipc_export(hal_ch, &__rpcdef_lock_cmd);
-	minipc_export(hal_ch, &__rpcdef_get_timing_state);
 
 	/* FIXME: pll_cmd is empty anyways???? */
 

@@ -85,19 +85,12 @@ typedef struct {
 #define HEXP_PORT_TSC_FALLING 2
 */
 
-typedef struct {
-	int timing_mode;	/* Free-running Master/GM/BC */
-	int locked_port;
-
-} hexp_timing_state_t;
-
 /* Prototypes of functions that call on rpc */
 extern int halexp_check_running(void);
 extern int halexp_reset_port(const char *port_name);
 extern int halexp_calibration_cmd(const char *port_name, int command, int on_off);
 extern int halexp_lock_cmd(const char *port_name, int command, int priority);
 extern int halexp_pps_cmd(int cmd, hexp_pps_params_t *params);
-extern int halexp_get_timing_state(hexp_timing_state_t *state);
 
 /* Export structures, shared by server and client for argument matching */
 #ifdef HAL_EXPORT_STRUCTURES
@@ -152,14 +145,6 @@ struct minipc_pd __rpcdef_pps_cmd = {
 	.args = {
 		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
 		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT, hexp_pps_params_t),
-		 MINIPC_ARG_END,
-		 },
-};
-
-struct minipc_pd __rpcdef_get_timing_state = {
-	.name = "get_timing_state",
-	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT, hexp_timing_state_t),
-	.args = {
 		 MINIPC_ARG_END,
 		 },
 };

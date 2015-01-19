@@ -36,16 +36,6 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 	return rval;
 }
 
-int halexp_get_timing_state(hexp_timing_state_t * tstate)
-{
-	int ret;
-	ret = minipc_call(hal_ch, DEFAULT_TO, &__rpcdef_get_timing_state,
-			  tstate);
-	if (ret < 0)
-		return ret;
-	return 0;
-}
-
 /* Some clients call this, some call the client_init() defined later */
 int halexp_client_try_connect(int retries, int timeout)
 {
