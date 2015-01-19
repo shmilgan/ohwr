@@ -1595,19 +1595,6 @@ the processes (excluding the @sc{rt} subsystem).
         by @i{wr_phytool}.
         Called by @i{ppsi} directly (no @i{libwr}) in @t{wrs-time.c}.
 
-@item hal::get_port_state
-@c FIXME: shmem this
-
-	This is the most used @sc{rpc} function, and should
-        definitely be moved to shared memory.      
-	Called by library code: @t{halexp_get_port_state} (called
-        by following functions
-        @t{update_dmtd}, @t{ptpd_netif_recvfrom},
-        @t{ptpd_netif_create_socket} and (unused)
-        @t{ptpd_netif_get_dmtd_phase}).  These functions are used
-        by @i{wr_phytool}.
-        Also called by @i{ppsi} directly, in function @i{wrpc_read_calibration_data}.
-
 @item hal::get_timing_state
 @c FIXME: shmem this if used (not  used it seems)
 
