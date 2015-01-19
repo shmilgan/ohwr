@@ -457,6 +457,17 @@ void rt_command(int ep, int argc, char *argv[])
 		printf("Enabling ptracker @ port %d\n", ep);
 		
 		rts_adjust_phase(ep, atoi(argv[4]));
+	}
+	else if (!strcmp(argv[3], "hdo"))
+	{
+		printf("Enabling holdover %s\n", argv[4]);
+		if (!strcmp(argv[4], "enable"))
+			rts_backup_channel(ep,RTS_HOLDOVER_ENA);
+		else if (!strcmp(argv[4], "disable"))
+			rts_backup_channel(ep,RTS_HOLDOVER_DIS);
+		else
+		      printf("wrong hdo command: %s\n", argv[4]);
+		  
 	}	
 }
 
@@ -510,7 +521,7 @@ struct {
 	{
 	"rt",
 	"",
-	"RT subsystem command [show,lock,master,gm,adj ]",
+	"RT subsystem command [show,lock,master,gm,adj,hdo]",
 	rt_command},
 	{NULL}
 

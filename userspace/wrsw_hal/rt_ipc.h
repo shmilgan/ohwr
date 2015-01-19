@@ -68,6 +68,12 @@
 /* the backup channel was lost (link went down) */
 #define RTS_BACKUP_CH_DOWN     3
 
+/* enable holdover of the active channel*/
+#define RTS_HOLDOVER_ENA 4
+
+/* enable holdover */
+#define RTS_HOLDOVER_DIS 5
+
 /* null reference input */
 #define REF_NONE 255
 
