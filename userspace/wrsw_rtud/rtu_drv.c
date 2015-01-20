@@ -56,11 +56,11 @@
 static void write_mfifo_addr(uint32_t zbt_addr);
 static void write_mfifo_data(uint32_t word);
 
-static uint32_t mac_entry_word0_w(struct filtering_entry *ent);
-static uint32_t mac_entry_word1_w(struct filtering_entry *ent);
-static uint32_t mac_entry_word2_w(struct filtering_entry *ent);
-static uint32_t mac_entry_word3_w(struct filtering_entry *ent);
-static uint32_t mac_entry_word4_w(struct filtering_entry *ent);
+static uint32_t mac_entry_word0_w(struct rtu_filtering_entry *ent);
+static uint32_t mac_entry_word1_w(struct rtu_filtering_entry *ent);
+static uint32_t mac_entry_word2_w(struct rtu_filtering_entry *ent);
+static uint32_t mac_entry_word3_w(struct rtu_filtering_entry *ent);
+static uint32_t mac_entry_word4_w(struct rtu_filtering_entry *ent);
 
 /*
  * Used to communicate to RTU UFIFO IRQ handler device at kernel space
@@ -293,7 +293,7 @@ static void flush_mfifo()
  * @param ent MAC table entry to be written to MFIFO.
  * @param zbt_addr ZBT SRAM memory address in which MAC entry shoud be added.
  */
-void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent,
+void rtu_write_htab_entry(uint16_t zbt_addr, struct rtu_filtering_entry *ent,
 			  int flush)
 {
 	write_mfifo_addr(zbt_addr);
@@ -356,7 +356,7 @@ void rtu_read_aging_bitmap(uint32_t * bitmap)
  * VLAN table size: 4096 32-bit words.
  * @param addr entry memory address
  */
-void rtu_write_vlan_entry(int vid, struct vlan_table_entry *ent)
+void rtu_write_vlan_entry(int vid, struct rtu_vlan_table_entry *ent)
 {
 	uint32_t vtr1 = 0, vtr2 = 0;
 
@@ -583,7 +583,7 @@ static void write_mfifo_data(uint32_t word)
 
 // to marshall MAC entries
 
-static uint32_t mac_entry_word0_w(struct filtering_entry *ent)
+static uint32_t mac_entry_word0_w(struct rtu_filtering_entry *ent)
 {
 	return
 	    ((0xFF & ent->mac[0]) << 24) |
@@ -593,7 +593,7 @@ static uint32_t mac_entry_word0_w(struct filtering_entry *ent)
 	    ((0x1 & ent->end_of_bucket) << 1) | ((0x1 & ent->valid));
 }
 
-static uint32_t mac_entry_word1_w(struct filtering_entry *ent)
+static uint32_t mac_entry_word1_w(struct rtu_filtering_entry *ent)
 {
 	return
 	    ((0xFF & ent->mac[2]) << 24) |
@@ -601,7 +601,7 @@ static uint32_t mac_entry_word1_w(struct filtering_entry *ent)
 	    ((0xFF & ent->mac[4]) << 8) | ((0xFF & ent->mac[5]));
 }
 
-static uint32_t mac_entry_word2_w(struct filtering_entry *ent)
+static uint32_t mac_entry_word2_w(struct rtu_filtering_entry *ent)
 {
 	return
 	    ((0x1 & ent->drop_when_dest) << 28) |
@@ -614,14 +614,14 @@ static uint32_t mac_entry_word2_w(struct filtering_entry *ent)
 	    ((0x7 & ent->prio_src) << 17) | ((0x1 & ent->has_prio_src) << 16);
 }
 
-static uint32_t mac_entry_word3_w(struct filtering_entry *ent)
+static uint32_t mac_entry_word3_w(struct rtu_filtering_entry *ent)
 {
 	return
 	    ((0xFFFF & ent->port_mask_dst) << 16) |
 	    ((0xFFFF & ent->port_mask_src));
 }
 
-static uint32_t mac_entry_word4_w(struct filtering_entry *ent)
+static uint32_t mac_entry_word4_w(struct rtu_filtering_entry *ent)
 {
 	return
 	    ((0xFFFF & (ent->port_mask_dst >> 16)) << 16) |

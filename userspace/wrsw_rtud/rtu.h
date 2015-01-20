@@ -78,9 +78,9 @@ struct rtu_request {
  * \brief Copies src filtering entry body into dst filtering entry body.
  * @return pointer to dst filtering entry.
  */
-static inline
-    struct filtering_entry *rtu_fe_copy(struct filtering_entry *dst,
-					struct filtering_entry *src)
+static inline struct rtu_filtering_entry *rtu_fe_copy(
+					struct rtu_filtering_entry *dst,
+					struct rtu_filtering_entry *src)
 {
 	return memcpy(dst, src, sizeof(*src));
 }
@@ -90,7 +90,8 @@ static inline
  * @param ent pointer to entry to clean (either in HCAM or HTAB)
  * @return pointer to filtering entry that was cleaned
  */
-static inline struct filtering_entry *rtu_fe_clean(struct filtering_entry *ent)
+static inline struct rtu_filtering_entry *rtu_fe_clean(
+					struct rtu_filtering_entry *ent)
 {
 	return memset(ent, 0, sizeof(*ent));
 }

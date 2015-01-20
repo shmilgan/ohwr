@@ -57,7 +57,7 @@ int rtudexp_get_fd_list(const struct minipc_pd *pd, uint32_t * args, void *ret)
 	pr_info("GetFDList start=%d\n", start_from);
 
 	for (i = 0; i < 8; i++) {
-		struct filtering_entry *ent =
+		struct rtu_filtering_entry *ent =
 		    rtu_fd_lookup_htab_entry(start_from + i);
 		if (!ent)
 			break;
@@ -90,7 +90,7 @@ int rtudexp_get_vd_list(const struct minipc_pd *pd, uint32_t * args, void *ret)
 	pr_info("GetVDList start=%d\n", current);
 
 	do {
-		struct vlan_table_entry *ent = rtu_vlan_entry_get(current);
+		struct rtu_vlan_table_entry *ent = rtu_vlan_entry_get(current);
 		if (!ent)
 			break;
 

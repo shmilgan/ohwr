@@ -62,15 +62,15 @@ void rtu_fd_set_hash_poly(uint16_t poly);
 void rtu_fd_flush(void);
 void rtu_fd_clear_entries_for_port(int dest_port);
 
-struct filtering_entry *rtu_fd_lookup_htab_entry(int index);
+struct rtu_filtering_entry *rtu_fd_lookup_htab_entry(int index);
 
-struct filtering_entry *rtu_fd_lookup_htab_entry(int index);
+struct rtu_filtering_entry *rtu_fd_lookup_htab_entry(int index);
 
 void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid,
 			      uint8_t prio, int has_prio, int prio_override,
 			      int drop);
 
 void vlan_entry_rd(int vid);
-struct vlan_table_entry *rtu_vlan_entry_get(int vid);
+struct rtu_vlan_table_entry *rtu_vlan_entry_get(int vid);
 
 #endif /*__WHITERABBIT_RTU_FD_H*/

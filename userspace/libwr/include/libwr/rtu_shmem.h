@@ -21,7 +21,7 @@ struct rtu_addr {
 /**
  * \brief RTU Filtering Database Entry Object
  */
-struct filtering_entry {
+struct rtu_filtering_entry {
 	struct rtu_addr addr;	/* address of self in the RTU hashtable */
 
 	int valid;		/* bit: 1 = entry is valid, 0: entry is
@@ -77,7 +77,7 @@ struct filtering_entry {
 /**
  * \brief RTU VLAN registration entry object
  */
-struct vlan_table_entry {
+struct rtu_vlan_table_entry {
 	uint32_t port_mask;	/* VLAN port mask:
 				 * 1 = ports assigned to this VLAN */
 	uint8_t fid;		/* Filtering Database Identifier */

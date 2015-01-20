@@ -49,7 +49,7 @@ int rtu_read_learning_queue(struct rtu_request *req);
 
 // HTAB access
 
-void rtu_write_htab_entry(uint16_t zbt_addr, struct filtering_entry *ent,
+void rtu_write_htab_entry(uint16_t zbt_addr, struct rtu_filtering_entry *ent,
 			  int flush);
 void rtu_clean_htab(void);
 
@@ -59,7 +59,7 @@ void rtu_read_aging_bitmap(uint32_t * bitmap);
 
 // VLAN TABLE
 
-void rtu_write_vlan_entry(int vid, struct vlan_table_entry *ent);
+void rtu_write_vlan_entry(int vid, struct rtu_vlan_table_entry *ent);
 void rtu_clean_vlan_entry(int vid);
 void rtu_clean_vlan(void);
 

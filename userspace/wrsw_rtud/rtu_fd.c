@@ -53,7 +53,8 @@
  */
 struct fd_handle {
 	struct rtu_addr addr;
-	struct filtering_entry *entry_ptr;	// pointer to entry at mirror fd
+	struct rtu_filtering_entry *entry_ptr; /* pointer to entry at mirror
+						* fd */
 };
 
 /**
@@ -76,7 +77,7 @@ struct hw_req *hw_req_list;
  * Main filtering table organized as hash table with 4-entry buckets.
  * Note both banks have the same content. Therefore SW only mirrors one bank.
  */
-static struct filtering_entry rtu_htab[HTAB_ENTRIES][RTU_BUCKETS];
+static struct rtu_filtering_entry rtu_htab[HTAB_ENTRIES][RTU_BUCKETS];
 
 /**
  * \brief Max time that a dynamic MAC entry can remain
@@ -87,7 +88,7 @@ static unsigned long aging_time = DEFAULT_AGING_TIME;
 /**
  * Mirror of VLAN table
  */
-static struct vlan_table_entry vlan_tab[NUM_VLANS];
+static struct rtu_vlan_table_entry vlan_tab[NUM_VLANS];
 
 /**
  * \brief Mutex used to synchronise concurrent access to the filtering database.
@@ -97,7 +98,7 @@ static pthread_mutex_t fd_mutex;
 static struct hw_req *tail(struct hw_req *head);
 static void clean_list(struct hw_req *head);
 static int hw_request(int type, struct rtu_addr addr,
-		      struct filtering_entry *ent);
+		      struct rtu_filtering_entry *ent);
 
 static void clean_fd(void);
 static void clean_vd(void);
@@ -138,13 +139,13 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 }
 
 static int htab_search(uint8_t mac[ETH_ALEN],
-		       uint8_t fid, struct filtering_entry **ent)
+		       uint8_t fid, struct rtu_filtering_entry **ent)
 {
 	int i, j;
 
 	for (i = 0; i < HTAB_ENTRIES; i++)
 		for (j = 0; j < RTU_BUCKETS; j++) {
-			struct filtering_entry *tmp = &rtu_htab[i][j];
+			struct rtu_filtering_entry *tmp = &rtu_htab[i][j];
 
 			if (!tmp->valid)
 				continue;
@@ -181,7 +182,7 @@ static int htab_count_buckets(struct rtu_addr addr)
 int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 			int dynamic, int at_existing_entry)
 {
-	struct filtering_entry *ent;	// pointer to scan hashtable
+	struct rtu_filtering_entry *ent; /* pointer to scan hashtable */
 	uint8_t fid;		// Filtering database identifier
 	int ret = 0;		// return value
 	uint32_t mask_src, mask_dst;	// used to check port masks update
@@ -297,7 +298,7 @@ void rtu_fd_flush(void)
 	pthread_mutex_unlock(&fd_mutex);
 }
 
-struct filtering_entry *rtu_fd_lookup_htab_entry(int index)
+struct rtu_filtering_entry *rtu_fd_lookup_htab_entry(int index)
 {
 	int i, j, n = 0;
 
@@ -343,7 +344,7 @@ static void clean_list(struct hw_req *head)
 }
 
 static int hw_request(int type, struct rtu_addr addr,
-		      struct filtering_entry *ent)
+		      struct rtu_filtering_entry *ent)
 {
 	struct hw_req *req;
 
@@ -465,7 +466,7 @@ void rtu_fd_clear_entries_for_port(int dest_port)
 {
 	int i;			// loop index
 	int j;			// bucket loop index
-	struct filtering_entry *ent;	// pointer to scan tables
+	struct rtu_filtering_entry *ent; /* pointer to scan tables */
 
 	for (i = HTAB_ENTRIES; i-- > 0;) {
 		for (j = RTU_BUCKETS; j-- > 0;) {
@@ -494,7 +495,7 @@ static void rtu_fd_age_out(void)
 {
 	int i;			// loop index
 	int j;			// bucket loop index
-	struct filtering_entry *ent;	// pointer to scan tables
+	struct rtu_filtering_entry *ent; /* pointer to scan tables */
 	unsigned long t;	// (secs)
 
 	t = now() - aging_time;
@@ -530,13 +531,13 @@ static void delete_htab_entry(struct rtu_addr addr)
 	      addr.bucket);
 
 	memset(&rtu_htab[addr.hash][addr.bucket], 0,
-	       sizeof(struct filtering_entry));
+	       sizeof(struct rtu_filtering_entry));
 
 	if (addr.bucket < n_buckets - 1)
 		memmove(&rtu_htab[addr.hash][addr.bucket],
 			&rtu_htab[addr.hash][addr.bucket + 1],
 			(n_buckets - addr.bucket -
-			 1) * sizeof(struct filtering_entry));
+			 1) * sizeof(struct rtu_filtering_entry));
 
 	for (i = 0; i < n_buckets; i++) {
 		struct rtu_addr a;
@@ -628,7 +629,7 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid,
  * @param vid       VLAN ID
  * @return entry of VLAN table at given VID-address
  */
-struct vlan_table_entry *rtu_vlan_entry_get(int vid)
+struct rtu_vlan_table_entry *rtu_vlan_entry_get(int vid)
 {
 	// First entry reserved for untagged packets.
 	if (vid > NUM_VLANS)
