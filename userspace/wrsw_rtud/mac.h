@@ -32,9 +32,7 @@
 
 #include <stdint.h>
 #include <string.h>
-
-#define ETH_ALEN 6
-#define ETH_ALEN_STR 18
+#include <libwr/rtu_shmem.h>
 
 /**
  * \brief Check whether two mac addresses are equal.
