@@ -39,6 +39,8 @@
 #include <regs/rtu-regs.h>
 
 #include <libwr/wrs-msg.h>
+#include <libwr/shmem.h>
+#include <libwr/rtu_shmem.h>
 
 #include "rtu_fd.h"
 #include "rtu_drv.h"
@@ -77,7 +79,7 @@ struct hw_req *hw_req_list;
  * Main filtering table organized as hash table with 4-entry buckets.
  * Note both banks have the same content. Therefore SW only mirrors one bank.
  */
-static struct rtu_filtering_entry rtu_htab[HTAB_ENTRIES][RTU_BUCKETS];
+static struct rtu_filtering_entry (*rtu_htab)[RTU_BUCKETS];
 
 /**
  * \brief Max time that a dynamic MAC entry can remain
@@ -88,7 +90,7 @@ static unsigned long aging_time = DEFAULT_AGING_TIME;
 /**
  * Mirror of VLAN table
  */
-static struct rtu_vlan_table_entry vlan_tab[NUM_VLANS];
+static struct rtu_vlan_table_entry *vlan_tab;
 
 /**
  * \brief Mutex used to synchronise concurrent access to the filtering database.
@@ -118,6 +120,32 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 {
 	uint32_t bitmap[RTU_ENTRIES / 32];
 	int err;
+	struct wrs_shm_head *rtu_port_shmem;
+	struct rtu_shmem_header *rtu_hdr;
+	pr_info("Open rtu shmem.\n");
+	rtu_port_shmem = wrs_shm_get(wrs_shm_rtu, "wrsw_rtud",
+				WRS_SHM_WRITE | WRS_SHM_LOCKED);
+	if (!rtu_port_shmem) {
+		pr_error("%s: Can't join shmem: %s\n", __func__,
+			strerror(errno));
+		return -1;
+	}
+
+	/* Created at header->offset */
+	rtu_hdr = wrs_shm_alloc(rtu_port_shmem, sizeof(*rtu_hdr));
+	rtu_htab = wrs_shm_alloc(rtu_port_shmem,
+				 sizeof(*rtu_htab) * HTAB_ENTRIES);
+	rtu_hdr->filters = (struct rtu_filtering_entry *) rtu_htab;
+	vlan_tab = wrs_shm_alloc(rtu_port_shmem,
+				 sizeof(*vlan_tab) * NUM_VLANS);
+	rtu_hdr->vlans = vlan_tab;
+
+	if ((!rtu_htab) || (!vlan_tab)) {
+		pr_error("%s: cannot allocate mem in shmem\n", __func__);
+		return -1;
+	}
+	/* add version info */
+	rtu_port_shmem->version = RTU_SHMEM_VERSION;
 
 	pr_info("clean filtering database.\n");
 	clean_fd();		// clean filtering database
@@ -134,6 +162,10 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 
 	pr_info("set hash poly.\n");
 	rtu_fd_set_hash_poly(poly);
+
+	/* release process waiting on rtud's shm
+	 NOTE: all data may not be populated yet */
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
 
 	return 0;
 }
@@ -385,7 +417,7 @@ static inline int to_mem_addr(struct rtu_addr addr)
  */
 static void clean_fd(void)
 {
-	memset(&rtu_htab, 0, sizeof(rtu_htab));
+	memset(rtu_htab, 0, sizeof(*rtu_htab) * HTAB_ENTRIES);
 
 	rtu_clean_htab();
 }
