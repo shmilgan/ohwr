@@ -88,5 +88,11 @@ struct rtu_vlan_table_entry {
 	int drop;		/* 1: drop the packet (VLAN not registered) */
 };
 
+/* This is the overall structure stored in shared memory */
+#define RTU_SHMEM_VERSION 1 /* Version 1 */
+struct rtu_shmem_header {
+	struct rtu_filtering_entry *filters;
+	struct rtu_vlan_table_entry *vlans;
+};
 
 #endif /*  __LIBWR_RTU_SHMEM_H__ */
