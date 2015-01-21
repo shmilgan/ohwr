@@ -8,7 +8,7 @@
 
 #define WRS_SHM_FILE  "/dev/shm/wrs-shmem-%i"
 #define WRS_SHM_MIN_SIZE    (4*1024)
-#define WRS_SHM_MAX_SIZE  (256*1024)
+#define WRS_SHM_MAX_SIZE  (512*1024)
 
 /* Each process "name" (i.e. id) is added to the filename above */
 enum wrs_shm_name {
