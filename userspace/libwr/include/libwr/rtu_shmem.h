@@ -9,6 +9,9 @@
 #define LAST_HTAB_ENTRY	((HTAB_ENTRIES)-1)
 #define LAST_RTU_BUCKET	(RTU_BUCKETS-1)
 
+/* Maximum number of supported VLANs */
+#define NUM_VLANS               4096
+
 #define ETH_ALEN 6
 #define ETH_ALEN_STR 18
 

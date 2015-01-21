@@ -43,9 +43,6 @@
 #define MIN_PORT 0
 #define MAX_PORT 17
 
-// Maximum number of supported VLANs
-#define NUM_VLANS               4096
-
 #define NUM_RESERVED_ADDR       16
 
 // Default aging time for dynamic entries at filtering database [secs]
