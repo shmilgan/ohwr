@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
+#include <libwr/rtu_shmem.h>
 #include <ppsi/ppsi.h>
 #include <ppsi-wrs.h>
 
@@ -244,6 +245,77 @@ int dump_hal_mem(struct wrs_shm_head *head)
 	return 0;
 }
 
+/* map for fields of rtud structures */
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct rtu_filtering_entry
+struct dump_info htab_info[] = {
+	DUMP_FIELD(int, addr.hash),
+	DUMP_FIELD(int, addr.bucket),
+	DUMP_FIELD(int, valid),
+	DUMP_FIELD(int, end_of_bucket),
+	DUMP_FIELD(int, is_bpdu),
+	DUMP_FIELD_SIZE(bina, mac, ETH_ALEN),
+	DUMP_FIELD(UInteger8, fid),
+	DUMP_FIELD(uint32_t, port_mask_src),
+	DUMP_FIELD(uint32_t, port_mask_dst),
+	DUMP_FIELD(int, drop_when_source),
+	DUMP_FIELD(int, drop_when_dest),
+	DUMP_FIELD(int, drop_unmatched_src_ports),
+	DUMP_FIELD(UInteger32, last_access_t),
+	DUMP_FIELD(int, force_remove),
+	DUMP_FIELD(UInteger8, prio_src),
+	DUMP_FIELD(int, has_prio_src),
+	DUMP_FIELD(int, prio_override_src),
+	DUMP_FIELD(UInteger8, prio_dst),
+	DUMP_FIELD(int, has_prio_dst),
+	DUMP_FIELD(int, prio_override_dst),
+	DUMP_FIELD(int, dynamic),
+	DUMP_FIELD(int, age),
+};
+
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct rtu_vlan_table_entry
+struct dump_info vlan_info[] = {
+	DUMP_FIELD(uint32_t, port_mask),
+	DUMP_FIELD(UInteger8, fid),
+	DUMP_FIELD(UInteger8, prio),
+	DUMP_FIELD(int, has_prio),
+	DUMP_FIELD(int, prio_override),
+	DUMP_FIELD(int, drop),
+};
+
+int dump_rtu_mem(struct wrs_shm_head *head)
+{
+	struct rtu_shmem_header *rtu_h;
+	struct rtu_filtering_entry *rtu_filters;
+	struct rtu_vlan_table_entry *rtu_vlans;
+	int i, j;
+
+	if (head->version != RTU_SHMEM_VERSION) {
+		fprintf(stderr, "dump rtu: unknown version %i (known is %i)\n",
+			head->version, RTU_SHMEM_VERSION);
+		return -1;
+	}
+	rtu_h = (void *)head + head->data_off;
+	rtu_filters = wrs_shm_follow(head, rtu_h->filters);
+	rtu_vlans = wrs_shm_follow(head, rtu_h->vlans);
+
+	for (i = 0; i < HTAB_ENTRIES; i++) {
+		for (j = 0; j < RTU_BUCKETS; j++) {
+			printf("dump htab[%d][%d]\n", i, j);
+			dump_many_fields(rtu_filters+i*RTU_BUCKETS+j,
+					 htab_info, ARRAY_SIZE(htab_info));
+		}
+	}
+
+	for (i = 0; i < NUM_VLANS; i++) {
+		printf("dump vlan %i\n", i);
+		dump_many_fields(rtu_vlans, vlan_info, ARRAY_SIZE(vlan_info));
+		rtu_vlans++;
+	}
+	return 0;
+}
+
 /* map for fields of ppsi structures */
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct pp_globals
@@ -453,6 +525,7 @@ typedef int (dump_f)(struct wrs_shm_head *head);
 dump_f *name_id_to_f[WRS_SHM_N_NAMES] = {
 	[wrs_shm_hal] = dump_hal_mem,
 	[wrs_shm_ptp] = dump_ppsi_mem,
+	[wrs_shm_rtu] = dump_rtu_mem,
 };
 
 int main(int argc, char **argv)
