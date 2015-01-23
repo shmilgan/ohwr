@@ -238,6 +238,11 @@ int dump_hal_mem(struct wrs_shm_head *head)
 	n = h->nports;
 	p = wrs_shm_follow(head, h->ports);
 
+	if (!p) {
+		fprintf(stderr, "dump hal: cannot follow pointer to *ports\n");
+		return -1;
+	}
+
 	for (i = 0; i < n; i++, p++) {
 		printf("dump port %i\n", i);
 		dump_many_fields(p, hal_port_info, ARRAY_SIZE(hal_port_info));
@@ -299,6 +304,11 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 	rtu_h = (void *)head + head->data_off;
 	rtu_filters = wrs_shm_follow(head, rtu_h->filters);
 	rtu_vlans = wrs_shm_follow(head, rtu_h->vlans);
+
+	if ((!rtu_filters) || (!rtu_vlans)) {
+		fprintf(stderr, "dump rtu: cannot follow pointer in shm\n");
+		return -1;
+	}
 
 	for (i = 0; i < HTAB_ENTRIES; i++) {
 		for (j = 0; j < RTU_BUCKETS; j++) {
