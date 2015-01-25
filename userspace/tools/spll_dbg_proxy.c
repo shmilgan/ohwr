@@ -32,7 +32,7 @@
 
 /* Size of the software FIFO ring buffer */
 #define RING_BUFFER_ENTRIES 1048576
-#define ENTRIES_PER_PACKET 128
+#define ENTRIES_PER_PACKET 16
 
 __attribute__((packed)) struct fifo_entry {
 	uint32_t value;
@@ -50,6 +50,7 @@ struct ring_buffer {
 	int wr_ptr, rd_ptr, count;
 };
 
+int sample_ids[10] = {0,0,0,0,0,0,0,0,0,0};
 
 int rbuf_init(struct ring_buffer *rbuf, int num_entries, int entry_size)
 {
@@ -105,6 +106,25 @@ static struct SPLL_WB *_spll_regs = (struct SPLL_WB*) SPLL_BASE;
 
 #define REG(x) ((uint32_t)(&_spll_regs->x))
 
+
+#define DBG_MAIN      0x00		/* ...          : Main PLL */
+#define DBG_HELPER    0x10		/* Sample source: Helper PLL */
+#define DBG_EXT       0x20		/* Sample source: External Reference PLL */
+#define DBG_BACKUP    0x40
+#define DBG_BACKUP_0  0x40
+#define DBG_BACKUP_1  0x50
+#define DBG_BACKUP_2  0x60
+#define DBG_BACKUP_3  0x70
+
+#define DBG_Y 0
+#define DBG_ERR 1
+#define DBG_TAG 2
+#define DBG_REF 5
+#define DBG_AVG_L 3
+#define DBG_EVENT 4
+#define DBG_SAMPLE_ID 6
+#define DBG_AVG_S 7
+
 void poll_spll_fifo(int purge)
 {
 
@@ -136,6 +156,20 @@ void poll_spll_fifo(int purge)
 		ent.value = _fpga_readl(REG(DFR_HOST_R0));
 		ent.seq_id = _fpga_readl(REG(DFR_HOST_R1)) & 0xffff;
 
+		int what = 0xFF & (ent.value >> 24);
+		
+// 		if(what & (DBG_SAMPLE_ID | DBG_HELPER))
+// 		{
+// 			 fprintf(stderr, "%d\n",ent.value & 0xffffff);
+// 			 
+// 			if((ent.value & 0xffffff) > sample_ids[0])
+// 				sample_ids[0] = (ent.value & 0xffffff);
+// 			else
+// 			{
+// 			      fprintf(stderr, "sample_n order fucked, skipping!\n");
+// 			      return;
+// 			}
+// 		}
 
 	//	fprintf(stderr, "v: %x\n", ent.value);
 
@@ -199,7 +233,7 @@ void proxy_stuff(int fd)
 			}
 		}
 //		fprintf(stderr,"Count :%d\n", spll_trace.count);
-		usleep(10000);
+// 		usleep(10000);
 	}
 
 }

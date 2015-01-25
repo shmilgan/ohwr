@@ -84,19 +84,22 @@ end
 % outliers by fraction of avarage
 threshold_vec       = zeros(size(mpll_tmp,2));
 threshold_vec(1)=0.5;
-threshold_vec(2)=0.5;
+threshold_vec(2)=0.5;  % Y
 threshold_vec(4)=0.5;
 threshold_vec(5)=0.5;
 
 
 % outliers by number of standard deviations
 smart_threshold_vec = zeros(size(mpll_tmp,2));
-smart_threshold_vec(1)=3;
-smart_threshold_vec(2)=9; % Y
+smart_threshold_vec(1)=3; 
+smart_threshold_vec(2)=3; % Y
 smart_threshold_vec(4)=3; % long avg %
 smart_threshold_vec(5)=3;
 
-mpll_cleared = outliers(mpll_tmp(hack_offset_0:end,:),threshold_vec, 'mpll  ');
+%%%%
+
+mpll_cleared = outliers2(mpll_tmp(hack_offset_0:end,:),threshold_vec, 'mpll  ');
+%%%%
 mpll_cleared = smartOutliers(mpll_cleared,smart_threshold_vec, 'mpll smart  ');
 
 
@@ -105,10 +108,10 @@ size(mpll_cleared);
 
 threshold_vec(7)=0.5;
 smart_threshold_vec(7)=3;
-hpll_cleared = outliers(hpll_tmp(hack_offset_0:end,:),threshold_vec, 'hpll  ');
+hpll_cleared = outliers2(hpll_tmp(hack_offset_0:end,:),threshold_vec, 'hpll  ');
 hpll_cleared = smartOutliers(hpll_cleared,smart_threshold_vec, 'hpll smart  ');
 
-bpll_cleared_0    = outliers(bpll_tmp_0(hack_offset_0:end,:),threshold_vec, 'bpll 0');
+bpll_cleared_0    = outliers2(bpll_tmp_0(hack_offset_0:end,:),threshold_vec, 'bpll 0');
 bpll_cleared_0 = smartOutliers(bpll_cleared_0,smart_threshold_vec, 'bpll 0 smart  ');
 bpll_switchover_0 = detectSwitchover(bpll_cleared_0,6)
 if(backup_n > 1)

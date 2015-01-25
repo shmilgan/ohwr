@@ -13,7 +13,7 @@
 #define SERVPORT 12345
 
 #define RING_BUFFER_ENTRIES 1048576
-#define ENTRIES_PER_PACKET 128
+#define ENTRIES_PER_PACKET 16
 
 
 #define DBG_Y 0
@@ -100,6 +100,7 @@ struct pll_stat {
 	int mark_event;
 	int event;
 	int record;
+	int locked;
 };
 
 void usage(char *name)
@@ -157,7 +158,7 @@ void print_pll(struct pll_stat *s,FILE *f)
     if((s->flags >> DBG_EVENT)     & 0x1) fprintf(f,"%10d",s->mark_event);else fprintf(f,"%10d",0);
     if((s->flags >> DBG_AVG_L)     & 0x1) fprintf(f,"%10d",s->avg_l);     else fprintf(f,"%10d",0);
     if((s->flags >> DBG_AVG_S)     & 0x1) fprintf(f,"%10d",s->avg_s);     else fprintf(f,"%10d",0);
-    
+    if((s->flags >> DBG_Y)         & 0x1) fprintf(f,"%10d",s->locked);    else fprintf(f,"%10d",0);
 //     if((s->flags >> DBG_PERIOD)    & 0x1) fprintf(f,"%10d",s->period);    else fprintf(f,"%10d",0);
 
     fprintf(f,"\n");
@@ -179,7 +180,8 @@ int process(struct pll_stat *s, FILE *f, uint16_t seq_id, uint32_t value, int wh
         return -1;
     int event = 0;
     s->mark_event = 0;
-    if(what == DBG_Y)         s->y         = value; 
+    if(what == DBG_Y)         s->y         = value & 0x0FFFF;
+    if(what == DBG_Y)         s->locked    =(value & 0x10000) ? 1 : 0 ; 
     if(what == DBG_ERR)       s->err       = convertNumber(value); 
     if(what == DBG_TAG)       s->tag       = value; 
     if(what == DBG_REF)       s->setpoint  = convertNumber(value); 
@@ -209,6 +211,8 @@ int main(int argc, char *argv[])
     int i;
     int totalcnt = 0;
     int finish_after_marker = 0;
+    int matlab_read = 0;
+    int debug_to_hex = 0;
     FILE *mPLL, *bPLL, *hPLL, *xPLL[4];
     struct pll_stat mpll_stat, bpll_stat[4], hpll_stat;
     mpll_stat=clear_stat;
@@ -232,7 +236,7 @@ int main(int argc, char *argv[])
         for (name = s = argv[0]; s[0]; s++) 
             if (s[0] == '/' && s[1]) 
                 name = &s[1];
-        optstring = "?d:b:p";
+        optstring = "?xmrd:b:p";
         printf("Startup options\n");
         while ((op = getopt(argc, argv, optstring)) != -1) 
         {
@@ -251,6 +255,19 @@ int main(int argc, char *argv[])
                 case 'p':
                    print = 1;
                    printf("print all data to stdout\n");
+                   break;
+                case 'r':
+                   printf("record all\n");
+                   mpll_stat.record = 1;
+                   hpll_stat.record = 1;
+                   break;
+                case 'm':
+                   printf("matlab read\n");
+                   matlab_read = 1;
+                   break;
+                case 'x':
+                   printf("debug to hex\n");
+                   debug_to_hex = 1;
                    break;
                 case '?':
                 default:
@@ -317,7 +334,7 @@ int main(int argc, char *argv[])
     else 
         printf("Problem to created files\n");
 
-    if(finish_after_marker == 0)
+    if(finish_after_marker == 0 && matlab_read == 0)
     {
         fprintf(mPLL,   "%s \n", tab_content);
 //         fprintf(bPLL,   "%s \n", tab_content);
@@ -332,6 +349,7 @@ int main(int argc, char *argv[])
 
     int got_marker=0;
     int after_marker_cnt = 0;
+    int cnt_three=0;
     while(1)
     {
         struct fifo_entry tx_buf[ENTRIES_PER_PACKET];
@@ -352,9 +370,29 @@ int main(int argc, char *argv[])
         else if(rc> 0)
         {
            if(print) printf("Read %d byes of data\n", rc);
-           for(i=0;i<ENTRIES_PER_PACKET;i++)
+//            cnt_three = 0;
+//            fprintf(hPLL,"\n"); 
+           if((rc>>3) != ENTRIES_PER_PACKET)
+               printf("rc != ENTRIES_PER_PACKET:  %d \n", rc);
+           for(i=0;i<(rc>>3);i++)
            {
               int value = (0xffffff & tx_buf[i].value);
+              
+              if(debug_to_hex)
+	      {
+		
+		  fprintf(hPLL,"%10x",value); 
+		  cnt_three++;
+		  if(cnt_three == 3 )
+		  {
+		      fprintf(hPLL,"\n"); 
+		      cnt_three = 0;
+		  }
+		      
+		
+		  continue;
+	      }
+	   
               
               if(print || (0xF & (tx_buf[i].value>>24)) == DBG_EVENT)
 	      {
