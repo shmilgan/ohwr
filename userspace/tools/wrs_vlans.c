@@ -36,13 +36,13 @@
 
 
 
-int debug = 0;
-struct minipc_ch *rtud_ch;
-struct rtu_vlans_t *rtu_vlans = NULL;
-char *prgname;
+static int debug = 0;
+static struct minipc_ch *rtud_ch;
+static struct rtu_vlans_t *rtu_vlans = NULL;
+static char *prgname;
 
 /* runtime options */
-struct option ropts[] = {
+static struct option ropts[] = {
 	{"help", 0, NULL, OPT_HELP},
 	{"debug", 0, &debug, 1},
 	{"clear", 0, NULL, OPT_CLEAR},
@@ -62,9 +62,23 @@ struct option ropts[] = {
 	{0,}};
 /*******************/
 
-struct s_port_vlans vlans[NPORTS];
+static struct s_port_vlans vlans[NPORTS];
 
-unsigned long portmask;
+static unsigned long portmask;
+
+static int print_help();
+static void print_config(struct s_port_vlans *vlans);
+static int apply_settings(struct s_port_vlans *vlans);
+static int clear_all();
+static int set_rtu_vlan(int vid, int fid, int pmask, int drop, int prio,
+			int del, int flags);
+static void free_rtu_vlans(struct rtu_vlans_t *ptr);
+static void list_rtu_vlans(void);
+static void list_ep_vlans(void);
+static struct rtu_vlans_t *rtu_retrieve_config(void);
+static struct rtu_vlans_t *rtu_find_vlan(struct rtu_vlans_t *conf, int vid,
+					 int fid);
+static int config_rtud(void);
 
 static inline int nextport(int i, unsigned long pmask) /* helper for for_each_port() below */
 {
@@ -257,7 +271,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-int print_help(char *prgname)
+static int print_help(char *prgname)
 {
 	fprintf(stderr, "Use: %s [--ep <port number> <EP options> --ep <port number> "
 			"<EP options> ...] [--rvid <vid> --rfid <fid> --rmask <mask> --rdrop "
@@ -289,7 +303,7 @@ int print_help(char *prgname)
 	return 0;
 }
 
-void print_config(struct s_port_vlans *vlans)
+static void print_config(struct s_port_vlans *vlans)
 {
 	int i;
 
@@ -313,7 +327,7 @@ static void ep_write(int ep, int offset, uint32_t value)
 	_fpga_writel(0x30000 + ep * 0x400 + offset, value);
 }
 
-int apply_settings(struct s_port_vlans *vlans)
+static int apply_settings(struct s_port_vlans *vlans)
 {
 	int ep;
 	uint32_t v, r;
@@ -349,7 +363,7 @@ int apply_settings(struct s_port_vlans *vlans)
 	return 0;
 }
 
-int config_rtud(void)
+static int config_rtud(void)
 {
 	struct rtu_vlans_t *cur;
 	struct rtu_vlans_t *old_list, *old_entry;
@@ -384,7 +398,7 @@ int config_rtud(void)
 	return 0;
 }
 
-void list_rtu_vlans(void)
+static void list_rtu_vlans(void)
 {
 	struct rtu_vlans_t *p = rtu_retrieve_config();
 
@@ -409,7 +423,7 @@ void list_rtu_vlans(void)
 	printf("\n");
 }
 
-void list_ep_vlans(void)
+static void list_ep_vlans(void)
 {
 	uint32_t v, r;
 	int ep;
@@ -431,7 +445,7 @@ void list_ep_vlans(void)
 	return;
 }
 
-int clear_all()
+static int clear_all()
 {
 	struct rtu_vlans_t *p;
 	uint32_t r;
@@ -465,7 +479,8 @@ int clear_all()
 	return 0;
 }
 
-int set_rtu_vlan(int vid, int fid, int pmask, int drop, int prio, int del, int flags)
+static int set_rtu_vlan(int vid, int fid, int pmask, int drop, int prio,
+			int del, int flags)
 {
 	struct rtu_vlans_t *cur = rtu_vlans;;
 
@@ -520,7 +535,7 @@ int set_rtu_vlan(int vid, int fid, int pmask, int drop, int prio, int del, int f
 	return 0;
 }
 
-void free_rtu_vlans(struct rtu_vlans_t *ptr)
+static void free_rtu_vlans(struct rtu_vlans_t *ptr)
 {
 	struct rtu_vlans_t *next = NULL;
 
@@ -531,7 +546,7 @@ void free_rtu_vlans(struct rtu_vlans_t *ptr)
 	}
 }
 
-struct rtu_vlans_t* rtu_retrieve_config(void)
+static struct rtu_vlans_t *rtu_retrieve_config(void)
 {
 	rtudexp_vd_list_t vlist;
 	rtudexp_vd_entry_t *ventry;
@@ -576,7 +591,8 @@ struct rtu_vlans_t* rtu_retrieve_config(void)
 	return config;
 }
 
-struct rtu_vlans_t* rtu_find_vlan(struct rtu_vlans_t *conf, int vid, int fid)
+static struct rtu_vlans_t *rtu_find_vlan(struct rtu_vlans_t *conf, int vid,
+					 int fid)
 {
 	struct rtu_vlans_t *cur;
 

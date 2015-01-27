@@ -82,16 +82,4 @@ struct rtu_vlans_t
 	struct rtu_vlans_t *next;
 };
 
-int print_help();
-void print_config(struct s_port_vlans *vlans);
-int apply_settings(struct s_port_vlans *vlans);
-int clear_all();
-int set_rtu_vlan(int vid, int fid, int pmask, int drop, int prio, int del, int flags);
-void free_rtu_vlans(struct rtu_vlans_t *ptr);
-void list_rtu_vlans(void);
-void list_ep_vlans(void);
-struct rtu_vlans_t* rtu_retrieve_config(void);
-struct rtu_vlans_t* rtu_find_vlan(struct rtu_vlans_t *conf, int vid, int fid);
-int config_rtud(void);
-
 #endif
