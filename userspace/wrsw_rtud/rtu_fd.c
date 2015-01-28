@@ -97,6 +97,11 @@ static struct rtu_vlan_table_entry *vlan_tab;
  */
 static pthread_mutex_t fd_mutex;
 
+/**
+ * \brief Pointer to shmem, user for write locking.
+ */
+static struct wrs_shm_head *rtu_port_shmem;
+
 static struct hw_req *tail(struct hw_req *head);
 static void clean_list(struct hw_req *head);
 static int hw_request(int type, struct rtu_addr addr,
@@ -120,7 +125,6 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 {
 	uint32_t bitmap[RTU_ENTRIES / 32];
 	int err;
-	struct wrs_shm_head *rtu_port_shmem;
 	struct rtu_shmem_header *rtu_hdr;
 	pr_info("Open rtu shmem.\n");
 	rtu_port_shmem = wrs_shm_get(wrs_shm_rtu, "wrsw_rtud",
@@ -221,6 +225,8 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 	struct rtu_addr eaddr;
 
 	pthread_mutex_lock(&fd_mutex);
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+
 	// if VLAN is registered (otherwise just ignore request)
 	if (!vlan_tab[vid].drop) {
 		// Obtain FID from VLAN database
@@ -255,6 +261,8 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 				pr_error(
 				      "Hash %03x has no buckets left.\n",
 				      eaddr.hash);
+				wrs_shm_write(rtu_port_shmem,
+					      WRS_SHM_WRITE_END);
 				pthread_mutex_unlock(&fd_mutex);
 				return -ENOMEM;
 			}
@@ -281,6 +289,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 
 	}
 	rtu_fd_commit();
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
 	pthread_mutex_unlock(&fd_mutex);
 	return ret;
 }
@@ -402,9 +411,12 @@ static inline int to_mem_addr(struct rtu_addr addr)
  */
 static void clean_fd(void)
 {
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+
 	memset(rtu_htab, 0, sizeof(*rtu_htab) * HTAB_ENTRIES);
 
 	rtu_clean_htab();
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
 }
 
 /**
@@ -413,6 +425,8 @@ static void clean_fd(void)
 static void clean_vd(void)
 {
 	int i;
+
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
 
 	rtu_clean_vlan();
 	for (i = 1; i < NUM_VLANS; i++) {
@@ -429,6 +443,7 @@ static void clean_vd(void)
 	vlan_tab[0].prio = 0;
 
 	rtu_write_vlan_entry(0, &vlan_tab[0]);
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
 }
 
 /**
@@ -451,6 +466,7 @@ static void rtu_fd_age_update(void)
 	// Update 'last access time' for accessed entries
 	t = now();
 	// HTAB
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
 	for (i = 0; i < RTU_ENTRIES / 32; i++)
 		for (j = 0; j < 32; j++) {
 			agr_word = bitmap[i];
@@ -477,6 +493,8 @@ static void rtu_fd_age_update(void)
 				rtu_htab[hash][bucket].last_access_t = t;
 			}
 		}
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+
 }
 
 void rtu_fd_clear_entries_for_port(int dest_port)
@@ -484,6 +502,8 @@ void rtu_fd_clear_entries_for_port(int dest_port)
 	int i;			// loop index
 	int j;			// bucket loop index
 	struct rtu_filtering_entry *ent; /* pointer to scan tables */
+
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
 
 	for (i = HTAB_ENTRIES; i-- > 0;) {
 		for (j = RTU_BUCKETS; j-- > 0;) {
@@ -502,6 +522,7 @@ void rtu_fd_clear_entries_for_port(int dest_port)
 	}
 	// commit changes
 	rtu_fd_commit();
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
 }
 
 /**
@@ -516,6 +537,8 @@ static void rtu_fd_age_out(void)
 	unsigned long t;	// (secs)
 
 	t = now() - aging_time;
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+
 	// HTAB
 	for (i = HTAB_ENTRIES; i-- > 0;) {
 		for (j = RTU_BUCKETS; j-- > 0;) {
@@ -533,6 +556,7 @@ static void rtu_fd_age_out(void)
 	}
 	// commit changes
 	rtu_fd_commit();
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
 }
 
 /**
@@ -542,6 +566,8 @@ static void rtu_fd_age_out(void)
 static void delete_htab_entry(struct rtu_addr addr)
 {
 	int i, n_buckets = htab_count_buckets(addr);
+
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
 
 	pr_info("Deleted entry for MAC %s : hash %03x:%d.\n",
 	      mac_to_string(rtu_htab[addr.hash][addr.bucket].mac), addr.hash,
@@ -564,6 +590,7 @@ static void delete_htab_entry(struct rtu_addr addr)
 				     &rtu_htab[a.hash][a.bucket],
 				     (i == n_buckets - 1) ? 1 : 0);
 	}
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
 }
 
 static void rtu_hw_commit(void)
@@ -627,6 +654,7 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid,
 #define rtu_rd(reg) \
 	 _fpga_readl(FPGA_BASE_RTU + offsetof(struct RTU_WB, reg))
 	int port_num = RTU_PSR_N_PORTS_R(rtu_rd(PSR));
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
     /****************************************************************************************/
 	if (port_mask == 0x0 && drop == 1)
 		vlan_tab[vid].port_mask = 0x0;
@@ -639,4 +667,5 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid,
 	vlan_tab[vid].prio = prio;
 
 	rtu_write_vlan_entry(vid, &vlan_tab[vid]);
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
 }
