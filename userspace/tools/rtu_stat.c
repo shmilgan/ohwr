@@ -170,15 +170,17 @@ int read_vlans(void)
 	if (!vlan_tab_shm)
 		return -2;
 	/* read data, with the sequential lock to have all data consistent */
-	do {
+	while (1) {
 		ii = wrs_shm_seqbegin(rtu_port_shmem);
 		memcpy(&vlan_tab_local, vlan_tab_shm,
 		       NUM_VLANS * sizeof(*vlan_tab_shm));
 		retries++;
 		if (retries > 100)
 			return -1;
+		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+			break; /* consistent read */
 		usleep(1000);
-	} while (wrs_shm_seqretry(rtu_port_shmem, ii));
+	}
 
 	return 0;
 }
@@ -198,15 +200,17 @@ int read_htab(int *read_entries)
 		return -2;
 
 	/* Read data, with the sequential lock to have all data consistent */
-	do {
+	while (1) {
 		ii = wrs_shm_seqbegin(rtu_port_shmem);
 		memcpy(&rtu_htab_local, htab_shm,
 		       RTU_BUCKETS * HTAB_ENTRIES * sizeof(*htab_shm));
 		retries++;
 		if (retries > 100)
 			return -1;
+		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+			break; /* consistent read */
 		usleep(1000);
-	} while (wrs_shm_seqretry(rtu_port_shmem, ii));
+	}
 
 	/* Convert hash table to ordered table. Table will be qsorted later,
 	 * no need to qsort entire table */

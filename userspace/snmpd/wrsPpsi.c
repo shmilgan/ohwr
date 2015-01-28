@@ -230,7 +230,7 @@ static void wrs_ppsi_get_per_port(void)
 	/* read data, with the sequential lock to have all data consistent */
 	struct hal_port_state *port_state;
 	memset(wrs_p_array, 0, sizeof(wrs_p_array));
-	do {
+	while (1) {
 		ii = wrs_shm_seqbegin(hal_head);
 		for (i = 0; i < hal_nports_local; ++i) {
 			/* Assume that number of ports does not change between
@@ -261,7 +261,10 @@ static void wrs_ppsi_get_per_port(void)
 				 __func__);
 			retries = 0;
 			}
-	} while (wrs_shm_seqretry(hal_head, ii));
+		if (!wrs_shm_seqretry(hal_head, ii))
+			break; /* consistent read */
+		usleep(1000);
+	}
 
 }
 

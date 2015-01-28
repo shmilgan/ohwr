@@ -433,7 +433,7 @@ static void list_rtu_vlans(void)
 	static struct rtu_vlan_table_entry vlan_tab_local[NUM_VLANS];
 
 	/* read data, with the sequential lock to have all data consistent */
-	do {
+	while (1) {
 		ii = wrs_shm_seqbegin(rtu_port_shmem);
 		memcpy(&vlan_tab_local, vlan_tab_shm,
 		       NUM_VLANS * sizeof(*vlan_tab_shm));
@@ -444,8 +444,10 @@ static void list_rtu_vlans(void)
 					prgname);
 			break; /* use inconsistent data */
 			}
+		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+			break; /* consistent read */
 		usleep(1000);
-	} while (wrs_shm_seqretry(rtu_port_shmem, ii));
+	}
 
 	printf("# VID    FID       MASK       DROP    PRIO    PRIO_OVERRIDE\n");
 	printf("#----------------------------------------------------------\n");
@@ -608,7 +610,7 @@ static int rtu_find_vlan(struct rtu_vlan_table_entry *rtu_vlan_entry, int vid,
 
 	/* copy data no mater if it will be used later, with the sequential
 	 * lock to have all data consistent */
-	do {
+	while (1) {
 		ii = wrs_shm_seqbegin(rtu_port_shmem);
 		memcpy(rtu_vlan_entry, &vlan_tab_shm[vid],
 			sizeof(*rtu_vlan_entry));
@@ -619,8 +621,10 @@ static int rtu_find_vlan(struct rtu_vlan_table_entry *rtu_vlan_entry, int vid,
 				"Use inconsistent\n", prgname);
 			break; /* use inconsistent data */
 			}
+		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+			break; /* consistent read */
 		usleep(1000);
-	} while (wrs_shm_seqretry(rtu_port_shmem, ii));
+	}
 
 	/* Ignore entires that are not active */
 	if ((rtu_vlan_entry->drop != 0)

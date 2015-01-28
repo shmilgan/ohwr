@@ -32,15 +32,17 @@ int read_ports(void){
 	unsigned retries = 0;
 
 	/* read data, with the sequential lock to have all data consistent */
-	do {
+	while (1) {
 		ii = wrs_shm_seqbegin(hal_head);
 		memcpy(hal_ports_local_copy, hal_ports,
 		       hal_nports_local*sizeof(struct hal_port_state));
 		retries++;
 		if (retries > 100)
 			return -1;
+		if (!wrs_shm_seqretry(hal_head, ii))
+			break; /* consistent read */
 		usleep(1000);
-	} while (wrs_shm_seqretry(hal_head, ii));
+	}
 
 	return 0;
 }
