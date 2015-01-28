@@ -605,26 +605,29 @@ static int rtu_find_vlan(struct rtu_vlan_table_entry *rtu_vlan_entry, int vid,
 {
 	unsigned ii;
 	unsigned retries = 0;
+
+	/* copy data no mater if it will be used later, with the sequential
+	 * lock to have all data consistent */
+	do {
+		ii = wrs_shm_seqbegin(rtu_port_shmem);
+		memcpy(rtu_vlan_entry, &vlan_tab_shm[vid],
+			sizeof(*rtu_vlan_entry));
+		retries++;
+		if (retries > 100) {
+			fprintf(stderr, "%s: couldn't read consistent "
+				"data from RTU's shmem. "
+				"Use inconsistent\n", prgname);
+			break; /* use inconsistent data */
+			}
+		usleep(1000);
+	} while (wrs_shm_seqretry(rtu_port_shmem, ii));
+
 	/* Ignore entires that are not active */
-	if ((vlan_tab_shm[vid].drop != 0)
-	    && (vlan_tab_shm[vid].port_mask == 0x0))
+	if ((rtu_vlan_entry->drop != 0)
+	    && (rtu_vlan_entry->port_mask == 0x0))
 		return 0;
 
-	if ((fid == vlan_tab_shm[vid].fid) || (fid == -1)) {
-		do {
-			ii = wrs_shm_seqbegin(rtu_port_shmem);
-			memcpy(rtu_vlan_entry, &vlan_tab_shm[vid],
-			       sizeof(*rtu_vlan_entry));
-			retries++;
-			if (retries > 100) {
-				fprintf(stderr, "%s: couldn't read consistent "
-					"data from RTU's shmem. "
-					"Use inconsistent\n", prgname);
-				break; /* use inconsistent data */
-				}
-			usleep(1000);
-		} while (wrs_shm_seqretry(rtu_port_shmem, ii));
+	if ((fid == rtu_vlan_entry->fid) || (fid == -1))
 		return 1;
-	}
 	return 0;
 }
