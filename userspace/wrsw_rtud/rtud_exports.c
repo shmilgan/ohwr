@@ -47,79 +47,6 @@ static struct minipc_ch *rtud_ch;
 		if (minipc_export(rtud_ch, &stru) < 0) { \
 			pr_error("Could not export %s (rtu_ch=%p)\n",stru.name,rtud_ch); }
 
-/* The exported function */
-int rtudexp_get_fd_list(const struct minipc_pd *pd, uint32_t * args, void *ret)
-{
-	int i;
-	rtudexp_fd_list_t *list = ret;
-	int start_from = args[0];
-
-	pr_info("GetFDList start=%d\n", start_from);
-
-	for (i = 0; i < 8; i++) {
-		struct rtu_filtering_entry *ent =
-		    rtu_fd_lookup_htab_entry(start_from + i);
-		if (!ent)
-			break;
-
-		memcpy(list->list[i].mac, ent->mac, sizeof(ent->mac));
-		//printf("Ent: %s %x\n", mac_to_string(ent->mac), ent->port_mask_dst);
-
-		list->list[i].dpm = ent->port_mask_dst;
-		list->list[i].spm = ent->port_mask_src;
-		list->list[i].priority = 0;
-		list->list[i].dynamic = ent->dynamic;
-		list->list[i].hash = ent->addr.hash;
-		list->list[i].bucket = ent->addr.bucket;
-		list->list[i].age = ent->age;
-		list->list[i].fid = ent->fid;
-	}
-
-	list->num_rules = i;
-	list->next = (i < 8 ? 0 : start_from + i);
-	return 0;
-}
-
-/* The exported vlan */
-int rtudexp_get_vd_list(const struct minipc_pd *pd, uint32_t * args, void *ret)
-{
-	int i = 0;
-	rtudexp_vd_list_t *list = ret;
-	int current = args[0];
-
-	pr_info("GetVDList start=%d\n", current);
-
-	do {
-		struct rtu_vlan_table_entry *ent = rtu_vlan_entry_get(current);
-		if (!ent)
-			break;
-
-		if (ent->drop == 0 || ent->port_mask != 0x0) {
-			list->list[i].vid = current;
-			list->list[i].port_mask = ent->port_mask;
-			list->list[i].drop = ent->drop;
-			list->list[i].fid = ent->fid;
-			list->list[i].has_prio = ent->has_prio;
-			list->list[i].prio_override = ent->prio_override;
-			list->list[i].prio = ent->prio;
-			pr_info(
-			      "vlan_entry_vd: vid %d, drop=%d, fid=%d, port_mask 0x%x\n",
-			      list->list[i].vid, list->list[i].drop,
-			      list->list[i].fid, list->list[i].port_mask);
-			i++;
-		}
-		current++;
-
-		if (current == NUM_VLANS)
-			break;
-
-	} while (i < 8);
-
-	list->num_entries = i;
-	list->next = (i < 8 ? 0 : current);
-	return 0;
-}
-
 int rtudexp_clear_entries(const struct minipc_pd *pd,
 			  uint32_t * args, void *ret)
 {
@@ -196,8 +123,6 @@ int rtud_init_exports()
 	if (getenv("RTUD_MINIPC_DEBUG"))
 		minipc_set_logfile(rtud_ch, stderr);
 
-	MINIPC_EXP_FUNC(rtud_export_get_fd_list, rtudexp_get_fd_list);
-	MINIPC_EXP_FUNC(rtud_export_get_vd_list, rtudexp_get_vd_list);
 	MINIPC_EXP_FUNC(rtud_export_clear_entries, rtudexp_clear_entries);
 	MINIPC_EXP_FUNC(rtud_export_add_entry, rtudexp_add_entry);
 	MINIPC_EXP_FUNC(rtud_export_vlan_entry, rtudexp_vlan_entry);

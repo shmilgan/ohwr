@@ -31,64 +31,6 @@
 #include <stdint.h>
 #include <minipc.h>
 
-typedef struct {
-	uint8_t mac[8];
-	uint32_t dpm;
-	uint32_t spm;
-	uint8_t priority;
-	int dynamic;
-	uint16_t hash;
-	int bucket;
-	int age;
-	int fid;
-} rtudexp_fd_entry_t;
-
-typedef struct {
-	rtudexp_fd_entry_t list[8];
-
-	int num_rules;
-	int next;
-} rtudexp_fd_list_t;
-
-///// VLAN export
-typedef struct {
-	int vid;
-	uint32_t port_mask;
-	uint8_t fid;
-	uint8_t prio;
-	int has_prio;
-	int prio_override;
-	int drop;
-} rtudexp_vd_entry_t;
-
-typedef struct {
-	rtudexp_vd_entry_t list[8];
-
-	int num_entries;
-	int next;
-} rtudexp_vd_list_t;
-
-/* Export this function: it returns a structure */
-struct minipc_pd rtud_export_get_fd_list = {
-	.name = "get_fd_list",
-	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
-				    rtudexp_fd_list_t),
-	.args = {
-		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
-		 MINIPC_ARG_END,
-		 },
-};
-/* Export this function: it returns a structure */
-struct minipc_pd rtud_export_get_vd_list = {
-	.name = "get_vd_list",
-	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT,
-				    rtudexp_vd_list_t),
-	.args = {
-		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
-		 MINIPC_ARG_END,
-		 },
-};
-
 /* Export of a function to set remove entry in rtu */
 struct minipc_pd rtud_export_clear_entries = {
 	.name = "clear_entries",

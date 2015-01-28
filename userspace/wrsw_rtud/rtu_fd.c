@@ -330,22 +330,6 @@ void rtu_fd_flush(void)
 	pthread_mutex_unlock(&fd_mutex);
 }
 
-struct rtu_filtering_entry *rtu_fd_lookup_htab_entry(int index)
-{
-	int i, j, n = 0;
-
-	for (i = 0; i < RTU_ENTRIES / RTU_BUCKETS; i++) {
-		for (j = 0; j < RTU_BUCKETS; j++) {
-			if (rtu_htab[i][j].valid) {
-				if (n == index)
-					return &rtu_htab[i][j];
-				n++;
-			}
-		}
-	}
-	return NULL;
-}
-
 //---------------------------------------------
 // Static Methods
 //---------------------------------------------
@@ -654,28 +638,4 @@ void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid,
 	vlan_tab[vid].prio = prio;
 
 	rtu_write_vlan_entry(vid, &vlan_tab[vid]);
-}
-
-/**
- * \brief Creates or updates a filtering entry in the VLAN table.
- * @param vid       VLAN ID
- * @return entry of VLAN table at given VID-address
- */
-struct rtu_vlan_table_entry *rtu_vlan_entry_get(int vid)
-{
-	// First entry reserved for untagged packets.
-	if (vid > NUM_VLANS)
-		return NULL;
-	if (vlan_tab[vid].drop == 0)
-		vlan_entry_rd(vid);
-	return &vlan_tab[vid];
-}
-
-void vlan_entry_rd(int vid)
-{
-	// First entry reserved for untagged packets.
-
-	pr_info(
-	      "vlan_entry_vd: vid %d, drop=%d, fid=%d, port_mask 0x%x\n", vid,
-	      vlan_tab[vid].drop, vlan_tab[vid].fid, vlan_tab[vid].port_mask);
 }
