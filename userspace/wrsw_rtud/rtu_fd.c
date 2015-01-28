@@ -255,6 +255,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 				pr_error(
 				      "Hash %03x has no buckets left.\n",
 				      eaddr.hash);
+				pthread_mutex_unlock(&fd_mutex);
 				return -ENOMEM;
 			}
 
