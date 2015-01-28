@@ -51,8 +51,3 @@ int halexp_client_try_connect(int retries, int timeout)
 
 	return -1;
 }
-
-int halexp_client_init()
-{
-	return halexp_client_try_connect(0, 0);
-}
