@@ -139,6 +139,13 @@ int get_nports_from_hal(void)
 		fprintf(stderr, "unable to open shm for HAL!\n");
 		exit(-1);
 	}
+	/* check hal's shm version */
+	if (hal_head->version != HAL_SHMEM_VERSION) {
+		fprintf(stderr, "rtu_stat: unknown hal's shm version %i "
+			"(known is %i)\n",
+			hal_head->version, HAL_SHMEM_VERSION);
+		exit(-1);
+	}
 	h = (void *)hal_head + hal_head->data_off;
 	/* Assume number of ports does not change in runtime */
 	hal_nports_local = h->nports;

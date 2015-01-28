@@ -95,6 +95,14 @@ void init_shm(void)
 		sleep(1);
 	}
 
+	/* check hal's shm version */
+	if (hal_head->version != HAL_SHMEM_VERSION) {
+		fprintf(stderr, "rtu_drv: unknown hal's shm version %i "
+			"(known is %i)\n",
+			hal_head->version, HAL_SHMEM_VERSION);
+		exit(-1);
+	}
+
 	/* Even after HAL restart, HAL will place structures at the same
 	 * addresses. No need to re-dereference pointer at each read. */
 	hal_ports = wrs_shm_follow(hal_head, h->ports);
