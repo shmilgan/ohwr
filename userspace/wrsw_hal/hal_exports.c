@@ -2,6 +2,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <signal.h>
+#include <string.h>
 
 #include <libwr/wrs-msg.h>
 #include <libwr/pps_gen.h> /* for direct access to DMPLL and PPS generator */
@@ -10,6 +13,7 @@
 #include <rt_ipc.h>
 
 #include <minipc.h>
+#include <libwr/shmem.h>
 
 #define HAL_EXPORT_STRUCTURES
 #include <hal/hal_exports.h> /* for exported structs/function protos */
@@ -212,11 +216,20 @@ int hal_update_wripc(int ms_timeout)
    to prevent from launching multiple HALs simultaneously. */
 int hal_check_running()
 {
-	struct minipc_ch *ch;
+	struct wrs_shm_head *hal_head;
+	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
+	if (!hal_head) {
+		pr_info("Unable to open shm for HAL! Unable to check if there "
+			"is another HAL instance running. Error: %s\n",
+			strerror(errno));
+		exit(-1);
+	}
 
-	ch = minipc_client_create(WRSW_HAL_SERVER_ADDR, 0);
-	if (!ch)
+	/* check if pid is 0 (shm not filled) or process with provided
+	 * pid does not exist (probably crashed) */
+	if ((hal_head->pid == 0) || (kill(hal_head->pid, 0) != 0))
 		return 0;
-	minipc_close(ch);
+
+	wrs_shm_put(hal_head);
 	return 1;
 }

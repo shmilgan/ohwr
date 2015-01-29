@@ -1525,12 +1525,6 @@ Clients are created in the following places:
         actions related to vlan setup. All status information is passed
         through shared memory.
 
-@item userspace/wrsw_hal/hal_exports.c
-@c FIXME: don't check with a socket, but with the shmem mechanism
-
-	A temporary client is created to check whether a HAL process
-        is already running.
-
 @item userspace/tools/wr_mon.c
 @c FIXME: wr_mon should use shmem
 
