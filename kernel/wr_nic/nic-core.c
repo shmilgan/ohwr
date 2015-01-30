@@ -160,6 +160,18 @@ static void __wrn_tx_desc(struct wrn_ep *ep, int desc,
 	       &tx->tx1);
 }
 
+inline char* decode_frame(uint8_t byte)
+{
+	if (byte == 0x00)
+		return "SYNC";
+	if (byte == 0x08)
+		return "FOLLOW-UP";
+	if (byte == 0x0b)
+		return "ANNOUNCE";
+	if (byte == 0x09)
+		return "DELAY_RESP";
+	return "unknown";
+}
 
 static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
@@ -171,6 +183,7 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	int id;
 	int do_stamp = 0;
 	void *data; /* FIXME: move data and len to __wrn_tx_desc */
+	uint8_t *dbg_ptr;
 	unsigned len;
 
 	if (unlikely(skb->len > WRN_MTU)) {
@@ -210,6 +223,11 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	/* This both copies the data to the descriptr and fires tx */
 	__wrn_tx_desc(ep, desc, data, len, id, do_stamp);
+	if(do_stamp) {
+		dbg_ptr = (uint8_t*)data;
+		pr_debug("GD: tx %s id: %d, len: %d\n", decode_frame(dbg_ptr[14]),
+				id, len);
+	}
 
 	/* We are done, this is trivial maiintainance*/
 	ep->stats.tx_packets++;

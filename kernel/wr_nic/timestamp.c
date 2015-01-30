@@ -47,6 +47,7 @@ void wrn_tstamp_find_skb(struct wrn_dev *wrn, int desc)
 
 	ts.tv_sec = (s32)utc & 0x7fffffff;
 	ts.tv_nsec = wrn->ts_buf[i].ts * NSEC_PER_TICK;
+	pr_debug("GD: tx ts %d.%d\n", ts.tv_sec, ts.tv_nsec);
 	if (! (wrn->ts_buf[i].valid & TS_INVALID))
 	{	
 		hwts = skb_hwtstamps(skb);
@@ -90,6 +91,8 @@ static int record_tstamp(struct wrn_dev *wrn, u32 tsval, u32 idreg, u32 r2)
 
 		ts.tv_sec = (s32)utc & 0x7fffffff;
 		ts.tv_nsec = (tsval & 0xfffffff) * NSEC_PER_TICK;
+		pr_debug("GD: %s txts (id:%d, v:%d) %d.%d\n", __func__,
+				frame_id, !ts_incorrect, ts.tv_sec, ts.tv_nsec);
 
 		/* Provide the timestamp for the userland only if we're 100% sure about its correctness */
 		if (!ts_incorrect) 
@@ -111,7 +114,7 @@ static int record_tstamp(struct wrn_dev *wrn, u32 tsval, u32 idreg, u32 r2)
 		pr_debug("%s: ENOMEM\n", __func__);
 		return -ENOMEM;
 	}
-	pr_debug("%s: save to slot %i\n", __func__, i);
+	pr_debug("%s: GD save id: %d to slot %i\n", __func__, frame_id, i);
 	wrn->ts_buf[i].ts = tsval;
 	wrn->ts_buf[i].port_id = port_id;
 	wrn->ts_buf[i].frame_id = frame_id;
