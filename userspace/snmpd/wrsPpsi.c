@@ -342,8 +342,10 @@ ppsi_p_next_entry(void **loop_context,
 	/* Create the row OID: only the counter index */
 	snmp_set_var_value(index, (u_char *)&i, sizeof(i));
 
-	/* Set the data context (1..4 -> 0..3) */
-	*data_context = (void *)(intptr_t)(i - 1);
+	/* Set the data context (1..4)
+	 * Cannot be set to 0, because netsnmp_extract_iterator_context returns
+	 * NULL in function wrsPstats_handler when table is over */
+	*data_context = (void *)i;
 	/* and set the loop context for the next iteration */
 	*loop_context = (void *)i;
 	return index;
@@ -410,6 +412,14 @@ ppsi_p_handler(netsnmp_mib_handler          *handler,
 
 		/* "context" is the port number */
 		wrport = (intptr_t)netsnmp_extract_iterator_context(request);
+		if (!wrport)
+			/* NULL returned from
+				 * netsnmp_extract_iterator_context shuld be
+				 * interpreted as end of table */
+			break;
+		/* change range of wrport (1..4 (snmp is 1 based) ->
+			 * 0..3 (wrs_p_array/data array is 0 based)) */
+		wrport--;
 		table_info = netsnmp_extract_table_info(request);
 		subid = table_info->colnum - 1;
 
