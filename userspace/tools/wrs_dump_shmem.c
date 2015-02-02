@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <libwr/shmem.h>
@@ -62,6 +63,9 @@ enum dump_type {
 	dump_type_TimeInternal,
 	dump_type_ip_address,
 };
+
+static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
+				 entries */
 
 /*
  * A structure to dump fields. This is meant to simplify things, see use here
@@ -293,6 +297,7 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 {
 	struct rtu_shmem_header *rtu_h;
 	struct rtu_filtering_entry *rtu_filters;
+	struct rtu_filtering_entry *rtu_filters_cur;
 	struct rtu_vlan_table_entry *rtu_vlans;
 	int i, j;
 
@@ -312,16 +317,24 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 
 	for (i = 0; i < HTAB_ENTRIES; i++) {
 		for (j = 0; j < RTU_BUCKETS; j++) {
+			rtu_filters_cur = rtu_filters + i*RTU_BUCKETS + j;
+			if ((!dump_all_rtu_entries)
+			    && (!rtu_filters_cur->valid))
+				/* don't display empty entries */
+				continue;
 			printf("dump htab[%d][%d]\n", i, j);
-			dump_many_fields(rtu_filters+i*RTU_BUCKETS+j,
-					 htab_info, ARRAY_SIZE(htab_info));
+			dump_many_fields(rtu_filters_cur, htab_info,
+					 ARRAY_SIZE(htab_info));
 		}
 	}
 
-	for (i = 0; i < NUM_VLANS; i++) {
+	for (i = 0; i < NUM_VLANS; i++, rtu_vlans++) {
+		if ((!dump_all_rtu_entries) && (rtu_vlans->drop != 0
+			    && rtu_vlans->port_mask == 0x0))
+			/* don't display empty entries */
+			continue;
 		printf("dump vlan %i\n", i);
 		dump_many_fields(rtu_vlans, vlan_info, ARRAY_SIZE(vlan_info));
-		rtu_vlans++;
 	}
 	return 0;
 }
@@ -538,13 +551,37 @@ dump_f *name_id_to_f[WRS_SHM_N_NAMES] = {
 	[wrs_shm_rtu] = dump_rtu_mem,
 };
 
+void print_info(char *prgname)
+{
+	printf("usage: %s [parameters]\n", prgname);
+	printf(""
+		"             Dump shmem\n"
+		"   -a        Dump all rtu entries. By default only valid\n"
+		"             entries are printed. Note there are 2048 htab\n"
+		"             and 4096 vlan entries!\n"
+		"   -h        Show this message\n");
+
+}
+
 int main(int argc, char **argv)
 {
 	struct wrs_shm_head *head;
 	dump_f *f;
 	void *m;
 	int i;
+	int c;
 
+	while ((c = getopt(argc, argv, "ah")) != -1) {
+		switch (c) {
+		case 'a':
+			dump_all_rtu_entries = 1;
+			break;
+		case 'h':
+		default:
+			print_info(argv[0]);
+			exit(1);
+		}
+	}
 	for (i = 0; i < WRS_SHM_N_NAMES; i++) {
 		m = wrs_shm_get(i, "reader", 0);
 		if (!m) {
