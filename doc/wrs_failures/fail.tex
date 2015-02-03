@@ -8,7 +8,7 @@ WR network.\\
 	\item {\bf \emph{PPSi} went out of \texttt{TRACK\_PHASE}}
 		\label{fail:timing:ppsi_track_phase}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on ppsi shm)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{Slave}
 			\item [] \underline{Description}:\\
@@ -16,8 +16,9 @@ WR network.\\
 				that means something bad has happened and switch has lost the
 				synchronization to its Master.
 			\item [] \underline{SNMP objects}:\\
-				\texttt{WR-SWITCH-MIB::ppsiServoState}\\
-				\texttt{WR-SWITCH-MIB::ppsiServoStateN}
+				\texttt{WR-SWITCH-MIB::ppsiServoState} \emph{(implemented as string)}\\
+				\texttt{WR-SWITCH-MIB::ppsiServoStateN} \emph{(not implemented, as integer)}
+				%ppsiServoStateN shall contain state as a integer taken from ppsi shm
 			\item [] \underline{Note}: we should also monitor PPSi state inside the
 				switch to build up the general WRS status word.
 		\end{packed_enum}
@@ -25,7 +26,7 @@ WR network.\\
 	\item {\bf Offset jump not compensated by Slave}
 		\label{fail:timing:offset_jump}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on ppsi shm)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{Slave}
 			\item [] \underline{Description}:\\
@@ -33,14 +34,15 @@ WR network.\\
 				lost the link to its Master higher in the hierarchy or to external
 				clock), but Slave switch does not follow the jump.
 			\item [] \underline{SNMP objects}:\\
-				\texttt{WR-SWITCH-MIB::ppsiClockOffsetPs}
-			\item [] \underline{Note}: add also 32-bit signed value of the offset.
+				\texttt{WR-SWITCH-MIB::ppsiClockOffsetPs} \emph{(implemented)}\\
+				\texttt{WR-SWITCH-MIB::ppsiClockOffsetPsHR} \emph{(not implemented, 32 bit signed human readable value)}
+			\item [] \underline{Note}: add also 32-bit signed value of the offset. With saturation on overflow.
 		\end{packed_enum}
 
 	\item {\bf Detected jump in the RTT value calculated by \emph{PPSI}}
 		\label{fail:timing:rtt_jump}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{Slave}
 			\item [] \underline{Description}:\\
@@ -58,7 +60,7 @@ WR network.\\
 		$\Delta_{RXS}$ values are reported to the \emph{PPSi} daemon}
 		\label{fail:timing:deltas_report}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on ppsi shm)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
 			\item [] \underline{Description}:\\
@@ -66,7 +68,7 @@ WR network.\\
 				it won't be able to calculate a proper Master-to-Slave delay. Although
 				the estimated offset in \emph{PPSi} is close to 0, WRS won't be
 				synchronized to Master with the sub-nanosecond accuracy.
-			\item [] \underline{SNMP objects}:\\
+			\item [] \underline{SNMP objects}: \emph{(not implemented)}\\
 				\texttt{WR-SWITCH-MIB::ppsiDeltaTxM.<n>}\\
 				\texttt{WR-SWITCH-MIB::ppsiDeltaRxM.<n>}\\
 				\texttt{WR-SWITCH-MIB::ppsiDeltaTxS.<n>}\\
@@ -76,7 +78,7 @@ WR network.\\
 	\item {\bf \emph{SoftPLL} became unlocked}
 		\label{fail:timing:spll_unlock}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on SoftPLL mem read)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
 			\item [] \underline{Description}:\\
@@ -89,7 +91,7 @@ WR network.\\
 				clock down. In that case, the switch goes into Free-running mode and
 				resets WR time. Later we will have a holdover to keep the Grand Master
 				switch disciplined in case it loses external reference.
-			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
+			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}\\
 				\texttt{WR-SWITCH-MIB::spllMode}\\
 				\texttt{WR-SWITCH-MIB::spllSeqState}\\
 				\texttt{WR-SWITCH-MIB::spllAlignState}\\
@@ -104,7 +106,7 @@ WR network.\\
 	\item {\bf \emph{SoftPLL} has crashed/restarted}
 		\label{fail:timing:spll_crash}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on SoftPLL mem read), (require changes in lm32 software)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
 			\item [] \underline{Description}:\\
@@ -112,7 +114,7 @@ WR network.\\
 				either reseted or random (if for some reason variables were overwritten
 				with junk values). In such case PLL becomes unlocked and switch is not
 				able to provide synchronization to other devices.
-			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
+			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}\\
 				\texttt{WR-SWITCH-MIB::spllIrqCnt}
 			\item [] \underline{Note}: we need to have a similar mechanism as in the
 				\emph{wrpc-sw} to detect if the LM32 program has restarted because of
@@ -140,7 +142,7 @@ WR network.\\
 	\item {\bf PTP frames don't reach ARM}
 		\label{fail:timing:no_frames}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on ppsi shm?)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
 			\item [] \underline{Description}:\\
@@ -154,11 +156,11 @@ WR network.\\
 					\item \emph{wr\_nic.ko} driver crash
 					\item wrong VLANs configuration
 				\end{itemize}
-			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}\\
-				\texttt{WR-SWITCH-MIB::portPtpTxFrames.<n>}\\
-				\texttt{WR-SWITCH-MIB::portPtpRxFrames.<n>}\\
-				\texttt{WR-SWITCH-MIB::portLink.<n>}\\
-				\texttt{WR-SWITCH-MIB::portMode.<n>}
+			\item [] \underline{SNMP objects}:\\
+				\texttt{WR-SWITCH-MIB::portPtpTxFrames.<n>} \emph{(not implemented)}\\
+				\texttt{WR-SWITCH-MIB::portPtpRxFrames.<n>} \emph{(not implemented)}\\
+				\texttt{WR-SWITCH-MIB::portLink.<n>} \emph{(implemented)}\\
+				\texttt{WR-SWITCH-MIB::portMode.<n>} \emph{(implemented)}
 			\item [] \underline{Note}: If the kernel driver crashes, there is not much
 				we can do. We end up with either our system frozen or a reboot. For
 				wrong VLAN configuration and HDL problems we can monitor if PTP frames
@@ -183,13 +185,14 @@ WR network.\\
 				Despite \emph{PPSi} offset being close to 0 \emph{ps}, the device won't
 				be properly synchronized.
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}\\
-				\texttt{WR-SWITCH-MIB::portSfpID.<n>}\\
-				\texttt{WR-SWITCH-MIB::portSfpInDB.<n>}
+				\texttt{WR-SWITCH-MIB::portSfpID.<n>} \emph{(info available via hal shm)}\\
+				\texttt{WR-SWITCH-MIB::portSfpInDB.<n>}\\
+				\texttt{WR-SWITCH-MIB::portSfpGbE.<n>}
 			\item [] \underline{Note}: HAL should provide this info to the shared
 				memory, so in general we should build a per-port structure describing
 				SFP info:
 				\begin{packed_items}
-					\item SFP ID (e.g. AXGE-1254-0531)
+					\item SFP ID (e.g. AXGE-1254-0531) \emph{(available via halshm)}
 					\item Matched ? (to SFP database entries)
 					\item Gigabit ? (based on supported speeds read from i2c eeprom)
 				\end{packed_items}
@@ -205,7 +208,7 @@ WR network.\\
 	\item {\bf \emph{PPSi} process has crashed/restarted}
 		\label{fail:timing:ppsi_crash}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on monit)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
 			\item [] \underline{Description}:\\
@@ -213,9 +216,9 @@ WR network.\\
 				capabilities. If, in the future, we will have another process that could
 				bring \emph{PPSi} back to live, such a restart would still create a time
 				jump and has to be reported.
-			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}\\
-				\texttt{WR-SWITCH-MIB::ppsiBootCnt}\\
-				\texttt{HOST-RESOURCES-MIB::hrSWRunName.<x>}
+			\item [] \underline{SNMP objects}:\\
+				\texttt{WR-SWITCH-MIB::ppsiRunCnt} \emph{(not implemented)}\\
+				\texttt{HOST-RESOURCES-MIB::hrSWRunName.<x>} \emph{(implemented)}
 			\item [] \underline{Note}: list of the processes has to be monitored, if
 				\emph{PPSi} is there and if its PID has changed (it was restarted).
 		\end{packed_enum}
@@ -223,7 +226,7 @@ WR network.\\
 	\item {\bf \emph{HAL} process has crashed/restarted}
 		\label{fail:timing:hal_crash}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on monit)}
 			\item [] \underline{Severity}: WARNING (but only after we modify PPSi so
 				it reconnects to HAL, and HAL does not re-initialize SoftPLL after
 				crash)
@@ -232,7 +235,9 @@ WR network.\\
 				If \emph{HAL} crashes, \emph{PPSi} is not able to communicate with
 				hardware i.e. read phase shift, get timestamps, phase shift the clock
 				etc.
-			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
+			\item [] \underline{SNMP objects}:\\
+				\texttt{WR-SWITCH-MIB::halRunCnt} \emph{(not implemented)}\\
+				\texttt{HOST-RESOURCES-MIB::hrSWRunName.<x>} \emph{(implemented)}
 			\item [] \underline{Note}: list of processes has to be monitored, if
 				\emph{wrsw\_hal} is there and if its PID has changed (it was restarted).
 		\end{packed_enum}
@@ -240,7 +245,7 @@ WR network.\\
 	\item {\bf Wrong configuration applied}
 		\label{fail:timing:wrong_config}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(to be done later)}
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Mode}: \emph{all}
 			\item [] \underline{Description}:\\
@@ -305,7 +310,7 @@ between devices connected to the ports.\\
 	\item {\bf Link down}
 		\label{fail:data:link_down}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: DONE  \emph{(to be changed later for switchover)}
 			\item [] \underline{Severity}: ERROR (will be WARNING with the
 				switch-over)
 			\item [] \underline{Description}:\\
@@ -347,7 +352,7 @@ between devices connected to the ports.\\
 	\item {\bf Problem with the \emph{SwCore} or Endpoint HDL module}
 		\label{fail:data:swcore_hang}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on HDL, then hal?)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
 				If any of these HDL modules hangs, there is usually not much the user
@@ -377,7 +382,7 @@ between devices connected to the ports.\\
 	\item {\bf RTU is full and cannot accept more requests}
 		\label{fail:data:rtu_full}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on HDL)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
 				If RTU is full for a given port, it's not able to accept more requests
@@ -393,7 +398,7 @@ between devices connected to the ports.\\
 	\item {\bf Too much HP traffic / Per-priority queue full}
 		\label{fail:data:too_much_HP}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on HDL)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
 				If we get too much High Priority traffic, then SwCore will be busy all
@@ -401,7 +406,7 @@ between devices connected to the ports.\\
 				won't be flowing through the switch. In the extreme case, HP traffic
 				queue may become full and we start losing HP frames, which is
 				unacceptable.
-			\item [] \underline{SNMP objects}: \emph{(not fully implemented)}\\
+			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::pstatsWR<n>.33} - HP frames on a port\\
 				\texttt{WR-SWITCH-MIB::pstatsWR<n>.20} - Total number of Rx frames on
 				the port\\
@@ -414,7 +419,7 @@ between devices connected to the ports.\\
 	\item {\bf \emph{RTUd} has crashed}
 		\label{fail:data:rtu_crash}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on monit)}
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
 				If RTUd crashed, traffic would be still routed between the WRS ports, but
@@ -423,7 +428,9 @@ between devices connected to the ports.\\
 				removed from the RTU table if a device is disconnected from port. Since
 				there would be no learning, each frame with yet unknown destination MAC
 				will be broadcast to all ports (within a VLAN).
-			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
+			\item [] \underline{SNMP objects}:\\
+				\texttt{WR-SWITCH-MIB::rtuRunCnt} \emph{(not implemented)}\\
+				\texttt{HOST-RESOURCES-MIB::hrSWRunName.<x>} \emph{(implemented)}
 			\item [] \underline{Note}: the list of processes has to be monitored, if
 				\emph{RTUd} is there and if its PID has changed (it was restarted).
 		\end{packed_enum}
@@ -431,7 +438,7 @@ between devices connected to the ports.\\
 	\item {\bf Network loop - two or more identical MACs on two or more ports}
 		\label{fail:data:net_loop}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(to be done later)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
 				In such case we have a ping-pong situation. If two ports receive frames
@@ -447,7 +454,7 @@ between devices connected to the ports.\\
 
 	\item {\bf Wrong configuration applied (e.g. wrong VLAN config)}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(to be done later)}
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
 				The same problem as described in the timing fault
@@ -508,7 +515,7 @@ between devices connected to the ports.\\
 	\item {\bf Any userspace daemon has crashed/restarted}
 		\label{fail:other:daemon_crash}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on monit)}
 			\item [] \underline{Severity}: ERROR / WARNING (depending on the process)
 			\item [] \underline{Description}:
 			\item [] \underline{SNMP objects}:\\
@@ -595,7 +602,7 @@ wrs-192.168.16.242# devmem 0xfffffd04
 	\item {\bf System nearly out of memory}
 		\label{fail:other:no_mem}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(DONE?, create new object to report if error?)}
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:
 			\item [] \underline{SNMP objects}:\\
@@ -612,11 +619,16 @@ wrs-192.168.16.242# devmem 0xfffffd04
 	\item {\bf CPU load too high}
 		\label{fail:other:cpu}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(DONE?)}
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:
 			\item [] \underline{SNMP objects}:\\
-				\texttt{WR-SWITCH-MIB::cpuLoad}
+				\texttt{WR-SWITCH-MIB::cpuLoad} \emph{(not implemented)}\\
+				Can \texttt{HOST-RESOURCES-MIB::hrProcessorLoad} be used?
+        ("The average, over the last minute, of the percentage
+        of time that this processor was not idle.
+        Implementations may approximate this one minute
+        smoothing period if necessary.")
 			\item [] \underline{Note}: similar situation as with the memory. We need
 				to monitor, report and alarm if CPU load is close to 100\% (but still
 				enough to keep the system running).
@@ -625,7 +637,7 @@ wrs-192.168.16.242# devmem 0xfffffd04
 	\item {\bf Temperature inside the box too high}
 		\label{fail:other:temp}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(depends on HDL)}
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
 				If the temperature raises too high we might break our electronics inside
@@ -639,7 +651,7 @@ wrs-192.168.16.242# devmem 0xfffffd04
 					\item \emph{IC18} - temperature near the VCXO and PLLs (AD9516,
 						CDCM6100)
 				\end{itemize}
-			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
+			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}\\
 				\texttt{WR-SWITCH-MIB::tempFPGA}\\
 				\texttt{WR-SWITCH-MIB::tempScbPsu.1}\\
 				\texttt{WR-SWITCH-MIB::tempScbPsu.2}\\
@@ -657,7 +669,7 @@ wrs-192.168.16.242# devmem 0xfffffd04
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
 				If not supported Gigabit Fiber SFP is plugged into the cage, then it's a
-				timing issue \ref{tail:timing:wrong_sfp}. However, if a non 1-Gb SFP is
+				timing issue \ref{fail:timing:wrong_sfp}. However, if a non 1-Gb SFP is
 				used, then no Ethernet traffic would be flowing on that port. It's due
 				to the fact, that we don't have 10/100Mbit Ethernet implemented inside
 				the WRS.
