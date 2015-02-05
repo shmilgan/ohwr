@@ -24,6 +24,10 @@
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+#ifdef WRS_PPSI_SHMEM_VERSION
+#undef WRS_PPSI_SHMEM_VERSION
+#define WRS_PPSI_SHMEM_VERSION 1 /* temporary */
+#endif
 
 char *name_id_to_name[WRS_SHM_N_NAMES] = {
 	[wrs_shm_ptp] = "ptpd/ppsi",
