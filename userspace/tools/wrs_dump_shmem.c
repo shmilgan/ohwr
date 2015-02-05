@@ -52,6 +52,8 @@ enum dump_type {
 	dump_type_double,
 	dump_type_pointer,
 	/* and strange ones, from IEEE */
+	dump_type_UInteger64,
+	dump_type_Integer64,
 	dump_type_UInteger32,
 	dump_type_Integer32,
 	dump_type_UInteger16,
@@ -100,6 +102,12 @@ void dump_one_field(void *addr, struct dump_info *info)
 		for (i = 0; i < info->size; i++)
 			printf("%02x%c", ((unsigned char *)p)[i],
 			       i == info->size - 1 ? '\n' : ':');
+		break;
+	case dump_type_UInteger64:
+		printf("%lld\n", *(unsigned long long *)p);
+		break;
+	case dump_type_Integer64:
+		printf("%lld\n", *(long long *)p);
 		break;
 	case dump_type_uint32_t:
 		printf("0x%08lx\n", (long)*(uint32_t *)p);
