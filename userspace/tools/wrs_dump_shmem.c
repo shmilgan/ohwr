@@ -24,11 +24,6 @@
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
-#ifdef WRS_PPSI_SHMEM_VERSION
-#undef WRS_PPSI_SHMEM_VERSION
-#define WRS_PPSI_SHMEM_VERSION 1 /* temporary */
-#endif
-
 char *name_id_to_name[WRS_SHM_N_NAMES] = {
 	[wrs_shm_ptp] = "ptpd/ppsi",
 	[wrs_shm_rtu] = "wrsw_rtud",
@@ -370,6 +365,7 @@ struct dump_info ppg_info [] = {
 	DUMP_FIELD(int, rxdrop),
 	DUMP_FIELD(int, txdrop),
 	DUMP_FIELD(pointer, arch_data),
+	DUMP_FIELD(pointer, global_ext_data),
 };
 
 #undef DUMP_STRUCT
@@ -417,6 +413,38 @@ struct dump_info dstp_info [] = {
 	DUMP_FIELD(Boolean, frequencyTraceable),
 	DUMP_FIELD(Boolean, ptpTimescale),
 	DUMP_FIELD(Enumeration8, timeSource),
+};
+
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct wr_servo_state_t /* Horrible typedef */
+struct dump_info servo_state_info [] = {
+	DUMP_FIELD_SIZE(char, if_name, 16),
+	DUMP_FIELD(int, state),
+	DUMP_FIELD_SIZE(char, servo_state_name, 32),
+	DUMP_FIELD(int, next_state),
+	DUMP_FIELD(TimeInternal, mu),		/* half of the RTT */
+	DUMP_FIELD(Integer64, picos_mu),
+	DUMP_FIELD(Integer32, delta_tx_m),
+	DUMP_FIELD(Integer32, delta_rx_m),
+	DUMP_FIELD(Integer32, delta_tx_s),
+	DUMP_FIELD(Integer32, delta_rx_s),
+	DUMP_FIELD(Integer32, cur_setpoint),
+	DUMP_FIELD(Integer32, delta_ms),
+	DUMP_FIELD(Integer32, delta_ms_prev),
+	DUMP_FIELD(TimeInternal, t1),
+	DUMP_FIELD(TimeInternal, t2),
+	DUMP_FIELD(TimeInternal, t3),
+	DUMP_FIELD(TimeInternal, t4),
+	DUMP_FIELD(UInteger64, last_tics),
+	DUMP_FIELD(Integer32, fiber_fix_alpha),
+	DUMP_FIELD(Integer32, clock_period_ps),
+	DUMP_FIELD(int, missed_iters),
+
+	DUMP_FIELD(int, valid),
+	DUMP_FIELD(UInteger32, update_count),
+	DUMP_FIELD(int, tracking_enabled),
+	DUMP_FIELD(Integer64, skew),
+	DUMP_FIELD(Integer64, offset),
 };
 
 #undef DUMP_STRUCT
@@ -493,6 +521,7 @@ int dump_ppsi_mem(struct wrs_shm_head *head)
 	DSCurrent *dsc;
 	DSParent *dsp;
 	DSTimeProperties *dstp;
+	struct wr_servo_state_t *global_ext_data;
 	int i;
 
 	if (head->version != WRS_PPSI_SHMEM_VERSION) {
@@ -519,6 +548,11 @@ int dump_ppsi_mem(struct wrs_shm_head *head)
 	dstp = wrs_shm_follow(head, ppg->timePropertiesDS);
 	printf("time properties data set:\n");
 	dump_many_fields(dstp, dstp_info, ARRAY_SIZE(dstp_info));
+
+	global_ext_data = wrs_shm_follow(head, ppg->global_ext_data);
+	printf("global external data set:\n");
+	dump_many_fields(global_ext_data, servo_state_info,
+			 ARRAY_SIZE(servo_state_info));
 
 	ppi = wrs_shm_follow(head, ppg->pp_instances);
 	for (i = 0; i < ppg->nlinks; i++) {
