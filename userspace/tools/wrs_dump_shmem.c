@@ -171,6 +171,10 @@ void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
 {
 	int i;
 
+	if (!addr) {
+		fprintf(stderr, "dump: pointer not valid\n");
+		return;
+	}
 	for (i = 0; i < ninfo; i++)
 		dump_one_field(addr, info + i);
 }
