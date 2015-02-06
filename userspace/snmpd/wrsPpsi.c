@@ -3,6 +3,7 @@
  *
  *  Alessandro Rubini for CERN, 2014
  */
+
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
@@ -12,11 +13,13 @@
 #undef FALSE
 #undef TRUE
 
+/* conflict between definition in net-snmp-agent-includes.h (which include
+ * snmp_vars.h) and ppsi.h where INST is defined as a inline function */
+#undef INST
 #include <ppsi/ieee1588_types.h> /* for ClockIdentity */
-#include <minipc.h>
 #include <libwr/shmem.h>
+#include <ppsi/ppsi.h>
 #include <libwr/hal_shmem.h>
-
 #include <stdio.h>
 
 #include "wrsSnmp.h"
@@ -28,12 +31,17 @@ struct ppsi_pickinfo {
 	/* Following fields are used to format the output */
 	int type; int offset; int len;
 	/* The following field is used to scan the input */
+	/* TODO: ! REMOVE ! */
 	char *name;
 };
 
 static struct wrs_shm_head *hal_head;
 static struct hal_port_state *hal_ports;
 static int hal_nports_local;
+
+static struct wrs_shm_head *ppsi_head;
+static struct pp_globals *ppg;
+struct wr_servo_state_t *ppsi_servo;
 
 #define FIELD(_struct, _type, _field, _name) {			\
 		.name = _name,					\
@@ -46,17 +54,18 @@ static int hal_nports_local;
 
 /* Our data: globals */
 static struct wrs_p_globals {
-	ClockIdentity gm_id; /* Scanned as %x:... because it's 8-long */
-	ClockIdentity my_id; /* Same as above */
-	int ppsi_mode;
-	char ppsi_servo_state[32]; /* Scanned as "%s" */
-	int phase_tracking;
-	char sync_source[32]; /* Scanned as "%s" because length > 8 bytes */
+	ClockIdentity gm_id;	/* FIXME: not implemented */
+	ClockIdentity my_id;	/* FIXME: not implemented */
+	int ppsi_mode;		/* FIXME: not implemented */
+	char servo_state_name[32]; /* State as string */
+	int servo_state;	/* state number */
+	int tracking_enabled;
+	char sync_source[32];	/* FIXME: not implemented */
 	int64_t clock_offset;
 	int32_t skew;
 	int64_t rtt;
 	uint32_t llength;
-	int64_t servo_updates;
+	uint32_t servo_updates;
 } wrs_p_globals;
 
 static struct ppsi_pickinfo g_pickinfo[] = {
@@ -64,14 +73,15 @@ static struct ppsi_pickinfo g_pickinfo[] = {
 	FIELD(wrs_p_globals, ASN_OCTET_STR, gm_id, "gm_id:"),
 	FIELD(wrs_p_globals, ASN_OCTET_STR, my_id, "clock_id:"),
 	FIELD(wrs_p_globals, ASN_INTEGER, ppsi_mode, "mode:"),
-	FIELD(wrs_p_globals, ASN_OCTET_STR, ppsi_servo_state, "servo_state:"),
-	FIELD(wrs_p_globals, ASN_INTEGER, phase_tracking, "tracking:"),
+	FIELD(wrs_p_globals, ASN_OCTET_STR, servo_state_name, "servo_state:"),
+	FIELD(wrs_p_globals, ASN_INTEGER, servo_state, "servo_state_num:"),
+	FIELD(wrs_p_globals, ASN_INTEGER, tracking_enabled, "tracking:"),
 	FIELD(wrs_p_globals, ASN_OCTET_STR, sync_source, "source:"),
 	FIELD(wrs_p_globals, ASN_COUNTER64, clock_offset, "ck_offset:"),
 	FIELD(wrs_p_globals, ASN_INTEGER, skew, "skew:"),
 	FIELD(wrs_p_globals, ASN_COUNTER64, rtt, "rtt:"),
 	FIELD(wrs_p_globals, ASN_UNSIGNED, llength, "llength:"),
-	FIELD(wrs_p_globals, ASN_COUNTER64, servo_updates, "servo_upd:"),
+	FIELD(wrs_p_globals, ASN_UNSIGNED, servo_updates, "servo_upd:"),
 };
 
 /* Our data: per-port information */
@@ -90,106 +100,37 @@ static struct ppsi_pickinfo p_pickinfo[] = {
 	FIELD(wrs_p_perport, ASN_OCTET_STR, peer_id, "peer_id:"),
 };
 
-/* Parse a single line, used by both global and per-port */
-static void wrs_ppsi_parse_line(char *line, void *baseaddr,
-				struct ppsi_pickinfo *pi, int npi)
-{
-	char key[20], value[60];
-	void *addr;
-	long long *ptr64;
-	int i;
-
-	i = sscanf(line, "%s %s", key, value); /* value string has no spaces */
-	logmsg("%s", line);
-	logmsg("--%s--%s--\n", key, value);
-	if (i == 0)
-		return;
-	if (i != 2) {
-		snmp_log(LOG_ERR, "%s: can't parse line: %s", __func__,
-			 line /* this includes a trailing newline already */);
-		return;
-	}
-	/* now use parseinfo to find the key */
-	for (i = 0; i < npi; i++, pi++)
-		if (!strcmp(key, pi->name))
-			break;
-	if (i == npi) {
-		snmp_log(LOG_ERR, "%s: can't find key \"%s\"\n", __func__,
-			 key);
-		return;
-	}
-
-	addr = baseaddr + pi->offset;
-
-	/* Here I'm lazy in error checking, let's hope it's ok */
-	switch (pi->type) {
-	case ASN_UNSIGNED:
-		/*
-		 * our unsigned is line length, definitely less than 2G,
-		 * so fall through...
-		 */
-	case ASN_INTEGER:
-		sscanf(value, "%i", (int *)addr);
-		break;
-
-	case ASN_COUNTER64:
-		ptr64 = addr;
-		sscanf(value, "%lli", ptr64);
-		/*
-		 * WARNING: the current snmpd is bugged: it has
-		 * endianness problems with 64 bit, and the two
-		 * halves are swapped. So pre-swap them here
-		 */
-		*ptr64 = (*ptr64 << 32) | (*ptr64 >> 32);
-		break;
-
-	case ASN_OCTET_STR:
-		if (pi->len == 8) {
-			char *a = addr;
-			sscanf(value,
-			       "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
-			       a+0, a+1, a+2, a+3, a+4, a+5, a+6, a+7);
-			break;
-		}
-		if (pi->len > 8) {
-			strcpy(addr, value);
-			break;
-		}
-		snmp_log(LOG_ERR, "%s: no rule to parse OCTET_STREAM \"%s\"\n",
-			 __func__, key);
-		break;
-
-	default:
-		snmp_log(LOG_ERR, "%s: no rule to parse type of key \"%s\"\n",
-			 __func__, key);
-	}
-}
-
-
 static void wrs_ppsi_get_globals(void)
 {
-	static char *fname;
-	FILE *f;
-	char s[80];
+	unsigned ii;
+	unsigned retries = 0;
 
-	/* Allow the environment to override the fname, during development */
-	if (!fname) {
-		fname = getenv("WRS_SNMP_MON_FNAME");
-		if (!fname)
-			fname = "|/wr/bin/wr_mon -g";
-	}
-
-	f = wrs_fpopen(fname, "r");
-	if (!f) {
-		snmp_log(LOG_ERR, "%s: can't open \"%s\"\n", __func__, fname);
-		return;
-	}
 	memset(&wrs_p_globals, 0, sizeof(wrs_p_globals));
-	while (fgets(s, sizeof(s), f)) {
-		wrs_ppsi_parse_line(s, &wrs_p_globals, g_pickinfo,
-				    ARRAY_SIZE(g_pickinfo));
+	while (1) {
+		ii = wrs_shm_seqbegin(ppsi_head);
+
+		strncpy(wrs_p_globals.servo_state_name,
+			ppsi_servo->servo_state_name,
+			sizeof(ppsi_servo->servo_state_name));
+		wrs_p_globals.servo_state = ppsi_servo->state;
+		wrs_p_globals.tracking_enabled = ppsi_servo->tracking_enabled;
+		wrs_p_globals.clock_offset = ppsi_servo->offset;
+		wrs_p_globals.skew = ppsi_servo->skew;
+		wrs_p_globals.rtt = ppsi_servo->picos_mu;
+		wrs_p_globals.llength = (uint32_t)(ppsi_servo->delta_ms/1e12 *
+					300e6 / 1.55);
+		wrs_p_globals.servo_updates = ppsi_servo->update_count;
+
+		retries++;
+		if (retries > 100) {
+			snmp_log(LOG_ERR, "%s: too many retries to read PPSI\n",
+				 __func__);
+			retries = 0;
+			}
+		if (!wrs_shm_seqretry(ppsi_head, ii))
+			break; /* consistent read */
+		usleep(1000);
 	}
-	wrs_fpclose(f, fname);
 }
 
 void init_shm(void)
@@ -198,13 +139,14 @@ void init_shm(void)
 
 	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
 	if (!hal_head) {
-		fprintf(stderr, "unable to open shm for HAL!\n");
+		snmp_log(LOG_ERR, "unable to open shm for HAL!\n");
 		exit(-1);
 	}
 	/* check hal's shm version */
 	if (hal_head->version != HAL_SHMEM_VERSION) {
-		fprintf(stderr, "unknown hal's shm version %i (known is %i)\n",
-			hal_head->version, HAL_SHMEM_VERSION);
+		snmp_log(LOG_ERR, "unknown hal's shm version %i "
+			 "(known is %i)\n", hal_head->version,
+			 HAL_SHMEM_VERSION);
 		exit(-1);
 	}
 
@@ -220,6 +162,28 @@ void init_shm(void)
 			hal_nports_local, WRS_N_PORTS);
 		exit(-1);
 	}
+
+	ppsi_head = wrs_shm_get(wrs_shm_ptp, "", WRS_SHM_READ);
+	if (!ppsi_head) {
+		snmp_log(LOG_ERR, "unable to open shm for PPSI!\n");
+		exit(-1);
+	}
+
+	/* check hal's shm version */
+	if (ppsi_head->version != WRS_PPSI_SHMEM_VERSION) {
+		snmp_log(LOG_ERR, "wr_mon: unknown PPSI's shm version %i "
+			"(known is %i)\n",
+			ppsi_head->version, WRS_PPSI_SHMEM_VERSION);
+		exit(-1);
+	}
+	ppg = (void *)ppsi_head + ppsi_head->data_off;
+
+	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->global_ext_data);
+	if (!ppsi_servo) {
+		snmp_log(LOG_ERR, "Cannot follow ppsi_servo in shmem.\n");
+		exit(-1);
+	}
+
 }
 
 static void wrs_ppsi_get_per_port(void)
