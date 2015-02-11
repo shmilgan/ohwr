@@ -91,15 +91,21 @@ void init_shm(void)
 	h = (void *)hal_head + hal_head->data_off;
 	/* Assume number of ports does not change in runtime */
 	hal_nports_local = h->nports;
-	/* Even after HAL restart, HAL will place structures at the same
-	 * addresses. No need to re-dereference pointer at each read. */
-	hal_ports = wrs_shm_follow(hal_head, h->ports);
 	if (hal_nports_local > HAL_MAX_PORTS) {
 		fprintf(stderr, "Too many ports reported by HAL. "
 			"%d vs %d supported\n",
 			hal_nports_local, HAL_MAX_PORTS);
 		exit(-1);
 	}
+	/* Even after HAL restart, HAL will place structures at the same
+	 * addresses. No need to re-dereference pointer at each read. */
+	hal_ports = wrs_shm_follow(hal_head, h->ports);
+	if (!hal_ports) {
+		fprintf(stderr, "Unalbe to follow hal_ports pointer in HAL's "
+			"shmem");
+		exit(-1);
+	}
+
 
 	ppsi_head = wrs_shm_get(wrs_shm_ptp, "", WRS_SHM_READ);
 	if (!ppsi_head) {
