@@ -1526,11 +1526,10 @@ Clients are created in the following places:
         through shared memory.
 
 @item userspace/tools/wr_mon.c
-@c FIXME: wr_mon should use shmem
 
 	The tty-based monitoring interface connects to @i{ptpd} (@i{ppsi})
-        to get run-time information. It is going to be moved to
-        shared memory.
+        to enable or disable tracking. All status information is passed
+        from @i{HAL} and @i{ppsi} through shared memory.
 
 @item userspace/libwr/hal_client.c
 
