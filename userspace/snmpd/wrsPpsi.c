@@ -26,13 +26,10 @@
 
 #define PPSI_CACHE_TIMEOUT 5 /* 1 second: refresh table every so often */
 
-/* Table-driven memcpy: declare how to pick fields (pickinfo) -- and scan */
+/* Table-driven memcpy: declare how to pick fields (pickinfo) */
 struct ppsi_pickinfo {
 	/* Following fields are used to format the output */
 	int type; int offset; int len;
-	/* The following field is used to scan the input */
-	/* TODO: ! REMOVE ! */
-	char *name;
 };
 
 static struct wrs_shm_head *hal_head;
@@ -43,12 +40,10 @@ static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
 struct wr_servo_state_t *ppsi_servo;
 
-#define FIELD(_struct, _type, _field, _name) {			\
-		.name = _name,					\
+#define FIELD(_struct, _type, _field) {			\
 		.type = _type,					\
 		.offset = offsetof(struct _struct, _field),	\
 		.len = sizeof(_struct._field),			\
-		.name = _name, /* Warning: see wr_mon */	\
 		 }
 
 
@@ -70,18 +65,18 @@ static struct wrs_p_globals {
 
 static struct ppsi_pickinfo g_pickinfo[] = {
 	/* Warning: strings are a special case for snmp format */
-	FIELD(wrs_p_globals, ASN_OCTET_STR, gm_id, "gm_id:"),
-	FIELD(wrs_p_globals, ASN_OCTET_STR, my_id, "clock_id:"),
-	FIELD(wrs_p_globals, ASN_INTEGER, ppsi_mode, "mode:"),
-	FIELD(wrs_p_globals, ASN_OCTET_STR, servo_state_name, "servo_state:"),
-	FIELD(wrs_p_globals, ASN_INTEGER, servo_state, "servo_state_num:"),
-	FIELD(wrs_p_globals, ASN_INTEGER, tracking_enabled, "tracking:"),
-	FIELD(wrs_p_globals, ASN_OCTET_STR, sync_source, "source:"),
-	FIELD(wrs_p_globals, ASN_COUNTER64, clock_offset, "ck_offset:"),
-	FIELD(wrs_p_globals, ASN_INTEGER, skew, "skew:"),
-	FIELD(wrs_p_globals, ASN_COUNTER64, rtt, "rtt:"),
-	FIELD(wrs_p_globals, ASN_UNSIGNED, llength, "llength:"),
-	FIELD(wrs_p_globals, ASN_UNSIGNED, servo_updates, "servo_upd:"),
+	FIELD(wrs_p_globals, ASN_OCTET_STR, gm_id),
+	FIELD(wrs_p_globals, ASN_OCTET_STR, my_id),
+	FIELD(wrs_p_globals, ASN_INTEGER, ppsi_mode),
+	FIELD(wrs_p_globals, ASN_OCTET_STR, servo_state_name),
+	FIELD(wrs_p_globals, ASN_INTEGER, servo_state),
+	FIELD(wrs_p_globals, ASN_INTEGER, tracking_enabled),
+	FIELD(wrs_p_globals, ASN_OCTET_STR, sync_source),
+	FIELD(wrs_p_globals, ASN_COUNTER64, clock_offset),
+	FIELD(wrs_p_globals, ASN_INTEGER, skew),
+	FIELD(wrs_p_globals, ASN_COUNTER64, rtt),
+	FIELD(wrs_p_globals, ASN_UNSIGNED, llength),
+	FIELD(wrs_p_globals, ASN_UNSIGNED, servo_updates),
 };
 
 /* Our data: per-port information */
@@ -94,10 +89,10 @@ static struct wrs_p_perport {
 } wrs_p_perport, wrs_p_array[WRS_N_PORTS];
 
 static struct ppsi_pickinfo p_pickinfo[] = {
-	FIELD(wrs_p_perport, ASN_INTEGER, link_up, "linkup:"),
-	FIELD(wrs_p_perport, ASN_INTEGER, port_mode, "mode:"),
-	FIELD(wrs_p_perport, ASN_INTEGER, port_locked, "locked:"),
-	FIELD(wrs_p_perport, ASN_OCTET_STR, peer_id, "peer_id:"),
+	FIELD(wrs_p_perport, ASN_INTEGER, link_up),
+	FIELD(wrs_p_perport, ASN_INTEGER, port_mode),
+	FIELD(wrs_p_perport, ASN_INTEGER, port_locked),
+	FIELD(wrs_p_perport, ASN_OCTET_STR, peer_id),
 };
 
 static void wrs_ppsi_get_globals(void)
