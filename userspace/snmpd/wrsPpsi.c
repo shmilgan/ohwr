@@ -63,6 +63,10 @@ static struct wrs_p_globals {
 	int64_t rtt;
 	uint32_t llength;
 	uint32_t servo_updates;
+	int32_t delta_tx_m;
+	int32_t delta_rx_m;
+	int32_t delta_tx_s;
+	int32_t delta_rx_s;
 } wrs_p_globals;
 
 static struct ppsi_pickinfo g_pickinfo[] = {
@@ -80,6 +84,10 @@ static struct ppsi_pickinfo g_pickinfo[] = {
 	FIELD(wrs_p_globals, ASN_COUNTER64, rtt),
 	FIELD(wrs_p_globals, ASN_UNSIGNED, llength),
 	FIELD(wrs_p_globals, ASN_UNSIGNED, servo_updates),
+	FIELD(wrs_p_globals, ASN_INTEGER, delta_tx_m),
+	FIELD(wrs_p_globals, ASN_INTEGER, delta_rx_m),
+	FIELD(wrs_p_globals, ASN_INTEGER, delta_tx_s),
+	FIELD(wrs_p_globals, ASN_INTEGER, delta_rx_s),
 };
 
 /* Our data: per-port information */
@@ -137,7 +145,10 @@ static void wrs_ppsi_get_globals(void)
 		wrs_p_globals.llength = (uint32_t)(ppsi_servo->delta_ms/1e12 *
 					300e6 / 1.55);
 		wrs_p_globals.servo_updates = ppsi_servo->update_count;
-
+		wrs_p_globals.delta_tx_m = ppsi_servo->delta_tx_m;
+		wrs_p_globals.delta_rx_m = ppsi_servo->delta_rx_m;
+		wrs_p_globals.delta_tx_s = ppsi_servo->delta_tx_s;
+		wrs_p_globals.delta_rx_s = ppsi_servo->delta_rx_s;
 		retries++;
 		if (retries > 100) {
 			snmp_log(LOG_ERR, "%s: too many retries to read PPSI\n",

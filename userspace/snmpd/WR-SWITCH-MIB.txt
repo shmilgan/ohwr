@@ -374,6 +374,38 @@ ppsiServoUpdates OBJECT-TYPE
             "How many time did the servo run"
     ::= { wrsPpsiGlobals 13 }
 
+ppsiDeltaTxM OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Fixed Tx latency on Master side"
+    ::= { wrsPpsiGlobals 14 }
+
+ppsiDeltaRxM OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Fixed Rx latency on Master side"
+    ::= { wrsPpsiGlobals 15 }
+
+ppsiDeltaTxS OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Fixed Tx latency on Slave side"
+    ::= { wrsPpsiGlobals 16 }
+
+ppsiDeltaRxS OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Fixed Rx latency on Slave side"
+    ::= { wrsPpsiGlobals 17 }
+
 -- per-port (.3.2)
 
 ppsiPort OBJECT-TYPE
