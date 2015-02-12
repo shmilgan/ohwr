@@ -334,13 +334,21 @@ ppsiClockOffsetPs OBJECT-TYPE
             "Current clock offset from master, in picoseconds"
     ::= { wrsPpsiGlobals 8 }
 
+ppsiClockOffsetPsHR OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Human Readable current clock offset from master, in picoseconds with saturation to integer"
+    ::= { wrsPpsiGlobals 9 }
+
 ppsiSkew OBJECT-TYPE
     SYNTAX      INTEGER
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The estimated change of master-to-slave delay, in picoseconds"
-    ::= { wrsPpsiGlobals 9 }
+    ::= { wrsPpsiGlobals 10 }
 
 ppsiRTT OBJECT-TYPE
     SYNTAX      Counter64 -- does unsigned64 exits?
@@ -348,7 +356,7 @@ ppsiRTT OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The round-trip-time, from master, in picoseconds"
-    ::= { wrsPpsiGlobals 10 }
+    ::= { wrsPpsiGlobals 11 }
 
 ppsiLinkLength OBJECT-TYPE
     SYNTAX      Unsigned32
@@ -356,7 +364,7 @@ ppsiLinkLength OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "Estimated fiber length, from master-to-slave delay, in meters"
-    ::= { wrsPpsiGlobals 11 }
+    ::= { wrsPpsiGlobals 12 }
 
 ppsiServoUpdates OBJECT-TYPE
     SYNTAX      Unsigned32
@@ -364,7 +372,7 @@ ppsiServoUpdates OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "How many time did the servo run"
-    ::= { wrsPpsiGlobals 12 }
+    ::= { wrsPpsiGlobals 13 }
 
 -- per-port (.3.2)
 

@@ -57,6 +57,8 @@ static struct wrs_p_globals {
 	int tracking_enabled;
 	char sync_source[32];	/* FIXME: not implemented */
 	int64_t clock_offset;
+	int32_t clock_offsetHR;	/* Human readable version of clock_offset,
+				 * saturated to int limits */
 	int32_t skew;
 	int64_t rtt;
 	uint32_t llength;
@@ -73,6 +75,7 @@ static struct ppsi_pickinfo g_pickinfo[] = {
 	FIELD(wrs_p_globals, ASN_INTEGER, tracking_enabled),
 	FIELD(wrs_p_globals, ASN_OCTET_STR, sync_source),
 	FIELD(wrs_p_globals, ASN_COUNTER64, clock_offset),
+	FIELD(wrs_p_globals, ASN_INTEGER, clock_offsetHR),
 	FIELD(wrs_p_globals, ASN_INTEGER, skew),
 	FIELD(wrs_p_globals, ASN_COUNTER64, rtt),
 	FIELD(wrs_p_globals, ASN_UNSIGNED, llength),
@@ -95,6 +98,16 @@ static struct ppsi_pickinfo p_pickinfo[] = {
 	FIELD(wrs_p_perport, ASN_OCTET_STR, peer_id),
 };
 
+static int32_t int_saturate(int64_t value)
+{
+	if (value >= INT32_MAX)
+		return INT32_MAX;
+	else if (value <= INT32_MIN)
+		return INT32_MIN;
+
+	return value;
+}
+
 static void wrs_ppsi_get_globals(void)
 {
 	unsigned ii;
@@ -109,9 +122,18 @@ static void wrs_ppsi_get_globals(void)
 			sizeof(ppsi_servo->servo_state_name));
 		wrs_p_globals.servo_state = ppsi_servo->state;
 		wrs_p_globals.tracking_enabled = ppsi_servo->tracking_enabled;
-		wrs_p_globals.clock_offset = ppsi_servo->offset;
+		/*
+		 * WARNING: the current snmpd is bugged: it has
+		 * endianness problems with 64 bit, and the two
+		 * halves are swapped. So pre-swap them here
+		 */
+		wrs_p_globals.rtt = (ppsi_servo->picos_mu << 32)
+				    | (ppsi_servo->picos_mu >> 32);
+		wrs_p_globals.clock_offset = (ppsi_servo->offset << 32)
+					     | (ppsi_servo->offset >> 32);
+		wrs_p_globals.clock_offsetHR =
+					int_saturate(ppsi_servo->offset);
 		wrs_p_globals.skew = ppsi_servo->skew;
-		wrs_p_globals.rtt = ppsi_servo->picos_mu;
 		wrs_p_globals.llength = (uint32_t)(ppsi_servo->delta_ms/1e12 *
 					300e6 / 1.55);
 		wrs_p_globals.servo_updates = ppsi_servo->update_count;
