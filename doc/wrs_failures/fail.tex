@@ -26,7 +26,7 @@ WR network.\\
 	\item {\bf Offset jump not compensated by Slave}
 		\label{fail:timing:offset_jump}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO \emph{(depends on ppsi shm)}
+			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{Slave}
 			\item [] \underline{Description}:\\
@@ -34,9 +34,9 @@ WR network.\\
 				lost the link to its Master higher in the hierarchy or to external
 				clock), but Slave switch does not follow the jump.
 			\item [] \underline{SNMP objects}:\\
-				\texttt{WR-SWITCH-MIB::ppsiClockOffsetPs} \emph{(implemented)}\\
-				\texttt{WR-SWITCH-MIB::ppsiClockOffsetPsHR} \emph{(not implemented, 32 bit signed human readable value)}
-			\item [] \underline{Note}: add also 32-bit signed value of the offset. With saturation on overflow.
+				\texttt{WR-SWITCH-MIB::ppsiClockOffsetPs}\\
+				\texttt{WR-SWITCH-MIB::ppsiClockOffsetPsHR}
+			\item [] \underline{Note}: HR version is 32-bit signed value of the offset. With saturation on overflow and underflow.
 		\end{packed_enum}
 
 	\item {\bf Detected jump in the RTT value calculated by \emph{PPSI}}
