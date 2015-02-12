@@ -60,7 +60,7 @@ WR network.\\
 		$\Delta_{RXS}$ values are reported to the \emph{PPSi} daemon}
 		\label{fail:timing:deltas_report}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO \emph{(depends on ppsi shm)}
+			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
 			\item [] \underline{Description}:\\
@@ -68,7 +68,7 @@ WR network.\\
 				it won't be able to calculate a proper Master-to-Slave delay. Although
 				the estimated offset in \emph{PPSi} is close to 0, WRS won't be
 				synchronized to Master with the sub-nanosecond accuracy.
-			\item [] \underline{SNMP objects}: \emph{(not implemented)}\\
+			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::ppsiDeltaTxM.<n>}\\
 				\texttt{WR-SWITCH-MIB::ppsiDeltaRxM.<n>}\\
 				\texttt{WR-SWITCH-MIB::ppsiDeltaTxS.<n>}\\
