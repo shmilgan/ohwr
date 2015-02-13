@@ -520,7 +520,7 @@ int shw_sfp_read_header(int num, struct shw_sfp_header *head)
 
 	ret = shw_sfp_module_scan();
 	if (!(ret & (1 << num)))
-		return -1;
+		return -2;
 
 	ret =
 	    shw_sfp_read(num, I2C_SFP_ADDRESS, 0x0,
@@ -605,32 +605,35 @@ int shw_sfp_read_db(void)
 	return 0;
 }
 
-struct shw_sfp_caldata *shw_sfp_get_cal_data(int num)
+struct shw_sfp_caldata *shw_sfp_get_cal_data(int num,
+					     struct shw_sfp_header *head)
 {
-	uint32_t ret;
-	struct shw_sfp_header head;
 	struct shw_sfp_caldata *t;
 	struct shw_sfp_caldata *other = NULL;
-
-	ret = shw_sfp_module_scan();
-	if (!(ret & (1 << num))) {
-		printf("sfp not inserted into slot: %d\n", num);
-		return NULL;
-	}
-	if (shw_sfp_read_header(num, &head) < 0) {
-		printf("failed to read sfp header for slot %d\n", num);
-		return NULL;
-	}
-
-	char *pn = (char *)head.vendor_pn;
-	char *vs = (char *)head.vendor_serial;
+	char *vn = (char *)head->vendor_name;
+	char *pn = (char *)head->vendor_pn;
+	char *vs = (char *)head->vendor_serial;
 	int i;
-	for (i = 0; i < 16; i++) {
-		if (pn[i] == 0x20)
-			pn[i] = 0;
-		if (vs[i] == 0x20)
-			vs[i] = 0;
+
+	/* Replace spaces at the end of strings with 0 needed for
+	 * string comparison inside shw_sfp_get_cal_data.
+	 * String may contain spaces, standard says only about space padding */
+	for (i = 15; i >= 0 ; i--) {
+		if (vn[i] != 0x20)
+			break;
+		vn[i] = 0;
 	}
+	for (i = 15; i >= 0 ; i--) {
+		if (pn[i] != 0x20)
+			break;
+		pn[i] = 0;
+	}
+	for (i = 15; i >= 0 ; i--) {
+		if (vs[i] != 0x20)
+			break;
+		vs[i] = 0;
+	}
+
 	t = shw_sfp_cal_list;
 	/* In the first pass, look for serial number */
 	while (t) {

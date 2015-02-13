@@ -442,14 +442,19 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 	char subname[48];
 	int err;
 
-	if (shw_sfp_read_verify_header(p->hw_index, &shdr) < 0) {
+	err = shw_sfp_read_verify_header(p->hw_index, &shdr);
+	if (err == -2) {
+		pr_error("SFP module not inserted. Failed to read SFP "
+			 "configuration header\n");
+		return;
+	} else if (err < 0) {
 		pr_error("Failed to read SFP configuration header\n");
 		return;
 	}
 
 	pr_info("SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s\n",
 	      shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
-	cdata = shw_sfp_get_cal_data(p->hw_index);
+	cdata = shw_sfp_get_cal_data(p->hw_index, &shdr);
 	if (cdata) {
 		pr_info("SFP Info: (%s) deltaTx %d "
 		      "delta Rx %d alpha %.3f (* 1e6)\n",

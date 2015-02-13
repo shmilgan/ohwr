@@ -103,7 +103,8 @@ int shw_sfp_read_db(void);
 int shw_sfp_read_verify_header(int num, struct shw_sfp_header *head);
 
 /* return NULL if no data found */
-struct shw_sfp_caldata *shw_sfp_get_cal_data(int num);
+struct shw_sfp_caldata *shw_sfp_get_cal_data(int num,
+					     struct shw_sfp_header *head);
 
 /* Read and verify the header all at once. returns -1 on failure */
 int shw_sfp_read_verify_header(int num, struct shw_sfp_header *head);
