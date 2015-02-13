@@ -466,14 +466,16 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 		memcpy(&p->calib.sfp, cdata,
 		       sizeof(struct shw_sfp_caldata));
 	} else {
-		fprintf(stderr, "Unknown SFP \"%.16s\" on port %s\n",
-			shdr.vendor_pn, p->name);
+		fprintf(stderr, "Unknown SFP vn=\"%.16s\" pn=\"%.16s\" "
+			"vs=\"%.16s\" on port %s\n", shdr.vendor_name,
+			shdr.vendor_pn, shdr.vendor_serial, p->name);
 		memset(&p->calib.sfp, 0, sizeof(p->calib.sfp));
 	}
 
 	p->state = HAL_PORT_STATE_LINK_DOWN;
 	shw_sfp_set_tx_disable(p->hw_index, 0);
 	/* Copy the strings anyways, for informative value in shmem */
+	strncpy(p->calib.sfp.vendor_name, (void *)shdr.vendor_name, 16);
 	strncpy(p->calib.sfp.part_num, (void *)shdr.vendor_pn, 16);
 	strncpy(p->calib.sfp.vendor_serial, (void *)shdr.vendor_serial, 16);
 
@@ -500,8 +502,10 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 		return;
 	}
 
-	fprintf(stderr, "Port %s, SFP \"%.16s\", fiber %i: no alpha known\n",
-		p->name, p->calib.sfp.part_num, p->fiber_index);
+	fprintf(stderr, "Port %s, SFP vn=\"%.16s\" pn=\"%.16s\" vs=\"%.16s\", "
+		"fiber %i: no alpha known\n", p->name,
+		p->calib.sfp.vendor_name, p->calib.sfp.part_num,
+		p->calib.sfp.vendor_serial, p->fiber_index);
 	p->calib.sfp.alpha = 0;
 }
 

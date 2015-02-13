@@ -103,8 +103,8 @@ struct hal_port_state {
 };
 
 /* This is the overall structure stored in shared memory */
-#define HAL_SHMEM_VERSION 4 /* Version 4 because of new fields in struct
-			     * hal_port_state */
+#define HAL_SHMEM_VERSION 5 /* Version 5 because of new field vendor_name in
+			     * struct shw_sfp_caldata */
 struct hal_shmem_header {
 	int nports;
 	struct hal_port_state *ports;

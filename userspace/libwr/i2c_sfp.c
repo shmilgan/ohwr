@@ -569,6 +569,7 @@ int shw_sfp_read_db(void)
 
 		sfp = calloc(1, sizeof(*sfp));
 		strncpy(sfp->part_num, s, sizeof(sfp->part_num));
+		sfp->vendor_name[0] = 0;
 		sfp->vendor_serial[0] = 0;
 		sfp->flags = SFP_FLAG_CLASS_DATA; /* never used */
 
@@ -638,6 +639,7 @@ struct shw_sfp_caldata *shw_sfp_get_cal_data(int num,
 	/* In the first pass, look for serial number */
 	while (t) {
 //              printf("search1 %s %s\n", t->part_num, t->vendor_serial);
+		/* TODO: Add vendor matching */
 		if (strncmp(pn, t->part_num, 16) == 0
 		    && strncmp(t->vendor_serial, "", 16) == 0)
 			other = t;
