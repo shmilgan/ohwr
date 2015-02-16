@@ -242,6 +242,10 @@ static void wrs_ppsi_get_per_port(void)
 			wrs_p_array[i].link_up = state_up(port_state->state);
 			wrs_p_array[i].port_mode = (port_state->mode ==
 					      HEXP_PORT_MODE_WR_SLAVE ? 0 : 1);
+			if (port_state->state == HAL_PORT_STATE_DISABLED)
+				/* if port is disabled don't fill
+				 * other fields */
+				continue;
 			wrs_p_array[i].port_locked = port_state->locked;
 			/* FIXME: get real peer_id */
 			memset(&wrs_p_array[i].peer_id, 0xff,
