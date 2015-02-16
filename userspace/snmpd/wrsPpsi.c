@@ -250,8 +250,7 @@ static void wrs_ppsi_get_per_port(void)
 			/* No need to copy all ports structures, only what
 			 * we're interested in */
 			wrs_p_array[i].link_up = state_up(port_state->state);
-			wrs_p_array[i].port_mode = (port_state->mode ==
-					      HEXP_PORT_MODE_WR_SLAVE ? 0 : 1);
+			wrs_p_array[i].port_mode = port_state->mode;
 			if (port_state->state == HAL_PORT_STATE_DISABLED)
 				/* if port is disabled don't fill
 				 * other fields */

@@ -65,6 +65,7 @@ enum dump_type {
 	dump_type_TimeInternal,
 	dump_type_ip_address,
 	dump_type_sfp_flags,
+	dump_type_port_mode,
 };
 
 static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
@@ -178,6 +179,25 @@ void dump_one_field(void *addr, struct dump_info *info)
 			printf("SFP in data base, ");
 		printf("\n");
 		break;
+	case dump_type_port_mode:
+		switch (*(uint32_t *)p) {
+		case HEXP_PORT_MODE_WR_MASTER:
+			printf("WR Master\n");
+			break;
+		case HEXP_PORT_MODE_WR_SLAVE:
+			printf("WR Slave\n");
+			break;
+		case HEXP_PORT_MODE_NON_WR:
+			printf("Non-WR\n");
+			break;
+		case HEXP_PORT_MODE_WR_M_AND_S:
+			printf("Auto\n");
+			break;
+		default:
+			printf("Undefined\n");
+			break;
+		}
+		break;
 	}
 }
 void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
@@ -215,7 +235,7 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, hw_index),
 	DUMP_FIELD(int, fd),
 	DUMP_FIELD(int, hw_addr_auto),
-	DUMP_FIELD(int, mode),
+	DUMP_FIELD(port_mode, mode),
 	DUMP_FIELD(int, state),
 	DUMP_FIELD(int, fiber_index),
 	DUMP_FIELD(int, locked),

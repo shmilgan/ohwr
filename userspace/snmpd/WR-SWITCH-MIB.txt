@@ -439,7 +439,13 @@ portLink OBJECT-TYPE
     ::= { ppsiPort 1 }
 
 portMode OBJECT-TYPE
-    SYNTAX         INTEGER {slave(0), master(1)}
+    SYNTAX         INTEGER {
+                        unknown(0),
+                        master(1),
+                        slave(2),
+                        non-wr(3),
+                        auto(4)
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION

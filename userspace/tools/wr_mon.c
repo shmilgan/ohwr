@@ -179,6 +179,15 @@ void show_ports(void)
 				case HEXP_PORT_MODE_WR_SLAVE:
 					term_cprintf(C_WHITE, "WR Slave   ");
 					break;
+				case HEXP_PORT_MODE_NON_WR:
+					term_cprintf(C_WHITE, "Non WR     ");
+					break;
+				case HEXP_PORT_MODE_WR_M_AND_S:
+					term_cprintf(C_WHITE, "WR auto    ");
+					break;
+				default:
+					term_cprintf(C_WHITE, "Unknown    ");
+					break;
 			}
 
 			if (port_state->locked)
@@ -206,9 +215,23 @@ void show_ports(void)
 
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state_up(port_state->state));
-			printf("mode:%s ",
-			       port_state->mode == HEXP_PORT_MODE_WR_SLAVE
-			       ? "S" : "M");
+			switch (port_state->mode) {
+			case HEXP_PORT_MODE_WR_MASTER:
+				printf("mode:M ");
+				break;
+			case HEXP_PORT_MODE_WR_SLAVE:
+				printf("mode:S ");
+				break;
+			case HEXP_PORT_MODE_NON_WR:
+				printf("mode:N ");
+				break;
+			case HEXP_PORT_MODE_WR_M_AND_S:
+				printf("mode:A ");
+				break;
+			default:
+				printf("mode:U ");
+				break;
+			}
 			printf("lock:%d ", port_state->locked);
 		}
 		printf("\n");
