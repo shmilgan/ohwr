@@ -97,7 +97,9 @@ static struct wrs_p_perport {
 	unsigned link_up;
 	unsigned port_mode;
 	unsigned port_locked;
-	char sfp_id[16];
+	char sfp_vn[16];	/* vendor name */
+	char sfp_pn[16];	/* part name */
+	char sfp_vs[16];	/* vendor serial */
 	int sfp_in_db;
 	int sfp_GbE;
 } wrs_p_perport, wrs_p_array[WRS_N_PORTS];
@@ -107,7 +109,9 @@ static struct ppsi_pickinfo p_pickinfo[] = {
 	FIELD(wrs_p_perport, ASN_INTEGER, port_mode),
 	FIELD(wrs_p_perport, ASN_INTEGER, port_locked),
 	FIELD(wrs_p_perport, ASN_OCTET_STR, peer_id),
-	FIELD(wrs_p_perport, ASN_OCTET_STR, sfp_id),
+	FIELD(wrs_p_perport, ASN_OCTET_STR, sfp_vn),
+	FIELD(wrs_p_perport, ASN_OCTET_STR, sfp_pn),
+	FIELD(wrs_p_perport, ASN_OCTET_STR, sfp_vs),
 	FIELD(wrs_p_perport, ASN_INTEGER, sfp_in_db),
 	FIELD(wrs_p_perport, ASN_INTEGER, sfp_GbE),
 };
@@ -260,9 +264,15 @@ static void wrs_ppsi_get_per_port(void)
 			  port_state->calib.sfp.flags & SFP_FLAG_IN_DB ? 2 : 1;
 			wrs_p_array[i].sfp_GbE =
 			  port_state->calib.sfp.flags & SFP_FLAG_1GbE ? 2 : 1;
-			strncpy(wrs_p_array[i].sfp_id,
+			strncpy(wrs_p_array[i].sfp_vn,
+				port_state->calib.sfp.vendor_name,
+				sizeof(wrs_p_array[i].sfp_vn));
+			strncpy(wrs_p_array[i].sfp_pn,
 				port_state->calib.sfp.part_num,
-				sizeof(wrs_p_array[i].sfp_id));
+				sizeof(wrs_p_array[i].sfp_pn));
+			strncpy(wrs_p_array[i].sfp_vs,
+				port_state->calib.sfp.vendor_serial,
+				sizeof(wrs_p_array[i].sfp_vs));
 			logmsg("reading ports name %s link %d, mode %d, "
 			 "locked %d\n", port_state->name,
 			 wrs_p_array[i].link_up, wrs_p_array[i].port_mode,

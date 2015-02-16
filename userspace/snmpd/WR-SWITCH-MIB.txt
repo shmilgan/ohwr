@@ -17,7 +17,7 @@ CERN OBJECT IDENTIFIER ::= { enterprises 96 }
 -- (I follow the CamelCase to be sure I don't mistype. Who knows the rules...
 
 wrSwitchMIB MODULE-IDENTITY
-    LAST-UPDATED "201502131700Z"
+    LAST-UPDATED "201502161000Z"
     ORGANIZATION "CERN"
     CONTACT-INFO "postal:   BE-CO-HT, CERN, Geneva
                   email:    ht-drivers@cern.ch
@@ -423,7 +423,9 @@ PpsiPort ::=
         portMode             INTEGER,
         portLocked           INTEGER,
         portPeer             OCTET STRING,
-        portSfpID            DisplayString,
+        portSfpVN            DisplayString,
+        portSfpPN            DisplayString,
+        portSfpVS            DisplayString,
         portSfpInDB          INTEGER,
         portSfpGbE           INTEGER
     }
@@ -460,13 +462,29 @@ portPeer OBJECT-TYPE
             "the ClockID of the peer, if available. Or 0"
     ::= { ppsiPort 4 }
 
-portSfpID OBJECT-TYPE
+portSfpVN OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..32))
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            ""
+            "Vendor Name of SFP"
     ::= { ppsiPort 5 }
+
+portSfpPN OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..32))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Part Number of SFP"
+    ::= { ppsiPort 6 }
+
+portSfpVS OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..32))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Vendor serial number of SFP"
+    ::= { ppsiPort 7 }
 
 portSfpInDB OBJECT-TYPE
     SYNTAX         INTEGER {NA(0), not-in-Data-Base(1), in-Data-Base(2)}
@@ -474,7 +492,7 @@ portSfpInDB OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the SFP is in data base or not"
-    ::= { ppsiPort 6 }
+    ::= { ppsiPort 8 }
 
 portSfpGbE OBJECT-TYPE
     SYNTAX         INTEGER {NA(0), not-GbE(1), GbE(2)}
@@ -482,7 +500,7 @@ portSfpGbE OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the SFP is 1 GbE"
-    ::= { ppsiPort 7 }
+    ::= { ppsiPort 9 }
 
 -- Versions (4) are all just strings, several of them
 
