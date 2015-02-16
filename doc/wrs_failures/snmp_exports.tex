@@ -37,7 +37,7 @@ let NMS to decide when it's bad.\\
 			\hline
 		\end{tabular}
 
-	\item [] \texttt{WR-SWITCH-MIB::ppsiMode}\\
+	\item [] \texttt{WR-SWITCH-MIB::ptpMode}\\
 		Synchronization mode: Grand Master / Free-running Master / Slave
 	\item [] \texttt{WR-SWITCH-MIB::spllState}\\
 		\begin{packed_items}
@@ -51,8 +51,8 @@ let NMS to decide when it's bad.\\
 			backup link (true / false)
 		\end{packed_items}
 
-	\item [] \texttt{WR-SWITCH-MIB::ppsiClockOffsetPs}\\
-		Clock offset calculated by PPSi
+	\item [] \texttt{WR-SWITCH-MIB::ptpClockOffsetPs}\\
+		Clock offset calculated by PTP/PPSi
 
 	\item [] \texttt{WR-SWITCH-MIB::tempFPGA}\\ - SCB temperature below the FPGA
 	\item [] \texttt{WR-SWITCH-MIB::tempScbPsu.1}\\ - SCB temperature near the
@@ -87,36 +87,32 @@ the switch failures. These values are verbose and should not be used by
 operators.
 
 \subsubsection{PTP/WR parameters}
-{\bf Note}: PTP related objects should be called \texttt{WR-SWITCH-MIB::ptp*}
-instead of\\
-\texttt{WR-SWITCH-MIB::ppsi*}. People need to know it's PTP related,
-not necessary that the running PTP engine is PPSi.
 \begin{itemize}[leftmargin=0pt]
-	\item [] \texttt{WR-SWITCH-MIB::ppsiGrandmasterID}\\ - is it really Grand
+	\item [] \texttt{WR-SWITCH-MIB::ptpGrandmasterID}\\ - is it really Grand
 		Master, so the same ID for the whole network ? or is it a Master higher in
 		the sync hierarchy for a given device ?
-	\item [] \texttt{WR-SWITCH-MIB::ppsiOwnID}
-	\item [] \texttt{WR-SWITCH-MIB::ppsiMode}
-	\item [] \texttt{WR-SWITCH-MIB::ppsiSyncSource}\\ - port number
+	\item [] \texttt{WR-SWITCH-MIB::ptpOwnID}
+	\item [] \texttt{WR-SWITCH-MIB::ptpMode}
+	\item [] \texttt{WR-SWITCH-MIB::ptpSyncSource}\\ - port number
 		\emph{wr0}/\emph{wr1}/... for Slave mode or \emph{ext} for Grand Master mode
-	\item [] \texttt{WR-SWITCH-MIB::ppsiServoState}\\ - string, WR servo state
+	\item [] \texttt{WR-SWITCH-MIB::ptpServoState}\\ - string, WR servo state
 		(\emph{SYNC\_IDLE}, \emph{SYNC\_SEC}, \emph{SYNC\_NSEC}, \emph{SYNC\_PHASE},
 		\emph{OFFSET\_STABLE}, \emph{TRACK\_PHASE}) (timing:
 		\ref{fail:timing:ppsi_track_phase})
-	\item [] \texttt{WR-SWITCH-MIB::ppsiServoStateN}\\ - would it be usefull to
-		report also ppsiServoState in a numeric form ? (timing:
+	\item [] \texttt{WR-SWITCH-MIB::ptpServoStateN}\\ - would it be usefull to
+		report also ptpServoState in a numeric form ? (timing:
 		\ref{fail:timing:ppsi_track_phase})
-	\item [] \texttt{WR-SWITCH-MIB::ppsiRTT}\\ - Round-trip delay ($delay_{MM}$)
+	\item [] \texttt{WR-SWITCH-MIB::ptpRTT}\\ - Round-trip delay ($delay_{MM}$)
 		(timing: \ref{fail:timing:rtt_jump})
-	\item [] \texttt{WR-SWITCH-MIB::ppsiDelayMS}\\ - one-way M-S delay
+	\item [] \texttt{WR-SWITCH-MIB::ptpDelayMS}\\ - one-way M-S delay
 		($delay_{MS}$)
-	\item [] \texttt{WR-SWITCH-MIB::ppsiLinkLength}
-	\item [] \texttt{WR-SWITCH-MIB::ppsiPhaseTracking}\\ - if phase tracking is
+	\item [] \texttt{WR-SWITCH-MIB::ptpLinkLength}
+	\item [] \texttt{WR-SWITCH-MIB::ptpPhaseTracking}\\ - if phase tracking is
 		enabled (only for WR-demo purposes I think)
-	\item [] \texttt{WR-SWITCH-MIB::ppsiClockOffsetPs}\\ (timing:
+	\item [] \texttt{WR-SWITCH-MIB::ptpClockOffsetPs}\\ (timing:
 		\ref{fail:timing:offset_jump})
-	\item [] \texttt{WR-SWITCH-MIB::ppsiSkew}
-	\item [] \texttt{WR-SWITCH-MIB::ppsiPhSetpoint}
+	\item [] \texttt{WR-SWITCH-MIB::ptpSkew}
+	\item [] \texttt{WR-SWITCH-MIB::ptpPhSetpoint}
 	\item [] \texttt{WR-SWITCH-MIB::ServoUpdates}
 	\item [] \texttt{WR-SWITCH-MIB::portLink.<n>}\\ (timing:
 		\ref{fail:timing:master_down}, \ref{fail:timing:no_frames}; data:
@@ -128,10 +124,10 @@ not necessary that the running PTP engine is PPSi.
 	\item [] \texttt{WR-SWITCH-MIB::portPtpState.<n>}\\ - does it make sense to
 		report PTP state for each port ? (regular PTP, not WR state)
 	\item [] \texttt{WR-SWITCH-MIB::portPtpTxFrames.<n>}\\ - how many PTP frames
-		were sent from the port (counted by PPSi) (timing:
+		were sent from the port (counted by PTP/PPSi) (timing:
 		\ref{fail:timing:no_frames})
 	\item [] \texttt{WR-SWITCH-MIB::portPtpRxFrames.<n>}\\ - how many PTP frames
-		were received on the port (counted by PPSi) (timing:
+		were received on the port (counted by PTP/PPSi) (timing:
 		\ref{fail:timing:no_frames})
 	\item [] \texttt{WR-SWITCH-MIB::portActiveSlave.<n>}\\ - 0/1 to mark which one
 		is the active Slave (if there are also Backups and timing switchover)
@@ -300,7 +296,7 @@ not necessary that the running PTP engine is PPSi.
 		\vspace{12pt}
 		(timing: \ref{fail:timing:ppsi_crash}, \ref{fail:timing:hal_crash}; data:
 		\ref{fail:data:rtu_crash}; other: \ref{fail:other:daemon_crash})
-	\item [] \texttt{WR-SWITCH-MIB::ppsiRunCnt}\\ - how many times PPSi daemon
+	\item [] \texttt{WR-SWITCH-MIB::ptpRunCnt}\\ - how many times PTP/PPSi daemon
 		has crashed (timing: \ref{fail:timing:ppsi_crash})
 	\item [] \texttt{WR-SWITCH-MIB::halRunCnt}\\ - how many times HAL daemon
 		has crashed (timing: \ref{fail:timing:hal_crash})
@@ -322,7 +318,7 @@ not necessary that the running PTP engine is PPSi.
 		the critical configuration options was modified during the last
 		reconfiguration. Critical configuration options:
 		\begin{packed_items}
-			\item PPSi timing mode
+			\item PTP/PPSi timing mode
 			\item fixed hardware delays
 		\end{packed_items}
 		(timing: \ref{fail:timing:wrong_config})
