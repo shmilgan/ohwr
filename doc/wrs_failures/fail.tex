@@ -174,7 +174,7 @@ WR network.\\
 	\item {\bf Detected SFP not supported for WR timing}
 		\label{fail:timing:wrong_sfp}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: TODO \emph{(allow disable checking if not WR-ports)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
 			\item [] \underline{Description}:\\
@@ -184,17 +184,21 @@ WR network.\\
 				\emph{PPSi} not having the right values to estimate link asymmetry.
 				Despite \emph{PPSi} offset being close to 0 \emph{ps}, the device won't
 				be properly synchronized.
-			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}\\
-				\texttt{WR-SWITCH-MIB::portSfpID.<n>} \emph{(info available via hal shm)}\\
+			\item [] \underline{SNMP objects}:\\
+				\texttt{WR-SWITCH-MIB::portSfpVN.<n>}\\
+				\texttt{WR-SWITCH-MIB::portSfpPN.<n>}\\
+				\texttt{WR-SWITCH-MIB::portSfpVS.<n>}\\
 				\texttt{WR-SWITCH-MIB::portSfpInDB.<n>}\\
-				\texttt{WR-SWITCH-MIB::portSfpGbE.<n>}
-			\item [] \underline{Note}: HAL should provide this info to the shared
-				memory, so in general we should build a per-port structure describing
+				\texttt{WR-SWITCH-MIB::portSfpGbE.<n>}\\
+				\texttt{WR-SWITCH-MIB::portSfpError.<n>}\emph{(not implemented)}
+			\item [] \underline{Note}: HAL provide this info to the shared
+				memory, so in general we build a per-port structure describing
 				SFP info:
 				\begin{packed_items}
 					\item SFP ID (e.g. AXGE-1254-0531) \emph{(available via halshm)}
 					\item Matched ? (to SFP database entries)
 					\item Gigabit ? (based on supported speeds read from i2c eeprom)
+					\item portSfpError ? (true when port configured as a WR but not in DB or not GbE)
 				\end{packed_items}
 				\vspace{12pt}
 				WRS configuration should also allow to disable this check on some ports.
@@ -665,7 +669,7 @@ wrs-192.168.16.242# devmem 0xfffffd04
 	\item {\bf Not supported SFP plugged into the cage (especially non 1-Gb SFP)}
 		\label{fail:other:sfp}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO
+			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
 				If not supported Gigabit Fiber SFP is plugged into the cage, then it's a
@@ -673,10 +677,12 @@ wrs-192.168.16.242# devmem 0xfffffd04
 				used, then no Ethernet traffic would be flowing on that port. It's due
 				to the fact, that we don't have 10/100Mbit Ethernet implemented inside
 				the WRS.
-			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}\\
-				\texttt{WR-SWITCH-MIB::portSfpGbE}
-			\item [] \underline{Note}: We should get the information about supported
-				Ethernet speed through HAL together with the SFP's ID.
+			\item [] \underline{SNMP objects}:\\
+				\texttt{WR-SWITCH-MIB::portSfpVN.<n>}\\
+				\texttt{WR-SWITCH-MIB::portSfpPN.<n>}\\
+				\texttt{WR-SWITCH-MIB::portSfpVS.<n>}\\
+				\texttt{WR-SWITCH-MIB::portSfpGbE.<n>}\\
+				\texttt{WR-SWITCH-MIB::portSfpError.<n>}\emph{(not implemented)}
 		\end{packed_enum}
 
 	\item {\bf File system / Memory corruption}
