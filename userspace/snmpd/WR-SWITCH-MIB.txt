@@ -427,7 +427,8 @@ PpsiPort ::=
         portSfpPN            DisplayString,
         portSfpVS            DisplayString,
         portSfpInDB          INTEGER,
-        portSfpGbE           INTEGER
+        portSfpGbE           INTEGER,
+        portSfpError         INTEGER
     }
 
 portLink OBJECT-TYPE
@@ -506,6 +507,14 @@ portSfpGbE OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the SFP is 1 GbE"
+    ::= { ppsiPort 9 }
+
+portSfpError OBJECT-TYPE
+    SYNTAX         INTEGER {SFP-ok(0), SFP-Error(1)}
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Problem with SFP configuration. Port has to be always 1GbE. Port has to be in data base as long as support WR."
     ::= { ppsiPort 9 }
 
 -- Versions (4) are all just strings, several of them

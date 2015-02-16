@@ -102,6 +102,7 @@ static struct wrs_p_perport {
 	char sfp_vs[16];	/* vendor serial */
 	int sfp_in_db;
 	int sfp_GbE;
+	int sfp_error;
 } wrs_p_perport, wrs_p_array[WRS_N_PORTS];
 
 static struct ppsi_pickinfo p_pickinfo[] = {
@@ -114,6 +115,7 @@ static struct ppsi_pickinfo p_pickinfo[] = {
 	FIELD(wrs_p_perport, ASN_OCTET_STR, sfp_vs),
 	FIELD(wrs_p_perport, ASN_INTEGER, sfp_in_db),
 	FIELD(wrs_p_perport, ASN_INTEGER, sfp_GbE),
+	FIELD(wrs_p_perport, ASN_INTEGER, sfp_error),
 };
 
 static int32_t int_saturate(int64_t value)
@@ -272,6 +274,14 @@ static void wrs_ppsi_get_per_port(void)
 			strncpy(wrs_p_array[i].sfp_vs,
 				port_state->calib.sfp.vendor_serial,
 				sizeof(wrs_p_array[i].sfp_vs));
+			/* sfp error when SFP is not 1 GbE or
+			 * (port is not wr-non mode and sfp not in data base)
+			 */
+			wrs_p_array[i].sfp_error =
+				(wrs_p_array[i].sfp_GbE == 1) ||
+				((port_state->mode != HEXP_PORT_MODE_NON_WR) &&
+				(wrs_p_array[i].sfp_in_db == 1));
+
 			logmsg("reading ports name %s link %d, mode %d, "
 			 "locked %d\n", port_state->name,
 			 wrs_p_array[i].link_up, wrs_p_array[i].port_mode,
