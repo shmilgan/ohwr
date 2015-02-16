@@ -1261,10 +1261,6 @@ This a summary of the available tables and scalars:
 
 @end table
 
-@b{Note:} due to a buglet of mine, there is an extra item at
-the end of each table (@t{96.100.2} and @t{96.100.3.2}. It makes no
-harm, so its removal is not high priority.
-
 @c @b{Note:} due to a bug in management of 64-bit values in @i{net-snmp},
 @c we are using a bad work-around in the code, that may cause wrong values
 @c to be returned by other versions of the agent, where this bug is fixed.
@@ -1323,6 +1319,14 @@ WR-SWITCH-MIB::wrsSerialNumber.0 = STRING: 12345
 WR-SWITCH-MIB::wrsScbVersion.0 = STRING: 3.3
 WR-SWITCH-MIB::wrsDateTAI.0 = Counter64: 1406623390
 WR-SWITCH-MIB::wrsDateString.0 = STRING: 2014-07-29-08:43:10
+@end smallexample
+
+Another example is to print all objects exported by switch.
+@smallexample
+snmpwalk -c public -v 2c wrs -m all \
+        -M ${WRS_OUTPUT_DIR}/build/buildroot-2011.11/output/build/netsnmp-5.6.1.1/mibs/\
+        :${WR_SWITCH_SW}/userspace/snmpd/ \
+        1
 @end smallexample
 
 @c ==========================================================================
