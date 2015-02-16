@@ -20,6 +20,14 @@
 
 #define SFP_FLAG_CLASS_DATA	(1 << 0)
 #define SFP_FLAG_DEVICE_DATA	(1 << 1)
+#define SFP_FLAG_1GbE		(1 << 2) /* SFP is 1GbE */
+#define SFP_FLAG_IN_DB		(1 << 3) /* SFP is present in data base */
+
+#define SFP_SPEED_1Gb		0x0D /* Speed of SFP in 100MB/s. According to
+				      * SFF-8472.PDF: By convention 1.25 Gb/s
+				      * should be rounded up to 0Dh (13 in
+				      * units of 100 MBd) for Ethernet
+				      * 1000BASE-X. */
 
 struct shw_sfp_caldata {
 	uint32_t flags;

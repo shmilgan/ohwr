@@ -12,6 +12,7 @@
 #include <ppsi/ppsi.h>
 #include <ppsi-wrs.h>
 
+
 /*  be safe, in case some other header had them slightly differently */
 #undef container_of
 #undef offsetof
@@ -63,6 +64,7 @@ enum dump_type {
 	/* and this is ours */
 	dump_type_TimeInternal,
 	dump_type_ip_address,
+	dump_type_sfp_flags,
 };
 
 static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
@@ -165,6 +167,17 @@ void dump_one_field(void *addr, struct dump_info *info)
 		       cq->clockClass, cq->clockAccuracy, cq->clockAccuracy,
 		       cq->offsetScaledLogVariance);
 		break;
+	case dump_type_sfp_flags:
+		if (*(uint32_t *)p & SFP_FLAG_CLASS_DATA)
+			printf("SFP class data, ");
+		if (*(uint32_t *)p & SFP_FLAG_DEVICE_DATA)
+			printf("SFP device data, ");
+		if (*(uint32_t *)p & SFP_FLAG_1GbE)
+			printf("SFP is 1GbE, ");
+		if (*(uint32_t *)p & SFP_FLAG_IN_DB)
+			printf("SFP in data base, ");
+		printf("\n");
+		break;
 	}
 }
 void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
@@ -217,7 +230,7 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, calib.tx_calibrated),
 
 	/* Another internal structure, with a final pointer */
-	DUMP_FIELD(int,       calib.sfp.flags),
+	DUMP_FIELD(sfp_flags, calib.sfp.flags),
 	DUMP_FIELD_SIZE(char, calib.sfp.vendor_name, 16),
 	DUMP_FIELD_SIZE(char, calib.sfp.part_num, 16),
 	DUMP_FIELD_SIZE(char, calib.sfp.vendor_serial, 16),

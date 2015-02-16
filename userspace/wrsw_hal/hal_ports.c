@@ -465,6 +465,8 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 
 		memcpy(&p->calib.sfp, cdata,
 		       sizeof(struct shw_sfp_caldata));
+		/* Mark SFP as found in data base */
+		p->calib.sfp.flags |= SFP_FLAG_IN_DB;
 	} else {
 		fprintf(stderr, "Unknown SFP vn=\"%.16s\" pn=\"%.16s\" "
 			"vs=\"%.16s\" on port %s\n", shdr.vendor_name,
@@ -478,6 +480,8 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 	strncpy(p->calib.sfp.vendor_name, (void *)shdr.vendor_name, 16);
 	strncpy(p->calib.sfp.part_num, (void *)shdr.vendor_pn, 16);
 	strncpy(p->calib.sfp.vendor_serial, (void *)shdr.vendor_serial, 16);
+	/* check if SFP is 1GbE */
+	p->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb ? SFP_FLAG_1GbE : 0;
 
 	/*
 	 * Now, we should fix the alpha value according to fiber
