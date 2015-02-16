@@ -174,7 +174,7 @@ WR network.\\
 	\item {\bf Detected SFP not supported for WR timing}
 		\label{fail:timing:wrong_sfp}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO \emph{(allow disable checking if not WR-ports)}
+			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
 			\item [] \underline{Description}:\\
@@ -190,18 +190,8 @@ WR network.\\
 				\texttt{WR-SWITCH-MIB::portSfpVS.<n>}\\
 				\texttt{WR-SWITCH-MIB::portSfpInDB.<n>}\\
 				\texttt{WR-SWITCH-MIB::portSfpGbE.<n>}\\
-				\texttt{WR-SWITCH-MIB::portSfpError.<n>}\emph{(not implemented)}
-			\item [] \underline{Note}: HAL provide this info to the shared
-				memory, so in general we build a per-port structure describing
-				SFP info:
-				\begin{packed_items}
-					\item SFP ID (e.g. AXGE-1254-0531) \emph{(available via halshm)}
-					\item Matched ? (to SFP database entries)
-					\item Gigabit ? (based on supported speeds read from i2c eeprom)
-					\item portSfpError ? (true when port configured as a WR but not in DB or not GbE)
-				\end{packed_items}
-				\vspace{12pt}
-				WRS configuration should also allow to disable this check on some ports.
+				\texttt{WR-SWITCH-MIB::portSfpError.<n>}
+			\item [] \underline{Note}: WRS configuration allow to disable this check on some ports.
 				That is because ports may be used for regular (non-WR) PTP
 				synchronization or for data transfer only (no timing). In that case any
 				Gigabit SFP can be used (also copper). Detecting if a non-Gigabit
@@ -682,7 +672,7 @@ wrs-192.168.16.242# devmem 0xfffffd04
 				\texttt{WR-SWITCH-MIB::portSfpPN.<n>}\\
 				\texttt{WR-SWITCH-MIB::portSfpVS.<n>}\\
 				\texttt{WR-SWITCH-MIB::portSfpGbE.<n>}\\
-				\texttt{WR-SWITCH-MIB::portSfpError.<n>}\emph{(not implemented)}
+				\texttt{WR-SWITCH-MIB::portSfpError.<n>}
 		\end{packed_enum}
 
 	\item {\bf File system / Memory corruption}
