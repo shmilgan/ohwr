@@ -16,6 +16,7 @@
 #include <libwr/shw_io.h>
 #include <libwr/sfp_lib.h>
 #include <libwr/config.h>
+#include <libwr/hal_shmem.h>
 
 #include "wrsw_hal.h"
 #include <rt_ipc.h>
@@ -26,6 +27,7 @@
 
 static int daemon_mode = 0;
 static hal_cleanup_callback_t cleanup_cb[MAX_CLEANUP_CALLBACKS];
+struct hal_shmem_header *hal_shmem;
 
 /* Adds a function to be called during the HAL shutdown. */
 int hal_add_cleanup_callback(hal_cleanup_callback_t cb)
@@ -235,7 +237,8 @@ int main(int argc, char *argv[])
 		}
 
 		hal_port_update_all();
-		shw_update_fans();
+		/* update fans and temperatures in shmem */
+		shw_update_fans(&hal_shmem->temp);
 		t1 = t2;
 	}
 

@@ -67,6 +67,7 @@ enum dump_type {
 	dump_type_ip_address,
 	dump_type_sfp_flags,
 	dump_type_port_mode,
+	dump_type_sensor_temp,
 };
 
 static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
@@ -201,6 +202,9 @@ void dump_one_field(void *addr, struct dump_info *info)
 			break;
 		}
 		break;
+	case dump_type_sensor_temp:
+		printf("%f\n", ((float)(*(int *)p >> 4)) / 16.0);
+		break;
 	}
 }
 void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
@@ -227,6 +231,20 @@ void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
 	.offset = offsetof(DUMP_STRUCT, _fname), \
 	.size = _size, \
 }
+
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct hal_shmem_header
+struct dump_info hal_shmem_info [] = {
+	DUMP_FIELD(int, nports),
+	DUMP_FIELD(sensor_temp, temp.fpga),
+	DUMP_FIELD(sensor_temp, temp.pll),
+	DUMP_FIELD(sensor_temp, temp.psl),
+	DUMP_FIELD(sensor_temp, temp.psr),
+	DUMP_FIELD(int, temp.fpga_thold),
+	DUMP_FIELD(int, temp.pll_thold),
+	DUMP_FIELD(int, temp.psl_thold),
+	DUMP_FIELD(int, temp.psr_thold),
+};
 
 /* map for fields of hal_port_state (hal_shmem.h) */
 #undef DUMP_STRUCT
@@ -287,6 +305,10 @@ int dump_hal_mem(struct wrs_shm_head *head)
 		return -1;
 	}
 	h = (void *)head + head->data_off;
+
+	/* dump hal's shmem */
+	dump_many_fields(h, hal_shmem_info, ARRAY_SIZE(hal_shmem_info));
+
 	n = h->nports;
 	p = wrs_shm_follow(head, h->ports);
 

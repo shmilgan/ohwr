@@ -28,6 +28,7 @@
 
 #include <libwr/pio.h>
 #include <libwr/fan.h>
+#include <libwr/hal_shmem.h>
 
 #include <at91_softpwm.h>
 
@@ -39,7 +40,10 @@
 #include "spwm-regs.h"
 #include <libwr/util.h>
 
-#define FAN_TEMP_SENSOR_ADDR 0x4c
+#define TEMP_SENSOR_ADDR_FPGA	0x4A /* (7bits addr) IC19 Below FPGA */
+#define TEMP_SENSOR_ADDR_PLL	0x4C /* (7bits addr) IC18 PLLs */
+#define TEMP_SENSOR_ADDR_PSL	0x49 /* (7bits addr) IC20 Power supply left */
+#define TEMP_SENSOR_ADDR_PSR	0x4D /* (7bits addr) IC17 Power supply right */
 
 #define DESIRED_TEMPERATURE 55.0
 
@@ -204,7 +208,7 @@ static int shw_init_i2c_sensors()
 	return 0;
 }
 
-int shw_init_fans()
+int shw_init_fans(void)
 {
 	uint32_t val = 0;
 
@@ -250,7 +254,11 @@ int shw_init_fans()
 
 	shw_init_i2c_sensors();
 
-	tmp100_write_reg(FAN_TEMP_SENSOR_ADDR, 1, 0x60);	// 12-bit resolution
+	/* set all to 12-bit resolution */
+	tmp100_write_reg(TEMP_SENSOR_ADDR_FPGA, 1, 0x60);
+	tmp100_write_reg(TEMP_SENSOR_ADDR_PLL, 1, 0x60);
+	tmp100_write_reg(TEMP_SENSOR_ADDR_PSL, 1, 0x60);
+	tmp100_write_reg(TEMP_SENSOR_ADDR_PSR, 1, 0x60);
 
 	pi_init(&fan_pi);
 
@@ -263,17 +271,24 @@ int shw_init_fans()
  * Reads out the temperature and drives the fan accordingly
  * note: This call is done by hal_main.c:hal_update()
  */
-void shw_update_fans()
+void shw_update_fans(struct hal_temp_sensors *sensors)
 {
 	static int64_t last_tics = -1;
 	int64_t cur_tics = shw_get_tics();
 
 	if (fan_update_timeout > 0
 	    && (last_tics < 0 || (cur_tics - last_tics) > fan_update_timeout)) {
-		float t_cur = tmp100_read_temp(FAN_TEMP_SENSOR_ADDR);
+		/* drive fan based on PLL temperature */
+		float t_cur = tmp100_read_temp(TEMP_SENSOR_ADDR_PLL);
 		float drive = pi_update(&fan_pi, t_cur - DESIRED_TEMPERATURE);
 		//pr_info("t=%f,pwm=%f\n",t_cur , drive);
 		shw_pwm_speed(0xFF, drive / 1000);	//enable two and one
+
+		/* update sensor values */
+		sensors->fpga = tmp100_read_reg(TEMP_SENSOR_ADDR_FPGA, 0, 2);
+		sensors->pll = tmp100_read_reg(TEMP_SENSOR_ADDR_PLL, 0, 2);
+		sensors->psl = tmp100_read_reg(TEMP_SENSOR_ADDR_PSL, 0, 2);
+		sensors->psr = tmp100_read_reg(TEMP_SENSOR_ADDR_PSR, 0, 2);
 		last_tics = cur_tics;
 	}
 }

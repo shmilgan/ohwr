@@ -33,7 +33,7 @@
 #define RTS_POLL_INTERVAL 200 /* ms */
 #define SFP_POLL_INTERVAL 1000 /* ms */
 
-static void *hal_port_shmem;
+extern struct hal_shmem_header *hal_shmem;
 
 /* Port table: the only item which is not "hal_port_*", as it's much used */
 static struct hal_port_state *ports;
@@ -184,8 +184,7 @@ static int hal_port_init(int index)
 int hal_port_init_all()
 {
 	int index;
-	struct hal_shmem_header *hal_hdr;
-	struct wrs_shm_head *head;
+	struct wrs_shm_head *hal_shmem_hdr;
 
 	pr_info("Initializing switch ports...\n");
 
@@ -202,24 +201,23 @@ int hal_port_init_all()
 	}
 	/* Allocate the ports in shared memory, so wr_mon etc can see them
 	   Use lock since some (like rtud) wait for hal to be available */
-	hal_port_shmem = wrs_shm_get(wrs_shm_hal, "wrsw_hal",
+	hal_shmem_hdr = wrs_shm_get(wrs_shm_hal, "wrsw_hal",
 				WRS_SHM_WRITE | WRS_SHM_LOCKED);
-	if (!hal_port_shmem) {
+	if (!hal_shmem_hdr) {
 		fprintf(stderr, "%s: Can't join shmem: %s\n", __func__,
 			strerror(errno));
 		return -1;
 	}
-	head = hal_port_shmem;
-	hal_hdr = wrs_shm_alloc(hal_port_shmem, sizeof(*hal_hdr));
-	ports = wrs_shm_alloc(hal_port_shmem,
+	hal_shmem = wrs_shm_alloc(hal_shmem_hdr, sizeof(*hal_shmem));
+	ports = wrs_shm_alloc(hal_shmem_hdr,
 			      sizeof(struct hal_port_state)
 			      * HAL_MAX_PORTS);
-	if (!hal_hdr ||  !ports) {
+	if (!hal_shmem || !ports) {
 		fprintf(stderr, "%s: can't allocate in shmem\n", __func__);
 		return -1;
 	}
 
-	hal_hdr->ports = ports;
+	hal_shmem->ports = ports;
 
 	for (index = 0; index < HAL_MAX_PORTS; index++)
 		if (hal_port_init(index) < 0)
@@ -230,14 +228,14 @@ int hal_port_init_all()
 	      hal_port_nports);
 
 	/* We are done, mark things as valid */
-	hal_hdr->nports = hal_port_nports;
-	head->version = HAL_SHMEM_VERSION;
+	hal_shmem->nports = hal_port_nports;
+	hal_shmem_hdr->version = HAL_SHMEM_VERSION;
 
 	/* Release processes waiting for HAL's to fill shm with correct data
 	   When shm is opened successfully data in shm is still not populated!
 	   Read data with wrs_shm_seqbegin and wrs_shm_seqend!
 	   Especially for nports it is important */
-	wrs_shm_write(head, WRS_SHM_WRITE_END);
+	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 
 	/* Create a WRIPC server for HAL public API */
 	return hal_init_wripc(ports);
