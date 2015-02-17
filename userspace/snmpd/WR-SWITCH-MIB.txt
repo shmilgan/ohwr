@@ -30,7 +30,7 @@ wrSwitchMIB MODULE-IDENTITY
 -- we'll prefix everything in this mib with wrs (White Rabbit Switch)
 wrsScalar     OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
 wrsPstats     OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }
-wrsPpsi       OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }
+wrsPtp        OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }
 wrsVersion    OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }
 wrsDate       OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }
 
@@ -249,28 +249,28 @@ pstatsWR17 OBJECT-TYPE
 -- and a table. In the table, the "channel" name is the row. But
 -- the index is integer, following what ppsi does internally
 
-wrsPpsiGlobals OBJECT IDENTIFIER ::= { wrsPpsi 1 }
-wrsPpsiPerport OBJECT IDENTIFIER ::= { wrsPpsi 2 }
+wrsPtpGlobals OBJECT IDENTIFIER ::= { wrsPtp 1 }
+wrsPtpPerport OBJECT IDENTIFIER ::= { wrsPtp 2 }
 
 -- globals (.3.1)
 
-ppsiGrandmasterID OBJECT-TYPE
+ptpGrandmasterID OBJECT-TYPE
     SYNTAX       OCTET STRING (SIZE(8))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The ClockID of the current grandmaster"
-    ::= { wrsPpsiGlobals 1 }
+    ::= { wrsPtpGlobals 1 }
 
-ppsiOwnID OBJECT-TYPE
+ptpOwnID OBJECT-TYPE
     SYNTAX       OCTET STRING (SIZE(8))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The ClockID of this WR device"
-    ::= { wrsPpsiGlobals 2 }
+    ::= { wrsPtpGlobals 2 }
 
-ppsiMode OBJECT-TYPE
+ptpMode OBJECT-TYPE
     SYNTAX INTEGER {
                 unknown(0),        -- same as WRC_MODE macros
                 grandmaster(1),
@@ -281,17 +281,17 @@ ppsiMode OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The mode of this clock"
-    ::= { wrsPpsiGlobals 3 }
+    ::= { wrsPtpGlobals 3 }
  
-ppsiServoState OBJECT-TYPE
+ptpServoState OBJECT-TYPE
     SYNTAX      DisplayString (SIZE (0..32))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The servo state if slave"
-    ::= { wrsPpsiGlobals 4 }
+    ::= { wrsPtpGlobals 4 }
 
-ppsiServoStateN OBJECT-TYPE
+ptpServoStateN OBJECT-TYPE
     SYNTAX INTEGER {
                 Uninitialized(0),
                 SYNC-NSEC(1), -- no idea how to keep "_" instead of "-"
@@ -305,9 +305,9 @@ ppsiServoStateN OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "Numeric representation of servo state"
-    ::= { wrsPpsiGlobals 5 }
+    ::= { wrsPtpGlobals 5 }
 
-ppsiPhaseTracking OBJECT-TYPE
+ptpPhaseTracking OBJECT-TYPE
     SYNTAX INTEGER {
                not-tracking(0)
                tracking(1)
@@ -316,108 +316,108 @@ ppsiPhaseTracking OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "Whether phase tracking is enabled in the servo"
-    ::= { wrsPpsiGlobals 6 }
+    ::= { wrsPtpGlobals 6 }
 
-ppsiSyncSource OBJECT-TYPE
+ptpSyncSource OBJECT-TYPE
     SYNTAX      DisplayString (SIZE (0..32))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The port name that is currently the synchronization source"
-    ::= { wrsPpsiGlobals 7 }
+    ::= { wrsPtpGlobals 7 }
 
-ppsiClockOffsetPs OBJECT-TYPE
+ptpClockOffsetPs OBJECT-TYPE
     SYNTAX      Counter64 -- should be integer64 (signed)
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Current clock offset from master, in picoseconds"
-    ::= { wrsPpsiGlobals 8 }
+    ::= { wrsPtpGlobals 8 }
 
-ppsiClockOffsetPsHR OBJECT-TYPE
+ptpClockOffsetPsHR OBJECT-TYPE
     SYNTAX      INTEGER
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Human Readable current clock offset from master, in picoseconds with saturation to integer"
-    ::= { wrsPpsiGlobals 9 }
+    ::= { wrsPtpGlobals 9 }
 
-ppsiSkew OBJECT-TYPE
+ptpSkew OBJECT-TYPE
     SYNTAX      INTEGER
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The estimated change of master-to-slave delay, in picoseconds"
-    ::= { wrsPpsiGlobals 10 }
+    ::= { wrsPtpGlobals 10 }
 
-ppsiRTT OBJECT-TYPE
+ptpRTT OBJECT-TYPE
     SYNTAX      Counter64 -- does unsigned64 exits?
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The round-trip-time, from master, in picoseconds"
-    ::= { wrsPpsiGlobals 11 }
+    ::= { wrsPtpGlobals 11 }
 
-ppsiLinkLength OBJECT-TYPE
+ptpLinkLength OBJECT-TYPE
     SYNTAX      Unsigned32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Estimated fiber length, from master-to-slave delay, in meters"
-    ::= { wrsPpsiGlobals 12 }
+    ::= { wrsPtpGlobals 12 }
 
-ppsiServoUpdates OBJECT-TYPE
+ptpServoUpdates OBJECT-TYPE
     SYNTAX      Unsigned32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "How many time did the servo run"
-    ::= { wrsPpsiGlobals 13 }
+    ::= { wrsPtpGlobals 13 }
 
-ppsiDeltaTxM OBJECT-TYPE
+ptpDeltaTxM OBJECT-TYPE
     SYNTAX      INTEGER
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Fixed Tx latency on Master side"
-    ::= { wrsPpsiGlobals 14 }
+    ::= { wrsPtpGlobals 14 }
 
-ppsiDeltaRxM OBJECT-TYPE
+ptpDeltaRxM OBJECT-TYPE
     SYNTAX      INTEGER
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Fixed Rx latency on Master side"
-    ::= { wrsPpsiGlobals 15 }
+    ::= { wrsPtpGlobals 15 }
 
-ppsiDeltaTxS OBJECT-TYPE
+ptpDeltaTxS OBJECT-TYPE
     SYNTAX      INTEGER
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Fixed Tx latency on Slave side"
-    ::= { wrsPpsiGlobals 16 }
+    ::= { wrsPtpGlobals 16 }
 
-ppsiDeltaRxS OBJECT-TYPE
+ptpDeltaRxS OBJECT-TYPE
     SYNTAX      INTEGER
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Fixed Rx latency on Slave side"
-    ::= { wrsPpsiGlobals 17 }
+    ::= { wrsPtpGlobals 17 }
 
 -- per-port (.3.2)
 
-ppsiPort OBJECT-TYPE
-    SYNTAX      PpsiPort
+ptpPort OBJECT-TYPE
+    SYNTAX      PtpPort
     MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
-            "The ppsi line: information for each port"
+            "The ptp line: information for each port"
     INDEX   { portIndex }
-    ::= { wrsPpsiPerport 1 }
+    ::= { wrsPtpPerport 1 }
 
-PpsiPort ::=
+PtpPort ::=
     SEQUENCE {
         portLink             INTEGER,
         portMode             INTEGER,
@@ -437,7 +437,7 @@ portLink OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the link is up or down"
-    ::= { ppsiPort 1 }
+    ::= { ptpPort 1 }
 
 portMode OBJECT-TYPE
     SYNTAX         INTEGER {
@@ -451,7 +451,7 @@ portMode OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the port is master or slave"
-    ::= { ppsiPort 2 }
+    ::= { ptpPort 2 }
 
 portLocked OBJECT-TYPE
     SYNTAX         INTEGER {not-locked(0), locked(1)}
@@ -459,7 +459,7 @@ portLocked OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the peers are locked or not"
-    ::= { ppsiPort 3 }
+    ::= { ptpPort 3 }
 
 portPeer OBJECT-TYPE
     SYNTAX         OCTET STRING (SIZE(8))
@@ -467,7 +467,7 @@ portPeer OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "the ClockID of the peer, if available. Or 0"
-    ::= { ppsiPort 4 }
+    ::= { ptpPort 4 }
 
 portSfpVN OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..32))
@@ -475,7 +475,7 @@ portSfpVN OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Vendor Name of SFP"
-    ::= { ppsiPort 5 }
+    ::= { ptpPort 5 }
 
 portSfpPN OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..32))
@@ -483,7 +483,7 @@ portSfpPN OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Part Number of SFP"
-    ::= { ppsiPort 6 }
+    ::= { ptpPort 6 }
 
 portSfpVS OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..32))
@@ -491,7 +491,7 @@ portSfpVS OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Vendor serial number of SFP"
-    ::= { ppsiPort 7 }
+    ::= { ptpPort 7 }
 
 portSfpInDB OBJECT-TYPE
     SYNTAX         INTEGER {NA(0), not-in-Data-Base(1), in-Data-Base(2)}
@@ -499,7 +499,7 @@ portSfpInDB OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the SFP is in data base or not"
-    ::= { ppsiPort 8 }
+    ::= { ptpPort 8 }
 
 portSfpGbE OBJECT-TYPE
     SYNTAX         INTEGER {NA(0), not-GbE(1), GbE(2)}
@@ -507,7 +507,7 @@ portSfpGbE OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the SFP is 1 GbE"
-    ::= { ppsiPort 9 }
+    ::= { ptpPort 9 }
 
 portSfpError OBJECT-TYPE
     SYNTAX         INTEGER {SFP-ok(0), SFP-Error(1)}
@@ -515,7 +515,7 @@ portSfpError OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Problem with SFP configuration. Port has to be always 1GbE. Port has to be in data base as long as support WR."
-    ::= { ppsiPort 9 }
+    ::= { ptpPort 10 }
 
 -- Versions (4) are all just strings, several of them
 
