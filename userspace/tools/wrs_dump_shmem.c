@@ -46,6 +46,7 @@ enum dump_type {
 	dump_type_unsigned_char,
 	dump_type_unsigned_short,
 	dump_type_double,
+	dump_type_float,
 	dump_type_pointer,
 	/* and strange ones, from IEEE */
 	dump_type_UInteger64,
@@ -132,13 +133,15 @@ void dump_one_field(void *addr, struct dump_info *info)
 	case dump_type_double:
 		printf("%lf\n", *(double *)p);
 		break;
+	case dump_type_float:
+		printf("%f\n", *(float *)p);
+		break;
 	case dump_type_pointer:
 		printf("%p\n", *(void **)p);
 		break;
 	case dump_type_Integer16:
 		printf("%i\n", *(short *)p);
 		break;
-
 	case dump_type_TimeInternal:
 		printf("correct %i: %10i.%09i:%04i\n", ti->correct,
 		       ti->seconds, ti->nanoseconds, ti->phase);
