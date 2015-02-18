@@ -33,6 +33,7 @@ struct ppsi_pickinfo {
 };
 
 static struct wrs_shm_head *hal_head;
+static struct hal_shmem_header *hal_shmem;
 static struct hal_port_state *hal_ports;
 static int hal_nports_local;
 
@@ -118,6 +119,21 @@ static struct ppsi_pickinfo p_pickinfo[] = {
 	FIELD(wrs_p_perport, ASN_INTEGER, sfp_error),
 };
 
+/* Our data: globals */
+static struct wrs_temperatures {
+	int temp_fpga;		/* FPGA temperature */
+	int temp_pll;		/* PLL temperature */
+	int temp_psl;		/* PSL temperature */
+	int temp_psr;		/* PSR temperature */
+} wrs_temperatures;
+
+static struct ppsi_pickinfo temp_pickinfo[] = {
+	FIELD(wrs_temperatures, ASN_INTEGER, temp_fpga),
+	FIELD(wrs_temperatures, ASN_INTEGER, temp_pll),
+	FIELD(wrs_temperatures, ASN_INTEGER, temp_psl),
+	FIELD(wrs_temperatures, ASN_INTEGER, temp_psr),
+};
+
 static int32_t int_saturate(int64_t value)
 {
 	if (value >= INT32_MAX)
@@ -173,10 +189,34 @@ static void wrs_ppsi_get_globals(void)
 	}
 }
 
+
+static void wrs_get_temperatures(void)
+{
+	unsigned ii;
+	unsigned retries = 0;
+
+	memset(&wrs_temperatures, 0, sizeof(wrs_temperatures));
+	while (1) {
+		ii = wrs_shm_seqbegin(ppsi_head);
+
+		wrs_temperatures.temp_fpga = hal_shmem->temp.fpga >> 8;
+		wrs_temperatures.temp_pll = hal_shmem->temp.pll >> 8;
+		wrs_temperatures.temp_psl = hal_shmem->temp.psl >> 8;
+		wrs_temperatures.temp_psr = hal_shmem->temp.psr >> 8;
+		retries++;
+		if (retries > 100) {
+			snmp_log(LOG_ERR, "%s: too many retries to read PPSI\n",
+				 __func__);
+			retries = 0;
+			}
+		if (!wrs_shm_seqretry(ppsi_head, ii))
+			break; /* consistent read */
+		usleep(1000);
+	}
+}
+
 void init_shm(void)
 {
-	struct hal_shmem_header *h;
-
 	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
 	if (!hal_head) {
 		snmp_log(LOG_ERR, "unable to open shm for HAL!\n");
@@ -190,9 +230,9 @@ void init_shm(void)
 		exit(-1);
 	}
 
-	h = (void *)hal_head + hal_head->data_off;
+	hal_shmem = (void *)hal_head + hal_head->data_off;
 	/* Assume number of ports does not change in runtime */
-	hal_nports_local = h->nports;
+	hal_nports_local = hal_shmem->nports;
 	if (hal_nports_local > WRS_N_PORTS) {
 		snmp_log(LOG_ERR, "Too many ports reported by HAL. "
 			"%d vs %d supported\n",
@@ -201,7 +241,7 @@ void init_shm(void)
 	}
 	/* Even after HAL restart, HAL will place structures at the same
 	 * addresses. No need to re-dereference pointer at each read. */
-	hal_ports = wrs_shm_follow(hal_head, h->ports);
+	hal_ports = wrs_shm_follow(hal_head, hal_shmem->ports);
 	if (!hal_ports) {
 		snmp_log(LOG_ERR, "Unalbe to follow hal_ports pointer in HAL's"
 			 " shmem");
@@ -356,6 +396,57 @@ static int ppsi_g_group(netsnmp_mib_handler          *handler,
 	return SNMP_ERR_NOERROR;
 }
 
+
+/* This is the filler for the temperature sensors */
+static int temp_group(netsnmp_mib_handler          *handler,
+			netsnmp_handler_registration *reginfo,
+			netsnmp_agent_request_info   *reqinfo,
+			netsnmp_request_info         *requests)
+{
+	static time_t t0, t1;
+	int obj; /* the final index */
+	struct ppsi_pickinfo *pi;
+	void *ptr;
+	int len;
+
+	/*
+	 * Retrieve information from ppsi itself. But this function
+	 * is called once for every item, so only query the whole set
+	 * once every 2 seconds.
+	 */
+	t1 = time(NULL);
+	if (!t0 || t1 - t0 > 1) {
+		wrs_get_temperatures();
+		t0 = t1;
+	}
+
+	switch (reqinfo->mode) {
+	case MODE_GET:
+		/* "- 2" because last is 0 for all scalars, I suppose */
+		obj = requests->requestvb->name[
+			requests->requestvb->name_length - 2];
+		obj--; /* we are 0-based */
+		if (obj < 0 || obj >= ARRAY_SIZE(temp_pickinfo)) {
+			snmp_log(LOG_ERR, "wrong index (%d) in wrs ppsi\n",
+				 obj + 1);
+			return SNMP_ERR_GENERR;
+		}
+		pi = temp_pickinfo + obj;
+		ptr = (void *)&wrs_temperatures + pi->offset;
+		len = pi->len;
+		if (len > 8) /* special case for strings */
+			len = strnlen(ptr, len);
+		snmp_set_var_typed_value(requests->requestvb,
+					 pi->type, ptr, len);
+		break;
+	default:
+		snmp_log(LOG_ERR, "unknown mode (%d) in wrs temp group\n",
+			 reqinfo->mode);
+		return SNMP_ERR_GENERR;
+	}
+	return SNMP_ERR_NOERROR;
+}
+
 /* For the per-port table we use an iterator like in wrsPstats.c */
 
 static netsnmp_variable_list *
@@ -476,6 +567,8 @@ init_wrsPpsi(void)
 	netsnmp_handler_registration *hreg;
 	/* Above for globals, below for per-port */
 	const oid wrsPpsiP_oid[] = {  WRS_OID, 7 };
+	netsnmp_handler_registration *hreg_temp;
+	const oid wrsTemperature_oid[] = {  WRS_OID, 8 };
 	netsnmp_table_registration_info *table_info;
 	netsnmp_iterator_info *iinfo;
 	netsnmp_handler_registration *reginfo;
@@ -525,4 +618,13 @@ init_wrsPpsi(void)
 							  ppsi_p_load, NULL,
 							  wrsPpsiP_oid,
 							  OID_LENGTH(wrsPpsiP_oid)));
+
+	/* do the registration for the scalars/globals */
+	hreg_temp = netsnmp_create_handler_registration(
+		"wrsTemperature", temp_group,
+		wrsTemperature_oid, OID_LENGTH(wrsTemperature_oid),
+		HANDLER_CAN_RONLY);
+	netsnmp_register_scalar_group(
+		hreg_temp, 1 /* min */, ARRAY_SIZE(temp_pickinfo) /* max */);
+
 }

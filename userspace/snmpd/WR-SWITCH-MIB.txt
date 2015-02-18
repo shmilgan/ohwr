@@ -35,6 +35,7 @@ wrsVersion     OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }
 wrsDate        OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }
 wrsPtpGlobals  OBJECT IDENTIFIER ::= { wrSwitchMIB 6 }
 wrsPortsTable  OBJECT IDENTIFIER ::= { wrSwitchMIB 7 }
+wrsTemperature OBJECT IDENTIFIER ::= { wrSwitchMIB 8 }
 
 -- define one stupid object for a start
 
@@ -498,7 +499,6 @@ ptpDeltaRxS OBJECT-TYPE
     ::= { wrsPtpGlobals 17 }
 
 -- per-port (.7)
-
 wrsPortsTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF wrsPortsEntry
     MAX-ACCESS  not-accessible
@@ -616,4 +616,36 @@ portSfpError OBJECT-TYPE
             "Problem with SFP configuration. Port has to be always 1GbE. Port has to be in data base as long as support WR."
     ::= { wrsPortsEntry 10 }
 
+-- wrsTemperature (.8)
+tempFPGA OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "FPGA temperature"
+    ::= { wrsTemperature 1 }
+
+tempPLL OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "PLL temperature"
+    ::= { wrsTemperature 2 }
+
+tempPSL OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Power Supply Left (PSL) temperature"
+    ::= { wrsTemperature 3 }
+
+tempPSR OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Power Supply Right (PSR) temperature"
+    ::= { wrsTemperature 4 }
 END
