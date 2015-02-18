@@ -648,4 +648,50 @@ tempPSR OBJECT-TYPE
     DESCRIPTION
             "Power Supply Right (PSR) temperature"
     ::= { wrsTemperature 4 }
+
+tempTholdFPGA OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Threshold level for FPGA temperature"
+    ::= { wrsTemperature 5 }
+
+tempTholdPLL OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Threshold level for PLL temperature"
+    ::= { wrsTemperature 6 }
+
+tempTholdPSL OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Threshold level for Power Supply Left (PSL) temperature"
+    ::= { wrsTemperature 7 }
+
+tempTholdPSR OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Threshold level for Power Supply Right (PSR) temperature"
+    ::= { wrsTemperature 8 }
+
+tempWarning OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        NA(0),
+                        Threshold-not-set(1),
+                        Temperature-OK(2),
+                        Temperature-too-high(3),
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Warning if temperature exceed threshold levels"
+    ::= { wrsTemperature 9 }
+
 END

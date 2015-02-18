@@ -125,6 +125,12 @@ static struct wrs_temperatures {
 	int temp_pll;		/* PLL temperature */
 	int temp_psl;		/* PSL temperature */
 	int temp_psr;		/* PSR temperature */
+	int temp_fpga_thold;	/* Threshold value for FPGA temperature */
+	int temp_pll_thold;	/* Threshold value for PLL temperature */
+	int temp_psl_thold;	/* Threshold value for PSL temperature */
+	int temp_psr_thold;	/* Threshold value for PSR temperature */
+	int temp_warning;	/* Warning when at least one temperature
+				 * threshold level exceeded */
 } wrs_temperatures;
 
 static struct ppsi_pickinfo temp_pickinfo[] = {
@@ -132,6 +138,11 @@ static struct ppsi_pickinfo temp_pickinfo[] = {
 	FIELD(wrs_temperatures, ASN_INTEGER, temp_pll),
 	FIELD(wrs_temperatures, ASN_INTEGER, temp_psl),
 	FIELD(wrs_temperatures, ASN_INTEGER, temp_psr),
+	FIELD(wrs_temperatures, ASN_INTEGER, temp_fpga_thold),
+	FIELD(wrs_temperatures, ASN_INTEGER, temp_pll_thold),
+	FIELD(wrs_temperatures, ASN_INTEGER, temp_psl_thold),
+	FIELD(wrs_temperatures, ASN_INTEGER, temp_psr_thold),
+	FIELD(wrs_temperatures, ASN_INTEGER, temp_warning),
 };
 
 static int32_t int_saturate(int64_t value)
@@ -203,6 +214,26 @@ static void wrs_get_temperatures(void)
 		wrs_temperatures.temp_pll = hal_shmem->temp.pll >> 8;
 		wrs_temperatures.temp_psl = hal_shmem->temp.psl >> 8;
 		wrs_temperatures.temp_psr = hal_shmem->temp.psr >> 8;
+		wrs_temperatures.temp_fpga_thold = hal_shmem->temp.fpga_thold;
+		wrs_temperatures.temp_pll_thold = hal_shmem->temp.pll_thold;
+		wrs_temperatures.temp_psl_thold = hal_shmem->temp.psl_thold;
+		wrs_temperatures.temp_psr_thold = hal_shmem->temp.psr_thold;
+		if (!wrs_temperatures.temp_fpga_thold
+		    && !wrs_temperatures.temp_pll_thold
+		    && !wrs_temperatures.temp_psl_thold
+		    && !wrs_temperatures.temp_psr_thold) {
+			/* no threshold are set */
+			wrs_temperatures.temp_warning = 1;
+		} else {
+			/* rise warning when at least one threshold level
+			 * is exceeded, add 2, since 0 is readings not
+			 * available, 1 is no threshold set */
+			wrs_temperatures.temp_warning = 2 +
+			    (wrs_temperatures.temp_fpga > wrs_temperatures.temp_fpga_thold)
+			    || (wrs_temperatures.temp_pll > wrs_temperatures.temp_pll_thold)
+			    || (wrs_temperatures.temp_psl > wrs_temperatures.temp_psl_thold)
+			    || (wrs_temperatures.temp_psr > wrs_temperatures.temp_psr_thold);
+		}
 		retries++;
 		if (retries > 100) {
 			snmp_log(LOG_ERR, "%s: too many retries to read PPSI\n",
