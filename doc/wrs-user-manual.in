@@ -464,6 +464,15 @@ value is changed by the web interface, proper action is taken.
         default. Community values are strings and they default to
         @t{public} and @t{private}.
 
+@item CONFIG_SNMP_TEMP_THOLD_FPGA
+@itemx CONFIG_SNMP_TEMP_THOLD_PLL
+@itemx CONFIG_SNMP_TEMP_THOLD_PSL
+@itemx CONFIG_SNMP_TEMP_THOLD_PSR
+	Threshold levels for FPGA, PLL, Power Supply Left (PSL) and Power
+        Supply Right (PSR) temperature sensors. When any temperature exceeds
+        threshold level SNMP object @t{WR-SWITCH-MIB::tempWarning} will change
+        accordingly.
+        
 @item CONFIG_WRS_LOG_HAL
 @itemx CONFIG_WRS_LOG_RTU
 @itemx CONFIG_WRS_LOG_PTP
