@@ -372,7 +372,7 @@ int main(int argc, char *argv[])
            if(print) printf("Read %d byes of data\n", rc);
            if((rc>>3) != ENTRIES_PER_PACKET)
                printf("rc != ENTRIES_PER_PACKET:  %d \n", rc);
-           for(i=0;i<ENTRIES_PER_PACKET;i++)
+           for(i=0;i<(rc>>3);i++)
            {
               int value = (0xffffff & tx_buf[i].value);
               if(debug_to_hex)
