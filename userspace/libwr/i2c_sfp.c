@@ -562,15 +562,28 @@ int shw_sfp_read_db(void)
 	int error, val, index;
 
 	for (index = 0; ; index++) {
-		error = libwr_cfg_convert2("SFP%02i_PARAMS", "name",
+		error = libwr_cfg_convert2("SFP%02i_PARAMS", "pn",
 					   LIBWR_STRING, s, index);
 		if (error)
 			return 0; /* no more, no error */
 
 		sfp = calloc(1, sizeof(*sfp));
 		strncpy(sfp->part_num, s, sizeof(sfp->part_num));
-		sfp->vendor_name[0] = 0;
+
+		error = libwr_cfg_convert2("SFP%02i_PARAMS", "vn",
+					   LIBWR_STRING, s, index);
+		/* copy vendor name if found */
+		if (!error)
+			strncpy(sfp->vendor_name, s, sizeof(sfp->vendor_name));
+
 		sfp->vendor_serial[0] = 0;
+		error = libwr_cfg_convert2("SFP%02i_PARAMS", "vs",
+					   LIBWR_STRING, s, index);
+		/* copy serial name if found */
+		if (!error)
+			strncpy(sfp->vendor_serial, s,
+				sizeof(sfp->vendor_serial));
+
 		sfp->flags = SFP_FLAG_CLASS_DATA; /* never used */
 
 		/* These are uint32_t as I write this. So use "int val" */
@@ -610,7 +623,8 @@ struct shw_sfp_caldata *shw_sfp_get_cal_data(int num,
 					     struct shw_sfp_header *head)
 {
 	struct shw_sfp_caldata *t;
-	struct shw_sfp_caldata *other = NULL;
+	struct shw_sfp_caldata *match_pn_vn = NULL;
+	struct shw_sfp_caldata *match_pn = NULL;
 	char *vn = (char *)head->vendor_name;
 	char *pn = (char *)head->vendor_pn;
 	char *vs = (char *)head->vendor_serial;
@@ -639,16 +653,26 @@ struct shw_sfp_caldata *shw_sfp_get_cal_data(int num,
 	/* In the first pass, look for serial number */
 	while (t) {
 //              printf("search1 %s %s\n", t->part_num, t->vendor_serial);
-		/* TODO: Add vendor matching */
-		if (strncmp(pn, t->part_num, 16) == 0
-		    && strncmp(t->vendor_serial, "", 16) == 0)
-			other = t;
-		else if (strncmp(pn, t->part_num, 16) == 0
-			 && strncmp(vs, t->vendor_serial, 16) == 0)
+		if (t->vendor_name[0] == 0
+		    && strncmp(pn, t->part_num, 16) == 0
+		    && t->vendor_serial[0] == 0)
+			/* matched pn, but vn and vs not defined */
+			match_pn = t;
+		else if (strncmp(vn, t->vendor_name, 16) == 0
+		    && strncmp(pn, t->part_num, 16) == 0
+		    && t->vendor_serial[0] == 0)
+			/* matched vn, pn, but vs not defined */
+			match_pn_vn = t;
+		else if (strncmp(vn, t->vendor_name, 16) == 0
+			&& strncmp(pn, t->part_num, 16) == 0
+			&& strncmp(vs, t->vendor_serial, 16) == 0)
+			/* matched vn, pn, vs */
 			return t;
 		t = t->next;
 	}
-	if (other)
-		return other;
+	if (match_pn_vn)
+		return match_pn_vn;
+	if (match_pn)
+		return match_pn;
 	return NULL;
 }

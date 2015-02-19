@@ -231,7 +231,7 @@ menu "SFP and Media Timing Configuration"
 
 config SFP00_PARAMS
 	string "Parameters for one SFP device type"
-	default "name=AXGE-1254-0531,tx=10,rx=10,wl_txrx=1310+1490"
+	default "vn=Axcen Photonics,pn=AXGE-1254-0531,tx=10,rx=10,wl_txrx=1310+1490"
 	help
 	  This parameter, and the following ones, are used to
 	  configure the timing parameters of a specific SFP
@@ -242,7 +242,7 @@ config SFP00_PARAMS
 
 config SFP01_PARAMS
 	string "Parameters for one SFP device type"
-	default "name=AXGE-3454-0531,tx=10,rx=10,wl_txrx=1490+1310"
+	default "vn=Axcen Photonics,pn=AXGE-3454-0531,tx=10,rx=10,wl_txrx=1490+1310"
 
 config SFP02_PARAMS
 	string "Parameters for one SFP device type"

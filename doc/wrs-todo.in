@@ -217,13 +217,6 @@ interface with gateware is now simpler than it was, but software still
 has remnants of old data structure.  Also, the multi-threaded approach
 is overkill, and the program could benefit from a simplification.
 
-@item The SFP code needs to be cleaned up. There is unsafe string
-management in 16-wide non-terminated fields, and we don't really
-report all the information we have (we should copy all SFP
-information to shmem: we are almost there but not completely).
-Moreover, using the device name without the vendor
-name is unsafe: some vendors use generic device names.
-
 @item The @t{TRACE} support it not really working. We have serious
 warning messages that were never reported.  We should really print
 everything to stderr and let syslog manage it (according to user

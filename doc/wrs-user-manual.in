@@ -553,7 +553,7 @@ This is, for explanation's sake, an example of such items:
 
 @smallexample
 CONFIG_PORT09_PARAMS="name=wr9,tx=226214,rx=226758,role=slave,fiber=2"
-CONFIG_SFP00_PARAMS="name=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"
+CONFIG_SFP00_PARAMS="pn=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"
 CONFIG_FIBER02_PARAMS="alpha_1310_1490=2.6787e-04"
 @end smallexample
 
@@ -588,6 +588,35 @@ wavelength, and is determined, again, by calibration.
 
 Please note that only one alpha value is provided, because the
 opposite one (@t{alpha_1490_1310}) is calculated by software.
+
+@subheading SFP name matching
+
+SFP matching is based on vendor name (@i{vn}), part number (@i{pn}) and vendor
+serial (@i{vs}). While matching SFP's values are compared with values stored in
+@t{CONFIG_SFPXX_PARAMS}.
+First try is to match all SFP identifiers (@i{vn}, @i{pn} and @i{vs}) with
+stored in config. If match is not successful, @i{vn} and @i{pn} of SFP are
+compared only with config entries without vendor serial. If match is still not
+found SFP's values are compared with config entries, which has defined only
+part number. Such approach prevents matching SFPs to config entires with
+defined serial.
+
+Below are shown matching examples:
+@smallexample
+CONFIG_SFP00_PARAMS="vn=Axcen Photonics,pn=AXGE-3454-0531,vs=AX12390009629,tx=0,rx=0,..."
+@end smallexample
+Above config may be matched only to one SFP.
+@smallexample
+CONFIG_SFP01_PARAMS="vn=Axcen Photonics,pn=AXGE-3454-0531,tx=0,rx=0,wl_txrx=1310+1490"
+@end smallexample
+Above config may be matched only to SFP with vendor name "Axcen Photonics" and
+part number "AXGE-3454-0531", with exception to these SFPs that were matched to
+example like above (with vendor serial defined).
+@smallexample
+CONFIG_SFP02_PARAMS="pn=AXGE-3454-0531,tx=0,rx=0,wl_txrx=1310+1490"
+@end smallexample
+Config above will be matched to all SFPs with part number "AXGE-3454-0531",
+that were not matched by configs above.
 
 @subheading Other Deployments
 
