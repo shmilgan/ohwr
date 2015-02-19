@@ -15,7 +15,6 @@
 
 #define SHOW_GUI		0
 #define SHOW_STATS		1
-#define SHOW_SNMP_GLOBALS	3
 
 int mode = SHOW_GUI;
 
@@ -274,12 +273,8 @@ static void show_unadorned_ports(void)
 
 void show_servo(void)
 {
-	ptpdexp_sync_state_t ss;
-
 	int64_t total_asymmetry;
 	int64_t crtt;
-
-	minipc_call(ptp_ch, 2000, &__rpcdef_get_sync_state, &ss);
 
 	total_asymmetry = ppsi_servo_local.picos_mu -
 			  2LL * ppsi_servo_local.delta_ms;
@@ -290,56 +285,39 @@ void show_servo(void)
 	if(mode == SHOW_GUI) {
 		term_cprintf(C_BLUE, "Synchronization status:\n");
 
-		if(!ss.valid)
-		{
+		if (!ppsi_servo_local.valid) {
 			term_cprintf(C_RED, "Master mode or sync info not valid\n");
 			return;
 		}
 
 		term_cprintf(C_GREY, "Servo state:               ");
-		term_cprintf(C_WHITE, "%s\n", ss.slave_servo_state);
-		term_cprintf(C_GREY, "Servo state:               ");
 		term_cprintf(C_WHITE, "%s\n",
 			     ppsi_servo_local.servo_state_name);
 
-		term_cprintf(C_GREY, "Phase tracking:            ");
-		if(ss.tracking_enabled)
-			term_cprintf(C_GREEN, "ON\n");
-		else
-			term_cprintf(C_RED,"OFF\n");
 		term_cprintf(C_GREY, "Phase tracking:            ");
 		if (ppsi_servo_local.tracking_enabled)
 			term_cprintf(C_GREEN, "ON\n");
 		else
 			term_cprintf(C_RED, "OFF\n");
 
-		term_cprintf(C_GREY, "Synchronization source:    ");
-		term_cprintf(C_WHITE, "%s\n", ss.sync_source);
+		/* not implemented */
+		/*term_cprintf(C_GREY, "Synchronization source:    ");
+		term_cprintf(C_WHITE, "%s\n", ss.sync_source);*/
 
 		term_cprintf(C_BLUE, "\nTiming parameters:\n\n");
 
-		term_cprintf(C_GREY, "Round-trip time (mu):      ");
-		term_cprintf(C_WHITE, "%.3f nsec\n", ss.mu/1000.0);
 		term_cprintf(C_GREY, "Round-trip time (mu):      ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 			     ppsi_servo_local.picos_mu/1000.0);
 
 		term_cprintf(C_GREY, "Master-slave delay:        ");
-		term_cprintf(C_WHITE, "%.3f nsec\n", ss.delay_ms/1000.0);
-		term_cprintf(C_GREY, "Master-slave delay:        ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 			     ppsi_servo_local.delta_ms/1000.0);
 
 		term_cprintf(C_GREY, "Link length:               ");
-		term_cprintf(C_WHITE, "%.0f meters \n",
-			     ss.delay_ms/1e12 * 300e6 / 1.55);
-		term_cprintf(C_GREY, "Link length:               ");
 		term_cprintf(C_WHITE, "%.0f meters\n",
 			     ppsi_servo_local.delta_ms/1e12 * 300e6 / 1.55);
 
-		term_cprintf(C_GREY, "Master PHY delays:         ");
-		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
-			     ss.delta_tx_m/1000.0, ss.delta_rx_m/1000.0);
 		term_cprintf(C_GREY, "Master PHY delays:         ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
 			     ppsi_servo_local.delta_tx_m/1000.0,
@@ -347,63 +325,35 @@ void show_servo(void)
 
 		term_cprintf(C_GREY, "Slave PHY delays:          ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
-			     ss.delta_tx_s/1000.0, ss.delta_rx_s/1000.0);
-		term_cprintf(C_GREY, "Slave PHY delays:          ");
-		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
 			     ppsi_servo_local.delta_tx_s/1000.0,
 			     ppsi_servo_local.delta_rx_s/1000.0);
 
 		term_cprintf(C_GREY, "Total link asymmetry:      ");
-		term_cprintf(C_WHITE, "%.3f nsec\n", ss.total_asymmetry/1000.0);
-		term_cprintf(C_GREY, "Total link asymmetry:      ");
 		term_cprintf(C_WHITE, "%.3f nsec\n", total_asymmetry/1000.0);
 
-		if (0) {
+		/*if (0) {
 			term_cprintf(C_GREY, "Fiber asymmetry:           ");
 			term_cprintf(C_WHITE, "%.3f nsec\n", ss.fiber_asymmetry/1000.0);
-		}
+		}*/
 
-		term_cprintf(C_GREY, "Clock offset:              ");
-		term_cprintf(C_WHITE, "%.3f nsec\n", ss.cur_offset/1000.0);
 		term_cprintf(C_GREY, "Clock offset:              ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 			     ppsi_servo_local.offset/1000.0);
 
 		term_cprintf(C_GREY, "Phase setpoint:            ");
-		term_cprintf(C_WHITE, "%.3f nsec\n", ss.cur_setpoint/1000.0);
-		term_cprintf(C_GREY, "Phase setpoint:            ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 			     ppsi_servo_local.cur_setpoint/1000.0);
 
 		term_cprintf(C_GREY, "Skew:                      ");
-		term_cprintf(C_WHITE, "%.3f nsec\n", ss.cur_skew/1000.0);
-		term_cprintf(C_GREY, "Skew:                      ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 			     ppsi_servo_local.skew/1000.0);
 
-		term_cprintf(C_GREY, "Servo update counter:      ");
-		term_cprintf(C_WHITE, "%lld times\n", ss.update_count);
 		term_cprintf(C_GREY, "Servo update counter:      ");
 		term_cprintf(C_WHITE, "%u times\n",
 			     ppsi_servo_local.update_count);
 	}
 	else if(mode == SHOW_STATS) {
 		printf("SERVO    ");
-		printf("sv:%d ", ss.valid ? 1:0);
-		printf("ss:'%s' ", ss.slave_servo_state);
-		printf("mu:%llu ", ss.mu);
-		printf("dms:%llu ", ss.delay_ms);
-		printf("dtxm:%llu drxm:%llu ", ss.delta_tx_m, ss.delta_rx_m);
-		printf("dtxs:%llu drxs:%llu ", ss.delta_tx_s, ss.delta_rx_s);
-		printf("asym:%lld ", ss.total_asymmetry);
-		printf("crtt:%llu ", ss.mu - ss.delta_tx_m - ss.delta_rx_m -
-				ss.delta_tx_s - ss.delta_rx_s);
-		printf("cko:%lld ", ss.cur_offset);
-		printf("setp:%lld ", ss.cur_setpoint);
-		printf("ucnt:%llu ", ss.update_count);
-		printf("\n");
-
-		printf("SERVO shm");
 		printf("sv:%d ", ppsi_servo_local.valid ? 1 : 0);
 		printf("ss:'%s' ", ppsi_servo_local.servo_state_name);
 		printf("mu:%llu ", ppsi_servo_local.picos_mu);
@@ -418,21 +368,6 @@ void show_servo(void)
 		printf("setp:%d ", ppsi_servo_local.cur_setpoint);
 		printf("ucnt:%u ", ppsi_servo_local.update_count);
 		printf("\n");
-	} else if (mode == SHOW_SNMP_GLOBALS) {
-		if(!ss.valid)
-			return;
-		/* This is oh so similar to the above, but by lines */
-		printf("gm_id: f0:f0:f0:f0:f0:f0:f0:f0\n"); /* FIXME */
-		printf("clock_id: f1:f1:f1:f1:f1:f1:f1:f1\n"); /* FIXME */
-		printf("mode: 9999\n"); /* FIXME */
-		printf("servo_state: %s\n", ss.slave_servo_state);
-		printf("tracking: %i\n", ss.tracking_enabled ? 1 : 0);
-		printf("source: %s\n", ss.sync_source);
-		printf("ck_offset: %lli\n", ss.cur_offset);
-		printf("skew: %li\n", (long)ss.cur_skew);
-		printf("rtt: %lli\n", ss.mu);
-		printf("llength: %li\n", (long)(ss.delay_ms/1e12 * 300e6 / 1.55));
-		printf("servo_upd: %lli\n", ss.update_count);
 	}
 }
 
@@ -465,12 +400,6 @@ int main(int argc, char *argv[])
 			case 'b':
 				usecolor = 0;
 				break;
-			case 'g':
-				mode = SHOW_SNMP_GLOBALS;
-				read_ports();
-				read_servo();
-				show_all();
-				exit(0);
 			case 'w': /* for the web interface */
 				read_ports();
 				read_servo();
