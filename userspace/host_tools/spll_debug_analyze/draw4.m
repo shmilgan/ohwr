@@ -43,7 +43,7 @@ plot(Xaxis,smooth(mpll(start:finish,2),(ceil(length(Xaxis)/10))),'r');
 %  plot((switchover-start+1)*unitScale,max(mpll(start:finish,2)),'*r' );
 
 %  legend(sprintf('raw data','smoothed (span=%d)','switchover','Location','northwest',ceil(length(Xaxis)/10)));
-legend(sprintf('smoothed (span=%d)',ceil(length(Xaxis)/10)),'switchover','Location','northwest');
+legend(sprintf('smoothed (span=%d)',ceil(length(Xaxis)/10)));
 title('Y');
 xlabel('time [s]');
 ylabel('DAC out');
@@ -52,7 +52,11 @@ axis tight
 subplot(4,1,3)
 hold on
 
+
 samples=5000;
+if(length(mpll) < start+samples)
+  samples = length(mpll) - start;
+end
 
 plot(Xaxis(start:(start+samples)),mpll(start:(start+samples),2),'b');
 plot(Xaxis(start:(start+samples)),smooth(mpll(start:(start+samples),2),10),'r');

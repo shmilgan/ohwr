@@ -13,10 +13,10 @@ output = 1;
 
 for i=1:size_t(1)
   if input(i,column) == 1
+    disp(sprintf('Switchover at sample: %d',input(i,1)));
     return
   else
     output=output+1;
-%      output=output-1;
   end
 end
 
