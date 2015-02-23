@@ -472,10 +472,10 @@ ppsi_p_handler(netsnmp_mib_handler          *handler,
 void
 init_wrsPpsi(void)
 {
-	const oid wrsPpsiG_oid[] = {  WRS_OID, 3, 1 };
+	const oid wrsPpsiG_oid[] = {  WRS_OID, 6 };
 	netsnmp_handler_registration *hreg;
 	/* Above for globals, below for per-port */
-	const oid wrsPpsiP_oid[] = {  WRS_OID, 3, 2 };
+	const oid wrsPpsiP_oid[] = {  WRS_OID, 7 };
 	netsnmp_table_registration_info *table_info;
 	netsnmp_iterator_info *iinfo;
 	netsnmp_handler_registration *reginfo;

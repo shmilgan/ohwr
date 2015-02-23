@@ -7,7 +7,7 @@ WR-SWITCH-MIB DEFINITIONS ::= BEGIN
 
 -- IMPORTS: Include definitions from other mibs here
 IMPORTS
-        OBJECT-TYPE, Integer32, Counter32, Counter64
+        OBJECT-TYPE, Integer32, Counter32, Counter64,
         MODULE-IDENTITY, enterprises          FROM SNMPv2-SMI
         DisplayString                         FROM SNMPv2-TC;
 
@@ -17,7 +17,7 @@ CERN OBJECT IDENTIFIER ::= { enterprises 96 }
 -- (I follow the CamelCase to be sure I don't mistype. Who knows the rules...
 
 wrSwitchMIB MODULE-IDENTITY
-    LAST-UPDATED "201502161000Z"
+    LAST-UPDATED "201502231000Z"
     ORGANIZATION "CERN"
     CONTACT-INFO "postal:   BE-CO-HT, CERN, Geneva
                   email:    ht-drivers@cern.ch
@@ -28,11 +28,13 @@ wrSwitchMIB MODULE-IDENTITY
 
 -- Define typical mib nodes
 -- we'll prefix everything in this mib with wrs (White Rabbit Switch)
-wrsScalar     OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
-wrsPstats     OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }
-wrsPtp        OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }
-wrsVersion    OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }
-wrsDate       OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }
+wrsScalar      OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
+wrsPstatsTable OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }
+--wrsPpsi      OBJECT IDENTIFIER ::= { wrSwitchMIB 3 } is obsolete
+wrsVersion     OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }
+wrsDate        OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }
+wrsPtpGlobals  OBJECT IDENTIFIER ::= { wrSwitchMIB 6 }
+wrsPortsTable  OBJECT IDENTIFIER ::= { wrSwitchMIB 7 }
 
 -- define one stupid object for a start
 
@@ -51,7 +53,7 @@ wrsScalarOne   OBJECT-TYPE
 -- code every time (I *hate* this obsolete crap: code generators should not
 -- be like that).
 
-wrsPstats OBJECT-TYPE
+wrsPstatsTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF pstatsEntry
     MAX-ACCESS  not-accessible
     STATUS      current
@@ -67,7 +69,7 @@ pstatsEntry OBJECT-TYPE
     DESCRIPTION
             "An entry containing a pstat name and values for all WR ports."
     INDEX   { pstatsIndex }
-    ::= { wrsPstats 1 }
+    ::= { wrsPstatsTable 1 }
 
 PstatsEntry ::=
     SEQUENCE {
@@ -245,14 +247,103 @@ pstatsWR17 OBJECT-TYPE
     ::= {pstatsEntry 19 }
 
 
+-- Versions (4) are all just strings, several of them
+
+wrsVersionSw    OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The software version, as returned from 'git describe' at build time"
+    ::= { wrsVersion 1 }
+
+wrsVersionGw1   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The gateware version: commit of wr_switch_hdl"
+    ::= { wrsVersion 2 }
+
+wrsVersionGw2   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The gateware version: commit of general-cores"
+    ::= { wrsVersion 3 }
+
+wrsVersionGw3   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The gateware version: commit of wr-cores"
+    ::= { wrsVersion 4 }
+
+wrsVersionHw1   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The hardware version: minibackplane PCB"
+    ::= { wrsVersion 5 }
+
+wrsVersionHw2   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The hardware version: FPGA"
+    ::= { wrsVersion 6 }
+
+wrsManufacturer OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the manufacturing company"
+    ::= { wrsVersion 7 }
+
+wrsSerialNumber OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The serial number (or string) of the switch"
+    ::= { wrsVersion 8 }
+
+wrsScbVersion OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The version of the SCB (motherboard)"
+    ::= { wrsVersion 9 }
+
+-- Date (5), to quickly check wr status
+
+wrsDateTAI      OBJECT-TYPE
+    SYNTAX      Counter64 -- actually integer, but it is unsigned so ok
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current time, in TAI seconds"
+    ::= { wrsDate 1 }
+
+wrsDateString   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current TAI time, printed as %y-%m-%d-%H:%M:%S (no time zone)"
+    ::= { wrsDate 2 }
+
 -- The Wr/PTP/Ppsi information is two items: an array of scalars
 -- and a table. In the table, the "channel" name is the row. But
 -- the index is integer, following what ppsi does internally
 
-wrsPtpGlobals OBJECT IDENTIFIER ::= { wrsPtp 1 }
-wrsPtpPerport OBJECT IDENTIFIER ::= { wrsPtp 2 }
-
--- globals (.3.1)
+-- globals (.6)
 
 ptpGrandmasterID OBJECT-TYPE
     SYNTAX       OCTET STRING (SIZE(8))
@@ -406,18 +497,26 @@ ptpDeltaRxS OBJECT-TYPE
             "Fixed Rx latency on Slave side"
     ::= { wrsPtpGlobals 17 }
 
--- per-port (.3.2)
+-- per-port (.7)
 
-ptpPort OBJECT-TYPE
-    SYNTAX      PtpPort
+wrsPortsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF wrsPortsEntry
     MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
-            "The ptp line: information for each port"
-    INDEX   { portIndex }
-    ::= { wrsPtpPerport 1 }
+            "Information for each port"
+    ::= { wrSwitchMIB 7 }
 
-PtpPort ::=
+wrsPortsEntry OBJECT-TYPE
+    SYNTAX      WrsPortsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "An entry containing ports statuses"
+    INDEX   { wrsPortIndex }
+    ::= { wrsPortsTable 1 }
+
+WrsPortsEntry ::=
     SEQUENCE {
         portLink             INTEGER,
         portMode             INTEGER,
@@ -437,7 +536,7 @@ portLink OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the link is up or down"
-    ::= { ptpPort 1 }
+    ::= { wrsPortsEntry 1 }
 
 portMode OBJECT-TYPE
     SYNTAX         INTEGER {
@@ -451,7 +550,7 @@ portMode OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the port is master or slave"
-    ::= { ptpPort 2 }
+    ::= { wrsPortsEntry 2 }
 
 portLocked OBJECT-TYPE
     SYNTAX         INTEGER {not-locked(0), locked(1)}
@@ -459,7 +558,7 @@ portLocked OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the peers are locked or not"
-    ::= { ptpPort 3 }
+    ::= { wrsPortsEntry 3 }
 
 portPeer OBJECT-TYPE
     SYNTAX         OCTET STRING (SIZE(8))
@@ -467,7 +566,7 @@ portPeer OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "the ClockID of the peer, if available. Or 0"
-    ::= { ptpPort 4 }
+    ::= { wrsPortsEntry 4 }
 
 portSfpVN OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..32))
@@ -475,7 +574,7 @@ portSfpVN OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Vendor Name of SFP"
-    ::= { ptpPort 5 }
+    ::= { wrsPortsEntry 5 }
 
 portSfpPN OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..32))
@@ -483,7 +582,7 @@ portSfpPN OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Part Number of SFP"
-    ::= { ptpPort 6 }
+    ::= { wrsPortsEntry 6 }
 
 portSfpVS OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..32))
@@ -491,7 +590,7 @@ portSfpVS OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Vendor serial number of SFP"
-    ::= { ptpPort 7 }
+    ::= { wrsPortsEntry 7 }
 
 portSfpInDB OBJECT-TYPE
     SYNTAX         INTEGER {NA(0), not-in-Data-Base(1), in-Data-Base(2)}
@@ -499,7 +598,7 @@ portSfpInDB OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the SFP is in data base or not"
-    ::= { ptpPort 8 }
+    ::= { wrsPortsEntry 8 }
 
 portSfpGbE OBJECT-TYPE
     SYNTAX         INTEGER {NA(0), not-GbE(1), GbE(2)}
@@ -507,7 +606,7 @@ portSfpGbE OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the SFP is 1 GbE"
-    ::= { ptpPort 9 }
+    ::= { wrsPortsEntry 9 }
 
 portSfpError OBJECT-TYPE
     SYNTAX         INTEGER {SFP-ok(0), SFP-Error(1)}
@@ -515,99 +614,6 @@ portSfpError OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Problem with SFP configuration. Port has to be always 1GbE. Port has to be in data base as long as support WR."
-    ::= { ptpPort 10 }
-
--- Versions (4) are all just strings, several of them
-
-wrsVersionSw    OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..64))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The software version, as returned from 'git describe' at build time"
-    ::= { wrsVersion 1 }
-
-wrsVersionGw1   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The gateware version: commit of wr_switch_hdl"
-    ::= { wrsVersion 2 }
-
-wrsVersionGw2   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The gateware version: commit of general-cores"
-    ::= { wrsVersion 3 }
-
-wrsVersionGw3   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The gateware version: commit of wr-cores"
-    ::= { wrsVersion 4 }
-
-wrsVersionHw1   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The hardware version: minibackplane PCB"
-    ::= { wrsVersion 5 }
-
-wrsVersionHw2   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The hardware version: FPGA"
-    ::= { wrsVersion 6 }
-
-wrsManufacturer OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..64))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The name of the manufacturing company"
-    ::= { wrsVersion 7 }
-
-wrsSerialNumber OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The serial number (or string) of the switch"
-    ::= { wrsVersion 8 }
-
-wrsScbVersion OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The version of the SCB (motherboard)"
-    ::= { wrsVersion 9 }
-
--- Date (5), to quickly check wr status
-
-wrsDateTAI      OBJECT-TYPE
-    SYNTAX      Counter64 -- actually integer, but it is unsigned so ok
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The current time, in TAI seconds"
-    ::= { wrsDate 1 }
-
-wrsDateString   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The current TAI time, printed as %y-%m-%d-%H:%M:%S (no time zone)"
-    ::= { wrsDate 2 }
-
+    ::= { wrsPortsEntry 10 }
 
 END
