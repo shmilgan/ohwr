@@ -30,6 +30,8 @@ static struct pp_globals *ppg;
 static struct wr_servo_state_t *ppsi_servo;
 static struct wr_servo_state_t ppsi_servo_local; /* local copy of
 						    servo status */
+static struct hal_temp_sensors *temp_sensors;
+static struct hal_temp_sensors temp_sensors_local;
 
 
 int read_hal(void){
@@ -41,6 +43,8 @@ int read_hal(void){
 		ii = wrs_shm_seqbegin(hal_head);
 		memcpy(hal_ports_local_copy, hal_ports,
 		       hal_nports_local*sizeof(struct hal_port_state));
+		memcpy(&temp_sensors_local, temp_sensors,
+		       sizeof(*temp_sensors));
 		retries++;
 		if (retries > 100)
 			return -1;
@@ -105,7 +109,7 @@ void init_shm(void)
 			"shmem");
 		exit(-1);
 	}
-
+	temp_sensors = &(h->temp);
 
 	ppsi_head = wrs_shm_get(wrs_shm_ptp, "", WRS_SHM_READ);
 	if (!ppsi_head) {
@@ -372,6 +376,41 @@ void show_servo(void)
 	}
 }
 
+void show_temperatures(void)
+{
+	if (mode == SHOW_GUI) {
+		term_cprintf(C_BLUE, "\nTemperatures:\n");
+
+		term_cprintf(C_GREY, "FPGA: ");
+		term_cprintf(C_WHITE, "%2.2f ",
+			     temp_sensors_local.fpga/256.0);
+		term_cprintf(C_GREY, "PLL: ");
+		term_cprintf(C_WHITE, "%2.2f ",
+			     temp_sensors_local.pll/256.0);
+		term_cprintf(C_GREY, "PSL: ");
+		term_cprintf(C_WHITE, "%2.2f ",
+			     temp_sensors_local.psl/256.0);
+		term_cprintf(C_GREY, "PSR: ");
+		term_cprintf(C_WHITE, "%2.2f\n",
+			     temp_sensors_local.psr/256.0);
+
+		term_cprintf(C_BLUE, "Temperature thresholds:\n");
+
+		term_cprintf(C_GREY, "FPGA: ");
+		term_cprintf(C_WHITE, "%5d ",
+			     temp_sensors_local.fpga_thold);
+		term_cprintf(C_GREY, "PLL: ");
+		term_cprintf(C_WHITE, "%5d ",
+			     temp_sensors_local.pll_thold);
+		term_cprintf(C_GREY, "PSL: ");
+		term_cprintf(C_WHITE, "%5d ",
+			     temp_sensors_local.psl_thold);
+		term_cprintf(C_GREY, "PSR: ");
+		term_cprintf(C_WHITE, "%5d\n",
+			     temp_sensors_local.psr_thold);
+	}
+}
+
 int track_onoff = 1;
 
 void show_all()
@@ -383,6 +422,7 @@ void show_all()
 	}
 	show_ports();
 	show_servo();
+	show_temperatures();
 	fflush(stdout);
 }
 
