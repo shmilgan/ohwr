@@ -27,11 +27,12 @@ static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS];
 static int hal_nports_local;
 static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
-struct wr_servo_state_t *ppsi_servo;
-struct wr_servo_state_t ppsi_servo_local; /* local copy of servo status */
+static struct wr_servo_state_t *ppsi_servo;
+static struct wr_servo_state_t ppsi_servo_local; /* local copy of
+						    servo status */
 
 
-int read_ports(void){
+int read_hal(void){
 	unsigned ii;
 	unsigned retries = 0;
 
@@ -401,8 +402,7 @@ int main(int argc, char *argv[])
 				usecolor = 0;
 				break;
 			case 'w': /* for the web interface */
-				read_ports();
-				read_servo();
+				read_hal();
 				show_unadorned_ports();
 				exit(0);
 			default:
@@ -430,7 +430,7 @@ int main(int argc, char *argv[])
 					    track_onoff);
 			}
 		}
-		read_ports();
+		read_hal();
 		read_servo();
 		show_all();
 		/* If we got broken pipe or anything, exit */
