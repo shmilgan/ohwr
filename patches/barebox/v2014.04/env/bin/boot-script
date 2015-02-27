@@ -7,15 +7,18 @@ fi
 
 # fetch wrboot-<MAC> script, or <IP>/wrboot or wrboot
 tftp wrboot-$eth0.ethaddr wrboot
-if [ "$?" -ne "0" ]; then
+ret=$?
+if [ "$ret" -ne "0" ]; then
     sleep 1
     tftp $eth0.ipaddr/wrboot wrboot
+    ret=$?
 fi
-if [ "$?" -ne "0" ]; then
+if [ "$ret" -ne "0" ]; then
     sleep 1
     tftp wrboot wrboot
+    ret=$?
 fi
-if [ "$?" -eq "0" ]; then
+if [ "$ret" -eq "0" ]; then
     ./wrboot
 fi
 
