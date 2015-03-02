@@ -631,7 +631,7 @@ wrs-192.168.16.242# devmem 0xfffffd04
 	\item {\bf Temperature inside the box too high}
 		\label{fail:other:temp}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO \emph{(depends on HDL)}
+			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
 				If the temperature raises too high we might break our electronics inside
@@ -645,15 +645,22 @@ wrs-192.168.16.242# devmem 0xfffffd04
 					\item \emph{IC18} - temperature near the VCXO and PLLs (AD9516,
 						CDCM6100)
 				\end{itemize}
-			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}\\
+			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::tempFPGA}\\
-				\texttt{WR-SWITCH-MIB::tempScbPsu.1}\\
-				\texttt{WR-SWITCH-MIB::tempScbPsu.2}\\
-				\texttt{WR-SWITCH-MIB::tempPLL}
-			\item [] \underline{Note}: we should report temperature from these 4
-				sensors and set the threshold for each of them to raise an alarm.
-				Temperature is read by the HAL to drive PWM inside the FPGA. HAL should
-				report temperature to its area in the shared memory.
+				\texttt{WR-SWITCH-MIB::tempPSL}\\
+				\texttt{WR-SWITCH-MIB::tempPSR}\\
+				\texttt{WR-SWITCH-MIB::tempPLL}\\
+				\texttt{WR-SWITCH-MIB::tempTholdFPGA}\\
+				\texttt{WR-SWITCH-MIB::tempTholdPLL}\\
+				\texttt{WR-SWITCH-MIB::tempTholdPSL}\\
+				\texttt{WR-SWITCH-MIB::tempTholdPSR}\\
+				\texttt{WR-SWITCH-MIB::tempWarning}\\
+			\item [] \underline{Note}:
+			\texttt{tempWarning} is raised when temperature read from any of these sensors
+			exceeds individually set threshold in \emph{.config}. When at least one threshold
+			temperature is not set tempWarning returns \emph{Threshold-not-set}.
+			Temperature is read by the HAL to drive PWM inside the FPGA. HAL reports
+			temperature to its area in the shared memory.
 		\end{packed_enum}
 
 	\item {\bf Not supported SFP plugged into the cage (especially non 1-Gb SFP)}
