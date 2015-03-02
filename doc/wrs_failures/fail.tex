@@ -8,7 +8,7 @@ WR network.\\
 	\item {\bf \emph{PTP/PPSi} went out of \texttt{TRACK\_PHASE}}
 		\label{fail:timing:ppsi_track_phase}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO \emph{(depends on ppsi shm)}
+			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{Slave}
 			\item [] \underline{Description}:\\
@@ -16,8 +16,8 @@ WR network.\\
 				that means something bad has happened and switch has lost the
 				synchronization to its Master.
 			\item [] \underline{SNMP objects}:\\
-				\texttt{WR-SWITCH-MIB::ptpServoState} \emph{(implemented as string)}\\
-				\texttt{WR-SWITCH-MIB::ptpServoStateN} \emph{(not implemented, as integer)}
+				\texttt{WR-SWITCH-MIB::ptpServoState}\\
+				\texttt{WR-SWITCH-MIB::ptpServoStateN}
 				%ppsiServoStateN shall contain state as a integer taken from ppsi shm
 			\item [] \underline{Note}: we should also monitor PTP/PPSi state inside the
 				switch to build up the general WRS status word.
