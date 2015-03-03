@@ -401,8 +401,9 @@ ptpServoStateN OBJECT-TYPE
 
 ptpPhaseTracking OBJECT-TYPE
     SYNTAX INTEGER {
-               not-tracking(0)
-               tracking(1)
+               NA(0),
+               not-tracking(1),
+               tracking(2)
     }          
     MAX-ACCESS  read-only
     STATUS      current
@@ -531,7 +532,11 @@ WrsPortsEntry ::=
     }
 
 portLink OBJECT-TYPE
-    SYNTAX         INTEGER {down(0), up(1)}
+    SYNTAX         INTEGER {
+                        NA(0),
+                        down(1),
+                        up(2)
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
@@ -553,7 +558,11 @@ portMode OBJECT-TYPE
     ::= { wrsPortsEntry 2 }
 
 portLocked OBJECT-TYPE
-    SYNTAX         INTEGER {not-locked(0), locked(1)}
+    SYNTAX         INTEGER {
+                        NA(0),
+                        not-locked(1),
+                        locked(2)
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
@@ -609,7 +618,11 @@ portSfpGbE OBJECT-TYPE
     ::= { wrsPortsEntry 9 }
 
 portSfpError OBJECT-TYPE
-    SYNTAX         INTEGER {SFP-ok(0), SFP-Error(1)}
+    SYNTAX         INTEGER {
+                        NA(0),
+                        SFP-ok(1),
+                        SFP-Error(2)
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION

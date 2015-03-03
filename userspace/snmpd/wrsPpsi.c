@@ -168,7 +168,9 @@ static void wrs_ppsi_get_globals(void)
 			ppsi_servo->servo_state_name,
 			sizeof(ppsi_servo->servo_state_name));
 		wrs_p_globals.servo_state = ppsi_servo->state;
-		wrs_p_globals.tracking_enabled = ppsi_servo->tracking_enabled;
+		/* Keep value 0 for Not available */
+		wrs_p_globals.tracking_enabled =
+					1 + ppsi_servo->tracking_enabled;
 		/*
 		 * WARNING: the current snmpd is bugged: it has
 		 * endianness problems with 64 bit, and the two
@@ -321,14 +323,17 @@ static void wrs_ppsi_get_per_port(void)
 			port_state = hal_lookup_port(hal_ports,
 						    hal_nports_local, if_name);
 			/* No need to copy all ports structures, only what
-			 * we're interested in */
-			wrs_p_array[i].link_up = state_up(port_state->state);
+			 * we're interested in.
+			 * Keep value 0 for Not available */
+			wrs_p_array[i].link_up =
+					1 + state_up(port_state->state);
 			wrs_p_array[i].port_mode = port_state->mode;
 			if (port_state->state == HAL_PORT_STATE_DISABLED)
 				/* if port is disabled don't fill
 				 * other fields */
 				continue;
-			wrs_p_array[i].port_locked = port_state->locked;
+			/* Keep value 0 for Not available */
+			wrs_p_array[i].port_locked = 1 + port_state->locked;
 			/* FIXME: get real peer_id */
 			memset(&wrs_p_array[i].peer_id, 0xff,
 			       sizeof(ClockIdentity));
@@ -347,8 +352,8 @@ static void wrs_ppsi_get_per_port(void)
 				sizeof(wrs_p_array[i].sfp_vs));
 			/* sfp error when SFP is not 1 GbE or
 			 * (port is not wr-non mode and sfp not in data base)
-			 */
-			wrs_p_array[i].sfp_error =
+			 * Keep value 0 for Not available */
+			wrs_p_array[i].sfp_error = 1 +
 				(wrs_p_array[i].sfp_GbE == 1) ||
 				((port_state->mode != HEXP_PORT_MODE_NON_WR) &&
 				(wrs_p_array[i].sfp_in_db == 1));
