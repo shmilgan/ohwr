@@ -39,7 +39,6 @@ void *fpga;
 
 static struct EP_WB _ep_wb;
 
-
 #define EP_REG(regname) ((uint32_t)((void*)&_ep_wb.regname - (void*)&_ep_wb))
 #define IDX_TO_EP(x) (0x30000 + ((x) * 0x400))
 
@@ -399,20 +398,19 @@ void rt_command(int ep, int argc, char *argv[])
 	struct rts_pll_state pstate;
 	hexp_port_list_t plist;
 	int i;
-	
 	if(	rts_connect() < 0)
 	{
 		printf("Can't connect to the RT subsys\n");
 		return;
 	}
-
+// #if 0
 	if(	halexp_client_init() < 0)
 	{
 		printf("Can't connect to the HAL \n");
 		plist.num_physical_ports = 18;
 //		return -1;
 	}
-
+// #endif
 	rts_get_state(&pstate);
 //	halexp_query_ports(&plist);
 	
@@ -468,7 +466,38 @@ void rt_command(int ep, int argc, char *argv[])
 		else
 		      printf("wrong hdo command: %s\n", argv[4]);
 		  
-	}	
+	}
+	else if (!strcmp(argv[3], "mbox"))
+	{
+		int i;
+		uint32_t tmp;
+		for (i=0;i<0x10000;i=i+4)
+		{
+			tmp = fpga_readl(i);
+			printf("%c%c%c%c",
+			0x000000FF& tmp>>24,
+			0x000000FF & tmp>>16,
+			0x000000FF & tmp>>8 ,
+			0x000000FF & tmp>>0 );
+		}
+		  
+	}
+	else if (!strcmp(argv[3], "hdost"))
+	{
+		
+		printf("holdover state:\n");
+		
+		struct rts_hdover_state state;
+		rts_get_holdover_state(&state,0);
+		
+		printf("enabled: %d\n",state.enabled);
+		printf("state: %d\n",state.state);
+		printf("type: %d\n",state.type);
+		printf("hd_time: %d\n",state.hd_time);
+		printf("hd_time: %d\n",state.flags);
+		
+		
+	}
 }
 
 
@@ -521,7 +550,7 @@ struct {
 	{
 	"rt",
 	"",
-	"RT subsystem command [show,lock,master,gm,adj,hdo]",
+	"RT subsystem command [show,lock,master,gm,adj,hdo, mbox, hdost]",
 	rt_command},
 	{NULL}
 
