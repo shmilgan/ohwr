@@ -432,8 +432,8 @@ static int handle_link_down(hal_port_state_t *p, int link_up)
 		if(p->locked)
 		{
 			
-			TRACE(TRACE_INFO, "LINK DOWN [%d]: active: %d | backup %d | old %d | is backup=%d ",
-			p->hw_index, active_port(),backup_port(),old_backup_port(),is_backup_port(p->hw_index) );
+// 			TRACE(TRACE_INFO, "LINK DOWN [%d]: active: %d | backup %d | old %d | is backup=%d ",
+// 			p->hw_index, active_port(),backup_port(),old_backup_port(),is_backup_port(p->hw_index) );
 			if(hal_get_timing_mode() != HAL_TIMING_MODE_GRAND_MASTER)
 				
 				if(old_backup_port() == p->hw_index) // we just switche over from this port
@@ -543,8 +543,8 @@ static void port_fsm(hal_port_state_t *p)
         p->phase_val_valid = rts_state.channels[p->hw_index].flags & CHAN_PMEAS_READY ? 1 : 0;
 				//hal_port_check_lock(p->name);
 				//p->locked =
-		TRACE(TRACE_ERROR,"[main-fsm] Port %s| state up, phase % d, valid %d | flags 0x%x \n", p->name,
-		p->phase_val,p->phase_val_valid, rts_state.channels[p->hw_index].flags);
+// 		TRACE(TRACE_ERROR,"[main-fsm] Port %s| state up, phase % d, valid %d | flags 0x%x \n", p->name,
+// 		p->phase_val,p->phase_val_valid, rts_state.channels[p->hw_index].flags);
 /*		TRACE(TRACE_INFO,"[main-fsm] Port %s| state up, phase % d, valid %d", p->name,
 		p->phase_val,p->phase_val_valid);	*/	
 		}

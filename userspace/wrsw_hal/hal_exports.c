@@ -118,8 +118,8 @@ extern int any_port_locked(void);
 
 int halexp_get_timing_state(hexp_timing_state_t *state)
 {
-    state->timing_mode = hal_get_timing_mode();
-    state->locked_port = any_port_locked();
+    state->timing_mode = hal_get_timing_mode(); // this is the mode of wrsw_hal, determined by wrsw_hal.config
+    state->locked_port = any_port_locked();     // this is state from hal_ports.c, reflects softPLL with delay
 
     return 0;
 }
@@ -150,6 +150,61 @@ int halexp_swover_cmd(int cmd, int channel, hexp_backup_state_t *s)
 	}
 	return 0;
 }
+
+/* communicatin between PPSi and wrsw_hal and SoftPLL,
+ * 1. getting state of holdover by PPSi
+ * 2. controlling holdover by wr_phytool
+ */
+int halexp_hdover_cmd(int cmd, int value, hexp_holdover_state_t *s)
+{
+	struct rts_hdover_state state;
+	int ret=0;
+	TRACE(TRACE_INFO, "[halexp_hdover_cmd] :");
+	s->data_valid     =  0;
+	switch(cmd)
+	{
+		case HEXP_HDOVER_CMD_GET_STATE :
+		if((ret = rts_get_holdover_state(&state,0)) < 0)
+// 		if((ret = rts_is_holdover()) < 0)
+		{
+		   TRACE(TRACE_INFO, "[HEXP_HDOVER_CMD_GET_STATE] no data,ret=%d",ret);
+		   return -1;
+		}
+		TRACE(TRACE_INFO, "[HEXP_HDOVER_CMD_GET_STATE] state=%d, hd_time=%d, enabled=%d",
+		state.state, state.hd_time, state.enabled);
+		s->data_valid     =  1;
+		s->enabled        = (ret > 0)?1:0;
+		s->enabled        = state.enabled;
+		s->state          = state.state;
+		s->type           = state.type;
+		s->hd_time        = state.hd_time;
+		s->flags          = state.flags;
+		switch(state.state)
+		{
+			case RTS_HOLDOVER_DISABLED:
+			case RTS_HOLDOVER_ACQUIRING:
+			case RTS_HOLDOVER_READY:
+			default:
+			s->state = HEXP_HDOVER_INACTIVE;
+			TRACE(TRACE_INFO, "  HEXP_HDOVER_INACTIVE\n");
+			break;
+			case RTS_HOLDOVER_ACTIVE_IN:
+			s->state = HEXP_HDOVER_ACTIVE;
+			TRACE(TRACE_INFO, "  RTS_HOLDOVER_ACTIVE_IN\n");
+			break;
+			case RTS_HOLDOVER_ACTIVE_OUT:
+			s->state = HEXP_HDOVER_OUTSIDE_SPEC;
+			TRACE(TRACE_INFO, "  RTS_HOLDOVER_ACTIVE_OUT\n");
+			break;
+		}
+		break;
+		default:
+		TRACE(TRACE_INFO, "[halexp_hdover_cmd:err] ups, wrong cmd=%d\n", cmd);
+		return -1;
+	}
+	return 0;
+}
+
 
 static void hal_cleanup_wripc()
 {
@@ -196,6 +251,11 @@ static int export_swover_cmd(const struct minipc_pd *pd, uint32_t *args, void *r
 	return halexp_swover_cmd(args[0] /*cmd*/,args[1] /*channel*/, state);
 }
 
+static int export_hdover_cmd(const struct minipc_pd *pd, uint32_t *args, void *ret)
+{
+	hexp_holdover_state_t *state = ret;
+	return halexp_hdover_cmd(args[0] /*cmd*/,args[1] /*value*/, state);
+}
 
 static int export_query_ports(const struct minipc_pd *pd,
 			      uint32_t *args, void *ret)
@@ -232,6 +292,7 @@ int hal_init_wripc()
 	__rpcdef_query_ports.f = export_query_ports;
 	__rpcdef_get_timing_state.f = export_get_timing_state; 
 	__rpcdef_swover_cmd.f = export_swover_cmd;           //wrs-time.c
+	__rpcdef_hdover_cmd.f = export_hdover_cmd;           //wrs-main-loop.c
 
 	minipc_export(hal_ch, &__rpcdef_pps_cmd);
 	minipc_export(hal_ch, &__rpcdef_get_port_state);
@@ -239,6 +300,7 @@ int hal_init_wripc()
 	minipc_export(hal_ch, &__rpcdef_query_ports);
 	minipc_export(hal_ch, &__rpcdef_get_timing_state);
 	minipc_export(hal_ch, &__rpcdef_swover_cmd);
+	minipc_export(hal_ch, &__rpcdef_hdover_cmd);
 
 
 	/* FIXME: pll_cmd is empty anyways???? */

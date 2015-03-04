@@ -22,6 +22,8 @@
 #define CHAN_PTRACKER_ENABLED (1<<6)
 /* Channel needs to inform about new "good phase value" (NOTE: backup channel only) */
 #define CHAN_UPDATE_PHASE (1<<7)
+/* Channel is backup and get unlocked - this will trigger a forced reset of the  setpoint in wr_servo*/
+#define CHAN_BACKUP_UNLOCKED (1<<8)
 
 /* DMTD clock is present */
 #define RTS_DMTD_LOCKED (1<<0)
@@ -57,7 +59,7 @@
 #define RTS_MODE_DISABLED 4
 
 /* backup slave*/
-#define RTS_MODE_BACKUP_SLAVE 5
+#define RTS_MODE_BC_BACKUP 5
 
 /* pseudo-lock the backup channel */
 #define RTS_BACKUP_CH_LOCK     1
@@ -76,6 +78,21 @@
 
 /* null reference input */
 #define REF_NONE 255
+
+/* HOLDOVER: it is disabled by configuration*/
+#define RTS_HOLDOVER_DISABLED   0
+
+/* HOLDOVER: statistics are being acquired (duration depends on config) */
+#define RTS_HOLDOVER_ACQUIRING  1
+
+/* HOLDOVER: ready to be activated whenever needed */
+#define RTS_HOLDOVER_READY      2
+
+/* HOLDOVER: it is active (mPLL is in holdover) and the expected accuracy is within specification) */
+#define RTS_HOLDOVER_ACTIVE_IN  3 
+
+/* HOLDOVER: it is active (mPLL is in holdover) and the expected accuracy is outside of specification */
+#define RTS_HOLDOVER_ACTIVE_OUT 4 
 
 /* RT Subsystem debug commands, handled via rts_debug_command() */
 
@@ -102,14 +119,17 @@ struct rts_pll_state {
 
 	/* flags (global - RTS_xxx defines) */
 	uint32_t flags;
-
+	
 	/* state of all the ports as seen by softPLL
 	 * bit 0 = port 0, bit 1 = port 1 ...
 	 * value 0 = link down | value 1 = link up*/
 	uint32_t port_status;
-
+	
 	/* duration of current holdover period in 10us units */
 	int32_t holdover_duration;
+	
+	/* current state of holdover*/
+	int32_t holdover_state;
 
 	/* current reference source - or REF_NONE if free-running or grandmaster */
 	uint32_t current_ref;
@@ -119,10 +139,10 @@ struct rts_pll_state {
 	
 	/* mask of backup orts */
 	uint32_t backup_mask;
-	
+
 	/*keeps the id of the reference that has just gone down*/
 	uint32_t old_ref;
-
+	
 	/* mode of operation (RTS_MODE_xxx) */
 	uint32_t mode;
 
@@ -152,6 +172,19 @@ struct rts_bpll_state {
 	int32_t active_chan;
 };
 
+struct rts_hdover_state {
+	/* holdover enabled at all ? */
+	int enabled;
+	/* mode of operation: non-HOLDOVER; holdover within specs, holdover beyond specs */
+	int state;
+	/* type of holdover: dithered, constant, bit leaking ...*/
+	int type;
+	/* time for which in holdover */
+	int hd_time;
+	/* 1) enough statistics (in locked state) is gothered to; 2) etc */
+	int flags;
+};
+
 /* API */
 
 /* Connects to the RT CPU */
@@ -175,11 +208,18 @@ int rts_backup_channel(int channel, int cmd);
 /* Get state of the backup stuff, i.e. good phase, switchover & update notifications */
 int rts_get_backup_state(struct rts_bpll_state *s, int channel );
 
+/* get state of hodlover stuff */
+int rts_get_holdover_state(struct rts_hdover_state *s, int value);
+
 /* Enabled/disables phase tracking on a particular port */
 int rts_enable_ptracker(int channel, int enable);
 
 /* Enabled/disables phase tracking on a particular port */
 int rts_debug_command(int param, int value);
+
+int rts_is_holdover(void);
+
+void show_info();
 
 #ifdef RTIPC_EXPORT_STRUCTURES
 
@@ -252,13 +292,29 @@ static struct minipc_pd rtipc_rts_backup_channel_struct = {
 
 static struct minipc_pd rtipc_rts_get_backup_state_struct = {
 	.name = "yyyy",
-	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, struct rts_bpll_state),
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT, struct rts_bpll_state),
 	.args = {
 	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
 	    MINIPC_ARG_END
 	},
 };
 
+static struct minipc_pd rtipc_rts_get_holdover_state_struct = {
+	.name = "zzzz",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT, struct rts_hdover_state),
+	.args = {
+	    MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int ),
+	    MINIPC_ARG_END
+	},
+};
+
+static struct minipc_pd rtipc_rts_is_holdover_struct = {
+	.name = "beef",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+	    MINIPC_ARG_END
+	},
+};
 
 #endif
 

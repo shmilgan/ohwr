@@ -58,6 +58,16 @@
 #define HEXP_BCKP_CMD_GET_STATE  1
 /////////////////////////////////////
 
+#define HEXP_HDOVER_CMD_GET_STATE 0
+
+#define HEXP_HDOVER_INACTIVE     0
+#define HEXP_HDOVER_ACTIVE       1
+#define HEXP_HDOVER_OUTSIDE_SPEC 3
+/////////////////////////////////////
+
+#define HEXP_HDOVER_CMD_GET_STATE 0
+/////////////////////////////////////
+
 #define HAL_TIMING_MODE_GRAND_MASTER 0
 #define HAL_TIMING_MODE_FREE_MASTER 1
 #define HAL_TIMING_MODE_BC 2
@@ -164,6 +174,16 @@ typedef struct {
   int active_chan;
 } hexp_backup_state_t;
 
+/* state of holdover stuff read from SoftPLL (directly) */
+typedef struct {
+  int data_valid;
+  int enabled;
+  int state;
+  int type;
+  int hd_time;
+  int flags;
+} hexp_holdover_state_t;
+
 /* Prototypes of functions that call on rpc */
 extern int halexp_check_running(void);
 extern int halexp_reset_port(const char *port_name);
@@ -175,7 +195,7 @@ extern int halexp_pps_cmd(int cmd, hexp_pps_params_t *params);
 extern int halexp_get_timing_state(hexp_timing_state_t *state);
 // extern int halexp_swover_poll();
 extern int halexp_swover_cmd(int cmd, int channel, hexp_backup_state_t *s);
-
+extern int halexp_hdover_cmd(int cmd, int value, hexp_holdover_state_t *s);
 /* Export structures, shared by server and client for argument matching */
 #ifdef HAL_EXPORT_STRUCTURES
 
@@ -271,6 +291,16 @@ struct minipc_pd __rpcdef_swover_cmd = {
 	},
 };
 
+//int halexp_hdover_cmd();
+struct minipc_pd __rpcdef_hdover_cmd = {
+	.name = "hdover_cmd",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRUCT, hexp_holdover_state_t),
+	.args = {
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+		MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+		MINIPC_ARG_END,
+	},
+};
 
 #endif /* HAL_EXPORT_STRUCTURES */
 

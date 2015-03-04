@@ -93,7 +93,7 @@ int rts_backup_channel(int channel, int cmd)
 /* Get state of the backup stuff, i.e. good phase, switchover & update notifications */
 int rts_get_backup_state(struct rts_bpll_state *s, int channel)
 {
-	int i, ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_get_backup_state_struct,
+	int ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_get_backup_state_struct,
 			      s,channel);
 
 	if(ret < 0)
@@ -102,6 +102,43 @@ int rts_get_backup_state(struct rts_bpll_state *s, int channel)
 	s->flags          = (s->flags);
 	s->phase_good_val = (s->phase_good_val);
 	s->active_chan    = (s->active_chan);
+    return 0;
+}
+
+
+int rts_is_holdover(void)
+{
+	int rval;
+	int ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_is_holdover_struct, &rval);
+
+    if(ret < 0)
+        return ret;
+
+    return rval;
+}
+
+/* Get state of the holdover stuff, i.e.  */
+int rts_get_holdover_state(struct rts_hdover_state *s, int value)
+{
+	struct rts_hdover_state state = {0,0,0,0,0};
+	s->enabled          = 0;
+	s->state            = 0;
+	s->type             = 0;
+	s->hd_time          = 0;
+	s->flags            = 0;
+	int ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_get_holdover_state_struct,&state,value);
+	
+	printf("call rv %d client %p state %p errno=%d\n", ret, client, s,errno);
+	if(ret < 0)
+		return ret;
+	printf("state=%d, hd_time=%d, enabled=%d errno=%d\n",state.state, state.hd_time, 
+	state.enabled, errno);
+	s->enabled          = (state.enabled);
+	s->state            = (state.state);
+	s->type             = (state.type);
+	s->hd_time          = (state.hd_time);
+	s->flags            = (state.flags);
+	printf("state=%d, hd_time=%d, enabled=%d errno=%d\n",s->state, s->hd_time, s->enabled, errno);
     return 0;
 }
 
