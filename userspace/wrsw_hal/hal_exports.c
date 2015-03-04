@@ -159,42 +159,51 @@ int halexp_hdover_cmd(int cmd, int value, hexp_holdover_state_t *s)
 {
 	struct rts_hdover_state state;
 	int ret=0;
-	TRACE(TRACE_INFO, "[halexp_hdover_cmd] :");
-	s->data_valid     =  0;
+	int ret_state = 0;	
+	s->data_valid =  0;
+	return 0;// this does not work
 	switch(cmd)
 	{
 		case HEXP_HDOVER_CMD_GET_STATE :
+
+
 		if((ret = rts_get_holdover_state(&state,0)) < 0)
 // 		if((ret = rts_is_holdover()) < 0)
 		{
 		   TRACE(TRACE_INFO, "[HEXP_HDOVER_CMD_GET_STATE] no data,ret=%d",ret);
-		   return -1;
+		   return ret;
 		}
+// 		s->data_valid     =  1;
+// 		s->enabled        = (ret > 0)?1:0;
+// 		ret_state         = ret;
+// 		s->type           = 0;
+// 		s->hd_time        = 0;
+// 		s->flags          = 0;
+		
 		TRACE(TRACE_INFO, "[HEXP_HDOVER_CMD_GET_STATE] state=%d, hd_time=%d, enabled=%d",
 		state.state, state.hd_time, state.enabled);
 		s->data_valid     =  1;
-		s->enabled        = (ret > 0)?1:0;
 		s->enabled        = state.enabled;
-		s->state          = state.state;
+		ret_state         = state.state;
 		s->type           = state.type;
 		s->hd_time        = state.hd_time;
 		s->flags          = state.flags;
-		switch(state.state)
+		switch(ret_state)
 		{
 			case RTS_HOLDOVER_DISABLED:
 			case RTS_HOLDOVER_ACQUIRING:
 			case RTS_HOLDOVER_READY:
 			default:
 			s->state = HEXP_HDOVER_INACTIVE;
-			TRACE(TRACE_INFO, "  HEXP_HDOVER_INACTIVE\n");
+			TRACE(TRACE_INFO, "  HEXP_HDOVER_INACTIVE [%d]\n",ret_state);
 			break;
 			case RTS_HOLDOVER_ACTIVE_IN:
 			s->state = HEXP_HDOVER_ACTIVE;
-			TRACE(TRACE_INFO, "  RTS_HOLDOVER_ACTIVE_IN\n");
+			TRACE(TRACE_INFO, "  RTS_HOLDOVER_ACTIVE_IN [%d]\n",ret_state);
 			break;
 			case RTS_HOLDOVER_ACTIVE_OUT:
 			s->state = HEXP_HDOVER_OUTSIDE_SPEC;
-			TRACE(TRACE_INFO, "  RTS_HOLDOVER_ACTIVE_OUT\n");
+			TRACE(TRACE_INFO, "  RTS_HOLDOVER_ACTIVE_OUT [%d]\n",ret_state);
 			break;
 		}
 		break;

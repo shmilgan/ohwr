@@ -110,7 +110,7 @@ int rts_is_holdover(void)
 {
 	int rval;
 	int ret = minipc_call(client, RTS_TIMEOUT, &rtipc_rts_is_holdover_struct, &rval);
-
+    printf("[rt_client.c: rts_is_holdover] call rv %d client %p rval %d errno=%d\n", ret, client, rval,errno);
     if(ret < 0)
         return ret;
 
