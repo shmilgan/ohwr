@@ -161,24 +161,16 @@ int halexp_hdover_cmd(int cmd, int value, hexp_holdover_state_t *s)
 	int ret=0;
 	int ret_state = 0;	
 	s->data_valid =  0;
-	return 0;// this does not work
 	switch(cmd)
 	{
 		case HEXP_HDOVER_CMD_GET_STATE :
 
 
 		if((ret = rts_get_holdover_state(&state,0)) < 0)
-// 		if((ret = rts_is_holdover()) < 0)
 		{
 		   TRACE(TRACE_INFO, "[HEXP_HDOVER_CMD_GET_STATE] no data,ret=%d",ret);
 		   return ret;
 		}
-// 		s->data_valid     =  1;
-// 		s->enabled        = (ret > 0)?1:0;
-// 		ret_state         = ret;
-// 		s->type           = 0;
-// 		s->hd_time        = 0;
-// 		s->flags          = 0;
 		
 		TRACE(TRACE_INFO, "[HEXP_HDOVER_CMD_GET_STATE] state=%d, hd_time=%d, enabled=%d",
 		state.state, state.hd_time, state.enabled);
