@@ -144,6 +144,13 @@ int is_backup_port(int id)
     return(0x1 & (rts_state.backup_mask >> id)) ;
 }
 
+int is_holdover()
+{
+	if(!rts_state_valid) return -1;
+	if(rts_state.holdover_state < 0) return -1;
+	return rts_state.holdover_state;
+}
+
 int active_port()
 {
 	if(!rts_state_valid) return -1;
@@ -429,34 +436,37 @@ static int handle_link_down(hal_port_state_t *p, int link_up)
 	if(!link_up && p->state != HAL_PORT_STATE_LINK_DOWN && p->state != HAL_PORT_STATE_DISABLED &&
 	link_status(p->hw_index) == 0) //received updated from softPLL with the info that link is down
 	{
+		/*
+		 * async update of rts_state - make it before taking decision as to specific behavior.
+		 * This is because, the information about link-down comes from different source
+		 * than SoftPLL - in the worst case the info from SoftPLL might not reflect the
+		 * case when link is already down..
+		 */
+		rts_state_valid = rts_get_state(&rts_state) < 0 ? 0 : 1;
+		
 		if(p->locked)
 		{
 			
-// 			TRACE(TRACE_INFO, "LINK DOWN [%d]: active: %d | backup %d | old %d | is backup=%d ",
-// 			p->hw_index, active_port(),backup_port(),old_backup_port(),is_backup_port(p->hw_index) );
 			if(hal_get_timing_mode() != HAL_TIMING_MODE_GRAND_MASTER)
 				
 				if(old_backup_port() == p->hw_index) // we just switche over from this port
 				{
 					rts_backup_channel(p->hw_index, RTS_BACKUP_CH_ACTIVATE);
-// 					rts_state.old_ref = REF_NONE; //nasty: to make hal in sync with RT
 					TRACE(TRACE_INFO, "switching to backup reference");
 				}
-// 				else if(backup_port() == p->hw_index) // it is backup port
 				else if(is_backup_port(p->hw_index) > 0)
 				{
 					rts_backup_channel(p->hw_index, RTS_BACKUP_CH_DOWN);
-// 					rts_state.backup_ref = REF_NONE; //nasty: to make hal in sync with RT
 					TRACE(TRACE_INFO, "switching off backup reference");
 				}
-				// this is active slave, not a backup & no backup for it
-// 				else if(active_port() == p->hw_index && backup_port() < 0) 
+				else if(active_port() == p->hw_index &&  is_holdover() > 0)
+				{
+				      //TODO: rts_set_mode(RTS_MODE_HOLDOVER); 
+				      TRACE(TRACE_INFO, "switching RTS to holdover");
+				}
 				else if(active_port() == p->hw_index &&  is_backup_port(p->hw_index) == 0) 
 				{
 					rts_set_mode(RTS_MODE_GM_FREERUNNING);
-// 					rts_state.current_ref = REF_NONE; //nasty: to make hal in sync with RT
-// 					rts_state.backup_ref = REF_NONE; 
-// 					rts_state.old_ref = REF_NONE; 
 					TRACE(TRACE_INFO, "switching RTS to use local reference");
 				}
 				else 
@@ -466,9 +476,8 @@ static int handle_link_down(hal_port_state_t *p, int link_up)
 			else
 				  TRACE(TRACE_INFO, "I'm grandmaster, now switching of reference");
 		}
-		//async update of rts_state
+		//async update of rts_state - not use this is needed any more
 		rts_state_valid = rts_get_state(&rts_state) < 0 ? 0 : 1;
-		
 		shw_sfp_set_led_link(p->hw_index, 0);
 		p->state = HAL_PORT_STATE_LINK_DOWN;
 		reset_port_state(p);
