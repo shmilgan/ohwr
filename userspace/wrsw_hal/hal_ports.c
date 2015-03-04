@@ -538,6 +538,11 @@ static void port_fsm(hal_port_state_t *p)
 			rts_lock_channel(p->hw_index, 0);
 			p->state = HAL_PORT_STATE_LOCKING;
 		}
+		else if(is_holdover() > 0) //TODO: later check the active port...
+		{
+			rts_set_mode(RTS_MODE_BC);
+			TRACE(TRACE_INFO, "Go out of holdover");
+		}
 		
 		}
 		break;
