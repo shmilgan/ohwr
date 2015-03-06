@@ -130,6 +130,7 @@ extern int active_port(void);
  */
 int halexp_swover_cmd(int cmd, int channel, hexp_backup_state_t *s)
 {
+	int ret = 0;
 	struct rts_bpll_state state;
 	s->phase_good_val =  0;
 	s->flags          =  0;
@@ -144,11 +145,15 @@ int halexp_swover_cmd(int cmd, int channel, hexp_backup_state_t *s)
 		s->phase_good_val = state.phase_good_val;
 		s->flags = state.flags;
 	  break;
+	  case HEXP_BCKP_CMD_SET_SWITCHOVER:
+		ret = rts_backup_channel(0 /*unimportant*/, RTS_FORCE_SWITCHOVER);
+		TRACE(TRACE_INFO, "[halexp_swover_cmd:err] RTS_FORCE_SWITCHOVER ret=%d\n", ret);
+	  break;
 	  default:
 		TRACE(TRACE_INFO, "[halexp_swover_cmd:err] ups, wrong cmd=%d\n", cmd);
 		return -1;
 	}
-	return 0;
+	return ret;
 }
 
 /* communicatin between PPSi and wrsw_hal and SoftPLL,
@@ -164,8 +169,6 @@ int halexp_hdover_cmd(int cmd, int value, hexp_holdover_state_t *s)
 	switch(cmd)
 	{
 		case HEXP_HDOVER_CMD_GET_STATE :
-
-
 		if((ret = rts_get_holdover_state(&state,0)) < 0)
 		{
 		   TRACE(TRACE_INFO, "[HEXP_HDOVER_CMD_GET_STATE] no data,ret=%d",ret);

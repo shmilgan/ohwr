@@ -76,6 +76,11 @@
 /* enable holdover */
 #define RTS_HOLDOVER_DIS 5
 
+/* triggers switchover to the backup port (as pre-configured)*/
+#define RTS_FORCE_SWITCHOVER 6
+
+/* triggers holdover (even if backup ports exist)*/
+#define RTS_FORCE_HOLDOVER 7
 /* null reference input */
 #define REF_NONE 255
 
