@@ -1,90 +1,148 @@
-\section{SNMP exports}
+\section{SNMP exports (WIP)}
 \label{sec:snmp_exports}
 
-\subsection{Operator/basic objects (WIP)}
+\subsection{Operator/basic objects}
 Objects providing basic status of the WR Switch. It should be used by control
 system operators and people without deep knowledge of the White Rabbit
 internals. These values report the general status of the device and high level
-errors.
+errors.\\
 
-\noindent \rule{\textwidth}{2pt}
-{\bf Note}: Basically I think we should have another process monitoring various
-stuff according to possible faults that may occur. This process should then be
-used to report high-level information i.e. if this OK, is that OK, etc. At least
-for more complex stuff, e.g. we can simply export temperature or CPU load and
-let NMS to decide when it's bad.\\
-\noindent \rule{\textwidth}{2pt}
+{\bf Note}: We will need to change the SNMP code. There should be something like
+a loop reading all information periodically (e.g. every 5s) from various SHM
+areas (HAL, PPSi, SPLL), caching and calculating general status information.
+This way, when we receive SNMP request we can feed the information from our
+local SNMP cache. The same code could be later used to generate SNMP Traps.\\
 
-\begin{itemize}[leftmargin=0pt]
-	\item [] \texttt{WR-SWITCH-MIB::status}\\ - general status word for WR Switch.
-		It is split into several 2-bit fields. Each of them describes one
-		function of the WR Switch and can be:
-		\begin{packed_items}
-			\item [] {\bf "00"} - Status OK
-			\item [] {\bf "01"} - Status Warning
-			\item [] {\bf "10"} - Status Failure
-		\end{packed_items}
-		\vspace{12pt}
-		\begin{tabular}{|c|l|}
-			\hline
-			bits & description\\
-			\hline \hline
-			1:0 & PTP status\\
-			3:2 & SoftPLL status - OK if locked and aligned\\
-			5:4 & Switching status\\
-			7:6 & System status\\
-			 & Redundancy status\\
-			\hline
-		\end{tabular}
-
-	\item [] \texttt{WR-SWITCH-MIB::ptpMode}\\
-		Synchronization mode: Grand Master / Free-running Master / Slave
-	\item [] \texttt{WR-SWITCH-MIB::spllState}\\
-		\begin{packed_items}
-		\item [] \texttt{WR-SWITCH-MIB::spllState.mode}: (Grand Master /
-			Free-running Master / Slave)
-		%\item [] \texttt{WR-SWITCH-MIB::spllState.locked}: is Helper/Main locked (true / false)
-		%\item [] \texttt{WR-SWITCH-MIB::spllState.aligned}: is it phase-aligned (true / false)
-		\item [] \texttt{WR-SWITCH-MIB::spllState.hover}: is in holdover (true /
-			false)
-		\item [] \texttt{WR-SWITCH-MIB::spllState.sover}: is it switched-over to a
-			backup link (true / false)
-		\end{packed_items}
-
-	\item [] \texttt{WR-SWITCH-MIB::ptpClockOffsetPs}\\
-		Clock offset calculated by PTP/PPSi
-
-	\item [] \texttt{WR-SWITCH-MIB::tempFPGA}\\ - SCB temperature below the FPGA
-	\item [] \texttt{WR-SWITCH-MIB::tempScbPsu.1}\\ - SCB temperature near the
-		power supply circuit
-	\item [] \texttt{WR-SWITCH-MIB::tempScbPsu.2}\\ - SCB temperature near the
-		power supply circuit
-	\item [] \texttt{WR-SWITCH-MIB::tempPLL}\\ - SCB temperature near the VCXO and
-		PLLs
-
-	\item [] \texttt{WR-SWITCH-MIB::portLink.<n>}
-\end{itemize}
-
-\begin{itemize}
-	\item Uptime
-	\item Firmware version
-	\item Hardware version
-	\item Manufacturer
-	\item Serial number
-	\item How WRS was configured (manually / .config fetched from server/...)
-	\item Current WR time
-	\item Last date/time when firmware was upgraded
-	\item Contact info
-	\item Link failure detected, switched over to a backup link No. X
-	\item WRS has booted successfully, none of the steps has failed (reading HW
-		info, programming FPGA and LM32, loading kernel modules, starting daemons)
+\noindent {\bf General Status}:
+\begin{itemize}%[leftmargin=0pt]
+  \item WRS general status - OK / Warning / Error
+  \item Timing Status
+  \item Networking Status
+  \item System Statue
+  \item Detailed status
+  \begin{itemize}
+    \item Timing
+    \begin{itemize}
+      \item PTP (TRACK\_PHASE, offset, RTT, fixed deltas, deamon crash,
+        servo\_update\_cnt)
+      \item SoftPLL (DelCnt = 0; mode, SeqState, AlignState)
+      \item Slave link down
+      \item PTP frames flowing ?
+      \item (placeholder for Switchover)
+      \item (placeholder for Holdover)
+    \end{itemize}
+    \item Networking
+    \begin{itemize}
+      \item (placeholder for Link down)
+      \item SFPs (portSfpError.<x> ?)
+      \item Endpoint status (2.2.2)
+      \item Swcore status (2.2.3, 2.2.5)
+      \item RTU status (2.2.4, 2.2.7)
+      \item (placeholder for TRU)
+      \item (placeholder for switchover or backup link state)
+    \end{itemize}
+    \item System
+    \begin{itemize}
+      \item Boot ok
+      \item Free memory too low
+      \item Temperature
+      \item CPU load too high
+      \item Disk space too low (?)
+    \end{itemize}
+  \end{itemize}
+  \item Version (rewrite existing)
+  \begin{itemize}
+    \item last date/time when firmware was updated\\
+      (save current time on restart, when new firmware is in /update so that it can be exported with SNMP)
+    \item contact info
+    \item build by
+    \item build date
+    \item hash, HW, SW,
+    \item (check what exists and add missing)
+  \end{itemize}
 \end{itemize}
 
 \newpage
-\subsection{Expert objects}
+\subsection{Expert/extended status}
 Expert objects can be used by White Rabbit experts for the in-depth diagnosis of
 the switch failures. These values are verbose and should not be used by
 operators.
+
+\begin{itemize}
+  \item Operation Status
+  \begin{itemize}
+    \item CPU Load (\%)
+    \item current time
+    \begin{itemize}
+      \item TAI
+      \item date string
+    \end{itemize}
+    \item Boot status
+    \begin{itemize}
+      \item boot cnt
+      \item restart reason
+      \item boot status values\\
+        (1 object for each: hwinfo readout, FPGA, LM32, kernel modules, userspace daemons, config retreived ok)
+      \item config source (tftp, flash, as string?)
+    \end{itemize}
+    \item Temperature
+    \begin{itemize}
+      \item temp 1..4
+      \item threshold 1..4
+    \end{itemize}
+  \end{itemize}
+
+  \item Restart Counters
+    \begin{itemize}
+      \item HAL
+      \item PPSi
+      \item RTUd
+      \item (..)
+      \item SPLL
+    \end{itemize}
+
+  \item SoftPLL state
+  \begin{itemize}
+	  \item mode, irqcnt, seqstate, alignstate, Hlock, Mlock, Block[18], Err[18], HY, MY, delCnt, holdover, holdoverTime
+	  \item spll version
+	  \item spll build date
+	  \item (...)
+  \end{itemize}
+
+  \item Networking
+  \begin{itemize}
+    \item VLAN table dump
+    \item RTU table dump (check if management sw uses snmpwalk)
+    \item SW core status
+    \begin{itemize}
+      \item Free pages
+    \end{itemize}
+  \end{itemize}
+
+  \item Pstats (pivot table, some of the counters should be used to fill
+    standard MIBs)
+  \item PtpData (make it an array for later switch-over needs)
+  \begin{itemize}
+     \item per instance/ which port
+   \end{itemize}
+
+  \item Ports status (per-port information)
+  \begin{itemize}
+    \item portEnable (enable/disable port via ifconfig)
+    \item ptpTxFrames (per port or per instance, depending on implementation)
+    \item ptpRxFrames (per port or per instance, depending on implementation)
+  \end{itemize}
+
+  \item Configuration
+  \begin{itemize}
+    \item PPS width
+  \end{itemize}
+
+\end{itemize}
+
+\newpage
+\subsection{Expert objects (to be updated, was first draft}
+{\bf Note:} we will put here MIB file dump later.
 
 \subsubsection{PTP/WR parameters}
 \begin{itemize}[leftmargin=0pt]
