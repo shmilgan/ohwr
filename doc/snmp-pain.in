@@ -564,12 +564,6 @@ but sooner or later I'll fix it. As a side effect, I now use
 the two contexts concurrently in an ambiguous way.  No, I'm not
 proud of this code.
 
-I don't feel confident with all the data structures as yet, and there
-still is some magic in all of this.  This is confirmed by a buglet in
-the current code, that makes @i{snmpwalk} always return one item after
-the end of the table -- most likely I need to fix @t{next_entry()}
-to return @t{NULL} earlier.
-
 @c =========================================================================
 @node wrsPpsi
 @section wrsPpsi

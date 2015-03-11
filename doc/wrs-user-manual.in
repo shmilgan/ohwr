@@ -464,6 +464,15 @@ value is changed by the web interface, proper action is taken.
         default. Community values are strings and they default to
         @t{public} and @t{private}.
 
+@item CONFIG_SNMP_TEMP_THOLD_FPGA
+@itemx CONFIG_SNMP_TEMP_THOLD_PLL
+@itemx CONFIG_SNMP_TEMP_THOLD_PSL
+@itemx CONFIG_SNMP_TEMP_THOLD_PSR
+	Threshold levels for FPGA, PLL, Power Supply Left (PSL) and Power
+        Supply Right (PSR) temperature sensors. When any temperature exceeds
+        threshold level SNMP object @t{WR-SWITCH-MIB::tempWarning} will change
+        accordingly.
+        
 @item CONFIG_WRS_LOG_HAL
 @itemx CONFIG_WRS_LOG_RTU
 @itemx CONFIG_WRS_LOG_PTP
@@ -553,7 +562,7 @@ This is, for explanation's sake, an example of such items:
 
 @smallexample
 CONFIG_PORT09_PARAMS="name=wr9,tx=226214,rx=226758,role=slave,fiber=2"
-CONFIG_SFP00_PARAMS="name=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"
+CONFIG_SFP00_PARAMS="pn=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"
 CONFIG_FIBER02_PARAMS="alpha_1310_1490=2.6787e-04"
 @end smallexample
 
@@ -588,6 +597,35 @@ wavelength, and is determined, again, by calibration.
 
 Please note that only one alpha value is provided, because the
 opposite one (@t{alpha_1490_1310}) is calculated by software.
+
+@subheading SFP name matching
+
+SFP matching is based on vendor name (@i{vn}), part number (@i{pn}) and vendor
+serial (@i{vs}). While matching SFP's values are compared with values stored in
+@t{CONFIG_SFPXX_PARAMS}.
+First try is to match all SFP identifiers (@i{vn}, @i{pn} and @i{vs}) with
+stored in config. If match is not successful, @i{vn} and @i{pn} of SFP are
+compared only with config entries without vendor serial. If match is still not
+found SFP's values are compared with config entries, which has defined only
+part number. Such approach prevents matching SFPs to config entires with
+defined serial.
+
+Below are shown matching examples:
+@smallexample
+CONFIG_SFP00_PARAMS="vn=Axcen Photonics,pn=AXGE-3454-0531,vs=AX12390009629,tx=0,rx=0,..."
+@end smallexample
+Above config may be matched only to one SFP.
+@smallexample
+CONFIG_SFP01_PARAMS="vn=Axcen Photonics,pn=AXGE-3454-0531,tx=0,rx=0,wl_txrx=1310+1490"
+@end smallexample
+Above config may be matched only to SFP with vendor name "Axcen Photonics" and
+part number "AXGE-3454-0531", with exception to these SFPs that were matched to
+example like above (with vendor serial defined).
+@smallexample
+CONFIG_SFP02_PARAMS="pn=AXGE-3454-0531,tx=0,rx=0,wl_txrx=1310+1490"
+@end smallexample
+Config above will be matched to all SFPs with part number "AXGE-3454-0531",
+that were not matched by configs above.
 
 @subheading Other Deployments
 
@@ -1232,10 +1270,6 @@ This a summary of the available tables and scalars:
 
 @end table
 
-@b{Note:} due to a buglet of mine, there is an extra item at
-the end of each table (@t{96.100.2} and @t{96.100.3.2}. It makes no
-harm, so its removal is not high priority.
-
 @c @b{Note:} due to a bug in management of 64-bit values in @i{net-snmp},
 @c we are using a bad work-around in the code, that may cause wrong values
 @c to be returned by other versions of the agent, where this bug is fixed.
@@ -1294,6 +1328,14 @@ WR-SWITCH-MIB::wrsSerialNumber.0 = STRING: 12345
 WR-SWITCH-MIB::wrsScbVersion.0 = STRING: 3.3
 WR-SWITCH-MIB::wrsDateTAI.0 = Counter64: 1406623390
 WR-SWITCH-MIB::wrsDateString.0 = STRING: 2014-07-29-08:43:10
+@end smallexample
+
+Another example is to print all objects exported by switch.
+@smallexample
+snmpwalk -c public -v 2c wrs -m all \
+        -M ${WRS_OUTPUT_DIR}/build/buildroot-2011.11/output/build/netsnmp-5.6.1.1/mibs/\
+        :${WR_SWITCH_SW}/userspace/snmpd/ \
+        1
 @end smallexample
 
 @c ==========================================================================

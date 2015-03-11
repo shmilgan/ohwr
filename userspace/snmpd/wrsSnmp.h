@@ -85,8 +85,4 @@ extern void init_wrsDate(void);
 
 #define WRS_OID 1, 3, 6, 1, 4, 1, 96, 100
 
-/* Open a file or a pipe according to name[0] (e.g. "|wr_mon", "/tmp/log") */
-extern FILE *wrs_fpopen(char *file_or_pipe, char *mode);
-extern void wrs_fpclose(FILE *f, char *file_or_pipe);
-
 #endif /* WRS_SNMP_H */

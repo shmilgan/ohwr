@@ -6,15 +6,10 @@
 
 #define HAL_EXPORT_STRUCTURES
 #include <hal/hal_exports.h>
-#include <libwr/shmem.h>
-#include <libwr/hal_shmem.h>
 
 #define DEFAULT_TO 200000	/* ms */
 
 static struct minipc_ch *hal_ch;
-static struct wrs_shm_head *hal_head;
-static struct hal_port_state *hal_ports;
-static int hal_nports;
 
 int halexp_lock_cmd(const char *port_name, int command, int priority)
 {
@@ -39,17 +34,6 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 /* Some clients call this, some call the client_init() defined later */
 int halexp_client_try_connect(int retries, int timeout)
 {
-	struct hal_shmem_header *h;
-	struct hal_port_state *p;
-
-	hal_head = wrs_shm_get(wrs_shm_hal,"", WRS_SHM_READ);
-	if (!hal_head)
-		return -1;
-	h = (void *)hal_head + hal_head->data_off;
-	hal_nports = h->nports;
-	p = wrs_shm_follow(hal_head, h->ports);
-	hal_ports = p; /* This is used in later calls */
-
 	for (;;) {
 		hal_ch =
 		    minipc_client_create(WRSW_HAL_SERVER_ADDR,
@@ -66,9 +50,4 @@ int halexp_client_try_connect(int retries, int timeout)
 	}
 
 	return -1;
-}
-
-int halexp_client_init()
-{
-	return halexp_client_try_connect(0, 0);
 }

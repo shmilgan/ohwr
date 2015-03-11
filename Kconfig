@@ -70,44 +70,6 @@ config REMOTE_SYSLOG_UDP
 	help
 	  Select UDP to send system logs. If not set, TCP is used.
 
-config SNMP_TRAPSINK_ADDRESS
-	string "Static IP address or name where to send SNMPv1 traps"
-	help
-	  If not empty, the address or name is ussed as "trapsink"
-	  destination in the SNMP configuration file for the switch.
-	  It empty, no v1 traps are generated. If both this and
-	  the following TRAP2SINK_ADDRESS are set, snmpd sends two
-	  traps (one per protocol version). Trapcommunity is "public"
-	  (not configurable so far).
-
-config SNMP_TRAP2SINK_ADDRESS
-	string "Static IP address or name where to send SNMPv2c traps"
-	help
-	  If not empty, the address or name is ussed as "trap2sink"
-	  destination in the SNMP configuration file for the switch.
-	  It empty, no v2c traps are generated. Trapcommunity is "public"
-	  (not configurable so far).
-
-config SNMP_RO_COMMUNITY
-	string "Read-only community name for SNMP V1/V2 management"
-	default "public"
-	help
-	  If not empty, the 'community' name is a sort of password,
-	  that travels as clear text (we don't support encrypted SNMPv3
-	  yet). The default is good for testing, but should be changed
-	  for production. Please note, however, that the switch processes
-	  SNMP only on the CPU Ethernet port (the copper "management" port).
-
-config SNMP_RW_COMMUNITY
-	string "Read-write community name for SNMP V1/V2 management"
-	default "private"
-	help
-	  If not empty, the 'community' name is a sort of password,
-	  that travels as clear text (we don't support encrypted SNMPv3
-	  yet). The default is good for testing, but should be changed
-	  for production. Please note, however, that the switch processes
-	  SNMP only on the CPU Ethernet port (the copper "management" port).
-
 config WRS_LOG_HAL
 	string "Logging directions for the WR hal"
 	default "daemon.info"
@@ -231,7 +193,7 @@ menu "SFP and Media Timing Configuration"
 
 config SFP00_PARAMS
 	string "Parameters for one SFP device type"
-	default "name=AXGE-1254-0531,tx=10,rx=10,wl_txrx=1310+1490"
+	default "vn=Axcen Photonics,pn=AXGE-1254-0531,tx=10,rx=10,wl_txrx=1310+1490"
 	help
 	  This parameter, and the following ones, are used to
 	  configure the timing parameters of a specific SFP
@@ -242,7 +204,7 @@ config SFP00_PARAMS
 
 config SFP01_PARAMS
 	string "Parameters for one SFP device type"
-	default "name=AXGE-3454-0531,tx=10,rx=10,wl_txrx=1490+1310"
+	default "vn=Axcen Photonics,pn=AXGE-3454-0531,tx=10,rx=10,wl_txrx=1490+1310"
 
 config SFP02_PARAMS
 	string "Parameters for one SFP device type"
@@ -361,8 +323,76 @@ config PTP_CUSTOM
 
 endchoice
 
+menu "Management configuration"
+config SNMP_TRAPSINK_ADDRESS
+	string "Static IP address or name where to send SNMPv1 traps"
+	help
+	  If not empty, the address or name is ussed as "trapsink"
+	  destination in the SNMP configuration file for the switch.
+	  It empty, no v1 traps are generated. If both this and
+	  the following TRAP2SINK_ADDRESS are set, snmpd sends two
+	  traps (one per protocol version). Trapcommunity is "public"
+	  (not configurable so far).
+
+config SNMP_TRAP2SINK_ADDRESS
+	string "Static IP address or name where to send SNMPv2c traps"
+	help
+	  If not empty, the address or name is ussed as "trap2sink"
+	  destination in the SNMP configuration file for the switch.
+	  It empty, no v2c traps are generated. Trapcommunity is "public"
+	  (not configurable so far).
+
+config SNMP_RO_COMMUNITY
+	string "Read-only community name for SNMP V1/V2 management"
+	default "public"
+	help
+	  If not empty, the 'community' name is a sort of password,
+	  that travels as clear text (we don't support encrypted SNMPv3
+	  yet). The default is good for testing, but should be changed
+	  for production. Please note, however, that the switch processes
+	  SNMP only on the CPU Ethernet port (the copper "management" port).
+
+config SNMP_RW_COMMUNITY
+	string "Read-write community name for SNMP V1/V2 management"
+	default "private"
+	help
+	  If not empty, the 'community' name is a sort of password,
+	  that travels as clear text (we don't support encrypted SNMPv3
+	  yet). The default is good for testing, but should be changed
+	  for production. Please note, however, that the switch processes
+	  SNMP only on the CPU Ethernet port (the copper "management" port).
+
+config SNMP_TEMP_THOLD_FPGA
+	int "Threshold level for FPGA temperature"
+	default "0"
+	help
+	  Threshold level for FPGA temperature, when exceeded warning is
+	  notified by WR-SWITCH-MIB::tempWarning
+
+config SNMP_TEMP_THOLD_PLL
+	int "Threshold level for PLL temperature"
+	default "0"
+	help
+	  Threshold level for PLL temperature, when exceeded warning is
+	  notified by WR-SWITCH-MIB::tempWarning
+
+config SNMP_TEMP_THOLD_PSL
+	int "Threshold level for Power Supply Left (PSL) temperature"
+	default "0"
+	help
+	  Threshold level for Power Supply Left (PSL) temperature, when
+	  exceeded warning is notified by WR-SWITCH-MIB::tempWarning
+
+config SNMP_TEMP_THOLD_PSR
+	int "Threshold level for Power Supply Right (PSR) temperature"
+	default "0"
+	help
+	  Threshold level for Power Supply Right (PSR) temperature, when
+	  exceeded warning is notified by WR-SWITCH-MIB::tempWarning
+
+endmenu
+
 config PTP_CUSTOM_FILENAME
 	string "Pathname for your custom ppsi.conf"
 	depends on PTP_CUSTOM
 	default "/wr/etc/ppsi-custom.conf"
-

@@ -23,7 +23,7 @@ CFLAGS = -O -g -Wall \
 	-I$(LINUX)/arch/arm/mach-at91/include
 
 LDFLAGS = -L../libwr -L../mini-rpc \
-	 -lminipc -lm -ldl -lwr 
+	 -lm -ldl -lwr -lminipc
 
 all: $(BINARY)
 

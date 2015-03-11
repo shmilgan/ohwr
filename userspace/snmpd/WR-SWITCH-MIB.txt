@@ -7,7 +7,7 @@ WR-SWITCH-MIB DEFINITIONS ::= BEGIN
 
 -- IMPORTS: Include definitions from other mibs here
 IMPORTS
-        OBJECT-TYPE, Integer32, Counter32, Counter64
+        OBJECT-TYPE, Integer32, Counter32, Counter64,
         MODULE-IDENTITY, enterprises          FROM SNMPv2-SMI
         DisplayString                         FROM SNMPv2-TC;
 
@@ -17,7 +17,7 @@ CERN OBJECT IDENTIFIER ::= { enterprises 96 }
 -- (I follow the CamelCase to be sure I don't mistype. Who knows the rules...
 
 wrSwitchMIB MODULE-IDENTITY
-    LAST-UPDATED "201406181915Z"    -- 18 june 2014, 19:15 (why saying again?)
+    LAST-UPDATED "201502231000Z"
     ORGANIZATION "CERN"
     CONTACT-INFO "postal:   BE-CO-HT, CERN, Geneva
                   email:    ht-drivers@cern.ch
@@ -28,11 +28,11 @@ wrSwitchMIB MODULE-IDENTITY
 
 -- Define typical mib nodes
 -- we'll prefix everything in this mib with wrs (White Rabbit Switch)
-wrsScalar     OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
-wrsPstats     OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }
-wrsPpsi       OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }
-wrsVersion    OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }
-wrsDate       OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }
+wrsScalar      OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
+wrsPstatsTable OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }
+wrsPpsi      OBJECT IDENTIFIER ::= { wrSwitchMIB 3 } -- going to be obsolete
+wrsVersion     OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }
+wrsDate        OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }
 
 -- define one stupid object for a start
 
@@ -51,7 +51,7 @@ wrsScalarOne   OBJECT-TYPE
 -- code every time (I *hate* this obsolete crap: code generators should not
 -- be like that).
 
-wrsPstats OBJECT-TYPE
+wrsPstatsTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF pstatsEntry
     MAX-ACCESS  not-accessible
     STATUS      current
@@ -67,7 +67,7 @@ pstatsEntry OBJECT-TYPE
     DESCRIPTION
             "An entry containing a pstat name and values for all WR ports."
     INDEX   { pstatsIndex }
-    ::= { wrsPstats 1 }
+    ::= { wrsPstatsTable 1 }
 
 PstatsEntry ::=
     SEQUENCE {
@@ -244,33 +244,34 @@ pstatsWR17 OBJECT-TYPE
             "The value of this counter for interface wr17."
     ::= {pstatsEntry 19 }
 
+--following objects will be moved
+wrsPpsiGlobalsX OBJECT IDENTIFIER ::= { wrsPpsi 3 }
+wrsPortsTableX OBJECT IDENTIFIER ::= { wrsPpsi 4 }
+wrsTemperatureX OBJECT IDENTIFIER ::= { wrsPpsi 5 }
 
 -- The Wr/PTP/Ppsi information is two items: an array of scalars
 -- and a table. In the table, the "channel" name is the row. But
 -- the index is integer, following what ppsi does internally
 
-wrsPpsiGlobals OBJECT IDENTIFIER ::= { wrsPpsi 1 }
-wrsPpsiPerport OBJECT IDENTIFIER ::= { wrsPpsi 2 }
+-- globals (.3)
 
--- globals (.3.1)
-
-ppsiGrandmaterID OBJECT-TYPE
+ptpGrandmasterIDX OBJECT-TYPE
     SYNTAX       OCTET STRING (SIZE(8))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The ClockID of the current grandmaster"
-    ::= { wrsPpsiGlobals 1 }
+    ::= { wrsPpsiGlobalsX 1 }
 
-ppsiOwnID OBJECT-TYPE
+ptpOwnIDX OBJECT-TYPE
     SYNTAX       OCTET STRING (SIZE(8))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The ClockID of this WR device"
-    ::= { wrsPpsiGlobals 2 }
+    ::= { wrsPpsiGlobalsX 2 }
 
-ppsiMode OBJECT-TYPE
+ptpModeX OBJECT-TYPE
     SYNTAX INTEGER {
                 unknown(0),        -- same as WRC_MODE macros
                 grandmaster(1),
@@ -281,125 +282,339 @@ ppsiMode OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The mode of this clock"
-    ::= { wrsPpsiGlobals 3 }
+    ::= { wrsPpsiGlobalsX 3 }
  
-ppsiServoState OBJECT-TYPE
+ptpServoStateX OBJECT-TYPE
     SYNTAX      DisplayString (SIZE (0..32))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The servo state if slave"
-    ::= { wrsPpsiGlobals 4 }
+    ::= { wrsPpsiGlobalsX 4 }
 
-ppsiPhaseTracking OBJECT-TYPE
+ptpServoStateNX OBJECT-TYPE
     SYNTAX INTEGER {
-               not-tracking(0)
-               tracking(1)
+                Uninitialized(0),
+                SYNC-NSEC(1), -- no idea how to keep "_" instead of "-"
+                SYNC-SEC(2),
+                SYNC-PHASE(3),
+                TRACK-PHASE(4),
+                WAIT-SYNC-IDLE(5),
+                WAIT-OFFSET-STABLE(6)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Numeric representation of servo state"
+    ::= { wrsPpsiGlobalsX 5 }
+
+ptpPhaseTrackingX OBJECT-TYPE
+    SYNTAX INTEGER {
+               NA(0),
+               not-tracking(1),
+               tracking(2)
     }          
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Whether phase tracking is enabled in the servo"
-    ::= { wrsPpsiGlobals 5 }
+    ::= { wrsPpsiGlobalsX 6 }
 
-ppsiSyncSource OBJECT-TYPE
+ptpSyncSourceX OBJECT-TYPE
     SYNTAX      DisplayString (SIZE (0..32))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The port name that is currently the synchronization source"
-    ::= { wrsPpsiGlobals 6 }
+    ::= { wrsPpsiGlobalsX 7 }
 
-ppsiClockOffsetPs OBJECT-TYPE
+ptpClockOffsetPsX OBJECT-TYPE
     SYNTAX      Counter64 -- should be integer64 (signed)
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Current clock offset from master, in picoseconds"
-    ::= { wrsPpsiGlobals 7 }
+    ::= { wrsPpsiGlobalsX 8 }
 
-ppsiSkew OBJECT-TYPE
+ptpClockOffsetPsHRX OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Human Readable current clock offset from master, in picoseconds with saturation to integer"
+    ::= { wrsPpsiGlobalsX 9 }
+
+ptpSkewX OBJECT-TYPE
     SYNTAX      INTEGER
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The estimated change of master-to-slave delay, in picoseconds"
-    ::= { wrsPpsiGlobals 8 }
+    ::= { wrsPpsiGlobalsX 10 }
 
-ppsiRTT OBJECT-TYPE
+ptpRTTX OBJECT-TYPE
     SYNTAX      Counter64 -- does unsigned64 exits?
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The round-trip-time, from master, in picoseconds"
-    ::= { wrsPpsiGlobals 9 }
+    ::= { wrsPpsiGlobalsX 11 }
 
-ppsiLinkLength OBJECT-TYPE
+ptpLinkLengthX OBJECT-TYPE
     SYNTAX      Unsigned32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Estimated fiber length, from master-to-slave delay, in meters"
-    ::= { wrsPpsiGlobals 10 }
+    ::= { wrsPpsiGlobalsX 12 }
 
-ppsiServoUpdates OBJECT-TYPE
-    SYNTAX      Counter64
+ptpServoUpdatesX OBJECT-TYPE
+    SYNTAX      Unsigned32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "How many time did the servo run"
-    ::= { wrsPpsiGlobals 11 }
+    ::= { wrsPpsiGlobalsX 13 }
 
--- per-port (.3.2)
+ptpDeltaTxMX OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Fixed Tx latency on Master side"
+    ::= { wrsPpsiGlobalsX 14 }
 
-ppsiPort OBJECT-TYPE
-    SYNTAX      PpsiPort
+ptpDeltaRxMX OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Fixed Rx latency on Master side"
+    ::= { wrsPpsiGlobalsX 15 }
+
+ptpDeltaTxSX OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Fixed Tx latency on Slave side"
+    ::= { wrsPpsiGlobalsX 16 }
+
+ptpDeltaRxSX OBJECT-TYPE
+    SYNTAX      INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Fixed Rx latency on Slave side"
+    ::= { wrsPpsiGlobalsX 17 }
+
+-- per-port (.4)
+wrsPortsTableX OBJECT-TYPE
+    SYNTAX      SEQUENCE OF wrsPortsEntryX
     MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
-            "The ppsi line: information for each port"
-    INDEX   { portIndex }
-    ::= { wrsPpsiPerport 1 }
+            "Information for each port"
+    ::= { wrsPpsi 4 }
 
-PpsiPort ::=
+wrsPortsEntryX OBJECT-TYPE
+    SYNTAX      WrsPortsEntryX
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "An entry containing ports statuses"
+    INDEX   { wrsPortIndex }
+    ::= { wrsPortsTableX 1 }
+
+WrsPortsEntryX ::=
     SEQUENCE {
-        portLink             INTEGER
-        portMode             INTEGER
-        portLocked           INTEGER {not-locked(0), locked(1)},
-        portPeer             OCTET STRING
+        portLink             INTEGER,
+        portMode             INTEGER,
+        portLocked           INTEGER,
+        portPeer             OCTET STRING,
+        portSfpVN            DisplayString,
+        portSfpPN            DisplayString,
+        portSfpVS            DisplayString,
+        portSfpInDB          INTEGER,
+        portSfpGbE           INTEGER,
+        portSfpError         INTEGER
     }
 
-portLink OBJECT-TYPE
-    SYNTAX         INTEGER {down(0), up(1)}
+portLinkX OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        NA(0),
+                        down(1),
+                        up(2)
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Whether the link is up or down"
-    ::= { ppsiPort 1 }
+    ::= { wrsPortsEntryX 1 }
 
-portMode OBJECT-TYPE
-    SYNTAX         INTEGER {slave(0), master(1)}
+portModeX OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        unknown(0),
+                        master(1),
+                        slave(2),
+                        non-wr(3),
+                        auto(4)
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Whether the port is master or slave"
-    ::= { ppsiPort 2 }
+    ::= { wrsPortsEntryX 2 }
 
-portLocked OBJECT-TYPE
-    SYNTAX         INTEGER {not-locked(0), locked(1)}
+portLockedX OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        NA(0),
+                        not-locked(1),
+                        locked(2)
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Whether the peers are locked or not"
-    ::= { ppsiPort 3 }
+    ::= { wrsPortsEntryX 3 }
 
-portPeer OBJECT-TYPE
+portPeerX OBJECT-TYPE
     SYNTAX         OCTET STRING (SIZE(8))
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "the ClockID of the peer, if available. Or 0"
-    ::= { ppsiPort 4 }
+    ::= { wrsPortsEntryX 4 }
+
+portSfpVNX OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..32))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Vendor Name of SFP"
+    ::= { wrsPortsEntryX 5 }
+
+portSfpPNX OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..32))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Part Number of SFP"
+    ::= { wrsPortsEntryX 6 }
+
+portSfpVSX OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..32))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Vendor serial number of SFP"
+    ::= { wrsPortsEntryX 7 }
+
+portSfpInDBX OBJECT-TYPE
+    SYNTAX         INTEGER {NA(0), not-in-Data-Base(1), in-Data-Base(2)}
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Whether the SFP is in data base or not"
+    ::= { wrsPortsEntryX 8 }
+
+portSfpGbEX OBJECT-TYPE
+    SYNTAX         INTEGER {NA(0), not-GbE(1), GbE(2)}
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Whether the SFP is 1 GbE"
+    ::= { wrsPortsEntryX 9 }
+
+portSfpErrorX OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        NA(0),
+                        SFP-ok(1),
+                        SFP-Error(2)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Problem with SFP configuration. Port has to be always 1GbE. Port has to be in data base as long as support WR."
+    ::= { wrsPortsEntryX 10 }
+
+-- wrsTemperatureX (.5)
+tempFPGAX OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "FPGA temperature"
+    ::= { wrsTemperatureX 1 }
+
+tempPLLX OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "PLL temperature"
+    ::= { wrsTemperatureX 2 }
+
+tempPSLX OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Power Supply Left (PSL) temperature"
+    ::= { wrsTemperatureX 3 }
+
+tempPSRX OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Power Supply Right (PSR) temperature"
+    ::= { wrsTemperatureX 4 }
+
+tempTholdFPGAX OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Threshold level for FPGA temperature"
+    ::= { wrsTemperatureX 5 }
+
+tempTholdPLLX OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Threshold level for PLL temperature"
+    ::= { wrsTemperatureX 6 }
+
+tempTholdPSLX OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Threshold level for Power Supply Left (PSL) temperature"
+    ::= { wrsTemperatureX 7 }
+
+tempTholdPSRX OBJECT-TYPE
+    SYNTAX         INTEGER
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Threshold level for Power Supply Right (PSR) temperature"
+    ::= { wrsTemperatureX 8 }
+
+tempWarningX OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        NA(0),
+                        Threshold-not-set(1),
+                        Temperature-OK(2),
+                        Temperature-too-high(3),
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Warning if temperature exceed threshold levels"
+    ::= { wrsTemperatureX 9 }
 
 
 -- Versions (4) are all just strings, several of them

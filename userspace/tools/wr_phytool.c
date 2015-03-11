@@ -67,6 +67,13 @@ int hal_shm_init(void)
 			"FATAL: wr_phytool unable to open shm to HAL.\n");
 		return -1;
 	}
+	/* check hal's shm version */
+	if (hal_head->version != HAL_SHMEM_VERSION) {
+		fprintf(stderr, "wr_mon: unknown hal's shm version %i "
+			"(known is %i)\n",
+			hal_head->version, HAL_SHMEM_VERSION);
+		return -1;
+	}
 
 	h = (void *)hal_head + hal_head->data_off;
 

@@ -1490,10 +1490,8 @@ RPC servers are created in the following places:
 
 @table @code
 @item userspace/wrsw_rtud/rtud_exports.c
-@c FIXME: rtud should use shmem for status
 
-	The socket is called @t{rtud} and is used by the @i{rtu_stat}
-        program to gather runtime information, and by @i{wrs_vlans}
+	The socket is called @t{rtud} and is used by @i{wrs_vlans}
         to request actual actions.
 
 @item userspace/ppsi/arch-wrs/wrs-startup.c
@@ -1507,9 +1505,8 @@ RPC servers are created in the following places:
 
 	This channel is called @t{wrsw_hal} but the code uses is through
         the macro @t{WRSW_HAL_SERVER_ADDR}. The RPC server is used
-        both for status and commands, but status is already exported
-        in shared memory, and we are converting the clients; status
-        RPC calls will be removed soon.
+        only for commands. All clients use shared memory to get status
+        information.
 
 @item wrpc-sw::ipc/rt_ipc.c
 
@@ -1522,28 +1519,17 @@ Clients are created in the following places:
 
 @table @code
 
-@item userspace/tools/rtu_stat.c
-@c FIXME: rtu_stat should use shmem
-
-	The tool connects to @i{rtud} to get runtime information.
-
 @item userspace/tools/wrs_vlans.c
 
 	@t{wrs_vlans} connects to the @i{rtud} to request configuration
-        actions related to vlan setup.
-
-@item userspace/wrsw_hal/hal_exports.c
-@c FIXME: don't check with a socket, but with the shmem mechanism
-
-	A temporary client is created to check whether a HAL process
-        is already running.
+        actions related to vlan setup. All status information is passed
+        through shared memory.
 
 @item userspace/tools/wr_mon.c
-@c FIXME: wr_mon should use shmem
 
 	The tty-based monitoring interface connects to @i{ptpd} (@i{ppsi})
-        to get run-time information. It is going to be moved to
-        shared memory.
+        to enable or disable tracking. All status information is passed
+        from @i{HAL} and @i{ppsi} through shared memory.
 
 @item userspace/libwr/hal_client.c
 
@@ -1599,13 +1585,6 @@ the processes (excluding the @sc{rt} subsystem).
 
 	Called by library code (@t{halexp_lock_cmd}) but not used.
         Called by @i{ppsi} directly in @t{wrs-time.c}.
-
-@item  rtud::get_fd_list
-@itemx rtud::get_vd_list
-@c FIXME: shmem these
-
-	Called by @i{rtu_stat} to report information. They can be
-        moved to shared memory.
 
 @item  rtud::clear_entries
 @itemx rtud::add_entry

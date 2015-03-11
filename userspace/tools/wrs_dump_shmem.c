@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <libwr/shmem.h>
@@ -10,6 +11,7 @@
 #include <libwr/rtu_shmem.h>
 #include <ppsi/ppsi.h>
 #include <ppsi-wrs.h>
+
 
 /*  be safe, in case some other header had them slightly differently */
 #undef container_of
@@ -22,7 +24,6 @@
 
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-
 
 char *name_id_to_name[WRS_SHM_N_NAMES] = {
 	[wrs_shm_ptp] = "ptpd/ppsi",
@@ -45,8 +46,11 @@ enum dump_type {
 	dump_type_unsigned_char,
 	dump_type_unsigned_short,
 	dump_type_double,
+	dump_type_float,
 	dump_type_pointer,
 	/* and strange ones, from IEEE */
+	dump_type_UInteger64,
+	dump_type_Integer64,
 	dump_type_UInteger32,
 	dump_type_Integer32,
 	dump_type_UInteger16,
@@ -61,7 +65,13 @@ enum dump_type {
 	/* and this is ours */
 	dump_type_TimeInternal,
 	dump_type_ip_address,
+	dump_type_sfp_flags,
+	dump_type_port_mode,
+	dump_type_sensor_temp,
 };
+
+static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
+				 entries */
 
 /*
  * A structure to dump fields. This is meant to simplify things, see use here
@@ -93,6 +103,12 @@ void dump_one_field(void *addr, struct dump_info *info)
 			printf("%02x%c", ((unsigned char *)p)[i],
 			       i == info->size - 1 ? '\n' : ':');
 		break;
+	case dump_type_UInteger64:
+		printf("%lld\n", *(unsigned long long *)p);
+		break;
+	case dump_type_Integer64:
+		printf("%lld\n", *(long long *)p);
+		break;
 	case dump_type_uint32_t:
 		printf("0x%08lx\n", (long)*(uint32_t *)p);
 		break;
@@ -118,13 +134,15 @@ void dump_one_field(void *addr, struct dump_info *info)
 	case dump_type_double:
 		printf("%lf\n", *(double *)p);
 		break;
+	case dump_type_float:
+		printf("%f\n", *(float *)p);
+		break;
 	case dump_type_pointer:
 		printf("%p\n", *(void **)p);
 		break;
 	case dump_type_Integer16:
 		printf("%i\n", *(short *)p);
 		break;
-
 	case dump_type_TimeInternal:
 		printf("correct %i: %10i.%09i:%04i\n", ti->correct,
 		       ti->seconds, ti->nanoseconds, ti->phase);
@@ -154,12 +172,49 @@ void dump_one_field(void *addr, struct dump_info *info)
 		       cq->clockClass, cq->clockAccuracy, cq->clockAccuracy,
 		       cq->offsetScaledLogVariance);
 		break;
+	case dump_type_sfp_flags:
+		if (*(uint32_t *)p & SFP_FLAG_CLASS_DATA)
+			printf("SFP class data, ");
+		if (*(uint32_t *)p & SFP_FLAG_DEVICE_DATA)
+			printf("SFP device data, ");
+		if (*(uint32_t *)p & SFP_FLAG_1GbE)
+			printf("SFP is 1GbE, ");
+		if (*(uint32_t *)p & SFP_FLAG_IN_DB)
+			printf("SFP in data base, ");
+		printf("\n");
+		break;
+	case dump_type_port_mode:
+		switch (*(uint32_t *)p) {
+		case HEXP_PORT_MODE_WR_MASTER:
+			printf("WR Master\n");
+			break;
+		case HEXP_PORT_MODE_WR_SLAVE:
+			printf("WR Slave\n");
+			break;
+		case HEXP_PORT_MODE_NON_WR:
+			printf("Non-WR\n");
+			break;
+		case HEXP_PORT_MODE_WR_M_AND_S:
+			printf("Auto\n");
+			break;
+		default:
+			printf("Undefined\n");
+			break;
+		}
+		break;
+	case dump_type_sensor_temp:
+		printf("%f\n", ((float)(*(int *)p >> 4)) / 16.0);
+		break;
 	}
 }
 void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
 {
 	int i;
 
+	if (!addr) {
+		fprintf(stderr, "dump: pointer not valid\n");
+		return;
+	}
 	for (i = 0; i < ninfo; i++)
 		dump_one_field(addr, info + i);
 }
@@ -177,6 +232,20 @@ void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
 	.size = _size, \
 }
 
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct hal_shmem_header
+struct dump_info hal_shmem_info [] = {
+	DUMP_FIELD(int, nports),
+	DUMP_FIELD(sensor_temp, temp.fpga),
+	DUMP_FIELD(sensor_temp, temp.pll),
+	DUMP_FIELD(sensor_temp, temp.psl),
+	DUMP_FIELD(sensor_temp, temp.psr),
+	DUMP_FIELD(int, temp.fpga_thold),
+	DUMP_FIELD(int, temp.pll_thold),
+	DUMP_FIELD(int, temp.psl_thold),
+	DUMP_FIELD(int, temp.psr_thold),
+};
+
 /* map for fields of hal_port_state (hal_shmem.h) */
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct hal_port_state
@@ -187,7 +256,7 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, hw_index),
 	DUMP_FIELD(int, fd),
 	DUMP_FIELD(int, hw_addr_auto),
-	DUMP_FIELD(int, mode),
+	DUMP_FIELD(port_mode, mode),
 	DUMP_FIELD(int, state),
 	DUMP_FIELD(int, fiber_index),
 	DUMP_FIELD(int, locked),
@@ -202,7 +271,8 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(int, calib.tx_calibrated),
 
 	/* Another internal structure, with a final pointer */
-	DUMP_FIELD(int,       calib.sfp.flags),
+	DUMP_FIELD(sfp_flags, calib.sfp.flags),
+	DUMP_FIELD_SIZE(char, calib.sfp.vendor_name, 16),
 	DUMP_FIELD_SIZE(char, calib.sfp.part_num, 16),
 	DUMP_FIELD_SIZE(char, calib.sfp.vendor_serial, 16),
 	DUMP_FIELD(double,    calib.sfp.alpha),
@@ -235,6 +305,10 @@ int dump_hal_mem(struct wrs_shm_head *head)
 		return -1;
 	}
 	h = (void *)head + head->data_off;
+
+	/* dump hal's shmem */
+	dump_many_fields(h, hal_shmem_info, ARRAY_SIZE(hal_shmem_info));
+
 	n = h->nports;
 	p = wrs_shm_follow(head, h->ports);
 
@@ -293,6 +367,7 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 {
 	struct rtu_shmem_header *rtu_h;
 	struct rtu_filtering_entry *rtu_filters;
+	struct rtu_filtering_entry *rtu_filters_cur;
 	struct rtu_vlan_table_entry *rtu_vlans;
 	int i, j;
 
@@ -312,16 +387,24 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 
 	for (i = 0; i < HTAB_ENTRIES; i++) {
 		for (j = 0; j < RTU_BUCKETS; j++) {
+			rtu_filters_cur = rtu_filters + i*RTU_BUCKETS + j;
+			if ((!dump_all_rtu_entries)
+			    && (!rtu_filters_cur->valid))
+				/* don't display empty entries */
+				continue;
 			printf("dump htab[%d][%d]\n", i, j);
-			dump_many_fields(rtu_filters+i*RTU_BUCKETS+j,
-					 htab_info, ARRAY_SIZE(htab_info));
+			dump_many_fields(rtu_filters_cur, htab_info,
+					 ARRAY_SIZE(htab_info));
 		}
 	}
 
-	for (i = 0; i < NUM_VLANS; i++) {
+	for (i = 0; i < NUM_VLANS; i++, rtu_vlans++) {
+		if ((!dump_all_rtu_entries) && (rtu_vlans->drop != 0
+			    && rtu_vlans->port_mask == 0x0))
+			/* don't display empty entries */
+			continue;
 		printf("dump vlan %i\n", i);
 		dump_many_fields(rtu_vlans, vlan_info, ARRAY_SIZE(vlan_info));
-		rtu_vlans++;
 	}
 	return 0;
 }
@@ -345,6 +428,7 @@ struct dump_info ppg_info [] = {
 	DUMP_FIELD(int, rxdrop),
 	DUMP_FIELD(int, txdrop),
 	DUMP_FIELD(pointer, arch_data),
+	DUMP_FIELD(pointer, global_ext_data),
 };
 
 #undef DUMP_STRUCT
@@ -392,6 +476,38 @@ struct dump_info dstp_info [] = {
 	DUMP_FIELD(Boolean, frequencyTraceable),
 	DUMP_FIELD(Boolean, ptpTimescale),
 	DUMP_FIELD(Enumeration8, timeSource),
+};
+
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct wr_servo_state_t /* Horrible typedef */
+struct dump_info servo_state_info [] = {
+	DUMP_FIELD_SIZE(char, if_name, 16),
+	DUMP_FIELD(int, state),
+	DUMP_FIELD_SIZE(char, servo_state_name, 32),
+	DUMP_FIELD(int, next_state),
+	DUMP_FIELD(TimeInternal, mu),		/* half of the RTT */
+	DUMP_FIELD(Integer64, picos_mu),
+	DUMP_FIELD(Integer32, delta_tx_m),
+	DUMP_FIELD(Integer32, delta_rx_m),
+	DUMP_FIELD(Integer32, delta_tx_s),
+	DUMP_FIELD(Integer32, delta_rx_s),
+	DUMP_FIELD(Integer32, cur_setpoint),
+	DUMP_FIELD(Integer32, delta_ms),
+	DUMP_FIELD(Integer32, delta_ms_prev),
+	DUMP_FIELD(TimeInternal, t1),
+	DUMP_FIELD(TimeInternal, t2),
+	DUMP_FIELD(TimeInternal, t3),
+	DUMP_FIELD(TimeInternal, t4),
+	DUMP_FIELD(UInteger64, last_tics),
+	DUMP_FIELD(Integer32, fiber_fix_alpha),
+	DUMP_FIELD(Integer32, clock_period_ps),
+	DUMP_FIELD(int, missed_iters),
+
+	DUMP_FIELD(int, valid),
+	DUMP_FIELD(UInteger32, update_count),
+	DUMP_FIELD(int, tracking_enabled),
+	DUMP_FIELD(Integer64, skew),
+	DUMP_FIELD(Integer64, offset),
 };
 
 #undef DUMP_STRUCT
@@ -468,6 +584,7 @@ int dump_ppsi_mem(struct wrs_shm_head *head)
 	DSCurrent *dsc;
 	DSParent *dsp;
 	DSTimeProperties *dstp;
+	struct wr_servo_state_t *global_ext_data;
 	int i;
 
 	if (head->version != WRS_PPSI_SHMEM_VERSION) {
@@ -494,6 +611,11 @@ int dump_ppsi_mem(struct wrs_shm_head *head)
 	dstp = wrs_shm_follow(head, ppg->timePropertiesDS);
 	printf("time properties data set:\n");
 	dump_many_fields(dstp, dstp_info, ARRAY_SIZE(dstp_info));
+
+	global_ext_data = wrs_shm_follow(head, ppg->global_ext_data);
+	printf("global external data set:\n");
+	dump_many_fields(global_ext_data, servo_state_info,
+			 ARRAY_SIZE(servo_state_info));
 
 	ppi = wrs_shm_follow(head, ppg->pp_instances);
 	for (i = 0; i < ppg->nlinks; i++) {
@@ -538,13 +660,37 @@ dump_f *name_id_to_f[WRS_SHM_N_NAMES] = {
 	[wrs_shm_rtu] = dump_rtu_mem,
 };
 
+void print_info(char *prgname)
+{
+	printf("usage: %s [parameters]\n", prgname);
+	printf(""
+		"             Dump shmem\n"
+		"   -a        Dump all rtu entries. By default only valid\n"
+		"             entries are printed. Note there are 2048 htab\n"
+		"             and 4096 vlan entries!\n"
+		"   -h        Show this message\n");
+
+}
+
 int main(int argc, char **argv)
 {
 	struct wrs_shm_head *head;
 	dump_f *f;
 	void *m;
 	int i;
+	int c;
 
+	while ((c = getopt(argc, argv, "ah")) != -1) {
+		switch (c) {
+		case 'a':
+			dump_all_rtu_entries = 1;
+			break;
+		case 'h':
+		default:
+			print_info(argv[0]);
+			exit(1);
+		}
+	}
 	for (i = 0; i < WRS_SHM_N_NAMES; i++) {
 		m = wrs_shm_get(i, "reader", 0);
 		if (!m) {

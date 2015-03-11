@@ -33,7 +33,7 @@
 #define RTS_POLL_INTERVAL 200 /* ms */
 #define SFP_POLL_INTERVAL 1000 /* ms */
 
-static void *hal_port_shmem;
+extern struct hal_shmem_header *hal_shmem;
 
 /* Port table: the only item which is not "hal_port_*", as it's much used */
 static struct hal_port_state *ports;
@@ -184,8 +184,7 @@ static int hal_port_init(int index)
 int hal_port_init_all()
 {
 	int index;
-	struct hal_shmem_header *hal_hdr;
-	struct wrs_shm_head *head;
+	struct wrs_shm_head *hal_shmem_hdr;
 
 	pr_info("Initializing switch ports...\n");
 
@@ -202,24 +201,23 @@ int hal_port_init_all()
 	}
 	/* Allocate the ports in shared memory, so wr_mon etc can see them
 	   Use lock since some (like rtud) wait for hal to be available */
-	hal_port_shmem = wrs_shm_get(wrs_shm_hal, "wrsw_hal",
+	hal_shmem_hdr = wrs_shm_get(wrs_shm_hal, "wrsw_hal",
 				WRS_SHM_WRITE | WRS_SHM_LOCKED);
-	if (!hal_port_shmem) {
+	if (!hal_shmem_hdr) {
 		fprintf(stderr, "%s: Can't join shmem: %s\n", __func__,
 			strerror(errno));
 		return -1;
 	}
-	head = hal_port_shmem;
-	hal_hdr = wrs_shm_alloc(hal_port_shmem, sizeof(*hal_hdr));
-	ports = wrs_shm_alloc(hal_port_shmem,
+	hal_shmem = wrs_shm_alloc(hal_shmem_hdr, sizeof(*hal_shmem));
+	ports = wrs_shm_alloc(hal_shmem_hdr,
 			      sizeof(struct hal_port_state)
 			      * HAL_MAX_PORTS);
-	if (!hal_hdr ||  !ports) {
+	if (!hal_shmem || !ports) {
 		fprintf(stderr, "%s: can't allocate in shmem\n", __func__);
 		return -1;
 	}
 
-	hal_hdr->ports = ports;
+	hal_shmem->ports = ports;
 
 	for (index = 0; index < HAL_MAX_PORTS; index++)
 		if (hal_port_init(index) < 0)
@@ -230,14 +228,18 @@ int hal_port_init_all()
 	      hal_port_nports);
 
 	/* We are done, mark things as valid */
-	hal_hdr->nports = hal_port_nports;
-	head->version = HAL_SHMEM_VERSION;
-
+	hal_shmem->nports = hal_port_nports;
+	hal_shmem_hdr->version = HAL_SHMEM_VERSION;
+	hal_shmem->temp.fpga_thold =
+				atoi(libwr_cfg_get("SNMP_TEMP_THOLD_FPGA"));
+	hal_shmem->temp.pll_thold = atoi(libwr_cfg_get("SNMP_TEMP_THOLD_PLL"));
+	hal_shmem->temp.psl_thold = atoi(libwr_cfg_get("SNMP_TEMP_THOLD_PSL"));
+	hal_shmem->temp.psr_thold = atoi(libwr_cfg_get("SNMP_TEMP_THOLD_PSR"));
 	/* Release processes waiting for HAL's to fill shm with correct data
 	   When shm is opened successfully data in shm is still not populated!
 	   Read data with wrs_shm_seqbegin and wrs_shm_seqend!
 	   Especially for nports it is important */
-	wrs_shm_write(head, WRS_SHM_WRITE_END);
+	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 
 	/* Create a WRIPC server for HAL public API */
 	return hal_init_wripc(ports);
@@ -442,14 +444,19 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 	char subname[48];
 	int err;
 
-	if (shw_sfp_read_verify_header(p->hw_index, &shdr) < 0) {
+	err = shw_sfp_read_verify_header(p->hw_index, &shdr);
+	if (err == -2) {
+		pr_error("SFP module not inserted. Failed to read SFP "
+			 "configuration header\n");
+		return;
+	} else if (err < 0) {
 		pr_error("Failed to read SFP configuration header\n");
 		return;
 	}
 
 	pr_info("SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s\n",
 	      shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
-	cdata = shw_sfp_get_cal_data(p->hw_index);
+	cdata = shw_sfp_get_cal_data(p->hw_index, &shdr);
 	if (cdata) {
 		pr_info("SFP Info: (%s) deltaTx %d "
 		      "delta Rx %d alpha %.3f (* 1e6)\n",
@@ -460,17 +467,23 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 
 		memcpy(&p->calib.sfp, cdata,
 		       sizeof(struct shw_sfp_caldata));
+		/* Mark SFP as found in data base */
+		p->calib.sfp.flags |= SFP_FLAG_IN_DB;
 	} else {
-		fprintf(stderr, "Unknown SFP \"%.16s\" on port %s\n",
-			shdr.vendor_pn, p->name);
+		fprintf(stderr, "Unknown SFP vn=\"%.16s\" pn=\"%.16s\" "
+			"vs=\"%.16s\" on port %s\n", shdr.vendor_name,
+			shdr.vendor_pn, shdr.vendor_serial, p->name);
 		memset(&p->calib.sfp, 0, sizeof(p->calib.sfp));
 	}
 
 	p->state = HAL_PORT_STATE_LINK_DOWN;
 	shw_sfp_set_tx_disable(p->hw_index, 0);
 	/* Copy the strings anyways, for informative value in shmem */
+	strncpy(p->calib.sfp.vendor_name, (void *)shdr.vendor_name, 16);
 	strncpy(p->calib.sfp.part_num, (void *)shdr.vendor_pn, 16);
 	strncpy(p->calib.sfp.vendor_serial, (void *)shdr.vendor_serial, 16);
+	/* check if SFP is 1GbE */
+	p->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb ? SFP_FLAG_1GbE : 0;
 
 	/*
 	 * Now, we should fix the alpha value according to fiber
@@ -495,8 +508,10 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 		return;
 	}
 
-	fprintf(stderr, "Port %s, SFP \"%.16s\", fiber %i: no alpha known\n",
-		p->name, p->calib.sfp.part_num, p->fiber_index);
+	fprintf(stderr, "Port %s, SFP vn=\"%.16s\" pn=\"%.16s\" vs=\"%.16s\", "
+		"fiber %i: no alpha known\n", p->name,
+		p->calib.sfp.vendor_name, p->calib.sfp.part_num,
+		p->calib.sfp.vendor_serial, p->fiber_index);
 	p->calib.sfp.alpha = 0;
 }
 

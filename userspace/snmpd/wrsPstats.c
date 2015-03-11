@@ -57,9 +57,18 @@ wrsPstats_handler(netsnmp_mib_handler          *handler,
 			logmsg("%s: %i\n", __func__, __LINE__);
 			/* our "context" is the counter number; "subid" the column i.e. the port */
 			counter = (intptr_t)netsnmp_extract_iterator_context(request);
+			if (!counter)
+				/* NULL returned from
+				 * netsnmp_extract_iterator_context shuld be
+				 * interpreted as end of table */
+				continue;
+			/* change range of counter (1..39 (snmp is 1 based) ->
+			 * 0..38 (pstats_global_data array is 0 based)) */
+			counter--;
 
 			table_info = netsnmp_extract_table_info(request);
-			wrport = table_info->colnum - 2; /* port is 0-based and position 1 is the string */
+			/* port is 0-based and position 1 is the string */
+			wrport = table_info->colnum - 2;
 			logmsg("counter %i, port %i\n", counter, wrport);
 
 			if (wrport < 0) {
@@ -110,8 +119,10 @@ wrsPstats_next_entry(void **loop_context,
 	/* Create the row OID: only the counter index */
 	snmp_set_var_value(index, (u_char *)&i, sizeof(i));
 
-	/* Set the data context (1..39 -> 0..38) */
-	*data_context = (void *)(intptr_t)(i - 1);
+	/* Set the data context (1..39)
+	 * Cannot be set to 0, because netsnmp_extract_iterator_context returns
+	 * NULL in function wrsPstats_handler when table is over */
+	*data_context = (void *)i;
 	/* and set the loop context for the next iteration */
 	*loop_context = (void *)i;
 	return index;

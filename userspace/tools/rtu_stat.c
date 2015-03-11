@@ -23,33 +23,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <libwr/util.h>
 
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
+#include <libwr/rtu_shmem.h>
 
 #include <minipc.h>
 #include <rtud_exports.h>
 #include <mac.h>
+#include <errno.h>
 
 #define MINIPC_TIMEOUT 200
 
 static struct minipc_ch *rtud_ch;
 
-// forwarding entries
-void rtudexp_get_fd_list(rtudexp_fd_list_t *list, int start_from)
-{
-	minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_get_fd_list, list,
-			start_from);
-}
-
-// vlan entries
-void rtudexp_get_vd_list(rtudexp_vd_list_t *list, int current)
-{
-	minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_get_vd_list, list,
-			current);
-}
+struct wrs_shm_head *rtu_port_shmem;
+static struct rtu_vlan_table_entry vlan_tab_local[NUM_VLANS];
+static struct rtu_filtering_entry rtu_htab_local[RTU_BUCKETS * HTAB_ENTRIES];
 
 int rtudexp_clear_entries(int netif, int force)
 {
@@ -76,42 +69,6 @@ int rtudexp_vlan_entry(int vid, int fid, const char *ch_mask, int drop, int prio
 	return (ret<0)?ret:val;
 }
 
-#define RTU_MAX_ENTRIES 8192
-#define NUM_VLANS       4096
-
-void fetch_rtu_fd(rtudexp_fd_entry_t *d, int *n_entries)
-{
-	int start = 0, n = 0;
-	rtudexp_fd_list_t list;
-
-	do {
-		rtudexp_get_fd_list(&list, start);
-		//	printf("num_rules %d\n", list.num_rules);
-
-		memcpy( d+n, list.list, sizeof(rtudexp_fd_entry_t) * list.num_rules);
-		start=list.next;
-		n+=list.num_rules;
-	} while(start > 0);
-
-	//	printf("%d rules \n", n);
-	*n_entries = n;
-}
-
-int fetch_rtu_vd(rtudexp_vd_entry_t *d, int *n_entries)
-{
-	int start = 0, n = 0;
-	rtudexp_vd_list_t list;
-
-	do {
-		rtudexp_get_vd_list(&list, start);
-		memcpy( d+n, list.list, sizeof(rtudexp_vd_entry_t) * list.num_entries);
-		start=list.next;
-		n+=list.num_entries;
-	} while(start > 0);
-	*n_entries = n;
-	return 0;
-}
-
 /**
  * \brief Write mac address into a buffer to avoid concurrent access on static variable.
  */
@@ -123,15 +80,12 @@ char *mac_to_buffer(uint8_t mac[ETH_ALEN],char buffer[ETH_ALEN_STR])
     return buffer;
 }
 
-
-static int cmp_entries(const void *p1, const void *p2)
+static int cmp_rtu_entries(const void *p1, const void *p2)
 {
-	rtudexp_fd_entry_t *e1 = (rtudexp_fd_entry_t *)p1;
-	rtudexp_fd_entry_t *e2 = (rtudexp_fd_entry_t *)p2;
-
+	const struct rtu_filtering_entry *e1 = p1;
+	const struct rtu_filtering_entry *e2 = p2;
 
 	return memcmp(e1->mac, e2->mac, 6);
-	//           return strcmp(* (char * const *) p1, * (char * const *) p2);
 }
 
 char *decode_ports(int dpm, int nports)
@@ -185,6 +139,13 @@ int get_nports_from_hal(void)
 		fprintf(stderr, "unable to open shm for HAL!\n");
 		exit(-1);
 	}
+	/* check hal's shm version */
+	if (hal_head->version != HAL_SHMEM_VERSION) {
+		fprintf(stderr, "rtu_stat: unknown hal's shm version %i "
+			"(known is %i)\n",
+			hal_head->version, HAL_SHMEM_VERSION);
+		exit(-1);
+	}
 	h = (void *)hal_head + hal_head->data_off;
 	/* Assume number of ports does not change in runtime */
 	hal_nports_local = h->nports;
@@ -197,26 +158,119 @@ int get_nports_from_hal(void)
 	return hal_nports_local;
 }
 
+int read_vlans(void)
+{
+	unsigned ii;
+	unsigned retries = 0;
+	struct rtu_vlan_table_entry *vlan_tab_shm;
+	struct rtu_shmem_header *rtu_hdr;
+
+	rtu_hdr = (void *)rtu_port_shmem + rtu_port_shmem->data_off;
+	vlan_tab_shm = wrs_shm_follow(rtu_port_shmem, rtu_hdr->vlans);
+	if (!vlan_tab_shm)
+		return -2;
+	/* read data, with the sequential lock to have all data consistent */
+	while (1) {
+		ii = wrs_shm_seqbegin(rtu_port_shmem);
+		memcpy(&vlan_tab_local, vlan_tab_shm,
+		       NUM_VLANS * sizeof(*vlan_tab_shm));
+		retries++;
+		if (retries > 100)
+			return -1;
+		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+			break; /* consistent read */
+		usleep(1000);
+	}
+
+	return 0;
+}
+
+/* Read filtes from rtud's shm, convert hashtable to regular table */
+int read_htab(int *read_entries)
+{
+	unsigned ii;
+	unsigned retries = 0;
+	struct rtu_filtering_entry *htab_shm;
+	struct rtu_shmem_header *rtu_hdr;
+	struct rtu_filtering_entry *empty;
+
+	rtu_hdr = (void *)rtu_port_shmem + rtu_port_shmem->data_off;
+	htab_shm = wrs_shm_follow(rtu_port_shmem, rtu_hdr->filters);
+	if (!htab_shm)
+		return -2;
+
+	/* Read data, with the sequential lock to have all data consistent */
+	while (1) {
+		ii = wrs_shm_seqbegin(rtu_port_shmem);
+		memcpy(&rtu_htab_local, htab_shm,
+		       RTU_BUCKETS * HTAB_ENTRIES * sizeof(*htab_shm));
+		retries++;
+		if (retries > 100)
+			return -1;
+		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
+			break; /* consistent read */
+		usleep(1000);
+	}
+
+	/* Convert hash table to ordered table. Table will be qsorted later,
+	 * no need to qsort entire table */
+	*read_entries = 0;
+	empty = rtu_htab_local;
+	for (ii = 0; ii < RTU_BUCKETS * HTAB_ENTRIES; ii++) {
+		if (rtu_htab_local[ii].valid) {
+			memcpy(empty, &rtu_htab_local[ii], sizeof(*htab_shm));
+			empty++;
+			(*read_entries)++;
+		}
+	}
+
+	return 0;
+}
+
+int open_rtu_shm(void)
+{
+	/* open rtu shm */
+	rtu_port_shmem = wrs_shm_get(wrs_shm_rtu, "", WRS_SHM_READ);
+	if (!rtu_port_shmem) {
+		printf("rtu_stat: %s: Can't join shmem: %s\n", __func__,
+			strerror(errno));
+		return -1;
+	}
+
+	/* check rtu shm version */
+	if (rtu_port_shmem->version != RTU_SHMEM_VERSION) {
+		printf("dump rtu: unknown version %i (known is %i)\n",
+			rtu_port_shmem->version, RTU_SHMEM_VERSION);
+		return -1;
+	}
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
-
-	rtudexp_fd_entry_t fd_list[RTU_MAX_ENTRIES];
-	rtudexp_vd_entry_t vd_list[NUM_VLANS];
-
-	int n_fd_entries, n_vd_entries;
 	int i, isok;
 	int nports;
+	int htab_read_entries;
+	int vid_active = 0;
+	char mac_buf[ETH_ALEN_STR];
 
 	nports = get_nports_from_hal();
 
 	rtud_ch = minipc_client_create("rtud", 0);
 
-	if(!rtud_ch)
+	if (!rtud_ch)
 	{
 		printf("Can't connect to RTUd mini-rpc server\n");
 		return -1;
 	}
 	minipc_set_logfile(rtud_ch,stderr);
+
+	/* Open rtud's shmem */
+	if (open_rtu_shm()) {
+		printf("Can't open RTUd shmem\n");
+		return -1;
+	}
+
 	isok=0;
 	if(argc>1)
 	{
@@ -247,52 +301,77 @@ int main(int argc, char **argv)
 
 	}
 
-	fetch_rtu_fd(fd_list, &n_fd_entries);
+	/* read filter entires from shm to local memory for data consistency */
+	if (read_htab(&htab_read_entries)) {
+		printf("Too many retries while reading htab entries from RTUd "
+		       "shmem\n");
+		return -1;
+	}
 
-	qsort(fd_list, n_fd_entries,  sizeof(rtudexp_fd_entry_t), cmp_entries);
+	qsort(rtu_htab_local, htab_read_entries,
+	      sizeof(struct rtu_filtering_entry), cmp_rtu_entries);
 
-	printf("RTU Filtering Database Dump: %d rules\n", n_fd_entries);
+	printf("RTU Filtering Database Dump: %d rules\n", htab_read_entries);
 	printf("\n");
 	printf("MAC                     Dst.ports      FID          Type               Age [s]\n");
 	printf("----------------------------------------------------------------------------------\n");
 
-	char mac_buf[ETH_ALEN_STR];
-
-	for(i=0;i<n_fd_entries;i++)
+	for (i = 0; i < htab_read_entries; i++)
 	{
+		if (!rtu_htab_local[i].valid)
+			continue;
 		printf("%-25s %-12s %2d          %s (hash %03x:%x)   ",
-			mac_to_buffer(fd_list[i].mac,mac_buf),
-			decode_ports(fd_list[i].dpm, nports),
-			fd_list[i].fid,
-			fd_list[i].dynamic ? "DYNAMIC":"STATIC ",
-			fd_list[i].hash,
-			fd_list[i].bucket);
-		if(fd_list[i].dynamic)
-			printf("%d\n", fd_list[i].age);
+			mac_to_buffer(rtu_htab_local[i].mac, mac_buf),
+			decode_ports(rtu_htab_local[i].port_mask_dst, nports),
+			rtu_htab_local[i].fid,
+			rtu_htab_local[i].dynamic ? "DYNAMIC" : "STATIC ",
+			rtu_htab_local[i].addr.hash,
+			rtu_htab_local[i].addr.bucket);
+		if (rtu_htab_local[i].dynamic)
+			printf("%d\n", rtu_htab_local[i].age);
 		else
 			printf("-\n");
 	}
 	printf("\n");
 
-	fetch_rtu_vd(vd_list, &n_vd_entries);
+	/* read vlans from shm to local memory for data consistency */
+	if (read_vlans()) {
+		printf("Too many retries while reading vlans from RTUd "
+		       "shmem\n");
+		return -1;
+	}
 
-		printf("RTU VLAN Table Dump: %d active VIDs defined\n", n_vd_entries);
+	printf("RTU VLAN Table Dump:\n");
 	printf("\n");
 	printf("  VID    FID       MASK       DROP    PRIO    PRIO_OVERRIDE\n");
 	printf("-----------------------------------------------------------\n");
 
-	for(i=0;i<n_vd_entries;i++)
-	{
-		printf("%4d   %4d      0x%8x    ", vd_list[i].vid, vd_list[i].fid, vd_list[i].port_mask);
-		if(vd_list[i].drop == 0)     printf("NO ");
-		else                         printf("YES");
-		if(vd_list[i].has_prio == 0) printf("     --    ");
-		else                         printf("     %1d    ",vd_list[i].prio);
+	for (i = 0; i < NUM_VLANS; i++) {
+		if ((vlan_tab_local[i].drop != 0)
+		     && (vlan_tab_local[i].port_mask == 0x0))
+			continue;
 
-		if(vd_list[i].prio_override == 0) printf("     NO ");
-		else                              printf("     YES ");
+		printf("%4d   %4d      0x%8x    ", i, vlan_tab_local[i].fid,
+		       vlan_tab_local[i].port_mask);
+		if (vlan_tab_local[i].drop == 0)
+			printf("NO ");
+		else
+			printf("YES");
+		if (vlan_tab_local[i].has_prio == 0)
+			printf("     --    ");
+		else
+			printf("     %1d    ", vlan_tab_local[i].prio);
+
+		if (vlan_tab_local[i].prio_override == 0)
+			printf("     NO ");
+		else
+			printf("     YES ");
 		printf("\n");
+		vid_active++;
 	}
 	printf("\n");
+	printf("%d active VIDs defined\n", vid_active);
+	printf("\n");
+
 	return 0;
 }

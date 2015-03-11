@@ -20,14 +20,23 @@
 
 #define SFP_FLAG_CLASS_DATA	(1 << 0)
 #define SFP_FLAG_DEVICE_DATA	(1 << 1)
+#define SFP_FLAG_1GbE		(1 << 2) /* SFP is 1GbE */
+#define SFP_FLAG_IN_DB		(1 << 3) /* SFP is present in data base */
+
+#define SFP_SPEED_1Gb		0x0D /* Speed of SFP in 100MB/s. According to
+				      * SFF-8472.PDF: By convention 1.25 Gb/s
+				      * should be rounded up to 0Dh (13 in
+				      * units of 100 MBd) for Ethernet
+				      * 1000BASE-X. */
 
 struct shw_sfp_caldata {
-	int flags;
+	uint32_t flags;
 	/*
 	 * Part number used to identify it. Serial number because we
 	 * may specify per-specimen delays, but it is not used at this
 	 * point in time
 	 */
+	char vendor_name[16];
 	char part_num[16];
 	char vendor_serial[16];
 	/* Callibration data */
@@ -103,7 +112,8 @@ int shw_sfp_read_db(void);
 int shw_sfp_read_verify_header(int num, struct shw_sfp_header *head);
 
 /* return NULL if no data found */
-struct shw_sfp_caldata *shw_sfp_get_cal_data(int num);
+struct shw_sfp_caldata *shw_sfp_get_cal_data(int num,
+					     struct shw_sfp_header *head);
 
 /* Read and verify the header all at once. returns -1 on failure */
 int shw_sfp_read_verify_header(int num, struct shw_sfp_header *head);

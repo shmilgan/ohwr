@@ -3,7 +3,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <unistd.h>
-
+#include <ppsi/ppsi.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <minipc.h>
@@ -15,7 +15,6 @@
 
 #define SHOW_GUI		0
 #define SHOW_STATS		1
-#define SHOW_SNMP_GLOBALS	3
 
 int mode = SHOW_GUI;
 
@@ -26,24 +25,56 @@ static struct hal_port_state *hal_ports;
 /* local copy of port state */
 static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS];
 static int hal_nports_local;
+static struct wrs_shm_head *ppsi_head;
+static struct pp_globals *ppg;
+static struct wr_servo_state_t *ppsi_servo;
+static struct wr_servo_state_t ppsi_servo_local; /* local copy of
+						    servo status */
+static struct hal_temp_sensors *temp_sensors;
+static struct hal_temp_sensors temp_sensors_local;
 
-int read_ports(void){
+
+int read_hal(void){
 	unsigned ii;
 	unsigned retries = 0;
 
 	/* read data, with the sequential lock to have all data consistent */
-	do {
+	while (1) {
 		ii = wrs_shm_seqbegin(hal_head);
 		memcpy(hal_ports_local_copy, hal_ports,
 		       hal_nports_local*sizeof(struct hal_port_state));
+		memcpy(&temp_sensors_local, temp_sensors,
+		       sizeof(*temp_sensors));
 		retries++;
 		if (retries > 100)
 			return -1;
+		if (!wrs_shm_seqretry(hal_head, ii))
+			break; /* consistent read */
 		usleep(1000);
-	} while (wrs_shm_seqretry(hal_head, ii));
+	}
 
 	return 0;
 }
+
+int read_servo(void){
+	unsigned ii;
+	unsigned retries = 0;
+
+	/* read data, with the sequential lock to have all data consistent */
+	while (1) {
+		ii = wrs_shm_seqbegin(ppsi_head);
+		memcpy(&ppsi_servo_local, ppsi_servo, sizeof(*ppsi_servo));
+		retries++;
+		if (retries > 100)
+			return -1;
+		if (!wrs_shm_seqretry(ppsi_head, ii))
+			break; /* consistent read */
+		usleep(1000);
+	}
+
+	return 0;
+}
+
 
 void init_shm(void)
 {
@@ -54,16 +85,50 @@ void init_shm(void)
 		fprintf(stderr, "unable to open shm for HAL!\n");
 		exit(-1);
 	}
+	/* check hal's shm version */
+	if (hal_head->version != HAL_SHMEM_VERSION) {
+		fprintf(stderr, "wr_mon: unknown HAL's shm version %i "
+			"(known is %i)\n",
+			hal_head->version, HAL_SHMEM_VERSION);
+		exit(-1);
+	}
 	h = (void *)hal_head + hal_head->data_off;
 	/* Assume number of ports does not change in runtime */
 	hal_nports_local = h->nports;
-	/* Even after HAL restart, HAL will place structures at the same
-	 * addresses. No need to re-dereference pointer at each read. */
-	hal_ports = wrs_shm_follow(hal_head, h->ports);
 	if (hal_nports_local > HAL_MAX_PORTS) {
 		fprintf(stderr, "Too many ports reported by HAL. "
 			"%d vs %d supported\n",
 			hal_nports_local, HAL_MAX_PORTS);
+		exit(-1);
+	}
+	/* Even after HAL restart, HAL will place structures at the same
+	 * addresses. No need to re-dereference pointer at each read. */
+	hal_ports = wrs_shm_follow(hal_head, h->ports);
+	if (!hal_ports) {
+		fprintf(stderr, "Unalbe to follow hal_ports pointer in HAL's "
+			"shmem");
+		exit(-1);
+	}
+	temp_sensors = &(h->temp);
+
+	ppsi_head = wrs_shm_get(wrs_shm_ptp, "", WRS_SHM_READ);
+	if (!ppsi_head) {
+		fprintf(stderr, "unable to open shm for PPSI!\n");
+		exit(-1);
+	}
+
+	/* check hal's shm version */
+	if (ppsi_head->version != WRS_PPSI_SHMEM_VERSION) {
+		fprintf(stderr, "wr_mon: unknown PPSI's shm version %i "
+			"(known is %i)\n",
+			ppsi_head->version, WRS_PPSI_SHMEM_VERSION);
+		exit(-1);
+	}
+	ppg = (void *)ppsi_head + ppsi_head->data_off;
+
+	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->global_ext_data);
+	if (!ppsi_servo) {
+		fprintf(stderr, "Cannot follow ppsi_servo in shmem.\n");
 		exit(-1);
 	}
 
@@ -118,6 +183,15 @@ void show_ports(void)
 				case HEXP_PORT_MODE_WR_SLAVE:
 					term_cprintf(C_WHITE, "WR Slave   ");
 					break;
+				case HEXP_PORT_MODE_NON_WR:
+					term_cprintf(C_WHITE, "Non WR     ");
+					break;
+				case HEXP_PORT_MODE_WR_M_AND_S:
+					term_cprintf(C_WHITE, "WR auto    ");
+					break;
+				default:
+					term_cprintf(C_WHITE, "Unknown    ");
+					break;
 			}
 
 			if (port_state->locked)
@@ -145,9 +219,23 @@ void show_ports(void)
 
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state_up(port_state->state));
-			printf("mode:%s ",
-			       port_state->mode == HEXP_PORT_MODE_WR_SLAVE
-			       ? "S" : "M");
+			switch (port_state->mode) {
+			case HEXP_PORT_MODE_WR_MASTER:
+				printf("mode:M ");
+				break;
+			case HEXP_PORT_MODE_WR_SLAVE:
+				printf("mode:S ");
+				break;
+			case HEXP_PORT_MODE_NON_WR:
+				printf("mode:N ");
+				break;
+			case HEXP_PORT_MODE_WR_M_AND_S:
+				printf("mode:A ");
+				break;
+			default:
+				printf("mode:U ");
+				break;
+			}
 			printf("lock:%d ", port_state->locked);
 		}
 		printf("\n");
@@ -190,101 +278,136 @@ static void show_unadorned_ports(void)
 
 void show_servo(void)
 {
-	ptpdexp_sync_state_t ss;
+	int64_t total_asymmetry;
+	int64_t crtt;
 
-	minipc_call(ptp_ch, 2000, &__rpcdef_get_sync_state, &ss);
+	total_asymmetry = ppsi_servo_local.picos_mu -
+			  2LL * ppsi_servo_local.delta_ms;
+	crtt = ppsi_servo_local.picos_mu - ppsi_servo_local.delta_tx_m -
+	       ppsi_servo_local.delta_rx_m - ppsi_servo_local.delta_tx_s -
+	       ppsi_servo_local.delta_rx_s;
 
 	if(mode == SHOW_GUI) {
 		term_cprintf(C_BLUE, "Synchronization status:\n");
 
-		if(!ss.valid)
-		{
+		if (!ppsi_servo_local.valid) {
 			term_cprintf(C_RED, "Master mode or sync info not valid\n");
 			return;
 		}
 
 		term_cprintf(C_GREY, "Servo state:               ");
-		term_cprintf(C_WHITE, "%s\n", ss.slave_servo_state);
+		term_cprintf(C_WHITE, "%s\n",
+			     ppsi_servo_local.servo_state_name);
 
 		term_cprintf(C_GREY, "Phase tracking:            ");
-		if(ss.tracking_enabled)
+		if (ppsi_servo_local.tracking_enabled)
 			term_cprintf(C_GREEN, "ON\n");
 		else
-			term_cprintf(C_RED,"OFF\n");
+			term_cprintf(C_RED, "OFF\n");
 
-		term_cprintf(C_GREY, "Synchronization source:    ");
-		term_cprintf(C_WHITE, "%s\n", ss.sync_source);
+		/* not implemented */
+		/*term_cprintf(C_GREY, "Synchronization source:    ");
+		term_cprintf(C_WHITE, "%s\n", ss.sync_source);*/
 
 		term_cprintf(C_BLUE, "\nTiming parameters:\n\n");
 
 		term_cprintf(C_GREY, "Round-trip time (mu):      ");
-		term_cprintf(C_WHITE, "%.3f nsec\n", ss.mu/1000.0);
+		term_cprintf(C_WHITE, "%.3f nsec\n",
+			     ppsi_servo_local.picos_mu/1000.0);
 
 		term_cprintf(C_GREY, "Master-slave delay:        ");
-		term_cprintf(C_WHITE, "%.3f nsec\n", ss.delay_ms/1000.0);
+		term_cprintf(C_WHITE, "%.3f nsec\n",
+			     ppsi_servo_local.delta_ms/1000.0);
 
 		term_cprintf(C_GREY, "Link length:               ");
-		term_cprintf(C_WHITE, "%.0f meters \n",
-			     ss.delay_ms/1e12 * 300e6 / 1.55);
+		term_cprintf(C_WHITE, "%.0f meters\n",
+			     ppsi_servo_local.delta_ms/1e12 * 300e6 / 1.55);
 
 		term_cprintf(C_GREY, "Master PHY delays:         ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
-			     ss.delta_tx_m/1000.0, ss.delta_rx_m/1000.0);
+			     ppsi_servo_local.delta_tx_m/1000.0,
+			     ppsi_servo_local.delta_rx_m/1000.0);
 
 		term_cprintf(C_GREY, "Slave PHY delays:          ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
-			     ss.delta_tx_s/1000.0, ss.delta_rx_s/1000.0);
+			     ppsi_servo_local.delta_tx_s/1000.0,
+			     ppsi_servo_local.delta_rx_s/1000.0);
 
 		term_cprintf(C_GREY, "Total link asymmetry:      ");
-		term_cprintf(C_WHITE, "%.3f nsec\n", ss.total_asymmetry/1000.0);
+		term_cprintf(C_WHITE, "%.3f nsec\n", total_asymmetry/1000.0);
 
-		if (0) {
+		/*if (0) {
 			term_cprintf(C_GREY, "Fiber asymmetry:           ");
 			term_cprintf(C_WHITE, "%.3f nsec\n", ss.fiber_asymmetry/1000.0);
-		}
+		}*/
 
 		term_cprintf(C_GREY, "Clock offset:              ");
-		term_cprintf(C_WHITE, "%.3f nsec\n", ss.cur_offset/1000.0);
+		term_cprintf(C_WHITE, "%.3f nsec\n",
+			     ppsi_servo_local.offset/1000.0);
 
 		term_cprintf(C_GREY, "Phase setpoint:            ");
-		term_cprintf(C_WHITE, "%.3f nsec\n", ss.cur_setpoint/1000.0);
+		term_cprintf(C_WHITE, "%.3f nsec\n",
+			     ppsi_servo_local.cur_setpoint/1000.0);
 
 		term_cprintf(C_GREY, "Skew:                      ");
-		term_cprintf(C_WHITE, "%.3f nsec\n", ss.cur_skew/1000.0);
+		term_cprintf(C_WHITE, "%.3f nsec\n",
+			     ppsi_servo_local.skew/1000.0);
 
 		term_cprintf(C_GREY, "Servo update counter:      ");
-		term_cprintf(C_WHITE, "%lld times\n", ss.update_count);
+		term_cprintf(C_WHITE, "%u times\n",
+			     ppsi_servo_local.update_count);
 	}
 	else if(mode == SHOW_STATS) {
-		printf("SERVO ");
-		printf("sv:%d ", ss.valid ? 1:0);
-		printf("ss:'%s' ", ss.slave_servo_state);
-		printf("mu:%llu ", ss.mu);
-		printf("dms:%llu ", ss.delay_ms);
-		printf("dtxm:%llu drxm:%llu ", ss.delta_tx_m, ss.delta_rx_m);
-		printf("dtxs:%llu drxs:%llu ", ss.delta_tx_s, ss.delta_rx_s);
-		printf("asym:%lld ", ss.total_asymmetry);
-		printf("crtt:%llu ", ss.mu - ss.delta_tx_m - ss.delta_rx_m -
-				ss.delta_tx_s - ss.delta_rx_s);
-		printf("cko:%lld ", ss.cur_offset);
-		printf("setp:%lld ", ss.cur_setpoint);
-		printf("ucnt:%llu ", ss.update_count);
+		printf("SERVO    ");
+		printf("sv:%d ", ppsi_servo_local.valid ? 1 : 0);
+		printf("ss:'%s' ", ppsi_servo_local.servo_state_name);
+		printf("mu:%llu ", ppsi_servo_local.picos_mu);
+		printf("dms:%llu ", ppsi_servo_local.delta_ms);
+		printf("dtxm:%d drxm:%d ", ppsi_servo_local.delta_tx_m,
+					   ppsi_servo_local.delta_rx_m);
+		printf("dtxs:%d drxs:%d ", ppsi_servo_local.delta_tx_s,
+					   ppsi_servo_local.delta_rx_s);
+		printf("asym:%lld ", total_asymmetry);
+		printf("crtt:%llu ", crtt);
+		printf("cko:%lld ", ppsi_servo_local.offset);
+		printf("setp:%d ", ppsi_servo_local.cur_setpoint);
+		printf("ucnt:%u ", ppsi_servo_local.update_count);
 		printf("\n");
-	} else if (mode == SHOW_SNMP_GLOBALS) {
-		if(!ss.valid)
-			return;
-		/* This is oh so similar to the above, but by lines */
-		printf("gm_id: f0:f0:f0:f0:f0:f0:f0:f0\n"); /* FIXME */
-		printf("clock_id: f1:f1:f1:f1:f1:f1:f1:f1\n"); /* FIXME */
-		printf("mode: 9999\n"); /* FIXME */
-		printf("servo_state: %s\n", ss.slave_servo_state);
-		printf("tracking: %i\n", ss.tracking_enabled ? 1 : 0);
-		printf("source: %s\n", ss.sync_source);
-		printf("ck_offset: %lli\n", ss.cur_offset);
-		printf("skew: %li\n", (long)ss.cur_skew);
-		printf("rtt: %lli\n", ss.mu);
-		printf("llength: %li\n", (long)(ss.delay_ms/1e12 * 300e6 / 1.55));
-		printf("servo_upd: %lli\n", ss.update_count);
+	}
+}
+
+void show_temperatures(void)
+{
+	if (mode == SHOW_GUI) {
+		term_cprintf(C_BLUE, "\nTemperatures:\n");
+
+		term_cprintf(C_GREY, "FPGA: ");
+		term_cprintf(C_WHITE, "%2.2f ",
+			     temp_sensors_local.fpga/256.0);
+		term_cprintf(C_GREY, "PLL: ");
+		term_cprintf(C_WHITE, "%2.2f ",
+			     temp_sensors_local.pll/256.0);
+		term_cprintf(C_GREY, "PSL: ");
+		term_cprintf(C_WHITE, "%2.2f ",
+			     temp_sensors_local.psl/256.0);
+		term_cprintf(C_GREY, "PSR: ");
+		term_cprintf(C_WHITE, "%2.2f\n",
+			     temp_sensors_local.psr/256.0);
+
+		term_cprintf(C_BLUE, "Temperature thresholds:\n");
+
+		term_cprintf(C_GREY, "FPGA: ");
+		term_cprintf(C_WHITE, "%5d ",
+			     temp_sensors_local.fpga_thold);
+		term_cprintf(C_GREY, "PLL: ");
+		term_cprintf(C_WHITE, "%5d ",
+			     temp_sensors_local.pll_thold);
+		term_cprintf(C_GREY, "PSL: ");
+		term_cprintf(C_WHITE, "%5d ",
+			     temp_sensors_local.psl_thold);
+		term_cprintf(C_GREY, "PSR: ");
+		term_cprintf(C_WHITE, "%5d\n",
+			     temp_sensors_local.psr_thold);
 	}
 }
 
@@ -299,6 +422,7 @@ void show_all()
 	}
 	show_ports();
 	show_servo();
+	show_temperatures();
 	fflush(stdout);
 }
 
@@ -317,13 +441,8 @@ int main(int argc, char *argv[])
 			case 'b':
 				usecolor = 0;
 				break;
-			case 'g':
-				mode = SHOW_SNMP_GLOBALS;
-				read_ports();
-				show_all();
-				exit(0);
 			case 'w': /* for the web interface */
-				read_ports();
+				read_hal();
 				show_unadorned_ports();
 				exit(0);
 			default:
@@ -351,7 +470,8 @@ int main(int argc, char *argv[])
 					    track_onoff);
 			}
 		}
-		read_ports();
+		read_hal();
+		read_servo();
 		show_all();
 		/* If we got broken pipe or anything, exit */
 		if (ferror(stdout))

@@ -1,5 +1,5 @@
-#ifndef I2C_SFP_H
-#define I2C_SFP_H
+#ifndef I2C_IO_H
+#define I2C_IO_H
 
 #include "i2c.h"
 
@@ -25,4 +25,4 @@ int shw_i2c_io_scan(uint8_t * dev_map);
 int shw_get_hw_ver();
 uint8_t shw_get_fpga_type();
 
-#endif //I2C_SFP_H
+#endif //I2C_IO_H
