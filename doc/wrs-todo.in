@@ -336,6 +336,11 @@ a single interface between the web and the rest of the system.
 If we are brave enough, the web interface might make @sc{snmp} calls;
 but this requires having strong @sc{snmp} support for everything, first.
 
+@item We need a solution to know total of hours/days that switch is up.
+It might be worth to store average temperature or histogram of temperatures
+over switch lifetime. During implementation wear-out of flash shall be taken
+into consideration. This data shall be stored locally and be exported via SNMP.
+Such information may be useful for switch manufacturers to estimate MTTF.
 
 @end itemize
 
