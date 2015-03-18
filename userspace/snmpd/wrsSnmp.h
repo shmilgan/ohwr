@@ -1,6 +1,17 @@
 #ifndef WRS_SNMP_H
 #define WRS_SNMP_H
 
+#include <net-snmp/net-snmp-config.h>
+#include <net-snmp/net-snmp-includes.h>
+#include <net-snmp/agent/net-snmp-agent-includes.h>
+
+#include <libwr/shmem.h>
+#include <libwr/hal_shmem.h>
+
+extern struct wrs_shm_head *hal_head;
+extern struct hal_shmem_header *hal_shmem;
+extern struct hal_port_state *hal_ports;
+extern int hal_nports_local;
 
 /*
  * local hack: besides the file pointer, that is there anyways,

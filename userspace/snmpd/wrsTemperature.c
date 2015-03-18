@@ -1,39 +1,5 @@
-#include <net-snmp/net-snmp-config.h>
-#include <net-snmp/net-snmp-includes.h>
-#include <net-snmp/agent/net-snmp-agent-includes.h>
-#include <net-snmp/agent/auto_nlist.h>
-
-/* Crap! -- everybody makes them different, and even ppsi::ieee wants them */
-#undef FALSE
-#undef TRUE
-
-/* conflict between definition in net-snmp-agent-includes.h (which include
- * snmp_vars.h) and ppsi.h where INST is defined as a inline function */
-#undef INST
-#include <ppsi/ieee1588_types.h> /* for ClockIdentity */
-#include <libwr/shmem.h>
-#include <ppsi/ppsi.h>
-#include <libwr/hal_shmem.h>
-#include <stdio.h>
-
 #include "wrsSnmp.h"
-
-extern struct wrs_shm_head *hal_head;
-extern struct hal_shmem_header *hal_shmem;
-extern struct hal_port_state *hal_ports;
-extern int hal_nports_local;
-
-/* Our data: globals */
-static struct wrsTemperature_s {
-	int temp_fpga;		/* FPGA temperature */
-	int temp_pll;		/* PLL temperature */
-	int temp_psl;		/* PSL temperature */
-	int temp_psr;		/* PSR temperature */
-	int temp_fpga_thold;	/* Threshold value for FPGA temperature */
-	int temp_pll_thold;	/* Threshold value for PLL temperature */
-	int temp_psl_thold;	/* Threshold value for PSL temperature */
-	int temp_psr_thold;	/* Threshold value for PSR temperature */
-} wrsTemperature_s;
+#include "wrsTemperature.h"
 
 static struct pickinfo wrsTemperature_pickinfo[] = {
 	FIELD(wrsTemperature_s, ASN_INTEGER, temp_fpga),
@@ -46,6 +12,7 @@ static struct pickinfo wrsTemperature_pickinfo[] = {
 	FIELD(wrsTemperature_s, ASN_INTEGER, temp_psr_thold),
 };
 
+struct wrsTemperature_s wrsTemperature_s;
 
 int wrsTemperature_data_fill(void)
 {

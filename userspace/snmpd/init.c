@@ -7,6 +7,7 @@
 
 /* The sub-init functions */
 #include "wrsSnmp.h"
+#include "wrsTemperature.h"
 
 FILE *wrs_logf; /* for the local-hack messages */
 
