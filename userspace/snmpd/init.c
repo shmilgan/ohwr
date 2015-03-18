@@ -8,6 +8,7 @@
 /* The sub-init functions */
 #include "wrsSnmp.h"
 #include "wrsTemperature.h"
+#include "wrsOSStatus.h"
 
 FILE *wrs_logf; /* for the local-hack messages */
 
@@ -20,4 +21,5 @@ void init_wrsSnmp(void)
 	init_wrsDate();
 	init_wrsPtpData();
 	init_wrsTemperature();
+	init_wrsOSStatus();
 }
