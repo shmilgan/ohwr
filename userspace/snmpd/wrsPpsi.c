@@ -41,13 +41,6 @@ static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
 struct wr_servo_state_t *ppsi_servo;
 
-#define FIELD(_struct, _type, _field) {			\
-		.type = _type,					\
-		.offset = offsetof(struct _struct, _field),	\
-		.len = sizeof(_struct._field),			\
-		 }
-
-
 /* Our data: globals */
 static struct wrs_p_globals {
 	ClockIdentity gm_id;	/* FIXME: not implemented */

@@ -85,4 +85,15 @@ extern void init_wrsDate(void);
 
 #define WRS_OID 1, 3, 6, 1, 4, 1, 96, 100
 
+struct pickinfo {
+	/* Following fields are used to format the output */
+	int type; int offset; int len;
+};
+
+#define FIELD(_struct, _type, _field) {			\
+	.type = _type,					\
+	.offset = offsetof(struct _struct, _field),	\
+	.len = sizeof(_struct._field),			\
+	 }
+
 #endif /* WRS_SNMP_H */
