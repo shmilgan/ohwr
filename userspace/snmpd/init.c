@@ -17,4 +17,6 @@ void init_wrsSnmp(void)
 	init_wrsPpsi();
 	init_wrsVersion();
 	init_wrsDate();
+	init_wrsPtpData();
+	init_wrsTemperature();
 }

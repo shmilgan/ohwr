@@ -32,12 +32,12 @@ struct ppsi_pickinfo {
 	int type; int offset; int len;
 };
 
-static struct wrs_shm_head *hal_head;
-static struct hal_shmem_header *hal_shmem;
-static struct hal_port_state *hal_ports;
-static int hal_nports_local;
+struct wrs_shm_head *hal_head;
+struct hal_shmem_header *hal_shmem;
+struct hal_port_state *hal_ports;
+int hal_nports_local;
 
-static struct wrs_shm_head *ppsi_head;
+struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
 struct wr_servo_state_t *ppsi_servo;
 
