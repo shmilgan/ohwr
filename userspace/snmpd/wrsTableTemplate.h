@@ -1,3 +1,5 @@
+/* global variable to keep number of rows, filled by cache function */
+unsigned int n_rows;
 
 static netsnmp_variable_list *
 table_next_entry(void **loop_context,
@@ -6,8 +8,6 @@ table_next_entry(void **loop_context,
 			netsnmp_iterator_info *data)
 {
 	intptr_t i;
-	unsigned int n_rows;
-	TT_DATA_FILL_FUNC(&n_rows);
 	/* create the line ID from counter number */
 	i = (intptr_t)*loop_context;
 	if (i >= n_rows)
@@ -99,6 +99,12 @@ table_handler(netsnmp_mib_handler          *handler,
 	return SNMP_ERR_NOERROR;
 }
 
+static int table_cache_load(netsnmp_cache *cache, void *vmagic)
+{
+	TT_DATA_FILL_FUNC(&n_rows);
+	return 0;
+}
+
 void TT_INIT_FUNC(void)
 {
 	const oid wrsTT_oid[] = { TT_OID };
@@ -132,5 +138,11 @@ void TT_INIT_FUNC(void)
 						      OID_LENGTH(wrsTT_oid),
 						      HANDLER_CAN_RONLY);
 	netsnmp_register_table_iterator(reginfo, iinfo);
+
+	netsnmp_inject_handler(reginfo,
+			netsnmp_get_cache_handler(TT_CACHE_TIMEOUT,
+						  table_cache_load, NULL,
+						  wrsTT_oid,
+						  OID_LENGTH(wrsTT_oid)));
 
 }

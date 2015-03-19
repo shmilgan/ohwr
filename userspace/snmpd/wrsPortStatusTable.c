@@ -123,6 +123,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 #define TT_DATA_ARRAY wrsPortStatusTable_array
 #define TT_GROUP_NAME "wrsPortStatusTable"
 #define TT_INIT_FUNC init_wrsPortStatusTable
+#define TT_CACHE_TIMEOUT WRSPORTSTATUSTABLE_CACHE_TIMEOUT
 
 
 #include "wrsTableTemplate.h"
