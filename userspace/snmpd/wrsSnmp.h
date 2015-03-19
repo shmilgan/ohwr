@@ -5,6 +5,15 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
+/* Crap! -- everybody makes them different, and even ppsi::ieee wants them */
+#undef FALSE
+#undef TRUE
+
+/* conflict between definition in net-snmp-agent-includes.h (which include
+ * snmp_vars.h) and ppsi.h where INST is defined as a inline function */
+#undef INST
+#include <ppsi/ieee1588_types.h> /* for ClockIdentity */
+
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 

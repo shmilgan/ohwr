@@ -9,6 +9,7 @@
 #include "wrsSnmp.h"
 #include "wrsTemperature.h"
 #include "wrsOSStatus.h"
+#include "wrsPortStatusTable.h"
 
 FILE *wrs_logf; /* for the local-hack messages */
 
@@ -22,4 +23,5 @@ void init_wrsSnmp(void)
 	init_wrsPtpData();
 	init_wrsTemperature();
 	init_wrsOSStatus();
+	init_wrsPortStatusTable();
 }

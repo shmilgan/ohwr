@@ -34,7 +34,8 @@ SOURCES = \
 	shmem.c \
 	wrsPtpData.c \
 	wrsTemperature.c \
-	wrsOSStatus.c
+	wrsOSStatus.c \
+	wrsPortStatusTable.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
