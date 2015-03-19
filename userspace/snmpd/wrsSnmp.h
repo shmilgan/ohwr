@@ -104,7 +104,7 @@ struct pickinfo {
 #define FIELD(_struct, _type, _field) {			\
 	.type = _type,					\
 	.offset = offsetof(struct _struct, _field),	\
-	.len = sizeof(_struct._field),			\
+	.len = sizeof(((struct _struct *)0)->_field),			\
 	 }
 
 #endif /* WRS_SNMP_H */
