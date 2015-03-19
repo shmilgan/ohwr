@@ -1,6 +1,8 @@
 #ifndef WRS_WRS_TEMPERATURE_H
 #define WRS_WRS_TEMPERATURE_H
 
+#define WRSTEMPERATURE_CACHE_TIMEOUT 5
+
 struct wrsTemperature_s {
 	int temp_fpga;		/* FPGA temperature */
 	int temp_pll;		/* PLL temperature */
@@ -13,7 +15,7 @@ struct wrsTemperature_s {
 };
 
 extern struct wrsTemperature_s wrsTemperature_s;
-int wrsTemperature_data_fill(void);
+time_t wrsTemperature_data_fill(void);
 
 void init_wrsTemperature(void);
 #endif /* WRS_WRS_TEMPERATURE_H */

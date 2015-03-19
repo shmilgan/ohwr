@@ -21,6 +21,8 @@
 extern struct wrs_shm_head *ppsi_head;
 extern struct wr_servo_state_t *ppsi_servo;
 
+#define WRSPTPDATA_CACHE_TIMEOUT 5
+
 /* Our data: globals */
 static struct wrsPtpData_s {
 	ClockIdentity gm_id;	/* FIXME: not implemented */
@@ -74,18 +76,20 @@ static int32_t int_saturate(int64_t value)
 	return value;
 }
 
-int  wrsPtpData_data_fill(void)
+time_t  wrsPtpData_data_fill(void)
 {
 	unsigned ii;
 	unsigned retries = 0;
-	static time_t t0, t1;
+	static time_t time_update;
+	time_t time_cur;
 
-	t1 = time(NULL);
-	if (t0 && t1 - t0 < 5) {/* TODO: timeout constatnt */
-		/* cache not updated */
-		return 1;
+	time_cur = time(NULL);
+	if (time_update
+	    && time_cur - time_update < WRSPTPDATA_CACHE_TIMEOUT) {
+		/* cache not updated, return last update time */
+		return time_update;
 	}
-	t0 = t1;
+	time_update = time_cur;
 
 	memset(&wrsPtpData_s, 0, sizeof(wrsPtpData_s));
 	while (1) {
@@ -127,8 +131,8 @@ int  wrsPtpData_data_fill(void)
 			break; /* consistent read */
 		usleep(1000);
 	}
-	/* there was an update, return 0 */
-	return 0;
+	/* there was an update, return current time */
+	return time_update;
 }
 
 #define GT_OID WRS_OID, 6, 1

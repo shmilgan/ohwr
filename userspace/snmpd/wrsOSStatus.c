@@ -9,9 +9,18 @@ static struct pickinfo wrsOSStatus_pickinfo[] = {
 
 struct wrsOSStatus_s wrsOSStatus_s;
 
-int wrsOSStatus_data_fill(void)
+time_t wrsOSStatus_data_fill(void)
 {
-	wrsTemperature_data_fill();
+	static time_t time_update; /* time of last update */
+	time_t time_temp; /* time when temperature data was updated */
+
+	time_temp = wrsTemperature_data_fill();
+
+	if (time_temp <= time_update) {
+		/* cache not updated, return last update time */
+		return time_update;
+	}
+	time_update = time(NULL);
 
 	memset(&wrsOSStatus_s, 0, sizeof(wrsOSStatus_s));
 	/* wrsTemperatureWarning */
@@ -35,8 +44,8 @@ int wrsOSStatus_data_fill(void)
 		    || (wrsTemperature_s.temp_psr > wrsTemperature_s.temp_psr_thold));
 	}
 
-	/* there was an update, return 0 */
-	return 0;
+	/* there was an update, return current time */
+	return time_update;
 }
 
 #define GT_OID WRS_OID, 6, 3

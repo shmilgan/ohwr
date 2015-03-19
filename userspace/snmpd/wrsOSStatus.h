@@ -11,7 +11,7 @@ struct wrsOSStatus_s {
 };
 
 extern struct wrsOSStatus_s wrsOSStatus_s;
-int wrsOSStatus_data_fill(void);
+time_t wrsOSStatus_data_fill(void);
 void init_wrsOSStatus(void);
 
 #endif /* WRS_WRS_OSSTATUS_H */
