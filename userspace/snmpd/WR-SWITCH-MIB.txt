@@ -412,135 +412,6 @@ ptpDeltaRxSX OBJECT-TYPE
             "Fixed Rx latency on Slave side"
     ::= { wrsPpsiGlobalsX 17 }
 
--- per-port (.4)
-wrsPortsTableX OBJECT-TYPE
-    SYNTAX      SEQUENCE OF wrsPortsEntryX
-    MAX-ACCESS  not-accessible
-    STATUS      current
-    DESCRIPTION
-            "Information for each port"
-    ::= { wrsPpsi 4 }
-
-wrsPortsEntryX OBJECT-TYPE
-    SYNTAX      WrsPortsEntryX
-    MAX-ACCESS  not-accessible
-    STATUS      current
-    DESCRIPTION
-            "An entry containing ports statuses"
-    INDEX   { wrsPortIndex }
-    ::= { wrsPortsTableX 1 }
-
-WrsPortsEntryX ::=
-    SEQUENCE {
-        portLink             INTEGER,
-        portMode             INTEGER,
-        portLocked           INTEGER,
-        portPeer             OCTET STRING,
-        portSfpVN            DisplayString,
-        portSfpPN            DisplayString,
-        portSfpVS            DisplayString,
-        portSfpInDB          INTEGER,
-        portSfpGbE           INTEGER,
-        portSfpError         INTEGER
-    }
-
-portLinkX OBJECT-TYPE
-    SYNTAX         INTEGER {
-                        NA(0),
-                        down(1),
-                        up(2)
-    }
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Whether the link is up or down"
-    ::= { wrsPortsEntryX 1 }
-
-portModeX OBJECT-TYPE
-    SYNTAX         INTEGER {
-                        unknown(0),
-                        master(1),
-                        slave(2),
-                        non-wr(3),
-                        auto(4)
-    }
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Whether the port is master or slave"
-    ::= { wrsPortsEntryX 2 }
-
-portLockedX OBJECT-TYPE
-    SYNTAX         INTEGER {
-                        NA(0),
-                        not-locked(1),
-                        locked(2)
-    }
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Whether the peers are locked or not"
-    ::= { wrsPortsEntryX 3 }
-
-portPeerX OBJECT-TYPE
-    SYNTAX         OCTET STRING (SIZE(8))
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "the ClockID of the peer, if available. Or 0"
-    ::= { wrsPortsEntryX 4 }
-
-portSfpVNX OBJECT-TYPE
-    SYNTAX         DisplayString (SIZE (0..32))
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Vendor Name of SFP"
-    ::= { wrsPortsEntryX 5 }
-
-portSfpPNX OBJECT-TYPE
-    SYNTAX         DisplayString (SIZE (0..32))
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Part Number of SFP"
-    ::= { wrsPortsEntryX 6 }
-
-portSfpVSX OBJECT-TYPE
-    SYNTAX         DisplayString (SIZE (0..32))
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Vendor serial number of SFP"
-    ::= { wrsPortsEntryX 7 }
-
-portSfpInDBX OBJECT-TYPE
-    SYNTAX         INTEGER {NA(0), not-in-Data-Base(1), in-Data-Base(2)}
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Whether the SFP is in data base or not"
-    ::= { wrsPortsEntryX 8 }
-
-portSfpGbEX OBJECT-TYPE
-    SYNTAX         INTEGER {NA(0), not-GbE(1), GbE(2)}
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Whether the SFP is 1 GbE"
-    ::= { wrsPortsEntryX 9 }
-
-portSfpErrorX OBJECT-TYPE
-    SYNTAX         INTEGER {
-                        NA(0),
-                        SFP-ok(1),
-                        SFP-Error(2)
-    }
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Problem with SFP configuration. Port has to be always 1GbE. Port has to be in data base as long as support WR."
-    ::= { wrsPortsEntryX 10 }
 
 -- Versions (4) are all just strings, several of them
 
@@ -709,7 +580,155 @@ wrsTempThresholdPSR OBJECT-TYPE
 --wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
 --wrsPstatsTable          OBJECT IDENTIFIER ::= { wrsExpertStatus 4 }
 --wrsPtpDataTable         OBJECT IDENTIFIER ::= { wrsExpertStatus 5 }
---wrsPortStatusTable      OBJECT IDENTIFIER ::= { wrsExpertStatus 6 }
+-- per-port (.6.1.6)
+wrsPortStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF WrsPortStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "Information for each port"
+    ::= { wrsExpertStatus 6 }
+
+wrsPortStatusEntry OBJECT-TYPE
+    SYNTAX      WrsPortStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "An entry containing ports statuses"
+    INDEX   { wrsPortStatusIndex }
+    ::= { wrsPortStatusTable 1 }
+
+WrsPortStatusEntry ::=
+    SEQUENCE {
+        wrsPortStatusIndex       Unsigned32,
+        wrsPortStatusPortName    DisplayString,
+        wrsPortStatusLink        INTEGER,
+        wrsPortStatusMode        INTEGER,
+        wrsPortStatusLocked      INTEGER,
+        wrsPortStatusPeer        OCTET STRING,
+        wrsPortStatusSfpVN       DisplayString,
+        wrsPortStatusSfpPN       DisplayString,
+        wrsPortStatusSfpVS       DisplayString,
+        wrsPortStatusSfpInDB     INTEGER,
+        wrsPortStatusSfpGbE      INTEGER,
+        wrsPortStatusSfpError    INTEGER
+    }
+
+wrsPortStatusIndex OBJECT-TYPE
+    SYNTAX         Unsigned32
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION
+            "Index for wrsPortStatusTable"
+    ::= { wrsPortStatusEntry 1 }
+
+wrsPortStatusPortName OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..12))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Name of port"
+    ::= { wrsPortStatusEntry 2 }
+
+wrsPortStatusLink OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        down(1),
+                        up(2)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Whether the link is up or down"
+    ::= { wrsPortStatusEntry 3 }
+
+wrsPortStatusMode OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        unknown(0),
+                        master(1),
+                        slave(2),
+                        nonWr(3),
+                        auto(4)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Whether the port is master or slave"
+    ::= { wrsPortStatusEntry 4 }
+
+wrsPortStatusLocked OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        notLocked(1),
+                        locked(2)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Whether the peers are locked or not"
+    ::= { wrsPortStatusEntry 5 }
+
+wrsPortStatusPeer OBJECT-TYPE
+    SYNTAX         OCTET STRING (SIZE(8))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "the ClockID of the peer, if available. Or 0"
+    ::= { wrsPortStatusEntry 6 }
+
+wrsPortStatusSfpVN OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..32))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Vendor Name of SFP"
+    ::= { wrsPortStatusEntry 7 }
+
+wrsPortStatusSfpPN OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..32))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Part Number of SFP"
+    ::= { wrsPortStatusEntry 8 }
+
+wrsPortStatusSfpVS OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..32))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Vendor serial number of SFP"
+    ::= { wrsPortStatusEntry 9 }
+
+wrsPortStatusSfpInDB OBJECT-TYPE
+    SYNTAX         INTEGER {na(0), notInDataBase(1), inDataBase(2)}
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Whether the SFP is in data base or not"
+    ::= { wrsPortStatusEntry 10 }
+
+wrsPortStatusSfpGbE OBJECT-TYPE
+    SYNTAX         INTEGER {na(0), linkNotGbE(1), linkGbE(2)}
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Whether the SFP is 1 GbE"
+    ::= { wrsPortStatusEntry 11 }
+
+wrsPortStatusSfpError OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        sfpOk(1),
+                        sfpError(2),
+                        portDown(3)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Problem with SFP configuration. Port has to be always 1GbE. Port has to be in data base as long as support WR."
+    ::= { wrsPortStatusEntry 12 }
+
 --wrsNetworking
 --Configuration
 

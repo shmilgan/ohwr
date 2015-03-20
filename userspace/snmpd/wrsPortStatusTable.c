@@ -5,6 +5,8 @@
 struct wrsPortStatusTable_s wrsPortStatusTable_array[WRS_N_PORTS];
 
 static struct pickinfo wrsPortStatusTable_pickinfo[] = {
+	FIELD(wrsPortStatusTable_s, ASN_UNSIGNED, index), /* not reported */
+	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, port_name),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, link_up),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, port_mode),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, port_locked),
@@ -45,11 +47,11 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 		for (i = 0; i < hal_nports_local; ++i) {
 			/* Assume that number of ports does not change between
 			 * reads */
-			char if_name[10];
-
-			snprintf(if_name, 10, "wr%d", i);
+			snprintf(wrsPortStatusTable_array[i].port_name, 10,
+				 "wr%d", i);
 			port_state = hal_lookup_port(hal_ports,
-						    hal_nports_local, if_name);
+					hal_nports_local,
+					wrsPortStatusTable_array[i].port_name);
 			/* No need to copy all ports structures, only what
 			 * we're interested in.
 			 * Keep value 0 for Not available */
@@ -117,7 +119,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 	return time_cur;
 }
 
-#define TT_OID WRS_OID, 6, 4
+#define TT_OID WRSPORTSTATUSTABLE_OID
 #define TT_PICKINFO wrsPortStatusTable_pickinfo
 #define TT_DATA_FILL_FUNC wrsPortStatusTable_data_fill
 #define TT_DATA_ARRAY wrsPortStatusTable_array
