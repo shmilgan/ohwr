@@ -1,6 +1,8 @@
 #ifndef WRS_WRS_OSSTATUS_H
 #define WRS_WRS_OSSTATUS_H
 
+#define WRSOSSTATUS_OID WRS_OID, 254, 1, 1
+
 #define WRS_TEMPERATURE_WARNING_THOLD_NOT_SET 1		/* warning */
 #define WRS_TEMPERATURE_WARNING_OK 2			/* ok */
 #define WRS_TEMPERATURE_WARNING_TOO_HIGH 3		/* warning */

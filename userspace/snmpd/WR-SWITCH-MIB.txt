@@ -252,7 +252,6 @@ pstatsWR17 OBJECT-TYPE
 --following objects will be moved
 wrsPpsiGlobalsX OBJECT IDENTIFIER ::= { wrsPpsi 3 }
 wrsPortsTableX OBJECT IDENTIFIER ::= { wrsPpsi 4 }
-wrsTemperatureX OBJECT IDENTIFIER ::= { wrsPpsi 5 }
 
 -- The Wr/PTP/Ppsi information is two items: an array of scalars
 -- and a table. In the table, the "channel" name is the row. But
@@ -543,22 +542,6 @@ portSfpErrorX OBJECT-TYPE
             "Problem with SFP configuration. Port has to be always 1GbE. Port has to be in data base as long as support WR."
     ::= { wrsPortsEntryX 10 }
 
--- wrsTemperatureX (.5)
-
-tempWarningX OBJECT-TYPE
-    SYNTAX         INTEGER {
-                        NA(0),
-                        Threshold-not-set(1),
-                        Temperature-OK(2),
-                        Temperature-too-high(3),
-    }
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Warning if temperature exceed threshold levels"
-    ::= { wrsTemperatureX 9 }
-
-
 -- Versions (4) are all just strings, several of them
 
 wrsVersionSw    OBJECT-TYPE
@@ -730,9 +713,26 @@ wrsTempThresholdPSR OBJECT-TYPE
 --wrsNetworking
 --Configuration
 
---wrsDetailedStatusesGroup   OBJECT IDENTIFIER ::= { wrsStatus 1 }
+wrsDetailedStatusesGroup   OBJECT IDENTIFIER ::= { wrsStatus 1 }
 
---wrsOSStatusGroup           OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 1 }
+wrsOSStatusGroup           OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 1 }
+
+-- wrsOSStatusGroup (.254.1.1)
+
+wrsTemperatureWarning OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        thresholdNotSet(1),
+                        temperatureOK(2),
+                        temperatureTooHigh(3)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Warning if temperature exceed threshold levels"
+    ::= { wrsOSStatusGroup 2 }
+
+
 --wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
 --wrsNetworkingStatusGroup   OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 3 }
 

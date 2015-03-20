@@ -48,7 +48,7 @@ time_t wrsOSStatus_data_fill(void)
 	return time_update;
 }
 
-#define GT_OID WRS_OID, 6, 3
+#define GT_OID WRSOSSTATUS_OID
 #define GT_PICKINFO wrsOSStatus_pickinfo
 #define GT_DATA_FILL_FUNC wrsOSStatus_data_fill
 #define GT_DATA_STRUCT wrsOSStatus_s

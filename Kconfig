@@ -367,28 +367,34 @@ config SNMP_TEMP_THOLD_FPGA
 	default "0"
 	help
 	  Threshold level for FPGA temperature, when exceeded warning is
-	  notified by WR-SWITCH-MIB::tempWarning
+	  notified by SNMP via WR-SWITCH-MIB::wrsTemperatureWarning
+	  Require hal restart after change
 
 config SNMP_TEMP_THOLD_PLL
 	int "Threshold level for PLL temperature"
 	default "0"
 	help
 	  Threshold level for PLL temperature, when exceeded warning is
-	  notified by WR-SWITCH-MIB::tempWarning
+	  notified by SNMP via WR-SWITCH-MIB::wrsTemperatureWarning
+	  Require hal restart after change
 
 config SNMP_TEMP_THOLD_PSL
 	int "Threshold level for Power Supply Left (PSL) temperature"
 	default "0"
 	help
 	  Threshold level for Power Supply Left (PSL) temperature, when
-	  exceeded warning is notified by WR-SWITCH-MIB::tempWarning
+	  exceeded warning is notified by SNMP via
+	  WR-SWITCH-MIB::wrsTemperatureWarning
+	  Require hal restart after change
 
 config SNMP_TEMP_THOLD_PSR
 	int "Threshold level for Power Supply Right (PSR) temperature"
 	default "0"
 	help
 	  Threshold level for Power Supply Right (PSR) temperature, when
-	  exceeded warning is notified by WR-SWITCH-MIB::tempWarning
+	  exceeded warning is notified by SNMP via
+	  WR-SWITCH-MIB::wrsTemperatureWarning
+	  Require hal restart after change
 
 endmenu
 
