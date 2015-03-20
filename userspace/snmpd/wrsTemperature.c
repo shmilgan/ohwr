@@ -56,7 +56,7 @@ time_t wrsTemperature_data_fill(void)
 	return time_update;
 }
 
-#define GT_OID WRS_OID, 6, 2
+#define GT_OID WRSTEMPERATURE_OID
 #define GT_PICKINFO wrsTemperature_pickinfo
 #define GT_DATA_FILL_FUNC wrsTemperature_data_fill
 #define GT_DATA_STRUCT wrsTemperature_s
