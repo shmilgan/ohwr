@@ -1,9 +1,10 @@
 WR-SWITCH-MIB DEFINITIONS ::= BEGIN
 
--- This is blatantly copied from  NET-SNMP-TUTORIAL-MIB.txt and IF-MIB.txt
--- URL: http://www.net-snmp.org/tutorial/tutorial-5/
---                            toolkit/mib_module/NET-SNMP-TUTORIAL-MIB.txt
--- Bugs and swearing by Alessandro Rubini
+-- Original MIB, Bugs and swearing by Alessandro Rubini
+-- MIB rewritten by Adam Wujek, BE-CO-HT, CERN
+
+-- During development all unused/not implemented objects are comented out
+-- to avoid later changes
 
 -- IMPORTS: Include definitions from other mibs here
 IMPORTS
@@ -11,28 +12,32 @@ IMPORTS
         MODULE-IDENTITY, enterprises          FROM SNMPv2-SMI
         DisplayString                         FROM SNMPv2-TC;
 
-CERN OBJECT IDENTIFIER ::= { enterprises 96 }
+
 
 -- A brief description and update information about this mib.
 -- (I follow the CamelCase to be sure I don't mistype. Who knows the rules...
 
 wrSwitchMIB MODULE-IDENTITY
-    LAST-UPDATED "201502231000Z"
+    LAST-UPDATED "201503191600Z"
     ORGANIZATION "CERN"
     CONTACT-INFO "postal:   BE-CO-HT, CERN, Geneva
                   email:    ht-drivers@cern.ch
                  "
     DESCRIPTION  "White Rabbit Switch internal details
                  "
-    ::= { CERN 100 }
+    ::= { cern 100 }
+
+cern OBJECT IDENTIFIER ::= { enterprises 96 }
 
 -- Define typical mib nodes
 -- we'll prefix everything in this mib with wrs (White Rabbit Switch)
 wrsScalar      OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
-wrsPstatsTable OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }
-wrsPpsi      OBJECT IDENTIFIER ::= { wrSwitchMIB 3 } -- going to be obsolete
-wrsVersion     OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }
-wrsDate        OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }
+wrsPstatsTable OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }  -- going to be obsolete
+wrsPpsi        OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }  -- going to be obsolete
+wrsVersion     OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }  -- going to be obsolete
+wrsDate        OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }  -- going to be obsolete
+wrsExpertStatus       OBJECT IDENTIFIER ::= { wrSwitchMIB 6 }
+wrsStatus            OBJECT IDENTIFIER ::= { wrSwitchMIB 254 }
 
 -- define one stupid object for a start
 
@@ -41,7 +46,7 @@ wrsScalarOne   OBJECT-TYPE
     MAX-ACCESS  read-write
     STATUS      current
     DESCRIPTION
-        "Just an integer"
+        "Integer incremented at every GET"
     ::= { wrsScalar 1 }
 
 -- This pstats stuff is copied, in a way, from the ifTable stuff (IF-MIB.txt)
@@ -709,5 +714,27 @@ wrsDateString   OBJECT-TYPE
         "The current TAI time, printed as %y-%m-%d-%H:%M:%S (no time zone)"
     ::= { wrsDate 2 }
 
+--wrsOperationStatus      OBJECT IDENTIFIER ::= { wrsExpertStatus 1 }
+
+--wrsCurrentTimeGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 1 }
+--wrsBootStatusGroup      OBJECT IDENTIFIER ::= { wrsOperationStatus 2 }
+--wrsTemperatureGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 3 }
+
+--wrsRestartCntGroup      OBJECT IDENTIFIER ::= { wrsExpertStatus 2 }
+--wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
+--wrsPstatsTable          OBJECT IDENTIFIER ::= { wrsExpertStatus 4 }
+--wrsPtpDataTable         OBJECT IDENTIFIER ::= { wrsExpertStatus 5 }
+--wrsPortStatusTable      OBJECT IDENTIFIER ::= { wrsExpertStatus 6 }
+--wrsNetworking
+--Configuration
+
+--wrsDetailedStatusesGroup   OBJECT IDENTIFIER ::= { wrsStatus 1 }
+
+--wrsOSStatusGroup           OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 1 }
+--wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
+--wrsNetworkingStatusGroup   OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 3 }
+
+--wrsVersionGroup            OBJECT IDENTIFIER ::= { wrsStatus 2 }
+--wrsGeneralStatusGroup      OBJECT IDENTIFIER ::= { wrsStatus 254 }
 
 END
