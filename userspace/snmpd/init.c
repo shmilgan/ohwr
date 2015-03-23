@@ -7,6 +7,7 @@
 
 /* The sub-init functions */
 #include "wrsSnmp.h"
+#include "snmp_shmem.h"
 #include "wrsPtpDataTable.h"
 #include "wrsTemperature.h"
 #include "wrsOSStatus.h"
@@ -16,6 +17,7 @@ FILE *wrs_logf; /* for the local-hack messages */
 
 void init_wrsSnmp(void)
 {
+	init_shm();
 	init_wrsScalar();
 	init_wrsPstats();
 	init_wrsPpsi();

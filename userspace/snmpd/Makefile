@@ -26,6 +26,7 @@ CFLAGS += -DWRS_WITH_SNMP_HACKISH_LOG=0
 SHLIB = wrsSnmp.so
 SOURCES = \
 	init.c \
+	snmp_shmem.c \
 	wrsScalar.c \
 	wrsPstats.c \
 	wrsPpsi.c \
