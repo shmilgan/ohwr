@@ -16,11 +16,15 @@
 
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
+#include <ppsi/ppsi.h>
+#include <libwr/hal_shmem.h>
 
 extern struct wrs_shm_head *hal_head;
 extern struct hal_shmem_header *hal_shmem;
 extern struct hal_port_state *hal_ports;
 extern int hal_nports_local;
+extern struct wrs_shm_head *ppsi_head;
+extern struct wr_servo_state_t *ppsi_servo;
 
 /*
  * local hack: besides the file pointer, that is there anyways,

@@ -32,7 +32,7 @@ SOURCES = \
 	wrsVersion.c \
 	wrsDate.c \
 	shmem.c \
-	wrsPtpData.c \
+	wrsPtpDataTable.c \
 	wrsTemperature.c \
 	wrsOSStatus.c \
 	wrsPortStatusTable.c

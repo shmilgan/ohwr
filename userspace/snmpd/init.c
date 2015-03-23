@@ -7,6 +7,7 @@
 
 /* The sub-init functions */
 #include "wrsSnmp.h"
+#include "wrsPtpDataTable.h"
 #include "wrsTemperature.h"
 #include "wrsOSStatus.h"
 #include "wrsPortStatusTable.h"
@@ -20,7 +21,7 @@ void init_wrsSnmp(void)
 	init_wrsPpsi();
 	init_wrsVersion();
 	init_wrsDate();
-	init_wrsPtpData();
+	init_wrsPtpDataTable();
 	init_wrsTemperature();
 	init_wrsOSStatus();
 	init_wrsPortStatusTable();

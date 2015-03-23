@@ -8,7 +8,7 @@ WR-SWITCH-MIB DEFINITIONS ::= BEGIN
 
 -- IMPORTS: Include definitions from other mibs here
 IMPORTS
-        OBJECT-TYPE, Integer32, Counter32, Counter64,
+        OBJECT-TYPE, Integer32, Unsigned32, Counter32, Counter64,
         MODULE-IDENTITY, enterprises          FROM SNMPv2-SMI
         DisplayString                         FROM SNMPv2-TC;
 
@@ -579,7 +579,216 @@ wrsTempThresholdPSR OBJECT-TYPE
 --wrsRestartCntGroup      OBJECT IDENTIFIER ::= { wrsExpertStatus 2 }
 --wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
 --wrsPstatsTable          OBJECT IDENTIFIER ::= { wrsExpertStatus 4 }
---wrsPtpDataTable         OBJECT IDENTIFIER ::= { wrsExpertStatus 5 }
+-- wrsPtpDataTable (.6.1.5)
+wrsPtpDataTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF WrsPtpDataEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "Information for each ptp servo"
+    ::= { wrsExpertStatus 5 }
+
+wrsPtpDataEntry OBJECT-TYPE
+    SYNTAX      WrsPtpDataEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "An entry containing ptp servo statuses"
+    INDEX   { wrsPtpDataIndex }
+    ::= { wrsPtpDataTable 1 }
+
+WrsPtpDataEntry ::=
+    SEQUENCE {
+        wrsPtpDataIndex         Unsigned32,
+        wrsPtpPortName          DisplayString,
+        wrsPtpGrandmasterID     OCTET STRING,
+        wrsPtpOwnID             OCTET STRING,
+        wrsPtpMode              INTEGER,
+        wrsPtpServoState        DisplayString,
+        wrsPtpServoStateN       INTEGER,
+        wrsPtpPhaseTracking     INTEGER,
+        wrsPtpSyncSource        DisplayString,
+        wrsPtpClockOffsetPs     Counter64,
+        wrsPtpClockOffsetPsHR   Integer32,
+        wrsPtpSkew              Integer32,
+        wrsPtpRTT               Counter64,
+        wrsPtpLinkLength        Unsigned32,
+        wrsPtpServoUpdates      Counter32,
+        wrsPtpDeltaTxM          Integer32,
+        wrsPtpDeltaRxM          Integer32,
+        wrsPtpDeltaTxS          Integer32,
+        wrsPtpDeltaRxS          Integer32
+    }
+
+wrsPtpDataIndex OBJECT-TYPE
+    SYNTAX         Unsigned32
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION
+            "Index for wrsPtpDataTable"
+    ::= { wrsPtpDataEntry 1 }
+
+wrsPtpPortName OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..12))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Port name on which servo instance is running"
+    ::= { wrsPtpDataEntry 2 }
+
+wrsPtpGrandmasterID OBJECT-TYPE
+    SYNTAX       OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The ClockID of the current grandmaster"
+    ::= { wrsPtpDataEntry 3 }
+
+wrsPtpOwnID OBJECT-TYPE
+    SYNTAX       OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The ClockID of this WR device"
+    ::= { wrsPtpDataEntry 4 }
+
+wrsPtpMode OBJECT-TYPE
+    SYNTAX INTEGER {
+                unknown(0),        -- same as WRC_MODE macros
+                grandmaster(1),
+                master(2),
+                slave(3)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The mode of this clock"
+    ::= { wrsPtpDataEntry 5 }
+
+wrsPtpServoState OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The servo state if slave"
+    ::= { wrsPtpDataEntry 6 }
+
+wrsPtpServoStateN OBJECT-TYPE
+    SYNTAX INTEGER {
+                uninitialized(0),
+                syncNsec(1),
+                syncSec(2),
+                syncPhase(3),
+                trackPhase(4),
+                waitSyncIdle(5),
+                waitOffsetStable(6)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Numeric representation of servo state"
+    ::= { wrsPtpDataEntry 7 }
+
+wrsPtpPhaseTracking OBJECT-TYPE
+    SYNTAX INTEGER {
+               na(0),
+               notTracking(1),
+               tracking(2)
+    }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Whether phase tracking is enabled in the servo"
+    ::= { wrsPtpDataEntry 8 }
+
+wrsPtpSyncSource OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The port name that is currently the synchronization source"
+    ::= { wrsPtpDataEntry 9 }
+
+wrsPtpClockOffsetPs OBJECT-TYPE
+    SYNTAX      Counter64 -- integer64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Current clock offset from master, in picoseconds"
+    ::= { wrsPtpDataEntry 10 }
+
+wrsPtpClockOffsetPsHR OBJECT-TYPE
+    SYNTAX      Integer32 -- should be something like gauge32, but with int range
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Human Readable current clock offset from master, in picoseconds with saturation to integer"
+    ::= { wrsPtpDataEntry 11 }
+
+wrsPtpSkew OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The estimated change of master-to-slave delay, in picoseconds"
+    ::= { wrsPtpDataEntry 12 }
+
+wrsPtpRTT OBJECT-TYPE
+    SYNTAX      Counter64 -- unsigned64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "The round-trip-time, from master, in picoseconds"
+    ::= { wrsPtpDataEntry 13 }
+
+wrsPtpLinkLength OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Estimated fiber length, from master-to-slave delay, in meters"
+    ::= { wrsPtpDataEntry 14 }
+
+wrsPtpServoUpdates OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "How many time did the servo run"
+    ::= { wrsPtpDataEntry 15 }
+
+wrsPtpDeltaTxM OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Fixed Tx latency on Master side"
+    ::= { wrsPtpDataEntry 16 }
+
+wrsPtpDeltaRxM OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Fixed Rx latency on Master side"
+    ::= { wrsPtpDataEntry 17 }
+
+wrsPtpDeltaTxS OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Fixed Tx latency on Slave side"
+    ::= { wrsPtpDataEntry 18 }
+
+wrsPtpDeltaRxS OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Fixed Rx latency on Slave side"
+    ::= { wrsPtpDataEntry 19 }
+
 -- per-port (.6.1.6)
 wrsPortStatusTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF WrsPortStatusEntry
