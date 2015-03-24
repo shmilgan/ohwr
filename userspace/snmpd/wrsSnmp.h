@@ -103,7 +103,6 @@ extern void init_wrsScalar(void);
 
 /* Real stuff follows */
 extern void init_wrsPstats(void);
-extern void init_wrsPpsi(void);
 extern void init_wrsVersion(void);
 extern void init_wrsDate(void);
 

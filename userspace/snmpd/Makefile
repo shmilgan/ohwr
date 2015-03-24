@@ -29,7 +29,6 @@ SOURCES = \
 	snmp_shmem.c \
 	wrsScalar.c \
 	wrsPstats.c \
-	wrsPpsi.c \
 	wrsVersion.c \
 	wrsDate.c \
 	shmem.c \

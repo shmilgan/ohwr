@@ -20,7 +20,6 @@ void init_wrsSnmp(void)
 	init_shm();
 	init_wrsScalar();
 	init_wrsPstats();
-	init_wrsPpsi();
 	init_wrsVersion();
 	init_wrsDate();
 	init_wrsPtpDataTable();
