@@ -119,7 +119,8 @@ void TT_INIT_FUNC(void)
 	/* Add indexes: we only use one integer OID member as line identifier */
 	netsnmp_table_helper_add_indexes(table_info, ASN_INTEGER, 0);
 
-	table_info->min_column = 1;
+	/* first column is index, but don't return it, it is only for MIB */
+	table_info->min_column = 2;
 	table_info->max_column = ARRAY_SIZE(TT_PICKINFO);
 
 	/* Iterator info */
