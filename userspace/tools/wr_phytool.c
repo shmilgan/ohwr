@@ -500,6 +500,215 @@ void rt_command(int ep, int argc, char *argv[])
 	}
 }
 
+#include <fpga_io.h>
+#include <regs/psu-regs.h>
+#include <stddef.h>
+#define psu_rd(reg) \
+	 _fpga_readl(FPGA_BASE_PSU + offsetof(struct PSU_WB, reg))
+
+#define psu_wr(reg, val) \
+	 _fpga_writel(FPGA_BASE_PSU + offsetof(struct PSU_WB, reg), val)
+void psu_command(int ep, int argc, char *argv[])
+{
+	uint32_t val = 0;
+	int i, old;
+	
+	if(!strcmp(argv[3], "txport"))
+	{
+		if(argc < 5) 
+			printf("Too few arguments, need txport 0/1 port_id \n");
+		else if(atoi(argv[4])==1) // add port
+		{
+			val = psu_rd(TXPM);
+			val = PSU_TXPM_PORT_MASK_R(val);
+			val = val | (0x1 << atoi(argv[5]));
+			psu_wr(TXPM, val);
+			printf("[PSU] added master port %d | mask 0x4%x\n", atoi(argv[5]), val);
+		}
+		else  // remove port
+		{
+			val = psu_rd(TXPM);
+			val = PSU_TXPM_PORT_MASK_R(val);
+			val = val & ~(0x1 << atoi(argv[5]));
+			psu_wr(TXPM, val);
+			val = PSU_TXPM_PORT_MASK_R(val);
+			printf("[PSU] removed master port %d | mask 0x4%x\n", atoi(argv[5]), val);
+		}
+	} 
+	else if (!strcmp(argv[3], "rxport"))
+	{
+		if(argc < 4) 
+			printf("Too few arguments, need rxport port_id \n");
+		else
+		{
+			val = psu_rd(RXPM);
+			val = PSU_RXPM_PORT_MASK_R(val);
+			for(i=0;i<32;i++) if((val >> i) & 0x1) old=i;
+			val = 0x1 << atoi(argv[4]);
+			psu_wr(RXPM, val);
+			printf("[PSU] setting slaver port %d old %d | mask 0x4%x\n", atoi(argv[4]), old, val);
+		}
+	}
+	else if (!strcmp(argv[3], "hdo"))
+	{
+		if(argc < 3) 
+			printf("Too few arguments, need hdo 0/1 \n");
+		else if(atoi(argv[4])==1)
+		{
+			psu_wr(PTD, PSU_PTD_DBG_HOLDOVER_ON);
+			printf("[PSU] Enable faked holdover to send announces\n");
+		}
+		else
+		{
+			psu_wr(PTD, 0);
+			printf("[PSU] Disable faked holdover to send announces\n");
+		  
+		}
+	}
+	else if (!strcmp(argv[3], "dump"))
+	{
+		int word_addr=0;
+		int bank=0;
+		i=0;
+		while(i < 1024)
+		{
+
+			
+			val = PSU_PTD_TX_RAM_RD_ADR_W(i);
+			psu_wr(PTD, val);
+			
+			do{
+			   val = 0;
+			   val = psu_rd(PTD);
+			}while((val & PSU_PTD_TX_RAM_DAT_VALID) == 0);   
+			
+			val = PSU_PTD_TX_RAM_RD_DAT_R(val);
+			
+			if(i== 80) 
+			{
+				i = 256; 
+				word_addr=0; 
+				bank++; 
+			}
+			if(i==335) 
+			{
+				i = 512; 
+				word_addr=0; 
+				bank=0; 
+			}
+			
+			if(i==0)    printf("[PSU-dump] === Bank 1 === \n" );
+			if(i==256)  printf("[PSU-dump] === Bank 2 === \n" );
+			if(i==512)  printf("[PSU-dump] == perport === \n" );
+			if((val >> 16) & 0x1)
+			{
+				if(i <335)              printf("addr = %2d bank=%d word=%2d : 0x%4x\n",i, bank,word_addr, 0xFFFF & val);
+				else if(word_addr == 0) printf("addr = %2d port=%d port     :   %4d\n",i, bank, 0xFFFF & val);
+				else if(word_addr == 1) printf("addr = %2d port=%d seq id   :   %4d\n",i, bank, 0xFFFF & val);
+			}
+			i++;
+			if     (i== 80) bank++;
+			else if(i==335) bank=0;
+			else if(i >355 && (0x1 & word_addr)==1) bank++; 
+			if(i>335       && (0x1 & word_addr)==1) word_addr=0;
+			else                        word_addr++;
+			
+
+		}
+// 		for(i=0; i < 800; i++)
+// 		{
+// 			val = PSU_PTD_TX_RAM_RD_ENA | PSU_PTD_TX_RAM_RD_ADR_W(i);
+// 			psu_wr(PTD, val);
+// 			val=psu_rd(PTD);
+// 			val=PSU_PTD_TX_RAM_RD_DAT_R(val);
+// 			if(i==0)              printf("[PSU-dump] === Bank 1 === \n" );
+// 			if(i==256)            printf("[PSU-dump] === Bank 2 === \n" );
+// 			if(i==512)            printf("[PSU-dump] == perport === \n" );
+// 			if((val >> 16) & 0x1) printf("[PSU-dump] %4d : 0x4%x\n", i, val);
+// 		}
+
+	}
+	else if (!strcmp(argv[3], "show"))
+	{
+		val = psu_rd(PCR);
+		printf("[PSU-show] Enabled             %d (not supported yet) \n",(PSU_PCR_PSU_ENA & val)!=0);
+		printf("[PSU-show] Injection Priority  %d \n",PSU_PCR_INJ_PRIO_R(val));
+		printf("[PSU-show] Holdover clockClass %d \n",PSU_PCR_HOLDOVER_CLK_CLASS_R(val));
+		val = psu_rd(PSR);
+		printf("[PSU-show] In Holdover mode    %d \n",(PSU_PSR_HOLDOVER_ON & val)!=0);
+		printf("[PSU-show] Rx-ed Holdover Msg  %d \n",(PSU_PSR_HD_MSG_RX & val)!=0);
+		printf("[PSU-show] Holdover SPLL bit   %d \n",(PSU_PSR_HD_ON_SPLL & val)!=0);
+		printf("[PSU-show] Active SPLL ref bit ");
+		val = PSU_PSR_ACTIVE_REF_SPLL_R(val);
+		for(i=0;i<24;i++)            
+			if((val >> i) & 0x1) printf("%d [0x%x]",i,val);
+		printf("\n");
+				
+			
+		val = psu_rd(TXPM);
+		val = PSU_TXPM_PORT_MASK_R(val);
+		for(i=0;i<32;i++)
+			if((val >> i) & 0x1) printf("[PSU-show] tx-snooping enabled at port %d (master)\n",i);
+		val = psu_rd(RXPM);
+		val = PSU_RXPM_PORT_MASK_R(val);
+		for(i=0;i<32;i++)
+			if((val >> i) & 0x1) printf("[PSU-show] rx-snooping enabled at port %d (slave)\n",i);
+	}
+	else if (!strcmp(argv[3], "txPrio"))
+	{
+		val = psu_rd(PCR);
+		val = val & ~PSU_PCR_INJ_PRIO_MASK;
+		val = val |  PSU_PCR_INJ_PRIO_W(atoi(argv[4]));
+		psu_wr(PCR, val);
+		printf("[PSU] Set transmission Priority to %d [mask: 0x%x]\n",atoi(argv[4]), val);
+	}
+	else if (!strcmp(argv[3], "clkCl"))
+	{
+		val = psu_rd(PCR);
+		val = val & ~PSU_PCR_HOLDOVER_CLK_CLASS_MASK;
+		val = val |  PSU_PCR_HOLDOVER_CLK_CLASS_W(atoi(argv[4]));
+		psu_wr(PCR, val);
+		printf("[PSU] Set holdover clockClass to %d [mask: 0x%x]\n",atoi(argv[4]), val);
+	}
+	else if (!strcmp(argv[3], "clr"))
+	{
+		val = psu_rd(PCR);
+		val = val |  PSU_PCR_PSU_CLR_TX_MSG;
+		psu_wr(PCR, val);
+		printf("[PSU] Clear holdover msg received bit [mask: 0x%x]\n", val);
+	}
+	else if (!strcmp(argv[3], "txset"))
+	{
+		val = psu_rd(PTCR);
+		printf("[PSU] Old tx snoop config [mask: 0x%x]:\n", 0xF & val);
+		printf("[PSU] \t Drop msg with duplicate seqId   : %d\n",(val & PSU_PTCR_SEQID_DUP_DROP)==1);
+		printf("[PSU] \t Drop msg with wrong sequence    : %d\n",(val & PSU_PTCR_SEQID_WRG_DROP)==1);
+		printf("[PSU] \t Drop msg with mismatched ClkCl  : %d\n",(val & PSU_PTCR_CLKCL_WRG_DROP)==1);
+		printf("[PSU] \t Drop msg with mismatched PortId : %d\n",(val & PSU_PTCR_PRTID_WRG_DROP)==1);
+		val = atoi(argv[4]);
+		psu_wr(PTCR, val);
+		printf("[PSU] New tx snoop config [mask: 0x%x]:\n",0xF & val);
+		printf("[PSU] \t Drop msg with duplicate seqId   : %d\n",(val & PSU_PTCR_SEQID_DUP_DROP)==1);
+		printf("[PSU] \t Drop msg with wrong sequence    : %d\n",(val & PSU_PTCR_SEQID_WRG_DROP)==1);
+		printf("[PSU] \t Drop msg with mismatched ClkCl  : %d\n",(val & PSU_PTCR_CLKCL_WRG_DROP)==1);
+		printf("[PSU] \t Drop msg with mismatched PortId : %d\n",(val & PSU_PTCR_PRTID_WRG_DROP)==1);
+	}
+	else if (!strcmp(argv[3], "rxset"))
+	{
+		val = psu_rd(PRCR);
+		printf("[PSU] Old rx snoop config [mask: 0x%x]:\n", 0xF & val);
+		printf("[PSU] \t Detect duplicate seqId and ignore   : %d\n",(val & PSU_PRCR_SEQID_DUP_DET)==1);
+		printf("[PSU] \t Detect wrong seqId  and ignore      : %d\n",(val & PSU_PRCR_SEQID_WRG_DET)==1);
+		printf("[PSU] \t Detect mismatched PortID and ignore : %d\n",(val & PSU_PRCR_PRTID_WRG_DET)==1);
+		val = atoi(argv[4]);
+		psu_wr(PRCR, val);
+		printf("[PSU] \t Detect duplicate seqId and ignore   : %d\n",(val & PSU_PRCR_SEQID_DUP_DET)==1);
+		printf("[PSU] \t Detect wrong seqId  and ignore      : %d\n",(val & PSU_PRCR_SEQID_WRG_DET)==1);
+		printf("[PSU] \t Detect mismatched PortID and ignore : %d\n",(val & PSU_PRCR_PRTID_WRG_DET)==1);
+	}
+	else
+		printf("[PSU] wrong command: %s]\n",argv[3]);
+}
 
 struct {
 	char *cmd;
@@ -552,6 +761,12 @@ struct {
 	"",
 	"RT subsystem command [show,lock,master,gm,adj,hdo, mbox, hdost]",
 	rt_command},
+	
+	{
+	"psu",
+	"",
+	"PTP support unit command [txport, rxport, hdo, dump, show, clkCl, txPrio, clr,rxset,txset]",
+	psu_command},
 	{NULL}
 
 };
