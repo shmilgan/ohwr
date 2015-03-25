@@ -32,7 +32,7 @@ cern OBJECT IDENTIFIER ::= { enterprises 96 }
 -- Define typical mib nodes
 -- we'll prefix everything in this mib with wrs (White Rabbit Switch)
 wrsScalar      OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
-wrsPstatsTable OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }  -- going to be obsolete
+--wrsPstatsTable OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }  == obsolete
 --wrsPpsi        OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }  == obsolete
 wrsVersion     OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }  -- going to be obsolete
 wrsDate        OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }  -- going to be obsolete
@@ -48,206 +48,6 @@ wrsScalarOne   OBJECT-TYPE
     DESCRIPTION
         "Integer incremented at every GET"
     ::= { wrsScalar 1 }
-
--- This pstats stuff is copied, in a way, from the ifTable stuff (IF-MIB.txt)
--- We have the ports as columns, so they are a fixed number. And the
--- counters as lines.  This allows to change counters following gateware.
--- even if it is not standard practice.  Otherwise, we'd need to rewrite
--- code every time (I *hate* this obsolete crap: code generators should not
--- be like that).
-
-wrsPstatsTable OBJECT-TYPE
-    SYNTAX      SEQUENCE OF pstatsEntry
-    MAX-ACCESS  not-accessible
-    STATUS      current
-    DESCRIPTION
-            "A list of pstat counters. One column per interface.
-             The number of entries is given by the value of pstatsNumber."
-    ::= { wrSwitchMIB 2 }
-
-pstatsEntry OBJECT-TYPE
-    SYNTAX      PstatsEntry
-    MAX-ACCESS  not-accessible
-    STATUS      current
-    DESCRIPTION
-            "An entry containing a pstat name and values for all WR ports."
-    INDEX   { pstatsIndex }
-    ::= { wrsPstatsTable 1 }
-
-PstatsEntry ::=
-    SEQUENCE {
-        pstatsDescr                 DisplayString,
-        pstatsWR0                   Counter32,
-        pstatsWR1                   Counter32,
-        pstatsWR2                   Counter32,
-        pstatsWR3                   Counter32,
-        pstatsWR4                   Counter32,
-        pstatsWR5                   Counter32,
-        pstatsWR6                   Counter32,
-        pstatsWR7                   Counter32,
-        pstatsWR8                   Counter32,
-        pstatsWR9                   Counter32,
-        pstatsWR10                  Counter32,
-        pstatsWR11                  Counter32,
-        pstatsWR12                  Counter32,
-        pstatsWR13                  Counter32,
-        pstatsWR14                  Counter32,
-        pstatsWR15                  Counter32,
-        pstatsWR16                  Counter32,
-        pstatsWR17                  Counter32
-    }
-
-pstatsDescr OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "A textual string describing this counter"
-    ::= { pstatsEntry 1 }
-
-pstatsWR0 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr0."
-    ::= {pstatsEntry 2 }
-
-pstatsWR1 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr1."
-    ::= {pstatsEntry 3 }
-
-pstatsWR2 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr2."
-    ::= {pstatsEntry 4 }
-
-pstatsWR3 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr3."
-    ::= {pstatsEntry 5 }
-
-pstatsWR4 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr4."
-    ::= {pstatsEntry 6 }
-
-pstatsWR5 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr5."
-    ::= {pstatsEntry 7 }
-
-pstatsWR6 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr6."
-    ::= {pstatsEntry 8 }
-
-pstatsWR7 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr7."
-    ::= {pstatsEntry 9 }
-
-pstatsWR8 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr8."
-    ::= {pstatsEntry 10 }
-
-pstatsWR9 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr9."
-    ::= {pstatsEntry 11 }
-
-pstatsWR10 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr10."
-    ::= {pstatsEntry 12 }
-
-pstatsWR11 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr11."
-    ::= {pstatsEntry 13 }
-
-pstatsWR12 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr12."
-    ::= {pstatsEntry 14 }
-
-pstatsWR13 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr13."
-    ::= {pstatsEntry 15 }
-
-pstatsWR14 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr14."
-    ::= {pstatsEntry 16 }
-
-pstatsWR15 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr15."
-    ::= {pstatsEntry 17 }
-
-pstatsWR16 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr16."
-    ::= {pstatsEntry 18 }
-
-pstatsWR17 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr17."
-    ::= {pstatsEntry 19 }
 
 -- Versions (4) are all just strings, several of them
 
@@ -414,7 +214,407 @@ wrsTempThresholdPSR OBJECT-TYPE
 
 --wrsRestartCntGroup      OBJECT IDENTIFIER ::= { wrsExpertStatus 2 }
 --wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
---wrsPstatsTable          OBJECT IDENTIFIER ::= { wrsExpertStatus 4 }
+-- wrsPstatsTable (.6.1.4)
+wrsPstatsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF WrsPstatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "Information for each ptp servo"
+    ::= { wrsExpertStatus 4 }
+
+wrsPstatsEntry OBJECT-TYPE
+    SYNTAX      WrsPstatsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "An entry containing ptp servo statuses"
+    INDEX   { wrsPstatsIndex }
+    ::= { wrsPstatsTable 1 }
+
+WrsPstatsEntry ::=
+    SEQUENCE {
+        wrsPstatsIndex                 Unsigned32,
+        wrsPstatsPortName              DisplayString,
+        wrsPstatsTXUnderrun            Counter32,
+        wrsPstatsRXOverrun             Counter32,
+        wrsPstatsRXInvalidCode         Counter32,
+        wrsPstatsRXSyncLost            Counter32,
+        wrsPstatsRXPauseFrames         Counter32,
+        wrsPstatsRXPfilterDropped      Counter32,
+        wrsPstatsRXPCSErrors           Counter32,
+        wrsPstatsRXGiantFrames         Counter32,
+        wrsPstatsRXRuntFrames          Counter32,
+        wrsPstatsRXCRCErrors           Counter32,
+        wrsPstatsRXPclass0             Counter32,
+        wrsPstatsRXPclass1             Counter32,
+        wrsPstatsRXPclass2             Counter32,
+        wrsPstatsRXPclass3             Counter32,
+        wrsPstatsRXPclass4             Counter32,
+        wrsPstatsRXPclass5             Counter32,
+        wrsPstatsRXPclass6             Counter32,
+        wrsPstatsRXPclass7             Counter32,
+        wrsPstatsTXFrames              Counter32,
+        wrsPstatsRXFrames              Counter32,
+        wrsPstatsRXDropRTUFull         Counter32,
+        wrsPstatsRXPrio0               Counter32,
+        wrsPstatsRXPrio1               Counter32,
+        wrsPstatsRXPrio2               Counter32,
+        wrsPstatsRXPrio3               Counter32,
+        wrsPstatsRXPrio4               Counter32,
+        wrsPstatsRXPrio5               Counter32,
+        wrsPstatsRXPrio6               Counter32,
+        wrsPstatsRXPrio7               Counter32,
+        wrsPstatsRTUValid              Counter32,
+        wrsPstatsRTUResponses          Counter32,
+        wrsPstatsRTUDropped            Counter32,
+        wrsPstatsFastMatchPriority     Counter32,
+        wrsPstatsFastMatchFastForward  Counter32,
+        wrsPstatsFastMatchNonForward   Counter32,
+        wrsPstatsFastMatchRespValid    Counter32,
+        wrsPstatsFullMatchRespValid    Counter32,
+        wrsPstatsForwarded             Counter32,
+        wrsPstatsTRURespValid          Counter32
+    }
+
+wrsPstatsIndex OBJECT-TYPE
+    SYNTAX         Unsigned32
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION
+            "Index for wrsPstatsTable"
+    ::= { wrsPstatsEntry 1 }
+
+wrsPstatsPortName OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..12))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Port name of port"
+    ::= { wrsPstatsEntry 2 }
+
+wrsPstatsTXUnderrun OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of TX underrun errors"
+    ::= { wrsPstatsEntry 3 }
+
+wrsPstatsRXOverrun OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX overrun errors"
+    ::= { wrsPstatsEntry 4 }
+
+wrsPstatsRXInvalidCode OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received invalid 8B10B code errors"
+    ::= { wrsPstatsEntry 5 }
+
+wrsPstatsRXSyncLost OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX link synchronization lost"
+    ::= { wrsPstatsEntry 6 }
+
+wrsPstatsRXPauseFrames OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received pause frames"
+    ::= { wrsPstatsEntry 7 }
+
+wrsPstatsRXPfilterDropped OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames dropped at pfilter"
+    ::= { wrsPstatsEntry 8 }
+
+wrsPstatsRXPCSErrors OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of errors occured during frame reception in PCS"
+    ::= { wrsPstatsEntry 9 }
+
+wrsPstatsRXGiantFrames OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received giant frames
+            (bigger than Maximum Receive Unit)"
+    ::= { wrsPstatsEntry 10 }
+
+wrsPstatsRXRuntFrames OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received runt frames
+            (smaller than 64bytes)"
+    ::= { wrsPstatsEntry 11 }
+
+wrsPstatsRXCRCErrors OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX CRC errors"
+    ::= { wrsPstatsEntry 12 }
+
+wrsPstatsRXPclass0 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 0 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 13 }
+
+wrsPstatsRXPclass1 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 1 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 14 }
+
+wrsPstatsRXPclass2 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 2 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 15 }
+
+wrsPstatsRXPclass3 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 3 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 16 }
+
+ wrsPstatsRXPclass4 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 4 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 17 }
+
+wrsPstatsRXPclass5 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 5 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 18 }
+
+wrsPstatsRXPclass6 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 6 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 19 }
+
+wrsPstatsRXPclass7 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 7 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 20 }
+
+wrsPstatsTXFrames OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of transmitted frames"
+    ::= { wrsPstatsEntry 21 }
+
+wrsPstatsRXFrames OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames"
+    ::= { wrsPstatsEntry 22 }
+
+wrsPstatsRXDropRTUFull OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames dropped due to RTU full"
+    ::= { wrsPstatsEntry 23 }
+
+wrsPstatsRXPrio0 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 0"
+    ::= { wrsPstatsEntry 24 }
+
+wrsPstatsRXPrio1 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 1"
+    ::= { wrsPstatsEntry 25 }
+
+wrsPstatsRXPrio2 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 2"
+    ::= { wrsPstatsEntry 26 }
+
+wrsPstatsRXPrio3 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 3"
+    ::= { wrsPstatsEntry 27 }
+
+wrsPstatsRXPrio4 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 4"
+    ::= { wrsPstatsEntry 28 }
+
+wrsPstatsRXPrio5 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 5"
+    ::= { wrsPstatsEntry 29 }
+
+wrsPstatsRXPrio6 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 6"
+    ::= { wrsPstatsEntry 30 }
+
+wrsPstatsRXPrio7 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 7"
+    ::= { wrsPstatsEntry 31 }
+
+wrsPstatsRTUValid OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of valid RTU requests"
+    ::= { wrsPstatsEntry 32 }
+
+wrsPstatsRTUResponses OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of valid RTU responses"
+    ::= { wrsPstatsEntry 33 }
+
+wrsPstatsRTUDropped OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of frames dropped at RTU"
+    ::= { wrsPstatsEntry 34 }
+
+wrsPstatsFastMatchPriority OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of priority frames matched by fast match"
+    ::= { wrsPstatsEntry 35 }
+
+wrsPstatsFastMatchFastForward OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of forwarded frames matched by fast match"
+    ::= { wrsPstatsEntry 36 }
+
+wrsPstatsFastMatchNonForward OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of not forwarded frames matched by fast match"
+    ::= { wrsPstatsEntry 37 }
+
+wrsPstatsFastMatchRespValid OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of fast match decisions"
+    ::= { wrsPstatsEntry 38 }
+
+wrsPstatsFullMatchRespValid OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of full match decisions"
+    ::= { wrsPstatsEntry 39 }
+
+wrsPstatsForwarded OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of forwarded frames"
+    ::= { wrsPstatsEntry 40 }
+
+wrsPstatsTRURespValid OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of TRU decisions"
+    ::= { wrsPstatsEntry 41 }
+
 -- wrsPtpDataTable (.6.1.5)
 wrsPtpDataTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF WrsPtpDataEntry

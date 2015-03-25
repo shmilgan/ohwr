@@ -102,7 +102,6 @@ static inline int dumpstruct(FILE *dest, char *name, void *ptr, int size)
 extern void init_wrsScalar(void);
 
 /* Real stuff follows */
-extern void init_wrsPstats(void);
 extern void init_wrsVersion(void);
 extern void init_wrsDate(void);
 
