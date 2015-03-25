@@ -30,6 +30,9 @@
 /* HardWare Debugging Unit */
 #define FPGA_BASE_HWDU 	  0x59000 
 
+/* PTP support unit */
+#define FPGA_BASE_PSU 	  0x70000 
+
 /* Endpoint  */
 #define FPGA_BASE_EP0 	   0x30000
 

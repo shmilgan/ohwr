@@ -388,6 +388,53 @@ peripheral {
 			prefix = "TAG";
 			trigger = LEVEL_1;
 	 };
+   
+   reg {
+      name = "Port state register (direct access)";
+      prefix = "PSR";
+      field {
+         name = "States";
+         prefix = "STATES";
+         size = 32;
+         type = SLV;
+         access_bus = READ_ONLY;
+         access_dev = WRITE_ONLY;
+      };
+   };
+   reg {
+      name = "PTP support unit (direct notification)";
+      prefix = "PSU";
+      field {
+         name = "Holdover State";
+         prefix = "HOLDOVER";
+         type = BIT;
+         access_bus = READ_WRITE;
+         access_dev = READ_ONLY;
+      };
+      field {
+         name = "Received Announce with Holdover clock Class, write 1 to clear";
+         description = "Informs about detection of Announce message that indactes the upstream clocks are in holdover:\
+         Read 0: no mesasage detected \
+         Read 1: detected announce with configured clockClass at configured active slave \
+         Write 1: clear flag.";
+         prefix = "RX_HOLDOVER_MSG";
+         load = LOAD_EXT;
+         type = BIT;
+         access_bus = READ_WRITE;
+         access_dev = READ_WRITE;
+      };
+      field {
+         name = "Mask which indicates which reference input is used (i.e. active slave port)";
+         prefix = "SELECTED_REF_ID";
+         size = 5;
+         align = 8;
+         type = SLV;
+         access_bus = READ_WRITE;
+         access_dev = READ_ONLY;
+      };
+
+   };
+
 };
 
 

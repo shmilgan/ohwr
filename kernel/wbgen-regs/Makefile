@@ -17,6 +17,7 @@ WB_TSTAMP   = $(MODULES_WRS)/wrsw_txtsu/wrsw_txtsu.wb
 WB_RTU      = $(MODULES_WRS)/wrsw_rtu/rtu_wishbone_slave.wb
 WB_NIC      = $(MODULES_WRS)/wrsw_nic/wr_nic.wb
 WB_SOFTPLL  = $(MODULES_WRC)/wr_softpll_ng/spll_wb_slave.wb
+WB_PSU      = $(MODULES_WRS)/wrsw_psu/psu_wishbone_controller.wb
 
 HEADERS = endpoint-regs.h endpoint-mdio.h ppsg-regs.h tstamp-regs.h rtu-regs.h \
           nic-regs.h softpll-regs.h pstats-regs.h
@@ -47,4 +48,5 @@ wbinput:
 	@cp $(WB_RTU) rtu-regs.wb
 	@cp $(WB_NIC) nic-regs.wb
 	@cp $(WB_SOFTPLL) softpll-regs.wb
+	@cp $(WB_PSU) psu-regs.wb
 	@echo "Copied input files from subversions to local directory"

@@ -1,0 +1,291 @@
+-- -*- Mode: LUA; tab-width: 2 -*-
+
+-------------------------------------------------------------------------------
+-- Title      : Wishbone Register Block (slave)
+-- Project    : White Rabbit PSU
+-------------------------------------------------------------------------------
+-- File       : psu_wishbone_controller.wb
+-- Author     : Maciej Lipinski
+-- Company    : CERN BE-CO-HT
+-- Created    : 2015-03-18
+-- Last update: 2015-03-18
+-------------------------------------------------------------------------------
+-- Description: 
+-------------------------------------------------------------------------------
+
+-- Copyright (c) 2015 CERN / BE-CO-HT
+--
+-- This source file is free software; you can redistribute it
+-- and/or modify it under the terms of the GNU Lesser General
+-- Public License as published by the Free Software Foundation;
+-- either version 2.1 of the License, or (at your option) any
+-- later version.
+--
+-- This source is distributed in the hope that it will be
+-- useful, but WITHOUT ANY WARRANTY; without even the implied
+-- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+-- PURPOSE.  See the GNU Lesser General Public License for more
+-- details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this source; if not, download it
+-- from http://www.gnu.org/licenses/lgpl-2.1.html
+--
+-------------------------------------------------------------------------------
+-- FIXME:
+-------------------------------------------------------------------------------
+-- Revisions  :
+-- Date        Version  Author          Description
+-- 2015-03-18  1.0      mlipinsk	    Created
+-------------------------------------------------------------------------------
+
+peripheral {
+
+	name = "WR PTP Support Unit Controller";
+	description = "WB control of unit which supports fast generation/detection of PTP Announce messages";
+	hdl_entity = "psu_wishbone_controller";
+	prefix = "psu";
+
+-- ECR
+	reg {
+		name = "PSU Control Register";
+		prefix = "PCR";
+		description = "General PSU control register";
+		
+			field {
+				name = "Enable PSU";
+				description = "A generic enable/disable button";
+				prefix = "PSU_ENA";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = BIT;
+			};
+			field {
+				name = "Clear Rx Msg";
+				description = "Clear the register that indicates Announce with holdover clockClass has been received";
+				prefix = "PSU_CLR_TX_MSG";
+				access_bus = WRITE_ONLY;
+				access_dev = READ_ONLY;
+				type = MONOSTABLE;
+			};
+			field {
+				name = "Inject Packet Priority";
+				description = "The priority provided to RTU with which the injected Announce is sent (does not change priority in the Ethernet frame, might not have at all) but affects priority in output queue of SWcore";
+				prefix = "INJ_PRIO";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = SLV;
+				size = 3;
+				align= 8;
+			};
+			field {
+				name = "Holdover clockClass";
+				description = "ClockClass to be sent when HW-generating Announce and the one we detect when snooping received Announce";
+				prefix = "HOLDOVER_CLK_CLASS";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = SLV;
+				size = 8;
+				align= 16;
+			};
+	
+	};
+
+	reg {
+		name = "PSU Status";
+		prefix = "PSR";
+		description = "Status bits of the PSU operation";
+		
+			field {
+				name = "Holdover ON";
+				description = "Indicates that PSU is working in >holdover mode";
+				prefix = "HOLDOVER_ON";
+				type = BIT;
+				access_bus = READ_ONLY;
+				access_dev = WRITE_ONLY;
+			};
+			field {
+				name = "Announce Holdover Msg Received";
+				description = "Indicates that Announce message with holdover ClockClass\
+                              was received on a port. This is the same bit which goes to SoftPLL, it is\
+                              cleared by SoftPLL when read out.";
+				prefix = "HD_MSG_RX";
+				type = BIT;
+				access_bus = READ_ONLY;
+				access_dev = WRITE_ONLY;
+			};
+			field {
+				name = "Holdover info from SoftPLL";
+				description = "Indicates information provided by SoftPLL about holdover on.";
+				prefix = "HD_ON_SPLL";
+				type = BIT;
+				access_bus = READ_ONLY;
+				access_dev = WRITE_ONLY;
+			};
+			field {
+				name = "Active reference from SoftPLl";
+				description = "Active reference number - information from SoftPLL";
+				prefix = "ACTIVE_REF_SPLL";
+				type = SLV;
+				size = 24;
+				align = 8;
+				access_bus = READ_ONLY;
+				access_dev = WRITE_ONLY;
+			 };
+
+	};
+
+	reg {
+		name = "PSU Tx Control Register";
+		prefix = "PTCR";
+		description = "PSU Control register for tranmission, it defines drop-conditions\
+		for transmitted Announce and applies ONLY when in holdover. This means that ";
+		
+			field {
+				name = "Drop Announce with duplicate sequence Number";
+                              description = "Default=0 means that duplicates are not dropped, 1: means that they are dropped (when holdover)";
+				prefix = "SEQID_DUP_DROP";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = BIT;
+			};
+			field {
+				name = "Drop Announce with wrong sequence Number";
+				description = "Default=0 means that\
+                              the announce with wrong sequence number are not dropped, except when\
+                              duplicate, depending o the duplicate setting.\
+                              1: announce msgs with wrong sequence ID are dropped (when holdover)";
+				prefix = "SEQID_WRG_DROP";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = BIT;
+			};	
+			field {
+				name = "Drop Announce with mismatched ClockClass";
+				description = "Default=0 means that\
+				the announce with non-holdover clockClass are not dropped.\
+				1: the announce msgs with non-holdoverClass are dropped (when holdover)";
+				prefix = "CLKCL_WRG_DROP";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = BIT;
+			};
+			field {
+				name = "Drop Announce with mismatched PortIdentity";
+				description = "Default=0 means\
+                              that the announce with PortIdenity different then the previously sent\
+                              announce are not dropped.\
+                              1: announce msgs with PortId different then previously sent are dropped (when holdover).";
+				prefix = "PRTID_WRG_DROP";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = BIT;
+			};
+	};
+	reg {
+		name = "PSU Rx Control Register";
+		prefix = "PRCR";
+		description = "PSU Control register for reception - it defines the detect-conditions \
+		for received Announce (i.e. what information, additionally clockClass, should be considered\
+		when validating the received Announce message)";
+		
+			field {
+				name = "Detect duplicate sequence number in Announce ";
+				description = "The announce msg is considered only if it is not a duplicated";
+				prefix = "SEQID_DUP_DET";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = BIT;
+			};
+			field {
+				name = "Detect wrong sequence number in Announce ";
+				description = "The announce msg is considered only if sequence number is as expected";
+				prefix = "SEQID_WRG_DET";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = BIT;
+			};	
+			field {
+				name = "Detect mismatched PortIdentity in Announce messages";
+				description = "The announce msg is considered only if PortIdentity matches the previous";
+				prefix = "PRTID_WRG_DET";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = BIT;
+			};
+	};
+	reg {
+		name = "Rx port mask";
+		description = "Mask which indicates which ports should be snooped at reception, i.e. Announces received on which ports can trigger SoftPLL event"; 
+		prefix = "RxPM";
+			field {
+				name = "Port Mask";
+				description = "0/1 enable/disable port";
+				prefix = "PORT_MASK";
+				type = SLV;
+				size = 32;
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+			 };
+       };
+
+	reg {
+		name = "Tx port mask";
+		description = "Mask which indicates which ports should be snooped at transmission, i.e. Announces received on which ports can trigger SoftPLL event"; 
+		prefix = "TxPM";
+			field {
+				name = "Port Mask";
+				description = "0/1 enable/disable port";
+				prefix = "PORT_MASK";
+				type = SLV;
+				size = 32;
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+			 };
+       };
+
+	reg {
+		name = "PSU test and debug";
+		prefix = "PTD";
+		description = "Some debugging and control for testing";
+		
+			field {
+				name = "Holdover ON";
+				description = "This tests holdover condition (info from SoftPLL), mainly to trigger Announce sending";
+				prefix = "DBG_HOLDOVER_ON";
+				type = BIT;
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+			};
+			field {
+				name = "Tx inject/snoop RAM read valid";
+				description = "Indicates whether the data read out is valid";
+				prefix = "TX_RAM_DAT_VALID";
+				type = BIT;
+				access_bus = READ_ONLY;
+				access_dev = WRITE_ONLY;
+			};
+			
+			field {
+				name = "Tx inject/snoop RAM ADR";
+				description = "Address to read from Tx inject/snoop RAM";
+				prefix = "TX_RAM_RD_ADR";
+				access_bus = READ_WRITE;
+				access_dev = READ_ONLY;
+				type = SLV;
+				align = 4;
+				size = 10;
+			};
+			field {
+				name = "Tx inject/snoop RAM DAT";
+				description = "data to read from Tx inject/snoop RAM";
+				prefix = "TX_RAM_RD_DAT";
+				access_bus = READ_ONLY;
+				access_dev = WRITE_ONLY;
+				type = SLV;
+				size = 18;
+			};
+	};
+
+	
+};
