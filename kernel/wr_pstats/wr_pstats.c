@@ -52,6 +52,8 @@ static struct pstats_version_description pstats_desc[] = {
 		.cnt_names = "Inv pstats ver reported by FPGA",
 		.rx_packets = 0,
 		.tx_packets = 0,
+		.rx_errors = 0,
+		.tx_carrier_errors = 0,
 		.rx_length_errors = 0,
 		.rx_crc_errors = 0,
 		.rx_fifo_errors = 0,
@@ -100,6 +102,8 @@ static struct pstats_version_description pstats_desc[] = {
 			"TRU Resp Valid",		/* 38 */
 		.rx_packets = 19, /* RX Frames */
 		.tx_packets = 18, /* TX Frames */
+		.rx_errors = 6, /* RX PCS Errors */
+		.tx_carrier_errors = 3, /* RX Sync Lost */
 		.rx_length_errors = 7, /* RX Giant Frames */
 		.rx_crc_errors = 9, /* RX CRC Errors */
 		.rx_fifo_errors = 1, /* RX Overrun */
@@ -385,6 +389,11 @@ int pstats_callback(int epnum, struct net_device_stats *stats)
 	stats->rx_packets = (unsigned long) pstats_dev.cntrs[epnum][index];
 	index = pstats_desc[firmware_version].tx_packets;
 	stats->tx_packets = (unsigned long) pstats_dev.cntrs[epnum][index];
+	index = pstats_desc[firmware_version].rx_errors;
+	stats->rx_errors = (unsigned long) pstats_dev.cntrs[epnum][index];
+	index = pstats_desc[firmware_version].tx_carrier_errors;
+	stats->tx_carrier_errors =
+				(unsigned long) pstats_dev.cntrs[epnum][index];
 	index = pstats_desc[firmware_version].rx_length_errors;
 	stats->rx_length_errors = (unsigned long)pstats_dev.cntrs[epnum][index];
 	index = pstats_desc[firmware_version].rx_crc_errors;

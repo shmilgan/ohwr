@@ -33,6 +33,8 @@ extern int (*wr_nic_pstats_callback)(int epnum,
 struct pstats_version_description {
 	unsigned int rx_packets;
 	unsigned int tx_packets;
+	unsigned int rx_errors;
+	unsigned int tx_carrier_errors;
 	unsigned int rx_length_errors;
 	unsigned int rx_crc_errors;
 	unsigned int rx_fifo_errors;
