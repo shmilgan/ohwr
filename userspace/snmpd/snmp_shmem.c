@@ -12,6 +12,9 @@ struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
 struct wr_servo_state_t *ppsi_servo;
 
+/* RTUd */
+struct wrs_shm_head *rtud_head;
+
 
 
 static void init_shm_hal(void)
@@ -73,7 +76,26 @@ static void init_shm_ppsi(void)
 
 }
 
+static void init_shm_rtud(void)
+{
+	/* open RTUd's shm */
+	rtud_head = wrs_shm_get(wrs_shm_rtu, "", WRS_SHM_READ);
+	if (!rtud_head) {
+		snmp_log(LOG_ERR, "unable to open shm for RTUd!\n");
+		exit(-1);
+	}
+
+	/* check rtud's shm version */
+	if (rtud_head->version != RTU_SHMEM_VERSION) {
+		snmp_log(LOG_ERR, "unknown RTUd's shm version %i "
+			 "(known is %i)\n", rtud_head->version,
+			 RTU_SHMEM_VERSION);
+		exit(-1);
+	}
+}
+
 void init_shm(void){
 	init_shm_hal();
 	init_shm_ppsi();
+	init_shm_rtud();
 }

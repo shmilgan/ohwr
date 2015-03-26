@@ -5,6 +5,7 @@
 #include <libwr/hal_shmem.h>
 #include <ppsi/ppsi.h>
 #include <libwr/hal_shmem.h>
+#include <libwr/rtu_shmem.h>
 
 /* HAL */
 extern struct wrs_shm_head *hal_head;
@@ -15,6 +16,9 @@ extern int hal_nports_local;
 /* PPSI */
 extern struct wrs_shm_head *ppsi_head;
 extern struct wr_servo_state_t *ppsi_servo;
+
+/* RTUd */
+struct wrs_shm_head *rtud_head;
 
 void init_shm();
 
