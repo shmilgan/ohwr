@@ -5,6 +5,7 @@
 static struct pickinfo wrsStartCnt_pickinfo[] = {
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntHAL),
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntPPSI),
+	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntRTUd),
 };
 
 struct wrsStartCnt_s wrsStartCnt_s;
@@ -26,6 +27,7 @@ time_t wrsStartCnt_data_fill(void){
 	/* get start counters from shmem's */
 	wrsStartCnt_s.wrsStartCntHAL = hal_head->pidsequence;
 	wrsStartCnt_s.wrsStartCntPPSI = ppsi_head->pidsequence;
+	wrsStartCnt_s.wrsStartCntRTUd = rtud_head->pidsequence;
 
 	/* there was an update, return current time */
 	return time_update;

@@ -157,6 +157,14 @@ wrsStartCntPPSI OBJECT-TYPE
             "Number of PPSI deamon starts"
     ::= { wrsStartCntGroup 2 }
 
+wrsStartCntRTUd OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RTU deamon starts"
+    ::= { wrsStartCntGroup 3 }
+
 --wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
 -- wrsPstatsTable (.6.1.4)
 wrsPstatsTable OBJECT-TYPE

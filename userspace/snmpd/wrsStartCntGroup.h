@@ -7,6 +7,7 @@
 struct wrsStartCnt_s {
 	uint32_t wrsStartCntHAL;
 	uint32_t wrsStartCntPPSI;
+	uint32_t wrsStartCntRTUd;
 };
 
 extern struct wrsStartCnt_s wrsStartCnt_s;
