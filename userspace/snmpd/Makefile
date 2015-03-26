@@ -29,12 +29,12 @@ SOURCES = \
 	snmp_shmem.c \
 	wrsScalar.c \
 	wrsPstatsTable.c \
-	wrsVersion.c \
 	shmem.c \
 	wrsPtpDataTable.c \
 	wrsCurrentTimeGroup.c \
 	wrsTemperature.c \
 	wrsOSStatus.c \
+	wrsVersionGroup.c \
 	wrsPortStatusTable.c
 
 OBJECTS = $(SOURCES:.c=.o)

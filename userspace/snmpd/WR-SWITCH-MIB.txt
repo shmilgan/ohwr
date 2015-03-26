@@ -34,7 +34,7 @@ cern OBJECT IDENTIFIER ::= { enterprises 96 }
 wrsScalar      OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
 --wrsPstatsTable OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }  == obsolete
 --wrsPpsi        OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }  == obsolete
-wrsVersion     OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }  -- going to be obsolete
+--wrsVersion     OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }  == obsolete
 --wrsDate        OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }  == obsolete
 wrsExpertStatus       OBJECT IDENTIFIER ::= { wrSwitchMIB 6 }
 wrsStatus            OBJECT IDENTIFIER ::= { wrSwitchMIB 254 }
@@ -48,80 +48,6 @@ wrsScalarOne   OBJECT-TYPE
     DESCRIPTION
         "Integer incremented at every GET"
     ::= { wrsScalar 1 }
-
--- Versions (4) are all just strings, several of them
-
-wrsVersionSw    OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..64))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The software version, as returned from 'git describe' at build time"
-    ::= { wrsVersion 1 }
-
-wrsVersionGw1   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The gateware version: commit of wr_switch_hdl"
-    ::= { wrsVersion 2 }
-
-wrsVersionGw2   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The gateware version: commit of general-cores"
-    ::= { wrsVersion 3 }
-
-wrsVersionGw3   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The gateware version: commit of wr-cores"
-    ::= { wrsVersion 4 }
-
-wrsVersionHw1   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The hardware version: minibackplane PCB"
-    ::= { wrsVersion 5 }
-
-wrsVersionHw2   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The hardware version: FPGA"
-    ::= { wrsVersion 6 }
-
-wrsManufacturer OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..64))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The name of the manufacturing company"
-    ::= { wrsVersion 7 }
-
-wrsSerialNumber OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The serial number (or string) of the switch"
-    ::= { wrsVersion 8 }
-
-wrsScbVersion OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The version of the SCB (motherboard)"
-    ::= { wrsVersion 9 }
 
 wrsOperationStatus      OBJECT IDENTIFIER ::= { wrsExpertStatus 1 }
 
@@ -1000,7 +926,113 @@ wrsTemperatureWarning OBJECT-TYPE
 --wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
 --wrsNetworkingStatusGroup   OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 3 }
 
---wrsVersionGroup            OBJECT IDENTIFIER ::= { wrsStatus 2 }
+-- wrsVersionGroup (.254.2)
+wrsVersionGroup            OBJECT IDENTIFIER ::= { wrsStatus 2 }
+
+wrsVersionSwVersion            OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The software version, as returned from 'git describe' at build time"
+    ::= { wrsVersionGroup 1 }
+
+wrsVersionSwBuildBy            OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The software build by, as returned from 'git config --get-all user.name' at build time"
+    ::= { wrsVersionGroup 2 }
+
+wrsVersionSwBuildDate          OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The build date of the software, '__DATE__' at build time"
+    ::= { wrsVersionGroup 3 }
+
+wrsVersionBackplaneVersion     OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The hardware version of minibackplane PCB"
+    ::= { wrsVersionGroup 4 }
+
+wrsVersionFpgaType             OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The hardware version of FPGA"
+    ::= { wrsVersionGroup 5 }
+
+wrsVersionManufacturer         OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The name of the manufacturing company of a switch"
+    ::= { wrsVersionGroup 6 }
+
+wrsVersionSwitchSerialNumber   OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The serial number (or string) of the switch"
+    ::= { wrsVersionGroup 7 }
+
+wrsVersionScbVersion           OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The version of the SCB (switch's motherboard)"
+    ::= { wrsVersionGroup 8 }
+
+wrsVersionGwVersion            OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The version of gateware (FPGA bitstream)"
+    ::= { wrsVersionGroup 9 }
+
+wrsVersionGwBuild              OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The build of gateware (FPGA bitstream)"
+    ::= { wrsVersionGroup 10 }
+
+wrsVersionSwitchHdlCommitId    OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The gateware version: commit of wr_switch_hdl"
+    ::= { wrsVersionGroup 11 }
+
+wrsVersionGeneralCoresCommitId OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The gateware version: commit of general-cores"
+    ::= { wrsVersionGroup 12 }
+
+wrsVersionWrCoresCommitId      OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The gateware version: commit of wr-cores"
+    ::= { wrsVersionGroup 13 }
+
 --wrsGeneralStatusGroup      OBJECT IDENTIFIER ::= { wrsStatus 254 }
 
 END

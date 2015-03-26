@@ -101,9 +101,6 @@ static inline int dumpstruct(FILE *dest, char *name, void *ptr, int size)
 /* Scalar is just a stupid thing, but let's keep it */
 extern void init_wrsScalar(void);
 
-/* Real stuff follows */
-extern void init_wrsVersion(void);
-
 #define WRS_OID 1, 3, 6, 1, 4, 1, 96, 100
 
 struct pickinfo {
