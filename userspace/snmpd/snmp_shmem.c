@@ -1,18 +1,20 @@
 #include "wrsSnmp.h"
 #include "snmp_shmem.h"
 
+/* HAL */
 struct wrs_shm_head *hal_head;
 struct hal_shmem_header *hal_shmem;
 struct hal_port_state *hal_ports;
 int hal_nports_local;
 
+/* PPSI */
 struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
 struct wr_servo_state_t *ppsi_servo;
 
 
 
-void init_shm(void)
+static void init_shm_hal(void)
 {
 	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
 	if (!hal_head) {
@@ -44,14 +46,17 @@ void init_shm(void)
 			 " shmem");
 		exit(-1);
 	}
+}
 
+static void init_shm_ppsi(void)
+{
 	ppsi_head = wrs_shm_get(wrs_shm_ptp, "", WRS_SHM_READ);
 	if (!ppsi_head) {
 		snmp_log(LOG_ERR, "unable to open shm for PPSI!\n");
 		exit(-1);
 	}
 
-	/* check hal's shm version */
+	/* check ppsi's shm version */
 	if (ppsi_head->version != WRS_PPSI_SHMEM_VERSION) {
  		snmp_log(LOG_ERR, "unknown PPSI's shm version %i "
 			"(known is %i)\n",
@@ -66,4 +71,9 @@ void init_shm(void)
 		exit(-1);
 	}
 
+}
+
+void init_shm(void){
+	init_shm_hal();
+	init_shm_ppsi();
 }
