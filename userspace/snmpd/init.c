@@ -8,6 +8,7 @@
 /* The sub-init functions */
 #include "wrsSnmp.h"
 #include "snmp_shmem.h"
+#include "wrsStartCntGroup.h"
 #include "wrsPstatsTable.h"
 #include "wrsPtpDataTable.h"
 #include "wrsCurrentTimeGroup.h"
@@ -22,6 +23,7 @@ void init_wrsSnmp(void)
 {
 	init_shm();
 	init_wrsScalar();
+	init_wrsStartCntGroup();
 	init_wrsPstatsTable();
 	init_wrsPtpDataTable();
 	init_wrsCurrentTimeGroup();

@@ -28,6 +28,7 @@ SOURCES = \
 	init.c \
 	snmp_shmem.c \
 	wrsScalar.c \
+	wrsStartCntGroup.c \
 	wrsPstatsTable.c \
 	shmem.c \
 	wrsPtpDataTable.c \
