@@ -1,4 +1,5 @@
 #include "wrsSnmp.h"
+#include "snmp_shmem.h"
 #include "wrsTemperature.h"
 
 static struct pickinfo wrsTemperature_pickinfo[] = {

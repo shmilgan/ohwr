@@ -1,4 +1,5 @@
 #include "wrsSnmp.h"
+#include "snmp_shmem.h"
 #include "wrsPortStatusTable.h"
 
 /* Our data: per-port information */

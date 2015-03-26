@@ -1,5 +1,5 @@
 #include "wrsSnmp.h"
-
+#include "snmp_shmem.h"
 
 struct wrs_shm_head *hal_head;
 struct hal_shmem_header *hal_shmem;

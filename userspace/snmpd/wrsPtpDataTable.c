@@ -1,4 +1,5 @@
 #include "wrsSnmp.h"
+#include "snmp_shmem.h"
 #include "wrsPtpDataTable.h"
 
 struct wrsPtpDataTable_s wrsPtpDataTable_array[WRS_MAX_N_SERVO_INSTANCES];
