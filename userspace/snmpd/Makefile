@@ -30,9 +30,9 @@ SOURCES = \
 	wrsScalar.c \
 	wrsPstatsTable.c \
 	wrsVersion.c \
-	wrsDate.c \
 	shmem.c \
 	wrsPtpDataTable.c \
+	wrsCurrentTimeGroup.c \
 	wrsTemperature.c \
 	wrsOSStatus.c \
 	wrsPortStatusTable.c

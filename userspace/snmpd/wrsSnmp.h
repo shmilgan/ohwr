@@ -103,7 +103,6 @@ extern void init_wrsScalar(void);
 
 /* Real stuff follows */
 extern void init_wrsVersion(void);
-extern void init_wrsDate(void);
 
 #define WRS_OID 1, 3, 6, 1, 4, 1, 96, 100
 

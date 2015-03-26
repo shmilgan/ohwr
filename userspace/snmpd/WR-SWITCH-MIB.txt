@@ -35,7 +35,7 @@ wrsScalar      OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
 --wrsPstatsTable OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }  == obsolete
 --wrsPpsi        OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }  == obsolete
 wrsVersion     OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }  -- going to be obsolete
-wrsDate        OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }  -- going to be obsolete
+--wrsDate        OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }  == obsolete
 wrsExpertStatus       OBJECT IDENTIFIER ::= { wrSwitchMIB 6 }
 wrsStatus            OBJECT IDENTIFIER ::= { wrSwitchMIB 254 }
 
@@ -123,7 +123,10 @@ wrsScbVersion OBJECT-TYPE
         "The version of the SCB (motherboard)"
     ::= { wrsVersion 9 }
 
--- Date (5), to quickly check wr status
+wrsOperationStatus      OBJECT IDENTIFIER ::= { wrsExpertStatus 1 }
+
+-- wrsCurrentTimeGroup (.6.1.1)
+wrsCurrentTimeGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 1 }
 
 wrsDateTAI      OBJECT-TYPE
     SYNTAX      Counter64 -- actually integer, but it is unsigned so ok
@@ -131,19 +134,16 @@ wrsDateTAI      OBJECT-TYPE
     STATUS      current
     DESCRIPTION
         "The current time, in TAI seconds"
-    ::= { wrsDate 1 }
+    ::= { wrsCurrentTimeGroup 1 }
 
-wrsDateString   OBJECT-TYPE
+wrsDateTAIString   OBJECT-TYPE
     SYNTAX      DisplayString (SIZE (0..32))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
         "The current TAI time, printed as %y-%m-%d-%H:%M:%S (no time zone)"
-    ::= { wrsDate 2 }
+    ::= { wrsCurrentTimeGroup 2 }
 
-wrsOperationStatus      OBJECT IDENTIFIER ::= { wrsExpertStatus 1 }
-
---wrsCurrentTimeGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 1 }
 --wrsBootStatusGroup      OBJECT IDENTIFIER ::= { wrsOperationStatus 2 }
 wrsTemperatureGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 3 }
 

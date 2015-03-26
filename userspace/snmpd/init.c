@@ -10,6 +10,7 @@
 #include "snmp_shmem.h"
 #include "wrsPstatsTable.h"
 #include "wrsPtpDataTable.h"
+#include "wrsCurrentTimeGroup.h"
 #include "wrsTemperature.h"
 #include "wrsOSStatus.h"
 #include "wrsPortStatusTable.h"
@@ -22,8 +23,8 @@ void init_wrsSnmp(void)
 	init_wrsScalar();
 	init_wrsPstatsTable();
 	init_wrsVersion();
-	init_wrsDate();
 	init_wrsPtpDataTable();
+	init_wrsCurrentTimeGroup();
 	init_wrsTemperature();
 	init_wrsOSStatus();
 	init_wrsPortStatusTable();
