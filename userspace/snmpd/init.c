@@ -16,6 +16,7 @@
 #include "wrsOSStatus.h"
 #include "wrsVersionGroup.h"
 #include "wrsPortStatusTable.h"
+#include "wrsGeneralStatusGroup.h"
 
 FILE *wrs_logf; /* for the local-hack messages */
 
@@ -31,4 +32,5 @@ void init_wrsSnmp(void)
 	init_wrsOSStatus();
 	init_wrsVersionGroup();
 	init_wrsPortStatusTable();
+	init_wrsGeneralStatusGroup();
 }

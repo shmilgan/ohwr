@@ -36,7 +36,8 @@ SOURCES = \
 	wrsTemperature.c \
 	wrsOSStatus.c \
 	wrsVersionGroup.c \
-	wrsPortStatusTable.c
+	wrsPortStatusTable.c \
+	wrsGeneralStatusGroup.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
