@@ -230,6 +230,7 @@ int main(int argc, char *argv[])
     int totalcnt = 0;
     int finish_after_marker = 0;
     int matlab_read = 0;
+    int custom_ip=0;
     int debug_to_hex = 0;
     FILE *mPLL, *bPLL, *hPLL, *xPLL[4];
     struct pll_stat mpll_stat, bpll_stat[4], hpll_stat;
@@ -254,7 +255,7 @@ int main(int argc, char *argv[])
         for (name = s = argv[0]; s[0]; s++) 
             if (s[0] == '/' && s[1]) 
                 name = &s[1];
-        optstring = "?hxmrd:b:p";
+        optstring = "?hxmrd:b:i:p";
         printf("Startup options\n");
         while ((op = getopt(argc, argv, optstring)) != -1) 
         {
@@ -291,6 +292,10 @@ int main(int argc, char *argv[])
                    printf("debug to hex\n");
                    debug_to_hex = 1;
                    break;
+                case 'i':
+                   custom_ip = 1;
+                   strcpy(server, optarg);
+                   break;
                 case '?':
                 case 'h':
                 default:
@@ -306,7 +311,9 @@ int main(int argc, char *argv[])
     else
         printf("Client-socket() OK\n");
 
-    strcpy(server, SERVER);
+    if(custom_ip==0)
+        strcpy(server, SERVER);
+    printf("server IP: %s\n",server); 
 
     memset(&serveraddr, 0x00, sizeof(struct sockaddr_in));
     serveraddr.sin_family = AF_INET;
