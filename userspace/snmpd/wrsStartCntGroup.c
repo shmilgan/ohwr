@@ -1,5 +1,5 @@
 #include "wrsSnmp.h"
-#include "shmem_snmp.h"
+#include "snmp_shmem.h"
 #include "wrsStartCntGroup.h"
 
 static struct pickinfo wrsStartCnt_pickinfo[] = {
@@ -38,7 +38,7 @@ time_t wrsStartCnt_data_fill(void){
 #define GT_PICKINFO wrsStartCnt_pickinfo
 #define GT_DATA_FILL_FUNC wrsStartCnt_data_fill
 #define GT_DATA_STRUCT wrsStartCnt_s
-#define GT_GROUP_NAME "wrsStartCnt"
+#define GT_GROUP_NAME "wrsStartCntGroup"
 #define GT_INIT_FUNC init_wrsStartCntGroup
 
 #include "wrsGroupTemplate.h"

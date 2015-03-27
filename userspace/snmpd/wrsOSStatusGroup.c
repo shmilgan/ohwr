@@ -1,6 +1,6 @@
 #include "wrsSnmp.h"
-#include "wrsTemperature.h"
-#include "wrsOSStatus.h"
+#include "wrsTemperatureGroup.h"
+#include "wrsOSStatusGroup.h"
 
 static struct pickinfo wrsOSStatus_pickinfo[] = {
 	FIELD(wrsOSStatus_s, ASN_INTEGER, wrsBootSuccessful),
@@ -52,7 +52,7 @@ time_t wrsOSStatus_data_fill(void)
 #define GT_PICKINFO wrsOSStatus_pickinfo
 #define GT_DATA_FILL_FUNC wrsOSStatus_data_fill
 #define GT_DATA_STRUCT wrsOSStatus_s
-#define GT_GROUP_NAME "wrsOSStatus"
-#define GT_INIT_FUNC init_wrsOSStatus
+#define GT_GROUP_NAME "wrsOSStatusGroup"
+#define GT_INIT_FUNC init_wrsOSStatusGroup
 
 #include "wrsGroupTemplate.h"

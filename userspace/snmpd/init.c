@@ -12,8 +12,8 @@
 #include "wrsPstatsTable.h"
 #include "wrsPtpDataTable.h"
 #include "wrsCurrentTimeGroup.h"
-#include "wrsTemperature.h"
-#include "wrsOSStatus.h"
+#include "wrsTemperatureGroup.h"
+#include "wrsOSStatusGroup.h"
 #include "wrsVersionGroup.h"
 #include "wrsPortStatusTable.h"
 #include "wrsGeneralStatusGroup.h"
@@ -28,8 +28,8 @@ void init_wrsSnmp(void)
 	init_wrsPstatsTable();
 	init_wrsPtpDataTable();
 	init_wrsCurrentTimeGroup();
-	init_wrsTemperature();
-	init_wrsOSStatus();
+	init_wrsTemperatureGroup();
+	init_wrsOSStatusGroup();
 	init_wrsVersionGroup();
 	init_wrsPortStatusTable();
 	init_wrsGeneralStatusGroup();

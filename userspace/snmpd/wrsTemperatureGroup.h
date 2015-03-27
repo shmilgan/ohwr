@@ -1,5 +1,5 @@
-#ifndef WRS_WRS_TEMPERATURE_H
-#define WRS_WRS_TEMPERATURE_H
+#ifndef WRS_TEMPERATURE_GROUP_H
+#define WRS_TEMPERATURE_GROUP_H
 
 #define WRSTEMPERATURE_CACHE_TIMEOUT 5
 #define WRSTEMPERATURE_OID WRS_OID, 6, 1, 3
@@ -18,5 +18,5 @@ struct wrsTemperature_s {
 extern struct wrsTemperature_s wrsTemperature_s;
 time_t wrsTemperature_data_fill(void);
 
-void init_wrsTemperature(void);
-#endif /* WRS_WRS_TEMPERATURE_H */
+void init_wrsTemperatureGroup(void);
+#endif /* WRS_TEMPERATURE_GROUP_H */

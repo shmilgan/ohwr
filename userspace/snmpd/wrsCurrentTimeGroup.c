@@ -107,7 +107,7 @@ time_t wrsCurrentTime_data_fill(void)
 #define GT_PICKINFO wrsCurrentTime_pickinfo
 #define GT_DATA_FILL_FUNC wrsCurrentTime_data_fill
 #define GT_DATA_STRUCT wrsCurrentTime_s
-#define GT_GROUP_NAME "wrsCurrentTime"
+#define GT_GROUP_NAME "wrsCurrentTimeGroup"
 #define GT_INIT_FUNC init_wrsCurrentTimeGroup
 
 #include "wrsGroupTemplate.h"

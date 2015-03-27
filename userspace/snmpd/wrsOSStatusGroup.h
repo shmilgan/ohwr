@@ -1,5 +1,5 @@
-#ifndef WRS_WRS_OSSTATUS_H
-#define WRS_WRS_OSSTATUS_H
+#ifndef WRS_OSSTATUS_GROUP_H
+#define WRS_OSSTATUS_GROUP_H
 
 #define WRSOSSTATUS_OID WRS_OID, 254, 1, 1
 
@@ -14,6 +14,6 @@ struct wrsOSStatus_s {
 
 extern struct wrsOSStatus_s wrsOSStatus_s;
 time_t wrsOSStatus_data_fill(void);
-void init_wrsOSStatus(void);
+void init_wrsOSStatusGroup(void);
 
-#endif /* WRS_WRS_OSSTATUS_H */
+#endif /* WRS_OSSTATUS_GROUP_H */

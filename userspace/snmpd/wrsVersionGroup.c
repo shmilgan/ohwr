@@ -92,7 +92,7 @@ time_t wrsVersion_data_fill(void)
 #define GT_PICKINFO wrsVersion_pickinfo
 #define GT_DATA_FILL_FUNC wrsVersion_data_fill
 #define GT_DATA_STRUCT wrsVersion_s
-#define GT_GROUP_NAME "wrsVersion"
+#define GT_GROUP_NAME "wrsVersionGroup"
 #define GT_INIT_FUNC init_wrsVersionGroup
 
 #include "wrsGroupTemplate.h"

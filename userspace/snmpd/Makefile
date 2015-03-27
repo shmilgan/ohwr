@@ -33,8 +33,8 @@ SOURCES = \
 	shmem.c \
 	wrsPtpDataTable.c \
 	wrsCurrentTimeGroup.c \
-	wrsTemperature.c \
-	wrsOSStatus.c \
+	wrsTemperatureGroup.c \
+	wrsOSStatusGroup.c \
 	wrsVersionGroup.c \
 	wrsPortStatusTable.c \
 	wrsGeneralStatusGroup.c

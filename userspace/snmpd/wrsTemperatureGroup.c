@@ -1,6 +1,6 @@
 #include "wrsSnmp.h"
 #include "snmp_shmem.h"
-#include "wrsTemperature.h"
+#include "wrsTemperatureGroup.h"
 
 static struct pickinfo wrsTemperature_pickinfo[] = {
 	FIELD(wrsTemperature_s, ASN_INTEGER, temp_fpga),
@@ -61,7 +61,7 @@ time_t wrsTemperature_data_fill(void)
 #define GT_PICKINFO wrsTemperature_pickinfo
 #define GT_DATA_FILL_FUNC wrsTemperature_data_fill
 #define GT_DATA_STRUCT wrsTemperature_s
-#define GT_GROUP_NAME "wrsTemperature"
-#define GT_INIT_FUNC init_wrsTemperature
+#define GT_GROUP_NAME "wrsTemperatureGroup"
+#define GT_INIT_FUNC init_wrsTemperatureGroup
 
 #include "wrsGroupTemplate.h"
