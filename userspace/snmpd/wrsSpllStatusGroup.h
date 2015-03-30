@@ -2,7 +2,7 @@
 #define WRS_SPLL_STATUS_GROUP_H
 
 #define WRSSPLLSTATUS_CACHE_TIMEOUT 5
-#define WRSSPLLSTATUS_OID WRS_OID, 6, 3, 2
+#define WRSSPLLSTATUS_OID WRS_OID, 7, 3, 2
 
 struct wrsSpllStatus_s {
 	int32_t wrsSpllMode;

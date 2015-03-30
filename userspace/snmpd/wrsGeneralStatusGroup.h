@@ -1,7 +1,7 @@
 #ifndef WRS_GENERAL_STATUS_GROUP_H
 #define WRS_GENERAL_STATUS_GROUP_H
 
-#define WRSGENERALSTATUS_OID WRS_OID, 254, 254
+#define WRSGENERALSTATUS_OID WRS_OID, 6, 1
 struct wrsGeneralStatus_s {
 	int wrsMainSystemStatus;
 };

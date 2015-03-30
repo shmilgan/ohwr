@@ -2,7 +2,7 @@
 #define WRS_PTP_DATA_TABLE_H
 
 #define WRSPTPDATATABLE_CACHE_TIMEOUT 5
-#define WRSPTPDATATABLE_OID WRS_OID, 6, 5
+#define WRSPTPDATATABLE_OID WRS_OID, 7, 5
 /* Right now we allow only one servo instance, it will change in the future
  * when switchover is implemented */
 #define WRS_MAX_N_SERVO_INSTANCES 1

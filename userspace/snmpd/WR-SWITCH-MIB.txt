@@ -36,8 +36,9 @@ wrsScalar      OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
 --wrsPpsi        OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }  == obsolete
 --wrsVersion     OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }  == obsolete
 --wrsDate        OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }  == obsolete
-wrsExpertStatus       OBJECT IDENTIFIER ::= { wrSwitchMIB 6 }
-wrsStatus            OBJECT IDENTIFIER ::= { wrSwitchMIB 254 }
+wrsStatus             OBJECT IDENTIFIER ::= { wrSwitchMIB 6 }
+wrsExpertStatus       OBJECT IDENTIFIER ::= { wrSwitchMIB 7 }
+
 
 -- define one stupid object for a start
 
@@ -49,9 +50,140 @@ wrsScalarOne   OBJECT-TYPE
         "Integer incremented at every GET"
     ::= { wrsScalar 1 }
 
+
+--wrsGeneralStatusGroup      OBJECT IDENTIFIER ::= { wrsStatus 1 }
+wrsDetailedStatusesGroup   OBJECT IDENTIFIER ::= { wrsStatus 2 }
+
+-- wrsOSStatusGroup (.6.2.1)
+wrsOSStatusGroup           OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 1 }
+
+wrsTemperatureWarning OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        thresholdNotSet(1),
+                        temperatureOK(2),
+                        temperatureTooHigh(3)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Warning if temperature exceed threshold levels"
+    ::= { wrsOSStatusGroup 2 }
+
+
+--wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
+--wrsNetworkingStatusGroup   OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 3 }
+
+-- wrsVersionGroup (.6.3)
+wrsVersionGroup            OBJECT IDENTIFIER ::= { wrsStatus 3 }
+
+wrsVersionSwVersion            OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The software version, as returned from 'git describe' at build time"
+    ::= { wrsVersionGroup 1 }
+
+wrsVersionSwBuildBy            OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The software build by, as returned from 'git config --get-all user.name' at build time"
+    ::= { wrsVersionGroup 2 }
+
+wrsVersionSwBuildDate          OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The build date of the software, '__DATE__' at build time"
+    ::= { wrsVersionGroup 3 }
+
+wrsVersionBackplaneVersion     OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The hardware version of minibackplane PCB"
+    ::= { wrsVersionGroup 4 }
+
+wrsVersionFpgaType             OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The hardware version of FPGA"
+    ::= { wrsVersionGroup 5 }
+
+wrsVersionManufacturer         OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The name of the manufacturing company of a switch"
+    ::= { wrsVersionGroup 6 }
+
+wrsVersionSwitchSerialNumber   OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The serial number (or string) of the switch"
+    ::= { wrsVersionGroup 7 }
+
+wrsVersionScbVersion           OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The version of the SCB (switch's motherboard)"
+    ::= { wrsVersionGroup 8 }
+
+wrsVersionGwVersion            OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The version of gateware (FPGA bitstream)"
+    ::= { wrsVersionGroup 9 }
+
+wrsVersionGwBuild              OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The build of gateware (FPGA bitstream)"
+    ::= { wrsVersionGroup 10 }
+
+wrsVersionSwitchHdlCommitId    OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The gateware version: commit of wr_switch_hdl"
+    ::= { wrsVersionGroup 11 }
+
+wrsVersionGeneralCoresCommitId OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The gateware version: commit of general-cores"
+    ::= { wrsVersionGroup 12 }
+
+wrsVersionWrCoresCommitId      OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The gateware version: commit of wr-cores"
+    ::= { wrsVersionGroup 13 }
+
 wrsOperationStatus      OBJECT IDENTIFIER ::= { wrsExpertStatus 1 }
 
--- wrsCurrentTimeGroup (.6.1.1)
+-- wrsCurrentTimeGroup (.7.1.1)
 wrsCurrentTimeGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 1 }
 
 wrsDateTAI      OBJECT-TYPE
@@ -73,7 +205,7 @@ wrsDateTAIString   OBJECT-TYPE
 --wrsBootStatusGroup      OBJECT IDENTIFIER ::= { wrsOperationStatus 2 }
 wrsTemperatureGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 3 }
 
--- wrsTemperatureGroup (.6.1.3)
+-- wrsTemperatureGroup (.7.1.3)
 wrsTempFPGA OBJECT-TYPE
     SYNTAX         Integer32
     MAX-ACCESS     read-only
@@ -140,7 +272,7 @@ wrsTempThresholdPSR OBJECT-TYPE
 
 wrsStartCntGroup      OBJECT IDENTIFIER ::= { wrsExpertStatus 2 }
 
--- wrsStartCntGroup (.6.2)
+-- wrsStartCntGroup (.7.2)
 wrsStartCntHAL OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
@@ -166,7 +298,7 @@ wrsStartCntRTUd OBJECT-TYPE
     ::= { wrsStartCntGroup 3 }
 
 wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
--- wrsSpllStatusGroup (.6.3.2)
+-- wrsSpllStatusGroup (.7.3.2)
 wrsSpllStatusGroup      OBJECT IDENTIFIER ::= { wrsSpllState 2 }
 
 wrsSpllMode        OBJECT-TYPE
@@ -241,7 +373,7 @@ wrsSpllDelCnt      OBJECT-TYPE
             "Del counter at Soft PLL"
     ::= { wrsSpllStatusGroup 9 }
 
--- wrsPstatsTable (.6.1.4)
+-- wrsPstatsTable (.7.1.4)
 wrsPstatsTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF WrsPstatsEntry
     MAX-ACCESS  not-accessible
@@ -642,7 +774,7 @@ wrsPstatsTRURespValid OBJECT-TYPE
             "Number of TRU decisions"
     ::= { wrsPstatsEntry 41 }
 
--- wrsPtpDataTable (.6.1.5)
+-- wrsPtpDataTable (.7.1.5)
 wrsPtpDataTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF WrsPtpDataEntry
     MAX-ACCESS  not-accessible
@@ -852,7 +984,7 @@ wrsPtpDeltaRxS OBJECT-TYPE
             "Fixed Rx latency on Slave side"
     ::= { wrsPtpDataEntry 19 }
 
--- per-port (.6.1.6)
+-- per-port (.7.1.6)
 wrsPortStatusTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF WrsPortStatusEntry
     MAX-ACCESS  not-accessible
@@ -1003,137 +1135,5 @@ wrsPortStatusSfpError OBJECT-TYPE
 
 --wrsNetworking
 --Configuration
-
-wrsDetailedStatusesGroup   OBJECT IDENTIFIER ::= { wrsStatus 1 }
-
-wrsOSStatusGroup           OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 1 }
-
--- wrsOSStatusGroup (.254.1.1)
-
-wrsTemperatureWarning OBJECT-TYPE
-    SYNTAX         INTEGER {
-                        na(0),
-                        thresholdNotSet(1),
-                        temperatureOK(2),
-                        temperatureTooHigh(3)
-    }
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Warning if temperature exceed threshold levels"
-    ::= { wrsOSStatusGroup 2 }
-
-
---wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
---wrsNetworkingStatusGroup   OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 3 }
-
--- wrsVersionGroup (.254.2)
-wrsVersionGroup            OBJECT IDENTIFIER ::= { wrsStatus 2 }
-
-wrsVersionSwVersion            OBJECT-TYPE
-    SYNTAX                     DisplayString (SIZE (0..32))
-    MAX-ACCESS                 read-only
-    STATUS                     current
-    DESCRIPTION
-        "The software version, as returned from 'git describe' at build time"
-    ::= { wrsVersionGroup 1 }
-
-wrsVersionSwBuildBy            OBJECT-TYPE
-    SYNTAX                     DisplayString (SIZE (0..32))
-    MAX-ACCESS                 read-only
-    STATUS                     current
-    DESCRIPTION
-        "The software build by, as returned from 'git config --get-all user.name' at build time"
-    ::= { wrsVersionGroup 2 }
-
-wrsVersionSwBuildDate          OBJECT-TYPE
-    SYNTAX                     DisplayString (SIZE (0..32))
-    MAX-ACCESS                 read-only
-    STATUS                     current
-    DESCRIPTION
-        "The build date of the software, '__DATE__' at build time"
-    ::= { wrsVersionGroup 3 }
-
-wrsVersionBackplaneVersion     OBJECT-TYPE
-    SYNTAX                     DisplayString (SIZE (0..32))
-    MAX-ACCESS                 read-only
-    STATUS                     current
-    DESCRIPTION
-        "The hardware version of minibackplane PCB"
-    ::= { wrsVersionGroup 4 }
-
-wrsVersionFpgaType             OBJECT-TYPE
-    SYNTAX                     DisplayString (SIZE (0..32))
-    MAX-ACCESS                 read-only
-    STATUS                     current
-    DESCRIPTION
-        "The hardware version of FPGA"
-    ::= { wrsVersionGroup 5 }
-
-wrsVersionManufacturer         OBJECT-TYPE
-    SYNTAX                     DisplayString (SIZE (0..32))
-    MAX-ACCESS                 read-only
-    STATUS                     current
-    DESCRIPTION
-        "The name of the manufacturing company of a switch"
-    ::= { wrsVersionGroup 6 }
-
-wrsVersionSwitchSerialNumber   OBJECT-TYPE
-    SYNTAX                     DisplayString (SIZE (0..32))
-    MAX-ACCESS                 read-only
-    STATUS                     current
-    DESCRIPTION
-        "The serial number (or string) of the switch"
-    ::= { wrsVersionGroup 7 }
-
-wrsVersionScbVersion           OBJECT-TYPE
-    SYNTAX                     DisplayString (SIZE (0..32))
-    MAX-ACCESS                 read-only
-    STATUS                     current
-    DESCRIPTION
-        "The version of the SCB (switch's motherboard)"
-    ::= { wrsVersionGroup 8 }
-
-wrsVersionGwVersion            OBJECT-TYPE
-    SYNTAX                     DisplayString (SIZE (0..32))
-    MAX-ACCESS                 read-only
-    STATUS                     current
-    DESCRIPTION
-        "The version of gateware (FPGA bitstream)"
-    ::= { wrsVersionGroup 9 }
-
-wrsVersionGwBuild              OBJECT-TYPE
-    SYNTAX                     DisplayString (SIZE (0..32))
-    MAX-ACCESS                 read-only
-    STATUS                     current
-    DESCRIPTION
-        "The build of gateware (FPGA bitstream)"
-    ::= { wrsVersionGroup 10 }
-
-wrsVersionSwitchHdlCommitId    OBJECT-TYPE
-    SYNTAX                     DisplayString (SIZE (0..32))
-    MAX-ACCESS                 read-only
-    STATUS                     current
-    DESCRIPTION
-        "The gateware version: commit of wr_switch_hdl"
-    ::= { wrsVersionGroup 11 }
-
-wrsVersionGeneralCoresCommitId OBJECT-TYPE
-    SYNTAX                     DisplayString (SIZE (0..32))
-    MAX-ACCESS                 read-only
-    STATUS                     current
-    DESCRIPTION
-        "The gateware version: commit of general-cores"
-    ::= { wrsVersionGroup 12 }
-
-wrsVersionWrCoresCommitId      OBJECT-TYPE
-    SYNTAX                     DisplayString (SIZE (0..32))
-    MAX-ACCESS                 read-only
-    STATUS                     current
-    DESCRIPTION
-        "The gateware version: commit of wr-cores"
-    ::= { wrsVersionGroup 13 }
-
---wrsGeneralStatusGroup      OBJECT IDENTIFIER ::= { wrsStatus 254 }
 
 END

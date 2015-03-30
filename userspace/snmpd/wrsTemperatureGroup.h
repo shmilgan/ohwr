@@ -2,7 +2,7 @@
 #define WRS_TEMPERATURE_GROUP_H
 
 #define WRSTEMPERATURE_CACHE_TIMEOUT 5
-#define WRSTEMPERATURE_OID WRS_OID, 6, 1, 3
+#define WRSTEMPERATURE_OID WRS_OID, 7, 1, 3
 
 struct wrsTemperature_s {
 	int temp_fpga;		/* FPGA temperature */

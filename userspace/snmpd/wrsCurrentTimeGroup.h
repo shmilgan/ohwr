@@ -2,7 +2,7 @@
 #define WRS_CURRENT_TIME_GROUP_H
 
 #define WRSCURRENTTIME_CACHE_TIMEOUT 5
-#define WRSCURRENTTIME_OID WRS_OID, 6, 1, 1
+#define WRSCURRENTTIME_OID WRS_OID, 7, 1, 1
 
 struct wrsCurrentTime_s {
 	uint64_t wrsDateTAI;		/* current time in TAI */

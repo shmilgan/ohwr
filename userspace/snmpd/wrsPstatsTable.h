@@ -2,7 +2,7 @@
 #define WRS_PSTATS_TABLE_H
 
 #define WRSPSTATSTABLE_CACHE_TIMEOUT 5
-#define WRSPSTATSTABLE_OID WRS_OID, 6, 4
+#define WRSPSTATSTABLE_OID WRS_OID, 7, 4
 
 #define PSTATS_MAX_N_COUNTERS 39 /* maximum number of counters */
 #define PSTATS_SYSCTL_PATH "/proc/sys/pstats/" /* Path to sysclt entries */

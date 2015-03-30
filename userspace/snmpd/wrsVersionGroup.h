@@ -1,7 +1,7 @@
 #ifndef WRS_VERSION_GROUP_H
 #define WRS_VERSION_GROUP_H
 
-#define WRSVERSION_OID WRS_OID, 254, 2
+#define WRSVERSION_OID WRS_OID, 6, 3
 
 struct wrsVersion_s {
 	char wrsVersions[13][32];	/* array of version strings */

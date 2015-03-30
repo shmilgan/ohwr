@@ -2,7 +2,7 @@
 #define WRS_START_CNT_GROUP_H
 
 #define WRSSTARTCNT_CACHE_TIMEOUT 5
-#define WRSSTARTCNT_OID WRS_OID, 6, 2
+#define WRSSTARTCNT_OID WRS_OID, 7, 2
 
 struct wrsStartCnt_s {
 	uint32_t wrsStartCntHAL;
