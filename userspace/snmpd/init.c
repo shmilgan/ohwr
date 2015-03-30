@@ -9,6 +9,7 @@
 #include "wrsSnmp.h"
 #include "snmp_shmem.h"
 #include "wrsStartCntGroup.h"
+#include "wrsSpllStatusGroup.h"
 #include "wrsPstatsTable.h"
 #include "wrsPtpDataTable.h"
 #include "wrsCurrentTimeGroup.h"
@@ -25,6 +26,7 @@ void init_wrsSnmp(void)
 	init_shm();
 	init_wrsScalar();
 	init_wrsStartCntGroup();
+	init_wrsSpllStatusGroup();
 	init_wrsPstatsTable();
 	init_wrsPtpDataTable();
 	init_wrsCurrentTimeGroup();

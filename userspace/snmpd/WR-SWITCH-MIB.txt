@@ -165,7 +165,82 @@ wrsStartCntRTUd OBJECT-TYPE
             "Number of RTU deamon starts"
     ::= { wrsStartCntGroup 3 }
 
---wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
+wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
+-- wrsSpllStatusGroup (.6.3.2)
+wrsSpllStatusGroup      OBJECT IDENTIFIER ::= { wrsSpllState 2 }
+
+wrsSpllMode        OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Mode of Soft PLL"
+    ::= { wrsSpllStatusGroup 1 }
+
+wrsSpllIrqCnt      OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of interrupts in Soft PLL"
+    ::= { wrsSpllStatusGroup 2 }
+
+wrsSpllSeqState    OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Sequence state of Soft PLL"
+    ::= { wrsSpllStatusGroup 3 }
+
+wrsSpllAlignState  OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Align state of Soft PLL"
+    ::= { wrsSpllStatusGroup 4 }
+
+wrsSpllHlock       OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "HLock in Soft PLL"
+    ::= { wrsSpllStatusGroup 5 }
+
+wrsSpllMlock       OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "MLock at Soft PLL"
+    ::= { wrsSpllStatusGroup 6 }
+
+wrsSpllHY          OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "H_y at Soft PLL"
+    ::= { wrsSpllStatusGroup 7 }
+
+wrsSpllMY          OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "M_y at Soft PLL"
+    ::= { wrsSpllStatusGroup 8 }
+
+wrsSpllDelCnt      OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Del counter at Soft PLL"
+    ::= { wrsSpllStatusGroup 9 }
+
 -- wrsPstatsTable (.6.1.4)
 wrsPstatsTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF WrsPstatsEntry
