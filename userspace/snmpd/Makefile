@@ -27,6 +27,7 @@ SHLIB = wrsSnmp.so
 SOURCES = \
 	init.c \
 	snmp_shmem.c \
+	snmp_mmap.c \
 	wrsScalar.c \
 	wrsStartCntGroup.c \
 	wrsPstatsTable.c \
