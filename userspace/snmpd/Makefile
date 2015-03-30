@@ -25,21 +25,21 @@ CFLAGS += -DWRS_WITH_SNMP_HACKISH_LOG=0
 
 SHLIB = wrsSnmp.so
 SOURCES = \
-	init.c \
+	shmem.c \
 	snmp_shmem.c \
 	snmp_mmap.c \
 	wrsScalar.c \
+	wrsGeneralStatusGroup.c \
+	wrsOSStatusGroup.c \
+	wrsVersionGroup.c \
+	wrsCurrentTimeGroup.c \
+	wrsTemperatureGroup.c \
 	wrsStartCntGroup.c \
 	wrsSpllStatusGroup.c \
 	wrsPstatsTable.c \
-	shmem.c \
 	wrsPtpDataTable.c \
-	wrsCurrentTimeGroup.c \
-	wrsTemperatureGroup.c \
-	wrsOSStatusGroup.c \
-	wrsVersionGroup.c \
 	wrsPortStatusTable.c \
-	wrsGeneralStatusGroup.c
+	init.c \
 
 OBJECTS = $(SOURCES:.c=.o)
 
