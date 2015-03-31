@@ -12,6 +12,7 @@
 #include "wrsOSStatusGroup.h"
 #include "wrsVersionGroup.h"
 #include "wrsCurrentTimeGroup.h"
+#include "wrsBootStatusGroup.h"
 #include "wrsTemperatureGroup.h"
 #include "wrsStartCntGroup.h"
 #include "wrsSpllStatusGroup.h"
@@ -30,6 +31,7 @@ void init_wrsSnmp(void)
 	init_wrsOSStatusGroup();
 	init_wrsVersionGroup();
 	init_wrsCurrentTimeGroup();
+	init_wrsBootStatusGroup();
 	init_wrsTemperatureGroup();
 	init_wrsStartCntGroup();
 	init_wrsSpllStatusGroup();
