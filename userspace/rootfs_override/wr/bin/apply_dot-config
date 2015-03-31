@@ -6,6 +6,9 @@
 # require restarting running processes).  The script is called at
 # every boot by /etc/init.d/S20dot-config
 
+# When called with "local_config" parameter, files with information about
+# dotconfig source are removed (used by SNMP)
+
 # We create a temporary file in /tmp, to avoid wearing flash if not
 # needed. Then we replace the real file if different.
 
@@ -17,6 +20,14 @@ copy_conf() {
 	cmp -s $T $1 || cp $T $1
     done
 }
+
+#check if config is local
+if [ "$1" == "local_config" ]; then
+	# remove source information in case previous config was received from
+	# network
+	rm /tmp/dot-config_*
+	echo "local" > /tmp/dot-config_proto
+fi
 
 # Check and complain, but we need to edit some files even if unconfigured.
 if [ -f /wr/etc/dot-config ]; then

@@ -1282,7 +1282,8 @@ function safefilerewrite($dotconfig, $tmpdotconfig){
 
 function apply_kconfig(){
 	$dotconfigapp = "/usr/wr/bin/apply_dot-config";
-	shell_exec($dotconfigapp. " > /dev/null 2>&1 &");
+	/* So far all changes via web-interface are on local file. Notify apply_dot-config that changes are on local file */
+	shell_exec($dotconfigapp. " local_config > /dev/null 2>&1 &");
 }
 
 	

@@ -8,9 +8,13 @@
 # First, read dot-config to get the new location, if any.
 dotconfig=/wr/etc/dot-config
 tmpconfig=/tmp/dot-config
+tmpdir=/tmp
 
 if [ -f $dotconfig ]; then
     . $dotconfig
+    echo "local" > "$tmpdir"/dot-config_proto
+else
+    echo "no_config" > "$tmpdir"/dot-config_proto
 fi
 
 # Create /etc/resolv.conf, so we can use it. /etc is ramdisk anyways
@@ -32,6 +36,11 @@ if [ -n "$CONFIG_DOTCONF_URL" ]; then
     proto=$(echo $URL | cut -d: -f 1)
     host=$(echo $URL | cut -d/ -f 3)
     filename=$(echo $URL | cut -d/ -f 4-)
+
+    # save proto, host and filename of dot-config, to be used by SNMPd
+    echo "$proto" > "$tmpdir"/dot-config_proto
+    echo "$host" > "$tmpdir"/dot-config_host
+    echo "$filename" > "$tmpdir"/dot-config_filename
 
     rm -f $tmpconfig
     case $proto in
