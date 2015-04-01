@@ -206,21 +206,66 @@ wrsDateTAIString   OBJECT-TYPE
 --wrsBootStatusGroup (.7.1.2)
 wrsBootStatusGroup      OBJECT IDENTIFIER ::= { wrsOperationStatus 2 }
 
---wrsBootCnt      OBJECT-TYPE
---    SYNTAX      Counter32
---    MAX-ACCESS  read-only
---    STATUS      current
---    DESCRIPTION
---        "Number of switch's boots"
---    ::= { wrsBootStatusGroup 1 }
+wrsBootCnt      OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of switch's boots since power-on"
+    ::= { wrsBootStatusGroup 1 }
 
---wrsRestartReason  OBJECT-TYPE
---    SYNTAX        Integer32
---    MAX-ACCESS    read-only
---    STATUS        current
---    DESCRIPTION
---        "Reason of last switch restart"
---    ::= { wrsBootStatusGroup 3 }
+wrsRebootCnt     OBJECT-TYPE
+    SYNTAX       Counter32
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The number of soft reboots. This is incremented by the
+        reboot system call. A healthy system should feature one
+        soft-reboot less than total boots."
+    ::= { wrsBootStatusGroup 2 }
+
+wrsRestartReason  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        na(0),
+                        error(1),
+                        generalReset(2),
+                        wakeUpReset(3),
+                        watchdogReset(4),
+                        softwareReset(5),
+                        userReset(6)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+      "Reason of last switch restart.
+       error(1) - unable to read restart reason or reset counters
+       generalReset(2) -  Both VDDCORE and VDDBU rising (power-on)
+       wakeUpReset(3) - VDDCORE rising
+       watchdogReset(4) - Watchdog fault occurred
+       softwareReset(5) - Processor reset required by the software (system reboot)
+       userReset(6) -  NRST pin detected low (reset button)"
+    ::= { wrsBootStatusGroup 3 }
+
+wrsFaultIP OBJECT-TYPE
+    SYNTAX         OCTET STRING (SIZE(4))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+        "The fault address of the last panic. This is the instruction
+        pointer normally printed by the stack backtrace. The register
+        is zeroed at first boot and only modified within panic."
+    ::= { wrsBootStatusGroup 4 }
+
+wrsFaultLR OBJECT-TYPE
+    SYNTAX         OCTET STRING (SIZE(4))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+        "The link register register at last panic.
+        This is usually the caller of the function that failed,
+        but it may be a local register if the failing function
+        saved lr to the stack and used it as a scratch register."
+    ::= { wrsBootStatusGroup 5 }
 
 wrsConfigSource  OBJECT-TYPE
     SYNTAX       INTEGER {

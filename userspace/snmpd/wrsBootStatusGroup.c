@@ -1,5 +1,8 @@
 #include "wrsSnmp.h"
+#include "snmp_mmap.h"
 #include "wrsBootStatusGroup.h"
+
+#define BOOTCOUNT_FILE "/proc/wrs-bootcount"
 
 #define DOTCONFIGDIR "/tmp"
 #define DOTCONFIG_PROTO "dot-config_proto"
@@ -10,6 +13,10 @@
  * without new line. Macro expands to something like: "%10[^\n]" */
 #define LINE_READ_LEN_HELPER(x) "%"#x"[^\n]"
 #define LINE_READ_LEN(x) LINE_READ_LEN_HELPER(x)
+#define ARM_RCSR_ADDR 0xFFFFFD04 /* address of CPU's Reset Controller Status
+				  * Register */
+#define ARM_RCSR_RESET_TYPE_MASK 0x00000700 /* reset type mast in CPU's Reset
+					     * Controller Status Register */
 
 static struct pickinfo wrsBootStatus_pickinfo[] = {
 	FIELD(wrsBootStatus_s, ASN_COUNTER, wrsBootCnt),
@@ -24,10 +31,82 @@ static struct pickinfo wrsBootStatus_pickinfo[] = {
 
 struct wrsBootStatus_s wrsBootStatus_s;
 
+struct wrs_bc_item {
+	char *key;
+	uint32_t value;
+};
+
+/* items to be read from BOOTCOUNT_FILE */
+static struct wrs_bc_item boot_info[] = {
+	[0] = {.key = "boot_count:"},
+	[1] = {"reboot_count:"},
+	[2] = {"fault_ip:"},
+	[3] = {"fault_lr:"},
+};
+
+static void get_boot_info(void){
+	static int run_once = 0;
+	FILE *f;
+	char s[80], key[40];
+	uint32_t value;
+	int i;
+	uint32_t *rcsr_map;
+	if (run_once) {
+		/* boot info change only at restart */
+		return;
+	}
+	run_once = 1;
+
+	/* get restart reason */
+	rcsr_map = create_map(ARM_RCSR_ADDR, sizeof(uint32_t));
+	if (!rcsr_map) {
+		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup unable to map "
+			 "CPU's Reset Controller Status Register\n");
+		/* pass error to SNMP, assign 1 */
+		wrsBootStatus_s.wrsRestartReason = WRS_RESTART_REASON_ERROR;
+	} else {
+		/* reset reason values are from 0 to 4, SNMP enum is from
+		 * 2 to 6, so "+ 2", 1 is reserved for error */
+		wrsBootStatus_s.wrsRestartReason = 2 +
+				((*rcsr_map & ARM_RCSR_RESET_TYPE_MASK) >> 8);
+	}
+
+	f = fopen(BOOTCOUNT_FILE, "r");
+	if (!f) {
+		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup filed to open "
+			 BOOTCOUNT_FILE"\n");
+		/* notify snmp about error in restart reason */
+		wrsBootStatus_s.wrsRestartReason = WRS_RESTART_REASON_ERROR;
+		return;
+	}
+
+	while (fgets(s, sizeof(s), f)) {
+		if (sscanf(s, "%s %i", key, &value) != 2)
+			continue; /* error... */
+		for (i = 0; i < ARRAY_SIZE(boot_info); i++) {
+			if (strncmp(key, boot_info[i].key, 40))
+				continue;
+			boot_info[i].value = value;
+		}
+	}
+	fclose(f);
+
+	wrsBootStatus_s.wrsBootCnt = boot_info[0].value;
+	wrsBootStatus_s.wrsRebootCnt = boot_info[1].value;
+
+	snprintf(wrsBootStatus_s.wrsFaultIP,
+		 sizeof(wrsBootStatus_s.wrsFaultIP), "0x%.8x",
+		 boot_info[2].value);
+	snprintf(wrsBootStatus_s.wrsFaultLR,
+		 sizeof(wrsBootStatus_s.wrsFaultLR), "0x%.8x",
+		 boot_info[3].value);
+}
+
 static void get_dotconfig_source(void)
 {
 	char buff[10];
 	FILE *f;
+
 	/* Check dotconfig source.
 	 * dotconfig source can change in runtime, i.e. from remote to local by
 	 * web-interface */
@@ -96,6 +175,8 @@ time_t wrsBootStatus_data_fill(void)
 		return time_update;
 	}
 	time_update = time_cur;
+
+	get_boot_info();
 
 	/* get dotconfig source information */
 	get_dotconfig_source();
