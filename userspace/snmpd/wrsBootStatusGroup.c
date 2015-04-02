@@ -8,6 +8,7 @@
 #define DOTCONFIG_PROTO "dot-config_proto"
 #define DOTCONFIG_HOST "dot-config_host"
 #define DOTCONFIG_FILENAME "dot-config_filename"
+#define DOTCONFIG_DOWNLOAD "dot-config_status"
 
 /* Macros for fscanf function to read line with maximum of "x" characters
  * without new line. Macro expands to something like: "%10[^\n]" */
@@ -27,6 +28,7 @@ static struct pickinfo wrsBootStatus_pickinfo[] = {
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsConfigSource),
 	FIELD(wrsBootStatus_s, ASN_OCTET_STR, wrsConfigSourceHost),
 	FIELD(wrsBootStatus_s, ASN_OCTET_STR, wrsConfigSourceFilename),
+	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootConfigStatus),
 };
 
 struct wrsBootStatus_s wrsBootStatus_s;
@@ -104,7 +106,7 @@ static void get_boot_info(void){
 
 static void get_dotconfig_source(void)
 {
-	char buff[10];
+	char buff[21]; /* 1 for null char */
 	FILE *f;
 
 	/* Check dotconfig source.
@@ -114,7 +116,7 @@ static void get_dotconfig_source(void)
 	f = fopen(DOTCONFIGDIR "/" DOTCONFIG_PROTO, "r");
 	if (f) {
 		/* readline without newline */
-		fscanf(f, LINE_READ_LEN(10), buff);
+		fscanf(f, LINE_READ_LEN(20), buff);
 		fclose(f);
 		if (!strncmp(buff, "tftp", 10))
 			wrsBootStatus_s.wrsConfigSource =
@@ -137,6 +139,7 @@ static void get_dotconfig_source(void)
 		wrsBootStatus_s.wrsConfigSource =
 					WRS_CONFIG_SOURCE_PROTO_ERROR_MINOR;
 	}
+
 	/* read host used to get dotconfig */
 	f = fopen(DOTCONFIGDIR "/" DOTCONFIG_HOST, "r");
 	if (f) {
@@ -160,6 +163,30 @@ static void get_dotconfig_source(void)
 		/* host file not found, put "error" into
 		 * wrsConfigSourceFilename */
 		strcpy(wrsBootStatus_s.wrsConfigSourceFilename, "error");
+	}
+
+	f = fopen(DOTCONFIGDIR "/" DOTCONFIG_DOWNLOAD, "r");
+	if (f) {
+		/* readline without newline */
+		fscanf(f, LINE_READ_LEN(20), buff);
+		fclose(f);
+		if (!strncmp(buff, "config_ok", 20))
+			wrsBootStatus_s.wrsBootConfigStatus =
+						WRS_CONFIG_STATUS_OK;
+		else if (!strncmp(buff, "check_error", 20))
+			wrsBootStatus_s.wrsBootConfigStatus =
+						WRS_CONFIG_STATUS_CHECK_ERROR;
+		else if (!strncmp(buff, "download_error", 20))
+			wrsBootStatus_s.wrsBootConfigStatus =
+						WRS_CONFIG_STATUS_DL_ERROR;
+		else
+			wrsBootStatus_s.wrsBootConfigStatus =
+						WRS_CONFIG_STATUS_ERROR;
+	} else {
+		/* status file not found, probably something else caused
+		 * a problem */
+		wrsBootStatus_s.wrsConfigSource =
+						WRS_CONFIG_STATUS_ERROR_MINOR;
 	}
 }
 

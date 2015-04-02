@@ -300,6 +300,23 @@ wrsConfigSourceFilename   OBJECT-TYPE
         "Path and filename of dotconfig file on server"
     ::= { wrsBootStatusGroup 8 }
 
+wrsBootConfigStatus  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        downloadError(3),
+                        checkError(4),
+                        errorMinor(5)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Result of loading or downloading dot-config file
+        downloadError - unable to download file from given source
+        checkError - config file is not valid or too short (less than 200 characters).
+        errorMinor - cannot read status file, problem is probably somewhere else"
+    ::= { wrsBootStatusGroup 9 }
 
 -- wrsTemperatureGroup (.7.1.3)
 wrsTemperatureGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 3 }

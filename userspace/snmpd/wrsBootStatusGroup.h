@@ -16,6 +16,12 @@
 #define WRS_CONFIG_SOURCE_PROTO_HTTP 5
 #define WRS_CONFIG_SOURCE_PROTO_FTP 6
 
+#define WRS_CONFIG_STATUS_OK 1			/* ok */
+#define WRS_CONFIG_STATUS_ERROR 2		/* error */
+#define WRS_CONFIG_STATUS_DL_ERROR 3		/* error */
+#define WRS_CONFIG_STATUS_CHECK_ERROR 4		/* error */
+#define WRS_CONFIG_STATUS_ERROR_MINOR 5		/* warning */
+
 struct wrsBootStatus_s {
 	uint32_t wrsBootCnt;		/* boots since power-on must be != 0 */
 	uint32_t wrsRebootCnt;		/* soft reboots since hard reboot
@@ -26,6 +32,7 @@ struct wrsBootStatus_s {
 	int32_t wrsConfigSource;
 	char wrsConfigSourceHost[WRS_CONFIG_SOURCE_HOST_LEN+1];
 	char wrsConfigSourceFilename[WRS_CONFIG_SOURCE_FILENAME_LEN+1];
+	int32_t wrsBootConfigStatus;
 };
 
 extern struct wrsBootStatus_s wrsBootStatus_s;

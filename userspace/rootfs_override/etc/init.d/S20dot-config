@@ -13,8 +13,11 @@ tmpdir=/tmp
 if [ -f $dotconfig ]; then
     . $dotconfig
     echo "local" > "$tmpdir"/dot-config_proto
+    #assume that local config is always ok
+    echo "config_ok" > "$tmpdir"/dot-config_status
 else
     echo "no_config" > "$tmpdir"/dot-config_proto
+    echo "config_error" > "$tmpdir"/dot-config_status
 fi
 
 # Create /etc/resolv.conf, so we can use it. /etc is ramdisk anyways
@@ -54,13 +57,20 @@ if [ -n "$CONFIG_DOTCONF_URL" ]; then
 	    echo "Invalid URL for dot-config: \"$URL\"" >& 2
 	    ;;
     esac
-    # If it exists, it is not empty or too small, and the checker is happy..
-    if [ -f $tmpconfig ] &&
-	[ $(cat $tmpconfig | wc -c) -gt 200 ] &&
-	/wr/bin/wrs_checkcfg $tmpconfig /wr/etc/Kconfig; then
-	echo "Using newly-downloaded dot-config from $URL"
-	# copy it in place to use the new file (unless it is identical)
-	cmp -s $tmpconfig $dotconfig || cp $tmpconfig $dotconfig
+    if [ -f $tmpconfig ]; then
+	# If it exists, it is not empty or too small, and the checker is happy
+	if [ $(cat $tmpconfig | wc -c) -gt 200 ] &&
+	    /wr/bin/wrs_checkcfg $tmpconfig /wr/etc/Kconfig; then
+	    echo "Using newly-downloaded dot-config from $URL"
+	    # copy it in place to use the new file (unless it is identical)
+	    cmp -s $tmpconfig $dotconfig || cp $tmpconfig $dotconfig
+	    # info for SNMP that downloading was successful and checker is happy
+	    echo "config_ok" > "$tmpdir"/dot-config_status
+	else
+	    echo "check_error" > "$tmpdir"/dot-config_status
+	fi
+    else
+	echo "download_error" > "$tmpdir"/dot-config_status
     fi
 fi
 

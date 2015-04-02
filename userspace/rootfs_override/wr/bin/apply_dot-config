@@ -27,6 +27,8 @@ if [ "$1" == "local_config" ]; then
 	# network
 	rm /tmp/dot-config_*
 	echo "local" > /tmp/dot-config_proto
+	#assume that local config is always ok
+	echo "config_ok" > /tmp/dot-config_status
 fi
 
 # Check and complain, but we need to edit some files even if unconfigured.
