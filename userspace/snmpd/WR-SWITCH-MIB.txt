@@ -352,6 +352,23 @@ wrsBootLoadFPGA  OBJECT-TYPE
         fileNotFound - file to be loaded not found"
     ::= { wrsBootStatusGroup 11 }
 
+wrsBootLoadLM32  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        errorMinor(3),
+                        fileNotFound(4)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Result of loading LM32
+        error - loading failed
+        errorMinor - cannot read status file, problem is probably somewhere else
+        fileNotFound - file to be loaded not found"
+    ::= { wrsBootStatusGroup 12 }
+
 -- wrsTemperatureGroup (.7.1.3)
 wrsTemperatureGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 3 }
 

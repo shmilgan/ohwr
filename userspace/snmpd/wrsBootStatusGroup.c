@@ -12,6 +12,7 @@
 
 #define HWINFO_FILE "/tmp/hwinfo_read_status"
 #define LOAD_FPGA_STATUS_FILE "/tmp/load_fpga_status"
+#define LOAD_LM32_STATUS_FILE "/tmp/load_lm32_status"
 
 /* Macros for fscanf function to read line with maximum of "x" characters
  * without new line. Macro expands to something like: "%10[^\n]" */
@@ -34,6 +35,7 @@ static struct pickinfo wrsBootStatus_pickinfo[] = {
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootConfigStatus),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootHwinfoReadout),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootLoadFPGA),
+	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootLoadLM32),
 };
 
 struct wrsBootStatus_s wrsBootStatus_s;
@@ -197,7 +199,7 @@ static void get_dotconfig_source(void)
 
 /* get status of execution of following scripts:
  * /etc/init.d/S90hwinfo
- * /wr/sbin/startup-mb.sh
+ * /wr/sbin/startup-mb.sh (load FPGA and LM32)
  * */
 static void get_boot_scripts_status(void){
 	static int run_once = 0;
@@ -252,6 +254,28 @@ static void get_boot_scripts_status(void){
 		 * a problem */
 		wrsBootStatus_s.wrsBootLoadFPGA =
 					WRS_BOOT_LOAD_FPGA_ERROR_MINOR;
+	}
+
+	/* result of loading LM32 */
+	f = fopen(LOAD_LM32_STATUS_FILE, "r");
+	if (f) {
+		/* readline without newline */
+		fscanf(f, LINE_READ_LEN(20), buff);
+		fclose(f);
+		if (!strncmp(buff, "load_ok", 20))
+			wrsBootStatus_s.wrsBootLoadLM32 =
+						WRS_BOOT_LOAD_LM32_OK;
+		else if (!strncmp(buff, "load_file_not_found", 20))
+			wrsBootStatus_s.wrsBootLoadLM32 =
+					WRS_BOOT_LOAD_LM32_FILE_NOT_FOUND;
+		else /*  */
+			wrsBootStatus_s.wrsBootLoadLM32 =
+						WRS_BOOT_LOAD_LM32_ERROR;
+	} else {
+		/* status file not found, probably something else caused
+		 * a problem */
+		wrsBootStatus_s.wrsBootLoadLM32 =
+					WRS_BOOT_LOAD_LM32_ERROR_MINOR;
 	}
 }
 
