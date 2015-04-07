@@ -318,9 +318,23 @@ int load_fpga_main(char *fname)
 		exit(0);
 	default: /* parent */
 		waitpid(pid, &status, 0);
-		if (!WEXITSTATUS(status))
-			return 0;
-		return -1;
+		/* check if exited normally and returned 0 */
+		if (WIFEXITED(status)) {
+			if (!WEXITSTATUS(status)) {
+				return 0; /* success */
+			} else {
+				/* process returned not 0 */
+				fprintf(stderr, "load-virtex: Error, child "
+					"process returned %d\n",
+					WEXITSTATUS(status));
+				return -1; /* fail */
+			}
+		} else {
+			/* Child process terminated abnormally */
+			fprintf(stderr, "load-virtex: Child process terminated"
+					" abnormally\n");
+			return -1; /* fail */
+		}
 	}
 }
 
