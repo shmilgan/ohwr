@@ -27,6 +27,11 @@
 #define WRS_BOOT_HWINFO_ERROR_MINOR 3		/* warning */
 #define WRS_BOOT_HWINFO_WARNING 4		/* warning */
 
+#define WRS_BOOT_LOAD_FPGA_OK 1			/* ok */
+#define WRS_BOOT_LOAD_FPGA_ERROR 2		/* error */
+#define WRS_BOOT_LOAD_FPGA_ERROR_MINOR 3	/* warning */
+#define WRS_BOOT_LOAD_FPGA_FILE_NOT_FOUND 4	/* error */
+
 struct wrsBootStatus_s {
 	uint32_t wrsBootCnt;		/* boots since power-on must be != 0 */
 	uint32_t wrsRebootCnt;		/* soft reboots since hard reboot
@@ -39,6 +44,7 @@ struct wrsBootStatus_s {
 	char wrsConfigSourceFilename[WRS_CONFIG_SOURCE_FILENAME_LEN+1];
 	int32_t wrsBootConfigStatus;
 	int32_t wrsBootHwinfoReadout;
+	int32_t wrsBootLoadFPGA;
 };
 
 extern struct wrsBootStatus_s wrsBootStatus_s;
