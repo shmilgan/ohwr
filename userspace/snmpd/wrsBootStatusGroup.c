@@ -10,6 +10,7 @@
 #define DOTCONFIG_FILENAME "dot-config_filename"
 #define DOTCONFIG_DOWNLOAD "dot-config_status"
 
+#define HWINFO_FILE "/tmp/hwinfo_read_status"
 /* Macros for fscanf function to read line with maximum of "x" characters
  * without new line. Macro expands to something like: "%10[^\n]" */
 #define LINE_READ_LEN_HELPER(x) "%"#x"[^\n]"
@@ -29,6 +30,7 @@ static struct pickinfo wrsBootStatus_pickinfo[] = {
 	FIELD(wrsBootStatus_s, ASN_OCTET_STR, wrsConfigSourceHost),
 	FIELD(wrsBootStatus_s, ASN_OCTET_STR, wrsConfigSourceFilename),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootConfigStatus),
+	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootHwinfoReadout),
 };
 
 struct wrsBootStatus_s wrsBootStatus_s;
@@ -190,6 +192,44 @@ static void get_dotconfig_source(void)
 	}
 }
 
+/* get status of execution of following scripts:
+ * /etc/init.d/S90hwinfo
+ * */
+static void get_boot_scripts_status(void){
+	static int run_once = 0;
+	FILE *f;
+	char buff[21]; /* 1 for null char */
+
+	if (run_once) {
+		/* HWinfo, load of FPGA and LM32 is done only at boot */
+		return;
+	}
+	run_once = 1;
+
+	/* read result of S90hwinfo (HWinfo) execution */
+	f = fopen(HWINFO_FILE, "r");
+	if (f) {
+		/* readline without newline */
+		fscanf(f, LINE_READ_LEN(20), buff);
+		fclose(f);
+		if (!strncmp(buff, "hwinfo_ok", 20))
+			wrsBootStatus_s.wrsBootHwinfoReadout =
+						WRS_BOOT_HWINFO_OK;
+		else if (!strncmp(buff, "hwinfo_warning", 20))
+			wrsBootStatus_s.wrsBootHwinfoReadout =
+						WRS_BOOT_HWINFO_WARNING;
+		else /*  */
+			wrsBootStatus_s.wrsBootHwinfoReadout =
+						WRS_BOOT_HWINFO_ERROR;
+	} else {
+		/* status file not found, probably something else caused
+		 * a problem */
+		wrsBootStatus_s.wrsBootHwinfoReadout =
+					WRS_BOOT_HWINFO_ERROR_MINOR;
+	}
+}
+
+
 time_t wrsBootStatus_data_fill(void)
 {
 	static time_t time_update;
@@ -207,6 +247,9 @@ time_t wrsBootStatus_data_fill(void)
 
 	/* get dotconfig source information */
 	get_dotconfig_source();
+
+	/* get result of execution of hwinfo script */
+	get_boot_scripts_status();
 
 	/* there was an update, return current time */
 	return time_update;

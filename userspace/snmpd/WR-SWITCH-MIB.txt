@@ -318,6 +318,23 @@ wrsBootConfigStatus  OBJECT-TYPE
         errorMinor - cannot read status file, problem is probably somewhere else"
     ::= { wrsBootStatusGroup 9 }
 
+wrsBootHwinfoReadout  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        errorMinor(3),
+                        warning(4)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Result of hwinfo readout
+        error - hwinfo readout failed
+        errorMinor - cannot read status file, problem is probably somewhere else
+        warning - no hwinfo partition"
+    ::= { wrsBootStatusGroup 10 }
+
 -- wrsTemperatureGroup (.7.1.3)
 wrsTemperatureGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 3 }
 
