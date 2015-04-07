@@ -55,6 +55,7 @@ time_t wrsVersion_data_fill(void)
 	char s[80], key[40], value[40];
 	FILE *f;
 	int i;
+	int guess_index;
 	static int run_once = 0;
 
 	time_t time_cur;
@@ -75,14 +76,26 @@ time_t wrsVersion_data_fill(void)
 		return time_cur;
 	}
 
+	guess_index = 0;
 	while (fgets(s, sizeof(s), f)) {
 		if (sscanf(s, "%s %[^\n]", key, value) != 2)
 			continue; /* error... */
+
+		/* try educated guess to find position in array */
+		if (!strcmp(key, wrs_version[guess_index].key)) {
+			strncpy(wrsVersion_s.wrsVersions[guess_index],
+				value, 32);
+			guess_index++;
+			continue;
+		}
+
+		/* check all */
 		for (i = 0; i < ARRAY_SIZE(wrs_version); i++) {
 			if (strcmp(key, wrs_version[i].key))
 				continue;
 			strncpy(wrsVersion_s.wrsVersions[i], value, 32);
 		}
+		guess_index++;
 	}
 	pclose(f);
 	return time_cur;
