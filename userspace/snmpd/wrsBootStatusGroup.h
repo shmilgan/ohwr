@@ -51,6 +51,7 @@ struct wrsBootStatus_s {
 	int32_t wrsBootHwinfoReadout;
 	int32_t wrsBootLoadFPGA;
 	int32_t wrsBootLoadLM32;
+	int32_t wrsBootKernelModulesMissing;
 };
 
 extern struct wrsBootStatus_s wrsBootStatus_s;

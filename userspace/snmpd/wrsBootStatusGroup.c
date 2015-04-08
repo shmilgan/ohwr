@@ -14,6 +14,8 @@
 #define LOAD_FPGA_STATUS_FILE "/tmp/load_fpga_status"
 #define LOAD_LM32_STATUS_FILE "/tmp/load_lm32_status"
 
+#define MODULES_FILE "/proc/modules"
+
 /* Macros for fscanf function to read line with maximum of "x" characters
  * without new line. Macro expands to something like: "%10[^\n]" */
 #define LINE_READ_LEN_HELPER(x) "%"#x"[^\n]"
@@ -36,9 +38,25 @@ static struct pickinfo wrsBootStatus_pickinfo[] = {
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootHwinfoReadout),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootLoadFPGA),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootLoadLM32),
+	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootKernelModulesMissing),
 };
 
 struct wrsBootStatus_s wrsBootStatus_s;
+
+struct wrs_km_item {
+	char *key;
+};
+
+/* list of kernel modules to check */
+static struct wrs_km_item kernel_modules[] = {
+	[0] = {.key = "wr_clocksource"},
+	[1] = {"wr_pstats"},
+	[2] = {"wr_rtu"},
+	[3] = {"wr_nic"},
+	[4] = {"wr_vic"},
+	[5] = {"at91_softpwm"},
+	[6] = {"g_serial"},
+};
 
 struct wrs_bc_item {
 	char *key;
@@ -279,6 +297,55 @@ static void get_boot_scripts_status(void){
 	}
 }
 
+/* check if all modules are loaded */
+static void get_loaded_kernel_modules_status(void)
+{
+	FILE *f;
+	char key[41]; /* 1 for null char */
+	int modules_found;
+	int ret;
+	int i;
+	int guess_index;
+	int modules_missing;
+
+	f = fopen(MODULES_FILE, "r");
+	if (!f) {
+		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup filed to open "
+			 MODULES_FILE"\n");
+		/* notify snmp about error in kernel modules */
+		wrsBootStatus_s.wrsBootKernelModulesMissing =
+						ARRAY_SIZE(kernel_modules);
+		return;
+	}
+
+	while (ret != EOF) {
+		/* read first word from line (module name) ignore rest of
+		 * the line */
+		ret = fscanf(f, "%40s%*[^\n]", key);
+		if (ret != 1)
+			continue; /* error... or EOF */
+
+		/* try educated guess to find position in array */
+		if (!strncmp(key, kernel_modules[guess_index].key, 40)) {
+			modules_found++;
+			guess_index++;
+			continue;
+		}
+
+		for (i = 0; i < ARRAY_SIZE(kernel_modules); i++) {
+			if (strncmp(key, kernel_modules[i].key, 40))
+				continue;
+			modules_found++;
+		}
+		guess_index++;
+	}
+
+	modules_missing = ARRAY_SIZE(kernel_modules) - modules_found;
+	/* save number of missing modules */
+	wrsBootStatus_s.wrsBootKernelModulesMissing = modules_missing;
+
+	fclose(f);
+}
 
 time_t wrsBootStatus_data_fill(void)
 {
@@ -300,6 +367,9 @@ time_t wrsBootStatus_data_fill(void)
 
 	/* get result of execution of hwinfo script */
 	get_boot_scripts_status();
+
+	/* get loaded kernel modules */
+	get_loaded_kernel_modules_status();
 
 	/* there was an update, return current time */
 	return time_update;
