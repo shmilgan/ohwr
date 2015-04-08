@@ -57,6 +57,26 @@ wrsDetailedStatusesGroup   OBJECT IDENTIFIER ::= { wrsStatus 2 }
 -- wrsOSStatusGroup (.6.2.1)
 wrsOSStatusGroup           OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 1 }
 
+wrsBootSuccessful OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of wrsBootStatusGroup
+            ok - values in wrsBootStatusGroup are correct
+            error - there is an error in wrsBootStatusGroup
+            warning - there is a warning in wrsBootStatusGroup
+            warningNA - there is N/A field in wrsBootStatusGroup
+            bug - bug in checking conditions of wrsBootStatusGroup, please report"
+    ::= { wrsOSStatusGroup 1 }
+
 wrsTemperatureWarning OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
