@@ -382,6 +382,20 @@ wrsBootKernelModulesMissing  OBJECT-TYPE
         other errors (like unable to open /proc/modules) are reported as maximum number of missing modules"
     ::= { wrsBootStatusGroup 13 }
 
+wrsBootUserspaceDaemonsMissing  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        allDeamonsPresent(0)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Checking if all desired deamons are running.
+        allDeamonsPresent - all deamons running
+        other numbers represent number of deamons not running
+        other errors (can be: unable to run ps command or problem with multiple process instances) 
+        are reported as maximum number of missing modules"
+    ::= { wrsBootStatusGroup 14 }
+
 -- wrsTemperatureGroup (.7.1.3)
 wrsTemperatureGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 3 }
 

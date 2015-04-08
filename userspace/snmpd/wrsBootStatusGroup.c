@@ -15,6 +15,8 @@
 #define LOAD_LM32_STATUS_FILE "/tmp/load_lm32_status"
 
 #define MODULES_FILE "/proc/modules"
+/* get process list, output only process' command */
+#define PROCESS_COMMAND "/bin/ps axo command"
 
 /* Macros for fscanf function to read line with maximum of "x" characters
  * without new line. Macro expands to something like: "%10[^\n]" */
@@ -39,6 +41,7 @@ static struct pickinfo wrsBootStatus_pickinfo[] = {
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootLoadFPGA),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootLoadLM32),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootKernelModulesMissing),
+	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootUserspaceDaemonsMissing),
 };
 
 struct wrsBootStatus_s wrsBootStatus_s;
@@ -56,6 +59,23 @@ static struct wrs_km_item kernel_modules[] = {
 	[4] = {"wr_vic"},
 	[5] = {"at91_softpwm"},
 	[6] = {"g_serial"},
+};
+
+/* user space deamon list item */
+struct wrs_usd_item {
+	char *key;
+};
+
+/* user space deamon list */
+static struct wrs_km_item userspace_deamons[] = {
+	[0] = {.key = "/usr/sbin/dropbear"},
+	[1] = {"/wr/bin/wrsw_hal"}, /* two wrsw_hal instances */
+	[2] = {"/wr/bin/wrsw_hal"}, /* two wrsw_hal instances */
+	[3] = {"/wr/bin/wrsw_rtud"},
+	[4] = {"/wr/bin/ppsi"},
+	[5] = {"/usr/sbin/lighttpd"},
+	[6] = {"/usr/bin/monit"},
+	[7] = {"snmpd"},
 };
 
 struct wrs_bc_item {
@@ -347,6 +367,58 @@ static void get_loaded_kernel_modules_status(void)
 	fclose(f);
 }
 
+/* check if deamons from userspace_deamons array are running */
+static void get_deamons_status(void)
+{
+	FILE *f;
+	char key[41]; /* 1 for null char */
+	int ret;
+	int i;
+	int processes_found;
+	int processes_missing;
+
+	/* use ps command to get process list, more portable, less error prone
+	 * but probably slower than manually parsing /proc/ */
+	f = popen(PROCESS_COMMAND, "r");
+	if (!f) {
+		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup failed to execute "
+			 PROCESS_COMMAND"\n");
+		/* notify snmp about error in processes list */
+		wrsBootStatus_s.wrsBootUserspaceDaemonsMissing =
+						ARRAY_SIZE(userspace_deamons);
+		return;
+	}
+
+	while (ret != EOF) {
+		/* read first word from line (process name) ignore rest of
+		 * the line */
+		ret = fscanf(f, "%40s%*[^\n]", key);
+		if (ret != 1)
+			continue; /* error... or EOF */
+
+		for (i = 0; i < ARRAY_SIZE(userspace_deamons); i++) {
+			if (strncmp(key, userspace_deamons[i].key, 40))
+				continue;
+			processes_found++;
+			break;
+		}
+	}
+
+	processes_missing = ARRAY_SIZE(userspace_deamons) - processes_found;
+
+	/* save number of processes missing */
+	if (processes_missing < 0) {
+		/* probably something wrong with multiple process' instances */
+		wrsBootStatus_s.wrsBootUserspaceDaemonsMissing =
+						ARRAY_SIZE(userspace_deamons);
+	} else {
+		wrsBootStatus_s.wrsBootUserspaceDaemonsMissing =
+							processes_missing;
+	}
+
+	pclose(f);
+}
+
 time_t wrsBootStatus_data_fill(void)
 {
 	static time_t time_update;
@@ -370,6 +442,9 @@ time_t wrsBootStatus_data_fill(void)
 
 	/* get loaded kernel modules */
 	get_loaded_kernel_modules_status();
+
+	/* get info about running deamons */
+	get_deamons_status();
 
 	/* there was an update, return current time */
 	return time_update;
