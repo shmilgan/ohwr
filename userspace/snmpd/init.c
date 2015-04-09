@@ -10,6 +10,7 @@
 #include "snmp_shmem.h"
 #include "wrsGeneralStatusGroup.h"
 #include "wrsOSStatusGroup.h"
+#include "wrsNetworkingStatusGroup.h"
 #include "wrsVersionGroup.h"
 #include "wrsCurrentTimeGroup.h"
 #include "wrsBootStatusGroup.h"
@@ -29,6 +30,7 @@ void init_wrsSnmp(void)
 	init_wrsScalar();
 	init_wrsGeneralStatusGroup();
 	init_wrsOSStatusGroup();
+	init_wrsNetworkingStatusGroup();
 	init_wrsVersionGroup();
 	init_wrsCurrentTimeGroup();
 	init_wrsBootStatusGroup();

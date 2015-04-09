@@ -114,7 +114,30 @@ wrsTemperatureWarning OBJECT-TYPE
 
 
 --wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
---wrsNetworkingStatusGroup   OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 3 }
+
+-- wrsNetworkingStatusGroup (.6.1.3)
+wrsNetworkingStatusGroup   OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 3 }
+
+wrsSFPsStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of SFPs
+            ok - all SFPs are ok
+            error - there is an error in SFP
+            warning - there is a warning in SFP (not used)
+            warningNA - there is N/A field in SFP
+            bug - bug in checking conditions of SFPs, please report"
+    ::= { wrsNetworkingStatusGroup 1 }
+
 
 -- wrsVersionGroup (.6.3)
 wrsVersionGroup            OBJECT IDENTIFIER ::= { wrsStatus 3 }

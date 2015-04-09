@@ -31,6 +31,7 @@ SOURCES = \
 	wrsScalar.c \
 	wrsGeneralStatusGroup.c \
 	wrsOSStatusGroup.c \
+	wrsNetworkingStatusGroup.c \
 	wrsVersionGroup.c \
 	wrsCurrentTimeGroup.c \
 	wrsBootStatusGroup.c \
