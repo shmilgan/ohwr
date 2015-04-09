@@ -50,8 +50,30 @@ wrsScalarOne   OBJECT-TYPE
         "Integer incremented at every GET"
     ::= { wrsScalar 1 }
 
+-- wrsGeneralStatusGroup (.6.1)
+wrsGeneralStatusGroup      OBJECT IDENTIFIER ::= { wrsStatus 1 }
 
---wrsGeneralStatusGroup      OBJECT IDENTIFIER ::= { wrsStatus 1 }
+wrsOSStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of wrsOSStatusGroup
+            ok - values in wrsOSStatusGroup are correct
+            error - there is an error in wrsOSStatusGroup
+            warning - there is a warning in wrsOSStatusGroup
+            warningNA - there is N/A field in wrsOSStatusGroup
+            bug - bug in checking conditions of wrsOSStatusGroup, please report"
+    ::= { wrsGeneralStatusGroup 2 }
+
+
 wrsDetailedStatusesGroup   OBJECT IDENTIFIER ::= { wrsStatus 2 }
 
 -- wrsOSStatusGroup (.6.2.1)

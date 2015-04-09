@@ -13,6 +13,7 @@
 
 static struct pickinfo wrsGeneralStatus_pickinfo[] = {
 	FIELD(wrsGeneralStatus_s, ASN_INTEGER, wrsMainSystemStatus),
+	FIELD(wrsGeneralStatus_s, ASN_INTEGER, wrsOSStatus),
 };
 
 struct wrsGeneralStatus_s wrsGeneralStatus_s;
@@ -20,16 +21,52 @@ struct wrsGeneralStatus_s wrsGeneralStatus_s;
 time_t wrsGeneralStatus_data_fill(void)
 {
 	static time_t time_update; /* time of last update */
-	time_t time_temp; /* time when temperature data was updated */
+	time_t time_osstatus; /* time when wrsOSStatus data was updated */
+	struct wrsOSStatus_s *o;
 
-	time_temp = wrsTemperature_data_fill();
+	time_osstatus = wrsOSStatus_data_fill();
 
-	if (time_temp <= time_update) {
+	if (time_osstatus <= time_update) {
 		/* cache not updated, return last update time */
 		snmp_log(LOG_ERR,
 			"SNMP: wrsGeneralStatusGroup cache\n");
 		return time_update;
 	}
+
+	/*********************************************************************\
+	|**************************** wrsOSStatus ****************************|
+	\*********************************************************************/
+	o = &wrsOSStatus_s;
+	if ( /* check if error */
+		o->wrsBootSuccessful == WRS_BOOT_SUCCESSFUL_ERROR
+	) {
+		wrsGeneralStatus_s.wrsOSStatus = WRS_OS_STATUS_ERROR;
+
+	} else if ( /* check if warning */
+		o->wrsBootSuccessful == WRS_BOOT_SUCCESSFUL_WARNING
+		|| o->wrsTemperatureWarning == WRS_TEMPERATURE_WARNING_THOLD_NOT_SET
+		|| o->wrsTemperatureWarning == WRS_TEMPERATURE_WARNING_TOO_HIGH
+	) { /* warning */
+		wrsGeneralStatus_s.wrsOSStatus = WRS_OS_STATUS_WARNING;
+
+	} else if ( /* check if any of fields equal to 0 */
+		o->wrsBootSuccessful == WRS_BOOT_SUCCESSFUL_WARNING_NA
+		|| o->wrsBootSuccessful == 0
+		|| o->wrsTemperatureWarning == 0
+	) { /* warning NA */
+		wrsGeneralStatus_s.wrsOSStatus = WRS_OS_STATUS_WARNING_NA;
+
+	} else if ( /* check if OK */
+		o->wrsBootSuccessful == WRS_BOOT_SUCCESSFUL_OK
+		&& o->wrsTemperatureWarning == WRS_TEMPERATURE_WARNING_OK
+	) { /* OK */
+		wrsGeneralStatus_s.wrsOSStatus = WRS_OS_STATUS_OK;
+
+	} else { /* probably bug in previous conditions,
+		  * this should never happen */
+		wrsGeneralStatus_s.wrsOSStatus = WRS_OS_STATUS_BUG;
+	}
+
 	time_update = time(NULL);
 	wrsCurrentTime_data_fill();
 	wrsOSStatus_data_fill();
