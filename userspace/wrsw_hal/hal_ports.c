@@ -185,6 +185,7 @@ int hal_port_init_all()
 {
 	int index;
 	struct wrs_shm_head *hal_shmem_hdr;
+	char *config_item;
 
 	pr_info("Initializing switch ports...\n");
 
@@ -230,11 +231,19 @@ int hal_port_init_all()
 	/* We are done, mark things as valid */
 	hal_shmem->nports = hal_port_nports;
 	hal_shmem_hdr->version = HAL_SHMEM_VERSION;
-	hal_shmem->temp.fpga_thold =
-				atoi(libwr_cfg_get("SNMP_TEMP_THOLD_FPGA"));
-	hal_shmem->temp.pll_thold = atoi(libwr_cfg_get("SNMP_TEMP_THOLD_PLL"));
-	hal_shmem->temp.psl_thold = atoi(libwr_cfg_get("SNMP_TEMP_THOLD_PSL"));
-	hal_shmem->temp.psr_thold = atoi(libwr_cfg_get("SNMP_TEMP_THOLD_PSR"));
+	/* check wether config fields exist, atoi has to have valid string */
+	config_item = libwr_cfg_get("SNMP_TEMP_THOLD_FPGA");
+	if (config_item)
+		hal_shmem->temp.fpga_thold = atoi(config_item);
+	config_item = libwr_cfg_get("SNMP_TEMP_THOLD_PLL");
+	if (config_item)
+		hal_shmem->temp.pll_thold = atoi(config_item);
+	config_item = libwr_cfg_get("SNMP_TEMP_THOLD_PSL");
+	if (config_item)
+		hal_shmem->temp.psl_thold = atoi(config_item);
+	config_item = libwr_cfg_get("SNMP_TEMP_THOLD_PSR");
+	if (config_item)
+		hal_shmem->temp.psr_thold = atoi(config_item);
 	/* Release processes waiting for HAL's to fill shm with correct data
 	   When shm is opened successfully data in shm is still not populated!
 	   Read data with wrs_shm_seqbegin and wrs_shm_seqend!
