@@ -8,6 +8,7 @@
 /* The sub-init functions */
 #include "wrsSnmp.h"
 #include "snmp_shmem.h"
+#include "libwr/config.h"
 #include "wrsGeneralStatusGroup.h"
 #include "wrsOSStatusGroup.h"
 #include "wrsNetworkingStatusGroup.h"
@@ -21,12 +22,19 @@
 #include "wrsPtpDataTable.h"
 #include "wrsPortStatusTable.h"
 
+#define DOTCONFIG_FILE "/wr/etc/dot-config"
 
 FILE *wrs_logf; /* for the local-hack messages */
 
 void init_wrsSnmp(void)
 {
 	init_shm();
+	if (libwr_cfg_read_file(DOTCONFIG_FILE)) {
+		/* unable to read dot-config,
+		 * don't crash SNMPd, it will be reported in SNMP objects */
+		snmp_log(LOG_ERR, "SNMP: unable to read dot-config file %s\n",
+			 DOTCONFIG_FILE);
+	}
 	init_wrsScalar();
 	init_wrsGeneralStatusGroup();
 	init_wrsOSStatusGroup();
