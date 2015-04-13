@@ -138,6 +138,57 @@ wrsSFPsStatus OBJECT-TYPE
             bug - bug in checking conditions of SFPs, please report"
     ::= { wrsNetworkingStatusGroup 1 }
 
+wrsEndpointStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        firstRead(1),
+                        ok(2),
+                        error(3)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Check itmes described in 2.2.2 Fault in the Endpoint's transmission/reception
+             path in wrs_failures document.
+	     firstRead - cannot derermine change rate from olny one read
+             ok - parameters below limits
+             error - parameters above limits"
+    ::= { wrsNetworkingStatusGroup 2 }
+
+wrsSwcoreStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        firstRead(1),
+                        ok(2),
+                        error(3)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Check itmes described in 2.2.3 Problem with the SwCore or Endpoint HDL
+             module and 2.2.5 Too much HP traffic / Per-priority queue full
+             in wrs_failures document.
+	     firstRead - cannot derermine change rate from olny one read
+             ok - parameters below limits
+             error - parameters above limits"
+    ::= { wrsNetworkingStatusGroup 3 }
+
+wrsRTUStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        firstRead(1),
+                        ok(2),
+                        error(3)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Check itmes described in 2.2.4 RTU is full and cannot accept more requests
+             in wrs_failures document.
+	     firstRead - cannot derermine change rate from olny one read
+             ok - parameters below limits
+             error - parameters above limits"
+    ::= { wrsNetworkingStatusGroup 4 }
 
 -- wrsVersionGroup (.6.3)
 wrsVersionGroup            OBJECT IDENTIFIER ::= { wrsStatus 3 }
