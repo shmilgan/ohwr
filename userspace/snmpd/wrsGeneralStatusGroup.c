@@ -1,15 +1,6 @@
 #include "wrsSnmp.h"
-#include "snmp_shmem.h"
-#include "wrsCurrentTimeGroup.h"
 #include "wrsOSStatusGroup.h"
 #include "wrsNetworkingStatusGroup.h"
-#include "wrsPortStatusTable.h"
-#include "wrsPstatsTable.h"
-#include "wrsPtpDataTable.h"
-#include "wrsStartCntGroup.h"
-#include "wrsTemperatureGroup.h"
-#include "wrsVersionGroup.h"
-
 #include "wrsGeneralStatusGroup.h"
 
 static struct pickinfo wrsGeneralStatus_pickinfo[] = {
@@ -131,16 +122,7 @@ time_t wrsGeneralStatus_data_fill(void)
 	}
 
 	time_update = time(NULL);
-	wrsCurrentTime_data_fill();
-	wrsOSStatus_data_fill();
-	wrsPortStatusTable_data_fill(NULL);
-	wrsPstatsTable_data_fill(NULL);
-	wrsPtpDataTable_data_fill(NULL);
-	wrsStartCnt_data_fill();
-	wrsVersion_data_fill();
 
-	/*memset(&wrsGeneralStatus_s, 0, sizeof(wrsGeneralStatus_s));*/
-	wrsGeneralStatus_s.wrsMainSystemStatus++;
 	/* there was an update, return current time */
 	return time_update;
 }
