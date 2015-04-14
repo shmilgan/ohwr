@@ -72,7 +72,8 @@ time_t wrsGeneralStatus_data_fill(void)
 	|************************** wrsTimingStatus **************************|
 	\*********************************************************************/
 
-	/* not implemented */
+	/* not implemented, always return OK */
+	wrsGeneralStatus_s.wrsTimingStatus = WRS_TIMING_STATUS_OK;
 
 	/*********************************************************************\
 	|************************ wrsNetworkingStatus ************************|
