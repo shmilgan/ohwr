@@ -73,6 +73,25 @@ wrsOSStatus OBJECT-TYPE
             bug - bug in checking conditions of wrsOSStatusGroup, please report"
     ::= { wrsGeneralStatusGroup 2 }
 
+wrsNetworkingStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of wrsNetworkingStatusGroup
+            ok - values in wrsNetworkingStatusGroup are correct
+            error - there is an error in wrsNetworkingStatusGroup
+            warning - there is a warning in wrsNetworkingStatusGroup
+            warningNA - there is N/A field in wrsNetworkingStatusGroup
+            bug - bug in checking conditions of wrsNetworkingStatusGroup, please report"
+    ::= { wrsGeneralStatusGroup 4 }
 
 wrsDetailedStatusesGroup   OBJECT IDENTIFIER ::= { wrsStatus 2 }
 
