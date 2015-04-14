@@ -1,13 +1,29 @@
 #!/bin/sh
 
+COUNTER_FILE="/tmp/start_cnt_syslogd"
+
+start_counter() {
+	# increase boot counter
+	START_COUNTER=1
+	if [ -f "$COUNTER_FILE" ];
+	then
+	    read -r START_COUNTER < $COUNTER_FILE
+	    START_COUNTER=$((START_COUNTER+1))
+	fi
+	echo "$START_COUNTER" > $COUNTER_FILE
+}
+
 start() {
     # Check the configuration file: if there's no target, don't run the thing.
     if ! grep -q '^##.*remote-host' /etc/rsyslog.conf; then
 	echo -n "Starting rsyslog: "
 	/usr/sbin/rsyslogd
+	start_counter
 	echo "OK"
     else
 	echo "Not starting rsyslog: no target host selected"
+	# avoid SNMPd complaints about lack of start counter file
+	echo "0" > $COUNTER_FILE
     fi
 }
 

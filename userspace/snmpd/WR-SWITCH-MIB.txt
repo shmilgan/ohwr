@@ -645,6 +645,38 @@ wrsStartCntRTUd OBJECT-TYPE
             "Number of RTU deamon starts"
     ::= { wrsStartCntGroup 3 }
 
+wrsStartCntSshd OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Nmber of SSH deamon starts"
+    ::= { wrsStartCntGroup 4 }
+
+wrsStartCntHttpd OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Nmber of HTTP deamon starts"
+    ::= { wrsStartCntGroup 5 }
+
+wrsStartCntSnmpd OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Nmber of SNMP deamon starts"
+    ::= { wrsStartCntGroup 6 }
+
+wrsStartCntSyslogd OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Nmber of SYSLOG deamon starts"
+    ::= { wrsStartCntGroup 7 }
+
 wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
 -- wrsSpllStatusGroup (.7.3.2)
 wrsSpllStatusGroup      OBJECT IDENTIFIER ::= { wrsSpllState 2 }
