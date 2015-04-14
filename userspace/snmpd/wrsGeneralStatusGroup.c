@@ -20,6 +20,7 @@ time_t wrsGeneralStatus_data_fill(void)
 					* was updated */
 	struct wrsOSStatus_s *o;
 	struct wrsNetworkingStatus_s *n;
+	struct wrsGeneralStatus_s *g;
 
 	time_osstatus = wrsOSStatus_data_fill();
 	time_networking_status = wrsNetworkingStatus_data_fill();
@@ -120,6 +121,54 @@ time_t wrsGeneralStatus_data_fill(void)
 		  * this should never happen */
 		wrsGeneralStatus_s.wrsNetworkingStatus =
 						WRS_NETWORKING_STATUS_BUG;
+	}
+
+	/*********************************************************************\
+	|************************ wrsMainSystemStatus ************************|
+	\*********************************************************************/
+
+	/* update at the end of this group to have latest results of other
+	 * statuses */
+	g = &wrsGeneralStatus_s;
+	if ( /* check if error */
+		g->wrsOSStatus == WRS_OS_STATUS_ERROR
+		|| g->wrsTimingStatus == WRS_TIMING_STATUS_ERROR
+		|| g->wrsNetworkingStatus == WRS_NETWORKING_STATUS_ERROR
+	) {
+		wrsGeneralStatus_s.wrsMainSystemStatus =
+						WRS_MAIN_SYSTEM_STATUS_ERROR;
+
+	} else if ( /* check if warning */
+		g->wrsOSStatus == WRS_OS_STATUS_WARNING
+		|| g->wrsTimingStatus == WRS_TIMING_STATUS_WARNING
+		|| g->wrsNetworkingStatus == WRS_NETWORKING_STATUS_WARNING
+	) { /* warning */
+		wrsGeneralStatus_s.wrsMainSystemStatus =
+						WRS_MAIN_SYSTEM_STATUS_WARNING;
+
+	} else if ( /* check if any of fields equal to 0 or WARNING_NA */
+		g->wrsOSStatus == WRS_OS_STATUS_WARNING_NA
+		|| g->wrsOSStatus == 0
+		|| g->wrsTimingStatus == WRS_TIMING_STATUS_WARNING_NA
+		|| g->wrsTimingStatus == 0
+		|| g->wrsNetworkingStatus == WRS_NETWORKING_STATUS_WARNING_NA
+		|| g->wrsNetworkingStatus == 0
+	) { /* warning NA */
+		wrsGeneralStatus_s.wrsMainSystemStatus =
+					WRS_MAIN_SYSTEM_STATUS_WARNING_NA;
+
+	} else if ( /* check if OK */
+		g->wrsOSStatus == WRS_OS_STATUS_OK
+		&& g->wrsTimingStatus == WRS_TIMING_STATUS_OK
+		&& g->wrsNetworkingStatus == WRS_NETWORKING_STATUS_OK
+	) { /* OK */
+		wrsGeneralStatus_s.wrsMainSystemStatus =
+						WRS_MAIN_SYSTEM_STATUS_OK;
+
+	} else { /* probably bug in previous conditions,
+		  * this should never happen */
+		wrsGeneralStatus_s.wrsMainSystemStatus =
+						WRS_MAIN_SYSTEM_STATUS_BUG;
 	}
 
 	time_update = time(NULL);

@@ -53,6 +53,26 @@ wrsScalarOne   OBJECT-TYPE
 -- wrsGeneralStatusGroup (.6.1)
 wrsGeneralStatusGroup      OBJECT IDENTIFIER ::= { wrsStatus 1 }
 
+wrsMainSystemStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of WRS switch
+            ok - values in wrsGeneralStatusGroup are correct
+            error - there is an error in wrsGeneralStatusGroup
+            warning - there is a warning in wrsGeneralStatusGroup
+            warningNA - there is N/A field in wrsGeneralStatusGroup
+            bug - bug in checking conditions of wrsGeneralStatusGroup, please report"
+    ::= { wrsGeneralStatusGroup 1 }
+
 wrsOSStatus OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
