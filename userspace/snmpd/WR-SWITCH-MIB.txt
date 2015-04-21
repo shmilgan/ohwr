@@ -1,38 +1,44 @@
 WR-SWITCH-MIB DEFINITIONS ::= BEGIN
 
--- This is blatantly copied from  NET-SNMP-TUTORIAL-MIB.txt and IF-MIB.txt
--- URL: http://www.net-snmp.org/tutorial/tutorial-5/
---                            toolkit/mib_module/NET-SNMP-TUTORIAL-MIB.txt
--- Bugs and swearing by Alessandro Rubini
+-- Original MIB, Bugs and swearing by Alessandro Rubini
+-- MIB rewritten by Adam Wujek, BE-CO-HT, CERN
+
+-- During development all unused/not implemented objects are comented out
+-- to avoid later changes
 
 -- IMPORTS: Include definitions from other mibs here
 IMPORTS
-        OBJECT-TYPE, Integer32, Counter32, Counter64,
+        OBJECT-TYPE, Integer32, Unsigned32, Counter32, Counter64,
         MODULE-IDENTITY, enterprises          FROM SNMPv2-SMI
         DisplayString                         FROM SNMPv2-TC;
 
-CERN OBJECT IDENTIFIER ::= { enterprises 96 }
+
 
 -- A brief description and update information about this mib.
 -- (I follow the CamelCase to be sure I don't mistype. Who knows the rules...
 
 wrSwitchMIB MODULE-IDENTITY
-    LAST-UPDATED "201502231000Z"
+    LAST-UPDATED "201503191600Z"
     ORGANIZATION "CERN"
     CONTACT-INFO "postal:   BE-CO-HT, CERN, Geneva
                   email:    ht-drivers@cern.ch
                  "
     DESCRIPTION  "White Rabbit Switch internal details
                  "
-    ::= { CERN 100 }
+    ::= { cern 100 }
+
+cern OBJECT IDENTIFIER ::= { enterprises 96 }
 
 -- Define typical mib nodes
 -- we'll prefix everything in this mib with wrs (White Rabbit Switch)
 wrsScalar      OBJECT IDENTIFIER ::= { wrSwitchMIB 1 }
-wrsPstatsTable OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }
-wrsPpsi      OBJECT IDENTIFIER ::= { wrSwitchMIB 3 } -- going to be obsolete
-wrsVersion     OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }
-wrsDate        OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }
+--wrsPstatsTable OBJECT IDENTIFIER ::= { wrSwitchMIB 2 }  == obsolete
+--wrsPpsi        OBJECT IDENTIFIER ::= { wrSwitchMIB 3 }  == obsolete
+--wrsVersion     OBJECT IDENTIFIER ::= { wrSwitchMIB 4 }  == obsolete
+--wrsDate        OBJECT IDENTIFIER ::= { wrSwitchMIB 5 }  == obsolete
+wrsStatus             OBJECT IDENTIFIER ::= { wrSwitchMIB 6 }
+wrsExpertStatus       OBJECT IDENTIFIER ::= { wrSwitchMIB 7 }
+
 
 -- define one stupid object for a start
 
@@ -41,237 +47,1187 @@ wrsScalarOne   OBJECT-TYPE
     MAX-ACCESS  read-write
     STATUS      current
     DESCRIPTION
-        "Just an integer"
+        "Integer incremented at every GET"
     ::= { wrsScalar 1 }
 
--- This pstats stuff is copied, in a way, from the ifTable stuff (IF-MIB.txt)
--- We have the ports as columns, so they are a fixed number. And the
--- counters as lines.  This allows to change counters following gateware.
--- even if it is not standard practice.  Otherwise, we'd need to rewrite
--- code every time (I *hate* this obsolete crap: code generators should not
--- be like that).
+-- wrsGeneralStatusGroup (.6.1)
+wrsGeneralStatusGroup      OBJECT IDENTIFIER ::= { wrsStatus 1 }
 
-wrsPstatsTable OBJECT-TYPE
-    SYNTAX      SEQUENCE OF pstatsEntry
-    MAX-ACCESS  not-accessible
-    STATUS      current
-    DESCRIPTION
-            "A list of pstat counters. One column per interface.
-             The number of entries is given by the value of pstatsNumber."
-    ::= { wrSwitchMIB 2 }
-
-pstatsEntry OBJECT-TYPE
-    SYNTAX      PstatsEntry
-    MAX-ACCESS  not-accessible
-    STATUS      current
-    DESCRIPTION
-            "An entry containing a pstat name and values for all WR ports."
-    INDEX   { pstatsIndex }
-    ::= { wrsPstatsTable 1 }
-
-PstatsEntry ::=
-    SEQUENCE {
-        pstatsDescr                 DisplayString,
-        pstatsWR0                   Counter32,
-        pstatsWR1                   Counter32,
-        pstatsWR2                   Counter32,
-        pstatsWR3                   Counter32,
-        pstatsWR4                   Counter32,
-        pstatsWR5                   Counter32,
-        pstatsWR6                   Counter32,
-        pstatsWR7                   Counter32,
-        pstatsWR8                   Counter32,
-        pstatsWR9                   Counter32,
-        pstatsWR10                  Counter32,
-        pstatsWR11                  Counter32,
-        pstatsWR12                  Counter32,
-        pstatsWR13                  Counter32,
-        pstatsWR14                  Counter32,
-        pstatsWR15                  Counter32,
-        pstatsWR16                  Counter32,
-        pstatsWR17                  Counter32
+wrsMainSystemStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
     }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of WRS switch
+            ok - values in wrsGeneralStatusGroup are correct
+            error - there is an error in wrsGeneralStatusGroup
+            warning - there is a warning in wrsGeneralStatusGroup
+            warningNA - there is N/A field in wrsGeneralStatusGroup
+            bug - bug in checking conditions of wrsGeneralStatusGroup, please report"
+    ::= { wrsGeneralStatusGroup 1 }
 
-pstatsDescr OBJECT-TYPE
+wrsOSStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of wrsOSStatusGroup
+            ok - values in wrsOSStatusGroup are correct
+            error - there is an error in wrsOSStatusGroup
+            warning - there is a warning in wrsOSStatusGroup
+            warningNA - there is N/A field in wrsOSStatusGroup
+            bug - bug in checking conditions of wrsOSStatusGroup, please report"
+    ::= { wrsGeneralStatusGroup 2 }
+
+wrsNetworkingStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of wrsNetworkingStatusGroup
+            ok - values in wrsNetworkingStatusGroup are correct
+            error - there is an error in wrsNetworkingStatusGroup
+            warning - there is a warning in wrsNetworkingStatusGroup
+            warningNA - there is N/A field in wrsNetworkingStatusGroup
+            bug - bug in checking conditions of wrsNetworkingStatusGroup, please report"
+    ::= { wrsGeneralStatusGroup 4 }
+
+wrsDetailedStatusesGroup   OBJECT IDENTIFIER ::= { wrsStatus 2 }
+
+-- wrsOSStatusGroup (.6.2.1)
+wrsOSStatusGroup           OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 1 }
+
+wrsBootSuccessful OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of wrsBootStatusGroup
+            ok - values in wrsBootStatusGroup are correct
+            error - there is an error in wrsBootStatusGroup
+            warning - there is a warning in wrsBootStatusGroup
+            warningNA - there is N/A field in wrsBootStatusGroup
+            bug - bug in checking conditions of wrsBootStatusGroup, please report"
+    ::= { wrsOSStatusGroup 1 }
+
+wrsTemperatureWarning OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        thresholdNotSet(1),
+                        temperatureOK(2),
+                        temperatureTooHigh(3)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Warning if temperature exceed threshold levels"
+    ::= { wrsOSStatusGroup 2 }
+
+
+--wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
+
+-- wrsNetworkingStatusGroup (.6.1.3)
+wrsNetworkingStatusGroup   OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 3 }
+
+wrsSFPsStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of SFPs
+            ok - all SFPs are ok
+            error - there is an error in SFP
+            warning - there is a warning in SFP (not used)
+            warningNA - there is N/A field in SFP
+            bug - bug in checking conditions of SFPs, please report"
+    ::= { wrsNetworkingStatusGroup 1 }
+
+wrsEndpointStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        firstRead(1),
+                        ok(2),
+                        error(3)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Check itmes described in 2.2.2 Fault in the Endpoint's transmission/reception
+             path in wrs_failures document.
+	     firstRead - cannot derermine change rate from olny one read
+             ok - parameters below limits
+             error - parameters above limits"
+    ::= { wrsNetworkingStatusGroup 2 }
+
+wrsSwcoreStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        firstRead(1),
+                        ok(2),
+                        error(3)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Check itmes described in 2.2.3 Problem with the SwCore or Endpoint HDL
+             module and 2.2.5 Too much HP traffic / Per-priority queue full
+             in wrs_failures document.
+	     firstRead - cannot derermine change rate from olny one read
+             ok - parameters below limits
+             error - parameters above limits"
+    ::= { wrsNetworkingStatusGroup 3 }
+
+wrsRTUStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        firstRead(1),
+                        ok(2),
+                        error(3)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Check itmes described in 2.2.4 RTU is full and cannot accept more requests
+             in wrs_failures document.
+	     firstRead - cannot derermine change rate from olny one read
+             ok - parameters below limits
+             error - parameters above limits"
+    ::= { wrsNetworkingStatusGroup 4 }
+
+-- wrsVersionGroup (.6.3)
+wrsVersionGroup            OBJECT IDENTIFIER ::= { wrsStatus 3 }
+
+wrsVersionSwVersion            OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The software version, as returned from 'git describe' at build time"
+    ::= { wrsVersionGroup 1 }
+
+wrsVersionSwBuildBy            OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The software build by, as returned from 'git config --get-all user.name' at build time"
+    ::= { wrsVersionGroup 2 }
+
+wrsVersionSwBuildDate          OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The build date of the software, '__DATE__' at build time"
+    ::= { wrsVersionGroup 3 }
+
+wrsVersionBackplaneVersion     OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The hardware version of minibackplane PCB"
+    ::= { wrsVersionGroup 4 }
+
+wrsVersionFpgaType             OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The hardware version of FPGA"
+    ::= { wrsVersionGroup 5 }
+
+wrsVersionManufacturer         OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The name of the manufacturing company of a switch"
+    ::= { wrsVersionGroup 6 }
+
+wrsVersionSwitchSerialNumber   OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The serial number (or string) of the switch"
+    ::= { wrsVersionGroup 7 }
+
+wrsVersionScbVersion           OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The version of the SCB (switch's motherboard)"
+    ::= { wrsVersionGroup 8 }
+
+wrsVersionGwVersion            OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The version of gateware (FPGA bitstream)"
+    ::= { wrsVersionGroup 9 }
+
+wrsVersionGwBuild              OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The build of gateware (FPGA bitstream)"
+    ::= { wrsVersionGroup 10 }
+
+wrsVersionSwitchHdlCommitId    OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The gateware version: commit of wr_switch_hdl"
+    ::= { wrsVersionGroup 11 }
+
+wrsVersionGeneralCoresCommitId OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The gateware version: commit of general-cores"
+    ::= { wrsVersionGroup 12 }
+
+wrsVersionWrCoresCommitId      OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "The gateware version: commit of wr-cores"
+    ::= { wrsVersionGroup 13 }
+
+wrsOperationStatus      OBJECT IDENTIFIER ::= { wrsExpertStatus 1 }
+
+-- wrsCurrentTimeGroup (.7.1.1)
+wrsCurrentTimeGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 1 }
+
+wrsDateTAI      OBJECT-TYPE
+    SYNTAX      Counter64 -- actually integer, but it is unsigned so ok
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current time, in TAI seconds"
+    ::= { wrsCurrentTimeGroup 1 }
+
+wrsDateTAIString   OBJECT-TYPE
     SYNTAX      DisplayString (SIZE (0..32))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "A textual string describing this counter"
-    ::= { pstatsEntry 1 }
+        "The current TAI time, printed as %y-%m-%d-%H:%M:%S (no time zone)"
+    ::= { wrsCurrentTimeGroup 2 }
 
-pstatsWR0 OBJECT-TYPE
+
+--wrsBootStatusGroup (.7.1.2)
+wrsBootStatusGroup      OBJECT IDENTIFIER ::= { wrsOperationStatus 2 }
+
+wrsBootCnt      OBJECT-TYPE
     SYNTAX      Counter32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "The value of this counter for interface wr0."
-    ::= {pstatsEntry 2 }
+        "Number of switch's boots since power-on"
+    ::= { wrsBootStatusGroup 1 }
 
-pstatsWR1 OBJECT-TYPE
-    SYNTAX      Counter32
+wrsRebootCnt     OBJECT-TYPE
+    SYNTAX       Counter32
+    MAX-ACCESS   read-only
+    STATUS       current
+    DESCRIPTION
+        "The number of soft reboots. This is incremented by the
+        reboot system call. A healthy system should feature one
+        soft-reboot less than total boots."
+    ::= { wrsBootStatusGroup 2 }
+
+wrsRestartReason  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        na(0),
+                        error(1),
+                        generalReset(2),
+                        wakeUpReset(3),
+                        watchdogReset(4),
+                        softwareReset(5),
+                        userReset(6)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+      "Reason of last switch restart.
+       error(1) - unable to read restart reason or reset counters
+       generalReset(2) -  Both VDDCORE and VDDBU rising (power-on)
+       wakeUpReset(3) - VDDCORE rising
+       watchdogReset(4) - Watchdog fault occurred
+       softwareReset(5) - Processor reset required by the software (system reboot)
+       userReset(6) -  NRST pin detected low (reset button)"
+    ::= { wrsBootStatusGroup 3 }
+
+wrsFaultIP OBJECT-TYPE
+    SYNTAX         OCTET STRING (SIZE(4))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+        "The fault address of the last panic. This is the instruction
+        pointer normally printed by the stack backtrace. The register
+        is zeroed at first boot and only modified within panic."
+    ::= { wrsBootStatusGroup 4 }
+
+wrsFaultLR OBJECT-TYPE
+    SYNTAX         OCTET STRING (SIZE(4))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+        "The link register register at last panic.
+        This is usually the caller of the function that failed,
+        but it may be a local register if the failing function
+        saved lr to the stack and used it as a scratch register."
+    ::= { wrsBootStatusGroup 5 }
+
+wrsConfigSource  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        na(0),
+                        error(1),
+                        errorMinor(2),
+                        local(3),
+                        tftp(4),
+                        http(5),
+                        ftp(6)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Source of used dotconfig, protocol if gonfig was received from network
+        errorMinor - cannot read status file, problem is probably somewhere else"
+    ::= { wrsBootStatusGroup 6 }
+
+wrsConfigSourceHost   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "The value of this counter for interface wr1."
-    ::= {pstatsEntry 3 }
+        "Server address which provided dotconfig"
+    ::= { wrsBootStatusGroup 7 }
 
-pstatsWR2 OBJECT-TYPE
-    SYNTAX      Counter32
+wrsConfigSourceFilename   OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..128))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-            "The value of this counter for interface wr2."
-    ::= {pstatsEntry 4 }
+        "Path and filename of dotconfig file on server"
+    ::= { wrsBootStatusGroup 8 }
 
-pstatsWR3 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
+wrsBootConfigStatus  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        downloadError(3),
+                        checkError(4),
+                        errorMinor(5)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Result of loading or downloading dot-config file
+        downloadError - unable to download file from given source
+        checkError - config file is not valid or too short (less than 200 characters).
+        errorMinor - cannot read status file, problem is probably somewhere else"
+    ::= { wrsBootStatusGroup 9 }
+
+wrsBootHwinfoReadout  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        errorMinor(3),
+                        warning(4)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Result of hwinfo readout
+        error - hwinfo readout failed
+        errorMinor - cannot read status file, problem is probably somewhere else
+        warning - no hwinfo partition"
+    ::= { wrsBootStatusGroup 10 }
+
+wrsBootLoadFPGA  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        errorMinor(3),
+                        fileNotFound(4)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Result of loading FPGA
+        error - loading failed
+        errorMinor - cannot read status file, problem is probably somewhere else
+        fileNotFound - file to be loaded not found"
+    ::= { wrsBootStatusGroup 11 }
+
+wrsBootLoadLM32  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        errorMinor(3),
+                        fileNotFound(4)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Result of loading LM32
+        error - loading failed
+        errorMinor - cannot read status file, problem is probably somewhere else
+        fileNotFound - file to be loaded not found"
+    ::= { wrsBootStatusGroup 12 }
+
+wrsBootKernelModulesMissing  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        allKernelModulesPresent(0)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Checking if all desired kernel modules are loaded.
+        allKernelModulesPresent - all modules loaded
+        other numbers represent number of modules not loaded
+        other errors (like unable to open /proc/modules) are reported as maximum number of missing modules"
+    ::= { wrsBootStatusGroup 13 }
+
+wrsBootUserspaceDaemonsMissing  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        allDeamonsPresent(0)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Checking if all desired deamons are running.
+        allDeamonsPresent - all deamons running
+        other numbers represent number of deamons not running
+        other errors (can be: unable to run ps command or problem with multiple process instances) 
+        are reported as maximum number of missing modules"
+    ::= { wrsBootStatusGroup 14 }
+
+-- wrsTemperatureGroup (.7.1.3)
+wrsTemperatureGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 3 }
+
+wrsTempFPGA OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "FPGA temperature"
+    ::= { wrsTemperatureGroup 1 }
+
+wrsTempPLL OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "PLL temperature"
+    ::= { wrsTemperatureGroup 2 }
+
+wrsTempPSL OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Power Supply Left (PSL) temperature"
+    ::= { wrsTemperatureGroup 3 }
+
+wrsTempPSR OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Power Supply Right (PSR) temperature"
+    ::= { wrsTemperatureGroup 4 }
+
+wrsTempThresholdFPGA OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Threshold level for FPGA temperature"
+    ::= { wrsTemperatureGroup 5 }
+
+wrsTempThresholdPLL OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Threshold level for PLL temperature"
+    ::= { wrsTemperatureGroup 6 }
+
+wrsTempThresholdPSL OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Threshold level for Power Supply Left (PSL) temperature"
+    ::= { wrsTemperatureGroup 7 }
+
+wrsTempThresholdPSR OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Threshold level for Power Supply Right (PSR) temperature"
+    ::= { wrsTemperatureGroup 8 }
+
+wrsStartCntGroup      OBJECT IDENTIFIER ::= { wrsExpertStatus 2 }
+
+-- wrsStartCntGroup (.7.2)
+wrsStartCntHAL OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of HAL deamon starts"
+    ::= { wrsStartCntGroup 1 }
+
+wrsStartCntPPSI OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of PPSI deamon starts"
+    ::= { wrsStartCntGroup 2 }
+
+wrsStartCntRTUd OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RTU deamon starts"
+    ::= { wrsStartCntGroup 3 }
+
+wrsStartCntSshd OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Nmber of SSH deamon starts"
+    ::= { wrsStartCntGroup 4 }
+
+wrsStartCntHttpd OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Nmber of HTTP deamon starts"
+    ::= { wrsStartCntGroup 5 }
+
+wrsStartCntSnmpd OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Nmber of SNMP deamon starts"
+    ::= { wrsStartCntGroup 6 }
+
+wrsStartCntSyslogd OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Nmber of SYSLOG deamon starts"
+    ::= { wrsStartCntGroup 7 }
+
+wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
+-- wrsSpllStatusGroup (.7.3.2)
+wrsSpllStatusGroup      OBJECT IDENTIFIER ::= { wrsSpllState 2 }
+
+wrsSpllMode        OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Mode of Soft PLL"
+    ::= { wrsSpllStatusGroup 1 }
+
+wrsSpllIrqCnt      OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of interrupts in Soft PLL"
+    ::= { wrsSpllStatusGroup 2 }
+
+wrsSpllSeqState    OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Sequence state of Soft PLL"
+    ::= { wrsSpllStatusGroup 3 }
+
+wrsSpllAlignState  OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Align state of Soft PLL"
+    ::= { wrsSpllStatusGroup 4 }
+
+wrsSpllHlock       OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "HLock in Soft PLL"
+    ::= { wrsSpllStatusGroup 5 }
+
+wrsSpllMlock       OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "MLock at Soft PLL"
+    ::= { wrsSpllStatusGroup 6 }
+
+wrsSpllHY          OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "H_y at Soft PLL"
+    ::= { wrsSpllStatusGroup 7 }
+
+wrsSpllMY          OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "M_y at Soft PLL"
+    ::= { wrsSpllStatusGroup 8 }
+
+wrsSpllDelCnt      OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Del counter at Soft PLL"
+    ::= { wrsSpllStatusGroup 9 }
+
+-- wrsPstatsTable (.7.1.4)
+wrsPstatsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF WrsPstatsEntry
+    MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
-            "The value of this counter for interface wr3."
-    ::= {pstatsEntry 5 }
+            "Information for each ptp servo"
+    ::= { wrsExpertStatus 4 }
 
-pstatsWR4 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
+wrsPstatsEntry OBJECT-TYPE
+    SYNTAX      WrsPstatsEntry
+    MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
-            "The value of this counter for interface wr4."
-    ::= {pstatsEntry 6 }
+            "An entry containing ptp servo statuses"
+    INDEX   { wrsPstatsIndex }
+    ::= { wrsPstatsTable 1 }
 
-pstatsWR5 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
+WrsPstatsEntry ::=
+    SEQUENCE {
+        wrsPstatsIndex                 Unsigned32,
+        wrsPstatsPortName              DisplayString,
+        wrsPstatsTXUnderrun            Counter32,
+        wrsPstatsRXOverrun             Counter32,
+        wrsPstatsRXInvalidCode         Counter32,
+        wrsPstatsRXSyncLost            Counter32,
+        wrsPstatsRXPauseFrames         Counter32,
+        wrsPstatsRXPfilterDropped      Counter32,
+        wrsPstatsRXPCSErrors           Counter32,
+        wrsPstatsRXGiantFrames         Counter32,
+        wrsPstatsRXRuntFrames          Counter32,
+        wrsPstatsRXCRCErrors           Counter32,
+        wrsPstatsRXPclass0             Counter32,
+        wrsPstatsRXPclass1             Counter32,
+        wrsPstatsRXPclass2             Counter32,
+        wrsPstatsRXPclass3             Counter32,
+        wrsPstatsRXPclass4             Counter32,
+        wrsPstatsRXPclass5             Counter32,
+        wrsPstatsRXPclass6             Counter32,
+        wrsPstatsRXPclass7             Counter32,
+        wrsPstatsTXFrames              Counter32,
+        wrsPstatsRXFrames              Counter32,
+        wrsPstatsRXDropRTUFull         Counter32,
+        wrsPstatsRXPrio0               Counter32,
+        wrsPstatsRXPrio1               Counter32,
+        wrsPstatsRXPrio2               Counter32,
+        wrsPstatsRXPrio3               Counter32,
+        wrsPstatsRXPrio4               Counter32,
+        wrsPstatsRXPrio5               Counter32,
+        wrsPstatsRXPrio6               Counter32,
+        wrsPstatsRXPrio7               Counter32,
+        wrsPstatsRTUValid              Counter32,
+        wrsPstatsRTUResponses          Counter32,
+        wrsPstatsRTUDropped            Counter32,
+        wrsPstatsFastMatchPriority     Counter32,
+        wrsPstatsFastMatchFastForward  Counter32,
+        wrsPstatsFastMatchNonForward   Counter32,
+        wrsPstatsFastMatchRespValid    Counter32,
+        wrsPstatsFullMatchRespValid    Counter32,
+        wrsPstatsForwarded             Counter32,
+        wrsPstatsTRURespValid          Counter32
+    }
+
+wrsPstatsIndex OBJECT-TYPE
+    SYNTAX         Unsigned32
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION
+            "Index for wrsPstatsTable"
+    ::= { wrsPstatsEntry 1 }
+
+wrsPstatsPortName OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..12))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Port name of port"
+    ::= { wrsPstatsEntry 2 }
+
+wrsPstatsTXUnderrun OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of TX underrun errors"
+    ::= { wrsPstatsEntry 3 }
+
+wrsPstatsRXOverrun OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX overrun errors"
+    ::= { wrsPstatsEntry 4 }
+
+wrsPstatsRXInvalidCode OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received invalid 8B10B code errors"
+    ::= { wrsPstatsEntry 5 }
+
+wrsPstatsRXSyncLost OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX link synchronization lost"
+    ::= { wrsPstatsEntry 6 }
+
+wrsPstatsRXPauseFrames OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received pause frames"
+    ::= { wrsPstatsEntry 7 }
+
+wrsPstatsRXPfilterDropped OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames dropped at pfilter"
+    ::= { wrsPstatsEntry 8 }
+
+wrsPstatsRXPCSErrors OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of errors occured during frame reception in PCS"
+    ::= { wrsPstatsEntry 9 }
+
+wrsPstatsRXGiantFrames OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received giant frames
+            (bigger than Maximum Receive Unit)"
+    ::= { wrsPstatsEntry 10 }
+
+wrsPstatsRXRuntFrames OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received runt frames
+            (smaller than 64bytes)"
+    ::= { wrsPstatsEntry 11 }
+
+wrsPstatsRXCRCErrors OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX CRC errors"
+    ::= { wrsPstatsEntry 12 }
+
+wrsPstatsRXPclass0 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 0 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 13 }
+
+wrsPstatsRXPclass1 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 1 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 14 }
+
+wrsPstatsRXPclass2 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 2 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 15 }
+
+wrsPstatsRXPclass3 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 3 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 16 }
+
+ wrsPstatsRXPclass4 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 4 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 17 }
+
+wrsPstatsRXPclass5 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 5 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 18 }
+
+wrsPstatsRXPclass6 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 6 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 19 }
+
+wrsPstatsRXPclass7 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 7 by packet filter in endpoint"
+    ::= { wrsPstatsEntry 20 }
+
+wrsPstatsTXFrames OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of transmitted frames"
+    ::= { wrsPstatsEntry 21 }
+
+wrsPstatsRXFrames OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames"
+    ::= { wrsPstatsEntry 22 }
+
+wrsPstatsRXDropRTUFull OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames dropped due to RTU full"
+    ::= { wrsPstatsEntry 23 }
+
+wrsPstatsRXPrio0 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 0"
+    ::= { wrsPstatsEntry 24 }
+
+wrsPstatsRXPrio1 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 1"
+    ::= { wrsPstatsEntry 25 }
+
+wrsPstatsRXPrio2 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 2"
+    ::= { wrsPstatsEntry 26 }
+
+wrsPstatsRXPrio3 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 3"
+    ::= { wrsPstatsEntry 27 }
+
+wrsPstatsRXPrio4 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 4"
+    ::= { wrsPstatsEntry 28 }
+
+wrsPstatsRXPrio5 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 5"
+    ::= { wrsPstatsEntry 29 }
+
+wrsPstatsRXPrio6 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 6"
+    ::= { wrsPstatsEntry 30 }
+
+wrsPstatsRXPrio7 OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 7"
+    ::= { wrsPstatsEntry 31 }
+
+wrsPstatsRTUValid OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of valid RTU requests"
+    ::= { wrsPstatsEntry 32 }
+
+wrsPstatsRTUResponses OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of valid RTU responses"
+    ::= { wrsPstatsEntry 33 }
+
+wrsPstatsRTUDropped OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of frames dropped at RTU"
+    ::= { wrsPstatsEntry 34 }
+
+wrsPstatsFastMatchPriority OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of priority frames matched by fast match"
+    ::= { wrsPstatsEntry 35 }
+
+wrsPstatsFastMatchFastForward OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of forwarded frames matched by fast match"
+    ::= { wrsPstatsEntry 36 }
+
+wrsPstatsFastMatchNonForward OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of not forwarded frames matched by fast match"
+    ::= { wrsPstatsEntry 37 }
+
+wrsPstatsFastMatchRespValid OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of fast match decisions"
+    ::= { wrsPstatsEntry 38 }
+
+wrsPstatsFullMatchRespValid OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of full match decisions"
+    ::= { wrsPstatsEntry 39 }
+
+wrsPstatsForwarded OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of forwarded frames"
+    ::= { wrsPstatsEntry 40 }
+
+wrsPstatsTRURespValid OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of TRU decisions"
+    ::= { wrsPstatsEntry 41 }
+
+-- wrsPtpDataTable (.7.1.5)
+wrsPtpDataTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF WrsPtpDataEntry
+    MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
-            "The value of this counter for interface wr5."
-    ::= {pstatsEntry 7 }
+            "Information for each ptp servo"
+    ::= { wrsExpertStatus 5 }
 
-pstatsWR6 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
+wrsPtpDataEntry OBJECT-TYPE
+    SYNTAX      WrsPtpDataEntry
+    MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
-            "The value of this counter for interface wr6."
-    ::= {pstatsEntry 8 }
+            "An entry containing ptp servo statuses"
+    INDEX   { wrsPtpDataIndex }
+    ::= { wrsPtpDataTable 1 }
 
-pstatsWR7 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
+WrsPtpDataEntry ::=
+    SEQUENCE {
+        wrsPtpDataIndex         Unsigned32,
+        wrsPtpPortName          DisplayString,
+        wrsPtpGrandmasterID     OCTET STRING,
+        wrsPtpOwnID             OCTET STRING,
+        wrsPtpMode              INTEGER,
+        wrsPtpServoState        DisplayString,
+        wrsPtpServoStateN       INTEGER,
+        wrsPtpPhaseTracking     INTEGER,
+        wrsPtpSyncSource        DisplayString,
+        wrsPtpClockOffsetPs     Counter64,
+        wrsPtpClockOffsetPsHR   Integer32,
+        wrsPtpSkew              Integer32,
+        wrsPtpRTT               Counter64,
+        wrsPtpLinkLength        Unsigned32,
+        wrsPtpServoUpdates      Counter32,
+        wrsPtpDeltaTxM          Integer32,
+        wrsPtpDeltaRxM          Integer32,
+        wrsPtpDeltaTxS          Integer32,
+        wrsPtpDeltaRxS          Integer32
+    }
+
+wrsPtpDataIndex OBJECT-TYPE
+    SYNTAX         Unsigned32
+    MAX-ACCESS     not-accessible
+    STATUS         current
     DESCRIPTION
-            "The value of this counter for interface wr7."
-    ::= {pstatsEntry 9 }
+            "Index for wrsPtpDataTable"
+    ::= { wrsPtpDataEntry 1 }
 
-pstatsWR8 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
+wrsPtpPortName OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..12))
+    MAX-ACCESS     read-only
+    STATUS         current
     DESCRIPTION
-            "The value of this counter for interface wr8."
-    ::= {pstatsEntry 10 }
+            "Port name on which servo instance is running"
+    ::= { wrsPtpDataEntry 2 }
 
-pstatsWR9 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr9."
-    ::= {pstatsEntry 11 }
-
-pstatsWR10 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr10."
-    ::= {pstatsEntry 12 }
-
-pstatsWR11 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr11."
-    ::= {pstatsEntry 13 }
-
-pstatsWR12 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr12."
-    ::= {pstatsEntry 14 }
-
-pstatsWR13 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr13."
-    ::= {pstatsEntry 15 }
-
-pstatsWR14 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr14."
-    ::= {pstatsEntry 16 }
-
-pstatsWR15 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr15."
-    ::= {pstatsEntry 17 }
-
-pstatsWR16 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr16."
-    ::= {pstatsEntry 18 }
-
-pstatsWR17 OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "The value of this counter for interface wr17."
-    ::= {pstatsEntry 19 }
-
---following objects will be moved
-wrsPpsiGlobalsX OBJECT IDENTIFIER ::= { wrsPpsi 3 }
-wrsPortsTableX OBJECT IDENTIFIER ::= { wrsPpsi 4 }
-wrsTemperatureX OBJECT IDENTIFIER ::= { wrsPpsi 5 }
-
--- The Wr/PTP/Ppsi information is two items: an array of scalars
--- and a table. In the table, the "channel" name is the row. But
--- the index is integer, following what ppsi does internally
-
--- globals (.3)
-
-ptpGrandmasterIDX OBJECT-TYPE
+wrsPtpGrandmasterID OBJECT-TYPE
     SYNTAX       OCTET STRING (SIZE(8))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The ClockID of the current grandmaster"
-    ::= { wrsPpsiGlobalsX 1 }
+    ::= { wrsPtpDataEntry 3 }
 
-ptpOwnIDX OBJECT-TYPE
+wrsPtpOwnID OBJECT-TYPE
     SYNTAX       OCTET STRING (SIZE(8))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The ClockID of this WR device"
-    ::= { wrsPpsiGlobalsX 2 }
+    ::= { wrsPtpDataEntry 4 }
 
-ptpModeX OBJECT-TYPE
+wrsPtpMode OBJECT-TYPE
     SYNTAX INTEGER {
                 unknown(0),        -- same as WRC_MODE macros
                 grandmaster(1),
@@ -282,167 +1238,185 @@ ptpModeX OBJECT-TYPE
     STATUS      current
     DESCRIPTION
             "The mode of this clock"
-    ::= { wrsPpsiGlobalsX 3 }
- 
-ptpServoStateX OBJECT-TYPE
+    ::= { wrsPtpDataEntry 5 }
+
+wrsPtpServoState OBJECT-TYPE
     SYNTAX      DisplayString (SIZE (0..32))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The servo state if slave"
-    ::= { wrsPpsiGlobalsX 4 }
+    ::= { wrsPtpDataEntry 6 }
 
-ptpServoStateNX OBJECT-TYPE
+wrsPtpServoStateN OBJECT-TYPE
     SYNTAX INTEGER {
-                Uninitialized(0),
-                SYNC-NSEC(1), -- no idea how to keep "_" instead of "-"
-                SYNC-SEC(2),
-                SYNC-PHASE(3),
-                TRACK-PHASE(4),
-                WAIT-SYNC-IDLE(5),
-                WAIT-OFFSET-STABLE(6)
+                uninitialized(0),
+                syncNsec(1),
+                syncSec(2),
+                syncPhase(3),
+                trackPhase(4),
+                waitSyncIdle(5),
+                waitOffsetStable(6)
     }
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Numeric representation of servo state"
-    ::= { wrsPpsiGlobalsX 5 }
+    ::= { wrsPtpDataEntry 7 }
 
-ptpPhaseTrackingX OBJECT-TYPE
+wrsPtpPhaseTracking OBJECT-TYPE
     SYNTAX INTEGER {
-               NA(0),
-               not-tracking(1),
+               na(0),
+               notTracking(1),
                tracking(2)
-    }          
+    }
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Whether phase tracking is enabled in the servo"
-    ::= { wrsPpsiGlobalsX 6 }
+    ::= { wrsPtpDataEntry 8 }
 
-ptpSyncSourceX OBJECT-TYPE
+wrsPtpSyncSource OBJECT-TYPE
     SYNTAX      DisplayString (SIZE (0..32))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The port name that is currently the synchronization source"
-    ::= { wrsPpsiGlobalsX 7 }
+    ::= { wrsPtpDataEntry 9 }
 
-ptpClockOffsetPsX OBJECT-TYPE
-    SYNTAX      Counter64 -- should be integer64 (signed)
+wrsPtpClockOffsetPs OBJECT-TYPE
+    SYNTAX      Counter64 -- integer64
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Current clock offset from master, in picoseconds"
-    ::= { wrsPpsiGlobalsX 8 }
+    ::= { wrsPtpDataEntry 10 }
 
-ptpClockOffsetPsHRX OBJECT-TYPE
-    SYNTAX      INTEGER
+wrsPtpClockOffsetPsHR OBJECT-TYPE
+    SYNTAX      Integer32 -- should be something like gauge32, but with int range
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Human Readable current clock offset from master, in picoseconds with saturation to integer"
-    ::= { wrsPpsiGlobalsX 9 }
+    ::= { wrsPtpDataEntry 11 }
 
-ptpSkewX OBJECT-TYPE
-    SYNTAX      INTEGER
+wrsPtpSkew OBJECT-TYPE
+    SYNTAX      Integer32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The estimated change of master-to-slave delay, in picoseconds"
-    ::= { wrsPpsiGlobalsX 10 }
+    ::= { wrsPtpDataEntry 12 }
 
-ptpRTTX OBJECT-TYPE
-    SYNTAX      Counter64 -- does unsigned64 exits?
+wrsPtpRTT OBJECT-TYPE
+    SYNTAX      Counter64 -- unsigned64
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "The round-trip-time, from master, in picoseconds"
-    ::= { wrsPpsiGlobalsX 11 }
+    ::= { wrsPtpDataEntry 13 }
 
-ptpLinkLengthX OBJECT-TYPE
+wrsPtpLinkLength OBJECT-TYPE
     SYNTAX      Unsigned32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Estimated fiber length, from master-to-slave delay, in meters"
-    ::= { wrsPpsiGlobalsX 12 }
+    ::= { wrsPtpDataEntry 14 }
 
-ptpServoUpdatesX OBJECT-TYPE
-    SYNTAX      Unsigned32
+wrsPtpServoUpdates OBJECT-TYPE
+    SYNTAX      Counter32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "How many time did the servo run"
-    ::= { wrsPpsiGlobalsX 13 }
+    ::= { wrsPtpDataEntry 15 }
 
-ptpDeltaTxMX OBJECT-TYPE
-    SYNTAX      INTEGER
+wrsPtpDeltaTxM OBJECT-TYPE
+    SYNTAX      Integer32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Fixed Tx latency on Master side"
-    ::= { wrsPpsiGlobalsX 14 }
+    ::= { wrsPtpDataEntry 16 }
 
-ptpDeltaRxMX OBJECT-TYPE
-    SYNTAX      INTEGER
+wrsPtpDeltaRxM OBJECT-TYPE
+    SYNTAX      Integer32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Fixed Rx latency on Master side"
-    ::= { wrsPpsiGlobalsX 15 }
+    ::= { wrsPtpDataEntry 17 }
 
-ptpDeltaTxSX OBJECT-TYPE
-    SYNTAX      INTEGER
+wrsPtpDeltaTxS OBJECT-TYPE
+    SYNTAX      Integer32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Fixed Tx latency on Slave side"
-    ::= { wrsPpsiGlobalsX 16 }
+    ::= { wrsPtpDataEntry 18 }
 
-ptpDeltaRxSX OBJECT-TYPE
-    SYNTAX      INTEGER
+wrsPtpDeltaRxS OBJECT-TYPE
+    SYNTAX      Integer32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
             "Fixed Rx latency on Slave side"
-    ::= { wrsPpsiGlobalsX 17 }
+    ::= { wrsPtpDataEntry 19 }
 
--- per-port (.4)
-wrsPortsTableX OBJECT-TYPE
-    SYNTAX      SEQUENCE OF wrsPortsEntryX
+-- per-port (.7.1.6)
+wrsPortStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF WrsPortStatusEntry
     MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
             "Information for each port"
-    ::= { wrsPpsi 4 }
+    ::= { wrsExpertStatus 6 }
 
-wrsPortsEntryX OBJECT-TYPE
-    SYNTAX      WrsPortsEntryX
+wrsPortStatusEntry OBJECT-TYPE
+    SYNTAX      WrsPortStatusEntry
     MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
             "An entry containing ports statuses"
-    INDEX   { wrsPortIndex }
-    ::= { wrsPortsTableX 1 }
+    INDEX   { wrsPortStatusIndex }
+    ::= { wrsPortStatusTable 1 }
 
-WrsPortsEntryX ::=
+WrsPortStatusEntry ::=
     SEQUENCE {
-        portLink             INTEGER,
-        portMode             INTEGER,
-        portLocked           INTEGER,
-        portPeer             OCTET STRING,
-        portSfpVN            DisplayString,
-        portSfpPN            DisplayString,
-        portSfpVS            DisplayString,
-        portSfpInDB          INTEGER,
-        portSfpGbE           INTEGER,
-        portSfpError         INTEGER
+        wrsPortStatusIndex       Unsigned32,
+        wrsPortStatusPortName    DisplayString,
+        wrsPortStatusLink        INTEGER,
+        wrsPortStatusMode        INTEGER,
+        wrsPortStatusLocked      INTEGER,
+        wrsPortStatusPeer        OCTET STRING,
+        wrsPortStatusSfpVN       DisplayString,
+        wrsPortStatusSfpPN       DisplayString,
+        wrsPortStatusSfpVS       DisplayString,
+        wrsPortStatusSfpInDB     INTEGER,
+        wrsPortStatusSfpGbE      INTEGER,
+        wrsPortStatusSfpError    INTEGER
     }
 
-portLinkX OBJECT-TYPE
+wrsPortStatusIndex OBJECT-TYPE
+    SYNTAX         Unsigned32
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION
+            "Index for wrsPortStatusTable"
+    ::= { wrsPortStatusEntry 1 }
+
+wrsPortStatusPortName OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..12))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Name of port"
+    ::= { wrsPortStatusEntry 2 }
+
+wrsPortStatusLink OBJECT-TYPE
     SYNTAX         INTEGER {
-                        NA(0),
+                        na(0),
                         down(1),
                         up(2)
     }
@@ -450,264 +1424,96 @@ portLinkX OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Whether the link is up or down"
-    ::= { wrsPortsEntryX 1 }
+    ::= { wrsPortStatusEntry 3 }
 
-portModeX OBJECT-TYPE
+wrsPortStatusMode OBJECT-TYPE
     SYNTAX         INTEGER {
                         unknown(0),
                         master(1),
                         slave(2),
-                        non-wr(3),
+                        nonWr(3),
                         auto(4)
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Whether the port is master or slave"
-    ::= { wrsPortsEntryX 2 }
+    ::= { wrsPortStatusEntry 4 }
 
-portLockedX OBJECT-TYPE
+wrsPortStatusLocked OBJECT-TYPE
     SYNTAX         INTEGER {
-                        NA(0),
-                        not-locked(1),
+                        na(0),
+                        notLocked(1),
                         locked(2)
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Whether the peers are locked or not"
-    ::= { wrsPortsEntryX 3 }
+    ::= { wrsPortStatusEntry 5 }
 
-portPeerX OBJECT-TYPE
+wrsPortStatusPeer OBJECT-TYPE
     SYNTAX         OCTET STRING (SIZE(8))
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "the ClockID of the peer, if available. Or 0"
-    ::= { wrsPortsEntryX 4 }
+    ::= { wrsPortStatusEntry 6 }
 
-portSfpVNX OBJECT-TYPE
+wrsPortStatusSfpVN OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..32))
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Vendor Name of SFP"
-    ::= { wrsPortsEntryX 5 }
+    ::= { wrsPortStatusEntry 7 }
 
-portSfpPNX OBJECT-TYPE
+wrsPortStatusSfpPN OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..32))
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Part Number of SFP"
-    ::= { wrsPortsEntryX 6 }
+    ::= { wrsPortStatusEntry 8 }
 
-portSfpVSX OBJECT-TYPE
+wrsPortStatusSfpVS OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..32))
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Vendor serial number of SFP"
-    ::= { wrsPortsEntryX 7 }
+    ::= { wrsPortStatusEntry 9 }
 
-portSfpInDBX OBJECT-TYPE
-    SYNTAX         INTEGER {NA(0), not-in-Data-Base(1), in-Data-Base(2)}
+wrsPortStatusSfpInDB OBJECT-TYPE
+    SYNTAX         INTEGER {na(0), notInDataBase(1), inDataBase(2)}
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Whether the SFP is in data base or not"
-    ::= { wrsPortsEntryX 8 }
+    ::= { wrsPortStatusEntry 10 }
 
-portSfpGbEX OBJECT-TYPE
-    SYNTAX         INTEGER {NA(0), not-GbE(1), GbE(2)}
+wrsPortStatusSfpGbE OBJECT-TYPE
+    SYNTAX         INTEGER {na(0), linkNotGbE(1), linkGbE(2)}
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Whether the SFP is 1 GbE"
-    ::= { wrsPortsEntryX 9 }
+    ::= { wrsPortStatusEntry 11 }
 
-portSfpErrorX OBJECT-TYPE
+wrsPortStatusSfpError OBJECT-TYPE
     SYNTAX         INTEGER {
-                        NA(0),
-                        SFP-ok(1),
-                        SFP-Error(2)
+                        na(0),
+                        sfpOk(1),
+                        sfpError(2),
+                        portDown(3)
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
             "Problem with SFP configuration. Port has to be always 1GbE. Port has to be in data base as long as support WR."
-    ::= { wrsPortsEntryX 10 }
+    ::= { wrsPortStatusEntry 12 }
 
--- wrsTemperatureX (.5)
-tempFPGAX OBJECT-TYPE
-    SYNTAX         INTEGER
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "FPGA temperature"
-    ::= { wrsTemperatureX 1 }
-
-tempPLLX OBJECT-TYPE
-    SYNTAX         INTEGER
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "PLL temperature"
-    ::= { wrsTemperatureX 2 }
-
-tempPSLX OBJECT-TYPE
-    SYNTAX         INTEGER
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Power Supply Left (PSL) temperature"
-    ::= { wrsTemperatureX 3 }
-
-tempPSRX OBJECT-TYPE
-    SYNTAX         INTEGER
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Power Supply Right (PSR) temperature"
-    ::= { wrsTemperatureX 4 }
-
-tempTholdFPGAX OBJECT-TYPE
-    SYNTAX         INTEGER
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Threshold level for FPGA temperature"
-    ::= { wrsTemperatureX 5 }
-
-tempTholdPLLX OBJECT-TYPE
-    SYNTAX         INTEGER
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Threshold level for PLL temperature"
-    ::= { wrsTemperatureX 6 }
-
-tempTholdPSLX OBJECT-TYPE
-    SYNTAX         INTEGER
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Threshold level for Power Supply Left (PSL) temperature"
-    ::= { wrsTemperatureX 7 }
-
-tempTholdPSRX OBJECT-TYPE
-    SYNTAX         INTEGER
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Threshold level for Power Supply Right (PSR) temperature"
-    ::= { wrsTemperatureX 8 }
-
-tempWarningX OBJECT-TYPE
-    SYNTAX         INTEGER {
-                        NA(0),
-                        Threshold-not-set(1),
-                        Temperature-OK(2),
-                        Temperature-too-high(3),
-    }
-    MAX-ACCESS     read-only
-    STATUS         current
-    DESCRIPTION
-            "Warning if temperature exceed threshold levels"
-    ::= { wrsTemperatureX 9 }
-
-
--- Versions (4) are all just strings, several of them
-
-wrsVersionSw    OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..64))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The software version, as returned from 'git describe' at build time"
-    ::= { wrsVersion 1 }
-
-wrsVersionGw1   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The gateware version: commit of wr_switch_hdl"
-    ::= { wrsVersion 2 }
-
-wrsVersionGw2   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The gateware version: commit of general-cores"
-    ::= { wrsVersion 3 }
-
-wrsVersionGw3   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The gateware version: commit of wr-cores"
-    ::= { wrsVersion 4 }
-
-wrsVersionHw1   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The hardware version: minibackplane PCB"
-    ::= { wrsVersion 5 }
-
-wrsVersionHw2   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The hardware version: FPGA"
-    ::= { wrsVersion 6 }
-
-wrsManufacturer OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..64))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The name of the manufacturing company"
-    ::= { wrsVersion 7 }
-
-wrsSerialNumber OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The serial number (or string) of the switch"
-    ::= { wrsVersion 8 }
-
-wrsScbVersion OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The version of the SCB (motherboard)"
-    ::= { wrsVersion 9 }
-
--- Date (5), to quickly check wr status
-
-wrsDateTAI      OBJECT-TYPE
-    SYNTAX      Counter64 -- actually integer, but it is unsigned so ok
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The current time, in TAI seconds"
-    ::= { wrsDate 1 }
-
-wrsDateString   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..32))
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The current TAI time, printed as %y-%m-%d-%H:%M:%S (no time zone)"
-    ::= { wrsDate 2 }
-
+--wrsNetworking
+--Configuration
 
 END

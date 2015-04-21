@@ -13,11 +13,22 @@ if [ -n "$WRS_VERBOSE" ]; then
     set -x
 fi
 
+# will be changed later if successful
+echo "hwinfo_error" > /tmp/hwinfo_read_status
+
 # This kernel has no hwinfo partition (strange...)
-if ! grep -q hwinfo /proc/mtd; then exit 0; fi
+if ! grep -q hwinfo /proc/mtd; then
+    # probably not an error, save script result for snmp
+    echo "hwinfo_warning" > /tmp/hwinfo_read_status
+    exit 0;
+fi
 
 # Is there sdb in there? If so, nothing to do.
-if /wr/bin/sdb-read /dev/mtd5ro > /dev/null; then exit 0; fi
+if /wr/bin/sdb-read /dev/mtd5ro > /dev/null; then
+    # save script result for snmp
+    echo "hwinfo_ok" > /tmp/hwinfo_read_status
+    exit 0;
+fi
 
 echo "Creating SDB filesystem in /dev/mtd5"
 
@@ -47,3 +58,6 @@ test -c /dev/mtd5 || mknod /dev/mtd5 c 90 10
 flash_erase /dev/mtd5 0 0
 cat /tmp/sdb-for-dataflash > /dev/mtd5
 rm /dev/mtd5
+
+# save script result for snmp
+echo "hwinfo_ok" > /tmp/hwinfo_read_status

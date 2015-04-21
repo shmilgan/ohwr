@@ -1,6 +1,18 @@
 #ifndef WRS_SNMP_H
 #define WRS_SNMP_H
 
+#include <net-snmp/net-snmp-config.h>
+#include <net-snmp/net-snmp-includes.h>
+#include <net-snmp/agent/net-snmp-agent-includes.h>
+
+/* Crap! -- everybody makes them different, and even ppsi::ieee wants them */
+#undef FALSE
+#undef TRUE
+
+/* conflict between definition in net-snmp-agent-includes.h (which include
+ * snmp_vars.h) and ppsi.h where INST is defined as a inline function */
+#undef INST
+#include <ppsi/ieee1588_types.h> /* for ClockIdentity */
 
 /*
  * local hack: besides the file pointer, that is there anyways,
@@ -77,12 +89,17 @@ static inline int dumpstruct(FILE *dest, char *name, void *ptr, int size)
 /* Scalar is just a stupid thing, but let's keep it */
 extern void init_wrsScalar(void);
 
-/* Real stuff follows */
-extern void init_wrsPstats(void);
-extern void init_wrsPpsi(void);
-extern void init_wrsVersion(void);
-extern void init_wrsDate(void);
-
 #define WRS_OID 1, 3, 6, 1, 4, 1, 96, 100
+
+struct pickinfo {
+	/* Following fields are used to format the output */
+	int type; int offset; int len;
+};
+
+#define FIELD(_struct, _type, _field) {			\
+	.type = _type,					\
+	.offset = offsetof(struct _struct, _field),	\
+	.len = sizeof(((struct _struct *)0)->_field),			\
+	 }
 
 #endif /* WRS_SNMP_H */

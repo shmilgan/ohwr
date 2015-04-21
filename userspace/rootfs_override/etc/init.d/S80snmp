@@ -3,9 +3,22 @@
 SNMP_PID=/var/run/snmpd.pid
 SNMP_CONF=/wr/etc/snmpd.conf
 
+start_counter() {
+	# increase boot counter
+	COUNTER_FILE="/tmp/start_cnt_snmpd"
+	START_COUNTER=1
+	if [ -f "$COUNTER_FILE" ];
+	then
+	    read -r START_COUNTER < $COUNTER_FILE
+	    START_COUNTER=$((START_COUNTER+1))
+	fi
+	echo "$START_COUNTER" > $COUNTER_FILE
+}
+
 start() {
     # Log to syslog at daemon level. And log source address (-a)
     snmpd -Lsd -p $SNMP_PID -a -c $SNMP_CONF
+    start_counter
 }
 
 stop() {

@@ -367,28 +367,53 @@ config SNMP_TEMP_THOLD_FPGA
 	default "0"
 	help
 	  Threshold level for FPGA temperature, when exceeded warning is
-	  notified by WR-SWITCH-MIB::tempWarning
+	  notified by SNMP via WR-SWITCH-MIB::wrsTemperatureWarning
+	  Require hal restart after change
 
 config SNMP_TEMP_THOLD_PLL
 	int "Threshold level for PLL temperature"
 	default "0"
 	help
 	  Threshold level for PLL temperature, when exceeded warning is
-	  notified by WR-SWITCH-MIB::tempWarning
+	  notified by SNMP via WR-SWITCH-MIB::wrsTemperatureWarning
+	  Require hal restart after change
 
 config SNMP_TEMP_THOLD_PSL
 	int "Threshold level for Power Supply Left (PSL) temperature"
 	default "0"
 	help
 	  Threshold level for Power Supply Left (PSL) temperature, when
-	  exceeded warning is notified by WR-SWITCH-MIB::tempWarning
+	  exceeded warning is notified by SNMP via
+	  WR-SWITCH-MIB::wrsTemperatureWarning
+	  Require hal restart after change
 
 config SNMP_TEMP_THOLD_PSR
 	int "Threshold level for Power Supply Right (PSR) temperature"
 	default "0"
 	help
 	  Threshold level for Power Supply Right (PSR) temperature, when
-	  exceeded warning is notified by WR-SWITCH-MIB::tempWarning
+	  exceeded warning is notified by SNMP via
+	  WR-SWITCH-MIB::wrsTemperatureWarning
+	  Require hal restart after change
+
+config SNMP_SWCORESTATUS_HP_FRAME_RATE
+	int "Maximum allowed rate of HP frames on a port"
+	default "0"
+	help
+	  Error via SNMP if rate of HP frames on any port exceed given value.
+
+config SNMP_SWCORESTATUS_RX_FRAME_RATE
+	int "Maximum allowed rate of RX frames on a port"
+	default "0"
+	help
+	  Error via SNMP if rate of RX frames on any port exceed given value.
+
+config SNMP_SWCORESTATUS_RX_PRIO_FRAME_RATE
+	int "Maximum allowed rate of any RX priority"
+	default "0"
+	help
+	  Error if frame rate of any RX priority exceed given value.
+
 
 endmenu
 

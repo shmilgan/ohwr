@@ -1360,6 +1360,63 @@ If everything goes well, you'll get a window like the following one:
 
 @center @image{show-pstats, 10cm,, show-pstats}
 
+Command @t{snmptable} can also be used to get simillar results:
+
+@smallexample
+snmptable -Cw 80 -c public -v 2c 192.168.1.10 -m all \
+-M $WRS_OUTPUT_DIR/build/buildroot-2011.11/output/build/netsnmp-5.6.1.1/mibs/\
+:userspace/snmpd/ WR-SWITCH-MIB::wrsPstatsTable
+@end smallexample
+Output is in text form and looks like:
+@smallexample
+SNMP table: WR-SWITCH-MIB::wrsPstatsTable
+
+ wrsPstatsPortName wrsPstatsTXUnderrun wrsPstatsRXOverrun wrsPstatsRXInvalidCode
+               wr0                   0                  0                      0
+               wr1                   0                  0                      0
+               wr2                   0                  0                      0
+               wr3                   0                  0                      0
+               wr4                   0                  0                      0
+               wr5                   0                  0                      0
+               wr6                   0                  0                      0
+               wr7                   0                  0                      0
+               wr8                   0                  0                      0
+               wr9                   0                  0                      0
+              wr10                   0                  0                      0
+              wr11                   0                  0                      0
+              wr12                   0                  0                      0
+              wr13                   0                  0                      0
+              wr14                   0                  0                      0
+              wr15                   0                  0                      0
+              wr16                   0                  0                      0
+              wr17                   0                  0                      0
+
+SNMP table WR-SWITCH-MIB::wrsPstatsTable, part 2
+
+ wrsPstatsRXSyncLost wrsPstatsRXPauseFrames wrsPstatsRXPfilterDropped
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+                   0                      0                         0
+
+(...)
+@end smallexample
+Unfortunately output due to the number of counters is very wide. Number of 
+characters per line can be limited by switch @t{Cw}, in example was set to 80.
 
 @c ##########################################################################
 @node Bugs and Troubleshooting

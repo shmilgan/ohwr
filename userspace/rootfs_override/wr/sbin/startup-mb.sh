@@ -1,5 +1,7 @@
 #!/bin/ash
 export WR_HOME="/wr"
+LOAD_FPGA_STATUS_FILE="/tmp/load_fpga_status"
+LOAD_LM32_STATUS_FILE="/tmp/load_lm32_status"
 
 # Get parameter from kernel commandline
 for arg in $(cat /proc/cmdline); do
@@ -26,15 +28,33 @@ LM_FILE="$WR_HOME/lib/firmware/rt_cpu.elf"
 
 if ! [ -f "$FP_FILE" ]; then
     echo "Fatal: can't find \"$FP_FILE\"" >& 2
+    echo "load_file_not_found" > $LOAD_FPGA_STATUS_FILE
     exit 1;
 fi
 if ! [ -f "$LM_FILE" ]; then
     echo "Fatal: can't find \"$LM_FILE\"" >& 2
+    echo "load_file_not_found" > $LOAD_LM32_STATUS_FILE
     exit 1;
 fi
 
 $WR_HOME/bin/load-virtex $FP_FILE
+if [ $? -eq 0 ];
+then
+    echo "load_ok" > $LOAD_FPGA_STATUS_FILE
+else
+    echo "Fatal: load FPGA failed" >& 2
+    echo "load_error" > $LOAD_FPGA_STATUS_FILE
+fi
+
 $WR_HOME/bin/load-lm32   $LM_FILE scb_ver=${scb_ver}
+if [ $? -eq 0 ];
+then
+    echo "load_ok" > $LOAD_LM32_STATUS_FILE
+else
+    echo "Fatal: load LM32 failed" >& 2
+    echo "load_error" > $LOAD_LM32_STATUS_FILE
+fi
+
 insmod $WR_HOME/lib/modules/at91_softpwm.ko
 insmod $WR_HOME/lib/modules/wr_vic.ko
 insmod $WR_HOME/lib/modules/wr-nic.ko macaddr=$val
