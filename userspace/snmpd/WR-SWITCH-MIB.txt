@@ -691,11 +691,16 @@ wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
 wrsSpllStatusGroup      OBJECT IDENTIFIER ::= { wrsSpllState 2 }
 
 wrsSpllMode        OBJECT-TYPE
-    SYNTAX         Integer32
+    SYNTAX INTEGER {
+                na(0),
+                grandmaster(1),
+                master(2),
+                slave(3)
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Mode of Soft PLL"
+            "Mode of Soft PLL (values taken from softpll_ng.h)"
     ::= { wrsSpllStatusGroup 1 }
 
 wrsSpllIrqCnt      OBJECT-TYPE
@@ -707,19 +712,40 @@ wrsSpllIrqCnt      OBJECT-TYPE
     ::= { wrsSpllStatusGroup 2 }
 
 wrsSpllSeqState    OBJECT-TYPE
-    SYNTAX         Integer32
+    SYNTAX INTEGER {
+                startExt(1),
+                waitExt(2),
+                startHelper(3),
+                waitHelper(4),
+                startMain(5),
+                waitMain(6),
+                disabled(7),
+                ready(8),
+                clearDacs(9),
+                waitClearDacs(10)
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Sequence state of Soft PLL"
+            "Sequence state of Soft PLL (values taken from file softpll_ng.c in wrpc-sw repo)"
     ::= { wrsSpllStatusGroup 3 }
 
 wrsSpllAlignState  OBJECT-TYPE
-    SYNTAX         Integer32
+    SYNTAX INTEGER {
+                extOff(0),
+                start(1),
+                initCsync(2),
+                waitCsync(3),
+                waitSample(4),
+                compensateDelay(5),
+                locked(6),
+                startAlignment(7),
+                startMain(8)
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Align state of Soft PLL"
+            "Align state of Soft PLL (values taken from file spll_external.c in wrpc-sw repo)"
     ::= { wrsSpllStatusGroup 4 }
 
 wrsSpllHlock       OBJECT-TYPE
