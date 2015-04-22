@@ -8,7 +8,7 @@
 #define DOTCONFIG_PROTO "dot-config_proto"
 #define DOTCONFIG_HOST "dot-config_host"
 #define DOTCONFIG_FILENAME "dot-config_filename"
-#define DOTCONFIG_DOWNLOAD "dot-config_status"
+#define DOTCONFIG_STATUS "dot-config_status"
 
 #define HWINFO_FILE "/tmp/hwinfo_read_status"
 #define LOAD_FPGA_STATUS_FILE "/tmp/load_fpga_status"
@@ -185,32 +185,38 @@ static void get_dotconfig_source(void)
 					WRS_CONFIG_SOURCE_PROTO_ERROR_MINOR;
 	}
 
-	/* read host used to get dotconfig */
-	f = fopen(DOTCONFIGDIR "/" DOTCONFIG_HOST, "r");
-	if (f) {
-		/* readline without newline */
-		fscanf(f, LINE_READ_LEN(WRS_CONFIG_SOURCE_HOST_LEN),
-		       wrsBootStatus_s.wrsConfigSourceHost);
-		fclose(f);
-	} else {
-		/* host file not found, put "error" into wrsConfigSourceHost */
-		strcpy(wrsBootStatus_s.wrsConfigSourceHost, "error");
+	/* read hostname and file name only when config is not local */
+	if (wrsBootStatus_s.wrsConfigSource != WRS_CONFIG_SOURCE_PROTO_LOCAL) {
+		/* read host used to get dotconfig */
+		f = fopen(DOTCONFIGDIR "/" DOTCONFIG_HOST, "r");
+		if (f) {
+			/* readline without newline */
+			fscanf(f, LINE_READ_LEN(WRS_CONFIG_SOURCE_HOST_LEN),
+			      wrsBootStatus_s.wrsConfigSourceHost);
+			fclose(f);
+		} else {
+			/* host file not found, put "error" into
+			 * wrsConfigSourceHost */
+			strcpy(wrsBootStatus_s.wrsConfigSourceHost, "error");
+		}
+
+		/* read filename used to get dotconfig */
+		f = fopen(DOTCONFIGDIR "/" DOTCONFIG_FILENAME, "r");
+		if (f) {
+			/* readline without newline */
+			fscanf(f,
+			       LINE_READ_LEN(WRS_CONFIG_SOURCE_FILENAME_LEN),
+			       wrsBootStatus_s.wrsConfigSourceFilename);
+			fclose(f);
+		} else {
+			/* host file not found, put "error" into
+			* wrsConfigSourceFilename */
+			strcpy(wrsBootStatus_s.wrsConfigSourceFilename,
+			       "error");
+		}
 	}
 
-	/* read filename used to get dotconfig */
-	f = fopen(DOTCONFIGDIR "/" DOTCONFIG_FILENAME, "r");
-	if (f) {
-		/* readline without newline */
-		fscanf(f, LINE_READ_LEN(WRS_CONFIG_SOURCE_FILENAME_LEN),
-		       wrsBootStatus_s.wrsConfigSourceFilename);
-		fclose(f);
-	} else {
-		/* host file not found, put "error" into
-		 * wrsConfigSourceFilename */
-		strcpy(wrsBootStatus_s.wrsConfigSourceFilename, "error");
-	}
-
-	f = fopen(DOTCONFIGDIR "/" DOTCONFIG_DOWNLOAD, "r");
+	f = fopen(DOTCONFIGDIR "/" DOTCONFIG_STATUS, "r");
 	if (f) {
 		/* readline without newline */
 		fscanf(f, LINE_READ_LEN(20), buff);
