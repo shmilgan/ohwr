@@ -1,6 +1,7 @@
 #include "wrsSnmp.h"
 #include "snmp_shmem.h"
 #include "wrsTemperatureGroup.h"
+#include <libwr/config.h>
 
 static struct pickinfo wrsTemperature_pickinfo[] = {
 	FIELD(wrsTemperature_s, ASN_INTEGER, temp_fpga),
@@ -15,12 +16,31 @@ static struct pickinfo wrsTemperature_pickinfo[] = {
 
 struct wrsTemperature_s wrsTemperature_s;
 
+static void get_thresholds(void)
+{
+	char *config_item;
+	/* check wether config fields exist, atoi has to have valid string */
+	config_item = libwr_cfg_get("SNMP_TEMP_THOLD_FPGA");
+	if (config_item)
+		wrsTemperature_s.temp_fpga_thold = atoi(config_item);
+	config_item = libwr_cfg_get("SNMP_TEMP_THOLD_PLL");
+	if (config_item)
+		wrsTemperature_s.temp_pll_thold = atoi(config_item);
+	config_item = libwr_cfg_get("SNMP_TEMP_THOLD_PSL");
+	if (config_item)
+		wrsTemperature_s.temp_psl_thold = atoi(config_item);
+	config_item = libwr_cfg_get("SNMP_TEMP_THOLD_PSR");
+	if (config_item)
+		wrsTemperature_s.temp_psr_thold = atoi(config_item);
+}
+
 time_t wrsTemperature_data_fill(void)
 {
 	unsigned ii;
 	unsigned retries = 0;
 	static time_t time_update;
 	time_t time_cur;
+	static int first_run = 1;
 
 	time_cur = time(NULL);
 	if (time_update
@@ -30,7 +50,12 @@ time_t wrsTemperature_data_fill(void)
 	}
 	time_update = time_cur;
 
-	memset(&wrsTemperature_s, 0, sizeof(wrsTemperature_s));
+	if (first_run) {
+		/* load thresholds only once */
+		get_thresholds();
+		first_run = 0;
+	}
+
 	while (1) {
 		ii = wrs_shm_seqbegin(hal_head);
 
@@ -38,10 +63,6 @@ time_t wrsTemperature_data_fill(void)
 		wrsTemperature_s.temp_pll = hal_shmem->temp.pll >> 8;
 		wrsTemperature_s.temp_psl = hal_shmem->temp.psl >> 8;
 		wrsTemperature_s.temp_psr = hal_shmem->temp.psr >> 8;
-		wrsTemperature_s.temp_fpga_thold = hal_shmem->temp.fpga_thold;
-		wrsTemperature_s.temp_pll_thold = hal_shmem->temp.pll_thold;
-		wrsTemperature_s.temp_psl_thold = hal_shmem->temp.psl_thold;
-		wrsTemperature_s.temp_psr_thold = hal_shmem->temp.psr_thold;
 
 		retries++;
 		if (retries > 100) {

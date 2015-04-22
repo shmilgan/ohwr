@@ -412,21 +412,6 @@ void show_temperatures(void)
 		term_cprintf(C_GREY, "PSR: ");
 		term_cprintf(C_WHITE, "%2.2f\n",
 			     temp_sensors_local.psr/256.0);
-
-		term_cprintf(C_BLUE, "Temperature thresholds:\n");
-
-		term_cprintf(C_GREY, "FPGA: ");
-		term_cprintf(C_WHITE, "%5d ",
-			     temp_sensors_local.fpga_thold);
-		term_cprintf(C_GREY, "PLL: ");
-		term_cprintf(C_WHITE, "%5d ",
-			     temp_sensors_local.pll_thold);
-		term_cprintf(C_GREY, "PSL: ");
-		term_cprintf(C_WHITE, "%5d ",
-			     temp_sensors_local.psl_thold);
-		term_cprintf(C_GREY, "PSR: ");
-		term_cprintf(C_WHITE, "%5d\n",
-			     temp_sensors_local.psr_thold);
 	}
 }
 

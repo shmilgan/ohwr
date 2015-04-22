@@ -240,10 +240,6 @@ struct dump_info hal_shmem_info [] = {
 	DUMP_FIELD(sensor_temp, temp.pll),
 	DUMP_FIELD(sensor_temp, temp.psl),
 	DUMP_FIELD(sensor_temp, temp.psr),
-	DUMP_FIELD(int, temp.fpga_thold),
-	DUMP_FIELD(int, temp.pll_thold),
-	DUMP_FIELD(int, temp.psl_thold),
-	DUMP_FIELD(int, temp.psr_thold),
 };
 
 /* map for fields of hal_port_state (hal_shmem.h) */
