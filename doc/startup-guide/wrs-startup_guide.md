@@ -509,7 +509,7 @@ using the [login via USB method](#login-via-usb) and then edit the
 `interfaces` file:
 
 ~~~~{.bash}
-vi /etc/network/interfaces
+nano /usr/etc/network/interfaces
 ~~~~~~~~~~~
 
 for example, in a `192.168.1.x` subnetwork you might replace the
@@ -539,10 +539,10 @@ In a White Rabbit network, almost all the switches are configured as master (a.k
 However the "top" switch connected to the GPS signal is called the **GrandMaster**
 and is configured in a specific way.
 
-To configure a switch as GrandMaster you must edit[^viedit] the `wrsw_hal.conf` file
+To configure a switch as GrandMaster you must edit[^nanoedit] the `wrsw_hal.conf` file
 
 ~~~~{.C}
-vi /wr/etc/wrsw_hal.conf
+nano /wr/etc/wrsw_hal.conf
 ~~~~~~~~
 
 And uncommenting the timing.mode value the line below:
@@ -560,7 +560,8 @@ For a more detailed explanation on how to configure and connect the switch as Gr
 [wr_external_reference.pdf] document.
 
 
-[^viedit]: To edit in `vi`: `Ins` Insert text; `Esc` back to normal mode; `:wq` Save and Exit
+[^nanoedit]: To save your changes with nano press `Ctrl+O`, then `Enter`. 
+Finally exit with `Ctrl+X`.
 
 
 Firmware updates
