@@ -36,8 +36,10 @@
 			$new_mode = "auto";
 			break;
 		case "auto":
-			$new_mode = "master";
+			$new_mode = "non-wr";
 			break;
+		case "non-wr":
+			$new_mode = "master";
 		}
 		
 		$string = $_SESSION["KCONFIG"]["CONFIG_PORT".$endpoint."_PARAMS"];
