@@ -152,7 +152,28 @@ wrsTemperatureWarning OBJECT-TYPE
     ::= { wrsOSStatusGroup 2 }
 
 
---wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
+-- wrsTimingStatusGroup (.6.1.2)
+wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
+
+wrsSoftPLLStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of wrsSpllState
+            ok - values in wrsSpllState are correct
+            error - there is an error in wrsSpllState
+            warning - there is a warning in wrsSpllState
+            warningNA - there is N/A field in wrsSpllState
+            bug - bug in checking conditions of wrsSpllState, please report"
+    ::= { wrsTimingStatusGroup 2 }
 
 -- wrsNetworkingStatusGroup (.6.1.3)
 wrsNetworkingStatusGroup   OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 3 }
