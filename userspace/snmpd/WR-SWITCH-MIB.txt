@@ -1442,7 +1442,7 @@ WrsPortStatusEntry ::=
         wrsPortStatusIndex       Unsigned32,
         wrsPortStatusPortName    DisplayString,
         wrsPortStatusLink        INTEGER,
-        wrsPortStatusMode        INTEGER,
+        wrsPortStatusConfiguredMode INTEGER,
         wrsPortStatusLocked      INTEGER,
         wrsPortStatusPeer        OCTET STRING,
         wrsPortStatusSfpVN       DisplayString,
@@ -1481,7 +1481,7 @@ wrsPortStatusLink OBJECT-TYPE
             "Whether the link is up or down"
     ::= { wrsPortStatusEntry 3 }
 
-wrsPortStatusMode OBJECT-TYPE
+wrsPortStatusConfiguredMode OBJECT-TYPE
     SYNTAX         INTEGER {
                         unknown(0),
                         master(1),
@@ -1492,7 +1492,7 @@ wrsPortStatusMode OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Whether the port is master or slave"
+            "Whether the port is configured as master, slave, non-wr or auto"
     ::= { wrsPortStatusEntry 4 }
 
 wrsPortStatusLocked OBJECT-TYPE

@@ -55,9 +55,13 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 					wrsPortStatusTable_array[i].port_name);
 			/* No need to copy all ports structures, only what
 			 * we're interested in.
-			 * Keep value 0 for Not available */
+			 * Keep value 0 for Not available
+			 * values defined as WRS_PORT_STATUS_LINK_*
+			*/
 			wrsPortStatusTable_array[i].link_up =
 					1 + state_up(port_state->state);
+			 /* values defined as
+			  * WRS_PORT_STATUS_CONFIGURED_MODE_* */
 			wrsPortStatusTable_array[i].port_mode =
 							port_state->mode;
 			if (port_state->state == HAL_PORT_STATE_DISABLED) {
