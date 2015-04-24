@@ -89,12 +89,14 @@ done
 copy_conf /wr/sbin/start-daemons.sh
 
 # Select a ppsi configuration file
-for n in /wr/etc/ppsi-conf-pool/*; do
-    cfg=CONFIG_PTP_$(basename $n)
-    if [ "$cfg" = "y" ]; then
-	cp $n /wr/etc/ppsi.conf
-    fi
-done
-if [ "$CONFIG_PTP_CUSTOM" = "y" ]; then
+if [ "$CONFIG_PTP_PORT_PARAMS" = "y" ]; then
+    /wr/bin/assembly_ppsi_conf.sh
+elif [ "$CONFIG_PTP_CUSTOM" = "y" ]; then
     cp "$CONFIG_PTP_CUSTOM_FILENAME" /wr/etc/ppsi.conf
+else
+    # no valid PTP option keep ppsi.conf with old postfix
+    echo "No valid PTP option in dot-config!"
+    if [ -f /wr/etc/ppsi.conf ]; then
+	mv -f /wr/etc/ppsi.conf /wr/etc/ppsi.conf.old
+    fi
 fi
