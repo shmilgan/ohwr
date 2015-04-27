@@ -491,8 +491,8 @@ value is changed by the web interface, proper action is taken.
 @itemx CONFIG_PORT17_PARAMS
 
 	These configuration items are used to set up port parameters;
-        this includes the delays, the PTP role (not currently used,
-        though) and the fiber type as an integer index.  Most likely
+        this includes the delays, the PTP role, PTP protocol type
+        and the fiber type as an integer index.  Most likely
         the default values work for you. See @ref{Timing Configuration}
         for details.
 
@@ -526,23 +526,30 @@ value is changed by the web interface, proper action is taken.
         external reference; or a normal ``boundary-clock'' device that
         is slave on some ports and master on other ports.
 
-@item CONFIG_PTP_*
+@item CONFIG_PTP_PORT_PARAMS
+@itemx CONFIG_PTP_CUSTOM
 
-	We support a set of PPSi configuration files, for different PTP
-        roles. The default option being selected by @i{Kconfig} is
-        @t{PTP_WR_DEFAULT} for @t{TIME_BC} devices and @t{PTP_WR_MASTER}
-        for @t{GM} and @t{FM} devices.  The former configuration selects
-        a mandated slave PTP role on ports @t{wr0} and @t{wr1}, and
-        mandated master on all other ports; the latter conifiguration
-        is master on all ports. Please see the help provided within
-	@i{Kconfig} for more details about the various options we support.
+	By default, PPSi configuration file is assembled based on role and
+        protocol parameters stored in @t{PORTxx_PARAMS}. @t{TIME_BC} selected
+        by @i{Kconfig} defaults role of port @t{wr0} to slave, other ports
+        to master. For @t{TIME_GM} and @t{TIME_FM} all ports are mandated to
+        master.
+        Parameters @t{clock-class} and @t{clock-accuracy} can be changed
+        or new global PPSi settings can be added by editing file
+        @t{/wr/etc/ppsi-pre.conf}, which is used as begging of final
+        ppsi configuration file.
+
+	Alternatively PPSi can use custom user file for configuration
+        (@t{CONFIG_PTP_CUSTOM}).
+        Please see the help provided within @i{Kconfig} for more details about
+        the various options we support.
 
 @item CONFIG_PTP_CUSTOM_FILENAME
 
 	If you chose @t{CONFIG_PTP_CUSTOM} in the choice above, you
         can provide your own filename for the PPSi configuration file;
-        the chosen name is expected to be intalled in the @sc{wrs}
-        filesystem.     
+        the chosen name is expected to be installed in the @sc{wrs}
+        filesystem.
 
 @end table
 
@@ -561,7 +568,7 @@ description.
 This is, for explanation's sake, an example of such items:
 
 @smallexample
-CONFIG_PORT09_PARAMS="name=wr9,tx=226214,rx=226758,role=slave,fiber=2"
+CONFIG_PORT09_PARAMS="name=wr9,proto=raw,tx=226214,rx=226758,role=slave,fiber=2"
 CONFIG_SFP00_PARAMS="pn=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"
 CONFIG_FIBER02_PARAMS="alpha_1310_1490=2.6787e-04"
 @end smallexample
@@ -577,8 +584,8 @@ values depend on trace length and other hardware-specific details
 and are determined by a calibration procedure.  These values are
 used as constant delays in the @i{tx} and @i{rx} directions.
 
-@item The port is also configured as slave (information not used
-at this point) and is deployed using fiber type 2 -- this number
+@item The port is also configured as slave (@i{role}) using raw whiterabbit
+prootocol (@i{proto}) and is deployed using fiber type 2 -- this number
 is just a local enumeration of fiber types; most likely you'll be
 using type ``0'' in every port.
 
@@ -602,7 +609,7 @@ opposite one (@t{alpha_1490_1310}) is calculated by software.
 
 SFP matching is based on vendor name (@i{vn}), part number (@i{pn}) and vendor
 serial (@i{vs}). While matching SFP's values are compared with values stored in
-@t{CONFIG_SFPXX_PARAMS}.
+@t{CONFIG_SFPxx_PARAMS}.
 First try is to match all SFP identifiers (@i{vn}, @i{pn} and @i{vs}) with
 stored in config. If match is not successful, @i{vn} and @i{pn} of SFP are
 compared only with config entries without vendor serial. If match is still not
@@ -936,7 +943,12 @@ The following tools and scripts are provided:
 	The script is used to apply @t{dot-config} settings to the
         current configuration files.  It is run at boot time before
         any service is started. The @t{dot-config} mechanism is
-        documented in the @i{@sc{wrs} Users' Manual}.
+        documented in @ref{Configuration of the Device}.
+
+@item assembly_ppsi_conf.sh
+	The script is used to assembly ppsi configuration file based on
+        information stored in @t{PORTxx_PARAMS}.
+        This script is called by @i{apply_dot-config}.
 
 @item change_dot-config
 	This script changes the current @t{dot-config} file. It is
