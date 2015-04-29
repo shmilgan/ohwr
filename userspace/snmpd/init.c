@@ -18,6 +18,7 @@
 #include "wrsBootStatusGroup.h"
 #include "wrsTemperatureGroup.h"
 #include "wrsStartCntGroup.h"
+#include "wrsSpllVersionGroup.h"
 #include "wrsSpllStatusGroup.h"
 #include "wrsPstatsTable.h"
 #include "wrsPtpDataTable.h"
@@ -46,6 +47,7 @@ void init_wrsSnmp(void)
 	init_wrsBootStatusGroup();
 	init_wrsTemperatureGroup();
 	init_wrsStartCntGroup();
+	init_wrsSpllVersionGroup();
 	init_wrsSpllStatusGroup();
 	init_wrsPstatsTable();
 	init_wrsPtpDataTable();

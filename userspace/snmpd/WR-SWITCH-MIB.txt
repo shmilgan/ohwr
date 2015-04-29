@@ -723,6 +723,26 @@ wrsStartCntSyslogd OBJECT-TYPE
     ::= { wrsStartCntGroup 7 }
 
 wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
+
+-- wrsSpllVersionGroup (.7.3.1)
+wrsSpllVersionGroup      OBJECT IDENTIFIER ::= { wrsSpllState 1 }
+
+wrsSpllVersion            OBJECT-TYPE
+    SYNTAX                DisplayString (SIZE (0..32))
+    MAX-ACCESS            read-only
+    STATUS                current
+    DESCRIPTION
+        "The spll version, as returned from 'git describe' at build time"
+    ::= { wrsSpllVersionGroup 1 }
+
+wrsSpllBuildDate          OBJECT-TYPE
+    SYNTAX                DisplayString (SIZE (0..32))
+    MAX-ACCESS            read-only
+    STATUS                current
+    DESCRIPTION
+        "The build date of the spll, '__DATE__' at build time"
+    ::= { wrsSpllVersionGroup 2 }
+
 -- wrsSpllStatusGroup (.7.3.2)
 wrsSpllStatusGroup      OBJECT IDENTIFIER ::= { wrsSpllState 2 }
 
