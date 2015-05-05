@@ -1623,7 +1623,7 @@ allows to make some sense of the overall area.  The structure
 is filled by library functions and accessed by shared memory users.
 You can see how it is used in @t{tools/wrs_dump_shmem.c}.
 
-The following functions are defined. Pleae look in the source code
+The following functions are defined. Please look in the source code
 for details about how they are used:
 
 @table @code
@@ -1797,6 +1797,22 @@ is not supported at this time.
 We may also consider to use one of the kernel's mechanisms for persistent
 storage of information across reboots, to recover panic messages
 after a reboot.
+
+@c ==========================================================================
+@node Time keeping over restarts
+@section Time keeping over restarts
+
+At normal restart, current time is saved in @t{/update/saved_date}.
+Later, at boot switch tries to retrieve correct time from ntp server
+if configured in dot-config.
+If no correct date can be retrieved via ntp, switch tries to set date stored in
+@t{/update/saved_date}. Please note that at crash, power down or
+reset by reset button no date information is saved. After such restart switch
+will set date to last gentle reboot or to 1st of January 1970 if there were no
+gentle restarts before.
+
+Date set from file @t{/update/saved_date} is never correct, but is based on
+best effort principle.
 
 @c ==========================================================================
 @node SDB and Hardware Information
