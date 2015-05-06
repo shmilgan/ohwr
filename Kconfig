@@ -408,5 +408,66 @@ config SNMP_SWCORESTATUS_RX_PRIO_FRAME_RATE
 	help
 	  Error if frame rate of any RX priority exceed given value.
 
+endmenu
+
+menu "External clk2 clock signal configuration"
+config WRSAUXCLK_FREQ
+	string "Frequency of the generated clock signal in MHz"
+	default "10"
+	help
+	  --freq parameter of wrs_auxclk
+	  Desired frequency of the generated clock signal in MHz. Available
+	  range from 4kHz to 250MHz.
+
+config WRSAUXCLK_DUTY
+	string "Duty cycle of the generated clock signal"
+	default "0.5"
+	help
+	  --duty parameter of wrs_auxclk
+	  Desired duty cycle given as a fraction (e.g. 0.5, 0.4).
+
+config WRSAUXCLK_CSHIFT
+	string "Coarse shift of the generated clock signal"
+	default "36"
+	help
+	  --cshift parameter of wrs_auxclk
+	  Coarse shift (granularity 2ns) of the generated clock signal. This
+	  parameter can be used to get desired delay relation between generated
+	  1-PPS and clk2. The delay between 1-PPS and clk2 is constant for
+	  a given bitstream but may be different for various hardware versions
+	  and re-synthesized gateware. Therefore it should be measured and
+	  adjusted only once for given hardware and gateware version.
+
+
+config WRSAUXCLK_SIGDEL
+	string "Signal delay of the generated clock signal"
+	default "0"
+	help
+	  --sigdel parameter of wrs_auxclk
+	  Clock signal generated from the FPGA is cleaned by a discrete
+	  flip-flop. It may happen that generated aux clock is in phase with
+	  the flip-flop clock. In that case it is visible on the oscilloscope
+	  that clk2 clock is jittering by 4ns. The "Signal delay" parameter
+	  allows to add a precise delay to the FPGA-generated clock to avoid
+	  such jitter. This delay is specified in steps, where each step is
+	  around 150ps. This value, same as the "Coarse shift" parameter, is
+	  constant for a given bitstream so should be verified only once.
+
+
+config WRSAUXCLK_PPSHIFT
+	string "Fine signal delay of the generated clock signal"
+	default "0"
+	help
+	  --ppshift parameter of wrs_auxclk
+	  If one needs to precisely align 1-PPS output with the clk2 aux clock
+	  using "Coarse shift" parameter is not enough as it has
+	  4ns granularity. In that case this parameter lets you shift 1-PPS
+	  output by a configured number of 150ps steps. However, please have in
+	  mind that 1-PPS output is used as a reference for WR calibration
+	  procedure. Therefore, once this parameter is modified, the device
+	  should be re-calibrated. Otherwise, 1-PPS output will be shifted
+	  from the WR timescale by <steps>*150ps.
+
+
 
 endmenu
