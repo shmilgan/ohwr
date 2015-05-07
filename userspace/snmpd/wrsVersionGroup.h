@@ -5,6 +5,7 @@
 
 struct wrsVersion_s {
 	char wrsVersions[13][32];	/* array of version strings */
+	char wrsVersionLastUpdateDate[32];
 };
 
 extern struct wrsVersion_s wrsVersion_s;
