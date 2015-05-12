@@ -8,7 +8,13 @@
 #include "wrsSnmp.h"
 #include "wrsVersionGroup.h"
 
+/* Macros for fscanf function to read line with maximum of "x" characters
+ * without new line. Macro expands to something like: "%10[^\n]" */
+#define LINE_READ_LEN_HELPER(x) "%"#x"[^\n]"
+#define LINE_READ_LEN(x) LINE_READ_LEN_HELPER(x)
+
 #define VERSION_COMMAND "/wr/bin/wrs_version -t"
+#define LAST_UPDATE_DATE_FILE "/update/last_update"
 
 struct wrs_v_item {
 	char *key;
@@ -28,6 +34,7 @@ static struct pickinfo wrsVersion_pickinfo[] = {
 	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[10]),
 	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[11]),
 	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[12]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersionLastUpdateDate),
 };
 
 struct wrsVersion_s wrsVersion_s;
@@ -49,6 +56,22 @@ static struct wrs_v_item wrs_version[] = {
 	[11] = {"general-cores-commit:"},
 	[12] = {"wr-cores-commit:"},
 };
+
+
+static void get_last_update_date(void)
+{
+	FILE *f;
+	f = fopen(LAST_UPDATE_DATE_FILE, "r");
+	if (f) {
+		/* readline without newline */
+		fscanf(f, LINE_READ_LEN(32),
+		       wrsVersion_s.wrsVersionLastUpdateDate);
+		fclose(f);
+	} else {
+		snprintf(wrsVersion_s.wrsVersionLastUpdateDate, 32,
+			 "0000.00.00-00:00:00");
+	}
+}
 
 time_t wrsVersion_data_fill(void)
 {
@@ -98,6 +121,8 @@ time_t wrsVersion_data_fill(void)
 		guess_index++;
 	}
 	pclose(f);
+
+	get_last_update_date();
 	return time_cur;
 }
 

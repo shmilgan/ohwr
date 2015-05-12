@@ -123,6 +123,9 @@ mount -t ubifs ubi0:boot /boot
 # Some steps later set reboot=true; prepare a sane default.
 reboot=false
 
+#whether to change date of last update
+change_update_date=false
+
 # First: update usr: we may have the whole thing, or just wrs-usr.tar.gz
 if [ -f /update/$WRS_FW -o -f /update/$WRS_USR ]; then
     # FIXME: save configuration somewhere, and recover it later
@@ -171,7 +174,7 @@ if [ -f /update/$WRS_FW -o -f /update/$WRS_USR ]; then
     fi
     # And, to be sure, remove a file that may exist from a 4.0 install
     rm -f /update/$OLD_FW_OLDNAME
-
+    change_update_date=true
 fi
 
 # Allow replacing the kernel or initramfs alone (new in v4.1 of wr-switch-sw)
@@ -190,8 +193,12 @@ if [ -f /update/$WRS_BB ]; then
     mv /update/current-$WRS_BB /update/previous-$WRS_BB
     mv /update/$WRS_BB /update/current-$WRS_BB
     reboot=true
+    change_update_date=true
 fi
 
+if $change_update_date; then
+    cp /update/saved_date /update/last_update > /dev/null 2>&1
+fi
 # If we changed bloader or kernel or initramfs, we reboot. Otherwise proceed.
 if $reboot; then
     umount /update

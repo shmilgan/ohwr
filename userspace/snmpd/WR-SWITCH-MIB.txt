@@ -336,6 +336,15 @@ wrsVersionWrCoresCommitId      OBJECT-TYPE
         "The gateware version: commit of wr-cores"
     ::= { wrsVersionGroup 13 }
 
+wrsVersionLastUpdateDate      OBJECT-TYPE
+    SYNTAX                     DisplayString (SIZE (0..32))
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "Date and time of last firmware update, this information may not be
+        ccurate, due to hard restarts or lack of proper time."
+    ::= { wrsVersionGroup 14 }
+
 wrsOperationStatus      OBJECT IDENTIFIER ::= { wrsExpertStatus 1 }
 
 -- wrsCurrentTimeGroup (.7.1.1)
