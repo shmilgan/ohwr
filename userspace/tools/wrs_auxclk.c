@@ -61,11 +61,11 @@ int apply_settings(float freq_mhz, float duty, int cshift_ns, int sigdel_taps,
 	if( freq_mhz > MAX_FREQ || freq_mhz < MIN_FREQ ) {
 		fprintf(stderr, "Frequency outside range <%f; %d>\n", MIN_FREQ,
 				MAX_FREQ);
-		return -1;
+		return 1;
 	}
 	if( !(duty > 0 && duty < 1) ) {
 		fprintf(stderr, "Duty %f outside range (0; 1)\n", duty);
-		return -1;
+		return 1;
 	}
 
 	/* calculate high and low width from frequency and duty */
@@ -77,7 +77,7 @@ int apply_settings(float freq_mhz, float duty, int cshift_ns, int sigdel_taps,
 	if( cshift_ns > period_ns || cshift_ns < 0 ) {
 		fprintf(stderr, "Coarse shift outside range <0; %d>\n",
 				period_ns);
-		return -1;
+		return 1;
 	}
 
 	gen10_write(PR, h_width);
@@ -138,10 +138,10 @@ int main(int argc, char *argv[])
 			case OPT_HELP:
 			default:
 				print_help(prgname);
-				return 0;
+				return 1;
 		}
 	}
 
-	apply_settings(freq_mhz, duty, cshift_ns, sigdel_taps, ppshift_taps);
-	return 0;
+	return apply_settings(freq_mhz, duty, cshift_ns, sigdel_taps,
+			      ppshift_taps);
 }
