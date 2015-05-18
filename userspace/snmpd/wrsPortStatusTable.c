@@ -18,15 +18,18 @@ static struct pickinfo wrsPortStatusTable_pickinfo[] = {
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, sfp_in_db),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, sfp_GbE),
 	FIELD(wrsPortStatusTable_s, ASN_INTEGER, sfp_error),
+	FIELD(wrsPortStatusTable_s, ASN_COUNTER, ptp_tx_count),
+	FIELD(wrsPortStatusTable_s, ASN_COUNTER, ptp_rx_count),
 };
 
 
 time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 {
-	unsigned ii, i;
+	unsigned ii, i, ppi_i;
 	unsigned retries = 0;
 	static time_t time_update;
 	time_t time_cur;
+	char *ppsi_iface_name;
 
 	/* number of rows does not change for wrsPortStatusTable */
 	if (n_rows)
@@ -116,6 +119,49 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			retries = 0;
 			}
 		if (!wrs_shm_seqretry(hal_head, ii))
+			break; /* consistent read */
+		usleep(1000);
+	}
+
+	retries = 0;
+	/* fill ptp_tx_count and ptp_tx_count
+	 * ptp_tx_count and ptp_tx_count statistics in PPSI are collected per
+	 * ppi instance. Since there can be more than one instance per physical
+	 * port, proper counters has to be added. */
+	while (1) {
+		ii = wrs_shm_seqbegin(ppsi_head);
+		/* Match port name with interface name of ppsi instance.
+		 * More than one ppsi_iface_name can match to
+		 * wrsPortStatusTable_array[i].port_name, but only one can
+		 * match way round */
+		for (ppi_i = 0; ppi_i < *ppsi_ppi_nlinks; ppi_i++) {
+			/* (ppsi_ppi + ppi_i)->iface_name is a pointer in
+			 * shmem, so we have to follow it
+			 * NOTE: ppi->cfg.port_name cannot be used instead,
+			 * because it is not used when ppsi is configured from
+			 * cmdline */
+			ppsi_iface_name = (char *) wrs_shm_follow(ppsi_head,
+					       (ppsi_ppi + ppi_i)->iface_name);
+			for (i = 0; i < hal_nports_local; ++i) {
+				if (!strncmp(wrsPortStatusTable_array[i].port_name,
+					     ppsi_iface_name, 12)) {
+					wrsPortStatusTable_array[i].ptp_tx_count +=
+					      (ppsi_ppi + ppi_i)->ptp_tx_count;
+					wrsPortStatusTable_array[i].ptp_rx_count +=
+					      (ppsi_ppi + ppi_i)->ptp_rx_count;
+					/* speed up a little, break here */
+					break;
+				}
+			}
+		}
+		retries++;
+		if (retries > 100) {
+			snmp_log(LOG_ERR, "%s: too many retries to read PPSI "
+					  "shmem\n", __func__);
+			retries = 0;
+			break;
+			}
+		if (!wrs_shm_seqretry(ppsi_head, ii))
 			break; /* consistent read */
 		usleep(1000);
 	}

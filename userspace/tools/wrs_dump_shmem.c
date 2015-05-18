@@ -567,6 +567,8 @@ struct dump_info ppi_info [] = {
 	DUMP_FIELD_SIZE(char, cfg.port_name, 16),
 	DUMP_FIELD_SIZE(char, cfg.iface_name, 16),
 	DUMP_FIELD(int, cfg.ext),
+	DUMP_FIELD(UInteger32, ptp_tx_count),
+	DUMP_FIELD(UInteger32, ptp_rx_count),
 };
 
 int dump_ppsi_mem(struct wrs_shm_head *head)

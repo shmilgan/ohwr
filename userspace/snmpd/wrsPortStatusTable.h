@@ -32,6 +32,8 @@ struct wrsPortStatusTable_s {
 	int sfp_in_db;
 	int sfp_GbE;
 	int sfp_error;
+	unsigned long ptp_tx_count;
+	unsigned long ptp_rx_count;
 };
 
 

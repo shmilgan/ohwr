@@ -1485,7 +1485,9 @@ WrsPortStatusEntry ::=
         wrsPortStatusSfpVS       DisplayString,
         wrsPortStatusSfpInDB     INTEGER,
         wrsPortStatusSfpGbE      INTEGER,
-        wrsPortStatusSfpError    INTEGER
+        wrsPortStatusSfpError    INTEGER,
+        wrsPortStatusPtpTxFrames Counter32,
+        wrsPortStatusPtpRxFrames Counter32,
     }
 
 wrsPortStatusIndex OBJECT-TYPE
@@ -1602,6 +1604,24 @@ wrsPortStatusSfpError OBJECT-TYPE
     DESCRIPTION
             "Problem with SFP configuration. Port has to be always 1GbE. Port has to be in data base as long as support WR."
     ::= { wrsPortStatusEntry 12 }
+
+wrsPortStatusPtpTxFrames OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of transmitted PTP frames per port (for all PPSI instances
+             running on particular port"
+    ::= { wrsPortStatusEntry 13 }
+
+wrsPortStatusPtpRxFrames OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of received PTP frames per port (for all PPSI instances
+             running on particular port"
+    ::= { wrsPortStatusEntry 14 }
 
 --wrsNetworking
 --Configuration
