@@ -17,6 +17,13 @@
 					  * equal to 0 (NA),shouldn't happen in
 					  * normal operation */
 
+#define WRS_PTP_FRAMES_FLOWING_OK 1		/* ok */
+#define WRS_PTP_FRAMES_FLOWING_ERROR 2		/* error */
+#define WRS_PTP_FRAMES_FLOWING_WARNING_NA 4 /* warning, at least one field is
+					  * equal to 0 (NA),shouldn't happen in
+					  * normal operation */
+#define WRS_PTP_FRAMES_FLOWING_FR 6		/* ok, first run */
+
 struct wrsTimingStatus_s {
 	int wrsPTPStatus;
 	int wrsSoftPLLStatus;

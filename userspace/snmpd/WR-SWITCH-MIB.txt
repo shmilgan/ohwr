@@ -179,7 +179,8 @@ wrsSlaveLinksStatus OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
                         ok(1),
-                        error(2)
+                        error(2),
+                        warningNA(4)
     }
     MAX-ACCESS     read-only
     STATUS         current
@@ -187,8 +188,29 @@ wrsSlaveLinksStatus OBJECT-TYPE
             "Grouped status of slave link statuses
             ok - when every slave port is up when switch is in slave mode
                  and when every slave port is down when switch in master/grandmaster mode
-                 don't care about non-wr and auto ports"
+                 don't care about non-wr and auto ports
+            warningNA - there is N/A in wrsSpllMode, wrsPortStatusLink or
+                        wrsPortStatusConfiguredMode"
     ::= { wrsTimingStatusGroup 3 }
+
+wrsPTPFramesFlowing OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warningNA(4),
+                        firstRead(6)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of TX and RX PTP packets flowing
+            ok - when there are PTP packets flowing in both directions on all
+                 wr ports that are up
+            warningNA - there is N/A in wrsPortStatusLink or wrsPortStatusConfiguredMode
+            error - no PTP packets flowing at least on one wr up port
+            firstRead - unable to calculate deltas in first read"
+    ::= { wrsTimingStatusGroup 4 }
 
 -- wrsNetworkingStatusGroup (.6.1.3)
 wrsNetworkingStatusGroup   OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 3 }

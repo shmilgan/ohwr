@@ -12,9 +12,14 @@ static struct pickinfo wrsTimingStatus_pickinfo[] = {
 
 struct wrsTimingStatus_s wrsTimingStatus_s;
 
+/* store old values of TX and RX PTP counters to calculate delta */
+static unsigned long ptp_tx_count_prev[WRS_N_PORTS];
+static unsigned long ptp_rx_count_prev[WRS_N_PORTS];
+
 time_t wrsTimingStatus_data_fill(void)
 {
 	static time_t time_update; /* time of last update */
+	static int first_run = 1;
 	time_t time_spll; /* time when softPLL data was updated */
 	time_t time_port_status; /* time when port status table was updated */
 	unsigned int port_status_nrows; /* number of rows in PortStatusTable */
@@ -122,7 +127,44 @@ time_t wrsTimingStatus_data_fill(void)
 					  "failed for port %d\n", i);
 		}
 	}
+	/*********************************************************************\
+	|************************ wrsPTPFramesFlowing ************************|
+	\*********************************************************************/
+	/*
+	 * Check if PTP frames are flowing. Check only on ports that are
+	 * non-wr and up.
+	 */
+	p_a = wrsPortStatusTable_array;
+	wrsTimingStatus_s.wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_OK;
+	for (i = 0; i < port_status_nrows; i++) {
+		if (first_run == 1) {
+			/* don't report errors during first run */
+			wrsTimingStatus_s.wrsPTPFramesFlowing =
+						WRS_PTP_FRAMES_FLOWING_FR;
 
+		/* Error when there is no increase in TX/RX PTP counters.
+		   Check only when port is non-wr and port is down */
+		} else if ((p_a[i].port_mode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
+		    && (p_a[i].link_up == WRS_PORT_STATUS_LINK_UP)
+		    && ((ptp_tx_count_prev[i] == p_a[i].ptp_tx_count)
+			|| (ptp_rx_count_prev[i] == p_a[i].ptp_rx_count))) {
+			wrsTimingStatus_s.wrsPTPFramesFlowing =
+						WRS_PTP_FRAMES_FLOWING_ERROR;
+			snmp_log(LOG_ERR, "SNMP: wrsPTPFramesFlowing "
+					  "failed for port %d\n", i);
+
+		/* warning N/A */
+		} else if (p_a[i].port_mode == 0
+		    || p_a[i].link_up == 0){
+			wrsTimingStatus_s.wrsPTPFramesFlowing =
+					WRS_PTP_FRAMES_FLOWING_WARNING_NA;
+		}
+		/* save current values */
+		ptp_tx_count_prev[i] = p_a[i].ptp_tx_count;
+		ptp_rx_count_prev[i] = p_a[i].ptp_rx_count;
+	}
+
+	first_run = 0;
 	/* there was an update, return current time */
 	return time_update;
 }
