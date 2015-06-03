@@ -1305,7 +1305,11 @@ WrsPtpDataEntry ::=
         wrsPtpDeltaTxM          Integer32,
         wrsPtpDeltaRxM          Integer32,
         wrsPtpDeltaTxS          Integer32,
-        wrsPtpDeltaRxS          Integer32
+        wrsPtpDeltaRxS          Integer32,
+        wrsPtpServoStateErrCnt  Counter32,
+        wrsPtpClockOffsetErrCnt Counter32,
+        wrsPtpRTTErrCnt         Counter32,
+        wrsPtpDeltaRxTxErrCnt   Counter32
     }
 
 wrsPtpDataIndex OBJECT-TYPE
@@ -1475,6 +1479,38 @@ wrsPtpDeltaRxS OBJECT-TYPE
     DESCRIPTION
             "Fixed Rx latency on Slave side"
     ::= { wrsPtpDataEntry 19 }
+
+wrsPtpServoStateErrCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of servo updates with wrong servo state"
+    ::= { wrsPtpDataEntry 20 }
+
+wrsPtpClockOffsetErrCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of servo updates with wrong clock offset"
+    ::= { wrsPtpDataEntry 21 }
+
+wrsPtpRTTErrCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of servo updates with wrong RTT"
+    ::= { wrsPtpDataEntry 22 }
+
+wrsPtpDeltaRxTxErrCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of servo updates with wrong Delta TX/RX M/S"
+    ::= { wrsPtpDataEntry 23 }
 
 -- per-port (.7.1.6)
 wrsPortStatusTable OBJECT-TYPE

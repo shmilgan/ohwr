@@ -30,6 +30,10 @@ struct wrsPtpDataTable_s {
 	int32_t delta_rx_m;
 	int32_t delta_tx_s;
 	int32_t delta_rx_s;
+	uint32_t n_err_state;
+	uint32_t n_err_offset;
+	uint32_t n_err_delta_rtt;
+	uint32_t n_err_rxtx_deltas;
 };
 
 
