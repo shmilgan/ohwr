@@ -1,4 +1,5 @@
 #include "wrsSnmp.h"
+#include "wrsPtpDataTable.h"
 #include "wrsSpllStatusGroup.h"
 #include "wrsPortStatusTable.h"
 #include "wrsTimingStatusGroup.h"
@@ -12,6 +13,13 @@ static struct pickinfo wrsTimingStatus_pickinfo[] = {
 
 struct wrsTimingStatus_s wrsTimingStatus_s;
 
+/* store old values of ptp servo error counters and number of updates */
+static uint32_t servo_updates_prev[WRS_MAX_N_SERVO_INSTANCES];
+static uint32_t n_err_state_prev[WRS_MAX_N_SERVO_INSTANCES];
+static uint32_t n_err_offset_prev[WRS_MAX_N_SERVO_INSTANCES];
+static uint32_t n_err_delta_rtt_prev[WRS_MAX_N_SERVO_INSTANCES];
+static uint32_t n_err_rxtx_deltas_prev[WRS_MAX_N_SERVO_INSTANCES];
+
 /* store old values of TX and RX PTP counters to calculate delta */
 static unsigned long ptp_tx_count_prev[WRS_N_PORTS];
 static unsigned long ptp_rx_count_prev[WRS_N_PORTS];
@@ -20,17 +28,29 @@ time_t wrsTimingStatus_data_fill(void)
 {
 	static time_t time_update; /* time of last update */
 	static int first_run = 1;
+	time_t time_ptp_data; /* time when wrsPtpDataTable was updated */
 	time_t time_spll; /* time when softPLL data was updated */
 	time_t time_port_status; /* time when port status table was updated */
+	unsigned int ptp_data_nrows; /* number of rows in wrsPtpDataTable */
 	unsigned int port_status_nrows; /* number of rows in PortStatusTable */
 	int i;
+	struct wrsPtpDataTable_s *pd_a;
 	struct wrsSpllStatus_s *s;
 	struct wrsPortStatusTable_s *p_a;
 
+	time_ptp_data = wrsPtpDataTable_data_fill(&ptp_data_nrows);
 	time_spll = wrsSpllStatus_data_fill();
 	time_port_status = wrsPortStatusTable_data_fill(&port_status_nrows);
 
-	if (time_spll <= time_update
+	if (ptp_data_nrows > WRS_MAX_N_SERVO_INSTANCES) {
+		snmp_log(LOG_ERR, "SNMP: wrsTimingStatusGroup too many PTP "
+				  "instances(%d), only %d supported!\n",
+			 WRS_MAX_N_SERVO_INSTANCES, ptp_data_nrows);
+		ptp_data_nrows = WRS_MAX_N_SERVO_INSTANCES;
+	}
+
+	if (time_ptp_data <= time_update
+	    && time_spll <= time_update
 	    && time_port_status <= time_update) {
 		/* cache not updated, return last update time */
 		return time_update;
@@ -38,6 +58,47 @@ time_t wrsTimingStatus_data_fill(void)
 	time_update = time(NULL);
 
 	memset(&wrsTimingStatus_s, 0, sizeof(wrsTimingStatus_s));
+
+	/*********************************************************************\
+	|*************************** wrsPTPStatus  ***************************|
+	\*********************************************************************/
+	/*
+	 * Error when SPLL is in slave mode and at least one error counter in
+	 * PTP increased or no PTP servo updates
+	 */
+	s = &wrsSpllStatus_s;
+	pd_a = wrsPtpDataTable_array;
+
+	wrsTimingStatus_s.wrsPTPStatus = WRS_PTP_STATUS_OK;
+	/* NOTE: only one PTP instance is used right now. When switchover is
+	 * implemented it will change */
+	for (i = 0; i < ptp_data_nrows; i++) {
+		if (first_run == 1) {
+			/* don't report errors during first run */
+			wrsTimingStatus_s.wrsPTPStatus = WRS_PTP_STATUS_FR;
+
+		/* check if error */
+		} else if ((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE)
+		    && ((pd_a[i].servo_updates == servo_updates_prev[i])
+			|| (pd_a[i].n_err_state != n_err_state_prev[i])
+			|| (pd_a[i].n_err_offset != n_err_offset_prev[i])
+			|| (pd_a[i].n_err_delta_rtt != n_err_delta_rtt_prev[i])
+			|| (pd_a[i].n_err_rxtx_deltas != n_err_rxtx_deltas_prev[i]))) {
+			wrsTimingStatus_s.wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+			snmp_log(LOG_ERR, "SNMP: wrsPTPStatus "
+					  "failed for instance %d\n", i);
+
+			/* don't break! Check all other PTP instances,
+			 * to update all prev values */
+		}
+
+		/* update old values */
+		servo_updates_prev[i] = pd_a[i].servo_updates;
+		n_err_state_prev[i] = pd_a[i].n_err_state;
+		n_err_offset_prev[i] = pd_a[i].n_err_offset;
+		n_err_delta_rtt_prev[i] = pd_a[i].n_err_delta_rtt;
+		n_err_rxtx_deltas_prev[i] = pd_a[i].n_err_rxtx_deltas;
+	}
 
 	/*********************************************************************\
 	|************************* wrsSoftPLLStatus  *************************|

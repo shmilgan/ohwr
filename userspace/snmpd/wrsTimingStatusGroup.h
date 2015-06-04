@@ -3,6 +3,10 @@
 
 #define WRSTIMINGSTATUS_OID WRS_OID, 6, 2, 2
 
+#define WRS_PTP_STATUS_OK 1		/* ok */
+#define WRS_PTP_STATUS_ERROR 2		/* error */
+#define WRS_PTP_STATUS_FR 6		/* first read, ok */
+
 #define WRS_SOFTPLL_STATUS_OK 1			/* ok */
 #define WRS_SOFTPLL_STATUS_ERROR 2		/* error */
 #define WRS_SOFTPLL_STATUS_WARNING 3		/* warning */

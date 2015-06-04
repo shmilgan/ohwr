@@ -155,6 +155,23 @@ wrsTemperatureWarning OBJECT-TYPE
 -- wrsTimingStatusGroup (.6.1.2)
 wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
 
+wrsPTPStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        firstRead(6),
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of wrsPtpDataTable
+            ok - PTP error counters in wrsPtpDataTable are not increased since
+                 last scan and ptp servo updates counter increased
+            error - error in wrsPtpDataTable
+            firstRead - unable to calculate deltas in first read"
+    ::= { wrsTimingStatusGroup 1 }
+
 wrsSoftPLLStatus OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
