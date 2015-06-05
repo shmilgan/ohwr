@@ -49,6 +49,13 @@ time_t wrsTimingStatus_data_fill(void)
 		ptp_data_nrows = WRS_MAX_N_SERVO_INSTANCES;
 	}
 
+	if (port_status_nrows > WRS_N_PORTS) {
+		snmp_log(LOG_ERR, "SNMP: wrsTimingStatusGroup too many ports"
+				  "(%d), only %d supported!\n",
+			 WRS_N_PORTS, port_status_nrows);
+		port_status_nrows = WRS_N_PORTS;
+	}
+
 	if (time_ptp_data <= time_update
 	    && time_spll <= time_update
 	    && time_port_status <= time_update) {

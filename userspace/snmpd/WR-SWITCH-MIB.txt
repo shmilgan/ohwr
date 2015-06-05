@@ -93,6 +93,26 @@ wrsOSStatus OBJECT-TYPE
             bug - bug in checking conditions of wrsOSStatusGroup, please report"
     ::= { wrsGeneralStatusGroup 2 }
 
+wrsTimingStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of wrsTimingStatusGroup
+            ok - values in wrsTimingStatusGroup are correct
+            error - there is an error in wrsTimingStatusGroup
+            warning - there is a warning in wrsTimingStatusGroup
+            warningNA - there is N/A field in wrsTimingStatusGroup
+            bug - bug in checking conditions of wrsTimingStatusGroup, please report"
+    ::= { wrsGeneralStatusGroup 3 }
+
 wrsNetworkingStatus OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),

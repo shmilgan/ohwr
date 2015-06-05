@@ -1,5 +1,6 @@
 #include "wrsSnmp.h"
 #include "wrsOSStatusGroup.h"
+#include "wrsTimingStatusGroup.h"
 #include "wrsNetworkingStatusGroup.h"
 #include "wrsGeneralStatusGroup.h"
 
@@ -16,16 +17,21 @@ time_t wrsGeneralStatus_data_fill(void)
 {
 	static time_t time_update; /* time of last update */
 	time_t time_osstatus; /* time when wrsOSStatus data was updated */
+	time_t time_timing_status; /* time when wrsTimingStatus data was
+				    * updated */
 	time_t time_networking_status; /* time when wrsNetworkingStatus data
 					* was updated */
 	struct wrsOSStatus_s *o;
+	struct wrsTimingStatus_s *t;
 	struct wrsNetworkingStatus_s *n;
 	struct wrsGeneralStatus_s *g;
 
 	time_osstatus = wrsOSStatus_data_fill();
+	time_timing_status = wrsTimingStatus_data_fill();
 	time_networking_status = wrsNetworkingStatus_data_fill();
 
 	if (time_osstatus <= time_update
+	    && time_timing_status <= time_update
 	    && time_networking_status <= time_update) {
 		/* cache not updated, return last update time */
 		snmp_log(LOG_ERR,
@@ -73,8 +79,50 @@ time_t wrsGeneralStatus_data_fill(void)
 	|************************** wrsTimingStatus **************************|
 	\*********************************************************************/
 
-	/* not implemented, always return OK */
-	wrsGeneralStatus_s.wrsTimingStatus = WRS_TIMING_STATUS_OK;
+	t = &wrsTimingStatus_s;
+	if ( /* check if error */
+		t->wrsPTPStatus == WRS_PTP_STATUS_ERROR
+		|| t->wrsSoftPLLStatus == WRS_SOFTPLL_STATUS_ERROR
+		|| t->wrsSlaveLinksStatus == WRS_SLAVE_LINK_STATUS_ERROR
+		|| t->wrsPTPFramesFlowing == WRS_PTP_FRAMES_FLOWING_ERROR
+	) {
+		wrsGeneralStatus_s.wrsTimingStatus =
+						WRS_TIMING_STATUS_ERROR;
+
+	} else if ( /* check if warning */
+		t->wrsSoftPLLStatus == WRS_SOFTPLL_STATUS_WARNING
+	) { /* warning */
+		wrsGeneralStatus_s.wrsTimingStatus =
+						WRS_TIMING_STATUS_WARNING;
+
+	} else if ( /* check if any of fields equal to 0 or WARNING_NA */
+		t->wrsPTPStatus == 0
+		|| t->wrsSoftPLLStatus == WRS_SOFTPLL_STATUS_WARNING_NA
+		|| t->wrsSoftPLLStatus == 0
+		|| t->wrsSlaveLinksStatus == 0
+		|| t->wrsSlaveLinksStatus == WRS_SLAVE_LINK_STATUS_WARNING_NA
+		|| t->wrsPTPFramesFlowing == 0
+		|| t->wrsPTPFramesFlowing == WRS_PTP_FRAMES_FLOWING_WARNING_NA
+	) { /* warning NA */
+		wrsGeneralStatus_s.wrsTimingStatus =
+					      WRS_TIMING_STATUS_WARNING_NA;
+
+	} else if ( /* check if OK, FR (first read) is also ok */
+		(t->wrsPTPStatus == WRS_PTP_STATUS_OK
+		    || t->wrsPTPStatus == WRS_PTP_STATUS_FR) /* FR*/
+		&& t->wrsSoftPLLStatus == WRS_SOFTPLL_STATUS_OK
+		&& t->wrsSlaveLinksStatus == WRS_SLAVE_LINK_STATUS_OK
+		&& (t->wrsPTPFramesFlowing == WRS_PTP_FRAMES_FLOWING_OK
+		    || t->wrsPTPFramesFlowing == WRS_PTP_FRAMES_FLOWING_FR) /* FR */
+	) { /* OK */
+		wrsGeneralStatus_s.wrsTimingStatus =
+						WRS_TIMING_STATUS_OK;
+
+	} else { /* probably bug in previous conditions,
+		  * this should never happen */
+		wrsGeneralStatus_s.wrsTimingStatus =
+						WRS_TIMING_STATUS_BUG;
+	}
 
 	/*********************************************************************\
 	|************************ wrsNetworkingStatus ************************|
