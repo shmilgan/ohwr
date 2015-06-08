@@ -336,10 +336,10 @@ static void get_loaded_kernel_modules_status(void)
 {
 	FILE *f;
 	char key[41]; /* 1 for null char */
-	int modules_found;
-	int ret;
+	int modules_found = 0;
+	int ret = 0;
 	int i;
-	int guess_index;
+	int guess_index = 0;
 	int modules_missing;
 
 	f = fopen(MODULES_FILE, "r");
@@ -386,7 +386,7 @@ static void get_deamons_status(void)
 {
 	FILE *f;
 	char key[41]; /* 1 for null char */
-	int ret;
+	int ret = 0;
 	int i;
 	int processes_wrong = 0; /* number of too many or too few processes */
 
