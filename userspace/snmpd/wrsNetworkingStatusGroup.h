@@ -13,17 +13,17 @@
 					 * normal operation */
 #define WRS_SFPS_STATUS_BUG 5			/* warning */
 
-#define WRS_ENDPOINT_STATUS_FR 1		/* ok, first read */
-#define WRS_ENDPOINT_STATUS_OK 2		/* ok */
-#define WRS_ENDPOINT_STATUS_ERROR 3		/* error */
+#define WRS_ENDPOINT_STATUS_OK 1		/* ok */
+#define WRS_ENDPOINT_STATUS_ERROR 2		/* error */
+#define WRS_ENDPOINT_STATUS_FR 6		/* ok, first read */
 
-#define WRS_SWCORE_STATUS_FR 1			/* ok, first read */
-#define WRS_SWCORE_STATUS_OK 2			/* ok */
-#define WRS_SWCORE_STATUS_ERROR 3		/* error */
+#define WRS_SWCORE_STATUS_OK 1			/* ok */
+#define WRS_SWCORE_STATUS_ERROR 2		/* error */
+#define WRS_SWCORE_STATUS_FR 6			/* ok, first read */
 
-#define WRS_RTU_STATUS_FR 1			/* ok, first read */
-#define WRS_RTU_STATUS_OK 2			/* ok */
-#define WRS_RTU_STATUS_ERROR 3			/* error */
+#define WRS_RTU_STATUS_OK 1			/* ok */
+#define WRS_RTU_STATUS_ERROR 2			/* error */
+#define WRS_RTU_STATUS_FR 6			/* ok, first read */
 
 struct wrsNetworkingStatus_s {
 	int wrsSFPsStatus;

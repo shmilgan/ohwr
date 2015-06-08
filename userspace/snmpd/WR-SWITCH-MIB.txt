@@ -275,9 +275,9 @@ wrsSFPsStatus OBJECT-TYPE
 wrsEndpointStatus OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        firstRead(1),
-                        ok(2),
-                        error(3)
+                        ok(1),
+                        error(2),
+                        firstRead(6)
     }
     MAX-ACCESS     read-only
     STATUS         current
@@ -292,9 +292,9 @@ wrsEndpointStatus OBJECT-TYPE
 wrsSwcoreStatus OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        firstRead(1),
-                        ok(2),
-                        error(3)
+                        ok(1),
+                        error(2),
+                        firstRead(6)
     }
     MAX-ACCESS     read-only
     STATUS         current
@@ -310,9 +310,9 @@ wrsSwcoreStatus OBJECT-TYPE
 wrsRTUStatus OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        firstRead(1),
-                        ok(2),
-                        error(3)
+                        ok(1),
+                        error(2),
+                        firstRead(6)
     }
     MAX-ACCESS     read-only
     STATUS         current
