@@ -722,6 +722,41 @@ wrsTempThresholdPSR OBJECT-TYPE
             "Threshold level for Power Supply Right (PSR) temperature"
     ::= { wrsTemperatureGroup 8 }
 
+-- wrsMemoryGroup (.7.1.4)
+wrsMemoryGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 4 }
+
+wrsMemoryTotal OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Ram size in kB"
+    ::= { wrsMemoryGroup 1 }
+
+wrsMemoryUsed OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Used RAM in kB (Cache and buffers are not counted)"
+    ::= { wrsMemoryGroup 2 }
+
+wrsMemoryUsedPerc OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Percentage of used RAM"
+    ::= { wrsMemoryGroup 3 }
+
+wrsMemoryFree OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Free RAM in kB"
+    ::= { wrsMemoryGroup 4 }
+
 wrsStartCntGroup      OBJECT IDENTIFIER ::= { wrsExpertStatus 2 }
 
 -- wrsStartCntGroup (.7.2)
