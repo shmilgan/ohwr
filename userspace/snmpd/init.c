@@ -52,4 +52,9 @@ void init_wrsSnmp(void)
 	init_wrsPstatsTable();
 	init_wrsPtpDataTable();
 	init_wrsPortStatusTable();
+
+	/* perform first reads, needed to calculate deltas later */
+	wrsTimingStatus_data_fill();
+	wrsNetworkingStatus_data_fill();
+
 }
