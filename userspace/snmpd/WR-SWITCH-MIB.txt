@@ -757,6 +757,33 @@ wrsMemoryFree OBJECT-TYPE
             "Free RAM in kB"
     ::= { wrsMemoryGroup 4 }
 
+-- wrsCpuLoadGroup (.7.1.5)
+wrsCpuLoadGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 5 }
+
+wrsCPULoadAvg1min OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Load average over 1min multiplied by 100"
+    ::= { wrsCpuLoadGroup 1 }
+
+wrsCPULoadAvg5min OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Load average over 5min multiplied by 100"
+    ::= { wrsCpuLoadGroup 2 }
+
+wrsCPULoadAvg15min OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Load average over 15min multiplied by 100"
+    ::= { wrsCpuLoadGroup 3 }
+
 wrsStartCntGroup      OBJECT IDENTIFIER ::= { wrsExpertStatus 2 }
 
 -- wrsStartCntGroup (.7.2)

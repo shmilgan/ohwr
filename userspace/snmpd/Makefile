@@ -39,6 +39,7 @@ SOURCES = \
 	wrsBootStatusGroup.c \
 	wrsTemperatureGroup.c \
 	wrsMemoryGroup.c \
+	wrsCpuLoadGroup.c \
 	wrsStartCntGroup.c \
 	wrsSpllVersionGroup.c \
 	wrsSpllStatusGroup.c \
