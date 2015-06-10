@@ -786,6 +786,91 @@ wrsCPULoadAvg15min OBJECT-TYPE
             "Load average over 15min multiplied by 100"
     ::= { wrsCpuLoadGroup 3 }
 
+-- wrsDiskTable (.7.1.6)
+wrsDiskTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF WrsDiskEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "Information for each mounted partition"
+    ::= { wrsOperationStatus 6 }
+
+wrsDiskEntry OBJECT-TYPE
+    SYNTAX      WrsDiskEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "An entry containing partitions' details"
+    INDEX   { wrsDiskIndex }
+    ::= { wrsDiskTable 1 }
+
+WrsDiskEntry ::=
+    SEQUENCE {
+        wrsDiskIndex       Unsigned32,
+        wrsDiskMountPath   DisplayString,
+        wrsDiskSize        Integer32,
+        wrsDiskUsed        Integer32,
+        wrsDiskFree        Integer32,
+        wrsDiskUseRate     Integer32,
+        wrsDiskFilesystem  DisplayString
+    }
+
+wrsDiskIndex OBJECT-TYPE
+    SYNTAX         Unsigned32
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION
+            "Index for wrsDiskTable"
+    ::= { wrsDiskEntry 1 }
+
+wrsDiskMountPath OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..32))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Mount patch of reported partition"
+    ::= { wrsDiskEntry 2 }
+
+wrsDiskSize OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Partition size"
+    ::= { wrsDiskEntry 3 }
+
+wrsDiskUsed OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Used space on partition"
+    ::= { wrsDiskEntry 4 }
+
+wrsDiskFree OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Free space on partition"
+    ::= { wrsDiskEntry 5 }
+
+wrsDiskUseRate OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Percentage of used space on partition"
+    ::= { wrsDiskEntry 6 }
+
+wrsDiskFilesystem OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..64))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Filesystem reported by df command"
+    ::= { wrsDiskEntry 7 }
+
 -- wrsStartCntGroup (.7.2)
 wrsStartCntGroup      OBJECT IDENTIFIER ::= { wrsExpertStatus 2 }
 
