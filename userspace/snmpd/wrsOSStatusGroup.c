@@ -1,11 +1,16 @@
 #include "wrsSnmp.h"
 #include "wrsBootStatusGroup.h"
 #include "wrsTemperatureGroup.h"
+#include "wrsMemoryGroup.h"
 #include "wrsOSStatusGroup.h"
+
+#define WRSMEMORYFREELOW_TRESHOLD_ERROR 80
+#define WRSMEMORYFREELOW_TRESHOLD_WARNING 50
 
 static struct pickinfo wrsOSStatus_pickinfo[] = {
 	FIELD(wrsOSStatus_s, ASN_INTEGER, wrsBootSuccessful),
 	FIELD(wrsOSStatus_s, ASN_INTEGER, wrsTemperatureWarning),
+	FIELD(wrsOSStatus_s, ASN_INTEGER, wrsMemoryFreeLow),
 };
 
 struct wrsOSStatus_s wrsOSStatus_s;
@@ -15,13 +20,17 @@ time_t wrsOSStatus_data_fill(void)
 	static time_t time_update; /* time of last update */
 	time_t time_temp; /* time when temperature data was updated */
 	time_t time_boot; /* time when boot data was updated */
+	time_t time_free_mem; /* time when free memory data was updated */
 	struct wrsBootStatus_s *b;
+	struct wrsMemory_s *f;
 
 	time_boot = wrsBootStatus_data_fill();
 	time_temp = wrsTemperature_data_fill();
+	time_free_mem = wrsMemory_data_fill();
 
 	if (time_boot <= time_update
-		&& time_temp <= time_update) {
+		&& time_temp <= time_update
+		&& time_free_mem <= time_update) {
 		/* cache not updated, return last update time */
 		return time_update;
 	}
@@ -125,6 +134,26 @@ time_t wrsOSStatus_data_fill(void)
 		    || (wrsTemperature_s.temp_pll > wrsTemperature_s.temp_pll_thold)
 		    || (wrsTemperature_s.temp_psl > wrsTemperature_s.temp_psl_thold)
 		    || (wrsTemperature_s.temp_psr > wrsTemperature_s.temp_psr_thold));
+	}
+
+	/*********************************************************************\
+	|************************* wrsMemoryFreeLow  *************************|
+	\*********************************************************************/
+	/* Check memory usage */
+	f = &wrsMemory_s;
+	if (f->wrsMemoryUsedPerc > WRSMEMORYFREELOW_TRESHOLD_ERROR) {
+		/* Memory usage above error threshold level */
+		wrsOSStatus_s.wrsMemoryFreeLow = WRS_MEMORY_FREE_LOW_ERROR;
+	} else if (f->wrsMemoryUsedPerc > WRSMEMORYFREELOW_TRESHOLD_WARNING) {
+		/* Memory usage above warning threshold level */
+		wrsOSStatus_s.wrsMemoryFreeLow = WRS_MEMORY_FREE_LOW_WARNING;
+	} else if (f->wrsMemoryTotal == 0) {
+		/* Problem with read memory size */
+		wrsOSStatus_s.wrsMemoryFreeLow =
+					WRS_MEMORY_FREE_LOW_WARNING_NA;
+	} else {
+		/* Memory usage below threshold levels */
+		wrsOSStatus_s.wrsMemoryFreeLow = WRS_MEMORY_FREE_LOW_OK;
 	}
 
 	/* there was an update, return current time */

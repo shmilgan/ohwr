@@ -172,6 +172,21 @@ wrsTemperatureWarning OBJECT-TYPE
             "Warning if temperature exceed threshold levels"
     ::= { wrsOSStatusGroup 2 }
 
+wrsMemoryFreeLow OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Status of free memory. Based on wrsMemoryGroup.
+            Error - more than 80% memory used
+            Warning - more than 50% memory used"
+    ::= { wrsOSStatusGroup 3 }
 
 -- wrsTimingStatusGroup (.6.2.2)
 wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
