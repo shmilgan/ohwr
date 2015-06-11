@@ -47,6 +47,9 @@ time_t wrsGeneralStatus_data_fill(void)
 	o = &wrsOSStatus_s;
 	if ( /* check if error */
 		o->wrsBootSuccessful == WRS_BOOT_SUCCESSFUL_ERROR
+		|| o->wrsMemoryFreeLow == WRS_MEMORY_FREE_LOW_ERROR
+		|| o->wrsCpuLoadHigh == WRS_CPU_LOAD_HIGH_ERROR
+		|| o->wrsDiskSpaceLow == WRS_DISK_SPACE_LOW_ERROR
 	) {
 		wrsGeneralStatus_s.wrsOSStatus = WRS_OS_STATUS_ERROR;
 
@@ -54,6 +57,9 @@ time_t wrsGeneralStatus_data_fill(void)
 		o->wrsBootSuccessful == WRS_BOOT_SUCCESSFUL_WARNING
 		|| o->wrsTemperatureWarning == WRS_TEMPERATURE_WARNING_THOLD_NOT_SET
 		|| o->wrsTemperatureWarning == WRS_TEMPERATURE_WARNING_TOO_HIGH
+		|| o->wrsMemoryFreeLow == WRS_MEMORY_FREE_LOW_WARNING
+		|| o->wrsCpuLoadHigh == WRS_CPU_LOAD_HIGH_WARNING
+		|| o->wrsDiskSpaceLow == WRS_DISK_SPACE_LOW_WARNING
 	) { /* warning */
 		wrsGeneralStatus_s.wrsOSStatus = WRS_OS_STATUS_WARNING;
 
@@ -61,12 +67,20 @@ time_t wrsGeneralStatus_data_fill(void)
 		o->wrsBootSuccessful == WRS_BOOT_SUCCESSFUL_WARNING_NA
 		|| o->wrsBootSuccessful == 0
 		|| o->wrsTemperatureWarning == 0
+		|| o->wrsMemoryFreeLow == WRS_MEMORY_FREE_LOW_WARNING_NA
+		|| o->wrsMemoryFreeLow == 0
+		|| o->wrsCpuLoadHigh == 0
+		|| o->wrsDiskSpaceLow == WRS_DISK_SPACE_LOW_WARNING_NA
+		|| o->wrsDiskSpaceLow == 0
 	) { /* warning NA */
 		wrsGeneralStatus_s.wrsOSStatus = WRS_OS_STATUS_WARNING_NA;
 
 	} else if ( /* check if OK */
 		o->wrsBootSuccessful == WRS_BOOT_SUCCESSFUL_OK
 		&& o->wrsTemperatureWarning == WRS_TEMPERATURE_WARNING_OK
+		&& o->wrsMemoryFreeLow == WRS_MEMORY_FREE_LOW_OK
+		&& o->wrsCpuLoadHigh == WRS_CPU_LOAD_HIGH_OK
+		&& o->wrsDiskSpaceLow == WRS_DISK_SPACE_LOW_OK
 	) { /* OK */
 		wrsGeneralStatus_s.wrsOSStatus = WRS_OS_STATUS_OK;
 
