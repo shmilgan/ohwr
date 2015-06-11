@@ -188,6 +188,21 @@ wrsMemoryFreeLow OBJECT-TYPE
             Warning - more than 50% memory used"
     ::= { wrsOSStatusGroup 3 }
 
+wrsCpuLoadHigh OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Status of CPU load. Based on averag load in group wrsCpuLoad.
+            Error - average CPU load is more than 3 for 1min, 2 for 5min and 1.5 for 15min
+            Warning - average CPU load is more than 2 for 1min, 1.5 for 5min and 1 for 15min"
+    ::= { wrsOSStatusGroup 4 }
+
 -- wrsTimingStatusGroup (.6.2.2)
 wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
 

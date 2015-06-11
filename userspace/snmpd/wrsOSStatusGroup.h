@@ -22,10 +22,15 @@
 					  * equal to 0 (NA),shouldn't happen in
 					  * normal operation */
 
+#define WRS_CPU_LOAD_HIGH_OK 1				/* ok */
+#define WRS_CPU_LOAD_HIGH_ERROR 2			/* error */
+#define WRS_CPU_LOAD_HIGH_WARNING 3			/* warning */
+
 struct wrsOSStatus_s {
 	int wrsBootSuccessful;
 	int wrsTemperatureWarning;
 	int wrsMemoryFreeLow;
+	int wrsCpuLoadHigh;
 };
 
 extern struct wrsOSStatus_s wrsOSStatus_s;

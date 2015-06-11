@@ -2,15 +2,25 @@
 #include "wrsBootStatusGroup.h"
 #include "wrsTemperatureGroup.h"
 #include "wrsMemoryGroup.h"
+#include "wrsCpuLoadGroup.h"
 #include "wrsOSStatusGroup.h"
 
 #define WRSMEMORYFREELOW_TRESHOLD_ERROR 80
 #define WRSMEMORYFREELOW_TRESHOLD_WARNING 50
 
+/* To avoid float values for cpu load, they are multiplied by 100 */
+#define WRSCPULOAD_1MIN_WARNING 200
+#define WRSCPULOAD_5MIN_WARNING 150
+#define WRSCPULOAD_15MIN_WARNING 100
+#define WRSCPULOAD_1MIN_ERROR 300
+#define WRSCPULOAD_5MIN_ERROR 200
+#define WRSCPULOAD_15MIN_ERROR 150
+
 static struct pickinfo wrsOSStatus_pickinfo[] = {
 	FIELD(wrsOSStatus_s, ASN_INTEGER, wrsBootSuccessful),
 	FIELD(wrsOSStatus_s, ASN_INTEGER, wrsTemperatureWarning),
 	FIELD(wrsOSStatus_s, ASN_INTEGER, wrsMemoryFreeLow),
+	FIELD(wrsOSStatus_s, ASN_INTEGER, wrsCpuLoadHigh),
 };
 
 struct wrsOSStatus_s wrsOSStatus_s;
@@ -21,16 +31,20 @@ time_t wrsOSStatus_data_fill(void)
 	time_t time_temp; /* time when temperature data was updated */
 	time_t time_boot; /* time when boot data was updated */
 	time_t time_free_mem; /* time when free memory data was updated */
+	time_t time_cpu_load; /* time when cpu load data was updated */
 	struct wrsBootStatus_s *b;
 	struct wrsMemory_s *f;
+	struct wrsCpuLoad_s *c;
 
 	time_boot = wrsBootStatus_data_fill();
 	time_temp = wrsTemperature_data_fill();
 	time_free_mem = wrsMemory_data_fill();
+	time_cpu_load = wrsCpuLoad_data_fill();
 
 	if (time_boot <= time_update
 		&& time_temp <= time_update
-		&& time_free_mem <= time_update) {
+		&& time_free_mem <= time_update
+		&& time_cpu_load <= time_update) {
 		/* cache not updated, return last update time */
 		return time_update;
 	}
@@ -154,6 +168,26 @@ time_t wrsOSStatus_data_fill(void)
 	} else {
 		/* Memory usage below threshold levels */
 		wrsOSStatus_s.wrsMemoryFreeLow = WRS_MEMORY_FREE_LOW_OK;
+	}
+
+	/*********************************************************************\
+	|************************** wrsCpuLoadHigh  **************************|
+	\*********************************************************************/
+	/* Check CPU load */
+	c = &wrsCpuLoad_s;
+	if (c->wrsCPULoadAvg1min > WRSCPULOAD_1MIN_ERROR
+	    || c->wrsCPULoadAvg5min > WRSCPULOAD_5MIN_ERROR
+	    || c->wrsCPULoadAvg15min > WRSCPULOAD_15MIN_ERROR) {
+		/* CPU load above error threshold level */
+		wrsOSStatus_s.wrsCpuLoadHigh = WRS_CPU_LOAD_HIGH_ERROR;
+	} else if (c->wrsCPULoadAvg1min > WRSCPULOAD_1MIN_WARNING
+	    || c->wrsCPULoadAvg5min > WRSCPULOAD_5MIN_WARNING
+	    || c->wrsCPULoadAvg15min > WRSCPULOAD_15MIN_WARNING) {
+		/* CPU load above warning threshold level */
+		wrsOSStatus_s.wrsCpuLoadHigh = WRS_CPU_LOAD_HIGH_WARNING;
+	} else {
+		/* CPU load below threshold levels */
+		wrsOSStatus_s.wrsCpuLoadHigh = WRS_CPU_LOAD_HIGH_OK;
 	}
 
 	/* there was an update, return current time */
