@@ -26,11 +26,19 @@
 #define WRS_CPU_LOAD_HIGH_ERROR 2			/* error */
 #define WRS_CPU_LOAD_HIGH_WARNING 3			/* warning */
 
+#define WRS_DISK_SPACE_LOW_OK 1				/* ok */
+#define WRS_DISK_SPACE_LOW_ERROR 2			/* error */
+#define WRS_DISK_SPACE_LOW_WARNING 3			/* warning */
+#define WRS_DISK_SPACE_LOW_WARNING_NA 4 /* warning, at least one field is
+					  * equal to 0 (NA),shouldn't happen in
+					  * normal operation */
+
 struct wrsOSStatus_s {
 	int wrsBootSuccessful;
 	int wrsTemperatureWarning;
 	int wrsMemoryFreeLow;
 	int wrsCpuLoadHigh;
+	int wrsDiskSpaceLow;
 };
 
 extern struct wrsOSStatus_s wrsOSStatus_s;

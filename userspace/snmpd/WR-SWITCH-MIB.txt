@@ -203,6 +203,22 @@ wrsCpuLoadHigh OBJECT-TYPE
             Warning - average CPU load is more than 2 for 1min, 1.5 for 5min and 1 for 15min"
     ::= { wrsOSStatusGroup 4 }
 
+wrsDiskSpaceLow OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Status of used disk space. Based on wrsDiskTable.
+            Error - more than 90% of any disk is used
+            Warning - more than 80% of any disk is used"
+    ::= { wrsOSStatusGroup 5 }
+
 -- wrsTimingStatusGroup (.6.2.2)
 wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
 
