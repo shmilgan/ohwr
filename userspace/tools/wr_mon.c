@@ -7,6 +7,7 @@
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <minipc.h>
+#include <signal.h>
 
 #include "term.h"
 
@@ -30,6 +31,7 @@ static struct pp_globals *ppg;
 static struct wr_servo_state_t *ppsi_servo;
 static struct wr_servo_state_t ppsi_servo_local; /* local copy of
 						    servo status */
+static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
 static struct hal_temp_sensors temp_sensors_local;
 
@@ -75,6 +77,22 @@ int read_servo(void){
 	return 0;
 }
 
+
+void ppsi_connect_minipc()
+{
+	if (ptp_ch) {
+		/* close minipc, if connected before */
+		minipc_close(ptp_ch);
+	}
+	ptp_ch = minipc_client_create("ptpd", 0);
+	if (!ptp_ch) {
+		fprintf(stderr, "Can't establish WRIPC connection "
+			"to the PTP daemon!\n");
+		exit(-1);
+	}
+	/* store pid of ppsi connected via minipc */
+	ptp_ch_pid = ppsi_head->pid;
+}
 
 void init_shm(void)
 {
@@ -132,13 +150,7 @@ void init_shm(void)
 		exit(-1);
 	}
 
-	ptp_ch = minipc_client_create("ptpd", 0);
-	if (!ptp_ch)
-	{
-		fprintf(stderr,"Can't establish WRIPC connection "
-			"to the PTP daemon!\n");
-		exit(-1);
-	}
+	ppsi_connect_minipc();
 }
 
 void show_ports(void)
@@ -415,14 +427,35 @@ int track_onoff = 1;
 
 void show_all()
 {
+	int hal_alive;
+	int ppsi_alive;
+
 	if (mode == SHOW_GUI) {
 		term_clear();
 		term_pcprintf(1, 1, C_BLUE,
-			      "WR Switch Sync Monitor v 1.0 [q = quit]");
+			      "WR Switch Sync Monitor v 1.0 [q = quit]\n");
 	}
-	show_ports();
-	show_servo();
-	show_temperatures();
+
+	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0));
+	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0));
+
+	if (hal_alive)
+		show_ports();
+	else if (mode == SHOW_GUI)
+		term_cprintf(C_RED, "\nHAL is dead!\n");
+	else if (mode == SHOW_STATS)
+		printf("HAL is dead!\n");
+
+	if (ppsi_alive)
+		show_servo();
+	else if (mode == SHOW_GUI)
+		term_cprintf(C_RED, "\nPPSI is dead!\n");
+	else if (mode == SHOW_STATS)
+		printf("PPSI is dead!\n");
+
+
+	if (hal_alive)
+		show_temperatures();
 	fflush(stdout);
 }
 
@@ -465,6 +498,11 @@ int main(int argc, char *argv[])
 			if(c=='t') {
 				int rval;
 				track_onoff = 1-track_onoff;
+				if (ptp_ch_pid != ppsi_head->pid) {
+					/* ppsi was restarted since minipc
+					 * connection, reconnect now */
+					ppsi_connect_minipc();
+				}
 				minipc_call(ptp_ch, 200, &__rpcdef_cmd,
 					    &rval, PTPDEXP_COMMAND_TRACKING,
 					    track_onoff);
