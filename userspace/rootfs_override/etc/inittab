@@ -29,7 +29,7 @@ ttyGS0::respawn:/bin/ash --login
 ttyS0::respawn:/bin/ash --login
 
 # Stuff to do before rebooting
-# run all /etc/init.d/K* scripts
+# run all /etc/rcS/K??* scripts
 null::shutdown:/etc/init.d/rcK -a -r
 null::shutdown:/bin/umount -a -r
 

@@ -743,7 +743,7 @@ function wrs_management(){
 				
 			}else{ //Not running
 				
-				shell_exec("/etc/init.d/S80snmp > /dev/null 2>&1 &");
+				shell_exec("/etc/init.d/snmp start> /dev/null 2>&1 &");
 				
 			}
 			

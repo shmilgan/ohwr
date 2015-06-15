@@ -236,7 +236,7 @@ static void get_dotconfig_source(void)
 }
 
 /* get status of execution of following scripts:
- * /etc/init.d/S90hwinfo
+ * /etc/init.d/hwinfo
  * /wr/sbin/startup-mb.sh (load FPGA and LM32)
  * */
 static void get_boot_scripts_status(void){
@@ -250,7 +250,7 @@ static void get_boot_scripts_status(void){
 	}
 	run_once = 1;
 
-	/* read result of S90hwinfo (HWinfo) execution */
+	/* read result of /etc/init.d/hwinfo (HWinfo) execution */
 	f = fopen(HWINFO_FILE, "r");
 	if (f) {
 		/* readline without newline */

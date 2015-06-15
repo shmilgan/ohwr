@@ -8,7 +8,7 @@ fi
 # executing them in numerical order.
 #
 
-for i in /etc/init.d/K??* ;do
+for i in /etc/rcS/K??* ;do
 
      # Ignore dangling symlinks (if any).
      [ ! -f "$i" ] && continue
