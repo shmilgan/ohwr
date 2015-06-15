@@ -26,10 +26,10 @@ if [ -f $F ]; then
 	fi
 fi
 # if ntp failed, try to restore date saved before last reboot
-if [ $date_set = 0 ] && [ -f /update/update_date ]; then
+if [ $date_set = 0 ] && [ -f /update/saved_date ]; then
 	#date is not accurate but no better idea.
 	echo "Restore saved time"
-	date -s `cat /update/update_date`
+	date -s `cat /update/saved_date`
 	echo "Setting WR time from host time"
 	/wr/bin/wr_date set host
 fi
