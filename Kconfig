@@ -471,3 +471,13 @@ config WRSAUXCLK_PPSHIFT
 
 
 endmenu
+
+menu "Developer options"
+config MONIT_DISABLE
+	bool "Disable monit"
+	default n
+	help
+	  Disable monit to prevent processes' restarts. It may be useful for
+	  development.
+
+endmenu

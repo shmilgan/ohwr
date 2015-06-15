@@ -14,9 +14,11 @@
 ## Global section
 ###############################################################################
 ##
-## Start Monit in the background (run as a daemon):
 #
-set daemon  10              # check services at 10 seconds intervals
+# run from init
+set init
+#if "set init" don't run as daemon. "set daemon" only specify interval
+set daemon  10              # check services at 10 seconds intervals,
 #   with start delay 240    # optional: delay the first check by 4-minutes (by 
 #                           # default Monit check immediately after Monit start)
 #
@@ -54,5 +56,5 @@ set statefile /var/monit/monit.state
 ## It is possible to include additional configuration parts from other files or
 ## directories.
 #
-include /etc/monit.d/*
+include /etc/monit.d/*.conf
 #
