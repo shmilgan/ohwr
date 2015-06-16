@@ -28,21 +28,8 @@ export WR_HOME="/wr"
 
 eval $WR_HOME/bin/wrsw_hal    $LOGPIPE_HAL \&
 eval $WR_HOME/bin/wrsw_rtud   $LOGPIPE_RTU \&
-
-if [ ! -x $WR_HOME/bin/ppsi ]; then
-    echo "No WR-PTP daemon found" >&2
-    exit 1
-fi
-
-# Fire ppsi. Unfortinately the hal takes a while to start, and
-# until ppsi waits by itself (not in this submodule commit, yet),
-# wait here...  This is the last script of the wr startup, and it can wait
-for i in $(seq 1 10); do
-    if [ -S /tmp/.minipc/wrsw_hal ]; then break; fi
-    sleep 1
-done
-eval $WR_HOME/bin/ppsi  $LOGPIPE_PTP \&
+eval $WR_HOME/bin/ppsi        $LOGPIPE_PTP \&
 
 # ensure we receive UDP PTP frames, since ppsi supports UDP too.
-(sleep 4; $WR_HOME/bin/rtu_stat add 01:00:5e:00:01:81 18 0) &
+$WR_HOME/bin/rtu_stat add 01:00:5e:00:01:81 18 0 &
 
