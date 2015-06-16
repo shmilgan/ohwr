@@ -68,9 +68,11 @@ if [ -n "$CONFIG_DOTCONF_URL" ]; then
 	    echo "config_ok" > "$tmpdir"/dot-config_status
 	else
 	    echo "check_error" > "$tmpdir"/dot-config_status
+	    echo "Errors found in downloaded dot-config \"$URL\", using old"
 	fi
     else
 	echo "download_error" > "$tmpdir"/dot-config_status
+	echo "Download error for dot-config \"$URL\", using old"
     fi
 fi
 
