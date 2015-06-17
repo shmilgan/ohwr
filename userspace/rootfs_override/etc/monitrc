@@ -47,7 +47,15 @@ set idfile /var/monit/monit.id
 ## the monitoring state across reboots. If it is on temporary filesystem, the
 ## state will be lost on reboot which may be convenient in some situations.
 #
-set statefile /var/monit/monit.state
+# We don't want to propagate monit's state over restarts. Otherwise following
+# scenario is possible:
+# --exceeded number of application restarts/crashes within given time
+# --system restart due to above
+# --application restart/crash again
+# --monit will include application restart/crash after system restart in
+# previous countings, so will trigger another restart
+# We don't want to save monit's state over reboots, keep state file it in tmp
+set statefile /tmp/monit.state
 
 ###############################################################################
 ## Includes
