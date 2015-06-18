@@ -16,15 +16,27 @@ start_counter() {
 }
 
 start() {
- 	echo -n "Starting lighttpd daemon: "
-	/usr/sbin/lighttpd -f /var/www/lighttpd.config
-	start_counter
-	echo "OK"
+	echo -n "Starting lighttpd daemon: "
+	# note start-stop-daemon does not create pidfile, only check if pid is
+	# running
+	start-stop-daemon -q -p /var/run/lighttpd.pid -S \
+		--exec /usr/sbin/lighttpd -- -f /var/www/lighttpd.config
+	if [ $? -eq 0 ]; then
+		start_counter
+		echo "OK"
+	else
+		echo "Failed (already running?)"
+	fi
 }
 stop() {
 	echo -n "Stopping lighttpd daemon: "
-	killall lighttpd	
-	echo "OK"
+	start-stop-daemon -K -q -p /var/run/lighttpd.pid
+	if [ $? -eq 0 ]; then
+		start_counter
+		echo "OK"
+	else
+		echo "Failed"
+	fi
 }
 restart() {
 	stop

@@ -14,9 +14,11 @@
 ## Global section
 ###############################################################################
 ##
-## Start Monit in the background (run as a daemon):
 #
-set daemon  10              # check services at 10 seconds intervals
+# run from init
+set init
+#if "set init" don't run as daemon. "set daemon" only specify interval
+set daemon  10              # check services at 10 seconds intervals,
 #   with start delay 240    # optional: delay the first check by 4-minutes (by 
 #                           # default Monit check immediately after Monit start)
 #
@@ -45,7 +47,15 @@ set idfile /var/monit/monit.id
 ## the monitoring state across reboots. If it is on temporary filesystem, the
 ## state will be lost on reboot which may be convenient in some situations.
 #
-set statefile /var/monit/monit.state
+# We don't want to propagate monit's state over restarts. Otherwise following
+# scenario is possible:
+# --exceeded number of application restarts/crashes within given time
+# --system restart due to above
+# --application restart/crash again
+# --monit will include application restart/crash after system restart in
+# previous countings, so will trigger another restart
+# We don't want to save monit's state over reboots, keep state file it in tmp
+set statefile /tmp/monit.state
 
 ###############################################################################
 ## Includes
@@ -54,5 +64,5 @@ set statefile /var/monit/monit.state
 ## It is possible to include additional configuration parts from other files or
 ## directories.
 #
-include /etc/monit.d/*
+include /etc/monit.d/*.conf
 #

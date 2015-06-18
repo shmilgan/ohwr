@@ -23,6 +23,7 @@
 
 # now run any rc scripts
 ::sysinit:/etc/init.d/rcS
+::respawn:/etc/init.d/monit.sh init
 
 # Put a getty on the serial port
 ttyGS0::respawn:/bin/ash --login

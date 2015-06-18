@@ -551,6 +551,12 @@ value is changed by the web interface, proper action is taken.
         the chosen name is expected to be installed in the @sc{wrs}
         filesystem.
 
+@item CONFIG_MONIT_DISABLE
+
+	Disable monitoring of running processes by monit. Monit by default
+        re spawns processes that have died. This option is useful mostly during
+        development.
+
 @end table
 
 @c ==========================================================================
