@@ -10,7 +10,7 @@ int hal_nports_local;
 /* PPSI */
 struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
-struct wr_servo_state_t *ppsi_servo;
+struct wr_servo_state *ppsi_servo;
 
 /* RTUd */
 struct wrs_shm_head *rtud_head;

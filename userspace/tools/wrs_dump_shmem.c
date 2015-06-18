@@ -479,33 +479,30 @@ struct dump_info dstp_info [] = {
 };
 
 #undef DUMP_STRUCT
-#define DUMP_STRUCT struct wr_servo_state_t /* Horrible typedef */
+#define DUMP_STRUCT struct wr_servo_state
 struct dump_info servo_state_info [] = {
 	DUMP_FIELD_SIZE(char, if_name, 16),
+	DUMP_FIELD(unsigned_long, flags),
 	DUMP_FIELD(int, state),
-	DUMP_FIELD_SIZE(char, servo_state_name, 32),
-	DUMP_FIELD(int, next_state),
-	DUMP_FIELD(TimeInternal, mu),		/* half of the RTT */
-	DUMP_FIELD(Integer64, picos_mu),
 	DUMP_FIELD(Integer32, delta_tx_m),
 	DUMP_FIELD(Integer32, delta_rx_m),
 	DUMP_FIELD(Integer32, delta_tx_s),
 	DUMP_FIELD(Integer32, delta_rx_s),
-	DUMP_FIELD(Integer32, cur_setpoint),
-	DUMP_FIELD(Integer32, delta_ms),
-	DUMP_FIELD(Integer32, delta_ms_prev),
+	DUMP_FIELD(Integer32, fiber_fix_alpha),
+	DUMP_FIELD(Integer32, clock_period_ps),
 	DUMP_FIELD(TimeInternal, t1),
 	DUMP_FIELD(TimeInternal, t2),
 	DUMP_FIELD(TimeInternal, t3),
 	DUMP_FIELD(TimeInternal, t4),
-	DUMP_FIELD(UInteger64, last_tics),
-	DUMP_FIELD(Integer32, fiber_fix_alpha),
-	DUMP_FIELD(Integer32, clock_period_ps),
+	DUMP_FIELD(Integer32, delta_ms_prev),
 	DUMP_FIELD(int, missed_iters),
-
-	DUMP_FIELD(int, valid),
+	DUMP_FIELD(TimeInternal, mu),		/* half of the RTT */
+	DUMP_FIELD(Integer64, picos_mu),
+	DUMP_FIELD(Integer32, cur_setpoint),
+	DUMP_FIELD(Integer32, delta_ms),
 	DUMP_FIELD(UInteger32, update_count),
 	DUMP_FIELD(int, tracking_enabled),
+	DUMP_FIELD_SIZE(char, servo_state_name, 32),
 	DUMP_FIELD(Integer64, skew),
 	DUMP_FIELD(Integer64, offset),
 };
@@ -584,7 +581,7 @@ int dump_ppsi_mem(struct wrs_shm_head *head)
 	DSCurrent *dsc;
 	DSParent *dsp;
 	DSTimeProperties *dstp;
-	struct wr_servo_state_t *global_ext_data;
+	struct wr_servo_state *global_ext_data;
 	int i;
 
 	if (head->version != WRS_PPSI_SHMEM_VERSION) {

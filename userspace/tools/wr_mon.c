@@ -30,8 +30,8 @@ static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS];
 static int hal_nports_local;
 static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
-static struct wr_servo_state_t *ppsi_servo;
-static struct wr_servo_state_t ppsi_servo_local; /* local copy of
+static struct wr_servo_state *ppsi_servo;
+static struct wr_servo_state ppsi_servo_local; /* local copy of
 						    servo status */
 static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
@@ -309,7 +309,7 @@ void show_servo(void)
 	if(mode == SHOW_GUI) {
 		term_cprintf(C_BLUE, "Synchronization status:\n");
 
-		if (!ppsi_servo_local.valid) {
+		if (!(ppsi_servo_local.flags & WR_FLAG_VALID)) {
 			term_cprintf(C_RED, "Master mode or sync info not valid\n");
 			return;
 		}
@@ -378,7 +378,7 @@ void show_servo(void)
 	}
 	else if(mode == SHOW_STATS) {
 		printf("SERVO    ");
-		printf("sv:%d ", ppsi_servo_local.valid ? 1 : 0);
+		printf("sv:%d ", ppsi_servo_local.flags & WR_FLAG_VALID ? 1 : 0);
 		printf("ss:'%s' ", ppsi_servo_local.servo_state_name);
 		printf("mu:%llu ", ppsi_servo_local.picos_mu);
 		printf("dms:%llu ", ppsi_servo_local.delta_ms);
