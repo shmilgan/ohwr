@@ -433,7 +433,8 @@ void show_all()
 	if (mode == SHOW_GUI) {
 		term_clear();
 		term_pcprintf(1, 1, C_BLUE,
-			      "WR Switch Sync Monitor v 1.0 [q = quit]\n");
+			      "WR Switch Sync Monitor %s[q = quit]\n",
+			      __GIT_VER__);
 	}
 
 	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0));
