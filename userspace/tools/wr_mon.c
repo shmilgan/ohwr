@@ -88,7 +88,7 @@ void ppsi_connect_minipc()
 	if (!ptp_ch) {
 		fprintf(stderr, "Can't establish WRIPC connection "
 			"to the PTP daemon!\n");
-		exit(-1);
+		exit(1);
 	}
 	/* store pid of ppsi connected via minipc */
 	ptp_ch_pid = ppsi_head->pid;
@@ -101,14 +101,14 @@ void init_shm(void)
 	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
 	if (!hal_head) {
 		fprintf(stderr, "unable to open shm for HAL!\n");
-		exit(-1);
+		exit(1);
 	}
 	/* check hal's shm version */
 	if (hal_head->version != HAL_SHMEM_VERSION) {
 		fprintf(stderr, "wr_mon: unknown HAL's shm version %i "
 			"(known is %i)\n",
 			hal_head->version, HAL_SHMEM_VERSION);
-		exit(-1);
+		exit(1);
 	}
 	h = (void *)hal_head + hal_head->data_off;
 	/* Assume number of ports does not change in runtime */
@@ -117,7 +117,7 @@ void init_shm(void)
 		fprintf(stderr, "Too many ports reported by HAL. "
 			"%d vs %d supported\n",
 			hal_nports_local, HAL_MAX_PORTS);
-		exit(-1);
+		exit(1);
 	}
 	/* Even after HAL restart, HAL will place structures at the same
 	 * addresses. No need to re-dereference pointer at each read. */
@@ -125,14 +125,14 @@ void init_shm(void)
 	if (!hal_ports) {
 		fprintf(stderr, "Unalbe to follow hal_ports pointer in HAL's "
 			"shmem");
-		exit(-1);
+		exit(1);
 	}
 	temp_sensors = &(h->temp);
 
 	ppsi_head = wrs_shm_get(wrs_shm_ptp, "", WRS_SHM_READ);
 	if (!ppsi_head) {
 		fprintf(stderr, "unable to open shm for PPSI!\n");
-		exit(-1);
+		exit(1);
 	}
 
 	/* check hal's shm version */
@@ -140,14 +140,14 @@ void init_shm(void)
 		fprintf(stderr, "wr_mon: unknown PPSI's shm version %i "
 			"(known is %i)\n",
 			ppsi_head->version, WRS_PPSI_SHMEM_VERSION);
-		exit(-1);
+		exit(1);
 	}
 	ppg = (void *)ppsi_head + ppsi_head->data_off;
 
 	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->global_ext_data);
 	if (!ppsi_servo) {
 		fprintf(stderr, "Cannot follow ppsi_servo in shmem.\n");
-		exit(-1);
+		exit(1);
 	}
 
 	ppsi_connect_minipc();
