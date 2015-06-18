@@ -54,4 +54,12 @@ extern void __wrs_msg(int level, const char *func, int line,
 #define pr_info(...)	wrs_msg(LOG_INFO, __VA_ARGS__)
 #define pr_debug(...)	wrs_msg(LOG_DEBUG, __VA_ARGS__)
 
+#define assert_init(proc) { \
+	int ret = proc; \
+	if (ret < 0) { \
+		pr_error("Error in function "#proc" ret = %d\n", ret); \
+		return ret; \
+	} \
+}
+
 #endif /* __WRS_MSG_H__ */

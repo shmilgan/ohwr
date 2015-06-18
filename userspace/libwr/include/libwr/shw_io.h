@@ -25,10 +25,7 @@
 
 #include <stdint.h>
 
-#include <libwr/shw_io.h>
 #include <libwr/pio.h>
-
-#define assert_init(proc) { int ret; if((ret = proc) < 0) return ret; }
 
 /**
  * List of type of IO.

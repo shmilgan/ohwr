@@ -23,8 +23,6 @@
 
 #define MAX_CLEANUP_CALLBACKS 16
 
-#define assert_init(proc) { int ret; if((ret = proc) < 0) return ret; }
-
 static int daemon_mode = 0;
 static hal_cleanup_callback_t cleanup_cb[MAX_CLEANUP_CALLBACKS];
 struct hal_shmem_header *hal_shmem;
