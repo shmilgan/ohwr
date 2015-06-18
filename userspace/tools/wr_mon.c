@@ -7,6 +7,7 @@
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <minipc.h>
+#include <signal.h>
 
 #include "term.h"
 
@@ -30,6 +31,7 @@ static struct pp_globals *ppg;
 static struct wr_servo_state_t *ppsi_servo;
 static struct wr_servo_state_t ppsi_servo_local; /* local copy of
 						    servo status */
+static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
 static struct hal_temp_sensors temp_sensors_local;
 
@@ -76,6 +78,22 @@ int read_servo(void){
 }
 
 
+void ppsi_connect_minipc()
+{
+	if (ptp_ch) {
+		/* close minipc, if connected before */
+		minipc_close(ptp_ch);
+	}
+	ptp_ch = minipc_client_create("ptpd", 0);
+	if (!ptp_ch) {
+		fprintf(stderr, "Can't establish WRIPC connection "
+			"to the PTP daemon!\n");
+		exit(1);
+	}
+	/* store pid of ppsi connected via minipc */
+	ptp_ch_pid = ppsi_head->pid;
+}
+
 void init_shm(void)
 {
 	struct hal_shmem_header *h;
@@ -83,14 +101,14 @@ void init_shm(void)
 	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
 	if (!hal_head) {
 		fprintf(stderr, "unable to open shm for HAL!\n");
-		exit(-1);
+		exit(1);
 	}
 	/* check hal's shm version */
 	if (hal_head->version != HAL_SHMEM_VERSION) {
 		fprintf(stderr, "wr_mon: unknown HAL's shm version %i "
 			"(known is %i)\n",
 			hal_head->version, HAL_SHMEM_VERSION);
-		exit(-1);
+		exit(1);
 	}
 	h = (void *)hal_head + hal_head->data_off;
 	/* Assume number of ports does not change in runtime */
@@ -99,7 +117,7 @@ void init_shm(void)
 		fprintf(stderr, "Too many ports reported by HAL. "
 			"%d vs %d supported\n",
 			hal_nports_local, HAL_MAX_PORTS);
-		exit(-1);
+		exit(1);
 	}
 	/* Even after HAL restart, HAL will place structures at the same
 	 * addresses. No need to re-dereference pointer at each read. */
@@ -107,14 +125,14 @@ void init_shm(void)
 	if (!hal_ports) {
 		fprintf(stderr, "Unalbe to follow hal_ports pointer in HAL's "
 			"shmem");
-		exit(-1);
+		exit(1);
 	}
 	temp_sensors = &(h->temp);
 
 	ppsi_head = wrs_shm_get(wrs_shm_ptp, "", WRS_SHM_READ);
 	if (!ppsi_head) {
 		fprintf(stderr, "unable to open shm for PPSI!\n");
-		exit(-1);
+		exit(1);
 	}
 
 	/* check hal's shm version */
@@ -122,23 +140,17 @@ void init_shm(void)
 		fprintf(stderr, "wr_mon: unknown PPSI's shm version %i "
 			"(known is %i)\n",
 			ppsi_head->version, WRS_PPSI_SHMEM_VERSION);
-		exit(-1);
+		exit(1);
 	}
 	ppg = (void *)ppsi_head + ppsi_head->data_off;
 
 	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->global_ext_data);
 	if (!ppsi_servo) {
 		fprintf(stderr, "Cannot follow ppsi_servo in shmem.\n");
-		exit(-1);
+		exit(1);
 	}
 
-	ptp_ch = minipc_client_create("ptpd", 0);
-	if (!ptp_ch)
-	{
-		fprintf(stderr,"Can't establish WRIPC connection "
-			"to the PTP daemon!\n");
-		exit(-1);
-	}
+	ppsi_connect_minipc();
 }
 
 void show_ports(void)
@@ -415,14 +427,36 @@ int track_onoff = 1;
 
 void show_all()
 {
+	int hal_alive;
+	int ppsi_alive;
+
 	if (mode == SHOW_GUI) {
 		term_clear();
 		term_pcprintf(1, 1, C_BLUE,
-			      "WR Switch Sync Monitor v 1.0 [q = quit]");
+			      "WR Switch Sync Monitor %s[q = quit]\n",
+			      __GIT_VER__);
 	}
-	show_ports();
-	show_servo();
-	show_temperatures();
+
+	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0));
+	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0));
+
+	if (hal_alive)
+		show_ports();
+	else if (mode == SHOW_GUI)
+		term_cprintf(C_RED, "\nHAL is dead!\n");
+	else if (mode == SHOW_STATS)
+		printf("HAL is dead!\n");
+
+	if (ppsi_alive)
+		show_servo();
+	else if (mode == SHOW_GUI)
+		term_cprintf(C_RED, "\nPPSI is dead!\n");
+	else if (mode == SHOW_STATS)
+		printf("PPSI is dead!\n");
+
+
+	if (hal_alive)
+		show_temperatures();
 	fflush(stdout);
 }
 
@@ -465,6 +499,11 @@ int main(int argc, char *argv[])
 			if(c=='t') {
 				int rval;
 				track_onoff = 1-track_onoff;
+				if (ptp_ch_pid != ppsi_head->pid) {
+					/* ppsi was restarted since minipc
+					 * connection, reconnect now */
+					ppsi_connect_minipc();
+				}
 				minipc_call(ptp_ch, 200, &__rpcdef_cmd,
 					    &rval, PTPDEXP_COMMAND_TRACKING,
 					    track_onoff);
