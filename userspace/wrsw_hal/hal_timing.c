@@ -76,12 +76,19 @@ int hal_init_timing()
 				/*ups... something went wrong, try again */
 				rts_set_mode(RTS_MODE_GM_EXTERNAL);
 				tmo_init(&lock_tmo, LOCK_TIMEOUT_EXT, 0);
-			} else
+			} else {
+				pr_error("Got timeout\n");
 				return -1;
+			}
 		}
 
-		if (rts_get_state(&pstate) < 0)
-			return -1;
+		if (rts_get_state(&pstate) < 0) {
+			/* Don't give up when rts_get_state fails, it may be
+			 * due to race with ppsi at boot. No problems seen
+			 * because of waiting here. */
+			pr_error("rts_get_state failed try again\n");
+			continue;
+		}
 
 		if (pstate.flags & RTS_DMTD_LOCKED)
 			break;
