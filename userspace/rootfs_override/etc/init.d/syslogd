@@ -17,9 +17,17 @@ start() {
     # Check the configuration file: if there's no target, don't run the thing.
     if ! grep -q '^##.*remote-host' /etc/rsyslog.conf; then
 	echo -n "Starting rsyslog: "
-	/usr/sbin/rsyslogd
-	start_counter
-	echo "OK"
+	start-stop-daemon -q -p /var/run/rsyslogd.pid -S \
+		--exec /usr/sbin/rsyslogd
+	ret=$?
+	if [ $ret -eq 0 ]; then
+	    start_counter
+	    echo "OK"
+	elif [ $ret -eq 1 ]; then
+	    echo "Failed (already running?)"
+	else
+	    echo "Failed"
+	fi
     else
 	echo "Not starting rsyslog: no target host selected"
 	# avoid SNMPd complaints about lack of start counter file
@@ -28,12 +36,15 @@ start() {
 }
 
 stop() {
-    if pidof rsyslogd > /dev/null; then
-	echo -n "Stopping rsyslog: "
-	start-stop-daemon -K -q -p /var/log/rsyslog.pid
+    echo -n "Stopping rsyslog: "
+    start-stop-daemon -K -q -p /var/run/rsyslogd.pid
+    if [ $? -eq 0 ]; then
 	echo "OK"
+    else
+	echo "Failed"
     fi
 }
+
 restart() {
     stop
     start
