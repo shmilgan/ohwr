@@ -80,14 +80,6 @@ set | tr -d \' | grep CONFIG_SNMP | sed 's/=/ /' | while read varname value; do
 done
 copy_conf /wr/etc/snmpd.conf
 
-# Fix log values
-cp /wr/sbin/start-daemons.sh.in $T
-set | tr -d \' | grep CONFIG_WRS_LOG | sed 's/=/ /' | while read varname value; do
-    if [ -z "$value" ]; then continue; fi
-    sed -i "/$varname/ s,$varname,$value," $T
-done
-copy_conf /wr/sbin/start-daemons.sh
-
 # Select a ppsi configuration file
 if [ "$CONFIG_PTP_PORT_PARAMS" = "y" ]; then
     /wr/bin/assembly_ppsi_conf.sh
