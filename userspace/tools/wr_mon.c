@@ -6,6 +6,8 @@
 #include <ppsi/ppsi.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
+#include <libwr/switch_hw.h>
+#include <fpga_io.h>
 #include <minipc.h>
 #include <signal.h>
 
@@ -165,7 +167,12 @@ void show_ports(void)
 		time(&t);
 		tm = localtime(&t);
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
-		term_pcprintf(3, 1, C_BLUE, "Switch ports at %s\n", datestr);
+		term_cprintf(C_BLUE, "Switch time: %s\n", datestr);
+
+		t = (time_t)_fpga_readl(FPGA_BASE_PPS_GEN + 8 /* UTC_LO */);
+		tm = localtime(&t);
+		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
+		term_cprintf(C_BLUE, "WR time:     %s\n", datestr);
 
 		for (i = 0; i < hal_nports_local; i++)
 		{
@@ -433,7 +440,7 @@ void show_all()
 	if (mode == SHOW_GUI) {
 		term_clear();
 		term_pcprintf(1, 1, C_BLUE,
-			      "WR Switch Sync Monitor %s[q = quit]\n",
+			      "WR Switch Sync Monitor %s[q = quit]\n\n",
 			      __GIT_VER__);
 	}
 
@@ -485,6 +492,10 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (shw_fpga_mmap_init() < 0) {
+		fprintf(stderr, "%s: can't initialize FPGA mmap\n", argv[0]);
+		exit(1);
+	}
 	term_init(usecolor);
 	setvbuf(stdout, NULL, _IOFBF, 4096);
 	for(;;)
