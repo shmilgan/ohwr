@@ -75,12 +75,19 @@ void init_shm(void)
 {
 	struct hal_shmem_header *h;
 	int ii;
+	int n_wait = 0;
 
 	/* wait forever for HAL */
 	while ((hal_head = wrs_shm_get(wrs_shm_hal, "",
-				WRS_SHM_READ | WRS_SHM_LOCKED))
-		== NULL) {
-		pr_info("unable to open shm for HAL!\n");
+				WRS_SHM_READ | WRS_SHM_LOCKED))) {
+		if (n_wait > 5) {
+			/* print if waiting more than 5 seconds, some waiting
+			 * is expected since hal requires few seconds to start
+			 */
+			pr_error("unable to open shm for HAL!\n");
+		}
+		n_wait++;
+		sleep(1);
 	}
 
 	h = (void *)hal_head + hal_head->data_off;
@@ -91,13 +98,19 @@ void init_shm(void)
 		hal_nports_local = h->nports;
 		if (!wrs_shm_seqretry(hal_head, ii))
 			break;
-		pr_error("Wait for HAL.\n");
+		if (n_wait > 5) {
+			/* print if waiting more than 10 seconds, some wait
+			 * is expected since hal requires few seconds to start
+			 */
+			pr_error("Wait for HAL.\n");
+		}
+		n_wait++;
 		sleep(1);
 	}
 
 	/* check hal's shm version */
 	if (hal_head->version != HAL_SHMEM_VERSION) {
-		fprintf(stderr, "rtu_drv: unknown hal's shm version %i "
+		pr_error("unknown hal's shm version %i "
 			"(known is %i)\n",
 			hal_head->version, HAL_SHMEM_VERSION);
 		exit(-1);
