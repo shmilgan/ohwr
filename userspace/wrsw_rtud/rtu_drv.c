@@ -78,7 +78,7 @@ void init_shm(void)
 	int n_wait = 0;
 
 	/* wait forever for HAL */
-	while ((hal_head = wrs_shm_get(wrs_shm_hal, "",
+	while (!(hal_head = wrs_shm_get(wrs_shm_hal, "",
 				WRS_SHM_READ | WRS_SHM_LOCKED))) {
 		if (n_wait > 5) {
 			/* print if waiting more than 5 seconds, some waiting
