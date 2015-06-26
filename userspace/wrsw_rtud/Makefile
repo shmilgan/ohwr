@@ -23,6 +23,9 @@ CFLAGS = -O2 -Wall -ggdb  \
 	-I../libwr/include \
 	-I$(LINUX)/arch/arm/mach-at91/include
 
+GIT_VER = $(shell git describe --always --dirty | sed  's;^wr-switch-sw-;;')
+CFLAGS += -D__GIT_VER__="\"${GIT_VER}\""
+
 LDFLAGS 	:= -L../libwr -L../mini-rpc\
 		-lwr -lpthread -lminipc
 

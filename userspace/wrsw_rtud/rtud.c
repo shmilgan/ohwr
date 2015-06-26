@@ -355,6 +355,10 @@ int main(int argc, char **argv)
 
 	wrs_msg_init(argc, argv);
 
+	/* Print RTUd's version */
+	wrs_msg(LOG_ALERT, "wrsw_rtud. Commit %s, built on " __DATE__ "\n",
+		__GIT_VER__);
+
 	if (argc > 1) {
 		// Strip out path from argv[0] if exists, and extract command name
 		for (name = s = argv[0]; s[0]; s++) {
