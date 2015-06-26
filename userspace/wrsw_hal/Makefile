@@ -22,6 +22,9 @@ CFLAGS = -O -g -Wall \
 	-I../mini-rpc \
 	-I$(LINUX)/arch/arm/mach-at91/include
 
+GIT_VER = $(shell git describe --always --dirty | sed  's;^wr-switch-sw-;;')
+CFLAGS += -D__GIT_VER__="\"${GIT_VER}\""
+
 LDFLAGS = -L../libwr -L../mini-rpc \
 	 -lm -ldl -lwr -lminipc
 

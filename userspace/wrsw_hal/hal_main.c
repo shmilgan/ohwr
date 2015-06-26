@@ -190,6 +190,10 @@ int main(int argc, char *argv[])
 
 	wrs_msg_init(argc, argv);
 
+	/* Print HAL's version */
+	wrs_msg(LOG_ALERT, "wrsw_hal. Commit %s, built on " __DATE__ "\n",
+		__GIT_VER__);
+
 	/* Prevent from running HAL twice - it will likely freeze the system */
 	if (hal_check_running()) {
 		fprintf(stderr, "Fatal: There is another WR HAL "
