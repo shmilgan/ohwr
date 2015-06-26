@@ -554,7 +554,7 @@ value is changed by the web interface, proper action is taken.
 @item CONFIG_MONIT_DISABLE
 
 	Disable monitoring of running processes by monit. Monit by default
-        re spawns processes that have died. This option is useful mostly during
+        re-spawns processes that have died. This option is useful mostly during
         development.
 
 @end table
