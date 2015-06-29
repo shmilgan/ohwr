@@ -34,7 +34,7 @@ CFLAGS =  -O2 -g -Wall \
 		-I../ppsi/arch-wrs/include
 
 # for wrs_version alone (but others may use this)
-GIT_VER = $(shell git describe --always --dirty=+ | sed  's;^wr-switch-sw-;;')
+GIT_VER = $(shell git describe --always --dirty | sed  's;^wr-switch-sw-;;')
 GIT_USR = $(shell  git config --get-all user.name)
 CFLAGS += -D__GIT_USR__="\"${GIT_USR}\"" -D__GIT_VER__="\"${GIT_VER}\""
 

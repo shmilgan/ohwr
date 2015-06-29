@@ -33,7 +33,7 @@ TEMPLATEARG=--template=$(TEMPLATE)
 endif
 
 ## Obtain the version
-VERSION = $(shell git describe --always --dirty=+ | sed  's;^wr-switch-sw-;;')
+VERSION = $(shell git describe --always --dirty | sed  's;^wr-switch-sw-;;')
 DATE	= $(shell date +"%d %b. %Y")
 
 #--highlight-style=pygments (the default), kate, monochrome, espresso, haddock, and tango
