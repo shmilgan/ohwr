@@ -40,14 +40,27 @@ start() {
 	fi
 	umask 077
 	start-stop-daemon -S -q -p /var/run/dropbear.pid --exec /usr/sbin/dropbear
-	start_counter
-	echo "OK"
+	ret=$?
+	if [ $ret -eq 0 ]; then
+		start_counter
+		echo "OK"
+	elif [ $ret -eq 1 ]; then
+		echo "Failed (already running?)"
+	else
+		echo "Failed"
+	fi
 }
+
 stop() {
 	echo -n "Stopping dropbear sshd: "
 	start-stop-daemon -K -q -p /var/run/dropbear.pid
-	echo "OK"
+	if [ $? -eq 0 ]; then
+		echo "OK"
+	else
+		echo "Failed"
+	fi
 }
+
 restart() {
 	stop
 	start

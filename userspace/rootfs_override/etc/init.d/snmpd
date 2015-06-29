@@ -16,18 +16,31 @@ start_counter() {
 }
 
 start() {
+    echo -n "Starting snmpd daemon: "
     # Log to syslog at daemon level. And log source address (-a)
-    snmpd -Lsd -p $SNMP_PID -a -c $SNMP_CONF
-    start_counter
+    start-stop-daemon -q -p $SNMP_PID -S \
+		--exec /usr/sbin/snmpd -- -Lsd -p $SNMP_PID -a -c $SNMP_CONF
+    ret=$?
+    if [ $ret -eq 0 ]; then
+	start_counter
+	echo "OK"
+    elif [ $ret -eq 1 ]; then
+	echo "Failed (already running?)"
+    else
+	echo "Failed"
+    fi
 }
 
 stop() {
-    if pidof snmpd > /dev/null; then
-	echo -n "Stopping snmpd: "
-	start-stop-daemon -K -q -p $SNMP_PID
+    echo -n "Stopping snmpd: "
+    start-stop-daemon -K -q -p $SNMP_PID
+    if [ $? -eq 0 ]; then
 	echo "OK"
+    else
+	echo "Failed"
     fi
 }
+
 restart() {
     stop
     start

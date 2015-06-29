@@ -34,10 +34,10 @@ if [ ! -z "$CONFIG_WRSAUXCLK_PPSHIFT" ]; then
 fi
 
 # execute wrs_auxclk
-echo "Configuring external clock clk2"
+echo -n "Configuring external clock clk2: "
 /wr/bin/wrs_auxclk $p_freq $p_duty $p_cshift $p_sigdel $p_ppshift > /dev/null 2>&1
 if [ $? == 0 ]; then
-	echo "External clock clk2 OK"
+	echo "OK"
 else
-	echo "Failed to configure external clock clk2!!!"
+	echo "Failed"
 fi

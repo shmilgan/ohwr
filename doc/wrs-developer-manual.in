@@ -1815,6 +1815,47 @@ Date set from file @t{/update/saved_date} is never correct, but is based on
 best effort principle.
 
 @c ==========================================================================
+@node Supervision of running processes
+@section Supervision of running processes
+
+During normal operation @t{monit} supervises several processes running on a wrs
+switch. Check is done every 10 seconds. As for now supervised processes are:
+@t{wrsw_rtud},
+@t{wrsw_hal},
+@t{ppsi},
+@t{lighttpd},
+@t{dropbear},
+@t{snmpd}.
+
+In case any of the supervised processes does not run anymore (because of a crash,
+exit etc.), @t{monit} restarts missing process. If 5 restarts of a process
+occur during 10 cycles (10*10 seconds), the entire switch is restarted.
+
+Since @t{monit} is started from the inittab, even if @t{monit} crashes for some
+reason it will be re-spawned by the @t{init}.
+
+@c ==========================================================================
+@node Disabling monit
+@subsection Disabling monit
+
+In some cases, especially during development it is convenient to disable
+@t{monit} to avoid annoying re-spawns of the processes and restarts of the entire
+switch.
+@t{monit} can be disabled with command:
+@example
+/etc/init.d/monit.sh stop
+@end example
+which will send STOP signal to @t{monit} or by adding @t{CONFIG_MONIT_DISABLE=y} to dot-config.
+
+To re-enable @t{monit} first make sure there is no @t{CONFIG_MONIT_DISABLE=y} in dot-config, then execute command:
+@example
+/etc/init.d/monit.sh start
+@end example
+
+NOTE: Even when @t{monit} is disabled there is a process @t{/usr/bin/monit} in
+a process list, but its state is "stopped" (T).
+
+@c ==========================================================================
 @node SDB and Hardware Information
 @section SDB and Hardware Information
 

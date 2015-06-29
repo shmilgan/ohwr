@@ -21,23 +21,27 @@ start() {
 	# running
 	start-stop-daemon -q -p /var/run/lighttpd.pid -S \
 		--exec /usr/sbin/lighttpd -- -f /var/www/lighttpd.config
-	if [ $? -eq 0 ]; then
+	ret=$?
+	if [ $ret -eq 0 ]; then
 		start_counter
 		echo "OK"
-	else
+	elif [ $ret -eq 1 ]; then
 		echo "Failed (already running?)"
+	else
+		echo "Failed"
 	fi
 }
+
 stop() {
 	echo -n "Stopping lighttpd daemon: "
 	start-stop-daemon -K -q -p /var/run/lighttpd.pid
 	if [ $? -eq 0 ]; then
-		start_counter
 		echo "OK"
 	else
 		echo "Failed"
 	fi
 }
+
 restart() {
 	stop
 	start

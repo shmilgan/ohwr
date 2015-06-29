@@ -62,5 +62,4 @@ insmod $WR_HOME/lib/modules/wr-nic.ko macaddr=$val
 insmod $WR_HOME/lib/modules/wr_rtu.ko
 insmod $WR_HOME/lib/modules/wr_pstats.ko pstats_nports=18
 insmod $WR_HOME/lib/modules/wr_clocksource.ko
-$WR_HOME/sbin/start-daemons.sh
 
