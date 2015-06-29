@@ -473,25 +473,6 @@ value is changed by the web interface, proper action is taken.
         filesystem.  The UDP option, set by default, chooses UDP transmission;
         if unset it selects TCP communication.
 
-@item CONFIG_SNMP_TRAPSINK_ADDRESS
-@itemx CONFIG_SNMP_TRAP2SINK_ADDRESS
-@itemx CONFIG_SNMP_RO_COMMUNITY
-@itemx CONFIG_SNMP_RW_COMMUNITY
-
-	Configuration for the @sc{snmp} agent. Addresses can be IP addresses
-        or names (if DNS is configured and working), they are unset by
-        default. Community values are strings and they default to
-        @t{public} and @t{private}.
-
-@item CONFIG_SNMP_TEMP_THOLD_FPGA
-@itemx CONFIG_SNMP_TEMP_THOLD_PLL
-@itemx CONFIG_SNMP_TEMP_THOLD_PSL
-@itemx CONFIG_SNMP_TEMP_THOLD_PSR
-	Threshold levels for FPGA, PLL, Power Supply Left (PSL) and Power
-        Supply Right (PSR) temperature sensors. When any temperature exceeds
-        threshold level SNMP object @t{WR-SWITCH-MIB::tempWarning} will change
-        accordingly.
-
 @item CONFIG_WRS_LOG_HAL
 @itemx CONFIG_WRS_LOG_RTU
 @itemx CONFIG_WRS_LOG_PTP
@@ -592,6 +573,25 @@ value is changed by the web interface, proper action is taken.
         can provide your own filename for the PPSi configuration file;
         the chosen name is expected to be installed in the @sc{wrs}
         filesystem.
+
+@item CONFIG_SNMP_TRAPSINK_ADDRESS
+@itemx CONFIG_SNMP_TRAP2SINK_ADDRESS
+@itemx CONFIG_SNMP_RO_COMMUNITY
+@itemx CONFIG_SNMP_RW_COMMUNITY
+
+	Configuration for the @sc{snmp} agent. Addresses can be IP addresses
+        or names (if DNS is configured and working), they are unset by
+        default. Community values are strings and they default to
+        @t{public} and @t{private}.
+
+@item CONFIG_SNMP_TEMP_THOLD_FPGA
+@itemx CONFIG_SNMP_TEMP_THOLD_PLL
+@itemx CONFIG_SNMP_TEMP_THOLD_PSL
+@itemx CONFIG_SNMP_TEMP_THOLD_PSR
+	Threshold levels for FPGA, PLL, Power Supply Left (PSL) and Power
+        Supply Right (PSR) temperature sensors. When any temperature exceeds
+        threshold level SNMP object @t{WR-SWITCH-MIB::tempWarning} will change
+        accordingly.
 
 @item CONFIG_MONIT_DISABLE
 
