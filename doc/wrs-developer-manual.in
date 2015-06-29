@@ -1413,6 +1413,10 @@ boot scripts):
         to upgrade only one of boot loader, kernel, @i{initramfs}
         and @i{/usr}.
 
+        Additionally there are two files stored on @t{update} volume. File @t{last_update} contains date when last update was performed.
+        Second file @t{saved_date} contains date of last gently shut down of a switch. Please note that both dates are saved with best effort. None of them is guaranteed.
+        For more details please refer to @ref{Time keeping over restarts}.
+
 @end table
 
 For further details on the update procedure and exact file names to be
