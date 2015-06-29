@@ -87,6 +87,7 @@ void __wrs_msg(int level, const char *func, int line, const char *fmt, ...)
 {
 	va_list args;
 	static char *header_string[] = {
+		[LOG_ALERT] = "",
 		[LOG_ERR] = "Error: ",
 		[LOG_WARNING] = "Warning: ",
 		[LOG_INFO] = "",
