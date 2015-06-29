@@ -605,6 +605,15 @@ value is changed by the web interface, proper action is taken.
 
 	Error if frame rate of any RX priority exceed given value.
 
+@item CONFIG_WRSAUXCLK_FREQ
+@itemx CONFIG_WRSAUXCLK_DUTY
+@itemx CONFIG_WRSAUXCLK_CSHIFT
+@itemx CONFIG_WRSAUXCLK_SIGDEL
+@itemx CONFIG_WRSAUXCLK_PPSHIFT
+
+	Set of parameters passed to @t{wrs_auxclk} at boot time.
+        For more information please check @ref{wrs_auxclk}.
+
 @item CONFIG_MONIT_DISABLE
 
 	Disable monitoring of running processes by monit. Monit by default
