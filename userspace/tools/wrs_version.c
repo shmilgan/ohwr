@@ -45,6 +45,7 @@ void help(const char* pgrname)
 	printf("usage: %s <command>\n", pgrname);
 	printf("available commands are:\n"
 				"   -p PCB version\n"
+				"   -s scb version (without dot in version number)\n"
 				"   -f FPGA type\n"
 				"   -F FPGA type and init status LED\n"
 				"   -g Gateware version\n"
@@ -187,6 +188,21 @@ static void wrsw_tagged_versions(void)
 	print_gw_info(); /* This is already tagged */
 }
 
+/* remove dots from strings */
+static char *remove_dots(char *str)
+{
+	char *src, *dst;
+
+	for (src = dst = str; *src != '\0'; src++) {
+		*dst = *src;
+		if (*dst != '.')
+			dst++;
+	}
+	*dst = '\0';
+
+	return str;
+}
+
 int main(int argc, char **argv)
 {
 	char func='a';
@@ -242,6 +258,9 @@ int main(int argc, char **argv)
 		printf("PCB:%s, FPGA:%s; version: %s (%s); compiled at %s %s\n",
 		       get_shw_info('p'), get_fpga(),
 		       __GIT_VER__, __GIT_USR__, __DATE__, __TIME__);
+		break;
+	case 's':
+		printf("%s\n", remove_dots(sdb_get("scb_version", NULL)));
 		break;
 	case 'h':
 	default:

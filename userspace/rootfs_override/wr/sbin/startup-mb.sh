@@ -19,10 +19,11 @@ fi
 FP_FILE="$WR_HOME/lib/firmware/18p_mb-${tfpga}.bin"
 
 
-# TODO: Update wrsw_version to read this value from DF.
-scb_ver=33
-if mtdinfo -a | grep -A 1 dataflash | grep 264 &> /dev/null; then
-	scb_ver=34
+# get scb version
+scb_ver=$($WR_HOME/bin/wrs_version -s)
+if [ "$scb_ver" = "UNKNOWN" ]; then
+    echo "Warning: UNKNOWN scb version! default to 3.3" >& 2
+    scb_ver=33
 fi
 LM_FILE="$WR_HOME/lib/firmware/rt_cpu.elf"
 
