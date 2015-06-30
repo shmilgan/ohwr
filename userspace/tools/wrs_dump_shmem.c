@@ -240,10 +240,6 @@ struct dump_info hal_shmem_info [] = {
 	DUMP_FIELD(sensor_temp, temp.pll),
 	DUMP_FIELD(sensor_temp, temp.psl),
 	DUMP_FIELD(sensor_temp, temp.psr),
-	DUMP_FIELD(int, temp.fpga_thold),
-	DUMP_FIELD(int, temp.pll_thold),
-	DUMP_FIELD(int, temp.psl_thold),
-	DUMP_FIELD(int, temp.psr_thold),
 };
 
 /* map for fields of hal_port_state (hal_shmem.h) */
@@ -505,6 +501,10 @@ struct dump_info servo_state_info [] = {
 	DUMP_FIELD_SIZE(char, servo_state_name, 32),
 	DUMP_FIELD(Integer64, skew),
 	DUMP_FIELD(Integer64, offset),
+	DUMP_FIELD(UInteger32, n_err_state),
+	DUMP_FIELD(UInteger32, n_err_offset),
+	DUMP_FIELD(UInteger32, n_err_delta_rtt),
+	DUMP_FIELD(UInteger32, n_err_rxtx_deltas),
 };
 
 #undef DUMP_STRUCT
@@ -571,6 +571,8 @@ struct dump_info ppi_info [] = {
 	DUMP_FIELD_SIZE(char, cfg.port_name, 16),
 	DUMP_FIELD_SIZE(char, cfg.iface_name, 16),
 	DUMP_FIELD(int, cfg.ext),
+	DUMP_FIELD(UInteger32, ptp_tx_count),
+	DUMP_FIELD(UInteger32, ptp_rx_count),
 };
 
 int dump_ppsi_mem(struct wrs_shm_head *head)

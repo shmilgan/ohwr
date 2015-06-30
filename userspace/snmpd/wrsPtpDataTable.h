@@ -30,8 +30,13 @@ struct wrsPtpDataTable_s {
 	int32_t delta_rx_m;
 	int32_t delta_tx_s;
 	int32_t delta_rx_s;
+	uint32_t n_err_state;
+	uint32_t n_err_offset;
+	uint32_t n_err_delta_rtt;
+	uint32_t n_err_rxtx_deltas;
 };
 
+extern struct wrsPtpDataTable_s wrsPtpDataTable_array[WRS_MAX_N_SERVO_INSTANCES];
 
 time_t wrsPtpDataTable_data_fill(unsigned int *rows);
 void init_wrsPtpDataTable(void);

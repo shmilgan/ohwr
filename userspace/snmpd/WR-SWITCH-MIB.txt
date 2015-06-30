@@ -93,6 +93,26 @@ wrsOSStatus OBJECT-TYPE
             bug - bug in checking conditions of wrsOSStatusGroup, please report"
     ::= { wrsGeneralStatusGroup 2 }
 
+wrsTimingStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of wrsTimingStatusGroup
+            ok - values in wrsTimingStatusGroup are correct
+            error - there is an error in wrsTimingStatusGroup
+            warning - there is a warning in wrsTimingStatusGroup
+            warningNA - there is N/A field in wrsTimingStatusGroup
+            bug - bug in checking conditions of wrsTimingStatusGroup, please report"
+    ::= { wrsGeneralStatusGroup 3 }
+
 wrsNetworkingStatus OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
@@ -113,6 +133,7 @@ wrsNetworkingStatus OBJECT-TYPE
             bug - bug in checking conditions of wrsNetworkingStatusGroup, please report"
     ::= { wrsGeneralStatusGroup 4 }
 
+-- wrsDetailedStatusesGroup (.6.2)
 wrsDetailedStatusesGroup   OBJECT IDENTIFIER ::= { wrsStatus 2 }
 
 -- wrsOSStatusGroup (.6.2.1)
@@ -151,10 +172,131 @@ wrsTemperatureWarning OBJECT-TYPE
             "Warning if temperature exceed threshold levels"
     ::= { wrsOSStatusGroup 2 }
 
+wrsMemoryFreeLow OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Status of free memory. Based on wrsMemoryGroup.
+            Error - more than 80% memory used
+            Warning - more than 50% memory used"
+    ::= { wrsOSStatusGroup 3 }
 
---wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
+wrsCpuLoadHigh OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Status of CPU load. Based on averag load in group wrsCpuLoad.
+            Error - average CPU load is more than 3 for 1min, 2 for 5min and 1.5 for 15min
+            Warning - average CPU load is more than 2 for 1min, 1.5 for 5min and 1 for 15min"
+    ::= { wrsOSStatusGroup 4 }
 
--- wrsNetworkingStatusGroup (.6.1.3)
+wrsDiskSpaceLow OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Status of used disk space. Based on wrsDiskTable.
+            Error - more than 90% of any disk is used
+            Warning - more than 80% of any disk is used"
+    ::= { wrsOSStatusGroup 5 }
+
+-- wrsTimingStatusGroup (.6.2.2)
+wrsTimingStatusGroup       OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 2 }
+
+wrsPTPStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        firstRead(6),
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of wrsPtpDataTable
+            ok - PTP error counters in wrsPtpDataTable are not increased since
+                 last scan and ptp servo updates counter increased
+            error - error in wrsPtpDataTable
+            firstRead - unable to calculate deltas in first read"
+    ::= { wrsTimingStatusGroup 1 }
+
+wrsSoftPLLStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warning(3),
+                        warningNA(4),
+                        bug(5)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of wrsSpllState
+            ok - values in wrsSpllState are correct
+            error - there is an error in wrsSpllState
+            warning - there is a warning in wrsSpllState
+            warningNA - there is N/A field in wrsSpllState
+            bug - bug in checking conditions of wrsSpllState, please report"
+    ::= { wrsTimingStatusGroup 2 }
+
+wrsSlaveLinksStatus OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warningNA(4)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of slave link statuses
+            ok - when every slave port is up when switch is in slave mode
+                 and when every slave port is down when switch in master/grandmaster mode
+                 don't care about non-wr and auto ports
+            warningNA - there is N/A in wrsSpllMode, wrsPortStatusLink or
+                        wrsPortStatusConfiguredMode"
+    ::= { wrsTimingStatusGroup 3 }
+
+wrsPTPFramesFlowing OBJECT-TYPE
+    SYNTAX         INTEGER {
+                        na(0),
+                        ok(1),
+                        error(2),
+                        warningNA(4),
+                        firstRead(6)
+    }
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Grouped status of TX and RX PTP packets flowing
+            ok - when there are PTP packets flowing in both directions on all
+                 wr ports that are up
+            warningNA - there is N/A in wrsPortStatusLink or wrsPortStatusConfiguredMode
+            error - no PTP packets flowing at least on one wr up port
+            firstRead - unable to calculate deltas in first read"
+    ::= { wrsTimingStatusGroup 4 }
+
+-- wrsNetworkingStatusGroup (.6.2.3)
 wrsNetworkingStatusGroup   OBJECT IDENTIFIER ::= { wrsDetailedStatusesGroup 3 }
 
 wrsSFPsStatus OBJECT-TYPE
@@ -180,9 +322,9 @@ wrsSFPsStatus OBJECT-TYPE
 wrsEndpointStatus OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        firstRead(1),
-                        ok(2),
-                        error(3)
+                        ok(1),
+                        error(2),
+                        firstRead(6)
     }
     MAX-ACCESS     read-only
     STATUS         current
@@ -197,9 +339,9 @@ wrsEndpointStatus OBJECT-TYPE
 wrsSwcoreStatus OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        firstRead(1),
-                        ok(2),
-                        error(3)
+                        ok(1),
+                        error(2),
+                        firstRead(6)
     }
     MAX-ACCESS     read-only
     STATUS         current
@@ -215,9 +357,9 @@ wrsSwcoreStatus OBJECT-TYPE
 wrsRTUStatus OBJECT-TYPE
     SYNTAX         INTEGER {
                         na(0),
-                        firstRead(1),
-                        ok(2),
-                        error(3)
+                        ok(1),
+                        error(2),
+                        firstRead(6)
     }
     MAX-ACCESS     read-only
     STATUS         current
@@ -345,6 +487,7 @@ wrsVersionLastUpdateDate      OBJECT-TYPE
         ccurate, due to hard restarts or lack of proper time."
     ::= { wrsVersionGroup 14 }
 
+-- wrsOperationStatus (.7.1)
 wrsOperationStatus      OBJECT IDENTIFIER ::= { wrsExpertStatus 1 }
 
 -- wrsCurrentTimeGroup (.7.1.1)
@@ -627,9 +770,156 @@ wrsTempThresholdPSR OBJECT-TYPE
             "Threshold level for Power Supply Right (PSR) temperature"
     ::= { wrsTemperatureGroup 8 }
 
-wrsStartCntGroup      OBJECT IDENTIFIER ::= { wrsExpertStatus 2 }
+-- wrsMemoryGroup (.7.1.4)
+wrsMemoryGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 4 }
+
+wrsMemoryTotal OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Ram size in kB"
+    ::= { wrsMemoryGroup 1 }
+
+wrsMemoryUsed OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Used RAM in kB (Cache and buffers are not counted)"
+    ::= { wrsMemoryGroup 2 }
+
+wrsMemoryUsedPerc OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Percentage of used RAM"
+    ::= { wrsMemoryGroup 3 }
+
+wrsMemoryFree OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Free RAM in kB"
+    ::= { wrsMemoryGroup 4 }
+
+-- wrsCpuLoadGroup (.7.1.5)
+wrsCpuLoadGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 5 }
+
+wrsCPULoadAvg1min OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Load average over 1min multiplied by 100"
+    ::= { wrsCpuLoadGroup 1 }
+
+wrsCPULoadAvg5min OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Load average over 5min multiplied by 100"
+    ::= { wrsCpuLoadGroup 2 }
+
+wrsCPULoadAvg15min OBJECT-TYPE
+    SYNTAX         Integer32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Load average over 15min multiplied by 100"
+    ::= { wrsCpuLoadGroup 3 }
+
+-- wrsDiskTable (.7.1.6)
+wrsDiskTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF WrsDiskEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "Information for each mounted partition"
+    ::= { wrsOperationStatus 6 }
+
+wrsDiskEntry OBJECT-TYPE
+    SYNTAX      WrsDiskEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "An entry containing partitions' details"
+    INDEX   { wrsDiskIndex }
+    ::= { wrsDiskTable 1 }
+
+WrsDiskEntry ::=
+    SEQUENCE {
+        wrsDiskIndex       Unsigned32,
+        wrsDiskMountPath   DisplayString,
+        wrsDiskSize        Integer32,
+        wrsDiskUsed        Integer32,
+        wrsDiskFree        Integer32,
+        wrsDiskUseRate     Integer32,
+        wrsDiskFilesystem  DisplayString
+    }
+
+wrsDiskIndex OBJECT-TYPE
+    SYNTAX         Unsigned32
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION
+            "Index for wrsDiskTable"
+    ::= { wrsDiskEntry 1 }
+
+wrsDiskMountPath OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..32))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Mount patch of reported partition"
+    ::= { wrsDiskEntry 2 }
+
+wrsDiskSize OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Partition size"
+    ::= { wrsDiskEntry 3 }
+
+wrsDiskUsed OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Used space on partition"
+    ::= { wrsDiskEntry 4 }
+
+wrsDiskFree OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Free space on partition"
+    ::= { wrsDiskEntry 5 }
+
+wrsDiskUseRate OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Percentage of used space on partition"
+    ::= { wrsDiskEntry 6 }
+
+wrsDiskFilesystem OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..64))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Filesystem reported by df command"
+    ::= { wrsDiskEntry 7 }
 
 -- wrsStartCntGroup (.7.2)
+wrsStartCntGroup      OBJECT IDENTIFIER ::= { wrsExpertStatus 2 }
+
 wrsStartCntHAL OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
@@ -686,16 +976,42 @@ wrsStartCntSyslogd OBJECT-TYPE
             "Nmber of SYSLOG deamon starts"
     ::= { wrsStartCntGroup 7 }
 
+-- wrsSpllState (.7.3)
 wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
+
+-- wrsSpllVersionGroup (.7.3.1)
+wrsSpllVersionGroup      OBJECT IDENTIFIER ::= { wrsSpllState 1 }
+
+wrsSpllVersion            OBJECT-TYPE
+    SYNTAX                DisplayString (SIZE (0..32))
+    MAX-ACCESS            read-only
+    STATUS                current
+    DESCRIPTION
+        "The spll version, as returned from 'git describe' at build time"
+    ::= { wrsSpllVersionGroup 1 }
+
+wrsSpllBuildDate          OBJECT-TYPE
+    SYNTAX                DisplayString (SIZE (0..32))
+    MAX-ACCESS            read-only
+    STATUS                current
+    DESCRIPTION
+        "The build date of the spll, '__DATE__' at build time"
+    ::= { wrsSpllVersionGroup 2 }
+
 -- wrsSpllStatusGroup (.7.3.2)
 wrsSpllStatusGroup      OBJECT IDENTIFIER ::= { wrsSpllState 2 }
 
 wrsSpllMode        OBJECT-TYPE
-    SYNTAX         Integer32
+    SYNTAX INTEGER {
+                na(0),
+                grandmaster(1),
+                master(2),
+                slave(3)
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Mode of Soft PLL"
+            "Mode of Soft PLL (values taken from softpll_ng.h)"
     ::= { wrsSpllStatusGroup 1 }
 
 wrsSpllIrqCnt      OBJECT-TYPE
@@ -707,19 +1023,40 @@ wrsSpllIrqCnt      OBJECT-TYPE
     ::= { wrsSpllStatusGroup 2 }
 
 wrsSpllSeqState    OBJECT-TYPE
-    SYNTAX         Integer32
+    SYNTAX INTEGER {
+                startExt(1),
+                waitExt(2),
+                startHelper(3),
+                waitHelper(4),
+                startMain(5),
+                waitMain(6),
+                disabled(7),
+                ready(8),
+                clearDacs(9),
+                waitClearDacs(10)
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Sequence state of Soft PLL"
+            "Sequence state of Soft PLL (values taken from file softpll_ng.c in wrpc-sw repo)"
     ::= { wrsSpllStatusGroup 3 }
 
 wrsSpllAlignState  OBJECT-TYPE
-    SYNTAX         Integer32
+    SYNTAX INTEGER {
+                extOff(0),
+                start(1),
+                initCsync(2),
+                waitCsync(3),
+                waitSample(4),
+                compensateDelay(5),
+                locked(6),
+                startAlignment(7),
+                startMain(8)
+    }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Align state of Soft PLL"
+            "Align state of Soft PLL (values taken from file spll_external.c in wrpc-sw repo)"
     ::= { wrsSpllStatusGroup 4 }
 
 wrsSpllHlock       OBJECT-TYPE
@@ -762,13 +1099,13 @@ wrsSpllDelCnt      OBJECT-TYPE
             "Del counter at Soft PLL"
     ::= { wrsSpllStatusGroup 9 }
 
--- wrsPstatsTable (.7.1.4)
+-- wrsPstatsTable (.7.4)
 wrsPstatsTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF WrsPstatsEntry
     MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
-            "Information for each ptp servo"
+            "Pstats counters for each port"
     ::= { wrsExpertStatus 4 }
 
 wrsPstatsEntry OBJECT-TYPE
@@ -776,7 +1113,7 @@ wrsPstatsEntry OBJECT-TYPE
     MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
-            "An entry containing ptp servo statuses"
+            "An entry containing pstats counters"
     INDEX   { wrsPstatsIndex }
     ::= { wrsPstatsTable 1 }
 
@@ -1163,7 +1500,7 @@ wrsPstatsTRURespValid OBJECT-TYPE
             "Number of TRU decisions"
     ::= { wrsPstatsEntry 41 }
 
--- wrsPtpDataTable (.7.1.5)
+-- wrsPtpDataTable (.7.5)
 wrsPtpDataTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF WrsPtpDataEntry
     MAX-ACCESS  not-accessible
@@ -1201,7 +1538,11 @@ WrsPtpDataEntry ::=
         wrsPtpDeltaTxM          Integer32,
         wrsPtpDeltaRxM          Integer32,
         wrsPtpDeltaTxS          Integer32,
-        wrsPtpDeltaRxS          Integer32
+        wrsPtpDeltaRxS          Integer32,
+        wrsPtpServoStateErrCnt  Counter32,
+        wrsPtpClockOffsetErrCnt Counter32,
+        wrsPtpRTTErrCnt         Counter32,
+        wrsPtpDeltaRxTxErrCnt   Counter32
     }
 
 wrsPtpDataIndex OBJECT-TYPE
@@ -1372,7 +1713,39 @@ wrsPtpDeltaRxS OBJECT-TYPE
             "Fixed Rx latency on Slave side"
     ::= { wrsPtpDataEntry 19 }
 
--- per-port (.7.1.6)
+wrsPtpServoStateErrCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of servo updates with wrong servo state"
+    ::= { wrsPtpDataEntry 20 }
+
+wrsPtpClockOffsetErrCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of servo updates with wrong clock offset"
+    ::= { wrsPtpDataEntry 21 }
+
+wrsPtpRTTErrCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of servo updates with wrong RTT"
+    ::= { wrsPtpDataEntry 22 }
+
+wrsPtpDeltaRxTxErrCnt OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of servo updates with wrong Delta TX/RX M/S"
+    ::= { wrsPtpDataEntry 23 }
+
+-- wrsPortStatusTable (.7.6)
 wrsPortStatusTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF WrsPortStatusEntry
     MAX-ACCESS  not-accessible
@@ -1395,7 +1768,7 @@ WrsPortStatusEntry ::=
         wrsPortStatusIndex       Unsigned32,
         wrsPortStatusPortName    DisplayString,
         wrsPortStatusLink        INTEGER,
-        wrsPortStatusMode        INTEGER,
+        wrsPortStatusConfiguredMode INTEGER,
         wrsPortStatusLocked      INTEGER,
         wrsPortStatusPeer        OCTET STRING,
         wrsPortStatusSfpVN       DisplayString,
@@ -1403,7 +1776,9 @@ WrsPortStatusEntry ::=
         wrsPortStatusSfpVS       DisplayString,
         wrsPortStatusSfpInDB     INTEGER,
         wrsPortStatusSfpGbE      INTEGER,
-        wrsPortStatusSfpError    INTEGER
+        wrsPortStatusSfpError    INTEGER,
+        wrsPortStatusPtpTxFrames Counter32,
+        wrsPortStatusPtpRxFrames Counter32,
     }
 
 wrsPortStatusIndex OBJECT-TYPE
@@ -1434,7 +1809,7 @@ wrsPortStatusLink OBJECT-TYPE
             "Whether the link is up or down"
     ::= { wrsPortStatusEntry 3 }
 
-wrsPortStatusMode OBJECT-TYPE
+wrsPortStatusConfiguredMode OBJECT-TYPE
     SYNTAX         INTEGER {
                         unknown(0),
                         master(1),
@@ -1445,7 +1820,7 @@ wrsPortStatusMode OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Whether the port is master or slave"
+            "Whether the port is configured as master, slave, non-wr or auto"
     ::= { wrsPortStatusEntry 4 }
 
 wrsPortStatusLocked OBJECT-TYPE
@@ -1520,6 +1895,24 @@ wrsPortStatusSfpError OBJECT-TYPE
     DESCRIPTION
             "Problem with SFP configuration. Port has to be always 1GbE. Port has to be in data base as long as support WR."
     ::= { wrsPortStatusEntry 12 }
+
+wrsPortStatusPtpTxFrames OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of transmitted PTP frames per port (for all PPSI instances
+             running on particular port"
+    ::= { wrsPortStatusEntry 13 }
+
+wrsPortStatusPtpRxFrames OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "Number of received PTP frames per port (for all PPSI instances
+             running on particular port"
+    ::= { wrsPortStatusEntry 14 }
 
 --wrsNetworking
 --Configuration

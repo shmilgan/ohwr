@@ -32,12 +32,17 @@ SOURCES = \
 	wrsScalar.c \
 	wrsGeneralStatusGroup.c \
 	wrsOSStatusGroup.c \
+	wrsTimingStatusGroup.c \
 	wrsNetworkingStatusGroup.c \
 	wrsVersionGroup.c \
 	wrsCurrentTimeGroup.c \
 	wrsBootStatusGroup.c \
 	wrsTemperatureGroup.c \
+	wrsMemoryGroup.c \
+	wrsCpuLoadGroup.c \
+	wrsDiskTable.c \
 	wrsStartCntGroup.c \
+	wrsSpllVersionGroup.c \
 	wrsSpllStatusGroup.c \
 	wrsPstatsTable.c \
 	wrsPtpDataTable.c \

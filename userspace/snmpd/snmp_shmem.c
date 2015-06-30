@@ -11,6 +11,8 @@ int hal_nports_local;
 struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
 struct wr_servo_state *ppsi_servo;
+struct pp_instance *ppsi_ppi;
+int *ppsi_ppi_nlinks;
 
 /* RTUd */
 struct wrs_shm_head *rtud_head;
@@ -74,6 +76,13 @@ static void init_shm_ppsi(void)
 		exit(-1);
 	}
 
+	ppsi_ppi = wrs_shm_follow(ppsi_head, ppg->pp_instances);
+	if (!ppsi_ppi) {
+		snmp_log(LOG_ERR, "Cannot follow ppsi_ppi in shmem.\n");
+		exit(-1);
+	}
+	/* use pointer instead of copying */
+	ppsi_ppi_nlinks = &(ppg->nlinks);
 }
 
 static void init_shm_rtud(void)

@@ -8,6 +8,15 @@
 #define WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR 2	/* error */
 #define WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN 3	/* ok */
 
+#define WRS_PORT_STATUS_LINK_DOWN 1
+#define WRS_PORT_STATUS_LINK_UP 2
+
+#define WRS_PORT_STATUS_CONFIGURED_MODE_MASTER 1
+#define WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE 2
+#define WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR 3
+#define WRS_PORT_STATUS_CONFIGURED_MODE_AUTO 4
+
+
 struct wrsPortStatusTable_s {
 	uint32_t index;		/* not reported, index fields has to be marked
 				 * as not-accessible in MIB */
@@ -23,6 +32,8 @@ struct wrsPortStatusTable_s {
 	int sfp_in_db;
 	int sfp_GbE;
 	int sfp_error;
+	unsigned long ptp_tx_count;
+	unsigned long ptp_rx_count;
 };
 
 

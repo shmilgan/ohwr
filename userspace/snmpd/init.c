@@ -11,12 +11,17 @@
 #include "libwr/config.h"
 #include "wrsGeneralStatusGroup.h"
 #include "wrsOSStatusGroup.h"
+#include "wrsTimingStatusGroup.h"
 #include "wrsNetworkingStatusGroup.h"
 #include "wrsVersionGroup.h"
 #include "wrsCurrentTimeGroup.h"
 #include "wrsBootStatusGroup.h"
 #include "wrsTemperatureGroup.h"
+#include "wrsMemoryGroup.h"
+#include "wrsCpuLoadGroup.h"
+#include "wrsDiskTable.h"
 #include "wrsStartCntGroup.h"
+#include "wrsSpllVersionGroup.h"
 #include "wrsSpllStatusGroup.h"
 #include "wrsPstatsTable.h"
 #include "wrsPtpDataTable.h"
@@ -38,14 +43,24 @@ void init_wrsSnmp(void)
 	init_wrsScalar();
 	init_wrsGeneralStatusGroup();
 	init_wrsOSStatusGroup();
+	init_wrsTimingStatusGroup();
 	init_wrsNetworkingStatusGroup();
 	init_wrsVersionGroup();
 	init_wrsCurrentTimeGroup();
 	init_wrsBootStatusGroup();
 	init_wrsTemperatureGroup();
+	init_wrsMemoryGroup();
+	init_wrsCpuLoadGroup();
+	init_wrsDiskTable();
 	init_wrsStartCntGroup();
+	init_wrsSpllVersionGroup();
 	init_wrsSpllStatusGroup();
 	init_wrsPstatsTable();
 	init_wrsPtpDataTable();
 	init_wrsPortStatusTable();
+
+	/* perform first reads, needed to calculate deltas later */
+	wrsTimingStatus_data_fill();
+	wrsNetworkingStatus_data_fill();
+
 }

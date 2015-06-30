@@ -8,7 +8,7 @@
 #define DOTCONFIG_PROTO "dot-config_proto"
 #define DOTCONFIG_HOST "dot-config_host"
 #define DOTCONFIG_FILENAME "dot-config_filename"
-#define DOTCONFIG_DOWNLOAD "dot-config_status"
+#define DOTCONFIG_STATUS "dot-config_status"
 
 #define HWINFO_FILE "/tmp/hwinfo_read_status"
 #define LOAD_FPGA_STATUS_FILE "/tmp/load_fpga_status"
@@ -63,19 +63,27 @@ static struct wrs_km_item kernel_modules[] = {
 
 /* user space deamon list item */
 struct wrs_usd_item {
-	char *key;
+	char *key;	/* process name */
+	int32_t exp;	/* expected number of processes */
+	uint32_t cnt;	/* number of processes found */
 };
 
 /* user space deamon list */
-static struct wrs_km_item userspace_deamons[] = {
-	[0] = {.key = "/usr/sbin/dropbear"},
-	[1] = {"/wr/bin/wrsw_hal"}, /* two wrsw_hal instances */
-	[2] = {"/wr/bin/wrsw_hal"}, /* two wrsw_hal instances */
-	[3] = {"/wr/bin/wrsw_rtud"},
-	[4] = {"/wr/bin/ppsi"},
-	[5] = {"/usr/sbin/lighttpd"},
-	[6] = {"/usr/bin/monit"},
-	[7] = {"snmpd"},
+/* - key contain process name reported by ps command
+ * - positive exp describe exact number of expected processes
+ * - negative exp describe minimum number of expected processes. Usefull for
+ *   processes that is hard to predict number of their instances. For example
+ *   new dropbear process is spawned at ssh login.
+ */
+static struct wrs_usd_item userspace_deamons[] = {
+	[0] = {.key = "/usr/sbin/dropbear", .exp = -1}, /* expect at least one
+							 * dropbear process */
+	[1] = {"/wr/bin/wrsw_hal", 2}, /* two wrsw_hal instances */
+	[2] = {"/wr/bin/wrsw_rtud", 1},
+	[3] = {"/wr/bin/ppsi", 1},
+	[4] = {"/usr/sbin/lighttpd", 1},
+	[5] = {"/usr/bin/monit", 1},
+	[6] = {"/usr/sbin/snmpd", 1},
 };
 
 struct wrs_bc_item {
@@ -185,32 +193,38 @@ static void get_dotconfig_source(void)
 					WRS_CONFIG_SOURCE_PROTO_ERROR_MINOR;
 	}
 
-	/* read host used to get dotconfig */
-	f = fopen(DOTCONFIGDIR "/" DOTCONFIG_HOST, "r");
-	if (f) {
-		/* readline without newline */
-		fscanf(f, LINE_READ_LEN(WRS_CONFIG_SOURCE_HOST_LEN),
-		       wrsBootStatus_s.wrsConfigSourceHost);
-		fclose(f);
-	} else {
-		/* host file not found, put "error" into wrsConfigSourceHost */
-		strcpy(wrsBootStatus_s.wrsConfigSourceHost, "error");
+	/* read hostname and file name only when config is not local */
+	if (wrsBootStatus_s.wrsConfigSource != WRS_CONFIG_SOURCE_PROTO_LOCAL) {
+		/* read host used to get dotconfig */
+		f = fopen(DOTCONFIGDIR "/" DOTCONFIG_HOST, "r");
+		if (f) {
+			/* readline without newline */
+			fscanf(f, LINE_READ_LEN(WRS_CONFIG_SOURCE_HOST_LEN),
+			      wrsBootStatus_s.wrsConfigSourceHost);
+			fclose(f);
+		} else {
+			/* host file not found, put "error" into
+			 * wrsConfigSourceHost */
+			strcpy(wrsBootStatus_s.wrsConfigSourceHost, "error");
+		}
+
+		/* read filename used to get dotconfig */
+		f = fopen(DOTCONFIGDIR "/" DOTCONFIG_FILENAME, "r");
+		if (f) {
+			/* readline without newline */
+			fscanf(f,
+			       LINE_READ_LEN(WRS_CONFIG_SOURCE_FILENAME_LEN),
+			       wrsBootStatus_s.wrsConfigSourceFilename);
+			fclose(f);
+		} else {
+			/* host file not found, put "error" into
+			* wrsConfigSourceFilename */
+			strcpy(wrsBootStatus_s.wrsConfigSourceFilename,
+			       "error");
+		}
 	}
 
-	/* read filename used to get dotconfig */
-	f = fopen(DOTCONFIGDIR "/" DOTCONFIG_FILENAME, "r");
-	if (f) {
-		/* readline without newline */
-		fscanf(f, LINE_READ_LEN(WRS_CONFIG_SOURCE_FILENAME_LEN),
-		       wrsBootStatus_s.wrsConfigSourceFilename);
-		fclose(f);
-	} else {
-		/* host file not found, put "error" into
-		 * wrsConfigSourceFilename */
-		strcpy(wrsBootStatus_s.wrsConfigSourceFilename, "error");
-	}
-
-	f = fopen(DOTCONFIGDIR "/" DOTCONFIG_DOWNLOAD, "r");
+	f = fopen(DOTCONFIGDIR "/" DOTCONFIG_STATUS, "r");
 	if (f) {
 		/* readline without newline */
 		fscanf(f, LINE_READ_LEN(20), buff);
@@ -322,10 +336,10 @@ static void get_loaded_kernel_modules_status(void)
 {
 	FILE *f;
 	char key[41]; /* 1 for null char */
-	int modules_found;
-	int ret;
+	int modules_found = 0;
+	int ret = 0;
 	int i;
-	int guess_index;
+	int guess_index = 0;
 	int modules_missing;
 
 	f = fopen(MODULES_FILE, "r");
@@ -372,23 +386,36 @@ static void get_deamons_status(void)
 {
 	FILE *f;
 	char key[41]; /* 1 for null char */
-	int ret;
+	int ret = 0;
 	int i;
-	int processes_found;
-	int processes_missing;
+	int processes_wrong = 0; /* number of too many or too few processes */
 
-	/* use ps command to get process list, more portable, less error prone
+
+	/* clear user space deamon counters */
+	for (i = 0; i < ARRAY_SIZE(userspace_deamons); i++) {
+		userspace_deamons[i].cnt = 0;
+	}
+
+	/* Use ps command to get process list, more portable, less error prone
 	 * but probably slower than manually parsing /proc/ */
 	f = popen(PROCESS_COMMAND, "r");
 	if (!f) {
 		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup failed to execute "
 			 PROCESS_COMMAND"\n");
-		/* notify snmp about error in processes list */
-		wrsBootStatus_s.wrsBootUserspaceDaemonsMissing =
-						ARRAY_SIZE(userspace_deamons);
+		wrsBootStatus_s.wrsBootUserspaceDaemonsMissing = 0;
+		/* Notify snmp about error in processes list */
+		/* Count number of expected processes */
+		for (i = 0; i < ARRAY_SIZE(userspace_deamons); i++) {
+			/* when exp < 0 then expect at least number of
+			 * -exp processes */
+			wrsBootStatus_s.wrsBootUserspaceDaemonsMissing +=
+						abs(userspace_deamons[i].exp);
+		}
+
 		return;
 	}
 
+	/* count processes */
 	while (ret != EOF) {
 		/* read first word from line (process name) ignore rest of
 		 * the line */
@@ -399,22 +426,32 @@ static void get_deamons_status(void)
 		for (i = 0; i < ARRAY_SIZE(userspace_deamons); i++) {
 			if (strncmp(key, userspace_deamons[i].key, 40))
 				continue;
-			processes_found++;
+			userspace_deamons[i].cnt++;
 			break;
 		}
 	}
 
-	processes_missing = ARRAY_SIZE(userspace_deamons) - processes_found;
+	for (i = 0; i < ARRAY_SIZE(userspace_deamons); i++) {
+		if (userspace_deamons[i].exp < 0) {
+			/* if exp < 0 then expect at least -exp processes,
+			 * useful in situation when we cannot predict exact
+			 * number of processes.
+			 * NOTE: exp in this case is negative number */
+			/* saturate cnt */
+			if (userspace_deamons[i].cnt > (-userspace_deamons[i].exp)) {
+				userspace_deamons[i].cnt =
+						(-userspace_deamons[i].exp);
+			}
+		}
+		/* Calculate delta between expected and counted number
+		 * of processes. Neither too much or too few are ok.
+		 * NOTE: abs "exp" too */
+		processes_wrong += abs(abs(userspace_deamons[i].exp)
+				       - userspace_deamons[i].cnt);
+	}
 
 	/* save number of processes missing */
-	if (processes_missing < 0) {
-		/* probably something wrong with multiple process' instances */
-		wrsBootStatus_s.wrsBootUserspaceDaemonsMissing =
-						ARRAY_SIZE(userspace_deamons);
-	} else {
-		wrsBootStatus_s.wrsBootUserspaceDaemonsMissing =
-							processes_missing;
-	}
+	wrsBootStatus_s.wrsBootUserspaceDaemonsMissing = processes_wrong;
 
 	pclose(f);
 }
