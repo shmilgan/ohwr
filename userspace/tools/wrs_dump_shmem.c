@@ -41,6 +41,7 @@ enum dump_type {
 	dump_type_bina, /* for binary stull in MAC format */
 	/* normal types follow */
 	dump_type_uint32_t,
+	dump_type_uint16_t,
 	dump_type_int,
 	dump_type_unsigned_long,
 	dump_type_unsigned_char,
@@ -128,6 +129,7 @@ void dump_one_field(void *addr, struct dump_info *info)
 		printf("%i\n", *(unsigned char *)p);
 		break;
 	case dump_type_UInteger16:
+	case dump_type_uint16_t:
 	case dump_type_unsigned_short:
 		printf("%i\n", *(unsigned short *)p);
 		break;
@@ -530,23 +532,23 @@ struct dump_info ppi_info [] = {
 	DUMP_FIELD(pointer, tx_ptp),
 	DUMP_FIELD(pointer, rx_ptp),
 
-	/* This is a sub-structure with a ch sub-sub-structure */
-	DUMP_FIELD(int, np.ch[0].fd),
-	DUMP_FIELD(pointer, np.ch[0].custom),
-	DUMP_FIELD(pointer, np.ch[0].arch_data),
-	DUMP_FIELD_SIZE(bina, np.ch[0].addr, 6),
-	DUMP_FIELD_SIZE(bina, np.ch[0].peer, 6),
-	DUMP_FIELD(int, np.ch[0].pkt_present),
+	/* This is a sub-structure */
+	DUMP_FIELD(int, ch[0].fd),
+	DUMP_FIELD(pointer, ch[0].custom),
+	DUMP_FIELD(pointer, ch[0].arch_data),
+	DUMP_FIELD_SIZE(bina, ch[0].addr, 6),
+	DUMP_FIELD(int, ch[0].pkt_present),
+	DUMP_FIELD(int, ch[1].fd),
+	DUMP_FIELD(pointer, ch[1].custom),
+	DUMP_FIELD(pointer, ch[1].arch_data),
+	DUMP_FIELD_SIZE(bina, ch[1].addr, 6),
+	DUMP_FIELD(int, ch[1].pkt_present),
 
-	DUMP_FIELD(int, np.ch[1].fd),
-	DUMP_FIELD(pointer, np.ch[1].custom),
-	DUMP_FIELD(pointer, np.ch[1].arch_data),
-	DUMP_FIELD_SIZE(bina, np.ch[1].addr, 6),
-	DUMP_FIELD_SIZE(bina, np.ch[1].peer, 6),
-	DUMP_FIELD(int, np.ch[1].pkt_present),
-
-	DUMP_FIELD(ip_address, np.mcast_addr),
-	DUMP_FIELD(int, np.ptp_offset),
+	DUMP_FIELD(ip_address, mcast_addr),
+	DUMP_FIELD(int, tx_offset),
+	DUMP_FIELD(int, rx_offset),
+	DUMP_FIELD_SIZE(bina, peer, 6),
+	DUMP_FIELD(uint16_t, peer_vid),
 
 	DUMP_FIELD(TimeInternal, t1),
 	DUMP_FIELD(TimeInternal, t2),
@@ -567,12 +569,18 @@ struct dump_info ppi_info [] = {
 	//DUMP_FIELD(pointer, iface_name),
 	//DUMP_FIELD(pointer, port_name),
 	DUMP_FIELD(int, port_idx),
+	DUMP_FIELD(int, vlans_array_len),
+	/* FIXME: array */
+	DUMP_FIELD(int, nvlans),
+
 	/* sub structure */
 	DUMP_FIELD_SIZE(char, cfg.port_name, 16),
 	DUMP_FIELD_SIZE(char, cfg.iface_name, 16),
 	DUMP_FIELD(int, cfg.ext),
-	DUMP_FIELD(UInteger32, ptp_tx_count),
-	DUMP_FIELD(UInteger32, ptp_rx_count),
+	DUMP_FIELD(int, cfg.ext),
+
+	DUMP_FIELD(unsigned_long, ptp_tx_count),
+	DUMP_FIELD(unsigned_long, ptp_rx_count),
 };
 
 int dump_ppsi_mem(struct wrs_shm_head *head)

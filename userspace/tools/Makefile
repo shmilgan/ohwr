@@ -6,6 +6,7 @@ TOOLS += sdb-read
 TOOLS += nbtee
 TOOLS += wrs_auxclk
 TOOLS += wrs_checkcfg
+PPSI_CONFIG = ../ppsi/include/generated/autoconf.h
 
 WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
 
@@ -30,6 +31,7 @@ CFLAGS =  -O2 -g -Wall \
 		-I../libsdb \
 		-I../include \
 		-I../libwr/include \
+		-include $(PPSI_CONFIG) \
 		-I../ppsi/include \
 		-I../ppsi/arch-wrs/include
 
@@ -43,7 +45,16 @@ LDFLAGS = -L../mini-rpc \
 		-L../libsdb \
 		-lwr -lminipc -lsdbfs -lm -ldl
 
-all: 	$(TOOLS)
+all:
+
+all: 	check $(TOOLS)
+
+check:
+	@if [ ! -f $(PPSI_CONFIG) ]; then echo ""; echo ""; \
+		echo "##### Please configure ppsi before building tools"; \
+		echo ""; echo ""; \
+		exit 1; \
+	fi
 
 %: %.c
 	$(CC) $(CFLAGS) $*.c $(LDFLAGS) -o $*
@@ -63,3 +74,4 @@ clean:
 install: all
 	install -d $(WR_INSTALL_ROOT)/bin
 	install $(TOOLS) $(WR_INSTALL_ROOT)/bin
+
