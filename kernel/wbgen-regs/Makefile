@@ -20,7 +20,7 @@ WB_GEN10    = $(MODULES_WRS)/wrsw_rt_subsystem/wrsw_gen_10mhz.wb
 WB_SOFTPLL  = $(MODULES_WRC)/wr_softpll_ng/spll_wb_slave.wb
 
 HEADERS = endpoint-regs.h endpoint-mdio.h ppsg-regs.h tstamp-regs.h rtu-regs.h \
-          nic-regs.h softpll-regs.h pstats-regs.h gen10mhz-regs.h
+          nic-regs.h softpll-regs.h pstats-regs.h gen10mhz-regs.h wdog-regs.h
 WBINPUT = $(HEADERS:.h=wb)
 
 # No default, for people who types "make" everywhere (like me)
