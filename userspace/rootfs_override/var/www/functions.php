@@ -981,7 +981,7 @@ function wrs_display_help($help_id, $name){
 			- <b>Backup Configuration Files</b>: Downloads a tar.gz file with all configuration files of the switch.<br>
 			</p>"; 
 	} else if (!strcmp($help_id, "ptp")){
-		$message = "<p><b>Enable or disable PPSi service. <br>
+		$message = "<p>
 					<b>Changing Clock CLass and Clock Accuracy fields modifies ppsi.conf file for those values and relanches the service again.</b>. <br></p>";
 	} else if (!strcmp($help_id, "console")){
 		$message = "<p>This is a switch console emulator windows. Use it as if you were using a ssh session.</p>";

@@ -25,6 +25,8 @@
 		$PPSi_daemon = (wrs_check_ptp_status()) ? 'ENABLED' : 'DISABLED';
 		$PPSi_boot = ($_SESSION["KCONFIG"]["CONFIG_PPSI"]=="y") ? 'ENABLED' : 'DISABLED';
 	
+		/* This code enables or disables PPSi, not shown at the moment.
+		 * It might be something for the future
 		echo '
 		<FORM method="POST">
 		<table id="daemon" border="0" align="center">	
@@ -45,7 +47,7 @@
 				<th><INPUT type="submit" value='.$PPSi_boot.' class="btn"></th>	
 			</tr>
 		</table>				
-		</FORM>';
+		</FORM>';*/
 	
 
 		$formatID = "alternatecolor";
