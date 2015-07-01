@@ -82,7 +82,7 @@
 	
 	<div id="bottommsg">
 	<hr>
-	<p align="right">Click <A HREF="showfile.php?help_id=dotconfig">here</A> to display the current dotconfig file</p>
+	<p align="right">Click <A HREF="showfile.php?help_id=dotconfig" target="_blank">here</A> to display the current dotconfig file</p>
 	</div>
 	
 	<?php 
