@@ -975,7 +975,6 @@ function wrs_display_help($help_id, $name){
 			Options: <br>
 			- <b>Change mode:</b> Changes switch mode to Master/GrandMaster <br>
 			- <b>Reboot switch</b>: Reboots the switch <br>
-			- <b>Net-SNMP Server</b>: Enables/Disables remote management using SNMP <br>
 			- <b>NTP Server</b>: Sets the IP address of an external NTP server. By default it is configured as UTC, please use the second box to change it. This change is done on the webserver, not in the switch command line environment.<br>
 			- <b>Load Configuration Files</b>: You can upload individual configuration files to the switch (ppsi.conf, wrsw_hal.conf, snmp.conf, sfp_database.conf or a .tar.gz file with all of them.<br>
 			- <b>Backup Configuration Files</b>: Downloads a tar.gz file with all configuration files of the switch.<br>
