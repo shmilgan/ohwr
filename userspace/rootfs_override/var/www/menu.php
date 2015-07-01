@@ -32,6 +32,7 @@ echo '<div class="login">
 	echo '<li><a href="advance.php"> Advanced Mode </a></li>';
 	if(!empty($_SESSION['advance'])){
 		echo '<ul class="advance">';
+		echo '<li><a href="auxclk.php">Aux Clock Config</a></li>';
 		echo '<li><a href="sfpcalibration.php">SFP Calibration</a></li>';
 		echo '<li><a href="endpoint.php">Endpoint Tool </a></li>';
 		echo '<li><a href="endpointcalibration.php">Endpoint Calibration</a></li>';

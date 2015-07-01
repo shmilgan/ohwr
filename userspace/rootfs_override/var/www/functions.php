@@ -1049,11 +1049,12 @@ function wrs_display_help($help_id, $name){
 		$message = "<p>Firmware features: <br>
 					- <b>Flash firmware</b>: It flashes a new firmware to the switch. Do it under your own risk.<br>
 					</p>";
+	} else if (!strcmp($help_id, "auxclk")){
+		$message = "<p>Aux. Clock configuration: <br>
+					- <b>Please refer to the WRS manual to configure correctly this feature.<br>
+					</p>";
 	}
-	
-	
-	
-	
+
 	echo $message;
 	
 }
