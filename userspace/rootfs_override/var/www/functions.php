@@ -1037,7 +1037,7 @@ function wrs_display_help($help_id, $name){
 		
 	} else if (!strcmp($help_id, "network")){
 		$message = "<br><b>Set a DHCP network interface configuration or a static one.</b>";
-		$message = "<br><b>If you set a static configuration, you have to define: </b>";
+		$message .= "<br><b>If you set a static configuration, you have to define: </b>";
 		$message .= "<br><b><ul><li>IP Address --> IP Address of your switch</b></li>";
 		$message .= "<br><b><li>Netmask --> Netmask</b></li>";
 		$message .= "<br><b><li>Network--> IP Address of your network</b></li>";
@@ -1053,6 +1053,9 @@ function wrs_display_help($help_id, $name){
 		$message = "<p>Aux. Clock configuration: <br>
 					- <b>Please refer to the WRS manual to configure correctly this feature.<br>
 					</p>";
+	} else if (!strcmp($help_id, "dotconfig")){
+		$message = file_get_contents($GLOBALS['kconfigfile']);
+		$message = str_replace("\n", "<br>", $message);
 	}
 
 	echo $message;

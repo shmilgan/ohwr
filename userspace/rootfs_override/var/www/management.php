@@ -80,6 +80,11 @@
 			<INPUT type=submit value="Backup" class="btn" >
 	</form>
 	
+	<div id="bottommsg">
+	<hr>
+	<p align="right">Click <A HREF="showfile.php?help_id=dotconfig">here</A> to display the current dotconfig file</p>
+	</div>
+	
 	<?php 
 		wrs_management();
 	?>
