@@ -1089,20 +1089,20 @@ function parse_wrsw_hal_file(){
 }
 
 function parse_endpoint_modes(){
-	
+
 	$modes = array();
-	
+
 	for($i = 0; $i < 18; $i++){
 		$endpoint = intval($i);
 		$endpoint = sprintf("%02s", $endpoint);
 		$endpoint = strval($endpoint);
-		
+
 		$role = $_SESSION["KCONFIG"]["CONFIG_PORT".$endpoint."_PARAMS"];
 		$role = explode(",",$role);
-		$role = str_replace("role=","",$role[3]);
-		
-		array_push($modes,$role);			
-	}	
+		$role = str_replace("role=","",$role[4]);
+
+		array_push($modes,$role);	
+	}
 	return $modes;
 }
 /*
