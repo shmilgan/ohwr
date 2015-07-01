@@ -40,13 +40,6 @@
 		echo '<br>';		
 
 	?>
-	<div>
-		<hr>
-		<FORM align="right" method="post">
-		<input type="hidden" name="hal" value="hal">
-		<INPUT type="submit" value="Restart PPSi" class="btn">
-		</FORM>
-    </div>
 
 </div>
 </div>
