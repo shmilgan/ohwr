@@ -32,6 +32,9 @@
 /* HardWare Debugging Unit */
 #define FPGA_BASE_HWDU         0x59000
 
+/* Watchdog Module */
+#define FPGA_BASE_WDOG         0x5A000
+
 /* Endpoint  */
 #define FPGA_BASE_EP0          0x30000
 
