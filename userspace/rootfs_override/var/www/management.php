@@ -38,6 +38,7 @@
 		</form>
 	</center>
 	</tr>
+<!--
 	<tr>
 		<form  method="post">
 			<th align=left>Net-SNMP Server: </th>
@@ -45,10 +46,10 @@
 			<th><INPUT type="submit" STYLE="text-align:center;" value="<?php echo (check_snmp_status()) ? 'Disable SNMP' : 'Enable SNMP'; ?>" class="btn"></th>	
 		</form>
 	</tr>
+-->
 	</table>
-		
 
-	<table border="0" align="center">	
+	<table border="0" align="center">
 		<tr>
 			<form  method="post">
 			<th><center>NTP Server:</center></th><th><INPUT type="text" STYLE="text-align:center;" name="ntpip" value="<?php  $str = check_ntp_server(); echo $str; ?>"> </th>
