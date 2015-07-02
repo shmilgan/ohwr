@@ -18,7 +18,10 @@
 <div class="rightbody">
 <h1 class="title">Firmware Management <a href='help.php?help_id=firmware' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
-	<?php session_is_started() ?>
+	<?php 
+		session_is_started();
+		if(wrs_php_filesize()<30) php_file_transfer_size(30);
+	?>
 
 	<table border="0" align="center">	
 		<tr>
