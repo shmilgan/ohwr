@@ -20,19 +20,7 @@
 
 	<?php session_is_started() ?>
 	<?php $_SESSION['advance']=""; ?>
-	
-	<FORM method="POST">
-	<table id="daemon" border="0" align="center">	
-			<tr>
-				<th align=left>eth0 Setup: </th>
-				<th><input type="radio" name="networkgroup" value="DHCP" <?php if(!strcmp(wrs_interface_setup(), "dhcp")) echo "checked" ?> > DHCP <br>
-					<input type="radio" name="networkgroup" value="Static" <?php if(!strcmp(wrs_interface_setup(), "static")) echo "checked" ?> > Static <br>
-				<th><INPUT type="submit" value="Change" class="btn"></th>	
-			</tr>
-	</table>				
-	</FORM>
-	<br>
-	
+
 	<?php
 	
 		/* This will be part of the code when using dotconfig for DHCP/FIX IP
@@ -90,6 +78,20 @@
 		/* end of dotconfig version */
 		
 		if((empty($_POST["networkgroup"]))){
+			
+			echo '<FORM method="POST">
+			<table id="daemon" border="0" align="center">	
+					<tr>
+						<th align=left>eth0 Setup: </th>
+						<th><input type="radio" name="networkgroup" value="DHCP"';  if(!strcmp(wrs_interface_setup(), "dhcp")) echo "checked";
+						echo ' > DHCP <br>
+							<input type="radio" name="networkgroup" value="Static"';  if(!strcmp(wrs_interface_setup(), "static")) echo "checked";
+						echo ' > Static <br>
+						<th><INPUT type="submit" value="Change" class="btn"></th>	
+					</tr>
+			</table>				
+			</FORM>
+			<br>';
 	
 			$formatID = "alternatecolor";
 			$class = "altrowstable firstcol";
