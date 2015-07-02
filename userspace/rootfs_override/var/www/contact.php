@@ -61,12 +61,13 @@
 	</div>
 	
 	<div>
-		<p align=right><strong>Developers: </strong>Alessandro Rubini, 
-													Tomasz Wlostowski, 
-													Benoit Rat, 
-													Federico Vega, 
-													Grzegorz Daniluk, 
-													Maciej Lipinski, 
+		<p align=right><strong>Developers: </strong>Alessandro Rubini,
+													Tomasz Wlostowski,
+													Benoit Rat,
+													Federico Vaga,
+													Grzegorz Daniluk,
+													Maciej Lipinski,
+													Adam Wujek,
 													Jose Luis Gutierrez</p>
 	</div>
 
