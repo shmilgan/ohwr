@@ -6,6 +6,7 @@
 #define START_CNT_HTTPD "/tmp/start_cnt_httpd"
 #define START_CNT_SNMPD "/tmp/start_cnt_snmpd"
 #define START_CNT_SYSLOGD "/tmp/start_cnt_syslogd"
+#define START_CNT_WRSWATCHDOG "/tmp/start_cnt_wrs_watchdog"
 
 static struct pickinfo wrsStartCnt_pickinfo[] = {
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntHAL),
@@ -15,6 +16,7 @@ static struct pickinfo wrsStartCnt_pickinfo[] = {
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntHttpd),
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntSnmpd),
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntSyslogd),
+	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntWrsWatchdog),
 };
 
 struct wrsStartCnt_s wrsStartCnt_s;
@@ -59,6 +61,7 @@ time_t wrsStartCnt_data_fill(void){
 	read_start_count(START_CNT_HTTPD, &wrsStartCnt_s.wrsStartCntHttpd);
 	read_start_count(START_CNT_SNMPD, &wrsStartCnt_s.wrsStartCntSnmpd);
 	read_start_count(START_CNT_SYSLOGD, &wrsStartCnt_s.wrsStartCntSyslogd);
+	read_start_count(START_CNT_WRSWATCHDOG, &wrsStartCnt_s.wrsStartCntWrsWatchdog);
 
 	/* there was an update, return current time */
 	return time_update;

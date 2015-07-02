@@ -976,6 +976,14 @@ wrsStartCntSyslogd OBJECT-TYPE
             "Nmber of SYSLOG daemon starts"
     ::= { wrsStartCntGroup 7 }
 
+wrsStartCntWrsWatchdog OBJECT-TYPE
+    SYNTAX         Counter32
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Nmber of wrs_watchdog daemon starts"
+    ::= { wrsStartCntGroup 8 }
+
 -- wrsSpllState (.7.3)
 wrsSpllState            OBJECT IDENTIFIER ::= { wrsExpertStatus 3 }
 
