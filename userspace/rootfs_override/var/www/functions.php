@@ -342,8 +342,10 @@ function check_snmp_status(){
 
 
 function wrs_interface_setup(){
-	
-	return (!empty($_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP"])) ? "dhcp" : "static";
+
+	$interfaces = shell_exec('cat '.$GLOBALS['interfacesfile'].' | grep dhcp');	
+    return (strcmp($interfaces[0],"#")) ? "dhcp" : "static";
+    //return (!empty($_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP"])) ? "dhcp" : "static"; /* for dotconfig */
 }
 /*
  * It checks whether the filesystem is writable or not.
