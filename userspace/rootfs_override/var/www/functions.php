@@ -853,17 +853,7 @@ function wrs_ptp_configuration(){
 		echo '<br>Clock Accuracy changed to '.htmlspecialchars($_POST["clkacc"]);
 	} 
 	if ((!empty($_POST["clkclass"])) || !empty($_POST["clkacc"])){
-		// Redirect & relaunch.
-		echo '<br>Clock values changed. Rebooting PPSi daemon.</br';
-			
-		//We must relaunch ptpd too. (by default)
-		shell_exec("killall ppsi"); 
-		$ptp_command = "/wr/bin/ppsi > /dev/null 2>&1 &";
-		$output = shell_exec($ptp_command); 
-		
-		header('Location: ptp.php');
-		exit;
-
+		wrs_reboot();
 	}
 	echo '</center>';
 	
