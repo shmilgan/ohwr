@@ -200,7 +200,23 @@ void clear_stuck(int cnt[][FSMS_NO])
 	}
 }
 
-void daemonize()
+void write_pidfile(char *file, pid_t pid)
+{
+	FILE *f;
+
+	if (file == NULL)
+		return;
+
+	f = fopen(file, "w");
+	if (f == NULL) {
+		pr_error("Could not create PID file\n");
+		return;
+	}
+	fprintf(f, "%d\n", (int)pid);
+	fclose(f);
+}
+
+void daemonize(char *file)
 {
 	pid_t pid, sid;
 
@@ -211,6 +227,7 @@ void daemonize()
 		exit(EXIT_FAILURE);
 	}
 	if (pid > 0) {
+		write_pidfile(file, pid);
 		exit(EXIT_SUCCESS);
 	}
 
@@ -273,6 +290,7 @@ void print_help(char *prgname)
 int main(int argc, char *argv[])
 {
 	int c = 0;
+	char *pidfile = NULL;
 
 	prgname = argv[0];
 
@@ -286,7 +304,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((c = getopt(argc, argv, "dhrgn:l")) != -1) {
+	while ((c = getopt(argc, argv, "dhrgn:lp:")) != -1) {
 		switch (c) {
 		case 'd':
 			daemon_mode = 1;
@@ -303,6 +321,9 @@ int main(int argc, char *argv[])
 		case 'n':
 			port_num = atoi(optarg);
 			pr_info("Read %d ports from cmdline\n", port_num);
+			break;
+		case 'p':
+			pidfile = optarg;
 			break;
 		case 'h':
 		default:
@@ -322,7 +343,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (daemon_mode) {
-		daemonize();
+		daemonize(pidfile);
 		pr_info("Demonize\n");
 		endless_watchdog();
 	}
