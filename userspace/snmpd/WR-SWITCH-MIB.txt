@@ -696,9 +696,9 @@ wrsBootUserspaceDaemonsMissing  OBJECT-TYPE
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
-        "Checking if all desired deamons are running.
-        allDeamonsPresent - all deamons running
-        other numbers represent number of deamons not running
+        "Checking if all desired daemons are running.
+        allDeamonsPresent - all daemons running
+        other numbers represent number of daemons not running
         other errors (can be: unable to run ps command or problem with multiple process instances) 
         are reported as maximum number of missing modules"
     ::= { wrsBootStatusGroup 14 }
@@ -925,7 +925,7 @@ wrsStartCntHAL OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Number of HAL deamon starts"
+            "Number of HAL daemon starts"
     ::= { wrsStartCntGroup 1 }
 
 wrsStartCntPPSI OBJECT-TYPE
@@ -933,7 +933,7 @@ wrsStartCntPPSI OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Number of PPSI deamon starts"
+            "Number of PPSI daemon starts"
     ::= { wrsStartCntGroup 2 }
 
 wrsStartCntRTUd OBJECT-TYPE
@@ -941,7 +941,7 @@ wrsStartCntRTUd OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Number of RTU deamon starts"
+            "Number of RTU daemon starts"
     ::= { wrsStartCntGroup 3 }
 
 wrsStartCntSshd OBJECT-TYPE
@@ -949,7 +949,7 @@ wrsStartCntSshd OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Nmber of SSH deamon starts"
+            "Nmber of SSH daemon starts"
     ::= { wrsStartCntGroup 4 }
 
 wrsStartCntHttpd OBJECT-TYPE
@@ -957,7 +957,7 @@ wrsStartCntHttpd OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Nmber of HTTP deamon starts"
+            "Nmber of HTTP daemon starts"
     ::= { wrsStartCntGroup 5 }
 
 wrsStartCntSnmpd OBJECT-TYPE
@@ -965,7 +965,7 @@ wrsStartCntSnmpd OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Nmber of SNMP deamon starts"
+            "Nmber of SNMP daemon starts"
     ::= { wrsStartCntGroup 6 }
 
 wrsStartCntSyslogd OBJECT-TYPE
@@ -973,7 +973,7 @@ wrsStartCntSyslogd OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Nmber of SYSLOG deamon starts"
+            "Nmber of SYSLOG daemon starts"
     ::= { wrsStartCntGroup 7 }
 
 -- wrsSpllState (.7.3)

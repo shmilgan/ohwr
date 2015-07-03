@@ -69,7 +69,7 @@ static int hal_shutdown()
 	return 0;
 }
 
-static void hal_deamonize();
+static void hal_daemonize();
 
 /* Main initialization function */
 static int hal_init()
@@ -105,13 +105,13 @@ static int hal_init()
 	shw_io_write(shw_io_led_state_g, 1);
 
 	if (daemon_mode)
-		hal_deamonize();
+		hal_daemonize();
 
 	return 0;
 }
 
 /* Turns a nice and well-behaving HAL into an evil servant of satan. */
-static void hal_deamonize()
+static void hal_daemonize()
 {
 	pid_t pid, sid;
 
