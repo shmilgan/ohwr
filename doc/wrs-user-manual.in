@@ -498,6 +498,14 @@ value is changed by the web interface, proper action is taken.
 	strings selects no logging at all. Please note that unknown facility
 	names will generate a runtime error on the switch.
 
+@item CONFIG_WRS_LOG_MONIT
+	The string can be a pathname (e.g. @t{/dev/kmsg}) or a @t{syslog}
+	string.
+	An empty string is used to represent no logging. If it is needed to
+	select facility and level please leave here empty string and change
+	@t{/etc/monitrc} file directly.
+	Please note that unknown facility names will generate a runtime error
+	on the switch.
 
 @item CONFIG_PORT00_PARAMS
 @itemx CONFIG_PORT01_PARAMS

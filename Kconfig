@@ -109,6 +109,17 @@ config WRS_LOG_SNMPD
 	  note that unknown facility names will generate a runtime error on the
 	  switch.
 
+config WRS_LOG_MONIT
+	string "Logging directions for the monit"
+	default "syslog"
+	help
+	  The string can be a pathname (e.g. /dev/kmsg) or a "syslog" string.
+	  An empty strings is used  to represent no logging. If it is needed to
+	  select facility and level please leave here empty string and change
+	  /etc/monitrc file directly.
+	  Please note that unknown facility names will generate a runtime error
+	  on the switch.
+
 config KEEP_ROOTFS
 	bool "Keep generated filesystem and related script"
 	help
