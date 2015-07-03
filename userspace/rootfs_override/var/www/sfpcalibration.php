@@ -28,18 +28,21 @@
 		$formatID = "alternatecolor";
 		$class = "altrowstable firstcol";
 		$infoname = "SFP Calibration";
-		$size = "12";
+		$size = "9";
+		$vn = 0;
+		$vs = 0;
+		$counter = 0;
 		
-		$header = array ("SFP Name","Tx","Rx","wl_txrx"); 
+		$header = array ("Vendor Name","Vendor Serial","Model", "tx", "rx", "wl_txrx"); 
 		$matrix = array();
 		
-		for($i = 0; $i < 18; $i++){
-			$endpoint = intval($i);
-			$endpoint = sprintf("%02s", $endpoint);
-			$endpoint = strval($endpoint);
+		for($i = 0; $i < 10; $i++){
+			$sfp = intval($i);
+			$sfp = sprintf("%02s", $sfp);
+			$sfp = strval($sfp);
 			
-			if(!empty($_SESSION["KCONFIG"]["CONFIG_SFP".$endpoint."_PARAMS"])){
-				array_push($matrix, "key=CONFIG_SFP".$endpoint."_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_SFP".$endpoint."_PARAMS"]);
+			if(!empty($_SESSION["KCONFIG"]["CONFIG_SFP".$sfp."_PARAMS"])){
+				array_push($matrix, "key=CONFIG_SFP".$sfp."_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_SFP".$sfp."_PARAMS"]);
 				$last = $i;
 			}
 		}
@@ -55,17 +58,70 @@
 			}
 		}
 		
-		print_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
+		echo '<FORM method="POST">
+			<table border="0" align="center" class="'.$class.'" id="'.$formatID.'">';
+		if (!empty($infoname)) echo '<tr><th>'.$infoname.'</th></tr>';
 		
-		echo '<hr><p align="right">Click <A HREF="sfpcalibration.php?add=y">here</A> to a new SFP</p>';
-		
-		if(process_multi_form($matrix)){
-			save_kconfig();
-			apply_kconfig();
-			
-			header ('Location: sfpcalibration.php');
-			
+		// Printing fist line with column names.
+		if (!empty($header)){
+			echo "<tr class='sub'>";
+			foreach ($header as $column){
+				echo "<td>".($column)."</td>";
+			}
+			echo "</tr>";
 		}
+		
+		$i = 0;
+		// Printing the content of the form.		
+		foreach ($matrix as $elements) {
+			echo "<tr>";
+			$element = explode(",",$elements);
+			for ($j = 0; $j < 7; $j++) {
+				$columns = explode("=",$element[$j]);
+				
+				if($columns[0]=="key"){
+					echo '<INPUT type="hidden" value="'.$columns[1].'" name="key'.$i.'" >';
+				}
+				if($columns[0]=="vn"){
+					echo '<td align="center"><INPUT size="'.$size.'" type="text" value="'.$columns[1].'" name="vn'.$i.'" ></td>';
+				}else if ($columns[0]<>"vn" && $j==1){
+					echo '<td align="center"><INPUT size="'.$size.'" type="text" value="" name="vn'.$i.'" ></td>';
+				}
+				if($columns[0]=="vs"){
+					echo '<td align="center"><INPUT size="'.$size.'" type="text" value="'.$columns[1].'" name="vs'.$i.'" ></td>';
+				}else if($columns[0]<>"vs" && $j==2){
+					echo '<td align="center"><INPUT size="'.$size.'" type="text" value=""  name="vs'.$i.'" ></td>';
+				}
+				if($columns[0]=="pn"){
+					echo '<td align="center"><INPUT size="'.$size.'" type="text" value="'.$columns[1].'" name="pn'.$i.'" ></td>';
+				}
+				if($columns[0]=="tx"){
+					echo '<td align="center"><INPUT size="'.($size/2).'" type="text" value="'.$columns[1].'" name="tx'.$i.'" ></td>';
+				}
+				if($columns[0]=="rx"){
+					echo '<td align="center"><INPUT size="'.($size/2).'" type="text" value="'.$columns[1].'" name="rx'.$i.'" ></td>';
+				}
+				if($columns[0]=="wl_txrx" ){
+					echo '<td align="center"><INPUT size="'.$size.'" type="text" value="'.$columns[1].'" name="wl_txrx'.$i.'" ></td>';
+				}
+			}
+			echo "</tr>";
+			$i++;
+		}
+		echo '</table>';
+		
+		//echo '<INPUT type="submit" value="Save New Configuration" class="btn last">';	
+		echo '</FORM>';	
+		
+		//echo '<hr><p align="right">Click <A HREF="sfpcalibration.php?add=y">here</A> to a new SFP</p>';
+		
+		//if(process_multi_form($matrix)){
+			//save_kconfig();
+			//apply_kconfig();
+			
+			//header ('Location: sfpcalibration.php');
+			
+		//}
 		
 	?>
 	
