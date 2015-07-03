@@ -278,6 +278,8 @@ void endless_watchdog(void)
 
 void print_help(char *prgname)
 {
+	printf("wrs_watchdog. Commit %s, built on " __DATE__ "\n",
+	       __GIT_VER__);
 	printf("usage: %s <options>\n", prgname);
 	printf("   -d        Run as daemon in the background\n"
 		"   -l        List FSMs state for all ports\n"
@@ -343,6 +345,8 @@ int main(int argc, char *argv[])
 	}
 
 	if (daemon_mode) {
+		wrs_msg(LOG_ALERT, "wrs_watchdog. Commit %s, built on "
+			__DATE__ "\n", __GIT_VER__);
 		daemonize(pidfile);
 		pr_info("Demonize\n");
 		endless_watchdog();
