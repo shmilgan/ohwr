@@ -53,6 +53,7 @@ struct wrsBootStatus_s {
 	int32_t wrsBootLoadLM32;
 	int32_t wrsBootKernelModulesMissing;
 	int32_t wrsBootUserspaceDaemonsMissing;
+	int32_t wrsGwWatchdogTimeouts;
 };
 
 extern struct wrsBootStatus_s wrsBootStatus_s;
