@@ -155,6 +155,24 @@ $WRS_FORMS = Array(
 			value => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_PTP"],
 			vname => "logptp",
 		),
+		SYSTEM_LOGS_03 => Array(
+			key => "CONFIG_WRS_LOG_WRSWATCHDOG",
+			name => "Watchdog log",
+			value => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_WRSWATCHDOG"],
+			vname => "logwatchdog",
+		),
+		SYSTEM_LOGS_04 => Array(
+			key => "CONFIG_WRS_LOG_MONIT",
+			name => "Monitor log",
+			value => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_MONIT"],
+			vname => "logmonit",
+		),
+		SYSTEM_LOGS_05 => Array(
+			key => "CONFIG_WRS_LOG_SNMP",
+			name => "SNMP log",
+			value => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_SNMP"],
+			vname => "logsnmp",
+		),
 	),
 	
 	NETWORK_SETUP => Array(
