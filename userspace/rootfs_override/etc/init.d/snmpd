@@ -43,6 +43,8 @@ stop() {
 
 restart() {
     stop
+    # give time to snmpd to stop
+    sleep 1
     start
 }
 
