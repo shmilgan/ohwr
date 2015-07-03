@@ -3,15 +3,72 @@
 # Start the network....
 #
 
+dotconfig=/wr/etc/dot-config
+int_file=/etc/network/interfaces
+
+# no matter what we do keep lo up
+ifup lo &> /dev/null
+
 if grep -q '/ nfs' /proc/mounts; then
 	echo "Running via NFS: leaving eth0 config alone"
 	exit 0
 fi
 
-if grep -v '#' /etc/network/interfaces | grep -q 'eth0.*dhcp'; then
-    # run dhcp client in background, as ifup would run in one-shot mode
-    udhcpc -b -i eth0
-else
+# read dot-config
+if [ -f $dotconfig ]; then
+      . $dotconfig
+fi
+
+# kill all previous instances of udhcpc
+killall udhcpc &> /dev/null
+# put eth0 down in case it was up before
+ifdown eth0 &> /dev/null
+
+if [ "$CONFIG_ETH0_STATIC" ] || [ "$CONFIG_ETH0_DHCP_ONCE" ]; then
+    echo "Write IP address"
+    echo "# File generated from dot-config, do not edit!" > $int_file
+    echo "# Configure Loopback" >> $int_file
+    echo "auto lo" >> $int_file
+    echo "iface lo inet loopback" >> $int_file
+    echo "" >> $int_file
+
+    echo "iface eth0 inet static" >> $int_file
+    if [ "$CONFIG_ETH0_IP" ]; then
+	echo "    address $CONFIG_ETH0_IP" >> $int_file
+    fi
+    if [ "$CONFIG_ETH0_MASK" ]; then
+	echo "    netmask $CONFIG_ETH0_MASK" >> $int_file
+    fi
+    if [ "$CONFIG_ETH0_NETWORK" ]; then
+	echo "    network $CONFIG_ETH0_NETWORK" >> $int_file
+    fi
+    if [ "$CONFIG_ETH0_BROADCAST" ]; then
+	echo "    broadcast $CONFIG_ETH0_BROADCAST" >> $int_file
+    fi
+    if [ "$CONFIG_ETH0_GATEWAY" ]; then
+	echo "    gateway $CONFIG_ETH0_GATEWAY" >> $int_file
+    fi
+
+fi
+
+if [ "$CONFIG_ETH0_DHCP_ONCE" ]; then
+    echo "Try DHCP to get IP"
+    # try dhcp, if fail use static IP
+    udhcpc -i eth0 -n
+    if [ $? -ne 0 ]; then
+	echo "Failed to obtain IP address via DHCP, set static IP"
+	CONFIG_ETH0_STATIC="y"
+    fi
+fi
+
+if [ "$CONFIG_ETH0_STATIC" ]; then
     # ifup to use static parameters from /etc/netwrok/interfaces
+    echo "Using static IP"
     ifup eth0
+fi
+
+if [ "$CONFIG_ETH0_DHCP" ]; then
+    # try to get IP via dhcp if failed run dhcp client forever in background
+    echo "Using DHCP to get IP"
+    udhcpc -b -i eth0
 fi
