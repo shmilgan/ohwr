@@ -301,12 +301,14 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
+	wrs_msg_init(argc, argv);
+
 	if (shw_fpga_mmap_init() < 0) {
 		pr_error("%s: Can't access device memory\n", prgname);
 		exit(1);
 	}
 
-	while ((c = getopt(argc, argv, "dhrgn:lp:")) != -1) {
+	while ((c = getopt(argc, argv, "dhrgqvn:lp:")) != -1) {
 		switch (c) {
 		case 'd':
 			daemon_mode = 1;
@@ -327,6 +329,8 @@ int main(int argc, char *argv[])
 		case 'p':
 			pidfile = optarg;
 			break;
+		case 'q': break; /* done in wrs_msg_init() */
+		case 'v': break; /* done in wrs_msg_init() */
 		case 'h':
 		default:
 			print_help(prgname);
