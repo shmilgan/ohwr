@@ -183,6 +183,15 @@ config WRS_LOG_MONIT
 	  Please note that unknown facility names will generate a runtime error
 	  on the switch.
 
+config WRS_LOG_WRSWATCHDOG
+	string "Logging directions for the wrs_watchdog"
+	default "daemon.info"
+	help
+	  The string can be a pathname (e.g. /dev/kmsg) or a <facility>.<level>
+	  spefification like "daemon.debug". An empty strings is used
+	  to represent no logging (like /dev/null).  Please note that
+	  unknown facility names will generate a runtime error on the switch.
+
 config KEEP_ROOTFS
 	bool "Keep generated filesystem and related script"
 	help
