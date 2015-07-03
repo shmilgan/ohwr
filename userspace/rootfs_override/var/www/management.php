@@ -47,6 +47,13 @@
 		</form>
 	</tr>
 -->
+	<tr>
+		<form  method="post">
+			<th align=left>System Monitor: </th>
+			<input type="hidden" name="cmd" value="monit">
+			<th><INPUT type="submit" STYLE="text-align:center;" value="<?php echo (check_monit_status()) ? 'Disable Monitor' : 'Enable Monitor'; ?>" class="btn"></th>	
+		</form>
+	</tr>
 	</table>
 
 	<table border="0" align="center">

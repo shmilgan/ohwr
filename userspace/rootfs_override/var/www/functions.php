@@ -165,6 +165,7 @@ function wrs_main_info(){
 	$SNMP_port = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf |
 		grep agent | cut -d: -f3 | awk '{print $1}'");
 	$NTP = $_SESSION['KCONFIG']["CONFIG_NTP_SERVER"];
+	$Monitor = check_monit_status() ? '[on] ' : '[off] '; 
 	
 	// Print services table
 	echo '<br><table class="'.$class.'" id="'.$formatID.'" width="100%">';
@@ -172,6 +173,7 @@ function wrs_main_info(){
 	
 	echo '<tr><td>White-Rabbit Date</td><td>'.$wr_date.'</td></tr>';
 	echo '<tr><td>PPSi</td><td>'.$PPSi.'</td></tr>';
+	echo '<tr><td>System Monitor</td><td> <a href="management.php">'.$Monitor.'</td></tr>';
 	echo '<tr><td>Net-SNMP Server</td><td>'.$SNMP.'( port '.$SNMP_port.")</td></tr>";
 	echo '<tr><td>NTP Server</td><td> <a href="management.php">'.$NTP.'</td></tr>';
 	echo '</table>';
@@ -336,10 +338,12 @@ function check_ntp_server(){
 function check_snmp_status(){
 	$output = intval(shell_exec("ps aux | grep -c snmpd"));
 	return ($output>2) ? 1 : 0;
-	
-	
 }
 
+function check_monit_status(){
+	$output = intval(shell_exec("ps aux | grep -c monit"));
+	return ($output>2) ? 1 : 0;	
+}
 
 function wrs_interface_setup(){
 
@@ -750,6 +754,20 @@ function wrs_management(){
 			}
 			
 			header('Location: management.php');
+		} else if (!strcmp($cmd, "monit")){
+			
+			if(check_monit_status()){ //It is running
+				
+				//Stop SNMP
+				shell_exec("/bin/sh /etc/init.d/monit.sh stop > /dev/null 2>&1 &");
+				
+			}else{ //Not running
+				
+				shell_exec("/bin/sh /etc/init.d/monit.sh start > /dev/null 2>&1 &");
+				
+			}
+			
+			header('Location: management.php');
 		}
 		
 		
@@ -1048,6 +1066,15 @@ function wrs_display_help($help_id, $name){
 	} else if (!strcmp($help_id, "dotconfig")){
 		$message = file_get_contents($GLOBALS['kconfigfile']);
 		$message = str_replace("\n", "<br>", $message);
+	} else if (!strcmp($help_id, "logs")){
+		$message = "<p>Log files for the following services: <br>
+					- <b>HAL daemon<br>
+					- <b>RTU daemon<br>
+					- <b>PPSi daemon<br>
+					- <b>WRS Watchdog status<br>
+					- <b>System Monitor<br>
+					- <b>SNMP service<br>
+					</p>";
 	}
 
 	echo $message;
