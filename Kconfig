@@ -35,6 +35,69 @@ config PPSI
 
 menu "Local Network Configuration"
 
+choice
+	prompt "Management port configuration (eth0)"
+	default ETH0_DHCP
+
+config ETH0_DHCP
+	bool "DHCP forever"
+	help
+	  Try DHCP on management port (eth0) forever.
+
+config ETH0_DHCP_ONCE
+	bool "Try DHCP, if fail use static address"
+	help
+	  Try DHCP on management port (eth0) for a while, then configure
+	  static IP. Useful, when you move switch between various development
+	  enviroments.
+
+config ETH0_STATIC
+	bool "Static address"
+	help
+	  Use static address on management port (eth0). Don't try to DHCP.
+
+endchoice
+
+menu "Management port (eth0) Address"
+depends on ETH0_DHCP_ONCE || ETH0_STATIC
+
+config ETH0_IP
+	string "Static IP address of management port (eth0)"
+	default "192.168.1.254"
+	help
+	  Static IP address of management port (eth0). Please note that
+	  wrong IP address will generate a runtime error on the switch.
+
+config ETH0_MASK
+	string "Mask of management port (eth0)"
+	default "255.255.255.0"
+	help
+	  Mask of management port (eth0). Please note that wrong mask will
+	  generate a runtime error on the switch.
+
+config ETH0_NETWORK
+	string "Network of management port (eth0)"
+	default "192.168.1.0"
+	help
+	  Network of management port (eth0). Please note that wrong network
+	  will generate a runtime error on the switch.
+
+config ETH0_BROADCAST
+	string "Broadcast of management port (eth0)"
+	default "192.168.1.255"
+	help
+	  Broadcast of management port (eth0). Please note that wrong broadcast
+	  will generate a runtime error on the switch.
+
+config ETH0_GATEWAY
+	string "Default gateway of management port (eth0)"
+	default "192.168.1.1"
+	help
+	  Default gateway of management port (eth0). Please note that
+	  wrong gateway address will generate a runtime error on the switch.
+
+endmenu
+
 config NTP_SERVER
 	string "IP address of local NTP server (empty for none)"
 	help

@@ -431,6 +431,25 @@ value is changed by the web interface, proper action is taken.
         the next time the system boots. See @ref{Dynamic WRS Configuration}
         and @ref{The Configuration File} for details.
 
+@item CONFIG_ETH0_DHCP
+@itemx CONFIG_ETH0_DHCP_ONCE
+@itemx CONFIG_ETH0_STATIC
+
+	Configuration of management port's (@t{eth0}) IP. When
+	@t{CONFIG_ETH0_DHCP} is used, then switch tries to obtain IP via DHCP
+	forever. For option @t{CONFIG_ETH0_DHCP_ONCE} switch tries to get IP
+	via DHCP once, if this try is unsuccessful then switch uses static IP.
+	@t{CONFIG_ETH0_STATIC} forces switch to use provided static IP address.
+
+@item CONFIG_ETH0_IP
+@itemx CONFIG_ETH0_MASK
+@itemx CONFIG_ETH0_NETWORK
+@itemx CONFIG_ETH0_BROADCAST
+@itemx CONFIG_ETH0_GATEWAY
+
+	Management port's (@t{eth0}) static IP configuration when
+	@t{CONFIG_ETH0_DHCP_ONCE} or @t{CONFIG_ETH0_STATIC} parameter is used.
+
 @item CONFIG_NTP_SERVER
 
 	The NTP server used to prime White Rabbit time, at system boot.

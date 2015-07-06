@@ -33,6 +33,12 @@ if [ -n "$CONFIG_DOTCONF_URL" ]; then
     # replace IPADDR and MACADDR, to have a device-specific name
     macaddr=$(cat /sys/class/net/eth0/address)
     ipaddr=$(ifconfig eth0 | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
+    if [ -z "$ipaddr" ]; then
+	# if no IP address available from barebox try to get IP from old dot-config
+	# /etc/init.d/network will run later again
+	/etc/init.d/network
+	ipaddr=$(ifconfig eth0 | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
+    fi
     URL=$(echo $CONFIG_DOTCONF_URL | \
 	sed -e s/MACADDR/$macaddr/ -e s/IPADDR/$ipaddr/)
     # split the parts, as we need to handle tftp by hand
