@@ -151,7 +151,7 @@ void list_fsms(void)
 		/* yes, it is i<=port_num because we're reading FSMs for all WR
 		 * ports + NIC */
 		fsms = read_port(i);
-		printf("PORT %d: ", i);
+		printf("PORT %2d: ", i);
 		printf("ib_alloc(%d): %-14s",
 			fsms.act[ALLOC_IDX], alloc_states[fsms.state[ALLOC_IDX]]);
 		printf("ib_trans(%d): %-15s",
