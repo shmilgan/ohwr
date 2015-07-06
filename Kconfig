@@ -387,7 +387,8 @@ config PTP_PORT_PARAMS
 	bool "Raw Ethernet, WR on, Slave on wr0, Master on other ports"
 	help
 	  You can choose wether to use parameters defined in PORTXX_PARAMS or
-	  your own custom configuration file /wr/etc/ppsi.conf_custom
+	  your own custom configuration file defined by
+	  CONFIG_PTP_CUSTOM_FILENAME.
 
 	  The default setting for boundary clock forces port wr0
 	  to be PTP slave and all other ports to be master, in
@@ -398,11 +399,13 @@ config PTP_PORT_PARAMS
 
 	  Other predefined choices select more flexible configuration used
 	  mainly for test purposes. Any special need can be addressed by
-	  providing your own ppsi.conf_custom file, that you should copy
-	  to your switch.
+	  providing your own configuration file defined by
+	  CONFIG_PTP_CUSTOM_FILENAME, that you should copy to your switch.
 
 config PTP_CUSTOM
 	bool "Custom ppsi.conf"
+	help
+	  Use custom file for ppsi defined by CONFIG_PTP_CUSTOM_FILENAME.
 
 endchoice
 
