@@ -1,7 +1,7 @@
 #!/bin/ash
 export WR_HOME="/wr"
 
-echo "Killing deamon"
+echo "Killing daemon"
 killall wrsw_hal 
 killall wrsw_rtud
 killall ptpd

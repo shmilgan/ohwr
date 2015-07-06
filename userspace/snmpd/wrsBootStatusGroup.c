@@ -61,21 +61,21 @@ static struct wrs_km_item kernel_modules[] = {
 	[6] = {"g_serial"},
 };
 
-/* user space deamon list item */
+/* user space daemon list item */
 struct wrs_usd_item {
 	char *key;	/* process name */
 	int32_t exp;	/* expected number of processes */
 	uint32_t cnt;	/* number of processes found */
 };
 
-/* user space deamon list */
+/* user space daemon list */
 /* - key contain process name reported by ps command
  * - positive exp describe exact number of expected processes
  * - negative exp describe minimum number of expected processes. Usefull for
  *   processes that is hard to predict number of their instances. For example
  *   new dropbear process is spawned at ssh login.
  */
-static struct wrs_usd_item userspace_deamons[] = {
+static struct wrs_usd_item userspace_daemons[] = {
 	[0] = {.key = "/usr/sbin/dropbear", .exp = -1}, /* expect at least one
 							 * dropbear process */
 	[1] = {"/wr/bin/wrsw_hal", 2}, /* two wrsw_hal instances */
@@ -381,8 +381,8 @@ static void get_loaded_kernel_modules_status(void)
 	fclose(f);
 }
 
-/* check if deamons from userspace_deamons array are running */
-static void get_deamons_status(void)
+/* check if daemons from userspace_daemons array are running */
+static void get_daemons_status(void)
 {
 	FILE *f;
 	char key[41]; /* 1 for null char */
@@ -391,9 +391,9 @@ static void get_deamons_status(void)
 	int processes_wrong = 0; /* number of too many or too few processes */
 
 
-	/* clear user space deamon counters */
-	for (i = 0; i < ARRAY_SIZE(userspace_deamons); i++) {
-		userspace_deamons[i].cnt = 0;
+	/* clear user space daemon counters */
+	for (i = 0; i < ARRAY_SIZE(userspace_daemons); i++) {
+		userspace_daemons[i].cnt = 0;
 	}
 
 	/* Use ps command to get process list, more portable, less error prone
@@ -405,11 +405,11 @@ static void get_deamons_status(void)
 		wrsBootStatus_s.wrsBootUserspaceDaemonsMissing = 0;
 		/* Notify snmp about error in processes list */
 		/* Count number of expected processes */
-		for (i = 0; i < ARRAY_SIZE(userspace_deamons); i++) {
+		for (i = 0; i < ARRAY_SIZE(userspace_daemons); i++) {
 			/* when exp < 0 then expect at least number of
 			 * -exp processes */
 			wrsBootStatus_s.wrsBootUserspaceDaemonsMissing +=
-						abs(userspace_deamons[i].exp);
+						abs(userspace_daemons[i].exp);
 		}
 
 		return;
@@ -423,31 +423,31 @@ static void get_deamons_status(void)
 		if (ret != 1)
 			continue; /* error... or EOF */
 
-		for (i = 0; i < ARRAY_SIZE(userspace_deamons); i++) {
-			if (strncmp(key, userspace_deamons[i].key, 40))
+		for (i = 0; i < ARRAY_SIZE(userspace_daemons); i++) {
+			if (strncmp(key, userspace_daemons[i].key, 40))
 				continue;
-			userspace_deamons[i].cnt++;
+			userspace_daemons[i].cnt++;
 			break;
 		}
 	}
 
-	for (i = 0; i < ARRAY_SIZE(userspace_deamons); i++) {
-		if (userspace_deamons[i].exp < 0) {
+	for (i = 0; i < ARRAY_SIZE(userspace_daemons); i++) {
+		if (userspace_daemons[i].exp < 0) {
 			/* if exp < 0 then expect at least -exp processes,
 			 * useful in situation when we cannot predict exact
 			 * number of processes.
 			 * NOTE: exp in this case is negative number */
 			/* saturate cnt */
-			if (userspace_deamons[i].cnt > (-userspace_deamons[i].exp)) {
-				userspace_deamons[i].cnt =
-						(-userspace_deamons[i].exp);
+			if (userspace_daemons[i].cnt > (-userspace_daemons[i].exp)) {
+				userspace_daemons[i].cnt =
+						(-userspace_daemons[i].exp);
 			}
 		}
 		/* Calculate delta between expected and counted number
 		 * of processes. Neither too much or too few are ok.
 		 * NOTE: abs "exp" too */
-		processes_wrong += abs(abs(userspace_deamons[i].exp)
-				       - userspace_deamons[i].cnt);
+		processes_wrong += abs(abs(userspace_daemons[i].exp)
+				       - userspace_daemons[i].cnt);
 	}
 
 	/* save number of processes missing */
@@ -480,8 +480,8 @@ time_t wrsBootStatus_data_fill(void)
 	/* get loaded kernel modules */
 	get_loaded_kernel_modules_status();
 
-	/* get info about running deamons */
-	get_deamons_status();
+	/* get info about running daemons */
+	get_daemons_status();
 
 	/* there was an update, return current time */
 	return time_update;

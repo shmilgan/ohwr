@@ -52,9 +52,21 @@ init() {
     fi
 
     if [ -z "$CONFIG_MONIT_DISABLE" ]; then
+
+	if [ -z $CONFIG_WRS_LOG_MONIT ]; then
+	    LOG="";
+	elif echo "$CONFIG_WRS_LOG_MONIT" | grep / > /dev/null; then
+	    # if a pathname, use it
+	    LOG="-l $CONFIG_WRS_LOG_MONIT";
+	else
+	    # not a pathname, monit cannot take facility nor level from command
+	    # line, only possible from configuration file
+	    LOG="-l syslog"
+	fi
+
 	echo "Start monit"
 	# start monit
-	/usr/bin/monit
+	/usr/bin/monit $LOG
     else
 	echo "Monit disabled in dot-config"
 	loop_forever

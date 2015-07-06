@@ -2,6 +2,7 @@
 
 SNMP_PID=/var/run/snmpd.pid
 SNMP_CONF=/wr/etc/snmpd.conf
+dotconfig=/wr/etc/dot-config
 
 start_counter() {
 	# increase boot counter
@@ -17,9 +18,29 @@ start_counter() {
 
 start() {
     echo -n "Starting snmpd daemon: "
-    # Log to syslog at daemon level. And log source address (-a)
+
+    if [ -f "$dotconfig" ]; then
+	. "$dotconfig"
+    else
+	echo "$0 unable to source dot-config ($dotconfig)!"
+    fi
+
+    WRS_LOG=$CONFIG_WRS_LOG_SNMPD
+
+    if [ -z "$WRS_LOG" ]; then
+	LOG="";
+    elif echo "$WRS_LOG" | grep / > /dev/null; then
+        # if a pathname, use it
+	LOG="-Lf $WRS_LOG";
+    else
+	# not a pathname: use verbatim
+	LOG="-L$WRS_LOG"
+    fi
+
+    # Log source address (-a)
     start-stop-daemon -q -p $SNMP_PID -S \
-		--exec /usr/sbin/snmpd -- -Lsd -p $SNMP_PID -a -c $SNMP_CONF
+		--exec /usr/sbin/snmpd -- $LOG -p $SNMP_PID -a -c $SNMP_CONF
+
     ret=$?
     if [ $ret -eq 0 ]; then
 	start_counter
@@ -43,6 +64,8 @@ stop() {
 
 restart() {
     stop
+    # give time to snmpd to stop
+    sleep 1
     start
 }
 

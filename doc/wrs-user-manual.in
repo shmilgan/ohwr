@@ -472,7 +472,7 @@ value is changed by the web interface, proper action is taken.
         Supply Right (PSR) temperature sensors. When any temperature exceeds
         threshold level SNMP object @t{WR-SWITCH-MIB::tempWarning} will change
         accordingly.
-        
+
 @item CONFIG_WRS_LOG_HAL
 @itemx CONFIG_WRS_LOG_RTU
 @itemx CONFIG_WRS_LOG_PTP
@@ -484,6 +484,28 @@ value is changed by the web interface, proper action is taken.
         An empty strings selects no logging at all.  Please note that
         unknown facility names will generate a runtime error on the switch.
         All three strings default to ``@t{daemon.info}''.
+
+@item CONFIG_WRS_LOG_SNMPD
+
+	Value can be a pathname, to select logging to file (and
+        @t{/dev/kmsg} is a possible ``file'' target) or a valid snmpd log
+        option (without -L).
+        Allowed strings are in format ``@t{s} @i{facility}'' (e.g.
+        ``@t{s daemon}'') and ``@t{s} @i{level} @i{facility}'' (e.g.
+        ``@t{s 2 daemon}''). For example, ``@t{sd}'' or ``@t{s daemon}'' will forward
+        messages to syslog with daemon as facility. To set level (i.e. 5) use
+	``@t{S 5 daemon}''. For details please check ``man snmpcmd''. An empty
+	strings selects no logging at all. Please note that unknown facility
+	names will generate a runtime error on the switch.
+
+@item CONFIG_WRS_LOG_MONIT
+	The string can be a pathname (e.g. @t{/dev/kmsg}) or a @t{syslog}
+	string.
+	An empty string is used to represent no logging. If it is needed to
+	select facility and level please leave here empty string and change
+	@t{/etc/monitrc} file directly.
+	Please note that unknown facility names will generate a runtime error
+	on the switch.
 
 @item CONFIG_PORT00_PARAMS
 @itemx CONFIG_PORT01_PARAMS

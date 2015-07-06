@@ -97,6 +97,29 @@ config WRS_LOG_PTP
 	  to represent no logging (like /dev/null).  Please note that
 	  unknown facility names will generate a runtime error on the switch.
 
+config WRS_LOG_SNMPD
+	string "Logging directions for the SNMP daemon"
+	default "sd"
+	help
+	  The string can be a pathname (e.g. /dev/kmsg) or a valid snmpd log
+	  option (without -L). "sd" or "s daemon" will forward messages to
+	  syslog with daemon as facility. To set level (i.e. 5) use
+	  "S 5 daemon". For details please check "man snmpcmd". An empty
+	  strings is used  to represent no logging (like /dev/null). Please
+	  note that unknown facility names will generate a runtime error on the
+	  switch.
+
+config WRS_LOG_MONIT
+	string "Logging directions for the monit"
+	default "syslog"
+	help
+	  The string can be a pathname (e.g. /dev/kmsg) or a "syslog" string.
+	  An empty strings is used  to represent no logging. If it is needed to
+	  select facility and level please leave here empty string and change
+	  /etc/monitrc file directly.
+	  Please note that unknown facility names will generate a runtime error
+	  on the switch.
+
 config KEEP_ROOTFS
 	bool "Keep generated filesystem and related script"
 	help

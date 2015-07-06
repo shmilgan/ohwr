@@ -80,7 +80,7 @@ time_t wrsOSStatus_data_fill(void)
 		|| b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_ERROR
 		|| b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_FILE_NOT_FOUND
 		|| b->wrsBootKernelModulesMissing > 0 /* contain number of missing modules */
-		|| b->wrsBootUserspaceDaemonsMissing > 0 /* contain number of missing deamons */
+		|| b->wrsBootUserspaceDaemonsMissing > 0 /* contain number of missing daemons */
 	) {
 		wrsOSStatus_s.wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
 
