@@ -168,9 +168,9 @@ $WRS_FORMS = Array(
 			vname => "logmonit",
 		),
 		SYSTEM_LOGS_05 => Array(
-			key => "CONFIG_WRS_LOG_SNMP",
-			name => "SNMP log",
-			value => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_SNMP"],
+			key => "CONFIG_WRS_LOG_SNMPD",
+			name => "SNMPd log",
+			value => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_SNMPD"],
 			vname => "logsnmp",
 		),
 	),
