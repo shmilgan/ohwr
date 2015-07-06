@@ -34,8 +34,6 @@ time_t wrsGeneralStatus_data_fill(void)
 	    && time_timing_status <= time_update
 	    && time_networking_status <= time_update) {
 		/* cache not updated, return last update time */
-		snmp_log(LOG_ERR,
-			"SNMP: wrsGeneralStatusGroup cache\n");
 		return time_update;
 	}
 
