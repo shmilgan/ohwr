@@ -58,6 +58,8 @@ if [ "$CONFIG_ETH0_DHCP_ONCE" ]; then
     if [ $? -ne 0 ]; then
 	echo "Failed to obtain IP address via DHCP, set static IP"
 	CONFIG_ETH0_STATIC="y"
+    else
+	exit
     fi
 fi
 
@@ -65,10 +67,10 @@ if [ "$CONFIG_ETH0_STATIC" ]; then
     # ifup to use static parameters from /etc/netwrok/interfaces
     echo "Using static IP"
     ifup eth0
+    exit
 fi
 
-if [ "$CONFIG_ETH0_DHCP" ]; then
-    # try to get IP via dhcp if failed run dhcp client forever in background
-    echo "Using DHCP to get IP"
-    udhcpc -b -i eth0
-fi
+# Try to get IP via dhcp if failed run dhcp client forever in background.
+# If no information how to get IP address is available use this option.
+echo "Using DHCP to get IP"
+udhcpc -b -i eth0
