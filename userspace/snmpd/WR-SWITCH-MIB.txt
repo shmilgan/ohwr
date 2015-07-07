@@ -691,13 +691,13 @@ wrsBootKernelModulesMissing  OBJECT-TYPE
 
 wrsBootUserspaceDaemonsMissing  OBJECT-TYPE
     SYNTAX       INTEGER {
-                        allDeamonsPresent(0)
+                        allDaemonsPresent(0)
     }
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
         "Checking if all desired daemons are running.
-        allDeamonsPresent - all daemons running
+        allDaemonsPresent - all daemons running
         other numbers represent number of daemons not running
         other errors (can be: unable to run ps command or problem with multiple process instances) 
         are reported as maximum number of missing modules"
