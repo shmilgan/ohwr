@@ -183,7 +183,7 @@ $WRS_FORMS = Array(
 			vname => "ethip",
 		),
 		NETWORK_SETUP_01 => Array(
-			key => "CONFIG_ETH0_NETMASK",
+			key => "CONFIG_ETH0_MASK",
 			name => NETMASK,
 			value => $_SESSION["WRS_INFO"][NETMASK],
 			vname => "ethnetmask",

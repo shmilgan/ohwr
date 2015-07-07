@@ -22,72 +22,20 @@
 	<?php $_SESSION['advance']=""; ?>
 
 	<?php
-	
-		/* This will be part of the code when using dotconfig for DHCP/FIX IP
-		if((empty($_POST["networkgroup"]))){
-			
-			$formatID = "alternatecolor";
-			$class = "altrowstable firstcol";
-			$infoname = "Current eth0";
-			$format = "table";
-			$section = "WRS_FORMS";
-			$subsection = "NETWORK_SETUP";
-			
-			print_info($section, $subsection, $formatID, $class, $infoname, $format);
-			
-			echo '<br>';
-			$formatID = "alternatecolor1";
-			$class = "altrowstable firstcol";
-			$infoname = "DNS Configuration";
-			$format = "table";
-			$section = "WRS_FORMS";
-			$subsection = "DNS_SETUP";
-			
-			print_info($section, $subsection, $formatID, $class, $infoname, $format);
-			
-			echo '<hr><p align="right">Click <A HREF="dns.php">here</A> to modify DNS configuration</p>';
-	
-		}
-		
-		
-		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"DHCP"))){
-			
-			$DHCP_LINE = 'CONFIG_ETH0_DHCP="y"'."\n";
-			file_put_contents($GLOBALS['kconfigfile'], $DHCP_LINE, FILE_APPEND | LOCK_EX);
-			
-			echo '<center>DHCP is now set for eth0<br>Rebooting switch</center>';
-			
-			//Let's reboot
-			wrs_reboot();
-			
-		}
 
-		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"Static"))){
-
-			$formatID = "alternatecolor";
-			$class = "altrowstable firstcol";
-			$infoname = "eth0";
-			$format = "table";
-			$section = "WRS_FORMS";
-			$subsection = "NETWORK_SETUP";
-			
-			print_form($section, $subsection, $formatID, $class, $infoname, $format);
-			
-		}*/
-		
-		/* end of dotconfig version */
-		
 		if((empty($_POST["networkgroup"]))){
 			
 			echo '<FORM method="POST">
 			<table id="daemon" border="0" align="center">	
 					<tr>
-						<th align=left>eth0 Setup: </th>
-						<th><input type="radio" name="networkgroup" value="DHCP"';  if(!strcmp(wrs_interface_setup(), "dhcp")) echo "checked";
-						echo ' > DHCP <br>
-							<input type="radio" name="networkgroup" value="Static"';  if(!strcmp(wrs_interface_setup(), "static")) echo "checked";
-						echo ' > Static <br>
-						<th><INPUT type="submit" value="Change" class="btn"></th>	
+						<td align=left>eth0 Setup: </td>
+						<td><input type="radio" name="networkgroup" value="DHCPONLY"';  if(!strcmp(wrs_interface_setup(), "dhcponly")) echo "checked";
+						echo ' > DHCP Only <br>
+						<input type="radio" name="networkgroup" value="DHCPONCE"';  if(!strcmp(wrs_interface_setup(), "dhcponce")) echo "checked";
+						echo ' > DHCP + Static<br>
+							<input type="radio" name="networkgroup" value="STATIC"';  if(!strcmp(wrs_interface_setup(), "static")) echo "checked";
+						echo ' > Static IP<br></td>
+						<td><INPUT type="submit" value="Change" class="btn"></td>	
 					</tr>
 			</table>				
 			</FORM>
@@ -115,33 +63,63 @@
 			echo '<hr><p align="right">Click <A HREF="dns.php">here</A> to modify DNS configuration</p>';
 		}
 
-		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"DHCP"))){
-			$interface_file = $GLOBALS['interfacesfile'];
-			$tmpfile="/tmp/interfaces";
-			shell_exec('rm '.$interface_file);
+		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"DHCPONLY"))){
 			
-			$output="# Configure Loopback\nauto lo\niface lo inet loopback\n\n#Force eth0 to be configured by DHCP\nauto eth0\niface eth0 inet dhcp\n\n# Uncomment this example for static configuration\n";
-			$output.="#iface eth0 inet static\n";
-			$output.="#\taddress 192.168.1.10";
-			$output.="\n#\tnetmask 255.255.255.0";
-			$output.="\n#\tnetwork 192.168.1.0";
-			$output.="\n#\tbroadcast 192.168.1.255";
-			$output.="\n#\tgateway 192.168.1.1\n";
+			$_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP"]="y";
 			
-			$file = fopen($tmpfile,"w+");
-			fwrite($file,$output);
-			fclose($file);
+			check_add_existing_kconfig("CONFIG_ETH0_DHCP=");
 			
-			//We move the file to /usr/etc/network
-			copy($tmpfile, $interface_file);
-			
-			echo '<center>DHCP is now set for eth0<br>Rebooting switch</center>';
-			//Let's reboot
-			wrs_reboot();
-			
-		}
+			delete_from_kconfig("CONFIG_ETH0_DHCP_ONCE=");
+			delete_from_kconfig("CONFIG_ETH0_STATIC=");
+			delete_from_kconfig("CONFIG_ETH0_IP=");
+			delete_from_kconfig("CONFIG_ETH0_MASK=");
+			delete_from_kconfig("CONFIG_ETH0_NETWORK=");
+			delete_from_kconfig("CONFIG_ETH0_BROADCAST=");
+			delete_from_kconfig("CONFIG_ETH0_GATEWAY=");
 
-		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"Static"))){
+			save_kconfig();
+			apply_kconfig();
+			wrs_reboot();
+			//shell_exec("/etc/init.d/network restart > /dev/null 2>&1 &"); /* restart network */	
+			
+			$formatID = "alternatecolor";
+			$class = "altrowstable firstcol";
+			$infoname = "Current eth0";
+			$format = "table";
+			$section = "WRS_FORMS";
+			$subsection = "NETWORK_SETUP";
+			
+			print_info($section, $subsection, $formatID, $class, $infoname, $format);
+			
+			echo '<br><center>"DHCP Only" is now set for eth0<br>Rebooting network service...</center>';
+		}
+		
+		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"DHCPONCE"))){
+
+			echo '<p>Please enter the static setup in case DHCP fails: </p><br>';
+			
+			echo '<FORM method="POST">
+					<table border="0" align="center" class="altrowstable" id="alternatecolor">	
+						<tr>
+							<td>IP Address: </td>
+							<td><INPUT type="text" value="192.168.1.10" name="ip" ></td>
+						</tr>
+						<tr>
+							<td>Netmask: </td>
+							<td><INPUT type="text" value="255.255.255.0" name="netmask" ></td>
+						</tr>
+						<tr>
+							<td>Broadcast: </td>
+							<td><INPUT type="text" value="192.168.1.255" name="broadcast" ></td>
+						</tr>
+					</table>
+					<INPUT type="submit" value="Save New Configuration" class="btn last">
+					<INPUT type="hidden" value="DHCPONCE" name="dhcp">
+					</FORM>';
+		}
+		
+
+		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"STATIC"))){
 
 			echo '<FORM method="POST">
 					<table border="0" align="center" class="altrowstable" id="alternatecolor">	
@@ -154,16 +132,8 @@
 							<td><INPUT type="text" value="255.255.255.0" name="netmask" ></td>
 						</tr>
 						<tr>
-							<td>Network: </td>
-							<td><INPUT  type="text" value="192.168.1.0" name="network" ></td>
-						</tr>
-						<tr>
 							<td>Broadcast: </td>
 							<td><INPUT type="text" value="192.168.1.255" name="broadcast" ></td>
-						</tr>
-						<tr>
-							<td>Gateway: </td>
-							<td><INPUT type="text" value="192.168.1.1" name="gateway" ></td>
 						</tr>
 					</table>
 					<INPUT type="submit" value="Save New Configuration" class="btn last">
@@ -171,29 +141,55 @@
 			
 		}
 
-		if ((!empty($_POST["ip"])) && (!empty($_POST["netmask"])) && (!empty($_POST["network"])) && (!empty($_POST["broadcast"])) && (!empty($_POST["gateway"]))){
-			$interface_file = $GLOBALS['interfacesfile'];
-			$tmpfile="/tmp/interfaces";
-			shell_exec('rm '.$interface_file);
+		if ((!empty($_POST["ip"])) && (!empty($_POST["netmask"])) && (!empty($_POST["broadcast"]))){
+
 			
-			$output="# Configure Loopback\nauto lo\niface lo inet loopback\n\n#Force eth0 to be configured by DHCP\n#auto eth0\n#iface eth0 inet dhcp\n\n# Uncomment this example for static configuration\n";
-			$output.="iface eth0 inet static\n";
-			$output.="\taddress ".$_POST["ip"];
-			$output.="\n\tnetmask ".$_POST["netmask"];
-			$output.="\n\tnetwork ".$_POST["network"];
-			$output.="\n\tbroadcast ".$_POST["broadcast"];
-			$output.="\n\tgateway ".$_POST["gateway"]."\n";
+			if (!empty($_POST["dhcp"])){
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP_ONCE"]="y";
+				
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_IP"]=$_POST["ip"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_MASK"]=$_POST["netmask"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_NETWORK"]="";
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_BROADCAST"]=$_POST["broadcast"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_GATEWAY"]="";
+				
+				check_add_existing_kconfig("CONFIG_ETH0_DHCP_ONCE=");
+				check_add_existing_kconfig("CONFIG_ETH0_IP=");
+				check_add_existing_kconfig("CONFIG_ETH0_MASK=");
+				check_add_existing_kconfig("CONFIG_ETH0_NETWORK=");
+				check_add_existing_kconfig("CONFIG_ETH0_BROADCAST=");
+				check_add_existing_kconfig("CONFIG_ETH0_GATEWAY=");
+				
+				delete_from_kconfig("CONFIG_ETH0_DHCP=");
+				delete_from_kconfig("CONFIG_ETH0_STATIC=");
+				
+				echo '<br><center>"DHCP Once" is now set for eth0<br>Rebooting network service...</center>';
+				
+			}else{
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_STATIC"]="y";
+				
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_IP"]=$_POST["ip"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_MASK"]=$_POST["netmask"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_NETWORK"]="";
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_BROADCAST"]=$_POST["broadcast"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_GATEWAY"]="";
+				
+				check_add_existing_kconfig("CONFIG_ETH0_STATIC=");
+				check_add_existing_kconfig("CONFIG_ETH0_IP=");
+				check_add_existing_kconfig("CONFIG_ETH0_MASK=");
+				check_add_existing_kconfig("CONFIG_ETH0_NETWORK=");
+				check_add_existing_kconfig("CONFIG_ETH0_BROADCAST=");
+				check_add_existing_kconfig("CONFIG_ETH0_GATEWAY=");
+				
+				delete_from_kconfig("CONFIG_ETH0_DHCP_ONCE=");
+				delete_from_kconfig("CONFIG_ETH0_DHCP=");
+				
+				echo '<br><center>"Static Only" is now set for eth0<br>Rebooting network service...</center>';
+			}
 			
-			$file = fopen($tmpfile,"w+");
-			fwrite($file,$output);
-			fclose($file);
-			
-			//We move the file to /usr/etc/network
-			copy($tmpfile, $interface_file);
-			
-			echo '<center>New static configuration saved for eth0<br>Changes will take place after reboot.</center>';
-			
-			//Let's reboot
+			save_kconfig();
+			apply_kconfig();
+			//shell_exec("/etc/init.d/network restart > /dev/null 2>&1 &"); /* restart network */
 			wrs_reboot();
 		}
 	

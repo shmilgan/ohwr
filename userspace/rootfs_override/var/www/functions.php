@@ -146,7 +146,7 @@ function wrs_main_info(){
 	$format = "table";
 	$section = "WRS_TABLE_INFO";
 	$subsection = "DASHBOARD";
-	
+
 	print_info($section, $subsection, $formatID, $class, $infoname, $format);
 
 	// Print dinamic stuff (PPSi status, WR Date, SNMP Server & NTP)
@@ -347,9 +347,12 @@ function check_monit_status(){
 
 function wrs_interface_setup(){
 
-	$interfaces = shell_exec('cat '.$GLOBALS['interfacesfile'].' | grep dhcp');	
-    return (strcmp($interfaces[0],"#")) ? "dhcp" : "static";
-    //return (!empty($_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP"])) ? "dhcp" : "static"; /* for dotconfig */
+    if(!empty($_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP"]))
+		return "dhcponly";
+	else if (!empty($_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP_ONCE"]))
+		return "dhcponce";
+	else
+		return "static";
 }
 /*
  * It checks whether the filesystem is writable or not.
@@ -705,10 +708,10 @@ function wrs_management(){
 		} else if (!empty($_FILES['kconfig']['name'])){
 			
 			$uploaddir = $GLOBALS['etcdir'];
-			$uploadfile = $uploaddir . basename($_FILES['kconfig']['name']);
+			$uploadfile = $uploaddir.$GLOBALS['kconfigfilename'];
 			echo '<pre>';
-			if (($_FILES['kconfig']['name']==$GLOBALS['kconfigfilename']) && move_uploaded_file($_FILES['kconfig']['tmp_name'], $uploadfile)) {
-				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder. Applying changes\n";
+			if (move_uploaded_file($_FILES['kconfig']['tmp_name'], $uploadfile)) {
+				echo "<center>File is valid, and was successfully uploaded to ".$GLOBALS['etcdir']." folder. Applying changes and rebooting\n";
 				sleep(1);
 				wrs_reboot();
 			}  else {
@@ -720,8 +723,9 @@ function wrs_management(){
 		} else if (!strcmp($cmd, "Backup")){
 			
 			//Prepare backup
-			$backupfile=$GLOBALS['kconfigfilename'];
-			shell_exec("cd ".$GLOBALS['etcdir']."; cp ".$backupfile." /var/www/download/".$backupfile);
+			$date = date('Ymd-His');
+			$backupfile="wrs-".$GLOBALS['kconfigfilename'].$date.".backup";
+			shell_exec("cd ".$GLOBALS['etcdir']."; cp ".$GLOBALS['kconfigfilename']." /var/www/download/".$backupfile);
 			$backupfile="/download/$backupfile";
 			
 			//Download the file
@@ -769,9 +773,7 @@ function wrs_management(){
 			
 			header('Location: management.php');
 		}
-		
-		
-		
+
 }
 
 /**
@@ -1046,22 +1048,47 @@ function wrs_display_help($help_id, $name){
 		
 		
 	} else if (!strcmp($help_id, "network")){
-		$message = "<br><b>Set a DHCP network interface configuration or a static one.</b>";
-		$message .= "<br><b>If you set a static configuration, you have to define: </b>";
+		$message = "<br><b>Set a DHCP network interface configuration or a static one for the management port.</b>";
+		$message .= "<br><b>DHCP only will always try to get an IP address using DHCP. DHCP + Static will try only one time to get an IP address using DHCP, in case it fails, it will
+						use a static configuration given by the user. For the static option no DHCP action is performed.</b>";
+		$message .= "<br><b>If you set a Static configuration or DHCP + Static, you have to define: </b>";
 		$message .= "<br><b><ul><li>IP Address --> IP Address of your switch</b></li>";
 		$message .= "<br><b><li>Netmask --> Netmask</b></li>";
-		$message .= "<br><b><li>Network--> IP Address of your network</b></li>";
 		$message .= "<br><b><li>Broadcast --> Broadcast address</b></li>";
-		$message .= "<br><b><li>Gateway--> Gateway of the switch network</b></li></ul>";
-		$message .= "<br><br><b>NOTE: This network configuration only works for NAND-flashed switches. If you are using a NFS server, the configurtion is set by default in busybox and it is not possible to be changed.</b>";
+		$message .= "<br><br><b>NOTE: This network configuration only works for NAND-flashed switches. If you are using a NFS server, the configuration is set by default in busybox and it is not possible to be changed.</b>";
 		
 	} else if (!strcmp($help_id, "firmware")){
 		$message = "<p>Firmware features: <br>
 					- <b>Flash firmware</b>: It flashes a new firmware to the switch. Do it under your own risk.<br>
 					</p>";
 	} else if (!strcmp($help_id, "auxclk")){
-		$message = "<p>Aux. Clock configuration: <br>
-					- <b>Please refer to the WRS manual to configure correctly this feature.<br>
+		$message = "<p>Aux. Clock configuration: <br>";
+		$message .= "These are the parameters of a clock signal generated on the
+						clk2 SMC connector.";
+		$message .= "By default wrs auxclk is called by init scripts to generate 10MHz clock signal with 50% duty
+						cycle. This configuration can be modified by using various options:";
+		$message .= "<br><b><ul><li> freq <f> --> Desired frequency of the generated clock signal in MHz. Available range from 4kHz
+						to 250MHz.</b></li>";
+		$message .= "<br><b><li>duty <frac> --> Desired duty cycle given as a fraction (e.g. 0.5, 0.4).</b></li>";
+		$message .= "<br><b><li>cshift <csh> --> Coarse shift (granularity 2ns) of the generated clock signal. This parameter can be
+						used to get desired delay relation between generated 1-PPS and clk2. The delay
+						between 1-PPS and clk2 is constant for a given bitstream but may be different
+						for various hardware versions and re-synthesized gateware. Therefore it should be
+						measured and adjusted only once for given hardware and gateware version.</b></li>";
+		$message .= "<br><b><li>sigdel <steps> --> Clock signal generated from the FPGA is cleaned by a discrete flip-flop. It may
+						happen that generated aux clock is in phase with the flip-flop clock. In that case
+						it is visible on the oscilloscope that clk2 clock is jittering by 4ns. The --sigdel
+						parameter allows to add a precise delay to the FPGA-generated clock to avoid such
+						jitter. This delay is specified in steps, where each step is around 150ps. This value,
+						same as the --cshift parameter, is constant for a given bitstream so should be
+						verified only once..</b></li>";
+		$message .= "<br><b><li>ppshift <steps> --> If one needs to precisely align 1-PPS output with the clk2 aux clock using --cshift
+						parameter is not enough as it has 4ns granularity. In that case --ppshift lets you
+						shift 1-PPS output by a configured number of 150ps steps. However, please have in
+						mind that 1-PPS output is used as a reference for WR calibration procedure. There-
+						fore, once this parameter is modified, the device should be re-calibrated. Otherwise,
+						1-PPS output will be shifted from the WR timescale by <steps>*150ps.</b></li>";
+		$message .= "<br><center><b>Please refer to the WRS manual to configure correctly this feature.<br></center>
 					</p>";
 	} else if (!strcmp($help_id, "dotconfig")){
 		$message = file_get_contents($GLOBALS['kconfigfile']);
@@ -1228,6 +1255,33 @@ function wrs_reboot(){
 
 function load_kconfig(){
 	$_SESSION['KCONFIG'] = parse_ini_file($GLOBALS['kconfigfile']);
+}
+
+/*
+ * It checks whether a CONFIG__ element in the web interface exists or not
+ * in kconfig. In case it doesn't, it includes it at the end of the file
+ * with an empty value.
+ *  
+ * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
+ * @pre: this is done when a new non-existing CONFIG__ value must be added
+ * in kconfig, after using this function, the value must be fulfilled and
+ * call save_kconfig().
+ * 
+ */
+function check_add_existing_kconfig($element){
+	
+	$file = file_get_contents($GLOBALS['kconfigfile']);
+	$pos = strrpos($file, $element);
+	$element .= '""'."\n";
+	
+	if ($pos === false){
+		file_put_contents($GLOBALS['kconfigfile'], $element, FILE_APPEND | LOCK_EX);		
+	}
+}
+
+function delete_from_kconfig($element){
+	
+	shell_exec("sed -i '/".$element."/d' ".$GLOBALS['kconfigfile']);
 }
 
 /*
