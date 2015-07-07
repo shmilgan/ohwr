@@ -28,7 +28,7 @@
 		$formatID = "alternatecolor";
 		$class = "altrowstable firstcol";
 		$infoname = "SFP Calibration";
-		$size = "9";
+		$size = "7";
 		$vn = 0;
 		$vs = 0;
 		$counter = 0;
@@ -52,7 +52,7 @@
 			if($last<10){
 				$last = sprintf("%02s", $last);
 				$last = strval($last);
-				array_push($matrix, "key=CONFIG_SFP".$last."_PARAMS,name=empty,tx=empty,rx=empty,wl_txrx=empty");
+				array_push($matrix, "key=CONFIG_SFP".$last."_PARAMS,vn=,vs=,pn=,tx=,rx=,wl_txrx=");
 			}else{
 				echo "<center>There is only space for 9 SFP configurations.</center>";
 			}
@@ -104,24 +104,57 @@
 				if($columns[0]=="wl_txrx" ){
 					echo '<td align="center"><INPUT size="'.$size.'" type="text" value="'.$columns[1].'" name="wl_txrx'.$i.'" ></td>';
 				}
+				
 			}
+			echo '<td align="center"><a href="deletesfp.php?id='.$i.'">delete</a></td>';
 			echo "</tr>";
 			$i++;
 		}
 		echo '</table>';
 		
-		//echo '<INPUT type="submit" value="Save New Configuration" class="btn last">';	
+		echo '<INPUT type="hidden" value="yes" name="update">';
+		echo '<INPUT type="submit" value="Save New Configuration" class="btn last">';	
 		echo '</FORM>';	
 		
-		//echo '<hr><p align="right">Click <A HREF="sfpcalibration.php?add=y">here</A> to a new SFP</p>';
+		$error = 0;
+		if (!empty($_POST["update"])){
+			
+			for($j=0; $j<$i && !$error; $j++){
+				if(empty($_POST["pn".$j]) || empty($_POST["tx".$j]) || empty($_POST["tx".$j]) || empty($_POST["wl_txrx".$j])){
+					echo "<p>Model, Tx, Rx and WL_TXRX cannot be empty.</p>";
+					$error = 1;
+				}else{
+					$_SESSION["KCONFIG"][$_POST["key".$j]] = "";
+					if(empty($_SESSION["KCONFIG"][$_POST["key".$j]]))
+						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["vn".$j]) ? "" : "vn=".$_POST["vn".$j];
+					else
+						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["vn".$j]) ? "" : ",vn=".$_POST["vn".$j];
+					if(empty($_SESSION["KCONFIG"][$_POST["key".$j]]))
+						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["vs".$j]) ? "" : "vs=".$_POST["vs".$j];
+					else
+						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["vs".$j]) ? "" : ",vs=".$_POST["vs".$j];
+					if(empty($_SESSION["KCONFIG"][$_POST["key".$j]]))
+						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["pn".$j]) ? "" : "pn=".$_POST["pn".$j];
+					else
+						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["pn".$j]) ? "" : ",pn=".$_POST["pn".$j];
+					$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["tx".$j]) ? "" : ",tx=".$_POST["tx".$j];
+					$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["rx".$j]) ? "" : ",rx=".$_POST["rx".$j];
+					$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["wl_txrx".$j]) ? "" : ",wl_txrx=".$_POST["wl_txrx".$j];
+				}
+				
+			}
+			
+			if(!$error){
+				save_kconfig();
+				apply_kconfig();
+			
+				header ('Location: sfpcalibration.php');
+			}
+			
+			
+		}
 		
-		//if(process_multi_form($matrix)){
-			//save_kconfig();
-			//apply_kconfig();
-			
-			//header ('Location: sfpcalibration.php');
-			
-		//}
+		echo '<hr><p align="right">Click <A HREF="sfpcalibration.php?add=y">here</A> to a new SFP</p>';
 		
 	?>
 	
