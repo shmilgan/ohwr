@@ -57,6 +57,11 @@
 		$section = "WRS_FORMS";
 		$subsection = "CONFIG_PPSI";
 		
+		$_SESSION["WRS_FORMS"]["CONFIG_PPSI"][CONFIG_PPSI_00]["value"]=
+			shell_exec("cat /wr/etc/ppsi-pre.conf | grep clock-class | awk '{print $2}'");
+		$_SESSION["WRS_FORMS"]["CONFIG_PPSI"][CONFIG_PPSI_01]["value"]=
+			shell_exec("cat /wr/etc/ppsi-pre.conf | grep clock-accuracy | awk '{print $2}'");;
+		
 		print_form($section, $subsection, $formatID, $class, $infoname, $format);
 		
 		wrs_ptp_configuration();
