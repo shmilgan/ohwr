@@ -110,7 +110,7 @@ This is the current set of manuals that accompany the @sc{wrs}:
 @end itemize
 
 The official @sc{pdf} copy of these manuals at each release
-is published in The @i{files} tab of the software project in @t{ohwr.org}:
+is published in the @i{files} tab of the software project in @t{ohwr.org}:
 (@url{http://www.ohwr.org/projects/wr-switch-sw/files}).
 This doesn't apply to release 4.0 and earlier.
 
@@ -183,7 +183,7 @@ need to be aware of the steps involved, in case something goes wrong.
 Version 4.0 and later of @t{wr-switch-sw} are able to upgrade
 themselves if you place the profer files in the @i{/update} directory
 of the @sc{wrs}.  However, in version 4.0 we forgot to provide for
-an upgrade of the boot loader and didn't note that if the fron USB
+an upgrade of the boot loader and didn't note that if the front USB
 cable is not plugged, the upgrade procedure blocks.
 
 This latter problem happens because messages are written to the
@@ -207,15 +207,16 @@ actually used:
 
 @itemize @bullet
 
-   @item Copy your own @t{wrs-firmware.tar} for v4.1 into the @i{/update}
-   partition. This can be the official firwmare or one you built yourself.
+   @item Copy your own @t{wrs-firmware.tar} for at least v4.1 into the
+   @i{/update} partition.
+   This can be the official firwmare or one you built yourself.
    Then reboot and wait for everything to settle (the system will reboot
    once more by itself).
 
    @item Copy @t{wrs-firmware.tar} again. And reboot again. The system
    will reboot once more by itself.
 
-   @item Now you have a running v4.1 with your @i{hwinfo} in place
+   @item Now you have a running updated version with your @i{hwinfo} in place
    and the old MAC addresses preserved.
 
 @end itemize
@@ -236,8 +237,9 @@ filesystem before rebooting.
 
 @itemize
 
-   @item Copy your own @t{wrs-firmware.tar} for v4.1 into the @i{/update}
-   partition. This can be the official firwmare or one you built yourself.
+   @item Copy your own @t{wrs-firmware.tar} for at least v4.1 into the
+   @i{/update} partition. This can be the official firwmare or one you built
+   yourself.
 
    @item Create and mount @i{/boot} within the switch. This means
    running the following commands in @i{ssh}:
@@ -391,12 +393,14 @@ served to the @sc{wrs}.
 
 Please remember that the new @t{dot-config} should include a valid
 @t{DOTCONF_URL} setting, or you won't be able to update the configuration
-at the next boot.   In any case, you can always copy a configuration
+at the next boot. In any case, you can always copy a configuration
 file using @i{ssh}, or use the web interface to change the configuration.
 Changes performed using the web interface are immediately active, because
 the web server takes proper action; the new file copied over with @i{ssh},
 or any hand-edits, are only effective at next boot, unless overwritten by
 a remote configuration file.
+In case there are errors or unknown configuration entries in the retrieved
+file, the old one will be used.
 
 @c ==========================================================================
 @node Configuration Items that Apply at Build Time
@@ -722,7 +726,7 @@ short links, you use the same wavelength in both direction, over two
 fibers of the same length. In this case you may choose to avoid
 writing the @t{wl_txrx} parameter in @sc{sfp} configuration and the
 @t{alpha_XX_XX} parameter in fiber configuration.  The missing
-parameters will cause warning messages on the console, but are not
+parameters will cause warning messages to log destination, but are not
 fatal, and a default alpha of 0 is used.
 
 If you are using a pair of transceivers with different wavelengths,
@@ -994,7 +998,7 @@ The following tools and scripts are provided:
         They are used by the init scripts of the Linux system. The LM32
         loader can also change variables in the loaded binary, and
         read or write variables without stopping the running CPU.
-        This is limited to 32-bit integer variaables, though. See the
+        This is limited to 32-bit integer variables, though. See the
         commit message for details.
 @c FIXME: document better load-lm32 for elf.
 
@@ -1349,11 +1353,11 @@ The default read-write community is @t{private}.
 
 The switch supports all the standard information through the @i{net-snmp}
 installation. The additional, switch-specific information are in the
-``enterprise.96.100 subtree, where @t{96} is CERN and @t{100} is White
+``enterprise.96.100'' subtree, where @t{96} is CERN and @t{100} is White
 Rabbit. The associated MIB is in the directory @t{userspace/snmpd},
 where related source files live as well.
 
-As in version 4.2 there is no traps support.
+As in the version 4.2 there is no support for traps.
 
 @c ==========================================================================
 @node The WRS MIB
