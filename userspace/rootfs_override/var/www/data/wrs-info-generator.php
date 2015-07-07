@@ -28,7 +28,7 @@ $options = Array (
 	Array ("KERNEL","Kernel Version","uname -r","y"),
 	Array ("KERNELCOMPILEDDATE","Kernel Compiled Date","uname -v","y"),
 	Array ("FIRMWARE","Firmware Version","/wr/bin/wrs_version  |  awk '{print $4}'","y"),
-	Array ("HARDWARE","Hardware Version","/wr/bin/wrs_version -t | grep 'scb\|back' | sort -r | sed 's/-version: /: v/'","y"),
+	Array ("HARDWARE","Hardware Version","/wr/bin/wrs_version -t | grep 'scb\|back' | sort -r | sed 's/back/ back/' | sed 's/-version: /: v/'","y"),
 	Array ("FPGA","FPGA Version","/wr/bin/wrs_version -f","y"),
 	Array ("COMPILEDBY","Compiled By",'/wr/bin/wrs_version -v | cut -d " " -f 2-',"y"),
 	Array ("MANUFACTURER","Manufacturer","/wr/bin/wrs_version -t | grep 'manufacturer' | sed 's/[^:]*: //'","y"),

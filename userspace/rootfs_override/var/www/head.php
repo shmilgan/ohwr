@@ -5,7 +5,7 @@
 
   <title>White-Rabbit Local Management Tool</title>
   <meta http-equiv="Content-Type"
- content="text/html; charset=iso-8859-1">
+ content="text/html; charset=utf-8">
   <link href="css/style.css" rel="stylesheet" type="text/css">
 
   <!-- Javascript goes in the document HEAD -->

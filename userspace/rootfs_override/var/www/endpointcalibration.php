@@ -33,7 +33,7 @@
 		$formatID = "alternatecolor";
 		$class = "altrowstable firstcol";
 		$infoname = "Endpoint Configuration";
-		$size = "7";
+		$size = "6";
 
 		$header = array ("WR port","Protocol","Tx","Rx","Mode","Fiber"); 
 		$matrix = array ("key=CONFIG_PORT00_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT00_PARAMS"], 
@@ -68,7 +68,7 @@
 		$formatID = "alternatecolor1";
 		$class = "altrowstable firstcol";
 		$infoname = "Available Fibers";
-		$size = "12";
+		$size = "10";
 		
 		$header = array ("#","Alpha"); 
 		
