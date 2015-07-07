@@ -105,20 +105,27 @@ This is the current set of manuals that accompany the @sc{wrs}:
    software from new repository commits that are not an official release
    point, or just install your @i{wrs} with custom configuration values.
 
+@item @i{White Rabbit Switch: Failures and Diagnostics}: describe various
+   failure scenarios of a switch and ways how to recognize them.
+   Additionally describe SNMP exports of a switch (WR-SWITCH-MIB).
+
 @end itemize
 
-The official @sc{pdf} copy of the three manuals at each release
-is published in The @i{files} tab of the software project in @t{ohwr.org}:
+The official @sc{pdf} copy of these manuals at each release
+is published in the @i{files} tab of the software project in @t{ohwr.org}:
 (@url{http://www.ohwr.org/projects/wr-switch-sw/files}).
 This doesn't apply to release 4.0 and earlier.
 
-The source form of all three manuals is maintained in
+The source form of first three manuals is maintained in
 @t{wr-switch-sw/doc}. Within the repository, both the @i{User's
 Manual} and the @i{Developer's Manual} are always tracking the
 software commits, while the @i{Startup Guide} may not be authoritative
 because it is bound to device shipping rather than software
 development.
 
+The source of fourth document @i{White Rabbit Switch: Failures and Diagnostics} is in
+external repository @url{git://ohwr.org/white-rabbit.git} under
+@t{docs/specifications/management}.
 @c ==========================================================================
 @node Supported Hardware Versions
 @section Supported Hardware Versions
@@ -214,7 +221,7 @@ The LM32 program is provided as a pre-compiled binary in
 
 If you need to rebuild the @t{rt_cpu.bin} file from source, to make
 your own modifications, you can run @t{make wr_switch_defconfig}
-in @i{wrpc-sw} and then @t{make}. Please checkout the @code{wr-switch-sw-v4.1}
+in @i{wrpc-sw} and then @t{make}. Please checkout the @code{wr-switch-sw-v4.2}
 tag to get the exact commit.
 
 @c --------------------------------------------------------------------------
