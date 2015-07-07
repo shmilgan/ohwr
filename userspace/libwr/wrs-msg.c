@@ -44,12 +44,14 @@ void wrs_msg_init(int argc, char **argv)
 {
 	int i;
 	int max = ARRAY_SIZE(wrs_msg_used_levels) - 1;
+	char *e;
 
 	prgname = argv[0];
 	wrs_msg_f = stderr;
 
-	if (getenv("WRS_MSG_LEVEL")) {
-		i = atoi("WRS_MSG_LEVEL");
+	e = getenv("WRS_MSG_LEVEL");
+	if (e) {
+		i = atoi(e);
 		if (i) /* not 0 (EMERG) as atoi returns 0 on error */
 			wrs_msg_level = i;
 	}
@@ -64,6 +66,8 @@ void wrs_msg_init(int argc, char **argv)
 		if (!strcmp(argv[i], "-v") && wrs_msg_pos < max)
 			wrs_msg_pos++;
 	}
+
+	wrs_msg_level = wrs_msg_used_levels[wrs_msg_pos];
 
 	/* Prepare for run-time changes */
 	signal(SIGUSR1, wrs_msg_sighandler);
