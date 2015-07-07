@@ -117,20 +117,6 @@ static int rtu_create_static_entries()
 		enabled_port_mask |= (1 << hal_ports_local_copy[i].hw_index);
 
 		port_was_up[i] = state_up(hal_ports_local_copy[i].state);
-
-		pr_info(
-		      "adding static route for port %s index %d [mac %s]\n",
-		      hal_ports_local_copy[i].name,
-		      hal_ports_local_copy[i].hw_index,
-		      mac_to_string(hal_ports_local_copy[i].hw_addr)
-		    );
-
-		err =
-		    rtu_fd_create_entry(hal_ports_local_copy[i].hw_addr, 0,
-					(1 << hal_nports_local), STATIC,
-					OVERRIDE_EXISTING);
-		if (err)
-			return err;
 	}
 
 	// Broadcast MAC
