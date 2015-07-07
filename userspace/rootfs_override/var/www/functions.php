@@ -3,7 +3,7 @@
 //Global Variables
 $etcdir="/usr/wr/etc/"; //configuration file folder for WRS
 $snmpconf="snmpd.conf";
-$ppsiconf="ppsi.conf";
+$ppsiconf="ppsi-pre.conf";
 $wrswhalconf="wrsw_hal.conf";
 $sfpdatabaseconf="sfp_database.conf";
 $wrdateconf="wr_date.conf";
@@ -220,7 +220,7 @@ function print_form($section, $subsection, $formatID, $class, $infoname, $format
 	foreach ($_SESSION[$section][$subsection] as $row) {		
 		echo "<tr>";
 		echo "<td>".$row["name"]."</td>";
-		echo '<td align="center"><INPUT type="text" value="'.$row["value"].'" name="'.$row["vname"].'" ></td>';
+		echo '<td align="center"><INPUT type="text" value="'.$row["value"].'" name="'.$row["vname"].'" title="'.$row["help"].'"></td>';
 		echo "</tr>";
 	}
 	echo '</table>';
