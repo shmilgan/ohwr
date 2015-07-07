@@ -41,10 +41,11 @@
 			
 			$username = $_POST["login"];
 			$password = $_POST["password"];
-			$saved_hash = shell_exec("cat ".$GLOBALS['phpusersfile']." | grep ".$username." | awk '{print $2}'");
+			$saved_hash = shell_exec("cat ".$GLOBALS['phpusersfile']." | grep '".$username."' | awk '{print $2}'");
+			$saved_user = shell_exec("cat ".$GLOBALS['phpusersfile']." | grep '".$username."' | awk '{print $1}'");
+			$saved_user = preg_replace('/\s+/', '', $saved_user);
 			$saved_hash = str_replace("\n","",$saved_hash);
 			$user_exists = shell_exec("cat ".$GLOBALS['phpusersfile']." | grep -c ".$username);
-			
 			
 			$salt="wrs4.0salt";
 			$pass = $password;
@@ -52,7 +53,7 @@
 			$hash_md5 = md5($salt.$pass); // md5 hash with salt #2 
 			$hash_md5_double = md5(sha1($salt.$pass)); // md5 hash with salt & sha1 #3 
 						
-			if (!strcmp($hash_md5_double,$saved_hash) && $user_exists>0){
+			if (!strcmp($hash_md5_double,$saved_hash) && $user_exists>0 && (strcmp($saved_user, $username) == 0)){
 				session_start(); 
 				$_SESSION["myusername"] = $username;
 				
