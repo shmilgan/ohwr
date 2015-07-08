@@ -36,9 +36,9 @@
 
 		if($modified){
 			save_kconfig();
-			echo '<center>Configuration Saved...</center>';
 			apply_kconfig();
-			wrs_reboot();
+			shell_exec("/etc/init.d/wrs_auxclk restart > /dev/null 2>&1 &");
+			header("Location: auxclk.php");
 		}
 	?>
 
