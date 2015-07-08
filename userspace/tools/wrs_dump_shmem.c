@@ -506,7 +506,6 @@ struct dump_info servo_state_info [] = {
 	DUMP_FIELD(UInteger32, n_err_state),
 	DUMP_FIELD(UInteger32, n_err_offset),
 	DUMP_FIELD(UInteger32, n_err_delta_rtt),
-	DUMP_FIELD(UInteger32, n_err_rxtx_deltas),
 };
 
 #undef DUMP_STRUCT

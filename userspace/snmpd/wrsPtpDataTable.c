@@ -28,7 +28,6 @@ static struct pickinfo wrsPtpDataTable_pickinfo[] = {
 	FIELD(wrsPtpDataTable_s, ASN_COUNTER, n_err_state),
 	FIELD(wrsPtpDataTable_s, ASN_COUNTER, n_err_offset),
 	FIELD(wrsPtpDataTable_s, ASN_COUNTER, n_err_delta_rtt),
-	FIELD(wrsPtpDataTable_s, ASN_COUNTER, n_err_rxtx_deltas),
 };
 
 static int32_t int_saturate(int64_t value)
@@ -97,7 +96,6 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 		wrsPtpDataTable_array[0].n_err_state = ppsi_servo->n_err_state;
 		wrsPtpDataTable_array[0].n_err_offset = ppsi_servo->n_err_offset;
 		wrsPtpDataTable_array[0].n_err_delta_rtt = ppsi_servo->n_err_delta_rtt;
-		wrsPtpDataTable_array[0].n_err_rxtx_deltas = ppsi_servo->n_err_rxtx_deltas;
 		retries++;
 		if (retries > 100) {
 			snmp_log(LOG_ERR, "%s: too many retries to read PPSI\n",

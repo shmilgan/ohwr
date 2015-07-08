@@ -18,7 +18,6 @@ static uint32_t servo_updates_prev[WRS_MAX_N_SERVO_INSTANCES];
 static uint32_t n_err_state_prev[WRS_MAX_N_SERVO_INSTANCES];
 static uint32_t n_err_offset_prev[WRS_MAX_N_SERVO_INSTANCES];
 static uint32_t n_err_delta_rtt_prev[WRS_MAX_N_SERVO_INSTANCES];
-static uint32_t n_err_rxtx_deltas_prev[WRS_MAX_N_SERVO_INSTANCES];
 
 /* store old values of TX and RX PTP counters to calculate delta */
 static unsigned long ptp_tx_count_prev[WRS_N_PORTS];
@@ -90,7 +89,10 @@ time_t wrsTimingStatus_data_fill(void)
 			|| (pd_a[i].n_err_state != n_err_state_prev[i])
 			|| (pd_a[i].n_err_offset != n_err_offset_prev[i])
 			|| (pd_a[i].n_err_delta_rtt != n_err_delta_rtt_prev[i])
-			|| (pd_a[i].n_err_rxtx_deltas != n_err_rxtx_deltas_prev[i]))) {
+			|| (pd_a[i].delta_tx_m == 0)
+			|| (pd_a[i].delta_rx_m == 0)
+			|| (pd_a[i].delta_tx_s == 0)
+			|| (pd_a[i].delta_rx_s == 0))) {
 			wrsTimingStatus_s.wrsPTPStatus = WRS_PTP_STATUS_ERROR;
 			snmp_log(LOG_ERR, "SNMP: wrsPTPStatus "
 					  "failed for instance %d\n", i);
@@ -104,7 +106,6 @@ time_t wrsTimingStatus_data_fill(void)
 		n_err_state_prev[i] = pd_a[i].n_err_state;
 		n_err_offset_prev[i] = pd_a[i].n_err_offset;
 		n_err_delta_rtt_prev[i] = pd_a[i].n_err_delta_rtt;
-		n_err_rxtx_deltas_prev[i] = pd_a[i].n_err_rxtx_deltas;
 	}
 
 	/*********************************************************************\

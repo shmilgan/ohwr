@@ -1541,8 +1541,7 @@ WrsPtpDataEntry ::=
         wrsPtpDeltaRxS          Integer32,
         wrsPtpServoStateErrCnt  Counter32,
         wrsPtpClockOffsetErrCnt Counter32,
-        wrsPtpRTTErrCnt         Counter32,
-        wrsPtpDeltaRxTxErrCnt   Counter32
+        wrsPtpRTTErrCnt         Counter32
     }
 
 wrsPtpDataIndex OBJECT-TYPE
@@ -1736,14 +1735,6 @@ wrsPtpRTTErrCnt OBJECT-TYPE
     DESCRIPTION
             "Number of servo updates with wrong RTT"
     ::= { wrsPtpDataEntry 22 }
-
-wrsPtpDeltaRxTxErrCnt OBJECT-TYPE
-    SYNTAX      Counter32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-            "Number of servo updates with wrong Delta TX/RX M/S"
-    ::= { wrsPtpDataEntry 23 }
 
 -- wrsPortStatusTable (.7.6)
 wrsPortStatusTable OBJECT-TYPE
