@@ -110,6 +110,14 @@
 							<td>Broadcast: </td>
 							<td><INPUT type="text" value="192.168.1.255" name="broadcast" ></td>
 						</tr>
+						<tr>
+							<td>Network: </td>
+							<td><INPUT type="text" value="192.168.1.0" name="network" ></td>
+						</tr>
+						<tr>
+							<td>Gateway: </td>
+							<td><INPUT type="text" value="192.168.1.1" name="gateway" ></td>
+						</tr>
 					</table>
 					<INPUT type="submit" value="Save New Configuration" class="btn last">
 					<INPUT type="hidden" value="DHCPONCE" name="dhcp">
@@ -133,6 +141,14 @@
 							<td>Broadcast: </td>
 							<td><INPUT type="text" value="192.168.1.255" name="broadcast" ></td>
 						</tr>
+						<tr>
+							<td>Network: </td>
+							<td><INPUT type="text" value="192.168.1.0" name="network" ></td>
+						</tr>
+						<tr>
+							<td>Gateway: </td>
+							<td><INPUT type="text" value="192.168.1.1" name="gateway" ></td>
+						</tr>
 					</table>
 					<INPUT type="submit" value="Save New Configuration" class="btn last">
 					</FORM>';
@@ -141,15 +157,14 @@
 
 		if ((!empty($_POST["ip"])) && (!empty($_POST["netmask"])) && (!empty($_POST["broadcast"]))){
 
-			
 			if (!empty($_POST["dhcp"])){
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP_ONCE"]="y";
 				
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_IP"]=$_POST["ip"];
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_MASK"]=$_POST["netmask"];
-				$_SESSION["KCONFIG"]["CONFIG_ETH0_NETWORK"]="";
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_NETWORK"]=$_POST["network"];
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_BROADCAST"]=$_POST["broadcast"];
-				$_SESSION["KCONFIG"]["CONFIG_ETH0_GATEWAY"]="";
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_GATEWAY"]=$_POST["gateway"];
 				
 				check_add_existing_kconfig("CONFIG_ETH0_DHCP_ONCE=");
 				check_add_existing_kconfig("CONFIG_ETH0_IP=");
@@ -168,9 +183,9 @@
 				
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_IP"]=$_POST["ip"];
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_MASK"]=$_POST["netmask"];
-				$_SESSION["KCONFIG"]["CONFIG_ETH0_NETWORK"]="";
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_NETWORK"]=$_POST["network"];
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_BROADCAST"]=$_POST["broadcast"];
-				$_SESSION["KCONFIG"]["CONFIG_ETH0_GATEWAY"]="";
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_GATEWAY"]=$_POST["gateway"];
 				
 				check_add_existing_kconfig("CONFIG_ETH0_STATIC=");
 				check_add_existing_kconfig("CONFIG_ETH0_IP=");
