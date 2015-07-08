@@ -356,8 +356,10 @@ function wrs_interface_setup(){
 		return "dhcponly";
 	else if (!empty($_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP_ONCE"]))
 		return "dhcponce";
-	else
+	else if (!empty($_SESSION["KCONFIG"]["CONFIG_ETH0_STATIC"]))
 		return "static";
+	else
+		return "dhcponly";
 }
 /*
  * It checks whether the filesystem is writable or not.
