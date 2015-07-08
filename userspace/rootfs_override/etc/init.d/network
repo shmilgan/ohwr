@@ -21,8 +21,11 @@ fi
 
 # kill all previous instances of udhcpc
 killall udhcpc &> /dev/null
-# put eth0 down in case it was up before
-ifdown eth0 &> /dev/null
+# put eth0 down in case it was up before, flush to aviod ifup complains
+ip addr flush dev eth0
+ip link set eth0 down
+# wait after down to make udhcpc to work properly
+sleep 1
 
 if [ "$CONFIG_ETH0_STATIC" ] || [ "$CONFIG_ETH0_DHCP_ONCE" ]; then
     echo "Write IP address"
