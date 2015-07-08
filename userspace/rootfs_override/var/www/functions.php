@@ -341,8 +341,13 @@ function check_snmp_status(){
 }
 
 function check_monit_status(){
-	$output = intval(shell_exec("ps aux | grep -c monit"));
-	return ($output>2) ? 1 : 0;	
+	$output = shell_exec("/bin/ps axo command,state | grep '^/usr/bin/monit' | awk '{print $2}'");
+
+	if(empty($output) || (strpos($output,'T') !== false)){
+		return 0; /* monit is disabled or not in dotconfig */
+	}else{
+		return 1; /* monit is running */
+	}
 }
 
 function wrs_interface_setup(){
@@ -763,11 +768,13 @@ function wrs_management(){
 			if(check_monit_status()){ //It is running
 				
 				//Stop SNMP
-				shell_exec("/bin/sh /etc/init.d/monit.sh stop > /dev/null 2>&1 &");
+				shell_exec("/etc/init.d/monit.sh stop > /dev/null 2>&1 &");
+				echo "i have disable it<br>";
 				
 			}else{ //Not running
 				
-				shell_exec("/bin/sh /etc/init.d/monit.sh start > /dev/null 2>&1 &");
+				shell_exec("/etc/init.d/monit.sh start > /dev/null 2>&1 &");
+				echo "i have enable it<br>";
 				
 			}
 			
