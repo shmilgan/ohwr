@@ -327,7 +327,8 @@ static int hal_port_link_down(struct hal_port_state * p, int link_up)
 				rts_set_mode(RTS_MODE_GM_FREERUNNING);
 		}
 
-		shw_sfp_set_led_link(p->hw_index, 0);
+		/* turn off link/wrmode LEDs */
+		shw_sfp_set_generic(p->hw_index, 0, SFP_LED_WRMODE_OFF);
 		p->state = HAL_PORT_STATE_LINK_DOWN;
 		hal_port_reset_state(p);
 
@@ -380,8 +381,17 @@ static void hal_port_fsm(struct hal_port_state * p)
 
 				p->tx_cal_pending = 0;
 				p->rx_cal_pending = 0;
-
-				shw_sfp_set_led_link(p->hw_index, 1);
+				/* set link/wrmode LEDs */
+				if (p->mode == HEXP_PORT_MODE_WR_SLAVE) {/* slave */
+					shw_sfp_set_generic(p->hw_index, 1,
+							    SFP_LED_WRMODE_SLAVE);
+				} else if (p->mode == HEXP_PORT_MODE_NON_WR) {/* non-wr */
+					shw_sfp_set_generic(p->hw_index, 1,
+							    SFP_LED_WRMODE_NON_WR);
+				} else { /* master or other */
+					shw_sfp_set_generic(p->hw_index, 1,
+							    SFP_LED_WRMODE_MASTER);
+				}
 				pr_info("%s: link up\n", p->name);
 				p->state = HAL_PORT_STATE_UP;
 			}
