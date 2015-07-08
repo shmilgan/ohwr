@@ -21,7 +21,11 @@ fi
 
 # kill all previous instances of udhcpc
 killall udhcpc &> /dev/null
-# put eth0 down in case it was up before, flush to aviod ifup complains
+# put eth0 down in case it was up before, but it is not so simple
+# ifdown to change /var/run/ifstate
+# flush to aviod ifup complains
+# down to take link down (after reboot ifdown does not put link down)
+ifdown eth0 &> /dev/null
 ip addr flush dev eth0
 ip link set eth0 down
 # wait after down to make udhcpc to work properly
