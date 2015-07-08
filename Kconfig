@@ -444,7 +444,7 @@ config SNMP_RW_COMMUNITY
 
 config SNMP_TEMP_THOLD_FPGA
 	int "Threshold level for FPGA temperature"
-	default "0"
+	default "80"
 	help
 	  Threshold level for FPGA temperature, when exceeded warning is
 	  notified by SNMP via WR-SWITCH-MIB::wrsTemperatureWarning
@@ -452,7 +452,7 @@ config SNMP_TEMP_THOLD_FPGA
 
 config SNMP_TEMP_THOLD_PLL
 	int "Threshold level for PLL temperature"
-	default "0"
+	default "80"
 	help
 	  Threshold level for PLL temperature, when exceeded warning is
 	  notified by SNMP via WR-SWITCH-MIB::wrsTemperatureWarning
@@ -460,7 +460,7 @@ config SNMP_TEMP_THOLD_PLL
 
 config SNMP_TEMP_THOLD_PSL
 	int "Threshold level for Power Supply Left (PSL) temperature"
-	default "0"
+	default "80"
 	help
 	  Threshold level for Power Supply Left (PSL) temperature, when
 	  exceeded warning is notified by SNMP via
@@ -469,7 +469,7 @@ config SNMP_TEMP_THOLD_PSL
 
 config SNMP_TEMP_THOLD_PSR
 	int "Threshold level for Power Supply Right (PSR) temperature"
-	default "0"
+	default "80"
 	help
 	  Threshold level for Power Supply Right (PSR) temperature, when
 	  exceeded warning is notified by SNMP via

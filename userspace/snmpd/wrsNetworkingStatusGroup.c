@@ -78,6 +78,7 @@ static int get_endpoint_status(struct ns_pstats *old,
 	return ret;
 }
 
+/* don't use this function for now, return OK */
 static int get_swcore_status(struct ns_pstats *old,
 			       struct wrsPstatsTable_s *new, unsigned int rows,
 			       float t_delta)
@@ -86,11 +87,15 @@ static int get_swcore_status(struct ns_pstats *old,
 	int ret;
 	ret = 0;
 
+	/* don't use this function for now, return OK */
+	return ret;
+
 	for (i = 0; i < rows; i++) {
 		/* TXFrames and Forwarded described in 2.2.3 "Problem with the
 		 * SwCore or Endpoint HDL module" in wrs_failures document
 		 * shouldn't differ more than FORWARD_DELTA in total */
-/* counter Forwarded (38) is not implemented in HDL!!! */
+/* counter Forwarded (38) is implemented in HDL, but does not count PTP
+ * traffic!!! */
 #if 0
 		if ( /* shouldn't differ more than FORWARD_DELTA */
 		     ((new[i].TXFrames - new[i].Forwarded) > FORWARD_DELTA)
