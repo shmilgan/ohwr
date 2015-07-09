@@ -42,6 +42,18 @@ fi
 
 ##### Actual configuration actions start here.
 
+# Root password
+passwd=""
+if [ ! -z "$CONFIG_ROOT_PWD_CLEAR" ]; then
+    passwd=$(mkpasswd --method=md5 "$CONFIG_ROOT_PWD_CLEAR")
+fi
+if [ ! -z "$CONFIG_ROOT_PWD_CYPHER" ]; then
+    passwd="$CONFIG_ROOT_PWD_CYPHER"
+fi
+if [ ! -z "$passwd" ]; then
+    sed -i "s,^root:[^:]*:,root:$passwd:," /etc/shadow
+fi
+
 # A non-existent wr_date.conf means no NTP. So "rm" if unconfigured
 if [ ! -z "$CONFIG_NTP_SERVER" ]; then
     echo "ntpserver $CONFIG_NTP_SERVER" > $T

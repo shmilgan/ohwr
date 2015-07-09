@@ -98,6 +98,37 @@ config ETH0_GATEWAY
 
 endmenu
 
+menu "Root Password"
+
+config ROOT_PWD_IS_ENCRYPTED
+	bool "Should this file include an encripted root password?"
+	help
+	  The root password, as set here, can be in clear text or
+	  encrypted. If it is specified as clear text, it is encrypted and
+	  stored in the switch at run time.  If it specified in pre-encrypted
+	  form, the string will just be copied in place. A clear-text
+	  password in dot-config is less safe against sniffers.
+
+config ROOT_PWD_CLEAR
+	string "The password to be used at run time"
+	depends on !ROOT_PWD_IS_ENCRYPTED
+	default ""
+	help
+	  The string to be encrypted at boot time by the switch itself,
+	  to later use normal ssh authentication. The empty string is
+	  allowed.
+
+config ROOT_PWD_CYPHER
+	string "The password to be used at run time"
+	depends on ROOT_PWD_IS_ENCRYPTED
+	help
+	  The actual pre-encrypted string. This is stored at run time
+	  into /etc/passwd, for ssh authenticazion. To create the
+	  string, please run "mkpasswd --method=md5 <password>"
+
+endmenu
+
+
 config NTP_SERVER
 	string "IP address of local NTP server (empty for none)"
 	help
