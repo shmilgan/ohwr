@@ -26,9 +26,10 @@
 	<?php 
 	
 		$formatID = "alternatecolor";
-		$class = "altrowstable firstcol";
+		$class = "altrowstablesmall firstcol";
 		$infoname = "SFP Calibration";
-		$size = "7";
+		$size = "13";
+		$font_size = "10px";
 		$vn = 0;
 		$vs = 0;
 		$counter = 0;
@@ -83,30 +84,30 @@
 					echo '<INPUT type="hidden" value="'.$columns[1].'" name="key'.$i.'" >';
 				}
 				if($columns[0]=="vn"){
-					echo '<td align="center"><INPUT size="'.$size.'" type="text" value="'.$columns[1].'" name="vn'.$i.'" ></td>';
+					echo '<td align="center"><INPUT  style="font-size: '.$font_size.';" size="'.$size.'" type="text" value="'.$columns[1].'" name="vn'.$i.'" ></td>';
 				}else if ($columns[0]<>"vn" && $j==1){
-					echo '<td align="center"><INPUT size="'.$size.'" type="text" value="" name="vn'.$i.'" ></td>';
+					echo '<td align="center"><INPUT  style="font-size: '.$font_size.';" size="'.$size.'" type="text" value="" name="vn'.$i.'" ></td>';
 				}
 				if($columns[0]=="vs"){
-					echo '<td align="center"><INPUT size="'.$size.'" type="text" value="'.$columns[1].'" name="vs'.$i.'" ></td>';
+					echo '<td align="center"><INPUT style="font-size: '.$font_size.';" size="'.$size.'" type="text" value="'.$columns[1].'" name="vs'.$i.'" ></td>';
 				}else if($columns[0]<>"vs" && $j==2){
-					echo '<td align="center"><INPUT size="'.$size.'" type="text" value=""  name="vs'.$i.'" ></td>';
+					echo '<td align="center"><INPUT style="font-size: '.$font_size.';" size="'.$size.'" type="text" value=""  name="vs'.$i.'" ></td>';
 				}
 				if($columns[0]=="pn"){
-					echo '<td align="center"><INPUT size="'.$size.'" type="text" value="'.$columns[1].'" name="pn'.$i.'" ></td>';
+					echo '<td align="center"><INPUT style="font-size: '.$font_size.';"  size="'.$size.'" type="text" value="'.$columns[1].'" name="pn'.$i.'" ></td>';
 				}
 				if($columns[0]=="tx"){
-					echo '<td align="center"><INPUT size="'.($size/2).'" type="text" value="'.$columns[1].'" name="tx'.$i.'" ></td>';
+					echo '<td align="center"><INPUT style="font-size: '.$font_size.';"  size="'.($size/3).'" type="text" value="'.$columns[1].'" name="tx'.$i.'" ></td>';
 				}
 				if($columns[0]=="rx"){
-					echo '<td align="center"><INPUT size="'.($size/2).'" type="text" value="'.$columns[1].'" name="rx'.$i.'" ></td>';
+					echo '<td align="center"><INPUT style="font-size: '.$font_size.';"  size="'.($size/3).'" type="text" value="'.$columns[1].'" name="rx'.$i.'" ></td>';
 				}
 				if($columns[0]=="wl_txrx" ){
-					echo '<td align="center"><INPUT size="'.$size.'" type="text" value="'.$columns[1].'" name="wl_txrx'.$i.'" ></td>';
+					echo '<td align="center"><INPUT style="font-size: '.$font_size.';"  size="'.($size-4).'" type="text" value="'.$columns[1].'" name="wl_txrx'.$i.'" ></td>';
 				}
 				
 			}
-			echo '<td align="center"><a href="deletesfp.php?id='.$i.'">delete</a></td>';
+			echo '<td align="center"><a href="deletesfp.php?id='.$i.'"><img src="img/delete.png" title="Delete SFP"></a></td>';
 			echo "</tr>";
 			$i++;
 		}
@@ -154,7 +155,11 @@
 			
 		}
 		
-		echo '<hr><p align="right">Click <A HREF="sfpcalibration.php?add=y">here</A> to a new SFP</p>';
+		echo '<hr><div align="right">
+				<A HREF="sfpcalibration.php?add=y">
+				<img src="img/add.png" style="width:30px;height:30px;vertical-align:center">
+				<span style="">Add new SFP</span></A>
+				</div>';
 		
 	?>
 	
