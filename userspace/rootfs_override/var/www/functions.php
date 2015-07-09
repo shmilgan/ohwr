@@ -341,7 +341,7 @@ function check_snmp_status(){
 }
 
 function check_monit_status(){
-	$output = shell_exec("/bin/ps axo command,state | grep '^/usr/bin/monit' | awk '{print $2}'");
+	$output = shell_exec("/bin/ps axo command,state | grep '^/usr/bin/monit' | awk '{print $NF}'");
 
 	if(empty($output) || (strpos($output,'T') !== false)){
 		return 0; /* monit is disabled or not in dotconfig */
@@ -731,7 +731,7 @@ function wrs_management(){
 			
 			//Prepare backup
 			$date = date('Ymd-His');
-			$backupfile="wrs-".$GLOBALS['kconfigfilename'].$date.".backup";
+			$backupfile="wrs_".$_SESSION["WRS_INFO"][SERIALNUMBER]."-".$GLOBALS['kconfigfilename'].$date.".backup";
 			shell_exec("cd ".$GLOBALS['etcdir']."; cp ".$GLOBALS['kconfigfilename']." /var/www/download/".$backupfile);
 			$backupfile="/download/$backupfile";
 			
@@ -767,19 +767,14 @@ function wrs_management(){
 			header('Location: management.php');
 		} else if (!strcmp($cmd, "monit")){
 			
-			if(check_monit_status()){ //It is running
-				
+			if(check_monit_status()){ //It is running	
 				//Stop SNMP
 				shell_exec("/etc/init.d/monit.sh stop > /dev/null 2>&1 &");
-				echo "i have disable it<br>";
-				
 			}else{ //Not running
-				
-				shell_exec("/etc/init.d/monit.sh start > /dev/null 2>&1 &");
-				echo "i have enable it<br>";
-				
+				shell_exec("/etc/init.d/monit.sh start > /dev/null 2>&1 &");				
 			}
 			
+			sleep(2);
 			header('Location: management.php');
 		}
 
@@ -1076,27 +1071,27 @@ function wrs_display_help($help_id, $name){
 						clk2 SMC connector.";
 		$message .= "By default wrs auxclk is called by init scripts to generate 10MHz clock signal with 50% duty
 						cycle. This configuration can be modified by using various options:";
-		$message .= "<br><b><ul><li> freq <f> --> Desired frequency of the generated clock signal in MHz. Available range from 4kHz
-						to 250MHz.</b></li>";
-		$message .= "<br><b><li>duty <frac> --> Desired duty cycle given as a fraction (e.g. 0.5, 0.4).</b></li>";
-		$message .= "<br><b><li>cshift <csh> --> Coarse shift (granularity 2ns) of the generated clock signal. This parameter can be
+		$message .= "<br><b><ul><li> freq <f> </b>--> Desired frequency of the generated clock signal in MHz. Available range from 4kHz
+						to 250MHz.</li>";
+		$message .= "<br><b><li>duty <frac></b> --> Desired duty cycle given as a fraction (e.g. 0.5, 0.4).</li>";
+		$message .= "<br><b><li>cshift <csh></b> --> Coarse shift (granularity 2ns) of the generated clock signal. This parameter can be
 						used to get desired delay relation between generated 1-PPS and clk2. The delay
 						between 1-PPS and clk2 is constant for a given bitstream but may be different
 						for various hardware versions and re-synthesized gateware. Therefore it should be
-						measured and adjusted only once for given hardware and gateware version.</b></li>";
-		$message .= "<br><b><li>sigdel <steps> --> Clock signal generated from the FPGA is cleaned by a discrete flip-flop. It may
+						measured and adjusted only once for given hardware and gateware version.</li>";
+		$message .= "<br><b><li>sigdel <steps></b> --> Clock signal generated from the FPGA is cleaned by a discrete flip-flop. It may
 						happen that generated aux clock is in phase with the flip-flop clock. In that case
 						it is visible on the oscilloscope that clk2 clock is jittering by 4ns. The --sigdel
 						parameter allows to add a precise delay to the FPGA-generated clock to avoid such
 						jitter. This delay is specified in steps, where each step is around 150ps. This value,
 						same as the --cshift parameter, is constant for a given bitstream so should be
-						verified only once..</b></li>";
-		$message .= "<br><b><li>ppshift <steps> --> If one needs to precisely align 1-PPS output with the clk2 aux clock using --cshift
+						verified only once..</li>";
+		$message .= "<br><b><li>ppshift <steps></b>--> If one needs to precisely align 1-PPS output with the clk2 aux clock using --cshift
 						parameter is not enough as it has 4ns granularity. In that case --ppshift lets you
 						shift 1-PPS output by a configured number of 150ps steps. However, please have in
 						mind that 1-PPS output is used as a reference for WR calibration procedure. There-
 						fore, once this parameter is modified, the device should be re-calibrated. Otherwise,
-						1-PPS output will be shifted from the WR timescale by <steps>*150ps.</b></li>";
+						1-PPS output will be shifted from the WR timescale by <steps>*150ps.</li>";
 		$message .= "<br><center><b>Please refer to the WRS manual to configure correctly this feature.<br></center>
 					</p>";
 	} else if (!strcmp($help_id, "dotconfig")){
