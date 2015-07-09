@@ -32,8 +32,6 @@ start() {
 	echo "Failed (already running?)"
     else
 	eval /wr/bin/wrsw_rtud $LOGPIPE \&
-	# ensure we receive UDP PTP frames, since ppsi supports UDP too.
-	/wr/bin/rtu_stat add 01:00:5e:00:01:81 18 0 &
 	echo "OK"
     fi
 }
