@@ -17,7 +17,7 @@
 
 /* autoconf in cpp macros */
 #ifdef linux
-# define ENABLE_NLS
+# undef ENABLE_NLS
 #endif
 
 #ifdef __FreeBSD__
