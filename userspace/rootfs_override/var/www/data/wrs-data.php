@@ -218,31 +218,31 @@ $WRS_FORMS = Array(
 	CONFIG_WRSAUXCLK => Array(
 		CONFIG_WRSAUXCLK_00 => Array(
 			key => "CONFIG_WRSAUXCLK_FREQ",
-			name => "Aux. Clock Frequency",
+			name => "Frequency",
 			value => $_SESSION["KCONFIG"]["CONFIG_WRSAUXCLK_FREQ"],
 			vname => "auxclkfreq",
 		),
 		CONFIG_WRSAUXCLK_01 => Array(
 			key => "CONFIG_WRSAUXCLK_DUTY",
-			name => "Aux. Clock Duty",
+			name => "Duty",
 			value => $_SESSION["KCONFIG"]["CONFIG_WRSAUXCLK_DUTY"],
 			vname => "auxclkduty",
 		),
 		CONFIG_WRSAUXCLK_02 => Array(
 			key => "CONFIG_WRSAUXCLK_CSHIFT",
-			name => "Aux. Clock C. Shift",
+			name => "C. Shift",
 			value => $_SESSION["KCONFIG"]["CONFIG_WRSAUXCLK_CSHIFT"],
 			vname => "auxclkcshift",
 		),
 		CONFIG_WRSAUXCLK_03 => Array(
 			key => "CONFIG_WRSAUXCLK_SIGDEL",
-			name => "Aux. Clock Signal",
+			name => "Signal",
 			value => $_SESSION["KCONFIG"]["CONFIG_WRSAUXCLK_SIGDEL"],
 			vname => "auxclksigdel",
 		),
 		CONFIG_WRSAUXCLK_04 => Array(
 			key => "CONFIG_WRSAUXCLK_PPSHIFT",
-			name => "Aux. Clock  PP. Shift",
+			name => "PP. Shift",
 			value => $_SESSION["KCONFIG"]["CONFIG_WRSAUXCLK_PPSHIFT"],
 			vname => "auxclkppshift",
 		),
