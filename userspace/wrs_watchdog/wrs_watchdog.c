@@ -216,39 +216,6 @@ void write_pidfile(char *file, pid_t pid)
 	fclose(f);
 }
 
-void daemonize(char *file)
-{
-	pid_t pid, sid;
-
-	if (getppid() == 1)
-		return;
-	pid = fork();
-	if (pid < 0) {
-		exit(EXIT_FAILURE);
-	}
-	if (pid > 0) {
-		write_pidfile(file, pid);
-		exit(EXIT_SUCCESS);
-	}
-
-	/* At this point we are executing as the child process */
-
-	/* Change the file mode mask */
-	umask(0);
-	/* Create a new SID for the child process */
-	sid = setsid();
-	if (sid < 0) {
-		exit(EXIT_FAILURE);
-	}
-	/* Change the current working directory.  This prevents the current
-	   directory from being locked; hence not being able to remove it. */
-	if ((chdir("/")) < 0) {
-		exit(EXIT_FAILURE);
-	}
-	/* Redirect stdin to /dev/null -- keep output/error: they are logged */
-	freopen("/dev/null", "r", stdin);
-}
-
 void endless_watchdog(void)
 {
 	struct swc_fsms fsms[19];
@@ -281,7 +248,7 @@ void print_help(char *prgname)
 	printf("wrs_watchdog. Commit %s, built on " __DATE__ "\n",
 	       __GIT_VER__);
 	printf("usage: %s <options>\n", prgname);
-	printf("   -d        Run as daemon in the background\n"
+	printf("   -d        Run as daemon\n"
 		"   -l        List FSMs state for all ports\n"
 		"   -n <8/18> Set the number of ports\n"
 		"   -g        Show current value of the restart counter\n"
@@ -351,7 +318,8 @@ int main(int argc, char *argv[])
 	if (daemon_mode) {
 		wrs_msg(LOG_ALERT, "wrs_watchdog. Commit %s, built on "
 			__DATE__ "\n", __GIT_VER__);
-		daemonize(pidfile);
+
+		write_pidfile(pidfile, getpid());
 		pr_info("Demonize\n");
 		endless_watchdog();
 	}
