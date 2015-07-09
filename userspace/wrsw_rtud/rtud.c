@@ -93,6 +93,7 @@ static int rtu_create_static_entries()
 	uint8_t bcast_mac[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 	uint8_t slow_proto_mac[] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x01 };
 	uint8_t ptp_mcast_mac[] = { 0x01, 0x1b, 0x19, 0x00, 0x00, 0x00 };
+	uint8_t udp_ptp_mac[] = { 0x01, 0x00, 0x5e, 0x00, 0x01, 0x81 };
 	int i, err;
 	uint32_t enabled_port_mask = 0;
 
@@ -117,21 +118,15 @@ static int rtu_create_static_entries()
 		enabled_port_mask |= (1 << hal_ports_local_copy[i].hw_index);
 
 		port_was_up[i] = state_up(hal_ports_local_copy[i].state);
-
-		pr_info(
-		      "adding static route for port %s index %d [mac %s]\n",
-		      hal_ports_local_copy[i].name,
-		      hal_ports_local_copy[i].hw_index,
-		      mac_to_string(hal_ports_local_copy[i].hw_addr)
-		    );
-
-		err =
-		    rtu_fd_create_entry(hal_ports_local_copy[i].hw_addr, 0,
-					(1 << hal_nports_local), STATIC,
-					OVERRIDE_EXISTING);
-		if (err)
-			return err;
 	}
+
+	/* PTP over UDP */
+	pr_info("adding entry for PTP over UDP\n");
+	err =
+		rtu_fd_create_entry(udp_ptp_mac, 0, (1 << hal_nports_local),
+				    STATIC, OVERRIDE_EXISTING);
+	if (err)
+		return err;
 
 	// Broadcast MAC
 	pr_info("adding static route for broadcast MAC...\n");
@@ -139,6 +134,9 @@ static int rtu_create_static_entries()
 	    rtu_fd_create_entry(bcast_mac, 0,
 				enabled_port_mask | (1 << hal_nports_local),
 				STATIC, OVERRIDE_EXISTING);
+	if (err)
+		return err;
+
 	err =
 	    rtu_fd_create_entry(ptp_mcast_mac, 0,
 				(1 << hal_nports_local), STATIC,
