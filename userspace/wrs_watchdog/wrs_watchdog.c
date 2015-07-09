@@ -32,6 +32,9 @@
 #include <regs/wdog-regs.h>
 #include "wrs_watchdog.h"
 
+#include <libwr/shmem.h>
+#include <libwr/hal_shmem.h>
+
 #define RST_THR 2
 
 #define wdog_write(reg, val) \
@@ -43,7 +46,63 @@
 static char *prgname;
 int daemon_mode;
 int list_mode;
-int port_num = 18;
+int port_num = 0;
+
+int get_nports_from_hal(void)
+{
+	struct hal_shmem_header *h;
+	struct wrs_shm_head *hal_head;
+	int hal_nports_local; /* local copy of number of ports */
+	int ii;
+	int n_wait = 0;
+
+	/* wait forever for HAL */
+	while (!(hal_head = wrs_shm_get(wrs_shm_hal, "",
+				WRS_SHM_READ | WRS_SHM_LOCKED))) {
+		if (n_wait > 5) {
+			/* print if waiting more than 5 seconds, some waiting
+			 * is expected since hal requires few seconds to start
+			 */
+			pr_error("unable to open shm for HAL!\n");
+		}
+		n_wait++;
+		sleep(1);
+	}
+
+	h = (void *)hal_head + hal_head->data_off;
+
+	n_wait = 0;
+	while (1) { /* wait forever for HAL to produce consistent nports */
+		ii = wrs_shm_seqbegin(hal_head);
+		/* Assume number of ports does not change in runtime */
+		hal_nports_local = h->nports;
+		if (!wrs_shm_seqretry(hal_head, ii))
+			break;
+		if (n_wait > 5) {
+			/* print if waiting more than 5 seconds, some waiting
+			 * is expected since hal requires few seconds to start
+			 */
+			pr_error("Wait for HAL.\n");
+
+		}
+		n_wait++;
+		sleep(1);
+	}
+
+	/* check hal's shm version */
+	if (hal_head->version != HAL_SHMEM_VERSION) {
+		pr_error("unknown hal's shm version %i (known is %i)\n",
+			 hal_head->version, HAL_SHMEM_VERSION);
+		exit(-1);
+	}
+
+	if (hal_nports_local > HAL_MAX_PORTS) {
+		pr_error("Too many ports reported by HAL. %d vs %d "
+			 "supported\n", hal_nports_local, HAL_MAX_PORTS);
+		exit(-1);
+	}
+	return hal_nports_local;
+}
 
 uint32_t show_counter(void)
 {
@@ -243,6 +302,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'n':
 			port_num = atoi(optarg);
+			pr_info("Read %d ports from cmdline\n", port_num);
 			break;
 		case 'h':
 		default:
@@ -251,12 +311,19 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (!port_num) {
+		/* if port_num not read from parameter read it from HAL */
+		port_num = get_nports_from_hal();
+		pr_info("Read %d ports from HAL\n", port_num);
+	}
+
 	if (!daemon_mode && list_mode) {
 		list_fsms();
 	}
 
 	if (daemon_mode) {
 		daemonize();
+		pr_info("Demonize\n");
 		endless_watchdog();
 	}
 
