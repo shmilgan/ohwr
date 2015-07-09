@@ -89,7 +89,11 @@
 			
 			print_info($section, $subsection, $formatID, $class, $infoname, $format);
 			
-			echo '<br><center>"DHCP Only" is now set for eth0<br>Changes will take place after <a href="reboot.php">reboot</a>.</center>';
+			echo '<br><div id="alert"><center>"DHCP Only" is now set for eth0<br>
+				Changes will take place after reboot.</center></div>';
+			echo '<form action="reboot.php">
+						<INPUT style="float: right;" type="submit" value="Reboot Now" class="btn last">
+						</form>';
 		}
 		
 		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"DHCPONCE"))){
@@ -176,7 +180,11 @@
 				delete_from_kconfig("CONFIG_ETH0_DHCP=");
 				delete_from_kconfig("CONFIG_ETH0_STATIC=");
 				
-				echo '<br><center>"DHCP Once" is now set for eth0<br>Changes will take place after <a href="reboot.php">reboot</a>.</center>';
+				echo '<br><div id="alert"><center>"DHCP Once" is now set for eth0<br>
+					Changes will take place after reboot.</center></div>';
+				echo '<form action="reboot.php">
+						<INPUT style="float: right;" type="submit" value="Reboot Now" class="btn last">
+						</form>';
 				
 			}else{
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_STATIC"]="y";
@@ -197,7 +205,12 @@
 				delete_from_kconfig("CONFIG_ETH0_DHCP_ONCE=");
 				delete_from_kconfig("CONFIG_ETH0_DHCP=");
 				
-				echo '<br><center>"Static Only" is now set for eth0<br>Changes will take place after <a href="reboot.php">reboot</a>.</center>';
+				
+				echo '<br><div id="alert"><center>"Static Only" is now set for eth0<br>
+					Changes will take place after reboot.</center></div>';
+				echo '<form action="reboot.php">
+						<INPUT style="float: right;" type="submit" value="Reboot Now" class="btn last">
+						</form>';
 			}
 			
 			save_kconfig();
