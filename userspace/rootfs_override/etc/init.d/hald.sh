@@ -48,6 +48,8 @@ stop() {
 
 restart() {
     stop
+    # give HAL time to stop his child
+    sleep 1
     start
 }
 
