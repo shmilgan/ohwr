@@ -230,6 +230,7 @@ int hal_port_init_all()
 	/* We are done, mark things as valid */
 	hal_shmem->nports = hal_port_nports;
 	hal_shmem_hdr->version = HAL_SHMEM_VERSION;
+	hal_shmem->hal_mode = hal_get_timing_mode();
 	/* Release processes waiting for HAL's to fill shm with correct data
 	   When shm is opened successfully data in shm is still not populated!
 	   Read data with wrs_shm_seqbegin and wrs_shm_seqend!

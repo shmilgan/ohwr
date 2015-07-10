@@ -238,6 +238,7 @@ void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
 #define DUMP_STRUCT struct hal_shmem_header
 struct dump_info hal_shmem_info [] = {
 	DUMP_FIELD(int, nports),
+	DUMP_FIELD(int, hal_mode),
 	DUMP_FIELD(sensor_temp, temp.fpga),
 	DUMP_FIELD(sensor_temp, temp.pll),
 	DUMP_FIELD(sensor_temp, temp.psl),
