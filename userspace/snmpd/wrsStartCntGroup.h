@@ -12,6 +12,7 @@ struct wrsStartCnt_s {
 	uint32_t wrsStartCntHttpd;
 	uint32_t wrsStartCntSnmpd;
 	uint32_t wrsStartCntSyslogd;
+	uint32_t wrsStartCntWrsWatchdog;
 };
 
 extern struct wrsStartCnt_s wrsStartCnt_s;

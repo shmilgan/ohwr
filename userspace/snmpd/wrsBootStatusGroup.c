@@ -18,6 +18,9 @@
 /* get process list, output only process' command */
 #define PROCESS_COMMAND "/bin/ps axo command"
 
+/* get number of GW watchdog timeouts */
+#define WDOG_COMMAND "/wr/bin/wrs_watchdog -g"
+
 /* Macros for fscanf function to read line with maximum of "x" characters
  * without new line. Macro expands to something like: "%10[^\n]" */
 #define LINE_READ_LEN_HELPER(x) "%"#x"[^\n]"
@@ -42,6 +45,7 @@ static struct pickinfo wrsBootStatus_pickinfo[] = {
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootLoadLM32),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootKernelModulesMissing),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootUserspaceDaemonsMissing),
+	FIELD(wrsBootStatus_s, ASN_COUNTER, wrsGwWatchdogTimeouts),
 };
 
 struct wrsBootStatus_s wrsBootStatus_s;
@@ -456,6 +460,26 @@ static void get_daemons_status(void)
 	pclose(f);
 }
 
+static void get_n_watchdog_timouts(void)
+{
+	FILE *f;
+
+	wrsBootStatus_s.wrsGwWatchdogTimeouts = 0;
+
+	f = popen(WDOG_COMMAND, "r");
+	if (!f) {
+		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup failed to execute "
+			 WDOG_COMMAND"\n");
+		return;
+	}
+
+	/* Number of watchdog restarts is returned as a int value,
+	 * if error there nothing we can do */
+	fscanf(f, "%d", &wrsBootStatus_s.wrsGwWatchdogTimeouts);
+
+	pclose(f);
+}
+
 time_t wrsBootStatus_data_fill(void)
 {
 	static time_t time_update;
@@ -482,6 +506,9 @@ time_t wrsBootStatus_data_fill(void)
 
 	/* get info about running daemons */
 	get_daemons_status();
+
+	/* get info about number of gateware watchdog timeouts */
+	get_n_watchdog_timouts();
 
 	/* there was an update, return current time */
 	return time_update;
