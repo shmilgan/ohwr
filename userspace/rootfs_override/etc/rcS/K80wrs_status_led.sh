@@ -1,0 +1,1 @@
+../init.d/wrs_status_led.sh
