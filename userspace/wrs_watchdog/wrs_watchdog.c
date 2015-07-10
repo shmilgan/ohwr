@@ -259,7 +259,6 @@ void print_help(char *prgname)
 int main(int argc, char *argv[])
 {
 	int c = 0;
-	char *pidfile = NULL;
 
 	prgname = argv[0];
 
@@ -294,7 +293,8 @@ int main(int argc, char *argv[])
 			pr_info("Read %d ports from cmdline\n", port_num);
 			break;
 		case 'p':
-			pidfile = optarg;
+			pr_info("use pidfile %s", optarg);
+			write_pidfile(optarg, getpid());
 			break;
 		case 'q': break; /* done in wrs_msg_init() */
 		case 'v': break; /* done in wrs_msg_init() */
@@ -319,7 +319,6 @@ int main(int argc, char *argv[])
 		wrs_msg(LOG_ALERT, "wrs_watchdog. Commit %s, built on "
 			__DATE__ "\n", __GIT_VER__);
 
-		write_pidfile(pidfile, getpid());
 		pr_info("Demonize\n");
 		endless_watchdog();
 	}
