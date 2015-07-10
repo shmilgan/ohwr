@@ -1,4 +1,5 @@
 #include "wrsSnmp.h"
+#include <snmp_shmem.h>
 #include "wrsPtpDataTable.h"
 #include "wrsSpllStatusGroup.h"
 #include "wrsPortStatusTable.h"
@@ -125,6 +126,7 @@ time_t wrsTimingStatus_data_fill(void)
 		|| ((s->wrsSpllMode != WRS_SPLL_MODE_GRAND_MASTER)
 		    && (s->wrsSpllMode != WRS_SPLL_MODE_MASTER)
 		    && (s->wrsSpllMode != WRS_SPLL_MODE_SLAVE))
+		|| ((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE) && ((s->wrsSpllHlock == 0) || (s->wrsSpllMlock == 0)))
 	) {
 		wrsTimingStatus_s.wrsSoftPLLStatus =
 						WRS_SOFTPLL_STATUS_ERROR;
@@ -169,15 +171,15 @@ time_t wrsTimingStatus_data_fill(void)
 	wrsTimingStatus_s.wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_OK;
 	for (i = 0; i < port_status_nrows; i++) {
 		/* warning N/A */
-		if (s->wrsSpllMode == 0
-		    || p_a[i].port_mode == 0
+		if (/*hal_shmem->s->wrsSpllMode == 0
+		    || */p_a[i].port_mode == 0
 		    || p_a[i].link_up == 0){
 			wrsTimingStatus_s.wrsSlaveLinksStatus =
 					WRS_SLAVE_LINK_STATUS_WARNING_NA;
 		}
 		/* error when slave port is down when switch is in slave mode
 		   */
-		if (s->wrsSpllMode == WRS_SPLL_MODE_SLAVE
+		if (hal_shmem->hal_mode == HAL_TIMING_MODE_BC
 		    && (p_a[i].port_mode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
 		    && (p_a[i].link_up == WRS_PORT_STATUS_LINK_DOWN)) {
 			wrsTimingStatus_s.wrsSlaveLinksStatus =
@@ -187,7 +189,7 @@ time_t wrsTimingStatus_data_fill(void)
 		}
 		/* error when slave port is up when switch is in master or
 		 * grandmaster mode */
-		if (((s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER) || (s->wrsSpllMode == WRS_SPLL_MODE_MASTER))
+		if (((hal_shmem->hal_mode == HAL_TIMING_MODE_GRAND_MASTER) || (hal_shmem->hal_mode == HAL_TIMING_MODE_FREE_MASTER))
 		    && (p_a[i].port_mode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
 		    && (p_a[i].link_up == WRS_PORT_STATUS_LINK_UP)) {
 			wrsTimingStatus_s.wrsSlaveLinksStatus =
