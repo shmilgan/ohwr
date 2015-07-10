@@ -411,13 +411,13 @@ void shw_sfp_gpio_init(void)
 	for (i = 0; i < 18; i++) {
 		shw_sfp_set_led_synced(i, 1);
 		shw_udelay(7000);
-		shw_sfp_set_led_link(i, 1);
+		shw_sfp_set_generic(i, 1, SFP_LED_WRMODE_MASTER);
 		shw_udelay(7000);
 	}
 	for (i = 0; i < 18; i++) {
 		shw_sfp_set_led_synced(i, 0);
 		shw_udelay(7000);
-		shw_sfp_set_led_link(i, 0);
+		shw_sfp_set_generic(i, 0, SFP_LED_WRMODE_MASTER);
 		shw_udelay(7000);
 	}
 
@@ -457,9 +457,9 @@ void shw_sfp_gpio_set(int num, uint8_t state)
 	else
 		curr &= 0xf0;
 
-	if (state & SFP_LED_LINK)
+	if (state & SFP_LED_WRMODE1)
 		curr |= SFP_LED_LINK_MASK(top);
-	if (state & SFP_LED_WRMODE)
+	if (state & SFP_LED_WRMODE2)
 		curr |= SFP_LED_WRMODE_MASK(top);
 	if (state & SFP_LED_SYNCED)
 		curr |= SFP_LED_SYNCED_MASK(top);
@@ -500,9 +500,9 @@ uint8_t shw_sfp_gpio_get(int num)
 	i2c_transfer(bus, addr, 0, 1, &curr);
 
 	if (curr & SFP_LED_LINK_MASK(top))
-		out |= SFP_LED_LINK;
+		out |= SFP_LED_WRMODE1;
 	if (curr & SFP_LED_WRMODE_MASK(top))
-		out |= SFP_LED_WRMODE;
+		out |= SFP_LED_WRMODE2;
 	if (curr & SFP_LED_SYNCED_MASK(top))
 		out |= SFP_LED_SYNCED;
 	if (curr & SFP_TX_DISABLE_MASK(top))

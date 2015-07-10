@@ -1,16 +1,15 @@
 #ifndef __LIBWR_SHW_SFPLIB_H
 #define __LIBWR_SHW_SFPLIB_H
 
-#define SFP_LED_LINK	(1 << 0)
-#define SFP_LED_WRMODE	(1 << 1)
+/* note each led contains green and orange part */
+#define SFP_LED_WRMODE_SLAVE	(1) /* green */ 
+#define SFP_LED_WRMODE_NON_WR	(2) /* orange */
+#define SFP_LED_WRMODE_MASTER	(3) /* yellow */
+#define SFP_LED_WRMODE_OFF	(3) /* to off entire WRMODE LED */
+#define SFP_LED_WRMODE1	(1 << 0)
+#define SFP_LED_WRMODE2	(1 << 1)
 #define SFP_LED_SYNCED	(1 << 2)
 #define SFP_TX_DISABLE	(1 << 3)
-
-#define shw_sfp_set_led_link(num, status)	\
-	shw_sfp_set_generic(num, status, SFP_LED_LINK)
-
-#define shw_sfp_set_led_wrmode(num, status)	\
-	shw_sfp_set_generic(num, status, SFP_LED_WRMODE)
 
 #define shw_sfp_set_led_synced(num, status)	\
 	shw_sfp_set_generic(num, status, SFP_LED_SYNCED)
