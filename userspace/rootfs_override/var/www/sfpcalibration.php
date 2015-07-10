@@ -49,13 +49,19 @@
 		}
 		
 		if(!empty($_GET["add"])){
-			$last++;
-			if($last<10){
-				$last = sprintf("%02s", $last);
-				$last = strval($last);
-				array_push($matrix, "key=CONFIG_SFP".$last."_PARAMS,vn=,vs=,pn=,tx=,rx=,wl_txrx=");
-			}else{
-				echo "<center>There is only space for 9 SFP configurations.</center>";
+			/* look for first empty */
+			for($i = 0; $i < 10 && !$empty; $i++){
+				$sfp = intval($i);
+				$sfp = sprintf("%02s", $sfp);
+				$sfp = strval($sfp);
+				if(empty($_SESSION["KCONFIG"]["CONFIG_SFP".$sfp."_PARAMS"])){
+					array_push($matrix, "key=CONFIG_SFP".$sfp."_PARAMS,vn=,vs=,pn=,tx=,rx=,wl_txrx=");
+					$empty = 1;
+				}
+			}
+			
+			if (!$empty){
+				echo "<div id='alert'><center>There is only space for 10 SFP configurations.</center></div><br>";
 			}
 		}
 		
@@ -82,18 +88,21 @@
 				
 				if($columns[0]=="key"){
 					echo '<INPUT type="hidden" value="'.$columns[1].'" name="key'.$i.'" >';
+					$sfp_number=$columns[1][11];
 				}
 				if($columns[0]=="vn"){
 					echo '<td align="center"><INPUT  style="font-size: '.$font_size.';" size="'.$size.'" type="text" value="'.$columns[1].'" name="vn'.$i.'" ></td>';
-				}else if ($columns[0]<>"vn" && $j==1){
-					echo '<td align="center"><INPUT  style="font-size: '.$font_size.';" size="'.$size.'" type="text" value="" name="vn'.$i.'" ></td>';
+					$vn=1;
 				}
 				if($columns[0]=="vs"){
+					if(!$vn) echo '<td align="center"><INPUT  style="font-size: '.$font_size.';" size="'.$size.'" type="text" value="" name="vn'.$i.'" ></td>';
 					echo '<td align="center"><INPUT style="font-size: '.$font_size.';" size="'.$size.'" type="text" value="'.$columns[1].'" name="vs'.$i.'" ></td>';
-				}else if($columns[0]<>"vs" && $j==2){
-					echo '<td align="center"><INPUT style="font-size: '.$font_size.';" size="'.$size.'" type="text" value=""  name="vs'.$i.'" ></td>';
+					$vs=1;
+					$vn=1;
 				}
 				if($columns[0]=="pn"){
+					if (!$vn) echo '<td align="center"><INPUT  style="font-size: '.$font_size.';" size="'.$size.'" type="text" value="" name="vn'.$i.'" ></td>';
+					if (!$vs) echo '<td align="center"><INPUT style="font-size: '.$font_size.';" size="'.$size.'" type="text" value=""  name="vs'.$i.'" ></td>';
 					echo '<td align="center"><INPUT style="font-size: '.$font_size.';"  size="'.$size.'" type="text" value="'.$columns[1].'" name="pn'.$i.'" ></td>';
 				}
 				if($columns[0]=="tx"){
@@ -107,9 +116,11 @@
 				}
 				
 			}
-			echo '<td align="center"><a href="deletesfp.php?id='.$i.'"><img src="img/delete.png" title="Delete SFP"></a></td>';
+			echo '<td align="center"><a href="deletesfp.php?id='.$sfp_number.'"><img src="img/delete.png" title="Delete SFP"></a></td>';
 			echo "</tr>";
 			$i++;
+			$vs=0;
+			$vn=0;
 		}
 		echo '</table>';
 		
