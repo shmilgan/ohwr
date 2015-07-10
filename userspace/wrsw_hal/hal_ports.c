@@ -524,6 +524,8 @@ static void hal_port_remove_sfp(struct hal_port_state * p)
 {
 	hal_port_link_down(p, 0);
 	p->state = HAL_PORT_STATE_DISABLED;
+	/* clean SFP's details when removing SFP */
+	memset(&p->calib.sfp, 0, sizeof(p->calib.sfp));
 }
 
 /* detects insertion/removal of SFP transceivers */
