@@ -103,19 +103,27 @@ This is the current set of manuals that accompany the @sc{wrs}:
    software from new repository commits that are not an official release
    point, or just install your @i{wrs} with custom configuration values.
 
+@item @i{White Rabbit Switch: Failures and Diagnostics}: describe various
+   failure scenarios of a switch and ways how to recognize them.
+   Additionally describe SNMP exports of a switch (WR-SWITCH-MIB).
+
 @end itemize
 
-The official @sc{pdf} copy of the three manuals at each release
-is published in The @i{files} tab of the software project in @t{ohwr.org}:
+The official @sc{pdf} copy of these manuals at each release
+is published in the @i{files} tab of the software project in @t{ohwr.org}:
 (@url{http://www.ohwr.org/projects/wr-switch-sw/files}).
 This doesn't apply to release 4.0 and earlier.
 
-The source form of all three manuals is maintained in
+The source form of first three manuals is maintained in
 @t{wr-switch-sw/doc}. Within the repository, both the @i{User's
 Manual} and the @i{Developer's Manual} are always tracking the
 software commits, while the @i{Startup Guide} may not be authoritative
 because it is bound to device shipping rather than software
 development.
+
+The source of fourth document @i{White Rabbit Switch: Failures and Diagnostics} is in
+external repository @url{git://ohwr.org/white-rabbit.git} under
+@t{docs/specifications/management}.
 
 @c ==========================================================================
 @node Supported Hardware Versions
@@ -175,7 +183,7 @@ need to be aware of the steps involved, in case something goes wrong.
 Version 4.0 and later of @t{wr-switch-sw} are able to upgrade
 themselves if you place the profer files in the @i{/update} directory
 of the @sc{wrs}.  However, in version 4.0 we forgot to provide for
-an upgrade of the boot loader and didn't note that if the fron USB
+an upgrade of the boot loader and didn't note that if the front USB
 cable is not plugged, the upgrade procedure blocks.
 
 This latter problem happens because messages are written to the
@@ -199,15 +207,16 @@ actually used:
 
 @itemize @bullet
 
-   @item Copy your own @t{wrs-firmware.tar} for v4.1 into the @i{/update}
-   partition. This can be the official firwmare or one you built yourself.
+   @item Copy your own @t{wrs-firmware.tar} for at least v4.1 into the
+   @i{/update} partition.
+   This can be the official firwmare or one you built yourself.
    Then reboot and wait for everything to settle (the system will reboot
    once more by itself).
 
    @item Copy @t{wrs-firmware.tar} again. And reboot again. The system
    will reboot once more by itself.
 
-   @item Now you have a running v4.1 with your @i{hwinfo} in place
+   @item Now you have a running updated version with your @i{hwinfo} in place
    and the old MAC addresses preserved.
 
 @end itemize
@@ -228,8 +237,9 @@ filesystem before rebooting.
 
 @itemize
 
-   @item Copy your own @t{wrs-firmware.tar} for v4.1 into the @i{/update}
-   partition. This can be the official firwmare or one you built yourself.
+   @item Copy your own @t{wrs-firmware.tar} for at least v4.1 into the
+   @i{/update} partition. This can be the official firwmare or one you built
+   yourself.
 
    @item Create and mount @i{/boot} within the switch. This means
    running the following commands in @i{ssh}:
@@ -383,12 +393,14 @@ served to the @sc{wrs}.
 
 Please remember that the new @t{dot-config} should include a valid
 @t{DOTCONF_URL} setting, or you won't be able to update the configuration
-at the next boot.   In any case, you can always copy a configuration
+at the next boot. In any case, you can always copy a configuration
 file using @i{ssh}, or use the web interface to change the configuration.
 Changes performed using the web interface are immediately active, because
 the web server takes proper action; the new file copied over with @i{ssh},
 or any hand-edits, are only effective at next boot, unless overwritten by
 a remote configuration file.
+In case there are errors or unknown configuration entries in the retrieved
+file, the old one will be used.
 
 @c ==========================================================================
 @node Configuration Items that Apply at Build Time
@@ -472,25 +484,6 @@ value is changed by the web interface, proper action is taken.
         server is stored in @t{/etc/rsyslog.conf} of the generated
         filesystem.  The UDP option, set by default, chooses UDP transmission;
         if unset it selects TCP communication.
-
-@item CONFIG_SNMP_TRAPSINK_ADDRESS
-@itemx CONFIG_SNMP_TRAP2SINK_ADDRESS
-@itemx CONFIG_SNMP_RO_COMMUNITY
-@itemx CONFIG_SNMP_RW_COMMUNITY
-
-	Configuration for the @sc{snmp} agent. Addresses can be IP addresses
-        or names (if DNS is configured and working), they are unset by
-        default. Community values are strings and they default to
-        @t{public} and @t{private}.
-
-@item CONFIG_SNMP_TEMP_THOLD_FPGA
-@itemx CONFIG_SNMP_TEMP_THOLD_PLL
-@itemx CONFIG_SNMP_TEMP_THOLD_PSL
-@itemx CONFIG_SNMP_TEMP_THOLD_PSR
-	Threshold levels for FPGA, PLL, Power Supply Left (PSL) and Power
-        Supply Right (PSR) temperature sensors. When any temperature exceeds
-        threshold level SNMP object @t{WR-SWITCH-MIB::tempWarning} will change
-        accordingly.
 
 @item CONFIG_WRS_LOG_HAL
 @itemx CONFIG_WRS_LOG_RTU
@@ -593,6 +586,46 @@ value is changed by the web interface, proper action is taken.
         the chosen name is expected to be installed in the @sc{wrs}
         filesystem.
 
+@item CONFIG_SNMP_TRAPSINK_ADDRESS
+@itemx CONFIG_SNMP_TRAP2SINK_ADDRESS
+@itemx CONFIG_SNMP_RO_COMMUNITY
+@itemx CONFIG_SNMP_RW_COMMUNITY
+
+	Configuration for the @sc{snmp} agent. Addresses can be IP addresses
+        or names (if DNS is configured and working), they are unset by
+        default. Community values are strings and they default to
+        @t{public} and @t{private}.
+
+@item CONFIG_SNMP_TEMP_THOLD_FPGA
+@itemx CONFIG_SNMP_TEMP_THOLD_PLL
+@itemx CONFIG_SNMP_TEMP_THOLD_PSL
+@itemx CONFIG_SNMP_TEMP_THOLD_PSR
+	Threshold levels for FPGA, PLL, Power Supply Left (PSL) and Power
+        Supply Right (PSR) temperature sensors. When any temperature exceeds
+        threshold level SNMP object @t{WR-SWITCH-MIB::tempWarning} will change
+        accordingly.
+
+@item CONFIG_SNMP_SWCORESTATUS_HP_FRAME_RATE
+
+	Error via SNMP if rate of HP frames on any port exceed given value.
+
+@item CONFIG_SNMP_SWCORESTATUS_RX_FRAME_RATE
+
+	Error via SNMP if rate of RX frames on any port exceed given value.
+
+@item CONFIG_SNMP_SWCORESTATUS_RX_PRIO_FRAME_RATE
+
+	Error if frame rate of any RX priority exceed given value.
+
+@item CONFIG_WRSAUXCLK_FREQ
+@itemx CONFIG_WRSAUXCLK_DUTY
+@itemx CONFIG_WRSAUXCLK_CSHIFT
+@itemx CONFIG_WRSAUXCLK_SIGDEL
+@itemx CONFIG_WRSAUXCLK_PPSHIFT
+
+	Set of parameters passed to @t{wrs_auxclk} at boot time.
+        For more information please check @ref{wrs_auxclk}.
+
 @item CONFIG_MONIT_DISABLE
 
 	Disable monitoring of running processes by monit. Monit by default
@@ -693,7 +726,7 @@ short links, you use the same wavelength in both direction, over two
 fibers of the same length. In this case you may choose to avoid
 writing the @t{wl_txrx} parameter in @sc{sfp} configuration and the
 @t{alpha_XX_XX} parameter in fiber configuration.  The missing
-parameters will cause warning messages on the console, but are not
+parameters will cause warning messages to log destination, but are not
 fatal, and a default alpha of 0 is used.
 
 If you are using a pair of transceivers with different wavelengths,
@@ -965,7 +998,7 @@ The following tools and scripts are provided:
         They are used by the init scripts of the Linux system. The LM32
         loader can also change variables in the loaded binary, and
         read or write variables without stopping the running CPU.
-        This is limited to 32-bit integer variaables, though. See the
+        This is limited to 32-bit integer variables, though. See the
         commit message for details.
 @c FIXME: document better load-lm32 for elf.
 
@@ -1313,25 +1346,26 @@ options:
 @node SNMP Support
 @chapter SNMP Support
 
-The White Rabbit Switch supports SNMP, although some more work is needed
-in this respect.  The default read-only ``community'' name is @t{private},
+The White Rabbit Switch supports SNMP. The default read-only ``community'' name
+is @t{private},
 but you can change it from the @t{Kconfig} interface before building.
 The default read-write community is @t{private}.
 
 The switch supports all the standard information through the @i{net-snmp}
-installation.  We'll remove some of the items in a later release, because
-nobody wants to check running processes or disk space usage.
-
-The additional, switch-specific information are in the
-``enterprise.96.100 subtree, where @t{96} is CERN and @t{100} is White
+installation. The additional, switch-specific information are in the
+``enterprise.96.100'' subtree, where @t{96} is CERN and @t{100} is White
 Rabbit. The associated MIB is in the directory @t{userspace/snmpd},
 where related source files live as well.
+
+As in the version 4.2 there is no support for traps.
 
 @c ==========================================================================
 @node The WRS MIB
 @section The WRS MIB
 
-This a summary of the available tables and scalars:
+This section contain a summary of the available groups and tables. 
+Objects from 96.100.2 to 96.100.5 are obsolete, they were used during early
+implementation of switch's snmp.
 
 @table @code
 
@@ -1341,26 +1375,113 @@ This a summary of the available tables and scalars:
         that is incremented each time you access it. It can be used to
         test basic functionality.
 
-@item 96.100.2
+@item 96.100.6
 
-	Port statistics, as an SNMP table.  The first column is the
-        name of each counter, and further columns represent interfaces
-        @t{wr0} through @t{wr17}. Each counters is shown in a table line,
-        as the number and names of the counters may change in the future.
+	@b{wrsStatus} -- MIB's branch with collective statuses of entire
+	switch.
 
-@item 96.100.3
+@item 96.100.6.1
 
-	White Rabbit specific information.  Subid @t{.1} is the global
-        items, and subid @t{.2} is a table with per-port items.
+	@b{wrsGeneralStatusGroup} -- Group containing collective statuses of
+	particular subsystems and main system status, describing status of
+	entire switch.
 
-@item 96.100.4
+@item 96.100.6.2
 
-	Hardware, gateware and software versions, plus serial
-        number and other hardware information.
+	@b{wrsDetailedStatusesGroup} -- Branch with collective statuses of
+	switch's subsystems.
 
-@item 96.100.5
+@item 96.100.6.2.1
 
-	The internal White Rabbit time, as a number and a string.
+	@b{wrsOSStatusGroup} -- Group with collective statuses of
+	switch's Operating System.
+
+@item 96.100.6.2.2
+
+	@b{wrsTimingStatusGroup} -- Group with collective statuses of
+	switch's timing subsystem.
+
+@item 96.100.6.2.3
+
+	@b{wrsNetworkingStatusGroup} -- Group with collective statuses of
+	switch's networking subsystem.
+
+@item 96.100.6.3
+	@b{wrsVersionGroup} -- Hardware, gateware and software versions.
+	Additionally switch's serial number and other hardware information.
+
+@item 96.100.7
+
+	@b{wrsExpertStatus} -- Branch with detailed statuses of switch
+	subsystems.
+
+@item 96.100.7.1
+
+	@b{wrsOperationStatus} -- Branch with internal switch's statuses.
+
+@item 96.100.7.1.1
+
+	@b{wrsCurrentTimeGroup} -- The internal White Rabbit time, as a number
+	and a string.
+
+@item 96.100.7.1.2
+
+	@b{wrsBootStatusGroup} -- Group with statuses of switch's boot. It
+	contains boot counter, restart reason, config source, result of loading
+	FPGA and LM32, number of not started processes and not loaded kernel
+	modules.
+
+@item 96.100.7.1.3
+
+	@b{wrsTemperatureGroup} -- Group with temperature values and
+	thresholds.
+
+@item 96.100.7.1.4
+
+	@b{wrsMemoryGroup} -- Group with memory usage values.
+
+@item 96.100.7.1.5
+
+	@b{wrsCpuLoadGroup} -- Group with load average values, for 1, 5 and 15
+	minutes.
+
+@item 96.100.7.1.6
+
+	@b{wrsDiskTable} -- Table containing switch's disks usage.
+
+@item 96.100.7.2
+
+	@b{wrsStartCntGroup} -- Group with start counters of switch's
+	proccesses.
+
+@item 96.100.7.3
+
+	@b{wrsSpllState} -- Branch with Soft PLL status.
+
+@item 96.100.7.3.1
+
+	@b{wrsSpllVersionGroup} -- Group with version details of Soft PLL.
+
+@item 96.100.7.3.2
+
+	@b{wrsSpllStatusGroup} -- Group with status details of switch's Soft PLL.
+
+@item 96.100.7.4
+
+	@b{wrsPstatsTable} -- Port statistics, as an SNMP table. The first
+	column is the name of each interface, and further columns represent
+	various counters' values.
+
+@item 96.100.7.5
+
+	@b{wrsPtpDataTable} -- Table containing information about PTP servo.
+
+@item 96.100.7.6
+
+	@b{wrsPortStatusTable} -- Table containing details about switch's
+	ports, whether link is up, configured mode, SFPs, PTP RX and TX frames
+	passed.
+
 
 @end table
 
@@ -1387,41 +1508,54 @@ the software commit in this example is my own development version while writing
 this section:
 
 @smallexample
-WR-SWITCH-MIB::wrsScalar.0 = INTEGER: 2
-WR-SWITCH-MIB::pstatsDescr.1 = STRING: TX Underrun
-WR-SWITCH-MIB::pstatsDescr.2 = STRING: RX Overrun
-WR-SWITCH-MIB::pstatsDescr.3 = STRING: RX Invalid Code
+WR-SWITCH-MIB::wrsScalar.0 = INTEGER: 1
+WR-SWITCH-MIB::wrsMainSystemStatus.0 = INTEGER: ok(1)
+WR-SWITCH-MIB::wrsOSStatus.0 = INTEGER: ok(1)
+WR-SWITCH-MIB::wrsTimingStatus.0 = INTEGER: ok(1)
 [...]
-WR-SWITCH-MIB::pstatsDescr.38 = STRING: Forwarded
-WR-SWITCH-MIB::pstatsDescr.39 = STRING: TRU Resp Valid
-WR-SWITCH-MIB::pstatsWR0.1 = Counter32: 0
+WR-SWITCH-MIB::wrsConfigSource.0 = INTEGER: tftp(4)
+WR-SWITCH-MIB::wrsConfigSourceHost.0 = STRING: 192.168.1.1
+WR-SWITCH-MIB::wrsConfigSourceFilename.0 = STRING: config-192.168.1.10
+WR-SWITCH-MIB::wrsBootConfigStatus.0 = INTEGER: ok(1)
+WR-SWITCH-MIB::wrsBootHwinfoReadout.0 = INTEGER: ok(1)
+WR-SWITCH-MIB::wrsBootLoadFPGA.0 = INTEGER: ok(1)
+WR-SWITCH-MIB::wrsBootLoadLM32.0 = INTEGER: ok(1)
 [...]
-WR-SWITCH-MIB::pstatsWR17.38 = Counter32: 50819
-WR-SWITCH-MIB::pstatsWR17.39 = Counter32: 0
-WR-SWITCH-MIB::pstatsEntry.20 = Counter32: 0
-WR-SWITCH-MIB::ppsiGrandmaterID.0 = Hex-STRING: 00 00 00 00 00 00 00 00
-WR-SWITCH-MIB::ppsiOwnID.0 = Hex-STRING: 00 00 00 00 00 00 00 00
-WR-SWITCH-MIB::ppsiMode.0 = INTEGER: unknown(0)
-WR-SWITCH-MIB::ppsiServoState.0 = STRING:
-WR-SWITCH-MIB::ppsiPhaseTracking.0 = INTEGER: not-tracking(0)
+WR-SWITCH-MIB::wrsPstatsPortName.1 = STRING: wr0
+WR-SWITCH-MIB::wrsPstatsPortName.2 = STRING: wr1
 [...]
-WR-SWITCH-MIB::portLink.14 = INTEGER: down(0)
-WR-SWITCH-MIB::portLink.15 = INTEGER: up(1)
-WR-SWITCH-MIB::portLink.16 = INTEGER: down(0)
+WR-SWITCH-MIB::wrsPstatsTXFrames.1 = Counter32: 232
+WR-SWITCH-MIB::wrsPstatsTXFrames.2 = Counter32: 543
 [...]
-WR-SWITCH-MIB::portPeer.18 = Hex-STRING: FF FF FF FF FF FF FF FF
-WR-SWITCH-MIB::ppsiPort.5 = Hex-STRING: FF FF FF FF FF FF FF FF
-WR-SWITCH-MIB::wrsVersionSw.0 = STRING: v4.0-rc1-42-gcec7805+
-WR-SWITCH-MIB::wrsVersionGw1.0 = STRING: 7cce708
-WR-SWITCH-MIB::wrsVersionGw2.0 = STRING: 5118070
-WR-SWITCH-MIB::wrsVersionGw3.0 = STRING: 7efeb16
-WR-SWITCH-MIB::wrsVersionHw1.0 = STRING: 3.30
-WR-SWITCH-MIB::wrsVersionHw2.0 = STRING: LX240T
-WR-SWITCH-MIB::wrsManufacturer.0 = STRING: Seven Solutions
-WR-SWITCH-MIB::wrsSerialNumber.0 = STRING: 12345
-WR-SWITCH-MIB::wrsScbVersion.0 = STRING: 3.3
-WR-SWITCH-MIB::wrsDateTAI.0 = Counter64: 1406623390
-WR-SWITCH-MIB::wrsDateString.0 = STRING: 2014-07-29-08:43:10
+WR-SWITCH-MIB::wrsPstatsRXFrames.1 = Counter32: 255
+WR-SWITCH-MIB::wrsPstatsRXFrames.2 = Counter32: 544
+[...]
+WR-SWITCH-MIB::wrsPtpServoState.1 = STRING: TRACK_PHASE
+WR-SWITCH-MIB::wrsPtpServoStateN.1 = INTEGER: trackPhase(4)
+WR-SWITCH-MIB::wrsPtpPhaseTracking.1 = INTEGER: tracking(2)
+WR-SWITCH-MIB::wrsPtpSyncSource.1 = STRING: 
+WR-SWITCH-MIB::wrsPtpClockOffsetPs.1 = Counter64: 0
+WR-SWITCH-MIB::wrsPtpClockOffsetPsHR.1 = INTEGER: 0
+WR-SWITCH-MIB::wrsPtpSkew.1 = INTEGER: -1
+WR-SWITCH-MIB::wrsPtpRTT.1 = Counter64: 943893
+WR-SWITCH-MIB::wrsPtpLinkLength.1 = Gauge32: 91
+WR-SWITCH-MIB::wrsPtpServoUpdates.1 = Counter32: 33
+[...]
+WR-SWITCH-MIB::wrsPortStatusPortName.1 = STRING: wr0
+WR-SWITCH-MIB::wrsPortStatusPortName.2 = STRING: wr1
+[...]
+WR-SWITCH-MIB::wrsPortStatusLink.1 = INTEGER: up(2)
+WR-SWITCH-MIB::wrsPortStatusLink.2 = INTEGER: up(2)
+[...]
+WR-SWITCH-MIB::wrsPortStatusConfiguredMode.1 = INTEGER: slave(2)
+WR-SWITCH-MIB::wrsPortStatusConfiguredMode.2 = INTEGER: auto(4)
+[...]
+WR-SWITCH-MIB::wrsPortStatusSfpVN.1 = STRING: Axcen Photonics
+WR-SWITCH-MIB::wrsPortStatusSfpVN.2 = STRING: Axcen Photonics
+[...]
+WR-SWITCH-MIB::wrsPortStatusSfpPN.1 = STRING: AXGE-3454-0531
+WR-SWITCH-MIB::wrsPortStatusSfpPN.2 = STRING: AXGE-3454-0531
+[...]
 @end smallexample
 
 Another example is to print all objects exported by switch.
