@@ -724,6 +724,40 @@ split of the measured value is equally right).  Other transceiver
 types can be calibrated to either positive or negative values, to cope
 with the @i{difference} between them and the @t{AXGE} devices.
 
+@c ==========================================================================
+@node Front panel's LEDs
+@section Front panel's LEDs
+
+There are two LEDs on front panel describing switch's status and two LEDs for
+each switch's port. Each LED can be off, light with green or orange color, or
+combination of both giving yellow.
+For more details please refer to following subsections.
+
+@c =-------------------------------------------------------------------------
+@node Status LEDs
+@subsection Status LEDs
+
+The status LED is placed together with power indicator LED on the left side of
+switch's front panel. The status LED is the right one.
+
+During barebox/kernel boot the status LED is off. When startup-mb.sh starts
+the LED is set to yellow. If the HAL starts successfully then the LED is set to
+green. If the HAL caught a SIGNAL sent by other process, HAL sets the status
+LED to orange.
+When reboot is performed status LED is turned off.
+
+@c =-------------------------------------------------------------------------
+@node Ports' LEDs
+@subsection Ports' LEDs
+
+Under each switch's port there are two LEDs. The left LED is on when particular
+port is populated with a SFP and the link is up. It's color is dependent on
+the configured function. For ports configured as a slave the LED is green, for
+non-wr ports the LED is orange. For ports configured as a master and other
+cases (including wrong configuration) the left LED is yellow.
+
+The right LED blinks when packet is transmitted or received on a port.
+
 @c ############################################################################
 @node Booting with Barebox
 @chapter Booting with Barebox
