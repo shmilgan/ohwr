@@ -6,6 +6,8 @@ TOOLS += sdb-read
 TOOLS += nbtee
 TOOLS += wrs_auxclk
 TOOLS += wrs_checkcfg
+TOOLS += wrs_status_led
+
 PPSI_CONFIG = ../ppsi/include/generated/autoconf.h
 
 WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
