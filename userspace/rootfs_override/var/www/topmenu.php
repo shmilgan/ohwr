@@ -11,7 +11,7 @@ echo '<ul>
 
 echo '<ul>
 	<li '.echoSelectedClassIfRequestMatches("index").'><a href="index.php"> Dashboard </a></li>
-	<li '.echoSelectedClassIfRequestMatches("ptp").'><a href="ptp.php"> PPSi Setup </a></li>
+	<li '.echoSelectedClassIfRequestMatches("ptp").'><a href="ptp.php"> WR-PPSi Setup </a></li>
 	<li '.echoSelectedClassIfRequestMatches("vlan").'><a href="vlan.php"> VLAN Setup </a></li>
 	<li '.echoSelectedClassIfRequestMatches("endpointmode").'><a href="endpointmode.php">  Endpoint Mode</a></li>
 	<li '.echoSelectedClassIfRequestMatches("management").'><a href="management.php"> Switch Management </a></li>
