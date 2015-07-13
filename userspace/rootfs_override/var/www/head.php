@@ -1,4 +1,13 @@
-<?php ob_start();?>
+<?php ob_start();
+if(strcmp($_SESSION['LASTIME'],filectime($GLOBALS['kconfigfile'])) &&
+		strcmp(basename($_SERVER['PHP_SELF']), "reboot.php")){
+	echo "<script>
+	alert('WARNING: Dotconfig has been modified. Realoading configuration...');
+	window.location.href='index.php';
+	</script>";
+	load_kconfig();
+}
+?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
