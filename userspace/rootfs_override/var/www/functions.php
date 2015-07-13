@@ -167,10 +167,21 @@ function wrs_main_info(){
 	$NTP = $_SESSION['KCONFIG']["CONFIG_NTP_SERVER"];
 	$Monitor = check_monit_status() ? '[on] ' : '[off] '; 
 	
+	$WRSmode = check_switch_mode();
+	if(!strcmp($WRSmode, "GM"))
+		$WRSmode="GrandMaster";
+	else if (!strcmp($WRSmode, "BC"))
+		$WRSmode="Boundary Clock";
+	else if (!strcmp($WRSmode, "FM"))
+		$WRSmode="Free-Running Master";
+	else 
+		$WRSmode="GrandMaster";
+	
 	// Print services table
 	echo '<br><table class="'.$class.'" id="'.$formatID.'" width="100%">';
 	echo '<tr><th>'.$infoname.'</th></tr>';
 	
+	echo '<tr><td>PTP Mode</td><td> <a href="ptp.php">'.$WRSmode.'</td></tr>';
 	echo '<tr><td>White-Rabbit Date</td><td>'.$wr_date.'</td></tr>';
 	echo '<tr><td>PPSi</td><td>'.$PPSi.'</td></tr>';
 	echo '<tr><td>System Monitor</td><td> <a href="management.php">'.$Monitor.'</td></tr>';
@@ -748,9 +759,15 @@ function wrs_management(){
 			save_kconfig();
 			apply_kconfig();
 			
-			header('Location: management.php');
+			//if(!empty($_SESSION["KCONFIG"]["CONFIG_TIME_BC"]) && (!empty($_POST["ntpip"]))){
+				//echo '<div id="alert">Please notice that UTC time from a NTP Server is overriden by Boundary Clocks in track phase. 
+						//<br>If you still want to use time from a NTP Server it is recommended to set GrandMaster or Free-Running Master mode.</div>';
+			//}else{
+				//header('Location: ptp.php');
+			//}
 			
-			
+			header('Location: ptp.php');
+
 		} else if (!strcmp($cmd, "snmp")){
 			
 			if(check_snmp_status()){ //It is running
@@ -989,15 +1006,16 @@ function wrs_display_help($help_id, $name){
 	} else if (!strcmp($help_id, "management")){
 		$message = "<p>
 			Options: <br>
-			- <b>Change mode:</b> Changes switch mode to Master/GrandMaster <br>
-			- <b>Reboot switch</b>: Reboots the switch <br>
-			- <b>NTP Server</b>: Sets the IP address of an external NTP server. By default it is configured as UTC, please use the second box to change it. This change is done on the webserver, not in the switch command line environment.<br>
-			- <b>Load Configuration Files</b>: You can upload individual configuration files to the switch (ppsi.conf, wrsw_hal.conf, snmp.conf, sfp_database.conf or a .tar.gz file with all of them.<br>
-			- <b>Backup Configuration Files</b>: Downloads a tar.gz file with all configuration files of the switch.<br>
+			- <b>Reboot switch</b>: Reboots the switch.<br>
+			- <b>System Monitor</b>: Enable/Disable the monitor daemon.<br>
+			- <b>Load Configuration Files</b>: Load a backup dotconfig file to the WRS.<br>
+			- <b>Backup Configuration Files</b>: Downloads a copy of dotconfig file, which contains all the setup of the WRS.<br>
 			</p>"; 
 	} else if (!strcmp($help_id, "ptp")){
 		$message = "<p>
-					<b>Changing Clock CLass and Clock Accuracy fields modifies ppsi.conf file for those values and relanches the service again.</b>. <br></p>";
+					- <b>Switch Mode</b>: WRS can work on GrandMaster, Boundary Clock and Free-Running Master modes.<br>
+					- <b>NTP Server</b>: Set a NTP server for UTC time. Please notice that White-Rabbit time will override the received NTP time.<br>
+					- <b>Clock CLass and Clock Accuracy</b> fields modifies ppsi.conf file for those values and relanches the service again. <br></p>";
 	} else if (!strcmp($help_id, "console")){
 		$message = "<p>This is a switch console emulator windows. Use it as if you were using a ssh session.</p>";
 	} else if (!strcmp($help_id, "gateware")){
@@ -1160,22 +1178,20 @@ function parse_endpoint_modes(){
 	return $modes;
 }
 /*
- * Obtains the content the switch mode from wrsw_hal.conf file
+ * Obtains the content the switch mode from dotconfig file
  *  
  * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
  * 	
- * @return true for GrandMaster mode, false for Master mode.
+ * @return GM, BC or FM mode.
  * 
  */
 function check_switch_mode(){
-	$status = shell_exec("cat ".$GLOBALS['etcdir']."wrsw_hal.conf | grep -c GrandMaster");
-	
-	if($status>0){
-		return "GrandMaster";
-	} else {
-		return "Master";
-	}
-
+	if(!empty($_SESSION["KCONFIG"]["CONFIG_TIME_GM"]))
+		return "GM";
+	else if (!empty($_SESSION["KCONFIG"]["CONFIG_TIME_BC"]))
+		return "BC";
+	else if (!empty($_SESSION["KCONFIG"]["CONFIG_TIME_FM"]))
+		return "FM";
 }
 
 /*
@@ -1258,6 +1274,7 @@ function wrs_reboot(){
  */
 
 function load_kconfig(){
+	$_SESSION['LASTIME'] = filectime($GLOBALS['kconfigfile']);
 	$_SESSION['KCONFIG'] = parse_ini_file($GLOBALS['kconfigfile']);
 }
 
@@ -1308,35 +1325,48 @@ function save_kconfig(){
 	$file = file_get_contents($GLOBALS['kconfigfile']);
 	$reading = fopen($GLOBALS['kconfigfile'], 'r');
 	$writing = fopen($GLOBALS['kconfigfile'].".tmp", 'w');
+	
+	$last_time = filectime($GLOBALS['kconfigfile']);
+	$modified = 0;
+	if (strcmp($last_time,$_SESSION['LASTIME']))
+		$modified = 1;
 
-	while (!feof($reading)) {
-	  $line = fgets($reading);
-	  $line_aux = $line;
-	  $element = explode("=",$line);
-	  
-		// Dealing with enabled options
-		if ((!empty($element)) && ($element[0]!="\n") && (!feof($reading)) && ($element[0][0]!="#")){
-			if($_SESSION['KCONFIG'][$element[0]]=="y") //Already enabled binary options
-				$line=$element[0].'='.$_SESSION['KCONFIG'][$element[0]]."\n";
-			else if ($_SESSION['KCONFIG'][$element[0]]=="n") //Binary must be disabled
-				$line="# ".$element[0]." is not set"."\n";
-			else
-				$line=$element[0].'="'.$_SESSION['KCONFIG'][$element[0]].'"'."\n";
-		} 
+	if (!$modified){
+		while (!feof($reading)) {
+		  $line = fgets($reading);
+		  $line_aux = $line;
+		  $element = explode("=",$line);
+		  
+			// Dealing with enabled options
+			if ((!empty($element)) && ($element[0]!="\n") && (!feof($reading)) && ($element[0][0]!="#")){
+				if($_SESSION['KCONFIG'][$element[0]]=="y") //Already enabled binary options
+					$line=$element[0].'='.$_SESSION['KCONFIG'][$element[0]]."\n";
+				else if ($_SESSION['KCONFIG'][$element[0]]=="n") //Binary must be disabled
+					$line="# ".$element[0]." is not set"."\n";
+				else
+					$line=$element[0].'="'.$_SESSION['KCONFIG'][$element[0]].'"'."\n";
+			} 
 
-		// Dealing with enabled options and comments
-		if (strpos($line_aux,'is not set') !== false){
-			$element = explode(" ",$line_aux);
-			if (!empty($element[1]) && empty($_SESSION['KCONFIG'][$element[1]]))
-				$line="# ".$element[1]." is not set"."\n";
-			else if (!empty($element[1]) && !empty($_SESSION['KCONFIG'][$element[1]]))
-				$line=$element[1].'='.$_SESSION['KCONFIG'][$element[1]]."\n";
+			// Dealing with enabled options and comments
+			if (strpos($line_aux,'is not set') !== false){
+				$element = explode(" ",$line_aux);
+				if (!empty($element[1]) && empty($_SESSION['KCONFIG'][$element[1]]))
+					$line="# ".$element[1]." is not set"."\n";
+				else if (!empty($element[1]) && !empty($_SESSION['KCONFIG'][$element[1]]))
+					$line=$element[1].'='.$_SESSION['KCONFIG'][$element[1]]."\n";
+			}
+		  
+		  fputs($writing, $line);
 		}
-	  
-	  fputs($writing, $line);
+		fclose($reading); fclose($writing);
+		rename( $GLOBALS['kconfigfile'].".tmp", $GLOBALS['kconfigfile']);
+		$_SESSION['LASTIME'] = filectime($GLOBALS['kconfigfile']);
+	}else{
+		load_kconfig();
+		echo '<div id="alert">ERROR: Changes were not saved because dotconfig file was modified by other user. 
+				<br>Dotconfig has now been reloaded.</div>';
+		exit;
 	}
-	fclose($reading); fclose($writing);
-	rename( $GLOBALS['kconfigfile'].".tmp", $GLOBALS['kconfigfile']);
 }
 
 function safefilerewrite($dotconfig, $tmpdotconfig){
