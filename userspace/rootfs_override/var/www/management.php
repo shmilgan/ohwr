@@ -21,15 +21,9 @@
 	<?php session_is_started() ?>
 	<?php $_SESSION['advance']=""; ?>
 
-	<table border="0" align="center">	
-	<tr>
 	<center>
-		<form  method="post">
-			<th>Switch Mode: (<?php  $str = check_switch_mode(); echo $str; ?>)</th>
-			<input type="hidden" name="cmd" value="change">
-			<th><input type="submit" value="Change Mode" class="btn"></th>
-		</form>
-	</tr>
+
+	<table border="0" align="center">	
 	<tr>
 		<form  method="post">
 			<th>Reboot system: </th>
@@ -55,16 +49,6 @@
 		</form>
 	</tr>
 	</table>
-
-	<table border="0" align="center">
-		<tr>
-			<form  method="post">
-			<th><center>NTP Server:</center></th><th><INPUT type="text" STYLE="text-align:center;" name="ntpip" value="<?php  $str = check_ntp_server(); echo $str; ?>"> </th>
-			<th><input type="hidden" name="cmd" value="ntp">
-			<th><input type="submit" value="Add NTP Server" class="btn"></th>
-			</form>
-		</tr>
-	</table>
 	
 	<hr>
 	<br><br>
@@ -80,7 +64,7 @@
 	</table>
 	</center>
 	
-	<br><br>
+	<br>
 	<FORM align="center" method="POST" ENCTYPE="multipart/form-data">
 			Backup configuration file to your computer</center>
 			<input type="hidden" name="cmd" value="Backup">
