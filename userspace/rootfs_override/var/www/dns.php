@@ -20,27 +20,25 @@
 
 	<?php session_is_started() ?>
 	<?php $_SESSION['advance']=""; ?>
-	
-	
+
 	<?php
-			
 		$formatID = "alternatecolor";
 		$class = "altrowstable firstcol";
 		$infoname = "DNS Configuration";
 		$format = "table";
 		$section = "WRS_FORMS";
 		$subsection = "DNS_SETUP";
-		
+
 		print_form($section, $subsection, $formatID, $class, $infoname, $format);
 
 		$modified = process_form($section, $subsection);
-				
+
 		if($modified){
 			save_kconfig();
 			apply_kconfig();
 			header ('Location: network.php');
 		}
-					
+
 	?>
 
 

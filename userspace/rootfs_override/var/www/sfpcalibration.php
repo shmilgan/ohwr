@@ -21,10 +21,10 @@
 <?php session_is_started() ?>
 
 	<br>
-	
 
-	<?php 
-	
+
+	<?php
+
 		$formatID = "alternatecolor";
 		$class = "altrowstablesmall firstcol";
 		$infoname = "SFP Calibration";
@@ -33,21 +33,21 @@
 		$vn = 0;
 		$vs = 0;
 		$counter = 0;
-		
-		$header = array ("Vendor Name","Vendor Serial","Model", "tx", "rx", "wl_txrx"); 
+
+		$header = array ("Vendor Name","Vendor Serial","Model", "tx", "rx", "wl_txrx");
 		$matrix = array();
-		
+
 		for($i = 0; $i < 10; $i++){
 			$sfp = intval($i);
 			$sfp = sprintf("%02s", $sfp);
 			$sfp = strval($sfp);
-			
+
 			if(!empty($_SESSION["KCONFIG"]["CONFIG_SFP".$sfp."_PARAMS"])){
 				array_push($matrix, "key=CONFIG_SFP".$sfp."_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_SFP".$sfp."_PARAMS"]);
 				$last = $i;
 			}
 		}
-		
+
 		if(!empty($_GET["add"])){
 			/* look for first empty */
 			for($i = 0; $i < 10 && !$empty; $i++){
@@ -59,16 +59,16 @@
 					$empty = 1;
 				}
 			}
-			
+
 			if (!$empty){
 				echo "<div id='alert'><center>There is only space for 10 SFP configurations.</center></div><br>";
 			}
 		}
-		
+
 		echo '<FORM method="POST">
 			<table border="0" align="center" class="'.$class.'" id="'.$formatID.'">';
 		if (!empty($infoname)) echo '<tr><th>'.$infoname.'</th></tr>';
-		
+
 		// Printing fist line with column names.
 		if (!empty($header)){
 			echo "<tr class='sub'>";
@@ -77,15 +77,15 @@
 			}
 			echo "</tr>";
 		}
-		
+
 		$i = 0;
-		// Printing the content of the form.		
+		// Printing the content of the form.
 		foreach ($matrix as $elements) {
 			echo "<tr>";
 			$element = explode(",",$elements);
 			for ($j = 0; $j < 7; $j++) {
 				$columns = explode("=",$element[$j]);
-				
+
 				if($columns[0]=="key"){
 					echo '<INPUT type="hidden" value="'.$columns[1].'" name="key'.$i.'" >';
 					$sfp_number=$columns[1][11];
@@ -114,7 +114,6 @@
 				if($columns[0]=="wl_txrx" ){
 					echo '<td align="center"><INPUT style="font-size: '.$font_size.';"  size="'.($size-4).'" type="text" value="'.$columns[1].'" name="wl_txrx'.$i.'" ></td>';
 				}
-				
 			}
 			echo '<td align="center"><a href="deletesfp.php?id='.$sfp_number.'"><img src="img/delete.png" title="Delete SFP"></a></td>';
 			echo "</tr>";
@@ -123,14 +122,14 @@
 			$vn=0;
 		}
 		echo '</table>';
-		
+
 		echo '<INPUT type="hidden" value="yes" name="update">';
-		echo '<INPUT type="submit" value="Save New Configuration" class="btn last">';	
-		echo '</FORM>';	
-		
+		echo '<INPUT type="submit" value="Save New Configuration" class="btn last">';
+		echo '</FORM>';
+
 		$error = 0;
 		if (!empty($_POST["update"])){
-			
+
 			for($j=0; $j<$i && !$error; $j++){
 				if(empty($_POST["pn".$j]) || empty($_POST["tx".$j]) || empty($_POST["tx".$j]) || empty($_POST["wl_txrx".$j])){
 					echo "<p>Model, Tx, Rx and WL_TXRX cannot be empty.</p>";
@@ -153,28 +152,24 @@
 					$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["rx".$j]) ? "" : ",rx=".$_POST["rx".$j];
 					$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["wl_txrx".$j]) ? "" : ",wl_txrx=".$_POST["wl_txrx".$j];
 				}
-				
+
 			}
-			
+
 			if(!$error){
 				save_kconfig();
 				apply_kconfig();
-			
+
 				header ('Location: sfpcalibration.php');
 			}
-			
-			
 		}
-		
+
 		echo '<hr><div align="right">
 				<A HREF="sfpcalibration.php?add=y">
 				<img src="img/add.png" style="width:30px;height:30px;vertical-align:center">
 				<span style="">Add new SFP</span></A>
 				</div>';
-		
+
 	?>
-	
-	
 </div>
 </div>
 </div>

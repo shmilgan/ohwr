@@ -19,21 +19,20 @@
 <h1 class="title">System Logs <a href='help.php?help_id=logs' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 	<?php session_is_started() ?>
-		
+
 	<?php
-	
-	
+
 		$formatID = "alternatecolor";
 		$class = "altrowstable firstcol";
 		$infoname = "System Logs";
 		$format = "table";
 		$section = "WRS_FORMS";
 		$subsection = "SYSTEM_LOGS";
-		
+
 		print_form($section, $subsection, $formatID, $class, $infoname, $format);
 
 		$modified = process_form($section, $subsection);
-		
+
 		if($modified){
 			check_add_existing_kconfig("CONFIG_WRS_LOG_WRSWATCHDOG=");
 			check_add_existing_kconfig("CONFIG_WRS_LOG_MONIT=");

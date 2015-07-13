@@ -27,11 +27,10 @@
 		$_SESSION["KCONFIG"]["CONFIG_SFP".$sfp."_PARAMS"]="";
 		save_kconfig();
 		apply_kconfig();
-		
+
 		header ('Location: sfpcalibration.php');
 	?>
-	
-	
+
 </div>
 </div>
 </div>

@@ -24,9 +24,9 @@
 	<?php
 
 		if((empty($_POST["networkgroup"]))){
-			
+
 			echo '<FORM method="POST">
-			<table id="daemon" border="0" align="center">	
+			<table id="daemon" border="0" align="center">
 					<tr>
 						<td align=left>eth0 Setup: </td>
 						<td><input type="radio" name="networkgroup" value="DHCPONLY"';  if(!strcmp(wrs_interface_setup(), "dhcponly")) echo "checked";
@@ -35,21 +35,21 @@
 						echo ' > DHCP + Static<br>
 							<input type="radio" name="networkgroup" value="STATIC"';  if(!strcmp(wrs_interface_setup(), "static")) echo "checked";
 						echo ' > Static IP<br></td>
-						<td><INPUT type="submit" value="Change" class="btn"></td>	
+						<td><INPUT type="submit" value="Change" class="btn"></td>
 					</tr>
-			</table>				
+			</table>
 			</FORM>
 			<br>';
-	
+
 			$formatID = "alternatecolor";
 			$class = "altrowstable firstcol";
 			$infoname = "Current eth0";
 			$format = "table";
 			$section = "WRS_FORMS";
 			$subsection = "NETWORK_SETUP";
-			
+
 			print_info($section, $subsection, $formatID, $class, $infoname, $format);
-			
+
 			echo '<br>';
 			$formatID = "alternatecolor1";
 			$class = "altrowstable firstcol";
@@ -57,18 +57,18 @@
 			$format = "table";
 			$section = "WRS_FORMS";
 			$subsection = "DNS_SETUP";
-			
+
 			print_info($section, $subsection, $formatID, $class, $infoname, $format);
-			
+
 			echo '<hr><p align="right">Click <A HREF="dns.php">here</A> to modify DNS configuration</p>';
 		}
 
 		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"DHCPONLY"))){
-			
+
 			$_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP"]="y";
-			
+
 			check_add_existing_kconfig("CONFIG_ETH0_DHCP=");
-			
+
 			delete_from_kconfig("CONFIG_ETH0_DHCP_ONCE=");
 			delete_from_kconfig("CONFIG_ETH0_STATIC=");
 			delete_from_kconfig("CONFIG_ETH0_IP=");
@@ -79,29 +79,29 @@
 
 			save_kconfig();
 			apply_kconfig();
-			
+
 			$formatID = "alternatecolor";
 			$class = "altrowstable firstcol";
 			$infoname = "Current eth0";
 			$format = "table";
 			$section = "WRS_FORMS";
 			$subsection = "NETWORK_SETUP";
-			
+
 			print_info($section, $subsection, $formatID, $class, $infoname, $format);
-			
+
 			echo '<br><div id="alert"><center>"DHCP Only" is now set for eth0<br>
 				Changes will take place after reboot.</center></div>';
 			echo '<form action="reboot.php">
 						<INPUT style="float: right;" type="submit" value="Reboot Now" class="btn last">
 						</form>';
 		}
-		
+
 		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"DHCPONCE"))){
 
 			echo '<p>Please enter the static setup in case DHCP fails: </p><br>';
-			
+
 			echo '<FORM method="POST">
-					<table border="0" align="center" class="altrowstable" id="alternatecolor">	
+					<table border="0" align="center" class="altrowstable" id="alternatecolor">
 						<tr>
 							<td>IP Address: </td>
 							<td><INPUT type="text" value="192.168.1.10" name="ip" ></td>
@@ -127,12 +127,12 @@
 					<INPUT type="hidden" value="DHCPONCE" name="dhcp">
 					</FORM>';
 		}
-		
+
 
 		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"STATIC"))){
 
 			echo '<FORM method="POST">
-					<table border="0" align="center" class="altrowstable" id="alternatecolor">	
+					<table border="0" align="center" class="altrowstable" id="alternatecolor">
 						<tr>
 							<td>IP Address: </td>
 							<td><INPUT type="text" value="192.168.1.10" name="ip" ></td>
@@ -156,69 +156,68 @@
 					</table>
 					<INPUT type="submit" value="Save New Configuration" class="btn last">
 					</FORM>';
-			
+
 		}
 
 		if ((!empty($_POST["ip"])) && (!empty($_POST["netmask"])) && (!empty($_POST["broadcast"]))){
 
 			if (!empty($_POST["dhcp"])){
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP_ONCE"]="y";
-				
+
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_IP"]=$_POST["ip"];
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_MASK"]=$_POST["netmask"];
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_NETWORK"]=$_POST["network"];
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_BROADCAST"]=$_POST["broadcast"];
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_GATEWAY"]=$_POST["gateway"];
-				
+
 				check_add_existing_kconfig("CONFIG_ETH0_DHCP_ONCE=");
 				check_add_existing_kconfig("CONFIG_ETH0_IP=");
 				check_add_existing_kconfig("CONFIG_ETH0_MASK=");
 				check_add_existing_kconfig("CONFIG_ETH0_NETWORK=");
 				check_add_existing_kconfig("CONFIG_ETH0_BROADCAST=");
 				check_add_existing_kconfig("CONFIG_ETH0_GATEWAY=");
-				
+
 				delete_from_kconfig("CONFIG_ETH0_DHCP=");
 				delete_from_kconfig("CONFIG_ETH0_STATIC=");
-				
+
 				echo '<br><div id="alert"><center>"DHCP Once" is now set for eth0<br>
 					Changes will take place after reboot.</center></div>';
 				echo '<form action="reboot.php">
 						<INPUT style="float: right;" type="submit" value="Reboot Now" class="btn last">
 						</form>';
-				
+
 			}else{
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_STATIC"]="y";
-				
+
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_IP"]=$_POST["ip"];
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_MASK"]=$_POST["netmask"];
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_NETWORK"]=$_POST["network"];
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_BROADCAST"]=$_POST["broadcast"];
 				$_SESSION["KCONFIG"]["CONFIG_ETH0_GATEWAY"]=$_POST["gateway"];
-				
+
 				check_add_existing_kconfig("CONFIG_ETH0_STATIC=");
 				check_add_existing_kconfig("CONFIG_ETH0_IP=");
 				check_add_existing_kconfig("CONFIG_ETH0_MASK=");
 				check_add_existing_kconfig("CONFIG_ETH0_NETWORK=");
 				check_add_existing_kconfig("CONFIG_ETH0_BROADCAST=");
 				check_add_existing_kconfig("CONFIG_ETH0_GATEWAY=");
-				
+
 				delete_from_kconfig("CONFIG_ETH0_DHCP_ONCE=");
 				delete_from_kconfig("CONFIG_ETH0_DHCP=");
-				
-				
+
 				echo '<br><div id="alert"><center>"Static Only" is now set for eth0<br>
 					Changes will take place after reboot.</center></div>';
 				echo '<form action="reboot.php">
 						<INPUT style="float: right;" type="submit" value="Reboot Now" class="btn last">
 						</form>';
 			}
-			
+
 			save_kconfig();
 			apply_kconfig();
 
 		}
-	
-	?>
+
+?>
 
 
 </div>

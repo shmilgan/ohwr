@@ -1,8 +1,6 @@
 <ul>
-	<li><a href="index.php"> Dashboard </a></li> 
-
-
-<?php 
+	<li><a href="index.php"> Dashboard </a></li>
+<?php
 //session_start();
 if (!isset($_SESSION['myusername'])) {
 
@@ -22,7 +20,7 @@ echo '<div class="login">
       </form>
 </div>';
 }else{
-	
+
 	//The rest of the menu for logged users
 	echo '<li><a href="network.php"> Network Setup </a></li>';
 	echo '<li><a href="ptp.php"> WR-PPSi Setup </a></li>';
@@ -45,7 +43,7 @@ echo '<div class="login">
 		echo '</ul>';
 	}
 	echo '</ul><br><hr>';
-	
+
 	echo '<b>User: <font color="blue"><a href="change_passwd.php">'.$_SESSION["myusername"].'</a> </font></b>';
 	echo '<a href="./logout.php">(logout)</a>';
 }

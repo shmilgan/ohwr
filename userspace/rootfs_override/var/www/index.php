@@ -20,7 +20,7 @@
 
 
 	<?php
-		wrs_main_info();		
+		wrs_main_info();
 	?>
 
 

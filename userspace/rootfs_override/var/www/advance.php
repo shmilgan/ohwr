@@ -20,8 +20,8 @@
 
 <?php session_is_started() ?>
 
-	
-	<?php 
+
+	<?php
 		$_SESSION['advance']="yes";
 		header('Location: index.php');
 	?>

@@ -22,21 +22,20 @@
 <?php session_is_started() ?>
 
 
-	<?php 
-	
+	<?php
 		// Warning message
 		echo "<hr>
-				<center>NOTE: If you do not know how to calibrate endpoints 
-				please click on <a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration' 
+				<center>NOTE: If you do not know how to calibrate endpoints
+				please click on <a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration'
 				target='_blank'> here </a>*<hr><br>";
-		
+
 		$formatID = "alternatecolor";
 		$class = "altrowstable firstcol";
 		$infoname = "Endpoint Configuration";
 		$size = "6";
 
-		$header = array ("WR port","Protocol","Tx","Rx","Mode","Fiber"); 
-		$matrix = array ("key=CONFIG_PORT00_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT00_PARAMS"], 
+		$header = array ("WR port","Protocol","Tx","Rx","Mode","Fiber");
+		$matrix = array ("key=CONFIG_PORT00_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT00_PARAMS"],
 							"key=CONFIG_PORT01_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],
 							"key=CONFIG_PORT02_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT02_PARAMS"],
 							"key=CONFIG_PORT03_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT03_PARAMS"],
@@ -53,32 +52,30 @@
 							"key=CONFIG_PORT14_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT14_PARAMS"],
 							"key=CONFIG_PORT15_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT15_PARAMS"],
 							"key=CONFIG_PORT16_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT16_PARAMS"],
-							"key=CONFIG_PORT17_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT17_PARAMS"],							
+							"key=CONFIG_PORT17_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT17_PARAMS"],
 							);
 		print_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
-		
+
 		if(process_multi_form($matrix)){
 			save_kconfig();
 			apply_kconfig();
-			
+
 			header ('Location: endpointcalibration.php');
-			
 		}
-		
+
 		$formatID = "alternatecolor1";
 		$class = "altrowstable firstcol";
 		$infoname = "Available Fibers";
 		$size = "10";
-		
-		$header = array ("#","Alpha"); 
-		
+
+		$header = array ("#","Alpha");
+
 		$matrix = array ("id=0,key=CONFIG_FIBER00_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER00_PARAMS"],
 							"id=1,key=CONFIG_FIBER01_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER01_PARAMS"],
 							"id=2,key=CONFIG_FIBER02_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER02_PARAMS"],
 							"id=3,key=CONFIG_FIBER03_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER03_PARAMS"]);
-		
+
 		print_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
-				
 	?>
 
 </div>

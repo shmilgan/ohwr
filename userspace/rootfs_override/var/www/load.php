@@ -20,8 +20,8 @@
 
 	<?php session_is_started() ?>
 
-	<table border="0" align="center">	
-	
+	<table border="0" align="center">
+
 	<tr>
 		<th><FORM method="POST" ENCTYPE="multipart/form-data" onsubmit="return confirm('Are you sure you want to upload a new FPGA binary file? \nThis could result in the malfunction of the switch.');">
 								  <INPUT type=file name="fpgafile"  >
@@ -37,33 +37,33 @@
 		</FORM></th>
 	</tr>
 	</table>
-	
+
 <!--
-	<br><br><br><center>Max. filesize is now <?php //echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'"); 
+	<br><br><br><center>Max. filesize is now <?php //echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'");
 			?></center>
-			
-			<table border="0" align="center">	
+
+			<table border="0" align="center">
 			<tr>
-			
+
 			<form align="center" method="post">
 			<th>New PHP Filesize: </th><th><INPUT type="text" name="size" > </th>
 			<th><input type="submit" value="Change" class="btn"></th>
 			</tr>
 			</form>
 			</table>
--->	
+-->
 
 	<div id="bottommsg">
 		<center>
 		*NOTE: After loading a FPGA or lm32 binary the switch will reboot.
 		</center>
 	</div>
-	
-	<?  
+
+	<?
 		wrs_load_files();
 
 	?>
-			
+
 
 </div>
 </div>

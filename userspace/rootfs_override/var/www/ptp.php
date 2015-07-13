@@ -20,10 +20,10 @@
 
 	<?php session_is_started() ?>
 	<?php $_SESSION['advance']=""; ?>
-	
+
 	<center>
 	<FORM method="POST">
-		<table id="mode" border="0" align="center">	
+		<table id="mode" border="0" align="center">
 				<tr>
 					<td align=left><b>Switch Mode:</b></td>
 					<td><input type="radio" name="modegroup" value="GM" <?php if(!strcmp(check_switch_mode(), "GM")) echo "checked"; ?>
@@ -32,14 +32,14 @@
 					> Boundary Clock <br>
 						<input type="radio" name="modegroup" value="FM"<?php if(!strcmp(check_switch_mode(), "FM")) echo "checked"; ?>
 					> Free-Running Master <br></td>
-					<td><INPUT type="submit" value="Change" class="btn"></td>	
+					<td><INPUT type="submit" value="Change" class="btn"></td>
 				</tr>
-		</table>				
+		</table>
 	</FORM>
 	<hr>
 	<table border="0" align="center">
 		<tr>
-			<form  method="post" <?php if(!strcmp(check_switch_mode(), "BC")) 
+			<form  method="post" <?php if(!strcmp(check_switch_mode(), "BC"))
 			echo 'onsubmit="return confirm(\'Please notice that UTC time from a NTP Server is overriden by White-Rabbit for Boundary Clocks. Do you want to proceed?\');"'; ?> >
 			<th><center>NTP Server:</center></th><th><INPUT type="text" STYLE="text-align:center;" name="ntpip" value="<?php  $str = check_ntp_server(); echo $str; ?>"> </th>
 			<th><input type="hidden" name="cmd" value="ntp">
@@ -48,35 +48,34 @@
 		</tr>
 	</table>
 	<hr>
-	
+
 	<?php
 		$PPSi_daemon = (wrs_check_ptp_status()) ? 'ENABLED' : 'DISABLED';
 		$PPSi_boot = ($_SESSION["KCONFIG"]["CONFIG_PPSI"]=="y") ? 'ENABLED' : 'DISABLED';
-	
+
 		/* This code enables or disables PPSi, not shown at the moment.
 		 * It might be something for the future
 		echo '
 		<FORM method="POST">
-		<table id="daemon" border="0" align="center">	
+		<table id="daemon" border="0" align="center">
 			<tr>
 				<th align=center>PPSi Daemon: </th>
 				<input type="hidden" name="cmd" value="ppsiupdate">
 				<th><INPUT type="submit" value='.$PPSi_daemon.' class="btn"></th>
 			</tr>
-		</table>				
+		</table>
 		</FORM>';
-		
+
 		echo'
 		<FORM method="POST">
-		<table id="daemon" border="0" align="center">	
+		<table id="daemon" border="0" align="center">
 			<tr>
 				<th align=center>PPSi @ Boot: </th>
 				<input type="hidden" name="cmd" value="ppsibootupdate">
-				<th><INPUT type="submit" value='.$PPSi_boot.' class="btn"></th>	
+				<th><INPUT type="submit" value='.$PPSi_boot.' class="btn"></th>
 			</tr>
-		</table>				
+		</table>
 		</FORM>';*/
-	
 
 		$formatID = "alternatecolor";
 		$class = "altrowstable firstcol";
@@ -84,19 +83,19 @@
 		$format = "table";
 		$section = "WRS_FORMS";
 		$subsection = "CONFIG_PPSI";
-		
+
 		$_SESSION["WRS_FORMS"]["CONFIG_PPSI"][CONFIG_PPSI_00]["value"]=
 			shell_exec("cat /wr/etc/ppsi-pre.conf | grep clock-class | awk '{print $2}'");
 		$_SESSION["WRS_FORMS"]["CONFIG_PPSI"][CONFIG_PPSI_01]["value"]=
 			shell_exec("cat /wr/etc/ppsi-pre.conf | grep clock-accuracy | awk '{print $2}'");;
-		
+
 		print_form($section, $subsection, $formatID, $class, $infoname, $format);
-		
+
 		wrs_ptp_configuration();
 		wrs_management();
-		
+
 		if ((!empty($_POST["modegroup"]))){
-			
+
 			if (!strcmp(htmlspecialchars($_POST["modegroup"]),"GM")){
 				$_SESSION["KCONFIG"]["CONFIG_TIME_GM"]="y";
 				if(!empty($_SESSION["KCONFIG"]["CONFIG_TIME_BC"]))
@@ -104,7 +103,7 @@
 				if(!empty($_SESSION["KCONFIG"]["CONFIG_TIME_FM"]))
 					$_SESSION["KCONFIG"]["CONFIG_TIME_FM"]="n";
 			}
-			
+
 			if (!strcmp(htmlspecialchars($_POST["modegroup"]),"BC")){
 				$_SESSION["KCONFIG"]["CONFIG_TIME_BC"]="y";
 				if(!empty($_SESSION["KCONFIG"]["CONFIG_TIME_GM"]))
@@ -112,7 +111,7 @@
 				if(!empty($_SESSION["KCONFIG"]["CONFIG_TIME_FM"]))
 					$_SESSION["KCONFIG"]["CONFIG_TIME_FM"]="n";
 			}
-			
+
 			if (!strcmp(htmlspecialchars($_POST["modegroup"]),"FM")){
 				$_SESSION["KCONFIG"]["CONFIG_TIME_FM"]="y";
 				if(!empty($_SESSION["KCONFIG"]["CONFIG_TIME_GM"]))
