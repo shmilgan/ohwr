@@ -16,81 +16,82 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">User Administration <a href='help.php?help_id=network' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
+<h1 class="title">User Administration</h1>
 
 	<?php session_is_started() ?>
 	<?php $_SESSION['advance']=""; ?>
-	
-	<table border="0" align="left">	
-		
+
+	<table class="altrowstable" id="alternatecolor" border="0" align="center">	
+
 			<form method="post">
-			<tr><th>Username: </th><th><INPUT type="text" name="user" value="admin" readonly></th></tr>
-			<tr><th>Old Password: </th><th><INPUT type="password" name="oldpasswd" > </th></tr>
-			<tr><th>New Password: </th><th> <INPUT type="password" name="newpasswd" > </th></tr>
-			<tr><th>Confirm Password: </th><th><INPUT type="password" name="confirmpasswd" > </th></tr>
-			<tr><th></th><th  align="center"><input type="submit" value="Change Password" class="btn"></th></tr>
+			<tr><td>Username: </td><td><INPUT type="text" name="user" value="root" readonly></td></tr>
+			<tr><td>Old Password: </td><td><INPUT type="password" name="oldpasswd" > </td></tr>
+			<tr><td>New Password: </td><td> <INPUT type="password" name="newpasswd" > </td></tr>
+			<tr><td>Confirm Password: </td><td><INPUT type="password" name="confirmpasswd" > </td></tr>
+			<tr><td></td><td  align="center"><input type="submit" value="Change Password" class="btn"></td></tr>
 			</form>
-		
+
 	</table>
-	
-	
-	<?php 
+
+	<?php
 		//Change user password
-		
-		$success=false;
-		if( empty($_POST['user'])){
-			echo '<br><br><br><p align=center>Please fill fields.<br></p>';
-				
+
+		if((empty($_POST['oldpasswd']) || empty($_POST['newpasswd']) || empty($_POST['confirmpasswd']))){
+			echo '<br><br><p align="center">*Please fill all fields.</p>';
+	
 		}else{
-			$saved_hash = shell_exec("cat ".$GLOBALS['phpusersfile']." | grep ".$_POST["user"]." | awk '{print $2}'");
-			$saved_hash = str_replace("\n","",$saved_hash);
-			
+
 			$username = $_POST["user"];
 			$oldpassword = $_POST["oldpasswd"];
 			$newpasswd = $_POST["newpasswd"];
 			$confirmpasswd = $_POST["confirmpasswd"];
-			
-			//First confirm old password
-			$salt="wrs4.0salt";
-			$pass = $oldpassword;
-			$hash = md5($pass); // md5 hash #1 
-			$hash_md5 = md5($salt.$pass); // md5 hash with salt #2 
-			$hash_md5_double = md5(sha1($salt.$pass)); // md5 hash with salt & sha1 #3 
-			
-			
-			if (!strcmp($hash_md5_double, $saved_hash) && !strcmp($newpasswd, $confirmpasswd) && !strcmp($_POST["user"],$_SESSION['myusername'])){ //old password is correct && new and confirm are the same
-				//set the new one
-				
-				$pass = $confirmpasswd;
-				$hash = md5($pass); // md5 hash #1 
-				$hash_md5 = md5($salt.$pass); // md5 hash with salt #2 
-				$hash_md5_double = md5(sha1($salt.$pass)); // md5 hash with salt & sha1 #3 
-				
-				//Save in file
-				//We save the changes in a temporarely file in /tmp
-				$old_value=$username." ".$saved_hash;
-				$new_value=$username." ".$hash_md5_double;
 
-				$output = shell_exec('cat '.$GLOBALS['phpusersfile'].' | sed -i "s/'.$old_value.'/'.$new_value.'/g" '.$GLOBALS['phpusersfile']); //replace password for the user
-				
-				//$file = fopen("/etc/phpusers","w+");
-				//fwrite($file,$output);
-				//fclose($file);
-				
-				
-				
-				$success=true;
-				echo '<br><br><br><p align=center>Password changed.<br></p>';
-			}else{
-				$success=false;
-				echo '<br><br><br><p align=center>Error changing password.<br></p>';
+			/* Changing the password from the web interface will always save
+			 * the password encrypted for security reasons...
+			 * */
+			if(!empty($_SESSION['KCONFIG']['CONFIG_ROOT_PWD_IS_ENCRYPTED'])){ 
+				/* Previous password was encrypted */
+				/* password shall be here: ROOT_PWD_CYPHER */
+				$dotconfig_old_passwd = $_SESSION['KCONFIG']['CONFIG_ROOT_PWD_CYPHER'];
+				$oldpassword = shell_exec('/usr/bin/mkpasswd --method=md5 "'.$oldpassword.'"');
+			}else{ 
+				/* previous password was not encrypted */
+				/* password shall be here: ROOT_PWD_CLEAR */
+				$dotconfig_old_passwd = $_SESSION['KCONFIG']['CONFIG_ROOT_PWD_CLEAR'];
 			}
-			
-			
+
+			if(!strcmp($newpasswd,$confirmpasswd)==0){
+				echo '<br><br><div id="alert" align="center">New and confirm password are different.</div>';
+				exit;
+			}else{
+				$newpasswd=shell_exec('/usr/bin/mkpasswd --method=md5 "'.$newpasswd.'"');
+			}
+
+			if(strcmp($newpasswd,"")==0){ /* using mkpasswd it can never be NULL */
+				echo '<br><br><div id="alert" align="center">Something went wrong.</div>';
+				exit;
+			}
+
+			if(!strcmp($dotconfig_old_passwd,$oldpassword)==0){
+				echo '<br><br><div id="alert" align="center">Old password was not correct.</div>';
+				exit;
+			}else{ /* Save to dotconfig... */
+				
+				if(!empty($_SESSION['KCONFIG']['CONFIG_ROOT_PWD_IS_ENCRYPTED'])){ 
+					$_SESSION['KCONFIG']['CONFIG_ROOT_PWD_CYPHER'] = $newpasswd;
+				}else{ /* previous was not encrypted */
+					$_SESSION['KCONFIG']['CONFIG_ROOT_PWD_IS_ENCRYPTED']="y";
+					$_SESSION['KCONFIG']['CONFIG_ROOT_PWD_CYPHER']=$newpasswd;
+					check_add_existing_kconfig("CONFIG_ROOT_PWD_IS_ENCRYPTED=");
+					check_add_existing_kconfig("CONFIG_ROOT_PWD_CYPHER=");
+					delete_from_kconfig("CONFIG_ROOT_PWD_CLEAR=");
+				}
+				save_kconfig();
+				apply_kconfig();
+				header('Location: logout.php');
+			}
 		}
-		
-		if($success) header('Location: logout.php');
-	
+
 	?>
 
 </div>
