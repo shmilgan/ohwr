@@ -33,13 +33,16 @@
 #define __GIT_USR__ "?"
 #endif
 
-void help(const char* pgrname)
+void help(const char* prgname)
 {
-	printf("wrs_status_led. Commit %s, built on " __DATE__ "\n", 
+	printf("%s: Commit %s, built on " __DATE__ "\n", prgname,
 	       __GIT_VER__);
-	printf("usage: %s <command>\n", pgrname);
+	printf("usage: %s <command>\n", prgname);
 	printf("available commands are:\n"
 	       "   -x turn off status led\n"
+	       "   -y turn status led yellow\n"
+	       "   -g turn status led green\n"
+	       "   -o turn status led orange\n"
 	       "   -h this help\n"
                "\n");
 	exit(1);
@@ -49,14 +52,14 @@ int main(int argc, char **argv)
 {
 	int opt;
 
-	/* argc forced to 1: -t and -v are not "terse" and "verbose" */
+	/* argc forced to 1: -q and -v are not "quiet" and "verbose" */
 	wrs_msg_init(1, argv);
 
 	assert_init(shw_pio_mmap_init());
 	shw_io_init();
 	shw_io_configure_all();
 
-	while ((opt = getopt(argc, argv, "yxhqv")) != -1) {
+	while ((opt = getopt(argc, argv, "xyogh")) != -1) {
 		switch (opt) {
 		case 'x':
 			shw_io_write(shw_io_led_state_o, 0);
@@ -65,6 +68,16 @@ int main(int argc, char **argv)
 
 		case 'y':
 			shw_io_write(shw_io_led_state_o, 1);
+			shw_io_write(shw_io_led_state_g, 1);
+			break;
+
+		case 'o':
+			shw_io_write(shw_io_led_state_o, 1);
+			shw_io_write(shw_io_led_state_g, 0);
+			break;
+
+		case 'g':
+			shw_io_write(shw_io_led_state_o, 0);
 			shw_io_write(shw_io_led_state_g, 1);
 			break;
 
