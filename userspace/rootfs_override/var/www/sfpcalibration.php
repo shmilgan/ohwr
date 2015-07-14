@@ -28,8 +28,6 @@
 		$formatID = "alternatecolor";
 		$class = "altrowstablesmall firstcol";
 		$infoname = "SFP Calibration";
-		$size = "13";
-		$font_size = "10px";
 		$vn = 0;
 		$vs = 0;
 		$counter = 0;
@@ -91,28 +89,28 @@
 					$sfp_number=$columns[1][11];
 				}
 				if($columns[0]=="vn"){
-					echo '<td align="center"><INPUT  style="font-size: '.$font_size.';" size="'.$size.'" type="text" value="'.$columns[1].'" name="vn'.$i.'" ></td>';
+					echo '<td align="center"><INPUT type="text" value="'.$columns[1].'" name="vn'.$i.'" ></td>';
 					$vn=1;
 				}
 				if($columns[0]=="vs"){
-					if(!$vn) echo '<td align="center"><INPUT  style="font-size: '.$font_size.';" size="'.$size.'" type="text" value="" name="vn'.$i.'" ></td>';
-					echo '<td align="center"><INPUT style="font-size: '.$font_size.';" size="'.$size.'" type="text" value="'.$columns[1].'" name="vs'.$i.'" ></td>';
+					if(!$vn) echo '<td align="center"><INPUT type="text" value="" name="vn'.$i.'" ></td>';
+					echo '<td align="center"><INPUT type="text" value="'.$columns[1].'" name="vs'.$i.'" ></td>';
 					$vs=1;
 					$vn=1;
 				}
 				if($columns[0]=="pn"){
-					if (!$vn) echo '<td align="center"><INPUT  style="font-size: '.$font_size.';" size="'.$size.'" type="text" value="" name="vn'.$i.'" ></td>';
-					if (!$vs) echo '<td align="center"><INPUT style="font-size: '.$font_size.';" size="'.$size.'" type="text" value=""  name="vs'.$i.'" ></td>';
-					echo '<td align="center"><INPUT style="font-size: '.$font_size.';"  size="'.$size.'" type="text" value="'.$columns[1].'" name="pn'.$i.'" ></td>';
+					if (!$vn) echo '<td align="center"><INPUT type="text" value="" name="vn'.$i.'" ></td>';
+					if (!$vs) echo '<td align="center"><INPUT type="text" value=""  name="vs'.$i.'" ></td>';
+					echo '<td align="center"><INPUT type="text" value="'.$columns[1].'" name="pn'.$i.'" ></td>';
 				}
 				if($columns[0]=="tx"){
-					echo '<td align="center"><INPUT style="font-size: '.$font_size.';"  size="'.($size/3).'" type="text" value="'.$columns[1].'" name="tx'.$i.'" ></td>';
+					echo '<td align="center"><INPUT type="text" value="'.$columns[1].'" name="tx'.$i.'" ></td>';
 				}
 				if($columns[0]=="rx"){
-					echo '<td align="center"><INPUT style="font-size: '.$font_size.';"  size="'.($size/3).'" type="text" value="'.$columns[1].'" name="rx'.$i.'" ></td>';
+					echo '<td align="center"><INPUT type="text" value="'.$columns[1].'" name="rx'.$i.'" ></td>';
 				}
 				if($columns[0]=="wl_txrx" ){
-					echo '<td align="center"><INPUT style="font-size: '.$font_size.';"  size="'.($size-4).'" type="text" value="'.$columns[1].'" name="wl_txrx'.$i.'" ></td>';
+					echo '<td align="center"><INPUT type="text" value="'.$columns[1].'" name="wl_txrx'.$i.'" ></td>';
 				}
 			}
 			echo '<td align="center"><a href="deletesfp.php?id='.$sfp_number.'"><img src="img/delete.png" title="Delete SFP"></a></td>';

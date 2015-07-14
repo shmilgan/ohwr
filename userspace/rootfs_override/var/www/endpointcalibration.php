@@ -30,9 +30,9 @@
 				target='_blank'> here </a>*<hr><br>";
 
 		$formatID = "alternatecolor";
-		$class = "altrowstable firstcol";
+		$class = "altrowstablesmall firstcol";
 		$infoname = "Endpoint Configuration";
-		$size = "6";
+		//$size = "6";
 
 		$header = array ("WR port","Protocol","Tx","Rx","Mode","Fiber");
 		$matrix = array ("key=CONFIG_PORT00_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT00_PARAMS"],
@@ -64,7 +64,7 @@
 		}
 
 		$formatID = "alternatecolor1";
-		$class = "altrowstable firstcol";
+		$class = "altrowstablesmall firstcol";
 		$infoname = "Available Fibers";
 		$size = "10";
 

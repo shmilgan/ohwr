@@ -53,7 +53,7 @@
 	<hr>
 	<br><br>
 	<center><p><strong>Load configuration files</strong></p></center>
-	<table class='altrowstable' id='alternatecolor' width="100%">
+	<table class='altrowstable' id='alternatecolor'>
 		<tr>
 		<FORM method="POST" ENCTYPE="multipart/form-data" onsubmit="return confirm('Are you sure you want to upload a dotconfig file? \nThis could result in the malfunction of the switch.');">
 			<td ><INPUT type=file name="kconfig" ></td>
@@ -62,7 +62,7 @@
 		</tr>
 		<tr>
 		<FORM method="POST" onsubmit="return confirm('Are you sure you want to set an URL for dotconfig? \nThis could result in the malfunction of the switch.');">
-			<td><INPUT type=text name="dotconfigURL" size="44%" VALUE= <?php echo $_SESSION['KCONFIG']['CONFIG_DOTCONF_URL'];?>></td>
+			<td align="center"><INPUT type=text name="dotconfigURL" size="35%" VALUE= <?php echo $_SESSION['KCONFIG']['CONFIG_DOTCONF_URL'];?>></td>
 			<input type="hidden" name="cmd" value="kconfigURL">
 			<td><INPUT type=submit value="Load from URL" class="btn" ></td>
 		</form>
@@ -72,11 +72,13 @@
 	</center>
 
 	<br>
-	<FORM align="center" method="POST" ENCTYPE="multipart/form-data">
-			Backup configuration file to your computer</center>
+	<center>
+	<FORM method="POST" ENCTYPE="multipart/form-data">
+			Backup configuration file to your computer
 			<input type="hidden" name="cmd" value="Backup">
 			<INPUT type=submit value="Backup" class="btn" >
 	</form>
+	</center>
 
 	<div id="bottommsg">
 	<hr>
