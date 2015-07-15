@@ -38,18 +38,13 @@ int vuart_rx(char *buf, int size)
 	return n_rx;
 }
 
-static int transfer_byte(int from, int is_control) {
+static int transfer_byte(int from) {
 	char c;
 	int ret;
 	do {
 		ret = read(from, &c, 1);
 	} while (ret < 0 && errno == EINTR);
 	if(ret == 1) {
-		if(is_control) {
-			if(c == '\x01') { // C-a
-				return -1;
-			}
-		}
 		vuart_tx(&c, 1);
 	} else {
 		fprintf(stderr, "nothing to read. Port disconnected?\n");
@@ -59,25 +54,11 @@ static int transfer_byte(int from, int is_control) {
 }
 
 
-void term_main(int keep_term)
+void term_main(void)
 {
 	struct termios oldkey, newkey;
-	int need_exit = 0;
 
-	fprintf(stderr, "[press C-a to exit]\n");
-
-	if(!keep_term) {
-		tcgetattr(STDIN_FILENO,&oldkey);
-		newkey.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
-		newkey.c_iflag = IGNPAR;
-		newkey.c_oflag = 0;
-		newkey.c_lflag = 0;
-		newkey.c_cc[VMIN]=1;
-		newkey.c_cc[VTIME]=0;
-		tcflush(STDIN_FILENO, TCIFLUSH);
-		tcsetattr(STDIN_FILENO,TCSANOW,&newkey);
-	}
-	while(!need_exit) {
+	while(1) {
 		fd_set fds;
 		int ret;
 		char rx;
@@ -91,23 +72,22 @@ void term_main(int keep_term)
 			perror("select");
 		} else if (ret > 0) {
 			if(FD_ISSET(STDIN_FILENO, &fds)) {
-				need_exit = transfer_byte(STDIN_FILENO, 1);
+				transfer_byte(STDIN_FILENO);
 			}
 		}
 
 		while((vuart_rx(&rx, 1)) == 1)
 			fprintf(stderr,"%c", rx);
+		usleep(1000); /* relief the CPU */
 	}
 
-	if(!keep_term)
-		tcsetattr(STDIN_FILENO,TCSANOW,&oldkey);
 }
 
 
 int main(void)
 {
 	shw_fpga_mmap_init();
-	term_main(0);
+	term_main();
 
 	return 0;
 }
