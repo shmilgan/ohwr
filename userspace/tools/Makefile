@@ -7,7 +7,7 @@ TOOLS += nbtee
 TOOLS += wrs_auxclk
 TOOLS += wrs_checkcfg
 TOOLS += wrs_status_led
-
+TOOLS += mkpasswd
 PPSI_CONFIG = ../ppsi/include/generated/autoconf.h
 
 WR_INSTALL_ROOT ?= /usr/lib/white-rabbit
@@ -77,3 +77,5 @@ install: all
 	install -d $(WR_INSTALL_ROOT)/bin
 	install $(TOOLS) $(WR_INSTALL_ROOT)/bin
 
+mkpasswd: mkpasswd.o utils.o
+	${CC} -o $@ $^ $(LDFLAGS) -lcrypt
