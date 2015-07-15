@@ -45,7 +45,7 @@ fi
 # Root password
 passwd=""
 if [ ! -z "$CONFIG_ROOT_PWD_CLEAR" ]; then
-    passwd=$(mkpasswd --method=md5 "$CONFIG_ROOT_PWD_CLEAR")
+    passwd=$(/wr/bin/mkpasswd --method=md5 "$CONFIG_ROOT_PWD_CLEAR")
 fi
 if [ ! -z "$CONFIG_ROOT_PWD_CYPHER" ]; then
     passwd="$CONFIG_ROOT_PWD_CYPHER"
