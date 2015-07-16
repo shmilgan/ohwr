@@ -47,8 +47,9 @@ passwd=""
 if [ ! -z "$CONFIG_ROOT_PWD_CLEAR" ]; then
     passwd=$(/wr/bin/mkpasswd --method=md5 "$CONFIG_ROOT_PWD_CLEAR")
 fi
-if [ ! -z "$CONFIG_ROOT_PWD_CYPHER" ]; then
-    passwd="$CONFIG_ROOT_PWD_CYPHER"
+if [ ! -z "$CONFIG_ROOT_PWD_IS_ENCRYPTED" ]; then
+    #problem: the password includes '$', so the shell assignment failed.
+    passwd=$(busybox awk '-F"' '/PWD_CYPHER/ {print $2}' /wr/etc/dot-config)
 fi
 if [ ! -z "$passwd" ]; then
     sed -i "s,^root:[^:]*:,root:$passwd:," /etc/shadow
