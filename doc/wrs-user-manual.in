@@ -462,6 +462,24 @@ value is changed by the web interface, proper action is taken.
 	Management port's (@t{eth0}) static IP configuration when
 	@t{CONFIG_ETH0_DHCP_ONCE} or @t{CONFIG_ETH0_STATIC} parameter is used.
 
+@item CONFIG_ROOT_PWD_IS_ENCRYPTED
+@itemx CONFIG_ROOT_PWD_CLEAR
+@itemx CONFIG_ROOT_PWD_CYPHER
+
+	This set of options allow setting the password for the ``root''
+        user (the administrator). The password is used to login to
+        your switch using @t{ssh} (secure shell).  If you choose
+        @t{CONFIG_ROOT_PWD_IS_ENCRYPTED}, you will be prompted for a
+        text version of a pre-encrypted password (@t{CONFIG_ROOT_PWD_CYPHER}).
+        To encrypt your @i{magic} string, you must run ``@t{mkpasswd
+	--method=md5} @i{magic}'' on your Linux host (or switch).
+        If you choose to configure an unencrypted password, then you are
+        asked to specify it as @t{CONFIG_ROOT_PWD_CLEAR}. In this latter
+        case encryption is performed at run-time to use the normal @i{ssh}
+        authentication, but the clear-text password will remain in dot-config.
+        By default the root password is an empty string, like in the initial
+        @i{wr-switch-sw} releases.
+
 @item CONFIG_NTP_SERVER
 
 	The NTP server used to prime White Rabbit time, at system boot.
