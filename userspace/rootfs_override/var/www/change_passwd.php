@@ -36,9 +36,8 @@
 	<?php
 		//Change user password
 
-		if((empty($_POST['oldpasswd']) || empty($_POST['newpasswd']) || empty($_POST['confirmpasswd']))){
-			echo '<br><br><p align="center">*Please fill all fields.</p>';
-	
+		if(!(!empty($_POST["oldpasswd"]) || !empty($_POST["newpasswd"]) || !empty($_POST["confirmpasswd"]))){
+			echo '<br><br><p align="center">*Please fill all fields.</p>';	
 		}else{
 
 			$username = $_POST["user"];
@@ -49,12 +48,15 @@
 			/* Changing the password from the web interface will always save
 			 * the password encrypted for security reasons...
 			 * */
-			if(!empty($_SESSION['KCONFIG']['CONFIG_ROOT_PWD_IS_ENCRYPTED'])){ 
+			if(!empty($_SESSION['KCONFIG']['CONFIG_ROOT_PWD_IS_ENCRYPTED'])){
 				/* Previous password was encrypted */
 				/* password shall be here: ROOT_PWD_CYPHER */
-				$dotconfig_old_passwd = $_SESSION['KCONFIG']['CONFIG_ROOT_PWD_CYPHER'];
-				$oldpassword = shell_exec('/usr/bin/mkpasswd --method=md5 "'.$oldpassword.'"');
-			}else{ 
+				$dotconfig_passwd = $_SESSION['KCONFIG']['CONFIG_ROOT_PWD_CYPHER'];
+				$salt = get_encrypt_salt($dotconfig_passwd);
+				$method = get_encrypt_method($dotconfig_passwd);
+				$rounds = get_encrypt_rounds($dotconfig_passwd);
+				$oldpassword = encrypt_password($oldpassword, $salt, $rounds, $method);
+			}else{
 				/* previous password was not encrypted */
 				/* password shall be here: ROOT_PWD_CLEAR */
 				$dotconfig_old_passwd = $_SESSION['KCONFIG']['CONFIG_ROOT_PWD_CLEAR'];
@@ -64,7 +66,11 @@
 				echo '<br><br><div id="alert" align="center">New and confirm password are different.</div>';
 				exit;
 			}else{
-				$newpasswd=shell_exec('/usr/bin/mkpasswd --method=md5 "'.$newpasswd.'"');
+				$method = "CRYPT_MD5";
+				$rounds = "";
+				$salt = substr(substr( "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" ,
+							mt_rand( 0 ,50 ) ,1 ) .substr( md5( time() ), 1), 4, 8);
+				$newpasswd = encrypt_password($newpasswd, $salt, $rounds, $method);
 			}
 
 			if(strcmp($newpasswd,"")==0){ /* using mkpasswd it can never be NULL */
@@ -72,12 +78,11 @@
 				exit;
 			}
 
-			if(!strcmp($dotconfig_old_passwd,$oldpassword)==0){
+			if(!strcmp($dotconfig_passwd,$oldpassword)==0){
 				echo '<br><br><div id="alert" align="center">Old password was not correct.</div>';
 				exit;
 			}else{ /* Save to dotconfig... */
-				
-				if(!empty($_SESSION['KCONFIG']['CONFIG_ROOT_PWD_IS_ENCRYPTED'])){ 
+				if(!empty($_SESSION['KCONFIG']['CONFIG_ROOT_PWD_IS_ENCRYPTED'])){
 					$_SESSION['KCONFIG']['CONFIG_ROOT_PWD_CYPHER'] = $newpasswd;
 				}else{ /* previous was not encrypted */
 					$_SESSION['KCONFIG']['CONFIG_ROOT_PWD_IS_ENCRYPTED']="y";
@@ -88,6 +93,7 @@
 				}
 				save_kconfig();
 				apply_kconfig();
+				load_kconfig();
 				header('Location: logout.php');
 			}
 		}

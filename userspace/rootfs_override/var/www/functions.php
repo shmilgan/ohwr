@@ -1382,4 +1382,85 @@ function apply_kconfig(){
 	shell_exec($dotconfigapp. " local_config > /dev/null 2>&1 &");
 }
 
+function encrypt_password($password, $salt, $rounds, $method){
+
+	$encrypted_passwd = "";
+
+	switch ($method) {
+		case "CRYPT_STD_DES":
+			$encrypted_passwd = shell_exec('/wr/bin/mkpasswd --method=des "'.$password.'" --salt="'.$salt.'"');
+			$encrypted_passwd = str_replace("\n", "", $encrypted_passwd);
+			break;
+		case "CRYPT_MD5":
+			$encrypted_passwd = shell_exec('/wr/bin/mkpasswd --method=md5 "'.$password.'" --salt="'.$salt.'"');
+			$encrypted_passwd = str_replace("\n", "", $encrypted_passwd);
+			break;
+		case "CRYPT_BLOWFISH":
+			$encrypted_passwd = shell_exec('/wr/bin/mkpasswd --method=bf "'.$password.'" --salt="'.$salt.'"');
+			$encrypted_passwd = str_replace("\n", "", $encrypted_passwd);
+			break;
+		case "CRYPT_SHA256":
+			$encrypted_passwd = shell_exec('/wr/bin/mkpasswd --method=sha-256 "'.$password.'" --salt="'.$salt.'" --rounds="'.$rounds.'"');
+			$encrypted_passwd = str_replace("\n", "", $encrypted_passwd);
+			break;
+		case "CRYPT_SHA512":
+			$encrypted_passwd = shell_exec('/wr/bin/mkpasswd --method=sha-512 "'.$password.'" --salt="'.$salt.'" --rounds="'.$rounds.'"');
+			$encrypted_passwd = str_replace("\n", "", $encrypted_passwd);
+			break;
+	}
+
+	return $encrypted_passwd;
+}
+
+function get_encrypt_method($enc_password){
+
+	$method = "";
+	if (strpos($enc_password,'$1$') !== false)
+		$method = "CRYPT_MD5";
+	else if (strpos($enc_password,'$2a$07$') !== false)
+		$method = "CRYPT_BLOWFISH";
+	else if (strpos($enc_password,'$5$') !== false)
+		$method = "CRYPT_SHA256";
+	else if (strpos($enc_password,'$6$') !== false)
+		$method = "CRYPT_SHA512";
+
+	return $method;
+}
+
+function get_encrypt_rounds($enc_password){
+
+	$elements = explode("$", $enc_password);
+	$rounds = "";
+
+	foreach ($elements as $element){
+		if (strpos($element,'rounds=') !== false){
+			$rounds = str_replace("rounds=","",$element);
+		}
+	}
+	return $rounds;
+}
+
+function get_encrypt_salt($enc_password){
+	$method = get_encrypt_method($enc_password);
+	$salt = "";
+
+	$elements = explode("$", $enc_password);
+
+	switch ($method) {
+		case "CRYPT_MD5":
+			$salt = $elements[2];
+			break;
+		case "CRYPT_BLOWFISH":
+			$salt = $elements[3];
+			break;
+		case "CRYPT_SHA256":
+			$salt = $elements[3];
+			break;
+		case "CRYPT_SHA512":
+			$salt = $elements[3];
+			break;
+	}
+	return $salt;
+}
+
 ?>

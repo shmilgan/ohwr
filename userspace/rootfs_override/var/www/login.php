@@ -32,7 +32,10 @@
 			if(!empty($_SESSION['KCONFIG']['CONFIG_ROOT_PWD_IS_ENCRYPTED'])){
 				/* password is here: ROOT_PWD_CYPHER */
 				$dotconfig_passwd = $_SESSION['KCONFIG']['CONFIG_ROOT_PWD_CYPHER'];
-				$password = shell_exec('/usr/bin/mkpasswd --method=md5 "'.$password.'"');
+				$salt = get_encrypt_salt($dotconfig_passwd);
+				$method = get_encrypt_method($dotconfig_passwd);
+				$rounds = get_encrypt_rounds($dotconfig_passwd);
+				$password = encrypt_password($password, $salt, $rounds, $method);
 			}else{ /* password is here: ROOT_PWD_CLEAR */
 				$dotconfig_passwd = $_SESSION['KCONFIG']['CONFIG_ROOT_PWD_CLEAR'];
 			}
