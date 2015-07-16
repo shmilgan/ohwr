@@ -42,18 +42,15 @@ fi
 
 ##### Actual configuration actions start here.
 
-# Root password
-passwd=""
-if [ ! -z "$CONFIG_ROOT_PWD_CLEAR" ]; then
-    passwd=$(/wr/bin/mkpasswd --method=md5 "$CONFIG_ROOT_PWD_CLEAR")
-fi
+# Root password. The default is an empty password (if old dot-config active)
 if [ ! -z "$CONFIG_ROOT_PWD_IS_ENCRYPTED" ]; then
     #problem: the password includes '$', so the shell assignment failed.
     passwd=$(busybox awk '-F"' '/PWD_CYPHER/ {print $2}' /wr/etc/dot-config)
+else
+    # Note: CONFIG_ROOT_PWD_CLEAR may be an empty string
+    passwd=$(/wr/bin/mkpasswd --method=md5 "$CONFIG_ROOT_PWD_CLEAR")
 fi
-if [ ! -z "$passwd" ]; then
-    sed -i "s,^root:[^:]*:,root:$passwd:," /etc/shadow
-fi
+sed -i "s,^root:[^:]*:,root:$passwd:," /etc/shadow
 
 # A non-existent wr_date.conf means no NTP. So "rm" if unconfigured
 if [ ! -z "$CONFIG_NTP_SERVER" ]; then
