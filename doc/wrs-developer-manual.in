@@ -45,7 +45,7 @@
 @title White Rabbit Switch: Developer's Manual
 @subtitle Information about software in the White Rabbit switch, for developers and advanced users
 @subtitle @value{update-month} (@value{release})
-@author Alessandro Rubini, Benoit Rat, Federico Vaga et al.
+@author Alessandro Rubini, Adam Wujek, Benoit Rat, Federico Vaga, ...
 @end titlepage
 @headings single
 
@@ -328,7 +328,7 @@ place.
 
 Every downloaded file is saved to the @code{downloads} directory 
 (@code{$WRS_DOWNLOAD_DIR} if set, or the default place
-@code{$WRS_OUPUT_DIR/downloads}). You should
+@code{$WRS_OUTPUT_DIR/downloads}). You should
 arrange not to remove that directory when you recompile over and over
 during development. I chose to make the first
 script download everything, before starting any build, to help
@@ -1067,7 +1067,7 @@ devices you can avoid this ``@code{-e}'' argument.
 
 @c FIXME: -e for dataflash
 
-@b{Note:} White Rabbit switches are shipped with their preallocated
+@b{Note:} White Rabbit switches are shipped with their pre-allocated
 MAC addresses, reported in a sticker on the back side of the switch;
 if re-flashing, you may want to use the same values.
 
@@ -1092,7 +1092,7 @@ and 02:34:56:78:9A:00 for MAC2 (the base address for the 18 SFP ports).
    Warning: you did not set the MAC2 value; using "02:34:56:78:9A:00"
 
    flash-wrs: Waiting for at91sam SAMBA bootloader on usb.
-       Please check the Managment USB cable is connected
+       Please check the Management USB cable is connected
        and keep pressed the Flash button while
        resetting/powering the switch.
    ............. Ok
@@ -1225,7 +1225,7 @@ You might also want to check its embedded documentations using:
 $ ./build/flash-wrs --help
 Usage: ./build/flash-wrs [options] [<firmware>.tar.gz] [DEV]
 
-MAC:	 MAC address in hexadecimal seperated by ':' (i.e, AB:CD:EF:01:23:45)
+MAC:	 MAC address in hexadecimal separated by ':' (i.e, AB:CD:EF:01:23:45)
 <firmware>.tar.gz: Use the file in the firmware to flash the device
 DEV:	 The usb device (by default it is /dev/ttyACM0)
 Options: 
@@ -1366,7 +1366,7 @@ developers are ever expected to change the hardware information data.
 Overall, the following is the content of @file{/proc/mtd}
 after boot.  It is divided in stanzas for a better reading:
 NAND partitioning, dataflash partitioning and the UBI volumes
-stored withing ``UBIfied-NAND'' are thus shown in selarate blocks:
+stored withing ``UBIfied-NAND'' are thus shown in separate blocks:
 
 @example
    dev:    size   erasesize  name
@@ -1413,7 +1413,7 @@ boot scripts):
 @item update
 
 	The volume is a storage place for firmware upgrade. If you
-        copy @t{wrs-firwware.tar} in this volume, the next boot will
+        copy @t{wrs-firmware.tar} in this volume, the next boot will
         completely replace @t{/usr} with this new image. If the tar
         file includes them, the kernel and @i{initramfs} image are
         replaced as well.  Developers can copy individual files,
@@ -1648,7 +1648,7 @@ for details about how they are used:
         before writing its own @t{pid}, and a reader will wait for the @t{pid}
         to be valid (i.e. it waits for a writer to be there). A writer using
         the ``locked'' flag must release the lock after initialization
-        by calling @t{wrs_shme_write(WRS_SHM_WRITE_END)}.
+        by calling @t{wrs_shmem_write(WRS_SHM_WRITE_END)}.
         On error NULL is returned, and errno is set to @t{EINVAL},
         @t{ETIMEDOUT} or to the error returned by underlying system calls
         (for example, @t{EPERM} if the file cannot be mapped).
@@ -1738,7 +1738,7 @@ of boots since power on. It does so relying on 4 32-bit @sc{cpu}
 registers that are unpredictable at power-up and remain unchanged over
 reboots. They are called ``backup registers'' in vendor documentation
 (@t{GPBR}): they actually read 0 on power-up but the documentation
-doesn`t say anything so we can't count on it.
+doesn't say anything so we can't count on it.
 
 Our kernel patches use the 16 bytes in the following way; all values
 are little-endian.
@@ -1766,7 +1766,7 @@ are little-endian.
 	The number of soft reboots. This is incremented by the
 	@i{reboot} system call, and not by accidental reboots
 	(i.e. panic or other yet-unforeseen situation).  A healthy
-	sytem should feature one soft-reboot less than total boots.
+	system should feature one soft-reboot less than total boots.
 
 @item bytes 8..11
 
@@ -1989,7 +1989,7 @@ console, on the backplane.
 @node From the Linux Shell
 @subsection From the Linux Shell
 
-The information lives in partion @t{mtd5}, as shown in @t{/proc/mtd}
+The information lives in partition @t{mtd5}, as shown in @t{/proc/mtd}
 (Memory Technology Device). To avoid accidental erasure, our
 filesystem doesn't include the device file @t{/dev/mtd5}, but only
 the read-only counterpart, @t{/dev/mtd5ro}.
@@ -2020,7 +2020,7 @@ If you prefer creating or replacing @i{hwinfo} from the boot loader,
 this is the procedure. You can't run it with software version 4.0 or
 earlier, because our boot loader was unable to access
 @i{dataflash}. V4.1 fixed this problem and introduced the @t{sdb}
-command in the booloader to access your @i{hwinfo} structure.
+command in the bootloader to access your @i{hwinfo} structure.
 
 @smallexample
    erase /dev/dataflash0.hwinfo
@@ -2146,7 +2146,7 @@ details are different.
 
 Even if the package is already released and used in production,
 some details can be
-suboptimal, while some procedures may be tricky and need more explanation.
+sub-optimal, while some procedures may be tricky and need more explanation.
 
 We are collecting all those issues in the @i{wiki} page of the
 project, to avoid frequent updates to this manual to just collect
@@ -2167,4 +2167,6 @@ on the mailing list if you don't find help there.
 @c  LocalWords:  filesystem diff ohwr http mkdir linux rubini itemize PTPd VHDL
 @c  LocalWords:  noposix ptpd userspace libwr DataFlash NAND barebox FPGA
 @c  LocalWords:  Atmel Kconfig minicom tinyserial ttyUSB bootloader logfile
-@c  LocalWords:  nandflash gateware TFTP init wrboot wiki
+@c  LocalWords:  nandflash gateware TFTP init wrboot wiki pathname
+@c  LocalWords:  subdirectory filename configs pathnames multicast
+@c  LocalWords:  DHCP submodule minipc ppsi vlan shmem hwinfo ethaddr

@@ -45,7 +45,7 @@
 @title White Rabbit Switch: User's Manual
 @subtitle Information about configuring the White Rabbit switch, for final users
 @subtitle @value{update-month} (@value{release})
-@author Alessandro Rubini, Benoit Rat, Federico Vaga et al.
+@author Alessandro Rubini, Adam Wujek, Benoit Rat, Federico Vaga, ...
 @end titlepage
 @headings single
 
@@ -97,7 +97,7 @@ This is the current set of manuals that accompany the @sc{wrs}:
 
 @item @i{White Rabbit Switch: Developer's Manual}: it describes the
    build procedure and how internals work; use of scripts and
-   @sc{wrs}-specific executables and so on.  The manual is by developers
+   @sc{wrs}-specific programs and so on.  The manual is by developers
    and for developers.  This is the
    document to check if you need to customize your @i{wrs} rebuild
    software from new repository commits that are not an official release
@@ -168,7 +168,7 @@ includes the MAC addresses for the management Ethernet and the
 time, a bad practice developed in a hurry.
 
 The @i{hwinfo} structure is now written to @i{dataflash} by the
-manufacturer, and never changed even when perforiming a complete re-flash
+manufacturer, and never changed even when performing a complete re-flash
 of the device, because the flashing scripts preserve the @i{hwinfo}
 memory area.
 
@@ -181,7 +181,7 @@ need to be aware of the steps involved, in case something goes wrong.
 @section Upgrading from v4.0
 
 Version 4.0 and later of @t{wr-switch-sw} are able to upgrade
-themselves if you place the profer files in the @i{/update} directory
+themselves if you place the proper files in the @i{/update} directory
 of the @sc{wrs}.  However, in version 4.0 we forgot to provide for
 an upgrade of the boot loader and didn't note that if the front USB
 cable is not plugged, the upgrade procedure blocks.
@@ -209,7 +209,7 @@ actually used:
 
    @item Copy your own @t{wrs-firmware.tar} for at least v4.1 into the
    @i{/update} partition.
-   This can be the official firwmare or one you built yourself.
+   This can be the official firmware or one you built yourself.
    Then reboot and wait for everything to settle (the system will reboot
    once more by itself).
 
@@ -238,7 +238,7 @@ filesystem before rebooting.
 @itemize
 
    @item Copy your own @t{wrs-firmware.tar} for at least v4.1 into the
-   @i{/update} partition. This can be the official firwmare or one you built
+   @i{/update} partition. This can be the official firmware or one you built
    yourself.
 
    @item Create and mount @i{/boot} within the switch. This means
@@ -283,7 +283,7 @@ manuals) and then proceed as described in @ref{Upgrading from v4.0}.
 When flashing version 4.0 you'll need to pass your MAC addresses on
 the command line of the flasher, so please take not of what they are.
 
-Another option is flashing the latest firwmare version and then build
+Another option is flashing the latest firmware version and then build
 your own @i{hwinfo} structure by specifying your MAC addresses.
 @t{wr-switch-sw} includes specific tools for both steps. They are
 described in the @i{Developer's Manual}, because they are expected to
@@ -575,7 +575,7 @@ value is changed by the web interface, proper action is taken.
         items should be set (running ``@t{make menuconfig}'' offers
         them as an exclusive choice). The options select a grand-master
         with external reference, from GPS or Cesium or both; a free-running
-        master, used for isolated acquisition networks, withouth an
+        master, used for isolated acquisition networks, without an
         external reference; or a normal ``boundary-clock'' device that
         is slave on some ports and master on other ports.
 
@@ -684,7 +684,7 @@ and are determined by a calibration procedure.  These values are
 used as constant delays in the @i{tx} and @i{rx} directions.
 
 @item The port is also configured as slave (@i{role}) using raw whiterabbit
-prootocol (@i{proto}) and is deployed using fiber type 2 -- this number
+protocol (@i{proto}) and is deployed using fiber type 2 -- this number
 is just a local enumeration of fiber types; most likely you'll be
 using type ``0'' in every port.
 
@@ -713,7 +713,7 @@ First try is to match all SFP identifiers (@i{vn}, @i{pn} and @i{vs}) with
 stored in config. If match is not successful, @i{vn} and @i{pn} of SFP are
 compared only with config entries without vendor serial. If match is still not
 found SFP's values are compared with config entries, which has defined only
-part number. Such approach prevents matching SFPs to config entires with
+part number. Such approach prevents matching SFPs to config entries with
 defined serial.
 
 Below are shown matching examples:
@@ -736,7 +736,7 @@ that were not matched by configs above.
 @subheading Other Deployments
 
 The example above matches the choices we make at CERN, where our
-White Rabbit networks are all run with a single monomodal fiber
+White Rabbit networks are all run with a single mono-modal fiber
 and  1310/1490 light.
 
 If you are using dual-fiber transceivers, which is acceptable for
@@ -829,7 +829,7 @@ like the following:
 
 If flashing of the whole system was successful, the first entry will
 simply work, booting the switch without any network access.  Although
-a DCHP client runs by default after boot, everything will work even if
+a DHCP client runs by default after boot, everything will work even if
 you leave the Ethernet port unconnected or you have no DHCP server
 when the switch is operational.
 
@@ -1195,7 +1195,7 @@ configuration is divided into two parts:
   tagged frames not belonging to the configured VLAN
   @item TRUNK - passes only tagged frames, drops all untagged frames
   @item Disabled - VLANs disabled
-  @item Unqualified port - passess all frames regardless of VLAN configuration
+  @item Unqualified port - passes all frames regardless of VLAN configuration
   @end itemize
 
 @item wrs_vlans --rvid <vid> [options]
@@ -1691,4 +1691,7 @@ on the mailing list if you don't find help there.
 @c  LocalWords:  filesystem diff ohwr http mkdir linux rubini itemize PTPd VHDL
 @c  LocalWords:  noposix ptpd userspace libwr DataFlash NAND barebox FPGA
 @c  LocalWords:  Atmel Kconfig minicom tinyserial ttyUSB bootloader logfile
-@c  LocalWords:  nandflash gateware TFTP init wrboot wiki
+@c  LocalWords:  nandflash gateware TFTP init wrboot wiki LEDs DHCP
+@c  LocalWords:  SNMP hwinfo pathname CONFIG filename Busybox Barebox
+@c  LocalWords:  rsyslog PARAMS subdirectory dhcp nand VLAN vlans
+@c  LocalWords:  auxclk bitstream

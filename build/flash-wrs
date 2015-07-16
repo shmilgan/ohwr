@@ -243,7 +243,7 @@ if lsusb | grep -q "at91sam" || $fake; then
 else
 	echo ""
 	echo "$me: Waiting for at91sam SAMBA bootloader on usb."
-	echo "    Please check the Managment USB cable is connected "
+	echo "    Please check the Management USB cable is connected "
 	echo "    and keep pressed the Flash button while" 
 	echo "    resetting/powering the switch."
 	while true; do
