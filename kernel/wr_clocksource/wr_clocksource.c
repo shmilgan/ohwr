@@ -46,9 +46,12 @@ static inline void wrcs_do_stats(void)
 	ncalls++;
 }
 
+DEFINE_SPINLOCK(wrcs_lock);
+
 static cycle_t wrcs_read(struct clocksource *cs)
 {
 	static uint32_t offset, last, this;
+	unsigned long flags;
 
 	wrcs_do_stats();
 
@@ -59,10 +62,12 @@ static cycle_t wrcs_read(struct clocksource *cs)
 	 * We reset at 0x3b9aca0, so without this we should use mask = 0x1f
 	 * and mac_idle = 32 ticks = 512ns. Unaffordable.
 	 */
+	spin_lock_irqsave(&wrcs_lock, flags);
 	this = readl(&wrcs_ppsg->CNTR_NSEC);
 	if (this < last)
 		offset += WRCS_FREQUENCY;
 	last = this;
+	spin_unlock_irqrestore(&wrcs_lock, flags);
 	return offset + this;
 }
 
