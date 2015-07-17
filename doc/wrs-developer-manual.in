@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month January 2015
+@set update-month July 2015
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -206,12 +206,13 @@ both the @i{gateware} image and the @i{lm32} firmware binary
 are built from sources external to this package.
 
 The @i{gateware} is being downloaded as a pre-build tar archive
-(currently called @code{wrs-gw-v4.0-20140807.tar.gz}).  This
-is build from the @code{wr-switch-sw-v4.0} tag of the @code{wr-switch-hdl}
+(currently called @code{wrs-gw-v4.2-RC1-20150714.tar.gz}).  This
+is built from the @code{wr-switch-sw-v4.2-rc1} tag of the @code{wr-switch-hdl}
 repository.  Please note that the repository uses @i{git} submodules,
 so it depends on other @code{ohwr} repositories too, which in turn
 have not been tagged because the submodule mechanism ensures you'll
-get the exact version you need.
+get the exact version you need. Anyways, all relevant commit identifiers
+are shown in the SNMP version fields (within @t{WR-SWITCH-MIB.txt}).
 
 The LM32 program is provided as a pre-compiled binary in
 @code{binaries/rt_cpu.bin}. The respective source code is the
@@ -221,7 +222,8 @@ The LM32 program is provided as a pre-compiled binary in
 
 If you need to rebuild the @t{rt_cpu.bin} file from source, to make
 your own modifications, you can run @t{make wr_switch_defconfig}
-in @i{wrpc-sw} and then @t{make}. Please checkout the @code{wr-switch-sw-v4.2}
+in @i{wrpc-sw} and then @t{make}. Please checkout the
+@code{wr-switch-sw-v4.2-rc1}
 tag to get the exact commit.
 
 @c --------------------------------------------------------------------------
@@ -1247,7 +1249,7 @@ If you want to flash the @i{at91boot.bin}, @i{barebox.bin}, @i{kernel}
 or @i{file-system} that you just built, you can just call the script
 from the build directory and use the @code{-b} option.
 
-The official binaries for installation of version 4.0 of this package
+The official binaries for installation of version 4.2-rc1 of this package
 are available in the @i{files} tab of this project in @t{ohwr.org}.
 We don't provide a complete link here, but one is available in the
 list of downloaded files: @t{build/download-info}.
@@ -2104,7 +2106,7 @@ those in your hands.
 @node DIP Switch HW version
 @section DIP Switch HW version
 
-Since v3.3, the backplane include a DIP switch configured by the 
+Since v3.3, the backplane includes a DIP switch configured by the 
 manufacturer in order to define a specific SCB and backplane 
 version. This setup is then read by the software in order to load 
 the correct FPGA binaries and use the proper I/Os. Please be aware 

@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month January 2015
+@set update-month July 2015
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -1375,7 +1375,7 @@ installation. The additional, switch-specific information are in the
 Rabbit. The associated MIB is in the directory @t{userspace/snmpd},
 where related source files live as well.
 
-As in the version 4.2 there is no support for traps.
+There is currently no support for traps.
 
 @c ==========================================================================
 @node The WRS MIB
