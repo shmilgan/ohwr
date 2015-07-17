@@ -21,3 +21,4 @@ nbtee
 wrs_auxclk
 wrs_checkcfg
 mkpasswd
+wrs_status_led
