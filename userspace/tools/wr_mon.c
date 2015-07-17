@@ -99,12 +99,22 @@ void ppsi_connect_minipc()
 void init_shm(void)
 {
 	struct hal_shmem_header *h;
+	int retr, maxretr = 15;
 
 	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
 	if (!hal_head) {
 		fprintf(stderr, "unable to open shm for HAL!\n");
 		exit(1);
 	}
+	for (retr = 0; retr < maxretr && !hal_head->version; retr++) {
+		if (!retr)
+			fprintf(stderr, "Waiting for HAL..");
+		fprintf(stderr, ".");
+		sleep(1);
+	}
+	if (retr)
+		fprintf(stderr, "\n");
+
 	/* check hal's shm version */
 	if (hal_head->version != HAL_SHMEM_VERSION) {
 		fprintf(stderr, "wr_mon: unknown HAL's shm version %i "
@@ -125,7 +135,7 @@ void init_shm(void)
 	 * addresses. No need to re-dereference pointer at each read. */
 	hal_ports = wrs_shm_follow(hal_head, h->ports);
 	if (!hal_ports) {
-		fprintf(stderr, "Unalbe to follow hal_ports pointer in HAL's "
+		fprintf(stderr, "Unable to follow hal_ports pointer in HAL's "
 			"shmem");
 		exit(1);
 	}
