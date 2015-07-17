@@ -28,22 +28,21 @@
 			$format = "list";
 			$section = "WRS_TABLE_INFO";
 			$subsection = "CONTACT";
-			
 			print_info($section, $subsection, $formatID, $class, $infoname, $format);
 		?>
 	</div>
 	<br>
-	
+
 	<div>
 		<p align=right>
-			<strong>Open Hardware Repository  
+			<strong>Open Hardware Repository
 			<a href="http://www.ohwr.org/projects/white-rabbit/wiki">
 				http://www.ohwr.org/projects/white-rabbit/wiki</a>
 			</strong>
 		</p>
 		<br>
 		<p align=right>
-			<strong>White-Rabbit Mailing List 
+			<strong>White-Rabbit Mailing List
 			<a href="mailto:white-rabbit-dev@ohwr.org?subject=[White-Rabbit Switch Local Management Tool]">
 				(white-rabbit-dev@ohwr.org)</a>
 			</strong>
@@ -59,14 +58,15 @@
 		 <IMG SRC="img/ugr.gif" WIDTH=140 ALT="University of Granada">
 		</center>
 	</div>
-	
+
 	<div>
-		<p align=right><strong>Developers: </strong>Alessandro Rubini, 
-													Tomasz Wlostowski, 
-													Benoit Rat, 
-													Federico Vega, 
-													Grzegorz Daniluk, 
-													Maciej Lipinski, 
+		<p align=right><strong>Developers: </strong>Alessandro Rubini,
+													Tomasz Wlostowski,
+													Benoit Rat,
+													Federico Vaga,
+													Grzegorz Daniluk,
+													Maciej Lipinski,
+													Adam Wujek,
 													Jose Luis Gutierrez</p>
 	</div>
 

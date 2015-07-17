@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body id="management">
+<body id="sfpcalib">
 <div class="main">
 <div class="page">
 <div class="header" >
@@ -16,26 +16,20 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
+<h1 class="title"><a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration' target='_blank'><img align=right src="./img/question.png"></a></h1>
 
-	<?php session_is_started() ?>
+<?php session_is_started() ?>
 
-	<div id="rebootmsg">
-		<p align=center>
-			<img src="./img/loader.gif">
-		</p>
-		<br>
-		<div id="rebootingtext" align=center>...Saving changes...</div>
-	</div>
+	<?php 
+		$sfp = intval($_GET["id"]);
+		$sfp = sprintf("%02s", $sfp);
+		$sfp = strval($sfp);
+		$_SESSION["KCONFIG"]["CONFIG_SFP".$sfp."_PARAMS"]="";
+		save_kconfig();
+		apply_kconfig();
 
-	<div id="rebooting"></div>
-
-	<div id="rebootwrlogo">
-		<br><br>
-		<img src="./img/ryanlerch_The_White_Rabbit.png">
-		<p align=right>Alice: How long is forever?
-					<br>White Rabbit: Sometimes, just a nanosecond.</p>
-	</div>
-
+		header ('Location: sfpcalibration.php');
+	?>
 
 </div>
 </div>

@@ -16,31 +16,29 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">System Logs <a href='help.php?help_id=logs' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
+<h1 class="title">WRS Aux Clock (Out CLK2)<a href='help.php?help_id=auxclk' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 	<?php session_is_started() ?>
 
 	<?php
 
+
 		$formatID = "alternatecolor";
 		$class = "altrowstable firstcol";
-		$infoname = "System Logs";
+		$infoname = "Aux. Clock Info";
 		$format = "table";
 		$section = "WRS_FORMS";
-		$subsection = "SYSTEM_LOGS";
+		$subsection = "CONFIG_WRSAUXCLK";
 
 		print_form($section, $subsection, $formatID, $class, $infoname, $format);
 
 		$modified = process_form($section, $subsection);
 
 		if($modified){
-			check_add_existing_kconfig("CONFIG_WRS_LOG_WRSWATCHDOG=");
-			check_add_existing_kconfig("CONFIG_WRS_LOG_MONIT=");
-			check_add_existing_kconfig("CONFIG_WRS_LOG_SNMPD=");
 			save_kconfig();
-			echo '<center>Configuration Saved...</center>';
 			apply_kconfig();
-			wrs_reboot();
+			shell_exec("/etc/init.d/wrs_auxclk restart > /dev/null 2>&1 &");
+			header("Location: auxclk.php");
 		}
 	?>
 

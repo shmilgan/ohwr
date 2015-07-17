@@ -20,33 +20,36 @@
 
 	<?php session_is_started() ?>
 	<?php $_SESSION['advance']=""; ?>
-	
-	<FORM method="POST">
-	<table id="daemon" border="0" align="center">	
-			<tr>
-				<th align=left>eth0 Setup: </th>
-				<th><input type="radio" name="networkgroup" value="DHCP" <?php if(!strcmp(wrs_interface_setup(), "dhcp")) echo "checked" ?> > DHCP <br>
-					<input type="radio" name="networkgroup" value="Static" <?php if(!strcmp(wrs_interface_setup(), "static")) echo "checked" ?> > Static <br>
-				<th><INPUT type="submit" value="Change" class="btn"></th>	
-			</tr>
-	</table>				
-	</FORM>
-	<br>
-	
+
 	<?php
-	
-	
+
 		if((empty($_POST["networkgroup"]))){
-			
+
+			echo '<FORM method="POST">
+			<table id="daemon" border="0" align="center">
+					<tr>
+						<td align=left>eth0 Setup: </td>
+						<td><input type="radio" name="networkgroup" value="DHCPONLY"';  if(!strcmp(wrs_interface_setup(), "dhcponly")) echo "checked";
+						echo ' > DHCP Only <br>
+						<input type="radio" name="networkgroup" value="DHCPONCE"';  if(!strcmp(wrs_interface_setup(), "dhcponce")) echo "checked";
+						echo ' > DHCP + Static<br>
+							<input type="radio" name="networkgroup" value="STATIC"';  if(!strcmp(wrs_interface_setup(), "static")) echo "checked";
+						echo ' > Static IP<br></td>
+						<td><INPUT type="submit" value="Change" class="btn"></td>
+					</tr>
+			</table>
+			</FORM>
+			<br>';
+
 			$formatID = "alternatecolor";
 			$class = "altrowstable firstcol";
 			$infoname = "Current eth0";
 			$format = "table";
 			$section = "WRS_FORMS";
 			$subsection = "NETWORK_SETUP";
-			
+
 			print_info($section, $subsection, $formatID, $class, $infoname, $format);
-			
+
 			echo '<br>';
 			$formatID = "alternatecolor1";
 			$class = "altrowstable firstcol";
@@ -54,45 +57,167 @@
 			$format = "table";
 			$section = "WRS_FORMS";
 			$subsection = "DNS_SETUP";
-			
+
 			print_info($section, $subsection, $formatID, $class, $infoname, $format);
-			
+
 			echo '<hr><p align="right">Click <A HREF="dns.php">here</A> to modify DNS configuration</p>';
-	
 		}
-		
-		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"DHCP"))){
-			
-			$DHCP_LINE = 'CONFIG_ETH0_DHCP="y"'."\n";
-			file_put_contents($GLOBALS['kconfigfile'], $DHCP_LINE, FILE_APPEND | LOCK_EX);
-			
-			echo '<center>DHCP is now set for eth0<br>Rebooting switch</center>';
-			
-			//Let's reboot
-			wrs_reboot();
-			
-		}
-		
-		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"Static"))){
+
+		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"DHCPONLY"))){
+
+			$_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP"]="y";
+
+			check_add_existing_kconfig("CONFIG_ETH0_DHCP=");
+
+			delete_from_kconfig("CONFIG_ETH0_DHCP_ONCE=");
+			delete_from_kconfig("CONFIG_ETH0_STATIC=");
+			delete_from_kconfig("CONFIG_ETH0_IP=");
+			delete_from_kconfig("CONFIG_ETH0_MASK=");
+			delete_from_kconfig("CONFIG_ETH0_NETWORK=");
+			delete_from_kconfig("CONFIG_ETH0_BROADCAST=");
+			delete_from_kconfig("CONFIG_ETH0_GATEWAY=");
+
+			save_kconfig();
+			apply_kconfig();
 
 			$formatID = "alternatecolor";
 			$class = "altrowstable firstcol";
-			$infoname = "eth0";
+			$infoname = "Current eth0";
 			$format = "table";
 			$section = "WRS_FORMS";
 			$subsection = "NETWORK_SETUP";
-			
-			print_form($section, $subsection, $formatID, $class, $infoname, $format);
-			
+
+			print_info($section, $subsection, $formatID, $class, $infoname, $format);
+
+			echo '<br><div id="alert"><center>"DHCP Only" is now set for eth0<br>
+				Changes will take place after reboot.</center></div>';
+			echo '<form action="reboot.php">
+						<INPUT style="float: right;" type="submit" value="Reboot Now" class="btn last">
+						</form>';
 		}
-		
-		if ((!empty($_POST["ip"])) && (!empty($_POST["netmask"])) && (!empty($_POST["network"])) && (!empty($_POST["broadcast"])) && (!empty($_POST["gateway"]))){
-			
+
+		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"DHCPONCE"))){
+
+			echo '<p>Please enter the static setup in case DHCP fails: </p><br>';
+
+			echo '<FORM method="POST">
+					<table border="0" align="center" class="altrowstable" id="alternatecolor">
+						<tr>
+							<td>IP Address: </td>
+							<td><INPUT type="text" value="192.168.1.10" name="ip" ></td>
+						</tr>
+						<tr>
+							<td>Netmask: </td>
+							<td><INPUT type="text" value="255.255.255.0" name="netmask" ></td>
+						</tr>
+						<tr>
+							<td>Broadcast: </td>
+							<td><INPUT type="text" value="192.168.1.255" name="broadcast" ></td>
+						</tr>
+						<tr>
+							<td>Network: </td>
+							<td><INPUT type="text" value="192.168.1.0" name="network" ></td>
+						</tr>
+						<tr>
+							<td>Gateway: </td>
+							<td><INPUT type="text" value="192.168.1.1" name="gateway" ></td>
+						</tr>
+					</table>
+					<INPUT type="submit" value="Save New Configuration" class="btn last">
+					<INPUT type="hidden" value="DHCPONCE" name="dhcp">
+					</FORM>';
 		}
-			
-			
-			
-	?>
+
+
+		if ((!empty($_POST["networkgroup"])) && (!strcmp(htmlspecialchars($_POST["networkgroup"]),"STATIC"))){
+
+			echo '<FORM method="POST">
+					<table border="0" align="center" class="altrowstable" id="alternatecolor">
+						<tr>
+							<td>IP Address: </td>
+							<td><INPUT type="text" value="192.168.1.10" name="ip" ></td>
+						</tr>
+						<tr>
+							<td>Netmask: </td>
+							<td><INPUT type="text" value="255.255.255.0" name="netmask" ></td>
+						</tr>
+						<tr>
+							<td>Broadcast: </td>
+							<td><INPUT type="text" value="192.168.1.255" name="broadcast" ></td>
+						</tr>
+						<tr>
+							<td>Network: </td>
+							<td><INPUT type="text" value="192.168.1.0" name="network" ></td>
+						</tr>
+						<tr>
+							<td>Gateway: </td>
+							<td><INPUT type="text" value="192.168.1.1" name="gateway" ></td>
+						</tr>
+					</table>
+					<INPUT type="submit" value="Save New Configuration" class="btn last">
+					</FORM>';
+
+		}
+
+		if ((!empty($_POST["ip"])) && (!empty($_POST["netmask"])) && (!empty($_POST["broadcast"]))){
+
+			if (!empty($_POST["dhcp"])){
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_DHCP_ONCE"]="y";
+
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_IP"]=$_POST["ip"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_MASK"]=$_POST["netmask"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_NETWORK"]=$_POST["network"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_BROADCAST"]=$_POST["broadcast"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_GATEWAY"]=$_POST["gateway"];
+
+				check_add_existing_kconfig("CONFIG_ETH0_DHCP_ONCE=");
+				check_add_existing_kconfig("CONFIG_ETH0_IP=");
+				check_add_existing_kconfig("CONFIG_ETH0_MASK=");
+				check_add_existing_kconfig("CONFIG_ETH0_NETWORK=");
+				check_add_existing_kconfig("CONFIG_ETH0_BROADCAST=");
+				check_add_existing_kconfig("CONFIG_ETH0_GATEWAY=");
+
+				delete_from_kconfig("CONFIG_ETH0_DHCP=");
+				delete_from_kconfig("CONFIG_ETH0_STATIC=");
+
+				echo '<br><div id="alert"><center>"DHCP Once" is now set for eth0<br>
+					Changes will take place after reboot.</center></div>';
+				echo '<form action="reboot.php">
+						<INPUT style="float: right;" type="submit" value="Reboot Now" class="btn last">
+						</form>';
+
+			}else{
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_STATIC"]="y";
+
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_IP"]=$_POST["ip"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_MASK"]=$_POST["netmask"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_NETWORK"]=$_POST["network"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_BROADCAST"]=$_POST["broadcast"];
+				$_SESSION["KCONFIG"]["CONFIG_ETH0_GATEWAY"]=$_POST["gateway"];
+
+				check_add_existing_kconfig("CONFIG_ETH0_STATIC=");
+				check_add_existing_kconfig("CONFIG_ETH0_IP=");
+				check_add_existing_kconfig("CONFIG_ETH0_MASK=");
+				check_add_existing_kconfig("CONFIG_ETH0_NETWORK=");
+				check_add_existing_kconfig("CONFIG_ETH0_BROADCAST=");
+				check_add_existing_kconfig("CONFIG_ETH0_GATEWAY=");
+
+				delete_from_kconfig("CONFIG_ETH0_DHCP_ONCE=");
+				delete_from_kconfig("CONFIG_ETH0_DHCP=");
+
+				echo '<br><div id="alert"><center>"Static Only" is now set for eth0<br>
+					Changes will take place after reboot.</center></div>';
+				echo '<form action="reboot.php">
+						<INPUT style="float: right;" type="submit" value="Reboot Now" class="btn last">
+						</form>';
+			}
+
+			save_kconfig();
+			apply_kconfig();
+
+		}
+
+?>
 
 
 </div>

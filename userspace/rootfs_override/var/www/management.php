@@ -21,15 +21,9 @@
 	<?php session_is_started() ?>
 	<?php $_SESSION['advance']=""; ?>
 
-	<table border="0" align="center">	
-	<tr>
 	<center>
-		<form  method="post">
-			<th>Switch Mode: (<?php  $str = check_switch_mode(); echo $str; ?>)</th>
-			<input type="hidden" name="cmd" value="change">
-			<th><input type="submit" value="Change Mode" class="btn"></th>
-		</form>
-	</tr>
+
+	<table border="0" align="center">
 	<tr>
 		<form  method="post">
 			<th>Reboot system: </th>
@@ -38,48 +32,60 @@
 		</form>
 	</center>
 	</tr>
+<!--
 	<tr>
 		<form  method="post">
 			<th align=left>Net-SNMP Server: </th>
 			<input type="hidden" name="cmd" value="snmp">
-			<th><INPUT type="submit" STYLE="text-align:center;" value="<?php echo (check_snmp_status()) ? 'Disable SNMP' : 'Enable SNMP'; ?>" class="btn"></th>	
+			<th><INPUT type="submit" STYLE="text-align:center;" value="<?php echo (check_snmp_status()) ? 'Disable SNMP' : 'Enable SNMP'; ?>" class="btn"></th>
+		</form>
+	</tr>
+-->
+	<tr>
+		<form  method="post">
+			<th align=left>System Monitor: </th>
+			<input type="hidden" name="cmd" value="monit">
+			<th><INPUT type="submit" STYLE="text-align:center;" value="<?php echo (check_monit_status()) ? 'Disable Monitor' : 'Enable Monitor'; ?>" class="btn"></th>
 		</form>
 	</tr>
 	</table>
-		
 
-	<table border="0" align="center">	
-		<tr>
-			<form  method="post">
-			<th><center>NTP Server:</center></th><th><INPUT type="text" STYLE="text-align:center;" name="ntpip" value="<?php  $str = check_ntp_server(); echo $str; ?>"> </th>
-			<th><input type="hidden" name="cmd" value="ntp">
-			<th><input type="submit" value="Add NTP Server" class="btn"></th>
-			</form>
-		</tr>
-	</table>
-	
 	<hr>
 	<br><br>
 	<center><p><strong>Load configuration files</strong></p></center>
-	<table class='altrowstable' id='alternatecolor' width="100%">
+	<table class='altrowstable' id='alternatecolor'>
 		<tr>
-		<FORM method="POST" ENCTYPE="multipart/form-data">
+		<FORM method="POST" ENCTYPE="multipart/form-data" onsubmit="return confirm('Are you sure you want to upload a dotconfig file? \nThis could result in the malfunction of the switch.');">
 			<td ><INPUT type=file name="kconfig" ></td>
 			<td><INPUT type=submit value="Load dot-config" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
 		</form>
 		</tr>
 		<tr>
+		<FORM method="POST" onsubmit="return confirm('Are you sure you want to set an URL for dotconfig? \nThis could result in the malfunction of the switch.');">
+			<td align="center"><INPUT type=text name="dotconfigURL" size="35%" VALUE= <?php echo $_SESSION['KCONFIG']['CONFIG_DOTCONF_URL'];?>></td>
+			<input type="hidden" name="cmd" value="kconfigURL">
+			<td><INPUT type=submit value="Load from URL" class="btn" ></td>
+		</form>
+		</tr>
+		<tr>
 	</table>
 	</center>
-	
-	<br><br>
-	<FORM align="center" method="POST" ENCTYPE="multipart/form-data">
-			Backup configuration file to your computer</center>
+
+	<br>
+	<center>
+	<FORM method="POST" ENCTYPE="multipart/form-data">
+			Backup configuration file to your computer
 			<input type="hidden" name="cmd" value="Backup">
 			<INPUT type=submit value="Backup" class="btn" >
 	</form>
-	
-	<?php 
+	</center>
+
+	<div id="bottommsg">
+	<hr>
+	<p align="right">Click <A HREF="showfile.php?help_id=dotconfig" target="_blank">here</A> to display the current dotconfig file</p>
+	</div>
+
+	<?php
 		wrs_management();
 	?>
 

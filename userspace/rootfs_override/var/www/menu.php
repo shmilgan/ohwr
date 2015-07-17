@@ -1,8 +1,6 @@
 <ul>
-	<li><a href="index.php"> Dashboard </a></li> 
-
-
-<?php 
+	<li><a href="index.php"> Dashboard </a></li>
+<?php
 //session_start();
 if (!isset($_SESSION['myusername'])) {
 
@@ -22,16 +20,19 @@ echo '<div class="login">
       </form>
 </div>';
 }else{
-	
+
 	//The rest of the menu for logged users
 	echo '<li><a href="network.php"> Network Setup </a></li>';
-	echo '<li><a href="ptp.php"> PPSi Setup </a></li>';
+	echo '<li><a href="ptp.php"> WR-PPSi Setup </a></li>';
 	echo '<li><a href="endpointmode.php">  Endpoint Mode</a></li>';
 	echo '<li><a href="vlan.php"> VLAN Setup </a></li>';
 	echo '<li><a href="management.php"> Switch Management </a></li>';
 	echo '<li><a href="advance.php"> Advanced Mode </a></li>';
 	if(!empty($_SESSION['advance'])){
 		echo '<ul class="advance">';
+		/* show Aux. CLK2 configuration only if version 3.4 */
+		if (strpos($_SESSION["WRS_INFO"][HARDWARE],'scb: v3.4') !== false)
+			echo '<li><a href="auxclk.php">Aux Clock Config</a></li>';
 		echo '<li><a href="sfpcalibration.php">SFP Calibration</a></li>';
 		echo '<li><a href="endpoint.php">Endpoint Tool </a></li>';
 		echo '<li><a href="endpointcalibration.php">Endpoint Calibration</a></li>';
@@ -42,7 +43,7 @@ echo '<div class="login">
 		echo '</ul>';
 	}
 	echo '</ul><br><hr>';
-	
+
 	echo '<b>User: <font color="blue"><a href="change_passwd.php">'.$_SESSION["myusername"].'</a> </font></b>';
 	echo '<a href="./logout.php">(logout)</a>';
 }

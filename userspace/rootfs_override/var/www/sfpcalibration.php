@@ -21,55 +21,153 @@
 <?php session_is_started() ?>
 
 	<br>
-	
 
-	<?php 
-	
+
+	<?php
+
 		$formatID = "alternatecolor";
-		$class = "altrowstable firstcol";
+		$class = "altrowstablesmall firstcol";
 		$infoname = "SFP Calibration";
-		$size = "12";
-		
-		$header = array ("SFP Name","Tx","Rx","wl_txrx"); 
+		$vn = 0;
+		$vs = 0;
+		$counter = 0;
+
+		$header = array ("Vendor Name","Vendor Serial","Model", "tx", "rx", "wl_txrx");
 		$matrix = array();
-		
-		for($i = 0; $i < 18; $i++){
-			$endpoint = intval($i);
-			$endpoint = sprintf("%02s", $endpoint);
-			$endpoint = strval($endpoint);
-			
-			if(!empty($_SESSION["KCONFIG"]["CONFIG_SFP".$endpoint."_PARAMS"])){
-				array_push($matrix, "key=CONFIG_SFP".$endpoint."_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_SFP".$endpoint."_PARAMS"]);
+
+		for($i = 0; $i < 10; $i++){
+			$sfp = intval($i);
+			$sfp = sprintf("%02s", $sfp);
+			$sfp = strval($sfp);
+
+			if(!empty($_SESSION["KCONFIG"]["CONFIG_SFP".$sfp."_PARAMS"])){
+				array_push($matrix, "key=CONFIG_SFP".$sfp."_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_SFP".$sfp."_PARAMS"]);
 				$last = $i;
 			}
 		}
-		
+
 		if(!empty($_GET["add"])){
-			$last++;
-			if($last<10){
-				$last = sprintf("%02s", $last);
-				$last = strval($last);
-				array_push($matrix, "key=CONFIG_SFP".$last."_PARAMS,name=empty,tx=empty,rx=empty,wl_txrx=empty");
-			}else{
-				echo "<center>There is only space for 9 SFP configurations.</center>";
+			/* look for first empty */
+			for($i = 0; $i < 10 && !$empty; $i++){
+				$sfp = intval($i);
+				$sfp = sprintf("%02s", $sfp);
+				$sfp = strval($sfp);
+				if(empty($_SESSION["KCONFIG"]["CONFIG_SFP".$sfp."_PARAMS"])){
+					array_push($matrix, "key=CONFIG_SFP".$sfp."_PARAMS,vn=,vs=,pn=,tx=,rx=,wl_txrx=");
+					$empty = 1;
+				}
+			}
+
+			if (!$empty){
+				echo "<div id='alert'><center>There is only space for 10 SFP configurations.</center></div><br>";
 			}
 		}
-		
-		print_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
-		
-		echo '<hr><p align="right">Click <A HREF="sfpcalibration.php?add=y">here</A> to a new SFP</p>';
-		
-		if(process_multi_form($matrix)){
-			save_kconfig();
-			apply_kconfig();
-			
-			header ('Location: sfpcalibration.php');
-			
+
+		echo '<FORM method="POST">
+			<table border="0" align="center" class="'.$class.'" id="'.$formatID.'">';
+		if (!empty($infoname)) echo '<tr><th>'.$infoname.'</th></tr>';
+
+		// Printing fist line with column names.
+		if (!empty($header)){
+			echo "<tr class='sub'>";
+			foreach ($header as $column){
+				echo "<td>".($column)."</td>";
+			}
+			echo "</tr>";
 		}
-		
+
+		$i = 0;
+		// Printing the content of the form.
+		foreach ($matrix as $elements) {
+			echo "<tr>";
+			$element = explode(",",$elements);
+			for ($j = 0; $j < 7; $j++) {
+				$columns = explode("=",$element[$j]);
+
+				if($columns[0]=="key"){
+					echo '<INPUT type="hidden" value="'.$columns[1].'" name="key'.$i.'" >';
+					$sfp_number=$columns[1][11];
+				}
+				if($columns[0]=="vn"){
+					echo '<td align="center"><INPUT type="text" value="'.$columns[1].'" name="vn'.$i.'" ></td>';
+					$vn=1;
+				}
+				if($columns[0]=="vs"){
+					if(!$vn) echo '<td align="center"><INPUT type="text" value="" name="vn'.$i.'" ></td>';
+					echo '<td align="center"><INPUT type="text" value="'.$columns[1].'" name="vs'.$i.'" ></td>';
+					$vs=1;
+					$vn=1;
+				}
+				if($columns[0]=="pn"){
+					if (!$vn) echo '<td align="center"><INPUT type="text" value="" name="vn'.$i.'" ></td>';
+					if (!$vs) echo '<td align="center"><INPUT type="text" value=""  name="vs'.$i.'" ></td>';
+					echo '<td align="center"><INPUT type="text" value="'.$columns[1].'" name="pn'.$i.'" ></td>';
+				}
+				if($columns[0]=="tx"){
+					echo '<td align="center"><INPUT type="text" value="'.$columns[1].'" name="tx'.$i.'" ></td>';
+				}
+				if($columns[0]=="rx"){
+					echo '<td align="center"><INPUT type="text" value="'.$columns[1].'" name="rx'.$i.'" ></td>';
+				}
+				if($columns[0]=="wl_txrx" ){
+					echo '<td align="center"><INPUT type="text" value="'.$columns[1].'" name="wl_txrx'.$i.'" ></td>';
+				}
+			}
+			echo '<td align="center"><a href="deletesfp.php?id='.$sfp_number.'"><img src="img/delete.png" title="Delete SFP"></a></td>';
+			echo "</tr>";
+			$i++;
+			$vs=0;
+			$vn=0;
+		}
+		echo '</table>';
+
+		echo '<INPUT type="hidden" value="yes" name="update">';
+		echo '<INPUT type="submit" value="Save New Configuration" class="btn last">';
+		echo '</FORM>';
+
+		$error = 0;
+		if (!empty($_POST["update"])){
+
+			for($j=0; $j<$i && !$error; $j++){
+				if(empty($_POST["pn".$j]) || empty($_POST["tx".$j]) || empty($_POST["tx".$j]) || empty($_POST["wl_txrx".$j])){
+					echo "<p>Model, Tx, Rx and WL_TXRX cannot be empty.</p>";
+					$error = 1;
+				}else{
+					$_SESSION["KCONFIG"][$_POST["key".$j]] = "";
+					if(empty($_SESSION["KCONFIG"][$_POST["key".$j]]))
+						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["vn".$j]) ? "" : "vn=".$_POST["vn".$j];
+					else
+						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["vn".$j]) ? "" : ",vn=".$_POST["vn".$j];
+					if(empty($_SESSION["KCONFIG"][$_POST["key".$j]]))
+						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["vs".$j]) ? "" : "vs=".$_POST["vs".$j];
+					else
+						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["vs".$j]) ? "" : ",vs=".$_POST["vs".$j];
+					if(empty($_SESSION["KCONFIG"][$_POST["key".$j]]))
+						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["pn".$j]) ? "" : "pn=".$_POST["pn".$j];
+					else
+						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["pn".$j]) ? "" : ",pn=".$_POST["pn".$j];
+					$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["tx".$j]) ? "" : ",tx=".$_POST["tx".$j];
+					$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["rx".$j]) ? "" : ",rx=".$_POST["rx".$j];
+					$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["wl_txrx".$j]) ? "" : ",wl_txrx=".$_POST["wl_txrx".$j];
+				}
+
+			}
+
+			if(!$error){
+				save_kconfig();
+				apply_kconfig();
+
+				header ('Location: sfpcalibration.php');
+			}
+		}
+
+		echo '<hr><div align="right">
+				<A HREF="sfpcalibration.php?add=y">
+				<img src="img/add.png" style="width:30px;height:30px;vertical-align:center">
+				<span style="">Add new SFP</span></A>
+				</div>';
+
 	?>
-	
-	
 </div>
 </div>
 </div>

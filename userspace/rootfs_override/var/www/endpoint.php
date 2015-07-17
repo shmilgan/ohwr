@@ -23,41 +23,38 @@
 	<?php
 		echo '<form  method=POST>
 				Select an Endpoint:	<select name="endpoint" class="sec">';
-					
+
 		for($op = 0; $op < 18; $op++){
-			
-			echo '<option value="wr'.$op.'">wr'.$op.'</option>';							
-				
+
+			echo '<option value="wr'.$op.'">wr'.$op.'</option>';
+
 		}
-		
+
 		echo '</select>';
-	
+
 		echo '<select name="option1" class="sec">';
-		echo '<option value="txcal1">Enable Calibration Transmission</option>';	
-		echo '<option value="txcal0">Disable Calibration Transmission</option>';	
-		echo '<option value="dump">See Registers</option>';	
-		echo '<option value="wr">Modify Registers</option>';	
-		//echo '<option value="rt">Show Flags</option>';	
-		echo '<option value="lock">Lock Endpoint</option>';	
-		//echo '<option value="master">Make Master</option>';	
-		//echo '<option value="gm">Make GrandMaster</option>';	
-			
-			
+		echo '<option value="txcal1">Enable Calibration Transmission</option>';
+		echo '<option value="txcal0">Disable Calibration Transmission</option>';
+		echo '<option value="dump">See Registers</option>';
+		echo '<option value="wr">Modify Registers</option>';
+		//echo '<option value="rt">Show Flags</option>';
+		echo '<option value="lock">Lock Endpoint</option>';
+		//echo '<option value="master">Make Master</option>';
+		//echo '<option value="gm">Make GrandMaster</option>';
+
 		echo '</select>
 					<input type="submit" value="Go!" class="btn">
-					</form>';	
-		
-		
-		
+					</form>';
+
 		//Second option levels:
 		$option1=htmlspecialchars($_POST['option1']);
 		$endpoint=htmlspecialchars($_POST['endpoint']);
-		
+
 		//Calling phytool.
 		if(!empty($option1)){
-			wr_endpoint_phytool($option1, $endpoint);					
+			wr_endpoint_phytool($option1, $endpoint);
 		}
-		
+
 		echo '<br><hr><br>';
 		wr_show_endpoint_rt_show();
 		echo '<br><hr><br>';

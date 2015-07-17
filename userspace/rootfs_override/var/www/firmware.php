@@ -18,9 +18,12 @@
 <div class="rightbody">
 <h1 class="title">Firmware Management <a href='help.php?help_id=firmware' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
-	<?php session_is_started() ?>
+	<?php
+		session_is_started();
+		if(wrs_php_filesize()<30) php_file_transfer_size(30);
+	?>
 
-	<table border="0" align="center">	
+	<table border="0" align="center">
 		<tr>
 			<FORM method="POST" ENCTYPE="multipart/form-data" onsubmit="return confirm('Are you sure you want to upload and flash a new firmware?');">
 			<th ><INPUT type=file name="file" ></th>
@@ -38,7 +41,7 @@
 		<?php
 		//Include downloading and flashing from OHWR if file wr-switch-sw-v4.0-rc1-20140710_binaries.tar is available
 		//$ohwrlink="http://www.ohwr.org/attachments/download/3095/wr-switch-sw-v4.0-rc1-20140710_binaries.tar";
-		
+
 		//echo '<tr></tr><tr></tr><tr><tr></tr><tr></tr><tr><tr></tr><tr></tr><tr>';
 		//echo '	<tr>
 				//<th >Download binaries from OHWR <FORM method="POST" onsubmit="return confirm("Are you sure you want to upload and flash a new firmware?");"></th>
@@ -46,7 +49,7 @@
 				//<INPUT type=submit value="Download&Flash Firmware from OHWR" class="btn" ></th>
 				//</FORM>
 				//</tr>';
-		
+
 		?>
 	</table>
 		<div id="bottommsg">
@@ -56,9 +59,8 @@
 		</p>
 		<hr>
 	</div>
-	<?php 
+	<?php
 		wrs_management();
-	
 	?>
 
 

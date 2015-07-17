@@ -4,7 +4,7 @@ session_start();
 ob_start();
 
 if (empty($_SESSION["WRS_INFO"])){
-	
+
 	$wrsinfogenerator = "/var/www/data/wrs-info-generator.php";
 	shell_exec("/usr/bin/php-cgi ".$wrsinfogenerator."> /dev/null 2>&1 &");
 	sleep(2);
@@ -77,49 +77,49 @@ $WRS_TABLE_INFO = Array (
 			name => COMPILEDBY,
 			value => $_SESSION["WRS_INFO"][COMPILEDBY],
 		),
-		CONTACT_03 => Array( 
+		CONTACT_03 => Array(
 			name => KERNELCOMPILEDDATE,
 			value => $_SESSION["WRS_INFO"][KERNELCOMPILEDDATE],
 		),
-		CONTACT_04 => Array( 
+		CONTACT_04 => Array(
 			name => HARDWARE,
 			value => $_SESSION["WRS_INFO"][HARDWARE],
-		),	
-		CONTACT_05 => Array( 
+		),
+		CONTACT_05 => Array(
 			name => FPGA,
 			value => $_SESSION["WRS_INFO"][FPGA],
-		),	
-		CONTACT_06 => Array( 
+		),
+		CONTACT_06 => Array(
 			name => MANUFACTURER,
 			value => $_SESSION["WRS_INFO"][MANUFACTURER],
-		),		
-		CONTACT_07 => Array( 
+		),
+		CONTACT_07 => Array(
 			name => SERIALNUMBER,
 			value => $_SESSION["WRS_INFO"][SERIALNUMBER],
-		),	
-		CONTACT_08 => Array( 
+		),
+		CONTACT_08 => Array(
 			name => GATEWARE,
 			value => $_SESSION["WRS_INFO"][GATEWARE],
-		),	
-		CONTACT_09 => Array( 
+		),
+		CONTACT_09 => Array(
 			name => GATEWAREBUILD,
 			value => $_SESSION["WRS_INFO"][GATEWAREBUILD],
-		),	
-		CONTACT_10 => Array( 
+		),
+		CONTACT_10 => Array(
 			name => WRSHDLCOMMIT,
 			value => $_SESSION["WRS_INFO"][WRSHDLCOMMIT],
-		),	
-		CONTACT_11 => Array( 
+		),
+		CONTACT_11 => Array(
 			name => GCORESCOMMIT,
 			value => $_SESSION["WRS_INFO"][GCORESCOMMIT],
-		),	
-		CONTACT_12 => Array( 
+		),
+		CONTACT_12 => Array(
 			name => WRCORESCOMMIT,
 			value => $_SESSION["WRS_INFO"][WRCORESCOMMIT],
-		),	
+		),
 	),
 );
-	
+
 $WRS_FORMS = Array(
 	DNS_SETUP => Array(
 		DNS_SETUP_00 => Array(
@@ -135,7 +135,7 @@ $WRS_FORMS = Array(
 			vname => "dnsdomain",
 		),
 	),
-	
+
 	SYSTEM_LOGS => Array(
 		SYSTEM_LOGS_00 => Array(
 			key => "CONFIG_WRS_LOG_HAL",
@@ -155,8 +155,26 @@ $WRS_FORMS = Array(
 			value => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_PTP"],
 			vname => "logptp",
 		),
+		SYSTEM_LOGS_03 => Array(
+			key => "CONFIG_WRS_LOG_WRSWATCHDOG",
+			name => "Watchdog log",
+			value => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_WRSWATCHDOG"],
+			vname => "logwatchdog",
+		),
+		SYSTEM_LOGS_04 => Array(
+			key => "CONFIG_WRS_LOG_MONIT",
+			name => "Monitor log",
+			value => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_MONIT"],
+			vname => "logmonit",
+		),
+		SYSTEM_LOGS_05 => Array(
+			key => "CONFIG_WRS_LOG_SNMPD",
+			name => "SNMPd log",
+			value => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_SNMPD"],
+			vname => "logsnmp",
+		),
 	),
-	
+
 	NETWORK_SETUP => Array(
 		NETWORK_SETUP_00 => Array(
 			key => "CONFIG_ETH0_IP",
@@ -165,7 +183,7 @@ $WRS_FORMS = Array(
 			vname => "ethip",
 		),
 		NETWORK_SETUP_01 => Array(
-			key => "CONFIG_ETH0_NETMASK",
+			key => "CONFIG_ETH0_MASK",
 			name => NETMASK,
 			value => $_SESSION["WRS_INFO"][NETMASK],
 			vname => "ethnetmask",
@@ -183,7 +201,7 @@ $WRS_FORMS = Array(
 			vname => "ethmac",
 		),
 	),
-	
+
 	CONFIG_PPSI => Array(
 		CONFIG_PPSI_00 => Array(
 			name => "Clock Class",
@@ -194,6 +212,39 @@ $WRS_FORMS = Array(
 			name => "Clock Accuracy",
 			value => "",
 			vname => "clkacc",
+		),
+	),
+
+	CONFIG_WRSAUXCLK => Array(
+		CONFIG_WRSAUXCLK_00 => Array(
+			key => "CONFIG_WRSAUXCLK_FREQ",
+			name => "Frequency",
+			value => $_SESSION["KCONFIG"]["CONFIG_WRSAUXCLK_FREQ"],
+			vname => "auxclkfreq",
+		),
+		CONFIG_WRSAUXCLK_01 => Array(
+			key => "CONFIG_WRSAUXCLK_DUTY",
+			name => "Duty",
+			value => $_SESSION["KCONFIG"]["CONFIG_WRSAUXCLK_DUTY"],
+			vname => "auxclkduty",
+		),
+		CONFIG_WRSAUXCLK_02 => Array(
+			key => "CONFIG_WRSAUXCLK_CSHIFT",
+			name => "C. Shift",
+			value => $_SESSION["KCONFIG"]["CONFIG_WRSAUXCLK_CSHIFT"],
+			vname => "auxclkcshift",
+		),
+		CONFIG_WRSAUXCLK_03 => Array(
+			key => "CONFIG_WRSAUXCLK_SIGDEL",
+			name => "Signal",
+			value => $_SESSION["KCONFIG"]["CONFIG_WRSAUXCLK_SIGDEL"],
+			vname => "auxclksigdel",
+		),
+		CONFIG_WRSAUXCLK_04 => Array(
+			key => "CONFIG_WRSAUXCLK_PPSHIFT",
+			name => "PP. Shift",
+			value => $_SESSION["KCONFIG"]["CONFIG_WRSAUXCLK_PPSHIFT"],
+			vname => "auxclkppshift",
 		),
 	),
 

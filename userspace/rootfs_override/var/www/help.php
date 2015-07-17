@@ -5,9 +5,9 @@
 <link href="css/help.css" rel="stylesheet" type="text/css">
 </head>
 <body  bgcolor="#FFD100">
-<h1><center>Help</center></h1>	
+<h1><center>Help</center></h1>
 <hr>
-	
+
 <?php
 	wrs_display_help($_GET['help_id'],"");
 ?>
