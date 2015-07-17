@@ -99,23 +99,13 @@ void ppsi_connect_minipc()
 void init_shm(void)
 {
 	struct hal_shmem_header *h;
-	int retr, maxretr = 15;
 
 	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
 	if (!hal_head) {
 		fprintf(stderr, "unable to open shm for HAL!\n");
 		exit(1);
 	}
-	for (retr = 0; retr < maxretr && !hal_head->version; retr++) {
-		if (!retr)
-			fprintf(stderr, "Waiting for HAL..");
-		fprintf(stderr, ".");
-		sleep(1);
-	}
-	if (retr)
-		fprintf(stderr, "\n");
-
-	/* check hal's shm version */
+	wrs_shm_wait(hal_head, 500 /* ms */, 20, stderr);
 	if (hal_head->version != HAL_SHMEM_VERSION) {
 		fprintf(stderr, "wr_mon: unknown HAL's shm version %i "
 			"(known is %i)\n",
@@ -146,6 +136,7 @@ void init_shm(void)
 		fprintf(stderr, "unable to open shm for PPSI!\n");
 		exit(1);
 	}
+	wrs_shm_wait(ppsi_head, 500 /* ms */, 20, stderr);
 
 	/* check hal's shm version */
 	if (ppsi_head->version != WRS_PPSI_SHMEM_VERSION) {

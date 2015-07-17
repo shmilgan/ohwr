@@ -26,6 +26,8 @@ static void init_shm_hal(void)
 		snmp_log(LOG_ERR, "unable to open shm for HAL!\n");
 		exit(-1);
 	}
+	wrs_shm_wait(hal_head, 500 /* ms */, 20, NULL);
+
 	/* check hal's shm version */
 	if (hal_head->version != HAL_SHMEM_VERSION) {
 		snmp_log(LOG_ERR, "unknown hal's shm version %i "

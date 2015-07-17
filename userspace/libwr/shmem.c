@@ -113,6 +113,23 @@ int wrs_shm_put(void *headptr)
 	return 0;
 }
 
+/* A reader may wait for the writer (polling on version field) */
+void wrs_shm_wait(void *headptr, int msec_step, int retries, FILE *msg)
+{
+	struct wrs_shm_head *head = headptr;
+	int i;
+
+	for (i = 0; i < retries && !head->version; i++) {
+		if (!i && msg)
+			fprintf(msg, "Waiting for my peer...");
+		if (msg)
+			fprintf(stderr, ".");
+		usleep(1000 * msec_step);
+	}
+	if (i && msg)
+		fprintf(msg, "\n");
+}
+
 /* The writer can allocate structures that live in the area itself */
 void *wrs_shm_alloc(void *headptr, size_t size)
 {
