@@ -1159,9 +1159,13 @@ function parse_endpoint_modes(){
 
 		$role = $_SESSION["KCONFIG"]["CONFIG_PORT".$endpoint."_PARAMS"];
 		$role = explode(",",$role);
-		$role = str_replace("role=","",$role[4]);
-
-		array_push($modes,$role);
+		
+		foreach ($role as $column){
+			if (strpos($column,'role=') !== false) {
+				$role = str_replace("role=","",$column);
+				array_push($modes,$role);
+			}
+		}
 	}
 	return $modes;
 }
