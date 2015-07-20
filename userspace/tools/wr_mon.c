@@ -316,8 +316,11 @@ void show_servo(void)
 		}
 
 		term_cprintf(C_GREY, "Servo state:               ");
-		term_cprintf(C_WHITE, "%s\n",
-			     ppsi_servo_local.servo_state_name);
+		term_cprintf(C_WHITE, "%s: %s%s\n",
+			     ppsi_servo_local.if_name,
+			     ppsi_servo_local.servo_state_name,
+			     ppsi_servo_local.flags & WR_FLAG_WAIT_HW ?
+					" (wait for hw)" : "");
 
 		term_cprintf(C_GREY, "Phase tracking:            ");
 		if (ppsi_servo_local.tracking_enabled)
