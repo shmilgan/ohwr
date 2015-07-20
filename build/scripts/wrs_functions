@@ -173,7 +173,8 @@ export WRS_MAKE_J=-j$WRS_MAKE_J_NUMBER
 # Also, check the configuration each time this is executed (i.e., each step)
 WRS_CONFIG_DIR=$(dirname "$WRS_BASE_DIR")
 if [ -f "$WRS_CONFIG_DIR/.config" ]; then
-    true
+    # If Kconfig changed since last build, add missing items
+    (cd "$WRS_CONFIG_DIR" && yes "" | make oldconfig)
 else
     echo "No configuration, using default" >& 2
     (cd "$WRS_CONFIG_DIR" && make defconfig)
