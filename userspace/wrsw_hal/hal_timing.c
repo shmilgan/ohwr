@@ -20,7 +20,7 @@ static int timing_mode;
 #define LOCK_TIMEOUT_EXT 60000
 #define LOCK_TIMEOUT_INT 10000
 
-int hal_init_timing()
+int hal_init_timing(char *filename)
 {
 	timeout_t lock_tmo;
 	static struct {
@@ -33,7 +33,7 @@ int hal_init_timing()
 		{NULL, HAL_TIMING_MODE_BC /* default */},
 	};
 
-	if (rts_connect() < 0) {
+	if (rts_connect(NULL) < 0) {
 		pr_error(
 		      "Failed to establish communication with the RT subsystem.\n");
 		return -1;

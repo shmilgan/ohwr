@@ -181,7 +181,7 @@ static int hal_port_init(int index)
 
 /* Interates via all the ports defined in the config file and
  * intializes them one after another. */
-int hal_port_init_all()
+int hal_port_init_all(char *logfilename)
 {
 	int index;
 	struct wrs_shm_head *hal_shmem_hdr;
@@ -238,7 +238,7 @@ int hal_port_init_all()
 	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 
 	/* Create a WRIPC server for HAL public API */
-	return hal_init_wripc(ports);
+	return hal_init_wripc(ports, logfilename);
 
 	return 0;
 }

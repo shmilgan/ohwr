@@ -6,6 +6,13 @@
  *
  * Released in the public domain
  */
+
+/*
+ * This file must *only* be used by wrsw_hal, even if it lives in libwr
+ * Only wr_phytool uses it, for strange hacking, but it interferes with
+ * hal. Nobody uses phytool in production, so that's ok. I'll add some
+ * check, maybe, someday.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -118,11 +125,21 @@ int rts_debug_command(int command, int value)
 	return rval;
 }
 
-int rts_connect()
+int rts_connect(char *logfilename)
 {
+	static FILE *f;
+
 	minipc_set_poll(25000); /* 25ms, default is 10ms */
 	client = minipc_client_create(RTS_MAILBOX_ADDR, 0 /* not verbose */ );
 	if (!client)
 		return -1;
+	if (!f && logfilename) {
+
+		f = fopen(logfilename, "a");
+		if (!f) /* ignore error for logs */
+			return 0;
+		setvbuf(f, NULL, _IONBF, 0);
+		minipc_set_logfile(client, f);
+	}
 	return 0;
 }

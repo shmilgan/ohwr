@@ -25,6 +25,8 @@
 
 static int daemon_mode = 0;
 static hal_cleanup_callback_t cleanup_cb[MAX_CLEANUP_CALLBACKS];
+static char *logfilename;
+
 struct hal_shmem_header *hal_shmem;
 
 /* Adds a function to be called during the HAL shutdown. */
@@ -95,10 +97,10 @@ static int hal_init()
 	/* Low-level hw init, init non-kernel drivers */
 	assert_init(shw_init());
 
-	assert_init(hal_init_timing());
+	assert_init(hal_init_timing(logfilename));
 
 	/* Initialize port FSMs and IPC/RPC - see hal_ports.c */
-	assert_init(hal_port_init_all());
+	assert_init(hal_port_init_all(logfilename));
 
 	//everything is fine up to here, we can blink green LED
 	shw_io_write(shw_io_led_state_o, 0);
@@ -161,7 +163,7 @@ static void hal_parse_cmdline(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "dhqv")) != -1) {
+	while ((opt = getopt(argc, argv, "dhqvl:")) != -1) {
 		switch (opt) {
 		case 'd':
 			daemon_mode = 1;
@@ -170,6 +172,10 @@ static void hal_parse_cmdline(int argc, char *argv[])
 		case 'h':
 			show_help();
 			exit(0);
+			break;
+
+		case 'l':
+			logfilename = optarg;
 			break;
 
 		case 'q': break; /* done in wrs_msg_init() */

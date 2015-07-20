@@ -176,8 +176,10 @@ static int export_lock_cmd(const struct minipc_pd *pd,
 }
 
 /* Creates a wripc server and exports all public API functions */
-int hal_init_wripc(struct hal_port_state *hal_ports)
+int hal_init_wripc(struct hal_port_state *hal_ports, char *logfilename)
 {
+	static FILE *f;
+
 	ports = hal_ports; /* static pointer used later */
 
 	hal_ch = minipc_server_create(WRSW_HAL_SERVER_ADDR, 0);
@@ -188,6 +190,14 @@ int hal_init_wripc(struct hal_port_state *hal_ports)
 		return -1;
 	}
 	/* NOTE: check_running is not remotely called, so I don't export it */
+
+	if (!f && logfilename) {
+		f = fopen(logfilename, "a");
+		if (f) {/* ignore error for logs */
+			setvbuf(f, NULL, _IONBF, 0);
+			minipc_set_logfile(hal_ch, f);
+		}
+	}
 
 	/* fill the function pointers */
 	__rpcdef_pps_cmd.f = export_pps_cmd;

@@ -49,8 +49,6 @@ static struct EP_WB _ep_wb;
 #define fpga_writel(val, addr) *(volatile uint32_t *)(fpga + (addr)) = val
 #define fpga_readl(addr) (*(volatile uint32_t *)(fpga + (addr)))
 
-extern int rts_connect();
-
 static int hal_nports_local;
 static struct wrs_shm_head *hal_head;
 static struct hal_port_state *hal_ports;
@@ -301,7 +299,7 @@ void calc_trans(int ep, int argc, char *argv[])
 
 //	fpga_writel(EP_DMCR_N_AVG_W(1024) | EP_DMCR_EN, IDX_TO_EP(ep) + EP_REG(DMCR));
 
-	if( rts_connect() < 0)
+	if( rts_connect(NULL) < 0)
 	{
 		printf("Can't connect to the RT subsys\n");
 		return;
@@ -463,7 +461,7 @@ void rt_command(int ep, int argc, char *argv[])
 
 	assert(hal_shm_init() == 0); /* to get hal_nports_local */
 
-	if(	rts_connect() < 0)
+	if(	rts_connect(NULL) < 0)
 	{
 		printf("Can't connect to the RT subsys\n");
 		return;
