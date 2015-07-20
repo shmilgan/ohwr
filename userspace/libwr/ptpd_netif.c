@@ -48,7 +48,7 @@ struct etherpacket {
 	char data[ETH_DATA_LEN];
 };
 
-static uint64_t get_tics()
+static uint64_t get_tics(void)
 {
 	struct timezone tz = { 0, 0 };
 	struct timeval tv;

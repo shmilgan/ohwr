@@ -95,7 +95,7 @@ int shw_i2c_io_scan(uint8_t * dev_map)
 	return detect;
 }
 
-int shw_get_hw_ver()
+int shw_get_hw_ver(void)
 {
 	uint8_t ret;
 	struct i2c_bus *bus = &i2c_io_bus;
@@ -125,7 +125,7 @@ int shw_get_hw_ver()
 	}
 }
 
-uint8_t shw_get_fpga_type()
+uint8_t shw_get_fpga_type(void)
 {
 	struct i2c_bus *bus = &i2c_io_bus;
 

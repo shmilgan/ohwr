@@ -8,6 +8,6 @@
 
 void shw_udelay_init(void);
 void shw_udelay(uint32_t microseconds);
-uint64_t shw_get_tics();
+uint64_t shw_get_tics(void);
 
 #endif /* __LIBWR_HW_UTIL_H */

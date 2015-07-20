@@ -142,9 +142,9 @@ int halexp_pps_cmd(int cmd, hexp_pps_params_t * params)
 	return -1;		/* fixme: real error code */
 }
 
-extern int hal_port_any_locked();
+extern int hal_port_any_locked(void);
 
-static void hal_cleanup_wripc()
+static void hal_cleanup_wripc(void)
 {
 	minipc_close(hal_ch);
 }

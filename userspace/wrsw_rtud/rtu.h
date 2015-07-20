@@ -96,12 +96,12 @@ static inline struct rtu_filtering_entry *rtu_fe_clean(
 /**
  * \brief Returns number of seconds since the epoch.
  */
-static inline unsigned long now()
+static inline unsigned long now(void)
 {
 	return (unsigned long)time(NULL);
 }
 
-int rtud_init_exports();
-void rtud_handle_wripc();
+int rtud_init_exports(void);
+void rtud_handle_wripc(void);
 
 #endif /*__WHITERABBIT_RTU_H*/

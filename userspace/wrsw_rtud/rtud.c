@@ -88,7 +88,7 @@ int read_ports(void){
  * @return error code
  */
 
-static int rtu_create_static_entries()
+static int rtu_create_static_entries(void)
 {
 	uint8_t bcast_mac[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 	uint8_t slow_proto_mac[] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x01 };
@@ -149,7 +149,7 @@ static int rtu_create_static_entries()
 	return 0;
 }
 
-static void rtu_update_ports_state()
+static void rtu_update_ports_state(void)
 {
 	int i;
 	int link_up;
@@ -209,7 +209,7 @@ static void *rtu_daemon_wripc_process(void *arg)
  * \brief Handles the learning process.
  * @return error code
  */
-static int rtu_daemon_learning_process()
+static int rtu_daemon_learning_process(void)
 {
 	int err, i, port_down;
 	struct rtu_request req;	// Request read from learning queue
@@ -322,7 +322,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 /**
  * \brief RTU shutdown.
  */
-static void rtu_daemon_destroy()
+static void rtu_daemon_destroy(void)
 {
 	// Threads stuff
 	pthread_cancel(wripc_process);

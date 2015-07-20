@@ -211,7 +211,7 @@ static	struct {
 		int hits;
 } bslides[MAX_BITSLIDES];
 
-int bslide_bins()
+int bslide_bins(void)
 {
 	int i, hits = 0;
 
@@ -241,7 +241,7 @@ void sighandler(int sig)
 	quit = 1;
 }
 
-static void print_cal_stats()
+static void print_cal_stats(void)
 {
 	int i,last_occupied = -1;
 	printf("Calibration statistics: \n");

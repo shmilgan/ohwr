@@ -37,9 +37,9 @@ void rtux_add_ff_mac_range(int mac_id, int valid, uint8_t mac_lower[ETH_ALEN],
 void rtux_set_port_mirror(uint32_t mirror_src_mask, uint32_t mirror_dst_mask,
 			  int rx, int tx);
 void rtux_set_hp_prio_mask(uint8_t hp_prio_mask);
-uint8_t rtux_get_hp_prio_mask();
+uint8_t rtux_get_hp_prio_mask(void);
 
-int rtux_get_cpu_port();
+int rtux_get_cpu_port(void);
 void rtux_set_feature_ctrl(int mr, int mac_ptp, int mac_ll, int mac_single,
 			   int mac_range, int mac_br, int at_fm);
 void rtux_set_fw_to_CPU(int hp, int unrec);

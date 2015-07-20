@@ -67,10 +67,10 @@ static struct s_port_vlans vlans[NPORTS];
 
 static unsigned long portmask;
 
-static int print_help();
+static int print_help(char *prgname);
 static void print_config(struct s_port_vlans *vlans);
 static int apply_settings(struct s_port_vlans *vlans);
-static int clear_all();
+static int clear_all(void);
 static int set_rtu_vlan(int vid, int fid, int pmask, int drop, int prio,
 			int del, int flags);
 static void free_rtu_vlans(struct rtu_vlans_t *ptr);
@@ -503,7 +503,7 @@ static void list_ep_vlans(void)
 	return;
 }
 
-static int clear_all()
+static int clear_all(void)
 {
 	uint32_t r;
 	int val, i;

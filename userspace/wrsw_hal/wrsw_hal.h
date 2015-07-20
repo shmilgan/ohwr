@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 
-typedef void (*hal_cleanup_callback_t)();
+typedef void (*hal_cleanup_callback_t)(void);
 
 int hal_check_running(void);
 

@@ -80,7 +80,7 @@ int read_servo(void){
 }
 
 
-void ppsi_connect_minipc()
+void ppsi_connect_minipc(void)
 {
 	if (ptp_ch) {
 		/* close minipc, if connected before */
@@ -421,7 +421,7 @@ void show_temperatures(void)
 
 int track_onoff = 1;
 
-void show_all()
+void show_all(void)
 {
 	int hal_alive;
 	int ppsi_alive;

@@ -198,7 +198,7 @@ static float tmp100_read_temp(int dev_addr)
 	return ((float)(temp >> 4)) / 16.0;
 }
 
-static int shw_init_i2c_sensors()
+static int shw_init_i2c_sensors(void)
 {
 	if (i2c_init_bus(&fpga_sensors_i2c) < 0) {
 		pr_error(

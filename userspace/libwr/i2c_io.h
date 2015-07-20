@@ -22,7 +22,7 @@ extern struct i2c_bus i2c_io_bus;
 int shw_i2c_io_init(void);
 int shw_i2c_io_scan(uint8_t * dev_map);
 
-int shw_get_hw_ver();
-uint8_t shw_get_fpga_type();
+int shw_get_hw_ver(void);
+uint8_t shw_get_fpga_type(void);
 
 #endif //I2C_IO_H

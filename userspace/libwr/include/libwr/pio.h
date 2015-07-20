@@ -51,11 +51,11 @@ void shw_pio_configure(const pio_pin_t * pin);
 void shw_pio_configure_pins(const pio_pin_t * pins);
 
 int shw_clock_out_enable(int pck_num, int prescaler, int source);
-volatile uint8_t *shw_pio_get_sys_base();
+volatile uint8_t *shw_pio_get_sys_base(void);
 volatile uint8_t *shw_pio_get_port_base(int port);
 void shw_set_fp_led(int led, int state);
 
-int shw_pio_mmap_init();
+int shw_pio_mmap_init(void);
 void shw_pio_toggle_pin(pio_pin_t * pin, uint32_t udelay);
 void shw_pio_configure(const pio_pin_t * pin);
 

@@ -20,6 +20,7 @@ OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
 CFLAGS = -Wall -I. -O2 -ggdb \
+	-Wstrict-prototypes \
 	-DLIBWR_INTERNAL \
 	-I./include \
 	-I../include \

@@ -51,7 +51,7 @@ static int hal_port_nports;
 
 int hal_port_check_lock(const char *port_name);
 
-int hal_port_any_locked()
+int hal_port_any_locked(void)
 {
 	if (!hal_port_rts_state_valid)
 		return -1;
@@ -286,7 +286,7 @@ int hal_port_pshifter_busy()
 
 /* Updates the current value of the phase shift on a given
  * port. Called by the main update function regularly. */
-static void poll_rts_state()
+static void poll_rts_state(void)
 {
 	struct rts_pll_state *hs = &hal_port_rts_state;
 
@@ -530,7 +530,7 @@ static void hal_port_remove_sfp(struct hal_port_state * p)
 }
 
 /* detects insertion/removal of SFP transceivers */
-static void hal_port_poll_sfp()
+static void hal_port_poll_sfp(void)
 {
 	if (tmo_expired(&hal_port_tmo_sfp)) {
 		uint32_t mask = shw_sfp_module_scan();

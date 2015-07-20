@@ -11,7 +11,7 @@ typedef struct {
 	uint64_t timeout;
 } timeout_t;
 
-static inline uint64_t tm_get_tics()
+static inline uint64_t tm_get_tics(void)
 {
 	struct timezone tz = { 0, 0 };
 	struct timeval tv;

@@ -35,7 +35,7 @@ int shw_init()
 	return 0;
 }
 
-int shw_exit_fatal()
+int shw_exit_fatal(void)
 {
 	pr_error("exiting due to fatal error.\n");
 	exit(-1);

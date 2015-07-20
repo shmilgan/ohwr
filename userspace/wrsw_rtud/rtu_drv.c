@@ -301,7 +301,7 @@ int rtu_mfifo_is_empty(void)
 	return RTU_MFIFO_CSR_EMPTY & csr;
 }
 
-static void flush_mfifo()
+static void flush_mfifo(void)
 {
 	uint32_t gcr = rtu_rd(GCR);
 	rtu_wr(GCR, gcr | RTU_GCR_MFIFOTRIG);

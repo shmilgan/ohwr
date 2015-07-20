@@ -77,7 +77,7 @@ struct wr_tstamp {
 // - opens devices
 // - does necessary ioctls()
 // - initializes connection with the mighty HAL daemon
-int ptpd_netif_init();
+int ptpd_netif_init(void);
 
 // Creates UDP or Ethernet RAW socket (determined by sock_type) bound to bind_addr. If PTPD_FLAG_MULTICAST is set, the socket is
 // automatically added to multicast group. User can specify physical_port field to bind the socket to specific switch port only.

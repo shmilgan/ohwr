@@ -90,8 +90,8 @@ typedef struct {
 extern const shw_io_t _all_shw_io[];
 
 //Functions
-int shw_io_init();
-int shw_io_configure_all();
+int shw_io_init(void);
+int shw_io_configure_all(void);
 const shw_io_t *get_shw_io(shw_io_id_t id);
 const pio_pin_t *get_pio_pin(shw_io_id_t id);
 uint32_t shw_io_read(shw_io_id_t id);

@@ -43,7 +43,7 @@ int hal_add_cleanup_callback(hal_cleanup_callback_t cb)
 }
 
 /* Calls all cleanup callbacks */
-static void call_cleanup_cbs()
+static void call_cleanup_cbs(void)
 {
 	int i;
 
@@ -65,16 +65,16 @@ static void sighandler(int sig)
 	exit(0);
 }
 
-static int hal_shutdown()
+static int hal_shutdown(void)
 {
 	call_cleanup_cbs();
 	return 0;
 }
 
-static void hal_daemonize();
+static void hal_daemonize(void);
 
 /* Main initialization function */
-static int hal_init()
+static int hal_init(void)
 {
 	//trace_log_stderr();
 
@@ -113,7 +113,7 @@ static int hal_init()
 }
 
 /* Turns a nice and well-behaving HAL into an evil servant of satan. */
-static void hal_daemonize()
+static void hal_daemonize(void)
 {
 	pid_t pid, sid;
 
@@ -152,7 +152,7 @@ static void hal_daemonize()
 	freopen("/dev/null", "r", stdin);
 }
 
-static void show_help()
+static void show_help(void)
 {
 	printf("WR Switch Hardware Abstraction Layer daemon (wrsw_hal)\n\
 Usage: wrsw_hal [options], where [options] can be:\n\

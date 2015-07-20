@@ -17,6 +17,7 @@ OBJCOPY         = $(CROSS_COMPILE)objcopy
 OBJDUMP         = $(CROSS_COMPILE)objdump
 
 CFLAGS = -O -g -Wall \
+	-Wstrict-prototypes \
 	-I../include \
 	-I../libwr/include \
 	-I../mini-rpc \
