@@ -308,7 +308,7 @@ void show_servo(void)
 	       ppsi_servo_local.delta_rx_s;
 
 	if(mode == SHOW_GUI) {
-		term_cprintf(C_BLUE, "Synchronization status:\n");
+		term_cprintf(C_BLUE, "\nSynchronization status:\n");
 
 		if (!(ppsi_servo_local.flags & WR_FLAG_VALID)) {
 			term_cprintf(C_RED, "Master mode or sync info not valid\n");
@@ -322,15 +322,9 @@ void show_servo(void)
 			     ppsi_servo_local.flags & WR_FLAG_WAIT_HW ?
 					" (wait for hw)" : "");
 
-		term_cprintf(C_GREY, "Phase tracking:            ");
-		if (ppsi_servo_local.tracking_enabled)
-			term_cprintf(C_GREEN, "ON\n");
-		else
-			term_cprintf(C_RED, "OFF\n");
-
-		/* not implemented */
-		/*term_cprintf(C_GREY, "Synchronization source:    ");
-		term_cprintf(C_WHITE, "%s\n", ss.sync_source);*/
+		/* "tracking disabled" is just a testing tool */
+		if (!ppsi_servo_local.tracking_enabled)
+			term_cprintf(C_RED, "Tracking forcibly disabled\n");
 
 		term_cprintf(C_BLUE, "\nTiming parameters:\n\n");
 
