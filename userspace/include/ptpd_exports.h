@@ -5,7 +5,6 @@
 #include <stdlib.h>
 
 #define PTPDEXP_COMMAND_TRACKING 1
-#define PTPDEXP_COMMAND_MAN_ADJUST_PHASE 2
 
 extern int ptpdexp_cmd(int cmd, int value);
 
