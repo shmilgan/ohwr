@@ -800,6 +800,29 @@ types can be calibrated to either positive or negative values, to cope
 with the @i{difference} between them and the @t{AXGE} devices.
 
 @c ==========================================================================
+@node VLANs Configuration
+@section VLANs Configuration
+
+Unfortunately, the current firmware release does not support VLAN configuration
+in the main @i{dot-config} file. Therefore, if you want to use VLANs you
+have to manually configure them using the @i{wrs_vlans} tool described
+in @ref{wrs_vlans}.
+
+In addition to that, to have synchronization working with VLANs, you have to
+prepare a custom @i{PPSi} configuration file with VLANs specified per-port. You
+can simply copy the file generated in the WRS filesystem
+(@i{/wr/etc/ppsi.conf}) to a central @t{tftp}/@t{http}/@t{ftp} server where
+@i{dot-config} files for your switches are stored and fetched on boot time.
+For every VLAN-enabled port you should add the following line:
+@example
+  vlan <VID>
+@end example
+where @i{VID} is a VLAN ID configured on the port. To let your switch use the
+modified @i{ppsi.conf}, you should add it as @t{CONFIG_PTP_REMOTE_CONF} option
+in the @i{dot-config} (@ref{Configuration Items that Apply at Run Time}). This
+way it will be fetched and applied every time your switch boots.
+
+@c ==========================================================================
 @node Front panel's LEDs
 @section Front panel's LEDs
 
