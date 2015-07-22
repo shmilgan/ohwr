@@ -28,5 +28,8 @@ fi
 make clean
 make wrs_defconfig
 make CROSS_COMPILE=$CROSS_COMPILE || wrs_die "Failure building PPSi"
+make -C tools  CROSS_COMPILE=$CROSS_COMPILE || \
+    wrs_die "Failure building PPSi tools"
 install -d "$WRS_OUTPUT_DIR/images/wr/bin"
-install ppsi "$WRS_OUTPUT_DIR/images/wr/bin"
+install ppsi tools/ptpdump "$WRS_OUTPUT_DIR/images/wr/bin"
+
