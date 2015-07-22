@@ -66,7 +66,7 @@ config: scripts_basic FORCE
 
 clean:
 	@find . $(RCS_FIND_IGNORE) \
-		\( -name '*.[oas]' -o -name '*.ko' -o -name '.*.cmd' \
+		\( -name '*.[oa]' -o -name '*.ko' -o -name '.*.cmd' \
 		-o -name '.*.d' -o -name '.*.tmp' -o -name '*.mod.c' \
 		-o -name 'Module.markers' -o -name '.tmp_*.o.*' \) \
 		-type f -print | xargs rm -f -v

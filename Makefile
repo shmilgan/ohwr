@@ -15,3 +15,8 @@ defconfig:
 
 .config: silentoldconfig
 
+clean: 
+	$(MAKE) -C userspace $@
+	$(MAKE) -C kernel $@
+	$(MAKE) -f Makefile.kconfig $@
+
