@@ -300,6 +300,8 @@ void show_servo(void)
 {
 	int64_t total_asymmetry;
 	int64_t crtt;
+	static time_t lastt;
+	static int last_count;
 
 	total_asymmetry = ppsi_servo_local.picos_mu -
 			  2LL * ppsi_servo_local.delta_ms;
@@ -316,11 +318,15 @@ void show_servo(void)
 		}
 
 		term_cprintf(C_GREY, "Servo state:               ");
-		term_cprintf(C_WHITE, "%s: %s%s\n",
-			     ppsi_servo_local.if_name,
-			     ppsi_servo_local.servo_state_name,
-			     ppsi_servo_local.flags & WR_FLAG_WAIT_HW ?
-					" (wait for hw)" : "");
+		if (lastt && time(NULL) - lastt > 5) {
+			term_cprintf(C_RED, " --- not updating --- ");
+		} else {
+			term_cprintf(C_WHITE, "%s: %s%s\n",
+				     ppsi_servo_local.if_name,
+				     ppsi_servo_local.servo_state_name,
+				     ppsi_servo_local.flags & WR_FLAG_WAIT_HW ?
+				     " (wait for hw)" : "");
+		}
 
 		/* "tracking disabled" is just a testing tool */
 		if (!ppsi_servo_local.tracking_enabled)
@@ -369,6 +375,10 @@ void show_servo(void)
 		term_cprintf(C_GREY, "Servo update counter:      ");
 		term_cprintf(C_WHITE, "%u times\n",
 			     ppsi_servo_local.update_count);
+		if (ppsi_servo_local.update_count != last_count) {
+			lastt = time(NULL);
+			last_count = ppsi_servo_local.update_count;
+		}
 	}
 	else if(mode == SHOW_STATS) {
 		printf("SERVO    ");
