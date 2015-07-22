@@ -7,6 +7,15 @@ if(strcmp($_SESSION['LASTIME'],filectime($GLOBALS['kconfigfile'])) &&
 	</script>";
 	load_kconfig();
 }
+if (isset($_SESSION['LAST_ACTIVITY'])
+					&& (!empty($_SESSION["myusername"]))
+					&& (time() - $_SESSION['LAST_ACTIVITY'] > 600)) {
+    // last request was more than 10 minutes ago
+    session_unset();
+    session_destroy();
+    header('Location: index.php');
+}
+$_SESSION['LAST_ACTIVITY'] = time();
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
