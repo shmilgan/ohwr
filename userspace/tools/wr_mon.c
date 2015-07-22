@@ -158,11 +158,14 @@ void init_shm(void)
 
 void show_ports(void)
 {
-	int i;
+	int i, j;
 	time_t t;
 	struct tm *tm;
 	char datestr[32];
 	struct hal_port_state *port_state;
+	struct pp_instance *pp_array;
+
+	pp_array = wrs_shm_follow(ppsi_head, ppg->pp_instances);
 
 	if(mode == SHOW_GUI) {
 		time(&t);
@@ -193,8 +196,11 @@ void show_ports(void)
 			else
 				term_cprintf(C_RED, "Link down  ");
 
-			term_cprintf(C_GREY, "mode: ");
-
+			/*
+			 * FIXME: this is from dot-config, but ppsi.conf
+			 * can be unrelated, like during tests. So this is
+			 * just wrong for us developers (did I write FIXME?)
+			 */
 			switch (port_state->mode)
 			{
 				case HEXP_PORT_MODE_WR_MASTER:
@@ -219,11 +225,28 @@ void show_ports(void)
 			else
 				term_cprintf(C_RED, "NoLock  ");
 
-			if (port_state->calib.rx_calibrated
-			    && port_state->calib.tx_calibrated)
-				term_cprintf(C_GREEN, "Calibrated\n");
-			else
-				term_cprintf(C_RED, "Uncalibrated\n");
+			/*
+			 * Actually, what is interesting is the PTP state.
+			 * For this lookup, the port in ppsi shmem
+			 */
+			for (j = 0; j < ppg->nlinks; j++) {
+				if (!strcmp(if_name,
+					    pp_array[j].cfg.iface_name))
+					break;
+			}
+			/* Warning: we may have more pp instances per port */
+			if (j == ppg->nlinks || !state_up(port_state->state)) {
+				term_cprintf(C_RED, "no-ptp\n");
+			} else {
+				unsigned char *p = pp_array[j].peer;
+
+				term_cprintf(C_WHITE, "peer: %02x:%02x:%02x"
+					     ":%02x:%02x:%02x ", p[0], p[1],
+					     p[2], p[3], p[4], p[5]);
+				term_cprintf(C_GREEN, "ptp state %i\n",
+					     pp_array[j].state);
+				/* FIXME: string state */
+			}
 		}
 	}
 	else if(mode == SHOW_STATS) {
