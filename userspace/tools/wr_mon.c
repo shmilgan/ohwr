@@ -336,10 +336,6 @@ void show_servo(void)
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 			     ppsi_servo_local.delta_ms/1000.0);
 
-		term_cprintf(C_GREY, "Link length:               ");
-		term_cprintf(C_WHITE, "%.0f meters\n",
-			     ppsi_servo_local.delta_ms/1e12 * 300e6 / 1.55);
-
 		term_cprintf(C_GREY, "Master PHY delays:         ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
 			     ppsi_servo_local.delta_tx_m/1000.0,
