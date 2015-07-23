@@ -309,6 +309,15 @@ configured. This allows customization of each installed switch
 through a central server, without modifying the filesystem image in
 each specimen.
 
+Starting with release 4.2, we added ``@t{make config}'' support at run
+time, to be run in @t{/wr/etc}; the file is called @t{dot-config}, and
+not @t{.config}.  This is meant to be useful for developers, when
+testing different configurations in the lab, rather than in
+production. We also support ``@t{make config}'', ``@t{make
+defconfig}'' and @t{make oldconfig}''.  We are not yet able to
+run ``@t{make menuconfig}'', but that may be added when we upgrade
+@i{buildroot} after release 4.2.
+
 @c ==========================================================================
 @node Dynamic WRS Configuration
 @section Dynamic WRS Configuration

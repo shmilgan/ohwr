@@ -1,0 +1,22 @@
+
+config:
+	cp dot-config .config
+	./conf Kconfig
+	mv .config.old dot-config.old
+	mv .config dot-config
+
+defconfig:
+	cp dot-config .config
+	./conf -D wrs_release_defconfig Kconfig	
+	mv .config.old dot-config.old
+	mv .config dot-config
+
+oldconfig:
+	cp dot-config .config
+	./conf -o Kconfig
+	mv .config.old dot-config.old
+	mv .config dot-config
+
+menuconfig:
+	@echo "Sorry, we don't support menuconfig on the target, yet"
+	@exit 1

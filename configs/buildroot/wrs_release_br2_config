@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Buildroot 2011.11 Configuration
-# Mon Dec 15 17:19:45 2014
+# Wed Jul 29 20:48:17 2015
 #
 BR2_HAVE_DOT_CONFIG=y
 BR2_arm=y
@@ -361,7 +361,7 @@ BR2_PACKAGE_STRACE=y
 # gperf requires a toolchain with C++ support enabled
 #
 # BR2_PACKAGE_GREP is not set
-# BR2_PACKAGE_MAKE is not set
+BR2_PACKAGE_MAKE=y
 # BR2_PACKAGE_MPC is not set
 # BR2_PACKAGE_MPFR is not set
 # BR2_PACKAGE_LIBTOOL is not set

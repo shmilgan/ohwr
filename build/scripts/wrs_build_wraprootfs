@@ -31,11 +31,7 @@ ROOTFS_USR_TGZ="$WRS_OUTPUT_DIR/images/wrs-usr.tar.gz"
 ROOTFS_INITRAMFS="$WRS_OUTPUT_DIR/images/wrs-initramfs.gz"
 
 cat > $TMPSCRIPT << EOF
-. $WRS_BASE_DIR/../.config
-mkdir -p $TMPFS/wr/etc
-cp $WRS_BASE_DIR/../.config $TMPFS/wr/etc/dot-config
-cp $WRS_BASE_DIR/../Kconfig $TMPFS/wr/etc/Kconfig
-
+mkdir -p $TMPFS/wr
 cp -r $rootfs_vanilla/* $TMPFS
 cp -r $WRS_OUTPUT_DIR/images/wr/* $TMPFS/wr
 cp -r $WRS_OUTPUT_DIR/images/lib/* $TMPFS/lib

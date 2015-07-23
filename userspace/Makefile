@@ -6,7 +6,7 @@ WRDEV_DIR ?= $(WRS_BASE_DIR)/..
 # subdirectories we want to compile
 SUBDIRS = libwr mini-rpc libsdb \
 	wrsw_hal wrsw_rtud tools snmpd \
-	wrs_watchdog
+	wrs_watchdog dot-config
 
 # all variables are exported
 export
