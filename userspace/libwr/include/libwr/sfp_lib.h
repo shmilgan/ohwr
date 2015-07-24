@@ -27,6 +27,8 @@
 				      * should be rounded up to 0Dh (13 in
 				      * units of 100 MBd) for Ethernet
 				      * 1000BASE-X. */
+#define SFP_SPEED_1Gb_10   0x0A /* Unfortunatelly the above is not always true,
+              * e.g. Cisco copper SFP (MGBT1) says simply 10 and not 13.*/
 
 struct shw_sfp_caldata {
 	uint32_t flags;
