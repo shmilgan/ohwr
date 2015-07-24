@@ -74,7 +74,7 @@ static void hal_port_reset_state(struct hal_port_state * p)
 }
 
 /* checks if the port is supported by the FPGA firmware */
-static int hal_port_check_presence(const char *if_name)
+static int hal_port_check_presence(const char *if_name, unsigned char *mac)
 {
 	struct ifreq ifr;
 
@@ -82,7 +82,7 @@ static int hal_port_check_presence(const char *if_name)
 
 	if (ioctl(hal_port_fd, SIOCGIFHWADDR, &ifr) < 0)
 		return 0;
-
+	memcpy(mac, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
 	return 1;
 }
 
@@ -112,7 +112,7 @@ static int hal_port_init(int index)
 	strncpy(p->name, name, 16);
 
 	/* check if the port is built into the firmware, if not, we are done */
-	if (!hal_port_check_presence(name))
+	if (!hal_port_check_presence(name, p->hw_addr))
 		return -1;
 
 	p->state = HAL_PORT_STATE_DISABLED;
