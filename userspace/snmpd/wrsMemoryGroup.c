@@ -68,6 +68,7 @@ time_t wrsMemory_data_fill(void)
 			found++;
 		}
 	}
+	fclose(f);
 
 	if (found == MEMINFO_ENTRIES && mem_total > 0) { /* avoid div 0 */
 		wrsMemory_s.wrsMemoryTotal = (int) mem_total;
