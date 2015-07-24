@@ -48,9 +48,9 @@ for i_zero in {00..17};do
 	done
 
 	# if role "non-wr" skip port configuration
-	if [ "$p_role" == "non-wr" ]; then
-		continue
-	fi
+	#if [ "$p_role" == "non-wr" ]; then
+	#	continue
+	#fi
 
 	#remove leading zero from i_zero (params has numbers with leading zero,
 	#interface names are without leading zero)
