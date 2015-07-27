@@ -31,7 +31,7 @@ start() {
 	LOG="";
     elif echo "$WRS_LOG" | grep / > /dev/null; then
         # if a pathname, use it
-	LOG="-Lf $WRS_LOG";
+	LOG="-LF 5 $WRS_LOG";
     else
 	# not a pathname: use verbatim
 	LOG="-L$WRS_LOG"
