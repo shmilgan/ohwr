@@ -24,6 +24,9 @@ static uint32_t n_err_delta_rtt_prev[WRS_MAX_N_SERVO_INSTANCES];
 static unsigned long ptp_tx_count_prev[WRS_N_PORTS];
 static unsigned long ptp_rx_count_prev[WRS_N_PORTS];
 
+/* store old values of SPLL status */
+static int32_t spll_DelCnt_prev;
+
 time_t wrsTimingStatus_data_fill(void)
 {
 	static time_t time_update; /* time of last update */
@@ -132,7 +135,8 @@ time_t wrsTimingStatus_data_fill(void)
 						WRS_SOFTPLL_STATUS_ERROR;
 
 	} else if ( /* check if warning */
-		s->wrsSpllDelCnt > 0
+		(s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllDelCnt > 0)
+		|| (s->wrsSpllDelCnt != spll_DelCnt_prev)
 	) { /* warning */
 		wrsTimingStatus_s.wrsSoftPLLStatus =
 						WRS_SOFTPLL_STATUS_WARNING;
@@ -144,7 +148,8 @@ time_t wrsTimingStatus_data_fill(void)
 					      WRS_SOFTPLL_STATUS_WARNING_NA;
 
 	} else if ( /* check if OK */
-		s->wrsSpllDelCnt == 0
+		((s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllDelCnt == 0)
+		    || (s->wrsSpllDelCnt == spll_DelCnt_prev))
 		&& s->wrsSpllSeqState == WRS_SPLL_SEQ_STATE_READY
 		&& ((s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllAlignState == WRS_SPLL_ALIGN_STATE_LOCKED)
 		    || (s->wrsSpllMode == WRS_SPLL_MODE_MASTER)
@@ -158,6 +163,8 @@ time_t wrsTimingStatus_data_fill(void)
 		wrsTimingStatus_s.wrsSoftPLLStatus =
 						WRS_SOFTPLL_STATUS_BUG;
 	}
+
+	spll_DelCnt_prev = s->wrsSpllDelCnt;
 
 	/*********************************************************************\
 	|************************ wrsSlaveLinksStatus ************************|
