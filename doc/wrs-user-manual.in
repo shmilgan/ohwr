@@ -590,6 +590,7 @@ value is changed by the web interface, proper action is taken.
 
 @item CONFIG_PTP_PORT_PARAMS
 @itemx CONFIG_PTP_CUSTOM
+@itemx CONFIG_PTP_REMOTE_CONF
 
 	By default, PPSi configuration file is assembled based on role and
         protocol parameters stored in @t{PORTxx_PARAMS}. @t{TIME_BC} selected
@@ -603,8 +604,17 @@ value is changed by the web interface, proper action is taken.
 
 	Alternatively PPSi can use custom user file for configuration
         (@t{CONFIG_PTP_CUSTOM}).
+
+	Finally, you can choose @t{PTP_REMOTE_CONF} and be able to
+        specify an URL (@t{http://}, @t{ftp://} or @t{tftp://}) whence
+        the switch will download the @t{ppsi.conf} at boot time.
+        The filename in the URL can include @t{IPADDR} and/or @t{MACADDR},
+        so the same configuration string can be used to set up a batch
+        of switches with different configurations.
+
         Please see the help provided within @i{Kconfig} for more details about
         the various options we support.
+	
 
 @item CONFIG_PTP_CUSTOM_FILENAME
 
@@ -612,6 +622,11 @@ value is changed by the web interface, proper action is taken.
         can provide your own filename for the PPSi configuration file;
         the chosen name is expected to be installed in the @sc{wrs}
         filesystem.
+
+@item CONFIG_PTP_CONF_URL
+
+	If you choose @t{CONFIG_PTP_REMOTE_CONF} this is the URL
+        used to download @t{ppsi.conf} at each system boot.
 
 @item CONFIG_SNMP_TRAPSINK_ADDRESS
 @itemx CONFIG_SNMP_TRAP2SINK_ADDRESS

@@ -434,9 +434,17 @@ config PTP_PORT_PARAMS
 	  CONFIG_PTP_CUSTOM_FILENAME, that you should copy to your switch.
 
 config PTP_CUSTOM
-	bool "Custom ppsi.conf"
+	bool "Custom ppsi.conf in the WRS filesystem"
 	help
 	  Use custom file for ppsi defined by CONFIG_PTP_CUSTOM_FILENAME.
+
+config PTP_REMOTE_CONF
+	bool "Download ppsi.conf from the network at each boot"
+	help
+	  This choice allows to specify an URL so you can download a
+	  custom file using the network. This allows running a bunch
+	  of switches, all with the same configuration but different
+	  configuations that can't just be derived from PORT_PARAMS above.
 
 endchoice
 
@@ -444,6 +452,20 @@ config PTP_CUSTOM_FILENAME
 	string "Pathname for your custom ppsi.conf"
 	depends on PTP_CUSTOM
 	default "/wr/etc/ppsi-custom.conf"
+	help
+	  This is the filename used as ppsi.conf. Please note that the
+	  file is copied to /wr/etc/ppsi.conf when configuration is applied,
+	  and the PTP daemon always picks /wr/etc/ppsi.conf, not this
+	  filename.
+
+config PTP_CONF_URL
+	depends on PTP_REMOTE_CONF
+	string "Download URL (http, ftp, tftp) for custom ppsi.conf"
+	help
+	  Like CONFIG_DOTCONF_URL, this option allows passing IPADDR
+	  and MACADDR in the filename, and if a DNS server is configured,
+	  you can use host names.
+	  For example: tftp://morgana/wrs-IPADDR-ppsi.conf
 
 
 menu "Management configuration"
