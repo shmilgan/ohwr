@@ -8,7 +8,7 @@ echo '</ul><br><hr>';
 echo '<div class="login">
       <h3>Login</h3>
       <form method="post" action="login.php">
-        <input type="text" name="login" value="" placeholder="Username" size="15">
+        <input type="text" name="login" value="root" placeholder="Username" size="15" readonly>
         <input type="password" name="password" value="" placeholder="Password" size="15">
         <!--<p class="remember_me">
           <label>
