@@ -677,7 +677,7 @@ function wrs_management(){
 					unlink($uploadfile);
 					//Reboot switch
 					sleep(1);
-					wrs_reboot();
+					wrs_reboot(90); //Updating only one part of the firmware take ~90s.
 				}
 				else if(substr($uploadfname,0,14)=="wr-switch-sw-v" && substr($uploadfname,-13)=="_binaries.tar")
 				{
@@ -685,7 +685,7 @@ function wrs_management(){
 					unlink($uploadfile);
 					//Reboot switch
 					sleep(1);
-					wrs_reboot();
+					wrs_reboot(150); //120s should be enough but we prefer to keep safe
 				}
 				else
 				{
@@ -1250,9 +1250,9 @@ function echoSelectedClassIfRequestMatches($requestUri)
         return 'class="selected"';
 }
 
-function wrs_reboot(){
+function wrs_reboot($timeout=40){
 	sleep(1);
-	header ('Location: reboot.php');
+	header ('Location: reboot.php?timeout='.$timeout);
 }
 
 /*

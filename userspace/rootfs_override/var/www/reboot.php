@@ -1,5 +1,5 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body id="management">
+<body id="reboot">
 <div class="main">
 <div class="page">
 <div class="header" >
@@ -27,6 +27,7 @@
 		<div id="rebootingtext" align=center>...Saving changes...</div>
 	</div>
 
+	<form><input hidden id="reboot_to" value="<?php echo $_GET['timeout']?>"></form>
 	<div id="rebooting"></div>
 
 	<div id="rebootwrlogo">
