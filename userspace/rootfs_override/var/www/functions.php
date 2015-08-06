@@ -180,6 +180,9 @@ function wrs_main_info(){
 		$WRSmode="Free-Running Master";
 	else
 		$WRSmode="Unknown";
+	
+	#Obtain the temperatures using the last line of (wr-mon -w)
+	$temperatures=shell_exec("cat /tmp/ports.conf 2>/dev/null | tail -1");
 
 	// Print services table
 	echo '<br><table class="'.$class.'" id="'.$formatID.'" width="100%">';
@@ -191,6 +194,7 @@ function wrs_main_info(){
 	echo '<tr><td>System Monitor</td><td> <a href="management.php">'.$Monitor.'</td></tr>';
 	echo '<tr><td>Net-SNMP Server</td><td>'.$SNMP.'( port '.$SNMP_port.")</td></tr>";
 	echo '<tr><td>NTP Server</td><td> <a href="management.php">'.$NTP.'</td></tr>';
+	if(!empty($temperatures)) echo '<tr><td>Temperature (ºC)</td><td>'.$temperatures.'</td></tr>';
 	echo '</table>';
 
 }
