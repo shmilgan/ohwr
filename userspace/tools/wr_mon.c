@@ -497,6 +497,7 @@ int main(int argc, char *argv[])
 			case 'w': /* for the web interface */
 				read_hal();
 				show_unadorned_ports();
+				show_temperatures();
 				exit(0);
 			default:
 				fprintf(stderr, "Unrecognized option.\n");
