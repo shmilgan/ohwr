@@ -189,11 +189,11 @@ function wrs_main_info(){
 	echo '<tr><th>'.$infoname.'</th></tr>';
 
 	echo '<tr><td>PTP Mode</td><td> <a href="ptp.php">'.$WRSmode.'</a>'.$WRSmode_xtra.'</td></tr>';
+	echo '<tr><td>NTP Server</td><td> <a href="management.php">'.$NTP.'</td></tr>';
 	echo '<tr><td>White-Rabbit Date</td><td>'.$wr_date.'</td></tr>';
 	echo '<tr><td>PPSi</td><td>'.$PPSi.'</td></tr>';
 	echo '<tr><td>System Monitor</td><td> <a href="management.php">'.$Monitor.'</td></tr>';
 	echo '<tr><td>Net-SNMP Server</td><td>'.$SNMP.'( port '.$SNMP_port.")</td></tr>";
-	echo '<tr><td>NTP Server</td><td> <a href="management.php">'.$NTP.'</td></tr>';
 	if(!empty($temperatures)) echo '<tr><td>Temperature (ºC)</td><td>'.$temperatures.'</td></tr>';
 	echo '</table>';
 
