@@ -104,14 +104,14 @@ function wrs_header_ports(){
 	echo '<tr class="status">';
 	for($i=1; $i<18*3; $i=$i+3){
 
-		if (!strstr($ports[($i+1)],"NoLock")){
+		if (strstr($ports[($i+1)],"Locked")){
 			$mode="locked";
 		}else{
 			$mode="unlocked";
 		}
 		echo '<th>'."<img class='syntonization ".$mode."' SRC='img/".$mode.".png' alt='syntonization: ".$mode."', title = 'syntonization: ".$mode."'>";
 
-		if (!strstr($ports[($i+2)],"Uncalibrated")){
+		if (strstr($ports[($i+2)],"Calibrated")){
 			$mode="calibrated";
 			$img="check.png";
 		}else{
@@ -168,20 +168,24 @@ function wrs_main_info(){
 	$Monitor = check_monit_status() ? '[on] ' : '[off] ';
 
 	$WRSmode = check_switch_mode();
-	if(!strcmp($WRSmode, "GM"))
+	$WRSmode_xtra="";
+	if(!strcmp($WRSmode, "GM")) {
 		$WRSmode="GrandMaster";
+		$ports = shell_exec("cat /tmp/ports.conf");
+		if(empty($ports)) $WRSmode_xtra="<br>Waiting PPS/10MHz ...";
+	}
 	else if (!strcmp($WRSmode, "BC"))
 		$WRSmode="Boundary Clock";
 	else if (!strcmp($WRSmode, "FM"))
 		$WRSmode="Free-Running Master";
 	else
-		$WRSmode="GrandMaster";
+		$WRSmode="Unknown";
 
 	// Print services table
 	echo '<br><table class="'.$class.'" id="'.$formatID.'" width="100%">';
 	echo '<tr><th>'.$infoname.'</th></tr>';
 
-	echo '<tr><td>PTP Mode</td><td> <a href="ptp.php">'.$WRSmode.'</td></tr>';
+	echo '<tr><td>PTP Mode</td><td> <a href="ptp.php">'.$WRSmode.'</a>'.$WRSmode_xtra.'</td></tr>';
 	echo '<tr><td>White-Rabbit Date</td><td>'.$wr_date.'</td></tr>';
 	echo '<tr><td>PPSi</td><td>'.$PPSi.'</td></tr>';
 	echo '<tr><td>System Monitor</td><td> <a href="management.php">'.$Monitor.'</td></tr>';
