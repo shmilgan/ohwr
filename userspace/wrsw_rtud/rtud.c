@@ -228,7 +228,7 @@ static int rtu_daemon_learning_process(void)
 			      req.has_vid ? req.vid : 0,
 			      req.has_prio ? req.prio : 0);
 
-			for (port_down = i = 0; i <= MAX_PORT; i++)
+			for (port_down = i = 0; i <= MAX_PORT; i++) {
 				p = &hal_ports_local_copy[i];
 				if (p->in_use && p->hw_index == req.port_id
 				    && !state_up(p->state)) {
@@ -236,6 +236,7 @@ static int rtu_daemon_learning_process(void)
 					pr_info("port down %d\n", i);
 					break;
 				}
+			}
 
 			/* don't learn on ports that are down (FIFO tail?) */
 			if (port_down)
