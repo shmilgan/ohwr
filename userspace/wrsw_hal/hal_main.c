@@ -22,6 +22,7 @@
 #include <rt_ipc.h>
 
 #define MAX_CLEANUP_CALLBACKS 16
+#define PORT_FAN_MS_PERIOD 250
 
 static int daemon_mode = 0;
 static hal_cleanup_callback_t cleanup_cb[MAX_CLEANUP_CALLBACKS];
@@ -223,7 +224,6 @@ int main(int argc, char *argv[])
 	 * is some jitter from hal_update_wripc() timing.
 	 * includes some jitter.
 	 */
-	#define PORT_FAN_MS_PERIOD 200
 
 	clock_gettime(CLOCK_MONOTONIC, &t1);
 	for (;;) {
@@ -236,13 +236,6 @@ int main(int argc, char *argv[])
 		delay_ms += (t2.tv_nsec - t1.tv_nsec) / 1000 / 1000;
 		if (delay_ms < PORT_FAN_MS_PERIOD)
 			continue;
-
-		/* update the "previous" stamp */
-		t1.tv_nsec += PORT_FAN_MS_PERIOD * 1000 * 1000;
-		if (t1.tv_nsec > 1000 * 1000 * 1000) {
-			t1.tv_nsec -= 1000 * 1000 * 1000;
-			t1.tv_sec++;
-		}
 
 		hal_port_update_all();
 		/* update fans and temperatures in shmem */

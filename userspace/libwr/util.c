@@ -52,12 +52,3 @@ void shw_udelay(uint32_t microseconds)
 	for (i = 0; i < loops_per_msec * microseconds / 1000; i++)
 		;
 }
-
-uint64_t shw_get_tics()
-{
-	struct timeval tv;
-	struct timezone tz = { 0, 0 };
-	gettimeofday(&tv, &tz);
-	return (uint64_t) tv.tv_usec + (uint64_t) tv.tv_sec * 1000000ULL;
-}
-
