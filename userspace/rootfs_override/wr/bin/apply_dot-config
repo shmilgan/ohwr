@@ -117,11 +117,6 @@ elif [ "$CONFIG_PTP_REMOTE_CONF" = "y" ]; then
     host=$(echo $URL | cut -d/ -f 3)
     filename=$(echo $URL | cut -d/ -f 4-)
 
-    # save proto, host and filename of dot-config, to be used by SNMPd
-    echo "$proto" > "$tmpdir"/dot-config_proto
-    echo "$host" > "$tmpdir"/dot-config_host
-    echo "$filename" > "$tmpdir"/dot-config_filename
-
     rm -f $tmpconfig
     case $proto in
 	http|ftp)
