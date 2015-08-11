@@ -217,11 +217,6 @@ interface with gateware is now simpler than it was, but software still
 has remnants of old data structure.  Also, the multi-threaded approach
 is overkill, and the program could benefit from a simplification.
 
-@item The @t{TRACE} support it not really working. We have serious
-warning messages that were never reported.  We should really print
-everything to stderr and let syslog manage it (according to user
-configuration: this is already in dot-config).
-
 @item Audit all occurrences of the function @i{gettimeofday}. Ofthen it is used
 to calculate the time differences. A problem may occur when the switch jump
 back in time. Then expected timeout will never expire like in the commit
@@ -271,17 +266,6 @@ connect a Free-running Master to it's Slave port (wr0) then it becomes
 Slave to the Free-running Master and jumps it's WR time.  All the
 mechanism is in place, this should be trivial to fix.
 
-@item If Slave is in TRACK_PHASE state and a time jump occurs it doesn't
-reset its servo. It stays in TRACK_PHASE forever with a huge offset.
-That is something we've already observed in AD test system for
-Jean-Claude when GrandMaster was unlocking from the reference GPS. Not
-following the time jump will be also a problem if we power on in the
-same time all switches in the chain with GrandMaster on the top. It
-takes some time for GM to lock so the network would start as
-free-running to the second switch in the chain, but once GM is
-synchronized all slaves will stay in TRACK_PHASE with large offset to
-GrandMaster.
-
 
 @end itemize
 
@@ -314,9 +298,6 @@ in the @i{snmp-pain} document) and should be made better. Some stuff
 needs to be factorized, some variables should be renamed and the use
 of ``context'' items in tables should be fixed.
 
-@item Some items that are already in the WR MIB are not filled, especially
-in the PTP/PPSi area.
-
 @item We lack support for the VLAN configuration items. This means
 implementing the standardized VLAN MIB.  Unfortunately we can't
 really have any sensible code using @i{mib2c} (see the @i{snmp-pain}
@@ -331,7 +312,7 @@ I must learn how to deal with read-write objects before trying to
 extend our MIB.
 
 @item There is no support yet for sending traps on WR events.
-This is even more important thatn @i{set}, because we want to notify
+This is even more important that @i{set}, because we want to notify
 WR time jumps and lock/unlock events.
 
 @item We need to seriously audit the web interface, and verify
