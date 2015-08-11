@@ -17,7 +17,7 @@ CFLAGS =  -D KBUILD_NO_NLS
 # most of this is just copying stuff in
 RFILES = Kconfig dot-config wrs_release_defconfig
 XFILES = conf
-FILE = $(RFILES) $(XFILES)
+FILES = $(RFILES) $(XFILES)
 
 all: $(FILES)
 
