@@ -222,6 +222,12 @@ warning messages that were never reported.  We should really print
 everything to stderr and let syslog manage it (according to user
 configuration: this is already in dot-config).
 
+@item Audit all occurrences of the function @i{gettimeofday}. Ofthen it is used
+to calculate the time differences. A problem may occur when the switch jump
+back in time. Then expected timeout will never expire like in the commit
+@t{37bdfd74} @i{userspace/wrsw_hal: bugfix not updating temperatures in
+wr_mon/HAL}.
+
 @end itemize
 
 @c ##########################################################################
