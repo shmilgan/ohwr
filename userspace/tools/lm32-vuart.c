@@ -56,8 +56,6 @@ static int transfer_byte(int from) {
 
 void term_main(void)
 {
-	struct termios oldkey, newkey;
-
 	while(1) {
 		fd_set fds;
 		int ret;
