@@ -7,6 +7,7 @@
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/switch_hw.h>
+#include <libwr/wrs-msg.h>
 #include <fpga_io.h>
 #include <minipc.h>
 #include <signal.h>
@@ -88,8 +89,8 @@ void ppsi_connect_minipc(void)
 	}
 	ptp_ch = minipc_client_create("ptpd", 0);
 	if (!ptp_ch) {
-		fprintf(stderr, "Can't establish WRIPC connection "
-			"to the PTP daemon!\n");
+		pr_error("Can't establish WRIPC connection to the PTP "
+			 "daemon!\n");
 		exit(1);
 	}
 	/* store pid of ppsi connected via minipc */
@@ -99,57 +100,73 @@ void ppsi_connect_minipc(void)
 void init_shm(void)
 {
 	struct hal_shmem_header *h;
-
-	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
-	if (!hal_head) {
-		fprintf(stderr, "unable to open shm for HAL!\n");
-		exit(1);
+	int ret;
+	int n_wait = 0;
+	while ((ret = wrs_shm_get_and_check(wrs_shm_hal, &hal_head)) != 0) {
+		n_wait++;
+		if (ret == 1) {
+			pr_error("Unable to open HAL's shm !\n");
+		}
+		if (ret == 2) {
+			pr_error("Unable to read HAL's version!\n");
+		}
+		if (n_wait > 10) {
+			/* timeout! */
+			exit(-1);
+		}
+		sleep(1);
 	}
-	wrs_shm_wait(hal_head, 500 /* ms */, 20, stderr);
+
 	if (hal_head->version != HAL_SHMEM_VERSION) {
-		fprintf(stderr, "wr_mon: unknown HAL's shm version %i "
-			"(known is %i)\n",
-			hal_head->version, HAL_SHMEM_VERSION);
+		pr_error("Unknown HAL's shm version %i (known is %i)\n",
+			 hal_head->version, HAL_SHMEM_VERSION);
 		exit(1);
 	}
 	h = (void *)hal_head + hal_head->data_off;
 	/* Assume number of ports does not change in runtime */
 	hal_nports_local = h->nports;
 	if (hal_nports_local > HAL_MAX_PORTS) {
-		fprintf(stderr, "Too many ports reported by HAL. "
-			"%d vs %d supported\n",
-			hal_nports_local, HAL_MAX_PORTS);
+		pr_error("Too many ports reported by HAL. %d vs %d "
+			 "supported\n", hal_nports_local, HAL_MAX_PORTS);
 		exit(1);
 	}
 	/* Even after HAL restart, HAL will place structures at the same
 	 * addresses. No need to re-dereference pointer at each read. */
 	hal_ports = wrs_shm_follow(hal_head, h->ports);
 	if (!hal_ports) {
-		fprintf(stderr, "Unable to follow hal_ports pointer in HAL's "
-			"shmem");
+		pr_error("Unable to follow hal_ports pointer in HAL's "
+			 "shmem\n");
 		exit(1);
 	}
 	temp_sensors = &(h->temp);
 
-	ppsi_head = wrs_shm_get(wrs_shm_ptp, "", WRS_SHM_READ);
-	if (!ppsi_head) {
-		fprintf(stderr, "unable to open shm for PPSI!\n");
-		exit(1);
+	n_wait = 0;
+	while ((ret = wrs_shm_get_and_check(wrs_shm_ptp, &ppsi_head)) != 0) {
+		n_wait++;
+		if (ret == 1) {
+			pr_error("Unable to open PPSI's shm !\n");
+		}
+		if (ret == 2) {
+			pr_error("Unable to read PPSI's version!\n");
+		}
+		if (n_wait > 10) {
+			/* timeout! */
+			exit(-1);
+		}
+		sleep(1);
 	}
-	wrs_shm_wait(ppsi_head, 500 /* ms */, 20, stderr);
 
 	/* check hal's shm version */
 	if (ppsi_head->version != WRS_PPSI_SHMEM_VERSION) {
-		fprintf(stderr, "wr_mon: unknown PPSI's shm version %i "
-			"(known is %i)\n",
-			ppsi_head->version, WRS_PPSI_SHMEM_VERSION);
+		pr_error("Unknown PPSI's shm version %i (known is %i)\n",
+			 ppsi_head->version, WRS_PPSI_SHMEM_VERSION);
 		exit(1);
 	}
 	ppg = (void *)ppsi_head + ppsi_head->data_off;
 
 	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->global_ext_data);
 	if (!ppsi_servo) {
-		fprintf(stderr, "Cannot follow ppsi_servo in shmem.\n");
+		pr_error("Cannot follow ppsi_servo in shmem.\n");
 		exit(1);
 	}
 
@@ -483,8 +500,10 @@ int main(int argc, char *argv[])
 {
 	int opt;
 	int usecolor = 1;
+
+	wrs_msg_init(argc, argv);
 	init_shm();
-	while((opt=getopt(argc, argv, "sbgw")) != -1)
+	while((opt=getopt(argc, argv, "sbgwqv")) != -1)
 	{
 		switch(opt)
 		{
@@ -498,14 +517,16 @@ int main(int argc, char *argv[])
 				read_hal();
 				show_unadorned_ports();
 				exit(0);
+			case 'q': break; /* done in wrs_msg_init() */
+			case 'v': break; /* done in wrs_msg_init() */
 			default:
-				fprintf(stderr, "Unrecognized option.\n");
+				pr_error("Unrecognized option.\n");
 				break;
 		}
 	}
 
 	if (shw_fpga_mmap_init() < 0) {
-		fprintf(stderr, "%s: can't initialize FPGA mmap\n", argv[0]);
+		pr_error("Can't initialize FPGA mmap\n");
 		exit(1);
 	}
 	term_init(usecolor);
