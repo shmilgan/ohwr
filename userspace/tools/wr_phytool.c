@@ -57,14 +57,26 @@ int hal_shm_init(void)
 {
 	int ii;
 	struct hal_shmem_header *h;
+	int n_wait = 0;
+	int ret;
 
-	/* open shmem to HAL */
-	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ | WRS_SHM_LOCKED);
-	if (!hal_head) {
-		fprintf(stderr,
-			"FATAL: wr_phytool unable to open shm to HAL.\n");
-		return -1;
+	/* wait for HAL */
+	while ((ret = wrs_shm_get_and_check(wrs_shm_hal, &hal_head)) != 0) {
+		n_wait++;
+		if (n_wait > 10) {
+			if (ret == 1) {
+				fprintf(stderr, "wr_phytool: Unable to open "
+					"HAL's shm !\n");
+			}
+			if (ret == 2) {
+				fprintf(stderr, "wr_phytool: Unable to read "
+					"HAL's version!\n");
+			}
+			return(-1);
+		}
+		sleep(1);
 	}
+
 	/* check hal's shm version */
 	if (hal_head->version != HAL_SHMEM_VERSION) {
 		fprintf(stderr, "wr_mon: unknown hal's shm version %i "
