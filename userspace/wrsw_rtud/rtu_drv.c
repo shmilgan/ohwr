@@ -76,33 +76,37 @@ void init_shm(void)
 	struct hal_shmem_header *h;
 	int ii;
 	int n_wait = 0;
+	int ret;
 
-	/* wait forever for HAL */
-	while (!(hal_head = wrs_shm_get(wrs_shm_hal, "",
-				WRS_SHM_READ | WRS_SHM_LOCKED))) {
-		if (n_wait > 5) {
-			/* print if waiting more than 5 seconds, some waiting
+	/* wait for HAL */
+	while ((ret = wrs_shm_get_and_check(wrs_shm_hal, &hal_head)) != 0) {
+		n_wait++;
+		if (n_wait > 10) {
+			/* print if waiting more than 10 seconds, some wait
 			 * is expected since hal requires few seconds to start
 			 */
-			pr_error("unable to open shm for HAL!\n");
+			if (ret == 1) {
+				pr_error("Unable to open HAL's shmem!\n");
+			}
+			if (ret == 2) {
+				pr_error("Unable to read HAL's version!\n");
+			}
+			exit(1);
 		}
-		n_wait++;
 		sleep(1);
 	}
 
 	h = (void *)hal_head + hal_head->data_off;
 
-	while (1) { /* wait forever for HAL to produce consistent nports */
+	while (1) { /* wait 10 sec for HAL to produce consistent nports */
 		ii = wrs_shm_seqbegin(hal_head);
 		/* Assume number of ports does not change in runtime */
 		hal_nports_local = h->nports;
 		if (!wrs_shm_seqretry(hal_head, ii))
 			break;
-		if (n_wait > 5) {
-			/* print if waiting more than 10 seconds, some wait
-			 * is expected since hal requires few seconds to start
-			 */
+		if (n_wait > 10) {
 			pr_error("Wait for HAL.\n");
+			exit(1);
 		}
 		n_wait++;
 		sleep(1);
