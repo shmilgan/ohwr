@@ -17,16 +17,27 @@ int *ppsi_ppi_nlinks;
 /* RTUd */
 struct wrs_shm_head *rtud_head;
 
-
-
 static void init_shm_hal(void)
 {
-	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
-	if (!hal_head) {
-		snmp_log(LOG_ERR, "unable to open shm for HAL!\n");
-		exit(-1);
+	int ret;
+	int n_wait = 0;
+
+	while ((ret = wrs_shm_get_and_check(wrs_shm_hal, &hal_head)) != 0) {
+		n_wait++;
+		if (n_wait > 10) {
+			/* timeout! */
+			if (ret == 1) {
+				snmp_log(LOG_ERR, "Unable to open HAL's "
+					 "shmem!\n");
+			}
+			if (ret == 2) {
+				snmp_log(LOG_ERR, "Unable to read HAL's "
+					 "version!\n");
+			}
+			exit(-1);
+		}
+		sleep(1);
 	}
-	wrs_shm_wait(hal_head, 500 /* ms */, 20, NULL);
 
 	/* check hal's shm version */
 	if (hal_head->version != HAL_SHMEM_VERSION) {
@@ -57,10 +68,22 @@ static void init_shm_hal(void)
 
 static void init_shm_ppsi(void)
 {
-	ppsi_head = wrs_shm_get(wrs_shm_ptp, "", WRS_SHM_READ);
-	if (!ppsi_head) {
-		snmp_log(LOG_ERR, "unable to open shm for PPSI!\n");
-		exit(-1);
+	int ret;
+	int n_wait = 0;
+
+	while ((ret = wrs_shm_get_and_check(wrs_shm_ptp, &ppsi_head)) != 0) {
+		n_wait++;
+		if (n_wait > 10) {
+			/* timeout! */
+			if (ret == 1) {
+				snmp_log(LOG_ERR, "Unable to open shm for PPSI!\n");
+			}
+			if (ret == 2) {
+				snmp_log(LOG_ERR, "Unable to read PPSI's version!\n");
+			}
+			exit(-1);
+		}
+		sleep(1);
 	}
 
 	/* check ppsi's shm version */
@@ -89,11 +112,24 @@ static void init_shm_ppsi(void)
 
 static void init_shm_rtud(void)
 {
-	/* open RTUd's shm */
-	rtud_head = wrs_shm_get(wrs_shm_rtu, "", WRS_SHM_READ);
-	if (!rtud_head) {
-		snmp_log(LOG_ERR, "unable to open shm for RTUd!\n");
-		exit(-1);
+	int ret;
+	int n_wait = 0;
+
+	while ((ret = wrs_shm_get_and_check(wrs_shm_rtu, &rtud_head)) != 0) {
+		n_wait++;
+		if (n_wait > 10) {
+			/* timeout! */
+			if (ret == 1) {
+				snmp_log(LOG_ERR, "Unable to open shm for "
+					 "RTUd!\n");
+			}
+			if (ret == 2) {
+				snmp_log(LOG_ERR, "Unable to read RTUd's "
+					 "version!\n");
+			}
+			exit(-1);
+		}
+		sleep(1);
 	}
 
 	/* check rtud's shm version */
