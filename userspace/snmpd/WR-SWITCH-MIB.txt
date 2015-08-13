@@ -202,7 +202,7 @@ wrsCpuLoadHigh OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Status of CPU load. Based on averag load in group wrsCpuLoad.
+            "Status of CPU load. Based on average load in group wrsCpuLoad.
             Error - average CPU load is more than 3 for 1min, 2 for 5min and 1.5 for 15min
             Warning - average CPU load is more than 2 for 1min, 1.5 for 5min and 1 for 15min"
     ::= { wrsOSStatusGroup 4 }
@@ -236,9 +236,8 @@ wrsPTPStatus OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Grouped status of wrsPtpDataTable
-            ok - PTP error counters in wrsPtpDataTable are not increased since
-                 last scan and ptp servo updates counter increased
+            "Grouped status of PTP daemon based on values in wrsPtpDataTable
+            ok - Correct values in wrsPtpDataTable
             error - error in wrsPtpDataTable
             firstRead - unable to calculate deltas in first read"
     ::= { wrsTimingStatusGroup 1 }
@@ -255,7 +254,7 @@ wrsSoftPLLStatus OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Grouped status of wrsSpllState
+            "Grouped status of Soft PLL based on values in wrsSpllState
             ok - values in wrsSpllState are correct
             error - there is an error in wrsSpllState
             warning - there is a warning in wrsSpllState
@@ -274,11 +273,9 @@ wrsSlaveLinksStatus OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Grouped status of slave link statuses
-            ok - when every slave port is up when switch is in slave mode
-                 and when every slave port is down when switch in master/grandmaster mode
-                 don't care about non-wr and auto ports
-            warningNA - there is N/A in wrsSpllMode, wrsPortStatusLink or
-                        wrsPortStatusConfiguredMode"
+            ok - all links have proper status
+            error - wrong link status of at least one link
+            warningNA - there is N/A in one of object used to calculate this value"
     ::= { wrsTimingStatusGroup 3 }
 
 wrsPTPFramesFlowing OBJECT-TYPE
@@ -295,9 +292,9 @@ wrsPTPFramesFlowing OBJECT-TYPE
             "Grouped status of TX and RX PTP packets flowing
             ok - when there are PTP packets flowing in both directions on all
                  wr ports that are up
-            warningNA - there is N/A in wrsPortStatusLink or wrsPortStatusConfiguredMode
-            error - no PTP packets flowing at least on one wr up port
-            firstRead - unable to calculate deltas in first read"
+            warningNA - there is N/A in one of object used to calculate this value
+            error - no PTP packets flowing on at least one wr up port
+            firstRead - cannot calculate value from only one read"
     ::= { wrsTimingStatusGroup 4 }
 
 -- wrsNetworkingStatusGroup (.6.2.3)
@@ -318,8 +315,7 @@ wrsSFPsStatus OBJECT-TYPE
             "Grouped status of SFPs
             ok - all SFPs are ok
             error - there is an error in SFP
-            warning - there is a warning in SFP (not used)
-            warningNA - there is N/A field in SFP
+            warningNA - there is N/A in one of object used to calculate this value
             bug - bug in checking conditions of SFPs, please report"
     ::= { wrsNetworkingStatusGroup 1 }
 
@@ -333,11 +329,10 @@ wrsEndpointStatus OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Check items described in 2.2.2 Fault in the Endpoint's transmission/reception
-             path in wrs_failures document.
-	     firstRead - cannot determine change rate from only one read
-             ok - parameters below limits
-             error - parameters above limits"
+            "Grouped status of all endpoints
+             ok - all endpoints are ok
+             error - erro in at least one endpoint
+             firstRead - cannot calculate value from only one read"
     ::= { wrsNetworkingStatusGroup 2 }
 
 wrsSwcoreStatus OBJECT-TYPE
@@ -350,12 +345,10 @@ wrsSwcoreStatus OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Check items described in 2.2.3 Problem with the SwCore or Endpoint HDL
-             module and 2.2.5 Too much HP traffic / Per-priority queue full
-             in wrs_failures document.
-	     firstRead - cannot determine change rate from only one read
-             ok - parameters below limits
-             error - parameters above limits"
+            "Overall status of Soft Core.
+             ok - correct Soft Core status
+             error - erroneous Soft Core status
+             firstRead - cannot calculate value from only one read"
     ::= { wrsNetworkingStatusGroup 3 }
 
 wrsRTUStatus OBJECT-TYPE
@@ -368,11 +361,10 @@ wrsRTUStatus OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Check items described in 2.2.4 RTU is full and cannot accept more requests
-             in wrs_failures document.
-	     firstRead - cannot determine change rate from only one read
-             ok - parameters below limits
-             error - parameters above limits"
+            "RTU status
+             ok - correct RTU status
+             error - erroneous RTU status
+             firstRead - cannot calculate value from only one read"
     ::= { wrsNetworkingStatusGroup 4 }
 
 -- wrsVersionGroup (.6.3)
@@ -488,7 +480,7 @@ wrsVersionLastUpdateDate      OBJECT-TYPE
     STATUS                     current
     DESCRIPTION
         "Date and time of last firmware update, this information may not be
-        accurate, due to hard restarts or lack of proper time."
+        accurate, due to hard restarts or lack of proper time at update."
     ::= { wrsVersionGroup 14 }
 
 -- wrsOperationStatus (.7.1)
@@ -591,7 +583,8 @@ wrsConfigSource  OBJECT-TYPE
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
-        "Source of used dotconfig, protocol if config was received from network
+        "Source of used dotconfig, used protocol if config was received from
+        network
         errorMinor - cannot read status file, problem is probably somewhere else"
     ::= { wrsBootStatusGroup 6 }
 
@@ -600,7 +593,7 @@ wrsConfigSourceHost   OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "Server address which provided dotconfig"
+        "Server's address which provided dotconfig"
     ::= { wrsBootStatusGroup 7 }
 
 wrsConfigSourceFilename   OBJECT-TYPE
@@ -624,6 +617,7 @@ wrsBootConfigStatus  OBJECT-TYPE
     STATUS        current
     DESCRIPTION
         "Result of loading or downloading dot-config file
+        ok - dot-config downloaded or loaded correctly
         downloadError - unable to download file from given source
         checkError - config file is not valid or too short (less than 200 characters).
         errorMinor - cannot read status file, problem is probably somewhere else"
@@ -641,6 +635,7 @@ wrsBootHwinfoReadout  OBJECT-TYPE
     STATUS        current
     DESCRIPTION
         "Result of hwinfo readout
+        ok - hwinfo readout successful
         error - hwinfo readout failed
         errorMinor - cannot read status file, problem is probably somewhere else
         warning - no hwinfo partition"
@@ -658,6 +653,7 @@ wrsBootLoadFPGA  OBJECT-TYPE
     STATUS        current
     DESCRIPTION
         "Result of loading FPGA
+        ok - FPGA loaded successfully
         error - loading failed
         errorMinor - cannot read status file, problem is probably somewhere else
         fileNotFound - file to be loaded not found"
@@ -675,6 +671,7 @@ wrsBootLoadLM32  OBJECT-TYPE
     STATUS        current
     DESCRIPTION
         "Result of loading LM32
+        ok - LM32 loaded successfully
         error - loading failed
         errorMinor - cannot read status file, problem is probably somewhere else
         fileNotFound - file to be loaded not found"
