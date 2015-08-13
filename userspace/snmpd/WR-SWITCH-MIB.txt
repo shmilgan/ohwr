@@ -3,7 +3,7 @@ WR-SWITCH-MIB DEFINITIONS ::= BEGIN
 -- Original MIB, Bugs and swearing by Alessandro Rubini
 -- MIB rewritten by Adam Wujek, BE-CO-HT, CERN
 
--- During development all unused/not implemented objects are comented out
+-- During development all unused/not implemented objects are commented out
 -- to avoid later changes
 
 -- IMPORTS: Include definitions from other mibs here
@@ -69,7 +69,7 @@ wrsMainSystemStatus OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Grouped status of WRS switch
-            ok - values in wrsGeneralStatusGroup are correct
+            ok - other objects in wrsGeneralStatusGroup are ok
             error - there is an error in wrsGeneralStatusGroup
             warning - there is a warning in wrsGeneralStatusGroup
             warningNA - there is N/A field in wrsGeneralStatusGroup
@@ -89,7 +89,7 @@ wrsOSStatus OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Grouped status of wrsOSStatusGroup
-            ok - values in wrsOSStatusGroup are correct
+            ok - values in wrsOSStatusGroup are ok
             error - there is an error in wrsOSStatusGroup
             warning - there is a warning in wrsOSStatusGroup
             warningNA - there is N/A field in wrsOSStatusGroup
@@ -109,7 +109,7 @@ wrsTimingStatus OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Grouped status of wrsTimingStatusGroup
-            ok - values in wrsTimingStatusGroup are correct
+            ok - values in wrsTimingStatusGroup are ok
             error - there is an error in wrsTimingStatusGroup
             warning - there is a warning in wrsTimingStatusGroup
             warningNA - there is N/A field in wrsTimingStatusGroup
@@ -129,7 +129,7 @@ wrsNetworkingStatus OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Grouped status of wrsNetworkingStatusGroup
-            ok - values in wrsNetworkingStatusGroup are correct
+            ok - values in wrsNetworkingStatusGroup are ok
             error - there is an error in wrsNetworkingStatusGroup
             warning - there is a warning in wrsNetworkingStatusGroup
             warningNA - there is N/A field in wrsNetworkingStatusGroup
@@ -154,7 +154,8 @@ wrsBootSuccessful OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Grouped status of wrsBootStatusGroup
+            "Grouped status of wrsBootStatusGroup, indicating whether boot was
+            successful
             ok - values in wrsBootStatusGroup are correct
             error - there is an error in wrsBootStatusGroup
             warning - there is a warning in wrsBootStatusGroup
@@ -332,9 +333,9 @@ wrsEndpointStatus OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Check itmes described in 2.2.2 Fault in the Endpoint's transmission/reception
+            "Check items described in 2.2.2 Fault in the Endpoint's transmission/reception
              path in wrs_failures document.
-	     firstRead - cannot derermine change rate from olny one read
+	     firstRead - cannot determine change rate from only one read
              ok - parameters below limits
              error - parameters above limits"
     ::= { wrsNetworkingStatusGroup 2 }
@@ -349,10 +350,10 @@ wrsSwcoreStatus OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Check itmes described in 2.2.3 Problem with the SwCore or Endpoint HDL
+            "Check items described in 2.2.3 Problem with the SwCore or Endpoint HDL
              module and 2.2.5 Too much HP traffic / Per-priority queue full
              in wrs_failures document.
-	     firstRead - cannot derermine change rate from olny one read
+	     firstRead - cannot determine change rate from only one read
              ok - parameters below limits
              error - parameters above limits"
     ::= { wrsNetworkingStatusGroup 3 }
@@ -367,9 +368,9 @@ wrsRTUStatus OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Check itmes described in 2.2.4 RTU is full and cannot accept more requests
+            "Check items described in 2.2.4 RTU is full and cannot accept more requests
              in wrs_failures document.
-	     firstRead - cannot derermine change rate from olny one read
+	     firstRead - cannot determine change rate from only one read
              ok - parameters below limits
              error - parameters above limits"
     ::= { wrsNetworkingStatusGroup 4 }
@@ -487,7 +488,7 @@ wrsVersionLastUpdateDate      OBJECT-TYPE
     STATUS                     current
     DESCRIPTION
         "Date and time of last firmware update, this information may not be
-        ccurate, due to hard restarts or lack of proper time."
+        accurate, due to hard restarts or lack of proper time."
     ::= { wrsVersionGroup 14 }
 
 -- wrsOperationStatus (.7.1)
@@ -590,7 +591,7 @@ wrsConfigSource  OBJECT-TYPE
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
-        "Source of used dotconfig, protocol if gonfig was received from network
+        "Source of used dotconfig, protocol if config was received from network
         errorMinor - cannot read status file, problem is probably somewhere else"
     ::= { wrsBootStatusGroup 6 }
 
@@ -961,7 +962,7 @@ wrsStartCntSshd OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Nmber of SSH daemon starts"
+            "Number of SSH daemon starts"
     ::= { wrsStartCntGroup 4 }
 
 wrsStartCntHttpd OBJECT-TYPE
@@ -969,7 +970,7 @@ wrsStartCntHttpd OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Nmber of HTTP daemon starts"
+            "Number of HTTP daemon starts"
     ::= { wrsStartCntGroup 5 }
 
 wrsStartCntSnmpd OBJECT-TYPE
@@ -977,7 +978,7 @@ wrsStartCntSnmpd OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Nmber of SNMP daemon starts"
+            "Number of SNMP daemon starts"
     ::= { wrsStartCntGroup 6 }
 
 wrsStartCntSyslogd OBJECT-TYPE
@@ -985,7 +986,7 @@ wrsStartCntSyslogd OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Nmber of SYSLOG daemon starts"
+            "Number of SYSLOG daemon starts"
     ::= { wrsStartCntGroup 7 }
 
 wrsStartCntWrsWatchdog OBJECT-TYPE
@@ -993,7 +994,7 @@ wrsStartCntWrsWatchdog OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Nmber of wrs_watchdog daemon starts"
+            "Number of wrs_watchdog daemon starts"
     ::= { wrsStartCntGroup 8 }
 
 -- wrsSpllState (.7.3)
@@ -1007,7 +1008,7 @@ wrsSpllVersion            OBJECT-TYPE
     MAX-ACCESS            read-only
     STATUS                current
     DESCRIPTION
-        "The spll version, as returned from 'git describe' at build time"
+        "The Soft PLL version, as returned from 'git describe' at build time"
     ::= { wrsSpllVersionGroup 1 }
 
 wrsSpllBuildDate          OBJECT-TYPE
@@ -1015,7 +1016,7 @@ wrsSpllBuildDate          OBJECT-TYPE
     MAX-ACCESS            read-only
     STATUS                current
     DESCRIPTION
-        "The build date of the spll, '__DATE__' at build time"
+        "The build date of the Soft PLL, '__DATE__' at build time"
     ::= { wrsSpllVersionGroup 2 }
 
 -- wrsSpllStatusGroup (.7.3.2)
@@ -1251,7 +1252,7 @@ wrsPstatsRXPCSErrors OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Number of errors occured during frame reception in PCS"
+            "Number of errors occurred during frame reception in PCS"
     ::= { wrsPstatsEntry 9 }
 
 wrsPstatsRXGiantFrames OBJECT-TYPE
