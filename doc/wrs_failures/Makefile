@@ -7,5 +7,5 @@ wrs_failures.pdf : wrs_failures.tex fail.tex intro.tex snmp_exports.tex
 	pdflatex wrs_failures.tex
 
 clean :
-	rm -f *.eps *.pdf *.dat *.log *.out *.aux *.dvi *.ps *.toc
+	rm -f *.eps  *.dat *.log *.out *.aux *.dvi *.ps *.toc *.pdf
 
