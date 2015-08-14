@@ -938,12 +938,12 @@ wrsStartCntHAL OBJECT-TYPE
             "Number of HAL daemon starts"
     ::= { wrsStartCntGroup 1 }
 
-wrsStartCntPPSI OBJECT-TYPE
+wrsStartCntPTP OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Number of PPSI daemon starts"
+            "Number of PTP daemon starts"
     ::= { wrsStartCntGroup 2 }
 
 wrsStartCntRTUd OBJECT-TYPE

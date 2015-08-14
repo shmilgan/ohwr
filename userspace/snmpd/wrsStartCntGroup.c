@@ -10,7 +10,7 @@
 
 static struct pickinfo wrsStartCnt_pickinfo[] = {
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntHAL),
-	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntPPSI),
+	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntPTP),
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntRTUd),
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntSshd),
 	FIELD(wrsStartCnt_s, ASN_COUNTER, wrsStartCntHttpd),
@@ -54,7 +54,7 @@ time_t wrsStartCnt_data_fill(void){
 
 	/* get start counters from shmem's */
 	wrsStartCnt_s.wrsStartCntHAL = hal_head->pidsequence;
-	wrsStartCnt_s.wrsStartCntPPSI = ppsi_head->pidsequence;
+	wrsStartCnt_s.wrsStartCntPTP = ppsi_head->pidsequence;
 	wrsStartCnt_s.wrsStartCntRTUd = rtud_head->pidsequence;
 
 	read_start_count(START_CNT_SSHD, &wrsStartCnt_s.wrsStartCntSshd);

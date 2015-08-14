@@ -6,7 +6,7 @@
 
 struct wrsStartCnt_s {
 	uint32_t wrsStartCntHAL;
-	uint32_t wrsStartCntPPSI;
+	uint32_t wrsStartCntPTP;
 	uint32_t wrsStartCntRTUd;
 	uint32_t wrsStartCntSshd;
 	uint32_t wrsStartCntHttpd;
