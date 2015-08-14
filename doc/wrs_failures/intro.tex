@@ -25,14 +25,13 @@ Ethernet switching. The structure of each failure description is the following:
 				clock).
 		\end{itemize}
 
-	\item [] \underline{Description}: what the problem is about, how important it
+	\item [] \underline{Description}: What the problem is about, how important it
 		is and what bad may happen if it occurs.
-	\item [] \underline{SNMP objects}: which SNMP objects should be monitored to
+	\item [] \underline{SNMP objects}: Which SNMP objects should be monitored to
 		detect the failure. These may be objects from \texttt{WR-SWITCH-MIB} or one
 		of the standard MIBs used by the \emph{net-snmp}.
-	\item [] \underline{Notes}: optional comment in case required SNMP objects are
-		not yet exported by our current implementation of the SNMP agent. It
-		describes some preliminary ideas what should be exported in the near future.
+	\item [] \underline{Notes}: Optional comment for SNMP implementation. It may describe current
+		implementation of ideas how to implement it in the future
 \end{itemize}
 
 Section \ref{sec:snmp_exports} is a documentation for people integrating WR
