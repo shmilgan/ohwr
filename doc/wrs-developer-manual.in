@@ -107,7 +107,7 @@ This is the current set of manuals that accompany the @sc{wrs}:
 
 @item @i{White Rabbit Switch: Failures and Diagnostics}: describe various
    failure scenarios of a switch and ways how to recognize them.
-   Additionally describe SNMP exports of a switch (WR-SWITCH-MIB).
+   Additionally describe SNMP exports of a switch (@t{WR-SWITCH-MIB}).
 
 @end itemize
 
@@ -116,16 +116,13 @@ is published in the @i{files} tab of the software project in @t{ohwr.org}:
 (@url{http://www.ohwr.org/projects/wr-switch-sw/files}).
 This doesn't apply to release 4.0 and earlier.
 
-The source form of first three manuals is maintained in
-@t{wr-switch-sw/doc}. Within the repository, both the @i{User's
-Manual} and the @i{Developer's Manual} are always tracking the
-software commits, while the @i{Startup Guide} may not be authoritative
-because it is bound to device shipping rather than software
+The source form of all four manuals is maintained in @t{wr-switch-sw/doc}.
+Within the repository, three of them the @i{User's Manual},
+the @i{Developer's Manual} and the @i{Failures and Diagnostics}
+are always tracking the software commits, while the @i{Startup Guide} may not
+be authoritative because it is bound to device shipping rather than software
 development.
 
-The source of fourth document @i{White Rabbit Switch: Failures and Diagnostics} is in
-external repository @url{git://ohwr.org/white-rabbit.git} under
-@t{docs/specifications/management}.
 @c ==========================================================================
 @node Supported Hardware Versions
 @section Supported Hardware Versions
