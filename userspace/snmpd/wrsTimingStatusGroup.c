@@ -116,11 +116,11 @@ time_t wrsTimingStatus_data_fill(void)
 	|************************* wrsSoftPLLStatus  *************************|
 	\*********************************************************************/
 	/*
-	 * DelCnt - warning if > 0
+	 * DelCnt - warning if > 0 or no change in DelCnt
 	 * seqstate has to be 8 (ready)
 	 * mode = 1 (grand master) aligin state must be 6 (LOCKED)
 	 * mode = 2 (free running master)
-	 * mode = 3 (slave)
+	 * mode = 3 (slave) and wrsSpllHlock != 0 and wrsSpllMlock != 0
 	*/
 	s = &wrsSpllStatus_s;
 	if ( /* check if error */
