@@ -4,8 +4,8 @@ nodes/switches with correct timing information consistent with the rest of the
 WR network.\\
 
 \noindent Faults leading to a timing error:
-\begin{enumerate}
-	\item {\bf \emph{PTP/PPSi} went out of \texttt{TRACK\_PHASE}}
+
+\subsubsection{\bf \emph{PTP/PPSi} went out of \texttt{TRACK\_PHASE}}
 		\label{fail:timing:ppsi_track_phase}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -21,7 +21,7 @@ WR network.\\
 			\item [] \underline{Note}: PTP servo state is exported as a string and a number.
 		\end{packed_enum}
 
-	\item {\bf Offset jump not compensated by Slave}
+\subsubsection{\bf Offset jump not compensated by Slave}
 		\label{fail:timing:offset_jump}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -37,7 +37,7 @@ WR network.\\
 				saturation on overflow and underflow
 		\end{packed_enum}
 
-	\item {\bf Detected jump in the RTT value calculated by \emph{PTP/PPSi}}
+\subsubsection{\bf Detected jump in the RTT value calculated by \emph{PTP/PPSi}}
 		\label{fail:timing:rtt_jump}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -54,7 +54,7 @@ WR network.\\
 				the switch to build up the general WRS status word (section XXX).
 		\end{packed_enum}
 
-	\item {\bf Wrong $\Delta_{TXM}$, $\Delta_{RXM}$, $\Delta_{TXS}$,
+\subsubsection{\bf Wrong $\Delta_{TXM}$, $\Delta_{RXM}$, $\Delta_{TXS}$,
 		$\Delta_{RXS}$ values are reported to the \emph{PTP/PPSi} daemon}
 		\label{fail:timing:deltas_report}
 		\begin{packed_enum}
@@ -73,7 +73,7 @@ WR network.\\
 				\texttt{WR-SWITCH-MIB::wrsPtpDeltaRxS.<n>}
 		\end{packed_enum}
 
-	\item {\bf \emph{SoftPLL} became unlocked}
+\subsubsection{\bf \emph{SoftPLL} became unlocked}
 		\label{fail:timing:spll_unlock}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -98,7 +98,7 @@ WR network.\\
 				\texttt{WR-SWITCH-MIB::wrsSpllDelCnt}
 		\end{packed_enum}
 
-	\item {\bf \emph{SoftPLL} has crashed/restarted}
+\subsubsection{\bf \emph{SoftPLL} has crashed/restarted}
 		\label{fail:timing:spll_crash}
 		\begin{packed_enum}
 			\item [] \underline{Status}: TODO \emph{(depends on SoftPLL mem read), (require changes in lm32 software)}
@@ -120,7 +120,7 @@ WR network.\\
 				\emph{SoftPLL} is hanging (but not restarted) based on irq counter.
 		\end{packed_enum}
 
-	\item {\bf Link to WR Master is down}
+\subsubsection{\bf Link to WR Master is down}
 		\label{fail:timing:master_down}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -136,7 +136,7 @@ WR network.\\
 				\texttt{WR-SWITCH-MIB::wrsPortStatusConfiguredMode.<n>}
 		\end{packed_enum}
 
-	\item {\bf PTP frames don't reach ARM}
+\subsubsection{\bf PTP frames don't reach ARM}
 		\label{fail:timing:no_frames}
 		\begin{packed_enum}
 			\item [] \underline{Status}: TODO \emph{(depends on ppsi shm?)}
@@ -168,7 +168,7 @@ WR network.\\
 				lack of frames due to the link down (which is a separate issue).
 		\end{packed_enum}
 
-	\item {\bf Detected SFP not supported for WR timing}
+\subsubsection{\bf Detected SFP not supported for WR timing}
 		\label{fail:timing:wrong_sfp}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -196,7 +196,7 @@ WR network.\\
 				\ref{fail:other:sfp} in section \ref{sec:other_fail}.
 		\end{packed_enum}
 
-	\item {\bf \emph{PTP/PPSi} process has crashed/restarted}
+\subsubsection{\bf \emph{PTP/PPSi} process has crashed/restarted}
 		\label{fail:timing:ppsi_crash}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -212,7 +212,7 @@ WR network.\\
 				\texttt{HOST-RESOURCES-MIB::hrSWRunName.<n>}
 		\end{packed_enum}
 
-	\item {\bf \emph{HAL} process has crashed/restarted}
+\subsubsection{\bf \emph{HAL} process has crashed/restarted}
 		\label{fail:timing:hal_crash}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -230,7 +230,7 @@ WR network.\\
 				\texttt{HOST-RESOURCES-MIB::hrSWRunName.<n>}
 		\end{packed_enum}
 
-	\item {\bf Wrong configuration applied}
+\subsubsection{\bf Wrong configuration applied}
 		\label{fail:timing:wrong_config}
 		\begin{packed_enum}
 			\item [] \underline{Status}: TODO \emph{(to be done later)}
@@ -251,7 +251,7 @@ WR network.\\
 				options (PTP/WR mode, fixed hardware delays)
 		\end{packed_enum}
 
-	\item {\bf Switchover failed}
+\subsubsection{\bf Switchover failed}
 		\begin{packed_enum}
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: ERROR
@@ -272,7 +272,7 @@ WR network.\\
 				to detect and report that something went wrong.
 		\end{packed_enum}
 
-	\item {\bf Holdover for too long}
+\subsubsection{\bf Holdover for too long}
 		\begin{packed_enum}
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: WARNING
@@ -285,17 +285,15 @@ WR network.\\
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
 		\end{packed_enum}
 
-\end{enumerate}
-
 \newpage
 \subsection{Data error}
 As a data error we define WR Switch not being able to forward Ethernet traffic
 between devices connected to the ports.\\
 
 \noindent Faults leading to a data error:
-\begin{enumerate}
 
-	\item {\bf Link down}
+
+\subsubsection{\bf Link down}
 		\label{fail:data:link_down}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE  \emph{(to be changed later for switchover)}
@@ -318,7 +316,7 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCH-MIB::wrsPortStatusLink.<n>}
 		\end{packed_enum}
 
-	\item {\bf Fault in the Endpoint's transmission/reception path}
+\subsubsection{\bf Fault in the Endpoint's transmission/reception path}
 		\label{fail:data:ep_txrx}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -337,7 +335,7 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCH-MIB::wrsPstatsRXCRCErrors.<n>}
 		\end{packed_enum}
 
-	\item {\bf Problem with the \emph{SwCore} or Endpoint HDL module}
+\subsubsection{\bf Problem with the \emph{SwCore} or Endpoint HDL module}
 		\label{fail:data:swcore_hang}
 		\begin{packed_enum}
 			\item [] \underline{Status}: TODO \emph{(depends on HDL, then hal?)}
@@ -363,7 +361,7 @@ between devices connected to the ports.\\
 				\end{itemize}
 		\end{packed_enum}
 
-	\item {\bf RTU is full and cannot accept more requests}
+\subsubsection{\bf RTU is full and cannot accept more requests}
 		\label{fail:data:rtu_full}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -376,7 +374,7 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCh-MIB::wrsPstatsRXDropRTUFull.<n>}
 		\end{packed_enum}
 
-	\item {\bf Too much HP traffic / Per-priority queue full}
+\subsubsection{\bf Too much HP traffic / Per-priority queue full}
 		\label{fail:data:too_much_HP}
 		\begin{packed_enum}
 			\item [] \underline{Status}: TODO \emph{(depends on HDL)}
@@ -399,7 +397,7 @@ between devices connected to the ports.\\
 				full.
 		\end{packed_enum}
 
-	\item {\bf \emph{RTUd} has crashed}
+\subsubsection{\bf \emph{RTUd} has crashed}
 		\label{fail:data:rtu_crash}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -418,7 +416,7 @@ between devices connected to the ports.\\
 				\texttt{HOST-RESOURCES-MIB::hrSWRunName.<n>} \emph{(implemented)}
 		\end{packed_enum}
 
-	\item {\bf Network loop - two or more identical MACs on two or more ports}
+\subsubsection{\bf Network loop - two or more identical MACs on two or more ports}
 		\label{fail:data:net_loop}
 		\begin{packed_enum}
 			\item [] \underline{Status}: TODO \emph{(to be done later)}
@@ -435,7 +433,7 @@ between devices connected to the ports.\\
 				diagnose ping-pong in the RTU table.
 		\end{packed_enum}
 
-	\item {\bf Wrong configuration applied (e.g. wrong VLAN config)}
+\subsubsection{\bf Wrong configuration applied (e.g. wrong VLAN config)}
 		\begin{packed_enum}
 			\item [] \underline{Status}: TODO \emph{(to be done later)}
 			\item [] \underline{Severity}: WARNING
@@ -444,7 +442,7 @@ between devices connected to the ports.\\
 				\ref{fail:timing:no_frames}
 		\end{packed_enum}
 
-	\item {\bf Topology Redundancy failure}
+\subsubsection{\bf Topology Redundancy failure}
 		\begin{packed_enum}
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: ERROR
@@ -460,14 +458,11 @@ between devices connected to the ports.\\
 				link is down.
 		\end{packed_enum}
 
-\end{enumerate}
-
 \newpage
 \subsection{Other errors}
 \label{sec:other_fail}
 
-\begin{enumerate}
-	\item {\bf WR Switch did not boot correctly}
+\subsubsection{\bf WR Switch did not boot correctly}
 		\label{fail:other:boot}
 		\begin{packed_enum}
 			\item [] \underline{Status}: QUESTION, TODO (add stop restarting system after defined number of restarts)
@@ -503,7 +498,7 @@ between devices connected to the ports.\\
 				hand we have booted correctly we set the boot count to 0.
 		\end{packed_enum}
 
-	\item {\bf dot-config error}
+\subsubsection{\bf dot-config error}
 		\label{fail:other:dot-config}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -519,7 +514,7 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCH-MIB::wrsBootConfigStatus} - result of veryfication of dot-config
 		\end{packed_enum}
 
-	\item {\bf Any userspace daemon has crashed/restarted}
+\subsubsection{\bf Any userspace daemon has crashed/restarted}
 		\label{fail:other:daemon_crash}
 		\begin{packed_enum}
 			\item [] \underline{Status}: QUESTION, TODO \emph{(depends on monit)}
@@ -590,7 +585,7 @@ between devices connected to the ports.\\
 				now, backup link is active.\\
 		\end{packed_enum}
 
-	\item {\bf Kernel crash}
+\subsubsection{\bf Kernel crash}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
@@ -611,7 +606,7 @@ between devices connected to the ports.\\
 				panic function of the kernel or the \texttt{reboot} command.
 				Saving of IP and LR registers has to be implemented.
 		\end{packed_enum}
-	\item {\bf System nearly out of memory}
+\subsubsection{\bf System nearly out of memory}
 		\label{fail:other:no_mem}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -627,7 +622,7 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCH-MIB::wrsMemoryFree}\\
 				\texttt{WR-SWITCH-MIB::wrsMemoryFreeLow} - warn or error when low memory
 		\end{packed_enum}
-	\item {\bf Disk space low}
+\subsubsection{\bf Disk space low}
 		\label{fail:other:no_disk}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -654,7 +649,7 @@ between devices connected to the ports.\\
 				(to ease implementation of \texttt{wrsDiskSpaceLow}).
 		\end{packed_enum}
 
-	\item {\bf CPU load too high}
+\subsubsection{\bf CPU load too high}
 		\label{fail:other:cpu}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -671,7 +666,7 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCH-MIB::wrsCpuLoadHigh} - warn or error when CPU load too high
 		\end{packed_enum}
 
-	\item {\bf Temperature inside the box too high}
+\subsubsection{\bf Temperature inside the box too high}
 		\label{fail:other:temp}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -705,7 +700,7 @@ between devices connected to the ports.\\
 			Temperature is read by the HAL to drive PWM inside the FPGA.
 		\end{packed_enum}
 
-	\item {\bf Not supported SFP plugged into the cage (especially non 1-Gb SFP)}
+\subsubsection{\bf Not supported SFP plugged into the cage (especially non 1-Gb SFP)}
 		\label{fail:other:sfp}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
@@ -725,7 +720,7 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCH-MIB::wrsSFPsStatus} - status word for SFPs' status
 		\end{packed_enum}
 
-	\item {\bf File system / Memory corruption}
+\subsubsection{\bf File system / Memory corruption}
 		\label{fail:other:memory}
 		\begin{packed_enum}
 			\item [] \underline{Description}:\\
@@ -735,7 +730,7 @@ between devices connected to the ports.\\
 				This is bad, crazy things may happen, we can't do much about it.
 		\end{packed_enum}
 
-	\item {\bf Kernel freeze}
+\subsubsection{\bf Kernel freeze}
 		\begin{packed_enum}
 			\item [] \underline{Description}:
 				If kernel freezes we can do nothing. It can freeze e.g. due to some
@@ -746,7 +741,7 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}: \emph{(none)}
 		\end{packed_enum}
 
-	\item {\bf Power failure}
+\subsubsection{\bf Power failure}
 		\begin{packed_enum}
 			\item [] \underline{Description}:\\
 				Power failure may be either a WRS problem (i.e. broken power supply
@@ -757,7 +752,7 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}: \emph{(none)}
 		\end{packed_enum}
 
-	\item {\bf Hardware problem}
+\subsubsection{\bf Hardware problem}
 		\begin{packed_enum}
 			\item [] \underline{Description}:\\
 				If any crucial hardware part breaks we'll most probably notice it as one
@@ -774,7 +769,7 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}: \emph{(none)}
 		\end{packed_enum}
 
-	\item {\bf Management link down}
+\subsubsection{\bf Management link down}
 		\label{fail:other:management_link}
 		\begin{packed_enum}
 			\item [] \underline{Description}:\\
@@ -784,7 +779,7 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}: \emph{(none)}
 		\end{packed_enum}
 
-	\item {\bf No static IP on the management port \& failed to DHCP}
+\subsubsection{\bf No static IP on the management port \& failed to DHCP}
 		\begin{packed_enum}
 			\item [] \underline{Description}:\\
 				From operator's point of view it is similar to the issue
@@ -797,7 +792,7 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}: \emph{(none)}
 		\end{packed_enum}
 
-	\item {\bf IP address on the management port has changed}
+\subsubsection{\bf IP address on the management port has changed}
 		\begin{packed_enum}
 			\item [] \underline{Status}: TODO
 			\item [] \underline{Severity}: WARNING
@@ -810,7 +805,7 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
 		\end{packed_enum}
 
-	\item {\bf Multiple unauthorized access attempts}
+\subsubsection{\bf Multiple unauthorized access attempts}
 		\begin{packed_enum}
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: WARNING
@@ -823,7 +818,7 @@ between devices connected to the ports.\\
 				warning. We should probably use this information to add an SNMP object.
 		\end{packed_enum}
 
-	\item {\bf Network reconfiguration (RSTP)}
+\subsubsection{\bf Network reconfiguration (RSTP)}
 		\label{fail:other:rstp}
 		\begin{packed_enum}
 			\item [] \underline{Status}: for later
@@ -836,7 +831,7 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
 		\end{packed_enum}
 
-	\item {\bf Backup link down}
+\subsubsection{\bf Backup link down}
 		\begin{packed_enum}
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: WARNING
@@ -847,8 +842,6 @@ between devices connected to the ports.\\
 				the backup link operational in case the primary one fails.
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
 		\end{packed_enum}
-
-\end{enumerate}
 
 %\subsection{Switch out of sync to Master}
 %
