@@ -105,7 +105,7 @@ This is the current set of manuals that accompany the @sc{wrs}:
 
 @item @i{White Rabbit Switch: Failures and Diagnostics}: describe various
    failure scenarios of a switch and ways how to recognize them.
-   Additionally describe SNMP exports of a switch (WR-SWITCH-MIB).
+   Additionally describe SNMP exports of a switch (@t{WR-SWITCH-MIB}).
 
 @end itemize
 
@@ -114,16 +114,12 @@ is published in the @i{files} tab of the software project in @t{ohwr.org}:
 (@url{http://www.ohwr.org/projects/wr-switch-sw/files}).
 This doesn't apply to release 4.0 and earlier.
 
-The source form of first three manuals is maintained in
-@t{wr-switch-sw/doc}. Within the repository, both the @i{User's
-Manual} and the @i{Developer's Manual} are always tracking the
-software commits, while the @i{Startup Guide} may not be authoritative
-because it is bound to device shipping rather than software
+The source form of all four manuals is maintained in @t{wr-switch-sw/doc}.
+Within the repository, three of them the @i{User's Manual},
+the @i{Developer's Manual} and the @i{Failures and Diagnostics}
+are always tracking the software commits, while the @i{Startup Guide} may not
+be authoritative because it is bound to device shipping rather than software
 development.
-
-The source of fourth document @i{White Rabbit Switch: Failures and Diagnostics} is in
-external repository @url{git://ohwr.org/white-rabbit.git} under
-@t{docs/specifications/management}.
 
 @c ==========================================================================
 @node Supported Hardware Versions
@@ -1428,8 +1424,9 @@ There is currently no support for traps.
 @node The WRS MIB
 @section The WRS MIB
 
-This section contain a summary of the available groups and tables. 
-Objects from 96.100.2 to 96.100.5 are obsolete, they were used during early
+This section contain a summary of the @t{WR-SWITCH-MIB}, for details please
+refer to the document @i{White Rabbit Switch: Failures and Diagnostics}.
+Objects from @t{96.100.2} to @t{96.100.5} are obsolete, they were used during early
 implementation of switch's snmp.
 
 @table @code
@@ -1445,108 +1442,10 @@ implementation of switch's snmp.
 	@b{wrsStatus} -- MIB's branch with collective statuses of entire
 	switch.
 
-@item 96.100.6.1
-
-	@b{wrsGeneralStatusGroup} -- Group containing collective statuses of
-	particular subsystems and main system status, describing status of
-	entire switch.
-
-@item 96.100.6.2
-
-	@b{wrsDetailedStatusesGroup} -- Branch with collective statuses of
-	switch's subsystems.
-
-@item 96.100.6.2.1
-
-	@b{wrsOSStatusGroup} -- Group with collective statuses of
-	switch's Operating System.
-
-@item 96.100.6.2.2
-
-	@b{wrsTimingStatusGroup} -- Group with collective statuses of
-	switch's timing subsystem.
-
-@item 96.100.6.2.3
-
-	@b{wrsNetworkingStatusGroup} -- Group with collective statuses of
-	switch's networking subsystem.
-
-@item 96.100.6.3
-	@b{wrsVersionGroup} -- Hardware, gateware and software versions.
-	Additionally switch's serial number and other hardware information.
-
 @item 96.100.7
 
 	@b{wrsExpertStatus} -- Branch with detailed statuses of switch
 	subsystems.
-
-@item 96.100.7.1
-
-	@b{wrsOperationStatus} -- Branch with internal switch's statuses.
-
-@item 96.100.7.1.1
-
-	@b{wrsCurrentTimeGroup} -- The internal White Rabbit time, as a number
-	and a string.
-
-@item 96.100.7.1.2
-
-	@b{wrsBootStatusGroup} -- Group with statuses of switch's boot. It
-	contains boot counter, restart reason, config source, result of loading
-	FPGA and LM32, number of not started processes and not loaded kernel
-	modules.
-
-@item 96.100.7.1.3
-
-	@b{wrsTemperatureGroup} -- Group with temperature values and
-	thresholds.
-
-@item 96.100.7.1.4
-
-	@b{wrsMemoryGroup} -- Group with memory usage values.
-
-@item 96.100.7.1.5
-
-	@b{wrsCpuLoadGroup} -- Group with load average values, for 1, 5 and 15
-	minutes.
-
-@item 96.100.7.1.6
-
-	@b{wrsDiskTable} -- Table containing switch's disks usage.
-
-@item 96.100.7.2
-
-	@b{wrsStartCntGroup} -- Group with start counters of switch's
-	proccesses.
-
-@item 96.100.7.3
-
-	@b{wrsSpllState} -- Branch with Soft PLL status.
-
-@item 96.100.7.3.1
-
-	@b{wrsSpllVersionGroup} -- Group with version details of Soft PLL.
-
-@item 96.100.7.3.2
-
-	@b{wrsSpllStatusGroup} -- Group with status details of switch's Soft PLL.
-
-@item 96.100.7.4
-
-	@b{wrsPstatsTable} -- Port statistics, as an SNMP table. The first
-	column is the name of each interface, and further columns represent
-	various counters' values.
-
-@item 96.100.7.5
-
-	@b{wrsPtpDataTable} -- Table containing information about PTP servo.
-
-@item 96.100.7.6
-
-	@b{wrsPortStatusTable} -- Table containing details about switch's
-	ports, whether link is up, configured mode, SFPs, PTP RX and TX frames
-	passed.
-
 
 @end table
 
@@ -1554,7 +1453,7 @@ implementation of switch's snmp.
 @c we are using a bad work-around in the code, that may cause wrong values
 @c to be returned by other versions of the agent, where this bug is fixed.
 
-the easiest way to retrieve the values is using @i{snmpwalk}, telling
+The easiest way to retrieve the values is using @i{snmpwalk}, telling
 it to access our MIB file in order to use symbolic names. Assuming
 @t{wrs} is the DNS name for your White Rabbit Switch and @t{WR_SWITCH_SW}
 is an environment variable pointing to this package:
