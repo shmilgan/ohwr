@@ -892,7 +892,7 @@ within build scripts, to respect our users' security concerns.
 The script creates an archive for the whole filesystem,
 called @t{wrs-image.tar.gz}.  It is used by the installation
 procedure and it is ready to be unpacked for NFS-Root. It is currently 
-slightly less than 20MB of data.
+slightly less than 25MB of data.
 
 To make your NFS-root place, you can run
 the following command in a newly-created empty directory:
@@ -1460,7 +1460,7 @@ The RPC mechanism in the switch relies on the @i{mini-rpc} package.
 The package is a submodule, currently at this commit:
 
 @smallexample
-  4c87062d userspace/mini-rpc (v1.0-4-g4c87062)
+  4c87062d userspace/mini-rpc (v1.0-5-g28dff05)
 @end smallexample
 
 The library is documented in its own doc/ directory. The basic
@@ -1833,6 +1833,7 @@ switch. Check is done every 10 seconds. As for now supervised processes are:
 @t{wrsw_rtud},
 @t{wrsw_hal},
 @t{ppsi},
+@t{wrs_watchdog},
 @t{lighttpd},
 @t{dropbear},
 @t{snmpd}.
