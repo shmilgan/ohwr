@@ -203,8 +203,8 @@ wrsCpuLoadHigh OBJECT-TYPE
     STATUS         current
     DESCRIPTION
             "Status of CPU load. Based on average load in group wrsCpuLoad.
-            Error - average CPU load is more than 3 for 1min, 2 for 5min and 1.5 for 15min
-            Warning - average CPU load is more than 2 for 1min, 1.5 for 5min and 1 for 15min"
+            Error - average CPU load is more than 3 for 1min, 2 for 5min or 1.5 for 15min
+            Warning - average CPU load is more than 2 for 1min, 1.5 for 5min or 1 for 15min"
     ::= { wrsOSStatusGroup 4 }
 
 wrsDiskSpaceLow OBJECT-TYPE
@@ -407,7 +407,7 @@ wrsVersionFpgaType             OBJECT-TYPE
     MAX-ACCESS                 read-only
     STATUS                     current
     DESCRIPTION
-        "The hardware version of FPGA"
+        "The hardware type of FPGA"
     ::= { wrsVersionGroup 5 }
 
 wrsVersionManufacturer         OBJECT-TYPE
@@ -415,7 +415,7 @@ wrsVersionManufacturer         OBJECT-TYPE
     MAX-ACCESS                 read-only
     STATUS                     current
     DESCRIPTION
-        "The name of the manufacturing company of a switch"
+        "The name of the manufacturing company of the switch"
     ::= { wrsVersionGroup 6 }
 
 wrsVersionSwitchSerialNumber   OBJECT-TYPE
@@ -447,7 +447,7 @@ wrsVersionGwBuild              OBJECT-TYPE
     MAX-ACCESS                 read-only
     STATUS                     current
     DESCRIPTION
-        "The build of gateware (FPGA bitstream)"
+        "The build ID of gateware (FPGA bitstream)"
     ::= { wrsVersionGroup 10 }
 
 wrsVersionSwitchHdlCommitId    OBJECT-TYPE
@@ -455,7 +455,7 @@ wrsVersionSwitchHdlCommitId    OBJECT-TYPE
     MAX-ACCESS                 read-only
     STATUS                     current
     DESCRIPTION
-        "The gateware version: commit of wr_switch_hdl"
+        "The gateware version: commit ID of wr_switch_hdl"
     ::= { wrsVersionGroup 11 }
 
 wrsVersionGeneralCoresCommitId OBJECT-TYPE
