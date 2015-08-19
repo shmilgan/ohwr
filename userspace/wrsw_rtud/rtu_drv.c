@@ -331,7 +331,8 @@ void rtu_write_htab_entry(uint16_t zbt_addr, struct rtu_filtering_entry *ent,
 	if (flush)
 		flush_mfifo();
 
-	pr_debug("write htab entry [with flush]: addr %x ent %08x %08x %08x %08x %08x",
+	pr_debug("write htab entry [with flush]: "
+		 "addr %x ent %08x %08x %08x %08x %08x\n",
 		  zbt_addr,
 		  mac_entry_word0_w(ent),
 		  mac_entry_word1_w(ent),
