@@ -55,7 +55,11 @@ time_t wrsStartCnt_data_fill(void){
 	/* get start counters from shmem's */
 	wrsStartCnt_s.wrsStartCntHAL = hal_head->pidsequence;
 	wrsStartCnt_s.wrsStartCntPTP = ppsi_head->pidsequence;
-	wrsStartCnt_s.wrsStartCntRTUd = rtud_head->pidsequence;
+	if (shmem_ready_rtud()) {
+		wrsStartCnt_s.wrsStartCntRTUd = rtud_head->pidsequence;
+	} else {
+		snmp_log(LOG_ERR, "Unable to read rtu's shmem\n");
+	}
 
 	read_start_count(START_CNT_SSHD, &wrsStartCnt_s.wrsStartCntSshd);
 	read_start_count(START_CNT_HTTPD, &wrsStartCnt_s.wrsStartCntHttpd);

@@ -17,6 +17,8 @@ int *ppsi_ppi_nlinks;
 /* RTUd */
 struct wrs_shm_head *rtud_head;
 
+int shmem_open_rtud;
+
 static void init_shm_hal(void)
 {
 	int ret;
@@ -110,26 +112,25 @@ static void init_shm_ppsi(void)
 	ppsi_ppi_nlinks = &(ppg->nlinks);
 }
 
-static void init_shm_rtud(void)
+static int init_shm_rtud(void)
 {
 	int ret;
-	int n_wait = 0;
+	static int n_wait = 0;
 
-	while ((ret = wrs_shm_get_and_check(wrs_shm_rtu, &rtud_head)) != 0) {
-		n_wait++;
-		if (n_wait > 10) {
-			/* timeout! */
-			if (ret == 1) {
-				snmp_log(LOG_ERR, "Unable to open shm for "
-					 "RTUd!\n");
-			}
-			if (ret == 2) {
-				snmp_log(LOG_ERR, "Unable to read RTUd's "
-					 "version!\n");
-			}
-			exit(-1);
+	ret = wrs_shm_get_and_check(wrs_shm_rtu, &rtud_head);
+	n_wait++;
+	/* start printing error after 5 messages */
+	if (n_wait > 5) {
+		if (ret == 1) {
+			snmp_log(LOG_ERR, "Unable to open shm for RTUd!\n");
 		}
-		sleep(1);
+		if (ret == 2) {
+			snmp_log(LOG_ERR, "Unable to read RTUd's version!\n");
+		}
+	}
+	if (ret) {
+		/* return if error while opening shmem */
+		return ret;
 	}
 
 	/* check rtud's shm version */
@@ -137,12 +138,33 @@ static void init_shm_rtud(void)
 		snmp_log(LOG_ERR, "unknown RTUd's shm version %i "
 			 "(known is %i)\n", rtud_head->version,
 			 RTU_SHMEM_VERSION);
-		exit(-1);
+		return 3;
 	}
+
+	/* everything is ok */
+	return 0;
+}
+
+int shmem_ready_rtud(void)
+{
+	if (shmem_open_rtud) {
+		return 1;
+	}
+	shmem_open_rtud = !init_shm_rtud();
+	return shmem_open_rtud;
 }
 
 void init_shm(void){
+	int i;
+
 	init_shm_hal();
 	init_shm_ppsi();
-	init_shm_rtud();
+	for (i = 0; i < 10; i++) {
+		if (shmem_ready_rtud()) {
+			/* shmem opened successfully */
+			break;
+		}
+		/* wait 1 second before another try */
+		sleep(1);
+	}
 }
