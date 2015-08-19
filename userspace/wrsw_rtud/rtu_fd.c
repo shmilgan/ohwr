@@ -131,30 +131,81 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 				WRS_SHM_WRITE | WRS_SHM_LOCKED);
 	if (!rtu_port_shmem) {
 		pr_error("%s: Can't join shmem: %s\n", __func__,
-			strerror(errno));
+			 strerror(errno));
 		return -1;
 	}
 
-	/* Created at header->offset */
-	rtu_hdr = wrs_shm_alloc(rtu_port_shmem, sizeof(*rtu_hdr));
-	rtu_htab = wrs_shm_alloc(rtu_port_shmem,
-				 sizeof(*rtu_htab) * HTAB_ENTRIES);
-	rtu_hdr->filters = (struct rtu_filtering_entry *) rtu_htab;
-	vlan_tab = wrs_shm_alloc(rtu_port_shmem,
-				 sizeof(*vlan_tab) * NUM_VLANS);
-	rtu_hdr->vlans = vlan_tab;
+	if (rtu_port_shmem->pidsequence == 1) {
+		/* for first RTUd run */
+		pr_info("Alloc rtu_hdr\n");
+		rtu_hdr = wrs_shm_alloc(rtu_port_shmem, sizeof(*rtu_hdr));
+	} else {
+		/* rtu_hdr was created at header->offset */
+		rtu_hdr = (void *)rtu_port_shmem + rtu_port_shmem->data_off;
+		/* move data_size to have have similar behavior like
+		 * wrs_shm_alloc, needed for future allocations */
+		/* force 8-alignment */
+		rtu_port_shmem->data_size += (sizeof(*rtu_hdr) + 7) & ~7;
+	}
+	if (!rtu_hdr) {
+		pr_error("%s: Cannot allocate mem in shmem rtu_hdr\n",
+			 __func__);
+		return -1;
+	}
+
+	if (!rtu_hdr->filters) {
+		/* for first RTUd run */
+		pr_info("Alloc rtu_htab\n");
+		rtu_htab = wrs_shm_alloc(rtu_port_shmem,
+					sizeof(*rtu_htab) * HTAB_ENTRIES);
+		rtu_hdr->filters = (struct rtu_filtering_entry *) rtu_htab;
+		rtu_hdr->filters_offset =
+				(void *)rtu_htab - (void *)rtu_port_shmem;
+		pr_info("Clean filtering database.\n");
+		clean_fd();		/* clean filtering database */
+	} else {
+		pr_info("Use existing filtering table.\n");
+		/* next RTUd runs */
+		rtu_hdr->filters =
+			      (void *)rtu_port_shmem + rtu_hdr->filters_offset;
+		rtu_htab = (void *)rtu_hdr->filters;
+		/* move data_size to have have similar behavior like
+		 * wrs_shm_alloc, needed for future allocations */
+		/* force 8-alignment */
+		rtu_port_shmem->data_size +=
+				(sizeof(*rtu_htab) * HTAB_ENTRIES + 7) & ~7;
+	}
+
+	if (!rtu_hdr->vlans) {
+		/* for first RTUd run */
+		pr_info("Alloc vlan_tab\n");
+		vlan_tab = wrs_shm_alloc(rtu_port_shmem,
+					sizeof(*vlan_tab) * NUM_VLANS);
+		rtu_hdr->vlans = vlan_tab;
+		rtu_hdr->vlans_offset =
+				(void *)vlan_tab - (void *)rtu_port_shmem;
+		pr_info("Clean vlan database.\n");
+		clean_vd();		/* clean VLAN database */
+	} else {
+		pr_info("Use existing vlan table.\n");
+		/* next RTUd runs */
+		rtu_hdr->vlans =
+				(void *)rtu_port_shmem + rtu_hdr->vlans_offset;
+		vlan_tab = (void *)rtu_hdr->vlans;
+		/* move data_size to have have similar behavior like
+		 * wrs_shm_alloc, needed for future allocations */
+		/* force 8-alignment */
+		rtu_port_shmem->data_size +=
+				(sizeof(*vlan_tab) * NUM_VLANS + 7) & ~7;
+	}
 
 	if ((!rtu_htab) || (!vlan_tab)) {
-		pr_error("%s: cannot allocate mem in shmem\n", __func__);
+		pr_error("%s: Cannot allocate mem in shmem\n", __func__);
 		return -1;
 	}
 	/* add version info */
 	rtu_port_shmem->version = RTU_SHMEM_VERSION;
 
-	pr_info("clean filtering database.\n");
-	clean_fd();		// clean filtering database
-	pr_info("clean vlan database.\n");
-	clean_vd();		// clean VLAN database
 	pr_info("clean aging map.\n");
 	rtu_read_aging_bitmap(bitmap);	// clean aging registers
 	pr_info("set aging time [%ld].\n", aging);
@@ -234,7 +285,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 
 		/* Case 1: entry already present in the hashtable */
 		if (htab_search(mac, fid, &ent)) {
-			pr_debug("Entry for mac %s already found.",
+			pr_debug("Entry for mac %s already found.\n",
 				  mac_to_string(mac));
 
 			if (at_existing_entry == ADD_TO_EXISTING)	// enable multipath for redundancy
