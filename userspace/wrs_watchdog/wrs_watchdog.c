@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'g':
 			show_counter();
-			break;
+			exit(0);
 		case 'n':
 			port_num = atoi(optarg);
 			pr_info("Read %d ports from cmdline\n", port_num);
