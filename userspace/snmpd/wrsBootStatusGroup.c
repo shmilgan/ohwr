@@ -88,6 +88,7 @@ static struct wrs_usd_item userspace_daemons[] = {
 	[4] = {"/usr/sbin/lighttpd", 1},
 	[5] = {"/usr/bin/monit", 1},
 	[6] = {"/usr/sbin/snmpd", 1},
+	[7] = {"/wr/bin/wrs_watchdog", 1},
 };
 
 struct wrs_bc_item {
