@@ -131,48 +131,49 @@ void show_help(char *prgname)
 int get_nports_from_hal(void)
 {
 	struct hal_shmem_header *h;
-	struct wrs_shm_head *hal_head;
+	struct wrs_shm_head *hal_head = NULL;
 	int hal_nports_local; /* local copy of number of ports */
 	int ii;
 	int n_wait = 0;
+	int ret;
 
-	/* wait forever for HAL */
-	while (!(hal_head = wrs_shm_get(wrs_shm_hal, "",
-				WRS_SHM_READ | WRS_SHM_LOCKED))) {
-		if (n_wait > 5) {
-			/* print if waiting more than 5 seconds, some waiting
-			 * is expected since hal requires few seconds to start
-			 */
-			fprintf(stderr, "rtu_stat: unable to open shm for "
-				"HAL!\n");
-		}
+	/* wait for HAL */
+	while ((ret = wrs_shm_get_and_check(wrs_shm_hal, &hal_head)) != 0) {
 		n_wait++;
+		if (n_wait > 10) {
+			if (ret == 1) {
+				fprintf(stderr, "rtu_stat: Unable to open "
+					"HAL's shm !\n");
+			}
+			if (ret == 2) {
+				fprintf(stderr, "rtu_stat: Unable to read "
+					"HAL's version!\n");
+			}
+			exit(1);
+		}
 		sleep(1);
 	}
 
 	h = (void *)hal_head + hal_head->data_off;
 
 	n_wait = 0;
-	while (1) { /* wait forever for HAL to produce consistent nports */
+	while (1) { /* wait for 10 sec for HAL to produce consistent nports */
+		n_wait++;
 		ii = wrs_shm_seqbegin(hal_head);
 		/* Assume number of ports does not change in runtime */
 		hal_nports_local = h->nports;
 		if (!wrs_shm_seqretry(hal_head, ii))
 			break;
-		if (n_wait > 5) {
-			/* print if waiting more than 5 seconds, some waiting
-			 * is expected since hal requires few seconds to start
-			 */
-			fprintf(stderr, "rtu_stat: Wait for HAL.\n");
-
+		fprintf(stderr, "rtu_stat: Wait for HAL.\n");
+		if (n_wait > 10) {
+			exit(1);
 		}
-		n_wait++;
 		sleep(1);
 	}
 
 	/* check hal's shm version */
 	if (hal_head->version != HAL_SHMEM_VERSION) {
-		fprintf(stderr, "rtu_stat: unknown hal's shm version %i "
+		fprintf(stderr, "rtu_stat: unknown HAL's shm version %i "
 			"(known is %i)\n",
 			hal_head->version, HAL_SHMEM_VERSION);
 		exit(-1);
@@ -258,12 +259,23 @@ int read_htab(int *read_entries)
 
 int open_rtu_shm(void)
 {
+	int n_wait = 0;
+	int ret;
 	/* open rtu shm */
-	rtu_port_shmem = wrs_shm_get(wrs_shm_rtu, "", WRS_SHM_READ);
-	if (!rtu_port_shmem) {
-		fprintf(stderr, "rtu_stat: %s: Can't join rtud's shmem: %s\n",
-			__func__, strerror(errno));
-		return -1;
+	while ((ret = wrs_shm_get_and_check(wrs_shm_rtu, &rtu_port_shmem)) != 0) {
+		n_wait++;
+		if (n_wait > 10) {
+			if (ret == 1) {
+				fprintf(stderr, "rtu_stat: Unable to open "
+					"RTUd's shm !\n");
+			}
+			if (ret == 2) {
+				fprintf(stderr, "rtu_stat: Unable to read "
+					"RTUd's version!\n");
+			}
+			exit(1);
+		}
+		sleep(1);
 	}
 
 	/* check rtu shm version */

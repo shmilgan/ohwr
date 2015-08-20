@@ -46,6 +46,8 @@ int wrs_shm_put(void *headptr);
 
 /* A reader may wait for the writer (polling on version field) */
 void wrs_shm_wait(void *headptr, int msec_step, int retries, FILE *msg);
+int wrs_shm_get_and_check(enum wrs_shm_name shm_name,
+				 struct wrs_shm_head **head);
 
 /* The writer can allocate structures that live in the area itself */
 void *wrs_shm_alloc(void *headptr, size_t size);

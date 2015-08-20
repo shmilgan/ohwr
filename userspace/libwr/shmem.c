@@ -113,21 +113,32 @@ int wrs_shm_put(void *headptr)
 	return 0;
 }
 
-/* A reader may wait for the writer (polling on version field) */
-void wrs_shm_wait(void *headptr, int msec_step, int retries, FILE *msg)
+/* Open shmem and check if data is available
+ * return 0 when ok, otherwise error
+ * 1 when openning shmem failed
+ * 2 when version is 0 */
+int wrs_shm_get_and_check(enum wrs_shm_name shm_name,
+				 struct wrs_shm_head **head)
 {
-	struct wrs_shm_head *head = headptr;
-	int i;
+	int ii;
+	int version;
 
-	for (i = 0; i < retries && !head->version; i++) {
-		if (!i && msg)
-			fprintf(msg, "Waiting for my peer...");
-		if (msg)
-			fprintf(stderr, ".");
-		usleep(1000 * msec_step);
+	/* try to open shmem */
+	if (!(*head) && !(*head = wrs_shm_get(shm_name, "",
+					WRS_SHM_READ | WRS_SHM_LOCKED))) {
+		return 1;
 	}
-	if (i && msg)
-		fprintf(msg, "\n");
+
+	ii = wrs_shm_seqbegin(*head);
+	/* read head version */
+	version = (*head)->version;
+	if (wrs_shm_seqretry(*head, ii) || !version) {
+		/* data in shmem available and version not zero */
+		return 2;
+	}
+
+	/* all ok */
+	return 0;
 }
 
 /* The writer can allocate structures that live in the area itself */

@@ -135,6 +135,8 @@ int main(int argc, char *argv[])
 	int c, i, arg;
 	unsigned long conf_pmask = 0;	//current '--ep' port mask
 	struct rtu_shmem_header *rtu_hdr;
+	int n_wait = 0;
+	int ret;
 
 	prgname = argv[0];
 
@@ -156,13 +158,22 @@ int main(int argc, char *argv[])
 	}
 
 	/* open rtu shm */
-	rtu_port_shmem = wrs_shm_get(wrs_shm_rtu, "", WRS_SHM_READ);
-	if (!rtu_port_shmem) {
-		fprintf(stderr, "%s: Can't join RTU's shmem\n",
-			prgname);
-		exit(1);
+	while ((ret = wrs_shm_get_and_check(wrs_shm_rtu, &rtu_port_shmem)) != 0) {
+		n_wait++;
+		if (n_wait > 10) {
+			if (ret == 1) {
+				fprintf(stderr, "%s: Unable to open RTUd's "
+					"shmem!\n", prgname);
+			}
+			if (ret == 2) {
+				fprintf(stderr, "%s: Unable to read RTUd's "
+					"version!\n", prgname);
+			}
+			exit(1);
+		}
+		sleep(1);
 	}
-	/* FIXME: Wait for rtud to fill shmem */
+
 	/* check rtu shm version */
 	if (rtu_port_shmem->version != RTU_SHMEM_VERSION) {
 		fprintf(stderr, "%s: unknown version %i (known is %i)\n",
