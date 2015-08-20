@@ -39,10 +39,10 @@ RELEASE=$(shell git describe --always --dirty)
 	$(MAKEINFO) --no-headers $< > $@
 
 ##############################################
-.PHONY: all check terse clean install
+.PHONY: all check terse clean install wrs_failures
 .INTERMEDIATE: $(TEXI)
 
-all: $(ALL)
+all: $(ALL) wrs_failures
 	$(MAKE) terse
 
 check: _err.ps
@@ -54,6 +54,10 @@ terse:
 
 clean: terse
 	rm -f $(ALL) $(TEXI)
+	$(MAKE) -C wrs_failures clean
 
 install:
 	if [ -n $(WRS_OUTPUT_DIR) ]; then cp *.pdf  $(WRS_OUTPUT_DIR)/images/; fi
+
+wrs_failures:
+	$(MAKE) -C wrs_failures
