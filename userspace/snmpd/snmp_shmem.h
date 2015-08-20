@@ -23,5 +23,8 @@ extern int *ppsi_ppi_nlinks;
 struct wrs_shm_head *rtud_head;
 
 void init_shm();
+int shmem_ready_hald(void);
+int shmem_ready_ppsi(void);
 int shmem_ready_rtud(void);
+
 #endif /* WRS_SNMP_SHMEM_H */

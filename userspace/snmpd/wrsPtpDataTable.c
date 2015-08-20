@@ -46,10 +46,11 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 	unsigned retries = 0;
 	static time_t time_update;
 	time_t time_cur;
+	static int n_rows_local = 0;
 
 	/* number of rows does not change for wrsPortStatusTable */
 	if (n_rows)
-		*n_rows = WRS_MAX_N_SERVO_INSTANCES;
+		*n_rows = n_rows_local;
 
 	time_cur = time(NULL);
 	if (time_update
@@ -60,6 +61,19 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 	time_update = time_cur;
 
 	memset(&wrsPtpDataTable_array, 0, sizeof(wrsPtpDataTable_array));
+
+	/* check whether shmem is available */
+	if (!shmem_ready_ppsi()) {
+		snmp_log(LOG_ERR, "%s: Unable to read PPSI's shmem\n", __func__);
+		n_rows_local = 0;
+		return time_update;
+	} else {
+		n_rows_local = WRS_MAX_N_SERVO_INSTANCES;
+	}
+
+	if (n_rows)
+		*n_rows = n_rows_local;
+
 	/* assume that there is only one servo, will change when switchover is
 	 * implemented */
 	while (1) {

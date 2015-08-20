@@ -53,12 +53,20 @@ time_t wrsStartCnt_data_fill(void){
 	memset(&wrsStartCnt_s, 0, sizeof(wrsStartCnt_s));
 
 	/* get start counters from shmem's */
-	wrsStartCnt_s.wrsStartCntHAL = hal_head->pidsequence;
-	wrsStartCnt_s.wrsStartCntPTP = ppsi_head->pidsequence;
+	if (shmem_ready_hald()) {
+		wrsStartCnt_s.wrsStartCntHAL = hal_head->pidsequence;
+	} else {
+		snmp_log(LOG_ERR, "%s: Unable to read HAL's shmem\n", __func__);
+	}
+	if (shmem_ready_ppsi()) {
+		wrsStartCnt_s.wrsStartCntPTP = ppsi_head->pidsequence;
+	} else {
+		snmp_log(LOG_ERR, "%s: Unable to read PPSI's shmem\n", __func__);
+	}
 	if (shmem_ready_rtud()) {
 		wrsStartCnt_s.wrsStartCntRTUd = rtud_head->pidsequence;
 	} else {
-		snmp_log(LOG_ERR, "Unable to read rtu's shmem\n");
+		snmp_log(LOG_ERR, "%s: Unable to read rtu's shmem\n", __func__);
 	}
 
 	read_start_count(START_CNT_SSHD, &wrsStartCnt_s.wrsStartCntSshd);

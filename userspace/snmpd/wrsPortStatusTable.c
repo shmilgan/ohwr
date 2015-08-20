@@ -30,10 +30,11 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 	static time_t time_update;
 	time_t time_cur;
 	char *ppsi_iface_name;
+	static int n_rows_local = 0;
 
 	/* number of rows does not change for wrsPortStatusTable */
 	if (n_rows)
-		*n_rows = WRS_N_PORTS;
+		*n_rows = n_rows_local;
 
 	time_cur = time(NULL);
 	if (time_update
@@ -43,9 +44,23 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 	}
 	time_update = time_cur;
 
-	/* read data, with the sequential lock to have all data consistent */
 	struct hal_port_state *port_state;
 	memset(wrsPortStatusTable_array, 0, sizeof(wrsPortStatusTable_array));
+
+	/* check whether shmem is available */
+	if (!shmem_ready_hald()) {
+		/* there was an update, return current time */
+		snmp_log(LOG_ERR, "%s: Unable to read HAL's shmem\n", __func__);
+		n_rows_local = 0;
+		return time_cur;
+	} else {
+		n_rows_local = WRS_N_PORTS;
+	}
+
+	if (n_rows)
+		*n_rows = n_rows_local;
+
+	/* read data, with the sequential lock to have all data consistent */
 	while (1) {
 		ii = wrs_shm_seqbegin(hal_head);
 		for (i = 0; i < hal_nports_local; ++i) {
@@ -124,6 +139,14 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 	}
 
 	retries = 0;
+	/* check whether shmem is available */
+	if (!shmem_ready_ppsi()) {
+		/* there was an update, return current time */
+		snmp_log(LOG_ERR, "%s: Unable to read PPSI's shmem\n",
+			 __func__);
+		return time_cur;
+	}
+
 	/* fill ptp_tx_count and ptp_tx_count
 	 * ptp_tx_count and ptp_tx_count statistics in PPSI are collected per
 	 * ppi instance. Since there can be more than one instance per physical

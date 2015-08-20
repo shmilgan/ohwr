@@ -17,28 +17,29 @@ int *ppsi_ppi_nlinks;
 /* RTUd */
 struct wrs_shm_head *rtud_head;
 
+int shmem_open_hald;
+int shmem_open_ppsi;
 int shmem_open_rtud;
 
-static void init_shm_hal(void)
+static int init_shm_hald(void)
 {
 	int ret;
-	int n_wait = 0;
+	static int n_wait = 0;
 
-	while ((ret = wrs_shm_get_and_check(wrs_shm_hal, &hal_head)) != 0) {
-		n_wait++;
-		if (n_wait > 10) {
-			/* timeout! */
-			if (ret == 1) {
-				snmp_log(LOG_ERR, "Unable to open HAL's "
-					 "shmem!\n");
-			}
-			if (ret == 2) {
-				snmp_log(LOG_ERR, "Unable to read HAL's "
-					 "version!\n");
-			}
-			exit(-1);
+	ret = wrs_shm_get_and_check(wrs_shm_hal, &hal_head);
+	n_wait++;
+	/* start printing error after 5 messages */
+	if (n_wait > 5) {
+		if (ret == 1) {
+			snmp_log(LOG_ERR, "Unable to open HAL's shmem!\n");
 		}
-		sleep(1);
+		if (ret == 2) {
+			snmp_log(LOG_ERR, "Unable to read HAL's version!\n");
+		}
+	}
+	if (ret) {
+		/* return if error while opening shmem */
+		return ret;
 	}
 
 	/* check hal's shm version */
@@ -46,7 +47,7 @@ static void init_shm_hal(void)
 		snmp_log(LOG_ERR, "unknown hal's shm version %i "
 			 "(known is %i)\n", hal_head->version,
 			 HAL_SHMEM_VERSION);
-		exit(-1);
+		return 3;
 	}
 
 	hal_shmem = (void *)hal_head + hal_head->data_off;
@@ -56,7 +57,7 @@ static void init_shm_hal(void)
 		snmp_log(LOG_ERR, "Too many ports reported by HAL. "
 			"%d vs %d supported\n",
 			hal_nports_local, WRS_N_PORTS);
-		exit(-1);
+		return 3;
 	}
 	/* Even after HAL restart, HAL will place structures at the same
 	 * addresses. No need to re-dereference pointer at each read. */
@@ -64,52 +65,58 @@ static void init_shm_hal(void)
 	if (!hal_ports) {
 		snmp_log(LOG_ERR, "Unalbe to follow hal_ports pointer in HAL's"
 			 " shmem");
-		exit(-1);
+		return 3;
 	}
+
+	/* everything is ok */
+	return 0;
 }
 
-static void init_shm_ppsi(void)
+static int init_shm_ppsi(void)
 {
 	int ret;
 	int n_wait = 0;
 
-	while ((ret = wrs_shm_get_and_check(wrs_shm_ptp, &ppsi_head)) != 0) {
-		n_wait++;
-		if (n_wait > 10) {
-			/* timeout! */
-			if (ret == 1) {
-				snmp_log(LOG_ERR, "Unable to open shm for PPSI!\n");
-			}
-			if (ret == 2) {
-				snmp_log(LOG_ERR, "Unable to read PPSI's version!\n");
-			}
-			exit(-1);
+	ret = wrs_shm_get_and_check(wrs_shm_ptp, &ppsi_head);
+	n_wait++;
+	/* start printing error after 5 messages */
+	if (n_wait > 5) {
+		/* timeout! */
+		if (ret == 1) {
+			snmp_log(LOG_ERR, "Unable to open shm for PPSI!\n");
 		}
-		sleep(1);
+		if (ret == 2) {
+			snmp_log(LOG_ERR, "Unable to read PPSI's version!\n");
+		}
+	}
+	if (ret) {
+		/* return if error while opening shmem */
+		return ret;
 	}
 
 	/* check ppsi's shm version */
 	if (ppsi_head->version != WRS_PPSI_SHMEM_VERSION) {
- 		snmp_log(LOG_ERR, "unknown PPSI's shm version %i "
+		snmp_log(LOG_ERR, "unknown PPSI's shm version %i "
 			"(known is %i)\n",
 			ppsi_head->version, WRS_PPSI_SHMEM_VERSION);
-		exit(-1);
+		return 3;
 	}
 	ppg = (void *)ppsi_head + ppsi_head->data_off;
 
 	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->global_ext_data);
 	if (!ppsi_servo) {
 		snmp_log(LOG_ERR, "Cannot follow ppsi_servo in shmem.\n");
-		exit(-1);
+		return 4;
 	}
 
 	ppsi_ppi = wrs_shm_follow(ppsi_head, ppg->pp_instances);
 	if (!ppsi_ppi) {
 		snmp_log(LOG_ERR, "Cannot follow ppsi_ppi in shmem.\n");
-		exit(-1);
+		return 5;
 	}
 	/* use pointer instead of copying */
 	ppsi_ppi_nlinks = &(ppg->nlinks);
+	return 0;
 }
 
 static int init_shm_rtud(void)
@@ -145,6 +152,24 @@ static int init_shm_rtud(void)
 	return 0;
 }
 
+int shmem_ready_hald(void)
+{
+	if (shmem_open_hald) {
+		return 1;
+	}
+	shmem_open_hald = !init_shm_hald();
+	return shmem_open_hald;
+}
+
+int shmem_ready_ppsi(void)
+{
+	if (shmem_open_ppsi) {
+		return 1;
+	}
+	shmem_open_ppsi = !init_shm_ppsi();
+	return shmem_open_ppsi;
+}
+
 int shmem_ready_rtud(void)
 {
 	if (shmem_open_rtud) {
@@ -157,9 +182,23 @@ int shmem_ready_rtud(void)
 void init_shm(void){
 	int i;
 
-	init_shm_hal();
-	init_shm_ppsi();
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < 1; i++) {
+		if (shmem_ready_hald()) {
+			/* shmem opened successfully */
+			break;
+		}
+		/* wait 1 second before another try */
+		sleep(1);
+	}
+	for (i = 0; i < 1; i++) {
+		if (shmem_ready_ppsi()) {
+			/* shmem opened successfully */
+			break;
+		}
+		/* wait 1 second before another try */
+		sleep(1);
+	}
+	for (i = 0; i < 1; i++) {
 		if (shmem_ready_rtud()) {
 			/* shmem opened successfully */
 			break;

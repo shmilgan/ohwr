@@ -56,6 +56,12 @@ time_t wrsTemperature_data_fill(void)
 		first_run = 0;
 	}
 
+	if (!shmem_ready_hald()) {
+		/* Unable to open shmem, return current time */
+		snmp_log(LOG_ERR, "%s: Unable to read HAL's shmem\n", __func__);
+		return time_update;
+	}
+
 	while (1) {
 		ii = wrs_shm_seqbegin(hal_head);
 

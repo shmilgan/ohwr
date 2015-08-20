@@ -175,36 +175,40 @@ time_t wrsTimingStatus_data_fill(void)
 	 * mode. Don't care about non-wr and auto ports.
 	*/
 	p_a = wrsPortStatusTable_array;
-	wrsTimingStatus_s.wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_OK;
-	for (i = 0; i < port_status_nrows; i++) {
-		/* warning N/A */
-		if (/*hal_shmem->s->wrsSpllMode == 0
-		    || */p_a[i].port_mode == 0
-		    || p_a[i].link_up == 0){
-			wrsTimingStatus_s.wrsSlaveLinksStatus =
-					WRS_SLAVE_LINK_STATUS_WARNING_NA;
-		}
-		/* error when slave port is down when switch is in slave mode
-		   */
-		if (hal_shmem->hal_mode == HAL_TIMING_MODE_BC
-		    && (p_a[i].port_mode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
-		    && (p_a[i].link_up == WRS_PORT_STATUS_LINK_DOWN)) {
-			wrsTimingStatus_s.wrsSlaveLinksStatus =
-						WRS_SLAVE_LINK_STATUS_ERROR;
-			snmp_log(LOG_ERR, "SNMP: wrsSlaveLinksStatus (slave) "
-					  "failed for port %d\n", i);
-		}
-		/* error when slave port is up when switch is in master or
-		 * grandmaster mode */
-		if (((hal_shmem->hal_mode == HAL_TIMING_MODE_GRAND_MASTER) || (hal_shmem->hal_mode == HAL_TIMING_MODE_FREE_MASTER))
-		    && (p_a[i].port_mode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
-		    && (p_a[i].link_up == WRS_PORT_STATUS_LINK_UP)) {
-			wrsTimingStatus_s.wrsSlaveLinksStatus =
-						WRS_SLAVE_LINK_STATUS_ERROR;
-			snmp_log(LOG_ERR, "SNMP: wrsSlaveLinksStatus (master) "
-					  "failed for port %d\n", i);
+	/* check whether hal_shmem is available */
+	if (shmem_ready_hald()) {
+		wrsTimingStatus_s.wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_OK;
+		for (i = 0; i < port_status_nrows; i++) {
+			/* warning N/A */
+			if (/*hal_shmem->s->wrsSpllMode == 0
+			    || */p_a[i].port_mode == 0
+			    || p_a[i].link_up == 0){
+				wrsTimingStatus_s.wrsSlaveLinksStatus =
+						WRS_SLAVE_LINK_STATUS_WARNING_NA;
+			}
+			/* error when slave port is down when switch is in slave mode
+			  */
+			if (hal_shmem->hal_mode == HAL_TIMING_MODE_BC
+			    && (p_a[i].port_mode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
+			    && (p_a[i].link_up == WRS_PORT_STATUS_LINK_DOWN)) {
+				wrsTimingStatus_s.wrsSlaveLinksStatus =
+							WRS_SLAVE_LINK_STATUS_ERROR;
+				snmp_log(LOG_ERR, "SNMP: wrsSlaveLinksStatus (slave) "
+						  "failed for port %d\n", i);
+			}
+			/* error when slave port is up when switch is in master or
+			* grandmaster mode */
+			if (((hal_shmem->hal_mode == HAL_TIMING_MODE_GRAND_MASTER) || (hal_shmem->hal_mode == HAL_TIMING_MODE_FREE_MASTER))
+			    && (p_a[i].port_mode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
+			    && (p_a[i].link_up == WRS_PORT_STATUS_LINK_UP)) {
+				wrsTimingStatus_s.wrsSlaveLinksStatus =
+							WRS_SLAVE_LINK_STATUS_ERROR;
+				snmp_log(LOG_ERR, "SNMP: wrsSlaveLinksStatus (master) "
+						  "failed for port %d\n", i);
+			}
 		}
 	}
+
 	/*********************************************************************\
 	|************************ wrsPTPFramesFlowing ************************|
 	\*********************************************************************/
