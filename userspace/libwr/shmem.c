@@ -11,7 +11,7 @@
 #include <sys/mman.h>
 
 #include <libwr/shmem.h>
-#define SHM_LOCK_TIMEOUT 2
+#define SHM_LOCK_TIMEOUT_MS 50 /* in ms */
 /* Get wrs shared memory */
 /* return NULL and set errno on error */
 void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags)
@@ -64,7 +64,9 @@ void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags)
 
 			usleep(10 * 1000);
 			clock_gettime(CLOCK_MONOTONIC, &tv2);
-			if (tv2.tv_sec - tv1.tv_sec < SHM_LOCK_TIMEOUT)
+			if ((tv2.tv_sec*1000 + tv2.tv_nsec/1000000)
+			    - (tv1.tv_sec*1000 + tv1.tv_nsec/1000000)
+			    < SHM_LOCK_TIMEOUT_MS)
 				continue;
 
 			errno = ETIMEDOUT;
