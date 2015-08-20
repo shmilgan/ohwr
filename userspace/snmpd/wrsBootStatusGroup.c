@@ -123,6 +123,8 @@ static void get_boot_info(void){
 			 "CPU's Reset Controller Status Register\n");
 		/* pass error to SNMP, assign 1 */
 		wrsBootStatus_s.wrsRestartReason = WRS_RESTART_REASON_ERROR;
+		/* try again next time */
+		run_once = 0;
 	} else {
 		/* reset reason values are from 0 to 4, SNMP enum is from
 		 * 2 to 6, so "+ 2", 1 is reserved for error */
@@ -136,6 +138,8 @@ static void get_boot_info(void){
 			 BOOTCOUNT_FILE"\n");
 		/* notify snmp about error in restart reason */
 		wrsBootStatus_s.wrsRestartReason = WRS_RESTART_REASON_ERROR;
+		/* try again next time */
+		run_once = 0;
 		return;
 	}
 
@@ -288,6 +292,8 @@ static void get_boot_scripts_status(void){
 		 * a problem */
 		wrsBootStatus_s.wrsBootHwinfoReadout =
 					WRS_BOOT_HWINFO_ERROR_MINOR;
+		/* try again next time */
+		run_once = 0;
 	}
 
 	/* result of loading FPGA */
@@ -310,6 +316,8 @@ static void get_boot_scripts_status(void){
 		 * a problem */
 		wrsBootStatus_s.wrsBootLoadFPGA =
 					WRS_BOOT_LOAD_FPGA_ERROR_MINOR;
+		/* try again next time */
+		run_once = 0;
 	}
 
 	/* result of loading LM32 */
@@ -332,6 +340,8 @@ static void get_boot_scripts_status(void){
 		 * a problem */
 		wrsBootStatus_s.wrsBootLoadLM32 =
 					WRS_BOOT_LOAD_LM32_ERROR_MINOR;
+		/* try again next time */
+		run_once = 0;
 	}
 }
 
