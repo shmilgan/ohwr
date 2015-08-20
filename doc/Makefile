@@ -39,14 +39,11 @@ RELEASE=$(shell git describe --always --dirty)
 	$(MAKEINFO) --no-headers $< > $@
 
 ##############################################
-.PHONY: all images check terse clean install
+.PHONY: all check terse clean install
 .INTERMEDIATE: $(TEXI)
 
-all: images $(ALL)
+all: $(ALL)
 	$(MAKE) terse
-
-images::
-	if [ -d images ]; then $(MAKE) -C images || exit 1; fi
 
 check: _err.ps
 	gs -sDEVICE=linux -r320x200x16 $<
