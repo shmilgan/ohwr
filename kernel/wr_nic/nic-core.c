@@ -188,7 +188,7 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	desc = __wrn_alloc_tx_desc(wrn);
 	id = (wrn->id++) & 0xffff;
 	if (id == 0) /* 0 cannot be used in the SPEC; irrelevant in WRS */
-		id = wrn->id++;
+		id = (wrn->id++) & 0xffff;
 	spin_unlock_irqrestore(&wrn->lock, flags);
 
 	if (desc < 0) /* error */
