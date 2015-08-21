@@ -200,8 +200,9 @@ static int wrn_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	//spin_lock_irqsave(&ep->lock, flags);
 
 	if (wrn->skb_desc[desc].skb) {
-		pr_err("%s: descriptor overflow: tx timestamp pending\n",
+		pr_warn("%s: discarding tx frame that got no timestamp\n",
 			__func__);
+		dev_kfree_skb_irq(wrn->skb_desc[desc].skb);
 	}
 	wrn->skb_desc[desc].skb = skb; /* Save for tx irq and stamping */
 	wrn->skb_desc[desc].frame_id = id; /* Save for tx irq and stamping */
