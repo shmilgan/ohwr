@@ -1,169 +1,167 @@
-\section{SNMP exports (WIP)}
+\section{SNMP exports}
 \label{sec:snmp_exports}
-This section describes SNMP objects exported by wrs switch. Objects within
-\texttt{WR\--SWITCH\--MIB} are divided into two categories. Operator/basic objects
-(section \ref{sec:snmp_exports:basic}) providing basic status of the WR Switch.
-It should be used by control system operators and people without deep knowledge
-of the White Rabbit internals. These values report the general status of the
-device and high level errors.
+This section describes SNMP objects exported by the WR Switch. Objects within
+the \texttt{WR\--SWITCH\--MIB} are divided into two categories:
+\begin{itemize}
+  \item operator/basic objects (section \ref{sec:snmp_exports:basic}) -
+    providing basic status of the switch. It should be used by a control system
+    operators and people without a deep knowledge of the White Rabbit internals.
+    These values report a general status of the device and high level errors.
 
-Expert/extended status objects (section \ref{sec:snmp_exports:expert})
-can be used by White Rabbit experts for the in-depth diagnosis of
-the switch failures. These values are verbose and should not be used by
-operators.
-
+  \item expert/extended status objects (section \ref{sec:snmp_exports:expert}) -
+    can be used by White Rabbit experts for the in-depth diagnosis of the switch
+    failures. These values are verbose and should not be used by the operators.
+\end{itemize}
 
 \subsection{Operator/basic objects}
 \label{sec:snmp_exports:basic}
-This section describes MIB objects that are calculated based on other objects'
-values and switch version's objects.
-
-Most of the status objects described in this section can have one of the
-following values:
+This section describes the general status MIB objects that are calculated based
+on the other SNMP (detailed) exports. Most of the status objects described in
+this section can have one of the following values:
 \begin{itemize}%[leftmargin=0pt]
-  \item \texttt{NA} -- Status value was not calculated at all (returned value
-	is 0). Something bad has happened.
-  \item \texttt{OK} -- Status of particular object is correct.
-  \item \texttt{Warning} -- Objects used to calculate this value are outside
-	proper values, but problem in not important enough to report
-	\texttt{Error}.
-  \item \texttt{WarningNA} -- At least one of the objects used to calculate
-	status has value \texttt{NA} or \texttt{WarningNA}.
-  \item \texttt{Error} -- Error in values used to calculate particular object.
-  \item \texttt{FirstRead} -- Object's value cannot be calculated because at
-	least one condition uses deltas between current and previous value.
-	This values should appear only at first SNMP read. Threated as correct
-	value.
-  \item \texttt{Bug} -- Something wrong happened while calculating object's
-	value. If you see this please report.
+  \item \texttt{NA} -- status value was not calculated at all (returned value
+    is 0). Something bad has happened.
+  \item \texttt{OK} -- status of the particular object is correct.
+  \item \texttt{Warning} -- objects used to calculate this value are outside the
+    proper values, but problem in not critical enough to report \texttt{Error}.
+  \item \texttt{WarningNA} -- at least one of the objects used to calculate the
+    status has a value \texttt{NA} or \texttt{WarningNA}.
+  \item \texttt{Error} -- error in values used to calculate the particular
+    object.
+  \item \texttt{FirstRead} -- the value of the object cannot be calculated
+    because at least one condition uses deltas between the current and previous
+    value. This value should appear only at first SNMP read. Threated as a
+    correct value.
+  \item \texttt{Bug} -- Something wrong has happened while calculating the
+    object. If you see this please report to WR developers.
 \end{itemize}
 
 \noindent {\bf General Status objects}:
 \begin{itemize}%[leftmargin=0pt]
   \item \texttt{wrsGeneralStatusGroup} -- Group containing collective statuses
-	of particular subsystems and main system status, describing status of
-	entire switch.
+    of various subsystems and the main system status, describing the status of
+    entire switch.
     \begin{itemize}
       \item \texttt{wrsMainSystemStatus} -- WRS general status of a switch can
-	    be OK, Warning or Error. When there is an error or warning please
-	    check values of \texttt{wrsOSStatus}, \texttt{wrsTimingStatus}
-	    and \texttt{wrsNetworkingStatus} to find out which subsystem is
-	    causing problems.
-      \item \texttt{wrsOSStatus} -- Collective status of a
-	    \texttt{wrsOSStatusGroup}. For details please check group's content.
-      \item \texttt{wrsTimingStatus} -- Collective status of a
-	    \texttt{wrsTimingStatusGroup}. For details please check group's
-	    content.
-      \item \texttt{wrsNetworkingStatus} -- Collective status of a
-	    \texttt{wrsNetworkingStatusGroup}. For details please check group's
-	    content.
+        be \texttt{OK}, \texttt{Warning} or \texttt{Error}. When there is an
+        error or warning please check the values of \texttt{wrsOSStatus},
+        \texttt{wrsTimingStatus} and \texttt{wrsNetworkingStatus} to find out
+        which subsystem causes the problem.
+      \item \texttt{wrsOSStatus} -- Collective status of the
+        \texttt{wrsOSStatusGroup}. For details please check the group's content.
+      \item \texttt{wrsTimingStatus} -- Collective status of the
+	\texttt{wrsTimingStatusGroup}. For details please check the group's
+        content.
+      \item \texttt{wrsNetworkingStatus} -- Collective status of the
+	\texttt{wrsNetworkingStatusGroup}. For details please check the group's
+	content.
     \end{itemize}
-  \item \texttt{wrsDetailedStatusesGroup} -- Branch with collective statuses of
-	switch's subsystems.
-    \begin{itemize}
-      \item \texttt{wrsOSStatusGroup} -- Group with collective statuses of
-	switch's Operating System.
-	\begin{itemize}
-	  \item \texttt{wrsBootSuccessful} -- Grouped status of
-		\texttt{wrsBootStatusGroup}, indicating whether boot was
-		successful. Error when dot-config source is wrong, unable to
-		get dot-config, dot-config contains errors, unable to read
-		hwinfo, unable to load FPGA bitstream, unable to load LM32
-		software, any kernel modules are missing or userspace daemons
-		are missing (issue \ref{fail:other:boot},
-		\ref{fail:other:dot-config}).
-	  \item \texttt{wrsTemperatureWarning} -- Report whether temperature
-		thresholds are not set or are exceeded (issue
-		\ref{fail:other:temp}).
-	  \item \texttt{wrsMemoryFreeLow} -- Warning when 50\% of memory is
-		used, error when more than 80\% of memory is used (issue
-		\ref{fail:other:no_mem}).
-	  \item \texttt{wrsCpuLoadHigh} -- Warning when average CPU load is
-		more than 2 for 1min, 1.5 for 5min or 1 for 15min. Error when
-		average CPU load is more than 3 for 1min, 2 for 5min or 1.5 for
-		15min (issue \ref{fail:other:cpu}).
-	  \item \texttt{wrsDiskSpaceLow} -- Warning when more than 80\% of any
-		disk partition is used. Error when more than 90\% of any disk
-		partition is used. (issue \ref{fail:other:no_disk}).
-	\end{itemize}
-      \item \texttt{wrsTimingStatusGroup} -- Group with collective statuses of
-	    switch's timing subsystem.
-	\begin{itemize}
-	  \item \texttt{wrsPTPStatus} -- Error when any of PTP error counters
-		in \texttt{wrsPtpDataTable} (\texttt{wrsPtpServoStateErrCnt},
-		\texttt{wrsPtpClockOffsetErrCnt} or\\ \texttt{wrsPtpRTTErrCnt})
-		increased since last scan (issues
-		\ref{fail:timing:ppsi_track_phase},
-		\ref{fail:timing:offset_jump},
-		\ref{fail:timing:rtt_jump}), at least one of the 
-		$\Delta_{TXM}$, $\Delta_{RXM}$, $\Delta_{TXS}$ is equal to 0
-		(issue \ref{fail:timing:deltas_report}) or ptp servo
-		updates counter not increased.
-	  \item \texttt{wrsSoftPLLStatus} -- Error when \texttt{wrsSpllSeqState} not
-		ready, or \\ \texttt{wrsSpllAlignState} is not locked for
-		grand master, or one of \texttt{wrsSpllHlock},
-		\texttt{wrsSpllMlock} equals to 0 for SoftPLL slave mode (issue
-		\ref{fail:timing:spll_unlock}).\\
-		Warning when \texttt{wrsSpllDelCnt} $>$ 0 for grand master mode
-		or \texttt{wrsSpllDelCnt} changed any for all modes.
-	  \item \texttt{wrsSlaveLinksStatus} -- Error when link to master is
-		down for switch in slave mode (issue
-		\ref{fail:timing:master_down}). Additionally, error when link
-		to master is up for switch in free running master or grand
-		master (issue \ref{fail:timing:master_up}).
-	  \item \texttt{wrsPTPFramesFlowing} -- Error when there is no
-		increment of RX and TX PTP packets on all links up that are 
-		configured as master or slave (issue
-		\ref{fail:timing:no_frames}). Report the first run.
-	\end{itemize}
-      \item \texttt{wrsNetworkingStatusGroup} -- Group with collective statuses
-	    of switch's networking subsystem.
-	\begin{itemize}
-	  \item \texttt{wrsSFPsStatus} -- Error when any of SFPs reports error.
-		To find out which SFP caused a problem check
-		\texttt{wrsPortStatusSfpError.<n>} (issue
-		\ref{fail:timing:wrong_sfp}, \ref{fail:other:sfp})
-	  \item \texttt{wrsEndpointStatus} -- Error when there is a fault in
-		the Endpoint's transmission/reception path (issue
-		\ref{fail:data:ep_txrx}).
-	  \item \texttt{wrsSwcoreStatus} -- Not used in this release. Always
-		reports that it is ok.
-	  \item \texttt{wrsRTUStatus} -- Error when RTU is full and cannot
-		accept more requests (issue \ref{fail:data:rtu_full}).
 
-	\end{itemize}
-    \end{itemize}
-  \item \texttt{wrsVersionGroup} -- Hardware, gateware and software versions.
-	Additionally switch's serial number and other hardware information.
+  \item \texttt{wrsDetailedStatusesGroup} -- Branch with collective statuses of
+	various switch subsystems.
     \begin{itemize}
-      \item \texttt{wrsVersionSwVersion} -- The software version, as returned
-	    from \texttt{git describe} at build time.
-      \item \texttt{wrsVersionSwBuildBy} -- The software build by, as returned
-	    from \texttt{git config --get-all user.name} at build time
-      \item \texttt{wrsVersionSwBuildDate} -- The build date of the software,
-	    \texttt{\_\_DATE\_\_} at build time
-      \item \texttt{wrsVersionBackplaneVersion} -- The hardware version of
-	    minibackplane PCB
-      \item \texttt{wrsVersionFpgaType} -- The hardware type of FPGA
-      \item \texttt{wrsVersionManufacturer} -- The name of the manufacturing
-	    company of the switch
-      \item \texttt{wrsVersionSwitchSerialNumber} -- The serial number (or
-	    string) of the switch
-      \item \texttt{wrsVersionScbVersion} -- The version of the SCB (switch's
-	    motherboard)
-      \item \texttt{wrsVersionGwVersion} -- The version of gateware (FPGA
-	    bitstream)
-      \item \texttt{wrsVersionGwBuild} -- The build ID of gateware (FPGA
-	    bitstream)
-      \item \texttt{wrsVersionSwitchHdlCommitId} -- The gateware version:
-	    commit ID of \texttt{wr\_switch\_hdl}
-      \item \texttt{wrsVersionGeneralCoresCommitId} -- The gateware version:
-	    commit of \texttt{general-cores}
-      \item \texttt{wrsVersionWrCoresCommitId} -- The gateware version: commit
-	    of \texttt{wr-cores}
-      \item \texttt{wrsVersionLastUpdateDate} -- Date and time of last firmware
-	    update, this information may not be accurate, due to hard restarts
-	    or lack of proper time at update.
+      \item \texttt{wrsOSStatusGroup} -- Group with collective statuses of the
+        embedded operating system running on the switch.
+      \begin{itemize}
+        \item \texttt{wrsBootSuccessful} -- Grouped status of
+          \texttt{wrsBootStatusGroup}, indicating whether boot was successful.
+          \texttt{Error} when dot-config source is wrong, unable to get the dot-config,
+          dot-config contains errors, unable to read the hwinfo, unable to load
+          the FPGA bitstream, unable to load the LM32 software, any kernel
+          modules or userspace daemons are missing (issue \ref{fail:other:boot},
+          \ref{fail:other:dot-config}).
+        \item \texttt{wrsTemperatureWarning} -- Report whether the temperature
+          thresholds are not set or are exceeded (issue \ref{fail:other:temp}).
+        \item \texttt{wrsMemoryFreeLow} -- \texttt{Warning} when 50\% of the memory is
+          used, error when more than 80\% of the memory is used (issue
+          \ref{fail:other:no_mem}).
+        \item \texttt{wrsCpuLoadHigh} -- \texttt{Warning} when the average CPU load is
+          more than 2 for the past 1min, 1.5 for 5min or 1 for 15min.
+          \texttt{Error} when the average CPU load is more than 3 for the past
+          1min, 2 for 5min or 1.5 for 15min (issue \ref{fail:other:cpu}).
+        \item \texttt{wrsDiskSpaceLow} -- \texttt{Warning} when more than 80\% of any
+          disk partition is used. \texttt{Error} when more than 90\% of any disk
+          partition is used (issue \ref{fail:other:no_disk}).
+      \end{itemize}
+
+      \item \texttt{wrsTimingStatusGroup} -- Group with collective statuses of
+        the timing subsystem.
+      \begin{itemize}
+        \item \texttt{wrsPTPStatus} -- \texttt{Error} when any of PTP error counters in
+          \texttt{wrsPtpDataTable} (\texttt{wrsPtpServoStateErrCnt},
+          \texttt{wrsPtpClockOffsetErrCnt} or\\ \texttt{wrsPtpRTTErrCnt}) has
+          increased since the last scan (issue
+          \ref{fail:timing:ppsi_track_phase}, \ref{fail:timing:offset_jump},
+          \ref{fail:timing:rtt_jump}), at least one of the $\Delta_{TXM}$,
+          $\Delta_{RXM}$, $\Delta_{TXS}$, $\Delta_{RXS}$ is 0 (issue
+          \ref{fail:timing:deltas_report}) or PTP servo update counter is not
+          increasing.
+        \item \texttt{wrsSoftPLLStatus} -- \texttt{Error} when \texttt{wrsSpllSeqState}
+          is not \emph{Ready}, or \texttt{wrsSpllAlignState} is not
+          \emph{Locked} (for Grand Master mode), or any of
+          \texttt{wrsSpllHlock}, \texttt{wrsSpllMlock} equals to 0 (for Slave
+          mode) (issue \ref{fail:timing:spll_unlock}).\\
+          \texttt{Warning} when \texttt{wrsSpllDelCnt} $>$ 0 (for Grand Master
+          mode) or \texttt{wrsSpllDelCnt} has changed (for all other modes).
+        \item \texttt{wrsSlaveLinksStatus} -- \texttt{Error} when link to Master
+          is down for a switch in the Slave mode (issue
+          \ref{fail:timing:master_down}). Additionally, \texttt{Error} when the
+          link to Master is up for a switch in the Free-running Master or Grand
+          Master mode (issue \ref{fail:timing:master_up}).
+        \item \texttt{wrsPTPFramesFlowing} -- \texttt{Error} when PTP Tx/Rx
+          frame counters on active links (Master / Slave ports) are not being
+          incremented. (issue \ref{fail:timing:no_frames}). Report the first
+          run.
+      \end{itemize}
+
+      \item \texttt{wrsNetworkingStatusGroup} -- Group with collective statuses
+        of the networking subsystem.
+      \begin{itemize}
+        \item \texttt{wrsSFPsStatus} -- \texttt{Error} when any of the SFPs
+          reports an error. To find out which SFP caused the problem check
+          \texttt{wrsPortStatusSfpError.<n>} (issue \ref{fail:timing:wrong_sfp},
+          \ref{fail:other:sfp})
+        \item \texttt{wrsEndpointStatus} -- \texttt{Error} when there is a fault
+          in the Endpoint's transmission/reception path (issue
+          \ref{fail:data:ep_txrx}).
+        \item \texttt{wrsSwcoreStatus} -- Not used in the current release.
+          Always reports \texttt{OK}.
+      \item \texttt{wrsRTUStatus} -- \texttt{Error} when RTU is full and cannot
+        accept more requests (issue \ref{fail:data:rtu_full}).
+      \end{itemize}
+    \end{itemize}
+
+  \item \texttt{wrsVersionGroup} -- Hardware, gateware and software versions.
+	Additionally the serial number and other hardware information for the WRS.
+    \begin{itemize}
+      \item \texttt{wrsVersionSwVersion} -- software version (as returned
+        from the \texttt{git describe} at build time).
+      \item \texttt{wrsVersionSwBuildBy} -- software build-by (as returned
+        from the \texttt{git config --get-all user.name} at build time)
+      \item \texttt{wrsVersionSwBuildDate} -- software build date
+        (\texttt{\_\_DATE\_\_} at build time)
+      \item \texttt{wrsVersionBackplaneVersion} -- hardware version of the
+        minibackplane PCB
+      \item \texttt{wrsVersionFpgaType} -- FPGA model inside the switch
+      \item \texttt{wrsVersionManufacturer} -- name of the manufacturing
+	company
+      \item \texttt{wrsVersionSwitchSerialNumber} -- serial number (or string)
+        of the switch
+      \item \texttt{wrsVersionScbVersion} -- version of the SCB (the
+        motherboard)
+      \item \texttt{wrsVersionGwVersion} -- version of the gateware (FPGA
+        bitstream)
+      \item \texttt{wrsVersionGwBuild} -- build ID of the gateware (FPGA
+        bitstream)
+      \item \texttt{wrsVersionSwitchHdlCommitId} -- gateware version: commit ID
+        from the \texttt{wr\_switch\_hdl} repository
+      \item \texttt{wrsVersionGeneralCoresCommitId} -- gateware version: commit
+        ID from the \texttt{general-cores} repository
+      \item \texttt{wrsVersionWrCoresCommitId} -- gateware version: commit ID
+        from the \texttt{wr-cores} repository
+      \item \texttt{wrsVersionLastUpdateDate} -- date and time of last firmware
+        update, this information may not be accurate, due to hard restarts or
+        lack of the proper time at update.
     \end{itemize}
 \end{itemize}
 
@@ -195,15 +193,15 @@ following values:
 	  \item \texttt{wrsBootHwinfoReadout}
 	  \item \texttt{wrsBootLoadFPGA}
 	  \item \texttt{wrsBootLoadLM32}
-	  \item \texttt{wrsBootKernelModulesMissing} -- List of kernel modules
-		is defined in source code.
-	  \item \texttt{wrsBootUserspaceDaemonsMissing} -- List of daemons
-		is defined in source code.
-	  \item \texttt{wrsGwWatchdogTimeouts} -- Number of times the watchdog
-		has restarted the HDL module responsible for the Ethernet
-		switching process (issue \ref{fail:other:hdl_freeze}).
-	  \item \texttt{wrsRestartReasonMonit} -- Process that caused
-	        \texttt{monit} to trigger restart.
+	  \item \texttt{wrsBootKernelModulesMissing} -- List of kernel modules is
+	    defined in the source code.
+	  \item \texttt{wrsBootUserspaceDaemonsMissing} -- List of daemons is defined
+	    in the source code.
+	  \item \texttt{wrsGwWatchdogTimeouts} -- Number of times the watchdog has
+	    restarted the HDL module responsible for the Ethernet switching process
+	    (issue \ref{fail:data:swcore_hang}).
+	  \item \texttt{wrsRestartReasonMonit} -- Process that caused \texttt{monit}
+	    to trigger a restart.
 	\end{itemize}
       \item \texttt{wrsTemperatureGroup}
 	\begin{itemize}
@@ -243,9 +241,9 @@ following values:
 
   \item \texttt{wrsStartCntGroup}
     \begin{itemize}
-      \item \texttt{wrsStartCntHAL} \ref{fail:timing:hal_crash}, \ref{fail:other:daemon_crash}
-      \item \texttt{wrsStartCntPTP} \ref{fail:timing:ppsi_crash}, \ref{fail:other:daemon_crash}
-      \item \texttt{wrsStartCntRTUd} \ref{fail:data:rtu_crash}, \ref{fail:other:daemon_crash}
+      \item \texttt{wrsStartCntHAL} -- issue \ref{fail:timing:hal_crash}, \ref{fail:other:daemon_crash}
+      \item \texttt{wrsStartCntPTP} -- issue \ref{fail:timing:ppsi_crash}, \ref{fail:other:daemon_crash}
+      \item \texttt{wrsStartCntRTUd} -- issue \ref{fail:data:rtu_crash}, \ref{fail:other:daemon_crash}
       \item \texttt{wrsStartCntSshd}
       \item \texttt{wrsStartCntHttpd}
       \item \texttt{wrsStartCntSnmpd}
@@ -330,7 +328,7 @@ following values:
   \item \texttt{wrsPtpDataTable} -- Table with a row per PTP servo instance.
     \begin{itemize}
       \item \texttt{wrsPtpIndex}
-      \item \texttt{wrsPtpPortName} -- On which port instance is running.
+      \item \texttt{wrsPtpPortName} -- The port on which the instance is running.
       \item \texttt{wrsPtpGrandmasterID} -- Not implemented.
       \item \texttt{wrsPtpOwnID} -- Not implemented.
       \item \texttt{wrsPtpMode}
@@ -348,15 +346,15 @@ following values:
       \item \texttt{wrsPtpDeltaRxM}
       \item \texttt{wrsPtpDeltaTxS}
       \item \texttt{wrsPtpDeltaRxS}
-      \item \texttt{wrsPtpServoStateErrCnt} -- Number of servo updates when
-	    servo was out of TRACK\_PHASE (issue
-	    \ref{fail:timing:ppsi_track_phase}).
+      \item \texttt{wrsPtpServoStateErrCnt} -- Number of the servo updates when
+        servo is out of the TRACK\_PHASE (issue
+        \ref{fail:timing:ppsi_track_phase}).
       \item \texttt{wrsPtpClockOffsetErrCnt} -- Number of servo updates when
-	    offset was bigger than 1000ps or smaller than -1000ps (issue
-	    \ref{fail:timing:offset_jump}).
-      \item \texttt{wrsPtpRTTErrCnt} -- number of servo updates when RTT delta
-	    between servo updates was bigger than 1000ps or smaller than
-	    -1000ps (issue \ref{fail:timing:rtt_jump}).
+        offset is larger than 500ps or smaller than -500ps (issue
+        \ref{fail:timing:offset_jump}).
+      \item \texttt{wrsPtpRTTErrCnt} -- Number of servo updates when RTT delta
+        between subsequent updates is larger than 1000ps or smaller than -1000ps
+        (issue \ref{fail:timing:rtt_jump}).
     \end{itemize}
 
   \item \texttt{wrsPortStatusTable} -- Table with a row per port.

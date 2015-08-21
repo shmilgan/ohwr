@@ -1,9 +1,9 @@
 \subsection{Timing error}
 As a timing error we define WR Switch not being able to provide its slave
 nodes/switches with correct timing information consistent with the rest of the
-WR network.\\
+WR network.
 
-This section contains list of faults leading to a timing error.
+\noindent This section contains the list of faults leading to a timing error.
 
 \subsubsection{\bf \emph{PTP/PPSi} went out of \texttt{TRACK\_PHASE}}
 		\label{fail:timing:ppsi_track_phase}
@@ -12,8 +12,8 @@ This section contains list of faults leading to a timing error.
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{Slave}
 			\item [] \underline{Description}:\\
-				If \emph{PTP/PPSi} WR servo goes out of the \texttt{TRACK\_PHASE} state,
-				that means something bad has happened and switch has lost the
+				If the \emph{PTP/PPSi} WR servo goes out of the \texttt{TRACK\_PHASE}
+				state, this means something bad has happened and switch lost the
 				synchronization to its Master.
 			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::wrsPtpServoState.<n>} -- PTP servo state as string\\
@@ -150,9 +150,9 @@ This section contains list of faults leading to a timing error.
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{Grand Master}, \emph{Free-Running Master}
 			\item [] \underline{Description}:\\
-				In that case there is probably wrong configuration.
-				\emph{Grand Master} neither \emph{Free-Running Master}
-				should be connection to master switch.
+				In that case there is probably wrong configuration. Neither the
+				\emph{Grand Master} nor the \emph{Free-Running Master} should be
+				connected to another WR Master.
 			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::wrsPortStatusLink.<n>}\\
 				\texttt{WR-SWITCH-MIB::wrsPortStatusConfiguredMode.<n>}\\
@@ -213,7 +213,7 @@ This section contains list of faults leading to a timing error.
 				\texttt{WR-SWITCH-MIB::wrsPortStatusSfpInDB.<n>}\\
 				\texttt{WR-SWITCH-MIB::wrsPortStatusSfpGbE.<n>}\\
 				\texttt{WR-SWITCH-MIB::wrsPortStatusSfpError.<n>}\\
-				wrsSFPsStatus
+				\texttt{WR-SWITCH-MIB::wrsSFPsStatus}
 			\item [] \underline{Note}: WRS configuration allow to disable this check on some ports.
 				That is because ports may be used for regular (non-WR) PTP
 				synchronization or for data transfer only (no timing). In that case any
@@ -230,8 +230,8 @@ This section contains list of faults leading to a timing error.
 			\item [] \underline{Mode}: \emph{all}
 			\item [] \underline{Description}:\\
 				If the \emph{PTP/PPSi} daemon crashes we lose any synchronization
-				capabilities. Then \texttt{Monit} restarts missing process.
-				Number of particular process starts is stored in corresponding object.
+				capabilities. Then \texttt{Monit} restarts the missing process.
+				The number of process starts is stored in a corresponding object.
 			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::wrsStartCntPTP}\\
 				\texttt{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing}\\
@@ -246,8 +246,8 @@ This section contains list of faults leading to a timing error.
 			\item [] \underline{Mode}: \emph{all}
 			\item [] \underline{Description}:\\
 				If \emph{HAL} crashes, \emph{PTP/PPSi} is not able to communicate with
-				hardware i.e. read phase shift, get timestamps, phase shift the clock
-				etc. When \emph{HAL} crashes then \texttt{Monit} will restart it.
+				the hardware i.e. read phase shift, get timestamps, phase shift the
+				clock etc. When \emph{HAL} crashes, \texttt{Monit} will restart it.
 			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::wrsStartCntHAL}\\
 				\texttt{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing}\\
@@ -264,7 +264,7 @@ This section contains list of faults leading to a timing error.
 				If there is a wrong configuration applied to the \emph{PTP/PPSi} or HAL
 				(i.e.  wrong fixed delays, mode of operation etc.) there is not much we
 				can do. The responsibility of WR experts (or person deploying the
-				system) is to make sure that all the devices have correct initial
+				system) is to make sure that all the devices have a correct
 				configuration. Later we can only generate warnings, if the key
 				configuration options are changed remotely (e.g. Grand Master mode to
 				Free-running Master or updated fixed hardware delays values).\\
@@ -288,7 +288,7 @@ This section contains list of faults leading to a timing error.
 				operates in a \emph{Grand Master} mode, it is about broken/lost
 				connection to an external reference and switching to a backup WR link
 				(another WR Master). Regardless of the configuration, if we fail to
-				switch-over to a backup link (e.g. because the it is down), WRS resets
+				switch-over to a backup link (e.g. because it is down), WRS resets
 				the time counters and continue the operation as a Free-Running Master.
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
 			\item [] \underline{Note}: we should probably use parameters reported by
@@ -303,9 +303,9 @@ This section contains list of faults leading to a timing error.
 			\item [] \underline{Mode}: \emph{Grand Master}
 			\item [] \underline{Description}: \emph{(not yet implemented)}\\
 				Signaling active holdover is one thing, but if a Grand Master switch is
-				kept in sync with holdover for too long, it might drift away from the
-				ideal external reference too much. All devices in WR network will be
-				still synchronized, but no longer in sync with external reference.
+				kept in holdover for too long, it may drift away from the ideal external
+				reference too much. All devices in a WR network will be still
+				synchronized, but no longer in sync with the external reference.
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
 		\end{packed_enum}
 
@@ -314,7 +314,7 @@ This section contains list of faults leading to a timing error.
 As a data error we define WR Switch not being able to forward Ethernet traffic
 between devices connected to the ports.\\
 
-\noindent This section contains list of faults leading to a data error.
+\noindent This section contains the list of faults leading to a data error.
 
 \subsubsection{\bf Link down}
 		\label{fail:data:link_down}
@@ -331,7 +331,7 @@ between devices connected to the ports.\\
 					\item unplugged fiber
 					\item broken fiber
 					\item broken SFP
-					\item wrong(non-complementary) pair of WDM SPFs is used
+					\item wrong(non-complementary) pair of WDM SPFs used
 				\end{itemize}
 				However, we are not able to distinguish between them inside the switch.
 			\item [] \underline{SNMP objects}:\\
@@ -358,30 +358,29 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCH-MIB::wrsPstatsRXCRCErrors.<n>}
 		\end{packed_enum}
 
-\subsubsection{\bf Problem with the \emph{SwCore} or Endpoint HDL module}
+\subsubsection{\bf Problem with the SwCore or Endpoint HDL module}
 		\label{fail:data:swcore_hang}
 		\begin{packed_enum}
-			\item [] \underline{Status}: TODO \emph{(depends on HDL, then hal?)}
+    \item [] \underline{Status}: TODO (add monitoring of the Endpoint hangs, depend on
+      HDL)
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
-				If any of these HDL modules hangs, there is usually not much the user
-				can do besides resetting the WR Switch so that the FPGA is reprogrammed.
-				It may happen that frames are lost only on one or two ports, but it may
-				be also that the whole SwCore refuses to forward traffic.
+				If the SwCore is hanging, then the Ethernet forwarding is not
+				performed on one or multiple ports. We have a HDL watchdog module which
+				constantly monitors if the SwCore is not stuck. If such a situation is
+				detected the whole SwCore is reset, all the frames enqueued in the
+				Endpoints are acknowledged and lost. After this the switch can continue
+				its operation and the watchdog triggers counter is incremented.
 			\item [] \underline{SNMP objects}:\\
+				\texttt{WR-SWITCH-MIB::wrsGwWatchdogTimeouts}\\
 				\texttt{WR-SWITCH-MIB::wrsPstatsTXFrames.<n>}\\
 				\texttt{WR-SWITCH-MIB::wrsPstatsForwarded.<n>}
-			\item [] \underline{Note}: We should probably provide also some events for
-				counting from the SwCore.\\
-				Two early ideas for checking if SwCore is hanging or not:
-				\begin{itemize}
-					\item Monitor the number of used and free pages in the MPM memory
-					\item Compare per-port \emph{RTUfwd} counter with the \emph{Tx}
-						Endpoint counter for this port. \emph{RTUfwd} counts all forwarding
-						decisions from RTU to the port $<$n$>$ (including PTP frames from
-						NIC). If this number is equal to the number of frames actually
-						transmitted by the Endpoint, then everything works fine).
-				\end{itemize}
+			\item [] \underline{Note}: For Endpoint monitoring we could compare
+				per-port \emph{RTUfwd} counter with the \emph{Tx} Endpoint counter for
+				each port. \emph{RTUfwd} counts all forwarding decisions from RTU to the
+				port $<$n$>$ (excluding PTP frames from NIC). If the sum of this number
+				and RTU decisions generated from NIC is equal to the number of frames
+				actually transmitted by the Endpoint, then everything works fine.
 		\end{packed_enum}
 
 \subsubsection{\bf RTU is full and cannot accept more requests}
@@ -427,12 +426,12 @@ between devices connected to the ports.\\
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
 				If \emph{RTUd} crashed, traffic would be still routed between the WRS ports, but
-				only based on already existing static and dynamic rules. There would be
-				no learning or aging functionality. That means MAC addresses wouldn't be
-				removed from the RTU table if a device is disconnected from port. Since
-				there would be no learning, each frame with yet unknown destination MAC
-				will be broadcast to all ports (within a VLAN).
-				When \emph{RTUd} crashes then \texttt{Monit} will restart it.
+				only based on the already existing static and dynamic rules. There would be
+				no learning or aging functionality. This means, MAC addresses wouldn't be
+				removed from the RTU table if a device is disconnected from a port.
+				Without learning, each frame with yet unknown destination MAC would be
+				broadcast to all ports (within a VLAN). When \emph{RTUd} crashes,
+				\texttt{Monit} will restart it.
 			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::wrsStartCntRTUd}\\
 				\texttt{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing}\\
@@ -453,7 +452,7 @@ between devices connected to the ports.\\
 				situation is a network configuration problem or eRSTP failure.
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
 			\item [] \underline{Note}: we need to monitor the \emph{rtu\_stat} to
-				diagnose ping-pong in the RTU table.
+				detect ping-pong in the RTU table.
 		\end{packed_enum}
 
 \subsubsection{\bf Wrong configuration applied (e.g. wrong VLAN config)}
@@ -492,14 +491,14 @@ between devices connected to the ports.\\
 				 not successful, add stop restarting system after defined number of restarts)
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
-				That one is about making sure that everything is up and running after WR
-				switch boots. If any of the services fails, an alarm should be raised.
-				
-				We have a object reported
-				through the SNMP \texttt{wrsBootSuccessful} saying that WRS has
-				booted correctly, FPGA is programmed, all kernel drivers are loaded and
-				all daemons are up and running. If it's not the case, we should report
-				what has happened:
+				Every time the switch boots, we verify that all the services have
+				started and are running correctly. If any of them fails, an alarm is
+				raised.
+
+				The SNMP object \texttt{wrsBootSuccessful} says if a WRS has booted
+				correctly, FPGA is programmed, all kernel drivers are loaded and all
+				daemons are up and running. If it's not the case, we report what went
+				wrong:
 				\begin{itemize}
 					\item status of reading HW information from dataflash
 					\item status of programming FPGA and LM32
@@ -519,28 +518,34 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCH-MIB::wrsBootKernelModulesMissing}\\
 				\texttt{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing}
 			\item [] \underline{Note}: 
-				The idea for that is to reboot the system if it was not able to boot
-				correctly. Then we use the scratchpad registers of the processor to keep
+				The idea is to reboot the system if it was not able to boot correctly.
+				Then we use the scratchpad registers of the processor to keep
 				the boot count. If the value of this counter is more than X we stop
 				rebooting and try to have a system running with at least \emph{dropbear}
 				for SSH and \emph{net-snmp} to allow remote diagnostics. If on the other
-				hand we have booted correctly we set the boot count to 0.
+				hand the switch has booted correctly, we set the boot count to 0.
 		\end{packed_enum}
 
-\subsubsection{\bf dot-config error}
+\subsubsection{\bf Dot-config error}
 		\label{fail:other:dot-config}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
-				Dot-config file used to configure switch can be stored locally or retrieved from the network.
-				Notify about source of dot-config and result of its downloading and verifying.
+				Dot-config file used to configure the switch can be stored locally or
+				retrieved from a central server. When it is fetch from the server it has
+				to be verified before being applied. If downloading or verification has
+				failed an alarm is raised.
 			\item [] \underline{SNMP objects}:\\
-				\texttt{WR-SWITCH-MIB::wrsBootSuccessful} - status word informing whether switch booted correctly\\
-				\texttt{WR-SWITCH-MIB::wrsConfigSource} - source of dot-config, local or protocol which was used do download dot-config\\
-				\texttt{WR-SWITCH-MIB::wrsConfigSourceHost} - address of server providing dot-config if non local\\
-				\texttt{WR-SWITCH-MIB::wrsConfigSourceFilename} - path on a server to dot-config if non local\\
-				\texttt{WR-SWITCH-MIB::wrsBootConfigStatus} - result of veryfication of dot-config
+				\texttt{WR-SWITCH-MIB::wrsBootSuccessful} - status word informing
+				whether switch booted correctly\\
+				\texttt{WR-SWITCH-MIB::wrsConfigSource} - source of a dot-config,
+				local or protocol which was used do fetch the dot-config\\
+				\texttt{WR-SWITCH-MIB::wrsConfigSourceHost} - address of a server
+				providing dot-config (if not local)\\
+				\texttt{WR-SWITCH-MIB::wrsConfigSourceFilename} - path to the dot-config
+				on a server (if not local)\\
+				\texttt{WR-SWITCH-MIB::wrsBootConfigStatus} - result of the dot-config verification
 		\end{packed_enum}
 
 \subsubsection{\bf Any userspace daemon has crashed/restarted}
@@ -549,10 +554,10 @@ between devices connected to the ports.\\
 			\item [] \underline{Status}: TODO \emph{(depends on monit)}
 			\item [] \underline{Severity}: ERROR / WARNING (depending on the process)
 			\item [] \underline{Description}:\\
-				Running processes are monitored by \texttt{Monit}. When any of them crash,
-				then \texttt{Monit} restarts missing process and increments corresponding
-				start counter. If particular process is restarted 5 times within 100 seconds
-				then entire switch is restarted.
+				Running processes are monitored by \texttt{Monit}. When any of them
+				crashes, \texttt{Monit} restarts a missing process and increments a
+				corresponding start counter. If a process is restarted 5 times within
+				100 seconds, then the entire switch is restarted.
 			\item [] \underline{SNMP objects}:\\
 				\texttt{HOST-RESOURCES-MIB::hrSWRunName.<n>} - list of processes in standard MIB\\
 				\texttt{WR-SWITCH-MIB::wrsStartCntHAL}\\
@@ -568,17 +573,16 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCH-MIB::wrsBootSuccessful} - status word informing whether switch booted correctly
 			\item [] \underline{Note}: We shall distinguish between crucial
 				processes - error should be reported if one of them crashes; and less
-				important processes which should just be restarted if they crash (and
-				warning should be reported). If any of the processes has crashed, we
-				need to restart it and increment a per-process counter reported through
-				the SNMP to indicate how many times each process has crashed.\\
+				important processes (warning should be reported if they crash). If any
+				of the processes has crashed, we need to restart it and increment a
+				per-process counter reported through the SNMP.
 
 				Crucial processes (Error report if any of them crashes):
 				\begin{itemize}
 					\item \emph{PTP/PPSi}
-					\item \emph{WRSW\_RTUd} - after adding configuration preserving code
+					\item \emph{wrsw\_rtud} - after adding configuration preserving code
 						on restart, RTUd could be crossed out from this list
-					\item \emph{WRSW\_HAL}
+					\item \emph{wrsw\_hal}
 				\end{itemize}
 				Less critical processes (Restarting them and Warning generation is
 				enough):
@@ -591,36 +595,36 @@ between devices connected to the ports.\\
 					\item \emph{TRUd/eRSTPd} - not yet implemented
 				\end{itemize}
 
-				\emph{RTUd} - we need to set the flag that it has crashed so that when
-				it runs again it knows that HDL is already configured. It should not
-				erase static entries in RTU table (e.g. multicasts for PTP) and it
-				should not erase or it should configure again static entries set by-hand
-				as well as VLANs. Dynamic entries are not a problem. RTUd will learn all
-				MACs after restarting. The only consequence will be increased network
-				traffic due to frames broadcast until all MACs are learned. In general
-				the source code has to be checked to make sure what is cleared on
+				\emph{wrsw\_rtud} - we need to set the flag informing the process has
+				crashed so that when it runs again it knows that HDL is already
+				configured. It should not erase static entries in the RTU table (e.g.
+				multicasts for PTP), the static entries set by-hand as well as VLANs.
+				Dynamic entries are not a problem. RTUd can learn all MACs after
+				restarting. The only consequence will be increased network traffic due
+				to frames broadcast until all the MACs are learned. In general,
+				the source code has to be checked to make sure what is cleared on the
 				startup and modified to preserve the configuration.\\
 
 				\emph{TRUd/eRSTPd} - topology reconfiguration is done in hardware if
-				needed, this daemon is used only to configure TRU/RTU HDL module.
+				needed, the daemon is used only to configure the TRU/RTU HDL module.
 				However, the story is similar as with the RTUd. If eRSTPd crashes, we
 				need to store this information so that when it runs again, it does not
-				erase the whole configuration. Also if topology reconfiguration is done
-				in HDL while eRSTPd is down, HDL should keep the flag that it happened,
-				and eRSTPd should read this flag when starting, so that it's aware that
-				now, backup link is active.\\
+				erase the whole configuration. Also if a topology reconfiguration
+				happens while eRSTPd is down, HDL should keep the flag for the eRSTPd so
+				that it's aware the backup link is active.
 		\end{packed_enum}
 
 \subsubsection{\bf Kernel crash}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
-			\item [] \underline{Description}:
-				If Linux kernel has crashed the system reboots. Until next boot we have
-				no synchronization, no SNMP to report the status, FPGA may be still
+			\item [] \underline{Description}:\\
+				If the Linux kernel has crashed, system reboots. Until the next boot we
+				have no synchronization, no SNMP to report the status, FPGA may be still
 				forwarding Ethernet traffic, but based on dynamic and static routing
-				rules from before the crash. Based on SNMP objects below it is possible
-				to figure out that reboot took place and what was the reason for last reboot.
+				rules from before the crash. Based on the SNMP objects below it is
+				possible to figure out that reboot took place and what was the reason of
+				the last reboot.
 			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::wrsBootCnt}\\
 				\texttt{WR-SWITCH-MIB::wrsRebootCnt}\\
@@ -628,35 +632,36 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCH-MIB::wrsFaultIP} \emph{(not implemented)}\\
 				\texttt{WR-SWITCH-MIB::wrsFaultLR} \emph{(not implemented)}
 			\item [] \underline{Note}:
-				Unfortunately it is not possible right now to distinguish whether reboot was caused by
-				panic function of the kernel or the \texttt{reboot} command.
-				Saving of IP and LR registers has to be implemented.
+				Unfortunately, right now it is not possible to distinguish whether the
+				reboot was caused by the kernel panic function or the \texttt{reboot}
+				command. Preserving the state of IP and LR registers has to be
+				implemented.
 		\end{packed_enum}
 \subsubsection{\bf System nearly out of memory}
 		\label{fail:other:no_mem}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: WARNING
-			\item [] \underline{Description}:
-				We need to monitor and report the amount of the
-				free memory, report it through SNMP and raise an alarm if it's extremely
-				low (but still enough to keep the system running).
+			\item [] \underline{Description}:\\
+				We need to monitor the amount of free memory, report it through SNMP and
+				raise an alarm if it's extremely low (but still enough to keep the
+				system running).
 			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::wrsMemoryTotal}\\
 				\texttt{WR-SWITCH-MIB::wrsMemoryUsed}\\
 				\texttt{WR-SWITCH-MIB::wrsMemoryUsedPerc} - percentage of used memory\\
 				\texttt{WR-SWITCH-MIB::wrsMemoryFree}\\
-				\texttt{WR-SWITCH-MIB::wrsMemoryFreeLow} - warn or error when low memory
+				\texttt{WR-SWITCH-MIB::wrsMemoryFreeLow} - warning or error on low memory
 		\end{packed_enum}
 \subsubsection{\bf Disk space low}
 		\label{fail:other:no_disk}
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: WARNING
-			\item [] \underline{Description}:
-				We need to monitor and report the amount of the
-				free disk space, report it through SNMP and raise an alarm if it's extremely
-				low (but still enough to keep the system running).
+			\item [] \underline{Description}:\\
+				We need to monitor the amount of free disk space, report it through SNMP
+				and raise an alarm if it's extremely low (but still enough to keep the
+				system running).
 			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::wrsDiskMountPath.<n>}\\
 				\texttt{WR-SWITCH-MIB::wrsDiskSize.<n>}\\
@@ -664,15 +669,15 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCH-MIB::wrsDiskFree.<n>}\\
 				\texttt{WR-SWITCH-MIB::wrsDiskUseRate.<n>}\\
 				\texttt{WR-SWITCH-MIB::wrsDiskFilesystem.<n>}\\
-				\texttt{WR-SWITCH-MIB::wrsDiskSpaceLow} - warn or error when low disk space\\
+				\texttt{WR-SWITCH-MIB::wrsDiskSpaceLow} - warning or error on low disk space\\
 				\texttt{HOST-RESOURCES-MIB::hrStorageDescr.<n>}\\
 				\texttt{HOST-RESOURCES-MIB::hrStorageSize.<n>}\\
 				\texttt{HOST-RESOURCES-MIB::hrStorageUsed.<n>}
 			\item [] \underline{Note}:
-				Objects like \texttt{HOST-RESOURCES-MIB::hrStorage*.<n>} are available via standard MIB.
-				The same functionality is implemented in \texttt{WR-SWITCH-MIB}'s objects
-				\texttt{wrsDisk*.<n>}
-				(to ease implementation of \texttt{wrsDiskSpaceLow}).
+				Objects like \texttt{HOST-RESOURCES-MIB::hrStorage*.<n>} are available
+				via standard MIB. The same functionality is implemented in
+				\texttt{WR-SWITCH-MIB} objects \texttt{wrsDisk*.<n>} (to ease the
+				implementation of \texttt{wrsDiskSpaceLow}).
 		\end{packed_enum}
 
 \subsubsection{\bf CPU load too high}
@@ -680,16 +685,17 @@ between devices connected to the ports.\\
 		\begin{packed_enum}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: WARNING
-			\item [] \underline{Description}:
-				On a healthy switch CPU's load average shall be below 0.1. Some actions like
-				SNMP queries or web interface activity may increase system's load average.
-				System load average from 1, 5 and 15 minutes is exported via below objects.
-				Additionally \texttt{wrsCpuLoadHigh} warn or error on too high load.
+			\item [] \underline{Description}:\\
+				On a healthy switch the average CPU load should be below \emph{0.1}.
+				Some actions like SNMP queries or web interface activity may increase
+				the average system load. The system load averages for the past 1, 5 and
+				15 minutes are exported via SNMP objects. Additionally
+				\texttt{wrsCpuLoadHigh} alerts when the load is too high.
 			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::wrsCPULoadAvg1min}\\
 				\texttt{WR-SWITCH-MIB::wrsCPULoadAvg5min}\\
 				\texttt{WR-SWITCH-MIB::wrsCPULoadAvg15min}\\
-				\texttt{WR-SWITCH-MIB::wrsCpuLoadHigh} - warn or error when CPU load too high
+				\texttt{WR-SWITCH-MIB::wrsCpuLoadHigh} - warning or error when CPU load too high
 		\end{packed_enum}
 
 \subsubsection{\bf Temperature inside the box too high}
@@ -709,6 +715,10 @@ between devices connected to the ports.\\
 					\item \emph{IC18} - temperature near the VCXO and PLLs (AD9516,
 						CDCM6100)
 				\end{itemize}
+				\texttt{wrsTemperatureWarning} is raised when the temperature read from
+				any of these sensors exceeds a threshold configured in the
+				\emph{dot-config}. When at least one threshold temperature is not set
+				\texttt{wrsTemperatureWarning} is set to \emph{Threshold-not-set}.
 			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::wrsTempFPGA}\\
 				\texttt{WR-SWITCH-MIB::wrsTempPLL}\\
@@ -719,11 +729,6 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCH-MIB::wrsTempThresholdPSL}\\
 				\texttt{WR-SWITCH-MIB::wrsTempThresholdPSR}\\
 				\texttt{WR-SWITCH-MIB::wrsTemperatureWarning}
-			\item [] \underline{Note}:
-			\texttt{wrsTemperatureWarning} is raised when temperature read from any of these sensors
-			exceeds individually set threshold in \emph{dot-config}. When at least one threshold
-			temperature is not set tempWarning returns \emph{Threshold-not-set}.
-			Temperature is read by the HAL to drive PWM inside the FPGA.
 		\end{packed_enum}
 
 \subsubsection{\bf Not supported SFP plugged into the cage (especially non 1-Gb SFP)}
@@ -732,11 +737,11 @@ between devices connected to the ports.\\
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
-				If not supported Gigabit Fiber SFP is plugged into the cage, then it's a
-				timing issue \ref{fail:timing:wrong_sfp}. However, if a non 1-Gb SFP is
-				used, then no Ethernet traffic would be flowing on that port. It's due
-				to the fact, that we don't have 10/100Mbit Ethernet implemented inside
-				the WRS.
+				If a not supported Gigabit optical SFP is plugged into the cage, then
+				it's a timing issue \ref{fail:timing:wrong_sfp}. However, if a non 1-Gb
+				SFP is used, then no Ethernet traffic would be flowing on that port.
+				It's due to the fact, that we don't have 10/100Mbit Ethernet implemented
+				inside the WRS.
 			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::wrsPortStatusSfpVN.<n>}\\
 				\texttt{WR-SWITCH-MIB::wrsPortStatusSfpPN.<n>}\\
@@ -751,34 +756,21 @@ between devices connected to the ports.\\
 		\begin{packed_enum}
 			\item [] \underline{Description}:\\
 			\item [] \underline{SNMP objects}: \emph{(none)}
-			\item [] \underline{Note}: how shall we detect this ? Based on
-				\emph{dmesg} errors reported by UBI and system in general ?\\
-				This is bad, crazy things may happen, we can't do much about it.
+			\item [] \underline{Note}: how shall we detect this? Based on the
+				\emph{dmesg} errors reported by UBI and system in general?  This is bad,
+				crazy things may happen, we can't do much about it.
 		\end{packed_enum}
 
 \subsubsection{\bf Kernel freeze}
 		\begin{packed_enum}
-			\item [] \underline{Description}:
+			\item [] \underline{Description}:\\
 				If kernel freezes we can do nothing. It can freeze e.g. due to some
-				infinite in the irq handler. It's like with the power failure, somebody
-				has to go to the place where WRS is installed and investigate/restart
-				the device.
-			\item [] \underline{!QUESTION!}: Do we have watchdog in CPU? can we use it?
+				infinite loop in the irq handler. It's like with the power failure,
+				somebody has to go to the place where WRS is installed and
+				investigate/restart the device.
 			\item [] \underline{SNMP objects}: \emph{(none)}
 			\item [] \underline{Note}:
 				If we have watchdog in our CPU it should be used.
-		\end{packed_enum}
-
-\subsubsection{\bf HDL module responsible for the Ethernet switching freezes}
-		\label{fail:other:hdl_freeze}
-		\begin{packed_enum}
-			\item [] \underline{Description}:
-				If HDL module responsible for the Ethernet
-				switching process freezes we can restart it
-				using watchdog. However, there shall be no need
-				to restart HDL module.
-			\item [] \underline{SNMP objects}: \\
-				\texttt{WR-SWITCH-MIB::wrsGwWatchdogTimeouts}
 		\end{packed_enum}
 
 \subsubsection{\bf Power failure}
@@ -786,7 +778,7 @@ between devices connected to the ports.\\
 			\item [] \underline{Description}:\\
 				Power failure may be either a WRS problem (i.e. broken power supply
 				inside the switch) or an external problem (i.e. providing voltage to the
-				device). There is not much reporting we can do in such case, it's up to
+				device). There is not much reporting we can do in such case. It's up to
 				the Network Management Station to raise an alarm if the SNMP Agent does
 				not respond to the SNMP requests.
 			\item [] \underline{SNMP objects}: \emph{(none)}
@@ -796,8 +788,8 @@ between devices connected to the ports.\\
 		\begin{packed_enum}
 			\item [] \underline{Description}:\\
 				If any crucial hardware part breaks we'll most probably notice it as one
-				(or multiple) timing/data errors described in the previous sections.
-				Besides that, we don't have any self-diagnostics on-board. Few examples:
+				(or multiple) timing / data errors described previously. Besides that,
+				we don't have any self-diagnostics on-board. Few examples:
 				\begin{itemize}
 					\item DAC / VCO - problems with synchronization
 					\item cooling	fans - rise of the temperature inside the WRS box
@@ -850,11 +842,11 @@ between devices connected to the ports.\\
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
-				If we observe many attempts to gain a root access through ssh (or the
-				web interface) that might mean somebody tries to do something nasty. We
-				should report such situation as a Warning.
+				If we observe many attempts to gain a root access through the ssh (or
+				the web interface) this might be somebody trying to do something nasty.
+				We should report such situation as a Warning.
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
-			\item [] \underline{Note}: Bad password event is reported by syslog as
+			\item [] \underline{Note}: Bad password event is reported by Syslog as a
 				warning. We should probably use this information to add an SNMP object.
 		\end{packed_enum}
 
@@ -876,10 +868,10 @@ between devices connected to the ports.\\
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}: \emph{(not yet implemented)}\\
-				It's related to the issue \ref{fail:other:rstp}. If the WRS uses primary
-				uplink, but the backup one fails, it's not a critical fault. WR Network
-				still works, but the problem should be diagnosed and repaired to have
-				the backup link operational in case the primary one fails.
+				This is related to the issue \ref{fail:other:rstp}. If the WRS uses
+				primary uplink, but the backup one fails, it's not a critical fault. WR
+				Network still works, but the link should be diagnosed and repaired to
+				have the backup link operational in case the primary one fails.
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
 		\end{packed_enum}
 
