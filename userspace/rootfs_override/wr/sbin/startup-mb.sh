@@ -2,6 +2,9 @@
 export WR_HOME="/wr"
 LOAD_FPGA_STATUS_FILE="/tmp/load_fpga_status"
 LOAD_LM32_STATUS_FILE="/tmp/load_lm32_status"
+#files for monit's restart reason
+MONIT_RR_FLASH="/update/monit_restart_reason"
+MONIT_RR_TMP="/tmp/monit_restart_reason"
 
 # Get parameter from kernel commandline
 for arg in $(cat /proc/cmdline); do
@@ -10,6 +13,13 @@ for arg in $(cat /proc/cmdline); do
 		val=$(echo $arg | cut -d= -f2);
 	fi;
 done
+
+# handle monit's restat reason
+# no need to remove $MONIT_RR_TMP, since tmp is not persistent
+if [ -f "$MONIT_RR_FLASH" ]; then
+    # move restart reason to tmp so there is no need to remove it later
+    mv -f "$MONIT_RR_FLASH" "$MONIT_RR_TMP"
+fi
 
 # Obtain the type of FPGA (LX130XT or LX240XT)
 tfpga=$($WR_HOME/bin/wrs_version -F)

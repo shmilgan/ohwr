@@ -1841,6 +1841,10 @@ switch. Check is done every 10 seconds. As for now supervised processes are:
 In case any of the supervised processes does not run anymore (because of a crash,
 exit etc.), @t{monit} restarts missing process. If 5 restarts of a process
 occur during 10 cycles (10*10 seconds), the entire switch is restarted.
+The process' name causing restart is saved in the file
+@t{/update/monit_restart_reason} on the flash partition. After next boot this
+file is moved to @t{/tmp/monit_restart_reason}, where can be read. Since it is
+@t{/tmp} partition, file with restart reason is lost after next boot.
 
 Since @t{monit} is started from the inittab, even if @t{monit} crashes for some
 reason it will be re-spawned by the @t{init}.

@@ -3,6 +3,7 @@
 #include "wrsBootStatusGroup.h"
 
 #define BOOTCOUNT_FILE "/proc/wrs-bootcount"
+#define MONIT_REASON_FILE "/tmp/monit_restart_reason"
 
 #define DOTCONFIGDIR "/tmp"
 #define DOTCONFIG_PROTO "dot-config_proto"
@@ -46,6 +47,7 @@ static struct pickinfo wrsBootStatus_pickinfo[] = {
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootKernelModulesMissing),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootUserspaceDaemonsMissing),
 	FIELD(wrsBootStatus_s, ASN_COUNTER, wrsGwWatchdogTimeouts),
+	FIELD(wrsBootStatus_s, ASN_OCTET_STR, wrsRestartReasonMonit),
 };
 
 struct wrsBootStatus_s wrsBootStatus_s;
@@ -164,6 +166,18 @@ static void get_boot_info(void){
 	snprintf(wrsBootStatus_s.wrsFaultLR,
 		 sizeof(wrsBootStatus_s.wrsFaultLR), "0x%.8x",
 		 boot_info[3].value);
+
+	/* try to find whether monit caused restart */
+	f = fopen(MONIT_REASON_FILE, "r");
+	if (f) {
+		/* when MONIT_REASON_FILE exists means that last restart was
+		 * triggered by monit */
+		wrsBootStatus_s.wrsRestartReason = WRS_RESTART_REASON_MONIT;
+		/* try to get program that caused restart */
+		fscanf(f, LINE_READ_LEN(31),
+		       wrsBootStatus_s.wrsRestartReasonMonit);
+		fclose(f);
+	}
 }
 
 static void get_dotconfig_source(void)

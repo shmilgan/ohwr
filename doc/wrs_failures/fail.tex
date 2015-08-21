@@ -509,6 +509,7 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::wrsBootSuccessful} -- status word informing whether switch booted correctly\\
 				\texttt{WR-SWITCH-MIB::wrsRestartReason}\\
+				\texttt{WR-SWITCH-MIB::wrsRestartReasonMonit}\\
 				\texttt{WR-SWITCH-MIB::wrsConfigSource}\\
 				\texttt{WR-SWITCH-MIB::wrsConfigSourceHost}\\
 				\texttt{WR-SWITCH-MIB::wrsConfigSourceFilename}\\
@@ -545,7 +546,7 @@ between devices connected to the ports.\\
 \subsubsection{\bf Any userspace daemon has crashed/restarted}
 		\label{fail:other:daemon_crash}
 		\begin{packed_enum}
-			\item [] \underline{Status}: QUESTION, TODO \emph{(depends on monit)}
+			\item [] \underline{Status}: TODO \emph{(depends on monit)}
 			\item [] \underline{Severity}: ERROR / WARNING (depending on the process)
 			\item [] \underline{Description}:\\
 				Running processes are monitored by \texttt{Monit}. When any of them crash,

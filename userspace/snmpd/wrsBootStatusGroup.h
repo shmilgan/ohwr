@@ -5,6 +5,7 @@
 #define WRSBOOTSTATUS_OID WRS_OID, 7, 1, 2
 
 #define WRS_RESTART_REASON_ERROR 1		/* error */
+#define WRS_RESTART_REASON_MONIT 7		/* ok */
 
 #define WRS_CONFIG_SOURCE_HOST_LEN 64
 #define WRS_CONFIG_SOURCE_FILENAME_LEN 128
@@ -54,6 +55,7 @@ struct wrsBootStatus_s {
 	int32_t wrsBootKernelModulesMissing;
 	int32_t wrsBootUserspaceDaemonsMissing;
 	int32_t wrsGwWatchdogTimeouts;
+	char wrsRestartReasonMonit[32];
 };
 
 extern struct wrsBootStatus_s wrsBootStatus_s;

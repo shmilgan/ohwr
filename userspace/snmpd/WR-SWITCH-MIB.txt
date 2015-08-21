@@ -535,7 +535,8 @@ wrsRestartReason  OBJECT-TYPE
                         wakeUpReset(3),
                         watchdogReset(4),
                         softwareReset(5),
-                        userReset(6)
+                        userReset(6),
+                        restartByMonit(7)
     }
     MAX-ACCESS    read-only
     STATUS        current
@@ -546,7 +547,9 @@ wrsRestartReason  OBJECT-TYPE
        wakeUpReset(3) - VDDCORE rising
        watchdogReset(4) - Watchdog fault occurred
        softwareReset(5) - Processor reset required by the software (system reboot)
-       userReset(6) -  NRST pin detected low (reset button)"
+       userReset(6) -  NRST pin detected low (reset button)
+       restartByMonit(7) - Restart caused by Monit, please check wrsRestartReasonMonit
+                           for program that caused problems"
     ::= { wrsBootStatusGroup 3 }
 
 wrsFaultIP OBJECT-TYPE
@@ -712,6 +715,14 @@ wrsGwWatchdogTimeouts  OBJECT-TYPE
         "Number of times the watchdog has restarted the HDL module responsible
         for the Ethernet switching process."
     ::= { wrsBootStatusGroup 15 }
+
+wrsRestartReasonMonit  OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..32))
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Program's name that monit failed to start several times"
+    ::= { wrsBootStatusGroup 16 }
 
 -- wrsTemperatureGroup (.7.1.3)
 wrsTemperatureGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 3 }
