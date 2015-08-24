@@ -13,12 +13,16 @@
 #define WRS_CONFIG_SOURCE_ERROR_MINOR 2		/* warning */
 #define WRS_CONFIG_SOURCE_LOCAL 3		/* ok */
 #define WRS_CONFIG_SOURCE_REMOTE 4		/* ok */
+#define WRS_CONFIG_SOURCE_TRY_DHCP 5		/* ok */
+#define WRS_CONFIG_SOURCE_FORCE_DHCP 6		/* ok */
 
 #define WRS_CONFIG_STATUS_OK 1			/* ok */
 #define WRS_CONFIG_STATUS_ERROR 2		/* error */
 #define WRS_CONFIG_STATUS_DL_ERROR 3		/* error */
 #define WRS_CONFIG_STATUS_CHECK_ERROR 4		/* error */
 #define WRS_CONFIG_STATUS_ERROR_MINOR 5		/* warning */
+#define WRS_CONFIG_STATUS_DHCP_ERROR 6		/* ok, for try_dhcp,
+						 * error for force_dhcp */
 
 #define WRS_BOOT_HWINFO_OK 1			/* ok */
 #define WRS_BOOT_HWINFO_ERROR 2			/* error */

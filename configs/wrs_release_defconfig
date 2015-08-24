@@ -1,7 +1,10 @@
 #
 # Automatically generated make config: don't edit
 #
-CONFIG_DOTCONF_URL=""
+# CONFIG_DOTCONF_SOURCE_LOCAL is not set
+# CONFIG_DOTCONF_SOURCE_REMOTE is not set
+# CONFIG_DOTCONF_SOURCE_FORCE_DHCP is not set
+CONFIG_DOTCONF_SOURCE_TRY_DHCP=y
 CONFIG_BR2_CONFIGFILE="wrs_release_br2_config"
 CONFIG_PPSI=y
 

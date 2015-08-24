@@ -532,14 +532,18 @@ between devices connected to the ports.\\
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
 				Dot-config file used to configure the switch can be stored locally or
-				retrieved from a central server. When it is fetch from the server it has
-				to be verified before being applied. If downloading or verification has
+				retrieved from a central server. Additionally URL to the remote dot-config
+				can be retrieved via DHCP request. When dot-config is fetch from the server
+				it has to be verified before being applied. If downloading or verification has
 				failed an alarm is raised.
 			\item [] \underline{SNMP objects}:\\
 				\texttt{WR-SWITCH-MIB::wrsBootSuccessful} -- status word informing
 					whether switch booted correctly\\
 				\texttt{WR-SWITCH-MIB::wrsConfigSource} -- source of a dot-config,
-					local or remote\\
+					local, remote or get URL to the dot-config via DHCP. When
+					\texttt{wrsConfigSource} is set to the \texttt{tryDhcp}, then failure of
+					getting dot-config's URL via DHCP does not rise an error in
+					\texttt{wrsBootSuccessful}\\
 				\texttt{WR-SWITCH-MIB::wrsConfigSourceUrl} -- path to the dot-config
 					on a server (if not local)\\
 				\texttt{WR-SWITCH-MIB::wrsBootConfigStatus} -- result of the dot-config verification

@@ -579,7 +579,9 @@ wrsConfigSource  OBJECT-TYPE
                         error(1),
                         errorMinor(2),
                         local(3),
-                        remote(4)
+                        remote(4),
+                        tryDhcp(5),
+                        forceDhcp(6)
     }
     MAX-ACCESS    read-only
     STATUS        current
@@ -587,7 +589,11 @@ wrsConfigSource  OBJECT-TYPE
         "Source of used dotconfig
         local - used dot-config was stored on the switch
         remote - dot-config retrieved from the network check the
-	         wrsConfigSourceUrl for the path
+                 wrsConfigSourceUrl for the path
+        tryDhcp - try to get URL to the dot-config via DHCP, if DHCP retrieve
+                  fail do not propagate error to the wrsBootSuccessful;
+        forceDhcp - get URL to the dot-config via DHCP, if failed propagate error
+                    to the wrsBootSuccessful
         errorMinor - cannot read the status file, problem is probably somewhere
                      else"
     ::= { wrsBootStatusGroup 6 }
@@ -616,16 +622,18 @@ wrsBootConfigStatus  OBJECT-TYPE
                         error(2),
                         downloadError(3),
                         checkError(4),
-                        errorMinor(5)
+                        errorMinor(5),
+                        dhcpError(6)
     }
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
         "Result of loading or downloading dot-config file
         ok - dot-config downloaded or loaded correctly
-        downloadError - unable to download file from given source
+        downloadError - unable to download a file from a given source
         checkError - config file is not valid or too short (less than 200 characters).
-        errorMinor - cannot read status file, problem is probably somewhere else"
+        errorMinor - cannot read the status file, problem is probably somewhere else
+        dhcpError - unable to get URL to dot-config via DHCP (only for forceDhcp)"
     ::= { wrsBootStatusGroup 9 }
 
 wrsBootHwinfoReadout  OBJECT-TYPE

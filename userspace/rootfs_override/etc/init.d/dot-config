@@ -10,9 +10,10 @@ dotconfig=/wr/etc/dot-config
 tmpconfig=/tmp/dot-config
 tmpdir=/tmp
 
+rm -f "$tmpdir"/dot-config_source
+
 if [ -f $dotconfig ]; then
     . $dotconfig
-    echo "local" > "$tmpdir"/dot-config_source
     #assume that local config is always ok
     echo "config_ok" > "$tmpdir"/dot-config_status
 else
@@ -28,9 +29,42 @@ if [ ! -z "$CONFIG_DNS_SERVER" ]; then
     fi
 fi
 
+# remove "$tmpdir"/dot-config_source_url" in case it is not first run
+# of this script
+rm -f "$tmpdir"/dot-config_source_url
+
 # If we are expected to get a new dot-conf, do it
-if [ -n "$CONFIG_DOTCONF_URL" ]; then
+if [ -n "$CONFIG_DOTCONF_SOURCE_REMOTE" ] || [ -n "$CONFIG_DOTCONF_SOURCE_TRY_DHCP" ] \
+	|| [ -n "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" ]; then
     echo "remote" > "$tmpdir"/dot-config_source
+
+    # get URL via DHCP
+    if [ -n "$CONFIG_DOTCONF_SOURCE_TRY_DHCP" ] \
+	    || [ -n "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" ]; then
+	if [ -n "$CONFIG_DOTCONF_SOURCE_TRY_DHCP" ]; then
+	    echo "try_dhcp" > "$tmpdir"/dot-config_source
+	fi
+	if [ -n "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" ]; then
+	    echo "force_dhcp" > "$tmpdir"/dot-config_source
+	fi
+
+	# let udhcpc run /wr/bin/dhcp_get_filename.sh script to get "filename"
+	# from DHCP (which contain url with dot-config).
+	/sbin/udhcpc -i eth0 -s /wr/bin/dhcp_get_filename.sh -O bootfile -o \
+		-n -q -f -t 5 &>/dev/null
+	if [ -f "$tmpdir"/dot-config_source_url ]; then
+	    # replace CONFIG_DOTCONF_URL with one gotten from dhcp
+	    CONFIG_DOTCONF_URL=`cat "$tmpdir"/dot-config_source_url`
+	    echo "Got dot-config's URL ("$CONFIG_DOTCONF_URL") via DHCP"
+	else
+	    echo "dhcp_error" > "$tmpdir"/dot-config_status
+	    echo "Unable to get dot-config's URL via DHCP, using old dot-config"
+	    # apply old dot-config
+	    /wr/bin/apply_dot-config
+	    exit
+	fi
+    fi
+
     # replace IPADDR and MACADDR, to have a device-specific name
     macaddr=$(cat /sys/class/net/eth0/address)
     ipaddr=$(ifconfig eth0 | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
@@ -78,6 +112,11 @@ if [ -n "$CONFIG_DOTCONF_URL" ]; then
 	echo "download_error" > "$tmpdir"/dot-config_status
 	echo "Download error for dot-config \"$URL\", using old"
     fi
+elif [ -n "$DOTCONF_SOURCE_LOCAL" ]; then
+    echo "local" > "$tmpdir"/dot-config_source
+    echo "Using local dot-config"
+else
+    echo "Unknown dot-config source. Using local dot-config"
 fi
 
 # Finally, apply what we have, be it old or new

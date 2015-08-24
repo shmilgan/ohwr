@@ -195,6 +195,12 @@ static void get_dotconfig_source(void)
 		if (!strncmp(buff, "remote", 10))
 			wrsBootStatus_s.wrsConfigSource =
 						WRS_CONFIG_SOURCE_REMOTE;
+		else if (!strncmp(buff, "try_dhcp", 10))
+			wrsBootStatus_s.wrsConfigSource =
+						WRS_CONFIG_SOURCE_TRY_DHCP;
+		else if (!strncmp(buff, "force_dhcp", 10))
+			wrsBootStatus_s.wrsConfigSource =
+						WRS_CONFIG_SOURCE_FORCE_DHCP;
 		else if (!strncmp(buff, "local", 10))
 			wrsBootStatus_s.wrsConfigSource =
 						WRS_CONFIG_SOURCE_LOCAL;
@@ -208,7 +214,7 @@ static void get_dotconfig_source(void)
 					WRS_CONFIG_SOURCE_ERROR_MINOR;
 	}
 
-	/* read hostname and file name only when config is not local */
+	/* read dot-config's URL only when config source is not local */
 	if (wrsBootStatus_s.wrsConfigSource != WRS_CONFIG_SOURCE_LOCAL) {
 		/* read URL used to get dotconfig */
 		f = fopen(DOTCONFIGDIR "/" DOTCONFIG_SOURCE_URL, "r");
@@ -238,6 +244,9 @@ static void get_dotconfig_source(void)
 		else if (!strncmp(buff, "download_error", 20))
 			wrsBootStatus_s.wrsBootConfigStatus =
 						WRS_CONFIG_STATUS_DL_ERROR;
+		else if (!strncmp(buff, "dhcp_error", 20))
+			wrsBootStatus_s.wrsBootConfigStatus =
+						WRS_CONFIG_STATUS_DHCP_ERROR;
 		else
 			wrsBootStatus_s.wrsBootConfigStatus =
 						WRS_CONFIG_STATUS_ERROR;
