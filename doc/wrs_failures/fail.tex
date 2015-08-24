@@ -510,8 +510,7 @@ between devices connected to the ports.\\
 				\texttt{WR-SWITCH-MIB::wrsRestartReason}\\
 				\texttt{WR-SWITCH-MIB::wrsRestartReasonMonit}\\
 				\texttt{WR-SWITCH-MIB::wrsConfigSource}\\
-				\texttt{WR-SWITCH-MIB::wrsConfigSourceHost}\\
-				\texttt{WR-SWITCH-MIB::wrsConfigSourceFilename}\\
+				\texttt{WR-SWITCH-MIB::wrsConfigSourceUrl}\\
 				\texttt{WR-SWITCH-MIB::wrsBootHwinfoReadout}\\
 				\texttt{WR-SWITCH-MIB::wrsBootLoadFPGA}\\
 				\texttt{WR-SWITCH-MIB::wrsBootLoadLM32}\\
@@ -537,15 +536,13 @@ between devices connected to the ports.\\
 				to be verified before being applied. If downloading or verification has
 				failed an alarm is raised.
 			\item [] \underline{SNMP objects}:\\
-				\texttt{WR-SWITCH-MIB::wrsBootSuccessful} - status word informing
-				whether switch booted correctly\\
-				\texttt{WR-SWITCH-MIB::wrsConfigSource} - source of a dot-config,
-				local or protocol which was used do fetch the dot-config\\
-				\texttt{WR-SWITCH-MIB::wrsConfigSourceHost} - address of a server
-				providing dot-config (if not local)\\
-				\texttt{WR-SWITCH-MIB::wrsConfigSourceFilename} - path to the dot-config
-				on a server (if not local)\\
-				\texttt{WR-SWITCH-MIB::wrsBootConfigStatus} - result of the dot-config verification
+				\texttt{WR-SWITCH-MIB::wrsBootSuccessful} -- status word informing
+					whether switch booted correctly\\
+				\texttt{WR-SWITCH-MIB::wrsConfigSource} -- source of a dot-config,
+					local or remote\\
+				\texttt{WR-SWITCH-MIB::wrsConfigSourceUrl} -- path to the dot-config
+					on a server (if not local)\\
+				\texttt{WR-SWITCH-MIB::wrsBootConfigStatus} -- result of the dot-config verification
 		\end{packed_enum}
 
 \subsubsection{\bf Any userspace daemon has crashed/restarted}

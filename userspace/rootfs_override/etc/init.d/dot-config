@@ -12,11 +12,11 @@ tmpdir=/tmp
 
 if [ -f $dotconfig ]; then
     . $dotconfig
-    echo "local" > "$tmpdir"/dot-config_proto
+    echo "local" > "$tmpdir"/dot-config_source
     #assume that local config is always ok
     echo "config_ok" > "$tmpdir"/dot-config_status
 else
-    echo "no_config" > "$tmpdir"/dot-config_proto
+    echo "no_config" > "$tmpdir"/dot-config_source
     echo "config_error" > "$tmpdir"/dot-config_status
 fi
 
@@ -30,6 +30,7 @@ fi
 
 # If we are expected to get a new dot-conf, do it
 if [ -n "$CONFIG_DOTCONF_URL" ]; then
+    echo "remote" > "$tmpdir"/dot-config_source
     # replace IPADDR and MACADDR, to have a device-specific name
     macaddr=$(cat /sys/class/net/eth0/address)
     ipaddr=$(ifconfig eth0 | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
@@ -46,11 +47,8 @@ if [ -n "$CONFIG_DOTCONF_URL" ]; then
     host=$(echo $URL | cut -d/ -f 3)
     filename=$(echo $URL | cut -d/ -f 4-)
 
-    # save proto, host and filename of dot-config, to be used by SNMPd
-    echo "$proto" > "$tmpdir"/dot-config_proto
-    echo "$host" > "$tmpdir"/dot-config_host
-    echo "$filename" > "$tmpdir"/dot-config_filename
-
+    # save URL of dot-config, to be used by SNMPd
+    echo "$URL" > "$tmpdir"/dot-config_source_url
     rm -f $tmpconfig
     case $proto in
 	http|ftp)

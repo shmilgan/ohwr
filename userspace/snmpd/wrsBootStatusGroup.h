@@ -4,18 +4,15 @@
 #define WRSBOOTSTATUS_CACHE_TIMEOUT 5
 #define WRSBOOTSTATUS_OID WRS_OID, 7, 1, 2
 
+#define WRS_RESTART_REASON_MONIT_LEN 32
 #define WRS_RESTART_REASON_ERROR 1		/* error */
 #define WRS_RESTART_REASON_MONIT 7		/* ok */
 
-#define WRS_CONFIG_SOURCE_HOST_LEN 64
-#define WRS_CONFIG_SOURCE_FILENAME_LEN 128
-#define WRS_CONFIG_SOURCE_PROTO_ERROR 1		/* error */
-#define WRS_CONFIG_SOURCE_PROTO_ERROR_MINOR 2	/* warning */
-#define WRS_CONFIG_SOURCE_PROTO_LOCAL 3		/* ok */
-/* below proto are ok, if host and filename not empty */
-#define WRS_CONFIG_SOURCE_PROTO_TFTP 4
-#define WRS_CONFIG_SOURCE_PROTO_HTTP 5
-#define WRS_CONFIG_SOURCE_PROTO_FTP 6
+#define WRS_CONFIG_SOURCE_URL_LEN 128
+#define WRS_CONFIG_SOURCE_ERROR 1		/* error */
+#define WRS_CONFIG_SOURCE_ERROR_MINOR 2		/* warning */
+#define WRS_CONFIG_SOURCE_LOCAL 3		/* ok */
+#define WRS_CONFIG_SOURCE_REMOTE 4		/* ok */
 
 #define WRS_CONFIG_STATUS_OK 1			/* ok */
 #define WRS_CONFIG_STATUS_ERROR 2		/* error */
@@ -46,8 +43,8 @@ struct wrsBootStatus_s {
 	char wrsFaultIP[11];	/* faulty instruction pointer as string */
 	char wrsFaultLR[11];	/* link register at fault as string */
 	int32_t wrsConfigSource;
-	char wrsConfigSourceHost[WRS_CONFIG_SOURCE_HOST_LEN+1];
-	char wrsConfigSourceFilename[WRS_CONFIG_SOURCE_FILENAME_LEN+1];
+	char wrsConfigSourceUrl[WRS_CONFIG_SOURCE_URL_LEN+1];
+	char wrsRestartReasonMonit[WRS_RESTART_REASON_MONIT_LEN+1];
 	int32_t wrsBootConfigStatus;
 	int32_t wrsBootHwinfoReadout;
 	int32_t wrsBootLoadFPGA;
@@ -55,7 +52,6 @@ struct wrsBootStatus_s {
 	int32_t wrsBootKernelModulesMissing;
 	int32_t wrsBootUserspaceDaemonsMissing;
 	int32_t wrsGwWatchdogTimeouts;
-	char wrsRestartReasonMonit[32];
 };
 
 extern struct wrsBootStatus_s wrsBootStatus_s;

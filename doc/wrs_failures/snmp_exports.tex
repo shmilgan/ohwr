@@ -186,8 +186,9 @@ this section can have one of the following values:
 	  \item \texttt{wrsFaultIP} -- Not implemented
 	  \item \texttt{wrsFaultLR} -- Not implemented
 	  \item \texttt{wrsConfigSource}
-	  \item \texttt{wrsConfigSourceHost}
-	  \item \texttt{wrsConfigSourceFilename}
+	  \item \texttt{wrsConfigSourceUrl}
+	  \item \texttt{wrsRestartReasonMonit} -- Process that caused \texttt{monit}
+	    to trigger a restart.
 	  \item \texttt{wrsBootConfigStatus}
 	  %below boot status values
 	  \item \texttt{wrsBootHwinfoReadout}
@@ -200,8 +201,7 @@ this section can have one of the following values:
 	  \item \texttt{wrsGwWatchdogTimeouts} -- Number of times the watchdog has
 	    restarted the HDL module responsible for the Ethernet switching process
 	    (issue \ref{fail:data:swcore_hang}).
-	  \item \texttt{wrsRestartReasonMonit} -- Process that caused \texttt{monit}
-	    to trigger a restart.
+
 	\end{itemize}
       \item \texttt{wrsTemperatureGroup}
 	\begin{itemize}
