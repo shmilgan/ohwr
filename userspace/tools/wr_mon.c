@@ -516,6 +516,7 @@ int main(int argc, char *argv[])
 			case 'w': /* for the web interface */
 				read_hal();
 				show_unadorned_ports();
+				show_temperatures();
 				exit(0);
 			case 'q': break; /* done in wrs_msg_init() */
 			case 'v': break; /* done in wrs_msg_init() */

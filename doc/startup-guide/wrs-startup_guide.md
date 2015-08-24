@@ -80,6 +80,9 @@ conditions
 
  1.2   02/10/2014   Benoit Rat\         Updating for v4.1 release
                     [Seven Solutions]
+
+ 1.3   05/08/2014   Benoit Rat\         Updating for v4.2 release
+                    [Seven Solutions]
 ------------------------------------------------------------------------
 
 \clearpage
@@ -136,7 +139,7 @@ a White Rabbit Network. For more details on advanced topics please
 refers to the [Advanced configuration section](#advanced-configuration) or
 to the other manuals.
 
-This document will refer only to [WRS] v3.3 and v3.4.
+This document will refer only to [WRS] with hardware v3.3 and v3.4.
 
 The Official Manuals
 ---------------------
@@ -203,10 +206,10 @@ Front panel v3.4 (Legend)
 #. Status LED
 #. Power LED
 #. PPS output
-#. CLK1 output (10MHz from PLL)
-#. CLK2 output (10MHz from FPGA)
+#. CLK1 output (62.5 MHz PLL)
+#. CLK2 output (Auxiliary clock, default is 10MHz)
 #. 10MHz reference clock input (GPS/Cesium)
-#. PPS in
+#. PPS reference input
 #. Ethernet 100Mbps Management Port
 
 
@@ -263,41 +266,99 @@ The device is factory configured with the following default settings:
 	* MAC1 corresponds to the managment port (RJ45).
 	* MAC2 corresponds to the first SFP port ($wr[0-17] \Leftrightarrow \textrm{MAC2}+[0-17]$).
 * WR mode is **BoundaryClock** (Simple Master)
-	* The first two ports (SFPs 1 & 2) are configured as WR slave.
-	* The other ports (SFPs [3-18]) are configured as WR master.
+	* The first port (SFP 1) is configured as WR slave.
+	* The other ports (SFPs [2-18]) are configured as WR master.
 * SSH user: **root**
 * SSH password: (empty/just press enter)
 * Boot method: from Nandflash firmware
-* Web Management Interface user: **admin**
+* Web Management Interface user: **root**
 * Web Management Interface password: (empty)
 
 
 Quick Startup
 --------------
 
-To get the switch quickly working we recommend you to:
+To quickly get the switch working we recommend you to:
 
 1. Plug the *Ethernet 100Mpbs Management Port* of the switch to a DHCP network using RJ45 patch-cord.
 #. Plug the power cable to the *Power Plug*.
 
-After all connections have been made, toggle the power-switch on to turn
+After these connections have been made, toggle the power-switch on to turn
 the device on. After the power on, the [WRS] should behave as follows:
 
 3. The *Power LED* goes green
 #. After 15s, the *Status LED* goes orange which means that the [WRS]'s kernel
 has started.
 #. Then the fan start working which means that FPGA has been correctly programmed.
-#. Finally, it goes green when everything is succesful (PLL is locked).
+#. Finally, it goes green when everything is successful (PLL is locked).
 
 You have now the [WRS] ready to be used in a WR network.
 
-7. Connect the blue SFPs (AXGE-1254-0531) to the SFP port 1 and 2 of the
-[WRS]. These SFPs are the ones that will receive synchronization message
-from another master [WRS] or from the grandmaster [WRS]. If you only have
-one switch in your network you might configure it in the
+7. Connect the blue SFP (AXGE-1254-0531) to the SFP port 1 of the
+[WRS]. This port is the one that will receive synchronization 
+from another [WRS] master or from the [WRS] grandmaster. If you only have
+one switch in your network you might configure it in 
 [GrandMaster mode](#grandmaster-mode).
-#. You can plug the other SFP ports [2-16] with violet SFPs (AXGE-3454-0531)
+#. You can plug the other SFP ports [2-18] with violet SFPs (AXGE-3454-0531)
 to the WR node such as [SPEC], [SVEC], ...
+
+
+Obtain the WRS IP
+-------------------
+
+In order to login to the [WRS] using SSH or through the web interface you need to obtain
+the IP of the ethernet management port. By default, this port automatically gets an
+ IP using the DHCP protocol. 
+If you don't have any DHCP router/server in your network, please refer to the [non-DHCP](#non-dhcp-user) section.
+
+Then to retrieve the management IP of the [WRS] you can:
+
+* [Connect to ttyACM0](#login-via-usb) to retrieve the
+IP (`ipconfig eth0`).
+* Open the interface of your DHCP server, and find the IP associated to your [WRS]
+MAC address.
+* Scan your local network using nmap (i.e, `sudo nmap -sP 192.168.1.0/24`) and 
+read the output `arp -n` to associate the corresponding IP of the [WRS] to its MAC address.
+
+
+Login using the Web Management Interface (WMI)
+-----------------------
+
+The easiest way to access and manage the [WRS] is through its web interface by 
+using the ethernet management port. 
+
+The access should be carried out by a network browser (Mozilla Firefox and Google Chrome supported) as it follows:
+
+1. First you need to obtain the IP of [WRS] as explained [previously](#obtain-the-wrs-ip).
+
+1. Open your browser and type the IP address (i.e. 192.168.1.50) of the [WRS]. 
+
+![Web Management Interface - Login/Dashboard](WMI-login.png)
+
+1. After accessing the **WMI**, you should enter the login using *root*'s password, otherwise you will be only able to see the Dashboard info.
+By default there is no password, so you should leave this **field empty**. For this reason it is strongly recommended to change the password.
+
+### Changing root password.
+
+In order to change the **WMI** password you just need to login, then click on "**User: root**" on the left side of the webpage.
+
+In the *USER ADMINISTRATION* panel, you have to enter your old password, the new password and its confirmation.
+Once you submit the new password you will be redirected to the main screen and logged out.
+
+> **Notes**: By changing the password through the WMI you will also change the 
+`root` user password to connect through SSH.
+
+Login via SSH
+--------------
+
+If the [WRS] IP is for example `192.168.1.50` you might connect using:
+
+	ssh root@192.168.1.50
+
+By default there is no password, therefore you should just press enter when a password 
+is requested.
+
+
 
 USB Connections
 ----------------
@@ -309,7 +370,7 @@ a. Management Mini-USB (B) port
 b. FPGA Mini-USB (B) UART
 c. ARM Mini-USB (B) UART
 
-These ports correspond themselve to different devices on your computer.
+Under a linux system, these ports correspond themselves to different devices on your computer.
 
 a. ttyACM0 (when the *Status LED* is green)
 b. ttyUSB0
@@ -332,7 +393,7 @@ minicom -D /dev/ttyUSB1 -b 115200
 [^minicom]: In Debian-like distribution you can install minicom by executing
 `sudo apt-get install minicom`.
 
-> ***Note***: ttyUSB0 and ttyUSB1 usally correspond respectively to FGPA and ARM UART.
+> ***Note***: ttyUSB0 and ttyUSB1 usually correspond respectively to FGPA and ARM UART.
 However this order can change dependably on how you plug the cable.
 
 Login via USB
@@ -347,28 +408,9 @@ instead of the ARM UART.
 minicom -D /dev/ttyACM0 -b 115200
 ~~~~~~~~~~
 
-The ARM UART is usually employed during development and monitoring because
-the kernel and daemons messages are sent to this console.
+The ARM UART is usually employed for development or monitoring because
+the log messages are usually printed to this console.
 
-
-Login via SSH
---------------
-
-The Ethernet management port automatically obtains its IP using the DHCP
-protocol. If you don't have any DHCP router/server in your network please
-refer to the [non-DHCP](#non-dhcp-user) section.
-
-To obtain the IP of the [WRS] you can connect to your DHCP server interface
-and retrieve the IP, or [connect to ttyACM0](#login-via-usb) to retrieve the
-IP (`ipconfig eth0`).
-
-If the [WRS] IP is for example `192.168.1.50` you might connect using:
-
-
-
-	ssh root@192.168.1.50
-
-And press enter when requesting the password.
 
 
 Login using Windows
@@ -398,67 +440,154 @@ by the one in your subnetwork.
 ![Putty - SSH connection](putty-SSH.png)
 
 
-Login using the Web Management Interface (WMI)
------------------------
 
-If you want to access and manage the [WRS] using the web interface, it is necessary to connect the [WRS] manager ethernet port to
-your local network and obtain the IP as explained in [login via SSH](#login-via-ssh).
-The access should be carried out by a network browser (Mozilla Firefox and Google Chrome supported) as it follows:
 
-1. Open your browser and type the IP address (i.e. 192.168.1.50) of the [WRS]. By default, the network IP configuration
-is provided by the DHCP server in the same network and can be retrieved from it.
 
-![Web Management Interface - Login](wwwlogin.png)
 
-2. After accessing the **WMI**, you should enter the web interface user and password, which is not
-same for the SSH connection, otherwise you will be only able to see the Dashboard info.
-By default the user is **admin** with no password. For this reason it is strongly recommended to change the password.
 
-In order to change the **WMI** password you just need to click on "**User: admin**" on the left side of the webpage.
-You have to enter your username (**admin**), old password, new password and repeat the new password.
-Once you submit the new password you will be redirected to the main screen and logged out.
+
+Configurations
+==================
+
+We strongly suggest you to configure the switch using the Web Management Interface.
 
 
 Web Management Interface Features:
 -------------------
 
-**WMI** is a web interface that allows the [WRS] management from a web browser. It displays the main configuration and status of the main services and programms that are available for the switch, such as endpoints' mode and calibration status, SFP calibration, PTP, SNMP, VLANs, etc. It acts as an abstraction layer between the back-end scritps and programs in */wr/bin/* folder, making the WR switch management easier for the user.
+**WMI** is a web interface that allows the [WRS] management from a web browser. 
+It displays the configuration and status of the main services and programs
+that are available for the switch.
 
-![Web Management Interface - Switch Management](wwwmanagement.png)
+It acts as an abstraction layer between the `dot-config` file and the programs in `/wr/bin/` folder,
+making the WR switch management easier for the user. It also gives the possibility to restore/backup
+a specific configuration by saving/loading the `dot-config` file.
+
+![Web Management Interface - Switch Management](WMI-mngt.png)
 
 List of all the actions that can be performed by using the **WMI**:
 
-- Display info: HW information, services status and main configuration.
-- Stop/run services: PPSi, WRSW_HAL, NTP.
-- NTP server setup.
-- Modify endpoint wr_master/wr_slave mode.
-- VLAN setup.
-- White-Rabbit timing.
-- Modify maximum filesize of uploaded files to the switch.
-- PPSi daemon configuration: clock class, clock accuracy, etc.
-- Terminal simulation avoiding SSH connections.
-- Login system.
-- Modify login password.
-- Load lm32 and FPGA binaries into the switch.
-- Switch reboot.
-- Backup and restore configuration files for services (PPSi, HAL, SNMP, etc).
-- Restore configuration files from tarball.
-- Flash firmware.
-- Backup firmware.
+- **Dashboard**    : Display info about the WRS such as HW information, services status and main configuration.
+- **Network Setup**: Configuration of the ethernet management port (DHCP, Static, etc.)
+- **WR-PPSi Setup**: Configuration about the timing network: WR mode, NTP server, PPSi clock class, etc.
+- **Endpoint Mode**: Modify the mode for each port (wr_master/wr_slave/auto/none).
+- **VLAN setup**   : Let the user configure specific VLANs for different ports.
+- **Switch Managment**: Let the user load/backup a specific configuration, reboot switch, disable system monitor.
+- **Advanced Tab** :
+    - Calibrate the SFP
+    - Configure the endpoint
+    - Calibrate the endpoint
+    - Load lm32 and FPGA binaries into the switch.
+    - Configure the files for the login system.
+    - Open a virtual console that emulate a terminal connection.
+    - **Flash a new firmware**
 
-If you want to know more about each section you can click the help icon
+
+> **Notes**:  If you want to know more about each section you can click the help icon
 that you will find on the top-right corner of each page.
+
+
+GrandMaster mode
+-----------------
+
+![White Rabbit Network](wr_network2.jpg)
+
+In a White Rabbit network, almost all the switches are configured as boundary clock (a.k.a Simple Master)
+which is the default configuration. They receive a clock from an upper layer, and transmit it to other switches or nodes (lower layer).
+However the "top" switch connected to the GPS signal is called the **GrandMaster**
+and is configured in a specific way.
+
+First you need to connect the 10MHz and PPS from a clock source to the switch SMC inputs.
+Please consult the [wr_external_reference.pdf] document to understand what kind and shape 
+of signals is needed as input for grand master mode.
+
+Then to configure a [WRS] as GrandMaster you must:
+
+### Using the web-interface
+
+You can find the option to select the switch in grandmaster mode in the configuration panel under the **WR-PPSi** tab.
+Once you have change the option, you should click on  *Save new configuration*, and
+wait until the WRS has reboot.
+
+![Web Management Interface - WR-PPSi configuration](WMI-wrppsi.png)
+
+> **Notes**: A NTP server should be provided for the grandmaster switch 
+so that we can distribute the current TAI seconds to the whole WR network
+
+### By editing the dot-config file in a terminal
+
+If you prefer to configure the [WRS] using a terminal you should open the `dot-config` file
+
+~~~~{.C}
+nano /wr/etc/dot-config
+~~~~~~~~
+
+And replace the following lines:
+
+~~~~{.Haskell}
+# CONFIG_TIME_GM is not set
+# CONFIG_TIME_FM is not set
+CONFIG_TIME_BC=y
+~~~~~~
+
+by 
+
+~~~~~~{.config}
+CONFIG_TIME_GM=y
+# CONFIG_TIME_FM is not set
+# CONFIG_TIME_BC is not set
+~~~~~~~
+
+and finally you need to `reboot` the switch.
+
+
+
+Non-DHCP user
+---------------
+
+If you have no DHCP server in your network you must connect to the [WRS]
+using the [login via USB method](#login-via-usb) and edit the `dot-config` file:
+
+~~~~{.bash}
+nano /wr/etc/dot-config
+~~~~~~~~~~~
+
+for example, in a `192.168.1.x` subnetwork you might replace the
+`CONFIG_ETH0_DHCP=y` by
+
+~~~~~{.bash}
+#
+# Local Network Configuration
+#
+# CONFIG_ETH0_DHCP is not set
+# CONFIG_ETH0_DHCP_ONCE is not set
+CONFIG_ETH0_STATIC=y
+
+#
+# Management port (eth0) Address
+#
+CONFIG_ETH0_IP="192.168.1.254"
+CONFIG_ETH0_MASK="255.255.255.0"
+CONFIG_ETH0_NETWORK="192.168.1.0"
+CONFIG_ETH0_BROADCAST="192.168.1.255"
+CONFIG_ETH0_GATEWAY="192.168.1.1"
+~~~~~~~~~~~~~~
+
+
+> ***Note:*** If you are willing to use TFTP script in a non-DHCP network, you
+must also statically set the IP in the bootloader configuration.
+
 
 
 Console tools:
 -------------------
 
-Once you are logged via a terminal you can use various tools to monitor the [WRS].
+If you are logged via a terminal you can use various tools to monitor/configure the [WRS].
 All these tools are found in `/wr/bin/` which is included in the `$PATH`.
 
 The following list resumes the most interesting commands:
 
- * `wrs_version`:	Print information about the SW & HW version of the [WRS].
+ * `wrs_version -t`:	Print information about the SW & HW version of the [WRS].
  * `rtu_stat`:	Routing Table Unit Statistic, returns the routing table information where we can find which MAC needs to be forwarded to which port. It also allows to add and delete entries.
  * `wr_mon`:	WR Switch Sync Monitor, outputs information about the state of WR syncrhonisation such as Phase Tracking, Master-Slave delay, link asymmetry, etc...
  * `wrs_vlans`: 	Creation and configuration of VLANs.
@@ -470,12 +599,24 @@ The SFP ports are labeled from 1 to 18 on the front panel but their correspondin
 network interface are named from `wr0` to `wr17`.
 
 
-Configurations
-==================
+Firmware updates
+------------------
 
-We strongly suggest you to configure the switch using the Web Management Interface.
-However if you prefer to configure it using a terminal just follow some examples below.
+Since the firmware v4.1 we have improved the update procedure and the
+switch is able to upgrade by itself.
 
+Just copy the firmware you have downloaded to the `/update/wrs-firmware.tar` in the  [WRS] switch.
+For instance you can do:
+
+	scp wr-switch-sw-v<X.X-YYYYMMDD>_binaries.tar root@192.168.1.50:/update/wrs-firmware.tar
+
+and then reboot the switch.
+
+You can also use the `Advanced Mode > Firmware` menu in the Web Interface to perform this step.
+
+![Web Management Interface - Updating the firmware](WMI-firmware.png)
+
+> ***Note:*** If you are upgrading from v3.3 or v4.0 please refer to [wrs-user-manual.pdf].
 
 Booting
 ------------
@@ -499,86 +640,6 @@ the [WRS] is booted you can place a `wrboot` script in your TFTP root
 folder and select the second option or you can edit the configuration
 (third option). Please find more explanations in the
 [wrs-user-manual.pdf]
-
-
-Non-DHCP user
----------------
-
-If you have no DHCP server in your network you must connect to the [WRS]
-using the [login via USB method](#login-via-usb) and then edit the
-`interfaces` file:
-
-~~~~{.bash}
-vi /etc/network/interfaces
-~~~~~~~~~~~
-
-for example, in a `192.168.1.x` subnetwork you might replace the
-`iface eth0 inet dhcp` by
-
-~~~~~{.bash}
-iface eth0 inet static
-     address 192.168.1.10
-     netmask 255.255.255.0
-     network 192.168.1.0
-     broadcast 192.168.1.255
-     gateway 192.168.1.1
-~~~~~~~~~~~~~~
-
-
-> ***Note:*** If you are willing to use TFTP script in a non-DHCP network, you
-must also statically set the IP in the bootloader configuration.
-
-
-GrandMaster mode
------------------
-
-![White Rabbit Network](wr_network2.jpg)
-
-In a White Rabbit network, almost all the switches are configured as master (a.k.a SimpleMaster)
-(default configuration). They transmit the clock signal that cames from other switches.
-However the "top" switch connected to the GPS signal is called the **GrandMaster**
-and is configured in a specific way.
-
-To configure a switch as GrandMaster you must edit[^viedit] the `wrsw_hal.conf` file
-
-~~~~{.C}
-vi /wr/etc/wrsw_hal.conf
-~~~~~~~~
-
-And uncommenting the timing.mode value the line below:
-
-~~~~{.Haskell}
-timing =  {
-	-- other values
-	mode = "GrandMaster"; -- grand-master with external reference
-};
-~~~~~~
-
-Finally you need to connect the 10MHz and PPS from a clock source to the switch SMC inputs, and reboot the switch.
-
-For a more detailed explanation on how to configure and connect the switch as GrandMaster, please consult the
-[wr_external_reference.pdf] document.
-
-
-[^viedit]: To edit in `vi`: `Ins` Insert text; `Esc` back to normal mode; `:wq` Save and Exit
-
-
-Firmware updates
-------------------
-
-Since the firmware v4.1 we have improved the update procedure and the
-switch is able to upgrade by itself.
-
-Just copy the firmware you have donwload to the `/update` folder of the switch.
-For instance you can do:
-
-	scp wr-switch-sw-v<X.X-YYYYMMDD>_binaries.tar root@192.168.1.50:/update/wrs-firmware.tar
-
-and then reboot the switch.
-
-You can also use the `Advanced Mode > Firmware` menu in the Web Interface to perform this step.
-
-> ***Note:*** If you are upgrading from v3.3 or v4.0 please refer to the old manual.
 
 Advanced configuration
 -----------------------
@@ -809,7 +870,6 @@ References
 * [wr-switch-testing]: Project for testing the switch itself
 * [SFPs Wiki]: Type of SFP supported by the [WRS]
 * [latest stable release]: http://www.sevensols.com/dl/wr-switch-sw/bin/latest_stable.tar.gz
-* [flashing package]: http://www.sevensols.com/dl/wrs-flashing/latest_stable.tar.gz
 
 
 <!-- List of links -->

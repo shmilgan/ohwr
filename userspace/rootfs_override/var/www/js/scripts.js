@@ -55,6 +55,7 @@ function showPopup(url) {
  * Reboots the switch
  * 
  * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
+ * @author Benoit Rat <benoit@sevensols.com>
  *
  * Reboots the switch using the rebooter.php file.
  * This has been done to display the "rebooting" message after any
@@ -64,10 +65,19 @@ function showPopup(url) {
 $(document).ready(
 		function() {
 			setTimeout(function() {
-				var path = window.location.pathname;
-				var page = path.split("/").pop();
-				if (page == "reboot.php"){
-					$('#rebootingtext').text("Rebooting WRS. The web interface will refresh automatically after 50s.");
+				var pageid=$('body').attr('id');
+				if (pageid=="reboot")
+				{
+					//Obtain timeout from the hidden input (#reboot_to) or set it by default to 40s
+					tout=$('#reboot_to').val()
+					if($.isNumeric(tout)==false || tout < 30) tout=40
+					
+					//Improve how to print the timeout when more than 1 minute
+					if(tout>60) tout_str=Math.floor(tout/60)+"m "+(tout%60)+"s."
+					else tout_str=tout+"s."
+					
+					//Update the HTML and call the rebooter.
+					$('#rebootingtext').text("Rebooting WRS. The web interface will refresh automatically after "+tout_str);
 					$('#rebooting').load('rebooter.php');
 				}
 			}, 1500);
@@ -77,18 +87,24 @@ $(document).ready(
  * Redirects users to index.php
  * 
  * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
+ * @author Benoit Rat <benoit@sevensols.com>
  *
- * 50 seconds after the execution of the reboot cmd, the web browser 
+ * tout seconds after the execution of the reboot cmd, the web browser 
  * reloads automatically the web interface.
  * 
  */
 $(document).ready(
 		function() {
+			var pageid=$('body').attr('id');
+			if (pageid=="reboot")
+			{
+				//Obtain timeout from the hidden input (#reboot_to) or set it by default to 40s
+				tout=$('#reboot_to').val()
+				if($.isNumeric(tout)==false || tout < 30) tout=40
+			
+			//Main timeout to refresh the webpage
 			setTimeout(function() {
-				var path = window.location.pathname;
-				var page = path.split("/").pop();
-				if (page == "reboot.php"){
-					window.location.href = "index.php";
-				}
-			}, 50000);
+				window.location.href = "index.php";
+			}, tout*1000);
+			}
 		});

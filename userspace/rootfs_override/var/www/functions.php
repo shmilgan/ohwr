@@ -104,14 +104,14 @@ function wrs_header_ports(){
 	echo '<tr class="status">';
 	for($i=1; $i<18*3; $i=$i+3){
 
-		if (!strstr($ports[($i+1)],"NoLock")){
+		if (strstr($ports[($i+1)],"Locked")){
 			$mode="locked";
 		}else{
 			$mode="unlocked";
 		}
 		echo '<th>'."<img class='syntonization ".$mode."' SRC='img/".$mode.".png' alt='syntonization: ".$mode."', title = 'syntonization: ".$mode."'>";
 
-		if (!strstr($ports[($i+2)],"Uncalibrated")){
+		if (strstr($ports[($i+2)],"Calibrated")){
 			$mode="calibrated";
 			$img="check.png";
 		}else{
@@ -168,25 +168,33 @@ function wrs_main_info(){
 	$Monitor = check_monit_status() ? '[on] ' : '[off] ';
 
 	$WRSmode = check_switch_mode();
-	if(!strcmp($WRSmode, "GM"))
+	$WRSmode_xtra="";
+	if(!strcmp($WRSmode, "GM")) {
 		$WRSmode="GrandMaster";
+		$ports = shell_exec("cat /tmp/ports.conf");
+		if(empty($ports)) $WRSmode_xtra="<br>Waiting PPS/10MHz ...";
+	}
 	else if (!strcmp($WRSmode, "BC"))
 		$WRSmode="Boundary Clock";
 	else if (!strcmp($WRSmode, "FM"))
 		$WRSmode="Free-Running Master";
 	else
-		$WRSmode="GrandMaster";
+		$WRSmode="Unknown";
+	
+	#Obtain the temperatures using the last line of (wr-mon -w)
+	$temperatures=shell_exec("cat /tmp/ports.conf 2>/dev/null | tail -1");
 
 	// Print services table
 	echo '<br><table class="'.$class.'" id="'.$formatID.'" width="100%">';
 	echo '<tr><th>'.$infoname.'</th></tr>';
 
-	echo '<tr><td>PTP Mode</td><td> <a href="ptp.php">'.$WRSmode.'</td></tr>';
+	echo '<tr><td>PTP Mode</td><td> <a href="ptp.php">'.$WRSmode.'</a>'.$WRSmode_xtra.'</td></tr>';
+	echo '<tr><td>NTP Server</td><td> <a href="management.php">'.$NTP.'</td></tr>';
 	echo '<tr><td>White-Rabbit Date</td><td>'.$wr_date.'</td></tr>';
 	echo '<tr><td>PPSi</td><td>'.$PPSi.'</td></tr>';
 	echo '<tr><td>System Monitor</td><td> <a href="management.php">'.$Monitor.'</td></tr>';
 	echo '<tr><td>Net-SNMP Server</td><td>'.$SNMP.'( port '.$SNMP_port.")</td></tr>";
-	echo '<tr><td>NTP Server</td><td> <a href="management.php">'.$NTP.'</td></tr>';
+	if(!empty($temperatures)) echo '<tr><td>Temperature (ºC)</td><td>'.$temperatures.'</td></tr>';
 	echo '</table>';
 
 }
@@ -677,7 +685,7 @@ function wrs_management(){
 					unlink($uploadfile);
 					//Reboot switch
 					sleep(1);
-					wrs_reboot();
+					wrs_reboot(90); //Updating only one part of the firmware take ~90s.
 				}
 				else if(substr($uploadfname,0,14)=="wr-switch-sw-v" && substr($uploadfname,-13)=="_binaries.tar")
 				{
@@ -685,7 +693,7 @@ function wrs_management(){
 					unlink($uploadfile);
 					//Reboot switch
 					sleep(1);
-					wrs_reboot();
+					wrs_reboot(150); //120s should be enough but we prefer to keep safe
 				}
 				else
 				{
@@ -1250,9 +1258,9 @@ function echoSelectedClassIfRequestMatches($requestUri)
         return 'class="selected"';
 }
 
-function wrs_reboot(){
+function wrs_reboot($timeout=40){
 	sleep(1);
-	header ('Location: reboot.php');
+	header ('Location: reboot.php?timeout='.$timeout);
 }
 
 /*
