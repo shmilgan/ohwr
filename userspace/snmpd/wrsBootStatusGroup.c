@@ -228,6 +228,9 @@ static void get_dotconfig_source(void)
 			 * wrsConfigSourceHost */
 			strcpy(wrsBootStatus_s.wrsConfigSourceUrl, "error");
 		}
+	} else {
+		memset(wrsBootStatus_s.wrsConfigSourceUrl, 0,
+		       sizeof(wrsBootStatus_s.wrsConfigSourceUrl));
 	}
 
 	f = fopen(DOTCONFIGDIR "/" DOTCONFIG_STATUS, "r");
