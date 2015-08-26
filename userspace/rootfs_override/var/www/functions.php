@@ -377,6 +377,21 @@ function wrs_interface_setup(){
 	else
 		return "dhcponly";
 }
+
+function wrs_dotconf_source_setup(){
+
+    if(!empty($_SESSION["KCONFIG"]["CONFIG_DOTCONF_SOURCE_LOCAL"]))
+		return "source_local";
+	else if (!empty($_SESSION["KCONFIG"]["CONFIG_DOTCONF_SOURCE_REMOTE"]))
+		return "source_remote";
+	else if (!empty($_SESSION["KCONFIG"]["CONFIG_DOTCONF_SOURCE_TRY_DHCP"]))
+		return "source_try_dhcp";
+	else if (!empty($_SESSION["KCONFIG"]["CONFIG_DOTCONF_SOURCE_FORCE_DHCP"]))
+		return "source_force_dhcp";
+	else
+		return "source_try_dhcp";
+}
+
 /*
  * It checks whether the filesystem is writable or not.
  *
@@ -789,15 +804,7 @@ function wrs_management(){
 
 			sleep(2);
 			header('Location: management.php');
-
-		} else if (!strcmp($cmd, "kconfigURL")){
-			$_SESSION["KCONFIG"]["CONFIG_DOTCONF_URL"] = $_POST["dotconfigURL"];
-			save_kconfig();
-			apply_kconfig();
-			sleep(2);
-			wrs_reboot();
 		}
-
 }
 
 /**
@@ -1003,9 +1010,16 @@ function wrs_display_help($help_id, $name){
 		$message = "<p>
 			Options: <br>
 			- <b>Reboot switch</b>: Reboots the switch.<br>
-			- <b>System Monitor</b>: Enable/Disable the monitor daemon.<br>
-			- <b>Load Configuration Files</b>: Load a backup dotconfig file to the WRS.<br>
-			- <b>Load Dotconfig from URL</b>: Set this field if you want to load dotconfig from an URL at boot stage.<br>
+			- <b>System Monitor</b>: Enable/Disable the monit daemon.<br>
+			- <b>Dot-config source during start</b>: Set the source of dot-config file at WRS startup. <br>
+			  -- <b>Local</b>: The White Rabbit Switch is configured at run-time, according to a dot-config file stored locally.
+			  If you select this option, dot-config is not replaced at run time.<br>
+			  -- <b>Remote</b>: Use provided URL to the dot-config.<br>
+			  -- <b>Force DHCP</b>: Retrieve a URL to the dot-config via DHCP at boot. The URL can be configured in the \"filename\"
+			  configuration field of the DHCP server.<br>
+			  -- <b>Try DHCP</b>: The same as Force DHCP, but this option does not cause errors in SNMP's objects if the switch
+			  fails to retrieve the URL to the dot-config via DHCP.<br>
+			  - <b>Load Configuration Files</b>: Upload a backup dotconfig file to the WRS and reboot.<br>
 			- <b>Backup Configuration Files</b>: Downloads a copy of dotconfig file, which contains all the setup of the WRS.<br>
 			</p>";
 	} else if (!strcmp($help_id, "ptp")){
@@ -1113,12 +1127,19 @@ function wrs_display_help($help_id, $name){
 		$message = str_replace("\n", "<br>", $message);
 	} else if (!strcmp($help_id, "logs")){
 		$message = "<p>Log files for the following services: <br>
-					- <b>HAL daemon<br>
-					- <b>RTU daemon<br>
-					- <b>PPSi daemon<br>
-					- <b>WRS Watchdog status<br>
-					- <b>System Monitor<br>
-					- <b>SNMP service<br>
+					- <b>HAL daemon</b>, <b>RTU daemon</b>, <b>PPSi daemon</b>, <b>WRS Watchdog status</b> -  The string can
+					  be a pathname (e.g. /dev/kmsg) or a &lt;facility&gt;.&lt;level&gt; spefification like \"daemon.debug\".
+					  An empty strings is used to represent no logging (like /dev/null). Please note that unknown facility
+					  names will generate a runtime error on the switch.<br>
+					- <b>Monit</b> - The string can be a pathname (e.g. /dev/kmsg) or a \"syslog\" string. An empty strings
+					  is used  to represent no logging. If it is needed to select facility and level please leave here empty
+					  string and change /etc/monitrc file directly. Please note that unknown facility names will generate a
+					  runtime error on the switch.<br>
+					- <b>SNMP service</b> - The string can be a pathname (e.g. /dev/kmsg) or a valid snmpd log option (without -L).
+					  \"sd\" or \"s daemon\" will forward messages to syslog with daemon as facility. To set level (i.e. 5) use
+					  \"S 5 daemon\". For details please check \"man snmpcmd\". An empty strings is used  to represent no
+					  logging (like /dev/null). Please note that unknown facility names will generate a runtime error on the
+					  switch.<br>
 					</p>";
 	}
 
