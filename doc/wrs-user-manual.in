@@ -336,7 +336,8 @@ configuration file each time it is booted, and applies the choices
 before starting any service.  The name of the configuration file can
 include the @sc{mac} or @sc{ip} address of the device, to allow
 running several switches with different configurations in the same
-network.
+network. The URL to the configuration file can also be retrieved from DHCP
+server.
 
 @c ==========================================================================
 @node The Configuration File
@@ -352,12 +353,39 @@ The configuration step creates @t{.config}, that you can copy to your
 @sc{wrs} as @t{/wr/etc/dot-config}. After reboot, you'll see your
 choices in effect.
 
-The first configuration choice is @t{CONFIG_DOTCONF_URL}.  If the
-selected string is not empty, the Switch will download a new @t{dot-config}
-file, and replace the copy in local storage if it is different. If
-the string is empty, no network access is performed.
+The first configuration choice is about source of the @t{dot-config} file
+(items starting with @t{CONFIG_DOTCONF_SOURCE_}).  The following @t{dot-config}
+sources are implemented in current version:
+@table @t
 
-@t{CONFIG_DOTCONF_URL} is of the form
+@item CONFIG_DOTCONF_SOURCE_LOCAL
+
+	Use local @t{dot-config} file stored in @t{/wr/etc/dot-config}.
+        In this case no network access is performed.
+
+@item CONFIG_DOTCONF_SOURCE_REMOTE
+
+	Get a @t{dot-config} file from the URL provided in @t{CONFIG_DOTCONF_URL}.
+
+@item CONFIG_DOTCONF_SOURCE_FORCE_DHCP
+	Get a URL to a @t{dot-config} file from a DHCP server.
+        The URL can be configured in the ``@t{filename}'' configuration field
+        of the DHCP server. The configured URL has to be in the same form as
+        @t{CONFIG_DOTCONF_URL}.
+
+@item CONFIG_DOTCONF_SOURCE_TRY_DHCP
+	The same as @t{CONFIG_DOTCONF_SOURCE_FORCE_DHCP}, but this option does
+        not cause errors in SNMP's objects if the switch fails to retrieve the
+        URL to the @t{dot-config} via DHCP. Note that syntax and download
+        errors of @t{dot-config} are notified in the same way as for other
+        choices.
+
+@end table
+
+If the selected option triggers @sc{wrs} to download a new @t{dot-config}
+file, it will replace the copy in the local storage if it is different.
+
+The URL (stored in @t{CONFIG_DOTCONF_URL} or retrieved via DHCP) is of the form
 ``@i{protocol}@t{://}@i{host}@t{/}@i{pathname}''.  The special upper-case
 strings @t{IPADDR} and @t{MACADDR} are substituted with the current
 addresses of the management port of the switch.
@@ -388,6 +416,7 @@ The three parts of the URL are as follows:
 For example this is a valid configuration for run-time update:
 
 @smallexample
+   CONFIG_DOTCONF_SOURCE_REMOTE=y
    CONFIG_DOTCONF_URL="tftp://morgana/wrs-config-IPADDR"
    CONFIG_DNS_SERVER="192.168.16.1"
    CONFIG_DNS_DOMAIN="i.gnudd.com"
@@ -397,9 +426,10 @@ And it results, in my case, in @t{wrs-config-192.168.16.9} being
 served to the @sc{wrs}.
 
 Please remember that the new @t{dot-config} should include a valid
-@t{DOTCONF_URL} setting, or you won't be able to update the configuration
-at the next boot. In any case, you can always copy a configuration
-file using @i{ssh}, or use the web interface to change the configuration.
+@t{CONFIG_DOTCONF_SOURCE_*} setting, or you won't be able to update the
+configuration at the next boot. In any case, you can always copy a
+configuration file using @i{ssh}, or use the web interface to change the
+configuration.
 Changes performed using the web interface are immediately active, because
 the web server takes proper action; the new file copied over with @i{ssh},
 or any hand-edits, are only effective at next boot, unless overwritten by
@@ -442,9 +472,13 @@ value is changed by the web interface, proper action is taken.
 
 @table @code
 
-@item CONFIG_DOTCONF_URL
+@item CONFIG_DOTCONF_SOURCE_LOCAL
+@itemx CONFIG_DOTCONF_SOURCE_REMOTE
+@itemx CONFIG_DOTCONF_SOURCE_FORCE_DHCP
+@itemx CONFIG_DOTCONF_SOURCE_TRY_DHCP
+@itemx CONFIG_DOTCONF_URL
 
-	The location of a config file to be used at a replacement
+	The source and location of a config file to be used at a replacement
         the next time the system boots. See @ref{Dynamic WRS Configuration}
         and @ref{The Configuration File} for details.
 
@@ -1477,9 +1511,8 @@ WR-SWITCH-MIB::wrsMainSystemStatus.0 = INTEGER: ok(1)
 WR-SWITCH-MIB::wrsOSStatus.0 = INTEGER: ok(1)
 WR-SWITCH-MIB::wrsTimingStatus.0 = INTEGER: ok(1)
 [...]
-WR-SWITCH-MIB::wrsConfigSource.0 = INTEGER: tftp(4)
-WR-SWITCH-MIB::wrsConfigSourceHost.0 = STRING: 192.168.1.1
-WR-SWITCH-MIB::wrsConfigSourceFilename.0 = STRING: config-192.168.1.10
+WR-SWITCH-MIB::wrsConfigSource.0 = INTEGER: remote(4)
+WR-SWITCH-MIB::wrsConfigSourceUrl.0 = STRING: tftp://192.168.1.1/config-192.168.1.10
 WR-SWITCH-MIB::wrsBootConfigStatus.0 = INTEGER: ok(1)
 WR-SWITCH-MIB::wrsBootHwinfoReadout.0 = INTEGER: ok(1)
 WR-SWITCH-MIB::wrsBootLoadFPGA.0 = INTEGER: ok(1)

@@ -579,32 +579,40 @@ wrsConfigSource  OBJECT-TYPE
                         error(1),
                         errorMinor(2),
                         local(3),
-                        tftp(4),
-                        http(5),
-                        ftp(6)
+                        remote(4),
+                        tryDhcp(5),
+                        forceDhcp(6)
     }
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
-        "Source of used dotconfig, used protocol if config was received from
-        network
-        errorMinor - cannot read status file, problem is probably somewhere else"
+        "Source of used dotconfig
+        local - used dot-config was stored on the switch
+        remote - dot-config retrieved from the network check the
+                 wrsConfigSourceUrl for the path
+        tryDhcp - try to get URL to the dot-config via DHCP, if DHCP retrieve
+                  fail do not propagate error to the wrsBootSuccessful;
+        forceDhcp - get URL to the dot-config via DHCP, if failed propagate error
+                    to the wrsBootSuccessful
+        errorMinor - cannot read the status file, problem is probably somewhere
+                     else"
     ::= { wrsBootStatusGroup 6 }
 
-wrsConfigSourceHost   OBJECT-TYPE
+wrsConfigSourceUrl   OBJECT-TYPE
     SYNTAX      DisplayString (SIZE (0..64))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "Server's address which provided dotconfig"
+        "Url to the dot-config"
     ::= { wrsBootStatusGroup 7 }
 
-wrsConfigSourceFilename   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..128))
-    MAX-ACCESS  read-only
-    STATUS      current
+wrsRestartReasonMonit  OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..32))
+    MAX-ACCESS    read-only
+    STATUS        current
     DESCRIPTION
-        "Path and filename of dotconfig file on server"
+        "Program's name which caused the monit to restart the switch due to too
+         many crashes."
     ::= { wrsBootStatusGroup 8 }
 
 wrsBootConfigStatus  OBJECT-TYPE
@@ -614,16 +622,18 @@ wrsBootConfigStatus  OBJECT-TYPE
                         error(2),
                         downloadError(3),
                         checkError(4),
-                        errorMinor(5)
+                        errorMinor(5),
+                        dhcpError(6)
     }
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
         "Result of loading or downloading dot-config file
         ok - dot-config downloaded or loaded correctly
-        downloadError - unable to download file from given source
+        downloadError - unable to download a file from a given source
         checkError - config file is not valid or too short (less than 200 characters).
-        errorMinor - cannot read status file, problem is probably somewhere else"
+        errorMinor - cannot read the status file, problem is probably somewhere else
+        dhcpError - unable to get URL to dot-config via DHCP (only for forceDhcp)"
     ::= { wrsBootStatusGroup 9 }
 
 wrsBootHwinfoReadout  OBJECT-TYPE
@@ -715,14 +725,6 @@ wrsGwWatchdogTimeouts  OBJECT-TYPE
         "Number of times the watchdog has restarted the HDL module responsible
         for the Ethernet switching process."
     ::= { wrsBootStatusGroup 15 }
-
-wrsRestartReasonMonit  OBJECT-TYPE
-    SYNTAX         DisplayString (SIZE (0..32))
-    MAX-ACCESS    read-only
-    STATUS        current
-    DESCRIPTION
-        "Program's name that monit failed to start several times"
-    ::= { wrsBootStatusGroup 16 }
 
 -- wrsTemperatureGroup (.7.1.3)
 wrsTemperatureGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 3 }

@@ -70,10 +70,13 @@ time_t wrsOSStatus_data_fill(void)
 	if ( /* check if error */
 		b->wrsBootCnt == 0
 		|| b->wrsRestartReason == WRS_RESTART_REASON_ERROR
-		|| b->wrsConfigSource == WRS_CONFIG_SOURCE_PROTO_ERROR
+		|| b->wrsConfigSource == WRS_CONFIG_SOURCE_ERROR
 		|| b->wrsBootConfigStatus == WRS_CONFIG_STATUS_ERROR
 		|| b->wrsBootConfigStatus == WRS_CONFIG_STATUS_DL_ERROR
 		|| b->wrsBootConfigStatus == WRS_CONFIG_STATUS_CHECK_ERROR
+		    /* error only when dhcp failed for force_dhcp */
+		|| (b->wrsBootConfigStatus == WRS_CONFIG_STATUS_DHCP_ERROR
+		    && b->wrsConfigSource == WRS_CONFIG_SOURCE_FORCE_DHCP)
 		|| b->wrsBootHwinfoReadout == WRS_BOOT_HWINFO_ERROR
 		|| b->wrsBootLoadFPGA == WRS_BOOT_LOAD_FPGA_ERROR
 		|| b->wrsBootLoadFPGA == WRS_BOOT_LOAD_FPGA_FILE_NOT_FOUND
@@ -85,7 +88,7 @@ time_t wrsOSStatus_data_fill(void)
 		wrsOSStatus_s.wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
 
 	} else if ( /* check if warning */
-		b->wrsConfigSource == WRS_CONFIG_SOURCE_PROTO_ERROR_MINOR
+		b->wrsConfigSource == WRS_CONFIG_SOURCE_ERROR_MINOR
 		|| b->wrsBootConfigStatus == WRS_CONFIG_STATUS_ERROR_MINOR
 		|| b->wrsBootHwinfoReadout == WRS_BOOT_HWINFO_ERROR_MINOR
 		|| b->wrsBootHwinfoReadout == WRS_BOOT_HWINFO_WARNING
@@ -107,9 +110,10 @@ time_t wrsOSStatus_data_fill(void)
 	} else if ( /* check if OK */
 		b->wrsBootCnt != 0
 		&& b->wrsRestartReason != WRS_RESTART_REASON_ERROR
-		&& b->wrsConfigSource != WRS_CONFIG_SOURCE_PROTO_ERROR
-		&& b->wrsConfigSource != WRS_CONFIG_SOURCE_PROTO_ERROR_MINOR /* warning */
-		&& b->wrsBootConfigStatus == WRS_CONFIG_STATUS_OK
+		&& b->wrsConfigSource != WRS_CONFIG_SOURCE_ERROR
+		&& b->wrsConfigSource != WRS_CONFIG_SOURCE_ERROR_MINOR /* warning */
+		&& (b->wrsBootConfigStatus == WRS_CONFIG_STATUS_OK
+		    || b->wrsConfigSource == WRS_CONFIG_SOURCE_TRY_DHCP)
 		&& b->wrsBootHwinfoReadout == WRS_BOOT_HWINFO_OK
 		&& b->wrsBootLoadFPGA == WRS_BOOT_LOAD_FPGA_OK
 		&& b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_OK
@@ -118,20 +122,20 @@ time_t wrsOSStatus_data_fill(void)
 	) { /* OK, but check source */
 		/* additional check of source */
 		if (
-			b->wrsConfigSource == WRS_CONFIG_SOURCE_PROTO_LOCAL
+			b->wrsConfigSource == WRS_CONFIG_SOURCE_LOCAL
+			|| b->wrsConfigSource == WRS_CONFIG_SOURCE_TRY_DHCP
 			|| (
 				(
-					b->wrsConfigSource == WRS_CONFIG_SOURCE_PROTO_TFTP
-					|| b->wrsConfigSource == WRS_CONFIG_SOURCE_PROTO_HTTP
-					|| b->wrsConfigSource == WRS_CONFIG_SOURCE_PROTO_FTP
+					b->wrsConfigSource == WRS_CONFIG_SOURCE_REMOTE
+					|| b->wrsConfigSource == WRS_CONFIG_SOURCE_FORCE_DHCP
 				)
-				&& strnlen(b->wrsConfigSourceHost, WRS_CONFIG_SOURCE_HOST_LEN + 1)
-				&& strnlen(b->wrsConfigSourceFilename, WRS_CONFIG_SOURCE_FILENAME_LEN + 1)
+				&& strnlen(b->wrsConfigSourceUrl, WRS_CONFIG_SOURCE_URL_LEN + 1)
 			)
 		) { /* OK */
-			/* when dotconfig is local or (remote and host not empty and filename not empty) */
+			/* when dotconfig is local or try_dhcp or
+			 * ((remote or force_dhcp) and url not empty) */
 			wrsOSStatus_s.wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_OK;
-		} else { /* error because of source */
+		} else { /* error because of empty source url */
 			wrsOSStatus_s.wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
 		}
 	} else { /* probably bug in previous conditions,

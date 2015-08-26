@@ -52,7 +52,56 @@
 
 	<hr>
 	<br><br>
-	<center><p><strong>Load configuration files</strong></p></center>
+	<center><p><strong>Dot-config source during start:</strong></p></center>
+	<?php
+		if((!empty($_POST["dotconfig_source"]))){
+			/* remove all possible sources from the file */
+			delete_from_kconfig("CONFIG_DOTCONF_SOURCE_LOCAL=");
+			delete_from_kconfig("CONFIG_DOTCONF_SOURCE_REMOTE=");
+			delete_from_kconfig("CONFIG_DOTCONF_SOURCE_TRY_DHCP=");
+			delete_from_kconfig("CONFIG_DOTCONF_SOURCE_FORCE_DHCP=");
+			delete_from_kconfig("CONFIG_DOTCONF_URL=");
+			/* remove all possible sources from the _SESSION */
+			$_SESSION["KCONFIG"]["CONFIG_DOTCONF_SOURCE_LOCAL"]="";
+			$_SESSION["KCONFIG"]["CONFIG_DOTCONF_SOURCE_REMOTE"]="";
+			$_SESSION["KCONFIG"]["CONFIG_DOTCONF_SOURCE_TRY_DHCP"]="";
+			$_SESSION["KCONFIG"]["CONFIG_DOTCONF_SOURCE_FORCE_DHCP"]="";
+			$_SESSION["KCONFIG"]["CONFIG_DOTCONF_URL"]="";
+			/* assembly new source name */
+			$new_dot_source = "CONFIG_DOTCONF_".$_POST["dotconfig_source"];
+			/* add new source to session and file */
+			$_SESSION["KCONFIG"][$new_dot_source]="y";
+			check_add_existing_kconfig($new_dot_source."=");
+			/* add URL for remote if source is remote */
+			if (!strcmp($_POST["dotconfig_source"], "SOURCE_REMOTE")) {
+				$_SESSION["KCONFIG"]["CONFIG_DOTCONF_URL"]=$_POST["dotconfig_URL"];
+				check_add_existing_kconfig("CONFIG_DOTCONF_URL=");
+			}
+			save_kconfig();
+		}
+
+		echo '<FORM method="POST">
+			<table id="daemon" border="0" align="center">
+				<tr>
+					<td>
+					<input type="radio" name="dotconfig_source" value="SOURCE_LOCAL"';  if(!strcmp(wrs_dotconf_source_setup(), "source_local")) echo "checked";
+					echo ' > Local <br>
+					<input type="radio" name="dotconfig_source" value="SOURCE_REMOTE"';  if(!strcmp(wrs_dotconf_source_setup(), "source_remote")) echo "checked";
+					echo ' > Remote
+					<INPUT type=text name="dotconfig_URL" size="25%" VALUE='; echo $_SESSION['KCONFIG']['CONFIG_DOTCONF_URL']; echo '><br>
+					<input type="radio" name="dotconfig_source" value="SOURCE_TRY_DHCP"';  if(!strcmp(wrs_dotconf_source_setup(), "source_try_dhcp")) echo "checked";
+					echo ' > Try DHCP <br>
+					<input type="radio" name="dotconfig_source" value="SOURCE_FORCE_DHCP"';  if(!strcmp(wrs_dotconf_source_setup(), "source_force_dhcp")) echo "checked";
+					echo ' > Force DHCP <br>
+					</td>
+					<td><INPUT type="submit" value="Change" class="btn"></td>
+				</tr>
+			</table>
+			</FORM>
+			<br>';
+	?>
+
+	<center><p><strong>Load dot-config from local computer</strong></p></center>
 	<table class='altrowstable' id='alternatecolor'>
 		<tr>
 		<FORM method="POST" ENCTYPE="multipart/form-data" onsubmit="return confirm('Are you sure you want to upload a dotconfig file? \nThis could result in the malfunction of the switch.');">
@@ -60,14 +109,6 @@
 			<td><INPUT type=submit value="Load dot-config" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
 		</form>
 		</tr>
-		<tr>
-		<FORM method="POST" onsubmit="return confirm('Are you sure you want to set an URL for dotconfig? \nThis could result in the malfunction of the switch.');">
-			<td align="center"><INPUT type=text name="dotconfigURL" size="35%" VALUE= <?php echo $_SESSION['KCONFIG']['CONFIG_DOTCONF_URL'];?>></td>
-			<input type="hidden" name="cmd" value="kconfigURL">
-			<td><INPUT type=submit value="Load from URL" class="btn" ></td>
-		</form>
-		</tr>
-		<tr>
 	</table>
 	</center>
 

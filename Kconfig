@@ -1,18 +1,47 @@
 
 mainmenu "White Rabbit Switch  configuration"
 
-config DOTCONF_URL
+choice DOTCONF_SOURCE
+	  prompt "Source for a run-time replacement of dot-config"
+	  default DOTCONF_SOURCE_TRY_DHCP
 
-	string "URL for a run-time replacement of dot-config"
+config DOTCONF_SOURCE_LOCAL
+	bool "Use local dot-config"
 	help
 	  The White Rabbit Switch is configured at run-time,
 	  according to a dot-config .config file. The file
-	  is the same .config you are defining now.  If you
-	  select an empty string, dot-config is not replaced
-	  at run time.  Otherwise, tftp://, ftp:// or http://
-	  URLs are allowed. Names are allowed if you configured
-	  a DNS server.  The special strings IPADDR and MACADDR
-	   are substituted before retrieving the file.
+	  is the same .config you are defining now. If you
+	  select this option, dot-config is not replaced
+	  at run time.
+
+config DOTCONF_SOURCE_REMOTE
+	bool "Use remote dot-config"
+	help
+	  Use the URL to dot-config provided in DOTCONF_URL.
+
+config DOTCONF_SOURCE_FORCE_DHCP
+	bool "Force to get the URL to a dot-config via DHCP"
+	help
+	  Retrieve a URL to the dot-config via DHCP at boot.
+	  The URL can be configured in the "filename" configuration field of
+	  the DHCP server.
+
+config DOTCONF_SOURCE_TRY_DHCP
+	bool "Try to get the URL to a dot-config via DHCP"
+	help
+	  The same as DOTCONF_SOURCE_FORCE_DHCP, but this option does not
+	  cause errors in SNMP's objects if the switch fails to retrieve
+	  the URL to the dot-config via DHCP.
+
+endchoice
+
+config DOTCONF_URL
+	string "URL for a run-time replacement of dot-config"
+	depends on DOTCONF_SOURCE_REMOTE
+	help
+	  tftp://, ftp:// or http:// URLs are allowed. Names are allowed if
+	  you configured a DNS server. The special strings IPADDR and MACADDR
+	  are substituted before retrieving the file.
 	  Example:  "tftp://morgana/wrs-config-IPADDR"
 
 config BR2_CONFIGFILE
