@@ -267,8 +267,8 @@ menu "Port Timing Configuration"
 
 config PORT00_PARAMS
 	string "Parameters for the first port"
-	default "name=wr0,proto=raw,tx=0,rx=160000,role=slave,fiber=0" if TIME_BC
-	default "name=wr0,proto=raw,tx=0,rx=160000,role=master,fiber=0"
+	default "name=wr0,proto=raw,tx=223876,rx=226248,role=slave,fiber=0" if TIME_BC
+	default "name=wr0,proto=raw,tx=223876,rx=226248,role=master,fiber=0"
 	help
 	  This item, and the following ones, are used to assign the
 	  constant delays (likely from calibration), protocol type (raw or udp),
@@ -277,71 +277,71 @@ config PORT00_PARAMS
 
 config PORT01_PARAMS
 	string "Parameters for the second port"
-	default "name=wr1,proto=raw,tx=0,rx=160000,role=master,fiber=0"
+	default "name=wr1,proto=raw,tx=224083,rx=226197,role=master,fiber=0"
 
 config PORT02_PARAMS
 	string "Parameters for a further port"
-	default "name=wr2,proto=raw,tx=0,rx=160000,role=master,fiber=0"
+	default "name=wr2,proto=raw,tx=224100,rx=226458,role=master,fiber=0"
 
 config PORT03_PARAMS
 	string "Parameters for a further port"
-	default "name=wr3,proto=raw,tx=0,rx=160000,role=master,fiber=0"
+	default "name=wr3,proto=raw,tx=224298,rx=226694,role=master,fiber=0"
 
 config PORT04_PARAMS
 	string "Parameters for a further port"
-	default "name=wr4,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr4,proto=raw,tx=224324,rx=227692,role=master,fiber=0"
 
 config PORT05_PARAMS
 	string "Parameters for a further port"
-	default "name=wr5,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr5,proto=raw,tx=224634,rx=227960,role=master,fiber=0"
 
 config PORT06_PARAMS
 	string "Parameters for a further port"
-	default "name=wr6,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr6,proto=raw,tx=224749,rx=228051,role=master,fiber=0"
 
 config PORT07_PARAMS
 	string "Parameters for a further port"
-	default "name=wr7,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr7,proto=raw,tx=224943,rx=228143,role=master,fiber=0"
 
 config PORT08_PARAMS
 	string "Parameters for a further port"
-	default "name=wr8,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr8,proto=raw,tx=225054,rx=228216,role=master,fiber=0"
 
 config PORT09_PARAMS
 	string "Parameters for a further port"
-	default "name=wr9,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr9,proto=raw,tx=225189,rx=228485,role=master,fiber=0"
 
 config PORT10_PARAMS
 	string "Parameters for a further port"
-	default "name=wr10,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr10,proto=raw,tx=225513,rx=228969,role=master,fiber=0"
 
 config PORT11_PARAMS
 	string "Parameters for a further port"
-	default "name=wr11,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr11,proto=raw,tx=225665,rx=229055,role=master,fiber=0"
 
 config PORT12_PARAMS
 	string "Parameters for a further port"
-	default "name=wr12,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr12,proto=raw,tx=225837,rx=229273,role=master,fiber=0"
 
 config PORT13_PARAMS
 	string "Parameters for a further port"
-	default "name=wr13,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr13,proto=raw,tx=225950,rx=229426,role=master,fiber=0"
 
 config PORT14_PARAMS
 	string "Parameters for a further port"
-	default "name=wr14,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr14,proto=raw,tx=226243,rx=229899,role=master,fiber=0"
 
 config PORT15_PARAMS
 	string "Parameters for a further port"
-	default "name=wr15,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr15,proto=raw,tx=226355,rx=229979,role=master,fiber=0"
 
 config PORT16_PARAMS
 	string "Parameters for a further port"
-	default "name=wr16,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr16,proto=raw,tx=226534,rx=230008,role=master,fiber=0"
 
 config PORT17_PARAMS
 	string "Parameters for a further port"
-	default "name=wr17,proto=raw,tx=0,rx=161200,role=master,fiber=0"
+	default "name=wr17,proto=raw,tx=226709,rx=230215,role=master,fiber=0"
 
 endmenu
 
@@ -349,7 +349,7 @@ menu "SFP and Media Timing Configuration"
 
 config SFP00_PARAMS
 	string "Parameters for one SFP device type"
-	default "vn=Axcen Photonics,pn=AXGE-1254-0531,tx=10,rx=10,wl_txrx=1310+1490"
+	default "vn=Axcen Photonics,pn=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"
 	help
 	  This parameter, and the following ones, are used to
 	  configure the timing parameters of a specific SFP
@@ -360,7 +360,7 @@ config SFP00_PARAMS
 
 config SFP01_PARAMS
 	string "Parameters for one SFP device type"
-	default "vn=Axcen Photonics,pn=AXGE-3454-0531,tx=10,rx=10,wl_txrx=1490+1310"
+	default "vn=Axcen Photonics,pn=AXGE-3454-0531,tx=0,rx=0,wl_txrx=1490+1310"
 
 config SFP02_PARAMS
 	string "Parameters for one SFP device type"
