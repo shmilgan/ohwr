@@ -48,6 +48,8 @@ if [ -n "$CONFIG_DOTCONF_SOURCE_REMOTE" ] || [ -n "$CONFIG_DOTCONF_SOURCE_TRY_DH
 	    echo "force_dhcp" > "$tmpdir"/dot-config_source
 	fi
 
+	# up eth0 to allow dhcp requests
+	ifconfig eth0 up
 	# let udhcpc run /wr/bin/dhcp_get_filename.sh script to get "filename"
 	# from DHCP (which contain url with dot-config).
 	/sbin/udhcpc -i eth0 -s /wr/bin/dhcp_get_filename.sh -O bootfile -o \
@@ -112,7 +114,7 @@ if [ -n "$CONFIG_DOTCONF_SOURCE_REMOTE" ] || [ -n "$CONFIG_DOTCONF_SOURCE_TRY_DH
 	echo "download_error" > "$tmpdir"/dot-config_status
 	echo "Download error for dot-config \"$URL\", using old"
     fi
-elif [ -n "$DOTCONF_SOURCE_LOCAL" ]; then
+elif [ -n "$CONFIG_DOTCONF_SOURCE_LOCAL" ]; then
     echo "local" > "$tmpdir"/dot-config_source
     echo "Using local dot-config"
 else

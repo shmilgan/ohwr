@@ -14,3 +14,6 @@ tmpdir="/tmp"
 if [ -n "$boot_file" ]; then
     echo $boot_file > "$tmpdir"/dot-config_source_url
 fi
+
+# run also default script
+/usr/share/udhcpc/default.script $@
