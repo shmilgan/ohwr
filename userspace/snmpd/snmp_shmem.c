@@ -182,7 +182,7 @@ int shmem_ready_rtud(void)
 void init_shm(void){
 	int i;
 
-	for (i = 0; i < 1; i++) {
+	for (i = 0; i < 10; i++) {
 		if (shmem_ready_hald()) {
 			/* shmem opened successfully */
 			break;
@@ -190,7 +190,7 @@ void init_shm(void){
 		/* wait 1 second before another try */
 		sleep(1);
 	}
-	for (i = 0; i < 1; i++) {
+	for (i = 0; i < 10; i++) {
 		if (shmem_ready_ppsi()) {
 			/* shmem opened successfully */
 			break;
@@ -198,7 +198,7 @@ void init_shm(void){
 		/* wait 1 second before another try */
 		sleep(1);
 	}
-	for (i = 0; i < 1; i++) {
+	for (i = 0; i < 10; i++) {
 		if (shmem_ready_rtud()) {
 			/* shmem opened successfully */
 			break;
