@@ -203,8 +203,8 @@ both the @i{gateware} image and the @i{lm32} firmware binary
 are built from sources external to this package.
 
 The @i{gateware} is being downloaded as a pre-build tar archive
-(currently called @code{wrs-gw-v4.2-RC1-20150714.tar.gz}).  This
-is built from the @code{wr-switch-sw-v4.2-rc1} tag of the @code{wr-switch-hdl}
+(currently called @code{wrs-gw-v4.2-20150826.tar.gz}).  This
+is built from the @code{wr-switch-sw-v4.2} tag of the @code{wr-switch-hdl}
 repository.  Please note that the repository uses @i{git} submodules,
 so it depends on other @code{ohwr} repositories too, which in turn
 have not been tagged because the submodule mechanism ensures you'll
@@ -220,7 +220,7 @@ The LM32 program is provided as a pre-compiled binary in
 If you need to rebuild the @t{rt_cpu.bin} file from source, to make
 your own modifications, you can run @t{make wr_switch_defconfig}
 in @i{wrpc-sw} and then @t{make}. Please checkout the
-@code{wr-switch-sw-v4.2-rc1}
+@code{wr-switch-sw-v4.2}
 tag to get the exact commit.
 
 @c --------------------------------------------------------------------------
@@ -398,27 +398,27 @@ bogoMips in total). If files had already been downloaded, the first
 step takes only a few seconds, as shown, to verify the checksums:
 
 @smallexample
-2014-06-21 17:01:57: --- Downloading all files
-2014-06-21 17:02:02: --- Buildroot compiler and filesystem
-2014-06-21 17:02:02: Uncompressing buildroot
-2014-06-21 17:02:02: Patching buildroot
-2014-06-21 17:02:02: Reconfiguring buildroot
-2014-06-21 17:02:04: Compiling buildroot
-2014-06-21 17:26:40: --- AT91Boot
-2014-06-21 17:26:40: Patching AT91Boot
-2014-06-21 17:26:40: Building AT91Boot
-2014-06-21 17:26:41: --- Barebox
-2014-06-21 17:26:44: Patching Barebox
-2014-06-21 17:26:44: Building Barebox
-2014-06-21 17:26:58: --- Linux kernel for switch
-2014-06-21 17:29:15: --- Kernel modules from this package
-2014-06-21 17:29:19: --- PTP daemon (ppsi repository as a submodule)
-2014-06-21 17:29:26: --- User space tools
-2014-06-21 17:29:33: --- Deploying FPGA firmware
-2014-06-21 17:29:33: Using pre-built binaries from wrs-gw-v4.0-dev-20140328.tar.gz
-2014-06-21 17:29:33: --- Wrapping filesystem
-2014-06-21 17:29:46: --- Packing into wr-switch-sw-v4.0-20140621_binaries.tar
-2014-06-21 17:29:46: Complete build succeeded, apparently
+2015-08-28 10:01:57: --- Downloading all files
+2015-08-28 10:02:02: --- Buildroot compiler and filesystem
+2015-08-28 10:02:02: Uncompressing buildroot
+2015-08-28 10:02:02: Patching buildroot
+2015-08-28 10:02:02: Reconfiguring buildroot
+2015-08-28 10:02:04: Compiling buildroot
+2015-08-28 10:26:40: --- AT91Boot
+2015-08-28 10:26:40: Patching AT91Boot
+2015-08-28 10:26:40: Building AT91Boot
+2015-08-28 10:26:41: --- Barebox
+2015-08-28 10:26:44: Patching Barebox
+2015-08-28 10:26:44: Building Barebox
+2015-08-28 10:26:58: --- Linux kernel for switch
+2015-08-28 10:29:15: --- Kernel modules from this package
+2015-08-28 10:29:19: --- PTP daemon (ppsi repository as a submodule)
+2015-08-28 10:29:26: --- User space tools
+2015-08-28 10:29:33: --- Deploying FPGA firmware
+2015-08-28 10:29:33: Using pre-built binaries from wrs-gw-v4.2-20150826.tar.gz
+2015-08-28 10:29:33: --- Wrapping filesystem
+2015-08-28 10:29:46: --- Packing into wr-switch-sw-v4.2-20150828_binaries.tar
+2015-08-28 10:29:46: Complete build succeeded, apparently
 @end smallexample
 
 You may prefer to save @i{stderr} with @i{stdout} to the log file
@@ -465,7 +465,7 @@ i.e. a @i{tar} archive of all files needed to flash a brand new WR
 Switch.  The example above shows that the name is something like:
 
 @example
-	wr-switch-sw-v4.0-20140621_binaries.tar
+	wr-switch-sw-v4.2-20150828_binaries.tar
 @end example
 
 In other words, we include both the tag name (from @t{git describe})
@@ -1246,7 +1246,7 @@ If you want to flash the @i{at91boot.bin}, @i{barebox.bin}, @i{kernel}
 or @i{file-system} that you just built, you can just call the script
 from the build directory and use the @code{-b} option.
 
-The official binaries for installation of version 4.2-rc1 of this package
+The official binaries for installation of version 4.2 of this package
 are available in the @i{files} tab of this project in @t{ohwr.org}.
 We don't provide a complete link here, but one is available in the
 list of downloaded files: @t{build/download-info}.
