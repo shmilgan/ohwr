@@ -13,8 +13,6 @@ if [ -n "$WRS_VERBOSE" ]; then
     set -x
 fi
 
-# will be changed later if successful
-echo "hwinfo_error" > /tmp/hwinfo_read_status
 
 # This kernel has no hwinfo partition (strange...)
 if ! grep -q hwinfo /proc/mtd; then
@@ -33,7 +31,11 @@ fi
 echo "Creating SDB filesystem in /dev/mtd5"
 
 # So, we must create an sdb file, we need the template
-cp /wr/etc/sdb-for-dataflash /tmp || exit 1
+cp /wr/etc/sdb-for-dataflash /tmp 
+if [ $? -ne 0 ] ; then
+    echo "hwinfo_error" > /tmp/hwinfo_read_status
+    exit 1
+fi
 
 # we need the eth addresses
 ethaddr=$(ifconfig eth0 | grep HWaddr | awk '{print $5}')
