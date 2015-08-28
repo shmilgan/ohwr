@@ -285,12 +285,18 @@ static void get_boot_scripts_status(void){
 		if (!strncmp(buff, "hwinfo_ok", 20))
 			wrsBootStatus_s.wrsBootHwinfoReadout =
 						WRS_BOOT_HWINFO_OK;
-		else if (!strncmp(buff, "hwinfo_warning", 20))
+		else if (!strncmp(buff, "hwinfo_warning", 20)) {
 			wrsBootStatus_s.wrsBootHwinfoReadout =
 						WRS_BOOT_HWINFO_WARNING;
-		else /*  */
+			/* try again next time */
+			run_once = 0;
+		}
+		else {/*  */
 			wrsBootStatus_s.wrsBootHwinfoReadout =
 						WRS_BOOT_HWINFO_ERROR;
+			/* try again next time */
+			run_once = 0;
+		}
 	} else {
 		/* status file not found, probably something else caused
 		 * a problem */
@@ -309,12 +315,19 @@ static void get_boot_scripts_status(void){
 		if (!strncmp(buff, "load_ok", 20))
 			wrsBootStatus_s.wrsBootLoadFPGA =
 						WRS_BOOT_LOAD_FPGA_OK;
-		else if (!strncmp(buff, "load_file_not_found", 20))
+		else if (!strncmp(buff, "load_file_not_found", 20)) {
 			wrsBootStatus_s.wrsBootLoadFPGA =
 					WRS_BOOT_LOAD_FPGA_FILE_NOT_FOUND;
-		else /*  */
+			/* try again next time */
+			run_once = 0;
+		}
+		else {/*  */
 			wrsBootStatus_s.wrsBootLoadFPGA =
 						WRS_BOOT_LOAD_FPGA_ERROR;
+			/* try again next time */
+			run_once = 0;
+
+		}
 	} else {
 		/* status file not found, probably something else caused
 		 * a problem */
@@ -333,12 +346,19 @@ static void get_boot_scripts_status(void){
 		if (!strncmp(buff, "load_ok", 20))
 			wrsBootStatus_s.wrsBootLoadLM32 =
 						WRS_BOOT_LOAD_LM32_OK;
-		else if (!strncmp(buff, "load_file_not_found", 20))
+		else if (!strncmp(buff, "load_file_not_found", 20)) {
 			wrsBootStatus_s.wrsBootLoadLM32 =
 					WRS_BOOT_LOAD_LM32_FILE_NOT_FOUND;
-		else /*  */
+			/* try again next time */
+			run_once = 0;
+		}
+		else {/*  */
 			wrsBootStatus_s.wrsBootLoadLM32 =
 						WRS_BOOT_LOAD_LM32_ERROR;
+			/* try again next time */
+			run_once = 0;
+
+		}
 	} else {
 		/* status file not found, probably something else caused
 		 * a problem */

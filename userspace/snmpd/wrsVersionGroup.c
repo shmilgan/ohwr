@@ -103,8 +103,11 @@ time_t wrsVersion_data_fill(void)
 
 	guess_index = 0;
 	while (fgets(s, sizeof(s), f)) {
-		if (sscanf(s, "%s %[^\n]", key, value) != 2)
+		if (sscanf(s, "%s %[^\n]", key, value) != 2) {
+			/* try again next time */
+			run_once = 0;
 			continue; /* error... */
+		}
 
 		/* try educated guess to find position in array */
 		if (!strcmp(key, wrs_version[guess_index].key)) {
