@@ -53,18 +53,21 @@ time_t wrsTimingStatus_data_fill(void)
 		return time_update;
 	}
 
-	/* update only when ptp_data or spll was updated */
+	/* update when ptp_data and spll status were updated
+	 * otherwise there may be comparison between the same data */
 	if (time_ptp_data > time_update
-	    || time_spll > time_update) {
+	    && time_spll > time_update) {
 		get_wrsPTPStatus(ptp_data_nrows);
 	}
 
-	/* update only when the spll was updated */
+	/* update when the spll was updated
+	 * otherwise there may be comparison between the same data */
 	if (time_spll > time_update) {
 		get_wrsSoftPLLStatus();
 	}
 
-	/* update only when the port_status was updated */
+	/* update only when the port_status was updated
+	 * otherwise there may be comparison between the same data */
 	if (time_port_status > time_update) {
 		get_wrsSlaveLinksStatus(port_status_nrows);
 		get_wrsPTPFramesFlowing(port_status_nrows);
