@@ -1,5 +1,6 @@
-/* global variable to keep number of rows, filled by cache function */
-unsigned int n_rows;
+/* global variable to keep number of rows, filled by cache function
+ * one for each table */
+static unsigned int t_n_rows; /* template n_rows */
 
 static netsnmp_variable_list *
 table_next_entry(void **loop_context,
@@ -10,7 +11,7 @@ table_next_entry(void **loop_context,
 	intptr_t i;
 	/* create the line ID from counter number */
 	i = (intptr_t)*loop_context;
-	if (i >= n_rows)
+	if (i >= t_n_rows)
 		return NULL; /* no more */
 	i++;
 	/* Create the row OID: only the counter index */
@@ -101,7 +102,7 @@ table_handler(netsnmp_mib_handler          *handler,
 
 static int table_cache_load(netsnmp_cache *cache, void *vmagic)
 {
-	TT_DATA_FILL_FUNC(&n_rows);
+	TT_DATA_FILL_FUNC(&t_n_rows);
 	return 0;
 }
 
