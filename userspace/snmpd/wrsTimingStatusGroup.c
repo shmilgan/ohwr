@@ -14,32 +14,19 @@ static struct pickinfo wrsTimingStatus_pickinfo[] = {
 
 struct wrsTimingStatus_s wrsTimingStatus_s;
 
-/* store old values of ptp servo error counters and number of updates */
-static uint32_t servo_updates_prev[WRS_MAX_N_SERVO_INSTANCES];
-static uint32_t n_err_state_prev[WRS_MAX_N_SERVO_INSTANCES];
-static uint32_t n_err_offset_prev[WRS_MAX_N_SERVO_INSTANCES];
-static uint32_t n_err_delta_rtt_prev[WRS_MAX_N_SERVO_INSTANCES];
-
-/* store old values of TX and RX PTP counters to calculate delta */
-static unsigned long ptp_tx_count_prev[WRS_N_PORTS];
-static unsigned long ptp_rx_count_prev[WRS_N_PORTS];
-
-/* store old values of SPLL status */
-static int32_t spll_DelCnt_prev;
+static void get_wrsPTPStatus(unsigned int ptp_data_nrows);
+static void get_wrsSoftPLLStatus();
+static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows);
+static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows);
 
 time_t wrsTimingStatus_data_fill(void)
 {
 	static time_t time_update; /* time of last update */
-	static int first_run = 1;
 	time_t time_ptp_data; /* time when wrsPtpDataTable was updated */
 	time_t time_spll; /* time when softPLL data was updated */
 	time_t time_port_status; /* time when port status table was updated */
 	unsigned int ptp_data_nrows; /* number of rows in wrsPtpDataTable */
 	unsigned int port_status_nrows; /* number of rows in PortStatusTable */
-	int i;
-	struct wrsPtpDataTable_s *pd_a;
-	struct wrsSpllStatus_s *s;
-	struct wrsPortStatusTable_s *p_a;
 
 	time_ptp_data = wrsPtpDataTable_data_fill(&ptp_data_nrows);
 	time_spll = wrsSpllStatus_data_fill();
@@ -65,9 +52,44 @@ time_t wrsTimingStatus_data_fill(void)
 		/* cache not updated, return last update time */
 		return time_update;
 	}
-	time_update = time(NULL);
 
-	memset(&wrsTimingStatus_s, 0, sizeof(wrsTimingStatus_s));
+	/* update when ptp_data and spll status were updated
+	 * otherwise there may be comparison between the same data */
+	if (time_ptp_data > time_update
+	    && time_spll > time_update) {
+		get_wrsPTPStatus(ptp_data_nrows);
+	}
+
+	/* update when the spll was updated
+	 * otherwise there may be comparison between the same data */
+	if (time_spll > time_update) {
+		get_wrsSoftPLLStatus();
+	}
+
+	/* update only when the port_status was updated
+	 * otherwise there may be comparison between the same data */
+	if (time_port_status > time_update) {
+		get_wrsSlaveLinksStatus(port_status_nrows);
+		get_wrsPTPFramesFlowing(port_status_nrows);
+	}
+
+	time_update = time(NULL);
+	/* there was an update, return current time */
+	return time_update;
+}
+
+static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
+{
+	struct wrsSpllStatus_s *s;
+	struct wrsPtpDataTable_s *pd_a;
+	int i;
+	static int first_run = 1;
+
+	/* store old values of ptp servo error counters and number of updates */
+	static uint32_t servo_updates_prev[WRS_MAX_N_SERVO_INSTANCES];
+	static uint32_t n_err_state_prev[WRS_MAX_N_SERVO_INSTANCES];
+	static uint32_t n_err_offset_prev[WRS_MAX_N_SERVO_INSTANCES];
+	static uint32_t n_err_delta_rtt_prev[WRS_MAX_N_SERVO_INSTANCES];
 
 	/*********************************************************************\
 	|*************************** wrsPTPStatus  ***************************|
@@ -86,6 +108,8 @@ time_t wrsTimingStatus_data_fill(void)
 		if (first_run == 1) {
 			/* don't report errors during first run */
 			wrsTimingStatus_s.wrsPTPStatus = WRS_PTP_STATUS_FR;
+			/* no need to check others */
+			break;
 
 		/* check if error */
 		} else if ((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE)
@@ -100,11 +124,13 @@ time_t wrsTimingStatus_data_fill(void)
 			wrsTimingStatus_s.wrsPTPStatus = WRS_PTP_STATUS_ERROR;
 			snmp_log(LOG_ERR, "SNMP: wrsPTPStatus "
 					  "failed for instance %d\n", i);
-
-			/* don't break! Check all other PTP instances,
-			 * to update all prev values */
+			/* no more can be done, error is error
+			 * update prev values outside loop */
+			break;
 		}
+	}
 
+	for (i = 0; i < ptp_data_nrows; i++) {
 		/* update old values */
 		servo_updates_prev[i] = pd_a[i].servo_updates;
 		n_err_state_prev[i] = pd_a[i].n_err_state;
@@ -112,6 +138,15 @@ time_t wrsTimingStatus_data_fill(void)
 		n_err_delta_rtt_prev[i] = pd_a[i].n_err_delta_rtt;
 	}
 
+	first_run = 0;
+}
+
+static void get_wrsSoftPLLStatus(void)
+{
+	struct wrsSpllStatus_s *s;
+
+	/* store old values of SPLL status */
+	static int32_t spll_DelCnt_prev;
 	/*********************************************************************\
 	|************************* wrsSoftPLLStatus  *************************|
 	\*********************************************************************/
@@ -133,7 +168,15 @@ time_t wrsTimingStatus_data_fill(void)
 	) {
 		wrsTimingStatus_s.wrsSoftPLLStatus =
 						WRS_SOFTPLL_STATUS_ERROR;
-
+		/*snmp_log(LOG_ERR, "SNMP: wrsSoftPLLStatus"
+				"%d %d %d %d\n",
+				s->wrsSpllSeqState != WRS_SPLL_SEQ_STATE_READY,
+				s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllAlignState != WRS_SPLL_ALIGN_STATE_LOCKED,
+				((s->wrsSpllMode != WRS_SPLL_MODE_GRAND_MASTER)
+					&& (s->wrsSpllMode != WRS_SPLL_MODE_MASTER)
+					&& (s->wrsSpllMode != WRS_SPLL_MODE_SLAVE)),
+				((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE) && ((s->wrsSpllHlock == 0) || (s->wrsSpllMlock == 0)))
+			);*/
 	} else if ( /* check if warning */
 		(s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllDelCnt > 0)
 		|| (s->wrsSpllDelCnt != spll_DelCnt_prev)
@@ -165,6 +208,12 @@ time_t wrsTimingStatus_data_fill(void)
 	}
 
 	spll_DelCnt_prev = s->wrsSpllDelCnt;
+}
+
+static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
+{
+	struct wrsPortStatusTable_s *p_a;
+	int i;
 
 	/*********************************************************************\
 	|************************ wrsSlaveLinksStatus ************************|
@@ -208,6 +257,17 @@ time_t wrsTimingStatus_data_fill(void)
 			}
 		}
 	}
+}
+
+static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
+{
+	struct wrsPortStatusTable_s *p_a;
+	int i;
+	static int first_run = 1;
+
+	/* store old values of TX and RX PTP counters to calculate delta */
+	static unsigned long ptp_tx_count_prev[WRS_N_PORTS];
+	static unsigned long ptp_rx_count_prev[WRS_N_PORTS];
 
 	/*********************************************************************\
 	|************************ wrsPTPFramesFlowing ************************|
@@ -223,6 +283,8 @@ time_t wrsTimingStatus_data_fill(void)
 			/* don't report errors during first run */
 			wrsTimingStatus_s.wrsPTPFramesFlowing =
 						WRS_PTP_FRAMES_FLOWING_FR;
+			/* no need to check others */
+			break;
 
 		/* Error when there is no increase in TX/RX PTP counters.
 		   Check only when port is non-wr and port is down */
@@ -234,21 +296,26 @@ time_t wrsTimingStatus_data_fill(void)
 						WRS_PTP_FRAMES_FLOWING_ERROR;
 			snmp_log(LOG_ERR, "SNMP: wrsPTPFramesFlowing "
 					  "failed for port %d\n", i);
+			/* can't go worse, no need to change other ports */
+			break;
 
 		/* warning N/A */
 		} else if (p_a[i].port_mode == 0
 		    || p_a[i].link_up == 0){
 			wrsTimingStatus_s.wrsPTPFramesFlowing =
 					WRS_PTP_FRAMES_FLOWING_WARNING_NA;
+			/* continue with other ports, somewhere may be an
+			 * error */
 		}
+	}
+
+	for (i = 0; i < port_status_nrows; i++) {
 		/* save current values */
 		ptp_tx_count_prev[i] = p_a[i].ptp_tx_count;
 		ptp_rx_count_prev[i] = p_a[i].ptp_rx_count;
 	}
 
 	first_run = 0;
-	/* there was an update, return current time */
-	return time_update;
 }
 
 #define GT_OID WRSTIMINGSTATUS_OID
