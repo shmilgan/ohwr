@@ -108,6 +108,8 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
 		if (first_run == 1) {
 			/* don't report errors during first run */
 			wrsTimingStatus_s.wrsPTPStatus = WRS_PTP_STATUS_FR;
+			/* no need to check others */
+			break;
 
 		/* check if error */
 		} else if ((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE)
@@ -122,11 +124,13 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
 			wrsTimingStatus_s.wrsPTPStatus = WRS_PTP_STATUS_ERROR;
 			snmp_log(LOG_ERR, "SNMP: wrsPTPStatus "
 					  "failed for instance %d\n", i);
-
-			/* don't break! Check all other PTP instances,
-			 * to update all prev values */
+			/* no more can be done, error is error
+			 * update prev values outside loop */
+			break;
 		}
+	}
 
+	for (i = 0; i < ptp_data_nrows; i++) {
 		/* update old values */
 		servo_updates_prev[i] = pd_a[i].servo_updates;
 		n_err_state_prev[i] = pd_a[i].n_err_state;
@@ -279,6 +283,8 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 			/* don't report errors during first run */
 			wrsTimingStatus_s.wrsPTPFramesFlowing =
 						WRS_PTP_FRAMES_FLOWING_FR;
+			/* no need to check others */
+			break;
 
 		/* Error when there is no increase in TX/RX PTP counters.
 		   Check only when port is non-wr and port is down */
@@ -290,13 +296,20 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 						WRS_PTP_FRAMES_FLOWING_ERROR;
 			snmp_log(LOG_ERR, "SNMP: wrsPTPFramesFlowing "
 					  "failed for port %d\n", i);
+			/* can't go worse, no need to change other ports */
+			break;
 
 		/* warning N/A */
 		} else if (p_a[i].port_mode == 0
 		    || p_a[i].link_up == 0){
 			wrsTimingStatus_s.wrsPTPFramesFlowing =
 					WRS_PTP_FRAMES_FLOWING_WARNING_NA;
+			/* continue with other ports, somewhere may be an
+			 * error */
 		}
+	}
+
+	for (i = 0; i < port_status_nrows; i++) {
 		/* save current values */
 		ptp_tx_count_prev[i] = p_a[i].ptp_tx_count;
 		ptp_rx_count_prev[i] = p_a[i].ptp_rx_count;
