@@ -76,6 +76,8 @@
 // Max size of data we can tranfsert in one shot
 #define PDC_MAX_COUNT 0xFFFF
 
+
+#define IS_POWEROFTWO(x) ((x != 0) && !(x & (x - 1)))
 //------------------------------------------------------------------------------
 //         Local structures
 //------------------------------------------------------------------------------
@@ -302,7 +304,7 @@ int main(int argc, char **argv)
 {
     struct _Mailbox *pMailbox = (struct _Mailbox *) argv;
     const At45Desc *pDesc = 0;
-    unsigned int bytesToWrite, bytesToRead, bufferAddr, memoryOffset, packetSize;
+    unsigned int bytesToWrite, bytesToRead, bufferAddr, memoryOffset, packetSize,type;
     // index on read/write buffer
     unsigned char *pBuffer;
     // Temporary buffer used for non page aligned read/write 
@@ -622,12 +624,29 @@ int main(int argc, char **argv)
     // CONFIGURE IN BINARY MODE (power of two page size): 
     // ----------------------------------------------------------
     else if (pMailbox->command == APPLET_CMD_BINARY_PAGE) {
-
-        TRACE_INFO("BINARY PAGE SET command\n\r");
-         // Configure power-of-2 binary page size.
-        AT45D_BinaryPage(&at45);
-        TRACE_INFO("Binary Page achieved\n\r");
-        pMailbox->status = APPLET_SUCCESS;
+        //type <= if is binary page (power of two)
+        type = pMailbox->argument.inputFullErase.eraseType; //TODO: Should use proper name
+        if(type && !IS_POWEROFTWO(pageSize))
+        {
+            TRACE_INFO("BINARY PAGE SET command\n\r");
+            // Configure power-of-2 binary page size.
+            AT45D_PageMode(&at45,1);
+            TRACE_INFO("Binary Page achieved\n\r");
+            pMailbox->status = APPLET_SUCCESS;
+        }
+        else if(!type && IS_POWEROFTWO(pageSize))
+        {
+            TRACE_INFO("FULL PAGE SET command\n\r");
+            // Configure to full page size (with extra bits).
+            AT45D_PageMode(&at45,0);
+            TRACE_INFO("Full Page achieved\n\r");
+            pMailbox->status = APPLET_SUCCESS;
+        }
+        else
+        {
+            TRACE_INFO("DF already set in %s mode\n\r",(type)?"BINARY":"FULL");
+            pMailbox->status = APPLET_SUCCESS;
+        }
     }
 
 exit :

@@ -43,6 +43,7 @@
 #define MBOX_MEM_ERASE_START 0x10
 #define MBOX_MEM_ERASE_END   0x14
 
+#define MBOX_MEM_CHECK_TYPE 0xc
 
 #define INTERNAL_SRAM_BUF 		0x300000
 #define SDRAM_START 			0x70000000
@@ -452,11 +453,23 @@ int mem_program(int type, int nFile, const sndfile* pFileArray)
 
 void mem_check(int type)
 {
+	unsigned int pageMode;
 	fprintf(stderr,"Checking %s...\n\n",memName[type]);
 
-	mbox_write(INTERNAL_SRAM_BUF, MBOX_COMMAND, APPLET_CMD_LIST_BAD_BLOCKS);
-	samba_run(INTERNAL_SRAM_BUF, 0);
-	if((samba_read(INTERNAL_SRAM_BUF + MBOX_COMMAND, 4, 10000000)) != ~APPLET_CMD_LIST_BAD_BLOCKS) die("invalid response from applet write");
+	if(type==MEMTYPE_DF)
+	{
+		//Check and force DF to run in Full Page Mode (not binary)
+		pageMode=0; //0 <=> Full; 1<=> Binary
+		mbox_write(INTERNAL_SRAM_BUF, MBOX_COMMAND, APPLET_CMD_BINARY_PAGE);
+		mbox_write(INTERNAL_SRAM_BUF, MBOX_MEM_CHECK_TYPE,pageMode);
+		samba_run(INTERNAL_SRAM_BUF, 0);
+	}
+	else
+	{
+		mbox_write(INTERNAL_SRAM_BUF, MBOX_COMMAND, APPLET_CMD_LIST_BAD_BLOCKS);
+		samba_run(INTERNAL_SRAM_BUF, 0);
+		if((samba_read(INTERNAL_SRAM_BUF + MBOX_COMMAND, 4, 10000000)) != ~APPLET_CMD_LIST_BAD_BLOCKS) die("invalid response from applet write");
+	}
 	if((samba_read(INTERNAL_SRAM_BUF + MBOX_STATUS, 4, 10000000)) != APPLET_SUCCESS) die("invalid response from applet status");
 }
 

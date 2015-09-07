@@ -238,10 +238,11 @@ void AT45D_Erase(At45 *pAt45, unsigned int address)
 /// \param pAt45  Pointer to a At45 driver instance.
 //------------------------------------------------------------------------------
 
-void AT45D_BinaryPage(At45 *pAt45) 
+void AT45D_PageMode(At45 *pAt45, unsigned char to_bin)
 {
     unsigned char error;
     unsigned char opcode[3]= {AT45_BINARY_PAGE};
+    if(!to_bin) opcode[2]=0xA7; //Full Dataflash page size
     SANITY_CHECK(pAt45);
 
     // Issue a binary page command.

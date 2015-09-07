@@ -81,7 +81,7 @@ extern void AT45D_Write(
 
 extern void AT45D_Erase(At45 *pAt45, unsigned int address);
 
-extern void AT45D_BinaryPage(At45 *pAt45);
+extern void AT45D_PageMode(At45 *pAt45, unsigned char to_bin);
 
 #endif //#ifndef AT45D_H
 
