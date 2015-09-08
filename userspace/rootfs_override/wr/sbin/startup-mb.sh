@@ -10,14 +10,14 @@ for arg in $(cat /proc/cmdline); do
 done
 
 # Obtain the type of FPGA (LX130XT or LX240XT)
-tfpga=$($WR_HOME/bin/wrs_version -F)
+tfpga=$($WR_HOME/bin/wrs_version -t 2>/dev/null | grep fpga-type | cut -d: -f2 | sed 's/[ \.]//g')
 if [ "$tfpga" = "UNKNOWN" ]; then
     tfpga="LX240T"
 fi
 FP_FILE="$WR_HOME/lib/firmware/18p_mb-${tfpga}.bin"
 
 # Get the SCB version from DF.
-scb_ver=$($WR_HOME/bin/wrs_version -t | grep scb-version | cut -d: -f2 | sed 's/[ \.]//g')
+scb_ver=$($WR_HOME/bin/wrs_version -t 2>/dev/null | grep scb-version | cut -d: -f2 | sed 's/[ \.]//g')
 if [ "$scb_ver" = "UNKNOWN" ]; then
 	scb_ver=33
 	# For backward compatibility we can also check the type of DF.
