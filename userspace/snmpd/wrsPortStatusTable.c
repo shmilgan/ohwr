@@ -71,6 +71,12 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			port_state = hal_lookup_port(hal_ports,
 					hal_nports_local,
 					wrsPortStatusTable_array[i].port_name);
+			if(!port_state) {
+				/* It looks like we're in strange situation
+				 * that HAL is up but hal_ports is not filled
+				 */
+				continue;
+			}
 			/* No need to copy all ports structures, only what
 			 * we're interested in.
 			 * Keep value 0 for Not available
