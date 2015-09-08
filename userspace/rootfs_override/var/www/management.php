@@ -81,20 +81,21 @@
 		}
 
 		echo '<FORM method="POST">
-			<table id="daemon" border="0" align="center">
+			<table class="altrowstable" id="alternatecolor" width="100%">
 				<tr>
-					<td>
-					<input type="radio" name="dotconfig_source" value="SOURCE_LOCAL"';  if(!strcmp(wrs_dotconf_source_setup(), "source_local")) echo "checked";
-					echo ' > Local <br>
-					<input type="radio" name="dotconfig_source" value="SOURCE_REMOTE"';  if(!strcmp(wrs_dotconf_source_setup(), "source_remote")) echo "checked";
-					echo ' > Remote
-					<INPUT type=text name="dotconfig_URL" size="25%" VALUE='; echo $_SESSION['KCONFIG']['CONFIG_DOTCONF_URL']; echo '><br>
-					<input type="radio" name="dotconfig_source" value="SOURCE_TRY_DHCP"';  if(!strcmp(wrs_dotconf_source_setup(), "source_try_dhcp")) echo "checked";
-					echo ' > Try DHCP <br>
-					<input type="radio" name="dotconfig_source" value="SOURCE_FORCE_DHCP"';  if(!strcmp(wrs_dotconf_source_setup(), "source_force_dhcp")) echo "checked";
-					echo ' > Force DHCP <br>
-					</td>
-					<td><INPUT type="submit" value="Change" class="btn"></td>
+					<td align=center width=25%>
+					<select name=dotconfig_source>
+						<option name=dotconfig_source value="SOURCE_LOCAL"';  if(!strcmp(wrs_dotconf_source_setup(), "source_local")) echo "selected";
+							echo '> Local </option>';
+						echo '<option name=dotconfig_source value="SOURCE_REMOTE"';  if(!strcmp(wrs_dotconf_source_setup(), "source_remote")) echo "selected";
+						echo '> Remote </option>';
+						echo '<option name=dotconfig_source value="SOURCE_TRY_DHCP"';  if(!strcmp(wrs_dotconf_source_setup(), "source_try_dhcp")) echo "selected";
+						echo '> Try DHCP </option>';
+						echo '<option name=dotconfig_source value="SOURCE_FORCE_DHCP"';  if(!strcmp(wrs_dotconf_source_setup(), "source_force_dhcp")) echo "selected";
+						echo '> Force DHCP </option>;
+					</select>
+					<td align=center width=50%><INPUT type=text name="dotconfig_URL" title="Remote URL for dot-config file" VALUE='; echo $_SESSION['KCONFIG']['CONFIG_DOTCONF_URL']; echo '></td>
+					<td align=center width=25%><INPUT type="submit" value="Change" class="btn"></td>
 				</tr>
 			</table>
 			</FORM>
@@ -102,11 +103,11 @@
 	?>
 
 	<center><p><strong>Load dot-config from local computer</strong></p></center>
-	<table class='altrowstable' id='alternatecolor'>
+	<table class='altrowstable' id='alternatecolor1' width="100%">
 		<tr>
 		<FORM method="POST" ENCTYPE="multipart/form-data" onsubmit="return confirm('Are you sure you want to upload a dotconfig file? \nThis could result in the malfunction of the switch.');">
 			<td ><INPUT type=file name="kconfig" ></td>
-			<td><INPUT type=submit value="Load dot-config" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
+			<td align=center><INPUT type=submit value="Load dot-config" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE= <?php wrs_php_filesize();?>000></td>
 		</form>
 		</tr>
 	</table>
