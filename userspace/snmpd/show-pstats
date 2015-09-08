@@ -2,7 +2,7 @@
 
 # Allow user override
 if [catch "set cmd \"\$env(SHOWPS_CMD)\""] {
-    set cmd "snmpwalk -c public -v 2c -On -Oq HOST .1.3.6.1.4.1.96.100.6.4.1"
+    set cmd "snmpwalk -c public -v 2c -On -Oq HOST .1.3.6.1.4.1.96.100.7.4.1"
 }
 
 if ![llength $argv] {
@@ -67,7 +67,7 @@ proc updatew {wname} {
     while {[gets $F str] > 0} {
 	foreach {oid value} $str {
 	    # remove the leading part
-	    regsub ".1.3.6.1.4.1.96.100.6.4.1." $oid "" oid
+	    regsub ".1.3.6.1.4.1.96.100.7.4.1." $oid "" oid
 	    # extract column and row
 	    foreach {col row} [split $oid .] {
 		if ![string length $row] break
