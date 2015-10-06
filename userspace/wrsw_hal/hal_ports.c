@@ -149,6 +149,7 @@ static int hal_port_init(int index)
 			{"auto",   HEXP_PORT_MODE_WR_M_AND_S},
 			{"master", HEXP_PORT_MODE_WR_MASTER},
 			{"slave",  HEXP_PORT_MODE_WR_SLAVE},
+			{"synce_slave", HEXP_PORT_MODE_SYNCE_SLAVE},
 			{"non-wr", HEXP_PORT_MODE_NON_WR},
 			{NULL,     HEXP_PORT_MODE_NON_WR /* default */},
 		};
@@ -383,7 +384,8 @@ static void hal_port_fsm(struct hal_port_state * p)
 				p->tx_cal_pending = 0;
 				p->rx_cal_pending = 0;
 				/* set link/wrmode LEDs */
-				if (p->mode == HEXP_PORT_MODE_WR_SLAVE) {/* slave */
+				if (p->mode == HEXP_PORT_MODE_WR_SLAVE ||
+				    p->mode == HEXP_PORT_MODE_SYNCE_SLAVE) {/* slave */
 					shw_sfp_set_generic(p->hw_index, 1,
 							    SFP_LED_WRMODE_SLAVE);
 				} else if (p->mode == HEXP_PORT_MODE_NON_WR) {/* non-wr */
@@ -394,7 +396,15 @@ static void hal_port_fsm(struct hal_port_state * p)
 							    SFP_LED_WRMODE_MASTER);
 				}
 				pr_info("%s: link up\n", p->name);
-				p->state = HAL_PORT_STATE_UP;
+				
+				/* if SyncE lock straight away*/
+				if (p->mode == HEXP_PORT_MODE_SYNCE_SLAVE) {
+					rts_set_mode(RTS_MODE_BC);
+					rts_lock_channel(p->hw_index, 0);
+					p->state = HAL_PORT_STATE_LOCKING;
+					pr_info("ML: SyncE mode on %s\n", p->name);
+				} else
+					p->state = HAL_PORT_STATE_UP;
 			}
 			break;
 		}

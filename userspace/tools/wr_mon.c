@@ -226,6 +226,9 @@ void show_ports(void)
 				case HEXP_PORT_MODE_WR_SLAVE:
 					term_cprintf(C_WHITE, "WR Slave   ");
 					break;
+			       case HEXP_PORT_MODE_SYNCE_SLAVE:
+					term_cprintf(C_WHITE, "SyE Slave  ");
+					break;
 				case HEXP_PORT_MODE_NON_WR:
 					term_cprintf(C_WHITE, "Non WR     ");
 					break;
