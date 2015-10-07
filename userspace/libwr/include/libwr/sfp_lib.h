@@ -10,6 +10,7 @@
 #define SFP_LED_WRMODE2	(1 << 1)
 #define SFP_LED_SYNCED	(1 << 2)
 #define SFP_TX_DISABLE	(1 << 3)
+#define SFP_TX_ENABLE 	(1 << 4)
 
 #define shw_sfp_set_led_synced(num, status)	\
 	shw_sfp_set_generic(num, status, SFP_LED_SYNCED)

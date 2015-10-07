@@ -465,6 +465,8 @@ void shw_sfp_gpio_set(int num, uint8_t state)
 		curr |= SFP_LED_SYNCED_MASK(top);
 	if (state & SFP_TX_DISABLE)
 		curr |= SFP_TX_DISABLE_MASK(top);
+	if (state & SFP_TX_ENABLE)
+		curr &= (~SFP_TX_DISABLE_MASK(top));
 
 	send[1] = curr;
 	i2c_transfer(bus, addr, 2, 0, send);

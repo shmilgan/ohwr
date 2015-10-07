@@ -194,6 +194,20 @@ void try_autonegotiation(int ep, int argc, char *argv[])
 	printf("\nComplete: LPA %x\n", pcs_read(ep, MII_LPA));
 }
 
+void sfpen_command(int ep, int argc, char *argv[])
+{
+	int on_off = atoi(argv[3]) ? 1 : 0;
+
+	if(on_off) {
+		printf("port %d: Enabling TX\n", ep);
+		shw_sfp_gpio_set(ep, SFP_TX_ENABLE);	
+	}
+	else {
+		printf("port %d: Disabling TX\n", ep);
+		shw_sfp_gpio_set(ep, SFP_TX_DISABLE);	
+	}
+}
+
 int get_bitslide(int ep)
 {
 	return (pcs_read(ep, 16) >> 4) & 0x1f;
@@ -572,8 +586,14 @@ struct {
 	"",
 	"RT subsystem command [show,lock,master,gm]",
 	rt_command},
-	{NULL}
 
+	{
+	"sfpen",
+	"",
+	"Enable/disable SFP Tx",
+	sfpen_command},
+
+	{NULL}
 };
 
 
