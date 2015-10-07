@@ -584,7 +584,10 @@ int main(int argc, char **argv)
 		exit(1);
 
 	wrs_msg_init(1, argv); /* only use argv[0]: no cmdline */
-	shw_init();
+
+	shw_io_init();
+	shw_fpga_mmap_init();
+	shw_sfp_buses_init();
 
 	if(argc<3)
 	{
