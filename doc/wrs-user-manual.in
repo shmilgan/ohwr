@@ -336,7 +336,7 @@ configuration file each time it is booted, and applies the choices
 before starting any service.  The name of the configuration file can
 include the @sc{mac} or @sc{ip} address of the device, to allow
 running several switches with different configurations in the same
-network. The URL to the configuration file can also be retrieved from DHCP
+network. The location of the configuration file can also be retrieved from DHCP
 server.
 
 @c ==========================================================================
@@ -368,9 +368,14 @@ sources are implemented in current version:
 	Get a @t{dot-config} file from the URL provided in @t{CONFIG_DOTCONF_URL}.
 
 @item CONFIG_DOTCONF_SOURCE_FORCE_DHCP
-	Get a URL to a @t{dot-config} file from a DHCP server.
-        The URL can be configured in the ``@t{filename}'' configuration field
-        of the DHCP server. The configured URL has to be in the same form as
+	Get a network location of a @t{dot-config} file from a DHCP server.
+        Server can be configured in a way to provide the entire URL to
+        the dot-config in the ``@t{filename}'' configuration field of the DHCP
+        server. As an alternative, ``@t{filename}'' can be configured only as a
+        path. It will be then interpreted as a path on a tftp server, which IP
+        address is taken from the configuration field
+        ``@t{The BOOTP next server option}'' of a DHCP server.
+        In the case the URL is used it has to be in the same form as
         @t{CONFIG_DOTCONF_URL}.
 
 @item CONFIG_DOTCONF_SOURCE_TRY_DHCP

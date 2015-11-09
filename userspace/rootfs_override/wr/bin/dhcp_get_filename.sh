@@ -11,6 +11,16 @@
 # needed. Then we replace the real file if different.
 tmpdir="/tmp"
 
+# check whether we got path to the dot-config file from DHCP server
 if [ -n "$boot_file" ]; then
+    # check whether the path consists potocol type
+    proto=$(echo "$boot_file" | cut -d: -f 1)
+    if [ "$proto" != "tftp" ] && [ "$proto" != "ftp" ] && [ "$proto" != "http" ] && [ -n "$siaddr" ]; then
+	# There is no protocol type in the path. If $siaddr is not empty, assume
+	# config should come from $siaddr/$boot_file via tftp
+	boot_file=tftp://"$siaddr"/"$boot_file"
+    fi
+    # Path with protocol type (added above or originally included) that was
+    # received from the DHCP server.
     echo $boot_file > "$tmpdir"/dot-config_source_url
 fi
