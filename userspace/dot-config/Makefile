@@ -16,7 +16,7 @@ CFLAGS =  -D KBUILD_NO_NLS
 
 # most of this is just copying stuff in
 RFILES = Kconfig dot-config wrs_release_defconfig
-XFILES = conf
+XFILES = conf mconf
 FILES = $(RFILES) $(XFILES)
 
 all: $(FILES)
@@ -36,9 +36,27 @@ dot-config: $(WRS_BASE_DIR)/../.config
 Kconfig: $(WRS_BASE_DIR)/../Kconfig
 	cp $^ $@
 
+CONF_LOC=$(WRS_BASE_DIR)/../scripts/kconfig
+
 conf:
-	$(CC) $(CFLAGS) -o $@ $(WRS_BASE_DIR)/../scripts/kconfig/conf.c \
-		$(WRS_BASE_DIR)/../scripts/kconfig/zconf.tab.c
+	$(CC) $(CFLAGS) -o $@ $(CONF_LOC)/conf.c \
+		$(CONF_LOC)/zconf.tab.c
+
+CURSES_BUILD := $(wildcard $(WRS_OUTPUT_DIR)/build/buildroot-2*)
+CURSES_BUILD := $(wildcard $(CURSES_BUILD)/output/build/ncurses-*)
+
+lxdialog := $(CONF_LOC)/lxdialog/checklist.c
+lxdialog += $(CONF_LOC)/lxdialog/util.c
+lxdialog += $(CONF_LOC)/lxdialog/inputbox.c
+lxdialog += $(CONF_LOC)/lxdialog/textbox.c
+lxdialog += $(CONF_LOC)/lxdialog/yesno.c
+lxdialog += $(CONF_LOC)/lxdialog/menubox.c
+
+mconf:
+	$(CC) $(CFLAGS) -o $@ $(CONF_LOC)/mconf.c $(CONF_LOC)/zconf.tab.c \
+		$(lxdialog) \
+		-DCURSES_LOC="<curses.h>" -I$(CURSES_BUILD)/include \
+		-L$(CURSES_BUILD)/lib -lncurses
 
 wrs_release_defconfig: $(WRS_BASE_DIR)/../configs/wrs_release_defconfig
 	cp $^ $@

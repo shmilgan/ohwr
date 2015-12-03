@@ -310,9 +310,7 @@ time, to be run in @t{/wr/etc}; the file is called @t{dot-config}, and
 not @t{.config}.  This is meant to be useful for developers, when
 testing different configurations in the lab, rather than in
 production. We also support ``@t{make config}'', ``@t{make
-defconfig}'' and @t{make oldconfig}''.  We are not yet able to
-run ``@t{make menuconfig}'', but that may be added when we upgrade
-@i{buildroot} after release 4.2.
+defconfig}'', @t{make oldconfig}'' and ``@t{make menuconfig}''.
 
 @c ==========================================================================
 @node Dynamic WRS Configuration
