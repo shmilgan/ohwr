@@ -181,6 +181,7 @@ void print_info(char *prgname)
 			"   -e        Show counters from Endpoints\n"
 			"   -p        Show counters for priorities only (from Endpoints)\n"
 			"   -a        Show all counters (don't fit screen)\n"
+			"   -t        Show traffic only, i.e. rx/tx-ed frames\n"
 			"   -n        Define 8/18 ports version\n"
 			"   -h        Show this message\n");
 
@@ -192,10 +193,11 @@ int main(int argc, char **argv)
 	int def_cnts[]  = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,29,30,31,32,33,34,35,36,37}; //30
 	int rtu_cnts[]  = {29,30,31,32,33,34,35,36,37,38}; //10
 	int ep_cnts[]   = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28}; //29
+	int traffic[]   = {18,19};//2
 	int op = 0, c;
 
 	use_ports = NPORTS;
-	while ( (c = getopt(argc, argv, "pheran:")) != -1) {
+	while ( (c = getopt(argc, argv, "phertan:")) != -1) {
 		switch(c) {
 			case 'n':
 				use_ports = atoi(optarg);
@@ -204,6 +206,7 @@ int main(int argc, char **argv)
 			case 'e':
 			case 'r':
 			case 'a':
+			case 't':
 				op = c;
 				break;
 			case 'h':
@@ -228,6 +231,9 @@ int main(int argc, char **argv)
 				break;
 			case 'r':
 				print_chosen_cnts(rtu_cnts, 10);
+				break;
+			case 't':
+				print_chosen_cnts(traffic, 2);
 				break;
 			case 'a':
 				print_first_n_cnts(CNT_PP);
