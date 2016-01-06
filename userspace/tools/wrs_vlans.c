@@ -150,13 +150,20 @@ int main(int argc, char *argv[])
 		print_help(prgname);
 		exit(0);
 	}
-	rtud_ch = minipc_client_create("rtud", 0);
-	if(!rtud_ch) {
-		fprintf(stderr, "%s: Can't connect to RTUd mini-rpc server\n",
-			prgname);
-		exit(1);
+
+	n_wait = 0;
+	/* connect to the RTUd mini-rpc */
+	while((rtud_ch = minipc_client_create("rtud", 0)) == 0) {
+		n_wait++;
+		if (n_wait > 10) {
+			fprintf(stderr, "%s: Can't connect to RTUd mini-rpc "
+					"server\n", prgname);
+			exit(1);
+		}
+		sleep(1);
 	}
 
+	n_wait = 0;
 	/* open rtu shm */
 	while ((ret = wrs_shm_get_and_check(wrs_shm_rtu, &rtu_port_shmem)) != 0) {
 		n_wait++;
@@ -180,6 +187,8 @@ int main(int argc, char *argv[])
 			prgname, rtu_port_shmem->version, RTU_SHMEM_VERSION);
 		exit(1);
 	}
+
+
 
 	/* get vlans array */
 	rtu_hdr = (void *)rtu_port_shmem + rtu_port_shmem->data_off;
