@@ -55,3 +55,14 @@ if [ "$PS1" ]; then
 fi;
 
 export PS1="wrs-`ifconfig eth0 | grep inet | awk -F: '{ print $2 }' | awk '{ print $1 }'`#"
+
+echo -n "dot-config status: "
+if [ -f /tmp/dot-config_status ]; then
+    cat /tmp/dot-config_status
+else
+    echo "error!"
+fi
+if [ -f /tmp/dot-config_source ]; then
+    echo -n "dot-config source: "
+    cat /tmp/dot-config_source
+fi
