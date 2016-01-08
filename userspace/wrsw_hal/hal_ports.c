@@ -86,14 +86,6 @@ static int hal_port_check_presence(const char *if_name, unsigned char *mac)
 	return 1;
 }
 
-static void hal_port_enable(int port, int enable)
-{
-	char str[50];
-	snprintf(str, sizeof(str), "/sbin/ifconfig wr%d %s", port,
-		 enable ? "up" : "down");
-	system(str);
-}
-
 /* Port initialization, from dot-config values */
 static int hal_port_init(int index)
 {
@@ -142,7 +134,7 @@ static int hal_port_init(int index)
 	p->t4_phase_transition = DEFAULT_T4_PHASE_TRANS;
 	p->clock_period = REF_CLOCK_PERIOD_PS;
 
-	hal_port_enable(p->hw_index, 1);
+	/* enabling of ports is done by startup script */
 
 	{
 		static struct roletab { char *name; int value; } *rp, rt[] = {

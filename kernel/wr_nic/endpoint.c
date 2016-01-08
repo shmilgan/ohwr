@@ -176,7 +176,6 @@ int wrn_ep_open(struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
 	unsigned long timerarg = (unsigned long)dev;
-	int prio, prio_map;
 
 	if (WR_IS_NODE) {
 		netif_carrier_on(dev);
@@ -184,18 +183,6 @@ int wrn_ep_open(struct net_device *dev)
 	}
 
 	/* Prepare hardware registers: first config, then bring up */
-	writel(0
-	       | EP_VCR0_QMODE_W(0x3)		/* unqualified port */
-	       | EP_VCR0_PRIO_VAL_W(4),		/* some mid priority */
-		&ep->ep_regs->VCR0);
-
-	/* Write default 802.1Q tag priority to traffic class mapping */
-	prio_map = 0;
-	for(prio=0; prio<8; ++prio) {
-		prio_map |= (0x7 & prio) << (prio*3);
-	}
-	writel(prio_map, &ep->ep_regs->TCAR);
-
 
 	/*
 	 * enable RX timestamping (it has no impact on performance)
@@ -255,6 +242,7 @@ int wrn_endpoint_probe(struct net_device *dev)
 	struct wrn_ep *ep = netdev_priv(dev);
 	static u8 wraddr[6];
 	int err;
+	int prio, prio_map;
 	u32 val;
 
 	if (is_zero_ether_addr(wraddr)) {
@@ -318,6 +306,20 @@ int wrn_endpoint_probe(struct net_device *dev)
 	ep->mii.force_media = 0;
 	ep->mii.advertising = ADVERTISE_1000XFULL;
 	ep->mii.full_duplex = 1;
+
+	/* set-up VLAN related registers during driver loading not during
+	 * opening device */
+	writel(0
+	       | EP_VCR0_QMODE_W(0x3)		/* unqualified port */
+	       | EP_VCR0_PRIO_VAL_W(4),		/* some mid priority */
+		&ep->ep_regs->VCR0);
+
+	/* Write default 802.1Q tag priority to traffic class mapping */
+	prio_map = 0;
+	for (prio = 0; prio < 8; ++prio) {
+		prio_map |= (0x7 & prio) << (prio * 3);
+	}
+	writel(prio_map, &ep->ep_regs->TCAR);
 
 	/* Finally, register and succeed, or fail and undo */
 	err = register_netdev(dev);
