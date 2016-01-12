@@ -204,7 +204,12 @@ do_resize:
 
 		for (i = 0; i < max_choice; i++) {
 			item_set(i + scroll);
-			if (toupper(key) == toupper(item_str()[0]))
+			
+			/*
+			 * uClibc's function toupper asserts for items outside <0,255>
+			 * Let's ignore these keys, they're not in strings anyway.
+			 */
+			if ((key >= 0) && (key <= 255) && (toupper(key) == toupper(item_str()[0])))
 				break;
 		}
 
