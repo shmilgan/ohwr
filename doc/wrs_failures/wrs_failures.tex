@@ -22,6 +22,9 @@
 \definecolor{light-gray}{gray}{0.95}
 %\usepackage[firstpage]{draftwatermark}
 
+% for glossary
+% nopostdot - no dot at the end of index entires
+\usepackage[nogroupskip,nopostdot,counter=subsubsection]{glossaries}
 
 \usepackage{listings}
 \usepackage{cancel}
@@ -71,6 +74,27 @@
 \newcommand{\eqdelay}[1]{{\text{delay}}_{#1}}
 \newcommand{\eqasymm}{{\text{asymmetry}}}
 
+% for glossary, set way of sorting entries
+\makenoidxglossaries
+% don't bold entries, texttt them
+\renewcommand*{\glsnamefont}[1]{\texttt{\textmd{#1}}}
+% use list style for glossary
+\setglossarystyle{list}
+% helper to add glossary entries
+\newcommand{\snmpentry}[2]{%
+  \newglossaryentry{#1}{%
+    name={#1},%
+    description={#2}%
+    }%
+  }
+
+% load glossary definitions from snmp_objects.tex
+\loadglsentries{snmp_objects}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 \setcounter{tocdepth}{2}
 \input{revinfo.tex}
@@ -110,4 +134,6 @@
 %\bibliographystyle{unsrt}
 %\bibliography{references}
 
+% print glossary index
+\printnoidxglossary[sort=letter,title=SNMP objects]
 \end{document}
