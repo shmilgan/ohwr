@@ -144,7 +144,7 @@ static int get_rtu_status(struct ns_pstats *old,
 	/* values from 2.2.4 "RTU is full and cannot accept more requests" in
 	 * wrs_failures document shouldn't increase */
 	for (i = 0; i < rows; i++) {
-		if ((new[i].TXUnderrun - old[i].TXUnderrun) > 0) {
+		if ((new[i].RXDropRTUFull - old[i].RXDropRTUFull) > 0) {
 			/* if error, no need to check more, but do it just for
 			 * logs */
 			ret = 1;
