@@ -38,6 +38,18 @@ static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
 static struct hal_temp_sensors temp_sensors_local;
 
+void help(char *prgname)
+{
+	fprintf(stderr, "%s: Use: \"%s [<options>] <cmd> [<args>]\n",
+		prgname, prgname);
+	fprintf(stderr,
+		"  The program has the following options\n"
+		"  -h       print help\n"
+		"  -s       show statistics\n"
+		"  -b       use black and white output\n"
+		"  -w       web interface mode\n");
+	exit(1);
+}
 
 int read_hal(void){
 	unsigned ii;
@@ -503,10 +515,12 @@ int main(int argc, char *argv[])
 
 	wrs_msg_init(argc, argv);
 	init_shm();
-	while((opt=getopt(argc, argv, "sbgwqv")) != -1)
+	while((opt=getopt(argc, argv, "hsbgwqv")) != -1)
 	{
 		switch(opt)
 		{
+		    case 'h':
+		        help(argv[0]);
 			case 's':
 				mode = SHOW_STATS;
 				break;
@@ -521,8 +535,7 @@ int main(int argc, char *argv[])
 			case 'q': break; /* done in wrs_msg_init() */
 			case 'v': break; /* done in wrs_msg_init() */
 			default:
-				pr_error("Unrecognized option.\n");
-				break;
+				help(argv[0]);
 		}
 	}
 
