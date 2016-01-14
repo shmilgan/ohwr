@@ -8,5 +8,6 @@
 
 void shw_udelay_init(void);
 void shw_udelay(uint32_t microseconds);
+char *format_time(uint64_t sec);
 
 #endif /* __LIBWR_HW_UTIL_H */
