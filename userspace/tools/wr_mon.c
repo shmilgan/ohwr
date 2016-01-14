@@ -8,6 +8,7 @@
 #include <libwr/hal_shmem.h>
 #include <libwr/switch_hw.h>
 #include <libwr/wrs-msg.h>
+#include <libwr/pps_gen.h>
 #include <fpga_io.h>
 #include <minipc.h>
 #include <signal.h>
@@ -18,7 +19,22 @@
 #include "ptpd_exports.h"
 
 #define SHOW_GUI		0
-#define SHOW_STATS		1
+#define SHOW_SLAVE_PORTS	1
+#define SHOW_MASTER_PORTS	(1<<1)
+#define SHOW_OTHER_PORTS	(1<<2)
+#define SHOW_SERVO		(1<<3)
+#define SHOW_TEMPERATURES	(1<<4)
+#define WEB_INTERFACE		(1<<5) /* TJP: still has it's own print
+					*      function, ugly
+					*/
+#define SHOW_WR_TIME		(1<<6)
+
+/* for convenience when any or all ports needs a print statement */
+#define SHOW_ALL_PORTS		(SHOW_SLAVE_PORTS | SHOW_MASTER_PORTS | \
+				SHOW_OTHER_PORTS)
+/* for convenience with -a option */
+#define SHOW_ALL		(SHOW_ALL_PORTS | SHOW_SERVO | \
+				SHOW_TEMPERATURES | SHOW_WR_TIME)
 
 int mode = SHOW_GUI;
 
@@ -32,12 +48,37 @@ static int hal_nports_local;
 static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
 static struct wr_servo_state *ppsi_servo;
-static struct wr_servo_state ppsi_servo_local; /* local copy of
-						    servo status */
+static struct wr_servo_state ppsi_servo_local; /* local copy of servo status */
 static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
+/* local copy of temperature sensor readings */
 static struct hal_temp_sensors temp_sensors_local;
 
+static uint64_t seconds;
+static uint32_t nanoseconds;
+
+void help(char *prgname)
+{
+	fprintf(stderr, "%s: Use: \"%s [<options>] <cmd> [<args>]\n",
+		prgname, prgname);
+	fprintf(stderr,
+		"  The program has the following options\n"
+		"  -h   print help\n"
+		"  -i   show White Rabbit time.\n"
+		"	   very close\n"
+		"  -m   show master ports\n"
+		"  -s   show slave ports\n"
+		"  -o   show other ports\n"
+		"  -e   show servo statistics\n"
+		"  -t   show temperatures\n"
+		"  -a   show all (same as -i -m -s -o -e -t options)\n"
+		"  -b   black and white output\n"
+		"  -w   web interface mode\n"
+		"\n"
+		"During execution the user can enter 'q' to exit the program\n"
+		"and 't' to toggle printing of state information on/off\n");
+	exit(1);
+}
 
 int read_hal(void){
 	unsigned ii;
@@ -79,7 +120,6 @@ int read_servo(void){
 
 	return 0;
 }
-
 
 void ppsi_connect_minipc(void)
 {
@@ -131,7 +171,8 @@ void init_shm(void)
 		exit(1);
 	}
 	/* Even after HAL restart, HAL will place structures at the same
-	 * addresses. No need to re-dereference pointer at each read. */
+	 * addresses. No need to re-dereference pointer at each read.
+	 */
 	hal_ports = wrs_shm_follow(hal_head, h->ports);
 	if (!hal_ports) {
 		pr_error("Unable to follow hal_ports pointer in HAL's "
@@ -194,53 +235,95 @@ void show_ports(void)
 		tm = localtime(&t);
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
 		term_cprintf(C_BLUE, "WR time:     %s\n", datestr);
+	}
+	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+		printf("PORTS ");
+	}
 
-		for (i = 0; i < hal_nports_local; i++)
-		{
-			char if_name[10];
+	for (i = 0; i < hal_nports_local; i++) {
+		char if_name[10];
+		char if_mode[15];
+		int print_port = 0;
+		int print_mode_color = 0;
 
-			snprintf(if_name, 10, "wr%d", i);
+		snprintf(if_name, 10, "wr%d", i);
 
-			port_state = hal_lookup_port(hal_ports_local_copy,
-						    hal_nports_local, if_name);
-			if (!port_state)
-				continue;
+		port_state = hal_lookup_port(hal_ports_local_copy,
+						hal_nports_local, if_name);
+		if (!port_state)
+			continue;
 
+		switch (port_state->mode) {
+		case HEXP_PORT_MODE_WR_MASTER:
+			if (mode == SHOW_GUI) {
+				print_mode_color = C_WHITE;
+				strcpy(if_mode, "WR Master  ");
+			} else if (mode & SHOW_MASTER_PORTS) {
+				print_port = 1;
+				strcpy(if_mode, "M");
+			} else if (mode & WEB_INTERFACE) {
+				strcpy(if_mode, "Master");
+			}
+			break;
+		case HEXP_PORT_MODE_WR_SLAVE:
+			if (mode == SHOW_GUI) {
+				print_mode_color = C_WHITE;
+				strcpy(if_mode, "WR Slave   ");
+			} else if (mode & SHOW_SLAVE_PORTS) {
+				print_port = 1;
+				strcpy(if_mode, "S");
+			} else if (mode & WEB_INTERFACE) {
+				strcpy(if_mode, "Slave");
+			}
+			break;
+		case HEXP_PORT_MODE_NON_WR:
+			if (mode == SHOW_GUI) {
+				print_mode_color = C_WHITE;
+				strcpy(if_mode, "Non WR     ");
+			} else if (mode & SHOW_OTHER_PORTS) {
+				print_port = 1;
+				strcpy(if_mode, "N");
+			} else if (mode & WEB_INTERFACE) {
+				strcpy(if_mode, "Non WR");
+			}
+			break;
+		case HEXP_PORT_MODE_WR_M_AND_S:
+			if (mode == SHOW_GUI) {
+				print_mode_color = C_WHITE;
+				strcpy(if_mode, "WR auto    ");
+			} else if (mode &
+				(SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+				print_port = 1;
+				strcpy(if_mode, "A");
+			} else if (mode & WEB_INTERFACE) {
+				strcpy(if_mode, "Auto");
+			}
+			break;
+		default:
+			if (mode == SHOW_GUI) {
+				print_mode_color = C_WHITE;
+				strcpy(if_mode, "Unknown    ");
+			} else if (mode & SHOW_OTHER_PORTS) {
+				print_port = 1;
+				strcpy(if_mode, "U");
+			} else if (mode & WEB_INTERFACE) {
+				strcpy(if_mode, "Unknown");
+			}
+			break;
+		}
+
+		if (mode == SHOW_GUI) {
 			term_cprintf(C_WHITE, " %-5s: ", if_name);
 			/* check if link is up */
 			if (state_up(port_state->state))
 				term_cprintf(C_GREEN, "Link up    ");
 			else
 				term_cprintf(C_RED, "Link down  ");
-
-			/*
-			 * FIXME: this is from dot-config, but ppsi.conf
-			 * can be unrelated, like during tests. So this is
-			 * just wrong for us developers (did I write FIXME?)
-			 */
-			switch (port_state->mode)
-			{
-				case HEXP_PORT_MODE_WR_MASTER:
-					term_cprintf(C_WHITE, "WR Master  ");
-					break;
-				case HEXP_PORT_MODE_WR_SLAVE:
-					term_cprintf(C_WHITE, "WR Slave   ");
-					break;
-				case HEXP_PORT_MODE_NON_WR:
-					term_cprintf(C_WHITE, "Non WR     ");
-					break;
-				case HEXP_PORT_MODE_WR_M_AND_S:
-					term_cprintf(C_WHITE, "WR auto    ");
-					break;
-				default:
-					term_cprintf(C_WHITE, "Unknown    ");
-					break;
-			}
-
+			term_cprintf(C_WHITE, if_mode);
 			if (port_state->locked)
-				term_cprintf(C_GREEN, "Locked  ");
+				term_cprintf(C_GREEN, "Locked     ");
 			else
-				term_cprintf(C_RED, "NoLock  ");
+				term_cprintf(C_RED, "NoLock     ");
 
 			/*
 			 * Actually, what is interesting is the PTP state.
@@ -248,7 +331,7 @@ void show_ports(void)
 			 */
 			for (j = 0; j < ppg->nlinks; j++) {
 				if (!strcmp(if_name,
-					    pp_array[j].cfg.iface_name))
+						pp_array[j].cfg.iface_name))
 					break;
 			}
 			/* Warning: we may have more pp instances per port */
@@ -257,84 +340,31 @@ void show_ports(void)
 			} else {
 				unsigned char *p = pp_array[j].peer;
 
-				term_cprintf(C_WHITE, "peer: %02x:%02x:%02x"
-					     ":%02x:%02x:%02x ", p[0], p[1],
-					     p[2], p[3], p[4], p[5]);
+				term_cprintf(C_WHITE,
+					"peer: %02x:%02x:%02x:%02x:%02x:%02x ",
+					 p[0], p[1], p[2], p[3], p[4], p[5]);
 				term_cprintf(C_GREEN, "ptp state %i\n",
-					     pp_array[j].state);
+						 pp_array[j].state);
 				/* FIXME: string state */
 			}
-		}
-	}
-	else if(mode == SHOW_STATS) {
-		printf("PORTS ");
-		for (i = 0; i < hal_nports_local; ++i) {
-			char if_name[10];
-
-			snprintf(if_name, 10, "wr%d", i);
-			port_state = hal_lookup_port(hal_ports_local_copy,
-						   hal_nports_local, if_name);
-			if (!port_state)
-				continue;
-
+		} else if (mode & WEB_INTERFACE) {
+			printf("%s ", state_up(port_state->state)
+				? "up" : "down");
+			printf("%s ", if_mode);
+			printf("%s ", port_state->locked
+				? "Locked" : "NoLock");
+			printf("%s\n", port_state->calib.rx_calibrated
+				&& port_state->calib.tx_calibrated
+				? "Calibrated" : "Uncalibrated");
+		} else if (print_port) {
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state_up(port_state->state));
-			switch (port_state->mode) {
-			case HEXP_PORT_MODE_WR_MASTER:
-				printf("mode:M ");
-				break;
-			case HEXP_PORT_MODE_WR_SLAVE:
-				printf("mode:S ");
-				break;
-			case HEXP_PORT_MODE_NON_WR:
-				printf("mode:N ");
-				break;
-			case HEXP_PORT_MODE_WR_M_AND_S:
-				printf("mode:A ");
-				break;
-			default:
-				printf("mode:U ");
-				break;
-			}
+			printf("mode:%s ", if_mode);
 			printf("lock:%d ", port_state->locked);
+			print_port = 0;
 		}
-		printf("\n");
 	}
 }
-
-/*
- * This is almost a copy of the above, used by web interface.
- * Code duplication is bad, but this is better than a separate tool
- * which is almost identical but even broken
- */
-static void show_unadorned_ports(void)
-{
-	int i;
-	struct hal_port_state *port_state;
-
-	for (i = 0; i < hal_nports_local; i++)
-	{
-		char if_name[10];
-
-		snprintf(if_name, 10, "wr%d", i);
-			port_state = hal_lookup_port(hal_ports_local_copy,
-						     hal_nports_local, if_name);
-			if (!port_state)
-				continue;
-
-		printf("%s %s %s %s\n",
-		       state_up(port_state->state)
-		       ? "up" : "down",
-		       port_state->mode == HEXP_PORT_MODE_WR_MASTER
-		       ? "Master" : "Slave", /* FIXME: other options? */
-		       port_state->locked
-		       ? "Locked" : "NoLock",
-		       port_state->calib.rx_calibrated
-			   && port_state->calib.tx_calibrated
-		       ? "Calibrated" : "Uncalibrated");
-	}
-}
-
 
 void show_servo(void)
 {
@@ -353,11 +383,12 @@ void show_servo(void)
 		term_cprintf(C_BLUE, "\nSynchronization status:\n");
 
 		if (!(ppsi_servo_local.flags & WR_FLAG_VALID)) {
-			term_cprintf(C_RED, "Master mode or sync info not valid\n");
+			term_cprintf(C_RED,
+				     "Master mode or sync info not valid\n");
 			return;
 		}
 
-		term_cprintf(C_GREY, "Servo state:               ");
+		term_cprintf(C_GREY, "Servo state: ");
 		if (lastt && time(NULL) - lastt > 5) {
 			term_cprintf(C_RED, " --- not updating --- ");
 		} else {
@@ -372,70 +403,83 @@ void show_servo(void)
 		if (!ppsi_servo_local.tracking_enabled)
 			term_cprintf(C_RED, "Tracking forcibly disabled\n");
 
-		term_cprintf(C_BLUE, "\nTiming parameters:\n\n");
+		term_cprintf(C_BLUE, "\nTiming parameters:\n");
 
-		term_cprintf(C_GREY, "Round-trip time (mu):      ");
+		term_cprintf(C_GREY, "Round-trip time (mu): ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 			     ppsi_servo_local.picos_mu/1000.0);
 
-		term_cprintf(C_GREY, "Master-slave delay:        ");
+		term_cprintf(C_GREY, "Master-slave delay:   ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 			     ppsi_servo_local.delta_ms/1000.0);
 
-		term_cprintf(C_GREY, "Master PHY delays:         ");
+		term_cprintf(C_GREY, "Master PHY delays:    ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
 			     ppsi_servo_local.delta_tx_m/1000.0,
 			     ppsi_servo_local.delta_rx_m/1000.0);
 
-		term_cprintf(C_GREY, "Slave PHY delays:          ");
+		term_cprintf(C_GREY, "Slave PHY delays:     ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
 			     ppsi_servo_local.delta_tx_s/1000.0,
 			     ppsi_servo_local.delta_rx_s/1000.0);
 
-		term_cprintf(C_GREY, "Total link asymmetry:      ");
+		term_cprintf(C_GREY, "Total link asymmetry: ");
 		term_cprintf(C_WHITE, "%.3f nsec\n", total_asymmetry/1000.0);
 
 		/*if (0) {
-			term_cprintf(C_GREY, "Fiber asymmetry:           ");
-			term_cprintf(C_WHITE, "%.3f nsec\n", ss.fiber_asymmetry/1000.0);
+			term_cprintf(C_GREY, "Fiber asymmetry:   ");
+			term_cprintf(C_WHITE, "%.3f nsec\n",
+				ss.fiber_asymmetry/1000.0);
 		}*/
 
-		term_cprintf(C_GREY, "Clock offset:              ");
+		term_cprintf(C_GREY, "Clock offset:         ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 			     ppsi_servo_local.offset/1000.0);
 
-		term_cprintf(C_GREY, "Phase setpoint:            ");
+		term_cprintf(C_GREY, "Phase setpoint:       ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 			     ppsi_servo_local.cur_setpoint/1000.0);
 
-		term_cprintf(C_GREY, "Skew:                      ");
+		term_cprintf(C_GREY, "Skew:                 ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 			     ppsi_servo_local.skew/1000.0);
 
-		term_cprintf(C_GREY, "Servo update counter:      ");
+		term_cprintf(C_GREY, "Servo update counter: ");
 		term_cprintf(C_WHITE, "%u times\n",
 			     ppsi_servo_local.update_count);
 		if (ppsi_servo_local.update_count != last_count) {
 			lastt = time(NULL);
 			last_count = ppsi_servo_local.update_count;
 		}
-	}
-	else if(mode == SHOW_STATS) {
-		printf("SERVO    ");
+	} else {
+		/* TJP: commented out fields are present on the SPEC,
+		 *      does the switch have similar fields?
+		 */
+		printf("SERVO ");
+/*		printf("lnk:");*/
+/*		printf("rx:");*/
+/*		printf("tx:");*/
+		printf("lock:%i ", ppsi_servo_local.tracking_enabled);
 		printf("sv:%d ", ppsi_servo_local.flags & WR_FLAG_VALID ? 1 : 0);
 		printf("ss:'%s' ", ppsi_servo_local.servo_state_name);
+/*		printf("aux:");*/
 		printf("mu:%llu ", ppsi_servo_local.picos_mu);
 		printf("dms:%llu ", ppsi_servo_local.delta_ms);
 		printf("dtxm:%d drxm:%d ", ppsi_servo_local.delta_tx_m,
-					   ppsi_servo_local.delta_rx_m);
+		       ppsi_servo_local.delta_rx_m);
 		printf("dtxs:%d drxs:%d ", ppsi_servo_local.delta_tx_s,
-					   ppsi_servo_local.delta_rx_s);
+		       ppsi_servo_local.delta_rx_s);
 		printf("asym:%lld ", total_asymmetry);
 		printf("crtt:%llu ", crtt);
 		printf("cko:%lld ", ppsi_servo_local.offset);
 		printf("setp:%d ", ppsi_servo_local.cur_setpoint);
+/*		printf("hd:");*/
+/*		printf("md:");*/
+/*		printf("ad:");*/
 		printf("ucnt:%u ", ppsi_servo_local.update_count);
-		printf("\n");
+		/* SPEC shows temperature, but that can be selected separately
+		 * in this program
+		 */
 	}
 }
 
@@ -456,10 +500,19 @@ void show_temperatures(void)
 		term_cprintf(C_GREY, "PSR: ");
 		term_cprintf(C_WHITE, "%2.2f\n",
 			     temp_sensors_local.psr/256.0);
+	} else {
+		printf("TEMP ");
+		printf("fpga:%2.2f ", temp_sensors_local.fpga/256.0);
+		printf("pll:%2.2f ", temp_sensors_local.pll/256.0);
+		printf("psl:%2.2f ", temp_sensors_local.psl/256.0);
+		printf("psr:%2.2f", temp_sensors_local.psr/256.0);
 	}
 }
 
-int track_onoff = 1;
+void show_time(void)
+{
+	printf("TIME sec:%lld nsec:%d ", seconds, nanoseconds);
+}
 
 void show_all(void)
 {
@@ -476,23 +529,38 @@ void show_all(void)
 	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0));
 	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0));
 
-	if (hal_alive)
-		show_ports();
-	else if (mode == SHOW_GUI)
-		term_cprintf(C_RED, "\nHAL is dead!\n");
-	else if (mode == SHOW_STATS)
-		printf("HAL is dead!\n");
+	if (mode & SHOW_WR_TIME) {
+		if (ppsi_alive)
+			show_time();
+		else if (mode == SHOW_GUI)
+			term_cprintf(C_RED, "\nPPSI is dead!\n");
+		else if (mode == SHOW_ALL)
+			printf("PPSI is dead!\n");
+	}
 
-	if (ppsi_alive)
-		show_servo();
-	else if (mode == SHOW_GUI)
-		term_cprintf(C_RED, "\nPPSI is dead!\n");
-	else if (mode == SHOW_STATS)
-		printf("PPSI is dead!\n");
+	if ((mode & (SHOW_ALL_PORTS|WEB_INTERFACE)) || mode == SHOW_GUI) {
+		if (hal_alive)
+			show_ports();
+		else if (mode == SHOW_GUI)
+			term_cprintf(C_RED, "\nHAL is dead!\n");
+		else if (mode == SHOW_ALL)
+			printf("HAL is dead!\n");
+	}
 
+	if (mode & SHOW_SERVO || mode == SHOW_GUI) {
+		if (ppsi_alive)
+			show_servo();
+	}
 
-	if (hal_alive)
-		show_temperatures();
+	if (mode & SHOW_TEMPERATURES || mode == SHOW_GUI) {
+		if (hal_alive)
+			show_temperatures();
+	}
+
+	if (!(mode & WEB_INTERFACE || mode == SHOW_GUI)) {
+		/* the newline for all in non-GUI or non-WEB mode... */
+		printf("\n");
+	}
 	fflush(stdout);
 }
 
@@ -500,42 +568,74 @@ int main(int argc, char *argv[])
 {
 	int opt;
 	int usecolor = 1;
+	int track_onoff = 1;
+
+	/* try a pps_gen based approach */
+	uint64_t last_seconds = 0;
+	uint32_t last_nanoseconds = 0;
 
 	wrs_msg_init(argc, argv);
-	init_shm();
-	while((opt=getopt(argc, argv, "sbgwqv")) != -1)
-	{
+
+	while ((opt = getopt(argc, argv, "himsoetabwqv")) != -1) {
 		switch(opt)
 		{
+			case 'h':
+				help(argv[0]);
+			case 'i':
+				mode |= SHOW_WR_TIME;
+				break;
 			case 's':
-				mode = SHOW_STATS;
+				mode |= SHOW_SLAVE_PORTS;
+				break;
+			case 'm':
+				mode |= SHOW_MASTER_PORTS;
+				break;
+			case 'o':
+				mode |= SHOW_OTHER_PORTS;
+				break;
+			case 'e':
+				mode |= SHOW_SERVO;
+				break;
+			case 't':
+				mode |= SHOW_TEMPERATURES;
+				break;
+			case 'a':
+				mode |= SHOW_ALL;
 				break;
 			case 'b':
 				usecolor = 0;
 				break;
-			case 'w': /* for the web interface */
-				read_hal();
-				show_unadorned_ports();
-				show_temperatures();
-				exit(0);
+			case 'w':
+				mode |= WEB_INTERFACE;
+				break;
 			case 'q': break; /* done in wrs_msg_init() */
 			case 'v': break; /* done in wrs_msg_init() */
 			default:
-				pr_error("Unrecognized option.\n");
-				break;
+				help(argv[0]);
 		}
+	}
+
+	init_shm();
+	term_init(usecolor);
+
+	if (mode & WEB_INTERFACE) {
+		read_servo();
+		read_hal();
+		show_all();
+		exit(0);
 	}
 
 	if (shw_fpga_mmap_init() < 0) {
 		pr_error("Can't initialize FPGA mmap\n");
 		exit(1);
 	}
-	term_init(usecolor);
+
 	setvbuf(stdout, NULL, _IOFBF, 4096);
+
+	/* main loop */
 	for(;;)
 	{
-		if(term_poll(500))
-		{
+		if (term_poll(10)) {
 			int c = term_get();
 
 			if(c=='q')
@@ -550,17 +650,27 @@ int main(int argc, char *argv[])
 					ppsi_connect_minipc();
 				}
 				minipc_call(ptp_ch, 200, &__rpcdef_cmd,
-					    &rval, PTPDEXP_COMMAND_TRACKING,
-					    track_onoff);
+					&rval, PTPDEXP_COMMAND_TRACKING,
+					track_onoff);
 			}
 		}
-		read_hal();
-		read_servo();
-		show_all();
+
+		shw_pps_gen_read_time(&seconds, &nanoseconds);
+		if (seconds != last_seconds && track_onoff) {
+			read_servo();
+			read_hal();
+
+			show_all();
+
+			last_seconds = seconds;
+			last_nanoseconds = nanoseconds;
+		}
+
 		/* If we got broken pipe or anything, exit */
 		if (ferror(stdout))
 			exit(1);
 	}
+
 	term_restore();
 	setlinebuf(stdout);
 	printf("\n");
