@@ -25,7 +25,7 @@
 % for glossary
 % nopostdot - no dot at the end of index entires
 \usepackage[nogroupskip,nopostdot,counter=subsubsection]{glossaries}
-
+\renewcommand{\glossarysection}[2][]{}
 \usepackage{listings}
 \usepackage{cancel}
 \graphicspath{ {../../../../figures/} }
@@ -166,6 +166,8 @@
   }%
 }
 
+\newcommand{\ignore}[1]{}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -209,14 +211,8 @@
 %\bibliographystyle{unsrt}
 %\bibliography{references}
 
-\newcommand{\ignore}[1]{}
-% print glossary index
-% SNMP status objects
-\printnoidxglossary[type=snmp_status,style=objtree,sort=def]
-% SNMP expert objects
-\printnoidxglossary[type=snmp_expert,style=objtree,sort=def]
-% other objects
-\printnoidxglossary[type=snmp_other,style=objtree,sort=def]
+
+
 
 % add not used entries, but don't display their's section
 % based on:
