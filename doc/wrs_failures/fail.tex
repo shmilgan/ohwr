@@ -355,7 +355,8 @@ between devices connected to the ports.\\
 				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXSyncLost.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPfilterDropped.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPCSErrors.<n>}\\
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXCRCErrors.<n>}
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXCRCErrors.<n>}\\
+				\snmpadd{WR-SWITCH-MIB::wrsEndpointStatus}
 		\end{packed_enum}
 
 \subsubsection{\bf Problem with the SwCore or Endpoint HDL module}
@@ -393,7 +394,8 @@ between devices connected to the ports.\\
 				and generate new responses. In such case frames are dropped in the
 				Rx path of the Endpoint.
 			\item [] \underline{SNMP objects}:\\
-				\texttt{WR-SWITCh-MIB::wrsPstatsRXDropRTUFull.<n>}
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXDropRTUFull.<n>} \\
+				\snmpadd{WR-SWITCH-MIB::wrsRTUStatus}
 		\end{packed_enum}
 
 \subsubsection{\bf Too much HP traffic / Per-priority queue full}
