@@ -82,10 +82,13 @@
 \newglossary*{snmp_status}{SNMP's status objects}
 \newglossary*{snmp_expert}{SNMP's expert objects}
 \newglossary*{snmp_other}{Objects from other MIBs}
-
+% alphabetical list of all entries
+\newglossary*{snmp_all}{All SNMP objects}
+% default formating for alphabetical list, display nothing
+\defglsentryfmt[snmp_all]{}
 % macro to add entires
 \newcommand{\snmpadd}[1]{
-  \texttt{\glspl{#1}}%
+  \texttt{\glspl{#1}}\glsdisp[hyper=false]{x#1}{}%
 }
 
 % helpers to add glossary entries
@@ -98,13 +101,14 @@
   \fi
 }
 
-% {MIB}{parent}{object}{comment}
+% {MIB}{parent}{object}{comment}{glossary_name}
 \newcommand{\snmpentry}[5]{%
   \ifx&#2&% if parameter 2 is empty don't add parent
     \newglossaryentry{#1::#3}{%
       type=#5,%
       name={#3},%
       plural={#1::#3},% used to display name not plural
+      user1={#1},% MIB
       description={\descr{#4}}%
       }%
   \else
@@ -113,9 +117,16 @@
       name={#3},%
       description={\descr{#4}},%
       plural={#1::#3},% used to display name not plural
+      user1={#1},% MIB
       parent={#1::#2}%
       }%
   \fi
+  % add entry to alphabetical list
+  \newglossaryentry{x#1::#3}{%
+      type=snmp_all,%
+      name={#1::#3},%
+      description={}
+      }%
 }
 
 % {MIB}{parent}{object}{comment}
@@ -148,7 +159,7 @@
   \renewcommand{\glossentry}[2]{%
     \hangindent30pt\relax
     \parindent0pt\relax
-    --\kern 0.33em\glsentryitem{##1}\glstreenamefmt{\glstarget{##1}{\glossentryname{##1}}}%
+    --\kern 0.33em\glsentryitem{##1}\glstreenamefmt{\glstarget{##1}{\texttt{\textmd{\glsentryuseri{##1}}::}\glossentryname{##1}}}%
     \ifglshassymbol{##1}{\kern 0.33em(\glossentrysymbol{##1})}{}%
     \glossentrydesc{##1}\glspostdescription\kern 0.33em##2\par
   }%
