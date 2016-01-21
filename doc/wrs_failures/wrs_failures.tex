@@ -12,6 +12,7 @@
 \usepackage[latin1]{inputenc}
 \usepackage{verbatim}
 \usepackage{amsmath}
+\usepackage{textcomp}
 \usepackage{times,mathptmx}
 \usepackage{chngcntr}
 \usepackage{hyperref}
@@ -50,6 +51,13 @@
 	\setlength{\parskip}{0pt}
 	\setlength{\parsep}{0pt}
 }{\end{itemize}}
+
+\newenvironment{pck_proc}{
+\begin{enumerate}[topsep=2pt]
+	\setlength{\itemsep}{1pt}
+	\setlength{\parskip}{0pt}
+	\setlength{\parsep}{0pt}
+}{\end{enumerate}}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -252,7 +260,12 @@
 %\bibliographystyle{unsrt}
 %\bibliography{references}
 
-
+\appendix
+\newpage
+\section{Sorted list of all MIB objects}
+\label{sec:snmp_exports:sorted}
+% print alphabetical list
+\printnoidxglossary[type=snmp_all,style=tree,sort=letter]
 
 
 % add not used entries, but don't display their's section
@@ -263,7 +276,7 @@
   \ifglsused{\thislabel}{}{\glsadd[format=ignore]{\thislabel}}%
 }
 
-\newpage
-\input{procedures.tex}
+%\newpage
+%\input{procedures.tex}
 
 \end{document}

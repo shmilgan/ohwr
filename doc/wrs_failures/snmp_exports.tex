@@ -1,23 +1,67 @@
-\section{SNMP exports}
+\section{SNMP diagnostics and solving problems}
 \label{sec:snmp_exports}
 This section describes SNMP objects exported by the WR Switch. Objects within
-the \texttt{WR\--SWITCH\--MIB} are divided into two categories:
+the \texttt{WR\--SWITCH\--MIB} are divided into two groups:
 \begin{itemize}
-  \item operator/basic objects (section \ref{sec:snmp_exports:basic}) -
-    providing basic status of the switch. It should be used by a control system
-    operators and people without a deep knowledge of the White Rabbit internals.
-    These values report a general status of the device and high level errors.
+  \item General status objects for operators (section
+    \ref{sec:snmp_exports:basic}) - provide a summary about the status of a
+    switch and several main subsystems (like timing, networking, OS). These
+    should be used by control system operators and users without a
+    comprehensive knowledge of the White Rabbit internals. These exports provide
+    a general status of the device and high level errors which is enough in most
+    cases to perform a quick repair.
 
-  \item expert/extended status objects (section \ref{sec:snmp_exports:expert}) -
+  \item Expert objects (section \ref{sec:snmp_exports:expert}) -
     can be used by White Rabbit experts for the in-depth diagnosis of the switch
-    failures. These values are verbose and should not be used by the operators.
+    failures. These values are verbose and normally should not be used by the
+    operators.
 \end{itemize}
 
-\subsection{Operator/basic objects}
+Description of the general status objects in section
+\ref{sec:snmp_exports:basic} includes also a list of actions to follow if a
+particular object reports an error. These repair procedures don't require any
+in-depth knowledge about White Rabbit. Independently of an error reported, there
+are some common remarks that apply to all situations:
+\begin{itemize}
+  \item Linux inside the WR Switch enumerates WR interfaces starting from 0.
+    This means we have to use internally port indexes 0..17. However, the
+    port numbers printed on the front panel are 1..18. Syslog messages
+    generated from the switch use the Linux port numbering. The consequence is
+    that every time Syslog says there is a problem on port X, this refers to
+    port index X+1 on the front panel of the switch.
+  \item If a procedure given for a specific SNMP object does not solve the
+    problem. Please contact WR experts to perform more in-depth analysis of your
+    network. For this, you should provide a complete dump of the WRS status
+    generated in the first step of each procedure.
+  \item First action in most of the procedures below named \emph{Dump state}
+    requires simply calling a tool provided by WR developers that reads all the
+    detailed information from the switch and writes it to a single file that can
+    be later analyzed by the experts.\\
+    {\bf TODO: point to the tool once it's done}
+  \item If solving procedure requires restarting or replacing a broken WR
+    Switch, please make sure that after the repair, all other WR devices
+    connected to the affected switch are synchronized and do not report any
+    problems.
+  \item If a procedure requires replacing switch with a new unit, the broken one
+    should be handled to WR experts or the switch manufacturer to investigate
+    the problem.
+\end{itemize}
+
+\subsection{General status objects for operators}
 \label{sec:snmp_exports:basic}
-This section describes the general status MIB objects that are calculated based
-on the other SNMP (detailed) exports. Most of the status objects described in
-this section can have one of the following values:
+This section describes the general status MIB objects that represent the overall
+status of a device and its subsystems. They are organized in a tree structure
+(fig.\ref{fig:snmp_oper}) where each object reports a problem based on the
+status of its child objects. SNMP object in the third layer of this tree are
+calculated based on the SNMP expert objects. Most of the status objects
+described in this section can have one of the following values:
+\begin{figure}[ht]
+  \begin{center}
+    \includegraphics[width=.8\textwidth]{img/snmp_obj.pdf}
+    \caption{The structure of general status objects for operators}
+    \label{fig:snmp_oper}
+  \end{center}
+\end{figure}
 \begin{itemize}%[leftmargin=0pt]
   \item \texttt{NA} -- status value was not calculated at all (returned value
     is 0). Something bad has happened.
@@ -36,33 +80,34 @@ this section can have one of the following values:
     object. If you see this please report to WR developers.
 \end{itemize}
 
-\noindent {\bf General Status objects}:
+\paragraph*{SNMP objects:}
 
 % SNMP status objects
 \printnoidxglossary[type=snmp_status,title=,style=objtree,sort=def]
 
 \newpage
-\subsection{Expert/extended status}
+\subsection{Expert objects}
 \label{sec:snmp_exports:expert}
 
-\noindent {\bf Expert Status}:
+\paragraph*{SNMP objects:}
 
 % SNMP expert objects
 \printnoidxglossary[type=snmp_expert,style=objtree,sort=def]
 
-\subsection{Other's MIB objects}
-\label{sec:snmp_exports:others}
+%\subsection{Other's MIB objects}
+%\label{sec:snmp_exports:others}
 
+\vspace{12pt}
 \noindent {\bf Objects from other MIBs}:
 
 % other objects
 \printnoidxglossary[type=snmp_other,style=objtree,sort=def]
 
-\subsection{Sorted list of MIB objects}
-\label{sec:snmp_exports:sorted}
+%\subsection{Sorted list of MIB objects}
+%\label{sec:snmp_exports:sorted}
 
 % print alphabetical list
-\printnoidxglossary[type=snmp_all,style=tree,sort=letter]
+%\printnoidxglossary[type=snmp_all,style=tree,sort=letter]
 
 %%%%%%%%%%%%%%%%%%5
 %% Other notes
