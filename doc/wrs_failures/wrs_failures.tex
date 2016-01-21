@@ -31,14 +31,21 @@
 \graphicspath{ {../../../../figures/} }
 
 \newenvironment{packed_enum}{
-\begin{itemize}[leftmargin=0pt,topsep=-12pt]
+\begin{enumerate}[leftmargin=0pt,topsep=-12pt]
+	\setlength{\itemsep}{1pt}
+	\setlength{\parskip}{0pt}
+	\setlength{\parsep}{0pt}
+}{\end{enumerate}}
+
+\newenvironment{packed_items}{
+\begin{itemize}[topsep=-12pt]
 	\setlength{\itemsep}{1pt}
 	\setlength{\parskip}{0pt}
 	\setlength{\parsep}{0pt}
 }{\end{itemize}}
 
-\newenvironment{packed_items}{
-\begin{itemize}[topsep=-12pt]
+\newenvironment{pck_descr}{
+\begin{itemize}[leftmargin=0pt,topsep=-12pt]
 	\setlength{\itemsep}{1pt}
 	\setlength{\parskip}{0pt}
 	\setlength{\parsep}{0pt}

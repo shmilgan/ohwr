@@ -7,7 +7,7 @@ WR network.
 
 \subsubsection{\bf \emph{PTP/PPSi} went out of \texttt{TRACK\_PHASE}}
 		\label{fail:timing:ppsi_track_phase}
-		\begin{packed_enum}
+    \begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{Slave}
@@ -21,11 +21,11 @@ WR network.
 				\snmpadd{WR-SWITCH-MIB::wrsPtpServoStateErrCnt.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPTPStatus}
 			\item [] \underline{Note}: PTP servo state is exported as a string and a number.
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Offset jump not compensated by Slave}
 		\label{fail:timing:offset_jump}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{Slave}
@@ -39,11 +39,11 @@ WR network.
 				saturation on overflow and underflow\\
 				\snmpadd{WR-SWITCH-MIB::wrsPtpClockOffsetErrCnt.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPTPStatus}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Detected jump in the RTT value calculated by \emph{PTP/PPSi}}
 		\label{fail:timing:rtt_jump}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{Slave}
@@ -56,12 +56,12 @@ WR network.
 				\snmpadd{WR-SWITCH-MIB::wrsPtpRTT.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPtpRTTErrCnt.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPTPStatus}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Wrong $\Delta_{TXM}$, $\Delta_{RXM}$, $\Delta_{TXS}$,
 		$\Delta_{RXS}$ values are reported to the \emph{PTP/PPSi} daemon}
 		\label{fail:timing:deltas_report}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
@@ -76,11 +76,11 @@ WR network.
 				\snmpadd{WR-SWITCH-MIB::wrsPtpDeltaTxS.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPtpDeltaRxS.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPTPStatus}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf \emph{SoftPLL} became unlocked}
 		\label{fail:timing:spll_unlock}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
@@ -102,11 +102,11 @@ WR network.
 				\snmpadd{WR-SWITCH-MIB::wrsSpllMlock}\\
 				\snmpadd{WR-SWITCH-MIB::wrsSpllDelCnt}\\
 				\snmpadd{WR-SWITCH-MIB::wrsSoftPLLStatus}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf \emph{SoftPLL} has crashed/restarted}
 		\label{fail:timing:spll_crash}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: TODO \emph{(depends on SoftPLL mem read), (require changes in lm32 software)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
@@ -124,11 +124,11 @@ WR network.
 				re-initialization phase. 
 				In addition to that, we can detect if
 				\emph{SoftPLL} is hanging (but not restarted) based on irq counter.
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Link to WR Master is down for slave}
 		\label{fail:timing:master_down}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR (will become WARNING with the
 				switch-over)
@@ -141,11 +141,11 @@ WR network.
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusLink.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusConfiguredMode.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsSlaveLinksStatus}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Link to WR Master is up for master}
 		\label{fail:timing:master_up}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{Grand Master}, \emph{Free-Running Master}
@@ -157,11 +157,11 @@ WR network.
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusLink.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusConfiguredMode.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsSlaveLinksStatus}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf PTP frames don't reach ARM}
 		\label{fail:timing:no_frames}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
@@ -190,11 +190,11 @@ WR network.
 				status (up/down). If VLANs are mis configured, we don't receive PTP
 				frames, but the link is still up. This could let us distinguish from a
 				lack of frames due to the link down (which is a separate issue).
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Detected SFP not supported for WR timing}
 		\label{fail:timing:wrong_sfp}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
@@ -220,11 +220,11 @@ WR network.
 				Gigabit SFP can be used (also copper). Detecting if a non-Gigabit
 				Ethernet SFP is plugged into the cage is covered in a separate issue
 				\ref{fail:other:sfp}.
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf \emph{PTP/PPSi} process has crashed/restarted}
 		\label{fail:timing:ppsi_crash}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
@@ -236,11 +236,11 @@ WR network.
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntPTP}\\
 				\snmpadd{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing}\\
 				\snmpadd{HOST-RESOURCES-MIB::hrSWRunName.<n>}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf \emph{HAL} process has crashed/restarted}
 		\label{fail:timing:hal_crash}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Mode}: \emph{all}
@@ -252,11 +252,11 @@ WR network.
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntHAL}\\
 				\snmpadd{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing}\\
 				\snmpadd{HOST-RESOURCES-MIB::hrSWRunName.<n>}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Wrong configuration applied}
 		\label{fail:timing:wrong_config}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: TODO \emph{(to be done later)}
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Mode}: \emph{all}
@@ -273,10 +273,10 @@ WR network.
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
 			\item [] \underline{Note}: monitor remote updates of key configuration
 				options (PTP/WR mode, fixed hardware delays)
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Switchover failed}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{Slave}, \emph{Grand Master}
@@ -294,10 +294,10 @@ WR network.
 			\item [] \underline{Note}: we should probably use parameters reported by
 				the backup channel(s) of the SoftPLL and the backup PTP servo to be able
 				to detect and report that something went wrong.
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Holdover for too long}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Mode}: \emph{Grand Master}
@@ -307,7 +307,7 @@ WR network.
 				reference too much. All devices in a WR network will be still
 				synchronized, but no longer in sync with the external reference.
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \newpage
 \subsection{Data error}
@@ -318,7 +318,7 @@ between devices connected to the ports.\\
 
 \subsubsection{\bf Link down}
 		\label{fail:data:link_down}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE  \emph{(to be changed later for switchover)}
 			\item [] \underline{Severity}: ERROR (will be WARNING with the
 				switch-over)
@@ -337,11 +337,11 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}:\\
 				\snmpadd{IF-MIB::ifOperStatus.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusLink.<n>}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Fault in the Endpoint's transmission/reception path}
 		\label{fail:data:ep_txrx}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
@@ -357,11 +357,11 @@ between devices connected to the ports.\\
 				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPCSErrors.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXCRCErrors.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsEndpointStatus}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Problem with the SwCore or Endpoint HDL module}
 		\label{fail:data:swcore_hang}
-		\begin{packed_enum}
+		\begin{pck_descr}
     \item [] \underline{Status}: TODO (add monitoring of the Endpoint hangs, depend on
       HDL)
 			\item [] \underline{Severity}: ERROR
@@ -382,11 +382,11 @@ between devices connected to the ports.\\
 				port $<$n$>$ (excluding PTP frames from NIC). If the sum of this number
 				and RTU decisions generated from NIC is equal to the number of frames
 				actually transmitted by the Endpoint, then everything works fine.
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf RTU is full and cannot accept more requests}
 		\label{fail:data:rtu_full}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
@@ -396,11 +396,11 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}:\\
 				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXDropRTUFull.<n>} \\
 				\snmpadd{WR-SWITCH-MIB::wrsRTUStatus}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Too much HP traffic / Per-priority queue full}
 		\label{fail:data:too_much_HP}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: TODO \emph{(depends on HDL)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
@@ -424,11 +424,11 @@ between devices connected to the ports.\\
 			\item [] \underline{Note}: we need to get from SwCore the information
 				about per-priority queue utilization, or at least an event when it's
 				full.
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf \emph{RTUd} has crashed}
 		\label{fail:data:rtu_crash}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
@@ -443,11 +443,11 @@ between devices connected to the ports.\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntRTUd}\\
 				\snmpadd{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing}\\
 				\snmpadd{HOST-RESOURCES-MIB::hrSWRunName.<n>}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Network loop - two or more identical MACs on two or more ports}
 		\label{fail:data:net_loop}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: TODO \emph{(to be done later)}
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
@@ -460,19 +460,19 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
 			\item [] \underline{Note}: we need to monitor the \emph{rtu\_stat} to
 				detect ping-pong in the RTU table.
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Wrong configuration applied (e.g. wrong VLAN config)}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: TODO \emph{(to be done later)}
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
 				The same problem as described in the timing fault
 				\ref{fail:timing:no_frames}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Topology Redundancy failure}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}: \emph{(not yet implemented)}\\
@@ -485,7 +485,7 @@ between devices connected to the ports.\\
 				going down, but we should also think about how to determine if there is
 				some problem with eRSTP and if it may fail/has failed if the primary
 				link is down.
-		\end{packed_enum}
+		\end{pck_descr}
 
 \newpage
 \subsection{Other errors}
@@ -493,7 +493,7 @@ between devices connected to the ports.\\
 
 \subsubsection{\bf WR Switch did not boot correctly}
 		\label{fail:other:boot}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: TODO (add rebooting system when boot is
 				 not successful, add stop restarting system after defined number of restarts)
 			\item [] \underline{Severity}: ERROR
@@ -530,11 +530,11 @@ between devices connected to the ports.\\
 				rebooting and try to have a system running with at least \emph{dropbear}
 				for SSH and \emph{net-snmp} to allow remote diagnostics. If on the other
 				hand the switch has booted correctly, we set the boot count to 0.
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Dot-config error}
 		\label{fail:other:dot-config}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
@@ -554,11 +554,11 @@ between devices connected to the ports.\\
 				\snmpadd{WR-SWITCH-MIB::wrsConfigSourceUrl} -- path to the dot-config
 					on a server (if not local)\\
 				\snmpadd{WR-SWITCH-MIB::wrsBootConfigStatus} -- result of the dot-config verification
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Any userspace daemon has crashed/restarted}
 		\label{fail:other:daemon_crash}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: TODO \emph{(depends on monit)}
 			\item [] \underline{Severity}: ERROR / WARNING (depending on the process)
 			\item [] \underline{Description}:\\
@@ -620,10 +620,10 @@ between devices connected to the ports.\\
 				erase the whole configuration. Also if a topology reconfiguration
 				happens while eRSTPd is down, HDL should keep the flag for the eRSTPd so
 				that it's aware the backup link is active.
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Kernel crash}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Description}:\\
@@ -644,10 +644,10 @@ between devices connected to the ports.\\
 				reboot was caused by the kernel panic function or the \texttt{reboot}
 				command. Preserving the state of IP and LR registers has to be
 				implemented.
-		\end{packed_enum}
+		\end{pck_descr}
 \subsubsection{\bf System nearly out of memory}
 		\label{fail:other:no_mem}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
@@ -660,10 +660,10 @@ between devices connected to the ports.\\
 				\snmpadd{WR-SWITCH-MIB::wrsMemoryUsedPerc} - percentage of used memory\\
 				\snmpadd{WR-SWITCH-MIB::wrsMemoryFree}\\
 				\snmpadd{WR-SWITCH-MIB::wrsMemoryFreeLow} - warning or error on low memory
-		\end{packed_enum}
+		\end{pck_descr}
 \subsubsection{\bf Disk space low}
 		\label{fail:other:no_disk}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
@@ -686,11 +686,11 @@ between devices connected to the ports.\\
 				via standard MIB. The same functionality is implemented in
 				\texttt{WR-SWITCH-MIB} objects \texttt{wrsDisk*.<n>} (to ease the
 				implementation of \texttt{wrsDiskSpaceLow}).
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf CPU load too high}
 		\label{fail:other:cpu}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
@@ -704,11 +704,11 @@ between devices connected to the ports.\\
 				\snmpadd{WR-SWITCH-MIB::wrsCPULoadAvg5min}\\
 				\snmpadd{WR-SWITCH-MIB::wrsCPULoadAvg15min}\\
 				\snmpadd{WR-SWITCH-MIB::wrsCpuLoadHigh} - warning or error when CPU load too high
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Temperature inside the box too high}
 		\label{fail:other:temp}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
@@ -737,11 +737,11 @@ between devices connected to the ports.\\
 				\snmpadd{WR-SWITCH-MIB::wrsTempThresholdPSL}\\
 				\snmpadd{WR-SWITCH-MIB::wrsTempThresholdPSR}\\
 				\snmpadd{WR-SWITCH-MIB::wrsTemperatureWarning}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Not supported SFP plugged into the cage (especially non 1-Gb SFP)}
 		\label{fail:other:sfp}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
@@ -757,20 +757,20 @@ between devices connected to the ports.\\
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusSfpGbE.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusSfpError.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsSFPsStatus} - status word for SFPs' status
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf File system / Memory corruption}
 		\label{fail:other:memory}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Description}:\\
 			\item [] \underline{SNMP objects}: \emph{(none)}
 			\item [] \underline{Note}: how shall we detect this? Based on the
 				\emph{dmesg} errors reported by UBI and system in general?  This is bad,
 				crazy things may happen, we can't do much about it.
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Kernel freeze}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Description}:\\
 				If kernel freezes we can do nothing. It can freeze e.g. due to some
 				infinite loop in the irq handler. It's like with the power failure,
@@ -779,10 +779,10 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}: \emph{(none)}
 			\item [] \underline{Note}:
 				If we have watchdog in our CPU it should be used.
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Power failure}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Description}:\\
 				Power failure may be either a WRS problem (i.e. broken power supply
 				inside the switch) or an external problem (i.e. providing voltage to the
@@ -790,10 +790,10 @@ between devices connected to the ports.\\
 				the Network Management Station to raise an alarm if the SNMP Agent does
 				not respond to the SNMP requests.
 			\item [] \underline{SNMP objects}: \emph{(none)}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Hardware problem}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Description}:\\
 				If any crucial hardware part breaks we'll most probably notice it as one
 				(or multiple) timing / data errors described previously. Besides that,
@@ -807,20 +807,20 @@ between devices connected to the ports.\\
 					\item memory chip - data corruption (failure \ref{fail:other:memory})
 				\end{itemize}
 			\item [] \underline{SNMP objects}: \emph{(none)}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Management link down}
 		\label{fail:other:management_link}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Description}:\\
 				For obvious reasons we are not able to report through SNMP that the
 				management link is down. This should be detected and reported by the NMS
 				if it does not receive SNMP and ICMP responses from the WRS.
 			\item [] \underline{SNMP objects}: \emph{(none)}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf No static IP on the management port \& failed to DHCP}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Description}:\\
 				From operator's point of view it is similar to the issue
 				\ref{fail:other:management_link}. WRS is not accessible through the
@@ -830,10 +830,10 @@ between devices connected to the ports.\\
 				connection to the management USB port of the WRS to diagnose the
 				problem.
 			\item [] \underline{SNMP objects}: \emph{(none)}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf IP address on the management port has changed}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: TODO
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
@@ -843,10 +843,10 @@ between devices connected to the ports.\\
 				should either generate SNMP trap to NMS or send Syslog message to a
 				central server.
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Multiple unauthorized access attempts}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
@@ -856,11 +856,11 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
 			\item [] \underline{Note}: Bad password event is reported by Syslog as a
 				warning. We should probably use this information to add an SNMP object.
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Network reconfiguration (RSTP)}
 		\label{fail:other:rstp}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}: \emph{(not yet implemented)}\\
@@ -869,10 +869,10 @@ between devices connected to the ports.\\
 				critical situation, WR network still works. However, further
 				investigation should be performed to repair the broken link.
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
-		\end{packed_enum}
+		\end{pck_descr}
 
 \subsubsection{\bf Backup link down}
-		\begin{packed_enum}
+		\begin{pck_descr}
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}: \emph{(not yet implemented)}\\
@@ -881,7 +881,7 @@ between devices connected to the ports.\\
 				Network still works, but the link should be diagnosed and repaired to
 				have the backup link operational in case the primary one fails.
 			\item [] \underline{SNMP objects}: \emph{(not yet implemented)}
-		\end{packed_enum}
+		\end{pck_descr}
 
 %\subsection{Switch out of sync to Master}
 %
