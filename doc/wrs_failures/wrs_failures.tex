@@ -99,11 +99,13 @@
 \newglossary*{snmp_other}{Objects from other MIBs}
 % alphabetical list of all entries
 \newglossary*{snmp_all}{All SNMP objects}
-% default formating for alphabetical list, display nothing
-\defglsentryfmt[snmp_all]{}
+
+\defglsentryfmt[snmp_status]{\texttt{\glsentryfmt}}
+\defglsentryfmt[snmp_expert]{\texttt{\glsentryfmt}}
+\defglsentryfmt[snmp_other]{\texttt{\glsentryfmt}}
 % macro to add entires
 \newcommand{\snmpadd}[1]{
-  \texttt{\glspl{#1}}\glsdisp[hyper=false]{x#1}{}%
+  \glspl{#1}\glsadd{x#1}%
 }
 
 % helpers to add glossary entries
