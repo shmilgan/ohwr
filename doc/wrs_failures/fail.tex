@@ -375,7 +375,8 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}:\\
 				\snmpadd{WR-SWITCH-MIB::wrsGwWatchdogTimeouts}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPstatsTXFrames.<n>}\\
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsForwarded.<n>}
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsForwarded.<n>}\\
+				\snmpadd{WR-SWITCH-MIB::wrsSwcoreStatus}
 			\item [] \underline{Note}: For Endpoint monitoring we could compare
 				per-port \emph{RTUfwd} counter with the \emph{Tx} Endpoint counter for
 				each port. \emph{RTUfwd} counts all forwarding decisions from RTU to the
@@ -420,7 +421,8 @@ between devices connected to the ports.\\
 				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio4.<n>} \\
 				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio5.<n>} \\
 				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio6.<n>} \\
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio7.<n>}
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio7.<n>} \\
+				\snmpadd{WR-SWITCH-MIB::wrsSwcoreStatus}
 			\item [] \underline{Note}: we need to get from SwCore the information
 				about per-priority queue utilization, or at least an event when it's
 				full.
