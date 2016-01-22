@@ -10,20 +10,22 @@
   \snmpentrys{WR-SWITCH-MIB}{wrsGeneralStatusGroup}{wrsMainSystemStatus}{
     WRS general status of a switch can be \texttt{OK}, \texttt{Warning} or
     \texttt{Error}. In case of an error or warning, please check the values of
-    \texttt{wrsOSStatus}, \texttt{wrsTimingStatus} and
-    \texttt{wrsNetworkingStatus} to find out which subsystem causes the problem.}
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsOSStatus}},
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsTimingStatus}} and
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsNetworkingStatus}} to find out which
+    subsystem causes the problem.}
   \snmpentrys{WR-SWITCH-MIB}{wrsGeneralStatusGroup}{wrsOSStatus}{
     Collective status of the operating system running on WR switch. In case of
     an error or warning, please check status objects in the
-    \texttt{wrsOSStatusGroup}.}
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsOSStatusGroup}}.}
   \snmpentrys{WR-SWITCH-MIB}{wrsGeneralStatusGroup}{wrsTimingStatus}{
     Collective status of the synchronization subsystem. In case of an
     error or warning, please check status objects in the
-    \texttt{wrsTimingStatusGroup}.}
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsTimingStatusGroup}}.}
   \snmpentrys{WR-SWITCH-MIB}{wrsGeneralStatusGroup}{wrsNetworkingStatus}{
     Collective status of the Ethernet switching subsystem. In case of an error
     or warning, please check status objects in the
-    \texttt{wrsNetworkingStatusGroup}.\vspace{12pt}}
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsNetworkingStatusGroup}}.\vspace{12pt}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \snmpentrys{WR-SWITCH-MIB}{}{wrsDetailedStatusesGroup}{
@@ -47,8 +49,8 @@
     \underline{On error:}
     \begin{pck_proc}
       \item Dump state
-      \item Check \texttt{wrsBootConfigStatus}, if it reports an
-        error, please verify your WRS configuration.
+      \item Check \texttt{\glshyperlink{WR-SWITCH-MIB::wrsBootConfigStatus}},
+        if it reports an error, please verify your WRS configuration.
       \item Restart the switch
       \item Please consult WR experts if the problem persists.
     \end{pck_proc}
@@ -129,19 +131,20 @@
     \texttt{Error} when any of PTP error counters in \texttt{wrsPtpDataTable}\\
     (\texttt{wrsPtpServoStateErrCnt}, \texttt{wrsPtpClockOffsetErrCnt} or\\
     \texttt{wrsPtpRTTErrCnt}) has increased since the last scan (issue
-    \ref{fail:timing:ppsi_track_phase}, \ref{fail:timing:offset_jump},
-    \ref{fail:timing:rtt_jump}), at least one of the $\Delta_{TXM}$,
-    $\Delta_{RXM}$, $\Delta_{TXS}$, $\Delta_{RXS}$ is 0 (issue
-    \ref{fail:timing:deltas_report}) or PTP servo update counter is not
+    \ref{fail:timing:ppsi_track_phase},
+    \ref{fail:timing:offset_jump}, \ref{fail:timing:rtt_jump}), at least one of
+    the $\Delta_{TXM}$, $\Delta_{RXM}$, $\Delta_{TXS}$, $\Delta_{RXS}$ is 0
+    (issue \ref{fail:timing:deltas_report}) or PTP servo update counter is not
     increasing.\\
     \underline{On error:}
     \begin{pck_proc}
       \item Dump state
-      \item Check \texttt{wrsSoftPLLStatus} on the Master (WR device one step
-        higher in a timing hierarchy). Eventually proceed to investigate the
-        problem on the Master switch. Otherwise, continue with the primary WRS.
+      \item Check \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSoftPLLStatus}} on the
+        Master (WR device one step higher in a timing hierarchy). Eventually
+        proceed to investigate the problem on the Master switch. Otherwise,
+        continue with the primary WRS.
       \item Verify if the link to WR Master was not lost by checking the
-        object\\ \texttt{wrsSlaveLinksStatus}.
+        object\\ \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSlaveLinksStatus}}.
       \item If this is not the case, restart the switch.
       \item If the problem persists replace the switch with a new unit.
         %(see \ref{cern:wrs_replacement}).
@@ -155,8 +158,8 @@
     \texttt{wrsSpllAlignState} is not \emph{Locked} (for Grand Master mode), or
     any of \texttt{wrsSpllHlock}, \texttt{wrsSpllMlock} equals to 0 (for
     Boundary Clock mode).\\
-    \texttt{Warning} when \texttt{wrsSpllDelCnt} $>$ 0 (for Grand Master mode)
-    or \texttt{wrsSpllDelCnt} has changed (for all other modes).\\
+    \texttt{Warning} when \texttt{wrsSpllDelCnt} $>$ 0 (for Grand Master mode) or
+    \texttt{wrsSpllDelCnt} has changed (for all other modes).\\
     \underline{On error:}\\
     For GrandMaster WRS:
     \begin{pck_proc}
@@ -171,10 +174,11 @@
     \glspar For Boundary Clock WRS:
     \begin{pck_proc}
       \item Dump state
-      \item Check \texttt{wrsSoftPLLStatus} on the Master. Eventually proceed to
-        investigate the problem on the Master switch.
+      \item Check \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSoftPLLStatus}} on the
+        Master. Eventually proceed to investigate the problem on the Master
+        switch.
       \item Verify if the link to WR Master was not lost by checking the
-        object\\ \texttt{wrsSlaveLinksStatus}.
+        object\\ \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSlaveLinksStatus}}.
       \item Restart the switch.
       \item If the problem persists, replace the switch with a new unit.
         %(see \ref{cern:wrs_replacement}).
