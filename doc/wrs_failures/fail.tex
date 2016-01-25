@@ -445,7 +445,7 @@ between devices connected to the ports.\\
 				queue may become full and we start losing HP frames, which is
 				unacceptable.
 			\item [] \underline{SNMP objects}:\\
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsFastMatchPriority.<n>} - HP frames on a port\\
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsFastMatchPriority.<n>} -- HP frames on a port\\
 				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXFrames.<n>} -- Total number of Rx frames on
 				the port\\
 				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio0.<n>} -- Rx priority 0\\
@@ -612,7 +612,7 @@ between devices connected to the ports.\\
 				corresponding start counter. If a process is restarted 5 times within
 				100 seconds, then the entire switch is restarted.
 			\item [] \underline{SNMP objects}:\\
-				\snmpadd{HOST-RESOURCES-MIB::hrSWRunName.<n>} - list of processes in standard MIB\\
+				\snmpadd{HOST-RESOURCES-MIB::hrSWRunName.<n>} -- list of processes in standard MIB\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntHAL}\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntPTP}\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntRTUd}\\
@@ -622,8 +622,8 @@ between devices connected to the ports.\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntSyslogd}\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntWrsWatchdog}\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntSPLL} \emph{(not implemented)}\\
-				\snmpadd{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing} - number of missing processes\\
-				\snmpadd{WR-SWITCH-MIB::wrsBootSuccessful} - status word informing whether switch booted correctly\\
+				\snmpadd{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing} -- number of missing processes\\
+				\snmpadd{WR-SWITCH-MIB::wrsBootSuccessful} -- status word informing whether switch booted correctly\\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
 				\snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus}
 			\item [] \underline{Note}: We shall distinguish between crucial
@@ -635,7 +635,7 @@ between devices connected to the ports.\\
 				Crucial processes (Error report if any of them crashes):
 				\begin{itemize}
 					\item \emph{PTP/PPSi}
-					\item \emph{wrsw\_rtud} - after adding configuration preserving code
+					\item \emph{wrsw\_rtud} -- after adding configuration preserving code
 						on restart, RTUd could be crossed out from this list
 					\item \emph{wrsw\_hal}
 				\end{itemize}
@@ -647,10 +647,10 @@ between devices connected to the ports.\\
 					\item \emph{rsyslogd}
 					\item \emph{snmpd}
 					\item \emph{lighttpd}
-					\item \emph{TRUd/eRSTPd} - not yet implemented
+					\item \emph{TRUd/eRSTPd} -- not yet implemented
 				\end{itemize}
 
-				\emph{wrsw\_rtud} - we need to set the flag informing the process has
+				\emph{wrsw\_rtud} -- we need to set the flag informing the process has
 				crashed so that when it runs again it knows that HDL is already
 				configured. It should not erase static entries in the RTU table (e.g.
 				multicasts for PTP), the static entries set by-hand as well as VLANs.
@@ -660,7 +660,7 @@ between devices connected to the ports.\\
 				the source code has to be checked to make sure what is cleared on the
 				startup and modified to preserve the configuration.\\
 
-				\emph{TRUd/eRSTPd} - topology reconfiguration is done in hardware if
+				\emph{TRUd/eRSTPd} -- topology reconfiguration is done in hardware if
 				needed, the daemon is used only to configure the TRU/RTU HDL module.
 				However, the story is similar as with the RTUd. If eRSTPd crashes, we
 				need to store this information so that when it runs again, it does not
@@ -707,9 +707,9 @@ between devices connected to the ports.\\
 			\item [] \underline{SNMP objects}:\\
 				\snmpadd{WR-SWITCH-MIB::wrsMemoryTotal}\\
 				\snmpadd{WR-SWITCH-MIB::wrsMemoryUsed}\\
-				\snmpadd{WR-SWITCH-MIB::wrsMemoryUsedPerc} - percentage of used memory\\
+				\snmpadd{WR-SWITCH-MIB::wrsMemoryUsedPerc} -- percentage of used memory\\
 				\snmpadd{WR-SWITCH-MIB::wrsMemoryFree}\\
-				\snmpadd{WR-SWITCH-MIB::wrsMemoryFreeLow} - warning or error on low memory\\
+				\snmpadd{WR-SWITCH-MIB::wrsMemoryFreeLow} -- warning or error on low memory\\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
 				\snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus}
 		\end{pck_descr}
@@ -729,7 +729,7 @@ between devices connected to the ports.\\
 				\snmpadd{WR-SWITCH-MIB::wrsDiskFree.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsDiskUseRate.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsDiskFilesystem.<n>}\\
-				\snmpadd{WR-SWITCH-MIB::wrsDiskSpaceLow} - warning or error on low disk space\\
+				\snmpadd{WR-SWITCH-MIB::wrsDiskSpaceLow} -- warning or error on low disk space\\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
 				\snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus}\\
 				\snmpadd{HOST-RESOURCES-MIB::hrStorageDescr.<n>}\\
@@ -757,7 +757,7 @@ between devices connected to the ports.\\
 				\snmpadd{WR-SWITCH-MIB::wrsCPULoadAvg1min}\\
 				\snmpadd{WR-SWITCH-MIB::wrsCPULoadAvg5min}\\
 				\snmpadd{WR-SWITCH-MIB::wrsCPULoadAvg15min}\\
-				\snmpadd{WR-SWITCH-MIB::wrsCpuLoadHigh} - warning or error when CPU load too high\\
+				\snmpadd{WR-SWITCH-MIB::wrsCpuLoadHigh} -- warning or error when CPU load too high\\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
 				\snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus}
 		\end{pck_descr}
@@ -773,10 +773,10 @@ between devices connected to the ports.\\
 				the box are broken and should be replaced. There are 4 temperature
 				sensors monitored:
 				\begin{itemize}
-					\item \emph{IC19} - temperature below the FPGA
-					\item \emph{IC20}, \emph{IC17} - temperature near the SCB power supply
+					\item \emph{IC19} -- temperature below the FPGA
+					\item \emph{IC20}, \emph{IC17} -- temperature near the SCB power supply
 						circuit
-					\item \emph{IC18} - temperature near the VCXO and PLLs (AD9516,
+					\item \emph{IC18} -- temperature near the VCXO and PLLs (AD9516,
 						CDCM6100)
 				\end{itemize}
 				\texttt{wrsTemperatureWarning} is raised when the temperature read from
@@ -814,7 +814,7 @@ between devices connected to the ports.\\
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusSfpVS.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusSfpGbE.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusSfpError.<n>}\\
-				\snmpadd{WR-SWITCH-MIB::wrsSFPsStatus} - status word for SFPs' status\\
+				\snmpadd{WR-SWITCH-MIB::wrsSFPsStatus} -- status word for SFPs' status\\
 				\snmpadd{WR-SWITCH-MIB::wrsNetworkingStatus}\\
 				\snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus}
 		\end{pck_descr}
@@ -859,12 +859,12 @@ between devices connected to the ports.\\
 				(or multiple) timing / data errors described previously. Besides that,
 				we don't have any self-diagnostics on-board. Few examples:
 				\begin{itemize}
-					\item DAC / VCO - problems with synchronization
-					\item cooling	fans - rise of the temperature inside the WRS box
+					\item DAC / VCO -- problems with synchronization
+					\item cooling fans -- rise of the temperature inside the WRS box
 						(failure \ref{fail:other:temp})
-					\item power supply, ARM, FPGA - booting problem (failure
+					\item power supply, ARM, FPGA -- booting problem (failure
 						\ref{fail:other:boot})
-					\item memory chip - data corruption (failure \ref{fail:other:memory})
+					\item memory chip -- data corruption (failure \ref{fail:other:memory})
 				\end{itemize}
 			\item [] \underline{SNMP objects}: \emph{(none)}
 		\end{pck_descr}
