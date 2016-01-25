@@ -40,7 +40,8 @@
 
   \snmpentrys{WR-SWITCH-MIB}{wrsOSStatusGroup}{wrsBootSuccessful}{
     \underline{Description:}
-    Grouped status of \texttt{wrsBootStatusGroup}, indicating whether boot was
+    Grouped status of \texttt{\glshyperlink{WR-SWITCH-MIB::wrsBootStatusGroup}},
+    indicating whether boot was
     successful. \texttt{Error} when dot-config source is wrong, unable to get
     the dot-config, unable to get URL to the dot-config, dot-config contains
     errors, unable to read the hwinfo, unable to load the FPGA bitstream, unable
@@ -128,9 +129,12 @@
   \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsPTPStatus}{
     \underline{Description:}
     Reports the status of PTP daemon running on the switch.\\
-    \texttt{Error} when any of PTP error counters in \texttt{wrsPtpDataTable}\\
-    (\texttt{wrsPtpServoStateErrCnt}, \texttt{wrsPtpClockOffsetErrCnt} or\\
-    \texttt{wrsPtpRTTErrCnt}) has increased since the last scan (issue
+    \texttt{Error} when any of PTP error counters in
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsPtpDataTable}}\\
+    (\texttt{\glshyperlink{WR-SWITCH-MIB::wrsPtpServoStateErrCnt.<n>}},
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsPtpClockOffsetErrCnt.<n>}} or\\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsPtpRTTErrCnt.<n>}})
+    has increased since the last scan (issue
     \ref{fail:timing:ppsi_track_phase},
     \ref{fail:timing:offset_jump}, \ref{fail:timing:rtt_jump}), at least one of
     the $\Delta_{TXM}$, $\Delta_{RXM}$, $\Delta_{TXS}$, $\Delta_{RXS}$ is 0
@@ -154,12 +158,17 @@
   \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsSoftPLLStatus}{
     \underline{Description:}
     Reports the status of the PLLs inside the switch.\\
-    \texttt{Error} when \texttt{wrsSpllSeqState} is not \emph{Ready}, or
-    \texttt{wrsSpllAlignState} is not \emph{Locked} (for Grand Master mode), or
-    any of \texttt{wrsSpllHlock}, \texttt{wrsSpllMlock} equals to 0 (for
+    \texttt{Error} when \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllSeqState}}
+    is not \emph{Ready}, or 
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllAlignState}} is not
+    \emph{Locked} (for Grand Master mode), or any of
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllHlock}},
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllMlock}} equals to 0 (for
     Boundary Clock mode).\\
-    \texttt{Warning} when \texttt{wrsSpllDelCnt} $>$ 0 (for Grand Master mode) or
-    \texttt{wrsSpllDelCnt} has changed (for all other modes).\\
+    \texttt{Warning} when \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllDelCnt}}
+    $>$ 0 (for Grand Master mode) or
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllDelCnt}} has changed (for all
+    other modes).\\
     \underline{On error:}\\
     For GrandMaster WRS:
     \begin{pck_proc}
@@ -247,10 +256,12 @@
     \underline{Description:}
     Reports the status of SFP transceivers inserted to the switch.\\
     \texttt{Error} when any of the SFPs reports an error. To find out which SFP
-    caused the problem check \texttt{wrsPortStatusSfpError.<n>}.\\
+    caused the problem check
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsPortStatusSfpError.<n>}}.\\
     \underline{On error:}
     \begin{pck_proc}
-      \item Check \texttt{wrsPortStatusSfpError.*} SNMP objects or Syslog
+      \item Check \texttt{\glshyperlink{WR-SWITCH-MIB::wrsPortStatusSfpError.<n>}}
+        SNMP objects or Syslog
         messages to determine the WR port on which the problem is reported. In
         case of Syslog, you should see a message similar to this one:\\
         \texttt{Unknown SFP vn="AVAGO" pn="ABCU-5710RZ" vs="AN1151PD8A" on port
@@ -546,7 +557,7 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpDeltaTxS.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpDeltaRxS.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoStateErrCnt.<n>}{
-    Number of the servo updates when servo is out of the TRACK\_PHASE.}
+    Number of the servo updates when servo is out of the \texttt{TRACK\_PHASE}.}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpClockOffsetErrCnt.<n>}{
     Number of servo updates when offset is larger than 500ps or smaller than
     -500ps.}
