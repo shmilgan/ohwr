@@ -188,7 +188,7 @@
     \setlist[enumerate]{leftmargin=\paraaindent}
     --\kern 0.33em\glsentryitem{##1}\glstreenamefmt{\glstarget{##1}{\texttt{\textmd{\glsentryuseri{##1}}::}\glossentryname{##1}}}%
     \ifglshassymbol{##1}{\kern 0.33em(\glossentrysymbol{##1})}{}%
-    \glossentrydesc{##1}\glspostdescription\kern 0.33em##2\par
+    \glossentrydesc{##1}\glspostdescription\kern 0.33em##2\par\vspace{12pt}
   }%
   \renewcommand{\subglossentry}[3]{%
     \hangindent##1\glstreeindent\relax
@@ -206,7 +206,7 @@
     \fi
     \glstreenamefmt{\glstarget{##2}{\glossentryname{##2}}}%
     \ifglshassymbol{##2}{\kern 0.33em(\glossentrysymbol{##2})}{}%
-    \glossentrydesc{##2}\glspostdescription\kern 0.33em##3\par
+    \glossentrydesc{##2}\glspostdescription\kern 0.33em##3\par\vspace{12pt}
   }%
   %redefine \glspar to support indentation in many paragraphs
   \renewcommand{\glspar}{%
