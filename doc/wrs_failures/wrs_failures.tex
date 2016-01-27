@@ -186,7 +186,7 @@
     \setlength{\paraaindent}{\hangindent}
     \addtolength{\paraaindent}{14pt}
     \setlist[enumerate]{leftmargin=\paraaindent}
-    --\kern 0.33em\glsentryitem{##1}\glstreenamefmt{\glstarget{##1}{\texttt{\textmd{\glsentryuseri{##1}}::}\glossentryname{##1}}}%
+    $\bullet$\kern 0.33em\glsentryitem{##1}\glstreenamefmt{\glstarget{##1}{\texttt{\textmd{\glsentryuseri{##1}}::}\glossentryname{##1}}}%
     \ifglshassymbol{##1}{\kern 0.33em(\glossentrysymbol{##1})}{}%
     \glossentrydesc{##1}\glspostdescription\kern 0.33em##2\par\vspace{12pt}
   }%
@@ -200,7 +200,13 @@
     \setlength{\paraaindent}{\hangindent}
     \addtolength{\paraaindent}{14pt}
     \setlist[enumerate]{leftmargin=\paraaindent}
-    --\kern 0.33em%
+    \ifnum##1=1\relax
+      $\circ$%
+    \fi
+    \ifnum##1=2\relax
+      $\ast$%
+    \fi
+    \kern 0.33em%
     \ifnum##1=1\relax
       \glssubentryitem{##2}%
     \fi
