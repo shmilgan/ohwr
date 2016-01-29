@@ -145,6 +145,12 @@ V1 and V2 were development items, never shipped.
 @node Overview
 @section Overview
 
+To build your switch firmware you have to first clone the main git repository,
+which contains all the sources and building scripts:
+@example
+   git clone git://ohwr.org/white-rabbit/wr-switch-sw.git
+@end example
+
 The scripts build over previous work by Tomasz Wlostowski, who first
 made the whole thing work and stick together -- a serious result from
 serious efforts, I am really amazed by his achievements.
