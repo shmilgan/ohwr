@@ -30,21 +30,21 @@ are some common remarks that apply to all situations:
     that every time Syslog says there is a problem on port X, this refers to
     port index X+1 on the front panel of the switch.
   \item If a procedure given for a specific SNMP object does not solve the
-    problem. Please contact WR experts to perform more in-depth analysis of your
-    network. For this, you should provide a complete dump of the WRS status
+    problem, please contact WR experts to perform a more in-depth analysis of
+    the network. For this, you should provide a complete dump of the WRS status
     generated in the first step of each procedure.
-  \item First action in most of the procedures below named \emph{Dump state}
+  \item The first action in most of the procedures below named \emph{Dump state}
     requires simply calling a tool provided by WR developers that reads all the
     detailed information from the switch and writes it to a single file that can
     be later analyzed by the experts.\\
     {\bf TODO: point to the tool once it's done}
-  \item If solving procedure requires restarting or replacing a broken WR
-    Switch, please make sure that after the repair, all other WR devices
+  \item If a problem solving procedure requires restarting or replacing a broken
+    WR Switch, please make sure that after the repair, all other WR devices
     connected to the affected switch are synchronized and do not report any
     problems.
-  \item If a procedure requires replacing switch with a new unit, the broken one
-    should be handled to WR experts or the switch manufacturer to investigate
-    the problem.
+  \item If a procedure requires replacing a switch with a new unit, the broken
+    one should be handled to WR experts or the switch manufacturer to
+    investigate the problem.
 \end{itemize}
 
 \subsection{General status objects for operators}
@@ -52,7 +52,7 @@ are some common remarks that apply to all situations:
 This section describes the general status MIB objects that represent the overall
 status of a device and its subsystems. They are organized in a tree structure
 (fig.\ref{fig:snmp_oper}) where each object reports a problem based on the
-status of its child objects. SNMP object in the third layer of this tree are
+status of its child objects. SNMP objects in the third layer of this tree are
 calculated based on the SNMP expert objects. Most of the status objects
 described in this section can have one of the following values:
 \begin{figure}[ht]
@@ -69,12 +69,12 @@ described in this section can have one of the following values:
   \item \texttt{Warning} -- objects used to calculate this value are outside the
     proper values, but problem in not critical enough to report \texttt{Error}.
   \item \texttt{WarningNA} -- at least one of the objects used to calculate the
-    status has a value \texttt{NA} or \texttt{WarningNA}.
+    status has a value \texttt{NA} (or \texttt{WarningNA}).
   \item \texttt{Error} -- error in values used to calculate the particular
     object.
   \item \texttt{FirstRead} -- the value of the object cannot be calculated
     because at least one condition uses deltas between the current and previous
-    value. This value should appear only at first SNMP read. Threated as a
+    value. This value should appear only at first SNMP read. To be treated as a
     correct value.
   \item \texttt{Bug} -- Something wrong has happened while calculating the
     object. If you see this please report to WR developers.

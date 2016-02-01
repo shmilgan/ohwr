@@ -8,24 +8,32 @@
   subsystems.}
 
   \snmpentrys{WR-SWITCH-MIB}{wrsGeneralStatusGroup}{wrsMainSystemStatus}{
+    \underline{Description:}
     WRS general status of a switch can be \texttt{OK}, \texttt{Warning} or
     \texttt{Error}. In case of an error or warning, please check the values of
     \texttt{\glshyperlink{WR-SWITCH-MIB::wrsOSStatus}},
     \texttt{\glshyperlink{WR-SWITCH-MIB::wrsTimingStatus}} and
     \texttt{\glshyperlink{WR-SWITCH-MIB::wrsNetworkingStatus}} to find out which
-    subsystem causes the problem.}
+    subsystem causes the problem.
+    \glspar \underline{Related problems:}}
   \snmpentrys{WR-SWITCH-MIB}{wrsGeneralStatusGroup}{wrsOSStatus}{
+    \underline{Description:}
     Collective status of the operating system running on WR switch. In case of
     an error or warning, please check status objects in the
-    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsOSStatusGroup}}.}
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsOSStatusGroup}}.
+    \glspar \underline{Related problems:}}
   \snmpentrys{WR-SWITCH-MIB}{wrsGeneralStatusGroup}{wrsTimingStatus}{
+    \underline{Description:}
     Collective status of the synchronization subsystem. In case of an
     error or warning, please check status objects in the
-    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsTimingStatusGroup}}.}
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsTimingStatusGroup}}.
+    \glspar \underline{Related problems:}}
   \snmpentrys{WR-SWITCH-MIB}{wrsGeneralStatusGroup}{wrsNetworkingStatus}{
+    \underline{Description:}
     Collective status of the Ethernet switching subsystem. In case of an error
     or warning, please check status objects in the
-    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsNetworkingStatusGroup}}.}
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsNetworkingStatusGroup}}.
+    \glspar \underline{Related problems:}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \snmpentrys{WR-SWITCH-MIB}{}{wrsDetailedStatusesGroup}{
@@ -174,7 +182,7 @@
     \begin{pck_proc}
       \item Dump state
       \item Check 1-PPS and 10 MHz signals coming from an external source.
-        Verify if they are properly connected and, in case of GPS receiver,
+        Verify if they are properly connected and, in case of a GPS receiver,
         check if it is synchronized and locked.
       \item Restart the GrandMaster switch.
       \item If the problem persists, replace the switch with a new unit.
@@ -388,7 +396,7 @@
 
   \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionLastUpdateDate}{
     \underline{Description:}
-    Date and time of the last firmware update, this information may not be
+    Date and time of the last firmware update. This information may not be
     accurate, due to hard restarts or lack of the proper time during the
     upgrade.}
 
