@@ -1,3 +1,56 @@
+This section tries to identify all the possible ways the White Rabbit Switch can
+fail. The structure of each error description is the following:
+\begin{itemize}[leftmargin=0pt]
+  \item [] \underline{Status}: describes the implementation status of the WRS
+    diagnostics detecting the fault. Can be one of the following:
+    \begin{packed_items}
+      \item DONE: all the SNMP objects are implemented and the problem is
+        reported by a switch
+      \item TODO: not all of the SNMP objects are already implemented, the
+        problem is either reported only in some situations or not reported at
+        all
+      \item \emph{for later}: the problem concerns functionality that is not yet
+        present in the stable release of the WR switch firmware i.e. it will
+        never happen with the current stable firmware release.
+    \end{packed_items}
+  \item [] \underline{Severity}: describes how critical is the fault. Currently
+    we distinguish two severity levels:
+    \begin{packed_items}
+      \item WARNING - means that despite the fault the synchronization and
+        Ethernet switching functionality were not affected so the switch behaves
+        correctly in the WR network.
+      \item ERROR - means that the fault is critical and most probably a WR
+        switch misbehaves in a WR network, possibly causing also problems to
+        other WR devices connected to this switch.
+    \end{packed_items}
+	\item [] \underline{Mode}: for timing failures, it describes which modes are
+		affected. Possible values are:
+		\begin{packed_items}
+			\item \emph{Slave} - the WR Switch has at least one Slave port
+        synchronized to another WR device higher in the timing hierarchy (though
+        it may be also Master to other WR/PTP devices lower in the timing
+        hierarchy).
+			\item \emph{Grand Master} - the WR Switch at the top of the
+        synchronization hierarchy. It is synchronized to an external clock (e.g.
+        GPS, Cesium) and provides timing to other WR/PTP devices.
+			\item \emph{Free-Running Master} - the WR Switch at the top of the
+				synchronization hierarchy. It provides timing to other WR/PTP devices
+				but runs from a local oscillator (not synchronized to an external
+        clock).
+      \item \emph{all} - any WR switch can be affected regardless the timing
+        mode.
+		\end{packed_items}
+
+	\item [] \underline{Description}: What the problem is about, how important it
+		is and what are the effects if it occurs.
+	\item [] \underline{SNMP objects}: Which SNMP objects should be monitored to
+		detect the failure. These may be objects from \texttt{WR-SWITCH-MIB} or one
+		of the standard MIBs used by the \emph{net-snmp}.
+	\item [] \underline{Notes}: Optional comment for the SNMP implementation. It
+    may describe the current implementation of ideas or how to implement it in
+    the future.
+\end{itemize}
+
 \subsection{Timing error}
 \label{sec:timing_fail}
 As a timing error we define the WR Switch not being able to provide its slave
@@ -525,7 +578,7 @@ list of faults leading to a data error.
 
 \subsubsection{\bf Wrong configuration applied (e.g. wrong VLAN config)}
 		\begin{pck_descr}
-			\item [] \underline{Status}: TODO \emph{(to be done later)}
+			\item [] \underline{Status}: TODO
 			\item [] \underline{Severity}: WARNING
 			\item [] \underline{Description}:\\
 				The same problem as described in the timing fault
