@@ -26,7 +26,7 @@ fail. The structure of each error description is the following:
 	\item [] \underline{Mode}: for timing failures, it describes which modes are
 		affected. Possible values are:
 		\begin{packed_items}
-			\item \emph{Slave} - the WR Switch has at least one Slave port
+			\item \emph{Boundary Clock} - the WR Switch has at least one Slave port
         synchronized to another WR device higher in the timing hierarchy (though
         it may be also Master to other WR/PTP devices lower in the timing
         hierarchy).
@@ -64,7 +64,7 @@ WR network.
     \begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
-			\item [] \underline{Mode}: \emph{Slave}
+			\item [] \underline{Mode}: \emph{Boundary Clock}
 			\item [] \underline{Description}:\\
 				If the \emph{PTP/PPSi} WR servo goes out of the \texttt{TRACK\_PHASE}
 				state, this means something bad has happened and the switch lost the
@@ -86,11 +86,11 @@ WR network.
 		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
-			\item [] \underline{Mode}: \emph{Slave}
+			\item [] \underline{Mode}: \emph{Boundary Clock}
 			\item [] \underline{Description}:\\
 				This may happen if the Master resets its WR time counters (e.g. because
         it lost the link to its Master higher in the hierarchy or to external
-				clock), but the Slave switch does not follow the jump.
+				clock), but the WR Slave does not follow the jump.
 			\item [] \underline{SNMP objects}:\\
         {\footnotesize
 				\snmpadd{WR-SWITCH-MIB::wrsPtpClockOffsetPs.<n>} -- value of the offset in ps\\
@@ -106,7 +106,7 @@ WR network.
 		\begin{pck_descr}
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR
-			\item [] \underline{Mode}: \emph{Slave}
+			\item [] \underline{Mode}: \emph{Boundary Clock}
 			\item [] \underline{Description}:\\
 				Once a WR link is established the round-trip delay (RTT) can change
         smoothly due to the temperature variations. However, if a sudden jump is
@@ -152,10 +152,10 @@ WR network.
 			\item [] \underline{Severity}: ERROR
 			\item [] \underline{Mode}: \emph{all}
 			\item [] \underline{Description}:\\
-				If the \emph{SoftPLL} loses lock, for any reason, Slave or Grand Master
-				switch can no longer be syntonized and phase aligned with its time
-				source. WRS in Free-running mode without properly locked Helper PLL is
-				not able to perform reliable phase measurements for enhancing Rx
+				If the \emph{SoftPLL} loses lock, for any reason, Boundary Clock or
+        Grand Master switch can no longer be syntonized and phase aligned with
+        its time source. WRS in Free-running mode without properly locked Helper
+        PLL is not able to perform reliable phase measurements for enhancing Rx
 				timestamps resolution. For a Grand Master the reason of \emph{SoftPLL}
 				going out of lock might be disconnected 1-PPS/10MHz signals or that the
         external clock is down. In that case, the switch goes into Free-running
@@ -203,7 +203,7 @@ WR network.
 			\item [] \underline{Status}: DONE
 			\item [] \underline{Severity}: ERROR (will become WARNING with the
 				switch-over)
-			\item [] \underline{Mode}: \emph{Slave}
+			\item [] \underline{Mode}: \emph{Boundary Clock}
 			\item [] \underline{Description}:\\
 				If a Boundary Clock switch loses the link on its Slave port, the timing
         reference is lost. The switch resets counters responsible for keeping
@@ -373,11 +373,11 @@ WR network.
 		\begin{pck_descr}
 			\item [] \underline{Status}: for later
 			\item [] \underline{Severity}: ERROR
-			\item [] \underline{Mode}: \emph{Slave}, \emph{Grand Master}
+			\item [] \underline{Mode}: \emph{Boundary Clock}, \emph{Grand Master}
 			\item [] \underline{Description}: \emph{(not yet implemented)}\\
 				In case the primary timing link breaks, switchover is responsible for
 				seamless switching to the backup one to keep the device in sync. If WRS
-				operates in a \emph{Slave} mode, switchover is about switching
+				operates in a \emph{Boundary Clock} mode, switchover is about switching
 				between two (or more) WR links to one or multiple WR Masters. If it
 				operates in a \emph{Grand Master} mode, it is about broken/lost
 				connection to an external reference and switching to a backup WR link
