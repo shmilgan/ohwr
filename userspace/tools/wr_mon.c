@@ -17,8 +17,11 @@
 #define PTP_EXPORT_STRUCTURES
 #include "ptpd_exports.h"
 
-#define SHOW_GUI		0
-#define SHOW_STATS		1
+#define SHOW_GUI			0
+#define SHOW_SLAVE_STATS	1
+#define SHOW_MASTER_STATS	2
+#define SHOW_SERVO			4
+#define SHOW_TEMPERATURE	8
 
 int mode = SHOW_GUI;
 
@@ -33,7 +36,7 @@ static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
 static struct wr_servo_state *ppsi_servo;
 static struct wr_servo_state ppsi_servo_local; /* local copy of
-						    servo status */
+							servo status */
 static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
 static struct hal_temp_sensors temp_sensors_local;
@@ -44,10 +47,14 @@ void help(char *prgname)
 		prgname, prgname);
 	fprintf(stderr,
 		"  The program has the following options\n"
-		"  -h       print help\n"
-		"  -s       show statistics\n"
-		"  -b       use black and white output\n"
-		"  -w       web interface mode\n");
+		"  -h   print help\n"
+		"  -m   show master statistics\n"
+		"  -s   show slave statistics\n"
+		"  -e   show servo\n"
+		"  -t   show temperature\n"
+		"  -a   show all (same as -m -s -e- t options)\n"
+		"  -c   use colour output\n"
+		"  -w   web interface mode\n");
 	exit(1);
 }
 
@@ -59,9 +66,9 @@ int read_hal(void){
 	while (1) {
 		ii = wrs_shm_seqbegin(hal_head);
 		memcpy(hal_ports_local_copy, hal_ports,
-		       hal_nports_local*sizeof(struct hal_port_state));
+			   hal_nports_local*sizeof(struct hal_port_state));
 		memcpy(&temp_sensors_local, temp_sensors,
-		       sizeof(*temp_sensors));
+			   sizeof(*temp_sensors));
 		retries++;
 		if (retries > 100)
 			return -1;
@@ -205,7 +212,7 @@ void show_ports(void)
 		t = (time_t)_fpga_readl(FPGA_BASE_PPS_GEN + 8 /* UTC_LO */);
 		tm = localtime(&t);
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
-		term_cprintf(C_BLUE, "WR time:     %s\n", datestr);
+		term_cprintf(C_BLUE, "WR time:	 %s\n", datestr);
 
 		for (i = 0; i < hal_nports_local; i++)
 		{
@@ -214,14 +221,14 @@ void show_ports(void)
 			snprintf(if_name, 10, "wr%d", i);
 
 			port_state = hal_lookup_port(hal_ports_local_copy,
-						    hal_nports_local, if_name);
+							hal_nports_local, if_name);
 			if (!port_state)
 				continue;
 
 			term_cprintf(C_WHITE, " %-5s: ", if_name);
 			/* check if link is up */
 			if (state_up(port_state->state))
-				term_cprintf(C_GREEN, "Link up    ");
+				term_cprintf(C_GREEN, "Link up	");
 			else
 				term_cprintf(C_RED, "Link down  ");
 
@@ -239,13 +246,13 @@ void show_ports(void)
 					term_cprintf(C_WHITE, "WR Slave   ");
 					break;
 				case HEXP_PORT_MODE_NON_WR:
-					term_cprintf(C_WHITE, "Non WR     ");
+					term_cprintf(C_WHITE, "Non WR	 ");
 					break;
 				case HEXP_PORT_MODE_WR_M_AND_S:
-					term_cprintf(C_WHITE, "WR auto    ");
+					term_cprintf(C_WHITE, "WR auto	");
 					break;
 				default:
-					term_cprintf(C_WHITE, "Unknown    ");
+					term_cprintf(C_WHITE, "Unknown	");
 					break;
 			}
 
@@ -260,7 +267,7 @@ void show_ports(void)
 			 */
 			for (j = 0; j < ppg->nlinks; j++) {
 				if (!strcmp(if_name,
-					    pp_array[j].cfg.iface_name))
+						pp_array[j].cfg.iface_name))
 					break;
 			}
 			/* Warning: we may have more pp instances per port */
@@ -270,10 +277,10 @@ void show_ports(void)
 				unsigned char *p = pp_array[j].peer;
 
 				term_cprintf(C_WHITE, "peer: %02x:%02x:%02x"
-					     ":%02x:%02x:%02x ", p[0], p[1],
-					     p[2], p[3], p[4], p[5]);
+						 ":%02x:%02x:%02x ", p[0], p[1],
+						 p[2], p[3], p[4], p[5]);
 				term_cprintf(C_GREEN, "ptp state %i\n",
-					     pp_array[j].state);
+						 pp_array[j].state);
 				/* FIXME: string state */
 			}
 		}
@@ -312,6 +319,68 @@ void show_ports(void)
 		}
 		printf("\n");
 	}
+	else if(mode == SHOW_SLAVE_STATS) {
+		printf("PORTS ");
+		for (i = 0; i < hal_nports_local; ++i) {
+			char if_name[10];
+
+			snprintf(if_name, 10, "wr%d", i);
+			port_state = hal_lookup_port(hal_ports_local_copy,
+						   hal_nports_local, if_name);
+			if (!port_state)
+				continue;
+
+			switch (port_state->mode) {
+			case HEXP_PORT_MODE_WR_SLAVE:
+				printf("port:%s ", if_name);
+				printf("lnk:%d ", state_up(port_state->state));
+				printf("mode:S ");
+				printf("lock:%d ", port_state->locked);
+				break;
+			case HEXP_PORT_MODE_WR_M_AND_S:
+				snprintf(if_name, 10, "wr%d", i);
+				printf("port:%s ", if_name);
+				printf("lnk:%d ", state_up(port_state->state));
+				printf("mode:A ");
+				printf("lock:%d ", port_state->locked);
+				break;
+			default:
+				break;
+			}
+		}
+		printf("\n");
+	}
+	else if(mode == SHOW_MASTER_STATS) {
+		printf("PORTS ");
+		for (i = 0; i < hal_nports_local; ++i) {
+			char if_name[10];
+
+			snprintf(if_name, 10, "wr%d", i);
+			port_state = hal_lookup_port(hal_ports_local_copy,
+						   hal_nports_local, if_name);
+			if (!port_state)
+				continue;
+
+			switch (port_state->mode) {
+			case HEXP_PORT_MODE_WR_MASTER:
+				printf("port:%s ", if_name);
+				printf("lnk:%d ", state_up(port_state->state));
+				printf("mode:M ");
+				printf("lock:%d ", port_state->locked);
+				break;
+			case HEXP_PORT_MODE_WR_M_AND_S:
+				snprintf(if_name, 10, "wr%d", i);
+				printf("port:%s ", if_name);
+				printf("lnk:%d ", state_up(port_state->state));
+				printf("mode:A ");
+				printf("lock:%d ", port_state->locked);
+				break;
+			default:
+				break;
+			}
+		}
+		printf("\n");
+	}
 }
 
 /*
@@ -330,20 +399,20 @@ static void show_unadorned_ports(void)
 
 		snprintf(if_name, 10, "wr%d", i);
 			port_state = hal_lookup_port(hal_ports_local_copy,
-						     hal_nports_local, if_name);
+							 hal_nports_local, if_name);
 			if (!port_state)
 				continue;
 
 		printf("%s %s %s %s\n",
-		       state_up(port_state->state)
-		       ? "up" : "down",
-		       port_state->mode == HEXP_PORT_MODE_WR_MASTER
-		       ? "Master" : "Slave", /* FIXME: other options? */
-		       port_state->locked
-		       ? "Locked" : "NoLock",
-		       port_state->calib.rx_calibrated
+			   state_up(port_state->state)
+			   ? "up" : "down",
+			   port_state->mode == HEXP_PORT_MODE_WR_MASTER
+			   ? "Master" : "Slave", /* FIXME: other options? */
+			   port_state->locked
+			   ? "Locked" : "NoLock",
+			   port_state->calib.rx_calibrated
 			   && port_state->calib.tx_calibrated
-		       ? "Calibrated" : "Uncalibrated");
+			   ? "Calibrated" : "Uncalibrated");
 	}
 }
 
@@ -358,8 +427,8 @@ void show_servo(void)
 	total_asymmetry = ppsi_servo_local.picos_mu -
 			  2LL * ppsi_servo_local.delta_ms;
 	crtt = ppsi_servo_local.picos_mu - ppsi_servo_local.delta_tx_m -
-	       ppsi_servo_local.delta_rx_m - ppsi_servo_local.delta_tx_s -
-	       ppsi_servo_local.delta_rx_s;
+		   ppsi_servo_local.delta_rx_m - ppsi_servo_local.delta_tx_s -
+		   ppsi_servo_local.delta_rx_s;
 
 	if(mode == SHOW_GUI) {
 		term_cprintf(C_BLUE, "\nSynchronization status:\n");
@@ -369,15 +438,15 @@ void show_servo(void)
 			return;
 		}
 
-		term_cprintf(C_GREY, "Servo state:               ");
+		term_cprintf(C_GREY, "Servo state:			   ");
 		if (lastt && time(NULL) - lastt > 5) {
 			term_cprintf(C_RED, " --- not updating --- ");
 		} else {
 			term_cprintf(C_WHITE, "%s: %s%s\n",
-				     ppsi_servo_local.if_name,
-				     ppsi_servo_local.servo_state_name,
-				     ppsi_servo_local.flags & WR_FLAG_WAIT_HW ?
-				     " (wait for hw)" : "");
+					 ppsi_servo_local.if_name,
+					 ppsi_servo_local.servo_state_name,
+					 ppsi_servo_local.flags & WR_FLAG_WAIT_HW ?
+					 " (wait for hw)" : "");
 		}
 
 		/* "tracking disabled" is just a testing tool */
@@ -386,54 +455,71 @@ void show_servo(void)
 
 		term_cprintf(C_BLUE, "\nTiming parameters:\n\n");
 
-		term_cprintf(C_GREY, "Round-trip time (mu):      ");
+		term_cprintf(C_GREY, "Round-trip time (mu):	  ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-			     ppsi_servo_local.picos_mu/1000.0);
+				 ppsi_servo_local.picos_mu/1000.0);
 
-		term_cprintf(C_GREY, "Master-slave delay:        ");
+		term_cprintf(C_GREY, "Master-slave delay:		");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-			     ppsi_servo_local.delta_ms/1000.0);
+				 ppsi_servo_local.delta_ms/1000.0);
 
-		term_cprintf(C_GREY, "Master PHY delays:         ");
+		term_cprintf(C_GREY, "Master PHY delays:		 ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
-			     ppsi_servo_local.delta_tx_m/1000.0,
-			     ppsi_servo_local.delta_rx_m/1000.0);
+				 ppsi_servo_local.delta_tx_m/1000.0,
+				 ppsi_servo_local.delta_rx_m/1000.0);
 
-		term_cprintf(C_GREY, "Slave PHY delays:          ");
+		term_cprintf(C_GREY, "Slave PHY delays:		  ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
-			     ppsi_servo_local.delta_tx_s/1000.0,
-			     ppsi_servo_local.delta_rx_s/1000.0);
+				 ppsi_servo_local.delta_tx_s/1000.0,
+				 ppsi_servo_local.delta_rx_s/1000.0);
 
-		term_cprintf(C_GREY, "Total link asymmetry:      ");
+		term_cprintf(C_GREY, "Total link asymmetry:	  ");
 		term_cprintf(C_WHITE, "%.3f nsec\n", total_asymmetry/1000.0);
 
 		/*if (0) {
-			term_cprintf(C_GREY, "Fiber asymmetry:           ");
+			term_cprintf(C_GREY, "Fiber asymmetry:		   ");
 			term_cprintf(C_WHITE, "%.3f nsec\n", ss.fiber_asymmetry/1000.0);
 		}*/
 
-		term_cprintf(C_GREY, "Clock offset:              ");
+		term_cprintf(C_GREY, "Clock offset:			  ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-			     ppsi_servo_local.offset/1000.0);
+				 ppsi_servo_local.offset/1000.0);
 
-		term_cprintf(C_GREY, "Phase setpoint:            ");
+		term_cprintf(C_GREY, "Phase setpoint:			");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-			     ppsi_servo_local.cur_setpoint/1000.0);
+				 ppsi_servo_local.cur_setpoint/1000.0);
 
-		term_cprintf(C_GREY, "Skew:                      ");
+		term_cprintf(C_GREY, "Skew:					  ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-			     ppsi_servo_local.skew/1000.0);
+				 ppsi_servo_local.skew/1000.0);
 
-		term_cprintf(C_GREY, "Servo update counter:      ");
+		term_cprintf(C_GREY, "Servo update counter:	  ");
 		term_cprintf(C_WHITE, "%u times\n",
-			     ppsi_servo_local.update_count);
+				 ppsi_servo_local.update_count);
 		if (ppsi_servo_local.update_count != last_count) {
 			lastt = time(NULL);
 			last_count = ppsi_servo_local.update_count;
 		}
 	}
 	else if(mode == SHOW_STATS) {
-		printf("SERVO    ");
+		printf("SERVO	");
+		printf("sv:%d ", ppsi_servo_local.flags & WR_FLAG_VALID ? 1 : 0);
+		printf("ss:'%s' ", ppsi_servo_local.servo_state_name);
+		printf("mu:%llu ", ppsi_servo_local.picos_mu);
+		printf("dms:%llu ", ppsi_servo_local.delta_ms);
+		printf("dtxm:%d drxm:%d ", ppsi_servo_local.delta_tx_m,
+					   ppsi_servo_local.delta_rx_m);
+		printf("dtxs:%d drxs:%d ", ppsi_servo_local.delta_tx_s,
+					   ppsi_servo_local.delta_rx_s);
+		printf("asym:%lld ", total_asymmetry);
+		printf("crtt:%llu ", crtt);
+		printf("cko:%lld ", ppsi_servo_local.offset);
+		printf("setp:%d ", ppsi_servo_local.cur_setpoint);
+		printf("ucnt:%u ", ppsi_servo_local.update_count);
+		printf("\n");
+	}
+	else if(mode == SHOW_SLAVE_STATS) {
+		printf("SERVO	");
 		printf("sv:%d ", ppsi_servo_local.flags & WR_FLAG_VALID ? 1 : 0);
 		printf("ss:'%s' ", ppsi_servo_local.servo_state_name);
 		printf("mu:%llu ", ppsi_servo_local.picos_mu);
@@ -458,16 +544,16 @@ void show_temperatures(void)
 
 		term_cprintf(C_GREY, "FPGA: ");
 		term_cprintf(C_WHITE, "%2.2f ",
-			     temp_sensors_local.fpga/256.0);
+				 temp_sensors_local.fpga/256.0);
 		term_cprintf(C_GREY, "PLL: ");
 		term_cprintf(C_WHITE, "%2.2f ",
-			     temp_sensors_local.pll/256.0);
+				 temp_sensors_local.pll/256.0);
 		term_cprintf(C_GREY, "PSL: ");
 		term_cprintf(C_WHITE, "%2.2f ",
-			     temp_sensors_local.psl/256.0);
+				 temp_sensors_local.psl/256.0);
 		term_cprintf(C_GREY, "PSR: ");
 		term_cprintf(C_WHITE, "%2.2f\n",
-			     temp_sensors_local.psr/256.0);
+				 temp_sensors_local.psr/256.0);
 	}
 }
 
@@ -481,8 +567,8 @@ void show_all(void)
 	if (mode == SHOW_GUI) {
 		term_clear();
 		term_pcprintf(1, 1, C_BLUE,
-			      "WR Switch Sync Monitor %s[q = quit]\n\n",
-			      __GIT_VER__);
+				  "WR Switch Sync Monitor %s[q = quit]\n\n",
+				  __GIT_VER__);
 	}
 
 	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0));
@@ -515,15 +601,20 @@ int main(int argc, char *argv[])
 
 	wrs_msg_init(argc, argv);
 	init_shm();
-	while((opt=getopt(argc, argv, "hsbgwqv")) != -1)
+	while((opt=getopt(argc, argv, "hasmbwqv")) != -1)
 	{
 		switch(opt)
 		{
-		    case 'h':
-		        help(argv[0]);
-			case 's':
+			case 'h':
+				help(argv[0]);
+			case 'a':
 				mode = SHOW_STATS;
 				break;
+			case 's':
+				mode = SHOW_SLAVE_STATS;
+				break;
+			case 'm':
+				mode = SHOW_MASTER_STATS;
 			case 'b':
 				usecolor = 0;
 				break;
@@ -563,8 +654,8 @@ int main(int argc, char *argv[])
 					ppsi_connect_minipc();
 				}
 				minipc_call(ptp_ch, 200, &__rpcdef_cmd,
-					    &rval, PTPDEXP_COMMAND_TRACKING,
-					    track_onoff);
+						&rval, PTPDEXP_COMMAND_TRACKING,
+						track_onoff);
 			}
 		}
 		read_hal();
