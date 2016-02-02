@@ -20,9 +20,9 @@
 #define SHOW_GUI			0
 #define SHOW_SLAVE_STATS	1
 #define SHOW_MASTER_STATS	2
-#define SHOW_SERVO			4
-#define SHOW_TEMPERATURE	8
-#define SHOW_STATS			15 /* for convenience with -a option */
+#define SHOW_SERVO_STATS	4
+#define SHOW_TEMPERATURES	8
+#define SHOW_ALL_STATS		15 /* for convenience with -a option */
 
 int mode = SHOW_GUI;
 
@@ -51,8 +51,8 @@ void help(char *prgname)
 		"  -h   print help\n"
 		"  -m   show master statistics\n"
 		"  -s   show slave statistics\n"
-		"  -e   show servo\n"
-		"  -t   show temperature\n"
+		"  -e   show servo statistics\n"
+		"  -t   show temperatures\n"
 		"  -a   show all (same as -m -s -e- t options)\n"
 		"  -c   use colour output\n"
 		"  -w   web interface mode\n");
@@ -286,7 +286,7 @@ void show_ports(void)
 			}
 		}
 	}
-	else if(mode == SHOW_STATS) {
+	else if(mode == SHOW_ALL_STATS) {
 		printf("PORTS ");
 		for (i = 0; i < hal_nports_local; ++i) {
 			char if_name[10];
@@ -502,7 +502,7 @@ void show_servo(void)
 			last_count = ppsi_servo_local.update_count;
 		}
 	}
-	else if(mode == SHOW_STATS) {
+	else if(mode == SHOW_ALL_STATS) {
 		printf("SERVO	");
 		printf("sv:%d ", ppsi_servo_local.flags & WR_FLAG_VALID ? 1 : 0);
 		printf("ss:'%s' ", ppsi_servo_local.servo_state_name);
@@ -579,14 +579,14 @@ void show_all(void)
 		show_ports();
 	else if (mode == SHOW_GUI)
 		term_cprintf(C_RED, "\nHAL is dead!\n");
-	else if (mode == SHOW_STATS)
+	else if (mode == SHOW_ALL_STATS)
 		printf("HAL is dead!\n");
 
 	if (ppsi_alive)
 		show_servo();
 	else if (mode == SHOW_GUI)
 		term_cprintf(C_RED, "\nPPSI is dead!\n");
-	else if (mode == SHOW_STATS)
+	else if (mode == SHOW_ALL_STATS)
 		printf("PPSI is dead!\n");
 
 
@@ -598,26 +598,45 @@ void show_all(void)
 int main(int argc, char *argv[])
 {
 	int opt;
-	int usecolor = 1;
+	int usecolor = 0;
 
 	wrs_msg_init(argc, argv);
 	init_shm();
-	while((opt=getopt(argc, argv, "hasmbwqv")) != -1)
+	while((opt=getopt(argc, argv, "hmsetacwqv")) != -1)
 	{
+
+/*
+		"  -h   print help\n"
+		"  -m   show master statistics\n"
+		"  -s   show slave statistics\n"
+		"  -e   show servo statistics\n"
+		"  -t   show temperature\n"
+		"  -a   show all statistics (same as -m -s -e- t options)\n"
+		"  -c   use colour output\n"
+		"  -w   web interface mode\n");
+*/
+
 		switch(opt)
 		{
 			case 'h':
 				help(argv[0]);
-			case 'a':
-				mode = SHOW_STATS;
-				break;
 			case 's':
-				mode = SHOW_SLAVE_STATS;
+				mode |= SHOW_SLAVE_STATS;
 				break;
 			case 'm':
-				mode = SHOW_MASTER_STATS;
-			case 'b':
-				usecolor = 0;
+				mode |= SHOW_MASTER_STATS;
+				break;
+			case 'e':
+				mode |= SHOW_SERVO_STATS;
+				break;
+			case 't':
+				mode |= SHOW_TEMPERATURES;
+				break;
+			case 'a':
+				mode = SHOW_ALL_STATS;
+				break;
+			case 'c':
+				usecolor = 1;
 				break;
 			case 'w': /* for the web interface */
 				read_hal();
@@ -659,6 +678,8 @@ int main(int argc, char *argv[])
 						track_onoff);
 			}
 		}
+		
+		/* TODO: fix function calls, make it handier somehow */
 		read_hal();
 		read_servo();
 		show_all();
