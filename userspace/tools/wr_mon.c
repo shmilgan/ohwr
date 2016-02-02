@@ -57,7 +57,10 @@ void help(char *prgname)
 		"  -t   show temperatures\n"
 		"  -a   show all (same as -m -s -e- t options)\n"
 		"  -c   use colour output\n"
-		"  -w   web interface mode\n");
+		"  -w   web interface mode\n"
+		"\n"
+		"During execution the user can enter 'q' to exit the program\n"
+		"and 't' to toggle printing of state information on/off\n");
 	exit(1);
 }
 
@@ -392,6 +395,7 @@ void show_ports(void)
  * Code duplication is bad, but this is better than a separate tool
  * which is almost identical but even broken
  */
+/* TODO: integrate in the grand print logic */
 static void show_unadorned_ports(void)
 {
 	int i;
@@ -563,6 +567,7 @@ void show_temperatures(void)
 
 int track_onoff = 1;
 
+/* TJP: check if this needs modification */
 void show_all(void)
 {
 	int hal_alive;
@@ -605,7 +610,6 @@ int main(int argc, char *argv[])
 	uint32_t last_count = 0;
 
 	wrs_msg_init(argc, argv);
-	init_shm(); /* TODO: move to below, we don't need this to interpret the options */
 	
 	while((opt=getopt(argc, argv, "hmsetacwqv")) != -1)
 	{
@@ -632,7 +636,7 @@ int main(int argc, char *argv[])
 				usecolor = 1;
 				break;
 			case 'w':
-				mode |= WEB_INTERFACE
+				mode |= WEB_INTERFACE;
 				break;
 			case 'q': break; /* done in wrs_msg_init() */
 			case 'v': break; /* done in wrs_msg_init() */
@@ -641,10 +645,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	init_shm();
+
 	if (mode & WEB_INTERFACE) {
 		read_hal();
 		show_unadorned_ports();
-		show_temperatures();
 		exit(0);
 	}
 
@@ -654,6 +659,8 @@ int main(int argc, char *argv[])
 	}
 	term_init(usecolor);
 	setvbuf(stdout, NULL, _IOFBF, 4096);
+
+	/* main loop */
 	for(;;)
 	{
 		if(term_poll(10))
@@ -682,7 +689,6 @@ int main(int argc, char *argv[])
 		if (last_count != ppsi_servo_local.update_count) {
 			last_count=ppsi_servo_local.update_count;
 		
-			/* TODO: fix function calls, make it handier somehow? */
 			read_hal();
 			show_all();
 		}
@@ -691,6 +697,7 @@ int main(int argc, char *argv[])
 		if (ferror(stdout))
 			exit(1);
 	}
+
 	term_restore();
 	setlinebuf(stdout);
 	printf("\n");
