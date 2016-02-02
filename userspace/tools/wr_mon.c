@@ -692,13 +692,6 @@ int main(int argc, char *argv[])
 			}
 		}
 
-/* TJP: the older code that checks updates on ppsi servo, this does not work
- * when the servo is not getting packets in */
-/*		read_servo();*/
-		/* wait for servo to have updates */
-/*		if (last_count != ppsi_servo_local.update_count) {*/
-/*			last_count=ppsi_servo_local.update_count;*/
-
 		shw_pps_gen_read_time(&seconds, &nanoseconds);
 		/* printf("sec: %s, nsec: %d\n", format_time(seconds), nanoseconds); */
 		if (seconds != last_seconds) {
