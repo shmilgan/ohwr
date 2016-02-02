@@ -638,7 +638,7 @@ int main(int argc, char *argv[])
 	setvbuf(stdout, NULL, _IOFBF, 4096);
 	for(;;)
 	{
-		if(term_poll(500))
+		if(term_poll(1))
 		{
 			int c = term_get();
 
