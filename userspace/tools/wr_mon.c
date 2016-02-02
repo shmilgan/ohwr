@@ -702,7 +702,8 @@ int main(int argc, char *argv[])
 		if (seconds != last_seconds) {
 			last_seconds=seconds;
 			last_nanoseconds=nanoseconds;
-
+			usleep(1000);
+			
 			read_servo();
 			read_hal();
 			show_all();
