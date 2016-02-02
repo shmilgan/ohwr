@@ -8,6 +8,7 @@
 #include <libwr/hal_shmem.h>
 #include <libwr/switch_hw.h>
 #include <libwr/wrs-msg.h>
+#include <libwr/pps_gen.h>
 #include <fpga_io.h>
 #include <minipc.h>
 #include <signal.h>
@@ -609,6 +610,12 @@ int main(int argc, char *argv[])
 	int usecolor = 0;
 	uint32_t last_count = 0;
 
+	/* try a pps_gen based approach */
+	uint64_t seconds=0;
+	uint64_t last_seconds=0;	
+	uint32_t nanoseconds=0;
+	uint32_t last_nanoseconds=0;
+
 	wrs_msg_init(argc, argv);
 	
 	while((opt=getopt(argc, argv, "hmsetacwqv")) != -1)
@@ -684,11 +691,16 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		read_servo();
+/*		read_servo();*/
 		/* wait for servo to have updates */
-		if (last_count != ppsi_servo_local.update_count) {
-			last_count=ppsi_servo_local.update_count;
-		
+/*		if (last_count != ppsi_servo_local.update_count) {*/
+/*			last_count=ppsi_servo_local.update_count;*/
+
+		shw_pps_gen_read_time(seconds, nanoseconds);
+		printf("sec: %u, nsec: %u", seconds, nanoseconds);
+		if (seconds != last_seconds) {
+			last_seconds=seconds;
+			
 			read_hal();
 			show_all();
 		}
