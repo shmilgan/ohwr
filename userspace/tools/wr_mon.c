@@ -23,6 +23,7 @@
 #define SHOW_SERVO_STATS	4
 #define SHOW_TEMPERATURES	8
 #define SHOW_ALL_STATS		15 /* for convenience with -a option */
+#define WEB_INTERFACE       16 /* TJP: still has it's own print function, ugly */
 
 int mode = SHOW_GUI;
 
@@ -30,8 +31,8 @@ static struct minipc_ch *ptp_ch;
 
 static struct wrs_shm_head *hal_head;
 static struct hal_port_state *hal_ports;
-/* local copy of port state */
-static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS];
+static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS]; /* local copy
+							of port state */
 static int hal_nports_local;
 static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
@@ -40,7 +41,8 @@ static struct wr_servo_state ppsi_servo_local; /* local copy of
 							servo status */
 static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
-static struct hal_temp_sensors temp_sensors_local;
+static struct hal_temp_sensors temp_sensors_local; /* local copy of
+							temperature sensor readings */
 
 void help(char *prgname)
 {
@@ -99,7 +101,6 @@ int read_servo(void){
 
 	return 0;
 }
-
 
 void ppsi_connect_minipc(void)
 {
@@ -193,6 +194,8 @@ void init_shm(void)
 	ppsi_connect_minipc();
 }
 
+/* TODO: loop over ports first and then decide how to print, maybe even via
+		an additional function to avoid endless code duplication? */
 void show_ports(void)
 {
 	int i, j;
@@ -599,11 +602,11 @@ int main(int argc, char *argv[])
 {
 	int opt;
 	int usecolor = 0;
-	uint32_t update_count = 0;
-	uint32_t local_update_count = 0;
+	uint32_t last_count = 0;
 
 	wrs_msg_init(argc, argv);
-	init_shm();
+	init_shm(); /* TODO: move to below, we don't need this to interpret the options */
+	
 	while((opt=getopt(argc, argv, "hmsetacwqv")) != -1)
 	{
 		switch(opt)
@@ -623,22 +626,26 @@ int main(int argc, char *argv[])
 				mode |= SHOW_TEMPERATURES;
 				break;
 			case 'a':
-				mode = SHOW_ALL_STATS;
+				mode |= SHOW_ALL_STATS;
 				break;
 			case 'c':
 				usecolor = 1;
 				break;
-			case 'w': /* for the web interface */
-				/* TODO: mode=WEB_INTERFACE, this is ugly */
-				read_hal();
-				show_unadorned_ports();
-				show_temperatures();
-				exit(0);
+			case 'w':
+				mode |= WEB_INTERFACE
+				break;
 			case 'q': break; /* done in wrs_msg_init() */
 			case 'v': break; /* done in wrs_msg_init() */
 			default:
 				help(argv[0]);
 		}
+	}
+
+	if (mode & WEB_INTERFACE) {
+		read_hal();
+		show_unadorned_ports();
+		show_temperatures();
+		exit(0);
 	}
 
 	if (shw_fpga_mmap_init() < 0) {
@@ -649,7 +656,7 @@ int main(int argc, char *argv[])
 	setvbuf(stdout, NULL, _IOFBF, 4096);
 	for(;;)
 	{
-		if(term_poll(0))
+		if(term_poll(10))
 		{
 			int c = term_get();
 
@@ -670,14 +677,13 @@ int main(int argc, char *argv[])
 			}
 		}
 
+		read_servo();
 		/* wait for servo to have updates */
-		update_count = ppsi_servo_local.update_count;
-		if(update_count > local_update_count) {
-			local_update_count=update_count;
+		if (last_count != ppsi_servo_local.update_count) {
+			last_count=ppsi_servo_local.update_count;
 		
-			/* TODO: fix function calls, make it handier somehow */
+			/* TODO: fix function calls, make it handier somehow? */
 			read_hal();
-			read_servo();
 			show_all();
 		}
 		
