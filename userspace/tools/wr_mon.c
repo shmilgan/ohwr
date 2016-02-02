@@ -9,6 +9,7 @@
 #include <libwr/switch_hw.h>
 #include <libwr/wrs-msg.h>
 #include <libwr/pps_gen.h>
+#include <libwr/util.h>
 #include <fpga_io.h>
 #include <minipc.h>
 #include <signal.h>
@@ -696,11 +697,13 @@ int main(int argc, char *argv[])
 /*		if (last_count != ppsi_servo_local.update_count) {*/
 /*			last_count=ppsi_servo_local.update_count;*/
 
-		shw_pps_gen_read_time(seconds, nanoseconds);
-		printf("sec: %u, nsec: %u", seconds, nanoseconds);
+		shw_pps_gen_read_time(&seconds, &nanoseconds);
+		/* printf("sec: %s, nsec: %d\n", format_time(seconds), nanoseconds); */
 		if (seconds != last_seconds) {
 			last_seconds=seconds;
-			
+			last_nanoseconds=nanoseconds;
+
+			read_servo();
 			read_hal();
 			show_all();
 		}
