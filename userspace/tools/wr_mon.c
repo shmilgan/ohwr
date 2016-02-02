@@ -671,7 +671,7 @@ int main(int argc, char *argv[])
 		}
 
 		/* wait for servo to have updates */
-		update_count = ppsi_servo_local.update_count
+		update_count = ppsi_servo_local.update_count;
 		if(update_count > local_update_count) {
 			local_update_count=update_count;
 		
