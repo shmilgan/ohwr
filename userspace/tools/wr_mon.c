@@ -692,6 +692,8 @@ int main(int argc, char *argv[])
 			}
 		}
 
+/* TJP: the older code that checks updates on ppsi servo, this does not work
+ * when the servo is not getting packets in */
 /*		read_servo();*/
 		/* wait for servo to have updates */
 /*		if (last_count != ppsi_servo_local.update_count) {*/
