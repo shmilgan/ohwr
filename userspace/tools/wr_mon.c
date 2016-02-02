@@ -22,6 +22,7 @@
 #define SHOW_MASTER_STATS	2
 #define SHOW_SERVO			4
 #define SHOW_TEMPERATURE	8
+#define SHOW_STATS			15 /* for convenience with -a option */
 
 int mode = SHOW_GUI;
 
