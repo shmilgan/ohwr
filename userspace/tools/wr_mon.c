@@ -639,6 +639,7 @@ int main(int argc, char *argv[])
 				usecolor = 1;
 				break;
 			case 'w': /* for the web interface */
+				/* TODO: mode=WEB_INTERFACE, this is ugly */
 				read_hal();
 				show_unadorned_ports();
 				show_temperatures();
