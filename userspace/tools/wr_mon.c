@@ -599,23 +599,13 @@ int main(int argc, char *argv[])
 {
 	int opt;
 	int usecolor = 0;
+	uint32_t update_count = 0;
+	uint32_t local_update_count = 0;
 
 	wrs_msg_init(argc, argv);
 	init_shm();
 	while((opt=getopt(argc, argv, "hmsetacwqv")) != -1)
 	{
-
-/*
-		"  -h   print help\n"
-		"  -m   show master statistics\n"
-		"  -s   show slave statistics\n"
-		"  -e   show servo statistics\n"
-		"  -t   show temperature\n"
-		"  -a   show all statistics (same as -m -s -e- t options)\n"
-		"  -c   use colour output\n"
-		"  -w   web interface mode\n");
-*/
-
 		switch(opt)
 		{
 			case 'h':
@@ -659,7 +649,7 @@ int main(int argc, char *argv[])
 	setvbuf(stdout, NULL, _IOFBF, 4096);
 	for(;;)
 	{
-		if(term_poll(1))
+		if(term_poll(0))
 		{
 			int c = term_get();
 
@@ -679,11 +669,18 @@ int main(int argc, char *argv[])
 						track_onoff);
 			}
 		}
+
+		/* wait for servo to have updates */
+		update_count = ppsi_servo_local.update_count
+		if(update_count > local_update_count) {
+			local_update_count=update_count;
 		
-		/* TODO: fix function calls, make it handier somehow */
-		read_hal();
-		read_servo();
-		show_all();
+			/* TODO: fix function calls, make it handier somehow */
+			read_hal();
+			read_servo();
+			show_all();
+		}
+		
 		/* If we got broken pipe or anything, exit */
 		if (ferror(stdout))
 			exit(1);
