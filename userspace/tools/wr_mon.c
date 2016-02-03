@@ -22,10 +22,13 @@
 #define SHOW_GUI			0
 #define SHOW_SLAVE_PORTS	1
 #define SHOW_MASTER_PORTS	2
-#define SHOW_SERVO_STATS	4
-#define SHOW_TEMPERATURES	8
-#define SHOW_ALL_STATS		15 /* for convenience with -a option */
-#define WEB_INTERFACE       16 /* TJP: still has it's own print function, ugly */
+#define SHOW_OTHER_PORTS    4
+#define SHOW_SERVO_STATS	8
+#define SHOW_TEMPERATURES	16
+#define WEB_INTERFACE       32 /* TJP: still has it's own print function, ugly */
+
+#define SHOW_ALL_PORTS      7
+#define SHOW_ALL			31 /* for convenience with -a option */
 
 int mode = SHOW_GUI;
 
@@ -53,11 +56,12 @@ void help(char *prgname)
 	fprintf(stderr,
 		"  The program has the following options\n"
 		"  -h   print help\n"
-		"  -m   show master statistics\n"
-		"  -s   show slave statistics\n"
+		"  -m   show master ports\n"
+		"  -s   show slave ports\n"
+		"  -o   show other ports\n"
 		"  -e   show servo statistics\n"
 		"  -t   show temperatures\n"
-		"  -a   show all (same as -m -s -e- t options)\n"
+		"  -a   show all (same as -m -s -o -e- t options)\n"
 		"  -c   use colour output\n"
 		"  -w   web interface mode\n"
 		"\n"
@@ -244,18 +248,22 @@ void show_ports(void)
 			else
 				term_cprintf(C_RED, "Link down  ");
 		}
-		if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+		if (((mode & SHOW_SLAVE_PORTS) && port_state->mode==HEXP_PORT_MODE_WR_SLAVE)
+			 || ((mode & SHOW_MASTER_PORTS) && port_state->mode==HEXP_PORT_MODE_WR_MASTER)
+			 || ((mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) && port_state->mode==HEXP_PORT_MODE_WR_M_AND_S)
+			 || (mode & SHOW_OTHER_PORTS)) {
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state_up(port_state->state));
 		}
 
+		/* TJP: slight code duplication here in favour of montrous logical expression */
 		switch (port_state->mode)
 		{
 			case HEXP_PORT_MODE_WR_MASTER:
 				if (mode==SHOW_GUI) {
 					term_cprintf(C_WHITE, "WR Master  ");
 				}
-				if (mode& (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+				if (mode & SHOW_MASTER_PORTS) {
 					printf("mode:M ");
 				}
 				break;
@@ -263,7 +271,7 @@ void show_ports(void)
 				if (mode==SHOW_GUI) {
 					term_cprintf(C_WHITE, "WR Slave   ");
 				}
-				if (mode& (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+				if (mode & SHOW_SLAVE_PORTS) {
 					printf("mode:S ");
 				}
 				break;
@@ -271,7 +279,7 @@ void show_ports(void)
 				if (mode==SHOW_GUI) {
 					term_cprintf(C_WHITE, "Non WR	 ");
 				}
-				if (mode& (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+				if (mode & SHOW_OTHER_PORTS) {
 					printf("mode:N ");
 				}
 				break;
@@ -287,7 +295,7 @@ void show_ports(void)
 				if (mode==SHOW_GUI) {
 					term_cprintf(C_WHITE, "Unknown	");
 				}
-				if (mode& (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+				if (mode & SHOW_OTHER_PORTS) {
 					printf("mode:U ");
 				}
 				break;
@@ -328,103 +336,6 @@ void show_ports(void)
 			}
 		}
 	}
-
-/*	else if(mode == SHOW_ALL_STATS) {*/
-/*		printf("PORTS ");*/
-/*		for (i = 0; i < hal_nports_local; ++i) {*/
-/*			char if_name[10];*/
-
-/*			snprintf(if_name, 10, "wr%d", i);*/
-/*			port_state = hal_lookup_port(hal_ports_local_copy,*/
-/*						   hal_nports_local, if_name);*/
-/*			if (!port_state)*/
-/*				continue;*/
-
-/*			printf("port:%s ", if_name);*/
-/*			printf("lnk:%d ", state_up(port_state->state));*/
-/*			switch (port_state->mode) {*/
-/*			case HEXP_PORT_MODE_WR_MASTER:*/
-/*				printf("mode:M ");*/
-/*				break;*/
-/*			case HEXP_PORT_MODE_WR_SLAVE:*/
-/*				printf("mode:S ");*/
-/*				break;*/
-/*			case HEXP_PORT_MODE_NON_WR:*/
-/*				printf("mode:N ");*/
-/*				break;*/
-/*			case HEXP_PORT_MODE_WR_M_AND_S:*/
-/*				printf("mode:A ");*/
-/*				break;*/
-/*			default:*/
-/*				printf("mode:U ");*/
-/*				break;*/
-/*			}*/
-/*			printf("lock:%d ", port_state->locked);*/
-/*		}*/
-/*		printf("\n");*/
-/*	}*/
-/*	else if(mode == SHOW_SLAVE_PORTS) {*/
-/*		printf("PORTS ");*/
-/*		for (i = 0; i < hal_nports_local; ++i) {*/
-/*			char if_name[10];*/
-
-/*			snprintf(if_name, 10, "wr%d", i);*/
-/*			port_state = hal_lookup_port(hal_ports_local_copy,*/
-/*						   hal_nports_local, if_name);*/
-/*			if (!port_state)*/
-/*				continue;*/
-
-/*			switch (port_state->mode) {*/
-/*			case HEXP_PORT_MODE_WR_SLAVE:*/
-/*				printf("port:%s ", if_name);*/
-/*				printf("lnk:%d ", state_up(port_state->state));*/
-/*				printf("mode:S ");*/
-/*				printf("lock:%d ", port_state->locked);*/
-/*				break;*/
-/*			case HEXP_PORT_MODE_WR_M_AND_S:*/
-/*				snprintf(if_name, 10, "wr%d", i);*/
-/*				printf("port:%s ", if_name);*/
-/*				printf("lnk:%d ", state_up(port_state->state));*/
-/*				printf("mode:A ");*/
-/*				printf("lock:%d ", port_state->locked);*/
-/*				break;*/
-/*			default:*/
-/*				break;*/
-/*			}*/
-/*		}*/
-/*		printf("\n");*/
-/*	}*/
-/*	else if(mode == SHOW_MASTER_PORTS) {*/
-/*		printf("PORTS ");*/
-/*		for (i = 0; i < hal_nports_local; ++i) {*/
-/*			char if_name[10];*/
-
-/*			snprintf(if_name, 10, "wr%d", i);*/
-/*			port_state = hal_lookup_port(hal_ports_local_copy,*/
-/*						   hal_nports_local, if_name);*/
-/*			if (!port_state)*/
-/*				continue;*/
-
-/*			switch (port_state->mode) {*/
-/*			case HEXP_PORT_MODE_WR_MASTER:*/
-/*				printf("port:%s ", if_name);*/
-/*				printf("lnk:%d ", state_up(port_state->state));*/
-/*				printf("mode:M ");*/
-/*				printf("lock:%d ", port_state->locked);*/
-/*				break;*/
-/*			case HEXP_PORT_MODE_WR_M_AND_S:*/
-/*				snprintf(if_name, 10, "wr%d", i);*/
-/*				printf("port:%s ", if_name);*/
-/*				printf("lnk:%d ", state_up(port_state->state));*/
-/*				printf("mode:A ");*/
-/*				printf("lock:%d ", port_state->locked);*/
-/*				break;*/
-/*			default:*/
-/*				break;*/
-/*			}*/
-/*		}*/
-/*		printf("\n");*/
-/*	}*/
 }
 
 /*
@@ -546,7 +457,7 @@ void show_servo(void)
 			last_count = ppsi_servo_local.update_count;
 		}
 	}
-	else if(mode == SHOW_ALL_STATS) {
+	else if(mode == SHOW_ALL) {
 		printf("SERVO	");
 		printf("sv:%d ", ppsi_servo_local.flags & WR_FLAG_VALID ? 1 : 0);
 		printf("ss:'%s' ", ppsi_servo_local.servo_state_name);
@@ -624,14 +535,14 @@ void show_all(void)
 		show_ports();
 	else if (mode == SHOW_GUI)
 		term_cprintf(C_RED, "\nHAL is dead!\n");
-	else if (mode == SHOW_ALL_STATS)
+	else if (mode == SHOW_ALL)
 		printf("HAL is dead!\n");
 
 	if (ppsi_alive)
 		show_servo();
 	else if (mode == SHOW_GUI)
 		term_cprintf(C_RED, "\nPPSI is dead!\n");
-	else if (mode == SHOW_ALL_STATS)
+	else if (mode == SHOW_ALL)
 		printf("PPSI is dead!\n");
 
 
@@ -654,7 +565,7 @@ int main(int argc, char *argv[])
 
 	wrs_msg_init(argc, argv);
 	
-	while((opt=getopt(argc, argv, "hmsetacwqv")) != -1)
+	while((opt=getopt(argc, argv, "hmsoetacwqv")) != -1)
 	{
 		switch(opt)
 		{
@@ -666,6 +577,9 @@ int main(int argc, char *argv[])
 			case 'm':
 				mode |= SHOW_MASTER_PORTS;
 				break;
+			case 'o':
+				mode |= SHOW_OTHER_PORTS;
+				break;
 			case 'e':
 				mode |= SHOW_SERVO_STATS;
 				break;
@@ -673,7 +587,7 @@ int main(int argc, char *argv[])
 				mode |= SHOW_TEMPERATURES;
 				break;
 			case 'a':
-				mode |= SHOW_ALL_STATS;
+				mode |= SHOW_ALL;
 				break;
 			case 'c':
 				usecolor = 1;
