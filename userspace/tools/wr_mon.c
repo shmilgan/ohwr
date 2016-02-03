@@ -240,76 +240,142 @@ void show_ports(void)
 		if (!port_state)
 			continue;
 	
-		if (mode==SHOW_GUI) {
-			term_cprintf(C_WHITE, " %-5s: ", if_name);
-			/* check if link is up */
-			if (state_up(port_state->state))
-				term_cprintf(C_GREEN, "Link up	");
-			else
-				term_cprintf(C_RED, "Link down  ");
-		}
-		if (((mode & SHOW_SLAVE_PORTS) && port_state->mode==HEXP_PORT_MODE_WR_SLAVE)
-			 || ((mode & SHOW_MASTER_PORTS) && port_state->mode==HEXP_PORT_MODE_WR_MASTER)
-			 || ((mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) && port_state->mode==HEXP_PORT_MODE_WR_M_AND_S)
-			 || (mode & SHOW_OTHER_PORTS)) {
-			printf("port:%s ", if_name);
-			printf("lnk:%d ", state_up(port_state->state));
-		}
-
-		/* TJP: slight code duplication here in favour of montrous logical expression */
+		/* TJP: slight code duplication here in favour of monstrous logical expression */
 		switch (port_state->mode)
 		{
 			case HEXP_PORT_MODE_WR_MASTER:
 				if (mode==SHOW_GUI) {
+					term_cprintf(C_WHITE, " %-5s: ", if_name);
+					if (state_up(port_state->state))
+						term_cprintf(C_GREEN, "Link up	");
+					else
+						term_cprintf(C_RED, "Link down  ");
 					term_cprintf(C_WHITE, "WR Master  ");
+					if (port_state->locked)
+						term_cprintf(C_GREEN, "Locked  ");
+					else
+						term_cprintf(C_RED, "NoLock  ");
 				}
 				if (mode & SHOW_MASTER_PORTS) {
+					printf("port:%s ", if_name);
+					printf("lnk:%d ", state_up(port_state->state));
 					printf("mode:M ");
+					printf("lock:%d ", port_state->locked);
 				}
 				break;
 			case HEXP_PORT_MODE_WR_SLAVE:
 				if (mode==SHOW_GUI) {
+					term_cprintf(C_WHITE, " %-5s: ", if_name);
+					if (state_up(port_state->state))
+						term_cprintf(C_GREEN, "Link up	");
+					else
+						term_cprintf(C_RED, "Link down  ");
 					term_cprintf(C_WHITE, "WR Slave   ");
+					if (port_state->locked)
+						term_cprintf(C_GREEN, "Locked  ");
+					else
+						term_cprintf(C_RED, "NoLock  ");
 				}
 				if (mode & SHOW_SLAVE_PORTS) {
+					printf("port:%s ", if_name);
+					printf("lnk:%d ", state_up(port_state->state));
 					printf("mode:S ");
+					printf("lock:%d ", port_state->locked);
 				}
 				break;
 			case HEXP_PORT_MODE_NON_WR:
 				if (mode==SHOW_GUI) {
+					term_cprintf(C_WHITE, " %-5s: ", if_name);
+					if (state_up(port_state->state))
+						term_cprintf(C_GREEN, "Link up	");
+					else
+						term_cprintf(C_RED, "Link down  ");
 					term_cprintf(C_WHITE, "Non WR	 ");
+					if (port_state->locked)
+						term_cprintf(C_GREEN, "Locked  ");
+					else
+						term_cprintf(C_RED, "NoLock  ");
 				}
 				if (mode & SHOW_OTHER_PORTS) {
+					printf("port:%s ", if_name);
+					printf("lnk:%d ", state_up(port_state->state));
 					printf("mode:N ");
+					printf("lock:%d ", port_state->locked);
 				}
 				break;
 			case HEXP_PORT_MODE_WR_M_AND_S:
 				if (mode==SHOW_GUI) {
+					term_cprintf(C_WHITE, " %-5s: ", if_name);
+					if (state_up(port_state->state))
+						term_cprintf(C_GREEN, "Link up	");
+					else
+						term_cprintf(C_RED, "Link down  ");
 					term_cprintf(C_WHITE, "WR auto	");
+					if (port_state->locked)
+						term_cprintf(C_GREEN, "Locked  ");
+					else
+						term_cprintf(C_RED, "NoLock  ");
 				}
 				if (mode& (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+					printf("port:%s ", if_name);
+					printf("lnk:%d ", state_up(port_state->state));
 					printf("mode:A ");
+					printf("lock:%d ", port_state->locked);
 				}
 				break;
 			default:
 				if (mode==SHOW_GUI) {
+					term_cprintf(C_WHITE, " %-5s: ", if_name);
+					if (state_up(port_state->state))
+						term_cprintf(C_GREEN, "Link up	");
+					else
+						term_cprintf(C_RED, "Link down  ");
 					term_cprintf(C_WHITE, "Unknown	");
+					if (port_state->locked)
+						term_cprintf(C_GREEN, "Locked  ");
+					else
+						term_cprintf(C_RED, "NoLock  ");
 				}
 				if (mode & SHOW_OTHER_PORTS) {
+					printf("port:%s ", if_name);
+					printf("lnk:%d ", state_up(port_state->state));
 					printf("mode:U ");
+					printf("lock:%d ", port_state->locked);
 				}
 				break;
 		}
 
-		if (mode==SHOW_GUI) {		
-			if (port_state->locked)
-				term_cprintf(C_GREEN, "Locked  ");
-			else
-				term_cprintf(C_RED, "NoLock  ");
-		}
-		if (mode& (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
-			printf("lock:%d ", port_state->locked);
-		}
+		/* TJP: I'll try to get rid of the monstrousity later... */
+/*		if (mode==SHOW_GUI) {*/
+/*			term_cprintf(C_WHITE, " %-5s: ", if_name);*/
+/*			/* check if link is up */*/
+/*			if (state_up(port_state->state))*/
+/*				term_cprintf(C_GREEN, "Link up	");*/
+/*			else*/
+/*				term_cprintf(C_RED, "Link down  ");*/
+/*		}*/
+/*		if (((mode & SHOW_SLAVE_PORTS) && port_state->mode==HEXP_PORT_MODE_WR_SLAVE)*/
+/*			 || ((mode & SHOW_MASTER_PORTS) && port_state->mode==HEXP_PORT_MODE_WR_MASTER)*/
+/*			 || ((mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) && port_state->mode==HEXP_PORT_MODE_WR_M_AND_S)*/
+/*			 || (mode & SHOW_OTHER_PORTS)) {*/
+/*			printf("port:%s ", if_name);*/
+/*			printf("lnk:%d ", state_up(port_state->state));*/
+/*			/* TJP: replace with printstring from switch statement...*/
+/*			/* printf("mode:U "); */*/
+/*		}*/
+
+/*		if (mode==SHOW_GUI) {		*/
+/*			if (port_state->locked)*/
+/*				term_cprintf(C_GREEN, "Locked  ");*/
+/*			else*/
+/*				term_cprintf(C_RED, "NoLock  ");*/
+/*		}*/
+/*		if (((mode & SHOW_SLAVE_PORTS) && port_state->mode==HEXP_PORT_MODE_WR_SLAVE)*/
+/*			 || ((mode & SHOW_MASTER_PORTS) && port_state->mode==HEXP_PORT_MODE_WR_MASTER)*/
+/*			 || ((mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) && port_state->mode==HEXP_PORT_MODE_WR_M_AND_S)*/
+/*			 || (mode & SHOW_OTHER_PORTS)) {*/
+/*			printf("lock:%d ", port_state->locked);*/
+/*		}*/
 		
 		if (mode==SHOW_GUI) {		
 			/*
