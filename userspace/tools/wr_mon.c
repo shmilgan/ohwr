@@ -512,7 +512,7 @@ void show_all(void)
 	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0));
 	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0));
 
-	if (mode & (SHOW_ALL_PORTS|WEB_INTERFACE)) {
+	if (mode & (SHOW_ALL_PORTS|WEB_INTERFACE) || mode==SHOW_GUI) {
 		if (hal_alive)
 			show_ports();
 		else if (mode == SHOW_GUI)
@@ -521,7 +521,7 @@ void show_all(void)
 			printf("HAL is dead!\n");
 	}
 
-	if (mode & SHOW_SERVO) {
+	if (mode & SHOW_SERVO || mode==SHOW_GUI) {
 		if (ppsi_alive)
 			show_servo();
 		else if (mode == SHOW_GUI)
@@ -530,7 +530,7 @@ void show_all(void)
 			printf("PPSI is dead!\n");
 	}
 
-	if (mode & SHOW_TEMPERATURES) {
+	if (mode & SHOW_TEMPERATURES || mode==SHOW_GUI) {
 		if (hal_alive)
 			show_temperatures();
 	}
