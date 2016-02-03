@@ -199,8 +199,6 @@ void init_shm(void)
 	ppsi_connect_minipc();
 }
 
-/* TODO: loop over ports first and then decide how to print, maybe even via
-		an additional function to avoid endless code duplication? */
 void show_ports(void)
 {
 	int i, j;
@@ -223,9 +221,10 @@ void show_ports(void)
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
 		term_cprintf(C_BLUE, "WR time:	 %s\n", datestr);
 	}
+	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+		printf("PORTS ");
+	}
 
-	/* TJP: is it not handier to first gather all information and then do
-	 *      the printing? */
 	for (i = 0; i < hal_nports_local; i++)
 	{
 		char if_name[10];
@@ -300,32 +299,39 @@ void show_ports(void)
 				break;
 		}
 
-		if (port_state->locked)
-			term_cprintf(C_GREEN, "Locked  ");
-		else
-			term_cprintf(C_RED, "NoLock  ");
-
-		/*
-		 * Actually, what is interesting is the PTP state.
-		 * For this lookup, the port in ppsi shmem
-		 */
-		for (j = 0; j < ppg->nlinks; j++) {
-			if (!strcmp(if_name,
-					pp_array[j].cfg.iface_name))
-				break;
+		if (mode==SHOW_GUI) {		
+			if (port_state->locked)
+				term_cprintf(C_GREEN, "Locked  ");
+			else
+				term_cprintf(C_RED, "NoLock  ");
 		}
-		/* Warning: we may have more pp instances per port */
-		if (j == ppg->nlinks || !state_up(port_state->state)) {
-			term_cprintf(C_RED, "no-ptp\n");
-		} else {
-			unsigned char *p = pp_array[j].peer;
+		if (mode& (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+			printf("lock:%d ", port_state->locked);
+		}
+		
+		if (mode==SHOW_GUI) {		
+			/*
+			 * Actually, what is interesting is the PTP state.
+			 * For this lookup, the port in ppsi shmem
+			 */
+			for (j = 0; j < ppg->nlinks; j++) {
+				if (!strcmp(if_name,
+						pp_array[j].cfg.iface_name))
+					break;
+			}
+			/* Warning: we may have more pp instances per port */
+			if (j == ppg->nlinks || !state_up(port_state->state)) {
+				term_cprintf(C_RED, "no-ptp\n");
+			} else {
+				unsigned char *p = pp_array[j].peer;
 
-			term_cprintf(C_WHITE, "peer: %02x:%02x:%02x"
-					 ":%02x:%02x:%02x ", p[0], p[1],
-					 p[2], p[3], p[4], p[5]);
-			term_cprintf(C_GREEN, "ptp state %i\n",
-					 pp_array[j].state);
-			/* FIXME: string state */
+				term_cprintf(C_WHITE, "peer: %02x:%02x:%02x"
+						 ":%02x:%02x:%02x ", p[0], p[1],
+						 p[2], p[3], p[4], p[5]);
+				term_cprintf(C_GREEN, "ptp state %i\n",
+						 pp_array[j].state);
+				/* FIXME: string state */
+			}
 		}
 	}
 
