@@ -29,7 +29,7 @@
 #define SHOW_WR_TIME        64
 
 #define SHOW_ALL_PORTS      7
-#define SHOW_ALL			31 /* for convenience with -a option */
+#define SHOW_ALL			95 /* for convenience with -a option */
 
 int mode = SHOW_GUI;
 
@@ -65,7 +65,7 @@ void help(char *prgname)
 		"  -o   show other ports\n"
 		"  -e   show servo statistics\n"
 		"  -t   show temperatures\n"
-		"  -a   show all (same as -m -s -o -e- t options)\n"
+		"  -a   show all (same as -i -m -s -o -e- t options)\n"
 		"  -c   use colour output\n"
 		"  -w   web interface mode\n"
 		"\n"
@@ -457,9 +457,15 @@ void show_servo(void)
 		}
 	}
 	else {
+		/* TJP: commented out fields are present on the SPEC */
 		printf("SERVO ");
+		//printf("lnk:");
+		//printf("rx:");
+		//printf("tx:");
+		printf("lock:%i ", ppsi_servo_local.tracking_enabled);
 		printf("sv:%d ", ppsi_servo_local.flags & WR_FLAG_VALID ? 1 : 0);
 		printf("ss:'%s' ", ppsi_servo_local.servo_state_name);
+		//printf("aux:");
 		printf("mu:%llu ", ppsi_servo_local.picos_mu);
 		printf("dms:%llu ", ppsi_servo_local.delta_ms);
 		printf("dtxm:%d drxm:%d ", ppsi_servo_local.delta_tx_m,
@@ -470,7 +476,12 @@ void show_servo(void)
 		printf("crtt:%llu ", crtt);
 		printf("cko:%lld ", ppsi_servo_local.offset);
 		printf("setp:%d ", ppsi_servo_local.cur_setpoint);
+		//printf("hd:");
+		//printf("md:");
+		//printf("ad:");
 		printf("ucnt:%u ", ppsi_servo_local.update_count);
+		/* SPEC shows temperature, but that can be selected separately
+		 *in this program */
 	}
 }
 
@@ -621,7 +632,7 @@ int main(int argc, char *argv[])
 	/* main loop */
 	for(;;)
 	{
-		if(term_poll(10))
+		if(term_poll(100))
 		{
 			int c = term_get();
 
