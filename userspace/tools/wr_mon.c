@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include <unistd.h>
 #include <ppsi/ppsi.h>
+#include <ppsi/ieee1588_types.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/switch_hw.h>
