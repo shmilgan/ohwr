@@ -650,7 +650,7 @@ int main(int argc, char *argv[])
 	/* main loop */
 	for(;;)
 	{
-		if(term_poll(100))
+		if(term_poll(1))
 		{
 			int c = term_get();
 
