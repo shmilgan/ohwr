@@ -57,8 +57,7 @@ void help(char *prgname)
 	fprintf(stderr,
 		"  The program has the following options\n"
 		"  -h   print help\n"
-		"  -i   show White Rabbit time. This is not the time when\n"
-		"       the counters of the servo were captured but somthing\n"
+		"  -i   show White Rabbit time.\n"
 		"       very close\n"
 		"  -m   show master ports\n"
 		"  -s   show slave ports\n"
@@ -512,6 +511,13 @@ void show_temperatures(void)
 	}
 }
 
+/* FIXME: this should work (as far as my C goes) but it doesnt */
+void show_time(void)
+{
+	printf("TIME %s.%09d ", format_time((uint64_t)ppsi_servo_local.mu.seconds),
+				(uint32_t)ppsi_servo_local.mu.nanoseconds);
+}
+
 void show_all(void)
 {
 	int hal_alive;
@@ -527,6 +533,15 @@ void show_all(void)
 	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0));
 	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0));
 
+	if (mode & SHOW_WR_TIME) {
+		if (ppsi_alive)
+			show_time();
+		else if (mode == SHOW_GUI)
+			term_cprintf(C_RED, "\nPPSI is dead!\n");
+		else if (mode == SHOW_ALL)
+			printf("PPSI is dead!\n");
+	}
+
 	if (mode & (SHOW_ALL_PORTS|WEB_INTERFACE) || mode==SHOW_GUI) {
 		if (hal_alive)
 			show_ports();
@@ -539,10 +554,6 @@ void show_all(void)
 	if (mode & SHOW_SERVO || mode==SHOW_GUI) {
 		if (ppsi_alive)
 			show_servo();
-		else if (mode == SHOW_GUI)
-			term_cprintf(C_RED, "\nPPSI is dead!\n");
-		else if (mode == SHOW_ALL)
-			printf("PPSI is dead!\n");
 	}
 
 	if (mode & SHOW_TEMPERATURES || mode==SHOW_GUI) {
@@ -658,9 +669,6 @@ int main(int argc, char *argv[])
 			read_servo();
 			read_hal();
 			
-			if (mode & SHOW_WR_TIME) {
-				printf("TIME %s.%09d ", format_time(seconds), nanoseconds);
-			}
 			show_all();
 
 			last_seconds=seconds;
