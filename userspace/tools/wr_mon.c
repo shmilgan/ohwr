@@ -354,7 +354,7 @@ void show_ports(void)
 			printf("%s ",state_up(port_state->state) ? "up" : "down");
 			printf("%s ",if_mode);
 			printf("%s ", port_state->locked ? "Locked" : "NoLock");
-			printf("%s",port_state->calib.rx_calibrated
+			printf("%s\n",port_state->calib.rx_calibrated
 							&& port_state->calib.tx_calibrated
 							? "Calibrated" : "Uncalibrated");
 		}
