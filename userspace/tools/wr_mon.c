@@ -251,9 +251,12 @@ void show_ports(void)
 					print_mode_color=C_WHITE;
 					strcpy(if_mode, "WR Master  ");
 				}
-				if (mode & SHOW_MASTER_PORTS) {
+				else if (mode & SHOW_MASTER_PORTS) {
 					print_port=1;
 					strcpy(if_mode, "M");
+				}
+				else if (mode & WEB_INTERFACE) {
+					strcpy(if_mode, "Master");
 				}
 				break;
 			case HEXP_PORT_MODE_WR_SLAVE:
@@ -265,6 +268,9 @@ void show_ports(void)
 					print_port=1;
 					strcpy(if_mode, "S");
 				}
+				else if (mode & WEB_INTERFACE) {
+					strcpy(if_mode, "Slave");
+				}
 				break;
 			case HEXP_PORT_MODE_NON_WR:
 				if (mode==SHOW_GUI) {
@@ -274,6 +280,9 @@ void show_ports(void)
 				if (mode & SHOW_OTHER_PORTS) {
 					print_port=1;
 					strcpy(if_mode, "N");
+				}
+				else if (mode & WEB_INTERFACE) {
+					strcpy(if_mode, "Non WR");
 				}
 				break;
 			case HEXP_PORT_MODE_WR_M_AND_S:
@@ -285,6 +294,9 @@ void show_ports(void)
 					print_port=1;
 					strcpy(if_mode, "A");
 				}
+				else if (mode & WEB_INTERFACE) {
+					strcpy(if_mode, "Auto");
+				}
 				break;
 			default:
 				if (mode==SHOW_GUI) {
@@ -294,6 +306,9 @@ void show_ports(void)
 				if (mode & SHOW_OTHER_PORTS) {
 					print_port=1;
 					strcpy(if_mode, "U");
+				}
+				else if (mode & WEB_INTERFACE) {
+					strcpy(if_mode, "Unknown");
 				}
 				break;
 		}
@@ -335,6 +350,14 @@ void show_ports(void)
 				/* FIXME: string state */
 			}
 		}
+		else if (mode & WEB_INTERFACE) {
+			printf("%s ",state_up(port_state->state) ? "up" : "down");
+			printf("%s ",if_mode);
+			printf("%s ", port_state->locked ? "Locked" : "NoLock");
+			printf("%s",port_state->calib.rx_calibrated
+							&& port_state->calib.tx_calibrated
+							? "Calibrated" : "Uncalibrated");
+		}
 		else if (print_port) {
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state_up(port_state->state));
@@ -345,39 +368,39 @@ void show_ports(void)
 	}
 }
 
-/*
- * This is almost a copy of the above, used by web interface.
- * Code duplication is bad, but this is better than a separate tool
- * which is almost identical but even broken
- */
-/* TODO: integrate in the grand print logic */
-static void show_unadorned_ports(void)
-{
-	int i;
-	struct hal_port_state *port_state;
+/*/**/
+/* * This is almost a copy of the above, used by web interface.*/
+/* * Code duplication is bad, but this is better than a separate tool*/
+/* * which is almost identical but even broken*/
+/* */*/
+/*/* TODO: integrate in the grand print logic */*/
+/*static void show_unadorned_ports(void)*/
+/*{*/
+/*	int i;*/
+/*	struct hal_port_state *port_state;*/
 
-	for (i = 0; i < hal_nports_local; i++)
-	{
-		char if_name[10];
+/*	for (i = 0; i < hal_nports_local; i++)*/
+/*	{*/
+/*		char if_name[10];*/
 
-		snprintf(if_name, 10, "wr%d", i);
-			port_state = hal_lookup_port(hal_ports_local_copy,
-							 hal_nports_local, if_name);
-			if (!port_state)
-				continue;
+/*		snprintf(if_name, 10, "wr%d", i);*/
+/*			port_state = hal_lookup_port(hal_ports_local_copy,*/
+/*							 hal_nports_local, if_name);*/
+/*			if (!port_state)*/
+/*				continue;*/
 
-		printf("%s %s %s %s\n",
-			   state_up(port_state->state)
-			   ? "up" : "down",
-			   port_state->mode == HEXP_PORT_MODE_WR_MASTER
-			   ? "Master" : "Slave", /* FIXME: other options? */
-			   port_state->locked
-			   ? "Locked" : "NoLock",
-			   port_state->calib.rx_calibrated
-			   && port_state->calib.tx_calibrated
-			   ? "Calibrated" : "Uncalibrated");
-	}
-}
+/*		printf("%s %s %s %s\n",*/
+/*			   state_up(port_state->state)*/
+/*			   ? "up" : "down",*/
+/*			   port_state->mode == HEXP_PORT_MODE_WR_MASTER*/
+/*			   ? "Master" : "Slave", /* FIXME: other options? */*/
+/*			   port_state->locked*/
+/*			   ? "Locked" : "NoLock",*/
+/*			   port_state->calib.rx_calibrated*/
+/*			   && port_state->calib.tx_calibrated*/
+/*			   ? "Calibrated" : "Uncalibrated");*/
+/*	}*/
+/*}*/
 
 
 void show_servo(void)
@@ -509,9 +532,6 @@ void show_temperatures(void)
 	}
 }
 
-int track_onoff = 1;
-
-/* TJP: check if this needs modification */
 void show_all(void)
 {
 	int hal_alive;
@@ -527,9 +547,13 @@ void show_all(void)
 	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0));
 	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0));
 
-	if (mode & SHOW_ALL_PORTS) {
+	if (mode & (SHOW_ALL_PORTS|WEB_INTERFACE)) {
 		if (hal_alive)
 			show_ports();
+			if (mode & WEB_INTERFACE) {
+				printf("\n");
+				exit(0);
+			}
 		else if (mode == SHOW_GUI)
 			term_cprintf(C_RED, "\nHAL is dead!\n");
 		else if (mode == SHOW_ALL)
@@ -558,6 +582,9 @@ int main(int argc, char *argv[])
 {
 	int opt;
 	int usecolor = 0;
+	int track_onoff = 1;
+
+	/* for an update_count based approach */
 	uint32_t last_count = 0;
 
 	/* try a pps_gen based approach */
@@ -605,15 +632,12 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	printf("mode: %i\n\n", mode);
-
 	init_shm();
 
 	if (mode & WEB_INTERFACE) {
-		/* TODO: include web output in show_all() */
-		/* read_servo(); */
+		read_servo();
 		read_hal();
-		show_unadorned_ports();
+		show_all();
 		exit(0);
 	}
 
@@ -650,7 +674,7 @@ int main(int argc, char *argv[])
 
 		shw_pps_gen_read_time(&seconds, &nanoseconds);
 		/* printf("sec: %s, nsec: %d\n", format_time(seconds), nanoseconds); */
-		if (seconds != last_seconds) {
+		if (seconds != last_seconds && track_onoff) {
 			read_servo();
 			read_hal();
 			show_all();
