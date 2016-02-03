@@ -224,6 +224,8 @@ void show_ports(void)
 		term_cprintf(C_BLUE, "WR time:	 %s\n", datestr);
 	}
 
+	/* TJP: is it not handier to first gather all information and then do
+	 *      the printing? */
 	for (i = 0; i < hal_nports_local; i++)
 	{
 		char if_name[10];
@@ -243,8 +245,7 @@ void show_ports(void)
 			else
 				term_cprintf(C_RED, "Link down  ");
 		}
-		
-		if (mode & SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS) {
+		if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state_up(port_state->state));
 		}
@@ -258,19 +259,44 @@ void show_ports(void)
 		switch (port_state->mode)
 		{
 			case HEXP_PORT_MODE_WR_MASTER:
-				term_cprintf(C_WHITE, "WR Master  ");
+				if (mode==SHOW_GUI) {
+					term_cprintf(C_WHITE, "WR Master  ");
+				}
+				if (mode& (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+					printf("mode:M ");
+				}
 				break;
 			case HEXP_PORT_MODE_WR_SLAVE:
-				term_cprintf(C_WHITE, "WR Slave   ");
+				if (mode==SHOW_GUI) {
+					term_cprintf(C_WHITE, "WR Slave   ");
+				}
+				if (mode& (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+					printf("mode:S ");
+				}
 				break;
 			case HEXP_PORT_MODE_NON_WR:
-				term_cprintf(C_WHITE, "Non WR	 ");
+				if (mode==SHOW_GUI) {
+					term_cprintf(C_WHITE, "Non WR	 ");
+				}
+				if (mode& (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+					printf("mode:N ");
+				}
 				break;
 			case HEXP_PORT_MODE_WR_M_AND_S:
-				term_cprintf(C_WHITE, "WR auto	");
+				if (mode==SHOW_GUI) {
+					term_cprintf(C_WHITE, "WR auto	");
+				}
+				if (mode& (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+					printf("mode:A ");
+				}
 				break;
 			default:
-				term_cprintf(C_WHITE, "Unknown	");
+				if (mode==SHOW_GUI) {
+					term_cprintf(C_WHITE, "Unknown	");
+				}
+				if (mode& (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
+					printf("mode:U ");
+				}
 				break;
 		}
 
