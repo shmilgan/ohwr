@@ -515,10 +515,6 @@ void show_all(void)
 	if (mode & (SHOW_ALL_PORTS|WEB_INTERFACE)) {
 		if (hal_alive)
 			show_ports();
-			if (mode & WEB_INTERFACE) {
-				printf("\n");
-				exit(0);
-			}
 		else if (mode == SHOW_GUI)
 			term_cprintf(C_RED, "\nHAL is dead!\n");
 		else if (mode == SHOW_ALL)
