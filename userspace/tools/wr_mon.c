@@ -4,7 +4,6 @@
 #include <getopt.h>
 #include <unistd.h>
 #include <ppsi/ppsi.h>
-#include <ppsi/ieee1588_types.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/switch_hw.h>
@@ -513,11 +512,11 @@ void show_temperatures(void)
 }
 
 /* FIXME: this should work (as far as my C goes) but it doesnt */
-void show_time(void)
+/* void show_time(void)
 {
 	printf("TIME %s.%09d ", format_time((uint64_t)ppsi_servo_local.mu.seconds),
 				(uint32_t)ppsi_servo_local.mu.nanoseconds);
-}
+} */
 
 void show_all(void)
 {
@@ -535,12 +534,14 @@ void show_all(void)
 	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0));
 
 	if (mode & SHOW_WR_TIME) {
-		if (ppsi_alive)
+		/* FIXME: get this working, delete error messages around show_servo()
+		 *     when this works */
+/*		if (ppsi_alive)
 			show_time();
 		else if (mode == SHOW_GUI)
 			term_cprintf(C_RED, "\nPPSI is dead!\n");
 		else if (mode == SHOW_ALL)
-			printf("PPSI is dead!\n");
+			printf("PPSI is dead!\n"); */
 	}
 
 	if (mode & (SHOW_ALL_PORTS|WEB_INTERFACE) || mode==SHOW_GUI) {
@@ -553,8 +554,13 @@ void show_all(void)
 	}
 
 	if (mode & SHOW_SERVO || mode==SHOW_GUI) {
+		/* FIXME: remove error messages here if show_time() works, see above */
 		if (ppsi_alive)
 			show_servo();
+		else if (mode == SHOW_GUI)
+			term_cprintf(C_RED, "\nPPSI is dead!\n");
+		else if (mode == SHOW_ALL)
+			printf("PPSI is dead!\n");
 	}
 
 	if (mode & SHOW_TEMPERATURES || mode==SHOW_GUI) {
@@ -669,11 +675,16 @@ int main(int argc, char *argv[])
 		if (seconds != last_seconds && track_onoff) {
 			read_servo();
 			read_hal();
-			
+
+			/* FIXME: get the function call show_time() working */
+			if (mode & SHOW_WR_TIME) {
+				printf("TIME %s.%09d ", format_time(seconds), nanoseconds);
+			}
+
 			show_all();
 
 			last_seconds=seconds;
-			last_nanoseconds=nanoseconds;			
+			last_nanoseconds=nanoseconds;
 		}
 		
 		/* If we got broken pipe or anything, exit */
