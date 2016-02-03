@@ -535,7 +535,9 @@ void show_all(void)
 			show_temperatures();
 	}
 	
-	printf("\n"); /* the newline for all... */
+	if (!(mode & WEB_INTERFACE || mode==SHOW_GUI)){
+		printf("\n"); /* the newline for all in non-GUI or non-WEB mode... */
+	}
 	fflush(stdout);
 }
 
