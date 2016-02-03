@@ -26,6 +26,7 @@
 #define SHOW_SERVO			8
 #define SHOW_TEMPERATURES	16
 #define WEB_INTERFACE       32 /* TJP: still has it's own print function, ugly */
+#define SHOW_WR_TIME        64
 
 #define SHOW_ALL_PORTS      7
 #define SHOW_ALL			31 /* for convenience with -a option */
@@ -56,6 +57,9 @@ void help(char *prgname)
 	fprintf(stderr,
 		"  The program has the following options\n"
 		"  -h   print help\n"
+		"  -i   show White Rabbit time. This is not the time when\n"
+		"       the counters of the servo were captured but somthing\n"
+		"       very close\n"
 		"  -m   show master ports\n"
 		"  -s   show slave ports\n"
 		"  -o   show other ports\n"
@@ -558,12 +562,15 @@ int main(int argc, char *argv[])
 
 	wrs_msg_init(argc, argv);
 	
-	while((opt=getopt(argc, argv, "hmsoetacwqv")) != -1)
+	while((opt=getopt(argc, argv, "himsoetacwqv")) != -1)
 	{
 		switch(opt)
 		{
 			case 'h':
 				help(argv[0]);
+			case 'i':
+				mode |= SHOW_WR_TIME;
+				break;
 			case 's':
 				mode |= SHOW_SLAVE_PORTS;
 				break;
@@ -639,7 +646,10 @@ int main(int argc, char *argv[])
 		if (seconds != last_seconds && track_onoff) {
 			read_servo();
 			read_hal();
-			printf("TIME %s.%09d ", format_time(seconds), nanoseconds);
+			
+			if (mode & SHOW_WR_TIME) {
+				printf("TIME %s.%09d ", format_time(seconds), nanoseconds);
+			}
 			show_all();
 
 			last_seconds=seconds;
