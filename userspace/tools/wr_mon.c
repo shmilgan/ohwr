@@ -249,12 +249,6 @@ void show_ports(void)
 			printf("lnk:%d ", state_up(port_state->state));
 		}
 
-		/*
-		 * FIXME: this is from dot-config, but ppsi.conf
-		 * can be unrelated, like during tests. So this is
-		 * just wrong for us developers (did I write FIXME?)
-		 */
-		/* TJP: it seems to me this has been fixed? */
 		switch (port_state->mode)
 		{
 			case HEXP_PORT_MODE_WR_MASTER:
