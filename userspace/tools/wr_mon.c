@@ -20,8 +20,8 @@
 #include "ptpd_exports.h"
 
 #define SHOW_GUI			0
-#define SHOW_SLAVE_STATS	1
-#define SHOW_MASTER_STATS	2
+#define SHOW_SLAVE_PORTS	1
+#define SHOW_MASTER_PORTS	2
 #define SHOW_SERVO_STATS	4
 #define SHOW_TEMPERATURES	8
 #define SHOW_ALL_STATS		15 /* for convenience with -a option */
@@ -222,174 +222,183 @@ void show_ports(void)
 		tm = localtime(&t);
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
 		term_cprintf(C_BLUE, "WR time:	 %s\n", datestr);
+	}
 
-		for (i = 0; i < hal_nports_local; i++)
-		{
-			char if_name[10];
+	for (i = 0; i < hal_nports_local; i++)
+	{
+		char if_name[10];
 
-			snprintf(if_name, 10, "wr%d", i);
+		snprintf(if_name, 10, "wr%d", i);
 
-			port_state = hal_lookup_port(hal_ports_local_copy,
-							hal_nports_local, if_name);
-			if (!port_state)
-				continue;
-
+		port_state = hal_lookup_port(hal_ports_local_copy,
+						hal_nports_local, if_name);
+		if (!port_state)
+			continue;
+	
+		if (mode==SHOW_GUI) {
 			term_cprintf(C_WHITE, " %-5s: ", if_name);
 			/* check if link is up */
 			if (state_up(port_state->state))
 				term_cprintf(C_GREEN, "Link up	");
 			else
 				term_cprintf(C_RED, "Link down  ");
-
-			/*
-			 * FIXME: this is from dot-config, but ppsi.conf
-			 * can be unrelated, like during tests. So this is
-			 * just wrong for us developers (did I write FIXME?)
-			 */
-			switch (port_state->mode)
-			{
-				case HEXP_PORT_MODE_WR_MASTER:
-					term_cprintf(C_WHITE, "WR Master  ");
-					break;
-				case HEXP_PORT_MODE_WR_SLAVE:
-					term_cprintf(C_WHITE, "WR Slave   ");
-					break;
-				case HEXP_PORT_MODE_NON_WR:
-					term_cprintf(C_WHITE, "Non WR	 ");
-					break;
-				case HEXP_PORT_MODE_WR_M_AND_S:
-					term_cprintf(C_WHITE, "WR auto	");
-					break;
-				default:
-					term_cprintf(C_WHITE, "Unknown	");
-					break;
-			}
-
-			if (port_state->locked)
-				term_cprintf(C_GREEN, "Locked  ");
-			else
-				term_cprintf(C_RED, "NoLock  ");
-
-			/*
-			 * Actually, what is interesting is the PTP state.
-			 * For this lookup, the port in ppsi shmem
-			 */
-			for (j = 0; j < ppg->nlinks; j++) {
-				if (!strcmp(if_name,
-						pp_array[j].cfg.iface_name))
-					break;
-			}
-			/* Warning: we may have more pp instances per port */
-			if (j == ppg->nlinks || !state_up(port_state->state)) {
-				term_cprintf(C_RED, "no-ptp\n");
-			} else {
-				unsigned char *p = pp_array[j].peer;
-
-				term_cprintf(C_WHITE, "peer: %02x:%02x:%02x"
-						 ":%02x:%02x:%02x ", p[0], p[1],
-						 p[2], p[3], p[4], p[5]);
-				term_cprintf(C_GREEN, "ptp state %i\n",
-						 pp_array[j].state);
-				/* FIXME: string state */
-			}
 		}
-	}
-	else if(mode == SHOW_ALL_STATS) {
-		printf("PORTS ");
-		for (i = 0; i < hal_nports_local; ++i) {
-			char if_name[10];
-
-			snprintf(if_name, 10, "wr%d", i);
-			port_state = hal_lookup_port(hal_ports_local_copy,
-						   hal_nports_local, if_name);
-			if (!port_state)
-				continue;
-
+		
+		if (mode & SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS) {
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state_up(port_state->state));
-			switch (port_state->mode) {
+		}
+
+		/*
+		 * FIXME: this is from dot-config, but ppsi.conf
+		 * can be unrelated, like during tests. So this is
+		 * just wrong for us developers (did I write FIXME?)
+		 */
+		/* TJP: it seems to me this has been fixed? */
+		switch (port_state->mode)
+		{
 			case HEXP_PORT_MODE_WR_MASTER:
-				printf("mode:M ");
+				term_cprintf(C_WHITE, "WR Master  ");
 				break;
 			case HEXP_PORT_MODE_WR_SLAVE:
-				printf("mode:S ");
+				term_cprintf(C_WHITE, "WR Slave   ");
 				break;
 			case HEXP_PORT_MODE_NON_WR:
-				printf("mode:N ");
+				term_cprintf(C_WHITE, "Non WR	 ");
 				break;
 			case HEXP_PORT_MODE_WR_M_AND_S:
-				printf("mode:A ");
+				term_cprintf(C_WHITE, "WR auto	");
 				break;
 			default:
-				printf("mode:U ");
+				term_cprintf(C_WHITE, "Unknown	");
 				break;
-			}
-			printf("lock:%d ", port_state->locked);
 		}
-		printf("\n");
-	}
-	else if(mode == SHOW_SLAVE_STATS) {
-		printf("PORTS ");
-		for (i = 0; i < hal_nports_local; ++i) {
-			char if_name[10];
 
-			snprintf(if_name, 10, "wr%d", i);
-			port_state = hal_lookup_port(hal_ports_local_copy,
-						   hal_nports_local, if_name);
-			if (!port_state)
-				continue;
+		if (port_state->locked)
+			term_cprintf(C_GREEN, "Locked  ");
+		else
+			term_cprintf(C_RED, "NoLock  ");
 
-			switch (port_state->mode) {
-			case HEXP_PORT_MODE_WR_SLAVE:
-				printf("port:%s ", if_name);
-				printf("lnk:%d ", state_up(port_state->state));
-				printf("mode:S ");
-				printf("lock:%d ", port_state->locked);
+		/*
+		 * Actually, what is interesting is the PTP state.
+		 * For this lookup, the port in ppsi shmem
+		 */
+		for (j = 0; j < ppg->nlinks; j++) {
+			if (!strcmp(if_name,
+					pp_array[j].cfg.iface_name))
 				break;
-			case HEXP_PORT_MODE_WR_M_AND_S:
-				snprintf(if_name, 10, "wr%d", i);
-				printf("port:%s ", if_name);
-				printf("lnk:%d ", state_up(port_state->state));
-				printf("mode:A ");
-				printf("lock:%d ", port_state->locked);
-				break;
-			default:
-				break;
-			}
 		}
-		printf("\n");
-	}
-	else if(mode == SHOW_MASTER_STATS) {
-		printf("PORTS ");
-		for (i = 0; i < hal_nports_local; ++i) {
-			char if_name[10];
+		/* Warning: we may have more pp instances per port */
+		if (j == ppg->nlinks || !state_up(port_state->state)) {
+			term_cprintf(C_RED, "no-ptp\n");
+		} else {
+			unsigned char *p = pp_array[j].peer;
 
-			snprintf(if_name, 10, "wr%d", i);
-			port_state = hal_lookup_port(hal_ports_local_copy,
-						   hal_nports_local, if_name);
-			if (!port_state)
-				continue;
-
-			switch (port_state->mode) {
-			case HEXP_PORT_MODE_WR_MASTER:
-				printf("port:%s ", if_name);
-				printf("lnk:%d ", state_up(port_state->state));
-				printf("mode:M ");
-				printf("lock:%d ", port_state->locked);
-				break;
-			case HEXP_PORT_MODE_WR_M_AND_S:
-				snprintf(if_name, 10, "wr%d", i);
-				printf("port:%s ", if_name);
-				printf("lnk:%d ", state_up(port_state->state));
-				printf("mode:A ");
-				printf("lock:%d ", port_state->locked);
-				break;
-			default:
-				break;
-			}
+			term_cprintf(C_WHITE, "peer: %02x:%02x:%02x"
+					 ":%02x:%02x:%02x ", p[0], p[1],
+					 p[2], p[3], p[4], p[5]);
+			term_cprintf(C_GREEN, "ptp state %i\n",
+					 pp_array[j].state);
+			/* FIXME: string state */
 		}
-		printf("\n");
 	}
+
+/*	else if(mode == SHOW_ALL_STATS) {*/
+/*		printf("PORTS ");*/
+/*		for (i = 0; i < hal_nports_local; ++i) {*/
+/*			char if_name[10];*/
+
+/*			snprintf(if_name, 10, "wr%d", i);*/
+/*			port_state = hal_lookup_port(hal_ports_local_copy,*/
+/*						   hal_nports_local, if_name);*/
+/*			if (!port_state)*/
+/*				continue;*/
+
+/*			printf("port:%s ", if_name);*/
+/*			printf("lnk:%d ", state_up(port_state->state));*/
+/*			switch (port_state->mode) {*/
+/*			case HEXP_PORT_MODE_WR_MASTER:*/
+/*				printf("mode:M ");*/
+/*				break;*/
+/*			case HEXP_PORT_MODE_WR_SLAVE:*/
+/*				printf("mode:S ");*/
+/*				break;*/
+/*			case HEXP_PORT_MODE_NON_WR:*/
+/*				printf("mode:N ");*/
+/*				break;*/
+/*			case HEXP_PORT_MODE_WR_M_AND_S:*/
+/*				printf("mode:A ");*/
+/*				break;*/
+/*			default:*/
+/*				printf("mode:U ");*/
+/*				break;*/
+/*			}*/
+/*			printf("lock:%d ", port_state->locked);*/
+/*		}*/
+/*		printf("\n");*/
+/*	}*/
+/*	else if(mode == SHOW_SLAVE_PORTS) {*/
+/*		printf("PORTS ");*/
+/*		for (i = 0; i < hal_nports_local; ++i) {*/
+/*			char if_name[10];*/
+
+/*			snprintf(if_name, 10, "wr%d", i);*/
+/*			port_state = hal_lookup_port(hal_ports_local_copy,*/
+/*						   hal_nports_local, if_name);*/
+/*			if (!port_state)*/
+/*				continue;*/
+
+/*			switch (port_state->mode) {*/
+/*			case HEXP_PORT_MODE_WR_SLAVE:*/
+/*				printf("port:%s ", if_name);*/
+/*				printf("lnk:%d ", state_up(port_state->state));*/
+/*				printf("mode:S ");*/
+/*				printf("lock:%d ", port_state->locked);*/
+/*				break;*/
+/*			case HEXP_PORT_MODE_WR_M_AND_S:*/
+/*				snprintf(if_name, 10, "wr%d", i);*/
+/*				printf("port:%s ", if_name);*/
+/*				printf("lnk:%d ", state_up(port_state->state));*/
+/*				printf("mode:A ");*/
+/*				printf("lock:%d ", port_state->locked);*/
+/*				break;*/
+/*			default:*/
+/*				break;*/
+/*			}*/
+/*		}*/
+/*		printf("\n");*/
+/*	}*/
+/*	else if(mode == SHOW_MASTER_PORTS) {*/
+/*		printf("PORTS ");*/
+/*		for (i = 0; i < hal_nports_local; ++i) {*/
+/*			char if_name[10];*/
+
+/*			snprintf(if_name, 10, "wr%d", i);*/
+/*			port_state = hal_lookup_port(hal_ports_local_copy,*/
+/*						   hal_nports_local, if_name);*/
+/*			if (!port_state)*/
+/*				continue;*/
+
+/*			switch (port_state->mode) {*/
+/*			case HEXP_PORT_MODE_WR_MASTER:*/
+/*				printf("port:%s ", if_name);*/
+/*				printf("lnk:%d ", state_up(port_state->state));*/
+/*				printf("mode:M ");*/
+/*				printf("lock:%d ", port_state->locked);*/
+/*				break;*/
+/*			case HEXP_PORT_MODE_WR_M_AND_S:*/
+/*				snprintf(if_name, 10, "wr%d", i);*/
+/*				printf("port:%s ", if_name);*/
+/*				printf("lnk:%d ", state_up(port_state->state));*/
+/*				printf("mode:A ");*/
+/*				printf("lock:%d ", port_state->locked);*/
+/*				break;*/
+/*			default:*/
+/*				break;*/
+/*			}*/
+/*		}*/
+/*		printf("\n");*/
+/*	}*/
 }
 
 /*
@@ -528,7 +537,7 @@ void show_servo(void)
 		printf("ucnt:%u ", ppsi_servo_local.update_count);
 		printf("\n");
 	}
-	else if(mode == SHOW_SLAVE_STATS) {
+	else if(mode == SHOW_SLAVE_PORTS) {
 		printf("SERVO	");
 		printf("sv:%d ", ppsi_servo_local.flags & WR_FLAG_VALID ? 1 : 0);
 		printf("ss:'%s' ", ppsi_servo_local.servo_state_name);
@@ -626,10 +635,10 @@ int main(int argc, char *argv[])
 			case 'h':
 				help(argv[0]);
 			case 's':
-				mode |= SHOW_SLAVE_STATS;
+				mode |= SHOW_SLAVE_PORTS;
 				break;
 			case 'm':
-				mode |= SHOW_MASTER_STATS;
+				mode |= SHOW_MASTER_PORTS;
 				break;
 			case 'e':
 				mode |= SHOW_SERVO_STATS;
@@ -656,6 +665,8 @@ int main(int argc, char *argv[])
 	init_shm();
 
 	if (mode & WEB_INTERFACE) {
+		/* TODO: include web output in show_all() */
+		/* read_servo(); */
 		read_hal();
 		show_unadorned_ports();
 		exit(0);
@@ -695,18 +706,18 @@ int main(int argc, char *argv[])
 		shw_pps_gen_read_time(&seconds, &nanoseconds);
 		/* printf("sec: %s, nsec: %d\n", format_time(seconds), nanoseconds); */
 		if (seconds != last_seconds) {
-			last_seconds=seconds;
-			last_nanoseconds=nanoseconds;
-			usleep(1000);
-			
 			read_servo();
 			read_hal();
 			show_all();
+
+			last_seconds=seconds;
+			last_nanoseconds=nanoseconds;			
 		}
 		
 		/* If we got broken pipe or anything, exit */
-		if (ferror(stdout))
+		if (ferror(stdout)) {
 			exit(1);
+		}
 	}
 
 	term_restore();
