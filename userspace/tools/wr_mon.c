@@ -23,7 +23,7 @@
 #define SHOW_SLAVE_PORTS	1
 #define SHOW_MASTER_PORTS	2
 #define SHOW_OTHER_PORTS    4
-#define SHOW_SERVO_STATS	8
+#define SHOW_SERVO			8
 #define SHOW_TEMPERATURES	16
 #define WEB_INTERFACE       32 /* TJP: still has it's own print function, ugly */
 
@@ -223,7 +223,7 @@ void show_ports(void)
 		t = (time_t)_fpga_readl(FPGA_BASE_PPS_GEN + 8 /* UTC_LO */);
 		tm = localtime(&t);
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
-		term_cprintf(C_BLUE, "WR time:	 %s\n", datestr);
+		term_cprintf(C_BLUE, "WR time:  %s\n", datestr);
 	}
 	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
 		printf("PORTS ");
@@ -232,7 +232,10 @@ void show_ports(void)
 	for (i = 0; i < hal_nports_local; i++)
 	{
 		char if_name[10];
-
+		char if_mode[15];
+		int print_port=0;
+		int print_mode_color=0;
+		
 		snprintf(if_name, 10, "wr%d", i);
 
 		port_state = hal_lookup_port(hal_ports_local_copy,
@@ -245,22 +248,12 @@ void show_ports(void)
 		{
 			case HEXP_PORT_MODE_WR_MASTER:
 				if (mode==SHOW_GUI) {
-					term_cprintf(C_WHITE, " %-5s: ", if_name);
-					if (state_up(port_state->state))
-						term_cprintf(C_GREEN, "Link up	");
-					else
-						term_cprintf(C_RED, "Link down  ");
-					term_cprintf(C_WHITE, "WR Master  ");
-					if (port_state->locked)
-						term_cprintf(C_GREEN, "Locked  ");
-					else
-						term_cprintf(C_RED, "NoLock  ");
+					print_mode_color=C_WHITE;
+					strcpy(if_mode, "WR Master  ");
 				}
 				if (mode & SHOW_MASTER_PORTS) {
-					printf("port:%s ", if_name);
-					printf("lnk:%d ", state_up(port_state->state));
-					printf("mode:M ");
-					printf("lock:%d ", port_state->locked);
+					print_port=1;
+					if_mode="M"
 				}
 				break;
 			case HEXP_PORT_MODE_WR_SLAVE:
@@ -346,38 +339,19 @@ void show_ports(void)
 		}
 
 		/* TJP: I'll try to get rid of the monstrousity later... */
-/*		if (mode==SHOW_GUI) {*/
-/*			term_cprintf(C_WHITE, " %-5s: ", if_name);*/
-/*			/* check if link is up */*/
-/*			if (state_up(port_state->state))*/
-/*				term_cprintf(C_GREEN, "Link up	");*/
-/*			else*/
-/*				term_cprintf(C_RED, "Link down  ");*/
-/*		}*/
-/*		if (((mode & SHOW_SLAVE_PORTS) && port_state->mode==HEXP_PORT_MODE_WR_SLAVE)*/
-/*			 || ((mode & SHOW_MASTER_PORTS) && port_state->mode==HEXP_PORT_MODE_WR_MASTER)*/
-/*			 || ((mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) && port_state->mode==HEXP_PORT_MODE_WR_M_AND_S)*/
-/*			 || (mode & SHOW_OTHER_PORTS)) {*/
-/*			printf("port:%s ", if_name);*/
-/*			printf("lnk:%d ", state_up(port_state->state));*/
-/*			/* TJP: replace with printstring from switch statement...*/
-/*			/* printf("mode:U "); */*/
-/*		}*/
+		if (mode==SHOW_GUI) {
+			term_cprintf(C_WHITE, " %-5s: ", if_name);
+			 check if link is up 
+			if (state_up(port_state->state))
+				term_cprintf(C_GREEN, "Link up	");
+			else
+				term_cprintf(C_RED, "Link down  ");
+			term_cprintf(C_WHITE, if_mode);
+			if (port_state->locked)
+				term_cprintf(C_GREEN, "Locked  ");
+			else
+				term_cprintf(C_RED, "NoLock  ");
 
-/*		if (mode==SHOW_GUI) {		*/
-/*			if (port_state->locked)*/
-/*				term_cprintf(C_GREEN, "Locked  ");*/
-/*			else*/
-/*				term_cprintf(C_RED, "NoLock  ");*/
-/*		}*/
-/*		if (((mode & SHOW_SLAVE_PORTS) && port_state->mode==HEXP_PORT_MODE_WR_SLAVE)*/
-/*			 || ((mode & SHOW_MASTER_PORTS) && port_state->mode==HEXP_PORT_MODE_WR_MASTER)*/
-/*			 || ((mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) && port_state->mode==HEXP_PORT_MODE_WR_M_AND_S)*/
-/*			 || (mode & SHOW_OTHER_PORTS)) {*/
-/*			printf("lock:%d ", port_state->locked);*/
-/*		}*/
-		
-		if (mode==SHOW_GUI) {		
 			/*
 			 * Actually, what is interesting is the PTP state.
 			 * For this lookup, the port in ppsi shmem
@@ -400,6 +374,12 @@ void show_ports(void)
 						 pp_array[j].state);
 				/* FIXME: string state */
 			}
+		}
+		else if (print_port) {
+			printf("port:%s ", if_name);
+			printf("lnk:%d ", state_up(port_state->state));
+			printf("mode:%s ", if_mode);
+			printf("lock:%d ", port_state->locked);
 		}
 	}
 }
@@ -523,8 +503,8 @@ void show_servo(void)
 			last_count = ppsi_servo_local.update_count;
 		}
 	}
-	else if(mode == SHOW_ALL) {
-		printf("SERVO	");
+	else {
+		printf("SERVO ");
 		printf("sv:%d ", ppsi_servo_local.flags & WR_FLAG_VALID ? 1 : 0);
 		printf("ss:'%s' ", ppsi_servo_local.servo_state_name);
 		printf("mu:%llu ", ppsi_servo_local.picos_mu);
@@ -538,24 +518,6 @@ void show_servo(void)
 		printf("cko:%lld ", ppsi_servo_local.offset);
 		printf("setp:%d ", ppsi_servo_local.cur_setpoint);
 		printf("ucnt:%u ", ppsi_servo_local.update_count);
-		printf("\n");
-	}
-	else if(mode == SHOW_SLAVE_PORTS) {
-		printf("SERVO	");
-		printf("sv:%d ", ppsi_servo_local.flags & WR_FLAG_VALID ? 1 : 0);
-		printf("ss:'%s' ", ppsi_servo_local.servo_state_name);
-		printf("mu:%llu ", ppsi_servo_local.picos_mu);
-		printf("dms:%llu ", ppsi_servo_local.delta_ms);
-		printf("dtxm:%d drxm:%d ", ppsi_servo_local.delta_tx_m,
-					   ppsi_servo_local.delta_rx_m);
-		printf("dtxs:%d drxs:%d ", ppsi_servo_local.delta_tx_s,
-					   ppsi_servo_local.delta_rx_s);
-		printf("asym:%lld ", total_asymmetry);
-		printf("crtt:%llu ", crtt);
-		printf("cko:%lld ", ppsi_servo_local.offset);
-		printf("setp:%d ", ppsi_servo_local.cur_setpoint);
-		printf("ucnt:%u ", ppsi_servo_local.update_count);
-		printf("\n");
 	}
 }
 
@@ -597,23 +559,30 @@ void show_all(void)
 	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0));
 	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0));
 
-	if (hal_alive)
-		show_ports();
-	else if (mode == SHOW_GUI)
-		term_cprintf(C_RED, "\nHAL is dead!\n");
-	else if (mode == SHOW_ALL)
-		printf("HAL is dead!\n");
+	if (mode = SHOW_ALL_PORTS) {
+		if (hal_alive)
+			show_ports();
+		else if (mode == SHOW_GUI)
+			term_cprintf(C_RED, "\nHAL is dead!\n");
+		else if (mode == SHOW_ALL)
+			printf("HAL is dead!\n");
+	}
 
-	if (ppsi_alive)
-		show_servo();
-	else if (mode == SHOW_GUI)
-		term_cprintf(C_RED, "\nPPSI is dead!\n");
-	else if (mode == SHOW_ALL)
-		printf("PPSI is dead!\n");
+	if (mode = SHOW_SERVO) {
+		if (ppsi_alive)
+			show_servo();
+		else if (mode == SHOW_GUI)
+			term_cprintf(C_RED, "\nPPSI is dead!\n");
+		else if (mode == SHOW_ALL)
+			printf("PPSI is dead!\n");
+	}
 
-
-	if (hal_alive)
-		show_temperatures();
+	if (mode = SHOW_TEMPERATURES) {
+		if (hal_alive)
+			show_temperatures();
+	}
+	
+	printf("\n"); /* the newline for all... */
 	fflush(stdout);
 }
 
@@ -647,7 +616,7 @@ int main(int argc, char *argv[])
 				mode |= SHOW_OTHER_PORTS;
 				break;
 			case 'e':
-				mode |= SHOW_SERVO_STATS;
+				mode |= SHOW_SERVO;
 				break;
 			case 't':
 				mode |= SHOW_TEMPERATURES;
