@@ -662,4 +662,39 @@ config MONIT_DISABLE
 	  Disable monit to prevent processes' restarts. It may be useful for
 	  development.
 
+menu "Fan speed control"
+config FAN_HYSTERESIS
+	bool "Use hysteresis to control fan speed"
+	default n
+	help
+	  Disable monit to prevent processes' restarts. It may be useful for
+	  development.
+
+config FAN_HYSTERESIS_T_DISABLE
+	int "Disable fans temperature"
+	default 60
+	range 0 80
+	depends on FAN_HYSTERESIS
+	help
+	  Temperature at which fans are disabled when working in hysteresis mode.
+
+config FAN_HYSTERESIS_T_ENABLE
+	int "Enable fans temperature"
+	default 65
+	range 0 80
+	depends on FAN_HYSTERESIS
+	help
+	  Temperature at which fans are enabled when working in hysteresis mode.
+	  Maximum allowed value is 80
+
+config FAN_HYSTERESIS_PWM_VAL
+	int "Value of fans' PWM"
+	default 100
+	range 4 1000
+	depends on FAN_HYSTERESIS
+	help
+	  PWM value used to drive fans. Range from 4 to 1000.
+
+endmenu
+
 endmenu

@@ -24,11 +24,13 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <libwr/wrs-msg.h>
 
 #include <libwr/pio.h>
 #include <libwr/fan.h>
 #include <libwr/hal_shmem.h>
+#include <libwr/config.h>
 
 #include <at91_softpwm.h>
 
@@ -49,6 +51,10 @@
 
 static int is_cpu_pwn = 0;
 static int enable_d0 = 0;
+static int fan_hysteresis = 0;
+static int fan_hysteresis_t_disable = 0;
+static int fan_hysteresis_t_enable = 0;
+static int fan_hysteresis_pwm_val = 0;
 
 static i2c_fpga_reg_t fpga_sensors_bus_master = {
 	.base_address = FPGA_I2C_ADDRESS,
@@ -204,6 +210,7 @@ static int shw_init_i2c_sensors(void)
 int shw_init_fans(void)
 {
 	uint32_t val = 0;
+	char *config_item;
 
 	//Set the type of PWM
 	if (shw_get_hw_ver() < 330)
@@ -255,6 +262,42 @@ int shw_init_fans(void)
 
 	pi_init(&fan_pi);
 
+	/* check wether config fields exist, atoi has to have valid string */
+	config_item = libwr_cfg_get("FAN_HYSTERESIS");
+	if ((config_item) && !strcmp(config_item, "y")) {
+		fan_hysteresis = 1;
+		pr_info("enable fan hysteresis\n");
+		config_item = libwr_cfg_get("FAN_HYSTERESIS_T_ENABLE");
+		if (config_item) {
+			fan_hysteresis_t_enable = atoi(config_item);
+			/* don't allow fan_hysteresis_t_enable to be higher
+			 * than 80 deg */
+			if (fan_hysteresis_t_enable >= 80)
+				fan_hysteresis_t_enable = 80;
+		}
+
+		config_item = libwr_cfg_get("FAN_HYSTERESIS_T_DISABLE");
+		if (config_item) {
+			fan_hysteresis_t_disable = atoi(config_item);
+		}
+
+		config_item = libwr_cfg_get("FAN_HYSTERESIS_PWM_VAL");
+		if (config_item) {
+			fan_hysteresis_pwm_val = atoi(config_item);
+		}
+		if (fan_hysteresis_pwm_val < 4) {
+			/* set minimum pwm value to 4 */
+			fan_hysteresis_pwm_val = 4;
+		}
+
+		pr_info("set temp enable to %d for fan hysteresis\n",
+			fan_hysteresis_t_enable);
+		pr_info("set temp disable to %d for fan hysteresis\n",
+			fan_hysteresis_t_disable);
+		pr_info("set pwm value to %d for fan hysteresis\n",
+			fan_hysteresis_pwm_val);
+	}
+
 	return 0;
 }
 
@@ -268,7 +311,21 @@ void shw_update_fans(struct hal_temp_sensors *sensors)
 	float t_cur = tmp100_read_temp(TEMP_SENSOR_ADDR_PLL);
 	float drive = pi_update(&fan_pi, t_cur - DESIRED_TEMPERATURE);
 	//pr_info("t=%f,pwm=%f\n",t_cur , drive);
-	shw_pwm_speed(0xFF, drive / 1000);	//enable two and one
+
+	if (fan_hysteresis) {
+		if (t_cur < fan_hysteresis_t_disable) {
+			/* disable fans */
+			shw_pwm_speed(0xFF, 0);
+			}
+		if (t_cur > fan_hysteresis_t_enable) {
+			/* enable fans with given value */
+			shw_pwm_speed(0xFF,
+					((float) fan_hysteresis_pwm_val)/1000);
+			}
+	} else {
+		/* use PI controller for FANs speeds */
+		shw_pwm_speed(0xFF, drive / 1000);
+	}
 
 	/* update sensor values */
 	sensors->fpga = tmp100_read_reg(TEMP_SENSOR_ADDR_FPGA, 0, 2);
