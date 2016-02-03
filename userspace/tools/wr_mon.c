@@ -368,41 +368,6 @@ void show_ports(void)
 	}
 }
 
-/*/**/
-/* * This is almost a copy of the above, used by web interface.*/
-/* * Code duplication is bad, but this is better than a separate tool*/
-/* * which is almost identical but even broken*/
-/* */*/
-/*/* TODO: integrate in the grand print logic */*/
-/*static void show_unadorned_ports(void)*/
-/*{*/
-/*	int i;*/
-/*	struct hal_port_state *port_state;*/
-
-/*	for (i = 0; i < hal_nports_local; i++)*/
-/*	{*/
-/*		char if_name[10];*/
-
-/*		snprintf(if_name, 10, "wr%d", i);*/
-/*			port_state = hal_lookup_port(hal_ports_local_copy,*/
-/*							 hal_nports_local, if_name);*/
-/*			if (!port_state)*/
-/*				continue;*/
-
-/*		printf("%s %s %s %s\n",*/
-/*			   state_up(port_state->state)*/
-/*			   ? "up" : "down",*/
-/*			   port_state->mode == HEXP_PORT_MODE_WR_MASTER*/
-/*			   ? "Master" : "Slave", /* FIXME: other options? */*/
-/*			   port_state->locked*/
-/*			   ? "Locked" : "NoLock",*/
-/*			   port_state->calib.rx_calibrated*/
-/*			   && port_state->calib.tx_calibrated*/
-/*			   ? "Calibrated" : "Uncalibrated");*/
-/*	}*/
-/*}*/
-
-
 void show_servo(void)
 {
 	int64_t total_asymmetry;
