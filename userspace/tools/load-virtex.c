@@ -239,7 +239,7 @@ static int load_fpga_child(char *fname)
 		//exit(1);
 	}
 
-	if (pio_get(DONE)) {
+	if (!pio_get(DONE)) {
 		fprintf(stderr, "%s: DONE is already high after PROGRAM_B\n",
 			__func__);
 		//exit(1);
