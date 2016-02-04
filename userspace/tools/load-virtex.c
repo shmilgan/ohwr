@@ -62,7 +62,7 @@ static void *ioregs;
 /* Missing SSC reg fields */
 #define     AT91_SSC_CKO_DURING_XFER   (2 << 2)
 
-/* This sets a bit. To clear output se set ODR (output disable register) */
+/* This sets a bit. To clear output we set ODR (output disable register) */
 static inline void pio_set(int regname, int port, int bit)
 {
 	__PIO(port, regname)  |= (1 << bit);
