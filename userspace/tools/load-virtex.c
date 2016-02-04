@@ -193,7 +193,7 @@ static int load_fpga_child(char *fname)
 	pio_set(PIO_SODR, FPGA_RESET);
 	pio_set(PIO_OER, FPGA_RESET);
 
-	/* program_b is output high: is is pulsed low to start programming */
+	/* program_b is output high: this is pulsed low to start programming */
 	pio_set(PIO_PER, PROGRAMB);
 	pio_set(PIO_SODR, PROGRAMB);
 	pio_set(PIO_OER, PROGRAMB);
@@ -239,6 +239,7 @@ static int load_fpga_child(char *fname)
 		//exit(1);
 	}
 
+	/* TJP: low?, that is not ! is it? */
 	if (!pio_get(DONE)) {
 		fprintf(stderr, "%s: DONE is already high after PROGRAM_B\n",
 			__func__);
