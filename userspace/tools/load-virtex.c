@@ -290,7 +290,7 @@ static int load_fpga_child(char *fname)
 		if (!pio_get(DONE))
 			break;
 	}
-	if (!pio_get(DONE)) {
+	if (pio_get(DONE)) {
 		fprintf(stderr, "%s: DONE is not going high after %i bytes\n",
 			__func__, bs_size);
 		exit(1);
