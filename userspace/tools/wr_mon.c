@@ -19,19 +19,19 @@
 #define PTP_EXPORT_STRUCTURES
 #include "ptpd_exports.h"
 
-#define SHOW_GUI			0
+#define SHOW_GUI		0
 #define SHOW_SLAVE_PORTS	1
 #define SHOW_MASTER_PORTS	2
 #define SHOW_OTHER_PORTS	4
-#define SHOW_SERVO			8
+#define SHOW_SERVO		8
 #define SHOW_TEMPERATURES	16
-#define WEB_INTERFACE	   32 /* TJP: still has it's own print
-			       *      function, ugly
-			       */
+#define WEB_INTERFACE		32 /* TJP: still has it's own print
+				    *      function, ugly
+				    */
 #define SHOW_WR_TIME		64
 
-#define SHOW_ALL_PORTS	  7
-#define SHOW_ALL			95 /* for convenience with -a option */
+#define SHOW_ALL_PORTS		7
+#define SHOW_ALL		95 /* for convenience with -a option */
 
 int mode = SHOW_GUI;
 
@@ -168,7 +168,8 @@ void init_shm(void)
 		exit(1);
 	}
 	/* Even after HAL restart, HAL will place structures at the same
-	 * addresses. No need to re-dereference pointer at each read. */
+	 * addresses. No need to re-dereference pointer at each read.
+	 */
 	hal_ports = wrs_shm_follow(hal_head, h->ports);
 	if (!hal_ports) {
 		pr_error("Unable to follow hal_ports pointer in HAL's "
@@ -308,7 +309,6 @@ void show_ports(void)
 			break;
 		}
 
-		/* TJP: I'll try to get rid of the monstrousity later... */
 		if (mode == SHOW_GUI) {
 			term_cprintf(C_WHITE, " %-5s: ", if_name);
 			/* check if link is up */
