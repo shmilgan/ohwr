@@ -295,12 +295,12 @@ static int load_fpga_child(char *fname)
 			__func__, bs_size);
 		exit(1);
 	}
-	printf("FPGA image loaded\n");
 
 	/* PA5 must go low then high */
 	pio_set(PIO_CODR, FPGA_RESET);
 	ud(10);
 	pio_set(PIO_SODR, FPGA_RESET);
+	printf("FPGA image loaded\n");
 	exit(0);
 }
 
