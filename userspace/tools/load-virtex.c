@@ -239,8 +239,7 @@ static int load_fpga_child(char *fname)
 		//exit(1);
 	}
 
-	/* TJP: low?, that is not ! is it? */
-	if (!pio_get(DONE)) {
+	if (pio_get(DONE)) {
 		fprintf(stderr, "%s: DONE is already high after PROGRAM_B\n",
 			__func__);
 		//exit(1);
@@ -276,8 +275,7 @@ static int load_fpga_child(char *fname)
 
 		__SSC(AT91_SSC_THR) = bstream[i];
 
-		/* TJP, ! should go in this check? */
-		if (0 && /* don't do this check */ !pio_get(DONE)) {
+		if (pio_get(DONE)) {
 			fprintf(stderr, "%s: DONE is already high after "
 				"%i bytes (missing %i)\n", __func__,
 				i, bs_size - i);
