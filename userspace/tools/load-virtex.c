@@ -276,6 +276,7 @@ static int load_fpga_child(char *fname)
 
 		__SSC(AT91_SSC_THR) = bstream[i];
 
+		/* TJP, ! should go in this check? */
 		if (0 && /* don't do this check */ !pio_get(DONE)) {
 			fprintf(stderr, "%s: DONE is already high after "
 				"%i bytes (missing %i)\n", __func__,
