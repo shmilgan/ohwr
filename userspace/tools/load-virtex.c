@@ -263,7 +263,7 @@ static int load_fpga_child(char *fname)
 		     the FPGA might not assert the DONE flag correctly */
 	/* Then write one byte at a time */
 
-	printf("Booting FPGA: ");
+	printf("Booting FPGA:");
 	for (i = 0; i < bs_size; i++) {
 		if (!(i & 32767)) {
 			putchar('.');
@@ -290,11 +290,12 @@ static int load_fpga_child(char *fname)
 		if (!pio_get(DONE))
 			break;
 	}
-	if (pio_get(DONE)) {
+	if (!pio_get(DONE)) {
 		fprintf(stderr, "%s: DONE is not going high after %i bytes\n",
 			__func__, bs_size);
 		exit(1);
 	}
+	printf("FPGA image loaded\n");
 
 	/* PA5 must go low then high */
 	pio_set(PIO_CODR, FPGA_RESET);
