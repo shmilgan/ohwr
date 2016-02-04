@@ -276,7 +276,7 @@ void show_ports(void)
 		case HEXP_PORT_MODE_NON_WR:
 			if (mode == SHOW_GUI) {
 				print_mode_color = C_WHITE;
-				strcpy(if_mode, "Non WR	 ");
+				strcpy(if_mode, "Non WR  ");
 			} else if (mode & SHOW_OTHER_PORTS) {
 				print_port = 1;
 				strcpy(if_mode, "N");
@@ -287,7 +287,7 @@ void show_ports(void)
 		case HEXP_PORT_MODE_WR_M_AND_S:
 			if (mode == SHOW_GUI) {
 				print_mode_color = C_WHITE;
-				strcpy(if_mode, "WR auto	");
+				strcpy(if_mode, "WR auto   ");
 			} else if (mode &
 				(SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
 				print_port = 1;
@@ -299,7 +299,7 @@ void show_ports(void)
 		default:
 			if (mode == SHOW_GUI) {
 				print_mode_color = C_WHITE;
-				strcpy(if_mode, "Unknown	");
+				strcpy(if_mode, "Unknown     ");
 			} else if (mode & SHOW_OTHER_PORTS) {
 				print_port = 1;
 				strcpy(if_mode, "U");
@@ -313,7 +313,7 @@ void show_ports(void)
 			term_cprintf(C_WHITE, " %-5s: ", if_name);
 			/* check if link is up */
 			if (state_up(port_state->state))
-				term_cprintf(C_GREEN, "Link up	");
+				term_cprintf(C_GREEN, "Link up    ");
 			else
 				term_cprintf(C_RED, "Link down  ");
 			term_cprintf(C_WHITE, if_mode);
@@ -385,7 +385,7 @@ void show_servo(void)
 			return;
 		}
 
-		term_cprintf(C_GREY, "Servo state:			   ");
+		term_cprintf(C_GREY, "Servo state: ");
 		if (lastt && time(NULL) - lastt > 5) {
 			term_cprintf(C_RED, " --- not updating --- ");
 		} else {
@@ -402,25 +402,25 @@ void show_servo(void)
 
 		term_cprintf(C_BLUE, "\nTiming parameters:\n\n");
 
-		term_cprintf(C_GREY, "Round-trip time (mu):	  ");
+		term_cprintf(C_GREY, "Round-trip time (mu): ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 				 ppsi_servo_local.picos_mu/1000.0);
 
-		term_cprintf(C_GREY, "Master-slave delay:		");
+		term_cprintf(C_GREY, "Master-slave delay:   ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 				 ppsi_servo_local.delta_ms/1000.0);
 
-		term_cprintf(C_GREY, "Master PHY delays:		 ");
+		term_cprintf(C_GREY, "Master PHY delays:    ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
 				 ppsi_servo_local.delta_tx_m/1000.0,
 				 ppsi_servo_local.delta_rx_m/1000.0);
 
-		term_cprintf(C_GREY, "Slave PHY delays:		  ");
+		term_cprintf(C_GREY, "Slave PHY delays:     ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
 				 ppsi_servo_local.delta_tx_s/1000.0,
 				 ppsi_servo_local.delta_rx_s/1000.0);
 
-		term_cprintf(C_GREY, "Total link asymmetry:	  ");
+		term_cprintf(C_GREY, "Total link asymmetry: ");
 		term_cprintf(C_WHITE, "%.3f nsec\n", total_asymmetry/1000.0);
 
 		/*if (0) {
@@ -429,19 +429,19 @@ void show_servo(void)
 				ss.fiber_asymmetry/1000.0);
 		}*/
 
-		term_cprintf(C_GREY, "Clock offset:			  ");
+		term_cprintf(C_GREY, "Clock offset:         ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 				 ppsi_servo_local.offset/1000.0);
 
-		term_cprintf(C_GREY, "Phase setpoint:			");
+		term_cprintf(C_GREY, "Phase setpoint:       ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 				 ppsi_servo_local.cur_setpoint/1000.0);
 
-		term_cprintf(C_GREY, "Skew:				  ");
+		term_cprintf(C_GREY, "Skew:                 ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
 				 ppsi_servo_local.skew/1000.0);
 
-		term_cprintf(C_GREY, "Servo update counter:	  ");
+		term_cprintf(C_GREY, "Servo update counter: ");
 		term_cprintf(C_WHITE, "%u times\n",
 				 ppsi_servo_local.update_count);
 		if (ppsi_servo_local.update_count != last_count) {
