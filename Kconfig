@@ -289,83 +289,83 @@ endmenu
 
 menu "Port Timing Configuration"
 
-config PORT00_PARAMS
+config PORT01_PARAMS
 	string "Parameters for the first port"
-	default "name=wr0,proto=raw,tx=223896,rx=226310,role=slave,fiber=0" if TIME_BC
-	default "name=wr0,proto=raw,tx=223896,rx=226310,role=master,fiber=0"
+	default "name=wri1,proto=raw,tx=223896,rx=226310,role=slave,fiber=0" if TIME_BC
+	default "name=wri1,proto=raw,tx=223896,rx=226310,role=master,fiber=0"
 	help
 	  This item, and the following ones, are used to assign the
 	  constant delays (likely from calibration), protocol type (raw or udp),
 	  port roles and type of fiber for each of the ports. Please refer to
 	  the user manual for more information.
 
-config PORT01_PARAMS
-	string "Parameters for the second port"
-	default "name=wr1,proto=raw,tx=224066,rx=226334,role=master,fiber=0"
-
 config PORT02_PARAMS
-	string "Parameters for a further port"
-	default "name=wr2,proto=raw,tx=224170,rx=226620,role=master,fiber=0"
+	string "Parameters for the second port"
+	default "name=wri2,proto=raw,tx=224066,rx=226334,role=master,fiber=0"
 
 config PORT03_PARAMS
 	string "Parameters for a further port"
-	default "name=wr3,proto=raw,tx=224278,rx=226722,role=master,fiber=0"
+	default "name=wri3,proto=raw,tx=224170,rx=226620,role=master,fiber=0"
 
 config PORT04_PARAMS
 	string "Parameters for a further port"
-	default "name=wr4,proto=raw,tx=224431,rx=227755,role=master,fiber=0"
+	default "name=wri4,proto=raw,tx=224278,rx=226722,role=master,fiber=0"
 
 config PORT05_PARAMS
 	string "Parameters for a further port"
-	default "name=wr5,proto=raw,tx=224607,rx=228005,role=master,fiber=0"
+	default "name=wri5,proto=raw,tx=224431,rx=227755,role=master,fiber=0"
 
 config PORT06_PARAMS
 	string "Parameters for a further port"
-	default "name=wr6,proto=raw,tx=224788,rx=228176,role=master,fiber=0"
+	default "name=wri6,proto=raw,tx=224607,rx=228005,role=master,fiber=0"
 
 config PORT07_PARAMS
 	string "Parameters for a further port"
-	default "name=wr7,proto=raw,tx=224903,rx=228251,role=master,fiber=0"
+	default "name=wri7,proto=raw,tx=224788,rx=228176,role=master,fiber=0"
 
 config PORT08_PARAMS
 	string "Parameters for a further port"
-	default "name=wr8,proto=raw,tx=225040,rx=228274,role=master,fiber=0"
+	default "name=wri8,proto=raw,tx=224903,rx=228251,role=master,fiber=0"
 
 config PORT09_PARAMS
 	string "Parameters for a further port"
-	default "name=wr9,proto=raw,tx=225285,rx=228599,role=master,fiber=0"
+	default "name=wri9,proto=raw,tx=225040,rx=228274,role=master,fiber=0"
 
 config PORT10_PARAMS
 	string "Parameters for a further port"
-	default "name=wr10,proto=raw,tx=225510,rx=229052,role=master,fiber=0"
+	default "name=wri10,proto=raw,tx=225285,rx=228599,role=master,fiber=0"
 
 config PORT11_PARAMS
 	string "Parameters for a further port"
-	default "name=wr11,proto=raw,tx=225625,rx=229111,role=master,fiber=0"
+	default "name=wri11,proto=raw,tx=225510,rx=229052,role=master,fiber=0"
 
 config PORT12_PARAMS
 	string "Parameters for a further port"
-	default "name=wr12,proto=raw,tx=225779,rx=229389,role=master,fiber=0"
+	default "name=wri12,proto=raw,tx=225625,rx=229111,role=master,fiber=0"
 
 config PORT13_PARAMS
 	string "Parameters for a further port"
-	default "name=wr13,proto=raw,tx=226005,rx=229533,role=master,fiber=0"
+	default "name=wri13,proto=raw,tx=225779,rx=229389,role=master,fiber=0"
 
 config PORT14_PARAMS
 	string "Parameters for a further port"
-	default "name=wr14,proto=raw,tx=226228,rx=229984,role=master,fiber=0"
+	default "name=wri14,proto=raw,tx=226005,rx=229533,role=master,fiber=0"
 
 config PORT15_PARAMS
 	string "Parameters for a further port"
-	default "name=wr15,proto=raw,tx=226352,rx=230126,role=master,fiber=0"
+	default "name=wri15,proto=raw,tx=226228,rx=229984,role=master,fiber=0"
 
 config PORT16_PARAMS
 	string "Parameters for a further port"
-	default "name=wr16,proto=raw,tx=226534,rx=230134,role=master,fiber=0"
+	default "name=wri16,proto=raw,tx=226352,rx=230126,role=master,fiber=0"
 
 config PORT17_PARAMS
 	string "Parameters for a further port"
-	default "name=wr17,proto=raw,tx=226733,rx=230371,role=master,fiber=0"
+	default "name=wri17,proto=raw,tx=226534,rx=230134,role=master,fiber=0"
+
+config PORT18_PARAMS
+	string "Parameters for a further port"
+	default "name=wri18,proto=raw,tx=226733,rx=230371,role=master,fiber=0"
 
 endmenu
 
@@ -470,13 +470,13 @@ choice
 	default PTP_PORT_PARAMS
 
 config PTP_PORT_PARAMS
-	bool "Raw Ethernet, WR on, Slave on wr0, Master on other ports"
+	bool "Raw Ethernet, WR on, Slave on wri1, Master on other ports"
 	help
 	  You can choose wether to use parameters defined in PORTXX_PARAMS or
 	  your own custom configuration file defined by
 	  CONFIG_PTP_CUSTOM_FILENAME.
 
-	  The default setting for boundary clock forces port wr0
+	  The default setting for boundary clock forces port wri1
 	  to be PTP slave and all other ports to be master, in
 	  Ethernet mode and with full WR protocol extensions. The default
 	  for a Grand-Master or Free-Running master has all ports as
