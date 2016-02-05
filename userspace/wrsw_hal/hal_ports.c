@@ -163,6 +163,24 @@ static int hal_port_init(int index)
 
 		pr_info("Port %s: mode %i\n", p->name, val);
 	}
+
+	/* Get fiber type */
+	error = libwr_cfg_convert2("PORT%02i_PARAMS", "fiber",
+				   LIBWR_INT, &p->fiber_index, index);
+
+	if (error) {
+		fprintf(stderr, "port index %i (%s): "
+			"no \"fiber=\" specified, default fiber to 0\n",
+			index, name);
+		p->fiber_index = 0;
+		}
+	if (p->fiber_index > 3) {
+		fprintf(stderr, "port index %i (%s): "
+			"not supported \"fiber=\" value, default to 0\n",
+			index, name);
+		p->fiber_index = 0;
+		}
+
 	/* Used to pre-calibrate the TX path for each port. No more in V3 */
 
 	/* FIXME: this address should come from the driver header */
