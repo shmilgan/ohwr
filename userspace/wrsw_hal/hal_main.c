@@ -27,6 +27,7 @@
 static int daemon_mode = 0;
 static hal_cleanup_callback_t cleanup_cb[MAX_CLEANUP_CALLBACKS];
 static char *logfilename;
+static char *dotconfigname = "/wr/etc/dot-config";
 
 struct hal_shmem_header *hal_shmem;
 
@@ -84,11 +85,15 @@ static int hal_init(void)
 
 	memset(cleanup_cb, 0, sizeof(cleanup_cb));
 
-	line = libwr_cfg_read_file("/wr/etc/dot-config"); /* FIXME: accept -f */
+	pr_info("Using file %s as dot-config\n", dotconfigname);
+	line = libwr_cfg_read_file(dotconfigname);
+
 	if (line == -1)
-		pr_error("Unable to read dot-config or error in line 1\n");
+		pr_error("Unable to read dot-config file %s or error in line"
+			 "1\n", dotconfigname);
 	else if (line)
-		pr_error("Error in dot-config, error in line %d\n", -line);
+		pr_error("Error in dot-config file %s, error in line %d\n",
+			 dotconfigname, -line);
 
 	shw_sfp_read_db();
 
@@ -170,7 +175,7 @@ static void hal_parse_cmdline(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "dhqvl:")) != -1) {
+	while ((opt = getopt(argc, argv, "dhqvl:f:")) != -1) {
 		switch (opt) {
 		case 'd':
 			daemon_mode = 1;
@@ -187,6 +192,11 @@ static void hal_parse_cmdline(int argc, char *argv[])
 
 		case 'q': break; /* done in wrs_msg_init() */
 		case 'v': break; /* done in wrs_msg_init() */
+
+		case 'f':
+			/* custom dot-config file */
+			dotconfigname = optarg;
+			break;
 
 		default:
 			fprintf(stderr,
