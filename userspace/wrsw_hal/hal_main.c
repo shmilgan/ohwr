@@ -79,11 +79,17 @@ static int hal_init(void)
 {
 	//trace_log_stderr();
 
+	int line;
 	pr_info("initializing...\n");
 
 	memset(cleanup_cb, 0, sizeof(cleanup_cb));
 
-	libwr_cfg_read_file("/wr/etc/dot-config"); /* FIXME: accept -f */
+	line = libwr_cfg_read_file("/wr/etc/dot-config"); /* FIXME: accept -f */
+	if (line == -1)
+		pr_error("Unable to read dot-config or error in line 1\n");
+	else if (line)
+		pr_error("Error in dot-config, error in line %d\n", -line);
+
 	shw_sfp_read_db();
 
 	/* Set up trap for some signals - the main purpose is to
