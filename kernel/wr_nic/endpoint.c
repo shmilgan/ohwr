@@ -241,6 +241,7 @@ int wrn_endpoint_probe(struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
 	static u8 wraddr[6];
+	char wrint_name[16]; /* 6 is enough, but to be super cautious use 16 */
 	int err;
 	int prio, prio_map;
 	u32 val;
@@ -278,9 +279,12 @@ int wrn_endpoint_probe(struct net_device *dev)
 	if (ep->ep_number == 0)
 		pr_info("WR-nic: Using address %pM\n", wraddr);
 
+	/* assign wr interfaces numbers from 1 */
+	snprintf(wrint_name, 16, "wri%d", ep->ep_number + 1);
+
 	/* Use wraddr as MAC */
 	memcpy(dev->dev_addr, wraddr, ETH_ALEN);
-	pr_debug("wr_nic: assign MAC %pM to wr%d\n", dev->dev_addr, ep->ep_number);
+	pr_info("wr_nic: assign MAC %pM to %s\n", dev->dev_addr, wrint_name);
 
 	/* Check whether the ep has been sinthetized or not */
 	val = readl(&ep->ep_regs->IDCODE);
@@ -291,7 +295,7 @@ int wrn_endpoint_probe(struct net_device *dev)
 	}
 	/* Errors different from -ENODEV are fatal to insmod */
 
-	dev_alloc_name(dev, "wr%d");
+	dev_alloc_name(dev, wrint_name);
 	wrn_netops_init(dev); /* function in ./nic-core.c */
 	wrn_ethtool_init(dev); /* function in ./ethtool.c */
 	/* Napi is not supported on this device */
