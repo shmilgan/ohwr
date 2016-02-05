@@ -20,7 +20,7 @@ echo "# This file will be overwritten at next boot." >> $OUTPUT_FILE
 #copy top of ppsi.conf
 cat $PRE_FILE >> $OUTPUT_FILE
 
-for i_zero in {00..17};do
+for i_zero in {01..18};do
 	# unset parametes
 	unset p_name
 	unset p_proto
@@ -57,12 +57,12 @@ for i_zero in {00..17};do
 	i=$(expr $i_zero + 0)
 
 	if [ -n "$p_proto" ]; then
-		echo "port wr$i-$p_proto" >> $OUTPUT_FILE
+		echo "port wri$i-$p_proto" >> $OUTPUT_FILE
 		echo "proto $p_proto" >> $OUTPUT_FILE
 	else
-		echo "port wr$i-raw" >> $OUTPUT_FILE
+		echo "port wri$i-raw" >> $OUTPUT_FILE
 	fi
-	echo "iface wr$i" >> $OUTPUT_FILE
+	echo "iface wri$i" >> $OUTPUT_FILE
 	if [ -n "$p_role" ]; then
 		echo "role $p_role" >> $OUTPUT_FILE
 	fi
