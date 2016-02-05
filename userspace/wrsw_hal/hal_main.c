@@ -166,9 +166,15 @@ static void hal_daemonize(void)
 
 static void show_help(void)
 {
-	printf("WR Switch Hardware Abstraction Layer daemon (wrsw_hal)\n\
-Usage: wrsw_hal [options], where [options] can be:\n\
--d       : fork into background (daemon mode)\n");
+	printf("WR Switch Hardware Abstraction Layer daemon (wrsw_hal)\n"
+	       "Usage: wrsw_hal [options], where [options] can be:\n"
+	       "    -d         : fork into background (daemon mode)\n"
+	       "    -h         : display help\n"
+	       "    -l <file>  : set logfile\n"
+	       "    -f <file>  : use custom dot-config file\n"
+	       "    -q         : decrease verbosity\n"
+	       "    -v         : increase verbosity\n"
+	       "\n");
 }
 
 static void hal_parse_cmdline(int argc, char *argv[])
