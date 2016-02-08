@@ -364,9 +364,11 @@ config SFP01_PARAMS
 
 config SFP02_PARAMS
 	string "Parameters for one SFP device type"
+	default "vn=ZyXEL,pn=SFP-BX1490-10-D,tx=0,rx=0,wl_txrx=1490+1310"
 
 config SFP03_PARAMS
 	string "Parameters for one SFP device type"
+	default "vn=ZyXEL,pn=SFP-BX1310-10-D,tx=0,rx=0,wl_txrx=1310+1490"
 
 config SFP04_PARAMS
 	string "Parameters for one SFP device type"
