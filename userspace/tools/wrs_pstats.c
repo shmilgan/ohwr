@@ -74,7 +74,7 @@ char info[][20] = {{"Tu-run|"}, // 0
                    {"TRUrsp|"}  // 38
                  };
 
-int pstats_init(void)
+int pstats_init(int init)
 {
 	int err, i, j;
 
@@ -92,7 +92,7 @@ int pstats_init(void)
 			cnt_pp[i][j].init = 0;
 			cnt_pp[i][j].cnt = 0;
 		}
-	parse_sysfs(1);
+	parse_sysfs(init);
 	return 0;
 }
 
@@ -102,7 +102,7 @@ static void parse_sysfs(int init)
 	uint32_t port, cntr, val;
 	char filename[30];
 
-	if(init) {
+	if(init==1) {
 		for(port=0; port<use_ports; ++port) {
 			sprintf(filename, "/proc/sys/pstats/port%u", port);
 			file = fopen(filename, "r");
@@ -183,6 +183,7 @@ void print_info(char *prgname)
 			"   -a        Show all counters (don't fit screen)\n"
 			"   -t        Show traffic only, i.e. rx/tx-ed frames\n"
 			"   -n        Define 8/18 ports version\n"
+			"   -v        Show counter values from start of device\n"
 			"   -h        Show this message\n");
 
 }
@@ -195,9 +196,10 @@ int main(int argc, char **argv)
 	int ep_cnts[]   = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28}; //29
 	int traffic[]   = {18,19};//2
 	int op = 0, c;
+	int init = 1;
 
 	use_ports = NPORTS;
-	while ( (c = getopt(argc, argv, "phertan:")) != -1) {
+	while ( (c = getopt(argc, argv, "phvertan:")) != -1) {
 		switch(c) {
 			case 'n':
 				use_ports = atoi(optarg);
@@ -209,6 +211,9 @@ int main(int argc, char **argv)
 			case 't':
 				op = c;
 				break;
+			case 'v':
+			       init = 2;
+			       break;
 			case 'h':
 			default:
 				print_info(argv[0]);
@@ -216,7 +221,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if(pstats_init()) return -1;
+	if(pstats_init(init)) return -1;
 
 	while(1)
 	{
