@@ -48,7 +48,7 @@ static int hal_nports_local;
 static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
 static struct wr_servo_state *ppsi_servo;
-static struct wr_servo_state ppsi_servo_local; /* local copy of	servo status */
+static struct wr_servo_state ppsi_servo_local; /* local copy of servo status */
 static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
 /* local copy of temperature sensor readings */
@@ -68,7 +68,7 @@ void help(char *prgname)
 		"  -o   show other ports\n"
 		"  -e   show servo statistics\n"
 		"  -t   show temperatures\n"
-		"  -a   show all (same as -i -m -s -o -e- t options)\n"
+		"  -a   show all (same as -i -m -s -o -e -t options)\n"
 		"  -b   black and white output\n"
 		"  -w   web interface mode\n"
 		"\n"
@@ -85,9 +85,9 @@ int read_hal(void){
 	while (1) {
 		ii = wrs_shm_seqbegin(hal_head);
 		memcpy(hal_ports_local_copy, hal_ports,
-			   hal_nports_local*sizeof(struct hal_port_state));
+		       hal_nports_local*sizeof(struct hal_port_state));
 		memcpy(&temp_sensors_local, temp_sensors,
-			   sizeof(*temp_sensors));
+		       sizeof(*temp_sensors));
 		retries++;
 		if (retries > 100)
 			return -1;
