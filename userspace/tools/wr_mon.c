@@ -21,15 +21,16 @@
 
 #define SHOW_GUI		0
 #define SHOW_SLAVE_PORTS	1
-#define SHOW_MASTER_PORTS	1<<1
-#define SHOW_OTHER_PORTS	1<<2
-#define SHOW_SERVO		1<<3
-#define SHOW_TEMPERATURES	1<<4
-#define WEB_INTERFACE		1<<5 /* TJP: still has it's own print
-				    *      function, ugly
-				    */
-#define SHOW_WR_TIME		1<<6
+#define SHOW_MASTER_PORTS	(1<<1)
+#define SHOW_OTHER_PORTS	(1<<2)
+#define SHOW_SERVO		(1<<3)
+#define SHOW_TEMPERATURES	(1<<4)
+#define WEB_INTERFACE		(1<<5) /* TJP: still has it's own print
+					*      function, ugly
+					*/
+#define SHOW_WR_TIME		(1<<6)
 
+/* for convenience when any or all ports needs a print statement */
 #define SHOW_ALL_PORTS		(SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS|\
 				SHOW_OTHER_PORTS)
 /* for convenience with -a option */
@@ -43,7 +44,7 @@ static struct minipc_ch *ptp_ch;
 static struct wrs_shm_head *hal_head;
 static struct hal_port_state *hal_ports;
 /* local copy of port state */
-static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS]; 
+static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS];
 static int hal_nports_local;
 static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
@@ -52,7 +53,10 @@ static struct wr_servo_state ppsi_servo_local; /* local copy of servo status */
 static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
 /* local copy of temperature sensor readings */
-static struct hal_temp_sensors temp_sensors_local; 
+static struct hal_temp_sensors temp_sensors_local;
+
+static uint64_t seconds = 0;
+static uint32_t nanoseconds = 0;
 
 void help(char *prgname)
 {
@@ -506,17 +510,10 @@ void show_temperatures(void)
 	}
 }
 
-/* FIXME: this should work (as far as my C goes) but it doesnt */
-/*void show_time(void)*/
-/*{*/
-	/* 
-	 * use correct variables, this is not in the ppsi_servo_local, should
-	 * it be there, then we have the time at the moment of creating the
-	 * copy...
-	 */
-/*	printf("TIME %s.%09d ", format_time((uint64_t)ppsi_servo_local.mu.seconds),*/
-/*				(uint32_t)ppsi_servo_local.mu.nanoseconds);*/
-/*}*/
+void show_time(void)
+{
+	printf("TIME sec: %lld nsec:%d ", seconds, nanoseconds);
+}
 
 void show_all(void)
 {
@@ -533,16 +530,14 @@ void show_all(void)
 	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0));
 	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0));
 
-/*	if (mode & SHOW_WR_TIME) {*/
-		/* FIXME: get this working, delete error messages around
-		 *        show_servo() when this works */
-/*		if (ppsi_alive)*/
-/*			show_time();*/
-/*		else if (mode == SHOW_GUI)*/
-/*			term_cprintf(C_RED, "\nPPSI is dead!\n");*/
-/*		else if (mode == SHOW_ALL)*/
-/*			printf("PPSI is dead!\n");*/
-/*	}*/
+	if (mode & SHOW_WR_TIME) {
+		if (ppsi_alive)
+			show_time();
+		else if (mode == SHOW_GUI)
+			term_cprintf(C_RED, "\nPPSI is dead!\n");
+		else if (mode == SHOW_ALL)
+			printf("PPSI is dead!\n");
+	}
 
 	if ((mode & (SHOW_ALL_PORTS|WEB_INTERFACE)) || mode == SHOW_GUI) {
 		if (hal_alive)
@@ -554,13 +549,8 @@ void show_all(void)
 	}
 
 	if (mode & SHOW_SERVO || mode == SHOW_GUI) {
-		/* FIXME: remove error messages here if show_time() works, see above */
 		if (ppsi_alive)
 			show_servo();
-		else if (mode == SHOW_GUI)
-			term_cprintf(C_RED, "\nPPSI is dead!\n");
-		else if (mode == SHOW_ALL)
-			printf("PPSI is dead!\n");
 	}
 
 	if (mode & SHOW_TEMPERATURES || mode == SHOW_GUI) {
@@ -582,9 +572,7 @@ int main(int argc, char *argv[])
 	int track_onoff = 1;
 
 	/* try a pps_gen based approach */
-	uint64_t seconds = 0;
 	uint64_t last_seconds = 0;
-	uint32_t nanoseconds = 0;
 	uint32_t last_nanoseconds = 0;
 
 	wrs_msg_init(argc, argv);
@@ -673,13 +661,6 @@ int main(int argc, char *argv[])
 			read_servo();
 			read_hal();
 
-			/* FIXME: get the function call show_time() working */
-			if (mode & SHOW_WR_TIME) {
-				/* print time as in wrpc stat cont */
-				printf("TIME sec: %lld nsec:%d ", seconds,
-				       nanoseconds);
-			}
-			
 			show_all();
 
 			last_seconds = seconds;
