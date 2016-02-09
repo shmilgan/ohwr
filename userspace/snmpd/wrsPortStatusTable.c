@@ -67,7 +67,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			/* Assume that number of ports does not change between
 			 * reads */
 			snprintf(wrsPortStatusTable_array[i].port_name, 10,
-				 "wr%d", i);
+				 "wri%d", i + 1);
 			port_state = hal_lookup_port(hal_ports,
 					hal_nports_local,
 					wrsPortStatusTable_array[i].port_name);
