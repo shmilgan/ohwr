@@ -581,16 +581,11 @@ int main(int argc, char *argv[])
 	int usecolor = 1;
 	int track_onoff = 1;
 
-	/* for an update_count based approach */
-	/* uint32_t last_count = 0; */
-
 	/* try a pps_gen based approach */
 	uint64_t seconds = 0;
 	uint64_t last_seconds = 0;
 	uint32_t nanoseconds = 0;
 	uint32_t last_nanoseconds = 0;
-	char *time_str;
-	int time_str_len = 0;
 
 	wrs_msg_init(argc, argv);
 
@@ -681,7 +676,8 @@ int main(int argc, char *argv[])
 			/* FIXME: get the function call show_time() working */
 			if (mode & SHOW_WR_TIME) {
 				/* print time as in wrpc stat cont */
-				printf("TIME sec: %u nsec:%09d", seconds, nanoseconds);
+				printf("TIME sec: %lld nsec:%d ", seconds,
+				       nanoseconds);
 			}
 			
 			show_all();
