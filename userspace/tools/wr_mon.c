@@ -231,7 +231,7 @@ void show_ports(void)
 		t = (time_t)_fpga_readl(FPGA_BASE_PPS_GEN + 8 /* UTC_LO */);
 		tm = localtime(&t);
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
-		term_cprintf(C_BLUE, "WR time:  %s\n", datestr);
+		term_cprintf(C_BLUE, "WR time:     %s\n", datestr);
 	}
 	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
 		printf("PORTS ");
