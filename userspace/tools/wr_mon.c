@@ -680,12 +680,8 @@ int main(int argc, char *argv[])
 
 			/* FIXME: get the function call show_time() working */
 			if (mode & SHOW_WR_TIME) {
-				time_str = asctime(gmtime(&seconds));
-				time_str_len = strlen(time_str);
-				time_str[time_str_len-1]=0;
-				
-				/* FIXME: print more in style of stat cont on wrpc */
-				printf("TIME %s nsec:%09d", time_str, nanoseconds);
+				/* print time as in wrpc stat cont */
+				printf("TIME sec: %u nsec:%09d", seconds, nanoseconds);
 			}
 			
 			show_all();
