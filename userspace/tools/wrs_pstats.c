@@ -96,7 +96,8 @@ static void parse_sysfs(int init)
 
 	if (init == 1) {
 		for(port=0; port<use_ports; ++port) {
-			sprintf(filename, "/proc/sys/pstats/port%u", port);
+			sprintf(filename, "/proc/sys/pstats/wrport%u",
+				port + 1);
 			file = fopen(filename, "r");
 			for(cntr=0; cntr<CNT_PP; ++cntr) {
 				fscanf(file, "%" SCNu32, &tmp1);
@@ -110,13 +111,15 @@ static void parse_sysfs(int init)
 	else {
 		for(port=0; port<use_ports; ++port) {
 
-			sprintf(filename, "/proc/sys/pstats/port%u", port);
+			sprintf(filename, "/proc/sys/pstats/wrport%u",
+				port + 1);
 			file = fopen(filename, "r");
 			for(cntr=0; cntr<CNT_PP; ++cntr) {
 				fscanf(file, "%" SCNu32, &tmp1);
 				fscanf(file, "%" SCNu32, &tmp2);
 				val = (((uint64_t) tmp2) << 32) | tmp1;
-				cnt_pp[port][cntr].cnt = val - cnt_pp[port][cntr].init;
+				cnt_pp[port][cntr].cnt =
+						val - cnt_pp[port][cntr].init;
 			}
 			fclose(file);
 		}
