@@ -580,11 +580,8 @@ struct {
 int main(int argc, char **argv)
 {
 	int i;
-	if (fpga_map(argv[0]) < 0)
-		exit(1);
 
 	wrs_msg_init(1, argv); /* only use argv[0]: no cmdline */
-	shw_init();
 
 	if(argc<3)
 	{
@@ -597,6 +594,9 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+	if (fpga_map(argv[0]) < 0)
+		exit(1);
+	shw_init();
 
 	for(i=0; commands[i].cmd;i++)
 		if(!strcmp(commands[i].cmd, argv[2]))
