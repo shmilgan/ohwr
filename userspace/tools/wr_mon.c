@@ -373,15 +373,15 @@ void show_servo(void)
 	total_asymmetry = ppsi_servo_local.picos_mu -
 			  2LL * ppsi_servo_local.delta_ms;
 	crtt = ppsi_servo_local.picos_mu - ppsi_servo_local.delta_tx_m -
-		   ppsi_servo_local.delta_rx_m - ppsi_servo_local.delta_tx_s -
-		   ppsi_servo_local.delta_rx_s;
+	       ppsi_servo_local.delta_rx_m - ppsi_servo_local.delta_tx_s -
+	       ppsi_servo_local.delta_rx_s;
 
 	if(mode == SHOW_GUI) {
 		term_cprintf(C_BLUE, "\nSynchronization status:\n");
 
 		if (!(ppsi_servo_local.flags & WR_FLAG_VALID)) {
 			term_cprintf(C_RED,
-				"Master mode or sync info not valid\n");
+				     "Master mode or sync info not valid\n");
 			return;
 		}
 
@@ -390,10 +390,10 @@ void show_servo(void)
 			term_cprintf(C_RED, " --- not updating --- ");
 		} else {
 			term_cprintf(C_WHITE, "%s: %s%s\n",
-				 ppsi_servo_local.if_name,
-				 ppsi_servo_local.servo_state_name,
-				 ppsi_servo_local.flags & WR_FLAG_WAIT_HW ?
-				 " (wait for hw)" : "");
+				     ppsi_servo_local.if_name,
+				     ppsi_servo_local.servo_state_name,
+				     ppsi_servo_local.flags & WR_FLAG_WAIT_HW ?
+				     " (wait for hw)" : "");
 		}
 
 		/* "tracking disabled" is just a testing tool */
@@ -404,21 +404,21 @@ void show_servo(void)
 
 		term_cprintf(C_GREY, "Round-trip time (mu): ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-				 ppsi_servo_local.picos_mu/1000.0);
+			     ppsi_servo_local.picos_mu/1000.0);
 
 		term_cprintf(C_GREY, "Master-slave delay:   ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-				 ppsi_servo_local.delta_ms/1000.0);
+			     ppsi_servo_local.delta_ms/1000.0);
 
 		term_cprintf(C_GREY, "Master PHY delays:    ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
-				 ppsi_servo_local.delta_tx_m/1000.0,
-				 ppsi_servo_local.delta_rx_m/1000.0);
+			     ppsi_servo_local.delta_tx_m/1000.0,
+			     ppsi_servo_local.delta_rx_m/1000.0);
 
 		term_cprintf(C_GREY, "Slave PHY delays:     ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
-				 ppsi_servo_local.delta_tx_s/1000.0,
-				 ppsi_servo_local.delta_rx_s/1000.0);
+			     ppsi_servo_local.delta_tx_s/1000.0,
+			     ppsi_servo_local.delta_rx_s/1000.0);
 
 		term_cprintf(C_GREY, "Total link asymmetry: ");
 		term_cprintf(C_WHITE, "%.3f nsec\n", total_asymmetry/1000.0);
@@ -431,19 +431,19 @@ void show_servo(void)
 
 		term_cprintf(C_GREY, "Clock offset:         ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-				 ppsi_servo_local.offset/1000.0);
+			     ppsi_servo_local.offset/1000.0);
 
 		term_cprintf(C_GREY, "Phase setpoint:       ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-				 ppsi_servo_local.cur_setpoint/1000.0);
+			     ppsi_servo_local.cur_setpoint/1000.0);
 
 		term_cprintf(C_GREY, "Skew:                 ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-				 ppsi_servo_local.skew/1000.0);
+			     ppsi_servo_local.skew/1000.0);
 
 		term_cprintf(C_GREY, "Servo update counter: ");
 		term_cprintf(C_WHITE, "%u times\n",
-				 ppsi_servo_local.update_count);
+			     ppsi_servo_local.update_count);
 		if (ppsi_servo_local.update_count != last_count) {
 			lastt = time(NULL);
 			last_count = ppsi_servo_local.update_count;
@@ -463,9 +463,9 @@ void show_servo(void)
 		printf("mu:%llu ", ppsi_servo_local.picos_mu);
 		printf("dms:%llu ", ppsi_servo_local.delta_ms);
 		printf("dtxm:%d drxm:%d ", ppsi_servo_local.delta_tx_m,
-					   ppsi_servo_local.delta_rx_m);
+		       ppsi_servo_local.delta_rx_m);
 		printf("dtxs:%d drxs:%d ", ppsi_servo_local.delta_tx_s,
-					   ppsi_servo_local.delta_rx_s);
+		       ppsi_servo_local.delta_rx_s);
 		printf("asym:%lld ", total_asymmetry);
 		printf("crtt:%llu ", crtt);
 		printf("cko:%lld ", ppsi_servo_local.offset);
@@ -487,16 +487,16 @@ void show_temperatures(void)
 
 		term_cprintf(C_GREY, "FPGA: ");
 		term_cprintf(C_WHITE, "%2.2f ",
-				 temp_sensors_local.fpga/256.0);
+			     temp_sensors_local.fpga/256.0);
 		term_cprintf(C_GREY, "PLL: ");
 		term_cprintf(C_WHITE, "%2.2f ",
-				 temp_sensors_local.pll/256.0);
+			     temp_sensors_local.pll/256.0);
 		term_cprintf(C_GREY, "PSL: ");
 		term_cprintf(C_WHITE, "%2.2f ",
-				 temp_sensors_local.psl/256.0);
+			     temp_sensors_local.psl/256.0);
 		term_cprintf(C_GREY, "PSR: ");
 		term_cprintf(C_WHITE, "%2.2f\n",
-				 temp_sensors_local.psr/256.0);
+			     temp_sensors_local.psr/256.0);
 	} else {
 		printf("TEMP ");
 		printf("fpga:%2.2f ", temp_sensors_local.fpga/256.0);
@@ -526,8 +526,8 @@ void show_all(void)
 	if (mode == SHOW_GUI) {
 		term_clear();
 		term_pcprintf(1, 1, C_BLUE,
-				  "WR Switch Sync Monitor %s[q = quit]\n\n",
-				  __GIT_VER__);
+			      "WR Switch Sync Monitor %s[q = quit]\n\n",
+			      __GIT_VER__);
 	}
 
 	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0));
