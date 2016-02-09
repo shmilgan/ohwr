@@ -21,14 +21,14 @@
 
 #define SHOW_GUI		0
 #define SHOW_SLAVE_PORTS	1
-#define SHOW_MASTER_PORTS	2
-#define SHOW_OTHER_PORTS	4
-#define SHOW_SERVO		8
-#define SHOW_TEMPERATURES	16
-#define WEB_INTERFACE		32 /* TJP: still has it's own print
+#define SHOW_MASTER_PORTS	1<<1
+#define SHOW_OTHER_PORTS	1<<2
+#define SHOW_SERVO		1<<3
+#define SHOW_TEMPERATURES	1<<4
+#define WEB_INTERFACE		1<<5 /* TJP: still has it's own print
 				    *      function, ugly
 				    */
-#define SHOW_WR_TIME		64
+#define SHOW_WR_TIME		1<<6
 
 #define SHOW_ALL_PORTS		(SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS|\
 				SHOW_OTHER_PORTS)
@@ -42,10 +42,8 @@ static struct minipc_ch *ptp_ch;
 
 static struct wrs_shm_head *hal_head;
 static struct hal_port_state *hal_ports;
-static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS]; /* local copy
-								   * of port
-								   * state
-								   */
+/* local copy of port state */
+static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS]; 
 static int hal_nports_local;
 static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
@@ -53,9 +51,8 @@ static struct wr_servo_state *ppsi_servo;
 static struct wr_servo_state ppsi_servo_local; /* local copy of	servo status */
 static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
-static struct hal_temp_sensors temp_sensors_local; /* local copy of temperature
-						    * sensor readings
-						    */
+/* local copy of temperature sensor readings */
+static struct hal_temp_sensors temp_sensors_local; 
 
 void help(char *prgname)
 {
@@ -72,7 +69,7 @@ void help(char *prgname)
 		"  -e   show servo statistics\n"
 		"  -t   show temperatures\n"
 		"  -a   show all (same as -i -m -s -o -e- t options)\n"
-		"  -c   use colour output\n"
+		"  -b   black and white output\n"
 		"  -w   web interface mode\n"
 		"\n"
 		"During execution the user can enter 'q' to exit the program\n"
