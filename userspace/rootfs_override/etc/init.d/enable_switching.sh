@@ -4,7 +4,7 @@ start() {
     echo -n "Enable switching: "
 
     # bring up all interfaces
-    for i in `ls /sys/class/net | grep wr`
+    for i in `ls /sys/class/net | grep wri`
     do
 	    ifconfig $i up
     done
@@ -16,7 +16,7 @@ stop() {
     echo -n "Disable switching: "
 
     # bring down all interfaces
-    for i in `ls /sys/class/net | grep wr`
+    for i in `ls /sys/class/net | grep wri`
     do
 	    ifconfig $i down
     done
