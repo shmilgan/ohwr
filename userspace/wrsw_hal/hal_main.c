@@ -205,9 +205,8 @@ static void hal_parse_cmdline(int argc, char *argv[])
 			break;
 
 		default:
-			fprintf(stderr,
-				"Unrecognized option. Call %s -h for help.\n",
-				argv[0]);
+			pr_error("Unrecognized option. Call %s -h for help.\n",
+				 argv[0]);
 			break;
 		}
 	}
@@ -225,7 +224,7 @@ int main(int argc, char *argv[])
 
 	/* Prevent from running HAL twice - it will likely freeze the system */
 	if (hal_check_running()) {
-		fprintf(stderr, "Fatal: There is another WR HAL "
+		pr_error("Fatal: There is another WR HAL "
 			"instance running. We can't work together.\n\n");
 		return -1;
 	}

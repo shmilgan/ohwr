@@ -45,7 +45,7 @@ int hal_init_timing(char *filename)
 	timing_mode = m->modevalue;
 
 	if (!m->cfgname)
-		fprintf(stderr, "%s: no config variable set, defaults used\n",
+		pr_error("%s: no config variable set, defaults used\n",
 			__func__);
 
 	/* initialize the RT Subsys */

@@ -114,7 +114,7 @@ static int hal_port_init(int index)
 	error = libwr_cfg_convert2("PORT%02i_PARAMS", "tx", LIBWR_INT,
 				   &val, index);
 	if (error)
-		fprintf(stderr, "port index %i (%s): no \"tx=\" specified\n",
+		pr_error("port index %i (%s): no \"tx=\" specified\n",
 			index, name);
 	p->calib.phy_tx_min = val;
 
@@ -122,7 +122,7 @@ static int hal_port_init(int index)
 	error = libwr_cfg_convert2("PORT%02i_PARAMS", "rx", LIBWR_INT,
 				   &val, index);
 	if (error)
-		fprintf(stderr, "port index %i (%s): no \"rx=\" specified\n",
+		pr_error("port index %i (%s): no \"rx=\" specified\n",
 			index, name);
 	p->calib.phy_rx_min = val;
 
@@ -150,7 +150,7 @@ static int hal_port_init(int index)
 		error = libwr_cfg_convert2("PORT%02i_PARAMS", "role",
 					   LIBWR_STRING, s, index);
 		if (error)
-			fprintf(stderr, "port index %i (%s): "
+			pr_error("port index %i (%s): "
 				"no \"role=\" specified\n", index, name);
 
 		for (rp = rt; rp->name; rp++)
@@ -158,7 +158,7 @@ static int hal_port_init(int index)
 				break;
 		p->mode = rp->value;
 		if (!rp->name)
-			fprintf(stderr, "port index %i (%s): invalid role "
+			pr_error("port index %i (%s): invalid role "
 				"\"%s\" specified\n", index, name, s);
 
 		pr_info("Port %s: mode %i\n", p->name, val);
@@ -169,13 +169,13 @@ static int hal_port_init(int index)
 				   LIBWR_INT, &p->fiber_index, index);
 
 	if (error) {
-		fprintf(stderr, "port index %i (%s): "
+		pr_error("port index %i (%s): "
 			"no \"fiber=\" specified, default fiber to 0\n",
 			index, name);
 		p->fiber_index = 0;
 		}
 	if (p->fiber_index > 3) {
-		fprintf(stderr, "port index %i (%s): "
+		pr_error("port index %i (%s): "
 			"not supported \"fiber=\" value, default to 0\n",
 			index, name);
 		p->fiber_index = 0;
@@ -205,8 +205,7 @@ int hal_port_init_all(char *logfilename)
 	/* Open a single raw socket for accessing the MAC addresses, etc. */
 	hal_port_fd = socket(AF_PACKET, SOCK_DGRAM, 0);
 	if (hal_port_fd < 0) {
-		fprintf(stderr, "%s: Can't create socket: %s\n",
-			__func__, strerror(errno));
+		pr_error("Can't create socket: %s\n", strerror(errno));
 		return -1;
 	}
 	/* Allocate the ports in shared memory, so wr_mon etc can see them
@@ -214,8 +213,7 @@ int hal_port_init_all(char *logfilename)
 	hal_shmem_hdr = wrs_shm_get(wrs_shm_hal, "wrsw_hal",
 				WRS_SHM_WRITE | WRS_SHM_LOCKED);
 	if (!hal_shmem_hdr) {
-		fprintf(stderr, "%s: Can't join shmem: %s\n", __func__,
-			strerror(errno));
+		pr_error("Can't join shmem: %s\n", strerror(errno));
 		return -1;
 	}
 	hal_shmem = wrs_shm_alloc(hal_shmem_hdr, sizeof(*hal_shmem));
@@ -223,7 +221,7 @@ int hal_port_init_all(char *logfilename)
 			      sizeof(struct hal_port_state)
 			      * HAL_MAX_PORTS);
 	if (!hal_shmem || !ports) {
-		fprintf(stderr, "%s: can't allocate in shmem\n", __func__);
+		pr_error("Can't allocate in shmem\n");
 		return -1;
 	}
 
@@ -318,7 +316,7 @@ static uint32_t pcs_readl(struct hal_port_state * p, int reg)
 	ifr.ifr_data = (void *)&rv;
 //      printf("raw fd %d name %s\n", hal_port_fd, ifr.ifr_name);
 	if (ioctl(hal_port_fd, PRIV_IOCPHYREG, &ifr) < 0) {
-		fprintf(stderr, "ioctl failed\n");
+		pr_error("ioctl failed\n");
 	};
 
 //      printf("PCS_readl: reg %d data %x\n", reg, NIC_RESULT_DATA(rv));
@@ -486,7 +484,7 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 		/* Mark SFP as found in data base */
 		p->calib.sfp.flags |= SFP_FLAG_IN_DB;
 	} else {
-		fprintf(stderr, "Unknown SFP vn=\"%.16s\" pn=\"%.16s\" "
+		pr_error("Unknown SFP vn=\"%.16s\" pn=\"%.16s\" "
 			"vs=\"%.16s\" on port %s\n", shdr.vendor_name,
 			shdr.vendor_pn, shdr.vendor_serial, p->name);
 		memset(&p->calib.sfp, 0, sizeof(p->calib.sfp));
@@ -525,7 +523,7 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 		return;
 	}
 
-	fprintf(stderr, "Port %s, SFP vn=\"%.16s\" pn=\"%.16s\" vs=\"%.16s\", "
+	pr_error("Port %s, SFP vn=\"%.16s\" pn=\"%.16s\" vs=\"%.16s\", "
 		"fiber %i: no alpha known\n", p->name,
 		p->calib.sfp.vendor_name, p->calib.sfp.part_num,
 		p->calib.sfp.vendor_serial, p->fiber_index);
