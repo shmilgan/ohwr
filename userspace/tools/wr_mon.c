@@ -30,8 +30,11 @@
 				    */
 #define SHOW_WR_TIME		64
 
-#define SHOW_ALL_PORTS		7
-#define SHOW_ALL		95 /* for convenience with -a option */
+#define SHOW_ALL_PORTS		{SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS\
+				|SHOW_OTHER_PORTS}
+/* for convenience with -a option */
+#define SHOW_ALL		{SHOW_ALL_PORTS|SHOW_SERVO|SHOW_TEMPERATURES\
+				|SHOW_WR_TIME}
 
 int mode = SHOW_GUI;
 
@@ -573,7 +576,7 @@ void show_all(void)
 int main(int argc, char *argv[])
 {
 	int opt;
-	int usecolor = 0;
+	int usecolor = 1;
 	int track_onoff = 1;
 
 	/* for an update_count based approach */
@@ -587,7 +590,7 @@ int main(int argc, char *argv[])
 
 	wrs_msg_init(argc, argv);
 
-	while ((opt = getopt(argc, argv, "himsoetacwqv")) != -1) {
+	while ((opt = getopt(argc, argv, "himsoetabwqv")) != -1) {
 		switch(opt)
 		{
 			case 'h':
@@ -613,8 +616,8 @@ int main(int argc, char *argv[])
 			case 'a':
 				mode |= SHOW_ALL;
 				break;
-			case 'c':
-				usecolor = 1;
+			case 'b':
+				usecolor = 0;
 				break;
 			case 'w':
 				mode |= WEB_INTERFACE;
