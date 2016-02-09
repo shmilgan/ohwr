@@ -5,7 +5,7 @@
 # people upgrading from older wr-switch-sw releases.
 #
 # This script is run late, because it will have effect at next boot only.
-# If we run it too early, we can't get the mac address from wr0 which does
+# If we run it too early, we can't get the mac address from wri1 which does
 # not exist yet.
 
 # This allows me to pass WRS_VERBOSE=y on the command line...
@@ -39,9 +39,9 @@ fi
 
 # we need the eth addresses
 ethaddr=$(ifconfig eth0 | grep HWaddr | awk '{print $5}')
-wraddr=$(ifconfig wr0 | grep HWaddr | awk '{print $5}')
+wraddr=$(ifconfig wri1 | grep HWaddr | awk '{print $5}')
 
-# if we run this early (upgrade mess from v4.0) there is no wr0,
+# if we run this early (upgrade mess from v4.0) there is no wri1,
 # so pick if from the command line:
 if [ "x$wraddr" = "x" ]; then
     wraddr=$(awk 'BEGIN {FS="="; RS=" "} /wr_nic.macaddr/ {print $2}' \
