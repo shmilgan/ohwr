@@ -509,6 +509,11 @@ void show_temperatures(void)
 /* FIXME: this should work (as far as my C goes) but it doesnt */
 /*void show_time(void)*/
 /*{*/
+	/* 
+	 * use correct variables, this is not in the ppsi_servo_local, should
+	 * it be there, then we have the time at the moment of creating the
+	 * copy...
+	 */
 /*	printf("TIME %s.%09d ", format_time((uint64_t)ppsi_servo_local.mu.seconds),*/
 /*				(uint32_t)ppsi_servo_local.mu.nanoseconds);*/
 /*}*/
