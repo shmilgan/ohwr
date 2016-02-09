@@ -30,8 +30,11 @@
 				    */
 #define SHOW_WR_TIME		64
 
-#define SHOW_ALL_PORTS		7
-#define SHOW_ALL		95 /* for convenience with -a option */
+#define SHOW_ALL_PORTS		{SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS\
+				|SHOW_OTHER_PORTS}
+/* for convenience with -a option */
+#define SHOW_ALL		{SHOW_ALL_PORTS|SHOW_SERVO|SHOW_TEMPERATURES\
+				|SHOW_WR_TIME}
 
 int mode = SHOW_GUI;
 
