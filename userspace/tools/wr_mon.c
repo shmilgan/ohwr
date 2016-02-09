@@ -55,8 +55,8 @@ static struct hal_temp_sensors *temp_sensors;
 /* local copy of temperature sensor readings */
 static struct hal_temp_sensors temp_sensors_local;
 
-static uint64_t seconds = 0;
-static uint32_t nanoseconds = 0;
+static uint64_t seconds;
+static uint32_t nanoseconds;
 
 void help(char *prgname)
 {
