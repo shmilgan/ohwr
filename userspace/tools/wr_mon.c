@@ -632,6 +632,7 @@ int main(int argc, char *argv[])
 	}
 
 	init_shm();
+	term_init(usecolor);
 
 	if (mode & WEB_INTERFACE) {
 		read_servo();
@@ -644,7 +645,7 @@ int main(int argc, char *argv[])
 		pr_error("Can't initialize FPGA mmap\n");
 		exit(1);
 	}
-	term_init(usecolor);
+
 	setvbuf(stdout, NULL, _IOFBF, 4096);
 
 	/* main loop */
