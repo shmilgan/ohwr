@@ -589,6 +589,8 @@ int main(int argc, char *argv[])
 	uint64_t last_seconds = 0;
 	uint32_t nanoseconds = 0;
 	uint32_t last_nanoseconds = 0;
+	char *time_str;
+	int time_str_len = 0;
 
 	wrs_msg_init(argc, argv);
 
@@ -677,10 +679,15 @@ int main(int argc, char *argv[])
 			read_hal();
 
 			/* FIXME: get the function call show_time() working */
-			if (mode & SHOW_WR_TIME)
-				printf("TIME %s.%09d ", format_time(seconds),
-					nanoseconds);
-
+			if (mode & SHOW_WR_TIME) {
+				time_str = asctime(gmtime(&seconds));
+				time_str_len = strlen(time_str);
+				time_str[time_str_len-1]=0;
+				
+				/* FIXME: print more in style of stat cont on wrpc */
+				printf("TIME %s nsec:%09d", time_str, nanoseconds);
+			}
+			
 			show_all();
 
 			last_seconds = seconds;
