@@ -15,7 +15,7 @@
 #include <libwr/switch_hw.h>
 #include <libwr/hal_client.h>
 
-static void parse_sysfs(int init);
+static void parse_sysfs(void);
 
 #define NPORTS 18
 #define CNT_PP 39
@@ -25,7 +25,13 @@ struct cnt_word {
 	uint64_t init;
 };
 
-struct cnt_word cnt_pp[NPORTS][CNT_PP];
+#define IF_SIZE 8
+struct p_cnt {
+	char if_name[IF_SIZE];
+	struct cnt_word counters[CNT_PP];
+};
+
+struct p_cnt cnt_pp[NPORTS];
 int use_ports;
 
 char info[][20] = {{"Tu-run|"}, // 0
@@ -72,57 +78,66 @@ char info[][20] = {{"Tu-run|"}, // 0
 int pstats_init(int init)
 {
 	int i, j;
+	FILE *file;
+	uint32_t p_index, cntr;
+	uint32_t tmp1;
+	uint32_t tmp2;
+	uint64_t val;
+	char filename[30];
 
 	printf("module initialized\n");
 
 	for(i=0; i<use_ports; ++i)
 		for(j=0; j<CNT_PP; ++j)
 		{
-			cnt_pp[i][j].init = 0;
-			cnt_pp[i][j].cnt = 0;
+			cnt_pp[i].counters[j].init = 0;
+			cnt_pp[i].counters[j].cnt = 0;
 		}
-	parse_sysfs(init);
+
+	for (p_index = 0; p_index < use_ports; ++p_index) {
+		/* wrport is numbered from 1 to 18 */
+		snprintf(cnt_pp[p_index].if_name, IF_SIZE, "wri%u",
+			p_index + 1);
+
+		if (init == 1) {
+			sprintf(filename, "/proc/sys/pstats/wrport%u",
+				p_index + 1);
+			file = fopen(filename, "r");
+			for (cntr = 0; cntr < CNT_PP; ++cntr) {
+				fscanf(file, "%" SCNu32, &tmp1);
+				fscanf(file, "%" SCNu32, &tmp2);
+				val = (((uint64_t) tmp2) << 32) | tmp1;
+				cnt_pp[p_index].counters[cntr].init = val;
+			}
+			fclose(file);
+		}
+	}
+	parse_sysfs();
 	return 0;
 }
 
-static void parse_sysfs(int init)
+static void parse_sysfs(void)
 {
 	FILE *file;
-	uint32_t port, cntr;
+	uint32_t p_index, cntr;
 	uint32_t tmp1;
 	uint32_t tmp2;
 	uint64_t val;
 	char filename[30];
 
-	if (init == 1) {
-		for(port=0; port<use_ports; ++port) {
-			sprintf(filename, "/proc/sys/pstats/wrport%u",
-				port + 1);
-			file = fopen(filename, "r");
-			for(cntr=0; cntr<CNT_PP; ++cntr) {
-				fscanf(file, "%" SCNu32, &tmp1);
-				fscanf(file, "%" SCNu32, &tmp2);
-				val = (((uint64_t) tmp2) << 32) | tmp1;
-				cnt_pp[port][cntr].init = val;
-			}
-			fclose(file);
+	for (p_index = 0; p_index < use_ports; ++p_index) {
+		/* wrport is numbered from 1 to 18 */
+		sprintf(filename, "/proc/sys/pstats/wrport%u",
+			p_index + 1);
+		file = fopen(filename, "r");
+		for (cntr = 0; cntr < CNT_PP; ++cntr) {
+			fscanf(file, "%" SCNu32, &tmp1);
+			fscanf(file, "%" SCNu32, &tmp2);
+			val = (((uint64_t) tmp2) << 32) | tmp1;
+			cnt_pp[p_index].counters[cntr].cnt =
+				val - cnt_pp[p_index].counters[cntr].init;
 		}
-	}
-	else {
-		for(port=0; port<use_ports; ++port) {
-
-			sprintf(filename, "/proc/sys/pstats/wrport%u",
-				port + 1);
-			file = fopen(filename, "r");
-			for(cntr=0; cntr<CNT_PP; ++cntr) {
-				fscanf(file, "%" SCNu32, &tmp1);
-				fscanf(file, "%" SCNu32, &tmp2);
-				val = (((uint64_t) tmp2) << 32) | tmp1;
-				cnt_pp[port][cntr].cnt =
-						val - cnt_pp[port][cntr].init;
-			}
-			fclose(file);
-		}
+		fclose(file);
 	}
 }
 
@@ -130,8 +145,8 @@ static void parse_sysfs(int init)
 void print_first_n_cnts(int n_cnts)
 {
 	int cnt = 0;
-	int port = 0;
-	printf("P |");
+	int p_index = 0;
+	printf("P    |");
 	for(cnt=0; cnt<n_cnts; ++cnt)
 		printf("%2d:%s", cnt,info[cnt]);
 	printf("\n");
@@ -140,11 +155,11 @@ void print_first_n_cnts(int n_cnts)
 		printf("----------");
 
 	printf("\n");
-	for(port=0; port<use_ports; ++port)
+	for (p_index = 0; p_index < use_ports; ++p_index)
 	{
-		printf("%2u|", port);
-		for(cnt=0; cnt<n_cnts;++cnt)
-			printf("%9llu|", cnt_pp[port][cnt].cnt);
+		printf("%-5s|", cnt_pp[p_index].if_name);
+		for (cnt = 0; cnt < n_cnts; ++cnt)
+			printf("%9llu|", cnt_pp[p_index].counters[cnt].cnt);
 		printf("\n");
 	}
 }
@@ -152,9 +167,9 @@ void print_first_n_cnts(int n_cnts)
 void print_chosen_cnts( int cnts_list[], int n_cnts)
 {
 	int cnt = 0;
-	int port = 0;
+	int p_index = 0;
 
-	printf("P |");
+	printf("P    |");
 	for(cnt=0; cnt<n_cnts; ++cnt)
 		printf("%2d:%s", cnts_list[cnt],info[cnts_list[cnt]]);
 	printf("\n");
@@ -162,11 +177,12 @@ void print_chosen_cnts( int cnts_list[], int n_cnts)
 	for(cnt=0; cnt<n_cnts; ++cnt)
 	printf("----------");
 	printf("\n");
-	for(port=0; port<use_ports; ++port)
+	for (p_index = 0; p_index < use_ports; ++p_index)
 	{
-		printf("%2u|", port);
-		for(cnt=0; cnt<n_cnts;++cnt)
-			printf("%9llu|", cnt_pp[port][cnts_list[cnt]].cnt);
+		printf("%-5s|", cnt_pp[p_index].if_name);
+		for (cnt = 0; cnt < n_cnts; ++cnt)
+			printf("%9llu|",
+				cnt_pp[p_index].counters[cnts_list[cnt]].cnt);
 		printf("\n");
 	}
 }
@@ -226,7 +242,7 @@ int main(int argc, char **argv)
 	while(1)
 	{
 		printf("\033[2J\033[1;1H");
-		parse_sysfs(0);
+		parse_sysfs();
 		switch(op) {
 			case 'p':
 				print_chosen_cnts(prio_cnts, 8);
