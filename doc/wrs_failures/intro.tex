@@ -1,14 +1,25 @@
 \section{Introduction}
 
-This document tries to list all possible ways the White Rabbit Switch can
-break and describes the information exported from our device to help diagnose
-the problems.
+This document provides information about the diagnostics of White Rabbit
+switches. It is a complementary documentation to the official \emph{White Rabbit
+Switch: User's Manual} published with every stable firmware release. Please
+refer to this user manual for a basic information about the switch and
+guidelines on its configuration.\\
 
-The document is organized in two parts. First one (section \ref{sec:failures})
-tries to list all the possible failures that may disturb synchronization and
-Ethernet switching. The structure of each failure description is the following:
+White Rabbit Switch firmware starting from \emph{v4.2} provides diagnostic
+mechanisms in the form of SNMP objects and Syslog messages. This document is
+organized in two parts. It starts with a description of the SNMP objects and
+procedures to be followed if various errors are reported (section
+\ref{sec:snmp_exports}). This first part is meant for the operators and people
+integrating a WR switch into a control system, without the deep knowledge about
+the White Rabbit internals. These people usually have to perform a quick
+diagnostics and decide on actions to restore a WR network.
+Second part of the document tries to list all the possible failures
+that may disturb synchronization and Ethernet switching (section
+\ref{sec:failures}). It is meant for the WR experts to help them with in-depth
+diagnosis of the problems reported by SNMP.
 
-Section \ref{sec:snmp_exports} is a documentation for people integrating WR
-switch into a control system, operators and WR experts. It describes all
-essential SNMP objects exported by the device divided into two groups:
-\emph{Operator/basic objects}, \emph{Expert objects}
+This document has many internal hyperlinks that associate general SNMP status
+objects and expert SNMP objects with related problems' description and the other
+way round. These links can be easily used when reading the document on a
+computer.
