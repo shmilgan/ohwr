@@ -222,15 +222,16 @@ config WRS_LOG_PTP
 
 config WRS_LOG_SNMPD
 	string "Logging directions for the SNMP daemon"
-	default "sd"
+	default "Swd"
 	help
 	  The string can be a pathname (e.g. /dev/kmsg) or a valid snmpd log
-	  option (without -L). "sd" or "s daemon" will forward messages to
-	  syslog with daemon as facility. To set level (i.e. 5) use
-	  "S 5 daemon". For details please check "man snmpcmd". An empty
+	  option (without -L). "Swd" will forward messages with priority at
+	  least warning to syslog with daemon as facility. To set level (i.e. 5)
+	  use "S 5 daemon". For details please check "man snmpcmd". An empty
 	  strings is used  to represent no logging (like /dev/null). Please
 	  note that unknown facility names will generate a runtime error on the
-	  switch.
+	  switch. NOTE: It looks like Notice is not a default logging priority
+	  as writen in manual.
 
 config WRS_LOG_MONIT
 	string "Logging directions for the monit"
