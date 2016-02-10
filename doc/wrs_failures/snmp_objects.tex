@@ -417,18 +417,24 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsRestartReason}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsFaultIP}{Not implemented}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsFaultLR}{Not implemented}
-  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsConfigSource}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsConfigSourceUrl}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsConfigSource}{Source of a
+    configuration file. When it is set to \texttt{tryDhcp}, then a failure of
+    getting the URL via DHCP does not rise an error in
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsBootSuccessful}} }
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsConfigSourceUrl}{Path to the
+  dot-config on a remote server (if local file is not used).}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsRestartReasonMonit}{
     Process that caused \texttt{monit} to trigger a restart.}
-  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootConfigStatus}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootConfigStatus}{Result of
+  the dot-config verification.}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootHwinfoReadout}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootLoadFPGA}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootLoadLM32}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootKernelModulesMissing}{
     List of kernel modules is defined in the source code.}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootUserspaceDaemonsMissing}{
-    List of daemons is defined in the source code.}
+    Number of missing (not running while they should) processes in embedded
+    Linux.}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsGwWatchdogTimeouts}{
     Number of times the watchdog has restarted the HDL module responsible for
     the Ethernet switching process}
@@ -446,7 +452,8 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsMemoryGroup}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsMemoryGroup}{wrsMemoryTotal}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsMemoryGroup}{wrsMemoryUsed}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsMemoryGroup}{wrsMemoryUsedPerc}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsMemoryGroup}{wrsMemoryUsedPerc}{Percentage of
+    used memory.}
   \snmpentrye{WR-SWITCH-MIB}{wrsMemoryGroup}{wrsMemoryFree}{}
 
   \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsCpuLoadGroup}{}
@@ -520,20 +527,22 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPclass6.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPclass7.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsTXFrames.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXFrames.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXFrames.<n>}{Total number
+    of Rx frames on port \emph{n} }
   \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXDropRTUFull.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio0.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio1.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio2.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio3.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio4.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio5.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio6.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio7.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio0.<n>}{Rx priority 0}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio1.<n>}{Rx priority 1}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio2.<n>}{Rx priority 2}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio3.<n>}{Rx priority 3}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio4.<n>}{Rx priority 4}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio5.<n>}{Rx priority 5}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio6.<n>}{Rx priority 6}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio7.<n>}{Rx priority 7}
   \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRTUValid.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRTUResponses.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRTUDropped.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsFastMatchPriority.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsFastMatchPriority.<n>}{HP
+    frames on port \emph{n}}
   \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsFastMatchFastForward.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsFastMatchNonForward.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsFastMatchRespValid.<n>}{}
@@ -550,12 +559,16 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpOwnID.<n>}{
     Not implemented.}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpMode.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoState.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoStateN.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoState.<n>}{PTP servo
+  state as string}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoStateN.<n>}{PTP servo
+  state as number}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpPhaseTracking.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpSyncSource.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpClockOffsetPs.<n>}{}
-  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpClockOffsetPsHR.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpClockOffsetPs.<n>}{value of
+  the offset in ps}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpClockOffsetPsHR.<n>}{32-bit
+  signed value of the offset in picoseconds, with saturation}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpSkew.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpRTT.<n>}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpLinkLength.<n>}{}
@@ -593,7 +606,7 @@
 % Add entries from other MIBs.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\snmpentryo{HOST-RESOURCES-MIB}{}{hrSWRunName.<n>}{}
+\snmpentryo{HOST-RESOURCES-MIB}{}{hrSWRunName.<n>}{List of running processes.}
 \snmpentryo{HOST-RESOURCES-MIB}{}{hrStorageDescr.<n>}{}
 \snmpentryo{HOST-RESOURCES-MIB}{}{hrStorageSize.<n>}{}
 \snmpentryo{HOST-RESOURCES-MIB}{}{hrStorageUsed.<n>}{}

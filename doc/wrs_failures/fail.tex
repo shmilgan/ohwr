@@ -71,8 +71,8 @@ WR network.
 				synchronization to its Master.
 			\item [] \underline{SNMP objects}:\\
         {\footnotesize
-				\snmpadd{WR-SWITCH-MIB::wrsPtpServoState.<n>} -- PTP servo state as string\\
-				\snmpadd{WR-SWITCH-MIB::wrsPtpServoStateN.<n>} -- PTP servo state as number\\
+				\snmpadd{WR-SWITCH-MIB::wrsPtpServoState.<n>}\\
+				\snmpadd{WR-SWITCH-MIB::wrsPtpServoStateN.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPtpServoStateErrCnt.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPTPStatus} \\
 				\snmpadd{WR-SWITCH-MIB::wrsTimingStatus} \\
@@ -93,8 +93,8 @@ WR network.
 				clock), but the WR Slave does not follow the jump.
 			\item [] \underline{SNMP objects}:\\
         {\footnotesize
-				\snmpadd{WR-SWITCH-MIB::wrsPtpClockOffsetPs.<n>} -- value of the offset in ps\\
-				\snmpadd{WR-SWITCH-MIB::wrsPtpClockOffsetPsHR.<n>} -- 32-bit signed value of the offset in ps; with saturation\\
+				\snmpadd{WR-SWITCH-MIB::wrsPtpClockOffsetPs.<n>}\\
+				\snmpadd{WR-SWITCH-MIB::wrsPtpClockOffsetPsHR.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPtpClockOffsetErrCnt.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPTPStatus} \\
 				\snmpadd{WR-SWITCH-MIB::wrsTimingStatus} \\
@@ -188,7 +188,7 @@ WR network.
 			\item [] \underline{SNMP objects}:\\
         {\footnotesize
 				\snmpadd{WR-SWITCH-MIB::wrsSpllIrqCnt}\\
-        \snmpadd{WR-SWITCH-MIB::wrsStartCntSPLL} \emph{(not yet implemented)} }
+        \snmpadd{WR-SWITCH-MIB::wrsStartCntSPLL} }
 			\item [] \underline{Note}: We have a similar mechanism as in the
 				\emph{wrpc-sw} to detect if the LM32 program has restarted because of
 				the CPU following a NULL pointer. However, LM32 program hangs on
@@ -518,16 +518,16 @@ list of faults leading to a data error.
 				unacceptable.
 			\item [] \underline{SNMP objects}:\\
         {\footnotesize
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsFastMatchPriority.<n>} -- HP frames on a port\\
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXFrames.<n>} -- Total number of Rx frames on the port\\
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio0.<n>} -- Rx priority 0\\
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio1.<n>} -- Rx priority 1\\
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio2.<n>} -- Rx priority 2\\
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio3.<n>} -- Rx priority 3\\
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio4.<n>} -- Rx priority 4\\
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio5.<n>} -- Rx priority 5\\
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio6.<n>} -- Rx priority 6\\
-				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio7.<n>} -- Rx priority 7\\
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsFastMatchPriority.<n>} \\
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXFrames.<n>} \\
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio0.<n>} \\
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio1.<n>} \\
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio2.<n>} \\
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio3.<n>} \\
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio4.<n>} \\
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio5.<n>} \\
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio6.<n>} \\
+				\snmpadd{WR-SWITCH-MIB::wrsPstatsRXPrio7.<n>} \\
 				\snmpadd{WR-SWITCH-MIB::wrsSwcoreStatus}\\
 				\snmpadd{WR-SWITCH-MIB::wrsNetworkingStatus}\\
         \snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }
@@ -637,7 +637,7 @@ list of faults leading to a data error.
 				\snmpadd{WR-SWITCH-MIB::wrsBootLoadLM32}\\
 				\snmpadd{WR-SWITCH-MIB::wrsBootKernelModulesMissing}\\
 				\snmpadd{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing}\\
-				\snmpadd{WR-SWITCH-MIB::wrsBootSuccessful} -- status word informing whether switch booted correctly\\
+				\snmpadd{WR-SWITCH-MIB::wrsBootSuccessful} \\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
         \snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }
 			\item [] \underline{Note}: 
@@ -662,16 +662,10 @@ list of faults leading to a data error.
         downloading or verification has failed, an alarm is raised.
 			\item [] \underline{SNMP objects}:\\
         {\footnotesize
-				\snmpadd{WR-SWITCH-MIB::wrsConfigSource} -- source of a dot-config,
-					local, remote or get URL to the dot-config via DHCP. When
-					\texttt{wrsConfigSource} is set to the \texttt{tryDhcp}, then failure of
-					getting dot-config's URL via DHCP does not rise an error in
-					\texttt{wrsBootSuccessful}\\
-				\snmpadd{WR-SWITCH-MIB::wrsConfigSourceUrl} -- path to the dot-config
-					on a server (if not local)\\
-				\snmpadd{WR-SWITCH-MIB::wrsBootConfigStatus} -- result of the dot-config verification\\
-				\snmpadd{WR-SWITCH-MIB::wrsBootSuccessful} -- status word informing
-					whether switch booted correctly\\
+				\snmpadd{WR-SWITCH-MIB::wrsConfigSource} \\
+				\snmpadd{WR-SWITCH-MIB::wrsConfigSourceUrl} \\
+				\snmpadd{WR-SWITCH-MIB::wrsBootConfigStatus} \\
+				\snmpadd{WR-SWITCH-MIB::wrsBootSuccessful} \\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
         \snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }
 		\end{pck_descr}
@@ -688,7 +682,7 @@ list of faults leading to a data error.
 				100 seconds, then the entire switch is restarted.
 			\item [] \underline{SNMP objects}:\\
         {\footnotesize
-				\snmpadd{HOST-RESOURCES-MIB::hrSWRunName.<n>} -- list of processes in standard MIB\\
+				\snmpadd{HOST-RESOURCES-MIB::hrSWRunName.<n>} \\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntHAL}\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntPTP}\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntRTUd}\\
@@ -697,9 +691,9 @@ list of faults leading to a data error.
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntSnmpd}\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntSyslogd}\\
 				\snmpadd{WR-SWITCH-MIB::wrsStartCntWrsWatchdog}\\
-				\snmpadd{WR-SWITCH-MIB::wrsStartCntSPLL} \emph{(not implemented)}\\
-				\snmpadd{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing} -- number of missing processes\\
-				\snmpadd{WR-SWITCH-MIB::wrsBootSuccessful} -- status word informing whether switch booted correctly\\
+				\snmpadd{WR-SWITCH-MIB::wrsStartCntSPLL}\\
+				\snmpadd{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing}\\
+				\snmpadd{WR-SWITCH-MIB::wrsBootSuccessful} \\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
         \snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }
 			\item [] \underline{Note}: We shall distinguish between crucial
@@ -764,8 +758,8 @@ list of faults leading to a data error.
 				\snmpadd{WR-SWITCH-MIB::wrsBootCnt}\\
 				\snmpadd{WR-SWITCH-MIB::wrsRebootCnt}\\
 				\snmpadd{WR-SWITCH-MIB::wrsRestartReason}\\
-				\snmpadd{WR-SWITCH-MIB::wrsFaultIP} \emph{(not implemented)}\\
-				\snmpadd{WR-SWITCH-MIB::wrsFaultLR} \emph{(not implemented)}\\
+				\snmpadd{WR-SWITCH-MIB::wrsFaultIP}\\
+				\snmpadd{WR-SWITCH-MIB::wrsFaultLR}\\
 				\snmpadd{WR-SWITCH-MIB::wrsBootSuccessful}\\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
         \snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }
@@ -788,9 +782,9 @@ list of faults leading to a data error.
         {\footnotesize
         \snmpadd{WR-SWITCH-MIB::wrsMemoryTotal}\\
 				\snmpadd{WR-SWITCH-MIB::wrsMemoryUsed}\\
-				\snmpadd{WR-SWITCH-MIB::wrsMemoryUsedPerc} -- percentage of used memory\\
+				\snmpadd{WR-SWITCH-MIB::wrsMemoryUsedPerc}\\
 				\snmpadd{WR-SWITCH-MIB::wrsMemoryFree}\\
-				\snmpadd{WR-SWITCH-MIB::wrsMemoryFreeLow} -- warning or error on low memory\\
+				\snmpadd{WR-SWITCH-MIB::wrsMemoryFreeLow}\\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
         \snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }
 		\end{pck_descr}
@@ -811,7 +805,7 @@ list of faults leading to a data error.
 				\snmpadd{WR-SWITCH-MIB::wrsDiskFree.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsDiskUseRate.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsDiskFilesystem.<n>}\\
-				\snmpadd{WR-SWITCH-MIB::wrsDiskSpaceLow} -- warning or error on low disk space\\
+				\snmpadd{WR-SWITCH-MIB::wrsDiskSpaceLow}\\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
 				\snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus}\\
 				\snmpadd{HOST-RESOURCES-MIB::hrStorageDescr.<n>}\\
@@ -840,7 +834,7 @@ list of faults leading to a data error.
         \snmpadd{WR-SWITCH-MIB::wrsCPULoadAvg1min}\\
 				\snmpadd{WR-SWITCH-MIB::wrsCPULoadAvg5min}\\
 				\snmpadd{WR-SWITCH-MIB::wrsCPULoadAvg15min}\\
-				\snmpadd{WR-SWITCH-MIB::wrsCpuLoadHigh} -- warning or error when CPU load too high\\
+				\snmpadd{WR-SWITCH-MIB::wrsCpuLoadHigh}\\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
         \snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }
 		\end{pck_descr}
@@ -902,7 +896,7 @@ list of faults leading to a data error.
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusSfpVS.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusSfpGbE.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusSfpError.<n>}\\
-				\snmpadd{WR-SWITCH-MIB::wrsSFPsStatus} -- status word for SFPs' status\\
+				\snmpadd{WR-SWITCH-MIB::wrsSFPsStatus}\\
 				\snmpadd{WR-SWITCH-MIB::wrsNetworkingStatus}\\
         \snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }
 		\end{pck_descr}
