@@ -34,17 +34,17 @@ fi
 rm -f "$tmpdir"/dot-config_source_url
 
 # If we are expected to get a new dot-conf, do it
-if [ -n "$CONFIG_DOTCONF_SOURCE_REMOTE" ] || [ -n "$CONFIG_DOTCONF_SOURCE_TRY_DHCP" ] \
-	|| [ -n "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" ]; then
+if [ "$CONFIG_DOTCONF_SOURCE_REMOTE" = "y" ] || [ "$CONFIG_DOTCONF_SOURCE_TRY_DHCP" = "y" ] \
+	|| [ "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" = "y" ]; then
     echo "remote" > "$tmpdir"/dot-config_source
 
     # get URL via DHCP
-    if [ -n "$CONFIG_DOTCONF_SOURCE_TRY_DHCP" ] \
-	    || [ -n "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" ]; then
-	if [ -n "$CONFIG_DOTCONF_SOURCE_TRY_DHCP" ]; then
+    if [ "$CONFIG_DOTCONF_SOURCE_TRY_DHCP" = "y" ] \
+	    || [ "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" = "y" ]; then
+	if [ "$CONFIG_DOTCONF_SOURCE_TRY_DHCP" = "y" ]; then
 	    echo "try_dhcp" > "$tmpdir"/dot-config_source
 	fi
-	if [ -n "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" ]; then
+	if [ "$CONFIG_DOTCONF_SOURCE_FORCE_DHCP" = "y" ]; then
 	    echo "force_dhcp" > "$tmpdir"/dot-config_source
 	fi
 
@@ -114,7 +114,7 @@ if [ -n "$CONFIG_DOTCONF_SOURCE_REMOTE" ] || [ -n "$CONFIG_DOTCONF_SOURCE_TRY_DH
 	echo "download_error" > "$tmpdir"/dot-config_status
 	echo "Download error for dot-config \"$URL\", using old"
     fi
-elif [ -n "$CONFIG_DOTCONF_SOURCE_LOCAL" ]; then
+elif [ "$CONFIG_DOTCONF_SOURCE_LOCAL" = "y" ]; then
     echo "local" > "$tmpdir"/dot-config_source
     echo "Using local dot-config"
 else

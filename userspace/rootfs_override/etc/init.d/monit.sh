@@ -51,7 +51,7 @@ init() {
 	loop_forever
     fi
 
-    if [ -z "$CONFIG_MONIT_DISABLE" ]; then
+    if [ "$CONFIG_MONIT_DISABLE" != "y" ]; then
 
 	if [ -z $CONFIG_WRS_LOG_MONIT ]; then
 	    LOG="";

@@ -31,7 +31,7 @@ ip link set eth0 down
 # wait after down to make udhcpc to work properly
 sleep 1
 
-if [ "$CONFIG_ETH0_STATIC" ] || [ "$CONFIG_ETH0_DHCP_ONCE" ]; then
+if [ "$CONFIG_ETH0_STATIC" = "y" ] || [ "$CONFIG_ETH0_DHCP_ONCE" = "y" ]; then
     echo "Write IP address"
     echo "# File generated from dot-config, do not edit!" > $int_file
     echo "# Configure Loopback" >> $int_file
@@ -58,7 +58,7 @@ if [ "$CONFIG_ETH0_STATIC" ] || [ "$CONFIG_ETH0_DHCP_ONCE" ]; then
 
 fi
 
-if [ "$CONFIG_ETH0_DHCP_ONCE" ]; then
+if [ "$CONFIG_ETH0_DHCP_ONCE" = "y" ]; then
     echo "Try DHCP to get IP"
     # try dhcp, if fail use static IP
     udhcpc -i eth0 -n
@@ -70,7 +70,7 @@ if [ "$CONFIG_ETH0_DHCP_ONCE" ]; then
     fi
 fi
 
-if [ "$CONFIG_ETH0_STATIC" ]; then
+if [ "$CONFIG_ETH0_STATIC" = "y" ]; then
     # ifup to use static parameters from /etc/netwrok/interfaces
     echo "Using static IP"
     ifup eth0
