@@ -29,6 +29,7 @@ SOURCES = \
 	dot-config.c \
 	snmp_shmem.c \
 	snmp_mmap.c \
+	util.c \
 	wrsScalar.c \
 	wrsGeneralStatusGroup.c \
 	wrsOSStatusGroup.c \

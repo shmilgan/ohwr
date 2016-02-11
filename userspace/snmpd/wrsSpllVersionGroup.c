@@ -34,7 +34,7 @@ time_t wrsSpllVersion_data_fill(void)
 	static time_t time_update;
 	time_t time_cur;
 
-	time_cur = time(NULL);
+	time_cur = get_monotonic_sec();
 	if (time_update
 	    && time_cur - time_update < WRSSPLLVERSION_CACHE_TIMEOUT) {
 		/* cache not updated, return last update time */

@@ -27,7 +27,7 @@ time_t wrsCurrentTime_data_fill(void)
 	struct tm tm;
 	uint64_t wrs_d_current_64;
 
-	time_cur = time(NULL);
+	time_cur = get_monotonic_sec();
 	if (time_update
 	    && time_cur - time_update < WRSCURRENTTIME_CACHE_TIMEOUT) {
 		/* cache not updated, return last update time */

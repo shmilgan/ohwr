@@ -231,7 +231,7 @@ time_t wrsGeneralStatus_data_fill(void)
 						WRS_MAIN_SYSTEM_STATUS_BUG;
 	}
 
-	time_update = time(NULL);
+	time_update = get_monotonic_sec();
 
 	/* there was an update, return current time */
 	return time_update;

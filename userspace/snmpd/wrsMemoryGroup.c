@@ -29,7 +29,7 @@ time_t wrsMemory_data_fill(void)
 	int ret = 0;
 	char key[41]; /* 1 for null char */
 
-	time_cur = time(NULL);
+	time_cur = get_monotonic_sec();
 	if (time_update
 	    && time_cur - time_update < WRSMEMORY_CACHE_TIMEOUT) {
 		/* cache not updated, return last update time */

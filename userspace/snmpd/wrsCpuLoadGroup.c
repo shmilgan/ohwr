@@ -17,7 +17,7 @@ time_t wrsCpuLoad_data_fill(void)
 
 	struct sysinfo info;
 
-	time_cur = time(NULL);
+	time_cur = get_monotonic_sec();
 	if (time_update
 	    && time_cur - time_update < WRSCPULOAD_CACHE_TIMEOUT) {
 		/* cache not updated, return last update time */

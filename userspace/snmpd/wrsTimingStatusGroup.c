@@ -73,7 +73,7 @@ time_t wrsTimingStatus_data_fill(void)
 		get_wrsPTPFramesFlowing(port_status_nrows);
 	}
 
-	time_update = time(NULL);
+	time_update = get_monotonic_sec();
 	/* there was an update, return current time */
 	return time_update;
 }

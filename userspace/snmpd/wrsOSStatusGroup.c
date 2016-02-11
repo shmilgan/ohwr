@@ -60,7 +60,7 @@ time_t wrsOSStatus_data_fill(void)
 		/* cache not updated, return last update time */
 		return time_update;
 	}
-	time_update = time(NULL);
+	time_update = get_monotonic_sec();
 
 	memset(&wrsOSStatus_s, 0, sizeof(wrsOSStatus_s));
 	/*********************************************************************\

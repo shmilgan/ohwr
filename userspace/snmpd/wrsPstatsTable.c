@@ -64,7 +64,7 @@ wrsPstatsTable_data_fill(unsigned int *n_rows)
 	if (n_rows)
 		*n_rows = WRS_N_PORTS;
 
-	time_cur = time(NULL);
+	time_cur = get_monotonic_sec();
 	if (time_update
 	    && time_cur - time_update < WRSPSTATSTABLE_CACHE_TIMEOUT) {
 		/* cache not updated, return last update time */

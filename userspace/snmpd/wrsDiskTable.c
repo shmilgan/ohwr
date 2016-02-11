@@ -44,7 +44,7 @@ time_t wrsDiskTable_data_fill(unsigned int *ret_n_rows)
 	if (ret_n_rows)
 		*ret_n_rows = n_rows;
 
-	time_cur = time(NULL);
+	time_cur = get_monotonic_sec();
 	if (time_update
 	    && time_cur - time_update < WRSDISKTABLE_CACHE_TIMEOUT) {
 		/* cache not updated, return last update time */

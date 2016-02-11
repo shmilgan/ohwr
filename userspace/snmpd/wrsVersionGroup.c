@@ -82,7 +82,7 @@ time_t wrsVersion_data_fill(void)
 	static int run_once = 0;
 
 	time_t time_cur;
-	time_cur = time(NULL);
+	time_cur = get_monotonic_sec();
 
 	/* assume that version does not change in runtime */
 	if (run_once) {

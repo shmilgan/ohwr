@@ -4,6 +4,7 @@
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
+#include "libwr/util.h"
 
 /* Crap! -- everybody makes them different, and even ppsi::ieee wants them */
 #undef FALSE
