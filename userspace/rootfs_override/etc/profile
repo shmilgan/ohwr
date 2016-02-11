@@ -54,7 +54,13 @@ if [ "$PS1" ]; then
     alias bc='calc -Cd '
 fi;
 
-export PS1="wrs-`ifconfig eth0 | grep inet | awk -F: '{ print $2 }' | awk '{ print $1 }'`#"
+HOST_NAME=`/bin/hostname`
+
+if [ "$HOST_NAME" != "(none)" ]; then
+    export PS1="$HOST_NAME#"
+else
+    export PS1="wrs-`ifconfig eth0 | grep inet | awk -F: '{ print $2 }' | awk '{ print $1 }'`#"
+fi
 
 echo -n "dot-config status: "
 if [ -f /tmp/dot-config_status ]; then
