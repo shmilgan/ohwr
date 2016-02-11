@@ -41,6 +41,7 @@
 #include <libwr/wrs-msg.h>
 #include <libwr/shmem.h>
 #include <libwr/rtu_shmem.h>
+#include <libwr/util.h>
 
 #include "rtu_fd.h"
 #include "rtu_drv.h"
@@ -298,7 +299,9 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 			if ((ent->port_mask_dst != mask_dst) || (ent->port_mask_src != mask_src)) {	// something new
 				ent->port_mask_dst = mask_dst;
 				ent->port_mask_src = mask_src;
-				ent->last_access_t = now();	//ML: update time always when updating the entry
+				/* ML: update time always when updating
+				 * the entry */
+				ent->last_access_t = get_monotonic_sec();
 				hw_request(HW_WRITE_REQ, ent->addr, ent);
 			}
 			/* Case 2: MAC not found */
@@ -333,7 +336,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 			ent->port_mask_src = 0xFFFFFFFF;	//ML: filtering on ingress is optional according to 802.1Q-2012
 			//by default it should not happen. TODO: add optional config
 			ent->dynamic = dynamic;
-			ent->last_access_t = now();
+			ent->last_access_t = get_monotonic_sec();
 			mac_copy(ent->mac, mac);
 			hw_request(HW_WRITE_REQ, eaddr, ent);
 		}
@@ -515,7 +518,7 @@ static void rtu_fd_age_update(void)
 	rtu_read_aging_bitmap(bitmap);
 
 	// Update 'last access time' for accessed entries
-	t = now();
+	t = get_monotonic_sec();
 	// HTAB
 	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
 	for (i = 0; i < RTU_ENTRIES / 32; i++)
@@ -587,7 +590,7 @@ static void rtu_fd_age_out(void)
 	struct rtu_filtering_entry *ent; /* pointer to scan tables */
 	unsigned long t;	// (secs)
 
-	t = now() - aging_time;
+	t = get_monotonic_sec() - aging_time;
 	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
 
 	// HTAB

@@ -93,14 +93,6 @@ static inline struct rtu_filtering_entry *rtu_fe_clean(
 	return memset(ent, 0, sizeof(*ent));
 }
 
-/**
- * \brief Returns number of seconds since the epoch.
- */
-static inline unsigned long now(void)
-{
-	return (unsigned long)time(NULL);
-}
-
 int rtud_init_exports(void);
 void rtud_handle_wripc(void);
 
