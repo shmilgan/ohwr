@@ -127,6 +127,29 @@ config ETH0_GATEWAY
 
 endmenu
 
+choice
+	prompt "Hostname source"
+	default HOSTNAME_DHCP
+
+config HOSTNAME_DHCP
+	bool "Get hostname via DHCP"
+	help
+	  Get hostname from DHCP server.
+
+config HOSTNAME_STATIC
+	bool "Use static hostname"
+	help
+	  Use static Hostname stored in CONFIG_HOSTNAME_STRING
+
+endchoice
+
+config HOSTNAME_STRING
+	string "Static hostname of the switch"
+	default "wrs"
+	depends on HOSTNAME_STATIC
+	help
+	  Use this string as a static hostname of the switch.
+
 menu "Root Password"
 
 config ROOT_PWD_IS_ENCRYPTED

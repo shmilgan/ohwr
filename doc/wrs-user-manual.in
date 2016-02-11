@@ -504,6 +504,14 @@ value is changed by the web interface, proper action is taken.
 	Management port's (@t{eth0}) static IP configuration when
 	@t{CONFIG_ETH0_DHCP_ONCE} or @t{CONFIG_ETH0_STATIC} parameter is used.
 
+@item CONFIG_HOSTNAME_DHCP
+@itemx CONFIG_HOSTNAME_STATIC
+@itemx CONFIG_HOSTNAME_STRING
+
+	These options describe how to set hostname of the switch. From DHCP
+	(@t{CONFIG_HOSTNAME_DHCP}) or use a predefined value
+	(@t{CONFIG_HOSTNAME_STATIC}) defined in option @t{CONFIG_HOSTNAME_STRING}.
+
 @item CONFIG_ROOT_PWD_IS_ENCRYPTED
 @itemx CONFIG_ROOT_PWD_CLEAR
 @itemx CONFIG_ROOT_PWD_CYPHER

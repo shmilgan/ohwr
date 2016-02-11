@@ -58,10 +58,17 @@ if [ "$CONFIG_ETH0_STATIC" = "y" ] || [ "$CONFIG_ETH0_DHCP_ONCE" = "y" ]; then
 
 fi
 
+if [ "$CONFIG_HOSTNAME_STATIC" = "y" ]; then
+    /bin/hostname "$CONFIG_HOSTNAME_STRING"
+    echo "$CONFIG_HOSTNAME_STRING" > /etc/hostname
+elif [ "$CONFIG_HOSTNAME_DHCP" = "y" ]; then
+    DHCP_OPT_EXTRA="-O hostname -s /wr/bin/dhcp_extra_opt.sh"
+fi
+
 if [ "$CONFIG_ETH0_DHCP_ONCE" = "y" ]; then
     echo "Try DHCP to get IP"
     # try dhcp, if fail use static IP
-    udhcpc -i eth0 -n
+    udhcpc -i eth0 -n $DHCP_OPT_EXTRA
     if [ $? -ne 0 ]; then
 	echo "Failed to obtain IP address via DHCP, set static IP"
 	CONFIG_ETH0_STATIC="y"
@@ -80,4 +87,4 @@ fi
 # Try to get IP via dhcp if failed run dhcp client forever in background.
 # If no information how to get IP address is available use this option.
 echo "Using DHCP to get IP"
-udhcpc -b -i eth0
+udhcpc -b -i eth0 $DHCP_OPT_EXTRA
