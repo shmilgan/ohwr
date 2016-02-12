@@ -512,7 +512,7 @@ void show_temperatures(void)
 
 void show_time(void)
 {
-	printf("TIME sec: %lld nsec:%d ", seconds, nanoseconds);
+	printf("TIME sec:%lld nsec:%d ", seconds, nanoseconds);
 }
 
 void show_all(void)
