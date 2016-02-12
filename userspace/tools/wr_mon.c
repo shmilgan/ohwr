@@ -21,20 +21,21 @@
 
 #define SHOW_GUI		0
 #define SHOW_SLAVE_PORTS	1
-#define SHOW_MASTER_PORTS	2
-#define SHOW_OTHER_PORTS	4
-#define SHOW_SERVO		8
-#define SHOW_TEMPERATURES	16
-#define WEB_INTERFACE		32 /* TJP: still has it's own print
-				    *      function, ugly
-				    */
-#define SHOW_WR_TIME		64
+#define SHOW_MASTER_PORTS	(1<<1)
+#define SHOW_OTHER_PORTS	(1<<2)
+#define SHOW_SERVO		(1<<3)
+#define SHOW_TEMPERATURES	(1<<4)
+#define WEB_INTERFACE		(1<<5) /* TJP: still has it's own print
+					*      function, ugly
+					*/
+#define SHOW_WR_TIME		(1<<6)
 
-#define SHOW_ALL_PORTS		{SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS\
-				|SHOW_OTHER_PORTS}
+/* for convenience when any or all ports needs a print statement */
+#define SHOW_ALL_PORTS		(SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS|\
+				SHOW_OTHER_PORTS)
 /* for convenience with -a option */
-#define SHOW_ALL		{SHOW_ALL_PORTS|SHOW_SERVO|SHOW_TEMPERATURES\
-				|SHOW_WR_TIME}
+#define SHOW_ALL		(SHOW_ALL_PORTS|SHOW_SERVO|SHOW_TEMPERATURES|\
+				SHOW_WR_TIME)
 
 int mode = SHOW_GUI;
 
@@ -42,20 +43,20 @@ static struct minipc_ch *ptp_ch;
 
 static struct wrs_shm_head *hal_head;
 static struct hal_port_state *hal_ports;
-static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS]; /* local copy
-								   * of port
-								   * state
-								   */
+/* local copy of port state */
+static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS];
 static int hal_nports_local;
 static struct wrs_shm_head *ppsi_head;
 static struct pp_globals *ppg;
 static struct wr_servo_state *ppsi_servo;
-static struct wr_servo_state ppsi_servo_local; /* local copy of	servo status */
+static struct wr_servo_state ppsi_servo_local; /* local copy of servo status */
 static pid_t ptp_ch_pid; /* pid of ppsi connected via minipc */
 static struct hal_temp_sensors *temp_sensors;
-static struct hal_temp_sensors temp_sensors_local; /* local copy of temperature
-						    * sensor readings
-						    */
+/* local copy of temperature sensor readings */
+static struct hal_temp_sensors temp_sensors_local;
+
+static uint64_t seconds;
+static uint32_t nanoseconds;
 
 void help(char *prgname)
 {
@@ -71,8 +72,8 @@ void help(char *prgname)
 		"  -o   show other ports\n"
 		"  -e   show servo statistics\n"
 		"  -t   show temperatures\n"
-		"  -a   show all (same as -i -m -s -o -e- t options)\n"
-		"  -c   use colour output\n"
+		"  -a   show all (same as -i -m -s -o -e -t options)\n"
+		"  -b   black and white output\n"
 		"  -w   web interface mode\n"
 		"\n"
 		"During execution the user can enter 'q' to exit the program\n"
@@ -88,9 +89,9 @@ int read_hal(void){
 	while (1) {
 		ii = wrs_shm_seqbegin(hal_head);
 		memcpy(hal_ports_local_copy, hal_ports,
-			   hal_nports_local*sizeof(struct hal_port_state));
+		       hal_nports_local*sizeof(struct hal_port_state));
 		memcpy(&temp_sensors_local, temp_sensors,
-			   sizeof(*temp_sensors));
+		       sizeof(*temp_sensors));
 		retries++;
 		if (retries > 100)
 			return -1;
@@ -234,7 +235,7 @@ void show_ports(void)
 		t = (time_t)_fpga_readl(FPGA_BASE_PPS_GEN + 8 /* UTC_LO */);
 		tm = localtime(&t);
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
-		term_cprintf(C_BLUE, "WR time:  %s\n", datestr);
+		term_cprintf(C_BLUE, "WR time:     %s\n", datestr);
 	}
 	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
 		printf("PORTS ");
@@ -279,7 +280,7 @@ void show_ports(void)
 		case HEXP_PORT_MODE_NON_WR:
 			if (mode == SHOW_GUI) {
 				print_mode_color = C_WHITE;
-				strcpy(if_mode, "Non WR  ");
+				strcpy(if_mode, "Non WR     ");
 			} else if (mode & SHOW_OTHER_PORTS) {
 				print_port = 1;
 				strcpy(if_mode, "N");
@@ -290,7 +291,7 @@ void show_ports(void)
 		case HEXP_PORT_MODE_WR_M_AND_S:
 			if (mode == SHOW_GUI) {
 				print_mode_color = C_WHITE;
-				strcpy(if_mode, "WR auto   ");
+				strcpy(if_mode, "WR auto    ");
 			} else if (mode &
 				(SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
 				print_port = 1;
@@ -302,7 +303,7 @@ void show_ports(void)
 		default:
 			if (mode == SHOW_GUI) {
 				print_mode_color = C_WHITE;
-				strcpy(if_mode, "Unknown     ");
+				strcpy(if_mode, "Unknown    ");
 			} else if (mode & SHOW_OTHER_PORTS) {
 				print_port = 1;
 				strcpy(if_mode, "U");
@@ -321,9 +322,9 @@ void show_ports(void)
 				term_cprintf(C_RED, "Link down  ");
 			term_cprintf(C_WHITE, if_mode);
 			if (port_state->locked)
-				term_cprintf(C_GREEN, "Locked  ");
+				term_cprintf(C_GREEN, "Locked     ");
 			else
-				term_cprintf(C_RED, "NoLock  ");
+				term_cprintf(C_RED, "NoLock     ");
 
 			/*
 			 * Actually, what is interesting is the PTP state.
@@ -376,15 +377,15 @@ void show_servo(void)
 	total_asymmetry = ppsi_servo_local.picos_mu -
 			  2LL * ppsi_servo_local.delta_ms;
 	crtt = ppsi_servo_local.picos_mu - ppsi_servo_local.delta_tx_m -
-		   ppsi_servo_local.delta_rx_m - ppsi_servo_local.delta_tx_s -
-		   ppsi_servo_local.delta_rx_s;
+	       ppsi_servo_local.delta_rx_m - ppsi_servo_local.delta_tx_s -
+	       ppsi_servo_local.delta_rx_s;
 
 	if(mode == SHOW_GUI) {
 		term_cprintf(C_BLUE, "\nSynchronization status:\n");
 
 		if (!(ppsi_servo_local.flags & WR_FLAG_VALID)) {
 			term_cprintf(C_RED,
-				"Master mode or sync info not valid\n");
+				     "Master mode or sync info not valid\n");
 			return;
 		}
 
@@ -393,60 +394,60 @@ void show_servo(void)
 			term_cprintf(C_RED, " --- not updating --- ");
 		} else {
 			term_cprintf(C_WHITE, "%s: %s%s\n",
-				 ppsi_servo_local.if_name,
-				 ppsi_servo_local.servo_state_name,
-				 ppsi_servo_local.flags & WR_FLAG_WAIT_HW ?
-				 " (wait for hw)" : "");
+				     ppsi_servo_local.if_name,
+				     ppsi_servo_local.servo_state_name,
+				     ppsi_servo_local.flags & WR_FLAG_WAIT_HW ?
+				     " (wait for hw)" : "");
 		}
 
 		/* "tracking disabled" is just a testing tool */
 		if (!ppsi_servo_local.tracking_enabled)
 			term_cprintf(C_RED, "Tracking forcibly disabled\n");
 
-		term_cprintf(C_BLUE, "\nTiming parameters:\n\n");
+		term_cprintf(C_BLUE, "\nTiming parameters:\n");
 
 		term_cprintf(C_GREY, "Round-trip time (mu): ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-				 ppsi_servo_local.picos_mu/1000.0);
+			     ppsi_servo_local.picos_mu/1000.0);
 
 		term_cprintf(C_GREY, "Master-slave delay:   ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-				 ppsi_servo_local.delta_ms/1000.0);
+			     ppsi_servo_local.delta_ms/1000.0);
 
 		term_cprintf(C_GREY, "Master PHY delays:    ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
-				 ppsi_servo_local.delta_tx_m/1000.0,
-				 ppsi_servo_local.delta_rx_m/1000.0);
+			     ppsi_servo_local.delta_tx_m/1000.0,
+			     ppsi_servo_local.delta_rx_m/1000.0);
 
 		term_cprintf(C_GREY, "Slave PHY delays:     ");
 		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
-				 ppsi_servo_local.delta_tx_s/1000.0,
-				 ppsi_servo_local.delta_rx_s/1000.0);
+			     ppsi_servo_local.delta_tx_s/1000.0,
+			     ppsi_servo_local.delta_rx_s/1000.0);
 
 		term_cprintf(C_GREY, "Total link asymmetry: ");
 		term_cprintf(C_WHITE, "%.3f nsec\n", total_asymmetry/1000.0);
 
 		/*if (0) {
-			term_cprintf(C_GREY, "Fiber asymmetry:		   ");
+			term_cprintf(C_GREY, "Fiber asymmetry:   ");
 			term_cprintf(C_WHITE, "%.3f nsec\n",
 				ss.fiber_asymmetry/1000.0);
 		}*/
 
 		term_cprintf(C_GREY, "Clock offset:         ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-				 ppsi_servo_local.offset/1000.0);
+			     ppsi_servo_local.offset/1000.0);
 
 		term_cprintf(C_GREY, "Phase setpoint:       ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-				 ppsi_servo_local.cur_setpoint/1000.0);
+			     ppsi_servo_local.cur_setpoint/1000.0);
 
 		term_cprintf(C_GREY, "Skew:                 ");
 		term_cprintf(C_WHITE, "%.3f nsec\n",
-				 ppsi_servo_local.skew/1000.0);
+			     ppsi_servo_local.skew/1000.0);
 
 		term_cprintf(C_GREY, "Servo update counter: ");
 		term_cprintf(C_WHITE, "%u times\n",
-				 ppsi_servo_local.update_count);
+			     ppsi_servo_local.update_count);
 		if (ppsi_servo_local.update_count != last_count) {
 			lastt = time(NULL);
 			last_count = ppsi_servo_local.update_count;
@@ -466,9 +467,9 @@ void show_servo(void)
 		printf("mu:%llu ", ppsi_servo_local.picos_mu);
 		printf("dms:%llu ", ppsi_servo_local.delta_ms);
 		printf("dtxm:%d drxm:%d ", ppsi_servo_local.delta_tx_m,
-					   ppsi_servo_local.delta_rx_m);
+		       ppsi_servo_local.delta_rx_m);
 		printf("dtxs:%d drxs:%d ", ppsi_servo_local.delta_tx_s,
-					   ppsi_servo_local.delta_rx_s);
+		       ppsi_servo_local.delta_rx_s);
 		printf("asym:%lld ", total_asymmetry);
 		printf("crtt:%llu ", crtt);
 		printf("cko:%lld ", ppsi_servo_local.offset);
@@ -490,16 +491,16 @@ void show_temperatures(void)
 
 		term_cprintf(C_GREY, "FPGA: ");
 		term_cprintf(C_WHITE, "%2.2f ",
-				 temp_sensors_local.fpga/256.0);
+			     temp_sensors_local.fpga/256.0);
 		term_cprintf(C_GREY, "PLL: ");
 		term_cprintf(C_WHITE, "%2.2f ",
-				 temp_sensors_local.pll/256.0);
+			     temp_sensors_local.pll/256.0);
 		term_cprintf(C_GREY, "PSL: ");
 		term_cprintf(C_WHITE, "%2.2f ",
-				 temp_sensors_local.psl/256.0);
+			     temp_sensors_local.psl/256.0);
 		term_cprintf(C_GREY, "PSR: ");
 		term_cprintf(C_WHITE, "%2.2f\n",
-				 temp_sensors_local.psr/256.0);
+			     temp_sensors_local.psr/256.0);
 	} else {
 		printf("TEMP ");
 		printf("fpga:%2.2f ", temp_sensors_local.fpga/256.0);
@@ -509,12 +510,10 @@ void show_temperatures(void)
 	}
 }
 
-/* FIXME: this should work (as far as my C goes) but it doesnt */
-/* void show_time(void)
+void show_time(void)
 {
-	printf("TIME %s.%09d ", format_time((uint64_t)ppsi_servo_local.mu.seconds),
-				(uint32_t)ppsi_servo_local.mu.nanoseconds);
-} */
+	printf("TIME sec:%lld nsec:%d ", seconds, nanoseconds);
+}
 
 void show_all(void)
 {
@@ -524,25 +523,23 @@ void show_all(void)
 	if (mode == SHOW_GUI) {
 		term_clear();
 		term_pcprintf(1, 1, C_BLUE,
-				  "WR Switch Sync Monitor %s[q = quit]\n\n",
-				  __GIT_VER__);
+			      "WR Switch Sync Monitor %s[q = quit]\n\n",
+			      __GIT_VER__);
 	}
 
 	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0));
 	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0));
 
 	if (mode & SHOW_WR_TIME) {
-		/* FIXME: get this working, delete error messages around
-		 *        show_servo() when this works */
-/*		if (ppsi_alive)
+		if (ppsi_alive)
 			show_time();
 		else if (mode == SHOW_GUI)
 			term_cprintf(C_RED, "\nPPSI is dead!\n");
 		else if (mode == SHOW_ALL)
-			printf("PPSI is dead!\n"); */
+			printf("PPSI is dead!\n");
 	}
 
-	if (mode & (SHOW_ALL_PORTS|WEB_INTERFACE) || mode == SHOW_GUI) {
+	if ((mode & (SHOW_ALL_PORTS|WEB_INTERFACE)) || mode == SHOW_GUI) {
 		if (hal_alive)
 			show_ports();
 		else if (mode == SHOW_GUI)
@@ -552,13 +549,8 @@ void show_all(void)
 	}
 
 	if (mode & SHOW_SERVO || mode == SHOW_GUI) {
-		/* FIXME: remove error messages here if show_time() works, see above */
 		if (ppsi_alive)
 			show_servo();
-		else if (mode == SHOW_GUI)
-			term_cprintf(C_RED, "\nPPSI is dead!\n");
-		else if (mode == SHOW_ALL)
-			printf("PPSI is dead!\n");
 	}
 
 	if (mode & SHOW_TEMPERATURES || mode == SHOW_GUI) {
@@ -576,21 +568,16 @@ void show_all(void)
 int main(int argc, char *argv[])
 {
 	int opt;
-	int usecolor = 0;
+	int usecolor = 1;
 	int track_onoff = 1;
 
-	/* for an update_count based approach */
-	uint32_t last_count = 0;
-
 	/* try a pps_gen based approach */
-	uint64_t seconds = 0;
 	uint64_t last_seconds = 0;
-	uint32_t nanoseconds = 0;
 	uint32_t last_nanoseconds = 0;
 
 	wrs_msg_init(argc, argv);
 
-	while ((opt = getopt(argc, argv, "himsoetacwqv")) != -1) {
+	while ((opt = getopt(argc, argv, "himsoetabwqv")) != -1) {
 		switch(opt)
 		{
 			case 'h':
@@ -616,8 +603,8 @@ int main(int argc, char *argv[])
 			case 'a':
 				mode |= SHOW_ALL;
 				break;
-			case 'c':
-				usecolor = 1;
+			case 'b':
+				usecolor = 0;
 				break;
 			case 'w':
 				mode |= WEB_INTERFACE;
@@ -630,6 +617,7 @@ int main(int argc, char *argv[])
 	}
 
 	init_shm();
+	term_init(usecolor);
 
 	if (mode & WEB_INTERFACE) {
 		read_servo();
@@ -642,7 +630,7 @@ int main(int argc, char *argv[])
 		pr_error("Can't initialize FPGA mmap\n");
 		exit(1);
 	}
-	term_init(usecolor);
+
 	setvbuf(stdout, NULL, _IOFBF, 4096);
 
 	/* main loop */
@@ -672,11 +660,6 @@ int main(int argc, char *argv[])
 		if (seconds != last_seconds && track_onoff) {
 			read_servo();
 			read_hal();
-
-			/* FIXME: get the function call show_time() working */
-			if (mode & SHOW_WR_TIME)
-				printf("TIME %s.%09d ", format_time(seconds),
-					nanoseconds);
 
 			show_all();
 
