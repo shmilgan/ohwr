@@ -1,0 +1,614 @@
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Add status entries in the order as the appear in the MIB
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\snmpentrys{WR-SWITCH-MIB}{}{wrsGeneralStatusGroup}{
+  Group containing collective status of the switch and its various
+  subsystems.}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsGeneralStatusGroup}{wrsMainSystemStatus}{
+    \underline{Description:}
+    WRS general status of a switch can be \texttt{OK}, \texttt{Warning} or
+    \texttt{Error}. In case of an error or warning, please check the values of
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsOSStatus}},
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsTimingStatus}} and
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsNetworkingStatus}} to find out which
+    subsystem causes the problem.
+    \glspar \underline{Related problems:}}
+  \snmpentrys{WR-SWITCH-MIB}{wrsGeneralStatusGroup}{wrsOSStatus}{
+    \underline{Description:}
+    Collective status of the operating system running on WR switch. In case of
+    an error or warning, please check status objects in the
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsOSStatusGroup}}.
+    \glspar \underline{Related problems:}}
+  \snmpentrys{WR-SWITCH-MIB}{wrsGeneralStatusGroup}{wrsTimingStatus}{
+    \underline{Description:}
+    Collective status of the synchronization subsystem. In case of an
+    error or warning, please check status objects in the
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsTimingStatusGroup}}.
+    \glspar \underline{Related problems:}}
+  \snmpentrys{WR-SWITCH-MIB}{wrsGeneralStatusGroup}{wrsNetworkingStatus}{
+    \underline{Description:}
+    Collective status of the Ethernet switching subsystem. In case of an error
+    or warning, please check status objects in the
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsNetworkingStatusGroup}}.
+    \glspar \underline{Related problems:}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\snmpentrys{WR-SWITCH-MIB}{}{wrsDetailedStatusesGroup}{
+  Branch with collective statuses of various switch subsystems.}
+
+  %------------------------------------------------------------------------
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsDetailedStatusesGroup}{wrsOSStatusGroup}{
+    \underline{Description:}
+    Group with collective statuses of the embedded operating system running on
+    the switch.}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsOSStatusGroup}{wrsBootSuccessful}{
+    \underline{Description:}
+    Grouped status of \texttt{\glshyperlink{WR-SWITCH-MIB::wrsBootStatusGroup}},
+    indicating whether boot was
+    successful. \texttt{Error} when dot-config source is wrong, unable to get
+    the dot-config, unable to get URL to the dot-config, dot-config contains
+    errors, unable to read the hwinfo, unable to load the FPGA bitstream, unable
+    to load the LM32 software, any kernel modules or userspace daemons are
+    missing.\\
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Dump state
+      \item Check \texttt{\glshyperlink{WR-SWITCH-MIB::wrsBootConfigStatus}},
+        if it reports an error, please verify your WRS configuration.
+      \item Restart the switch
+      \item Please consult WR experts if the problem persists.
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsOSStatusGroup}{wrsTemperatureWarning}{
+    \underline{Description:}
+    Reports whether the temperature thresholds are not set or are exceeded.\\
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Dump state
+      \item Verify if your switch configuration contains valid temperature
+        thresholds. By default, they are all set to 80 \textdegree C.
+      \item Verify if cooling of the rack where WR Switch is installed works
+        properly.
+      \item Verify if both cooling fans in the back of the WR Switch case are
+        working.
+      \item Replace the switch with a new unit and consult the WR Switch
+        manufacturer for a repair.
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsOSStatusGroup}{wrsMemoryFreeLow}{
+    \underline{Description:}
+    Reports \texttt{Warning} when more than 50\%, or \texttt{Error} when more
+    than 80\% of the memory is used.\\
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Dump state
+      \item Restart the switch
+      \item Send the dumped state of the switch to WR experts for analysis as
+        this might mean there is some internal problem in the WRS firmware.
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsOSStatusGroup}{wrsCpuLoadHigh}{
+    \underline{Description:}
+    Reports \texttt{Warning} when the average CPU load is more than 2 for the past 1min,
+    1.5 for 5min or 1 for 15min. \texttt{Error} when the average CPU load is
+    more than 3 for the past 1min, 2 for 5min or 1.5 for 15min.\\
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Dump state
+      \item Restart the switch
+      \item Send the dumped state of the switch to WR experts for analysis as
+        this might mean there is some internal problem in the WRS firmware.
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+	\snmpentrys{WR-SWITCH-MIB}{wrsOSStatusGroup}{wrsDiskSpaceLow}{
+    \underline{Description:}
+    \texttt{Warning} when more than 80\% of any disk partition is used.
+    \texttt{Error} when more than 90\% of any disk partition is used.\\
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Dump state
+      \item Check the values of \emph{CONFIG\_WRS\_LOG\_*} configuration options
+        on the switch. These are the parameters describing where log messages
+        should be sent from various processes in the switch. Normally users
+        don't need to modify them, but if any of them is set to a file in the
+        WRS filesystem (e.g. /tmp/snmp.log) this may reduce the free space after
+        some time of operation.
+      \item Restart the switch
+      \item Send the dumped state of the switch to WR experts for analysis as
+        this might mean there is some internal problem in the WRS firmware.
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  %------------------------------------------------------------------------
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsDetailedStatusesGroup}{wrsTimingStatusGroup} {
+    \underline{Description:}
+    Group with collective statuses of the timing subsystem.} %}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsPTPStatus}{
+    \underline{Description:}
+    Reports the status of PTP daemon running on the switch.\\
+    \texttt{Error} when any of PTP error counters in
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsPtpDataTable}}\\
+    (\texttt{\glshyperlink{WR-SWITCH-MIB::wrsPtpServoStateErrCnt.<n>}},
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsPtpClockOffsetErrCnt.<n>}} or\\
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsPtpRTTErrCnt.<n>}})
+    has increased since the last scan (issue
+    \ref{fail:timing:ppsi_track_phase},
+    \ref{fail:timing:offset_jump}, \ref{fail:timing:rtt_jump}), at least one of
+    the $\Delta_{TXM}$, $\Delta_{RXM}$, $\Delta_{TXS}$, $\Delta_{RXS}$ is 0
+    (issue \ref{fail:timing:deltas_report}) or PTP servo update counter is not
+    increasing.\\
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Dump state
+      \item Check \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSoftPLLStatus}} on the
+        Master (WR device one step higher in a timing hierarchy). Eventually
+        proceed to investigate the problem on the Master switch. Otherwise,
+        continue with the primary WRS.
+      \item Verify if the link to WR Master was not lost by checking the
+        object\\ \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSlaveLinksStatus}}.
+      \item If this is not the case, restart the switch.
+      \item If the problem persists replace the switch with a new unit.
+        %(see \ref{cern:wrs_replacement}).
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsSoftPLLStatus}{
+    \underline{Description:}
+    Reports the status of the PLLs inside the switch.\\
+    \texttt{Error} when \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllSeqState}}
+    is not \emph{Ready}, or 
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllAlignState}} is not
+    \emph{Locked} (for Grand Master mode), or any of
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllHlock}},
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllMlock}} equals to 0 (for
+    Boundary Clock mode).\\
+    \texttt{Warning} when \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllDelCnt}}
+    $>$ 0 (for Grand Master mode) or
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSpllDelCnt}} has changed (for all
+    other modes).\\
+    \underline{On error:}\\
+    For GrandMaster WRS:
+    \begin{pck_proc}
+      \item Dump state
+      \item Check 1-PPS and 10 MHz signals coming from an external source.
+        Verify if they are properly connected and, in case of a GPS receiver,
+        check if it is synchronized and locked.
+      \item Restart the GrandMaster switch.
+      \item If the problem persists, replace the switch with a new unit.
+        %(see \ref{cern:wrs_replacement}).
+    \end{pck_proc}
+    \glspar For Boundary Clock WRS:
+    \begin{pck_proc}
+      \item Dump state
+      \item Check \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSoftPLLStatus}} on the
+        Master. Eventually proceed to investigate the problem on the Master
+        switch.
+      \item Verify if the link to WR Master was not lost by checking the
+        object\\ \texttt{\glshyperlink{WR-SWITCH-MIB::wrsSlaveLinksStatus}}.
+      \item Restart the switch.
+      \item If the problem persists, replace the switch with a new unit.
+        %(see \ref{cern:wrs_replacement}).
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsSlaveLinksStatus}{
+    \underline{Description:}
+    Reports the status of the link on WR ports configured to slave role.\\
+    \texttt{Error} when link to master is down for a switch in the Boundary
+    Clock mode. Additionally, \texttt{Error} is generated when the
+    link to master is up for a switch in the Free-running Master or Grand
+    Master mode.\\
+    \underline{On error:}\\
+    For Master/GrandMaster WRS:
+    \begin{pck_proc}
+      \item Check the configuration of the switch. Especially if the
+        \emph{Timing Mode} is correctly set (i.e. if it was not accidentally set
+        to \emph{Boundary Clock}).
+      \item Check the role of each port timing configuration. They should be all
+        set to \emph{master}. If any of them is set to \emph{slave} you should
+        verify if there is no WR Master connected to it.
+    \end{pck_proc}
+    \glspar For Boundary Clock WRS:
+    \begin{pck_proc}
+      \item Check the fiber connection on the slave port of the WRS.
+      \item Check the configuration of the switch. Especially if the
+        \emph{Timing Mode} is correctly set (i.e. if it was not accidentally set
+        to \emph{Grand-Master} or \emph{Free-Running Master}).
+      \item Check the status of the WR Master connected to the slave port of the
+        WRS.
+      \item Replace the faulty switch with a new unit, if this does not solve
+        the problem, make sure your fiber link is not broken.
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsPTPFramesFlowing}{
+    \underline{Description:}
+    Reports \texttt{Error} when PTP frames are not being sent and received on
+    active WR ports - Tx/Rx frame counters on active links (master / slave
+    ports) are not being incremented. Reports also \texttt{FirstRead} value.\\
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Check Syslog message to determine the WR port on which the
+        problem is reported. You should see a message similar to this one:\\
+        \texttt{SNMP: wrsPTPFramesFlowing failed for port 1}
+      \item Check your network layout and the WR Switch configuration. If you
+        have some non-WR devices connected to ports of the WR Switch (e.g.
+        computer sending/receiving only data, without the need of
+        synchronization), these ports should have their role in the timing
+        configuration set to \emph{non-wr}.
+      \item Check the status of a WR device connected to the reported port.
+      \item Restart the switch.
+      \item If the problem persists, please contact WR experts for in-depth
+        investigation.
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  %------------------------------------------------------------------------
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsDetailedStatusesGroup}{wrsNetworkingStatusGroup}{
+    \underline{Description:}
+    Group with collective statuses of the networking subsystem.}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsNetworkingStatusGroup}{wrsSFPsStatus}{
+    \underline{Description:}
+    Reports the status of SFP transceivers inserted to the switch.\\
+    \texttt{Error} when any of the SFPs reports an error. To find out which SFP
+    caused the problem check
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsPortStatusSfpError.<n>}}.\\
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Check \texttt{\glshyperlink{WR-SWITCH-MIB::wrsPortStatusSfpError.<n>}}
+        SNMP objects or Syslog
+        messages to determine the WR port on which the problem is reported. In
+        case of Syslog, you should see a message similar to this one:\\
+        \texttt{Unknown SFP vn="AVAGO" pn="ABCU-5710RZ" vs="AN1151PD8A" on port
+        wr1}
+      \item If the reported port is intended to be used to connect a device that
+        does not require WR synchronization (e.g. using a copper SFP module),
+        then you should verify whether the role in the timing configuration for
+        this port is set to \emph{non-wr}.
+      \item Otherwise, you should use a WR-supported SFP module and make sure it
+        is declared together with calibration values in the WRS configuration.
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsNetworkingStatusGroup}{wrsEndpointStatus}{
+    \underline{Description:}
+    Reports the status of Ethernet MAC endpoints on WR ports\\
+    \texttt{Error} when there is a fault in the Endpoint's
+    transmission/reception path.\\
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Make several state dumps.
+      \item Restart the switch.
+      \item Check Syslog messages to determine the WR port on which the problem
+        is reported. You should see a message similar to this one:\\
+        \texttt{SNMP: wrsEndpointStatus failed for port 1}
+      \item Check the fiber link on a reported port, i.e. try replacing SFP
+        transceivers on both sides of the link, try using another fiber.
+      \item If the problem persists, please contact WR experts for in-depth
+        investigation.
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsNetworkingStatusGroup}{wrsSwcoreStatus}{
+    \underline{Description:}
+    Reports the status of the Ethernet switching module.\\
+    Status object not implemented in the current firmware release. Always
+    reports \texttt{OK}.\\
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Dump state.
+      \item Restart the switch.
+      \item Please contact WR experts since this might mean that either there is
+        too much high priority traffic in your network, or there is some
+        internal problem in the WRS firmware.
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsNetworkingStatusGroup}{wrsRTUStatus}{
+    \underline{Description:}
+    Reports the status of the routing module responsible for deciding where (to
+    which port) incoming Ethernet frames should be forwarded.\\
+    \texttt{Error} when RTU is overloaded and cannot accept more requests.\\
+    \underline{On error:}
+    \begin{pck_proc}
+      \item Dump state
+      \item Restart the switch.
+      \item If possible, try reducing the load of small Ethernet frames flowing
+        through your switch. If possible in your application, try using larger
+        Ethernet frames with lower load to transfer information.
+    \end{pck_proc}
+    \glspar \underline{Related problems:}}
+
+  %------------------------------------------------------------------------
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsDetailedStatusesGroup}{wrsVersionGroup}{
+    \underline{Description:}
+    Hardware, gateware and software versions. Additionally the serial number and
+    other hardware information for the WRS.}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionSwVersion}{
+    \underline{Description:}
+    Software version in the form of release version and eventually git commit
+    from the repository (information provided from \emph{git describe} command
+    at build time).}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionSwBuildBy}{
+    \underline{Description:}
+    Information who has built the firmware running on the switch (provided from
+    \texttt{git config --get-all user.name} command at build time).}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionSwBuildDate}{
+    \underline{Description:}
+    Firmware build date (\texttt{\_\_DATE\_\_} at build time).}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionBackplaneVersion}{
+    \underline{Description:}
+    Hardware version of the Minibackplane board.}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionFpgaType}{
+    \underline{Description:}
+    FPGA model inside the switch.}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionManufacturer}{
+    \underline{Description:}
+    Name of the manufacturing company.}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionSwitchSerialNumber}{
+    \underline{Description:}
+    Serial number of the switch.}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionScbVersion}{
+    \underline{Description:}
+    Hardware version of the main SCB board.}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionGwVersion}{
+    \underline{Description:}
+    Version of the FPGA bitstream (Gateware).}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionGwBuild}{
+    \underline{Description:}
+    Build ID of the FGPA bitstream - the synthesis date}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionSwitchHdlCommitId}{
+    \underline{Description:}
+    FPGA bitstream commit ID from the main \texttt{wr\_switch\_hdl} repository.}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionGeneralCoresCommitId}{
+    \underline{Description:}
+    FPGA bitstream commit ID from the \texttt{general-cores} repository.}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionWrCoresCommitId}{
+    \underline{Description:}
+    FPGA bitstream commit ID from the \texttt{wr-cores} repository.}
+
+  \snmpentrys{WR-SWITCH-MIB}{wrsVersionGroup}{wrsVersionLastUpdateDate}{
+    \underline{Description:}
+    Date and time of the last firmware update. This information may not be
+    accurate, due to hard restarts or lack of the proper time during the
+    upgrade.}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Add expert entries in the order as the appear in the MIB
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\snmpentrye{WR-SWITCH-MIB}{}{wrsOperationStatus}{}
+
+  \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsCurrentTimeGroup}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsDateTAI}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsCurrentTimeGroup}{wrsDateTAIString}{}
+
+  \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsBootStatusGroup}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootCnt}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsRebootCnt}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsRestartReason}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsFaultIP}{Not implemented}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsFaultLR}{Not implemented}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsConfigSource}{Source of a
+    configuration file. When it is set to \texttt{tryDhcp}, then a failure of
+    getting the URL via DHCP does not rise an error in
+    \texttt{\glshyperlink{WR-SWITCH-MIB::wrsBootSuccessful}} }
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsConfigSourceUrl}{Path to the
+  dot-config on a remote server (if local file is not used).}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsRestartReasonMonit}{
+    Process that caused \texttt{monit} to trigger a restart.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootConfigStatus}{Result of
+  the dot-config verification.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootHwinfoReadout}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootLoadFPGA}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootLoadLM32}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootKernelModulesMissing}{
+    List of kernel modules is defined in the source code.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootUserspaceDaemonsMissing}{
+    Number of missing (not running while they should) processes in embedded
+    Linux.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsGwWatchdogTimeouts}{
+    Number of times the watchdog has restarted the HDL module responsible for
+    the Ethernet switching process}
+
+  \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsTemperatureGroup}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsTemperatureGroup}{wrsTempFPGA}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsTemperatureGroup}{wrsTempPLL}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsTemperatureGroup}{wrsTempPSL}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsTemperatureGroup}{wrsTempPSR}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsTemperatureGroup}{wrsTempThresholdFPGA}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsTemperatureGroup}{wrsTempThresholdPLL}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsTemperatureGroup}{wrsTempThresholdPSL}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsTemperatureGroup}{wrsTempThresholdPSR}{}
+
+  \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsMemoryGroup}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsMemoryGroup}{wrsMemoryTotal}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsMemoryGroup}{wrsMemoryUsed}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsMemoryGroup}{wrsMemoryUsedPerc}{Percentage of
+    used memory.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsMemoryGroup}{wrsMemoryFree}{}
+
+  \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsCpuLoadGroup}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsCpuLoadGroup}{wrsCPULoadAvg1min}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsCpuLoadGroup}{wrsCPULoadAvg5min}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsCpuLoadGroup}{wrsCPULoadAvg15min}{}
+
+  \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsDiskTable}{
+    Table with a row for every partition.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsDiskTable}{wrsDiskIndex.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsDiskTable}{wrsDiskMountPath.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsDiskTable}{wrsDiskSize.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsDiskTable}{wrsDiskUsed.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsDiskTable}{wrsDiskFree.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsDiskTable}{wrsDiskUseRate.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsDiskTable}{wrsDiskFilesystem.<n>}{}
+
+  \snmpentrye{WR-SWITCH-MIB}{}{wrsStartCntGroup}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntHAL}{issue \ref{fail:timing:hal_crash}, \ref{fail:other:daemon_crash}}
+  \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntPTP}{issue \ref{fail:timing:ppsi_crash}, \ref{fail:other:daemon_crash}}
+  \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntRTUd}{issue \ref{fail:data:rtu_crash}, \ref{fail:other:daemon_crash}}
+  \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntSshd}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntHttpd}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntSnmpd}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntSyslogd}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntWrsWatchdog}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsStartCntGroup}{wrsStartCntSPLL}{Not implemented}
+
+  \snmpentrye{WR-SWITCH-MIB}{}{wrsSpllState}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllState}{wrsSpllVersionGroup}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllVersionGroup}{wrsSpllVersion}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllVersionGroup}{wrsSpllBuildDate}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllState}{wrsSpllStatusGroup}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllStatusGroup}{wrsSpllMode}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllStatusGroup}{wrsSpllIrqCnt}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllStatusGroup}{wrsSpllSeqState}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllStatusGroup}{wrsSpllAlignState}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllStatusGroup}{wrsSpllHlock}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllStatusGroup}{wrsSpllMlock}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllStatusGroup}{wrsSpllHY}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllStatusGroup}{wrsSpllMY}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllStatusGroup}{wrsSpllDelCnt}{}
+%		xxx wrsSpllHoldover
+%		xxx wrsSpllHoldoverTime
+%		xxx (...)
+%     \snmpentrye{WR-SWITCH-MIB}{wrsSpllPerPortTable[18]
+%	
+%		xxx wrsSpllBlock
+%		xxx wrsSpllErr
+%	
+
+  \snmpentrye{WR-SWITCH-MIB}{}{wrsPstatsTable}{Table with pstats values, one row per port.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsIndex.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsPortName.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsTXUnderrun.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXOverrun.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXInvalidCode.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXSyncLost.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPauseFrames.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPfilterDropped.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPCSErrors.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXGiantFrames.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXRuntFrames.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXCRCErrors.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPclass0.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPclass1.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPclass2.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPclass3.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPclass4.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPclass5.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPclass6.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPclass7.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsTXFrames.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXFrames.<n>}{Total number
+    of Rx frames on port \emph{n} }
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXDropRTUFull.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio0.<n>}{Rx priority 0}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio1.<n>}{Rx priority 1}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio2.<n>}{Rx priority 2}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio3.<n>}{Rx priority 3}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio4.<n>}{Rx priority 4}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio5.<n>}{Rx priority 5}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio6.<n>}{Rx priority 6}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRXPrio7.<n>}{Rx priority 7}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRTUValid.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRTUResponses.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsRTUDropped.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsFastMatchPriority.<n>}{HP
+    frames on port \emph{n}}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsFastMatchFastForward.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsFastMatchNonForward.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsFastMatchRespValid.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsFullMatchRespValid.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsForwarded.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPstatsTable}{wrsPstatsTRURespValid.<n>}{}
+
+  \snmpentrye{WR-SWITCH-MIB}{}{wrsPtpDataTable}{Table with a row per PTP servo instance.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpIndex.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpPortName.<n>}{
+    The port on which the instance is running.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpGrandmasterID.<n>}{
+    Not implemented.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpOwnID.<n>}{
+    Not implemented.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpMode.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoState.<n>}{PTP servo
+  state as string}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoStateN.<n>}{PTP servo
+  state as number}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpPhaseTracking.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpSyncSource.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpClockOffsetPs.<n>}{value of
+  the offset in ps}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpClockOffsetPsHR.<n>}{32-bit
+  signed value of the offset in picoseconds, with saturation}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpSkew.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpRTT.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpLinkLength.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoUpdates.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpDeltaTxM.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpDeltaRxM.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpDeltaTxS.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpDeltaRxS.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoStateErrCnt.<n>}{
+    Number of the servo updates when servo is out of the \texttt{TRACK\_PHASE}.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpClockOffsetErrCnt.<n>}{
+    Number of servo updates when offset is larger than 500ps or smaller than
+    -500ps.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpRTTErrCnt.<n>}{
+    Number of servo updates when RTT delta between subsequent updates is larger
+    than 1000ps or smaller than -1000ps.}
+
+  \snmpentrye{WR-SWITCH-MIB}{}{wrsPortStatusTable}{Table with a row per port.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusIndex.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusPortName.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusLink.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusConfiguredMode.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusLocked.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusPeer.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpVN.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpPN.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpVS.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpInDB.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpGbE.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusSfpError.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusPtpTxFrames.<n>}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusPtpRxFrames.<n>}{}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Add entries from other MIBs.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\snmpentryo{HOST-RESOURCES-MIB}{}{hrSWRunName.<n>}{List of running processes.}
+\snmpentryo{HOST-RESOURCES-MIB}{}{hrStorageDescr.<n>}{}
+\snmpentryo{HOST-RESOURCES-MIB}{}{hrStorageSize.<n>}{}
+\snmpentryo{HOST-RESOURCES-MIB}{}{hrStorageUsed.<n>}{}
+\snmpentryo{IF-MIB}{}{ifOperStatus.<n>}{}
+
