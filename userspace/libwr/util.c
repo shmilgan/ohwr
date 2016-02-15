@@ -12,14 +12,13 @@ void shw_udelay_init(void)
 {
 	volatile int i;
 	int j, cur, min = 0;
-	struct timeval tv1, tv2;
+	uint64_t tv1, tv2;
 	for (j = 0; j < 10; j++) {
-		gettimeofday(&tv1, NULL);
+		tv1 = get_monotonic_tics();
 		for (i = 0; i < 100*1000; i++)
 			;
-		gettimeofday(&tv2, NULL);
-		cur = (tv2.tv_sec - tv1.tv_sec) * 1000 * 1000
-			+ tv2.tv_usec - tv1.tv_usec;
+		tv2 = get_monotonic_tics();
+		cur = tv2 - tv1;
 		/* keep minimum time, assuming we were scheduled-off less */
 		if (!min || cur < min)
 			min = cur;
