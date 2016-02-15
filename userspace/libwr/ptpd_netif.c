@@ -26,6 +26,7 @@
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/hal_client.h>
+#include <libwr/util.h>
 #include <net/ethernet.h>
 
 #ifdef NETIF_VERBOSE
@@ -48,31 +49,22 @@ struct etherpacket {
 	char data[ETH_DATA_LEN];
 };
 
-static uint64_t get_tics(void)
-{
-	struct timezone tz = { 0, 0 };
-	struct timeval tv;
-	gettimeofday(&tv, &tz);
-
-	return (uint64_t) tv.tv_sec * 1000000ULL + (uint64_t) tv.tv_usec;
-}
-
 static inline int tmo_init(struct wr_tmo * tmo, uint32_t milliseconds)
 {
-	tmo->start_tics = get_tics();
+	tmo->start_tics = get_monotonic_tics();
 	tmo->timeout = (uint64_t) milliseconds *1000ULL;
 	return 0;
 }
 
 static inline int tmo_restart(struct wr_tmo * tmo)
 {
-	tmo->start_tics = get_tics();
+	tmo->start_tics = get_monotonic_tics();
 	return 0;
 }
 
 static inline int tmo_expired(struct wr_tmo * tmo)
 {
-	return (get_tics() - tmo->start_tics > tmo->timeout);
+	return (get_monotonic_tics() - tmo->start_tics > tmo->timeout);
 }
 
 // cheks if x is inside range <min, max>
