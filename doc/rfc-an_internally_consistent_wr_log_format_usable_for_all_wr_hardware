@@ -1,0 +1,44 @@
+RFC: An internally consistent WR log format usable for all WR hardware.
+- -----------------------------------------------------------------------
+I think it would be nice to try to make the output of 'stat cont' on
+SPEC, WR-LEN, Switch (wr_mon), WR-ZEN consistent for machine parsing.
+Right now I see that the LEN/ZEN have yet another pretty print
+implemented, that my current scripts can't read (and really it is
+annoying to fix the scripts for each new format that is just not
+compattible...)
+
+I would suggest that each status update contains only one line of data
+(not 4 as on the LEN/ZEN), or that a structured data format (e.g. by
+use of {}) is implemented. On the LEN/ZEN there is currently a line of
+data for the mode, each of the wr ports and the temperature...
+
+Currently a format with field:value separated by spaces seems the most
+imlemented. I could imagine that this can be extended to:
+
+field:{field:value field:value} field:value
+
+where the highest level of hierarchy is not embraced. I can imagine
+that at some point we would come to comparison of various slave ports
+on a switch where for each slave port an active servo state is kept.
+Such a configuration, combined with hardware support for a latch of
+all data to a static register, could e.g. be used to support real time
+comparison of various clock domains. Currently the registers appear to
+have no support for hard real time capture of the register values
+(maybe I'm wrong there).
+
+At this point I see in the switch four domains that could be called
+"top level" in an extended format.
+
+TIME: hardware timestamp (currently as close to as possible) of the
+      capture time of the data
+SERVO: state of the servo that keeps track of the time, references which
+       port is tracked.
+PORTS: status of each port of a device
+TEMP: temperature of the temperature sensors on a device.
+
+In the current and proposed update of wr_mon the words TIME PORTS
+SERVO and TEMP are fields without value, showing this by the absence of :
+It is a question whether we need this in a more structured format. In
+my own parser such words are simply filtered (including the C in the
+temperature field of the SPEC, which I would suggest to drop, or to
+have a three semicolon separated field:value:unit form allowed too).
