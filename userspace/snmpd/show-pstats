@@ -2,7 +2,7 @@
 
 # Allow user override
 if [catch "set cmd \"\$env(SHOWPS_CMD)\""] {
-    set cmd "snmpwalk -c public -v 2c -On -Oq HOST .1.3.6.1.4.1.96.100.7.4.1"
+    set cmd "snmpwalk -c public -v 2c -On -Oq HOST .1.3.6.1.4.1.96.100.7.7.1"
 }
 
 if ![llength $argv] {
@@ -21,53 +21,53 @@ proc updatew {wname} {
 	    grid [label $wname.wr$i -text "WR$i" -fg blue] -row 0 -column $c
 	}
     }
-    set labels {wrsPstatsPortName
-		wrsPstatsTXUnderrun
-		wrsPstatsRXOverrun
-		wrsPstatsRXInvalidCode
-		wrsPstatsRXSyncLost
-		wrsPstatsRXPauseFrames
-		wrsPstatsRXPfilterDropped
-		wrsPstatsRXPCSErrors
-		wrsPstatsRXGiantFrames
-		wrsPstatsRXRuntFrames
-		wrsPstatsRXCRCErrors
-		wrsPstatsRXPclass0
-		wrsPstatsRXPclass1
-		wrsPstatsRXPclass2
-		wrsPstatsRXPclass3
-		wrsPstatsRXPclass4
-		wrsPstatsRXPclass5
-		wrsPstatsRXPclass6
-		wrsPstatsRXPclass7
-		wrsPstatsTXFrames
-		wrsPstatsRXFrames
-		wrsPstatsRXDropRTUFull
-		wrsPstatsRXPrio0
-		wrsPstatsRXPrio1
-		wrsPstatsRXPrio2
-		wrsPstatsRXPrio3
-		wrsPstatsRXPrio4
-		wrsPstatsRXPrio5
-		wrsPstatsRXPrio6
-		wrsPstatsRXPrio7
-		wrsPstatsRTUValid
-		wrsPstatsRTUResponses
-		wrsPstatsRTUDropped
-		wrsPstatsFastMatchPriority
-		wrsPstatsFastMatchFastForward
-		wrsPstatsFastMatchNonForward
-		wrsPstatsFastMatchRespValid
-		wrsPstatsFullMatchRespValid
-		wrsPstatsForwarded
-		wrsPstatsTRURespValid
+    set labels {wrsPstatsHCPortName
+		wrsPstatsHCTXUnderrun
+		wrsPstatsHCRXOverrun
+		wrsPstatsHCRXInvalidCode
+		wrsPstatsHCRXSyncLost
+		wrsPstatsHCRXPauseFrames
+		wrsPstatsHCRXPfilterDropped
+		wrsPstatsHCRXPCSErrors
+		wrsPstatsHCRXGiantFrames
+		wrsPstatsHCRXRuntFrames
+		wrsPstatsHCRXCRCErrors
+		wrsPstatsHCRXPclass0
+		wrsPstatsHCRXPclass1
+		wrsPstatsHCRXPclass2
+		wrsPstatsHCRXPclass3
+		wrsPstatsHCRXPclass4
+		wrsPstatsHCRXPclass5
+		wrsPstatsHCRXPclass6
+		wrsPstatsHCRXPclass7
+		wrsPstatsHCTXFrames
+		wrsPstatsHCRXFrames
+		wrsPstatsHCRXDropRTUFull
+		wrsPstatsHCRXPrio0
+		wrsPstatsHCRXPrio1
+		wrsPstatsHCRXPrio2
+		wrsPstatsHCRXPrio3
+		wrsPstatsHCRXPrio4
+		wrsPstatsHCRXPrio5
+		wrsPstatsHCRXPrio6
+		wrsPstatsHCRXPrio7
+		wrsPstatsHCRTUValid
+		wrsPstatsHCRTUResponses
+		wrsPstatsHCRTUDropped
+		wrsPstatsHCFastMatchPriority
+		wrsPstatsHCFastMatchFastForward
+		wrsPstatsHCFastMatchNonForward
+		wrsPstatsHCFastMatchRespValid
+		wrsPstatsHCFullMatchRespValid
+		wrsPstatsHCForwarded
+		wrsPstatsHCTRURespValid
     }
     # open a file according to the command given
     set F [open "| $w($wname:cmd)" r]
     while {[gets $F str] > 0} {
 	foreach {oid value} $str {
 	    # remove the leading part
-	    regsub ".1.3.6.1.4.1.96.100.7.4.1." $oid "" oid
+	    regsub ".1.3.6.1.4.1.96.100.7.7.1." $oid "" oid
 	    # extract column and row
 	    foreach {col row} [split $oid .] {
 		if ![string length $row] break
