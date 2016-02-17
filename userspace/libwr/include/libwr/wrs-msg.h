@@ -36,7 +36,7 @@ extern void wrs_msg_init(int argc, char **argv);
 #  define WRS_MSG_DEFAULT_LEVEL    LOG_WARNING
 #endif
 
-#define WRS_MSG_DETAILS_AT  LOG_INFO /* >= info (so, debug) use __LINE__ */
+#define WRS_MSG_DETAILS_AT  LOG_DEBUG /* >= for debug use __LINE__ */
 
 /* This is the external function for it all */
 extern void __wrs_msg(int level, const char *func, int line,
