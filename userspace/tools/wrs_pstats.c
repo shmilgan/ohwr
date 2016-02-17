@@ -5,6 +5,7 @@
 // #include<regs/dummy-regs.h>
 #include<time.h>
 #include<poll.h>
+#include <inttypes.h>
 
 /*temp*/
 #include <stddef.h>
@@ -26,8 +27,8 @@ static void parse_sysfs(int init);
 #define CNT_PP 39
 
 struct cnt_word {
-	uint32_t cnt;	//4 cntrs per 32-bit word
-	uint32_t init;
+	uint64_t cnt;
+	uint64_t init;
 };
 
 struct cnt_word cnt_pp[NPORTS][CNT_PP];
@@ -99,7 +100,10 @@ int pstats_init(int init)
 static void parse_sysfs(int init)
 {
 	FILE *file;
-	uint32_t port, cntr, val;
+	uint32_t port, cntr;
+	uint32_t tmp1;
+	uint32_t tmp2;
+	uint64_t val;
 	char filename[30];
 
 	if (init == 1) {
@@ -107,7 +111,9 @@ static void parse_sysfs(int init)
 			sprintf(filename, "/proc/sys/pstats/port%u", port);
 			file = fopen(filename, "r");
 			for(cntr=0; cntr<CNT_PP; ++cntr) {
-				fscanf(file, "%u\t", &val);
+				fscanf(file, "%" SCNu32, &tmp1);
+				fscanf(file, "%" SCNu32, &tmp2);
+				val = (((uint64_t) tmp2) << 32) | tmp1;
 				cnt_pp[port][cntr].init = val;
 			}
 			fclose(file);
@@ -119,7 +125,9 @@ static void parse_sysfs(int init)
 			sprintf(filename, "/proc/sys/pstats/port%u", port);
 			file = fopen(filename, "r");
 			for(cntr=0; cntr<CNT_PP; ++cntr) {
-				fscanf(file, "%u\t", &val);
+				fscanf(file, "%" SCNu32, &tmp1);
+				fscanf(file, "%" SCNu32, &tmp2);
+				val = (((uint64_t) tmp2) << 32) | tmp1;
 				cnt_pp[port][cntr].cnt = val - cnt_pp[port][cntr].init;
 			}
 			fclose(file);
@@ -145,7 +153,7 @@ void print_first_n_cnts(int n_cnts)
 	{
 		printf("%2u|", port);
 		for(cnt=0; cnt<n_cnts;++cnt)
-			printf("%9u|", cnt_pp[port][cnt].cnt);
+			printf("%9llu|", cnt_pp[port][cnt].cnt);
 		printf("\n");
 	}
 }
@@ -167,7 +175,7 @@ void print_chosen_cnts( int cnts_list[], int n_cnts)
 	{
 		printf("%2u|", port);
 		for(cnt=0; cnt<n_cnts;++cnt)
-			printf("%9u|", cnt_pp[port][cnts_list[cnt]].cnt);
+			printf("%9llu|", cnt_pp[port][cnts_list[cnt]].cnt);
 		printf("\n");
 	}
 }
