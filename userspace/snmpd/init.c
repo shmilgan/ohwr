@@ -23,9 +23,9 @@
 #include "wrsStartCntGroup.h"
 #include "wrsSpllVersionGroup.h"
 #include "wrsSpllStatusGroup.h"
-#include "wrsPstatsTable.h"
 #include "wrsPtpDataTable.h"
 #include "wrsPortStatusTable.h"
+#include "wrsPstatsHCTable.h"
 
 #define DOTCONFIG_FILE "/wr/etc/dot-config"
 
@@ -55,9 +55,9 @@ void init_wrsSnmp(void)
 	init_wrsStartCntGroup();
 	init_wrsSpllVersionGroup();
 	init_wrsSpllStatusGroup();
-	init_wrsPstatsTable();
 	init_wrsPtpDataTable();
 	init_wrsPortStatusTable();
+	init_wrsPstatsHCTable();
 
 	/* perform first reads, needed to calculate deltas later */
 	wrsTimingStatus_data_fill();

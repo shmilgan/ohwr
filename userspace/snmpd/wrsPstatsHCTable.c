@@ -1,55 +1,55 @@
 #include "wrsSnmp.h"
-#include "wrsPstatsTable.h"
+#include "wrsPstatsHCTable.h"
 
-struct wrsPstatsTable_s pstats_array[WRS_N_PORTS];
+struct wrsPstatsHCTable_s pstats_array[WRS_N_PORTS];
 
-static struct pickinfo wrsPstatsTable_pickinfo[] = {
+static struct pickinfo wrsPstatsHCTable_pickinfo[] = {
 	/* Warning: strings are a special case for snmp format */
-	FIELD(wrsPstatsTable_s, ASN_UNSIGNED, index), /* not reported */
-	FIELD(wrsPstatsTable_s, ASN_OCTET_STR, port_name),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, TXUnderrun),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXOverrun),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXInvalidCode),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXSyncLost),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPauseFrames),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPfilterDropped),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPCSErrors),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXGiantFrames),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXRuntFrames),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXCRCErrors),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPclass0),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPclass1),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPclass2),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPclass3),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPclass4),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPclass5),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPclass6),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPclass7),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, TXFrames),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXFrames),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXDropRTUFull),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPrio0),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPrio1),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPrio2),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPrio3),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPrio4),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPrio5),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPrio6),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RXPrio7),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RTUValid),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RTUResponses),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, RTUDropped),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, FastMatchPriority),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, FastMatchFastForward),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, FastMatchNonForward),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, FastMatchRespValid),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, FullMatchRespValid),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, Forwarded),
-	FIELD(wrsPstatsTable_s, ASN_COUNTER, TRURespValid),
+	FIELD(wrsPstatsHCTable_s, ASN_UNSIGNED, index), /* not reported */
+	FIELD(wrsPstatsHCTable_s, ASN_OCTET_STR, port_name),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, TXUnderrun),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXOverrun),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXInvalidCode),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXSyncLost),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPauseFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPfilterDropped),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPCSErrors),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXGiantFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXRuntFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXCRCErrors),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass0),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass1),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass2),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass3),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass4),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass5),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass6),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass7),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, TXFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXDropRTUFull),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio0),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio1),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio2),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio3),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio4),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio5),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio6),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio7),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RTUValid),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RTUResponses),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RTUDropped),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, FastMatchPriority),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, FastMatchFastForward),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, FastMatchNonForward),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, FastMatchRespValid),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, FullMatchRespValid),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, Forwarded),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, TRURespValid),
 };
 
 time_t
-wrsPstatsTable_data_fill(unsigned int *n_rows)
+wrsPstatsHCTable_data_fill(unsigned int *n_rows)
 {
 	FILE *f;
 	char fname[32];
@@ -66,7 +66,7 @@ wrsPstatsTable_data_fill(unsigned int *n_rows)
 
 	time_cur = get_monotonic_sec();
 	if (time_update
-	    && time_cur - time_update < WRSPSTATSTABLE_CACHE_TIMEOUT) {
+	    && time_cur - time_update < WRSPSTATSHCTABLE_CACHE_TIMEOUT) {
 		/* cache not updated, return last update time */
 		return time_update;
 	}
@@ -176,12 +176,12 @@ wrsPstatsTable_data_fill(unsigned int *n_rows)
 	return time_update;
 }
 
-#define TT_OID WRSPSTATSTABLE_OID
-#define TT_PICKINFO wrsPstatsTable_pickinfo
-#define TT_DATA_FILL_FUNC wrsPstatsTable_data_fill
+#define TT_OID WRSPSTATSHCTABLE_OID
+#define TT_PICKINFO wrsPstatsHCTable_pickinfo
+#define TT_DATA_FILL_FUNC wrsPstatsHCTable_data_fill
 #define TT_DATA_ARRAY pstats_array
-#define TT_GROUP_NAME "wrsPstatsTable"
-#define TT_INIT_FUNC init_wrsPstatsTable
-#define TT_CACHE_TIMEOUT WRSPSTATSTABLE_CACHE_TIMEOUT
+#define TT_GROUP_NAME "wrsPstatsHCTable"
+#define TT_INIT_FUNC init_wrsPstatsHCTable
+#define TT_CACHE_TIMEOUT WRSPSTATSHCTABLE_CACHE_TIMEOUT
 
 #include "wrsTableTemplate.h"

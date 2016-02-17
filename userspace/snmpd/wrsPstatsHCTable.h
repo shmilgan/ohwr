@@ -1,8 +1,8 @@
-#ifndef WRS_PSTATS_TABLE_H
-#define WRS_PSTATS_TABLE_H
+#ifndef WRS_PSTATS_HC_TABLE_H
+#define WRS_PSTATS_HC_TABLE_H
 
-#define WRSPSTATSTABLE_CACHE_TIMEOUT 5
-#define WRSPSTATSTABLE_OID WRS_OID, 7, 4
+#define WRSPSTATSHCTABLE_CACHE_TIMEOUT 5
+#define WRSPSTATSHCTABLE_OID WRS_OID, 7, 7
 
 #define PSTATS_MAX_N_COUNTERS 39 /* maximum number of counters */
 #define PSTATS_SYSCTL_PATH "/proc/sys/pstats/" /* Path to sysclt entries */
@@ -10,7 +10,7 @@
 					* and number of counters */
 
 
-struct wrsPstatsTable_s {
+struct wrsPstatsHCTable_s {
 	uint32_t index;		/* not reported, index fields has to be marked
 				 * as not-accessible in MIB */
 	char port_name[12];	/* port name of counters */
@@ -55,8 +55,8 @@ struct wrsPstatsTable_s {
 	uint32_t TRURespValid;
 };
 
-extern struct wrsPstatsTable_s pstats_array[WRS_N_PORTS];
-time_t wrsPstatsTable_data_fill(unsigned int *rows);
-void init_wrsPstatsTable(void);
+extern struct wrsPstatsHCTable_s pstats_array[WRS_N_PORTS];
+time_t wrsPstatsHCTable_data_fill(unsigned int *rows);
+void init_wrsPstatsHCTable(void);
 
-#endif /* WRS_PSTATS_TABLE_H */
+#endif /* WRS_PSTATS_HC_TABLE_H */

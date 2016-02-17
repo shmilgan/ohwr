@@ -1,6 +1,6 @@
 #include "wrsSnmp.h"
 #include "wrsPortStatusTable.h"
-#include "wrsPstatsTable.h"
+#include "wrsPstatsHCTable.h"
 #include "wrsNetworkingStatusGroup.h"
 #include <libwr/config.h>
 
@@ -15,7 +15,7 @@ struct wrsNetworkingStatus_s wrsNetworkingStatus_s;
 static struct wrsNetworkingStatus_config ns_dotconfig;
 static struct ns_pstats ns_pstats_copy[WRS_N_PORTS];
 
-static void copy_pstats(struct ns_pstats *copy, struct wrsPstatsTable_s *org,
+static void copy_pstats(struct ns_pstats *copy, struct wrsPstatsHCTable_s *org,
 			unsigned int rows)
 {
 	int i;
@@ -48,7 +48,8 @@ static void copy_pstats(struct ns_pstats *copy, struct wrsPstatsTable_s *org,
 }
 
 static int get_endpoint_status(struct ns_pstats *old,
-			       struct wrsPstatsTable_s *new, unsigned int rows,
+			       struct wrsPstatsHCTable_s *new,
+			       unsigned int rows,
 			       float t_delta)
 {
 	int i;
@@ -80,8 +81,9 @@ static int get_endpoint_status(struct ns_pstats *old,
 
 /* don't use this function for now, return OK */
 static int get_swcore_status(struct ns_pstats *old,
-			       struct wrsPstatsTable_s *new, unsigned int rows,
-			       float t_delta)
+			     struct wrsPstatsHCTable_s *new,
+			     unsigned int rows,
+			     float t_delta)
 {
 	int i;
 	int ret;
@@ -134,8 +136,8 @@ static int get_swcore_status(struct ns_pstats *old,
 }
 
 static int get_rtu_status(struct ns_pstats *old,
-			       struct wrsPstatsTable_s *new, unsigned int rows,
-			       float t_delta)
+			  struct wrsPstatsHCTable_s *new, unsigned int rows,
+			  float t_delta)
 {
 	int i;
 	int ret;
@@ -195,7 +197,7 @@ time_t wrsNetworkingStatus_data_fill(void)
 	static int run_once = 1;
 
 	time_port_status = wrsPortStatusTable_data_fill(&port_status_nrows);
-	time_pstats = wrsPstatsTable_data_fill(&pstats_nrows);
+	time_pstats = wrsPstatsHCTable_data_fill(&pstats_nrows);
 
 	if (time_port_status <= time_update
 	    && time_pstats <= time_update) {
