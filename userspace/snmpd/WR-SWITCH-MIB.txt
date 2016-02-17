@@ -18,16 +18,22 @@ IMPORTS
 -- (I follow the CamelCase to be sure I don't mistype. Who knows the rules...
 
 wrSwitchMIB MODULE-IDENTITY
-    LAST-UPDATED "201508121200Z"
+    LAST-UPDATED "201602171600Z"
     ORGANIZATION "CERN"
     CONTACT-INFO "postal:   BE-CO-HT, CERN, Geneva
                   email:    ht-drivers@cern.ch
                  "
     DESCRIPTION  "White Rabbit Switch internal details
                  "
+    REVISION     "201602171600Z"
+    DESCRIPTION
+        "Use 64bit counters for pstats. Make wrsPstats* obsolete,
+        use wrsPstatsHC* instead."
+
     REVISION     "201508121200Z"
     DESCRIPTION
         "First revision."
+
     ::= { cern 100 }
 
 cern OBJECT IDENTIFIER ::= { enterprises 96 }
@@ -1134,7 +1140,7 @@ wrsSpllDelCnt      OBJECT-TYPE
 wrsPstatsTable OBJECT-TYPE
     SYNTAX      SEQUENCE OF WrsPstatsEntry
     MAX-ACCESS  not-accessible
-    STATUS      current
+    STATUS      deprecated
     DESCRIPTION
             "Pstats counters for each port"
     ::= { wrsExpertStatus 4 }
@@ -1142,7 +1148,7 @@ wrsPstatsTable OBJECT-TYPE
 wrsPstatsEntry OBJECT-TYPE
     SYNTAX      WrsPstatsEntry
     MAX-ACCESS  not-accessible
-    STATUS      current
+    STATUS      deprecated
     DESCRIPTION
             "An entry containing pstats counters"
     INDEX   { wrsPstatsIndex }
@@ -1150,53 +1156,53 @@ wrsPstatsEntry OBJECT-TYPE
 
 WrsPstatsEntry ::=
     SEQUENCE {
-        wrsPstatsIndex                 Unsigned32,
-        wrsPstatsPortName              DisplayString,
-        wrsPstatsTXUnderrun            Counter32,
-        wrsPstatsRXOverrun             Counter32,
-        wrsPstatsRXInvalidCode         Counter32,
-        wrsPstatsRXSyncLost            Counter32,
-        wrsPstatsRXPauseFrames         Counter32,
-        wrsPstatsRXPfilterDropped      Counter32,
-        wrsPstatsRXPCSErrors           Counter32,
-        wrsPstatsRXGiantFrames         Counter32,
-        wrsPstatsRXRuntFrames          Counter32,
-        wrsPstatsRXCRCErrors           Counter32,
-        wrsPstatsRXPclass0             Counter32,
-        wrsPstatsRXPclass1             Counter32,
-        wrsPstatsRXPclass2             Counter32,
-        wrsPstatsRXPclass3             Counter32,
-        wrsPstatsRXPclass4             Counter32,
-        wrsPstatsRXPclass5             Counter32,
-        wrsPstatsRXPclass6             Counter32,
-        wrsPstatsRXPclass7             Counter32,
-        wrsPstatsTXFrames              Counter32,
-        wrsPstatsRXFrames              Counter32,
-        wrsPstatsRXDropRTUFull         Counter32,
-        wrsPstatsRXPrio0               Counter32,
-        wrsPstatsRXPrio1               Counter32,
-        wrsPstatsRXPrio2               Counter32,
-        wrsPstatsRXPrio3               Counter32,
-        wrsPstatsRXPrio4               Counter32,
-        wrsPstatsRXPrio5               Counter32,
-        wrsPstatsRXPrio6               Counter32,
-        wrsPstatsRXPrio7               Counter32,
-        wrsPstatsRTUValid              Counter32,
-        wrsPstatsRTUResponses          Counter32,
-        wrsPstatsRTUDropped            Counter32,
-        wrsPstatsFastMatchPriority     Counter32,
-        wrsPstatsFastMatchFastForward  Counter32,
-        wrsPstatsFastMatchNonForward   Counter32,
-        wrsPstatsFastMatchRespValid    Counter32,
-        wrsPstatsFullMatchRespValid    Counter32,
-        wrsPstatsForwarded             Counter32,
-        wrsPstatsTRURespValid          Counter32
+        wrsPstatsIndex                 Unsigned32,    -- deprecated
+        wrsPstatsPortName              DisplayString, -- deprecated
+        wrsPstatsTXUnderrun            Counter32,     -- deprecated
+        wrsPstatsRXOverrun             Counter32,     -- deprecated
+        wrsPstatsRXInvalidCode         Counter32,     -- deprecated
+        wrsPstatsRXSyncLost            Counter32,     -- deprecated
+        wrsPstatsRXPauseFrames         Counter32,     -- deprecated
+        wrsPstatsRXPfilterDropped      Counter32,     -- deprecated
+        wrsPstatsRXPCSErrors           Counter32,     -- deprecated
+        wrsPstatsRXGiantFrames         Counter32,     -- deprecated
+        wrsPstatsRXRuntFrames          Counter32,     -- deprecated
+        wrsPstatsRXCRCErrors           Counter32,     -- deprecated
+        wrsPstatsRXPclass0             Counter32,     -- deprecated
+        wrsPstatsRXPclass1             Counter32,     -- deprecated
+        wrsPstatsRXPclass2             Counter32,     -- deprecated
+        wrsPstatsRXPclass3             Counter32,     -- deprecated
+        wrsPstatsRXPclass4             Counter32,     -- deprecated
+        wrsPstatsRXPclass5             Counter32,     -- deprecated
+        wrsPstatsRXPclass6             Counter32,     -- deprecated
+        wrsPstatsRXPclass7             Counter32,     -- deprecated
+        wrsPstatsTXFrames              Counter32,     -- deprecated
+        wrsPstatsRXFrames              Counter32,     -- deprecated
+        wrsPstatsRXDropRTUFull         Counter32,     -- deprecated
+        wrsPstatsRXPrio0               Counter32,     -- deprecated
+        wrsPstatsRXPrio1               Counter32,     -- deprecated
+        wrsPstatsRXPrio2               Counter32,     -- deprecated
+        wrsPstatsRXPrio3               Counter32,     -- deprecated
+        wrsPstatsRXPrio4               Counter32,     -- deprecated
+        wrsPstatsRXPrio5               Counter32,     -- deprecated
+        wrsPstatsRXPrio6               Counter32,     -- deprecated
+        wrsPstatsRXPrio7               Counter32,     -- deprecated
+        wrsPstatsRTUValid              Counter32,     -- deprecated
+        wrsPstatsRTUResponses          Counter32,     -- deprecated
+        wrsPstatsRTUDropped            Counter32,     -- deprecated
+        wrsPstatsFastMatchPriority     Counter32,     -- deprecated
+        wrsPstatsFastMatchFastForward  Counter32,     -- deprecated
+        wrsPstatsFastMatchNonForward   Counter32,     -- deprecated
+        wrsPstatsFastMatchRespValid    Counter32,     -- deprecated
+        wrsPstatsFullMatchRespValid    Counter32,     -- deprecated
+        wrsPstatsForwarded             Counter32,     -- deprecated
+        wrsPstatsTRURespValid          Counter32      -- deprecated
     }
 
 wrsPstatsIndex OBJECT-TYPE
     SYNTAX         Unsigned32
     MAX-ACCESS     not-accessible
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Index for wrsPstatsTable"
     ::= { wrsPstatsEntry 1 }
@@ -1204,7 +1210,7 @@ wrsPstatsIndex OBJECT-TYPE
 wrsPstatsPortName OBJECT-TYPE
     SYNTAX         DisplayString (SIZE (0..12))
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Port name of port"
     ::= { wrsPstatsEntry 2 }
@@ -1212,7 +1218,7 @@ wrsPstatsPortName OBJECT-TYPE
 wrsPstatsTXUnderrun OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of TX underrun errors"
     ::= { wrsPstatsEntry 3 }
@@ -1220,7 +1226,7 @@ wrsPstatsTXUnderrun OBJECT-TYPE
 wrsPstatsRXOverrun OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of RX overrun errors"
     ::= { wrsPstatsEntry 4 }
@@ -1228,7 +1234,7 @@ wrsPstatsRXOverrun OBJECT-TYPE
 wrsPstatsRXInvalidCode OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received invalid 8B10B code errors"
     ::= { wrsPstatsEntry 5 }
@@ -1236,7 +1242,7 @@ wrsPstatsRXInvalidCode OBJECT-TYPE
 wrsPstatsRXSyncLost OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of RX link synchronization lost"
     ::= { wrsPstatsEntry 6 }
@@ -1244,7 +1250,7 @@ wrsPstatsRXSyncLost OBJECT-TYPE
 wrsPstatsRXPauseFrames OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received pause frames"
     ::= { wrsPstatsEntry 7 }
@@ -1252,7 +1258,7 @@ wrsPstatsRXPauseFrames OBJECT-TYPE
 wrsPstatsRXPfilterDropped OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received frames dropped at pfilter"
     ::= { wrsPstatsEntry 8 }
@@ -1260,7 +1266,7 @@ wrsPstatsRXPfilterDropped OBJECT-TYPE
 wrsPstatsRXPCSErrors OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of errors occurred during frame reception in PCS"
     ::= { wrsPstatsEntry 9 }
@@ -1268,7 +1274,7 @@ wrsPstatsRXPCSErrors OBJECT-TYPE
 wrsPstatsRXGiantFrames OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received giant frames
             (bigger than Maximum Receive Unit)"
@@ -1277,7 +1283,7 @@ wrsPstatsRXGiantFrames OBJECT-TYPE
 wrsPstatsRXRuntFrames OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received runt frames
             (smaller than 64bytes)"
@@ -1286,7 +1292,7 @@ wrsPstatsRXRuntFrames OBJECT-TYPE
 wrsPstatsRXCRCErrors OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of RX CRC errors"
     ::= { wrsPstatsEntry 12 }
@@ -1294,7 +1300,7 @@ wrsPstatsRXCRCErrors OBJECT-TYPE
 wrsPstatsRXPclass0 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received frames assigned to
             class 0 by packet filter in endpoint"
@@ -1303,7 +1309,7 @@ wrsPstatsRXPclass0 OBJECT-TYPE
 wrsPstatsRXPclass1 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received frames assigned to
             class 1 by packet filter in endpoint"
@@ -1312,7 +1318,7 @@ wrsPstatsRXPclass1 OBJECT-TYPE
 wrsPstatsRXPclass2 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received frames assigned to
             class 2 by packet filter in endpoint"
@@ -1321,7 +1327,7 @@ wrsPstatsRXPclass2 OBJECT-TYPE
 wrsPstatsRXPclass3 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received frames assigned to
             class 3 by packet filter in endpoint"
@@ -1330,7 +1336,7 @@ wrsPstatsRXPclass3 OBJECT-TYPE
  wrsPstatsRXPclass4 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received frames assigned to
             class 4 by packet filter in endpoint"
@@ -1339,7 +1345,7 @@ wrsPstatsRXPclass3 OBJECT-TYPE
 wrsPstatsRXPclass5 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received frames assigned to
             class 5 by packet filter in endpoint"
@@ -1348,7 +1354,7 @@ wrsPstatsRXPclass5 OBJECT-TYPE
 wrsPstatsRXPclass6 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received frames assigned to
             class 6 by packet filter in endpoint"
@@ -1357,7 +1363,7 @@ wrsPstatsRXPclass6 OBJECT-TYPE
 wrsPstatsRXPclass7 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received frames assigned to
             class 7 by packet filter in endpoint"
@@ -1366,7 +1372,7 @@ wrsPstatsRXPclass7 OBJECT-TYPE
 wrsPstatsTXFrames OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of transmitted frames"
     ::= { wrsPstatsEntry 21 }
@@ -1374,7 +1380,7 @@ wrsPstatsTXFrames OBJECT-TYPE
 wrsPstatsRXFrames OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of received frames"
     ::= { wrsPstatsEntry 22 }
@@ -1382,7 +1388,7 @@ wrsPstatsRXFrames OBJECT-TYPE
 wrsPstatsRXDropRTUFull OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of RX frames dropped due to RTU full"
     ::= { wrsPstatsEntry 23 }
@@ -1390,7 +1396,7 @@ wrsPstatsRXDropRTUFull OBJECT-TYPE
 wrsPstatsRXPrio0 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of RX frames at internal priority 0"
     ::= { wrsPstatsEntry 24 }
@@ -1398,7 +1404,7 @@ wrsPstatsRXPrio0 OBJECT-TYPE
 wrsPstatsRXPrio1 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of RX frames at internal priority 1"
     ::= { wrsPstatsEntry 25 }
@@ -1406,7 +1412,7 @@ wrsPstatsRXPrio1 OBJECT-TYPE
 wrsPstatsRXPrio2 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of RX frames at internal priority 2"
     ::= { wrsPstatsEntry 26 }
@@ -1414,7 +1420,7 @@ wrsPstatsRXPrio2 OBJECT-TYPE
 wrsPstatsRXPrio3 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of RX frames at internal priority 3"
     ::= { wrsPstatsEntry 27 }
@@ -1422,7 +1428,7 @@ wrsPstatsRXPrio3 OBJECT-TYPE
 wrsPstatsRXPrio4 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of RX frames at internal priority 4"
     ::= { wrsPstatsEntry 28 }
@@ -1430,7 +1436,7 @@ wrsPstatsRXPrio4 OBJECT-TYPE
 wrsPstatsRXPrio5 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of RX frames at internal priority 5"
     ::= { wrsPstatsEntry 29 }
@@ -1438,7 +1444,7 @@ wrsPstatsRXPrio5 OBJECT-TYPE
 wrsPstatsRXPrio6 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of RX frames at internal priority 6"
     ::= { wrsPstatsEntry 30 }
@@ -1446,7 +1452,7 @@ wrsPstatsRXPrio6 OBJECT-TYPE
 wrsPstatsRXPrio7 OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of RX frames at internal priority 7"
     ::= { wrsPstatsEntry 31 }
@@ -1454,7 +1460,7 @@ wrsPstatsRXPrio7 OBJECT-TYPE
 wrsPstatsRTUValid OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of valid RTU requests"
     ::= { wrsPstatsEntry 32 }
@@ -1462,7 +1468,7 @@ wrsPstatsRTUValid OBJECT-TYPE
 wrsPstatsRTUResponses OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of valid RTU responses"
     ::= { wrsPstatsEntry 33 }
@@ -1470,7 +1476,7 @@ wrsPstatsRTUResponses OBJECT-TYPE
 wrsPstatsRTUDropped OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of frames dropped at RTU"
     ::= { wrsPstatsEntry 34 }
@@ -1478,7 +1484,7 @@ wrsPstatsRTUDropped OBJECT-TYPE
 wrsPstatsFastMatchPriority OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of priority frames matched by fast match"
     ::= { wrsPstatsEntry 35 }
@@ -1486,7 +1492,7 @@ wrsPstatsFastMatchPriority OBJECT-TYPE
 wrsPstatsFastMatchFastForward OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of forwarded frames matched by fast match"
     ::= { wrsPstatsEntry 36 }
@@ -1494,7 +1500,7 @@ wrsPstatsFastMatchFastForward OBJECT-TYPE
 wrsPstatsFastMatchNonForward OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of not forwarded frames matched by fast match"
     ::= { wrsPstatsEntry 37 }
@@ -1502,7 +1508,7 @@ wrsPstatsFastMatchNonForward OBJECT-TYPE
 wrsPstatsFastMatchRespValid OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of fast match decisions"
     ::= { wrsPstatsEntry 38 }
@@ -1510,7 +1516,7 @@ wrsPstatsFastMatchRespValid OBJECT-TYPE
 wrsPstatsFullMatchRespValid OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of full match decisions"
     ::= { wrsPstatsEntry 39 }
@@ -1518,7 +1524,7 @@ wrsPstatsFullMatchRespValid OBJECT-TYPE
 wrsPstatsForwarded OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of forwarded frames"
     ::= { wrsPstatsEntry 40 }
@@ -1526,7 +1532,7 @@ wrsPstatsForwarded OBJECT-TYPE
 wrsPstatsTRURespValid OBJECT-TYPE
     SYNTAX         Counter32
     MAX-ACCESS     read-only
-    STATUS         current
+    STATUS         deprecated
     DESCRIPTION
             "Number of TRU decisions"
     ::= { wrsPstatsEntry 41 }
@@ -1936,6 +1942,406 @@ wrsPortStatusPtpRxFrames OBJECT-TYPE
              running on particular port"
     ::= { wrsPortStatusEntry 14 }
 
+-- wrsPstatsHCTable (.7.7)
+wrsPstatsHCTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF WrsPstatsHCEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "Pstats counters for each port"
+    ::= { wrsExpertStatus 7 }
+
+wrsPstatsHCEntry OBJECT-TYPE
+    SYNTAX      WrsPstatsHCEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+            "An entry containing pstats counters"
+    INDEX   { wrsPstatsHCIndex }
+    ::= { wrsPstatsHCTable 1 }
+
+WrsPstatsHCEntry ::=
+    SEQUENCE {
+        wrsPstatsHCIndex                 Unsigned32,
+        wrsPstatsHCPortName              DisplayString,
+        wrsPstatsHCTXUnderrun            Counter64,
+        wrsPstatsHCRXOverrun             Counter64,
+        wrsPstatsHCRXInvalidCode         Counter64,
+        wrsPstatsHCRXSyncLost            Counter64,
+        wrsPstatsHCRXPauseFrames         Counter64,
+        wrsPstatsHCRXPfilterDropped      Counter64,
+        wrsPstatsHCRXPCSErrors           Counter64,
+        wrsPstatsHCRXGiantFrames         Counter64,
+        wrsPstatsHCRXRuntFrames          Counter64,
+        wrsPstatsHCRXCRCErrors           Counter64,
+        wrsPstatsHCRXPclass0             Counter64,
+        wrsPstatsHCRXPclass1             Counter64,
+        wrsPstatsHCRXPclass2             Counter64,
+        wrsPstatsHCRXPclass3             Counter64,
+        wrsPstatsHCRXPclass4             Counter64,
+        wrsPstatsHCRXPclass5             Counter64,
+        wrsPstatsHCRXPclass6             Counter64,
+        wrsPstatsHCRXPclass7             Counter64,
+        wrsPstatsHCTXFrames              Counter64,
+        wrsPstatsHCRXFrames              Counter64,
+        wrsPstatsHCRXDropRTUFull         Counter64,
+        wrsPstatsHCRXPrio0               Counter64,
+        wrsPstatsHCRXPrio1               Counter64,
+        wrsPstatsHCRXPrio2               Counter64,
+        wrsPstatsHCRXPrio3               Counter64,
+        wrsPstatsHCRXPrio4               Counter64,
+        wrsPstatsHCRXPrio5               Counter64,
+        wrsPstatsHCRXPrio6               Counter64,
+        wrsPstatsHCRXPrio7               Counter64,
+        wrsPstatsHCRTUValid              Counter64,
+        wrsPstatsHCRTUResponses          Counter64,
+        wrsPstatsHCRTUDropped            Counter64,
+        wrsPstatsHCFastMatchPriority     Counter64,
+        wrsPstatsHCFastMatchFastForward  Counter64,
+        wrsPstatsHCFastMatchNonForward   Counter64,
+        wrsPstatsHCFastMatchRespValid    Counter64,
+        wrsPstatsHCFullMatchRespValid    Counter64,
+        wrsPstatsHCForwarded             Counter64,
+        wrsPstatsHCTRURespValid          Counter64
+    }
+
+wrsPstatsHCIndex OBJECT-TYPE
+    SYNTAX         Unsigned32
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION
+            "Index for wrsPstatsHCTable"
+    ::= { wrsPstatsHCEntry 1 }
+
+wrsPstatsHCPortName OBJECT-TYPE
+    SYNTAX         DisplayString (SIZE (0..12))
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Port name of port"
+    ::= { wrsPstatsHCEntry 2 }
+
+wrsPstatsHCTXUnderrun OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of TX underrun errors"
+    ::= { wrsPstatsHCEntry 3 }
+
+wrsPstatsHCRXOverrun OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX overrun errors"
+    ::= { wrsPstatsHCEntry 4 }
+
+wrsPstatsHCRXInvalidCode OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received invalid 8B10B code errors"
+    ::= { wrsPstatsHCEntry 5 }
+
+wrsPstatsHCRXSyncLost OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX link synchronization lost"
+    ::= { wrsPstatsHCEntry 6 }
+
+wrsPstatsHCRXPauseFrames OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received pause frames"
+    ::= { wrsPstatsHCEntry 7 }
+
+wrsPstatsHCRXPfilterDropped OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames dropped at pfilter"
+    ::= { wrsPstatsHCEntry 8 }
+
+wrsPstatsHCRXPCSErrors OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of errors occurred during frame reception in PCS"
+    ::= { wrsPstatsHCEntry 9 }
+
+wrsPstatsHCRXGiantFrames OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received giant frames
+            (bigger than Maximum Receive Unit)"
+    ::= { wrsPstatsHCEntry 10 }
+
+wrsPstatsHCRXRuntFrames OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received runt frames
+            (smaller than 64bytes)"
+    ::= { wrsPstatsHCEntry 11 }
+
+wrsPstatsHCRXCRCErrors OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX CRC errors"
+    ::= { wrsPstatsHCEntry 12 }
+
+wrsPstatsHCRXPclass0 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 0 by packet filter in endpoint"
+    ::= { wrsPstatsHCEntry 13 }
+
+wrsPstatsHCRXPclass1 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 1 by packet filter in endpoint"
+    ::= { wrsPstatsHCEntry 14 }
+
+wrsPstatsHCRXPclass2 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 2 by packet filter in endpoint"
+    ::= { wrsPstatsHCEntry 15 }
+
+wrsPstatsHCRXPclass3 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 3 by packet filter in endpoint"
+    ::= { wrsPstatsHCEntry 16 }
+
+ wrsPstatsHCRXPclass4 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 4 by packet filter in endpoint"
+    ::= { wrsPstatsHCEntry 17 }
+
+wrsPstatsHCRXPclass5 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 5 by packet filter in endpoint"
+    ::= { wrsPstatsHCEntry 18 }
+
+wrsPstatsHCRXPclass6 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 6 by packet filter in endpoint"
+    ::= { wrsPstatsHCEntry 19 }
+
+wrsPstatsHCRXPclass7 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames assigned to
+            class 7 by packet filter in endpoint"
+    ::= { wrsPstatsHCEntry 20 }
+
+wrsPstatsHCTXFrames OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of transmitted frames"
+    ::= { wrsPstatsHCEntry 21 }
+
+wrsPstatsHCRXFrames OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of received frames"
+    ::= { wrsPstatsHCEntry 22 }
+
+wrsPstatsHCRXDropRTUFull OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames dropped due to RTU full"
+    ::= { wrsPstatsHCEntry 23 }
+
+wrsPstatsHCRXPrio0 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 0"
+    ::= { wrsPstatsHCEntry 24 }
+
+wrsPstatsHCRXPrio1 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 1"
+    ::= { wrsPstatsHCEntry 25 }
+
+wrsPstatsHCRXPrio2 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 2"
+    ::= { wrsPstatsHCEntry 26 }
+
+wrsPstatsHCRXPrio3 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 3"
+    ::= { wrsPstatsHCEntry 27 }
+
+wrsPstatsHCRXPrio4 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 4"
+    ::= { wrsPstatsHCEntry 28 }
+
+wrsPstatsHCRXPrio5 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 5"
+    ::= { wrsPstatsHCEntry 29 }
+
+wrsPstatsHCRXPrio6 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 6"
+    ::= { wrsPstatsHCEntry 30 }
+
+wrsPstatsHCRXPrio7 OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of RX frames at internal priority 7"
+    ::= { wrsPstatsHCEntry 31 }
+
+wrsPstatsHCRTUValid OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of valid RTU requests"
+    ::= { wrsPstatsHCEntry 32 }
+
+wrsPstatsHCRTUResponses OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of valid RTU responses"
+    ::= { wrsPstatsHCEntry 33 }
+
+wrsPstatsHCRTUDropped OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of frames dropped at RTU"
+    ::= { wrsPstatsHCEntry 34 }
+
+wrsPstatsHCFastMatchPriority OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of priority frames matched by fast match"
+    ::= { wrsPstatsHCEntry 35 }
+
+wrsPstatsHCFastMatchFastForward OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of forwarded frames matched by fast match"
+    ::= { wrsPstatsHCEntry 36 }
+
+wrsPstatsHCFastMatchNonForward OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of not forwarded frames matched by fast match"
+    ::= { wrsPstatsHCEntry 37 }
+
+wrsPstatsHCFastMatchRespValid OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of fast match decisions"
+    ::= { wrsPstatsHCEntry 38 }
+
+wrsPstatsHCFullMatchRespValid OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of full match decisions"
+    ::= { wrsPstatsHCEntry 39 }
+
+wrsPstatsHCForwarded OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of forwarded frames"
+    ::= { wrsPstatsHCEntry 40 }
+
+wrsPstatsHCTRURespValid OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of TRU decisions"
+    ::= { wrsPstatsHCEntry 41 }
 --wrsNetworking
 --Configuration
 
