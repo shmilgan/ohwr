@@ -112,9 +112,9 @@ static struct pstats_version_description pstats_desc[] = {
 };
 
 struct cntrs_dev {
-	unsigned int cntrs[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
-	unsigned int zeros[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
-	unsigned int userv[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
+	unsigned long long cntrs[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
+	unsigned long long zeros[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
+	unsigned long long userv[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
 	struct PSTATS_WB __iomem *regs;
 
 	/* prevents from simultaneous access to cntrs array from tasklet and
@@ -185,7 +185,7 @@ static void pstats_tlet_fn(unsigned long arg)
 	uint32_t irqs;
 	uint64_t *cntrs_ov;
 	int port, cntr;
-	unsigned int *ptr;
+	unsigned long long *ptr;
 	struct cntrs_dev *device = (struct cntrs_dev *)arg;
 
 	if (device->irqs_head - device->irqs_tail > PSTATS_IRQBUFSZ) {
@@ -266,7 +266,7 @@ static irqreturn_t pstats_irq_handler(int irq, void *devid)
 static int rd_cnt_word(int port, int adr)
 {
 	uint32_t val[2];
-	unsigned int *ptr;
+	unsigned long long *ptr;
 	int i;
 
 	val[0] = (adr<<PSTATS_CR_ADDR_SHIFT |
@@ -359,7 +359,8 @@ static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 		pstats_info[PINFO_CNTPW] = firmware_cpw;
 		pstats_info[PINFO_CNTPP] = firmware_counters;
 	}
-
+	/* each value will be split into two unsigned longs,
+	 * each counter has to be assembled in software reading pstats */
 	return proc_dointvec(ctl, 0, buffer, lenp, ppos);
 }
 
@@ -463,8 +464,11 @@ static int __init pstats_init(void)
 	for (i = 0; i < pstats_nports; ++i) {
 		pstats_ctl_table[i].procname = portnames[i];
 		pstats_ctl_table[i].data = &pstats_dev.userv[i];
+		/* each value will be split into two unsigned longs,
+		 * each counter has to be assembled in software reading pstats
+		 */
 		pstats_ctl_table[i].maxlen =
-			firmware_counters*sizeof(unsigned int);
+			firmware_counters*sizeof(unsigned long long);
 		pstats_ctl_table[i].mode = 0644;
 		pstats_ctl_table[i].proc_handler = pstats_handler;
 		pstats_ctl_table[i].extra1 = (void *)i;
