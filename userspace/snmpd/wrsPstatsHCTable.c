@@ -7,45 +7,45 @@ static struct pickinfo wrsPstatsHCTable_pickinfo[] = {
 	/* Warning: strings are a special case for snmp format */
 	FIELD(wrsPstatsHCTable_s, ASN_UNSIGNED, index), /* not reported */
 	FIELD(wrsPstatsHCTable_s, ASN_OCTET_STR, port_name),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, TXUnderrun),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXOverrun),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXInvalidCode),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXSyncLost),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPauseFrames),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPfilterDropped),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPCSErrors),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXGiantFrames),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXRuntFrames),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXCRCErrors),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass0),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass1),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass2),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass3),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass4),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass5),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass6),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPclass7),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, TXFrames),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXFrames),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXDropRTUFull),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio0),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio1),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio2),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio3),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio4),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio5),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio6),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RXPrio7),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RTUValid),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RTUResponses),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, RTUDropped),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, FastMatchPriority),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, FastMatchFastForward),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, FastMatchNonForward),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, FastMatchRespValid),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, FullMatchRespValid),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, Forwarded),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER, TRURespValid),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, TXUnderrun),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXOverrun),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXInvalidCode),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXSyncLost),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPauseFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPfilterDropped),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPCSErrors),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXGiantFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXRuntFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXCRCErrors),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass0),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass1),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass2),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass3),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass4),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass5),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass6),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass7),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, TXFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXDropRTUFull),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio0),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio1),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio2),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio3),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio4),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio5),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio6),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio7),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RTUValid),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RTUResponses),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RTUDropped),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, FastMatchPriority),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, FastMatchFastForward),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, FastMatchNonForward),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, FastMatchRespValid),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, FullMatchRespValid),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, Forwarded),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, TRURespValid),
 };
 
 time_t
@@ -55,12 +55,13 @@ wrsPstatsHCTable_data_fill(unsigned int *n_rows)
 	char fname[32];
 	int wrport;
 	uint32_t i;
-	uint32_t counters[PSTATS_MAX_N_COUNTERS];
+	uint64_t counters[PSTATS_MAX_N_COUNTERS];
 	static time_t time_update;
 	time_t time_cur;
 	uint32_t n_counters_in_fpga;
 	uint32_t counters_version;
-	uint32_t tmp;
+	uint32_t tmp1;
+	uint32_t tmp2;
 	if (n_rows)
 		*n_rows = WRS_N_PORTS;
 
@@ -85,7 +86,7 @@ wrsPstatsHCTable_data_fill(unsigned int *n_rows)
 			counters_version = 0;
 		}
 		/* read number of counters per word, not used */
-		fscanf(f, "%u", &tmp);
+		fscanf(f, "%u", &tmp1);
 		if (fscanf(f, "%u", &n_counters_in_fpga) != 1) {
 			/* not able to read valid number of counters,
 			 * use maximum possible */
@@ -112,12 +113,22 @@ wrsPstatsHCTable_data_fill(unsigned int *n_rows)
 		f = fopen(fname, "r");
 		if (!f) {
 			snmp_log(LOG_ERR,
-			"SNMP: wrsPstatsTable filed to open file %s\n", fname);
+				 "SNMP: wrsPstatsHCTable filed to open file "
+				 "%s\n", fname);
 			continue;
 		}
 		for (i = 0; i < n_counters_in_fpga; i++) {
-			if (fscanf(f, "%u", &counters[i]) != 1)
-				counters[i] = 0xffffffff;
+			if (fscanf(f, "%" SCNu32, &tmp1) == 1 &&
+			    fscanf(f, "%" SCNu32, &tmp2) == 1) {
+				/*
+				 * WARNING: the current snmpd is bugged: it has
+				 * endianness problems with 64 bit, and the two
+				 * halves are swapped. So pre-swap them here
+				 */
+				counters[i] = (((uint64_t) tmp1) << 32) | tmp2;
+			} else {
+				counters[i] = 0xffffffffffffffffLL;
+			}
 		}
 
 		fclose(f);
