@@ -247,7 +247,7 @@ void show_ports(void)
 		int print_port = 0;
 		int print_mode_color = 0;
 
-		snprintf(if_name, 10, "wr%d", i);
+		snprintf(if_name, 10, "wri%d", i + 1);
 
 		port_state = hal_lookup_port(hal_ports_local_copy,
 						hal_nports_local, if_name);
