@@ -108,7 +108,7 @@ wrsPstatsHCTable_data_fill(unsigned int *n_rows)
 	/* read pstats for each port */
 	for (wrport = 0; wrport < WRS_N_PORTS; wrport++) {
 		snprintf(pstats_array[wrport].port_name, 10,
-				 "wr%d", wrport);
+				 "wri%d", wrport + 1);
 		sprintf(fname, PSTATS_SYSCTL_PATH"wrport%i", wrport + 1);
 		f = fopen(fname, "r");
 		if (!f) {
