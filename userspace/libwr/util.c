@@ -52,3 +52,21 @@ void shw_udelay(uint32_t microseconds)
 	for (i = 0; i < loops_per_msec * microseconds / 1000; i++)
 		;
 }
+
+/* get monotonic number of useconds */
+uint64_t get_monotonic_tics(void)
+{
+	struct timespec tv;
+	clock_gettime(CLOCK_MONOTONIC, &tv);
+ 
+	return (uint64_t) tv.tv_sec * 1000000ULL +
+			(uint64_t) (tv.tv_nsec / 1000);
+}
+
+/* get monotonic number of seconds */
+time_t get_monotonic_sec(void)
+{
+	struct timespec tv;
+	clock_gettime(CLOCK_MONOTONIC, &tv);
+	return tv.tv_sec;
+}
