@@ -112,9 +112,11 @@ static struct pstats_version_description pstats_desc[] = {
 };
 
 struct cntrs_dev {
-	unsigned long long cntrs[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
-	unsigned long long zeros[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
-	unsigned long long userv[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
+	uint64_t cntrs[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
+	/* there is no need to keep 64bits for zero values,
+	 * part which is read from FPGA is enough */
+	uint16_t zeros[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
+	uint64_t userv[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
 	struct PSTATS_WB __iomem *regs;
 
 	/* prevents from simultaneous access to cntrs array from tasklet and
@@ -185,7 +187,7 @@ static void pstats_tlet_fn(unsigned long arg)
 	uint32_t irqs;
 	uint64_t *cntrs_ov;
 	int port, cntr;
-	unsigned long long *ptr;
+	uint64_t *ptr;
 	struct cntrs_dev *device = (struct cntrs_dev *)arg;
 
 	if (device->irqs_head - device->irqs_tail > PSTATS_IRQBUFSZ) {
@@ -266,7 +268,7 @@ static irqreturn_t pstats_irq_handler(int irq, void *devid)
 static int rd_cnt_word(int port, int adr)
 {
 	uint32_t val[2];
-	unsigned long long *ptr;
+	uint64_t *ptr;
 	int i;
 
 	val[0] = (adr<<PSTATS_CR_ADDR_SHIFT |
@@ -302,11 +304,16 @@ static int pstats_rd_cntrs(int port)
 
 static void pstats_zero(int port)
 {
+	int i;
 	pstats_rd_cntrs(port);
 	spin_lock(&pstats_dev.port_mutex[port]);
-	memcpy(pstats_dev.zeros[port],
-	       pstats_dev.cntrs[port],
-	       sizeof(pstats_dev.zeros[port]));
+	for (i = 0; i < PSTATS_MAX_NUM_OF_COUNTERS; i++) {
+		/* Copy 16 LSBits to zero */
+		pstats_dev.zeros[port][i] =
+			(uint16_t) pstats_dev.cntrs[port][i];
+		/* clear 48 MSBits */
+		pstats_dev.cntrs[port][i] &= PSTATS_LSB_MSK;
+	}
 	spin_unlock(&pstats_dev.port_mutex[port]);
 }
 
@@ -468,7 +475,7 @@ static int __init pstats_init(void)
 		 * each counter has to be assembled in software reading pstats
 		 */
 		pstats_ctl_table[i].maxlen =
-			firmware_counters*sizeof(unsigned long long);
+			firmware_counters*sizeof(uint64_t);
 		pstats_ctl_table[i].mode = 0644;
 		pstats_ctl_table[i].proc_handler = pstats_handler;
 		pstats_ctl_table[i].extra1 = (void *)i;
