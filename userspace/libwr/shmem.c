@@ -11,6 +11,7 @@
 #include <sys/mman.h>
 
 #include <libwr/shmem.h>
+#include <libwr/util.h>
 #define SHM_LOCK_TIMEOUT_MS 50 /* in ms */
 /* Get wrs shared memory */
 /* return NULL and set errno on error */
@@ -18,7 +19,7 @@ void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags)
 {
 	struct wrs_shm_head *head;
 	struct stat stbuf;
-	struct timespec tv1, tv2;
+	uint64_t tv1, tv2;
 	void *map;
 	char fname[64];
 	int write_access = flags & WRS_SHM_WRITE;
@@ -54,7 +55,7 @@ void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags)
 		if (!(flags & WRS_SHM_LOCKED))
 			return map;
 
-		clock_gettime(CLOCK_MONOTONIC, &tv1);
+		tv1 = get_monotonic_tics();
 		while (1) {
 			/* Releasing does not mean initial data is in place! */
 			/* Read data with wrs_shm_seqbegin and
@@ -63,10 +64,8 @@ void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags)
 				return map;
 
 			usleep(10 * 1000);
-			clock_gettime(CLOCK_MONOTONIC, &tv2);
-			if ((tv2.tv_sec*1000 + tv2.tv_nsec/1000000)
-			    - (tv1.tv_sec*1000 + tv1.tv_nsec/1000000)
-			    < SHM_LOCK_TIMEOUT_MS)
+			tv2 = get_monotonic_tics();
+			if (((tv2 - tv1) * 1000) < SHM_LOCK_TIMEOUT_MS)
 				continue;
 
 			errno = ETIMEDOUT;
@@ -178,12 +177,10 @@ void *wrs_shm_follow(void *headptr, void *ptr)
 void wrs_shm_write(void *headptr, int flags)
 {
 	struct wrs_shm_head *head = headptr;
-	struct timespec tv;
 
 	if (flags == WRS_SHM_WRITE_END) {
 		/* At end-of-writing update the timestamp too */
-		clock_gettime(CLOCK_MONOTONIC, &tv);
-		head->stamp = tv.tv_sec;
+		head->stamp = get_monotonic_sec();
 	}
 	head->sequence++;
 	return;
@@ -211,10 +208,8 @@ int wrs_shm_seqretry(void *headptr, unsigned start)
 int wrs_shm_age(void *headptr)
 {
 	struct wrs_shm_head *head = headptr;
-	struct timespec tv;
 
-	clock_gettime(CLOCK_MONOTONIC, &tv);
-	return tv.tv_sec - head->stamp;
+	return get_monotonic_sec() - head->stamp;
 }
 
 /* A reader can get the information pointer, for a specific version, or NULL */
