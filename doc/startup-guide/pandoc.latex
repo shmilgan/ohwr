@@ -16,6 +16,7 @@
 \documentclass[a4paper,oneside,$if(fontsize)$$fontsize$,$endif$$if(lang)$$lang$,$endif$]{$documentclass$}
 \usepackage{amssymb,amsmath}
 \usepackage[left=2.2cm,right=2.2cm,top=3cm,bottom=3cm]{geometry}
+\usepackage{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Xetex.
