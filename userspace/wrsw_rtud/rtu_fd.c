@@ -563,13 +563,18 @@ void rtu_fd_clear_entries_for_port(int dest_port)
 		for (j = RTU_BUCKETS; j-- > 0;) {
 			ent = &rtu_htab[i][j];
 			if (ent->valid && ent->dynamic) {
-				if (ent->port_mask_dst == (1 << dest_port))
+				if (ent->port_mask_dst == (1 << dest_port)) {
+					/* entry is _only_ for this port */
 					hw_request(HW_REMOVE_REQ, ent->addr,
 						   ent);
-				else {
-					pr_error(
-					      "cleaning multicast entries not supported yet...\n");
-
+				}
+				else if (ent->port_mask_dst & (1 << dest_port)) {
+					/* entry is for at least two ports 
+					 * including current */
+					pr_error("cleaning multicast entries "
+						 "not supported yet... "
+						 "mask=0x%x port=%d\n",
+						 ent->port_mask_dst, dest_port);
 				}
 			}
 		}
