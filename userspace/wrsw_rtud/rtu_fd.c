@@ -572,8 +572,9 @@ void rtu_fd_clear_entries_for_port(int dest_port)
 					 * including current */
 					pr_error("cleaning multicast entries "
 						 "not supported yet... "
-						 "mask=0x%x port=%d\n",
-						 ent->port_mask_dst, dest_port);
+						 "mask=0x%x port=%d (wri%d)\n",
+						 ent->port_mask_dst,
+						 dest_port + 1, dest_port + 1);
 				}
 			}
 		}

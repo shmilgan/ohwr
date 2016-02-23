@@ -155,7 +155,7 @@ static void rtu_update_ports_state(void)
 	int link_up;
 	/* update hal_ports_local_copy */
 	read_ports();
-	for (i = 0; i <= MAX_PORT; i++) {
+	for (i = 0; (i <= MAX_PORT) && (i < hal_nports_local); i++) {
 		if (!hal_ports_local_copy[i].in_use)
 			continue;
 
@@ -222,8 +222,8 @@ static int rtu_daemon_learning_process(void)
 		err = rtu_read_learning_queue(&req);
 		if (!err) {
 			pr_debug(
-			      "ureq: port %d src %s VID %d priority %d\n",
-			      req.port_id,
+			      "ureq: port %d (wri%d) src %s VID %d priority %d\n",
+			      req.port_id + 1, req.port_id + 1,
 			      mac_to_string(req.src),
 			      req.has_vid ? req.vid : 0,
 			      req.has_prio ? req.prio : 0);
@@ -233,7 +233,7 @@ static int rtu_daemon_learning_process(void)
 				if (p->in_use && p->hw_index == req.port_id
 				    && !state_up(p->state)) {
 					port_down = 1;
-					pr_debug("port down %d\n", i);
+					pr_debug("port down %s\n", p->name);
 					break;
 				}
 			}

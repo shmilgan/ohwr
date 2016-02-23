@@ -53,7 +53,8 @@ int rtudexp_clear_entries(const struct minipc_pd *pd,
 	int iface_num = (int)args[0];
 	int *p_ret = (int *)ret;	//force pointed to int type
 
-	pr_debug("Removing dynamic entries on interface %d\n", iface_num);
+	pr_debug("Removing dynamic entries on interface %d (wri%d)\n",
+		 iface_num + 1, iface_num + 1);
 
 	rtu_fd_clear_entries_for_port(iface_num);
 	*p_ret = 0;
@@ -80,8 +81,9 @@ int rtudexp_add_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 		      "%s is an invalid MAC format (XX:XX:XX:XX:XX:XX)\n",
 		      strEHA);
 
-	pr_info("Create entry for (MAC=%s) port %x, mode:%s\n",
-	      mac_to_string(mac_tmp), 1 << port, (mode) ? "DYNAMIC" : "STATIC");
+	pr_info("Create entry for (MAC=%s) port %x (wri%d), mode:%s\n",
+	      mac_to_string(mac_tmp), 1 << port, port + 1,
+	      (mode) ? "DYNAMIC" : "STATIC");
 	*p_ret =
 	    rtu_fd_create_entry(mac_tmp, 0, 1 << port, mode, OVERRIDE_EXISTING);
 	return *p_ret;
