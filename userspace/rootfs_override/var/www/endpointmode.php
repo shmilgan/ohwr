@@ -28,11 +28,11 @@
 		echo '<table class="altrowstable" id="alternatecolor" style="width:100%;text-align:center">';
 		for($i = 0; $i < 9; $i++){
 			echo '<tr>';
-			echo '<th>wr'.($i).'</td>';
-			echo '<td><a href="modifymode.php?wr='.($i).'&mode='.$modes[$i].'">'.$modes[$i].'</a></th>';
+			echo '<th>wri'.($i+1).'</td>';
+			echo '<td><a href="modifymode.php?wri='.($i+1).'&mode='.$modes[$i].'">'.$modes[$i].'</a></th>';
 
-			echo '<th>wr'.($i+9).'</th>';
-			echo '<td><a href="modifymode.php?wr='.($i+9).'&mode='.$modes[$i+9].'">'.$modes[$i+9].'</a></td>';
+			echo '<th>wri'.($i+10).'</th>';
+			echo '<td><a href="modifymode.php?wri='.($i+10).'&mode='.$modes[$i+9].'">'.$modes[$i+9].'</a></td>';
 			echo '</tr>';
 		}
 		echo '</table>';

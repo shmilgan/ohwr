@@ -24,9 +24,9 @@
 		echo '<form  method=POST>
 				Select an Endpoint:	<select name="endpoint" class="sec">';
 
-		for($op = 0; $op < 18; $op++){
+		for($op = 1; $op <= 18; $op++){
 
-			echo '<option value="wr'.$op.'">wr'.$op.'</option>';
+			echo '<option value="'.$op.'">wri'.$op.'</option>';
 
 		}
 
@@ -36,7 +36,7 @@
 		echo '<option value="txcal1">Enable Calibration Transmission</option>';
 		echo '<option value="txcal0">Disable Calibration Transmission</option>';
 		echo '<option value="dump">See Registers</option>';
-		echo '<option value="wr">Modify Registers</option>';
+		echo '<option value="wri">Modify Registers</option>';
 		//echo '<option value="rt">Show Flags</option>';
 		echo '<option value="lock">Lock Endpoint</option>';
 		//echo '<option value="master">Make Master</option>';

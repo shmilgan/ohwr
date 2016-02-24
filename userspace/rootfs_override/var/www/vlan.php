@@ -99,7 +99,7 @@
 			if($counter>=2 && !empty($line)){
 				$line = explode(" ", $line);
 
-				echo '<tr align=center><td>WR'.($line[1]+1).'</td><td>'.$line[2]." (".$line[3].')</td><td>'.($line[5]).'</td><td bgcolor="'.$vlancolor[$line[6]].'">VLAN '.$line[6].'</td><td>'.$line[7].'</td></td></tr>';
+				echo '<tr align=center><td>'.($line[0]).'</td><td>'.$line[1]." (".$line[2].')</td><td>'.($line[4]).'</td><td bgcolor="'.$vlancolor[$line[5]].'">VLAN '.$line[5].'</td><td>'.$line[6].'</td></td></tr>';
 
 			}
 

@@ -22,7 +22,7 @@
 
 	<?php
 
-		$endpoint = intval($_GET["wr"]);
+		$endpoint = intval($_GET["wri"]);
 		$endpoint = sprintf("%02s", $endpoint);
 		$endpoint = strval($endpoint);
 

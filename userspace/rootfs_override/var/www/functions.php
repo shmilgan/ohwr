@@ -93,7 +93,7 @@ function wrs_header_ports(){
 		}
 		else $mode="linkdown";
 
-		$desc=sprintf("#%02d: wr%d (%s)",$cont+1,$cont,$mode);
+		$desc=sprintf("#%02d: wri%d (%s)",$cont+1,$cont+1,$mode);
 		echo '<th>'."<img class='".$mode."' src='img/".$mode.".png' alt='".$desc."', title='".$desc."'>".'</th>';
 		$cont++;
 
@@ -480,10 +480,10 @@ function wr_endpoint_phytool($option1, $endpoint){
 
 		$output=shell_exec("/wr/bin/wr_phytool ".$endpoint." dump");
 		$ports = explode(" ", $output);
-
+		echo 'wri'.$endpoint.'<BR>';
 		echo "<table border='0' align='center'>";
 		echo '<tr>';
-		echo '<th>'.$endpoint.' Register</th>';
+		echo '<th>Register</th>';
 		echo '<th>Value</th>';
 		echo '</tr>';
 
@@ -503,20 +503,17 @@ function wr_endpoint_phytool($option1, $endpoint){
 		//}
 
 	// User wants to modify endpoint's registers
-	} else if(!strcmp($option1, "wr")){
-
-		$output=shell_exec("/wr/bin/wr_phytool ".$endpoint." dump");
-		$ports = explode(" ", $output);
+	} else if(!strcmp($option1, "wri")){
 
 		echo '<br>';
 		echo '<center></center><form  method=POST>';
 		echo "<table border='0' align='center'>";
 		echo '<tr>';
-		echo '<th>'.$endpoint.' Registers</th>';
+		echo '<th>wri'.$endpoint.' Registers</th>';
 		echo '<th><center>Value</center></th>';
 		echo '</tr>';
-
-		for($i=0; $i<18; $i++){
+		/* wr_phytool prints 17 registers */
+		for($i=0; $i<17; $i++){
 			echo '<tr>';
 			echo '<th>R'.$i.'</th>';
 			echo '<th><input type="text" name="r'.$i.'" value="'.$_POST['r'.$i].'"></th>';
@@ -526,12 +523,12 @@ function wr_endpoint_phytool($option1, $endpoint){
 
 		echo '</tr>';
 		echo '</table>';
-		echo '<input type="hidden" name="option1" value="wr">';
-		echo '<input type="hidden" name="wr" value="yes">';
+		echo '<input type="hidden" name="option1" value="wri">';
+		echo '<input type="hidden" name="wri" value="yes">';
 		echo '<input type="hidden" name="endpoint" value="'.$endpoint.'">';
 		echo '<center><input type="submit" value="Update" class="btn"></center></form><center>';
 
-		if(!empty($_POST['wr'])){
+		if(!empty($_POST['wri'])){
 			for($i=0; $i<18 ; $i++){
 				if (!empty($_POST['r'.$i])){
 					$cmd = '/wr/bin/wr_phytool '.$_POST['endpoint'].' wr '.dechex($i).' '.$_POST['r'.$i].'';
@@ -573,8 +570,8 @@ function wr_endpoint_phytool($option1, $endpoint){
 
 
 function wr_show_endpoint_rt_show(){
-
-	$output=shell_exec('/wr/bin/wr_phytool wr0 rt show');
+	/* use port number between 1 and 18 */
+	$output=shell_exec('/wr/bin/wr_phytool 1 rt show');
 	$rts = nl2br($output);
 	echo $rts;
 }
@@ -1161,7 +1158,7 @@ function parse_endpoint_modes(){
 
 	$modes = array();
 
-	for($i = 0; $i < 18; $i++){
+	for($i = 1; $i <= 18; $i++){
 		$endpoint = intval($i);
 		$endpoint = sprintf("%02s", $endpoint);
 		$endpoint = strval($endpoint);
@@ -1219,12 +1216,7 @@ function parse_mask2ports($vlanmask){
 
 	for($i=0; $i<18; $i++){
 		if($bin[$i]=="1"){
-			$ports .= "wr".($i+1)." ";
-			$counter++;
-			if($counter==4){
-				$ports .= "<br>";
-				$counter = 0;
-			}
+			$ports .= "wri".($i+1)." ";
 		}
 	}
 
