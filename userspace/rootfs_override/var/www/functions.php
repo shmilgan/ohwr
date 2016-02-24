@@ -4,7 +4,6 @@
 $etcdir="/usr/wr/etc/"; //configuration file folder for WRS
 $snmpconf="snmpd.conf";
 $ppsiconf="ppsi-pre.conf";
-$wrswhalconf="wrsw_hal.conf";
 $sfpdatabaseconf="sfp_database.conf";
 $wrdateconf="wr_date.conf";
 $vlancolor = array("#27DE2A", "#B642A8", "#6E42B6", "#425DB6" , "#428DB6", "#4686B6", "#43B88B", "#42B65F", "#82B642", "#B6AE42", "#B67E42");
@@ -1049,8 +1048,8 @@ function wrs_display_help($help_id, $name){
 			$message .= $i.":   ".$msg[$i]."<br>";
 		}
 	} else if (!strcmp($help_id, "endpointmode")){
-		$message = "<br><b>Change endpoint mode to master/slave/auto by clicking on one of the items.</b><br>";
-		$message .= "<b>It modifies both wrsw_hal.conf and ppsi.conf files</b>";
+		$message = "<br><b>Change endpoint mode to master/slave/non-wr/auto by clicking on one of the items.</b><br>";
+		$message .= "<b>It modifies dot-config and ppsi.conf files</b>";
 	} else if (!strcmp($help_id, "snmp")){
 		$message = "<p align=left>List of public SNMP OIDs</p><br>";
 		$message .= shell_exec("snmpwalk -v1 -c public localhost");
@@ -1158,25 +1157,6 @@ function extension($filename){
     return substr(strrchr($filename, '.'), 1);
 }
 
-/*
- * Obtains the content of wrsw_hal_file
- *
- * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
- *
- * @return $file: string containing endpoints master/slave
- *
- */
-function parse_wrsw_hal_file(){
-
-	$file =  shell_exec('cat '.$GLOBALS['etcdir'].'wrsw_hal.conf | grep wr_');
-	$file =  str_replace("mode =", "", $file);
-	$file =  str_replace('"', "", $file);
-	$file =  str_replace(';', "", $file);
-	$file =  str_replace('wr_', "", $file);
-	$file = explode(" ", $file);
-	return $file;
-}
-
 function parse_endpoint_modes(){
 
 	$modes = array();
@@ -1213,25 +1193,6 @@ function check_switch_mode(){
 		return "BC";
 	else if (!empty($_SESSION["KCONFIG"]["CONFIG_TIME_FM"]))
 		return "FM";
-}
-
-/*
- * Obtains the current mode of the switch from wrsw_hal.conf file
- * and changes it from master to Grandmaster and vicecersa
- *
- * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
- *
- *
- */
-function modify_switch_mode(){
-
-	if (!strcmp(check_switch_mode(), "GrandMaster")){
-		$cmd = 'sed -i "s/mode = \"GrandMaster\"/mode = \"Master\"/g" '.$GLOBALS['etcdir'].'wrsw_hal.conf';
-	}else{
-		$cmd = 'sed -i "s/mode = \"Master\"/mode = \"GrandMaster\"/g" '.$GLOBALS['etcdir'].'wrsw_hal.conf';
-	}
-	shell_exec($cmd);
-
 }
 
 function session_is_started(){
