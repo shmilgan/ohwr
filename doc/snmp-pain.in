@@ -520,7 +520,7 @@ interface is a line.  This approach allows the same MIB to work for
 every possible configuration.  For WR port statistics we chose a
 different approach: the counters themselves are somehow dynamic (they
 may change across versions, while the gateware develops) while the
-interfaces are restricted to be in the set @t{wr0}--@t{wr17}.
+interfaces are restricted to be in the set @t{wri1}--@t{wri18}.
 
 So our pStats table is reversed from the common use of @sc{snmp} tables.
 As a side effect this allows the WR switch to return the name of each

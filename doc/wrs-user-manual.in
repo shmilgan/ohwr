@@ -588,10 +588,10 @@ value is changed by the web interface, proper action is taken.
 	Please note that unknown facility names will generate a runtime error
 	on the switch.
 
-@item CONFIG_PORT00_PARAMS
-@itemx CONFIG_PORT01_PARAMS
+@item CONFIG_PORT01_PARAMS
+@itemx CONFIG_PORT02_PARAMS
 @itemx ...
-@itemx CONFIG_PORT17_PARAMS
+@itemx CONFIG_PORT18_PARAMS
 
 	These configuration items are used to set up port parameters;
         this includes the delays, the PTP role, PTP protocol type
@@ -635,7 +635,7 @@ value is changed by the web interface, proper action is taken.
 
 	By default, PPSi configuration file is assembled based on role and
         protocol parameters stored in @t{PORTxx_PARAMS}. @t{TIME_BC} selected
-        by @i{Kconfig} defaults role of port @t{wr0} to slave, other ports
+        by @i{Kconfig} defaults role of port @t{wri1} to slave, other ports
         to master. For @t{TIME_GM} and @t{TIME_FM} all ports are mandated to
         master.
         Parameters @t{clock-class} and @t{clock-accuracy} can be changed
@@ -743,12 +743,12 @@ description.
 This is, for explanation's sake, an example of such items:
 
 @smallexample
-CONFIG_PORT09_PARAMS="name=wr9,proto=raw,tx=226214,rx=226758,role=slave,fiber=2"
+CONFIG_PORT09_PARAMS="name=wri9,proto=raw,tx=226214,rx=226758,role=slave,fiber=2"
 CONFIG_SFP00_PARAMS="pn=AXGE-1254-0531,tx=0,rx=0,wl_txrx=1310+1490"
 CONFIG_FIBER02_PARAMS="alpha_1310_1490=2.6787e-04"
 @end smallexample
 
-When making timing calculation for port @t{wr9}, assuming the
+When making timing calculation for port @t{wri9}, assuming the
 auto-detected @sc{sfp} model is``AXGE-1254-0531'', the software
 uses configuration in the following way:
 
@@ -1149,9 +1149,7 @@ The following tools and scripts are provided:
         A tool to switch the TX (laser) of a port on and off by use of the @t{TX
         disable} pin on the SFP. Usage ``@t{wrs_port_tx_control <port_no> on}''
         switches the TX on, and ``@t{wrs_port_tx_control <port_no> off}''
-        switches the TX off. The port number @t{<port_no>} ranges from 0 to the
-        maximum number of ports on the device minus one, and is currently
-        limited to 17.
+        switches the TX off. The port number @t{<port_no>} ranges from 1 to 18.
 
 @item wr_date
 
@@ -1189,8 +1187,10 @@ The following tools and scripts are provided:
 @item apply_dot-config
 	The script is used to apply @t{dot-config} settings to the
         current configuration files.  It is run at boot time before
-        any service is started. The @t{dot-config} mechanism is
-        documented in @ref{Configuration of the Device}.
+        any service is started and by web interface to apply changes in
+        the local dot-config.
+        The @t{dot-config} mechanism is documented in @ref{Configuration of the
+        Device}.
 
 @item assembly_ppsi_conf.sh
 	The script is used to assembly ppsi configuration file based on
@@ -1572,8 +1572,8 @@ WR-SWITCH-MIB::wrsPtpRTT.1 = Counter64: 943893
 WR-SWITCH-MIB::wrsPtpLinkLength.1 = Gauge32: 91
 WR-SWITCH-MIB::wrsPtpServoUpdates.1 = Counter32: 33
 [...]
-WR-SWITCH-MIB::wrsPortStatusPortName.1 = STRING: wr0
-WR-SWITCH-MIB::wrsPortStatusPortName.2 = STRING: wr1
+WR-SWITCH-MIB::wrsPortStatusPortName.1 = STRING: wri1
+WR-SWITCH-MIB::wrsPortStatusPortName.2 = STRING: wri2
 [...]
 WR-SWITCH-MIB::wrsPortStatusLink.1 = INTEGER: up(2)
 WR-SWITCH-MIB::wrsPortStatusLink.2 = INTEGER: up(2)
@@ -1587,8 +1587,8 @@ WR-SWITCH-MIB::wrsPortStatusSfpVN.2 = STRING: Axcen Photonics
 WR-SWITCH-MIB::wrsPortStatusSfpPN.1 = STRING: AXGE-3454-0531
 WR-SWITCH-MIB::wrsPortStatusSfpPN.2 = STRING: AXGE-3454-0531
 [...]
-WR-SWITCH-MIB::wrsPstatsHCPortName.1 = STRING: wr0
-WR-SWITCH-MIB::wrsPstatsHCPortName.2 = STRING: wr1
+WR-SWITCH-MIB::wrsPstatsHCPortName.1 = STRING: wri1
+WR-SWITCH-MIB::wrsPstatsHCPortName.2 = STRING: wri2
 [...]
 WR-SWITCH-MIB::wrsPstatsHCTXFrames.1 = Counter64: 232
 WR-SWITCH-MIB::wrsPstatsHCTXFrames.2 = Counter64: 543
@@ -1639,47 +1639,47 @@ Output is in text form and looks like:
 @smallexample
 SNMP table: WR-SWITCH-MIB::wrsPstatsHCTable
 
- wrsPstatsHCPortName wrsPstatsHCTXUnderrun wrsPstatsHCRXOverrun wrsPstatsHCRXInvalidCode
-                 wr0                     0                    0                        0
-                 wr1                     0                    0                        0
-                 wr2                     0                    0                        0
-                 wr3                     0                    0                        0
-                 wr4                     0                    0                        0
-                 wr5                     0                    0                        0
-                 wr6                     0                    0                        0
-                 wr7                     0                    0                        0
-                 wr8                     0                    0                        0
-                 wr9                     0                    0                        0
-                wr10                     0                    0                        0
-                wr11                     0                    0                        0
-                wr12                     0                    0                        0
-                wr13                     0                    0                        0
-                wr14                     0                    0                        0
-                wr15                     0                    0                        0
-                wr16                     0                    0                        0
-                wr17                     0                    0                        0
+ wrsPstatsHCPortName wrsPstatsHCTXUnderrun wrsPstatsHCRXOverrun
+                wri1                     0                    0
+                wri2                     0                    0
+                wri3                     0                    0
+                wri4                     0                    0
+                wri5                     0                    0
+                wri6                     0                    0
+                wri7                     0                    0
+                wri8                     0                    0
+                wri9                     0                    0
+               wri10                     0                    0
+               wri11                     0                    0
+               wri12                     0                    0
+               wri13                     0                    0
+               wri14                     0                    0
+               wri15                     0                    0
+               wri16                     0                    0
+               wri17                     0                    0
+               wri18                     0                    0
 
 SNMP table WR-SWITCH-MIB::wrsPstatsHCTable, part 2
 
- wrsPstatsHCRXSyncLost wrsPstatsHCRXPauseFrames wrsPstatsHCRXPfilterDropped
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
-                     0                        0                           0
+ wrsPstatsHCRXInvalidCode wrsPstatsHCRXSyncLost wrsPstatsHCRXPauseFrames
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
+                        0                     0                        0
 
 (...)
 @end smallexample

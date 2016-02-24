@@ -1927,7 +1927,7 @@ The binary image includes 4 files, stored as an @sc{sdb} filesystem:
 
 	The MAC address for the management Ethernet port (RJ45, 100Mb/s).
 
-@item wr0.ethaddr
+@item wri1.ethaddr
 
 	The MAC address for the first fiber port (SFP, 1Gb/s). Other ports
         are assigned sequential addresses starting from this one.
@@ -2068,7 +2068,7 @@ in the boot scripts, as we now extract the mac addresses from sdb.
   bb> sdb ls /dev/dataflash0.hwinfo
   46696c6544617461:2e202020 @ 00000000-0000083f .
   46696c6544617461:7363625f @ 00000240-00000243 scb_version
-  46696c6544617461:7772302e @ 00000220-00000231 wr0.ethaddr
+  46696c6544617461:7772302e @ 00000220-00000231 wri1.ethaddr
   46696c6544617461:6d616e75 @ 00000260-0000026f manufacturer
   46696c6544617461:68775f69 @ 00000420-0000083f hw_info
   46696c6544617461:65746830 @ 00000200-00000211 eth0.ethaddr
@@ -2078,7 +2078,7 @@ in the boot scripts, as we now extract the mac addresses from sdb.
   bb> sdb cat /dev/dataflash0.hwinfo hw_info
   fpga: LX240T
   scb_serial: 12345
-  bb> sdb set /dev/dataflash0.hwinfo wraddr wr0.ethaddr
+  bb> sdb set /dev/dataflash0.hwinfo wraddr wri1.ethaddr
   bb> echo $wraddr
   22:33:44:55:66:77
 

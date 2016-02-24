@@ -256,7 +256,7 @@ implementation.
 
 @item WR GrandMaster Switch should be holy provided it has an
 external reference. Currently if we have a GrandMaster Switch and we
-connect a Free-running Master to it's Slave port (wr0) then it becomes
+connect a Free-running Master to it's Slave port (wri1) then it becomes
 Slave to the Free-running Master and jumps it's WR time.  All the
 mechanism is in place, this should be trivial to fix.
 
