@@ -59,7 +59,7 @@ while [ $# -ge 1 ]; do
 	    shift; shift
 	    ;;
 	
-	-m2|--mac2|--wr0.ethaddr)
+	-m2|--mac2|--wri1.ethaddr)
 	    MAC2="$2"
 	    checkMAC $MAC2
 	    if [ $? -eq 1 ];then
