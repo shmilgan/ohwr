@@ -31,7 +31,7 @@ bootargs="$bootargs root=nfs rw ip=$ipinfo"
 bootargs="$bootargs nfsroot=/opt/root/wrs,tcp"
 
 # And pass the WR base MAC address, that barebox retrieved from SDB
-bootargs="$bootargs wr_nic.macaddr=$wr0_ethaddr"
+bootargs="$bootargs wr_nic.macaddr=$wri1_ethaddr"
 
 # Load the kernel using the personal name chosen above, and boot it
 tftp $kernelname /dev/mem.kernel; bootz /dev/mem.kernel

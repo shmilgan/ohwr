@@ -22,7 +22,7 @@ cp /boot/wrs-initramfs.gz /dev/mem.initramfs
 #bootargs="verbose console=ttyS0,115200 panic=10"
 bootargs="quiet console=ttyS0,115200 panic=10"
 bootargs="$bootargs initrd=0x71800000,0x400000"
-bootargs="$bootargs wr_nic.macaddr=$wr0_ethaddr"
+bootargs="$bootargs wr_nic.macaddr=$wri1_ethaddr"
 bootz /dev/mem.kernel
 
 # Sleep 2 seconds so you can see the message and return to menu
