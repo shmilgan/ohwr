@@ -17,6 +17,7 @@
 #include <libwr/sfp_lib.h>
 #include <libwr/config.h>
 #include <libwr/hal_shmem.h>
+#include <libwr/util.h>
 
 #include "wrsw_hal.h"
 #include <rt_ipc.h>
@@ -214,7 +215,7 @@ static void hal_parse_cmdline(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-	struct timespec t1, t2;
+	uint64_t t1, t2;
 
 	wrs_msg_init(argc, argv);
 
@@ -246,15 +247,14 @@ int main(int argc, char *argv[])
 	 * includes some jitter.
 	 */
 
-	clock_gettime(CLOCK_MONOTONIC, &t1);
+	t1 = get_monotonic_tics();
 	for (;;) {
 		int delay_ms;
 
 		hal_update_wripc(25 /* max ms delay */);
 
-		clock_gettime(CLOCK_MONOTONIC, &t2);
-		delay_ms = (t2.tv_sec - t1.tv_sec) * 1000;
-		delay_ms += (t2.tv_nsec - t1.tv_nsec) / 1000 / 1000;
+		t2 = get_monotonic_tics();
+		delay_ms = (t2 - t1) * 1000;
 		if (delay_ms < PORT_FAN_MS_PERIOD)
 			continue;
 

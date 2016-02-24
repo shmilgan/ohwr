@@ -36,7 +36,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 	if (n_rows)
 		*n_rows = n_rows_local;
 
-	time_cur = time(NULL);
+	time_cur = get_monotonic_sec();
 	if (time_update
 	    && time_cur - time_update < WRSPORTSTATUSTABLE_CACHE_TIMEOUT) {
 		/* cache not updated, return last update time */

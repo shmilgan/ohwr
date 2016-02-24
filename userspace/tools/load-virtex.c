@@ -88,12 +88,12 @@ static int pio_get(int port, int bit)
 
 static void ud(int usecs) /* horrible udelay thing without scheduling */
 {
-	struct timeval tv1, tv2;
-	gettimeofday(&tv1, NULL);
+	struct timespec tv1, tv2;
+	clock_gettime(CLOCK_MONOTONIC, &tv1);
 	do
-		gettimeofday(&tv2, NULL);
+		clock_gettime(CLOCK_MONOTONIC, &tv2);
 	while ((tv2.tv_sec - tv1.tv_sec) * 1000*1000
-	       + tv2.tv_usec - tv1.tv_usec < usecs);
+	       + (tv2.tv_nsec - tv1.tv_nsec) / 1000 < usecs);
 }
 
 
