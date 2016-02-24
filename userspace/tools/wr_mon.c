@@ -24,9 +24,7 @@
 #define SHOW_OTHER_PORTS	(1<<2)
 #define SHOW_SERVO		(1<<3)
 #define SHOW_TEMPERATURES	(1<<4)
-#define WEB_INTERFACE		(1<<5) /* TJP: still has it's own print
-					*      function, ugly
-					*/
+#define WEB_INTERFACE		(1<<5)
 #define SHOW_WR_TIME		(1<<6)
 
 /* for convenience when any or all ports needs a print statement */
@@ -485,7 +483,7 @@ void show_servo(void)
 
 void show_temperatures(void)
 {
-	if (mode == SHOW_GUI) {
+	if ((mode == SHOW_GUI) || (mode & WEB_INTERFACE)) {
 		term_cprintf(C_BLUE, "\nTemperatures:\n");
 
 		term_cprintf(C_GREY, "FPGA: ");
@@ -552,7 +550,7 @@ void show_all(void)
 			show_servo();
 	}
 
-	if (mode & SHOW_TEMPERATURES || mode == SHOW_GUI) {
+	if (mode & (SHOW_TEMPERATURES | WEB_INTERFACE) || mode == SHOW_GUI) {
 		if (hal_alive)
 			show_temperatures();
 	}
@@ -616,7 +614,6 @@ int main(int argc, char *argv[])
 	}
 
 	init_shm();
-	term_init(usecolor);
 
 	if (mode & WEB_INTERFACE) {
 		read_servo();
@@ -624,6 +621,8 @@ int main(int argc, char *argv[])
 		show_all();
 		exit(0);
 	}
+
+	term_init(usecolor);
 
 	if (shw_fpga_mmap_init() < 0) {
 		pr_error("Can't initialize FPGA mmap\n");
