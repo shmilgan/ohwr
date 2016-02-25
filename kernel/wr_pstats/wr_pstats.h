@@ -16,8 +16,8 @@
 						 * in the switch */
 
 #define PSTATS_MSB_SHIFT	16	/*how many bits are stored in hw*/
-#define PSTATS_LSB_MSK 0x0000ffff
-#define PSTATS_MSB_MSK 0xffff0000
+#define PSTATS_LSB_MSK 0x000000000000ffffLL
+#define PSTATS_MSB_MSK 0xffffffffffff0000LL
 #define PSTATS_ALL_MSK 0xffffffff
 
 #define PSTATS_IRQBUFSZ  16

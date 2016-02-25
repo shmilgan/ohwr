@@ -112,9 +112,10 @@ static struct pstats_version_description pstats_desc[] = {
 };
 
 struct cntrs_dev {
-	unsigned int cntrs[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
-	unsigned int zeros[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
-	unsigned int userv[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
+	uint64_t cntrs[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
+	/* there is no need to keep 64bits for zero values,
+	 * part which is read from FPGA is enough */
+	uint16_t zeros[PSTATS_MAX_NPORTS][PSTATS_MAX_NUM_OF_COUNTERS];
 	struct PSTATS_WB __iomem *regs;
 
 	/* prevents from simultaneous access to cntrs array from tasklet and
@@ -185,7 +186,7 @@ static void pstats_tlet_fn(unsigned long arg)
 	uint32_t irqs;
 	uint64_t *cntrs_ov;
 	int port, cntr;
-	unsigned int *ptr;
+	uint64_t *ptr;
 	struct cntrs_dev *device = (struct cntrs_dev *)arg;
 
 	if (device->irqs_head - device->irqs_tail > PSTATS_IRQBUFSZ) {
@@ -266,7 +267,7 @@ static irqreturn_t pstats_irq_handler(int irq, void *devid)
 static int rd_cnt_word(int port, int adr)
 {
 	uint32_t val[2];
-	unsigned int *ptr;
+	uint64_t *ptr;
 	int i;
 
 	val[0] = (adr<<PSTATS_CR_ADDR_SHIFT |
@@ -284,6 +285,10 @@ static int rd_cnt_word(int port, int adr)
 		ptr = &(pstats_dev.cntrs[port][4 * adr + i]);
 		*ptr &= PSTATS_MSB_MSK;
 		*ptr |= hwcnt_to_sw(val[0], val[1], i);
+		/* apply zero bias,
+		 * NOTE: since cntrs are monotonic, they're always bigger than
+		 * zeros */
+		*ptr -= pstats_dev.zeros[port][4 * adr + i];
 		spin_unlock(&pstats_dev.port_mutex[port]);
 	}
 
@@ -302,11 +307,21 @@ static int pstats_rd_cntrs(int port)
 
 static void pstats_zero(int port)
 {
+	int i;
 	pstats_rd_cntrs(port);
 	spin_lock(&pstats_dev.port_mutex[port]);
-	memcpy(pstats_dev.zeros[port],
-	       pstats_dev.cntrs[port],
-	       sizeof(pstats_dev.zeros[port]));
+	for (i = 0; i < PSTATS_MAX_NUM_OF_COUNTERS; i++) {
+		/* since cntrs is monotonic it will never happen that zero will
+		 * be bigger than cntrs */
+		/* add zeros since it was substracted before in
+		 * pstats_rd_cntrs (rd_cnt_word) */
+		pstats_dev.cntrs[port][i] += pstats_dev.zeros[port][i];
+		/* clear 48 MSBits */
+		pstats_dev.cntrs[port][i] &= PSTATS_LSB_MSK;
+		/* Copy 16 LSBits to zero */
+		pstats_dev.zeros[port][i] =
+			(uint16_t) pstats_dev.cntrs[port][i];
+	}
 	spin_unlock(&pstats_dev.port_mutex[port]);
 }
 
@@ -333,8 +348,8 @@ static int pstats_desc_handler(ctl_table *ctl, int write, void *buffer,
 static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 		size_t *lenp, loff_t *ppos)
 {
-	int i, port;
-	struct cntrs_dev *d = &pstats_dev;
+	int port;
+	int ret;
 
 	port = (int)ctl->extra1;
 
@@ -350,17 +365,23 @@ static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 	}
 
 	if (port < pstats_nports) {
+		/* read counters including correction of zeros offset */
 		pstats_rd_cntrs(port);
-		for (i = 0; i < firmware_counters; i++)
-			d->userv[port][i] = d->cntrs[port][i] - d->zeros[port][i];
 	} else {
 		/* stuff for info file, read at module load time */
 		pstats_info[PINFO_VER] = firmware_version;
 		pstats_info[PINFO_CNTPW] = firmware_cpw;
 		pstats_info[PINFO_CNTPP] = firmware_counters;
 	}
-
-	return proc_dointvec(ctl, 0, buffer, lenp, ppos);
+	/* It might happen that irq comes between reading MSB 32 bits and
+	 * LSB 32 bits of particualr counter.
+	 * In that case counter's value would be lower than previous one */
+	spin_lock(&pstats_dev.port_mutex[port]);
+	/* each value will be split into two unsigned longs,
+	 * each counter has to be assembled in software reading pstats */
+	ret = proc_dointvec(ctl, 0, buffer, lenp, ppos);
+	spin_unlock(&pstats_dev.port_mutex[port]);
+	return ret;
 }
 
 /* one per port, then info and description, and terminator, filled at init time */
@@ -462,9 +483,12 @@ static int __init pstats_init(void)
 
 	for (i = 0; i < pstats_nports; ++i) {
 		pstats_ctl_table[i].procname = portnames[i];
-		pstats_ctl_table[i].data = &pstats_dev.userv[i];
+		pstats_ctl_table[i].data = &pstats_dev.cntrs[i];
+		/* each value will be split into two unsigned longs,
+		 * each counter has to be assembled in software reading pstats
+		 */
 		pstats_ctl_table[i].maxlen =
-			firmware_counters*sizeof(unsigned int);
+			firmware_counters*sizeof(uint64_t);
 		pstats_ctl_table[i].mode = 0644;
 		pstats_ctl_table[i].proc_handler = pstats_handler;
 		pstats_ctl_table[i].extra1 = (void *)i;

@@ -45,7 +45,7 @@ SOURCES = \
 	wrsStartCntGroup.c \
 	wrsSpllVersionGroup.c \
 	wrsSpllStatusGroup.c \
-	wrsPstatsTable.c \
+	wrsPstatsHCTable.c \
 	wrsPtpDataTable.c \
 	wrsPortStatusTable.c \
 	init.c \
