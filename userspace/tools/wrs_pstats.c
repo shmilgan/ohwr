@@ -17,12 +17,6 @@
 
 static void parse_sysfs(int init);
 
-#define pstats_rd(reg) \
-	 _fpga_readl(FPGA_BASE_PSTATS + offsetof(struct PSTATS_WB, reg))
-
-#define pstats_wr(reg, val) \
-	 _fpga_writel(FPGA_BASE_PSTATS + offsetof(struct PSTATS_WB, reg), val)
-
 #define NPORTS 18
 #define CNT_PP 39
 
@@ -77,13 +71,7 @@ char info[][20] = {{"Tu-run|"}, // 0
 
 int pstats_init(int init)
 {
-	int err, i, j;
-
-	err = shw_fpga_mmap_init();
-	if(err) {
-		printf("shw_fpga_mmap_init failed with %d\n", err);
-		return err;
-	}
+	int i, j;
 
 	printf("module initialized\n");
 
