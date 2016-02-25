@@ -1138,6 +1138,13 @@ The following tools and scripts are provided:
         using the standard escape sequences for color output. The
         @t{-b} command line options removes color change (b/w).
 
+@item wrs_pps_control
+        A tool to switch the PPS output on and off. Usage ``@t{wrs_pps_control
+        on}'' switches the PPS output on, and ``@t{wrs_pps_control off}''
+        switches the PPS output off. Switching the output on/off is independent
+        of the PPSi process, but PPSi switches the PPS output back on when a
+        link restart is detected and PPSi comes into @t{'TRACK_PHASE'} state.
+
 @item wr_date
 
 	The program can read or set the White Rabbit date. When setting,
