@@ -50,7 +50,7 @@ static void call_cleanup_cbs(void)
 {
 	int i;
 
-	pr_info("Cleaning up...\n");
+	pr_debug("Cleaning up...\n");
 	for (i = 0; i < MAX_CLEANUP_CALLBACKS; i++)
 		if (cleanup_cb[i])
 			cleanup_cb[i] ();
@@ -82,7 +82,7 @@ static int hal_init(void)
 	//trace_log_stderr();
 
 	int line;
-	pr_info("initializing...\n");
+	pr_debug("initializing...\n");
 
 	memset(cleanup_cb, 0, sizeof(cleanup_cb));
 
@@ -220,8 +220,7 @@ int main(int argc, char *argv[])
 	wrs_msg_init(argc, argv);
 
 	/* Print HAL's version */
-	wrs_msg(LOG_ALERT, "wrsw_hal. Commit %s, built on " __DATE__ "\n",
-		__GIT_VER__);
+	pr_info("wrsw_hal. Commit %s, built on " __DATE__ "\n", __GIT_VER__);
 
 	/* Prevent from running HAL twice - it will likely freeze the system */
 	if (hal_check_running()) {

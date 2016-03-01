@@ -161,7 +161,7 @@ static int hal_port_init(int index)
 			pr_error("port index %i (%s): invalid role "
 				"\"%s\" specified\n", index, name, s);
 
-		pr_info("Port %s: mode %i\n", p->name, val);
+		pr_debug("Port %s: mode %i\n", p->name, val);
 	}
 
 	/* Get fiber type */
@@ -553,7 +553,7 @@ static void hal_port_poll_sfp(void)
 				if (ports[i].in_use
 				    && (mask ^ old_mask) & (1 << hw_index)) {
 					int insert = mask & (1 << hw_index);
-					pr_info("Detected SFP %s "
+					pr_info("SFP Info: Detected SFP %s "
 					      "on port %s.\n",
 					      insert ? "insertion" : "removal",
 					      ports[i].name);
