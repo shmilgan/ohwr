@@ -238,7 +238,7 @@ void endless_watchdog(void)
 
 		/* handle reset if needed */
 		if (rst) {
-			pr_warning("SWCore stuck... resetting\n");
+			pr_warning("Switching core stuck... resetting\n");
 			force_rst();
 			clear_stuck(stuck_cnt);
 		}
@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
 			pr_info("Read %d ports from cmdline\n", port_num);
 			break;
 		case 'p':
-			pr_info("use pidfile %s", optarg);
+			pr_debug("use pidfile %s", optarg);
 			write_pidfile(optarg, getpid());
 			break;
 		case 'q': break; /* done in wrs_msg_init() */
@@ -320,7 +320,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (daemon_mode) {
-		wrs_msg(LOG_ALERT, "wrs_watchdog. Commit %s, built on "
+		pr_info("wrs_watchdog. Commit %s, built on "
 			__DATE__ "\n", __GIT_VER__);
 
 		pr_info("Demonize\n");
