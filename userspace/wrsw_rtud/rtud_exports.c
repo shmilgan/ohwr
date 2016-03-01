@@ -51,15 +51,9 @@ int rtudexp_clear_entries(const struct minipc_pd *pd,
 			  uint32_t * args, void *ret)
 {
 	int iface_num = (int)args[0];
-	int force = (int)args[1];
 	int *p_ret = (int *)ret;	//force pointed to int type
 
-	pr_debug("Removing dynamic entries on interface %d, force=%d\n", iface_num, force);
-
-	//Do nothing
-	if (force)
-		pr_debug("wr%d > force %d is not implemented\n",
-		      iface_num, force);
+	pr_debug("Removing dynamic entries on interface %d\n", iface_num);
 
 	rtu_fd_clear_entries_for_port(iface_num);
 	*p_ret = 0;

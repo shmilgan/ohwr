@@ -118,7 +118,7 @@ void show_help(char *prgname)
 	fprintf(stderr,""
 			"   help:             Show this message\n"
 			"   list:             List the routing table (same as empty command)\n"
-			"   remove <ifnum> [<force>]: Remove all dynamic entries for one interface\n"
+			"   remove <ifnum>:   Remove all dynamic entries for one interface\n"
 			"   add    <mac (XX:XX:XX:XX:XX)> <ifnum> [<mode>]: Add entry for a specific \n"
 			"                     MAC address (mode={1=dynamic,0=static}\n"
 			"   vlan   <vid> <fid> <hex mask> [<drop>, <prio>, <has_prio>, <prio_override>]: \n"
