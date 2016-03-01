@@ -68,13 +68,12 @@ struct i2c_bus i2c_io_bus = {
 
 int shw_i2c_io_init(void)
 {
-	pr_info("Initializing IO I2C bus...%s\n", __TIME__);
 	if (i2c_init_bus(&i2c_io_bus) < 0) {
-		pr_error("init failed: %s\n", i2c_io_bus.name);
+		pr_error("I2C I/O init failed for bus %s\n", i2c_io_bus.name);
 		return -1;
 	}
 
-	pr_info("init: success: %s\n", i2c_io_bus.name);
+	pr_info("I2C I/O init success for bus %s\n", i2c_io_bus.name);
 	return 0;
 }
 
@@ -112,9 +111,8 @@ int shw_get_hw_ver(void)
 		case 2:
 			return 341;
 		default:
-			pr_error(
-			      "Unknown HW version (0x%x), check the DIP switch under the SCB\n",
-			      (ret >> 1) & 0x7);
+			pr_error("Unknown HW version (0x%x), check the DIP "
+			      "switch under the SCB\n", (ret >> 1) & 0x7);
 			return -1;
 
 		}

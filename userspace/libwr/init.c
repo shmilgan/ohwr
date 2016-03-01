@@ -10,7 +10,7 @@
 
 int shw_init()
 {
-	pr_info("%s\n======================================================\n",
+	pr_debug("%s\n======================================================\n",
 		__TIME__);
 
 	/* Init input/output (GPIO & CPU I2C) */
@@ -37,6 +37,6 @@ int shw_init()
 
 int shw_exit_fatal(void)
 {
-	pr_error("exiting due to fatal error.\n");
+	pr_error("Exiting due to fatal error.\n");
 	exit(-1);
 }

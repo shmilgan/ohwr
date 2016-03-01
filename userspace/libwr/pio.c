@@ -48,12 +48,12 @@ int shw_pio_mmap_init()
 		 AT91C_BASE_SYS_RAW);
 
 	if (_sys_base == NULL) {
-		pr_error("Can't mmap CPU GPIO regs\n");
+		pr_error("Can't mmap CPU GPIO registers\n");
 		close(fd);
 		exit(-1);
 	}
 
-	pr_info("AT91_SYS virtual base = %p\n", _sys_base);
+	pr_debug("AT91_SYS virtual base = %p\n", _sys_base);
 
 	pmc_enable_clock(2);	/* enable PIO clocks */
 	pmc_enable_clock(3);

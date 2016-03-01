@@ -194,7 +194,8 @@ int shw_sfp_buses_init(void)
 	pr_info("Initializing SFP I2C busses...\n");
 	for (i = 0; i < ARRAY_SIZE(i2c_buses); i++) {
 		if (i2c_init_bus(&i2c_buses[i]) < 0) {
-			pr_error("init failed: %s\n", i2c_buses[i].name);
+			pr_error("I2C SFP init failed for bus %s\n",
+				i2c_buses[i].name);
 			return -1;
 		}
 //              printf("init: success: %s\n", i2c_buses[i].name);

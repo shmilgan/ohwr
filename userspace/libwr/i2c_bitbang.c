@@ -24,7 +24,7 @@ int i2c_bitbang_init_bus(struct i2c_bus *bus)
 
 	priv = (struct i2c_bitbang *)bus->type_specific;
 
-	pr_info("init: %s (%p)\n", bus->name, bus);
+	pr_debug("init: %s (%p)\n", bus->name, bus);
 	shw_pio_configure(priv->scl);
 	shw_pio_configure(priv->sda);
 	shw_pio_setdir(priv->scl, 0);
