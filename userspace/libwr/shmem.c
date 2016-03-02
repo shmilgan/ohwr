@@ -65,7 +65,7 @@ void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags)
 
 			usleep(10 * 1000);
 			tv2 = get_monotonic_tics();
-			if (((tv2 - tv1) * 1000) < SHM_LOCK_TIMEOUT_MS)
+			if (((tv2 - tv1) / 1000) < SHM_LOCK_TIMEOUT_MS)
 				continue;
 
 			errno = ETIMEDOUT;
