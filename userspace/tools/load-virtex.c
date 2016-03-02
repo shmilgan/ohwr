@@ -26,6 +26,8 @@
 #include <mach/at91_ssc.h>
 #include <mach/at91_pmc.h>
 
+#include <libwr/util.h>
+
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
@@ -84,17 +86,6 @@ static int pio_get(int port, int bit)
 #define INITB		PIOA, 3 //in
 #define PROGRAMB	PIOA, 4 //out
 #define FPGA_RESET	PIOA, 5 //out
-
-
-static void ud(int usecs) /* horrible udelay thing without scheduling */
-{
-	struct timespec tv1, tv2;
-	clock_gettime(CLOCK_MONOTONIC, &tv1);
-	do
-		clock_gettime(CLOCK_MONOTONIC, &tv2);
-	while ((tv2.tv_sec - tv1.tv_sec) * 1000*1000
-	       + (tv2.tv_nsec - tv1.tv_nsec) / 1000 < usecs);
-}
 
 
 /* being a lazy bastard, I fork a process to avoid free, munmap etc */
@@ -213,7 +204,7 @@ static int load_fpga_child(char *fname)
 	pio_set(PIO_PER, LED1);
 	pio_set(PIO_OER, LED1);
 	pio_set(PIO_CODR, LED1);
-	ud(100*1000);
+	shw_udelay(100*1000);
 	pio_set(PIO_SODR, LED0);
 	pio_set(PIO_SODR, LED1);
 
@@ -227,7 +218,7 @@ static int load_fpga_child(char *fname)
 
 	/* Then, wait little and then check init_b must go low */
 	for (i = 0; i < 50; i++) {
-		ud(10);
+		shw_udelay(10);
 		if (!pio_get(INITB))
 			break;
 	}
@@ -248,7 +239,7 @@ static int load_fpga_child(char *fname)
 	/* raise program_b, and initb must go high, too */
 	pio_set(PIO_SODR, PROGRAMB);
 	for (i = 0; i < 50; i++) {
-		ud(10);
+		shw_udelay(10);
 		if (pio_get(INITB))
 			break;
 	}
@@ -259,7 +250,7 @@ static int load_fpga_child(char *fname)
 		//exit(1);
 	}
 
-	ud(1000); /* wait for a short while before commencing the configuration - otherwise
+	shw_udelay(1000); /* wait for a short while before commencing the configuration - otherwise
 		     the FPGA might not assert the DONE flag correctly */
 	/* Then write one byte at a time */
 
@@ -286,7 +277,7 @@ static int load_fpga_child(char *fname)
 
 	/* Then, wait a little and then check done must go high */
 	for (i = 0; i < 500; i++) {
-		ud(100);
+		shw_udelay(100);
 		if (!pio_get(DONE))
 			break;
 	}
@@ -298,7 +289,7 @@ static int load_fpga_child(char *fname)
 
 	/* PA5 must go low then high */
 	pio_set(PIO_CODR, FPGA_RESET);
-	ud(10);
+	shw_udelay(10);
 	pio_set(PIO_SODR, FPGA_RESET);
 	exit(0);
 }
