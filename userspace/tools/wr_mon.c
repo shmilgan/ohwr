@@ -386,7 +386,7 @@ void show_servo(void)
 			return;
 		}
 
-		term_cprintf(C_GREY, "Servo state: ");
+		term_cprintf(C_GREY, "Servo state:          ");
 		if (lastt && time(NULL) - lastt > 5) {
 			term_cprintf(C_RED, " --- not updating --- ");
 		} else {
