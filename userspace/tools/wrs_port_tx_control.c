@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <libwr/wrs-msg.h>
+#include <regs/endpoint-mdio.h>
 #include <regs/endpoint-regs.h>
 #include <fpga_io.h>
 #include <libwr/switch_hw.h>
@@ -11,10 +12,11 @@
 
 static struct EP_WB _ep_wb;
 
+/* convert WR switch endpoint register name to an address value */
 #define EP_REG(regname) ((uint32_t)((void *)&_ep_wb.regname - (void *)&_ep_wb))
-#define IDX_TO_EP(x) (0x30000 + ((x) * 0x400))
 
-#define TX_ON_MASK	(1<<11)
+/* convert port number (x) to an endpoint address, x from 0 to 17 on switch */
+#define IDX_TO_EP(x) (0x30000 + ((x) * 0x400))
 
 void help(char *prgname)
 {
@@ -33,15 +35,35 @@ void help(char *prgname)
 	exit(1);
 }
 
+/*
+ * Read a 1000base-X TBI PCS register on a WR switch endpoint
+ *   ep: endpoint number (0 to 17, will be translated to address offset)
+ *   reg: WR endpoint 1000base-X TBI PCS register address to read from
+ */
 uint32_t pcs_read(int ep, uint32_t reg)
 {
+	/*
+	 * write the PCS register address to read from to the MDIO control
+	 * register on the WR switch endpoint.
+	 */
 	_fpga_writel(IDX_TO_EP(ep) + EP_REG(MDIO_CR), EP_MDIO_CR_ADDR_W(reg));
+	/*
+	 * wait until the control register has processed the address and copied
+	 * the data from the address into the control register
+	 */
 	while (!(_fpga_readl(IDX_TO_EP(ep) + EP_REG(MDIO_ASR)) &
 		EP_MDIO_ASR_READY))
 		;
+	/* read data copied into the control register */
 	return EP_MDIO_CR_DATA_R(_fpga_readl(IDX_TO_EP(ep) + EP_REG(MDIO_ASR)));
 }
 
+/*
+ * Write a value to a 1000base-X TBI PCS register on a WR switch endpoint
+ *   ep: endpoint number (0 to 17, will be translated to address offset)
+ *   reg: WR endpoint 1000base-X TBI PCS register address to write to
+ *   value: PCS register value to write
+ */
 void pcs_write(int ep, uint32_t reg, uint32_t val)
 {
 	_fpga_writel(IDX_TO_EP(ep) + EP_REG(MDIO_CR), EP_MDIO_CR_ADDR_W(reg)
@@ -115,7 +137,7 @@ int main(int argc, char *argv[])
 {
 	int opt;
 	int port_number;
-	uint32_t reg;
+	uint32_t reg = MDIO_MCR_ADDRESS;
 	uint32_t value;
 
 	while ((opt = getopt(argc, argv, "h")) != -1) {
@@ -139,11 +161,11 @@ int main(int argc, char *argv[])
 
 		if (strcmp(argv[2], "on") == 0) {
 			value = pcs_read(port_number, reg);
-			pcs_write(port_number, reg, value&~TX_ON_MASK);
+			pcs_write(port_number, reg, value&~MDIO_MCR_PDOWN);
 			exit(0);
 		} else if (strcmp(argv[2], "off") == 0) {
 			value = pcs_read(port_number, reg);
-			pcs_write(port_number, reg, value|TX_ON_MASK);
+			pcs_write(port_number, reg, value|MDIO_MCR_PDOWN);
 			exit(0);
 		} else {
 			printf("Unknown command\n;");
