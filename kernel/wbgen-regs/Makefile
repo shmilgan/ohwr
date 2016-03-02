@@ -11,7 +11,7 @@ MODULES_WRC ?= $(REPOS)/wr-cores/modules
 #SPECS = $(HW_REPO)/trunk/documentation/specifications
 
 WB_ENDPOINT = $(MODULES_WRC)/wr_endpoint/ep_wishbone_controller.wb
-WB_MDIO 		= $(MODULES_WRC)/wr_endpoint/pcs_regs.wb
+WB_MDIO     = $(MODULES_WRC)/wr_endpoint/pcs_regs.wb
 WB_PPSG     = $(MODULES_WRC)/wr_pps_gen/pps_gen_wb.wb
 WB_TSTAMP   = $(MODULES_WRS)/wrsw_txtsu/wrsw_txtsu.wb
 WB_RTU      = $(MODULES_WRS)/wrsw_rtu/rtu_wishbone_slave.wb
