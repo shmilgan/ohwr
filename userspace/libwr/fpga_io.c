@@ -25,7 +25,7 @@ int shw_fpga_mmap_init()
 {
 	int fd;
 
-	pr_info("Initializing FPGA memory mapping.\n");
+	pr_debug("Initializing FPGA memory mapping.\n");
 
 	fd = open("/dev/mem", O_RDWR | O_SYNC);
 	if (fd < 0) {
@@ -42,7 +42,7 @@ int shw_fpga_mmap_init()
 		return -1;
 	}
 
-	pr_info("FPGA virtual base = %p\n", _fpga_base_virt);
+	pr_debug("FPGA virtual base = %p\n", _fpga_base_virt);
 
 	return 0;
 

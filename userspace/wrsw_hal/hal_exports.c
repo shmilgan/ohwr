@@ -229,7 +229,7 @@ int hal_check_running()
 	struct wrs_shm_head *hal_head;
 	hal_head = wrs_shm_get(wrs_shm_hal, "", WRS_SHM_READ);
 	if (!hal_head) {
-		pr_info("Unable to open shm for HAL! Unable to check if there "
+		pr_error("Unable to open shm for HAL! Unable to check if there "
 			"is another HAL instance running. Error: %s\n",
 			strerror(errno));
 		exit(-1);

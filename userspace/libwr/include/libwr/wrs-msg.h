@@ -33,10 +33,10 @@ extern void wrs_msg_init(int argc, char **argv);
 #ifdef DEBUG /* We had it, so let's keep this build-time thing */
 #  define WRS_MSG_DEFAULT_LEVEL    LOG_DEBUG
 #else
-#  define WRS_MSG_DEFAULT_LEVEL    LOG_WARNING
+#  define WRS_MSG_DEFAULT_LEVEL    LOG_INFO
 #endif
 
-#define WRS_MSG_DETAILS_AT  LOG_INFO /* >= info (so, debug) use __LINE__ */
+#define WRS_MSG_DETAILS_AT  LOG_DEBUG /* >= for debug use __LINE__ */
 
 /* This is the external function for it all */
 extern void __wrs_msg(int level, const char *func, int line,

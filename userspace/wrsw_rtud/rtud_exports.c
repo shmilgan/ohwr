@@ -51,15 +51,9 @@ int rtudexp_clear_entries(const struct minipc_pd *pd,
 			  uint32_t * args, void *ret)
 {
 	int iface_num = (int)args[0];
-	int force = (int)args[1];
 	int *p_ret = (int *)ret;	//force pointed to int type
 
-	pr_info("iface=%d, force=%d\n", iface_num, force);
-
-	//Do nothing
-	if (force)
-		pr_info("wr%d > force %d is not implemented\n",
-		      iface_num, force);
+	pr_debug("Removing dynamic entries on interface %d\n", iface_num);
 
 	rtu_fd_clear_entries_for_port(iface_num);
 	*p_ret = 0;
@@ -118,7 +112,7 @@ int rtud_init_exports()
 	if (!rtud_ch < 0)
 		return -1;
 
-	pr_info("wripc server created [fd %d]\n",
+	pr_debug("wripc server created [fd %d]\n",
 	      minipc_fileno(rtud_ch));
 	if (getenv("RTUD_MINIPC_DEBUG"))
 		minipc_set_logfile(rtud_ch, stderr);

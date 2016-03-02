@@ -127,7 +127,7 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 	uint32_t bitmap[RTU_ENTRIES / 32];
 	int err;
 	struct rtu_shmem_header *rtu_hdr;
-	pr_info("Open rtu shmem.\n");
+	pr_debug("Open rtu shmem.\n");
 	rtu_port_shmem = wrs_shm_get(wrs_shm_rtu, "wrsw_rtud",
 				WRS_SHM_WRITE | WRS_SHM_LOCKED);
 	if (!rtu_port_shmem) {
@@ -138,7 +138,7 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 
 	if (rtu_port_shmem->pidsequence == 1) {
 		/* for first RTUd run */
-		pr_info("Alloc rtu_hdr\n");
+		pr_debug("Alloc rtu_hdr\n");
 		rtu_hdr = wrs_shm_alloc(rtu_port_shmem, sizeof(*rtu_hdr));
 	} else {
 		/* rtu_hdr was created at header->offset */
@@ -156,13 +156,13 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 
 	if (!rtu_hdr->filters) {
 		/* for first RTUd run */
-		pr_info("Alloc rtu_htab\n");
+		pr_info("Allocating a new, clean hash table\n");
 		rtu_htab = wrs_shm_alloc(rtu_port_shmem,
 					sizeof(*rtu_htab) * HTAB_ENTRIES);
 		rtu_hdr->filters = (struct rtu_filtering_entry *) rtu_htab;
 		rtu_hdr->filters_offset =
 				(void *)rtu_htab - (void *)rtu_port_shmem;
-		pr_info("Clean filtering database.\n");
+		pr_debug("Clean filtering database.\n");
 		clean_fd();		/* clean filtering database */
 	} else {
 		pr_info("Use existing filtering table.\n");
@@ -179,16 +179,16 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 
 	if (!rtu_hdr->vlans) {
 		/* for first RTUd run */
-		pr_info("Alloc vlan_tab\n");
+		pr_info("Allocating a new, clean vlan table\n");
 		vlan_tab = wrs_shm_alloc(rtu_port_shmem,
 					sizeof(*vlan_tab) * NUM_VLANS);
 		rtu_hdr->vlans = vlan_tab;
 		rtu_hdr->vlans_offset =
 				(void *)vlan_tab - (void *)rtu_port_shmem;
-		pr_info("Clean vlan database.\n");
+		pr_debug("Clean vlan database.\n");
 		clean_vd();		/* clean VLAN database */
 	} else {
-		pr_info("Use existing vlan table.\n");
+		pr_info("Using existing vlan table.\n");
 		/* next RTUd runs */
 		rtu_hdr->vlans =
 				(void *)rtu_port_shmem + rtu_hdr->vlans_offset;
@@ -207,16 +207,16 @@ int rtu_fd_init(uint16_t poly, unsigned long aging)
 	/* add version info */
 	rtu_port_shmem->version = RTU_SHMEM_VERSION;
 
-	pr_info("clean aging map.\n");
+	pr_debug("clean aging map.\n");
 	rtu_read_aging_bitmap(bitmap);	// clean aging registers
-	pr_info("set aging time [%ld].\n", aging);
+	pr_debug("set aging time [%ld].\n", aging);
 	aging_time = aging;
 
 	err = pthread_mutex_init(&fd_mutex, NULL);
 	if (err)
 		return err;
 
-	pr_info("set hash poly.\n");
+	pr_debug("set hash poly.\n");
 	rtu_fd_set_hash_poly(poly);
 
 	/* release process waiting on rtud's shm
@@ -312,8 +312,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 			n_buckets = htab_count_buckets(eaddr);
 
 			if (n_buckets == RTU_BUCKETS) {
-				pr_error(
-				      "Hash %03x has no buckets left.\n",
+				pr_error("Hash %03x has no buckets left.\n",
 				      eaddr.hash);
 				wrs_shm_write(rtu_port_shmem,
 					      WRS_SHM_WRITE_END);
@@ -533,7 +532,7 @@ static void rtu_fd_age_update(void)
 					continue;
 
 				if (0)
-					pr_info(
+					pr_debug(
 					      "Updated htab entry age: mac = %s, hash = %03x:%d, delta_t = %ld\n",
 					      mac_to_string(rtu_htab[hash]
 							    [bucket].mac), hash,
@@ -605,8 +604,8 @@ static void rtu_fd_age_out(void)
 			if (ent->valid && ent->dynamic
 			    && (time_after(t, ent->last_access_t)
 				|| ent->force_remove)) {
-				pr_info(
-				      "Deleting htab entry: mac = %s, hash = 0x%x, bucket = %d, forced=%d\n",
+				pr_debug("Deleting htab entry: mac = %s, hash ="
+				      " 0x%x, bucket = %d, forced=%d\n",
 				      mac_to_string(ent->mac), i, j,
 				      ent->force_remove);
 				hw_request(HW_REMOVE_REQ, ent->addr, ent);

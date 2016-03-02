@@ -70,6 +70,6 @@ int32_t i2c_scan(struct i2c_bus * bus, uint8_t * data)
 			found++;
 		}
 	}
-	pr_info("%s (%p): ndev=%d\n", bus->name, bus, found);
+	pr_debug("%s (%p): ndev=%d\n", bus->name, bus, found);
 	return found;
 }

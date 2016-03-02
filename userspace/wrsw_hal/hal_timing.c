@@ -90,8 +90,12 @@ int hal_init_timing(char *filename)
 			continue;
 		}
 
-		if (pstate.flags & RTS_DMTD_LOCKED)
+		if (pstate.flags & RTS_DMTD_LOCKED) {
+			if (timing_mode == HAL_TIMING_MODE_GRAND_MASTER)
+				pr_info("GrandMaster locked to external "
+						"reference\n");
 			break;
+		}
 
 		usleep(100000);
 	}

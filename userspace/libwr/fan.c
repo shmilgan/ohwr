@@ -200,8 +200,7 @@ static float tmp100_read_temp(int dev_addr)
 static int shw_init_i2c_sensors(void)
 {
 	if (i2c_init_bus(&fpga_sensors_i2c) < 0) {
-		pr_error(
-		      "can't initialize temperature sensors I2C bus.\n");
+		pr_error("Can't initialize temperature sensors I2C bus.\n");
 		return -1;
 	}
 	return 0;
@@ -266,7 +265,7 @@ int shw_init_fans(void)
 	config_item = libwr_cfg_get("FAN_HYSTERESIS");
 	if ((config_item) && !strcmp(config_item, "y")) {
 		fan_hysteresis = 1;
-		pr_info("enable fan hysteresis\n");
+		pr_info("Enabling fan hysteresis\n");
 		config_item = libwr_cfg_get("FAN_HYSTERESIS_T_ENABLE");
 		if (config_item) {
 			fan_hysteresis_t_enable = atoi(config_item);
@@ -290,11 +289,11 @@ int shw_init_fans(void)
 			fan_hysteresis_pwm_val = 4;
 		}
 
-		pr_info("set temp enable to %d for fan hysteresis\n",
-			fan_hysteresis_t_enable);
-		pr_info("set temp disable to %d for fan hysteresis\n",
-			fan_hysteresis_t_disable);
-		pr_info("set pwm value to %d for fan hysteresis\n",
+		pr_info("Setting upper temperature threshold to %d for fan "
+			"hysteresis\n", fan_hysteresis_t_enable);
+		pr_info("Setting lower temperature threshold to %d for fan "
+			"hysteresis\n", fan_hysteresis_t_disable);
+		pr_info("Setting pwm value to %d for fan hysteresis\n",
 			fan_hysteresis_pwm_val);
 	}
 

@@ -103,7 +103,7 @@ static int rtu_create_static_entries(void)
 	      hal_nports_local);
 
 	// VLAN-aware Bridge reserved addresses (802.1Q-2005 Table 8.1)
-	pr_info("adding static routes for slow protocols...\n");
+	pr_info("Adding static routes for slow protocols...\n");
 	for (i = 0; i < NUM_RESERVED_ADDR; i++) {
 		slow_proto_mac[5] = i;
 		err =
@@ -121,7 +121,7 @@ static int rtu_create_static_entries(void)
 	}
 
 	/* PTP over UDP */
-	pr_info("adding entry for PTP over UDP\n");
+	pr_info("Adding entry for PTP over UDP\n");
 	err =
 		rtu_fd_create_entry(udp_ptp_mac, 0, (1 << hal_nports_local),
 				    STATIC, OVERRIDE_EXISTING);
@@ -129,7 +129,7 @@ static int rtu_create_static_entries(void)
 		return err;
 
 	// Broadcast MAC
-	pr_info("adding static route for broadcast MAC...\n");
+	pr_info("Adding static route for broadcast MAC...\n");
 	err =
 	    rtu_fd_create_entry(bcast_mac, 0,
 				enabled_port_mask | (1 << hal_nports_local),
@@ -144,7 +144,7 @@ static int rtu_create_static_entries(void)
 	if (err)
 		return err;
 
-	pr_info("done creating static entries.\n");
+	pr_info("Done creating static entries.\n");
 
 	return 0;
 }
@@ -221,7 +221,7 @@ static int rtu_daemon_learning_process(void)
 		// Serve pending unrecognised request
 		err = rtu_read_learning_queue(&req);
 		if (!err) {
-			pr_info(
+			pr_debug(
 			      "ureq: port %d src %s VID %d priority %d\n",
 			      req.port_id,
 			      mac_to_string(req.src),
@@ -233,7 +233,7 @@ static int rtu_daemon_learning_process(void)
 				if (p->in_use && p->hw_index == req.port_id
 				    && !state_up(p->state)) {
 					port_down = 1;
-					pr_info("port down %d\n", i);
+					pr_debug("port down %d\n", i);
 					break;
 				}
 			}
@@ -251,14 +251,14 @@ static int rtu_daemon_learning_process(void)
 			err = 0;
 			if (err == -ENOMEM) {
 				// TODO remove oldest entries (802.1D says you MAY do it)
-				pr_info("filtering database full\n");
+				pr_info("Filtering database full\n");
 			} else if (err) {
-				pr_info("create entry: err %d\n",
+				pr_error("Create entry: error %d\n",
 				      err);
 				break;
 			}
 		} else {
-			pr_info("read learning queue: err %d\n", err);
+			pr_error("Read learning queue: error %d\n", err);
 		}
 	}
 	return err;
@@ -276,7 +276,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 	int i, err;
 
 	// init RTU HW
-	pr_info("init rtu hardware.\n");
+	pr_debug("Initializing RTU gateware.\n");
 	err = rtu_init();
 	if (err)
 		return err;
@@ -285,11 +285,11 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 		return err;
 
 	// disable RTU
-	pr_info("disable rtu.\n");
+	pr_debug("Disabling RTU.\n");
 	rtu_disable();
 
 	// init configuration for ports
-	pr_info("init port config.\n");
+	pr_info("Initial configuration for all ports.\n");
 	for (i = MIN_PORT; i <= MAX_PORT; i++) {
 		// MIN_PORT <= port <= MAX_PORT, thus no err returned
 
@@ -301,7 +301,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 	}
 
 	// init filtering database
-	pr_info("init fd.\n");
+	pr_info("Initializing filtering database.\n");
 	err = rtu_fd_init(poly, aging_time);
 	if (err)
 		return err;
@@ -312,7 +312,7 @@ static int rtu_daemon_init(uint16_t poly, unsigned long aging_time)
 		return err;
 
 	// turn on RTU
-	pr_info("enable rtu.\n");
+	pr_debug("Enabling RTU.\n");
 	rtu_enable();
 
 	rtud_init_exports();
@@ -355,8 +355,7 @@ int main(int argc, char **argv)
 	wrs_msg_init(argc, argv);
 
 	/* Print RTUd's version */
-	wrs_msg(LOG_ALERT, "wrsw_rtud. Commit %s, built on " __DATE__ "\n",
-		__GIT_VER__);
+	pr_info("wrsw_rtud. Commit %s, built on " __DATE__ "\n", __GIT_VER__);
 
 	if (argc > 1) {
 		// Strip out path from argv[0] if exists, and extract command name

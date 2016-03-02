@@ -114,8 +114,7 @@ void init_shm(void)
 
 	/* check hal's shm version */
 	if (hal_head->version != HAL_SHMEM_VERSION) {
-		pr_error("unknown hal's shm version %i "
-			"(known is %i)\n",
+		pr_error("Unknown hal's shm version %i (known is %i)\n",
 			hal_head->version, HAL_SHMEM_VERSION);
 		exit(-1);
 	}
@@ -124,8 +123,7 @@ void init_shm(void)
 	 * addresses. No need to re-dereference pointer at each read. */
 	hal_ports = wrs_shm_follow(hal_head, h->ports);
 	if (hal_nports_local > HAL_MAX_PORTS) {
-		pr_error("Too many ports reported by HAL. "
-			"%d vs %d supported\n",
+		pr_error("Too many ports reported by HAL. %d vs %d supported\n",
 			hal_nports_local, HAL_MAX_PORTS);
 		exit(-1);
 	}
@@ -143,8 +141,7 @@ int rtu_init(void)
 	// Used to 'get' RTU IRQs from kernel
 	fd = open(RTU_DEVNAME, O_RDWR);
 	if (fd < 0) {
-		pr_error(
-		      "Can't open %s: is the RTU kernel driver loaded?\n",
+		pr_error("Can't open %s: is the RTU kernel driver loaded?\n",
 		      RTU_DEVNAME);
 		return errno;
 	}
@@ -153,7 +150,7 @@ int rtu_init(void)
 	if (err)
 		return err;
 
-	pr_info("module initialized\n");
+	pr_debug("module initialized\n");
 
 	return 0;
 }
@@ -163,7 +160,7 @@ void rtu_exit(void)
 	if (fd >= 0)
 		close(fd);
 
-	pr_info("module cleanup\n");
+	pr_debug("module cleanup\n");
 }
 
 #define rtu_rd(reg) \
@@ -398,9 +395,9 @@ void rtu_write_vlan_entry(int vid, struct rtu_vlan_table_entry *ent)
 	rtu_wr(VTR1, vtr1);
 
 	if (ent->drop > 0 && ent->port_mask == 0x0) {
-		pr_info("RemoveVlan: vid %d (fid %d)\n", vid, ent->fid);
+		pr_info("Removing VLAN: vid %d (fid %d)\n", vid, ent->fid);
 	} else {
-		pr_info("AddVlan: vid %d (fid %d) port_mask 0x%x\n",
+		pr_info("Adding VLAN: vid %d (fid %d) port_mask 0x%x\n",
 		      vid, ent->fid, ent->port_mask);
 	}
 

@@ -112,7 +112,7 @@ int shw_io_init()
 			     I2C_shw_io_led_state_o);
 	}
 
-	pr_info("version=%d (CPUPWN=%d)\n", ver, ver < 330);
+	pr_info("Hardware version is %d (CPUPWN=%d)\n", ver, ver < 330);
 	return 0;
 }
 
@@ -140,7 +140,7 @@ int shw_io_configure_all()
 			//Do nothing for undefined type
 			break;
 		default:
-			pr_info(
+			pr_debug(
 			      "Config not implemented for type %d for io #%d\n",
 			      io->type, i);
 			break;
@@ -192,7 +192,7 @@ uint32_t shw_io_read(shw_io_id_t id)
 					shift);
 			}
 		case SHW_UNDEF:
-			pr_error( "IO #%d is undef\n", id);
+			pr_error( "IO #%d is undefined\n", id);
 			break;
 		default:
 			pr_error( "Unknow type %d for io #%d\n",
@@ -232,7 +232,7 @@ int shw_io_write(shw_io_id_t id, uint32_t value)
 								     i32data);
 			}
 		case SHW_UNDEF:
-			pr_error( "Pin #%d is undef\n", id);
+			pr_error( "Pin #%d is undefined\n", id);
 			break;
 		default:
 			pr_error( "Unknow type %d for io #%d\n",
