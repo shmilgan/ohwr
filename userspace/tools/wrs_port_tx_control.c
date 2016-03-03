@@ -4,8 +4,8 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <libwr/wrs-msg.h>
-#include <regs/endpoint-mdio.h>
 #include <regs/endpoint-regs.h>
+/* #include <regs/endpoint-mdio.h> */
 #include <fpga_io.h>
 #include <libwr/switch_hw.h>
 #include <libwr/shmem.h>
@@ -17,6 +17,18 @@ static struct EP_WB _ep_wb;
 
 /* convert port number (x) to an endpoint address, x from 0 to 17 on switch */
 #define IDX_TO_EP(x) (0x30000 + ((x) * 0x400))
+
+/* FIXME: if include of endpoint-mdio.h is fixed this define can go:
+ *   #ifndef __WBGEN2_REGDEFS_ENDPOINT-MDIO_WB to
+ *   #ifndef __WBGEN2_REGDEFS_ENDPOINT_MDIO_WB, otherwise the MDIO_WB is not
+ *		used and it is not included.
+ */
+#define MDIO_MCR_PDOWN (1<<11)
+
+/* PCS register address we want to read/write
+ * FIXME: these addresses could/should go into endpoint-mdio.h
+ */
+#define MDIO_MCR_ADDRESS                      0x0
 
 void help(char *prgname)
 {
