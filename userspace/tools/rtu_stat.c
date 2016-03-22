@@ -26,7 +26,10 @@
 #include <unistd.h>
 
 #include <libwr/util.h>
+#include "regs/rtu-regs.h"
 
+#include <libwr/switch_hw.h>
+#include "fpga_io.h"
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/rtu_shmem.h>
@@ -288,6 +291,191 @@ int open_rtu_shm(void)
 	return 0;
 }
 
+
+////////////////////////////////////////////////////////////////////////////////////////////
+#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#define rtu_rd(reg) \
+	 _fpga_readl(FPGA_BASE_RTU + offsetof(struct RTU_WB, reg))
+
+#define rtu_wr(reg, val) \
+	 _fpga_writel(FPGA_BASE_RTU + offsetof(struct RTU_WB, reg), val)
+
+
+void rtux_disp_ctrl(void)
+{
+   uint32_t mask;
+
+   mask = rtu_rd(RX_CTR);
+   fprintf(stderr,"RTU eXtension features (read):\n");
+   if(RTU_RX_CTR_MR_ENA             & mask)
+     {fprintf(stderr,"\t (1 ) Port Mirroring                           - enabled\n"); }
+   else
+     {fprintf(stderr,"\t (1 ) Port Mirroring                           - disabled\n");}
+   if(RTU_RX_CTR_FF_MAC_PTP         & mask)
+     {fprintf(stderr,"\t (2 ) PTP fast forward                         - enabled\n"); }
+   else
+     {fprintf(stderr,"\t (2 ) PTP fast forward                         - disabled\n");}
+   if(RTU_RX_CTR_FF_MAC_LL          & mask)
+     {fprintf(stderr,"\t (4 ) Link-limited traffic (BPDU) fast forward - enabled\n"); }
+   else
+     {fprintf(stderr,"\t (4 ) Link-limited traffic (BPDU) fast forward - disabled\n");}
+   if(RTU_RX_CTR_FF_MAC_SINGLE       & mask)
+     {fprintf(stderr,"\t (8 ) Single configured MACs fast forward      - enabled\n"); }
+   else
+     {fprintf(stderr,"\t (8 ) Single configured MACs fast forward      - disabled\n");}
+   if(RTU_RX_CTR_FF_MAC_RANGE       & mask)
+     {fprintf(stderr,"\t (16) Range of configured MACs fast forward    - enabled\n"); }
+   else
+     {fprintf(stderr,"\t (16) Range of configured MACs fast forward    - disabled\n");}
+   if(RTU_RX_CTR_FF_MAC_BR          & mask)
+     {fprintf(stderr,"\t (32) Broadcast fast forward                   - enabled\n"); }
+   else
+     {fprintf(stderr,"\t (32) Broadcast fast forward                   - disabled\n");}
+   if(RTU_RX_CTR_AT_FMATCH_TOO_SLOW & mask)
+     {fprintf(stderr,"\t (64) When fast match engine too slow          - braodcast processed frame\n");}
+   else
+     {fprintf(stderr,"\t (64) When fast match engine too slow          - drop processed frame\n"); }
+}
+
+void rtux_disp_fw_to_CPU()
+{
+   uint32_t mask;
+
+   mask = rtu_rd(RX_CTR);
+   fprintf(stderr,"RTU eXtension features (read):\n");
+   if(RTU_RX_CTR_HP_FW_CPU_ENA & mask)
+     {fprintf(stderr,"\t (1 ) HP forwarding to CPU                    - enabled\n"); }
+   else
+     {fprintf(stderr,"\t (1 ) HP forwarding to CPU                    - disabled\n"); }
+
+   if(RTU_RX_CTR_UREC_FW_CPU_ENA & mask)
+     {fprintf(stderr,"\t (2 ) Unrec broadcast forwarding to CPU       - enabled\n"); }
+   else
+     {fprintf(stderr,"\t (2 ) Unrec broadcast forwarding to CPU       - disabled\n"); }
+}
+void rtux_read_cpu_port()
+{
+   uint32_t mask;
+
+   mask = rtu_rd(CPU_PORT);
+
+   fprintf(stderr,"RTU eXtension: reading mask indicating which (virtual) port is connected"
+                    "to CPU mask=0x%x\n", RTU_CPU_PORT_MASK_R(mask));
+}
+void rtux_read_hp_prio_mask()
+{
+   uint32_t mask;
+
+   mask = rtu_rd(RX_CTR);
+   fprintf(stderr,"RTU eXtension: hp priorities (for which priorities traffic is "
+   "considered HP), mask=0x%x\n",RTU_RX_CTR_PRIO_MASK_R(mask) );
+}
+void rtux_set_hp_prio_mask(uint8_t hp_prio_mask)
+{
+   uint32_t mask;
+
+   mask = rtu_rd(RX_CTR);
+   mask = (~RTU_RX_CTR_PRIO_MASK_MASK) & mask; // clear
+   mask = RTU_RX_CTR_PRIO_MASK_W(hp_prio_mask) | mask;
+
+   rtu_wr(RX_CTR,mask);
+   rtux_read_hp_prio_mask();
+}
+static uint32_t get_mac_lo(uint8_t mac[ETH_ALEN])
+{
+    return
+        ((0xFF & mac[2])                        << 24)  |
+        ((0xFF & mac[3])                        << 16)  |
+        ((0xFF & mac[4])                        <<  8)  |
+        ((0xFF & mac[5])                             )  ;
+}
+
+static uint32_t get_mac_hi(uint8_t mac[ETH_ALEN])
+{
+    return
+        ((0xFF & mac[0])                        <<  8)  |
+        ((0xFF & mac[1])                             )  ;
+}
+
+void rtux_add_ff_mac_range(int mac_id, int valid, uint8_t mac_lower[ETH_ALEN],
+                                                   uint8_t mac_upper[ETH_ALEN])
+{
+   uint32_t mac_hi, mac_lo;
+   uint32_t m_mac_id; // modified mac id
+
+   // writting lower boundary of the mac range
+   m_mac_id = (~(1 << 7) ) & mac_id; // lower range (highest bit is low)
+
+   mac_lo = RTU_RX_FF_MAC_R0_LO_W    (get_mac_lo(mac_lower)) ;
+   mac_hi = RTU_RX_FF_MAC_R1_HI_ID_W (get_mac_hi(mac_lower)) |
+            RTU_RX_FF_MAC_R1_ID_W    (m_mac_id)                |
+            RTU_RX_FF_MAC_R1_TYPE                            | // type = 1
+            RTU_RX_FF_MAC_R1_VALID;
+
+   rtu_wr(RX_FF_MAC_R0, mac_lo);
+   rtu_wr(RX_FF_MAC_R1, mac_hi);
+ 
+   // writting upper boundary of the mac range
+   m_mac_id = (1 << 7) | mac_id; // upper range high (highest bit is low)
+
+   mac_lo = RTU_RX_FF_MAC_R0_LO_W    (get_mac_lo(mac_upper)) ;
+   mac_hi = RTU_RX_FF_MAC_R1_HI_ID_W (get_mac_hi(mac_upper)) |
+            RTU_RX_FF_MAC_R1_ID_W    (m_mac_id)                |
+            RTU_RX_FF_MAC_R1_TYPE                            | // type = 1
+            RTU_RX_FF_MAC_R1_VALID;
+
+   rtu_wr(RX_FF_MAC_R0, mac_lo);
+   rtu_wr(RX_FF_MAC_R1, mac_hi);
+
+   fprintf(stderr,"RTU eXtension: set fast forward mac range: (id=%d, valid=%d):\n", mac_id,
+                                                                                     valid);
+   fprintf(stderr,"\t lower_mac = %x:%x:%x:%x:%x:%x\n",mac_lower[0],mac_lower[1],mac_lower[2],
+                                                       mac_lower[3],mac_lower[4],mac_lower[5]);
+   fprintf(stderr,"\t upper_mac = %x:%x:%x:%x:%x:%x\n",mac_upper[0],mac_upper[1],mac_upper[2],
+                                                       mac_upper[3],mac_upper[4],mac_upper[5]);
+
+}
+
+void rtux_feature_ctrl(int mr, int mac_ptp, int mac_ll, int mac_single, int mac_range,
+                       int mac_br, int at_fm)
+{
+   uint32_t mask;
+
+   mask = rtu_rd(RX_CTR);
+   mask = 0xFFFFFFC0 & mask;
+
+   if(mr)         mask = RTU_RX_CTR_MR_ENA              | mask;
+   if(mac_ptp)    mask = RTU_RX_CTR_FF_MAC_PTP          | mask;
+   if(mac_ll)     mask = RTU_RX_CTR_FF_MAC_LL           | mask;
+   if(mac_single) mask = RTU_RX_CTR_FF_MAC_SINGLE       | mask;
+   if(mac_range)  mask = RTU_RX_CTR_FF_MAC_RANGE        | mask;
+   if(mac_br)     mask = RTU_RX_CTR_FF_MAC_BR           | mask;
+   if(at_fm)      mask = RTU_RX_CTR_AT_FMATCH_TOO_SLOW  | mask;
+
+   rtu_wr(RX_CTR, mask);
+   rtux_disp_ctrl();
+
+}
+
+void rtux_fw_to_CPU(int arg)
+{
+   uint32_t mask;
+   int hp    = 0x1 & (arg >> 0);
+   int unrec = 0x1 & (arg >> 1);
+
+   mask = rtu_rd(RX_CTR);
+   mask = 0xFFF0FFFF & mask;
+
+   if(hp)    mask = RTU_RX_CTR_HP_FW_CPU_ENA   | mask;
+   if(unrec) mask = RTU_RX_CTR_UREC_FW_CPU_ENA | mask;
+
+   rtu_wr(RX_CTR, mask);
+   rtux_disp_fw_to_CPU();
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char **argv)
 {
 	int i, isok;
@@ -338,6 +526,42 @@ int main(int argc, char **argv)
 			if((argc > 3 ) && (rtudexp_vlan_entry(atoi(argv[2]),atoi(argv[3]),argv[4],
 					    atoidef(argv[5],0),atoidef(argv[6],0),atoidef(argv[7],0),
 					    atoidef(argv[8],0))==0))  isok=1;
+			else printf("Could not %s entry for %s\n",argv[2],argv[3]);
+			exit(1);
+		}
+		else if(strcmp(argv[1], "rtux")==0)
+		{
+			
+			if (shw_fpga_mmap_init() < 0) {
+				printf( "Can't access device memory\n");
+				exit(1);
+			}
+			printf("managed to map FPGA mem\n");
+			
+			if((argc > 3) && (strcmp(argv[2], "HPprio")==0))
+			{
+				rtux_set_hp_prio_mask(1<<atoi(argv[3]));
+				isok=1;
+			}
+			else if((argc > 3) && (strcmp(argv[2], "ctrl")==0))
+			{
+				rtux_feature_ctrl((atoi(argv[3])>>0)&0x1, //mr
+						  (atoi(argv[3])>>1)&0x1, //mac_pto
+						  (atoi(argv[3])>>2)&0x1, //mac_ll
+						  (atoi(argv[3])>>3)&0x1, //mac_single
+						  (atoi(argv[3])>>4)&0x1, //mac_range
+						  (atoi(argv[3])>>5)&0x1, //mac_br
+						  (atoi(argv[3])>>6)&0x1  //at_fm
+						  );
+				isok=1;
+			}
+			else if(((argc > 2) && (strcmp(argv[2], "dump")==0)) || (argc == 2))
+			{
+				   rtux_disp_ctrl();
+				   rtux_disp_fw_to_CPU();
+				   rtux_read_cpu_port();
+				   rtux_read_hp_prio_mask();
+			}
 			else printf("Could not %s entry for %s\n",argv[2],argv[3]);
 			exit(1);
 		}
