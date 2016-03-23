@@ -98,7 +98,7 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 						| (ppsi_servo->offset >> 32);
 		wrsPtpDataTable_array[0].clock_offsetHR =
 					int_saturate(ppsi_servo->offset);
-		wrsPtpDataTable_array[0].skew = ppsi_servo->skew;
+		wrsPtpDataTable_array[0].skew = int_saturate(ppsi_servo->skew);
 		wrsPtpDataTable_array[0].llength =
 			(uint32_t)(ppsi_servo->delta_ms/1e12 * 300e6 / 1.55);
 		wrsPtpDataTable_array[0].servo_updates =
