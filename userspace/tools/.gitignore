@@ -22,3 +22,4 @@ wrs_auxclk
 wrs_checkcfg
 mkpasswd
 wrs_status_led
+wrs_sfp_dump
