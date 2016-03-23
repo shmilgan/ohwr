@@ -112,7 +112,7 @@ int shw_io_init()
 			     I2C_shw_io_led_state_o);
 	}
 
-	pr_info("Hardware version is %d (CPUPWN=%d)\n", ver, ver < 330);
+	pr_debug("Hardware version is %d (CPUPWN=%d)\n", ver, ver < 330);
 	return 0;
 }
 

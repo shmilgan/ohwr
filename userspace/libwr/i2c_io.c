@@ -73,7 +73,7 @@ int shw_i2c_io_init(void)
 		return -1;
 	}
 
-	pr_info("I2C I/O init success for bus %s\n", i2c_io_bus.name);
+	pr_debug("I2C I/O init success for bus %s\n", i2c_io_bus.name);
 	return 0;
 }
 
