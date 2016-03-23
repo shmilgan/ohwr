@@ -232,7 +232,17 @@ int shw_sfp_header_verify_base(struct shw_sfp_header *head)
 		sum += ((uint8_t *) head)[i];
 	sum &= 0xff;
 
-	return (sum == head->cc_base) ? 0 : -1;
+	if (sum != head->cc_base) {
+		pr_error("shw_sfp_header_verify_base: Wrong base checksum! "
+			 "(expected 0x%02x, calculated 0x%02x)\n",
+			 head->cc_base, sum);
+		if (wrs_msg_level >= LOG_DEBUG) {
+			shw_sfp_print_header(head);
+			shw_sfp_header_dump(head);
+		}
+		return -1;
+	}
+	return 0;
 }
 
 int shw_sfp_header_verify_ext(struct shw_sfp_header *head)
@@ -244,7 +254,17 @@ int shw_sfp_header_verify_ext(struct shw_sfp_header *head)
 		sum += ((uint8_t *) head)[i];
 	sum &= 0xff;
 
-	return (sum == head->cc_ext) ? 0 : -1;
+	if (sum != head->cc_ext) {
+		pr_error("shw_sfp_header_verify_ext: Wrong ext checksum! "
+			 "(expected 0x%02x, calculated 0x%02x)\n",
+			 head->cc_ext, sum);
+		if (wrs_msg_level >= LOG_DEBUG) {
+			shw_sfp_print_header(head);
+			shw_sfp_header_dump(head);
+		}
+		return -1;
+	}
+	return 0;
 }
 
 int shw_sfp_header_verify(struct shw_sfp_header *head)
@@ -516,18 +536,24 @@ int shw_sfp_read_header(int num, struct shw_sfp_header *head)
 {
 	int ret;
 
-	if (shw_sfp_id(num) < 0)
+	if (shw_sfp_id(num) < 0) {
+		pr_error("shw_sfp_read_header: wrong SFP num %d\n", num);
 		return -1;
+	}
 
 	ret = shw_sfp_module_scan();
-	if (!(ret & (1 << num)))
+	if (!(ret & (1 << num))) {
+		pr_error("shw_sfp_read_header: SFP not present %d\n", num);
 		return -2;
+	}
 
 	ret =
 	    shw_sfp_read(num, I2C_SFP_ADDRESS, 0x0,
 			 sizeof(struct shw_sfp_header), (uint8_t *) head);
-	if (ret == I2C_DEV_NOT_FOUND)
+	if (ret == I2C_DEV_NOT_FOUND) {
+		pr_error("shw_sfp_read_header: I2C_DEV_NOT_FOUND\n");
 		return -ENODEV;
+	}
 
 	return 0;
 }
