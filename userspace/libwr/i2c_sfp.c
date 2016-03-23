@@ -215,10 +215,10 @@ int shw_sfp_bus_scan(int num, uint8_t * dev_map)
 		return -1;
 
 	detect = i2c_scan(&i2c_buses[num], dev_map);
-	printf("\ni2c_bus: %s: %d devices\n", i2c_buses[num].name, detect);
+	pr_debug("\ni2c_bus: %s: %d devices\n", i2c_buses[num].name, detect);
 	for (i = 0; i < 128; i++)
 		if (dev_map[i / 8] & (1 << (i % 8)))
-			printf("device at: 0x%02X\n", i);
+			pr_debug("device at: 0x%02X\n", i);
 
 	return detect;
 }
@@ -548,12 +548,12 @@ static struct shw_sfp_caldata *shw_sfp_cal_list = NULL;
 /* local helper */
 static void __err_msg(int index, char *pname, char *pvalue)
 {
-	fprintf(stderr, "Config item \"SFP%02i_PARAMS\": parameter \"%s\" ",
-		index, pname);
 	if (pvalue)
-		fprintf(stderr, "is wrong (\"%s\")\n", pvalue);
+		pr_error("Config item \"SFP%02i_PARAMS\": parameter \"%s\" "
+			 "is wrong (\"%s\")\n", index, pname, pvalue);
 	else
-		fprintf(stderr, "is not specified\n");
+		pr_error("Config item \"SFP%02i_PARAMS\": parameter \"%s\" "
+			 "is not specified\n", index, pname);
 }
 
 int shw_sfp_read_db(void)
@@ -653,7 +653,6 @@ struct shw_sfp_caldata *shw_sfp_get_cal_data(int num,
 	t = shw_sfp_cal_list;
 	/* In the first pass, look for serial number */
 	while (t) {
-//              printf("search1 %s %s\n", t->part_num, t->vendor_serial);
 		if (t->vendor_name[0] == 0
 		    && strncmp(pn, t->part_num, 16) == 0
 		    && t->vendor_serial[0] == 0)

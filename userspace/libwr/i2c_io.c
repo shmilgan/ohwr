@@ -86,10 +86,10 @@ int shw_i2c_io_scan(uint8_t * dev_map)
 		return -1;
 
 	detect = i2c_scan(&i2c_io_bus, dev_map);
-	printf("\ni2c_bus: %s: %d devices\n", i2c_io_bus.name, detect);
+	pr_debug("\ni2c_bus: %s: %d devices\n", i2c_io_bus.name, detect);
 	for (i = 0; i < 128; i++)
 		if (dev_map[i / 8] & (1 << (i % 8)))
-			printf("device at: 0x%02X\n", i);
+			pr_debug("device at: 0x%02X\n", i);
 
 	return detect;
 }

@@ -27,6 +27,7 @@
 #include <libwr/hal_shmem.h>
 #include <libwr/hal_client.h>
 #include <libwr/util.h>
+#include <libwr/wrs-msg.h>
 #include <net/ethernet.h>
 
 #ifdef NETIF_VERBOSE
@@ -487,8 +488,8 @@ int ptpd_netif_adjust_counters(int64_t adjust_sec, int32_t adjust_nsec)
 		return 0;
 
 	if (adjust_sec && adjust_nsec) {
-		fprintf(stderr,
-			" FATAL : trying to adjust both the SEC and the NS counters simultaneously. \n");
+		pr_error(" FATAL : trying to adjust both the SEC and the NS "
+			 "counters simultaneously.\n");
 		exit(-1);
 	}
 

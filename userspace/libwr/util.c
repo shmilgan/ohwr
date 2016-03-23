@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
+#include <libwr/wrs-msg.h>
 #include <libwr/util.h>
 
 static int loops_per_msec = -1;
@@ -26,7 +27,7 @@ void shw_udelay_init(void)
 	loops_per_msec = i * 1000 / min;
 
 	if (0)
-		printf("loops per msec %i\n", loops_per_msec);
+		pr_debug("loops per msec %i\n", loops_per_msec);
 	/*
 	 * I get 39400 more or less; it makes sense at 197 bogomips.
 	 * The loop is 6 instructions with 3 (cached) memory accesses

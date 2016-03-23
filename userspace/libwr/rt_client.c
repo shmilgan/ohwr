@@ -43,16 +43,16 @@ int rts_get_state(struct rts_pll_state *state)
 		return ret;
 
 #ifdef VERBOSE
-	printf("RTS State Dump: \n");
-	printf("CurrentRef: %d Mode: %d Flags: %x\n",
+	pr_debug("RTS State Dump:\n");
+	pr_debug("CurrentRef: %d Mode: %d Flags: %x\n",
 	       state->current_ref, state->mode, state->flags);
 	for (i = 0; i < RTS_PLL_CHANNELS; i++)
-		printf("Ch%d: setpoint: %dps current: %dps "
-		       "loopback: %dps flags: %x\n", i,
-		       state->channels[i].phase_setpoint,
-		       state->channels[i].phase_current,
-		       state->channels[i].phase_loopback,
-		       state->channels[i].flags);
+		pr_debug("Ch%d: setpoint: %dps current: %dps "
+			 "loopback: %dps flags: %x\n", i,
+			 state->channels[i].phase_setpoint,
+			 state->channels[i].phase_current,
+			 state->channels[i].phase_loopback,
+			 state->channels[i].flags);
 
 #endif
 	return 0;

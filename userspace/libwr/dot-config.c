@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <libwr/wrs-msg.h>
 #include <libwr/config.h>
 
 /* All strings here are strdup'd and then split; you can't free(3) them */
@@ -173,7 +174,7 @@ int libwr_cfg_read_verify_file(char *dotconfig, char *kconfig)
 			if (!strcmp(c->name, kc->name))
 				break;
 		if (!kc) {
-			fprintf(stderr, "Configuration \"%s\" not found\n",
+			pr_error("Configuration \"%s\" not found\n",
 				c->name);
 			errors++;
 		}

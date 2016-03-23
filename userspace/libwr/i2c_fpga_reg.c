@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <libwr/util.h>		//for shw_udelay();
+#include <libwr/wrs-msg.h>
 
 #include "i2c_fpga_reg.h"
 
@@ -18,11 +19,11 @@ int i2c_fpga_reg_init_bus(struct i2c_bus *bus)
 	i2c_fpga_reg_t *priv;
 
 	if (!bus->type_specific) {
-		printf("no type specific structure provided\n");
+		pr_error("no type specific structure provided\n");
 		return -1;
 	}
 	if (bus->type != I2C_BUS_TYPE_FPGA_REG) {
-		printf("type doesn't match I2C_BUS_TYPE_FPGA_REG(%d): %d\n",
+		pr_error("type doesn't match I2C_BUS_TYPE_FPGA_REG(%d): %d\n",
 		       I2C_BUS_TYPE_FPGA_REG, bus->type);
 		return -1;
 	}
@@ -40,7 +41,7 @@ int i2c_fpga_reg_init_bus(struct i2c_bus *bus)
 	_fpga_writel(priv->base_address + FPGA_I2C_REG_CTR, CTR_EN);
 
 	if (!(_fpga_readl(priv->base_address + FPGA_I2C_REG_CTR) & CTR_EN)) {
-		printf("failed to read from control register\n");
+		pr_error("failed to read from control register\n");
 		return -1;
 	}
 

@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <fpga_io.h>
 #include <regs/hwiu-regs.h>
+#include <libwr/wrs-msg.h>
 #include <libwr/hwiu.h>
 
 #define hwiu_write(reg, val) \
@@ -43,8 +44,9 @@ int shw_hwiu_gwver(struct gw_info *info)
 	s_data = (struct gw_info *)data;
 	*info = *s_data;
 	if (info->nwords != HWIU_INFO_WORDS) {
-		printf("nwords: sw=%u, hw=%u, ver=%u, data=%x\n", info->nwords,
-		       HWIU_INFO_WORDS, info->struct_ver, data[0]);
+		pr_error("nwords: sw=%u, hw=%u, ver=%u, data=%x\n",
+			 info->nwords, HWIU_INFO_WORDS, info->struct_ver,
+			 data[0]);
 		return -1;
 	}
 	//now read info words
