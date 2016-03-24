@@ -82,7 +82,9 @@ void usage(char *name)
 		"\t-h   help\n"
 		"\t-p   polynomial for hash calculation. Possible values are CCITT, IBM, DECT\n"
 		"\t-r   aging resolution (in sec). 20 sec by default\n"
-		"\t-t   aging time (10 to 10000 sec). 300 sec by default.\n",
+		"\t-t   aging time (10 to 10000 sec). 300 sec by default.\n"
+		"\t-q   decrease verbosity\n"
+		"\t-v   dncrease verbosity\n",
 		name);
 	exit(1);
 }
