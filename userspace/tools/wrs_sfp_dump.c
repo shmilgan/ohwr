@@ -13,6 +13,7 @@ void print_info(char *prgname)
 	printf(""
 		"             Dump sfp header info for all ports\n"
 		"   -p <num>  Dump sfp header for specific port (1-18)\n"
+		"   -x        Dump sfp header also in hex\n"
 		"   -h        Show this message\n"
 		"   -q        Decrease verbosity\n"
 		"   -v        Increase verbosity\n"
@@ -30,12 +31,13 @@ int main(int argc, char **argv)
 	int nports;
 	int dump_port;
 	int i;
+	int dump_hex_header = 0;
 
 	wrs_msg_init(argc, argv);
 	nports = 18;
 	dump_port = 1;
 
-	while ((c = getopt(argc, argv, "ahqvp:")) != -1) {
+	while ((c = getopt(argc, argv, "ahqvp:x")) != -1) {
 		switch (c) {
 		case 'p':
 			dump_port = atoi(optarg);
@@ -46,6 +48,9 @@ int main(int argc, char **argv)
 				print_info(argv[0]);
 				exit(1);
 			}
+			break;
+		case 'x':
+			dump_hex_header = 1;
 			break;
 		case 'q': break; /* done in wrs_msg_init() */
 		case 'v': break; /* done in wrs_msg_init() */
@@ -72,6 +77,9 @@ int main(int argc, char **argv)
 				 "port %d\n", i);
 		} else {
 			shw_sfp_print_header(&shdr);
+			if (dump_hex_header) {
+				shw_sfp_header_dump(&shdr);
+			}
 		}
 	}
 	return 0;
