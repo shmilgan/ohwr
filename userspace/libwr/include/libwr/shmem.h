@@ -44,6 +44,12 @@ struct wrs_shm_head {
 /* Set custom path for shmem */
 void wrs_shm_set_path(char *new_path);
 
+/* Allow to ignore the flag WRS_SHM_LOCKED
+ * If this flag is not ignored then function wrs_shm_get_and_check is not able
+ * to open shmem successfully due to lack of process running with the given pid
+ */
+void wrs_shm_ignore_flag_locked(int ignore_flag);
+
 /* get vs. put, like in the kernel. Errors are in errno (see source) */
 void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags);
 int wrs_shm_put(void *headptr);
