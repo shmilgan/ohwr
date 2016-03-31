@@ -12,7 +12,17 @@
 
 #include <libwr/shmem.h>
 #include <libwr/util.h>
+
 #define SHM_LOCK_TIMEOUT_MS 50 /* in ms */
+
+static char wrs_shm_path[50] = WRS_SHM_DEFAULT_PATH;
+
+/* Set custom path for shmem */
+void wrs_shm_set_path(char *new_path)
+{
+	strncpy(wrs_shm_path, new_path, 50);
+}
+
 /* Get wrs shared memory */
 /* return NULL and set errno on error */
 void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags)
@@ -30,7 +40,7 @@ void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags)
 		return NULL;
 	}
 
-	sprintf(fname, WRS_SHM_FILE, name_id);
+	sprintf(fname, "%.50s/"WRS_SHM_FILE, wrs_shm_path, name_id);
 	fd = open(fname, O_RDWR | O_CREAT | O_SYNC, 0644);
 	if (fd < 0)
 		return NULL; /* keep errno */

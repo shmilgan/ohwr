@@ -6,7 +6,8 @@
 #define __WRS_SHM_H__
 #include <stdint.h>
 
-#define WRS_SHM_FILE  "/dev/shm/wrs-shmem-%i"
+#define WRS_SHM_DEFAULT_PATH  "/dev/shm"
+#define WRS_SHM_FILE  "wrs-shmem-%i"
 #define WRS_SHM_MIN_SIZE    (4*1024)
 #define WRS_SHM_MAX_SIZE  (512*1024)
 
@@ -39,6 +40,9 @@ struct wrs_shm_head {
 #define WRS_SHM_READ   0x0000
 #define WRS_SHM_WRITE  0x0001
 #define WRS_SHM_LOCKED 0x0002 /* at init time: writers locks, readers wait  */
+
+/* Set custom path for shmem */
+void wrs_shm_set_path(char *new_path);
 
 /* get vs. put, like in the kernel. Errors are in errno (see source) */
 void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags);
