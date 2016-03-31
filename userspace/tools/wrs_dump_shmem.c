@@ -675,6 +675,7 @@ void print_info(char *prgname)
 		"   -a        Dump all rtu entries. By default only valid\n"
 		"             entries are printed. Note there are 2048 htab\n"
 		"             and 4096 vlan entries!\n"
+		"   -H <dir>  Open shmem dumps from the given directory\n"
 		"   -h        Show this message\n");
 
 }
@@ -687,10 +688,13 @@ int main(int argc, char **argv)
 	int i;
 	int c;
 
-	while ((c = getopt(argc, argv, "ah")) != -1) {
+	while ((c = getopt(argc, argv, "ahH:")) != -1) {
 		switch (c) {
 		case 'a':
 			dump_all_rtu_entries = 1;
+			break;
+		case 'H':
+			wrs_shm_set_path(optarg);
 			break;
 		case 'h':
 		default:
