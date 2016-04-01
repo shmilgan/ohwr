@@ -1198,6 +1198,12 @@ The following tools and scripts are provided:
   The tool allows to setup the parameters of a clock generated on the @i{clk2}
   SMC.
 
+@item wrs_sfp_dump
+	Dump the content of SFPs internal memory. Please note that this tool
+	cannot be used in production due to the race condition of i2c
+	transactions. The race can cause errors while reading SFPs memory,
+	wrong notification of LEDs, the false insert/remove SFP notifications.
+
 @c FIXME: document lm32-vuart rtu_stat spll_dbg_proxy
 @c FIXME: document wrs_pstats
 @end table
