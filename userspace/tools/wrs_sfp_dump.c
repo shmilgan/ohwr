@@ -17,10 +17,17 @@ void print_info(char *prgname)
 		"   -h        Show this message\n"
 		"   -q        Decrease verbosity\n"
 		"   -v        Increase verbosity\n"
+		"   -V        Print version\n"
 		"\n"
 		"NOTE: Be carefull! All reads (i2c transfers) are in race with hal!\n"
 	);
 
+}
+
+void print_version(char *prgname)
+{
+	printf("%s version %s, build by %s\n", prgname, __GIT_VER__,
+	       __GIT_USR__);
 }
 
 int main(int argc, char **argv)
@@ -37,7 +44,7 @@ int main(int argc, char **argv)
 	nports = 18;
 	dump_port = 1;
 
-	while ((c = getopt(argc, argv, "ahqvp:x")) != -1) {
+	while ((c = getopt(argc, argv, "ahqvp:xV")) != -1) {
 		switch (c) {
 		case 'p':
 			dump_port = atoi(optarg);
@@ -52,11 +59,15 @@ int main(int argc, char **argv)
 		case 'x':
 			dump_hex_header = 1;
 			break;
+		case 'V':
+			print_version(argv[0]);
+			break;
 		case 'q': break; /* done in wrs_msg_init() */
 		case 'v': break; /* done in wrs_msg_init() */
 		case 'h':
 		default:
 			print_info(argv[0]);
+			print_version(argv[0]);
 			exit(1);
 		}
 	}
