@@ -1,0 +1,40 @@
+From bdc865eaf5ed39c1332b8da9302ce9ddb7f9e37f Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Mon, 4 Apr 2016 20:07:33 +0200
+Subject: [PATCH 8/8] llpd: simplify build
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ package/lldpd/lldpd.mk | 10 ++--------
+ 1 file changed, 2 insertions(+), 8 deletions(-)
+
+diff --git a/package/lldpd/lldpd.mk b/package/lldpd/lldpd.mk
+index fe32391..400ced4 100644
+--- a/package/lldpd/lldpd.mk
++++ b/package/lldpd/lldpd.mk
+@@ -11,15 +11,9 @@ LLDPD_SITE  = http://media.luffy.cx/files/lldpd/
+ #LLDPD_LICENSE_FILES = README.md
+ #LLDPD_AUTORECONF = YES
+ 
+-define LLDPD_RUN_AUTOGEN
+-        cd $(@D) && PATH=$(LLDPD_PATH) ./autogen.sh
+-endef
+-
+-LLDPD_PRE_CONFIGURE_HOOKS += LLDPD_RUN_AUTOGEN
+-
+ LLDPD_CONF_OPT = --host=arm-linux \
+ 		--without-xml \
+-		--with-snmp \
++		--without-snmp \
+ 		--without-json \
+ 		--disable-doxygen-doc \
+ 		--disable-doxygen-html \
+@@ -42,4 +36,4 @@ LLDPD_CONF_OPT = --host=arm-linux \
+ 		--with-embedded-libevent \
+ 		CFLAGS="-O0 -g -Q -v -da -pedantic -Wall -Wextra -Wno-format-zero-length" 
+ 
+-$(eval $(autotools-package))
++$(eval $(call AUTOTARGETS))
+-- 
+2.1.4
+

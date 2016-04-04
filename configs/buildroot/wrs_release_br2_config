@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Buildroot 2011.11 Configuration
-# Wed Jul 29 20:48:17 2015
+# Mon Apr  4 19:58:54 2016
 #
 BR2_HAVE_DOT_CONFIG=y
 BR2_arm=y
@@ -184,7 +184,7 @@ BR2_TARGET_LDFLAGS=""
 BR2_TOOLCHAIN_BUILDROOT_WCHAR=y
 # BR2_TOOLCHAIN_BUILDROOT_LOCALE is not set
 # BR2_TOOLCHAIN_BUILDROOT_CXX is not set
-# BR2_TOOLCHAIN_BUILDROOT_USE_SSP is not set
+BR2_TOOLCHAIN_BUILDROOT_USE_SSP=y
 # BR2_PTHREADS_NONE is not set
 # BR2_PTHREADS is not set
 # BR2_PTHREADS_OLD is not set
@@ -297,6 +297,7 @@ BR2_PACKAGE_CUSTOMIZE=y
 # BR2_PACKAGE_TREMOR is not set
 # BR2_PACKAGE_VORBIS_TOOLS is not set
 # BR2_PACKAGE_WAVPACK is not set
+BR2_PACKAGE_LLDPD=y
 
 #
 # Compressors and decompressors
@@ -954,7 +955,6 @@ BR2_PACKAGE_NETSNMP=y
 # BR2_PACKAGE_NETSNMP_ENABLE_MIBS is not set
 # BR2_PACKAGE_NETSTAT_NAT is not set
 # BR2_PACKAGE_NOIP is not set
-BR2_PACKAGE_LLDPD=y
 
 #
 # nfs-utils requires a toolchain with RPC and LARGEFILE support
