@@ -61,14 +61,7 @@ sed -i "s,__WR_SWITCH_SW__,$WRS_BASE_DIR/../configs/buildroot," .config
 
 # replace "-j" level. First remove it in case it's left in
 sed -i /^BR2_JLEVEL/d .config
-# make 3.82 splits the work differently, and compilation fails. So no -j
-makefails=$(make -v | awk 'NR==1 {if ($NF > 3.81) print "fail"}')
-if [ "x$makefails" = "xfail" ]; then
-    echo "BR2_JLEVEL=1" >> .config
-    # Actually, it seems it fails anyways. I give up and document the issue
-else
-    echo "BR2_JLEVEL=$WRS_MAKE_J_NUMBER" >> .config
-fi
+echo "BR2_JLEVEL=$WRS_MAKE_J_NUMBER" >> .config
 
 # apply any pending patches (only if we untarred a fresh copy)
 if [ -z "$WRS_NO_REPLACE_BUILDROOT" ]; then
