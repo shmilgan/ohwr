@@ -1,5 +1,29 @@
---- ./toolchain/gcc/4.3.6/gcc-no-docs.patch.orig	2014-05-27 12:06:43.000000000 +0200
-+++ ./toolchain/gcc/4.3.6/gcc-no-docs.patch	2014-05-27 12:05:55.000000000 +0200
+From a0280c78d738de0d20788a35092c3da7b0c3c3cf Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 27 May 2014 13:07:08 +0200
+Subject: [PATCH 2/6] gcc: no docs
+
+Somebody decided that suboptimal formatting is now an error. So the
+new makeinfo errors out when building gcc-4.3.6 because of
+documentation details.  Idiocy has no limits, and we are are bound to
+suffer for that.  I remember when "gnu's not unix, we have higher standards".
+
+This patch prevents gcc documentation to be built when buildroot prepares
+the cross compiler.  Bah.
+
+/alessandro who wasted a whole day on that
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ toolchain/gcc/4.3.6/gcc-no-docs.patch | 194 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 194 insertions(+)
+ create mode 100644 toolchain/gcc/4.3.6/gcc-no-docs.patch
+
+diff --git a/toolchain/gcc/4.3.6/gcc-no-docs.patch b/toolchain/gcc/4.3.6/gcc-no-docs.patch
+new file mode 100644
+index 0000000..e9e9eef
+--- /dev/null
++++ b/toolchain/gcc/4.3.6/gcc-no-docs.patch
 @@ -0,0 +1,194 @@
 +--- gcc-4.3.6/gcc/configure.ac.orig	2014-05-27 11:57:52.000000000 +0200
 ++++ gcc-4.3.6/gcc/configure.ac	2014-05-27 12:02:59.000000000 +0200
@@ -195,3 +219,6 @@
 + 
 + 
 + # Extract the first word of "perl", so it can be a program name with args.
+-- 
+2.1.4
+

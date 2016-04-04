@@ -1,7 +1,7 @@
-From efe1355563ac28c2f1a1ac689d6f5001bef627b0 Mon Sep 17 00:00:00 2001
+From e474da2c6bd7c33e94d187ce31071dbfbf9d13a5 Mon Sep 17 00:00:00 2001
 From: Adam Wujek <adam.wujek@cern.ch>
 Date: Thu, 13 Nov 2014 13:48:13 +0100
-Subject: [PATCH] add monit
+Subject: [PATCH 4/6] add monit
 
 Commit based on patches from buildroot
 
@@ -79,7 +79,7 @@ index 0000000..edb619b
 + 
 diff --git a/package/monit/monit.mk b/package/monit/monit.mk
 new file mode 100644
-index 0000000..ef70a7a
+index 0000000..4670c18
 --- /dev/null
 +++ b/package/monit/monit.mk
 @@ -0,0 +1,41 @@
@@ -125,5 +125,5 @@ index 0000000..ef70a7a
 +
 +$(eval $(call AUTOTARGETS))
 -- 
-1.9.1
+2.1.4
 

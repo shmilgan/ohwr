@@ -1,5 +1,26 @@
---- ./package/autoconf/autoconf-2.65-doc-hack-for-new-makeinfo.patch.orig	2014-05-27 15:01:44.000000000 +0200
-+++ ./package/autoconf/autoconf-2.65-doc-hack-for-new-makeinfo.patch	2014-05-27 15:02:15.000000000 +0200
+From e9fae152e6e631949cf50eafd405c32282336e84 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Tue, 27 May 2014 15:04:20 +0200
+Subject: [PATCH 3/6] autoconfig doc
+
+Again, suboptimal formatting is now an error in new makeinfo. Worse,
+this looks correct, but the complain is there anyways.  Hack a fix,
+killing a newline that make the parser report the error.
+
+Hope we are done: nobody outside gnu is fool enough to use makeinfo.
+Me excluded, obviously (see wr-switch-sw/doc).
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ .../autoconf/autoconf-2.65-doc-hack-for-new-makeinfo.patch   | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+ create mode 100644 package/autoconf/autoconf-2.65-doc-hack-for-new-makeinfo.patch
+
+diff --git a/package/autoconf/autoconf-2.65-doc-hack-for-new-makeinfo.patch b/package/autoconf/autoconf-2.65-doc-hack-for-new-makeinfo.patch
+new file mode 100644
+index 0000000..5f99fdf
+--- /dev/null
++++ b/package/autoconf/autoconf-2.65-doc-hack-for-new-makeinfo.patch
 @@ -0,0 +1,12 @@
 +--- ./doc/autoconf.texi.orig	2014-05-27 14:51:18.713711000 +0200
 ++++ ./doc/autoconf.texi	2014-05-27 14:54:28.133711000 +0200
@@ -13,3 +34,6 @@
 + @defmacx AT_CHECK_UNQUOTED (@var{commands}, @dvar{status, 0}, @ovar{stdout}, @
 +   @ovar{stderr}, @ovar{run-if-fail}, @ovar{run-if-pass})
 + @atindex{CHECK}
+-- 
+2.1.4
+

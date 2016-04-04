@@ -1,8 +1,13 @@
-Subject: [PATCH] snmp expand if-mib with 64bit counters
+From bb845715cf5339b05cd908266023f62dbbf2cf02 Mon Sep 17 00:00:00 2001
+From: Adam Wujek <adam.wujek@cern.ch>
+Date: Tue, 16 Feb 2016 16:15:27 +0100
+Subject: [PATCH 5/6] snmp: expand if-mib with 64bit counters
 
 Add if-mib/ifXTable to the SNMPd. It adds 64bit (HC) counters to the ifTable.
+---
+ package/netsnmp/netsnmp.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
 diff --git a/package/netsnmp/netsnmp.mk b/package/netsnmp/netsnmp.mk
 index 5d789b9..e7a578b 100644
 --- a/package/netsnmp/netsnmp.mk
@@ -16,3 +21,6 @@ index 5d789b9..e7a578b 100644
  		--with-out-mib-modules="disman/event disman/schedule utilities" \
  		--with-out-transports="Unix"
  NETSNMP_BLOAT_MIBS = BRIDGE DISMAN-EVENT DISMAN-SCHEDULE DISMAN-SCRIPT EtherLike RFC-1215 RFC1155-SMI RFC1213 SCTP SMUX
+-- 
+2.1.4
+
