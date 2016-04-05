@@ -12,7 +12,30 @@
 
 #include <libwr/shmem.h>
 #include <libwr/util.h>
+
 #define SHM_LOCK_TIMEOUT_MS 50 /* in ms */
+
+static char wrs_shm_path[50] = WRS_SHM_DEFAULT_PATH;
+static int wrs_shm_locked = WRS_SHM_LOCKED;
+
+/* Set custom path for shmem */
+void wrs_shm_set_path(char *new_path)
+{
+	strncpy(wrs_shm_path, new_path, 50);
+}
+
+/* Allow to ignore the flag WRS_SHM_LOCKED
+ * If this flag is not ignored then function wrs_shm_get_and_check is not able
+ * to open shmem successfully due to lack of process running with the given pid
+ */
+void wrs_shm_ignore_flag_locked(int ignore_flag)
+{
+	if (ignore_flag)
+		wrs_shm_locked = 0;
+	else
+		wrs_shm_locked = WRS_SHM_LOCKED;
+}
+
 /* Get wrs shared memory */
 /* return NULL and set errno on error */
 void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags)
@@ -30,7 +53,7 @@ void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags)
 		return NULL;
 	}
 
-	sprintf(fname, WRS_SHM_FILE, name_id);
+	sprintf(fname, "%.50s/"WRS_SHM_FILE, wrs_shm_path, name_id);
 	fd = open(fname, O_RDWR | O_CREAT | O_SYNC, 0644);
 	if (fd < 0)
 		return NULL; /* keep errno */
@@ -52,7 +75,7 @@ void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags)
 
 	if (!write_access) {
 		/* This is a reader: if locked, wait for a writer */
-		if (!(flags & WRS_SHM_LOCKED))
+		if (!(flags & wrs_shm_locked))
 			return map;
 
 		tv1 = get_monotonic_tics();
@@ -87,7 +110,7 @@ void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags)
 	head->stamp = 0;
 	head->data_off = sizeof(*head);
 	head->data_size = 0;
-	if (flags & WRS_SHM_LOCKED)
+	if (flags & wrs_shm_locked)
 		head->sequence = 1; /* a sort of lock */
 	else
 		head->sequence = 0;

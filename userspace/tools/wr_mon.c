@@ -54,6 +54,8 @@ static struct hal_temp_sensors temp_sensors_local;
 
 static uint64_t seconds;
 static uint32_t nanoseconds;
+/* ignore checking if process is alive */
+static int ignore_alive;
 
 void help(char *prgname)
 {
@@ -72,6 +74,7 @@ void help(char *prgname)
 		"  -a   show all (same as -i -m -s -o -e -t options)\n"
 		"  -b   black and white output\n"
 		"  -w   web interface mode\n"
+		"  -H <dir> Open shmem dumps from the given directory\n"
 		"\n"
 		"During execution the user can enter 'q' to exit the program\n"
 		"and 't' to toggle printing of state information on/off\n");
@@ -524,8 +527,10 @@ void show_all(void)
 			      __GIT_VER__);
 	}
 
-	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0));
-	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0));
+	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0))
+								+ ignore_alive;
+	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0))
+								+ ignore_alive;
 
 	if (mode & SHOW_WR_TIME) {
 		if (ppsi_alive)
@@ -574,7 +579,7 @@ int main(int argc, char *argv[])
 
 	wrs_msg_init(argc, argv);
 
-	while ((opt = getopt(argc, argv, "himsoetabwqv")) != -1) {
+	while ((opt = getopt(argc, argv, "himsoetabwqvH:")) != -1) {
 		switch(opt)
 		{
 			case 'h':
@@ -605,6 +610,12 @@ int main(int argc, char *argv[])
 				break;
 			case 'w':
 				mode |= WEB_INTERFACE;
+				break;
+			case 'H':
+				wrs_shm_set_path(optarg);
+				/* ignore WRS_SHM_LOCKED flag */
+				wrs_shm_ignore_flag_locked(1);
+				ignore_alive = 1;
 				break;
 			case 'q': break; /* done in wrs_msg_init() */
 			case 'v': break; /* done in wrs_msg_init() */
