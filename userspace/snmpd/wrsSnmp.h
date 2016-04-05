@@ -15,60 +15,9 @@
 #undef INST
 #include <ppsi/ieee1588_types.h> /* for ClockIdentity */
 
-/*
- * local hack: besides the file pointer, that is there anyways,
- * everything else  is not actually built if WRS_WITH_SNMP_HACKISH_LOG
- * is set 0 at build time (currently the default)
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-extern FILE *wrs_logf;
-
-static inline int logmsg(const char *fmt, ...)
-{
-	va_list args;
-	int ret;
-
-	if (WRS_WITH_SNMP_HACKISH_LOG) {
-		if (!wrs_logf) {
-			char *fname = getenv("WRS_SNMP_LOGFILE");
-			if (!fname)
-				fname = "/dev/console";
-			wrs_logf = fopen(fname, "w");
-		}
-		if (!wrs_logf)
-			return 0;
-
-		va_start(args, fmt);
-		ret = vfprintf(wrs_logf, fmt, args);
-		va_end(args);
-
-		return ret;
-	} else {
-		return 0;
-	}
-}
-
-static inline int dumpstruct(FILE *dest, char *name, void *ptr, int size)
-{
-	int ret = 0, i;
-	unsigned char *p = ptr;
-
-	if (WRS_WITH_SNMP_HACKISH_LOG) {
-		ret = fprintf(dest, "dump %s at %p (size 0x%x)\n",
-			      name, ptr, size);
-		for (i = 0; i < size; ) {
-			ret += fprintf(dest, "%02x", p[i]);
-			i++;
-			ret += fprintf(dest, i & 3 ? " " : i & 0xf ? "	" : "\n");
-		}
-		if (i & 0xf)
-			ret += fprintf(dest, "\n");
-	}
-	return ret;
-}
-/* end local hack */
 
 
 

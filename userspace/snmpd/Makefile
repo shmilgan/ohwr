@@ -30,6 +30,7 @@ SOURCES = \
 	snmp_shmem.c \
 	snmp_mmap.c \
 	util.c \
+	snmp_msg.c \
 	wrsScalar.c \
 	wrsGeneralStatusGroup.c \
 	wrsOSStatusGroup.c \
