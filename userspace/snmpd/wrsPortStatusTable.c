@@ -126,8 +126,8 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 				((port_state->mode != HEXP_PORT_MODE_NON_WR) &&
 				(wrsPortStatusTable_array[i].sfp_in_db == 1)));
 
-			logmsg("reading ports name %s link %d, mode %d, "
-				"locked %d\n", port_state->name,
+			snmp_log(LOG_DEBUG, "reading ports name %s link %d, "
+				"mode %d, locked %d\n", port_state->name,
 				wrsPortStatusTable_array[i].link_up,
 				wrsPortStatusTable_array[i].port_mode,
 				wrsPortStatusTable_array[i].port_locked);
