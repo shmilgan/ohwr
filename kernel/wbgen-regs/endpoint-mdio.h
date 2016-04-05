@@ -10,8 +10,8 @@
 
 */
 
-#ifndef __WBGEN2_REGDEFS_ENDPOINT-MDIO_WB
-#define __WBGEN2_REGDEFS_ENDPOINT-MDIO_WB
+#ifndef __WBGEN2_REGDEFS_ENDPOINT_MDIO_WB
+#define __WBGEN2_REGDEFS_ENDPOINT_MDIO_WB
 
 #ifdef __KERNEL__
 #include <linux/types.h>
@@ -36,6 +36,7 @@
 
 
 /* definitions for register: MDIO Control Register */
+#define MDIO_MCR_ADDRESS                      0x0
 
 /* definitions for field: Reserved in reg: MDIO Control Register */
 #define MDIO_MCR_RESV_MASK                    WBGEN2_GEN_MASK(0, 5)
@@ -92,6 +93,7 @@
 #define MDIO_MCR_RESET                        WBGEN2_GEN_MASK(15, 1)
 
 /* definitions for register: MDIO Status Register */
+#define MDIO_MSR_ADDRESS                      0x4
 
 /* definitions for field: Extended Capability in reg: MDIO Status Register */
 #define MDIO_MSR_ERCAP_MASK                   WBGEN2_GEN_MASK(0, 1)
@@ -181,6 +183,7 @@
 #define MDIO_MSR_100BASE4_R(reg)              WBGEN2_GEN_READ(reg, 15, 1)
 
 /* definitions for register: MDIO PHY Identification Register 1 */
+#define MDIO_PHYSID_ADDRESS                      0x8
 
 /* definitions for field:  Organizationally Unique Identifier (bits 7-21) in reg: MDIO PHY Identification Register 1 */
 #define MDIO_PHYSID1_OUI_MASK                 WBGEN2_GEN_MASK(0, 16)
@@ -189,6 +192,7 @@
 #define MDIO_PHYSID1_OUI_R(reg)               WBGEN2_GEN_READ(reg, 0, 16)
 
 /* definitions for register: MDIO PHY Identification Register 2 */
+#define MDIO_PHYSID2_ADDRESS                      0xc
 
 /* definitions for field: Revision Number in reg: MDIO PHY Identification Register 2 */
 #define MDIO_PHYSID2_REV_NUM_MASK             WBGEN2_GEN_MASK(0, 4)
@@ -209,6 +213,7 @@
 #define MDIO_PHYSID2_OUI_R(reg)               WBGEN2_GEN_READ(reg, 10, 6)
 
 /* definitions for register: MDIO Auto-Negotiation Advertisement Register */
+#define MDIO_ADVERTISE_ADDRESS                0x10
 
 /* definitions for field: Reserved in reg: MDIO Auto-Negotiation Advertisement Register */
 #define MDIO_ADVERTISE_RSVD3_MASK             WBGEN2_GEN_MASK(0, 5)
@@ -259,6 +264,7 @@
 #define MDIO_ADVERTISE_NPAGE_R(reg)           WBGEN2_GEN_READ(reg, 15, 1)
 
 /* definitions for register: MDIO Auto-Negotiation Link Partner Ability Register */
+#define MDIO_LPA_ADDRESS                      0x14
 
 /* definitions for field: Reserved in reg: MDIO Auto-Negotiation Link Partner Ability Register */
 #define MDIO_LPA_RSVD3_MASK                   WBGEN2_GEN_MASK(0, 5)
@@ -297,6 +303,7 @@
 #define MDIO_LPA_NPAGE                        WBGEN2_GEN_MASK(15, 1)
 
 /* definitions for register: MDIO Auto-Negotiation Expansion Register */
+#define MDIO_EXPANSION_ADDRESS                0x18
 
 /* definitions for field: Reserved in reg: MDIO Auto-Negotiation Expansion Register */
 #define MDIO_EXPANSION_RSVD1_MASK             WBGEN2_GEN_MASK(0, 1)
@@ -323,6 +330,7 @@
 #define MDIO_EXPANSION_RSVD2_R(reg)           WBGEN2_GEN_READ(reg, 3, 13)
 
 /* definitions for register: MDIO Extended Status Register */
+#define MDIO_ESTATUS_ADDRESS                  0x3c
 
 /* definitions for field: Reserved in reg: MDIO Extended Status Register */
 #define MDIO_ESTATUS_RSVD1_MASK               WBGEN2_GEN_MASK(0, 12)
@@ -355,6 +363,7 @@
 #define MDIO_ESTATUS_1000_XFULL_R(reg)        WBGEN2_GEN_READ(reg, 15, 1)
 
 /* definitions for register: WhiteRabbit-specific Configuration Register */
+#define MDIO_WR_ADDRESS                       0x40
 
 /* definitions for field: TX Calibration Pattern in reg: WhiteRabbit-specific Configuration Register */
 #define MDIO_WR_SPEC_TX_CAL                   WBGEN2_GEN_MASK(0, 1)
