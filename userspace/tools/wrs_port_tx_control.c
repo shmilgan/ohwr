@@ -15,8 +15,9 @@ static struct EP_WB _ep_wb;
 /* convert WR switch endpoint register name to an address value */
 #define EP_REG(regname) ((uint32_t)((void *)&_ep_wb.regname - (void *)&_ep_wb))
 
-/* convert port number (x) to an endpoint address, x from 0 to 17 on switch */
-#define IDX_TO_EP(x) (0x30000 + ((x) * 0x400))
+/* convert port number (x) to an endpoint address, x is 1..18 on switch,
+ * ep is 0..17 */
+#define IDX_TO_EP(x) (0x30000 + (((x) - 1) * 0x400))
 
 /* FIXME: if include of endpoint-mdio.h is fixed this define can go:
  *   #ifndef __WBGEN2_REGDEFS_ENDPOINT-MDIO_WB to
@@ -39,7 +40,7 @@ void help(char *prgname)
 		"  -h   print help\n"
 		"\n"
 		"  Port numbers:\n"
-		"      <port_nr> = 0 to 17 (on 18 port switch)\n"
+		"      <port_nr> = 1 to 18 (on 18 port switch)\n"
 		"\n"
 		"  Commands <cmd> are:\n"
 		"      on  - switch TX laser on.\n"
@@ -49,38 +50,40 @@ void help(char *prgname)
 
 /*
  * Read a 1000base-X TBI PCS register on a WR switch endpoint
- *   ep: endpoint number (0 to 17, will be translated to address offset)
+ *   port: endpoint number (1 to 18, will be translated to address offset)
  *   reg: WR endpoint 1000base-X TBI PCS register address to read from
  */
-uint32_t pcs_read(int ep, uint32_t reg)
+uint32_t pcs_read(int port, uint32_t reg)
 {
 	/*
 	 * write the PCS register address to read from to the MDIO control
 	 * register on the WR switch endpoint.
 	 */
-	_fpga_writel(IDX_TO_EP(ep) + EP_REG(MDIO_CR), EP_MDIO_CR_ADDR_W(reg));
+	_fpga_writel(IDX_TO_EP(port) + EP_REG(MDIO_CR),
+		     EP_MDIO_CR_ADDR_W(reg));
 	/*
 	 * wait until the control register has processed the address and copied
 	 * the data from the address into the control register
 	 */
-	while (!(_fpga_readl(IDX_TO_EP(ep) + EP_REG(MDIO_ASR)) &
+	while (!(_fpga_readl(IDX_TO_EP(port) + EP_REG(MDIO_ASR)) &
 		EP_MDIO_ASR_READY))
 		;
 	/* read data copied into the control register */
-	return EP_MDIO_CR_DATA_R(_fpga_readl(IDX_TO_EP(ep) + EP_REG(MDIO_ASR)));
+	return EP_MDIO_CR_DATA_R(_fpga_readl(IDX_TO_EP(port) + 
+				 EP_REG(MDIO_ASR)));
 }
 
 /*
  * Write a value to a 1000base-X TBI PCS register on a WR switch endpoint
- *   ep: endpoint number (0 to 17, will be translated to address offset)
+ *   port: endpoint number (1 to 18, will be translated to address offset)
  *   reg: WR endpoint 1000base-X TBI PCS register address to write to
  *   value: PCS register value to write
  */
-void pcs_write(int ep, uint32_t reg, uint32_t val)
+void pcs_write(int port, uint32_t reg, uint32_t val)
 {
-	_fpga_writel(IDX_TO_EP(ep) + EP_REG(MDIO_CR), EP_MDIO_CR_ADDR_W(reg)
+	_fpga_writel(IDX_TO_EP(port) + EP_REG(MDIO_CR), EP_MDIO_CR_ADDR_W(reg)
 		| EP_MDIO_CR_DATA_W(val) | EP_MDIO_CR_RW);
-	while (!(_fpga_readl(IDX_TO_EP(ep) + EP_REG(MDIO_ASR)) &
+	while (!(_fpga_readl(IDX_TO_EP(port) + EP_REG(MDIO_ASR)) &
 		EP_MDIO_ASR_READY))
 		;
 }
@@ -166,7 +169,7 @@ int main(int argc, char *argv[])
 	if (argc > 2) {
 		port_number = atoi(argv[1]);
 
-		if (port_number < 0 || port_number > get_nports_from_hal()-1) {
+		if (port_number < 1 || port_number > get_nports_from_hal()) {
 			printf("Port number out of range\n");
 			exit(1);
 		}
