@@ -1,14 +1,14 @@
-From 5c43dbeaa4d0c15f07eef5a4b0791830e9c1ab93 Mon Sep 17 00:00:00 2001
+From 85f80e86b0c81ef8fcfbfd1a759583f2e5271ffc Mon Sep 17 00:00:00 2001
 From: Cesar Prados <c.prados@gsi.de>
 Date: Wed, 6 Apr 2016 16:52:44 +0200
-Subject: [PATCH 1/2] lldp: add lldpd to buildroot
+Subject: [PATCH 2/2] lldp: add lldpd to buildroot
 
 ---
  package/Config.in       |    1 +
  package/lldpd/Config.in |   21 +++++++++
  package/lldpd/S59lldpd  |  120 +++++++++++++++++++++++++++++++++++++++++++++++
- package/lldpd/lldpd.mk  |   43 +++++++++++++++++
- 4 files changed, 185 insertions(+)
+ package/lldpd/lldpd.mk  |   46 ++++++++++++++++++
+ 4 files changed, 188 insertions(+)
  create mode 100644 package/lldpd/Config.in
  create mode 100644 package/lldpd/S59lldpd
  create mode 100644 package/lldpd/lldpd.mk
@@ -180,10 +180,10 @@ index 0000000..c2654ea
 +:
 diff --git a/package/lldpd/lldpd.mk b/package/lldpd/lldpd.mk
 new file mode 100644
-index 0000000..7f55849
+index 0000000..bc755e9
 --- /dev/null
 +++ b/package/lldpd/lldpd.mk
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,46 @@
 +################################################################################
 +#
 +# lldpd
@@ -217,14 +217,17 @@ index 0000000..7f55849
 +		--without-privsep-user \
 +		--without-privsep-group \
 +		--with-embedded-libevent \
++		--prefix=$(TARGET_DIR) \
 +		CFLAGS="-O0 -g -Q -v -da -pedantic -Wall -Wextra -Wno-format-zero-length" 
 +
 +LLDPD_CONF_ENV += NETSNMP_CONFIG=$(TARGET_DIR)/usr/bin/net-snmp-config
 +
-+#define LLDPD_INSTALL_TARGET_CMDS
-+#	$(INSTALL) -m 0755 -D package/lldpd/S59lldpd \
-+#		$(TARGET_DIR)/etc/init.d/S59lldpd
-+#endef
++define LLDPD_INSTALL_TARGET_CMDS
++        $(TARGET_MAKE_ENV) $(MAKE) -C $(@D) \
++                DESTDIR=$(TARGET_DIR) install
++	$(INSTALL) -m 0755 -D package/lldpd/S59lldpd \
++		$(TARGET_DIR)/etc/init.d/S59lldpd
++endef
 +
 +$(eval $(call AUTOTARGETS))
 -- 
