@@ -1,0 +1,232 @@
+From 5c43dbeaa4d0c15f07eef5a4b0791830e9c1ab93 Mon Sep 17 00:00:00 2001
+From: Cesar Prados <c.prados@gsi.de>
+Date: Wed, 6 Apr 2016 16:52:44 +0200
+Subject: [PATCH 1/2] lldp: add lldpd to buildroot
+
+---
+ package/Config.in       |    1 +
+ package/lldpd/Config.in |   21 +++++++++
+ package/lldpd/S59lldpd  |  120 +++++++++++++++++++++++++++++++++++++++++++++++
+ package/lldpd/lldpd.mk  |   43 +++++++++++++++++
+ 4 files changed, 185 insertions(+)
+ create mode 100644 package/lldpd/Config.in
+ create mode 100644 package/lldpd/S59lldpd
+ create mode 100644 package/lldpd/lldpd.mk
+
+diff --git a/package/Config.in b/package/Config.in
+index 4b5e5d8..b986ad5 100644
+--- a/package/Config.in
++++ b/package/Config.in
+@@ -441,6 +441,7 @@ source "package/netkittelnet/Config.in"
+ endif
+ source "package/netplug/Config.in"
+ source "package/netsnmp/Config.in"
++source "package/lldpd/Config.in"
+ source "package/netstat-nat/Config.in"
+ source "package/noip/Config.in"
+ source "package/nfs-utils/Config.in"
+diff --git a/package/lldpd/Config.in b/package/lldpd/Config.in
+new file mode 100644
+index 0000000..a3dfa79
+--- /dev/null
++++ b/package/lldpd/Config.in
+@@ -0,0 +1,21 @@
++config BR2_PACKAGE_LLDPD
++	bool "lldpd"
++	default y
++	help
++	  lldpd is a 802.1ab implementation (LLDP) to help you locate
++	  neighbors of all your equipments.
++
++	  LLDP allows you to know exactly on which port is a server
++	  (and reciprocally).
++
++	  LLDP is an industry standard protocol designed to supplant
++	  proprietary Link-Layer protocols such as EDP or CDP. The
++	  goal of LLDP is to provide an inter-vendor compatible
++	  mechanism to deliver Link-Layer notifications to adjacent
++	  network devices.
++
++	  lldpd is an ISC-licensed implementation of LLDP for various
++	  Unixes. It also supports some proprietary protocols.
++
++	  https://vincentbernat.github.io/lldpd/
++
+diff --git a/package/lldpd/S59lldpd b/package/lldpd/S59lldpd
+new file mode 100644
+index 0000000..c2654ea
+--- /dev/null
++++ b/package/lldpd/S59lldpd
+@@ -0,0 +1,120 @@
++#! /bin/sh
++### BEGIN INIT INFO
++# Provides:          lldpd
++# Required-Start:    $remote_fs $network $syslog
++# Required-Stop:     $network $remote_fs $syslog
++# Default-Start:     2 3 4 5
++# Default-Stop:      0 1 6
++# Short-Description: LLDP daemon
++# Description:       This script controls lldpd, a 802.1ab
++#                    implementation. lldpd also supports CDP,
++#                    EDP and various other protocols.
++### END INIT INFO
++
++# Do NOT "set -e"
++
++# PATH should only include /usr/* if it runs after the mountnfs.sh script
++PATH=/sbin:/usr/sbin:/bin:/usr/bin
++DESC="LLDP daemon"
++NAME=lldpd
++DAEMON=/usr/sbin/$NAME
++DAEMON_ARGS=""
++PIDFILE=/var/run/$NAME.pid
++SCRIPTNAME=/etc/init.d/$NAME
++CHROOT=/var/run/$NAME
++
++# Exit if the package is not installed
++[ -x "$DAEMON" ] || exit 0
++
++# Read configuration variable file if it is present
++[ -r /etc/default/$NAME ] && . /etc/default/$NAME
++
++[ -f /lib/init/vars.sh ] && . /lib/init/vars.sh
++. /lib/lsb/init-functions
++
++do_chroot()
++{
++	oldumask=$(umask)
++	umask 022
++	[ -d $CHROOT/etc ] || mkdir -p $CHROOT/etc
++	[ -f $CHROOT/etc/localtime ] || [ ! -f /etc/localtime ] || \
++		cp /etc/localtime $CHROOT/etc/localtime
++	umask $oldumask
++}
++
++do_start()
++{
++	do_chroot
++	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
++		|| return 1
++	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- \
++		$DAEMON_ARGS \
++		|| return 2
++}
++
++do_stop()
++{
++	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
++	RETVAL="$?"
++	[ "$RETVAL" = 2 ] && return 2
++	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
++	[ "$?" = 2 ] && return 2
++	rm -f $PIDFILE
++	return "$RETVAL"
++}
++
++do_reload() {
++	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $NAME
++	return 0
++}
++
++case "$1" in
++  start)
++	[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
++	do_start
++	case "$?" in
++		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
++		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
++	esac
++	;;
++  stop)
++	[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
++	do_stop
++	case "$?" in
++		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
++		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
++	esac
++	;;
++  reload)
++	log_daemon_msg "Reloading $DESC" "$NAME"
++	do_reload
++	log_end_msg $?
++	;;
++  restart|force-reload)
++	log_daemon_msg "Restarting $DESC" "$NAME"
++	do_stop
++	case "$?" in
++	  0|1)
++		do_start
++		case "$?" in
++			0) log_end_msg 0 ;;
++			1) log_end_msg 1 ;; # Old process is still running
++			*) log_end_msg 1 ;; # Failed to start
++		esac
++		;;
++	  *)
++	  	# Failed to stop
++		log_end_msg 1
++		;;
++	esac
++	;;
++  status)
++	status_of_proc $DAEMON $NAME -p $PIDFILE && exit 0 || exit $?
++	;;
++  *)
++	echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload|status}" >&2
++	exit 3
++	;;
++esac
++
++:
+diff --git a/package/lldpd/lldpd.mk b/package/lldpd/lldpd.mk
+new file mode 100644
+index 0000000..7f55849
+--- /dev/null
++++ b/package/lldpd/lldpd.mk
+@@ -0,0 +1,43 @@
++################################################################################
++#
++# lldpd
++#
++################################################################################
++
++LLDPD_VERSION = 0.9.1
++LLDPD_SITE  = http://media.luffy.cx/files/lldpd
++LLDPD_DEPENDENCIES = netsnmp
++
++LLDPD_CONF_OPT = --host=arm-linux \
++		--without-xml \
++		--with-snmp \
++		--without-json \
++		--disable-doxygen-doc \
++		--disable-doxygen-html \
++		--disable-doxygen-pdf \
++		--disable-sonmp \
++		--without-seccomp \
++		--disable-cdp \
++		--disable-fdp \
++		--disable-edp \
++		--disable-dot1 \
++		--disable-dot3 \
++		--disable-lldpmed \
++		--with-lldpd-pid-file=/var/run/lldp.pid \
++		--with-lldpd-ctl-socket=/var/run/lldp_socket \
++		--without-systemdsystemunitdir \
++		--disable-dtrace --disable-privsep \
++		--without-privsep-chroot \
++		--without-privsep-user \
++		--without-privsep-group \
++		--with-embedded-libevent \
++		CFLAGS="-O0 -g -Q -v -da -pedantic -Wall -Wextra -Wno-format-zero-length" 
++
++LLDPD_CONF_ENV += NETSNMP_CONFIG=$(TARGET_DIR)/usr/bin/net-snmp-config
++
++#define LLDPD_INSTALL_TARGET_CMDS
++#	$(INSTALL) -m 0755 -D package/lldpd/S59lldpd \
++#		$(TARGET_DIR)/etc/init.d/S59lldpd
++#endef
++
++$(eval $(call AUTOTARGETS))
+-- 
+1.7.10.4
+
