@@ -1,7 +1,7 @@
-From 85f80e86b0c81ef8fcfbfd1a759583f2e5271ffc Mon Sep 17 00:00:00 2001
+From 1ca8409b6b3fe45d9ce3da99517e26f07c1203aa Mon Sep 17 00:00:00 2001
 From: Cesar Prados <c.prados@gsi.de>
 Date: Wed, 6 Apr 2016 16:52:44 +0200
-Subject: [PATCH 2/2] lldp: add lldpd to buildroot
+Subject: [PATCH 1/2] lldp: add lldpd to buildroot
 
 ---
  package/Config.in       |    1 +
@@ -180,7 +180,7 @@ index 0000000..c2654ea
 +:
 diff --git a/package/lldpd/lldpd.mk b/package/lldpd/lldpd.mk
 new file mode 100644
-index 0000000..bc755e9
+index 0000000..5741adf
 --- /dev/null
 +++ b/package/lldpd/lldpd.mk
 @@ -0,0 +1,46 @@
@@ -216,7 +216,7 @@ index 0000000..bc755e9
 +		--without-privsep-chroot \
 +		--without-privsep-user \
 +		--without-privsep-group \
-+		--with-embedded-libevent \
++		--with-embedded-libevent
 +		--prefix=$(TARGET_DIR) \
 +		CFLAGS="-O0 -g -Q -v -da -pedantic -Wall -Wextra -Wno-format-zero-length" 
 +
