@@ -78,6 +78,7 @@ int main(int argc, char **argv)
 	assert_init(shw_sfp_buses_init());
 
 	for (i = dump_port; i <= nports; i++) {
+		memset(&shdr, 0, sizeof(shdr));
 		printf("========= port %d =========\n", i - 1);
 		err = shw_sfp_read_verify_header(i - 1, &shdr);
 		if (err == -2) {
