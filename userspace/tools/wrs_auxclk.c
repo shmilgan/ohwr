@@ -43,6 +43,22 @@ struct option ropts[] = {
 	{0,}};
 /*******************/
 
+/* data structures */
+struct params {
+	float freq_mhz;
+	int period_ns;
+
+	float duty;
+	int h_width, l_width;
+
+	int cshift_ns;
+	int sigdel_taps;
+	int ppshift_taps;
+};
+
+
+/*******************/
+
 int print_help(char *prgname)
 {
 	fprintf(stderr, "Use: %s [--freq <MHz>] [--duty <frac>] [--cshift <ns>]"
@@ -51,54 +67,64 @@ int print_help(char *prgname)
 	return 0;
 }
 
-int apply_settings(float freq_mhz, float duty, int cshift_ns, int sigdel_taps,
-		int ppshift_taps)
+int calc_settings(struct params *req, struct params *calc)
 {
-	int period_ns;
-	int h_width, l_width;
+	calc->freq_mhz = req->freq_mhz;
+	if (req->freq_mhz > MAX_FREQ)
+		calc->freq_mhz = MAX_FREQ;
+	if (req->freq_mhz < MIN_FREQ)
+		calc->freq_mhz = MIN_FREQ;
 
-	/*first check if values are in range*/
-	if( freq_mhz > MAX_FREQ || freq_mhz < MIN_FREQ ) {
-		fprintf(stderr, "Frequency outside range <%f; %d>\n", MIN_FREQ,
-				MAX_FREQ);
-		return 1;
-	}
-	if( !(duty > 0 && duty < 1) ) {
-		fprintf(stderr, "Duty %f outside range (0; 1)\n", duty);
-		return 1;
-	}
+	if (!(req->duty > 0 && req->duty < 1))
+		req->duty = 0.5;
 
-	/* calculate high and low width from frequency and duty */
-	period_ns = 1000 / freq_mhz;
-	h_width = period_ns/CNT_RES * duty;
-	l_width = period_ns/CNT_RES - h_width;
+	req->period_ns = 1000 / calc->freq_mhz;
+	calc->h_width = req->period_ns/CNT_RES * req->duty;
+	calc->l_width = req->period_ns/CNT_RES - calc->h_width;
 
-	/* now check the coarse shift */
-	if( cshift_ns > period_ns || cshift_ns < 0 ) {
-		fprintf(stderr, "Coarse shift outside range <0; %d>\n",
-				period_ns);
-		return 1;
-	}
+	/* last step, calculate the actual frequency and period based on the
+	 * actual h_width and l_width */
+	calc->period_ns = (calc->h_width + calc->l_width) * CNT_RES;
+	calc->freq_mhz = 1000 / calc->period_ns;
+	calc->duty = (float)calc->h_width*CNT_RES/calc->period_ns;
 
-	gen10_write(PR, h_width);
-	gen10_write(DCR, l_width);
-	gen10_write(CSR, cshift_ns/CNT_RES);
-	gen10_write(IOR, sigdel_taps);
-	gen10_write(PPS_IOR, ppshift_taps);
+	/* just copy the values that don't change */
+	calc->cshift_ns    = req->cshift_ns;
+	calc->sigdel_taps  = req->sigdel_taps;
+	calc->ppshift_taps = req->ppshift_taps;
+
+	/* check if what's about to be generated matches the request */
+	if (req->period_ns == calc->period_ns && req->duty == calc->duty)
+		return 0;
+	else
+		return -1;
+}
+
+int apply_settings(struct params *p)
+{
+	gen10_write(PR, p->h_width);
+	gen10_write(DCR, p->l_width);
+	gen10_write(CSR, p->cshift_ns/CNT_RES);
+	gen10_write(IOR, p->sigdel_taps);
+	gen10_write(PPS_IOR, p->ppshift_taps);
 	sleep(1);
 	/* now read the actual delay (in taps) from IODelays */
-	sigdel_taps = gen10_read(IOR);
-	sigdel_taps >>= GEN10_IOR_TAP_CUR_SHIFT;
-	ppshift_taps = gen10_read(PPS_IOR);
-	ppshift_taps >>= GEN10_PPS_IOR_TAP_CUR_SHIFT;
+	p->sigdel_taps = gen10_read(IOR);
+	p->sigdel_taps >>= GEN10_IOR_TAP_CUR_SHIFT;
+	p->ppshift_taps = gen10_read(PPS_IOR);
+	p->ppshift_taps >>= GEN10_PPS_IOR_TAP_CUR_SHIFT;
 
-	printf("Calculated settings:\n");
-	printf("period: %d ns (%d MHz)\n", period_ns, 1000/period_ns);
-	printf("high: %d ns; low: %d ns\n", h_width, l_width);
-	printf("duty: %f\n", (float)h_width*CNT_RES/period_ns);
-	printf("coarse shift: %d\n", (cshift_ns/CNT_RES)*CNT_RES);
-	printf("PPS shift: %d taps\n", ppshift_taps);
-	printf("Signal delay: %d taps\n", sigdel_taps);
+	return 0;
+}
+
+int print_settings(FILE *f, struct params *p)
+{
+	fprintf(f, "frequency: %.3f MHz (%d ns)\n", p->freq_mhz, p->period_ns);
+	fprintf(f, "high: %d ns; low: %d ns\n", p->h_width, p->l_width);
+	fprintf(f, "duty: %f\n", p->duty);
+	fprintf(f, "coarse shift: %d\n", (p->cshift_ns/CNT_RES)*CNT_RES);
+	fprintf(f, "PPS shift: %d taps\n", p->ppshift_taps);
+	fprintf(f, "Signal delay: %d taps\n", p->sigdel_taps);
 
 	return 0;
 }
@@ -106,12 +132,10 @@ int apply_settings(float freq_mhz, float duty, int cshift_ns, int sigdel_taps,
 int main(int argc, char *argv[])
 {
 	char *prgname = argv[0];
-	float freq_mhz = DEF_FREQ;
-	float duty     = DEF_DUTY;
-	int cshift_ns  = DEF_CSHIFT;
-	int sigdel_taps  = DEF_SIGDEL;
-	int ppshift_taps = DEF_PPSHIFT;
-	int c;
+	struct params req = {DEF_FREQ, 0, DEF_DUTY, 0, 0, DEF_CSHIFT,
+		DEF_SIGDEL, DEF_PPSHIFT};
+	struct params calc;
+	int c, ret;
 
 	if (shw_fpga_mmap_init() < 0) {
 		fprintf(stderr, "%s: Can't access device memory\n", prgname);
@@ -121,19 +145,19 @@ int main(int argc, char *argv[])
 	while( (c = getopt_long(argc, argv, "h", ropts, NULL)) != -1) {
 		switch(c) {
 			case OPT_FREQ:
-				freq_mhz = (float) atof(optarg);
+				req.freq_mhz = (float) atof(optarg);
 				break;
 			case OPT_DUTY:
-				duty = (float) atof(optarg);
+				req.duty = (float) atof(optarg);
 				break;
 			case OPT_CSHIFT:
-				cshift_ns = atoi(optarg);
+				req.cshift_ns = atoi(optarg);
 				break;
 			case OPT_SIGDEL:
-				sigdel_taps = atoi(optarg);
+				req.sigdel_taps = atoi(optarg);
 				break;
 			case OPT_PPSHIFT:
-				ppshift_taps = atoi(optarg);
+				req.ppshift_taps = atoi(optarg);
 				break;
 			case OPT_HELP:
 			default:
@@ -142,6 +166,31 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	return apply_settings(freq_mhz, duty, cshift_ns, sigdel_taps,
-			      ppshift_taps);
+	ret = calc_settings(&req, &calc);
+
+	if (!(calc.duty > 0 && calc.duty < 1)) {
+		fprintf(stderr, "Requested duty %.2f (calculated %.2f)"
+				" outside range (0; 1)\n", req.duty, calc.duty);
+		return 1;
+	}
+
+	/* now check the coarse shift */
+	if (calc.cshift_ns > calc.period_ns || calc.cshift_ns < 0) {
+		fprintf(stderr, "Coarse shift outside range <0; %d>\n",
+				req.period_ns);
+		return 1;
+	}
+
+	if (ret != 0) {
+		fprintf(stderr, "Could not generate required signal, here is "
+				"the alternative you could use:\n");
+		print_settings(stderr, &calc);
+		return 1;
+	}
+
+	apply_settings(&calc);
+	printf("Applied settings:\n");
+	print_settings(stdout, &calc);
+
+	return 0;
 }
