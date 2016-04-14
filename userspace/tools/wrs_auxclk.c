@@ -16,11 +16,11 @@
 #define OPT_PPSHIFT 6
 
 /* default parameters to generate 10MHz signal */
-#define DEF_FREQ 	10
-#define DEF_DUTY 	0.5
-#define DEF_CSHIFT 	30
-#define DEF_SIGDEL 	0
-#define DEF_PPSHIFT 	0
+#define DEF_FREQ	10
+#define DEF_DUTY	0.5
+#define DEF_CSHIFT	30
+#define DEF_SIGDEL	0
+#define DEF_PPSHIFT	0
 
 #define MAX_FREQ 250	/* min half-period is 2ns */
 #define MIN_FREQ 0.004	/* max half-period is 65535*2ns */
@@ -40,7 +40,7 @@ struct option ropts[] = {
 	{"cshift", 1, NULL, OPT_CSHIFT},
 	{"sigdel", 1, NULL, OPT_SIGDEL},
 	{"ppshift", 1, NULL, OPT_PPSHIFT},
-	{0,}};
+	{0,} };
 /*******************/
 
 /* data structures */
@@ -142,27 +142,27 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while( (c = getopt_long(argc, argv, "h", ropts, NULL)) != -1) {
-		switch(c) {
-			case OPT_FREQ:
-				req.freq_mhz = (float) atof(optarg);
-				break;
-			case OPT_DUTY:
-				req.duty = (float) atof(optarg);
-				break;
-			case OPT_CSHIFT:
-				req.cshift_ns = atoi(optarg);
-				break;
-			case OPT_SIGDEL:
-				req.sigdel_taps = atoi(optarg);
-				break;
-			case OPT_PPSHIFT:
-				req.ppshift_taps = atoi(optarg);
-				break;
-			case OPT_HELP:
-			default:
-				print_help(prgname);
-				return 1;
+	while ((c = getopt_long(argc, argv, "h", ropts, NULL)) != -1) {
+		switch (c) {
+		case OPT_FREQ:
+			req.freq_mhz = (float) atof(optarg);
+			break;
+		case OPT_DUTY:
+			req.duty = (float) atof(optarg);
+			break;
+		case OPT_CSHIFT:
+			req.cshift_ns = atoi(optarg);
+			break;
+		case OPT_SIGDEL:
+			req.sigdel_taps = atoi(optarg);
+			break;
+		case OPT_PPSHIFT:
+			req.ppshift_taps = atoi(optarg);
+			break;
+		case OPT_HELP:
+		default:
+			print_help(prgname);
+			return 1;
 		}
 	}
 
