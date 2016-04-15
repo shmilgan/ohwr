@@ -666,7 +666,7 @@ int main(int argc, char *argv[])
 		}
 
 		shw_pps_gen_read_time(&seconds, &nanoseconds);
-		if (seconds != last_seconds && track_onoff) {
+		if (seconds != last_seconds) {
 			read_servo();
 			read_hal();
 
