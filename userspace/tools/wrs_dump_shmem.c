@@ -676,9 +676,15 @@ void print_info(char *prgname)
 		"             entries are printed. Note there are 2048 htab\n"
 		"             and 4096 vlan entries!\n"
 		"   -H <dir>  Open shmem dumps from the given directory\n"
-		"   -h        Show this message\n");
+		"   -h        Show this message\n"
+		"  Dump shmem for specific program (by default dump for all)\n"
+		"   -P        Dump ptp entries\n"
+		"   -R        Dump rtu entries\n"
+		"   -L        Dump hal entries\n");
 
 }
+
+int dump_print[WRS_SHM_N_NAMES];
 
 int main(int argc, char **argv)
 {
@@ -687,14 +693,27 @@ int main(int argc, char **argv)
 	void *m;
 	int i;
 	int c;
+	int print_all = 1;
 
-	while ((c = getopt(argc, argv, "ahH:")) != -1) {
+	while ((c = getopt(argc, argv, "ahH:PRL")) != -1) {
 		switch (c) {
 		case 'a':
 			dump_all_rtu_entries = 1;
 			break;
 		case 'H':
 			wrs_shm_set_path(optarg);
+			break;
+		case 'P':
+			dump_print[wrs_shm_ptp] = 1;
+			print_all = 0;
+			break;
+		case 'R':
+			dump_print[wrs_shm_rtu] = 1;
+			print_all = 0;
+			break;
+		case 'L':
+			dump_print[wrs_shm_hal] = 1;
+			print_all = 0;
 			break;
 		case 'h':
 		default:
@@ -703,6 +722,9 @@ int main(int argc, char **argv)
 		}
 	}
 	for (i = 0; i < WRS_SHM_N_NAMES; i++) {
+		if (!print_all && !dump_print[i])
+			continue;
+
 		m = wrs_shm_get(i, "reader", 0);
 		if (!m) {
 			fprintf(stderr, "%s: can't attach memory area %i: %s\n",
