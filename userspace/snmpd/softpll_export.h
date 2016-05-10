@@ -77,6 +77,7 @@ struct spll_stats {
 	char commit_id[32];
 	char build_date[16];
 	char build_time[16];
+	char build_by[32];
 };
 
 extern struct spll_stats stats;

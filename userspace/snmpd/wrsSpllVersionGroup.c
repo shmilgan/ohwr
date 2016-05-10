@@ -11,6 +11,7 @@ static struct spll_stats *spll_stats_p;
 static struct pickinfo wrsSpllVersion_pickinfo[] = {
 	FIELD(wrsSpllVersion_s, ASN_OCTET_STR, commit_id),
 	FIELD(wrsSpllVersion_s, ASN_OCTET_STR, build_date),
+	FIELD(wrsSpllVersion_s, ASN_OCTET_STR, build_by),
 };
 
 struct wrsSpllVersion_s wrsSpllVersion_s;
@@ -60,7 +61,7 @@ time_t wrsSpllVersion_data_fill(void)
 	}
 	/* check version of SPLL's stat structure, version fields are from
 	 * version 2 */
-	if (spll_stats_p->ver == 2) {
+	if (spll_stats_p->ver == 2 || spll_stats_p->ver == 3) {
 		int len;
 		strncpy_e(wrsSpllVersion_s.commit_id, spll_stats_p->commit_id, 32);
 		/* concatenate date and time */
@@ -69,6 +70,10 @@ time_t wrsSpllVersion_data_fill(void)
 		wrsSpllVersion_s.build_date[len] = ' '; /* put space instead of null */
 		/* add time after added space at the end of string */
 		strncpy_e(&wrsSpllVersion_s.build_date[len + 1], spll_stats_p->build_time, 16 - 1);
+	}
+	/* buil_by was introduced in version 3 */
+	if (spll_stats_p->ver == 3) {
+		strncpy_e(wrsSpllVersion_s.build_by, spll_stats_p->build_by, 32);
 	}
 	/* there was an update, return current time */
 	return time_update;

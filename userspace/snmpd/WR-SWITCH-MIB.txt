@@ -1035,6 +1035,14 @@ wrsSpllBuildDate          OBJECT-TYPE
         "The build date of the Soft PLL, '__DATE__' at build time"
     ::= { wrsSpllVersionGroup 2 }
 
+wrsSpllBuildBy            OBJECT-TYPE
+    SYNTAX                DisplayString (SIZE (0..32))
+    MAX-ACCESS            read-only
+    STATUS                current
+    DESCRIPTION
+        "The build by of the Soft PLL"
+    ::= { wrsSpllVersionGroup 3 }
+
 -- wrsSpllStatusGroup (.7.3.2)
 wrsSpllStatusGroup      OBJECT IDENTIFIER ::= { wrsSpllState 2 }
 

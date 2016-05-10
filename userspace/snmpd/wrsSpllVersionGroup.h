@@ -7,6 +7,7 @@
 struct wrsSpllVersion_s {
 	char commit_id[32];
 	char build_date[32];
+	char build_by[32];
 };
 
 extern struct wrsSpllVersion_s wrsSpllVersion_s;
