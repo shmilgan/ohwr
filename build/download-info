@@ -23,8 +23,8 @@ wrs-gw-v4.2-20150826.tar.gz 807117326f6d5b1b53ebc95ca093fc44 \
    http://www.ohwr.org/attachments/download/4035/wrs-gw-v4.2-20150826.tar.gz
 
 # buildroot core and packages
-buildroot-2011.11.tar.bz2        7b852f4ef17c63857ca7b9388b782070 \
-   http://www.buildroot.org/downloads/buildroot-2011.11.tar.bz2
+buildroot-2016.02.tar.bz2        fcf10ae55b0831f52d492b6939e95581 \
+   http://www.buildroot.org/downloads/buildroot-2016.02.tar.bz2
 
 autoconf-2.65.tar.bz2            a6de1cc6434cd64038b0a0ae4e252b33 \
    http://ftp.gnu.org/pub/gnu/autoconf/autoconf-2.65.tar.bz2

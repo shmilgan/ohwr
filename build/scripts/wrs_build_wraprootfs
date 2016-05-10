@@ -22,7 +22,7 @@ DEVTAR="$WRS_BASE_DIR/../userspace/devices.tar.gz"
 TMPFS=$(mktemp -d /tmp/rootfs.XXXXXX)
 chmod a+rx $TMPFS
 
-rootfs_vanilla="$WRS_OUTPUT_DIR/build/buildroot-2011.11/output/target"
+rootfs_vanilla="$WRS_OUTPUT_DIR/build/buildroot-2016.02/output/target"
 rootfs_override="$WRS_BASE_DIR/../userspace/rootfs_override"
 
 TMPSCRIPT=$(mktemp /tmp/rootfs-script.XXXXXX)
