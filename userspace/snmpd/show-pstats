@@ -17,8 +17,8 @@ proc updatew {wname} {
     set new [expr ![llength [winfo children $wname]]]
     if $new {
 	grid [label $wname.name -text "CTR NAME" -fg blue] -row 0 -column 1
-	for {set i 0; set c 2} {$i < 18} {incr i; incr c} {
-	    grid [label $wname.wr$i -text "WR$i" -fg blue] -row 0 -column $c
+	for {set i 1; set c 2} {$i < 19} {incr i; incr c} {
+	    grid [label $wname.wri$i -text "WRI$i" -fg blue] -row 0 -column $c
 	}
     }
     set labels {wrsPstatsHCPortName
