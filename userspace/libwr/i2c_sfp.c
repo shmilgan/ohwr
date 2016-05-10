@@ -537,13 +537,13 @@ int shw_sfp_read_header(int num, struct shw_sfp_header *head)
 	int ret;
 
 	if (shw_sfp_id(num) < 0) {
-		pr_error("shw_sfp_read_header: wrong SFP num %d\n", num);
+		pr_error("shw_sfp_read_header: wrong SFP num %d\n", num + 1);
 		return -1;
 	}
 
 	ret = shw_sfp_module_scan();
 	if (!(ret & (1 << num))) {
-		pr_error("shw_sfp_read_header: SFP not present %d\n", num);
+		pr_error("shw_sfp_read_header: SFP not present %d\n", num + 1);
 		return -2;
 	}
 
