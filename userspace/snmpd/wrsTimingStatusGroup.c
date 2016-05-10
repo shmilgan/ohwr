@@ -243,7 +243,8 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 				wrsTimingStatus_s.wrsSlaveLinksStatus =
 							WRS_SLAVE_LINK_STATUS_ERROR;
 				snmp_log(LOG_ERR, "SNMP: wrsSlaveLinksStatus (slave) "
-						  "failed for port %d\n", i);
+						  "failed for port %d (wri%d)\n",
+					 i + 1, i + 1);
 			}
 			/* error when slave port is up when switch is in master or
 			* grandmaster mode */
@@ -253,7 +254,8 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 				wrsTimingStatus_s.wrsSlaveLinksStatus =
 							WRS_SLAVE_LINK_STATUS_ERROR;
 				snmp_log(LOG_ERR, "SNMP: wrsSlaveLinksStatus (master) "
-						  "failed for port %d\n", i);
+						  "failed for port %d (wri%d)\n",
+					 i + 1, i + 1);
 			}
 		}
 	}
@@ -295,7 +297,8 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 			wrsTimingStatus_s.wrsPTPFramesFlowing =
 						WRS_PTP_FRAMES_FLOWING_ERROR;
 			snmp_log(LOG_ERR, "SNMP: wrsPTPFramesFlowing "
-					  "failed for port %d\n", i);
+					  "failed for port %d (wri%d)\n",
+				 i + 1, i + 1);
 			/* can't go worse, no need to change other ports */
 			break;
 
