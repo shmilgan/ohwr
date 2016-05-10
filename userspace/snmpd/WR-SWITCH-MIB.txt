@@ -1588,7 +1588,8 @@ WrsPtpDataEntry ::=
         wrsPtpDeltaRxS          Integer32,
         wrsPtpServoStateErrCnt  Counter32,
         wrsPtpClockOffsetErrCnt Counter32,
-        wrsPtpRTTErrCnt         Counter32
+        wrsPtpRTTErrCnt         Counter32,
+        wrsPtpServoUpdateTime   Counter64
     }
 
 wrsPtpDataIndex OBJECT-TYPE
@@ -1782,6 +1783,14 @@ wrsPtpRTTErrCnt OBJECT-TYPE
     DESCRIPTION
             "Number of servo updates with wrong RTT"
     ::= { wrsPtpDataEntry 22 }
+
+wrsPtpServoUpdateTime OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "TAI Nanosecond of the last servo's update"
+    ::= { wrsPtpDataEntry 23 }
 
 -- wrsPortStatusTable (.7.6)
 wrsPortStatusTable OBJECT-TYPE

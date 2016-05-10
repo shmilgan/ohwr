@@ -33,6 +33,7 @@ struct wrsPtpDataTable_s {
 	uint32_t n_err_state;
 	uint32_t n_err_offset;
 	uint32_t n_err_delta_rtt;
+	uint64_t update_time;
 };
 
 extern struct wrsPtpDataTable_s wrsPtpDataTable_array[WRS_MAX_N_SERVO_INSTANCES];
