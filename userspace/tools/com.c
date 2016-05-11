@@ -52,9 +52,8 @@ typedef struct {char *name; int flag; } speed_spec;
 
 
 void print_status(int fd) {
-	int status;
 	unsigned int arg;
-	status = ioctl(fd, TIOCMGET, &arg);
+	ioctl(fd, TIOCMGET, &arg);
 	fprintf(stderr, "[STATUS]: ");
 	if(arg & TIOCM_RTS) fprintf(stderr, "RTS ");
 	if(arg & TIOCM_CTS) fprintf(stderr, "CTS ");
