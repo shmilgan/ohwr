@@ -10,17 +10,16 @@ fi
 
 wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR
 
-wrs_echo "--- Buildroot compiler and filesystem"
-zipname="buildroot-2016.02.tar.bz2"
-wrs_download $zipname
+wrs_echo "--- Buildroot: unpack and configure"
+wrs_download $buildroot_zipname
 
 mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
 mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 
 # go to the build dir and compile it, using our configuration
 cd $WRS_OUTPUT_DIR/build
-dirname="buildroot-2016.02"
-if [ ! -d $dirname ]; then
+
+if [ ! -d $buildroot_dirname ]; then
     unset WRS_NO_REPLACE_BUILDROOT
 fi
 
@@ -28,8 +27,8 @@ if [ -n "$WRS_NO_REPLACE_BUILDROOT" ]; then
     wrs_echo "Preserving current buildroot build"
 else
     wrs_echo "Uncompressing buildroot"
-    rm -rf $dirname
-    tar xjf ${WRS_DOWNLOAD_DIR}/$zipname || wrs_die "untar $zipname"
+    rm -rf $buildroot_dirname
+    tar xjf ${WRS_DOWNLOAD_DIR}/$buildroot_zipname || wrs_die "untar $buildroot_zipname"
 fi
 
 # select configuration: old default, overridden by Kconfig and environment
@@ -53,7 +52,7 @@ if [ ! -f "$CFG" ]; then
 fi
 wrs_echo "Configuring with \"$CFG\""
 
-cd $WRS_OUTPUT_DIR/build/${dirname}
+cd $WRS_OUTPUT_DIR/build/${buildroot_dirname}
 cp $CFG .config
 # If busybox configuration is inside wr-switch-sw (currently it is),
 # fix the config filename
@@ -63,7 +62,7 @@ sed -i "s,__WR_SWITCH_SW__,$WRS_BASE_DIR/../configs/buildroot," .config
 # apply any pending patches (only if we untarred a fresh copy)
 if [ -z "$WRS_NO_REPLACE_BUILDROOT" ]; then
     wrs_echo "Patching buildroot"
-    cd $WRS_OUTPUT_DIR/build/${dirname}
+    cd $WRS_OUTPUT_DIR/build/${buildroot_dirname}
     for n in $WRS_BASE_DIR/../patches/buildroot/*patch; do
 	# the shell passes the "*" over if no matches are there, so check
 	if test -f "$n"; then
@@ -94,26 +93,3 @@ fi
 # re-digest the config we built
 wrs_echo "Reconfiguring buildroot"
 make oldconfig || wrs_die "buildroot config"
-
-buildrootdir=$(/bin/pwd)
-
-cd $buildrootdir
-
-# We don't want CC to be pre-set at this point (some of us do :)
-unset CC
-wrs_echo "Compiling buildroot"
-
-# make 3.82 splits the work differently. When using buildroot with
-# the make > 3.81 buildroot uses BR2_JLEVEL= (preferably 0 for automatic number
-# of jobs setting).
-# For make =< 3.81 BR2_JLEVEL= is ignored and build is done using only one job.
-# Passing -j allows to build with many jobs, but many warning messages are
-# printed:
-# make[2]: warning: -jN forced in submake: disabling jobserver mode.
-makefails=$(make -v | awk 'NR==1 {if ($NF <= 3.81) print "oldmake"}')
-if [ "x$makefails" = "xoldmake" ]; then
-    JLEVEL="-j$WRS_MAKE_J_NUMBER"
-fi
-
-# tell to buildroot to use our download directory
-make BR2_DL_DIR=$WRS_DOWNLOAD_DIR $JLEVEL || wrs_die "buildroot compilation"

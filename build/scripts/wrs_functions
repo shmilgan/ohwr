@@ -181,5 +181,9 @@ else
     if [ $? -ne 0 ]; then wrs_die "Configuration failed"; fi
 fi
 
+# buildroot definitions
+buildroot_zipname="buildroot-2016.02.tar.bz2"
+buildroot_dirname="buildroot-2016.02"
+
 # and import the configuration variables
 . $WRS_CONFIG_DIR/.config

@@ -129,23 +129,25 @@ wrs_build_step () {
 failed_step=false; # this is set to "true" but the wrs_build_step function
 
 # Now build the stuff one step at a time, only if not already done.
-# Steps 0 and 9 are redone in any case:
+# Steps 0 and 11 are redone in any case:
 #   step 0 is downloading, and re-cecking md5sum has no side effects
-#   step 9 is wrapping the filesystem: we need to re-wrap is something changed
-redo_step "0 9"
+#   step 11 is wrapping the filesystem: we need to re-wrap is something changed
+redo_step "0 11"
 
 #                 done-marker            script name
 wrs_build_step    00-download            wrs_download
-wrs_build_step    01-buildroot           wrs_build_buildroot
+wrs_build_step    01-buildroot_init      wrs_buildroot_init
+wrs_build_step    02-buildroot_download  wrs_buildroot_download
+wrs_build_step    03-buildroot_build     wrs_buildroot_build
 wrs_default_compiler
-wrs_build_step    02-at91boot            wrs_build_at91boot
-wrs_build_step    03-barebox             wrs_build_barebox
-wrs_build_step    04-kernel              wrs_build_kernel
-wrs_build_step    05-modules             wrs_build_modules
-wrs_build_step    06-ptp                 wrs_build_ptp
-wrs_build_step    07-wrs-userspace       wrs_build_userspace
-wrs_build_step    08-wrs-gateware        wrs_build_gateware
-wrs_build_step    09-wrap-rootfs         wrs_build_wraprootfs
+wrs_build_step    04-at91boot            wrs_build_at91boot
+wrs_build_step    05-barebox             wrs_build_barebox
+wrs_build_step    06-kernel              wrs_build_kernel
+wrs_build_step    07-modules             wrs_build_modules
+wrs_build_step    08-ptp                 wrs_build_ptp
+wrs_build_step    09-wrs-userspace       wrs_build_userspace
+wrs_build_step    10-wrs-gateware        wrs_build_gateware
+wrs_build_step    11-wrap-rootfs         wrs_build_wraprootfs
 
 if $failed_step; then
     wrs_die "One or more build steps failed"

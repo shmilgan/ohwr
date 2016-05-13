@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# check variables, like all scripts herein do
+WRS_SCRIPT_NAME=$(basename $0)
+if [ -z "$WRS_BASE_DIR" ]; then
+    echo "$0: Plesae set WRS_BASE_DIR" >& 2
+    exit 1
+fi
+. ${WRS_BASE_DIR}/scripts/wrs_functions
+
+wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR
+
+wrs_echo "--- Buildroot: compiler and filesystem"
+
+cd $WRS_OUTPUT_DIR/build/${buildroot_dirname}
+buildrootdir=$(/bin/pwd)
+
+cd $buildrootdir
+
+# We don't want CC to be pre-set at this point (some of us do :)
+unset CC
+wrs_echo "Compiling buildroot"
+
+# make 3.82 splits the work differently. When using buildroot with
+# the make > 3.81 buildroot uses BR2_JLEVEL= (preferably 0 for automatic number
+# of jobs setting).
+# For make =< 3.81 BR2_JLEVEL= is ignored and build is done using only one job.
+# Passing -j allows to build with many jobs, but many warning messages are
+# printed:
+# make[2]: warning: -jN forced in submake: disabling jobserver mode.
+makefails=$(make -v | awk 'NR==1 {if ($NF <= 3.81) print "oldmake"}')
+if [ "x$makefails" = "xoldmake" ]; then
+    JLEVEL="-j$WRS_MAKE_J_NUMBER"
+fi
+
+# tell to buildroot to use our download directory
+make BR2_DL_DIR=$WRS_DOWNLOAD_DIR $JLEVEL || wrs_die "buildroot compilation"

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# check variables, like all scripts herein do
+WRS_SCRIPT_NAME=$(basename $0)
+if [ -z "$WRS_BASE_DIR" ]; then
+    echo "$0: Plesae set WRS_BASE_DIR" >& 2
+    exit 1
+fi
+. ${WRS_BASE_DIR}/scripts/wrs_functions
+
+wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR
+
+wrs_echo "--- Buildroot: download packages"
+
+cd $WRS_OUTPUT_DIR/build/${buildroot_dirname}
+buildrootdir=$(/bin/pwd)
+
+cd $buildrootdir
+
+echo "current dir "`pwd`
+
+# tell to buildroot to use our download directory
+make BR2_DL_DIR=$WRS_DOWNLOAD_DIR source || wrs_die "buildroot download"
