@@ -59,16 +59,6 @@ cp $CFG .config
 # fix the config filename
 sed -i "s,__WR_SWITCH_SW__,$WRS_BASE_DIR/../configs/buildroot," .config
 
-# replace "-j" level. First remove it in case it's left in
-sed -i /^BR2_JLEVEL/d .config
-# make 3.82 splits the work differently, and compilation fails. So no -j
-makefails=$(make -v | awk 'NR==1 {if ($NF > 3.81) print "fail"}')
-if [ "x$makefails" = "xfail" ]; then
-    echo "BR2_JLEVEL=1" >> .config
-    # Actually, it seems it fails anyways. I give up and document the issue
-else
-    echo "BR2_JLEVEL=$WRS_MAKE_J_NUMBER" >> .config
-fi
 
 # apply any pending patches (only if we untarred a fresh copy)
 if [ -z "$WRS_NO_REPLACE_BUILDROOT" ]; then
@@ -112,5 +102,18 @@ cd $buildrootdir
 # We don't want CC to be pre-set at this point (some of us do :)
 unset CC
 wrs_echo "Compiling buildroot"
+
+# make 3.82 splits the work differently. When using buildroot with
+# the make > 3.81 buildroot uses BR2_JLEVEL= (preferably 0 for automatic number
+# of jobs setting).
+# For make =< 3.81 BR2_JLEVEL= is ignored and build is done using only one job.
+# Passing -j allows to build with many jobs, but many warning messages are
+# printed:
+# make[2]: warning: -jN forced in submake: disabling jobserver mode.
+makefails=$(make -v | awk 'NR==1 {if ($NF <= 3.81) print "oldmake"}')
+if [ "x$makefails" = "xoldmake" ]; then
+    JLEVEL="-j$WRS_MAKE_J_NUMBER"
+fi
+
 # tell to buildroot to use our download directory
-make BR2_DL_DIR=$WRS_DOWNLOAD_DIR || wrs_die "buildroot compilation"
+make BR2_DL_DIR=$WRS_DOWNLOAD_DIR $JLEVEL || wrs_die "buildroot compilation"
