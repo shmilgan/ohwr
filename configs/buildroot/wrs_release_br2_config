@@ -2156,7 +2156,7 @@ BR2_PACKAGE_ETHTOOL=y
 #
 # ibrdtnd needs a toolchain w/ C++, threads
 #
-BR2_PACKAGE_IFPLUGD=y
+# BR2_PACKAGE_IFPLUGD is not set
 # BR2_PACKAGE_IFTOP is not set
 
 #
