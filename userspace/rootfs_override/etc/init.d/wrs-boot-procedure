@@ -201,11 +201,23 @@ if $change_update_date; then
 fi
 # If we changed bloader or kernel or initramfs, we reboot. Otherwise proceed.
 if $reboot; then
+    cd /
     umount /update
     umount /boot
+    echo "Gentle reboot"
     reboot
-    # We notified init, but it takes time. Stop breathing while waiting to die.
-    sleep 9999
+    sleep 2
+    # If init ignores signals before all sysinit entires from inittab are done,
+    # we have to force the reboot.
+    echo "Force reboot"
+    # Firstly, remount / in case we use nfs
+    /bin/mount -o remount,ro /
+    # umount what is left
+    /bin/umount -a -r
+    # force reboot
+    reboot -f
+    # wait forever
+    while true; do sleep 1; done
 fi
 
 # Here we are: boot normally: if initrd, mount /usr and copy /etc
