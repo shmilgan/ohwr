@@ -70,6 +70,11 @@ gpio_set_value 1 0
 
 PS1="wrs-$eth0.ethaddr# "
 
+# skip 2x16 lines, to keep barebox messages in the console's history
+# otherwise mesages will be cleared by "menu -s ..." command
+echo -e \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+echo -e \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+
 # Create the menu
 #menu -r -m boot
 menu -a -m boot -d "Welcome on WRSv3 Boot Sequence"
