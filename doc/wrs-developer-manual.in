@@ -1436,6 +1436,25 @@ used in partial updates during development, please see
 @t{/etc/init.d/wrs-boot-procedure} (in the source archive it is
 distributed in @t{userspace/rootfs_override/}.
 
+@c ==========================================================================
+@node Restore default Barebox environment
+@section Restore default Barebox environment
+
+In some cases it might be necessary to restore default Barebox's environment.
+
+Please note that so far switch uses only "Barebox-environment-backup"
+partition. It doesn't use "Barebox-Environment".
+
+Erasing can be performed from Barebox's commnad line:
+@smallexample
+   erase /dev/env0
+@end smallexample
+or from Linux:
+@smallexample
+   flash_erase /dev/mtd0 0 0
+@end smallexample
+
+
 @c ##########################################################################
 @node WRS Internals
 @chapter WRS Internals
