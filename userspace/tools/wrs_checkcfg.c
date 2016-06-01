@@ -6,10 +6,13 @@
 #include <string.h>
 #include <errno.h>
 #include <libwr/config.h>
+#include <libwr/wrs-msg.h>
 
 int main(int argc, char **argv)
 {
 	int err, verbose = 0;
+
+	wrs_msg_init(1, argv);
 
 me_lazy:
 	if (argc < 2 || !strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
