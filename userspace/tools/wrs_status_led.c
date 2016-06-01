@@ -43,6 +43,8 @@ void help(const char* prgname)
 	       "   -y turn status led yellow\n"
 	       "   -g turn status led green\n"
 	       "   -o turn status led orange\n"
+	       "   -q decrease verbosity\n"
+	       "   -v increase verbosity\n"
 	       "   -h this help\n"
                "\n");
 	exit(1);
@@ -53,13 +55,13 @@ int main(int argc, char **argv)
 	int opt;
 
 	/* argc forced to 1: -q and -v are not "quiet" and "verbose" */
-	wrs_msg_init(1, argv);
+	wrs_msg_init(argc, argv);
 
 	assert_init(shw_pio_mmap_init());
 	shw_io_init();
 	shw_io_configure_all();
 
-	while ((opt = getopt(argc, argv, "xyogh")) != -1) {
+	while ((opt = getopt(argc, argv, "xyoghvq")) != -1) {
 		switch (opt) {
 		case 'x':
 			shw_io_write(shw_io_led_state_o, 0);
