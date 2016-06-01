@@ -1,6 +1,6 @@
 #include "wrsSnmp.h"
 #include "wrsSpllVersionGroup.h"
-#include "softpll_ng.h"
+#include "softpll_export.h"
 #include "snmp_mmap.h"
 
 #define FPGA_SPLL_STAT 0x10006800

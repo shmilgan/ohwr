@@ -1048,7 +1048,7 @@ wrsSpllMode        OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Mode of Soft PLL (values taken from softpll_ng.h)"
+            "Mode of Soft PLL (values taken from softpll_export.h, wrpc-sw repo)"
     ::= { wrsSpllStatusGroup 1 }
 
 wrsSpllIrqCnt      OBJECT-TYPE
@@ -1075,7 +1075,7 @@ wrsSpllSeqState    OBJECT-TYPE
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Sequence state of Soft PLL (values taken from file softpll_ng.c in wrpc-sw repo)"
+            "Sequence state of Soft PLL (values taken from file softpll_export.h, wrpc-sw repo)"
     ::= { wrsSpllStatusGroup 3 }
 
 wrsSpllAlignState  OBJECT-TYPE
@@ -1088,12 +1088,14 @@ wrsSpllAlignState  OBJECT-TYPE
                 compensateDelay(5),
                 locked(6),
                 startAlignment(7),
-                startMain(8)
+                startMain(8),
+                waitClkIn(9),
+                waitPlock(10)
     }
     MAX-ACCESS     read-only
     STATUS         current
     DESCRIPTION
-            "Align state of Soft PLL (values taken from file spll_external.c in wrpc-sw repo)"
+            "Align state of Soft PLL (values taken from file softpll_export.h, wrpc-sw repo)"
     ::= { wrsSpllStatusGroup 4 }
 
 wrsSpllHlock       OBJECT-TYPE
