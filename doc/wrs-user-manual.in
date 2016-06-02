@@ -1601,7 +1601,7 @@ WR-SWITCH-MIB::wrsPstatsHCRXFrames.2 = Counter64: 544
 Another example is to print all objects exported by switch.
 @smallexample
 snmpwalk -c public -v 2c wrs -m all \
-        -M ${WRS_OUTPUT_DIR}/build/buildroot-2011.11/output/build/netsnmp-5.6.1.1/mibs/\
+        -M ${WRS_OUTPUT_DIR}/build/buildroot-2016.02/output/build/netsnmp-5.7.3/mibs/\
         :${WR_SWITCH_SW}/userspace/snmpd/ \
         1
 @end smallexample
@@ -1632,7 +1632,7 @@ Command @t{snmptable} can also be used to get simillar results:
 
 @smallexample
 snmptable -Cw 80 -c public -v 2c 192.168.1.10 -m all \
--M $WRS_OUTPUT_DIR/build/buildroot-2011.11/output/build/netsnmp-5.6.1.1/mibs/\
+-M $WRS_OUTPUT_DIR/build/buildroot-2016.02/output/build/netsnmp-5.7.3/mibs/\
 :userspace/snmpd/ WR-SWITCH-MIB::wrsPstatsHCTable
 @end smallexample
 Output is in text form and looks like:
