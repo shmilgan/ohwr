@@ -12,7 +12,8 @@
 # We create a temporary file in /tmp, to avoid wearing flash if not
 # needed. Then we replace the real file if different.
 
-T=$(mktemp /tmp/config-XXXXXX)
+tmpdir=/tmp
+T=$(mktemp "$tmpdir"/config-XXXXXX)
 
 copy_conf() {
     # busybox cmp exits 1 or 2 according to GNU man page
@@ -25,18 +26,28 @@ copy_conf() {
 if [ "$1" == "local_config" ]; then
 	# remove source information in case previous config was received from
 	# network
-	rm /tmp/dot-config_*
-	echo "local" > /tmp/dot-config_source
-	#assume that local config is always ok
-	echo "config_ok" > /tmp/dot-config_status
+	rm "$tmpdir"/dot-config_*
+	echo "local" > "$tmpdir"/dot-config_source
 fi
 
 # Check and complain, but we need to edit some files even if unconfigured.
 if [ -f /wr/etc/dot-config ]; then
-    . /wr/etc/dot-config
+    source /wr/etc/dot-config
+    ret_source=$?
+    /wr/bin/wrs_checkcfg /wr/etc/dot-config /wr/etc/Kconfig
+    ret_check=$?
     configured=true
+    if [ $ret_source != 0 ] || [ $ret_check != 0 ]; then
+	# errors in local dot-config
+	echo "check_error" > "$tmpdir"/dot-config_status
+	echo "Errors found in local dot-config!!!" >& 2
+    else
+	echo "config_ok" > "$tmpdir"/dot-config_status
+    fi
 else
     echo "No /wr/etc/dot-config to use" >& 2
+    echo "no_config" > "$tmpdir"/dot-config_source
+    echo "config_error" > "$tmpdir"/dot-config_status
     configured=false
 fi
 
@@ -99,7 +110,7 @@ elif [ "$CONFIG_PTP_REMOTE_CONF" = "y" ]; then
 
     # Warning: code below copied from /etc/init.d/dot-config.
 
-    tmpconfig=/tmp/ppsi-config
+    tmpconfig="$tmpdir"/ppsi-config
 
     # replace IPADDR and MACADDR, to have a device-specific name
     macaddr=$(cat /sys/class/net/eth0/address)
@@ -136,7 +147,7 @@ elif [ "$CONFIG_PTP_REMOTE_CONF" = "y" ]; then
     fi
 else
     # no valid PTP option keep ppsi.conf with old postfix
-    echo "No valid PTP option in dot-config!"
+    echo "No valid PTP option in dot-config!" >& 2
     if [ -f /wr/etc/ppsi.conf ]; then
 	mv -f /wr/etc/ppsi.conf /wr/etc/ppsi.conf.old
     fi
