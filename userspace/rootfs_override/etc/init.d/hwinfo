@@ -31,7 +31,7 @@ fi
 echo "Creating SDB filesystem in /dev/mtd5"
 
 # So, we must create an sdb file, we need the template
-cp /wr/etc/sdb-for-dataflash /tmp 
+cp /wr/etc/sdb-for-dataflash.bin /tmp 
 if [ $? -ne 0 ] ; then
     echo "hwinfo_error" > /tmp/hwinfo_read_status
     exit 1
@@ -52,14 +52,19 @@ if [ "x$ethaddr" = "x" ]; then ethaddr="02:34:56:78:9A:BC"; fi
 if [ "x$wraddr"  = "x" ]; then  wraddr="02:34:56:78:9A:00"; fi
 
 # we lack sdb-write...
-sed -i s,02:34:56:78:9A:BC,$ethaddr, /tmp/sdb-for-dataflash
-sed -i s,02:34:56:78:9A:00,$wraddr,  /tmp/sdb-for-dataflash
+sed -i s,02:34:56:78:9A:BC,$ethaddr, /tmp/sdb-for-dataflash.bin
+sed -i s,02:34:56:78:9A:00,$wraddr,  /tmp/sdb-for-dataflash.bin
 
 # Create the writable device file and write in there, then remove it
 test -c /dev/mtd5 || mknod /dev/mtd5 c 90 10
 flash_erase /dev/mtd5 0 0
-cat /tmp/sdb-for-dataflash > /dev/mtd5
+cat /tmp/sdb-for-dataflash.bin > /dev/mtd5
 rm /dev/mtd5
 
 # save script result for snmp
 echo "hwinfo_ok" > /tmp/hwinfo_read_status
+
+# reboot if hw info was updated
+# Please note that reboot will take pleace after switch finishes booting
+echo -e "\n\nOrdering reboot after hwinfo update!!!\n\n"
+reboot

@@ -141,10 +141,6 @@ if [ -f /update/$WRS_FW -o -f /update/$WRS_USR ]; then
     else
 	tar xzf /update/$WRS_USR
     fi
-    # a special fix: we may need to create hwinfo when upgrading from 4.0
-    if [ -x /wr/bin/sdb-read ]; then
-	/etc/init.d/hwinfo
-    fi
 
     sync; cd /; umount /usr
     echo " done" | $TEE /dev/ttyGS0
