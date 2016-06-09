@@ -148,16 +148,30 @@ if [ -f /update/$WRS_FW -o -f /update/$WRS_USR ]; then
     # check if we have an initramfs and/or kernel too
     # FIXME: should rather check first and save a backup
     cd /boot
-    # The commands may fail because we miss wrs-firmware.tar or the content
-    for file in $WRS_KER $WRS_RAMFS; do
-	tar -xf /update/$WRS_FW $file && reboot=true
-    done
+
+    if [ -f /update/$WRS_FW ]; then
+	# The commands may fail because we miss wrs-firmware.tar or the content
+	for file in $WRS_KER $WRS_RAMFS; do
+	
+	    echo -n "Trying to extract $file..." | $TEE /dev/ttyGS0
+	    tar -xf /update/$WRS_FW $file &> /dev/null
+	    ret=$?
+	    if [ $ret = 0 ]; then
+		echo " done" | $TEE /dev/ttyGS0
+		reboot=true
+	    else
+		echo " not present in anchive" | $TEE /dev/ttyGS0
+	    fi
+	done
+    fi
     # Do the same for barebox.bin, so we can upgrade it all in a step
     cd /tmp
     tar -xf /update/$WRS_FW $WRS_BB
     if [ -f $WRS_BB ]; then
+	echo -n "Updating barebox..." | $TEE /dev/ttyGS0
 	cat $WRS_BB > /dev/mtd3
 	rm $WRS_BB
+	echo " done" | $TEE /dev/ttyGS0
     fi
 
     # done: rename the firmware file (whole or usr, whatever is there)
@@ -176,20 +190,24 @@ fi
 # Allow replacing the kernel or initramfs alone (new in v4.1 of wr-switch-sw)
 for file in $WRS_KER $WRS_RAMFS; do
     if [ -f /update/$file ]; then
+	echo -n "Replacing $file..." | $TEE /dev/ttyGS0
 	cp /update/$file /boot; sync
 	mv /update/current-$file /update/previous-${file} 2> /dev/null
 	mv /update/$file /update/current-$file
 	reboot=true
+	echo " done" | $TEE /dev/ttyGS0
     fi
 done
 
 # Allow changing the boot loader (new in v4.1 of wr-switch-sw)
 if [ -f /update/$WRS_BB ]; then
+    echo -n "Updating barebox..." | $TEE /dev/ttyGS0
     cat /update/$WRS_BB > /dev/mtd3
     mv /update/current-$WRS_BB /update/previous-$WRS_BB
     mv /update/$WRS_BB /update/current-$WRS_BB
     reboot=true
     change_update_date=true
+    echo " done" | $TEE /dev/ttyGS0
 fi
 
 if $change_update_date; then
