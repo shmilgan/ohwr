@@ -94,6 +94,7 @@ time_t wrsOSStatus_data_fill(void)
 		|| b->wrsBootHwinfoReadout == WRS_BOOT_HWINFO_WARNING
 		|| b->wrsBootLoadFPGA == WRS_BOOT_LOAD_FPGA_ERROR_MINOR
 		|| b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_ERROR_MINOR
+		|| b->wrsFwUpdateStatus == WRS_FW_UPDATE_STATUS_CHECKSUM_ERROR
 	) { /* warning */
 		wrsOSStatus_s.wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
 
@@ -104,6 +105,7 @@ time_t wrsOSStatus_data_fill(void)
 		|| b->wrsBootHwinfoReadout == 0
 		|| b->wrsBootLoadFPGA == 0
 		|| b->wrsBootLoadLM32 == 0
+		|| b->wrsFwUpdateStatus == 0
 	) { /* warning NA */
 		wrsOSStatus_s.wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
 
@@ -119,6 +121,7 @@ time_t wrsOSStatus_data_fill(void)
 		&& b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_OK
 		&& b->wrsBootKernelModulesMissing == 0
 		&& b->wrsBootUserspaceDaemonsMissing == 0
+		&& b->wrsFwUpdateStatus == WRS_FW_UPDATE_STATUS_OK
 	) { /* OK, but check source */
 		/* additional check of source */
 		if (

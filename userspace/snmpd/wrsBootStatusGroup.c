@@ -21,6 +21,8 @@
 /* get number of GW watchdog timeouts */
 #define WDOG_COMMAND "/wr/bin/wrs_watchdog -g"
 
+#define FW_UPDATE_FILE "/update/wrs-firmware.tar.checksum_error"
+
 /* Macros for fscanf function to read line with maximum of "x" characters
  * without new line. Macro expands to something like: "%10[^\n]" */
 #define LINE_READ_LEN_HELPER(x) "%"#x"[^\n]"
@@ -46,6 +48,7 @@ static struct pickinfo wrsBootStatus_pickinfo[] = {
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootKernelModulesMissing),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootUserspaceDaemonsMissing),
 	FIELD(wrsBootStatus_s, ASN_COUNTER, wrsGwWatchdogTimeouts),
+	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsFwUpdateStatus),
 };
 
 struct wrsBootStatus_s wrsBootStatus_s;
@@ -514,6 +517,21 @@ static void get_n_watchdog_timouts(void)
 	pclose(f);
 }
 
+
+static void get_fw_update_status(void)
+{
+	wrsBootStatus_s.wrsFwUpdateStatus = 0;
+
+	if (access(FW_UPDATE_FILE, F_OK ) == 0 ) {
+		/* FW_UPDATE_FILE exists, last update was not successful */
+			wrsBootStatus_s.wrsFwUpdateStatus =
+					WRS_FW_UPDATE_STATUS_CHECKSUM_ERROR;
+	} else {
+		wrsBootStatus_s.wrsFwUpdateStatus = WRS_FW_UPDATE_STATUS_OK;
+	}
+}
+
+
 time_t wrsBootStatus_data_fill(void)
 {
 	static time_t time_update;
@@ -543,6 +561,9 @@ time_t wrsBootStatus_data_fill(void)
 
 	/* get info about number of gateware watchdog timeouts */
 	get_n_watchdog_timouts();
+
+	/* get info about the firmware update status */
+	get_fw_update_status();
 
 	/* there was an update, return current time */
 	return time_update;

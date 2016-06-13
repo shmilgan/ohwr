@@ -732,6 +732,21 @@ wrsGwWatchdogTimeouts  OBJECT-TYPE
         for the Ethernet switching process."
     ::= { wrsBootStatusGroup 15 }
 
+wrsFwUpdateStatus  OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        na(0),
+                        ok(1),
+                        checksumError(2)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Status of the last firmware update.
+        ok - Update successful
+        checksumError - firmware checksum error"
+    ::= { wrsBootStatusGroup 16 }
+
+
 -- wrsTemperatureGroup (.7.1.3)
 wrsTemperatureGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 3 }
 

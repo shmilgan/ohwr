@@ -39,6 +39,9 @@
 #define WRS_BOOT_LOAD_LM32_ERROR_MINOR 3	/* warning */
 #define WRS_BOOT_LOAD_LM32_FILE_NOT_FOUND 4	/* error */
 
+#define WRS_FW_UPDATE_STATUS_OK 1		/* ok */
+#define WRS_FW_UPDATE_STATUS_CHECKSUM_ERROR 2	/* warning */
+
 struct wrsBootStatus_s {
 	uint32_t wrsBootCnt;		/* boots since power-on must be != 0 */
 	uint32_t wrsRebootCnt;		/* soft reboots since hard reboot
@@ -56,6 +59,7 @@ struct wrsBootStatus_s {
 	int32_t wrsBootKernelModulesMissing;
 	int32_t wrsBootUserspaceDaemonsMissing;
 	int32_t wrsGwWatchdogTimeouts;
+	int32_t wrsFwUpdateStatus;
 };
 
 extern struct wrsBootStatus_s wrsBootStatus_s;
