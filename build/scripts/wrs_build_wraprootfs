@@ -102,7 +102,17 @@ fakeroot bash $WRS_SH_OPTIONS $TMPSCRIPT
 #  - wrs-usr.tar.gz
 # Actually, the pack is already built by "wrs_build_wraprootfs", so check
 packlist="at91bootstrap.bin barebox.bin zImage wrs-initramfs.gz wrs-usr.tar.gz"
+checksum_file="checksums.md5"
 
+wrs_echo "--- Calculating checksums";
+rm -f "$WRS_OUTPUT_DIR/images/$checksum_file"
+for file in $packlist; do
+      (cd "$WRS_OUTPUT_DIR/images" && md5sum "$file" >> "$checksum_file")
+done
+
+# Put $checksum_file first into the archive. In case the archive is damaged,
+# the beginning of the archive has the biggest chance to be untuched
+packlist="$checksum_file $packlist"
 # Check if the current git repo correspond to a tag
 version=$(cd $WRS_BASE_DIR; git describe --always --dirty)
 # If prefix 'wr-switch-sw-' is not set in tagname, we force it to

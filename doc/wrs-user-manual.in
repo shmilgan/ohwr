@@ -141,18 +141,31 @@ V1 and V2 were development items, never shipped.
 @chapter Upgrading WRS Software
 
 The @sc{wrs} is shipped with a current version of its software image,
-which is sometiems called @i{firmware}.
+which is sometimes called @i{firmware}.
 If your devices are running a previous version of the software you may
 want to upgrade, or you may want to replace the firmware images after
 rebuilding your own, as explained in the @i{Developer's Manual}.
 
-If you run version 4.1 or later, you can ignore this chapter, that
+If you run version 4.1 or later please copy @t{wrs-firmware.tar} file into
+the @t{/update} partition via @t{scp} or web-interface and restart your switch.
+
+When the running version during the update is at least 4.3, then update script
+performs the check of md5sums of all files inside @t{wrs-firmware.tar}.
+In case at least one checksum is wrong then update is aborted.
+The @t{wrs-firmware.tar} containing corrupted file is renamed to
+@t{wrs-firmware.tar.checksum_error}. This file is automatically removed during
+the next successful update.
+
+When checksums in the @t{wrs-firmware.tar} are not available
+(for example during downgrading) appropriate warning message is printed.
+
+If this method works for you, you can ignore this chapter, which
 explains a transition between the initial way we passed MAC addresses
 and the safer approach we introduced in v4.1
 
 @c ==========================================================================
-@node hwinfo
-@section hwinfo
+@node hwinfo for pre-v4.1
+@section hwinfo for pre-v4.1
 
 Version 4.1 (October 2014) and later ones use a new way to pass
 hardware information to all levels of software, such information

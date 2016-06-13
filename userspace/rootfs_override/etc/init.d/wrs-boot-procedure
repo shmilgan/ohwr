@@ -5,6 +5,8 @@
 # Warning: this file (and only this one) is executed in initramfs
 # *before* /etc is copied from flash, so you can't edit this on
 # flash, as it won't work. This can only be modified at build time.
+# Don't run/access anything from /usr, because it is not mounted until
+# the end of this file.
 
 echo "$0: Running"
 
@@ -125,6 +127,54 @@ reboot=false
 
 #whether to change date of last update
 change_update_date=false
+
+checksum_error=false
+
+# commands below are links to the busybox from /usr, which is not mounted yet
+# at this moment
+md5sum_bin="/bin/busybox md5sum"
+cut_bin="/bin/busybox cut"
+
+# check checksums, but only if we have $WRS_FW archive
+if [ -f /update/$WRS_FW  ]; then
+    tar -xOf /update/$WRS_FW checksums.md5 &>/dev/null
+    if [ $? != 0 ]; then
+	echo -e "\nWarning: File with checksums for the new firmware not found\n" | $TEE /dev/ttyGS0
+    else
+	echo "Verifying checksums of the new firmware" | $TEE /dev/ttyGS0
+	for file in `tar -tf /update/$WRS_FW`; do
+	    if [ x"$file" = x"checksums.md5" ]; then
+		continue;
+	    fi
+	    echo -n "Checking $file ... " | $TEE /dev/ttyGS0
+	    sum=`tar -xOf /update/$WRS_FW $file | $md5sum_bin  | $cut_bin -f 1 -d " "`
+	    expected_sum=`tar -xOf /update/$WRS_FW checksums.md5 | grep "$file" | $cut_bin -f 1 -d " "`
+	    if [ x"$expected_sum" = x"" ]; then
+		echo "Error no checksum found for file $file" | $TEE /dev/ttyGS0
+		checksum_error=true
+	    else
+		echo "$expected_sum" | grep "$sum" > /dev/null
+		if [ $? != 0 ]; then
+		    echo "Checksum error! Expected $expected_sum, calculated $sum" | $TEE /dev/ttyGS0
+		    checksum_error=true
+		else
+		    echo "OK" | $TEE /dev/ttyGS0
+		fi
+	    fi
+	done
+	if [ $checksum_error = true ]; then
+	    echo -e "\nChecksum error! skip firmware update!\n" | $TEE /dev/ttyGS0
+	    mv /update/"$WRS_FW" /update/"$WRS_FW".checksum_error
+	else
+	    if [ -f /update/"$WRS_FW".checksum_error ]; then
+		echo "Remove file /update/"$WRS_FW".checksum_error" | $TEE /dev/ttyGS0
+		rm -f /update/"$WRS_FW".checksum_error
+	    fi
+	fi
+    fi
+
+fi
+
 
 # First: update usr: we may have the whole thing, or just wrs-usr.tar.gz
 if [ -f /update/$WRS_FW -o -f /update/$WRS_USR ]; then
