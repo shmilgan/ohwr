@@ -126,7 +126,19 @@ void show_help(char *prgname)
 			"                     MAC address (mode={1=dynamic,0=static}\n"
 			"   vlan   <vid> <fid> <hex mask> [<drop>, <prio>, <has_prio>, <prio_override>]: \n"
 			"                    Add VLAN entry with vid, fid, mask and drop flag (Write mask=0x0 \n"
-			"                    and drop=1 to remove the VLAN)\n");
+			"                    and drop=1 to remove the VLAN)\n"
+			"   rtux [dump]      shows all the extra RTU config\n"
+			"   rtux HPrio <val> sets the priority of traffic to be interprated as High Priority\n"
+			"   rtux ctrl <mask> sets eXtra configuration, the mask is a binary mask, the meaning\n"
+			"                    and configurationof each bit is explained when you run rtux dump:\n"
+			"                    6: When full match engine too slow               broadcast/drop\n"
+			"                    5: Fast forward for Broadcast traffic            enable/disable\n"
+			"                    4: Fast forward for Range of configured MACs     enable/disable\n"
+			"                    3: Fast forward for Single Configured MACs       enable/disable\n"
+			"                    2: Fast forward for  Link-limited traffic (BPDU) enable/disable\n"
+			"                    1: Fast forward for PTP traffic                  enable/disable\n"
+			"                    0: (not tested) Port Mirroring                   enable/disable\n"
+	       );
 
 	exit(1);
 }
