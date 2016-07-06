@@ -438,6 +438,8 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsGwWatchdogTimeouts}{
     Number of times the watchdog has restarted the HDL module responsible for
     the Ethernet switching process}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsFwUpdateStatus}{
+    Status of the last firmware update}
 
   \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsTemperatureGroup}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsTemperatureGroup}{wrsTempFPGA}{}
@@ -486,6 +488,7 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsSpllState}{wrsSpllVersionGroup}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsSpllVersionGroup}{wrsSpllVersion}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsSpllVersionGroup}{wrsSpllBuildDate}{}
+  \snmpentrye{WR-SWITCH-MIB}{wrsSpllVersionGroup}{wrsSpllBuildBy}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsSpllState}{wrsSpllStatusGroup}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsSpllStatusGroup}{wrsSpllMode}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsSpllStatusGroup}{wrsSpllIrqCnt}{}
@@ -585,6 +588,8 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpRTTErrCnt.<n>}{
     Number of servo updates when RTT delta between subsequent updates is larger
     than 1000ps or smaller than -1000ps.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsPtpDataTable}{wrsPtpServoUpdateTime.<n>}{
+    TAI Nanosecond of the last servo's update.}
 
   \snmpentrye{WR-SWITCH-MIB}{}{wrsPortStatusTable}{Table with a row per port.}
   \snmpentrye{WR-SWITCH-MIB}{wrsPortStatusTable}{wrsPortStatusIndex.<n>}{}
