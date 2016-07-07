@@ -634,6 +634,7 @@ int shw_sfp_read_db(void)
 			__err_msg(index, "wl_txrx", NULL);
 		if (sscanf(s, "%i+%i", &sfp->tx_wl, &sfp->rx_wl) != 2) {
 			sfp->tx_wl = 0;
+			sfp->rx_wl = 0;
 			__err_msg(index, "wl_txrx", s);
 		}
 
