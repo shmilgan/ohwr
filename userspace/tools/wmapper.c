@@ -16,7 +16,7 @@ int main(int argc, char **argv)
     FILE *f;
     int pagesize = getpagesize();
     unsigned int pos, pos_pg, pos_off;
-    unsigned int len, len_pg, len_off;
+    unsigned int len, len_pg;
     void *address;
     char *rest;
 
@@ -45,7 +45,6 @@ int main(int argc, char **argv)
     pos_pg  = pos & ~(pagesize-1);
     pos_off = pos &  (pagesize-1);
     len_pg  = (len + pos_off + pagesize-1) & ~(pagesize-1);
-    len_off = (len + pos_off) &  (pagesize-1);
 
     address=mmap(0, len_pg, PROT_READ | PROT_WRITE,
 		 MAP_FILE | MAP_SHARED, fileno(f), pos_pg);

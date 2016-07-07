@@ -20,7 +20,7 @@ start() {
 	# note start-stop-daemon does not create pidfile, only check if pid is
 	# running
 	start-stop-daemon -q -p /var/run/lighttpd.pid -S \
-		--exec /usr/sbin/lighttpd -- -f /var/www/lighttpd.config
+		--exec /usr/sbin/lighttpd -- -f /etc/lighttpd/lighttpd.conf
 	ret=$?
 	if [ $ret -eq 0 ]; then
 		start_counter

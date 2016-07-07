@@ -11,7 +11,7 @@ fi
 wrs_check_vars WRS_DOWNLOAD_DIR
 
 cd $WRS_DOWNLOAD_DIR
-wrs_echo "--- Downloading all files"
+wrs_echo "--- Downloading base packages"
 
 # download all files
 DLLIST=${WRS_BASE_DIR}/download-info

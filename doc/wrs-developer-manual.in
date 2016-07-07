@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month July 2015
+@set update-month June 2016
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -179,7 +179,7 @@ The purpose of the build-script rewrite is achieving the following targets:
         retrieved. Even if you ``make distclean'' in the build scripts you
         will not need re-get everything from the network.  In a similar
         mood, people who already have a local copy of the big packages
-        (kernel, barebox, white-rabbit svn) will not need to re-download not
+        (kernel, barebox, white-rabbit) will not need to re-download not
         even the first time they build the WRS software.
 @end itemize
 
@@ -215,7 +215,8 @@ repository.  Please note that the repository uses @i{git} submodules,
 so it depends on other @code{ohwr} repositories too, which in turn
 have not been tagged because the submodule mechanism ensures you'll
 get the exact version you need. Anyways, all relevant commit identifiers
-are shown in the SNMP version fields (within @t{WR-SWITCH-MIB.txt}).
+are shown by command @t{wrs_version -t} or in the SNMP version fields
+(within @t{WR-SWITCH-MIB.txt}).
 
 The LM32 program is provided as a pre-compiled binary in
 @code{binaries/rt_cpu.bin}. The respective source code is the
@@ -335,11 +336,12 @@ Every downloaded file is saved to the @code{downloads} directory
 (@code{$WRS_DOWNLOAD_DIR} if set, or the default place
 @code{$WRS_OUTPUT_DIR/downloads}). You should
 arrange not to remove that directory when you recompile over and over
-during development. I chose to make the first
-script download everything, before starting any build, to help
-telling download errors from other
-issues. Also, after downloading is over you can work
-even without a network connection.
+during development. Download process is divided into two parts. Firstly,
+our buildsystem downloads only base packages (at91bootstrap, barebox,
+linux kernel, switch's gateware and the builroot). The rest of packages are
+downloaded by the buildroot.
+In the first step the script downloads mentioned packages, before starting
+any build, to help telling download errors from other issues.
 
 For each upstream archive needed, the following steps are performed:
 
@@ -358,14 +360,18 @@ main build directory.
 The messages of a download run are like the following ones:
 
 @smallexample
-   2012-01-12 18:30:46: --- Downloading all files
-   2012-01-12 18:30:53: Retrieved at91bootstrap-3-3.0.tar.gz from upstream
-   2012-01-12 18:31:00: Retrieved buildroot-2011.11.tar.bz2 from upstream
-   [...]
-   2012-01-12 18:37:53: Retrieved uClibc-0.9.32.tar.bz2 from upstream
-   2012-01-12 18:37:56: Retrieved zlib-1.2.5.tar.bz2 from upstream
+    2016-06-02 17:10:46: --- Downloading base packages
+    2016-06-02 17:10:50: Retrieved at91bootstrap-3-3.0.tar.gz from upstream
+    2016-06-02 17:10:51: Retrieved barebox-2014.04.0.tar.bz2 from upstream
+    2016-06-02 17:11:21: Retrieved linux-2.6.39.tar.bz2 from upstream
+    2016-06-02 17:11:22: Retrieved wrs-gw-v4.2-20150826.tar.gz from upstream
+    2016-06-02 17:11:27: Retrieved buildroot-2016.02.tar.bz2 from upstream
 @end smallexample
 
+After buildroot is downloaded, it is unpacked and then configured. Buildroot
+uses simillar mechanism to the one described above to download packages that
+it needs. Buildroot prints the progress of download of each package.
+After downloading is over you can work even without a network connection.
 
 @c ==========================================================================
 @node Building Procedure
@@ -396,35 +402,38 @@ minutes it takes to build @i{buildroot}, but you can safely ignore them,
 trusting the build process will complete successfully.
 
 The progress messages look like what is shown here below.  The log
-file will be rather big (6 or 7MB or so), as all the compilation steps are
+file will be rather big (~18MB), as all the compilation steps are
 quite verbose.
 
-The following example shows a run on a quad core system (18k
-bogoMips in total). If files had already been downloaded, the first
+The following example shows a run on a quad core, dual hyperthreaded system
+(8*6800 bogoMips in total). If files had already been downloaded, the first few
 step takes only a few seconds, as shown, to verify the checksums:
 
 @smallexample
-2015-08-28 10:01:57: --- Downloading all files
-2015-08-28 10:02:02: --- Buildroot compiler and filesystem
-2015-08-28 10:02:02: Uncompressing buildroot
-2015-08-28 10:02:02: Patching buildroot
-2015-08-28 10:02:02: Reconfiguring buildroot
-2015-08-28 10:02:04: Compiling buildroot
-2015-08-28 10:26:40: --- AT91Boot
-2015-08-28 10:26:40: Patching AT91Boot
-2015-08-28 10:26:40: Building AT91Boot
-2015-08-28 10:26:41: --- Barebox
-2015-08-28 10:26:44: Patching Barebox
-2015-08-28 10:26:44: Building Barebox
-2015-08-28 10:26:58: --- Linux kernel for switch
-2015-08-28 10:29:15: --- Kernel modules from this package
-2015-08-28 10:29:19: --- PTP daemon (ppsi repository as a submodule)
-2015-08-28 10:29:26: --- User space tools
-2015-08-28 10:29:33: --- Deploying FPGA firmware
-2015-08-28 10:29:33: Using pre-built binaries from wrs-gw-v4.2-20150826.tar.gz
-2015-08-28 10:29:33: --- Wrapping filesystem
-2015-08-28 10:29:46: --- Packing into wr-switch-sw-v4.2-20150828_binaries.tar
-2015-08-28 10:29:46: Complete build succeeded, apparently
+2016-06-02 17:26:39: --- Downloading base packages
+2016-06-02 17:26:39: --- Buildroot: unpack and configure
+2016-06-02 17:26:39: Uncompressing buildroot
+2016-06-02 17:26:40: Configuring with "[...]/../configs/buildroot/wrs_release_br2_config"
+2016-06-02 17:26:40: Patching buildroot
+2016-06-02 17:26:40: Reconfiguring buildroot
+2016-06-02 17:26:41: --- Buildroot: download packages
+2016-06-02 17:26:48: --- Buildroot: compiler and filesystem
+2016-06-02 17:26:48: Compiling buildroot
+2016-06-02 17:47:54: --- AT91Boot
+2016-06-02 17:47:54: Patching AT91Boot
+2016-06-02 17:47:54: Building AT91Boot
+2016-06-02 17:47:55: --- Barebox
+2016-06-02 17:47:55: Patching Barebox
+2016-06-02 17:47:55: Building Barebox
+2016-06-02 17:48:03: --- Linux kernel for switch
+2016-06-02 17:48:52: --- Kernel modules from this package
+2016-06-02 17:48:56: --- PTP daemon (ppsi repository as a submodule)
+2016-06-02 17:49:05: --- User space tools
+2016-06-02 17:49:15: --- Deploying FPGA firmware
+2016-06-02 17:49:15: Using pre-built binaries from wrs-gw-v4.2-20150826.tar.gz
+2016-06-02 17:49:16: --- Wrapping filesystem
+2016-06-02 17:49:21: --- Packing into wr-switch-sw-v4.2-20160602_binaries.tar
+2016-06-02 17:49:21: Complete build succeeded, apparently
 @end smallexample
 
 You may prefer to save @i{stderr} with @i{stdout} to the log file
@@ -505,7 +514,7 @@ it creates a file in the @code{build/_done} directory.
 When you rebuild everything, steps for which the marker file exists
 are not rebuilt. To force rebuilding of one specific part, just remove
 the marker.  Markers are numbered, reflecting the order of compilation
-steps, but they also have a name: names like @code{04-kernel} should be
+steps, but they also have a name: names like @code{06-kernel} should be
 self-explicative. 
 
 To ease the rebuilding of a specific module a shortcut has been created 
@@ -513,7 +522,7 @@ in the @code{wrs_build-all} script. For example if you want to recompile
 the kernel alone you should execute.
 
 @example
-   /path/to/wr-switch-sw/build/wrs_build-all --step=04
+   /path/to/wr-switch-sw/build/wrs_build-all --step=06
 @end example
 
 You can list all compiled modules by calling
@@ -595,7 +604,7 @@ top-level source directory.
 @c to read explanation.
 
 If you want to change the configuration, you can do so after the first
-build iteration: change directory to @code{build/buildroot-2011.11}
+build iteration: change directory to @code{build/buildroot-2016.02}
 and run @code{make menuconfig} (this the Buildroot configuration,
 not the one of wr-switch-sw). After making your choices, copy back
 the file @code{.config} to @t{configs/buildroot} in this package,
@@ -719,7 +728,7 @@ To use the same compiler the scripts use, you need this setting (which is split
 in two lines with a local variable to fit the page with in documentation):
 
 @smallexample
-   BR=${WRS_OUTPUT_DIR}/build/buildroot-2011.11
+   BR=${WRS_OUTPUT_DIR}/build/buildroot-2016.02
    export CROSS_COMPILE=${BR}/output/host/usr/bin/arm-linux-
 @end smallexample
 
@@ -914,7 +923,7 @@ Manual}.
 The archives include a number of device special files in
 @i{dev}. The pre-created devices come from
 @i{userspace/devices.tar.gz}. Note that the buildroot output
-directory, @i{build/buildroot-2011.11/output/target} does not
+directory, @i{build/buildroot-2016.02/output/target} does not
 include any device (and no white-rabbit specific files), so it
 cannot be used as a root filesystem by itself.
 
@@ -1435,6 +1444,25 @@ For further details on the update procedure and exact file names to be
 used in partial updates during development, please see
 @t{/etc/init.d/wrs-boot-procedure} (in the source archive it is
 distributed in @t{userspace/rootfs_override/}.
+
+@c ==========================================================================
+@node Restore default Barebox environment
+@section Restore default Barebox environment
+
+In some cases it might be necessary to restore default Barebox's environment.
+
+Please note that so far switch uses only "Barebox-environment-backup"
+partition. It doesn't use "Barebox-Environment".
+
+Erasing can be performed from Barebox's commnad line:
+@smallexample
+   erase /dev/env0
+@end smallexample
+or from Linux:
+@smallexample
+   flash_erase /dev/mtd0 0 0
+@end smallexample
+
 
 @c ##########################################################################
 @node WRS Internals

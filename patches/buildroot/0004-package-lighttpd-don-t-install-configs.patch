@@ -1,0 +1,29 @@
+From 3fc5ca32bba115dd875cf3d16401ca774dbd9ade Mon Sep 17 00:00:00 2001
+From: Adam Wujek <adam.wujek@cern.ch>
+Date: Thu, 26 May 2016 15:59:33 +0200
+Subject: [PATCH] package/lighttpd: don't install configs
+
+Don't install lighttpd configs for WRS, we have our own.
+
+Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
+---
+ package/lighttpd/lighttpd.mk | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/package/lighttpd/lighttpd.mk b/package/lighttpd/lighttpd.mk
+index 0146373..70d5ffc 100644
+--- a/package/lighttpd/lighttpd.mk
++++ b/package/lighttpd/lighttpd.mk
+@@ -75,7 +75,8 @@ define LIGHTTPD_INSTALL_CONFIG
+ 		$(TARGET_DIR)/etc/lighttpd/conf.d/mime.conf
+ endef
+ 
+-LIGHTTPD_POST_INSTALL_TARGET_HOOKS += LIGHTTPD_INSTALL_CONFIG
++# Don't install lighttpd configs for WRS, we have our own
++# LIGHTTPD_POST_INSTALL_TARGET_HOOKS += LIGHTTPD_INSTALL_CONFIG
+ 
+ define LIGHTTPD_INSTALL_INIT_SYSV
+ 	$(INSTALL) -D -m 0755 package/lighttpd/S50lighttpd \
+-- 
+1.9.1
+

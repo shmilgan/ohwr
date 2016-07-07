@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <inttypes.h>
+#include <time.h>
 
 #define atoidef(str,def) (str)?atoi(str):def
 

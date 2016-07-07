@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/time.h>
 
 #include <libwr/wrs-msg.h>
 #include <libwr/util.h>

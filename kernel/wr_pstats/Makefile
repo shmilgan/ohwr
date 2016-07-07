@@ -8,5 +8,5 @@ all modules:
 	$(MAKE) -C $(LINUX) SUBDIRS=$(shell /bin/pwd) modules
 
 clean:
-	rm -f *.mod.c *.o *.ko *.i .*cmd Module.symvers modules.order *~
+	rm -f *.mod.c *.o *.ko *.i .*cmd  modules.order *~
 	rm -rf .tmp_versions

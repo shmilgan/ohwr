@@ -431,7 +431,7 @@ static int config_rtud(void)
 {
 	struct rtu_vlans_t *cur;
 	struct rtu_vlan_table_entry rtu_vlan_entry;
-	int ret, val;
+	int val;
 
 	cur = rtu_vlans;
 	while(cur) {
@@ -452,7 +452,7 @@ static int config_rtud(void)
 						rtu_vlan_entry.prio_override;
 			}
 		}
-		ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry, &val,
+		minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry, &val,
 				cur->vid, cur->fid, cur->pmask, cur->drop, cur->prio, cur->has_prio,
 				cur->prio_override);
 		cur = cur->next;

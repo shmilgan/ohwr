@@ -3,6 +3,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <unistd.h>
+#include <time.h>
 #include <ppsi/ppsi.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
@@ -575,7 +576,6 @@ int main(int argc, char *argv[])
 
 	/* try a pps_gen based approach */
 	uint64_t last_seconds = 0;
-	uint32_t last_nanoseconds = 0;
 
 	wrs_msg_init(argc, argv);
 
@@ -673,7 +673,6 @@ int main(int argc, char *argv[])
 			show_all();
 
 			last_seconds = seconds;
-			last_nanoseconds = nanoseconds;
 		}
 
 		/* If we got broken pipe or anything, exit */

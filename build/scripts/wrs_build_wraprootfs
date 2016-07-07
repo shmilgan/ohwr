@@ -22,7 +22,7 @@ DEVTAR="$WRS_BASE_DIR/../userspace/devices.tar.gz"
 TMPFS=$(mktemp -d /tmp/rootfs.XXXXXX)
 chmod a+rx $TMPFS
 
-rootfs_vanilla="$WRS_OUTPUT_DIR/build/buildroot-2011.11/output/target"
+rootfs_vanilla="$WRS_OUTPUT_DIR/build/buildroot-2016.02/output/target"
 rootfs_override="$WRS_BASE_DIR/../userspace/rootfs_override"
 
 TMPSCRIPT=$(mktemp /tmp/rootfs-script.XXXXXX)
@@ -36,6 +36,11 @@ cp -r $rootfs_vanilla/* $TMPFS
 cp -r $WRS_OUTPUT_DIR/images/wr/* $TMPFS/wr
 cp -r $WRS_OUTPUT_DIR/images/lib/* $TMPFS/lib
 rm -f $TMPFS/etc/init.d/*
+rm -f $TMPFS/THIS_IS_NOT_YOUR_ROOT_FILESYSTEM
+# remove symlink from the buildroot
+rm -rf $TMPFS/etc/dropbear
+mkdir -p $TMPFS/etc/dropbear; chown -R root:root $TMPFS/etc/dropbear
+
 cp -r $rootfs_override/* $TMPFS
 # remove leftovers from on-going edits in rootfs_override
 find $TMPFS -name '*~' | xargs rm -f
@@ -52,7 +57,6 @@ if [ -f $WRS_BASE_DIR/authorized_keys ]; then
 fi
 chmod g-w $TMPFS/root $TMPFS/root/.ssh
 chown -R root:root $TMPFS/root
-mkdir -p $TMPFS/etc/dropbear; chown -R root:root $TMPFS/etc/dropbear
 chmod a+rx $TMPFS
 
 ##### now move stuff to usr (we need usr to be in flash, / remains initramfs)
@@ -64,6 +68,8 @@ mv $TMPFS/wr  $TMPFS/usr; ln -s usr/wr  $TMPFS
 mv $TMPFS/var $TMPFS/usr; ln -s usr/var $TMPFS
 # var/run links to ../tmp, so create /usr/tmp
 ln -s ../tmp $TMPFS/usr/tmp
+# var/run links to ../run, overwrite it to point to ../tmp
+ln -sf ../tmp $TMPFS/var/run
 # mv ubi commands to /sbin: they are needed for boot time
 mv $TMPFS/usr/sbin/ubi* $TMPFS/sbin
 
