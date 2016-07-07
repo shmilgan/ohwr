@@ -225,16 +225,16 @@ time_t wrsNetworkingStatus_data_fill(void)
 	port_status_n_na = 0;
 	/* count number of ports of each status */
 	for (i = 0; i < port_status_nrows; i++) {
-		if (p_a[i].sfp_error == WRS_PORT_STATUS_SFP_ERROR_SFP_OK) {
+		if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_SFP_OK) {
 			port_status_n_ok++;
 		}
-		if (p_a[i].sfp_error == WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR) {
+		if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR) {
 			port_status_n_error++;
 		}
-		if (p_a[i].sfp_error == WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) {
+		if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) {
 			port_status_n_down++;
 		}
-		if (p_a[i].sfp_error == 0) {
+		if (p_a[i].wrsPortStatusSfpError == 0) {
 			port_status_n_na++;
 		}
 	}

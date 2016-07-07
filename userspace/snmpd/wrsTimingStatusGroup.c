@@ -230,16 +230,16 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 		for (i = 0; i < port_status_nrows; i++) {
 			/* warning N/A */
 			if (/*hal_shmem->s->wrsSpllMode == 0
-			    || */p_a[i].port_mode == 0
-			    || p_a[i].link_up == 0){
+			    || */p_a[i].wrsPortStatusConfiguredMode == 0
+			    || p_a[i].wrsPortStatusLink == 0){
 				wrsTimingStatus_s.wrsSlaveLinksStatus =
 						WRS_SLAVE_LINK_STATUS_WARNING_NA;
 			}
 			/* error when slave port is down when switch is in slave mode
 			  */
 			if (hal_shmem->hal_mode == HAL_TIMING_MODE_BC
-			    && (p_a[i].port_mode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
-			    && (p_a[i].link_up == WRS_PORT_STATUS_LINK_DOWN)) {
+			    && (p_a[i].wrsPortStatusConfiguredMode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
+			    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_DOWN)) {
 				wrsTimingStatus_s.wrsSlaveLinksStatus =
 							WRS_SLAVE_LINK_STATUS_ERROR;
 				snmp_log(LOG_ERR, "SNMP: wrsSlaveLinksStatus (slave) "
@@ -249,8 +249,8 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 			/* error when slave port is up when switch is in master or
 			* grandmaster mode */
 			if (((hal_shmem->hal_mode == HAL_TIMING_MODE_GRAND_MASTER) || (hal_shmem->hal_mode == HAL_TIMING_MODE_FREE_MASTER))
-			    && (p_a[i].port_mode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
-			    && (p_a[i].link_up == WRS_PORT_STATUS_LINK_UP)) {
+			    && (p_a[i].wrsPortStatusConfiguredMode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
+			    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP)) {
 				wrsTimingStatus_s.wrsSlaveLinksStatus =
 							WRS_SLAVE_LINK_STATUS_ERROR;
 				snmp_log(LOG_ERR, "SNMP: wrsSlaveLinksStatus (master) "
@@ -268,8 +268,8 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 	static int first_run = 1;
 
 	/* store old values of TX and RX PTP counters to calculate delta */
-	static unsigned long ptp_tx_count_prev[WRS_N_PORTS];
-	static unsigned long ptp_rx_count_prev[WRS_N_PORTS];
+	static unsigned long wrsPortStatusPtpTxFrames_prev[WRS_N_PORTS];
+	static unsigned long wrsPortStatusPtpRxFrames_prev[WRS_N_PORTS];
 
 	/*********************************************************************\
 	|************************ wrsPTPFramesFlowing ************************|
@@ -290,10 +290,10 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 
 		/* Error when there is no increase in TX/RX PTP counters.
 		   Check only when port is non-wr and port is down */
-		} else if ((p_a[i].port_mode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
-		    && (p_a[i].link_up == WRS_PORT_STATUS_LINK_UP)
-		    && ((ptp_tx_count_prev[i] == p_a[i].ptp_tx_count)
-			|| (ptp_rx_count_prev[i] == p_a[i].ptp_rx_count))) {
+		} else if ((p_a[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
+		    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP)
+		    && ((wrsPortStatusPtpTxFrames_prev[i] == p_a[i].wrsPortStatusPtpTxFrames)
+			|| (wrsPortStatusPtpRxFrames_prev[i] == p_a[i].wrsPortStatusPtpRxFrames))) {
 			wrsTimingStatus_s.wrsPTPFramesFlowing =
 						WRS_PTP_FRAMES_FLOWING_ERROR;
 			snmp_log(LOG_ERR, "SNMP: wrsPTPFramesFlowing "
@@ -303,8 +303,8 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 			break;
 
 		/* warning N/A */
-		} else if (p_a[i].port_mode == 0
-		    || p_a[i].link_up == 0){
+		} else if (p_a[i].wrsPortStatusConfiguredMode == 0
+		    || p_a[i].wrsPortStatusLink == 0){
 			wrsTimingStatus_s.wrsPTPFramesFlowing =
 					WRS_PTP_FRAMES_FLOWING_WARNING_NA;
 			/* continue with other ports, somewhere may be an
@@ -314,8 +314,8 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 
 	for (i = 0; i < port_status_nrows; i++) {
 		/* save current values */
-		ptp_tx_count_prev[i] = p_a[i].ptp_tx_count;
-		ptp_rx_count_prev[i] = p_a[i].ptp_rx_count;
+		wrsPortStatusPtpTxFrames_prev[i] = p_a[i].wrsPortStatusPtpTxFrames;
+		wrsPortStatusPtpRxFrames_prev[i] = p_a[i].wrsPortStatusPtpRxFrames;
 	}
 
 	first_run = 0;

@@ -7,19 +7,19 @@ struct wrsPortStatusTable_s wrsPortStatusTable_array[WRS_N_PORTS];
 
 static struct pickinfo wrsPortStatusTable_pickinfo[] = {
 	FIELD(wrsPortStatusTable_s, ASN_UNSIGNED, index), /* not reported */
-	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, port_name),
-	FIELD(wrsPortStatusTable_s, ASN_INTEGER, link_up),
-	FIELD(wrsPortStatusTable_s, ASN_INTEGER, port_mode),
-	FIELD(wrsPortStatusTable_s, ASN_INTEGER, port_locked),
-	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, peer_id),
-	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, sfp_vn),
-	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, sfp_pn),
-	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, sfp_vs),
-	FIELD(wrsPortStatusTable_s, ASN_INTEGER, sfp_in_db),
-	FIELD(wrsPortStatusTable_s, ASN_INTEGER, sfp_GbE),
-	FIELD(wrsPortStatusTable_s, ASN_INTEGER, sfp_error),
-	FIELD(wrsPortStatusTable_s, ASN_COUNTER, ptp_tx_count),
-	FIELD(wrsPortStatusTable_s, ASN_COUNTER, ptp_rx_count),
+	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusPortName),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusLink),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusConfiguredMode),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusLocked),
+	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusPeer),
+	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusSfpVN),
+	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusSfpPN),
+	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusSfpVS),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpInDB),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpGbE),
+	FIELD(wrsPortStatusTable_s, ASN_INTEGER, wrsPortStatusSfpError),
+	FIELD(wrsPortStatusTable_s, ASN_COUNTER, wrsPortStatusPtpTxFrames),
+	FIELD(wrsPortStatusTable_s, ASN_COUNTER, wrsPortStatusPtpRxFrames),
 };
 
 
@@ -66,11 +66,11 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 		for (i = 0; i < hal_nports_local; ++i) {
 			/* Assume that number of ports does not change between
 			 * reads */
-			snprintf(wrsPortStatusTable_array[i].port_name, 10,
+			snprintf(wrsPortStatusTable_array[i].wrsPortStatusPortName, 10,
 				 "wri%d", i + 1);
 			port_state = hal_lookup_port(hal_ports,
 					hal_nports_local,
-					wrsPortStatusTable_array[i].port_name);
+					wrsPortStatusTable_array[i].wrsPortStatusPortName);
 			if(!port_state) {
 				/* It looks like we're in strange situation
 				 * that HAL is up but hal_ports is not filled
@@ -82,38 +82,38 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			 * Keep value 0 for Not available
 			 * values defined as WRS_PORT_STATUS_LINK_*
 			*/
-			wrsPortStatusTable_array[i].link_up =
+			wrsPortStatusTable_array[i].wrsPortStatusLink =
 					1 + state_up(port_state->state);
 			 /* values defined as
 			  * WRS_PORT_STATUS_CONFIGURED_MODE_* */
-			wrsPortStatusTable_array[i].port_mode =
+			wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode =
 							port_state->mode;
 			if (port_state->state == HAL_PORT_STATE_DISABLED) {
-				wrsPortStatusTable_array[i].sfp_error =
+				wrsPortStatusTable_array[i].wrsPortStatusSfpError =
 					  WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN;
 				/* if port is disabled don't fill
 				 * other fields */
 				continue;
 			}
 			/* Keep value 0 for Not available */
-			wrsPortStatusTable_array[i].port_locked =
+			wrsPortStatusTable_array[i].wrsPortStatusLocked =
 							1 + port_state->locked;
 			/* FIXME: get real peer_id */
-			memset(&wrsPortStatusTable_array[i].peer_id, 0xff,
+			memset(&wrsPortStatusTable_array[i].wrsPortStatusPeer, 0xff,
 			       sizeof(ClockIdentity));
-			wrsPortStatusTable_array[i].sfp_in_db =
+			wrsPortStatusTable_array[i].wrsPortStatusSfpInDB =
 			  port_state->calib.sfp.flags & SFP_FLAG_IN_DB ? 2 : 1;
-			wrsPortStatusTable_array[i].sfp_GbE =
+			wrsPortStatusTable_array[i].wrsPortStatusSfpGbE =
 			  port_state->calib.sfp.flags & SFP_FLAG_1GbE ? 2 : 1;
-			strncpy(wrsPortStatusTable_array[i].sfp_vn,
+			strncpy(wrsPortStatusTable_array[i].wrsPortStatusSfpVN,
 				port_state->calib.sfp.vendor_name,
-				sizeof(wrsPortStatusTable_array[i].sfp_vn));
-			strncpy(wrsPortStatusTable_array[i].sfp_pn,
+				sizeof(wrsPortStatusTable_array[i].wrsPortStatusSfpVN));
+			strncpy(wrsPortStatusTable_array[i].wrsPortStatusSfpPN,
 				port_state->calib.sfp.part_num,
-				sizeof(wrsPortStatusTable_array[i].sfp_pn));
-			strncpy(wrsPortStatusTable_array[i].sfp_vs,
+				sizeof(wrsPortStatusTable_array[i].wrsPortStatusSfpPN));
+			strncpy(wrsPortStatusTable_array[i].wrsPortStatusSfpVS,
 				port_state->calib.sfp.vendor_serial,
-				sizeof(wrsPortStatusTable_array[i].sfp_vs));
+				sizeof(wrsPortStatusTable_array[i].wrsPortStatusSfpVS));
 			/* sfp error when SFP is not 1 GbE or
 			 * (port is not wr-non mode and sfp not in data base)
 			 * Keep value 0 for Not available 
@@ -121,16 +121,16 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			 * sfp error is 2 WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR
 			 * port down, set above, is 3
 			 * (WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) */
-			wrsPortStatusTable_array[i].sfp_error = 1 +
-				((wrsPortStatusTable_array[i].sfp_GbE == 1) ||
+			wrsPortStatusTable_array[i].wrsPortStatusSfpError = 1 +
+				((wrsPortStatusTable_array[i].wrsPortStatusSfpGbE == 1) ||
 				((port_state->mode != HEXP_PORT_MODE_NON_WR) &&
-				(wrsPortStatusTable_array[i].sfp_in_db == 1)));
+				(wrsPortStatusTable_array[i].wrsPortStatusSfpInDB == 1)));
 
 			snmp_log(LOG_DEBUG, "reading ports name %s link %d, "
 				"mode %d, locked %d\n", port_state->name,
-				wrsPortStatusTable_array[i].link_up,
-				wrsPortStatusTable_array[i].port_mode,
-				wrsPortStatusTable_array[i].port_locked);
+				wrsPortStatusTable_array[i].wrsPortStatusLink,
+				wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode,
+				wrsPortStatusTable_array[i].wrsPortStatusLocked);
 		}
 
 		retries++;
@@ -153,15 +153,15 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 		return time_cur;
 	}
 
-	/* fill ptp_tx_count and ptp_tx_count
-	 * ptp_tx_count and ptp_tx_count statistics in PPSI are collected per
+	/* fill wrsPortStatusPtpTxFrames and wrsPortStatusPtpRxFrames
+	 * ptp_tx_count and ptp_rx_count statistics in PPSI are collected per
 	 * ppi instance. Since there can be more than one instance per physical
 	 * port, proper counters has to be added. */
 	while (1) {
 		ii = wrs_shm_seqbegin(ppsi_head);
 		/* Match port name with interface name of ppsi instance.
 		 * More than one ppsi_iface_name can match to
-		 * wrsPortStatusTable_array[i].port_name, but only one can
+		 * wrsPortStatusTable_array[i].wrsPortStatusPortName, but only one can
 		 * match way round */
 		for (ppi_i = 0; ppi_i < *ppsi_ppi_nlinks; ppi_i++) {
 			/* (ppsi_ppi + ppi_i)->iface_name is a pointer in
@@ -172,11 +172,11 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			ppsi_iface_name = (char *) wrs_shm_follow(ppsi_head,
 					       (ppsi_ppi + ppi_i)->iface_name);
 			for (i = 0; i < hal_nports_local; ++i) {
-				if (!strncmp(wrsPortStatusTable_array[i].port_name,
+				if (!strncmp(wrsPortStatusTable_array[i].wrsPortStatusPortName,
 					     ppsi_iface_name, 12)) {
-					wrsPortStatusTable_array[i].ptp_tx_count +=
+					wrsPortStatusTable_array[i].wrsPortStatusPtpTxFrames +=
 					      (ppsi_ppi + ppi_i)->ptp_tx_count;
-					wrsPortStatusTable_array[i].ptp_rx_count +=
+					wrsPortStatusTable_array[i].wrsPortStatusPtpRxFrames +=
 					      (ppsi_ppi + ppi_i)->ptp_rx_count;
 					/* speed up a little, break here */
 					break;

@@ -20,20 +20,20 @@
 struct wrsPortStatusTable_s {
 	uint32_t index;		/* not reported, index fields has to be marked
 				 * as not-accessible in MIB */
-	char port_name[12];	/* port name */
-	ClockIdentity peer_id;
+	char wrsPortStatusPortName[12];	/* port name */
+	ClockIdentity wrsPortStatusPeer;
 	/* These can't be "unsigned char" because we scanf a %i in there */
-	unsigned link_up;
-	unsigned port_mode;
-	unsigned port_locked;
-	char sfp_vn[16];	/* vendor name */
-	char sfp_pn[16];	/* part name */
-	char sfp_vs[16];	/* vendor serial */
-	int sfp_in_db;
-	int sfp_GbE;
-	int sfp_error;
-	unsigned long ptp_tx_count;
-	unsigned long ptp_rx_count;
+	unsigned wrsPortStatusLink;
+	unsigned wrsPortStatusConfiguredMode;
+	unsigned wrsPortStatusLocked;
+	char wrsPortStatusSfpVN[16];	/* vendor name */
+	char wrsPortStatusSfpPN[16];	/* part name */
+	char wrsPortStatusSfpVS[16];	/* vendor serial */
+	int wrsPortStatusSfpInDB;
+	int wrsPortStatusSfpGbE;
+	int wrsPortStatusSfpError;
+	unsigned long wrsPortStatusPtpTxFrames;
+	unsigned long wrsPortStatusPtpRxFrames;
 };
 
 
