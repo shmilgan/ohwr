@@ -149,10 +149,10 @@ time_t wrsOSStatus_data_fill(void)
 	/*********************************************************************\
 	|*********************** wrsTemperatureWarning ***********************|
 	\*********************************************************************/
-	if (!wrsTemperature_s.temp_fpga_thold
-	    && !wrsTemperature_s.temp_pll_thold
-	    && !wrsTemperature_s.temp_psl_thold
-	    && !wrsTemperature_s.temp_psr_thold) {
+	if (!wrsTemperature_s.wrsTempThresholdFPGA
+	    && !wrsTemperature_s.wrsTempThresholdPLL
+	    && !wrsTemperature_s.wrsTempThresholdPSL
+	    && !wrsTemperature_s.wrsTempThresholdPSR) {
 		/* no threshold are set */
 		wrsOSStatus_s.wrsTemperatureWarning =
 					WRS_TEMPERATURE_WARNING_THOLD_NOT_SET;
@@ -163,10 +163,10 @@ time_t wrsOSStatus_data_fill(void)
 		  * 2 is ok (WRS_TEMPERATURE_WARNING_OK), 3 is temperature too
 		  * high (WRS_TEMPERATURE_WARNING_TOO_HIGH) */
 		wrsOSStatus_s.wrsTemperatureWarning = 2 +
-		    ((wrsTemperature_s.temp_fpga > wrsTemperature_s.temp_fpga_thold)
-		    || (wrsTemperature_s.temp_pll > wrsTemperature_s.temp_pll_thold)
-		    || (wrsTemperature_s.temp_psl > wrsTemperature_s.temp_psl_thold)
-		    || (wrsTemperature_s.temp_psr > wrsTemperature_s.temp_psr_thold));
+		    ((wrsTemperature_s.wrsTempFPGA > wrsTemperature_s.wrsTempThresholdFPGA)
+		    || (wrsTemperature_s.wrsTempPLL > wrsTemperature_s.wrsTempThresholdPLL)
+		    || (wrsTemperature_s.wrsTempPSL > wrsTemperature_s.wrsTempThresholdPSL)
+		    || (wrsTemperature_s.wrsTempPSR > wrsTemperature_s.wrsTempThresholdPSR));
 	}
 
 	/*********************************************************************\

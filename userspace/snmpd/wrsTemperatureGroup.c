@@ -4,14 +4,14 @@
 #include <libwr/config.h>
 
 static struct pickinfo wrsTemperature_pickinfo[] = {
-	FIELD(wrsTemperature_s, ASN_INTEGER, temp_fpga),
-	FIELD(wrsTemperature_s, ASN_INTEGER, temp_pll),
-	FIELD(wrsTemperature_s, ASN_INTEGER, temp_psl),
-	FIELD(wrsTemperature_s, ASN_INTEGER, temp_psr),
-	FIELD(wrsTemperature_s, ASN_INTEGER, temp_fpga_thold),
-	FIELD(wrsTemperature_s, ASN_INTEGER, temp_pll_thold),
-	FIELD(wrsTemperature_s, ASN_INTEGER, temp_psl_thold),
-	FIELD(wrsTemperature_s, ASN_INTEGER, temp_psr_thold),
+	FIELD(wrsTemperature_s, ASN_INTEGER, wrsTempFPGA),
+	FIELD(wrsTemperature_s, ASN_INTEGER, wrsTempPLL),
+	FIELD(wrsTemperature_s, ASN_INTEGER, wrsTempPSL),
+	FIELD(wrsTemperature_s, ASN_INTEGER, wrsTempPSR),
+	FIELD(wrsTemperature_s, ASN_INTEGER, wrsTempThresholdFPGA),
+	FIELD(wrsTemperature_s, ASN_INTEGER, wrsTempThresholdPLL),
+	FIELD(wrsTemperature_s, ASN_INTEGER, wrsTempThresholdPSL),
+	FIELD(wrsTemperature_s, ASN_INTEGER, wrsTempThresholdPSR),
 };
 
 struct wrsTemperature_s wrsTemperature_s;
@@ -22,16 +22,16 @@ static void get_thresholds(void)
 	/* check wether config fields exist, atoi has to have valid string */
 	config_item = libwr_cfg_get("SNMP_TEMP_THOLD_FPGA");
 	if (config_item)
-		wrsTemperature_s.temp_fpga_thold = atoi(config_item);
+		wrsTemperature_s.wrsTempThresholdFPGA = atoi(config_item);
 	config_item = libwr_cfg_get("SNMP_TEMP_THOLD_PLL");
 	if (config_item)
-		wrsTemperature_s.temp_pll_thold = atoi(config_item);
+		wrsTemperature_s.wrsTempThresholdPLL = atoi(config_item);
 	config_item = libwr_cfg_get("SNMP_TEMP_THOLD_PSL");
 	if (config_item)
-		wrsTemperature_s.temp_psl_thold = atoi(config_item);
+		wrsTemperature_s.wrsTempThresholdPSL = atoi(config_item);
 	config_item = libwr_cfg_get("SNMP_TEMP_THOLD_PSR");
 	if (config_item)
-		wrsTemperature_s.temp_psr_thold = atoi(config_item);
+		wrsTemperature_s.wrsTempThresholdPSR = atoi(config_item);
 }
 
 time_t wrsTemperature_data_fill(void)
@@ -65,10 +65,10 @@ time_t wrsTemperature_data_fill(void)
 	while (1) {
 		ii = wrs_shm_seqbegin(hal_head);
 
-		wrsTemperature_s.temp_fpga = hal_shmem->temp.fpga >> 8;
-		wrsTemperature_s.temp_pll = hal_shmem->temp.pll >> 8;
-		wrsTemperature_s.temp_psl = hal_shmem->temp.psl >> 8;
-		wrsTemperature_s.temp_psr = hal_shmem->temp.psr >> 8;
+		wrsTemperature_s.wrsTempFPGA = hal_shmem->temp.fpga >> 8;
+		wrsTemperature_s.wrsTempPLL = hal_shmem->temp.pll >> 8;
+		wrsTemperature_s.wrsTempPSL = hal_shmem->temp.psl >> 8;
+		wrsTemperature_s.wrsTempPSR = hal_shmem->temp.psr >> 8;
 
 		retries++;
 		if (retries > 100) {
