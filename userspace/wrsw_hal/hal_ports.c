@@ -468,11 +468,12 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 
 	err = shw_sfp_read_verify_header(p->hw_index, &shdr);
 	if (err == -2) {
-		pr_error("SFP module not inserted. Failed to read SFP "
-			 "configuration header\n");
+		pr_error("%s SFP module not inserted. Failed to read SFP "
+			 "configuration header\n", p->name);
 		return;
 	} else if (err < 0) {
-		pr_error("Failed to read SFP configuration header\n");
+		pr_error("Failed to read SFP configuration header for %s\n",
+			 p->name);
 		return;
 	}
 
@@ -480,12 +481,14 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 	      shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
 	cdata = shw_sfp_get_cal_data(p->hw_index, &shdr);
 	if (cdata) {
-		pr_info("SFP Info: (%s) deltaTx %d "
-		      "delta Rx %d alpha %.3f (* 1e6)\n",
-		      cdata->flags & SFP_FLAG_CLASS_DATA
-		      ? "class-specific" : "device-specific",
-		      cdata->delta_tx_ps, cdata->delta_rx_ps,
-		      cdata->alpha * 1e6);
+		/* Alpha is not known now. It is read later from the fibers'
+		 * database. */
+		pr_info("%s SFP Info: (%s) delta Tx %d, delta Rx %d, "
+			"TX wl: %dnm, RX wl: %dnm\n", p->name,
+			cdata->flags & SFP_FLAG_CLASS_DATA
+			? "class-specific" : "device-specific",
+			cdata->delta_tx_ps, cdata->delta_rx_ps, cdata->tx_wl,
+			cdata->rx_wl);
 
 		memcpy(&p->calib.sfp, cdata,
 		       sizeof(struct shw_sfp_caldata));
@@ -518,8 +521,13 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 	err = libwr_cfg_convert2("FIBER%02i_PARAMS", subname,
 				 LIBWR_DOUBLE, &p->calib.sfp.alpha,
 				 p->fiber_index);
-	if (!err)
+	if (!err) {
+		/* Now we know alpha, so print it. */
+		pr_info("%s SFP Info: alpha %.3f (* 1e6) found for TX wl: %dnm,"
+			" RX wl: %dmn\n", p->name, p->calib.sfp.alpha * 1e6,
+			p->calib.sfp.tx_wl, p->calib.sfp.rx_wl);
 		return;
+	}
 
 	/* Try again, with the opposite direction (rx/tx) */
 	sprintf(subname, "alpha_%i_%i", p->calib.sfp.rx_wl, p->calib.sfp.tx_wl);
@@ -528,6 +536,10 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 				 p->fiber_index);
 	if (!err) {
 		p->calib.sfp.alpha = (1.0 / (1.0 + p->calib.sfp.alpha)) - 1.0;
+		/* Now we know alpha, so print it. */
+		pr_info("%s SFP Info: alpha %.3f (* 1e6) found for TX wl: %dnm,"
+			" RX wl: %dmn\n", p->name, p->calib.sfp.alpha * 1e6,
+			p->calib.sfp.tx_wl, p->calib.sfp.rx_wl);
 		return;
 	}
 
