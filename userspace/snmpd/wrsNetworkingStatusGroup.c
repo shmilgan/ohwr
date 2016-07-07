@@ -73,7 +73,7 @@ static int get_endpoint_status(struct ns_pstats *old,
 			 * logs */
 			ret = 1;
 			snmp_log(LOG_ERR, "SNMP: wrsEndpointStatus failed for "
-					  "port %d\n", i);
+					  "port %d (wri %d)\n", i + 1, i + 1);
 		}
 	}
 	return ret;
@@ -107,7 +107,7 @@ static int get_swcore_status(struct ns_pstats *old,
 			 * logs */
 			ret = 1;
 			snmp_log(LOG_ERR, "SNMP: wrsSwcoreStatus failed for "
-					  "port %d\n", i);
+					  "port %d (wri %d)\n", i + 1, i + 1);
 		}
 #endif
 		/* values from 2.2.5 "Too much HP traffic / Per-priority queue
@@ -129,7 +129,7 @@ static int get_swcore_status(struct ns_pstats *old,
 			 * logs */
 			ret = 1;
 			snmp_log(LOG_ERR, "SNMP: wrsSwcoreStatus failed for "
-					  "port %d\n", i);
+					  "port %d (wri %d)\n", i + 1, i + 1);
 		}
 	}
 	return ret;
@@ -151,7 +151,7 @@ static int get_rtu_status(struct ns_pstats *old,
 			 * logs */
 			ret = 1;
 			snmp_log(LOG_ERR, "SNMP: wrsEndpointStatus failed for "
-					  "port %d\n", i);
+					  "port %d (wri %d)\n", i + 1, i + 1);
 		}
 	}
 	/* TODO: add 2.2.7 "Network loop - two or more identical MACs on two or
