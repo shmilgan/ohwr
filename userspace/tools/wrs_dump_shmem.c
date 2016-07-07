@@ -317,7 +317,7 @@ int dump_hal_mem(struct wrs_shm_head *head)
 	}
 
 	for (i = 0; i < n; i++, p++) {
-		printf("dump port %i\n", i);
+		printf("dump port %i\n", i + 1);
 		dump_many_fields(p, hal_port_info, ARRAY_SIZE(hal_port_info));
 	}
 	return 0;
