@@ -56,7 +56,7 @@
 			$single_line = explode(" ",$vlans_assignment[$i+1]); //info per endpoint line
 
 			echo '<tr>';
-			echo '<th><center><b>wr'.($i+1).'</b></center></th>';
+			echo '<th><center><b>'.($single_line[0]).'</b></center></th>';
 
 			//Show the Vlan option button
 			echo '<th>';
@@ -67,7 +67,7 @@
 					echo '<option class="btn" value="'.$vlan[0].$vlan[1].'"><center>ID'.$vlan[0].$vlan[1].'</center></option>';
 				}
 			}*/
-			echo '<input  STYLE="background-color:'.$vlancolor[$single_line[6]].';text-align:center;" size="5" type="text" value="'.$single_line[6].'" name="vlan'.($i).'">';
+			echo '<input  STYLE="background-color:'.$vlancolor[$single_line[5]].';text-align:center;" size="5" type="text" value="'.$single_line[5].'" name="vlan'.($i).'">';
 			//echo '<option class="btn" selected="selected" value="disabled"><center>Disabled</center></option>';
 			//echo '</select>'; // end Vlan ID assignation
 
@@ -75,24 +75,24 @@
 
 			echo '<th>'; // Mode selection
 				echo '<select name=mode'.($i).'>';
-				echo '<option class="btn" '; echo (!strcmp($single_line[2],"0")) ? 'selected="selected"' : ''; echo ' value="0"><center>Access</center></option>';
-				echo '<option class="btn" '; echo (!strcmp($single_line[2],"1")) ? 'selected="selected"' : ''; echo ' value="1"><center>Trunk</center></option>';
-				echo '<option class="btn" '; echo (!strcmp($single_line[2],"2")) ? 'selected="selected"' : ''; echo ' value="2"><center>VLAN Disabled</center></option>';
-				echo '<option class="btn" '; echo (!strcmp($single_line[2],"3")) ? 'selected="selected"' : ''; echo ' value="3"><center>Unqualified port</center></option>';
+				echo '<option class="btn" '; echo (!strcmp($single_line[1],"0")) ? 'selected="selected"' : ''; echo ' value="0"><center>Access</center></option>';
+				echo '<option class="btn" '; echo (!strcmp($single_line[1],"1")) ? 'selected="selected"' : ''; echo ' value="1"><center>Trunk</center></option>';
+				echo '<option class="btn" '; echo (!strcmp($single_line[1],"2")) ? 'selected="selected"' : ''; echo ' value="2"><center>VLAN Disabled</center></option>';
+				echo '<option class="btn" '; echo (!strcmp($single_line[1],"3")) ? 'selected="selected"' : ''; echo ' value="3"><center>Unqualified port</center></option>';
 				echo '</select>'; // end mode
 
 			echo '</th>';
 
 			echo '<th>'; // Priority selection
 				echo '<select name=prio'.($i).'>';
-				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"0")) ? 'selected="selected"' : ''; echo 'value="0"><center>0</center></option>';
-				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"1")) ? 'selected="selected"' : ''; echo 'value="1"><center>1</center></option>';
-				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"2")) ? 'selected="selected"' : ''; echo 'value="2"><center>2</center></option>';
-				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"3")) ? 'selected="selected"' : ''; echo 'value="3"><center>3</center></option>';
-				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"4")) ? 'selected="selected"' : ''; echo 'value="4"><center>4</center></option>';
-				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"5")) ? 'selected="selected"' : ''; echo 'value="5"><center>5</center></option>';
-				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"6")) ? 'selected="selected"' : ''; echo 'value="6"><center>6</center></option>';
-				echo '<option class="btn"  '; echo (!strcmp($single_line[5],"7")) ? 'selected="selected"' : ''; echo 'value="7"><center>7</center></option>';
+				echo '<option class="btn"  '; echo (!strcmp($single_line[4],"0")) ? 'selected="selected"' : ''; echo 'value="0"><center>0</center></option>';
+				echo '<option class="btn"  '; echo (!strcmp($single_line[4],"1")) ? 'selected="selected"' : ''; echo 'value="1"><center>1</center></option>';
+				echo '<option class="btn"  '; echo (!strcmp($single_line[4],"2")) ? 'selected="selected"' : ''; echo 'value="2"><center>2</center></option>';
+				echo '<option class="btn"  '; echo (!strcmp($single_line[4],"3")) ? 'selected="selected"' : ''; echo 'value="3"><center>3</center></option>';
+				echo '<option class="btn"  '; echo (!strcmp($single_line[4],"4")) ? 'selected="selected"' : ''; echo 'value="4"><center>4</center></option>';
+				echo '<option class="btn"  '; echo (!strcmp($single_line[4],"5")) ? 'selected="selected"' : ''; echo 'value="5"><center>5</center></option>';
+				echo '<option class="btn"  '; echo (!strcmp($single_line[4],"6")) ? 'selected="selected"' : ''; echo 'value="6"><center>6</center></option>';
+				echo '<option class="btn"  '; echo (!strcmp($single_line[4],"7")) ? 'selected="selected"' : ''; echo 'value="7"><center>7</center></option>';
 
 				echo '</select>'; // end Priority
 
@@ -115,27 +115,28 @@
 
 			for($i = 0; $i < 18; $i++){
 				//if(strcmp($_POST['vlan'.$i],"disabled")){ //VLAN selected
-					$vlan_cmd .= " --ep ".$i;
+					$vlan_cmd .= " --ep ".($i+1);
 					$vlan_cmd .= " --emode ".$_POST['mode'.$i];
 					$vlan_cmd .= " --eprio ".$_POST['prio'.$i];
 					if(!empty($_POST['vlan'.$i])){$vlan_cmd .= " --evid ".$_POST['vlan'.$i];}
 					if(!empty($_POST['mask'.$i])){$vlan_cmd .= " --eumask ".$_POST['mask'.$i];}
 					$output = shell_exec($vlan_cmd);
 					echo $vlan_cmd;
-					echo '<br><p><center>Port WR'.($i+1).' added to VLAN'.$_POST['vlan'.$i].'</center></p>';
+					echo '<br><p><center>Port wri'.($i+1).' added to VLAN'.$_POST['vlan'.$i].'</center></p>';
 
 				//}else{
 					if(!strcmp($_POST['mode'.$i],"2")){ //Disable VLAN for endpoint
-						$vlan_cmd .= " --ep ".$i;
+						$vlan_cmd .= " --ep ".($i+1);
 						$vlan_cmd .= " --emode ".$_POST['mode'.$i];
 						$output = shell_exec($vlan_cmd);
-						echo '<br><p><center>VLAN removed for port WR'.($i+1).'</center></p>';
+						echo '<br><p><center>VLAN removed for port wri'.($i+1).'</center></p>';
 					}
 
 				//}
 
 				$vlan_cmd= "/wr/bin/wrs_vlans ";
 			}
+			/* redirect to vlan.php */
 			header('Location: vlan.php');
 		}
 

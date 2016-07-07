@@ -79,14 +79,14 @@ int main(int argc, char **argv)
 
 	for (i = dump_port; i <= nports; i++) {
 		memset(&shdr, 0, sizeof(shdr));
-		printf("========= port %d =========\n", i - 1);
+		printf("========= port %d =========\n", i);
 		err = shw_sfp_read_verify_header(i - 1, &shdr);
 		if (err == -2) {
 			pr_error("SFP module not inserted in port %d. Failed "
-				 "to read SFP configuration header\n", i - 1);
+				 "to read SFP configuration header\n", i);
 		} else if (err < 0) {
 			pr_error("Failed to read SFP configuration header on "
-				 "port %d\n", i - 1);
+				 "port %d\n", i);
 		} else {
 			shw_sfp_print_header(&shdr);
 			if (dump_hex_header) {

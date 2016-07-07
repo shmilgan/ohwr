@@ -38,8 +38,7 @@
 			$header = array ("WR port","Protocol","Tx","Rx","Mode","Fiber");
 		else
 			$header = array ("WR port","Tx","Rx","Mode","Fiber");
-		$matrix = array ("key=CONFIG_PORT00_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT00_PARAMS"],
-							"key=CONFIG_PORT01_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],
+		$matrix = array ("key=CONFIG_PORT01_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],
 							"key=CONFIG_PORT02_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT02_PARAMS"],
 							"key=CONFIG_PORT03_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT03_PARAMS"],
 							"key=CONFIG_PORT04_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT04_PARAMS"],
@@ -56,6 +55,7 @@
 							"key=CONFIG_PORT15_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT15_PARAMS"],
 							"key=CONFIG_PORT16_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT16_PARAMS"],
 							"key=CONFIG_PORT17_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT17_PARAMS"],
+							"key=CONFIG_PORT18_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT18_PARAMS"],
 							);
 		print_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
 

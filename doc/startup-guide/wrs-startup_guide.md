@@ -594,9 +594,9 @@ The following list resumes the most interesting commands:
 
 > ***Note:*** More information about the tools are explained in the [wrs-user-manual.pdf] or can be obtain using the embedded help argument: `--help`, `-h` or `help`.
 
-#### Warning:
-The SFP ports are labeled from 1 to 18 on the front panel but their corresponding
-network interface are named from `wr0` to `wr17`.
+#### Note:
+The SFP ports are labeled from 1 to 18 on the front panel, their corresponding
+network interface are named from `wri1` to `wri18`.
 
 
 Firmware updates

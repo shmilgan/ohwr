@@ -43,9 +43,10 @@ static unsigned int firmware_adr_pp; /* number of words with counters */
 static unsigned int firmware_cpw; /* number of counters per word */
 module_param(pstats_nports, int, S_IRUGO);
 
-const char *portnames[]  = {"port0", "port1", "port2", "port3", "port4",
-	"port5", "port6", "port7", "port8", "port9", "port10", "port11",
-	"port12", "port13", "port14", "port15", "port16", "port17"};
+const char *portnames[]  = {"wrport1", "wrport2", "wrport3", "wrport4",
+	"wrport5", "wrport6", "wrport7", "wrport8", "wrport9", "wrport10",
+	"wrport11", "wrport12", "wrport13", "wrport14", "wrport15", "wrport16",
+	 "wrport17", "wrport18"};
 
 static struct pstats_version_description pstats_desc[] = {
 	[0] = {

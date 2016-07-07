@@ -39,11 +39,11 @@ int halexp_lock_cmd(const char *port_name, int command, int priority)
 		   of the reference frequency. (priority) parameter
 		   allows to distinguish between various reference
 		   sources and establish a switchover order. For
-		   example when wr0, wr1, wr2 have respectively
+		   example when wri1, wri2, wri3 have respectively
 		   priorities (1, 0, 2), the primary clock source is
-		   wr1. When it dies (e.g. rats ate the fiber), the
-		   PLL will automatically switch to wr1, and if wr1
-		   dies, to wr2. When all the ports are down, the PLL
+		   wri2. When it dies (e.g. rats ate the fiber), the
+		   PLL will automatically switch to wri2, and if wri2
+		   dies, to wri3. When all the ports are down, the PLL
 		   will switch to holdover mode. In V3, calling this
 		   command with negative (priority) removes the port
 		   from the locking list.

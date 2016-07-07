@@ -1,4 +1,4 @@
-# We have 5 files only: eth0.ethaddr, wr0.ethaddr, manufacturer, scb_version
+# We have 5 files only: eth0.ethaddr, wri1.ethaddr, manufacturer, scb_version
 # and hw_info.
 #
 # They are at static addresses so to be able to change them from a script
@@ -14,7 +14,7 @@
 eth0.ethaddr
 	position = 0x200
 
-wr0.ethaddr
+wri1.ethaddr
 	position = 0x220
 
 scb_version
