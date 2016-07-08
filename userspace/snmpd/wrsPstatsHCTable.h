@@ -11,48 +11,48 @@
 
 
 struct wrsPstatsHCTable_s {
-	uint32_t index;		/* not reported, index fields has to be marked
-				 * as not-accessible in MIB */
-	char port_name[12];	/* port name of counters */
-	uint64_t TXUnderrun;
-	uint64_t RXOverrun;
-	uint64_t RXInvalidCode;
-	uint64_t RXSyncLost;
-	uint64_t RXPauseFrames;
-	uint64_t RXPfilterDropped;
-	uint64_t RXPCSErrors;
-	uint64_t RXGiantFrames;
-	uint64_t RXRuntFrames;
-	uint64_t RXCRCErrors;
-	uint64_t RXPclass0;
-	uint64_t RXPclass1;
-	uint64_t RXPclass2;
-	uint64_t RXPclass3;
-	uint64_t RXPclass4;
-	uint64_t RXPclass5;
-	uint64_t RXPclass6;
-	uint64_t RXPclass7;
-	uint64_t TXFrames;
-	uint64_t RXFrames;
-	uint64_t RXDropRTUFull;
-	uint64_t RXPrio0;
-	uint64_t RXPrio1;
-	uint64_t RXPrio2;
-	uint64_t RXPrio3;
-	uint64_t RXPrio4;
-	uint64_t RXPrio5;
-	uint64_t RXPrio6;
-	uint64_t RXPrio7;
-	uint64_t RTUValid;
-	uint64_t RTUResponses;
-	uint64_t RTUDropped;
-	uint64_t FastMatchPriority;
-	uint64_t FastMatchFastForward;
-	uint64_t FastMatchNonForward;
-	uint64_t FastMatchRespValid;
-	uint64_t FullMatchRespValid;
-	uint64_t Forwarded;
-	uint64_t TRURespValid;
+	uint32_t wrsPstatsHCIndex; /* not reported, index fields has to be marked
+				  * as not-accessible in MIB */
+	char wrsPstatsHCPortName[12];	/* port name of counters */
+	uint64_t wrsPstatsHCTXUnderrun;
+	uint64_t wrsPstatsHCRXOverrun;
+	uint64_t wrsPstatsHCRXInvalidCode;
+	uint64_t wrsPstatsHCRXSyncLost;
+	uint64_t wrsPstatsHCRXPauseFrames;
+	uint64_t wrsPstatsHCRXPfilterDropped;
+	uint64_t wrsPstatsHCRXPCSErrors;
+	uint64_t wrsPstatsHCRXGiantFrames;
+	uint64_t wrsPstatsHCRXRuntFrames;
+	uint64_t wrsPstatsHCRXCRCErrors;
+	uint64_t wrsPstatsHCRXPclass0;
+	uint64_t wrsPstatsHCRXPclass1;
+	uint64_t wrsPstatsHCRXPclass2;
+	uint64_t wrsPstatsHCRXPclass3;
+	uint64_t wrsPstatsHCRXPclass4;
+	uint64_t wrsPstatsHCRXPclass5;
+	uint64_t wrsPstatsHCRXPclass6;
+	uint64_t wrsPstatsHCRXPclass7;
+	uint64_t wrsPstatsHCTXFrames;
+	uint64_t wrsPstatsHCRXFrames;
+	uint64_t wrsPstatsHCRXDropRTUFull;
+	uint64_t wrsPstatsHCRXPrio0;
+	uint64_t wrsPstatsHCRXPrio1;
+	uint64_t wrsPstatsHCRXPrio2;
+	uint64_t wrsPstatsHCRXPrio3;
+	uint64_t wrsPstatsHCRXPrio4;
+	uint64_t wrsPstatsHCRXPrio5;
+	uint64_t wrsPstatsHCRXPrio6;
+	uint64_t wrsPstatsHCRXPrio7;
+	uint64_t wrsPstatsHCRTUValid;
+	uint64_t wrsPstatsHCRTUResponses;
+	uint64_t wrsPstatsHCRTUDropped;
+	uint64_t wrsPstatsHCFastMatchPriority;
+	uint64_t wrsPstatsHCFastMatchFastForward;
+	uint64_t wrsPstatsHCFastMatchNonForward;
+	uint64_t wrsPstatsHCFastMatchRespValid;
+	uint64_t wrsPstatsHCFullMatchRespValid;
+	uint64_t wrsPstatsHCForwarded;
+	uint64_t wrsPstatsHCTRURespValid;
 };
 
 extern struct wrsPstatsHCTable_s pstats_array[WRS_N_PORTS];

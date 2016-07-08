@@ -21,26 +21,26 @@ static void copy_pstats(struct ns_pstats *copy, struct wrsPstatsHCTable_s *org,
 	int i;
 	for (i = 0; i < rows; i++) {
 		/* wrsEndpointStatus */
-		copy->TXUnderrun = org->TXUnderrun;
-		copy->RXOverrun = org->RXOverrun;
-		copy->RXInvalidCode = org->RXInvalidCode;
-		copy->RXSyncLost = org->RXSyncLost;
-		copy->RXPfilterDropped = org->RXPfilterDropped;
-		copy->RXPCSErrors = org->RXPCSErrors;
-		copy->RXCRCErrors = org->RXCRCErrors;
+		copy->wrsPstatsHCTXUnderrun = org->wrsPstatsHCTXUnderrun;
+		copy->wrsPstatsHCRXOverrun = org->wrsPstatsHCRXOverrun;
+		copy->wrsPstatsHCRXInvalidCode = org->wrsPstatsHCRXInvalidCode;
+		copy->wrsPstatsHCRXSyncLost = org->wrsPstatsHCRXSyncLost;
+		copy->wrsPstatsHCRXPfilterDropped = org->wrsPstatsHCRXPfilterDropped;
+		copy->wrsPstatsHCRXPCSErrors = org->wrsPstatsHCRXPCSErrors;
+		copy->wrsPstatsHCRXCRCErrors = org->wrsPstatsHCRXCRCErrors;
 		/* wrsSwcoreStatus */
-		copy->RXFrames = org->RXFrames;
-		copy->RXPrio0 = org->RXPrio0;
-		copy->RXPrio1 = org->RXPrio1;
-		copy->RXPrio2 = org->RXPrio2;
-		copy->RXPrio3 = org->RXPrio3;
-		copy->RXPrio4 = org->RXPrio4;
-		copy->RXPrio5 = org->RXPrio5;
-		copy->RXPrio6 = org->RXPrio6;
-		copy->RXPrio7 = org->RXPrio7;
-		copy->FastMatchPriority = org->FastMatchPriority;
+		copy->wrsPstatsHCRXFrames = org->wrsPstatsHCRXFrames;
+		copy->wrsPstatsHCRXPrio0 = org->wrsPstatsHCRXPrio0;
+		copy->wrsPstatsHCRXPrio1 = org->wrsPstatsHCRXPrio1;
+		copy->wrsPstatsHCRXPrio2 = org->wrsPstatsHCRXPrio2;
+		copy->wrsPstatsHCRXPrio3 = org->wrsPstatsHCRXPrio3;
+		copy->wrsPstatsHCRXPrio4 = org->wrsPstatsHCRXPrio4;
+		copy->wrsPstatsHCRXPrio5 = org->wrsPstatsHCRXPrio5;
+		copy->wrsPstatsHCRXPrio6 = org->wrsPstatsHCRXPrio6;
+		copy->wrsPstatsHCRXPrio7 = org->wrsPstatsHCRXPrio7;
+		copy->wrsPstatsHCFastMatchPriority = org->wrsPstatsHCFastMatchPriority;
 		/* wrsRTUStatus */
-		copy->RXDropRTUFull = org->RXDropRTUFull;
+		copy->wrsPstatsHCRXDropRTUFull = org->wrsPstatsHCRXDropRTUFull;
 
 		copy++;
 		org++;
@@ -61,13 +61,13 @@ static int get_endpoint_status(struct ns_pstats *old,
 	 * per second */
 	for (i = 0; i < rows; i++) {
 		if (
-		     ((new[i].TXUnderrun - old[i].TXUnderrun)/t_delta > 1.0)
-		     || ((new[i].RXOverrun - old[i].RXOverrun)/t_delta > 1.0)
-		     || ((new[i].RXInvalidCode - old[i].RXInvalidCode)/t_delta > 1.0)
-		     || ((new[i].RXSyncLost - old[i].RXSyncLost)/t_delta > 1.0)
-		     || ((new[i].RXPfilterDropped - old[i].RXPfilterDropped)/t_delta > 1.0)
-		     || ((new[i].RXPCSErrors - old[i].RXPCSErrors)/t_delta > 1.0)
-		     || ((new[i].RXCRCErrors - old[i].RXCRCErrors)/t_delta > 1.0)
+		     ((new[i].wrsPstatsHCTXUnderrun - old[i].wrsPstatsHCTXUnderrun)/t_delta > 1.0)
+		     || ((new[i].wrsPstatsHCRXOverrun - old[i].wrsPstatsHCRXOverrun)/t_delta > 1.0)
+		     || ((new[i].wrsPstatsHCRXInvalidCode - old[i].wrsPstatsHCRXInvalidCode)/t_delta > 1.0)
+		     || ((new[i].wrsPstatsHCRXSyncLost - old[i].wrsPstatsHCRXSyncLost)/t_delta > 1.0)
+		     || ((new[i].wrsPstatsHCRXPfilterDropped - old[i].wrsPstatsHCRXPfilterDropped)/t_delta > 1.0)
+		     || ((new[i].wrsPstatsHCRXPCSErrors - old[i].wrsPstatsHCRXPCSErrors)/t_delta > 1.0)
+		     || ((new[i].wrsPstatsHCRXCRCErrors - old[i].wrsPstatsHCRXCRCErrors)/t_delta > 1.0)
 		) {
 			/* if error, no need to check more, but do it just for
 			 * logs */
@@ -100,8 +100,8 @@ static int get_swcore_status(struct ns_pstats *old,
  * traffic!!! */
 #if 0
 		if ( /* shouldn't differ more than FORWARD_DELTA */
-		     ((new[i].TXFrames - new[i].Forwarded) > FORWARD_DELTA)
-		     || ((new[i].Forwarded - new[i].TXFrames) > FORWARD_DELTA)
+		     ((new[i].wrsPstatsHCTXFrames - new[i].wrsPstatsHCForwarded) > FORWARD_DELTA)
+		     || ((new[i].wrsPstatsHCForwarded - new[i].wrsPstatsHCTXFrames) > FORWARD_DELTA)
 		) {
 			/* if error, no need to check more, but do it just for
 			 * logs */
@@ -114,16 +114,16 @@ static int get_swcore_status(struct ns_pstats *old,
 		 * full" in wrs_failures document shouldn't change faster
 		 * than parameters defined in dotconfig per second */
 		if ( /* shouldn't differ more than FORWARD_DELTA */
-		     ((new[i].RXFrames - old[i].RXFrames)/t_delta >= ns_dotconfig.rx_frame_rate)
-		     || ((new[i].RXPrio0 - old[i].RXPrio0)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].RXPrio1 - old[i].RXPrio1)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].RXPrio2 - old[i].RXPrio2)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].RXPrio3 - old[i].RXPrio3)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].RXPrio4 - old[i].RXPrio4)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].RXPrio5 - old[i].RXPrio5)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].RXPrio6 - old[i].RXPrio6)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].RXPrio7 - old[i].RXPrio7)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].FastMatchPriority - old[i].FastMatchPriority)/t_delta >= ns_dotconfig.hp_frame_rate)
+		     ((new[i].wrsPstatsHCRXFrames - old[i].wrsPstatsHCRXFrames)/t_delta >= ns_dotconfig.rx_frame_rate)
+		     || ((new[i].wrsPstatsHCRXPrio0 - old[i].wrsPstatsHCRXPrio0)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
+		     || ((new[i].wrsPstatsHCRXPrio1 - old[i].wrsPstatsHCRXPrio1)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
+		     || ((new[i].wrsPstatsHCRXPrio2 - old[i].wrsPstatsHCRXPrio2)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
+		     || ((new[i].wrsPstatsHCRXPrio3 - old[i].wrsPstatsHCRXPrio3)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
+		     || ((new[i].wrsPstatsHCRXPrio4 - old[i].wrsPstatsHCRXPrio4)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
+		     || ((new[i].wrsPstatsHCRXPrio5 - old[i].wrsPstatsHCRXPrio5)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
+		     || ((new[i].wrsPstatsHCRXPrio6 - old[i].wrsPstatsHCRXPrio6)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
+		     || ((new[i].wrsPstatsHCRXPrio7 - old[i].wrsPstatsHCRXPrio7)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
+		     || ((new[i].wrsPstatsHCFastMatchPriority - old[i].wrsPstatsHCFastMatchPriority)/t_delta >= ns_dotconfig.hp_frame_rate)
 		) {
 			/* if error, no need to check more, but do it just for
 			 * logs */
@@ -146,7 +146,7 @@ static int get_rtu_status(struct ns_pstats *old,
 	/* values from 2.2.4 "RTU is full and cannot accept more requests" in
 	 * wrs_failures document shouldn't increase */
 	for (i = 0; i < rows; i++) {
-		if ((new[i].RXDropRTUFull - old[i].RXDropRTUFull) > 0) {
+		if ((new[i].wrsPstatsHCRXDropRTUFull - old[i].wrsPstatsHCRXDropRTUFull) > 0) {
 			/* if error, no need to check more, but do it just for
 			 * logs */
 			ret = 1;

@@ -38,27 +38,27 @@ void init_wrsNetworkingStatusGroup(void);
 
 struct ns_pstats {
 	/* wrsEndpointStatus */
-	uint64_t TXUnderrun;		/* 1 */
-	uint64_t RXOverrun;		/* 2 */
-	uint64_t RXInvalidCode;		/* 3 */
-	uint64_t RXSyncLost;		/* 4 */
-	uint64_t RXPfilterDropped;	/* 6 */
-	uint64_t RXPCSErrors;		/* 7 */
-	uint64_t RXCRCErrors;		/* 10 */
+	uint64_t wrsPstatsHCTXUnderrun;		/* 1 */
+	uint64_t wrsPstatsHCRXOverrun;		/* 2 */
+	uint64_t wrsPstatsHCRXInvalidCode;		/* 3 */
+	uint64_t wrsPstatsHCRXSyncLost;		/* 4 */
+	uint64_t wrsPstatsHCRXPfilterDropped;	/* 6 */
+	uint64_t wrsPstatsHCRXPCSErrors;		/* 7 */
+	uint64_t wrsPstatsHCRXCRCErrors;		/* 10 */
 	/* wrsSwcoreStatus */
 	/* Too much HP traffic / Per-priority queue full */
-	uint64_t RXFrames;		/* 20 */
-	uint64_t RXPrio0;		/* 22 */
-	uint64_t RXPrio1;		/* 23 */
-	uint64_t RXPrio2;		/* 24 */
-	uint64_t RXPrio3;		/* 25 */
-	uint64_t RXPrio4;		/* 26 */
-	uint64_t RXPrio5;		/* 27 */
-	uint64_t RXPrio6;		/* 28 */
-	uint64_t RXPrio7;		/* 29 */
-	uint64_t FastMatchPriority;	/* 33 */
+	uint64_t wrsPstatsHCRXFrames;		/* 20 */
+	uint64_t wrsPstatsHCRXPrio0;		/* 22 */
+	uint64_t wrsPstatsHCRXPrio1;		/* 23 */
+	uint64_t wrsPstatsHCRXPrio2;		/* 24 */
+	uint64_t wrsPstatsHCRXPrio3;		/* 25 */
+	uint64_t wrsPstatsHCRXPrio4;		/* 26 */
+	uint64_t wrsPstatsHCRXPrio5;		/* 27 */
+	uint64_t wrsPstatsHCRXPrio6;		/* 28 */
+	uint64_t wrsPstatsHCRXPrio7;		/* 29 */
+	uint64_t wrsPstatsHCFastMatchPriority;	/* 33 */
 	/* wrsRTUStatus */
-	uint64_t RXDropRTUFull;		/* 21 */
+	uint64_t wrsPstatsHCRXDropRTUFull;		/* 21 */
 };
 
 /* parameters read from dot-config */
