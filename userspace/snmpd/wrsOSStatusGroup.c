@@ -20,6 +20,14 @@
 #define WRSDISKSPACELOW_TRESHOLD_ERROR 90
 #define WRSDISKSPACELOW_TRESHOLD_WARNING 80
 
+static char *slog_obj_name;
+static char *wrsBootSuccessful_str = "wrsBootSuccessful";
+static char *wrsTemperatureWarning_str = "wrsTemperatureWarning";
+static char *wrsMemoryFreeLow_str = "wrsMemoryFreeLow";
+static char *wrsCpuLoadHigh_str = "wrsCpuLoadHigh";
+static char *wrsDiskSpaceLow_str = "wrsDiskSpaceLow";
+
+
 static struct pickinfo wrsOSStatus_pickinfo[] = {
 	FIELD(wrsOSStatus_s, ASN_INTEGER, wrsBootSuccessful),
 	FIELD(wrsOSStatus_s, ASN_INTEGER, wrsTemperatureWarning),
@@ -41,10 +49,12 @@ time_t wrsOSStatus_data_fill(void)
 	unsigned int n_rows_disk_space; /* number of rows in wrsDiskTable_array
 					 */
 	unsigned int i;
+	struct wrsOSStatus_s *o;
 	struct wrsBootStatus_s *b;
 	struct wrsMemory_s *f;
 	struct wrsCpuLoad_s *c;
 	struct wrsDiskTable_s *d;
+	struct wrsTemperature_s *t;
 
 	time_boot = wrsBootStatus_data_fill();
 	time_temp = wrsTemperature_data_fill();
@@ -63,53 +73,169 @@ time_t wrsOSStatus_data_fill(void)
 	time_update = get_monotonic_sec();
 
 	memset(&wrsOSStatus_s, 0, sizeof(wrsOSStatus_s));
+
+	o = &wrsOSStatus_s;
 	/*********************************************************************\
 	|************************* wrsBootSuccessful *************************|
 	\*********************************************************************/
+
+	slog_obj_name = wrsBootSuccessful_str;
 	b = &wrsBootStatus_s;
-	if ( /* check if error */
-		b->wrsBootCnt == 0
-		|| b->wrsRestartReason == WRS_RESTART_REASON_ERROR
-		|| b->wrsConfigSource == WRS_CONFIG_SOURCE_ERROR
-		|| b->wrsBootConfigStatus == WRS_CONFIG_STATUS_ERROR
-		|| b->wrsBootConfigStatus == WRS_CONFIG_STATUS_DL_ERROR
-		|| b->wrsBootConfigStatus == WRS_CONFIG_STATUS_CHECK_ERROR
-		    /* error only when dhcp failed for force_dhcp */
-		|| (b->wrsBootConfigStatus == WRS_CONFIG_STATUS_DHCP_ERROR
-		    && b->wrsConfigSource == WRS_CONFIG_SOURCE_FORCE_DHCP)
-		|| b->wrsBootHwinfoReadout == WRS_BOOT_HWINFO_ERROR
-		|| b->wrsBootLoadFPGA == WRS_BOOT_LOAD_FPGA_ERROR
-		|| b->wrsBootLoadFPGA == WRS_BOOT_LOAD_FPGA_FILE_NOT_FOUND
-		|| b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_ERROR
-		|| b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_FILE_NOT_FOUND
-		|| b->wrsBootKernelModulesMissing > 0 /* contain number of missing modules */
-		|| b->wrsBootUserspaceDaemonsMissing > 0 /* contain number of missing daemons */
-	) {
-		wrsOSStatus_s.wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
 
-	} else if ( /* check if warning */
-		b->wrsConfigSource == WRS_CONFIG_SOURCE_ERROR_MINOR
-		|| b->wrsBootConfigStatus == WRS_CONFIG_STATUS_ERROR_MINOR
-		|| b->wrsBootHwinfoReadout == WRS_BOOT_HWINFO_ERROR_MINOR
-		|| b->wrsBootHwinfoReadout == WRS_BOOT_HWINFO_WARNING
-		|| b->wrsBootLoadFPGA == WRS_BOOT_LOAD_FPGA_ERROR_MINOR
-		|| b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_ERROR_MINOR
-		|| b->wrsFwUpdateStatus == WRS_FW_UPDATE_STATUS_CHECKSUM_ERROR
-	) { /* warning */
-		wrsOSStatus_s.wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+	/* check if error */
+	if (b->wrsBootCnt == 0) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: Unable to read wrsBootCnt\n",
+			 slog_obj_name);
+	}
+	if (b->wrsRestartReason == WRS_RESTART_REASON_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: Unable to read wrsRestartReason\n",
+			 slog_obj_name);
+	}
+	if (b->wrsConfigSource == WRS_CONFIG_SOURCE_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: Unknown config source in wrsConfigSource\n",
+			 slog_obj_name);
+	}
+	if (b->wrsBootConfigStatus == WRS_CONFIG_STATUS_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: Unable to read wrsBootConfigStatus\n",
+			 slog_obj_name);
+	}
+	if (b->wrsBootConfigStatus == WRS_CONFIG_STATUS_DL_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: Downloading of dot-config failed\n",
+			 slog_obj_name);
+	}
+	if (b->wrsBootConfigStatus == WRS_CONFIG_STATUS_CHECK_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: Unable to read status file for wrsBootConfigStatus\n",
+			 slog_obj_name);
+	}
 
-	} else if ( /* check if any of fields equal to 0 */
-		b->wrsRestartReason == 0
-		|| b->wrsConfigSource == 0
-		|| b->wrsBootConfigStatus == 0
-		|| b->wrsBootHwinfoReadout == 0
-		|| b->wrsBootLoadFPGA == 0
-		|| b->wrsBootLoadLM32 == 0
-		|| b->wrsFwUpdateStatus == 0
-	) { /* warning NA */
-		wrsOSStatus_s.wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
+	/* error only when dhcp failed for force_dhcp */
+	if (b->wrsBootConfigStatus == WRS_CONFIG_STATUS_DHCP_ERROR
+		    && b->wrsConfigSource == WRS_CONFIG_SOURCE_FORCE_DHCP) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+			 "Failed to get URL to dot-config via DHCP (wrsConfigSource is set to forceDhcp)\n",
+			 slog_obj_name);
+	}
+	if (b->wrsBootHwinfoReadout == WRS_BOOT_HWINFO_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: Hwinfo readout failed\n",
+			 slog_obj_name);
+	}
+	if (b->wrsBootLoadFPGA == WRS_BOOT_LOAD_FPGA_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: Failed to program FPGA\n",
+			 slog_obj_name);
+	}
+	if (b->wrsBootLoadFPGA == WRS_BOOT_LOAD_FPGA_FILE_NOT_FOUND) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: FPGA bitstream not found\n",
+			 slog_obj_name);
+	}
+	if (b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: LM32 load failed\n",
+			 slog_obj_name);
+	}
+	if (b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_FILE_NOT_FOUND) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: LM32 binary not found\n",
+			 slog_obj_name);
+	}
+	/* check the number of missing modules */
+	if (b->wrsBootKernelModulesMissing > 0) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: %d kernel modules not loaded\n",
+			 slog_obj_name, b->wrsBootKernelModulesMissing);
+	}
+	/* check the number of missing daemons */
+	if (b->wrsBootUserspaceDaemonsMissing > 0) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: %d userspace daemons not started\n",
+			 slog_obj_name, b->wrsBootUserspaceDaemonsMissing);
+	}
 
-	} else if ( /* check if OK */
+	/* check if warning */
+	if (!o->wrsBootSuccessful) {
+
+		if (b->wrsConfigSource == WRS_CONFIG_SOURCE_ERROR_MINOR) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: Unable to read status file of wrsConfigSource\n",
+				slog_obj_name);
+		}
+		if (b->wrsBootConfigStatus == WRS_CONFIG_STATUS_ERROR_MINOR) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: Unable to read status file of wrsBootConfigStatus\n",
+				slog_obj_name);
+		}
+		if (b->wrsBootHwinfoReadout == WRS_BOOT_HWINFO_ERROR_MINOR) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: Unable to read status file of wrsBootHwinfoReadout\n",
+				slog_obj_name);
+		}
+		if (b->wrsBootHwinfoReadout == WRS_BOOT_HWINFO_WARNING) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: HWINFO partition not found\n",
+				slog_obj_name);
+		}
+		if (b->wrsBootLoadFPGA == WRS_BOOT_LOAD_FPGA_ERROR_MINOR) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: Unable to read status file of wrsBootLoadFPGA\n",
+				slog_obj_name);
+		}
+		if (b->wrsBootLoadLM32 == WRS_BOOT_LOAD_LM32_ERROR_MINOR) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: Unable to read status file of wrsBootLoadLM32\n",
+				slog_obj_name);
+		}
+		if (b->wrsFwUpdateStatus == WRS_FW_UPDATE_STATUS_CHECKSUM_ERROR) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: Last update of the firmware failed\n",
+				slog_obj_name);
+		}
+	}
+
+	/* check if any of fields equal to 0 */
+	if (!o->wrsBootSuccessful) {
+		if (b->wrsRestartReason == 0) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Status of wrsRestartReason not available\n",
+				slog_obj_name);
+		}
+		if (b->wrsBootConfigStatus == 0) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Status of wrsBootConfigStatus not available\n",
+				slog_obj_name);
+		}
+		if (b->wrsBootHwinfoReadout == 0) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Status of wrsBootHwinfoReadout not available\n",
+				slog_obj_name);
+		}
+		if (b->wrsBootLoadFPGA == 0) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Status of wrsBootLoadFPGA not available\n",
+				slog_obj_name);
+		}
+		if (b->wrsBootLoadLM32 == 0) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Status of wrsBootLoadLM32 not available\n",
+				slog_obj_name);
+		}
+		if (b->wrsFwUpdateStatus == 0) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Status of wrsFwUpdateStatus not available\n",
+				slog_obj_name);
+		}
+	}
+
+	if ((!o->wrsBootSuccessful) 
+	    && ( /* check if OK */
 		b->wrsBootCnt != 0
 		&& b->wrsRestartReason != WRS_RESTART_REASON_ERROR
 		&& b->wrsConfigSource != WRS_CONFIG_SOURCE_ERROR
@@ -122,7 +248,8 @@ time_t wrsOSStatus_data_fill(void)
 		&& b->wrsBootKernelModulesMissing == 0
 		&& b->wrsBootUserspaceDaemonsMissing == 0
 		&& b->wrsFwUpdateStatus == WRS_FW_UPDATE_STATUS_OK
-	) { /* OK, but check source */
+	       )
+	   ) { /* OK, but check source */
 		/* additional check of source */
 		if (
 			b->wrsConfigSource == WRS_CONFIG_SOURCE_LOCAL
@@ -137,105 +264,211 @@ time_t wrsOSStatus_data_fill(void)
 		) { /* OK */
 			/* when dotconfig is local or try_dhcp or
 			 * ((remote or force_dhcp) and url not empty) */
-			wrsOSStatus_s.wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_OK;
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_OK;
 		} else { /* error because of empty source url */
-			wrsOSStatus_s.wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: empty dot-config's source URL\n",
+				 slog_obj_name);
 		}
-	} else { /* probably bug in previous conditions,
-		  * this should never happen */
-		wrsOSStatus_s.wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_BUG;
+	}
+	
+	if (!o->wrsBootSuccessful) {
+		/* probably bug in previous conditions,
+		 * this should never happen */
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_BUG;
+		SLOG(SL_BUG);
 	}
 
 	/*********************************************************************\
 	|*********************** wrsTemperatureWarning ***********************|
 	\*********************************************************************/
-	if (!wrsTemperature_s.wrsTempThresholdFPGA
-	    && !wrsTemperature_s.wrsTempThresholdPLL
-	    && !wrsTemperature_s.wrsTempThresholdPSL
-	    && !wrsTemperature_s.wrsTempThresholdPSR) {
-		/* no threshold are set */
-		wrsOSStatus_s.wrsTemperatureWarning =
-					WRS_TEMPERATURE_WARNING_THOLD_NOT_SET;
-	} else {
-		/* rise warning when at least one threshold level
-		  * is exceeded, add 2, since 0 is readings not available, 1 is
-		  * no threshold set (WRS_TEMPERATURE_WARNING_THOLD_NOT_SET)
-		  * 2 is ok (WRS_TEMPERATURE_WARNING_OK), 3 is temperature too
-		  * high (WRS_TEMPERATURE_WARNING_TOO_HIGH) */
-		wrsOSStatus_s.wrsTemperatureWarning = 2 +
-		    ((wrsTemperature_s.wrsTempFPGA > wrsTemperature_s.wrsTempThresholdFPGA)
-		    || (wrsTemperature_s.wrsTempPLL > wrsTemperature_s.wrsTempThresholdPLL)
-		    || (wrsTemperature_s.wrsTempPSL > wrsTemperature_s.wrsTempThresholdPSL)
-		    || (wrsTemperature_s.wrsTempPSR > wrsTemperature_s.wrsTempThresholdPSR));
+
+	slog_obj_name = wrsTemperatureWarning_str;
+	t = &wrsTemperature_s;
+
+	/* warning when at least temperature threshold is not set (is 0) */
+	if (t->wrsTempThresholdFPGA == 0) {
+		o->wrsTemperatureWarning = WRS_TEMPERATURE_WARNING_THOLD_NOT_SET;
+		snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+			 "Temperature threshold for the FPGA is not set\n",
+			 slog_obj_name);
+	}
+	if (t->wrsTempThresholdPLL == 0) {
+		o->wrsTemperatureWarning = WRS_TEMPERATURE_WARNING_THOLD_NOT_SET;
+		snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+			 "Temperature threshold for the PLL is not set\n",
+			 slog_obj_name);
+	}
+	if (t->wrsTempThresholdPSL == 0) {
+		o->wrsTemperatureWarning = WRS_TEMPERATURE_WARNING_THOLD_NOT_SET;
+		snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+			 "Temperature threshold for the Power Supply Left is not set\n",
+			 slog_obj_name);
+	}
+	if (t->wrsTempThresholdPSR == 0) {
+		o->wrsTemperatureWarning = WRS_TEMPERATURE_WARNING_THOLD_NOT_SET;
+		snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+			 "Temperature threshold for the Power Supply Right is not set\n",
+			 slog_obj_name);
+	}
+
+	/* rise temperature too high warning when at least one threshold level
+	 * is exceeded */
+	if (t->wrsTempThresholdFPGA && (t->wrsTempFPGA > t->wrsTempThresholdFPGA)) {
+		o->wrsTemperatureWarning = WRS_TEMPERATURE_WARNING_TOO_HIGH;
+		snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+			 "Temperature of the FPGA (%d) exceeded threshold value (%d)\n",
+			 slog_obj_name, t->wrsTempFPGA, t->wrsTempThresholdFPGA);
+	}
+	if (t->wrsTempThresholdPLL && (t->wrsTempPLL > t->wrsTempThresholdPLL)) {
+		o->wrsTemperatureWarning = WRS_TEMPERATURE_WARNING_TOO_HIGH;
+		snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+			 "Temperature of the PLL (%d) exceeded threshold value (%d)\n",
+			 slog_obj_name, t->wrsTempPLL, t->wrsTempThresholdPLL);
+	}
+	if (t->wrsTempThresholdPSL && (t->wrsTempPSL > t->wrsTempThresholdPSL)) {
+		o->wrsTemperatureWarning = WRS_TEMPERATURE_WARNING_TOO_HIGH;
+		snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+			 "Temperature of the Power Supply Left (%d) exceeded threshold value (%d)\n",
+			 slog_obj_name, t->wrsTempPSL, t->wrsTempThresholdPSL);
+	}
+	if (t->wrsTempThresholdPSR && (t->wrsTempPSR > t->wrsTempThresholdPSR)) {
+		o->wrsTemperatureWarning = WRS_TEMPERATURE_WARNING_TOO_HIGH;
+		snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+			 "Temperature of the Power Supply Right (%d) exceeded threshold value (%d)\n",
+			 slog_obj_name, t->wrsTempPSR, t->wrsTempThresholdPSR);
 	}
 
 	/*********************************************************************\
 	|************************* wrsMemoryFreeLow  *************************|
 	\*********************************************************************/
 	/* Check memory usage */
+
+	slog_obj_name = wrsMemoryFreeLow_str;
 	f = &wrsMemory_s;
+
 	if (f->wrsMemoryUsedPerc > WRSMEMORYFREELOW_TRESHOLD_ERROR) {
-		/* Memory usage above error threshold level */
-		wrsOSStatus_s.wrsMemoryFreeLow = WRS_MEMORY_FREE_LOW_ERROR;
-	} else if (f->wrsMemoryUsedPerc > WRSMEMORYFREELOW_TRESHOLD_WARNING) {
-		/* Memory usage above warning threshold level */
-		wrsOSStatus_s.wrsMemoryFreeLow = WRS_MEMORY_FREE_LOW_WARNING;
-	} else if (f->wrsMemoryTotal == 0) {
-		/* Problem with read memory size */
-		wrsOSStatus_s.wrsMemoryFreeLow =
-					WRS_MEMORY_FREE_LOW_WARNING_NA;
-	} else {
+		o->wrsMemoryFreeLow = WRS_MEMORY_FREE_LOW_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+			 "Percentage of used memory (%d) exceeded threshold of error level (%d)\n",
+			 slog_obj_name, f->wrsMemoryUsedPerc, WRSMEMORYFREELOW_TRESHOLD_ERROR);
+	}
+	if (!o->wrsMemoryFreeLow && (f->wrsMemoryUsedPerc > WRSMEMORYFREELOW_TRESHOLD_WARNING)) {
+		o->wrsMemoryFreeLow = WRS_MEMORY_FREE_LOW_WARNING;
+		snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+			 "Percentage of used memory (%d) exceeded threshold of warning level (%d)\n",
+			 slog_obj_name, f->wrsMemoryUsedPerc, WRSMEMORYFREELOW_TRESHOLD_WARNING);
+	}
+	if (!o->wrsMemoryFreeLow && (f->wrsMemoryUsedPerc == 0)) {
+		o->wrsMemoryFreeLow = WRS_MEMORY_FREE_LOW_WARNING_NA;
+		snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: "
+			 "Unable to read percentage of used memory\n",
+			 slog_obj_name);
+	}
+	if (!o->wrsMemoryFreeLow) {
 		/* Memory usage below threshold levels */
-		wrsOSStatus_s.wrsMemoryFreeLow = WRS_MEMORY_FREE_LOW_OK;
+		o->wrsMemoryFreeLow = WRS_MEMORY_FREE_LOW_OK;
 	}
 
 	/*********************************************************************\
 	|************************** wrsCpuLoadHigh  **************************|
 	\*********************************************************************/
 	/* Check CPU load */
+
+	slog_obj_name = wrsCpuLoadHigh_str;
 	c = &wrsCpuLoad_s;
-	if (c->wrsCPULoadAvg1min > WRSCPULOAD_1MIN_ERROR
-	    || c->wrsCPULoadAvg5min > WRSCPULOAD_5MIN_ERROR
-	    || c->wrsCPULoadAvg15min > WRSCPULOAD_15MIN_ERROR) {
-		/* CPU load above error threshold level */
-		wrsOSStatus_s.wrsCpuLoadHigh = WRS_CPU_LOAD_HIGH_ERROR;
-	} else if (c->wrsCPULoadAvg1min > WRSCPULOAD_1MIN_WARNING
-	    || c->wrsCPULoadAvg5min > WRSCPULOAD_5MIN_WARNING
-	    || c->wrsCPULoadAvg15min > WRSCPULOAD_15MIN_WARNING) {
+
+	/* CPU load above error threshold level */
+	if (c->wrsCPULoadAvg1min > WRSCPULOAD_1MIN_ERROR) {
+		o->wrsCpuLoadHigh = WRS_CPU_LOAD_HIGH_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+			 "Average CPU load for 1 min (%d) exceeded threshold of error level (%d)\n",
+			 slog_obj_name, c->wrsCPULoadAvg1min, WRSCPULOAD_1MIN_ERROR);
+	}
+	if (c->wrsCPULoadAvg5min > WRSCPULOAD_5MIN_ERROR) {
+		o->wrsCpuLoadHigh = WRS_CPU_LOAD_HIGH_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+			 "Average CPU load for 5 min (%d) exceeded threshold of error level (%d)\n",
+			 slog_obj_name, c->wrsCPULoadAvg5min, WRSCPULOAD_5MIN_ERROR);
+	}
+	if (c->wrsCPULoadAvg15min > WRSCPULOAD_15MIN_ERROR) {
+		o->wrsCpuLoadHigh = WRS_CPU_LOAD_HIGH_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+			 "Average CPU load for 15 min (%d) exceeded threshold of error level (%d)\n",
+			 slog_obj_name, c->wrsCPULoadAvg15min, WRSCPULOAD_15MIN_ERROR);
+	}
+
+	if (!o->wrsCpuLoadHigh) {
 		/* CPU load above warning threshold level */
-		wrsOSStatus_s.wrsCpuLoadHigh = WRS_CPU_LOAD_HIGH_WARNING;
-	} else {
+		if (c->wrsCPULoadAvg1min > WRSCPULOAD_1MIN_WARNING) {
+			o->wrsCpuLoadHigh = WRS_CPU_LOAD_HIGH_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+				"Average CPU load for 1 min (%d) exceeded threshold of warning level (%d)\n",
+				slog_obj_name, c->wrsCPULoadAvg1min, WRSCPULOAD_1MIN_WARNING);
+		}
+		if (c->wrsCPULoadAvg5min > WRSCPULOAD_5MIN_WARNING) {
+			o->wrsCpuLoadHigh = WRS_CPU_LOAD_HIGH_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+				"Average CPU load for 5 min (%d) exceeded threshold of warning level (%d)\n",
+				slog_obj_name, c->wrsCPULoadAvg5min, WRSCPULOAD_5MIN_WARNING);
+		}
+		if (c->wrsCPULoadAvg15min > WRSCPULOAD_15MIN_WARNING) {
+			o->wrsCpuLoadHigh = WRS_CPU_LOAD_HIGH_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+				"Average CPU load for 15 min (%d) exceeded threshold of warning level (%d)\n",
+				slog_obj_name, c->wrsCPULoadAvg15min, WRSCPULOAD_15MIN_WARNING);
+		}
+	}
+
+	if (!o->wrsCpuLoadHigh) {
 		/* CPU load below threshold levels */
-		wrsOSStatus_s.wrsCpuLoadHigh = WRS_CPU_LOAD_HIGH_OK;
+		o->wrsCpuLoadHigh = WRS_CPU_LOAD_HIGH_OK;
 	}
 
 	/*********************************************************************\
 	|************************** wrsDiskSpaceLow **************************|
 	\*********************************************************************/
 	/* Check disk usage */
+
+	slog_obj_name = wrsDiskSpaceLow_str;
 	d = wrsDiskTable_array;
-	wrsOSStatus_s.wrsDiskSpaceLow = WRS_DISK_SPACE_LOW_OK;
+
+	o->wrsDiskSpaceLow = WRS_DISK_SPACE_LOW_OK;
 	for (i = 0; i < n_rows_disk_space; i++) {
 		if (d[i].wrsDiskUseRate > WRSDISKSPACELOW_TRESHOLD_ERROR) {
 			/* Disk usage above error threshold level */
-			wrsOSStatus_s.wrsDiskSpaceLow =
-						WRS_DISK_SPACE_LOW_ERROR;
-			snmp_log(LOG_ERR, "SNMP: wrsDiskSpaceLow error for "
-				 "disk %s\n", d[i].wrsDiskMountPath);
-			/* error, can't be worst so break */
-			break;
+			o->wrsDiskSpaceLow = WRS_DISK_SPACE_LOW_ERROR;
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+				 "Percentage of used disk space (%d) exceeded threshold of error level (%d) "
+				 "for disk mounted at %s\n", slog_obj_name,
+				 d[i].wrsDiskUseRate,
+				 WRSDISKSPACELOW_TRESHOLD_ERROR,
+				 d[i].wrsDiskMountPath);
 		} else if (d[i].wrsDiskUseRate > WRSDISKSPACELOW_TRESHOLD_WARNING) {
 			/* Disk usage above warning threshold level */
-			wrsOSStatus_s.wrsDiskSpaceLow =
-						WRS_DISK_SPACE_LOW_WARNING;
-			snmp_log(LOG_ERR, "SNMP: wrsDiskSpaceLow warning for "
-				 "disk %s\n", d[i].wrsDiskMountPath);
-		} else if (d[i].wrsDiskSize == 0
-			   && wrsOSStatus_s.wrsDiskSpaceLow == WRS_DISK_SPACE_LOW_OK) {
+			if (o->wrsDiskSpaceLow == WRS_DISK_SPACE_LOW_OK
+			    || o->wrsDiskSpaceLow == WRS_DISK_SPACE_LOW_WARNING_NA) {
+				/* set to warning only if before no
+				 * errors/warnings nor warning_na */
+				o->wrsDiskSpaceLow = WRS_DISK_SPACE_LOW_WARNING;
+			}
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+				 "Percentage of used disk space (%d) exceeded threshold of warning level (%d) "
+				 "for disk mounted at %s\n", slog_obj_name,
+				 d[i].wrsDiskUseRate,
+				 WRSDISKSPACELOW_TRESHOLD_WARNING,
+				 d[i].wrsDiskMountPath);
+		} else if (d[i].wrsDiskSize == 0) {
 			/* disk size is 0, propably error while reading size,
 			 * but don't overwrite regular warning */
-			wrsOSStatus_s.wrsDiskSpaceLow =
-						WRS_DISK_SPACE_LOW_WARNING_NA;
+			if (o->wrsDiskSpaceLow == WRS_DISK_SPACE_LOW_OK) {
+				o->wrsDiskSpaceLow = WRS_DISK_SPACE_LOW_WARNING_NA;
+			}
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: "
+				 "Unable to read percentage of used disk space"
+				 "for disk mounted at %s\n", slog_obj_name,
+				 d[i].wrsDiskMountPath);
+
 		}
 	}
 
