@@ -52,4 +52,25 @@ struct pickinfo {
 	.len = sizeof(((struct _struct *)0)->_field),			\
 	 }
 
+/*
+ * Print a message about an object
+ *
+ * Valid example2:
+ * strcpy(slog_obj_name, "my_obj");
+ * SLOG(SL_BUG);
+ * prints:
+ * SNMP: BUG my_obj
+ */
+#define SLOG(_log_type) \
+     do { \
+         snmp_log(LOG_ERR, "SNMP: " _log_type " %s\n", slog_obj_name); \
+     } while (0)
+
+/* String definitions for functions SLOG* */
+#define SL_ER "Error"
+#define SL_W "Warning"
+#define SL_NA "Warning NA"
+#define SL_BUG "BUG"
+
+
 #endif /* WRS_SNMP_H */
