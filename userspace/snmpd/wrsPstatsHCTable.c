@@ -5,47 +5,47 @@ struct wrsPstatsHCTable_s pstats_array[WRS_N_PORTS];
 
 static struct pickinfo wrsPstatsHCTable_pickinfo[] = {
 	/* Warning: strings are a special case for snmp format */
-	FIELD(wrsPstatsHCTable_s, ASN_UNSIGNED, index), /* not reported */
-	FIELD(wrsPstatsHCTable_s, ASN_OCTET_STR, port_name),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, TXUnderrun),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXOverrun),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXInvalidCode),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXSyncLost),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPauseFrames),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPfilterDropped),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPCSErrors),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXGiantFrames),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXRuntFrames),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXCRCErrors),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass0),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass1),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass2),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass3),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass4),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass5),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass6),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPclass7),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, TXFrames),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXFrames),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXDropRTUFull),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio0),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio1),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio2),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio3),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio4),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio5),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio6),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RXPrio7),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RTUValid),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RTUResponses),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, RTUDropped),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, FastMatchPriority),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, FastMatchFastForward),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, FastMatchNonForward),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, FastMatchRespValid),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, FullMatchRespValid),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, Forwarded),
-	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, TRURespValid),
+	FIELD(wrsPstatsHCTable_s, ASN_UNSIGNED, wrsPstatsHCIndex), /* not reported */
+	FIELD(wrsPstatsHCTable_s, ASN_OCTET_STR, wrsPstatsHCPortName),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCTXUnderrun),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXOverrun),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXInvalidCode),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXSyncLost),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPauseFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPfilterDropped),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPCSErrors),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXGiantFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXRuntFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXCRCErrors),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPclass0),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPclass1),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPclass2),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPclass3),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPclass4),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPclass5),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPclass6),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPclass7),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCTXFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXFrames),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXDropRTUFull),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPrio0),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPrio1),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPrio2),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPrio3),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPrio4),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPrio5),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPrio6),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRXPrio7),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRTUValid),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRTUResponses),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCRTUDropped),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCFastMatchPriority),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCFastMatchFastForward),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCFastMatchNonForward),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCFastMatchRespValid),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCFullMatchRespValid),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCForwarded),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCTRURespValid),
 };
 
 time_t
@@ -107,7 +107,7 @@ wrsPstatsHCTable_data_fill(unsigned int *n_rows)
 
 	/* read pstats for each port */
 	for (wrport = 0; wrport < WRS_N_PORTS; wrport++) {
-		snprintf(pstats_array[wrport].port_name, 10,
+		snprintf(pstats_array[wrport].wrsPstatsHCPortName, 10,
 				 "wri%d", wrport + 1);
 		sprintf(fname, PSTATS_SYSCTL_PATH"wrport%i", wrport + 1);
 		f = fopen(fname, "r");
@@ -137,45 +137,45 @@ wrsPstatsHCTable_data_fill(unsigned int *n_rows)
 		switch (counters_version) {
 		case 1:
 			/* copy counters to array */
-			pstats_array[wrport].TXUnderrun = counters[0];
-			pstats_array[wrport].RXOverrun = counters[1];
-			pstats_array[wrport].RXInvalidCode = counters[2];
-			pstats_array[wrport].RXSyncLost = counters[3];
-			pstats_array[wrport].RXPauseFrames = counters[4];
-			pstats_array[wrport].RXPfilterDropped = counters[5];
-			pstats_array[wrport].RXPCSErrors = counters[6];
-			pstats_array[wrport].RXGiantFrames = counters[7];
-			pstats_array[wrport].RXRuntFrames = counters[8];
-			pstats_array[wrport].RXCRCErrors = counters[9];
-			pstats_array[wrport].RXPclass0 = counters[10];
-			pstats_array[wrport].RXPclass1 = counters[11];
-			pstats_array[wrport].RXPclass2 = counters[12];
-			pstats_array[wrport].RXPclass3 = counters[13];
-			pstats_array[wrport].RXPclass4 = counters[14];
-			pstats_array[wrport].RXPclass5 = counters[15];
-			pstats_array[wrport].RXPclass6 = counters[16];
-			pstats_array[wrport].RXPclass7 = counters[17];
-			pstats_array[wrport].TXFrames = counters[18];
-			pstats_array[wrport].RXFrames = counters[19];
-			pstats_array[wrport].RXDropRTUFull = counters[20];
-			pstats_array[wrport].RXPrio0 = counters[21];
-			pstats_array[wrport].RXPrio1 = counters[22];
-			pstats_array[wrport].RXPrio2 = counters[23];
-			pstats_array[wrport].RXPrio3 = counters[24];
-			pstats_array[wrport].RXPrio4 = counters[25];
-			pstats_array[wrport].RXPrio5 = counters[26];
-			pstats_array[wrport].RXPrio6 = counters[27];
-			pstats_array[wrport].RXPrio7 = counters[28];
-			pstats_array[wrport].RTUValid = counters[29];
-			pstats_array[wrport].RTUResponses = counters[30];
-			pstats_array[wrport].RTUDropped = counters[31];
-			pstats_array[wrport].FastMatchPriority = counters[32];
-			pstats_array[wrport].FastMatchFastForward = counters[33];
-			pstats_array[wrport].FastMatchNonForward = counters[34];
-			pstats_array[wrport].FastMatchRespValid = counters[35];
-			pstats_array[wrport].FullMatchRespValid = counters[36];
-			pstats_array[wrport].Forwarded = counters[37];
-			pstats_array[wrport].TRURespValid = counters[38];
+			pstats_array[wrport].wrsPstatsHCTXUnderrun = counters[0];
+			pstats_array[wrport].wrsPstatsHCRXOverrun = counters[1];
+			pstats_array[wrport].wrsPstatsHCRXInvalidCode = counters[2];
+			pstats_array[wrport].wrsPstatsHCRXSyncLost = counters[3];
+			pstats_array[wrport].wrsPstatsHCRXPauseFrames = counters[4];
+			pstats_array[wrport].wrsPstatsHCRXPfilterDropped = counters[5];
+			pstats_array[wrport].wrsPstatsHCRXPCSErrors = counters[6];
+			pstats_array[wrport].wrsPstatsHCRXGiantFrames = counters[7];
+			pstats_array[wrport].wrsPstatsHCRXRuntFrames = counters[8];
+			pstats_array[wrport].wrsPstatsHCRXCRCErrors = counters[9];
+			pstats_array[wrport].wrsPstatsHCRXPclass0 = counters[10];
+			pstats_array[wrport].wrsPstatsHCRXPclass1 = counters[11];
+			pstats_array[wrport].wrsPstatsHCRXPclass2 = counters[12];
+			pstats_array[wrport].wrsPstatsHCRXPclass3 = counters[13];
+			pstats_array[wrport].wrsPstatsHCRXPclass4 = counters[14];
+			pstats_array[wrport].wrsPstatsHCRXPclass5 = counters[15];
+			pstats_array[wrport].wrsPstatsHCRXPclass6 = counters[16];
+			pstats_array[wrport].wrsPstatsHCRXPclass7 = counters[17];
+			pstats_array[wrport].wrsPstatsHCTXFrames = counters[18];
+			pstats_array[wrport].wrsPstatsHCRXFrames = counters[19];
+			pstats_array[wrport].wrsPstatsHCRXDropRTUFull = counters[20];
+			pstats_array[wrport].wrsPstatsHCRXPrio0 = counters[21];
+			pstats_array[wrport].wrsPstatsHCRXPrio1 = counters[22];
+			pstats_array[wrport].wrsPstatsHCRXPrio2 = counters[23];
+			pstats_array[wrport].wrsPstatsHCRXPrio3 = counters[24];
+			pstats_array[wrport].wrsPstatsHCRXPrio4 = counters[25];
+			pstats_array[wrport].wrsPstatsHCRXPrio5 = counters[26];
+			pstats_array[wrport].wrsPstatsHCRXPrio6 = counters[27];
+			pstats_array[wrport].wrsPstatsHCRXPrio7 = counters[28];
+			pstats_array[wrport].wrsPstatsHCRTUValid = counters[29];
+			pstats_array[wrport].wrsPstatsHCRTUResponses = counters[30];
+			pstats_array[wrport].wrsPstatsHCRTUDropped = counters[31];
+			pstats_array[wrport].wrsPstatsHCFastMatchPriority = counters[32];
+			pstats_array[wrport].wrsPstatsHCFastMatchFastForward = counters[33];
+			pstats_array[wrport].wrsPstatsHCFastMatchNonForward = counters[34];
+			pstats_array[wrport].wrsPstatsHCFastMatchRespValid = counters[35];
+			pstats_array[wrport].wrsPstatsHCFullMatchRespValid = counters[36];
+			pstats_array[wrport].wrsPstatsHCForwarded = counters[37];
+			pstats_array[wrport].wrsPstatsHCTRURespValid = counters[38];
 			break;
 		case 2:
 		default:
