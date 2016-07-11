@@ -8,32 +8,32 @@
 #define WRS_MAX_N_SERVO_INSTANCES 1
 
 struct wrsPtpDataTable_s {
-	uint32_t index;		/* not reported, index fields has to be marked
+	uint32_t wrsPtpDataIndex;		/* not reported, index fields has to be marked
 				 * as not-accessible in MIB */
-	char port_name[12];	/* port name on which ptp servo instance in
+	char wrsPtpPortName[12];	/* port name on which ptp servo instance in
 				 * running FIXME: not implemented */
-	ClockIdentity gm_id;	/* FIXME: not implemented */
-	ClockIdentity my_id;	/* FIXME: not implemented */
-	int ppsi_mode;		/* FIXME: not implemented */
-	char servo_state_name[32]; /* State as string */
-	int servo_state;	/* state number */
-	int tracking_enabled;
-	char sync_source[32];	/* FIXME: not implemented */
-	int64_t clock_offset;
-	int32_t clock_offsetHR;	/* Human readable version of clock_offset,
+	ClockIdentity wrsPtpGrandmasterID;	/* FIXME: not implemented */
+	ClockIdentity wrsPtpOwnID;	/* FIXME: not implemented */
+	int wrsPtpMode;		/* FIXME: not implemented */
+	char wrsPtpServoState[32]; /* State as string */
+	int wrsPtpServoStateN;	/* state number */
+	int wrsPtpPhaseTracking;
+	char wrsPtpSyncSource[32];	/* FIXME: not implemented */
+	int64_t wrsPtpClockOffsetPs;
+	int32_t wrsPtpClockOffsetPsHR;	/* Human readable version of clock_offset,
 				 * saturated to int limits */
-	int32_t skew;
-	int64_t rtt;
-	uint32_t llength;
-	uint32_t servo_updates;
-	int32_t delta_tx_m;
-	int32_t delta_rx_m;
-	int32_t delta_tx_s;
-	int32_t delta_rx_s;
-	uint32_t n_err_state;
-	uint32_t n_err_offset;
-	uint32_t n_err_delta_rtt;
-	uint64_t update_time;
+	int32_t wrsPtpSkew;
+	int64_t wrsPtpRTT;
+	uint32_t wrsPtpLinkLength;
+	uint32_t wrsPtpServoUpdates;
+	int32_t wrsPtpDeltaTxM;
+	int32_t wrsPtpDeltaRxM;
+	int32_t wrsPtpDeltaTxS;
+	int32_t wrsPtpDeltaRxS;
+	uint32_t wrsPtpServoStateErrCnt;
+	uint32_t wrsPtpClockOffsetErrCnt;
+	uint32_t wrsPtpRTTErrCnt;
+	uint64_t wrsPtpServoUpdateTime;
 };
 
 extern struct wrsPtpDataTable_s wrsPtpDataTable_array[WRS_MAX_N_SERVO_INSTANCES];

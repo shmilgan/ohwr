@@ -6,29 +6,29 @@ struct wrsPtpDataTable_s wrsPtpDataTable_array[WRS_MAX_N_SERVO_INSTANCES];
 
 static struct pickinfo wrsPtpDataTable_pickinfo[] = {
 	/* Warning: strings are a special case for snmp format */
-	FIELD(wrsPtpDataTable_s, ASN_UNSIGNED, index), /* not reported */
-	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, port_name),
-	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, gm_id),
-	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, my_id),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, ppsi_mode),
-	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, servo_state_name),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, servo_state),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, tracking_enabled),
-	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, sync_source),
-	FIELD(wrsPtpDataTable_s, ASN_COUNTER64, clock_offset),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, clock_offsetHR),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, skew),
-	FIELD(wrsPtpDataTable_s, ASN_COUNTER64, rtt),
-	FIELD(wrsPtpDataTable_s, ASN_UNSIGNED, llength),
-	FIELD(wrsPtpDataTable_s, ASN_COUNTER, servo_updates),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, delta_tx_m),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, delta_rx_m),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, delta_tx_s),
-	FIELD(wrsPtpDataTable_s, ASN_INTEGER, delta_rx_s),
-	FIELD(wrsPtpDataTable_s, ASN_COUNTER, n_err_state),
-	FIELD(wrsPtpDataTable_s, ASN_COUNTER, n_err_offset),
-	FIELD(wrsPtpDataTable_s, ASN_COUNTER, n_err_delta_rtt),
-	FIELD(wrsPtpDataTable_s, ASN_COUNTER64, update_time),
+	FIELD(wrsPtpDataTable_s, ASN_UNSIGNED, wrsPtpDataIndex), /* not reported */
+	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpPortName),
+	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpGrandmasterID),
+	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpOwnID),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpMode),
+	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpServoState),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpServoStateN),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpPhaseTracking),
+	FIELD(wrsPtpDataTable_s, ASN_OCTET_STR, wrsPtpSyncSource),
+	FIELD(wrsPtpDataTable_s, ASN_COUNTER64, wrsPtpClockOffsetPs),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpClockOffsetPsHR),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpSkew),
+	FIELD(wrsPtpDataTable_s, ASN_COUNTER64, wrsPtpRTT),
+	FIELD(wrsPtpDataTable_s, ASN_UNSIGNED, wrsPtpLinkLength),
+	FIELD(wrsPtpDataTable_s, ASN_COUNTER, wrsPtpServoUpdates),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpDeltaTxM),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpDeltaRxM),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpDeltaTxS),
+	FIELD(wrsPtpDataTable_s, ASN_INTEGER, wrsPtpDeltaRxS),
+	FIELD(wrsPtpDataTable_s, ASN_COUNTER, wrsPtpServoStateErrCnt),
+	FIELD(wrsPtpDataTable_s, ASN_COUNTER, wrsPtpClockOffsetErrCnt),
+	FIELD(wrsPtpDataTable_s, ASN_COUNTER, wrsPtpRTTErrCnt),
+	FIELD(wrsPtpDataTable_s, ASN_COUNTER64, wrsPtpServoUpdateTime),
 
 };
 
@@ -81,38 +81,39 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 	while (1) {
 		ii = wrs_shm_seqbegin(ppsi_head);
 
-		strncpy(wrsPtpDataTable_array[0].servo_state_name,
+		strncpy(wrsPtpDataTable_array[0].wrsPtpServoState,
 			ppsi_servo->servo_state_name,
 			sizeof(ppsi_servo->servo_state_name));
-		wrsPtpDataTable_array[0].servo_state = ppsi_servo->state;
+		wrsPtpDataTable_array[0].wrsPtpServoStateN = ppsi_servo->state;
 		/* Keep value 0 for Not available */
-		wrsPtpDataTable_array[0].tracking_enabled =
+		wrsPtpDataTable_array[0].wrsPtpPhaseTracking =
 					1 + ppsi_servo->tracking_enabled;
 		/*
 		 * WARNING: the current snmpd is bugged: it has
 		 * endianness problems with 64 bit, and the two
 		 * halves are swapped. So pre-swap them here
 		 */
-		wrsPtpDataTable_array[0].rtt = (ppsi_servo->picos_mu << 32)
+		wrsPtpDataTable_array[0].wrsPtpRTT = (ppsi_servo->picos_mu << 32)
 				    | (ppsi_servo->picos_mu >> 32);
-		wrsPtpDataTable_array[0].clock_offset =
+		wrsPtpDataTable_array[0].wrsPtpClockOffsetPs =
 						(ppsi_servo->offset << 32)
 						| (ppsi_servo->offset >> 32);
-		wrsPtpDataTable_array[0].clock_offsetHR =
+		wrsPtpDataTable_array[0].wrsPtpClockOffsetPsHR =
 					int_saturate(ppsi_servo->offset);
-		wrsPtpDataTable_array[0].skew = int_saturate(ppsi_servo->skew);
-		wrsPtpDataTable_array[0].llength =
+		wrsPtpDataTable_array[0].wrsPtpSkew =
+						int_saturate(ppsi_servo->skew);
+		wrsPtpDataTable_array[0].wrsPtpLinkLength =
 			(uint32_t)(ppsi_servo->delta_ms/1e12 * 300e6 / 1.55);
-		wrsPtpDataTable_array[0].servo_updates =
+		wrsPtpDataTable_array[0].wrsPtpServoUpdates =
 						ppsi_servo->update_count;
-		wrsPtpDataTable_array[0].delta_tx_m = ppsi_servo->delta_tx_m;
-		wrsPtpDataTable_array[0].delta_rx_m = ppsi_servo->delta_rx_m;
-		wrsPtpDataTable_array[0].delta_tx_s = ppsi_servo->delta_tx_s;
-		wrsPtpDataTable_array[0].delta_rx_s = ppsi_servo->delta_rx_s;
-		wrsPtpDataTable_array[0].n_err_state = ppsi_servo->n_err_state;
-		wrsPtpDataTable_array[0].n_err_offset = ppsi_servo->n_err_offset;
-		wrsPtpDataTable_array[0].n_err_delta_rtt = ppsi_servo->n_err_delta_rtt;
-		wrsPtpDataTable_array[0].update_time =
+		wrsPtpDataTable_array[0].wrsPtpDeltaTxM = ppsi_servo->delta_tx_m;
+		wrsPtpDataTable_array[0].wrsPtpDeltaRxM = ppsi_servo->delta_rx_m;
+		wrsPtpDataTable_array[0].wrsPtpDeltaTxS = ppsi_servo->delta_tx_s;
+		wrsPtpDataTable_array[0].wrsPtpDeltaRxS = ppsi_servo->delta_rx_s;
+		wrsPtpDataTable_array[0].wrsPtpServoStateErrCnt = ppsi_servo->n_err_state;
+		wrsPtpDataTable_array[0].wrsPtpClockOffsetErrCnt = ppsi_servo->n_err_offset;
+		wrsPtpDataTable_array[0].wrsPtpRTTErrCnt = ppsi_servo->n_err_delta_rtt;
+		wrsPtpDataTable_array[0].wrsPtpServoUpdateTime =
 			(((uint64_t) ppsi_servo->update_time.seconds) * 1000000000LL)
 			+ ppsi_servo->update_time.nanoseconds;
 		retries++;
