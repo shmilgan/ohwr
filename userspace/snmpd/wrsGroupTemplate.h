@@ -8,6 +8,7 @@ static int group_handler(netsnmp_mib_handler          *handler,
 	struct pickinfo *pi;
 	void *ptr;
 	int len;
+	struct counter64 tmp_counter64;
 
 	/*
 	 * Retrieve information from ppsi itself. But this function
@@ -31,6 +32,15 @@ static int group_handler(netsnmp_mib_handler          *handler,
 		}
 		pi = GT_PICKINFO + obj;
 		ptr = (void *)&GT_DATA_STRUCT + pi->offset;
+		/* snmp_set_var_typed_value function does not support counter64
+		 * as a uint64_t, but as a struct counter64. Their binary
+		 * representation differs by order of 32bit words. We fill
+		 * struct counter64 according to its fields. */
+		if (pi->type == ASN_COUNTER64) {
+			tmp_counter64.high = (*(uint64_t *)ptr) >> 32;
+			tmp_counter64.low = *(uint64_t *)ptr;
+			ptr = &tmp_counter64;
+		}
 		len = pi->len;
 		if (len > 8) /* special case for strings */
 			len = strnlen(ptr, len);
