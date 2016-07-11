@@ -86,10 +86,10 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
 	static int first_run = 1;
 
 	/* store old values of ptp servo error counters and number of updates */
-	static uint32_t servo_updates_prev[WRS_MAX_N_SERVO_INSTANCES];
-	static uint32_t n_err_state_prev[WRS_MAX_N_SERVO_INSTANCES];
-	static uint32_t n_err_offset_prev[WRS_MAX_N_SERVO_INSTANCES];
-	static uint32_t n_err_delta_rtt_prev[WRS_MAX_N_SERVO_INSTANCES];
+	static uint32_t wrsPtpServoUpdates_prev[WRS_MAX_N_SERVO_INSTANCES];
+	static uint32_t wrsPtpServoStateErrCnt_prev[WRS_MAX_N_SERVO_INSTANCES];
+	static uint32_t wrsPtpClockOffsetErrCnt_prev[WRS_MAX_N_SERVO_INSTANCES];
+	static uint32_t wrsPtpRTTErrCnt_prev[WRS_MAX_N_SERVO_INSTANCES];
 
 	/*********************************************************************\
 	|*************************** wrsPTPStatus  ***************************|
@@ -113,14 +113,14 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
 
 		/* check if error */
 		} else if ((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE)
-		    && ((pd_a[i].servo_updates == servo_updates_prev[i])
-			|| (pd_a[i].n_err_state != n_err_state_prev[i])
-			|| (pd_a[i].n_err_offset != n_err_offset_prev[i])
-			|| (pd_a[i].n_err_delta_rtt != n_err_delta_rtt_prev[i])
-			|| (pd_a[i].delta_tx_m == 0)
-			|| (pd_a[i].delta_rx_m == 0)
-			|| (pd_a[i].delta_tx_s == 0)
-			|| (pd_a[i].delta_rx_s == 0))) {
+		    && ((pd_a[i].wrsPtpServoUpdates == wrsPtpServoUpdates_prev[i])
+			|| (pd_a[i].wrsPtpServoStateErrCnt != wrsPtpServoStateErrCnt_prev[i])
+			|| (pd_a[i].wrsPtpClockOffsetErrCnt != wrsPtpClockOffsetErrCnt_prev[i])
+			|| (pd_a[i].wrsPtpRTTErrCnt != wrsPtpRTTErrCnt_prev[i])
+			|| (pd_a[i].wrsPtpDeltaTxM == 0)
+			|| (pd_a[i].wrsPtpDeltaRxM == 0)
+			|| (pd_a[i].wrsPtpDeltaTxS == 0)
+			|| (pd_a[i].wrsPtpDeltaRxS == 0))) {
 			wrsTimingStatus_s.wrsPTPStatus = WRS_PTP_STATUS_ERROR;
 			snmp_log(LOG_ERR, "SNMP: wrsPTPStatus "
 					  "failed for instance %d\n", i);
@@ -132,10 +132,10 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
 
 	for (i = 0; i < ptp_data_nrows; i++) {
 		/* update old values */
-		servo_updates_prev[i] = pd_a[i].servo_updates;
-		n_err_state_prev[i] = pd_a[i].n_err_state;
-		n_err_offset_prev[i] = pd_a[i].n_err_offset;
-		n_err_delta_rtt_prev[i] = pd_a[i].n_err_delta_rtt;
+		wrsPtpServoUpdates_prev[i] = pd_a[i].wrsPtpServoUpdates;
+		wrsPtpServoStateErrCnt_prev[i] = pd_a[i].wrsPtpServoStateErrCnt;
+		wrsPtpClockOffsetErrCnt_prev[i] = pd_a[i].wrsPtpClockOffsetErrCnt;
+		wrsPtpRTTErrCnt_prev[i] = pd_a[i].wrsPtpRTTErrCnt;
 	}
 
 	first_run = 0;
