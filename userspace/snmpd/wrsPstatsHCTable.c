@@ -120,12 +120,7 @@ wrsPstatsHCTable_data_fill(unsigned int *n_rows)
 		for (i = 0; i < n_counters_in_fpga; i++) {
 			if (fscanf(f, "%" SCNu32, &tmp1) == 1 &&
 			    fscanf(f, "%" SCNu32, &tmp2) == 1) {
-				/*
-				 * WARNING: the current snmpd is bugged: it has
-				 * endianness problems with 64 bit, and the two
-				 * halves are swapped. So pre-swap them here
-				 */
-				counters[i] = (((uint64_t) tmp1) << 32) | tmp2;
+				counters[i] = (((uint64_t) tmp2) << 32) | tmp1;
 			} else {
 				counters[i] = 0xffffffffffffffffLL;
 			}

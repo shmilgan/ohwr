@@ -51,6 +51,7 @@ table_handler(netsnmp_mib_handler          *handler,
 	int row, subid;
 	int len;
 	void *ptr;
+	struct counter64 tmp_counter64;
 
 	switch (reqinfo->mode) {
 	case MODE_GET:
@@ -91,6 +92,15 @@ table_handler(netsnmp_mib_handler          *handler,
 
 		pi = TT_PICKINFO + subid;
 		ptr = (void *)(TT_DATA_ARRAY + row) + pi->offset;
+		/* snmp_set_var_typed_value function does not support counter64
+		 * as a uint64_t, but as a struct counter64. Their binary
+		 * representation differs by order of 32bit words. We fill
+		 * struct counter64 according to its fields. */
+		if (pi->type == ASN_COUNTER64) {
+			tmp_counter64.high = (*(uint64_t *)ptr) >> 32;
+			tmp_counter64.low = *(uint64_t *)ptr;
+			ptr = &tmp_counter64;
+		}
 		len = pi->len;
 		if (len > 8) /* special case for strings */
 			len = strnlen(ptr, len);

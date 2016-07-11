@@ -56,13 +56,7 @@ time_t wrsCurrentTime_data_fill(void)
 	} while ((tmp1 != utch) || (tmp2 != utcl));
 
 	wrs_d_current_64 = (uint64_t)(utch) << 32 | utcl;
-	/*
-	  * WARNING: the current snmpd is bugged: it has
-	  * endianness problems with 64 bit, and the two
-	  * halves are swapped. So pre-swap them here
-	  */
-	wrsCurrentTime_s.wrsDateTAI =
-		(wrs_d_current_64 << 32) | (wrs_d_current_64 >> 32);
+	wrsCurrentTime_s.wrsDateTAI = wrs_d_current_64;
 
 	t = wrs_d_current_64;
 	localtime_r(&t, &tm);

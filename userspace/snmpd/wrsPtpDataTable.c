@@ -88,16 +88,9 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 		/* Keep value 0 for Not available */
 		wrsPtpDataTable_array[0].wrsPtpPhaseTracking =
 					1 + ppsi_servo->tracking_enabled;
-		/*
-		 * WARNING: the current snmpd is bugged: it has
-		 * endianness problems with 64 bit, and the two
-		 * halves are swapped. So pre-swap them here
-		 */
-		wrsPtpDataTable_array[0].wrsPtpRTT = (ppsi_servo->picos_mu << 32)
-				    | (ppsi_servo->picos_mu >> 32);
+		wrsPtpDataTable_array[0].wrsPtpRTT = ppsi_servo->picos_mu;
 		wrsPtpDataTable_array[0].wrsPtpClockOffsetPs =
-						(ppsi_servo->offset << 32)
-						| (ppsi_servo->offset >> 32);
+						ppsi_servo->offset;
 		wrsPtpDataTable_array[0].wrsPtpClockOffsetPsHR =
 					int_saturate(ppsi_servo->offset);
 		wrsPtpDataTable_array[0].wrsPtpSkew =
