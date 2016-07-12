@@ -16,6 +16,11 @@
 #define WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR 3
 #define WRS_PORT_STATUS_CONFIGURED_MODE_AUTO 4
 
+#define WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE 1	/* error */
+#define WRS_PORT_STATUS_SFP_IN_DB_IN_DATA_BASE 2	/* ok */
+
+#define WRS_PORT_STATUS_SFP_GBE_LINK_NOT_GBE 1	/* error */
+#define WRS_PORT_STATUS_SFP_GBE_LINK_GBE 2	/* ok */
 
 struct wrsPortStatusTable_s {
 	uint32_t index;		/* not reported, index fields has to be marked
