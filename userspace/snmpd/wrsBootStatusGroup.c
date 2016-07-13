@@ -138,7 +138,7 @@ static void get_boot_info(void){
 
 	f = fopen(BOOTCOUNT_FILE, "r");
 	if (!f) {
-		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup filed to open "
+		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup failed to open "
 			 BOOTCOUNT_FILE"\n");
 		/* notify snmp about error in restart reason */
 		wrsBootStatus_s.wrsRestartReason = WRS_RESTART_REASON_ERROR;
@@ -324,7 +324,7 @@ static void get_boot_scripts_status(void){
 			/* try again next time */
 			run_once = 0;
 		}
-		else {/*  */
+		else {/* Failed to load FPGA */
 			wrsBootStatus_s.wrsBootLoadFPGA =
 						WRS_BOOT_LOAD_FPGA_ERROR;
 			/* try again next time */
@@ -385,7 +385,7 @@ static void get_loaded_kernel_modules_status(void)
 
 	f = fopen(MODULES_FILE, "r");
 	if (!f) {
-		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup filed to open "
+		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup failed to open "
 			 MODULES_FILE"\n");
 		/* notify snmp about error in kernel modules */
 		wrsBootStatus_s.wrsBootKernelModulesMissing =
