@@ -22,33 +22,37 @@ copy_conf() {
     done
 }
 
-#check if config is local
+# check if config is local, used by webinterface
 if [ "$1" == "local_config" ]; then
-	# remove source information in case previous config was received from
-	# network
-	rm "$tmpdir"/dot-config_*
-	echo "local" > "$tmpdir"/dot-config_source
-fi
+    # remove source information in case previous config was received from
+    # network
+    rm "$tmpdir"/dot-config_*
+    echo "local" > "$tmpdir"/dot-config_source
 
-# Check and complain, but we need to edit some files even if unconfigured.
-if [ -f /wr/etc/dot-config ]; then
-    source /wr/etc/dot-config
-    ret_source=$?
-    /wr/bin/wrs_checkcfg /wr/etc/dot-config /wr/etc/Kconfig
-    ret_check=$?
-    configured=true
-    if [ $ret_source != 0 ] || [ $ret_check != 0 ]; then
-	# errors in local dot-config
-	echo "check_error" > "$tmpdir"/dot-config_status
-	echo "Errors found in local dot-config!!!" >& 2
+    # Check and complain
+    if [ -f /wr/etc/dot-config ]; then
+	source /wr/etc/dot-config
+	ret_source=$?
+	/wr/bin/wrs_checkcfg /wr/etc/dot-config /wr/etc/Kconfig
+	ret_check=$?
+	configured=true
+	if [ $ret_source != 0 ] || [ $ret_check != 0 ]; then
+	    # errors in local dot-config
+	    echo "check_error" > "$tmpdir"/dot-config_status
+	    echo "Errors found in local dot-config!!!" >& 2
+	else
+	    echo "config_ok" > "$tmpdir"/dot-config_status
+	fi
     else
-	echo "config_ok" > "$tmpdir"/dot-config_status
+	echo "No /wr/etc/dot-config to use" >& 2
+	echo "no_config" > "$tmpdir"/dot-config_source
+	echo "config_error" > "$tmpdir"/dot-config_status
+	configured=false
     fi
-else
-    echo "No /wr/etc/dot-config to use" >& 2
-    echo "no_config" > "$tmpdir"/dot-config_source
-    echo "config_error" > "$tmpdir"/dot-config_status
-    configured=false
+elif [ -f /wr/etc/dot-config ]; then
+    # if config was not touched by webinterface simply source it, the check was
+    # done by /etc/init.d/dot-config
+    source /wr/etc/dot-config
 fi
 
 ##### Actual configuration actions start here.
