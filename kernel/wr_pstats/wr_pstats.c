@@ -225,11 +225,13 @@ static void pstats_tlet_fn(unsigned long arg)
 			 */
 			spin_lock(&device->port_mutex[port]);
 			cntrs_ov = &(device->overflows[device->irqs_tail][port]);
-			//if(port==0)
-			//	printk(KERN_WARNING "cntrs_ov: %08x %08x\n", (uint32_t)((*cntrs_ov)>>32 & 0xffffffff),
-			//      (uint32_t)((*cntrs_ov) & 0x00ffffffffLL));
+			/* if(port==0)
+			 *	printk(KERN_WARNING "cntrs_ov: %08x %08x\n", (uint32_t)((*cntrs_ov)>>32 & 0xffffffff),
+			 *      (uint32_t)((*cntrs_ov) & 0x00ffffffffLL));
+			 */
 			for (cntr = 0; cntr < firmware_counters; ++cntr) {
-				/*decode counters overflow flags to increment coutners*/
+				/* decode counters overflow flags to increment
+				 * coutners */
 				if ((*cntrs_ov)>>cntr & 0x01) {
 					ptr = &(device->cntrs[port][cntr]);
 					*ptr += 1<<PSTATS_MSB_SHIFT;
@@ -258,7 +260,7 @@ static irqreturn_t pstats_irq_handler(int irq, void *devid)
 		device->overflows[device->irqs_head][i] = pstats_irq_cntrs(i);
 
 	device->irqs_head = (device->irqs_head + 1) % PSTATS_IRQBUFSZ;
-	//device->port_irqs[device->irqs_head++ % PSTATS_IRQBUFSZ] = irqs;
+	/* device->port_irqs[device->irqs_head++ % PSTATS_IRQBUFSZ] = irqs; */
 	tasklet_schedule(&proc_ports);
 	pstats_irq_enable(portmsk);
 
@@ -385,7 +387,8 @@ static int pstats_handler(ctl_table *ctl, int write, void *buffer,
 	return ret;
 }
 
-/* one per port, then info and description, and terminator, filled at init time */
+/* one per port, then info and description, and terminator,
+ * filled at init time */
 static ctl_table pstats_ctl_table[PSTATS_MAX_NPORTS + 3];
 
 static ctl_table proc_table[] = {
