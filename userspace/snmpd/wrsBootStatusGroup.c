@@ -123,8 +123,8 @@ static void get_boot_info(void){
 	/* get restart reason */
 	rcsr_map = create_map(ARM_RCSR_ADDR, sizeof(uint32_t));
 	if (!rcsr_map) {
-		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup unable to map "
-			 "CPU's Reset Controller Status Register\n");
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsRestartReason: unable to"
+			 " map CPU's Reset Controller Status Register\n");
 		/* pass error to SNMP, assign 1 */
 		wrsBootStatus_s.wrsRestartReason = WRS_RESTART_REASON_ERROR;
 		/* try again next time */
@@ -138,8 +138,8 @@ static void get_boot_info(void){
 
 	f = fopen(BOOTCOUNT_FILE, "r");
 	if (!f) {
-		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup failed to open "
-			 BOOTCOUNT_FILE"\n");
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsRestartReason: failed to"
+			 " open " BOOTCOUNT_FILE "\n");
 		/* notify snmp about error in restart reason */
 		wrsBootStatus_s.wrsRestartReason = WRS_RESTART_REASON_ERROR;
 		/* try again next time */
@@ -215,6 +215,8 @@ static void get_dotconfig_source(void)
 		 * a problem */
 		wrsBootStatus_s.wrsConfigSource =
 					WRS_CONFIG_SOURCE_ERROR_MINOR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsConfigSource: failed to "
+			 "open " DOTCONFIGDIR "/" DOTCONFIG_SOURCE "\n");
 	}
 
 	/* read dot-config's URL only when config source is not local */
@@ -230,6 +232,9 @@ static void get_dotconfig_source(void)
 			/* host file not found, put "error" into
 			 * wrsConfigSourceHost */
 			strcpy(wrsBootStatus_s.wrsConfigSourceUrl, "error");
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsConfigSourceUrl:"
+				 " failed to open "
+				 DOTCONFIGDIR "/" DOTCONFIG_SOURCE_URL"\n");
 		}
 	} else {
 		memset(wrsBootStatus_s.wrsConfigSourceUrl, 0,
@@ -261,6 +266,8 @@ static void get_dotconfig_source(void)
 		 * a problem */
 		wrsBootStatus_s.wrsConfigSource =
 						WRS_CONFIG_STATUS_ERROR_MINOR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsConfigSource: failed to "
+			 "open " DOTCONFIGDIR "/" DOTCONFIG_STATUS"\n");
 	}
 }
 
@@ -305,6 +312,8 @@ static void get_boot_scripts_status(void){
 		 * a problem */
 		wrsBootStatus_s.wrsBootHwinfoReadout =
 					WRS_BOOT_HWINFO_ERROR_MINOR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsBootHwinfoReadout: "
+			 "failed to open " HWINFO_FILE "\n");
 		/* try again next time */
 		run_once = 0;
 	}
@@ -336,6 +345,8 @@ static void get_boot_scripts_status(void){
 		 * a problem */
 		wrsBootStatus_s.wrsBootLoadFPGA =
 					WRS_BOOT_LOAD_FPGA_ERROR_MINOR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsBootLoadFPGA: failed to "
+			 "open " LOAD_FPGA_STATUS_FILE "\n");
 		/* try again next time */
 		run_once = 0;
 	}
@@ -367,6 +378,8 @@ static void get_boot_scripts_status(void){
 		 * a problem */
 		wrsBootStatus_s.wrsBootLoadLM32 =
 					WRS_BOOT_LOAD_LM32_ERROR_MINOR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsBootLoadLM32: failed to "
+			 "open " LOAD_FPGA_STATUS_FILE "\n");
 		/* try again next time */
 		run_once = 0;
 	}
@@ -385,8 +398,8 @@ static void get_loaded_kernel_modules_status(void)
 
 	f = fopen(MODULES_FILE, "r");
 	if (!f) {
-		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup failed to open "
-			 MODULES_FILE"\n");
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsBootKernelModulesMissing"
+			 ": failed to open " MODULES_FILE "\n");
 		/* notify snmp about error in kernel modules */
 		wrsBootStatus_s.wrsBootKernelModulesMissing =
 						ARRAY_SIZE(kernel_modules);
@@ -441,8 +454,9 @@ static void get_daemons_status(void)
 	 * but probably slower than manually parsing /proc/ */
 	f = popen(PROCESS_COMMAND, "r");
 	if (!f) {
-		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup failed to execute "
-			 PROCESS_COMMAND"\n");
+		snmp_log(LOG_ERR, "SNMP: " SL_ER
+			 " wrsBootUserspaceDaemonsMissing: failed to execute "
+			 PROCESS_COMMAND "\n");
 		wrsBootStatus_s.wrsBootUserspaceDaemonsMissing = 0;
 		/* Notify snmp about error in processes list */
 		/* Count number of expected processes */
@@ -505,8 +519,8 @@ static void get_n_watchdog_timouts(void)
 
 	f = popen(WDOG_COMMAND, "r");
 	if (!f) {
-		snmp_log(LOG_ERR, "SNMP: wrsBootStatusGroup failed to execute "
-			 WDOG_COMMAND"\n");
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsGwWatchdogTimeouts: "
+			 "failed to execute " WDOG_COMMAND "\n");
 		return;
 	}
 
