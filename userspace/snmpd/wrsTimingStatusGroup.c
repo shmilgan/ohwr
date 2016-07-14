@@ -13,6 +13,11 @@ static struct pickinfo wrsTimingStatus_pickinfo[] = {
 };
 
 struct wrsTimingStatus_s wrsTimingStatus_s;
+static char *slog_obj_name;
+static char *wrsPTPStatus_str = "wrsPTPStatus";
+static char *wrsSoftPLLStatus_str = "wrsSoftPLLStatus";
+static char *wrsSlaveLinksStatus_str = "wrsSlaveLinksStatus";
+static char *wrsPTPFramesFlowing_str = "wrsPTPFramesFlowing";
 
 static void get_wrsPTPStatus(unsigned int ptp_data_nrows);
 static void get_wrsSoftPLLStatus();
@@ -82,6 +87,7 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
 {
 	struct wrsSpllStatus_s *s;
 	struct wrsPtpDataTable_s *pd_a;
+	struct wrsTimingStatus_s *t;
 	int i;
 	static int first_run = 1;
 
@@ -100,33 +106,72 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
 	 */
 	s = &wrsSpllStatus_s;
 	pd_a = wrsPtpDataTable_array;
+	t = &wrsTimingStatus_s;
+	slog_obj_name = wrsPTPStatus_str;
 
-	wrsTimingStatus_s.wrsPTPStatus = WRS_PTP_STATUS_OK;
+	t->wrsPTPStatus = WRS_PTP_STATUS_OK;
 	/* NOTE: only one PTP instance is used right now. When switchover is
 	 * implemented it will change */
 	for (i = 0; i < ptp_data_nrows; i++) {
 		if (first_run == 1) {
 			/* don't report errors during first run */
-			wrsTimingStatus_s.wrsPTPStatus = WRS_PTP_STATUS_FR;
+			t->wrsPTPStatus = WRS_PTP_STATUS_FR;
 			/* no need to check others */
 			break;
 
 		/* check if error */
-		} else if ((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE)
-		    && ((pd_a[i].wrsPtpServoUpdates == wrsPtpServoUpdates_prev[i])
-			|| (pd_a[i].wrsPtpServoStateErrCnt != wrsPtpServoStateErrCnt_prev[i])
-			|| (pd_a[i].wrsPtpClockOffsetErrCnt != wrsPtpClockOffsetErrCnt_prev[i])
-			|| (pd_a[i].wrsPtpRTTErrCnt != wrsPtpRTTErrCnt_prev[i])
-			|| (pd_a[i].wrsPtpDeltaTxM == 0)
-			|| (pd_a[i].wrsPtpDeltaRxM == 0)
-			|| (pd_a[i].wrsPtpDeltaTxS == 0)
-			|| (pd_a[i].wrsPtpDeltaRxS == 0))) {
-			wrsTimingStatus_s.wrsPTPStatus = WRS_PTP_STATUS_ERROR;
-			snmp_log(LOG_ERR, "SNMP: wrsPTPStatus "
-					  "failed for instance %d\n", i);
-			/* no more can be done, error is error
-			 * update prev values outside loop */
-			break;
+		} else if (s->wrsSpllMode == WRS_SPLL_MODE_SLAVE) {
+			if (pd_a[i].wrsPtpServoUpdates == wrsPtpServoUpdates_prev[i]) {
+				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+					 "No PTP servo update since last check\n",
+					 slog_obj_name);
+			}
+			if (pd_a[i].wrsPtpServoStateErrCnt != wrsPtpServoStateErrCnt_prev[i]) {
+				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+					 "PTP servo not in TRACK_PHASE - %d times since last check\n",
+					 slog_obj_name,
+					 pd_a[i].wrsPtpServoStateErrCnt - wrsPtpServoStateErrCnt_prev[i]);
+			}
+			if (pd_a[i].wrsPtpClockOffsetErrCnt != wrsPtpClockOffsetErrCnt_prev[i]) {
+				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+					 "PTP clock offset too large - %d times since last check\n",
+					 slog_obj_name,
+					 pd_a[i].wrsPtpClockOffsetErrCnt - wrsPtpClockOffsetErrCnt_prev[i]);
+			}
+			if (pd_a[i].wrsPtpRTTErrCnt != wrsPtpRTTErrCnt_prev[i]) {
+				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+					 "Jump in RTT value - %d times since last check\n",
+					 slog_obj_name,
+					 pd_a[i].wrsPtpRTTErrCnt - wrsPtpRTTErrCnt_prev[i]);
+			}
+			if (pd_a[i].wrsPtpDeltaTxM == 0) {
+				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+					 "DeltaTx for Master set to 0\n",
+					 slog_obj_name);
+			}
+			if (pd_a[i].wrsPtpDeltaRxM == 0) {
+				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+					 "DeltaRx for Master set to 0\n",
+					 slog_obj_name);
+			}
+			if (pd_a[i].wrsPtpDeltaTxS == 0) {
+				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+					 "DeltaTx for Slave set to 0\n",
+					 slog_obj_name);
+			}
+			if (pd_a[i].wrsPtpDeltaRxS == 0) {
+			t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+					 "DeltaRx for Slave set to 0\n",
+					 slog_obj_name);
+			}
 		}
 	}
 
@@ -144,6 +189,7 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
 static void get_wrsSoftPLLStatus(void)
 {
 	struct wrsSpllStatus_s *s;
+	struct wrsTimingStatus_s *t;
 
 	/* store old values of SPLL status */
 	static int32_t spll_DelCnt_prev;
@@ -158,6 +204,7 @@ static void get_wrsSoftPLLStatus(void)
 	 * mode = 3 (slave) and wrsSpllHlock != 0 and wrsSpllMlock != 0
 	*/
 	s = &wrsSpllStatus_s;
+	t = &wrsTimingStatus_s;
 	if ( /* check if error */
 		s->wrsSpllSeqState != WRS_SPLL_SEQ_STATE_READY
 		|| (s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllAlignState != WRS_SPLL_ALIGN_STATE_LOCKED)
@@ -166,7 +213,7 @@ static void get_wrsSoftPLLStatus(void)
 		    && (s->wrsSpllMode != WRS_SPLL_MODE_SLAVE))
 		|| ((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE) && ((s->wrsSpllHlock == 0) || (s->wrsSpllMlock == 0)))
 	) {
-		wrsTimingStatus_s.wrsSoftPLLStatus =
+		t->wrsSoftPLLStatus =
 						WRS_SOFTPLL_STATUS_ERROR;
 		/*snmp_log(LOG_ERR, "SNMP: wrsSoftPLLStatus"
 				"%d %d %d %d\n",
@@ -181,13 +228,13 @@ static void get_wrsSoftPLLStatus(void)
 		(s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllDelCnt > 0)
 		|| (s->wrsSpllDelCnt != spll_DelCnt_prev)
 	) { /* warning */
-		wrsTimingStatus_s.wrsSoftPLLStatus =
+		t->wrsSoftPLLStatus =
 						WRS_SOFTPLL_STATUS_WARNING;
 
 	} else if ( /* check if any of fields equal to 0 or WARNING_NA */
 		s->wrsSpllMode == 0
 	) { /* warning NA */
-		wrsTimingStatus_s.wrsSoftPLLStatus =
+		t->wrsSoftPLLStatus =
 					      WRS_SOFTPLL_STATUS_WARNING_NA;
 
 	} else if ( /* check if OK */
@@ -198,12 +245,12 @@ static void get_wrsSoftPLLStatus(void)
 		    || (s->wrsSpllMode == WRS_SPLL_MODE_MASTER)
 		    || (s->wrsSpllMode == WRS_SPLL_MODE_SLAVE))
 	) { /* OK */
-		wrsTimingStatus_s.wrsSoftPLLStatus =
+		t->wrsSoftPLLStatus =
 						WRS_SOFTPLL_STATUS_OK;
 
 	} else { /* probably bug in previous conditions,
 		  * this should never happen */
-		wrsTimingStatus_s.wrsSoftPLLStatus =
+		t->wrsSoftPLLStatus =
 						WRS_SOFTPLL_STATUS_BUG;
 	}
 
@@ -213,6 +260,7 @@ static void get_wrsSoftPLLStatus(void)
 static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 {
 	struct wrsPortStatusTable_s *p_a;
+	struct wrsTimingStatus_s *t;
 	int i;
 
 	/*********************************************************************\
@@ -224,38 +272,67 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 	 * mode. Don't care about non-wr and auto ports.
 	*/
 	p_a = wrsPortStatusTable_array;
+	t = &wrsTimingStatus_s;
+	slog_obj_name = wrsSlaveLinksStatus_str;
+
 	/* check whether hal_shmem is available */
 	if (shmem_ready_hald()) {
-		wrsTimingStatus_s.wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_OK;
+		t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_OK;
 		for (i = 0; i < port_status_nrows; i++) {
 			/* warning N/A */
-			if (/*hal_shmem->s->wrsSpllMode == 0
-			    || */p_a[i].wrsPortStatusConfiguredMode == 0
-			    || p_a[i].wrsPortStatusLink == 0){
-				wrsTimingStatus_s.wrsSlaveLinksStatus =
-						WRS_SLAVE_LINK_STATUS_WARNING_NA;
+			if (p_a[i].wrsPortStatusConfiguredMode == 0) {
+				if (t->wrsSlaveLinksStatus != WRS_SLAVE_LINK_STATUS_ERROR) {
+					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_WARNING_NA;
+				}
+				/* Log always for every port */
+				snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: "
+					  "Status of wrsPortStatusConfiguredMode not available "
+					  "for port %i (wri%i)\n",
+					  slog_obj_name, i + 1, i + 1);
 			}
+			if (p_a[i].wrsPortStatusLink == 0){
+				if (t->wrsSlaveLinksStatus != WRS_SLAVE_LINK_STATUS_ERROR) {
+					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_WARNING_NA;
+				}
+				/* Log always for every port */
+				snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: "
+					  "Status of wrsPortStatusLink not available "
+					  "for port %i (wri%i)\n",
+					  slog_obj_name, i + 1, i + 1);
+			}
+
 			/* error when slave port is down when switch is in slave mode
 			  */
 			if (hal_shmem->hal_mode == HAL_TIMING_MODE_BC
 			    && (p_a[i].wrsPortStatusConfiguredMode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
 			    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_DOWN)) {
-				wrsTimingStatus_s.wrsSlaveLinksStatus =
-							WRS_SLAVE_LINK_STATUS_ERROR;
-				snmp_log(LOG_ERR, "SNMP: wrsSlaveLinksStatus (slave) "
-						  "failed for port %d (wri%d)\n",
-					 i + 1, i + 1);
+				t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+					 "In Boundary Clock mode, port %d (wri%d) configured as slave is down\n",
+					 slog_obj_name, i + 1, i + 1);
 			}
 			/* error when slave port is up when switch is in master or
 			* grandmaster mode */
-			if (((hal_shmem->hal_mode == HAL_TIMING_MODE_GRAND_MASTER) || (hal_shmem->hal_mode == HAL_TIMING_MODE_FREE_MASTER))
-			    && (p_a[i].wrsPortStatusConfiguredMode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
+			if ((p_a[i].wrsPortStatusConfiguredMode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
 			    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP)) {
-				wrsTimingStatus_s.wrsSlaveLinksStatus =
-							WRS_SLAVE_LINK_STATUS_ERROR;
-				snmp_log(LOG_ERR, "SNMP: wrsSlaveLinksStatus (master) "
-						  "failed for port %d (wri%d)\n",
-					 i + 1, i + 1);
+				if (hal_shmem->hal_mode == HAL_TIMING_MODE_GRAND_MASTER) {
+					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
+					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+						 "In Grand Master mode, port %d (wri%d) configured as slave is up\n",
+						 slog_obj_name, i + 1, i + 1);
+					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+						 "In Grand Master mode slave ports cannot be used\n",
+						 slog_obj_name);
+				}
+				if (hal_shmem->hal_mode == HAL_TIMING_MODE_FREE_MASTER) {
+					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
+					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+						 "In Free-running Master mode, port %d (wri%d) configured as slave is up\n",
+						 slog_obj_name, i + 1, i + 1);
+					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+						 "In Free-running Master mode slave ports cannot be used\n",
+						 slog_obj_name);
+				}
 			}
 		}
 	}
@@ -264,6 +341,7 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 {
 	struct wrsPortStatusTable_s *p_a;
+	struct wrsTimingStatus_s *t;
 	int i;
 	static int first_run = 1;
 
@@ -278,35 +356,63 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 	 * Check if PTP frames are flowing. Check only on ports that are
 	 * non-wr and up.
 	 */
+
 	p_a = wrsPortStatusTable_array;
-	wrsTimingStatus_s.wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_OK;
+	t = &wrsTimingStatus_s;
+	slog_obj_name = wrsPTPFramesFlowing_str;
+
+	t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_OK;
 	for (i = 0; i < port_status_nrows; i++) {
 		if (first_run == 1) {
 			/* don't report errors during first run */
-			wrsTimingStatus_s.wrsPTPFramesFlowing =
-						WRS_PTP_FRAMES_FLOWING_FR;
+			t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_FR;
 			/* no need to check others */
 			break;
 
 		/* Error when there is no increase in TX/RX PTP counters.
 		   Check only when port is non-wr and port is down */
-		} else if ((p_a[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
-		    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP)
-		    && ((wrsPortStatusPtpTxFrames_prev[i] == p_a[i].wrsPortStatusPtpTxFrames)
-			|| (wrsPortStatusPtpRxFrames_prev[i] == p_a[i].wrsPortStatusPtpRxFrames))) {
-			wrsTimingStatus_s.wrsPTPFramesFlowing =
-						WRS_PTP_FRAMES_FLOWING_ERROR;
-			snmp_log(LOG_ERR, "SNMP: wrsPTPFramesFlowing "
-					  "failed for port %d (wri%d)\n",
-				 i + 1, i + 1);
-			/* can't go worse, no need to change other ports */
-			break;
-
-		/* warning N/A */
-		} else if (p_a[i].wrsPortStatusConfiguredMode == 0
-		    || p_a[i].wrsPortStatusLink == 0){
-			wrsTimingStatus_s.wrsPTPFramesFlowing =
-					WRS_PTP_FRAMES_FLOWING_WARNING_NA;
+		}
+		if ((p_a[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
+		    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP)) {
+			if (wrsPortStatusPtpTxFrames_prev[i] == p_a[i].wrsPortStatusPtpTxFrames) {
+				t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+					 "No TX PTP frames flowing for port %i (wri%i) which is up and in WR mode\n",
+					 slog_obj_name, i + 1, i + 1);
+			}
+			if (wrsPortStatusPtpRxFrames_prev[i] == p_a[i].wrsPortStatusPtpRxFrames) {
+				t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+					 "No RX PTP frames flowing for port %i (wri%i) which is up and in WR mode\n",
+					 slog_obj_name, i + 1, i + 1);
+			}
+			/* can't go worse, but check other ports for logging */
+		/* Warning N/A, skip when already error. Will not reach this
+		 * point for first read */
+		}
+		if (p_a[i].wrsPortStatusConfiguredMode == 0) {
+			/* assign if not error */
+			if (t->wrsPTPFramesFlowing != WRS_PTP_FRAMES_FLOWING_ERROR) {
+				t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_WARNING_NA;
+			}
+			/* Log always for every port */
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: "
+				  "Status of wrsPortStatusConfiguredMode not available "
+				  "for port %i (wri%i)\n",
+				  slog_obj_name, i + 1, i + 1);
+			/* continue with other ports, somewhere may be an
+			 * error */
+		}
+		if (p_a[i].wrsPortStatusLink == 0){
+			/* assign if not error */
+			if (t->wrsPTPFramesFlowing != WRS_PTP_FRAMES_FLOWING_ERROR) {
+				t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_WARNING_NA;
+			}
+			/* Log always for every port */
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: "
+				  "Status of wrsPortStatusLink not available "
+				  "for port %i (wri%i)\n",
+				  slog_obj_name, i + 1, i + 1);
 			/* continue with other ports, somewhere may be an
 			 * error */
 		}
