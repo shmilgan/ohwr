@@ -18,7 +18,7 @@
 static void parse_sysfs(int init);
 
 #define NPORTS 18
-#define CNT_PP 39
+#define CNT_PP 40
 
 struct cnt_word {
 	uint64_t cnt;
@@ -29,44 +29,45 @@ struct cnt_word cnt_pp[NPORTS][CNT_PP];
 int use_ports;
 
 char info[][20] = {{"Tu-run|"}, // 0
-                   {"Ro-run|"}, // 1
-                   {"Riv-cd|"}, // 2
-                   {"Rsyn-l|"}, // 3
-                   {"Rpause|"}, // 4
-                   {"Rpf-dp|"}, // 5
-                   {"Rpcs-e|"}, // 6
-                   {"Rgiant|"}, // 7
-                   {"Rrunt |"}, // 8
-                   {"Rcrc_e|"}, // 9
-                   {"Rpcl_0|"}, // 10
-                   {"Rpcl_1|"}, // 11
-                   {"Rpcl_2|"}, // 12
-                   {"Rpcl_3|"}, // 13
-                   {"Rpcl_4|"}, // 14
-                   {"Rpcl_5|"}, // 15
-                   {"Rpcl_6|"}, // 16
-                   {"Rpcl_7|"}, // 17
-                   {"Tframe|"}, // 18
-                   {"Rframe|"}, // 19
-                   {"Rrtu_f|"}, // 20
-                   {"Rpri_0|"}, // 21 -> p0
-                   {"Rpri_1|"}, // 22 -> p1
-                   {"Rpri_2|"}, // 23 -> p2
-                   {"Rpri_3|"}, // 24 -> p3
-                   {"Rpri_4|"}, // 25 -> p4
-                   {"Rpri_5|"}, // 26 -> p5
-                   {"Rpri_6|"}, // 27 -> p6
-                   {"Rpri_7|"}, // 28 -> p7
-                   {"RTUreq|"}, // 29
-                   {"RTUrsp|"}, // 30
-                   {"RTUdrp|"}, // 31
-                   {"RTUhp |"}, // 32
-                   {"RTUf-f|"}, // 33
-                   {"RTUn-f|"}, // 34
-                   {"RTUfst|"}, // 35
-                   {"RTUful|"}, // 36
-                   {"RTUfwd|"}, // 37 ---
-                   {"TRUrsp|"}  // 38
+		   {"Ro-run|"}, // 1
+		   {"Riv-cd|"}, // 2
+		   {"Rsyn-l|"}, // 3
+		   {"Rpause|"}, // 4
+		   {"Rpf-dp|"}, // 5
+		   {"Rpcs-e|"}, // 6
+		   {"Rgiant|"}, // 7
+		   {"Rrunt |"}, // 8
+		   {"Rcrc_e|"}, // 9
+		   {"Rpcl_0|"}, // 10
+		   {"Rpcl_1|"}, // 11
+		   {"Rpcl_2|"}, // 12
+		   {"Rpcl_3|"}, // 13
+		   {"Rpcl_4|"}, // 14
+		   {"Rpcl_5|"}, // 15
+		   {"Rpcl_6|"}, // 16
+		   {"Rpcl_7|"}, // 17
+		   {"Tframe|"}, // 18
+		   {"Rframe|"}, // 19
+		   {"Rrtu_f|"}, // 20
+		   {"Rpri_0|"}, // 21 -> p0
+		   {"Rpri_1|"}, // 22 -> p1
+		   {"Rpri_2|"}, // 23 -> p2
+		   {"Rpri_3|"}, // 24 -> p3
+		   {"Rpri_4|"}, // 25 -> p4
+		   {"Rpri_5|"}, // 26 -> p5
+		   {"Rpri_6|"}, // 27 -> p6
+		   {"Rpri_7|"}, // 28 -> p7
+		   {"RTUreq|"}, // 29
+		   {"RTUrsp|"}, // 30
+		   {"RTUdrp|"}, // 31
+		   {"RTUhp |"}, // 32
+		   {"RTUf-f|"}, // 33
+		   {"RTUn-f|"}, // 34
+		   {"RTUfst|"}, // 35
+		   {"RTUful|"}, // 36
+		   {"RTUfwd|"}, // 37 ---
+		   {"TRUrsp|"}, // 38
+		   {"NIC_Tx|"}  // 39
                  };
 
 int pstats_init(int init)
@@ -187,7 +188,7 @@ void print_info(char *prgname)
 int main(int argc, char **argv)
 {
 	int prio_cnts[] = {21,22,23,24,25,26,27,28}; //8
-	int def_cnts[]  = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,29,30,31,32,33,34,35,36,37}; //30
+	int def_cnts[]  = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,29,30,31,32,33,34,35,36,37,39}; //31
 	int rtu_cnts[]  = {29,30,31,32,33,34,35,36,37,38}; //10
 	int ep_cnts[]   = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28}; //29
 	int traffic[]   = {18,19};//2
@@ -241,7 +242,7 @@ int main(int argc, char **argv)
 				print_first_n_cnts(CNT_PP);
 				break;
 			default:
-				print_chosen_cnts(def_cnts, 30);
+				print_chosen_cnts(def_cnts, 31);
 		}
 		sleep(1);
 	}

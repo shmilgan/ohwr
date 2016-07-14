@@ -99,7 +99,8 @@ static struct pstats_version_description pstats_desc[] = {
 			"FastMatch: Resp Valid\n"	/* 35 */
 			"FullMatch: Resp Valid\n"	/* 36 */
 			"Forwarded\n"			/* 37 */
-			"TRU Resp Valid",		/* 38 */
+			"TRU Resp Valid\n"		/* 38 */
+			"NIC TX Frames",		/* 39 */
 		.rx_packets = 19, /* RX Frames */
 		.tx_packets = 18, /* TX Frames */
 		.rx_errors = 6, /* RX PCS Errors */
