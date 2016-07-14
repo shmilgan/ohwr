@@ -7,7 +7,7 @@
 #define WRVIC_BASE_IRQ  (NR_AIC_IRQS + (5 * 32))
 /*****/
 
-#define PSTATS_MAX_NUM_OF_COUNTERS 39		/* Maximum number of counters
+#define PSTATS_MAX_NUM_OF_COUNTERS 40		/* Maximum number of counters
 						 * supported by the driver */
 
 #define PSTATS_MAX_NPORTS 18			/* Maximum number of ports
