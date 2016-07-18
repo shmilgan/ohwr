@@ -2036,7 +2036,8 @@ WrsPstatsHCEntry ::=
         wrsPstatsHCFastMatchRespValid    Counter64,
         wrsPstatsHCFullMatchRespValid    Counter64,
         wrsPstatsHCForwarded             Counter64,
-        wrsPstatsHCTRURespValid          Counter64
+        wrsPstatsHCTRURespValid          Counter64,
+        wrsPstatsHCNICTXFrames		 Counter64
     }
 
 wrsPstatsHCIndex OBJECT-TYPE
@@ -2376,6 +2377,14 @@ wrsPstatsHCTRURespValid OBJECT-TYPE
     DESCRIPTION
             "Number of TRU decisions"
     ::= { wrsPstatsHCEntry 41 }
+
+wrsPstatsHCNICTXFrames OBJECT-TYPE
+    SYNTAX         Counter64
+    MAX-ACCESS     read-only
+    STATUS         current
+    DESCRIPTION
+            "Number of TX frames coming from CPU"
+    ::= { wrsPstatsHCEntry 42 }
 --wrsNetworking
 --Configuration
 
