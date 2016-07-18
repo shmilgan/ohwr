@@ -46,6 +46,7 @@ static struct pickinfo wrsPstatsHCTable_pickinfo[] = {
 	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCFullMatchRespValid),
 	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCForwarded),
 	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCTRURespValid),
+	FIELD(wrsPstatsHCTable_s, ASN_COUNTER64, wrsPstatsHCNICTXFrames),
 };
 
 time_t
@@ -171,6 +172,7 @@ wrsPstatsHCTable_data_fill(unsigned int *n_rows)
 			pstats_array[wrport].wrsPstatsHCFullMatchRespValid = counters[36];
 			pstats_array[wrport].wrsPstatsHCForwarded = counters[37];
 			pstats_array[wrport].wrsPstatsHCTRURespValid = counters[38];
+			pstats_array[wrport].wrsPstatsHCNICTXFrames = counters[39];
 			break;
 		case 2:
 		default:
