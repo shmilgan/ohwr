@@ -59,6 +59,10 @@ struct ns_pstats {
 	uint64_t wrsPstatsHCFastMatchPriority;	/* 33 */
 	/* wrsRTUStatus */
 	uint64_t wrsPstatsHCRXDropRTUFull;		/* 21 */
+
+	uint64_t wrsPstatsHCTXFrames;
+	uint64_t wrsPstatsHCForwarded;
+	uint64_t wrsPstatsHCNICTXFrames;
 };
 
 /* parameters read from dot-config */

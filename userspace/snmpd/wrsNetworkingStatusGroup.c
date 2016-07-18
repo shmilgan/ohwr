@@ -48,6 +48,10 @@ static void copy_pstats(struct ns_pstats *copy, struct wrsPstatsHCTable_s *org,
 		/* wrsRTUStatus */
 		copy->wrsPstatsHCRXDropRTUFull = org->wrsPstatsHCRXDropRTUFull;
 
+		copy->wrsPstatsHCTXFrames    = org->wrsPstatsHCTXFrames;
+		copy->wrsPstatsHCForwarded   = org->wrsPstatsHCForwarded;
+		copy->wrsPstatsHCNICTXFrames = org->wrsPstatsHCNICTXFrames;
+
 		copy++;
 		org++;
 	}
@@ -86,11 +90,9 @@ static int get_swcore_status(struct ns_pstats *old,
 			     float t_delta)
 {
 	int i;
-	int ret;
-	ret = 0;
-
-	/* don't use this function for now, return OK */
-	return ret;
+	int ret = 0;
+	uint64_t total_fwd_delta;
+	uint64_t tx_delta;
 
 	slog_obj_name = wrsSwcoreStatus_str;
 
@@ -98,20 +100,24 @@ static int get_swcore_status(struct ns_pstats *old,
 		/* TXFrames and Forwarded described in 2.2.3 "Problem with the
 		 * SwCore or Endpoint HDL module" in wrs_failures document
 		 * shouldn't differ more than FORWARD_DELTA in total */
-/* counter Forwarded (38) is implemented in HDL, but does not count PTP
- * traffic!!! */
-#if 0
+		total_fwd_delta = (new[i].wrsPstatsHCForwarded + new[i].wrsPstatsHCNICTXFrames) -
+			(old[i].wrsPstatsHCForwarded + old[i].wrsPstatsHCNICTXFrames);
+		tx_delta = new[i].wrsPstatsHCTXFrames - old[i].wrsPstatsHCTXFrames;
+
 		if ( /* shouldn't differ more than FORWARD_DELTA */
-		     ((new[i].wrsPstatsHCTXFrames - new[i].wrsPstatsHCForwarded) > FORWARD_DELTA)
-		     || ((new[i].wrsPstatsHCForwarded - new[i].wrsPstatsHCTXFrames) > FORWARD_DELTA)
+		     ((tx_delta - total_fwd_delta) > FORWARD_DELTA)
+		     || ((total_fwd_delta - tx_delta) > FORWARD_DELTA)
 		) {
 			/* if error, no need to check more, but do it just for
 			 * logs */
 			ret = 1;
-			snmp_log(LOG_ERR, "SNMP: wrsSwcoreStatus failed for "
-					  "port %d (wri %d)\n", i + 1, i + 1);
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+				 "Endpoint TX frames number on port %d (wri %d) does not match "
+				 "the number of frames forwarded from other ports and NIC, "
+				 " some frames got lost..", slog_obj_name, i + 1, i + 1);
 		}
-#endif
+
+#if 0
 		/* values from 2.2.5 "Too much HP traffic / Per-priority queue
 		 * full" in wrs_failures document shouldn't change faster
 		 * than parameters defined in dotconfig per second */
@@ -125,6 +131,7 @@ static int get_swcore_status(struct ns_pstats *old,
 		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXPrio6,           new, old, i, t_delta, ns_dotconfig.rx_prio_frame_rate, ret = 1);
 		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXPrio7,           new, old, i, t_delta, ns_dotconfig.rx_prio_frame_rate, ret = 1);
 		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCFastMatchPriority, new, old, i, t_delta, ns_dotconfig.hp_frame_rate,      ret = 1);
+#endif
 	}
 	return ret;
 }
