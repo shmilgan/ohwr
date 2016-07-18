@@ -77,6 +77,7 @@ wrsPstatsHCTable_data_fill(unsigned int *n_rows)
 	/* fill array with 0xff, buy this it will be easy visible in case
 	 * some counters are invalid */
 	memset(&pstats_array, 0xff, sizeof(pstats_array));
+	memset(&counters, 0xff, sizeof(counters));
 
 	/* read counters version and number of counters */
 	f = fopen(PSTATS_SYSCTL_PATH PSTATS_SYSCTL_INFO_FILE, "r");

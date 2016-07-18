@@ -46,6 +46,10 @@ struct ns_pstats {
 	uint64_t wrsPstatsHCRXPCSErrors;	/* 7 */
 	uint64_t wrsPstatsHCRXCRCErrors;	/* 10 */
 	/* wrsSwcoreStatus */
+	/* Problem with the SwCore or Endpoint HDL module */
+	uint64_t wrsPstatsHCTXFrames; 		/* 19 */
+	uint64_t wrsPstatsHCForwarded;		/* 38 */
+	uint64_t wrsPstatsHCNICTXFrames;	/* 40 */
 	/* Too much HP traffic / Per-priority queue full */
 	uint64_t wrsPstatsHCRXFrames;		/* 20 */
 	uint64_t wrsPstatsHCRXPrio0;		/* 22 */
