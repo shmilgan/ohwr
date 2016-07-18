@@ -19,7 +19,7 @@ static char *wrsSoftPLLStatus_str = "wrsSoftPLLStatus";
 static char *wrsSlaveLinksStatus_str = "wrsSlaveLinksStatus";
 static char *wrsPTPFramesFlowing_str = "wrsPTPFramesFlowing";
 
-static void get_wrsPTPStatus(unsigned int ptp_data_nrows);
+static void get_wrsPTPStatus(unsigned int ptp_data_nrows, int t_delta);
 static void get_wrsSoftPLLStatus();
 static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows);
 static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows);
@@ -30,6 +30,8 @@ time_t wrsTimingStatus_data_fill(void)
 	time_t time_ptp_data; /* time when wrsPtpDataTable was updated */
 	time_t time_spll; /* time when softPLL data was updated */
 	time_t time_port_status; /* time when port status table was updated */
+	static time_t time_ptp_data_prev; /* time when previous wrsPtpDataTable
+					   * table was updated */
 	unsigned int ptp_data_nrows; /* number of rows in wrsPtpDataTable */
 	unsigned int port_status_nrows; /* number of rows in PortStatusTable */
 
@@ -62,7 +64,8 @@ time_t wrsTimingStatus_data_fill(void)
 	 * otherwise there may be comparison between the same data */
 	if (time_ptp_data > time_update
 	    && time_spll > time_update) {
-		get_wrsPTPStatus(ptp_data_nrows);
+		get_wrsPTPStatus(ptp_data_nrows,
+				 time_ptp_data - time_ptp_data_prev);
 	}
 
 	/* update when the spll was updated
@@ -79,11 +82,13 @@ time_t wrsTimingStatus_data_fill(void)
 	}
 
 	time_update = get_monotonic_sec();
+	/* save the time of the last ptp_data copy */
+	time_ptp_data_prev = time_ptp_data;
 	/* there was an update, return current time */
 	return time_update;
 }
 
-static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
+static void get_wrsPTPStatus(unsigned int ptp_data_nrows, int t_delta)
 {
 	struct wrsSpllStatus_s *s;
 	struct wrsPtpDataTable_s *pd_a;
@@ -124,29 +129,32 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
 			if (pd_a[i].wrsPtpServoUpdates == wrsPtpServoUpdates_prev[i]) {
 				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
 				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-					 "No PTP servo update since last check\n",
-					 slog_obj_name);
+					 "No PTP servo update since last check (%ds)\n",
+					 slog_obj_name, t_delta);
 			}
 			if (pd_a[i].wrsPtpServoStateErrCnt != wrsPtpServoStateErrCnt_prev[i]) {
 				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
 				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-					 "PTP servo not in TRACK_PHASE - %d times since last check\n",
+					 "PTP servo not in TRACK_PHASE - %d times since last check (%ds)\n",
 					 slog_obj_name,
-					 pd_a[i].wrsPtpServoStateErrCnt - wrsPtpServoStateErrCnt_prev[i]);
+					 pd_a[i].wrsPtpServoStateErrCnt - wrsPtpServoStateErrCnt_prev[i],
+					 t_delta);
 			}
 			if (pd_a[i].wrsPtpClockOffsetErrCnt != wrsPtpClockOffsetErrCnt_prev[i]) {
 				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
 				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-					 "PTP clock offset too large - %d times since last check\n",
+					 "PTP clock offset too large - %d times since last check (%ds)\n",
 					 slog_obj_name,
-					 pd_a[i].wrsPtpClockOffsetErrCnt - wrsPtpClockOffsetErrCnt_prev[i]);
+					 pd_a[i].wrsPtpClockOffsetErrCnt - wrsPtpClockOffsetErrCnt_prev[i],
+					 t_delta);
 			}
 			if (pd_a[i].wrsPtpRTTErrCnt != wrsPtpRTTErrCnt_prev[i]) {
 				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
 				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-					 "Jump in RTT value - %d times since last check\n",
+					 "Jump in RTT value - %d times since last check (%ds)\n",
 					 slog_obj_name,
-					 pd_a[i].wrsPtpRTTErrCnt - wrsPtpRTTErrCnt_prev[i]);
+					 pd_a[i].wrsPtpRTTErrCnt - wrsPtpRTTErrCnt_prev[i],
+					 t_delta);
 			}
 			if (pd_a[i].wrsPtpDeltaTxM == 0) {
 				t->wrsPTPStatus = WRS_PTP_STATUS_ERROR;
