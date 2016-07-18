@@ -205,7 +205,6 @@ time_t wrsNetworkingStatus_data_fill(void)
 		/* cache not updated, return last update time */
 		return time_update;
 	}
-	time_update = get_monotonic_sec();
 
 	if (run_once) {
 		run_once = 0;
@@ -213,64 +212,71 @@ time_t wrsNetworkingStatus_data_fill(void)
 		load_dot_config();
 	}
 	time_pstats_delta = time_pstats - time_pstats_prev;
-	memset(&wrsNetworkingStatus_s, 0, sizeof(wrsNetworkingStatus_s));
 
 	/*********************************************************************\
 	|*************************** wrsSFPsStatus ***************************|
 	\*********************************************************************/
 
+	
 	slog_obj_name = wrsSFPsStatus_str;
 	p_a = wrsPortStatusTable_array;
-	port_status_n_ok = 0;
-	port_status_n_error = 0;
-	port_status_n_down = 0;
-	port_status_n_na = 0;
-	/* count number of ports of each status */
-	for (i = 0; i < port_status_nrows; i++) {
-		if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_SFP_OK) {
-			port_status_n_ok++;
+	
+	if (time_port_status > time_update) {
+		/* update only if wrsPortStatusTable was updated */
+		port_status_n_ok = 0;
+		port_status_n_error = 0;
+		port_status_n_down = 0;
+		port_status_n_na = 0;
+		/* count number of ports of each status */
+		for (i = 0; i < port_status_nrows; i++) {
+			if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_SFP_OK) {
+				port_status_n_ok++;
+			}
+			if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) {
+				port_status_n_down++;
+			}
+			if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR) {
+				port_status_n_error++;
+			}
+			if (p_a[i].wrsPortStatusSfpError == 0) {
+				snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Unable to read wrsSFPsStatus "
+					"for port %i (wri%i)\n",
+					slog_obj_name, i + 1, i + 1);
+				port_status_n_na++;
+			}
 		}
-		if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) {
-			port_status_n_down++;
-		}
-		if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR) {
-			port_status_n_error++;
-		}
-		if (p_a[i].wrsPortStatusSfpError == 0) {
-			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Unable to read wrsSFPsStatus "
-				 "for port %i (wri%i)\n",
-				 slog_obj_name, i + 1, i + 1);
-			port_status_n_na++;
-		}
-	}
 
-	if (port_status_n_error > 0) {
-		/* error */
-		wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_ERROR;
-	} else if ((port_status_n_ok + port_status_n_down + port_status_n_na)
-			!= port_status_nrows) {
-		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: Error reading statuses of SFPs\n",
-			 slog_obj_name);
-		wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_ERROR;
-	} else if (port_status_n_na > 0) { /* warning NA */
-		wrsNetworkingStatus_s.wrsSFPsStatus =
-						WRS_SFPS_STATUS_WARNING_NA;
+		if (port_status_n_error > 0) {
+			/* error */
+			wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_ERROR;
+		} else if ((port_status_n_ok + port_status_n_down + port_status_n_na)
+				!= port_status_nrows) {
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: Error reading statuses of SFPs\n",
+				slog_obj_name);
+			wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_ERROR;
+		} else if (port_status_n_na > 0) { /* warning NA */
+			wrsNetworkingStatus_s.wrsSFPsStatus =
+							WRS_SFPS_STATUS_WARNING_NA;
 
-	} else if ((port_status_n_ok + port_status_n_down) ==
-			port_status_nrows) {
-		/* OK is when port is ok or down */
-		wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_OK;
+		} else if ((port_status_n_ok + port_status_n_down) ==
+				port_status_nrows) {
+			/* OK is when port is ok or down */
+			wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_OK;
 
-	} else { /* probably bug in previous conditions,
-		  * this should never happen */
-		wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_BUG;
+		} else { /* probably bug in previous conditions,
+			  * this should never happen */
+			wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_BUG;
+		}
 	}
 
 	/*********************************************************************\
 	|************************* wrsEndpointStatus *************************|
 	\*********************************************************************/
 
-	if (time_pstats_prev) { /* never generate error during first check */
+	if (!time_pstats_delta) {
+		/* do nothing when time_pstats_delta == 0, it means there was
+		 * no re-read of pstats */
+	} else if (time_pstats_prev && time_pstats_delta) { /* never generate error during first check */
 		ret = get_endpoint_status(ns_pstats_copy, pstats_array,
 					  pstats_nrows, time_pstats_delta);
 		if (ret == 0)
@@ -289,7 +295,10 @@ time_t wrsNetworkingStatus_data_fill(void)
 	|************************** wrsSwcoreStatus **************************|
 	\*********************************************************************/
 
-	if (time_pstats_prev) { /* never generate error during first check */
+	if (!time_pstats_delta) {
+		/* do nothing when time_pstats_delta == 0, it means there was
+		 * no re-read of pstats */
+	} else if (time_pstats_prev && time_pstats_delta) { /* never generate error during first check */
 		ret = get_swcore_status(ns_pstats_copy, pstats_array,
 					  pstats_nrows, time_pstats_delta);
 		if (ret == 0)
@@ -307,21 +316,26 @@ time_t wrsNetworkingStatus_data_fill(void)
 	|*************************** wrsRTUStatus  ***************************|
 	\*********************************************************************/
 
-	if (time_pstats_prev) { /* never generate error during first check */
+	if (!time_pstats_delta) {
+		/* do nothing when time_pstats_delta == 0, it means there was
+		 * no re-read of pstats */
+	} else if (time_pstats_prev) { /* never generate error during first check */
+		
 		ret = get_rtu_status(ns_pstats_copy, pstats_array,
-					  pstats_nrows, time_pstats_delta);
+				     pstats_nrows, time_pstats_delta);
 		if (ret == 0)
 			wrsNetworkingStatus_s.wrsRTUStatus =
 						WRS_RTU_STATUS_OK;
 		else
 			wrsNetworkingStatus_s.wrsRTUStatus =
 						WRS_RTU_STATUS_ERROR;
+		
 	} else {
 		/* first read */
 		wrsNetworkingStatus_s.wrsRTUStatus = WRS_RTU_STATUS_FR;
 	}
 
-
+	time_update = get_monotonic_sec();
 	/* save time of pstats copy */
 	time_pstats_prev = time_pstats;
 	/* copy current set of pstats */
