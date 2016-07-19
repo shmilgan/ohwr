@@ -213,53 +213,86 @@ static void get_wrsSoftPLLStatus(void)
 	*/
 	s = &wrsSpllStatus_s;
 	t = &wrsTimingStatus_s;
-	if ( /* check if error */
-		s->wrsSpllSeqState != WRS_SPLL_SEQ_STATE_READY
-		|| (s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllAlignState != WRS_SPLL_ALIGN_STATE_LOCKED)
-		|| ((s->wrsSpllMode != WRS_SPLL_MODE_GRAND_MASTER)
+	slog_obj_name = wrsSoftPLLStatus_str;
+
+	t->wrsSoftPLLStatus = 0;
+	/* check if error */
+	if (s->wrsSpllSeqState != WRS_SPLL_SEQ_STATE_READY) {
+  		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+			 "Sequence state of Soft PLL not in Ready\n",
+			 slog_obj_name);
+	}
+	if (s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER
+	    && s->wrsSpllAlignState != WRS_SPLL_ALIGN_STATE_LOCKED) {
+		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+			 "Allign state is not locked\n",
+			 slog_obj_name);
+	}
+	if ((s->wrsSpllMode != WRS_SPLL_MODE_GRAND_MASTER)
 		    && (s->wrsSpllMode != WRS_SPLL_MODE_MASTER)
-		    && (s->wrsSpllMode != WRS_SPLL_MODE_SLAVE))
-		|| ((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE) && ((s->wrsSpllHlock == 0) || (s->wrsSpllMlock == 0)))
-	) {
-		t->wrsSoftPLLStatus =
-						WRS_SOFTPLL_STATUS_ERROR;
-		/*snmp_log(LOG_ERR, "SNMP: wrsSoftPLLStatus"
-				"%d %d %d %d\n",
-				s->wrsSpllSeqState != WRS_SPLL_SEQ_STATE_READY,
-				s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllAlignState != WRS_SPLL_ALIGN_STATE_LOCKED,
-				((s->wrsSpllMode != WRS_SPLL_MODE_GRAND_MASTER)
-					&& (s->wrsSpllMode != WRS_SPLL_MODE_MASTER)
-					&& (s->wrsSpllMode != WRS_SPLL_MODE_SLAVE)),
-				((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE) && ((s->wrsSpllHlock == 0) || (s->wrsSpllMlock == 0)))
-			);*/
-	} else if ( /* check if warning */
-		(s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllDelCnt > 0)
-		|| (s->wrsSpllDelCnt != spll_DelCnt_prev)
-	) { /* warning */
-		t->wrsSoftPLLStatus =
-						WRS_SOFTPLL_STATUS_WARNING;
+		    && (s->wrsSpllMode != WRS_SPLL_MODE_SLAVE)) {
+		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+			 "Soft PLL in wrong mode (%d)\n",
+			 slog_obj_name, s->wrsSpllMode);
+	}
+	if ((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE) && (s->wrsSpllHlock == 0)){
+		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+			 "Hlock equals 0 in Slave mode\n",
+			 slog_obj_name);
+	}
+	if ((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE) && (s->wrsSpllMlock == 0)){
+		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+			 "Mlock equals 0 in Slave mode\n",
+			 slog_obj_name);
+	}
 
-	} else if ( /* check if any of fields equal to 0 or WARNING_NA */
-		s->wrsSpllMode == 0
-	) { /* warning NA */
-		t->wrsSoftPLLStatus =
-					      WRS_SOFTPLL_STATUS_WARNING_NA;
-
-	} else if ( /* check if OK */
+	/* check if warning */
+	if (!t->wrsSoftPLLStatus) {
+		if (s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllDelCnt > 0) {
+			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+					  "Del counter greater than 0 for "
+					  "Soft PLL in the Grand Master mode\n",
+					  slog_obj_name);
+		}
+		if (s->wrsSpllDelCnt != spll_DelCnt_prev) {
+			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+					  "Del counter insceased by %d, "
+					  "no increase allowed\n",
+					  slog_obj_name,
+					  s->wrsSpllDelCnt - spll_DelCnt_prev);
+		}
+	}
+	/* check if any of fields equal to 0 or WARNING_NA */
+	if (!t->wrsSoftPLLStatus) {
+		if (s->wrsSpllMode == 0) {
+			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING_NA;
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: "
+					  "SPLL mode not set\n",
+					  slog_obj_name);
+		}
+	}
+	 /* check if OK */
+	if ((!t->wrsSoftPLLStatus) && (
 		((s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllDelCnt == 0)
 		    || (s->wrsSpllDelCnt == spll_DelCnt_prev))
 		&& s->wrsSpllSeqState == WRS_SPLL_SEQ_STATE_READY
 		&& ((s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllAlignState == WRS_SPLL_ALIGN_STATE_LOCKED)
 		    || (s->wrsSpllMode == WRS_SPLL_MODE_MASTER)
-		    || (s->wrsSpllMode == WRS_SPLL_MODE_SLAVE))
+		    || (s->wrsSpllMode == WRS_SPLL_MODE_SLAVE)))
 	) { /* OK */
-		t->wrsSoftPLLStatus =
-						WRS_SOFTPLL_STATUS_OK;
-
-	} else { /* probably bug in previous conditions,
-		  * this should never happen */
-		t->wrsSoftPLLStatus =
-						WRS_SOFTPLL_STATUS_BUG;
+		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_OK;
+	}
+	/* probably bug in previous conditions, this should never happen */
+	if (!t->wrsSoftPLLStatus) {
+		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_BUG;
+		SLOG(SL_BUG);
 	}
 
 	spll_DelCnt_prev = s->wrsSpllDelCnt;
