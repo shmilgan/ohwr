@@ -86,10 +86,10 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
 	static int first_run = 1;
 
 	/* store old values of ptp servo error counters and number of updates */
-	static uint32_t servo_updates_prev[WRS_MAX_N_SERVO_INSTANCES];
-	static uint32_t n_err_state_prev[WRS_MAX_N_SERVO_INSTANCES];
-	static uint32_t n_err_offset_prev[WRS_MAX_N_SERVO_INSTANCES];
-	static uint32_t n_err_delta_rtt_prev[WRS_MAX_N_SERVO_INSTANCES];
+	static uint32_t wrsPtpServoUpdates_prev[WRS_MAX_N_SERVO_INSTANCES];
+	static uint32_t wrsPtpServoStateErrCnt_prev[WRS_MAX_N_SERVO_INSTANCES];
+	static uint32_t wrsPtpClockOffsetErrCnt_prev[WRS_MAX_N_SERVO_INSTANCES];
+	static uint32_t wrsPtpRTTErrCnt_prev[WRS_MAX_N_SERVO_INSTANCES];
 
 	/*********************************************************************\
 	|*************************** wrsPTPStatus  ***************************|
@@ -113,14 +113,14 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
 
 		/* check if error */
 		} else if ((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE)
-		    && ((pd_a[i].servo_updates == servo_updates_prev[i])
-			|| (pd_a[i].n_err_state != n_err_state_prev[i])
-			|| (pd_a[i].n_err_offset != n_err_offset_prev[i])
-			|| (pd_a[i].n_err_delta_rtt != n_err_delta_rtt_prev[i])
-			|| (pd_a[i].delta_tx_m == 0)
-			|| (pd_a[i].delta_rx_m == 0)
-			|| (pd_a[i].delta_tx_s == 0)
-			|| (pd_a[i].delta_rx_s == 0))) {
+		    && ((pd_a[i].wrsPtpServoUpdates == wrsPtpServoUpdates_prev[i])
+			|| (pd_a[i].wrsPtpServoStateErrCnt != wrsPtpServoStateErrCnt_prev[i])
+			|| (pd_a[i].wrsPtpClockOffsetErrCnt != wrsPtpClockOffsetErrCnt_prev[i])
+			|| (pd_a[i].wrsPtpRTTErrCnt != wrsPtpRTTErrCnt_prev[i])
+			|| (pd_a[i].wrsPtpDeltaTxM == 0)
+			|| (pd_a[i].wrsPtpDeltaRxM == 0)
+			|| (pd_a[i].wrsPtpDeltaTxS == 0)
+			|| (pd_a[i].wrsPtpDeltaRxS == 0))) {
 			wrsTimingStatus_s.wrsPTPStatus = WRS_PTP_STATUS_ERROR;
 			snmp_log(LOG_ERR, "SNMP: wrsPTPStatus "
 					  "failed for instance %d\n", i);
@@ -132,10 +132,10 @@ static void get_wrsPTPStatus(unsigned int ptp_data_nrows)
 
 	for (i = 0; i < ptp_data_nrows; i++) {
 		/* update old values */
-		servo_updates_prev[i] = pd_a[i].servo_updates;
-		n_err_state_prev[i] = pd_a[i].n_err_state;
-		n_err_offset_prev[i] = pd_a[i].n_err_offset;
-		n_err_delta_rtt_prev[i] = pd_a[i].n_err_delta_rtt;
+		wrsPtpServoUpdates_prev[i] = pd_a[i].wrsPtpServoUpdates;
+		wrsPtpServoStateErrCnt_prev[i] = pd_a[i].wrsPtpServoStateErrCnt;
+		wrsPtpClockOffsetErrCnt_prev[i] = pd_a[i].wrsPtpClockOffsetErrCnt;
+		wrsPtpRTTErrCnt_prev[i] = pd_a[i].wrsPtpRTTErrCnt;
 	}
 
 	first_run = 0;
@@ -230,16 +230,16 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 		for (i = 0; i < port_status_nrows; i++) {
 			/* warning N/A */
 			if (/*hal_shmem->s->wrsSpllMode == 0
-			    || */p_a[i].port_mode == 0
-			    || p_a[i].link_up == 0){
+			    || */p_a[i].wrsPortStatusConfiguredMode == 0
+			    || p_a[i].wrsPortStatusLink == 0){
 				wrsTimingStatus_s.wrsSlaveLinksStatus =
 						WRS_SLAVE_LINK_STATUS_WARNING_NA;
 			}
 			/* error when slave port is down when switch is in slave mode
 			  */
 			if (hal_shmem->hal_mode == HAL_TIMING_MODE_BC
-			    && (p_a[i].port_mode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
-			    && (p_a[i].link_up == WRS_PORT_STATUS_LINK_DOWN)) {
+			    && (p_a[i].wrsPortStatusConfiguredMode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
+			    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_DOWN)) {
 				wrsTimingStatus_s.wrsSlaveLinksStatus =
 							WRS_SLAVE_LINK_STATUS_ERROR;
 				snmp_log(LOG_ERR, "SNMP: wrsSlaveLinksStatus (slave) "
@@ -249,8 +249,8 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 			/* error when slave port is up when switch is in master or
 			* grandmaster mode */
 			if (((hal_shmem->hal_mode == HAL_TIMING_MODE_GRAND_MASTER) || (hal_shmem->hal_mode == HAL_TIMING_MODE_FREE_MASTER))
-			    && (p_a[i].port_mode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
-			    && (p_a[i].link_up == WRS_PORT_STATUS_LINK_UP)) {
+			    && (p_a[i].wrsPortStatusConfiguredMode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
+			    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP)) {
 				wrsTimingStatus_s.wrsSlaveLinksStatus =
 							WRS_SLAVE_LINK_STATUS_ERROR;
 				snmp_log(LOG_ERR, "SNMP: wrsSlaveLinksStatus (master) "
@@ -268,8 +268,8 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 	static int first_run = 1;
 
 	/* store old values of TX and RX PTP counters to calculate delta */
-	static unsigned long ptp_tx_count_prev[WRS_N_PORTS];
-	static unsigned long ptp_rx_count_prev[WRS_N_PORTS];
+	static unsigned long wrsPortStatusPtpTxFrames_prev[WRS_N_PORTS];
+	static unsigned long wrsPortStatusPtpRxFrames_prev[WRS_N_PORTS];
 
 	/*********************************************************************\
 	|************************ wrsPTPFramesFlowing ************************|
@@ -290,10 +290,10 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 
 		/* Error when there is no increase in TX/RX PTP counters.
 		   Check only when port is non-wr and port is down */
-		} else if ((p_a[i].port_mode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
-		    && (p_a[i].link_up == WRS_PORT_STATUS_LINK_UP)
-		    && ((ptp_tx_count_prev[i] == p_a[i].ptp_tx_count)
-			|| (ptp_rx_count_prev[i] == p_a[i].ptp_rx_count))) {
+		} else if ((p_a[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
+		    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP)
+		    && ((wrsPortStatusPtpTxFrames_prev[i] == p_a[i].wrsPortStatusPtpTxFrames)
+			|| (wrsPortStatusPtpRxFrames_prev[i] == p_a[i].wrsPortStatusPtpRxFrames))) {
 			wrsTimingStatus_s.wrsPTPFramesFlowing =
 						WRS_PTP_FRAMES_FLOWING_ERROR;
 			snmp_log(LOG_ERR, "SNMP: wrsPTPFramesFlowing "
@@ -303,8 +303,8 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 			break;
 
 		/* warning N/A */
-		} else if (p_a[i].port_mode == 0
-		    || p_a[i].link_up == 0){
+		} else if (p_a[i].wrsPortStatusConfiguredMode == 0
+		    || p_a[i].wrsPortStatusLink == 0){
 			wrsTimingStatus_s.wrsPTPFramesFlowing =
 					WRS_PTP_FRAMES_FLOWING_WARNING_NA;
 			/* continue with other ports, somewhere may be an
@@ -314,8 +314,8 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 
 	for (i = 0; i < port_status_nrows; i++) {
 		/* save current values */
-		ptp_tx_count_prev[i] = p_a[i].ptp_tx_count;
-		ptp_rx_count_prev[i] = p_a[i].ptp_rx_count;
+		wrsPortStatusPtpTxFrames_prev[i] = p_a[i].wrsPortStatusPtpTxFrames;
+		wrsPortStatusPtpRxFrames_prev[i] = p_a[i].wrsPortStatusPtpRxFrames;
 	}
 
 	first_run = 0;

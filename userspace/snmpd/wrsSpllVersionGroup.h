@@ -5,9 +5,9 @@
 #define WRSSPLLVERSION_OID WRS_OID, 7, 3, 1
 
 struct wrsSpllVersion_s {
-	char commit_id[32];
-	char build_date[32];
-	char build_by[32];
+	char wrsSpllVersion[32];
+	char wrsSpllBuildDate[32];
+	char wrsSpllBuildBy[32];
 };
 
 extern struct wrsSpllVersion_s wrsSpllVersion_s;
