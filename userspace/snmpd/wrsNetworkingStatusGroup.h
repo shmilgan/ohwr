@@ -63,9 +63,9 @@ struct ns_pstats {
 
 /* parameters read from dot-config */
 struct wrsNetworkingStatus_config {
-	int hp_frame_rate;
-	int rx_frame_rate;
-	int rx_prio_frame_rate;
+	float hp_frame_rate;
+	float rx_frame_rate;
+	float rx_prio_frame_rate;
 };
 
 #endif /* WRS_NETWORKING_STATUS_GROUP_H */

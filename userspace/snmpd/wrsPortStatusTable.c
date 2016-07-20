@@ -5,6 +5,9 @@
 /* Our data: per-port information */
 struct wrsPortStatusTable_s wrsPortStatusTable_array[WRS_N_PORTS];
 
+static char *slog_obj_name;
+static char *wrsPortStatusSfpError_str = "wrsPortStatusSfpError";
+
 static struct pickinfo wrsPortStatusTable_pickinfo[] = {
 	FIELD(wrsPortStatusTable_s, ASN_UNSIGNED, index), /* not reported */
 	FIELD(wrsPortStatusTable_s, ASN_OCTET_STR, wrsPortStatusPortName),
@@ -50,7 +53,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 	/* check whether shmem is available */
 	if (!shmem_ready_hald()) {
 		/* there was an update, return current time */
-		snmp_log(LOG_ERR, "%s: Unable to read HAL's shmem\n", __func__);
+		snmp_log(LOG_ERR, "%s: Unable to read HAL shmem\n", __func__);
 		n_rows_local = 0;
 		return time_cur;
 	} else {
@@ -101,10 +104,20 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			/* FIXME: get real peer_id */
 			memset(&wrsPortStatusTable_array[i].wrsPortStatusPeer, 0xff,
 			       sizeof(ClockIdentity));
-			wrsPortStatusTable_array[i].wrsPortStatusSfpInDB =
-			  port_state->calib.sfp.flags & SFP_FLAG_IN_DB ? 2 : 1;
-			wrsPortStatusTable_array[i].wrsPortStatusSfpGbE =
-			  port_state->calib.sfp.flags & SFP_FLAG_1GbE ? 2 : 1;
+			if (port_state->calib.sfp.flags & SFP_FLAG_IN_DB) {
+				wrsPortStatusTable_array[i].wrsPortStatusSfpInDB =
+					WRS_PORT_STATUS_SFP_IN_DB_IN_DATA_BASE;
+			} else {
+				wrsPortStatusTable_array[i].wrsPortStatusSfpInDB =
+					WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE;
+			}
+			if (port_state->calib.sfp.flags & SFP_FLAG_1GbE) {
+				wrsPortStatusTable_array[i].wrsPortStatusSfpGbE =
+					WRS_PORT_STATUS_SFP_GBE_LINK_GBE;
+			} else {
+				wrsPortStatusTable_array[i].wrsPortStatusSfpGbE =
+					WRS_PORT_STATUS_SFP_GBE_LINK_NOT_GBE;
+			}
 			strncpy(wrsPortStatusTable_array[i].wrsPortStatusSfpVN,
 				port_state->calib.sfp.vendor_name,
 				sizeof(wrsPortStatusTable_array[i].wrsPortStatusSfpVN));
@@ -115,16 +128,26 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 				port_state->calib.sfp.vendor_serial,
 				sizeof(wrsPortStatusTable_array[i].wrsPortStatusSfpVS));
 			/* sfp error when SFP is not 1 GbE or
-			 * (port is not wr-non mode and sfp not in data base)
-			 * Keep value 0 for Not available 
-			 * sfp ok is 1 (WRS_PORT_STATUS_SFP_ERROR_SFP_OK)
-			 * sfp error is 2 WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR
-			 * port down, set above, is 3
+			 * (port is not non-wr mode and sfp not in data base)
+			 * port down, is set above
 			 * (WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) */
-			wrsPortStatusTable_array[i].wrsPortStatusSfpError = 1 +
-				((wrsPortStatusTable_array[i].wrsPortStatusSfpGbE == 1) ||
-				((port_state->mode != HEXP_PORT_MODE_NON_WR) &&
-				(wrsPortStatusTable_array[i].wrsPortStatusSfpInDB == 1)));
+			slog_obj_name = wrsPortStatusSfpError_str;
+			wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_OK;
+			if (wrsPortStatusTable_array[i].wrsPortStatusSfpGbE == WRS_PORT_STATUS_SFP_GBE_LINK_NOT_GBE) {
+				/* error, SFP is not 1 GbE */
+				wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER  " %s: "
+					 "SFP in port %d (wri%d) is not for Gigabit Ethernet\n",
+					 slog_obj_name, i + 1, i + 1);
+			}
+			if ((wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR) &&
+				(wrsPortStatusTable_array[i].wrsPortStatusSfpInDB == WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE)) {
+				/* error, port is not non-wr mode and sfp not in data base */
+				wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
+				snmp_log(LOG_ERR, "SNMP: " SL_ER  " %s: "
+					 "SFP in port %d (wri%d) is not in database. Change the SFP or declare port as non-wr\n",
+					 slog_obj_name, i + 1, i + 1);
+			}
 
 			snmp_log(LOG_DEBUG, "reading ports name %s link %d, "
 				"mode %d, locked %d\n", port_state->name,
@@ -135,7 +158,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 
 		retries++;
 		if (retries > 100) {
-			snmp_log(LOG_ERR, "%s: too many retries to read HAL\n",
+			snmp_log(LOG_ERR, "%s: Unable to read HAL, too many retries\n",
 				 __func__);
 			retries = 0;
 			}
@@ -148,7 +171,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 	/* check whether shmem is available */
 	if (!shmem_ready_ppsi()) {
 		/* there was an update, return current time */
-		snmp_log(LOG_ERR, "%s: Unable to read PPSI's shmem\n",
+		snmp_log(LOG_ERR, "%s: Unable to read PPSI shmem\n",
 			 __func__);
 		return time_cur;
 	}
@@ -185,8 +208,8 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 		}
 		retries++;
 		if (retries > 100) {
-			snmp_log(LOG_ERR, "%s: too many retries to read PPSI "
-					  "shmem\n", __func__);
+			snmp_log(LOG_ERR, "%s: Unable to read PPSI, too many retries\n",
+					   __func__);
 			retries = 0;
 			break;
 			}

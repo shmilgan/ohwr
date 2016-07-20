@@ -14,6 +14,12 @@ static struct pickinfo wrsNetworkingStatus_pickinfo[] = {
 struct wrsNetworkingStatus_s wrsNetworkingStatus_s;
 static struct wrsNetworkingStatus_config ns_dotconfig;
 static struct ns_pstats ns_pstats_copy[WRS_N_PORTS];
+static char *slog_obj_name;
+static char *wrsSFPsStatus_str = "wrsSFPsStatus";
+static char *wrsEndpointStatus_str = "wrsEndpointStatus";
+static char *wrsSwcoreStatus_str = "wrsSwcoreStatus";
+static char *wrsRTUStatus_str = "wrsRTUStatus";
+
 
 static void copy_pstats(struct ns_pstats *copy, struct wrsPstatsHCTable_s *org,
 			unsigned int rows)
@@ -56,25 +62,19 @@ static int get_endpoint_status(struct ns_pstats *old,
 	int ret;
 	ret = 0;
 
+	slog_obj_name = wrsEndpointStatus_str;
+
 	/* values from 2.2.2 "Fault in the Endpoint’s transmission/reception
 	 * path" in wrs_failures document shouldn't change faster than 1
 	 * per second */
 	for (i = 0; i < rows; i++) {
-		if (
-		     ((new[i].wrsPstatsHCTXUnderrun - old[i].wrsPstatsHCTXUnderrun)/t_delta > 1.0)
-		     || ((new[i].wrsPstatsHCRXOverrun - old[i].wrsPstatsHCRXOverrun)/t_delta > 1.0)
-		     || ((new[i].wrsPstatsHCRXInvalidCode - old[i].wrsPstatsHCRXInvalidCode)/t_delta > 1.0)
-		     || ((new[i].wrsPstatsHCRXSyncLost - old[i].wrsPstatsHCRXSyncLost)/t_delta > 1.0)
-		     || ((new[i].wrsPstatsHCRXPfilterDropped - old[i].wrsPstatsHCRXPfilterDropped)/t_delta > 1.0)
-		     || ((new[i].wrsPstatsHCRXPCSErrors - old[i].wrsPstatsHCRXPCSErrors)/t_delta > 1.0)
-		     || ((new[i].wrsPstatsHCRXCRCErrors - old[i].wrsPstatsHCRXCRCErrors)/t_delta > 1.0)
-		) {
-			/* if error, no need to check more, but do it just for
-			 * logs */
-			ret = 1;
-			snmp_log(LOG_ERR, "SNMP: wrsEndpointStatus failed for "
-					  "port %d (wri %d)\n", i + 1, i + 1);
-		}
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCTXUnderrun,       new, old, i, t_delta, 1.0, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXOverrun,        new, old, i, t_delta, 1.0, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXInvalidCode,    new, old, i, t_delta, 1.0, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXSyncLost,       new, old, i, t_delta, 1.0, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXPfilterDropped, new, old, i, t_delta, 1.0, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXPCSErrors,      new, old, i, t_delta, 1.0, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXCRCErrors,      new, old, i, t_delta, 1.0, ret = 1);
 	}
 	return ret;
 }
@@ -91,6 +91,8 @@ static int get_swcore_status(struct ns_pstats *old,
 
 	/* don't use this function for now, return OK */
 	return ret;
+
+	slog_obj_name = wrsSwcoreStatus_str;
 
 	for (i = 0; i < rows; i++) {
 		/* TXFrames and Forwarded described in 2.2.3 "Problem with the
@@ -113,24 +115,16 @@ static int get_swcore_status(struct ns_pstats *old,
 		/* values from 2.2.5 "Too much HP traffic / Per-priority queue
 		 * full" in wrs_failures document shouldn't change faster
 		 * than parameters defined in dotconfig per second */
-		if ( /* shouldn't differ more than FORWARD_DELTA */
-		     ((new[i].wrsPstatsHCRXFrames - old[i].wrsPstatsHCRXFrames)/t_delta >= ns_dotconfig.rx_frame_rate)
-		     || ((new[i].wrsPstatsHCRXPrio0 - old[i].wrsPstatsHCRXPrio0)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].wrsPstatsHCRXPrio1 - old[i].wrsPstatsHCRXPrio1)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].wrsPstatsHCRXPrio2 - old[i].wrsPstatsHCRXPrio2)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].wrsPstatsHCRXPrio3 - old[i].wrsPstatsHCRXPrio3)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].wrsPstatsHCRXPrio4 - old[i].wrsPstatsHCRXPrio4)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].wrsPstatsHCRXPrio5 - old[i].wrsPstatsHCRXPrio5)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].wrsPstatsHCRXPrio6 - old[i].wrsPstatsHCRXPrio6)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].wrsPstatsHCRXPrio7 - old[i].wrsPstatsHCRXPrio7)/t_delta >= ns_dotconfig.rx_prio_frame_rate)
-		     || ((new[i].wrsPstatsHCFastMatchPriority - old[i].wrsPstatsHCFastMatchPriority)/t_delta >= ns_dotconfig.hp_frame_rate)
-		) {
-			/* if error, no need to check more, but do it just for
-			 * logs */
-			ret = 1;
-			snmp_log(LOG_ERR, "SNMP: wrsSwcoreStatus failed for "
-					  "port %d (wri %d)\n", i + 1, i + 1);
-		}
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXFrames,          new, old, i, t_delta, ns_dotconfig.rx_frame_rate,      ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXPrio0,           new, old, i, t_delta, ns_dotconfig.rx_prio_frame_rate, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXPrio1,           new, old, i, t_delta, ns_dotconfig.rx_prio_frame_rate, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXPrio2,           new, old, i, t_delta, ns_dotconfig.rx_prio_frame_rate, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXPrio3,           new, old, i, t_delta, ns_dotconfig.rx_prio_frame_rate, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXPrio4,           new, old, i, t_delta, ns_dotconfig.rx_prio_frame_rate, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXPrio5,           new, old, i, t_delta, ns_dotconfig.rx_prio_frame_rate, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXPrio6,           new, old, i, t_delta, ns_dotconfig.rx_prio_frame_rate, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCRXPrio7,           new, old, i, t_delta, ns_dotconfig.rx_prio_frame_rate, ret = 1);
+		SLOG_IF_COMP_WNSG(SL_ER, wrsPstatsHCFastMatchPriority, new, old, i, t_delta, ns_dotconfig.hp_frame_rate,      ret = 1);
 	}
 	return ret;
 }
@@ -143,6 +137,8 @@ static int get_rtu_status(struct ns_pstats *old,
 	int ret;
 	ret = 0;
 
+	slog_obj_name = wrsRTUStatus_str;
+
 	/* values from 2.2.4 "RTU is full and cannot accept more requests" in
 	 * wrs_failures document shouldn't increase */
 	for (i = 0; i < rows; i++) {
@@ -150,8 +146,13 @@ static int get_rtu_status(struct ns_pstats *old,
 			/* if error, no need to check more, but do it just for
 			 * logs */
 			ret = 1;
-			snmp_log(LOG_ERR, "SNMP: wrsEndpointStatus failed for "
-					  "port %d (wri %d)\n", i + 1, i + 1);
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+				 "wrsPstatsHCRXDropRTUFull counter for port %i (wri %i) increased by %lld, allowed %d\n",
+				 slog_obj_name, i + 1, i + 1,
+				 new[i].wrsPstatsHCRXDropRTUFull - old[i].wrsPstatsHCRXDropRTUFull, 0);
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+				 "some frames were lost because RTU could not accept new requests\n",
+				 slog_obj_name);
 		}
 	}
 	/* TODO: add 2.2.7 "Network loop - two or more identical MACs on two or
@@ -182,7 +183,7 @@ time_t wrsNetworkingStatus_data_fill(void)
 	static time_t time_update; /* time of last update */
 	time_t time_port_status; /* time when port status table was updated */
 	time_t time_pstats; /* time when pstats table was updated */
-	float time_pstats_delta; /* seconds since last update */
+	time_t time_pstats_delta; /* seconds since last update */
 	static time_t time_pstats_prev; /* time when previous state of pstats
 					 * table was updated */
 	unsigned int port_status_nrows; /* number of rows in PortStatusTable */
@@ -204,7 +205,6 @@ time_t wrsNetworkingStatus_data_fill(void)
 		/* cache not updated, return last update time */
 		return time_update;
 	}
-	time_update = get_monotonic_sec();
 
 	if (run_once) {
 		run_once = 0;
@@ -212,59 +212,71 @@ time_t wrsNetworkingStatus_data_fill(void)
 		load_dot_config();
 	}
 	time_pstats_delta = time_pstats - time_pstats_prev;
-	memset(&wrsNetworkingStatus_s, 0, sizeof(wrsNetworkingStatus_s));
 
 	/*********************************************************************\
 	|*************************** wrsSFPsStatus ***************************|
 	\*********************************************************************/
 
+	
+	slog_obj_name = wrsSFPsStatus_str;
 	p_a = wrsPortStatusTable_array;
-	port_status_n_ok = 0;
-	port_status_n_error = 0;
-	port_status_n_down = 0;
-	port_status_n_na = 0;
-	/* count number of ports of each status */
-	for (i = 0; i < port_status_nrows; i++) {
-		if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_SFP_OK) {
-			port_status_n_ok++;
+	
+	if (time_port_status > time_update) {
+		/* update only if wrsPortStatusTable was updated */
+		port_status_n_ok = 0;
+		port_status_n_error = 0;
+		port_status_n_down = 0;
+		port_status_n_na = 0;
+		/* count number of ports of each status */
+		for (i = 0; i < port_status_nrows; i++) {
+			if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_SFP_OK) {
+				port_status_n_ok++;
+			}
+			if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) {
+				port_status_n_down++;
+			}
+			if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR) {
+				port_status_n_error++;
+			}
+			if (p_a[i].wrsPortStatusSfpError == 0) {
+				snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Unable to read wrsSFPsStatus "
+					"for port %i (wri%i)\n",
+					slog_obj_name, i + 1, i + 1);
+				port_status_n_na++;
+			}
 		}
-		if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR) {
-			port_status_n_error++;
+
+		if (port_status_n_error > 0) {
+			/* error */
+			wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_ERROR;
+		} else if ((port_status_n_ok + port_status_n_down + port_status_n_na)
+				!= port_status_nrows) {
+			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: Error reading statuses of SFPs\n",
+				slog_obj_name);
+			wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_ERROR;
+		} else if (port_status_n_na > 0) { /* warning NA */
+			wrsNetworkingStatus_s.wrsSFPsStatus =
+							WRS_SFPS_STATUS_WARNING_NA;
+
+		} else if ((port_status_n_ok + port_status_n_down) ==
+				port_status_nrows) {
+			/* OK is when port is ok or down */
+			wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_OK;
+
+		} else { /* probably bug in previous conditions,
+			  * this should never happen */
+			wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_BUG;
 		}
-		if (p_a[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) {
-			port_status_n_down++;
-		}
-		if (p_a[i].wrsPortStatusSfpError == 0) {
-			port_status_n_na++;
-		}
-	}
-
-	if ((port_status_n_error > 0)
-	    || ((port_status_n_ok + port_status_n_down + port_status_n_na)
-			!= port_status_nrows)
-	) {
-		/* error */
-		wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_ERROR;
-
-	} else if (port_status_n_na > 0) { /* warning NA */
-		wrsNetworkingStatus_s.wrsSFPsStatus =
-						WRS_SFPS_STATUS_WARNING_NA;
-
-	} else if ((port_status_n_ok + port_status_n_down) ==
-			port_status_nrows) {
-		/* OK is when port is ok or down */
-		wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_OK;
-
-	} else { /* probably bug in previous conditions,
-		  * this should never happen */
-		wrsNetworkingStatus_s.wrsSFPsStatus = WRS_SFPS_STATUS_BUG;
 	}
 
 	/*********************************************************************\
 	|************************* wrsEndpointStatus *************************|
 	\*********************************************************************/
 
-	if (time_pstats_prev) { /* never generate error during first check */
+	if (!time_pstats_delta) {
+		/* do nothing when time_pstats_delta == 0, it means there was
+		 * no re-read of pstats */
+	} else if (time_pstats_prev && time_pstats_delta) { /* never generate error during first check */
 		ret = get_endpoint_status(ns_pstats_copy, pstats_array,
 					  pstats_nrows, time_pstats_delta);
 		if (ret == 0)
@@ -283,7 +295,10 @@ time_t wrsNetworkingStatus_data_fill(void)
 	|************************** wrsSwcoreStatus **************************|
 	\*********************************************************************/
 
-	if (time_pstats_prev) { /* never generate error during first check */
+	if (!time_pstats_delta) {
+		/* do nothing when time_pstats_delta == 0, it means there was
+		 * no re-read of pstats */
+	} else if (time_pstats_prev && time_pstats_delta) { /* never generate error during first check */
 		ret = get_swcore_status(ns_pstats_copy, pstats_array,
 					  pstats_nrows, time_pstats_delta);
 		if (ret == 0)
@@ -301,21 +316,26 @@ time_t wrsNetworkingStatus_data_fill(void)
 	|*************************** wrsRTUStatus  ***************************|
 	\*********************************************************************/
 
-	if (time_pstats_prev) { /* never generate error during first check */
+	if (!time_pstats_delta) {
+		/* do nothing when time_pstats_delta == 0, it means there was
+		 * no re-read of pstats */
+	} else if (time_pstats_prev) { /* never generate error during first check */
+		
 		ret = get_rtu_status(ns_pstats_copy, pstats_array,
-					  pstats_nrows, time_pstats_delta);
+				     pstats_nrows, time_pstats_delta);
 		if (ret == 0)
 			wrsNetworkingStatus_s.wrsRTUStatus =
 						WRS_RTU_STATUS_OK;
 		else
 			wrsNetworkingStatus_s.wrsRTUStatus =
 						WRS_RTU_STATUS_ERROR;
+		
 	} else {
 		/* first read */
 		wrsNetworkingStatus_s.wrsRTUStatus = WRS_RTU_STATUS_FR;
 	}
 
-
+	time_update = get_monotonic_sec();
 	/* save time of pstats copy */
 	time_pstats_prev = time_pstats;
 	/* copy current set of pstats */
