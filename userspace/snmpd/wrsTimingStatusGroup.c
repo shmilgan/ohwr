@@ -220,14 +220,16 @@ static void get_wrsSoftPLLStatus(void)
 	if (s->wrsSpllSeqState != WRS_SPLL_SEQ_STATE_READY) {
   		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_ERROR;
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-			 "Sequence state of Soft PLL not in Ready\n",
+			 "Sequencing FSM state of SoftPLL is not READY. "
+			 "SoftPLL is not yet ready or has unlocked.\n",
 			 slog_obj_name);
 	}
 	if (s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER
 	    && s->wrsSpllAlignState != WRS_SPLL_ALIGN_STATE_LOCKED) {
 		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_ERROR;
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-			 "Allign state is not locked\n",
+			 "Allignment FSM state of SoftPLL is not LOCKED. "
+			 "SoftPLL is not yet ready or has unlocked.\n",
 			 slog_obj_name);
 	}
 	if ((s->wrsSpllMode != WRS_SPLL_MODE_GRAND_MASTER)
@@ -235,19 +237,20 @@ static void get_wrsSoftPLLStatus(void)
 		    && (s->wrsSpllMode != WRS_SPLL_MODE_SLAVE)) {
 		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_ERROR;
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-			 "Soft PLL in wrong mode (%d)\n",
+			 "SoftPLL in mode %d which is neither of the supported "
+			 "modes: GrandMaster, Master, Slave\n",
 			 slog_obj_name, s->wrsSpllMode);
 	}
 	if ((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE) && (s->wrsSpllHlock == 0)){
 		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_ERROR;
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-			 "Hlock equals 0 in Slave mode\n",
+			 "SoftPLL is in Slave mode and Helper PLL is not locked\n",
 			 slog_obj_name);
 	}
 	if ((s->wrsSpllMode == WRS_SPLL_MODE_SLAVE) && (s->wrsSpllMlock == 0)){
 		t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_ERROR;
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-			 "Mlock equals 0 in Slave mode\n",
+			 "SoftPLL is in Slave mode and Main PLL is not locked\n",
 			 slog_obj_name);
 	}
 
@@ -256,15 +259,23 @@ static void get_wrsSoftPLLStatus(void)
 		if (s->wrsSpllMode == WRS_SPLL_MODE_GRAND_MASTER && s->wrsSpllDelCnt > 0) {
 			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING;
 			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
-					  "Del counter greater than 0 for "
-					  "Soft PLL in the Grand Master mode\n",
-					  slog_obj_name);
+					  "SoftPLL in GrandMaster mode has unlocked from "
+					  "the external reference. Delock counter is %d\n",
+					  slog_obj_name, s->wrsSpllDelCnt);
 		}
-		if (s->wrsSpllDelCnt != spll_DelCnt_prev) {
+		if (s->wrsSpllMode == WRS_SPLL_MODE_MASTER && s->wrsSpllDelCnt != spll_DelCnt_prev) {
 			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING;
 			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
-					  "Del counter insceased by %d, "
-					  "no increase allowed\n",
+					  "SoftPLL in Master mode has unlocked. Delock "
+					  "counter insceased by %d\n",
+					  slog_obj_name,
+					  s->wrsSpllDelCnt - spll_DelCnt_prev);
+		}
+		if (s->wrsSpllMode == WRS_SPLL_MODE_SLAVE && s->wrsSpllDelCnt != spll_DelCnt_prev) {
+			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: "
+					  "SoftPLL in Slave mode has unlocked. Delock "
+					  "counter insceased by %d\n",
 					  slog_obj_name,
 					  s->wrsSpllDelCnt - spll_DelCnt_prev);
 		}
@@ -274,7 +285,7 @@ static void get_wrsSoftPLLStatus(void)
 		if (s->wrsSpllMode == 0) {
 			t->wrsSoftPLLStatus = WRS_SOFTPLL_STATUS_WARNING_NA;
 			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: "
-					  "SPLL mode not set\n",
+					  "SoftPLL mode not set\n",
 					  slog_obj_name);
 		}
 	}
