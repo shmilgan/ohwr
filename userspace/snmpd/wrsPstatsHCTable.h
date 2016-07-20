@@ -4,7 +4,7 @@
 #define WRSPSTATSHCTABLE_CACHE_TIMEOUT 5
 #define WRSPSTATSHCTABLE_OID WRS_OID, 7, 7
 
-#define PSTATS_MAX_N_COUNTERS 39 /* maximum number of counters */
+#define PSTATS_MAX_N_COUNTERS 40 /* maximum number of counters */
 #define PSTATS_SYSCTL_PATH "/proc/sys/pstats/" /* Path to sysclt entries */
 #define PSTATS_SYSCTL_INFO_FILE "info" /* file with version of pstats counters
 					* and number of counters */
@@ -53,6 +53,7 @@ struct wrsPstatsHCTable_s {
 	uint64_t wrsPstatsHCFullMatchRespValid;
 	uint64_t wrsPstatsHCForwarded;
 	uint64_t wrsPstatsHCTRURespValid;
+	uint64_t wrsPstatsHCNICTXFrames;
 };
 
 extern struct wrsPstatsHCTable_s pstats_array[WRS_N_PORTS];
