@@ -21,19 +21,19 @@ struct wrs_v_item {
 };
 
 static struct pickinfo wrsVersion_pickinfo[] = {
-	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[0]),
-	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[1]),
-	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[2]),
-	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[3]),
-	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[4]),
-	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[5]),
-	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[6]),
-	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[7]),
-	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[8]),
-	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[9]),
-	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[10]),
-	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[11]),
-	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[12]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionSwVersion_i]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionSwBuildBy_i]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionSwBuildDate_i]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionBackplaneVersion_i]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionFpgaType_i]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionManufacturer_i]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionSwitchSerialNumber_i]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionScbVersion_i]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionGwVersion_i]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionGwBuild_i]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionSwitchHdlCommitId_i]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionGeneralCoresCommitId_i]),
+	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersions[wrsVersionWrCoresCommitId_i]),
 	FIELD(wrsVersion_s, ASN_OCTET_STR, wrsVersionLastUpdateDate),
 };
 
@@ -42,19 +42,19 @@ struct wrsVersion_s wrsVersion_s;
 static struct wrs_v_item wrs_version[] = {
 	/* Warning: the order here must match the MIB file
 	 * wrs_version has to have the same size as wrsVersion_s.wrsVersions */
-	[0] = {.key = "software-version:"},
-	[1] = {"bult-by:"},
-	[2] = {"build-date:"},
-	[3] = {"backplane-version:"},
-	[4] = {"fpga-type:"},
-	[5] = {"manufacturer:"},
-	[6] = {"serial-number:"},
-	[7] = {"scb-version:"},
-	[8] = {"gateware-version:"},
-	[9] = {"gateware-build:"},
-	[10] = {"wr_switch_hdl-commit:"},
-	[11] = {"general-cores-commit:"},
-	[12] = {"wr-cores-commit:"},
+	[wrsVersionSwVersion_i]			= {.key = "software-version:"},
+	[wrsVersionSwBuildBy_i]			= {"bult-by:"},
+	[wrsVersionSwBuildDate_i]		= {"build-date:"},
+	[wrsVersionBackplaneVersion_i]		= {"backplane-version:"},
+	[wrsVersionFpgaType_i]			= {"fpga-type:"},
+	[wrsVersionManufacturer_i]		= {"manufacturer:"},
+	[wrsVersionSwitchSerialNumber_i]	= {"serial-number:"},
+	[wrsVersionScbVersion_i]		= {"scb-version:"},
+	[wrsVersionGwVersion_i]			= {"gateware-version:"},
+	[wrsVersionGwBuild_i]			= {"gateware-build:"},
+	[wrsVersionSwitchHdlCommitId_i]		= {"wr_switch_hdl-commit:"},
+	[wrsVersionGeneralCoresCommitId_i]	= {"general-cores-commit:"},
+	[wrsVersionWrCoresCommitId_i]		= {"wr-cores-commit:"},
 };
 
 

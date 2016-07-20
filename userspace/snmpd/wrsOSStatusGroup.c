@@ -4,6 +4,7 @@
 #include "wrsMemoryGroup.h"
 #include "wrsCpuLoadGroup.h"
 #include "wrsDiskTable.h"
+#include "wrsVersionGroup.h"
 #include "wrsOSStatusGroup.h"
 
 #define WRSMEMORYFREELOW_TRESHOLD_ERROR 80
@@ -55,6 +56,8 @@ time_t wrsOSStatus_data_fill(void)
 	struct wrsCpuLoad_s *c;
 	struct wrsDiskTable_s *d;
 	struct wrsTemperature_s *t;
+	struct wrsVersion_s *v;
+	char *unknown = "UNKNOWN";
 
 	time_boot = wrsBootStatus_data_fill();
 	time_temp = wrsTemperature_data_fill();
@@ -81,6 +84,7 @@ time_t wrsOSStatus_data_fill(void)
 
 	slog_obj_name = wrsBootSuccessful_str;
 	b = &wrsBootStatus_s;
+	v = &wrsVersion_s;
 
 	/* check if error */
 	if (b->wrsBootCnt == 0) {
@@ -198,6 +202,23 @@ time_t wrsOSStatus_data_fill(void)
 			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: Last update of the firmware failed\n",
 				slog_obj_name);
 		}
+		if (!strcmp(v->wrsVersions[wrsVersionFpgaType_i], unknown)) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: wrong data in hwinfo, unknown version of FPGA\n",
+				slog_obj_name);
+		}
+		if (!strcmp(v->wrsVersions[wrsVersionSwitchSerialNumber_i], unknown)) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: wrong data in hwinfo, unknown Switch's serial number\n",
+				slog_obj_name);
+		}
+		if (!strcmp(v->wrsVersions[wrsVersionScbVersion_i], "000")) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: wrong data in hwinfo, unknown version of SCB\n",
+				slog_obj_name);
+		}
+
+
 	}
 
 	/* check if any of fields equal to 0 */
