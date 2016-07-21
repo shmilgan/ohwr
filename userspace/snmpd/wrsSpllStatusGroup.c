@@ -1,10 +1,7 @@
 #include "wrsSnmp.h"
-#include "softpll_export.h"
+#include <libwr/softpll.h>
 #include "wrsSpllStatusGroup.h"
 #include "snmp_mmap.h"
-
-#define FPGA_SPLL_STAT 0x10006800
-#define SPLL_MAGIC 0x5b1157a7
 
 static struct spll_stats *spll_stats_p;
 

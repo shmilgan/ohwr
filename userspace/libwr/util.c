@@ -4,6 +4,7 @@
 
 #include <libwr/wrs-msg.h>
 #include <libwr/util.h>
+#include <arpa/inet.h> /* for ntohl */
 
 static int loops_per_msec = -1;
 
@@ -68,4 +69,19 @@ time_t get_monotonic_sec(void)
 	struct timespec tv;
 	clock_gettime(CLOCK_MONOTONIC, &tv);
 	return tv.tv_sec;
+}
+
+/* change endianess of the string, for example when accessing strings in
+ * the SoftPLL */
+void strncpy_e(char *d, char *s, int len)
+{
+	int i;
+	int len_4;
+	uint32_t *s_i, *d_i;
+
+	s_i = (uint32_t *)s;
+	d_i = (uint32_t *)d;
+	len_4 = (len+3)/4; /* ceil len to word lenth (4) */
+	for (i = 0; i < len_4; i++)
+		d_i[i] = ntohl(s_i[i]);
 }

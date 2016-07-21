@@ -1,7 +1,7 @@
 #ifndef WRS_SPLL_STATUS_GROUP_H
 #define WRS_SPLL_STATUS_GROUP_H
 
-#include "softpll_export.h"
+#include <libwr/softpll.h>
 
 #define WRSSPLLSTATUS_CACHE_TIMEOUT 5
 #define WRSSPLLSTATUS_OID WRS_OID, 7, 3, 2

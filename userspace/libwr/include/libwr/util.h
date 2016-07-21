@@ -14,4 +14,8 @@ uint64_t get_monotonic_tics(void);
 /* get monotonic number of seconds */
 time_t get_monotonic_sec(void);
 
+/* Change endianess of the string, for example when accessing strings in
+ * the SoftPLL */
+void strncpy_e(char *d, char *s, int len);
+
 #endif /* __LIBWR_HW_UTIL_H */

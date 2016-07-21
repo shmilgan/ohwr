@@ -1,10 +1,8 @@
 #include "wrsSnmp.h"
 #include "wrsSpllVersionGroup.h"
-#include "softpll_export.h"
+#include <libwr/softpll.h>
+#include <libwr/util.h>
 #include "snmp_mmap.h"
-
-#define FPGA_SPLL_STAT 0x10006800
-#define SPLL_MAGIC 0x5b1157a7
 
 static struct spll_stats *spll_stats_p;
 
@@ -15,20 +13,6 @@ static struct pickinfo wrsSpllVersion_pickinfo[] = {
 };
 
 struct wrsSpllVersion_s wrsSpllVersion_s;
-
-/* change endianess of the string */
-static void strncpy_e(char *d, char *s, int len)
-{
-	int i;
-	int len_4;
-	uint32_t *s_i, *d_i;
-
-	s_i = (uint32_t *)s;
-	d_i = (uint32_t *)d;
-	len_4 = (len+3)/4; /* ceil len to word lenth (4) */
-	for (i = 0; i < len_4; i++)
-		d_i[i] = ntohl(s_i[i]);
-}
 
 time_t wrsSpllVersion_data_fill(void)
 {
