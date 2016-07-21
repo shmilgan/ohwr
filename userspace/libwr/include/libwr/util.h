@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
 
 #define atoidef(str,def) (str)?atoi(str):def
 
@@ -17,5 +20,8 @@ time_t get_monotonic_sec(void);
 /* Change endianess of the string, for example when accessing strings in
  * the SoftPLL */
 void strncpy_e(char *d, char *s, int len);
+
+/* Create map */
+void *create_map(unsigned long address, unsigned long size);
 
 #endif /* __LIBWR_HW_UTIL_H */

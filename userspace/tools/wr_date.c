@@ -18,6 +18,7 @@
 #include <sys/time.h>
 #include <sys/timex.h>
 #include "../../kernel/wbgen-regs/ppsg-regs.h"
+#include <libwr/util.h>
 
 #ifndef MOD_TAI
 #define MOD_TAI 0x80
@@ -53,7 +54,7 @@ char *opt_cfgfile = WRDATE_CFG_FILE;
 char *prgname;
 
 /* Check that we actualy are on the wr switch, exit if not */
-int wrdate_check_host(int fdmem)
+int wrdate_check_host(void)
 {
 	int ret;
 
@@ -75,26 +76,6 @@ int wrdate_cfgfile(char *fname)
 {
 	/* FIXME: parse config file */
 	return 0;
-}
-
-/* create a map, that is never goind to be released */
-void *create_map(int fdmem, unsigned long address, unsigned long size)
-{
-	unsigned long ps = getpagesize();
-	unsigned long offset, fragment, len;
-	void *mapaddr;
-
-	offset = address & ~(ps -1);
-	fragment = address & (ps -1);
-	len = address + size - offset;
-
-	mapaddr = mmap(0, len, PROT_READ | PROT_WRITE,
-		       MAP_SHARED, fdmem, offset);
-	if (mapaddr == MAP_FAILED) {
-		fprintf(stderr, "%s: mmap: %s\n", prgname, strerror(errno));
-		exit(1);
-	}
-	return mapaddr + fragment;
 }
 
 int wrdate_get(struct PPSG_WB *pps, int tohost)
@@ -324,7 +305,7 @@ int wrdate_set(struct PPSG_WB *pps, char *arg)
 
 int main(int argc, char **argv)
 {
-	int c, fd, tohost = 0;
+	int c, tohost = 0;
 	char *cmd;
 	struct PPSG_WB *pps;
 
@@ -353,15 +334,12 @@ int main(int argc, char **argv)
 
 	cmd = argv[optind++];
 
-
-	fd = open("/dev/mem", O_RDWR | O_SYNC);
-	if (fd < 0) {
-		fprintf(stderr, "%s: /dev/mem: %s\n", argv[0], strerror(errno));
+	wrdate_check_host();
+	pps = create_map(FPGA_BASE_PPSG, sizeof(*pps));
+	if (!pps) {
+		fprintf(stderr, "%s: mmap: %s\n", prgname, strerror(errno));
 		exit(1);
 	}
-	wrdate_check_host(fd);
-	pps = create_map(fd, FPGA_BASE_PPSG, sizeof(*pps));
-	close(fd);
 
 	wrdate_cfgfile(opt_cfgfile);
 

@@ -1,5 +1,5 @@
 #include "wrsSnmp.h"
-#include "snmp_mmap.h"
+#include <libwr/util.h>
 #include "wrsBootStatusGroup.h"
 
 #define BOOTCOUNT_FILE "/proc/wrs-bootcount"

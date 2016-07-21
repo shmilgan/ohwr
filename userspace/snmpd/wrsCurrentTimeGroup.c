@@ -1,6 +1,6 @@
 #include "wrsSnmp.h"
 #include "wrsCurrentTimeGroup.h"
-#include "snmp_mmap.h"
+#include <libwr/util.h>
 
 /* defines for nic-hardware.h */
 #define WR_SWITCH

@@ -2,7 +2,6 @@
 #include "wrsSpllVersionGroup.h"
 #include <libwr/softpll.h>
 #include <libwr/util.h>
-#include "snmp_mmap.h"
 
 static struct spll_stats *spll_stats_p;
 

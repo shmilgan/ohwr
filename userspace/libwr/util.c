@@ -85,3 +85,26 @@ void strncpy_e(char *d, char *s, int len)
 	for (i = 0; i < len_4; i++)
 		d_i[i] = ntohl(s_i[i]);
 }
+
+void *create_map(unsigned long address, unsigned long size)
+{
+	unsigned long ps = getpagesize();
+	unsigned long offset, fragment, len;
+	void *mapaddr;
+	int fd;
+
+	fd = open("/dev/mem", O_RDWR | O_SYNC);
+	if (fd < 0)
+		return NULL;
+
+	offset = address & ~(ps - 1);
+	fragment = address & (ps - 1);
+	len = address + size - offset;
+
+	mapaddr = mmap(0, len, PROT_READ | PROT_WRITE,
+		       MAP_SHARED, fd, offset);
+	close(fd);
+	if (mapaddr == MAP_FAILED)
+		return NULL;
+	return mapaddr + fragment;
+}
