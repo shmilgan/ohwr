@@ -5,18 +5,25 @@
 #include <errno.h>
 #include <unistd.h>
 #include <signal.h>
+#include <fcntl.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/rtu_shmem.h>
+#include <libwr/softpll_export.h>
+#include <libwr/util.h>
 #include <ppsi/ppsi.h>
 #include <ppsi-wrs.h>
-
 
 /*  be safe, in case some other header had them slightly differently */
 #undef container_of
 #undef offsetof
 #undef ARRAY_SIZE
+
+#define FPGA_SPLL_STAT 0x10006800
+#define SPLL_MAGIC 0x5b1157a7
 
 #define container_of(ptr, type, member) ({			\
 	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
@@ -32,12 +39,54 @@ char *name_id_to_name[WRS_SHM_N_NAMES] = {
 	[wrs_shm_vlan] = "wrs_vlans",
 };
 
+/* index of a the greatest number describing the SPLL mode +1 */
+#define SPLL_MODE_MAX_N 5
+char *spll_mode_to_name[SPLL_MODE_MAX_N] = {
+	[SPLL_MODE_GRAND_MASTER] = "Grand Master",
+	[SPLL_MODE_FREE_RUNNING_MASTER] = "Free Runnig Master",
+	[SPLL_MODE_SLAVE] = "Slave",
+	[SPLL_MODE_DISABLED] = "Disabled",
+};
+
+/* index of a the greatest number describing the SPLL sequence +1 */
+#define SPLL_SEQ_STATE_MAX_N 11
+char *spll_seq_state_to_name[SPLL_SEQ_STATE_MAX_N] = {
+	[SEQ_START_EXT] = "start ext",
+	[SEQ_WAIT_EXT] = "wait ext",
+	[SEQ_START_HELPER] = "start helper",
+	[SEQ_WAIT_HELPER] = "wait helper",
+	[SEQ_START_MAIN] = "start main",
+	[SEQ_WAIT_MAIN] = "wait main",
+	[SEQ_DISABLED] = "disabled",
+	[SEQ_READY] = "ready",
+	[SEQ_CLEAR_DACS] = "clear dacs",
+	[SEQ_WAIT_CLEAR_DACS] = "wait clear dacs",
+};
+
+/* index of a the greatest number describing the SPLL align state +1 */
+#define SPLL_ALIGN_STATE_MAX_N 11
+char *spll_align_state_to_name[SPLL_ALIGN_STATE_MAX_N] = {
+	[ALIGN_STATE_EXT_OFF] = "ext off",
+	[ALIGN_STATE_START] = "start",
+	[ALIGN_STATE_INIT_CSYNC] = "init csync",
+	[ALIGN_STATE_WAIT_CSYNC] = "wait csync",
+	[ALIGN_STATE_WAIT_SAMPLE] = "wait sample",
+	[ALIGN_STATE_COMPENSATE_DELAY] = "compensate delay",
+	[ALIGN_STATE_LOCKED] = "locked",
+	[ALIGN_STATE_START_ALIGNMENT] = "start alignment",
+	[ALIGN_STATE_START_MAIN] = "start main",
+	[ALIGN_STATE_WAIT_CLKIN] = "wait clkIn",
+	[ALIGN_STATE_WAIT_PLOCK] = "wait plock",
+};
+
 /*
  * To ease copying from header files, allow int, char and other known types.
  * Please add more type as more structures are included here
  */
 enum dump_type {
 	dump_type_char, /* for zero-terminated strings */
+	dump_type_char_e, /* for zero-terminated strings with thw wrong
+			   * endianess */
 	dump_type_bina, /* for binary stull in MAC format */
 	/* normal types follow */
 	dump_type_uint32_t,
@@ -69,6 +118,10 @@ enum dump_type {
 	dump_type_sfp_flags,
 	dump_type_port_mode,
 	dump_type_sensor_temp,
+	/* SoftPLL's enumerations */
+	dump_type_spll_mode,
+	dump_type_spll_seq_state,
+	dump_type_spll_align_state,
 };
 
 static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
@@ -98,6 +151,17 @@ void dump_one_field(void *addr, struct dump_info *info)
 	case dump_type_char:
 		sprintf(format,"\"%%.%is\"\n", info->size);
 		printf(format, (char *)p);
+		break;
+	case dump_type_char_e: /* swap endianess */
+		i = info->size;
+		printf("\"");
+		while (i > 0) {
+			strncpy_e(format, (char *) p, 1);
+			printf("%.4s", (char *)format);
+			i -= 4;
+			p = ((char *) p) + 4;
+		}
+		printf("\"\n");
 		break;
 	case dump_type_bina:
 		for (i = 0; i < info->size; i++)
@@ -206,6 +270,58 @@ void dump_one_field(void *addr, struct dump_info *info)
 		break;
 	case dump_type_sensor_temp:
 		printf("%f\n", ((float)(*(int *)p >> 4)) / 16.0);
+		break;
+	case dump_type_spll_mode:
+		i = *(uint32_t *)p;
+		switch (i) {
+		case SPLL_MODE_GRAND_MASTER:
+		case SPLL_MODE_FREE_RUNNING_MASTER:
+		case SPLL_MODE_SLAVE:
+		case SPLL_MODE_DISABLED:
+			printf("%s(%d)\n", spll_mode_to_name[i], i);
+			break;
+		default:
+			printf("Unknown(%d)\n", i);
+		}
+		break;
+	case dump_type_spll_seq_state:
+		i = *(uint32_t *)p;
+		switch (i) {
+		case SEQ_START_EXT:
+		case SEQ_WAIT_EXT:
+		case SEQ_START_HELPER:
+		case SEQ_WAIT_HELPER:
+		case SEQ_START_MAIN:
+		case SEQ_WAIT_MAIN:
+		case SEQ_DISABLED:
+		case SEQ_READY:
+		case SEQ_CLEAR_DACS:
+		case SEQ_WAIT_CLEAR_DACS:
+			printf("%s(%d)\n", spll_seq_state_to_name[i], i);
+			break;
+		default:
+			printf("Unknown(%d)\n", i);
+		}
+		break;
+	case dump_type_spll_align_state:
+		i = *(uint32_t *)p;
+		switch (i) {
+		case ALIGN_STATE_EXT_OFF:
+		case ALIGN_STATE_START:
+		case ALIGN_STATE_INIT_CSYNC:
+		case ALIGN_STATE_WAIT_CSYNC:
+		case ALIGN_STATE_WAIT_SAMPLE:
+		case ALIGN_STATE_COMPENSATE_DELAY:
+		case ALIGN_STATE_LOCKED:
+		case ALIGN_STATE_START_ALIGNMENT:
+		case ALIGN_STATE_START_MAIN:
+		case ALIGN_STATE_WAIT_CLKIN:
+		case ALIGN_STATE_WAIT_PLOCK:
+			printf("%s(%d)\n", spll_align_state_to_name[i], i);
+			break;
+		default:
+			printf("Unknown(%d)\n", i);
+		}
 		break;
 	}
 }
@@ -634,7 +750,43 @@ int dump_ppsi_mem(struct wrs_shm_head *head)
 	return 0; /* this is complete */
 }
 
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct spll_stats
+struct dump_info spll_stats_info[] = {
+	DUMP_FIELD(uint32_t, magic),	/* 0x5b1157a7 = SPLLSTAT ?;)*/
+	DUMP_FIELD(int, ver),
+	DUMP_FIELD(int, sequence),
+	DUMP_FIELD(spll_mode, mode),
+	DUMP_FIELD(int, irq_cnt),
+	DUMP_FIELD(spll_seq_state, seq_state),
+	DUMP_FIELD(spll_align_state, align_state),
+	DUMP_FIELD(int, H_lock),
+	DUMP_FIELD(int, M_lock),
+	DUMP_FIELD(int, H_y),
+	DUMP_FIELD(int, M_y),
+	DUMP_FIELD(int, del_cnt),
+	DUMP_FIELD(int, start_cnt),
+	DUMP_FIELD_SIZE(char_e, commit_id, 32),
+	DUMP_FIELD_SIZE(char_e, build_date, 16),
+	DUMP_FIELD_SIZE(char_e, build_time, 16),
+	DUMP_FIELD_SIZE(char_e, build_by, 32),
+};
 
+static int dump_spll_mem(struct spll_stats *spll)
+{
+	printf("ID: Soft PLL:\n");
+
+	/* Check magic */
+	if (spll->magic != SPLL_MAGIC) {
+		/* Wrong magic */
+		fprintf(stderr, "dump spll: unknown magic %x (known is %x)\n",
+			spll->magic, SPLL_MAGIC);
+	}
+
+	dump_many_fields(spll, spll_stats_info, ARRAY_SIZE(spll_stats_info));
+
+	return 0; /* this is complete */
+}
 
 int dump_any_mem(struct wrs_shm_head *head)
 {
@@ -681,11 +833,13 @@ void print_info(char *prgname)
 		"  Dump shmem for specific program (by default dump for all)\n"
 		"   -P        Dump ptp entries\n"
 		"   -R        Dump rtu entries\n"
-		"   -L        Dump hal entries\n");
+		"   -L        Dump hal entries\n"
+		"   -S        Dump SoftPll entries\n");
 
 }
 
-int dump_print[WRS_SHM_N_NAMES];
+static int dump_print[WRS_SHM_N_NAMES];
+static int dump_spll = 0;
 
 int main(int argc, char **argv)
 {
@@ -695,8 +849,9 @@ int main(int argc, char **argv)
 	int i;
 	int c;
 	int print_all = 1;
+	struct spll_stats *spll_stats_p;
 
-	while ((c = getopt(argc, argv, "ahH:PRL")) != -1) {
+	while ((c = getopt(argc, argv, "ahH:PRLS")) != -1) {
 		switch (c) {
 		case 'a':
 			dump_all_rtu_entries = 1;
@@ -714,6 +869,10 @@ int main(int argc, char **argv)
 			break;
 		case 'L':
 			dump_print[wrs_shm_hal] = 1;
+			print_all = 0;
+			break;
+		case 'S':
+			dump_spll = 1;
 			print_all = 0;
 			break;
 		case 'h':
@@ -755,6 +914,11 @@ int main(int argc, char **argv)
 			dump_any_mem(head);
 		wrs_shm_put(m);
 		printf("\n"); /* separate one area from the next */
+	}
+	if (print_all || dump_spll) {
+		spll_stats_p = create_map(FPGA_SPLL_STAT,
+					  sizeof(*spll_stats_p));
+		dump_spll_mem(spll_stats_p);
 	}
 	return 0;
 }
