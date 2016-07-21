@@ -110,10 +110,16 @@ static int hal_init(void)
 	/* Low-level hw init, init non-kernel drivers */
 	assert_init(shw_init());
 
+	/* read timing mode from dot-config */
+	assert_init(hal_init_timing_mode());
+
+	/* Initialize HAL's shmem - see hal_ports.c */
+	assert_init(hal_port_init_shmem(logfilename));
+
 	assert_init(hal_init_timing(logfilename));
 
-	/* Initialize port FSMs and IPC/RPC - see hal_ports.c */
-	assert_init(hal_port_init_all(logfilename));
+	/* Initialize IPC/RPC - see hal_ports.c */
+	assert_init(hal_port_init_wripc(logfilename));
 
 	//everything is fine up to here, we can blink green LED
 	shw_io_write(shw_io_led_state_o, 0);

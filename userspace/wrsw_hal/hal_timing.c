@@ -20,9 +20,8 @@ static int timing_mode;
 #define LOCK_TIMEOUT_EXT 60000
 #define LOCK_TIMEOUT_INT 10000
 
-int hal_init_timing(char *filename)
+int hal_init_timing_mode(void)
 {
-	timeout_t lock_tmo;
 	static struct {
 		char *cfgname;
 		int modevalue;
@@ -39,6 +38,7 @@ int hal_init_timing(char *filename)
 		return -1;
 	}
 
+	/* Read the mode from dot-config */
 	for (m = modes; m->cfgname; m++)
 		if (libwr_cfg_get(m->cfgname))
 			break;
@@ -47,7 +47,12 @@ int hal_init_timing(char *filename)
 	if (!m->cfgname)
 		pr_error("%s: no config variable set, defaults used\n",
 			__func__);
+	return 0;
+}
 
+int hal_init_timing(char *filename)
+{
+	timeout_t lock_tmo;
 	/* initialize the RT Subsys */
 	switch (timing_mode) {
 	case HAL_TIMING_MODE_GRAND_MASTER:
