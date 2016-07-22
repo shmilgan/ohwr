@@ -212,9 +212,15 @@ int wrn_ep_open(struct net_device *dev)
 int wrn_ep_close(struct net_device *dev)
 {
 	struct wrn_ep *ep = netdev_priv(dev);
+	uint32_t value;
 
 	if (WR_IS_NODE)
 		return 0; /* No access to EP registers in the SPEC */
+
+	/* Disable SFP (put enable pin on SFP down) */
+	value = wrn_phy_read(dev, 0, MII_BMCR);
+	wrn_phy_write(dev, 0, MII_BMCR, value | BMCR_PDOWN);
+
 	/*
 	 * Beware: the system loops in the del_timer_sync below if timer_setup
 	 * had not been called either (see "if (WR_IS_NODE)" in ep_open above)
