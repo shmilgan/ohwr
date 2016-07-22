@@ -24,4 +24,3 @@ mkpasswd
 wrs_status_led
 wrs_sfp_dump
 wrs_pps_control
-wrs_port_tx_control

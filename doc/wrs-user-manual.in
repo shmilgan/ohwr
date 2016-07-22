@@ -1158,12 +1158,6 @@ The following tools and scripts are provided:
         of the PPSi process, but PPSi switches the PPS output back on when a
         link restart is detected and PPSi comes into @t{'TRACK_PHASE'} state.
 
-@item wrs_port_tx_control
-        A tool to switch the TX (laser) of a port on and off by use of the @t{TX
-        disable} pin on the SFP. Usage ``@t{wrs_port_tx_control <port_no> on}''
-        switches the TX on, and ``@t{wrs_port_tx_control <port_no> off}''
-        switches the TX off. The port number @t{<port_no>} ranges from 1 to 18.
-
 @item wr_date
 
 	The program can read or set the White Rabbit date. When setting,
