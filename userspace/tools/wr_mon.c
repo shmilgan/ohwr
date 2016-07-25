@@ -58,6 +58,44 @@ static uint32_t nanoseconds;
 /* ignore checking if process is alive */
 static int ignore_alive;
 
+/* define size of pp_instance_state_to_name as a last element + 1 */
+#define PP_INSTANCE_STATE_MAX (WR_PORT_CALIBRATION_8 + 1)
+/* define conversion array for the field state in the struct pp_instance */
+static char *pp_instance_state_to_name[PP_INSTANCE_STATE_MAX] = {
+	/* from ppsi/include/ppsi/ieee1588_types.h, enum pp_std_states */
+	/* PPS_END_OF_TABLE = 0 */
+	[PPS_END_OF_TABLE] = "end of table",
+	[PPS_INITIALIZING] = "initializing",
+	[PPS_FAULTY] = "faulty",
+	[PPS_DISABLED] = "disabled",
+	[PPS_LISTENING] = "listening",
+	[PPS_PRE_MASTER] = "pre master",
+	[PPS_MASTER] = "master",
+	[PPS_PASSIVE] = "passive",
+	[PPS_UNCALIBRATED] = "uncalibrated",
+	[PPS_SLAVE] = "slave",
+	/* from ppsi/proto-ext-whiterabbit/wr-constants.h */
+	/* WRS_PRESENT = 100 */
+	[WRS_PRESENT] = "WRS_PRESENT",
+	[WRS_S_LOCK] = "WRS_S_LOCK",
+	[WRS_M_LOCK] = "WRS_M_LOCK",
+	[WRS_LOCKED] = "WRS_LOCKED",
+	[WRS_CALIBRATION] = "WRS_CALIBRATION",
+	[WRS_CALIBRATED] = "WRS_CALIBRATED",
+	[WRS_RESP_CALIB_REQ] = "WRS_RESP_CALIB_REQ",
+	[WRS_WR_LINK_ON] = "WRS_WR_LINK_ON",
+	/* substates: used within WRS_CALIBRATED as wrPortState field */
+	[WR_PORT_CALIBRATION_0] = "WR_PORT_CALIBRATION_0",
+	[WR_PORT_CALIBRATION_1] = "WR_PORT_CALIBRATION_1",
+	[WR_PORT_CALIBRATION_2] = "WR_PORT_CALIBRATION_2",
+	[WR_PORT_CALIBRATION_3] = "WR_PORT_CALIBRATION_3",
+	[WR_PORT_CALIBRATION_4] = "WR_PORT_CALIBRATION_4",
+	[WR_PORT_CALIBRATION_5] = "WR_PORT_CALIBRATION_5",
+	[WR_PORT_CALIBRATION_6] = "WR_PORT_CALIBRATION_6",
+	[WR_PORT_CALIBRATION_7] = "WR_PORT_CALIBRATION_7",
+	[WR_PORT_CALIBRATION_8] = "WR_PORT_CALIBRATION_8",
+};
+
 void help(char *prgname)
 {
 	fprintf(stderr, "%s: Use: \"%s [<options>] <cmd> [<args>]\n",
@@ -345,9 +383,18 @@ void show_ports(void)
 				term_cprintf(C_WHITE,
 					"peer: %02x:%02x:%02x:%02x:%02x:%02x ",
 					 p[0], p[1], p[2], p[3], p[4], p[5]);
-				term_cprintf(C_GREEN, "ptp state %i\n",
-						 pp_array[j].state);
-				/* FIXME: string state */
+				if (pp_array[j].state < PP_INSTANCE_STATE_MAX) {
+					/* Known state */
+					term_cprintf(C_GREEN,
+						    "ptp state %s(%i)\n",
+						    pp_instance_state_to_name[pp_array[j].state],
+						    pp_array[j].state);
+				} else {
+					/* Unknown ptp state */
+					term_cprintf(C_GREEN,
+						    "ptp state unknown(%i)\n",
+						    pp_array[j].state);
+				}
 			}
 		} else if (mode & WEB_INTERFACE) {
 			printf("%s ", state_up(port_state->state)
