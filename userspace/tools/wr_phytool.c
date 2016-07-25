@@ -297,7 +297,7 @@ void calc_trans(int ep, int argc, char *argv[])
 	if(argc >= 3)
 		f_log = fopen(argv[3], "wb");
 
-	snprintf(sock_addr.if_name, sizeof(sock_addr.if_name), "wri%d", ep);
+	snprintf(sock_addr.if_name, sizeof(sock_addr.if_name), "wri%d", ep + 1);
 	sock_addr.family = PTPD_SOCK_RAW_ETHERNET; // socket type
 	sock_addr.ethertype = 12345;
 	memset(sock_addr.mac, 0xff, 6);
@@ -425,7 +425,7 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 
 	signal (SIGINT, sighandler);
 
-	snprintf(sock_addr.if_name, sizeof(sock_addr.if_name), "wri%d", ep);
+	snprintf(sock_addr.if_name, sizeof(sock_addr.if_name), "wri%d", ep + 1);
 	sock_addr.family = PTPD_SOCK_RAW_ETHERNET; // socket type
 	sock_addr.ethertype = 12345;
 	memset(sock_addr.mac, 0xff, 6);
@@ -498,7 +498,7 @@ void rt_command(int ep, int argc, char *argv[])
 	} else if (!strcmp(argv[3], "lock"))
 	{
 		int i;
-		printf("locking to: %d\n", ep);
+		printf("locking to: port %d wri%d\n", ep + 1, ep + 1);
 		for(i=0;i<100;i++)
 		{
 			rts_get_state(&pstate);
