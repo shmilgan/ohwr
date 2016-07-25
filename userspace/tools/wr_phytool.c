@@ -34,6 +34,7 @@
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/wrs-msg.h>
+#include <libwr/util.h>
 
 #define WRS3_FPGA_BASE 0x10000000
 #define WRS3_FPGA_SIZE 0x100000
@@ -110,33 +111,6 @@ int hal_shm_init(void)
 	return 0;
 }
 
-int fpga_map(char *prgname)
-{
-	int fdmem;
-	void *addr;
-
-	/* /dev/mem for mmap of both gpio and spi1 */
-	if ((fdmem = open("/dev/mem", O_RDWR | O_SYNC)) < 0) {
-		fprintf(stderr, "%s: /dev/mem: %s\n",
-			prgname, strerror(errno));
-		return -1;
-	}
-
-	/* map a whole page (4kB, but we called getpagesize to know it) */
-	addr = mmap(0, WRS3_FPGA_BASE, PROT_READ | PROT_WRITE,
-		       MAP_SHARED, fdmem,
-		       WRS3_FPGA_BASE);
-	if (addr == MAP_FAILED) {
-		fprintf(stderr, "%s: mmap(/dev/mem): %s\n",
-			prgname, strerror(errno));
-		return -1;
-	}
-	close(fdmem);
-
-	fpga = addr;
-	return 0;
-}
-
 uint32_t pcs_read(int ep, uint32_t reg)
 {
 	fpga_writel(EP_MDIO_CR_ADDR_W(reg), IDX_TO_EP(ep) + EP_REG(MDIO_CR));
@@ -161,6 +135,10 @@ void dump_pcs_regs(int ep, int argc, char *argv[])
 void write_pcs_reg(int ep, int argc, char *argv[])
 {
 	int reg, data;
+	if (argc < 4) {
+		printf("Not enough parameters %d\n", argc);
+		exit(1);
+	}
 	sscanf(argv[3], "%x", &reg);
 	sscanf(argv[4], "%x", &data);
 	pcs_write(ep, reg, data);
@@ -286,6 +264,8 @@ void calc_trans(int ep, int argc, char *argv[])
 	int bitslide,phase, i;
 	struct hal_port_state *port;
 
+	memset(&ts_tx, 0, sizeof(ts_tx));
+	memset(&ts_rx, 0, sizeof(ts_rx));
 	signal (SIGINT, sighandler);
 	for(i=0;i<MAX_BITSLIDES;i++)
 	{
@@ -423,6 +403,8 @@ void pps_adjustment_test(int ep, int argc, char *argv[])
 	int adjust_count = 0;
 	struct hal_port_state *port;
 
+	memset(&ts_tx, 0, sizeof(ts_tx));
+	memset(&ts_rx, 0, sizeof(ts_rx));
 	signal (SIGINT, sighandler);
 
 	snprintf(sock_addr.if_name, sizeof(sock_addr.if_name), "wri%d", ep + 1);
@@ -598,9 +580,11 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	if (fpga_map(argv[0]) < 0)
+	fpga = create_map(WRS3_FPGA_BASE, WRS3_FPGA_SIZE);
+	if (!fpga) {
+		printf("%s: Unable to mmap\n", argv[0]);
 		exit(1);
-	shw_init();
+	}
 
 	for(i=0; commands[i].cmd;i++)
 		if(!strcmp(commands[i].cmd, argv[2]))
