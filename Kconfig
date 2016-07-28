@@ -296,76 +296,117 @@ config PORT01_PARAMS
 	help
 	  This item, and the following ones, are used to assign the
 	  constant delays (likely from calibration), protocol type (raw or udp),
-	  port roles and type of fiber for each of the ports. Please refer to
+	  port roles and type of fiber (number referring to the corresponding
+	  FIBERXX_PARAMS) for each of the ports. Please refer to
 	  the user manual for more information.
+	  "role" can be one of the following:
+	    - master - configure port as a master
+	    - slave - configure port as a slave
+	    - auto - when a port is connected to master behave as a slave,
+		     otherwise behave as master
+	    - non-wr - disable White Rabbit on a port, keep PTP
 
 config PORT02_PARAMS
 	string "Parameters for the second port"
 	default "name=wri2,proto=raw,tx=224066,rx=226334,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT03_PARAMS
 	string "Parameters for a further port"
 	default "name=wri3,proto=raw,tx=224170,rx=226620,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT04_PARAMS
 	string "Parameters for a further port"
 	default "name=wri4,proto=raw,tx=224278,rx=226722,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT05_PARAMS
 	string "Parameters for a further port"
 	default "name=wri5,proto=raw,tx=224431,rx=227755,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT06_PARAMS
 	string "Parameters for a further port"
 	default "name=wri6,proto=raw,tx=224607,rx=228005,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT07_PARAMS
 	string "Parameters for a further port"
 	default "name=wri7,proto=raw,tx=224788,rx=228176,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT08_PARAMS
 	string "Parameters for a further port"
 	default "name=wri8,proto=raw,tx=224903,rx=228251,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT09_PARAMS
 	string "Parameters for a further port"
 	default "name=wri9,proto=raw,tx=225040,rx=228274,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT10_PARAMS
 	string "Parameters for a further port"
 	default "name=wri10,proto=raw,tx=225285,rx=228599,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT11_PARAMS
 	string "Parameters for a further port"
 	default "name=wri11,proto=raw,tx=225510,rx=229052,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT12_PARAMS
 	string "Parameters for a further port"
 	default "name=wri12,proto=raw,tx=225625,rx=229111,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT13_PARAMS
 	string "Parameters for a further port"
 	default "name=wri13,proto=raw,tx=225779,rx=229389,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT14_PARAMS
 	string "Parameters for a further port"
 	default "name=wri14,proto=raw,tx=226005,rx=229533,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT15_PARAMS
 	string "Parameters for a further port"
 	default "name=wri15,proto=raw,tx=226228,rx=229984,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT16_PARAMS
 	string "Parameters for a further port"
 	default "name=wri16,proto=raw,tx=226352,rx=230126,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT17_PARAMS
 	string "Parameters for a further port"
 	default "name=wri17,proto=raw,tx=226534,rx=230134,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 config PORT18_PARAMS
 	string "Parameters for a further port"
 	default "name=wri18,proto=raw,tx=226733,rx=230371,role=master,fiber=0"
+	help
+	  Please check the help of PORT01_PARAMS
 
 endmenu
 
@@ -377,64 +418,98 @@ config SFP00_PARAMS
 	help
 	  This parameter, and the following ones, are used to
 	  configure the timing parameters of a specific SFP
-	  tranceiver. The tranceiver name is autodected for each port
+	  transceiver. The transceiver name is autodected for each port
 	  in the White Rabbit Switch, and you need one configuration
-	  entry for each tranceiver type that is installed in your
+	  entry for each transceiver type that is installed in your
 	  device.
+	  vn (optional) - Vendor Name of an SFP
+	  pn - Part Number of an SFP
+	  vs (optional) - Vendor Serial (serial number) of an SFP
+	  tx - TX delay of an SFP
+	  rx - RX delay of an SFP
+	  wl_txrx - Tx wavelength separated by "+" with Rx wavelength of an SFP;
+		    for example wl_txrx=1490+1310
 
 config SFP01_PARAMS
 	string "Parameters for one SFP device type"
 	default "vn=Axcen Photonics,pn=AXGE-3454-0531,tx=0,rx=0,wl_txrx=1490+1310"
+	help
+	  Please check the help of SFP00_PARAMS
 
 config SFP02_PARAMS
 	string "Parameters for one SFP device type"
 	default "vn=ZyXEL,pn=SFP-BX1490-10-D,tx=0,rx=0,wl_txrx=1490+1310"
+	help
+	  Please check the help of SFP00_PARAMS
 
 config SFP03_PARAMS
 	string "Parameters for one SFP device type"
 	default "vn=ZyXEL,pn=SFP-BX1310-10-D,tx=0,rx=0,wl_txrx=1310+1490"
+	help
+	  Please check the help of SFP00_PARAMS
 
 config SFP04_PARAMS
 	string "Parameters for one SFP device type"
+	help
+	  Please check the help of SFP00_PARAMS
 
 config SFP05_PARAMS
 	string "Parameters for one SFP device type"
+	help
+	  Please check the help of SFP00_PARAMS
 
 config SFP06_PARAMS
 	string "Parameters for one SFP device type"
+	help
+	  Please check the help of SFP00_PARAMS
 
 config SFP07_PARAMS
 	string "Parameters for one SFP device type"
+	help
+	  Please check the help of SFP00_PARAMS
 
 config SFP08_PARAMS
 	string "Parameters for one SFP device type"
+	help
+	  Please check the help of SFP00_PARAMS
 
 config SFP09_PARAMS
 	string "Parameters for one SFP device type"
+	help
+	  Please check the help of SFP00_PARAMS
 
 
 config FIBER00_PARAMS
 	string "Alpha parameters for fiber type 0"
 	default "alpha_1310_1490=2.6787e-04"
 	help
-	  This parameter, and the following ones, specify the physical
-	  features of your fiber type.  You need to specify the alpha
-	  value for each pair of wavelengths you are using. The index
-	  ("00" onwards) is used to match the port
-	  (CONFIG_PORTxx_PARAMS) with one of several installed fiber
-	  types.
+	  This parameter specify the physical features of used fiber type.
+	  Specify the alpha value for each pair of used wavelengths.
+	  This parameter follows a format:
+	  alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...
+	  where XXX_YYYY and AAAA_BBBB are pairs of used wavelengths,
+	  1.23e-04, 4.56e-04 are alpha values to be used for particular
+	  wavelengths
+	  The index ("00" onwards) is used to match the port
+	  (CONFIG_PORTxx_PARAMS) with one of several installed fiber types.
 
 config FIBER01_PARAMS
 	string "Alpha parameters for fiber type 1"
 	default "alpha_1310_1490=2.6787e-04"
+	help
+	  Please check the help of FIBER00_PARAMS
 
 config FIBER02_PARAMS
 	string "Alpha parameters for fiber type 2"
 	default "alpha_1310_1490=2.6787e-04"
+	help
+	  Please check the help of FIBER00_PARAMS
 
 config FIBER03_PARAMS
 	string "Alpha parameters for fiber type 3"
 	default "alpha_1310_1490=2.6787e-04"
+	help
+	  Please check the help of FIBER00_PARAMS
 
 endmenu
 

@@ -607,10 +607,35 @@ value is changed by the web interface, proper action is taken.
 @itemx CONFIG_PORT18_PARAMS
 
 	These configuration items are used to set up port parameters;
-        this includes the delays, the PTP role, PTP protocol type
-        and the fiber type as an integer index.  Most likely
-        the default values work for you. See @ref{Timing Configuration}
-        for details.
+        this takes the following parameters:
+
+	@itemize
+		@item @t{name} -- the name of a given interface
+		@item @t{proto} -- PTP protocol type to be used on particular
+				   port; possible values:
+		@itemize
+			@item @t{raw} -- use raw Ethernet frames for timing
+			@item @t{udp} -- use UDP packets for timing
+		@end itemize
+		@item @t{tx} -- TX delay of a port
+		@item @t{rx} -- RX delay of a port
+		@item @t{role} -- PTP role of a port; possible values:
+		@itemize
+			@item @t{master} -- configure port as a master
+			@item @t{slave} -- configure port as a slave
+			@item @t{auto} -- when a port is connected to master
+					  behave as a slave, otherwise behave
+					  as master
+			@item @t{non-wr} -- disable White Rabbit on a port, keep PTP
+		@end itemize
+		@item @t{fiber} -- describes which fiber type
+				   (@t{CONFIG_FIBERXX_PARAMS})
+				   should be used for a fiber connected to
+				   a particular port
+        @end itemize
+
+        Most likely the default values work for you.
+        See @ref{Timing Configuration} for details.
 
 @item CONFIG_SFP00_PARAMS
 @itemx ...
@@ -618,17 +643,43 @@ value is changed by the web interface, proper action is taken.
 
 	Configuration for @sc{sfp} models. You should fill values for
         all @sc{sfp} models you are using in your @sc{wrs} and all
-        wavelengths you are using. See @ref{Timing Configuration}
-        for details.
+        wavelengths you are using.
+	@itemize
+		@item @t{vn} (@i{optional}) -- Vendor Name of an SFP
+		@item @t{pn} -- Part Number of an SFP
+		@item @t{vs} (@i{optional}) -- Vendor Serial (serial number) of
+					       an SFP
+		@item @t{tx} -- TX delay of an SFP
+		@item @t{rx} -- RX delay of an SFP
+		@item @t{wl_txrx} -- Tx wavelength separated by "+" with Rx
+				     wavelength of an SFP;
+				     for example @t{wl_txrx=1490+1310}
+        @end itemize
+        See @ref{Timing Configuration} for details.
 
 @item CONFIG_FIBER00_PARAMS
 @itemx ...
 @itemx CONFIG_FIBER03_PARAMS
 
-	Configuration for fiber types. You are expected to have no more
-        than 4 fiber types installed in your deployment (if more, you need
-        to add items to the @i{dot-config} file).  See @ref{Timing
-        Configuration} for details.
+	This parameter specify the physical features of used fiber types.
+	Specify the alpha value for each pair of used wavelengths.
+	This parameter follows a format:
+
+	@t{alpha_XXXX_YYYY=1.23e-04,alpha_AAAA_BBBB=4.56e-04,...}
+
+	Where:
+	@itemize
+	@item @t{XXX_YYYY} and @t{AAAA_BBBB} are pairs of used wavelengths
+	@item @t{1.23e-04} and @t{4.56e-04} are alpha values to be used for
+	      particular wavelengths.
+	@end itemize
+	The index (@t{00} onwards) is used to match the port
+	(@t{CONFIG_PORTxx_PARAMS}) with one of several installed fiber types.
+	See @ref{Timing Configuration} for details.
+
+	You are expected to have no more than 4 fiber types installed in
+	your deployment. If more, you need to add items to the @i{dot-config}
+	file.
 
 @item CONFIG_TIME_GM
 @itemx CONFIG_TIME_FM
@@ -914,7 +965,7 @@ When reboot is performed status LED is turned off.
 @subsection Ports' LEDs
 
 Under each switch's port there are two LEDs. The left LED is on when particular
-port is populated with a SFP and the link is up. It's color is dependent on
+port is populated with an SFP and the link is up. It's color is dependent on
 the configured function. For ports configured as a slave the LED is green, for
 non-wr ports the LED is orange. For ports configured as a master and other
 cases (including wrong configuration) the left LED is yellow.
