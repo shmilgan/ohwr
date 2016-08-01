@@ -1,4 +1,5 @@
 Kconfig
+Kconfig_vlans.in
 dot-config
 conf
 mconf

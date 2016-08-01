@@ -858,3 +858,4 @@ config FAN_HYSTERESIS_PWM_VAL
 endmenu
 
 endmenu
+source Kconfig_vlans.in
