@@ -12,12 +12,21 @@ int main(int argc, char **argv)
 {
 	int err, verbose = 0;
 
-	wrs_msg_init(1, argv);
+	wrs_msg_init(argc, argv);
 
 me_lazy:
 	if (argc < 2 || !strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
-		fprintf(stderr, "%s: Use: \"%s [-v] <dotcfg> [<Kconfig>]\"\n",
+		printf("%s: Use: \"%s [-V] [-v] <dotcfg> [<Kconfig>]\"\n",
 			argv[0], argv[0]);
+		printf("<dotcfg> -- path to dot-config file to be checked\n");
+		printf("<Kconfig> -- path to Kconfig file\n");
+		printf("-v -- verbose\n");
+		printf("-V -- print version\n");
+		exit(1);
+	}
+
+	if (!strcmp(argv[1], "-V")) {
+		printf("Version: %s\n", __GIT_VER__); /* see Makefile */
 		exit(1);
 	}
 
