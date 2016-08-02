@@ -83,7 +83,7 @@ int rtudexp_add_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 
 	pr_info("Create entry for (MAC=%s) port %x (wri%d), mode:%s\n",
 	      mac_to_string(mac_tmp), 1 << port, port + 1,
-	      (mode) ? "DYNAMIC" : "STATIC");
+	      mode == RTU_ENTRY_TYPE_DYNAMIC ? "DYNAMIC" : "STATIC");
 	*p_ret =
 	    rtu_fd_create_entry(mac_tmp, 0, 1 << port, mode, OVERRIDE_EXISTING);
 	return *p_ret;

@@ -122,6 +122,8 @@ enum dump_type {
 	dump_type_spll_mode,
 	dump_type_spll_seq_state,
 	dump_type_spll_align_state,
+	/* rtu_filtering_entry enumerations */
+	dump_type_rtu_filtering_entry_dynamic,
 };
 
 static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
@@ -323,6 +325,19 @@ void dump_one_field(void *addr, struct dump_info *info)
 			printf("Unknown(%d)\n", i);
 		}
 		break;
+	case dump_type_rtu_filtering_entry_dynamic:
+		i = *(uint32_t *)p;
+		switch (i) {
+		case RTU_ENTRY_TYPE_STATIC:
+			printf("static");
+			break;
+		case RTU_ENTRY_TYPE_DYNAMIC:
+			printf("dynamic");
+			break;
+		default:
+			printf("Unknown(%d)\n", i);
+		}
+		break;
 	}
 }
 void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
@@ -463,7 +478,7 @@ struct dump_info htab_info[] = {
 	DUMP_FIELD(UInteger8, prio_dst),
 	DUMP_FIELD(int, has_prio_dst),
 	DUMP_FIELD(int, prio_override_dst),
-	DUMP_FIELD(int, dynamic),
+	DUMP_FIELD(rtu_filtering_entry_dynamic, dynamic),
 	DUMP_FIELD(int, age),
 };
 

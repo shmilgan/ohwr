@@ -115,15 +115,15 @@ char *decode_ports(int dpm, int nports)
 void show_help(char *prgname)
 {
 	fprintf(stderr, "usage: %s <command> <values>\n", prgname);
-	fprintf(stderr,""
-			"   help:             Show this message\n"
-			"   list:             List the routing table (same as empty command)\n"
-			"   remove <ifnum>:   Remove all dynamic entries for one interface\n"
-			"   add    <mac (XX:XX:XX:XX:XX)> <ifnum> [<mode>]: Add entry for a specific \n"
-			"                     MAC address (mode={1=dynamic,0=static}\n"
-			"   vlan   <vid> <fid> <hex mask> [<drop>, <prio>, <has_prio>, <prio_override>]: \n"
-			"                    Add VLAN entry with vid, fid, mask and drop flag (Write mask=0x0 \n"
-			"                    and drop=1 to remove the VLAN)\n");
+	fprintf(stderr, "   help:             Show this message\n");
+	fprintf(stderr, "   list:             List the routing table (same as empty command)\n");
+	fprintf(stderr, "   remove <ifnum>:   Remove all dynamic entries for one interface\n");
+	fprintf(stderr, "   add    <mac (XX:XX:XX:XX:XX)> <ifnum> [<mode>]: Add entry for a specific \n");
+	fprintf(stderr, "                     MAC address (mode={%d=dynamic, %d=static})\n",
+			RTU_ENTRY_TYPE_DYNAMIC, RTU_ENTRY_TYPE_STATIC);
+	fprintf(stderr, "   vlan   <vid> <fid> <hex mask> [<drop>, <prio>, <has_prio>, <prio_override>]: \n");
+	fprintf(stderr, "                    Add VLAN entry with vid, fid, mask and drop flag (Write mask=0x0 \n");
+	fprintf(stderr, "                    and drop=1 to remove the VLAN)\n");
 
 	exit(1);
 }
@@ -400,10 +400,11 @@ int main(int argc, char **argv)
 			mac_to_buffer(rtu_htab_local[i].mac, mac_buf),
 			decode_ports(rtu_htab_local[i].port_mask_dst, nports),
 			rtu_htab_local[i].fid,
-			rtu_htab_local[i].dynamic ? "DYNAMIC" : "STATIC ",
+			rtu_htab_local[i].dynamic == RTU_ENTRY_TYPE_DYNAMIC ?
+						     "DYNAMIC" : "STATIC ",
 			rtu_htab_local[i].addr.hash,
 			rtu_htab_local[i].addr.bucket);
-		if (rtu_htab_local[i].dynamic)
+		if (rtu_htab_local[i].dynamic == RTU_ENTRY_TYPE_DYNAMIC)
 			printf("%d\n", rtu_htab_local[i].age);
 		else
 			printf("-\n");

@@ -528,7 +528,8 @@ static void rtu_fd_age_update(void)
 				hash = bit_cnt >> 2;	// 4 buckets per hash
 				bucket = bit_cnt & 0x03;	// last 2 bits
 
-				if (!rtu_htab[hash][bucket].dynamic)
+				if (rtu_htab[hash][bucket].dynamic
+				    == RTU_ENTRY_TYPE_STATIC)
 					continue;
 
 				if (0)
@@ -561,7 +562,8 @@ void rtu_fd_clear_entries_for_port(int dest_port)
 	for (i = HTAB_ENTRIES; i-- > 0;) {
 		for (j = RTU_BUCKETS; j-- > 0;) {
 			ent = &rtu_htab[i][j];
-			if (ent->valid && ent->dynamic) {
+			if (ent->valid
+			    && (ent->dynamic == RTU_ENTRY_TYPE_DYNAMIC)) {
 				if (ent->port_mask_dst == (1 << dest_port)) {
 					/* entry is _only_ for this port */
 					hw_request(HW_REMOVE_REQ, ent->addr,
@@ -602,7 +604,7 @@ static void rtu_fd_age_out(void)
 	for (i = HTAB_ENTRIES; i-- > 0;) {
 		for (j = RTU_BUCKETS; j-- > 0;) {
 			ent = &rtu_htab[i][j];
-			if (ent->valid && ent->dynamic
+			if (ent->valid && ent->dynamic == RTU_ENTRY_TYPE_DYNAMIC
 			    && (time_after(t, ent->last_access_t)
 				|| ent->force_remove)) {
 				pr_debug("Deleting htab entry: mac = %s, hash ="

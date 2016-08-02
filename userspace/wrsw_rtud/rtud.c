@@ -108,7 +108,8 @@ static int rtu_create_static_entries(void)
 		slow_proto_mac[5] = i;
 		err =
 		    rtu_fd_create_entry(slow_proto_mac, 0,
-					(1 << hal_nports_local), STATIC,
+					(1 << hal_nports_local),
+					RTU_ENTRY_TYPE_STATIC,
 					OVERRIDE_EXISTING);
 		if (err)
 			return err;
@@ -124,7 +125,7 @@ static int rtu_create_static_entries(void)
 	pr_info("Adding entry for PTP over UDP\n");
 	err =
 		rtu_fd_create_entry(udp_ptp_mac, 0, (1 << hal_nports_local),
-				    STATIC, OVERRIDE_EXISTING);
+				    RTU_ENTRY_TYPE_STATIC, OVERRIDE_EXISTING);
 	if (err)
 		return err;
 
@@ -133,13 +134,13 @@ static int rtu_create_static_entries(void)
 	err =
 	    rtu_fd_create_entry(bcast_mac, 0,
 				enabled_port_mask | (1 << hal_nports_local),
-				STATIC, OVERRIDE_EXISTING);
+				RTU_ENTRY_TYPE_STATIC, OVERRIDE_EXISTING);
 	if (err)
 		return err;
 
 	err =
 	    rtu_fd_create_entry(ptp_mcast_mac, 0,
-				(1 << hal_nports_local), STATIC,
+				(1 << hal_nports_local), RTU_ENTRY_TYPE_STATIC,
 				OVERRIDE_EXISTING);
 	if (err)
 		return err;
@@ -246,7 +247,8 @@ static int rtu_daemon_learning_process(void)
 			port_map = (1 << req.port_id);
 			// create or update entry at filtering database
 			err =
-			    rtu_fd_create_entry(req.src, vid, port_map, DYNAMIC,
+			    rtu_fd_create_entry(req.src, vid, port_map,
+						RTU_ENTRY_TYPE_DYNAMIC,
 						OVERRIDE_EXISTING);
 			err = 0;
 			if (err == -ENOMEM) {

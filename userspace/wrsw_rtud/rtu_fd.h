@@ -35,9 +35,6 @@
 
 #include "rtu.h"
 
-// Filtering entries may be static (permanent) or dynamic (learned)
-#define STATIC          0
-#define DYNAMIC         1
 // Tells the rtu_fd_create_entry() function what to do if MAC entry is added
 // and the same MAC is already known to be at some port (coud be the same or different).
 // Most of the time we would like to override the entry because the device simply moved

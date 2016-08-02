@@ -21,6 +21,10 @@ struct rtu_addr {
 	int bucket;
 };
 
+/* Filtering entries may be static (permanent) or dynamic (learned) */
+#define RTU_ENTRY_TYPE_DYNAMIC 1
+#define RTU_ENTRY_TYPE_STATIC 0
+
 /**
  * \brief RTU Filtering Database Entry Object
  */
