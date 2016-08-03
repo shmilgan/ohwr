@@ -551,6 +551,52 @@ static void rtu_fd_age_update(void)
 
 }
 
+static int is_unicast(uint32_t port_mask)
+{
+	return port_mask && !(port_mask & (port_mask - 1));
+}
+
+int rtu_fd_remove_entry(uint8_t *mac, uint32_t port_mask, int type)
+{
+	int i;	/* loop index */
+	int j;	/* bucket loop index */
+	struct rtu_filtering_entry *ent; /* pointer to scan tables */
+	int removed_entries = 0;
+
+	if (!port_mask)
+		pr_error("Empty port mask for MAC %s\n", mac_to_string(mac));
+
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
+	pr_debug("Looking for an entry with mask=0x%x MAC: %s type %s\n",
+		 port_mask, mac_to_string(mac),
+		 rtu_type_to_str(type));
+	for (i = HTAB_ENTRIES; i-- > 0;) {
+		for (j = RTU_BUCKETS; j-- > 0;) {
+			ent = &rtu_htab[i][j];
+			if (ent->valid
+			    && (ent->dynamic == type)
+			    && !memcmp(ent->mac, mac, ETH_ALEN)
+			    && (ent->port_mask_dst == port_mask)) {
+				/* entry is _only_ for this port */
+				hw_request(HW_REMOVE_REQ, ent->addr,
+					    ent);
+				pr_info("Cleaning %s entry for mask=0x%x MAC: "
+					"%s type %s\n",
+					is_unicast(port_mask) ?
+						      "unicast" : "multicast",
+					ent->port_mask_dst,
+					mac_to_string(ent->mac),
+					rtu_type_to_str(type));
+				removed_entries++;
+			}
+		}
+	}
+	/* commit changes */
+	rtu_fd_commit();
+	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
+	return removed_entries;
+}
+
 void rtu_fd_clear_entries_for_port(int dest_port)
 {
 	int i;			// loop index

@@ -58,6 +58,7 @@ int rtu_fd_set_aging_time(unsigned long t) __attribute__ ((warn_unused_result));
 void rtu_fd_set_hash_poly(uint16_t poly);
 void rtu_fd_flush(void);
 void rtu_fd_clear_entries_for_port(int dest_port);
+int rtu_fd_remove_entry(uint8_t *mac, uint32_t port_mask, int type);
 
 void rtu_fd_create_vlan_entry(int vid, uint32_t port_mask, uint8_t fid,
 			      uint8_t prio, int has_prio, int prio_override,

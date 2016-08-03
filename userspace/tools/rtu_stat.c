@@ -44,29 +44,40 @@ struct wrs_shm_head *rtu_port_shmem;
 static struct rtu_vlan_table_entry vlan_tab_local[NUM_VLANS];
 static struct rtu_filtering_entry rtu_htab_local[RTU_BUCKETS * HTAB_ENTRIES];
 
-int rtudexp_clear_entries(int netif, int force)
+int rtudexp_clear_entries(int port, int type)
 {
 	int val, ret;
-	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_clear_entries,&val,netif,force);
-	return (ret<0)?ret:val;
+	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_clear_entries,
+			  &val, port, type);
+	return (ret < 0) ? ret : val;
 }
 
-int rtudexp_add_entry(const char *eha, int port, int mode)
+int rtudexp_add_entry(const char *mac, int port_mask, int type)
 {
 	int val, ret;
-	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_add_entry,&val,eha,port,mode);
-	return (ret<0)?ret:val;
+	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_add_entry,
+			  &val, mac, port_mask, type);
+	return (ret < 0) ? ret : val;
 }
 
-int rtudexp_vlan_entry(int vid, int fid, const char *ch_mask, int drop, int prio, int has_prio,
-		        int prio_override)
+int rtudexp_remove_entry(const char *mac, int port_mask, int type)
+{
+	int val, ret;
+	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_remove_entry,
+			  &val, mac, port_mask, type);
+	return (ret < 0) ? ret : val;
+}
+
+int rtudexp_vlan_entry(int vid, int fid, const char *ch_mask, int drop,
+		       int prio, int has_prio, int prio_override)
 {
 	int val, ret;
 	int mask;
 	sscanf(ch_mask,"%x", &mask);
-	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry,&val,vid,fid,mask,
-			    drop,prio,has_prio,prio_override);
-	return (ret<0)?ret:val;
+	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry,
+			  &val, vid, fid, mask, drop, prio, has_prio,
+			  prio_override);
+	return (ret < 0) ? ret : val;
 }
 
 static int cmp_rtu_entries(const void *p1, const void *p2)
@@ -106,13 +117,45 @@ void show_help(char *prgname)
 	fprintf(stderr, "usage: %s <command> <values>\n", prgname);
 	fprintf(stderr, "   help:             Show this message\n");
 	fprintf(stderr, "   list:             List the routing table (same as empty command)\n");
-	fprintf(stderr, "   remove <ifnum>:   Remove all dynamic entries for one interface\n");
-	fprintf(stderr, "   add    <mac (XX:XX:XX:XX:XX)> <ifnum> [<mode>]: Add entry for a specific \n");
-	fprintf(stderr, "                     MAC address (mode={%d=dynamic, %d=static})\n",
+	fprintf(stderr, "   remove all <port> [<type>]: Remove all RTU entries for the given port\n"
+			"                               with an optional type (default %d-dynamic)\n",
+			RTU_ENTRY_TYPE_DYNAMIC);
+	fprintf(stderr, "   remove <mac> <port> [<type>]: Add a RTU entry for a specific\n"
+			"                                 MAC address on a given port with an optional\n"
+			"                                 type (default %d-static)\n",
+			RTU_ENTRY_TYPE_STATIC);
+	fprintf(stderr, "   remove mask <mac> <port_mask> [<type>]: Add a RTU entry for a specific\n"
+			"                                           MAC address on a given port mask with\n"
+			"                                           an optional type (default %d-static)\n",
+			RTU_ENTRY_TYPE_STATIC);
+	fprintf(stderr, "   add <mac> <port> [<type>]: Add entry for a specific MAC address with an\n"
+			"                              optional type  (default %d-static)\n",
+			RTU_ENTRY_TYPE_STATIC);
+	fprintf(stderr, "   add mask <mac> <port_mask> [<type>]: Add an entry for a specific \n"
+			"                                        MAC address and multiple ports with\n"
+			"                                        an optional type  (default %d-static)\n",
+			RTU_ENTRY_TYPE_STATIC);
+	fprintf(stderr, "   vlan <vid> <fid> <port_mask> [<drop>, <prio>, <has_prio>, <prio_override>]:\n"
+			"                                Add VLAN entry with vid, fid, mask and drop flag;\n"
+			"                                write mask=0x0 and drop=1 to remove the VLAN\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Where:\n");
+	fprintf(stderr, "   <mac>           MAC address to be used in the RTU rule;\n"
+			"                   it is in the format XX:XX:XX:XX:XX:XX\n");
+	fprintf(stderr, "   <port>          port number on which RTU rule is registered; it is a port\n"
+			"                   number from 1 to 18, or the CPU (19)\n");
+	fprintf(stderr, "   <port_mask>     Mask of ports on which RTU rule is registered;\n"
+			"                   it is a hex mask of ports in the format 0xXXXXX\n");
+	fprintf(stderr, "   <type>          Numerical representation of rule's type %d=dynamic or %d=static\n",
 			RTU_ENTRY_TYPE_DYNAMIC, RTU_ENTRY_TYPE_STATIC);
-	fprintf(stderr, "   vlan   <vid> <fid> <hex mask> [<drop>, <prio>, <has_prio>, <prio_override>]: \n");
-	fprintf(stderr, "                    Add VLAN entry with vid, fid, mask and drop flag (Write mask=0x0 \n");
-	fprintf(stderr, "                    and drop=1 to remove the VLAN)\n");
+	fprintf(stderr, "   <vid>           VLAN ID\n");
+	fprintf(stderr, "   <fid>           Filtering Database ID\n");
+	fprintf(stderr, "   <drop>          Set to 1 to drop frames with <vid>; 0 don't drop\n");
+	fprintf(stderr, "   <prio>          Priority to override the VLAN-tagged received frames\n"
+			"                   (if <prio_override> true)\n");
+	fprintf(stderr, "   <has_prio>      Indicates there is valid <prio>\n");
+	fprintf(stderr, "   <prio_override> Use the <prio> in the VLAN Table to override the frame's\n"
+			"                   PRIO in the tag\n");
 
 	exit(1);
 }
@@ -277,6 +320,39 @@ int open_rtu_shm(void)
 	return 0;
 }
 
+int read_port(char *port, int nports)
+{
+	int i;
+	if (!strcmp(port, "CPU") || !strcmp(port, "cpu")) {
+		return 1 + nports; /* CPU is usually a 19th port */
+	}
+
+	i = strtol(port, NULL, 0);
+	/* interface number 1..18, CPU is 19 */
+	if (0 < i && i <= (nports + 1)) { /* 18 ports + CPU */
+		return i;
+	}
+	return -1;
+}
+
+int read_port_mask(char *mask, int nports)
+{
+	int i;
+	if (!strcmp(mask, "CPU") || !strcmp(mask, "cpu")) {
+		return 1 << nports; /* CPU is usually at 19th bit */
+	}
+	if (!strcmp(mask, "ALL") || !strcmp(mask, "all")) {
+		return (1 << (nports + 1)) - 1;
+	}
+
+	i = strtol(mask, NULL, 0);
+	/* interface number 1..18, CPU is 19 */
+	if (0 < i && i <= ((1 << (nports + 1)) - 1)) { /* 18 ports + CPU */
+		return i;
+	}
+	return -1;
+}
+
 int main(int argc, char **argv)
 {
 	int i, isok;
@@ -285,6 +361,8 @@ int main(int argc, char **argv)
 	int vid_active = 0;
 	char mac_buf[ETH_ALEN_STR];
 	int n_wait = 0;
+	int ret;
+	int type;
 
 	nports = get_nports_from_hal();
 
@@ -308,63 +386,185 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	isok=0;
-	if(argc>1)
-	{
-		if (strcmp(argv[1], "remove") == 0) {
-			i = atoidef(argc, argv, 2, -1);
-			/* interface number 1..18*/
-			if ((0 < i && i <= 18)
-			   && (rtudexp_clear_entries(i - 1,
-						     atoidef(argc, argv, 3, 0)
-						    ) == 0)) {
-				/* ok */
-				isok = 1;
-			} else {
-				printf("Could not %s entry for wri%d\n",
-				       argv[1], i);
-				exit(1);
-			}
-		} else if (strcmp(argv[1], "add") == 0) {
-			/* interface number 1..18*/
-			if ((argc > 3)
-			   && (rtudexp_add_entry(argv[2],
-						 atoi(argv[3]) - 1,
-						 atoidef(argc, argv, 4, 0)
-						) == 0)) {
-				/* ok */
-				isok = 1;
-			} else {
-				printf("Could not %s entry for %s\n", argv[2],
-				       argv[3] - 1);
-				exit(1);
-			}
-		} else if (strcmp(argv[1], "vlan") == 0) {
-			if ((argc > 3)
-			   && (rtudexp_vlan_entry(atoi(argv[2]),
-						  atoi(argv[3]) - 1,
-						  argv[4],
-						  atoidef(argc, argv, 5, 0),
-						  atoidef(argc, argv, 6, 0),
-						  atoidef(argc, argv, 7, 0),
-						  atoidef(argc, argv, 8, 0)
-						 ) == 0)) {
-				/* ok */
-				isok = 1;
-			} else {
-				printf("Could not %s entry for %s\n", argv[2],
-				       argv[3]);
-				exit(1);
-			}
-		} else if (strcmp(argv[1], "list") == 0)
+	isok = 0;
+/* ****************** remove all <port> [<type>] *************************** */
+	if (argc >= 4
+	    && !strcmp(argv[1], "remove")
+	    && !strcmp(argv[2], "all")) {
+		/* rtu_stat remove all <port> [<type>] */
+		i = read_port(argv[3], nports);
+		/* interface number 1..18, CPU is 19 */
+		if (i < 0) {
+			printf("Wrong port number %s\n", argv[3]);
+			exit(1);
+		}
+		type = atoidef(argc, argv, 5, RTU_ENTRY_TYPE_DYNAMIC);
+		if (rtu_check_type(type)) {
+			fprintf(stderr, "rtu_stat: Unknown type %d\n", type);
+			exit(1);
+		}
+		ret = rtudexp_clear_entries(i - 1, /* port */
+					    type /* type */
+					    );
+		/* ok */
+		isok = 1;
+/* ****************** remove mask <mac> <port_mask> [<type>] *************** */
+	} else if (argc >= 5
+		   && !strcmp(argv[1], "remove")
+		   && !strcmp(argv[2], "mask")) {
+		/* rtu_stat remove mask <mac> <port_mask> [<type>] */
+		i = read_port_mask(argv[4], nports);
+		/* interface number 1..18, CPU is 19 */
+		if (i < 0) {
+			printf("Wrong port mask 0x%s\n", argv[4]);
+			exit(1);
+		}
+		if (mac_verify(argv[3])) {
+			fprintf(stderr, "rtu_stat: Wrong MAC %s\n", argv[3]);
+			exit(1);
+		}
+		type = atoidef(argc, argv, 5, RTU_ENTRY_TYPE_STATIC);
+		if (rtu_check_type(type)) {
+			fprintf(stderr, "rtu_stat: Unknown type %d\n", type);
+			exit(1);
+		}
+		ret = rtudexp_remove_entry(argv[3], /* MAC */
+					    i, /* port mask */
+					    type /* type */
+					  );
+		if (ret > 0)
+			printf("Removed %d entries for port mask 0x%x\n",
+			       ret, i);
+		if (ret < 0) {
+			printf("Could not remove entry for port mask 0x%x\n",
+			       i);
+			exit(1);
+		}
+		isok = 1;
+/* ****************** remove <mac> <port> [<type>] ************************* */
+	} else if (argc >= 4
+		   && !strcmp(argv[1], "remove")) {
+		/* rtu_stat remove <mac> <port> [<type>] */
+		i = read_port(argv[3], nports);
+		/* interface number 1..18, CPU is 19 */
+		if (i < 0) {
+			printf("Wrong port number %s\n", argv[3]);
+			exit(1);
+		}
+		if (mac_verify(argv[2])) {
+			fprintf(stderr, "rtu_stat: Wrong MAC %s\n", argv[2]);
+			exit(1);
+		}
+		type = atoidef(argc, argv, 4, RTU_ENTRY_TYPE_STATIC);
+		if (rtu_check_type(type)) {
+			fprintf(stderr, "rtu_stat: Unknown type %d\n", type);
+			exit(1);
+		}
+		ret = rtudexp_remove_entry(argv[2], /* MAC */
+					1 << (i - 1), /* port mask */
+					type /* type */
+					);
+		if (ret > 0)
+			printf("Removed %d entries for port %d (wri%d)\n",
+			       ret, i, i);
+		if (ret < 0) {
+			printf("Could not remove entry for port %d (wri%d)\n",
+			       i, i);
+			exit(1);
+		}
+		isok = 1;
+/* ****************** add mask <mac> <port_mask> [<type>] ****************** */
+	} else if (argc >= 5
+		   && !strcmp(argv[1], "add")
+		   && !strcmp(argv[2], "mask")) {
+		/* rtu_stat add mask <mac> <port_mask> [<type>] */
+		i = read_port_mask(argv[4], nports);
+		/* interface number 1..18, CPU is 19 */
+		if (i < 0) {
+			printf("Wrong port mask 0x%s\n", argv[4]);
+			exit(1);
+		}
+		if (mac_verify(argv[3])) {
+			fprintf(stderr, "rtu_stat: Wrong MAC %s\n", argv[3]);
+			exit(1);
+		}
+		type = atoidef(argc, argv, 5, RTU_ENTRY_TYPE_STATIC);
+		if (rtu_check_type(type)) {
+			fprintf(stderr, "rtu_stat: Unknown type %d\n", type);
+			exit(1);
+		}
+		ret = rtudexp_add_entry(argv[3], /* MAC */
+					i, /* port mask */
+					type /* type */
+					);
+		if (ret > 0)
+			printf("Added %d entries for port mask 0x%x\n",
+			       ret, i);
+		if (ret < 0) {
+			printf("Could not add entry for port mask 0x%x\n", i);
+			exit(1);
+		}
+		isok = 1;
+/* ****************** add <mac> <port> [<type>] **************************** */
+	} else if (argc >= 4
+		   && !strcmp(argv[1], "add")) {
+		/* rtu_stat add <mac> <port> [<type>] */
+		i = read_port(argv[3], nports);
+		/* interface number 1..18, CPU is 19 */
+		if (i < 0) {
+			printf("Wrong port number %s\n", argv[3]);
+			exit(1);
+		}
+		if (mac_verify(argv[2])) {
+			fprintf(stderr, "rtu_stat: Wrong MAC %s\n", argv[2]);
+			exit(1);
+		}
+		type = atoidef(argc, argv, 4, RTU_ENTRY_TYPE_STATIC);
+		if (rtu_check_type(type)) {
+			fprintf(stderr, "rtu_stat: Unknown type %d\n", type);
+			exit(1);
+		}
+		ret = rtudexp_add_entry(argv[2], /* MAC */
+					1 << (i - 1), /* port mask */
+					type /* type */
+					);
+		if (ret > 0)
+			printf("Added %d entries for port %d (wri%d)\n",
+			       ret, i, i);
+		if (ret < 0) {
+			printf("Could not add entry for port %d (wri%d)\n",
+			       i, i);
+			exit(1);
+		}
+		isok = 1;
+/* ****************** vlan <vid> <fid> <port_mask>
+ *			   [<drop>, <prio>, <has_prio>, <prio_override>] *** */
+	} else if (argc >= 5
+		   && !strcmp(argv[1], "vlan")) {
+		if (rtudexp_vlan_entry(atoi(argv[2]),
+				       atoi(argv[3]) - 1,
+				       argv[4],
+				       atoidef(argc, argv, 5, 0),
+				       atoidef(argc, argv, 6, 0),
+				       atoidef(argc, argv, 7, 0),
+				       atoidef(argc, argv, 8, 0)
+				       ) == 0) {
+			/* ok */
 			isok = 1;
+		} else {
+			printf("Vlan command error\n");
+			exit(1);
+		}
+	} else if (argc >= 2
+		   && !strcmp(argv[1], "list"))
+		isok = 1;
 
-		//Does not continue
-		if (!isok)
-			show_help(argv[0]);
-
-
+	/* Does not continue */
+	if (argc > 1 && !isok) {
+		show_help(argv[0]);
+		exit(1);
 	}
+
 
 	/* read filter entires from shm to local memory for data consistency */
 	if (read_htab(&htab_read_entries)) {
@@ -385,12 +585,11 @@ int main(int argc, char **argv)
 	{
 		if (!rtu_htab_local[i].valid)
 			continue;
-		printf("%-25s %-12s %2d          %s (hash %03x:%x)   ",
+		printf("%-25s %-12s %2d          %-7s (hash %03x:%x)   ",
 			mac_to_buffer(rtu_htab_local[i].mac, mac_buf),
 			decode_ports(rtu_htab_local[i].port_mask_dst, nports),
 			rtu_htab_local[i].fid,
-			rtu_htab_local[i].dynamic == RTU_ENTRY_TYPE_DYNAMIC ?
-						     "DYNAMIC" : "STATIC ",
+			rtu_type_to_str(rtu_htab_local[i].dynamic),
 			rtu_htab_local[i].addr.hash,
 			rtu_htab_local[i].addr.bucket);
 		if (rtu_htab_local[i].dynamic == RTU_ENTRY_TYPE_DYNAMIC)

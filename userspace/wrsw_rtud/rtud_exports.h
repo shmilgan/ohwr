@@ -36,8 +36,7 @@ struct minipc_pd rtud_export_clear_entries = {
 	.name = "clear_entries",
 	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
 	.args = {
-		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
-		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* port */
 		 MINIPC_ARG_END,
 		 },
 };
@@ -47,9 +46,21 @@ struct minipc_pd rtud_export_add_entry = {
 	.name = "add_entry",
 	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
 	.args = {
-		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRING, char *),
-		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
-		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRING, char *), /* MAC */
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* port mask */
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* type */
+		 MINIPC_ARG_END,
+		 },
+};
+
+/* Export of a function to remove entry in rtu */
+struct minipc_pd rtud_export_remove_entry = {
+	.name = "remove_entry",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_STRING, char *), /* MAC */
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* port mask */
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* type */
 		 MINIPC_ARG_END,
 		 },
 };

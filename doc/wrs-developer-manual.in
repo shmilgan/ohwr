@@ -1632,6 +1632,7 @@ the processes (excluding the @sc{rt} subsystem).
 
 @item  rtud::clear_entries
 @itemx rtud::add_entry
+@itemx rtud::remove_entry
 
 	Called by @i{rtu_stat} when performing actions.
 

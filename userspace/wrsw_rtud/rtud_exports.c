@@ -50,13 +50,25 @@ static struct minipc_ch *rtud_ch;
 int rtudexp_clear_entries(const struct minipc_pd *pd,
 			  uint32_t * args, void *ret)
 {
-	int iface_num = (int)args[0];
-	int *p_ret = (int *)ret;	//force pointed to int type
+	int port = (int)args[0];
+	int type = (int)args[1];
+	int *p_ret = (int *)ret; /* force pointed to int type */
 
-	pr_debug("Removing dynamic entries on interface %d (wri%d)\n",
-		 iface_num + 1, iface_num + 1);
+	if (0 > port || port > 18) { /* 18 ports + CPU */
+		pr_error("Wrong port mask 0x%x\n", port);
+		*p_ret = -1;
+		return *p_ret;
+	}
+	if (rtu_check_type(type)) {
+		pr_error("Unknown type %d\n", type);
+		*p_ret = -1;
+		return *p_ret;
+	}
+	pr_debug("Removing %s entries on interface %d (wri%d)\n",
+		 rtu_type_to_str(type),
+		 port + 1, port + 1);
 
-	rtu_fd_clear_entries_for_port(iface_num);
+	rtu_fd_clear_entries_for_port(port, type);
 	*p_ret = 0;
 	return *p_ret;
 }
@@ -64,28 +76,78 @@ int rtudexp_clear_entries(const struct minipc_pd *pd,
 int rtudexp_add_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 {
 	uint8_t mac_tmp[ETH_ALEN] = { 0 };
+	char *mac;
+	uint32_t port_mask;
+	int type;
+	int *p_ret = (int *)ret; /* force pointed to int type */
 
-	char *strEHA;
-	int port, mode;
-	int *p_ret = (int *)ret;	//force pointed to int type
-
-	strEHA = (char *)args;
+	mac = (char *)args;
 	args = minipc_get_next_arg(args, pd->args[0]);
-	port = (int)args[0];
-	mode = (int)args[1];
+	port_mask = (int)args[0];
+	type = (int)args[1];
 
-	//pr_info("iface=%s, port=%d, dynamic=%d\n",strEHA,port,mode);
+	if (mac_verify(mac)) {
+		pr_error("%s is an invalid MAC format (XX:XX:XX:XX:XX:XX)\n",
+			 mac);
+		*p_ret = -1;
+		return *p_ret;
+	}
+	mac_from_str(mac_tmp, mac);
+	if (rtu_check_type(type)) {
+		pr_error("Unknown type %d\n", type);
+		*p_ret = -1;
+		return *p_ret;
+	}
+	if (1 > port_mask || port_mask > 0x7ffff) { /* 18 ports + CPU */
+		pr_error("Wrong port mask 0x%x\n", port_mask);
+		*p_ret = -1;
+		return *p_ret;
+	}
 
-	if (mac_from_str(mac_tmp, strEHA) != ETH_ALEN)
-		pr_error(
-		      "%s is an invalid MAC format (XX:XX:XX:XX:XX:XX)\n",
-		      strEHA);
+	pr_debug("Request to add an entry with port mask 0x%x, MAC: %s, "
+		 "type:%s\n", port_mask, mac_to_string(mac_tmp),
+		 rtu_type_to_str(type));
+	*p_ret = rtu_fd_create_entry(mac_tmp, 0, port_mask, type,
+				     OVERRIDE_EXISTING);
+	return *p_ret;
+}
 
-	pr_info("Create entry for (MAC=%s) port %x (wri%d), mode:%s\n",
-	      mac_to_string(mac_tmp), 1 << port, port + 1,
-	      mode == RTU_ENTRY_TYPE_DYNAMIC ? "DYNAMIC" : "STATIC");
-	*p_ret =
-	    rtu_fd_create_entry(mac_tmp, 0, 1 << port, mode, OVERRIDE_EXISTING);
+int rtudexp_remove_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
+{
+	uint8_t mac_tmp[ETH_ALEN] = { 0 };
+	char *mac;
+	uint32_t port_mask;
+	int type;
+	int *p_ret = (int *)ret; /*force pointed to int type */
+
+	mac = (char *)args;
+	args = minipc_get_next_arg(args, pd->args[0]);
+	port_mask = (int)args[0];
+	type = (int)args[1];
+
+	if (mac_verify(mac)) {
+		pr_error("%s is an invalid MAC format (XX:XX:XX:XX:XX:XX)\n",
+			 mac);
+		*p_ret = -1;
+		return *p_ret;
+	}
+	mac_from_str(mac_tmp, mac);
+	if (rtu_check_type(type)) {
+			pr_error("Unknown type %d\n", type);
+		*p_ret = -1;
+		return *p_ret;
+	}
+	if (1 > port_mask || port_mask > 0x7ffff) { /* 18 ports + CPU */
+		pr_error("Wrong port mask 0x%x\n", port_mask);
+		*p_ret = -1;
+		return *p_ret;
+	}
+
+	pr_debug("Request to remove an entry with port mask 0x%x, MAC: %s, "
+		 "type %s\n", port_mask, mac_to_string(mac_tmp),
+		 rtu_type_to_str(type));
+	*p_ret = rtu_fd_remove_entry(mac_tmp, port_mask, type);
+	pr_debug("Removed %d entries\n", *p_ret);
 	return *p_ret;
 }
 
@@ -121,6 +183,7 @@ int rtud_init_exports()
 
 	MINIPC_EXP_FUNC(rtud_export_clear_entries, rtudexp_clear_entries);
 	MINIPC_EXP_FUNC(rtud_export_add_entry, rtudexp_add_entry);
+	MINIPC_EXP_FUNC(rtud_export_remove_entry, rtudexp_remove_entry);
 	MINIPC_EXP_FUNC(rtud_export_vlan_entry, rtudexp_vlan_entry);
 
 	return 0;
