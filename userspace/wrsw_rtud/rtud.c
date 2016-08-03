@@ -167,7 +167,8 @@ static void rtu_update_ports_state(void)
 			      hal_ports_local_copy[i].name);
 
 			rtu_fd_clear_entries_for_port(hal_ports_local_copy[i].
-							hw_index);
+						      hw_index,
+						      RTU_ENTRY_TYPE_DYNAMIC);
 		}
 
 		port_was_up[i] = link_up;

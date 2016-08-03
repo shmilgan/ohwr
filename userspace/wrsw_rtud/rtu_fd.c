@@ -597,7 +597,7 @@ int rtu_fd_remove_entry(uint8_t *mac, uint32_t port_mask, int type)
 	return removed_entries;
 }
 
-void rtu_fd_clear_entries_for_port(int dest_port)
+void rtu_fd_clear_entries_for_port(int dest_port, int type)
 {
 	int i;			// loop index
 	int j;			// bucket loop index
@@ -609,7 +609,7 @@ void rtu_fd_clear_entries_for_port(int dest_port)
 		for (j = RTU_BUCKETS; j-- > 0;) {
 			ent = &rtu_htab[i][j];
 			if (ent->valid
-			    && (ent->dynamic == RTU_ENTRY_TYPE_DYNAMIC)) {
+			    && (ent->dynamic == type)) {
 				if (ent->port_mask_dst == (1 << dest_port)) {
 					/* entry is _only_ for this port */
 					hw_request(HW_REMOVE_REQ, ent->addr,
