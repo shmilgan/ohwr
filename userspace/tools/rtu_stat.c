@@ -312,11 +312,11 @@ int main(int argc, char **argv)
 	if(argc>1)
 	{
 		if (strcmp(argv[1], "remove") == 0) {
-			i=atoidef(argv[2],-1);
+			i = atoidef(argc, argv, 2, -1);
 			/* interface number 1..18*/
 			if ((0 < i && i <= 18)
 			   && (rtudexp_clear_entries(i - 1,
-						     atoidef(argv[3], 0)
+						     atoidef(argc, argv, 3, 0)
 						    ) == 0)) {
 				/* ok */
 				isok = 1;
@@ -330,7 +330,7 @@ int main(int argc, char **argv)
 			if ((argc > 3)
 			   && (rtudexp_add_entry(argv[2],
 						 atoi(argv[3]) - 1,
-						 atoidef(argv[4], 0)
+						 atoidef(argc, argv, 4, 0)
 						) == 0)) {
 				/* ok */
 				isok = 1;
@@ -344,10 +344,10 @@ int main(int argc, char **argv)
 			   && (rtudexp_vlan_entry(atoi(argv[2]),
 						  atoi(argv[3]) - 1,
 						  argv[4],
-						  atoidef(argv[5], 0),
-						  atoidef(argv[6], 0),
-						  atoidef(argv[7], 0),
-						  atoidef(argv[8], 0)
+						  atoidef(argc, argv, 5, 0),
+						  atoidef(argc, argv, 6, 0),
+						  atoidef(argc, argv, 7, 0),
+						  atoidef(argc, argv, 8, 0)
 						 ) == 0)) {
 				/* ok */
 				isok = 1;

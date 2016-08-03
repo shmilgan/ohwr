@@ -8,7 +8,10 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-#define atoidef(str,def) (str)?atoi(str):def
+#define atoidef(argc, argv, param_i, def) (argc > (param_i) ? \
+					    atoi(argv[(param_i)]) : (def))
+#define strtoldef(argc, argv, param_i, def) (argc > (param_i) ? \
+				    strtol(argv[(param_i)], NULL, 0) : (def))
 
 void shw_udelay_init(void);
 void shw_udelay(uint32_t microseconds);
