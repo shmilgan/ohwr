@@ -37,7 +37,7 @@
 #include "rtu.h"
 #include "rtu_fd.h"
 #include "rtud_exports.h"
-#include "mac.h"
+#include <libwr/mac.h>
 
 /* The channel */
 static struct minipc_ch *rtud_ch;

@@ -29,7 +29,7 @@
 #ifndef __WHITERABBIT_RTU_HASH_H
 #define __WHITERABBIT_RTU_HASH_H
 
-#include "mac.h"
+#include <libwr/mac.h>
 
 /*
   Hash polynomials implemented by RTU

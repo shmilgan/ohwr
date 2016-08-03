@@ -30,10 +30,10 @@
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/rtu_shmem.h>
+#include <libwr/mac.h>
 
 #include <minipc.h>
 #include <rtud_exports.h>
-#include <mac.h>
 #include <errno.h>
 
 #define MINIPC_TIMEOUT 200
@@ -67,17 +67,6 @@ int rtudexp_vlan_entry(int vid, int fid, const char *ch_mask, int drop, int prio
 	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry,&val,vid,fid,mask,
 			    drop,prio,has_prio,prio_override);
 	return (ret<0)?ret:val;
-}
-
-/**
- * \brief Write mac address into a buffer to avoid concurrent access on static variable.
- */
-//TODO: already defined in wrsw_rtud lib but we do not link to it. 3 opts: make it inline, move to libwr or link to the rtud lib?
-char *mac_to_buffer(uint8_t mac[ETH_ALEN],char buffer[ETH_ALEN_STR])
-{
- 	if(mac && buffer)
- 		snprintf(buffer, ETH_ALEN_STR, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
-    return buffer;
 }
 
 static int cmp_rtu_entries(const void *p1, const void *p2)

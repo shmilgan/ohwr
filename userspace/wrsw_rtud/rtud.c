@@ -41,9 +41,9 @@
 #include <libwr/wrs-msg.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
+#include <libwr/mac.h>
 
 #include "rtu.h"
-#include "mac.h"
 #include "rtu_fd.h"
 #include "rtu_drv.h"
 #include "rtu_ext_drv.h"

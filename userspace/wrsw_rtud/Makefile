@@ -1,6 +1,6 @@
 
 PROGRAM		= wrsw_rtud
-SRCFILES	= mac.c rtu_drv.c rtu_ext_drv.c rtu_hash.c rtu_fd.c rtud.c \
+SRCFILES	= rtu_drv.c rtu_ext_drv.c rtu_hash.c rtu_fd.c rtud.c \
 			rtud_exports.c utils.c
 OBJFILES	= $(patsubst %.c,%.o,$(SRCFILES))
 

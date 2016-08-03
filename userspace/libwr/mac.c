@@ -25,7 +25,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "mac.h"
+#include <libwr/mac.h>
 #include <stdio.h>
 
 /**
@@ -54,7 +54,7 @@ char *mac_to_buffer(uint8_t mac[ETH_ALEN], char buffer[ETH_ALEN_STR])
 /**
  * \brief Function to retrieve mac address from text input (argument in terminal)
  */
-int mac_from_str(uint8_t * tomac, const char *fromstr)
+int mac_from_str(uint8_t *tomac, const char *fromstr)
 {
 	if (tomac == 0 || fromstr == 0)
 		return -1;
