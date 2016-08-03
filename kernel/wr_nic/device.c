@@ -139,7 +139,7 @@ static int wrn_probe(struct platform_device *pdev)
 	wrn->ppsg_regs = wrn->bases[WRN_FB_PPSG];
 	wrn->txd = ((void *)wrn->regs) + 0x80; /* was: TX1_D1 */
 	wrn->rxd = ((void *)wrn->regs) + 0x100; /* was: RX1_D1 */
-	wrn->databuf = (void *)wrn->regs + offsetof(struct NIC_WB, MEM);
+	wrn->databuf = (void *)wrn->regs + NIC_MEM_BASE;
 	tasklet_init(&wrn->rx_tlet, wrn_rx_interrupt, (unsigned long)wrn);
 	if (0)
 		printk("regs %p, txd %p, rxd %p, buffer %p\n",
