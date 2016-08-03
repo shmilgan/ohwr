@@ -25,6 +25,32 @@ struct rtu_addr {
 #define RTU_ENTRY_TYPE_DYNAMIC 1
 #define RTU_ENTRY_TYPE_STATIC 0
 
+/* helper to verify correctness of a rtu type */
+static inline int rtu_check_type(int type)
+{
+	switch (type) {
+	case RTU_ENTRY_TYPE_DYNAMIC:
+	case RTU_ENTRY_TYPE_STATIC:
+		/* type ok */
+		return 0;
+	default:
+		return -1;
+	}
+}
+
+static inline char *rtu_type_to_str(int type)
+{
+	switch (type) {
+	case RTU_ENTRY_TYPE_DYNAMIC:
+		return "DYNAMIC";
+	case RTU_ENTRY_TYPE_STATIC:
+		return "STATIC";
+	default:
+		return "Unknown";
+	}
+}
+
+
 /**
  * \brief RTU Filtering Database Entry Object
  */
