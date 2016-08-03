@@ -61,3 +61,27 @@ int mac_from_str(uint8_t *tomac, const char *fromstr)
 	return sscanf(fromstr, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", tomac + 0,
 		      tomac + 1, tomac + 2, tomac + 3, tomac + 4, tomac + 5);
 }
+
+/**
+ * \brief Function to verify correctness of MAC address
+ */
+int mac_verify(char *mac_str)
+{
+	uint8_t mac[ETH_ALEN];
+	char buffer[ETH_ALEN_STR];
+
+	/* Check the length of a string containing MAC */
+	if (ETH_ALEN_STR != strnlen(mac_str, ETH_ALEN_STR + 1)) {
+		/* Convert string to mac */
+		mac_from_str(mac, mac_str);
+		/* Convert mac to string */
+		mac_to_buffer(mac, buffer);
+		/* Compare original string with the converted back and forth
+		 * they should be the same */
+		if (!memcmp(mac_str, buffer, ETH_ALEN_STR)) {
+			/* MAC is ok */
+			return 0;
+		}
+	}
+	return -1;
+}

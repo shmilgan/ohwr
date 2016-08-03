@@ -64,5 +64,6 @@ static inline uint8_t *mac_clean(uint8_t mac[ETH_ALEN])
 char *mac_to_string(uint8_t mac[ETH_ALEN]);
 char *mac_to_buffer(uint8_t mac[ETH_ALEN], char buffer[ETH_ALEN_STR]);
 int mac_from_str(uint8_t *tomac, const char *fromstr);
+int mac_verify(char *mac_str);
 
 #endif /* __WHITERABBIT_RTU_MAC_H */
