@@ -280,7 +280,6 @@ void shw_sfp_print_header(struct shw_sfp_header *head)
 	printf("Identifier: %02X\n", head->id);
 	printf("Extended Identifier: %02X\n", head->ext_id);
 	printf("Connector: %02X\n", head->connector);
-	printf("Connector: %02X\n", head->connector);
 	printf("Tranciever: %016llX\n", ((uint64_t *) head->transciever)[0]);
 	printf("Encoding: %02x\n", head->encoding);
 	printf("Nominal Bit Rate: %d Megabits/s\n", head->br_nom * 100);
@@ -303,6 +302,8 @@ void shw_sfp_print_header(struct shw_sfp_header *head)
 	for (i = 0; i < 4; i++)
 		printf("%c", head->vendor_rev[i]);
 	printf("\n");
+	printf("TX Wavelength: %d\n", (head->tx_wavelength[0] << 8)
+	       + head->tx_wavelength[1]);
 	printf("Options: %04X\n", ((uint16_t *) head->options)[0]);
 	printf("Bitrate (MAX): %02X\n", head->br_max);
 	printf("Bitrate (MIN): %02X\n", head->br_min);

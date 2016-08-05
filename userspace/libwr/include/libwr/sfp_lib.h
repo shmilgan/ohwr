@@ -70,7 +70,8 @@ struct shw_sfp_header {
 	uint8_t vendor_oui[3];
 	uint8_t vendor_pn[16];
 	uint8_t vendor_rev[4];
-	uint8_t reserved4[3];
+	uint8_t tx_wavelength[2];
+	uint8_t reserved4;
 	uint8_t cc_base;
 
 	/* extended ID fields start here */
