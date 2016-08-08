@@ -77,6 +77,14 @@ int rtudexp_learning_process(int operation, int enable, int port_mask)
 	return (ret < 0) ? ret : val;
 }
 
+int rtudexp_unrec(int operation, int enable, int port_mask)
+{
+	int val, ret;
+	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_unrec, &val,
+			  operation, enable, port_mask);
+	return (ret < 0) ? ret : val;
+}
+
 int rtudexp_vlan_entry(int vid, int fid, const char *ch_mask, int drop,
 		       int prio, int has_prio, int prio_override)
 {
@@ -150,6 +158,15 @@ void show_help(char *prgname)
 			"                                       ports\n");
 	fprintf(stderr, "   learning <enable|disable> mask <port_mask>: Enable/disable learning process\n"
 			"                                               in RTU for ports given as a mask\n");
+	fprintf(stderr, "   unrec:            Status of dropping packets when destination MAC is not\n"
+			"                     matched\n");
+	fprintf(stderr, "   unrec <enable|disable> [<port>]: Enable/disable dropping packets when\n"
+			"                                    the destination MAC is not matched.\n"
+			"                                    Apply setting on a given <port> or all ports\n"
+			"                                    when <port> is not provided.\n");
+	fprintf(stderr, "   unrec mask <enable|disable> <port_mask>: Enable/disable dropping packets when\n"
+			"                                            the destination MAC is not matched.\n"
+			"                                            Apply setting on ports given as a mask\n");
 	fprintf(stderr, "   vlan <vid> <fid> <port_mask> [<drop>, <prio>, <has_prio>, <prio_override>]:\n"
 			"                                Add VLAN entry with vid, fid, mask and drop flag;\n"
 			"                                write mask=0x0 and drop=1 to remove the VLAN\n");
@@ -647,6 +664,106 @@ int main(int argc, char **argv)
 		}
 		printf("-------------\n");
 		printf("Port | Learning\n");
+		printf("-------------\n");
+		for (i = 0; i < nports; i++) {
+			printf(" %2d    %s\n", i + 1,
+				(ret & 1) ? "enabled" : "disabled");
+			ret >>= 1;
+		}
+		/* Don't do anything more */
+		return 0;
+/* ****************** unrec <enable|disable> mask <port_mask> *********** */
+	} else if (argc >= 5
+		    && strcmp(argv[1], "unrec") == 0
+		    && strcmp(argv[3], "mask") == 0) {
+		if (!strcmp(argv[2], "enable"))
+			enable = RTU_UNREC_ENABLE;
+		else if (!strcmp(argv[2], "disable"))
+			enable = RTU_UNREC_DISABLE;
+		else {
+			fprintf(stderr, "rtu_stat: expected \"enable\""
+				" or \"disable\"\n");
+			exit(1);
+		}
+		mask = 0;
+		if (!strcmp(argv[4], "ALL")
+		    || !strcmp(argv[4], "all")) {
+			mask = (1 << (nports + 1)) - 1;
+		} else {
+			i = strtol(argv[4], NULL, 0);
+			/* interface number 1..18 */
+			if (0 < i && i <= ((1 << nports) - 1)) {
+				mask = i;
+			}
+		}
+
+		/* interface number 1..18, CPU is 19 */
+		if (mask == 0) {
+			printf("Wrong port mask 0x%s\n", argv[4]);
+			exit(1);
+		}
+		ret = rtudexp_unrec(RTU_SET_UNREC, /* oper */
+				    enable, /* enable */
+				    mask /* port_mask */
+				    );
+		if (ret > 0)
+			printf("Update of unrec state change successful\n");
+		if (ret < 0) {
+			printf("Could not change unrec state 0x%x\n", ret);
+			exit(1);
+		}
+		/* Don't do anything more */
+		return 0;
+/* ****************** unrec <enable|disable> [<port>] ******************* */
+	} else if (argc >= 3
+		    && strcmp(argv[1], "unrec") == 0) {
+		if (!strcmp(argv[2], "enable"))
+			enable = RTU_UNREC_ENABLE;
+		else if (!strcmp(argv[2], "disable"))
+			enable = RTU_UNREC_DISABLE;
+		else {
+			fprintf(stderr, "rtu_stat: expected \"enable\""
+				" or \"disable\"\n");
+			exit(1);
+		}
+		if (argc >= 4) { /* port defined */
+			i = strtol(argv[3], NULL, 0);
+			/* interface number 1..18*/
+			if (1 > i || i > nports) { /* 18 ports */
+				printf("Wrong port %s\n", argv[3]);
+				exit(1);
+			}
+			mask = 1 << (i - 1);
+		} else { /* port undefined, use as all */
+			mask = (1 << (nports)) - 1;
+		}
+		ret = rtudexp_unrec(RTU_SET_UNREC, /* oper */
+				    enable, /* enable */
+				    mask /* port_mask */
+				    );
+		if (ret > 0)
+			printf("Update of unrec state change successful\n");
+		if (ret < 0) {
+			printf("Could not change unrec state 0x%x\n", ret);
+			exit(1);
+		}
+		/* Don't do anything more */
+		return 0;
+/* ****************** unrec ************************************************ */
+	} else if (argc >= 2
+		    && strcmp(argv[1], "unrec") == 0) {
+		ret = rtudexp_unrec(RTU_GET_UNREC, /* oper */
+				    0, /* enable */
+				    (1 << nports) - 1 /* port_mask */
+				    );
+		if (ret < 0) {
+			printf("Could not read unrec state 0x%x\n", ret);
+			exit(1);
+		}
+		printf("Dropping packets when the destination MAC is not "
+		       "matched\n");
+		printf("-------------\n");
+		printf("Port | Drop\n");
 		printf("-------------\n");
 		for (i = 0; i < nports; i++) {
 			printf(" %2d    %s\n", i + 1,

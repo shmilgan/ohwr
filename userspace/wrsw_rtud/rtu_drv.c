@@ -599,6 +599,19 @@ int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
 	return 0;
 }
 
+/**
+ * \brief Gets the B_UNREC flag on indicated port.
+ * @param port port number (0 to 9)
+ * @return error code.
+ */
+int rtu_read_unrecognised_behaviour_on_port(int port)
+{
+	if ((port < MIN_PORT) || (port > MAX_PORT))
+		return -EINVAL;
+
+	return read_pcr(port) & RTU_PCR_B_UNREC ? 1 : 0;
+}
+
 //---------------------------------------------
 // Private Methods
 //---------------------------------------------

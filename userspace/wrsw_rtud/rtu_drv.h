@@ -88,6 +88,7 @@ int rtu_pass_all_on_port(int port, int pass_all)
     __attribute__ ((warn_unused_result));
 int rtu_set_unrecognised_behaviour_on_port(int port, int flag)
     __attribute__ ((warn_unused_result));
+int rtu_read_unrecognised_behaviour_on_port(int port);
 
 // IRQs
 
