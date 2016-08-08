@@ -68,6 +68,15 @@ int rtudexp_remove_entry(const char *mac, int port_mask, int type)
 	return (ret < 0) ? ret : val;
 }
 
+int rtudexp_learning_process(int operation, int enable, int port_mask)
+{
+	int val, ret;
+	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT,
+			  &rtud_export_learning_process, &val, operation,
+			  enable, port_mask);
+	return (ret < 0) ? ret : val;
+}
+
 int rtudexp_vlan_entry(int vid, int fid, const char *ch_mask, int drop,
 		       int prio, int has_prio, int prio_override)
 {
@@ -135,6 +144,12 @@ void show_help(char *prgname)
 			"                                        MAC address and multiple ports with\n"
 			"                                        an optional type  (default %d-static)\n",
 			RTU_ENTRY_TYPE_STATIC);
+	fprintf(stderr, "   learning:         Read status of learning process in RTU\n");
+	fprintf(stderr, "   learning <enable|disable> [<port>]: Enable/disable learning process in RTU\n"
+			"                                       for optional port, otherwise for all\n"
+			"                                       ports\n");
+	fprintf(stderr, "   learning <enable|disable> mask <port_mask>: Enable/disable learning process\n"
+			"                                               in RTU for ports given as a mask\n");
 	fprintf(stderr, "   vlan <vid> <fid> <port_mask> [<drop>, <prio>, <has_prio>, <prio_override>]:\n"
 			"                                Add VLAN entry with vid, fid, mask and drop flag;\n"
 			"                                write mask=0x0 and drop=1 to remove the VLAN\n");
@@ -363,6 +378,8 @@ int main(int argc, char **argv)
 	int n_wait = 0;
 	int ret;
 	int type;
+	int enable;
+	uint32_t mask;
 
 	nports = get_nports_from_hal();
 
@@ -537,6 +554,107 @@ int main(int argc, char **argv)
 			exit(1);
 		}
 		isok = 1;
+/* ****************** learning <enable|disable> mask <port_mask> *********** */
+	} else if (argc >= 5
+		    && strcmp(argv[1], "learning") == 0
+		    && strcmp(argv[3], "mask") == 0) {
+		if (!strcmp(argv[2], "enable"))
+			enable = RTU_LEARNING_ENABLE;
+		else if (!strcmp(argv[2], "disable"))
+			enable = RTU_LEARNING_DISABLE;
+		else {
+			fprintf(stderr, "rtu_stat: expected \"enable\""
+				" or \"disable\"\n");
+			exit(1);
+		}
+		mask = 0;
+		if (!strcmp(argv[4], "ALL")
+		    || !strcmp(argv[4], "all")) {
+			mask = (1 << (nports + 1)) - 1;
+		} else {
+			i = strtol(argv[4], NULL, 0);
+			/* interface number 1..18 */
+			if (0 < i && i <= ((1 << nports) - 1)) {
+				mask = i;
+			}
+		}
+
+		/* interface number 1..18, CPU is 19 */
+		if (mask == 0) {
+			printf("Wrong port mask 0x%s\n", argv[4]);
+			exit(1);
+		}
+		ret = rtudexp_learning_process(
+					RTU_SET_LEARNING, /* oper */
+					enable, /* enable */
+					mask /* port_mask */
+					);
+		if (ret > 0)
+			printf("Update of learning state change successful\n");
+		if (ret < 0) {
+			printf("Could not change learning state 0x%x\n", ret);
+			exit(1);
+		}
+		/* Don't do anything more */
+		return 0;
+/* ****************** learning <enable|disable> [<port>] ******************* */
+	} else if (argc >= 3
+		    && strcmp(argv[1], "learning") == 0) {
+		if (!strcmp(argv[2], "enable"))
+			enable = RTU_LEARNING_ENABLE;
+		else if (!strcmp(argv[2], "disable"))
+			enable = RTU_LEARNING_DISABLE;
+		else {
+			fprintf(stderr, "rtu_stat: expected \"enable\""
+				" or \"disable\"\n");
+			exit(1);
+		}
+		if (argc >= 4) { /* port defined */
+			i = strtol(argv[3], NULL, 0);
+			/* interface number 1..18*/
+			if (1 > i || i > nports) { /* 18 ports */
+				printf("Wrong port %s\n", argv[3]);
+				exit(1);
+			}
+			mask = 1 << (i - 1);
+		} else { /* port undefined, use as all */
+			mask = (1 << (nports)) - 1;
+		}
+		ret = rtudexp_learning_process(
+					RTU_SET_LEARNING, /* oper */
+					enable, /* enable */
+					mask /* port_mask */
+					);
+		if (ret > 0)
+			printf("Update of learning state change successful\n");
+		if (ret < 0) {
+			printf("Could not change learning state 0x%x\n", ret);
+			exit(1);
+		}
+		/* Don't do anything more */
+		return 0;
+/* ****************** learning ********************************************* */
+	} else if (argc >= 2
+		    && strcmp(argv[1], "learning") == 0) {
+		ret = rtudexp_learning_process(
+					RTU_GET_LEARNING, /* oper */
+					0, /* enable */
+					(1 << nports) - 1 /* port_mask */
+					);
+		if (ret < 0) {
+			printf("Could not read learning state 0x%x\n", ret);
+			exit(1);
+		}
+		printf("-------------\n");
+		printf("Port | Learning\n");
+		printf("-------------\n");
+		for (i = 0; i < nports; i++) {
+			printf(" %2d    %s\n", i + 1,
+				(ret & 1) ? "enabled" : "disabled");
+			ret >>= 1;
+		}
+		/* Don't do anything more */
+		return 0;
 /* ****************** vlan <vid> <fid> <port_mask>
  *			   [<drop>, <prio>, <has_prio>, <prio_override>] *** */
 	} else if (argc >= 5

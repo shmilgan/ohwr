@@ -81,6 +81,7 @@ int rtu_unset_fixed_prio_on_port(int port)
     __attribute__ ((warn_unused_result));
 int rtu_learn_enable_on_port(int port, int flag)
     __attribute__ ((warn_unused_result));
+int rtu_learn_read_on_port(int port);
 int rtu_pass_bpdu_on_port(int port, int flag)
     __attribute__ ((warn_unused_result));
 int rtu_pass_all_on_port(int port, int pass_all)

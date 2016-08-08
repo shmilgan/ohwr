@@ -36,6 +36,7 @@
 #include "minipc.h"
 #include "rtu.h"
 #include "rtu_fd.h"
+#include "rtu_drv.h"
 #include "rtud_exports.h"
 #include <libwr/mac.h>
 
@@ -151,6 +152,68 @@ int rtudexp_remove_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 	return *p_ret;
 }
 
+
+int rtudexp_learning_process(const struct minipc_pd *pd, uint32_t * args,
+			     void *ret)
+{
+	int oper;
+	int enable;
+	uint32_t port_mask;
+	int *p_ret = (int *)ret; /*force pointed to int type */
+	uint32_t learning_mask = 0;
+	int i;
+	int local_ret;
+
+	oper = (int)args[0];
+	enable = (int)args[1];
+	port_mask = (int)args[2];
+
+	*p_ret = 0;
+	pr_debug("Request for learning process state\n");
+	if (1 > port_mask || port_mask > 0x3ffff) { /* 18 ports */
+		pr_error("Wrong port mask 0x%x\n", port_mask);
+		*p_ret = -1;
+		return *p_ret;
+	}
+	switch (oper) {
+	case RTU_GET_LEARNING:
+		for (i = 0; i < 18; i++) {
+			if ((port_mask >> i) & 1) {
+				local_ret = rtu_learn_read_on_port(i);
+				if (local_ret < 0) {
+					*p_ret = local_ret;
+					return *p_ret;
+				}
+				learning_mask |= local_ret << i;
+			}
+		}
+		*p_ret = learning_mask;
+		pr_debug("Learning state mask 0x%x\n", learning_mask);
+		break;
+	case RTU_SET_LEARNING:
+		for (i = 0; i < 18; i++) {
+			if ((port_mask >> i) & 1) {
+				pr_debug("Request to change learning process "
+					 "state for port %d (wri%d)\n",
+					 i + 1, i + 1);
+				local_ret = rtu_learn_enable_on_port(i,
+								     enable);
+				if (local_ret < 0) {
+					*p_ret = local_ret;
+					return *p_ret;
+				}
+				(*p_ret)++;
+			}
+		}
+		break;
+	default:
+		pr_error("Wrong operation for learning process %d\n", oper);
+		*p_ret = -1;
+		return *p_ret;
+	}
+	return *p_ret;
+}
+
 int rtudexp_vlan_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 {
 	int vid, fid, mask, drop, prio, has_prio, prio_override;
@@ -184,6 +247,7 @@ int rtud_init_exports()
 	MINIPC_EXP_FUNC(rtud_export_clear_entries, rtudexp_clear_entries);
 	MINIPC_EXP_FUNC(rtud_export_add_entry, rtudexp_add_entry);
 	MINIPC_EXP_FUNC(rtud_export_remove_entry, rtudexp_remove_entry);
+	MINIPC_EXP_FUNC(rtud_export_learning_process, rtudexp_learning_process);
 	MINIPC_EXP_FUNC(rtud_export_vlan_entry, rtudexp_vlan_entry);
 
 	return 0;

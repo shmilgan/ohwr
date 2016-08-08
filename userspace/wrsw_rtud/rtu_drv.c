@@ -532,6 +532,19 @@ int rtu_learn_enable_on_port(int port, int flag)
 }
 
 /**
+ * \brief Gets the LEARN_EN flag on indicated port.
+ * @param port port number (0 to 9)
+ * @return flag status
+ */
+int rtu_learn_read_on_port(int port)
+{
+	if ((port < MIN_PORT) || (port > MAX_PORT))
+		return -EINVAL;
+
+	return read_pcr(port) & RTU_PCR_LEARN_EN ? 1 : 0;
+}
+
+/**
  * \brief Sets the PASS_BPDU flag on indicated port.
  * @param port port number (0 to 9)
  * @param flag 0: BPDU packets are passed RTU rules only if PASS_ALL is set.

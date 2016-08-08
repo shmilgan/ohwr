@@ -31,6 +31,11 @@
 #include <stdint.h>
 #include <minipc.h>
 
+#define RTU_LEARNING_ENABLE 1
+#define RTU_LEARNING_DISABLE 0
+#define RTU_SET_LEARNING 1
+#define RTU_GET_LEARNING 2
+
 /* Export of a function to set remove entry in rtu */
 struct minipc_pd rtud_export_clear_entries = {
 	.name = "clear_entries",
@@ -64,6 +69,20 @@ struct minipc_pd rtud_export_remove_entry = {
 		 MINIPC_ARG_END,
 		 },
 };
+
+/* Export of a function to get status or enable/disable of learning process in
+ * rtu */
+struct minipc_pd rtud_export_learning_process = {
+	.name = "learning_process",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* operation */
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* enable/disable */
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* port mask */
+		 MINIPC_ARG_END,
+		 },
+};
+
 
 /* Export of a function to add vlan entry in rtu */
 struct minipc_pd rtud_export_vlan_entry = {
