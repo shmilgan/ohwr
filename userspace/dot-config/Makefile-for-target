@@ -22,3 +22,10 @@ menuconfig:
 	./mconf Kconfig
 	mv .config.old dot-config.old
 	mv .config dot-config
+
+nconfig:
+	cp dot-config .config
+	./nconf Kconfig
+	mv .config.old dot-config.old
+	mv .config dot-config
+
