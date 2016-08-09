@@ -12,5 +12,5 @@ if [ -n "$hostname" ]; then
     echo "$hostname" > /etc/hostname
 fi
 
-# call default script
-source /usr/share/udhcpc/default.script
+# source default script
+. /usr/share/udhcpc/default.script

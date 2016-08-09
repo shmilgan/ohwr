@@ -31,7 +31,8 @@ if [ "$1" == "local_config" ]; then
 
     # Check and complain
     if [ -f /wr/etc/dot-config ]; then
-	source /wr/etc/dot-config
+	# source dot-config
+	. /wr/etc/dot-config
 	ret_source=$?
 	/wr/bin/wrs_checkcfg /wr/etc/dot-config /wr/etc/Kconfig
 	ret_check=$?
@@ -52,7 +53,7 @@ if [ "$1" == "local_config" ]; then
 elif [ -f /wr/etc/dot-config ]; then
     # if config was not touched by webinterface simply source it, the check was
     # done by /etc/init.d/dot-config
-    source /wr/etc/dot-config
+    . /wr/etc/dot-config
 fi
 
 ##### Actual configuration actions start here.
