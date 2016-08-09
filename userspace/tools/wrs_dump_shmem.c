@@ -124,6 +124,7 @@ enum dump_type {
 	dump_type_spll_align_state,
 	/* rtu_filtering_entry enumerations */
 	dump_type_rtu_filtering_entry_dynamic,
+	dump_type_array_int,
 };
 
 static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
@@ -338,6 +339,14 @@ void dump_one_field(void *addr, struct dump_info *info)
 			printf("Unknown(%d)\n", i);
 		}
 		break;
+	case dump_type_array_int:
+		{
+		int *size = addr + info->size;
+		for (i = 0; i < *size; i++)
+			printf("%d ", *((int *)p + i));
+		printf("\n");
+		break;
+		}
 	}
 }
 void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
@@ -702,7 +711,8 @@ struct dump_info ppi_info [] = {
 	//DUMP_FIELD(pointer, port_name),
 	DUMP_FIELD(int, port_idx),
 	DUMP_FIELD(int, vlans_array_len),
-	/* FIXME: array */
+	/* pass the size of a vlans array in the nvlans field */
+	DUMP_FIELD_SIZE(array_int, vlans, offsetof(DUMP_STRUCT, nvlans)),
 	DUMP_FIELD(int, nvlans),
 
 	/* sub structure */
