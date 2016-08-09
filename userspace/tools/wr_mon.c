@@ -262,6 +262,8 @@ void show_ports(void)
 	char datestr[32];
 	struct hal_port_state *port_state;
 	struct pp_instance *pp_array;
+	int vlan_i;
+	int nvlans;
 
 	pp_array = wrs_shm_follow(ppsi_head, ppg->pp_instances);
 
@@ -285,6 +287,7 @@ void show_ports(void)
 		char if_mode[15];
 		int print_port = 0;
 		int print_mode_color = 0;
+		int instance_port = 0;
 
 		snprintf(if_name, 10, "wri%d", i + 1);
 
@@ -365,37 +368,61 @@ void show_ports(void)
 			else
 				term_cprintf(C_RED, "NoLock     ");
 
+			instance_port = 0;
 			/*
 			 * Actually, what is interesting is the PTP state.
 			 * For this lookup, the port in ppsi shmem
 			 */
 			for (j = 0; j < ppg->nlinks; j++) {
-				if (!strcmp(if_name,
-						pp_array[j].cfg.iface_name))
-					break;
-			}
-			/* Warning: we may have more pp instances per port */
-			if (j == ppg->nlinks || !state_up(port_state->state)) {
-				term_cprintf(C_RED, "no-ptp\n");
-			} else {
-				unsigned char *p = pp_array[j].peer;
-
-				term_cprintf(C_WHITE,
-					"peer: %02x:%02x:%02x:%02x:%02x:%02x ",
-					 p[0], p[1], p[2], p[3], p[4], p[5]);
-				if (pp_array[j].state < PP_INSTANCE_STATE_MAX) {
-					/* Known state */
-					term_cprintf(C_GREEN,
-						    "ptp state %s(%i)\n",
-						    pp_instance_state_to_name[pp_array[j].state],
-						    pp_array[j].state);
+				if (strcmp(if_name,
+						pp_array[j].cfg.iface_name)) {
+					/* Instance not for this interface
+					 * skip */
+					continue;
+				}
+				if (instance_port > 0) {
+					term_cprintf(C_WHITE, "\n             "
+					       "                            ");
+				}
+				instance_port++;
+				/* print instance number */
+				term_cprintf(C_WHITE, " i%-2d:", j);
+				/* Warning: we may have more pp instances per
+				 * port */
+				if (!state_up(port_state->state)) {
+					term_cprintf(C_RED, " no-ptp");
 				} else {
-					/* Unknown ptp state */
-					term_cprintf(C_GREEN,
-						    "ptp state unknown(%i)\n",
-						    pp_array[j].state);
+					unsigned char *p = pp_array[j].peer;
+
+					term_cprintf(C_WHITE," peer: %02x:%02x"
+						     ":%02x:%02x:%02x:%02x",
+						     p[0], p[1], p[2], p[3],
+						     p[4], p[5]);
+					if (pp_array[j].state < PP_INSTANCE_STATE_MAX) {
+						/* Known state */
+						term_cprintf(C_GREEN, " ptp "
+							"state %s(%i)",
+							pp_instance_state_to_name[pp_array[j].state],
+							pp_array[j].state);
+					} else {
+						/* Unknown ptp state */
+						term_cprintf(C_GREEN, " ptp "
+							"state unknown(%i)",
+							pp_array[j].state);
+					}
+				}
+				nvlans = pp_array[j].nvlans;
+				if (nvlans > 0) {
+					term_cprintf(C_WHITE, " vlans: ");
+				}
+				for (vlan_i = 0; vlan_i < nvlans; vlan_i++) {
+					term_cprintf(C_WHITE, "%d",
+						    pp_array[j].vlans[vlan_i]);
+					if (vlan_i < nvlans - 1)
+						term_cprintf(C_WHITE, ",");
 				}
 			}
+			term_cprintf(C_WHITE, "\n");
 		} else if (mode & WEB_INTERFACE) {
 			printf("%s ", state_up(port_state->state)
 				? "up" : "down");
