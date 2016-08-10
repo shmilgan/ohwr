@@ -575,6 +575,7 @@ value is changed by the web interface, proper action is taken.
 	@t{CONFIG_WRS_LOG_OTHER} is currently used by:
 	@itemize
 	@item wrs_watchdog
+	@item wrs_auxclk
 	@end itemize
 	Each value
         can be a pathname, to select logging to file (and @t{/dev/kmsg}

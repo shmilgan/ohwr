@@ -4,6 +4,7 @@
 
 # First, read dot-config to get wrs_auxclk parameters
 dotconfig=/wr/etc/dot-config
+set -o pipefail
 
 if [ -f $dotconfig ]; then
     . $dotconfig
@@ -33,11 +34,27 @@ if [ ! -z "$CONFIG_WRSAUXCLK_PPSHIFT" ]; then
 	p_ppshift="--ppshift "$CONFIG_WRSAUXCLK_PPSHIFT;
 fi
 
+WRS_LOG=$CONFIG_WRS_LOG_OTHER
+
+# if empty turn it to /dev/null
+if [ -z $WRS_LOG ]; then
+    WRS_LOG="/dev/null";
+fi
+
+# if a pathname, use it
+if echo "$WRS_LOG" | grep / > /dev/null; then
+    eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
+else
+    # not a pathname: use verbatim
+    eval LOGPIPE=\" 2\>\&1 \| logger -t wr-switch -p $WRS_LOG\"
+fi
+
 # execute wrs_auxclk
 echo -n "Configuring external clock clk2: "
-/wr/bin/wrs_auxclk $p_freq $p_duty $p_cshift $p_sigdel $p_ppshift > /dev/null 2>&1
-if [ $? == 0 ]; then
-	echo "OK"
+eval /wr/bin/wrs_auxclk $p_freq $p_duty $p_cshift $p_sigdel $p_ppshift $LOGPIPE
+ret=$?
+if [ $ret -eq 0 ]; then
+    echo "OK"
 else
-	echo "Failed"
+    echo "Failed"
 fi

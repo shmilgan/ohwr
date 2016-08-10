@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
 	}
 
 	apply_settings(&calc);
-	printf("Applied settings:\n");
+	printf("%s: applied settings:\n", argv[0]);
 	print_settings(stdout, &calc);
 
 	return 0;

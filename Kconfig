@@ -274,6 +274,7 @@ config WRS_LOG_OTHER
 	  Redirect output from other programs.
 	  In the current version following programs uses this option:
 	  --wrs_watchdog
+	  --wrs_auxclk
 	  This collective entry is to avoid number of entries in dot-config.
 	  The string can be a pathname (e.g. /dev/kmsg) or a <facility>.<level>
 	  spefification like "daemon.debug". An empty strings is used
