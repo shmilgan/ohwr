@@ -1123,7 +1123,7 @@ function wrs_display_help($help_id, $name){
 		$message = str_replace("\n", "<br>", $message);
 	} else if (!strcmp($help_id, "logs")){
 		$message = "<p>Log files for the following services: <br>
-					- <b>HAL daemon</b>, <b>RTU daemon</b>, <b>PPSi daemon</b>, <b>WRS Watchdog status</b> -  The string can
+					- <b>HAL daemon</b>, <b>RTU daemon</b>, <b>PPSi daemon</b>, <b>other programs</b> -  The string can
 					  be a pathname (e.g. /dev/kmsg) or a &lt;facility&gt;.&lt;level&gt; spefification like \"daemon.debug\".
 					  An empty strings is used to represent no logging (like /dev/null). Please note that unknown facility
 					  names will generate a runtime error on the switch.<br>

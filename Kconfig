@@ -267,10 +267,14 @@ config WRS_LOG_MONIT
 	  Please note that unknown facility names will generate a runtime error
 	  on the switch.
 
-config WRS_LOG_WRSWATCHDOG
-	string "Logging directions for the wrs_watchdog"
+config WRS_LOG_OTHER
+	string "Logging directions for other programs"
 	default "daemon.info"
 	help
+	  Redirect output from other programs.
+	  In the current version following programs uses this option:
+	  --wrs_watchdog
+	  This collective entry is to avoid number of entries in dot-config.
 	  The string can be a pathname (e.g. /dev/kmsg) or a <facility>.<level>
 	  spefification like "daemon.debug". An empty strings is used
 	  to represent no logging (like /dev/null).  Please note that

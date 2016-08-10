@@ -34,7 +34,7 @@
 		$modified = process_form($section, $subsection);
 
 		if($modified){
-			check_add_existing_kconfig("CONFIG_WRS_LOG_WRSWATCHDOG=");
+			check_add_existing_kconfig("CONFIG_WRS_LOG_OTHER=");
 			check_add_existing_kconfig("CONFIG_WRS_LOG_MONIT=");
 			check_add_existing_kconfig("CONFIG_WRS_LOG_SNMPD=");
 			save_kconfig();

@@ -569,9 +569,14 @@ value is changed by the web interface, proper action is taken.
 @item CONFIG_WRS_LOG_HAL
 @itemx CONFIG_WRS_LOG_RTU
 @itemx CONFIG_WRS_LOG_PTP
-@itemx CONFIG_WRS_LOG_WRSWATCHDOG
+@itemx CONFIG_WRS_LOG_OTHER
 
-	Logging options for the three main WRS processes. Each value
+	Logging options for the three main WRS processes and other programs.
+	@t{CONFIG_WRS_LOG_OTHER} is currently used by:
+	@itemize
+	@item wrs_watchdog
+	@end itemize
+	Each value
         can be a pathname, to select logging to file (and @t{/dev/kmsg}
         is a possible ``file'' target) or a @i{facility}.@i{level} string,
         like @t{daemon.debug}, for syslog-based logging.

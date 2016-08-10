@@ -28,7 +28,7 @@ start() {
 	    echo "$0 unable to source dot-config ($dotconfig)!"
 	fi
 
-	WRS_LOG=$CONFIG_WRS_LOG_WRSWATCHDOG
+	WRS_LOG=$CONFIG_WRS_LOG_OTHER
 
 	# if empty turn it to /dev/null
 	if [ -z $WRS_LOG ]; then

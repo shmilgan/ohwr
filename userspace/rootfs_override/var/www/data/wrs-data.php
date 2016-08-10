@@ -156,10 +156,10 @@ $WRS_FORMS = Array(
 			vname => "logptp",
 		),
 		SYSTEM_LOGS_03 => Array(
-			key => "CONFIG_WRS_LOG_WRSWATCHDOG",
-			name => "Watchdog log",
-			value => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_WRSWATCHDOG"],
-			vname => "logwatchdog",
+			key => "CONFIG_WRS_LOG_OTHER",
+			name => "other applications log",
+			value => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_OTHER"],
+			vname => "logother",
 		),
 		SYSTEM_LOGS_04 => Array(
 			key => "CONFIG_WRS_LOG_MONIT",

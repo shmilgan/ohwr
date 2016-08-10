@@ -30,7 +30,7 @@ CONFIG_WRS_LOG_RTU="daemon.info"
 CONFIG_WRS_LOG_PTP="daemon.info"
 CONFIG_WRS_LOG_SNMPD="Swd"
 CONFIG_WRS_LOG_MONIT="syslog"
-CONFIG_WRS_LOG_WRSWATCHDOG="daemon.info"
+CONFIG_WRS_LOG_OTHER="daemon.info"
 # CONFIG_KEEP_ROOTFS is not set
 
 #
