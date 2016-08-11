@@ -60,9 +60,11 @@ int hal_init_timing(char *filename)
 		tmo_init(&lock_tmo, LOCK_TIMEOUT_EXT, 0);
 		break;
 
+	default: /* never hit, but having it here prevents a warning */
+		pr_error("%s: Unable to determine HAL mode! Use BC as"
+			 " default\n", __func__);
 	case HAL_TIMING_MODE_FREE_MASTER:
 	case HAL_TIMING_MODE_BC:
-	default: /* never hit, but having it here prevents a warning */
 		rts_set_mode(RTS_MODE_GM_FREERUNNING);
 		tmo_init(&lock_tmo, LOCK_TIMEOUT_INT, 0);
 		break;
