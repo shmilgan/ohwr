@@ -309,7 +309,10 @@ config PORT01_PARAMS
 	    - slave - configure port as a slave
 	    - auto - when a port is connected to master behave as a slave,
 		     otherwise behave as master
-	    - non-wr - disable White Rabbit on a port, keep PTP
+	    - non-wr - don't report problems with this port via SNMP like SFP
+		       not in DB, copper SFP connected, non 1GB SFP etc.
+	    - none - disable White Rabbit and PTP on a portdisable White Rabbit
+		       on a port, keep PTP
 
 config PORT02_PARAMS
 	string "Parameters for the second port"

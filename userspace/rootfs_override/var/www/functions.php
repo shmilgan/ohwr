@@ -1045,7 +1045,7 @@ function wrs_display_help($help_id, $name){
 			$message .= $i.":   ".$msg[$i]."<br>";
 		}
 	} else if (!strcmp($help_id, "endpointmode")){
-		$message = "<br><b>Change endpoint mode to master/slave/non-wr/auto by clicking on one of the items.</b><br>";
+		$message = "<br><b>Change endpoint mode to master/slave/auto/non-wr/none by clicking on one of the items.</b><br>";
 		$message .= "<b>It modifies dot-config and ppsi.conf files</b>";
 	} else if (!strcmp($help_id, "snmp")){
 		$message = "<p align=left>List of public SNMP OIDs</p><br>";

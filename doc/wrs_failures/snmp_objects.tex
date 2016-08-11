@@ -246,7 +246,8 @@
         have some non-WR devices connected to ports of the WR Switch (e.g.
         computer sending/receiving only data, without the need of
         synchronization), these ports should have their role in the timing
-        configuration set to \emph{non-wr}.
+        configuration set to \emph{non-wr} to avoid PTP traffic or \emph{none}
+        to disable PTP traffic at all.
       \item Check the status of a WR device connected to the reported port.
       \item Restart the switch.
       \item If the problem persists, please contact WR experts for in-depth
@@ -274,10 +275,10 @@
         case of Syslog, you should see a message similar to this one:\\
         \texttt{Unknown SFP vn="AVAGO" pn="ABCU-5710RZ" vs="AN1151PD8A" on port
         wri2}
-      \item If the reported port is intended to be used to connect a device that
-        does not require WR synchronization (e.g. using a copper SFP module),
-        then you should verify whether the role in the timing configuration for
-        this port is set to \emph{non-wr}.
+      \item If the reported port is intended to be used with WR not compatible
+        equipment (e.g. using a copper SFP module), to avoid SNMP errors set
+        this port to \emph{non-wr}. To disable PTP traffic on this port set it
+        to \emph{none}.
       \item Otherwise, you should use a WR-supported SFP module and make sure it
         is declared together with calibration values in the WRS configuration.
     \end{pck_proc}

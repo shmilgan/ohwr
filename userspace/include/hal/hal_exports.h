@@ -74,10 +74,11 @@ typedef struct {
 } hexp_pps_params_t;
 
 /* Port modes (hal_port_state.mode) */
-#define HEXP_PORT_MODE_WR_M_AND_S 4
 #define HEXP_PORT_MODE_WR_MASTER 1
 #define HEXP_PORT_MODE_WR_SLAVE 2
 #define HEXP_PORT_MODE_NON_WR 3
+#define HEXP_PORT_MODE_WR_M_AND_S 4
+#define HEXP_PORT_MODE_NONE 5
 
 #define FIX_ALPHA_FRACBITS 40
 /*

@@ -321,7 +321,7 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 	/*
 	 * ok when every slave port is up when switch is in slave mode
 	 * and when every slave port is down when switch in master/grandmaster
-	 * mode. Don't care about non-wr and auto ports.
+	 * mode. Don't care about non-wr, none and auto ports.
 	*/
 	p_a = wrsPortStatusTable_array;
 	t = &wrsTimingStatus_s;
@@ -406,7 +406,7 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 	\*********************************************************************/
 	/*
 	 * Check if PTP frames are flowing. Check only on ports that are
-	 * non-wr and up.
+	 * not (non-wr and none) and up.
 	 */
 
 	p_a = wrsPortStatusTable_array;
@@ -422,9 +422,10 @@ static void get_wrsPTPFramesFlowing(unsigned int port_status_nrows)
 			break;
 
 		/* Error when there is no increase in TX/RX PTP counters.
-		   Check only when port is non-wr and port is down */
+		   Check only when port is not (non-wr and none) and port is down */
 		}
 		if ((p_a[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
+		    && (p_a[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NONE)
 		    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_UP)) {
 			if (wrsPortStatusPtpTxFrames_prev[i] == p_a[i].wrsPortStatusPtpTxFrames) {
 				t->wrsPTPFramesFlowing = WRS_PTP_FRAMES_FLOWING_ERROR;

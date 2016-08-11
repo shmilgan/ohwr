@@ -22,7 +22,7 @@
 #define SHOW_GUI		0
 #define SHOW_SLAVE_PORTS	1
 #define SHOW_MASTER_PORTS	(1<<1)
-#define SHOW_OTHER_PORTS	(1<<2)
+#define SHOW_OTHER_PORTS	(1<<2) /* non-wr and none */
 #define SHOW_SERVO		(1<<3)
 #define SHOW_TEMPERATURES	(1<<4)
 #define WEB_INTERFACE		(1<<5)
@@ -328,6 +328,17 @@ void show_ports(void)
 				strcpy(if_mode, "N");
 			} else if (mode & WEB_INTERFACE) {
 				strcpy(if_mode, "Non WR");
+			}
+			break;
+		case HEXP_PORT_MODE_NONE:
+			if (mode == SHOW_GUI) {
+				print_mode_color = C_WHITE;
+				strcpy(if_mode, "None       ");
+			} else if (mode & SHOW_OTHER_PORTS) {
+				print_port = 1;
+				strcpy(if_mode, "X");
+			} else if (mode & WEB_INTERFACE) {
+				strcpy(if_mode, "None");
 			}
 			break;
 		case HEXP_PORT_MODE_WR_M_AND_S:

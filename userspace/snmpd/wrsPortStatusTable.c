@@ -128,7 +128,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 				port_state->calib.sfp.vendor_serial,
 				sizeof(wrsPortStatusTable_array[i].wrsPortStatusSfpVS));
 			/* sfp error when SFP is not 1 GbE or
-			 * (port is not non-wr mode and sfp not in data base)
+			 * (port is not "non-wr", "none" mode and sfp not in data base)
 			 * port down, is set above
 			 * (WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) */
 			slog_obj_name = wrsPortStatusSfpError_str;
@@ -140,12 +140,14 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 					 "SFP in port %d (wri%d) is not for Gigabit Ethernet\n",
 					 slog_obj_name, i + 1, i + 1);
 			}
-			if ((wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR) &&
-				(wrsPortStatusTable_array[i].wrsPortStatusSfpInDB == WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE)) {
+			if ((wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
+			    && (wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NONE)
+			    && (wrsPortStatusTable_array[i].wrsPortStatusSfpInDB == WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE)) {
 				/* error, port is not non-wr mode and sfp not in data base */
 				wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
 				snmp_log(LOG_ERR, "SNMP: " SL_ER  " %s: "
-					 "SFP in port %d (wri%d) is not in database. Change the SFP or declare port as non-wr\n",
+					 "SFP in port %d (wri%d) is not in database. "
+					 "Change the SFP or declare port as non-wr or none\n",
 					 slog_obj_name, i + 1, i + 1);
 			}
 

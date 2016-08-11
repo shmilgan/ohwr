@@ -263,6 +263,9 @@ void dump_one_field(void *addr, struct dump_info *info)
 		case HEXP_PORT_MODE_NON_WR:
 			printf("Non-WR\n");
 			break;
+		case HEXP_PORT_MODE_NONE:
+			printf("None\n");
+			break;
 		case HEXP_PORT_MODE_WR_M_AND_S:
 			printf("Auto\n");
 			break;

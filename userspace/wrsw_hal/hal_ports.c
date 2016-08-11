@@ -149,6 +149,7 @@ static int hal_port_init(int index)
 			{"master", HEXP_PORT_MODE_WR_MASTER},
 			{"slave",  HEXP_PORT_MODE_WR_SLAVE},
 			{"non-wr", HEXP_PORT_MODE_NON_WR},
+			{"none",   HEXP_PORT_MODE_NONE},
 			{NULL,     HEXP_PORT_MODE_NON_WR /* default,
 						* should exist and be last*/},
 		};
@@ -412,13 +413,13 @@ static void hal_port_fsm(struct hal_port_state * p)
 				/* set link/wrmode LEDs */
 				if (p->mode == HEXP_PORT_MODE_WR_SLAVE) {/* slave */
 					shw_sfp_set_generic(p->hw_index, 1,
-							    SFP_LED_WRMODE_SLAVE);
-				} else if (p->mode == HEXP_PORT_MODE_NON_WR) {/* non-wr */
+							SFP_LED_WRMODE_SLAVE);
+				} else if (p->mode == HEXP_PORT_MODE_WR_MASTER) {/* master */
 					shw_sfp_set_generic(p->hw_index, 1,
-							    SFP_LED_WRMODE_NON_WR);
-				} else { /* master or other */
+							SFP_LED_WRMODE_MASTER);
+				} else { /* non-wr or other */
 					shw_sfp_set_generic(p->hw_index, 1,
-							    SFP_LED_WRMODE_MASTER);
+							SFP_LED_WRMODE_NON_WR);
 				}
 				pr_info("%s: link up\n", p->name);
 				p->state = HAL_PORT_STATE_UP;

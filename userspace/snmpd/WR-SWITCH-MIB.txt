@@ -1877,7 +1877,8 @@ wrsPortStatusConfiguredMode OBJECT-TYPE
                         master(1),
                         slave(2),
                         nonWr(3),
-                        auto(4)
+                        auto(4),
+                        none(5)
     }
     MAX-ACCESS     read-only
     STATUS         current

@@ -632,7 +632,12 @@ value is changed by the web interface, proper action is taken.
 			@item @t{auto} -- when a port is connected to master
 					  behave as a slave, otherwise behave
 					  as master
-			@item @t{non-wr} -- disable White Rabbit on a port, keep PTP
+			@item @t{non-wr} -- don't report problems with this
+					    port via SNMP like SFP not in DB,
+					    copper SFP connected, non 1GB
+					    SFP etc.
+			@item @t{none} -- disable White Rabbit and PTP on a
+					  port
 		@end itemize
 		@item @t{fiber} -- describes which fiber type
 				   (@t{CONFIG_FIBERXX_PARAMS})
