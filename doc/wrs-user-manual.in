@@ -1283,6 +1283,13 @@ The following tools and scripts are provided:
 	transactions. The race can cause errors while reading SFPs memory,
 	wrong notification of LEDs, the false insert/remove SFP notifications.
 
+@item wrs_throttling
+  The tool is used to control Rx bandwidth throttling of the traffic that goes
+  from WR ports to Linux. It configures the FPGA module with a maximum allowed
+  bandwidth in KB/s. Throttling can be enabled to prevent Linux using 100% of
+  the processing power to receive Ethernet frames coming from WR ports to the
+  CPU.
+
 @c FIXME: document lm32-vuart rtu_stat spll_dbg_proxy
 @c FIXME: document wrs_pstats
 @end table
