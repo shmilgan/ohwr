@@ -149,7 +149,8 @@ static int hal_port_init(int index)
 			{"master", HEXP_PORT_MODE_WR_MASTER},
 			{"slave",  HEXP_PORT_MODE_WR_SLAVE},
 			{"non-wr", HEXP_PORT_MODE_NON_WR},
-			{NULL,     HEXP_PORT_MODE_NON_WR /* default */},
+			{NULL,     HEXP_PORT_MODE_NON_WR /* default,
+						* should exist and be last*/},
 		};
 
 		strcpy(s, "non-wr"); /* default if no string passed */
@@ -164,11 +165,18 @@ static int hal_port_init(int index)
 			if (!strcasecmp(s, rp->name))
 				break;
 		p->mode = rp->value;
-		if (!rp->name)
-			pr_error("port %i (%s): invalid role "
-				"\"%s\" specified\n", port_i, name, s);
 
-		pr_debug("Port %s: mode %i\n", p->name, val);
+		if (!rp->name) {
+			for (rp = rt; rp->name; rp++)
+				if (p->mode == rp->value)
+					break;
+			pr_error("port %i (%s): invalid role "
+				"\"%s\" specified; using mode %s\n", port_i,
+				name, s, rp->name);
+		}
+
+		pr_debug("Port %s: mode %s (%i)\n", p->name, rp->name,
+			 p->mode);
 	}
 
 	/* Get fiber type */
