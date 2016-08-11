@@ -16,7 +16,7 @@ CFLAGS =  -D KBUILD_NO_NLS
 
 # most of this is just copying stuff in
 RFILES = Kconfig dot-config wrs_release_defconfig
-XFILES = conf mconf
+XFILES = conf mconf nconf
 FILES = $(RFILES) $(XFILES)
 
 all: $(FILES)
@@ -57,6 +57,13 @@ mconf:
 		$(lxdialog) \
 		-DCURSES_LOC="<curses.h>" -I$(CURSES_BUILD)/include \
 		-L$(CURSES_BUILD)/lib -lncurses
+
+nconf:
+	$(CC) $(CFLAGS) -o $@ $(CONF_LOC)/nconf.c $(CONF_LOC)/zconf.tab.c \
+		$(CONF_LOC)/nconf.gui.c \
+		-DCURSES_LOC="<curses.h>" -I$(CURSES_BUILD)/include \
+		-L$(CURSES_BUILD)/lib -lncurses -lmenu -lpanel
+#	nconf.o zconf.tab.o nconf.gui.o
 
 wrs_release_defconfig: $(WRS_BASE_DIR)/../configs/wrs_release_defconfig
 	cp $^ $@
