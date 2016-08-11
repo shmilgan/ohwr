@@ -754,7 +754,22 @@ config WRSAUXCLK_PPSHIFT
 	  should be re-calibrated. Otherwise, 1-PPS output will be shifted
 	  from the WR timescale by <steps>*150ps.
 
+endmenu
 
+menu "NIC throttling configuration"
+config NIC_THROTTLING_ENABLED
+	bool "Enable NIC throttling"
+	default n
+	help
+	  Limit bandwith on NIC
+
+config NIC_THROTTLING_VAL
+	int "NIC throttling value"
+	depends on NIC_THROTTLING_ENABLED
+	default "4000"
+	range 1 65535
+	help
+	  Value to which bandwith should be limited
 
 endmenu
 

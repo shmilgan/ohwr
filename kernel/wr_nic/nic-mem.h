@@ -11,6 +11,9 @@
 #include "wr-nic.h"
 #include <asm/unaligned.h>
 
+#define NIC_MEM_BASE 0x8000 /* byte addressing of wb_in.adr(13) that in HDL
+			     * selects between WB registers and nic_buffer */
+
 /* Descriptor direction, used to locate descriptror data memory */
 enum wrn_ddir {
     WRN_DDIR_RX,
