@@ -9,18 +9,10 @@
 # When called with "local_config" parameter, files with information about
 # dotconfig source are removed (used by SNMP)
 
-# We create a temporary file in /tmp, to avoid wearing flash if not
-# needed. Then we replace the real file if different.
+# We create a temporary file in /tmp, store all files in ramdisk
 
 tmpdir=/tmp
 T=$(mktemp "$tmpdir"/config-XXXXXX)
-
-copy_conf() {
-    # busybox cmp exits 1 or 2 according to GNU man page
-    for dest in $*; do
-	cmp -s $T $1 || cp $T $1
-    done
-}
 
 # check if config is local, used by webinterface
 if [ "$1" == "local_config" ]; then
