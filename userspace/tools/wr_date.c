@@ -23,7 +23,7 @@
 #ifndef MOD_TAI
 #define MOD_TAI 0x80
 #endif
-#define WRDATE_CFG_FILE "/wr/etc/wr_date.conf"
+#define WRDATE_CFG_FILE "/etc/wr_date.conf"
 #define WRDATE_LEAP_FILE "/etc/leap-seconds.list"
 
 /* Address for hardware, from nic-hardware.h */

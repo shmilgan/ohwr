@@ -71,9 +71,7 @@ sed -i "s,^root:[^:]*:,root:$passwd:," /etc/shadow
 # A non-existent wr_date.conf means no NTP. So "rm" if unconfigured
 if [ ! -z "$CONFIG_NTP_SERVER" ]; then
     echo "ntpserver $CONFIG_NTP_SERVER" > $T
-    copy_conf /wr/etc/wr_date.conf
-else
-    rm -f /wr/etc/wr_date.conf
+    cp $T /etc/wr_date.conf
 fi
 
 # /etc/resolv.conf can be empty, so start empty
