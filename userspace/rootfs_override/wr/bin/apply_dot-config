@@ -85,7 +85,7 @@ fi
 copy_conf /etc/resolv.conf /usr/etc/resolv.conf
 
 # rsyslog.conf is created from a template file, and busybox sed has -i
-cp /usr/etc/rsyslog.conf.in $T
+cp /wr/etc/rsyslog.conf.in $T
 if [ "$CONFIG_REMOTE_SYSLOG_UDP" = "y" ]; then
     sed -i 's/@@remote-host/@remote-host/' $T
 fi
@@ -93,7 +93,7 @@ if [ ! -z "$CONFIG_REMOTE_SYSLOG_SERVER" ]; then
     sed -i '/remote-host/ s/^##//' $T
     sed -i "s/remote-host/$CONFIG_REMOTE_SYSLOG_SERVER/" $T
 fi
-copy_conf /etc/rsyslog.conf /usr/etc/rsyslog.conf
+cp $T /etc/rsyslog.conf
 
 # Fix SNMP values: for all not-empty configs remove comment and replace value
 cp /wr/etc/snmpd.conf.in $T
