@@ -82,7 +82,7 @@ if [ ! -z "$CONFIG_DNS_SERVER" ]; then
         echo "domain $CONFIG_DNS_DOMAIN" >> $T
     fi
 fi
-copy_conf /etc/resolv.conf /usr/etc/resolv.conf
+cp $T /etc/resolv.conf
 
 # rsyslog.conf is created from a template file, and busybox sed has -i
 cp /wr/etc/rsyslog.conf.in $T
