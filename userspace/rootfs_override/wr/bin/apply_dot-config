@@ -108,7 +108,7 @@ copy_conf /wr/etc/snmpd.conf
 if [ "$CONFIG_PTP_PORT_PARAMS" = "y" ]; then
     /wr/bin/assembly_ppsi_conf.sh
 elif [ "$CONFIG_PTP_CUSTOM" = "y" ]; then
-    cp "$CONFIG_PTP_CUSTOM_FILENAME" /wr/etc/ppsi.conf
+    cp "$CONFIG_PTP_CUSTOM_FILENAME" /etc/ppsi.conf
 elif [ "$CONFIG_PTP_REMOTE_CONF" = "y" ]; then
 
     # Warning: code below copied from /etc/init.d/dot-config.
@@ -144,14 +144,10 @@ elif [ "$CONFIG_PTP_REMOTE_CONF" = "y" ]; then
 	    ;;
     esac
     if [ -f $tmpconfig ]; then
-	    # copy it in place to use the new file (unless it is identical)
-	    cmp -s $tmpconfig /wr/etc/ppsi.conf || \
-		cp $tmpconfig /wr/etc/ppsi.conf
+	# copy it in place to use the new file
+	cp $tmpconfig /etc/ppsi.conf
     fi
 else
     # no valid PTP option keep ppsi.conf with old postfix
     echo "No valid PTP option in dot-config!" >& 2
-    if [ -f /wr/etc/ppsi.conf ]; then
-	mv -f /wr/etc/ppsi.conf /wr/etc/ppsi.conf.old
-    fi
 fi

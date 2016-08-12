@@ -935,7 +935,7 @@ in @ref{wrs_vlans}.
 In addition to that, to have synchronization working with VLANs, you have to
 prepare a custom @i{PPSi} configuration file with VLANs specified per-port. You
 can simply copy the file generated in the WRS filesystem
-(@i{/wr/etc/ppsi.conf}) to a central @t{tftp}/@t{http}/@t{ftp} server where
+(@i{/etc/ppsi.conf}) to a central @t{tftp}/@t{http}/@t{ftp} server where
 @i{dot-config} files for your switches are stored and fetched on boot time.
 For every VLAN-enabled port you should add the following line:
 @example

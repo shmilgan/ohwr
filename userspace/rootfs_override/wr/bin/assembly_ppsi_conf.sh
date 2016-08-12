@@ -4,7 +4,7 @@
 # script to assembly ppsi.conf based on dot-config configuration
 
 PRE_FILE="/wr/etc/ppsi-pre.conf"
-OUTPUT_FILE="/wr/etc/ppsi.conf"
+OUTPUT_FILE="/etc/ppsi.conf"
 
 if [ -f /wr/etc/dot-config ]; then
     . /wr/etc/dot-config

@@ -3,7 +3,7 @@
 //Global Variables
 $etcdir="/usr/wr/etc/"; //configuration file folder for WRS
 $snmpconf="snmpd.conf";
-$ppsiconf="ppsi-pre.conf";
+$ppsipreconf="ppsi-pre.conf";
 $sfpdatabaseconf="sfp_database.conf";
 $wrdateconf="wr_date.conf";
 $vlancolor = array("#27DE2A", "#B642A8", "#6E42B6", "#425DB6" , "#428DB6", "#4686B6", "#43B88B", "#42B65F", "#82B642", "#B6AE42", "#B67E42");
@@ -883,16 +883,16 @@ function wrs_ptp_configuration(){
 		header('Location: ptp.php');
 	}
 	if (!empty($_POST["clkclass"])){
-		$old_value= rtrim(shell_exec("cat ".$GLOBALS['etcdir'].$GLOBALS['ppsiconf']." | grep class "));
+		$old_value= rtrim(shell_exec("cat ".$GLOBALS['etcdir'].$GLOBALS['ppsipreconf']." | grep class "));
 		$new_value="clock-class ".htmlspecialchars($_POST["clkclass"]);
-		$sed = 'sed -i "s/'.$old_value.'/'.$new_value.'/g" '.$GLOBALS['etcdir'].$GLOBALS['ppsiconf'];echo $sed;
+		$sed = 'sed -i "s/'.$old_value.'/'.$new_value.'/g" '.$GLOBALS['etcdir'].$GLOBALS['ppsipreconf'];echo $sed;
 		shell_exec($sed);
 		echo '<br>Clock Class changed to '.htmlspecialchars($_POST["clkclass"]);
 	}
 	if (!empty($_POST["clkacc"])){
-		$old_value= rtrim(shell_exec("cat ".$GLOBALS['etcdir'].$GLOBALS['ppsiconf']." | grep accuracy "));
+		$old_value= rtrim(shell_exec("cat ".$GLOBALS['etcdir'].$GLOBALS['ppsipreconf']." | grep accuracy "));
 		$new_value="clock-accuracy ".htmlspecialchars($_POST["clkacc"]);
-		$sed ='sed -i "s/'.$old_value.'/'.$new_value.'/g" '.$GLOBALS['etcdir'].$GLOBALS['ppsiconf'];echo $sed;
+		$sed ='sed -i "s/'.$old_value.'/'.$new_value.'/g" '.$GLOBALS['etcdir'].$GLOBALS['ppsipreconf'];echo $sed;
 		shell_exec($sed);
 		echo '<br>Clock Accuracy changed to '.htmlspecialchars($_POST["clkacc"]);
 	}
