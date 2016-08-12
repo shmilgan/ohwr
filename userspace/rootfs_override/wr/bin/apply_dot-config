@@ -9,18 +9,10 @@
 # When called with "local_config" parameter, files with information about
 # dotconfig source are removed (used by SNMP)
 
-# We create a temporary file in /tmp, to avoid wearing flash if not
-# needed. Then we replace the real file if different.
+# We create a temporary file in /tmp, store all files in ramdisk
 
 tmpdir=/tmp
 T=$(mktemp "$tmpdir"/config-XXXXXX)
-
-copy_conf() {
-    # busybox cmp exits 1 or 2 according to GNU man page
-    for dest in $*; do
-	cmp -s $T $1 || cp $T $1
-    done
-}
 
 # check if config is local, used by webinterface
 if [ "$1" == "local_config" ]; then
@@ -71,9 +63,7 @@ sed -i "s,^root:[^:]*:,root:$passwd:," /etc/shadow
 # A non-existent wr_date.conf means no NTP. So "rm" if unconfigured
 if [ ! -z "$CONFIG_NTP_SERVER" ]; then
     echo "ntpserver $CONFIG_NTP_SERVER" > $T
-    copy_conf /wr/etc/wr_date.conf
-else
-    rm -f /wr/etc/wr_date.conf
+    cp $T /etc/wr_date.conf
 fi
 
 # /etc/resolv.conf can be empty, so start empty
@@ -84,10 +74,10 @@ if [ ! -z "$CONFIG_DNS_SERVER" ]; then
         echo "domain $CONFIG_DNS_DOMAIN" >> $T
     fi
 fi
-copy_conf /etc/resolv.conf /usr/etc/resolv.conf
+cp $T /etc/resolv.conf
 
 # rsyslog.conf is created from a template file, and busybox sed has -i
-cp /usr/etc/rsyslog.conf.in $T
+cp /wr/etc/rsyslog.conf.in $T
 if [ "$CONFIG_REMOTE_SYSLOG_UDP" = "y" ]; then
     sed -i 's/@@remote-host/@remote-host/' $T
 fi
@@ -95,7 +85,7 @@ if [ ! -z "$CONFIG_REMOTE_SYSLOG_SERVER" ]; then
     sed -i '/remote-host/ s/^##//' $T
     sed -i "s/remote-host/$CONFIG_REMOTE_SYSLOG_SERVER/" $T
 fi
-copy_conf /etc/rsyslog.conf /usr/etc/rsyslog.conf
+cp $T /etc/rsyslog.conf
 
 # Fix SNMP values: for all not-empty configs remove comment and replace value
 cp /wr/etc/snmpd.conf.in $T
@@ -104,13 +94,13 @@ set | tr -d \' | grep CONFIG_SNMP | sed 's/=/ /' | while read varname value; do
     sed -i "/$varname/ s/^#//" $T
     sed -i "/$varname/ s/$varname/$value/" $T
 done
-copy_conf /wr/etc/snmpd.conf
+cp $T /etc/snmpd.conf
 
 # Select a ppsi configuration file
 if [ "$CONFIG_PTP_PORT_PARAMS" = "y" ]; then
     /wr/bin/assembly_ppsi_conf.sh
 elif [ "$CONFIG_PTP_CUSTOM" = "y" ]; then
-    cp "$CONFIG_PTP_CUSTOM_FILENAME" /wr/etc/ppsi.conf
+    cp "$CONFIG_PTP_CUSTOM_FILENAME" /etc/ppsi.conf
 elif [ "$CONFIG_PTP_REMOTE_CONF" = "y" ]; then
 
     # Warning: code below copied from /etc/init.d/dot-config.
@@ -146,14 +136,10 @@ elif [ "$CONFIG_PTP_REMOTE_CONF" = "y" ]; then
 	    ;;
     esac
     if [ -f $tmpconfig ]; then
-	    # copy it in place to use the new file (unless it is identical)
-	    cmp -s $tmpconfig /wr/etc/ppsi.conf || \
-		cp $tmpconfig /wr/etc/ppsi.conf
+	# copy it in place to use the new file
+	cp $tmpconfig /etc/ppsi.conf
     fi
 else
     # no valid PTP option keep ppsi.conf with old postfix
     echo "No valid PTP option in dot-config!" >& 2
-    if [ -f /wr/etc/ppsi.conf ]; then
-	mv -f /wr/etc/ppsi.conf /wr/etc/ppsi.conf.old
-    fi
 fi

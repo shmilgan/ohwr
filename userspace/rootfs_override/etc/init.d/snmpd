@@ -1,7 +1,7 @@
 #!/bin/sh
 
 SNMP_PID=/var/run/snmpd.pid
-SNMP_CONF=/wr/etc/snmpd.conf
+SNMP_CONF=/etc/snmpd.conf
 dotconfig=/wr/etc/dot-config
 
 start_counter() {

@@ -548,7 +548,7 @@ value is changed by the web interface, proper action is taken.
 	The NTP server used to prime White Rabbit time, at system boot.
         The option can be an IP address or a host name, if DNS is properly
         configured.  The configuration value is stored in
-        @t{/wr/etc/wr_date.conf}. An empty string (default) disables
+        @t{/etc/wr_date.conf}. An empty string (default) disables
         NTP access at boot time.
 
 @item CONFIG_DNS_SERVER
@@ -935,7 +935,7 @@ in @ref{wrs_vlans}.
 In addition to that, to have synchronization working with VLANs, you have to
 prepare a custom @i{PPSi} configuration file with VLANs specified per-port. You
 can simply copy the file generated in the WRS filesystem
-(@i{/wr/etc/ppsi.conf}) to a central @t{tftp}/@t{http}/@t{ftp} server where
+(@i{/etc/ppsi.conf}) to a central @t{tftp}/@t{http}/@t{ftp} server where
 @i{dot-config} files for your switches are stored and fetched on boot time.
 For every VLAN-enabled port you should add the following line:
 @example
@@ -1227,7 +1227,7 @@ The following tools and scripts are provided:
         White Rabbit time to the current TAI value.  The program is
         meant to prime the White Rabbit counter at boot time, and is
         run by @t{/etc/init.d/wr_date} -- this script uses NTP
-        to set host time as a first step, if @t{/wr/etc/wr_date.conf}
+        to set host time as a first step, if @t{/etc/wr_date.conf}
         exists and includes a line of the form @t{ntpserver 192.168.16.1}.
 
         With ``@t{wr_date get}'' you can read White Rabbit time, and
