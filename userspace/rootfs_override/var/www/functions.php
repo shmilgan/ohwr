@@ -2,6 +2,7 @@
 
 //Global Variables
 $etcdir="/usr/wr/etc/"; //configuration file folder for WRS
+$etcdir_ram="/etc/"; //configuration file folder for WRS in ramdisk
 $snmpconf="snmpd.conf";
 $ppsipreconf="ppsi-pre.conf";
 $sfpdatabaseconf="sfp_database.conf";
@@ -161,7 +162,7 @@ function wrs_main_info(){
 	$SNMP = check_snmp_status() ? '[on] ' : '[off] ';
 	$SNMP_version = '&nbsp;&nbsp;ver. '.
 		shell_exec("snmpd -v | grep version | awk '{print $3}'");
-	$SNMP_port = shell_exec("cat ".$GLOBALS['etcdir']."snmpd.conf |
+	$SNMP_port = shell_exec("cat ".$GLOBALS['etcdir_ram'].$GLOBALS['snmpconf']." |
 		grep agent | cut -d: -f3 | awk '{print $1}'");
 	$NTP = $_SESSION['KCONFIG']["CONFIG_NTP_SERVER"];
 	$Monitor = check_monit_status() ? '[on] ' : '[off] ';

@@ -102,7 +102,7 @@ set | tr -d \' | grep CONFIG_SNMP | sed 's/=/ /' | while read varname value; do
     sed -i "/$varname/ s/^#//" $T
     sed -i "/$varname/ s/$varname/$value/" $T
 done
-copy_conf /wr/etc/snmpd.conf
+cp $T /etc/snmpd.conf
 
 # Select a ppsi configuration file
 if [ "$CONFIG_PTP_PORT_PARAMS" = "y" ]; then
