@@ -333,10 +333,10 @@ void dump_one_field(void *addr, struct dump_info *info)
 		i = *(uint32_t *)p;
 		switch (i) {
 		case RTU_ENTRY_TYPE_STATIC:
-			printf("static");
+			printf("static\n");
 			break;
 		case RTU_ENTRY_TYPE_DYNAMIC:
-			printf("dynamic");
+			printf("dynamic\n");
 			break;
 		default:
 			printf("Unknown(%d)\n", i);
