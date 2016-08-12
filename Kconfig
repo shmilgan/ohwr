@@ -551,25 +551,18 @@ endchoice
 choice
 	prompt "PTP Port Assignment"
 	default PTP_PORT_PARAMS
-
-config PTP_PORT_PARAMS
-	bool "Raw Ethernet, WR on, Slave on wri1, Master on other ports"
 	help
 	  You can choose wether to use parameters defined in PORTXX_PARAMS or
-	  your own custom configuration file defined by
-	  CONFIG_PTP_CUSTOM_FILENAME.
+	  your own custom configuration file placed in switch filesystem
+	  or downloaded at boot time.
 
-	  The default setting for boundary clock forces port wri1
-	  to be PTP slave and all other ports to be master, in
-	  Ethernet mode and with full WR protocol extensions. The default
-	  for a Grand-Master or Free-Running master has all ports as
-	  master ports. PPSI's global settings can be set in file
+config PTP_PORT_PARAMS
+	bool "Generate ppsi.conf based on the PORTXX_PARAMS"
+	help
+	  Generate ppsi.conf based on "proto" and "role" specified for each
+	  port in PORTXX_PARAMS.
+	  PPSI's global settings can be set in file
 	  /wr/etc/ppsi-pre.conf
-
-	  Other predefined choices select more flexible configuration used
-	  mainly for test purposes. Any special need can be addressed by
-	  providing your own configuration file defined by
-	  CONFIG_PTP_CUSTOM_FILENAME, that you should copy to your switch.
 
 config PTP_CUSTOM
 	bool "Custom ppsi.conf in the WRS filesystem"

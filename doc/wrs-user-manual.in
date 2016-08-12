@@ -709,10 +709,7 @@ value is changed by the web interface, proper action is taken.
 @itemx CONFIG_PTP_REMOTE_CONF
 
 	By default, PPSi configuration file is assembled based on role and
-        protocol parameters stored in @t{PORTxx_PARAMS}. @t{TIME_BC} selected
-        by @i{Kconfig} defaults role of port @t{wri1} to slave, other ports
-        to master. For @t{TIME_GM} and @t{TIME_FM} all ports are mandated to
-        master.
+        protocol parameters stored in @t{PORTxx_PARAMS}.
         Parameters @t{clock-class} and @t{clock-accuracy} can be changed
         or new global PPSi settings can be added by editing file
         @t{/wr/etc/ppsi-pre.conf}, which is used as begging of final
