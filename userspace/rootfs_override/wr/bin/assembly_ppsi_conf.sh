@@ -25,6 +25,7 @@ for i_zero in {01..18};do
 	unset p_name
 	unset p_proto
 	unset p_role
+	unset p_ppsi_vlans
 	# parse parameters
 	param_line=$(eval "echo \$CONFIG_PORT"$i_zero"_PARAMS")
 	IFS_OLD=$IFS
@@ -36,13 +37,19 @@ for i_zero in {01..18};do
 	do
 		# split pairs
 		IFS='=' read param value <<< "$pair"
-		case $param in
+		case "$param" in
 		"name")
 			p_name="$value";;
 		"proto")
 			p_proto="$value";;
 		"role")
 			p_role="$value";;
+		"ppsi_vlans")
+			p_ppsi_vlans="$value";;
+		"rx"|"tx"|"fiber")
+			continue;;
+		*)
+			echo "Invalid parameter $param in CONFIG_PORT"$i_zero"_PARAMS" ;;
 		esac
 
 	done
@@ -66,8 +73,13 @@ for i_zero in {01..18};do
 	if [ -n "$p_role" ]; then
 		echo "role $p_role" >> $OUTPUT_FILE
 	fi
-	#hardcode whiterabbit as extension
+	#hardcode whiterabbit as extension even for non-wr
 	echo "extension whiterabbit" >> $OUTPUT_FILE
+	# add vlans
+	if [ -n "$p_ppsi_vlans" ]; then
+		mod_vlans=${p_ppsi_vlans//:/,}
+		echo "vlan $mod_vlans" >> $OUTPUT_FILE
+	fi
 
 	# separate ports
 	echo "" >> $OUTPUT_FILE

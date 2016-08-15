@@ -647,6 +647,9 @@ value is changed by the web interface, proper action is taken.
 				   (@t{CONFIG_FIBERXX_PARAMS})
 				   should be used for a fiber connected to
 				   a particular port
+		@item @t{ppsi_vlans} -- colon separated list describing which
+					vlans shall be assigned to the
+					particular ppsi instance
         @end itemize
 
         Most likely the default values work for you.
