@@ -722,7 +722,6 @@ struct dump_info ppi_info [] = {
 	DUMP_FIELD_SIZE(char, cfg.port_name, 16),
 	DUMP_FIELD_SIZE(char, cfg.iface_name, 16),
 	DUMP_FIELD(int, cfg.ext),
-	DUMP_FIELD(int, cfg.ext),
 
 	DUMP_FIELD(unsigned_long, ptp_tx_count),
 	DUMP_FIELD(unsigned_long, ptp_rx_count),
