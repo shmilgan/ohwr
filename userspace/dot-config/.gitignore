@@ -2,4 +2,5 @@ Kconfig
 dot-config
 conf
 mconf
+nconf
 wrs_release_defconfig
