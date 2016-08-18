@@ -1409,8 +1409,13 @@ The following option flags are supported:
 @node wrs_vlans
 @section wrs_vlans
 
-The @i{wrs_vlans} shell tool can be used to setup VLANs in the switch. The
-configuration is divided into two parts:
+The @i{wrs_vlans} shell tool can be used to setup VLANs in the switch.
+The configuration can be read from the @t{dot-config} file pointed by @t{-f} or
+@t{--file} parameter (for @t{dot-config} details please check the
+@ref{Configuration Items that Apply at Build Time})
+Additionally the configuration can be specified using parameters below.
+
+The configuration is divided into two parts:
 
 @table @code
 

@@ -58,6 +58,32 @@
 #define OPT_RTU_DROP  23
 #define OPT_RTU_PRIO  24
 #define OPT_RTU_DEL   25
+#define OPT_FILE_READ 'f'
+
+#define PORT_PRIO_MIN 0
+#define PORT_PRIO_MAX 7
+
+#define PORT_VID_MIN 0
+#define PORT_VID_MAX 4095
+
+#define RTU_VID_MIN 0
+#define RTU_VID_MAX 4095
+
+#define RTU_FID_MIN 0
+#define RTU_FID_MAX 4095
+
+#define RTU_PRIO_MIN 0
+#define RTU_PRIO_MAX 7
+
+#define RTU_PMASK_MIN 0
+#define RTU_PMASK_MAX ((1 << NPORTS) - 1)
+
+/* struct for ranges of VLAN sets used in dot-config */
+struct vlan_sets {
+	char *name;
+	int min;
+	int max;
+};
 
 struct s_port_vlans
 {
