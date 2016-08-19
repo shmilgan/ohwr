@@ -64,36 +64,36 @@ static int ignore_alive;
 static char *pp_instance_state_to_name[PP_INSTANCE_STATE_MAX] = {
 	/* from ppsi/include/ppsi/ieee1588_types.h, enum pp_std_states */
 	/* PPS_END_OF_TABLE = 0 */
-	[PPS_END_OF_TABLE] = "end of table",
-	[PPS_INITIALIZING] = "initializing",
-	[PPS_FAULTY] = "faulty",
-	[PPS_DISABLED] = "disabled",
-	[PPS_LISTENING] = "listening",
-	[PPS_PRE_MASTER] = "pre master",
-	[PPS_MASTER] = "master",
-	[PPS_PASSIVE] = "passive",
-	[PPS_UNCALIBRATED] = "uncalibrated",
-	[PPS_SLAVE] = "slave",
+	[PPS_END_OF_TABLE] =      "EOT       ",
+	[PPS_INITIALIZING] =      "initing   ",
+	[PPS_FAULTY] =            "faulty    ",
+	[PPS_DISABLED] =          "disabled  ",
+	[PPS_LISTENING] =         "listening ",
+	[PPS_PRE_MASTER] =        "pre master",
+	[PPS_MASTER] =            "master    ",
+	[PPS_PASSIVE] =           "passive   ",
+	[PPS_UNCALIBRATED] =      "uncalib   ",
+	[PPS_SLAVE] =             "slave     ",
 	/* from ppsi/proto-ext-whiterabbit/wr-constants.h */
 	/* WRS_PRESENT = 100 */
-	[WRS_PRESENT] = "WRS_PRESENT",
-	[WRS_S_LOCK] = "WRS_S_LOCK",
-	[WRS_M_LOCK] = "WRS_M_LOCK",
-	[WRS_LOCKED] = "WRS_LOCKED",
-	[WRS_CALIBRATION] = "WRS_CALIBRATION",
-	[WRS_CALIBRATED] = "WRS_CALIBRATED",
-	[WRS_RESP_CALIB_REQ] = "WRS_RESP_CALIB_REQ",
-	[WRS_WR_LINK_ON] = "WRS_WR_LINK_ON",
+	[WRS_PRESENT] =           "WR_PRESENT",
+	[WRS_S_LOCK] =            "WR_S_LOCK ",
+	[WRS_M_LOCK] =            "WR_M_LOCK ",
+	[WRS_LOCKED] =            "WR_LOCKED ",
+	[WRS_CALIBRATION] =       "WR_CAL-ION",
+	[WRS_CALIBRATED] =        "WR_CAL-ED ",
+	[WRS_RESP_CALIB_REQ] =    "WR_RSP_CAL",
+	[WRS_WR_LINK_ON] =        "WR_LINK_ON",
 	/* substates: used within WRS_CALIBRATED as wrPortState field */
-	[WR_PORT_CALIBRATION_0] = "WR_PORT_CALIBRATION_0",
-	[WR_PORT_CALIBRATION_1] = "WR_PORT_CALIBRATION_1",
-	[WR_PORT_CALIBRATION_2] = "WR_PORT_CALIBRATION_2",
-	[WR_PORT_CALIBRATION_3] = "WR_PORT_CALIBRATION_3",
-	[WR_PORT_CALIBRATION_4] = "WR_PORT_CALIBRATION_4",
-	[WR_PORT_CALIBRATION_5] = "WR_PORT_CALIBRATION_5",
-	[WR_PORT_CALIBRATION_6] = "WR_PORT_CALIBRATION_6",
-	[WR_PORT_CALIBRATION_7] = "WR_PORT_CALIBRATION_7",
-	[WR_PORT_CALIBRATION_8] = "WR_PORT_CALIBRATION_8",
+	[WR_PORT_CALIBRATION_0] = "WR_P_CAL0 ",
+	[WR_PORT_CALIBRATION_1] = "WR_P_CAL1 ",
+	[WR_PORT_CALIBRATION_2] = "WR_P_CAL2 ",
+	[WR_PORT_CALIBRATION_3] = "WR_P_CAL3 ",
+	[WR_PORT_CALIBRATION_4] = "WR_P_CAL4 ",
+	[WR_PORT_CALIBRATION_5] = "WR_P_CAL5 ",
+	[WR_PORT_CALIBRATION_6] = "WR_P_CAL6 ",
+	[WR_PORT_CALIBRATION_7] = "WR_P_CAL7 ",
+	[WR_PORT_CALIBRATION_8] = "WR_P_CAL8 ",
 };
 
 void help(char *prgname)
@@ -254,7 +254,7 @@ void init_shm(void)
 	ppsi_connect_minipc();
 }
 
-void show_ports(void)
+void show_ports(int alive)
 {
 	int i, j;
 	time_t t;
@@ -265,18 +265,32 @@ void show_ports(void)
 	int vlan_i;
 	int nvlans;
 
+	if (!alive) {
+		if (mode == SHOW_GUI)
+			term_cprintf(C_RED, "HAL is dead!\n");
+		else if (mode == SHOW_ALL)
+			printf("HAL is dead!\n");
+		return;
+	}
+
 	pp_array = wrs_shm_follow(ppsi_head, ppg->pp_instances);
 
-	if(mode == SHOW_GUI) {
+	if (mode == SHOW_GUI) {
 		time(&t);
 		tm = localtime(&t);
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
-		term_cprintf(C_BLUE, "Switch time: %s\n", datestr);
+		term_cprintf(C_BLUE, "Switch time: ");
+		term_cprintf(C_WHITE, "%s\n", datestr);
 
 		t = (time_t)_fpga_readl(FPGA_BASE_PPS_GEN + 8 /* UTC_LO */);
 		tm = localtime(&t);
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
-		term_cprintf(C_BLUE, "WR time:     %s\n", datestr);
+		term_cprintf(C_BLUE, "WR time:     ");
+		term_cprintf(C_WHITE, "%s\n", datestr);
+/*                                    -------------------------------------------------------------------------------*/
+		term_cprintf(C_CYAN, "------------- HAL -----------|-------------- PPSI -----------------------------\n");
+		term_cprintf(C_CYAN, " Port | Link | WRconf | Freq |Inst| MAC of peer port  | PTP state | Pro | VLANs\n");
+		term_cprintf(C_CYAN, "------|------|--------|------|----|-------------------|-----------|-----|------\n");
 	}
 	if (mode & (SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
 		printf("PORTS ");
@@ -300,7 +314,7 @@ void show_ports(void)
 		case HEXP_PORT_MODE_WR_MASTER:
 			if (mode == SHOW_GUI) {
 				print_mode_color = C_WHITE;
-				strcpy(if_mode, "WR Master  ");
+				strcpy(if_mode, "Master");
 			} else if (mode & SHOW_MASTER_PORTS) {
 				print_port = 1;
 				strcpy(if_mode, "M");
@@ -311,7 +325,7 @@ void show_ports(void)
 		case HEXP_PORT_MODE_WR_SLAVE:
 			if (mode == SHOW_GUI) {
 				print_mode_color = C_WHITE;
-				strcpy(if_mode, "WR Slave   ");
+				strcpy(if_mode, "Slave ");
 			} else if (mode & SHOW_SLAVE_PORTS) {
 				print_port = 1;
 				strcpy(if_mode, "S");
@@ -322,7 +336,7 @@ void show_ports(void)
 		case HEXP_PORT_MODE_NON_WR:
 			if (mode == SHOW_GUI) {
 				print_mode_color = C_WHITE;
-				strcpy(if_mode, "Non WR     ");
+				strcpy(if_mode, "Non WR");
 			} else if (mode & SHOW_OTHER_PORTS) {
 				print_port = 1;
 				strcpy(if_mode, "N");
@@ -333,7 +347,7 @@ void show_ports(void)
 		case HEXP_PORT_MODE_NONE:
 			if (mode == SHOW_GUI) {
 				print_mode_color = C_WHITE;
-				strcpy(if_mode, "None       ");
+				strcpy(if_mode, "None  ");
 			} else if (mode & SHOW_OTHER_PORTS) {
 				print_port = 1;
 				strcpy(if_mode, "X");
@@ -344,7 +358,7 @@ void show_ports(void)
 		case HEXP_PORT_MODE_WR_M_AND_S:
 			if (mode == SHOW_GUI) {
 				print_mode_color = C_WHITE;
-				strcpy(if_mode, "WR auto    ");
+				strcpy(if_mode, "Auto  ");
 			} else if (mode &
 				(SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
 				print_port = 1;
@@ -356,7 +370,7 @@ void show_ports(void)
 		default:
 			if (mode == SHOW_GUI) {
 				print_mode_color = C_WHITE;
-				strcpy(if_mode, "Unknown    ");
+				strcpy(if_mode, "Unkn  ");
 			} else if (mode & SHOW_OTHER_PORTS) {
 				print_port = 1;
 				strcpy(if_mode, "U");
@@ -367,17 +381,22 @@ void show_ports(void)
 		}
 
 		if (mode == SHOW_GUI) {
-			term_cprintf(C_WHITE, " %-5s: ", if_name);
+			term_cprintf(C_WHITE, "%-5s", if_name);
+			term_cprintf(C_CYAN, " | ");
 			/* check if link is up */
 			if (state_up(port_state->state))
-				term_cprintf(C_GREEN, "Link up    ");
+				term_cprintf(C_GREEN, "up  ");
 			else
-				term_cprintf(C_RED, "Link down  ");
+				term_cprintf(C_RED, "down");
+			term_cprintf(C_CYAN, " | ");
 			term_cprintf(C_WHITE, if_mode);
+			term_cprintf(C_CYAN, " | ");
 			if (port_state->locked)
-				term_cprintf(C_GREEN, "Locked     ");
+				term_cprintf(C_GREEN, "Lock ");
 			else
-				term_cprintf(C_RED, "NoLock     ");
+				term_cprintf(C_RED, "     ");
+
+			term_cprintf(C_CYAN, "|");
 
 			instance_port = 0;
 			/*
@@ -392,46 +411,73 @@ void show_ports(void)
 					continue;
 				}
 				if (instance_port > 0) {
-					term_cprintf(C_WHITE, "\n             "
-					       "                            ");
+					term_cprintf(C_CYAN, "\n      |      |"
+						     "        |      |");
 				}
 				instance_port++;
 				/* print instance number */
-				term_cprintf(C_WHITE, " i%-2d:", j);
-				/* Warning: we may have more pp instances per
+				term_cprintf(C_WHITE, " %2d ", j);
+				term_cprintf(C_CYAN, "| ");
+				/* Note: we may have more pp instances per
 				 * port */
-				if (!state_up(port_state->state)) {
-					term_cprintf(C_RED, " no-ptp");
-				} else {
+				if (state_up(port_state->state)) {
 					unsigned char *p = pp_array[j].peer;
 
-					term_cprintf(C_WHITE," peer: %02x:%02x"
-						     ":%02x:%02x:%02x:%02x",
+					term_cprintf(C_WHITE, "%02x:%02x"
+						     ":%02x:%02x:%02x:%02x ",
 						     p[0], p[1], p[2], p[3],
 						     p[4], p[5]);
+					term_cprintf(C_CYAN, "| ");
 					if (pp_array[j].state < PP_INSTANCE_STATE_MAX) {
 						/* Known state */
-						term_cprintf(C_GREEN, " ptp "
-							"state %s(%i)",
-							pp_instance_state_to_name[pp_array[j].state],
-							pp_array[j].state);
+						term_cprintf(C_GREEN, "%s",
+							pp_instance_state_to_name[pp_array[j].state]);
 					} else {
 						/* Unknown ptp state */
-						term_cprintf(C_GREEN, " ptp "
-							"state unknown(%i)",
+						term_cprintf(C_GREEN,
+							"unkn(%3i)",
 							pp_array[j].state);
 					}
+				} else {
+					term_cprintf(C_WHITE, "               "
+						     "   ");
+					term_cprintf(C_CYAN, "|");
+					term_cprintf(C_WHITE, "           ");
 				}
+				term_cprintf(C_CYAN, "| ");
+				if (pp_array[j].proto == PPSI_PROTO_RAW) {
+					term_cprintf(C_WHITE, "R");
+				} else if (pp_array[j].proto
+					   == PPSI_PROTO_UDP) {
+					term_cprintf(C_WHITE, "U");
+				} else if (pp_array[j].proto
+					   == PPSI_PROTO_VLAN) {
+					term_cprintf(C_WHITE, "V");
+				} else {
+					term_cprintf(C_WHITE, "?");
+				}
+				if (pp_array[j].cfg.ext == PPSI_EXT_WR) {
+					term_cprintf(C_WHITE, "-W");
+				} else if (pp_array[j].cfg.ext
+					   == PPSI_EXT_NONE) {
+					term_cprintf(C_WHITE, "  ");
+				} else {
+					term_cprintf(C_WHITE, "-?");
+				}
+
 				nvlans = pp_array[j].nvlans;
-				if (nvlans > 0) {
-					term_cprintf(C_WHITE, " vlans: ");
-				}
+				term_cprintf(C_CYAN, " | ");
 				for (vlan_i = 0; vlan_i < nvlans; vlan_i++) {
 					term_cprintf(C_WHITE, "%d",
 						    pp_array[j].vlans[vlan_i]);
 					if (vlan_i < nvlans - 1)
 						term_cprintf(C_WHITE, ",");
 				}
+			}
+			if (!instance_port) {
+				term_cprintf(C_WHITE, " -- ");
+				term_cprintf(C_CYAN, "|                   |   "
+					     "        |     |");
 			}
 			term_cprintf(C_WHITE, "\n");
 		} else if (mode & WEB_INTERFACE) {
@@ -451,9 +497,13 @@ void show_ports(void)
 			print_port = 0;
 		}
 	}
+	if (mode == SHOW_GUI) {
+		term_cprintf(C_BLUE, "Pro - Protocol mapping: V-Ethernet over "
+			     "VLAN; U-UDP; R-Ethernet\n");
+	}
 }
 
-void show_servo(void)
+void show_servo(int alive)
 {
 	int64_t total_asymmetry;
 	int64_t crtt;
@@ -466,18 +516,27 @@ void show_servo(void)
 	       ppsi_servo_local.delta_rx_m - ppsi_servo_local.delta_tx_s -
 	       ppsi_servo_local.delta_rx_s;
 
-	if(mode == SHOW_GUI) {
-		term_cprintf(C_BLUE, "\nSynchronization status:\n");
+	if (mode == SHOW_GUI) {
+/*                                      -------------------------------------------------------------------------------*/
+		term_cprintf(C_CYAN, "\n--------------------------- Synchronization status ----------------------------\n");
+	}
 
+	if (!alive) {
+		if (mode == SHOW_GUI)
+			term_cprintf(C_RED, "PPSI is dead!\n");
+		return;
+	}
+
+	if (mode == SHOW_GUI) {
 		if (!(ppsi_servo_local.flags & WR_FLAG_VALID)) {
 			term_cprintf(C_RED,
 				     "Master mode or sync info not valid\n");
 			return;
 		}
 
-		term_cprintf(C_GREY, "Servo state:          ");
+		term_cprintf(C_BLUE, "Servo state:          ");
 		if (lastt && time(NULL) - lastt > 5) {
-			term_cprintf(C_RED, " --- not updating --- ");
+			term_cprintf(C_RED, "--- not updating ---\n");
 		} else {
 			term_cprintf(C_WHITE, "%s: %s%s\n",
 				     ppsi_servo_local.if_name,
@@ -489,55 +548,60 @@ void show_servo(void)
 		/* "tracking disabled" is just a testing tool */
 		if (!ppsi_servo_local.tracking_enabled)
 			term_cprintf(C_RED, "Tracking forcibly disabled\n");
+/*                                      -------------------------------------------------------------------------------*/
+		term_cprintf(C_CYAN, "\n------------------------------ Timing parameters ------------------------------\n");
 
-		term_cprintf(C_BLUE, "\nTiming parameters:\n");
-
-		term_cprintf(C_GREY, "Round-trip time (mu): ");
-		term_cprintf(C_WHITE, "%.3f nsec\n",
+		term_cprintf(C_BLUE, "Round-trip time (mu): ");
+		term_cprintf(C_WHITE, "%15.3f nsec\n",
 			     ppsi_servo_local.picos_mu/1000.0);
 
-		term_cprintf(C_GREY, "Master-slave delay:   ");
-		term_cprintf(C_WHITE, "%.3f nsec\n",
+		term_cprintf(C_BLUE, "Master-slave delay:   ");
+		term_cprintf(C_WHITE, "%15.3f nsec\n",
 			     ppsi_servo_local.delta_ms/1000.0);
 
-		term_cprintf(C_GREY, "Master PHY delays:    ");
-		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
-			     ppsi_servo_local.delta_tx_m/1000.0,
-			     ppsi_servo_local.delta_rx_m/1000.0);
-
-		term_cprintf(C_GREY, "Slave PHY delays:     ");
-		term_cprintf(C_WHITE, "TX: %.3f nsec, RX: %.3f nsec\n",
-			     ppsi_servo_local.delta_tx_s/1000.0,
-			     ppsi_servo_local.delta_rx_s/1000.0);
-
-		term_cprintf(C_GREY, "Total link asymmetry: ");
-		term_cprintf(C_WHITE, "%.3f nsec\n", total_asymmetry/1000.0);
+		term_cprintf(C_BLUE, "Total link asymmetry: ");
+		term_cprintf(C_WHITE, "%15.3f nsec\n", total_asymmetry/1000.0);
 
 		/*if (0) {
-			term_cprintf(C_GREY, "Fiber asymmetry:   ");
+			term_cprintf(C_BLUE, "Fiber asymmetry:   ");
 			term_cprintf(C_WHITE, "%.3f nsec\n",
 				ss.fiber_asymmetry/1000.0);
 		}*/
 
-		term_cprintf(C_GREY, "Clock offset:         ");
-		term_cprintf(C_WHITE, "%.3f nsec\n",
+		term_cprintf(C_BLUE, "Clock offset:         ");
+		term_cprintf(C_WHITE, "%15.3f nsec\n",
 			     ppsi_servo_local.offset/1000.0);
 
-		term_cprintf(C_GREY, "Phase setpoint:       ");
-		term_cprintf(C_WHITE, "%.3f nsec\n",
+		term_cprintf(C_BLUE, "Phase setpoint:       ");
+		term_cprintf(C_WHITE, "%15.3f nsec\n",
 			     ppsi_servo_local.cur_setpoint/1000.0);
 
-		term_cprintf(C_GREY, "Skew:                 ");
-		term_cprintf(C_WHITE, "%.3f nsec\n",
+		term_cprintf(C_BLUE, "Skew:                 ");
+		term_cprintf(C_WHITE, "%15.3f nsec\n",
 			     ppsi_servo_local.skew/1000.0);
 
-		term_cprintf(C_GREY, "Servo update counter: ");
-		term_cprintf(C_WHITE, "%u times\n",
+		term_cprintf(C_BLUE, "Servo update counter: ");
+		term_cprintf(C_WHITE, "%15u times\n",
 			     ppsi_servo_local.update_count);
 		if (ppsi_servo_local.update_count != last_count) {
 			lastt = time(NULL);
 			last_count = ppsi_servo_local.update_count;
 		}
+		term_cprintf(C_BLUE, "Master PHY delays:    ");
+		term_cprintf(C_BLUE, "TX: ");
+		term_cprintf(C_WHITE, "%11.3f nsec, ",
+			     ppsi_servo_local.delta_tx_m/1000.0);
+		term_cprintf(C_BLUE, "RX: ");
+		term_cprintf(C_WHITE, "%11.3f nsec\n",
+			     ppsi_servo_local.delta_rx_m/1000.0);
+
+		term_cprintf(C_BLUE, "Slave PHY delays:     ");
+		term_cprintf(C_BLUE, "TX: ");
+		term_cprintf(C_WHITE, "%11.3f nsec, ",
+			     ppsi_servo_local.delta_tx_s/1000.0);
+		term_cprintf(C_BLUE, "RX: ");
+		term_cprintf(C_WHITE, "%11.3f nsec\n",
+			     ppsi_servo_local.delta_rx_s/1000.0);
 	} else {
 		/* TJP: commented out fields are present on the SPEC,
 		 *      does the switch have similar fields?
@@ -573,18 +637,23 @@ void show_servo(void)
 void show_temperatures(void)
 {
 	if ((mode == SHOW_GUI) || (mode & WEB_INTERFACE)) {
-		term_cprintf(C_BLUE, "\nTemperatures:\n");
+		if (mode == SHOW_GUI) {
+/*                                              -------------------------------------------------------------------------------*/
+			term_cprintf(C_CYAN, "\n-------------------------------- Temperatures ---------------------------------\n");
+		} else {
+			term_cprintf(C_CYAN, "\nTemperatures:\n");
+		}
 
-		term_cprintf(C_GREY, "FPGA: ");
+		term_cprintf(C_BLUE, "FPGA: ");
 		term_cprintf(C_WHITE, "%2.2f ",
 			     temp_sensors_local.fpga/256.0);
-		term_cprintf(C_GREY, "PLL: ");
+		term_cprintf(C_BLUE, "PLL: ");
 		term_cprintf(C_WHITE, "%2.2f ",
 			     temp_sensors_local.pll/256.0);
-		term_cprintf(C_GREY, "PSL: ");
+		term_cprintf(C_BLUE, "PSL: ");
 		term_cprintf(C_WHITE, "%2.2f ",
 			     temp_sensors_local.psl/256.0);
-		term_cprintf(C_GREY, "PSR: ");
+		term_cprintf(C_BLUE, "PSR: ");
 		term_cprintf(C_WHITE, "%2.2f\n",
 			     temp_sensors_local.psr/256.0);
 	} else {
@@ -608,9 +677,9 @@ void show_all(void)
 
 	if (mode == SHOW_GUI) {
 		term_clear();
-		term_pcprintf(1, 1, C_BLUE,
-			      "WR Switch Sync Monitor %s[q = quit]\n\n",
-			      __GIT_VER__);
+		term_pcprintf(1, 1, C_BLUE, "WR Switch Sync Monitor ");
+		term_cprintf(C_WHITE, "%s", __GIT_VER__);
+		term_cprintf(C_BLUE, " [q = quit]\n\n");
 	}
 
 	hal_alive = (hal_head->pid && (kill(hal_head->pid, 0) == 0))
@@ -621,24 +690,16 @@ void show_all(void)
 	if (mode & SHOW_WR_TIME) {
 		if (ppsi_alive)
 			show_time();
-		else if (mode == SHOW_GUI)
-			term_cprintf(C_RED, "\nPPSI is dead!\n");
 		else if (mode == SHOW_ALL)
 			printf("PPSI is dead!\n");
 	}
 
 	if ((mode & (SHOW_ALL_PORTS|WEB_INTERFACE)) || mode == SHOW_GUI) {
-		if (hal_alive)
-			show_ports();
-		else if (mode == SHOW_GUI)
-			term_cprintf(C_RED, "\nHAL is dead!\n");
-		else if (mode == SHOW_ALL)
-			printf("HAL is dead!\n");
+		show_ports(hal_alive);
 	}
 
 	if (mode & SHOW_SERVO || mode == SHOW_GUI) {
-		if (ppsi_alive)
-			show_servo();
+		show_servo(ppsi_alive);
 	}
 
 	if (mode & (SHOW_TEMPERATURES | WEB_INTERFACE) || mode == SHOW_GUI) {
@@ -733,10 +794,10 @@ int main(int argc, char *argv[])
 		if (term_poll(10)) {
 			int c = term_get();
 
-			if(c=='q')
+			if (c == 'q')
 				break;
 
-			if(c=='t') {
+			if (c == 't') {
 				int rval;
 				track_onoff = 1-track_onoff;
 				if (ptp_ch_pid != ppsi_head->pid) {
