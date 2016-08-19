@@ -16,7 +16,7 @@ start() {
 stop() {
     echo -n "Clean VLANs' configuration: "
 
-    /wr/bin/wrs_vlans --ep 0-17 --emode 3
+    /wr/bin/wrs_vlans --port 1-18 --pmode 3
     /wr/bin/wrs_vlans --clear
 
     echo "OK"
