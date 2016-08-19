@@ -580,6 +580,7 @@ value is changed by the web interface, proper action is taken.
 	@item @t{wrs_watchdog}
 	@item @t{wrs_auxclk}
 	@item @t{wrs_custom_boot_script.sh}
+	@item @t{vlan.sh}
 	@end itemize
 	Each value
         can be a pathname, to select logging to file (and @t{/dev/kmsg}

@@ -276,6 +276,7 @@ config WRS_LOG_OTHER
 	  --wrs_watchdog
 	  --wrs_auxclk
 	  --wrs_custom_boot_script.sh
+	  --vlan.sh
 	  This collective entry is to avoid number of entries in dot-config.
 	  The string can be a pathname (e.g. /dev/kmsg) or a <facility>.<level>
 	  spefification like "daemon.debug". An empty strings is used
