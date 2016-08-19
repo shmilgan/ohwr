@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #define C_DIM 0x80
-#define C_WHITE 7
+#define C_WHITE 9 /* Default foreground color */
 
 #define C_GREY (C_WHITE | C_DIM)
 
