@@ -9,6 +9,7 @@
 #define C_RED 1
 #define C_GREEN 2
 #define C_BLUE 4
+#define C_CYAN 6
 
 void term_restore(void);
 void term_init(int usecolor);
