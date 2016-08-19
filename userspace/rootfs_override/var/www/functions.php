@@ -103,14 +103,7 @@ function wrs_header_ports(){
 
 	echo '<tr class="status">';
 	for($i=1; $i<18*3; $i=$i+3){
-
-		if (strstr($ports[($i+1)],"Locked")){
-			$mode="locked";
-		}else{
-			$mode="unlocked";
-		}
-		echo '<th>'."<img class='syntonization ".$mode."' SRC='img/".$mode.".png' alt='syntonization: ".$mode."', title = 'syntonization: ".$mode."'>";
-
+		echo '<th>';
 		if (strstr($ports[($i+2)],"Calibrated")){
 			$mode="calibrated";
 			$img="check.png";
@@ -118,7 +111,14 @@ function wrs_header_ports(){
 			$mode="uncalibrated";
 			$img="uncheck.png";
 		}
-		echo "<img class='calibration ".$mode."' SRC='img/".$img."'  alt='".$mode."', title = '".$mode."'>".'</th>';
+		echo "<img class='calibration ".$mode."' SRC='img/".$img."'  alt='".$mode."', title = '".$mode."'>";
+
+		if (strstr($ports[($i+1)],"Locked")){
+			$mode="locked";
+			echo "<img class='syntonization ".$mode."' SRC='img/".$mode.".png' alt='syntonization: ".$mode."', title = 'syntonization: ".$mode."'>";
+		}
+
+		echo '</th>';
 	}
 	echo '</tr>';
 
