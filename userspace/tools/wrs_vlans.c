@@ -727,13 +727,13 @@ static int set_rtu_vlan(int vid, int fid, int pmask, int drop, int prio,
 {
 	struct rtu_vlans_t *cur = rtu_vlans;;
 
-	if (!rtu_vlans && vid <= 0) {
+	if (!rtu_vlans && vid < 0) {
 		fprintf(stderr, "%s: missing \"--rvid <vid>\" before rtu cmd\n",
 			prgname);
 		return -1;
 	}
 
-	if (vid > 0) {
+	if (vid >= 0) {
 		cur = calloc(1, sizeof(*cur));
 		if (!cur) {
 			fprintf(stderr, "%s: %s\n", prgname, strerror(errno));
