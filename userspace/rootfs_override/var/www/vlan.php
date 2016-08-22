@@ -88,7 +88,7 @@
 		echo '<tr><th>Port</strong></th><th>QMode</th><th>Priority</th><th>VLAN ID</th><th>MAC Address</th></tr>';
 
 		$tmp_vlan_file="/tmp/port2vlan.conf";
-		$vlans = shell_exec("/wr/bin/wrs_vlans --elist >".$tmp_vlan_file);
+		$vlans = shell_exec("/wr/bin/wrs_vlans --plist >".$tmp_vlan_file);
 		$vlans = shell_exec("cat ".$tmp_vlan_file." |  sed -n '/ /s/ \+/ /gp'");
 		$vlans = explode("\n", $vlans);
 

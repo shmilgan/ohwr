@@ -44,7 +44,7 @@
 
 		// Get Previous assignment
 		$tmp_assign_file="/tmp/port2vlan.conf";
-		$vlans_assignment = shell_exec("/wr/bin/wrs_vlans --elist >".$tmp_assign_file);
+		$vlans_assignment = shell_exec("/wr/bin/wrs_vlans --plist >".$tmp_assign_file);
 		$vlans_assignment = shell_exec("cat ".$tmp_assign_file." |  sed -n '/ /s/ \+/ /gp'");
 		$vlans_assignment = explode("\n", $vlans_assignment);
 
@@ -115,19 +115,19 @@
 
 			for($i = 0; $i < 18; $i++){
 				//if(strcmp($_POST['vlan'.$i],"disabled")){ //VLAN selected
-					$vlan_cmd .= " --ep ".($i+1);
-					$vlan_cmd .= " --emode ".$_POST['mode'.$i];
-					$vlan_cmd .= " --eprio ".$_POST['prio'.$i];
-					if(!empty($_POST['vlan'.$i])){$vlan_cmd .= " --evid ".$_POST['vlan'.$i];}
-					if(!empty($_POST['mask'.$i])){$vlan_cmd .= " --eumask ".$_POST['mask'.$i];}
+					$vlan_cmd .= " --port ".($i+1);
+					$vlan_cmd .= " --pmode ".$_POST['mode'.$i];
+					$vlan_cmd .= " --pprio ".$_POST['prio'.$i];
+					if(!empty($_POST['vlan'.$i])){$vlan_cmd .= " --pvid ".$_POST['vlan'.$i];}
+					if(!empty($_POST['mask'.$i])){$vlan_cmd .= " --pumask ".$_POST['mask'.$i];}
 					$output = shell_exec($vlan_cmd);
 					echo $vlan_cmd;
 					echo '<br><p><center>Port wri'.($i+1).' added to VLAN'.$_POST['vlan'.$i].'</center></p>';
 
 				//}else{
 					if(!strcmp($_POST['mode'.$i],"2")){ //Disable VLAN for endpoint
-						$vlan_cmd .= " --ep ".($i+1);
-						$vlan_cmd .= " --emode ".$_POST['mode'.$i];
+						$vlan_cmd .= " --port ".($i+1);
+						$vlan_cmd .= " --pmode ".$_POST['mode'.$i];
 						$output = shell_exec($vlan_cmd);
 						echo '<br><p><center>VLAN removed for port wri'.($i+1).'</center></p>';
 					}
