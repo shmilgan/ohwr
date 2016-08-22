@@ -39,7 +39,7 @@
 				$line = explode(" ", $line);
 				if(strcmp($line[3],"0x")){
 
-					echo '<tr align=center><td bgcolor="'.$vlancolor[$line[1]].'">VLAN '.$line[1].'</td><td>'.$line[2].'</td><td>'.parse_mask2ports($line[3]).'</td><td>'.$line[4].'</td><td>'.$line[5].'</td><td><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></td></tr>';
+					echo '<tr align=center><td bgcolor="'.$vlancolor[$line[1]%10].'">VLAN '.$line[1].'</td><td>'.$line[2].'</td><td>'.parse_mask2ports($line[3]).'</td><td>'.$line[4].'</td><td>'.$line[5].'</td><td><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></td></tr>';
 				}else{
 					echo '<tr align=center><td>'.$line[1].'</td><td>'.$line[2].'</td><td>'.parse_mask2ports($line[3].$line[4]).'</td><td>'.$line[5].'</td><td>'.$line[6].'</td><td><A HREF="delvlan.php?vlan='.$line[1].'.">Delete</A></td></tr>';
 				}
@@ -99,7 +99,7 @@
 			if($counter>=2 && !empty($line)){
 				$line = explode(" ", $line);
 
-				echo '<tr align=center><td>'.($line[0]).'</td><td>'.$line[1]." (".$line[2].')</td><td>'.($line[4]).'</td><td bgcolor="'.$vlancolor[$line[5]].'">VLAN '.$line[5].'</td><td>'.$line[6].'</td></td></tr>';
+				echo '<tr align=center><td>'.($line[0]).'</td><td>'.$line[1]." (".$line[2].')</td><td>'.($line[4]).'</td><td bgcolor="'.$vlancolor[$line[5]%10].'">VLAN '.$line[5].'</td><td>'.$line[6].'</td></td></tr>';
 
 			}
 

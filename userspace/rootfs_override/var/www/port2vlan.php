@@ -67,7 +67,7 @@
 					echo '<option class="btn" value="'.$vlan[0].$vlan[1].'"><center>ID'.$vlan[0].$vlan[1].'</center></option>';
 				}
 			}*/
-			echo '<input  STYLE="background-color:'.$vlancolor[$single_line[5]].';text-align:center;" size="5" type="text" value="'.$single_line[5].'" name="vlan'.($i).'">';
+			echo '<input  STYLE="background-color:'.$vlancolor[$single_line[5]%10].';text-align:center;" size="5" type="text" value="'.$single_line[5].'" name="vlan'.($i).'">';
 			//echo '<option class="btn" selected="selected" value="disabled"><center>Disabled</center></option>';
 			//echo '</select>'; // end Vlan ID assignation
 
