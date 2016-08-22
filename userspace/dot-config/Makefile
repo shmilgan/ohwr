@@ -36,6 +36,9 @@ dot-config: $(WRS_BASE_DIR)/../.config
 Kconfig: $(WRS_BASE_DIR)/../Kconfig
 	cp $^ $@
 
+Kconfig_vlans.in: $(WRS_BASE_DIR)/../Kconfig_vlans.in
+	cp $^ $@
+
 CONF_LOC=$(WRS_BASE_DIR)/../scripts/kconfig
 
 conf:
