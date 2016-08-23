@@ -43,7 +43,6 @@
 
 #define NOPTS 15
 #define OPT_HELP 	'h'
-#define OPT_DEBUG 'd'
 #define OPT_CLEAR 3
 #define OPT_LIST 4
 #define OPT_P_PORT  10
