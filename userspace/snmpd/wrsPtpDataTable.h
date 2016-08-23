@@ -12,8 +12,8 @@ struct wrsPtpDataTable_s {
 				 * as not-accessible in MIB */
 	char wrsPtpPortName[12];	/* port name on which ptp servo instance in
 				 * running FIXME: not implemented */
-	ClockIdentity wrsPtpGrandmasterID;	/* FIXME: not implemented */
-	ClockIdentity wrsPtpOwnID;	/* FIXME: not implemented */
+	struct clock_identity wrsPtpGrandmasterID;	/* FIXME: not implemented */
+	struct clock_identity wrsPtpOwnID;	/* FIXME: not implemented */
 	int wrsPtpMode;		/* FIXME: not implemented */
 	char wrsPtpServoState[32]; /* State as string */
 	int wrsPtpServoStateN;	/* state number */

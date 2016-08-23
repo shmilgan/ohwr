@@ -103,7 +103,7 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 							1 + port_state->locked;
 			/* FIXME: get real peer_id */
 			memset(&wrsPortStatusTable_array[i].wrsPortStatusPeer, 0xff,
-			       sizeof(ClockIdentity));
+			       sizeof(struct clock_identity));
 			if (port_state->calib.sfp.flags & SFP_FLAG_IN_DB) {
 				wrsPortStatusTable_array[i].wrsPortStatusSfpInDB =
 					WRS_PORT_STATUS_SFP_IN_DB_IN_DATA_BASE;

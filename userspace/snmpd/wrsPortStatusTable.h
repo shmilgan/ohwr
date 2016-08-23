@@ -27,7 +27,7 @@ struct wrsPortStatusTable_s {
 	uint32_t index;		/* not reported, index fields has to be marked
 				 * as not-accessible in MIB */
 	char wrsPortStatusPortName[12];	/* port name */
-	ClockIdentity wrsPortStatusPeer;
+	struct clock_identity wrsPortStatusPeer;
 	/* These can't be "unsigned char" because we scanf a %i in there */
 	unsigned wrsPortStatusLink;
 	unsigned wrsPortStatusConfiguredMode;

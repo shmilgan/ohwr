@@ -144,8 +144,8 @@ void dump_one_field(void *addr, struct dump_info *info)
 {
 	void *p = addr + info->offset;
 	struct TimeInternal *ti = p;
-	struct PortIdentity *pi = p;
-	struct ClockQuality *cq = p;
+	struct port_identity *pi = p;
+	struct clock_quality *cq = p;
 	char format[16];
 	int i;
 
@@ -224,15 +224,15 @@ void dump_one_field(void *addr, struct dump_info *info)
 		break;
 
 	case dump_type_ClockIdentity: /* Same as binary */
-		for (i = 0; i < sizeof(ClockIdentity); i++)
+		for (i = 0; i < sizeof(struct clock_identity); i++)
 			printf("%02x%c", ((unsigned char *)p)[i],
-			       i == sizeof(ClockIdentity) - 1 ? '\n' : ':');
+			       i == sizeof(struct clock_identity) - 1 ? '\n' : ':');
 		break;
 
 	case dump_type_PortIdentity: /* Same as above plus port */
-		for (i = 0; i < sizeof(ClockIdentity); i++)
+		for (i = 0; i < sizeof(struct clock_identity); i++)
 			printf("%02x%c", ((unsigned char *)p)[i],
-			       i == sizeof(ClockIdentity) - 1 ? '.' : ':');
+			       i == sizeof(struct clock_identity) - 1 ? '.' : ':');
 		printf("%04x (%i)\n", pi->portNumber, pi->portNumber);
 		break;
 
@@ -611,12 +611,7 @@ struct dump_info dsp_info [] = {
 #define DUMP_STRUCT DSTimeProperties /* Horrible typedef */
 struct dump_info dstp_info [] = {
 	DUMP_FIELD(Integer16, currentUtcOffset),
-	DUMP_FIELD(Boolean, currentUtcOffsetValid),
-	DUMP_FIELD(Boolean, leap59),
-	DUMP_FIELD(Boolean, leap61),
-	DUMP_FIELD(Boolean, timeTraceable),
-	DUMP_FIELD(Boolean, frequencyTraceable),
-	DUMP_FIELD(Boolean, ptpTimescale),
+	DUMP_FIELD(UInteger8, flags),
 	DUMP_FIELD(Enumeration8, timeSource),
 };
 
@@ -714,7 +709,7 @@ struct dump_info ppi_info [] = {
 	//DUMP_FIELD(unsigned long timeouts[__PP_TO_ARRAY_SIZE]),
 	DUMP_FIELD(UInteger16, recv_sync_sequence_id),
 	//DUMP_FIELD(UInteger16 sent_seq[__PP_NR_MESSAGES_TYPES]),
-	DUMP_FIELD_SIZE(bina, received_ptp_header, sizeof(MsgHeader)),
+	DUMP_FIELD_SIZE(bina, received_ptp_header, sizeof(struct msg_header_wire)),
 	//DUMP_FIELD(pointer, iface_name),
 	//DUMP_FIELD(pointer, port_name),
 	DUMP_FIELD(int, port_idx),
