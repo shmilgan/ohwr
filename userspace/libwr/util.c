@@ -2,7 +2,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include <libwr/wrs-msg.h>
 #include <libwr/util.h>
 #include <arpa/inet.h> /* for ntohl */
 
@@ -27,7 +26,7 @@ void shw_udelay_init(void)
 	loops_per_msec = i * 1000 / min;
 
 	if (0)
-		pr_debug("loops per msec %i\n", loops_per_msec);
+		printf("loops per msec %i\n", loops_per_msec);
 	/*
 	 * I get 39400 more or less; it makes sense at 197 bogomips.
 	 * The loop is 6 instructions with 3 (cached) memory accesses
