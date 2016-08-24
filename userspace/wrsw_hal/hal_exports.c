@@ -16,7 +16,7 @@
 #include <libwr/shmem.h>
 
 #define HAL_EXPORT_STRUCTURES
-#include <hal/hal_exports.h> /* for exported structs/function protos */
+#include <hal_exports.h> /* for exported structs/function protos */
 
 static struct minipc_ch *hal_ch;
 static struct hal_port_state *ports;

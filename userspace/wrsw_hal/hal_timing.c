@@ -13,7 +13,7 @@
 #include "wrsw_hal.h"
 #include "timeout.h"
 #include <rt_ipc.h>
-#include <hal/hal_exports.h>
+#include <hal_exports.h>
 
 static int timing_mode;
 

@@ -1,7 +1,7 @@
 #ifndef __LIBWR_HAL_SHMEM_H__
 #define __LIBWR_HAL_SHMEM_H__
 
-#include <hal/hal_exports.h>
+#include <hal_exports.h>
 #include <libwr/sfp_lib.h>
 #include <string.h>
 
