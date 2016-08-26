@@ -5,6 +5,7 @@
 #ifndef __WRS_SHM_H__
 #define __WRS_SHM_H__
 #include <stdint.h>
+#include <stdio.h>
 
 #define WRS_SHM_DEFAULT_PATH  "/dev/shm"
 #define WRS_SHM_FILE  "wrs-shmem-%i"

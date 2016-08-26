@@ -478,7 +478,9 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 	char subname[48];
 	int err;
 
+	memset(&shdr, 0, sizeof(struct shw_sfp_header));
 	err = shw_sfp_read_verify_header(p->hw_index, &shdr);
+	memcpy(&p->calib.sfp_header_raw, &shdr, sizeof(struct shw_sfp_header));
 	if (err == -2) {
 		pr_error("%s SFP module not inserted. Failed to read SFP "
 			 "configuration header\n", p->name);
@@ -568,6 +570,7 @@ static void hal_port_remove_sfp(struct hal_port_state * p)
 	p->state = HAL_PORT_STATE_DISABLED;
 	/* clean SFP's details when removing SFP */
 	memset(&p->calib.sfp, 0, sizeof(p->calib.sfp));
+	memset(&p->calib.sfp_header_raw, 0, sizeof(struct shw_sfp_header));
 }
 
 /* detects insertion/removal of SFP transceivers */

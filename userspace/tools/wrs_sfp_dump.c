@@ -5,6 +5,9 @@
 #include <libwr/shw_io.h>
 /* for shw_sfp_buses_init and shw_sfp_print_header*/
 #include "../libwr/i2c_sfp.h"
+#include <libwr/shmem.h>
+#include <libwr/hal_shmem.h>
+
 
 #define SFP_EEPROM_READ 1
 #define SFP_EEPROM_WRITE 2
@@ -13,21 +16,34 @@
 #define MONIT_PROCESS_NAME "/usr/bin/monit"
 #define PROCESS_COMMAND_MONIT "/bin/ps axo stat o command"
 
+#define READ_HAL 1
+#define READ_I2C 2
+
+static struct wrs_shm_head *hal_head;
+static struct hal_port_state *hal_ports;
+static int hal_nports_local;
+
 void print_info(char *prgname)
 {
-	printf("usage: %s [parameters]\n", prgname);
+	printf("usage: %s <-I|-L> [parameters]\n", prgname);
 	printf(""
-		"                   Dump sfp header info for all ports\n"
-		"   -p <num>        Dump sfp header for specific port (1-18)\n"
+		"Select the source of SFP eeprom data:\n"
+		"   -L              Use eeprom data read by HAL at SFP insertion time\n"
+		"   -I              Use read eeprom data directly from SFP via I2C\n"
+		"Optional parameters:\n"
+		"   -p <num>        Dump sfp header for specific port (1-18); dump sfp header info for all\n"
+		"                   ports if no <-p> specified\n"
 		"   -x              Dump sfp header also in hex\n"
-		"   -h              Show this message\n"
+		"   -a <READ|WRITE> Read/write SFP's eeprom; works only with <-I>;\n"
+		"                   before READs/WRITEs disable HAL and monit!\n"
+		"   -f <file>       File to READ/WRITE SFP's eeprom\n"
+		"   -H <dir>        Open shmem dumps from the given directory; works only with <-L>\n"
 		"   -q              Decrease verbosity\n"
 		"   -v              Increase verbosity\n"
 		"   -V              Print version\n"
-		"   -a <READ|WRITE> Read/write SFP's eeprom; before reads/writes disable HAL and monit!\n"
-		"   -f <file>       File to READ/WRITE SFP's eeprom\n"
+		"   -h              Show this message\n"
 		"\n"
-		"NOTE: Be carefull! All reads (i2c transfers) are in race with hal!\n"
+		"NOTE: Be carefull! All reads (i2c transfers) are in race with HAL!\n"
 	);
 
 }
@@ -95,6 +111,10 @@ static void sfp_eeprom_read(char *eeprom_file, int port)
 	FILE *fp;
 	int ret;
 
+	if (!eeprom_file) {
+		pr_error("Please specify file to READ!\n");
+		exit(1);
+	}
 	memset(&sfp_header, 0, sizeof(struct shw_sfp_header));
 	if (check_hal() > 0) {
 		/* HAL may disturb sfp's eeprom read! */
@@ -132,14 +152,18 @@ static void sfp_eeprom_write(char *eeprom_file, int port)
 	FILE *fp;
 	int ret;
 
+	if (!eeprom_file) {
+		pr_error("Please specify file to WRITE!\n");
+		exit(1);
+	}
 	memset(&sfp_header, 0, sizeof(struct shw_sfp_header));
 	if (check_hal() > 0) {
-		/* HAL may disturb sfp's eeprom read! */
-		pr_error("HAL is running! It may disturb SFP's eeprom read\n");
+		/* HAL may disturb sfp's eeprom write! */
+		pr_error("HAL is running! It may disturb SFP's eeprom write\n");
 		exit(1);
 	}
 	if (check_monit() > 0) {
-		/* Monit may restart, which may disturb sfp's eeprom read! */
+		/* Monit may restart, which may disturb sfp's eeprom write! */
 		pr_error("Monit is running! It may restart HAL\n");
 		exit(1);
 	}
@@ -177,10 +201,81 @@ void print_version(char *prgname)
 	       __GIT_USR__);
 }
 
+int hal_read(struct shw_sfp_header *sfp_header_local_copy) {
+	unsigned ii;
+	unsigned retries = 0;
+	int port;
+
+	/* read data, with the sequential lock to have all data consistent */
+	while (1) {
+		ii = wrs_shm_seqbegin(hal_head);
+		for (port = 0; port < hal_nports_local; port++) {
+			memcpy(&sfp_header_local_copy[port],
+			       &hal_ports[port].calib.sfp_header_raw,
+			       sizeof(struct shw_sfp_header));
+		}
+
+		retries++;
+		if (retries > 100)
+			return -1;
+		if (!wrs_shm_seqretry(hal_head, ii))
+			break; /* consistent read */
+		usleep(1000);
+	}
+
+	return 0;
+}
+
+
+void hal_init_shm(void)
+{
+	struct hal_shmem_header *h;
+	int ret;
+	int n_wait = 0;
+	while ((ret = wrs_shm_get_and_check(wrs_shm_hal, &hal_head)) != 0) {
+		n_wait++;
+		if (ret == 1) {
+			pr_error("Unable to open HAL's shm !\n");
+		}
+		if (ret == 2) {
+			pr_error("Unable to read HAL's version!\n");
+		}
+		if (n_wait > 10) {
+			/* timeout! */
+			exit(1);
+		}
+		sleep(1);
+	}
+
+	if (hal_head->version != HAL_SHMEM_VERSION) {
+		pr_error("Unknown HAL's shm version %i (known is %i)\n",
+			 hal_head->version, HAL_SHMEM_VERSION);
+		exit(1);
+	}
+	h = (void *)hal_head + hal_head->data_off;
+	/* Assume number of ports does not change in runtime */
+	hal_nports_local = h->nports;
+	if (hal_nports_local > HAL_MAX_PORTS) {
+		pr_error("Too many ports reported by HAL. %d vs %d "
+			 "supported\n", hal_nports_local, HAL_MAX_PORTS);
+		exit(1);
+	}
+	/* Even after HAL restart, HAL will place structures at the same
+	 * addresses. No need to re-dereference pointer at each read.
+	 */
+	hal_ports = wrs_shm_follow(hal_head, h->ports);
+	if (!hal_ports) {
+		pr_error("Unable to follow hal_ports pointer in HAL's "
+			 "shmem\n");
+		exit(1);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	int c;
-	struct shw_sfp_header shdr;
+	struct shw_sfp_header sfp_hdr;
+	struct shw_sfp_header *sfp_hdr_p;
 	int err;
 	int nports;
 	int dump_port;
@@ -188,12 +283,16 @@ int main(int argc, char **argv)
 	int dump_hex_header = 0;
 	int operation = 0;
 	char *eeprom_file = NULL;
+	int sfp_data_source = 0;
+	/* local copy of sfp eeprom */
+	struct shw_sfp_header hal_sfp_raw_header_lc[HAL_MAX_PORTS];
+
 
 	wrs_msg_init(argc, argv);
 	nports = 18;
 	dump_port = 1;
 
-	while ((c = getopt(argc, argv, "a:hqvp:xVf:")) != -1) {
+	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIH:")) != -1) {
 		switch (c) {
 		case 'p':
 			dump_port = atoi(optarg);
@@ -210,7 +309,7 @@ int main(int argc, char **argv)
 			break;
 		case 'V':
 			print_version(argv[0]);
-			break;
+			exit(0);
 		case 'q': break; /* done in wrs_msg_init() */
 		case 'v': break; /* done in wrs_msg_init() */
 		case 'a':
@@ -231,6 +330,18 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 			break;
+		case 'L':
+			/* HAL mode */
+			sfp_data_source = READ_HAL;
+			break;
+		case 'I':
+			/* HAL mode */
+			sfp_data_source = READ_I2C;
+			break;
+		case 'H':
+			/* HAL mode */
+			wrs_shm_set_path(optarg);
+			break;
 		case 'h':
 		default:
 			print_info(argv[0]);
@@ -239,24 +350,49 @@ int main(int argc, char **argv)
 		}
 	}
 
-	/* init i2c, be carefull all i2c transfers are in race with hal! */
-	assert_init(shw_io_init());
-	assert_init(shw_fpga_mmap_init());
-	assert_init(shw_sfp_buses_init());
+	if (sfp_data_source != READ_HAL && sfp_data_source != READ_I2C) {
+		pr_error("Please specify the source of SFP eeprom data.\n"
+			 "  -L for saved data in HAL at SFP plugin\n"
+			 "  -I for direct access to SFPs via i2c\n");
+		exit(1);
+	}
 
-	if (operation == SFP_EEPROM_READ) {
-		sfp_eeprom_read(eeprom_file, dump_port);
-		exit(0);
+	if (sfp_data_source == READ_HAL) {
+		hal_init_shm();
+		hal_read(hal_sfp_raw_header_lc);
+		printf("Reading SFP eeprom from HAL\n");
 	}
-	if (operation == SFP_EEPROM_WRITE) {
-		sfp_eeprom_write(eeprom_file, dump_port);
-		exit(0);
+
+	if (sfp_data_source == READ_I2C) {
+		/* init i2c, be carefull all i2c transfers are in race with
+		 * hal! */
+		assert_init(shw_io_init());
+		assert_init(shw_fpga_mmap_init());
+		assert_init(shw_sfp_buses_init());
+
+		if (operation == SFP_EEPROM_READ) {
+			sfp_eeprom_read(eeprom_file, dump_port);
+			exit(0);
+		}
+		if (operation == SFP_EEPROM_WRITE) {
+			sfp_eeprom_write(eeprom_file, dump_port);
+			exit(0);
+		}
+		printf("Reading SFP eeprom via I2C\n");
 	}
+
 
 	for (i = dump_port; i <= nports; i++) {
-		memset(&shdr, 0, sizeof(shdr));
 		printf("========= port %d =========\n", i);
-		err = shw_sfp_read_verify_header(i - 1, &shdr);
+		if (sfp_data_source == READ_I2C) {
+			memset(&sfp_hdr, 0, sizeof(sfp_hdr));
+			sfp_hdr_p = &sfp_hdr;
+			err = shw_sfp_read_header(i - 1, sfp_hdr_p);
+		}
+		if (sfp_data_source == READ_HAL) {
+			sfp_hdr_p = &hal_sfp_raw_header_lc[i - 1];
+		}
+		err = shw_sfp_header_verify(sfp_hdr_p);
 		if (err == -2) {
 			pr_error("SFP module not inserted in port %d. Failed "
 				 "to read SFP configuration header\n", i);
@@ -264,9 +400,9 @@ int main(int argc, char **argv)
 			pr_error("Failed to read SFP configuration header on "
 				 "port %d\n", i);
 		} else {
-			shw_sfp_print_header(&shdr);
+			shw_sfp_print_header(sfp_hdr_p);
 			if (dump_hex_header) {
-				shw_sfp_header_dump(&shdr);
+				shw_sfp_header_dump(sfp_hdr_p);
 			}
 		}
 	}
