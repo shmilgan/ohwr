@@ -403,8 +403,10 @@ file, it will replace the copy in the local storage if it is different.
 
 The URL (stored in @t{CONFIG_DOTCONF_URL} or retrieved via DHCP) is of the form
 ``@i{protocol}@t{://}@i{host}@t{/}@i{pathname}''.  The special upper-case
-strings @t{IPADDR} and @t{MACADDR} are substituted with the current
-addresses of the management port of the switch.
+strings @t{HOSTNAME}, @t{IPADDR} and @t{MACADDR} are substituted with the
+current hostname, IP addresses or MAC address of the management port of the
+switch. By this the same configuration string can be used to set up a batch
+of switches with different configurations.
 
 The three parts of the URL are as follows:
 
@@ -424,8 +426,8 @@ The three parts of the URL are as follows:
 
 @item path
 
-	The pathname can include directory components and @t{IPADDR}
-        or @t{MACADDR} (or both).
+	The pathname can include directory components and any of @t{HOSTNAME},
+	@t{IPADDR}, @t{MACADDR}.
 
 @end table
 
@@ -722,7 +724,8 @@ value is changed by the web interface, proper action is taken.
 	Finally, you can choose @t{PTP_REMOTE_CONF} and be able to
         specify an URL (@t{http://}, @t{ftp://} or @t{tftp://}) whence
         the switch will download the @t{ppsi.conf} at boot time.
-        The filename in the URL can include @t{IPADDR} and/or @t{MACADDR},
+        The filename in the URL can include @t{HOSTNAME}, @t{IPADDR}
+        and/or @t{MACADDR},
         so the same configuration string can be used to set up a batch
         of switches with different configurations.
 

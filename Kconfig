@@ -40,8 +40,8 @@ config DOTCONF_URL
 	depends on DOTCONF_SOURCE_REMOTE
 	help
 	  tftp://, ftp:// or http:// URLs are allowed. Names are allowed if
-	  you configured a DNS server. The special strings IPADDR and MACADDR
-	  are substituted before retrieving the file.
+	  you configured a DNS server. The special strings HOSTNAME, IPADDR and
+	  MACADDR are substituted before retrieving the file.
 	  Example:  "tftp://morgana/wrs-config-IPADDR"
 
 config BR2_CONFIGFILE
@@ -593,7 +593,7 @@ config PTP_CONF_URL
 	depends on PTP_REMOTE_CONF
 	string "Download URL (http, ftp, tftp) for custom ppsi.conf"
 	help
-	  Like CONFIG_DOTCONF_URL, this option allows passing IPADDR
+	  Like CONFIG_DOTCONF_URL, this option allows passing HOSTNAME, IPADDR
 	  and MACADDR in the filename, and if a DNS server is configured,
 	  you can use host names.
 	  For example: tftp://morgana/wrs-IPADDR-ppsi.conf

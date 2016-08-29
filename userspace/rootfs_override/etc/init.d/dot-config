@@ -86,8 +86,9 @@ if [ "$CONFIG_DOTCONF_SOURCE_REMOTE" = "y" ] || [ "$CONFIG_DOTCONF_SOURCE_TRY_DH
 	/etc/init.d/network
 	ipaddr=$(ifconfig eth0 | grep inet | cut -d: -f 2 | cut '-d '  -f 1)
     fi
+    host_name=`hostname`
     URL=$(echo $CONFIG_DOTCONF_URL | \
-	sed -e s/MACADDR/$macaddr/ -e s/IPADDR/$ipaddr/)
+	sed -e s/MACADDR/$macaddr/ -e s/IPADDR/$ipaddr/ -e s/HOSTNAME/$host_name/)
     # split the parts, as we need to handle tftp by hand
     proto=$(echo $URL | cut -d: -f 1)
     host=$(echo $URL | cut -d/ -f 3)
