@@ -381,7 +381,7 @@ sources are implemented in current version:
 @item CONFIG_DOTCONF_SOURCE_FORCE_DHCP
 	Get a network location of a @t{dot-config} file from a DHCP server.
         Server can be configured in a way to provide the entire URL to
-        the dot-config in the ``@t{filename}'' configuration field of the DHCP
+        the @t{dot-config} in the ``@t{filename}'' configuration field of the DHCP
         server. As an alternative, ``@t{filename}'' can be configured only as a
         path. It will be then interpreted as a path on a tftp server, which IP
         address is taken from the configuration field
@@ -539,7 +539,8 @@ value is changed by the web interface, proper action is taken.
         If you choose to configure an unencrypted password, then you are
         asked to specify it as @t{CONFIG_ROOT_PWD_CLEAR}. In this latter
         case encryption is performed at run-time to use the normal @i{ssh}
-        authentication, but the clear-text password will remain in dot-config.
+        authentication, but the clear-text password will remain in
+        @t{dot-config}.
         By default the root password is an empty string, like in the initial
         @i{wr-switch-sw} releases.
 
@@ -689,7 +690,7 @@ value is changed by the web interface, proper action is taken.
 	See @ref{Timing Configuration} for details.
 
 	You are expected to have no more than 4 fiber types installed in
-	your deployment. If more, you need to add items to the @i{dot-config}
+	your deployment. If more, you need to add items to the @t{dot-config}
 	file.
 
 @item CONFIG_TIME_GM
@@ -808,7 +809,7 @@ This section describes how timing configuration works in the switch.
 Please note that up to version 4.1 (included) of @t{wr-switch-sw} things
 were different and not really documented.
 
-Timing configuration now depends on three sets of @i{dot-config}
+Timing configuration now depends on three sets of @t{dot-config}
 variables: per-port information, per-sfp information and fiber
 description.
 
@@ -899,7 +900,7 @@ If you are using a pair of transceivers with different wavelengths,
 and long fibers, you should provide an appropriate value of alpha,
 according to laboratory measures on your fiber type. The
 @t{CONFIG_FIBERxx_PARAMS} items are parsed as a list of
-comma-separated assignments, so you can specify and number of
+comma-separated assignments, so you can specify multiple
 wavelength pairs.  The accuracy of your value depends on the length
 of the fiber link.  For a 10km fiber (100us round-trip) you need to know
 alpha up to 1e-7 if you want the related uncertainty to be
@@ -928,7 +929,7 @@ with the @i{difference} between them and the @t{AXGE} devices.
 @section VLANs Configuration
 
 Unfortunately, the current firmware release does not support VLAN configuration
-in the main @i{dot-config} file. Therefore, if you want to use VLANs you
+in the main @t{dot-config} file. Therefore, if you want to use VLANs you
 have to manually configure them using the @i{wrs_vlans} tool described
 in @ref{wrs_vlans}.
 
@@ -936,14 +937,14 @@ In addition to that, to have synchronization working with VLANs, you have to
 prepare a custom @i{PPSi} configuration file with VLANs specified per-port. You
 can simply copy the file generated in the WRS filesystem
 (@i{/etc/ppsi.conf}) to a central @t{tftp}/@t{http}/@t{ftp} server where
-@i{dot-config} files for your switches are stored and fetched on boot time.
+@t{dot-config} files for your switches are stored and fetched on boot time.
 For every VLAN-enabled port you should add the following line:
 @example
   vlan <VID>
 @end example
 where @i{VID} is a VLAN ID configured on the port. To let your switch use the
 modified @i{ppsi.conf}, you should add it as @t{CONFIG_PTP_REMOTE_CONF} option
-in the @i{dot-config} (@ref{Configuration Items that Apply at Run Time}). This
+in the @t{dot-config} (@ref{Configuration Items that Apply at Run Time}). This
 way it will be fetched and applied every time your switch boots.
 
 @c ==========================================================================
@@ -1254,14 +1255,14 @@ The following tools and scripts are provided:
 	The script is used to apply @t{dot-config} settings to the
         current configuration files.  It is run at boot time before
         any service is started and by web interface to apply changes in
-        the local dot-config.
+        the local @t{dot-config}.
         The @t{dot-config} mechanism is documented in @ref{Configuration of the
         Device}.
 
 @item assembly_ppsi_conf.sh
 	The script is used to assembly ppsi configuration file based on
         information stored in @t{PORTxx_PARAMS}.
-        This script is called by @i{apply_dot-config}.
+        This script is called by @t{apply_dot-config}.
 
 @item change_dot-config
 	This script changes the current @t{dot-config} file. It is
@@ -1486,6 +1487,8 @@ VLAN configuration of the switch:
   Current RTU VLAN configuration.
 
 @item wrs_vlans --clear
+
+  Clear configuration.
 
 @end table
 
