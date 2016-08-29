@@ -757,7 +757,10 @@ config NIC_THROTTLING_ENABLED
 	bool "Enable NIC throttling"
 	default n
 	help
-	  Limit bandwith on NIC
+	  Limit the Rx bandwidth of the traffic that goes from WR ports to
+	  Linux. Throttling can be enabled to prevent Linux using 100% of the
+	  processing power to receive Ethernet frames coming from WR ports to
+	  the CPU.
 
 config NIC_THROTTLING_VAL
 	int "NIC throttling value"
@@ -765,7 +768,7 @@ config NIC_THROTTLING_VAL
 	default "4000"
 	range 1 65535
 	help
-	  Value to which bandwith should be limited
+	  Value to which bandwith should be limited (in KB/s).
 
 endmenu
 
