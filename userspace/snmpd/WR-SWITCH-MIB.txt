@@ -605,7 +605,7 @@ wrsConfigSource  OBJECT-TYPE
     ::= { wrsBootStatusGroup 6 }
 
 wrsConfigSourceUrl   OBJECT-TYPE
-    SYNTAX      DisplayString (SIZE (0..64))
+    SYNTAX      DisplayString (SIZE (0..128))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
