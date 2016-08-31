@@ -59,6 +59,10 @@ if [ "$CONFIG_ETH0_STATIC" = "y" ] || [ "$CONFIG_ETH0_DHCP_ONCE" = "y" ]; then
 fi
 
 if [ "$CONFIG_HOSTNAME_STATIC" = "y" ]; then
+    if [ -z "$CONFIG_HOSTNAME_STRING" ]; then
+	echo "empty CONFIG_HOSTNAME_STRING! use wrs"
+	CONFIG_HOSTNAME_STRING="wrs"
+    fi
     /bin/hostname "$CONFIG_HOSTNAME_STRING"
     echo "$CONFIG_HOSTNAME_STRING" > /etc/hostname
 elif [ "$CONFIG_HOSTNAME_DHCP" = "y" ]; then
