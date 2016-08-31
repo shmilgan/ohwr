@@ -23,6 +23,10 @@
 
 #define FW_UPDATE_FILE "/update/wrs-firmware.tar.checksum_error"
 
+#define CUSTOM_BOOT_SCRIPT_STATUS_FILE "/tmp/custom_boot_script_status"
+#define CUSTOM_BOOT_SCRIPT_SOURCE_FILE "/tmp/custom_boot_script_source"
+#define CUSTOM_BOOT_SCRIPT_SOURCE_URL_FILE "/tmp/custom_boot_script_url"
+
 /* Macros for fscanf function to read line with maximum of "x" characters
  * without new line. Macro expands to something like: "%10[^\n]" */
 #define LINE_READ_LEN_HELPER(x) "%"#x"[^\n]"
@@ -49,6 +53,9 @@ static struct pickinfo wrsBootStatus_pickinfo[] = {
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsBootUserspaceDaemonsMissing),
 	FIELD(wrsBootStatus_s, ASN_COUNTER, wrsGwWatchdogTimeouts),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsFwUpdateStatus),
+	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsCustomBootScriptSource),
+	FIELD(wrsBootStatus_s, ASN_OCTET_STR, wrsCustomBootScriptSourceUrl),
+	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsCustomBootScriptStatus),
 };
 
 struct wrsBootStatus_s wrsBootStatus_s;
@@ -545,6 +552,123 @@ static void get_fw_update_status(void)
 	}
 }
 
+static void get_custom_boot_script_status(void)
+{
+	static int run_once = 0;
+	FILE *f;
+	char buff[21]; /* 1 for null char */
+
+	if (run_once) {
+		/* custom boot script is executed once at boot time, no need
+		 * to check it every time */
+		return;
+	}
+	run_once = 1;
+
+	/* Clear source url */
+	memset(wrsBootStatus_s.wrsCustomBootScriptSourceUrl, 0,
+		       sizeof(wrsBootStatus_s.wrsCustomBootScriptSourceUrl));
+
+	/* result of custom boot script execution */
+	f = fopen(CUSTOM_BOOT_SCRIPT_STATUS_FILE, "r");
+	if (f) {
+		/* readline without newline */
+		fscanf(f, LINE_READ_LEN(20), buff);
+		fclose(f);
+		if (!strcmp(buff, "disabled")) {
+			wrsBootStatus_s.wrsCustomBootScriptStatus =
+					WRS_CUSTOM_BOOT_SCRIPT_STATUS_DISABLED;
+			/* set also source to disabled */
+			wrsBootStatus_s.wrsCustomBootScriptSource =
+					WRS_CUSTOM_BOOT_SCRIPT_SOURCE_DISABLED;
+			return;
+		} else if (!strcmp(buff, "ok"))
+			wrsBootStatus_s.wrsCustomBootScriptStatus =
+					WRS_CUSTOM_BOOT_SCRIPT_STATUS_OK;
+		else if (!strcmp(buff, "failed"))
+			wrsBootStatus_s.wrsCustomBootScriptStatus =
+					WRS_CUSTOM_BOOT_SCRIPT_STATUS_FAILED;
+		else if (!strcmp(buff, "wrong_source"))
+			wrsBootStatus_s.wrsCustomBootScriptStatus =
+					WRS_CUSTOM_BOOT_SCRIPT_STATUS_WRONG_SRC;
+		else if (!strcmp(buff, "download_error"))
+			wrsBootStatus_s.wrsCustomBootScriptStatus =
+					WRS_CUSTOM_BOOT_SCRIPT_STATUS_DL_ERROR;
+		else {/*  */
+			wrsBootStatus_s.wrsCustomBootScriptStatus =
+					WRS_CUSTOM_BOOT_SCRIPT_STATUS_ERROR;
+			/* try again next time */
+			run_once = 0;
+		}
+	} else {
+		/* status file not found, probably something else caused
+		 * a problem */
+		wrsBootStatus_s.wrsCustomBootScriptStatus =
+					WRS_CUSTOM_BOOT_SCRIPT_STATUS_ERROR_MINOR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsCustomBootScriptStatus: "
+			 "failed to open " CUSTOM_BOOT_SCRIPT_STATUS_FILE
+			 "\n");
+		/* try again next time */
+		run_once = 0;
+	}
+
+	/* source of custom boot script */
+	f = fopen(CUSTOM_BOOT_SCRIPT_SOURCE_FILE, "r");
+	if (f) {
+		/* readline without newline */
+		fscanf(f, LINE_READ_LEN(20), buff);
+		fclose(f);
+		if (!strcmp(buff, "local"))
+			wrsBootStatus_s.wrsCustomBootScriptSource =
+					WRS_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL;
+		else if (!strcmp(buff, "remote"))
+			wrsBootStatus_s.wrsCustomBootScriptSource =
+					WRS_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE;
+		else {/*  */
+			wrsBootStatus_s.wrsCustomBootScriptSource =
+					WRS_CUSTOM_BOOT_SCRIPT_SOURCE_ERROR;
+			/* try again next time */
+			run_once = 0;
+		}
+	} else {
+		/* status file not found, probably something else caused
+		 * a problem */
+		wrsBootStatus_s.wrsCustomBootScriptSource =
+				     WRS_CUSTOM_BOOT_SCRIPT_SOURCE_ERROR_MINOR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsCustomBootScriptSource: "
+			 "failed to open " CUSTOM_BOOT_SCRIPT_SOURCE_FILE
+			 "\n");
+		/* try again next time */
+		run_once = 0;
+	}
+
+	/* Read custom boot script's URL only when source is remote */
+	if (wrsBootStatus_s.wrsCustomBootScriptSource
+				== WRS_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE) {
+		/* read URL */
+		f = fopen(CUSTOM_BOOT_SCRIPT_SOURCE_URL_FILE, "r");
+		if (f) {
+			/* readline without newline */
+			fscanf(f, LINE_READ_LEN(
+					WRS_CUSTOM_BOOT_SCRIPT_SOURCE_URL_LEN),
+			      wrsBootStatus_s.wrsCustomBootScriptSourceUrl);
+			fclose(f);
+		} else {
+			/* host file not found, put "error" into
+			 * wrsCustomBootScriptSourceUrl */
+			strcpy(wrsBootStatus_s.wrsCustomBootScriptSourceUrl,
+			       "error");
+			snmp_log(LOG_ERR, "SNMP: " SL_ER
+				 " wrsCustomBootScriptSourceUrl: failed to "
+				 "open " CUSTOM_BOOT_SCRIPT_SOURCE_URL_FILE
+				 "\n");
+		}
+	} else {
+		memset(wrsBootStatus_s.wrsCustomBootScriptSourceUrl, 0,
+		       sizeof(wrsBootStatus_s.wrsCustomBootScriptSourceUrl));
+	}
+
+}
 
 time_t wrsBootStatus_data_fill(void)
 {
@@ -578,6 +702,9 @@ time_t wrsBootStatus_data_fill(void)
 
 	/* get info about the firmware update status */
 	get_fw_update_status();
+
+	/* get info about the firmware update status */
+	get_custom_boot_script_status();
 
 	/* there was an update, return current time */
 	return time_update;

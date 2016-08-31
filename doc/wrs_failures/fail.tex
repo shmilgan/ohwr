@@ -625,6 +625,7 @@ list of faults leading to a data error.
 					\item status of programming FPGA and LM32
 					\item status of loading kernel modules
 					\item status of starting userspace daemons
+					\item status of execution of a custom boot script
 				\end{itemize}
 			\item [] \underline{SNMP objects}:\\
         {\footnotesize
@@ -638,6 +639,9 @@ list of faults leading to a data error.
 				\snmpadd{WR-SWITCH-MIB::wrsBootKernelModulesMissing}\\
 				\snmpadd{WR-SWITCH-MIB::wrsBootUserspaceDaemonsMissing}\\
 				\snmpadd{WR-SWITCH-MIB::wrsFwUpdateStatus}\\
+				\snmpadd{WR-SWITCH-MIB::wrsCustomBootScriptSource}\\
+				\snmpadd{WR-SWITCH-MIB::wrsCustomBootScriptSourceUrl}\\
+				\snmpadd{WR-SWITCH-MIB::wrsCustomBootScriptStatus}\\
 				\snmpadd{WR-SWITCH-MIB::wrsBootSuccessful} \\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
         \snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }

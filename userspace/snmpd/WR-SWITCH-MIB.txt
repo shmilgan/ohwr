@@ -746,6 +746,59 @@ wrsFwUpdateStatus  OBJECT-TYPE
         checksumError - firmware checksum error"
     ::= { wrsBootStatusGroup 16 }
 
+wrsCustomBootScriptSource OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        na(0),
+                        error(1),
+                        errorMinor(2),
+                        local(3),
+                        remote(4),
+                        disabled(5)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "Source of the custom boot script
+        local - used custom boot script was stored on the switch
+        remote - custom boot script was retrieved from the network; check the
+                 wrsCustomBootScriptSourceUrl for the path
+        disabled - do not run custom boot script
+        errorMinor - cannot read the status file, problem is probably somewhere
+                     else"
+    ::= { wrsBootStatusGroup 17 }
+
+wrsCustomBootScriptSourceUrl OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..128))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Url to the custom boot script"
+    ::= { wrsBootStatusGroup 18 }
+
+
+wrsCustomBootScriptStatus OBJECT-TYPE
+    SYNTAX       INTEGER {
+                        na(0),
+                        ok(1),
+                        failed(2),
+                        wrongSrc(3),
+                        downloadError(4),
+                        disabled(5),
+                        error(6),
+                        errorMinor(7)
+    }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "The result of execution of the custom boot script
+        ok - custom boot script executed successfully
+        failed - custom boot script failed during execution
+        wrongSrc - no valid source of the custom boot script present in dot-config
+        downloadError - unable to download a file from a given source
+        disabled - do not run custom boot script
+        error - unsupported status
+        errorMinor - cannot read the status file, problem is probably somewhere else"
+    ::= { wrsBootStatusGroup 19 }
 
 -- wrsTemperatureGroup (.7.1.3)
 wrsTemperatureGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 3 }
