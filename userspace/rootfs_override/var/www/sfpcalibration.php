@@ -81,7 +81,7 @@
 		foreach ($matrix as $elements) {
 			echo "<tr>";
 			$element = explode(",",$elements);
-			for ($j = 0; $j < 7; $j++) {
+			for ($j = 0; $j < 6; $j++) {
 				$columns = explode("=",$element[$j]);
 
 				if($columns[0]=="key"){

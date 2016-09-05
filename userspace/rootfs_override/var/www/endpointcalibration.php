@@ -34,7 +34,7 @@
 		$infoname = "Endpoint Configuration";
 		//$size = "6";
 
-		if (strpos($_SESSION["KCONFIG"]["CONFIG_PORT00_PARAMS"],'proto=') !== false) 
+		if (strpos($_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],'proto=') !== false)
 			$header = array ("WR port","Protocol","Tx","Rx","Mode","Fiber");
 		else
 			$header = array ("WR port","Tx","Rx","Mode","Fiber");

@@ -26,7 +26,7 @@
 	<table border="0" align="center">
 		<tr>
 			<FORM method="POST" ENCTYPE="multipart/form-data" onsubmit="return confirm('Are you sure you want to upload and flash a new firmware?');">
-			<th ><INPUT type=file name="file" ></th>
+			<th><INPUT type=file name="firmware" ></th>
 			<th><INPUT type=submit value="Flash Firmware" class="btn" ><INPUT type=hidden name=MAX_FILE_SIZE  VALUE=<?php echo wrs_php_filesize();?>000></th>
 			</FORM>
 		</tr>

@@ -239,7 +239,7 @@ function print_form($section, $subsection, $formatID, $class, $infoname, $format
 	foreach ($_SESSION[$section][$subsection] as $row) {
 		echo "<tr>";
 		echo "<td>".$row["name"]."</td>";
-		echo '<td align="center"><INPUT type="text" value="'.$row["value"].'" name="'.$row["vname"].'" title="'.$row["help"].'"></td>';
+		echo '<td align="center"><INPUT type="text" value="'.$row["value"].'" name="'.$row["vname"].'"></td>';
 		echo "</tr>";
 	}
 	echo '</table>';
@@ -357,7 +357,7 @@ function check_snmp_status(){
 }
 
 function check_monit_status(){
-	$output = shell_exec("/bin/ps axo command,state | grep '^/usr/bin/monit' | awk '{print $NF}'");
+	$output = shell_exec("/bin/ps axo command,state | grep '^/usr/bin/monit' | awk '{print \$NF}'");
 
 	if(empty($output) || (strpos($output,'T') !== false)){
 		return 0; /* monit is disabled or not in dotconfig */
@@ -684,17 +684,16 @@ function wrs_management(){
 
 		if (!strcmp($cmd, "reboot")){
 			wrs_reboot();
-		} else if (!empty($_FILES['file']['name'])){
+		} else if (!empty($_FILES['firmware']['name'])){
 			$uploaddir = '/tmp/';
-			$uploadfname= basename($_FILES['file']['name']);
+			$uploadfname= basename($_FILES['firmware']['name']);
 			$uploadfile = $uploaddir . $uploadfname;
 			echo '<pre>';
-			if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
+			if (move_uploaded_file($_FILES['firmware']['tmp_name'], $uploadfile)) {
 				echo '<p align=center ><font color="red"><br>Upgrade procedure will take place after reboot.<br>Please do not switch off the device during flashing procedure.</font></p>';
 				if ($uploadfname=="barebox.bin" || $uploadfname=="wrs-firmware.tar" || $uploadfname=="zImage")
 				{
-					rename($uploadfile, "/update/".($_FILES['file']['name']));
-					unlink($uploadfile);
+					rename($uploadfile, "/update/".($_FILES['firmware']['name']));
 					//Reboot switch
 					sleep(1);
 					wrs_reboot(90); //Updating only one part of the firmware take ~90s.
@@ -702,7 +701,6 @@ function wrs_management(){
 				else if(substr($uploadfname,0,14)=="wr-switch-sw-v" && substr($uploadfname,-13)=="_binaries.tar")
 				{
 					rename($uploadfile, "/update/wrs-firmware.tar");
-					unlink($uploadfile);
 					//Reboot switch
 					sleep(1);
 					wrs_reboot(150); //120s should be enough but we prefer to keep safe
