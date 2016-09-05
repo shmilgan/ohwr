@@ -1636,6 +1636,16 @@ the processes (excluding the @sc{rt} subsystem).
 
 	Called by @i{rtu_stat} when performing actions.
 
+@item rtud::learning_process
+
+	Called by @i{rtu_stat} to enable/disable learning process on a set
+	of ports.
+
+@item rtud::unrec
+
+	Called by @i{rtu_stat} to enable/disable dropping of frames which
+	destination MAC address does not match to present RTU rules.
+
 @item rtud::vlan_entry
 
 	Called by both @i{rtu_stat} and @i{wrs_vlans}. It is
