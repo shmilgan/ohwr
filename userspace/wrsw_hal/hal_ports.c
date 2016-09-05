@@ -421,6 +421,11 @@ static void hal_port_fsm(struct hal_port_state * p)
 					shw_sfp_set_generic(p->hw_index, 1,
 							SFP_LED_WRMODE_NON_WR);
 				}
+				//ML-SyncE-HACK - starts
+				rts_set_mode(RTS_MODE_BC);
+				rts_lock_channel(p->hw_index, 0);
+				p->state = HAL_PORT_STATE_LOCKING;
+				//ML-SyncE-HACK - ends
 				pr_info("%s: link up\n", p->name);
 				p->state = HAL_PORT_STATE_UP;
 			}
