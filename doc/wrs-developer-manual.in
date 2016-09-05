@@ -1652,6 +1652,11 @@ the processes (excluding the @sc{rt} subsystem).
         used to pass a number of parameters to @i{rtud} and
         make it perform actions.
 
+@item rtud::hp_mask
+
+	Called by @i{rtu_stat} when setting which priorities are considered
+	High Priority (this only concerns the traffic which is fast-forwarded).
+
 @end table
 
 @c --------------------------------------------------------------------------

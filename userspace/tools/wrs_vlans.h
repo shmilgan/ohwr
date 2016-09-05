@@ -41,7 +41,6 @@
 
 #define PORT_MASK(x) (1<<(x))
 
-#define NOPTS 15
 #define OPT_HELP 	'h'
 #define OPT_CLEAR 3
 #define OPT_LIST 4
@@ -57,6 +56,7 @@
 #define OPT_RTU_DROP  23
 #define OPT_RTU_PRIO  24
 #define OPT_RTU_DEL   25
+#define OPT_RTU_HP_MASK 30
 #define OPT_FILE_READ 'f'
 
 #define PORT_PRIO_MIN 0

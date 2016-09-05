@@ -41,6 +41,9 @@
 #define RTU_SET_UNREC 1
 #define RTU_GET_UNREC 2
 
+#define RTU_SET_HP_MASK 1
+#define RTU_GET_HP_MASK 2
+
 /* Export of a function to set remove entry in rtu */
 struct minipc_pd rtud_export_clear_entries = {
 	.name = "clear_entries",
@@ -114,6 +117,17 @@ struct minipc_pd rtud_export_vlan_entry = {
 		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),	// 4: prio
 		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),	// 5: has_prio
 		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),	// 6: prio_override
+		 MINIPC_ARG_END,
+		 },
+};
+
+/* Export of a function to add vlan entry in rtu */
+struct minipc_pd rtud_export_hp_mask = {
+	.name = "hp_mask",
+	.retval = MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int),
+	.args = {
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* operation */
+		 MINIPC_ARG_ENCODE(MINIPC_ATYPE_INT, int), /* HP mask */
 		 MINIPC_ARG_END,
 		 },
 };

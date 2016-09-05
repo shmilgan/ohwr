@@ -60,6 +60,7 @@ static struct option ropts[] = {
 	{"rprio", 1, NULL, OPT_RTU_PRIO},
 	{"del", 0, NULL, OPT_RTU_DEL},
 	{"file", 1, NULL, OPT_FILE_READ},
+	{"hpmask", 1, NULL, OPT_RTU_HP_MASK},
 	{0,}};
 /*******************/
 static struct vlan_sets dot_config_vlan_sets[] = {
@@ -76,6 +77,7 @@ static void set_p_qmode(int ep, int arg_mode);
 static void set_p_vid(int ep, char *arg_vid);
 static void set_p_prio(int ep, char *arg_prio);
 static void set_p_umask(int ep, int arg_umask);
+static void set_hp_mask(char *mask_str);
 static int check_rtu(char *name, char *arg_val, int min, int max);
 static int print_help(char *prgname);
 static void print_config_rtu(struct s_port_vlans *vlans);
@@ -87,6 +89,7 @@ static int set_rtu_vlan(int vid, int fid, int pmask, int drop, int prio,
 static void free_rtu_vlans(struct rtu_vlans_t *ptr);
 static void list_rtu_vlans(void);
 static void list_p_vlans(void);
+static void print_hp_mask(void);
 static int rtu_find_vlan(struct rtu_vlan_table_entry *rtu_vlan_entry, int vid,
 					 int fid);
 static int config_rtud(void);
@@ -276,6 +279,7 @@ int main(int argc, char *argv[])
 
 		case OPT_P_LIST:
 			/* list endpoint stuff */
+			print_hp_mask();
 			list_p_vlans();
 			break;
 
@@ -315,7 +319,9 @@ int main(int argc, char *argv[])
 		case OPT_RTU_DEL:
 			set_rtu_vlan(-1, -1, -1, 0, -1, 1, 0);
 			break;
-
+		case OPT_RTU_HP_MASK:
+			set_hp_mask(optarg);
+			break;
 	  /****************************************************/
 		/* Other settings */
 		case OPT_CLEAR:
@@ -408,6 +414,30 @@ static void set_p_umask(int ep, int arg_umask)
 	vlans[ep].valid_mask |= VALID_UNTAG;
 }
 
+static void set_hp_mask(char *mask_str)
+{
+	int hp_mask;
+	int val;
+	int ret;
+
+	hp_mask = strtol(mask_str, NULL, 0);
+
+	if (hp_mask >= (1 << 8)) {
+		pr_error("Wrong HP mask %s\n", mask_str);
+		exit(1);
+	}
+
+	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT,
+			  &rtud_export_hp_mask, &val,
+			  RTU_SET_HP_MASK, hp_mask);
+	ret = (ret < 0) ? ret : val;
+	if (ret < 0) {
+		pr_error("failed to set HP mask 0x%x (%s), ret %d\n",
+			  hp_mask, mask_str, ret);
+		exit(1);
+	}
+
+}
 static int check_rtu(char *name, char *arg_val, int min, int max)
 {
 	int val;
@@ -422,7 +452,7 @@ static int check_rtu(char *name, char *arg_val, int min, int max)
 
 static int print_help(char *prgname)
 {
-	fprintf(stderr, "Use: %s [-v] [-q]"
+	fprintf(stderr, "Use: %s [-v] [-q] [--hpmask <mask>]"
 			"[--port <port number 1..18> <port options> "
 			"--port <port number> <port options> ...] "
 			"[--rvid <vid> --rfid <fid> --rmask <mask> --rdrop "
@@ -448,6 +478,9 @@ static int print_help(char *prgname)
 			"\t --rdrop <1/0>       drop/don't drop frames on VLAN\n"
 			"\t --rprio <prio>      force priority for VLAN (-1 cancels priority override)\n"
 			"Other options:\n"
+			"\t --hpmask <mask>   Set the mask which priorities are considered\n"
+			"\t                   High Priority (this only concerns the traffic which\n"
+			"\t                   is fast-forwarded)\n"
 			"\t --clear           clears RTUd VLAN table\n"
 			"\t --list            prints the content of RTUd VLAN table\n"
 			"\t -f|--file <file>  reads configuration from the provided dot-config file\n"
@@ -674,6 +707,21 @@ static void list_p_vlans(void)
 	return;
 }
 
+static void print_hp_mask(void)
+{
+	int hp_mask;
+	int ret;
+	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_hp_mask,
+			  &hp_mask, RTU_GET_HP_MASK, NULL);
+	if (ret < 0) {
+		pr_error("failed to read HP mask, ret %d\n", ret);
+		exit(1);
+	}
+	printf("#-----------------------------------------------\n");
+	printf("# HP mask: 0x%02x\n", hp_mask);
+	printf("#-----------------------------------------------\n");
+}
+
 static int clear_all(void)
 {
 	uint32_t r;
@@ -832,9 +880,27 @@ static int read_dot_config(char *dot_config_file)
 		return -1;
 	}
 
+	ret = libwr_cfg_get("RTU_HP_MASK_ENABLE");
+	if (ret && !strcmp(ret, "y")) {
+		if (wrs_msg_level >= LOG_DEBUG)
+			printf("Setting HP mask\n");
+
+		ret = libwr_cfg_get("RTU_HP_MASK_VAL");
+		if (ret) {
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Set RTU_HP_MASK_VAL %s\n", ret);
+			set_hp_mask(ret);
+		} else {
+			pr_error("Unable to get RTU_HP_MASK_VAL\n");
+			exit(1);
+		}
+	}
+
+
+	/* read VLANs related configuration */
 	ret = libwr_cfg_get("VLANS_ENABLE");
 	if (!ret || strcmp(ret, "y")) {
-		if (debug > 1)
+		if (wrs_msg_level >= LOG_DEBUG)
 			printf("VLANS not enabled\n");
 		return -2;
 	}
