@@ -1,0 +1,1 @@
+../init.d/wrs_custom_boot_script.sh

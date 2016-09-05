@@ -577,8 +577,9 @@ value is changed by the web interface, proper action is taken.
 	Logging options for the three main WRS processes and other programs.
 	@t{CONFIG_WRS_LOG_OTHER} is currently used by:
 	@itemize
-	@item wrs_watchdog
-	@item wrs_auxclk
+	@item @t{wrs_watchdog}
+	@item @t{wrs_auxclk}
+	@item @t{wrs_custom_boot_script.sh}
 	@end itemize
 	Each value
         can be a pathname, to select logging to file (and @t{/dev/kmsg}
@@ -791,9 +792,26 @@ value is changed by the web interface, proper action is taken.
 	Limit the Rx bandwidth of the traffic that goes from WR ports to Linux.
 	Throttling can be enabled to prevent Linux using 100% of the processing
 	power to receive Ethernet frames coming from WR ports to the CPU.
+
 	To enable throttling set @t{CONFIG_NIC_THROTTLING_ENABLED}.
 	@t{CONFIG_NIC_THROTTLING_VAL} contains maximum allowed bandwidth
 	in KB/s.
+
+@item CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED
+@itemx CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL
+@itemx CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE
+@itemx CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL
+
+	It is possible to run a custom script at boot time. In this case please set @t{CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED}.
+	To run a script from the local filesystem please set @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL}.
+	The script at the location @t{/wr/bin/custom_boot_script.sh} will be executed.
+
+	As an alternative, you can choose @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE} and be able to
+	specify an URL (@t{http://}, @t{ftp://} or @t{tftp://}) in @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL} whence
+	the switch will download the script to be executed at boot time.
+	The filename in the URL can include @t{HOSTNAME}, @t{IPADDR}
+	and/or @t{MACADDR}, so the same configuration string can be used to set up a batch
+	of switches with different configurations.
 
 @item CONFIG_MONIT_DISABLE
 

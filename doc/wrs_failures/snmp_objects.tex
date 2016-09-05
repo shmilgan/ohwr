@@ -54,11 +54,13 @@
     the dot-config, unable to get URL to the dot-config, dot-config contains
     errors, unable to read the hwinfo, unable to load the FPGA bitstream, unable
     to load the LM32 software, any kernel modules or userspace daemons are
-    missing.\\
+    missing, failed to update firmware due to checksum error, unable to
+    download custom boot script, custom boot script fails during execution.\\
     \underline{On error:}
     \begin{pck_proc}
       \item Dump state
       \item Check \texttt{\glshyperlink{WR-SWITCH-MIB::wrsBootConfigStatus}},
+        \texttt{\glshyperlink{WR-SWITCH-MIB::wrsCustomBootScriptStatus}}
         if it reports an error, please verify your WRS configuration.
       \item Restart the switch
       \item Please consult WR experts if the problem persists.
@@ -427,7 +429,7 @@
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsRestartReasonMonit}{
     Process that caused \texttt{monit} to trigger a restart.}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootConfigStatus}{Result of
-  the dot-config verification.}
+    the dot-config verification.}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootHwinfoReadout}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootLoadFPGA}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsBootLoadLM32}{}
@@ -441,6 +443,14 @@
     the Ethernet switching process}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsFwUpdateStatus}{
     Status of the last firmware update}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsCustomBootScriptSource}{
+    Source of the custom script that can be executed once at boot time. It can
+    be used to setup a switch in a way not supported by dot-config.}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsCustomBootScriptSourceUrl}{
+    Path to the custom boot script on a remote server (if local scripts is not
+    used).}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsCustomBootScriptStatus}{
+    Result of custom boot script execution.}
 
   \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsTemperatureGroup}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsTemperatureGroup}{wrsTempFPGA}{}

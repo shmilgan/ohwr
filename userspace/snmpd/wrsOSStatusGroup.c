@@ -164,6 +164,41 @@ time_t wrsOSStatus_data_fill(void)
 			 slog_obj_name, b->wrsBootUserspaceDaemonsMissing);
 	}
 
+	/* custom boot script source error */
+	if (b->wrsCustomBootScriptSource == WRS_CUSTOM_BOOT_SCRIPT_SOURCE_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: unrecognized source of custom boot script\n",
+			 slog_obj_name);
+	}
+
+	if (b->wrsCustomBootScriptStatus == WRS_CUSTOM_BOOT_SCRIPT_STATUS_FAILED) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: custom boot script failed during execution\n",
+			 slog_obj_name);
+	}
+	if (b->wrsCustomBootScriptStatus == WRS_CUSTOM_BOOT_SCRIPT_STATUS_WRONG_SRC) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: unrecognized source of custom boot script\n",
+			 slog_obj_name);
+	}
+	if (b->wrsCustomBootScriptStatus == WRS_CUSTOM_BOOT_SCRIPT_STATUS_DL_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: error while downloading custom boot script\n",
+			 slog_obj_name);
+	}
+	if (b->wrsCustomBootScriptStatus == WRS_CUSTOM_BOOT_SCRIPT_STATUS_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: error in status file of custom boot script execution\n",
+			 slog_obj_name);
+	}
+
+	if (b->wrsCustomBootScriptSource == WRS_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE
+	    && strnlen(b->wrsCustomBootScriptSourceUrl, WRS_CUSTOM_BOOT_SCRIPT_SOURCE_URL_LEN) == 0) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: empty URL for custom boot script\n",
+			 slog_obj_name);
+	}
+
 	/* check if warning */
 	if (!o->wrsBootSuccessful) {
 
@@ -217,8 +252,16 @@ time_t wrsOSStatus_data_fill(void)
 			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: wrong data in hwinfo, unknown version of SCB\n",
 				slog_obj_name);
 		}
-
-
+		if (b->wrsCustomBootScriptSource == WRS_CUSTOM_BOOT_SCRIPT_SOURCE_ERROR_MINOR) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: Unable to read status file of wrsCustomBootScriptSource\n",
+				slog_obj_name);
+		}
+		if (b->wrsCustomBootScriptStatus == WRS_CUSTOM_BOOT_SCRIPT_STATUS_ERROR_MINOR) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: Unable to read status file of wrsCustomBootScriptStatus\n",
+				slog_obj_name);
+		}
 	}
 
 	/* check if any of fields equal to 0 */
@@ -253,6 +296,16 @@ time_t wrsOSStatus_data_fill(void)
 			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Status of wrsFwUpdateStatus not available\n",
 				slog_obj_name);
 		}
+		if (b->wrsCustomBootScriptSource == 0) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Status of wrsCustomBootScriptSource not available\n",
+				slog_obj_name);
+		}
+		if (b->wrsCustomBootScriptStatus == 0) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Status of wrsCustomBootScriptStatus not available\n",
+				slog_obj_name);
+		}
 	}
 
 	if ((!o->wrsBootSuccessful) 
@@ -269,6 +322,18 @@ time_t wrsOSStatus_data_fill(void)
 		&& b->wrsBootKernelModulesMissing == 0
 		&& b->wrsBootUserspaceDaemonsMissing == 0
 		&& b->wrsFwUpdateStatus == WRS_FW_UPDATE_STATUS_OK
+		/* custom boot script source and status */
+		&& (/* disabled */
+		    (b->wrsCustomBootScriptSource == WRS_CUSTOM_BOOT_SCRIPT_SOURCE_DISABLED
+		     && b->wrsCustomBootScriptStatus == WRS_CUSTOM_BOOT_SCRIPT_STATUS_DISABLED
+		    ) || (/* local */
+			  b->wrsCustomBootScriptSource == WRS_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL
+			  && b->wrsCustomBootScriptStatus == WRS_CUSTOM_BOOT_SCRIPT_STATUS_OK
+		    ) || (/* remote */
+			  b->wrsCustomBootScriptSource == WRS_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE
+			  && b->wrsCustomBootScriptStatus == WRS_CUSTOM_BOOT_SCRIPT_STATUS_OK
+		    )
+		   )
 	       )
 	   ) { /* OK, but check source */
 		/* additional check of source */

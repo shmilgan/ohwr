@@ -275,6 +275,7 @@ config WRS_LOG_OTHER
 	  In the current version following programs uses this option:
 	  --wrs_watchdog
 	  --wrs_auxclk
+	  --wrs_custom_boot_script.sh
 	  This collective entry is to avoid number of entries in dot-config.
 	  The string can be a pathname (e.g. /dev/kmsg) or a <facility>.<level>
 	  spefification like "daemon.debug". An empty strings is used
@@ -769,6 +770,47 @@ config NIC_THROTTLING_VAL
 	range 1 65535
 	help
 	  Value to which bandwith should be limited (in KB/s).
+
+endmenu
+
+menu "Custom boot script configuration"
+config CUSTOM_BOOT_SCRIPT_ENABLED
+	bool "Execute custom script"
+	default n
+	help
+	  Enable execution of a custom script during boot. It can be a local
+	  script placed at /wr/bin/custom_boot_script.sh or downloaded from
+	  a given URL. This script can be used for some exotic configurations
+	  that dot-config does not support. This scipt runs before switching
+	  is enabled.
+
+choice CUSTOM_BOOT_SCRIPT_SOURCE
+	prompt "Source for a custom boot script"
+	depends on CUSTOM_BOOT_SCRIPT_ENABLED
+	default CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL
+	help
+	  Defines the source of a custom boot script. Local or remote.
+
+config CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL
+	bool "Use local custom script"
+	help
+	  Use /wr/bin/custom_boot_script.sh to be executed at boot.
+
+config CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE
+	bool "Use remote custom script"
+	help
+	  Use the URL in CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL to download the
+	  custom boot script.
+
+endchoice
+config CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL
+	string "URL of a custom script"
+	depends on CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE
+	help
+	  URL to the custom script. HOSTNAME, IPADDR and MACADDR are
+	  substituted before retrieving the file.
+
+	  Example:  "tftp://morgana/custom-script-IPADDR"
 
 endmenu
 
