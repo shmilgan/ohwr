@@ -192,9 +192,9 @@ void rtux_set_port_mirror(uint32_t mirror_src_mask, uint32_t mirror_dst_mask,
 }
 
 /**
- * \brief Read the mask which which priorities are considered High Priority (this only
+ * \brief Read the mask which priorities are considered High Priority (this only
  *        concerns the traffic which is fast-forwarded)
- * @return mask with priorities (eg. 0x9 => priority 7 and 0 are considered HP)
+ * @return mask with priorities (eg. 0x9 => priority 4 and 0 are considered HP)
 
  */
 uint8_t rtux_get_hp_prio_mask()
