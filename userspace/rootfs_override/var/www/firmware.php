@@ -20,7 +20,12 @@
 
 	<?php
 		session_is_started();
-		if(wrs_php_filesize()<30) php_file_transfer_size(30);
+		$size=wrs_php_filesize();
+		if (wrs_php_filesize() < 30) {
+			echo '<p align=center ><font color="red">';
+			echo 'Warning upload_max_filesize in php.ini is set to '.$size.'M. Upload probably will not work!';
+			echo '</font></p>';
+			}
 	?>
 
 	<table border="0" align="center">

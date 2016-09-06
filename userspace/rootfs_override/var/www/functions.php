@@ -11,7 +11,6 @@ $vlancolor = array("#27DE2A", "#B642A8", "#6E42B6", "#425DB6" , "#428DB6", "#468
 $MAX_PHP_FILESIZE = 40;
 $phpusersfile="/usr/etc/phpusers";
 $profilefile="/usr/etc/profile";
-$phpinifile="/etc/php.ini";
 $interfacesfile = "/usr/etc/network/interfaces";
 $kconfigfile = "/wr/etc/dot-config";
 $kconfigfilename = "dot-config";
@@ -425,40 +424,6 @@ function wrs_check_ptp_status(){
 }
 
 /*
- * It modifies filesize transfer value.
- *
- * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
- *
- * It modifies filesize transfer value in php.ini. Two variables must be
- * modified: upload_max_filesize and post_max_size
- *
- * @param string $size New PHP sent filename value.
- *
- */
-function php_file_transfer_size($size){
-
-	// We remove the blank space
-	$size=trim($size);
-
-
-	// We modify fist upload_max_filesize in php.ini
-	$prev_size = shell_exec("cat ".$GLOBALS['phpinifile']." | grep upload_max_filesize | awk '{print $3}'");
-	$prev_size=trim($prev_size);
-	$cmd = "sed -i 's/upload_max_filesize = ".$prev_size."/upload_max_filesize = ".$size."M/g' ".$GLOBALS['phpinifile'];
-	shell_exec($cmd);
-
-	// We modify post_max_size in php.ini
-	$prev_size = shell_exec("cat ".$GLOBALS['phpinifile']." | grep post_max_size | awk '{print $3}'");
-	$prev_size=trim($prev_size);
-	$cmd ="sed -i 's/post_max_size = ".$prev_size."/post_max_size = ".$size."M/g' ".$GLOBALS['phpinifile'];
-	shell_exec($cmd);
-	shell_exec("cat ".$GLOBALS['phpinifile']." >/usr/etc/php.ini"); //We store it in /usr/etc/php.ini copy. Just in case
-
-
-	//echo '<p align=center>File upload size changed to '.$size.'</p>';
-}
-
-/*
  * It modifies each endpoint configuration
  *
  * @author José Luis Gutiérrez <jlgutierrez@ugr.es>
@@ -586,11 +551,9 @@ function wr_show_endpoint_rt_show(){
  *
  */
 function wrs_php_filesize(){
-
-	 $size=shell_exec("cat ".$GLOBALS['phpinifile']." | grep upload_max_filesize | awk '{print $3}'");
-	 $size=substr($size, 0, -2);
+	 $size=ini_get('upload_max_filesize');
+	 $size=substr($size, 0, -1);
 	 return $size;
-
 }
 
 /*
@@ -659,12 +622,7 @@ function wrs_load_files(){
 			}
 
 			echo "</pre>";
-
-		} else if (!empty($_POST["size"])){
-			php_file_transfer_size(htmlspecialchars($_POST["size"]));
-			header ('Location: load.php');
 		}
-
 }
 
 /*

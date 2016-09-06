@@ -1,0 +1,69 @@
+From 9547e0de3053813d72df79462c45b9b4db668669 Mon Sep 17 00:00:00 2001
+From: Adam Wujek <adam.wujek@cern.ch>
+Date: Tue, 6 Sep 2016 17:06:45 +0200
+Subject: [PATCH] packages/php: increase the maximum allowed size of upload
+ files
+
+Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
+---
+ ...duction-increase-post_max_size-and-upload.patch | 48 ++++++++++++++++++++++
+ 1 file changed, 48 insertions(+)
+ create mode 100644 package/php/0007-php.ini-production-increase-post_max_size-and-upload.patch
+
+diff --git a/package/php/0007-php.ini-production-increase-post_max_size-and-upload.patch b/package/php/0007-php.ini-production-increase-post_max_size-and-upload.patch
+new file mode 100644
+index 0000000..be1dde3
+--- /dev/null
++++ b/package/php/0007-php.ini-production-increase-post_max_size-and-upload.patch
+@@ -0,0 +1,48 @@
++From 4bfab0ec8d534906d9252b9f5d300917b1bebe6d Mon Sep 17 00:00:00 2001
++From: Adam Wujek <adam.wujek@cern.ch>
++Date: Tue, 6 Sep 2016 17:03:57 +0200
++Subject: [PATCH] php.ini-production: increase post_max_size and
++ upload_max_filesize to 30M
++
++Also reduce memory_limit to 50M. On wr-switch we have only 64MB of RAM
++
++Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
++---
++ php.ini-production | 7 ++++---
++ 1 file changed, 4 insertions(+), 3 deletions(-)
++
++diff --git a/php.ini-production b/php.ini-production
++index dc483f7..9939f5c 100644
++--- a/php.ini-production
+++++ b/php.ini-production
++@@ -390,7 +390,8 @@ max_input_time = 60
++ 
++ ; Maximum amount of memory a script may consume (128MB)
++ ; http://php.net/memory-limit
++-memory_limit = 128M
+++; on wrs we have 64MB of RAM
+++memory_limit = 50M
++ 
++ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
++ ; Error handling and logging ;
++@@ -657,7 +658,7 @@ auto_globals_jit = On
++ ; Its value may be 0 to disable the limit. It is ignored if POST data reading
++ ; is disabled through enable_post_data_reading.
++ ; http://php.net/post-max-size
++-post_max_size = 8M
+++post_max_size = 30M
++ 
++ ; Automatically add files before PHP document.
++ ; http://php.net/auto-prepend-file
++@@ -806,7 +807,7 @@ file_uploads = On
++ 
++ ; Maximum allowed size for uploaded files.
++ ; http://php.net/upload-max-filesize
++-upload_max_filesize = 2M
+++upload_max_filesize = 30M
++ 
++ ; Maximum number of files that can be uploaded via a single request
++ max_file_uploads = 20
++-- 
++1.9.1
++
+-- 
+1.9.1
+

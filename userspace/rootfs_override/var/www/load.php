@@ -38,21 +38,6 @@
 	</tr>
 	</table>
 
-<!--
-	<br><br><br><center>Max. filesize is now <?php //echo shell_exec("cat /etc/php.ini | grep upload_max_filesize | awk '{print $3}'");
-			?></center>
-
-			<table border="0" align="center">
-			<tr>
-
-			<form align="center" method="post">
-			<th>New PHP Filesize: </th><th><INPUT type="text" name="size" > </th>
-			<th><input type="submit" value="Change" class="btn"></th>
-			</tr>
-			</form>
-			</table>
--->
-
 	<div id="bottommsg">
 		<center>
 		*NOTE: After loading a FPGA or lm32 binary the switch will reboot.
