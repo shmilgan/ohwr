@@ -318,6 +318,15 @@ void shw_sfp_print_header(struct shw_sfp_header *head)
 	printf("\n");
 }
 
+void shw_sfp_print_dom(struct shw_sfp_dom * dom)
+{
+	printf("Temperature: %.3f C\n", (int8_t)dom->temp[0] + dom->temp[1]/(float)256);
+	printf("Voltage: %.3f V\n", (dom->vcc[0]*256 + dom->vcc[1])/(float)10000);
+	printf("Bias Current:  %.3f uA\n", (dom->tx_bias[0]*256+dom->tx_bias[1])/(float)500000);
+	printf("TX power: %.3f mW\n", (dom->tx_pow[0]*256 + dom->tx_pow[1])/(float)100000);
+	printf("RX power: %.3f mW\n", (dom->rx_pow[0]*256 + dom->rx_pow[1])/(float)100000);
+}
+
 void shw_sfp_header_dump(struct shw_sfp_header *head)
 {
 	int i;
@@ -331,6 +340,20 @@ void shw_sfp_header_dump(struct shw_sfp_header *head)
 	printf("\n");
 
 }
+
+void shw_sfp_dom_dump(struct shw_sfp_dom *dom)
+{
+	int i;
+	uint8_t *dump = (uint8_t *) dom;
+	printf("Dom Dump:");
+	for (i = 0; i < sizeof(struct shw_sfp_dom); i++) {
+		if (i % 8 == 0)
+			printf("\n");
+		printf("%02X ", dump[i]);
+	}
+	printf("\n");
+}
+
 
 /* Get the SFP ID from the SFP number (0 to 17) */
 inline int shw_sfp_id(int num)
@@ -551,6 +574,32 @@ int shw_sfp_read_header(int num, struct shw_sfp_header *head)
 	ret =
 	    shw_sfp_read(num, I2C_SFP_ADDRESS, 0x0,
 			 sizeof(struct shw_sfp_header), (uint8_t *) head);
+	if (ret == I2C_DEV_NOT_FOUND) {
+		pr_error("shw_sfp_read_header: I2C_DEV_NOT_FOUND\n");
+		return -ENODEV;
+	}
+
+	return 0;
+}
+
+int shw_sfp_read_dom(int num, struct shw_sfp_dom *dom)
+{
+	int ret;
+
+	if (shw_sfp_id(num) < 0) {
+		pr_error("shw_sfp_read_header: wrong SFP num %d\n", num + 1);
+		return -1;
+	}
+
+	ret = shw_sfp_module_scan();
+	if (!(ret & (1 << num))) {
+		pr_error("shw_sfp_read_header: SFP not present %d\n", num + 1);
+		return -2;
+	}
+
+	ret =
+	    shw_sfp_read(num, I2C_SFP_DOM_ADDRESS, 0x0,
+			 sizeof(struct shw_sfp_dom), (uint8_t *) dom);
 	if (ret == I2C_DEV_NOT_FOUND) {
 		pr_error("shw_sfp_read_header: I2C_DEV_NOT_FOUND\n");
 		return -ENODEV;

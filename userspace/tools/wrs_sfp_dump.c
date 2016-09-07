@@ -33,11 +33,12 @@ void print_info(char *prgname)
 		"Optional parameters:\n"
 		"   -p <num>        Dump sfp header for specific port (1-18); dump sfp header info for all\n"
 		"                   ports if no <-p> specified\n"
-		"   -x              Dump sfp header also in hex\n"
 		"   -a <READ|WRITE> Read/write SFP's eeprom; works only with <-I>;\n"
 		"                   before READs/WRITEs disable HAL and monit!\n"
 		"   -f <file>       File to READ/WRITE SFP's eeprom\n"
 		"   -H <dir>        Open shmem dumps from the given directory; works only with <-L>\n"
+		"   -d              Dump sfp DOM data page\n"
+		"   -x              Dump sfp/DOM header also in hex\n"
 		"   -q              Decrease verbosity\n"
 		"   -v              Increase verbosity\n"
 		"   -V              Print version\n"
@@ -280,11 +281,13 @@ int main(int argc, char **argv)
 	int c;
 	struct shw_sfp_header sfp_hdr;
 	struct shw_sfp_header *sfp_hdr_p;
+	struct shw_sfp_dom sfp_dom;
 	int err;
 	int nports;
 	int dump_port;
 	int i;
 	int dump_hex_header = 0;
+	int dump_sfp_dom = 0;
 	int operation = 0;
 	char *eeprom_file = NULL;
 	int sfp_data_source = 0;
@@ -296,7 +299,7 @@ int main(int argc, char **argv)
 	nports = 18;
 	dump_port = 1;
 
-	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIH:")) != -1) {
+	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIdH:")) != -1) {
 		switch (c) {
 		case 'p':
 			dump_port = atoi(optarg);
@@ -310,6 +313,9 @@ int main(int argc, char **argv)
 			break;
 		case 'x':
 			dump_hex_header = 1;
+			break;
+		case 'd':
+			dump_sfp_dom = 1;
 			break;
 		case 'V':
 			print_version(argv[0]);
@@ -407,6 +413,13 @@ int main(int argc, char **argv)
 			shw_sfp_print_header(sfp_hdr_p);
 			if (dump_hex_header) {
 				shw_sfp_header_dump(sfp_hdr_p);
+			}
+			if(dump_sfp_dom) {
+				shw_sfp_read_dom(i - 1, &sfp_dom);
+				shw_sfp_print_dom(&sfp_dom);
+				if(dump_hex_header) {
+					shw_sfp_dom_dump(&sfp_dom);
+				}
 			}
 		}
 	}
