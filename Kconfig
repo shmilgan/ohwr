@@ -860,7 +860,11 @@ config FAN_HYSTERESIS_PWM_VAL
 	  PWM value used to drive fans. Range from 4 to 1000.
 
 endmenu
-
+config READ_SFP_DIAG_ENABLE
+	bool "Read SFPs Diagnostic Monitoring"
+	default n
+	help
+	  Let HAL to read Diagnostic Monitoring from SFP's eeprom.
 endmenu
 menu "RTU HP mask"
 

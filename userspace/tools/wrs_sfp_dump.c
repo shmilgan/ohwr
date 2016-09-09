@@ -202,7 +202,8 @@ void print_version(char *prgname)
 	       __GIT_USR__);
 }
 
-int hal_read(struct shw_sfp_header *sfp_header_local_copy) {
+int hal_read(struct shw_sfp_header *sfp_header_local_copy,
+	     struct shw_sfp_dom *sfp_dom) {
 	unsigned ii;
 	unsigned retries = 0;
 	int port;
@@ -215,7 +216,12 @@ int hal_read(struct shw_sfp_header *sfp_header_local_copy) {
 			       &hal_ports[port].calib.sfp_header_raw,
 			       sizeof(struct shw_sfp_header));
 		}
-
+		if (sfp_dom)
+			for (port = 0; port < hal_nports_local; port++) {
+				memcpy(&sfp_dom[port],
+				      &hal_ports[port].calib.sfp_dom_raw,
+				      sizeof(struct shw_sfp_dom));
+		}
 		retries++;
 		if (retries > 100)
 			return -1;
@@ -282,6 +288,7 @@ int main(int argc, char **argv)
 	struct shw_sfp_header sfp_hdr;
 	struct shw_sfp_header *sfp_hdr_p;
 	struct shw_sfp_dom sfp_dom;
+	struct shw_sfp_dom *sfp_dom_p;
 	int err;
 	int nports;
 	int dump_port;
@@ -293,6 +300,7 @@ int main(int argc, char **argv)
 	int sfp_data_source = 0;
 	/* local copy of sfp eeprom */
 	struct shw_sfp_header hal_sfp_raw_header_lc[HAL_MAX_PORTS];
+	struct shw_sfp_dom hal_sfp_raw_dom_lc[HAL_MAX_PORTS];
 
 
 	wrs_msg_init(argc, argv);
@@ -369,7 +377,7 @@ int main(int argc, char **argv)
 
 	if (sfp_data_source == READ_HAL) {
 		hal_init_shm();
-		hal_read(hal_sfp_raw_header_lc);
+		hal_read(hal_sfp_raw_header_lc, hal_sfp_raw_dom_lc);
 		printf("Reading SFP eeprom from HAL\n");
 	}
 
@@ -398,9 +406,13 @@ int main(int argc, char **argv)
 			memset(&sfp_hdr, 0, sizeof(sfp_hdr));
 			sfp_hdr_p = &sfp_hdr;
 			err = shw_sfp_read_header(i - 1, sfp_hdr_p);
+			memset(&sfp_dom, 0, sizeof(sfp_dom));
+			sfp_dom_p = &sfp_dom;
+			shw_sfp_read_dom(i - 1, sfp_dom_p);
 		}
 		if (sfp_data_source == READ_HAL) {
 			sfp_hdr_p = &hal_sfp_raw_header_lc[i - 1];
+			sfp_dom_p = &hal_sfp_raw_dom_lc[i - 1];
 		}
 		err = shw_sfp_header_verify(sfp_hdr_p);
 		if (err == -2) {
@@ -415,10 +427,9 @@ int main(int argc, char **argv)
 				shw_sfp_header_dump(sfp_hdr_p);
 			}
 			if(dump_sfp_dom) {
-				shw_sfp_read_dom(i - 1, &sfp_dom);
-				shw_sfp_print_dom(&sfp_dom);
+				shw_sfp_print_dom(sfp_dom_p);
 				if(dump_hex_header) {
-					shw_sfp_dom_dump(&sfp_dom);
+					shw_sfp_dom_dump(sfp_dom_p);
 				}
 			}
 		}

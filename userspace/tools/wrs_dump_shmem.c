@@ -382,6 +382,7 @@ void dump_many_fields(void *addr, struct dump_info *info, int ninfo)
 struct dump_info hal_shmem_info [] = {
 	DUMP_FIELD(int, nports),
 	DUMP_FIELD(int, hal_mode),
+	DUMP_FIELD(int, read_sfp_diag),
 	DUMP_FIELD(sensor_temp, temp.fpga),
 	DUMP_FIELD(sensor_temp, temp.pll),
 	DUMP_FIELD(sensor_temp, temp.psl),
@@ -433,6 +434,7 @@ struct dump_info hal_port_info [] = {
 	DUMP_FIELD(uint32_t, t2_phase_transition),
 	DUMP_FIELD(uint32_t, t4_phase_transition),
 	DUMP_FIELD(uint32_t, ep_base),
+	DUMP_FIELD(int, has_sfp_diag),
 };
 
 int dump_hal_mem(struct wrs_shm_head *head)

@@ -30,6 +30,16 @@
 #define SFP_SPEED_1Gb_10   0x0A /* Unfortunatelly the above is not always true,
               * e.g. Cisco copper SFP (MGBT1) says simply 10 and not 13.*/
 
+#define SFP_DIAGNOSTIC_IMPLEMENTED (1 << 6) /* Digital diagnostic monitoring
+					       implemented. "1" for compliance
+					       with SFF-8472 */
+#define SFP_ADDR_CHANGE_REQ (1 << 2) /* Bit 2 indicates whether or not it is
+					necessary for the host to perform an
+					address change sequence before
+					accessing information at 2-wire serial
+					address A2h. */
+
+
 struct shw_sfp_caldata {
 	uint32_t flags;
 	/*
@@ -80,7 +90,9 @@ struct shw_sfp_header {
 	uint8_t br_min;
 	uint8_t vendor_serial[16];
 	uint8_t date_code[8];
-	uint8_t reserved[3];
+	uint8_t diagnostic_monitoring_type;
+	uint8_t enhanced_options;
+	uint8_t sff_8472_compliance;
 	uint8_t cc_ext;
 } __attribute__ ((packed));
 
@@ -176,6 +188,9 @@ int shw_sfp_read_verify_header(int num, struct shw_sfp_header *head);
 
 /* Read the SFP diagnostics page */
 int shw_sfp_read_dom(int num, struct shw_sfp_dom *dom);
+
+/* Update the SFP diagnostics page */
+int shw_sfp_update_dom(int num, struct shw_sfp_dom *dom);
 
 /* Decode and print the SFP real time diagnostics */
 void shw_sfp_print_dom(struct shw_sfp_dom * dom);

@@ -211,6 +211,7 @@ static int hal_port_init(int index)
 int hal_port_init_shmem(char *logfilename)
 {
 	int index;
+	char *ret;
 	pr_info("Initializing switch ports...\n");
 
 	/* default timeouts */
@@ -255,6 +256,14 @@ int hal_port_init_shmem(char *logfilename)
 	hal_shmem->nports = hal_port_nports;
 	hal_shmem_hdr->version = HAL_SHMEM_VERSION;
 	hal_shmem->hal_mode = hal_get_timing_mode();
+
+	ret = libwr_cfg_get("READ_SFP_DIAG_ENABLE");
+	if (ret && !strcmp(ret, "y")) {
+		pr_info("Read SFP Diagnostic Monitoring enabled\n");
+		hal_shmem->read_sfp_diag = READ_SFP_DIAG_ENABLE;
+	} else
+		hal_shmem->read_sfp_diag = READ_SFP_DIAG_DISABLE;
+
 	/* Release processes waiting for HAL's to fill shm with correct data
 	   When shm is opened successfully data in shm is still not populated!
 	   Read data with wrs_shm_seqbegin and wrs_shm_seqend!
@@ -478,6 +487,7 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 	int err;
 
 	memset(&shdr, 0, sizeof(struct shw_sfp_header));
+	memset(&p->calib.sfp_dom_raw, 0, sizeof(struct shw_sfp_dom));
 	err = shw_sfp_read_verify_header(p->hw_index, &shdr);
 	memcpy(&p->calib.sfp_header_raw, &shdr, sizeof(struct shw_sfp_header));
 	if (err == -2) {
@@ -489,7 +499,27 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 			 p->name);
 		return;
 	}
+	if (hal_shmem->read_sfp_diag == READ_SFP_DIAG_ENABLE
+	    && shdr.diagnostic_monitoring_type & SFP_DIAGNOSTIC_IMPLEMENTED) {
+		pr_info("SFP Diagnostic Monitoring implemented in SFP plugged"
+			" to port %d (%s)\n", p->hw_index + 1, p->name);
+		if (shdr.diagnostic_monitoring_type & SFP_ADDR_CHANGE_REQ) {
+			pr_warning("SFP in port %d (%s) requires special "
+				   "address change before accessing Diagnostic"
+				   " Monitoring, which is not implemented "
+				   "right now\n", p->hw_index + 1, p->name);
+		} else {
+			/* copy coontent of SFP's Diagnostic Monitoring */
+			shw_sfp_read_dom(p->hw_index, &p->calib.sfp_dom_raw);
+			if (err < 0) {
+				pr_error("Failed to read SFP Diagnostic "
+					 "Monitoring for port %d (%s)\n",
+					 p->hw_index + 1, p->name);
+			}
+			p->has_sfp_diag = 1;
+		}
 
+	}
 	pr_info("SFP Info: Manufacturer: %.16s P/N: %.16s, S/N: %.16s\n",
 	      shdr.vendor_name, shdr.vendor_pn, shdr.vendor_serial);
 	cdata = shw_sfp_get_cal_data(p->hw_index, &shdr);
@@ -570,6 +600,8 @@ static void hal_port_remove_sfp(struct hal_port_state * p)
 	/* clean SFP's details when removing SFP */
 	memset(&p->calib.sfp, 0, sizeof(p->calib.sfp));
 	memset(&p->calib.sfp_header_raw, 0, sizeof(struct shw_sfp_header));
+	memset(&p->calib.sfp_dom_raw, 0, sizeof(struct shw_sfp_dom));
+	p->has_sfp_diag = 0;
 }
 
 /* detects insertion/removal of SFP transceivers */
@@ -615,10 +647,20 @@ void hal_port_update_all()
 	hal_port_poll_sfp();
 
 	for (i = 0; i < HAL_MAX_PORTS; i++)
-		if (ports[i].in_use)
+		if (ports[i].in_use) {
 			hal_port_fsm(&ports[i]);
+			/* update DOM only for plugged ports with DOM
+			 * capabilities */
+			if (ports[i].state != HAL_PORT_STATE_DISABLED 
+			    && hal_shmem->read_sfp_diag == READ_SFP_DIAG_ENABLE
+			    && (ports[i].has_sfp_diag)) {
+				shw_sfp_update_dom(ports[i].hw_index,
+						  &ports[i].calib.sfp_dom_raw);
+			}
+		}
 	/* unlock shmem */
 	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+
 }
 
 int hal_port_enable_tracking(const char *port_name)

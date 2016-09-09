@@ -608,6 +608,13 @@ int shw_sfp_read_dom(int num, struct shw_sfp_dom *dom)
 	return 0;
 }
 
+/* Function to update SFP's Diagnostic Monitoring data from SFP's eeprom */
+int shw_sfp_update_dom(int num, struct shw_sfp_dom *dom)
+{
+	/* For now copy entire eeprom */
+	return shw_sfp_read_dom(num, dom);
+}
+
 int shw_sfp_read_verify_header(int num, struct shw_sfp_header *head)
 {
 	int ret;
