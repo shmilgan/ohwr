@@ -2,6 +2,9 @@
 
 # Script read wrs_auxclk parameters from dot-config, then start wrs_auxclk.
 
+tmpdir=/tmp
+wrs_auxclk_set_status_file="$tmpdir"/wrs_auxclk_set_status
+
 # First, read dot-config to get wrs_auxclk parameters
 dotconfig=/wr/etc/dot-config
 set -o pipefail
@@ -55,6 +58,8 @@ eval /wr/bin/wrs_auxclk $p_freq $p_duty $p_cshift $p_sigdel $p_ppshift $LOGPIPE
 ret=$?
 if [ $ret -eq 0 ]; then
     echo "OK"
+    echo "ok" > $wrs_auxclk_set_status_file
 else
     echo "Failed"
+    echo "failed" > $wrs_auxclk_set_status_file
 fi

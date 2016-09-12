@@ -577,10 +577,10 @@ value is changed by the web interface, proper action is taken.
 	Logging options for the three main WRS processes and other programs.
 	@t{CONFIG_WRS_LOG_OTHER} is currently used by:
 	@itemize
-	@item @t{wrs_watchdog}
-	@item @t{wrs_auxclk}
-	@item @t{wrs_custom_boot_script.sh}
-	@item @t{vlan.sh}
+	@item @t{wrs_watchdog} daemon
+	@item @t{wrs_auxclk} executed at boot up
+	@item @t{wrs_custom_boot_script.sh} executed at boot up
+	@item Setting VLANs with @t{vlan.sh} at boot up
 	@end itemize
 	Each value
         can be a pathname, to select logging to file (and @t{/dev/kmsg}

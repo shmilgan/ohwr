@@ -1,5 +1,8 @@
 #!/bin/sh
 
+tmpdir=/tmp
+wrs_throttling_set_status_file="$tmpdir"/wrs_throttling_set_status
+
 # this script shall be called before enabling the switching
 dotconfig=/wr/etc/dot-config
 
@@ -36,11 +39,14 @@ start() {
 	ret=$?
 	if [ $ret -eq 0 ]; then
 	    echo "OK"
+	    echo "ok" > $wrs_throttling_set_status_file
 	else
 	    echo "Failed"
+	    echo "failed" > $wrs_throttling_set_status_file
 	fi
     else
-	echo "throttling disabled"
+	echo "Disabled"
+	echo "disabled" > $wrs_throttling_set_status_file
     fi
 
 }

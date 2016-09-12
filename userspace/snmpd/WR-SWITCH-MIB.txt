@@ -800,6 +800,71 @@ wrsCustomBootScriptStatus OBJECT-TYPE
         errorMinor - cannot read the status file, problem is probably somewhere else"
     ::= { wrsBootStatusGroup 19 }
 
+
+wrsAuxClkSetStatus             OBJECT-TYPE
+    SYNTAX                     INTEGER {
+                                   na(0),
+                                   ok(1),
+                                   failed(2),
+                                   disabled(3),
+                                   error(4),
+                                   errorMinor(5)
+                               }
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "Result of setting up auxclk on connector clk2
+        ok - successful set pu of the auxclk
+        failed - error while setting up the auxclk
+        disabled - the setting up of the auxclk disabled in dot-config
+        error - unsuported status
+        errorMinor - cannot read the status file, the problem is probably
+                     somewhere else"
+    ::= { wrsBootStatusGroup 20 }
+
+wrsThrottlingSetStatus         OBJECT-TYPE
+    SYNTAX                     INTEGER {
+                                   na(0),
+                                   ok(1),
+                                   failed(2),
+                                   disabled(3),
+                                   error(4),
+                                   errorMinor(5)
+                               }
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "Result of setting up a limit on the Rx bandwidth of the traffic that
+        goes from WR ports to Linux.
+        ok - successful set up of the throttling
+        failed - error while setting up the throttling
+        disabled - the setting up of the throttling disabled in dot-config
+        error - unsuported status
+        errorMinor - cannot read the status file, the problem is probably
+                     somewhere else"
+    ::= { wrsBootStatusGroup 21 }
+
+wrsVlansSetStatus              OBJECT-TYPE
+    SYNTAX                     INTEGER {
+                                   na(0),
+                                   ok(1),
+                                   failed(2),
+                                   disabled(3),
+                                   error(4),
+                                   errorMinor(5)
+                               }
+    MAX-ACCESS                 read-only
+    STATUS                     current
+    DESCRIPTION
+        "Result of setting up VLANs
+        ok - successful set up of VLANs
+        failed - error while setting up VLANs
+        disabled - the setting up of VLANs disabled in dot-config
+        error - unsuported status
+        errorMinor - cannot read the status file, the problem is probably
+                     somewhere else"
+    ::= { wrsBootStatusGroup 22 }
+
 -- wrsTemperatureGroup (.7.1.3)
 wrsTemperatureGroup     OBJECT IDENTIFIER ::= { wrsOperationStatus 3 }
 

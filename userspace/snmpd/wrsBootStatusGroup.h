@@ -56,8 +56,26 @@
 #define WRS_CUSTOM_BOOT_SCRIPT_STATUS_ERROR 6		/* error */
 #define WRS_CUSTOM_BOOT_SCRIPT_STATUS_ERROR_MINOR 7	/* warning */
 
-
 #define WRS_CUSTOM_BOOT_SCRIPT_SOURCE_URL_LEN 128
+
+#define WRS_AUXCLK_SET_STATUS_OK 1		/* ok */
+#define WRS_AUXCLK_SET_STATUS_FAILED 2		/* error */
+#define WRS_AUXCLK_SET_STATUS_DISABLED 3	/* ok */
+#define WRS_AUXCLK_SET_STATUS_ERROR 4		/* error */
+#define WRS_AUXCLK_SET_STATUS_ERROR_MINOR 5	/* warning */
+
+#define WRS_THROTTLING_SET_STATUS_OK 1		/* ok */
+#define WRS_THROTTLING_SET_STATUS_FAILED 2	/* error */
+#define WRS_THROTTLING_SET_STATUS_DISABLED 3	/* ok */
+#define WRS_THROTTLING_SET_STATUS_ERROR 4	/* error */
+#define WRS_THROTTLING_SET_STATUS_ERROR_MINOR 5	/* warning */
+
+#define WRS_VLANS_SET_STATUS_OK 1		/* ok */
+#define WRS_VLANS_SET_STATUS_FAILED 2		/* error */
+#define WRS_VLANS_SET_STATUS_DISABLED 3		/* ok */
+#define WRS_VLANS_SET_STATUS_ERROR 4		/* error */
+#define WRS_VLANS_SET_STATUS_ERROR_MINOR 5	/* warning */
+
 
 struct wrsBootStatus_s {
 	uint32_t wrsBootCnt;		/* boots since power-on must be != 0 */
@@ -80,6 +98,9 @@ struct wrsBootStatus_s {
 	int32_t wrsCustomBootScriptSource;
 	char wrsCustomBootScriptSourceUrl[WRS_CUSTOM_BOOT_SCRIPT_SOURCE_URL_LEN + 1];
 	int32_t wrsCustomBootScriptStatus;
+	int32_t wrsAuxClkSetStatus;
+	int32_t wrsThrottlingSetStatus;
+	int32_t wrsVlansSetStatus;
 };
 
 extern struct wrsBootStatus_s wrsBootStatus_s;

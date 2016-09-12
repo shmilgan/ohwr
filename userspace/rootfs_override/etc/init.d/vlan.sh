@@ -1,7 +1,7 @@
 #!/bin/sh
 
 tmpdir=/tmp
-vlans_status_file="$tmpdir"/vlans_status
+vlans_set_status_file="$tmpdir"/vlans_set_status
 
 dotconfig=/wr/etc/dot-config
 
@@ -38,10 +38,13 @@ start() {
     ret=$?
     if [ $ret -eq 0 ]; then
 	echo "OK"
+	echo "ok" > $vlans_set_status_file
     elif [ $ret -eq 2 ]; then
 	echo "Disabled"
+	echo "disabled" > $vlans_set_status_file
     else
 	echo "Failed"
+	echo "failed" > $vlans_set_status_file
     fi
 }
 
