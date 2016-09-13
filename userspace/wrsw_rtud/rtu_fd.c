@@ -674,8 +674,6 @@ static void delete_htab_entry(struct rtu_addr addr)
 {
 	int i, n_buckets = htab_count_buckets(addr);
 
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_BEGIN);
-
 	pr_info("Deleted entry for MAC %s : hash %03x:%d.\n",
 	      mac_to_string(rtu_htab[addr.hash][addr.bucket].mac), addr.hash,
 	      addr.bucket);
@@ -697,7 +695,6 @@ static void delete_htab_entry(struct rtu_addr addr)
 				     &rtu_htab[a.hash][a.bucket],
 				     (i == n_buckets - 1) ? 1 : 0);
 	}
-	wrs_shm_write(rtu_port_shmem, WRS_SHM_WRITE_END);
 }
 
 static void rtu_hw_commit(void)
