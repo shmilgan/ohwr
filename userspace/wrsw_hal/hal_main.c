@@ -16,6 +16,7 @@
 #include <libwr/shw_io.h>
 #include <libwr/sfp_lib.h>
 #include <libwr/config.h>
+#include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/util.h>
 
@@ -31,6 +32,7 @@ static char *logfilename;
 static char *dotconfigname = "/wr/etc/dot-config";
 
 struct hal_shmem_header *hal_shmem;
+struct wrs_shm_head *hal_shmem_hdr;
 
 /* Adds a function to be called during the HAL shutdown. */
 int hal_add_cleanup_callback(hal_cleanup_callback_t cb)
@@ -222,7 +224,7 @@ static void hal_parse_cmdline(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	uint64_t t1, t2;
-
+	struct hal_temp_sensors temp_sensors; /* local copy of temperatures */
 	wrs_msg_init(argc, argv);
 
 	/* Print HAL's version */
@@ -264,8 +266,13 @@ int main(int argc, char *argv[])
 			continue;
 
 		hal_port_update_all();
-		/* update fans and temperatures in shmem */
-		shw_update_fans(&hal_shmem->temp);
+		/* Update fans and get temperatures values. Don't write
+		 * temperatures directly to the shmem to reduce the critical
+		 * section of shmem */
+		shw_update_fans(&temp_sensors);
+		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
+		memcpy(&hal_shmem->temp, &temp_sensors, sizeof(temp_sensors));
+		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 		t1 = t2;
 	}
 
