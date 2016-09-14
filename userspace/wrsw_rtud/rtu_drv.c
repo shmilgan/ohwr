@@ -85,11 +85,15 @@ void init_shm(void)
 			/* print if waiting more than 10 seconds, some wait
 			 * is expected since hal requires few seconds to start
 			 */
-			if (ret == 1) {
+			if (ret == WRS_SHM_OPEN_FAILED) {
 				pr_error("Unable to open HAL's shmem!\n");
 			}
-			if (ret == 2) {
+			if (ret == WRS_SHM_WRONG_VERSION) {
 				pr_error("Unable to read HAL's version!\n");
+			}
+			if (ret == WRS_SHM_INCONSISTENT_DATA) {
+				pr_error("Unable to read consistent data from "
+					 "HAL's shmem!\n");
 			}
 			exit(1);
 		}

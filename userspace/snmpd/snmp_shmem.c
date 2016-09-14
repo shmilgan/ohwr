@@ -30,11 +30,15 @@ static int init_shm_hald(void)
 	n_wait++;
 	/* start printing error after 5 messages */
 	if (n_wait > 5) {
-		if (ret == 1) {
+		if (ret == WRS_SHM_OPEN_FAILED) {
 			snmp_log(LOG_ERR, "Unable to open HAL's shmem!\n");
 		}
-		if (ret == 2) {
+		if (ret == WRS_SHM_WRONG_VERSION) {
 			snmp_log(LOG_ERR, "Unable to read HAL's version!\n");
+		}
+		if (ret == WRS_SHM_INCONSISTENT_DATA) {
+			snmp_log(LOG_ERR, "Unable to read consistent data from"
+				 " HAL's shmem!\n");
 		}
 	}
 	if (ret) {
@@ -82,11 +86,15 @@ static int init_shm_ppsi(void)
 	/* start printing error after 5 messages */
 	if (n_wait > 5) {
 		/* timeout! */
-		if (ret == 1) {
+		if (ret == WRS_SHM_OPEN_FAILED) {
 			snmp_log(LOG_ERR, "Unable to open shm for PPSI!\n");
 		}
-		if (ret == 2) {
+		if (ret == WRS_SHM_WRONG_VERSION) {
 			snmp_log(LOG_ERR, "Unable to read PPSI's version!\n");
+		}
+		if (ret == WRS_SHM_INCONSISTENT_DATA) {
+			snmp_log(LOG_ERR, "Unable to read consistent data from"
+				 " PPSI's shmem!\n");
 		}
 	}
 	if (ret) {
@@ -128,11 +136,15 @@ static int init_shm_rtud(void)
 	n_wait++;
 	/* start printing error after 5 messages */
 	if (n_wait > 5) {
-		if (ret == 1) {
+		if (ret == WRS_SHM_OPEN_FAILED) {
 			snmp_log(LOG_ERR, "Unable to open shm for RTUd!\n");
 		}
-		if (ret == 2) {
+		if (ret == WRS_SHM_WRONG_VERSION) {
 			snmp_log(LOG_ERR, "Unable to read RTUd's version!\n");
+		}
+		if (ret == WRS_SHM_INCONSISTENT_DATA) {
+			snmp_log(LOG_ERR, "Unable to read consistent data from"
+				 " RTUd's shmem!\n");
 		}
 	}
 	if (ret) {

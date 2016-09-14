@@ -205,13 +205,17 @@ int get_nports_from_hal(void)
 	while ((ret = wrs_shm_get_and_check(wrs_shm_hal, &hal_head)) != 0) {
 		n_wait++;
 		if (n_wait > 10) {
-			if (ret == 1) {
+			if (ret == WRS_SHM_OPEN_FAILED) {
 				fprintf(stderr, "rtu_stat: Unable to open "
 					"HAL's shm !\n");
 			}
-			if (ret == 2) {
+			if (ret == WRS_SHM_WRONG_VERSION) {
 				fprintf(stderr, "rtu_stat: Unable to read "
 					"HAL's version!\n");
+			}
+			if (ret == WRS_SHM_INCONSISTENT_DATA) {
+				fprintf(stderr, "rtu_stat: Unable to read "
+					"consistent data from HAL's shmem!\n");
 			}
 			exit(1);
 		}
@@ -329,13 +333,18 @@ int open_rtu_shm(void)
 	while ((ret = wrs_shm_get_and_check(wrs_shm_rtu, &rtu_port_shmem)) != 0) {
 		n_wait++;
 		if (n_wait > 10) {
-			if (ret == 1) {
+			if (ret == WRS_SHM_OPEN_FAILED) {
 				fprintf(stderr, "rtu_stat: Unable to open "
 					"RTUd's shm !\n");
 			}
-			if (ret == 2) {
+			if (ret == WRS_SHM_WRONG_VERSION) {
 				fprintf(stderr, "rtu_stat: Unable to read "
 					"RTUd's version!\n");
+			}
+			if (ret == WRS_SHM_INCONSISTENT_DATA) {
+				fprintf(stderr, "rtu_stat: Unable to read "
+					"consistent data from RTUd's shmem!\n"
+				       );
 			}
 			exit(1);
 		}

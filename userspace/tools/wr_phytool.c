@@ -65,13 +65,17 @@ int hal_shm_init(void)
 	while ((ret = wrs_shm_get_and_check(wrs_shm_hal, &hal_head)) != 0) {
 		n_wait++;
 		if (n_wait > 10) {
-			if (ret == 1) {
+			if (ret == WRS_SHM_OPEN_FAILED) {
 				fprintf(stderr, "wr_phytool: Unable to open "
 					"HAL's shm !\n");
 			}
-			if (ret == 2) {
+			if (ret == WRS_SHM_WRONG_VERSION) {
 				fprintf(stderr, "wr_phytool: Unable to read "
 					"HAL's version!\n");
+			}
+			if (ret == WRS_SHM_INCONSISTENT_DATA) {
+				fprintf(stderr, "wr_phytool: Unable to read "
+					"consistent data from HAL's shmem!\n");
 			}
 			return(-1);
 		}
