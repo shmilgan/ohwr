@@ -51,7 +51,7 @@ static struct option ropts[] = {
 	{"pmode", 1, NULL, OPT_P_QMODE},
 	{"pvid", 1, NULL, OPT_P_VID},
 	{"pprio", 1, NULL, OPT_P_PRIO},
-	{"pumask", 1, NULL, OPT_P_UMASK},
+	{"puntag", 1, NULL, OPT_P_UNTAG},
 	{"plist", 0, NULL, OPT_P_LIST},
 	{"rvid", 1, NULL, OPT_RTU_VID},
 	{"rfid", 1, NULL, OPT_RTU_FID},
@@ -66,19 +66,20 @@ static struct option ropts[] = {
 static struct vlan_sets dot_config_vlan_sets[] = {
 	{"VLANS_ENABLE_SET1", 0, 22},
 	{"VLANS_ENABLE_SET2", 23, 100},
-	{"VLANS_ENABLE_SET3", 101, 4095},
+	{"VLANS_ENABLE_SET3", 101, 4094},
 	{NULL, 0, 0}
 };
 static struct s_port_vlans vlans[NPORTS];
 
 static unsigned long portmask;
 
-static void set_p_qmode(int ep, int arg_mode);
+static void set_p_pmode(int ep, int arg_mode);
 static void set_p_vid(int ep, char *arg_vid);
 static void set_p_prio(int ep, char *arg_prio);
-static void set_p_umask(int ep, int arg_umask);
+static void set_p_untag(int ep, int arg_untag);
 static void set_hp_mask(char *mask_str);
 static int check_rtu(char *name, char *arg_val, int min, int max);
+static int check_rtu_prio(char *arg_val);
 static int print_help(char *prgname);
 static void print_config_rtu(struct s_port_vlans *vlans);
 static void print_config_vlan(void);
@@ -237,15 +238,15 @@ int main(int argc, char *argv[])
 			break;
 
 		case OPT_P_QMODE:
-			/* qmode for port */
+			/* pmode for port */
 			arg = atoi(optarg);
 			if (arg < 0 || arg > 3) {
-				pr_error("invalid qmode %i (\"%s\")\n",
+				pr_error("invalid pmode %i (\"%s\")\n",
 					 arg, optarg);
 				exit(1);
 			}
 			iterate_ports(i, conf_pmask) {
-				set_p_qmode(i, arg);
+				set_p_pmode(i, arg);
 			}
 			break;
 
@@ -263,7 +264,7 @@ int main(int argc, char *argv[])
 			}
 			break;
 
-		case OPT_P_UMASK:
+		case OPT_P_UNTAG:
 			/* untag mask -- currently 0 or 1. Overrides default
 			 * set in QMODE above */
 			arg = atoi(optarg);
@@ -273,7 +274,7 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			iterate_ports(i, conf_pmask) {
-				set_p_umask(i, arg);
+				set_p_untag(i, arg);
 			}
 			break;
 
@@ -310,9 +311,8 @@ int main(int argc, char *argv[])
 			set_rtu_vlan(-1, -1, -1, ret, -1, 0, VALID_DROP);
 			break;
 		case OPT_RTU_PRIO:
-			ret = check_rtu("rtu prio", optarg, RTU_PRIO_MIN,
-					RTU_PRIO_MAX);
-			if (ret < 0)
+			ret = check_rtu_prio(optarg);
+			if (ret < RTU_PRIO_DISABLE)
 				exit(1);
 			set_rtu_vlan(-1, -1, -1, 0, ret, 0, VALID_PRIO);
 			break;
@@ -370,9 +370,9 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-static void set_p_qmode(int ep, int arg_mode)
+static void set_p_pmode(int ep, int arg_mode)
 {
-	vlans[ep].qmode = arg_mode;
+	vlans[ep].pmode = arg_mode;
 	vlans[ep].valid_mask |= VALID_QMODE;
 	/* untag is all-or-nothing: default untag if access mode */
 	if ((vlans[ep].valid_mask & VALID_UNTAG) == 0)
@@ -398,19 +398,26 @@ static void set_p_prio(int ep, char *arg_prio)
 	int prio;
 
 	prio = atoi(arg_prio);
-	if (prio < PORT_PRIO_MIN || prio > PORT_PRIO_MAX) {
+	if ((prio < PORT_PRIO_MIN || prio > PORT_PRIO_MAX)
+	    && (prio != PORT_PRIO_DISABLE)) {
 		pr_error("invalid priority %i (\"%s\") for port %d\n",
 			 prio, arg_prio, ep + 1);
 		exit(1);
 	}
-	vlans[ep].prio_val = prio;
-	vlans[ep].fix_prio = 1;
+	/* prio was touched, so set VALID_PRIO */
 	vlans[ep].valid_mask |= VALID_PRIO;
+	if (prio == PORT_PRIO_DISABLE) {
+		vlans[ep].prio_val = PORT_PRIO_MIN;
+		vlans[ep].fix_prio = 0;
+	} else {
+		vlans[ep].prio_val = prio;
+		vlans[ep].fix_prio = 1;
+	}
 }
 
-static void set_p_umask(int ep, int arg_umask)
+static void set_p_untag(int ep, int arg_untag)
 {
-	vlans[ep].untag_mask = arg_umask;
+	vlans[ep].untag_mask = arg_untag;
 	vlans[ep].valid_mask |= VALID_UNTAG;
 }
 
@@ -438,6 +445,7 @@ static void set_hp_mask(char *mask_str)
 	}
 
 }
+
 static int check_rtu(char *name, char *arg_val, int min, int max)
 {
 	int val;
@@ -446,6 +454,19 @@ static int check_rtu(char *name, char *arg_val, int min, int max)
 	if (val < min || val > max) {
 		pr_error("invalid %s %i (\"%s\")\n", name, val, arg_val);
 		return -1;
+	}
+	return val;
+}
+
+static int check_rtu_prio(char *arg_val)
+{
+	int val;
+
+	val = atoi(arg_val);
+	if ((val < RTU_PRIO_MIN || val > RTU_PRIO_MAX)
+	     && (val != RTU_PRIO_DISABLE)) {
+		pr_error("invalid rtu prio %i (\"%s\")\n", val, arg_val);
+		return -2;
 	}
 	return val;
 }
@@ -461,26 +482,34 @@ static int print_help(char *prgname)
 
 	fprintf(stderr,
 			"Port options:\n"
-			"\t --pmode <mode No.>  sets qmode for a port, possible values:\n"
+			"\t --port <1..18>     apply following options to particular set of ports\n"
+			"\t                    for example 1-3,5-6 will apply settings to ports 1,2,3,5,6\n"
+			"\t --pmode <0..3>     sets pmode for a port, possible values:\n"
 			"\t \t 0: ACCESS           - tags untagged frames, drops tagged frames not belonging to configured VLAN\n"
 			"\t \t 1: TRUNK            - passes only tagged frames, drops all untagged frames\n"
 			"\t \t 2: VLANs disabled   - passes all frames as is\n"
-			"\t \t 3: Unqualified port - passes all frames regardless of VLAN config\n"
-			"\t --pprio <priority>  sets priority for retagging\n"
-			"\t --pvid  <vid>       sets VLAN Id for port\n"
-			"\t --pumask <hex mask> sets untag mask for port\n"
-			"\t --plist             lists current ports configuration\n"
-			"RTU options:\n"
-			"\t --rvid <vid>        configure VLAN <vid> in rtud\n"
-			"\t --del               delete selected VLAN from rtud\n"
-			"\t --rfid <fid>        assign <fid> to configured VLAN\n"
-			"\t --rmask <hex mask>  ports belonging to configured VLAN\n"
-			"\t --rdrop <1/0>       drop/don't drop frames on VLAN\n"
-			"\t --rprio <prio>      force priority for VLAN (-1 cancels priority override)\n"
-			"Other options:\n"
-			"\t --hpmask <mask>   Set the mask which priorities are considered\n"
-			"\t                   High Priority (this only concerns the traffic which\n"
-			"\t                   is fast-forwarded)\n"
+			"\t \t 3: Unqualified port - passes all frames regardless of VLAN config\n");
+	fprintf(stderr, "\t --pprio <%d|%d..%d>  sets priority for retagging; -1 disables retagging;\n",
+			PORT_PRIO_DISABLE, PORT_PRIO_MIN, PORT_PRIO_MAX);
+	fprintf(stderr, "\t --pvid <%d..%d>   sets VLAN Id for port\n",
+			PORT_VID_MIN, PORT_VID_MAX);
+	fprintf(stderr, "\t --puntag <0|1>     if 1 untag all vlan tags on a port\n"
+			"\t --plist            lists current ports configuration\n"
+			"RTU options:\n");
+	fprintf(stderr, "\t --rvid <%d..%d>       VID value for which the other parameters are set in rtud\n",
+			RTU_VID_MIN, RTU_VID_MAX);
+	fprintf(stderr, "\t --del                  delete selected VLAN from rtud\n");
+	fprintf(stderr, "\t --rfid <%d..%d>       assign fid to configured VLAN\n",
+			RTU_FID_MIN, RTU_FID_MAX);
+	fprintf(stderr, "\t --rmask <0x%x..0x%x> ports belonging to configured VLAN\n",
+			RTU_PMASK_MIN, RTU_PMASK_MAX);
+	fprintf(stderr, "\t --rdrop <0|1>          don't drop or drop frames on VLAN (note that frame can belong\n"
+			"\t                        to a VID as a consequence of per-port Endpoint configuration)\n");
+	fprintf(stderr, "\t --rprio <%d|%d..%d>      force priority for VLAN; -1 cancels priority override\n",
+			RTU_PRIO_DISABLE, RTU_PRIO_MIN, RTU_PRIO_MAX);
+	fprintf(stderr, "Other options:\n"
+			"\t --hpmask <mask>   Set the mask which priorities are considered High Priority\n"
+			"\t                   (this only concerns the traffic which is fast-forwarded)\n"
 			"\t --clear           clears RTUd VLAN table\n"
 			"\t --list            prints the content of RTUd VLAN table\n"
 			"\t -f|--file <file>  reads configuration from the provided dot-config file\n"
@@ -495,11 +524,11 @@ static void print_config_rtu(struct s_port_vlans *vlans)
 	int i;
 
 	for_each_port(i) {
-		printf("port: %2d, qmode: %d, qmode_valid: %d, fix_prio: %d, "
+		printf("port: %2d, pmode: %d, pmode_valid: %d, fix_prio: %d, "
 		       "prio_val: %d, prio_valid: %d, vid: %2d, vid_valid: %d,"
 		       " untag_mask: 0x%X, untag_valid: %d\n",
 		       i + 1,
-		       vlans[i].qmode,
+		       vlans[i].pmode,
 		       ((vlans[i].valid_mask & VALID_QMODE) != 0),
 		       vlans[i].fix_prio,
 		       vlans[i].prio_val,
@@ -570,9 +599,12 @@ static int apply_settings(struct s_port_vlans *vlans)
 		r = offsetof(struct EP_WB, VCR0);
 		v = ep_read(ep, r);
 		if (vlans[ep].valid_mask & VALID_QMODE)
-			v = (v & ~EP_VCR0_QMODE_MASK) | EP_VCR0_QMODE_W(vlans[ep].qmode);
+			v = (v & ~EP_VCR0_QMODE_MASK) | EP_VCR0_QMODE_W(vlans[ep].pmode);
 		if (vlans[ep].valid_mask & VALID_PRIO) {
-			v |= EP_VCR0_FIX_PRIO;
+			if (vlans[ep].fix_prio)
+				v |= EP_VCR0_FIX_PRIO;
+			else
+				v &= ~EP_VCR0_FIX_PRIO;
 			v = (v & ~EP_VCR0_PRIO_VAL_MASK) | EP_VCR0_PRIO_VAL_W(vlans[ep].prio_val);
 		}
 		if (vlans[ep].valid_mask & VALID_VID)
@@ -913,42 +945,42 @@ static int read_dot_config(char *dot_config_file)
 		if (ret && !strcmp(ret, "y")) {
 			if (wrs_msg_level >= LOG_DEBUG)
 				printf("Found %s\n", buff);
-			set_p_qmode(port - 1, 0);
+			set_p_pmode(port - 1, QMODE_ACCESS);
 		}
 		sprintf(buff, "VLANS_PORT%02d_MODE_TRUNK", port);
 		ret = libwr_cfg_get(buff);
 		if (ret && !strcmp(ret, "y")) {
 			if (wrs_msg_level >= LOG_DEBUG)
 				printf("Found %s\n", buff);
-			set_p_qmode(port - 1, 1);
+			set_p_pmode(port - 1, QMODE_TRUNK);
 		}
 		sprintf(buff, "VLANS_PORT%02d_MODE_DISABLED", port);
 		ret = libwr_cfg_get(buff);
 		if (ret && !strcmp(ret, "y")) {
 			if (wrs_msg_level >= LOG_DEBUG)
 				printf("Found %s\n", buff);
-			set_p_qmode(port - 1, 2);
+			set_p_pmode(port - 1, QMODE_DISABLED);
 		}
 		sprintf(buff, "VLANS_PORT%02d_MODE_UNQUALIFIED", port);
 		ret = libwr_cfg_get(buff);
 		if (ret && !strcmp(ret, "y")) {
 			if (wrs_msg_level >= LOG_DEBUG)
 				printf("Found %s\n", buff);
-			set_p_qmode(port - 1, 3);
+			set_p_pmode(port - 1, QMODE_UNQ);
 		}
-		sprintf(buff, "VLANS_PORT%02d_UMASK_ALL", port);
+		sprintf(buff, "VLANS_PORT%02d_UNTAG_ALL", port);
 		ret = libwr_cfg_get(buff);
 		if (ret && !strcmp(ret, "y")) {
 			if (wrs_msg_level >= LOG_DEBUG)
 				printf("Found %s\n", buff);
-			set_p_umask(port - 1, 1);
+			set_p_untag(port - 1, 1);
 		}
-		sprintf(buff, "VLANS_PORT%02d_UMASK_NONE", port);
+		sprintf(buff, "VLANS_PORT%02d_UNTAG_NONE", port);
 		ret = libwr_cfg_get(buff);
 		if (ret && !strcmp(ret, "y")) {
 			if (wrs_msg_level >= LOG_DEBUG)
 				printf("Found %s\n", buff);
-			set_p_umask(port - 1, 0);
+			set_p_untag(port - 1, 0);
 		}
 		sprintf(buff, "VLANS_PORT%02d_PRIO", port);
 		val_ch = libwr_cfg_get(buff);
@@ -1006,9 +1038,8 @@ static void read_dot_config_vlans(int vlan_min, int vlan_max)
 
 		if (!libwr_cfg_convert2("VLANS_VLAN%04d", "prio", LIBWR_STRING,
 					buff, vlan)) {
-			prio = check_rtu("rtu prio", buff, RTU_PRIO_MIN,
-					 RTU_PRIO_MAX);
-			if (prio < 0)
+			prio = check_rtu_prio(buff);
+			if (prio < RTU_PRIO_DISABLE)
 				exit(1);
 			vlan_flags |= VALID_PRIO;
 			if (wrs_msg_level >= LOG_DEBUG)

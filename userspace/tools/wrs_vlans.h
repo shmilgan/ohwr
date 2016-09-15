@@ -48,7 +48,7 @@
 #define OPT_P_QMODE 11
 #define OPT_P_VID   12
 #define OPT_P_PRIO  13
-#define OPT_P_UMASK 14
+#define OPT_P_UNTAG 14
 #define OPT_P_LIST  15
 #define OPT_RTU_VID  20
 #define OPT_RTU_FID  21
@@ -61,18 +61,20 @@
 
 #define PORT_PRIO_MIN 0
 #define PORT_PRIO_MAX 7
+#define PORT_PRIO_DISABLE -1
 
 #define PORT_VID_MIN 0
-#define PORT_VID_MAX 4095
+#define PORT_VID_MAX 4094
 
 #define RTU_VID_MIN 0
-#define RTU_VID_MAX 4095
+#define RTU_VID_MAX 4094
 
 #define RTU_FID_MIN 0
-#define RTU_FID_MAX 4095
+#define RTU_FID_MAX 4094
 
 #define RTU_PRIO_MIN 0
 #define RTU_PRIO_MAX 7
+#define RTU_PRIO_DISABLE -1
 
 #define RTU_PMASK_MIN 0
 #define RTU_PMASK_MAX ((1 << NPORTS) - 1)
@@ -87,7 +89,7 @@ struct vlan_sets {
 struct s_port_vlans
 {
 	int  valid_mask;
-	char qmode;
+	char pmode;
 	char fix_prio;
 	char prio_val;
 	int  vid;
