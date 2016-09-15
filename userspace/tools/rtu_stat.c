@@ -158,13 +158,13 @@ void show_help(char *prgname)
 			"                                       ports\n");
 	fprintf(stderr, "   learning <enable|disable> mask <port_mask>: Enable/disable learning process\n"
 			"                                               in RTU for ports given as a mask\n");
-	fprintf(stderr, "   unrec:            Status of dropping packets when destination MAC is not\n"
+	fprintf(stderr, "   unrec:            Status of dropping frames when destination MAC is not\n"
 			"                     matched\n");
-	fprintf(stderr, "   unrec <enable|disable> [<port>]: Enable/disable dropping packets when\n"
+	fprintf(stderr, "   unrec <enable|disable> [<port>]: Enable/disable dropping frames when\n"
 			"                                    the destination MAC is not matched.\n"
 			"                                    Apply setting on a given <port> or all ports\n"
 			"                                    when <port> is not provided.\n");
-	fprintf(stderr, "   unrec mask <enable|disable> <port_mask>: Enable/disable dropping packets when\n"
+	fprintf(stderr, "   unrec mask <enable|disable> <port_mask>: Enable/disable dropping frames when\n"
 			"                                            the destination MAC is not matched.\n"
 			"                                            Apply setting on ports given as a mask\n");
 	fprintf(stderr, "   vlan <vid> <fid> <port_mask> [<drop>, <prio>, <has_prio>, <prio_override>]:\n"
@@ -760,7 +760,7 @@ int main(int argc, char **argv)
 			printf("Could not read unrec state 0x%x\n", ret);
 			exit(1);
 		}
-		printf("Dropping packets when the destination MAC is not "
+		printf("Dropping frames when the destination MAC is not "
 		       "matched\n");
 		printf("-------------\n");
 		printf("Port | Drop\n");
