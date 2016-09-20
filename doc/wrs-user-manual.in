@@ -843,6 +843,69 @@ value is changed by the web interface, proper action is taken.
 	@t{CONFIG_RTU_HP_MASK_ENABLE}.
 	@t{CONFIG_RTU_HP_MASK_VAL} contains the mask to be used.
 
+@item CONFIG_VLANS_ENABLE
+
+	Enable VLANs configuration. All below VLAN config options
+	(@t{CONFIG_VLANS_*}) require this filed to be set.
+
+@item CONFIG_VLANS_PORTXX_MODE_ACCESS
+@itemx CONFIG_VLANS_PORTXX_MODE_TRUNK
+@itemx CONFIG_VLANS_PORTXX_MODE_DISABLED
+@itemx CONFIG_VLANS_PORTXX_MODE_UNQUALIFIED
+
+	VLANs mode configuration for ports 1..18.
+	It can be one of: Access, Trunk, Disabled or Unqualified.
+	For details please refer to the @ref{VLANs Configuration}
+
+@item CONFIG_VLANS_PORTXX_UNTAG_ALL
+@itemx CONFIG_VLANS_PORTXX_UNTAG_NONE
+
+	Define whether to remove a tag from VLAN frames on a port 1..18.
+
+@item CONFIG_VLANS_PORTXX_PRIO
+
+	Priority value used when tagging frames or to override priority
+	passed to RTU. -1 disables the priority overwrite. Valid values are
+	from -1 to 7.
+
+@item CONFIG_VLANS_PORTXX_VID
+
+	VID value used when tagging frames or to override VID passed to RTU.
+	VID takes values 0..4094.
+	For details please refer to the @ref{VLANs Configuration}
+
+@item CONFIG_VLANS_VLANXXXX
+
+	Provide the configuration for VLAN from the range 0000-4094.
+	This option is a comma separated string in the following format:
+
+	@t{fid=<0..4094>,prio=<-1|0..7>,drop=<y|n>,ports=<1>:<2>:...:<18>}
+
+	Where:
+	@itemize
+	@item @t{fid} is a associated Filtering ID (FID) number. One FID can be
+	  associated with many VIDs. RTU learning is performed per-FID.
+	  Associating many VIDs with a single FID allowed shared-VLANs
+	  learning.
+	@item @t{prio} is a priority of a VLAN; can take values between -1 and
+	  7;
+	  -1 disables priority override, any other valid value takes
+	  precedence over port priority
+	@item If @t{drop} is set to @t{y}, all frames belonging to this VID are
+	  dropped (note that frame can belong to a VID as a consequence of
+	  per-port Endpoint configuration); can take values @t{y} and @t{n}
+	@item @t{ports} is a list of ports separated with the colon sign
+	VLANs configuration per VLANS.
+	@end itemize
+	Example:
+
+	@t{fid=4,prio=2,drop=n,ports=1:15}
+
+	It sets fid as 4, priority 2, don't drop frames belonging to this VLAN,
+	assign ports 1 and 15 to this VLAN.
+
+	For more details about VLANs configuration please refer to the @ref{VLANs Configuration}
+
 @end table
 
 @c ==========================================================================
@@ -972,24 +1035,240 @@ with the @i{difference} between them and the @t{AXGE} devices.
 @node VLANs Configuration
 @section VLANs Configuration
 
-Unfortunately, the current firmware release does not support VLAN configuration
-in the main @t{dot-config} file. Therefore, if you want to use VLANs you
-have to manually configure them using the @i{wrs_vlans} tool described
-in @ref{wrs_vlans}.
+The VLANs are handled at two levels:
 
-In addition to that, to have synchronization working with VLANs, you have to
-prepare a custom @i{PPSi} configuration file with VLANs specified per-port. You
+@itemize
+    @item Per-port configuration of the Endpoint. It allows to:
+    @itemize
+	@item tag ingress frames with VLAN-tag and specific priority
+	@item specify behaviour depending on whether the frames are tagged or
+	      untagged (@t{pmode})
+@c 	@item map priorities into @i{Traffic Class} that are provided to RTU
+	@item override priority before it is mapped into @i{Traffic Class},
+	      i.e. translate into @i{Traffic Class} different priority than
+	      the one received in the VLAN-tag
+	@item remove VLAN-tag of given VID(s) from egress frames
+    @end itemize
+
+    @item Per-VID by configuring the RTU. It allows to:
+    @itemize
+	@item limit the ports to which frames with a given VID are forwarded
+	@item limit the ports from which frames with given VID are accepted
+	      @footnote{Should, but does not now. There is a bug in HDL.}
+	@item override priority (@i{Traffic Class}) for a given VID
+	@item drop frames with a given VID
+    @end itemize
+
+@end itemize
+In terms of VLAN-tag, there are four types of VLAN-tags that can extend
+the Ethernet Frame header:
+@itemize
+    @item @i{none}     -- tag is not included in the Ethernet Frame
+    @item @i{priority} -- tag that has VID=@t{0x0}
+    @item @i{VLAN}     -- tag that has VID in the range @t{0x001} to @t{0xFFE}
+    @item @i{null}     -- tag that has VID=@t{0xFFF}
+@end itemize
+The behaviour of each @t{pmode} that can be set per-port depends on the type of
+VLAN-tag in the received frame.
+
+@itemize
+    @item Mode @t{ACCESS} (0x0), frames with:
+    @itemize
+	@item @i{no VLAN-tag}: are admitted, tagged with the values of VID and
+			priority that are configured in @t{pvid} and @t{pprio}
+			respectively
+	@item @i{priority tag}: are admitted, their tag is unchanged, the value
+			of VID provided to the RTU is overridden with the
+			configured in @t{pvid}. If @t{pprio} is not -1, the
+			value of priority provided to RTU is overridden with
+			the configured @t{pprio}
+	@item @i{VLAN tag}: are discarded
+	@item @i{null tag}: are discarded
+
+    @end itemize
+    @item Mode @t{TRUNK} (0x1), frames with:
+    @itemize
+	@item @i{no VLAN-tag}: are discarded
+	@item @i{priority tag}: are discarded
+	@item @i{VLAN tag}: are admitted; if @t{pprio} is not -1, the value of
+			priority provided to RTU is overridden with
+			the configured @t{pprio}
+	@item @i{null tag}: are discarded
+
+    @end itemize
+    @item Mode @t{DISABLED} (0x2), frames with:
+    @itemize
+	@item @i{no VLAN-tag}: are admitted. No other configuration is used even
+			if set.
+	@item @i{priority tag}: are admitted; if @t{pprio} is not -1, the value
+			of priority provided to RTU is overridden with
+			the configured @t{pprio}
+	@item @i{VLAN tag}: are admitted; if @t{pprio} is not -1, the value of
+			priority provided to RTU is overridden with
+			the configured @t{pprio}
+	@item @i{null tag}: are admitted; if @t{pprio} is not -1, the value of
+			priority provided to RTU is overridden with
+			the configured @t{pprio}
+    @end itemize
+    @item Mode @t{UNQUALIFIED} (0x3), frames with:
+    @itemize
+	@item @i{no VLAN-tag}: are admitted. No other configuration is used even
+			if set.
+	@item @i{priority tag}: are admitted. Their tag is unchanged, the value
+			of VID provided to the RTU is overridden with the
+			configured in @t{pvid}. If @t{pprio} is not -1, the
+			value of priority provided to RTU is overridden with
+			the configured @t{pprio}
+	@item @i{VLAN tag}: are admitted; if @t{pprio} is not -1, the value of
+			priority provided to RTU is overridden with
+			the configured @t{pprio}
+	@item @i{null tag}: discarded.
+    @end itemize
+@end itemize
+
+Modes and their behaviour are summarized in the table below:
+
+@center @image{VLAN_modes, 14cm,, VLAN_modes}
+
+From the version 4.3, it is possible to configure VLANs in the main
+@t{dot-config} file (for an example configuration please see
+@ref{Example VLAN configuration by dot-config}).
+
+As an alternative it is possible to use @i{wrs_vlans} tool
+described in @ref{wrs_vlans} together with a custom config file for @i{PPSi}.
+
+To have synchronization working with VLANs, the custom @i{PPSi} configuration
+file should contain VLANs specified per-port. You
 can simply copy the file generated in the WRS filesystem
 (@i{/etc/ppsi.conf}) to a central @t{tftp}/@t{http}/@t{ftp} server where
-@t{dot-config} files for your switches are stored and fetched on boot time.
-For every VLAN-enabled port you should add the following line:
+@t{dot-config} files for your switches are stored and fetched on boot time or
+permamently store it in the switch's flash (for details, please check
+configuration options @t{CONFIG_PTP_*} in the
+@ref{Configuration Items that Apply at Run Time}).
+
+In the @i{PPSi} config file, for every VLAN-enabled port you should add
+the following line:
 @example
   vlan <VID>
 @end example
-where @i{VID} is a VLAN ID configured on the port. To let your switch use the
-modified @i{ppsi.conf}, you should add it as @t{CONFIG_PTP_REMOTE_CONF} option
-in the @t{dot-config} (@ref{Configuration Items that Apply at Run Time}). This
-way it will be fetched and applied every time your switch boots.
+where @i{VID} is a VLAN ID configured on the port.
+
+For an example configuration please see
+@ref{Example VLAN configuration by tools}).
+
+@c =-------------------------------------------------------------------------
+@node Example VLAN configuration
+@subsection Example VLAN configuration
+
+This subsection describes how to configure VLANs on a switch using the
+@t{dot-config} and available command line tools.
+
+An example configuration of VLANs for ports (wri) 1-3 is provided below.
+The descriptions assumes, for simplicity, that switch has only this 3 ports.
+
+In this configuration, port 1 is synchronised to an upstream WR device and this
+device does not need to have any VLAN configuration. Port 1 is in @t{ACCESS} mode,
+thus it tags the ingress Ethernet frames. A VLAN-tags with VID 1 and priority
+4 is added so that frames received at this port belong to VLAN 1. Port 1 also
+untags the egress frames. In this configuration, it is only the port 1 that
+belongs to VLAN 1 which means that none of the traffic received on port 1 is
+forwarded to other ports. The only traffic received at port 1 that is not
+dropped are the PTP messages which are forwarded to the PTP daemon (@i{PPSi}). Such
+an arrangement can be useful if the synchronisation is to be propagated through
+WR network, i.e. between the upstream and this switch, but the data needs to be
+separated.
+
+The data is forwarded between ports 2 and 3. These ports belong to VLAN 2
+(VID=2). Port 3 is in @t{ACCESS} mode and it tags the ingress frames with VID 2
+and priority 7. This could be a port connected to a WR node that is a source of
+critical traffic. This WR node does not need to support VLANs, however its
+traffic needs to have the highest precedence in the network.
+
+The traffic from port 3 is forwarded only to port 2. This port is in @t{TRUNK}
+mode. It does not untag egress frames which means that the device connected to
+it (a switch or a node) must be VLAN-aware. Port 2 accepts only frames that are
+already tagged with the VLAN-tag. Out of the frames received at port 2, only
+the frames with VID=2 are forwarded, all the other frames are dropped. The
+frames with VID=2 are forwarded to PTP daemon and to port 3.
+
+@c =-------------------------------------------------------------------------
+@node Example VLAN configuration by dot-config
+@subsubsection Example VLAN configuration by dot-config
+
+To configure the switch in the way descibed in the
+@ref{Example VLAN configuration}, the @t{dot-config} has to contain the
+following config options:
+
+@smallexample
+CONFIG_PORT01_PARAMS="name=wri1,proto=raw,tx=0,rx=0,role=slave,fiber=0,ppsi_vlans=1"
+CONFIG_PORT02_PARAMS="name=wri2,proto=raw,tx=0,rx=0,role=master,fiber=0,ppsi_vlans=2"
+CONFIG_PORT03_PARAMS="name=wri3,proto=raw,tx=0,rx=0,role=master,fiber=0,ppsi_vlans=2"
+
+CONFIG_VLANS_ENABLE=y
+CONFIG_VLANS_PORT01_MODE_ACCESS=y
+CONFIG_VLANS_PORT01_UNTAG_ALL=y
+CONFIG_VLANS_PORT01_PRIO=4
+CONFIG_VLANS_PORT01_VID=1
+CONFIG_VLANS_PORT02_MODE_TRUNK=y
+CONFIG_VLANS_PORT02_PRIO=-1
+CONFIG_VLANS_PORT03_MODE_ACCESS=y
+CONFIG_VLANS_PORT03_UNTAG_ALL=y
+CONFIG_VLANS_PORT03_PRIO=7
+CONFIG_VLANS_PORT03_VID=2
+
+CONFIG_VLANS_ENABLE_SET1=y
+CONFIG_VLANS_VLAN0001="fid=1,prio=4,drop=no,ports=1"
+CONFIG_VLANS_VLAN0002="fid=2,prio=4,drop=no,ports=2:3"
+@end smallexample
+
+@c =-------------------------------------------------------------------------
+@node Example VLAN configuration by tools
+@subsubsection Example VLAN configuration by tools
+
+To configure the switch in the way descibed in the
+@ref{Example VLAN configuration}, using the command line tools please perform
+the following actions:
+
+Set ports' configuration by using the @t{wrs_vlans}:
+@smallexample
+# wrs_vlans \
+    --port 1 --pmode 0 --pprio 4 --pvid 1 --puntag 1 \
+    --port 2 --pmode 1 --pprio -1  \
+    --port 3 --pmode 0 --pprio 4 --pvid 2 --puntag 1
+@end smallexample
+
+Set VID configuration by using @t{wrs_vlans}:
+@smallexample
+# wrs_vlans \
+    --rvid 1 --rprio 4 --rdrop 0 --rmask 0x00001 \
+    --rvid 2 --rprio 4 --rdrop 0 --rmask 0x00006
+@end smallexample
+
+For details about @t{wrs_vlans} please refer to the @ref{wrs_vlans}.
+
+@i{PPSi} configuration that sould be placed into @t{ppsi.conf}:
+@smallexample
+port wri1-raw
+proto raw
+iface wri1
+role slave
+extension whiterabbit
+vlan 1
+
+port wri2-raw
+proto raw
+iface wri2
+role master
+extension whiterabbit
+vlan 2
+
+port wri3-raw
+proto raw
+iface wri3
+role master
+extension whiterabbit
+vlan 2
+@end smallexample
 
 @c ==========================================================================
 @node Front panel's LEDs
@@ -1293,7 +1572,8 @@ The following tools and scripts are provided:
 @item wrs_vlans
 	The tool allows to configure and unconfigure the VLAN settings
         for each port and for the RTU daemon. The @t{--help} option
-        lists all configuration items of the tool.
+        lists all configuration items of the tool. For details please
+        refer to the @ref{wrs_vlans}.
 
 @item apply_dot-config
 	The script is used to apply @t{dot-config} settings to the
@@ -1421,25 +1701,21 @@ The following option flags are supported:
 
 The @i{wrs_vlans} shell tool can be used to setup VLANs in the switch.
 The configuration can be read from the @t{dot-config} file pointed by @t{-f} or
-@t{--file} parameter (for @t{dot-config} details please check the
-@ref{Configuration Items that Apply at Build Time})
+@t{--file} parameter (for @t{dot-config} config options' details please check
+the @ref{Configuration Items that Apply at Build Time}).
 Additionally the configuration can be specified using parameters below.
+The details of VLANs configuration are discussed in the section and subsections
+of the @ref{VLANs Configuration}.
 
-The configuration is divided into two parts:
+The @i{wrs_vlans} configuration is divided into two parts:
 
 @table @code
 
 @item wrs_vlans --port <port number or range> [options]
 
   Per-port Endpoint VLAN configuration. Used to set VID and priority for ingress
-  frames tagging, egress untagging and port mode to:
-  @itemize @bullet
-  @item ACCESS - tags untagged frames with configured VID and priority, drops
-  tagged frames not belonging to the configured VLAN
-  @item TRUNK - passes only tagged frames, drops all untagged frames
-  @item Disabled - VLANs disabled
-  @item Unqualified port - passes all frames regardless of VLAN configuration
-  @end itemize
+  frames tagging, egress untagging and port mode. For port modes please refer
+  to the @ref{VLANs Configuration}.
 
 @item wrs_vlans --rvid <vid> [options]
 
@@ -1476,18 +1752,19 @@ For per-port configuration, multiple ways of specifying ports are supported:
 To configure each Endpoint the following options may be used:
 @table @code
 
-@item --pmode <mode No.>
-  Sets qmode for a port (0 - ACCESS, 1 - TRUNK, 2 - disabled, 3 - unqualified)
+@item --pmode <0..3>
+  Sets qmode for a port (@t{0} -- @t{ACCESS}, @t{1} -- @t{TRUNK},
+  @t{2} -- @t{DISABLED}, @t{3} -- @t{UNQUALIFIED})
 
-@item --pvid <vid>
+@item --pvid <0..4094>
   Sets VLAN id for tagging ingress frames.
 
-@item --pprio <priority>
-  Sets priority for tagging ingress frames.
+@item --pprio <-1|0..7>
+  Sets priority for tagging ingress frames. @t{-1} disables priority overwrite.
 
-@item --pumask <hex mask>
-  Sets mask for egress untagging. By default, if you configure ingress tagging,
-  all VIDs are untagged on egress.
+@item --puntag <0|1>
+  Disables or enables egress untagging. By default, if you configure ingress
+  tagging, all VIDs are untagged on egress.
 
 @end table
 
@@ -1500,18 +1777,18 @@ VLAN id to be set up and then the list of configuration options:
 Possible RTU VLAN configuration options:
 @table @code
 
-@item --rmask <hex mask>
+@item --rmask <0x0..0x3ffff>
   Mask defines which physical ports of the WRS belong to a configured VLAN.
 
-@item --rfid <fid>
+@item --rfid <0..4094>
   Assigns filtering ID @i{fid} to the configured VLAN. Multiple VLANs can be
   configured to have the same @i{fid}. This way they create a group where
   learning a new MAC address in one VLAN implies learning this MAC in the rest
   of VLANs in the group as well.
 
-@item --rprio <prio>
-  Forces 802.1q priority override for VLAN. Setting @i{prio} to -1, cancels the
-  override.
+@item --rprio <-1|0..7>
+  Forces 802.1q priority override for VLAN. Setting @i{prio} to @t{-1}, cancels
+  the override.
 
 @item --rdrop <1/0>
   Forces (if set to 1) or disables (if set to 0) frames drop for the configured

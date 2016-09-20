@@ -1345,7 +1345,7 @@ ever erase this memory; if it happens, the system won't boot and
 you'll be forced to re-flash it entirely, which requires access to the back
 side of the switch..
 
-NAND memory is used for user-data: tke boot loader configuration, the
+NAND memory is used for user-data: the boot loader configuration, the
 kernel and the filesystem.
 
 This is how the memory is used:
