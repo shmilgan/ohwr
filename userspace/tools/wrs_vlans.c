@@ -510,9 +510,10 @@ static int print_help(char *prgname)
 	fprintf(stderr, "Other options:\n"
 			"\t --hpmask <mask>   Set the mask which priorities are considered High Priority\n"
 			"\t                   (this only concerns the traffic which is fast-forwarded)\n"
-			"\t --clear           clears RTUd VLAN table\n"
+			"\t --clear           clears ports' and VLAN configuration\n"
 			"\t --list            prints the content of RTUd VLAN table\n"
-			"\t -f|--file <file>  reads configuration from the provided dot-config file\n"
+			"\t -f|--file <file>  clears configuration, then applies configuration from the provided\n"
+			"\t                   dot-config file\n"
 			"\t -v                be more verbose (can be used 1 or 2 times)\n"
 			"\t -q                be less verbose\n"
 			"\t --help            prints this help message\n");
@@ -928,6 +929,8 @@ static int read_dot_config(char *dot_config_file)
 		}
 	}
 
+	/* clear ports and VLANs configuration */
+	clear_all();
 
 	/* read VLANs related configuration */
 	ret = libwr_cfg_get("VLANS_ENABLE");
