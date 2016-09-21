@@ -84,6 +84,7 @@ static int print_help(char *prgname);
 static void print_config_rtu(struct s_port_vlans *vlans);
 static void print_config_vlan(void);
 static int apply_settings(struct s_port_vlans *vlans);
+static void default_vlan_config(void);
 static int clear_all(void);
 static int set_rtu_vlan(int vid, int fid, int pmask, int drop, int prio,
 			int del, int flags);
@@ -327,6 +328,7 @@ int main(int argc, char *argv[])
 		case OPT_CLEAR:
 			if (clear_all())
 				exit(1); /* message already printed */
+			default_vlan_config();
 			break;
 		case 0:
 			break;
@@ -755,17 +757,21 @@ static void print_hp_mask(void)
 	printf("#-----------------------------------------------\n");
 }
 
+static void default_vlan_config(void)
+{
+	int val;
+	/* Create VLAN 0 reserved for untagged packets */
+	minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry,
+		    &val, 0, 0, 0xffffffff, 0, 0, 0, 0);
+}
+
 static int clear_all(void)
 {
 	uint32_t r;
 	int val, i;
 	int ep;
 
-	/* cancel all rtu-administered vlans */
-	minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry,
-		    &val, 0, 0, 0xffffffff, 0, 0, 0, 0);
-
-	for (i = 1; i < NUM_VLANS; i++) {
+	for (i = 0; i < NUM_VLANS; i++) {
 		if ((vlan_tab_shm[i].drop != 0)
 		    && (vlan_tab_shm[i].port_mask == 0x0))
 			continue;
@@ -937,6 +943,9 @@ static int read_dot_config(char *dot_config_file)
 	if (!ret || strcmp(ret, "y")) {
 		if (wrs_msg_level >= LOG_DEBUG)
 			printf("VLANS not enabled\n");
+		/* All VLANs were removed, since VLANs are disabled set the
+		 * default configuration */
+		default_vlan_config();
 		return -2;
 	}
 
