@@ -26,6 +26,7 @@
 
 #include <ppsi/ppsi.h>
 #include "wrsw_hal.h"
+#include "hal_hist.h"
 #include <rt_ipc.h>
 #include <hal_exports.h>
 #include <libwr/hal_shmem.h>
@@ -573,6 +574,9 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 	p->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb ? SFP_FLAG_1GbE : 0;
 	p->calib.sfp.flags |= shdr.br_nom == SFP_SPEED_1Gb_10 ? SFP_FLAG_1GbE : 0;
 
+	/* notify wrs_hist about sfp insert */
+	hal_hist_sfp_insert(&p->calib.sfp);
+
 	/*
 	 * Now, we should fix the alpha value according to fiber
 	 * type. Alpha does not depend on the SFP, but on the
@@ -614,6 +618,9 @@ static void hal_port_insert_sfp(struct hal_port_state * p)
 
 static void hal_port_remove_sfp(struct hal_port_state * p)
 {
+	/* notify wrs_hist about sfp remove */
+	hal_hist_sfp_remove(&p->calib.sfp);
+
 	hal_port_link_down(p, 0);
 	p->state = HAL_PORT_STATE_DISABLED;
 	/* clean SFP's details when removing SFP */

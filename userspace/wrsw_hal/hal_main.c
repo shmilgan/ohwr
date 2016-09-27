@@ -22,6 +22,7 @@
 #include <libwr/timeout.h>
 
 #include "wrsw_hal.h"
+#include "hal_hist.h"
 #include <rt_ipc.h>
 
 #define MAX_CLEANUP_CALLBACKS 16
@@ -128,6 +129,9 @@ static int hal_init(void)
 	//everything is fine up to here, we can blink green LED
 	shw_io_write(shw_io_led_state_o, 0);
 	shw_io_write(shw_io_led_state_g, 1);
+
+	/* try to connect to the wrs_hist */
+	assert_init(hal_hist_init());
 
 	if (daemon_mode)
 		hal_daemonize();

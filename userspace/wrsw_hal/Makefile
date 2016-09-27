@@ -1,5 +1,6 @@
 
-OBJS = hal_exports.o hal_main.o hal_ports.o hal_timing.o
+OBJS = hal_exports.o hal_main.o hal_ports.o hal_timing.o \
+	hal_hist.o
 
 BINARY = wrsw_hal
 
