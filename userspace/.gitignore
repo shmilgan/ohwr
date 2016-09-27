@@ -5,6 +5,7 @@ wr_mon/wr_mon
 rtu_stat/rtu_stat
 wr_phytool/wr_phytool
 wrs_watchdog/wrs_watchdog
+wrs_hist/wrs_hist
 build.sh
 *#
 .#*
