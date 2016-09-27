@@ -1,0 +1,34 @@
+From 6f9248579c9516eb141d1f2ab1aeacdd25ee44e3 Mon Sep 17 00:00:00 2001
+From: Adam Wujek <adam.wujek@cern.ch>
+Date: Tue, 27 Sep 2016 10:42:21 +0200
+Subject: [PATCH] sam9m10g45ek (for wrs): partitions to store uptime history
+
+Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
+---
+ arch/arm/mach-at91/board-sam9m10g45ek.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index bfaa9fb..aa96823 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -105,6 +105,16 @@ static struct mtd_partition wrs_df_parts[] = {
+ 		.size   = 0x840,
+ 	},
+ 	{
++		.name   = "wrs_hist1",
++		.offset = MTDPART_OFS_APPEND,
++		.size   = 0x108000,
++	},
++	{
++		.name   = "wrs_hist2",
++		.offset = MTDPART_OFS_APPEND,
++		.size   = 0x108000,
++	},
++	{
+ 		.name   = "Available-dataflash",
+ 		.offset = MTDPART_OFS_APPEND,
+ 		.size   = MTDPART_SIZ_FULL,
+-- 
+1.9.1
+
