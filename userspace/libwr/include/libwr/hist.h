@@ -1,6 +1,8 @@
 #ifndef __LIBWR_HIST_H__
 #define __LIBWR_HIST_H__
 
+#include <stdint.h>
+
 #define WRS_HIST_TEMP_FPGA 0
 #define WRS_HIST_TEMP_PLL  1
 #define WRS_HIST_TEMP_PSL  2

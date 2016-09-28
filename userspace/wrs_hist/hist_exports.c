@@ -14,6 +14,8 @@
 #define HIST_EXPORT_STRUCTURES
 #include <hist_exports.h> /* for exported structs/function protos */
 
+#include "wrs_hist.h"
+
 static struct minipc_ch *hist_ch;
 
 /* Define shortcut for exporting */
@@ -46,6 +48,19 @@ static int histexp_sfp_action(const struct minipc_pd *pd, uint32_t * args,
 
 	pr_error("action %d, vn %s, pn %s, sn %s\n", *sfp_action, sfp_vn,
 		 sfp_pn, sfp_sn);
+
+	switch (*sfp_action) {
+	case HIST_SFP_INSERT:
+		hist_sfp_insert(sfp_vn, sfp_pn, sfp_sn);
+		break;
+	case HIST_SFP_REMOVE:
+		hist_sfp_remove(sfp_vn, sfp_pn, sfp_sn);
+		break;
+	default:
+		pr_error("Unrecognized action %d\n", *sfp_action);
+		break;
+	}
+	
 	rval = 0;
 	*(int *)ret = rval;
 	return 0;

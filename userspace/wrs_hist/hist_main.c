@@ -103,6 +103,7 @@ int main(int argc, char *argv[])
 	assert_init(hist_wripc_init());
  
 
+	/* TODO: scan HAL for SFPs that are already plugged */
 	/*
 	 * Main loop update - polls for WRIPC requests and rolls the port
 	 * state machines. This is not a busy loop, as wripc waits for
