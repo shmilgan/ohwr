@@ -6,21 +6,52 @@
 #include <signal.h>
 #include <getopt.h>
 #include <time.h>
-
+#include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include <libwr/wrs-msg.h>
 #include <libwr/shmem.h>
-#include <libwr/hal_shmem.h>
+#include <libwr/hist_shmem.h>
 #include <libwr/util.h>
 #include "wrs_hist.h"
 
 #define PORT_FAN_MS_PERIOD 250
 
+struct hist_shmem_data *hist_shmem;
+struct wrs_shm_head *hist_shmem_hdr;
 
-struct hal_shmem_header *hal_shmem;
+/* Interates via all the ports defined in the config file and
+ * intializes them one after another. */
+static int hist_shmem_init(void)
+{
+	pr_debug("Initializing shmem\n");
+
+	/* Allocate the ports in shared memory, so wr_mon etc can see them
+	 * Use lock since some might wait for it int he future to be
+	 * available */
+	hist_shmem_hdr = wrs_shm_get(wrs_shm_hist, "wrs_hist",
+				     WRS_SHM_WRITE | WRS_SHM_LOCKED);
+	if (!hist_shmem_hdr) {
+		pr_error("Can't join shmem: %s\n", strerror(errno));
+		return -1;
+	}
+	hist_shmem = wrs_shm_alloc(hist_shmem_hdr, sizeof(*hist_shmem));
+	if (!hist_shmem) {
+		pr_error("Can't allocate in shmem\n");
+		return -1;
+	}
+
+	/* TODO: clear allocated memory? */
+	hist_shmem_hdr->version = HIST_SHMEM_VERSION;
+	/* Release processes waiting for wrs_hist's to fill shm with correct
+	 * data. When shm is opened successfully data in shm is still not
+	 * populated! Read data with wrs_shm_seqbegin and wrs_shm_seqend! */
+	wrs_shm_write(hist_shmem_hdr, WRS_SHM_WRITE_END);
+
+	return 0;
+}
 
 static void show_help(void)
 {
@@ -63,8 +94,14 @@ int main(int argc, char *argv[])
 	pr_info("Commit %s, built on " __DATE__ "\n", __GIT_VER__);
 
 	hist_parse_cmdline(argc, argv);
-
-	hist_wripc_init();
+	if (hist_check_running()) {
+		pr_error("Fatal: There is another wrs_hist instance running. "
+			 "We can't work together.\n");
+		return 1;
+	}
+	assert_init(hist_shmem_init());
+	assert_init(hist_wripc_init());
+ 
 
 	/*
 	 * Main loop update - polls for WRIPC requests and rolls the port

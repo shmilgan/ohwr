@@ -12,6 +12,7 @@
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/rtu_shmem.h>
+#include <libwr/hist_shmem.h>
 #include <libwr/softpll_export.h>
 #include <libwr/util.h>
 #include <ppsi/ppsi.h>
@@ -37,6 +38,7 @@ char *name_id_to_name[WRS_SHM_N_NAMES] = {
 	[wrs_shm_rtu] = "wrsw_rtud",
 	[wrs_shm_hal] = "wrsw_hal",
 	[wrs_shm_vlan] = "wrs_vlans",
+	[wrs_shm_hist] = "wrs_hist",
 };
 
 /* index of a the greatest number describing the SPLL mode +1 */
@@ -855,6 +857,80 @@ static int dump_spll_mem(struct spll_stats *spll)
 	return 0; /* this is complete */
 }
 
+
+/* map for fields of wrs_hist_run_nand (hist.h) */
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct wrs_hist_run_nand
+struct dump_info wrs_hist_run_nand_info [] = {
+	DUMP_FIELD(uint32_t, magic),
+	DUMP_FIELD(asciiuptime, lifetime),
+	DUMP_FIELD(asciitime, timestamp),
+	DUMP_FIELD(uint8_t, temp[0]),
+	DUMP_FIELD(uint8_t, temp[1]),
+	DUMP_FIELD(uint8_t, temp[2]),
+	DUMP_FIELD(uint8_t, temp[3]),
+};
+
+/* map for fields of wrs_hist_run_spi (hist.h) */
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct wrs_hist_run_spi
+struct dump_info wrs_hist_run_spi_info [] = {
+	DUMP_FIELD(uint32_t, magic),
+	DUMP_FIELD(asciiuptime, lifetime),
+	DUMP_FIELD(asciitime, timestamp),
+};
+
+/* map for fields of wrs_hist_sfp_nand (hist.h) */
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct wrs_hist_sfp_nand
+struct dump_info wrs_hist_sfp_nand_info [] = {
+	DUMP_FIELD(uint32_t, magic),
+	DUMP_FIELD(asciitime, timestamp),
+};
+
+/* map for fields of wrs_hist_sfp_entry (hist.h) */
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct wrs_hist_sfp_entry
+struct dump_info wrs_hist_sfp_entry_info [] = {
+	DUMP_FIELD_SIZE(char, vn, 16),
+	DUMP_FIELD_SIZE(char, pn, 16),
+	DUMP_FIELD_SIZE(char, sn, 16),
+	DUMP_FIELD(asciiuptime, sfp_uptime),
+	DUMP_FIELD(asciitime, last_seen),
+};
+
+
+int dump_hist_mem(struct wrs_shm_head *head)
+{
+	struct hist_shmem_data *h;
+	int i;
+
+	if (head->version != HIST_SHMEM_VERSION) {
+		fprintf(stderr, "dump hal: unknown version %i (known is %i)\n",
+			head->version, HIST_SHMEM_VERSION);
+		return -1;
+	}
+	h = (void *)head + head->data_off;
+
+	printf("hist run nand:\n");
+	dump_many_fields(&h->hist_run_nand, wrs_hist_run_nand_info,
+			 ARRAY_SIZE(wrs_hist_run_nand_info));
+	printf("hist run spi:\n");
+	dump_many_fields(&h->hist_run_spi, wrs_hist_run_spi_info,
+			 ARRAY_SIZE(wrs_hist_run_spi_info));
+	printf("hist sfp nand:\n");
+	dump_many_fields(&h->hist_sfp_nand, wrs_hist_sfp_nand_info,
+			 ARRAY_SIZE(wrs_hist_sfp_nand_info));
+	
+	for (i = 0; i < WRS_HIST_MAX_SFPS; i++) {
+		printf("dump sfp %i:\n", i);
+		dump_many_fields(&h->hist_sfp_nand.sfps[i],
+				 wrs_hist_sfp_entry_info,
+				 ARRAY_SIZE(wrs_hist_sfp_entry_info));
+	}
+	return 0;
+}
+
 int dump_any_mem(struct wrs_shm_head *head)
 {
 	unsigned char *p = (void *)head;
@@ -885,6 +961,7 @@ dump_f *name_id_to_f[WRS_SHM_N_NAMES] = {
 	[wrs_shm_hal] = dump_hal_mem,
 	[wrs_shm_ptp] = dump_ppsi_mem,
 	[wrs_shm_rtu] = dump_rtu_mem,
+	[wrs_shm_hist] = dump_hist_mem,
 };
 
 void print_info(char *prgname)
@@ -901,7 +978,8 @@ void print_info(char *prgname)
 		"   -P        Dump ptp entries\n"
 		"   -R        Dump rtu entries\n"
 		"   -L        Dump hal entries\n"
-		"   -S        Dump SoftPll entries\n");
+		"   -S        Dump SoftPll entries\n"
+		"   -U        Dump wrs_hist entries\n");
 
 }
 
@@ -918,7 +996,7 @@ int main(int argc, char **argv)
 	int print_all = 1;
 	struct spll_stats *spll_stats_p;
 
-	while ((c = getopt(argc, argv, "ahH:PRLS")) != -1) {
+	while ((c = getopt(argc, argv, "ahH:PRLSU")) != -1) {
 		switch (c) {
 		case 'a':
 			dump_all_rtu_entries = 1;
@@ -940,6 +1018,10 @@ int main(int argc, char **argv)
 			break;
 		case 'S':
 			dump_spll = 1;
+			print_all = 0;
+			break;
+		case 'U':
+			dump_print[wrs_shm_hist] = 1;
 			print_all = 0;
 			break;
 		case 'h':

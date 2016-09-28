@@ -18,6 +18,7 @@ enum wrs_shm_name {
 	wrs_shm_rtu,
 	wrs_shm_hal,
 	wrs_shm_vlan,
+	wrs_shm_hist,
 	WRS_SHM_N_NAMES,	/* must be last */
 };
 

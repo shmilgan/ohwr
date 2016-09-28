@@ -75,3 +75,26 @@ int hist_wripc_update(int ms_timeout)
 	minipc_server_action(hist_ch, ms_timeout);
 	return 0;
 }
+
+/* Returns 1 if there's already an instance of the HAL running. Used
+   to prevent from launching multiple HALs simultaneously. */
+int hist_check_running(void)
+{
+	struct wrs_shm_head *hist_head;
+	hist_head = wrs_shm_get(wrs_shm_hist, "", WRS_SHM_READ);
+	if (!hist_head) {
+		pr_error("Unable to open shm for wrs_hist! Unable to check if"
+			 " there is another wrs_hist instance running. Error:"
+			 " %s\n",
+			 strerror(errno));
+		exit(1);
+	}
+
+	/* check if pid is 0 (shm not filled) or process with provided
+	 * pid does not exist (probably crashed) */
+	if ((hist_head->pid == 0) || (kill(hist_head->pid, 0) != 0))
+		return 0;
+
+	wrs_shm_put(hist_head);
+	return 1;
+}
