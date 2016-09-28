@@ -91,6 +91,8 @@ enum dump_type {
 	/* normal types follow */
 	dump_type_uint32_t,
 	dump_type_uint16_t,
+	dump_type_uint8_t,
+	dump_type_int8_t,
 	dump_type_int,
 	dump_type_unsigned_long,
 	dump_type_unsigned_char,
@@ -193,6 +195,8 @@ void dump_one_field(void *addr, struct dump_info *info)
 	case dump_type_Integer8:
 	case dump_type_Enumeration8:
 	case dump_type_Boolean:
+	case dump_type_uint8_t:
+	case dump_type_int8_t:
 		printf("%i\n", *(unsigned char *)p);
 		break;
 	case dump_type_UInteger16:
