@@ -1,5 +1,5 @@
 
-OBJS = hist_main.o hist_exports.o hist_sfp.o
+OBJS = hist_main.o hist_exports.o hist_sfp.o hist_uptime.o
 
 BINARY = wrs_hist
 

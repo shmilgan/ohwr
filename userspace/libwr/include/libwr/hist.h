@@ -8,6 +8,17 @@
 #define WRS_HIST_TEMP_PSL  2
 #define WRS_HIST_TEMP_PSR  3
 
+#define WRS_HIST_RUN_NAND_MAGIC 0xDADA5D00
+#define WRS_HIST_RUN_NAND_MAGIC_MASK 0xFFFFFF00
+#define WRS_HIST_RUN_NAND_MAGIC_VER 1
+#define WRS_HIST_RUN_NAND_MAGIC_VER_MASK 0xFF
+
+#define WRS_HIST_RUN_SPI_MAGIC 0x5ADA5500
+#define WRS_HIST_RUN_SPI_MAGIC_MASK 0xFFFFFF00
+#define WRS_HIST_RUN_SPI_MAGIC_VER 1
+#define WRS_HIST_RUN_SPI_MAGIC_VER_MASK 0xFF
+
+
 struct wrs_hist_run_nand {
 	uint32_t magic; /* 24bits magic + 8bits version */
 	uint32_t lifetime; /* in seconds, ~136 years */

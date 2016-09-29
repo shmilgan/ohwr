@@ -17,7 +17,9 @@
 #include <libwr/util.h>
 #include "wrs_hist.h"
 
-#define PORT_FAN_MS_PERIOD 250
+/* periods in ms */
+#define NAND_UPDATE_PERIOD 5
+#define SPI_UPDATE_PERIOD 5
 
 struct hist_shmem_data *hist_shmem;
 struct wrs_shm_head *hist_shmem_hdr;
@@ -87,7 +89,10 @@ static void hist_parse_cmdline(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-	uint64_t t1, t2;
+	time_t t;
+	time_t last_update_nand_ms;
+	time_t last_update_spi_ms;
+
 	wrs_msg_init(argc, argv);
 
 	/* Print HAL's version */
@@ -101,7 +106,7 @@ int main(int argc, char *argv[])
 	}
 	assert_init(hist_shmem_init());
 	assert_init(hist_wripc_init());
- 
+	assert_init(hist_uptime_init()); /* move it? */
 
 	/* TODO: scan HAL for SFPs that are already plugged */
 	/*
@@ -118,20 +123,24 @@ int main(int argc, char *argv[])
 
 	/* TODO: make sure only one copy of wrs_hist is running */
 
-	t1 = get_monotonic_tics();
+	t = get_monotonic_sec();
+	last_update_nand_ms = t;
+	last_update_spi_ms = t;
 	for (;;) {
-		int delay_ms;
-
+		t = get_monotonic_sec();
 		hist_wripc_update(1000 /* max ms delay */);
 
-		t2 = get_monotonic_tics();
-		delay_ms = (t2 - t1) * 1000;
-		if (delay_ms < PORT_FAN_MS_PERIOD)
-			continue;
+		if (last_update_nand_ms + NAND_UPDATE_PERIOD < t) {
+			last_update_nand_ms += NAND_UPDATE_PERIOD;
+			hist_uptime_nand_save();
+		}
 
-// 		wrs_shm_write(hal_shmem, WRS_SHM_WRITE_BEGIN);
-// 		wrs_shm_write(hal_shmem, WRS_SHM_WRITE_END);
-		t1 = t2;
+		if (last_update_spi_ms + SPI_UPDATE_PERIOD < t) {
+			last_update_spi_ms += SPI_UPDATE_PERIOD;
+			hist_uptime_spi_save();
+		}
+
+	  
 	}
 
 	return 0;
