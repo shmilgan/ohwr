@@ -127,6 +127,8 @@ enum dump_type {
 	/* rtu_filtering_entry enumerations */
 	dump_type_rtu_filtering_entry_dynamic,
 	dump_type_array_int,
+	dump_type_asciitime,
+	dump_type_asciiuptime,
 };
 
 static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
@@ -352,6 +354,33 @@ void dump_one_field(void *addr, struct dump_info *info)
 		for (i = 0; i < *size; i++)
 			printf("%d ", *((int *)p + i));
 		printf("\n");
+		break;
+		}
+	case dump_type_asciitime:
+		{
+		time_t *t;
+		t = (time_t *)p;
+		if (*t == 0) {
+			printf("--\n");
+			break;
+		}
+		printf("%s", ctime(t));
+		break;
+		}
+	case dump_type_asciiuptime:
+		{
+		time_t *t;
+		struct tm *tm;
+		t = (time_t *)p;
+		tm = gmtime(t);
+		if (*t == 0 || tm == 0) {
+			printf("--\n");
+			break;
+		}
+		printf("years %2d, months %2d, days %2d, hours %2d, min %2d, "
+		       "seconds %2d\n",
+		       tm->tm_year - 70, tm->tm_mon, tm->tm_mday - 1,
+		       tm->tm_hour, tm->tm_min, tm->tm_sec);
 		break;
 		}
 	}
