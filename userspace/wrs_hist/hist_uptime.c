@@ -10,6 +10,7 @@
 #include <libwr/util.h>
 #include <libwr/shmem.h>
 #include <libwr/hist_shmem.h>
+#include <libwr/hal_shmem.h>
 #include <libwr/wrs-msg.h>
 
 #include "wrs_hist.h"
@@ -137,10 +138,15 @@ static void hist_uptime_nand_write(struct wrs_hist_run_nand *data)
 
 static void hist_uptime_get_temp(uint8_t temp[4])
 {
-	temp[0] += 1;
-	temp[1] += 2;
-	temp[2] += 3;
-	temp[3] += 4;
+	static struct hal_temp_sensors temp_sensors;
+
+	/* TODO: this should read or calculare average temperature not
+	 * the current temperature */
+	hal_shmem_read_temp(&temp_sensors);
+	temp[WRS_HIST_TEMP_FPGA] = temp_sensors.fpga >> 8;
+	temp[WRS_HIST_TEMP_PLL] = temp_sensors.pll >> 8;
+	temp[WRS_HIST_TEMP_PSL] = temp_sensors.psl >> 8;
+	temp[WRS_HIST_TEMP_PSR] = temp_sensors.psr >> 8;
 }
 
 void hist_uptime_spi_save(void)

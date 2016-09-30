@@ -3,6 +3,12 @@
 
 #include <time.h>
 #include <inttypes.h>
+#include <libwr/hal_shmem.h>
+
+extern struct hist_shmem_data *hist_shmem;
+extern struct wrs_shm_head *hist_head;
+
+int hal_shmem_read_temp(struct hal_temp_sensors * temp);
 
 extern struct hist_shmem_data *hist_shmem;
 extern struct wrs_shm_head *hist_shmem_hdr;

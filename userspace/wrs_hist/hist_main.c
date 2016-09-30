@@ -14,6 +14,7 @@
 #include <libwr/wrs-msg.h>
 #include <libwr/shmem.h>
 #include <libwr/hist_shmem.h>
+#include <libwr/hal_shmem.h>
 #include <libwr/util.h>
 #include "wrs_hist.h"
 
@@ -23,6 +24,8 @@
 
 struct hist_shmem_data *hist_shmem;
 struct wrs_shm_head *hist_shmem_hdr;
+static struct wrs_shm_head *hal_shmem_hdr;
+static struct hal_temp_sensors *temp_sensors;
 
 /* Interates via all the ports defined in the config file and
  * intializes them one after another. */
@@ -51,6 +54,62 @@ static int hist_shmem_init(void)
 	 * data. When shm is opened successfully data in shm is still not
 	 * populated! Read data with wrs_shm_seqbegin and wrs_shm_seqend! */
 	wrs_shm_write(hist_shmem_hdr, WRS_SHM_WRITE_END);
+
+	return 0;
+}
+
+static void hal_shm_init(void)
+{
+	
+	int ret;
+	int n_wait = 0;
+	struct hal_shmem_header *h;
+	
+	while ((ret = wrs_shm_get_and_check(wrs_shm_hal, &hal_shmem_hdr)) != 0) {
+		n_wait++;
+		if (ret == WRS_SHM_OPEN_FAILED) {
+			pr_error("Unable to open HAL's shm !\n");
+		}
+		if (ret == WRS_SHM_WRONG_VERSION) {
+			pr_error("Unable to read HAL's version!\n");
+		}
+		if (ret == WRS_SHM_INCONSISTENT_DATA) {
+			pr_error("Unable to read consistent data from HAL's "
+				 "shmem!\n");
+		}
+		if (n_wait > 10) {
+			/* timeout! */
+			exit(-1);
+		}
+		sleep(1);
+	}
+
+	if (hal_shmem_hdr->version != HAL_SHMEM_VERSION) {
+		pr_error("Unknown HAL's shm version %i (known is %i)\n",
+			 hal_shmem_hdr->version, HAL_SHMEM_VERSION);
+		exit(1);
+	}
+	h = (void *)hal_shmem_hdr + hal_shmem_hdr->data_off;
+	temp_sensors = &(h->temp);
+}
+
+
+int hal_shmem_read_temp(struct hal_temp_sensors * temp){
+	unsigned ii;
+	unsigned retries = 0;
+
+	/* read data, with the sequential lock to have all data consistent */
+	while (1) {
+		ii = wrs_shm_seqbegin(hal_shmem_hdr);
+		memcpy(temp, temp_sensors,
+		       sizeof(*temp_sensors));
+		retries++;
+		if (retries > 100)
+			return -1;
+		if (!wrs_shm_seqretry(hal_shmem_hdr, ii))
+			break; /* consistent read */
+		usleep(1000);
+	}
 
 	return 0;
 }
@@ -104,6 +163,7 @@ int main(int argc, char *argv[])
 			 "We can't work together.\n");
 		return 1;
 	}
+	hal_shm_init();
 	assert_init(hist_shmem_init());
 	assert_init(hist_wripc_init());
 	assert_init(hist_uptime_init()); /* move it? */
