@@ -53,7 +53,7 @@
 		echo '<form method=POST>';
 
 		for($i = 0; $i < 18; $i++){
-			$single_line = explode(" ",$vlans_assignment[$i+1]); //info per endpoint line
+			$single_line = explode(" ",$vlans_assignment[$i+2]); //info per endpoint line
 
 			echo '<tr>';
 			echo '<th><center><b>'.($single_line[0]).'</b></center></th>';

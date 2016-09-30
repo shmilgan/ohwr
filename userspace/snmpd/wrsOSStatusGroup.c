@@ -170,7 +170,6 @@ time_t wrsOSStatus_data_fill(void)
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: unrecognized source of custom boot script\n",
 			 slog_obj_name);
 	}
-
 	if (b->wrsCustomBootScriptStatus == WRS_CUSTOM_BOOT_SCRIPT_STATUS_FAILED) {
 		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: custom boot script failed during execution\n",
@@ -191,11 +190,43 @@ time_t wrsOSStatus_data_fill(void)
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: error in status file of custom boot script execution\n",
 			 slog_obj_name);
 	}
-
 	if (b->wrsCustomBootScriptSource == WRS_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE
 	    && strnlen(b->wrsCustomBootScriptSourceUrl, WRS_CUSTOM_BOOT_SCRIPT_SOURCE_URL_LEN) == 0) {
 		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
 		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: empty URL for custom boot script\n",
+			 slog_obj_name);
+	}
+
+	if (b->wrsAuxClkSetStatus == WRS_AUXCLK_SET_STATUS_FAILED) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: setting up auxclk on connector clk2 failed\n",
+			 slog_obj_name);
+	}
+	if (b->wrsAuxClkSetStatus == WRS_AUXCLK_SET_STATUS_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: error in status file of setting up auxclk on connector clk2\n",
+			 slog_obj_name);
+	}
+
+	if (b->wrsThrottlingSetStatus == WRS_THROTTLING_SET_STATUS_FAILED) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: setting up a throttling limit failed\n",
+			 slog_obj_name);
+	}
+	if (b->wrsThrottlingSetStatus == WRS_THROTTLING_SET_STATUS_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: error in status file of setting up a throttling limit\n",
+			 slog_obj_name);
+	}
+
+	if (b->wrsVlansSetStatus == WRS_VLANS_SET_STATUS_FAILED) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: setting up a throttling limit failed\n",
+			 slog_obj_name);
+	}
+	if (b->wrsVlansSetStatus == WRS_VLANS_SET_STATUS_ERROR) {
+		o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_ERROR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: error in status file of setting up a throttling limit\n",
 			 slog_obj_name);
 	}
 
@@ -262,6 +293,21 @@ time_t wrsOSStatus_data_fill(void)
 			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: Unable to read status file of wrsCustomBootScriptStatus\n",
 				slog_obj_name);
 		}
+		if (b->wrsAuxClkSetStatus == WRS_AUXCLK_SET_STATUS_ERROR_MINOR) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: Unable to read status file of wrsAuxClkSetStatus\n",
+				slog_obj_name);
+		}
+		if (b->wrsThrottlingSetStatus == WRS_THROTTLING_SET_STATUS_ERROR_MINOR) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: Unable to read status file of wrsThrottlingSetStatus\n",
+				slog_obj_name);
+		}
+		if (b->wrsVlansSetStatus == WRS_VLANS_SET_STATUS_ERROR_MINOR) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING;
+			snmp_log(LOG_ERR, "SNMP: " SL_W " %s: Unable to read status file of wrsVlansSetStatus\n",
+				slog_obj_name);
+		}
 	}
 
 	/* check if any of fields equal to 0 */
@@ -306,6 +352,21 @@ time_t wrsOSStatus_data_fill(void)
 			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Status of wrsCustomBootScriptStatus not available\n",
 				slog_obj_name);
 		}
+		if (b->wrsAuxClkSetStatus == 0) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Status of wrsAuxClkSetStatus not available\n",
+				slog_obj_name);
+		}
+		if (b->wrsThrottlingSetStatus == 0) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Status of wrsThrottlingSetStatus not available\n",
+				slog_obj_name);
+		}
+		if (b->wrsVlansSetStatus == 0) {
+			o->wrsBootSuccessful = WRS_BOOT_SUCCESSFUL_WARNING_NA;
+			snmp_log(LOG_ERR, "SNMP: " SL_NA " %s: Status of wrsVlansSetStatus not available\n",
+				slog_obj_name);
+		}
 	}
 
 	if ((!o->wrsBootSuccessful) 
@@ -334,6 +395,12 @@ time_t wrsOSStatus_data_fill(void)
 			  && b->wrsCustomBootScriptStatus == WRS_CUSTOM_BOOT_SCRIPT_STATUS_OK
 		    )
 		   )
+		&& (b->wrsAuxClkSetStatus == WRS_AUXCLK_SET_STATUS_OK
+		    || b->wrsAuxClkSetStatus == WRS_AUXCLK_SET_STATUS_DISABLED)
+		&& (b->wrsThrottlingSetStatus == WRS_THROTTLING_SET_STATUS_OK
+		    || b->wrsThrottlingSetStatus == WRS_THROTTLING_SET_STATUS_DISABLED)
+		&& (b->wrsVlansSetStatus == WRS_VLANS_SET_STATUS_OK
+		    || b->wrsVlansSetStatus == WRS_VLANS_SET_STATUS_DISABLED)
 	       )
 	   ) { /* OK, but check source */
 		/* additional check of source */

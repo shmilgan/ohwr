@@ -1345,7 +1345,7 @@ ever erase this memory; if it happens, the system won't boot and
 you'll be forced to re-flash it entirely, which requires access to the back
 side of the switch..
 
-NAND memory is used for user-data: tke boot loader configuration, the
+NAND memory is used for user-data: the boot loader configuration, the
 kernel and the filesystem.
 
 This is how the memory is used:
@@ -1651,6 +1651,11 @@ the processes (excluding the @sc{rt} subsystem).
 	Called by both @i{rtu_stat} and @i{wrs_vlans}. It is
         used to pass a number of parameters to @i{rtud} and
         make it perform actions.
+
+@item rtud::hp_mask
+
+	Called by @i{rtu_stat} when setting which priorities are considered
+	High Priority (this only concerns the traffic which is fast-forwarded).
 
 @end table
 

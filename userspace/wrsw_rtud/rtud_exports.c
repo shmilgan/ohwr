@@ -37,6 +37,7 @@
 #include "rtu.h"
 #include "rtu_fd.h"
 #include "rtu_drv.h"
+#include "rtu_ext_drv.h"
 #include "rtud_exports.h"
 #include <libwr/mac.h>
 
@@ -278,6 +279,39 @@ int rtudexp_unrec(const struct minipc_pd *pd, uint32_t * args, void *ret)
 	return *p_ret;
 }
 
+int rtudexp_hp_mask(const struct minipc_pd *pd, uint32_t * args, void *ret)
+{
+	int oper;
+	uint32_t hp_mask;
+	int *p_ret = (int *)ret; /* force pointed to int type */
+
+	oper = (int)args[0];
+	hp_mask = (int)args[1];
+
+	*p_ret = 0;
+	pr_debug("Request for HP mask\n");
+	switch (oper) {
+	case RTU_SET_HP_MASK:
+		if (hp_mask >= (1 << 8)) {
+			*p_ret = -1;
+			pr_error("Wrong HP mask 0x%x\n", hp_mask);
+			break;
+		}
+		rtux_set_hp_prio_mask(hp_mask);
+		pr_debug("Setting HP mask 0x%x\n", hp_mask);
+		break;
+	case RTU_GET_HP_MASK:
+		*p_ret = rtux_get_hp_prio_mask();
+		pr_debug("Got HP mask 0x%x\n", *p_ret);
+		break;
+	default:
+		pr_error("Wrong operation for HP mask %d\n", oper);
+		*p_ret = -1;
+		return *p_ret;
+	}
+	return *p_ret;
+}
+
 int rtudexp_vlan_entry(const struct minipc_pd *pd, uint32_t * args, void *ret)
 {
 	int vid, fid, mask, drop, prio, has_prio, prio_override;
@@ -314,6 +348,7 @@ int rtud_init_exports()
 	MINIPC_EXP_FUNC(rtud_export_learning_process, rtudexp_learning_process);
 	MINIPC_EXP_FUNC(rtud_export_unrec, rtudexp_unrec);
 	MINIPC_EXP_FUNC(rtud_export_vlan_entry, rtudexp_vlan_entry);
+	MINIPC_EXP_FUNC(rtud_export_hp_mask, rtudexp_hp_mask);
 
 	return 0;
 }

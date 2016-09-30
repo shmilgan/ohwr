@@ -27,6 +27,10 @@
 #define CUSTOM_BOOT_SCRIPT_SOURCE_FILE "/tmp/custom_boot_script_source"
 #define CUSTOM_BOOT_SCRIPT_SOURCE_URL_FILE "/tmp/custom_boot_script_url"
 
+#define WRS_AUXCLK_SET_STATUS_FILE "/tmp/wrs_auxclk_set_status"
+#define WRS_THROTTLING_SET_STATUS_FILE "/tmp/wrs_throttling_set_status"
+#define WRS_VLANS_SET_STATUS_FILE "/tmp/vlans_set_status"
+
 /* Macros for fscanf function to read line with maximum of "x" characters
  * without new line. Macro expands to something like: "%10[^\n]" */
 #define LINE_READ_LEN_HELPER(x) "%"#x"[^\n]"
@@ -56,6 +60,9 @@ static struct pickinfo wrsBootStatus_pickinfo[] = {
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsCustomBootScriptSource),
 	FIELD(wrsBootStatus_s, ASN_OCTET_STR, wrsCustomBootScriptSourceUrl),
 	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsCustomBootScriptStatus),
+	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsAuxClkSetStatus),
+	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsThrottlingSetStatus),
+	FIELD(wrsBootStatus_s, ASN_INTEGER, wrsVlansSetStatus),
 };
 
 struct wrsBootStatus_s wrsBootStatus_s;
@@ -670,6 +677,103 @@ static void get_custom_boot_script_status(void)
 
 }
 
+static void get_wrs_aux_clk_set_status(void)
+{
+	char buff[21]; /* 1 for null char */
+	FILE *f;
+
+	f = fopen(WRS_AUXCLK_SET_STATUS_FILE, "r");
+	if (f) {
+		/* readline without newline */
+		fscanf(f, LINE_READ_LEN(20), buff);
+		fclose(f);
+		if (!strcmp(buff, "ok"))
+			wrsBootStatus_s.wrsAuxClkSetStatus =
+						WRS_AUXCLK_SET_STATUS_OK;
+		else if (!strcmp(buff, "failed"))
+			wrsBootStatus_s.wrsAuxClkSetStatus =
+						WRS_AUXCLK_SET_STATUS_FAILED;
+		else if (!strcmp(buff, "disabled"))
+			wrsBootStatus_s.wrsAuxClkSetStatus =
+						WRS_AUXCLK_SET_STATUS_DISABLED;
+		else /* unknown status */
+			wrsBootStatus_s.wrsAuxClkSetStatus =
+						WRS_AUXCLK_SET_STATUS_ERROR;
+	} else {
+		/* file with status not found, probably something else caused
+		 * a problem */
+		wrsBootStatus_s.wrsAuxClkSetStatus =
+					WRS_AUXCLK_SET_STATUS_ERROR_MINOR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsAuxClkSetStatus: failed to "
+			 "open " WRS_AUXCLK_SET_STATUS_FILE "\n");
+	}
+}
+
+static void get_wrs_throttling_set_status(void)
+{
+	char buff[21]; /* 1 for null char */
+	FILE *f;
+
+	f = fopen(WRS_THROTTLING_SET_STATUS_FILE, "r");
+	if (f) {
+		/* readline without newline */
+		fscanf(f, LINE_READ_LEN(20), buff);
+		fclose(f);
+		if (!strcmp(buff, "ok"))
+			wrsBootStatus_s.wrsThrottlingSetStatus =
+						WRS_THROTTLING_SET_STATUS_OK;
+		else if (!strcmp(buff, "failed"))
+			wrsBootStatus_s.wrsThrottlingSetStatus =
+						WRS_THROTTLING_SET_STATUS_FAILED;
+		else if (!strcmp(buff, "disabled"))
+			wrsBootStatus_s.wrsThrottlingSetStatus =
+						WRS_THROTTLING_SET_STATUS_DISABLED;
+		else /* unknown status */
+			wrsBootStatus_s.wrsThrottlingSetStatus =
+						WRS_THROTTLING_SET_STATUS_ERROR;
+	} else {
+		/* file with status not found, probably something else caused
+		 * a problem */
+		wrsBootStatus_s.wrsThrottlingSetStatus =
+					WRS_THROTTLING_SET_STATUS_ERROR_MINOR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsThrottlingSetStatus: failed"
+			 "to open " WRS_THROTTLING_SET_STATUS_FILE "\n");
+	}
+}
+
+
+static void get_wrs_vlans_set_status(void)
+{
+	char buff[21]; /* 1 for null char */
+	FILE *f;
+
+	f = fopen(WRS_VLANS_SET_STATUS_FILE, "r");
+	if (f) {
+		/* readline without newline */
+		fscanf(f, LINE_READ_LEN(20), buff);
+		fclose(f);
+		if (!strcmp(buff, "ok"))
+			wrsBootStatus_s.wrsVlansSetStatus =
+						WRS_VLANS_SET_STATUS_OK;
+		else if (!strcmp(buff, "failed"))
+			wrsBootStatus_s.wrsVlansSetStatus =
+						WRS_VLANS_SET_STATUS_FAILED;
+		else if (!strcmp(buff, "disabled"))
+			wrsBootStatus_s.wrsVlansSetStatus =
+						WRS_VLANS_SET_STATUS_DISABLED;
+		else /* unknown status */
+			wrsBootStatus_s.wrsVlansSetStatus =
+						WRS_VLANS_SET_STATUS_ERROR;
+	} else {
+		/* file with status not found, probably something else caused
+		 * a problem */
+		wrsBootStatus_s.wrsVlansSetStatus =
+					WRS_VLANS_SET_STATUS_ERROR_MINOR;
+		snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsVlansSetStatus: failed"
+			 "to open " WRS_VLANS_SET_STATUS_FILE "\n");
+	}
+}
+
 time_t wrsBootStatus_data_fill(void)
 {
 	static time_t time_update;
@@ -703,8 +807,17 @@ time_t wrsBootStatus_data_fill(void)
 	/* get info about the firmware update status */
 	get_fw_update_status();
 
-	/* get info about the firmware update status */
+	/* get info about the status of custom boot script execution */
 	get_custom_boot_script_status();
+
+	/* get info about the status of auxclk setting */
+	get_wrs_aux_clk_set_status();
+
+	/* get info about the status of wrs_throttling setting */
+	get_wrs_throttling_set_status();
+
+	/* get info about the status of vlans setup */
+	get_wrs_vlans_set_status();
 
 	/* there was an update, return current time */
 	return time_update;

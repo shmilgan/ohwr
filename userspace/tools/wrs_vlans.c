@@ -36,23 +36,22 @@
 
 #include <libwr/shmem.h>
 #include <libwr/rtu_shmem.h>
+#include <libwr/config.h>
+#include <libwr/wrs-msg.h>
 
-static int debug = 0;
 static struct minipc_ch *rtud_ch;
 static struct rtu_vlans_t *rtu_vlans = NULL;
-static char *prgname;
 
 /* runtime options */
 static struct option ropts[] = {
 	{"help", 0, NULL, OPT_HELP},
-	{"debug", 0, &debug, 1},
 	{"clear", 0, NULL, OPT_CLEAR},
 	{"list", 0, NULL, OPT_LIST},
 	{"port", 1, NULL, OPT_P_PORT},
 	{"pmode", 1, NULL, OPT_P_QMODE},
 	{"pvid", 1, NULL, OPT_P_VID},
 	{"pprio", 1, NULL, OPT_P_PRIO},
-	{"pumask", 1, NULL, OPT_P_UMASK},
+	{"puntag", 1, NULL, OPT_P_UNTAG},
 	{"plist", 0, NULL, OPT_P_LIST},
 	{"rvid", 1, NULL, OPT_RTU_VID},
 	{"rfid", 1, NULL, OPT_RTU_FID},
@@ -60,25 +59,44 @@ static struct option ropts[] = {
 	{"rdrop", 1, NULL, OPT_RTU_DROP},
 	{"rprio", 1, NULL, OPT_RTU_PRIO},
 	{"del", 0, NULL, OPT_RTU_DEL},
+	{"file", 1, NULL, OPT_FILE_READ},
+	{"hpmask", 1, NULL, OPT_RTU_HP_MASK},
 	{0,}};
 /*******************/
-
+static struct vlan_sets dot_config_vlan_sets[] = {
+	{"VLANS_ENABLE_SET1", 0, 22},
+	{"VLANS_ENABLE_SET2", 23, 100},
+	{"VLANS_ENABLE_SET3", 101, 4094},
+	{NULL, 0, 0}
+};
 static struct s_port_vlans vlans[NPORTS];
 
 static unsigned long portmask;
 
+static void set_p_pmode(int ep, int arg_mode);
+static void set_p_vid(int ep, char *arg_vid);
+static void set_p_prio(int ep, char *arg_prio);
+static void set_p_untag(int ep, int arg_untag);
+static void set_hp_mask(char *mask_str);
+static int check_rtu(char *name, char *arg_val, int min, int max);
+static int check_rtu_prio(char *arg_val);
 static int print_help(char *prgname);
-static void print_config(struct s_port_vlans *vlans);
+static void print_config_rtu(struct s_port_vlans *vlans);
+static void print_config_vlan(void);
 static int apply_settings(struct s_port_vlans *vlans);
+static void default_vlan_config(void);
 static int clear_all(void);
 static int set_rtu_vlan(int vid, int fid, int pmask, int drop, int prio,
 			int del, int flags);
 static void free_rtu_vlans(struct rtu_vlans_t *ptr);
 static void list_rtu_vlans(void);
 static void list_p_vlans(void);
+static void print_hp_mask(void);
 static int rtu_find_vlan(struct rtu_vlan_table_entry *rtu_vlan_entry, int vid,
 					 int fid);
 static int config_rtud(void);
+static int read_dot_config(char *dot_config_file);
+static void read_dot_config_vlans(int vlan_min, int vlan_max);
 
 struct rtu_vlan_table_entry *vlan_tab_shm;
 struct wrs_shm_head *rtu_port_shmem;
@@ -124,10 +142,10 @@ static int parse_mask(char *arg, unsigned long *pmask)
 			portmask |= (1 << p1);
 		}
 	}
-	if (!debug)
+	if (wrs_msg_level < LOG_DEBUG)
 		return 0;
 
-	printf("%s: working on ports:\n", prgname);
+	printf("working on ports:\n");
 	iterate_ports(p1, *pmask)
 		printf(" %i", p1 + 1);
 	printf("\n");
@@ -141,7 +159,10 @@ int main(int argc, char *argv[])
 	struct rtu_shmem_header *rtu_hdr;
 	int n_wait = 0;
 	int ret;
+	char *prgname;
 
+	wrs_msg_level = LOG_WARNING;
+	wrs_msg_init(argc, argv);
 	prgname = argv[0];
 
 	if (NPORTS > 8 * sizeof(portmask)) {
@@ -160,8 +181,7 @@ int main(int argc, char *argv[])
 	while((rtud_ch = minipc_client_create("rtud", 0)) == 0) {
 		n_wait++;
 		if (n_wait > 10) {
-			fprintf(stderr, "%s: Can't connect to RTUd mini-rpc "
-					"server\n", prgname);
+			pr_error("Can't connect to RTUd mini-rpc server\n");
 			exit(1);
 		}
 		sleep(1);
@@ -173,12 +193,10 @@ int main(int argc, char *argv[])
 		n_wait++;
 		if (n_wait > 10) {
 			if (ret == 1) {
-				fprintf(stderr, "%s: Unable to open RTUd's "
-					"shmem!\n", prgname);
+				pr_error("Unable to open RTUd's shmem!\n");
 			}
 			if (ret == 2) {
-				fprintf(stderr, "%s: Unable to read RTUd's "
-					"version!\n", prgname);
+				pr_error("Unable to read RTUd's version!\n");
 			}
 			exit(1);
 		}
@@ -187,8 +205,8 @@ int main(int argc, char *argv[])
 
 	/* check rtu shm version */
 	if (rtu_port_shmem->version != RTU_SHMEM_VERSION) {
-		fprintf(stderr, "%s: unknown version %i (known is %i)\n",
-			prgname, rtu_port_shmem->version, RTU_SHMEM_VERSION);
+		pr_error("unknown version %i (known is %i)\n",
+			 rtu_port_shmem->version, RTU_SHMEM_VERSION);
 		exit(1);
 	}
 
@@ -199,176 +217,321 @@ int main(int argc, char *argv[])
 	vlan_tab_shm = wrs_shm_follow(rtu_port_shmem, rtu_hdr->vlans);
 
 	if (!vlan_tab_shm) {
-		fprintf(stderr, "%s: cannot follow pointer to vlans in "
-			"RTU's shmem\n", prgname);
+		pr_error("cannot follow pointer to vlans in RTU's shmem\n");
 		exit(1);
 	}
 
 	if (shw_fpga_mmap_init() < 0) {
-		fprintf(stderr, "%s: Can't access device memory\n", prgname);
+		pr_error("Can't access device memory\n");
 		exit(1);
 	}
 
 	/*parse parameters*/
-	while( (c = getopt_long(argc, argv, "h", ropts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "hf:vq", ropts, NULL)) != -1) {
 		switch(c) {
-			case OPT_P_PORT:
-				/* port number */
-				conf_pmask = 0;
-				if (parse_mask(optarg, &conf_pmask) < 0) {
-					fprintf(stderr, "%s: wrong port mask "
-						"\"%s\"\n", prgname, optarg);
-					exit(1);
-				}
-				break;
+		case OPT_P_PORT:
+			/* port number */
+			conf_pmask = 0;
+			if (parse_mask(optarg, &conf_pmask) < 0) {
+				pr_error("wrong port mask \"%s\"\n", optarg);
+				exit(1);
+			}
+			break;
 
-			case OPT_P_QMODE:
-				/* qmode for port */
-				arg = atoi(optarg);
-				if (arg < 0 || arg > 3) {
-					fprintf(stderr, "%s: invalid qmode %i (\"%s\")\n",
-						prgname, arg, optarg);
-					exit(1);
-				}
-				iterate_ports(i, conf_pmask) {
-					vlans[i].qmode = arg;
-					vlans[i].valid_mask |= VALID_QMODE;
-					/* untag is all-or-nothing: default untag if access mode */
-					if ((vlans[i].valid_mask & VALID_UNTAG) == 0)
-						vlans[i].untag_mask = (arg == 0);
-				}
-				break;
+		case OPT_P_QMODE:
+			/* pmode for port */
+			arg = atoi(optarg);
+			if (arg < 0 || arg > 3) {
+				pr_error("invalid pmode %i (\"%s\")\n",
+					 arg, optarg);
+				exit(1);
+			}
+			iterate_ports(i, conf_pmask) {
+				set_p_pmode(i, arg);
+			}
+			break;
 
-			case OPT_P_PRIO:
-				/* priority value for port, forces fix_prio=1 */
-				iterate_ports(i, conf_pmask) {
-					vlans[i].prio_val = atoi(optarg);
-					vlans[i].fix_prio = 1;
-					vlans[i].valid_mask |= VALID_PRIO;
-				}
-				break;
+		case OPT_P_PRIO:
+			/* priority value for port, forces fix_prio=1 */
+			iterate_ports(i, conf_pmask) {
+				set_p_prio(i, optarg);
+			}
+			break;
 
-			case OPT_P_VID:
-				/* VID for port */
-				iterate_ports(i, conf_pmask) {
-					vlans[i].vid = atoi(optarg);
-					vlans[i].valid_mask |= VALID_VID;
-				}
-				break;
+		case OPT_P_VID:
+			/* VID for port */
+			iterate_ports(i, conf_pmask) {
+				set_p_vid(i, optarg);
+			}
+			break;
 
-			case OPT_P_UMASK:
-				//untag mask -- currently 0 or 1. Overrides default set in QMODE above
-				arg = atoi(optarg);
-				if (arg < 0 || arg > 1) {
-					fprintf(stderr, "%s: invalid unmask bit %i (\"%s\")\n",
-						prgname, arg, optarg);
-					exit(1);
-				}
-				iterate_ports(i, conf_pmask) {
-					vlans[i].untag_mask = arg;
-					vlans[i].valid_mask |= VALID_UNTAG;
-				}
-				break;
+		case OPT_P_UNTAG:
+			/* untag mask -- currently 0 or 1. Overrides default
+			 * set in QMODE above */
+			arg = atoi(optarg);
+			if (arg < 0 || arg > 1) {
+				pr_error("invalid unmask bit %i (\"%s\")\n",
+					 arg, optarg);
+				exit(1);
+			}
+			iterate_ports(i, conf_pmask) {
+				set_p_untag(i, arg);
+			}
+			break;
 
-			case OPT_P_LIST:
-				/* list endpoint stuff */
-				list_p_vlans();
-				break;
+		case OPT_P_LIST:
+			/* list endpoint stuff */
+			print_hp_mask();
+			list_p_vlans();
+			break;
 
-		  /****************************************************/
-			/* RTU settings */
-			case OPT_RTU_VID:
-				set_rtu_vlan(atoi(optarg), -1, -1, 0, -1, 0, VALID_VID);
-				break;
-			case OPT_RTU_FID:
-				set_rtu_vlan(-1, atoi(optarg), -1, 0, -1, 0, VALID_FID);
-				break;
-			case OPT_RTU_PMASK:
-				set_rtu_vlan(-1, -1, (int) strtol(optarg, NULL, 16), 0, -1, 0, VALID_PMASK);
-				break;
-			case OPT_RTU_DROP:
-				set_rtu_vlan(-1, -1, -1, atoi(optarg), -1, 0, VALID_DROP);
-				break;
-			case OPT_RTU_PRIO:
-				set_rtu_vlan(-1, -1, -1, 0, atoi(optarg), 0, VALID_PRIO);
-				break;
-			case OPT_RTU_DEL:
-				set_rtu_vlan(-1, -1, -1, 0, -1, 1, 0);
-				break;
+	  /****************************************************/
+		/* RTU settings */
+		case OPT_RTU_VID:
+			ret = check_rtu("rtu vid", optarg, RTU_VID_MIN,
+					RTU_VID_MAX);
+			if (ret < 0)
+				exit(1);
+			set_rtu_vlan(ret, -1, -1, 0, -1, 0, VALID_VID);
+			break;
+		case OPT_RTU_FID:
+			ret = check_rtu("rtu fid", optarg, RTU_FID_MIN,
+					RTU_FID_MAX);
+			if (ret < 0)
+				exit(1);
+			set_rtu_vlan(-1, ret, -1, 0, -1, 0, VALID_FID);
+			break;
+		case OPT_RTU_PMASK:
+			set_rtu_vlan(-1, -1, (int) strtol(optarg, NULL, 16), 0,
+				     -1, 0, VALID_PMASK);
+			break;
+		case OPT_RTU_DROP:
+			ret = check_rtu("rtu drop", optarg, 0, 1);
+			if (ret < 0)
+				exit(1);
+			set_rtu_vlan(-1, -1, -1, ret, -1, 0, VALID_DROP);
+			break;
+		case OPT_RTU_PRIO:
+			ret = check_rtu_prio(optarg);
+			if (ret < RTU_PRIO_DISABLE)
+				exit(1);
+			set_rtu_vlan(-1, -1, -1, 0, ret, 0, VALID_PRIO);
+			break;
+		case OPT_RTU_DEL:
+			set_rtu_vlan(-1, -1, -1, 0, -1, 1, 0);
+			break;
+		case OPT_RTU_HP_MASK:
+			set_hp_mask(optarg);
+			break;
+	  /****************************************************/
+		/* Other settings */
+		case OPT_CLEAR:
+			if (clear_all())
+				exit(1); /* message already printed */
+			default_vlan_config();
+			break;
+		case 0:
+			break;
+		case OPT_LIST:
+			if (wrs_msg_level >= LOG_DEBUG)
+				minipc_set_logfile(rtud_ch, stderr);
+			list_rtu_vlans();
+			break;
+		case OPT_FILE_READ:
+			if (wrs_msg_level >= LOG_DEBUG)
+				pr_info("Using file %s as dot-config\n",
+					optarg);
 
-		  /****************************************************/
-			/* Other settings */
-			case OPT_CLEAR:
-				if (clear_all())
-					exit(1); /* message already printed */
-				break;
-			case OPT_DEBUG:
-			case 0:
-				break;
-			case OPT_LIST:
-				if (debug)
-					minipc_set_logfile(rtud_ch,stderr);
-				list_rtu_vlans();
-				break;
-			case '?':
-			case OPT_HELP:
-			default:
-				print_help(prgname);
+			/* read dot-config */
+			ret = read_dot_config(optarg);
+			if (ret < 0)
+				exit(-ret);
+
+			break;
+		case 'q': break; /* done in wrs_msg_init() */
+		case 'v': break; /* done in wrs_msg_init() */
+		case '?':
+		case OPT_HELP:
+		default:
+			print_help(prgname);
+			exit(0);
 		}
 	}
 
-	if(debug) {
-		minipc_set_logfile(rtud_ch,stderr);
-		print_config(vlans);
+	if (wrs_msg_level >= LOG_DEBUG)
+		minipc_set_logfile(rtud_ch, stderr);
+
+	if (wrs_msg_level >= LOG_INFO) {
+		print_config_rtu(vlans);
+		print_config_vlan();
 	}
+	/* apply vlans and rtu_vlans */
 	apply_settings(vlans);
 	free_rtu_vlans(rtu_vlans);
 
 	return 0;
 }
 
+static void set_p_pmode(int ep, int arg_mode)
+{
+	vlans[ep].pmode = arg_mode;
+	vlans[ep].valid_mask |= VALID_QMODE;
+	/* untag is all-or-nothing: default untag if access mode */
+	if ((vlans[ep].valid_mask & VALID_UNTAG) == 0)
+		vlans[ep].untag_mask = (arg_mode == 0);
+}
+
+static void set_p_vid(int ep, char *arg_vid)
+{
+	int vid;
+
+	vid = atoi(arg_vid);
+	if (vid < PORT_VID_MIN || vid > PORT_VID_MAX) {
+		pr_error("invalid vid %i (\"%s\") for port %d\n",
+			 vid, arg_vid, ep + 1);
+		exit(1);
+	}
+	vlans[ep].vid = atoi(arg_vid);
+	vlans[ep].valid_mask |= VALID_VID;
+}
+
+static void set_p_prio(int ep, char *arg_prio)
+{
+	int prio;
+
+	prio = atoi(arg_prio);
+	if ((prio < PORT_PRIO_MIN || prio > PORT_PRIO_MAX)
+	    && (prio != PORT_PRIO_DISABLE)) {
+		pr_error("invalid priority %i (\"%s\") for port %d\n",
+			 prio, arg_prio, ep + 1);
+		exit(1);
+	}
+	/* prio was touched, so set VALID_PRIO */
+	vlans[ep].valid_mask |= VALID_PRIO;
+	if (prio == PORT_PRIO_DISABLE) {
+		vlans[ep].prio_val = PORT_PRIO_MIN;
+		vlans[ep].fix_prio = 0;
+	} else {
+		vlans[ep].prio_val = prio;
+		vlans[ep].fix_prio = 1;
+	}
+}
+
+static void set_p_untag(int ep, int arg_untag)
+{
+	vlans[ep].untag_mask = arg_untag;
+	vlans[ep].valid_mask |= VALID_UNTAG;
+}
+
+static void set_hp_mask(char *mask_str)
+{
+	int hp_mask;
+	int val;
+	int ret;
+
+	hp_mask = strtol(mask_str, NULL, 0);
+
+	if (hp_mask >= (1 << 8)) {
+		pr_error("Wrong HP mask %s\n", mask_str);
+		exit(1);
+	}
+
+	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT,
+			  &rtud_export_hp_mask, &val,
+			  RTU_SET_HP_MASK, hp_mask);
+	ret = (ret < 0) ? ret : val;
+	if (ret < 0) {
+		pr_error("failed to set HP mask 0x%x (%s), ret %d\n",
+			  hp_mask, mask_str, ret);
+		exit(1);
+	}
+
+}
+
+static int check_rtu(char *name, char *arg_val, int min, int max)
+{
+	int val;
+
+	val = atoi(arg_val);
+	if (val < min || val > max) {
+		pr_error("invalid %s %i (\"%s\")\n", name, val, arg_val);
+		return -1;
+	}
+	return val;
+}
+
+static int check_rtu_prio(char *arg_val)
+{
+	int val;
+
+	val = atoi(arg_val);
+	if ((val < RTU_PRIO_MIN || val > RTU_PRIO_MAX)
+	     && (val != RTU_PRIO_DISABLE)) {
+		pr_error("invalid rtu prio %i (\"%s\")\n", val, arg_val);
+		return -2;
+	}
+	return val;
+}
+
 static int print_help(char *prgname)
 {
-	fprintf(stderr, "Use: %s [--port <port number 1..18> <port options> "
+	fprintf(stderr, "Use: %s [-v] [-q] [--hpmask <mask>]"
+			"[--port <port number 1..18> <port options> "
 			"--port <port number> <port options> ...] "
 			"[--rvid <vid> --rfid <fid> --rmask <mask> --rdrop "
-			"--rprio <prio> --rvid <vid>...] [--debug]\n", prgname);
+			"--rprio <prio> --rvid <vid>...]  "
+			"[-f|--file <dot-config>]\n", prgname);
 
 	fprintf(stderr,
 			"Port options:\n"
-			"\t --pmode <mode No.>  sets qmode for a port, possible values:\n"
-			"\t \t 0: ACCESS           - tags untagged frames, drops tagged frames not belinging to configured VLAN\n"
+			"\t --port <1..18>     apply following options to particular set of ports\n"
+			"\t                    for example 1-3,5-6 will apply settings to ports 1,2,3,5,6\n"
+			"\t --pmode <0..3>     sets pmode for a port, possible values:\n"
+			"\t \t 0: ACCESS           - tags untagged frames, drops tagged frames not belonging to configured VLAN\n"
 			"\t \t 1: TRUNK            - passes only tagged frames, drops all untagged frames\n"
-			"\t \t 2: VLANs disabled   - passess all frames as is\n"
-			"\t \t 3: Unqualified port - passess all frames regardless VLAN config\n"
-			"\t --pprio <priority>  sets priority for retagging\n"
-			"\t --pvid  <vid>       sets VLAN Id for port\n"
-			"\t --pumask <hex mask> sets untag mask for port\n"
-			"\t --plist             lists current ports configuration\n"
-			"RTU options:\n"
-			"\t --rvid <vid>        configure VLAN <vid> in rtud\n"
-			"\t --del               delete selected VLAN from rtud\n"
-			"\t --rfid <fid>        assign <fid> to configured VLAN\n"
-			"\t --rmask <hex mask>  ports belonging to configured VLAN\n"
-			"\t --rdrop <1/0>       drop/don't drop frames on VLAN\n"
-			"\t --rprio <prio>      force priority for VLAN (-1 cancels priority override)\n"
-			"Other options:\n"
-			"\t --clear  clears RTUd VLAN table\n"
-			"\t --list   prints the content of RTUd VLAN table\n"
-			"\t --debug  debug mode, prints VLAN config before writing Endpoint registers\n"
-			"\t --help   prints this help message\n");
+			"\t \t 2: VLANs disabled   - passes all frames as is\n"
+			"\t \t 3: Unqualified port - passes all frames regardless of VLAN config\n");
+	fprintf(stderr, "\t --pprio <%d|%d..%d>  sets priority for retagging; -1 disables retagging;\n",
+			PORT_PRIO_DISABLE, PORT_PRIO_MIN, PORT_PRIO_MAX);
+	fprintf(stderr, "\t --pvid <%d..%d>   sets VLAN Id for port\n",
+			PORT_VID_MIN, PORT_VID_MAX);
+	fprintf(stderr, "\t --puntag <0|1>     if 1 untag all vlan tags on a port\n"
+			"\t --plist            lists current ports configuration\n"
+			"RTU options:\n");
+	fprintf(stderr, "\t --rvid <%d..%d>       VID value for which the other parameters are set in rtud\n",
+			RTU_VID_MIN, RTU_VID_MAX);
+	fprintf(stderr, "\t --del                  delete selected VLAN from rtud\n");
+	fprintf(stderr, "\t --rfid <%d..%d>       assign fid to configured VLAN\n",
+			RTU_FID_MIN, RTU_FID_MAX);
+	fprintf(stderr, "\t --rmask <0x%x..0x%x> ports belonging to configured VLAN\n",
+			RTU_PMASK_MIN, RTU_PMASK_MAX);
+	fprintf(stderr, "\t --rdrop <0|1>          don't drop or drop frames on VLAN (note that frame can belong\n"
+			"\t                        to a VID as a consequence of per-port Endpoint configuration)\n");
+	fprintf(stderr, "\t --rprio <%d|%d..%d>      force priority for VLAN; -1 cancels priority override\n",
+			RTU_PRIO_DISABLE, RTU_PRIO_MIN, RTU_PRIO_MAX);
+	fprintf(stderr, "Other options:\n"
+			"\t --hpmask <mask>   Set the mask which priorities are considered High Priority\n"
+			"\t                   (this only concerns the traffic which is fast-forwarded)\n"
+			"\t --clear           clears ports' and VLAN configuration\n"
+			"\t --list            prints the content of RTUd VLAN table\n"
+			"\t -f|--file <file>  clears configuration, then applies configuration from the provided\n"
+			"\t                   dot-config file\n"
+			"\t -v                be more verbose (can be used 1 or 2 times)\n"
+			"\t -q                be less verbose\n"
+			"\t --help            prints this help message\n");
 	return 0;
 }
 
-static void print_config(struct s_port_vlans *vlans)
+static void print_config_rtu(struct s_port_vlans *vlans)
 {
 	int i;
 
 	for_each_port(i) {
-		printf("port: %d, qmode: %d, qmode_valid: %d, fix_prio: %d, prio_val: %d, "
-		       "prio_valid: %d, vid: %d, vid_valid: %d, untag_mask: 0x%X, untag_valid: %d\n",
+		printf("port: %2d, pmode: %d, pmode_valid: %d, fix_prio: %d, "
+		       "prio_val: %d, prio_valid: %d, vid: %2d, vid_valid: %d,"
+		       " untag_mask: 0x%X, untag_valid: %d\n",
 		       i + 1,
-		       vlans[i].qmode,
+		       vlans[i].pmode,
 		       ((vlans[i].valid_mask & VALID_QMODE) != 0),
 		       vlans[i].fix_prio,
 		       vlans[i].prio_val,
@@ -378,6 +541,44 @@ static void print_config(struct s_port_vlans *vlans)
 		       vlans[i].untag_mask,
 		       ((vlans[i].valid_mask & VALID_UNTAG) != 0)
 		       );
+	}
+}
+
+static void print_config_vlan(void)
+{
+	struct rtu_vlans_t *cur;
+	cur = rtu_vlans;
+	while (cur) {
+		printf("vid: ");
+		if (cur->flags & VALID_VID)
+			printf("%4d ", cur->vid);
+		else
+			printf("     ");
+
+		printf("fid: ");
+		if (cur->flags & VALID_FID)
+			printf("%4d ", cur->fid);
+		else
+			printf("     ");
+
+		printf("port_mask: ");
+		if (cur->flags & VALID_PMASK)
+			printf("0x%05x ", cur->pmask);
+		else
+			printf("        ");
+
+		printf("drop: ");
+		if (cur->flags & VALID_DROP)
+			printf("%1d ", cur->drop);
+		else
+			printf("  ");
+
+		printf("prio: ");
+		if (cur->flags & VALID_PRIO)
+			printf("%1d", cur->prio);
+
+		printf("\n");
+		cur = cur->next;
 	}
 }
 
@@ -401,9 +602,12 @@ static int apply_settings(struct s_port_vlans *vlans)
 		r = offsetof(struct EP_WB, VCR0);
 		v = ep_read(ep, r);
 		if (vlans[ep].valid_mask & VALID_QMODE)
-			v = (v & ~EP_VCR0_QMODE_MASK) | EP_VCR0_QMODE_W(vlans[ep].qmode);
+			v = (v & ~EP_VCR0_QMODE_MASK) | EP_VCR0_QMODE_W(vlans[ep].pmode);
 		if (vlans[ep].valid_mask & VALID_PRIO) {
-			v |= EP_VCR0_FIX_PRIO;
+			if (vlans[ep].fix_prio)
+				v |= EP_VCR0_FIX_PRIO;
+			else
+				v &= ~EP_VCR0_FIX_PRIO;
 			v = (v & ~EP_VCR0_PRIO_VAL_MASK) | EP_VCR0_PRIO_VAL_W(vlans[ep].prio_val);
 		}
 		if (vlans[ep].valid_mask & VALID_VID)
@@ -452,6 +656,7 @@ static int config_rtud(void)
 						rtu_vlan_entry.prio_override;
 			}
 		}
+
 		minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry, &val,
 				cur->vid, cur->fid, cur->pmask, cur->drop, cur->prio, cur->has_prio,
 				cur->prio_override);
@@ -474,9 +679,8 @@ static void list_rtu_vlans(void)
 		       NUM_VLANS * sizeof(*vlan_tab_shm));
 		retries++;
 		if (retries > 100) {
-			fprintf(stderr, "%s: couldn't read consistent data "
-					"from RTU's shmem. Use inconsistent\n",
-					prgname);
+			pr_error("couldn't read consistent data from RTU's "
+				 "shmem. Use inconsistent\n");
 			break; /* use inconsistent data */
 			}
 		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
@@ -538,17 +742,36 @@ static void list_p_vlans(void)
 	return;
 }
 
+static void print_hp_mask(void)
+{
+	int hp_mask;
+	int ret;
+	ret = minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_hp_mask,
+			  &hp_mask, RTU_GET_HP_MASK, NULL);
+	if (ret < 0) {
+		pr_error("failed to read HP mask, ret %d\n", ret);
+		exit(1);
+	}
+	printf("#-----------------------------------------------\n");
+	printf("# HP mask: 0x%02x\n", hp_mask);
+	printf("#-----------------------------------------------\n");
+}
+
+static void default_vlan_config(void)
+{
+	int val;
+	/* Create VLAN 0 reserved for untagged packets */
+	minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry,
+		    &val, 0, 0, 0xffffffff, 0, 0, 0, 0);
+}
+
 static int clear_all(void)
 {
 	uint32_t r;
 	int val, i;
 	int ep;
 
-	/* cancel all rtu-administered vlans */
-	minipc_call(rtud_ch, MINIPC_TIMEOUT, &rtud_export_vlan_entry,
-		    &val, 0, 0, 0xffffffff, 0, 0, 0, 0);
-
-	for (i = 1; i < NUM_VLANS; i++) {
+	for (i = 0; i < NUM_VLANS; i++) {
 		if ((vlan_tab_shm[i].drop != 0)
 		    && (vlan_tab_shm[i].port_mask == 0x0))
 			continue;
@@ -575,16 +798,15 @@ static int set_rtu_vlan(int vid, int fid, int pmask, int drop, int prio,
 {
 	struct rtu_vlans_t *cur = rtu_vlans;;
 
-	if (!rtu_vlans && vid <= 0) {
-		fprintf(stderr, "%s: missing \"--rvid <vid>\" before rtu cmd\n",
-			prgname);
+	if (!rtu_vlans && vid < 0) {
+		pr_error("missing \"--rvid <vid>\" before rtu cmd\n");
 		return -1;
 	}
 
-	if (vid > 0) {
+	if (vid >= 0) {
 		cur = calloc(1, sizeof(*cur));
 		if (!cur) {
-			fprintf(stderr, "%s: %s\n", prgname, strerror(errno));
+			pr_error("%s\n", strerror(errno));
 			return -1;
 		}
 		cur->vid = vid;
@@ -651,9 +873,8 @@ static int rtu_find_vlan(struct rtu_vlan_table_entry *rtu_vlan_entry, int vid,
 			sizeof(*rtu_vlan_entry));
 		retries++;
 		if (retries > 100) {
-			fprintf(stderr, "%s: couldn't read consistent "
-				"data from RTU's shmem. "
-				"Use inconsistent\n", prgname);
+			pr_error("couldn't read consistent data from RTU's "
+				 "shmem. Use inconsistent\n");
 			break; /* use inconsistent data */
 			}
 		if (!wrs_shm_seqretry(rtu_port_shmem, ii))
@@ -669,4 +890,242 @@ static int rtu_find_vlan(struct rtu_vlan_table_entry *rtu_vlan_entry, int vid,
 	if ((fid == rtu_vlan_entry->fid) || (fid == -1))
 		return 1;
 	return 0;
+}
+
+static int read_dot_config(char *dot_config_file)
+{
+	int line;
+	int port;
+	char *ret;
+	char buff[60];
+	char *val_ch;
+	int i;
+
+	if (access(dot_config_file, R_OK)) {
+		pr_error("Unable to read dot-config file %s\n",
+			 dot_config_file);
+		return -1;
+	}
+
+	line = libwr_cfg_read_file(dot_config_file);
+
+	if (line == -1) {
+		pr_error("Unable to read dot-config file %s or error in "
+			"line 1\n", dot_config_file);
+		return -1;
+	} else if (line) {
+		pr_error("Error in dot-config file %s, error in line %d\n",
+			 dot_config_file, -line);
+		return -1;
+	}
+
+	ret = libwr_cfg_get("RTU_HP_MASK_ENABLE");
+	if (ret && !strcmp(ret, "y")) {
+		if (wrs_msg_level >= LOG_DEBUG)
+			printf("Setting HP mask\n");
+
+		ret = libwr_cfg_get("RTU_HP_MASK_VAL");
+		if (ret) {
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Set RTU_HP_MASK_VAL %s\n", ret);
+			set_hp_mask(ret);
+		} else {
+			pr_error("Unable to get RTU_HP_MASK_VAL\n");
+			exit(1);
+		}
+	}
+
+	/* clear ports and VLANs configuration */
+	clear_all();
+
+	/* read VLANs related configuration */
+	ret = libwr_cfg_get("VLANS_ENABLE");
+	if (!ret || strcmp(ret, "y")) {
+		if (wrs_msg_level >= LOG_DEBUG)
+			printf("VLANS not enabled\n");
+		/* All VLANs were removed, since VLANs are disabled set the
+		 * default configuration */
+		default_vlan_config();
+		return -2;
+	}
+
+	for (port = 1; port <= NPORTS; port++) {
+		portmask = portmask | (1 << (port - 1));
+
+		sprintf(buff, "VLANS_PORT%02d_MODE_ACCESS", port);
+		ret = libwr_cfg_get(buff);
+		if (ret && !strcmp(ret, "y")) {
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Found %s\n", buff);
+			set_p_pmode(port - 1, QMODE_ACCESS);
+		}
+		sprintf(buff, "VLANS_PORT%02d_MODE_TRUNK", port);
+		ret = libwr_cfg_get(buff);
+		if (ret && !strcmp(ret, "y")) {
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Found %s\n", buff);
+			set_p_pmode(port - 1, QMODE_TRUNK);
+		}
+		sprintf(buff, "VLANS_PORT%02d_MODE_DISABLED", port);
+		ret = libwr_cfg_get(buff);
+		if (ret && !strcmp(ret, "y")) {
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Found %s\n", buff);
+			set_p_pmode(port - 1, QMODE_DISABLED);
+		}
+		sprintf(buff, "VLANS_PORT%02d_MODE_UNQUALIFIED", port);
+		ret = libwr_cfg_get(buff);
+		if (ret && !strcmp(ret, "y")) {
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Found %s\n", buff);
+			set_p_pmode(port - 1, QMODE_UNQ);
+		}
+		sprintf(buff, "VLANS_PORT%02d_UNTAG_ALL", port);
+		ret = libwr_cfg_get(buff);
+		if (ret && !strcmp(ret, "y")) {
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Found %s\n", buff);
+			set_p_untag(port - 1, 1);
+		}
+		sprintf(buff, "VLANS_PORT%02d_UNTAG_NONE", port);
+		ret = libwr_cfg_get(buff);
+		if (ret && !strcmp(ret, "y")) {
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Found %s\n", buff);
+			set_p_untag(port - 1, 0);
+		}
+		sprintf(buff, "VLANS_PORT%02d_PRIO", port);
+		val_ch = libwr_cfg_get(buff);
+		if (val_ch) {
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Found %s=%s\n", buff, val_ch);
+			set_p_prio(port - 1, val_ch);
+		}
+		sprintf(buff, "VLANS_PORT%02d_VID", port);
+		val_ch = libwr_cfg_get(buff);
+		if (val_ch) {
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Found %s=%s\n", buff, val_ch);
+			set_p_vid(port - 1, val_ch);
+		}
+	}
+
+	for (i = 0; dot_config_vlan_sets[i].name; i++) {
+		ret = libwr_cfg_get(dot_config_vlan_sets[i].name);
+		if (ret && !strcmp(ret, "y")) {
+			read_dot_config_vlans(dot_config_vlan_sets[i].min,
+					      dot_config_vlan_sets[i].max);
+		}
+	}
+	return 0;
+}
+
+static void read_dot_config_vlans(int vlan_min, int vlan_max)
+{
+	int fid, prio, drop, pmask;
+	int vlan_flags;
+	int vlan;
+	char buff[60];
+	char *beg; /* beginning char of a port number */
+	char *end; /* end char of a port number */
+	int port;
+
+	for (vlan = vlan_min; vlan <= vlan_max; vlan++) {
+		vlan_flags = 0;
+		fid = -1;
+		prio = -1;
+		drop = -1;
+		pmask = 0;
+		if (!libwr_cfg_convert2("VLANS_VLAN%04d", "fid", LIBWR_STRING,
+					buff, vlan)) {
+			fid = check_rtu("rtu vid", buff, RTU_FID_MIN,
+					RTU_FID_MAX);
+			if (fid < 0)
+				exit(1);
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Vlan %4d: Found fid=%d\n",
+				       vlan, fid);
+			vlan_flags |= VALID_FID;
+		}
+
+		if (!libwr_cfg_convert2("VLANS_VLAN%04d", "prio", LIBWR_STRING,
+					buff, vlan)) {
+			prio = check_rtu_prio(buff);
+			if (prio < RTU_PRIO_DISABLE)
+				exit(1);
+			vlan_flags |= VALID_PRIO;
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Vlan %4d: Found prio=%d\n",
+				       vlan, prio);
+		}
+		if (!libwr_cfg_convert2("VLANS_VLAN%04d", "drop", LIBWR_STRING,
+					buff, vlan)) {
+			if (!strcmp(buff, "y"))
+				sprintf(buff, "1");
+			else if (!strcmp(buff, "n"))
+				sprintf(buff, "0");
+			else {
+				pr_error("invalid drop parameter \"%s\" in "
+					 "VLANS_VLAN%04d\n", buff, vlan);
+				exit(1);
+			}
+			drop = check_rtu("rtu drop", buff, 0, 1);
+			if (drop < 0)
+				exit(1);
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Vlan %4d: Found drop=%d\n",
+				       vlan, drop);
+			vlan_flags |= VALID_DROP;
+		}
+		if (!libwr_cfg_convert2("VLANS_VLAN%04d", "ports",
+					LIBWR_STRING, buff, vlan)) {
+			beg = buff;
+			while (1) {
+				port = strtol(beg, &end, 0);
+				if (end == beg) {
+					pr_error("invalid ports parameter "
+						 "\"%s\" in VLANS_VLAN%04d\n",
+						 buff, vlan);
+					exit(1);
+				}
+				if (port < 1 || port > NPORTS) {
+					pr_error("invalid port %d (\"%s\") for"
+						 " vlan %4d\n",
+						 port, buff, vlan);
+					exit(1);
+				}
+				if (wrs_msg_level >= LOG_DEBUG)
+					printf("Vlan %4d: Found port %d\n",
+					       vlan, port);
+				pmask |= 1 << (port - 1);
+				if (*end == '\0') {
+					/* end of ports' string */
+					break;
+				}
+				if (*end == ':') {
+					/* check next port */
+					beg = end;
+					beg++; /* skip ":" */
+					continue;
+				}
+			}
+
+			if (pmask < RTU_PMASK_MIN || pmask > RTU_PMASK_MAX) {
+				pr_error("invalid port mask 0x%x (\"%s\") for "
+					 "vlan %4d\n", pmask, buff, vlan);
+				exit(1);
+			}
+			if (wrs_msg_level >= LOG_DEBUG)
+				printf("Vlan %4d: Port mask 0x%05x\n",
+				       vlan, pmask);
+			vlan_flags |= VALID_PMASK;
+		}
+		if (vlan_flags) {
+			/* at least one parameter is present, so trigger
+			 * the fill */
+			vlan_flags |= VALID_VID;
+			set_rtu_vlan(vlan, fid, pmask, drop, prio, 0,
+				     vlan_flags);
+		}
+	}
 }

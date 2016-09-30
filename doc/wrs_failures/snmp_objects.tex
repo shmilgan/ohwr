@@ -55,7 +55,10 @@
     errors, unable to read the hwinfo, unable to load the FPGA bitstream, unable
     to load the LM32 software, any kernel modules or userspace daemons are
     missing, failed to update firmware due to checksum error, unable to
-    download custom boot script, custom boot script fails during execution.\\
+    download custom boot script, custom boot script fails during execution,
+    fails setting up auxclk on connector clk2, fails setting up a limit on
+    the Rx bandwidth of the traffic that goes from WR ports to Linux
+    (throttling), fails setting up VLANs.\\
     \underline{On error:}
     \begin{pck_proc}
       \item Dump state
@@ -445,12 +448,19 @@
     Status of the last firmware update}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsCustomBootScriptSource}{
     Source of the custom script that can be executed once at boot time. It can
-    be used to setup a switch in a way not supported by dot-config.}
+    be used to setup a switch in a way not supported by dot-config}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsCustomBootScriptSourceUrl}{
     Path to the custom boot script on a remote server (if local scripts is not
-    used).}
+    used)}
   \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsCustomBootScriptStatus}{
-    Result of custom boot script execution.}
+    Result of custom boot script execution}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsAuxClkSetStatus}{
+    Result of setting up auxclk on connector clk2}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsThrottlingSetStatus}{
+    Result of setting up a limit on the Rx bandwidth of the traffic that
+    goes from WR ports to Linux (throttling)}
+  \snmpentrye{WR-SWITCH-MIB}{wrsBootStatusGroup}{wrsVlansSetStatus}{
+    Result of setting up auxclk on connector clk2}
 
   \snmpentrye{WR-SWITCH-MIB}{wrsOperationStatus}{wrsTemperatureGroup}{}
   \snmpentrye{WR-SWITCH-MIB}{wrsTemperatureGroup}{wrsTempFPGA}{}

@@ -276,6 +276,7 @@ config WRS_LOG_OTHER
 	  --wrs_watchdog
 	  --wrs_auxclk
 	  --wrs_custom_boot_script.sh
+	  --vlan.sh
 	  This collective entry is to avoid number of entries in dot-config.
 	  The string can be a pathname (e.g. /dev/kmsg) or a <facility>.<level>
 	  spefification like "daemon.debug". An empty strings is used
@@ -300,11 +301,11 @@ config PORT01_PARAMS
 	default "name=wri1,proto=raw,tx=223896,rx=226310,role=slave,fiber=0" if TIME_BC
 	default "name=wri1,proto=raw,tx=223896,rx=226310,role=master,fiber=0"
 	help
-	  This item, and the following ones, are used to assign the
+	  This item, and the following ones, are used to assign the tx and rx
 	  constant delays (likely from calibration), protocol type (raw or udp),
-	  port roles and type of fiber (number referring to the corresponding
-	  FIBERXX_PARAMS) for each of the ports. Please refer to
-	  the user manual for more information.
+	  port roles, type of fiber (number referring to the corresponding
+	  FIBERXX_PARAMS) and vlan configuration of PPSi for each of the ports.
+	  Please refer to the user manual for more information.
 	  "role" can be one of the following:
 	    - master - configure port as a master
 	    - slave - configure port as a slave
@@ -314,6 +315,9 @@ config PORT01_PARAMS
 		       not in DB, copper SFP connected, non 1GB SFP etc.
 	    - none - disable White Rabbit and PTP on a portdisable White Rabbit
 		       on a port, keep PTP
+	   ppsi_vlans - colon separated list describing which vlans shall be
+		       assigned to the particular ppsi instance
+
 
 config PORT02_PARAMS
 	string "Parameters for port 2"
@@ -858,3 +862,24 @@ config FAN_HYSTERESIS_PWM_VAL
 endmenu
 
 endmenu
+menu "RTU HP mask"
+
+config RTU_HP_MASK_ENABLE
+	bool "Set custom High Priority mask in RTU"
+	default n
+	help
+	  Set the mask which priorities are considered High Priority (this
+	  only concerns the traffic which is fast-forwarded).
+
+
+config RTU_HP_MASK_VAL
+	string "HP mask"
+	default 0
+	depends on RTU_HP_MASK_ENABLE
+	help
+	  Mask with priorities (eg. 0x9 => priority 4 and 0 are considered HP)
+
+
+endmenu
+
+source Kconfig_vlans.in

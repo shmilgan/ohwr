@@ -96,7 +96,7 @@
 		foreach($vlans as $line){
 			$counter++;
 
-			if($counter>=2 && !empty($line)){
+			if($counter>=3 && !empty($line)){
 				$line = explode(" ", $line);
 
 				echo '<tr align=center><td>'.($line[0]).'</td><td>'.$line[1]." (".$line[2].')</td><td>'.($line[4]).'</td><td bgcolor="'.$vlancolor[$line[5]%10].'">VLAN '.$line[5].'</td><td>'.$line[6].'</td></td></tr>';

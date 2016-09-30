@@ -1,15 +1,50 @@
 #!/bin/sh
 
+tmpdir=/tmp
+vlans_set_status_file="$tmpdir"/vlans_set_status
+
+dotconfig=/wr/etc/dot-config
+
+set -o pipefail
+
 start() {
     echo -n "Setting up VLANs: "
 
-    # set-up VLANs
-    /wr/etc/vlan_config.sh
+    if [ -f $dotconfig ]; then
+	. $dotconfig
+    else
+	echo "$0 unable to start wrs_throttling, unable to source " \
+	      "dot-config ($dotconfig)!"
+	exit 1
+    fi
 
-    if [ $? -eq 0 ]; then
+    WRS_LOG=$CONFIG_WRS_LOG_OTHER
+
+    # if empty turn it to /dev/null
+    if [ -z $WRS_LOG ]; then
+	WRS_LOG="/dev/null";
+    fi
+
+    # if a pathname, use it
+    if echo "$WRS_LOG" | grep / > /dev/null; then
+	eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
+    else
+	# not a pathname: use verbatim
+	eval LOGPIPE=\" 2\>\&1 \| logger -t wr-switch -p $WRS_LOG\"
+    fi
+
+    # set-up VLANs
+    eval /wr/bin/wrs_vlans -f /wr/etc/dot-config $LOGPIPE
+    ret=$?
+    if [ $ret -eq 0 ]; then
 	echo "OK"
+	echo "ok" > $vlans_set_status_file
+    elif [ $ret -eq 2 ]; then
+	echo "Disabled"
+	echo "disabled" > $vlans_set_status_file
     else
 	echo "Failed"
+	echo "failed" > $vlans_set_status_file
     fi
 }
 

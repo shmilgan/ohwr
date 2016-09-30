@@ -626,6 +626,10 @@ list of faults leading to a data error.
 					\item status of loading kernel modules
 					\item status of starting userspace daemons
 					\item status of execution of a custom boot script
+					\item status of setting up auxclk on connector clk2
+					\item status of setting up a limit on the Rx bandwidth of the traffic that
+					      goes from WR ports to Linux (throttling)
+					\item status of setting up VLANs
 				\end{itemize}
 			\item [] \underline{SNMP objects}:\\
         {\footnotesize
@@ -642,6 +646,9 @@ list of faults leading to a data error.
 				\snmpadd{WR-SWITCH-MIB::wrsCustomBootScriptSource}\\
 				\snmpadd{WR-SWITCH-MIB::wrsCustomBootScriptSourceUrl}\\
 				\snmpadd{WR-SWITCH-MIB::wrsCustomBootScriptStatus}\\
+				\snmpadd{WR-SWITCH-MIB::wrsAuxClkSetStatus}\\
+				\snmpadd{WR-SWITCH-MIB::wrsThrottlingSetStatus}\\
+				\snmpadd{WR-SWITCH-MIB::wrsVlansSetStatus}\\
 				\snmpadd{WR-SWITCH-MIB::wrsBootSuccessful} \\
 				\snmpadd{WR-SWITCH-MIB::wrsOSStatus}\\
         \snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }

@@ -5,8 +5,18 @@
 #include <string.h>
 #include <errno.h>
 #include <stdarg.h>
+/* for dirname and basename */
+#include <libgen.h>
 #include <libwr/wrs-msg.h>
 #include <libwr/config.h>
+
+
+#define READ_KCONFIG_MAX_DEPTH 10
+
+struct kc {
+	char *name;
+	struct kc *next;
+};
 
 /* All strings here are strdup'd and then split; you can't free(3) them */
 struct cfg_item {
@@ -137,36 +147,89 @@ int libwr_cfg_dump(FILE *output)
 	return 0;
 }
 
-int libwr_cfg_read_verify_file(char *dotconfig, char *kconfig)
+static int libwr_cfg_read_kconfig(struct kc **all_configs,
+				  char *kconfig_dirname,
+				  char *kconfig_filename, int depth_level)
 {
 	FILE *f;
-	int errors = 0;
 	char s[256], name[256];
-	struct cfg_item *c;
+	struct kc *kc;
+	int ret = 0;
+	int len;
 
-	struct kc {
-		char *name;
-		struct kc *next;
-	} *all_configs = NULL, *kc, *next;
+	/* Prevent infinite recursion */
+	if (depth_level >= READ_KCONFIG_MAX_DEPTH) {
+		pr_error("Maximum depth of Kconfig source reached\n");
+		return -1;
+	}
+
+	/* Check the length of Kconfig path */
+	len = strlen(kconfig_dirname) + strlen(kconfig_filename);
+	if (len >= 256) {
+		pr_error("File path too long %d\n", len);
+		return -1;
+	}
+
+	snprintf(name, 256, "%s/%s", kconfig_dirname, kconfig_filename);
+	pr_debug("Opening Kconfig file %s/%s\n", kconfig_dirname,
+		 kconfig_filename);
+
+	/* Read Kconfig and store all config names */
+	f = fopen(name, "r");
+	if (!f)
+		return -1;
+	while (fgets(s, sizeof(s), f)) {
+		if (sscanf(s, "source %s", name) == 1) {
+			/* Recursive call for sourced files */
+			ret = libwr_cfg_read_kconfig(all_configs,
+						     kconfig_dirname, name,
+						     depth_level + 1);
+			if (ret)
+				break;
+		}
+		if (sscanf(s, "config %s", name) != 1)
+			continue;
+		kc = malloc(sizeof(*kc));
+		if (!kc) {
+			ret = -1;
+			break;
+		}
+		kc->name = strdup(name);
+		kc->next = *all_configs;
+		*all_configs = kc;
+	}
+	fclose(f);
+	return ret;
+}
+
+int libwr_cfg_read_verify_file(char *dotconfig, char *kconfig)
+{
+	int errors = 0;
+	struct cfg_item *c;
+	struct kc *all_configs = NULL, *kc, *next;
+	int ret = 0;
+	char *kconfig_dup1 = NULL;
+	char *kconfig_dup2 = NULL;
+	char *kconfig_dirname;
+	char *kconfig_filename;
 
 	if (libwr_cfg_read_file(dotconfig))
 		return -1;
 
+	/* Spearate dirname and basename of Kconfig, use strdup as suggested
+	 * in the man page */
+	kconfig_dup1 = strdup(kconfig);
+	kconfig_dup2 = strdup(kconfig);
+	kconfig_dirname = dirname(kconfig_dup1);
+	kconfig_filename = basename(kconfig_dup2);
+
 	/* Read Kconfig and store all config names */
-	f = fopen(kconfig, "r");
-	if (!f)
-		return -1;
-	while (fgets(s, sizeof(s), f)) {
-		if (sscanf(s, "config %s", name) != 1)
-			continue;
-		kc = malloc(sizeof(*kc));
-		if (!kc)
-			return -1;
-		kc->name = strdup(name);
-		kc->next = all_configs;
-		all_configs = kc;
+	ret = libwr_cfg_read_kconfig(&all_configs, kconfig_dirname,
+				     kconfig_filename, 0);
+	if (ret) {
+		pr_error("Kconfig read error\n");
+		return ret;
 	}
-	fclose(f);
 
 	/* Verify all configs, complain if missing */
 	for (c = libwr_cfg; c; c = c->next) {
@@ -186,6 +249,12 @@ int libwr_cfg_read_verify_file(char *dotconfig, char *kconfig)
 		free(kc->name);
 		free(kc);
 	}
+	/* free allocated duplicates of kconfig's paths */
+	if (kconfig_dup1)
+		free(kconfig_dup1);
+	if (kconfig_dup2)
+		free(kconfig_dup2);
+
 	if (errors) {
 		errno = EINVAL;
 		return -1;

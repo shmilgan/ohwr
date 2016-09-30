@@ -41,16 +41,14 @@
 
 #define PORT_MASK(x) (1<<(x))
 
-#define NOPTS 15
 #define OPT_HELP 	'h'
-#define OPT_DEBUG 'd'
 #define OPT_CLEAR 3
 #define OPT_LIST 4
 #define OPT_P_PORT  10
 #define OPT_P_QMODE 11
 #define OPT_P_VID   12
 #define OPT_P_PRIO  13
-#define OPT_P_UMASK 14
+#define OPT_P_UNTAG 14
 #define OPT_P_LIST  15
 #define OPT_RTU_VID  20
 #define OPT_RTU_FID  21
@@ -58,11 +56,40 @@
 #define OPT_RTU_DROP  23
 #define OPT_RTU_PRIO  24
 #define OPT_RTU_DEL   25
+#define OPT_RTU_HP_MASK 30
+#define OPT_FILE_READ 'f'
+
+#define PORT_PRIO_MIN 0
+#define PORT_PRIO_MAX 7
+#define PORT_PRIO_DISABLE -1
+
+#define PORT_VID_MIN 0
+#define PORT_VID_MAX 4094
+
+#define RTU_VID_MIN 0
+#define RTU_VID_MAX 4094
+
+#define RTU_FID_MIN 0
+#define RTU_FID_MAX 4094
+
+#define RTU_PRIO_MIN 0
+#define RTU_PRIO_MAX 7
+#define RTU_PRIO_DISABLE -1
+
+#define RTU_PMASK_MIN 0
+#define RTU_PMASK_MAX ((1 << NPORTS) - 1)
+
+/* struct for ranges of VLAN sets used in dot-config */
+struct vlan_sets {
+	char *name;
+	int min;
+	int max;
+};
 
 struct s_port_vlans
 {
 	int  valid_mask;
-	char qmode;
+	char pmode;
 	char fix_prio;
 	char prio_val;
 	int  vid;
