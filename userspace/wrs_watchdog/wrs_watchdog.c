@@ -61,11 +61,15 @@ int get_nports_from_hal(void)
 	while ((ret = wrs_shm_get_and_check(wrs_shm_hal, &hal_head)) != 0) {
 		n_wait++;
 		if (n_wait > 10) {
-			if (ret == 1) {
+			if (ret == WRS_SHM_OPEN_FAILED) {
 				pr_error("Unable to open HAL's shmem!\n");
 			}
-			if (ret == 2) {
+			if (ret == WRS_SHM_WRONG_VERSION) {
 				pr_error("Unable to read HAL's version!\n");
+			}
+			if (ret == WRS_SHM_INCONSISTENT_DATA) {
+				pr_error("Unable to read consistent data from "
+					 "HAL's shmem!\n");
 			}
 			exit(1);
 		}

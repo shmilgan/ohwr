@@ -32,7 +32,8 @@ struct wrs_shm_head {
 	int pid;		/* The current pid owning the area */
 
 	unsigned pidsequence;	/* Each new pid must increments this */
-	unsigned sequence;	/* If we need consistency, this is it */
+	unsigned sequence;	/* If we need consistency, this is it. LSB bit
+				 * informs whether shmem is locked already */
 	unsigned version;	/* Version of the data structure */
 	unsigned data_size;	/* Size of it (for binary dumps) */
 };
@@ -41,6 +42,14 @@ struct wrs_shm_head {
 #define WRS_SHM_READ   0x0000
 #define WRS_SHM_WRITE  0x0001
 #define WRS_SHM_LOCKED 0x0002 /* at init time: writers locks, readers wait  */
+
+#define WRS_SHM_LOCK_MASK 0x0001
+
+/* return values of wrs_shm_get_and_check */
+#define WRS_SHM_OPEN_OK           0x0001
+#define WRS_SHM_OPEN_FAILED       0x0001
+#define WRS_SHM_WRONG_VERSION     0x0002
+#define WRS_SHM_INCONSISTENT_DATA 0x0003
 
 /* Set custom path for shmem */
 void wrs_shm_set_path(char *new_path);
@@ -52,33 +61,40 @@ void wrs_shm_set_path(char *new_path);
 void wrs_shm_ignore_flag_locked(int ignore_flag);
 
 /* get vs. put, like in the kernel. Errors are in errno (see source) */
-void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags);
-int wrs_shm_put(void *headptr);
+struct wrs_shm_head *wrs_shm_get(enum wrs_shm_name name_id, char *name,
+				 unsigned long flags);
+int wrs_shm_put(struct wrs_shm_head *head);
 
 /* A reader may wait for the writer (polling on version field) */
-void wrs_shm_wait(void *headptr, int msec_step, int retries, FILE *msg);
+void wrs_shm_wait(struct wrs_shm_head *head, int msec_step, int retries,
+		  FILE *msg);
 int wrs_shm_get_and_check(enum wrs_shm_name shm_name,
 				 struct wrs_shm_head **head);
 
 /* The writer can allocate structures that live in the area itself */
-void *wrs_shm_alloc(void *headptr, size_t size);
+void *wrs_shm_alloc(struct wrs_shm_head *head, size_t size);
 
 /* The reader can track writer's pointers, if they are in the area */
-void *wrs_shm_follow(void *headptr, void *ptr);
+void *wrs_shm_follow(struct wrs_shm_head *head, void *ptr);
 
 /* Before and after writing a chunk of data, act on sequence and stamp */
 #define WRS_SHM_WRITE_BEGIN	1
 #define WRS_SHM_WRITE_END	0
-extern void wrs_shm_write(void *headptr, int flags);
+
+/* A helper to pass the name of caller function */
+#define wrs_shm_write(headptr, flags) wrs_shm_write_caller(headptr, flags, \
+							   __func__)
+extern void wrs_shm_write_caller(struct wrs_shm_head *head, int flags,
+				 const char *caller);
 
 /* A reader can rely on the sequence number (in the <linux/seqlock.h> way) */
-extern unsigned wrs_shm_seqbegin(void *headptr);
-extern int wrs_shm_seqretry(void *headptr, unsigned start);
+extern unsigned wrs_shm_seqbegin(struct wrs_shm_head *head);
+extern int wrs_shm_seqretry(struct wrs_shm_head *head, unsigned start);
 
 /* A reader can check wether information is current enough */
-extern int wrs_shm_age(void *headptr);
+extern int wrs_shm_age(struct wrs_shm_head *head);
 
 /* A reader can get the information pointer, for a specific version, or NULL */
-extern void *wrs_shm_data(void *headptr, unsigned version);
+extern void *wrs_shm_data(struct wrs_shm_head *head, unsigned version);
 
 #endif /* __WRS_SHM_H__ */

@@ -34,6 +34,7 @@
 #define SFP_POLL_INTERVAL 1000 /* ms */
 
 extern struct hal_shmem_header *hal_shmem;
+extern struct wrs_shm_head *hal_shmem_hdr;
 
 /* Port table: the only item which is not "hal_port_*", as it's much used */
 static struct hal_port_state *ports;
@@ -210,8 +211,6 @@ static int hal_port_init(int index)
 int hal_port_init_shmem(char *logfilename)
 {
 	int index;
-	struct wrs_shm_head *hal_shmem_hdr;
-
 	pr_info("Initializing switch ports...\n");
 
 	/* default timeouts */
@@ -608,12 +607,18 @@ void hal_port_update_all()
 {
 	int i;
 
+	/* poll_rts_state does not write to shmem */
 	poll_rts_state();
+
+	/* lock shmem */
+	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
 	hal_port_poll_sfp();
 
 	for (i = 0; i < HAL_MAX_PORTS; i++)
 		if (ports[i].in_use)
 			hal_port_fsm(&ports[i]);
+	/* unlock shmem */
+	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 }
 
 int hal_port_enable_tracking(const char *port_name)
@@ -641,8 +646,11 @@ int hal_port_start_lock(const char *port_name, int priority)
 	if (p->state != HAL_PORT_STATE_UP)
 		return -1;
 
+	/* lock shmem */
+	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
 	/* fixme: check the main FSM state before */
 	p->state = HAL_PORT_STATE_LOCKING;
+	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 
 	pr_info("Locking to port: %s\n", port_name);
 
