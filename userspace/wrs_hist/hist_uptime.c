@@ -19,16 +19,33 @@
 
 static time_t init_time_monotonic;
 static time_t uptime_stored;
+/* Array translating temperature's value into the index of histogram's array */
+static uint8_t temp_descr_tab[256];
 
-static time_t hist_uptime_nand_read(void);
+static void hist_uptime_nand_read(time_t *uptime_stored,
+	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES]);
 static void hist_uptime_nand_write(struct wrs_hist_run_nand *data);
-static void hist_uptime_get_temp(uint8_t temp[4]);
+static void hist_uptime_get_temp(int8_t temp[WRS_HIST_TEMP_SENSORS_N]);
 static void hist_uptime_nand_update(void);
 
 int hist_uptime_init(void)
 {
+	int i;
+	int j;
+
+	/* Fill array translating temperature's value into the index of
+	 * histogram's array */
+	for (i = 0; i < WRS_HIST_TEMP_ENTRIES; i++) {
+		pr_debug("i = %d, from %d to %d %s\n", i, h_descr[i].from,
+			 h_descr[i].to, h_descr[i].desc);
+		/* add a 127 bias to the temperature's value */
+		for (j = h_descr[i].from + 127; j <= h_descr[i].to + 127; j++) {
+			pr_debug("i = %d j = %d\n", i, j);
+			temp_descr_tab[j] = i;
+		}
+	}
 	init_time_monotonic = get_monotonic_sec();
-	uptime_stored = hist_uptime_nand_read();
+	hist_uptime_nand_read(&uptime_stored, hist_shmem->temp);
 	hist_uptime_nand_update();
 	return 0;
 }
@@ -41,20 +58,40 @@ time_t hist_uptime_lifetime_get(void)
 }
 
 
-static time_t hist_uptime_nand_read(void)
+static void update_temp_histogram(
+	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES],
+	int8_t temp[WRS_HIST_TEMP_SENSORS_N])
+{
+	int i;
+	int tt;
+
+	for (i = 0; i < WRS_HIST_TEMP_SENSORS_N; i++) {
+		tt = temp[i] + 127;
+		temp_hist[i][temp_descr_tab[tt]]++;
+	}
+}
+
+static void hist_uptime_nand_read(time_t *uptime_stored,
+	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES])
 {
 	int fd;
 	struct wrs_hist_run_nand data_run_nand;
 	int ret;
 	uint32_t lifetime = 0;
+	int lines_read = 0;
+	uint32_t magic;
 
 	/* use O_NOATIME to avoid update of last access time */
 	fd = open(HIST_RUN_NAND_FILENAME, O_RDONLY | O_NOATIME);
 	if (fd < 0) {
 		pr_error("Unable to read the file %s\n",
 			 HIST_RUN_NAND_FILENAME);
-		return 0;
+		return;
 	}
+	/* clear histogram stored in the shmem in case there was a restart of
+	 * wrs_hist */
+	memset(temp_hist, 0, sizeof(uint16_t) * WRS_HIST_TEMP_SENSORS_N *
+			     WRS_HIST_TEMP_ENTRIES);
 	while (1) {
 		ret = read(fd, &data_run_nand, sizeof(data_run_nand));
 		if (ret == 0) {
@@ -71,19 +108,23 @@ static time_t hist_uptime_nand_read(void)
 				 HIST_RUN_NAND_FILENAME);
 			break;
 		}
-		if (data_run_nand.magic != (WRS_HIST_RUN_NAND_MAGIC | WRS_HIST_RUN_NAND_MAGIC_VER)) {
+		magic = WRS_HIST_RUN_NAND_MAGIC | WRS_HIST_RUN_NAND_MAGIC_VER;
+		if (data_run_nand.magic != magic) {
 			pr_error("Wrong magic number in the file %s, is 0x%x, "
 				 "expected 0x%x\n",
 				 HIST_RUN_NAND_FILENAME, data_run_nand.magic,
-				 WRS_HIST_RUN_NAND_MAGIC | WRS_HIST_RUN_NAND_MAGIC_VER);
+				 magic);
 			continue;
 		}
 
 		lifetime = data_run_nand.lifetime;
 		/* update temp histogram */
+		update_temp_histogram(temp_hist, data_run_nand.temp);
+		lines_read++;
 	}
 	close(fd);
-	return lifetime;
+	*uptime_stored = lifetime;
+	pr_debug("read %d lines from the flash\n", lines_read);
 }
 
 static void hist_uptime_nand_update(void)
@@ -99,6 +140,7 @@ static void hist_uptime_nand_update(void)
 	hist_uptime_get_temp(data_run_nand->temp);
 	data_run_nand->lifetime = hist_uptime_lifetime_get();
 	data_run_nand->timestamp = time(NULL);
+	update_temp_histogram(hist_shmem->temp, data_run_nand->temp);
 
 	/* unlock shmem */
 	wrs_shm_write(hist_shmem_hdr, WRS_SHM_WRITE_END);
@@ -136,7 +178,7 @@ static void hist_uptime_nand_write(struct wrs_hist_run_nand *data)
 	close(fd);
 }
 
-static void hist_uptime_get_temp(uint8_t temp[4])
+static void hist_uptime_get_temp(int8_t temp[WRS_HIST_TEMP_SENSORS_N])
 {
 	static struct hal_temp_sensors temp_sensors;
 

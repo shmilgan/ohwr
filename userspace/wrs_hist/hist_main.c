@@ -13,6 +13,7 @@
 
 #include <libwr/wrs-msg.h>
 #include <libwr/shmem.h>
+#define HIST_SHMEM_STRUCTURES
 #include <libwr/hist_shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/util.h>

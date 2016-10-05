@@ -3,10 +3,12 @@
 
 #include <stdint.h>
 
+#define WRS_HIST_TEMP_SENSORS_N 4
 #define WRS_HIST_TEMP_FPGA 0
 #define WRS_HIST_TEMP_PLL  1
 #define WRS_HIST_TEMP_PSL  2
 #define WRS_HIST_TEMP_PSR  3
+#define WRS_HIST_TEMP_ENTRIES 64
 
 #define WRS_HIST_RUN_NAND_MAGIC 0xDADA5D00
 #define WRS_HIST_RUN_NAND_MAGIC_MASK 0xFFFFFF00
@@ -23,7 +25,8 @@ struct wrs_hist_run_nand {
 	uint32_t magic; /* 24bits magic + 8bits version */
 	uint32_t lifetime; /* in seconds, ~136 years */
 	uint32_t timestamp; /* in seconds, ~136 years */
-	uint8_t temp[4]; /* average temperature over last hour */
+	/* average temperature over last hour */
+	int8_t temp[WRS_HIST_TEMP_SENSORS_N];
 };
 /* 16 bytes/h, ~140KB/year ~1MB/7.5years*/
 
@@ -31,8 +34,8 @@ struct wrs_hist_run_spi {
 	uint32_t magic; /* 24bits magic + 8bits version */
 	uint32_t lifetime; /* in seconds, ~136 years */
 	uint32_t timestamp; /* in seconds, ~136 years */
-	uint16_t temp[4][64]; /* histogram, tens of hours of particular
-			       * temperature 512 bytes */
+	/* histogram, tens of hours of particular temperature 512 bytes */
+	uint16_t temp[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES];
 };
 /*  */
 /* Right now we have 7614 erase blocks available in SPI = ~8MB */
@@ -54,7 +57,7 @@ struct wrs_hist_sfp_entry {
 };
 
 struct wrs_hist_sfp_temp {
-	uint8_t temp[64]; /* 64 bytes */
+	uint8_t temp[WRS_HIST_TEMP_ENTRIES]; /* 64 bytes */
 };
 
 /* size 9 + 50*56 + 50*64 = ~6KB */
