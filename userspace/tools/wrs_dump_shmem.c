@@ -12,6 +12,7 @@
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/rtu_shmem.h>
+#define HIST_SHMEM_STRUCTURES
 #include <libwr/hist_shmem.h>
 #include <libwr/softpll_export.h>
 #include <libwr/util.h>
@@ -131,6 +132,7 @@ enum dump_type {
 	dump_type_array_int,
 	dump_type_asciitime,
 	dump_type_asciiuptime,
+	dump_type_hist_temp,
 };
 
 static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
@@ -383,6 +385,26 @@ void dump_one_field(void *addr, struct dump_info *info)
 		       "seconds %2d\n",
 		       tm->tm_year - 70, tm->tm_mon, tm->tm_mday - 1,
 		       tm->tm_hour, tm->tm_min, tm->tm_sec);
+		break;
+		}
+	case dump_type_hist_temp:
+		{
+		uint16_t *temp;
+		int sensor;
+		int entries;
+		temp = (uint16_t *)p;
+		printf("\n");
+		printf("             temp range  FPGA   PLL   PSL   PSR\n");
+		for (entries = 0; entries < WRS_HIST_TEMP_ENTRIES; entries++) {
+			printf("              %9s", h_descr[entries].desc);
+			for (sensor = 0; sensor < WRS_HIST_TEMP_SENSORS_N;
+			     sensor++) {
+				printf(" %5d",
+				       *(temp + sensor * WRS_HIST_TEMP_ENTRIES
+				         + entries));
+			}
+			printf("\n");
+		}
 		break;
 		}
 	}
@@ -871,6 +893,13 @@ struct dump_info wrs_hist_run_nand_info [] = {
 	DUMP_FIELD(uint8_t, temp[3]),
 };
 
+/* map for fields of hist_shmem_data (hist.h) */
+#undef DUMP_STRUCT
+#define DUMP_STRUCT struct hist_shmem_data
+struct dump_info hist_shmem_data_info [] = {
+	DUMP_FIELD(hist_temp, temp),
+};
+
 /* map for fields of wrs_hist_run_spi (hist.h) */
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct wrs_hist_run_spi
@@ -915,6 +944,8 @@ int dump_hist_mem(struct wrs_shm_head *head)
 	printf("hist run nand:\n");
 	dump_many_fields(&h->hist_run_nand, wrs_hist_run_nand_info,
 			 ARRAY_SIZE(wrs_hist_run_nand_info));
+	dump_many_fields(h, hist_shmem_data_info,
+			 ARRAY_SIZE(hist_shmem_data_info));
 	printf("hist run spi:\n");
 	dump_many_fields(&h->hist_run_spi, wrs_hist_run_spi_info,
 			 ARRAY_SIZE(wrs_hist_run_spi_info));
