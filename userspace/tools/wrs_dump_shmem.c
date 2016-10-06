@@ -133,6 +133,7 @@ enum dump_type {
 	dump_type_asciitime,
 	dump_type_asciiuptime,
 	dump_type_hist_temp,
+	dump_type_hist_sfp_present
 };
 
 static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
@@ -405,6 +406,16 @@ void dump_one_field(void *addr, struct dump_info *info)
 			}
 			printf("\n");
 		}
+		break;
+		}
+	case dump_type_hist_sfp_present:
+		{
+		uint32_t val;
+		val = *(uint32_t *)p;
+		if (val & WRS_HIST_SFP_PRESENT)
+			printf("SFP present\n");
+		else
+			printf("SFP not present\n");
 		break;
 		}
 	}
@@ -924,8 +935,10 @@ struct dump_info wrs_hist_sfp_entry_info [] = {
 	DUMP_FIELD_SIZE(char, vn, 16),
 	DUMP_FIELD_SIZE(char, pn, 16),
 	DUMP_FIELD_SIZE(char, sn, 16),
-	DUMP_FIELD(asciiuptime, sfp_uptime),
-	DUMP_FIELD(asciitime, last_seen),
+	DUMP_FIELD(asciiuptime, sfp_lifetime),
+	DUMP_FIELD(hist_sfp_present, sfp_lifetime),
+	DUMP_FIELD(asciiuptime, lastseen_swlifetime),
+	DUMP_FIELD(asciitime, lastseen_timestamp),
 };
 
 

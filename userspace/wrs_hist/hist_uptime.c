@@ -36,11 +36,8 @@ int hist_uptime_init(void)
 	/* Fill array translating temperature's value into the index of
 	 * histogram's array */
 	for (i = 0; i < WRS_HIST_TEMP_ENTRIES; i++) {
-		pr_debug("i = %d, from %d to %d %s\n", i, h_descr[i].from,
-			 h_descr[i].to, h_descr[i].desc);
 		/* add a 127 bias to the temperature's value */
 		for (j = h_descr[i].from + 127; j <= h_descr[i].to + 127; j++) {
-			pr_debug("i = %d j = %d\n", i, j);
 			temp_descr_tab[j] = i;
 		}
 	}

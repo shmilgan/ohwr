@@ -5,6 +5,11 @@
 #include <inttypes.h>
 #include <libwr/hal_shmem.h>
 
+/* periods in seconds */
+#define NAND_UPDATE_PERIOD 5
+#define SPI_UPDATE_PERIOD 5
+#define SFP_UPDATE_PERIOD 20
+
 extern struct hist_shmem_data *hist_shmem;
 extern struct wrs_shm_head *hist_head;
 
@@ -15,11 +20,13 @@ extern struct wrs_shm_head *hist_shmem_hdr;
 int hist_wripc_init(void);
 int hist_wripc_update(int ms_timeout);
 int hist_check_running(void);
+struct hal_port_state * hal_shmem_read_ports(void);
+
 
 /* hist_sfp.c */
 void hist_sfp_insert(char *vn, char *pn, char *sn);
-void hist_sfp_update(char *vn, char *pn, char *sn);
 void hist_sfp_remove(char *vn, char *pn, char *sn);
+void hist_sfp_update_all(void);
 
 /* hist_uptime.c */
 int hist_uptime_init(void);

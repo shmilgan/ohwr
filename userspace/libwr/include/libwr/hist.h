@@ -20,6 +20,8 @@
 #define WRS_HIST_RUN_SPI_MAGIC_VER 1
 #define WRS_HIST_RUN_SPI_MAGIC_VER_MASK 0xFF
 
+#define WRS_HIST_MAX_SFPS 100
+#define WRS_HIST_SFP_PRESENT 1
 
 struct wrs_hist_run_nand {
 	uint32_t magic; /* 24bits magic + 8bits version */
@@ -43,16 +45,18 @@ struct wrs_hist_run_spi {
 /* 0x108000 = 1081344 (~1MB) gives us 40,96 years, so we can take one meg or 2x1MB or 2x0.5MB
  */
 
-#define WRS_HIST_MAX_SFPS 100
 
 struct wrs_hist_sfp_entry {
 	char vn[16];
 	char pn[16];
 	char sn[16];
-	uint32_t sfp_uptime;
-	uint32_t last_seen; /* value from lifetime, when sfp was last seen
-			     */
-	struct wrs_hist_sfp_temp *sfp_temp; /* temperature histogram if
+	uint32_t sfp_lifetime; /* Lifetime of a particular SFP. Use the LSB of
+				* this value to know whether SFP is plugged */
+	uint32_t lastseen_swlifetime; /* Value from the switch's lifetime,
+				       * when sfp was last seen */
+	uint32_t lastseen_timestamp; /* Value from timestamp, when sfp was last
+				      * seen */
+	struct wrs_hist_sfp_temp *sfp_temp; /* Temperature histogram if
 					     * available */
 };
 

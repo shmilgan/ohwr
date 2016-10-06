@@ -19,14 +19,12 @@
 #include <libwr/util.h>
 #include "wrs_hist.h"
 
-/* periods in ms */
-#define NAND_UPDATE_PERIOD 5
-#define SPI_UPDATE_PERIOD 5
-
 struct hist_shmem_data *hist_shmem;
 struct wrs_shm_head *hist_shmem_hdr;
 static struct wrs_shm_head *hal_shmem_hdr;
 static struct hal_temp_sensors *temp_sensors;
+static struct hal_port_state *hal_ports;
+static struct hal_port_state hal_ports_local_copy[HAL_MAX_PORTS];
 
 /* Interates via all the ports defined in the config file and
  * intializes them one after another. */
@@ -92,6 +90,12 @@ static void hal_shm_init(void)
 	}
 	h = (void *)hal_shmem_hdr + hal_shmem_hdr->data_off;
 	temp_sensors = &(h->temp);
+	hal_ports = wrs_shm_follow(hal_shmem_hdr, h->ports);
+	if (!hal_ports) {
+		pr_error("Unable to follow hal_ports pointer in HAL's "
+			 "shmem\n");
+		exit(1);
+	}
 }
 
 
@@ -114,6 +118,27 @@ int hal_shmem_read_temp(struct hal_temp_sensors * temp){
 
 	return 0;
 }
+
+struct hal_port_state * hal_shmem_read_ports(void){
+	unsigned ii;
+	unsigned retries = 0;
+
+	/* read data, with the sequential lock to have all data consistent */
+	while (1) {
+		ii = wrs_shm_seqbegin(hal_shmem_hdr);
+		memcpy(hal_ports_local_copy, hal_ports,
+		       HAL_MAX_PORTS * sizeof(struct hal_port_state));
+		retries++;
+		if (retries > 100)
+			return NULL;
+		if (!wrs_shm_seqretry(hal_shmem_hdr, ii))
+			break; /* consistent read */
+		usleep(1000);
+	}
+
+	return hal_ports_local_copy;
+}
+
 
 static void show_help(void)
 {
@@ -150,8 +175,9 @@ static void hist_parse_cmdline(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	time_t t;
-	time_t last_update_nand_ms;
-	time_t last_update_spi_ms;
+	time_t last_update_nand_s;
+	time_t last_update_spi_s;
+	time_t last_update_sfp_s;
 
 	wrs_msg_init(argc, argv);
 
@@ -159,6 +185,8 @@ int main(int argc, char *argv[])
 	pr_info("Commit %s, built on " __DATE__ "\n", __GIT_VER__);
 
 	hist_parse_cmdline(argc, argv);
+
+	/* make sure only one copy of wrs_hist is running */
 	if (hist_check_running()) {
 		pr_error("Fatal: There is another wrs_hist instance running. "
 			 "We can't work together.\n");
@@ -168,40 +196,44 @@ int main(int argc, char *argv[])
 	assert_init(hist_shmem_init());
 	assert_init(hist_wripc_init());
 	assert_init(hist_uptime_init()); /* move it? */
+	/* If HAL was running before add all SFPs to the local database */
+	hist_sfp_update_all();
 
-	/* TODO: scan HAL for SFPs that are already plugged */
 	/*
 	 * Main loop update - polls for WRIPC requests and rolls the port
 	 * state machines. This is not a busy loop, as wripc waits for
 	 * the "max ms delay". Unless an RPC call comes, in which
 	 * case it returns earlier.
 	 *
-	 * We thus check the actual time, and only proceed with
-	 * port and fan update every PORT_FAN_MS_PERIOD.  There still
-	 * is some jitter from hal_update_wripc() timing.
-	 * includes some jitter.
+	 * We thus check the actual time, and only proceed with update
+	 * functions every defined period. There still is some jitter from all
+	 * called functions.
 	 */
 
-	/* TODO: make sure only one copy of wrs_hist is running */
 
 	t = get_monotonic_sec();
-	last_update_nand_ms = t;
-	last_update_spi_ms = t;
+	last_update_nand_s = t;
+	last_update_spi_s = t;
+	last_update_sfp_s = t;
 	for (;;) {
 		t = get_monotonic_sec();
-		hist_wripc_update(1000 /* max ms delay */);
 
-		if (last_update_nand_ms + NAND_UPDATE_PERIOD < t) {
-			last_update_nand_ms += NAND_UPDATE_PERIOD;
+		if (last_update_nand_s + NAND_UPDATE_PERIOD <= t) {
+			last_update_nand_s += NAND_UPDATE_PERIOD;
 			hist_uptime_nand_save();
 		}
 
-		if (last_update_spi_ms + SPI_UPDATE_PERIOD < t) {
-			last_update_spi_ms += SPI_UPDATE_PERIOD;
+		if (last_update_spi_s + SPI_UPDATE_PERIOD <= t) {
+			last_update_spi_s += SPI_UPDATE_PERIOD;
 			hist_uptime_spi_save();
 		}
 
+		if (last_update_sfp_s + SFP_UPDATE_PERIOD <= t) {
+			last_update_sfp_s += SFP_UPDATE_PERIOD;
+			hist_sfp_update_all();
+		}
 	  
+		hist_wripc_update(1000 /* max ms delay */);
 	}
 
 	return 0;
