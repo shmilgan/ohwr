@@ -24,9 +24,10 @@ struct hal_port_state * hal_shmem_read_ports(void);
 
 
 /* hist_sfp.c */
+int hist_sfp_init(void);
 void hist_sfp_insert(char *vn, char *pn, char *sn);
 void hist_sfp_remove(char *vn, char *pn, char *sn);
-void hist_sfp_update_all(void);
+void hist_sfp_nand_save(void);
 
 /* hist_uptime.c */
 int hist_uptime_init(void);

@@ -20,6 +20,11 @@
 #define WRS_HIST_RUN_SPI_MAGIC_VER 1
 #define WRS_HIST_RUN_SPI_MAGIC_VER_MASK 0xFF
 
+#define WRS_HIST_SFP_MAGIC 0xFADA5F00
+#define WRS_HIST_SFP_MAGIC_MASK 0xFFFFFF00
+#define WRS_HIST_SFP_MAGIC_VER 1
+#define WRS_HIST_SFP_MAGIC_VER_MASK 0xFF
+
 #define WRS_HIST_MAX_SFPS 100
 #define WRS_HIST_SFP_PRESENT 1
 
@@ -47,15 +52,15 @@ struct wrs_hist_run_spi {
 
 
 struct wrs_hist_sfp_entry {
-	char vn[16];
-	char pn[16];
-	char sn[16];
+	char vn[16]; /* SFP's vendor name */
+	char pn[16]; /* SFP's product name */
+	char sn[16]; /* SFP's serial nuber */
 	uint32_t sfp_lifetime; /* Lifetime of a particular SFP. Use the LSB of
 				* this value to know whether SFP is plugged */
 	uint32_t lastseen_swlifetime; /* Value from the switch's lifetime,
-				       * when sfp was last seen */
-	uint32_t lastseen_timestamp; /* Value from timestamp, when sfp was last
-				      * seen */
+				       * when sfp was checked and seen */
+	uint32_t lastseen_timestamp; /* Value from timestamp, when sfp was
+				      * checked and seen */
 	struct wrs_hist_sfp_temp *sfp_temp; /* Temperature histogram if
 					     * available */
 };
@@ -64,11 +69,14 @@ struct wrs_hist_sfp_temp {
 	uint8_t temp[WRS_HIST_TEMP_ENTRIES]; /* 64 bytes */
 };
 
-/* size 9 + 50*56 + 50*64 = ~6KB */
+/* size 9 + 50*56 + 50*64 + 4 = ~6KB */
 struct wrs_hist_sfp_nand {
 	uint32_t magic; /* 24bits magic + 8bits version */
-	uint32_t timestamp; /* in seconds, ~136 years */
+	uint32_t timestamp; /* When the SFP data was saved to NAND
+			     * in seconds, ~136 years */
 	struct wrs_hist_sfp_entry sfps[WRS_HIST_MAX_SFPS];
+	uint32_t end_magic; /* 24bits magic + 8bits version, the same magic at
+			     * the end of file to verify the end */
 };
 
 #endif /* __LIBWR_HIST_H__ */

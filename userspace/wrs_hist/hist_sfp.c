@@ -1,12 +1,39 @@
 #include <string.h>
+#include <stdlib.h>
+#include <errno.h>
 
+#include <sys/stat.h>
+#define __USE_GNU /* for O_NOATIME flag */
+#include <fcntl.h>
+
+#include <libwr/wrs-msg.h>
 #include <libwr/util.h>
 #include <libwr/hist_shmem.h>
-#include <libwr/wrs-msg.h>
-
 #include "wrs_hist.h"
+
+#define HIST_SFP_NAND_FILENAME "/update/lifetime_sfp_stats.bin"
+
 #define SFP_STR_LEN 16
 #define SFP_INSERT_NEW_ENTRY 1
+
+static int hist_sfp_nand_read(struct wrs_hist_sfp_nand * sfp_data);
+
+int hist_sfp_init(void)
+{
+	int ret;
+	ret = hist_sfp_nand_read(&hist_shmem->hist_sfp_nand);
+	if (ret < 0) {
+		/* Unable to read SFPs DB, recreate magic etc. */
+		hist_shmem->hist_sfp_nand.magic =
+				WRS_HIST_SFP_MAGIC | WRS_HIST_SFP_MAGIC_VER;
+		hist_shmem->hist_sfp_nand.timestamp = time(NULL);
+		hist_shmem->hist_sfp_nand.end_magic =
+				WRS_HIST_SFP_MAGIC | WRS_HIST_SFP_MAGIC_VER;
+	}
+	/* update data in the shmem and write them back */
+	hist_sfp_nand_save();
+	return 0;
+}
 
 static struct wrs_hist_sfp_entry * hist_sfp_find(char *vn, char *pn, char *sn)
 {
@@ -181,7 +208,7 @@ static void hist_sfp_update(char *vn, char *pn, char *sn,
 	return;
 }
 
-void hist_sfp_update_all(void)
+static void hist_sfp_update_all(void)
 {
 	struct hal_port_state *ports;
 	int i;
@@ -192,6 +219,10 @@ void hist_sfp_update_all(void)
 	pr_debug("lifetime_of_update %d, hist_uptime_lifetime_get %ld\n",
 		 lifetime_of_update, hist_uptime_lifetime_get());
 	ports = hal_shmem_read_ports();
+	if (!ports) {
+		pr_error("Unable to get ports stats from the HAL!!!\n");
+		return;
+	}
 	for (i = 0; i < HAL_MAX_PORTS; i++) {
 		if (ports->state != HAL_PORT_STATE_DISABLED
 		    && (ports->calib.sfp.vendor_name[0] != '\0'
@@ -206,4 +237,88 @@ void hist_sfp_update_all(void)
 		/* go to next port */
 		ports++;
 	}
+}
+
+
+static int hist_sfp_nand_read(struct wrs_hist_sfp_nand * sfp_data)
+{
+	int fd;
+	int ret;
+	uint32_t magic;
+
+	/* use O_NOATIME to avoid update of last access time */
+	fd = open(HIST_SFP_NAND_FILENAME, O_RDONLY | O_NOATIME);
+	if (!fd) {
+		pr_error("Unable to read the file %s\n",
+			 HIST_SFP_NAND_FILENAME);
+		return -1;
+	}
+	/* clear histogram stored in the shmem in case there was a restart of
+	 * wrs_hist */
+	memset(sfp_data, 0, sizeof(struct wrs_hist_sfp_nand));
+
+	ret = read(fd, sfp_data, sizeof(struct wrs_hist_sfp_nand));
+	if (ret < 0) {
+		pr_error("Read error from the file %s, ret %d, "
+			  "error(%d) %s:\n",
+			  HIST_SFP_NAND_FILENAME, ret, errno,
+			  strerror(errno));
+		ret = -1;
+	} else if (ret != sizeof(struct wrs_hist_sfp_nand)) {
+		pr_error("Unable to read all data from the file %s, read %d, "
+			 "expected %d\n",
+			 HIST_SFP_NAND_FILENAME, ret,
+			 sizeof(struct wrs_hist_sfp_nand));
+		ret = -1;
+	}
+	magic = WRS_HIST_SFP_MAGIC | WRS_HIST_SFP_MAGIC_VER;
+	if (sfp_data->magic != magic || sfp_data->end_magic != magic) {
+		pr_error("Wrong magic number in the file %s, is 0x%x and 0x%x,"
+			  " expected 0x%x\n",
+			  HIST_SFP_NAND_FILENAME, sfp_data->magic,
+			  sfp_data->end_magic, magic);
+		ret = -1;
+	}
+
+	/* TODO: read SFPs temperature histograms */
+	close(fd);
+	return ret;
+}
+
+static void hist_sfp_nand_write(struct wrs_hist_sfp_nand *data)
+{
+	int fd;
+	int ret;
+	/* use O_NOATIME to avoid update of last access time
+	 * O_SYNC to reduce caching problem
+	 * O_TRUNC to truncate to length 0 */
+	fd = open(HIST_SFP_NAND_FILENAME,
+		  O_WRONLY| O_TRUNC | O_CREAT | O_NOATIME | O_SYNC, 0644);
+	if (!fd) {
+		pr_error("Unable to write to the file %s\n",
+			 HIST_SFP_NAND_FILENAME);
+		exit(1);
+	}
+	/* Save a timestamp when the data was saved */
+	data->timestamp = time(NULL);
+	ret = write(fd, data, sizeof(struct wrs_hist_sfp_nand));
+
+	if (ret < 0) {
+		pr_error("Write error to the file %s, ret %d, error(%d) %s:\n",
+			HIST_SFP_NAND_FILENAME, ret, errno, strerror(errno));
+	} else if (ret != sizeof(struct wrs_hist_sfp_nand)) {
+		pr_error("Unable to write all data to the file %s\n",
+			HIST_SFP_NAND_FILENAME);
+	}
+	/* TODO: write SFPs temperature histograms */
+
+	fsync(fd);
+	close(fd);
+}
+
+void hist_sfp_nand_save(void)
+{
+	hist_sfp_update_all();
+	pr_debug("Saving SFP data to the nand\n");
+	hist_sfp_nand_write(&hist_shmem->hist_sfp_nand);
 }
