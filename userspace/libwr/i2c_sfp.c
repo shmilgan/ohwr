@@ -47,6 +47,9 @@
 #define SFP_LED_WRMODE_MASK(t)	((t) ? (1 << 5) : (1 << 3))
 #define SFP_TX_DISABLE_MASK(t)	((t) ? (1 << 7) : (1 << 2))
 
+/* Either 8 or 16 byte pages, so we use the smaller */
+#define SFP_PAGE_SIZE 8
+
 /*
  * We need these tables because the schematics are messed up
  * The first one is for figuring out the masks in the pca9548's
@@ -392,15 +395,26 @@ int32_t shw_sfp_read(int num, uint32_t addr, int off, int len, uint8_t * buf)
 	return i2c_transfer(bus, addr, 0, len, buf);
 }
 
+
 int32_t shw_sfp_write(int num, uint32_t addr, int off, int len, uint8_t * buf)
 {
 	int id;
 	uint8_t byte1, byte2;
+	int32_t counter = 0;
 	struct i2c_bus *bus;
+	int i = 0;
+	uint8_t page[SFP_PAGE_SIZE + 1];
+	int ret;
+
+	/* The SFP eeprom only supports 8 bit addresses */
+	if (len < 1 || len > 256 || off < 0 || off > 256 || off + len < 0
+	    || off + len > 256)
+		return -1;
 
 	id = shw_sfp_id(num);
 	if (id < 0)
 		return -1;
+
 	bus = &i2c_buses[WR_MUX_BUS];
 	if (id == 0 || id == 1)
 		bus = &i2c_buses[WR_SFP0_BUS + id];
@@ -413,11 +427,44 @@ int32_t shw_sfp_write(int num, uint32_t addr, int off, int len, uint8_t * buf)
 		i2c_transfer(bus, 0x71, 1, 0, &byte2);
 	}
 
-	/* Send the offset we want to write to if requested */
-	if (off >= 0)
-		i2c_transfer(bus, addr, 1, 0, (uint8_t *) & off);
-	/* Do the read */
-	return i2c_transfer(bus, addr, len, 0, buf);
+	/* Write in a paged mode, 1 byte address */
+	page[0] = (counter + off) & 0xff;
+	while (counter < len)
+	{
+		page[i + 1] = buf[counter++];
+		i++;
+		/* When we hit a page boundary then perform a write */
+		if ((off + counter) % SFP_PAGE_SIZE == 0)
+		{
+			pr_debug("Writing %d bytes to EEPROM address %02x\n",
+				 i, page[0]);
+			ret = i2c_transfer(bus, addr, i + 1, 0, page);
+			if (ret < 0) {
+				pr_error("i2c_transfer error code 0x%x\n",
+					 ret);
+				return -1;
+			}
+			i = 0;
+			page[0] = (counter + off) & 0xff;
+			/* Sleep 10ms for eeprom to finish writing the page */
+			/* XXX this should actually be done by polling the  */
+			/* EEPROM and seeing if it is ready */
+			usleep(10000);
+		}
+	}
+	/* Write the last page, if not already done */
+	if (i != 0)
+	{
+		pr_debug("Writing last %d bytes to EEPROM address %02x\n",
+			i, page[0]);
+		ret = i2c_transfer(bus, addr, i + 1, 0, page);
+		if (ret < 0) {
+			pr_error("i2c_transfer error code 0x%x\n", ret);
+			return -1;
+		}
+		usleep(10000);
+	}
+	return counter;
 }
 
 uint32_t shw_sfp_module_scan(void)
