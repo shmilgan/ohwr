@@ -147,6 +147,13 @@ void hist_sfp_insert(char *vn, char *pn, char *sn)
 	sfp->lastseen_swlifetime = hist_uptime_lifetime_get();
 	sfp->lastseen_timestamp = time(NULL);
 
+	/* Update all other SFPs and write new information to the nand.
+	 * We don't want to loose the information that particullar SFP was
+	 * inserted, so we want to update nand. Since we will update the nand
+	 * anyway update the entire database. */
+	hist_sfp_nand_save();
+
+	return;
 }
 
 void hist_sfp_remove(char *vn, char *pn, char *sn)
@@ -176,6 +183,12 @@ void hist_sfp_remove(char *vn, char *pn, char *sn)
 	sfp->sfp_lifetime &= ~WRS_HIST_SFP_PRESENT;
 	sfp->lastseen_swlifetime = lifetime_of_remove;
 	sfp->lastseen_timestamp = time(NULL);
+
+	/* Update all other SFPs and write new information to the nand.
+	 * We don't want to loose the information that particullar SFP was
+	 * inserted, so we want to update nand. Since we will update the nand
+	 * anyway update the entire database. */
+	hist_sfp_nand_save();
 
 	return;
 }
