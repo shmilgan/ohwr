@@ -20,10 +20,11 @@
 #define WRS_HIST_RUN_SPI_MAGIC_VER 1
 #define WRS_HIST_RUN_SPI_MAGIC_VER_MASK 0xFF
 
-#define WRS_HIST_SFP_MAGIC 0xFADA5F00
-#define WRS_HIST_SFP_MAGIC_MASK 0xFFFFFF00
-#define WRS_HIST_SFP_MAGIC_VER 1
-#define WRS_HIST_SFP_MAGIC_VER_MASK 0xFF
+#define WRS_HIST_SFP_MAGIC          0xADAF0000
+#define WRS_HIST_SFP_MAGIC_MASK     0xFFFF0000
+#define WRS_HIST_SFP_MAGIC_CRC_MASK 0x0000FF00
+#define WRS_HIST_SFP_MAGIC_VER      0x00000001
+#define WRS_HIST_SFP_MAGIC_VER_MASK 0x000000FF
 
 #define WRS_HIST_MAX_SFPS 100
 #define WRS_HIST_SFP_PRESENT 1
@@ -54,29 +55,29 @@ struct wrs_hist_run_spi {
 struct wrs_hist_sfp_entry {
 	char vn[16]; /* SFP's vendor name */
 	char pn[16]; /* SFP's product name */
-	char sn[16]; /* SFP's serial nuber */
+	char sn[16]; /* SFP's serial number */
 	uint32_t sfp_lifetime; /* Lifetime of a particular SFP. Use the LSB of
 				* this value to know whether SFP is plugged */
 	uint32_t lastseen_swlifetime; /* Value from the switch's lifetime,
 				       * when sfp was checked and seen */
 	uint32_t lastseen_timestamp; /* Value from timestamp, when sfp was
 				      * checked and seen */
-	struct wrs_hist_sfp_temp *sfp_temp; /* Temperature histogram if
-					     * available */
+	uint8_t crc; /* crc to validate each sfp entry, these with wrong crc
+		      * will be discarded */
 };
 
-struct wrs_hist_sfp_temp {
-	uint8_t temp[WRS_HIST_TEMP_ENTRIES]; /* 64 bytes */
-};
-
-/* size 9 + 50*56 + 50*64 + 4 = ~6KB */
+/* size 12 + (50*68 + 50*64) + 4 = ~6.6KB */
 struct wrs_hist_sfp_nand {
-	uint32_t magic; /* 24bits magic + 8bits version */
-	uint32_t timestamp; /* When the SFP data was saved to NAND
-			     * in seconds, ~136 years */
+	uint32_t magic; /* 16bits magic + 8bits crc + 8bits version */
+	uint32_t saved_swlifetime; /* When the SFP data was saved to NAND
+				    * as switch lifetime in seconds,
+				    * ~136 years */
+	uint32_t saved_timestamp; /* When the SFP data was saved to NAND
+				   * as a timestamp in seconds, ~136 years */
 	struct wrs_hist_sfp_entry sfps[WRS_HIST_MAX_SFPS];
-	uint32_t end_magic; /* 24bits magic + 8bits version, the same magic at
-			     * the end of file to verify the end */
+	uint32_t end_magic; /* 16bits magic + 8bits crc + 8bits version,
+			     * the same magic at the end of structure to verify
+			     * the presence of the end */
 };
 
 #endif /* __LIBWR_HIST_H__ */

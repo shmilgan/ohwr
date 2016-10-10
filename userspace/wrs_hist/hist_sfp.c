@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <stdio.h>
 
 #include <sys/stat.h>
 #define __USE_GNU /* for O_NOATIME flag */
@@ -10,6 +11,7 @@
 #include <libwr/util.h>
 #include <libwr/hist_shmem.h>
 #include "wrs_hist.h"
+#include "hist_crc.h"
 
 #define HIST_SFP_NAND_FILENAME "/update/lifetime_sfp_stats.bin"
 
@@ -21,12 +23,16 @@ static int hist_sfp_nand_read(struct wrs_hist_sfp_nand * sfp_data);
 int hist_sfp_init(void)
 {
 	int ret;
+
 	ret = hist_sfp_nand_read(&hist_shmem->hist_sfp_nand);
 	if (ret < 0) {
-		/* Unable to read SFPs DB, recreate magic etc. */
+		/* Unable to read SFPs DB, recreate magic etc. No need to
+		 * calculate crc at this moment. */
 		hist_shmem->hist_sfp_nand.magic =
 				WRS_HIST_SFP_MAGIC | WRS_HIST_SFP_MAGIC_VER;
-		hist_shmem->hist_sfp_nand.timestamp = time(NULL);
+		hist_shmem->hist_sfp_nand.saved_swlifetime =
+						hist_uptime_lifetime_get();
+		hist_shmem->hist_sfp_nand.saved_timestamp = time(NULL);
 		hist_shmem->hist_sfp_nand.end_magic =
 				WRS_HIST_SFP_MAGIC | WRS_HIST_SFP_MAGIC_VER;
 	}
@@ -258,10 +264,13 @@ static int hist_sfp_nand_read(struct wrs_hist_sfp_nand * sfp_data)
 	int fd;
 	int ret;
 	uint32_t magic;
+	uint8_t crc_saved;
+	uint8_t crc_saved_end;
+	uint8_t crc_calc;
 
 	/* use O_NOATIME to avoid update of last access time */
 	fd = open(HIST_SFP_NAND_FILENAME, O_RDONLY | O_NOATIME);
-	if (!fd) {
+	if (fd < 0) {
 		pr_error("Unable to read the file %s\n",
 			 HIST_SFP_NAND_FILENAME);
 		return -1;
@@ -284,16 +293,45 @@ static int hist_sfp_nand_read(struct wrs_hist_sfp_nand * sfp_data)
 			 sizeof(struct wrs_hist_sfp_nand));
 		ret = -1;
 	}
+
+	/* ignore bits used by CRC in the magic */
 	magic = WRS_HIST_SFP_MAGIC | WRS_HIST_SFP_MAGIC_VER;
-	if (sfp_data->magic != magic || sfp_data->end_magic != magic) {
+	if ((sfp_data->magic & ~WRS_HIST_SFP_MAGIC_CRC_MASK) != magic
+	    || (sfp_data->end_magic & ~WRS_HIST_SFP_MAGIC_CRC_MASK) != magic
+	   ) {
 		pr_error("Wrong magic number in the file %s, is 0x%x and 0x%x,"
 			  " expected 0x%x\n",
 			  HIST_SFP_NAND_FILENAME, sfp_data->magic,
 			  sfp_data->end_magic, magic);
 		ret = -1;
 	}
+	/* save both CRCs */
+	crc_saved = (sfp_data->magic & WRS_HIST_SFP_MAGIC_CRC_MASK) >> 8;
+	crc_saved_end = (sfp_data->end_magic & WRS_HIST_SFP_MAGIC_CRC_MASK)
+				>> 8;
+	/* clear both CRCs, since they affect the calculation of the new crc */
+	sfp_data->magic &= ~WRS_HIST_SFP_MAGIC_CRC_MASK;
+	sfp_data->end_magic &= ~WRS_HIST_SFP_MAGIC_CRC_MASK;
+	crc_calc = crc_fast((uint8_t *)sfp_data,
+			    sizeof(struct wrs_hist_sfp_nand));
+	if (crc_saved != crc_calc) {
+		pr_error("Wrong CRC at the beginnig of the file with SFPs data"
+			 "in the nand (%s)! Expected crc 0x%x, Calculated "
+			 "0x%x\n",
+			 HIST_SFP_NAND_FILENAME, crc_saved, crc_calc);
+	}
+	if (crc_saved_end != crc_calc) {
+		pr_error("Wrong CRC at the end of the file with SFPs data in "
+			 "the nand (%s)! Expected crc 0x%x, Calculated 0x%x\n",
+			 HIST_SFP_NAND_FILENAME, crc_saved_end, crc_calc);
+	}
+	if (crc_saved != crc_calc || crc_saved_end != crc_calc) {
+		/* If there is a problem with the files CRC, we can try to
+		 * recover entries that are consistent (with valid CRC) */
+		/* TODO: clear only entries with the wrong CRC */
+	}
 
-	/* TODO: read SFPs temperature histograms */
+	/* TODO: read SFPs specific information like temperature histograms */
 	close(fd);
 	return ret;
 }
@@ -302,18 +340,28 @@ static void hist_sfp_nand_write(struct wrs_hist_sfp_nand *data)
 {
 	int fd;
 	int ret;
+	uint8_t crc_calc;
+
 	/* use O_NOATIME to avoid update of last access time
 	 * O_SYNC to reduce caching problem
 	 * O_TRUNC to truncate to length 0 */
 	fd = open(HIST_SFP_NAND_FILENAME,
 		  O_WRONLY| O_TRUNC | O_CREAT | O_NOATIME | O_SYNC, 0644);
-	if (!fd) {
+	if (fd < 0) {
 		pr_error("Unable to write to the file %s\n",
 			 HIST_SFP_NAND_FILENAME);
 		exit(1);
 	}
 	/* Save a timestamp when the data was saved */
-	data->timestamp = time(NULL);
+	data->saved_swlifetime = hist_uptime_lifetime_get();
+	data->saved_timestamp = time(NULL);
+
+	/* calculate CRC */
+	data->magic &= ~WRS_HIST_SFP_MAGIC_CRC_MASK;
+	data->end_magic &= ~WRS_HIST_SFP_MAGIC_CRC_MASK;
+	crc_calc = crc_fast((uint8_t *)data, sizeof(struct wrs_hist_sfp_nand));
+	data->magic |= crc_calc << 8;
+	data->end_magic |= crc_calc << 8;
 	ret = write(fd, data, sizeof(struct wrs_hist_sfp_nand));
 
 	if (ret < 0) {
@@ -323,7 +371,7 @@ static void hist_sfp_nand_write(struct wrs_hist_sfp_nand *data)
 		pr_error("Unable to write all data to the file %s\n",
 			HIST_SFP_NAND_FILENAME);
 	}
-	/* TODO: write SFPs temperature histograms */
+	/* TODO: write SFPs specific information like temperature histograms */
 
 	fsync(fd);
 	close(fd);

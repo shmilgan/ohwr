@@ -925,7 +925,8 @@ struct dump_info wrs_hist_run_spi_info [] = {
 #define DUMP_STRUCT struct wrs_hist_sfp_nand
 struct dump_info wrs_hist_sfp_nand_info [] = {
 	DUMP_FIELD(uint32_t, magic),
-	DUMP_FIELD(asciitime, timestamp),
+	DUMP_FIELD(asciiuptime, saved_swlifetime),
+	DUMP_FIELD(asciitime, saved_timestamp),
 };
 
 /* map for fields of wrs_hist_sfp_entry (hist.h) */

@@ -18,6 +18,7 @@
 #include <libwr/hal_shmem.h>
 #include <libwr/util.h>
 #include "wrs_hist.h"
+#include "hist_crc.h"
 
 struct hist_shmem_data *hist_shmem;
 struct wrs_shm_head *hist_shmem_hdr;
@@ -192,6 +193,7 @@ int main(int argc, char *argv[])
 			 "We can't work together.\n");
 		return 1;
 	}
+	crc_init();
 	hal_shm_init();
 	assert_init(hist_shmem_init());
 	assert_init(hist_wripc_init());
