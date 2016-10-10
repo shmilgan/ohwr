@@ -10,10 +10,11 @@
 #define WRS_HIST_TEMP_PSR  3
 #define WRS_HIST_TEMP_ENTRIES 64
 
-#define WRS_HIST_RUN_NAND_MAGIC 0xDADA5D00
-#define WRS_HIST_RUN_NAND_MAGIC_MASK 0xFFFFFF00
-#define WRS_HIST_RUN_NAND_MAGIC_VER 1
-#define WRS_HIST_RUN_NAND_MAGIC_VER_MASK 0xFF
+#define WRS_HIST_RUN_NAND_MAGIC          0xDAD50000
+#define WRS_HIST_RUN_NAND_MAGIC_MASK     0xFFFF0000
+#define WRS_HIST_RUN_NAND_MAGIC_CRC_MASK 0x0000FF00
+#define WRS_HIST_RUN_NAND_MAGIC_VER      0x00000001
+#define WRS_HIST_RUN_NAND_MAGIC_VER_MASK 0x000000FF
 
 #define WRS_HIST_RUN_SPI_MAGIC 0x5ADA5500
 #define WRS_HIST_RUN_SPI_MAGIC_MASK 0xFFFFFF00
@@ -30,7 +31,7 @@
 #define WRS_HIST_SFP_PRESENT 1
 
 struct wrs_hist_run_nand {
-	uint32_t magic; /* 24bits magic + 8bits version */
+	uint32_t magic; /* 16bits magic + 8bits crc + 8bits version */
 	uint32_t lifetime; /* in seconds, ~136 years */
 	uint32_t timestamp; /* in seconds, ~136 years */
 	/* average temperature over last hour */
@@ -39,7 +40,7 @@ struct wrs_hist_run_nand {
 /* 16 bytes/h, ~140KB/year ~1MB/7.5years*/
 
 struct wrs_hist_run_spi {
-	uint32_t magic; /* 24bits magic + 8bits version */
+	uint32_t magic; /* 16bits magic + 8bits crc + 8bits version */
 	uint32_t lifetime; /* in seconds, ~136 years */
 	uint32_t timestamp; /* in seconds, ~136 years */
 	/* histogram, tens of hours of particular temperature 512 bytes */
