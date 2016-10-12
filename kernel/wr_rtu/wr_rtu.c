@@ -38,6 +38,7 @@
 #include <linux/sched.h>
 #include <linux/wait.h>
 #include <linux/spinlock.h>
+#include <linux/io.h>
 
 #include "../wbgen-regs/rtu-regs.h"
 #include "wr_rtu.h"
