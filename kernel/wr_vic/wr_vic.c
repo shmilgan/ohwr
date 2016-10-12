@@ -19,6 +19,13 @@
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
 
+#include <mach/at91sam9g45.h>
+/*
+ * Ugly trick to be able to use headers that have been moved out
+ * from mach/ directory
+ */
+#include <mach/../../at91_aic.h>
+
 #define DRV_NAME "wr_vic"
 #define PFX DRV_NAME ": "
 

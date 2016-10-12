@@ -40,6 +40,12 @@
 #include <linux/spinlock.h>
 #include <linux/io.h>
 
+/*
+ * Ugly trick to be able to use headers that have been moved out
+ * from mach/ directory
+ */
+#include <mach/../../at91_aic.h>
+
 #include "../wbgen-regs/rtu-regs.h"
 #include "wr_rtu.h"
 

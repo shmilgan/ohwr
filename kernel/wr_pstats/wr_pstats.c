@@ -29,6 +29,12 @@
 #include <linux/moduleparam.h>
 #include <linux/netdevice.h>
 
+/*
+ * Ugly trick to be able to use headers that have been moved out
+ * from mach/ directory
+ */
+#include <mach/../../at91_aic.h>
+
 #include "../wbgen-regs/pstats-regs.h"
 #include "wr_pstats.h"
 
