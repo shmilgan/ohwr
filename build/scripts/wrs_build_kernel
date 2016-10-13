@@ -1,6 +1,6 @@
 #!/bin/bash
 
-KERVER=2.6.39
+KERVER=3.16.37
 
 # check variables, like all scripts herein do
 WRS_SCRIPT_NAME=$(basename $0)
@@ -13,7 +13,8 @@ fi
 wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR CROSS_COMPILE
 
 wrs_echo "--- Linux kernel for switch"
-tarname="linux-${KERVER}.tar.bz2"
+
+tarname="linux-${KERVER}.tar.gz"
 patchdir="${WRS_BASE_DIR}/../patches/kernel/v${KERVER}"
 wrs_download $tarname
 
@@ -24,7 +25,7 @@ mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 cd $WRS_OUTPUT_DIR/build
 dirname="linux-${KERVER}"
 rm -rf $dirname
-tar xjf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
+tar xzf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
 
 # apply patches
 cd $dirname
