@@ -363,22 +363,26 @@ void dump_one_field(void *addr, struct dump_info *info)
 		}
 	case dump_type_asciitime:
 		{
-		time_t *t;
-		t = (time_t *)p;
-		if (*t == 0) {
+		time_t t;
+		uint32_t tt;
+		tt = *(uint32_t *)p;
+		t = (time_t)tt;
+		if (tt == 0) {
 			printf("--\n");
 			break;
 		}
-		printf("%s", ctime(t));
+		printf("%s", ctime(&t));
 		break;
 		}
 	case dump_type_asciiuptime:
 		{
-		time_t *t;
+		time_t t;
 		struct tm *tm;
-		t = (time_t *)p;
-		tm = gmtime(t);
-		if (*t == 0 || tm == 0) {
+		uint32_t tt;
+		tt = *(uint32_t *)p;
+		t = (time_t)tt;
+		tm = gmtime(&t);
+		if (tt == 0 || tm == 0) {
 			printf("--\n");
 			break;
 		}
