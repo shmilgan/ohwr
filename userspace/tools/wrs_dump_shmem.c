@@ -877,7 +877,10 @@ struct dump_info spll_stats_info[] = {
 static int dump_spll_mem(struct spll_stats *spll)
 {
 	printf("ID: Soft PLL:\n");
-
+	if (!spll) {
+		fprintf(stderr, "dump spll: unable to create map to spll\n");
+		return 0;
+	}
 	/* Check magic */
 	if (spll->magic != SPLL_MAGIC) {
 		/* Wrong magic */
