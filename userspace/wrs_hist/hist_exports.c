@@ -1,4 +1,4 @@
-/* HAL public API available via WR-IPC */
+/* wrs_hist public API available via WR-IPC */
 
 #include <stdio.h>
 #include <stdlib.h>
