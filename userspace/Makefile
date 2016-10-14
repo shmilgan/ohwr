@@ -7,7 +7,8 @@ WRDEV_DIR ?= $(WRS_BASE_DIR)/..
 SUBDIRS = libwr mini-rpc libsdb \
 	wrsw_hal wrsw_rtud tools snmpd \
 	wrs_watchdog dot-config \
-	wrs_hist
+	wrs_hist \
+	host_tools \
 
 # all variables are exported
 export
@@ -15,6 +16,7 @@ export
 # All targets must install as well, as later builds use headers/libs
 all:
 	ln -sf ../../kernel/wbgen-regs include/regs
+	ln -sf $(LINUX)/arch/arm/mach-at91/include/mach host_tools/libwr/
 	for d in $(SUBDIRS); do $(MAKE) -C $$d $@ || exit 1; done
 
 clean:
