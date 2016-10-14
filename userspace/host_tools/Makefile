@@ -1,6 +1,8 @@
 
 # subdirectories we want to compile
-SUBDIRS = libwr
+SUBDIRS = \
+	libwr \
+	tools \
 
 # all variables are exported
 export
