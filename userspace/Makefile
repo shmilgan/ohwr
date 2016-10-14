@@ -9,6 +9,7 @@ SUBDIRS = libwr mini-rpc libsdb \
 	wrs_watchdog dot-config \
 	wrs_hist \
 	host_tools \
+	host_tests \
 
 # all variables are exported
 export
