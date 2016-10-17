@@ -1042,7 +1042,6 @@ int main(int argc, char **argv)
 {
 	struct wrs_shm_head *head;
 	dump_f *f;
-	void *m;
 	int i;
 	int c;
 	int print_all = 1;
@@ -1086,17 +1085,16 @@ int main(int argc, char **argv)
 		if (!print_all && !dump_print[i])
 			continue;
 
-		m = wrs_shm_get(i, "reader", 0);
-		if (!m) {
+		head = wrs_shm_get(i, "reader", 0);
+		if (!head) {
 			fprintf(stderr, "%s: can't attach memory area %i: %s\n",
 				argv[0], i, strerror(errno));
 			continue;
 		}
-		head = m;
 		if (!head->pidsequence) {
 			printf("ID %i (\"%s\"): no data\n",
 			       i, name_id_to_name[i]);
-			wrs_shm_put(m);
+			wrs_shm_put(head);
 			continue;
 		}
 		if (head->pid) {
@@ -1113,7 +1111,7 @@ int main(int argc, char **argv)
 		/* if the area-specific function fails, fall back to generic */
 		if (!f || f(head) != 0)
 			dump_any_mem(head);
-		wrs_shm_put(m);
+		wrs_shm_put(head);
 		printf("\n"); /* separate one area from the next */
 	}
 	if (print_all || dump_spll) {
