@@ -16,6 +16,10 @@ if [ -n "$WRS_VERBOSE" ]; then
 fi
 
 # This used to be S01modules
+insmod /lib/modules/`uname -r`/kernel/libcomposite.ko
+
+insmod /lib/modules/`uname -r`/kernel/u_serial.ko
+insmod /lib/modules/`uname -r`/kernel/usb_f_acm.ko
 insmod /lib/modules/`uname -r`/kernel/g_serial.ko
 rmmod g_serial
 insmod /lib/modules/`uname -r`/kernel/g_serial.ko
