@@ -100,6 +100,9 @@ enum dump_type {
 	dump_type_uint16_t,
 	dump_type_uint8_t,
 	dump_type_int8_t,
+	dump_type_uint32_t_hex,
+	dump_type_uint16_t_hex,
+	dump_type_uint8_t_hex,
 	dump_type_int,
 	dump_type_unsigned_long,
 	dump_type_unsigned_char,
@@ -206,6 +209,15 @@ void dump_one_field(void *addr, struct dump_info *info)
 	case dump_type_uint8_t:
 	case dump_type_int8_t:
 		printf("%i\n", *(unsigned char *)p);
+		break;
+	case dump_type_uint32_t_hex:
+		printf("0x%08x\n", *(uint32_t *)p);
+		break;
+	case dump_type_uint16_t_hex:
+		printf("0x%04x\n", *(uint16_t *)p);
+		break;
+	case dump_type_uint8_t_hex:
+		printf("0x%02x\n", *(uint8_t *)p);
 		break;
 	case dump_type_UInteger16:
 	case dump_type_uint16_t:
