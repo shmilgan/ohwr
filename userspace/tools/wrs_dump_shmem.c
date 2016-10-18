@@ -140,7 +140,7 @@ enum dump_type {
 	dump_type_asciitime,
 	dump_type_asciiuptime,
 	dump_type_hist_temp,
-	dump_type_hist_sfp_present
+	dump_type_hist_sfp_flags
 };
 
 /*
@@ -425,10 +425,10 @@ void dump_one_field(void *addr, struct dump_info *info)
 		}
 		break;
 		}
-	case dump_type_hist_sfp_present:
+	case dump_type_hist_sfp_flags:
 		{
-		uint32_t val;
-		val = *(uint32_t *)p;
+		uint8_t val;
+		val = *(uint8_t *)p;
 		if (val & WRS_HIST_SFP_PRESENT)
 			printf("SFP present\n");
 		else
@@ -915,9 +915,9 @@ static int dump_spll_mem(struct spll_stats *spll)
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct wrs_hist_run_nand
 struct dump_info wrs_hist_run_nand_info [] = {
-	DUMP_FIELD(uint16_t, magic),
-	DUMP_FIELD(uint8_t, ver),
-	DUMP_FIELD(uint8_t, crc),
+	DUMP_FIELD(uint16_t_hex, magic),
+	DUMP_FIELD(uint8_t_hex, ver),
+	DUMP_FIELD(uint8_t_hex, crc),
 	DUMP_FIELD(asciiuptime, lifetime),
 	DUMP_FIELD(asciitime, timestamp),
 	DUMP_FIELD(uint8_t, temp[0]),
@@ -937,9 +937,9 @@ struct dump_info hist_shmem_data_info [] = {
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct wrs_hist_run_spi
 struct dump_info wrs_hist_run_spi_info [] = {
-	DUMP_FIELD(uint16_t, magic),
-	DUMP_FIELD(uint8_t, ver),
-	DUMP_FIELD(uint8_t, crc),
+	DUMP_FIELD(uint16_t_hex, magic),
+	DUMP_FIELD(uint8_t_hex, ver),
+	DUMP_FIELD(uint8_t_hex, crc),
 	DUMP_FIELD(asciiuptime, lifetime),
 	DUMP_FIELD(asciitime, timestamp),
 };
@@ -948,25 +948,28 @@ struct dump_info wrs_hist_run_spi_info [] = {
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct wrs_hist_sfp_nand
 struct dump_info wrs_hist_sfp_nand_info [] = {
-	DUMP_FIELD(uint16_t, magic),
-	DUMP_FIELD(uint8_t, ver),
-	DUMP_FIELD(uint8_t, crc),
+	DUMP_FIELD(uint16_t_hex, magic),
+	DUMP_FIELD(uint8_t_hex, ver),
+	DUMP_FIELD(uint8_t_hex, crc),
 	DUMP_FIELD(asciiuptime, saved_swlifetime),
 	DUMP_FIELD(asciitime, saved_timestamp),
-	DUMP_FIELD(uint16_t, end_magic),
-	DUMP_FIELD(uint8_t, end_ver),
-	DUMP_FIELD(uint8_t, end_crc),
+	DUMP_FIELD(uint16_t_hex, end_magic),
+	DUMP_FIELD(uint8_t_hex, end_ver),
+	DUMP_FIELD(uint8_t_hex, end_crc),
 };
 
 /* map for fields of wrs_hist_sfp_entry (hist.h) */
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct wrs_hist_sfp_entry
 struct dump_info wrs_hist_sfp_entry_info [] = {
+	DUMP_FIELD(uint8_t_hex, mag),
+	DUMP_FIELD(uint8_t_hex, ver),
+	DUMP_FIELD(hist_sfp_flags, flags),
+	DUMP_FIELD(uint8_t_hex, crc),
 	DUMP_FIELD_SIZE(char, vn, 16),
 	DUMP_FIELD_SIZE(char, pn, 16),
 	DUMP_FIELD_SIZE(char, sn, 16),
 	DUMP_FIELD(asciiuptime, sfp_lifetime),
-	DUMP_FIELD(hist_sfp_present, sfp_lifetime),
 	DUMP_FIELD(asciiuptime, lastseen_swlifetime),
 	DUMP_FIELD(asciitime, lastseen_timestamp),
 };

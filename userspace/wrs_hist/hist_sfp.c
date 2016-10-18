@@ -229,6 +229,7 @@ static int hist_sfp_nand_validate_sfp_entries(struct wrs_hist_sfp_nand *data,
 	uint8_t crc_calc;
 	uint8_t crc_old;
 	int entries_nok = 0;
+	int invalid_entry = 0;
 	struct wrs_hist_sfp_entry sfp_entry;
 
 	sfp_entry = data->sfps[0];
@@ -241,9 +242,34 @@ static int hist_sfp_nand_validate_sfp_entries(struct wrs_hist_sfp_nand *data,
 			/* empty entry skip it */
 			continue;
 		}
+		invalid_entry = 0;
 
 		/* copy sfp data, calculation of CRC requires CRC to be 0 */
 		sfp_entry = data->sfps[i];
+		if (sfp_entry.mag != WRS_HIST_SFP_EMAGIC) {
+			pr_error("Wrong magic for SFP entry %d in file %s "
+				 "(vn:%.*s, pn:%.*s, sn:%.*s). "
+				 "read 0x%02x, expected 0x%02x\n",
+				 i, file,  SFP_STR_LEN, sfp_entry.vn,
+				 SFP_STR_LEN, sfp_entry.pn, SFP_STR_LEN,
+				 sfp_entry.sn, sfp_entry.mag,
+				 WRS_HIST_SFP_EMAGIC);
+			if (!invalid_entry)
+				entries_nok++;
+			invalid_entry = 1;
+		}
+		if (sfp_entry.ver != WRS_HIST_SFP_EMAGIC_VER) {
+			pr_error("Wrong version for SFP entry %d in file %s "
+				 "(vn:%.*s, pn:%.*s, sn:%.*s). "
+				 "read 0x%02x, expected 0x%02x\n",
+				 i, file,  SFP_STR_LEN, sfp_entry.vn,
+				 SFP_STR_LEN, sfp_entry.pn, SFP_STR_LEN,
+				 sfp_entry.sn, sfp_entry.ver,
+				 WRS_HIST_SFP_EMAGIC_VER);
+			if (!invalid_entry)
+				entries_nok++;
+			invalid_entry = 1;
+		}
 		crc_old = sfp_entry.crc;
 		sfp_entry.crc = 0;
 		crc_calc = crc_fast((uint8_t *)&sfp_entry,
@@ -259,8 +285,18 @@ static int hist_sfp_nand_validate_sfp_entries(struct wrs_hist_sfp_nand *data,
 			 * them */
 			memset(&data->sfps[i], 0,
 			       sizeof(struct wrs_hist_sfp_entry));
-			entries_nok++;
+			if (!invalid_entry)
+				entries_nok++;
 			continue;
+		}
+		if (invalid_entry) {
+			/* fix magic and version */
+			data->sfps[i].mag = WRS_HIST_SFP_EMAGIC;
+			data->sfps[i].ver = WRS_HIST_SFP_EMAGIC_VER;
+			/* Recalculate SFP */
+			data->sfps[i].crc = 0;
+			data->sfps[i].crc = crc_fast((uint8_t *)&data->sfps[i],
+					    sizeof(struct wrs_hist_sfp_entry));
 		}
 	}
 	if (entries_nok != 0)
@@ -275,7 +311,7 @@ static struct wrs_hist_sfp_entry * hist_sfp_find(char *vn, char *pn, char *sn)
 	struct wrs_hist_sfp_nand *hist_sfp_nand_loc;
 	hist_sfp_nand_loc = &hist_shmem->hist_sfp_nand;
 	for (i = 0; i < WRS_HIST_MAX_SFPS; i++) {
-		if (!hist_sfp_nand_loc->sfps[i].sfp_lifetime) {
+		if (!hist_sfp_nand_loc->sfps[i].mag) {
 			/* Skip entries never used */
 			continue;
 		}
@@ -298,7 +334,7 @@ static struct wrs_hist_sfp_entry * hist_sfp_find_empty(void)
 	int i;
 
 	for (i = 0; i < WRS_HIST_MAX_SFPS; i++) {
-		if (!hist_shmem->hist_sfp_nand.sfps[i].sfp_lifetime) {
+		if (!hist_shmem->hist_sfp_nand.sfps[i].mag) {
 			/* Return an entry never used */
 			return &hist_shmem->hist_sfp_nand.sfps[i];
 		}
@@ -376,7 +412,9 @@ void hist_sfp_insert(char *vn, char *pn, char *sn)
 	struct wrs_hist_sfp_entry *sfp;
 
 	hist_sfp_get_entry(vn, pn, sn, &sfp);
-	sfp->sfp_lifetime |= WRS_HIST_SFP_PRESENT;
+	sfp->mag = WRS_HIST_SFP_EMAGIC;
+	sfp->ver = WRS_HIST_SFP_EMAGIC_VER;
+	sfp->flags |= WRS_HIST_SFP_PRESENT;
 	/* update last seen */
 	sfp->lastseen_swlifetime = hist_uptime_lifetime_get();
 	sfp->lastseen_timestamp = time(NULL);
@@ -399,8 +437,7 @@ void hist_sfp_remove(char *vn, char *pn, char *sn)
 	
 	/* avoid multipe calls of hist_uptime_lifetime_get() to have consistent
 	 * time */
-	lifetime_of_remove =
-			hist_uptime_lifetime_get() & ~WRS_HIST_SFP_PRESENT;
+	lifetime_of_remove = hist_uptime_lifetime_get();
 
 	new_entry = hist_sfp_get_entry(vn, pn, sn, &sfp);
 	if (new_entry & SFP_INSERT_NEW_ENTRY) {
@@ -408,14 +445,16 @@ void hist_sfp_remove(char *vn, char *pn, char *sn)
 			   "never happen! Sfp vn:%.*s, pn:%.*s, sn: %.*s\n",
 			   SFP_STR_LEN, vn, SFP_STR_LEN, pn, SFP_STR_LEN, sn);
 	}
-	if (!(sfp->sfp_lifetime & WRS_HIST_SFP_PRESENT)) {
+	if (!(sfp->flags & WRS_HIST_SFP_PRESENT)) {
 		pr_warning("Removed not present SFP! It should "
 			   "never happen! Sfp vn:%.*s, pn:%.*s, sn: %.*s\n",
 			   SFP_STR_LEN, vn, SFP_STR_LEN, pn, SFP_STR_LEN, sn);
 	}
 
 	sfp->sfp_lifetime += lifetime_of_remove - sfp->lastseen_swlifetime;
-	sfp->sfp_lifetime &= ~WRS_HIST_SFP_PRESENT;
+	sfp->flags &= ~WRS_HIST_SFP_PRESENT;
+	sfp->mag = WRS_HIST_SFP_EMAGIC;
+	sfp->ver = WRS_HIST_SFP_EMAGIC_VER;
 	sfp->lastseen_swlifetime = lifetime_of_remove;
 	sfp->lastseen_timestamp = time(NULL);
 	hist_sfp_calc_sfp_crc(sfp);
@@ -442,7 +481,7 @@ static void hist_sfp_update(char *vn, char *pn, char *sn,
 		pr_info("Sfp vn:%.*s, pn:%.*s, sn: %.*s updated but was not "
 			"present in the database\n",
 			 SFP_STR_LEN, vn, SFP_STR_LEN, pn, SFP_STR_LEN, sn);
-	} else if (sfp->sfp_lifetime & WRS_HIST_SFP_PRESENT) {
+	} else if (sfp->flags & WRS_HIST_SFP_PRESENT) {
 		/* SFP was present before, update it, we cannot use
 		 * SFP_UPDATE_PERIOD, because usually insertion does not happen
 		 * in sync with the update. We don't want to loose time shorter
@@ -450,9 +489,11 @@ static void hist_sfp_update(char *vn, char *pn, char *sn,
 		sfp->sfp_lifetime +=
 				lifetime_of_update - sfp->lastseen_swlifetime;
 	}
+	sfp->mag = WRS_HIST_SFP_EMAGIC;
+	sfp->ver = WRS_HIST_SFP_EMAGIC_VER;
 	sfp->lastseen_swlifetime = lifetime_of_update;
 	sfp->lastseen_timestamp = time(NULL);
-	sfp->sfp_lifetime |= WRS_HIST_SFP_PRESENT;
+	sfp->flags |= WRS_HIST_SFP_PRESENT;
 	hist_sfp_calc_sfp_crc(sfp);
 
 	return;
@@ -464,8 +505,7 @@ static void hist_sfp_update_all(void)
 	int i;
 	uint32_t lifetime_of_update;
 
-	lifetime_of_update =
-			hist_uptime_lifetime_get() & ~WRS_HIST_SFP_PRESENT;
+	lifetime_of_update = hist_uptime_lifetime_get();
 	pr_debug("lifetime_of_update %d, hist_uptime_lifetime_get %ld\n",
 		 lifetime_of_update, hist_uptime_lifetime_get());
 	ports = hal_shmem_read_ports();

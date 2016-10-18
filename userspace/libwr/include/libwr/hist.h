@@ -19,8 +19,12 @@
 #define WRS_HIST_SFP_MAGIC          0xADAF
 #define WRS_HIST_SFP_MAGIC_VER      0x01
 
+#define WRS_HIST_SFP_EMAGIC         0xAA
+#define WRS_HIST_SFP_EMAGIC_VER     0x01
+
+
 #define WRS_HIST_MAX_SFPS 100
-#define WRS_HIST_SFP_PRESENT 1
+#define WRS_HIST_SFP_PRESENT 0x01
 
 struct wrs_hist_run_nand {
 	uint16_t magic; /* 16bits magic */
@@ -50,17 +54,19 @@ struct wrs_hist_run_spi {
 
 
 struct wrs_hist_sfp_entry {
+	uint8_t mag; /* 8bits magic */
+	uint8_t ver; /* 8bits version */
+	uint8_t flags; /* 8bits flags */
+	uint8_t crc; /* 8bits crc to validate each sfp entry, these with wrong
+		      * crc will be discarded */
 	char vn[16]; /* SFP's vendor name */
 	char pn[16]; /* SFP's product name */
 	char sn[16]; /* SFP's serial number */
-	uint32_t sfp_lifetime; /* Lifetime of a particular SFP. Use the LSB of
-				* this value to know whether SFP is plugged */
+	uint32_t sfp_lifetime; /* Lifetime of a particular SFP */
 	uint32_t lastseen_swlifetime; /* Value from the switch's lifetime,
 				       * when sfp was checked and seen */
 	uint32_t lastseen_timestamp; /* Value from timestamp, when sfp was
 				      * checked and seen */
-	uint8_t crc; /* crc to validate each sfp entry, these with wrong crc
-		      * will be discarded */
 };
 
 /* size 12 + (50*68 + 50*64) + 4 = ~6.6KB */
