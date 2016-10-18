@@ -105,10 +105,13 @@ int main(int argc, char *argv[])
 	crc_init();
 	hal_shm_init();
 	assert_init(hist_shmem_init());
+
 	assert_init(hist_wripc_init());
 	assert_init(hist_uptime_init()); /* move it? */
 	/* If HAL was running before add all SFPs to the local database */
 	assert_init(hist_sfp_init());
+	/* update data in the shmem and write them back */
+	hist_sfp_nand_save();
 
 	/*
 	 * Main loop update - polls for WRIPC requests and rolls the port
