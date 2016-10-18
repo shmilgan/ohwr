@@ -34,6 +34,10 @@
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+static int dump_all_entries = 0; /* rtu exports 4096 vlans and 2048 htab
+				  * entries; wrs_hist's database with SFP has
+				  * 100 entries  */
+
 char *name_id_to_name[WRS_SHM_N_NAMES] = {
 	[wrs_shm_ptp] = "ptpd/ppsi",
 	[wrs_shm_rtu] = "wrsw_rtud",
@@ -135,9 +139,6 @@ enum dump_type {
 	dump_type_hist_temp,
 	dump_type_hist_sfp_present
 };
-
-static int dump_all_rtu_entries = 0; /* rtu exports 4096 vlans and 2048 htab
-				 entries */
 
 /*
  * A structure to dump fields. This is meant to simplify things, see use here
@@ -604,7 +605,7 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 	for (i = 0; i < HTAB_ENTRIES; i++) {
 		for (j = 0; j < RTU_BUCKETS; j++) {
 			rtu_filters_cur = rtu_filters + i*RTU_BUCKETS + j;
-			if ((!dump_all_rtu_entries)
+			if ((!dump_all_entries)
 			    && (!rtu_filters_cur->valid))
 				/* don't display empty entries */
 				continue;
@@ -615,7 +616,7 @@ int dump_rtu_mem(struct wrs_shm_head *head)
 	}
 
 	for (i = 0; i < NUM_VLANS; i++, rtu_vlans++) {
-		if ((!dump_all_rtu_entries) && (rtu_vlans->drop != 0
+		if ((!dump_all_entries) && (rtu_vlans->drop != 0
 			    && rtu_vlans->port_mask == 0x0))
 			/* don't display empty entries */
 			continue;
@@ -962,6 +963,7 @@ struct dump_info wrs_hist_sfp_entry_info [] = {
 int dump_hist_mem(struct wrs_shm_head *head)
 {
 	struct hist_shmem_data *h;
+	struct wrs_hist_sfp_entry *sfp_entry;
 	int i;
 
 	if (head->version != HIST_SHMEM_VERSION) {
@@ -982,10 +984,19 @@ int dump_hist_mem(struct wrs_shm_head *head)
 	printf("hist sfp nand:\n");
 	dump_many_fields(&h->hist_sfp_nand, wrs_hist_sfp_nand_info,
 			 ARRAY_SIZE(wrs_hist_sfp_nand_info));
-	
+
+	sfp_entry = &h->hist_sfp_nand.sfps[0];
 	for (i = 0; i < WRS_HIST_MAX_SFPS; i++) {
+		if (!dump_all_entries
+		    && sfp_entry[i].vn[0] == '\0'
+		    && sfp_entry[i].pn[0] == '\0'
+		    && sfp_entry[i].sn[0] == '\0'
+		) {
+			/* skip empty entries */
+			continue;
+		}
 		printf("dump sfp %i:\n", i);
-		dump_many_fields(&h->hist_sfp_nand.sfps[i],
+		dump_many_fields(&sfp_entry[i],
 				 wrs_hist_sfp_entry_info,
 				 ARRAY_SIZE(wrs_hist_sfp_entry_info));
 	}
@@ -1028,12 +1039,12 @@ dump_f *name_id_to_f[WRS_SHM_N_NAMES] = {
 void print_info(char *prgname)
 {
 	printf("usage: %s [parameters]\n", prgname);
-	printf(""
-		"             Dump shmem\n"
-		"   -a        Dump all rtu entries. By default only valid\n"
-		"             entries are printed. Note there are 2048 htab\n"
-		"             and 4096 vlan entries!\n"
-		"   -H <dir>  Open shmem dumps from the given directory\n"
+	printf("             Dump shmem\n");
+	printf("   -a        Dump all entries. By default only valid entries are printed.\n"
+	       "             Note: there are 2048 htab and 4096 vlan entries in RTU!\n"
+	       "             Note: there are SFP %d entries in wrs_hist!\n",
+	       WRS_HIST_MAX_SFPS);
+	printf( "   -H <dir>  Open shmem dumps from the given directory\n"
 		"   -h        Show this message\n"
 		"  Dump shmem for specific program (by default dump for all)\n"
 		"   -P        Dump ptp entries\n"
@@ -1059,7 +1070,7 @@ int main(int argc, char **argv)
 	while ((c = getopt(argc, argv, "ahH:PRLSU")) != -1) {
 		switch (c) {
 		case 'a':
-			dump_all_rtu_entries = 1;
+			dump_all_entries = 1;
 			break;
 		case 'H':
 			wrs_shm_set_path(optarg);
