@@ -902,7 +902,9 @@ static int dump_spll_mem(struct spll_stats *spll)
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct wrs_hist_run_nand
 struct dump_info wrs_hist_run_nand_info [] = {
-	DUMP_FIELD(uint32_t, magic),
+	DUMP_FIELD(uint16_t, magic),
+	DUMP_FIELD(uint8_t, ver),
+	DUMP_FIELD(uint8_t, crc),
 	DUMP_FIELD(asciiuptime, lifetime),
 	DUMP_FIELD(asciitime, timestamp),
 	DUMP_FIELD(uint8_t, temp[0]),
@@ -922,7 +924,9 @@ struct dump_info hist_shmem_data_info [] = {
 #undef DUMP_STRUCT
 #define DUMP_STRUCT struct wrs_hist_run_spi
 struct dump_info wrs_hist_run_spi_info [] = {
-	DUMP_FIELD(uint32_t, magic),
+	DUMP_FIELD(uint16_t, magic),
+	DUMP_FIELD(uint8_t, ver),
+	DUMP_FIELD(uint8_t, crc),
 	DUMP_FIELD(asciiuptime, lifetime),
 	DUMP_FIELD(asciitime, timestamp),
 };

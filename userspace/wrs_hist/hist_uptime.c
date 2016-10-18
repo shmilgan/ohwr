@@ -79,7 +79,6 @@ static int hist_uptime_nand_read(time_t *uptime_stored,
 	uint32_t lifetime = 0;
 	int32_t entries_ok = 0; /* number of valid entries read so far */
 	int32_t entries_index = 0; /* number of entries read so far */
-	uint32_t magic;
 	uint8_t crc_saved;
 	uint8_t crc_calc;
 
@@ -111,21 +110,26 @@ static int hist_uptime_nand_read(time_t *uptime_stored,
 			break;
 		}
 		entries_index++;
-		magic = WRS_HIST_RUN_NAND_MAGIC | WRS_HIST_RUN_NAND_MAGIC_VER;
-		if ((data_run_nand.magic & ~WRS_HIST_RUN_NAND_MAGIC_CRC_MASK)
-		    != magic
-		   ) {
-			pr_error("Wrong magic number in the file %s, is 0x%x, "
-				 "expected 0x%x. Entry %d\n",
-				 HIST_RUN_NAND_FILENAME, data_run_nand.magic,
-				 magic, entries_ok);
+		if (data_run_nand.magic != WRS_HIST_RUN_NAND_MAGIC) {
+			pr_error("Wrong magic in saved uptime entry (index %d)"
+				 " in the nand (file %s)! is 0x%04x, "
+				 "expected 0x%04x\n",
+				 entries_index, HIST_RUN_NAND_FILENAME,
+				 data_run_nand.magic, WRS_HIST_RUN_NAND_MAGIC);
+			continue;
+		}
+		if (data_run_nand.ver != WRS_HIST_RUN_NAND_MAGIC_VER) {
+			pr_error("Wrong version number in saved uptime entry "
+				 "(index %d) in the nand (file %s)! is 0x%04x,"
+				 " expected 0x%04x\n",
+				 entries_index, HIST_RUN_NAND_FILENAME,
+				 data_run_nand.ver,
+				 WRS_HIST_RUN_NAND_MAGIC_VER);
 			continue;
 		}
 		/* save old, clear old, compute new and compare CRCs */
-		crc_saved =
-		      (data_run_nand.magic & WRS_HIST_RUN_NAND_MAGIC_CRC_MASK)
-		      >> 8;
-		data_run_nand.magic &= ~WRS_HIST_RUN_NAND_MAGIC_CRC_MASK;
+		crc_saved = data_run_nand.crc;
+		data_run_nand.crc = 0;
 		crc_calc = crc_fast((uint8_t *)&data_run_nand,
 				    sizeof(struct wrs_hist_run_nand));
 		if (crc_saved != crc_calc) {
@@ -134,15 +138,15 @@ static int hist_uptime_nand_read(time_t *uptime_stored,
 				/* but if debug is enabled print them all */
 				pr_debug("Wrong CRC in saved uptime entry "
 					 "(index %d) in the nand (file %s)! "
-					 "Expected crc 0x%x, calculated 0x%x"
-					 "\n", entries_index,
+					 "Expected crc 0x%02x, calculated "
+					 "0x%02x\n", entries_index,
 					 HIST_RUN_NAND_FILENAME, crc_saved,
 					 crc_calc);
 				continue;
 			}
 			pr_error("Wrong CRC in saved uptime entry (index %d) "
-				 "in the nand (file %s)! Expected crc 0x%x, "
-				 "calculated 0x%x\n", entries_index,
+				 "in the nand (file %s)! Expected crc 0x%02x, "
+				 "calculated 0x%02x\n", entries_index,
 				 HIST_RUN_NAND_FILENAME, crc_saved, crc_calc);
 			continue;
 		}
@@ -171,8 +175,8 @@ static void hist_uptime_nand_update(void)
 	wrs_shm_write(hist_shmem_hdr, WRS_SHM_WRITE_BEGIN);
 
 	data_run_nand = &hist_shmem->hist_run_nand;
-	data_run_nand->magic =
-			WRS_HIST_RUN_NAND_MAGIC | WRS_HIST_RUN_NAND_MAGIC_VER;
+	data_run_nand->magic = WRS_HIST_RUN_NAND_MAGIC;
+	data_run_nand->ver = WRS_HIST_RUN_NAND_MAGIC_VER;
 	hist_uptime_get_temp(data_run_nand->temp);
 	data_run_nand->lifetime = hist_uptime_lifetime_get();
 	data_run_nand->timestamp = time(NULL);
@@ -206,9 +210,9 @@ static void hist_uptime_nand_write(struct wrs_hist_run_nand *data)
 	}
 
 	/* clear old, compute and write CRC */
-	data->magic &= ~WRS_HIST_RUN_NAND_MAGIC_CRC_MASK;
+	data->crc = 0;
 	crc_calc = crc_fast((uint8_t *)data, sizeof(struct wrs_hist_run_nand));
-	data->magic |= crc_calc << 8;
+	data->crc = crc_calc;
 
 	ret = write(fd, data, sizeof(struct wrs_hist_run_nand));
 	if (ret < 0) {
