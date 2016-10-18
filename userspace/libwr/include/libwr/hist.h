@@ -21,11 +21,8 @@
 #define WRS_HIST_RUN_SPI_MAGIC_VER 1
 #define WRS_HIST_RUN_SPI_MAGIC_VER_MASK 0xFF
 
-#define WRS_HIST_SFP_MAGIC          0xADAF0000
-#define WRS_HIST_SFP_MAGIC_MASK     0xFFFF0000
-#define WRS_HIST_SFP_MAGIC_CRC_MASK 0x0000FF00
-#define WRS_HIST_SFP_MAGIC_VER      0x00000001
-#define WRS_HIST_SFP_MAGIC_VER_MASK 0x000000FF
+#define WRS_HIST_SFP_MAGIC          0xADAF
+#define WRS_HIST_SFP_MAGIC_VER      0x01
 
 #define WRS_HIST_MAX_SFPS 100
 #define WRS_HIST_SFP_PRESENT 1
@@ -69,16 +66,20 @@ struct wrs_hist_sfp_entry {
 
 /* size 12 + (50*68 + 50*64) + 4 = ~6.6KB */
 struct wrs_hist_sfp_nand {
-	uint32_t magic; /* 16bits magic + 8bits crc + 8bits version */
+	uint16_t magic; /* 16bits magic */
+	uint8_t ver; /* 8bits version */
+	uint8_t crc; /* 8bits crc */
 	uint32_t saved_swlifetime; /* When the SFP data was saved to NAND
 				    * as switch lifetime in seconds,
 				    * ~136 years */
 	uint32_t saved_timestamp; /* When the SFP data was saved to NAND
 				   * as a timestamp in seconds, ~136 years */
 	struct wrs_hist_sfp_entry sfps[WRS_HIST_MAX_SFPS];
-	uint32_t end_magic; /* 16bits magic + 8bits crc + 8bits version,
-			     * the same magic at the end of structure to verify
-			     * the presence of the end */
+	/* the same information at the end of structure to verify the presence
+	 * of the end */
+	uint16_t end_magic; /* 16bits magic */
+	uint8_t end_ver; /* 8bits version */
+	uint8_t end_crc; /* 8bits crc */
 };
 
 #endif /* __LIBWR_HIST_H__ */

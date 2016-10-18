@@ -57,13 +57,13 @@ int hist_sfp_init(void)
 	}
 	/* Whatever is the state of DB recreate magic etc. No need to
 	  * calculate crc at this moment. */
-	hist_shmem->hist_sfp_nand.magic =
-			WRS_HIST_SFP_MAGIC | WRS_HIST_SFP_MAGIC_VER;
+	hist_shmem->hist_sfp_nand.magic = WRS_HIST_SFP_MAGIC;
+	hist_shmem->hist_sfp_nand.ver = WRS_HIST_SFP_MAGIC_VER;
 	hist_shmem->hist_sfp_nand.saved_swlifetime =
 					hist_uptime_lifetime_get();
 	hist_shmem->hist_sfp_nand.saved_timestamp = time(NULL);
-	hist_shmem->hist_sfp_nand.end_magic =
-			WRS_HIST_SFP_MAGIC | WRS_HIST_SFP_MAGIC_VER;
+	hist_shmem->hist_sfp_nand.end_magic = WRS_HIST_SFP_MAGIC;
+	hist_shmem->hist_sfp_nand.end_ver = WRS_HIST_SFP_MAGIC_VER;
 
 	wrs_shm_write(hist_shmem_hdr, WRS_SHM_WRITE_END);
 
@@ -526,37 +526,50 @@ static int hist_sfp_nand_read(struct wrs_hist_sfp_nand *sfp_data, char *file)
 static int hist_sfp_nand_read_verify(struct wrs_hist_sfp_nand *sfp_data,
 				     char *file)
 {
-	uint32_t magic;
 	uint8_t crc_saved;
 	uint8_t crc_saved_end;
 	uint8_t crc_calc;
 
-	/* ignore bits used by CRC in the magic */
-	magic = WRS_HIST_SFP_MAGIC | WRS_HIST_SFP_MAGIC_VER;
-	/* check the first magic */
-	if ((sfp_data->magic & ~WRS_HIST_SFP_MAGIC_CRC_MASK) != magic) {
+	/* Check the first magic */
+	if (sfp_data->magic != WRS_HIST_SFP_MAGIC) {
 		pr_error("Wrong magic number in the file %s, is 0x%x and 0x%x,"
 			  " expected 0x%x\n",
 			  file, sfp_data->magic,
-			  sfp_data->end_magic, magic);
+			  sfp_data->end_magic, WRS_HIST_SFP_MAGIC);
 		return VERIFY_WRONG_MAGIC;
 	}
+	/* Check the first version */
+	if (sfp_data->ver != WRS_HIST_SFP_MAGIC_VER) {
+		pr_error("Wrong version number in the file %s, is 0x%x and "
+			 "0x%x, expected 0x%x\n",
+			  file, sfp_data->ver,
+			  sfp_data->end_ver, WRS_HIST_SFP_MAGIC_VER);
+		return VERIFY_WRONG_MAGIC;
+	}
+
 	/* Check the second magic */
-	if ((sfp_data->end_magic & ~WRS_HIST_SFP_MAGIC_CRC_MASK) != magic) {
+	if (sfp_data->end_magic != WRS_HIST_SFP_MAGIC) {
 		pr_error("Wrong magic number in the file %s, is 0x%x and 0x%x,"
 			  " expected 0x%x\n",
 			  file, sfp_data->magic,
-			  sfp_data->end_magic, magic);
+			  sfp_data->end_magic, WRS_HIST_SFP_MAGIC);
+		return VERIFY_WRONG_MAGIC_SEC;
+	}
+	/* Check the second version */
+	if (sfp_data->end_ver != WRS_HIST_SFP_MAGIC_VER) {
+		pr_error("Wrong version number in the file %s, is 0x%x and "
+			 "0x%x, expected 0x%x\n",
+			  file, sfp_data->ver,
+			  sfp_data->end_ver, WRS_HIST_SFP_MAGIC_VER);
 		return VERIFY_WRONG_MAGIC_SEC;
 	}
 
 	/* save both CRCs read from file */
-	crc_saved = (sfp_data->magic & WRS_HIST_SFP_MAGIC_CRC_MASK) >> 8;
-	crc_saved_end = (sfp_data->end_magic & WRS_HIST_SFP_MAGIC_CRC_MASK)
-				>> 8;
+	crc_saved = sfp_data->crc;
+	crc_saved_end = sfp_data->end_crc;
 	/* clear both CRCs, since they affect the calculation of the new crc */
-	sfp_data->magic &= ~WRS_HIST_SFP_MAGIC_CRC_MASK;
-	sfp_data->end_magic &= ~WRS_HIST_SFP_MAGIC_CRC_MASK;
+	sfp_data->crc = 0;
+	sfp_data->end_crc = 0;
 	crc_calc = crc_fast((uint8_t *)sfp_data,
 			    sizeof(struct wrs_hist_sfp_nand));
 	if (crc_saved != crc_calc) {
@@ -595,11 +608,11 @@ static void hist_sfp_nand_write(struct wrs_hist_sfp_nand *data, char *file)
 	data->saved_timestamp = time(NULL);
 
 	/* calculate CRC */
-	data->magic &= ~WRS_HIST_SFP_MAGIC_CRC_MASK;
-	data->end_magic &= ~WRS_HIST_SFP_MAGIC_CRC_MASK;
+	data->crc = 0;
+	data->end_crc = 0;
 	crc_calc = crc_fast((uint8_t *)data, sizeof(struct wrs_hist_sfp_nand));
-	data->magic |= crc_calc << 8;
-	data->end_magic |= crc_calc << 8;
+	data->crc = crc_calc;
+	data->end_crc = crc_calc;
 	ret = write(fd, data, sizeof(struct wrs_hist_sfp_nand));
 
 	if (ret < 0) {
