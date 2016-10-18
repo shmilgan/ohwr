@@ -16,9 +16,9 @@ if [ -n "$WRS_VERBOSE" ]; then
 fi
 
 # This used to be S01modules
-insmod /lib/modules/2.6.39/kernel/g_serial.ko
+insmod /lib/modules/`uname -r`/kernel/g_serial.ko
 rmmod g_serial
-insmod /lib/modules/2.6.39/kernel/g_serial.ko
+insmod /lib/modules/`uname -r`/kernel/g_serial.ko
 
 /bin/mkdir -p /dev/pts
 /bin/mkdir -p /dev/shm
