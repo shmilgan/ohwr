@@ -1,0 +1,34 @@
+1. Running tests
+
+First of all compile "hist_sfp_test" by:
+$ make
+Compile "wrs_dump_shmem" in userspace/host_tools/tools by:
+$ make -C ../../host_tools/tools
+Run tests itself:
+$ make test
+../bats/bin/bats bats_sfp_test_*.bats
+ ✓ Check the presence of wrs_dump_shmem
+ ✓ Check the presence of hist_sfp_test
+ [...]
+ 15 tests, 0 failures
+
+2. Updating tests
+
+Update the file "bats_sfp_test_2tests.def" with the new test definitions in the
+format:
+<test name in the free text>; <first_file_with_the_SFP_database_to_use>; <second_file_with_the_SFP_database_to_use>
+for example:
+my test; file_a.bin; file_b.bin
+
+Put files file_a.bin and file_b.bin under the directory test_data.
+Re-generate file "bats_sfp_test_2tests.bats" by:
+$ ./generate_tests.sh bats_sfp_test_2tests.def > bats_sfp_test_2tests.bats
+Generate dumps of shmem memory filled by the hist_sfp_test:
+$ CREATE_RESULTS=yes ../bats/bin/bats bats_sfp_test_2tests.bats
+Last command will create txt files in directory result_data, which will be used
+in the future to verify tests' results.
+Two last command can be triggered by a command:
+$ make create_results
+
+After *.txt files are (re-)generated commit them together with *.bin, *.bats
+and *.def files to the repo.
