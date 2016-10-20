@@ -1,5 +1,5 @@
 
-DIRS = wr_vic wr_nic wr_rtu wr_pstats wr_clocksource
+DIRS = coht_vic wr_nic wr_rtu wr_pstats wr_clocksource
 
 # We may "LINUX ?= /usr/src/linux-wrswitch", but it's better to leave it empty
 
