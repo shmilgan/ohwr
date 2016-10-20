@@ -1,0 +1,31 @@
+## test name;                                                                first_file_with_the_SFP_database_to_use;             second_file_with_the_SFP_database_to_use;
+hist_sfp_run none file exists;                                               none;                                                none
+hist_sfp_run one file exists;                                                lifetime_sfp_stats_ok_5sfp.bin;                      none
+hist_sfp_run both files ok, both are the same;                               lifetime_sfp_stats_ok_5sfp.bin;                      lifetime_sfp_stats_ok_5sfp_b.bin
+hist_sfp_run both files ok, both are the same file;                          lifetime_sfp_stats_ok_5sfp.bin;                      lifetime_sfp_stats_ok_5sfp.bin
+hist_sfp_run both files ok, old and old;                                     lifetime_sfp_stats_ok_5sfp_old.bin;                  lifetime_sfp_stats_ok_5sfp_old.bin
+hist_sfp_run both files ok, old and new;                                     lifetime_sfp_stats_ok_5sfp_old.bin;                  lifetime_sfp_stats_ok_5sfp.bin
+hist_sfp_run both files ok, new and old;                                     lifetime_sfp_stats_ok_5sfp.bin;                      lifetime_sfp_stats_ok_5sfp_old.bin
+hist_sfp_run both files ok, 5sfp and 2sfp;                                   lifetime_sfp_stats_ok_5sfp.bin;                      lifetime_sfp_stats_ok_2sfp_old.bin
+hist_sfp_run both files ok, the same file with 2sfp;                         lifetime_sfp_stats_ok_2sfp_old.bin;                  lifetime_sfp_stats_ok_2sfp_old.bin
+# should ignore the one with the wrong CRC
+hist_sfp_run both files ok, 5sfp with wrong main crc and 5sfp;               lifetime_sfp_stats_ok_5sfp_wrong_main_crc.bin;       lifetime_sfp_stats_ok_5sfp.bin
+# should ignore the one with the wrong CRC
+hist_sfp_run both files ok, 5sfp and 5sfp with wrong main crc;               lifetime_sfp_stats_ok_5sfp.bin;                      lifetime_sfp_stats_ok_5sfp_wrong_main_crc.bin
+# should ignore the one with the wrong CRC
+hist_sfp_run both files ok, 2sfp and 5sfp with wrong main crc;               lifetime_sfp_stats_ok_2sfp_old.bin;                  lifetime_sfp_stats_ok_5sfp_wrong_main_crc.bin
+# should ignore the one with the wrong CRC
+hist_sfp_run both files ok, 2sfp with wrong main crc and 5sfp;               lifetime_sfp_stats_ok_2sfp_old_wrong_main_crc.bin;   lifetime_sfp_stats_ok_5sfp.bin
+# should combine database in a was to take all from 5sfp, since there are newer
+hist_sfp_run both files ok, 2sfp and 5sfp both with wrong main crc;          lifetime_sfp_stats_ok_2sfp_old_wrong_main_crc.bin;   lifetime_sfp_stats_ok_5sfp_wrong_main_crc.bin
+# should ignore the one with the wrong CRC
+hist_sfp_run both files ok, 2sfp and 5sfp with wrong main end crc;           lifetime_sfp_stats_ok_5sfp_wrong_main_end_crc.bin;   lifetime_sfp_stats_ok_2sfp_old.bin
+# should ignore SFP entry with the wrong CRC, entry 0 should be empty
+hist_sfp_run both files ok, two 5sfp both with wrong entry 0;                lifetime_sfp_stats_ok_5sfp_wrong_main_crcs_wrong_crc_sfp0.bin; lifetime_sfp_stats_ok_5sfp_wrong_main_crcs_wrong_crc_sfp0.bin
+# should ignore SFP entry 0 from 5sfp with the wrong CRC, entry 0 should be from 2sfp
+hist_sfp_run both files ok, 2sfp with wrong main crc and 5sfp with wrong entry 0; \
+                                                                             lifetime_sfp_stats_ok_2sfp_old_wrong_main_crc.bin;   lifetime_sfp_stats_ok_5sfp_wrong_main_crcs_wrong_crc_sfp0.bin
+# should take 2 old sfps
+hist_sfp_run both files ok, 5sfp truncated, 2sfp old;                        lifetime_sfp_stats_ok_5sfp_trunc.bin;                lifetime_sfp_stats_ok_2sfp_old.bin
+# should combine database in a was to take all from 5sfp, since there are newer
+hist_sfp_run both files ok, 5sfp truncated, 2sfp truncated;                  lifetime_sfp_stats_ok_5sfp_trunc.bin;                lifetime_sfp_stats_ok_2sfp_old_trunc.bin

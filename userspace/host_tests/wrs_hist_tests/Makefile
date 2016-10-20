@@ -44,5 +44,6 @@ test:
 	../bats/bin/bats bats_sfp_test_*.bats
 
 create_results:
+	./generate_tests.sh bats_sfp_test_2tests.def > bats_sfp_test_2tests.bats
 # define as yes to create all results, default "no"
 	CREATE_RESULTS=yes ../bats/bin/bats bats_sfp_test_*.bats
