@@ -38,3 +38,11 @@ clean:
 
 cleanall: clean
 	rm -f wrs-shmem-*
+	rm -f dump_out.txt
+
+test:
+	../bats/bin/bats bats_sfp_test_*.bats
+
+create_results:
+# define as yes to create all results, default "no"
+	CREATE_RESULTS=yes ../bats/bin/bats bats_sfp_test_*.bats
