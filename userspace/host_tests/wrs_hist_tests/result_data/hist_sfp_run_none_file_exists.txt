@@ -1,0 +1,26 @@
+hist run nand:
+        magic:                         0x0000
+        ver:                           0x00
+        crc:                           0x00
+        lifetime:                      --
+        timestamp:                     --
+        temp[0]:                       0
+        temp[1]:                       0
+        temp[2]:                       0
+        temp[3]:                       0
+        temp:                          
+             temp range  FPGA   PLL   PSL   PSR
+hist run spi:
+        magic:                         0x0000
+        ver:                           0x00
+        crc:                           0x00
+        lifetime:                      --
+        timestamp:                     --
+hist sfp nand:
+        magic:                         0xadaf
+        ver:                           0x01
+        crc:                           0x00
+        end_magic:                     0xadaf
+        end_ver:                       0x01
+        end_crc:                       0x00
+
