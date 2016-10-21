@@ -20,9 +20,18 @@
 #include <linux/spinlock.h>
 #include <linux/delay.h>
 #include <linux/io.h>
+#include <linux/irqdomain.h>
 
 #include "wr-nic.h"
 #include "nic-mem.h"
+
+/**
+ * IRQ domain to be used. This is static here but in general it should be
+ * a module parameter or somehow configurable. For the time being we keep
+ * it hard-coded here.
+ */
+static const char *irqdomain_name = "htvic-wr-swi.0";
+
 
 #if WR_IS_NODE /* Our platform_data is different in node vs switch */
 #include "../spec-nic.h"
@@ -42,7 +51,15 @@ static inline struct wrn_dev *wrn_from_pdev(struct platform_device *pdev)
 static int wrn_remove(struct platform_device *pdev)
 {
 	struct wrn_dev *wrn = wrn_from_pdev(pdev);
-	int i;
+	int i, irq;
+	struct irq_domain *irqdomain;
+
+	irqdomain = irq_find_host((struct device_node *)irqdomain_name);
+	if (!irqdomain) {
+		dev_err(&pdev->dev, "The IRQ domain %s does not exist\n",
+			irqdomain_name);
+		return -EINVAL;
+	}
 
 	if (WR_IS_SWITCH) {
 		spin_lock(&wrn->lock);
@@ -71,8 +88,10 @@ static int wrn_remove(struct platform_device *pdev)
 	/* Unregister all interrupts that were registered */
 	for (i = 0; wrn->irq_registered; i++) {
 		static int irqs[] = WRN_IRQ_NUMBERS;
-		if (wrn->irq_registered & (1 << i))
-			free_irq(irqs[i], wrn);
+		if (wrn->irq_registered & (1 << i)) {
+			irq = irq_find_mapping(irqdomain, irqs[i]);
+			free_irq(irq, wrn);
+		}
 		wrn->irq_registered &= ~(1 << i);
 	}
 	return 0;
@@ -113,12 +132,20 @@ static int wrn_probe(struct platform_device *pdev)
 	struct net_device *netdev;
 	struct wrn_ep *ep;
 	struct wrn_dev *wrn = wrn_from_pdev(pdev);
-	int i, err = 0;
+	int i, err = 0, irq;
 
 	/* Lazily: irqs are not in the resource list */
 	static int irqs[] = WRN_IRQ_NUMBERS;
 	static char *irq_names[] = WRN_IRQ_NAMES;
 	static irq_handler_t irq_handlers[] = WRN_IRQ_HANDLERS;
+	struct irq_domain *irqdomain;
+
+	irqdomain = irq_find_host((struct device_node *)irqdomain_name);
+	if (!irqdomain) {
+		dev_err(&pdev->dev, "The IRQ domain %s does not exist\n",
+			irqdomain_name);
+		return -EINVAL;
+	}
 
 	/* No need to lock_irq: we only protect count and continue unlocked */
 	if (WR_IS_SWITCH) {
@@ -148,7 +175,8 @@ static int wrn_probe(struct platform_device *pdev)
 	if (WR_IS_SWITCH) {
 		/* Register the interrupt handlers (not shared) */
 		for (i = 0; i < ARRAY_SIZE(irq_names); i++) {
-			err = request_irq(irqs[i], irq_handlers[i],
+			irq = irq_find_mapping(irqdomain, irqs[i]);
+			err = request_irq(irq, irq_handlers[i],
 					  IRQF_TRIGGER_LOW, irq_names[i], wrn);
 			if (err)
 				goto out;

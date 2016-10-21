@@ -20,7 +20,7 @@
 #define NSEC_PER_TICK (NSEC_PER_SEC / REFCLK_FREQ)
 
 /* The interrupt is one of those managed by our WRVIC device */
-#define WRN_IRQ_BASE		192
+#define WRN_IRQ_BASE		0
 #define WRN_IRQ_NIC		(WRN_IRQ_BASE + 0)
 #define WRN_IRQ_TSTAMP		(WRN_IRQ_BASE + 1)
 //#define WRN_IRQ_PPSG		(WRN_IRQ_BASE + )
