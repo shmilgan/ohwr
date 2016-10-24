@@ -8,7 +8,6 @@
 #include <inttypes.h>
 #include <fcntl.h>
 
-#include <mach/at91_pmc.h>
 #include <mach/at91_pio.h>
 
 #include <libwr/pio.h>
