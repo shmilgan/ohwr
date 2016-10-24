@@ -90,7 +90,8 @@ else
 fi
 
 
-insmod $WR_HOME/lib/modules/wr_vic.ko
+insmod $WR_HOME/lib/modules/htvic.ko
+insmod $WR_HOME/lib/modules/wrs_devices.ko
 insmod $WR_HOME/lib/modules/wr-nic.ko macaddr=$val
 insmod $WR_HOME/lib/modules/wr_rtu.ko
 insmod $WR_HOME/lib/modules/wr_pstats.ko pstats_nports=18
