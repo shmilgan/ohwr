@@ -57,19 +57,10 @@ else
     echo "load_error" > $LOAD_FPGA_STATUS_FILE
 fi
 
-# At this offset there is an ID. Just check that it's there as a
-# small proof that we correctly programmed the FPGA
-CHK_ADDR=0x10030034
-CHK_EXP=0xcafebabe
-CHK_VAL=$(devmem $CHK_ADDR | tr '[:upper:]' '[:lower:]')
-if [ $CHK_VAL != $CHK_EXP ]
-then
-    echo "The bitstream $FP_FILE is not correct or there something is not working with the FPGA"
-    echo "Expected: [$CHK_ADDR] = $CHK_EXP"
-    echo "Current: [$CHK_ADDR] = $CHK_VAL"
-    echo "LM32 program and drivers for the bitstream components will not be loaded"
-    exit
-fi
+# FIXME
+# Don't try to do **anything** here. The LM32 **must** be programed
+# before doing anything else. We do not know yet the reson but without
+# the following step the FPGA cannot be access properly
 
 $WR_HOME/bin/load-lm32   $LM_FILE scb_ver=${scb_ver}
 if [ $? -eq 0 ];
@@ -79,6 +70,25 @@ else
     echo "Fatal: load LM32 failed" >& 2
     echo "load_error" > $LOAD_LM32_STATUS_FILE
 fi
+# FIXME also this sleep is necessary because the LM32 does some magic
+sleep 1
+
+# At this offset there is an ID. Just check that it's there as a
+# small proof that we correctly programmed the FPGA
+CHK_ADDR=0x10030034
+CHK_EXP=0xcafebabe
+CHK_VAL=$(devmem $CHK_ADDR | tr '[:upper:]' '[:lower:]')
+if [ $CHK_VAL == $CHK_EXP ]
+then
+    echo "The FPGA and the LM32 are programmed"
+else
+    echo "The bitstream $FP_FILE is not correct or there something is not working with the FPGA"
+    echo "Expected: [$CHK_ADDR] = $CHK_EXP"
+    echo "Current: [$CHK_ADDR] = $CHK_VAL"
+    echo "LM32 program and drivers for the bitstream components will not be loaded"
+    exit
+fi
+
 
 insmod $WR_HOME/lib/modules/at91_softpwm.ko
 insmod $WR_HOME/lib/modules/wr_vic.ko
