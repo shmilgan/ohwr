@@ -1,0 +1,89 @@
+From eeb910ba9c084ca9dbe7e87f986c2d091538a693 Mon Sep 17 00:00:00 2001
+From: Federico Vaga <federico.vaga@cern.ch>
+Date: Thu, 27 Oct 2016 14:13:42 +0200
+Subject: [PATCH 4/8] wr-switch (sam9m10g45ek): enable FPGA access from EBI1
+ (SMC)
+
+Configure the EBI1 to in order to be used to access the FPGA
+address space.
+
+The EBI1 is, by design, controlled by the Static Memory
+Controller (SMC) component.
+
+Signed-off-by: Federico Vaga <federico.vaga@cern.ch>
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+---
+ arch/arm/mach-at91/board-sam9m10g45ek.c | 50 +++++++++++++++++++++++++++++++++
+ 1 file changed, 50 insertions(+)
+
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index 1ea6132..74ae268 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -448,6 +448,53 @@ static struct platform_device *devices[] __initdata = {
+ #endif
+ };
+ 
++static struct sam9_smc_config __initdata wrs_fpga_smc_config = {
++	.ncs_read_setup	= 2,
++	.nrd_setup		= 4,
++	.ncs_write_setup	= 2,
++	.nwe_setup		= 4,
++
++	.ncs_read_pulse	= 34,
++	.nrd_pulse		= 30,
++	.ncs_write_pulse	= 34,
++	.nwe_pulse		= 30,
++
++	.read_cycle		= 40,
++	.write_cycle		= 40,
++
++	.mode			= AT91_SMC_READMODE | AT91_SMC_WRITEMODE | AT91_SMC_DBW_32,
++	.tdf_cycles		= 0,
++};
++
++/**
++ * Configure the EBI1 pins for the wr switch FPGA
++ *
++ * This enable the External Bus Interface 1 (EBI1) and configure
++ * the Static Memory Controller (SMC) in order to allow the user
++ * to access the FPGA address space at the offset 0x1000000 by
++ * using chip-select 0 [NCS0].
++ *
++ * NCS0 is always and SMC controller, it cannot be configured in
++ * any other ways (pag 162 SAM9G45 datasheet)
++ */
++static void __init wrs_fpga_init(void)
++{
++	int i;
++
++	/* PC16..31: periphA as EBI1_D16..31 */
++	for (i = AT91_PIN_PC16; i <= AT91_PIN_PC31; i++)
++		at91_set_A_periph(i, 0);
++	/* PC2 and PC3 too: EBI1_A19 EBI1_A20 */
++	at91_set_A_periph(AT91_PIN_PC2, 0);
++	at91_set_A_periph(AT91_PIN_PC3, 0);
++
++	/* FIXME: We should pull rst high for when it is programmed */
++
++	/* Then, write the EBI1 configuration (NCS0 == 0x1000.0000) */
++	/*TODO check if the ID 0 is fine  */
++	sam9_smc_configure(0, 0, &wrs_fpga_smc_config);
++}
++
+ static void __init ek_board_init(void)
+ {
+ 	/* Serial */
+@@ -487,6 +534,9 @@ static void __init ek_board_init(void)
+ 	/* LEDs */
+ 	at91_gpio_leds(ek_leds, ARRAY_SIZE(ek_leds));
+ 	at91_pwm_leds(ek_pwm_led, ARRAY_SIZE(ek_pwm_led));
++
++	wrs_fpga_init();
++
+ 	/* Other platform devices */
+ 	platform_add_devices(devices, ARRAY_SIZE(devices));
+ }
+-- 
+2.7.4
+

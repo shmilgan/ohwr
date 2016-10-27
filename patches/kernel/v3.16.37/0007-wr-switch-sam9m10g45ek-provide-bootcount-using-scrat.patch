@@ -1,0 +1,202 @@
+From 71546ce5ad13e8c2f7de155cc8a17dada9028839 Mon Sep 17 00:00:00 2001
+From: Alessandro Rubini <rubini@gnudd.com>
+Date: Fri, 28 Nov 2014 14:18:27 +0100
+Subject: [PATCH 7/8] wr-switch (sam9m10g45ek): provide bootcount using scratch
+ registers
+
+Update to 3.16.37
+=================
+This patch has been ported from 2.6.39.
+
+The functions at91_sys_read/write() have been removed
+by the patch  8c428b8d33. Use __raw_readl/writel() and reproduce
+the original behavior
+
+The patch b3af8b49be changes the address to the GPBR. To solve this
+I created a GPBR resource and mapped it
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+Signed-off-by: Federico Vaga <federico.vaga@cern.ch>
+---
+ arch/arm/kernel/process.c          |  15 +++++
+ arch/arm/mach-at91/Makefile        |   1 +
+ arch/arm/mach-at91/wrs-bootcount.c | 122 +++++++++++++++++++++++++++++++++++++
+ 3 files changed, 138 insertions(+)
+ create mode 100644 arch/arm/mach-at91/wrs-bootcount.c
+
+diff --git a/arch/arm/kernel/process.c b/arch/arm/kernel/process.c
+index 3f688b7..c8cff71 100644
+--- a/arch/arm/kernel/process.c
++++ b/arch/arm/kernel/process.c
+@@ -41,6 +41,7 @@
+ #include <asm/system_misc.h>
+ #include <asm/mach/time.h>
+ #include <asm/tls.h>
++#include <mach/hardware.h>
+ #include "reboot.h"
+ 
+ #ifdef CONFIG_CC_STACKPROTECTOR
+@@ -117,6 +118,20 @@ void _soft_restart(unsigned long addr, bool disable_l2)
+ 
+ static void null_restart(enum reboot_mode reboot_mode, const char *cmd)
+ {
++	uint32_t gpbr_val;
++	char *gpbr_str = (void *)&gpbr_val;
++	unsigned short *gpbr_short = (void *)&gpbr_val;
++	void __iomem *addr = (void __iomem *)AT91_VA_BASE_SYS;
++	unsigned long gpbr = AT91SAM9G45_BASE_GPBR - AT91_BASE_SYS;
++
++	/* WRS: Change the static registers. See wrs-bootcount.c for details */
++	gpbr_val = __raw_readl(addr + gpbr);
++	gpbr_str[3] = 'R'; /* reboot requested by user */
++	__raw_writel(gpbr_val, addr + gpbr);
++
++	gpbr_val = __raw_readl(addr + gpbr + 4);
++	gpbr_short[1]++; /* count the user-requeted reboots */
++	__raw_writel(gpbr_val, addr + gpbr + 4);
+ }
+ 
+ void soft_restart(unsigned long addr)
+diff --git a/arch/arm/mach-at91/Makefile b/arch/arm/mach-at91/Makefile
+index 78e9cec..7d385bc 100644
+--- a/arch/arm/mach-at91/Makefile
++++ b/arch/arm/mach-at91/Makefile
+@@ -80,6 +80,7 @@ obj-$(CONFIG_MACH_SNAPPER_9260)	+= board-snapper9260.o
+ 
+ # AT91SAM9G45 board-specific support
+ obj-$(CONFIG_MACH_AT91SAM9M10G45EK) += board-sam9m10g45ek.o
++obj-$(CONFIG_MACH_AT91SAM9M10G45EK) += wrs-bootcount.o
+ 
+ # AT91SAM board with device-tree
+ obj-$(CONFIG_MACH_AT91RM9200_DT) += board-dt-rm9200.o
+diff --git a/arch/arm/mach-at91/wrs-bootcount.c b/arch/arm/mach-at91/wrs-bootcount.c
+new file mode 100644
+index 0000000..c4305b9
+--- /dev/null
++++ b/arch/arm/mach-at91/wrs-bootcount.c
+@@ -0,0 +1,122 @@
++/* Alessandro Rubini for CERN 2014 */
++#include <linux/kernel.h>
++#include <linux/init.h>
++#include <linux/proc_fs.h>
++#include <linux/seq_file.h>
++#include <linux/io.h>
++#include <linux/ioport.h>
++
++#include <mach/hardware.h>
++#include <asm/mach/map.h>
++
++#ifdef CONFIG_RTC_DRV_AT91SAM9
++#error "This is incompatible with CONFIG_RTC_DRV_AT91SAM9"
++#endif
++
++/* This structures is mapped over the general purpose registers */
++struct wrs_bc {
++	unsigned char magic[3];
++	unsigned char last_is_reboot;
++	unsigned short boot_count;
++	unsigned short reboot_count;
++	uint32_t fault_ip;
++	uint32_t fault_lr;
++};
++
++static struct wrs_bc __bc_soft, __bc_hard;
++
++/* bc_regs points there, bc_hw is a local tmp working copy, bc_sw is sw */
++static struct wrs_bc __iomem *bc_regs;
++static struct wrs_bc *bc_hw = &__bc_hard;
++static struct wrs_bc *bc_sw = &__bc_soft;
++
++/*
++ * For some reason, memcpy_fromio and toio is not working. The MSB
++ * is repeated 4 times in the resulting word. So do it by hand
++ */
++static void copy16_fromio(void *dest, void __iomem *src)
++{
++	uint32_t __iomem *s = src;
++	uint32_t *d = dest;
++	int i;
++	for (i = 0; i < 4; i++)
++		d[i] = __raw_readl(s + i);
++}
++
++static void copy16_toio(void __iomem *dest, void *src)
++{
++	uint32_t __iomem *d = dest;
++	uint32_t *s = src;
++	int i;
++	for (i = 0; i < 4; i++)
++		__raw_writel(s[i], d + i);
++}
++
++/**
++ * List of necessary resources
++ */
++static struct resource wrs_r[] = {
++	{
++		.name = "GPBR",
++		.start = AT91SAM9G45_BASE_GPBR,
++		.end = AT91SAM9G45_BASE_GPBR + 0x10,
++		.flags = IORESOURCE_MEM,
++	},
++};
++
++/* As soon as possible, copy stuff over */
++static int __init wrs_bc_early_init(void)
++{
++	bc_regs = ioremap(wrs_r[0].start, resource_size(&wrs_r[0]));
++	copy16_fromio(bc_hw, bc_regs);
++
++	if (strncmp(bc_hw->magic, "WRS", 3)) /* power on */
++		memset(bc_hw, 0, sizeof(*bc_hw));
++
++	strncpy(bc_hw->magic, "WRS", 3);
++	bc_hw->boot_count++;
++
++	/* save sw for printing, fix hw and copy back */
++	memcpy(bc_sw, bc_hw, sizeof(*bc_sw));
++	bc_hw->last_is_reboot = 'U';
++	bc_hw->fault_ip = bc_hw->fault_lr = 0;
++	copy16_toio(bc_regs, bc_hw);
++	return 0;
++}
++early_initcall(wrs_bc_early_init);
++
++/* Over time, export in proc */
++static int wrs_bc_proc_show(struct seq_file *m, void *v)
++{
++        seq_printf(m, "boot_count: %i\n"
++		   "reboot_count: %i\n"
++		   "last_is_reboot: %i\n"
++		   "fault_ip: 0x%08x\n"
++		   "fault_lr: 0x%08x\n",
++		   bc_sw->boot_count,
++		   bc_sw->reboot_count,
++		   bc_sw->last_is_reboot == 'R',
++		   bc_sw->fault_ip,
++		   bc_sw->fault_lr);
++        return 0;
++}
++
++static int wrs_bc_proc_open(struct inode *inode, struct file *file)
++{
++        return single_open(file, wrs_bc_proc_show, NULL);
++}
++
++static const struct file_operations wrs_bc_proc_fops = {
++        .open           = wrs_bc_proc_open,
++        .read           = seq_read,
++        .llseek         = seq_lseek,
++        .release        = single_release,
++};
++
++static int __init proc_wrs_bc_init(void)
++{
++	/* two files use dash and two use underscore in /proc. Pick one */
++        proc_create("wrs-bootcount", 0, NULL, &wrs_bc_proc_fops);
++        return 0;
++}
++module_init(proc_wrs_bc_init);
+-- 
+2.7.4
+

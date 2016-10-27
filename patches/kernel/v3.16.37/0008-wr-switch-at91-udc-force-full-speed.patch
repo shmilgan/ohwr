@@ -1,0 +1,53 @@
+From 036bcbd702ca7129ce72871b62c67291022ae6f4 Mon Sep 17 00:00:00 2001
+From: Federico Vaga <federico.vaga@cern.ch>
+Date: Thu, 13 Oct 2016 17:06:35 +0200
+Subject: [PATCH 8/8] wr-switch (at91 udc): force full speed
+
+Some WRS speciments won't work correctly with automatic speed setup.
+This patch forces full-speed on the device (instead of the
+autodetected high-speed), and thus they work.
+
+Speed is not a problem anyways, because it is just a serial port.
+
+Update to 3.16.37
+=================
+This patch has been ported from 2.6.39.
+
+Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+Signed-off-by: Federico Vaga <federico.vaga@cern.ch>
+---
+ drivers/usb/gadget/atmel_usba_udc.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/usb/gadget/atmel_usba_udc.c b/drivers/usb/gadget/atmel_usba_udc.c
+index 892bd97..34b0e87 100644
+--- a/drivers/usb/gadget/atmel_usba_udc.c
++++ b/drivers/usb/gadget/atmel_usba_udc.c
+@@ -1149,12 +1149,12 @@ static int do_test_mode(struct usba_udc *udc)
+ 		break;
+ 	case 0x0300:
+ 		/*
+-		 * Test_SE0_NAK: Force high-speed mode and set up ep0
++		 * Test_SE0_NAK: Force full-speed mode and set up ep0
+ 		 * for Bulk IN transfers
+ 		 */
+ 		ep = &udc->usba_ep[0];
+ 		usba_writel(udc, TST,
+-				USBA_BF(SPEED_CFG, USBA_SPEED_CFG_FORCE_HIGH));
++				USBA_BF(SPEED_CFG, USBA_SPEED_CFG_FORCE_FULL));
+ 		usba_ep_writel(ep, CFG,
+ 				USBA_BF(EPT_SIZE, USBA_EPT_SIZE_64)
+ 				| USBA_EPT_DIR_IN
+@@ -1812,6 +1812,9 @@ static int atmel_usba_start(struct usb_gadget *gadget,
+ 		toggle_bias(1);
+ 		usba_writel(udc, CTRL, USBA_ENABLE_MASK);
+ 		usba_writel(udc, INT_ENB, USBA_END_OF_RESET);
++		/* Also, force full spedd or sometimes it won't work on WRS */
++		usba_writel(udc, TST,
++			    USBA_BF(SPEED_CFG, USBA_SPEED_CFG_FORCE_FULL));
+ 	}
+ 	spin_unlock_irqrestore(&udc->lock, flags);
+ 
+-- 
+2.7.4
+

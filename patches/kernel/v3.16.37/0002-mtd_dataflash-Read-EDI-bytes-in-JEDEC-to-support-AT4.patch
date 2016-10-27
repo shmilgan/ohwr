@@ -1,0 +1,194 @@
+From f544884365b48caa5b35e369a1386bfbb237517a Mon Sep 17 00:00:00 2001
+From: Benoit Rat <benoit@sevensols.com>
+Date: Fri, 14 Oct 2016 10:16:25 +0200
+Subject: [PATCH 2/8] mtd_dataflash: Read EDI bytes in JEDEC to support
+ AT45DB641E
+
+Standard JEDEC ID is only 24bits to identify a DF chip.
+
+It also has an optional Extended Device Info (EDI) on bytes 4 and/or 5
+that need to be read in order differentiate some DF chips. (i.e, the
+difference between AT45DB641E and AT45DB642D is made by byte 4).
+
+We have had two new fields in the struct flash_info:
+   * edi_nbytes: number of optional bytes to read (1 or 2)
+   * edi_jedec:  EDI value for a given chip
+
+Update to 3.16.37
+=================
+This patch has been ported from 2.6.39.
+
+Signed-off-by: Benoit Rat <benoit@sevensols.com>
+Signed-off-by: Federico Vaga <federico.vaga@cern.ch>
+---
+ drivers/mtd/devices/mtd_dataflash.c | 100 +++++++++++++++++++++++-------------
+ 1 file changed, 63 insertions(+), 37 deletions(-)
+
+diff --git a/drivers/mtd/devices/mtd_dataflash.c b/drivers/mtd/devices/mtd_dataflash.c
+index dd22ce2..3cb38d2 100644
+--- a/drivers/mtd/devices/mtd_dataflash.c
++++ b/drivers/mtd/devices/mtd_dataflash.c
+@@ -698,6 +698,13 @@ struct flash_info {
+ 	uint16_t	pageoffset;
+ 
+ 	uint16_t	flags;
++
++	/* JEDEC has an optional Extended Device Info (EDI) on bytes
++	 * 4 and/or 5 that need to be read to differentiate some DF chips
++	 */
++	uint8_t         edi_nbytes;
++	uint16_t        edi_jedec;
++
+ #define SUP_POW2PS	0x0002		/* supports 2^N byte pages */
+ #define IS_POW2PS	0x0001		/* uses 2^N byte pages */
+ };
+@@ -713,36 +720,40 @@ static struct flash_info dataflash_data[] = {
+ 	 * These newer chips also support 128-byte security registers (with
+ 	 * 64 bytes one-time-programmable) and software write-protection.
+ 	 */
+-	{ "AT45DB011B",  0x1f2200, 512, 264, 9, SUP_POW2PS},
++	{ "AT45DB011B",  0x1f2200, 512, 264, 9, SUP_POW2PS, 0, 0x0},
+ 	{ "at45db011d",  0x1f2200, 512, 256, 8, SUP_POW2PS | IS_POW2PS},
+ 
+-	{ "AT45DB021B",  0x1f2300, 1024, 264, 9, SUP_POW2PS},
+-	{ "at45db021d",  0x1f2300, 1024, 256, 8, SUP_POW2PS | IS_POW2PS},
++	{ "AT45DB021B",  0x1f2300, 1024, 264, 9, SUP_POW2PS, 0, 0x0},
++	{ "at45db021d",  0x1f2300, 1024, 256, 8, SUP_POW2PS | IS_POW2PS, 0, 0x0},
+ 
+-	{ "AT45DB041x",  0x1f2400, 2048, 264, 9, SUP_POW2PS},
+-	{ "at45db041d",  0x1f2400, 2048, 256, 8, SUP_POW2PS | IS_POW2PS},
++	{ "AT45DB041x",  0x1f2400, 2048, 264, 9, SUP_POW2PS, 0, 0x0},
++	{ "at45db041d",  0x1f2400, 2048, 256, 8, SUP_POW2PS | IS_POW2PS, 0, 0x0},
+ 
+-	{ "AT45DB081B",  0x1f2500, 4096, 264, 9, SUP_POW2PS},
+-	{ "at45db081d",  0x1f2500, 4096, 256, 8, SUP_POW2PS | IS_POW2PS},
++	{ "AT45DB081B",  0x1f2500, 4096, 264, 9, SUP_POW2PS, 0, 0x0},
++	{ "at45db081d",  0x1f2500, 4096, 256, 8, SUP_POW2PS | IS_POW2PS, 0, 0x0},
+ 
+-	{ "AT45DB161x",  0x1f2600, 4096, 528, 10, SUP_POW2PS},
+-	{ "at45db161d",  0x1f2600, 4096, 512, 9, SUP_POW2PS | IS_POW2PS},
++	{ "AT45DB161x",  0x1f2600, 4096, 528, 10, SUP_POW2PS, 0, 0x0},
++	{ "at45db161d",  0x1f2600, 4096, 512, 9, SUP_POW2PS | IS_POW2PS, 0, 0x0},
+ 
+-	{ "AT45DB321x",  0x1f2700, 8192, 528, 10, 0},		/* rev C */
++	{ "AT45DB321x",  0x1f2700, 8192, 528, 10, 0, 0, 0x0},		/* rev C */
+ 
+-	{ "AT45DB321x",  0x1f2701, 8192, 528, 10, SUP_POW2PS},
+-	{ "at45db321d",  0x1f2701, 8192, 512, 9, SUP_POW2PS | IS_POW2PS},
++	{ "AT45DB321x",  0x1f2701, 8192, 528, 10, SUP_POW2PS, 0, 0x0},
++	{ "at45db321d",  0x1f2701, 8192, 512, 9, SUP_POW2PS | IS_POW2PS, 0, 0x0},
+ 
+-	{ "AT45DB642x",  0x1f2800, 8192, 1056, 11, SUP_POW2PS},
+-	{ "at45db642d",  0x1f2800, 8192, 1024, 10, SUP_POW2PS | IS_POW2PS},
++	{ "AT45DB642x",  0x1f2800, 8192, 1056, 11, SUP_POW2PS, 1, 0x0},
++	{ "at45db642d",  0x1f2800, 8192, 1024, 10, SUP_POW2PS | IS_POW2PS, 1, 0x0},
++
++	{ "AT45DB641E",  0x1f2800, 32768, 264, 9, SUP_POW2PS, 1, 0x1},
++	{ "at45db641e",  0x1f2800, 32768, 256, 8, SUP_POW2PS | IS_POW2PS, 1, 0x1},
+ };
+ 
+ static struct flash_info *jedec_probe(struct spi_device *spi)
+ {
+ 	int			tmp;
+ 	uint8_t			code = OP_READ_ID;
+-	uint8_t			id[3];
++	uint8_t			id[5];
+ 	uint32_t		jedec;
++	uint16_t		jedec_edi;
+ 	struct flash_info	*info;
+ 	int status;
+ 
+@@ -754,7 +765,7 @@ static struct flash_info *jedec_probe(struct spi_device *spi)
+ 	 * That's not an error; only rev C and newer chips handle it, and
+ 	 * only Atmel sells these chips.
+ 	 */
+-	tmp = spi_write_then_read(spi, &code, 1, id, 3);
++	tmp = spi_write_then_read(spi, &code, 1, id, 5);
+ 	if (tmp < 0) {
+ 		pr_debug("%s: error %d reading JEDEC ID\n",
+ 			dev_name(&spi->dev), tmp);
+@@ -769,31 +780,39 @@ static struct flash_info *jedec_probe(struct spi_device *spi)
+ 	jedec = jedec << 8;
+ 	jedec |= id[2];
+ 
++	/* EDI bytes to support newest chips */
++	jedec_edi = id[3];
++	jedec_edi = jedec_edi << 8;
++	jedec_edi |= id[4];
++
++
+ 	for (tmp = 0, info = dataflash_data;
+ 			tmp < ARRAY_SIZE(dataflash_data);
+ 			tmp++, info++) {
+ 		if (info->jedec_id == jedec) {
+-			pr_debug("%s: OTP, sector protect%s\n",
+-				dev_name(&spi->dev),
+-				(info->flags & SUP_POW2PS)
+-					? ", binary pagesize" : ""
+-				);
+-			if (info->flags & SUP_POW2PS) {
+-				status = dataflash_status(spi);
+-				if (status < 0) {
+-					pr_debug("%s: status error %d\n",
+-						dev_name(&spi->dev), status);
+-					return ERR_PTR(status);
+-				}
+-				if (status & 0x1) {
+-					if (info->flags & IS_POW2PS)
+-						return info;
+-				} else {
+-					if (!(info->flags & IS_POW2PS))
+-						return info;
+-				}
+-			} else
+-				return info;
++			if (info->edi_jedec == (jedec_edi >> (16 - 8 * info->edi_nbytes))) {
++				pr_debug("%s: OTP, sector protect%s\n",
++				      dev_name(&spi->dev),
++				      (info->flags & SUP_POW2PS)
++				      ? ", binary pagesize" : ""
++					);
++				if (info->flags & SUP_POW2PS) {
++					status = dataflash_status(spi);
++					if (status < 0) {
++						pr_debug("%s: status error %d\n",
++						      dev_name(&spi->dev), status);
++						return ERR_PTR(status);
++					}
++					if (status & 0x1) {
++						if (info->flags & IS_POW2PS)
++							return info;
++					} else {
++						if (!(info->flags & IS_POW2PS))
++							return info;
++					}
++				} else
++					return info;
++			}
+ 		}
+ 	}
+ 
+@@ -819,6 +838,7 @@ static struct flash_info *jedec_probe(struct spi_device *spi)
+  *   AT45DB0321B 32Mbit  (4M)    xx1101xx (0x34)   8192    528     10
+  *   AT45DB0642  64Mbit  (8M)    xx111xxx (0x3c)   8192   1056     11
+  *   AT45DB1282  128Mbit (16M)   xx0100xx (0x10)  16384   1056     11
++ *   AT45DB0641E 64Mbit  (8M)    xx111xxx (0x3c)  32768    264      9
+  */
+ static int dataflash_probe(struct spi_device *spi)
+ {
+@@ -833,6 +853,12 @@ static int dataflash_probe(struct spi_device *spi)
+ 	 * write procedures.
+ 	 */
+ 	info = jedec_probe(spi);
++
++	printk("MTD: %s 0x%08x %d %d %d %x\n",
++	       info->name,info->jedec_id,
++	       info->nr_pages,info->pagesize,info->pageoffset,info->flags);
++
++
+ 	if (IS_ERR(info))
+ 		return PTR_ERR(info);
+ 	if (info != NULL)
+-- 
+2.7.4
+
