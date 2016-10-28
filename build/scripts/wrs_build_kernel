@@ -1,7 +1,5 @@
 #!/bin/bash
 
-KERVER=3.16.37
-
 # check variables, like all scripts herein do
 WRS_SCRIPT_NAME=$(basename $0)
 if [ -z "$WRS_BASE_DIR" ]; then
@@ -14,8 +12,8 @@ wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR CROSS_COMPILE
 
 wrs_echo "--- Linux kernel for switch"
 
-tarname="linux-${KERVER}.tar.gz"
-patchdir="${WRS_BASE_DIR}/../patches/kernel/v${KERVER}"
+tarname="linux-${KVER}.tar.gz"
+patchdir="${WRS_BASE_DIR}/../patches/kernel/v${KVER}"
 wrs_download $tarname
 
 mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
@@ -23,7 +21,7 @@ mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 
 # go to the build dir and compile it, using our configuration
 cd $WRS_OUTPUT_DIR/build
-dirname="linux-${KERVER}"
+dirname="linux-${KVER}"
 rm -rf $dirname
 tar xzf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
 
@@ -51,7 +49,7 @@ make oldconfig  || wrs_die "kernel config"
 
 make $WRS_MAKE_J zImage modules  || wrs_die "kernel compilation"
 
-mkdir -p $WRS_OUTPUT_DIR/images/lib/modules/$KERVER/kernel
+mkdir -p $WRS_OUTPUT_DIR/images/lib/modules/$KVER/kernel
 
-cp $(find . -name '*.ko') $WRS_OUTPUT_DIR/images/lib/modules/$KERVER/kernel
+cp $(find . -name '*.ko') $WRS_OUTPUT_DIR/images/lib/modules/$KVER/kernel
 cp arch/$ARCH/boot/zImage $WRS_OUTPUT_DIR/images

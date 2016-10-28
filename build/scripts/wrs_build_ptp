@@ -21,7 +21,7 @@ make clean
 
 # we need LINUX and CROSS_COMPILE. The latter is there for sure
 if [ "x$LINUX" == "x" ]; then
-    export LINUX="$WRS_OUTPUT_DIR/build/linux-2.6.39"
+    export LINUX="$WRS_OUTPUT_DIR/build/linux-$KVER"
 fi
 
 
