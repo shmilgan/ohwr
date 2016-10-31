@@ -29,7 +29,6 @@ OBJDUMP         = $(CROSS_COMPILE)objdump
 # LOTs of includes
 CFLAGS =  -O2 -g -Wall \
 		-Wstrict-prototypes \
-		-I$(LINUX)/include \
 		-I$(LINUX)/arch/arm/mach-at91/include \
 		-I../wrsw_rtud \
 		-I../mini-rpc \
