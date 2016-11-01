@@ -32,8 +32,6 @@
 #include <libwr/hal_shmem.h>
 #include <libwr/config.h>
 
-#include <at91_softpwm.h>
-
 #include "i2c.h"
 #include "i2c_io.h"
 #include "i2c_fpga_reg.h"
@@ -49,8 +47,6 @@
 
 #define DESIRED_TEMPERATURE 55.0
 
-static int is_cpu_pwn = 0;
-static int enable_d0 = 0;
 static int fan_hysteresis = 0;
 static int fan_hysteresis_t_disable = 0;
 static int fan_hysteresis_t_enable = 0;
@@ -83,8 +79,6 @@ typedef struct {
 static pi_controller_t fan_pi;
 
 //-----------------------------------------
-//-- Old CPU PWM system (<3.3)
-static int pwm_fd;
 //-- New FPGA PWM system
 static volatile struct SPWM_WB *spwm_wbr;
 //----------------------------------------
@@ -125,21 +119,6 @@ static inline void pi_init(pi_controller_t * pi)
 	pi->integrator = 0;
 }
 
-/* Configures a PWM output on gpio pin (pin). Rate accepts range from 0 (0%) to 1000 (100%) */
-static void pwm_configure_pin(const pio_pin_t * pin, int enable, int rate)
-{
-	int index = pin->port * 32 + pin->pin;
-	if (pin == 0)
-		return;
-
-	if (enable && !enable_d0)
-		ioctl(pwm_fd, AT91_SOFTPWM_ENABLE, index);
-	else if (!enable && enable_d0)
-		ioctl(pwm_fd, AT91_SOFTPWM_DISABLE, index);
-
-	enable_d0 = enable;
-	ioctl(pwm_fd, AT91_SOFTPWM_SETPOINT, rate);
-}
 
 /* Configures a PWM output on gpio pin (pin). Rate accepts range from 0 (0%) to 1000 (100%) */
 static void pwm_configure_fpga(int enmask, float rate)
@@ -156,12 +135,7 @@ static void pwm_configure_fpga(int enmask, float rate)
 static void shw_pwm_speed(int enmask, float rate)
 {
 	//pr_info("%x %f\n",enmask,rate);
-	if (is_cpu_pwn) {
-		pwm_configure_pin(get_pio_pin(shw_io_box_fan_en), enmask,
-				  rate * 1000);
-	} else {
-		pwm_configure_fpga(enmask, rate);
-	}
+	pwm_configure_fpga(enmask, rate);
 }
 
 /* Texas Instruments TMP100 temperature sensor driver */
@@ -211,45 +185,24 @@ int shw_init_fans(void)
 	uint32_t val = 0;
 	char *config_item;
 
-	//Set the type of PWM
-	if (shw_get_hw_ver() < 330)
-		is_cpu_pwn = 1;
-	else
-		is_cpu_pwn = 0;
-
 	pr_info(
-	      "Configuring %s PWMs for fans (desired temperature = %.1f degC)\n",
-	      is_cpu_pwn ? "CPU" : "FPGA", DESIRED_TEMPERATURE);
+	      "Configuring FPGA PWMs for fans (desired temperature = %.1f "
+	      "degC)\n", DESIRED_TEMPERATURE);
 
-	if (is_cpu_pwn) {
-		pwm_fd = open("/dev/at91_softpwm", O_RDWR);
-		if (pwm_fd < 0) {
-			pr_error(
-			      "at91_softpwm driver not installed or device not created.\n");
-			return -1;
-		}
+	//Point to the corresponding WB direction
+	spwm_wbr =
+	    (volatile struct SPWM_WB *)(FPGA_BASE_ADDR +
+					FPGA_BASE_SPWM);
 
-		fan_pi.ki = 1.0;
-		fan_pi.kp = 4.0;
-		fan_pi.y_min = 200;
-		fan_pi.bias = 200;
-		fan_pi.y_max = 800;
-	} else {
-		//Point to the corresponding WB direction
-		spwm_wbr =
-		    (volatile struct SPWM_WB *)(FPGA_BASE_ADDR +
-						FPGA_BASE_SPWM);
+	//Configure SPWM register the 30~=(62.5MHz÷(8kHz×2^8))−1
+	val = SPWM_CR_PRESC_W(30) | SPWM_CR_PERIOD_W(255);
+	spwm_wbr->CR = val;
 
-		//Configure SPWM register the 30~=(62.5MHz÷(8kHz×2^8))−1
-		val = SPWM_CR_PRESC_W(30) | SPWM_CR_PERIOD_W(255);
-		spwm_wbr->CR = val;
-
-		fan_pi.ki = 1.0;
-		fan_pi.kp = 4.0;
-		fan_pi.y_min = 400;
-		fan_pi.bias = 200;
-		fan_pi.y_max = 1000;
-	}
+	fan_pi.ki = 1.0;
+	fan_pi.kp = 4.0;
+	fan_pi.y_min = 400;
+	fan_pi.bias = 200;
+	fan_pi.y_max = 1000;
 
 	shw_init_i2c_sensors();
 
