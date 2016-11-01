@@ -427,7 +427,8 @@ static void get_loaded_kernel_modules_status(void)
 			continue; /* error... or EOF */
 
 		/* try educated guess to find position in array */
-		if (!strncmp(key, kernel_modules[guess_index].key, 40)) {
+		if (guess_index < ARRAY_SIZE(kernel_modules)
+		    && !strncmp(key, kernel_modules[guess_index].key, 40)) {
 			modules_found++;
 			guess_index++;
 			continue;
