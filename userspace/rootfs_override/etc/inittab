@@ -23,6 +23,8 @@
 
 # now run any rc scripts
 ::sysinit:/etc/init.d/rcS
+# We want to keep the monitoring running even when it crashes. So, it
+# must run within initab with respawn action
 ::respawn:/etc/init.d/monit.sh init
 
 # Put a getty on the serial port
