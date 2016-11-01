@@ -3,6 +3,8 @@ DIRS = wr_vic wr_nic wr_rtu at91_softpwm wr_pstats wr_clocksource
 
 # We may "LINUX ?= /usr/src/linux-wrswitch", but it's better to leave it empty
 
+export ARCH ?= arm
+export CROSS_COMPILE ?= $(CROSS_COMPILE_ARM)
 
 all modules clean:
 	for n in $(DIRS); do \
