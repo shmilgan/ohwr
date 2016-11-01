@@ -308,7 +308,6 @@ void show_ports(int alive)
 		char if_name[10];
 		char if_mode[15];
 		int print_port = 0;
-		int print_mode_color = 0;
 		int instance_port = 0;
 
 		snprintf(if_name, 10, "wri%d", i + 1);
@@ -321,7 +320,6 @@ void show_ports(int alive)
 		switch (port_state->mode) {
 		case HEXP_PORT_MODE_WR_MASTER:
 			if (mode == SHOW_GUI) {
-				print_mode_color = C_WHITE;
 				strcpy(if_mode, "Master");
 			} else if (mode & SHOW_MASTER_PORTS) {
 				print_port = 1;
@@ -332,7 +330,6 @@ void show_ports(int alive)
 			break;
 		case HEXP_PORT_MODE_WR_SLAVE:
 			if (mode == SHOW_GUI) {
-				print_mode_color = C_WHITE;
 				strcpy(if_mode, "Slave ");
 			} else if (mode & SHOW_SLAVE_PORTS) {
 				print_port = 1;
@@ -343,7 +340,6 @@ void show_ports(int alive)
 			break;
 		case HEXP_PORT_MODE_NON_WR:
 			if (mode == SHOW_GUI) {
-				print_mode_color = C_WHITE;
 				strcpy(if_mode, "Non WR");
 			} else if (mode & SHOW_OTHER_PORTS) {
 				print_port = 1;
@@ -354,7 +350,6 @@ void show_ports(int alive)
 			break;
 		case HEXP_PORT_MODE_NONE:
 			if (mode == SHOW_GUI) {
-				print_mode_color = C_WHITE;
 				strcpy(if_mode, "None  ");
 			} else if (mode & SHOW_OTHER_PORTS) {
 				print_port = 1;
@@ -365,7 +360,6 @@ void show_ports(int alive)
 			break;
 		case HEXP_PORT_MODE_WR_M_AND_S:
 			if (mode == SHOW_GUI) {
-				print_mode_color = C_WHITE;
 				strcpy(if_mode, "Auto  ");
 			} else if (mode &
 				(SHOW_SLAVE_PORTS|SHOW_MASTER_PORTS)) {
@@ -377,7 +371,6 @@ void show_ports(int alive)
 			break;
 		default:
 			if (mode == SHOW_GUI) {
-				print_mode_color = C_WHITE;
 				strcpy(if_mode, "Unkn  ");
 			} else if (mode & SHOW_OTHER_PORTS) {
 				print_port = 1;
