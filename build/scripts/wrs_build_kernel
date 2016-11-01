@@ -33,7 +33,7 @@ done
 
 
 # copy the config and replace "-j" level. First remove it in case it's left in
-CFG="${patchdir}/linux-config-wrswitch"
+CFG=$WRS_BASE_DIR/../configs/wrs_linux_defconfig
 if [ "x$WRS_KERNEL_CONFIG" != "x" ]; then
     if [ -f $WRS_KERNEL_CONFIG ]; then
 	CFG=$WRS_KERNEL_CONFIG
