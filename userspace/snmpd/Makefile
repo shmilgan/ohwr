@@ -1,5 +1,6 @@
-
-SNMP_BUILD := $(wildcard $(WRS_OUTPUT_DIR)/build/buildroot-2*)
+# if BRVER not defined use a wildcard
+BRVER?=2*
+SNMP_BUILD := $(wildcard $(WRS_OUTPUT_DIR)/build/buildroot-$(BRVER))
 SNMP_BUILD := $(wildcard $(SNMP_BUILD)/output/build/netsnmp-*)
 
 NET_SNMP_CONFIG ?= $(SNMP_BUILD)/net-snmp-config

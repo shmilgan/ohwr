@@ -45,7 +45,9 @@ conf:
 	$(CC) $(CFLAGS) -o $@ $(CONF_LOC)/conf.c \
 		$(CONF_LOC)/zconf.tab.c
 
-CURSES_BUILD := $(wildcard $(WRS_OUTPUT_DIR)/build/buildroot-2*)
+# if BRVER not defined use a wildcard
+BRVER?=2*
+CURSES_BUILD := $(wildcard $(WRS_OUTPUT_DIR)/build/buildroot-$(BRVER))
 CURSES_BUILD := $(wildcard $(CURSES_BUILD)/output/build/ncurses-*)
 
 lxdialog := $(CONF_LOC)/lxdialog/checklist.c

@@ -48,6 +48,10 @@ fi
 
 export WRS_SCRIPTS_DIR=${WRS_BASE_DIR}/scripts
 
+# Export Buildroot version in use
+export BRVER="2016.02"
+
+
 ## Function that show a little help
 showhelp() {
 	echo ""
