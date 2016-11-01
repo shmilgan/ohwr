@@ -811,7 +811,6 @@ offset (well lower than a second, after the initial ntp-driven setting event).
 This is considered acceptable, because system time is only
 used for logging.
 
-@item @i{at91_softpwm.ko}: a driver that generates a PWM signal for the fan.
 
 @end itemize
 

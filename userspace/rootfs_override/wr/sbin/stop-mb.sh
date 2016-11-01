@@ -11,4 +11,3 @@ rmmod wr_pstats
 rmmod wr_rtu
 rmmod wr_nic
 rmmod wr_vic
-rmmod at91_softpwm
