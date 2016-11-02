@@ -233,6 +233,8 @@ static void get_dotconfig_source(void)
 			 "open " DOTCONFIGDIR "/" DOTCONFIG_SOURCE "\n");
 	}
 
+	memset(wrsBootStatus_s.wrsConfigSourceUrl, 0,
+	       sizeof(wrsBootStatus_s.wrsConfigSourceUrl));
 	/* read dot-config's URL only when config source is not local */
 	if (wrsBootStatus_s.wrsConfigSource != WRS_CONFIG_SOURCE_LOCAL) {
 		/* read URL used to get dotconfig */
@@ -242,17 +244,14 @@ static void get_dotconfig_source(void)
 			fscanf(f, LINE_READ_LEN(WRS_CONFIG_SOURCE_URL_LEN),
 			      wrsBootStatus_s.wrsConfigSourceUrl);
 			fclose(f);
-		} else {
+		} else if (wrsBootStatus_s.wrsConfigSource != WRS_CONFIG_SOURCE_TRY_DHCP) {
 			/* host file not found, put "error" into
-			 * wrsConfigSourceHost */
+			 * wrsConfigSourceUrl for all except try_dhcp */
 			strcpy(wrsBootStatus_s.wrsConfigSourceUrl, "error");
 			snmp_log(LOG_ERR, "SNMP: " SL_ER " wrsConfigSourceUrl:"
 				 " failed to open "
 				 DOTCONFIGDIR "/" DOTCONFIG_SOURCE_URL"\n");
 		}
-	} else {
-		memset(wrsBootStatus_s.wrsConfigSourceUrl, 0,
-		       sizeof(wrsBootStatus_s.wrsConfigSourceUrl));
 	}
 
 	f = fopen(DOTCONFIGDIR "/" DOTCONFIG_STATUS, "r");
