@@ -12,7 +12,7 @@ wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR CROSS_COMPILE
 
 wrs_echo "--- Linux kernel for switch"
 
-tarname="linux-${KVER}.tar.gz"
+tarname="linux-${KVER}.tar.xz"
 patchdir="${WRS_BASE_DIR}/../patches/kernel/v${KVER}"
 wrs_download $tarname
 
@@ -23,7 +23,8 @@ mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 cd $WRS_OUTPUT_DIR/build
 dirname="linux-${KVER}"
 rm -rf $dirname
-tar xzf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
+# xz archive, so use "J" for tar
+tar xJf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
 
 # apply patches
 cd $dirname

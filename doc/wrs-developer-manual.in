@@ -363,7 +363,7 @@ The messages of a download run are like the following ones:
     2016-06-02 17:10:46: --- Downloading base packages
     2016-06-02 17:10:50: Retrieved at91bootstrap-3-3.0.tar.gz from upstream
     2016-06-02 17:10:51: Retrieved barebox-2014.04.0.tar.bz2 from upstream
-    2016-06-02 17:11:21: Retrieved linux-2.6.39.tar.bz2 from upstream
+    2016-06-02 17:11:21: Retrieved linux-3.16.37.tar.xz from upstream
     2016-06-02 17:11:22: Retrieved wrs-gw-v4.2-20150826.tar.gz from upstream
     2016-06-02 17:11:27: Retrieved buildroot-2016.02.tar.bz2 from upstream
 @end smallexample

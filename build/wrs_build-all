@@ -37,6 +37,7 @@ export PATH="$PATH:/usr/sbin"
 WRS_TOOLS="git gcc g++ ar as m4 msgfmt md5sum make"
 WRS_TOOLS="$WRS_TOOLS awk unzip patch bison flex ncursesw5-config"
 WRS_TOOLS="$WRS_TOOLS fakeroot makeinfo"
+WRS_TOOLS="$WRS_TOOLS xz"
 
 wrs_check_tools $WRS_TOOLS
 
