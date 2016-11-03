@@ -7,6 +7,8 @@
 
 //address from AT24C01 datasheet (1k, all address lines shorted to the ground)
 #define I2C_SFP_ADDRESS 0x50
+// From SFF-8472, but right-shifted one bit as I2C addresses are only 7 bits.
+#define I2C_SFP_DOM_ADDRESS 0x51
 
 /* The two FPGA buses */
 #define WR_FPGA_BUS0	0

@@ -33,11 +33,12 @@ void print_info(char *prgname)
 		"Optional parameters:\n"
 		"   -p <num>        Dump sfp header for specific port (1-18); dump sfp header info for all\n"
 		"                   ports if no <-p> specified\n"
-		"   -x              Dump sfp header also in hex\n"
 		"   -a <READ|WRITE> Read/write SFP's eeprom; works only with <-I>;\n"
 		"                   before READs/WRITEs disable HAL and monit!\n"
 		"   -f <file>       File to READ/WRITE SFP's eeprom\n"
 		"   -H <dir>        Open shmem dumps from the given directory; works only with <-L>\n"
+		"   -d              Dump sfp DOM data page\n"
+		"   -x              Dump sfp/DOM header also in hex\n"
 		"   -q              Decrease verbosity\n"
 		"   -v              Increase verbosity\n"
 		"   -V              Print version\n"
@@ -201,7 +202,8 @@ void print_version(char *prgname)
 	       __GIT_USR__);
 }
 
-int hal_read(struct shw_sfp_header *sfp_header_local_copy) {
+int hal_read(struct shw_sfp_header *sfp_header_local_copy,
+	     struct shw_sfp_dom *sfp_dom) {
 	unsigned ii;
 	unsigned retries = 0;
 	int port;
@@ -214,7 +216,12 @@ int hal_read(struct shw_sfp_header *sfp_header_local_copy) {
 			       &hal_ports[port].calib.sfp_header_raw,
 			       sizeof(struct shw_sfp_header));
 		}
-
+		if (sfp_dom)
+			for (port = 0; port < hal_nports_local; port++) {
+				memcpy(&sfp_dom[port],
+				      &hal_ports[port].calib.sfp_dom_raw,
+				      sizeof(struct shw_sfp_dom));
+		}
 		retries++;
 		if (retries > 100)
 			return -1;
@@ -280,23 +287,27 @@ int main(int argc, char **argv)
 	int c;
 	struct shw_sfp_header sfp_hdr;
 	struct shw_sfp_header *sfp_hdr_p;
+	struct shw_sfp_dom sfp_dom;
+	struct shw_sfp_dom *sfp_dom_p;
 	int err;
 	int nports;
 	int dump_port;
 	int i;
 	int dump_hex_header = 0;
+	int dump_sfp_dom = 0;
 	int operation = 0;
 	char *eeprom_file = NULL;
 	int sfp_data_source = 0;
 	/* local copy of sfp eeprom */
 	struct shw_sfp_header hal_sfp_raw_header_lc[HAL_MAX_PORTS];
+	struct shw_sfp_dom hal_sfp_raw_dom_lc[HAL_MAX_PORTS];
 
 
 	wrs_msg_init(argc, argv);
 	nports = 18;
 	dump_port = 1;
 
-	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIH:")) != -1) {
+	while ((c = getopt(argc, argv, "a:hqvp:xVf:LIdH:")) != -1) {
 		switch (c) {
 		case 'p':
 			dump_port = atoi(optarg);
@@ -310,6 +321,9 @@ int main(int argc, char **argv)
 			break;
 		case 'x':
 			dump_hex_header = 1;
+			break;
+		case 'd':
+			dump_sfp_dom = 1;
 			break;
 		case 'V':
 			print_version(argv[0]);
@@ -363,7 +377,7 @@ int main(int argc, char **argv)
 
 	if (sfp_data_source == READ_HAL) {
 		hal_init_shm();
-		hal_read(hal_sfp_raw_header_lc);
+		hal_read(hal_sfp_raw_header_lc, hal_sfp_raw_dom_lc);
 		printf("Reading SFP eeprom from HAL\n");
 	}
 
@@ -392,9 +406,13 @@ int main(int argc, char **argv)
 			memset(&sfp_hdr, 0, sizeof(sfp_hdr));
 			sfp_hdr_p = &sfp_hdr;
 			err = shw_sfp_read_header(i - 1, sfp_hdr_p);
+			memset(&sfp_dom, 0, sizeof(sfp_dom));
+			sfp_dom_p = &sfp_dom;
+			shw_sfp_read_dom(i - 1, sfp_dom_p);
 		}
 		if (sfp_data_source == READ_HAL) {
 			sfp_hdr_p = &hal_sfp_raw_header_lc[i - 1];
+			sfp_dom_p = &hal_sfp_raw_dom_lc[i - 1];
 		}
 		err = shw_sfp_header_verify(sfp_hdr_p);
 		if (err == -2) {
@@ -407,6 +425,12 @@ int main(int argc, char **argv)
 			shw_sfp_print_header(sfp_hdr_p);
 			if (dump_hex_header) {
 				shw_sfp_header_dump(sfp_hdr_p);
+			}
+			if(dump_sfp_dom) {
+				shw_sfp_print_dom(sfp_dom_p);
+				if(dump_hex_header) {
+					shw_sfp_dom_dump(sfp_dom_p);
+				}
 			}
 		}
 	}
