@@ -40,6 +40,11 @@ WRS_TOOLS="$WRS_TOOLS fakeroot makeinfo"
 
 wrs_check_tools $WRS_TOOLS
 
+# Fix buildroot 2011.02 compilation for Ubuntu 16.04, check host gcc version
+if expr `gcc -dumpversion | cut -f1 -d.` \>= 5; then
+	export HOST_CFLAGS='-fgnu89-inline'
+fi
+
 # Create the directory for the "done" markers, as wrs_build_step needs it
 export WRS_DONE_DIR=${WRS_OUTPUT_DIR}/build/_done
 if ! [ -d "${WRS_DONE_DIR}" ]; then
