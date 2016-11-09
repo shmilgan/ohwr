@@ -18,7 +18,7 @@ static int try_connect_minipc(void)
 		/* close minipc, if connected before */
 		minipc_close(hist_ch);
 	}
-	hist_ch = minipc_client_create("wrs_hist", 0);
+	hist_ch = minipc_client_create("wrs_hist", MINIPC_FLAG_MSG_NOSIGNAL);
 	if (!hist_ch) {
 		pr_info("Can't establish WRIPC connection to the wrs_hist "
 			 "daemon!\n");

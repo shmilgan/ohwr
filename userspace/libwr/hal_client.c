@@ -36,8 +36,7 @@ int halexp_client_try_connect(int retries, int timeout)
 {
 	for (;;) {
 		hal_ch =
-		    minipc_client_create(WRSW_HAL_SERVER_ADDR,
-					 MINIPC_FLAG_VERBOSE);
+		    minipc_client_create(WRSW_HAL_SERVER_ADDR, 0);
 		if (hal_ch == 0)
 			retries--;
 		else
