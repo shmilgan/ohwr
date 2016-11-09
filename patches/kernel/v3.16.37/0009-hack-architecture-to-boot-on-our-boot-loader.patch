@@ -1,0 +1,83 @@
+From 5a22a53c8403160bcc345877f3dd1249405e1cc8 Mon Sep 17 00:00:00 2001
+From: Federico Vaga <federico.vaga@cern.ch>
+Date: Wed, 9 Nov 2016 15:24:45 +0100
+Subject: [PATCH] hack architecture to boot on our boot-loader
+
+The boot-loader is based on the PMG45 architecture which does not
+exists on the kernel side, which is then based on the SAM9M10G45EK.
+
+For some reason this combination was working with kernel 2.6.39, but
+now it does not.
+
+Fixing the bootloader, in order to be based on the SAM9M10G45EK board
+as the kernel, requires much more effort for a little practical gain.
+
+The main problem is that the 3.16.37 kernel refues to boot since the
+boot-loader declares that the board in use is a PMG45 and not a SAM9M10EK
+as expected by the kernel. In order to make the kernel boot we have to
+provide this information:
+
+armlinux_architecture
+armlinux_system_rev
+armlinux_system_serial
+
+This can be done by changing the boot-loader environment variables.
+However, on switches that use custom environment variables stored in the
+flash it can lead to the situation that the new kernel won't boot.
+
+The issue is quickly fixed by this patch that changes the identification
+number for the SAM9M10G45EK to the one for the PMG45 architecture declared
+in the boot-loader.
+The patch also hard-code the NAND bus width which should be taken
+dynamically from the armlinux_system_rev. But, for the same reason, the
+wrong architecture provides wrong values.
+
+This choice give us the freedom to update the kernel without changing the
+boot-loader nor bootloader's environment . This means that for whatever
+eason we will be able to easily switch from 2.6.39 to 3.16.37 for debugging
+purpose.
+
+Acked-by: Adam Wujek <adam.wujek@cern.ch>
+Signed-off-by: Federico Vaga <federico.vaga@cern.ch>
+---
+ arch/arm/mach-at91/board-sam9m10g45ek.c | 4 ++--
+ arch/arm/tools/mach-types               | 1 +
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index 5686a87..894ed23 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -206,7 +206,7 @@ static struct sam9_smc_config __initdata ek_nand_smc_config = {
+ 
+ static void __init ek_add_device_nand(void)
+ {
+-	ek_nand_data.bus_width_16 = board_have_nand_16bit();
++	ek_nand_data.bus_width_16 = 1;
+ 	/* setup bus-width (8 or 16) */
+ 	if (ek_nand_data.bus_width_16)
+ 		ek_nand_smc_config.mode |= AT91_SMC_DBW_16;
+@@ -578,7 +578,7 @@ static void __init ek_board_init(void)
+ 	platform_add_devices(devices, ARRAY_SIZE(devices));
+ }
+ 
+-MACHINE_START(AT91SAM9M10G45EK, "Atmel AT91SAM9M10G45-EK")
++MACHINE_START(PM9G45, "Atmel AT91SAM9M10G45-EK")
+ 	/* Maintainer: Atmel */
+ 	.init_time	= at91sam926x_pit_init,
+ 	.map_io		= at91_map_io,
+diff --git a/arch/arm/tools/mach-types b/arch/arm/tools/mach-types
+index a10297d..399392f 100644
+--- a/arch/arm/tools/mach-types
++++ b/arch/arm/tools/mach-types
+@@ -457,6 +457,7 @@ mityomapl138		MACH_MITYOMAPL138	MITYOMAPL138		2650
+ guruplug		MACH_GURUPLUG		GURUPLUG		2659
+ spear310		MACH_SPEAR310		SPEAR310		2660
+ spear320		MACH_SPEAR320		SPEAR320		2661
++pm9g45			MACH_PM9G45		PM9G45			2672
+ aquila			MACH_AQUILA		AQUILA			2676
+ esata_sheevaplug	MACH_ESATA_SHEEVAPLUG	ESATA_SHEEVAPLUG	2678
+ msm7x30_surf		MACH_MSM7X30_SURF	MSM7X30_SURF		2679
+-- 
+2.7.4
+
