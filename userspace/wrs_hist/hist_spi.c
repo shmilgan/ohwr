@@ -244,6 +244,9 @@ int hist_up_spi_init(void)
 		hist_shmem->hist_up_spi = data_b;
 	}
 
+	/* copy histogram read from the SPI to the live histogram */
+	memcpy(hist_shmem->temp, hist_shmem->hist_up_spi.temp,
+	       sizeof(hist_shmem->hist_up_spi.temp));
 	return 0;
 }
 

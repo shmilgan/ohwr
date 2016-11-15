@@ -89,10 +89,7 @@ static int nand_read(time_t *uptime_stored,
 			 HIST_UP_NAND_FILENAME);
 		return -1;
 	}
-	/* clear histogram stored in the shmem in case there was a restart of
-	 * wrs_hist */
-	memset(temp_hist, 0, sizeof(uint16_t) * WRS_HIST_TEMP_SENSORS_N *
-			     WRS_HIST_TEMP_ENTRIES);
+
 	while (1) {
 		ret = read(fd, &data_up_nand, sizeof(data_up_nand));
 		if (ret == 0) {
@@ -152,8 +149,11 @@ static int nand_read(time_t *uptime_stored,
 		}
 
 		lifetime = data_up_nand.lifetime;
-		/* update temp histogram */
-		update_temp_histogram(temp_hist, data_up_nand.temp);
+		if (hist_shmem->hist_up_spi.lifetime < lifetime) {
+			/* Update temp histogram, with only newer entries than
+			 * the last histogram dump in the SPI */
+			update_temp_histogram(temp_hist, data_up_nand.temp);
+		}
 		entries_ok++;
 	}
 

@@ -10,7 +10,7 @@ struct hist_shmem_data {
 	struct wrs_hist_up_nand hist_up_nand;
 	struct wrs_hist_up_spi hist_up_spi;
 	struct wrs_hist_sfp_nand hist_sfp_nand;
-	/* histogram, hours of particular temperatures 512 bytes */
+	/* live histogram, hours of particular temperatures, 512 bytes */
 	uint16_t temp[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES];
 	/* Histogram of SFPs temperatures */
 	//struct wrs_hist_sfp_temp hist_sfp_temp[WRS_HIST_MAX_SFPS];
