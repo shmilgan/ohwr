@@ -37,20 +37,26 @@ struct wrs_hist_up_nand {
 };
 /* 16 bytes/h, ~140KB/year ~1MB/7.5years*/
 
+/* Right now we have 7614 total erase blocks available in SPI = ~8MB */
+/* Each erase block in SPI is 1056 bytes, 528 is a half of it.
+ * Let's use 0x108000 = 1081344 (~1MB) for each partition, this gives us
+ * maximum 2048 entries (each entry is half of a sector, 528 bytes).
+ * If we write every 168 hours (7*24, one week of uptime). We will run out of
+ * entries after 2048*168 = 344 064 hours = 39.28 years
+ */
 struct wrs_hist_up_spi {
 	uint16_t magic; /* 16bits magic */
 	uint8_t ver; /* 8bits version */
 	uint8_t crc; /* 8bits crc */
 	uint32_t lifetime; /* in seconds, ~136 years */
 	uint32_t timestamp; /* in seconds, ~136 years */
-	/* histogram, tens of hours of particular temperature 512 bytes */
+	/* histogram, hours of particular temperature 512 bytes
+	 * 16bit number of hours overlaps after 7,48 years */
 	uint16_t temp[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES];
+	uint8_t padding[4]; /* pad to the size of half of a sector
+			     * (524+4=528) */
 };
-/*  */
-/* Right now we have 7614 erase blocks available in SPI = ~8MB */
-/* 1056 each SPI erase block, 528 is a half of it, 264 quater */
-/* 0x108000 = 1081344 (~1MB) gives us 40,96 years, so we can take one meg or 2x1MB or 2x0.5MB
- */
+
 
 
 struct wrs_hist_sfp_entry {
