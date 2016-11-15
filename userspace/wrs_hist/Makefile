@@ -4,6 +4,7 @@ OBJS = \
 	hist_exports.o \
 	hist_sfp.o \
 	hist_up.o \
+	hist_spi.o \
 	hist_crc.o \
 	hist_hal.o \
 

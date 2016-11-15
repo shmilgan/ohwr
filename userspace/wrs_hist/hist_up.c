@@ -238,7 +238,3 @@ static void get_temp(int8_t temp[WRS_HIST_TEMP_SENSORS_N])
 	temp[WRS_HIST_TEMP_PSL] = temp_sensors.psl >> 8;
 	temp[WRS_HIST_TEMP_PSR] = temp_sensors.psr >> 8;
 }
-
-void hist_up_spi_save(void)
-{
-}

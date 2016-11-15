@@ -86,7 +86,6 @@ int main(int argc, char *argv[])
 {
 	time_t t;
 	time_t last_update_nand_s;
-	time_t last_update_spi_s;
 	time_t last_update_sfp_s;
 
 	wrs_msg_init(argc, argv);
@@ -105,8 +104,8 @@ int main(int argc, char *argv[])
 	crc_init();
 	hal_shm_init();
 	assert_init(hist_shmem_init());
-
 	assert_init(hist_wripc_init());
+	assert_init(hist_up_spi_init());
 	assert_init(hist_up_init()); /* move it? */
 	/* If HAL was running before add all SFPs to the local database */
 	assert_init(hist_sfp_init());
@@ -124,10 +123,8 @@ int main(int argc, char *argv[])
 	 * called functions.
 	 */
 
-
 	t = get_monotonic_sec();
 	last_update_nand_s = t;
-	last_update_spi_s = t;
 	last_update_sfp_s = t;
 	for (;;) {
 		t = get_monotonic_sec();
@@ -137,8 +134,8 @@ int main(int argc, char *argv[])
 			hist_up_nand_save();
 		}
 
-		if (last_update_spi_s + SPI_UPDATE_PERIOD <= t) {
-			last_update_spi_s += SPI_UPDATE_PERIOD;
+		if ((hist_shmem->hist_up_spi.lifetime + SPI_UPDATE_PERIOD)
+		    <= hist_up_lifetime_get()) {
 			hist_up_spi_save();
 		}
 
@@ -146,7 +143,7 @@ int main(int argc, char *argv[])
 			last_update_sfp_s += SFP_UPDATE_PERIOD;
 			hist_sfp_nand_save();
 		}
-	  
+
 		hist_wripc_update(1000 /* max ms delay */);
 	}
 

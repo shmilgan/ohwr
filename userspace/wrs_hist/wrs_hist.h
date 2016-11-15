@@ -5,10 +5,16 @@
 #include <inttypes.h>
 #include <libwr/hal_shmem.h>
 
+#define DAYS_IN_WEEK	7
+#define HOURS_IN_DAY	24
+#define MINUTES_IN_HOUR	60
+#define SECONDS_IN_HOUR	60
+
 /* periods in seconds */
-#define NAND_UPDATE_PERIOD 5
-#define SPI_UPDATE_PERIOD 5
-#define SFP_UPDATE_PERIOD 20
+#define NAND_UPDATE_PERIOD 5 /* MINUTES_IN_HOUR * SECONDS_IN_HOUR */
+#define SPI_UPDATE_PERIOD 20 /* DAYS_IN_WEEK * HOURS_IN_DAY * MINUTES_IN_HOUR
+			       * SECONDS_IN_HOUR */
+#define SFP_UPDATE_PERIOD 20 /* MINUTES_IN_HOUR * SECONDS_IN_HOUR */
 
 extern struct hist_shmem_data *hist_shmem;
 extern struct wrs_shm_head *hist_head;
@@ -35,7 +41,12 @@ void hist_sfp_nand_save(void);
 int hist_up_init(void);
 time_t hist_up_lifetime_get(void);
 void hist_up_nand_save(void);
+
+/* hist_spi.c */
+int hist_up_spi_init(void);
+void hist_up_spi_exit(void);
 void hist_up_spi_save(void);
+
 
 /* hist_hal.c */
 void hal_shm_init(void);
