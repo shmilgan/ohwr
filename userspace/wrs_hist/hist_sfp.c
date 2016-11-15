@@ -468,7 +468,8 @@ void hist_sfp_remove(char *vn, char *pn, char *sn)
 }
 
 static void hist_sfp_update(char *vn, char *pn, char *sn,
-			    uint32_t lifetime_of_update)
+			    uint32_t lifetime_of_update,
+			    uint32_t timestamp_of_update)
 {
 	struct wrs_hist_sfp_entry *sfp;
 	int new_entry;
@@ -491,7 +492,7 @@ static void hist_sfp_update(char *vn, char *pn, char *sn,
 	sfp->mag = WRS_HIST_SFP_EMAGIC;
 	sfp->ver = WRS_HIST_SFP_EMAGIC_VER;
 	sfp->lastseen_swlifetime = lifetime_of_update;
-	sfp->lastseen_timestamp = time(NULL);
+	sfp->lastseen_timestamp = timestamp_of_update;
 	sfp->flags |= WRS_HIST_SFP_PRESENT;
 	hist_sfp_calc_sfp_crc(sfp);
 
@@ -503,11 +504,14 @@ static void hist_sfp_update_all(void)
 	struct hal_port_state *ports;
 	int i;
 	uint32_t lifetime_of_update;
+	uint32_t timestamp_of_update;
 
+	ports = hal_shmem_read_ports();
+	/* Save time when ports were read */
 	lifetime_of_update = hist_up_lifetime_get();
+	timestamp_of_update = time(NULL);
 	pr_debug("lifetime_of_update %d, hist_up_lifetime_get %ld\n",
 		 lifetime_of_update, hist_up_lifetime_get());
-	ports = hal_shmem_read_ports();
 	if (!ports) {
 		pr_error("Unable to get ports stats from the HAL!!!\n");
 		return;
@@ -521,7 +525,8 @@ static void hist_sfp_update_all(void)
 			hist_sfp_update(ports->calib.sfp.vendor_name,
 					ports->calib.sfp.part_num,
 					ports->calib.sfp.vendor_serial,
-					lifetime_of_update);
+					lifetime_of_update,
+					timestamp_of_update);
 		}
 		/* go to next port */
 		ports++;
@@ -668,9 +673,10 @@ void hist_sfp_nand_save(void)
 	uint32_t timestamp;
 	uint32_t lifetime;
 
+	hist_sfp_update_all();
+
 	lifetime = hist_up_lifetime_get();
 	timestamp = time(NULL);
-	hist_sfp_update_all();
 	/* Save a timestamp when the data was saved */
 	hist_shmem->hist_sfp_nand.saved_swlifetime = lifetime;
 	hist_shmem->hist_sfp_nand.saved_timestamp = timestamp;
