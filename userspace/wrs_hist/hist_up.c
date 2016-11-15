@@ -24,13 +24,13 @@ static time_t uptime_stored;
 /* Array translating temperature's value into the index of histogram's array */
 static uint8_t temp_descr_tab[256];
 
-static int hist_uptime_nand_read(time_t *uptime_stored,
+static int nand_read(time_t *uptime_stored,
 	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES]);
-static void hist_uptime_nand_write(struct wrs_hist_up_nand *data);
-static void hist_uptime_get_temp(int8_t temp[WRS_HIST_TEMP_SENSORS_N]);
-static void hist_uptime_nand_update(void);
+static void nand_write(struct wrs_hist_up_nand *data);
+static void get_temp(int8_t temp[WRS_HIST_TEMP_SENSORS_N]);
+static void nand_update(void);
 
-int hist_uptime_init(void)
+int hist_up_init(void)
 {
 	int i;
 	int j;
@@ -44,12 +44,12 @@ int hist_uptime_init(void)
 		}
 	}
 	init_time_monotonic = get_monotonic_sec();
-	hist_uptime_nand_read(&uptime_stored, hist_shmem->temp);
+	nand_read(&uptime_stored, hist_shmem->temp);
 
 	return 0;
 }
 
-time_t hist_uptime_lifetime_get(void)
+time_t hist_up_lifetime_get(void)
 {
 	time_t uptime;
 	uptime = get_monotonic_sec() - init_time_monotonic;
@@ -70,7 +70,7 @@ static void update_temp_histogram(
 	}
 }
 
-static int hist_uptime_nand_read(time_t *uptime_stored,
+static int nand_read(time_t *uptime_stored,
 	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES])
 {
 	int fd;
@@ -167,7 +167,7 @@ static int hist_uptime_nand_read(time_t *uptime_stored,
 	return 0;
 }
 
-static void hist_uptime_nand_update(void)
+static void nand_update(void)
 {
 	struct wrs_hist_up_nand *data_up_nand;
 
@@ -177,8 +177,8 @@ static void hist_uptime_nand_update(void)
 	data_up_nand = &hist_shmem->hist_up_nand;
 	data_up_nand->magic = WRS_HIST_UP_NAND_MAGIC;
 	data_up_nand->ver = WRS_HIST_UP_NAND_MAGIC_VER;
-	hist_uptime_get_temp(data_up_nand->temp);
-	data_up_nand->lifetime = hist_uptime_lifetime_get();
+	get_temp(data_up_nand->temp);
+	data_up_nand->lifetime = hist_up_lifetime_get();
 	data_up_nand->timestamp = time(NULL);
 	update_temp_histogram(hist_shmem->temp, data_up_nand->temp);
 
@@ -186,14 +186,14 @@ static void hist_uptime_nand_update(void)
 	wrs_shm_write(hist_shmem_hdr, WRS_SHM_WRITE_END);
 }
 
-void hist_uptime_nand_save(void)
+void hist_up_nand_save(void)
 {
-	hist_uptime_nand_update();
+	nand_update();
 	pr_debug("Saving lifetime data to the nand\n");
-	hist_uptime_nand_write(&hist_shmem->hist_up_nand);
+	nand_write(&hist_shmem->hist_up_nand);
 }
 
-static void hist_uptime_nand_write(struct wrs_hist_up_nand *data)
+static void nand_write(struct wrs_hist_up_nand *data)
 {
 	int fd;
 	int ret;
@@ -226,7 +226,7 @@ static void hist_uptime_nand_write(struct wrs_hist_up_nand *data)
 	close(fd);
 }
 
-static void hist_uptime_get_temp(int8_t temp[WRS_HIST_TEMP_SENSORS_N])
+static void get_temp(int8_t temp[WRS_HIST_TEMP_SENSORS_N])
 {
 	static struct hal_temp_sensors temp_sensors;
 
@@ -239,6 +239,6 @@ static void hist_uptime_get_temp(int8_t temp[WRS_HIST_TEMP_SENSORS_N])
 	temp[WRS_HIST_TEMP_PSR] = temp_sensors.psr >> 8;
 }
 
-void hist_uptime_spi_save(void)
+void hist_up_spi_save(void)
 {
 }

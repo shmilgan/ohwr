@@ -3,7 +3,7 @@ OBJS = \
 	hist_main.o \
 	hist_exports.o \
 	hist_sfp.o \
-	hist_uptime.o \
+	hist_up.o \
 	hist_crc.o \
 	hist_hal.o \
 

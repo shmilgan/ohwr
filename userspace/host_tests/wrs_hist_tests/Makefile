@@ -1,6 +1,6 @@
 vpath %.c ../../wrs_hist
 
-OBJS = hist_sfp.o hist_main.o hist_crc.o hist_uptime.o hist_sfp_test.o
+OBJS = hist_sfp.o hist_main.o hist_crc.o hist_up.o hist_sfp_test.o
 
 BINARY = hist_sfp_test
 # this is a host version of libwr, ignore CROSS_COMPILE

@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 	assert_init(hist_shmem_init());
 
 	assert_init(hist_wripc_init());
-	assert_init(hist_uptime_init()); /* move it? */
+	assert_init(hist_up_init()); /* move it? */
 	/* If HAL was running before add all SFPs to the local database */
 	assert_init(hist_sfp_init());
 	/* update data in the shmem and write them back */
@@ -134,12 +134,12 @@ int main(int argc, char *argv[])
 
 		if (last_update_nand_s + NAND_UPDATE_PERIOD <= t) {
 			last_update_nand_s += NAND_UPDATE_PERIOD;
-			hist_uptime_nand_save();
+			hist_up_nand_save();
 		}
 
 		if (last_update_spi_s + SPI_UPDATE_PERIOD <= t) {
 			last_update_spi_s += SPI_UPDATE_PERIOD;
-			hist_uptime_spi_save();
+			hist_up_spi_save();
 		}
 
 		if (last_update_sfp_s + SFP_UPDATE_PERIOD <= t) {

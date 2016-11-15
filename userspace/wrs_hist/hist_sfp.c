@@ -60,7 +60,7 @@ int hist_sfp_init(void)
 	hist_shmem->hist_sfp_nand.magic = WRS_HIST_SFP_MAGIC;
 	hist_shmem->hist_sfp_nand.ver = WRS_HIST_SFP_MAGIC_VER;
 	hist_shmem->hist_sfp_nand.saved_swlifetime =
-					hist_uptime_lifetime_get();
+					hist_up_lifetime_get();
 	hist_shmem->hist_sfp_nand.saved_timestamp = time(NULL);
 	hist_shmem->hist_sfp_nand.end_magic = WRS_HIST_SFP_MAGIC;
 	hist_shmem->hist_sfp_nand.end_ver = WRS_HIST_SFP_MAGIC_VER;
@@ -416,7 +416,7 @@ void hist_sfp_insert(char *vn, char *pn, char *sn)
 	sfp->ver = WRS_HIST_SFP_EMAGIC_VER;
 	sfp->flags |= WRS_HIST_SFP_PRESENT;
 	/* update last seen */
-	sfp->lastseen_swlifetime = hist_uptime_lifetime_get();
+	sfp->lastseen_swlifetime = hist_up_lifetime_get();
 	sfp->lastseen_timestamp = time(NULL);
 	hist_sfp_calc_sfp_crc(sfp);
 
@@ -435,9 +435,9 @@ void hist_sfp_remove(char *vn, char *pn, char *sn)
 	int new_entry;
 	uint32_t lifetime_of_remove;
 	
-	/* avoid multipe calls of hist_uptime_lifetime_get() to have consistent
+	/* avoid multipe calls of hist_up_lifetime_get() to have consistent
 	 * time */
-	lifetime_of_remove = hist_uptime_lifetime_get();
+	lifetime_of_remove = hist_up_lifetime_get();
 
 	new_entry = hist_sfp_get_entry(vn, pn, sn, &sfp);
 	if (new_entry & SFP_INSERT_NEW_ENTRY) {
@@ -505,9 +505,9 @@ static void hist_sfp_update_all(void)
 	int i;
 	uint32_t lifetime_of_update;
 
-	lifetime_of_update = hist_uptime_lifetime_get();
-	pr_debug("lifetime_of_update %d, hist_uptime_lifetime_get %ld\n",
-		 lifetime_of_update, hist_uptime_lifetime_get());
+	lifetime_of_update = hist_up_lifetime_get();
+	pr_debug("lifetime_of_update %d, hist_up_lifetime_get %ld\n",
+		 lifetime_of_update, hist_up_lifetime_get());
 	ports = hal_shmem_read_ports();
 	if (!ports) {
 		pr_error("Unable to get ports stats from the HAL!!!\n");
@@ -644,7 +644,7 @@ static void hist_sfp_nand_write(struct wrs_hist_sfp_nand *data, char *file)
 		exit(1);
 	}
 	/* Save a timestamp when the data was saved */
-	data->saved_swlifetime = hist_uptime_lifetime_get();
+	data->saved_swlifetime = hist_up_lifetime_get();
 	data->saved_timestamp = time(NULL);
 
 	/* calculate CRC */

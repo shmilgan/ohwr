@@ -31,11 +31,11 @@ void hist_sfp_insert(char *vn, char *pn, char *sn);
 void hist_sfp_remove(char *vn, char *pn, char *sn);
 void hist_sfp_nand_save(void);
 
-/* hist_uptime.c */
-int hist_uptime_init(void);
-time_t hist_uptime_lifetime_get(void);
-void hist_uptime_nand_save(void);
-void hist_uptime_spi_save(void);
+/* hist_up.c */
+int hist_up_init(void);
+time_t hist_up_lifetime_get(void);
+void hist_up_nand_save(void);
+void hist_up_spi_save(void);
 
 /* hist_hal.c */
 void hal_shm_init(void);
