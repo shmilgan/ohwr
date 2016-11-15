@@ -20,11 +20,11 @@
 #define HIST_UP_NAND_FILENAME "/update/lifetime_stats.bin"
 
 static time_t init_time_monotonic;
-static time_t uptime_stored;
+static time_t lifetime_read;
 /* Array translating temperature's value into the index of histogram's array */
 static uint8_t temp_descr_tab[256];
 
-static int nand_read(time_t *uptime_stored,
+static int nand_read(
 	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES]);
 static void nand_write(struct wrs_hist_up_nand *data);
 static void get_temp(int8_t temp[WRS_HIST_TEMP_SENSORS_N]);
@@ -44,7 +44,7 @@ int hist_up_nand_init(void)
 		}
 	}
 	init_time_monotonic = get_monotonic_sec();
-	nand_read(&uptime_stored, hist_shmem->temp);
+	nand_read(hist_shmem->temp);
 
 	return 0;
 }
@@ -53,7 +53,7 @@ time_t hist_up_lifetime_get(void)
 {
 	time_t uptime;
 	uptime = get_monotonic_sec() - init_time_monotonic;
-	return uptime_stored + uptime;
+	return lifetime_read + uptime;
 }
 
 
@@ -70,7 +70,7 @@ static void update_temp_histogram(
 	}
 }
 
-static int nand_read(time_t *uptime_stored,
+static int nand_read(
 	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES])
 {
 	int fd;
@@ -158,7 +158,7 @@ static int nand_read(time_t *uptime_stored,
 	}
 
 	close(fd);
-	*uptime_stored = lifetime;
+	lifetime_read = lifetime;
 	pr_debug("Read %d lifetime entries from the flash\n", entries_ok);
 
 	if (entries_ok != entries_index)
