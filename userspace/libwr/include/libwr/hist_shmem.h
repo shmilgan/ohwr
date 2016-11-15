@@ -7,8 +7,8 @@
 #define HIST_SHMEM_VERSION 1 /* Version 1 first version */
 
 struct hist_shmem_data {
-	struct wrs_hist_run_nand hist_run_nand;
-	struct wrs_hist_run_spi hist_run_spi;
+	struct wrs_hist_up_nand hist_up_nand;
+	struct wrs_hist_up_spi hist_up_spi;
 	struct wrs_hist_sfp_nand hist_sfp_nand;
 	/* histogram, hours of particular temperatures 512 bytes */
 	uint16_t temp[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES];

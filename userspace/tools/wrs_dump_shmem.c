@@ -911,10 +911,10 @@ static int dump_spll_mem(struct spll_stats *spll)
 }
 
 
-/* map for fields of wrs_hist_run_nand (hist.h) */
+/* map for fields of wrs_hist_up_nand (hist.h) */
 #undef DUMP_STRUCT
-#define DUMP_STRUCT struct wrs_hist_run_nand
-struct dump_info wrs_hist_run_nand_info [] = {
+#define DUMP_STRUCT struct wrs_hist_up_nand
+struct dump_info wrs_hist_up_nand_info [] = {
 	DUMP_FIELD(uint16_t_hex, magic),
 	DUMP_FIELD(uint8_t_hex, ver),
 	DUMP_FIELD(uint8_t_hex, crc),
@@ -933,10 +933,10 @@ struct dump_info hist_shmem_data_info [] = {
 	DUMP_FIELD(hist_temp, temp),
 };
 
-/* map for fields of wrs_hist_run_spi (hist.h) */
+/* map for fields of wrs_hist_up_spi (hist.h) */
 #undef DUMP_STRUCT
-#define DUMP_STRUCT struct wrs_hist_run_spi
-struct dump_info wrs_hist_run_spi_info [] = {
+#define DUMP_STRUCT struct wrs_hist_up_spi
+struct dump_info wrs_hist_up_spi_info [] = {
 	DUMP_FIELD(uint16_t_hex, magic),
 	DUMP_FIELD(uint8_t_hex, ver),
 	DUMP_FIELD(uint8_t_hex, crc),
@@ -988,14 +988,14 @@ int dump_hist_mem(struct wrs_shm_head *head)
 	}
 	h = (void *)head + head->data_off;
 
-	printf("hist run nand:\n");
-	dump_many_fields(&h->hist_run_nand, wrs_hist_run_nand_info,
-			 ARRAY_SIZE(wrs_hist_run_nand_info));
+	printf("hist up nand:\n");
+	dump_many_fields(&h->hist_up_nand, wrs_hist_up_nand_info,
+			 ARRAY_SIZE(wrs_hist_up_nand_info));
 	dump_many_fields(h, hist_shmem_data_info,
 			 ARRAY_SIZE(hist_shmem_data_info));
-	printf("hist run spi:\n");
-	dump_many_fields(&h->hist_run_spi, wrs_hist_run_spi_info,
-			 ARRAY_SIZE(wrs_hist_run_spi_info));
+	printf("hist up spi:\n");
+	dump_many_fields(&h->hist_up_spi, wrs_hist_up_spi_info,
+			 ARRAY_SIZE(wrs_hist_up_spi_info));
 	printf("hist sfp nand:\n");
 	dump_many_fields(&h->hist_sfp_nand, wrs_hist_sfp_nand_info,
 			 ARRAY_SIZE(wrs_hist_sfp_nand_info));

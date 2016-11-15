@@ -10,11 +10,11 @@
 #define WRS_HIST_TEMP_PSR  3
 #define WRS_HIST_TEMP_ENTRIES 64
 
-#define WRS_HIST_RUN_NAND_MAGIC		0xDAD5
-#define WRS_HIST_RUN_NAND_MAGIC_VER	0x01
+#define WRS_HIST_UP_NAND_MAGIC		0xDAD5
+#define WRS_HIST_UP_NAND_MAGIC_VER	0x01
 
-#define WRS_HIST_RUN_SPI_MAGIC		0x5ADA
-#define WRS_HIST_RUN_SPI_MAGIC_VER	0x01
+#define WRS_HIST_UP_SPI_MAGIC		0x5ADA
+#define WRS_HIST_UP_SPI_MAGIC_VER	0x01
 
 #define WRS_HIST_SFP_MAGIC          0xADAF
 #define WRS_HIST_SFP_MAGIC_VER      0x01
@@ -26,7 +26,7 @@
 #define WRS_HIST_MAX_SFPS 100
 #define WRS_HIST_SFP_PRESENT 0x01
 
-struct wrs_hist_run_nand {
+struct wrs_hist_up_nand {
 	uint16_t magic; /* 16bits magic */
 	uint8_t ver; /* 8bits version */
 	uint8_t crc; /* 8bits crc */
@@ -37,7 +37,7 @@ struct wrs_hist_run_nand {
 };
 /* 16 bytes/h, ~140KB/year ~1MB/7.5years*/
 
-struct wrs_hist_run_spi {
+struct wrs_hist_up_spi {
 	uint16_t magic; /* 16bits magic */
 	uint8_t ver; /* 8bits version */
 	uint8_t crc; /* 8bits crc */

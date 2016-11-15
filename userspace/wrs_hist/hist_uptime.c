@@ -17,7 +17,7 @@
 #include "wrs_hist.h"
 #include "hist_crc.h"
 
-#define HIST_RUN_NAND_FILENAME "/update/lifetime_stats.bin"
+#define HIST_UP_NAND_FILENAME "/update/lifetime_stats.bin"
 
 static time_t init_time_monotonic;
 static time_t uptime_stored;
@@ -26,7 +26,7 @@ static uint8_t temp_descr_tab[256];
 
 static int hist_uptime_nand_read(time_t *uptime_stored,
 	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES]);
-static void hist_uptime_nand_write(struct wrs_hist_run_nand *data);
+static void hist_uptime_nand_write(struct wrs_hist_up_nand *data);
 static void hist_uptime_get_temp(int8_t temp[WRS_HIST_TEMP_SENSORS_N]);
 static void hist_uptime_nand_update(void);
 
@@ -74,7 +74,7 @@ static int hist_uptime_nand_read(time_t *uptime_stored,
 	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES])
 {
 	int fd;
-	struct wrs_hist_run_nand data_run_nand;
+	struct wrs_hist_up_nand data_up_nand;
 	int ret;
 	uint32_t lifetime = 0;
 	int32_t entries_ok = 0; /* number of valid entries read so far */
@@ -83,10 +83,10 @@ static int hist_uptime_nand_read(time_t *uptime_stored,
 	uint8_t crc_calc;
 
 	/* use O_NOATIME to avoid update of last access time */
-	fd = open(HIST_RUN_NAND_FILENAME, O_RDONLY | O_NOATIME);
+	fd = open(HIST_UP_NAND_FILENAME, O_RDONLY | O_NOATIME);
 	if (fd < 0) {
 		pr_error("Unable to read the file %s\n",
-			 HIST_RUN_NAND_FILENAME);
+			 HIST_UP_NAND_FILENAME);
 		return -1;
 	}
 	/* clear histogram stored in the shmem in case there was a restart of
@@ -94,44 +94,44 @@ static int hist_uptime_nand_read(time_t *uptime_stored,
 	memset(temp_hist, 0, sizeof(uint16_t) * WRS_HIST_TEMP_SENSORS_N *
 			     WRS_HIST_TEMP_ENTRIES);
 	while (1) {
-		ret = read(fd, &data_run_nand, sizeof(data_run_nand));
+		ret = read(fd, &data_up_nand, sizeof(data_up_nand));
 		if (ret == 0) {
 			/* End of file */
 			break;
 		} else if (ret < 0) {
 			pr_error("Read error from the file %s, ret %d, "
 				 "error(%d) %s:\n",
-				 HIST_RUN_NAND_FILENAME, ret, errno,
+				 HIST_UP_NAND_FILENAME, ret, errno,
 				 strerror(errno));
 			break;
-		} else if (ret != sizeof(struct wrs_hist_run_nand)) {
+		} else if (ret != sizeof(struct wrs_hist_up_nand)) {
 			pr_error("Unable to read all data from the file %s\n",
-				 HIST_RUN_NAND_FILENAME);
+				 HIST_UP_NAND_FILENAME);
 			break;
 		}
 		entries_index++;
-		if (data_run_nand.magic != WRS_HIST_RUN_NAND_MAGIC) {
+		if (data_up_nand.magic != WRS_HIST_UP_NAND_MAGIC) {
 			pr_error("Wrong magic in saved uptime entry (index %d)"
 				 " in the nand (file %s)! is 0x%04x, "
 				 "expected 0x%04x\n",
-				 entries_index, HIST_RUN_NAND_FILENAME,
-				 data_run_nand.magic, WRS_HIST_RUN_NAND_MAGIC);
+				 entries_index, HIST_UP_NAND_FILENAME,
+				 data_up_nand.magic, WRS_HIST_UP_NAND_MAGIC);
 			continue;
 		}
-		if (data_run_nand.ver != WRS_HIST_RUN_NAND_MAGIC_VER) {
+		if (data_up_nand.ver != WRS_HIST_UP_NAND_MAGIC_VER) {
 			pr_error("Wrong version number in saved uptime entry "
 				 "(index %d) in the nand (file %s)! is 0x%04x,"
 				 " expected 0x%04x\n",
-				 entries_index, HIST_RUN_NAND_FILENAME,
-				 data_run_nand.ver,
-				 WRS_HIST_RUN_NAND_MAGIC_VER);
+				 entries_index, HIST_UP_NAND_FILENAME,
+				 data_up_nand.ver,
+				 WRS_HIST_UP_NAND_MAGIC_VER);
 			continue;
 		}
 		/* save old, clear old, compute new and compare CRCs */
-		crc_saved = data_run_nand.crc;
-		data_run_nand.crc = 0;
-		crc_calc = crc_fast((uint8_t *)&data_run_nand,
-				    sizeof(struct wrs_hist_run_nand));
+		crc_saved = data_up_nand.crc;
+		data_up_nand.crc = 0;
+		crc_calc = crc_fast((uint8_t *)&data_up_nand,
+				    sizeof(struct wrs_hist_up_nand));
 		if (crc_saved != crc_calc) {
 			/* avoid to many printouts about non-valid entries */
 			if (entries_index - entries_ok > 30) {
@@ -140,20 +140,20 @@ static int hist_uptime_nand_read(time_t *uptime_stored,
 					 "(index %d) in the nand (file %s)! "
 					 "Expected crc 0x%02x, calculated "
 					 "0x%02x\n", entries_index,
-					 HIST_RUN_NAND_FILENAME, crc_saved,
+					 HIST_UP_NAND_FILENAME, crc_saved,
 					 crc_calc);
 				continue;
 			}
 			pr_error("Wrong CRC in saved uptime entry (index %d) "
 				 "in the nand (file %s)! Expected crc 0x%02x, "
 				 "calculated 0x%02x\n", entries_index,
-				 HIST_RUN_NAND_FILENAME, crc_saved, crc_calc);
+				 HIST_UP_NAND_FILENAME, crc_saved, crc_calc);
 			continue;
 		}
 
-		lifetime = data_run_nand.lifetime;
+		lifetime = data_up_nand.lifetime;
 		/* update temp histogram */
-		update_temp_histogram(temp_hist, data_run_nand.temp);
+		update_temp_histogram(temp_hist, data_up_nand.temp);
 		entries_ok++;
 	}
 
@@ -169,18 +169,18 @@ static int hist_uptime_nand_read(time_t *uptime_stored,
 
 static void hist_uptime_nand_update(void)
 {
-	struct wrs_hist_run_nand *data_run_nand;
+	struct wrs_hist_up_nand *data_up_nand;
 
 	/* lock shmem */
 	wrs_shm_write(hist_shmem_hdr, WRS_SHM_WRITE_BEGIN);
 
-	data_run_nand = &hist_shmem->hist_run_nand;
-	data_run_nand->magic = WRS_HIST_RUN_NAND_MAGIC;
-	data_run_nand->ver = WRS_HIST_RUN_NAND_MAGIC_VER;
-	hist_uptime_get_temp(data_run_nand->temp);
-	data_run_nand->lifetime = hist_uptime_lifetime_get();
-	data_run_nand->timestamp = time(NULL);
-	update_temp_histogram(hist_shmem->temp, data_run_nand->temp);
+	data_up_nand = &hist_shmem->hist_up_nand;
+	data_up_nand->magic = WRS_HIST_UP_NAND_MAGIC;
+	data_up_nand->ver = WRS_HIST_UP_NAND_MAGIC_VER;
+	hist_uptime_get_temp(data_up_nand->temp);
+	data_up_nand->lifetime = hist_uptime_lifetime_get();
+	data_up_nand->timestamp = time(NULL);
+	update_temp_histogram(hist_shmem->temp, data_up_nand->temp);
 
 	/* unlock shmem */
 	wrs_shm_write(hist_shmem_hdr, WRS_SHM_WRITE_END);
@@ -190,10 +190,10 @@ void hist_uptime_nand_save(void)
 {
 	hist_uptime_nand_update();
 	pr_debug("Saving lifetime data to the nand\n");
-	hist_uptime_nand_write(&hist_shmem->hist_run_nand);
+	hist_uptime_nand_write(&hist_shmem->hist_up_nand);
 }
 
-static void hist_uptime_nand_write(struct wrs_hist_run_nand *data)
+static void hist_uptime_nand_write(struct wrs_hist_up_nand *data)
 {
 	int fd;
 	int ret;
@@ -201,26 +201,26 @@ static void hist_uptime_nand_write(struct wrs_hist_run_nand *data)
 
 	/* use O_NOATIME to avoid update of last access time */
 	/* O_SYNC to reduce caching problem */
-	fd = open(HIST_RUN_NAND_FILENAME,
+	fd = open(HIST_UP_NAND_FILENAME,
 		  O_WRONLY| O_APPEND | O_CREAT | O_NOATIME | O_SYNC, 0644);
 	if (fd < 0) {
 		pr_error("Unable to write to the file %s\n",
-			 HIST_RUN_NAND_FILENAME);
+			 HIST_UP_NAND_FILENAME);
 		exit(1);
 	}
 
 	/* clear old, compute and write CRC */
 	data->crc = 0;
-	crc_calc = crc_fast((uint8_t *)data, sizeof(struct wrs_hist_run_nand));
+	crc_calc = crc_fast((uint8_t *)data, sizeof(struct wrs_hist_up_nand));
 	data->crc = crc_calc;
 
-	ret = write(fd, data, sizeof(struct wrs_hist_run_nand));
+	ret = write(fd, data, sizeof(struct wrs_hist_up_nand));
 	if (ret < 0) {
 		pr_error("Write error to the file %s, ret %d, error(%d) %s:\n",
-			 HIST_RUN_NAND_FILENAME, ret, errno, strerror(errno));
-	} else if (ret != sizeof(struct wrs_hist_run_nand)) {
+			 HIST_UP_NAND_FILENAME, ret, errno, strerror(errno));
+	} else if (ret != sizeof(struct wrs_hist_up_nand)) {
 		pr_error("Unable to write all data to the file %s\n",
-			 HIST_RUN_NAND_FILENAME);
+			 HIST_UP_NAND_FILENAME);
 	}
 	fsync(fd);
 	close(fd);
