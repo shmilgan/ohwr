@@ -59,9 +59,8 @@ int hist_sfp_init(void)
 	  * calculate crc at this moment. */
 	hist_shmem->hist_sfp_nand.magic = WRS_HIST_SFP_MAGIC;
 	hist_shmem->hist_sfp_nand.ver = WRS_HIST_SFP_MAGIC_VER;
-	hist_shmem->hist_sfp_nand.saved_swlifetime =
-					hist_up_lifetime_get();
-	hist_shmem->hist_sfp_nand.saved_timestamp = time(NULL);
+	/* skip saved_swlifetime, and timestamp, they will be updated at
+	 * the DB save */ 
 	hist_shmem->hist_sfp_nand.end_magic = WRS_HIST_SFP_MAGIC;
 	hist_shmem->hist_sfp_nand.end_ver = WRS_HIST_SFP_MAGIC_VER;
 
@@ -643,9 +642,6 @@ static void hist_sfp_nand_write(struct wrs_hist_sfp_nand *data, char *file)
 		pr_error("Unable to write to the file %s\n", file);
 		return;
 	}
-	/* Save a timestamp when the data was saved */
-	data->saved_swlifetime = hist_up_lifetime_get();
-	data->saved_timestamp = time(NULL);
 
 	/* calculate CRC */
 	data->crc = 0;
@@ -669,7 +665,15 @@ static void hist_sfp_nand_write(struct wrs_hist_sfp_nand *data, char *file)
 
 void hist_sfp_nand_save(void)
 {
+	uint32_t timestamp;
+	uint32_t lifetime;
+
+	lifetime = hist_up_lifetime_get();
+	timestamp = time(NULL);
 	hist_sfp_update_all();
+	/* Save a timestamp when the data was saved */
+	hist_shmem->hist_sfp_nand.saved_swlifetime = lifetime;
+	hist_shmem->hist_sfp_nand.saved_timestamp = timestamp;
 	pr_debug("Saving SFP data to the nand\n");
 	hist_sfp_nand_write(&hist_shmem->hist_sfp_nand,
 			    hist_sfp_nand_filename);
