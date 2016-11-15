@@ -37,6 +37,19 @@ int hal_shmem_read_temp(struct hal_temp_sensors * temp)
 	return 0;
 }
 
+void hist_up_spi_exit(void)
+{
+}
+
+int hist_up_spi_init(void)
+{
+	return 0;
+}
+
+void hist_up_spi_save(void)
+{
+}
+
 static void show_help(void)
 {
 	printf("WR Switch history daemon (wrsw_hist)\n"
@@ -99,6 +112,8 @@ int main(int argc, char **argv)
 	parse_cmdline(argc, argv);
 	crc_init();
 	assert_init(hist_shmem_init());
+	printf("hist_shmem_hdr->pidsequence %d\n", hist_shmem_hdr->pidsequence);
+	printf("hist_shmem_hdr->sequence %d\n", hist_shmem_hdr->sequence);
 	hist_sfp_init();
 	return 0;
 }

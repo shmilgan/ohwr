@@ -33,12 +33,14 @@ int hist_check_running(void);
 
 /* hist_sfp.c */
 int hist_sfp_init(void);
+void hist_sfp_nand_exit(void);
 void hist_sfp_insert(char *vn, char *pn, char *sn);
 void hist_sfp_remove(char *vn, char *pn, char *sn);
 void hist_sfp_nand_save(void);
 
 /* hist_up.c */
-int hist_up_init(void);
+int hist_up_nand_init(void);
+void hist_up_nand_exit(void);
 time_t hist_up_lifetime_get(void);
 void hist_up_nand_save(void);
 

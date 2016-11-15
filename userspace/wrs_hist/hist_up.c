@@ -30,7 +30,7 @@ static void nand_write(struct wrs_hist_up_nand *data);
 static void get_temp(int8_t temp[WRS_HIST_TEMP_SENSORS_N]);
 static void nand_update(void);
 
-int hist_up_init(void)
+int hist_up_nand_init(void)
 {
 	int i;
 	int j;
@@ -237,4 +237,10 @@ static void get_temp(int8_t temp[WRS_HIST_TEMP_SENSORS_N])
 	temp[WRS_HIST_TEMP_PLL] = temp_sensors.pll >> 8;
 	temp[WRS_HIST_TEMP_PSL] = temp_sensors.psl >> 8;
 	temp[WRS_HIST_TEMP_PSR] = temp_sensors.psr >> 8;
+}
+
+/* Function to be called at the exit of wrs_hist */
+void hist_up_nand_exit(void)
+{
+	/* nothing to do there */
 }

@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include <time.h>
 #include <errno.h>
+#include <signal.h>
 
 #include <libwr/wrs-msg.h>
 #include <libwr/shmem.h>
@@ -16,6 +17,9 @@
 
 struct hist_shmem_data *hist_shmem;
 struct wrs_shm_head *hist_shmem_hdr;
+
+static void sighandler(int sig);
+static void wrs_exit(void);
 
 /* Interates via all the ports defined in the config file and
  * intializes them one after another. */
@@ -106,9 +110,15 @@ int main(int argc, char *argv[])
 	assert_init(hist_shmem_init());
 	assert_init(hist_wripc_init());
 	assert_init(hist_up_spi_init());
-	assert_init(hist_up_init()); /* move it? */
+	assert_init(hist_up_nand_init()); /* move it? */
 	/* If HAL was running before add all SFPs to the local database */
 	assert_init(hist_sfp_init());
+	
+	signal(SIGSEGV, sighandler);
+	signal(SIGINT, sighandler);
+	signal(SIGTERM, sighandler);
+	signal(SIGILL, sighandler);
+
 	/* update data in the shmem and write them back */
 	hist_sfp_nand_save();
 
@@ -148,4 +158,19 @@ int main(int argc, char *argv[])
 	}
 
 	return 0;
+}
+
+static void sighandler(int sig)
+{
+	pr_error("signal caught (%d)!\n", sig);
+	wrs_exit();
+	exit(0);
+}
+
+/* function to be called at exit */
+static void wrs_exit(void)
+{
+	hist_sfp_nand_exit();
+	hist_up_spi_exit();
+	hist_up_nand_exit();
 }

@@ -641,7 +641,7 @@ static void hist_sfp_nand_write(struct wrs_hist_sfp_nand *data, char *file)
 		  0644);
 	if (fd < 0) {
 		pr_error("Unable to write to the file %s\n", file);
-		exit(1);
+		return;
 	}
 	/* Save a timestamp when the data was saved */
 	data->saved_swlifetime = hist_up_lifetime_get();
@@ -675,4 +675,11 @@ void hist_sfp_nand_save(void)
 			    hist_sfp_nand_filename);
 	hist_sfp_nand_write(&hist_shmem->hist_sfp_nand,
 			    hist_sfp_nand_filename_backup);
+}
+
+/* Function to be called at the exit of wrs_hist */
+void hist_sfp_nand_exit(void)
+{
+	/* save the SFP data at exit */
+	hist_sfp_nand_save();
 }
