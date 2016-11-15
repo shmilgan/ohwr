@@ -942,6 +942,7 @@ struct dump_info wrs_hist_up_spi_info [] = {
 	DUMP_FIELD(uint8_t_hex, crc),
 	DUMP_FIELD(asciiuptime, lifetime),
 	DUMP_FIELD(asciitime, timestamp),
+	DUMP_FIELD(hist_temp, temp),
 };
 
 /* map for fields of wrs_hist_sfp_nand (hist.h) */
