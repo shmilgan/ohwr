@@ -1,4 +1,4 @@
-hist run nand:
+hist up nand:
         magic:                         0x0000
         ver:                           0x00
         crc:                           0x00
@@ -10,12 +10,14 @@ hist run nand:
         temp[3]:                       0
         temp:                          
              temp range  FPGA   PLL   PSL   PSR
-hist run spi:
+hist up spi:
         magic:                         0x0000
         ver:                           0x00
         crc:                           0x00
         lifetime:                      --
         timestamp:                     --
+        temp:                          
+             temp range  FPGA   PLL   PSL   PSR
 hist sfp nand:
         magic:                         0xadaf
         ver:                           0x01
