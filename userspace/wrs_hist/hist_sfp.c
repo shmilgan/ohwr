@@ -48,6 +48,8 @@ int hist_sfp_init(void)
 	struct wrs_hist_sfp_nand data_b; /* sfp data read from the backup
 					   * file */
 	struct wrs_hist_sfp_nand *ret_data;
+	uint32_t cur_lifetime;
+	uint32_t sfp_lifetime; /* lifetime read from sfps */
 
 	ret_data = hist_sfp_nand_data_verify(&data_a, &data_b);
 	wrs_shm_write(hist_shmem_hdr, WRS_SHM_WRITE_BEGIN);
@@ -65,6 +67,28 @@ int hist_sfp_init(void)
 	hist_shmem->hist_sfp_nand.end_ver = WRS_HIST_SFP_MAGIC_VER;
 
 	wrs_shm_write(hist_shmem_hdr, WRS_SHM_WRITE_END);
+
+	/* Check the lifetime and if it is more than the one that we read
+	 * from up_nand adjust lifetime */
+	cur_lifetime = hist_up_lifetime_get();
+	sfp_lifetime = hist_shmem->hist_sfp_nand.saved_swlifetime;
+	if (sfp_lifetime > cur_lifetime) {
+		/* It might happen that the SFP DB is somehow corrupted and
+		 * lifetime is too much advanced, in such case avoid update */
+		if (sfp_lifetime > (cur_lifetime + 3 * NAND_UPDATE_PERIOD)) {
+			pr_error("SFP DB was writen with lifetime %d, which is"
+				 " more than current lifetime (%d) + 3 times "
+				 " nand update period (%d)\n", sfp_lifetime,
+				 cur_lifetime, NAND_UPDATE_PERIOD);
+		} else {
+			hist_up_lifetime_set(sfp_lifetime);
+			pr_debug("Updating the current lifetime (%d) with the "
+				 "value read from SFP DB (%d), after update "
+				 "current lifetime is %d\n",
+				 cur_lifetime, sfp_lifetime,
+				 (uint32_t) hist_up_lifetime_get());
+		}
+	}
 
 	return 0;
 }

@@ -110,8 +110,12 @@ int main(int argc, char *argv[])
 	assert_init(hist_shmem_init());
 	assert_init(hist_wripc_init());
 	assert_init(hist_up_spi_init());
-	assert_init(hist_up_nand_init()); /* move it? */
+	/* uses histograms read from spi, call hist_up_spi_init before
+	 * hist_up_nand_init */
+	assert_init(hist_up_nand_init()); 
 	/* If HAL was running before add all SFPs to the local database */
+	/* hist_sfp_init, may update lifetime information based on a value
+	 * written in the sfp DB */
 	assert_init(hist_sfp_init());
 	
 	signal(SIGSEGV, sighandler);
