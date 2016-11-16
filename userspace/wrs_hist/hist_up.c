@@ -35,6 +35,9 @@ int hist_up_nand_init(void)
 	int i;
 	int j;
 
+	/* Clear hist_up_nand in the shmem */
+	memset(&hist_shmem->hist_up_nand, 0, sizeof(hist_shmem->hist_up_nand));
+
 	/* Fill array translating temperature's value into the index of
 	 * histogram's array */
 	for (i = 0; i < WRS_HIST_TEMP_ENTRIES; i++) {
@@ -148,6 +151,9 @@ static int nand_read(
 			continue;
 		}
 
+		/* Copy the valid entry to the shmem */
+		memcpy(&hist_shmem->hist_up_nand, &data_up_nand,
+		       sizeof(data_up_nand));
 		lifetime = data_up_nand.lifetime;
 		if (hist_shmem->hist_up_spi.lifetime < lifetime) {
 			/* Update temp histogram, with only newer entries than
