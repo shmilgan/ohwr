@@ -41,8 +41,9 @@ void hist_sfp_nand_save(void);
 /* hist_up.c */
 int hist_up_nand_init(void);
 void hist_up_nand_exit(void);
-time_t hist_up_lifetime_get(void);
 void hist_up_nand_save(void);
+time_t hist_up_lifetime_get(void);
+void hist_up_lifetime_set(time_t lifetime);
 
 /* hist_spi.c */
 int hist_up_spi_init(void);

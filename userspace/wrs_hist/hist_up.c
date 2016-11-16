@@ -59,6 +59,13 @@ time_t hist_up_lifetime_get(void)
 	return lifetime_read + uptime;
 }
 
+/* Adjusts the lifetime value, if there is a more precise information when
+ * last restart had happened than the value read from up_nand, then pass to
+ * this function lifetime of last restart */
+void hist_up_lifetime_set(time_t lifetime)
+{
+	lifetime_read = lifetime;
+}
 
 static void update_temp_histogram(
 	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES],
