@@ -17,7 +17,8 @@
 #include "wrs_hist.h"
 #include "hist_crc.h"
 
-#define HIST_UP_NAND_FILENAME "/update/lifetime_stats.bin"
+#define HIST_UP_NAND_FILENAME_P "/update/lifetime_stats_p.bin"
+#define HIST_UP_NAND_FILENAME_B "/update/lifetime_stats_b.bin"
 
 static time_t init_time_monotonic;
 static time_t lifetime_read;
@@ -25,15 +26,34 @@ static time_t lifetime_read;
 static uint8_t temp_descr_tab[256];
 
 static int nand_read(
-	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES]);
-static void nand_write(struct wrs_hist_up_nand *data);
+	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES],
+	struct wrs_hist_up_nand *last_valid_data, char *nand_filename);
+static void nand_write(struct wrs_hist_up_nand *data, char *file);
 static void get_temp(int8_t temp[WRS_HIST_TEMP_SENSORS_N]);
 static void nand_update(void);
 
+#define PICK_P 1
+#define PICK_B 2
 int hist_up_nand_init(void)
 {
 	int i;
 	int j;
+	int ret_p, ret_b;
+	struct wrs_hist_up_nand *pick_data = NULL;
+
+	uint16_t temp_hist_p[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES];
+	uint16_t temp_hist_b[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES];
+	 /* the last valid entry read from the primary nand file */
+	struct wrs_hist_up_nand data_up_nand_p;
+	 /* the last valid entry read from the backup nand file */
+	struct wrs_hist_up_nand data_up_nand_b;
+
+	/* copy temp array from shmem */
+	memcpy(&temp_hist_p, &hist_shmem->temp, sizeof(temp_hist_p));
+	memcpy(&temp_hist_b, &hist_shmem->temp, sizeof(temp_hist_b));
+
+	memset(&data_up_nand_p, 0, sizeof(data_up_nand_p));
+	memset(&data_up_nand_b, 0, sizeof(data_up_nand_b));
 
 	/* Clear hist_up_nand in the shmem */
 	memset(&hist_shmem->hist_up_nand, 0, sizeof(hist_shmem->hist_up_nand));
@@ -47,7 +67,24 @@ int hist_up_nand_init(void)
 		}
 	}
 	init_time_monotonic = get_monotonic_sec();
-	nand_read(hist_shmem->temp);
+	ret_p = nand_read(temp_hist_p, &data_up_nand_p, HIST_UP_NAND_FILENAME_P);
+	ret_b = nand_read(temp_hist_b, &data_up_nand_b, HIST_UP_NAND_FILENAME_B);
+
+	if (ret_p >= 0 && ret_b >= 0) {
+		if (data_up_nand_p.lifetime > data_up_nand_b.lifetime)
+			pick_data = &data_up_nand_p;
+		else
+			pick_data = &data_up_nand_b;
+	} else if (ret_p >= 0) {
+		pick_data = &data_up_nand_p;
+	} else if (ret_b >= 0) {
+		pick_data = &data_up_nand_b;
+	}
+	if (pick_data) {
+		hist_up_lifetime_set(pick_data->lifetime);
+		memcpy(&hist_shmem->hist_up_nand, pick_data,
+		       sizeof(hist_shmem->hist_up_nand));
+	}
 
 	return 0;
 }
@@ -81,7 +118,8 @@ static void update_temp_histogram(
 }
 
 static int nand_read(
-	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES])
+	uint16_t temp_hist[WRS_HIST_TEMP_SENSORS_N][WRS_HIST_TEMP_ENTRIES],
+	struct wrs_hist_up_nand *last_valid_data, char *nand_filename)
 {
 	int fd;
 	struct wrs_hist_up_nand data_up_nand;
@@ -93,10 +131,10 @@ static int nand_read(
 	uint8_t crc_calc;
 
 	/* use O_NOATIME to avoid update of last access time */
-	fd = open(HIST_UP_NAND_FILENAME, O_RDONLY | O_NOATIME);
+	fd = open(nand_filename, O_RDONLY | O_NOATIME);
 	if (fd < 0) {
 		pr_error("Unable to read the file %s\n",
-			 HIST_UP_NAND_FILENAME);
+			 nand_filename);
 		return -1;
 	}
 
@@ -108,12 +146,12 @@ static int nand_read(
 		} else if (ret < 0) {
 			pr_error("Read error from the file %s, ret %d, "
 				 "error(%d) %s:\n",
-				 HIST_UP_NAND_FILENAME, ret, errno,
+				 nand_filename, ret, errno,
 				 strerror(errno));
 			break;
 		} else if (ret != sizeof(struct wrs_hist_up_nand)) {
 			pr_error("Unable to read all data from the file %s\n",
-				 HIST_UP_NAND_FILENAME);
+				 nand_filename);
 			break;
 		}
 		entries_index++;
@@ -121,7 +159,7 @@ static int nand_read(
 			pr_error("Wrong magic in saved uptime entry (index %d)"
 				 " in the nand (file %s)! is 0x%04x, "
 				 "expected 0x%04x\n",
-				 entries_index, HIST_UP_NAND_FILENAME,
+				 entries_index, nand_filename,
 				 data_up_nand.magic, WRS_HIST_UP_NAND_MAGIC);
 			continue;
 		}
@@ -129,7 +167,7 @@ static int nand_read(
 			pr_error("Wrong version number in saved uptime entry "
 				 "(index %d) in the nand (file %s)! is 0x%04x,"
 				 " expected 0x%04x\n",
-				 entries_index, HIST_UP_NAND_FILENAME,
+				 entries_index, nand_filename,
 				 data_up_nand.ver,
 				 WRS_HIST_UP_NAND_MAGIC_VER);
 			continue;
@@ -147,20 +185,21 @@ static int nand_read(
 					 "(index %d) in the nand (file %s)! "
 					 "Expected crc 0x%02x, calculated "
 					 "0x%02x\n", entries_index,
-					 HIST_UP_NAND_FILENAME, crc_saved,
+					 nand_filename, crc_saved,
 					 crc_calc);
 				continue;
 			}
 			pr_error("Wrong CRC in saved uptime entry (index %d) "
 				 "in the nand (file %s)! Expected crc 0x%02x, "
 				 "calculated 0x%02x\n", entries_index,
-				 HIST_UP_NAND_FILENAME, crc_saved, crc_calc);
+				 nand_filename, crc_saved, crc_calc);
 			continue;
 		}
+		/* entry might be used later so restore the cleared CRC */
+		data_up_nand.crc = crc_calc;
 
 		/* Copy the valid entry to the shmem */
-		memcpy(&hist_shmem->hist_up_nand, &data_up_nand,
-		       sizeof(data_up_nand));
+		memcpy(last_valid_data, &data_up_nand, sizeof(data_up_nand));
 		lifetime = data_up_nand.lifetime;
 		if (hist_shmem->hist_up_spi.lifetime < lifetime) {
 			/* Update temp histogram, with only newer entries than
@@ -171,12 +210,14 @@ static int nand_read(
 	}
 
 	close(fd);
-	lifetime_read = lifetime;
-	pr_debug("Read %d lifetime entries from the flash\n", entries_ok);
+
+	pr_debug("Read %d lifetime entries from the nand flash file %s, last "
+		 "entry has a lifetime %d\n",
+		 entries_ok, nand_filename, lifetime);
 
 	if (entries_ok != entries_index)
-		pr_error("Read %d non-valid lifetime entries from the flash\n",
-			 entries_index - entries_ok);
+		pr_error("Read %d non-valid lifetime entries from the nand flash file %s\n",
+			 entries_index - entries_ok, nand_filename);
 	return 0;
 }
 
@@ -203,10 +244,11 @@ void hist_up_nand_save(void)
 {
 	nand_update();
 	pr_debug("Saving lifetime data to the nand\n");
-	nand_write(&hist_shmem->hist_up_nand);
+	nand_write(&hist_shmem->hist_up_nand, HIST_UP_NAND_FILENAME_P);
+	nand_write(&hist_shmem->hist_up_nand, HIST_UP_NAND_FILENAME_B);
 }
 
-static void nand_write(struct wrs_hist_up_nand *data)
+static void nand_write(struct wrs_hist_up_nand *data, char *file)
 {
 	int fd;
 	int ret;
@@ -214,12 +256,12 @@ static void nand_write(struct wrs_hist_up_nand *data)
 
 	/* use O_NOATIME to avoid update of last access time */
 	/* O_SYNC to reduce caching problem */
-	fd = open(HIST_UP_NAND_FILENAME,
+	fd = open(file,
 		  O_WRONLY| O_APPEND | O_CREAT | O_NOATIME | O_SYNC, 0644);
 	if (fd < 0) {
 		pr_error("Unable to write to the file %s\n",
-			 HIST_UP_NAND_FILENAME);
-		exit(1);
+			 file);
+		return;
 	}
 
 	/* clear old, compute and write CRC */
@@ -230,10 +272,10 @@ static void nand_write(struct wrs_hist_up_nand *data)
 	ret = write(fd, data, sizeof(struct wrs_hist_up_nand));
 	if (ret < 0) {
 		pr_error("Write error to the file %s, ret %d, error(%d) %s:\n",
-			 HIST_UP_NAND_FILENAME, ret, errno, strerror(errno));
+			 file, ret, errno, strerror(errno));
 	} else if (ret != sizeof(struct wrs_hist_up_nand)) {
 		pr_error("Unable to write all data to the file %s\n",
-			 HIST_UP_NAND_FILENAME);
+			 file);
 	}
 	fsync(fd);
 	close(fd);
