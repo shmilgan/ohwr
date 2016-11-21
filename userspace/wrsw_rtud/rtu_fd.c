@@ -325,7 +325,7 @@ int rtu_fd_create_entry(uint8_t mac[ETH_ALEN], uint16_t vid, uint32_t port_mask,
 			ent = &rtu_htab[eaddr.hash][eaddr.bucket];
 			ent->addr = eaddr;
 
-			pr_info(
+			pr_debug(
 			      "Created new entry for MAC %s : hash %03x:%d.\n",
 			      mac_to_string(mac), eaddr.hash, eaddr.bucket);
 
@@ -580,7 +580,7 @@ int rtu_fd_remove_entry(uint8_t *mac, uint32_t port_mask, int type)
 				/* entry is _only_ for this port */
 				hw_request(HW_REMOVE_REQ, ent->addr,
 					    ent);
-				pr_info("Cleaning %s entry for mask=0x%x MAC: "
+				pr_debug("Cleaning %s entry for mask=0x%x MAC: "
 					"%s type %s\n",
 					is_unicast(port_mask) ?
 						      "unicast" : "multicast",
@@ -674,7 +674,7 @@ static void delete_htab_entry(struct rtu_addr addr)
 {
 	int i, n_buckets = htab_count_buckets(addr);
 
-	pr_info("Deleted entry for MAC %s : hash %03x:%d.\n",
+	pr_debug("Deleted entry for MAC %s : hash %03x:%d.\n",
 	      mac_to_string(rtu_htab[addr.hash][addr.bucket].mac), addr.hash,
 	      addr.bucket);
 
