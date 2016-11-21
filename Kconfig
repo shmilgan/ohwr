@@ -590,8 +590,8 @@ config PTP_CUSTOM_FILENAME
 	default "/wr/etc/ppsi-custom.conf"
 	help
 	  This is the filename used as ppsi.conf. Please note that the
-	  file is copied to /wr/etc/ppsi.conf when configuration is applied,
-	  and the PTP daemon always picks /wr/etc/ppsi.conf, not this
+	  file is copied to /etc/ppsi.conf when configuration is applied,
+	  and the PTP daemon always picks /etc/ppsi.conf, not this
 	  filename.
 
 config PTP_CONF_URL
