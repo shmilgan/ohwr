@@ -3,13 +3,25 @@
 
 /* note each led contains green and orange part */
 #define SFP_LED_WRMODE_SLAVE	(1) /* green */ 
-#define SFP_LED_WRMODE_NON_WR	(2) /* orange */
+#define SFP_LED_WRMODE_OTHER	(2) /* orange */
 #define SFP_LED_WRMODE_MASTER	(3) /* yellow */
 #define SFP_LED_WRMODE_OFF	(3) /* to off entire WRMODE LED */
 #define SFP_LED_WRMODE1	(1 << 0)
 #define SFP_LED_WRMODE2	(1 << 1)
 #define SFP_LED_SYNCED	(1 << 2)
 #define SFP_TX_DISABLE	(1 << 3)
+
+#define shw_sfp_set_led_wrmode_slave(num)	\
+	shw_sfp_set_generic(num, 1, SFP_LED_WRMODE_SLAVE)
+
+#define shw_sfp_set_led_wrmode_master(num)	\
+	shw_sfp_set_generic(num, 1, SFP_LED_WRMODE_MASTER)
+
+#define shw_sfp_set_led_wrmode_other(num)	\
+	shw_sfp_set_generic(num, 1, SFP_LED_WRMODE_OTHER)
+
+#define shw_sfp_set_led_wrmode_off(num)	\
+	shw_sfp_set_generic(num, 0, SFP_LED_WRMODE_OFF)
 
 #define shw_sfp_set_led_synced(num, status)	\
 	shw_sfp_set_generic(num, status, SFP_LED_SYNCED)

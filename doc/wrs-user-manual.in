@@ -1291,11 +1291,12 @@ For more details please refer to following subsections.
 The status LED is placed together with power indicator LED on the left side of
 switch's front panel. The status LED is the right one.
 
-During barebox/kernel boot the status LED is off. When startup-mb.sh starts
+During barebox/kernel boot the status LED is off. When @t{startup-mb.sh} starts
 the LED is set to yellow. If the HAL starts successfully then the LED is set to
 green. If the HAL caught a SIGNAL sent by other process, HAL sets the status
 LED to orange.
-When reboot is performed status LED is turned off.
+When the regular reboot is performed status LED is turned off. In case of
+a kernel crash the LED remains unchanged.
 
 @c =-------------------------------------------------------------------------
 @node Ports' LEDs
@@ -1304,8 +1305,8 @@ When reboot is performed status LED is turned off.
 Under each switch's port there are two LEDs. The left LED is on when particular
 port is populated with an SFP and the link is up. It's color is dependent on
 the configured function. For ports configured as a slave the LED is green, for
-non-wr ports the LED is orange. For ports configured as a master and other
-cases (including wrong configuration) the left LED is yellow.
+master ports the LED is yellow. For ports configured as an auto, none, non-wr
+and other cases (including wrong configuration) the left LED is orange.
 
 The right LED blinks when packet is transmitted or received on a port.
 

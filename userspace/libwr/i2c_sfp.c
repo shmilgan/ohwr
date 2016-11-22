@@ -503,13 +503,13 @@ void shw_sfp_gpio_init(void)
 	for (i = 0; i < 18; i++) {
 		shw_sfp_set_led_synced(i, 1);
 		shw_udelay(7000);
-		shw_sfp_set_generic(i, 1, SFP_LED_WRMODE_MASTER);
+		shw_sfp_set_generic(i, 1, SFP_LED_WRMODE1 | SFP_LED_WRMODE2);
 		shw_udelay(7000);
 	}
 	for (i = 0; i < 18; i++) {
 		shw_sfp_set_led_synced(i, 0);
 		shw_udelay(7000);
-		shw_sfp_set_generic(i, 0, SFP_LED_WRMODE_MASTER);
+		shw_sfp_set_generic(i, 0, SFP_LED_WRMODE1 | SFP_LED_WRMODE2);
 		shw_udelay(7000);
 	}
 

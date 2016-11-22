@@ -365,7 +365,7 @@ static int hal_port_link_down(struct hal_port_state * p, int link_up)
 		}
 
 		/* turn off link/wrmode LEDs */
-		shw_sfp_set_generic(p->hw_index, 0, SFP_LED_WRMODE_OFF);
+		shw_sfp_set_led_wrmode_off(p->hw_index);
 		p->state = HAL_PORT_STATE_LINK_DOWN;
 		hal_port_reset_state(p);
 
@@ -419,15 +419,15 @@ static void hal_port_fsm(struct hal_port_state * p)
 				p->tx_cal_pending = 0;
 				p->rx_cal_pending = 0;
 				/* set link/wrmode LEDs */
-				if (p->mode == HEXP_PORT_MODE_WR_SLAVE) {/* slave */
-					shw_sfp_set_generic(p->hw_index, 1,
-							SFP_LED_WRMODE_SLAVE);
-				} else if (p->mode == HEXP_PORT_MODE_WR_MASTER) {/* master */
-					shw_sfp_set_generic(p->hw_index, 1,
-							SFP_LED_WRMODE_MASTER);
-				} else { /* non-wr or other */
-					shw_sfp_set_generic(p->hw_index, 1,
-							SFP_LED_WRMODE_NON_WR);
+				if (p->mode == HEXP_PORT_MODE_WR_SLAVE) {
+					/* slave */
+					shw_sfp_set_led_wrmode_slave(p->hw_index);
+				} else if (p->mode == HEXP_PORT_MODE_WR_MASTER) {
+					/* master */
+					shw_sfp_set_led_wrmode_master(p->hw_index);
+				} else {
+					/* auto, none, non-wr or other */
+					shw_sfp_set_led_wrmode_other(p->hw_index);
 				}
 				pr_info("%s: link up\n", p->name);
 				p->state = HAL_PORT_STATE_UP;
