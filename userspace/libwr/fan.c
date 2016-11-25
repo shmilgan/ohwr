@@ -165,12 +165,6 @@ static void tmp100_write_reg(int dev_addr, uint8_t reg_addr, uint8_t value)
 	i2c_write(&fpga_sensors_i2c, dev_addr, 2, data);
 }
 
-static float tmp100_read_temp(int dev_addr)
-{
-	int temp = tmp100_read_reg(dev_addr, 0, 2);
-	return ((float)(temp >> 4)) / 16.0;
-}
-
 static int shw_init_i2c_sensors(void)
 {
 	if (i2c_init_bus(&fpga_sensors_i2c) < 0) {
@@ -259,29 +253,43 @@ int shw_init_fans(void)
  */
 void shw_update_fans(struct hal_temp_sensors *sensors)
 {
-	/* drive fan based on PLL temperature */
-	float t_cur = tmp100_read_temp(TEMP_SENSOR_ADDR_PLL);
-	float drive = pi_update(&fan_pi, t_cur - DESIRED_TEMPERATURE);
+	float t_cur;
+	float drive;
+	static float pwm_set_old = -1.0; /* anything different than 0, to force
+					    write at the beginning */
+	static float pwm_set_new = 0;
 	//pr_info("t=%f,pwm=%f\n",t_cur , drive);
-
-	if (fan_hysteresis) {
-		if (t_cur < fan_hysteresis_t_disable) {
-			/* disable fans */
-			shw_pwm_speed(0xFF, 0);
-			}
-		if (t_cur > fan_hysteresis_t_enable) {
-			/* enable fans with given value */
-			shw_pwm_speed(0xFF,
-					((float) fan_hysteresis_pwm_val)/1000);
-			}
-	} else {
-		/* use PI controller for FANs speeds */
-		shw_pwm_speed(0xFF, drive / 1000);
-	}
 
 	/* update sensor values */
 	sensors->fpga = tmp100_read_reg(TEMP_SENSOR_ADDR_FPGA, 0, 2);
 	sensors->pll = tmp100_read_reg(TEMP_SENSOR_ADDR_PLL, 0, 2);
 	sensors->psl = tmp100_read_reg(TEMP_SENSOR_ADDR_PSL, 0, 2);
 	sensors->psr = tmp100_read_reg(TEMP_SENSOR_ADDR_PSR, 0, 2);
+
+	/* drive fan based on PLL temperature */
+	t_cur = ((float)(sensors->pll >> 4)) / 16.0;
+	drive = pi_update(&fan_pi, t_cur - DESIRED_TEMPERATURE);
+
+
+	if (fan_hysteresis) {
+		if (t_cur < fan_hysteresis_t_disable) {
+			/* disable fans */
+			pwm_set_new = 0;
+			}
+		if (t_cur > fan_hysteresis_t_enable) {
+			/* enable fans with given value */
+			pwm_set_new = ((float) fan_hysteresis_pwm_val) / 1000;
+			}
+		/* pwm_set_new might be not updated. e.g. t_cur is between
+		 * fan_hysteresis_t_disable and fan_hysteresis_t_enable */
+	} else {
+		/* use PI controller for FANs speeds */
+		pwm_set_new = drive / 1000;
+	}
+
+	/* Update PWM, only when there was a change */
+	if (pwm_set_new != pwm_set_old) {
+		shw_pwm_speed(0xFF, pwm_set_new);
+		pwm_set_old = pwm_set_new;
+	}
 }
