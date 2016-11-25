@@ -1308,7 +1308,10 @@ the configured function. For ports configured as a slave the LED is green, for
 master ports the LED is yellow. For ports configured as an auto, none, non-wr
 and other cases (including wrong configuration) the left LED is orange.
 
-The right LED blinks when packet is transmitted or received on a port.
+The right LED is green when a particular port is synchronized to the master.
+When a packet is transmitted or received on a port the right LED blinks orange.
+If a port is also synced then it blinks yellow instead.
+
 
 @c ############################################################################
 @node Booting with Barebox

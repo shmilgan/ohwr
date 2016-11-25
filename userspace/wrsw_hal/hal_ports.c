@@ -23,6 +23,7 @@
 #include <libwr/shmem.h>
 #include <libwr/config.h>
 
+#include <ppsi/ppsi.h>
 #include "wrsw_hal.h"
 #include "timeout.h"
 #include <rt_ipc.h>
@@ -50,7 +51,15 @@ static int hal_port_rts_state_valid = 0;
 static timeout_t hal_port_tmo_rts, hal_port_tmo_sfp;
 static int hal_port_nports;
 
+static struct wr_servo_state *ppsi_servo;
+static struct wr_servo_state ppsi_servo_local;
+static struct wrs_shm_head *ppsi_head;
+
 int hal_port_check_lock(const char *port_name);
+static void set_led_synced(int p_index, int val);
+static void update_sync_leds(void);
+static int read_servo(void);
+static int try_open_ppsi_shmem(void);
 
 int hal_port_any_locked(void)
 {
@@ -364,6 +373,9 @@ static int hal_port_link_down(struct hal_port_state * p, int link_up)
 				rts_set_mode(RTS_MODE_GM_FREERUNNING);
 		}
 
+		/* turn off synced LED */
+		set_led_synced(p->hw_index, 0);
+
 		/* turn off link/wrmode LEDs */
 		shw_sfp_set_led_wrmode_off(p->hw_index);
 		p->state = HAL_PORT_STATE_LINK_DOWN;
@@ -661,6 +673,8 @@ void hal_port_update_all()
 	/* unlock shmem */
 	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 
+	/* update LEDs of synced ports */
+	update_sync_leds();
 }
 
 int hal_port_enable_tracking(const char *port_name)
@@ -722,5 +736,140 @@ int hal_port_check_lock(const char *port_name)
 		(hs->flags & RTS_REF_LOCKED));
 }
 
-/* Public function for querying the state of a particular port (DMTD
- * phase, calibration deltas, etc.) */
+/* to avoid i2c transfers to set the synced LEDs, cache their state */
+static void set_led_synced(int p_index, int val)
+{
+	/* We assume that after the HAL is started all LEDs are off */
+	static int leds_map[HAL_MAX_PORTS];
+
+	if (p_index >= HAL_MAX_PORTS)
+		return;
+
+	if (leds_map[p_index] == val) {
+		/* value has not changed */
+		return;
+	}
+
+	/* update the LED */
+	shw_sfp_set_led_synced(p_index, val);
+	leds_map[p_index] = val;
+}
+
+static void update_sync_leds(void)
+{
+	int i;
+	static uint32_t update_count = 0;
+	static uint32_t since_last_servo_update = 0;
+
+	/* try to open ppsi's shmem */
+	if (!try_open_ppsi_shmem())
+		return;
+	/* read servo */
+	if (read_servo())
+		return;
+
+	if (!strnlen(ppsi_servo_local.if_name, 16))
+		return;
+
+	for (i = 0; i < HAL_MAX_PORTS; i++) {
+		/* Check:
+		 * --port in use
+		 * --link is up
+		 * --interface name matches between port and servo
+		 * If all is true then turn on the sync status LED, otherwise
+		 * turn it off
+		 */
+		if (ports[i].in_use
+		    && state_up(ports[i].state)
+		    && !strcmp(ppsi_servo_local.if_name, ports[i].name)) {
+			if (update_count == ppsi_servo_local.update_count) {
+				if (since_last_servo_update < 10)
+					since_last_servo_update++;
+			} else {
+				since_last_servo_update = 0;
+				update_count = ppsi_servo_local.update_count;
+			}
+			/* Check:
+			* --port in slave mode
+			* --servo is in track phase
+			* --servo is updating
+			*/
+			if (ports[i].mode == HEXP_PORT_MODE_WR_SLAVE
+			    && ppsi_servo_local.state == WR_TRACK_PHASE
+			    && since_last_servo_update < 10
+			    ) {
+				set_led_synced(i, 1);
+			} else {
+				set_led_synced(i, 0);
+			}
+		}
+	}
+}
+
+
+static int read_servo(void){
+	unsigned ii;
+	unsigned retries = 0;
+
+	/* read data, with the sequential lock to have all data consistent */
+	while (1) {
+		ii = wrs_shm_seqbegin(ppsi_head);
+		memcpy(&ppsi_servo_local, ppsi_servo, sizeof(*ppsi_servo));
+		retries++;
+		if (retries > 100)
+			return -1;
+		if (!wrs_shm_seqretry(ppsi_head, ii))
+			break; /* consistent read */
+	}
+
+	return 0;
+}
+
+
+static int try_open_ppsi_shmem(void)
+{
+	int ret;
+	struct pp_globals *ppg;
+	static int open_error;
+
+	if (ppsi_servo) {
+		/* shmem already opened */
+		return 1;
+	}
+
+	if (!ppsi_head) {
+		ret = wrs_shm_get_and_check(wrs_shm_ptp, &ppsi_head);
+		if (ret == WRS_SHM_OPEN_FAILED) {
+			if (open_error > 100)
+				pr_error("Unable to open PPSI's shm !\n");
+			else
+				open_error++;
+			return 0;
+		}
+		if (ret == WRS_SHM_WRONG_VERSION) {
+			pr_error("Unable to read PPSI's version!\n");
+			return 0;
+		}
+		if (ret == WRS_SHM_INCONSISTENT_DATA) {
+			pr_error("Unable to read consistent data from PPSI's "
+				 "shmem!\n");
+			return 0;
+		}
+	}
+
+	/* check ppsi's shm version */
+	if (ppsi_head->version != WRS_PPSI_SHMEM_VERSION) {
+		pr_error("Unknown PPSI's shm version %i (known is %i)\n",
+			 ppsi_head->version, WRS_PPSI_SHMEM_VERSION);
+		return 0;
+	}
+	ppg = (void *)ppsi_head + ppsi_head->data_off;
+
+	/* there is an assumption that there is only one servo in ppsi! */
+	ppsi_servo = wrs_shm_follow(ppsi_head, ppg->global_ext_data);
+	if (!ppsi_servo) {
+		pr_error("Cannot follow ppsi_servo in shmem.\n");
+		return 0;
+	}
+	return 1;
+}

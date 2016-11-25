@@ -21,7 +21,9 @@ CFLAGS = -O -g -Wall \
 	-I../include \
 	-I../libwr/include \
 	-I../mini-rpc \
-	-I$(LINUX)/arch/arm/mach-at91/include
+	-I$(LINUX)/arch/arm/mach-at91/include \
+	-I../ppsi/include \
+	-I../ppsi/arch-wrs/include
 
 GIT_VER = $(shell git describe --always --dirty | sed  's;^wr-switch-sw-;;')
 CFLAGS += -D__GIT_VER__="\"${GIT_VER}\""
