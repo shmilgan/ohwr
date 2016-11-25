@@ -53,9 +53,15 @@ static int hal_port_nports;
 
 static struct wr_servo_state *ppsi_servo;
 static struct wr_servo_state ppsi_servo_local;
+static struct pp_instance *ppsi_instances;
+static struct pp_instance ppsi_instances_local[PP_MAX_LINKS];
 static struct wrs_shm_head *ppsi_head;
 
+static int ppsi_nlinks;
+
 int hal_port_check_lock(const char *port_name);
+static void update_link_leds(void);
+static void set_led_wrmode(int p_index, int val);
 static void set_led_synced(int p_index, int val);
 static void update_sync_leds(void);
 static int read_servo(void);
@@ -377,7 +383,7 @@ static int hal_port_link_down(struct hal_port_state * p, int link_up)
 		set_led_synced(p->hw_index, 0);
 
 		/* turn off link/wrmode LEDs */
-		shw_sfp_set_led_wrmode_off(p->hw_index);
+		set_led_wrmode(p->hw_index, SFP_LED_WRMODE_OFF);
 		p->state = HAL_PORT_STATE_LINK_DOWN;
 		hal_port_reset_state(p);
 
@@ -430,17 +436,10 @@ static void hal_port_fsm(struct hal_port_state * p)
 
 				p->tx_cal_pending = 0;
 				p->rx_cal_pending = 0;
-				/* set link/wrmode LEDs */
-				if (p->mode == HEXP_PORT_MODE_WR_SLAVE) {
-					/* slave */
-					shw_sfp_set_led_wrmode_slave(p->hw_index);
-				} else if (p->mode == HEXP_PORT_MODE_WR_MASTER) {
-					/* master */
-					shw_sfp_set_led_wrmode_master(p->hw_index);
-				} else {
-					/* auto, none, non-wr or other */
-					shw_sfp_set_led_wrmode_other(p->hw_index);
-				}
+				/* Set link/wrmode LEDs to other. Master/slave
+				 * color is set in the different place */
+				set_led_wrmode(p->hw_index,
+					       SFP_LED_WRMODE_OTHER);
 				pr_info("%s: link up\n", p->name);
 				p->state = HAL_PORT_STATE_UP;
 			}
@@ -673,6 +672,13 @@ void hal_port_update_all()
 	/* unlock shmem */
 	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 
+	/* try to open ppsi's shmem */
+	if (!try_open_ppsi_shmem())
+		return;
+
+	/* update color of the link LEDs */
+	update_link_leds();
+
 	/* update LEDs of synced ports */
 	update_sync_leds();
 }
@@ -736,6 +742,109 @@ int hal_port_check_lock(const char *port_name)
 		(hs->flags & RTS_REF_LOCKED));
 }
 
+/* to avoid i2c transfers to set the link LEDs, cache their state */
+static void set_led_wrmode(int p_index, int val)
+{
+	/* We assume that after the HAL is started all LEDs are off */
+	static int leds_map[HAL_MAX_PORTS];
+
+	if (p_index >= HAL_MAX_PORTS)
+		return;
+
+	if (leds_map[p_index] == val) {
+		/* value has not changed */
+		return;
+	}
+
+	/* update the LED, don't forget to turn off LEDs if needed */
+	if (val == SFP_LED_WRMODE_SLAVE) {
+		/* cannot set and clear LED in the same call! */
+		shw_sfp_set_generic(p_index, 1, SFP_LED_WRMODE1);
+		shw_sfp_set_generic(p_index, 0, SFP_LED_WRMODE2);
+	} else if (val == SFP_LED_WRMODE_OTHER) {
+		/* cannot set and clear LED in the same call! */
+		shw_sfp_set_generic(p_index, 0, SFP_LED_WRMODE1);
+		shw_sfp_set_generic(p_index, 1, SFP_LED_WRMODE2);
+	} else if (val == SFP_LED_WRMODE_MASTER) {
+		shw_sfp_set_generic(p_index, 1,
+				    SFP_LED_WRMODE1 | SFP_LED_WRMODE2);
+	} else if (val == SFP_LED_WRMODE_OFF) {
+		shw_sfp_set_generic(p_index, 0,
+				    SFP_LED_WRMODE1 | SFP_LED_WRMODE2);
+	}
+	leds_map[p_index] = val;
+}
+
+static int read_ppsi_instances(void){
+	unsigned ii;
+	unsigned retries = 0;
+
+	/* read data, with the sequential lock to have all data consistent */
+	while (1) {
+		ii = wrs_shm_seqbegin(ppsi_head);
+		memcpy(&ppsi_instances_local, ppsi_instances,
+		       ppsi_nlinks * sizeof(*ppsi_instances));
+		retries++;
+		if (retries > 100)
+			return -1;
+		if (!wrs_shm_seqretry(ppsi_head, ii))
+			break; /* consistent read */
+	}
+
+	return 0;
+}
+
+static void update_link_leds(void)
+{
+	int i;
+	int j;
+	int port_state;
+
+	/* read servo */
+	if (read_ppsi_instances())
+		return;
+
+	for (i = 0; i < HAL_MAX_PORTS; i++) {
+		if (!ports[i].in_use
+		    || !state_up(ports[i].state)) {
+			/* skip ports not in use nor up */
+			continue;
+		}
+
+		port_state = 0;
+		for (j = 0; j < ppsi_nlinks; j++) {
+			/* There might be multiple ppsi instances on
+			 * a particular port */
+			if (strcmp(ports[i].name,
+					ppsi_instances[j].cfg.iface_name)) {
+				/* Instance not for this interface
+				  * skip */
+				continue;
+			}
+			/* Pick the most important state */
+			if (ppsi_instances[j].state == PPS_SLAVE) {
+				/* Slave found, not possible to find more
+				 * important state than this, break */
+				port_state = PPS_SLAVE;
+				break;
+			}
+
+			if (ppsi_instances[j].state == PPS_MASTER) {
+				port_state = PPS_MASTER;
+				/* Don't brake, keep trying to find slave */
+				continue;
+			}
+		}
+		if (port_state == PPS_SLAVE)
+			set_led_wrmode(i, SFP_LED_WRMODE_SLAVE);
+		else if (port_state == PPS_MASTER)
+			set_led_wrmode(i, SFP_LED_WRMODE_MASTER);
+		else
+			set_led_wrmode(i, SFP_LED_WRMODE_OTHER);
+	}
+}
+
+
 /* to avoid i2c transfers to set the synced LEDs, cache their state */
 static void set_led_synced(int p_index, int val)
 {
@@ -761,9 +870,6 @@ static void update_sync_leds(void)
 	static uint32_t update_count = 0;
 	static uint32_t since_last_servo_update = 0;
 
-	/* try to open ppsi's shmem */
-	if (!try_open_ppsi_shmem())
-		return;
 	/* read servo */
 	if (read_servo())
 		return;
@@ -806,7 +912,6 @@ static void update_sync_leds(void)
 	}
 }
 
-
 static int read_servo(void){
 	unsigned ii;
 	unsigned retries = 0;
@@ -825,14 +930,13 @@ static int read_servo(void){
 	return 0;
 }
 
-
 static int try_open_ppsi_shmem(void)
 {
 	int ret;
 	struct pp_globals *ppg;
 	static int open_error;
 
-	if (ppsi_servo) {
+	if (ppsi_servo && ppsi_instances) {
 		/* shmem already opened */
 		return 1;
 	}
@@ -871,5 +975,14 @@ static int try_open_ppsi_shmem(void)
 		pr_error("Cannot follow ppsi_servo in shmem.\n");
 		return 0;
 	}
+
+	ppsi_instances = wrs_shm_follow(ppsi_head, ppg->pp_instances);
+	if (!ppsi_instances) {
+		pr_error("Cannot follow pp_instances in shmem.\n");
+		return 0;
+	}
+
+	ppsi_nlinks = ppg->nlinks;
+
 	return 1;
 }
