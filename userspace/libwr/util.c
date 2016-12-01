@@ -14,10 +14,10 @@ void shw_udelay_init(void)
 	int j, cur, min = 0;
 	uint64_t tv1, tv2;
 	for (j = 0; j < 10; j++) {
-		tv1 = get_monotonic_tics();
+		tv1 = get_monotonic_us();
 		for (i = 0; i < 100*1000; i++)
 			;
-		tv2 = get_monotonic_tics();
+		tv2 = get_monotonic_us();
 		cur = tv2 - tv1;
 		/* keep minimum time, assuming we were scheduled-off less */
 		if (!min || cur < min)
@@ -53,7 +53,7 @@ void shw_udelay(uint32_t microseconds)
 }
 
 /* get monotonic number of useconds */
-uint64_t get_monotonic_tics(void)
+uint64_t get_monotonic_us(void)
 {
 	struct timespec tv;
 	clock_gettime(CLOCK_MONOTONIC, &tv);

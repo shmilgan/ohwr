@@ -51,20 +51,20 @@ struct etherpacket {
 
 static inline int tmo_init(struct wr_tmo * tmo, uint32_t milliseconds)
 {
-	tmo->start_tics = get_monotonic_tics();
+	tmo->start_tics = get_monotonic_us();
 	tmo->timeout = (uint64_t) milliseconds *1000ULL;
 	return 0;
 }
 
 static inline int tmo_restart(struct wr_tmo * tmo)
 {
-	tmo->start_tics = get_monotonic_tics();
+	tmo->start_tics = get_monotonic_us();
 	return 0;
 }
 
 static inline int tmo_expired(struct wr_tmo * tmo)
 {
-	return (get_monotonic_tics() - tmo->start_tics > tmo->timeout);
+	return (get_monotonic_us() - tmo->start_tics > tmo->timeout);
 }
 
 // cheks if x is inside range <min, max>
