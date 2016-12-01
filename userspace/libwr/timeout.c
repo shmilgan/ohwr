@@ -18,10 +18,12 @@ int libwr_tmo_restart(timeout_t *tmo)
 
 int libwr_tmo_expired(timeout_t *tmo)
 {
-	int expired = (get_monotonic_us() - tmo->start_tics > tmo->timeout);
+	uint64_t time = get_monotonic_us();
+	int expired = (time > tmo->start_tics + tmo->timeout);
 
 	if (tmo->repeat && expired)
-		tmo->start_tics = get_monotonic_us();
+		while (time > tmo->start_tics + tmo->timeout)
+			tmo->start_tics += tmo->timeout;
 
 	return expired;
 }
