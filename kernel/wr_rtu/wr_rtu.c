@@ -39,6 +39,13 @@
 #include <linux/wait.h>
 #include <linux/spinlock.h>
 #include <linux/io.h>
+#include <linux/irqdomain.h>
+
+/*
+ * Ugly trick to be able to use headers that have been moved out
+ * from mach/ directory
+ */
+#include <mach/../../at91_aic.h>
 
 #include "../wbgen-regs/rtu-regs.h"
 #include "wr_rtu.h"
@@ -63,6 +70,13 @@ static struct RTU_WB __iomem *regs;
 
 #define wr_rtu_readl(r)		__raw_readl(&regs->r);
 #define wr_rtu_writel(val, r)	__raw_writel(val, &regs->r);
+
+/**
+ * IRQ domain to be used. This is static here but in general it should be
+ * a module parameter or somehow configurable. For the time being we keep
+ * it hard-coded here.
+ */
+static const char *irqdomain_name = "htvic-wr-swi.0";
 
 static void wr_rtu_enable_irq(void)
 {
@@ -153,6 +167,15 @@ static struct miscdevice wr_rtu_misc = {
 static int __init wr_rtu_init(void)
 {
 	int err;
+	int irq;
+	struct irq_domain *irqdomain;
+
+	irqdomain = irq_find_host((struct device_node *)irqdomain_name);
+	if (!irqdomain) {
+		pr_err("pstat: The IRQ domain %s does not exist\n",
+			irqdomain_name);
+		return -EINVAL;
+	}
 
 	// register misc device
 	err = misc_register(&wr_rtu_misc);
@@ -176,9 +199,8 @@ static int __init wr_rtu_init(void)
 	// register interrupt handler
 	wr_rtu_disable_irq();
 
-	err = request_irq(
-		WRVIC_BASE_IRQ + WR_RTU_IRQ,
-		wr_rtu_interrupt,
+	irq = irq_find_mapping(irqdomain, WR_RTU_IRQ);
+	err = request_irq(irq, wr_rtu_interrupt,
 		IRQF_SHARED,
 		"wr-rtu",
 		(void*)regs
@@ -203,10 +225,20 @@ static int __init wr_rtu_init(void)
 
 static void __exit wr_rtu_exit(void)
 {
+	int irq;
+	struct irq_domain *irqdomain;
+
 	// disable RTU interrupts
 	wr_rtu_disable_irq();
 	// Unregister IRQ handler
-	free_irq(WRVIC_BASE_IRQ + WR_RTU_IRQ, (void*)regs);
+	irqdomain = irq_find_host((struct device_node *)irqdomain_name);
+	if (!irqdomain) {
+		pr_err("pstat: The IRQ domain %s does not exist\n",
+			irqdomain_name);
+	} else {
+		irq = irq_find_mapping(irqdomain, WR_RTU_IRQ);
+		free_irq(irq, (void*)regs);
+	}
 	// Unmap RTU memory
 	iounmap(regs);
 	// Unregister misc device driver

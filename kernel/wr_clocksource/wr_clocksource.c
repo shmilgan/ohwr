@@ -109,7 +109,7 @@ static void wrcs_timer_fn(unsigned long unused)
 		return;
 	}
 
-	clocksource_register(&wrcs_cs);
+	clocksource_register_hz(&wrcs_cs, WRCS_FREQUENCY);
 	wrcs_is_registered = 1;
 	/* And don't restart the timer */
 }
@@ -121,8 +121,6 @@ static int wrcs_init(void)
 		pr_err("WR Clocksource: can't remap PPS registers\n");
 		return -EIO;
 	}
-
-	clocksource_calc_mult_shift(&wrcs_cs, WRCS_FREQUENCY, 1);
 
 	/* Fire the timer */
 	mod_timer(&wrcs_timer, jiffies + HZ);

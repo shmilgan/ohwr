@@ -77,9 +77,12 @@ static struct wrs_km_item kernel_modules[] = {
 	[1] = {"wr_pstats"},
 	[2] = {"wr_rtu"},
 	[3] = {"wr_nic"},
-	[4] = {"wr_vic"},
-	[5] = {"at91_softpwm"},
+	[4] = {"wrs_devices"},
+	[5] = {"htvic"},
 	[6] = {"g_serial"},
+	[7] = {"usb_f_acm"},
+	[8] = {"u_serial"},
+	[9] = {"libcomposite"},
 };
 
 /* user space daemon list item */

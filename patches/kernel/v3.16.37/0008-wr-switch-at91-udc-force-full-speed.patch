@@ -1,7 +1,7 @@
-From 1402207cdb93a0f12ef5b544184c17b35d4ffd12 Mon Sep 17 00:00:00 2001
-From: Alessandro Rubini <rubini@gnudd.com>
-Date: Tue, 17 Jun 2014 10:47:30 +0200
-Subject: [PATCH 9/9] at91 udc: force full speed
+From 036bcbd702ca7129ce72871b62c67291022ae6f4 Mon Sep 17 00:00:00 2001
+From: Federico Vaga <federico.vaga@cern.ch>
+Date: Thu, 13 Oct 2016 17:06:35 +0200
+Subject: [PATCH 8/8] wr-switch (at91 udc): force full speed
 
 Some WRS speciments won't work correctly with automatic speed setup.
 This patch forces full-speed on the device (instead of the
@@ -9,16 +9,21 @@ autodetected high-speed), and thus they work.
 
 Speed is not a problem anyways, because it is just a serial port.
 
+Update to 3.16.37
+=================
+This patch has been ported from 2.6.39.
+
 Signed-off-by: Alessandro Rubini <rubini@gnudd.com>
+Signed-off-by: Federico Vaga <federico.vaga@cern.ch>
 ---
- drivers/usb/gadget/atmel_usba_udc.c |    7 +++++--
- 1 files changed, 5 insertions(+), 2 deletions(-)
+ drivers/usb/gadget/atmel_usba_udc.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/usb/gadget/atmel_usba_udc.c b/drivers/usb/gadget/atmel_usba_udc.c
-index e7c65a4..bd6ccfb 100644
+index 892bd97..34b0e87 100644
 --- a/drivers/usb/gadget/atmel_usba_udc.c
 +++ b/drivers/usb/gadget/atmel_usba_udc.c
-@@ -1158,12 +1158,12 @@ static int do_test_mode(struct usba_udc *udc)
+@@ -1149,12 +1149,12 @@ static int do_test_mode(struct usba_udc *udc)
  		break;
  	case 0x0300:
  		/*
@@ -26,14 +31,14 @@ index e7c65a4..bd6ccfb 100644
 +		 * Test_SE0_NAK: Force full-speed mode and set up ep0
  		 * for Bulk IN transfers
  		 */
- 		ep = &usba_ep[0];
+ 		ep = &udc->usba_ep[0];
  		usba_writel(udc, TST,
 -				USBA_BF(SPEED_CFG, USBA_SPEED_CFG_FORCE_HIGH));
 +				USBA_BF(SPEED_CFG, USBA_SPEED_CFG_FORCE_FULL));
  		usba_ep_writel(ep, CFG,
  				USBA_BF(EPT_SIZE, USBA_EPT_SIZE_64)
  				| USBA_EPT_DIR_IN
-@@ -1832,6 +1832,9 @@ int usb_gadget_probe_driver(struct usb_gadget_driver *driver,
+@@ -1812,6 +1812,9 @@ static int atmel_usba_start(struct usb_gadget *gadget,
  		toggle_bias(1);
  		usba_writel(udc, CTRL, USBA_ENABLE_MASK);
  		usba_writel(udc, INT_ENB, USBA_END_OF_RESET);
@@ -44,5 +49,5 @@ index e7c65a4..bd6ccfb 100644
  	spin_unlock_irqrestore(&udc->lock, flags);
  
 -- 
-1.7.7.2
+2.7.4
 

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-KERVER=2.6.39
-
 # check variables, like all scripts herein do
 WRS_SCRIPT_NAME=$(basename $0)
 if [ -z "$WRS_BASE_DIR" ]; then
@@ -13,8 +11,9 @@ fi
 wrs_check_vars WRS_OUTPUT_DIR WRS_DOWNLOAD_DIR CROSS_COMPILE
 
 wrs_echo "--- Linux kernel for switch"
-tarname="linux-${KERVER}.tar.bz2"
-patchdir="${WRS_BASE_DIR}/../patches/kernel/v${KERVER}"
+
+tarname="linux-${KVER}.tar.xz"
+patchdir="${WRS_BASE_DIR}/../patches/kernel/v${KVER}"
 wrs_download $tarname
 
 mkdir -p $WRS_OUTPUT_DIR/build || wrs_die "mkdir build"
@@ -22,9 +21,10 @@ mkdir -p $WRS_OUTPUT_DIR/images || wrs_die "mkdir images"
 
 # go to the build dir and compile it, using our configuration
 cd $WRS_OUTPUT_DIR/build
-dirname="linux-${KERVER}"
+dirname="linux-${KVER}"
 rm -rf $dirname
-tar xjf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
+# xz archive, so use "J" for tar
+tar xJf ${WRS_DOWNLOAD_DIR}/$tarname || wrs_die "untar $tarname"
 
 # apply patches
 cd $dirname
@@ -34,7 +34,7 @@ done
 
 
 # copy the config and replace "-j" level. First remove it in case it's left in
-CFG="${patchdir}/linux-config-wrswitch"
+CFG=$WRS_BASE_DIR/../configs/wrs_linux_defconfig
 if [ "x$WRS_KERNEL_CONFIG" != "x" ]; then
     if [ -f $WRS_KERNEL_CONFIG ]; then
 	CFG=$WRS_KERNEL_CONFIG
@@ -50,7 +50,7 @@ make oldconfig  || wrs_die "kernel config"
 
 make $WRS_MAKE_J zImage modules  || wrs_die "kernel compilation"
 
-mkdir -p $WRS_OUTPUT_DIR/images/lib/modules/$KERVER/kernel
+mkdir -p $WRS_OUTPUT_DIR/images/lib/modules/$KVER/kernel
 
-cp $(find . -name '*.ko') $WRS_OUTPUT_DIR/images/lib/modules/$KERVER/kernel
+cp $(find . -name '*.ko') $WRS_OUTPUT_DIR/images/lib/modules/$KVER/kernel
 cp arch/$ARCH/boot/zImage $WRS_OUTPUT_DIR/images

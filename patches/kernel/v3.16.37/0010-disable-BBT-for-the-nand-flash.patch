@@ -1,0 +1,46 @@
+From 882cefc0c65c424e6f080b00e77465cadbe777c6 Mon Sep 17 00:00:00 2001
+From: Adam Wujek <adam.wujek@cern.ch>
+Date: Thu, 24 Nov 2016 17:06:13 +0100
+Subject: [PATCH] disable BBT for the nand flash
+
+Disable the Bad Block Table (BBT) because the BBT uses the 4 last PEBs of
+nand flash, which overwrites UBIFS.
+BBT was disabled in the old kernel. There is not so much performance penalty
+due to that (see the last sentence in the citation below). There is no impact
+on the reliability of a flash because this is just a table of bad blocks which
+is otherwise recreated in the ram at every boot.
+
+The MTD layer supplies upper layers (including UBI) with information about bad
+PEBs. It keeps so-called bad block table in RAM, which is usually 1 bit per PEB.
+When the driver initializes, it has to build this table by scanning whole flash
+media, which normally includes reading OOB area of 1st NAND page of each PEB.
+This takes time and may be improved by using on-flash BBT (bad block table).
+In this case the bad PEB map is stored on flash and MTD does not have to do any
+scanning. See the NAND_USE_FLASH_BBT constant in the Linux source codes. But
+note, bad PEB scanning is usually minor comparing to the UBI scan time, so
+on-flash BBT is not probably going to give much.
+(http://www.linux-mtd.infradead.org/faq/ubi.html#L_attach_faster)
+
+Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
+---
+ arch/arm/mach-at91/board-sam9m10g45ek.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index 5686a87..59fe03d 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -181,7 +181,9 @@ static struct atmel_nand_data __initdata ek_nand_data = {
+ 	.enable_pin	= AT91_PIN_PC14,
+ 	.det_pin	= -EINVAL,
+ 	.ecc_mode	= NAND_ECC_SOFT,
+-	.on_flash_bbt	= 1,
++	.on_flash_bbt	= 0, /* Disable the BBT since it uses 4 last PEBs in
++				the nand, which are used by the ubifs already.
++				It does not decrease in the reliability. */
+ 	.parts		= ek_nand_partition,
+ 	.num_parts	= ARRAY_SIZE(ek_nand_partition),
+ };
+-- 
+1.9.1
+

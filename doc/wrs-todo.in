@@ -141,13 +141,6 @@ waiting for the boot loader to be sent to RAM from USB.
 
 @itemize @bullet
 
-@item 2.6.39 is pretty old nowadays. We should move to a recent kernel.
-Unfortunately this means writing the ``device tree'' crap for our board,
-as everything nowadays is device-tree-based.  Which in my opinion has
-been designed by our competitors, to kill us slowly and painfully.
-In addition, our patches must be ported forward.  A patch-set for 3.14
-is currently work in progress.
-
 @item The @i{wr-nic} driver is very similar to what we run for the SPEC,
 we went forward in merging it with the one in @i{spec-sw} but a few
 lines are still different.  Unifying will allow using a driver

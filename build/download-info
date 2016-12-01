@@ -15,8 +15,8 @@ barebox-2014.04.0.tar.bz2       e1f089fc24cc7f24478e663c0e3b91d9 \
    http://www.barebox.org/download/barebox-2014.04.0.tar.bz2
 
 # kernel
-linux-2.6.39.tar.bz2            1aab7a741abe08d42e8eccf20de61e05 \
-   http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.39.tar.bz2
+linux-3.16.37.tar.xz            fc4e8c469cf852a128e160f2910c1f21 \
+   https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.16.37.tar.xz
 
 # our gateware binaries
 wrs-gw-v4.2-20150826.tar.gz 807117326f6d5b1b53ebc95ca093fc44 \

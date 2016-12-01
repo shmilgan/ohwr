@@ -1,0 +1,32 @@
+From 6e431fcaed49be557b0721e6f9f4f22151a74838 Mon Sep 17 00:00:00 2001
+From: Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
+Date: Thu, 31 May 2012 13:26:20 +0200
+Subject: [PATCH 3/8] wr-switch (sam9m10g45ek): change USB vbus_pin from PB19
+ to PB8
+
+We are builing our environment on top of the sam9m10g45
+evaluation-kit board. In the EK design the pin PB19 is used
+but on the switch we use PB8.
+
+Signed-off-by: Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
+Signed-off-by: Federico Vaga <federico.vaga@cern.ch>
+---
+ arch/arm/mach-at91/board-sam9m10g45ek.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/mach-at91/board-sam9m10g45ek.c b/arch/arm/mach-at91/board-sam9m10g45ek.c
+index 74ae268..824ae43 100644
+--- a/arch/arm/mach-at91/board-sam9m10g45ek.c
++++ b/arch/arm/mach-at91/board-sam9m10g45ek.c
+@@ -74,7 +74,7 @@ static struct at91_usbh_data __initdata ek_usbh_hs_data = {
+  * USB HS Device port
+  */
+ static struct usba_platform_data __initdata ek_usba_udc_data = {
+-	.vbus_pin	= AT91_PIN_PB19,
++	.vbus_pin	= AT91_PIN_PB8,
+ };
+ 
+ 
+-- 
+2.7.4
+

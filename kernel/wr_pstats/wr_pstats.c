@@ -28,12 +28,26 @@
 #include <linux/spinlock.h>
 #include <linux/moduleparam.h>
 #include <linux/netdevice.h>
+#include <linux/irqdomain.h>
+
+/*
+ * Ugly trick to be able to use headers that have been moved out
+ * from mach/ directory
+ */
+#include <mach/../../at91_aic.h>
 
 #include "../wbgen-regs/pstats-regs.h"
 #include "wr_pstats.h"
 
 #define pstats_readl(device, r)		__raw_readl(&device.regs->r)
 #define pstats_writel(val, device, r)	__raw_writel(val, &device.regs->r)
+
+/**
+ * IRQ domain to be used. This is static here but in general it should be
+ * a module parameter or somehow configurable. For the time being we keep
+ * it hard-coded here.
+ */
+static const char *irqdomain_name = "htvic-wr-swi.0";
 
 static int pstats_nports = PSTATS_DEFAULT_NPORTS;
 static uint32_t portmsk;
@@ -436,8 +450,16 @@ static struct ctl_table_header *pstats_header;
 
 static int __init pstats_init(void)
 {
-	int i, err = 0;
+	int i, err = 0, irq;
 	unsigned int data;
+	struct irq_domain *irqdomain;
+
+	irqdomain = irq_find_host((struct device_node *)irqdomain_name);
+	if (!irqdomain) {
+		pr_err("pstat: The IRQ domain %s does not exist\n",
+			irqdomain_name);
+		return -EINVAL;
+	}
 
 	if (pstats_nports > PSTATS_MAX_NPORTS) {
 		printk(KERN_ERR "%s: Too many ports for pstats %u,"
@@ -525,7 +547,8 @@ static int __init pstats_init(void)
 
 	/*request pstats IRQ*/
 	pstats_irq_disable(PSTATS_ALL_MSK);
-	err = request_irq(WRVIC_BASE_IRQ+WR_PSTATS_IRQ, pstats_irq_handler,
+	irq = irq_find_mapping(irqdomain, WR_PSTATS_IRQ);
+	err = request_irq(irq, pstats_irq_handler,
 			IRQF_SHARED, "wr_pstats", &pstats_dev);
 	if (err) {
 		printk(KERN_ERR "%s: cannot request interrupt\n",
@@ -553,8 +576,19 @@ err_exit:
 
 static void __exit pstats_exit(void)
 {
+	int irq;
+	struct irq_domain *irqdomain;
+
 	pstats_irq_disable(PSTATS_ALL_MSK);
-	free_irq(WRVIC_BASE_IRQ+WR_PSTATS_IRQ, &pstats_dev);
+
+	irqdomain = irq_find_host((struct device_node *)irqdomain_name);
+	if (!irqdomain) {
+		pr_err("pstat: The IRQ domain %s does not exist\n",
+			irqdomain_name);
+	} else {
+		irq = irq_find_mapping(irqdomain, WR_PSTATS_IRQ);
+		free_irq(irq, &pstats_dev);
+	}
 
 	wr_nic_pstats_callback = NULL;
 

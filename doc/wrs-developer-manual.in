@@ -363,7 +363,7 @@ The messages of a download run are like the following ones:
     2016-06-02 17:10:46: --- Downloading base packages
     2016-06-02 17:10:50: Retrieved at91bootstrap-3-3.0.tar.gz from upstream
     2016-06-02 17:10:51: Retrieved barebox-2014.04.0.tar.bz2 from upstream
-    2016-06-02 17:11:21: Retrieved linux-2.6.39.tar.bz2 from upstream
+    2016-06-02 17:11:21: Retrieved linux-3.16.37.tar.xz from upstream
     2016-06-02 17:11:22: Retrieved wrs-gw-v4.2-20150826.tar.gz from upstream
     2016-06-02 17:11:27: Retrieved buildroot-2016.02.tar.bz2 from upstream
 @end smallexample
@@ -736,31 +736,26 @@ in two lines with a local variable to fit the page with in documentation):
 @node The Linux Kernel
 @subsection The Linux Kernel
 
-The kernel is currently version 2.6.39, compiled from an uncompressed
+The kernel is currently version 3.16.37, compiled from an uncompressed
 tar file (so not within a @i{git} repository).  The upstream
 vanilla kernel is downloaded, then
 local patches are applied (they come from a @i{git}
 repository, but they are currently applied with a simple @i{patch}
 command).
 
-The relevant patches are available in @i{patches/kernel/v2.6.39},
+The relevant patches are available in @i{patches/kernel/v3.16.37},
 and are currently the following ones:
 
 @example
-   0001-wrs3-changes-to-g45ek.patch
-   0002-initramfs-stop-after-one-cpio-archive.patch
-   0003-at91-NR_IRQS-increase-by-64-to-fit-custom-muxes.patch
-   0004-irq-export-symbols-for-external-irq-controller.patch
-   0005-Change-Vbus-pin.patch
-   0006-arm-fiq-allow-modules-to-exploit-the-fiq-mechanism.patch
-   0007-mtd-nand-sam9g45-can-hwecc-like-9263.patch
-   0008-wrs3-use-correct-nand-partitioning.patch
-   0009-at91-udc-force-full-speed.patch
-   0010-sam9m10g45ek-for-wrs-new-partitioning.patch
-   0011-sam9m10g45ek-for-wrs-final-partitions-for-V4.1.patch
-   0012-sam9m10g45ek-for-wrs-more-relaxed-nand-timings.patch
-   0013-mtd_dataflash-Read-EDI-JEDEC-to-support-AT45DB641E.patch
-   0014-sam9m10g45ek-for-wrs-provide-bootcount-using-scratch.patch
+  0001-initramfs-stop-after-one-cpio-archive.patch
+  0002-arm-fiq-allow-modules-to-exploit-the-fiq-mechanism.patch
+  0003-mtd_dataflash-Read-EDI-bytes-in-JEDEC-to-support-AT4.patch
+  0004-wr-switch-sam9m10g45ek-enable-FPGA-access-from-EBI1-.patch
+  0005-wr-switch-sam9m10g45ek-change-USB-vbus_pin-from-PB19.patch
+  0006-wr-switch-sam9m10g45ek-store-device-partitioning.patch
+  0007-wr-switch-sam9m10g45ek-more-relaxed-nand-timings.patch
+  0008-wr-switch-sam9m10g45ek-provide-bootcount-using-scrat.patch
+  0009-wr-switch-at91-udc-force-full-speed.patch
 @end example
 
 The configuration we use to build the kernel is not a patch but a plain
@@ -797,7 +792,7 @@ Currently, the package includes the following modules:
 
 @itemize @bullet
 
-@item @i{wr_vic.ko}: the interrupt controller for in-FPGA devices.
+@item @i{htvic.ko}: the interrupt controller for in-FPGA devices.
 @item @i{wr-nic.ko}: the network ``card'' driver for WR ports.
 @item @i{wr_rtu.ko}: the routing-table interface between the
       switching core and the associated user-space daemon.
@@ -811,6 +806,8 @@ offset (well lower than a second, after the initial ntp-driven setting event).
 This is considered acceptable, because system time is only
 used for logging.
 
+
+@item @i{wrs_devices.ko}: a dummy module that register our platform devices.
 
 @end itemize
 

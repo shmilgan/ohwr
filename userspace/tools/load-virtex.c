@@ -23,8 +23,6 @@
 #include <mach/at91sam9g45.h>
 
 #include <mach/at91_pio.h>
-#include <mach/at91_ssc.h>
-#include <mach/at91_pmc.h>
 
 #include <libwr/util.h>
 
@@ -34,8 +32,46 @@
 
 static unsigned char *bstream;
 
+
+/* FIXME definitions from kernel 2.6.39  - read commit message */
+#define AT91SAM9G45_PERIPH (0xFFF78000)
+#define AT91SAM9G45_SSC0 (0xFFF9C000)
+#define AT91_SSC_CR 0x00
+#define   AT91_SSC_RXEN (1 <<  0) /* Receive Enable */
+#define   AT91_SSC_RXDIS (1 <<  1) /* Receive Disable */
+#define   AT91_SSC_TXEN (1 <<  8) /* Transmit Enable */
+#define   AT91_SSC_TXDIS (1 <<  9) /* Transmit Disable */
+#define   AT91_SSC_SWRST (1 << 15) /* Software Reset */
+#define AT91_SSC_CMR 0x04 /* Clock Mode Register */
+#define   AT91_SSC_CMR_DIV (0xfff << 0) /* Clock Divider */
+#define AT91_SSC_RCMR 0x10 /* Receive Clock Mode Register */
+#define   AT91_SSC_CKS (3 <<  0) /* Clock Selection */
+#define      AT91_SSC_CKS_DIV (0 << 0)
+#define      AT91_SSC_CKS_CLOCK (1 << 0)
+#define      AT91_SSC_CKS_PIN (2 << 0)
+
+#define AT91_SSC_RFMR 0x14 /* Receive Frame Mode Register */
+#define   AT91_SSC_DATALEN (0x1f <<  0) /* Data Length */
+#define   AT91_SSC_LOOP (1    <<  5) /* Loop Mode */
+#define   AT91_SSC_MSBF (1    <<  7) /* Most Significant Bit First */
+
+#define AT91_SSC_TCMR 0x18 /* Transmit Clock Mode Register */
+#define AT91_SSC_TFMR 0x1c /* Transmit Fram Mode Register */
+#define   AT91_SSC_DATDEF (1 <<  5) /* Data Default Value */
+#define   AT91_SSC_FSDEN (1 << 23) /* Frame Sync Data Enable */
+#define AT91_SSC_THR 0x24 /* Transmit Holding Register */
+#define AT91_SSC_SR 0x40 /* Status Register */
+#define   AT91_SSC_TXRDY (1 <<  0) /* Transmit Ready */
+#define   AT91_SSC_TXEMPTY (1 <<  1) /* Transmit Empty */
+
+
+#define AT91_SYS (0xFFFFE200)
+#define   AT91_SYS_PIOA (0x1000)
+#define AT91_SYS_PMC (0x1A00)
+#define   AT91_SYS_PMC_PCER (0x10)
+
 /* The address and size of the entire AT91 I/O reg space */
-#define BASE_IOREGS 0xfff78000
+#define BASE_IOREGS AT91SAM9G45_PERIPH
 #define SIZE_IOREGS 0x88000
 
 enum {
@@ -48,18 +84,20 @@ enum {
 
 static void *ioregs;
 
-
-#define AT91_PIOx(port) (AT91_PIOA + AT91_BASE_SYS + 0x200 * port)
+#define __PERIPH_FIXUP(__addr) (ioregs - BASE_IOREGS + __addr)
+#define AT91_PIOx(port) (AT91_SYS + AT91_SYS_PIOA + 0x200 * port)
 
 /* macros to access 32-bit registers of various peripherals */
-#define __PIO(port, regname) (*(volatile uint32_t *) \
-  (ioregs + AT91_PIOx(port) - BASE_IOREGS + regname))
+#define __PIO_ADDR(port, regname) (AT91_PIOx(port) + regname)
+#define __SSC_ADDR(regname) (AT91SAM9G45_SSC0 + regname)
+#define __PMC_ADDR(regname) (AT91_SYS + AT91_SYS_PMC + regname)
 
-#define __SSC(regname) (*(volatile uint32_t *) \
-  (ioregs + (AT91SAM9G45_BASE_SSC0 - BASE_IOREGS) + regname))
 
+#define __PIO(port, regname) (*(volatile uint32_t *)			\
+			      (__PERIPH_FIXUP(__PIO_ADDR(port, regname))))
+#define __SSC(regname) (*(volatile uint32_t *)(__PERIPH_FIXUP(__SSC_ADDR(regname))))
 #define __PMC(regname) \
-  (*(volatile uint32_t *)(ioregs + (AT91_BASE_SYS - BASE_IOREGS) + regname))
+	(*(volatile uint32_t *)(__PERIPH_FIXUP(__PMC_ADDR(regname))))
 
 /* Missing SSC reg fields */
 #define     AT91_SSC_CKO_DURING_XFER   (2 << 2)
@@ -145,7 +183,6 @@ static int load_fpga_child(char *fname)
 		exit(1);
 	}
 
-
 	/*
 	 * all of this stuff is working on gpio so enable pio, out or in
 	 */
@@ -161,7 +198,7 @@ static int load_fpga_child(char *fname)
 	pio_set(PIO_OER, TD0);
 
 	/* enable SSC controller clock */
-	__PMC(AT91_PMC_PCER) = 1<<AT91SAM9G45_ID_SSC0;
+	__PMC(AT91_SYS_PMC_PCER) = (1 << AT91SAM9G45_ID_SSC0);
 
 	__SSC(AT91_SSC_CR) = AT91_SSC_SWRST;
 	__SSC(AT91_SSC_CR) = 0;
