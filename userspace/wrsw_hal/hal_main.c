@@ -254,13 +254,13 @@ int main(int argc, char *argv[])
 	 * includes some jitter.
 	 */
 
-	t1 = get_monotonic_tics();
+	t1 = get_monotonic_us();
 	for (;;) {
 		int delay_ms;
 
 		hal_update_wripc(25 /* max ms delay */);
 
-		t2 = get_monotonic_tics();
+		t2 = get_monotonic_us();
 		delay_ms = (t2 - t1) / 1000;
 		if (delay_ms < PORT_FAN_MS_PERIOD)
 			continue;
