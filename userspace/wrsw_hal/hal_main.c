@@ -261,7 +261,7 @@ int main(int argc, char *argv[])
 		hal_update_wripc(25 /* max ms delay */);
 
 		t2 = get_monotonic_tics();
-		delay_ms = (t2 - t1) * 1000;
+		delay_ms = (t2 - t1) / 1000;
 		if (delay_ms < PORT_FAN_MS_PERIOD)
 			continue;
 
