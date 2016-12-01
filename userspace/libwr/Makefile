@@ -3,7 +3,8 @@ OBJS = init.o fpga_io.o util.o pps_gen.o i2c.o shw_io.o i2c_bitbang.o \
        ptpd_netif.o hal_client.o \
        shmem.o rt_client.o \
        dot-config.o wrs-msg.o \
-       mac.o
+       mac.o \
+       timeout.o
 
 LIB = libwr.a
 

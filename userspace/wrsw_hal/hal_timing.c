@@ -9,9 +9,9 @@
 #include <libwr/switch_hw.h>
 #include <libwr/config.h>
 #include <libwr/wrs-msg.h>
+#include <libwr/timeout.h>
 
 #include "wrsw_hal.h"
-#include "timeout.h"
 #include <rt_ipc.h>
 #include <hal_exports.h>
 
@@ -57,7 +57,7 @@ int hal_init_timing(char *filename)
 	switch (timing_mode) {
 	case HAL_TIMING_MODE_GRAND_MASTER:
 		rts_set_mode(RTS_MODE_GM_EXTERNAL);
-		tmo_init(&lock_tmo, LOCK_TIMEOUT_EXT, 0);
+		libwr_tmo_init(&lock_tmo, LOCK_TIMEOUT_EXT, 0);
 		break;
 
 	default: /* never hit, but having it here prevents a warning */
@@ -66,14 +66,14 @@ int hal_init_timing(char *filename)
 	case HAL_TIMING_MODE_FREE_MASTER:
 	case HAL_TIMING_MODE_BC:
 		rts_set_mode(RTS_MODE_GM_FREERUNNING);
-		tmo_init(&lock_tmo, LOCK_TIMEOUT_INT, 0);
+		libwr_tmo_init(&lock_tmo, LOCK_TIMEOUT_INT, 0);
 		break;
 	}
 
 	while (1) {
 		struct rts_pll_state pstate;
 
-		if (tmo_expired(&lock_tmo)) {
+		if (libwr_tmo_expired(&lock_tmo)) {
 			pr_error("Can't lock the PLL. "
 			      "If running in the GrandMaster mode, "
 			      "are you sure the 1-PPS and 10 MHz "
@@ -82,7 +82,7 @@ int hal_init_timing(char *filename)
 			if (timing_mode == HAL_TIMING_MODE_GRAND_MASTER) {
 				/*ups... something went wrong, try again */
 				rts_set_mode(RTS_MODE_GM_EXTERNAL);
-				tmo_init(&lock_tmo, LOCK_TIMEOUT_EXT, 0);
+				libwr_tmo_init(&lock_tmo, LOCK_TIMEOUT_EXT, 0);
 			} else {
 				pr_error("Got timeout\n");
 				return -1;

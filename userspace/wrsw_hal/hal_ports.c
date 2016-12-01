@@ -22,10 +22,10 @@
 #include <libwr/sfp_lib.h>
 #include <libwr/shmem.h>
 #include <libwr/config.h>
+#include <libwr/timeout.h>
 
 #include <ppsi/ppsi.h>
 #include "wrsw_hal.h"
-#include "timeout.h"
 #include <rt_ipc.h>
 #include <hal_exports.h>
 #include <libwr/hal_shmem.h>
@@ -230,8 +230,8 @@ int hal_port_init_shmem(char *logfilename)
 	pr_info("Initializing switch ports...\n");
 
 	/* default timeouts */
-	tmo_init(&hal_port_tmo_sfp, SFP_POLL_INTERVAL, 1);
-	tmo_init(&hal_port_tmo_rts, RTS_POLL_INTERVAL, 1);
+	libwr_tmo_init(&hal_port_tmo_sfp, SFP_POLL_INTERVAL, 1);
+	libwr_tmo_init(&hal_port_tmo_rts, RTS_POLL_INTERVAL, 1);
 
 	/* Open a single raw socket for accessing the MAC addresses, etc. */
 	hal_port_fd = socket(AF_PACKET, SOCK_DGRAM, 0);
@@ -341,7 +341,7 @@ static void poll_rts_state(void)
 {
 	struct rts_pll_state *hs = &hal_port_rts_state;
 
-	if (tmo_expired(&hal_port_tmo_rts)) {
+	if (libwr_tmo_expired(&hal_port_tmo_rts)) {
 		hal_port_rts_state_valid = rts_get_state(hs) < 0 ? 0 : 1;
 		if (!hal_port_rts_state_valid)
 			printf("rts_get_state failure, weird...\n");
@@ -618,7 +618,7 @@ static void hal_port_remove_sfp(struct hal_port_state * p)
 /* detects insertion/removal of SFP transceivers */
 static void hal_port_poll_sfp(void)
 {
-	if (tmo_expired(&hal_port_tmo_sfp)) {
+	if (libwr_tmo_expired(&hal_port_tmo_sfp)) {
 		uint32_t mask = shw_sfp_module_scan();
 		static int old_mask = 0;
 
