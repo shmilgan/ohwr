@@ -83,6 +83,11 @@ static int get_endpoint_status(struct ns_pstats *old,
 	return ret;
 }
 
+uint64_t delta_uint64(uint64_t a, uint64_t b)
+{
+	return (a > b) ? (a - b) : (b - a);
+}
+
 /* don't use this function for now, return OK */
 static int get_swcore_status(struct ns_pstats *old,
 			     struct wrsPstatsHCTable_s *new,
@@ -108,8 +113,7 @@ static int get_swcore_status(struct ns_pstats *old,
 		tx_delta = new[i].wrsPstatsHCTXFrames - old[i].wrsPstatsHCTXFrames;
 
 		if ( /* shouldn't differ more than FORWARD_DELTA */
-		     ((tx_delta - total_fwd_delta) > FORWARD_DELTA)
-		     || ((total_fwd_delta - tx_delta) > FORWARD_DELTA)
+		    delta_uint64(tx_delta, total_fwd_delta) > FORWARD_DELTA
 		) {
 			/* if error, no need to check more, but do it just for
 			 * logs */
