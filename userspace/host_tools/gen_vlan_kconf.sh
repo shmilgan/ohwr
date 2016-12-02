@@ -204,9 +204,9 @@ for set_i in {1..3}; do
 			echo "	  --\"prio\" is a priority of a VLAN; can take values between -1 and 7"
 			echo "	    -1 disables priority override, any other valid value takes"
 			echo "	    precedence over port priority"
-			echo "	  --If \"drop\" is set to \"y\", all frames belonging to this VID are"
+			echo "	  --If \"drop\" is set to y, yes or 1 all frames belonging to this VID are"
 			echo "	    dropped (note that frame can belong to a VID as a consequence of"
-			echo "	    per-port Endpoint configuration); can take values \"y\" and \"n\""
+			echo "	    per-port Endpoint configuration); can take values y, yes, 1, n, no, 0"
 			echo "	  --\"ports\" is a list of ports separated with a semicolon sign (\";\");"
 			echo "	    ports ranges are supported (with a minus sign)"
 		else

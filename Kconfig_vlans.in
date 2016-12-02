@@ -1456,9 +1456,9 @@ config VLANS_VLAN0000
 	  --"prio" is a priority of a VLAN; can take values between -1 and 7
 	    -1 disables priority override, any other valid value takes
 	    precedence over port priority
-	  --If "drop" is set to "y", all frames belonging to this VID are
+	  --If "drop" is set to y, yes or 1 all frames belonging to this VID are
 	    dropped (note that frame can belong to a VID as a consequence of
-	    per-port Endpoint configuration); can take values "y" and "n"
+	    per-port Endpoint configuration); can take values y, yes, 1, n, no, 0
 	  --"ports" is a list of ports separated with a semicolon sign (";");
 	    ports ranges are supported (with a minus sign)
 
@@ -1620,9 +1620,9 @@ config VLANS_VLAN0023
 	  --"prio" is a priority of a VLAN; can take values between -1 and 7
 	    -1 disables priority override, any other valid value takes
 	    precedence over port priority
-	  --If "drop" is set to "y", all frames belonging to this VID are
+	  --If "drop" is set to y, yes or 1 all frames belonging to this VID are
 	    dropped (note that frame can belong to a VID as a consequence of
-	    per-port Endpoint configuration); can take values "y" and "n"
+	    per-port Endpoint configuration); can take values y, yes, 1, n, no, 0
 	  --"ports" is a list of ports separated with a semicolon sign (";");
 	    ports ranges are supported (with a minus sign)
 
@@ -2114,9 +2114,9 @@ config VLANS_VLAN0101
 	  --"prio" is a priority of a VLAN; can take values between -1 and 7
 	    -1 disables priority override, any other valid value takes
 	    precedence over port priority
-	  --If "drop" is set to "y", all frames belonging to this VID are
+	  --If "drop" is set to y, yes or 1 all frames belonging to this VID are
 	    dropped (note that frame can belong to a VID as a consequence of
-	    per-port Endpoint configuration); can take values "y" and "n"
+	    per-port Endpoint configuration); can take values y, yes, 1, n, no, 0
 	  --"ports" is a list of ports separated with a semicolon sign (";");
 	    ports ranges are supported (with a minus sign)
 

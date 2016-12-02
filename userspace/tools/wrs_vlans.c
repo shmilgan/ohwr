@@ -1064,9 +1064,13 @@ static void read_dot_config_vlans(int vlan_min, int vlan_max)
 		}
 		if (!libwr_cfg_convert2("VLANS_VLAN%04d", "drop", LIBWR_STRING,
 					buff, vlan)) {
-			if (!strcmp(buff, "y"))
+			if (!strcmp(buff, "y") /* "y", "yes" or "1" */
+			    || !strcmp(buff, "yes")
+			    || !strcmp(buff, "1"))
 				sprintf(buff, "1");
-			else if (!strcmp(buff, "n"))
+			else if (!strcmp(buff, "n") /* "n", "no" or "0" */
+				 || !strcmp(buff, "no")
+				 || !strcmp(buff, "0"))
 				sprintf(buff, "0");
 			else {
 				pr_error("invalid drop parameter \"%s\" in "

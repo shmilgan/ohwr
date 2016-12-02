@@ -898,9 +898,10 @@ value is changed by the web interface, proper action is taken.
 	  7;
 	  -1 disables priority override, any other valid value takes
 	  precedence over port priority
-	@item If @t{drop} is set to @t{y}, all frames belonging to this VID are
-	  dropped (note that frame can belong to a VID as a consequence of
-	  per-port Endpoint configuration); can take values @t{y} and @t{n}
+	@item If @t{drop} is set to @t{y}, @t{yes} or @t{1}, all frames
+	  belonging to this VID are dropped (note that frame can belong to a
+	  VID as a consequence of per-port Endpoint configuration); can take
+	  values @t{y}, @t{yes}, @t{1}, @t{n}, @t{no}, @t{0}
 	@item @t{ports} is a list of ports separated with the semicolon sign
 	VLANs configuration per VLANS.
 	@end itemize
@@ -1228,8 +1229,8 @@ CONFIG_VLANS_PORT03_VID=2
 CONFIG_VLANS_PORT03_VID_PTP="2"
 
 CONFIG_VLANS_ENABLE_SET1=y
-CONFIG_VLANS_VLAN0001="fid=1,prio=4,drop=no,ports=1"
-CONFIG_VLANS_VLAN0002="fid=2,prio=4,drop=no,ports=2;3"
+CONFIG_VLANS_VLAN0001="fid=1,prio=4,drop=n,ports=1"
+CONFIG_VLANS_VLAN0002="fid=2,prio=4,drop=n,ports=2;3"
 @end smallexample
 
 @c =-------------------------------------------------------------------------
@@ -1240,12 +1241,18 @@ To configure the switch in the way descibed in the
 @ref{Example VLAN configuration}, using the command line tools please perform
 the following actions:
 
+Clear the current configuration:
+@smallexample
+# wrs_vlans --clear
+# wrs_vlans --rvid 0 --del
+@end smallexample
+
 Set ports' configuration by using the @t{wrs_vlans}:
 @smallexample
 # wrs_vlans \
     --port 1 --pmode 0 --pprio 4 --pvid 1 --puntag 1 \
     --port 2 --pmode 1 --pprio -1  \
-    --port 3 --pmode 0 --pprio 4 --pvid 2 --puntag 1
+    --port 3 --pmode 0 --pprio 7 --pvid 2 --puntag 1
 @end smallexample
 
 Set VID configuration by using @t{wrs_vlans}:
