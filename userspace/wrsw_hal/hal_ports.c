@@ -31,8 +31,11 @@
 #include <libwr/hal_shmem.h>
 #include "driver_stuff.h"
 
-#define RTS_POLL_INTERVAL 200 /* ms */
-#define SFP_POLL_INTERVAL 1000 /* ms */
+#define UPDATE_RTS_PERIOD 250 /* ms */
+#define UPDATE_SFP_PERIOD 1000 /* ms */
+#define UPDATE_SYNC_LEDS_PERIOD 500 /* ms */
+#define UPDATE_LINK_LEDS_PERIOD 500 /* ms */
+#define UPDATE_SFP_DOM_PERIOD 1000 /* ms */
 
 extern struct hal_shmem_header *hal_shmem;
 extern struct wrs_shm_head *hal_shmem_hdr;
@@ -49,6 +52,8 @@ static int hal_port_rts_state_valid = 0;
 
 /* Polling timeouts (RT Subsystem & SFP detection) */
 static timeout_t hal_port_tmo_rts, hal_port_tmo_sfp;
+static timeout_t update_sync_leds_tmo, update_link_leds_tmo;
+static timeout_t update_sfp_dom_tmo;
 static int hal_port_nports;
 
 static struct wr_servo_state *ppsi_servo;
@@ -230,8 +235,11 @@ int hal_port_init_shmem(char *logfilename)
 	pr_info("Initializing switch ports...\n");
 
 	/* default timeouts */
-	libwr_tmo_init(&hal_port_tmo_sfp, SFP_POLL_INTERVAL, 1);
-	libwr_tmo_init(&hal_port_tmo_rts, RTS_POLL_INTERVAL, 1);
+	libwr_tmo_init(&hal_port_tmo_sfp, UPDATE_SFP_PERIOD, 1);
+	libwr_tmo_init(&hal_port_tmo_rts, UPDATE_RTS_PERIOD, 1);
+	libwr_tmo_init(&update_sync_leds_tmo, UPDATE_SYNC_LEDS_PERIOD, 1);
+	libwr_tmo_init(&update_link_leds_tmo, UPDATE_LINK_LEDS_PERIOD, 1);
+	libwr_tmo_init(&update_sfp_dom_tmo, UPDATE_SFP_DOM_PERIOD, 1);
 
 	/* Open a single raw socket for accessing the MAC addresses, etc. */
 	hal_port_fd = socket(AF_PACKET, SOCK_DGRAM, 0);
@@ -658,17 +666,23 @@ void hal_port_update_all()
 	hal_port_poll_sfp();
 
 	for (i = 0; i < HAL_MAX_PORTS; i++)
-		if (ports[i].in_use) {
+		if (ports[i].in_use)
 			hal_port_fsm(&ports[i]);
+
+	if (hal_shmem->read_sfp_diag == READ_SFP_DIAG_ENABLE
+	    && libwr_tmo_expired(&update_sfp_dom_tmo)) {
+		for (i = 0; i < HAL_MAX_PORTS; i++) {
 			/* update DOM only for plugged ports with DOM
 			 * capabilities */
-			if (ports[i].state != HAL_PORT_STATE_DISABLED 
-			    && hal_shmem->read_sfp_diag == READ_SFP_DIAG_ENABLE
+			if (ports[i].in_use
+			    && ports[i].state != HAL_PORT_STATE_DISABLED
 			    && (ports[i].has_sfp_diag)) {
 				shw_sfp_update_dom(ports[i].hw_index,
 						  &ports[i].calib.sfp_dom_raw);
 			}
 		}
+	}
+
 	/* unlock shmem */
 	wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
 
@@ -676,11 +690,15 @@ void hal_port_update_all()
 	if (!try_open_ppsi_shmem())
 		return;
 
-	/* update color of the link LEDs */
-	update_link_leds();
+	if (libwr_tmo_expired(&update_link_leds_tmo)) {
+		/* update color of the link LEDs */
+		update_link_leds();
+	}
 
-	/* update LEDs of synced ports */
-	update_sync_leds();
+	if (libwr_tmo_expired(&update_sync_leds_tmo)) {
+		/* update LEDs of synced ports */
+		update_sync_leds();
+	}
 }
 
 int hal_port_enable_tracking(const char *port_name)
@@ -889,7 +907,7 @@ static void update_sync_leds(void)
 		    && state_up(ports[i].state)
 		    && !strcmp(ppsi_servo_local.if_name, ports[i].name)) {
 			if (update_count == ppsi_servo_local.update_count) {
-				if (since_last_servo_update < 10)
+				if (since_last_servo_update < 7)
 					since_last_servo_update++;
 			} else {
 				since_last_servo_update = 0;
@@ -902,7 +920,7 @@ static void update_sync_leds(void)
 			*/
 			if (ports[i].mode == HEXP_PORT_MODE_WR_SLAVE
 			    && ppsi_servo_local.state == WR_TRACK_PHASE
-			    && since_last_servo_update < 10
+			    && since_last_servo_update < 7
 			    ) {
 				set_led_synced(i, 1);
 			} else {

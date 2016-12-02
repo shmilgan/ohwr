@@ -19,12 +19,14 @@
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
 #include <libwr/util.h>
+#include <libwr/timeout.h>
 
 #include "wrsw_hal.h"
 #include <rt_ipc.h>
 
 #define MAX_CLEANUP_CALLBACKS 16
-#define PORT_FAN_MS_PERIOD 250
+#define UPDATE_FAN_PERIOD 500
+#define UPDATE_ALL_PERIOD 100
 
 static int daemon_mode = 0;
 static hal_cleanup_callback_t cleanup_cb[MAX_CLEANUP_CALLBACKS];
@@ -223,8 +225,10 @@ static void hal_parse_cmdline(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-	uint64_t t1, t2;
 	struct hal_temp_sensors temp_sensors; /* local copy of temperatures */
+	static timeout_t update_fan_tmo;
+	static timeout_t update_all_tmo;
+
 	wrs_msg_init(argc, argv);
 
 	/* Print HAL's version */
@@ -242,6 +246,9 @@ int main(int argc, char *argv[])
 	if (hal_init())
 		exit(1);
 
+	libwr_tmo_init(&update_fan_tmo, UPDATE_FAN_PERIOD, 1);
+	libwr_tmo_init(&update_all_tmo, UPDATE_ALL_PERIOD, 1);
+
 	/*
 	 * Main loop update - polls for WRIPC requests and rolls the port
 	 * state machines. This is not a busy loop, as wripc waits for
@@ -249,31 +256,26 @@ int main(int argc, char *argv[])
 	 * case it returns earlier.
 	 *
 	 * We thus check the actual time, and only proceed with
-	 * port and fan update every PORT_FAN_MS_PERIOD.  There still
+	 * port and fan update every UPDATE_FAN_PERIOD.  There still
 	 * is some jitter from hal_update_wripc() timing.
-	 * includes some jitter.
 	 */
 
-	t1 = get_monotonic_us();
 	for (;;) {
-		int delay_ms;
-
 		hal_update_wripc(25 /* max ms delay */);
 
-		t2 = get_monotonic_us();
-		delay_ms = (t2 - t1) / 1000;
-		if (delay_ms < PORT_FAN_MS_PERIOD)
-			continue;
+		if (libwr_tmo_expired(&update_all_tmo))
+			hal_port_update_all();
 
-		hal_port_update_all();
-		/* Update fans and get temperatures values. Don't write
-		 * temperatures directly to the shmem to reduce the critical
-		 * section of shmem */
-		shw_update_fans(&temp_sensors);
-		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
-		memcpy(&hal_shmem->temp, &temp_sensors, sizeof(temp_sensors));
-		wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
-		t1 = t2;
+		if (libwr_tmo_expired(&update_fan_tmo)) {
+			/* Update fans and get temperatures values. Don't write
+			* temperatures directly to the shmem to reduce the
+			* critical section of shmem */
+			shw_update_fans(&temp_sensors);
+			wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_BEGIN);
+			memcpy(&hal_shmem->temp, &temp_sensors,
+			       sizeof(temp_sensors));
+			wrs_shm_write(hal_shmem_hdr, WRS_SHM_WRITE_END);
+		}
 	}
 
 	hal_shutdown();
