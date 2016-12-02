@@ -24,6 +24,7 @@
 	<?php
 
 		echo '<center><strong>Existing VLANs</strong></center><hr>';
+		echo '<center><strong><font color="red">!! Please note that all changes to the VLANs configuration will be lost after a reboot !! <br> Use dot-config instead.</font></strong></center><hr>';
 		$tmp_vlan_file="/tmp/vlans.conf";
 		$vlans = shell_exec("/wr/bin/wrs_vlans --list >".$tmp_vlan_file);
 		$vlans = shell_exec("cat ".$tmp_vlan_file." |  sed -n '/ /s/ \+/ /gp'");
@@ -84,6 +85,7 @@
 		//Display Port2Vlan assignment
 		echo '<br><br>';
 		echo '<center><strong>Port2Vlan assignments</strong></center><hr>';
+		echo '<center><strong><font color="red">!! Please note that all changes to the VLANs configuration will be lost after a reboot !! <br> Use dot-config instead.</font></strong></center><hr>';
 		echo '<table class="altrowstable firstcol" id="alternatecolor1" width="100%">';
 		echo '<tr><th>Port</strong></th><th>QMode</th><th>Priority</th><th>VLAN ID</th><th>MAC Address</th></tr>';
 

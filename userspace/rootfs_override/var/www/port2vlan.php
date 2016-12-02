@@ -25,6 +25,7 @@
 
 		// Get VLANS
 		echo '<center><strong>Port-VLAN List</strong></center><hr>';
+		echo '<center><strong><font color="red">!! Please note that all changes to the VLANs configuration will be lost after a reboot !! <br> Use dot-config instead.</font></strong></center><hr>';
 		$tmp_vlan_file="/tmp/vlans.conf";
 		$vlans = shell_exec("/wr/bin/wrs_vlans --list >".$tmp_vlan_file);
 		$vlans = shell_exec("cat ".$tmp_vlan_file." |  sed -n '/ /s/ \+/ /gp'");
