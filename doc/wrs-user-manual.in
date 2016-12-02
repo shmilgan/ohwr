@@ -648,9 +648,6 @@ value is changed by the web interface, proper action is taken.
 				   (@t{CONFIG_FIBERXX_PARAMS})
 				   should be used for a fiber connected to
 				   a particular port
-		@item @t{ppsi_vlans} -- colon separated list describing which
-					vlans shall be assigned to the
-					particular ppsi instance
         @end itemize
 
         Most likely the default values work for you.
@@ -878,6 +875,11 @@ value is changed by the web interface, proper action is taken.
 	VID value used when tagging frames or to override VID passed to RTU.
 	VID takes values 0..4094.
 	For details please refer to the @ref{VLANs Configuration}
+
+@item CONFIG_VLANS_PORTXX_VID_PTP
+
+	Semicolon separated list describing which vlans shall be assigned to
+	a PTP instance on a particular port
 
 @item CONFIG_VLANS_VLANXXXX
 
@@ -1206,21 +1208,24 @@ To configure the switch in the way descibed in the
 following config options:
 
 @smallexample
-CONFIG_PORT01_PARAMS="name=wri1,proto=raw,tx=0,rx=0,role=slave,fiber=0,ppsi_vlans=1"
-CONFIG_PORT02_PARAMS="name=wri2,proto=raw,tx=0,rx=0,role=master,fiber=0,ppsi_vlans=2"
-CONFIG_PORT03_PARAMS="name=wri3,proto=raw,tx=0,rx=0,role=master,fiber=0,ppsi_vlans=2"
+CONFIG_PORT01_PARAMS="name=wri1,proto=raw,tx=0,rx=0,role=slave,fiber=0"
+CONFIG_PORT02_PARAMS="name=wri2,proto=raw,tx=0,rx=0,role=master,fiber=0"
+CONFIG_PORT03_PARAMS="name=wri3,proto=raw,tx=0,rx=0,role=master,fiber=0"
 
 CONFIG_VLANS_ENABLE=y
 CONFIG_VLANS_PORT01_MODE_ACCESS=y
 CONFIG_VLANS_PORT01_UNTAG_ALL=y
 CONFIG_VLANS_PORT01_PRIO=4
 CONFIG_VLANS_PORT01_VID=1
+CONFIG_VLANS_PORT01_VID_PTP="1"
 CONFIG_VLANS_PORT02_MODE_TRUNK=y
 CONFIG_VLANS_PORT02_PRIO=-1
+CONFIG_VLANS_PORT02_VID_PTP="2"
 CONFIG_VLANS_PORT03_MODE_ACCESS=y
 CONFIG_VLANS_PORT03_UNTAG_ALL=y
 CONFIG_VLANS_PORT03_PRIO=7
 CONFIG_VLANS_PORT03_VID=2
+CONFIG_VLANS_PORT03_VID_PTP="2"
 
 CONFIG_VLANS_ENABLE_SET1=y
 CONFIG_VLANS_VLAN0001="fid=1,prio=4,drop=no,ports=1"

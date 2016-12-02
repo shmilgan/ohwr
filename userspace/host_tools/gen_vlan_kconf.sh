@@ -141,6 +141,16 @@ for port_i in {1..18}; do
 	echo "	help"
 	echo "	  VID value used when tagging frames or to override VID passed to RTU"
 	echo ""
+	echo "config VLANS_PORT"$port_0i"_VID_PTP"
+	echo "	string \"Port "$port_i" VIDs for PTP\""
+	echo "	default \"0\" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK"
+	echo "	default \"\" if VLANS_PORT01_MODE_UNQUALIFIED"
+	echo "	depends on VLANS_PORT"$port_0i"_MODE_ACCESS || VLANS_PORT"$port_0i"_MODE_TRUNK \\"
+	echo "		   || VLANS_PORT"$port_0i"_MODE_UNQUALIFIED"
+	echo "	help"
+	echo "	  Semicolon separated list describing which vlans shall be assigned to"
+	echo "	  a PTP instance on a particular port"
+	echo ""
 
 done
 
@@ -197,7 +207,7 @@ for set_i in {1..3}; do
 			echo "	  --If \"drop\" is set to \"y\", all frames belonging to this VID are"
 			echo "	    dropped (note that frame can belong to a VID as a consequence of"
 			echo "	    per-port Endpoint configuration); can take values \"y\" and \"n\""
-			echo "	  --\"ports\" is a list of ports separated with a semicolon sign(\";\");"
+			echo "	  --\"ports\" is a list of ports separated with a semicolon sign (\";\");"
 			echo "	    ports ranges are supported (with a minus sign)"
 		else
 			# for the rest just refer to the first VLAN in the menu

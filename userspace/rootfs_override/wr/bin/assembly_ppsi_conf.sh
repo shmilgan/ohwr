@@ -25,7 +25,6 @@ for i_zero in {01..18};do
 	unset p_name
 	unset p_proto
 	unset p_role
-	unset p_ppsi_vlans
 	# parse parameters
 	param_line=$(eval "echo \$CONFIG_PORT"$i_zero"_PARAMS")
 	IFS_OLD=$IFS
@@ -44,8 +43,6 @@ for i_zero in {01..18};do
 			p_proto="$value";;
 		"role")
 			p_role="$value";;
-		"ppsi_vlans")
-			p_ppsi_vlans="$value";;
 		"rx"|"tx"|"fiber")
 			continue;;
 		*)
@@ -75,10 +72,28 @@ for i_zero in {01..18};do
 	fi
 	#hardcode whiterabbit as extension even for non-wr
 	echo "extension whiterabbit" >> $OUTPUT_FILE
+
 	# add vlans
-	if [ -n "$p_ppsi_vlans" ]; then
-		mod_vlans=${p_ppsi_vlans//:/,}
-		echo "vlan $mod_vlans" >> $OUTPUT_FILE
+	if [ "$CONFIG_VLANS_ENABLE" = "y" ]; then
+		unset ppsi_vlans;
+		unset port_mode_access;
+		unset port_mode_trunk;
+		unset port_mode_unqualified;
+
+		# check port mode
+		port_mode_access=$(eval "echo \$CONFIG_VLANS_PORT"$i_zero"_MODE_ACCESS")
+		port_mode_trunk=$(eval "echo \$CONFIG_VLANS_PORT"$i_zero"_MODE_TRUNK")
+		port_mode_unqualified=$(eval "echo \$CONFIG_VLANS_PORT"$i_zero"_MODE_UNQUALIFIED")
+		# check port mode
+		if [ "$port_mode_access" = "y" ] \
+		    || [ "$port_mode_trunk" = "y" ] \
+		    || [ "$port_mode_unqualified" = "y" ]; then
+			ppsi_vlans=$(eval "echo \$CONFIG_VLANS_PORT"$i_zero"_VID_PTP")
+			if [ -n "$ppsi_vlans" ]; then
+				mod_vlans=${ppsi_vlans//;/,}
+				echo "vlan $mod_vlans" >> $OUTPUT_FILE
+			fi
+		fi
 	fi
 
 	# separate ports

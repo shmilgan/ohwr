@@ -127,6 +127,16 @@ config VLANS_PORT01_VID
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
 
+config VLANS_PORT01_VID_PTP
+	string "Port 1 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK \
+		   || VLANS_PORT01_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
+
 
 comment "Port 2"
 choice VLANS_PORT02_MODE
@@ -192,6 +202,16 @@ config VLANS_PORT02_VID
 	depends on VLANS_PORT02_MODE_ACCESS || VLANS_PORT02_MODE_UNQUALIFIED
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
+
+config VLANS_PORT02_VID_PTP
+	string "Port 2 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT02_MODE_ACCESS || VLANS_PORT02_MODE_TRUNK \
+		   || VLANS_PORT02_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
 
 
 comment "Port 3"
@@ -259,6 +279,16 @@ config VLANS_PORT03_VID
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
 
+config VLANS_PORT03_VID_PTP
+	string "Port 3 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT03_MODE_ACCESS || VLANS_PORT03_MODE_TRUNK \
+		   || VLANS_PORT03_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
+
 
 comment "Port 4"
 choice VLANS_PORT04_MODE
@@ -324,6 +354,16 @@ config VLANS_PORT04_VID
 	depends on VLANS_PORT04_MODE_ACCESS || VLANS_PORT04_MODE_UNQUALIFIED
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
+
+config VLANS_PORT04_VID_PTP
+	string "Port 4 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT04_MODE_ACCESS || VLANS_PORT04_MODE_TRUNK \
+		   || VLANS_PORT04_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
 
 
 comment "Port 5"
@@ -391,6 +431,16 @@ config VLANS_PORT05_VID
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
 
+config VLANS_PORT05_VID_PTP
+	string "Port 5 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT05_MODE_ACCESS || VLANS_PORT05_MODE_TRUNK \
+		   || VLANS_PORT05_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
+
 
 comment "Port 6"
 choice VLANS_PORT06_MODE
@@ -456,6 +506,16 @@ config VLANS_PORT06_VID
 	depends on VLANS_PORT06_MODE_ACCESS || VLANS_PORT06_MODE_UNQUALIFIED
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
+
+config VLANS_PORT06_VID_PTP
+	string "Port 6 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT06_MODE_ACCESS || VLANS_PORT06_MODE_TRUNK \
+		   || VLANS_PORT06_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
 
 
 comment "Port 7"
@@ -523,6 +583,16 @@ config VLANS_PORT07_VID
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
 
+config VLANS_PORT07_VID_PTP
+	string "Port 7 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT07_MODE_ACCESS || VLANS_PORT07_MODE_TRUNK \
+		   || VLANS_PORT07_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
+
 
 comment "Port 8"
 choice VLANS_PORT08_MODE
@@ -588,6 +658,16 @@ config VLANS_PORT08_VID
 	depends on VLANS_PORT08_MODE_ACCESS || VLANS_PORT08_MODE_UNQUALIFIED
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
+
+config VLANS_PORT08_VID_PTP
+	string "Port 8 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT08_MODE_ACCESS || VLANS_PORT08_MODE_TRUNK \
+		   || VLANS_PORT08_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
 
 
 comment "Port 9"
@@ -655,6 +735,16 @@ config VLANS_PORT09_VID
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
 
+config VLANS_PORT09_VID_PTP
+	string "Port 9 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT09_MODE_ACCESS || VLANS_PORT09_MODE_TRUNK \
+		   || VLANS_PORT09_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
+
 
 comment "Port 10"
 choice VLANS_PORT10_MODE
@@ -720,6 +810,16 @@ config VLANS_PORT10_VID
 	depends on VLANS_PORT10_MODE_ACCESS || VLANS_PORT10_MODE_UNQUALIFIED
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
+
+config VLANS_PORT10_VID_PTP
+	string "Port 10 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT10_MODE_ACCESS || VLANS_PORT10_MODE_TRUNK \
+		   || VLANS_PORT10_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
 
 
 comment "Port 11"
@@ -787,6 +887,16 @@ config VLANS_PORT11_VID
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
 
+config VLANS_PORT11_VID_PTP
+	string "Port 11 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT11_MODE_ACCESS || VLANS_PORT11_MODE_TRUNK \
+		   || VLANS_PORT11_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
+
 
 comment "Port 12"
 choice VLANS_PORT12_MODE
@@ -852,6 +962,16 @@ config VLANS_PORT12_VID
 	depends on VLANS_PORT12_MODE_ACCESS || VLANS_PORT12_MODE_UNQUALIFIED
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
+
+config VLANS_PORT12_VID_PTP
+	string "Port 12 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT12_MODE_ACCESS || VLANS_PORT12_MODE_TRUNK \
+		   || VLANS_PORT12_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
 
 
 comment "Port 13"
@@ -919,6 +1039,16 @@ config VLANS_PORT13_VID
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
 
+config VLANS_PORT13_VID_PTP
+	string "Port 13 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT13_MODE_ACCESS || VLANS_PORT13_MODE_TRUNK \
+		   || VLANS_PORT13_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
+
 
 comment "Port 14"
 choice VLANS_PORT14_MODE
@@ -984,6 +1114,16 @@ config VLANS_PORT14_VID
 	depends on VLANS_PORT14_MODE_ACCESS || VLANS_PORT14_MODE_UNQUALIFIED
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
+
+config VLANS_PORT14_VID_PTP
+	string "Port 14 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT14_MODE_ACCESS || VLANS_PORT14_MODE_TRUNK \
+		   || VLANS_PORT14_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
 
 
 comment "Port 15"
@@ -1051,6 +1191,16 @@ config VLANS_PORT15_VID
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
 
+config VLANS_PORT15_VID_PTP
+	string "Port 15 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT15_MODE_ACCESS || VLANS_PORT15_MODE_TRUNK \
+		   || VLANS_PORT15_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
+
 
 comment "Port 16"
 choice VLANS_PORT16_MODE
@@ -1116,6 +1266,16 @@ config VLANS_PORT16_VID
 	depends on VLANS_PORT16_MODE_ACCESS || VLANS_PORT16_MODE_UNQUALIFIED
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
+
+config VLANS_PORT16_VID_PTP
+	string "Port 16 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT16_MODE_ACCESS || VLANS_PORT16_MODE_TRUNK \
+		   || VLANS_PORT16_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
 
 
 comment "Port 17"
@@ -1183,6 +1343,16 @@ config VLANS_PORT17_VID
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
 
+config VLANS_PORT17_VID_PTP
+	string "Port 17 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT17_MODE_ACCESS || VLANS_PORT17_MODE_TRUNK \
+		   || VLANS_PORT17_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
+
 
 comment "Port 18"
 choice VLANS_PORT18_MODE
@@ -1249,6 +1419,16 @@ config VLANS_PORT18_VID
 	help
 	  VID value used when tagging frames or to override VID passed to RTU
 
+config VLANS_PORT18_VID_PTP
+	string "Port 18 VIDs for PTP"
+	default "0" if VLANS_PORT01_MODE_ACCESS || VLANS_PORT01_MODE_TRUNK
+	default "" if VLANS_PORT01_MODE_UNQUALIFIED
+	depends on VLANS_PORT18_MODE_ACCESS || VLANS_PORT18_MODE_TRUNK \
+		   || VLANS_PORT18_MODE_UNQUALIFIED
+	help
+	  Semicolon separated list describing which vlans shall be assigned to
+	  a PTP instance on a particular port
+
 # Ports configuration
 endmenu
 menu "VLANs configuration"
@@ -1279,7 +1459,7 @@ config VLANS_VLAN0000
 	  --If "drop" is set to "y", all frames belonging to this VID are
 	    dropped (note that frame can belong to a VID as a consequence of
 	    per-port Endpoint configuration); can take values "y" and "n"
-	  --"ports" is a list of ports separated with a semicolon sign(";");
+	  --"ports" is a list of ports separated with a semicolon sign (";");
 	    ports ranges are supported (with a minus sign)
 
 config VLANS_VLAN0001
@@ -1443,7 +1623,7 @@ config VLANS_VLAN0023
 	  --If "drop" is set to "y", all frames belonging to this VID are
 	    dropped (note that frame can belong to a VID as a consequence of
 	    per-port Endpoint configuration); can take values "y" and "n"
-	  --"ports" is a list of ports separated with a semicolon sign(";");
+	  --"ports" is a list of ports separated with a semicolon sign (";");
 	    ports ranges are supported (with a minus sign)
 
 config VLANS_VLAN0024
@@ -1937,7 +2117,7 @@ config VLANS_VLAN0101
 	  --If "drop" is set to "y", all frames belonging to this VID are
 	    dropped (note that frame can belong to a VID as a consequence of
 	    per-port Endpoint configuration); can take values "y" and "n"
-	  --"ports" is a list of ports separated with a semicolon sign(";");
+	  --"ports" is a list of ports separated with a semicolon sign (";");
 	    ports ranges are supported (with a minus sign)
 
 config VLANS_VLAN0102

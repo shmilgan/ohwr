@@ -315,9 +315,6 @@ config PORT01_PARAMS
 		       not in DB, copper SFP connected, non 1GB SFP etc.
 	    - none - disable White Rabbit and PTP on a portdisable White Rabbit
 		       on a port, keep PTP
-	   ppsi_vlans - colon separated list describing which vlans shall be
-		       assigned to the particular ppsi instance
-
 
 config PORT02_PARAMS
 	string "Parameters for port 2"
