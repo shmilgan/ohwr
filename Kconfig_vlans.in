@@ -1267,7 +1267,7 @@ config VLANS_VLAN0000
 	help
 	  Provide the configuration for VLAN0
 	  Example:
-	  fid=0,prio=4,drop=no,ports=1:18
+	  fid=0,prio=4,drop=no,ports=1;2;3-5;7
 	  Where:
 	  --"fid" is a associated Filtering ID (FID) number. One FID can be
 	    associated with many VIDs. RTU learning is performed per-FID.
@@ -1279,7 +1279,8 @@ config VLANS_VLAN0000
 	  --If "drop" is set to "y", all frames belonging to this VID are
 	    dropped (note that frame can belong to a VID as a consequence of
 	    per-port Endpoint configuration); can take values "y" and "n"
-	  --"ports" is a list of ports separated with the colon sign
+	  --"ports" is a list of ports separated with a semicolon sign(";");
+	    ports ranges are supported (with a minus sign)
 
 config VLANS_VLAN0001
 	string "VLAN1 configuration"
@@ -1430,7 +1431,7 @@ config VLANS_VLAN0023
 	help
 	  Provide the configuration for VLAN23
 	  Example:
-	  fid=23,prio=4,drop=no,ports=2:18
+	  fid=23,prio=4,drop=no,ports=1;2;3-5;7
 	  Where:
 	  --"fid" is a associated Filtering ID (FID) number. One FID can be
 	    associated with many VIDs. RTU learning is performed per-FID.
@@ -1442,7 +1443,8 @@ config VLANS_VLAN0023
 	  --If "drop" is set to "y", all frames belonging to this VID are
 	    dropped (note that frame can belong to a VID as a consequence of
 	    per-port Endpoint configuration); can take values "y" and "n"
-	  --"ports" is a list of ports separated with the colon sign
+	  --"ports" is a list of ports separated with a semicolon sign(";");
+	    ports ranges are supported (with a minus sign)
 
 config VLANS_VLAN0024
 	string "VLAN24 configuration"
@@ -1923,7 +1925,7 @@ config VLANS_VLAN0101
 	help
 	  Provide the configuration for VLAN101
 	  Example:
-	  fid=101,prio=4,drop=no,ports=3:18
+	  fid=101,prio=4,drop=no,ports=1;2;3-5;7
 	  Where:
 	  --"fid" is a associated Filtering ID (FID) number. One FID can be
 	    associated with many VIDs. RTU learning is performed per-FID.
@@ -1935,7 +1937,8 @@ config VLANS_VLAN0101
 	  --If "drop" is set to "y", all frames belonging to this VID are
 	    dropped (note that frame can belong to a VID as a consequence of
 	    per-port Endpoint configuration); can take values "y" and "n"
-	  --"ports" is a list of ports separated with the colon sign
+	  --"ports" is a list of ports separated with a semicolon sign(";");
+	    ports ranges are supported (with a minus sign)
 
 config VLANS_VLAN0102
 	string "VLAN102 configuration"

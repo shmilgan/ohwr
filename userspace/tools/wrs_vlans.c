@@ -121,7 +121,7 @@ static int parse_mask(char *arg, unsigned long *pmask)
 	char c, *newarg, *s;
 
 	newarg = strdup(arg);
-	while ( (s = strtok(newarg, ",")) ) {
+	while ( (s = strtok(newarg, ",;")) ) {
 		newarg = NULL; /* for next iteration */
 		switch (sscanf(s, "%i-%i%c", &p1, &p2, &c)) {
 		case 1:
@@ -139,7 +139,6 @@ static int parse_mask(char *arg, unsigned long *pmask)
 			return -1;
 		for (; p1 <= p2; p1++) {
 			*pmask |= (1 << p1);
-			portmask |= (1 << p1);
 		}
 	}
 	if (wrs_msg_level < LOG_DEBUG)
@@ -240,6 +239,9 @@ int main(int argc, char *argv[])
 				pr_error("wrong port mask \"%s\"\n", optarg);
 				exit(1);
 			}
+			/* add this set of ports to the global list of ports
+			 * that are configured */
+			portmask |= conf_pmask;
 			break;
 
 		case OPT_P_QMODE:
@@ -1030,8 +1032,6 @@ static void read_dot_config_vlans(int vlan_min, int vlan_max)
 	int vlan_flags;
 	int vlan;
 	char buff[60];
-	char *beg; /* beginning char of a port number */
-	char *end; /* end char of a port number */
 	int port;
 
 	for (vlan = vlan_min; vlan <= vlan_max; vlan++) {
@@ -1083,36 +1083,7 @@ static void read_dot_config_vlans(int vlan_min, int vlan_max)
 		}
 		if (!libwr_cfg_convert2("VLANS_VLAN%04d", "ports",
 					LIBWR_STRING, buff, vlan)) {
-			beg = buff;
-			while (1) {
-				port = strtol(beg, &end, 0);
-				if (end == beg) {
-					pr_error("invalid ports parameter "
-						 "\"%s\" in VLANS_VLAN%04d\n",
-						 buff, vlan);
-					exit(1);
-				}
-				if (port < 1 || port > NPORTS) {
-					pr_error("invalid port %d (\"%s\") for"
-						 " vlan %4d\n",
-						 port, buff, vlan);
-					exit(1);
-				}
-				if (wrs_msg_level >= LOG_DEBUG)
-					printf("Vlan %4d: Found port %d\n",
-					       vlan, port);
-				pmask |= 1 << (port - 1);
-				if (*end == '\0') {
-					/* end of ports' string */
-					break;
-				}
-				if (*end == ':') {
-					/* check next port */
-					beg = end;
-					beg++; /* skip ":" */
-					continue;
-				}
-			}
+			parse_mask(buff, &pmask);
 
 			if (pmask < RTU_PMASK_MIN || pmask > RTU_PMASK_MAX) {
 				pr_error("invalid port mask 0x%x (\"%s\") for "

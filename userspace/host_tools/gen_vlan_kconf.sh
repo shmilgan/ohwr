@@ -185,7 +185,7 @@ for set_i in {1..3}; do
 			# for the first VLAN in the menu print full help
 			echo "	  Provide the configuration for VLAN"$vlan_i
 			echo "	  Example:"
-			echo "	  fid="$vlan_min",prio=4,drop=no,ports="$set_i":18"
+			echo "	  fid="$vlan_min",prio=4,drop=no,ports=1;2;3-5;7"
 			echo "	  Where:"
 			echo "	  --\"fid\" is a associated Filtering ID (FID) number. One FID can be"
 			echo "	    associated with many VIDs. RTU learning is performed per-FID."
@@ -197,7 +197,8 @@ for set_i in {1..3}; do
 			echo "	  --If \"drop\" is set to \"y\", all frames belonging to this VID are"
 			echo "	    dropped (note that frame can belong to a VID as a consequence of"
 			echo "	    per-port Endpoint configuration); can take values \"y\" and \"n\""
-			echo "	  --\"ports\" is a list of ports separated with the colon sign"
+			echo "	  --\"ports\" is a list of ports separated with a semicolon sign(\";\");"
+			echo "	    ports ranges are supported (with a minus sign)"
 		else
 			# for the rest just refer to the first VLAN in the menu
 			echo "	  Please check the help of VLANS_VLAN"$vlan_min_0
