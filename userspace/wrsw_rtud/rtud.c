@@ -94,6 +94,7 @@ static int rtu_create_static_entries(void)
 	uint8_t slow_proto_mac[] = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x01 };
 	uint8_t ptp_mcast_mac[] = { 0x01, 0x1b, 0x19, 0x00, 0x00, 0x00 };
 	uint8_t udp_ptp_mac[] = { 0x01, 0x00, 0x5e, 0x00, 0x01, 0x81 };
+	uint8_t udp_ptp_p2p_mac[] = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x6b };
 	int i, err;
 	uint32_t enabled_port_mask = 0;
 
@@ -125,6 +126,13 @@ static int rtu_create_static_entries(void)
 	pr_info("Adding entry for PTP over UDP\n");
 	err =
 		rtu_fd_create_entry(udp_ptp_mac, 0, (1 << hal_nports_local),
+				    RTU_ENTRY_TYPE_STATIC, OVERRIDE_EXISTING);
+	if (err)
+		return err;
+
+	err =
+		rtu_fd_create_entry(udp_ptp_p2p_mac, 0,
+				    (1 << hal_nports_local),
 				    RTU_ENTRY_TYPE_STATIC, OVERRIDE_EXISTING);
 	if (err)
 		return err;
