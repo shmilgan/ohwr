@@ -22,7 +22,7 @@ bootargs="verbose console=ttyS0,115200 panic=10"
 
 # Pass IP information to the kernel (or ipinfo="dhcp" to re-request)
 ipinfo="$eth0.ipaddr:$eth0.serverip:$eth0.gateway:$eth0.netmask:wrs:eth0"
-bootargs="$bootargs root=nfs rw ip=$ipinfo"
+bootargs="$bootargs root=/dev/nfs rw ip=$ipinfo"
 
 # I you want, specify a non-default root directory
 bootargs="$bootargs nfsroot=/opt/root/wrs,tcp"

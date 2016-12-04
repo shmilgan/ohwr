@@ -1412,6 +1412,9 @@ The individual menu items perform the following actions:
 If you use the @i{wrboot} script option, you can for example run
 an NFS-Root system or do whatever customization and testing you want.
 
+@b{Note}: with 2.6.39 we suggested use of @t{root=nfs}, but this
+convention is no more supported in Linux, please use @t{root=/dev/nfs}.
+
 The complete filesystem after a successful build is called
 @t{images/wrs-image.tar.gz}, and is not included in the release
 firmware file, because an installed switch runs an @i{initramfs}
@@ -1491,10 +1494,18 @@ of known-working wrboot scripts as examples;
 @section Creating an NFS-Root Environment for WRS
 
 In order to create an NFS root directory, you should uncompress
-@t{wrs-image.tar.gz} that is created at build time.  If you use
+@t{wrs-image.tar.gz} that is created at build time in a newly-created
+empty directory:
+
+@example
+   tar xzf $WRS_OUTPUT_DIR/images/wrs-image.tar.gz
+@end example
+
+If you use
 a released @t{wrs-firmware.tar}, however, you'll have no overall
 filesystem for the switch, and you should rebuild it from two
-parts.  This is how to create your NFS filesystem (please adapt
+parts.  This is how to create your NFS filesystem from a
+released @t{wrs-firmware} file (please adapt
 for your local pathnames):
 
 @example

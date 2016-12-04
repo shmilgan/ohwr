@@ -914,7 +914,8 @@ the following command in a newly-created empty directory:
 
 To boot with NFS-root you should use a custom boot script,
 as described in the section @i{Using wrboot}, in the @i{@sc{wrs} User's
-Manual}.
+Manual}.  Please note that the kernel now needs @t{root=/dev/nfs},
+as the old convention @t{root=nfs} is not supported any more.
 
 The archives include a number of device special files in
 @i{dev}. The pre-created devices come from
