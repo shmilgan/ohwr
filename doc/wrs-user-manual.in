@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month July 2015
+@set update-month December 2016
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -70,7 +70,7 @@ configure them in their network.
 @node WRS Documentation
 @chapter WRS Documentation
 
-Up to and including release 4.0 of @sc{wrs} software this manual
+Up to and including release v4.0 of @sc{wrs} software this manual
 didn't exist, and the ``WRS Build Manual'' included some information
 about configuration.
 
@@ -112,7 +112,7 @@ This is the current set of manuals that accompany the @sc{wrs}:
 The official @sc{pdf} copy of these manuals at each release
 is published in the @i{files} tab of the software project in @t{ohwr.org}:
 (@url{http://www.ohwr.org/projects/wr-switch-sw/files}).
-This doesn't apply to release 4.0 and earlier.
+This doesn't apply to release v4.0 and earlier.
 
 The source form of all four manuals is maintained in @t{wr-switch-sw/doc}.
 Within the repository, three of them the @i{User's Manual},
@@ -149,19 +149,42 @@ rebuilding your own, as explained in the @i{Developer's Manual}.
 If you run version 4.1 or later please copy @t{wrs-firmware.tar} file into
 the @t{/update} partition via @t{scp} or web-interface and restart your switch.
 
-When the running version during the update is at least 4.3, then update script
+When the running version during the update is at least v5.0, then update script
 performs the check of md5sums of all files inside @t{wrs-firmware.tar}.
 In case at least one checksum is wrong then update is aborted.
-The @t{wrs-firmware.tar} containing corrupted file is renamed to
+When occurs, the checksum error is reported via SNMP (object
+@t{wrsFwUpdateStatus}) until the next successful update.
+Additionally, the @t{wrs-firmware.tar} containing corrupted file is renamed to
 @t{wrs-firmware.tar.checksum_error}. This file is automatically removed during
 the next successful update.
 
 When checksums in the @t{wrs-firmware.tar} are not available
-(for example during downgrading) appropriate warning message is printed.
+(for example during downgrading to version pre-5.0) appropriate warning
+message is printed to the console.
 
-If this method works for you, you can ignore this chapter, which
+If this method of upgrading firmware works for you, you can ignore the rest of
+this chapter, which
 explains a transition between the initial way we passed MAC addresses
 and the safer approach we introduced in v4.1
+
+@c ==========================================================================
+@node Upgrade from pre-v5.0 to v5.0
+@section Upgrade from pre-v5.0 to v5.0
+
+During the update from the pre-v5.0 firmware to v5.0 (or later) you might see
+the following errors on the console.
+@example
+/wr/bin/sdb-read: can't load library 'libm.so.1'
+Creating SDB filesystem in /dev/mtd5
+cp: can't stat '/wr/etc/sdb-for-dataflash': No such file or directory
+ done
+@end example
+Please ignore this message, no real error occurred nor @i{hwinfo} partition
+(@t{/dev/mtd5}) was overwritten. The error is caused by an old firmware trying
+to run a binary (@t{sdb-read} to be precise) from the new firmware image.
+The problem became visible now, because between v4.2 and v5.0 we uplifted
+the buildroot, which changed the version of @t{libm} library from @t{libm.so.0}
+to @t{libm.so.1}.
 
 @c ==========================================================================
 @node hwinfo for pre-v4.1
@@ -283,7 +306,7 @@ that will however be persistent over reboot (because it is saved to
 @node Upgrading from v3.x
 @section Upgrading from v3.x
 
-Upgrading from versions older than 4.0 (August 2014) requires physical
+Upgrading from versions older than v4.0 (August 2014) requires physical
 access to the device and, unfortunately, requires some extra steps
 especially if you want to preserve your MAC addresses.
 
@@ -303,13 +326,13 @@ only be performed by the manufacturer, not the final user.
 @node Configuration of the Device
 @chapter Configuration of the Device
 
-After release 3.3 of this software package, we added Kconfig support
+After release v3.3 of this software package, we added Kconfig support
 to wr-switch-sw.  If you build your software image (as documented
 in the @i{@sc{wrs} Developer's Manual}),  you can make some
 configuration choices for your customized firmware image.  But most
 users are not expected to rebuild.
 
-After release 4.1, we moved most of the configuration to run-time
+After release v4.1, we moved most of the configuration to run-time
 (rather than build-time): the @t{.config} file that you create
 with a ``@t{make menuconfig}'' or equivalent command, is now copied
 to the @sc{wrs} filesystem and used during boot.  Moreover, the
@@ -318,12 +341,13 @@ configured. This allows customization of each installed switch
 through a central server, without modifying the filesystem image in
 each specimen.
 
-Starting with release 4.2, we added ``@t{make config}'' support at run
+Starting with release v4.2, we added ``@t{make config}'' support at run
 time, to be run in @t{/wr/etc}; the file is called @t{dot-config}, and
 not @t{.config}.  This is meant to be useful for developers, when
 testing different configurations in the lab, rather than in
 production. We also support ``@t{make config}'', ``@t{make
-defconfig}'', @t{make oldconfig}'' and ``@t{make menuconfig}''.
+defconfig}'', @t{make oldconfig}'', from v5.0 ``@t{make menuconfig}''
+and ``@t{make nconfig}''.
 
 @c ==========================================================================
 @node Dynamic WRS Configuration
@@ -345,10 +369,10 @@ its own configuration is lost.
 With @i{dynamic configuration}, each @sc{wrs} device loads its own
 configuration file each time it is booted, and applies the choices
 before starting any service.  The name of the configuration file can
-include the @sc{mac} or @sc{ip} address of the device, to allow
+include the @sc{mac}, @sc{ip} address or @sc{hostname} of the device, to allow
 running several switches with different configurations in the same
-network. The location of the configuration file can also be retrieved from DHCP
-server.
+network. The location of the configuration file can be stored in the
+@t{dot-config} or be retrieved from DHCP server.
 
 @c ==========================================================================
 @node The Configuration File
@@ -356,9 +380,9 @@ server.
 
 The main configuration file for the @sc{wrs} is
 @t{/wr/etc/dot-config}.  You create this file by running ``@t{make
-menuconfig}'' within @t{wr-switch-sw}, and making your choices.
-You can also edit the text file, or run other configurators: @t{make xconfig},
-@t{make gconfig}, @t{make config}.
+menuconfig}'' within @t{wr-switch-sw} repo, and making your choices.
+You can also edit the text file, or run other configurators: @t{make config},
+@t{make xconfig}, @t{make gconfig}, @t{make nconfig}.
 
 The configuration step creates @t{.config}, that you can copy to your
 @sc{wrs} as @t{/wr/etc/dot-config}. After reboot, you'll see your
@@ -381,13 +405,14 @@ sources are implemented in current version:
 @item CONFIG_DOTCONF_SOURCE_FORCE_DHCP
 	Get a network location of a @t{dot-config} file from a DHCP server.
         Server can be configured in a way to provide the entire URL to
-        the @t{dot-config} in the ``@t{filename}'' configuration field of the DHCP
-        server. As an alternative, ``@t{filename}'' can be configured only as a
+        the @t{dot-config} in the ``@t{filename}'' configuration field of the
+        DHCP server. In this case the provided URL has to be in the same form
+        as @t{CONFIG_DOTCONF_URL}.
+
+        As an alternative, ``@t{filename}'' can be configured only as a
         path. It will be then interpreted as a path on a tftp server, which IP
         address is taken from the configuration field
         ``@t{The BOOTP next server option}'' of a DHCP server.
-        In the case the URL is used it has to be in the same form as
-        @t{CONFIG_DOTCONF_URL}.
 
 @item CONFIG_DOTCONF_SOURCE_TRY_DHCP
 	The same as @t{CONFIG_DOTCONF_SOURCE_FORCE_DHCP}, but this option does
@@ -399,7 +424,9 @@ sources are implemented in current version:
 @end table
 
 If the selected option triggers @sc{wrs} to download a new @t{dot-config}
-file, it will replace the copy in the local storage if it is different.
+file and it passes the validation process, the new @t{dot-config} will replace
+the copy in the local storage. In case there are errors or unknown
+configuration entries in the retrieved file, the old one will be used.
 
 The URL (stored in @t{CONFIG_DOTCONF_URL} or retrieved via DHCP) is of the form
 ``@i{protocol}@t{://}@i{host}@t{/}@i{pathname}''.  The special upper-case
@@ -421,7 +448,8 @@ The three parts of the URL are as follows:
 
 	The host can be an IP address, or a name. In order to use
         a name you must specify a valid @t{CONFIG_DNS_SERVER} and
-        optionally @t{CONFIG_DNS_DOMAIN}.  The values
+        optionally @t{CONFIG_DNS_DOMAIN}. Alternatively DNS configuration can
+        be taken from the DHCP server.  The values
         in the current @t{dot-config} are used to load the new file.
 
 @item path
@@ -485,8 +513,8 @@ them in the installed version has no effect:
 
 The following items in @t{dot-config} are used at run time: at every
 boot the value (the old one or the just-downloaded one) is used in the
-appropriate way, before the respective service is started.  When the
-value is changed by the web interface, proper action is taken.
+appropriate way, before the respective service is started.
+@c When the value is changed by the web interface, proper action is taken.
 
 @table @code
 
@@ -558,14 +586,20 @@ value is changed by the web interface, proper action is taken.
 @itemx CONFIG_DNS_DOMAIN
 
 	The DNS server (as an IP address) and default domain. The values
-        end up in @t{/etc/resolv.conf} of the generated filesystem.
-        By default the two strings are empty.
+        end up in @t{/etc/resolv.conf} of the runtime filesystem.
+        By default the two strings are empty. If @t{CONFIG_ETH0_DHCP} or
+        @t{CONFIG_ETH0_DHCP_ONCE} is used file @t{/etc/resolv.conf} will be
+        populated with DNS settings received from the DHCP server.
+        If configuration items for static (@t{CONFIG_DNS_*}) and dynamic
+        (@t{CONFIG_ETH0_DHCP}) DNS configuration are used simultaneously
+        then information from both sources end up in the @t{/etc/resolv.conf}
+        file. However, information from @t{CONFIG_DNS_*} is placed first.
 
 @item CONFIG_REMOTE_SYSLOG_SERVER
 @itemx CONFIG_REMOTE_SYSLOG_UDP
 
 	Configuration for system log. The name (or IP address) of the
-        server is stored in @t{/etc/rsyslog.conf} of the generated
+        server is stored in @t{/etc/rsyslog.conf} of the runtime
         filesystem.  The UDP option, set by default, chooses UDP transmission;
         if unset it selects TCP communication.
 
@@ -578,6 +612,7 @@ value is changed by the web interface, proper action is taken.
 	@t{CONFIG_WRS_LOG_OTHER} is currently used by:
 	@itemize
 	@item @t{wrs_watchdog} daemon
+	@item @t{wrs_throttling} executed at boot up
 	@item @t{wrs_auxclk} executed at boot up
 	@item @t{wrs_custom_boot_script.sh} executed at boot up
 	@item Setting VLANs with @t{vlan.sh} at boot up
@@ -601,14 +636,15 @@ value is changed by the web interface, proper action is taken.
 	``@t{S 5 daemon}''. For details please check ``man snmpcmd''. An empty
 	strings selects no logging at all. Please note that unknown facility
 	names will generate a runtime error on the switch. NOTE: It looks
-	like @t{Notice} is not a default logging priority as writen in manual.
+	like @t{Notice} is not a default logging priority as written in
+	@i{net-snmp} manual.
 
 @item CONFIG_WRS_LOG_MONIT
 	The string can be a pathname (e.g. @t{/dev/kmsg}) or a @t{syslog}
 	string.
 	An empty string is used to represent no logging. If it is needed to
 	select facility and level please leave here empty string and change
-	@t{/etc/monitrc} file directly.
+	@t{/etc/monitrc} or @t{/usr//etc/monitrc} file directly.
 	Please note that unknown facility names will generate a runtime error
 	on the switch.
 
@@ -617,7 +653,7 @@ value is changed by the web interface, proper action is taken.
 @itemx ...
 @itemx CONFIG_PORT18_PARAMS
 
-	These configuration items are used to set up port parameters;
+	These configuration items are used to set up ports' parameters;
         this takes the following parameters:
 
 	@itemize
@@ -628,8 +664,8 @@ value is changed by the web interface, proper action is taken.
 			@item @t{raw} -- use raw Ethernet frames for timing
 			@item @t{udp} -- use UDP packets for timing
 		@end itemize
-		@item @t{tx} -- TX delay of a port
-		@item @t{rx} -- RX delay of a port
+		@item @t{tx} -- TX delay of a port in picoseconds
+		@item @t{rx} -- RX delay of a port in picoseconds
 		@item @t{role} -- PTP role of a port; possible values:
 		@itemize
 			@item @t{master} -- configure port as a master
@@ -665,8 +701,8 @@ value is changed by the web interface, proper action is taken.
 		@item @t{pn} -- Part Number of an SFP
 		@item @t{vs} (@i{optional}) -- Vendor Serial (serial number) of
 					       an SFP
-		@item @t{tx} -- TX delay of an SFP
-		@item @t{rx} -- RX delay of an SFP
+		@item @t{tx} -- TX delay of an SFP in picoseconds
+		@item @t{rx} -- RX delay of an SFP in picoseconds
 		@item @t{wl_txrx} -- Tx wavelength separated by "+" with Rx
 				     wavelength of an SFP;
 				     for example @t{wl_txrx=1490+1310}
@@ -694,15 +730,14 @@ value is changed by the web interface, proper action is taken.
 	See @ref{Timing Configuration} for details.
 
 	You are expected to have no more than 4 fiber types installed in
-	your deployment. If more, you need to add items to the @t{dot-config}
-	file.
+	your deployment.
 
 @item CONFIG_TIME_GM
 @itemx CONFIG_TIME_FM
 @itemx CONFIG_TIME_BC
 
 	The type of PTP clock this switch is. Only one of the three
-        items should be set (running ``@t{make menuconfig}'' offers
+        items should be set (e.g. running ``@t{make menuconfig}'' offers
         them as an exclusive choice). The options select a grand-master
         with external reference, from GPS or Cesium or both; a free-running
         master, used for isolated acquisition networks, without an
@@ -714,7 +749,9 @@ value is changed by the web interface, proper action is taken.
 @itemx CONFIG_PTP_REMOTE_CONF
 
 	By default, PPSi configuration file is assembled based on role and
-        protocol parameters stored in @t{PORTxx_PARAMS}.
+        protocol parameters stored in @t{PORTxx_PARAMS}. If VLANs are
+        configured via @t{dot-config} additionally configuration items
+        @t{CONFIG_VLANS_PORTXX_VID} are used.
         Parameters @t{clock-class} and @t{clock-accuracy} can be changed
         or new global PPSi settings can be added by editing file
         @t{/wr/etc/ppsi-pre.conf}, which is used as begging of final
@@ -724,12 +761,8 @@ value is changed by the web interface, proper action is taken.
         (@t{CONFIG_PTP_CUSTOM}).
 
 	Finally, you can choose @t{PTP_REMOTE_CONF} and be able to
-        specify an URL (@t{http://}, @t{ftp://} or @t{tftp://}) whence
-        the switch will download the @t{ppsi.conf} at boot time.
-        The filename in the URL can include @t{HOSTNAME}, @t{IPADDR}
-        and/or @t{MACADDR},
-        so the same configuration string can be used to set up a batch
-        of switches with different configurations.
+        specify an URL whence the switch will download the @t{ppsi.conf} at
+        boot time.
 
         Please see the help provided within @i{Kconfig} for more details about
         the various options we support.
@@ -744,8 +777,14 @@ value is changed by the web interface, proper action is taken.
 
 @item CONFIG_PTP_CONF_URL
 
-	If you choose @t{CONFIG_PTP_REMOTE_CONF} this is the URL
-        used to download @t{ppsi.conf} at each system boot.
+	If you choose @t{CONFIG_PTP_REMOTE_CONF} specify an URL
+	(@t{http://}, @t{ftp://} or @t{tftp://}) whence
+        the switch will download the @t{ppsi.conf} at boot time.
+        The filename in the URL can include @t{HOSTNAME}, @t{IPADDR}
+        and/or @t{MACADDR}, so the same configuration string can be used to set
+        up a batch of switches with different configurations (similar to the
+        @t{CONFIG_DOTCONF_URL}, please refer to @ref{The Configuration File}).
+
 
 @item CONFIG_SNMP_TRAPSINK_ADDRESS
 @itemx CONFIG_SNMP_TRAP2SINK_ADDRESS
@@ -793,8 +832,7 @@ value is changed by the web interface, proper action is taken.
 	Limit the Rx bandwidth of the traffic that goes from WR ports to Linux.
 	Throttling can be enabled to prevent Linux using 100% of the processing
 	power to receive Ethernet frames coming from WR ports to the CPU.
-
-	To enable throttling set @t{CONFIG_NIC_THROTTLING_ENABLED}.
+	To enable the throttling set @t{CONFIG_NIC_THROTTLING_ENABLED}.
 	@t{CONFIG_NIC_THROTTLING_VAL} contains maximum allowed bandwidth
 	in KB/s.
 
@@ -803,20 +841,25 @@ value is changed by the web interface, proper action is taken.
 @itemx CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE
 @itemx CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL
 
-	It is possible to run a custom script at boot time. In this case please set @t{CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED}.
-	To run a script from the local filesystem please set @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL}.
-	The script at the location @t{/wr/bin/custom_boot_script.sh} will be executed.
+	It is possible to run a custom script at boot time. In this case please
+        set @t{CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED}.
+        To run a script @t{/wr/bin/custom_boot_script.sh} from the local
+        filesystem please set @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_LOCAL}.
 
-	As an alternative, you can choose @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE} and be able to
-	specify an URL (@t{http://}, @t{ftp://} or @t{tftp://}) in @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL} whence
-	the switch will download the script to be executed at boot time.
-	The filename in the URL can include @t{HOSTNAME}, @t{IPADDR}
-	and/or @t{MACADDR}, so the same configuration string can be used to set up a batch
-	of switches with different configurations.
+	As an alternative, you can choose
+        @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE} and specify an URL
+        (@t{http://}, @t{ftp://} or @t{tftp://}) in
+        @t{CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL} whence
+        the switch will download the script to be executed at boot time.
+        The filename in the URL can include @t{HOSTNAME}, @t{IPADDR}
+        and/or @t{MACADDR}, so the same configuration string can be used to set
+        up a batch of switches with different configurations (similar to the
+        @t{CONFIG_DOTCONF_URL}, please refer to @ref{The Configuration File}).
 
 @item CONFIG_MONIT_DISABLE
 
-	Disable monitoring of running processes by monit. Monit by default
+	Disable monitoring of running processes by @i{Monit}. @i{Monit} by
+        default
         re-spawns processes that have died. This option is useful mostly during
         development.
 
@@ -829,11 +872,11 @@ value is changed by the web interface, proper action is taken.
 	@t{CONFIG_FAN_HYSTERESIS_PWM_VAL} when PLL's temperature exceeds
 	@t{CONFIG_FAN_HYSTERESIS_T_ENABLE}. Disable fans when temperature drops
 	below @t{CONFIG_FAN_HYSTERESIS_T_DISABLE}. These options are intended to
-	be used during development to reduce noise generated by switch.
+	be used during development to reduce noise generated by a switch.
 
 @item CONFIG_READ_SFP_DIAG_ENABLE
 
-	Let HAL to read Diagnostic Monitoring from SFP's eeprom like
+	Let HAL to read @i{Diagnostic Monitoring} (DOM) from SFP's eeprom like
 	temperature, TX/RX power etc.
 
 @item CONFIG_RTU_HP_MASK_ENABLE
@@ -841,9 +884,9 @@ value is changed by the web interface, proper action is taken.
 
 	Set the mask which VLAN priorities are considered High Priority (this
 	only concerns the traffic which is fast-forwarded).
-	To enable the apply of the custom mask set
+	To enable the apply of the custom mask please set
 	@t{CONFIG_RTU_HP_MASK_ENABLE}.
-	@t{CONFIG_RTU_HP_MASK_VAL} contains the mask to be used.
+	@t{CONFIG_RTU_HP_MASK_VAL} shall contain the mask to be used.
 
 @item CONFIG_VLANS_ENABLE
 
@@ -872,18 +915,28 @@ value is changed by the web interface, proper action is taken.
 
 @item CONFIG_VLANS_PORTXX_VID
 
-	VID value used when tagging frames or to override VID passed to RTU.
-	VID takes values 0..4094.
+	This value based on the port's mode is used as:
+	@itemize
+	@item @t{MODE_ACCESS} -- (mandatory) use as VID for tagging incoming
+	  frames and notify the PPSI which VLAN shall it use for
+	  synchronization; only one VLAN number shall be used in this mode
+	@item @t{MODE_TRUNK} - (optional) notify the PPSI which VLAN(s) shall
+	  it use for synchronization; semicolon separated list is allowed
+	@item @t{MODE_DISABLED} - (optional) notify the PPSI which VLAN(s)
+	  shall it use for synchronization; semicolon separated list is allowed
+	@item @t{MODE_UNQUALIFIED} - (optional) notify the PPSI which VLAN(s)
+	  shall it use for synchronization; semicolon separated list is allowed
+	@end itemize
+	The range of a valid VID is from 0 to 4094.
+
+	Please note that in the v5.0 it is not possible to set via
+	@t{dot-config} an override of VLAN tag for @t{UNQUALIFIED} mode.
+
 	For details please refer to the @ref{VLANs Configuration}
-
-@item CONFIG_VLANS_PORTXX_VID_PTP
-
-	Semicolon separated list describing which vlans shall be assigned to
-	a PTP instance on a particular port
 
 @item CONFIG_VLANS_VLANXXXX
 
-	Provide the configuration for VLAN from the range 0000-4094.
+	Provide a configuration for VLAN from the range 0000-4094.
 	This option is a comma separated string in the following format:
 
 	@t{fid=<0..4094>,prio=<-1|0..7>,drop=<y|n>,ports=<1>;<2>;...;<...-...>;<18>}
@@ -902,12 +955,12 @@ value is changed by the web interface, proper action is taken.
 	  belonging to this VID are dropped (note that frame can belong to a
 	  VID as a consequence of per-port Endpoint configuration); can take
 	  values @t{y}, @t{yes}, @t{1}, @t{n}, @t{no}, @t{0}
-	@item @t{ports} is a list of ports separated with the semicolon sign
-	VLANs configuration per VLANS.
+	@item @t{ports} is a list of ports separated with a semicolon sign
+	  (";"); ports ranges are supported (with a minus sign)
 	@end itemize
 	Example:
 
-	@t{fid=4,prio=2,drop=n,ports=1;<3-5>;15}
+	@t{fid=4,prio=2,drop=n,ports=1;3-5;15}
 
 	It sets fid as 4, priority 2, don't drop frames belonging to this VLAN,
 	assign ports 1, 3-5 and 15 to this VLAN.
@@ -972,14 +1025,15 @@ opposite one (@t{alpha_1490_1310}) is calculated by software.
 @subheading SFP name matching
 
 SFP matching is based on vendor name (@i{vn}), part number (@i{pn}) and vendor
-serial (@i{vs}). While matching SFP's values are compared with values stored in
-@t{CONFIG_SFPxx_PARAMS}.
-First try is to match all SFP identifiers (@i{vn}, @i{pn} and @i{vs}) with
-stored in config. If match is not successful, @i{vn} and @i{pn} of SFP are
-compared only with config entries without vendor serial. If match is still not
-found SFP's values are compared with config entries, which has defined only
-part number. Such approach prevents matching SFPs to config entries with
-defined serial.
+serial (@i{vs}). During matching SFP's values are compared with values stored
+in @t{CONFIG_SFPxx_PARAMS}.
+The first try is to match all SFP identifiers (@i{vn}, @i{pn} and @i{vs}) with
+stored in @t{dot-config}. If match is not successful, @i{vn} and @i{pn} of
+a SFP are compared only with @t{dot-config} entries that are without vendor
+serial. If match is still not found SFP's values are compared with
+@t{dot-config} entries, which has defined only
+a part number. Such approach prevents matching SFPs to @t{dot-config} entries
+with defined vendor serial.
 
 Below are shown matching examples:
 @smallexample
@@ -1075,7 +1129,8 @@ the Ethernet Frame header:
     @item @i{none}     -- tag is not included in the Ethernet Frame
     @item @i{priority} -- tag that has VID=@t{0x0}
     @item @i{VLAN}     -- tag that has VID in the range @t{0x001} to @t{0xFFE}
-    @item @i{null}     -- tag that has VID=@t{0xFFF}
+                          (1 to 4094)
+    @item @i{null}     -- tag that has VID=@t{0xFFF} (4095)
 @end itemize
 The behaviour of each @t{pmode} that can be set per-port depends on the type of
 VLAN-tag in the received frame.
@@ -1128,6 +1183,8 @@ VLAN-tag in the received frame.
 			configured in @t{pvid}. If @t{pprio} is not -1, the
 			value of priority provided to RTU is overridden with
 			the configured @t{pprio}
+			NOTE: For version v5.0 providing a VID for this mode
+			is not supported in the dot-config
 	@item @i{VLAN tag}: are admitted; if @t{pprio} is not -1, the value of
 			priority provided to RTU is overridden with
 			the configured @t{pprio}
@@ -1139,26 +1196,31 @@ Modes and their behaviour are summarized in the table below:
 
 @center @image{VLAN_modes, 14cm,, VLAN_modes}
 
-From the version 4.3, it is possible to configure VLANs in the main
+From the version 5.0, it is possible to configure VLANs in the 
 @t{dot-config} file (for an example configuration please see
 @ref{Example VLAN configuration by dot-config}).
 
 As an alternative it is possible to use @i{wrs_vlans} tool
 described in @ref{wrs_vlans} together with a custom config file for @i{PPSi}.
 
-To have synchronization working with VLANs, the custom @i{PPSi} configuration
-file should contain VLANs specified per-port. You
-can simply copy the file generated in the WRS filesystem
+Another alternative working on pre-v5.0 to set VLANs is to use the web
+interface. However, as it is in v5.0 the web-interface is not capable to store
+a VLAN configuration into a @t{dot-config}.
+
+To have a synchronization working with VLANs, please provide proper VIDs to
+configuration options like @t{CONFIG_VLANS_PORTXX_VID}. As an alternative
+write a custom @i{PPSi} configuration file with VLANs specified per-port.
+You can simply copy the file generated in the WRS filesystem
 (@i{/etc/ppsi.conf}) to a central @t{tftp}/@t{http}/@t{ftp} server where
 @t{dot-config} files for your switches are stored and fetched on boot time or
-permamently store it in the switch's flash (for details, please check
+permanently store it in the switch's flash (for details, please check
 configuration options @t{CONFIG_PTP_*} in the
 @ref{Configuration Items that Apply at Run Time}).
 
 In the @i{PPSi} config file, for every VLAN-enabled port you should add
 the following line:
 @example
-  vlan <VID>
+  vlan <VID1>[,<VID2>,...]
 @end example
 where @i{VID} is a VLAN ID configured on the port.
 
@@ -1172,10 +1234,10 @@ For an example configuration please see
 This subsection describes how to configure VLANs on a switch using the
 @t{dot-config} and available command line tools.
 
-An example configuration of VLANs for ports (wri) 1-3 is provided below.
-The descriptions assumes, for simplicity, that switch has only this 3 ports.
+An example configuration of VLANs for ports (@t{wri}) 1-3 is provided below.
+The descriptions assume, for simplicity, that switch has only this 3 ports.
 
-In this configuration, port 1 is synchronised to an upstream WR device and this
+In this configuration, port 1 is synchronised to an upstream WR device. This
 device does not need to have any VLAN configuration. Port 1 is in @t{ACCESS} mode,
 thus it tags the ingress Ethernet frames. A VLAN-tags with VID 1 and priority
 4 is added so that frames received at this port belong to VLAN 1. Port 1 also
@@ -1217,16 +1279,14 @@ CONFIG_VLANS_ENABLE=y
 CONFIG_VLANS_PORT01_MODE_ACCESS=y
 CONFIG_VLANS_PORT01_UNTAG_ALL=y
 CONFIG_VLANS_PORT01_PRIO=4
-CONFIG_VLANS_PORT01_VID=1
-CONFIG_VLANS_PORT01_VID_PTP="1"
+CONFIG_VLANS_PORT01_VID="1"
 CONFIG_VLANS_PORT02_MODE_TRUNK=y
 CONFIG_VLANS_PORT02_PRIO=-1
-CONFIG_VLANS_PORT02_VID_PTP="2"
+CONFIG_VLANS_PORT02_VID="2"
 CONFIG_VLANS_PORT03_MODE_ACCESS=y
 CONFIG_VLANS_PORT03_UNTAG_ALL=y
 CONFIG_VLANS_PORT03_PRIO=7
-CONFIG_VLANS_PORT03_VID=2
-CONFIG_VLANS_PORT03_VID_PTP="2"
+CONFIG_VLANS_PORT03_VID="2"
 
 CONFIG_VLANS_ENABLE_SET1=y
 CONFIG_VLANS_VLAN0001="fid=1,prio=4,drop=n,ports=1"
@@ -1237,7 +1297,7 @@ CONFIG_VLANS_VLAN0002="fid=2,prio=4,drop=n,ports=2;3"
 @node Example VLAN configuration by tools
 @subsubsection Example VLAN configuration by tools
 
-To configure the switch in the way descibed in the
+To configure the switch in the way described in the
 @ref{Example VLAN configuration}, using the command line tools please perform
 the following actions:
 
@@ -1367,7 +1427,7 @@ The individual menu items perform the following actions:
 
 @item 1: boot from nand (default)
 
-	This entry is selected by default after 10 seconds of
+	This entry is selected by default after 5 seconds of
         inactivity on the serial port. It boots the system from its
         own NAND memory. This ``just works''.
 
@@ -1382,8 +1442,9 @@ The individual menu items perform the following actions:
 @item 3: edit config
 
 	This fires the editor on the configuration file, and
-        saves it to flash when the user is done. This is useful to
-        change the MAC address of the ARM network port. Please note
+        saves it to flash when the user is done. This may be useful to
+        change the MAC or IP address of the ARM network port, change the
+        autoboot timeout or change the autoselect choice. Please note
         that saving save the whole @file{/env} file tree, so you
         can also change the init scripts interactively and have them
         stored persistently on the flash. Users are not expected to
@@ -1412,8 +1473,8 @@ The individual menu items perform the following actions:
 If you use the @i{wrboot} script option, you can for example run
 an NFS-Root system or do whatever customization and testing you want.
 
-@b{Note}: with 2.6.39 we suggested use of @t{root=nfs}, but this
-convention is no more supported in Linux, please use @t{root=/dev/nfs}.
+@b{Note}: with the Linux kernel 2.6.39 we suggested use of @t{root=nfs}, but
+this convention is no more supported in Linux, please use @t{root=/dev/nfs}.
 
 The complete filesystem after a successful build is called
 @t{images/wrs-image.tar.gz}, and is not included in the release
@@ -1566,8 +1627,9 @@ The following tools and scripts are provided:
 
 @item wr_mon
 	A simple monitor of White Rabbit status. It prints to @i{stdout}
-        using the standard escape sequences for color output. The
-        @t{-b} command line options removes color change (b/w).
+        using the standard escape sequences for color output. Please check
+        @t{wr_mon}'s help (@t{--help} parameter) for further information.
+        This is probably the most important diagnostic tool on the switch.
 
 @item wrs_pps_control
         A tool to switch the PPS output on and off. Usage ``@t{wrs_pps_control
@@ -1620,7 +1682,7 @@ The following tools and scripts are provided:
 
 @item assembly_ppsi_conf.sh
 	The script is used to assembly ppsi configuration file based on
-        information stored in @t{PORTxx_PARAMS}.
+        information stored in @t{dot-config}.
         This script is called by @t{apply_dot-config}.
 
 @item change_dot-config
@@ -1640,17 +1702,28 @@ The following tools and scripts are provided:
   SMC.
 
 @item wrs_sfp_dump
-	Dump the content of SFPs internal memory. Please note that this tool
-	cannot be used in production due to the race condition of i2c
-	transactions. The race can cause errors while reading SFPs memory,
+	Dump the content of SFPs internal memory. This tool can read SFP info
+	from HAL's shmem or directly from SFPs via i2c bus. Please note that
+	reading directly via i2c can cause races on i2c bus. It is not
+	recommended to be used in production.
+	The race can cause errors while reading SFPs memory,
 	wrong notification of LEDs, the false insert/remove SFP notifications.
 
+	This tool can also write SFPs internal memory. This functionality can
+	be used to fix SFPs reporting i.e. wrong checksum. Use this option with
+	care.
+	
+	For more details please refer to tool's help.
+
 @item wrs_throttling
-  The tool is used to control Rx bandwidth throttling of the traffic that goes
-  from WR ports to Linux. It configures the FPGA module with a maximum allowed
-  bandwidth in KB/s. Throttling can be enabled to prevent Linux using 100% of
-  the processing power to receive Ethernet frames coming from WR ports to the
-  CPU.
+	The tool is used to control Rx bandwidth throttling of the traffic that
+	goes from WR ports to Linux. It configures the FPGA module with a
+	maximum allowed bandwidth in KB/s. Throttling can be enabled to prevent
+	Linux using 100% of the processing power to receive Ethernet frames
+	coming from WR ports to the CPU. This tool is executed by default at
+	switch's boot with parameters saved in the dot-config. For more
+	information, please refer to the
+	@ref{Configuration Items that Apply at Run Time}.
 
 @c FIXME: document lm32-vuart rtu_stat spll_dbg_proxy
 @c FIXME: document wrs_pstats
@@ -1849,7 +1922,7 @@ VLAN configuration of the switch:
 
 @item wrs_vlans --clear
 
-  Clear configuration.
+  Clear configuration. Add a default rule to pass all traffic between ports.
 
 @end table
 
@@ -2065,7 +2138,7 @@ If everything goes well, you'll get a window like the following one:
 
 @center @image{show-pstats, 10cm,, show-pstats}
 
-Command @t{snmptable} can also be used to get simillar results:
+Command @t{snmptable} can also be used to get similar results:
 
 @smallexample
 snmptable -Cw 80 -c public -v 2c 192.168.1.10 -m all \
