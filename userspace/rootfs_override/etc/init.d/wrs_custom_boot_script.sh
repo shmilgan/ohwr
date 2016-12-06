@@ -60,7 +60,7 @@ start() {
 	fi
 	host_name=`hostname`
 	URL=$(echo $CONFIG_CUSTOM_BOOT_SCRIPT_SOURCE_REMOTE_URL | \
-	    sed -e s/MACADDR/$macaddr/ -e s/IPADDR/$ipaddr/ -e s/HOSTNAME/$host_name/)
+	    sed -e s/MACADDR/$macaddr/g -e s/IPADDR/$ipaddr/g -e s/HOSTNAME/$host_name/g)
 	# split the parts, as we need to handle tftp by hand
 	proto=$(echo $URL | cut -d: -f 1)
 	host=$(echo $URL | cut -d/ -f 3)
