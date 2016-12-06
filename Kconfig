@@ -313,8 +313,7 @@ config PORT01_PARAMS
 		     otherwise behave as master
 	    - non-wr - don't report problems with this port via SNMP like SFP
 		       not in DB, copper SFP connected, non 1GB SFP etc.
-	    - none - disable White Rabbit and PTP on a portdisable White Rabbit
-		       on a port, keep PTP
+	    - none - disable White Rabbit and PTP on a port
 
 config PORT02_PARAMS
 	string "Parameters for port 2"
