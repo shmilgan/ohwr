@@ -27,6 +27,7 @@
 #define QMODE_TRUNK	 1
 #define QMODE_DISABLED 2
 #define QMODE_UNQ 3
+#define QMODE_INVALID 4
 
 #define MINIPC_TIMEOUT 200
 

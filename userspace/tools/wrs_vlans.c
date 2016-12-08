@@ -906,6 +906,7 @@ static int read_dot_config(char *dot_config_file)
 	char buff[60];
 	char *val_ch;
 	int i;
+	int mode;
 
 	if (access(dot_config_file, R_OK)) {
 		pr_error("Unable to read dot-config file %s\n",
@@ -957,6 +958,7 @@ static int read_dot_config(char *dot_config_file)
 
 	for (port = 1; port <= NPORTS; port++) {
 		portmask = portmask | (1 << (port - 1));
+		mode = QMODE_INVALID;
 
 		sprintf(buff, "VLANS_PORT%02d_MODE_ACCESS", port);
 		ret = libwr_cfg_get(buff);
@@ -964,6 +966,7 @@ static int read_dot_config(char *dot_config_file)
 			if (wrs_msg_level >= LOG_DEBUG)
 				printf("Found %s\n", buff);
 			set_p_pmode(port - 1, QMODE_ACCESS);
+			mode = QMODE_ACCESS;
 		}
 		sprintf(buff, "VLANS_PORT%02d_MODE_TRUNK", port);
 		ret = libwr_cfg_get(buff);
@@ -971,6 +974,7 @@ static int read_dot_config(char *dot_config_file)
 			if (wrs_msg_level >= LOG_DEBUG)
 				printf("Found %s\n", buff);
 			set_p_pmode(port - 1, QMODE_TRUNK);
+			mode = QMODE_TRUNK;
 		}
 		sprintf(buff, "VLANS_PORT%02d_MODE_DISABLED", port);
 		ret = libwr_cfg_get(buff);
@@ -978,6 +982,7 @@ static int read_dot_config(char *dot_config_file)
 			if (wrs_msg_level >= LOG_DEBUG)
 				printf("Found %s\n", buff);
 			set_p_pmode(port - 1, QMODE_DISABLED);
+			mode = QMODE_DISABLED;
 		}
 		sprintf(buff, "VLANS_PORT%02d_MODE_UNQUALIFIED", port);
 		ret = libwr_cfg_get(buff);
@@ -985,21 +990,35 @@ static int read_dot_config(char *dot_config_file)
 			if (wrs_msg_level >= LOG_DEBUG)
 				printf("Found %s\n", buff);
 			set_p_pmode(port - 1, QMODE_UNQ);
+			mode = QMODE_UNQ;
 		}
-		sprintf(buff, "VLANS_PORT%02d_UNTAG_ALL", port);
-		ret = libwr_cfg_get(buff);
-		if (ret && !strcmp(ret, "y")) {
+		
+		/* check UNTAG all or none only for ACCESS
+		 * for other modes use untag none by default */
+		if (mode == QMODE_ACCESS) {
+			sprintf(buff, "VLANS_PORT%02d_UNTAG_ALL", port);
+			ret = libwr_cfg_get(buff);
+			if (ret && !strcmp(ret, "y")) {
+				if (wrs_msg_level >= LOG_DEBUG)
+					printf("Found %s\n", buff);
+				set_p_untag(port - 1, 1);
+			}
+
+			sprintf(buff, "VLANS_PORT%02d_UNTAG_NONE", port);
+			ret = libwr_cfg_get(buff);
+			if (ret && !strcmp(ret, "y")) {
+				if (wrs_msg_level >= LOG_DEBUG)
+					printf("Found %s\n", buff);
+				set_p_untag(port - 1, 0);
+			}
+		} else {
+			/* for other modes "untag none" by default */
 			if (wrs_msg_level >= LOG_DEBUG)
-				printf("Found %s\n", buff);
-			set_p_untag(port - 1, 1);
-		}
-		sprintf(buff, "VLANS_PORT%02d_UNTAG_NONE", port);
-		ret = libwr_cfg_get(buff);
-		if (ret && !strcmp(ret, "y")) {
-			if (wrs_msg_level >= LOG_DEBUG)
-				printf("Found %s\n", buff);
+				printf("Setting port %d to untag none\n",
+				       port);
 			set_p_untag(port - 1, 0);
 		}
+
 		sprintf(buff, "VLANS_PORT%02d_PRIO", port);
 		val_ch = libwr_cfg_get(buff);
 		if (val_ch) {
@@ -1028,11 +1047,11 @@ static int read_dot_config(char *dot_config_file)
 
 static void read_dot_config_vlans(int vlan_min, int vlan_max)
 {
-	int fid, prio, drop, pmask;
+	int fid, prio, drop;
+	unsigned long pmask;
 	int vlan_flags;
 	int vlan;
 	char buff[60];
-	int port;
 
 	for (vlan = vlan_min; vlan <= vlan_max; vlan++) {
 		vlan_flags = 0;
@@ -1090,12 +1109,12 @@ static void read_dot_config_vlans(int vlan_min, int vlan_max)
 			parse_mask(buff, &pmask);
 
 			if (pmask < RTU_PMASK_MIN || pmask > RTU_PMASK_MAX) {
-				pr_error("invalid port mask 0x%x (\"%s\") for "
-					 "vlan %4d\n", pmask, buff, vlan);
+				pr_error("invalid port mask 0x%lx (\"%s\") for"
+					 " vlan %4d\n", pmask, buff, vlan);
 				exit(1);
 			}
 			if (wrs_msg_level >= LOG_DEBUG)
-				printf("Vlan %4d: Port mask 0x%05x\n",
+				printf("Vlan %4d: Port mask 0x%05lx\n",
 				       vlan, pmask);
 			vlan_flags |= VALID_PMASK;
 		}
