@@ -907,6 +907,7 @@ static int read_dot_config(char *dot_config_file)
 	char *val_ch;
 	int i;
 	int mode;
+	int vlan0_port_mask = 0;
 
 	if (access(dot_config_file, R_OK)) {
 		pr_error("Unable to read dot-config file %s\n",
@@ -1019,6 +1020,11 @@ static int read_dot_config(char *dot_config_file)
 			set_p_untag(port - 1, 0);
 		}
 
+		/* update a mask for vlan0 */
+		if (mode != QMODE_ACCESS && mode != QMODE_TRUNK) {
+			vlan0_port_mask |= 1 << (port - 1);
+		}
+
 		sprintf(buff, "VLANS_PORT%02d_PRIO", port);
 		val_ch = libwr_cfg_get(buff);
 		if (val_ch) {
@@ -1033,6 +1039,18 @@ static int read_dot_config(char *dot_config_file)
 				printf("Found %s=%s\n", buff, val_ch);
 			set_p_vid(port - 1, val_ch);
 		}
+	}
+
+	/* If VLANS_VLAN0000 is empty => ports mask is not provided for VLAN0
+	 * then add to VLAN0 ports that are not ACCESS nor TRUNK */
+	val_ch = libwr_cfg_get("VLANS_VLAN0000");
+	if (!val_ch || !strnlen(val_ch, 10)) {
+		if (wrs_msg_level >= LOG_DEBUG)
+			printf("Vlan0 not configured: Using port mask based on"
+			       " configured port modes (0x%05x)\n",
+			       vlan0_port_mask);
+		set_rtu_vlan(0, 0, vlan0_port_mask, -1, -1, 0,
+			     VALID_VID | VALID_FID | VALID_PMASK);
 	}
 
 	for (i = 0; dot_config_vlan_sets[i].name; i++) {
@@ -1107,7 +1125,6 @@ static void read_dot_config_vlans(int vlan_min, int vlan_max)
 		if (!libwr_cfg_convert2("VLANS_VLAN%04d", "ports",
 					LIBWR_STRING, buff, vlan)) {
 			parse_mask(buff, &pmask);
-
 			if (pmask < RTU_PMASK_MIN || pmask > RTU_PMASK_MAX) {
 				pr_error("invalid port mask 0x%lx (\"%s\") for"
 					 " vlan %4d\n", pmask, buff, vlan);
