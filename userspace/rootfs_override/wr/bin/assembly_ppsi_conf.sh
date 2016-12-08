@@ -79,16 +79,23 @@ for i_zero in {01..18};do
 		unset port_mode_access;
 		unset port_mode_trunk;
 		unset port_mode_unqualified;
+		unset port_mode_disabled;
 
 		# check port mode
 		port_mode_access=$(eval "echo \$CONFIG_VLANS_PORT"$i_zero"_MODE_ACCESS")
 		port_mode_trunk=$(eval "echo \$CONFIG_VLANS_PORT"$i_zero"_MODE_TRUNK")
 		port_mode_unqualified=$(eval "echo \$CONFIG_VLANS_PORT"$i_zero"_MODE_UNQUALIFIED")
+		port_mode_disabled=$(eval "echo \$CONFIG_VLANS_PORT"$i_zero"_MODE_DISABLED")
+
 		# check port mode
-		if [ "$port_mode_access" = "y" ] \
-		    || [ "$port_mode_trunk" = "y" ] \
+		if [ "$port_mode_access" = "y" ]; then
+			ppsi_vlans=$(eval "echo \$CONFIG_VLANS_PORT"$i_zero"_VID")
+			echo "vlan $ppsi_vlans" >> $OUTPUT_FILE
+		fi
+		if [ "$port_mode_trunk" = "y" ] \
+		    || [ "$port_mode_disabled" = "y" ] \
 		    || [ "$port_mode_unqualified" = "y" ]; then
-			ppsi_vlans=$(eval "echo \$CONFIG_VLANS_PORT"$i_zero"_VID_PTP")
+			ppsi_vlans=$(eval "echo \$CONFIG_VLANS_PORT"$i_zero"_VID")
 			if [ -n "$ppsi_vlans" ]; then
 				mod_vlans=${ppsi_vlans//;/,}
 				echo "vlan $mod_vlans" >> $OUTPUT_FILE

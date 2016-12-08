@@ -1032,12 +1032,14 @@ static int read_dot_config(char *dot_config_file)
 				printf("Found %s=%s\n", buff, val_ch);
 			set_p_prio(port - 1, val_ch);
 		}
-		sprintf(buff, "VLANS_PORT%02d_VID", port);
-		val_ch = libwr_cfg_get(buff);
-		if (val_ch) {
-			if (wrs_msg_level >= LOG_DEBUG)
-				printf("Found %s=%s\n", buff, val_ch);
-			set_p_vid(port - 1, val_ch);
+		if (mode == QMODE_ACCESS) {
+			sprintf(buff, "VLANS_PORT%02d_VID", port);
+			val_ch = libwr_cfg_get(buff);
+			if (val_ch) {
+				if (wrs_msg_level >= LOG_DEBUG)
+					printf("Found %s=%s\n", buff, val_ch);
+				set_p_vid(port - 1, val_ch);
+			}
 		}
 	}
 
