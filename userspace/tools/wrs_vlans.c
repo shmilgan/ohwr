@@ -246,12 +246,9 @@ int main(int argc, char *argv[])
 
 		case OPT_P_QMODE:
 			/* pmode for port */
-			arg = atoi(optarg);
-			if (arg < 0 || arg > 3) {
-				pr_error("invalid pmode %i (\"%s\")\n",
-					 arg, optarg);
+			arg = check_rtu("pmode", optarg, 0, 3);
+			if (arg < 0)
 				exit(1);
-			}
 			iterate_ports(i, conf_pmask) {
 				set_p_pmode(i, arg);
 			}
@@ -274,12 +271,9 @@ int main(int argc, char *argv[])
 		case OPT_P_UNTAG:
 			/* untag mask -- currently 0 or 1. Overrides default
 			 * set in QMODE above */
-			arg = atoi(optarg);
-			if (arg < 0 || arg > 1) {
-				pr_error("invalid unmask bit %i (\"%s\")\n",
-					 arg, optarg);
+			arg = check_rtu("umask bit", optarg, 0, 1);
+			if (arg < 0)
 				exit(1);
-			}
 			iterate_ports(i, conf_pmask) {
 				set_p_untag(i, arg);
 			}
@@ -308,8 +302,11 @@ int main(int argc, char *argv[])
 			set_rtu_vlan(-1, ret, -1, 0, -1, 0, VALID_FID);
 			break;
 		case OPT_RTU_PMASK:
-			set_rtu_vlan(-1, -1, (int) strtol(optarg, NULL, 16), 0,
-				     -1, 0, VALID_PMASK);
+			ret = check_rtu("pmask", optarg, RTU_PMASK_MIN,
+					RTU_PMASK_MAX);
+			if (ret < 0)
+				exit(1);
+			set_rtu_vlan(-1, -1, ret, 0, -1, 0, VALID_PMASK);
 			break;
 		case OPT_RTU_DROP:
 			ret = check_rtu("rtu drop", optarg, 0, 1);
@@ -390,26 +387,35 @@ static void set_p_pmode(int ep, int arg_mode)
 static void set_p_vid(int ep, char *arg_vid)
 {
 	int vid;
+	char *endptr;
 
-	vid = atoi(arg_vid);
-	if (vid < PORT_VID_MIN || vid > PORT_VID_MAX) {
-		pr_error("invalid vid %i (\"%s\") for port %d\n",
-			 vid, arg_vid, ep + 1);
+	vid = strtol(arg_vid, &endptr, 0);
+	if (*arg_vid == '\0' /* empty string */
+	    || *endptr != '\0' /* more chars after number in the string */
+	    || vid < PORT_VID_MIN || vid > PORT_VID_MAX
+	   ) {
+		pr_error("invalid vid \"%s\" for port %d\n",
+			 arg_vid, ep + 1);
 		exit(1);
 	}
-	vlans[ep].vid = atoi(arg_vid);
+	vlans[ep].vid = vid;
 	vlans[ep].valid_mask |= VALID_VID;
 }
 
 static void set_p_prio(int ep, char *arg_prio)
 {
 	int prio;
+	char *endptr;
 
-	prio = atoi(arg_prio);
-	if ((prio < PORT_PRIO_MIN || prio > PORT_PRIO_MAX)
-	    && (prio != PORT_PRIO_DISABLE)) {
-		pr_error("invalid priority %i (\"%s\") for port %d\n",
-			 prio, arg_prio, ep + 1);
+	prio = strtol(arg_prio, &endptr, 0);
+
+	if (*arg_prio == '\0' /* empty string */
+	    || *endptr != '\0' /* more chars after number in the string */
+	    || ((prio < PORT_PRIO_MIN || prio > PORT_PRIO_MAX)
+	        && (prio != PORT_PRIO_DISABLE))
+	   ) {
+		pr_error("invalid priority \"%s\" for port %d\n",
+			 arg_prio, ep + 1);
 		exit(1);
 	}
 	/* prio was touched, so set VALID_PRIO */
@@ -434,10 +440,13 @@ static void set_hp_mask(char *mask_str)
 	int hp_mask;
 	int val;
 	int ret;
+	char *endptr;
 
-	hp_mask = strtol(mask_str, NULL, 0);
+	hp_mask = strtol(mask_str, &endptr, 0);
 
-	if (hp_mask >= (1 << 8)) {
+	if (*mask_str == '\0' /* empty string */
+	    || *endptr != '\0' /* more chars after number in the string */
+	    || hp_mask >= (1 << 8)) {
 		pr_error("Wrong HP mask %s\n", mask_str);
 		exit(1);
 	}
@@ -457,10 +466,14 @@ static void set_hp_mask(char *mask_str)
 static int check_rtu(char *name, char *arg_val, int min, int max)
 {
 	int val;
+	char *endptr;
 
-	val = atoi(arg_val);
-	if (val < min || val > max) {
-		pr_error("invalid %s %i (\"%s\")\n", name, val, arg_val);
+	val = strtol(arg_val, &endptr, 0);
+
+	if (*arg_val == '\0' /* empty string */
+	    || *endptr != '\0' /* more chars after number in the string */
+	    || val < min || val > max) {
+		pr_error("invalid %s \"%s\"\n", name, arg_val);
 		return -1;
 	}
 	return val;
@@ -469,11 +482,16 @@ static int check_rtu(char *name, char *arg_val, int min, int max)
 static int check_rtu_prio(char *arg_val)
 {
 	int val;
+	char *endptr;
 
-	val = atoi(arg_val);
-	if ((val < RTU_PRIO_MIN || val > RTU_PRIO_MAX)
-	     && (val != RTU_PRIO_DISABLE)) {
-		pr_error("invalid rtu prio %i (\"%s\")\n", val, arg_val);
+	val = strtol(arg_val, &endptr, 0);
+
+	if (*arg_val == '\0' /* empty string */
+	    || *endptr != '\0' /* more chars after number in the string */
+	    || ((val < RTU_PRIO_MIN || val > RTU_PRIO_MAX)
+	        && (val != RTU_PRIO_DISABLE))
+	   ) {
+		pr_error("invalid rtu prio \"%s\"\n", arg_val);
 		return -2;
 	}
 	return val;
@@ -1039,6 +1057,10 @@ static int read_dot_config(char *dot_config_file)
 				if (wrs_msg_level >= LOG_DEBUG)
 					printf("Found %s=%s\n", buff, val_ch);
 				set_p_vid(port - 1, val_ch);
+			} else {
+				pr_error("VID not defined for the port (%d) in"
+					 " ACCESS mode!\n", port);
+				exit(1);
 			}
 		}
 	}
