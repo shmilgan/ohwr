@@ -46,7 +46,7 @@ for i_zero in {01..18};do
 		"rx"|"tx"|"fiber")
 			continue;;
 		*)
-			echo "Invalid parameter $param in CONFIG_PORT"$i_zero"_PARAMS" ;;
+			echo "$0: Invalid parameter $param in CONFIG_PORT"$i_zero"_PARAMS" ;;
 		esac
 
 	done
@@ -90,8 +90,17 @@ for i_zero in {01..18};do
 		# check port mode
 		if [ "$port_mode_access" = "y" ]; then
 			ppsi_vlans=$(eval "echo \$CONFIG_VLANS_PORT"$i_zero"_VID")
-			echo "vlan $ppsi_vlans" >> $OUTPUT_FILE
+			# use "&> /dev/null" to avoid error when $ppsi_vlans
+			# is not a number
+			if [ "$ppsi_vlans" -ge 0 ]  &> /dev/null \
+			    && [ "$ppsi_vlans" -le 4094 ] &> /dev/null; then
+				echo "vlan $ppsi_vlans" >> $OUTPUT_FILE
+			else
+				echo "$0: Wrong value \"$ppsi_vlans\" in CONFIG_VLANS_PORT"$i_zero"_VID"
+				continue;
+			fi
 		fi
+
 		if [ "$port_mode_trunk" = "y" ] \
 		    || [ "$port_mode_disabled" = "y" ] \
 		    || [ "$port_mode_unqualified" = "y" ]; then
@@ -106,4 +115,3 @@ for i_zero in {01..18};do
 	# separate ports
 	echo "" >> $OUTPUT_FILE
 done
-
