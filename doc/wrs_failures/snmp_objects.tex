@@ -210,8 +210,9 @@
   \snmpentrys{WR-SWITCH-MIB}{wrsTimingStatusGroup}{wrsSlaveLinksStatus}{
     \underline{Description:}
     Reports the status of the link on WR ports configured to slave role.\\
-    \texttt{Error} when link to master is down for a switch in the Boundary
-    Clock mode. Additionally, \texttt{Error} is generated when the
+    \texttt{Error} when link to master is down or softpll mode is not slave for
+    a switch in the Boundary Clock mode.
+    Additionally, \texttt{Error} is generated when the
     link to master is up for a switch in the Free-running Master or Grand
     Master mode.\\
     \underline{On error:}\\
@@ -230,6 +231,8 @@
       \item Check the configuration of the switch. Especially if the
         \emph{Timing Mode} is correctly set (i.e. if it was not accidentally set
         to \emph{Grand-Master} or \emph{Free-Running Master}).
+      \item Check the VLANs configuration. Whether both switches are configured
+        to use the same VLAN.
       \item Check the status of the WR Master connected to the slave port of the
         WRS.
       \item Replace the faulty switch with a new unit, if this does not solve

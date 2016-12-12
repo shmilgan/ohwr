@@ -311,6 +311,7 @@ static void get_wrsSoftPLLStatus(void)
 
 static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 {
+	struct wrsSpllStatus_s *s;
 	struct wrsPortStatusTable_s *p_a;
 	struct wrsTimingStatus_s *t;
 	int i;
@@ -323,6 +324,7 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 	 * and when every slave port is down when switch in master/grandmaster
 	 * mode. Don't care about non-wr, none and auto ports.
 	*/
+	s = &wrsSpllStatus_s;
 	p_a = wrsPortStatusTable_array;
 	t = &wrsTimingStatus_s;
 	slog_obj_name = wrsSlaveLinksStatus_str;
@@ -356,12 +358,20 @@ static void get_wrsSlaveLinksStatus(unsigned int port_status_nrows)
 			/* error when slave port is down when switch is in slave mode
 			  */
 			if (hal_shmem->hal_mode == HAL_TIMING_MODE_BC
-			    && (p_a[i].wrsPortStatusConfiguredMode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)
-			    && (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_DOWN)) {
-				t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
-				snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-					 "In Boundary Clock mode, port %d (wri%d) configured as slave is down\n",
-					 slog_obj_name, i + 1, i + 1);
+			    && (p_a[i].wrsPortStatusConfiguredMode == WRS_PORT_STATUS_CONFIGURED_MODE_SLAVE)) {
+				if (p_a[i].wrsPortStatusLink == WRS_PORT_STATUS_LINK_DOWN) {
+					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
+					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+						"In Boundary Clock mode, port %d (wri%d) configured as slave is down\n",
+						slog_obj_name, i + 1, i + 1);
+				}
+				if (s->wrsSpllMode != WRS_SPLL_MODE_SLAVE) {
+					t->wrsSlaveLinksStatus = WRS_SLAVE_LINK_STATUS_ERROR;
+					snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
+						"In Boundary Clock mode, port %d (wri%d) configured as slave, "
+						"wrsSpllMode not slave (%d), but %d\n",
+						slog_obj_name, i + 1, i + 1, WRS_SPLL_MODE_SLAVE, s->wrsSpllMode);
+				}
 			}
 			/* error when slave port is up when switch is in master or
 			* grandmaster mode */
