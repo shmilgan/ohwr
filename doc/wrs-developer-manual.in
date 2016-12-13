@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month June 2016
+@set update-month December 2016
 @c the release name below is substituted at build time
 @set release __RELEASE_GIT_ID__
 
@@ -151,9 +151,8 @@ which contains all the sources and building scripts:
    git clone git://ohwr.org/white-rabbit/wr-switch-sw.git
 @end example
 
-The scripts build over previous work by Tomasz Wlostowski, who first
-made the whole thing work and stick together -- a serious result from
-serious efforts, I am really amazed by his achievements.
+Original build scripts were developed by Tomasz Wlostowski who first
+made the whole thing work and stick together.
 
 The purpose of the build-script rewrite is achieving the following targets:
 
@@ -184,7 +183,8 @@ The purpose of the build-script rewrite is achieving the following targets:
 @end itemize
 
 After release 3.3, we decided to add @i{Kconfig} support. This means
-that the first build step is expected to be ``@t{make menuconfig}'',
+that the first build step is expected to be ``@t{make menuconfig}'' (from v5.0
+@t{make nconfig} and @t{make xconfig} are supported alternatives),
 like it happens for the kernel.  The default configuration is selected
 by default when one of the build scripts is run, so the procedure for
 the final user is the same as for v3.3 and earlier.
@@ -209,25 +209,25 @@ both the @i{gateware} image and the @i{lm32} firmware binary
 are built from sources external to this package.
 
 The @i{gateware} is being downloaded as a pre-build tar archive
-(currently called @code{wrs-gw-v4.2-20150826.tar.gz}).  This
-is built from the @code{wr-switch-sw-v4.2} tag of the @code{wr-switch-hdl}
+(currently called @code{wrs-gw-v5.0-20161214.tar.gz}).  This
+is built from the @code{wr-switch-sw-v5.0} tag of the @code{wr-switch-hdl}
 repository.  Please note that the repository uses @i{git} submodules,
 so it depends on other @code{ohwr} repositories too, which in turn
 have not been tagged because the submodule mechanism ensures you'll
-get the exact version you need. Anyways, all relevant commit identifiers
-are shown by command @t{wrs_version -t} or in the SNMP version fields
-(within @t{WR-SWITCH-MIB.txt}).
+get the exact version you need. All relevant commit identifiers
+are shown by command @t{wrs_version -t} or in the SNMP version objects
+(for more information please refer to switch's MIB file @t{WR-SWITCH-MIB.txt}).
 
 The LM32 program is provided as a pre-compiled binary in
 @code{binaries/rt_cpu.bin}. The respective source code is the
 @i{wrpc-sw} package, because all WR installations run the same
 @sc{pll} software code and we chose to avoid duplication. Moreover,
-@i{wr-switch-sw} builds to not require an LM32 development environment.
+@i{wr-switch-sw} builds do not require an LM32 development environment.
 
 If you need to rebuild the @t{rt_cpu.bin} file from source, to make
 your own modifications, you can run @t{make wr_switch_defconfig}
 in @i{wrpc-sw} and then @t{make}. Please checkout the
-@code{wr-switch-sw-v4.2}
+@code{wr-switch-sw-v5.0}
 tag to get the exact commit.
 
 @c --------------------------------------------------------------------------
@@ -235,20 +235,17 @@ tag to get the exact commit.
 @subsection Portability
 
 The scripts in their current status are not expected to be very
-portable. I am sure a number of @i{bashisms} exist, and I did no effort
-to even identify them.  To relieve the user from possible pain,
+portable. A number of @i{bashisms} exist,
 internally the name @i{bash} is used instead of @i{sh}, so things
 work in systems where the default shell is @i{dash}, provided @i{bash}
 is installed.
 
-Similarly, the scripts are likely to fail if you use spaces in directory
-names; that is because not all
-uses of shell variables are properly quoted. I urge you to use directory names
-with no spaces in them, or to submit a patch to fix the scripts.
+Similarly, the scripts are likely to fail if spaces are used in directory
+names; that is because not all uses of shell variables are properly quoted.
 
-It should go without saying that the build environment is expected to
-be a native GNU/Linux system; success reports about other environments
-(e.g. cygwin) are welcome, possibly with associated patches.
+The expected build environment is a native GNU/Linux system; success reports
+about other environments (e.g. cygwin) are welcome, possibly with associated
+patches.
 
 @c --------------------------------------------------------------------------
 @node Environment Variables
@@ -360,17 +357,17 @@ main build directory.
 The messages of a download run are like the following ones:
 
 @smallexample
-    2016-06-02 17:10:46: --- Downloading base packages
-    2016-06-02 17:10:50: Retrieved at91bootstrap-3-3.0.tar.gz from upstream
-    2016-06-02 17:10:51: Retrieved barebox-2014.04.0.tar.bz2 from upstream
-    2016-06-02 17:11:21: Retrieved linux-3.16.37.tar.xz from upstream
-    2016-06-02 17:11:22: Retrieved wrs-gw-v4.2-20150826.tar.gz from upstream
-    2016-06-02 17:11:27: Retrieved buildroot-2016.02.tar.bz2 from upstream
+    2016-12-14 17:10:46: --- Downloading base packages
+    2016-12-14 17:10:50: Retrieved at91bootstrap-3-3.0.tar.gz from upstream
+    2016-12-14 17:10:51: Retrieved barebox-2014.04.0.tar.bz2 from upstream
+    2016-12-14 17:11:21: Retrieved linux-3.16.37.tar.xz from upstream
+    2016-12-14 17:11:22: Retrieved wrs-gw-v5.0-20161214.tar.gz from upstream
+    2016-12-14 17:11:27: Retrieved buildroot-2016.02.tar.bz2 from upstream
 @end smallexample
 
 After buildroot is downloaded, it is unpacked and then configured. Buildroot
 uses simillar mechanism to the one described above to download packages that
-it needs. Buildroot prints the progress of download of each package.
+it needs. Buildroot prints the progress of downloading of each package.
 After downloading is over you can work even without a network connection.
 
 @c ==========================================================================
@@ -380,7 +377,7 @@ If you just want to build stuff, with no concern about network
 downloads and without even knowing what is happening, just create a
 directory where you want the output to be generated and start
 compilation. Note that it takes around 4GB of storage in excess
-of the 330MB downloaded.
+of the 400MB downloaded.
 
 Then run this (but please read more for a better command):
 
@@ -410,30 +407,30 @@ The following example shows a run on a quad core, dual hyperthreaded system
 step takes only a few seconds, as shown, to verify the checksums:
 
 @smallexample
-2016-06-02 17:26:39: --- Downloading base packages
-2016-06-02 17:26:39: --- Buildroot: unpack and configure
-2016-06-02 17:26:39: Uncompressing buildroot
-2016-06-02 17:26:40: Configuring with "[...]/../configs/buildroot/wrs_release_br2_config"
-2016-06-02 17:26:40: Patching buildroot
-2016-06-02 17:26:40: Reconfiguring buildroot
-2016-06-02 17:26:41: --- Buildroot: download packages
-2016-06-02 17:26:48: --- Buildroot: compiler and filesystem
-2016-06-02 17:26:48: Compiling buildroot
-2016-06-02 17:47:54: --- AT91Boot
-2016-06-02 17:47:54: Patching AT91Boot
-2016-06-02 17:47:54: Building AT91Boot
-2016-06-02 17:47:55: --- Barebox
-2016-06-02 17:47:55: Patching Barebox
-2016-06-02 17:47:55: Building Barebox
-2016-06-02 17:48:03: --- Linux kernel for switch
-2016-06-02 17:48:52: --- Kernel modules from this package
-2016-06-02 17:48:56: --- PTP daemon (ppsi repository as a submodule)
-2016-06-02 17:49:05: --- User space tools
-2016-06-02 17:49:15: --- Deploying FPGA firmware
-2016-06-02 17:49:15: Using pre-built binaries from wrs-gw-v4.2-20150826.tar.gz
-2016-06-02 17:49:16: --- Wrapping filesystem
-2016-06-02 17:49:21: --- Packing into wr-switch-sw-v4.2-20160602_binaries.tar
-2016-06-02 17:49:21: Complete build succeeded, apparently
+2016-12-14 17:26:39: --- Downloading base packages
+2016-12-14 17:26:39: --- Buildroot: unpack and configure
+2016-12-14 17:26:39: Uncompressing buildroot
+2016-12-14 17:26:40: Configuring with "[...]/../configs/buildroot/wrs_release_br2_config"
+2016-12-14 17:26:40: Patching buildroot
+2016-12-14 17:26:40: Reconfiguring buildroot
+2016-12-14 17:26:41: --- Buildroot: download packages
+2016-12-14 17:26:48: --- Buildroot: compiler and filesystem
+2016-12-14 17:26:48: Compiling buildroot
+2016-12-14 17:47:54: --- AT91Boot
+2016-12-14 17:47:54: Patching AT91Boot
+2016-12-14 17:47:54: Building AT91Boot
+2016-12-14 17:47:55: --- Barebox
+2016-12-14 17:47:55: Patching Barebox
+2016-12-14 17:47:55: Building Barebox
+2016-12-14 17:48:03: --- Linux kernel for switch
+2016-12-14 17:48:52: --- Kernel modules from this package
+2016-12-14 17:48:56: --- PTP daemon (ppsi repository as a submodule)
+2016-12-14 17:49:05: --- User space tools
+2016-12-14 17:49:15: --- Deploying FPGA firmware
+2016-12-14 17:49:15: Using pre-built binaries from wrs-gw-v5.0-20161214.tar.gz
+2016-12-14 17:49:16: --- Wrapping filesystem
+2016-12-14 17:49:21: --- Packing into wr-switch-sw-v5.0-20161214_binaries.tar
+2016-12-14 17:49:21: Complete build succeeded, apparently
 @end smallexample
 
 You may prefer to save @i{stderr} with @i{stdout} to the log file
@@ -480,7 +477,7 @@ i.e. a @i{tar} archive of all files needed to flash a brand new WR
 Switch.  The example above shows that the name is something like:
 
 @example
-	wr-switch-sw-v4.2-20150828_binaries.tar
+	wr-switch-sw-v5.0-20161214_binaries.tar
 @end example
 
 In other words, we include both the tag name (from @t{git describe})
@@ -748,18 +745,19 @@ and are currently the following ones:
 
 @example
   0001-initramfs-stop-after-one-cpio-archive.patch
-  0002-arm-fiq-allow-modules-to-exploit-the-fiq-mechanism.patch
-  0003-mtd_dataflash-Read-EDI-bytes-in-JEDEC-to-support-AT4.patch
+  0002-mtd_dataflash-Read-EDI-bytes-in-JEDEC-to-support-AT4.patch
+  0003-wr-switch-sam9m10g45ek-change-USB-vbus_pin-from-PB19.patch
   0004-wr-switch-sam9m10g45ek-enable-FPGA-access-from-EBI1-.patch
-  0005-wr-switch-sam9m10g45ek-change-USB-vbus_pin-from-PB19.patch
-  0006-wr-switch-sam9m10g45ek-store-device-partitioning.patch
-  0007-wr-switch-sam9m10g45ek-more-relaxed-nand-timings.patch
-  0008-wr-switch-sam9m10g45ek-provide-bootcount-using-scrat.patch
-  0009-wr-switch-at91-udc-force-full-speed.patch
+  0005-wr-switch-sam9m10g45ek-store-device-partitioning.patch
+  0006-wr-switch-sam9m10g45ek-more-relaxed-nand-timings.patch
+  0007-wr-switch-sam9m10g45ek-provide-bootcount-using-scrat.patch
+  0008-wr-switch-at91-udc-force-full-speed.patch
+  0009-hack-architecture-to-boot-on-our-boot-loader.patch
+  0010-disable-BBT-for-the-nand-flash.patch
 @end example
 
 The configuration we use to build the kernel is not a patch but a plain
-@code{.config} file, in the same directory as the patches, so you
+@code{.config} file (@t{configs/wrs_linux_defconfig}), so you
 can change it easily, if needed. As an alternative,
 you can also set @code{WRS_KERNEL_CONFIG} to the full pathname of
 your configuration file of choice. The file must be a copy of the
@@ -771,7 +769,7 @@ ignored with a simple warning, without stopping the build procedure.
 
 The build scripts copy both @i{zImage} and all compiled kernel
 modules to the @i{images/} directory of the build place. This currently
-includes modules 
+includes modules.
 
 @c --------------------------------------------------------------------------
 @node Kernel Modules
@@ -783,10 +781,10 @@ build directory. The modules are then copied into the
 @file{images/wr/lib/modules/} subdirectory of the main build directory.
 
 Please note that modules (and later user-space) are compiled in-place;
-ie. not in the output directory.  The disadvantage is that your repository
+i.e. not in the output directory.  The disadvantage is that your repository
 becomes dirty with output and intermediate files. The advantage is that
 any modification you make to the code is already in the repository
-for your to commit.
+for you to commit.
 
 Currently, the package includes the following modules:
 
@@ -819,8 +817,8 @@ Configuration used to support two different PTP engines, but now
 we only support PPSi.
 
 The code is hosted in its own
-repository; it is a @i{git} submodules in this package.
-The repository is hosted on @code{ohwr}, like others.
+repository; it is a @i{git} submodule in this package.
+The repository is hosted on @code{ohwr.org}, like others.
 
 PPSi is @i{Kconfig} based: you may build it in its own directory by
 using its @i{wrs_defconfig} and the proper @t{CROSS_COMPILE} variable.
@@ -847,7 +845,6 @@ The main components are:
         that is running on the FPGA.
 
 @item libwr
-
 	A series of utility functions to access the switch itself.
 
 @item wrsw_hal
@@ -1037,7 +1034,7 @@ you need to following items to flash a switch:
 The flashing procedure will use the @i{server address} reported by
 DHCP as IP address for the TFTP transfer.
 
-Also, since release 4.1, you should not provide MAC addresses
+Also, since release v4.1, you should not provide MAC addresses
 while flashing any more. The two MAC addresses are expected to be stored
 in @i{dataflash} by the manufacturer and not changed any more. If you
 upgrade your switch from a previous software version, please refer
@@ -1258,7 +1255,7 @@ If you want to flash the @i{at91boot.bin}, @i{barebox.bin}, @i{kernel}
 or @i{file-system} that you just built, you can just call the script
 from the build directory and use the @code{-b} option.
 
-The official binaries for installation of version 4.2 of this package
+The official binaries for installation of version 5.0 of this package
 are available in the @i{files} tab of this project in @t{ohwr.org}.
 We don't provide a complete link here, but one is available in the
 list of downloaded files: @t{build/download-info}.
@@ -1340,7 +1337,7 @@ device.  Such an SPI memory is used to host the IPL (@i{at91boot}) and
 the executable code of the @i{barebox} boot loader.  The user is not expected to
 ever erase this memory; if it happens, the system won't boot and
 you'll be forced to re-flash it entirely, which requires access to the back
-side of the switch..
+side of the switch.
 
 NAND memory is used for user-data: the boot loader configuration, the
 kernel and the filesystem.
@@ -1684,13 +1681,13 @@ The following functions are defined. Please look in the source code
 for details about how they are used:
 
 @table @code
-@item void *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags);
-@itemx void wrs_shm_put(void *headptr);
+@item struct wrs_shm_head *wrs_shm_get(enum wrs_shm_name name_id, char *name, unsigned long flags);
+@itemx int wrs_shm_put(struct wrs_shm_head *head);
 
 	Request access to a shared memory area, and stop using it.
         Flags are  @t{WRS_SHM_WRITE}, @t{WRS_SHM_READ} and @t{WRS_SHM_LOCKED}.
         If @t{WRS_SHM_WRITE} is set, head is properly initialized.
-        if @t{WRS_SHM_LOCKED} is set, a  writer will mark the area as locked
+        If @t{WRS_SHM_LOCKED} is set, a  writer will mark the area as locked
         before writing its own @t{pid}, and a reader will wait for the @t{pid}
         to be valid (i.e. it waits for a writer to be there). A writer using
         the ``locked'' flag must release the lock after initialization
@@ -1699,14 +1696,21 @@ for details about how they are used:
         @t{ETIMEDOUT} or to the error returned by underlying system calls
         (for example, @t{EPERM} if the file cannot be mapped).
 
-@item void *wrs_shm_alloc(void *headptr, size_t size);
+@item int wrs_shm_get_and_check(enum wrs_shm_name shm_name, struct wrs_shm_head **head);
+
+	Small helper function for opening shmem and checking if initial data is
+	already populated. Returns different errors when opening shmem failed,
+	when version is not initialized (version equals to 0) or when data in
+	shmem is inconsistent.
+
+@item void *wrs_shm_alloc(struct wrs_shm_head *head, size_t size);
 
 	Allocate data space within the shared memory area. The returned
         pointer can be used directly. Only writers should allocate
         but the code is not checking for this. The function is used,
         for example, in @t{wrsw_hal/hal_ports.c}.
 
-@item void *wrs_shm_follow(void *headptr, void *ptr);
+@item void *wrs_shm_follow(struct wrs_shm_head *head, void *ptr);
 
 	A reader can follow a pointer using this function.  The writer
         can allocate shared memory with @t{wrs_shm_alloc} and store the
@@ -1716,33 +1720,53 @@ for details about how they are used:
         can be used to convert a pointer in the writer's address space
         to a pointer in the reader's address space, or NULL if on error.
         Please see @t{tools/wrs_dump_shmem.c} about how this is used.
-        
-@item void wrs_shm_write(void *headptr, int flags);
+
+@item void wrs_shm_write(struct wrs_shm_head *head, int flags);
+@itemx void wrs_shm_write_caller(struct wrs_shm_head *head, int flags, const char *caller);
 
 	@t{flags} is @t{WRS_SHM_WRITE_BEGIN} or @t{WRS_SHM_WRITE_END}.
 	Whenever internal consistency of data structure is needed, the
         writer should call this function before modifying shared structures,
         and also
         when all modifications are done and data is internally consistent.
+        It is recommended to use @t{wrs_shm_write} version which is implemented
+        as a macro, which calls @t{wrs_shm_write_caller} with a callee's
+        function name as last parameter. Such approach is can be used for
+        tracking source of write begin and write ends.
+
         A call with @t{WRS_SHM_WRITE_END} is mandatory for writers that
         used @t{WRS_SHM_LOCKED} at @t{wrs_shm_get} time.
 
-@item unsigned wrs_shm_seqbegin(void *headptr);
-@itemx int wrs_shm_seqretry(void *headptr, unsigned start);
+@item unsigned wrs_shm_seqbegin(struct wrs_shm_head *head);
+@itemx int wrs_shm_seqretry(struct wrs_shm_head *head, unsigned start);
 
 	A reader can use these functions to ensure it reads
         internally-consistent data from a shared structure. It relies
         on proper use of @t{wrs_shm_write()} by the writer.
 
-@item int wrs_shm_age(void *headptr);
+@item int wrs_shm_age(struct wrs_shm_head *head);
 
 	The function returns the age, in seconds, of the last
         modification to the memory area.  It relies
         on proper use of @t{wrs_shm_write()} by the writer.
 
-@item void *wrs_shm_data(void *headptr, unsigned version);
+@item void *wrs_shm_data(struct wrs_shm_head *head, unsigned version);
 
 	Returns a pointer to data after the @t{struct wrs_shm_head}.
+
+@item wrs_shm_set_path(char *new_path);
+
+	This function can be used to open shmem files from different location
+	than @t{/dev/shm}. For example, these functions are used by a
+	@t{wrs_dump_shmem} tool to allow opening shmem files copied from
+	another switch.
+
+@item void wrs_shm_ignore_flag_locked(int ignore_flag);
+
+	This function complements function @t{wrs_shm_set_path}. It allows to
+	ignore the flag @t{WRS_SHM_LOCKED}. If such flag is not ignored then
+	function @t{wrs_shm_get_and_check} is not able to open shmem
+	successfully due to lack of process running with the given pid.
 
 @end table
 
@@ -1773,14 +1797,15 @@ currently 25ms.
 The @sc{hal} process is in charge of replying to IPC requests
 (@i{hal_exports.c}), driving the fan speed according to temperature
 (@i{libwr/fan.c}) and monitoring ports (this is spread in several
-files related to @i{i2c} communication).
+files related to @i{i2c} communication like reading SFPs' eeprom, lighting
+proper LED in the front panel, etc.).
 
 @c ==========================================================================
 @node Reboot/Reset Diagnostics
 @section Reboot/Reset Diagnostics
 
 For management and diagnostics, the @sc{wrs} keeps track of the number
-of boots since power on. It does so relying on 4 32-bit @sc{cpu}
+of boots since power on. It does so relying on four 32-bit @sc{cpu}
 registers that are unpredictable at power-up and remain unchanged over
 reboots. They are called ``backup registers'' in vendor documentation
 (@t{GPBR}): they actually read 0 on power-up but the documentation
@@ -1855,6 +1880,10 @@ We may also consider to use one of the kernel's mechanisms for persistent
 storage of information across reboots, to recover panic messages
 after a reboot.
 
+@b{Note:} Values of these registers can be read remotely via SNMP in objects:
+@t{wrsBootCnt}, @t{wrsRebootCnt}, @t{wrsRestartReason}, @t{wrsFaultIP} and
+@t{wrsFaultLR}.
+
 @c ==========================================================================
 @node Time keeping over restarts
 @section Time keeping over restarts
@@ -1862,9 +1891,9 @@ after a reboot.
 At normal restart, current time is saved in @t{/update/saved_date}.
 Later, at boot switch tries to retrieve correct time from ntp server
 if configured in dot-config.
-If no correct date can be retrieved via ntp, switch tries to set date stored in
-@t{/update/saved_date}. Please note that at crash, power down or
-reset by reset button no date information is saved. After such restart switch
+If no correct date can be retrieved via ntp, switch tries to set a date stored
+in @t{/update/saved_date}. Please note that at crash, power down or
+reset by a reset button no date information is saved. After such restart switch
 will set date to last gentle reboot or to 1st of January 1970 if there were no
 gentle restarts before.
 
@@ -1886,12 +1915,14 @@ switch. Check is done every 10 seconds. As for now supervised processes are:
 @t{snmpd}.
 
 In case any of the supervised processes does not run anymore (because of a crash,
-exit etc.), @t{monit} restarts missing process. If 5 restarts of a process
-occur during 10 cycles (10*10 seconds), the entire switch is restarted.
-The process' name causing restart is saved in the file
+exit etc.), @t{monit} restarts missing process. If 5 restarts of a particular
+process occurs during 10 cycles (10*10 seconds), the entire switch is
+restarted.
+The process' name causing a restart is saved in the file
 @t{/update/monit_restart_reason} on the flash partition. After next boot this
-file is moved to @t{/tmp/monit_restart_reason}, where can be read. Since it is
-@t{/tmp} partition, file with restart reason is lost after next boot.
+file is moved to @t{/tmp/monit_restart_reason}, where can be read by i.e. SNMP.
+Since it is @t{/tmp} partition, file with restart reason is lost after next
+boot.
 
 Since @t{monit} is started from the inittab, even if @t{monit} crashes for some
 reason it will be re-spawned by the @t{init}.
@@ -1901,21 +1932,23 @@ reason it will be re-spawned by the @t{init}.
 @subsection Disabling monit
 
 In some cases, especially during development it is convenient to disable
-@t{monit} to avoid annoying re-spawns of the processes and restarts of the entire
-switch.
+@t{monit} to avoid annoying re-spawns of the processes and restarts of the
+entire switch.
 @t{monit} can be disabled with command:
 @example
 /etc/init.d/monit.sh stop
 @end example
-which will send STOP signal to @t{monit} or by adding @t{CONFIG_MONIT_DISABLE=y} to dot-config.
+which will send STOP signal to @t{monit}. Additionally @t{monit} will not start
+after the boot if there is a config item @t{CONFIG_MONIT_DISABLE=y} in
+the dot-config.
 
 To re-enable @t{monit} first make sure there is no @t{CONFIG_MONIT_DISABLE=y} in dot-config, then execute command:
 @example
 /etc/init.d/monit.sh start
 @end example
 
-NOTE: Even when @t{monit} is disabled there is a process @t{/usr/bin/monit} in
-a process list, but its state is "stopped" (T).
+@b{Note:} Even when @t{monit} is disabled there is a process @t{/usr/bin/monit}
+in a process list, but its state is "stopped" (T).
 
 @c ==========================================================================
 @node SDB and Hardware Information
@@ -1934,7 +1967,7 @@ The storage device of choice, given the hardware architecture of the
 White Rabbit Switch, is the @i{dataflash}.  The data format we chose
 is @sc{sdb}, that we are using in a number of situations.
 
-A description of @sc{sdb} is to be found in the @t{ohwr} project
+A description of @sc{sdb} is to be found in the @t{ohwr.org} project
 called @i{fpga-config-space}. The @i{Self Describing Bus} was born
 to describe address spaces (i.e. the cores that are part of an @sc{fpga}
 design) but is also a good way to implement a small filesystem
@@ -1972,6 +2005,9 @@ The binary image includes 4 files, stored as an @sc{sdb} filesystem:
 
 	The MAC address for the first fiber port (SFP, 1Gb/s). Other ports
         are assigned sequential addresses starting from this one.
+
+        @b{Note:} In the switches which were produced before v5.0 firmware
+        was released this file contained @t{wr0.ethaddr}.
 
 @item hw_info
 
@@ -2025,7 +2061,7 @@ what version the SCB is (this is not really needed to identify  3.4 from
 Some information items are not really mandatory (the script will
 not fail if the are not specified), but should be defined anyways
 because @sc{snmp} code retrieves them to tell network administrators.
-Currently this only applies to the serial number (@t{-n})
+Currently this only applies to the serial number (@t{-n}).
 
 @c ==========================================================================
 @node Storing Hwinfo in a White Rabbit Switch
@@ -2197,15 +2233,15 @@ details are different.
 
 Even if the package is already released and used in production,
 some details can be
-sub-optimal, while some procedures may be tricky and need more explanation.
-
-We are collecting all those issues in the @i{wiki} page of the
-project, to avoid frequent updates to this manual to just collect
-those details.  So please visit
-@url{www.ohwr.org/projects/wr-switch-sw/wiki/Bugs} and
-@url{www.ohwr.org/projects/wr-switch-sw/wiki/Troubleshooting}
-if you have any problem with this package, but feel free to reach us
-on the mailing list if you don't find help there.
+suboptimal, while some procedures may be tricky and need more explanation.
+We are collecting all those issues in our project pages. Please visit:
+@itemize
+   @item Frequently Asked Questions: @url{http://www.ohwr.org/projects/white-rabbit/wiki/FAQswitch}
+   @item Issues for WR Switch SW project: @url{http://www.ohwr.org/projects/wr-switch-sw/issues}
+   @item Issues for WR Switch HDL project: @url{http://www.ohwr.org/projects/wr-switch-hdl/issues}
+@end itemize
+If you have any problem with this firmware and you don't find help in the above
+links, feel free to reach us on the @i{white-rabbit-dev} mailing list.
 
 @c ##########################################################################
 @bye
