@@ -67,6 +67,7 @@ struct ns_pstats {
 
 /* parameters read from dot-config */
 struct wrsNetworkingStatus_config {
+	int disable_wrsSwcoreStatus;
 	float hp_frame_rate;
 	float rx_frame_rate;
 	float rx_prio_frame_rate;

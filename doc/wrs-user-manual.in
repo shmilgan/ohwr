@@ -804,20 +804,25 @@ appropriate way, before the respective service is started.
         threshold level, SNMP object @t{WR-SWITCH-MIB::tempWarning} will change
         accordingly.
 
-@item CONFIG_SNMP_SWCORESTATUS_HP_FRAME_RATE
+@item CONFIG_SNMP_SWCORESTATUS_DISABLE
 
-	Error via SNMP if the rate of HP frames on any port exceed given value.
-	(currently not implemented)
+	Force SNMP object @t{wrsSwcoreStatus} to be always OK. It can be used
+	to mask all potential problems with sw-core.
 
-@item CONFIG_SNMP_SWCORESTATUS_RX_FRAME_RATE
+@c @item CONFIG_SNMP_SWCORESTATUS_HP_FRAME_RATE
+@c
+@c	Error via SNMP if the rate of HP frames on any port exceed given value.
+@c	(currently not implemented)
 
-	Error via SNMP if rate of RX frames on any port exceed given value.
-	(currently not implemented)
+@c@item CONFIG_SNMP_SWCORESTATUS_RX_FRAME_RATE
+@c
+@c	Error via SNMP if rate of RX frames on any port exceed given value.
+@c	(currently not implemented)
 
-@item CONFIG_SNMP_SWCORESTATUS_RX_PRIO_FRAME_RATE
-
-	Error if frame rate of any RX priority exceed given value.
-	(currently not implemented)
+@c@item CONFIG_SNMP_SWCORESTATUS_RX_PRIO_FRAME_RATE
+@c
+@c	Error if frame rate of any RX priority exceed given value.
+@c	(currently not implemented)
 
 @item CONFIG_WRSAUXCLK_FREQ
 @itemx CONFIG_WRSAUXCLK_DUTY

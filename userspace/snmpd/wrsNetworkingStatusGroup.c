@@ -102,6 +102,8 @@ static int get_swcore_status(struct ns_pstats *old,
 	uint64_t tx_delta;
 
 	slog_obj_name = wrsSwcoreStatus_str;
+	if (ns_dotconfig.disable_wrsSwcoreStatus)
+		return 0;
 
 	for (i = 0; i < rows; i++) {
 		/* TXFrames and Forwarded described in 2.2.3 "Problem with the
@@ -181,6 +183,15 @@ static int get_rtu_status(struct ns_pstats *old,
 static void load_dot_config(void)
 {
 	char *tmp;
+
+	ns_dotconfig.disable_wrsSwcoreStatus = 0;
+	tmp = libwr_cfg_get("SNMP_SWCORESTATUS_DISABLE");
+	if (tmp && !strcmp(tmp, "y")) {
+		ns_dotconfig.disable_wrsSwcoreStatus = 1;
+		snmp_log(LOG_WARNING, "SNMP: "SL_W" %s: "
+			 "SNMP_SWCORESTATUS_DISABLE=y in dot-config\n",
+			 wrsSwcoreStatus_str);
+	}
 
 	tmp = libwr_cfg_get("SNMP_SWCORESTATUS_HP_FRAME_RATE");
 	if (tmp)
