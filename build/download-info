@@ -19,8 +19,8 @@ linux-3.16.37.tar.xz            fc4e8c469cf852a128e160f2910c1f21 \
    https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.16.37.tar.xz
 
 # our gateware binaries
-wrs-gw-v5.0-RC1-20161201.tar.gz 601b17aa4e54372e9a01bc8f075997a3 \
-   http://www.ohwr.org/attachments/download/4741/wrs-gw-v5.0-RC1-20161201.tar.gz
+wrs-gw-v5.0-20161214.tar.gz ad4dd1f4bef255d1ac4955c02775e264 \
+   http://www.ohwr.org/attachments/download/4800/wrs-gw-v5.0-20161214.tar.gz
 
 # buildroot core and packages
 buildroot-2016.02.tar.bz2        fcf10ae55b0831f52d492b6939e95581 \
