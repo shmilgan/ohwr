@@ -97,15 +97,15 @@ This is the current set of manuals that accompany the @sc{wrs}:
 
 @item @i{White Rabbit Switch: Developer's Manual}: it describes the
    build procedure and how internals work; use of scripts and
-   @sc{wrs}-specific programs and so on.  The manual is by developers
+   @sc{wrs}-specific programs etc.  The manual is by developers
    and for developers.  This is the
    document to check if you need to customize your @i{wrs} rebuild
    software from new repository commits that are not an official release
    point, or just install your @i{wrs} with custom configuration values.
 
-@item @i{White Rabbit Switch: Failures and Diagnostics}: describe various
+@item @i{White Rabbit Switch: Failures and Diagnostics}: describes various
    failure scenarios of a switch and ways how to recognize them.
-   Additionally describe SNMP exports of a switch (@t{WR-SWITCH-MIB}).
+   Additionally, it describes SNMP exports of a switch (@t{WR-SWITCH-MIB}).
 
 @end itemize
 
@@ -150,10 +150,9 @@ If you run version 4.1 or later please copy @t{wrs-firmware.tar} file into
 the @t{/update} partition via @t{scp} or web-interface and restart your switch.
 
 When the running version during the update is at least v5.0, then update script
-performs the check of md5sums of all files inside @t{wrs-firmware.tar}.
-In case at least one checksum is wrong then update is aborted.
-When occurs, the checksum error is reported via SNMP (object
-@t{wrsFwUpdateStatus}) until the next successful update.
+performs the check of md5 sums of all files inside the @t{wrs-firmware.tar}.
+If at least one checksum is incorrect, the update is aborted and an error is
+reported via SNMP (object @t{wrsFwUpdateStatus}) until the next successful update.
 Additionally, the @t{wrs-firmware.tar} containing corrupted file is renamed to
 @t{wrs-firmware.tar.checksum_error}. This file is automatically removed during
 the next successful update.
@@ -197,15 +196,14 @@ includes the MAC addresses for the management Ethernet and the
 @i{hwinfo}, using the @sc{sdb} file format. @sc{sdb} is defined in the
 @t{fpga-configuration-space} within @t{ohwr.org}.  Before using
 @sc{sdb} we used to edit the boot loader's configuration at flash
-time, a bad practice developed in a hurry.
+time.
 
-The @i{hwinfo} structure is now written to @i{dataflash} by the
-manufacturer, and never changed even when performing a complete re-flash
-of the device, because the flashing scripts preserve the @i{hwinfo}
-memory area.
+The @i{hwinfo} structure is written to @i{dataflash} by the manufacturer. It is
+never changed even when performing a complete re-flash of the device, because
+the flashing scripts preserve the @i{hwinfo} memory area.
 
 When upgrading from a pre-4.1 switch software, you need to create this
-@i{hwinfo} data structure. This procedure is mostly automatic, but you
+@i{hwinfo} data structure. The procedure is mostly automatic, but you
 need to be aware of the steps involved, in case something goes wrong.
 
 @c ==========================================================================
@@ -221,9 +219,9 @@ cable is not plugged, the upgrade procedure blocks.
 This latter problem happens because messages are written to the
 management USB port, to help people flashing from scratch, and the
 write is a blocking one by default: if nobody collects the USB data,
-the system waits for a recipient. With version 4.1.1 we fixed the
-problem, using non-blocking operations; we'd better loose messages
-than block installation because nobody is reading.
+the system waits for a recipient. With version 4.1.1 the problem was fixed using
+non-blocking operations (it is better to loose messages than to block the
+installation because nobody is reading).
 
 Thus, there are two different ways to upgrade; which one
 you prefer we can't tell. Both work, each with its own drawbacks.
@@ -313,7 +311,7 @@ especially if you want to preserve your MAC addresses.
 One possible path is flashing version 4.0 (please refer to v4.0
 manuals) and then proceed as described in @ref{Upgrading from v4.0}.
 When flashing version 4.0 you'll need to pass your MAC addresses on
-the command line of the flasher, so please take not of what they are.
+the command line of the flasher, so please take note of what they are.
 
 Another option is flashing the latest firmware version and then build
 your own @i{hwinfo} structure by specifying your MAC addresses.
@@ -406,17 +404,17 @@ sources are implemented in current version:
 	Get a network location of a @t{dot-config} file from a DHCP server.
         Server can be configured in a way to provide the entire URL to
         the @t{dot-config} in the ``@t{filename}'' configuration field of the
-        DHCP server. In this case the provided URL has to be in the same form
+        DHCP server. In this case, provided URL has to be in the same form
         as @t{CONFIG_DOTCONF_URL}.
 
         As an alternative, ``@t{filename}'' can be configured only as a
-        path. It will be then interpreted as a path on a tftp server, which IP
+        path. It will be then interpreted as a path on a TFTP server, which IP
         address is taken from the configuration field
         ``@t{The BOOTP next server option}'' of a DHCP server.
 
 @item CONFIG_DOTCONF_SOURCE_TRY_DHCP
 	The same as @t{CONFIG_DOTCONF_SOURCE_FORCE_DHCP}, but this option does
-        not cause errors in SNMP's objects if the switch fails to retrieve the
+        not cause errors in SNMP's objects if switch fails to retrieve the
         URL to the @t{dot-config} via DHCP. Note that syntax and download
         errors of @t{dot-config} are notified in the same way as for other
         choices.
@@ -425,14 +423,14 @@ sources are implemented in current version:
 
 If the selected option triggers @sc{wrs} to download a new @t{dot-config}
 file and it passes the validation process, the new @t{dot-config} will replace
-the copy in the local storage. In case there are errors or unknown
+a local copy. In case there are errors or unknown
 configuration entries in the retrieved file, the old one will be used.
 
 The URL (stored in @t{CONFIG_DOTCONF_URL} or retrieved via DHCP) is of the form
 ``@i{protocol}@t{://}@i{host}@t{/}@i{pathname}''.  The special upper-case
 strings @t{HOSTNAME}, @t{IPADDR} and @t{MACADDR} are substituted with the
-current hostname, IP addresses or MAC address of the management port of the
-switch. By this the same configuration string can be used to set up a batch
+current hostname, IP address or MAC address of the management port of the
+switch. By this, the same configuration string can be used to set up a batch
 of switches with different configurations.
 
 The three parts of the URL are as follows:
@@ -468,10 +466,9 @@ For example this is a valid configuration for run-time update:
    CONFIG_DNS_DOMAIN="i.gnudd.com"
 @end smallexample
 
-And it results, in my case, in @t{wrs-config-192.168.16.9} being
-served to the @sc{wrs}.
+It results in @t{wrs-config-192.168.16.9} being served to the @sc{wrs}.
 
-Please remember that the new @t{dot-config} should include a valid
+Please remember, that the new @t{dot-config} should include a valid
 @t{CONFIG_DOTCONF_SOURCE_*} setting, or you won't be able to update the
 configuration at the next boot. In any case, you can always copy a
 configuration file using @i{ssh}, or use the web interface to change the
@@ -588,7 +585,7 @@ appropriate way, before the respective service is started.
 	The DNS server (as an IP address) and default domain. The values
         end up in @t{/etc/resolv.conf} of the runtime filesystem.
         By default the two strings are empty. If @t{CONFIG_ETH0_DHCP} or
-        @t{CONFIG_ETH0_DHCP_ONCE} is used file @t{/etc/resolv.conf} will be
+        @t{CONFIG_ETH0_DHCP_ONCE} is used, @t{/etc/resolv.conf} file will be
         populated with DNS settings received from the DHCP server.
         If configuration items for static (@t{CONFIG_DNS_*}) and dynamic
         (@t{CONFIG_ETH0_DHCP}) DNS configuration are used simultaneously
@@ -612,28 +609,28 @@ appropriate way, before the respective service is started.
 	@t{CONFIG_WRS_LOG_OTHER} is currently used by:
 	@itemize
 	@item @t{wrs_watchdog} daemon
-	@item @t{wrs_throttling} executed at boot up
-	@item @t{wrs_auxclk} executed at boot up
-	@item @t{wrs_custom_boot_script.sh} executed at boot up
+	@item @t{wrs_throttling} executed once at boot up
+	@item @t{wrs_auxclk} executed once at boot up
+	@item @t{wrs_custom_boot_script.sh} executed once at boot up
 	@item Setting VLANs with @t{vlan.sh} at boot up
 	@end itemize
 	Each value
-        can be a pathname, to select logging to file (and @t{/dev/kmsg}
+        can be a pathname, either to a file (e.g. @t{/dev/kmsg}
         is a possible ``file'' target) or a @i{facility}.@i{level} string,
         like @t{daemon.debug}, for syslog-based logging.
-        An empty strings selects no logging at all.  Please note that
+        An empty strings selects no logging at all.  Please note, that
         unknown facility names will generate a runtime error on the switch.
         All four strings default to ``@t{daemon.info}''.
 
 @item CONFIG_WRS_LOG_SNMPD
 
-	Value can be a pathname, to select logging to file (and
+	Value can be a pathname, either to a file (e.g. 
         @t{/dev/kmsg} is a possible ``file'' target) or a valid snmpd log
         option (without -L).
         Allowed strings are in the format ``@t{S} @i{level} @i{facility}'' (e.g.
         ``@t{S 2 daemon}''). For example, ``@t{s daemon}'' will forward
         messages to syslog with daemon as facility. To set level (i.e. 5) use
-	``@t{S 5 daemon}''. For details please check ``man snmpcmd''. An empty
+	``@t{S 5 daemon}''. For details please check @t{man snmpcmd}. An empty
 	strings selects no logging at all. Please note that unknown facility
 	names will generate a runtime error on the switch. NOTE: It looks
 	like @t{Notice} is not a default logging priority as written in
@@ -643,8 +640,8 @@ appropriate way, before the respective service is started.
 	The string can be a pathname (e.g. @t{/dev/kmsg}) or a @t{syslog}
 	string.
 	An empty string is used to represent no logging. If it is needed to
-	select facility and level please leave here empty string and change
-	@t{/etc/monitrc} or @t{/usr//etc/monitrc} file directly.
+	select facility and level please leave an empty string here and change
+	@t{/etc/monitrc} or @t{/usr/etc/monitrc} file directly.
 	Please note that unknown facility names will generate a runtime error
 	on the switch.
 
@@ -653,8 +650,8 @@ appropriate way, before the respective service is started.
 @itemx ...
 @itemx CONFIG_PORT18_PARAMS
 
-	These configuration items are used to set up ports' parameters;
-        this takes the following parameters:
+	These configuration items are used to set up timing parameters of the
+	WR ports:
 
 	@itemize
 		@item @t{name} -- the name of a given interface
@@ -668,22 +665,22 @@ appropriate way, before the respective service is started.
 		@item @t{rx} -- RX delay of a port in picoseconds
 		@item @t{role} -- PTP role of a port; possible values:
 		@itemize
-			@item @t{master} -- configure port as a master
-			@item @t{slave} -- configure port as a slave
+			@item @t{master} -- configure port as WR master
+			@item @t{slave} -- configure port as WR slave
 			@item @t{auto} -- when a port is connected to master
 					  behave as a slave, otherwise behave
 					  as master
-			@item @t{non-wr} -- don't report problems with this
-					    port via SNMP like SFP not in DB,
+			@item @t{non-wr} -- for this port don't report SNMP
+					    errors like: SFP not in DB,
 					    copper SFP connected, non 1GB
-					    SFP etc.
+					    SFP etc. This role should be used
+					    for synchronizing regular IEEE-1588
+					    slaves.
 			@item @t{none} -- disable White Rabbit and PTP on a
 					  port
 		@end itemize
-		@item @t{fiber} -- describes which fiber type
-				   (@t{CONFIG_FIBERXX_PARAMS})
-				   should be used for a fiber connected to
-				   a particular port
+		@item @t{fiber} -- fiber index from @t{CONFIG_FIBERXX_PARAMS}
+				   that is connected to this port
         @end itemize
 
         Most likely the default values work for you.
@@ -693,9 +690,9 @@ appropriate way, before the respective service is started.
 @itemx ...
 @itemx CONFIG_SFP09_PARAMS
 
-	Configuration for @sc{sfp} models. You should fill values for
-        all @sc{sfp} models you are using in your @sc{wrs} and all
-        wavelengths you are using.
+	Configuration for @sc{sfp} models. You should fill 
+        all @sc{sfp} models and all
+        wavelengths you are using in your @sc{wrs} 
 	@itemize
 		@item @t{vn} (@i{optional}) -- Vendor Name of an SFP
 		@item @t{pn} -- Part Number of an SFP
@@ -705,7 +702,9 @@ appropriate way, before the respective service is started.
 		@item @t{rx} -- RX delay of an SFP in picoseconds
 		@item @t{wl_txrx} -- Tx wavelength separated by "+" with Rx
 				     wavelength of an SFP;
-				     for example @t{wl_txrx=1490+1310}
+				     for example @t{wl_txrx=1490+1310} (for
+				     1490nm Tx wavelength and 1310nm Rx
+				     wavelength)
         @end itemize
         See @ref{Timing Configuration} for details.
 
@@ -713,7 +712,7 @@ appropriate way, before the respective service is started.
 @itemx ...
 @itemx CONFIG_FIBER03_PARAMS
 
-	This parameter specify the physical features of used fiber types.
+	This parameter specifies the physical features of used fiber types.
 	Specify the alpha value for each pair of used wavelengths.
 	This parameter follows a format:
 
@@ -738,29 +737,29 @@ appropriate way, before the respective service is started.
 
 	The type of PTP clock this switch is. Only one of the three
         items should be set (e.g. running ``@t{make menuconfig}'' offers
-        them as an exclusive choice). The options select a grand-master
-        with external reference, from GPS or Cesium or both; a free-running
-        master, used for isolated acquisition networks, without an
-        external reference; or a normal ``boundary-clock'' device that
+        them as an exclusive choice). The options select: a grand-master (GM)
+        with external reference, e.g. GPS or Cesium; a free-running
+        master (FM), used for isolated acquisition networks, without an
+        external reference; or a normal ``boundary-clock'' (BC) device that
         is slave on some ports and master on other ports.
 
 @item CONFIG_PTP_PORT_PARAMS
 @itemx CONFIG_PTP_CUSTOM
 @itemx CONFIG_PTP_REMOTE_CONF
 
-	By default, PPSi configuration file is assembled based on role and
+	By default, PTP daemon (PPSi) configuration file is assembled based on role and
         protocol parameters stored in @t{PORTxx_PARAMS}. If VLANs are
-        configured via @t{dot-config} additionally configuration items
-        @t{CONFIG_VLANS_PORTXX_VID} are used.
+        configured, the items
+        @t{CONFIG_VLANS_PORTXX_VID} are used as well.
         Parameters @t{clock-class} and @t{clock-accuracy} can be changed
         or new global PPSi settings can be added by editing file
-        @t{/wr/etc/ppsi-pre.conf}, which is used as begging of final
-        ppsi configuration file.
+        @t{/wr/etc/ppsi-pre.conf}, which is used as beginning of final
+        PPSi configuration file.
 
-	Alternatively PPSi can use custom user file for configuration
+	Alternatively, PPSi can use a custom user file for configuration
         (@t{CONFIG_PTP_CUSTOM}).
 
-	Finally, you can choose @t{PTP_REMOTE_CONF} and be able to
+	Finally, you can choose @t{PTP_REMOTE_CONF} to
         specify an URL whence the switch will download the @t{ppsi.conf} at
         boot time.
 
@@ -794,7 +793,7 @@ appropriate way, before the respective service is started.
 	Configuration for the @sc{snmp} agent. Addresses can be IP addresses
         or names (if DNS is configured and working), they are unset by
         default. Community values are strings and they default to
-        @t{public} and @t{private}.
+        @t{public} (@t{RO_COMMUNITY}) and @t{private} (@t{RW_COMMUNITY}).
 
 @item CONFIG_SNMP_TEMP_THOLD_FPGA
 @itemx CONFIG_SNMP_TEMP_THOLD_PLL
@@ -802,20 +801,23 @@ appropriate way, before the respective service is started.
 @itemx CONFIG_SNMP_TEMP_THOLD_PSR
 	Threshold levels for FPGA, PLL, Power Supply Left (PSL) and Power
         Supply Right (PSR) temperature sensors. When any temperature exceeds
-        threshold level SNMP object @t{WR-SWITCH-MIB::tempWarning} will change
+        threshold level, SNMP object @t{WR-SWITCH-MIB::tempWarning} will change
         accordingly.
 
 @item CONFIG_SNMP_SWCORESTATUS_HP_FRAME_RATE
 
-	Error via SNMP if rate of HP frames on any port exceed given value.
+	Error via SNMP if the rate of HP frames on any port exceed given value.
+	(currently not implemented)
 
 @item CONFIG_SNMP_SWCORESTATUS_RX_FRAME_RATE
 
 	Error via SNMP if rate of RX frames on any port exceed given value.
+	(currently not implemented)
 
 @item CONFIG_SNMP_SWCORESTATUS_RX_PRIO_FRAME_RATE
 
 	Error if frame rate of any RX priority exceed given value.
+	(currently not implemented)
 
 @item CONFIG_WRSAUXCLK_FREQ
 @itemx CONFIG_WRSAUXCLK_DUTY
@@ -823,7 +825,8 @@ appropriate way, before the respective service is started.
 @itemx CONFIG_WRSAUXCLK_SIGDEL
 @itemx CONFIG_WRSAUXCLK_PPSHIFT
 
-	Set of parameters passed to @t{wrs_auxclk} at boot time.
+	Set of parameters passed to @t{wrs_auxclk} at boot time to generate
+	WR-synchronized 10MHz clock on the @i{clk2} output.
         For more information please check @ref{wrs_auxclk}.
 
 @item CONFIG_NIC_THROTTLING_ENABLED
@@ -860,7 +863,7 @@ appropriate way, before the respective service is started.
 
 	Disable monitoring of running processes by @i{Monit}. @i{Monit} by
         default
-        re-spawns processes that have died. This option is useful mostly during
+        re-spawns processes that have died. This option should be used only during
         development.
 
 @item CONFIG_FAN_HYSTERESIS
@@ -868,23 +871,26 @@ appropriate way, before the respective service is started.
 @itemx CONFIG_FAN_HYSTERESIS_T_ENABLE
 @itemx CONFIG_FAN_HYSTERESIS_PWM_VAL
 
-	Use hysteresis to control switch's fans. Enable fans with PWM value
+	Use hysteresis to control fans. Enable fans with PWM value
 	@t{CONFIG_FAN_HYSTERESIS_PWM_VAL} when PLL's temperature exceeds
 	@t{CONFIG_FAN_HYSTERESIS_T_ENABLE}. Disable fans when temperature drops
 	below @t{CONFIG_FAN_HYSTERESIS_T_DISABLE}. These options are intended to
 	be used during development to reduce noise generated by a switch.
+	Don't use in production as this may affect the synchronization
+	performance.
 
 @item CONFIG_READ_SFP_DIAG_ENABLE
 
-	Let HAL to read @i{Diagnostic Monitoring} (DOM) from SFP's eeprom like
-	temperature, TX/RX power etc.
+	Let HAL to read @i{Diagnostic Monitoring} (DOM) from SFP's eeprom,
+	like: temperature, TX/RX power etc.
 
 @item CONFIG_RTU_HP_MASK_ENABLE
 @itemx CONFIG_RTU_HP_MASK_VAL
 
-	Set the mask which VLAN priorities are considered High Priority (this
+	Set the mask which VLAN priorities are considered High Priority traffic
+	(this
 	only concerns the traffic which is fast-forwarded).
-	To enable the apply of the custom mask please set
+	To enable a custom mask please set
 	@t{CONFIG_RTU_HP_MASK_ENABLE}.
 	@t{CONFIG_RTU_HP_MASK_VAL} shall contain the mask to be used.
 
@@ -898,38 +904,40 @@ appropriate way, before the respective service is started.
 @itemx CONFIG_VLANS_PORTXX_MODE_DISABLED
 @itemx CONFIG_VLANS_PORTXX_MODE_UNQUALIFIED
 
-	VLANs mode configuration for ports 1..18.
+	VLANs port mode configuration for ports 1..18.
 	It can be one of: Access, Trunk, Disabled or Unqualified.
 	For details please refer to the @ref{VLANs Configuration}
 
 @item CONFIG_VLANS_PORTXX_UNTAG_ALL
 @itemx CONFIG_VLANS_PORTXX_UNTAG_NONE
 
-	Define whether to remove a tag from VLAN frames on a port 1..18.
+	Define whether to remove a VLAN tag from egress frames on port 1..18.
 
 @item CONFIG_VLANS_PORTXX_PRIO
 
-	Priority value used when tagging frames or to override priority
-	passed to RTU. -1 disables the priority overwrite. Valid values are
+	Priority value used when tagging incoming frames or to locally override
+	the priority (in Unqualified and Disabled modes).
+	-1 disables the priority overwrite. Valid values are
 	from -1 to 7.
 
 @item CONFIG_VLANS_PORTXX_VID
 
-	This value based on the port's mode is used as:
+	The meaning of this value and whether it is mandatory or optional,
+	depends on the port mode:
 	@itemize
 	@item @t{MODE_ACCESS} -- (mandatory) use as VID for tagging incoming
-	  frames and notify the PPSI which VLAN shall it use for
+	  frames and notify PPSi which VLAN shall be used for
 	  synchronization; only one VLAN number shall be used in this mode
-	@item @t{MODE_TRUNK} - (optional) notify the PPSI which VLAN(s) shall
+	@item @t{MODE_TRUNK} - (optional) notify PPSi which VLAN(s) shall
 	  it use for synchronization; semicolon separated list is allowed
-	@item @t{MODE_DISABLED} - (optional) notify the PPSI which VLAN(s)
+	@item @t{MODE_DISABLED} - (optional) notify PPSi which VLAN(s)
 	  shall it use for synchronization; semicolon separated list is allowed
-	@item @t{MODE_UNQUALIFIED} - (optional) notify the PPSI which VLAN(s)
+	@item @t{MODE_UNQUALIFIED} - (optional) notify PPSi which VLAN(s)
 	  shall it use for synchronization; semicolon separated list is allowed
 	@end itemize
 	The range of a valid VID is from 0 to 4094.
 
-	Please note that in the v5.0 it is not possible to set via
+	@b{Note:} In firmware v5.0 it is not possible to set via
 	@t{dot-config} an override of VLAN tag for @t{UNQUALIFIED} mode.
 
 	For details please refer to the @ref{VLANs Configuration}
@@ -939,30 +947,32 @@ appropriate way, before the respective service is started.
 	Provide a configuration for VLAN from the range 0000-4094.
 	This option is a comma separated string in the following format:
 
-	@t{fid=<0..4094>,prio=<-1|0..7>,drop=<y|n>,ports=<1>;<2>;...;<...-...>;<18>}
+	@t{fid=<0..4094>,prio=<-1|0..7>,drop=<y|n>,ports=<1;2;...;...-...;18>}
 
 	Where:
 	@itemize
-	@item @t{fid} is a associated Filtering ID (FID) number. One FID can be
+	@item @t{fid} is a associated Filtering ID (FID) number. This parameter
+	  may be useful for complex VLAN configurations. In simple cases it can
+	  be omitted. One FID can be
 	  associated with many VIDs. RTU learning is performed per-FID.
 	  Associating many VIDs with a single FID allowed shared-VLANs
 	  learning.
 	@item @t{prio} is a priority of a VLAN; can take values between -1 and
 	  7;
-	  -1 disables priority override, any other valid value takes
-	  precedence over port priority
+	  -1 disables priority override, any other valid number takes
+	  precedence over the port priority
 	@item If @t{drop} is set to @t{y}, @t{yes} or @t{1}, all frames
 	  belonging to this VID are dropped (note that frame can belong to a
 	  VID as a consequence of per-port Endpoint configuration); can take
 	  values @t{y}, @t{yes}, @t{1}, @t{n}, @t{no}, @t{0}
 	@item @t{ports} is a list of ports separated with a semicolon sign
-	  (";"); ports ranges are supported (with a minus sign)
+	  (";"); ports ranges are supported (with a dash character)
 	@end itemize
 	Example:
 
 	@t{fid=4,prio=2,drop=n,ports=1;3-5;15}
 
-	It sets fid as 4, priority 2, don't drop frames belonging to this VLAN,
+	It sets FID as 4, priority 2, don't drop frames belonging to this VLAN,
 	assign ports 1, 3-5 and 15 to this VLAN.
 
 	For more details about VLANs configuration please refer to the
@@ -1001,21 +1011,21 @@ values depend on trace length and other hardware-specific details
 and are determined by a calibration procedure.  These values are
 used as constant delays in the @i{tx} and @i{rx} directions.
 
-@item The port is also configured as slave (@i{role}) using raw whiterabbit
+@item The port is also configured as WR slave (@i{role}) using raw whiterabbit
 protocol (@i{proto}) and is deployed using fiber type 2 -- this number
 is just a local enumeration of fiber types; most likely you'll be
 using type ``0'' in every port.
 
 @item The transceiver installed uses 1310nm light for tx
 and 1490nm light for rx (this is part of the specification of the
-transceiver, but cannot be auto-detected). Moreover it has 0 constant
-delay in both tx and rx, determined by calibration.
+transceiver, and cannot be auto-detected). Moreover it has 0 constant
+delay in both tx and rx, determined by the calibration procedure.
 
 @item The fiber type being used (type 2 here), when driven
 with 1310nm and 1490nm wavelengths, features an @i{alpha} parameter of
 0.00026787 (i.e. a ratio of 1.00026787) between the speed of light in
 the two directions.  This value depends on both the fiber type and
-wavelength, and is determined, again, by calibration.
+wavelength, and is determined, again, by the calibration procedure.
 
 @end itemize
 
@@ -1024,42 +1034,42 @@ opposite one (@t{alpha_1490_1310}) is calculated by software.
 
 @subheading SFP name matching
 
-SFP matching is based on vendor name (@i{vn}), part number (@i{pn}) and vendor
-serial (@i{vs}). During matching SFP's values are compared with values stored
+SFP matching is based on the vendor name (@i{vn}), part number (@i{pn}) and vendor
+serial (@i{vs}). During the matching, SFP parameters are compared with values stored
 in @t{CONFIG_SFPxx_PARAMS}.
-The first try is to match all SFP identifiers (@i{vn}, @i{pn} and @i{vs}) with
-stored in @t{dot-config}. If match is not successful, @i{vn} and @i{pn} of
-a SFP are compared only with @t{dot-config} entries that are without vendor
-serial. If match is still not found SFP's values are compared with
-@t{dot-config} entries, which has defined only
+The first try is to match all SFP identifiers (@i{vn}, @i{pn} and @i{vs}) with those
+stored in @t{dot-config}. If the match is not successful, @i{vn} and @i{pn} of
+an SFP are compared only with @t{dot-config} entries that are without vendor
+serial. If the match is still not found, SFP parameters are compared with
+@t{dot-config} entries, which have defined only
 a part number. Such approach prevents matching SFPs to @t{dot-config} entries
 with defined vendor serial.
 
-Below are shown matching examples:
+Below are shown some matching examples:
 @smallexample
 CONFIG_SFP00_PARAMS="vn=Axcen Photonics,pn=AXGE-3454-0531,vs=AX12390009629,tx=0,rx=0,..."
 @end smallexample
-Above config may be matched only to one SFP.
+CONFIG_SFP00_PARAMS may be matched only to one SFP.
 @smallexample
 CONFIG_SFP01_PARAMS="vn=Axcen Photonics,pn=AXGE-3454-0531,tx=0,rx=0,wl_txrx=1310+1490"
 @end smallexample
-Above config may be matched only to SFP with vendor name "Axcen Photonics" and
+CONFIG_SFP01_PARAMS may be matched only to SFP with vendor name "Axcen Photonics" and
 part number "AXGE-3454-0531", with exception to these SFPs that were matched to
-example like above (with vendor serial defined).
+CONFIG_SFP00_PARAMS (with vendor serial defined).
 @smallexample
 CONFIG_SFP02_PARAMS="pn=AXGE-3454-0531,tx=0,rx=0,wl_txrx=1310+1490"
 @end smallexample
-Config above will be matched to all SFPs with part number "AXGE-3454-0531",
-that were not matched by configs above.
+CONFIG_SFP02_PARAMS will be matched to all SFPs with part number "AXGE-3454-0531",
+that were not matched by any of the configs above.
 
 @subheading Other Deployments
 
-The example above matches the choices we make at CERN, where our
+Examples above match the choices we make at CERN, where our
 White Rabbit networks are all run with a single mono-modal fiber
-and  1310/1490 light.
+and  1310/1490 nm light.
 
 If you are using dual-fiber transceivers, which is acceptable for
-short links, you use the same wavelength in both direction, over two
+short links, you use the same wavelength in both directions, over two
 fibers of the same length. In this case you may choose to avoid
 writing the @t{wl_txrx} parameter in @sc{sfp} configuration and the
 @t{alpha_XX_XX} parameter in fiber configuration.  The missing
@@ -1078,19 +1088,15 @@ less than 10ps.
 
 @subheading Calibration
 
-Calibration of per-port and per-@sc{sfp} delays is described in the
-White Rabbit wiki:
-@url{http://www.ohwr.org/projects/white-rabbit/wiki/Calibration}.  The
-procedure can measure the total constant delays, but splitting between
-the what depends on the port and what depends on the transceiver is
-arbitrary (also, the split between the tx and rx paths is arbitrary).
+Calibration of per-port and per-@sc{sfp} delays as well as alpha is described in the
+White Rabbit Calibration procedure:
+@url{http://www.ohwr.org/projects/white-rabbit/wiki/Calibration}.
 
-The delays used in this example come from values listed in the above
-web page, and you should not be surprised by the fact that the
-transceiver specifies the delays as zero.  By performing the
-calibration procedure using this very transceiver type, the hardware
-engineers decided to assign the whole of the delay to the port (any
-split of the measured value is equally right).  Other transceiver
+The delays used in the examples come from values listed in the calibration wiki
+page, and you should not be surprised by the fact that the
+transceiver (SFP) specifies the delays as zero.  By performing the
+calibration procedure using this very transceiver type, the whole delay is
+assigned to the port.  Other transceiver
 types can be calibrated to either positive or negative values, to cope
 with the @i{difference} between them and the @t{AXGE} devices.
 
@@ -1098,7 +1104,7 @@ with the @i{difference} between them and the @t{AXGE} devices.
 @node VLANs Configuration
 @section VLANs Configuration
 
-The VLANs are handled at two levels:
+VLANs are handled at two levels:
 
 @itemize
     @item Per-port configuration of the Endpoint. It allows to:
@@ -1142,7 +1148,7 @@ VLAN-tag in the received frame.
 			priority that are configured in @t{pvid} and @t{pprio}
 			respectively
 	@item @i{priority tag}: are admitted, their tag is unchanged, the value
-			of VID provided to the RTU is overridden with the
+			of VID provided to the RTU is overridden with the one
 			configured in @t{pvid}. If @t{pprio} is not -1, the
 			value of priority provided to RTU is overridden with
 			the configured @t{pprio}
@@ -1183,7 +1189,8 @@ VLAN-tag in the received frame.
 			configured in @t{pvid}. If @t{pprio} is not -1, the
 			value of priority provided to RTU is overridden with
 			the configured @t{pprio}
-			NOTE: For version v5.0 providing a VID for this mode
+
+			@b{Note:} For version v5.0 providing a VID for this mode
 			is not supported in the dot-config
 	@item @i{VLAN tag}: are admitted; if @t{pprio} is not -1, the value of
 			priority provided to RTU is overridden with
@@ -1196,7 +1203,7 @@ Modes and their behaviour are summarized in the table below:
 
 @center @image{VLAN_modes, 14cm,, VLAN_modes}
 
-From the version 5.0, it is possible to configure VLANs in the 
+From the firmware v5.0, it is possible to configure VLANs in the 
 @t{dot-config} file (for an example configuration please see
 @ref{Example VLAN configuration by dot-config}).
 
@@ -1204,16 +1211,16 @@ As an alternative it is possible to use @i{wrs_vlans} tool
 described in @ref{wrs_vlans} together with a custom config file for @i{PPSi}.
 
 Another alternative working on pre-v5.0 to set VLANs is to use the web
-interface. However, as it is in v5.0 the web-interface is not capable to store
-a VLAN configuration into a @t{dot-config}.
+interface. However, as it is in v5.0, the web-interface is not capable to store
+VLANs configuration into a @t{dot-config}.
 
-To have a synchronization working with VLANs, please provide proper VIDs to
-configuration options like @t{CONFIG_VLANS_PORTXX_VID}. As an alternative
+To have synchronization working with VLANs, the preferred way is to provide proper VIDs to
+configuration options like @t{CONFIG_VLANS_PORTXX_VID}. As an alternative you can
 write a custom @i{PPSi} configuration file with VLANs specified per-port.
 You can simply copy the file generated in the WRS filesystem
 (@i{/etc/ppsi.conf}) to a central @t{tftp}/@t{http}/@t{ftp} server where
 @t{dot-config} files for your switches are stored and fetched on boot time or
-permanently store it in the switch's flash (for details, please check
+permanently store it in the flash (for details, please check the
 configuration options @t{CONFIG_PTP_*} in the
 @ref{Configuration Items that Apply at Run Time}).
 
@@ -1231,19 +1238,20 @@ For an example configuration please see
 @node Example VLAN configuration
 @subsection Example VLAN configuration
 
-This subsection describes how to configure VLANs on a switch using the
+This section describes how to configure VLANs on a switch using the
 @t{dot-config} and available command line tools.
 
-An example configuration of VLANs for ports (@t{wri}) 1-3 is provided below.
-The descriptions assume, for simplicity, that switch has only this 3 ports.
+An example configuration of VLANs for ports (@t{wri}) 1-3 is provided in 
+@ref{Example VLAN configuration by dot-config}.
+The description assumes, that switch has only these 3 ports.
 
 In this configuration, port 1 is synchronised to an upstream WR device. This
 device does not need to have any VLAN configuration. Port 1 is in @t{ACCESS} mode,
-thus it tags the ingress Ethernet frames. A VLAN-tags with VID 1 and priority
-4 is added so that frames received at this port belong to VLAN 1. Port 1 also
-untags the egress frames. In this configuration, it is only the port 1 that
-belongs to VLAN 1 which means that none of the traffic received on port 1 is
-forwarded to other ports. The only traffic received at port 1 that is not
+thus it tags the ingress Ethernet frames. VLAN-tags with VID 1 and priority
+4 are added so that frames received at this port belong to VLAN 1. Port 1 also
+untags the egress frames. In this configuration, only port 1
+belongs to VLAN 1, which means that none of the traffic received on port 1 is
+forwarded to other ports. The only traffic received on port 1 that is not
 dropped are the PTP messages which are forwarded to the PTP daemon (@i{PPSi}). Such
 an arrangement can be useful if the synchronisation is to be propagated through
 WR network, i.e. between the upstream and this switch, but the data needs to be
@@ -1259,7 +1267,7 @@ The traffic from port 3 is forwarded only to port 2. This port is in @t{TRUNK}
 mode. It does not untag egress frames which means that the device connected to
 it (a switch or a node) must be VLAN-aware. Port 2 accepts only frames that are
 already tagged with the VLAN-tag. Out of the frames received at port 2, only
-the frames with VID=2 are forwarded, all the other frames are dropped. The
+these with VID=2 are forwarded, all the other frames are dropped. The
 frames with VID=2 are forwarded to PTP daemon and to port 3.
 
 @c =-------------------------------------------------------------------------
@@ -1307,7 +1315,7 @@ Clear the current configuration:
 # wrs_vlans --rvid 0 --del
 @end smallexample
 
-Set ports' configuration by using the @t{wrs_vlans}:
+Set ports' configuration by using the @t{wrs_vlans} tool:
 @smallexample
 # wrs_vlans \
     --port 1 --pmode 0 --pprio 4 --pvid 1 --puntag 1 \
@@ -1315,7 +1323,7 @@ Set ports' configuration by using the @t{wrs_vlans}:
     --port 3 --pmode 0 --pprio 7 --pvid 2 --puntag 1
 @end smallexample
 
-Set VID configuration by using @t{wrs_vlans}:
+Set VID configuration by using the @t{wrs_vlans} tool:
 @smallexample
 # wrs_vlans \
     --rvid 1 --rprio 4 --rdrop 0 --rmask 0x00001 \
@@ -1352,21 +1360,21 @@ vlan 2
 @node Front panel's LEDs
 @section Front panel's LEDs
 
-There are two LEDs on front panel describing switch's status and two LEDs for
-each switch's port. Each LED can be off, light with green or orange color, or
+There are two LEDs on the front panel describing switch status and two LEDs for
+each WR port. Each LED can be off, green or orange color, or the
 combination of both giving yellow.
-For more details please refer to following subsections.
+For more details please refer to following the sections.
 
 @c =-------------------------------------------------------------------------
 @node Status LEDs
 @subsection Status LEDs
 
 The status LED is placed together with power indicator LED on the left side of
-switch's front panel. The status LED is the right one.
+the front panel. The status LED is the right one.
 
 During barebox/kernel boot the status LED is off. When @t{startup-mb.sh} starts
 the LED is set to yellow. If the HAL starts successfully then the LED is set to
-green. If the HAL caught a SIGNAL sent by other process, HAL sets the status
+green. If the HAL caught a SIGNAL (error) sent by other process, HAL sets the status
 LED to orange.
 When the regular reboot is performed status LED is turned off. In case of
 a kernel crash the LED remains unchanged.
@@ -1375,10 +1383,14 @@ a kernel crash the LED remains unchanged.
 @node Ports' LEDs
 @subsection Ports' LEDs
 
-Under each switch's port there are two LEDs. The left LED is on when particular
-port is populated with an SFP and the link is up. Its color is dependent on
-the statuses of PTP instances. For slave status the LED is green, for
-master the LED is yellow. For ports with other statuses the left LED is orange.
+Under each WR port there are two LEDs. The left LED is on when particular
+port is populated with an SFP and the link is up. Its color depends on
+the role of PTP instances:
+@itemize
+    @item @i{green}: WR slave role
+    @item @i{yellow}: WR master role
+    @item @i{orange}: all other roles
+@end itemize
 If there are multiple instances on a particular port the slave state (green)
 takes precedence over master (orange). Master takes precedence over other
 states (yellow).
@@ -1615,7 +1627,7 @@ The following tools and scripts are provided:
 @itemx wmapper
 	The former reads from a file using @i{mmap}
         (usually you run it on @i{/dev/mem}) and writes to @i{stdout}.
-        The latter read from @i{stdin} and writes using @i{mmap}.
+        The latter reads from @i{stdin} and writes using @i{mmap}.
         They are classic tools distributed in the @i{Linux Device Drivers}
         examples since 1998.
 
@@ -1629,10 +1641,10 @@ The following tools and scripts are provided:
 	A simple monitor of White Rabbit status. It prints to @i{stdout}
         using the standard escape sequences for color output. Please check
         @t{wr_mon}'s help (@t{--help} parameter) for further information.
-        This is probably the most important diagnostic tool on the switch.
+        (This is probably the most important diagnostic tool on the switch.)
 
 @item wrs_pps_control
-        A tool to switch the PPS output on and off. Usage ``@t{wrs_pps_control
+        A tool to switch the PPS output on and off. Usage: ``@t{wrs_pps_control
         on}'' switches the PPS output on, and ``@t{wrs_pps_control off}''
         switches the PPS output off. Switching the output on/off is independent
         of the PPSi process, but PPSi switches the PPS output back on when a
@@ -1657,17 +1669,17 @@ The following tools and scripts are provided:
         are not synced to NTP at boot.
 
 @item wrs_version
-	Print information about the SW & HW version of the WRS. Please
-        check the help message.
+	Print information about the software, gateware, hardware version of the WRS.
+	Please check the help message.
 
 @item shw_ver
 	A symbolic link to @t{wrs_version}, to be compatible with
         older versions that used this tool name. The name is
-        inconsistent with anything else in the switch, so it is being
+        inconsistent with anything else in the switch, so it was
         replaced.
 
 @item wrs_vlans
-	The tool allows to configure and unconfigure the VLAN settings
+	The tool allows to configure VLAN settings
         for each port and for the RTU daemon. The @t{--help} option
         lists all configuration items of the tool. For details please
         refer to the @ref{wrs_vlans}.
@@ -1675,7 +1687,7 @@ The following tools and scripts are provided:
 @item apply_dot-config
 	The script is used to apply @t{dot-config} settings to the
         current configuration files.  It is run at boot time before
-        any service is started and by web interface to apply changes in
+        any service is started and by the web interface to apply changes in
         the local @t{dot-config}.
         The @t{dot-config} mechanism is documented in @ref{Configuration of the
         Device}.
@@ -1699,7 +1711,7 @@ The following tools and scripts are provided:
 
 @item wrs_auxclk
   The tool allows to setup the parameters of a clock generated on the @i{clk2}
-  SMC.
+  SMC output on the front panel.
 
 @item wrs_sfp_dump
 	Dump the content of SFPs internal memory. This tool can read SFP info
@@ -1713,7 +1725,7 @@ The following tools and scripts are provided:
 	be used to fix SFPs reporting i.e. wrong checksum. Use this option with
 	care.
 	
-	For more details please refer to tool's help.
+	For more details please refer to the tool's help.
 
 @item wrs_throttling
 	The tool is used to control Rx bandwidth throttling of the traffic that
@@ -1721,7 +1733,7 @@ The following tools and scripts are provided:
 	maximum allowed bandwidth in KB/s. Throttling can be enabled to prevent
 	Linux using 100% of the processing power to receive Ethernet frames
 	coming from WR ports to the CPU. This tool is executed by default at
-	switch's boot with parameters saved in the dot-config. For more
+	boot time with parameters from the dot-config. For more
 	information, please refer to the
 	@ref{Configuration Items that Apply at Run Time}.
 
@@ -1809,11 +1821,11 @@ The following option flags are supported:
 
 The @i{wrs_vlans} shell tool can be used to setup VLANs in the switch.
 The configuration can be read from the @t{dot-config} file pointed by @t{-f} or
-@t{--file} parameter (for @t{dot-config} config options' details please check
-the @ref{Configuration Items that Apply at Build Time}).
-Additionally the configuration can be specified using parameters below.
-The details of VLANs configuration are discussed in the section and subsections
-of the @ref{VLANs Configuration}.
+@t{--file} parameter (for @t{dot-config} details please check
+@ref{Configuration Items that Apply at Build Time}).
+Additionally, the configuration can be specified using parameters below.
+The details of VLANs configuration are discussed in
+@ref{VLANs Configuration}.
 
 The @i{wrs_vlans} configuration is divided into two parts:
 
@@ -1828,7 +1840,7 @@ The @i{wrs_vlans} configuration is divided into two parts:
 @item wrs_vlans --rvid <vid> [options]
 
   Per-VLAN configuration of the Routing Table Unit, used to configure port mask
-  describing which port belong to a given VLAN. RTU uses this information to be
+  describing which ports belong to a given VLAN. RTU uses this information to be
   able to forward incoming frames only to ports inside the VLAN.
 
 @end table
@@ -1861,7 +1873,7 @@ To configure each Endpoint the following options may be used:
 @table @code
 
 @item --pmode <0..3>
-  Sets qmode for a port (@t{0} -- @t{ACCESS}, @t{1} -- @t{TRUNK},
+  Sets VLAN mode for a port (@t{0} -- @t{ACCESS}, @t{1} -- @t{TRUNK},
   @t{2} -- @t{DISABLED}, @t{3} -- @t{UNQUALIFIED})
 
 @item --pvid <0..4094>
@@ -1942,7 +1954,7 @@ with these parameters:
 @section wrs_auxclk
 
 The @i{wrs_auxclk} shell tool can be used to configure parameters of a clock
-signal generated on the @i{clk2} SMC connector.
+signal generated on the @i{clk2} SMC connector on the front panel.
 
 @b{Note:} you need to have WRS hardware at least in version 3.4 to have @i{clk2}
 output.
@@ -2014,7 +2026,7 @@ There is currently no support for traps.
 This section contain a summary of the @t{WR-SWITCH-MIB}, for details please
 refer to the document @i{White Rabbit Switch: Failures and Diagnostics}.
 Objects from @t{96.100.2} to @t{96.100.5} are obsolete, they were used during early
-implementation of switch's snmp.
+implementation of the WRS snmp.
 
 @table @code
 
@@ -2026,7 +2038,7 @@ implementation of switch's snmp.
 
 @item 96.100.6
 
-	@b{wrsStatus} -- MIB's branch with collective statuses of entire
+	@b{wrsStatus} -- MIB's branch with collective statuses of the entire
 	switch.
 
 @item 96.100.7
@@ -2054,9 +2066,7 @@ is an environment variable pointing to this package:
 Using SNMP version 1 instead of 2c is fine as well, but you won't receive
 the 64-bit values for slave/tracking information.
 
-The output you will get back is something like the following. Clearly
-the software commit in this example is my own development version while writing
-this section:
+The output you will get, is something like the following:
 
 @smallexample
 WR-SWITCH-MIB::wrsScalar.0 = INTEGER: 1
@@ -2108,7 +2118,7 @@ WR-SWITCH-MIB::wrsPstatsHCRXFrames.2 = Counter64: 544
 
 @end smallexample
 
-Another example is to print all objects exported by switch.
+Another example is to print all objects exported by the switch.
 @smallexample
 snmpwalk -c public -v 2c wrs -m all \
         -M ${WRS_OUTPUT_DIR}/build/buildroot-2016.02/output/build/netsnmp-5.7.3/mibs/\
@@ -2203,14 +2213,14 @@ characters per line can be limited by switch @t{Cw}, in example was set to 80.
 Even if the package is already released and used in production,
 some details can be
 suboptimal, while some procedures may be tricky and need more explanation.
-
-We are collecting all those issues in the @i{wiki} page of the
-project, to avoid frequent updates to this manual to just collect
-those details.  So please visit
-@url{www.ohwr.org/projects/wr-switch-sw/wiki/Bugs} and
-@url{www.ohwr.org/projects/wr-switch-sw/wiki/Troubleshooting}
-if you have any problem with this package, but feel free to reach us
-on the mailing list if you don't find help there.
+We are collecting all those issues in our project pages. Please visit:
+@itemize
+   @item Frequently Asked Questions: @url{http://www.ohwr.org/projects/white-rabbit/wiki/FAQswitch}
+   @item Issues for WR Switch SW project: @url{http://www.ohwr.org/projects/wr-switch-sw/issues}
+   @item Issues for WR Switch HDL project: @url{http://www.ohwr.org/projects/wr-switch-hdl/issues}
+@end itemize
+If you have any problem with this firmware and you don't find help in the above links,
+feel free to reach us on the @i{white-rabbit-dev} mailing list.
 
 @c ##########################################################################
 @bye
