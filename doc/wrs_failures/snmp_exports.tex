@@ -23,12 +23,6 @@ particular object reports an error. These repair procedures don't require any
 in-depth knowledge about White Rabbit. Independently of an error reported, there
 are some common remarks that apply to all situations:
 \begin{itemize}
-  \item Linux inside the WR Switch enumerates WR interfaces starting from 0.
-    This means we have to use internally port indexes 0..17. However, the
-    port numbers printed on the front panel are 1..18. Syslog messages
-    generated from the switch use the Linux port numbering. The consequence is
-    that every time Syslog says there is a problem on port X, this refers to
-    port index X+1 on the front panel of the switch.
   \item If a procedure given for a specific SNMP object does not solve the
     problem, please contact WR experts to perform a more in-depth analysis of
     the network. For this, you should provide a complete dump of the WRS status
@@ -45,6 +39,14 @@ are some common remarks that apply to all situations:
   \item If a procedure requires replacing a switch with a new unit, the broken
     one should be handled to WR experts or the switch manufacturer to
     investigate the problem.
+  \item Until version 5.0 of the switch firmware
+    Linux inside the WR Switch enumerated WR interfaces starting from 0.
+    This means we have to use internally port indexes 0..17. However, the
+    port numbers printed on the front panel were 1..18. Syslog messages
+    generated from the switch used the Linux port numbering. The consequence
+    was that every time Syslog says there is a problem on port X, this refered
+    to port index X+1 on the front panel of the switch. From the v5.0 ports are
+    numbered wri1 to wri18.
 \end{itemize}
 
 \subsection{General status objects for operators}

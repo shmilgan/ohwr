@@ -245,7 +245,7 @@ WR network.
 			\item [] \underline{Description}:\\
 				In this case, \emph{PTP/PPSi} will fail to stay synchronized and provide
 				synchronization. Even if the WR servo is in the \texttt{TRACK\_PHASE}
-        state, it calculates a new phase shift based on the Master-to-Slave delay
+				state, it calculates a new phase shift based on the Master-to-Slave delay
 				variations. To calculate these variations, it still needs timestamped
 				PTP frames flowing. There could be several causes of such fault:
 				\begin{itemize}
@@ -261,7 +261,10 @@ WR network.
 				\snmpadd{WR-SWITCH-MIB::wrsPortStatusConfiguredMode.<n>}\\
 				\snmpadd{WR-SWITCH-MIB::wrsPTPFramesFlowing}\\
 				\snmpadd{WR-SWITCH-MIB::wrsTimingStatus}\\
-        \snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }
+				\snmpadd{WR-SWITCH-MIB::wrsVlansSetStatus}\\
+				\snmpadd{WR-SWITCH-MIB::wrsBootSuccessful}\\
+				\snmpadd{WR-SWITCH-MIB::wrsOSStatusGroup}\\
+				\snmpadd{WR-SWITCH-MIB::wrsMainSystemStatus} }
 			\item [] \underline{Note}: If the kernel driver crashes, there is not much
 				we can do. We end up with either our system frozen or a reboot. For
 				wrong VLAN configuration and HDL problems we can monitor if PTP frames
