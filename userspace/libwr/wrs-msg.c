@@ -18,10 +18,10 @@ int wrs_msg_level = WRS_MSG_DEFAULT_LEVEL;
 /* We use debug, info, warning, error and "silent" */
 static int wrs_msg_used_levels[] = {
 	LOG_ALERT, /* more silent then ERR, but "1" not 0 */
-	LOG_ERR,
-	LOG_WARNING,
-	LOG_INFO,
-	LOG_DEBUG,
+	LOG_ERR,	/* 3 */
+	LOG_WARNING,	/* 4 */
+	LOG_INFO,	/* 6 */
+	LOG_DEBUG,	/* 7 */
 };
 static int wrs_msg_pos;
 
@@ -45,15 +45,63 @@ void wrs_msg_init(int argc, char **argv)
 	int i;
 	int max = ARRAY_SIZE(wrs_msg_used_levels) - 1;
 	char *e;
+	char *endptr = NULL;
 
 	prgname = argv[0];
 	wrs_msg_f = stderr;
 
 	e = getenv("WRS_MSG_LEVEL");
-	if (e) {
-		i = atoi(e);
-		if (i) /* not 0 (EMERG) as atoi returns 0 on error */
+	if (e && *e != '\0') {
+		i = strtol(e, &endptr, 0);
+		if (*endptr == '\0') {
 			wrs_msg_level = i;
+		} else {
+			/* check log levels even we dont't support them */
+			if (!strcmp(e, "LOG_EMERG")
+			    || !strcmp(e, "EMERG")
+			    || !strcmp(e, "emerg"))
+				wrs_msg_level = LOG_EMERG;
+			else if (!strcmp(e, "LOG_ALERT")
+			    || !strcmp(e, "ALERT")
+			    || !strcmp(e, "alert"))
+				wrs_msg_level = LOG_ALERT;
+			else if (!strcmp(e, "LOG_CRIT")
+			    || !strcmp(e, "CRIT")
+			    || !strcmp(e, "crit")
+			   )
+				wrs_msg_level = LOG_CRIT;
+			else if (!strcmp(e, "LOG_ERR")
+			    || !strcmp(e, "ERR")
+			    || !strcmp(e, "err")
+			    || !strcmp(e, "LOG_ERROR")
+			    || !strcmp(e, "ERROR")
+			    || !strcmp(e, "error")
+			   )
+				wrs_msg_level = LOG_ERR;
+			else if (!strcmp(e, "LOG_WARNING")
+			    || !strcmp(e, "WARNING")
+			    || !strcmp(e, "warning")
+			    || !strcmp(e, "LOG_WAR")
+			    || !strcmp(e, "WARN")
+			    || !strcmp(e, "warn")
+			   )
+				wrs_msg_level = LOG_WARNING;
+			else if (!strcmp(e, "LOG_NOTICE")
+			    || !strcmp(e, "NOTICE")
+			    || !strcmp(e, "notice"))
+				wrs_msg_level = LOG_NOTICE;
+			else if (!strcmp(e, "LOG_INFO")
+			    || !strcmp(e, "INFO")
+			    || !strcmp(e, "info"))
+				wrs_msg_level = LOG_INFO;
+			else if (!strcmp(e, "LOG_DEBUG")
+			    || !strcmp(e, "DEBUG")
+			    || !strcmp(e, "debug"))
+				wrs_msg_level = LOG_DEBUG;
+			else
+				pr_error("Wrong value \"%s\" in variable "
+					 "WRS_MSG_LEVEL\n", e);
+		}
 	}
 
 	/* Start at this level, then scan for individual "-v" or "-q" */

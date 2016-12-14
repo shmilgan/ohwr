@@ -38,6 +38,12 @@ start() {
 	eval LOGPIPE=\" 2\>\&1 \| logger -t wr-switch -p $WRS_LOG\"
     fi
 
+    # set msg level
+    if [ ! -z $CONFIG_WRS_LOG_LEVEL_OTHER ]; then
+	WRS_MSG_LEVEL=$CONFIG_WRS_LOG_LEVEL_OTHER
+	export WRS_MSG_LEVEL
+    fi
+
     # If custom boot script is not enabled, exit
     if [ ! "$CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED" = "y" ]; then
 	echo "disabled"

@@ -26,7 +26,14 @@ start() {
 	eval LOGPIPE=\" 2\>\&1 \| logger -t wr-switch -p $WRS_LOG\"
     fi
 
-# be carefull with pidof, no running script should have the same name as process
+    # set msg level
+    if [ ! -z $CONFIG_WRS_LOG_LEVEL_RTU ]; then
+	WRS_MSG_LEVEL=$CONFIG_WRS_LOG_LEVEL_RTU
+	export WRS_MSG_LEVEL
+    fi
+
+    # be carefull with pidof, no running script should have the same name as
+    # process
     if pidof rtud > /dev/null; then
 	# rtud already running
 	echo "Failed (already running?)"

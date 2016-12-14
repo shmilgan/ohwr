@@ -17,7 +17,6 @@ start() {
     if [ -z $WRS_LOG ]; then
 	WRS_LOG="/dev/null";
     fi
-
     # if a pathname, use it
     if echo "$WRS_LOG" | grep / > /dev/null; then
 	eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
@@ -26,7 +25,14 @@ start() {
 	eval LOGPIPE=\" 2\>\&1 \| logger -t wr-switch -p $WRS_LOG\"
     fi
 
-# be carefull with pidof, no running script should have the same name as process
+    # set msg level
+    if [ ! -z $CONFIG_WRS_LOG_LEVEL_HAL ]; then
+	WRS_MSG_LEVEL=$CONFIG_WRS_LOG_LEVEL_HAL
+	export WRS_MSG_LEVEL
+    fi
+
+    # be carefull with pidof, no running script should have the same name as
+    # process
     if pidof wrsw_hal > /dev/null; then
 	# wrsw_hal already running
 	echo "Failed (already running?)"

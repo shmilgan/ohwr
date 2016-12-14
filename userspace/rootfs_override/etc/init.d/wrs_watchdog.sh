@@ -43,6 +43,12 @@ start() {
 	    eval LOGPIPE=\" 2\>\&1 \| logger -t wr-switch -p $WRS_LOG\"
 	fi
 
+	# set msg level
+	if [ ! -z $CONFIG_WRS_LOG_LEVEL_OTHER ]; then
+	    WRS_MSG_LEVEL=$CONFIG_WRS_LOG_LEVEL_OTHER
+	    export WRS_MSG_LEVEL
+	fi
+
 	eval /wr/bin/wrs_watchdog -d -p $WDG_PID $LOGPIPE \&
 	start_counter
 	echo "OK"

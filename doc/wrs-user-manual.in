@@ -622,6 +622,47 @@ appropriate way, before the respective service is started.
         unknown facility names will generate a runtime error on the switch.
         All four strings default to ``@t{daemon.info}''.
 
+	@b{Note:} all messages produced by these programs if syslog is
+	configured will be passed to the syslog at the same
+	configured @i{<facility>.<level>}, no matter of verbosity of a message.
+	To change the verbosity of programs please use
+	@t{CONFIG_WRS_LOG_LEVEL_*}.
+
+@item CONFIG_WRS_LOG_LEVEL_HAL
+@itemx CONFIG_WRS_LOG_LEVEL_RTU
+@itemx CONFIG_WRS_LOG_LEVEL_OTHER
+
+	Specify verbosity of programs as a string or number. The following
+	levels are supported:
+	@itemize
+	@item @t{ALERT} or 1
+	@item @t{ERROR} or 3
+	@item @t{WARNING} or 4
+	@item @t{INFO} or 6
+	@item @t{DEBUG} or 7
+	@end itemize
+	Not supported levels are ceiled to the valid one.
+
+	By leaving this item empty, programs will use its default verbosity
+	level (@t{INFO}).
+
+	@b{Note:} all messages produced by these programs if syslog is
+	configured will be passed to the syslog at the same
+	configured @i{<facility>.<level>}, no matter of verbosity of a message.
+
+@item CONFIG_WRS_LOG_LEVEL_PTP
+
+	Specify verbosity of PPSi daemon as a string. This string will be
+	passed to the PPSI after @t{-d} parameter. Please refer to the PPSI's
+	documentation for more details.
+
+	By leaving this item empty, PPSi daemon will use its default
+	verbosity level.
+	
+	@b{Note:} all messages produced by PPSi if syslog is
+	configured will be passed to the syslog at the same
+	configured @i{<facility>.<level>}, no matter of verbosity of a message.
+
 @item CONFIG_WRS_LOG_SNMPD
 
 	Value can be a pathname, either to a file (e.g. 

@@ -18,6 +18,11 @@ start() {
 	WRS_LOG="/dev/null";
     fi
 
+    # set msg level
+    if [ ! -z $CONFIG_WRS_LOG_LEVEL_PTP ]; then
+	LOG_LEVEL="-d $CONFIG_WRS_LOG_LEVEL_PTP"
+    fi
+
     # if a pathname, use it
     if echo "$WRS_LOG" | grep / > /dev/null; then
 	eval LOGPIPE=\" \> $WRS_LOG 2\>\&1 \";
@@ -31,7 +36,7 @@ start() {
 	# ppsi already running
 	echo "Failed (already running?)"
     else
-	eval /wr/bin/ppsi $LOGPIPE \&
+	eval /wr/bin/ppsi $LOG_LEVEL $LOGPIPE \&
 	echo "OK"
     fi
 }

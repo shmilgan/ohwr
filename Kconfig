@@ -224,6 +224,26 @@ config WRS_LOG_HAL
 	  spefification like "daemon.debug". An empty strings is used
 	  to represent no logging (like /dev/null).  Please note that
 	  unknown facility names will generate a runtime error on the switch.
+	  Please note that all messages produced by the WR HAL if syslog is
+	  configured will be passed to the syslog at the same
+	  <facility>.<level>, no matter of verbosity of a message.
+
+config WRS_LOG_LEVEL_HAL
+	string "Logging verbosity level for the WR HAL"
+	default ""
+	help
+	  Specify verbosity of WR HAL as a string or number. The following
+	  levels are supported:
+	  ALERT (1)
+	  ERROR (3)
+	  WARNING (4)
+	  INFO (6)
+	  DEBUG (7)
+	  By leaving this item empty, HAL will use its default verbosity level
+	  (INFO).
+	  Please note that all messages produced by the WR HAL if syslog is
+	  configured will be passed to the syslog at the same
+	  <facility>.<level>, no matter of verbosity of a message.
 
 config WRS_LOG_RTU
 	string "Logging directions for the RTU daemon"
@@ -233,15 +253,51 @@ config WRS_LOG_RTU
 	  spefification like "daemon.debug". An empty strings is used
 	  to represent no logging (like /dev/null).  Please note that
 	  unknown facility names will generate a runtime error on the switch.
+	  Please note that all messages produced by RTU daemon if syslog is
+	  configured will be passed to the syslog at the same
+	  <facility>.<level>, no matter of verbosity of a message.
+
+config WRS_LOG_LEVEL_RTU
+	string "Logging verbosity level for the RTU daemon"
+	default ""
+	help
+	  Specify verbosity of RTU daemon as a string or number. The following
+	  levels are supported:
+	  ALERT (1)
+	  ERROR (3)
+	  WARNING (4)
+	  INFO (6)
+	  DEBUG (7)
+	  By leaving this item empty, RTU daemon will use its default verbosity
+	  level (INFO).
+	  Please note that all messages produced by RTU daemon if syslog is
+	  configured will be passed to the syslog at the same
+	  <facility>.<level>, no matter of verbosity of a message.
 
 config WRS_LOG_PTP
-	string "Logging directions for the PTP server (ptpd or ppsi)"
+	string "Logging directions for the PTP server (ppsi)"
 	default "daemon.info"
 	help
 	  The string can be a pathname (e.g. /dev/kmsg) or a <facility>.<level>
 	  spefification like "daemon.debug". An empty strings is used
 	  to represent no logging (like /dev/null).  Please note that
 	  unknown facility names will generate a runtime error on the switch.
+	  Please note that all messages produced by PPSi if syslog is
+	  configured will be passed to the syslog at the same
+	  <facility>.<level>, no matter of verbosity of a message.
+
+config WRS_LOG_LEVEL_PTP
+	string "Logging verbosity level for the PTP server (ppsi)"
+	default ""
+	help
+	  Specify verbosity of PPSi daemon as a string. This string will be
+	  passed to the PPSI after "-d" parameter. Please refer to the PPSI's
+	  documentation for more details.
+	  By leaving this item empty, PPSi daemon will use its default
+	  verbosity level.
+	  Please note that all messages produced by PPSi if syslog is
+	  configured will be passed to the syslog at the same
+	  <facility>.<level>, no matter of verbosity of a message.
 
 config WRS_LOG_SNMPD
 	string "Logging directions for the SNMP daemon"
@@ -282,6 +338,23 @@ config WRS_LOG_OTHER
 	  spefification like "daemon.debug". An empty strings is used
 	  to represent no logging (like /dev/null).  Please note that
 	  unknown facility names will generate a runtime error on the switch.
+
+config WRS_LOG_LEVEL_OTHER
+	string "Logging verbosity level for other programs"
+	default ""
+	help
+	  Specify verbosity of other programs as a string or number. The
+	  following levels are supported:
+	  ALERT (1)
+	  ERROR (3)
+	  WARNING (4)
+	  INFO (6)
+	  DEBUG (7)
+	  By leaving this item empty, other programs daemon will use their
+	  default verbosity level (INFO).
+	  Please note that all messages produced by other programs if syslog is
+	  configured will be passed to the syslog at the same
+	  <facility>.<level>
 
 config KEEP_ROOTFS
 	bool "Keep generated filesystem and related script"
