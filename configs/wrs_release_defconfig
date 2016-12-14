@@ -1,5 +1,6 @@
 #
-# Automatically generated make config: don't edit
+# Automatically generated file; DO NOT EDIT.
+# White Rabbit Switch  configuration
 #
 # CONFIG_DOTCONF_SOURCE_LOCAL is not set
 # CONFIG_DOTCONF_SOURCE_REMOTE is not set
@@ -14,6 +15,8 @@ CONFIG_PPSI=y
 CONFIG_ETH0_DHCP=y
 # CONFIG_ETH0_DHCP_ONCE is not set
 # CONFIG_ETH0_STATIC is not set
+CONFIG_HOSTNAME_DHCP=y
+# CONFIG_HOSTNAME_STATIC is not set
 
 #
 # Root Password
@@ -26,11 +29,15 @@ CONFIG_DNS_DOMAIN=""
 CONFIG_REMOTE_SYSLOG_SERVER=""
 CONFIG_REMOTE_SYSLOG_UDP=y
 CONFIG_WRS_LOG_HAL="daemon.info"
+CONFIG_WRS_LOG_LEVEL_HAL=""
 CONFIG_WRS_LOG_RTU="daemon.info"
+CONFIG_WRS_LOG_LEVEL_RTU=""
 CONFIG_WRS_LOG_PTP="daemon.info"
+CONFIG_WRS_LOG_LEVEL_PTP=""
 CONFIG_WRS_LOG_SNMPD="Swd"
 CONFIG_WRS_LOG_MONIT="syslog"
 CONFIG_WRS_LOG_OTHER="daemon.info"
+CONFIG_WRS_LOG_LEVEL_OTHER=""
 # CONFIG_KEEP_ROOTFS is not set
 
 #
@@ -90,6 +97,7 @@ CONFIG_SNMP_TEMP_THOLD_FPGA=80
 CONFIG_SNMP_TEMP_THOLD_PLL=80
 CONFIG_SNMP_TEMP_THOLD_PSL=80
 CONFIG_SNMP_TEMP_THOLD_PSR=80
+# CONFIG_SNMP_SWCORESTATUS_DISABLE is not set
 
 #
 # External clk2 clock signal configuration
@@ -101,6 +109,32 @@ CONFIG_WRSAUXCLK_SIGDEL="0"
 CONFIG_WRSAUXCLK_PPSHIFT="0"
 
 #
+# NIC throttling configuration
+#
+# CONFIG_NIC_THROTTLING_ENABLED is not set
+
+#
+# Custom boot script configuration
+#
+# CONFIG_CUSTOM_BOOT_SCRIPT_ENABLED is not set
+
+#
 # Developer options
 #
 # CONFIG_MONIT_DISABLE is not set
+
+#
+# Fan speed control
+#
+# CONFIG_FAN_HYSTERESIS is not set
+# CONFIG_READ_SFP_DIAG_ENABLE is not set
+
+#
+# RTU HP mask
+#
+# CONFIG_RTU_HP_MASK_ENABLE is not set
+
+#
+# VLANs
+#
+# CONFIG_VLANS_ENABLE is not set
