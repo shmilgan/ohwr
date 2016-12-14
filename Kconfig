@@ -371,8 +371,8 @@ menu "Port Timing Configuration"
 
 config PORT01_PARAMS
 	string "Parameters for port 1"
-	default "name=wri1,proto=raw,tx=223896,rx=226310,role=slave,fiber=0" if TIME_BC
-	default "name=wri1,proto=raw,tx=223896,rx=226310,role=master,fiber=0"
+	default "name=wri1,proto=raw,tx=223897,rx=226273,role=slave,fiber=0" if TIME_BC
+	default "name=wri1,proto=raw,tx=223897,rx=226273,role=master,fiber=0"
 	help
 	  This item, and the following ones, are used to assign the tx and rx
 	  constant delays (likely from calibration), protocol type (raw or udp),
@@ -390,103 +390,103 @@ config PORT01_PARAMS
 
 config PORT02_PARAMS
 	string "Parameters for port 2"
-	default "name=wri2,proto=raw,tx=224066,rx=226334,role=master,fiber=0"
+	default "name=wri2,proto=raw,tx=224037,rx=226377,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT03_PARAMS
 	string "Parameters for port 3"
-	default "name=wri3,proto=raw,tx=224170,rx=226620,role=master,fiber=0"
+	default "name=wri3,proto=raw,tx=224142,rx=226638,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT04_PARAMS
 	string "Parameters for port 4"
-	default "name=wri4,proto=raw,tx=224278,rx=226722,role=master,fiber=0"
+	default "name=wri4,proto=raw,tx=224313,rx=226471,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT05_PARAMS
 	string "Parameters for port 5"
-	default "name=wri5,proto=raw,tx=224431,rx=227755,role=master,fiber=0"
+	default "name=wri5,proto=raw,tx=224455,rx=227679,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT06_PARAMS
 	string "Parameters for port 6"
-	default "name=wri6,proto=raw,tx=224607,rx=228005,role=master,fiber=0"
+	default "name=wri6,proto=raw,tx=224603,rx=227891,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT07_PARAMS
-	string "Parameters for port 6"
-	default "name=wri7,proto=raw,tx=224788,rx=228176,role=master,fiber=0"
+	string "Parameters for port 7"
+	default "name=wri7,proto=raw,tx=224761,rx=228055,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT08_PARAMS
 	string "Parameters for port 8"
-	default "name=wri8,proto=raw,tx=224903,rx=228251,role=master,fiber=0"
+	default "name=wri8,proto=raw,tx=224898,rx=228178,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT09_PARAMS
 	string "Parameters for port 9"
-	default "name=wri9,proto=raw,tx=225040,rx=228274,role=master,fiber=0"
+	default "name=wri9,proto=raw,tx=225069,rx=228277,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT10_PARAMS
 	string "Parameters for port 10"
-	default "name=wri10,proto=raw,tx=225285,rx=228599,role=master,fiber=0"
+	default "name=wri10,proto=raw,tx=225245,rx=228435,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT11_PARAMS
 	string "Parameters for port 11"
-	default "name=wri11,proto=raw,tx=225510,rx=229052,role=master,fiber=0"
+	default "name=wri11,proto=raw,tx=225463,rx=228963,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT12_PARAMS
 	string "Parameters for port 12"
-	default "name=wri12,proto=raw,tx=225625,rx=229111,role=master,fiber=0"
+	default "name=wri12,proto=raw,tx=225645,rx=229107,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT13_PARAMS
 	string "Parameters for port 13"
-	default "name=wri13,proto=raw,tx=225779,rx=229389,role=master,fiber=0"
+	default "name=wri13,proto=raw,tx=225801,rx=229225,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT14_PARAMS
 	string "Parameters for port 14"
-	default "name=wri14,proto=raw,tx=226005,rx=229533,role=master,fiber=0"
+	default "name=wri14,proto=raw,tx=225983,rx=229463,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT15_PARAMS
 	string "Parameters for port 15"
-	default "name=wri15,proto=raw,tx=226228,rx=229984,role=master,fiber=0"
+	default "name=wri15,proto=raw,tx=226208,rx=229850,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT16_PARAMS
 	string "Parameters for port 16"
-	default "name=wri16,proto=raw,tx=226352,rx=230126,role=master,fiber=0"
+	default "name=wri16,proto=raw,tx=226393,rx=229907,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT17_PARAMS
 	string "Parameters for port 17"
-	default "name=wri17,proto=raw,tx=226534,rx=230134,role=master,fiber=0"
+	default "name=wri17,proto=raw,tx=226594,rx=230106,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
 config PORT18_PARAMS
 	string "Parameters for port 18"
-	default "name=wri18,proto=raw,tx=226733,rx=230371,role=master,fiber=0"
+	default "name=wri18,proto=raw,tx=226737,rx=230273,role=master,fiber=0"
 	help
 	  Please check the help of PORT01_PARAMS
 
@@ -520,23 +520,25 @@ config SFP01_PARAMS
 
 config SFP02_PARAMS
 	string "Parameters for one SFP device type"
-	default "vn=ZyXEL,pn=SFP-BX1490-10-D,tx=0,rx=0,wl_txrx=1490+1310"
+	default "vn=APAC Opto,pn=LS38-C3S-TC-N-B9,tx=761,rx=557,wl_txrx=1310+1490"
 	help
 	  Please check the help of SFP00_PARAMS
 
 config SFP03_PARAMS
 	string "Parameters for one SFP device type"
-	default "vn=ZyXEL,pn=SFP-BX1310-10-D,tx=0,rx=0,wl_txrx=1310+1490"
+	default "vn=APAC Opto,pn=LS48-C3S-TC-N-B4,tx=-29,rx=507,wl_txrx=1490+1310"
 	help
 	  Please check the help of SFP00_PARAMS
 
 config SFP04_PARAMS
 	string "Parameters for one SFP device type"
+	default "vn=ZyXEL,pn=SFP-BX1490-10-D,tx=0,rx=0,wl_txrx=1490+1310"
 	help
 	  Please check the help of SFP00_PARAMS
 
 config SFP05_PARAMS
 	string "Parameters for one SFP device type"
+	default "vn=ZyXEL,pn=SFP-BX1310-10-D,tx=0,rx=0,wl_txrx=1310+1490"
 	help
 	  Please check the help of SFP00_PARAMS
 
