@@ -9,7 +9,7 @@ autodetected high-speed), and thus they work.
 
 Speed is not a problem anyways, because it is just a serial port.
 
-Update to 3.16.37
+Update to 3.16.38
 =================
 This patch has been ported from 2.6.39.
 

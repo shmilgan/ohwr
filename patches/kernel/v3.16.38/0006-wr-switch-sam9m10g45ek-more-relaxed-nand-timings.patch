@@ -3,7 +3,7 @@ From: Alessandro Rubini <rubini@gnudd.com>
 Date: Mon, 28 Jul 2014 15:20:59 +0200
 Subject: [PATCH 6/8] wr-switch (sam9m10g45ek): more relaxed nand timings
 
-Update to 3.16.37
+Update to 3.16.38
 =================
 This patch has been ported from 2.6.39.
 

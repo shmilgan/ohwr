@@ -14,7 +14,7 @@ We have had two new fields in the struct flash_info:
    * edi_nbytes: number of optional bytes to read (1 or 2)
    * edi_jedec:  EDI value for a given chip
 
-Update to 3.16.37
+Update to 3.16.38
 =================
 This patch has been ported from 2.6.39.
 

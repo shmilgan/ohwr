@@ -50,7 +50,7 @@ fi
 export WRS_SCRIPTS_DIR=${WRS_BASE_DIR}/scripts
 
 # Export Linux kernel version in use
-export KVER="3.16.37"
+export KVER="3.16.38"
 
 # Export Buildroot version in use
 export BRVER="2016.02"

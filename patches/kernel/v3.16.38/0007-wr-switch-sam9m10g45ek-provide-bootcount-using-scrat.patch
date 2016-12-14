@@ -4,7 +4,7 @@ Date: Fri, 28 Nov 2014 14:18:27 +0100
 Subject: [PATCH 7/8] wr-switch (sam9m10g45ek): provide bootcount using scratch
  registers
 
-Update to 3.16.37
+Update to 3.16.38
 =================
 This patch has been ported from 2.6.39.
 

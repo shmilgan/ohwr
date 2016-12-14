@@ -12,7 +12,7 @@ now it does not.
 Fixing the bootloader, in order to be based on the SAM9M10G45EK board
 as the kernel, requires much more effort for a little practical gain.
 
-The main problem is that the 3.16.37 kernel refues to boot since the
+The main problem is that the 3.16.38 kernel refues to boot since the
 boot-loader declares that the board in use is a PMG45 and not a SAM9M10EK
 as expected by the kernel. In order to make the kernel boot we have to
 provide this information:
@@ -34,7 +34,7 @@ wrong architecture provides wrong values.
 
 This choice give us the freedom to update the kernel without changing the
 boot-loader nor bootloader's environment . This means that for whatever
-eason we will be able to easily switch from 2.6.39 to 3.16.37 for debugging
+eason we will be able to easily switch from 2.6.39 to 3.16.38 for debugging
 purpose.
 
 Acked-by: Adam Wujek <adam.wujek@cern.ch>

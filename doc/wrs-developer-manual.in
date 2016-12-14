@@ -360,7 +360,7 @@ The messages of a download run are like the following ones:
     2016-12-14 17:10:46: --- Downloading base packages
     2016-12-14 17:10:50: Retrieved at91bootstrap-3-3.0.tar.gz from upstream
     2016-12-14 17:10:51: Retrieved barebox-2014.04.0.tar.bz2 from upstream
-    2016-12-14 17:11:21: Retrieved linux-3.16.37.tar.xz from upstream
+    2016-12-14 17:11:21: Retrieved linux-3.16.38.tar.xz from upstream
     2016-12-14 17:11:22: Retrieved wrs-gw-v5.0-20161214.tar.gz from upstream
     2016-12-14 17:11:27: Retrieved buildroot-2016.02.tar.bz2 from upstream
 @end smallexample
@@ -733,14 +733,14 @@ in two lines with a local variable to fit the page with in documentation):
 @node The Linux Kernel
 @subsection The Linux Kernel
 
-The kernel is currently version 3.16.37, compiled from an uncompressed
+The kernel is currently version 3.16.38, compiled from an uncompressed
 tar file (so not within a @i{git} repository).  The upstream
 vanilla kernel is downloaded, then
 local patches are applied (they come from a @i{git}
 repository, but they are currently applied with a simple @i{patch}
 command).
 
-The relevant patches are available in @i{patches/kernel/v3.16.37},
+The relevant patches are available in @i{patches/kernel/v3.16.38},
 and are currently the following ones:
 
 @example
