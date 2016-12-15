@@ -263,16 +263,22 @@ static irqreturn_t pstats_irq_handler(int irq, void *devid)
 {
 	struct cntrs_dev *device = (struct cntrs_dev *)devid;
 	uint32_t irqs, i;
+	uint32_t tmp_cr;
 
 	irqs = pstats_irq_status();
 
 	pstats_irq_disable(PSTATS_ALL_MSK);
 	pstats_irq_clear(irqs);
 	device->port_irqs[device->irqs_head] = irqs;
+	/* in case IRQ handler happens in the middle of counters readout, save
+	 * current value of CR register */
+	tmp_cr = pstats_readl(pstats_dev, CR);
 	/* dump all overflow information so that we don't lose any if
 	 * tasklet is delayed */
 	for (i = 0; i < pstats_nports; ++i)
 		device->overflows[device->irqs_head][i] = pstats_irq_cntrs(i);
+	/* Restore CR register for whoever was reading before the IRQ */
+	pstats_writel(tmp_cr | PSTATS_CR_RD_EN, pstats_dev, CR);
 
 	device->irqs_head = (device->irqs_head + 1) % PSTATS_IRQBUFSZ;
 	/* device->port_irqs[device->irqs_head++ % PSTATS_IRQBUFSZ] = irqs; */
