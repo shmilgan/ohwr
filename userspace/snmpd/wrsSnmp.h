@@ -80,10 +80,12 @@ struct pickinfo {
 #define SLOG_IF_COMP_WNSG(_log_type, _obj, _new, _old, _i, _t_delta, _rate, _assign) \
      do { if ((_new[_i]._obj - _old[_i]._obj)/_t_delta > _rate) {\
              _assign; \
-             snmp_log(LOG_ERR, "SNMP: " _log_type " %s: " #_obj " for port %i (wri%i) increased by more than %.0f during %.0fs, allowed %.0f\n", \
-             slog_obj_name, _i + 1, _i + 1, \
-             (_new[_i]._obj - _old[_i]._obj)/_t_delta, _t_delta, \
-             _rate); \
+             snmp_log(LOG_ERR, "SNMP: " _log_type " %s: " #_obj " for port %i " \
+                      "(wri%i) increased by more than %.0f during %.0fs, " \
+                      "allowed %.0f, old value %llu new value %llu\n", \
+                      slog_obj_name, _i + 1, _i + 1, \
+                      (_new[_i]._obj - _old[_i]._obj)/_t_delta, _t_delta, \
+                      _rate, _old[_i]._obj, _new[_i]._obj); \
              } \
      } while (0)
 

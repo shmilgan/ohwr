@@ -166,9 +166,11 @@ static int get_rtu_status(struct ns_pstats *old,
 			 * logs */
 			ret = 1;
 			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
-				 "wrsPstatsHCRXDropRTUFull counter for port %i (wri %i) increased by %lld, allowed %d\n",
+				 "wrsPstatsHCRXDropRTUFull counter for port %i (wri %i) increased by %lld, allowed %d "
+				 "old val %lld, new val %lld\n",
 				 slog_obj_name, i + 1, i + 1,
-				 new[i].wrsPstatsHCRXDropRTUFull - old[i].wrsPstatsHCRXDropRTUFull, 0);
+				 new[i].wrsPstatsHCRXDropRTUFull - old[i].wrsPstatsHCRXDropRTUFull, 0,
+				 old[i].wrsPstatsHCRXDropRTUFull, new[i].wrsPstatsHCRXDropRTUFull);
 			snmp_log(LOG_ERR, "SNMP: " SL_ER " %s: "
 				 "some frames were lost because RTU could not accept new requests\n",
 				 slog_obj_name);
