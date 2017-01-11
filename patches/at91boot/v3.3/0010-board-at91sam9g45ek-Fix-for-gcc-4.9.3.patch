@@ -1,0 +1,67 @@
+From 882e087dabac75f16cd59b30b79bf7094b27f0a4 Mon Sep 17 00:00:00 2001
+From: Adam Wujek <adam.wujek@cern.ch>
+Date: Wed, 11 Jan 2017 17:25:14 +0100
+Subject: [PATCH] board/at91sam9g45ek: Fix for gcc 4.9.3
+
+As reported in the commit:
+f6c91cce Remove the enable I_cache function at boostrap
+
+Compiled bootstrap does not work with the gcc since version 4.6.3.
+
+The new gcc (actually linker) puts the "bl" (Branch with link) assembler
+instruction instead of "blx" (Branch with link, and exchange instruction set)
+as it was with the old gcc when calling get_cp15() and set_cp15().
+
+To solve this problem configuration of CP15 is removed. Anyway this code was
+useless since the line to set I_CACHE was already commented out.
+
+Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
+---
+ board/at91sam9g45ek/at91sam9g45ek.c | 17 -----------------
+ 1 file changed, 17 deletions(-)
+
+diff --git a/board/at91sam9g45ek/at91sam9g45ek.c b/board/at91sam9g45ek/at91sam9g45ek.c
+index b57d6a4..542cd60 100644
+--- a/board/at91sam9g45ek/at91sam9g45ek.c
++++ b/board/at91sam9g45ek/at91sam9g45ek.c
+@@ -49,14 +49,6 @@
+ #include "dataflash.h"
+ #endif
+ 
+-int get_cp15(void);
+-
+-void set_cp15(unsigned int value);
+-
+-int get_cpsr(void);
+-
+-void set_cpsr(unsigned int value);
+-
+ #ifdef CONFIG_HW_INIT
+ /*----------------------------------------------------------------------------*/
+ /* \fn    hw_init							      */
+@@ -66,8 +58,6 @@ void set_cpsr(unsigned int value);
+ /*----------------------------------------------------------------------------*/
+ void hw_init(void)
+ {
+-    unsigned int cp15;
+-
+     /*
+      * Configure PIOs 
+      */
+@@ -137,13 +127,6 @@ void hw_init(void)
+            || AT91C_RSTC_URSTEN, AT91C_BASE_RSTC + RSTC_RMR);
+ 
+     /*
+-     * Configure CP15 
+-     */
+-    cp15 = get_cp15();
+-    //cp15 |= I_CACHE;
+-    set_cp15(cp15);
+-
+-    /*
+      * Configure the PIO controller 
+      */
+     pio_setup(hw_pio);
+-- 
+1.9.1
+

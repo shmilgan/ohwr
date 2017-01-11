@@ -1,0 +1,25 @@
+From 272212136eba0dd28f474f4276e943c906a6f3e9 Mon Sep 17 00:00:00 2001
+From: Adam Wujek <adam.wujek@cern.ch>
+Date: Wed, 11 Jan 2017 17:56:08 +0100
+Subject: [PATCH] lib: fix warning in diag-printf.c
+
+Signed-off-by: Adam Wujek <adam.wujek@cern.ch>
+---
+ lib/diag-printf.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/lib/diag-printf.c b/lib/diag-printf.c
+index 07a1d78..cc80529 100644
+--- a/lib/diag-printf.c
++++ b/lib/diag-printf.c
+@@ -6,6 +6,7 @@
+  */
+ #include <stdarg.h>
+ #include <pp_printf.h>
++#include "dbgu.h"
+ 
+ #define PP_BUF 128		/* We prefer small targets */
+ 
+-- 
+1.9.1
+
