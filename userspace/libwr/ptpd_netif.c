@@ -8,9 +8,10 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <netinet/if_ether.h>
 #include <linux/if_packet.h>
-#include <linux/if_ether.h>
-#include <linux/if_arp.h>
 #include <linux/net_tstamp.h>
 #include <linux/sockios.h>
 #include <sys/time.h>

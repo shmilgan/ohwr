@@ -20,13 +20,13 @@
 #include <sys/mman.h>
 #include <signal.h>
 
-#define __EXPORTED_HEADERS__ /* prevent a #warning notice from linux/types.h */
-#include <linux/mii.h>
-
 #include <regs/endpoint-regs.h>
 
 #undef PACKED
 #include <libwr/ptpd_netif.h>
+#define __EXPORTED_HEADERS__ /* prevent a #warning notice from linux/types.h */
+#define _LINUX_IF_ETHER_H /* prevent linux/if_ether.h that redefines ethhdr  */
+#include <linux/mii.h>
 
 #include <rt_ipc.h>
 #include <libwr/switch_hw.h>
