@@ -620,6 +620,9 @@ within buildroot.
 Note that if the variable is not pointing to a regular file it is
 ignored with a simple warning -- rather than stopping the build procedure.
 
+An example alternate configuration file is @t{configs/buildroot/wrs_with_musl_config}, that builds a version of the White Rabbit Switch with a different
+system library (@i{musl} instead of @i{uclibc}).
+
 @c --------------------------------------------------------------------------
 @node The IPL
 @subsection The IPL
