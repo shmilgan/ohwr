@@ -1,4 +1,7 @@
 
+TERM=xterm
+export TERM
+
 config:
 	cp dot-config .config
 	./conf Kconfig
