@@ -573,7 +573,11 @@ void show_servo(int alive)
 			     ppsi_servo_local.delta_ms/1000.0);
 
 		term_cprintf(C_BLUE, "Total link asymmetry: ");
-		term_cprintf(C_WHITE, "%15.3f nsec\n", total_asymmetry/1000.0);
+		term_cprintf(C_WHITE, "%15.3f nsec, ",
+			     total_asymmetry / 1000.0);
+		term_cprintf(C_BLUE, "alpha: ");
+		term_cprintf(C_WHITE, "%d\n",
+			     ppsi_servo_local.fiber_fix_alpha);
 
 		/*if (0) {
 			term_cprintf(C_BLUE, "Fiber asymmetry:   ");
