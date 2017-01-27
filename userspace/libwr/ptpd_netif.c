@@ -226,6 +226,12 @@ struct wr_socket *ptpd_netif_create_socket(int sock_type, int flags,
 	struct ifreq ifr;
 	struct hwtstamp_config hwconfig;
 
+	/* Since version v3.2-rc1 (commit 850a545bd) linux kernel check whether
+	 * field "flags" of struct hwtstamp_config is empty, otherwise ioctl
+	 * for SIOCSHWTSTAMP returns -EINVAL */
+	memset(&ifr, 0, sizeof(struct ifreq));
+	memset(&hwconfig, 0, sizeof(struct hwtstamp_config));
+
 	strncpy(ifr.ifr_name, bind_addr->if_name, sizeof(ifr.ifr_name));
 
 	hwconfig.tx_type = HWTSTAMP_TX_ON;
