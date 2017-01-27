@@ -1,6 +1,26 @@
 
 mainmenu "White Rabbit Switch  configuration"
 
+config DOTCONF_FW_VERSION
+	string "Firmware version"
+	default "5.0"
+	help
+	  Free-text information about switch's firmware version. This field is
+	  for information purpose only. Additionally this field describes
+	  version of Kconfig.
+
+config DOTCONF_HW_VERSION
+	string "Hardware version"
+	help
+	  Free-text information about switch's Hardware version. This field is
+	  for information purpose only.
+
+config DOTCONF_INFO
+	string "Additional info about dot-config"
+	help
+	  Free-text information about switch's dot-config. This field is
+	  for information purpose only.
+
 choice DOTCONF_SOURCE
 	  prompt "Source for a run-time replacement of dot-config"
 	  default DOTCONF_SOURCE_TRY_DHCP

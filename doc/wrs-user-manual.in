@@ -386,7 +386,28 @@ The configuration step creates @t{.config}, that you can copy to your
 @sc{wrs} as @t{/wr/etc/dot-config}. After reboot, you'll see your
 choices in effect.
 
-The first configuration choice is about source of the @t{dot-config} file
+The first three configuration items are free-text fields which are intended for
+dot-config management purposed. As now (v5.0.1) these fields are not used for
+any functionality on the switch.
+
+@table @t
+
+@item CONFIG_DOTCONF_FW_VERSION
+@itemx CONFIG_DOTCONF_HW_VERSION
+
+	Free-text items to describe switch's firmware
+	@t{CONFIG_DOTCONF_FW_VERSION} and hardware
+	@t{CONFIG_DOTCONF_HW_VERSION} version. Additionally, the default value
+	of @t{CONFIG_DOTCONF_FW_VERSION} can be used as a version of a Kconfig
+	file.
+
+@item CONFIG_DOTCONF_INFO
+
+	Free-text item to descibe additional information about dot-config.
+
+@end table
+
+The next configuration item is a choice about source of the @t{dot-config} file
 (items starting with @t{CONFIG_DOTCONF_SOURCE_}).  The following @t{dot-config}
 sources are implemented in current version:
 @table @t
