@@ -57,7 +57,9 @@ function wrs_header_ports(){
 	// Check whether $WRS_MANAGEMENT is set or we take the program
 	// by default.
 
-	session_start();
+	if(!isset($_SESSION)){ 
+		session_start(); 
+    	} 
 
 	if(empty($_SESSION['portsupdated'])){
 		$_SESSION['portsupdated'] = intval(shell_exec("date +%s"));
@@ -71,60 +73,66 @@ function wrs_header_ports(){
 		shell_exec("/wr/bin/wr_mon -w > /tmp/ports.conf");
 		$_SESSION['portsupdated'] = intval(shell_exec("date +%s"));
 	}
-	$ports = shell_exec("cat /tmp/ports.conf");
-	$ports = explode(" ", $ports);
-
+	
 	// We parse and show the information comming from each endpoint.
 	echo "<table border='0' align='center'  vspace='1'>";
 	echo '<tr><th><h1 align=center>White-Rabbit Switch Manager</h1></th></tr>';
 	echo '</table>';
-	echo "<table id='sfp_panel' border='0' align='center' vspace='15'>";
+	draw_table();
+}
 
-	echo '<tr class="port">';
-	$cont = 0;
-	for($i=1; $i<18*3; $i=$i+3){
+function draw_table(){
+	$ports = shell_exec("/wr/bin/wr_mon -w | tail -20 | head -18");        
+	$ports = explode(PHP_EOL, $ports);
+ 	
+	echo  "<table id='sfp_panel' border='0' align='center' vspace='15'>";
+        echo '<tr class="port">';
+        $cont = 0;
+        for($i=0; $i<18; $i=$i+1){
+                if (strpos($ports[$i], "up")){
+                        if (!strpos($ports[$i],"Master")){
+                                $mode="master";
+                        }else{
+                                $mode="slave";
+                        }
+                }
+                else $mode="linkdown";
 
-		if (strstr($ports[($i-1)],"up")){
-			if (!strcmp($ports[($i)],"Master")){
-				$mode="master";
-			}else{
-				$mode="slave";
-			}
+                $desc=sprintf("#%02d: wri%d (%s)",$cont+1,$cont+1,$mode);
+                echo '<th>'."<img class='".$mode."' src='img/".$mode.".png' alt='".$desc."', title='".$desc."'>".'</th>';
+                $cont++;
+        }
+
+        echo '</tr>';
+ 	echo '<tr class="status">';
+        for($i=0; $i<18; $i=$i+1){
+                echo '<th>';
+                if (strpos($ports[$i],"Calibrated")){
+                        $mode="calibrated";
+                        $img="check.png";
+                }else{
+                        $mode="uncalibrated";
+                        $img="uncheck.png";
+                }
+                        echo "<img class='calibration ".$mode."' SRC='img/".$img."'  alt='".$mode."', title = '".$mode."'>";
+
+                if (strstr($ports[$i],"Locked")){
+                        $mode="locked";
+	                echo "<img class='syntonization ".$mode."' SRC='img/".$mode.".png' alt='syntonization: ".$mode."', title = 'syntonization: ".$mode."'>";
+                }
+		else{
+			$mode = "unlocked";
+	                echo "<img class='syntonization ".$mode."' SRC='img/".$mode.".png' alt='syntonization: ".$mode."', title = 'syntonization: ".$mode."'>";
+
 		}
-		else $mode="linkdown";
+	        echo '</th>';
+        }
+        echo '</tr>';
 
-		$desc=sprintf("#%02d: wri%d (%s)",$cont+1,$cont+1,$mode);
-		echo '<th>'."<img class='".$mode."' src='img/".$mode.".png' alt='".$desc."', title='".$desc."'>".'</th>';
-		$cont++;
+        echo '<tr>';
+        echo '</tr>';
 
-	}
-	echo '</tr>';
-
-	echo '<tr class="status">';
-	for($i=1; $i<18*3; $i=$i+3){
-		echo '<th>';
-		if (strstr($ports[($i+2)],"Calibrated")){
-			$mode="calibrated";
-			$img="check.png";
-		}else{
-			$mode="uncalibrated";
-			$img="uncheck.png";
-		}
-		echo "<img class='calibration ".$mode."' SRC='img/".$img."'  alt='".$mode."', title = '".$mode."'>";
-
-		if (strstr($ports[($i+1)],"Locked")){
-			$mode="locked";
-			echo "<img class='syntonization ".$mode."' SRC='img/".$mode.".png' alt='syntonization: ".$mode."', title = 'syntonization: ".$mode."'>";
-		}
-
-		echo '</th>';
-	}
-	echo '</tr>';
-
-	echo '<tr>';
-	echo '</tr>';
-
-	echo '</table>';
+        echo '</table>';
 
 }
 
@@ -153,9 +161,9 @@ function wrs_main_info(){
 	$formatID = "alternatecolor1";
 	$infoname = "WRS Services";
 
-	// Load variables
+	// Load variablesm�m
 	$wr_date =  str_replace("\n","<br>",
-		shell_exec("/wr/bin/wr_date -n get"));
+		shell_exec("/wr/bin/wr_date -n get | tail -2"));
 	$PPSi = wrs_check_ptp_status() ?
 		'[<a href="ptp.php">on</A>]' : '[<a href="ptp.php">off</A>]';
 	$SNMP = check_snmp_status() ? '[on] ' : '[off] ';
@@ -182,6 +190,12 @@ function wrs_main_info(){
 	
 	#Obtain the temperatures using the last line of (wr-mon -w)
 	$temperatures=shell_exec("cat /tmp/ports.conf 2>/dev/null | tail -1");
+	$arr = split(" ", $temperatures);
+	$temperatures = $arr[1];
+
+	$ports = shell_exec("/wr/bin/wr_mon -w | tail -2 | head -1");
+        $arr2 = explode(" ", $ports);
+	$ports = $arr2[3];
 
 	// Print services table
 	echo '<br><table class="'.$class.'" id="'.$formatID.'" width="100%">';
@@ -189,11 +203,12 @@ function wrs_main_info(){
 
 	echo '<tr><td>PTP Mode</td><td> <a href="ptp.php">'.$WRSmode.'</a>'.$WRSmode_xtra.'</td></tr>';
 	echo '<tr><td>NTP Server</td><td> <a href="management.php">'.$NTP.'</td></tr>';
-	echo '<tr><td>White-Rabbit Date</td><td>'.$wr_date.'</td></tr>';
+	echo '<tr><td>White-Rabbit Date</td><td id="datewr">'.$wr_date.'</td></tr>';
+	echo '<tr><td>WR Status</td><td id="timing">'. "loading..." .'</td></tr>';
 	echo '<tr><td>PPSi</td><td>'.$PPSi.'</td></tr>';
 	echo '<tr><td>System Monitor</td><td> <a href="management.php">'.$Monitor.'</td></tr>';
 	echo '<tr><td>Net-SNMP Server</td><td>'.$SNMP.'( port '.$SNMP_port.")</td></tr>";
-	if(!empty($temperatures)) echo '<tr><td>Temperature (ºC)</td><td>'.$temperatures.'</td></tr>';
+	if(!empty($temperatures)) echo '<tr><td>Temperature (ºC)</td><td id="temp">'.$temperatures.'</td></tr>';
 	echo '</table>';
 
 }
@@ -230,11 +245,8 @@ function print_info($section, $subsection, $formatID, $class, $infoname, $format
 }
 
 function print_form($section, $subsection, $formatID, $class, $infoname, $format){
-
-	echo '<FORM method="POST">
-			<table border="0" align="center" class="'.$class.'" id="'.$formatID.'">';
+	echo '<FORM method="POST"><table border="0" align="center" class="'.$class.'" id="'.$formatID.'">';
 	if (!empty($infoname)) echo '<tr><th>'.$infoname.'</th></tr>';
-
 	foreach ($_SESSION[$section][$subsection] as $row) {
 		echo "<tr>";
 		echo "<td>".$row["name"]."</td>";
@@ -266,7 +278,7 @@ function print_multi_form($matrix, $header, $formatID, $class, $infoname, $size)
 
 	echo '<FORM method="POST">
 			<table border="0" align="center" class="'.$class.'" id="'.$formatID.'"  width="100%" >';
-	if (!empty($infoname)) echo '<tr><th>'.$infoname.'</th></tr>';
+	if (!empty($infoname)) echo '<tr><th colspan='.count($matrix).'>'.$infoname.'</th></tr>';
 
 	// Printing fist line with column names.
 	if (!empty($header)){
