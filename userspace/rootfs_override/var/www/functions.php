@@ -1406,4 +1406,13 @@ function get_encrypt_salt($enc_password){
 	return $salt;
 }
 
+/**
+ * Function to reset switch to default
+ *
+ * @author Anne M. <anne@sevensols.com>
+**/
+function resetswitch(){ 
+		shell_exec("make -C /wr/etc/ defconfig");
+		shell_exec("reboot");	  
+}
 ?>
