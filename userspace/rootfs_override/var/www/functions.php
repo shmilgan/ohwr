@@ -1005,7 +1005,7 @@ function wrs_display_help($help_id, $name){
 		$message = "<p>This is a switch console emulator windows. Use it as if you were using a ssh session.</p>";
 	} else if (!strcmp($help_id, "gateware")){
 
-		$msg = shell_exec("/wr/bin/wrs_version -g");
+		$msg = $_SESSION["WRSVERSION"];
 		$msg = explode("\n", $msg);
 		$message .= "<ul>";
 
