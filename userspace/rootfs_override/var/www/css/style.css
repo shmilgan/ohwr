@@ -467,7 +467,12 @@ element.style {
 }
 
 .center {
-margin-left:auto;
-margin-right:auto;
-text-align:center;
+	margin-left:auto;
+	margin-right:auto;
+	text-align:center;
 }
+
+table.fiberstable td {
+        width: auto !important;
+}
+
