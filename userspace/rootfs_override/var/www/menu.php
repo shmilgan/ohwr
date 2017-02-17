@@ -41,6 +41,7 @@ echo '<div class="login">
 		echo '<li><a href="logs.php">System Logs</a></li>';
 		echo '<li><a href="terminal.php">Virtual Console</a></li>';
 		echo '<li><a href="firmware.php">Firmware</a></li>';
+		echo '<li><a href="reset.php">Reset to default</a></li>';
 		echo '</ul>';
 	}
 	echo '</ul><br><hr>';
