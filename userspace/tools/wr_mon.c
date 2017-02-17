@@ -482,14 +482,31 @@ void show_ports(int alive)
 			}
 			term_cprintf(C_WHITE, "\n");
 		} else if (mode & WEB_INTERFACE) {
+			printf("%-5s ", if_name);
 			printf("%s ", state_up(port_state->state)
 				? "up" : "down");
 			printf("%s ", if_mode);
 			printf("%s ", port_state->locked
 				? "Locked" : "NoLock");
-			printf("%s\n", port_state->calib.rx_calibrated
+			printf("%s ", port_state->calib.rx_calibrated
 				&& port_state->calib.tx_calibrated
 				? "Calibrated" : "Uncalibrated");
+
+			for (j = 0; j < ppg->nlinks; j++) {
+					if (strcmp(if_name,
+							pp_array[j].cfg.iface_name)) {
+						/* Instance not for this interface
+						 * skip */
+						continue;
+					}
+					if (state_up(port_state->state)) {
+						unsigned char *p = pp_array[j].peer;
+						printf("%02x:%02x:%02x:%02x:%02x:%02x ",
+								p[0], p[1], p[2], p[3],p[4], p[5]);
+					}
+			}
+			printf("\n");
+
 		} else if (print_port) {
 			printf("port:%s ", if_name);
 			printf("lnk:%d ", state_up(port_state->state));
@@ -632,18 +649,14 @@ void show_servo(int alive)
 		/* SPEC shows temperature, but that can be selected separately
 		 * in this program
 		 */
+		if(mode==WEB_INTERFACE) printf("\n");
 	}
 }
 
 void show_temperatures(void)
 {
-	if ((mode == SHOW_GUI) || (mode & WEB_INTERFACE)) {
-		if (mode == SHOW_GUI) {
-/*                                              -------------------------------------------------------------------------------*/
-			term_cprintf(C_CYAN, "\n-------------------------------- Temperatures ---------------------------------\n");
-		} else {
-			term_cprintf(C_CYAN, "\nTemperatures:\n");
-		}
+	if ((mode == SHOW_GUI)) {
+		term_cprintf(C_CYAN, "\n-------------------------------- Temperatures ---------------------------------\n");
 
 		term_cprintf(C_BLUE, "FPGA: ");
 		term_cprintf(C_WHITE, "%2.2f ",
@@ -663,12 +676,14 @@ void show_temperatures(void)
 		printf("pll:%2.2f ", temp_sensors_local.pll/256.0);
 		printf("psl:%2.2f ", temp_sensors_local.psl/256.0);
 		printf("psr:%2.2f", temp_sensors_local.psr/256.0);
+		if(mode==WEB_INTERFACE) printf("\n");
 	}
 }
 
 void show_time(void)
 {
 	printf("TIME sec:%lld nsec:%d ", seconds, nanoseconds);
+	if(mode==WEB_INTERFACE) printf("\n");
 }
 
 void show_all(void)
@@ -688,7 +703,7 @@ void show_all(void)
 	ppsi_alive = (ppsi_head->pid && (kill(ppsi_head->pid, 0) == 0))
 								+ ignore_alive;
 
-	if (mode & SHOW_WR_TIME) {
+	if (mode & (SHOW_WR_TIME | WEB_INTERFACE)) {
 		if (ppsi_alive)
 			show_time();
 		else if (mode == SHOW_ALL)
@@ -699,7 +714,7 @@ void show_all(void)
 		show_ports(hal_alive);
 	}
 
-	if (mode & SHOW_SERVO || mode == SHOW_GUI) {
+	if (mode & (SHOW_SERVO | WEB_INTERFACE) || mode == SHOW_GUI) {
 		show_servo(ppsi_alive);
 	}
 
@@ -773,7 +788,14 @@ int main(int argc, char *argv[])
 
 	init_shm();
 
-	if (mode & WEB_INTERFACE) {
+	if (shw_fpga_mmap_init() < 0) {
+		pr_error("Can't initialize FPGA mmap\n");
+		exit(1);
+	}
+
+	if (mode & WEB_INTERFACE)
+	{
+		shw_pps_gen_read_time(&seconds, &nanoseconds);
 		read_servo();
 		read_hal();
 		show_all();
@@ -781,12 +803,6 @@ int main(int argc, char *argv[])
 	}
 
 	term_init(usecolor);
-
-	if (shw_fpga_mmap_init() < 0) {
-		pr_error("Can't initialize FPGA mmap\n");
-		exit(1);
-	}
-
 	setvbuf(stdout, NULL, _IOFBF, 4096);
 
 	/* main loop */
@@ -816,7 +832,6 @@ int main(int argc, char *argv[])
 		if (seconds != last_seconds) {
 			read_servo();
 			read_hal();
-
 			show_all();
 
 			last_seconds = seconds;
