@@ -317,28 +317,37 @@ function print_multi_form($matrix, $header, $formatID, $class, $infoname, $size)
 }
 
 function process_multi_form($matrix){
-
 	$modified = false;
-
 	$i=0;
 	if(!empty($_POST)){
+		$fiber = array_search('FIBER', $_POST);
 		foreach ($matrix as $array){
+			
 			$elements = explode(",",$array);
 
 			foreach ($elements as $element){
 				$column = explode("=",$element);
+
 				if($column[0]!="key"){
-					$output .= preg_replace('/[0-9]+/', '', $column[0].$i)."=". $_POST[$column[0].$i].",";
+					$var = trim($column[0].$i);
+					$output .= preg_replace('/[0-9]+/', '', $var)."=".$_POST[$var].",";
 				}else{
 					$key = $_POST[$column[0].$i];
 				}
-
+				
 				//$_SESSION["KCONFIG"][$row["key"]]=$_POST[$row["vname"]];
 				//$_SESSION[$section][$subsection][$row["value"]] = $_POST[$row["vname"]];
 
 			}
 			$output = rtrim($output, ",");
-
+			
+			//change matrix fiber to match format to save at dot-config
+			if($fiber >=0 ){
+				$output = str_replace("tx=","alpha_", $output);
+				$output = str_replace(",rx=", "+", $output);
+				$output = str_replace(",val=", "=", $output);
+        	        }
+	
 			// We have the line, put it in kconfig.
 			$_SESSION["KCONFIG"][$key]=$output;
 
@@ -1427,4 +1436,19 @@ function resetswitch(){
 		shell_exec("make -C /wr/etc/ defconfig");
 		shell_exec("reboot");	  
 }
+
+/**
+ * Replaces last ocurrence in string
+ *
+ * @author Anne M. <anne@sevensols.com>
+**/
+
+function lreplace($search, $replace, $subject){
+    $pos = strrpos($subject, $search);
+    if($pos !== false){
+         $subject = substr_replace($subject, $replace, $pos, strlen($search));
+    }
+    return $subject;
+}
+
 ?>
