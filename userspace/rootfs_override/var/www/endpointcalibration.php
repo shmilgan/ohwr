@@ -28,16 +28,15 @@
 				<center>NOTE: If you do not know how to calibrate endpoints
 				please click on <a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration'
 				target='_blank'> here </a>*<hr><br>";
-
 		$formatID = "alternatecolor";
 		$class = "altrowstablesmall firstcol";
 		$infoname = "Endpoint Configuration";
 		//$size = "6";
 
 		if (strpos($_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],'proto=') !== false)
-			$header = array ("WR port","Protocol","Tx","Rx","Mode","Fiber");
+			$header = array ("WR port","Protocol","&#916 Tx","&#916 Rx","Mode","Fiber");
 		else
-			$header = array ("WR port","Tx","Rx","Mode","Fiber");
+			$header = array ("WR port","&#916 Tx","&#916 Rx","Mode","Fiber");
 		$matrix = array ("key=CONFIG_PORT01_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],
 							"key=CONFIG_PORT02_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT02_PARAMS"],
 							"key=CONFIG_PORT03_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT03_PARAMS"],
@@ -58,27 +57,13 @@
 							"key=CONFIG_PORT18_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT18_PARAMS"],
 							);
 		print_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
-
+		
 		if(process_multi_form($matrix)){
-			save_kconfig();
-			apply_kconfig();
+                        save_kconfig();
+                        apply_kconfig();
 
-			header ('Location: endpointcalibration.php');
-		}
-
-		$formatID = "alternatecolor1";
-		$class = "altrowstablesmall firstcol";
-		$infoname = "Available Fibers";
-		$size = "10";
-
-		$header = array ("#","Alpha");
-
-		$matrix = array ("id=0,key=CONFIG_FIBER00_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER00_PARAMS"],
-							"id=1,key=CONFIG_FIBER01_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER01_PARAMS"],
-							"id=2,key=CONFIG_FIBER02_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER02_PARAMS"],
-							"id=3,key=CONFIG_FIBER03_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER03_PARAMS"]);
-
-		print_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
+                        header ('Location: endpointcalibration.php');
+                }
 	?>
 
 </div>

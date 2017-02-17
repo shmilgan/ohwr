@@ -32,12 +32,13 @@ echo '<div class="login">
 		echo '<ul class="advance">';
 		/* show Aux. CLK2 configuration only if version 3.4 */
 		if (strpos($_SESSION["WRS_INFO"][HARDWARE],'scb: v3.4') !== false)
-			echo '<li><a href="auxclk.php">Aux Clock Config</a></li>';
-		echo '<li><a href="sfpcalibration.php">SFP Calibration</a></li>';
+		echo '<li><a href="auxclk.php">Aux Clock Config</a></li>';
 		echo '<li><a href="endpoint.php">Endpoint Tool </a></li>';
 		echo '<li><a href="endpointcalibration.php">Endpoint Calibration</a></li>';
+		echo '<li><a href="sfpcalibration.php">SFP Calibration</a></li>';
+		echo '<li><a href="endpointcalibrationalpha.php">Fiber Calibration</a></li>';
 		echo '<li><a href="load.php">LM32 & FPGA</a></li>';
-		echo '<li><a href="logs.php">System logs</a></li>';
+		echo '<li><a href="logs.php">System Logs</a></li>';
 		echo '<li><a href="terminal.php">Virtual Console</a></li>';
 		echo '<li><a href="firmware.php">Firmware</a></li>';
 		echo '</ul>';
