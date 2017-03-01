@@ -17,17 +17,13 @@ function createTempDataFile(){
 createTempDataFile();
 
 #Obtain the temperatures 
-function getTemperatures(){
+function getTemperatures($sub_id = -1){
 	$temperatures=shell_exec("cat /tmp/wrinfo | grep TEMP");
 	$temperatures = split(" ", $temperatures);
+	if($sub_id != -1){
+		$temperatures = $temperatures[$sub_id];
+	}
 	return $temperatures;
-}
-
-function getFgpaTemperatures(){
-        $temperatures=shell_exec("cat /tmp/wrinfo | grep TEMP");
-        $arr = split(" ", $temperatures);
-        $temperatures = $arr[1];
-        return $temperatures;
 }
 
 #Obtain the wr servo timing
