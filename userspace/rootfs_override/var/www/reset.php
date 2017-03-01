@@ -22,6 +22,9 @@
 <?php
 	session_is_started();
 ?>
+
+	<p>This will reset your switch to the default state</p>
+	<br>
 	<FORM method="POST" ENCTYPE="multipart/form-data" onsubmit="return confirm('Are you sure you want to reset the switch?');">
         <th><INPUT type=submit value="Reset" class="btn" name="reset" ></th>
         </FORM>              
