@@ -31,7 +31,7 @@ function updateWrValues(){
 	tables += '<br>';
 	
 	//table timing parameters & sync status
-        var data = datainfowr[2] + removewhitespaces(datainfowr[3]);
+        var data = datainfowr[2]+ ','+removewhitespaces(datainfowr[3]);
 	tables += drawtimingtable(data);
 	tables += '<br>';
 	
