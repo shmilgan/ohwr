@@ -3,6 +3,7 @@
 <div class="main">
 <div class="page">
 <div class="header" >
+<script type="text/javascript" src="js/func.js"></script>
 <!--<h1>White-Rabbit Switch Tool</h1>-->
 <div class="header-ports" ><?php wrs_header_ports(); ?></div>
 <div class="topmenu">
@@ -28,7 +29,7 @@
 				<center>NOTE: If you do not know how to calibrate endpoints
 				please click on <a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration'
 				target='_blank'> here </a>*<hr><br>";
-		$formatID = "alternatecolor";
+		$formatID = "alternatecolor1";
 		$class = "altrowstablesmall firstcol";
 		$infoname = "Endpoint Configuration";
 		//$size = "6";
