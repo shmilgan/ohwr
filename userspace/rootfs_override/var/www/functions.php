@@ -343,8 +343,9 @@ function process_multi_form($matrix){
 			
 			//change matrix fiber to match format to save at dot-config
 			if($fiber >=0 ){
+				$output = str_replace("id=".$i."," , "" ,$output);
+				$output = lreplace(",rx=", "_", $output);
 				$output = str_replace("tx=","alpha_", $output);
-				$output = str_replace(",rx=", "+", $output);
 				$output = str_replace(",val=", "=", $output);
         	        }
 	

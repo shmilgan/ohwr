@@ -35,29 +35,27 @@
 		$size = "3";
 
 		$header = array ("#","&#955tx", "&#955rx","Value");
-		$matrix = array ("key=CONFIG_FIBER00_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER00_PARAMS"],
-				"key=CONFIG_FIBER01_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER01_PARAMS"],
-				"key=CONFIG_FIBER02_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER02_PARAMS"],
-				"key=CONFIG_FIBER03_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER03_PARAMS"],
-				"key=CONFIG_FIBER04_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER04_PARAMS"],
-				"key=CONFIG_FIBER05_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER05_PARAMS"]);
+		$matrix = array ("key=CONFIG_FIBER00_PARAMS, id=0,".$_SESSION["KCONFIG"]["CONFIG_FIBER00_PARAMS"],
+				"key=CONFIG_FIBER01_PARAMS, id=1,".$_SESSION["KCONFIG"]["CONFIG_FIBER01_PARAMS"],
+				"key=CONFIG_FIBER02_PARAMS,id=2,".$_SESSION["KCONFIG"]["CONFIG_FIBER02_PARAMS"],
+				"key=CONFIG_FIBER03_PARAMS, id=3,".$_SESSION["KCONFIG"]["CONFIG_FIBER03_PARAMS"]);
 		
 
 		//change string to match drawing function
 		$length = count($matrix);
                 for ($i = 0; $i < $length; $i++) {
                 	$matrix[$i] = str_replace("alpha_", "tx=", $matrix[$i]);
-                	$matrix[$i] = str_replace("+", ",rx=", $matrix[$i]);
+                	$matrix[$i] = lreplace("_", ",rx=", $matrix[$i]);
 			$matrix[$i] = lreplace("=", ",val=", $matrix[$i]);
                 }
-	
+		
 		print_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
 
 		if(process_multi_form($matrix)){
 	                save_kconfig();
                         apply_kconfig();
 						
-                        header ('Location: endpointcalibrationalpha.php');
+                        header ('Location: fibercalibration.php');
                 }
 
 	?>
