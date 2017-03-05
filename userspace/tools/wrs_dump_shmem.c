@@ -89,6 +89,7 @@ enum dump_type {
 			   * endianess */
 	dump_type_bina, /* for binary stull in MAC format */
 	/* normal types follow */
+	dump_type_uint64_t,
 	dump_type_uint32_t,
 	dump_type_uint16_t,
 	dump_type_int,
@@ -173,6 +174,7 @@ void dump_one_field(void *addr, struct dump_info *info)
 			       i == info->size - 1 ? '\n' : ':');
 		break;
 	case dump_type_UInteger64:
+	case dump_type_uint64_t:
 		printf("%lld\n", *(unsigned long long *)p);
 		break;
 	case dump_type_Integer64:
@@ -708,9 +710,7 @@ struct dump_info ppi_info [] = {
 	DUMP_FIELD(time, t4),
 	DUMP_FIELD(time, t5),
 	DUMP_FIELD(time, t6),
-	DUMP_FIELD(Integer32,  t4_cf),
-	DUMP_FIELD(Integer32,  t6_cf),
-	DUMP_FIELD(time, cField),
+	DUMP_FIELD(uint64_t, syncCF),
 	DUMP_FIELD(time, last_rcv_time),
 	DUMP_FIELD(time, last_snt_time),
 	DUMP_FIELD(UInteger16, frgn_rec_num),
