@@ -60,7 +60,8 @@
 		<div id="bottommsg">
 		<hr>
 		<p align=center ><font color="red">NOTE: Flashing the switch with a wrong binary file might damage your device. <br>Please visit the
-			<A HREF="http://www.ohwr.org/projects/wr-switch-sw/files" TARGET="_new">OHR website</A> for more details.</font>
+			<A HREF="http://www.ohwr.org/projects/wr-switch-sw/files" TARGET="_new">OHR website</A> for more details.
+			<br><br>NOTE2: Before flashing we recommend to reboot in order to free the DRAM memory.</font>
 		</p>
 		<hr>
 	</div>
