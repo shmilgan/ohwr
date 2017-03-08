@@ -1435,8 +1435,7 @@ function get_encrypt_salt($enc_password){
 **/
 function resetswitch(){ 
 		shell_exec("make -C /wr/etc/ defconfig");
-		shell_exec("reboot");
-		wrs_reboot();	  
+		wrs_reboot(); 
 }
 
 /**
