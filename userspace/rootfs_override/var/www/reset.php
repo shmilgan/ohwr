@@ -36,27 +36,30 @@
 
 	<h2>Reset</h2>
 	<br>
-	<p>This will reset your switch to the default state</p>
+	<p>This will reset your switch to the default configuration</p>
 	<br>
 	<FORM method="POST" ENCTYPE="multipart/form-data" onsubmit="return confirm('Are you sure you want to reset the switch?');">
         <th><INPUT type=submit value="Reset" class="btn" name="reset" ></th>
         </FORM>              
 
-</div>
-</div>
-</div>
-<div class="footer">
-<?php 
-	if(isset($_POST['reset'])){
-		resetswitch();
-    	}
+<?php
+        if(isset($_POST['reset'])){
+                resetswitch();
+        }
 
-	if(isset($_POST['reboot'])){
+        if(isset($_POST['reboot'])){
                 wrs_reboot();
         }
 
 
  ?>
+
+
+</div>
+</div>
+</div>
+<div class="footer">
+	<?php include 'footer.php' ?>
 </div>
 </div>
 </div>
