@@ -644,6 +644,15 @@ config TIME_BC
 
 endchoice
 
+config PTP_USE_P2P
+	bool "Use peer-to-peer mechanism (as opposed to end-to-end"
+	help
+	  This is a global setting to use peer-delay synchronization,
+	  also known as peer-to-peer or p2p. Master ports in the switch
+	  already reply to peer-delay requests; if this option is chosen,
+	  all ports will issue peer-delay requests, and slave ports will use
+	  the delays thus aquired.
+
 choice
 	prompt "PTP Port Assignment"
 	default PTP_PORT_PARAMS

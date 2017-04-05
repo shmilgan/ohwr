@@ -73,6 +73,11 @@ for i_zero in {01..18};do
 	#hardcode whiterabbit as extension even for non-wr
 	echo "extension whiterabbit" >> $OUTPUT_FILE
 
+	# if peer-to-peer is chosen, force it on (default is e2e)
+	if [ -n "$CONFIG_PTP_USE_P2P" ]; then
+	    echo "mechanism p2p" >> $OUTPUT_FILE
+	fi
+
 	# add vlans
 	if [ "$CONFIG_VLANS_ENABLE" = "y" ]; then
 		unset ppsi_vlans;
