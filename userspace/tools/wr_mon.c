@@ -587,6 +587,18 @@ void show_servo(int alive)
 		term_cprintf(C_WHITE, "%15.3f nsec\n",
 			     ppsi_servo_local.picos_mu/1000.0);
 
+		term_cprintf(C_BLUE, "Estimated link length:     ");
+		/* (RTT - deltas) / 2 * c / ri
+		 c = 299792458 - speed of light in m/s
+		 ri = 1.4682 - refractive index for fiber g.652 */
+		term_cprintf(C_WHITE, "%10.2f meters\n",
+			(ppsi_servo_local.picos_mu
+			 - ppsi_servo_local.delta_tx_m
+			 - ppsi_servo_local.delta_rx_m
+			 - ppsi_servo_local.delta_tx_s
+			 - ppsi_servo_local.delta_tx_s
+			) / 2 / 1e6 * 299.792458 / 1.4682);
+
 		term_cprintf(C_BLUE, "Master-slave delay:   ");
 		term_cprintf(C_WHITE, "%15.3f nsec\n",
 			     ppsi_servo_local.delta_ms/1000.0);
@@ -594,6 +606,7 @@ void show_servo(int alive)
 		term_cprintf(C_BLUE, "Total link asymmetry: ");
 		term_cprintf(C_WHITE, "%15.3f nsec, ",
 			     total_asymmetry / 1000.0);
+		/* print alpha as fixed point number */
 		term_cprintf(C_BLUE, "alpha: ");
 		term_cprintf(C_WHITE, "%d\n",
 			     ppsi_servo_local.fiber_fix_alpha);
