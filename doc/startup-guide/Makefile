@@ -24,7 +24,8 @@ TEX=$(SRC:.md=.tex)
 DOC=$(SRC:.md=.doc)
 
 ## Pandoc arguments
-OPTIONS=-f markdown --toc --number-sections --smart
+EXTENSIONS=+definition_lists
+OPTIONS=-f markdown$(EXTENSIONS) --toc --number-sections --smart
 TEMPLATE=pandoc.latex 
 
 
