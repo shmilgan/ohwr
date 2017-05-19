@@ -531,6 +531,21 @@ wait until the WRS has reboot.
 > **Notes**: A NTP server should be provided for the grandmaster switch 
 so that we can distribute the current TAI seconds to the whole WR network
 
+### Using menuconfig
+
+Another way to modify the parameters to configure the [WRS] in Grandmaster is by
+[opening an SSH terminal](#login-via-ssh) and then run the command:
+
+    make -C /wr/etc/ menuconfig
+
+You will get a menu to directly modify the `dot-config` but with a more friendly[^termdisplay] interface.
+Then just go to `Timing Mode`, select `Grand-Master`, `Save`, `Exit`.
+Your WRS is now ready to be in GM mode at next reboot.
+
+[^termdisplay]: With some small terminal size, or while using minicom the ncurse interface does not behave well,
+ and the menuconfig is not properly displayed.
+
+
 ### By editing the dot-config file in a terminal
 
 If you prefer to configure the [WRS] using a terminal you should open the `dot-config` file
@@ -556,7 +571,6 @@ CONFIG_TIME_GM=y
 ~~~~~~~
 
 and finally you need to `reboot` the switch.
-
 
 
 Non-DHCP user
