@@ -670,6 +670,16 @@ void show_servo(int alive)
 		printf("dtxs:%d drxs:%d ", ppsi_servo_local.delta_tx_s,
 		       ppsi_servo_local.delta_rx_s);
 		printf("asym:%lld ", total_asymmetry);
+		/* Estimated link length in cm
+		 (RTT - deltas) / 2 * c / ri
+		 c = 299792458 - speed of light in m/s
+		 ri = 1.4682 - refractive index for fiber g.652 */
+		printf("ll:%d ", (int) ((ppsi_servo_local.picos_mu
+				    - ppsi_servo_local.delta_tx_m
+				    - ppsi_servo_local.delta_rx_m
+				    - ppsi_servo_local.delta_tx_s
+				    - ppsi_servo_local.delta_tx_s
+				   ) / 2 / 1e6 * 299.792458 / 1.4682 * 100));
 		printf("crtt:%llu ", crtt);
 		printf("cko:%lld ", ppsi_servo_local.offset);
 		printf("setp:%d ", ppsi_servo_local.cur_setpoint);
