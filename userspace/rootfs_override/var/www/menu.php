@@ -32,8 +32,8 @@ echo '<div class="login">
 		echo '<ul class="advance">';
 		/* show Aux. CLK2 configuration only if version 3.4 */
 		if (strpos($_SESSION["WRS_INFO"][HARDWARE],'scb: v3.4') !== false)
-			echo '<li><a href="wrinfo.php">WR Monitoring</a></li>';
-		echo '<li><a href="auxclk.php">Aux Clock Config</a></li>';
+			echo '<li><a href="auxclk.php">Aux Clock Config</a></li>';
+		echo '<li><a href="wrinfo.php">WR Monitoring</a></li>';
 		echo '<li><a href="endpoint.php">Endpoint Tool </a></li>';
 		echo '<li><a href="endpointcalibration.php">Endpoint Calibration</a></li>';
 		echo '<li><a href="sfpcalibration.php">SFP Calibration</a></li>';
