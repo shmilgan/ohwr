@@ -63,6 +63,7 @@ function drawtimingtable(data){
 	var names=[["WR time", "TAI"],["Switch time","UTC"],["Servo state", "ss"],["Round-trip time (mu)", "mu"],
 		["Master-slave delay","dms"],["Master PHY delays TX", "dtxm"], ["Master PHY delays RX", "drxm"],
 		["Slave PHY delays TX", "dtxs"],["Slave PHY delays RX", "drxs"], ["Total link asymmetry","asym"],
+		["Estimated link length","ll"],
 		["Clock offset", "cko"],["Phase setpoint","setp"],["Servo update counter","ucnt"]];
 	
 	var tablewr = '<div><table class="altrowstable firstcol" width="100%" id="alternatecolor">';
@@ -85,6 +86,10 @@ function drawtimingtable(data){
 			}
 			else if(data[i][0].indexOf("ucnt")>=0){
 				tablewr += '<tr><td>' + names[j][0] + '</td><td>' + data[i][1] + ' times' + '</td></tr>';
+				j++;
+			}
+			else if(data[i][0].indexOf("ll")>=0){
+				tablewr += '<tr><td>' + names[j][0] + '</td><td>' + data[i][1]/100 + ' m ' + '</td></tr>';
 				j++;
 			}
 			else if(data[i][0].indexOf("sv")<0 && data[i][0].indexOf("crtt")<0 && data[i][0].indexOf("lock")<0){
