@@ -36,7 +36,8 @@ function getTiming(){
 
 #Obtain wr date
 function getWrDate(){
-	$wr_date =  str_replace("\n","<br>", shell_exec("/wr/bin/wr_date -n get |tail -2"));
+	$wr_date = shell_exec("/wr/bin/wr_date -n get |tail -2");
+	$wr_date = explode("\n", $wr_date);
 	return $wr_date;
 }
 
