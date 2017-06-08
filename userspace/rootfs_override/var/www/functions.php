@@ -1126,6 +1126,8 @@ function wrs_display_help($help_id, $name){
 					  logging (like /dev/null). Please note that unknown facility names will generate a runtime error on the
 					  switch.  NOTE: It looks like Notice is not a default logging priority as writen in the manual.<br>
 					</p>";
+	} else if (!strcmp($help_id, "wrinfo")){
+		$message = "<p>Display live information about switch taken from the <b>wr_mon</b>. Information is updated every second.</p>";
 	}
 
 	echo $message;

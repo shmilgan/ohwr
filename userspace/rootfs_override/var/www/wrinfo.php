@@ -17,7 +17,7 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">WR Live Information <a href='help.php?help_id=firmware' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
+<h1 class="title">WR Live Information <a href='help.php?help_id=wrinfo' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
 
 <?php
