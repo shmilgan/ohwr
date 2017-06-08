@@ -143,35 +143,63 @@ $WRS_FORMS = Array(
 	'SYSTEM_LOGS' => Array(
 		'SYSTEM_LOGS_00' => Array(
 			'key' => "CONFIG_WRS_LOG_HAL",
-			'name' => "HAL log",
+			'name' => "Logging directions for the WR HAL",
 			'value' => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_HAL"],
 			'vname' => "loghal",
 		),
 		'SYSTEM_LOGS_01' => Array(
+			'key' => "CONFIG_WRS_LOG_LEVEL_HAL",
+			'name' => "Logging verbosity level for the WR HAL",
+			'value' => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_LEVEL_HAL"],
+			'vname' => "loglevelhal",
+		),
+
+		'SYSTEM_LOGS_02' => Array(
 			'key' => "CONFIG_WRS_LOG_RTU",
-			'name' => "RTU log",
+			'name' => "Logging directions for the RTU daemon",
 			'value' => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_RTU"],
 			'vname' => "logrtu",
 		),
-		'SYSTEM_LOGS_02' => Array(
+		'SYSTEM_LOGS_03' => Array(
+			'key' => "CONFIG_WRS_LOG_LEVEL_RTU",
+			'name' => "Logging verbosity level for the RTU daemon",
+			'value' => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_LEVEL_RTU"],
+			'vname' => "loglevelrtu",
+		),
+
+		'SYSTEM_LOGS_04' => Array(
 			'key' => "CONFIG_WRS_LOG_PTP",
-			'name' => "PTP log",
+			'name' => "Logging directions for the PTP daemon",
 			'value' => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_PTP"],
 			'vname' => "logptp",
 		),
-		'SYSTEM_LOGS_03' => Array(
+		'SYSTEM_LOGS_05' => Array(
+			'key' => "CONFIG_WRS_LOG_LEVEL_PTP",
+			'name' => "Logging verbosity level for the PTP daemon",
+			'value' => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_LEVEL_PTP"],
+			'vname' => "loglevelptp",
+		),
+
+		'SYSTEM_LOGS_06' => Array(
 			'key' => "CONFIG_WRS_LOG_OTHER",
-			'name' => "other applications log",
+			'name' => "Logging directions for other programs",
 			'value' => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_OTHER"],
 			'vname' => "logother",
 		),
-		'SYSTEM_LOGS_04' => Array(
+		'SYSTEM_LOGS_07' => Array(
+			'key' => "CONFIG_WRS_LOG_LEVEL_OTHER",
+			'name' => "Logging verbosity level for other programs",
+			'value' => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_LEVEL_OTHER"],
+			'vname' => "loglevelother",
+		),
+
+		'SYSTEM_LOGS_08' => Array(
 			'key' => "CONFIG_WRS_LOG_MONIT",
 			'name' => "Monit log",
 			'value' => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_MONIT"],
 			'vname' => "logmonit",
 		),
-		'SYSTEM_LOGS_05' => Array(
+		'SYSTEM_LOGS_09' => Array(
 			'key' => "CONFIG_WRS_LOG_SNMPD",
 			'name' => "SNMPd log",
 			'value' => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_SNMPD"],

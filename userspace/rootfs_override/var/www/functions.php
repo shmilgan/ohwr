@@ -1102,10 +1102,20 @@ function wrs_display_help($help_id, $name){
 		$message = str_replace("\n", "<br>", $message);
 	} else if (!strcmp($help_id, "logs")){
 		$message = "<p>Log files for the following services: <br>
-					- <b>HAL daemon</b>, <b>RTU daemon</b>, <b>PPSi daemon</b>, <b>other programs</b> -  The string can
+					- Logging directions for <b>HAL daemon</b>, <b>RTU daemon</b>, <b>PPSi/PTP daemon</b>, <b>other programs</b>
+					  (wrs_watchdog, wrs_auxclk, wrs_custom_boot_script.sh, vlan.sh)
+					  -  The string can
 					  be a pathname (e.g. /dev/kmsg) or a &lt;facility&gt;.&lt;level&gt; spefification like \"daemon.debug\".
 					  An empty strings is used to represent no logging (like /dev/null). Please note that unknown facility
-					  names will generate a runtime error on the switch.<br>
+					  names will generate a runtime error on the switch. Please note that all messages produced by programs
+					  if syslog is configured will be passed to the syslog at the same &lt;facility&gt;.&lt;level&gt,
+					  no matter of verbosity of a message.<br>
+					- Logging verbosity level for <b>HAL daemon</b>, <b>RTU daemon</b>, <b>PPSi/PTP daemon</b>, <b>other programs</b>
+					  (wrs_watchdog, wrs_auxclk, wrs_custom_boot_script.sh, vlan.sh)
+					  - Specify verbosity of programs as a string.
+					  By leaving this item empty, a daemon will use its default verbosity level, which is usually INFO.
+					  Please note that all messages produced by a program if syslog is configured will be passed to the syslog
+					  at the same &lt;facility&gt;.&lt;level&gt, no matter of verbosity of a message.<br>
 					- <b>Monit</b> - The string can be a pathname (e.g. /dev/kmsg) or a \"syslog\" string. An empty strings
 					  is used  to represent no logging. If it is needed to select facility and level please leave here empty
 					  string and change /etc/monitrc file directly. Please note that unknown facility names will generate a
@@ -1114,7 +1124,7 @@ function wrs_display_help($help_id, $name){
 					  \"sd\" or \"s daemon\" will forward messages to syslog with daemon as facility. To set level (i.e. 5) use
 					  \"S 5 daemon\". For details please check \"man snmpcmd\". An empty strings is used  to represent no
 					  logging (like /dev/null). Please note that unknown facility names will generate a runtime error on the
-					  switch.<br>
+					  switch.  NOTE: It looks like Notice is not a default logging priority as writen in the manual.<br>
 					</p>";
 	}
 
