@@ -28,7 +28,7 @@
 		save_kconfig();
 		apply_kconfig();
 
-		header ('Location: sfpcalibration.php');
+		header ('Location: sfpconfiguration.php');
 	?>
 
 </div>

@@ -27,7 +27,7 @@
 
 		$formatID = "alternatecolor";
 		$class = "altrowstablesmall firstcol";
-		$infoname = "SFP Calibration";
+		$infoname = "SFP Configuration";
 		$vn = 0;
 		$vs = 0;
 		$counter = 0;
@@ -159,12 +159,12 @@
 				save_kconfig();
 				apply_kconfig();
 
-				header ('Location: sfpcalibration.php');
+				header ('Location: sfpconfiguration.php');
 			}
 		}
 
 		echo '<hr><div align="right">
-				<A HREF="sfpcalibration.php?add=y">
+				<A HREF="sfpconfiguration.php?add=y">
 				<img src="img/add.png" style="width:30px;height:30px;vertical-align:center">
 				<span style="">Add new SFP</span></A>
 				</div>';

@@ -38,7 +38,7 @@
 		echo '</table>';
 		echo '<br>';
 
-		echo '<p align="right">Go to <a href="endpointcalibration.php">advanced mode</a></p>';
+		echo '<p align="right">Go to <a href="endpointconfiguration.php">advanced mode</a></p>';
 
 	?>
 

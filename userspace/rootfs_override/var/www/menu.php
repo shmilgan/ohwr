@@ -34,12 +34,12 @@ echo '<div class="login">
 		if (strpos($_SESSION["WRS_INFO"][HARDWARE],'scb: v3.4') !== false)
 			echo '<li><a href="auxclk.php">Aux Clock Config</a></li>';
 		echo '<li><a href="wrinfo.php">WR Monitoring</a></li>';
-		echo '<li><a href="endpoint.php">Endpoint Tool </a></li>';
-		echo '<li><a href="endpointcalibration.php">Endpoint Calibration</a></li>';
-		echo '<li><a href="sfpcalibration.php">SFP Calibration</a></li>';
-		echo '<li><a href="fibercalibration.php">Fiber Calibration</a></li>';
-		echo '<li><a href="load.php">LM32 & FPGA</a></li>';
+		echo '<li><a href="endpointconfiguration.php">Endpoint Configuration</a></li>';
+		echo '<li><a href="sfpconfiguration.php">SFP Configuration</a></li>';
+		echo '<li><a href="fiberconfiguration.php">Fiber Configuration</a></li>';
 		echo '<li><a href="logs.php">System Logs</a></li>';
+		echo '<li><a href="endpoint.php">Endpoint Tool </a></li>';
+		echo '<li><a href="load.php">LM32 & FPGA</a></li>';
 		echo '<li><a href="terminal.php">Virtual Console</a></li>';
 		echo '<li><a href="firmware.php">Firmware</a></li>';
 		echo '<li><a href="reset.php">Reboot & Reset</a></li>';

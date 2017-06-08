@@ -17,7 +17,7 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Endpoint Calibration<a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration' target='_blank'><img align=right src="./img/question.png"></a></h1>
+<h1 class="title">Endpoint Configuration<a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration' target='_blank'><img align=right src="./img/question.png"></a></h1>
 <br>
 
 <?php session_is_started() ?>
@@ -63,7 +63,7 @@
                         save_kconfig();
                         apply_kconfig();
 
-                        header ('Location: endpointcalibration.php');
+                        header ('Location: endpointconfiguration.php');
                 }
 	?>
 
