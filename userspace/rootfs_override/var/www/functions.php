@@ -320,7 +320,9 @@ function process_multi_form($matrix){
 	$modified = false;
 	$i=0;
 	if(!empty($_POST)){
-		$fiber = array_search('FIBER', $_POST);
+		$tmp = implode(" ",$_POST);
+		$fiber = strstr($tmp,'FIBER');
+		
 		foreach ($matrix as $array){
 			
 			$elements = explode(",",$array);
@@ -342,7 +344,7 @@ function process_multi_form($matrix){
 			$output = rtrim($output, ",");
 			
 			//change matrix fiber to match format to save at dot-config
-			if($fiber >=0 ){
+			if($fiber != FALSE ){
 				$output = str_replace("id=".$i."," , "" ,$output);
 				$output = lreplace(",rx=", "_", $output);
 				$output = str_replace("tx=","alpha_", $output);
