@@ -167,7 +167,7 @@ $WRS_FORMS = Array(
 		),
 		'SYSTEM_LOGS_04' => Array(
 			'key' => "CONFIG_WRS_LOG_MONIT",
-			'name' => "Monitor log",
+			'name' => "Monit log",
 			'value' => $_SESSION["KCONFIG"]["CONFIG_WRS_LOG_MONIT"],
 			'vname' => "logmonit",
 		),
