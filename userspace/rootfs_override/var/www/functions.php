@@ -69,8 +69,8 @@ function wrs_header_ports(){
 	$currenttime = intval(shell_exec("date +%s"));
 	$interval = $currenttime - $_SESSION['portsupdated'];
 
-	if(!file_exists("/tmp/ports.conf") || $interval>15){
-		shell_exec("/wr/bin/wr_mon -w > /tmp/ports.conf");
+	if(!file_exists("/tmp/www_ports.txt") || $interval>15){
+		shell_exec("/wr/bin/wr_mon -w > /tmp/www_ports.txt");
 		$_SESSION['portsupdated'] = intval(shell_exec("date +%s"));
 	}
 	
@@ -178,7 +178,7 @@ function wrs_main_info(){
 	$WRSmode_xtra="";
 	if(!strcmp($WRSmode, "GM")) {
 		$WRSmode="GrandMaster";
-		$ports = shell_exec("cat /tmp/ports.conf");
+		$ports = shell_exec("cat /tmp/www_ports.txt");
 		if(empty($ports)) $WRSmode_xtra="<br>Waiting PPS/10MHz ...";
 	}
 	else if (!strcmp($WRSmode, "BC"))
@@ -189,7 +189,7 @@ function wrs_main_info(){
 		$WRSmode="Unknown";
 	
 	#Obtain the temperatures using the last line of (wr-mon -w)
-	$temperatures=shell_exec("cat /tmp/ports.conf 2>/dev/null | tail -1");
+	$temperatures=shell_exec("cat /tmp/www_ports.txt 2>/dev/null | tail -1");
 	$arr = split(" ", $temperatures);
 	$temperatures = $arr[1];
 
