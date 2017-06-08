@@ -30,8 +30,8 @@ function get_info(){
 function updateValues(){
 	$("#sfp_panel").html(datainfo[2]);
 	$("#temp").text(datainfo[0]);
-	$("#datewr").html(datainfo[1]);
-	
+	$("#datewr").html(datainfo[1][0] + '<br>' + datainfo[1][1]);
+
 	var status;
 	var end = false;
 	for (var i=0; i<datainfo[3].length-1 && !end; i++){
