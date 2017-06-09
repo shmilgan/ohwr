@@ -590,14 +590,12 @@ void show_servo(int alive)
 		term_cprintf(C_BLUE, "Estimated link length:     ");
 		/* (RTT - deltas) / 2 * c / ri
 		 c = 299792458 - speed of light in m/s
-		 ri = 1.4682 - refractive index for fiber g.652 */
+		 ri = 1.4682 - refractive index for fiber g.652. However,
+			       experimental measurements using long (~5km) and
+			       short (few m) fibers gave a value 1.4827
+		 */
 		term_cprintf(C_WHITE, "%10.2f meters\n",
-			(ppsi_servo_local.picos_mu
-			 - ppsi_servo_local.delta_tx_m
-			 - ppsi_servo_local.delta_rx_m
-			 - ppsi_servo_local.delta_tx_s
-			 - ppsi_servo_local.delta_tx_s
-			) / 2 / 1e6 * 299.792458 / 1.4682);
+			crtt / 2 / 1e6 * 299.792458 / 1.4827);
 
 		term_cprintf(C_BLUE, "Master-slave delay:   ");
 		term_cprintf(C_WHITE, "%15.3f nsec\n",
@@ -670,16 +668,14 @@ void show_servo(int alive)
 		printf("dtxs:%d drxs:%d ", ppsi_servo_local.delta_tx_s,
 		       ppsi_servo_local.delta_rx_s);
 		printf("asym:%lld ", total_asymmetry);
-		/* Estimated link length in cm
-		 (RTT - deltas) / 2 * c / ri
+		/* (RTT - deltas) / 2 * c / ri
 		 c = 299792458 - speed of light in m/s
-		 ri = 1.4682 - refractive index for fiber g.652 */
-		printf("ll:%d ", (int) ((ppsi_servo_local.picos_mu
-				    - ppsi_servo_local.delta_tx_m
-				    - ppsi_servo_local.delta_rx_m
-				    - ppsi_servo_local.delta_tx_s
-				    - ppsi_servo_local.delta_tx_s
-				   ) / 2 / 1e6 * 299.792458 / 1.4682 * 100));
+		 ri = 1.4682 - refractive index for fiber g.652. However,
+			       experimental measurements using long (~5km) and
+			       short (few m) fibers gave a value 1.4827
+		 */
+		printf("ll:%d ",
+		       (int) (crtt / 2 / 1e6 * 299.792458 / 1.4827 * 100));
 		printf("crtt:%llu ", crtt);
 		printf("cko:%lld ", ppsi_servo_local.offset);
 		printf("setp:%d ", ppsi_servo_local.cur_setpoint);
