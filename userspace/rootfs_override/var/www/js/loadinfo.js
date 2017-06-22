@@ -39,7 +39,7 @@ function updateValues(){
 		if (content.indexOf("sv")>-1){
 			//datainfo[3][i] = '<b>' + content + '<b><br/>';
 			if (content.indexOf("0")>-1) {
-				datainfo[3][i+1] = 'UNDEFINED' + '<br/>';//modify next line
+				datainfo[3][i+1] = '' + '<br/>';//modify next line
 				status = datainfo[3][i+1];
 			}
 			else{
