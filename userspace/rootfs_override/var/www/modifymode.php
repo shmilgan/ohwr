@@ -22,32 +22,19 @@
 
 	<?php
 
-		$endpoint = intval($_GET["wri"]);
+		$endpoint = $_POST["wri"];
+		$endpoint = preg_replace("/[^0-9]/", '', $endpoint);
 		$endpoint = sprintf("%02s", $endpoint);
 		$endpoint = strval($endpoint);
 
-		$mode = $_GET["mode"];
-
-		switch ($mode) {
-		case "master":
-			$new_mode = "slave";
-			break;
-		case "slave":
-			$new_mode = "auto";
-			break;
-		case "auto":
-			$new_mode = "non-wr";
-			break;
-		case "non-wr":
-			$new_mode = "none";
-			break;
-		case "none":
-			$new_mode = "master";
-			break;
-		}
-
+		$mode = $_POST["mode"];
+ 
 		$string = $_SESSION["KCONFIG"]["CONFIG_PORT".$endpoint."_PARAMS"];
-		$string = str_replace($mode,$new_mode,$string);
+
+		$portions = explode(",", $string);
+		$portions[4] = "role=".$mode;
+		$string = implode(",", $portions);
+
 		$_SESSION["KCONFIG"]["CONFIG_PORT".$endpoint."_PARAMS"] = $string;
 
 		save_kconfig();

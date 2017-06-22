@@ -3,6 +3,7 @@
 <div class="main">
 <div class="page">
 <div class="header" >
+<script type="text/javascript" src="js/dropmodes.js"></script>
 <!--<h1>White-Rabbit Switch Tool</h1>-->
 <div class="header-ports" ><?php wrs_header_ports(); ?></div>
 <div class="topmenu">
@@ -25,16 +26,38 @@
 		//Load all
 		$modes = parse_endpoint_modes();
 
+		$names = array("slave", "auto", "non_wr", "none", "master"); 
+
 		echo '<table class="altrowstable" id="alternatecolor" style="width:100%;text-align:center">';
 		for($i = 0; $i < 9; $i++){
 			echo '<tr>';
-			echo '<th>wri'.($i+1).'</td>';
-			echo '<td><a href="modifymode.php?wri='.($i+1).'&mode='.$modes[$i].'">'.$modes[$i].'</a></th>';
+			echo '<th>wri' .($i+1). '</th>';
+
+			$tmp = $i+1;
+			echo '<td><select name="selected" id="selected-'.$tmp.'" class="drop">
+			<option selected="selected" ">'.$modes[$i].'</option>
+			<option value='. $names[0] .'>'. $names[0] .'</option>
+			<option value='. $names[1] .'>'. $names[1] .'</option>
+			<option value='. $names[2] .'>'. $names[2] .'</option>  
+			<option value='. $names[3] .'>'. $names[3] .'</option>
+			<option value='. $names[4] .'>'. $names[4] .'</option>               
+			</select></td>';
 
 			echo '<th>wri'.($i+10).'</th>';
-			echo '<td><a href="modifymode.php?wri='.($i+10).'&mode='.$modes[$i+9].'">'.$modes[$i+9].'</a></td>';
+
+			$tmp2 = $i+10;
+			echo '<td><select name="selected" id="selected-'.$tmp2.'" class="drop">
+			<option selected="selected" ">'.$modes[$i+9].'</option>
+			<option value='. $names[0] .'>'. $names[0] .'</option>
+			<option value='. $names[1] .'>'. $names[1] .'</option>
+			<option value='. $names[2] .'>'. $names[2] .'</option>  
+			<option value='. $names[3] .'>'. $names[3] .'</option>
+			<option value='. $names[4] .'>'. $names[4] .'</option>               
+			</select></td>';
+
 			echo '</tr>';
 		}
+
 		echo '</table>';
 		echo '<br>';
 
