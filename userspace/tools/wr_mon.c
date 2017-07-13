@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/timex.h>
 #include <ppsi/ppsi.h>
 #include <libwr/shmem.h>
 #include <libwr/hal_shmem.h>
@@ -266,12 +267,14 @@ void show_ports(int alive)
 {
 	int i, j;
 	time_t t;
+	struct timex timex_val;
 	struct tm *tm;
 	char datestr[32];
 	struct hal_port_state *port_state;
 	struct pp_instance *pp_array;
 	int vlan_i;
 	int nvlans;
+	int *p;
 
 	if (!alive) {
 		if (mode == SHOW_GUI)
@@ -284,17 +287,26 @@ void show_ports(int alive)
 	pp_array = wrs_shm_follow(ppsi_head, ppg->pp_instances);
 
 	if (mode == SHOW_GUI) {
-		time(&t);
-		tm = localtime(&t);
-		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
-		term_cprintf(C_BLUE, "Switch time: ");
-		term_cprintf(C_WHITE, "%s\n", datestr);
-
 		t = (time_t)_fpga_readl(FPGA_BASE_PPS_GEN + 8 /* UTC_LO */);
 		tm = localtime(&t);
 		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
-		term_cprintf(C_BLUE, "WR time:     ");
+		term_cprintf(C_BLUE, "WR time (TAI):     ");
 		term_cprintf(C_WHITE, "%s\n", datestr);
+
+		time(&t);
+		tm = localtime(&t);
+		strftime(datestr, sizeof(datestr), "%Y-%m-%d %H:%M:%S", tm);
+		term_cprintf(C_BLUE, "Switch time (UTC): ");
+		term_cprintf(C_WHITE, "%s\n", datestr);
+
+		term_cprintf(C_BLUE, "Leap seconds: ");
+		if (adjtimex(&timex_val) < 0) {
+			term_cprintf(C_WHITE, "error\n");
+		} else {
+			p = (int *)(&timex_val.stbcnt) + 1;
+			term_cprintf(C_WHITE, "%3d\n", *p);
+		}
+
 /*                                    -------------------------------------------------------------------------------*/
 		term_cprintf(C_CYAN, "------------- HAL -----------|-------------- PPSI -----------------------------\n");
 		term_cprintf(C_CYAN, " Port | Link | WRconf | Freq |Inst| MAC of peer port  | PTP state | Pro | VLANs\n");
