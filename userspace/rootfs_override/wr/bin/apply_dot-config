@@ -63,7 +63,7 @@ sed -i "s,^root:[^:]*:,root:$passwd:," /etc/shadow
 # A non-existent wr_date.conf means no NTP. So "rm" if unconfigured
 if [ ! -z "$CONFIG_NTP_SERVER" ]; then
     echo "ntpserver $CONFIG_NTP_SERVER" > $T
-    cp $T /etc/wr_date.conf
+    mv $T /etc/wr_date.conf
 fi
 
 # /etc/resolv.conf can be empty, so start empty
@@ -74,7 +74,7 @@ if [ ! -z "$CONFIG_DNS_SERVER" ]; then
         echo "domain $CONFIG_DNS_DOMAIN" >> $T
     fi
 fi
-cp $T /etc/resolv.conf
+mv $T /etc/resolv.conf
 
 # rsyslog.conf is created from a template file, and busybox sed has -i
 cp /wr/etc/rsyslog.conf.in $T
@@ -85,7 +85,7 @@ if [ ! -z "$CONFIG_REMOTE_SYSLOG_SERVER" ]; then
     sed -i '/remote-host/ s/^##//' $T
     sed -i "s/remote-host/$CONFIG_REMOTE_SYSLOG_SERVER/" $T
 fi
-cp $T /etc/rsyslog.conf
+mv $T /etc/rsyslog.conf
 
 # Fix SNMP values: for all not-empty configs remove comment and replace value
 cp /wr/etc/snmpd.conf.in $T
@@ -94,7 +94,7 @@ set | tr -d \' | grep CONFIG_SNMP | sed 's/=/ /' | while read varname value; do
     sed -i "/$varname/ s/^#//" $T
     sed -i "/$varname/ s/$varname/$value/" $T
 done
-cp $T /etc/snmpd.conf
+mv $T /etc/snmpd.conf
 
 # Select a ppsi configuration file
 if [ "$CONFIG_PTP_PORT_PARAMS" = "y" ]; then
@@ -138,7 +138,7 @@ elif [ "$CONFIG_PTP_REMOTE_CONF" = "y" ]; then
     esac
     if [ -f $tmpconfig ]; then
 	# copy it in place to use the new file
-	cp $tmpconfig /etc/ppsi.conf
+	mv $tmpconfig /etc/ppsi.conf
     fi
 else
     # no valid PTP option keep ppsi.conf with old postfix
