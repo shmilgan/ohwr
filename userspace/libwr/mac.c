@@ -1,10 +1,11 @@
 /*
  * White Rabbit MAC utils
- * Copyright (C) 2010, CERN.
+ * Copyright (C) 2010, 2017 CERN.
  *
  * Version:     wrsw_rtud v1.0
  *
  * Authors:     Tomasz Wlostowski (tomasz.wlostowski@cern.ch)
+ * Authors:     Adam Wujek (adam.wujek@cern.ch)
  *
  * Description: MAC address type related operations.
  *
@@ -71,7 +72,7 @@ int mac_verify(char *mac_str)
 	char buffer[ETH_ALEN_STR];
 
 	/* Check the length of a string containing MAC */
-	if (ETH_ALEN_STR != strnlen(mac_str, ETH_ALEN_STR + 1)) {
+	if (ETH_ALEN_STR == strnlen(mac_str, ETH_ALEN_STR) + 1) {
 		/* Convert string to mac */
 		mac_from_str(mac, mac_str);
 		/* Convert mac to string */
