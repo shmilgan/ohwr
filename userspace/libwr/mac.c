@@ -28,6 +28,7 @@
 
 #include <libwr/mac.h>
 #include <stdio.h>
+#include <ctype.h>
 
 /**
  * \brief Helper function to convert mac address into a string
@@ -85,4 +86,20 @@ int mac_verify(char *mac_str)
 		}
 	}
 	return -1;
+}
+
+
+/**
+ * \brief Function to lowercase the mac address
+ */
+int mac_to_lower(char *mac_str)
+{
+	int i;
+
+	if (ETH_ALEN_STR != strnlen(mac_str, ETH_ALEN_STR) + 1)
+		return -1;
+
+	for (i = 0; i < ETH_ALEN_STR; i++) 
+		mac_str[i] = tolower(mac_str[i]);
+	return 0;
 }

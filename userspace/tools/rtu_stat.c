@@ -462,7 +462,7 @@ int main(int argc, char **argv)
 			printf("Wrong port mask 0x%s\n", argv[4]);
 			exit(1);
 		}
-		if (mac_verify(argv[3])) {
+		if (mac_to_lower(argv[3]) || mac_verify(argv[3])) {
 			fprintf(stderr, "rtu_stat: Wrong MAC %s\n", argv[3]);
 			exit(1);
 		}
@@ -494,7 +494,7 @@ int main(int argc, char **argv)
 			printf("Wrong port number %s\n", argv[3]);
 			exit(1);
 		}
-		if (mac_verify(argv[2])) {
+		if (mac_to_lower(argv[2]) || mac_verify(argv[2])) {
 			fprintf(stderr, "rtu_stat: Wrong MAC %s\n", argv[2]);
 			exit(1);
 		}
@@ -527,7 +527,7 @@ int main(int argc, char **argv)
 			printf("Wrong port mask 0x%s\n", argv[4]);
 			exit(1);
 		}
-		if (mac_verify(argv[3])) {
+		if (mac_to_lower(argv[3]) || mac_verify(argv[3])) {
 			fprintf(stderr, "rtu_stat: Wrong MAC %s\n", argv[3]);
 			exit(1);
 		}
@@ -558,7 +558,7 @@ int main(int argc, char **argv)
 			printf("Wrong port number %s\n", argv[3]);
 			exit(1);
 		}
-		if (mac_verify(argv[2])) {
+		if (mac_to_lower(argv[2]) || mac_verify(argv[2])) {
 			fprintf(stderr, "rtu_stat: Wrong MAC %s\n", argv[2]);
 			exit(1);
 		}
