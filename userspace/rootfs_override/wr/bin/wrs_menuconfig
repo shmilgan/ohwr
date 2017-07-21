@@ -1,0 +1,3 @@
+#!/bin/sh
+
+make -C /wr/etc/ menuconfig
