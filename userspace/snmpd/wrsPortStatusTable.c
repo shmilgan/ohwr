@@ -127,35 +127,6 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 			strncpy(wrsPortStatusTable_array[i].wrsPortStatusSfpVS,
 				port_state->calib.sfp.vendor_serial,
 				sizeof(wrsPortStatusTable_array[i].wrsPortStatusSfpVS));
-			/* sfp error when SFP is not 1 GbE or
-			 * (port is not "non-wr", "none" mode and sfp not in data base)
-			 * port down, is set above
-			 * (WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) */
-			slog_obj_name = wrsPortStatusSfpError_str;
-			wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_OK;
-			if (wrsPortStatusTable_array[i].wrsPortStatusSfpGbE == WRS_PORT_STATUS_SFP_GBE_LINK_NOT_GBE) {
-				/* error, SFP is not 1 GbE */
-				wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
-				snmp_log(LOG_ERR, "SNMP: " SL_ER  " %s: "
-					 "SFP in port %d (wri%d) is not for Gigabit Ethernet\n",
-					 slog_obj_name, i + 1, i + 1);
-			}
-			if ((wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
-			    && (wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NONE)
-			    && (wrsPortStatusTable_array[i].wrsPortStatusSfpInDB == WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE)) {
-				/* error, port is not non-wr mode and sfp not in data base */
-				wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
-				snmp_log(LOG_ERR, "SNMP: " SL_ER  " %s: "
-					 "SFP in port %d (wri%d) is not in database. "
-					 "Change the SFP or declare port as non-wr or none\n",
-					 slog_obj_name, i + 1, i + 1);
-			}
-
-			snmp_log(LOG_DEBUG, "reading ports name %s link %d, "
-				"mode %d, locked %d\n", port_state->name,
-				wrsPortStatusTable_array[i].wrsPortStatusLink,
-				wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode,
-				wrsPortStatusTable_array[i].wrsPortStatusLocked);
 		}
 
 		retries++;
@@ -167,6 +138,54 @@ time_t wrsPortStatusTable_data_fill(unsigned int *n_rows)
 		if (!wrs_shm_seqretry(hal_head, ii))
 			break; /* consistent read */
 		usleep(1000);
+	}
+
+	/* keep the log printouts outside wrs_shm_seqbegin and wrs_shm_seqretry
+	 * since it introduces delays and might lead to an infinite loop of
+	 * retries */
+	slog_obj_name = wrsPortStatusSfpError_str;
+	for (i = 0; i < hal_nports_local; ++i) {
+		/* If info about wrsPortStatusSfpGbE is not filled skip further
+		 * checking. NOTE: there is no need to check the fill of others
+		 * like:
+		 * - wrsPortStatusConfiguredMode
+		 * - wrsPortStatusSfpInDB
+		 */
+		/* Don't check if WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN */
+		if (wrsPortStatusTable_array[i].wrsPortStatusSfpGbE == 0
+		    || wrsPortStatusTable_array[i].wrsPortStatusSfpError == WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) {
+			continue;
+		}
+
+		/* sfp error when SFP is not 1 GbE or
+		  * (port is not "non-wr", "none" mode and sfp not in data base)
+		  * port down, is set above
+		  * (WRS_PORT_STATUS_SFP_ERROR_PORT_DOWN) */
+		wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_OK;
+		if (wrsPortStatusTable_array[i].wrsPortStatusSfpGbE == WRS_PORT_STATUS_SFP_GBE_LINK_NOT_GBE) {
+			/* error, SFP is not 1 GbE */
+			wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
+			snmp_log(LOG_ERR, "SNMP: " SL_ER  " %s: "
+				  "SFP in port %d (wri%d) is not for Gigabit Ethernet\n",
+				  slog_obj_name, i + 1, i + 1);
+		}
+		if ((wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NON_WR)
+		    && (wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode != WRS_PORT_STATUS_CONFIGURED_MODE_NONE)
+		    && (wrsPortStatusTable_array[i].wrsPortStatusSfpInDB == WRS_PORT_STATUS_SFP_IN_DB_NOT_IN_DATA_BASE)) {
+			/* error, port is not non-wr mode and sfp not in data base */
+			wrsPortStatusTable_array[i].wrsPortStatusSfpError = WRS_PORT_STATUS_SFP_ERROR_SFP_ERROR;
+			snmp_log(LOG_ERR, "SNMP: " SL_ER  " %s: "
+				  "SFP in port %d (wri%d) is not in the database. "
+				  "Change the SFP or declare port as non-wr or none\n",
+				  slog_obj_name, i + 1, i + 1);
+		}
+
+		snmp_log(LOG_DEBUG, "reading ports name %s link %d, "
+			"mode %d, locked %d\n",
+			wrsPortStatusTable_array[i].wrsPortStatusPortName,
+			wrsPortStatusTable_array[i].wrsPortStatusLink,
+			wrsPortStatusTable_array[i].wrsPortStatusConfiguredMode,
+			wrsPortStatusTable_array[i].wrsPortStatusLocked);
 	}
 
 	retries = 0;
