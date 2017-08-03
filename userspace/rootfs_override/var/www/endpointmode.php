@@ -34,27 +34,34 @@
 			echo '<th>wri' .($i+1). '</th>';
 
 			$tmp = $i+1;
-			echo '<td><select name="selected" id="selected-'.$tmp.'" class="drop">
-			<option selected="selected" ">'.$modes[$i].'</option>
-			<option value='. $names[0] .'>'. $names[0] .'</option>
-			<option value='. $names[1] .'>'. $names[1] .'</option>
-			<option value='. $names[2] .'>'. $names[2] .'</option>  
-			<option value='. $names[3] .'>'. $names[3] .'</option>
-			<option value='. $names[4] .'>'. $names[4] .'</option>               
-			</select></td>';
+			echo '<td><select name="selected" id="selected-'.$tmp.'" class="drop">';
+			for ($j=0; $j<sizeof($names);$j++){
+				if($modes[$i] == $names[$j]){
+					echo '<option selected="selected" ">'.$modes[$i].'</option>';
+				}
+				else{
+					echo '<option value='. $names[$j] .'>'. $names[$j] .'</option>';
+				}
+			} 
+               
+			echo '</select></td>';
 
 			echo '<th>wri'.($i+10).'</th>';
 
 			$tmp2 = $i+10;
-			echo '<td><select name="selected" id="selected-'.$tmp2.'" class="drop">
-			<option selected="selected" ">'.$modes[$i+9].'</option>
-			<option value='. $names[0] .'>'. $names[0] .'</option>
-			<option value='. $names[1] .'>'. $names[1] .'</option>
-			<option value='. $names[2] .'>'. $names[2] .'</option>  
-			<option value='. $names[3] .'>'. $names[3] .'</option>
-			<option value='. $names[4] .'>'. $names[4] .'</option>               
-			</select></td>';
-
+			
+			echo '<td><select name="selected" id="selected-'.$tmp2.'" class="drop">';
+			
+			for ($j=0; $j<sizeof($names);$j++){
+				if($modes[$i+9] == $names[$j]){
+					echo '<option selected="selected" ">'.$modes[$i].'</option>';
+				}
+				else{
+					echo '<option value='. $names[$j] .'>'. $names[$j] .'</option>';
+				}
+			} 
+			
+			echo '</select></td>';
 			echo '</tr>';
 		}
 
