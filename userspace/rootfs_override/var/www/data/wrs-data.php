@@ -28,7 +28,7 @@ if(empty($_SESSION["WRSVERSION"])){
 $WRS_TABLE_INFO = Array (
 	'DASHBOARD' => Array(
 		'DASHBOARD_00' => Array(
-			'name' => 'HOSTNAME',
+			'name' => 'Hostname',
 			'value' => $_SESSION["WRS_INFO"][HOSTNAME],
 		),
 		'DASHBOARD_02' => Array(
@@ -36,89 +36,89 @@ $WRS_TABLE_INFO = Array (
 			'value' => $_SESSION["WRS_INFO"][IPADDRESS],
 		),
 		'DASHBOARD_03' => Array(
-			'name' => 'MACADDRESS',
+			'name' => 'MAC Address',
 			'value' => $_SESSION["WRS_INFO"][MACADDRESS],
 		),
 		'DASHBOARD_04' => Array(
-			'name' => 'KERNEL',
+			'name' => 'Kernel Version',
 			'value' => $_SESSION["WRS_INFO"][KERNEL],
 		),
 		'DASHBOARD_05' => Array(
-			'name' => 'FIRMWARE',
+			'name' => 'Firmware Version',
 			'value' => $_SESSION["WRS_INFO"][FIRMWARE],
 		),
 		'DASHBOARD_06' => Array(
-			'name' => 'HARDWARE',
+			'name' => 'Hardware Version',
 			'value' => $_SESSION["WRS_INFO"][HARDWARE],
 		),
 		'DASHBOARD_07' => Array(
-			'name' => 'FPGA',
+			'name' => 'FPGA type',
 			'value' => $_SESSION["WRS_INFO"][FPGA],
 		),
 		'DASHBOARD_08' => Array(
-			'name' => 'MANUFACTURER',
+			'name' => 'Manufacturer',
 			'value' => $_SESSION["WRS_INFO"][MANUFACTURER],
 		),
 		'DASHBOARD_09' => Array(
-			'name' => 'SERIALNUMBER',
+			'name' => 'Serial Number',
 			'value' => $_SESSION["WRS_INFO"][SERIALNUMBER],
 		),
 		'DASHBOARD_10' => Array(
-			'name' => 'KERNELCOMPILEDDATE',
+			'name' => 'Kernel Compiled Date',
 			'value' => $_SESSION["WRS_INFO"][KERNELCOMPILEDDATE],
 		),
 	),
 	'CONTACT' => Array (
 		'CONTACT_00' => Array(
-			'name' => 'FIRMWARE',
+			'name' => 'Firmware Version',
 			'value' => $_SESSION["WRS_INFO"][FIRMWARE],
 		),
 		'CONTACT_01' => Array(
-			'name' => 'KERNEL',
+			'name' => 'Kernel Version',
 			'value' => $_SESSION["WRS_INFO"][KERNEL],
 		),
 		'CONTACT_02' => Array(
-			'name' => 'COMPILEDBY',
+			'name' => 'Compiled By',
 			'value' => $_SESSION["WRS_INFO"][COMPILEDBY],
 		),
 		'CONTACT_03' => Array(
-			'name' => 'KERNELCOMPILEDDATE',
+			'name' => 'Kernel Compiled Date',
 			'value' => $_SESSION["WRS_INFO"][KERNELCOMPILEDDATE],
 		),
 		'CONTACT_04' => Array(
-			'name' => 'HARDWARE',
+			'name' => 'Hardware Version',
 			'value' => $_SESSION["WRS_INFO"][HARDWARE],
 		),
 		'CONTACT_05' => Array(
-			'name' => 'FPGA',
+			'name' => 'FPGA Version',
 			'value' => $_SESSION["WRS_INFO"][FPGA],
 		),
 		'CONTACT_06' => Array(
-			'name' => 'MANUFACTURER',
+			'name' => 'Manufacturer',
 			'value' => $_SESSION["WRS_INFO"][MANUFACTURER],
 		),
 		'CONTACT_07' => Array(
-			'name' => 'SERIALNUMBER',
+			'name' => 'Serial Number',
 			'value' => $_SESSION["WRS_INFO"][SERIALNUMBER],
 		),
 		'CONTACT_08' => Array(
-			'name' => 'GATEWARE',
+			'name' => 'Gateware Version',
 			'value' => $_SESSION["WRS_INFO"][GATEWARE],
 		),
 		'CONTACT_09' => Array(
-			'name' => 'GATEWAREBUILD',
+			'name' => 'Gateware Build',
 			'value' => $_SESSION["WRS_INFO"][GATEWAREBUILD],
 		),
 		'CONTACT_10' => Array(
-			'name' => 'WRSHDLCOMMIT',
+			'name' => 'WR Switch HDL Commit',
 			'value' => $_SESSION["WRS_INFO"][WRSHDLCOMMIT],
 		),
 		'CONTACT_11' => Array(
-			'name' => 'GCORESCOMMIT',
+			'name' => 'General Cores Commit',
 			'value' => $_SESSION["WRS_INFO"][GCORESCOMMIT],
 		),
 		'CONTACT_12' => Array(
-			'name' => 'WRCORESCOMMIT',
+			'name' => 'WR Cores Commit',
 			'value' => $_SESSION["WRS_INFO"][WRCORESCOMMIT],
 		),
 	),
