@@ -15,7 +15,10 @@
 #Save info to temp file so we dont have to execute command at each call
 
 if(empty($_SESSION["WRSVERSIONTMP"])){
-	$_SESSION["WRSVERSIONTMP"] = shell_exec("/wr/bin/wrs_version -t > /tmp/wrversion"); 
+	$file_version = "/tmp/wrversion";
+	if (!file_exists($file_version)) {
+		$_SESSION["WRSVERSIONTMP"] = shell_exec("/wr/bin/wrs_version -t > .$file_version."); 
+	}
 }
 
 $outputfilename = "/var/www/data/wrs-info.php";
