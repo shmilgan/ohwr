@@ -41,7 +41,7 @@ $options = Array (
 	Array ("FIRMWARE","Firmware Version","/wr/bin/wrs_version |  awk '{print $4}'","y"),
 	Array ("HARDWARE","Hardware Version","cat /tmp/www_wrs_version.txt  | grep 'scb\|back' | sort -r | sed 's/back/ back/' | sed 's/-version: /: v/'","y"),
 	Array ("FPGA","FPGA Version","cat /tmp/www_wrs_version.txt | grep 'fpga-type' | sed 's/[^:]*: //'","y"),
-	Array ("COMPILEDBY","Compiled By","cat /tmp/www_wrs_version.txt | grep 'software-version' | sed 's/[^:]*: //'","y"),
+	Array ("COMPILEDBY","Compiled By","cat /tmp/www_wrs_version.txt | grep 'bult-by' | sed 's/[^:]*: //'","y"),
 	Array ("MANUFACTURER","Manufacturer","cat /tmp/www_wrs_version.txt | grep 'manufacturer' | sed 's/[^:]*: //'","y"),
 	Array ("SERIALNUMBER","Serial Number","cat /tmp/www_wrs_version.txt | grep 'serial' | sed 's/[^:]*: //'","y"),
 	Array ("GATEWARE","Gateware Version","cat /tmp/www_wrs_version.txt | grep 'gateware-version' | sed 's/[^:]*: //'","y"),
