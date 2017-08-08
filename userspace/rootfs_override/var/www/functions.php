@@ -316,13 +316,124 @@ function print_multi_form($matrix, $header, $formatID, $class, $infoname, $size)
 	echo '</FORM>';
 }
 
+function strposa($haystack, $needles=array(), $offset=0) {
+		$i = 0;
+		                
+        foreach($needles as $needle) {	
+				if (strstr($needle,$haystack, true)!==false) return $i;
+				else $i++;
+        }
+		return -1;
+}
+
+function print_dynamic_multi_form($matrix, $header, $formatID, $class, $infoname, $size){
+	$names = array("slave", "auto", "non_wr", "none", "master"); 
+	$monitor = array("y","n"); 
+	$ext = array("WR", "none"); 
+	$dm = array("e2e", "p2p"); 
+
+	echo '<FORM method="POST" id="endpointconfig">
+			<table border="0" align="center" class="'.$class.'" id="'.$formatID.'" >';
+	if (!empty($infoname)) echo '<tr><th colspan='.count($matrix).'>'.$infoname.'</th></tr>';
+
+	// Printing fist line with column names.
+	if (!empty($header)){
+		echo "<tr class='sub'>";
+		foreach ($header as $column =>$c){
+			if($column!="key"){
+				echo "<td>".($c)."</td>";
+			}	
+		}
+		echo "</tr>";
+	}
+
+	$i = 0;
+
+	// Printing the content of the form.
+	foreach ($matrix as $array){
+		$first = 0;
+		$elements = explode(",",$array);
+		
+		foreach ($header as $column =>$c) {
+			if(strposa($column, $elements)>-1){
+				$column2 = explode("=",$elements[strposa($column, $elements)]); 
+
+				if ($column=="key"){
+					echo '<INPUT type="hidden" value="'.$column2[1].'" name="key'.$i.'" >';
+				}
+				//role
+				else if ($column=="role"){
+					echo '<td><select value="'.$column2[1].'" name="'.$column2[0].$i.'" id="selected" class="drop">';
+					for ($j=0; $j<sizeof($names);$j++){
+						echo $names[$j];
+						if($column2[1] == $names[$j]){
+							echo '<option name="'.$column2[0].$i.'" selected="selected" ">'.$column2[1].'</option>';
+						}
+						else{
+							echo '<option value='. $names[$j] .'>'. $names[$j] .'</option>';
+						}
+					}
+					echo '</select></td>';
+				}
+				//monitor
+				else if ($column=="monitor"){
+					if($column2[1] == "y")
+						echo '<td align="center"><INPUT type="checkbox" value="y" name="'.$column2[0].$i.'" class="checkbox" checked></td>';
+					else
+						echo '<td align="center"><INPUT type="checkbox" value="n" name="'.$column2[0].$i.'" class="checkbox" ></td>';
+				}
+				//extension
+				else if ($column=="ext"){
+					echo '<td><select value="'.$column2[1].'"name="'.$column2[0].$i.'"  id="selected" class="drop">';
+					for ($j=0; $j<sizeof($ext);$j++){
+						if($column2[1] == $ext[$j]){
+							echo '<option selected="selected" ">'.$column2[1].'</option>';
+						}
+						else{
+							echo '<option value='. $ext[$j] .'>'. $ext[$j] .'</option>';
+						}
+					}
+					echo '</select></td>';
+				}
+				//delay mechanistm
+				else if ($column=="dm"){
+					echo '<td><select value="'.$column2[1].'" name="'.$column2[0].$i.'" id="selected" class="drop">';
+					for ($j=0; $j<sizeof($dm);$j++){
+						if($column2[1] == $dm[$j]){
+							echo '<option selected="selected" ">'.$column2[1].'</option>';
+						}
+						else{
+							echo '<option value='. $dm[$j] .'>'. $dm[$j] .'</option>';
+						}
+					}
+					echo '</select></td>';
+				}
+				//other params
+				else{
+					echo '<td align="center"><INPUT size="'.$size.'" type="text" value="'.$column2[1].'" name="'.$column2[0].$i.'" ></td>';
+					$first = 1;
+				}
+			}
+		}
+		
+		echo "<tr>";
+		
+		$i++;
+		$first = 0;
+	}
+	echo '</table>';
+
+	echo '<INPUT type="submit" value="Save New Configuration" class="btn last">';
+	echo '</FORM>';
+}
+
+
 function process_multi_form($matrix){
 	$modified = false;
 	$i=0;
 	if(!empty($_POST)){
 		$tmp = implode(" ",$_POST);
 		$fiber = strstr($tmp,'FIBER');
-		
 		foreach ($matrix as $array){
 			
 			$elements = explode(",",$array);

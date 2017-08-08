@@ -308,6 +308,11 @@ table.altrowstablesmall input {
     font-size: 100%;
 }
 
+#endpointconfig table.altrowstablesmall input {
+    width: 45px;
+    font-size: 100%;
+}
+
 table.altrowstabledash {
 	font-family: verdana,arial,sans-serif;
 	font-size: 11px;

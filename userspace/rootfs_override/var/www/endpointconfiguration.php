@@ -34,10 +34,15 @@
 		$infoname = "Endpoint Configuration";
 		//$size = "6";
 
-		if (strpos($_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],'proto=') !== false)
-			$header = array ("WR port","Protocol","&#916 Tx","&#916 Rx","Mode","Fiber");
+		if (strpos($_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],'monitor=') !== false)
+			$header = array (key=>"key",name=>"WR port",proto=>"Protocol",tx=>"&#916 Tx",rx=>"&#916 Rx",role=>"Mode",fiber=>"Fiber", monitor=>"Monitor", ext=>"Extension", dm=>"Delay Mechanism");
+
+		else if (strpos($_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],'proto=') !== false)
+			$header = array (key=>"key",name=>"WR port",proto=>"Protocol",tx=>"&#916 Tx",rx=>"&#916 Rx",role=>"Mode",fiber=>"Fiber");
+		
 		else
-			$header = array ("WR port","&#916 Tx","&#916 Rx","Mode","Fiber");
+			$header = array (key=>"key",name=>"WR port",tx=>"&#916 Tx",rx=>"&#916 Rx",role=>"Mode",fiber=>"Fiber");
+
 		$matrix = array ("key=CONFIG_PORT01_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],
 							"key=CONFIG_PORT02_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT02_PARAMS"],
 							"key=CONFIG_PORT03_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT03_PARAMS"],
@@ -57,8 +62,8 @@
 							"key=CONFIG_PORT17_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT17_PARAMS"],
 							"key=CONFIG_PORT18_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT18_PARAMS"],
 							);
-		print_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
-		
+		print_dynamic_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
+
 		if(process_multi_form($matrix)){
                         save_kconfig();
                         apply_kconfig();
