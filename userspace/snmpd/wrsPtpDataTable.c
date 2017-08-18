@@ -67,7 +67,9 @@ time_t wrsPtpDataTable_data_fill(unsigned int *n_rows)
 	/* check whether shmem is available */
 	if (!shmem_ready_ppsi()) {
 		snmp_log(LOG_ERR, "%s: Unable to read PPSI's shmem\n", __func__);
-		n_rows_local = 0;
+		/* Keep one empty instance. If set to 0 all PPSI related OIDs
+		 * disappear */
+		n_rows_local = 1;
 		return time_update;
 	} else {
 		n_rows_local = WRS_MAX_N_SERVO_INSTANCES;
