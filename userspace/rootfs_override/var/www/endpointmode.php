@@ -54,7 +54,7 @@
 			
 			for ($j=0; $j<sizeof($names);$j++){
 				if($modes[$i+9] == $names[$j]){
-					echo '<option selected="selected" ">'.$modes[$i].'</option>';
+					echo '<option selected="selected" ">'.$modes[$i+9].'</option>';
 				}
 				else{
 					echo '<option value='. $names[$j] .'>'. $names[$j] .'</option>';
