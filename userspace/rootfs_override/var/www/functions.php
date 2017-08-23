@@ -57,7 +57,9 @@ function wrs_header_ports(){
 	// Check whether $WRS_MANAGEMENT is set or we take the program
 	// by default.
 
-	session_start();
+	if(!isset($_SESSION)){ 
+		session_start(); 
+    	} 
 
 	if(empty($_SESSION['portsupdated'])){
 		$_SESSION['portsupdated'] = intval(shell_exec("date +%s"));
@@ -67,64 +69,70 @@ function wrs_header_ports(){
 	$currenttime = intval(shell_exec("date +%s"));
 	$interval = $currenttime - $_SESSION['portsupdated'];
 
-	if(!file_exists("/tmp/ports.conf") || $interval>15){
-		shell_exec("/wr/bin/wr_mon -w > /tmp/ports.conf");
+	if(!file_exists("/tmp/www_ports.txt") || $interval>15){
+		shell_exec("/wr/bin/wr_mon -w > /tmp/www_ports.txt");
 		$_SESSION['portsupdated'] = intval(shell_exec("date +%s"));
 	}
-	$ports = shell_exec("cat /tmp/ports.conf");
-	$ports = explode(" ", $ports);
-
+	
 	// We parse and show the information comming from each endpoint.
 	echo "<table border='0' align='center'  vspace='1'>";
 	echo '<tr><th><h1 align=center>White-Rabbit Switch Manager</h1></th></tr>';
 	echo '</table>';
-	echo "<table id='sfp_panel' border='0' align='center' vspace='15'>";
+	draw_table();
+}
 
-	echo '<tr class="port">';
-	$cont = 0;
-	for($i=1; $i<18*3; $i=$i+3){
+function draw_table(){
+	$ports = shell_exec("/wr/bin/wr_mon -w | tail -20 | head -18");        
+	$ports = explode(PHP_EOL, $ports);
+ 	
+	echo  "<table id='sfp_panel' border='0' align='center' vspace='15'>";
+        echo '<tr class="port">';
+        $cont = 0;
+        for($i=0; $i<18; $i=$i+1){
+                if (strpos($ports[$i], "up")){
+                        if (!strpos($ports[$i],"Master")){
+                                $mode="master";
+                        }else{
+                                $mode="slave";
+                        }
+                }
+                else $mode="linkdown";
 
-		if (strstr($ports[($i-1)],"up")){
-			if (!strcmp($ports[($i)],"Master")){
-				$mode="master";
-			}else{
-				$mode="slave";
-			}
+                $desc=sprintf("#%02d: wri%d (%s)",$cont+1,$cont+1,$mode);
+                echo '<th>'."<img class='".$mode."' src='img/".$mode.".png' alt='".$desc."', title='".$desc."'>".'</th>';
+                $cont++;
+        }
+
+        echo '</tr>';
+ 	echo '<tr class="status">';
+        for($i=0; $i<18; $i=$i+1){
+                echo '<th>';
+                if (strpos($ports[$i],"Calibrated")){
+                        $mode="calibrated";
+                        $img="check.png";
+                }else{
+                        $mode="uncalibrated";
+                        $img="uncheck.png";
+                }
+                        echo "<img class='calibration ".$mode."' SRC='img/".$img."'  alt='".$mode."', title = '".$mode."'>";
+
+                if (strstr($ports[$i],"Locked")){
+                        $mode="locked";
+	                echo "<img class='syntonization ".$mode."' SRC='img/".$mode.".png' alt='syntonization: ".$mode."', title = 'syntonization: ".$mode."'>";
+                }
+		else{
+			$mode = "unlocked";
+	                echo "<img class='syntonization ".$mode."' SRC='img/".$mode.".png' alt='syntonization: ".$mode."', title = 'syntonization: ".$mode."'>";
+
 		}
-		else $mode="linkdown";
+	        echo '</th>';
+        }
+        echo '</tr>';
 
-		$desc=sprintf("#%02d: wri%d (%s)",$cont+1,$cont+1,$mode);
-		echo '<th>'."<img class='".$mode."' src='img/".$mode.".png' alt='".$desc."', title='".$desc."'>".'</th>';
-		$cont++;
+        echo '<tr>';
+        echo '</tr>';
 
-	}
-	echo '</tr>';
-
-	echo '<tr class="status">';
-	for($i=1; $i<18*3; $i=$i+3){
-		echo '<th>';
-		if (strstr($ports[($i+2)],"Calibrated")){
-			$mode="calibrated";
-			$img="check.png";
-		}else{
-			$mode="uncalibrated";
-			$img="uncheck.png";
-		}
-		echo "<img class='calibration ".$mode."' SRC='img/".$img."'  alt='".$mode."', title = '".$mode."'>";
-
-		if (strstr($ports[($i+1)],"Locked")){
-			$mode="locked";
-			echo "<img class='syntonization ".$mode."' SRC='img/".$mode.".png' alt='syntonization: ".$mode."', title = 'syntonization: ".$mode."'>";
-		}
-
-		echo '</th>';
-	}
-	echo '</tr>';
-
-	echo '<tr>';
-	echo '</tr>';
-
-	echo '</table>';
+        echo '</table>';
 
 }
 
@@ -153,9 +161,9 @@ function wrs_main_info(){
 	$formatID = "alternatecolor1";
 	$infoname = "WRS Services";
 
-	// Load variables
+	// Load variablesm�m
 	$wr_date =  str_replace("\n","<br>",
-		shell_exec("/wr/bin/wr_date -n get"));
+		shell_exec("/wr/bin/wr_date -n get | tail -2"));
 	$PPSi = wrs_check_ptp_status() ?
 		'[<a href="ptp.php">on</A>]' : '[<a href="ptp.php">off</A>]';
 	$SNMP = check_snmp_status() ? '[on] ' : '[off] ';
@@ -170,7 +178,7 @@ function wrs_main_info(){
 	$WRSmode_xtra="";
 	if(!strcmp($WRSmode, "GM")) {
 		$WRSmode="GrandMaster";
-		$ports = shell_exec("cat /tmp/ports.conf");
+		$ports = shell_exec("cat /tmp/www_ports.txt");
 		if(empty($ports)) $WRSmode_xtra="<br>Waiting PPS/10MHz ...";
 	}
 	else if (!strcmp($WRSmode, "BC"))
@@ -181,7 +189,13 @@ function wrs_main_info(){
 		$WRSmode="Unknown";
 	
 	#Obtain the temperatures using the last line of (wr-mon -w)
-	$temperatures=shell_exec("cat /tmp/ports.conf 2>/dev/null | tail -1");
+	$temperatures=shell_exec("cat /tmp/www_ports.txt 2>/dev/null | tail -1");
+	$arr = split(" ", $temperatures);
+	$temperatures = $arr[1];
+
+	$ports = shell_exec("/wr/bin/wr_mon -w | tail -2 | head -1");
+        $arr2 = explode(" ", $ports);
+	$ports = $arr2[3];
 
 	// Print services table
 	echo '<br><table class="'.$class.'" id="'.$formatID.'" width="100%">';
@@ -189,11 +203,12 @@ function wrs_main_info(){
 
 	echo '<tr><td>PTP Mode</td><td> <a href="ptp.php">'.$WRSmode.'</a>'.$WRSmode_xtra.'</td></tr>';
 	echo '<tr><td>NTP Server</td><td> <a href="management.php">'.$NTP.'</td></tr>';
-	echo '<tr><td>White-Rabbit Date</td><td>'.$wr_date.'</td></tr>';
+	echo '<tr><td>White-Rabbit Date</td><td id="datewr">'.$wr_date.'</td></tr>';
+	echo '<tr><td>WR Status</td><td id="timing">'. "loading..." .'</td></tr>';
 	echo '<tr><td>PPSi</td><td>'.$PPSi.'</td></tr>';
 	echo '<tr><td>System Monitor</td><td> <a href="management.php">'.$Monitor.'</td></tr>';
 	echo '<tr><td>Net-SNMP Server</td><td>'.$SNMP.'( port '.$SNMP_port.")</td></tr>";
-	if(!empty($temperatures)) echo '<tr><td>Temperature (ºC)</td><td>'.$temperatures.'</td></tr>';
+	if(!empty($temperatures)) echo '<tr><td>Temperature (ºC)</td><td id="temp">'.$temperatures.'</td></tr>';
 	echo '</table>';
 
 }
@@ -230,11 +245,8 @@ function print_info($section, $subsection, $formatID, $class, $infoname, $format
 }
 
 function print_form($section, $subsection, $formatID, $class, $infoname, $format){
-
-	echo '<FORM method="POST">
-			<table border="0" align="center" class="'.$class.'" id="'.$formatID.'">';
+	echo '<FORM method="POST"><table border="0" align="center" class="'.$class.'" id="'.$formatID.'">';
 	if (!empty($infoname)) echo '<tr><th>'.$infoname.'</th></tr>';
-
 	foreach ($_SESSION[$section][$subsection] as $row) {
 		echo "<tr>";
 		echo "<td>".$row["name"]."</td>";
@@ -266,7 +278,7 @@ function print_multi_form($matrix, $header, $formatID, $class, $infoname, $size)
 
 	echo '<FORM method="POST">
 			<table border="0" align="center" class="'.$class.'" id="'.$formatID.'"  width="100%" >';
-	if (!empty($infoname)) echo '<tr><th>'.$infoname.'</th></tr>';
+	if (!empty($infoname)) echo '<tr><th colspan='.count($matrix).'>'.$infoname.'</th></tr>';
 
 	// Printing fist line with column names.
 	if (!empty($header)){
@@ -304,29 +316,152 @@ function print_multi_form($matrix, $header, $formatID, $class, $infoname, $size)
 	echo '</FORM>';
 }
 
+function strposa($haystack, $needles=array(), $offset=0) {
+		$i = 0;
+		                
+        foreach($needles as $needle) {	
+				if (strstr($needle,$haystack, true)!==false) return $i;
+				else $i++;
+        }
+		return -1;
+}
+
+function print_dynamic_multi_form($matrix, $header, $formatID, $class, $infoname, $size){
+	$names = array("slave", "auto", "non_wr", "none", "master"); 
+	$monitor = array("y","n"); 
+	$ext = array("WR", "none"); 
+	$dm = array("e2e", "p2p"); 
+
+	echo '<FORM method="POST" id="endpointconfig">
+			<table border="0" align="center" class="'.$class.'" id="'.$formatID.'" >';
+	if (!empty($infoname)) echo '<tr><th colspan='.count($matrix).'>'.$infoname.'</th></tr>';
+
+	// Printing fist line with column names.
+	if (!empty($header)){
+		echo "<tr class='sub'>";
+		foreach ($header as $column =>$c){
+			if($column!="key"){
+				echo "<td>".($c)."</td>";
+			}	
+		}
+		echo "</tr>";
+	}
+
+	$i = 0;
+
+	// Printing the content of the form.
+	foreach ($matrix as $array){
+		$first = 0;
+		$elements = explode(",",$array);
+		
+		foreach ($header as $column =>$c) {
+			if(strposa($column, $elements)>-1){
+				$column2 = explode("=",$elements[strposa($column, $elements)]); 
+
+				if ($column=="key"){
+					echo '<INPUT type="hidden" value="'.$column2[1].'" name="key'.$i.'" >';
+				}
+				//role
+				else if ($column=="role"){
+					echo '<td><select value="'.$column2[1].'" name="'.$column2[0].$i.'" id="selected" class="drop">';
+					for ($j=0; $j<sizeof($names);$j++){
+						echo $names[$j];
+						if($column2[1] == $names[$j]){
+							echo '<option name="'.$column2[0].$i.'" selected="selected" ">'.$column2[1].'</option>';
+						}
+						else{
+							echo '<option value='. $names[$j] .'>'. $names[$j] .'</option>';
+						}
+					}
+					echo '</select></td>';
+				}
+				//monitor
+				else if ($column=="monitor"){
+					if($column2[1] == "y")
+						echo '<td align="center"><INPUT type="checkbox" value="y" name="'.$column2[0].$i.'" class="checkbox" checked></td>';
+					else
+						echo '<td align="center"><INPUT type="checkbox" value="n" name="'.$column2[0].$i.'" class="checkbox" ></td>';
+				}
+				//extension
+				else if ($column=="ext"){
+					echo '<td><select value="'.$column2[1].'"name="'.$column2[0].$i.'"  id="selected" class="drop">';
+					for ($j=0; $j<sizeof($ext);$j++){
+						if($column2[1] == $ext[$j]){
+							echo '<option selected="selected" ">'.$column2[1].'</option>';
+						}
+						else{
+							echo '<option value='. $ext[$j] .'>'. $ext[$j] .'</option>';
+						}
+					}
+					echo '</select></td>';
+				}
+				//delay mechanistm
+				else if ($column=="dm"){
+					echo '<td><select value="'.$column2[1].'" name="'.$column2[0].$i.'" id="selected" class="drop">';
+					for ($j=0; $j<sizeof($dm);$j++){
+						if($column2[1] == $dm[$j]){
+							echo '<option selected="selected" ">'.$column2[1].'</option>';
+						}
+						else{
+							echo '<option value='. $dm[$j] .'>'. $dm[$j] .'</option>';
+						}
+					}
+					echo '</select></td>';
+				}
+				//other params
+				else{
+					echo '<td align="center"><INPUT size="'.$size.'" type="text" value="'.$column2[1].'" name="'.$column2[0].$i.'" ></td>';
+					$first = 1;
+				}
+			}
+		}
+		
+		echo "<tr>";
+		
+		$i++;
+		$first = 0;
+	}
+	echo '</table>';
+
+	echo '<INPUT type="submit" value="Save New Configuration" class="btn last">';
+	echo '</FORM>';
+}
+
+
 function process_multi_form($matrix){
-
 	$modified = false;
-
 	$i=0;
 	if(!empty($_POST)){
+		$tmp = implode(" ",$_POST);
+		$fiber = strstr($tmp,'FIBER');
 		foreach ($matrix as $array){
+			
 			$elements = explode(",",$array);
 
 			foreach ($elements as $element){
 				$column = explode("=",$element);
+
 				if($column[0]!="key"){
-					$output .= preg_replace('/[0-9]+/', '', $column[0].$i)."=". $_POST[$column[0].$i].",";
+					$var = trim($column[0].$i);
+					$output .= preg_replace('/[0-9]+/', '', $var)."=".$_POST[$var].",";
 				}else{
 					$key = $_POST[$column[0].$i];
 				}
-
+				
 				//$_SESSION["KCONFIG"][$row["key"]]=$_POST[$row["vname"]];
 				//$_SESSION[$section][$subsection][$row["value"]] = $_POST[$row["vname"]];
 
 			}
 			$output = rtrim($output, ",");
-
+			
+			//change matrix fiber to match format to save at dot-config
+			if($fiber != FALSE ){
+				$output = str_replace("id=".$i."," , "" ,$output);
+				$output = lreplace(",rx=", "_", $output);
+				$output = str_replace("tx=","alpha_", $output);
+				$output = str_replace(",val=", "=", $output);
+        	        }
+	
 			// We have the line, put it in kconfig.
 			$_SESSION["KCONFIG"][$key]=$output;
 
@@ -984,7 +1119,7 @@ function wrs_display_help($help_id, $name){
 		$message = "<p>This is a switch console emulator windows. Use it as if you were using a ssh session.</p>";
 	} else if (!strcmp($help_id, "gateware")){
 
-		$msg = shell_exec("/wr/bin/wrs_version -g");
+		$msg = $_SESSION["WRSVERSION"];
 		$msg = explode("\n", $msg);
 		$message .= "<ul>";
 
@@ -1080,10 +1215,20 @@ function wrs_display_help($help_id, $name){
 		$message = str_replace("\n", "<br>", $message);
 	} else if (!strcmp($help_id, "logs")){
 		$message = "<p>Log files for the following services: <br>
-					- <b>HAL daemon</b>, <b>RTU daemon</b>, <b>PPSi daemon</b>, <b>other programs</b> -  The string can
+					- Logging directions for <b>HAL daemon</b>, <b>RTU daemon</b>, <b>PPSi/PTP daemon</b>, <b>other programs</b>
+					  (wrs_watchdog, wrs_auxclk, wrs_custom_boot_script.sh, vlan.sh)
+					  -  The string can
 					  be a pathname (e.g. /dev/kmsg) or a &lt;facility&gt;.&lt;level&gt; spefification like \"daemon.debug\".
 					  An empty strings is used to represent no logging (like /dev/null). Please note that unknown facility
-					  names will generate a runtime error on the switch.<br>
+					  names will generate a runtime error on the switch. Please note that all messages produced by programs
+					  if syslog is configured will be passed to the syslog at the same &lt;facility&gt;.&lt;level&gt,
+					  no matter of verbosity of a message.<br>
+					- Logging verbosity level for <b>HAL daemon</b>, <b>RTU daemon</b>, <b>PPSi/PTP daemon</b>, <b>other programs</b>
+					  (wrs_watchdog, wrs_auxclk, wrs_custom_boot_script.sh, vlan.sh)
+					  - Specify verbosity of programs as a string.
+					  By leaving this item empty, a daemon will use its default verbosity level, which is usually INFO.
+					  Please note that all messages produced by a program if syslog is configured will be passed to the syslog
+					  at the same &lt;facility&gt;.&lt;level&gt, no matter of verbosity of a message.<br>
 					- <b>Monit</b> - The string can be a pathname (e.g. /dev/kmsg) or a \"syslog\" string. An empty strings
 					  is used  to represent no logging. If it is needed to select facility and level please leave here empty
 					  string and change /etc/monitrc file directly. Please note that unknown facility names will generate a
@@ -1092,8 +1237,10 @@ function wrs_display_help($help_id, $name){
 					  \"sd\" or \"s daemon\" will forward messages to syslog with daemon as facility. To set level (i.e. 5) use
 					  \"S 5 daemon\". For details please check \"man snmpcmd\". An empty strings is used  to represent no
 					  logging (like /dev/null). Please note that unknown facility names will generate a runtime error on the
-					  switch.<br>
+					  switch.  NOTE: It looks like Notice is not a default logging priority as writen in the manual.<br>
 					</p>";
+	} else if (!strcmp($help_id, "wrinfo")){
+		$message = "<p>Display live information about switch taken from the <b>wr_mon</b>. Information is updated every second.</p>";
 	}
 
 	echo $message;
@@ -1404,6 +1551,30 @@ function get_encrypt_salt($enc_password){
 			break;
 	}
 	return $salt;
+}
+
+/**
+ * Function to reset switch to default
+ *
+ * @author Anne M. <anne@sevensols.com>
+**/
+function resetswitch(){ 
+		shell_exec("make -C /wr/etc/ defconfig");
+		wrs_reboot(); 
+}
+
+/**
+ * Replaces last ocurrence in string
+ *
+ * @author Anne M. <anne@sevensols.com>
+**/
+
+function lreplace($search, $replace, $subject){
+    $pos = strrpos($subject, $search);
+    if($pos !== false){
+         $subject = substr_replace($subject, $replace, $pos, strlen($search));
+    }
+    return $subject;
 }
 
 ?>

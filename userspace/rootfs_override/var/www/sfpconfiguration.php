@@ -27,12 +27,12 @@
 
 		$formatID = "alternatecolor";
 		$class = "altrowstablesmall firstcol";
-		$infoname = "SFP Calibration";
+		$infoname = "SFP Configuration";
 		$vn = 0;
 		$vs = 0;
 		$counter = 0;
 
-		$header = array ("Vendor Name","Vendor Serial","Model", "tx", "rx", "wl_txrx");
+		$header = array ("Vendor Name","Vendor Serial","Model", "tx", "rx", "&#955_txrx");
 		$matrix = array();
 
 		for($i = 0; $i < 10; $i++){
@@ -81,7 +81,7 @@
 		foreach ($matrix as $elements) {
 			echo "<tr>";
 			$element = explode(",",$elements);
-			for ($j = 0; $j < 6; $j++) {
+			for ($j = 0; $j < 7; $j++) {
 				$columns = explode("=",$element[$j]);
 
 				if($columns[0]=="key"){
@@ -127,13 +127,15 @@
 
 		$error = 0;
 		if (!empty($_POST["update"])){
-
 			for($j=0; $j<$i && !$error; $j++){
-				if(empty($_POST["pn".$j]) || empty($_POST["tx".$j]) || empty($_POST["tx".$j]) || empty($_POST["wl_txrx".$j])){
+
+				if($_POST["pn".$j]=="" || $_POST["tx".$j]=="" || $_POST["rx".$j]=="" || $_POST["wl_txrx".$j]==""){
 					echo "<p>Model, Tx, Rx and WL_TXRX cannot be empty.</p>";
 					$error = 1;
-				}else{
+				}
+				else{
 					$_SESSION["KCONFIG"][$_POST["key".$j]] = "";
+					
 					if(empty($_SESSION["KCONFIG"][$_POST["key".$j]]))
 						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["vn".$j]) ? "" : "vn=".$_POST["vn".$j];
 					else
@@ -146,9 +148,9 @@
 						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["pn".$j]) ? "" : "pn=".$_POST["pn".$j];
 					else
 						$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["pn".$j]) ? "" : ",pn=".$_POST["pn".$j];
-					$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["tx".$j]) ? "" : ",tx=".$_POST["tx".$j];
-					$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["rx".$j]) ? "" : ",rx=".$_POST["rx".$j];
-					$_SESSION["KCONFIG"][$_POST["key".$j]] .= empty($_POST["wl_txrx".$j]) ? "" : ",wl_txrx=".$_POST["wl_txrx".$j];
+					$_SESSION["KCONFIG"][$_POST["key".$j]] .= ",tx=".$_POST["tx".$j];
+					$_SESSION["KCONFIG"][$_POST["key".$j]] .= ",rx=".$_POST["rx".$j];
+					$_SESSION["KCONFIG"][$_POST["key".$j]] .= ",wl_txrx=".$_POST["wl_txrx".$j];
 				}
 
 			}
@@ -157,12 +159,12 @@
 				save_kconfig();
 				apply_kconfig();
 
-				header ('Location: sfpcalibration.php');
+				header ('Location: sfpconfiguration.php');
 			}
 		}
 
 		echo '<hr><div align="right">
-				<A HREF="sfpcalibration.php?add=y">
+				<A HREF="sfpconfiguration.php?add=y">
 				<img src="img/add.png" style="width:30px;height:30px;vertical-align:center">
 				<span style="">Add new SFP</span></A>
 				</div>';

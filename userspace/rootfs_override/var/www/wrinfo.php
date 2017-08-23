@@ -1,8 +1,9 @@
 <?php include 'functions.php'; include 'head.php'; ?>
-<body id="sfpcalib">
+<body id="management">
 <div class="main">
 <div class="page">
 <div class="header" >
+<script type="text/javascript" src="js/loadwrinfo.js"></script>
 <!--<h1>White-Rabbit Switch Tool</h1>-->
 <div class="header-ports" ><?php wrs_header_ports(); ?></div>
 <div class="topmenu">
@@ -16,20 +17,14 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title"><a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration' target='_blank'><img align=right src="./img/question.png"></a></h1>
+<h1 class="title">WR Live Information <a href='help.php?help_id=wrinfo' onClick='showPopup(this.href);return(false);'><img align=right src="./img/question.png"></a></h1>
 
-<?php session_is_started() ?>
 
-	<?php 
-		$sfp = intval($_GET["id"]);
-		$sfp = sprintf("%02s", $sfp);
-		$sfp = strval($sfp);
-		$_SESSION["KCONFIG"]["CONFIG_SFP".$sfp."_PARAMS"]="";
-		save_kconfig();
-		apply_kconfig();
+<?php
+	session_is_started();
+?>
 
-		header ('Location: sfpconfiguration.php');
-	?>
+<div id="wrstatus"></div>
 
 </div>
 </div>

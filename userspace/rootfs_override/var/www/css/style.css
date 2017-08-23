@@ -308,6 +308,11 @@ table.altrowstablesmall input {
     font-size: 100%;
 }
 
+#endpointconfig table.altrowstablesmall input {
+    width: 45px;
+    font-size: 100%;
+}
+
 table.altrowstabledash {
 	font-family: verdana,arial,sans-serif;
 	font-size: 11px;
@@ -467,7 +472,12 @@ element.style {
 }
 
 .center {
-margin-left:auto;
-margin-right:auto;
-text-align:center;
+	margin-left:auto;
+	margin-right:auto;
+	text-align:center;
 }
+
+table.fiberstable td {
+        width: auto !important;
+}
+

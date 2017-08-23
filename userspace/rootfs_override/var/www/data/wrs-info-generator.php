@@ -12,6 +12,17 @@
  *
  */
 
+#Save info to temp file so we dont have to execute command at each call
+
+if(empty($_SESSION["WRSVERSIONTMP"])){
+	$file_version = "/tmp/www_wrs_version.txt";
+	if (!file_exists($file_version)) {
+		$_SESSION["WRSVERSIONTMP"] = shell_exec("/wr/bin/wrs_version -t | tee > ".$file_version); 
+	} else {
+		$_SESSION["WRSVERSIONTMP"] = shell_exec("cat ".$file_version); 
+	}
+}
+
 $outputfilename = "/var/www/data/wrs-info.php";
 
 
@@ -27,19 +38,18 @@ $options = Array (
 	Array ("HOSTNAME","Hostname","uname -n","y"),
 	Array ("KERNEL","Kernel Version","uname -r","y"),
 	Array ("KERNELCOMPILEDDATE","Kernel Compiled Date","uname -v","y"),
-	Array ("FIRMWARE","Firmware Version","/wr/bin/wrs_version  |  awk '{print $4}'","y"),
-	Array ("HARDWARE","Hardware Version","/wr/bin/wrs_version -t | grep 'scb\|back' | sort -r | sed 's/back/ back/' | sed 's/-version: /: v/'","y"),
-	Array ("FPGA","FPGA Version","/wr/bin/wrs_version -f","y"),
-	Array ("COMPILEDBY","Compiled By",'/wr/bin/wrs_version -v | cut -d " " -f 2-',"y"),
-	Array ("MANUFACTURER","Manufacturer","/wr/bin/wrs_version -t | grep 'manufacturer' | sed 's/[^:]*: //'","y"),
-	Array ("SERIALNUMBER","Serial Number","/wr/bin/wrs_version -t | grep 'serial' | sed 's/[^:]*: //'","y"),
-	Array ("GATEWARE","Gateware Version","/wr/bin/wrs_version -t | grep 'gateware-version' | sed 's/[^:]*: //'","y"),
-	Array ("GATEWAREBUILD","Gateware Build","/wr/bin/wrs_version -t | grep 'gateware-build' | sed 's/[^:]*: //'","y"),
-	Array ("WRSHDLCOMMIT","WR Switch HDL Commit","/wr/bin/wrs_version -t | grep 'wr_switch_hdl-commit' | sed 's/[^:]*: //'","y"),
-	Array ("GCORESCOMMIT","General Cores Commit","/wr/bin/wrs_version -t | grep 'general-cores-commit' | sed 's/[^:]*: //'","y"),
-	Array ("WRCORESCOMMIT","WR Cores Commit","/wr/bin/wrs_version -t | grep 'wr-cores-commit' | sed 's/[^:]*: //'","y"),
+	Array ("FIRMWARE","Firmware Version","/wr/bin/wrs_version |  awk '{print $4}'","y"),
+	Array ("HARDWARE","Hardware Version","cat /tmp/www_wrs_version.txt  | grep 'scb\|back' | sort -r | sed 's/back/ back/' | sed 's/-version: /: v/'","y"),
+	Array ("FPGA","FPGA Version","cat /tmp/www_wrs_version.txt | grep 'fpga-type' | sed 's/[^:]*: //'","y"),
+	Array ("COMPILEDBY","Compiled By","cat /tmp/www_wrs_version.txt | grep 'bult-by' | sed 's/[^:]*: //'","y"),
+	Array ("MANUFACTURER","Manufacturer","cat /tmp/www_wrs_version.txt | grep 'manufacturer' | sed 's/[^:]*: //'","y"),
+	Array ("SERIALNUMBER","Serial Number","cat /tmp/www_wrs_version.txt | grep 'serial' | sed 's/[^:]*: //'","y"),
+	Array ("GATEWARE","Gateware Version","cat /tmp/www_wrs_version.txt | grep 'gateware-version' | sed 's/[^:]*: //'","y"),
+	Array ("GATEWAREBUILD","Gateware Build","cat /tmp/www_wrs_version.txt | grep 'gateware-build' | sed 's/[^:]*: //'","y"),
+	Array ("WRSHDLCOMMIT","WR Switch HDL Commit","cat /tmp/www_wrs_version.txt | grep 'wr_switch_hdl-commit' | sed 's/[^:]*: //'","y"),
+	Array ("GCORESCOMMIT","General Cores Commit","cat /tmp/www_wrs_version.txt | grep 'general-cores-commit' | sed 's/[^:]*: //'","y"),
+	Array ("WRCORESCOMMIT","WR Cores Commit","cat /tmp/www_wrs_version.txt | grep 'wr-cores-commit' | sed 's/[^:]*: //'","y"),
 );
-
 
 // Code for wrs-info.php generation.
 

@@ -3,6 +3,7 @@
 <div class="main">
 <div class="page">
 <div class="header" >
+<script type="text/javascript" src="js/func.js"></script>
 <!--<h1>White-Rabbit Switch Tool</h1>-->
 <div class="header-ports" ><?php wrs_header_ports(); ?></div>
 <div class="topmenu">
@@ -16,7 +17,7 @@
 </div>
 <div class="rightpanel">
 <div class="rightbody">
-<h1 class="title">Endpoint Calibration<a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration' target='_blank'><img align=right src="./img/question.png"></a></h1>
+<h1 class="title">Endpoint Configuration<a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration' target='_blank'><img align=right src="./img/question.png"></a></h1>
 <br>
 
 <?php session_is_started() ?>
@@ -28,16 +29,20 @@
 				<center>NOTE: If you do not know how to calibrate endpoints
 				please click on <a href='http://www.ohwr.org/projects/white-rabbit/wiki/Calibration'
 				target='_blank'> here </a>*<hr><br>";
-
-		$formatID = "alternatecolor";
+		$formatID = "alternatecolor1";
 		$class = "altrowstablesmall firstcol";
 		$infoname = "Endpoint Configuration";
 		//$size = "6";
 
-		if (strpos($_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],'proto=') !== false)
-			$header = array ("WR port","Protocol","Tx","Rx","Mode","Fiber");
+		if (strpos($_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],'monitor=') !== false)
+			$header = array (key=>"key",name=>"WR port",proto=>"Protocol",tx=>"&#916 Tx",rx=>"&#916 Rx",role=>"Mode",fiber=>"Fiber", monitor=>"Monitor", ext=>"Extension", dm=>"Delay Mechanism");
+
+		else if (strpos($_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],'proto=') !== false)
+			$header = array (key=>"key",name=>"WR port",proto=>"Protocol",tx=>"&#916 Tx",rx=>"&#916 Rx",role=>"Mode",fiber=>"Fiber");
+		
 		else
-			$header = array ("WR port","Tx","Rx","Mode","Fiber");
+			$header = array (key=>"key",name=>"WR port",tx=>"&#916 Tx",rx=>"&#916 Rx",role=>"Mode",fiber=>"Fiber");
+
 		$matrix = array ("key=CONFIG_PORT01_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT01_PARAMS"],
 							"key=CONFIG_PORT02_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT02_PARAMS"],
 							"key=CONFIG_PORT03_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT03_PARAMS"],
@@ -57,28 +62,14 @@
 							"key=CONFIG_PORT17_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT17_PARAMS"],
 							"key=CONFIG_PORT18_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_PORT18_PARAMS"],
 							);
-		print_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
+		print_dynamic_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
 
 		if(process_multi_form($matrix)){
-			save_kconfig();
-			apply_kconfig();
+                        save_kconfig();
+                        apply_kconfig();
 
-			header ('Location: endpointcalibration.php');
-		}
-
-		$formatID = "alternatecolor1";
-		$class = "altrowstablesmall firstcol";
-		$infoname = "Available Fibers";
-		$size = "10";
-
-		$header = array ("#","Alpha");
-
-		$matrix = array ("id=0,key=CONFIG_FIBER00_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER00_PARAMS"],
-							"id=1,key=CONFIG_FIBER01_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER01_PARAMS"],
-							"id=2,key=CONFIG_FIBER02_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER02_PARAMS"],
-							"id=3,key=CONFIG_FIBER03_PARAMS,".$_SESSION["KCONFIG"]["CONFIG_FIBER03_PARAMS"]);
-
-		print_multi_form($matrix, $header, $formatID, $class, $infoname, $size);
+                        header ('Location: endpointconfiguration.php');
+                }
 	?>
 
 </div>

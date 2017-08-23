@@ -83,6 +83,9 @@ conditions
 
  1.3   05/08/2014   Benoit Rat\         Updating for v4.2 release
                     [Seven Solutions]
+
+ 1.4   15/05/2017   Benoit Rat\         Updating for v5.0.1 release
+                    [Seven Solutions]
 ------------------------------------------------------------------------
 
 \clearpage
@@ -92,32 +95,46 @@ conditions
 
 DHCP
 :   The Dynamic Host Configuration Protocol to obtain network configuration.
+
 FMC
-:	FPGA Mezzanine Card, an ANSI standard for mezzanine card form factor.
+:   FPGA Mezzanine Card, an ANSI standard for mezzanine card form factor.
+
 HDL
-:	Hardware description language.
+:   Hardware description language.
+
 LM32
-:	LatticeMico32 is a 32-bit microprocessor soft core optimized for field-programmable gate arrays (FPGAs).
+:   LatticeMico32 is a 32-bit microprocessor soft core optimized for field-programmable gate arrays (FPGAs).
+
 NAND
-:	NAND Flash Memory, a type of reprogrammable non-volatile computer memory.
+:   NAND Flash Memory, a type of reprogrammable non-volatile computer memory.
+
 PCIe
-:	Peripheral Component Interconnect Express, a high-speed serial computer expansion bus standard.
+:   Peripheral Component Interconnect Express, a high-speed serial computer expansion bus standard.
+
 PTP
-:	Precise Time Protocol, a time synchronization protocol.
+:   Precise Time Protocol, a time synchronization protocol.
+
 SMC
-:	SubMiniature version C, coaxial connector used in radio-frequency circuits.
+:   SubMiniature version C, coaxial connector used in radio-frequency circuits.
+
 SFP
-:	Small form-factor pluggable transceiver, a hot-pluggable transceiver for optical fiber.
+:   Small form-factor pluggable transceiver, a hot-pluggable transceiver for optical fiber.
+
 SPEC
-:	Simple PCIe FMC carrier.
+:   Simple PCIe FMC carrier.
+
 SVEC
-:	Simple VME FMC carrier.
+:   Simple VME FMC carrier.
+
 UART
-:	Universal Asynchronous Receiver/Transmitter.
+:   Universal Asynchronous Receiver/Transmitter.
+
 WR
-: 	White Rabbit.
+:   White Rabbit.
+
 WRS
-: 	White Rabbit Switch.
+:   White Rabbit Switch.
+
 WMI
 :   Web Management Interface
 
@@ -514,6 +531,21 @@ wait until the WRS has reboot.
 > **Notes**: A NTP server should be provided for the grandmaster switch 
 so that we can distribute the current TAI seconds to the whole WR network
 
+### Using menuconfig
+
+Another way to modify the parameters to configure the [WRS] in Grandmaster is by
+[opening an SSH terminal](#login-via-ssh) and then run the command:
+
+    make -C /wr/etc/ menuconfig
+
+You will get a menu to directly modify the `dot-config` but with a more friendly[^termdisplay] interface.
+Then just go to `Timing Mode`, select `Grand-Master`, `Save`, `Exit`.
+Your WRS is now ready to be in GM mode at next reboot.
+
+[^termdisplay]: With some small terminal size, or while using minicom the ncurse interface does not behave well,
+ and the menuconfig is not properly displayed.
+
+
 ### By editing the dot-config file in a terminal
 
 If you prefer to configure the [WRS] using a terminal you should open the `dot-config` file
@@ -539,7 +571,6 @@ CONFIG_TIME_GM=y
 ~~~~~~~
 
 and finally you need to `reboot` the switch.
-
 
 
 Non-DHCP user
@@ -743,6 +774,16 @@ Specification
 +--------------------+-------------------------------------------------+
 
 +--------------------+-------------------------------------------------+
+| ***SMC I/O     *** |                                                 |
++====================+=================================================+
+| **PPS input**      | TTL Level (2-5V High);  0.4mA (50Ohm disabled   |
+|                    | by default) / 4.4mA (when 50Ohm enabled)        |
++--------------------+-------------------------------------------------+
+| **10MHz input**    | 250mV (rms) @ 50Ohm -> ~1dB                     |
++--------------------+-------------------------------------------------+
+
+
++--------------------+-------------------------------------------------+
 | ***Others***       |                                                 |
 +====================+=================================================+
 | **Soldering**      | IPC- 610 Rev E Class 2                          |
@@ -809,8 +850,7 @@ executing the following command:
 
 ~~~~~{.bash}
 #On the WRS
-wrs_version > /tmp/bug_report.txt
-rtu_stat >> /tmp/bug_report.txt
+wrs_version -t > /tmp/bug_report.txt
 dmesg >> /tmp/bug_report.txt
 
 #Obtain the IP of the switch
@@ -830,7 +870,7 @@ Contact-Us
 
 To contact Seven Solutions company please use:
 
-* <info@sevensols.com>
+* <support@sevensols.com>
 * (+34) 958 285 024
 * <http://www.sevensols.com>
 
@@ -861,15 +901,15 @@ Please be responsible and protect our environment.
 References
 ==============
 
-* [wrs-3/18.pdf]: Datasheet for the White Rabbit Switch v3 - 18 SFPs
-* [wrs-user-manual.pdf]: User manual documentation of the tools.
-* [wr_external_reference.pdf]: Connect the [WRS] in GrandMaster mode.
-* [whiterabbitsolution]: White Rabbit as a complete timing solutions
-* [WRS Wiki]: White Rabbit Switch Wiki on ohwr.org
-* [WRS FAQ]: WR-Switch Frequently Added Questions
-* [wr-switch-testing]: Project for testing the switch itself
-* [SFPs Wiki]: Type of SFP supported by the [WRS]
-* [latest stable release]: http://www.sevensols.com/dl/wr-switch-sw/bin/latest_stable.tar.gz
+* [wrs-3/18.pdf] : Datasheet for the White Rabbit Switch v3 - 18 SFPs
+* [wrs-user-manual.pdf] : User manual documentation of the tools.
+* [wr_external_reference.pdf] : Connect the [WRS] in GrandMaster mode.
+* [whiterabbitsolution] : White Rabbit as a complete timing solutions
+* [WRS Wiki] : White Rabbit Switch Wiki on ohwr.org
+* [WRS FAQ] : WR-Switch Frequently Added Questions
+* [wr-switch-testing] : Project for testing the switch itself
+* [SFPs Wiki] : Type of SFP supported by the [WRS]
+* [latest stable release] : `http://www.sevensols.com/dl/wr-switch-sw/bin/latest_stable.tar.gz`
 
 
 <!-- List of links -->
